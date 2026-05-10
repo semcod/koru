@@ -9,6 +9,8 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Protocol
 
+_GLOB_CHARS = frozenset("*?[")
+
 
 class CommandResult(Protocol):
     """Protocol for subprocess-like command results."""
@@ -39,11 +41,31 @@ class LoopReport:
     rounds_executed: int
 
 
+def _search_root_for_include(workspace: Path, include_pattern: str) -> Path:
+    """Return the narrowest safe root to scan before applying include_pattern."""
+    normalized = include_pattern.strip().replace("\\", "/")
+    literal_parts: list[str] = []
+
+    for part in normalized.split("/"):
+        if not part or any(char in part for char in _GLOB_CHARS):
+            break
+        literal_parts.append(part)
+
+    if not literal_parts:
+        return workspace
+
+    return workspace.joinpath(*literal_parts)
+
+
 def discover_repositories(workspace: Path, include_pattern: str = "semcod/*") -> list[Path]:
     """Return git repositories under workspace matching include_pattern."""
     workspace = workspace.resolve()
+    search_root = _search_root_for_include(workspace, include_pattern).resolve()
+    if not search_root.exists():
+        return []
+
     repositories: list[Path] = []
-    for git_dir in workspace.rglob(".git"):
+    for git_dir in search_root.rglob(".git"):
         candidate = git_dir.parent
         rel_path = candidate.relative_to(workspace).as_posix()
         if include_pattern == "*" or fnmatch(rel_path, include_pattern):

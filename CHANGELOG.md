@@ -163,6 +163,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
 
+## [0.1.4] - 2026-05-10
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/e2e/init.sh
+- Update tests/test_loop.py
+
+### Other
+- Update .gitignore
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update pipeline.yaml
+- Update uv.lock
+
 ## [0.1.3] - 2026-05-10
 
 ### Docs

@@ -7,10 +7,21 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from koru.cli import _command_value
-from koru.loop import discover_repositories, run_closed_loop
+from koru.loop import _search_root_for_include, discover_repositories, run_closed_loop
 
 
 class TestKoruLoop(unittest.TestCase):
+    def test_search_root_for_include_uses_literal_prefix(self) -> None:
+        workspace = Path("/workspace")
+
+        self.assertEqual(_search_root_for_include(workspace, "semcod/p*"), workspace / "semcod")
+        self.assertEqual(
+            _search_root_for_include(workspace, "semcod/tools/p*"),
+            workspace / "semcod" / "tools",
+        )
+        self.assertEqual(_search_root_for_include(workspace, "*"), workspace)
+        self.assertEqual(_search_root_for_include(workspace, "*/planfile"), workspace)
+
     def test_discover_repositories_with_pattern(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             workspace = Path(tmp_dir)

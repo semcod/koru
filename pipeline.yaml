@@ -1,0 +1,142 @@
+schema: '1.1'
+project: koru
+tasks:
+  - id: KORU-001
+    name: Set ci.command in policy.yaml to pytest
+    description: |
+      The koru --doctor reports ci_command as WARN because it is empty.
+      Edit .planfile/.koru/policy.yaml and set:
+        ci:
+          command: "python -m pytest tests/ --ignore=tests/test_bootstrap.py -q"
+      This enables require_ci_pass_before_complete to work.
+    executor:
+      kind: shell
+      handler: |
+        cd /home/tom/github/semcod/koru
+        sed -i 's|^  command: ""|  command: "python -m pytest tests/ --ignore=tests/test_bootstrap.py -q"|' .planfile/.koru/policy.yaml
+        grep 'command:' .planfile/.koru/policy.yaml
+    execution:
+      queue: default
+      state: ready
+    priority: high
+
+  - id: KORU-002
+    name: Fix pre-existing test_bootstrap priority enum test
+    description: |
+      tests/test_bootstrap.py::TestValidateFlatPipeline::test_invalid_priority_reported
+      fails because src/koru/bootstrap.py added "medium" to VALID_PRIORITIES
+      but the test expects "medium" to be invalid. Update the test to use a
+      truly invalid priority like "urgent".
+    executor:
+      kind: shell
+      handler: |
+        cd /home/tom/github/semcod/koru
+        sed -i 's/priority: medium/priority: urgent/' tests/test_bootstrap.py
+        PYTHONPATH=src python -m pytest tests/test_bootstrap.py::TestValidateFlatPipeline::test_invalid_priority_reported -q
+    execution:
+      queue: default
+      state: ready
+    priority: high
+
+  - id: KORU-003
+    name: Add e2e test for koru --init flow
+    description: |
+      Create tests/e2e/init.sh that exercises the full init → doctor → brief
+      → queue drain flow on a fresh tmpdir. Pattern after smoke.sh.
+    executor:
+      kind: shell
+      handler: |
+        cd /home/tom/github/semcod/koru
+        cat > tests/e2e/init.sh << 'SCRIPT'
+        #!/usr/bin/env bash
+        set -euo pipefail
+        DEMO="/tmp/koru-e2e-init-$$"
+        trap 'rm -rf "$DEMO"' EXIT
+        mkdir -p "$DEMO" && cd "$DEMO" && git init -q
+
+        step() { echo "==> $1"; }
+
+        step "1. bare koru shows setup-required"
+        OUTPUT=$(koru --project "$DEMO" 2>&1)
+        echo "$OUTPUT" | grep -q "Setup required"
+
+        step "2. koru --init succeeds"
+        koru --init --project "$DEMO"
+
+        step "3. koru --doctor passes"
+        koru --doctor --project "$DEMO"
+        [ $? -eq 0 ]
+
+        step "4. bare koru shows STARTER-001"
+        OUTPUT=$(koru --project "$DEMO" 2>&1)
+        echo "$OUTPUT" | grep -q "STARTER-001"
+
+        step "5. koru --queue drains STARTER-001"
+        koru --queue --project "$DEMO" | grep -q "completed"
+
+        echo ""
+        echo "==> ✅ All 5 init e2e steps passed"
+        SCRIPT
+        chmod +x tests/e2e/init.sh
+        echo "Created tests/e2e/init.sh"
+    execution:
+      queue: default
+      state: ready
+    priority: normal
+    blocked_by:
+      - KORU-001
+
+  - id: KORU-004
+    name: Add pyproject.toml console_scripts entry point for koru
+    description: |
+      So that `pip install -e .` makes `koru` available as a command.
+      Add [project.scripts] koru = "koru.cli:main" to pyproject.toml.
+    executor:
+      kind: shell
+      handler: |
+        cd /home/tom/github/semcod/koru
+        if ! grep -q 'project.scripts' pyproject.toml; then
+          echo -e '\n[project.scripts]\nkoru = "koru.cli:main"' >> pyproject.toml
+          echo "Added [project.scripts] to pyproject.toml"
+        else
+          echo "Entry point already exists"
+        fi
+    execution:
+      queue: default
+      state: ready
+    priority: normal
+
+  - id: KORU-005
+    name: Run full test suite and verify 0 failures
+    description: |
+      After KORU-001 and KORU-002, the full test suite (including
+      test_bootstrap.py) should pass with 0 failures.
+    executor:
+      kind: shell
+      handler: |
+        cd /home/tom/github/semcod/koru
+        PYTHONPATH=src python -m pytest tests/ -q --tb=short
+    execution:
+      queue: default
+      state: ready
+    priority: high
+    blocked_by:
+      - KORU-001
+      - KORU-002
+
+  - id: KORU-006
+    name: Stage and commit all Phase 5 changes
+    description: |
+      Commit the real sprint pipeline, policy fix, test fix, e2e script,
+      and pyproject entry point. Human reviews before pushing.
+    executor:
+      kind: human
+      mode: interactive
+    execution:
+      queue: default
+      state: ready
+    priority: normal
+    blocked_by:
+      - KORU-003
+      - KORU-004
+      - KORU-005

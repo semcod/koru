@@ -224,3 +224,6 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 .sumr/
+
+# koru runtime artefacts (generated)
+.planfile/.koru/
