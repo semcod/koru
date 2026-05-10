@@ -354,6 +354,29 @@ setup required for basic quality control. The universal gates ensure:
 - **Zero configuration** for basic validation
 - **Adaptive detection** of project-specific tooling
 
+### Auto-promotion & auto-repair for blocking tickets
+
+Koru automatically manages workflow priorities to prevent deadlocks:
+
+#### **Auto-promotion**
+- Tickets that block others are **automatically promoted to `critical` priority**
+- This ensures blocking issues are resolved first
+- Promotion happens on every `koru --context` call
+
+#### **Auto-repair mode**
+- Critical tickets receive **special instructions for LLM agents**:
+  - "AUTO-REPAIR MODE: Fix this issue immediately to unblock the workflow"
+  - "Do NOT ask for human input unless absolutely necessary"
+  - "Use all available tools and knowledge to resolve the blocking issue"
+  - "After fixing, immediately call `planfile ticket complete`"
+
+#### **Workflow**
+1. **Main task** → encounters blocking issue
+2. **Blocking ticket** created → auto-promoted to `critical`
+3. **LLM agent** receives auto-repair instructions
+4. **Issue resolved** → main task unblocked
+5. **Workflow continues** without manual intervention
+
 ### Loosening the policy
 
 Editing `<project>/.planfile/.koru/policy.yaml` is the **only** way to

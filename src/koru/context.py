@@ -210,6 +210,9 @@ def build_context(
             ]
             ticket_error = (err_lines[0] if err_lines else raw_err.splitlines()[0])
 
+    # Auto-promote blocking tickets to critical priority
+    _auto_promote_blocking_tickets(project, runner=planfile_runner)
+
     git_state = (git_probe or _git_probe)(project)
     detected_environment = (environment_probe or detect_agent_environment)(project)
 
@@ -244,6 +247,65 @@ def build_context(
 # ---------------------------------------------------------------------------
 # Instruction & self-service text generators
 # ---------------------------------------------------------------------------
+
+
+def _auto_promote_blocking_tickets(project: Path, runner: Callable | None = None) -> None:
+    """Automatically promote tickets that are blocking others to critical priority.
+    
+    This ensures that blocking issues are resolved first, allowing the main
+    workflow to continue without manual intervention.
+    """
+    from .runtime import planfile_dir
+    
+    pf = planfile_dir(project)
+    sprint_file = pf / "sprints" / "current.yaml"
+    
+    if not sprint_file.exists():
+        return
+    
+    try:
+        import yaml
+        with open(sprint_file, "r", encoding="utf-8") as f:
+            sprint_data = yaml.safe_load(f)
+        
+        if not sprint_data or "sprint" not in sprint_data:
+            return
+        
+        sprint_info = sprint_data["sprint"]
+        if "tickets" not in sprint_info:
+            return
+        
+        tickets = sprint_info["tickets"]
+        blocking_tickets = set()
+        
+        # Find all tickets that are blocking others
+        for ticket_id, ticket in tickets.items():
+            if isinstance(ticket, dict):
+                blocked_by = ticket.get("blocked_by", [])
+                if blocked_by:
+                    if isinstance(blocked_by, str):
+                        blocking_tickets.add(blocked_by)
+                    elif isinstance(blocked_by, list):
+                        blocking_tickets.update(blocked_by)
+        
+        # Promote blocking tickets to critical priority
+        promoted = False
+        for blocking_id in blocking_tickets:
+            if blocking_id in tickets and isinstance(tickets[blocking_id], dict):
+                current_priority = tickets[blocking_id].get("priority", "normal")
+                if current_priority != "critical":
+                    tickets[blocking_id]["priority"] = "critical"
+                    promoted = True
+                    print(f"🔥 Auto-promoted {blocking_id} from {current_priority} to critical (blocking)")
+        
+        # Write back if any tickets were promoted
+        if promoted:
+            with open(sprint_file, "w", encoding="utf-8") as f:
+                yaml.dump(sprint_data, f, default_flow_style=False, allow_unicode=True)
+    except Exception as e:
+        # Silently fail - priority promotion is nice-to-have, not critical
+        print(f"⚠️ Auto-promotion failed: {e}")
+        pass
 
 
 def _build_instructions(
@@ -323,10 +385,20 @@ def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[s
             f"Limit edits to the ticket's declared files: {scope}. "
             "Touching anything else requires `planfile ticket input`."
         )
-    rules.append(
-        "If you are blocked or need a human decision, call "
-        "`planfile ticket input <id> --prompt \"<question>\"` and stop."
-    )
+    # Auto-repair instructions for critical blocking tickets
+    if ticket and ticket.get("priority") == "critical":
+        rules.extend([
+            "CRITICAL PRIORITY: This ticket is blocking other work.",
+            "AUTO-REPAIR MODE: Fix this issue immediately to unblock the workflow.",
+            "Do NOT ask for human input unless absolutely necessary.",
+            "Use all available tools and knowledge to resolve the blocking issue.",
+            "After fixing, immediately call `planfile ticket complete` to continue."
+        ])
+    else:
+        rules.append(
+            "If you are blocked or need a human decision, call "
+            "`planfile ticket input <id> --prompt \"<question>\"` and stop."
+        )
     rules.extend(policy.notes)
     return rules
 
