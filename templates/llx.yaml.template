@@ -1,0 +1,96 @@
+# llx — Intelligent LLM model router configuration
+# Docs: https://github.com/wronai/llx
+
+# Direct OpenRouter API (bypass LiteLLM proxy)
+litellm_base_url: "https://openrouter.ai/api/v1"
+
+thresholds:
+  files_premium: 50
+  files_balanced: 10
+  files_cheap: 3
+  lines_premium: 20000
+  lines_balanced: 5000
+  cc_premium: 6.0
+  cc_balanced: 4.0
+  coupling_premium: 30
+  coupling_balanced: 10
+
+models:
+  premium:
+    provider: anthropic
+    model_id: claude-opus-4-20250514
+
+  balanced:
+    provider: openrouter
+    # Default tier — DeepSeek V4 Pro (minimum baseline, 2026-05-10).
+    model_id: openrouter/deepseek/deepseek-v4-pro
+
+  cheap:
+    provider: anthropic
+    model_id: claude-haiku-4-5-20251001
+
+  free:
+    provider: openrouter
+    model_id: openrouter/nvidia/nemotron-3-super-120b-a12b:free
+
+  local:
+    provider: ollama
+    model_id: ollama/qwen2.5-coder:7b
+    max_context: 32000
+
+  openrouter:
+    provider: openrouter
+    model_id: openrouter/deepseek/deepseek-v4-pro
+
+proxy:
+  port: 4000
+
+# Workflows — sequential task pipelines executed by `llx run [WORKFLOW]`.
+# Each step has a `kind` mapped to a built-in handler:
+#   prefact-scan      – run a prefact code scan
+#   plan-validate     – validate planfile tickets against the prefact scan
+#   plan-prune-stale  – physically delete stale (and optional unknown) tickets
+#   plan-clean        – status-based cleanup (drop canceled tickets + TODO.md)
+#   plan-run          – execute planfile tasks via LLM (skips stale tickets)
+#   testql            – run a TestQL scenario (planfile bridge)
+#   shell             – run a shell command
+#   python            – call `module:function` with kwargs
+#
+# Optional per-step keys:
+#   when: "<expr>"          – Python expression evaluated against previous step outputs
+#   on_failure: stop|continue
+#
+# Step parameters support shell-style env substitution:
+#   ${VAR}             – replaced with os.environ['VAR']
+#   ${VAR:-default}    – falls back to 'default' when VAR is unset
+# Substitution is recursive over dict / list / tuple values.
+#
+# Run with:  llx run testql
+# List with: llx run --list
+workflows:
+  testql:
+    description: "Run a TestQL scenario, generate tickets on failure"
+    steps:
+      - name: run-testql
+        kind: testql
+        with:
+          scenario: "${TESTQL_SCENARIO:-backend/testql-scenarios/generated-from-pytests.testql.toon.yaml}"
+          strategy: planfile.yaml
+          url: "${TESTQL_URL:-http://localhost:8101}"
+          create_tickets: true
+          fail_on_failure: false
+
+  prefact-generate:
+    description: "Generate prefact task patterns to planfile.yaml"
+    steps:
+      - name: prefact-scan
+        kind: prefact-scan
+        with:
+          config: prefact.yaml
+          project: "."
+      - name: plan-validate
+        kind: plan-validate
+        with:
+          strategy: planfile.yaml
+          prefact_yaml: prefact.yaml
+          project: "."

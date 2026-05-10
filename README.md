@@ -65,6 +65,21 @@ koru \
   --command "python -m pytest -q"
 ```
 
+### Or use Taskfile
+
+```bash
+task                          # list all tasks (40+)
+task install                  # pip install -e .
+task install:tools            # planfile, regix, redup, vallm, prefact, pfix
+task tickets:next             # highest-priority open ticket
+task quality:regix            # regression metrics gate
+task quality:redup            # duplicate detection
+task template:install         # bootstrap configs in current dir
+task webhook:run              # start healing-webhook on :8810
+```
+
+Full examples: [`docs/cli-examples.md`](./docs/cli-examples.md)
+
 ## Documentation
 
 The full documentation lives in [`docs/`](./docs/):

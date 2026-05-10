@@ -1,0 +1,301 @@
+version: '3'
+
+# Taskfile for koru — closed-loop refactor automation.
+#
+# Usage:
+#   task                      # show all tasks
+#   task install              # install koru in editable mode
+#   task loop -- WORKSPACE=/repos COMMAND='pytest -q'
+#   task tickets:next
+#   task quality:regix
+#   task template:install     # copy all template configs to current dir
+#
+# See docs/cli-examples.md for full examples.
+
+vars:
+  KORU_VERSION:
+    sh: cat VERSION 2>/dev/null || echo "0.1.1"
+  PYTHON: python3
+
+tasks:
+  default:
+    desc: Show all available tasks
+    cmds:
+      - task --list-all
+    silent: true
+
+  version:
+    desc: Show koru version
+    cmds:
+      - 'echo "koru v{{.KORU_VERSION}}"'
+    silent: true
+
+  # =====================================================================
+  # Install / setup
+  # =====================================================================
+
+  install:
+    desc: Install koru in editable mode
+    cmds:
+      - pip install -e .
+    sources:
+      - pyproject.toml
+      - src/**/*.py
+
+  install:dev:
+    desc: Install koru with dev dependencies (pytest etc.)
+    cmds:
+      - pip install -e ".[dev]" || pip install -e .
+
+  install:tools:
+    desc: Install all underlying LLM tools (planfile, regix, redup, vallm, ...)
+    cmds:
+      - pip install planfile regix redup vallm prefact pfix
+      - 'echo "✓ Core tools installed. For LLM-backed tools (redsl, llx, aider) install separately."'
+
+  # =====================================================================
+  # Tests
+  # =====================================================================
+
+  test:
+    desc: Run koru tests
+    cmds:
+      - pytest tests/ -v {{.CLI_ARGS}}
+
+  test:fast:
+    desc: Run tests without verbose output
+    cmds:
+      - pytest tests/ -q
+
+  # =====================================================================
+  # Closed-loop automation (the core koru CLI)
+  # =====================================================================
+
+  loop:
+    desc: 'Run closed-loop across workspace. Vars: WORKSPACE, INCLUDE, COMMAND'
+    cmds:
+      - koru --workspace "{{.WORKSPACE}}" --include "{{.INCLUDE}}" --command "{{.COMMAND}}"
+    vars:
+      WORKSPACE: '{{.WORKSPACE | default "."}}'
+      INCLUDE: '{{.INCLUDE | default "**"}}'
+      COMMAND: '{{.COMMAND | default "pytest -q"}}'
+    interactive: true
+
+  loop:test:
+    desc: Run pytest in closed-loop mode
+    cmds:
+      - task: loop
+        vars: {COMMAND: 'pytest -q'}
+
+  loop:lint:
+    desc: Run ruff in closed-loop mode
+    cmds:
+      - task: loop
+        vars: {COMMAND: 'ruff check .'}
+
+  # =====================================================================
+  # Quality gates (LLM-free, proxies to underlying tools)
+  # =====================================================================
+
+  quality:regix:
+    desc: Run regix gate locally (LLM-free regression metrics)
+    cmds:
+      - regix gate
+    preconditions:
+      - sh: which regix
+        msg: "regix not installed. Run: task install:tools"
+
+  quality:redup:
+    desc: 'Run redup duplicate detection (default: current dir)'
+    cmds:
+      - redup scan . --min-lines 10
+    preconditions:
+      - sh: which redup
+        msg: "redup not installed. Run: task install:tools"
+
+  quality:redup:check:
+    desc: Run redup with budget check (uses scripts/redup-check.sh)
+    cmds:
+      - bash scripts/redup-check.sh "{{.PATH | default \".\"}}"
+
+  quality:vallm:
+    desc: 'Validate file with vallm (FILE=path/to/file.py)'
+    cmds:
+      - vallm validate -f "{{.FILE}}"
+    requires:
+      vars: [FILE]
+
+  quality:vallm:semantic:
+    desc: 'Validate with LLM-as-judge (requires OPENROUTER_API_KEY, FILE=...)'
+    cmds:
+      - vallm validate -f "{{.FILE}}" --semantic -v
+    requires:
+      vars: [FILE]
+    preconditions:
+      - sh: '[ -n "$OPENROUTER_API_KEY" ]'
+        msg: "OPENROUTER_API_KEY not set"
+
+  # =====================================================================
+  # Tickets (planfile)
+  # =====================================================================
+
+  tickets:next:
+    desc: Show highest-priority open ticket
+    cmds:
+      - planfile ticket next
+    preconditions:
+      - sh: which planfile
+        msg: "planfile not installed. Run: pip install planfile"
+
+  tickets:list:
+    desc: List open tickets
+    cmds:
+      - planfile ticket list --status open --format yaml
+
+  tickets:show:
+    desc: 'Show ticket details (TID=PLF-XXX)'
+    cmds:
+      - planfile ticket show "{{.TID}}"
+    requires:
+      vars: [TID]
+
+  tickets:done:
+    desc: 'Mark ticket as done (TID=PLF-XXX)'
+    cmds:
+      - planfile ticket update "{{.TID}}" --status done
+    requires:
+      vars: [TID]
+
+  tickets:export:
+    desc: 'Export ticket as LLM-ready prompt (TID=PLF-XXX)'
+    cmds:
+      - bash scripts/planfile-export-prompt.sh "{{.TID}}"
+    requires:
+      vars: [TID]
+
+  # =====================================================================
+  # Templates (copy reference configs to current directory)
+  # =====================================================================
+
+  template:list:
+    desc: List available templates
+    cmds:
+      - ls templates/
+
+  template:install:
+    desc: Copy all template configs to current directory
+    cmds:
+      - cp templates/pyqual.yaml.template ./pyqual.yaml
+      - cp templates/redup.toml.template ./redup.toml
+      - cp templates/redsl.yaml.template ./redsl.yaml
+      - cp templates/regix.yaml.template ./regix.yaml
+      - cp templates/llx.toml.template ./llx.toml
+      - cp templates/llx.yaml.template ./llx.yaml
+      - cp templates/prefact.yaml.template ./prefact.yaml
+      - 'echo "✓ All templates copied. Review and edit before committing."'
+
+  template:install:single:
+    desc: 'Copy single template (TPL=pyqual.yaml|redup.toml|redsl.yaml|...)'
+    cmds:
+      - 'cp templates/{{.TPL}}.template ./{{.TPL}} && echo "✓ {{.TPL}} copied"'
+    requires:
+      vars: [TPL]
+
+  template:install:compose:
+    desc: Copy docker-compose.quality.yml template
+    cmds:
+      - cp templates/docker-compose.quality.yml.template ./docker-compose.quality.yml
+      - 'echo "✓ docker-compose.quality.yml copied. Review service definitions."'
+
+  # =====================================================================
+  # Scripts wrappers
+  # =====================================================================
+
+  scripts:list:
+    desc: List available scripts
+    cmds:
+      - ls scripts/
+
+  scripts:redup:check:
+    desc: 'Run redup-check.sh (PATH=. by default)'
+    cmds:
+      - bash scripts/redup-check.sh "{{.PATH | default \".\"}}"
+
+  scripts:redup:precommit:
+    desc: Run redup precommit hook
+    cmds:
+      - bash scripts/redup-precommit.sh
+
+  scripts:regix:precommit:
+    desc: Run regix precommit hook
+    cmds:
+      - bash scripts/regix-precommit.sh
+
+  scripts:redsl:precommit:
+    desc: Run redsl gate precommit hook
+    cmds:
+      - bash scripts/redsl-gate-precommit.sh
+
+  scripts:planfile:sync-todo:
+    desc: Sync planfile tickets with TODO.md
+    cmds:
+      - python3 scripts/planfile-sync-todo.py
+
+  # =====================================================================
+  # Healing-webhook (generic alert → ticket service)
+  # =====================================================================
+
+  webhook:run:
+    desc: 'Run healing-webhook locally on port 8810'
+    cmds:
+      - cd services/healing-webhook && python3 app.py
+    interactive: true
+
+  webhook:docker:build:
+    desc: Build healing-webhook Docker image
+    cmds:
+      - docker build -t koru-healing-webhook:latest services/healing-webhook/
+
+  webhook:docker:run:
+    desc: Run healing-webhook in Docker (port 8810)
+    cmds:
+      - docker run --rm -p 8810:8810 koru-healing-webhook:latest
+
+  webhook:test:
+    desc: Send test alertmanager payload to local webhook
+    cmds:
+      - 'curl -X POST http://localhost:8810/alert -H "Content-Type: application/json" -d ''{"alerts":[{"status":"firing","labels":{"alertname":"TestAlert","severity":"warning"},"annotations":{"summary":"Smoke test"}}]}'''
+
+  # =====================================================================
+  # Documentation
+  # =====================================================================
+
+  docs:
+    desc: Open documentation index
+    cmds:
+      - 'echo "Documentation: docs/README.md"'
+      - 'echo "Agent guide:   docs/agent-guide.md"'
+      - 'echo "Tool catalog:  docs/llm-tools/README.md"'
+      - 'echo "CLI examples:  docs/cli-examples.md"'
+    silent: true
+
+  docs:serve:
+    desc: 'Serve docs over HTTP (port 8000)'
+    cmds:
+      - cd docs && python3 -m http.server 8000
+
+  # =====================================================================
+  # Workflows (slash-commands ported from .windsurf/workflows/)
+  # =====================================================================
+
+  workflow:list:
+    desc: List available workflows (markdown instructions for agents)
+    cmds:
+      - ls workflows/
+
+  workflow:show:
+    desc: 'Show workflow content (NAME=testql-autoloop|aider-docker-autoloop|...)'
+    cmds:
+      - 'cat workflows/{{.NAME}}.md'
+    requires:
+      vars: [NAME]

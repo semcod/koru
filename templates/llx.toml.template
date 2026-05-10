@@ -1,0 +1,46 @@
+# llx — Intelligent LLM model router configuration
+# Docs: https://github.com/wronai/llx
+
+# Direct OpenRouter API (bypass LiteLLM proxy)
+litellm_base_url = "https://openrouter.ai/api/v1"
+
+[thresholds]
+files_premium = 50
+files_balanced = 10
+files_cheap = 3
+lines_premium = 20000
+lines_balanced = 5000
+cc_premium = 6.0
+cc_balanced = 4.0
+coupling_premium = 30
+coupling_balanced = 10
+
+[models.premium]
+provider = "anthropic"
+model_id = "claude-opus-4-20250514"
+
+[models.balanced]
+provider = "openrouter"
+model_id = "openrouter/deepseek/deepseek-chat"
+
+[models.cheap]
+provider = "anthropic"
+model_id = "claude-haiku-4-5-20251001"
+
+[models.free]
+provider = "openrouter"
+model_id = "openrouter/nvidia/nemotron-3-super-120b-a12b:free"
+
+[models.local]
+provider = "ollama"
+model_id = "ollama/qwen2.5-coder:7b"
+max_context = 32000
+
+[models.openrouter]
+provider = "openrouter"
+model_id = "openrouter/deepseek/deepseek-chat-v3-0324"
+
+[proxy]
+port = 4000
+# redis_url = "redis://localhost:6379"
+# budget_limit = 50.0

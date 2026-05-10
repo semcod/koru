@@ -1,0 +1,150 @@
+# docker-compose.quality.yml — Code-quality monitoring stack for c2004.
+#
+# Wires three off-the-shelf semcod services against the c2004 repo:
+#
+#   • redsl-chroma     — vector store for redsl semantic memory.
+#   • redsl-agent      — runs `redsl watch` against this repo, reading redsl.yaml
+#                        and emitting suggestions / dry-run patches in .redsl/.
+#   • rebuild-dash     — `rebuild serve` dashboard at :7821 over .rebuild/.
+#   • rebuild-walker   — one-shot service for `task quality:walk`.
+#
+# Layout assumed (sibling repos under ~/github):
+#   ../../semcod/redsl        → redsl source + Dockerfile
+#   ../../semcod/rebuild      → rebuild source + Dockerfile
+#
+# Bring up:        task quality:up
+# Tear down:       task quality:down
+# Trigger walk:    task quality:walk
+# Manual gate:     task quality:gate
+#
+# All services bind-mount this repo READ-ONLY by default — they MUST NOT mutate
+# the c2004 working tree without explicit `--apply` (handled by Taskfile targets).
+
+services:
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Vector memory — chromadb persisted to a named volume so redsl keeps its
+  # episodic history across restarts.
+  # ────────────────────────────────────────────────────────────────────────
+  redsl-chroma:
+    image: chromadb/chroma:latest
+    container_name: c2004-redsl-chroma
+    ports:
+      - "${REDSL_CHROMA_PORT:-8005}:8000"
+    volumes:
+      - redsl_chroma_data:/chroma/chroma
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks: [quality-net]
+
+  # ────────────────────────────────────────────────────────────────────────
+  # redsl-agent in watch mode — periodic self-improvement scheduler.
+  # Picks up redsl.yaml from the mounted repo, runs gate/health/improve
+  # cycles, and writes results to ./.redsl on the host.
+  # ────────────────────────────────────────────────────────────────────────
+  redsl-agent:
+    build:
+      context: ../../semcod/redsl
+      dockerfile: Dockerfile
+    image: semcod/redsl:local
+    container_name: c2004-redsl-agent
+    command:
+      - "python"
+      - "-m"
+      - "redsl"
+      - "watch"
+      - "/mnt/project"
+      - "--mode"
+      - "${REDSL_MODE:-suggest}"        # suggest | watch | autonomous
+      - "--interval"
+      - "${REDSL_INTERVAL_MIN:-30}"
+      - "--max-actions"
+      - "${REDSL_MAX_ACTIONS:-1}"
+    environment:
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      # DeepSeek V4 Pro — minimum baseline (2026-05-10). Empiryczny test wykazał,
+      # że tańsze warianty (Flash) halucynują semantykę — a refactor w kontenerze
+      # bez user review = realne ryzyko bugów w main. Patrz docs/SESSION-...md.
+      REFACTOR_LLM_MODEL: ${REFACTOR_LLM_MODEL:-openrouter/deepseek/deepseek-v4-pro}
+      REFACTOR_DRY_RUN: ${REFACTOR_DRY_RUN:-true}
+      REFACTOR_AUTO_APPROVE: "false"
+      CHROMA_URL: http://redsl-chroma:8000
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - .:/mnt/project:rw          # rw so redsl can write .redsl/ inside repo
+      - redsl_agent_memory:/tmp/redsl_memory
+    working_dir: /mnt/project
+    depends_on:
+      redsl-chroma:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [quality-net]
+
+  # ────────────────────────────────────────────────────────────────────────
+  # rebuild dashboard — serves the timeline of historical walks under .rebuild/.
+  # Read-only access to the results directory; never mutates the repo.
+  # ────────────────────────────────────────────────────────────────────────
+  rebuild-dash:
+    build:
+      context: ../../semcod/rebuild
+      dockerfile: Dockerfile
+    image: semcod/rebuild:local
+    container_name: c2004-rebuild-dash
+    command:
+      - "serve"
+      - "--results-dir"
+      - "/results"
+      - "--port"
+      - "7821"
+      - "--host"
+      - "0.0.0.0"
+    ports:
+      - "${REBUILD_DASH_PORT:-7821}:7821"
+    volumes:
+      - ./.rebuild:/results:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7821/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks: [quality-net]
+
+  # ────────────────────────────────────────────────────────────────────────
+  # rebuild-walker — one-shot container for `task quality:walk`. Disabled
+  # by default; brought up explicitly:
+  #   docker compose -f docker-compose.quality.yml run --rm rebuild-walker walk
+  # Mounts the host docker.sock so the per-commit deploy can spin up
+  # docker-compose stacks for each tested revision.
+  # ────────────────────────────────────────────────────────────────────────
+  rebuild-walker:
+    image: semcod/rebuild:local
+    container_name: c2004-rebuild-walker
+    profiles: [walk]                # only starts when --profile walk is passed
+    command: ["--help"]             # overridden by `task quality:walk`
+    environment:
+      PYTHONUNBUFFERED: "1"
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    volumes:
+      - .:/workspace:rw             # rebuild needs git checkout per commit
+      - ./.rebuild:/workspace/.rebuild:rw
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /workspace
+    networks: [quality-net]
+    depends_on:
+      - rebuild-dash
+
+volumes:
+  redsl_chroma_data:
+    name: c2004_redsl_chroma_data
+  redsl_agent_memory:
+    name: c2004_redsl_agent_memory
+
+networks:
+  quality-net:
+    name: c2004-quality-net
+    driver: bridge

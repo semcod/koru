@@ -13,7 +13,10 @@ For LLM agents starting a session in a koru-driven repository:
 2. **[`planfile-llm-guide.md`](./planfile-llm-guide.md)** — ticket-driven
    development with the `planfile` CLI. Covers ticket schema, labels,
    priority, sprint workflow.
-3. **[`llm-tools/`](./llm-tools/)** — per-tool docs and install scripts
+3. **[`cli-examples.md`](./cli-examples.md)** — practical Taskfile + CLI
+   examples for every common scenario (bootstrap, fix-alert, OpenRouter
+   lane, multi-repo refactor).
+4. **[`llm-tools/`](./llm-tools/)** — per-tool docs and install scripts
    for every component in the koru pipeline.
 
 For human operators / DevOps:

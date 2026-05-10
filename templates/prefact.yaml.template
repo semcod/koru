@@ -1,0 +1,120 @@
+project_root: .
+package_name: ''
+include:
+- '**/*.py'
+exclude:
+- '**/__pycache__/**'
+- '**/node_modules/**'
+- '**/.venv/**'
+- '**/venv/**'
+- '**/.git/**'
+- '**/build/**'
+- '**/dist/**'
+- '**/*.egg-info/**'
+- '**/tests/**'
+- '.swop/**'
+- '*/.swop/**'
+- '**/.swop/**'
+- '_archive/**'
+- 'archive/**'
+- '**/_archive/**'
+tools:
+  parallel: true
+  cache: true
+  ruff:
+    enabled: true
+    max_line_length: 88
+    select:
+    - E
+    - F
+    - W
+    - I
+    ignore:
+    - E501
+  mypy:
+    enabled: true
+    strict: false
+    ignore_missing_imports: true
+  isort:
+    enabled: true
+    profile: black
+    multi_line_output: 3
+performance:
+  max_workers: 4
+  cache_size: 104857600
+  chunk_size: 10
+  autonomous_max_run_seconds: 1800
+  autonomous_max_issues: 10000
+rules:
+  unused-imports:
+    enabled: true
+    tools:
+    - ruff
+    - autoflake
+    severity: error
+  relative-imports:
+    enabled: true
+    tools:
+    - libcst
+    auto_fix: true
+  magic-numbers:
+    enabled: true
+  smart-return-type:
+    enabled: true
+    tools:
+    - mypy
+    severity: warning
+  string-concat:
+    enabled: true
+    tools:
+    - ruff
+    severity: warning
+  llm-generated-code:
+    enabled: true
+    tools:
+    - ruff
+    severity: warning
+  ai-boilerplate:
+    enabled: true
+    tools:
+    - ruff
+    severity: warning
+  duplicate-imports:
+    enabled: true
+    tools:
+    - ruff
+    severity: warning
+  wildcard-imports:
+    enabled: true
+    tools:
+    - ruff
+    severity: warning
+  duplicate-keys:
+    enabled: true
+    tools:
+    - ruff
+    severity: error
+  llm-hallucinations:
+    enabled: true
+plugins:
+  enabled: true
+  directories:
+  - ~/.prefact/plugins
+  - ./.prefact/plugins
+environments:
+  development:
+    rules:
+      print-statements:
+        enabled: true
+      magic-numbers:
+        enabled: false
+    performance:
+      max_workers: 2
+  production:
+    rules:
+      print-statements:
+        enabled: false
+      magic-numbers:
+        enabled: true
+    performance:
+      max_workers: 8
