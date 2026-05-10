@@ -65,8 +65,8 @@ You now have every piece of information needed to fix this. Process:
 2. Reproduce the failure with the **🔁 Reproduction** commands.
 3. Propose the *smallest* patch that satisfies every checkbox in
    **✅ Acceptance criteria** while honouring the **🔒 Constraints**.
-4. Verify with `task monitor:probe` — the c2004 live probe.
-5. Close the ticket via `planfile ticket done TICKET_ID` (substitute the ID above).
+4. Verify with the project's CI gate (see `koru --doctor` for the configured command).
+5. Close the ticket via `planfile ticket complete TICKET_ID` (substitute the ID above).
 
 If you cannot satisfy all acceptance criteria in < 80 lines of diff,
 **split the ticket** — don't weaken it.
