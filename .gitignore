@@ -1,4 +1,11 @@
 # Byte-compiled / optimized / DLL files
+.env.example
+.idea/inspectionProfiles/Project_Default.xml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/koru-loop.iml
+.idea/modules.xml
+.idea/pyProjectModel.xml
+.idea/vcs.xml
 __pycache__/
 *.py[codz]
 *$py.class

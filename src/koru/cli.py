@@ -1,4 +1,4 @@
-"""Command-line entrypoint for koru-loop."""
+"""Command-line entrypoint for koru."""
 
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ def main() -> int:
     report = run_closed_loop(command=command, repositories=repositories, max_rounds=args.max_rounds)
 
     print(
-        f"koru-loop: repos={len(report.succeeded) + len(report.failed)} "
+        f"koru: repos={len(report.succeeded) + len(report.failed)} "
         f"succeeded={len(report.succeeded)} failed={len(report.failed)} rounds={report.rounds_executed}"
     )
     for repository in report.failed:
