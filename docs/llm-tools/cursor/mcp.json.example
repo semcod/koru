@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "planfile": {
+      "command": "python3",
+      "args": ["-m", "planfile.mcp.server"],
+      "env": {"PLANFILE_PROJECT": "/home/tom/github/maskservice/c2004"}
+    },
+    "testql": {
+      "command": "python3",
+      "args": ["-m", "testql.mcp.server"],
+      "env": {"TESTQL_PROJECT": "/home/tom/github/maskservice/c2004", "TESTQL_BASE_URL": "http://localhost:8101"}
+    },
+    "redup": {
+      "command": "python3",
+      "args": ["-m", "redup.mcp_server"],
+      "env": {"REDUP_ROOT": "/home/tom/github/maskservice/c2004"}
+    }
+  }
+}

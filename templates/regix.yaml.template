@@ -1,0 +1,93 @@
+# regix.yaml — Regression Index configuration for c2004 monorepo.
+#
+# Purpose
+# -------
+# Detect code quality regressions BEFORE they land:
+#   - cyclomatic complexity (CC) increases
+#   - maintainability index (MI) drops
+#   - test coverage drops
+#   - architectural smells (god_function, stub_regression, monolith_collapse)
+#
+# Layered with existing quality stack:
+#   - prefact.yaml      — LLM-aware linter (current state)
+#   - redsl.yaml        — refactor + quality gate (current state + auto-fix)
+#   - pyqual.yaml       — pipeline orchestration
+#   - regix.yaml (this) — DELTA between commits (regression detection)
+#
+# Common usage:
+#   task quality:regix             # compare HEAD~1 vs HEAD
+#   task quality:regix:local       # working-tree vs HEAD (pre-commit)
+#   task quality:regix:branch      # current branch vs main
+#
+# CI: triggered automatically on PRs via .github/workflows/quality.yml
+# Pre-commit: blocks commits introducing regressions (--errors-only)
+
+regix:
+  workdir: .
+
+  # Absolute thresholds — what counts as "bad" regardless of delta
+  metrics:
+    cc_max: 15              # cyclomatic complexity per function (matches redsl.yaml gates)
+    mi_min: 20              # maintainability index (radon)
+    coverage_min: 50        # test coverage % (loosened until coverage improves)
+    length_max: 100         # function length in lines (matches redsl.yaml)
+    docstring_min: 30       # docstring coverage % (relaxed for now)
+
+  # Delta thresholds — how big a regression must be to trigger
+  thresholds:
+    delta_warn: 2           # CC +2, MI -2, etc. → warning
+    delta_error: 5          # CC +5, MI -5, etc. → error (blocks commit)
+
+  backends:
+    cc: lizard              # Python + JS/TS support via lizard
+    mi: radon               # Python-only
+    coverage: pytest-cov    # reads .pyqual/coverage.json (already generated)
+    quality: none           # skip vallm here (run it separately in pyqual.yaml)
+
+  # What to analyze
+  include:
+    - "backend/app/**"
+    - "backend/firmware/**"
+    - "api/**"
+    - "services/**"
+    - "shared/**"
+    - "connect-*/backend/**"   # connect-encoder, connect-config, etc.
+    - "modules/**"
+
+  # What to skip (tests, generated code, archives)
+  exclude:
+    - "tests/**"
+    - "**/tests/**"
+    - "**/test_*.py"
+    - "examples/**"
+    - "docs/**"
+    - "_archive/**"
+    - "archive/**"
+    - "**/migrations/**"
+    - "**/__pycache__/**"
+    - "**/node_modules/**"
+    - "**/.venv/**"
+    - "frontend/**"             # JS/TS analyzed separately
+    - "generated/**"
+    - "proto/**"
+    - "contracts/**"
+    - "connect-data/**"         # config-only, no logic
+    - "connect-config/**"
+    - "connect-deleted/**"
+
+  output:
+    format: rich              # human-friendly default; CI overrides to toon
+    show_improvements: true   # show metric WINS too (motivating)
+    max_symbols: 30           # truncate long reports
+
+  gates:
+    on_regression: warn       # warn | error | block
+    fail_exit_code: 1
+    # Critical regressions ALWAYS block:
+    #   - god_function smell
+    #   - stub_regression smell
+    #   - monolith_collapse smell
+    block_on_smells:
+      - god_function
+      - stub_regression
+      - monolith_collapse

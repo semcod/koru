@@ -1,0 +1,177 @@
+# Pyqual Pipeline Configuration
+# See docs/GITHUB_PUSH_PROTECTION.md for troubleshooting push protection issues
+
+pipeline:
+  name: llx-quality-loop-with-aider
+  metrics:
+    cc_max: 10
+    vallm_pass_min: 50
+    coverage_min: 20
+    # regix regression-detection metrics — read from .regix/report.toon.yaml
+    regression_errors_max: 0      # any error-level regression fails the gate
+    regression_warnings_max: 5    # tolerate up to 5 warnings (delta_warn ≤ x < delta_error)
+  stages:
+  - name: test
+    run: .venv/bin/pytest --cov=backend/app --cov=api --cov=backend/firmware --cov=services --cov-report=json:.pyqual/coverage.json -q
+    when: always
+    env:
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-dummy-key-for-ci}
+  # Regression detection — compare current state to previous commit and
+  # block on any "error"-grade regression (delta ≥ delta_error in regix.yaml).
+  # Skipped silently if regix is not installed.
+  - name: regression-check
+    tool: regix
+    when: always
+    optional: true
+    timeout: 120
+  # Duplicate detection — runs redup with c2004's exclude patterns and shim
+  # filter (scripts/redup-check.sh). Advisory by default — does NOT block
+  # the pipeline because the budget (max_groups=400, max_lines=6000) is
+  # well above current baseline (~25 filtered groups). Set REDUP_STRICT=true
+  # in CI to make it blocking. Reports written to .redup/check.{json,filtered.json}.
+  - name: duplicate-check
+    run: |
+      bash scripts/redup-check.sh . || {
+        echo "[pyqual] redup advisory: budget exceeded — see .redup/check.filtered.json"
+        if [ "${REDUP_STRICT:-false}" = "true" ]; then
+          exit 1
+        fi
+        exit 0
+      }
+    when: always
+    optional: true
+    timeout: 180
+  # Security: Check for known vulnerabilities in dependencies
+  - name: security-audit
+    run: |
+      echo "Running pip-audit for CVE checks..."
+      .venv/bin/pip-audit --format=json --output=.pyqual/pip-audit.json || true
+      echo "Running bandit security scan..."
+      .venv/bin/bandit -r backend api backend/firmware services -f json -o .pyqual/bandit.json -ll || true
+    when: always
+    optional: true
+    timeout: 120
+  # Code Quality: Fast linting with ruff
+  - name: lint
+    run: |
+      echo "Running ruff linter..."
+      .venv/bin/ruff check backend api backend/firmware services --output-format=json > .pyqual/ruff.json || true
+      echo "Running ruff format check..."
+      .venv/bin/ruff format --check backend api backend/firmware services || true
+    when: always
+    optional: true
+    timeout: 60
+  # Optional: Pre-push secret scanning to prevent GitHub Push Protection blocks
+  # Uncomment if you have git-secrets or trufflehog installed
+  # - name: secret-scan
+  #   run: |
+  #     if command -v git-secrets &> /dev/null; then
+  #       git secrets --scan
+  #     elif command -v trufflehog &> /dev/null; then
+  #       trufflehog git file://. --since-commit HEAD~1
+  #     fi
+  #   when: always
+  #   optional: true
+  #   timeout: 60
+  - name: prefact
+    tool: prefact
+    optional: true
+    when: metrics_fail
+    timeout: 300
+  - name: fix
+    run: llx fix . --apply --errors TODO.md --verbose
+    when: metrics_fail
+    timeout: 1800
+  - name: verify
+    run: echo "Skipping vallm verify on large project" || vallm batch ./ --recursive
+      --format toon --output ./project
+    optional: true
+    when: after_fix
+    timeout: 30
+  # NOTE: The following stages are for Python package publishing (llx project)
+  # and are disabled for c2004 application project:
+  # - name: build
+  #   run: .venv/bin/python -m build
+  #   when: metrics_pass
+  #   timeout: 120
+  # - name: publish
+  #   run: .venv/bin/python -m twine upload dist/*
+  #   optional: true
+  #   when: metrics_pass
+  #   timeout: 120
+  # - name: verify-push-publish
+  #   run: |
+  #     VERSION=$(cat VERSION | tr -d '\n')
+  #     echo "Testing push and publish for version $VERSION"
+  #     # Verify push - check if current commit is on origin/main
+  #     LOCAL=$(git rev-parse HEAD)
+  #     REMOTE=$(git rev-parse origin/main)
+  #     if [ "$LOCAL" != "$REMOTE" ]; then
+  #       echo "ERROR: Push failed - local commit $LOCAL != origin/main $REMOTE"
+  #       exit 1
+  #     fi
+  #     echo "✓ Push verified: local == origin/main ($LOCAL)"
+  #   when: always
+  #   timeout: 30
+  # NOTE: Push stage auto-commits and pushes. If GitHub Push Protection blocks,
+  # see docs/GITHUB_PUSH_PROTECTION.md for remediation steps
+  - name: push
+    run: |
+      git add -A
+      if git diff --cached --quiet; then
+        echo "No changes to commit"
+      else
+        git commit -m "chore: auto-commit from pyqual run"
+      fi
+      git push origin main
+    when: always
+    timeout: 30
+  - name: verify-push-publish
+    run: |
+      VERSION=$(cat VERSION | tr -d '\n')
+      echo "Testing push and publish for version $VERSION"
+      # Verify push - check if current commit is on origin/main
+      LOCAL=$(git rev-parse HEAD)
+      REMOTE=$(git rev-parse origin/main)
+      if [ "$LOCAL" != "$REMOTE" ]; then
+        echo "ERROR: Push failed - local commit $LOCAL != origin/main $REMOTE"
+        echo "See docs/GITHUB_PUSH_PROTECTION.md for troubleshooting"
+        exit 1
+      fi
+      echo "✓ Push verified: local == origin/main ($LOCAL)"
+      # NOTE: c2004 is an application project, not a PyPI package
+      # Skipping PyPI verification
+      echo "✓ Skipping PyPI check (application project)"
+      echo "All deployment tests passed!"
+    when: always
+    optional: true
+    timeout: 30
+  loop:
+    max_iterations: 3
+    on_fail: create_ticket
+  env:
+    # DeepSeek V4 Pro — wybrany 2026-05-10 po empirycznym A/B vs alternatywy:
+    #
+    #   Model                      Czas  Koszt/run  Refactor quality  Bug?
+    #   ───────────────────────────────────────────────────────────────────
+    #   deepseek-v4-flash          21s   $0.0001    Średnia           YES (runtime crash)
+    #   deepseek-v4-pro            53s   $0.0014    Excellent (Counter)  NO
+    #   gpt-5-mini (poprzedni)     8s    $0.0004    Nie testowano refactoru
+    #   qwen3-coder-next           7s    $0.0001    OK
+    #
+    # Wniosek: Flash zbyt agresywnie skraca, halucynuje semantykę. Pro daje
+    # idiomatyczny, działający kod (użył `collections.Counter` zamiast manual
+    # loop). 53s/$0.0014 to akceptowalny narzut gdy alternatywa to bug w prod.
+    #
+    # Cena vs gpt-5-mini: input $0.435 vs $0.250 (+74%), output $0.870 vs $2.000 (-57%).
+    # Net dla typical fix (in:1k, out:500): pro=$0.000871, gpt-5-mini=$0.001250 → Pro 30% taniej.
+    # Context 1M (vs 400k) — istotne przy multi-file refactor w monorepo.
+    LLM_MODEL: openrouter/deepseek/deepseek-v4-pro
+    # Fallback used by llx tier system when v4-pro rate-limited or down.
+    # qwen3-coder jest 7x tańszy ale empirycznie wystarczający dla prostych
+    # tasków (unused imports, formatting). NIE używać dla refactoru.
+    LLM_MODEL_FALLBACK: openrouter/qwen/qwen3-coder-next
+    LLX_CODE_TOOL: internal
+    LLX_DEFAULT_TIER: balanced
+    LLX_VERBOSE: true
+    PATH: ".venv/bin:/usr/local/bin:/usr/bin:/bin"

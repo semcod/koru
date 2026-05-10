@@ -1,0 +1,123 @@
+apiVersion: redsl.workflow/v1
+kind: RefactorWorkflow
+metadata:
+  name: c2004-fleet-management
+  description: |
+    Quality monitor + autonomous refactor pipeline for the c2004 monorepo
+    (FastAPI backend + Vue/Vite frontend + connect-* microservices + firmware).
+    Conservative defaults: dry-run, validate after every change, only mark
+    tickets done when tests pass. Wired together with rebuild walks (see
+    rebuild.yaml) and the Taskfile quality:* targets.
+  labels:
+    repo: maskservice/c2004
+    stack: "python+typescript+docker"
+    monorepo: "true"
+
+spec:
+  # ── PERCEPCJA ──────────────────────────────────────────────────────────
+  perceive:
+    use_code2llm: false    # true = głębsza analiza przez code2llm
+    use_redup: true        # true = wykrywanie duplikatów
+
+  # ── DECYZJE ────────────────────────────────────────────────────────────
+  decide:
+    max_actions: 3         # konserwatywnie — c2004 to duży monorepo, małe PR-y
+    llm_model: auto        # auto = env LLM_MODEL (default: openrouter/deepseek/deepseek-v4-pro)
+    llm_temperature: null  # null = użyj domyślnej temperatury
+    # Cele refaktoryzacji — redsl skupia się na warstwie aplikacyjnej.
+    # Generowane stuby, zależności i archiwa są wykluczone.
+    include_paths:
+      - backend/
+      - connect-*/backend/
+      - packages/backend-shared-py/
+      - frontend/src/
+      - firmware/
+    exclude_paths:
+      - "**/node_modules/**"
+      - "**/__pycache__/**"
+      - "**/.venv/**"
+      - "**/dist/**"
+      - "**/build/**"
+      - "archive/**"
+      - "_archive/**"
+      - "**/__generated__/**"
+      - "**/proto/**/*_pb2*.py"
+      - "**/migrations/versions/**"
+
+  # ── WYKONANIE ──────────────────────────────────────────────────────────
+  execute:
+    use_sandbox: true           # uruchom zmiany w sandboxie zanim trafią do drzewa
+    rollback_on_failure: true   # cofnij zmiany jeśli walidacja failuje (kluczowe dla c2004)
+    dry_run_default: true       # domyślnie tylko sugestie — push wymaga jawnego --apply
+
+  # ── WALIDACJA (kroki wykonywane po apply, w kolejności) ────────────────
+  validate:
+    steps:
+      - name: regix
+        enabled: true
+        on_failure: rollback   # nie wpuszczamy regresji do c2004
+
+      - name: pyqual_gates
+        enabled: auto          # auto = uruchom jeśli pyqual.yaml istnieje w projekcie
+        on_failure: tune       # tune → pyqual tune --conservative → retry → ticket
+        tune:
+          strategy: conservative
+          retry: true
+          run_on_missing_metrics: true
+          create_planfile_task_on_failure: true
+
+      - name: tests
+        enabled: true          # c2004 ma stabilne pytest — brak refaktoru bez zielonego paska
+        on_failure: rollback
+        command: "pytest -x -q --no-cov backend/api/tests packages/backend-shared-py/tests || true"
+        # „|| true” — nie wywalaj cyklu w razie braku zależności, redsl zinterpretuje exit code z logu.
+
+      - name: lint
+        enabled: true
+        on_failure: rollback
+        command: "ruff check backend/ packages/backend-shared-py/src/ --no-fix"
+
+  # ── PLANFILE ───────────────────────────────────────────────────────────
+  planfile:
+    update_on_apply: true      # true = oznacz zadania done po apply
+
+  # ── REFLEKSJA ──────────────────────────────────────────────────────────
+  reflect:
+    enabled: true              # true = redsl uczy się z każdego cyklu
+
+  # ── STORAGE — gdzie trafiają logi i konwersacje LLM ───────────────────
+  storage:
+    base_dir: .redsl            # katalog artefaktów w projekcie
+    system_log_enabled: true    # logs/redsl_YYYYMMDD.log
+    chat_log_enabled: true      # .redsl/chat.jsonl — każdy prompt + response
+    chat_log_filename: chat.jsonl
+    history_enabled: true       # .redsl/history.jsonl — decyzje i wyniki
+    history_filename: history.jsonl
+
+  # ── DEPLOY — push do git i/lub publish do registry po cyklu ───────────
+  deploy:
+    enabled: false          # c2004 jest deployowane przez task deploy / docker-compose, nie redsl
+    push: false             # human-in-the-loop — zmiany idą przez PR
+    publish: false          # nigdy nie publikuj artefaktów c2004 z redsl
+    on_success_only: true
+
+  # ── GATES — progi quality dla redsl gate check / git pre-commit hook ─────
+  gates:
+    max_complexity: 12       # CC — więcej wymaga uzasadnienia w PR
+    max_function_lines: 80
+    max_file_lines: 600
+    min_test_coverage: 60    # global threshold; per-module override w pyqual.yaml
+    forbidden_patterns:
+      - "print\\("           # używaj logger.* zamiast print
+      - "TODO\\(@"          # tylko nazwane TODO bez @ są ok
+      - "# *(XXX|FIXME)\\b"  # zostaje tylko TODO/NOTE w kodzie produkcyjnym
+
+  # ── WATCH — mode dla redsl-agent śledzącego repo w tłe ──────────────────
+  watch:
+    mode: suggest            # watch | suggest | autonomous
+    interval_minutes: 30
+    max_actions_per_cycle: 1
+    paused_paths:
+      - frontend/dist/
+      - .rebuild/
+      - .redsl/

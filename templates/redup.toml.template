@@ -1,0 +1,61 @@
+# reDUP configuration for c2004.
+#
+# Scan settings — patrz `redup config --init` dla pełnego schema.
+extensions = ".py,.js,.ts,.tsx,.jsx"
+min_lines = 8
+min_similarity = 0.92
+include_tests = false
+format = "toon"
+
+[check]
+# Duplicate budget gate (enforced by scripts/redup-check.sh AFTER post-process filter).
+# Baseline 2026-05-10: 39 raw groups → po filtrze ~10 grup, ~250 linii.
+# Budget conservatively set ~10× baseline to allow growth without false alarms.
+max_groups = 400
+max_lines = 6000
+
+[output]
+format = "toon"
+output = ".redup/scan.toon.yaml"
+
+[reporting]
+include_snippets = true
+generate_suggestions = true
+
+# ── Post-scan exclude patterns ─────────────────────────────────────────
+# IMPORTANT: redup CLI nie wczytuje [exclude] z TOML w current version.
+# Te wzorce są filtrowane przez scripts/redup-check.sh (Python post-process).
+# Synchronizuj z `EXCLUDE_PATTERNS` w scripts/redup-check.sh przy zmianach.
+[exclude]
+patterns = [
+  ".swop/",            # generated swop services (gitignored)
+  "archive/",
+  "_archive/",
+  "/_pb2",             # generated protobuf
+  "/__generated__/",
+  "venv/",
+  ".venv/",
+  "node_modules/",
+  "/alembic/",         # alembic migrations są celowo "podobne" (template-based)
+]
+
+# Architectural shim detection (also in scripts/redup-check.sh).
+#
+# c2004 ma compat layer: pliki w `shared/` to NIE canonical implementation,
+# tylko bootloader/wrapper które runtime-importują z packages/backend-shared-py/.
+# redup widzi je jako duplikaty bo runtime-resolved symbols match canonical.
+# Filter wykrywa shim po docstring (.read(800) prefix):
+#
+#   - "Compatibility wrapper for"
+#   - "Compatibility shim for"
+#   - "Canonical implementation lives in"
+#
+# Plik w `shared/*.py` z którymkolwiek z tych markerów = automatycznie pominięty.
+# Reszta plików w shared/ podlega normalnym EXCLUDE_PATTERNS.
+[exclude.semantic]
+shim_markers = [
+  "Compatibility wrapper for",
+  "Compatibility shim for",
+  "Canonical implementation lives in",
+]
+shim_path_prefix = "shared/"

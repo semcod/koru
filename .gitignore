@@ -1,6 +1,6 @@
 # Byte-compiled / optimized / DLL files
 .env.example
-.idea/inspectionProfiles/Project_Default.xml
+.idea
 .idea/inspectionProfiles/profiles_settings.xml
 .idea/koru-loop.iml
 .idea/modules.xml
