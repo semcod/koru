@@ -377,6 +377,36 @@ Koru automatically manages workflow priorities to prevent deadlocks:
 4. **Issue resolved** → main task unblocked
 5. **Workflow continues** without manual intervention
 
+### Bug-first priority system
+
+Koru ensures bugs are always fixed before features when priorities are equal:
+
+#### **Automatic bug promotion**
+- Bugs get **priority boost** within their category:
+  - `low` → `normal`
+  - `normal` → `high` 
+  - `high` → `critical`
+  - `critical` stays `critical`
+- Promotion happens automatically on every `koru --context` call
+- Only tickets with `bug` label are promoted
+
+#### **Priority hierarchy**
+```
+critical (blocking tickets + high-priority bugs)
+├── high bugs (promoted from normal)
+├── high features
+├── normal bugs (promoted from low)
+├── normal features
+├── low bugs
+└── low features
+```
+
+#### **Benefits**
+- **Bug-first workflow** — stability issues resolved before new features
+- **Automatic triage** — no manual priority adjustments needed
+- **Predictable execution** — bugs always jump ahead of same-priority features
+- **Quality assurance** — prevents feature development while bugs exist
+
 ### Loosening the policy
 
 Editing `<project>/.planfile/.koru/policy.yaml` is the **only** way to

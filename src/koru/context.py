@@ -252,6 +252,7 @@ def build_context(
 def _auto_promote_blocking_tickets(project: Path, runner: Callable | None = None) -> None:
     """Automatically promote tickets that are blocking others to critical priority.
     
+    Also ensures bugs are prioritized over features when they have the same priority.
     This ensures that blocking issues are resolved first, allowing the main
     workflow to continue without manual intervention.
     """
@@ -297,6 +298,28 @@ def _auto_promote_blocking_tickets(project: Path, runner: Callable | None = None
                     tickets[blocking_id]["priority"] = "critical"
                     promoted = True
                     print(f"🔥 Auto-promoted {blocking_id} from {current_priority} to critical (blocking)")
+        
+        # Promote bugs over features within same priority level
+        # Bugs get priority boost: critical stays, high→critical, normal→high, low→normal
+        for ticket_id, ticket in tickets.items():
+            if isinstance(ticket, dict):
+                labels = ticket.get("labels", [])
+                if "bug" in labels and ticket.get("status") in ["open", "ready"]:
+                    current_priority = ticket.get("priority", "normal")
+                    new_priority = None
+                    
+                    if current_priority == "low":
+                        new_priority = "normal"
+                    elif current_priority == "normal":
+                        new_priority = "high"
+                    elif current_priority == "high":
+                        new_priority = "critical"
+                    # critical stays critical
+                    
+                    if new_priority and new_priority != current_priority:
+                        ticket["priority"] = new_priority
+                        promoted = True
+                        print(f"🐛 Auto-promoted bug {ticket_id} from {current_priority} to {new_priority}")
         
         # Write back if any tickets were promoted
         if promoted:
