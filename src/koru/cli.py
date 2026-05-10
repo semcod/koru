@@ -184,7 +184,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--format",
         dest="output_format",
-        choices=["json", "markdown"],
+        choices=["json", "markdown", "text"],
         default="json",
         help="Output format for --context (default: json).",
     )
@@ -335,8 +335,14 @@ def main() -> int:
 
     if args.doctor:
         report = run_diagnostics(args.project)
-        if args.output_format == "json":
+        # Doctor's friendly default is text. We only honour an explicit
+        # --format choice; otherwise text wins regardless of the global
+        # --format default (which is "json" for context).
+        explicit_format = "--format" in raw_args
+        if explicit_format and args.output_format == "json":
             print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
+        elif explicit_format and args.output_format == "markdown":
+            print(render_doctor_text(report))
         else:
             print(render_doctor_text(report))
         emit_management_event(

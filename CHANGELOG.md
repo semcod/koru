@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Onboarding & diagnostics (Phase 5)
+- `koru --init [--from <yaml>] [--force]` — one-command project bootstrap.
+  Creates `.planfile/{config.yaml, sprints/current.yaml}`,
+  `.planfile/.koru/policy.yaml` (commented stub with safe defaults), and
+  appends `.planfile/.koru/` to `.gitignore` (idempotent). Without
+  `--from`, generates a 2-ticket starter scaffold (`STARTER-001` shell,
+  `STARTER-002` human). Policy stub is never overwritten on `--force`.
+- `koru` (no args) — bare invocation now emits the markdown LLM brief
+  (`--context --format markdown`). If the project is uninitialised, the
+  brief leads with **⚠ Setup required** and the exact `koru --init`
+  command. Self-service commands swap to init-only vocabulary until
+  the project is bootstrapped.
+- `koru --doctor [--format json|text]` — read-only project diagnostics.
+  Probes 8 checks: `git_repo`, `planfile_binary`, `planfile_config`,
+  `planfile_sprints`, `runtime_dir`, `policy_yaml`, `gitignore`,
+  `ci_command`. Exit 1 on failure, 0 on warnings-only. Human-readable
+  text by default; `--format json` for machine consumption.
+- Pre-flight check in `build_context`: planfile subprocess is skipped
+  when the project is uninitialised (prevents planfile from auto-creating
+  a half-state `config.yaml`).
+
 ### Added — Queue runner (Phases 3.5 / 3.6 / 4)
 - `koru --queue --interactive` — when the next runnable ticket is a
   `human` executor, koru collects the answer on stdin (multi-line,

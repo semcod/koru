@@ -60,6 +60,22 @@ If the project is not initialised yet, `koru` (no args) detects this
 and prints a **⚠ Setup required** section with the exact `koru --init`
 command to run — the LLM never has to guess.
 
+## Diagnostics — `koru --doctor`
+
+When something feels off (LLM stuck, queue runner refusing, policy
+not taking effect), run:
+
+```bash
+koru --doctor                 # human-readable PASS/WARN/FAIL list
+koru --doctor --format json   # machine-readable for the LLM itself
+```
+
+The doctor probes 8 things and never writes anything: `git_repo`,
+`planfile_binary`, `planfile_config`, `planfile_sprints`,
+`runtime_dir`, `policy_yaml`, `gitignore`, `ci_command`. Exit code is
+`1` if any check fails, `0` if only warnings (warnings are advisory).
+Use it after `koru --init` and whenever a session starts mis-behaving.
+
 Natural-language intake is built in:
 
 ```bash
