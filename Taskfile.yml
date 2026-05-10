@@ -48,9 +48,10 @@ tasks:
       - pip install -e ".[dev]" || pip install -e .
 
   install:tools:
-    desc: Install all underlying LLM tools (planfile, regix, redup, vallm, ...)
+    desc: Install all underlying LLM tools (planfile, regix, redup, vallm, sumd, ...)
     cmds:
-      - pip install planfile regix redup vallm prefact pfix
+      - '[ -d ../planfile ] && pip install -e ../planfile || pip install planfile'
+      - pip install regix redup vallm prefact pfix sumd code2llm doql
       - 'echo "✓ Core tools installed. For LLM-backed tools (redsl, llx, aider) install separately."'
 
   # =====================================================================
@@ -109,6 +110,31 @@ tasks:
       - task: loop
         vars: {COMMAND: 'ruff check .'}
 
+  queue:run:
+    desc: 'Run one task from planfile queue. Vars: PROJECT, ACTOR, DRY_RUN'
+    cmds:
+      - koru --queue --project "{{.PROJECT}}" --actor "{{.ACTOR}}" {{if eq .DRY_RUN "true"}}--dry-run{{end}}
+    vars:
+      PROJECT: '{{.PROJECT | default "."}}'
+      ACTOR: '{{.ACTOR | default "koru-shell"}}'
+      DRY_RUN: '{{.DRY_RUN | default "false"}}'
+    interactive: true
+
+  queue:dry-run:
+    desc: Preview one runnable planfile queue task without executing it
+    cmds:
+      - task: queue:run
+        vars: {DRY_RUN: "true"}
+
+  queue:watch:
+    desc: 'Watch planfile WebSocket events. Vars: WS_URL, MAX_EVENTS'
+    cmds:
+      - koru --watch --ws-url "{{.WS_URL}}" {{if .MAX_EVENTS}}--max-events "{{.MAX_EVENTS}}"{{end}}
+    vars:
+      WS_URL: '{{.WS_URL | default "ws://localhost:8000/ws"}}'
+      MAX_EVENTS: '{{.MAX_EVENTS | default ""}}'
+    interactive: true
+
   # =====================================================================
   # Quality gates (LLM-free, proxies to underlying tools)
   # =====================================================================
@@ -150,6 +176,36 @@ tasks:
     preconditions:
       - sh: '[ -n "$OPENROUTER_API_KEY" ]'
         msg: "OPENROUTER_API_KEY not set"
+
+  # ── SUMR — debounced refactor snapshot (requires `task template:install:sumr`) ─
+
+  quality:sumr:status:
+    desc: Show SUMR.md staleness vs HEAD (LLM-free; exit 1 if stale)
+    cmds:
+      - scripts/sumr-refresh.sh --status
+    preconditions:
+      - sh: test -x scripts/sumr-refresh.sh
+        msg: "scripts/sumr-refresh.sh missing. Run: task template:install:sumr"
+
+  quality:sumr:auto:
+    desc: Refresh SUMR.md only if stale (debounced; safe for hooks/cron)
+    cmds:
+      - scripts/sumr-refresh.sh
+
+  quality:sumr:refresh:
+    desc: Force-refresh SUMR.md (bumps sumd/code2llm/redup/doql + regenerates)
+    cmds:
+      - scripts/sumr-refresh.sh --force
+
+  quality:sumr:install-hook:
+    desc: 'Install git post-merge hook (HOOK=post-commit|both for alt)'
+    cmds:
+      - bash scripts/git-hooks/install.sh {{.HOOK | default "post-merge"}}
+
+  quality:sumr:uninstall-hook:
+    desc: Remove sumr-refresh git hooks (leaves foreign hooks intact)
+    cmds:
+      - bash scripts/git-hooks/install.sh --uninstall
 
   # =====================================================================
   # Tickets (planfile)
@@ -222,6 +278,20 @@ tasks:
     cmds:
       - cp templates/docker-compose.quality.yml.template ./docker-compose.quality.yml
       - 'echo "✓ docker-compose.quality.yml copied. Review service definitions."'
+
+  template:install:sumr:
+    desc: 'Copy SUMR-refresh stack (script + git hooks + weekly workflow)'
+    cmds:
+      - mkdir -p scripts scripts/git-hooks .github/workflows
+      - cp templates/sumr-refresh.sh.template scripts/sumr-refresh.sh
+      - cp templates/git-hooks/post-merge.template scripts/git-hooks/post-merge
+      - cp templates/git-hooks/post-commit.template scripts/git-hooks/post-commit
+      - cp templates/git-hooks/install.sh.template scripts/git-hooks/install.sh
+      - cp templates/sumr-weekly.yml.template .github/workflows/sumr-weekly.yml
+      - chmod +x scripts/sumr-refresh.sh scripts/git-hooks/post-merge scripts/git-hooks/post-commit scripts/git-hooks/install.sh
+      - |
+        grep -q '^\.sumr/$' .gitignore 2>/dev/null || echo '.sumr/' >> .gitignore
+      - 'echo "✓ SUMR stack installed. Next: task quality:sumr:install-hook (see workflows/sumr-refresh-loop.md)"'
 
   # =====================================================================
   # Scripts wrappers
