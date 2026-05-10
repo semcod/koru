@@ -217,6 +217,91 @@ fixtures (`tests/` and `tests/e2e/*.sh`) are the only allowed
 `trap cleanup EXIT` so a failed run leaves nothing behind. If you find
 koru artefacts elsewhere, please open an issue.
 
+## LLM agent contract — koru as the gate
+
+When an LLM agent (Cascade, Cursor, aider, claude-code, local model, …)
+drives a koru-managed project, it must **read its instructions from
+koru, not from the human chat**. The contract is delivered by:
+
+```bash
+koru --context --project .                     # JSON brief (machine-readable)
+koru --context --project . --format markdown   # Markdown handoff (paste-to-IDE)
+koru --context --project . --ticket PLF-074    # brief for a specific ticket
+```
+
+The brief contains everything an autonomous agent needs to act safely:
+
+- **the next runnable ticket** (or one named via `--ticket`) — id,
+  name, status, files in scope, prompt, executor kind;
+- **the resolved policy** — explicit booleans for every git operation
+  the agent might attempt;
+- **environment fingerprint** — git branch, dirty state, remote,
+  whether planfile is initialised in the project;
+- **imperative rules** — copy-paste-able `DO NOT …` lines so even a
+  weak model can compare any candidate command to a checklist;
+- **self-service vocabulary** — concrete `planfile ticket {claim,start,
+  complete,fail,input}` invocations with the active ticket id pre-filled.
+
+### Safe-by-default policy
+
+The policy lives at `<project>/.planfile/.koru/policy.yaml`. **All
+gates default to the most restrictive value.** A missing or malformed
+file falls back to defaults — corruption can never silently loosen
+the policy.
+
+| gate | default | meaning |
+|---|---|---|
+| `allow_commit` | `false` | the agent does NOT run `git commit` |
+| `allow_push` | `false` | the agent does NOT run `git push` |
+| `allow_branch_create` | `false` | no `git checkout -b`, `git branch X`, `git switch -c` |
+| `allow_branch_switch` | `false` | no `git checkout <ref>`, `git switch <branch>` |
+| `allow_tag` | `false` | no `git tag` |
+| `allow_destructive_shell` | `false` | blocks `rm -rf /`, `dd`, `mkfs`, force-pushes, … |
+| `require_planfile_lifecycle` | `true` | every state change goes through `planfile ticket *` |
+| `require_ci_pass_before_complete` | `true` | the agent verifies CI exit 0 before `ticket complete` |
+
+The agent **bounces off CI/CD and koru**: it cannot commit, cannot
+push, cannot mutate planfile state outside the CLI vocabulary the
+brief gave it. To make a change that ships, the agent has exactly two
+exits: complete the ticket (humans/CI take it from there) or call
+`planfile ticket input <id> --prompt "<question>"` and stop.
+
+### Loosening the policy
+
+Editing `<project>/.planfile/.koru/policy.yaml` is the **only** way to
+relax a default. There is no CLI flag for it — that is a deliberate
+choice so any loosening is reviewable in git history.
+
+```yaml
+# .planfile/.koru/policy.yaml
+llm:
+  allow_commit: false       # never (recommended)
+  allow_push: false         # never (recommended)
+  allow_branch_create: true # opt-in: agent may create feature branches
+ci:
+  command: pytest -q        # how the agent verifies its work
+  timeout_seconds: 300
+notes:
+  - "Always run `task lint` before `ticket complete`."
+  - "Never edit migrations under alembic/versions/."
+```
+
+### Run logs
+
+`koru --queue` and `koru --queue --loop` write a JSON-Lines log per run
+to `<project>/.planfile/.koru/runs/queue-<timestamp>-<pid>.jsonl`:
+
+```jsonl
+{"type":"run.start","run_id":"queue-…","mode":"loop","actor":"koru","pid":12345,…}
+{"type":"iteration","iteration":1,"ticket_id":"PLF-074","status":"completed",…}
+{"type":"iteration","iteration":2,"ticket_id":"PLF-075","status":"failed",…}
+{"type":"run.end","iterations":2,"completed":["PLF-074"],"failed":["PLF-075"],…}
+```
+
+`--dry-run` skips the writer (preserves "dry-run leaves zero trace").
+`--no-log` opts out explicitly. Logs are non-authoritative — planfile
+sprint YAML remains the source of truth.
+
 ## Documentation
 
 The full documentation lives in [`docs/`](./docs/):
