@@ -22,14 +22,13 @@ so the LLM has zero ambiguity about what is allowed.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import yaml
 
 from .runtime import runtime_dir
-
 
 POLICY_FILENAME = "policy.yaml"
 
@@ -212,7 +211,9 @@ def policy_violations(policy: Policy, command: str) -> list[str]:
     if not policy.allow_push and "git push" in command:
         violations.append("policy.allow_push=false: 'git push' is forbidden")
     if not policy.allow_branch_create and (
-        "git branch " in f" {command} " or "git checkout -b" in command or "git switch -c" in command
+        "git branch " in f" {command} "
+        or "git checkout -b" in command
+        or "git switch -c" in command
     ):
         violations.append(
             "policy.allow_branch_create=false: creating branches is forbidden"

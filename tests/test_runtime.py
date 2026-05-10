@@ -8,6 +8,7 @@ only ``ensure_runs_dir`` is allowed to create directories.
 """
 from __future__ import annotations
 
+import os
 import re
 import tempfile
 import unittest
@@ -82,7 +83,7 @@ class TestRunIdGenerator(unittest.TestCase):
     def test_run_id_does_not_contain_path_separators(self) -> None:
         rid = new_run_id()
         self.assertNotIn("/", rid)
-        self.assertNotIn(os_sep := __import__("os").sep, rid)
+        self.assertNotIn(os.sep, rid)
         self.assertFalse(re.search(r"\s", rid))
 
 

@@ -94,7 +94,7 @@ def _planfile_env() -> dict[str, str]:
     """Force a wide, non-TTY console so planfile's Rich output stays one
     JSON object per line. Without this, long handler strings get wrapped
     by Rich and break json.loads on the koru side."""
-    return {**os.environ, "COLUMNS": "10000", "TERM": "dumb"}
+    return {**os.environ, "COLUMNS": "10000", "TERM": "dumb", "PYTHONWARNINGS": "ignore"}
 
 
 def _run_process(command: Sequence[str], project: Path) -> subprocess.CompletedProcess[str]:
@@ -303,7 +303,10 @@ def _parse_next_ticket(stdout: str) -> dict | None:
     stripped = stdout.strip()
     if not stripped or "No runnable ticket found" in stripped:
         return None
-    return json.loads(stripped)
+    try:
+        return json.loads(stripped)
+    except json.JSONDecodeError:
+        return json.loads(stripped, strict=False)
 
 
 def _ticket_command(ticket: dict) -> str | None:

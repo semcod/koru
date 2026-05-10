@@ -8,6 +8,9 @@ from .bootstrap import (
     materialize_to_planfile,
     validate_flat_pipeline,
 )
+from .context import build_context, render_markdown_handoff
+from .doctor import Check, DoctorReport, run_diagnostics
+from .init import InitReport, init_project
 from .loop import LoopReport, RunRecord, discover_repositories, run_closed_loop
 from .planfile_queue import (
     LlmRunResult,
@@ -16,8 +19,6 @@ from .planfile_queue import (
     run_next_planfile_task,
     run_planfile_queue_loop,
 )
-from .context import build_context, render_markdown_handoff
-from .init import InitReport, init_project
 from .policy import Policy, load_policy, policy_path, policy_violations
 from .run_log import RunLogWriter, open_run_log, open_run_log_eagerly
 from .runtime import (
@@ -29,6 +30,8 @@ from .runtime import (
 )
 
 __all__ = [
+    "Check",
+    "DoctorReport",
     "ImportReport",
     "InitReport",
     "LlmRunResult",
@@ -54,6 +57,7 @@ __all__ = [
     "policy_path",
     "policy_violations",
     "render_markdown_handoff",
+    "run_diagnostics",
     "run_closed_loop",
     "run_next_planfile_task",
     "run_planfile_queue_loop",

@@ -41,7 +41,6 @@ import yaml
 from .bootstrap import import_flat_pipeline
 from .runtime import planfile_dir, runtime_dir
 
-
 POLICY_STUB = """\
 # .planfile/.koru/policy.yaml
 # Edit this file to LOOSEN koru's strict-by-default LLM agent policy.

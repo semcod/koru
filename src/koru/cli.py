@@ -6,15 +6,24 @@ import argparse
 import asyncio
 import json
 import shlex
+import sys
 from pathlib import Path
 
+from .agents import (
+    detect_agent_options,
+    launch_agent,
+    save_agent_prompt,
+    select_agent,
+)
 from .bootstrap import import_flat_pipeline
 from .context import build_context, render_markdown_handoff
+from .doctor import render_text as render_doctor_text, run_diagnostics
 from .events import emit_management_event
 from .init import init_project
 from .loop import discover_repositories, run_closed_loop
 from .planfile_queue import run_next_planfile_task, run_planfile_queue_loop
 from .run_log import open_run_log_eagerly
+from .tasks import create_nl_task
 from .watch import watch_planfile_events
 
 
@@ -148,6 +157,16 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--doctor",
+        action="store_true",
+        help=(
+            "Run diagnostic checks against --project (planfile config, "
+            "sprints, policy.yaml, .gitignore, planfile binary, CI "
+            "command). Exits 1 if any check fails; warnings alone "
+            "exit 0. Use --format json for machine-readable output."
+        ),
+    )
+    parser.add_argument(
         "--context",
         action="store_true",
         help=(
@@ -178,6 +197,109 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _build_task_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru task",
+        description="Create a planfile ticket from a natural-language sentence.",
+    )
+    parser.add_argument("text", nargs="+", help="Natural-language task description.")
+    parser.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
+    parser.add_argument("--sprint", default="current", help="Target planfile sprint.")
+    parser.add_argument("--queue-name", default=None, help="Execution queue for the new ticket.")
+    parser.add_argument("--priority", default="normal", help="Ticket priority.")
+    return parser
+
+
+def _build_agent_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru agent",
+        description="Print or launch the best available LLM/IDE handoff for this project.",
+    )
+    parser.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
+    parser.add_argument(
+        "--queue-name",
+        default=None,
+        help="Queue used when selecting the active ticket.",
+    )
+    parser.add_argument("--ticket", default=None, help="Render prompt for a specific ticket id.")
+    parser.add_argument("--agent", dest="agent_id", default=None, help="Agent id to select.")
+    parser.add_argument(
+        "--launch",
+        action="store_true",
+        help="Launch the selected agent if it has a CLI.",
+    )
+    parser.add_argument("--list", action="store_true", help="List detected agents and exit.")
+    return parser
+
+
+def _task_main(argv: list[str]) -> int:
+    args = _build_task_parser().parse_args(argv)
+    try:
+        created = create_nl_task(
+            args.project,
+            " ".join(args.text),
+            sprint=args.sprint,
+            queue_name=args.queue_name,
+            priority=args.priority,
+        )
+    except ValueError as exc:
+        print(f"koru task: {exc}")
+        return 2
+    print(f"koru task: ✓ created {created.ticket_id} in {created.path}")
+    print(f"  name:  {created.name}")
+    print(f"  queue: {args.queue_name or 'default'}")
+    print("Next: run `koru` to get the LLM prompt, or `koru --queue` to execute one task.")
+    emit_management_event(
+        tool="koru.task",
+        action="created",
+        status="completed",
+        message=created.name,
+        queue=args.queue_name,
+        details={
+            "ticket_id": created.ticket_id,
+            "project": str(args.project),
+            "sprint": args.sprint,
+            "priority": args.priority,
+        },
+    )
+    return 0
+
+
+def _agent_main(argv: list[str]) -> int:
+    args = _build_agent_parser().parse_args(argv)
+    project = args.project.resolve()
+    agents = detect_agent_options(project)
+
+    if args.list:
+        for agent in agents:
+            marker = "✓" if agent.available else "·"
+            launch = "launchable" if agent.launchable else "manual"
+            print(f"{marker} {agent.id:<14} {launch:<10} {agent.reason}")
+        return 0
+
+    ctx = build_context(
+        project=project,
+        ticket_id=args.ticket,
+        queue_name=args.queue_name,
+    )
+    prompt = render_markdown_handoff(ctx)
+    if not args.launch:
+        save_path = save_agent_prompt(project, prompt)
+        print(prompt)
+        print(f"\nPrompt saved: {save_path}")
+        return 0
+
+    agent = select_agent(
+        agents,
+        agent_id=args.agent_id,
+        interactive=sys.stdin.isatty(),
+    )
+    if agent is None:
+        print("koru agent: no matching agent detected. Use `koru agent --list`.")
+        return 2
+    return launch_agent(agent, project, prompt)
+
+
 def _is_bare_invocation(args: argparse.Namespace) -> bool:
     """True when the user typed only ``koru`` (or ``koru --project P``).
 
@@ -187,6 +309,7 @@ def _is_bare_invocation(args: argparse.Namespace) -> bool:
     """
     return not (
         args.init
+        or args.doctor
         or args.bootstrap
         or args.context
         or args.queue
@@ -196,13 +319,38 @@ def _is_bare_invocation(args: argparse.Namespace) -> bool:
 
 
 def main() -> int:
-    args = _build_parser().parse_args()
+    raw_args = sys.argv[1:]
+    if raw_args and raw_args[0] == "task":
+        return _task_main(raw_args[1:])
+    if raw_args and raw_args[0] == "agent":
+        return _agent_main(raw_args[1:])
+
+    args = _build_parser().parse_args(raw_args)
 
     # Friendliest default: ``koru`` with no action flag emits the
     # markdown brief. LLM agents pasted into a chat just see the rules.
     if _is_bare_invocation(args):
         args.context = True
         args.output_format = "markdown"
+
+    if args.doctor:
+        report = run_diagnostics(args.project)
+        if args.output_format == "json":
+            print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
+        else:
+            print(render_doctor_text(report))
+        emit_management_event(
+            tool="koru.doctor",
+            action="completed",
+            status="failed" if report.has_failures else "completed",
+            level="error" if report.has_failures else "info",
+            message=", ".join(
+                f"{k}={v}" for k, v in report.summary().items() if v
+            ),
+            queue=args.queue_name,
+            details={"project": str(args.project)},
+        )
+        return 1 if report.has_failures else 0
 
     if args.init:
         try:
@@ -444,9 +592,21 @@ def main() -> int:
                 (),
                 {
                     "iterations": 1,
-                    "completed": [result.ticket_id] if result.status == "completed" and result.ticket_id else [],
-                    "failed": [result.ticket_id] if result.status == "failed" and result.ticket_id else [],
-                    "waiting": [result.ticket_id] if result.status == "waiting_input" and result.ticket_id else [],
+                    "completed": (
+                        [result.ticket_id]
+                        if result.status == "completed" and result.ticket_id
+                        else []
+                    ),
+                    "failed": (
+                        [result.ticket_id]
+                        if result.status == "failed" and result.ticket_id
+                        else []
+                    ),
+                    "waiting": (
+                        [result.ticket_id]
+                        if result.status == "waiting_input" and result.ticket_id
+                        else []
+                    ),
                     "last_status": result.status,
                 },
             )()

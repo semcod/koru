@@ -30,9 +30,9 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
+from .agents import detect_agent_environment
 from .policy import Policy, load_policy
 from .runtime import planfile_dir
-
 
 # ---------------------------------------------------------------------------
 # planfile helpers (mirror of planfile_queue's resolution but read-only)
@@ -49,7 +49,7 @@ def _planfile_command_base() -> list[str]:
 
 
 def _planfile_env() -> dict[str, str]:
-    return {**os.environ, "COLUMNS": "10000", "TERM": "dumb"}
+    return {**os.environ, "COLUMNS": "10000", "TERM": "dumb", "PYTHONWARNINGS": "ignore"}
 
 
 def _run_planfile(
@@ -73,6 +73,11 @@ def _run_planfile(
 def _safe_json(text: str) -> Any:
     try:
         return json.loads(text)
+    except (ValueError, TypeError):
+        pass
+    # Retry with strict=False to tolerate control chars in ticket descriptions
+    try:
+        return json.loads(text, strict=False)
     except (ValueError, TypeError):
         return None
 
@@ -119,8 +124,12 @@ def build_context(
     project: Path,
     ticket_id: str | None = None,
     queue_name: str | None = None,
-    planfile_runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]] | None = None,
+    planfile_runner: Callable[
+        [Sequence[str], Path],
+        subprocess.CompletedProcess[str],
+    ] | None = None,
     git_probe: Callable[[Path], dict[str, Any]] | None = None,
+    environment_probe: Callable[[Path], dict[str, Any]] | None = None,
     policy: Policy | None = None,
 ) -> dict[str, Any]:
     """Assemble the LLM brief for a project.
@@ -157,6 +166,20 @@ def build_context(
             if queue_name:
                 ticket_args.extend(["--queue", queue_name])
         ticket_proc = _run_planfile(project, ticket_args, runner=planfile_runner)
+
+        # Fallback: if `ticket next` is not available (older planfile),
+        # try `ticket list` and pick the first open ticket.
+        if (
+            ticket_proc.returncode != 0
+            and not ticket_id
+            and "Usage:" in (ticket_proc.stderr or "")
+        ):
+            ticket_proc = _run_planfile(
+                project,
+                ["ticket", "list", "--format", "json"],
+                runner=planfile_runner,
+            )
+
         if ticket_proc.returncode == 0:
             ticket_data = _safe_json(ticket_proc.stdout)
             if ticket_data is None:
@@ -166,10 +189,29 @@ def build_context(
                     ticket_error = "queue is idle"
                 else:
                     ticket_error = "planfile output was not JSON"
+            elif isinstance(ticket_data, list):
+                # `ticket list` returns an array — pick the first open ticket
+                open_tickets = [
+                    t for t in ticket_data
+                    if isinstance(t, dict) and t.get("status") in (None, "open", "ready", "todo")
+                ]
+                ticket_data = open_tickets[0] if open_tickets else None  # type: ignore[assignment]
+                if ticket_data is None:
+                    ticket_error = "queue is idle"
         else:
-            ticket_error = (ticket_proc.stderr or "planfile error").strip().splitlines()[0]
+            raw_err = (ticket_proc.stderr or "planfile error").strip()
+            # Filter out Python warnings (e.g. pydantic UserWarning) that
+            # leak into stderr but aren't the real error message.
+            err_lines = [
+                ln for ln in raw_err.splitlines()
+                if not ln.startswith("/") and "UserWarning" not in ln
+                and "warnings.warn" not in ln
+                and "You may be able to resolve" not in ln
+            ]
+            ticket_error = (err_lines[0] if err_lines else raw_err.splitlines()[0])
 
     git_state = (git_probe or _git_probe)(project)
+    detected_environment = (environment_probe or detect_agent_environment)(project)
 
     instructions = _build_instructions(
         resolved_policy,
@@ -192,6 +234,7 @@ def build_context(
             "git": git_state,
             "planfile_initialised": planfile_present,
             "queue_name": queue_name,
+            **detected_environment,
         },
         "instructions": instructions,
         "self_service": self_service,
@@ -343,9 +386,51 @@ def render_markdown_handoff(context: dict[str, Any]) -> str:
 
     lines.append(f"# koru handoff — {project}")
     lines.append("")
+    lines.append("## What koru is")
+    lines.append("")
+    lines.append(
+        "Koru is the project-local automation gate: it detects the repository "
+        "context, exposes planfile tickets, gives the LLM exact operating rules, "
+        "and keeps work traceable through ticket lifecycle events."
+    )
+    lines.append("")
 
     env = context.get("environment") or {}
     initialised = bool(env.get("planfile_initialised"))
+    project_env = env.get("project") or {}
+    markers = project_env.get("markers") or {}
+    agents = env.get("llm_agents") or []
+    recommended = env.get("recommended_agent") or {}
+
+    lines.append("## Detected environment")
+    lines.append("")
+    lines.append(f"- **project**: `{project_env.get('name') or Path(project).name}`")
+    lines.append(f"- **cwd**: `{project_env.get('cwd') or project}`")
+    lines.append(f"- **python**: `{project_env.get('python', '?')}`")
+    enabled_markers = [key for key, value in markers.items() if value]
+    lines.append(
+        "- **markers**: "
+        + (", ".join(f"`{marker}`" for marker in enabled_markers) if enabled_markers else "`none`")
+    )
+    if recommended:
+        lines.append(f"- **recommended agent**: `{recommended.get('label')}`")
+    lines.append("")
+
+    lines.append("## Available LLM/IDE lanes")
+    lines.append("")
+    if agents:
+        lines.append("| lane | available | launchable | note |")
+        lines.append("| --- | --- | --- | --- |")
+        for agent in agents:
+            lines.append(
+                f"| `{agent.get('id')}` | `{agent.get('available')}` | "
+                f"`{agent.get('launchable')}` | {agent.get('reason', '')} |"
+            )
+    else:
+        lines.append(
+            "No known LLM/IDE lanes detected. Paste this handoff into your preferred agent."
+        )
+    lines.append("")
 
     if not initialised:
         lines.append("## ⚠ Setup required")
@@ -359,7 +444,9 @@ def render_markdown_handoff(context: dict[str, Any]) -> str:
         lines.append("")
         lines.append("```bash")
         lines.append("koru --init --project .                       # 2-ticket starter scaffold")
-        lines.append("koru --init --project . --from pipeline.yaml  # import an existing flat pipeline")
+        lines.append(
+            "koru --init --project . --from pipeline.yaml  # import an existing flat pipeline"
+        )
         lines.append("```")
         lines.append("")
         lines.append("Then re-run `koru` to refresh this brief.")
@@ -415,6 +502,9 @@ def render_markdown_handoff(context: dict[str, Any]) -> str:
     lines.append("")
     for k, v in (context.get("self_service") or {}).items():
         lines.append(f"- **{k}**: `{v}`")
+    lines.append("- **add_nl_task**: `koru task \"Describe the next change\"`")
+    lines.append("- **agent_prompt**: `koru agent`")
+    lines.append("- **launch_agent**: `koru agent --launch`")
     lines.append("")
 
     return "\n".join(lines)
