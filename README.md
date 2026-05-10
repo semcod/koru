@@ -103,7 +103,7 @@ ticket, and the exact lifecycle commands the agent may use.
 pip install -e .
 ```
 
-## Quick start
+## Multi-repo loop mode
 
 Run one command across matching repositories and retry failures in a closed loop:
 
