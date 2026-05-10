@@ -42,7 +42,7 @@ def main() -> int:
 
     print(
         f"koru-loop: repos={len(report.succeeded) + len(report.failed)} "
-        f"succeeded={len(report.succeeded)} failed={len(report.failed)} attempts={report.attempts}"
+        f"succeeded={len(report.succeeded)} failed={len(report.failed)} rounds={report.rounds_executed}"
     )
     for repository in report.failed:
         print(f"FAILED: {repository}")

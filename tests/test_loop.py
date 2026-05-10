@@ -48,7 +48,29 @@ class TestKoruLoop(unittest.TestCase):
             self.assertEqual(attempts[repo_b], 2)
             self.assertEqual(report.failed, ())
             self.assertEqual(report.succeeded, (repo_a, repo_b))
-            self.assertEqual(report.attempts, 2)
+            self.assertEqual(report.rounds_executed, 2)
+
+    def test_run_closed_loop_single_round_when_all_succeed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            workspace = Path(tmp_dir)
+            repo_a = (workspace / "semcod" / "alpha").resolve()
+            repo_b = (workspace / "semcod" / "beta").resolve()
+            repo_a.mkdir(parents=True)
+            repo_b.mkdir(parents=True)
+
+            def runner(_command: list[str], _repository: Path) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="ok", stderr="")
+
+            report = run_closed_loop(
+                command=["python", "-V"],
+                repositories=[repo_a, repo_b],
+                max_rounds=3,
+                runner=runner,
+            )
+
+            self.assertEqual(report.failed, ())
+            self.assertEqual(report.succeeded, (repo_a, repo_b))
+            self.assertEqual(report.rounds_executed, 1)
 
 
 if __name__ == "__main__":

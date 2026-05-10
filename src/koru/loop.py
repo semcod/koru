@@ -27,7 +27,7 @@ class LoopReport:
     records: tuple[RunRecord, ...]
     succeeded: tuple[Path, ...]
     failed: tuple[Path, ...]
-    attempts: int
+    rounds_executed: int
 
 
 def discover_repositories(workspace: Path, include_pattern: str = "semcod/*") -> list[Path]:
@@ -90,6 +90,11 @@ def run_closed_loop(
 
     succeeded = tuple(sorted(repo for repo, rec in by_repository.items() if rec.exit_code == 0))
     failed = tuple(sorted(repo for repo, rec in by_repository.items() if rec.exit_code != 0))
-    attempts = max((record.attempt for record in records), default=0)
+    rounds_executed = max((record.attempt for record in records), default=0)
 
-    return LoopReport(records=tuple(records), succeeded=succeeded, failed=failed, attempts=attempts)
+    return LoopReport(
+        records=tuple(records),
+        succeeded=succeeded,
+        failed=failed,
+        rounds_executed=rounds_executed,
+    )
