@@ -1,0 +1,323 @@
+schema: "1.1"
+project: koru-bootstrap-example
+version: "0.1.0"
+generated: "2026-05-10"
+generator: "koru pipeline template"
+description: |
+  Bootstrap pipeline for integrating koru with a new project.
+  Import this file into planfile.yaml of your new project, then run:
+
+      koru queue        # inspect what's about to happen
+      koru run --all    # auto-run everything except human tasks
+
+  The pipeline demonstrates all executor types:
+    - shell:  for auto-runnable setup commands
+    - human:  for API keys and decisions
+    - llm:    for LLM-suggested config (opt-in, needs OPENROUTER_API_KEY)
+    - tool:   for running known CLIs like regix
+
+tasks:
+  # ─────────────────────────────────────────────────────────────────
+  # Phase 1: Preconditions (all auto)
+  # ─────────────────────────────────────────────────────────────────
+
+  - id: KORU-B-001
+    title: "Verify we're in a git repository"
+    status: todo
+    labels: [koru-task, executor:shell, phase:precheck]
+    priority: 1
+    metadata:
+      koru:
+        executor: shell
+        auto_run: true
+        command: "git rev-parse --git-dir > /dev/null 2>&1"
+        timeout_sec: 5
+        depends_on: []
+        error_message: "Not a git repository. Run 'git init' first."
+
+  - id: KORU-B-002
+    title: "Verify Python >= 3.10"
+    status: todo
+    labels: [koru-task, executor:shell, phase:precheck]
+    priority: 1
+    metadata:
+      koru:
+        executor: shell
+        auto_run: true
+        command: 'python3 -c "import sys; assert sys.version_info >= (3, 10), f''''need Python >= 3.10, have {sys.version_info.major}.{sys.version_info.minor}''''"'
+        timeout_sec: 5
+        depends_on: []
+
+  # ─────────────────────────────────────────────────────────────────
+  # Phase 2: Install (auto)
+  # ─────────────────────────────────────────────────────────────────
+
+  - id: KORU-B-010
+    title: "Install koru package"
+    status: todo
+    labels: [koru-task, executor:shell, phase:install]
+    priority: 2
+    metadata:
+      koru:
+        executor: shell
+        auto_run: true
+        command: "pip install koru"
+        timeout_sec: 120
+        depends_on: [KORU-B-001, KORU-B-002]
+        outputs:
+          installs: [koru]
+
+  - id: KORU-B-011
+    title: "Install core LLM-free tools (planfile, regix, redup)"
+    status: todo
+    labels: [koru-task, executor:shell, phase:install]
+    priority: 2
+    metadata:
+      koru:
+        executor: shell
+        auto_run: true
+        command: "pip install planfile regix redup"
+        timeout_sec: 180
+        depends_on: [KORU-B-010]
+
+  # ─────────────────────────────────────────────────────────────────
+  # Phase 3: Human decisions (interactive)
+  # ─────────────────────────────────────────────────────────────────
+
+  - id: KORU-B-020
+    title: "Decide: do you want the OpenRouter automation lane?"
+    status: todo
+    labels: [koru-task, executor:human, phase:config]
+    priority: 2
+    metadata:
+      koru:
+        executor: human
+        question: |
+          Koru supports two modes:
+
+            1. Default (IDE-native LLM, no cloud API):
+               Your IDE's LLM (Windsurf/Cursor/Claude Code) does all work.
+               No external cost. Recommended for daily development.
+
+            2. Opt-in (OpenRouter automation lane):
+               Enables `redsl improve`, `vallm validate --semantic`, headless auto-fix.
+               Requires OPENROUTER_API_KEY. Metered cost.
+
+          Do you want to enable the OpenRouter lane?
+        input_type: confirm
+        default: false
+        depends_on: [KORU-B-011]
+        outputs:
+          env_var: KORU_ENABLE_OPENROUTER
+
+  - id: KORU-B-021
+    title: "Get OPENROUTER_API_KEY (only if opted in)"
+    status: todo
+    labels: [koru-task, executor:human, phase:config]
+    priority: 2
+    metadata:
+      koru:
+        executor: human
+        question: "Paste your OPENROUTER_API_KEY (starts with sk-or-v1-)"
+        input_type: password
+        skip_if: "@KORU-B-020.outputs.env_var == false"
+        depends_on: [KORU-B-020]
+        outputs:
+          env_var: OPENROUTER_API_KEY
+
+  - id: KORU-B-022
+    title: "Choose config templates to install"
+    status: todo
+    labels: [koru-task, executor:human, phase:config]
+    priority: 3
+    metadata:
+      koru:
+        executor: human
+        question: "Which config templates do you want to install?"
+        input_type: choice
+        multi_select: true
+        choices:
+          - "pyqual.yaml (full pipeline orchestrator)"
+          - "redup.toml (duplicate budget)"
+          - "regix.yaml (regression metrics)"
+          - "redsl.yaml (OpenRouter lane — only with OPENROUTER_API_KEY)"
+          - "llx.yaml (LLM CLI — only with OPENROUTER_API_KEY)"
+        default: ["pyqual.yaml (full pipeline orchestrator)", "redup.toml (duplicate budget)", "regix.yaml (regression metrics)"]
+        depends_on: [KORU-B-020]
+        outputs:
+          env_var: KORU_SELECTED_TEMPLATES
+
+  # ─────────────────────────────────────────────────────────────────
+  # Phase 4: Write configs (auto, based on human choices)
+  # ─────────────────────────────────────────────────────────────────
+
+  - id: KORU-B-030
+    title: "Write .env file with OPENROUTER_API_KEY"
+    status: todo
+    labels: [koru-task, executor:shell, phase:config]
+    priority: 3
+    metadata:
+      koru:
+        executor: shell
+        auto_run: true
+        skip_if: "@KORU-B-020.outputs.env_var == false"
+        command: |
+          {
+            echo "# koru-managed secrets (DO NOT COMMIT)"
+            echo "OPENROUTER_API_KEY=${OPENROUTER_API_KEY}"
+          } >> .env
+          grep -q "^\.env$" .gitignore 2>/dev/null || echo ".env" >> .gitignore
+        inputs:
+          OPENROUTER_API_KEY: "@KORU-B-021.outputs.env_var"
+        depends_on: [KORU-B-021]
+
+  - id: KORU-B-031
+    title: "Copy selected templates to project root"
+    status: todo
+    labels: [koru-task, executor:tool, phase:config]
+    priority: 3
+    metadata:
+      koru:
+        executor: tool
+        tool: koru
+        auto_run: true
+        command: 'koru template install --selection "${KORU_SELECTED_TEMPLATES}"'
+        inputs:
+          KORU_SELECTED_TEMPLATES: "@KORU-B-022.outputs.env_var"
+        depends_on: [KORU-B-022]
+
+  # ─────────────────────────────────────────────────────────────────
+  # Phase 5: Baseline (auto)
+  # ─────────────────────────────────────────────────────────────────
+
+  - id: KORU-B-040
+    title: "Run first regix gate (establish baseline)"
+    status: todo
+    labels: [koru-task, executor:tool, phase:baseline]
+    priority: 4
+    metadata:
+      koru:
+        executor: tool
+        tool: regix
+        auto_run: true
+        command: "regix gate"
+        timeout_sec: 60
+        depends_on: [KORU-B-031]
+        outputs:
+          file: ".regix/baseline.json"
+        on_failure: continue   # baseline can fail — we'll capture it
+
+  - id: KORU-B-041
+    title: "Run first redup check (establish duplicate baseline)"
+    status: todo
+    labels: [koru-task, executor:tool, phase:baseline]
+    priority: 4
+    metadata:
+      koru:
+        executor: tool
+        tool: redup
+        auto_run: true
+        command: "redup scan . --min-lines 10 --format json --output .redup/baseline.json"
+        timeout_sec: 120
+        depends_on: [KORU-B-031]
+        on_failure: continue
+
+  # ─────────────────────────────────────────────────────────────────
+  # Phase 6: LLM-assisted (opt-in, OpenRouter)
+  # ─────────────────────────────────────────────────────────────────
+
+  - id: KORU-B-050
+    title: "Ask LLM to suggest project-specific regix thresholds"
+    status: todo
+    labels: [koru-task, executor:llm, phase:tuning]
+    priority: 5
+    metadata:
+      koru:
+        executor: llm
+        skip_if: "@KORU-B-020.outputs.env_var == false"
+        model: "anthropic/claude-3.5-sonnet"
+        max_tokens: 1500
+        prompt: |
+          You are tuning a `regix.yaml` config for a new Python project.
+          Given this baseline regix report, suggest reasonable thresholds
+          for the gate that are ~20% above the current metrics.
+
+          Baseline report:
+          ${BASELINE_REPORT}
+
+          Output ONLY valid YAML for the `gate` section of regix.yaml.
+          Format: YAML, no markdown fences.
+        inputs:
+          BASELINE_REPORT: "@KORU-B-040.outputs.file"
+        depends_on: [KORU-B-040]
+        outputs:
+          response: llm_suggestion
+
+  - id: KORU-B-051
+    title: "Review LLM suggestion and confirm"
+    status: todo
+    labels: [koru-task, executor:human, phase:tuning]
+    priority: 5
+    metadata:
+      koru:
+        executor: human
+        skip_if: "@KORU-B-020.outputs.env_var == false"
+        question: |
+          The LLM suggested these regix gate thresholds:
+
+          ${LLM_SUGGESTION}
+
+          Apply them to regix.yaml?
+        input_type: confirm
+        default: true
+        inputs:
+          LLM_SUGGESTION: "@KORU-B-050.outputs.response"
+        depends_on: [KORU-B-050]
+
+  # ─────────────────────────────────────────────────────────────────
+  # Phase 7: Wrap-up (auto)
+  # ─────────────────────────────────────────────────────────────────
+
+  - id: KORU-B-090
+    title: "Commit initial koru config"
+    status: todo
+    labels: [koru-task, executor:shell, phase:wrap]
+    priority: 6
+    metadata:
+      koru:
+        executor: shell
+        auto_run: false   # never auto-commit, let human confirm
+        command: |
+          git add *.yaml *.toml .gitignore planfile.yaml
+          git commit -m "chore(koru): bootstrap refactor automation config
+
+          - Installed templates: ${KORU_SELECTED_TEMPLATES}
+          - OpenRouter lane: ${KORU_ENABLE_OPENROUTER}
+          - Baseline: regix + redup reports in .regix/, .redup/
+          "
+        depends_on: [KORU-B-051]
+
+  - id: KORU-B-091
+    title: "Show summary and next steps"
+    status: todo
+    labels: [koru-task, executor:human, phase:wrap]
+    priority: 6
+    metadata:
+      koru:
+        executor: human
+        input_type: confirm
+        question: |
+          ✓ Koru bootstrap complete.
+
+          Installed configs: ${KORU_SELECTED_TEMPLATES}
+          OpenRouter lane:   ${KORU_ENABLE_OPENROUTER}
+
+          Next steps:
+            1. Review generated configs: ls *.yaml *.toml
+            2. Run `task quality:regix` to verify local gate
+            3. Run `task tickets:next` to start ticket-driven work
+            4. Read docs: koru/docs/agent-guide.md
+
+          Press Enter to finish.
+        default: true
+        depends_on: [KORU-B-090]

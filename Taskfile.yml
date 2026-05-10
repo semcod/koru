@@ -67,6 +67,22 @@ tasks:
     cmds:
       - pytest tests/ -q
 
+  lint:
+    desc: Run ruff on koru sources and tests
+    cmds:
+      - ruff check src tests
+
+  lint:fix:
+    desc: Run ruff with autofix
+    cmds:
+      - ruff check src tests --fix
+
+  ci:
+    desc: Local CI equivalent (lint + tests)
+    cmds:
+      - task: lint
+      - task: test:fast
+
   # =====================================================================
   # Closed-loop automation (the core koru CLI)
   # =====================================================================

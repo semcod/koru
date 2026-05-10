@@ -70,6 +70,7 @@ koru \
 ```bash
 task                          # list all tasks (40+)
 task install                  # pip install -e .
+task ci                       # local CI equivalent: lint + tests
 task install:tools            # planfile, regix, redup, vallm, prefact, pfix
 task tickets:next             # highest-priority open ticket
 task quality:regix            # regression metrics gate
@@ -90,6 +91,9 @@ The full documentation lives in [`docs/`](./docs/):
   validation gates, anti-patterns, troubleshooting.
 - **[`docs/planfile-llm-guide.md`](./docs/planfile-llm-guide.md)** —
   ticket-driven development with `planfile` CLI.
+- **[`docs/planfile-execution-gateway.md`](./docs/planfile-execution-gateway.md)** —
+  design for turning `planfile.yaml` into the execution gateway for shell,
+  MCP, API, human, and LLM tasks.
 - **[`docs/llm-tools/`](./docs/llm-tools/)** — per-tool docs and install
   scripts:
   - [`planfile/`](./docs/llm-tools/planfile/) — ticket backlog
