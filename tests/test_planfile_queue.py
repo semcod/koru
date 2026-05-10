@@ -45,12 +45,17 @@ class TestPlanfileQueue(unittest.TestCase):
                 actor="koru-test",
                 planfile_runner=planfile_runner,
                 shell_runner=shell_runner,
+                queue_name="c2004-refactor",
             )
 
             self.assertEqual(result.status, "completed")
             self.assertEqual(result.ticket_id, "PLF-001")
             self.assertIn(
                 ["ticket", "claim", "PLF-001", "--assigned-to", "koru-test"],
+                [_ticket_args(call) for call in planfile_calls],
+            )
+            self.assertIn(
+                ["ticket", "next", "--format", "json", "--queue", "c2004-refactor"],
                 [_ticket_args(call) for call in planfile_calls],
             )
             self.assertIn(
@@ -119,6 +124,101 @@ class TestPlanfileQueue(unittest.TestCase):
                 )
             )
 
+    def test_api_ticket_runs_lifecycle_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = {
+                "id": "PLF-004",
+                "name": "Call bootstrap API",
+                "executor": {"kind": "api"},
+                "inputs": {
+                    "api_endpoint": "http://service.local/bootstrap",
+                    "api_method": "POST",
+                    "api_headers": {"authorization": "Bearer test"},
+                    "api_body": {"project": "demo"},
+                    "api_timeout_seconds": 5,
+                },
+            }
+            planfile_calls: list[list[str]] = []
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                planfile_calls.append(command)
+                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                    return _ok(json.dumps(ticket))
+                return _ok()
+
+            def api_runner(request: dict[str, object], _project: Path) -> SimpleNamespace:
+                self.assertEqual(request["endpoint"], "http://service.local/bootstrap")
+                self.assertEqual(request["method"], "POST")
+                self.assertEqual(request["body"], {"project": "demo"})
+                return SimpleNamespace(
+                    returncode=0,
+                    stdout='{"ok":true}',
+                    stderr="",
+                    status_code=200,
+                    headers={},
+                )
+
+            result = run_next_planfile_task(
+                project=project,
+                actor="koru-api",
+                planfile_runner=planfile_runner,
+                api_runner=api_runner,
+            )
+
+            self.assertEqual(result.status, "completed")
+            self.assertEqual(result.executor_kind, "api")
+            self.assertEqual(result.message, "POST http://service.local/bootstrap")
+            self.assertIn(
+                ["ticket", "claim", "PLF-004", "--assigned-to", "koru-api"],
+                [_ticket_args(call) for call in planfile_calls],
+            )
+            self.assertTrue(
+                any(
+                    _ticket_args(call)[:3] == ["ticket", "complete", "PLF-004"]
+                    for call in planfile_calls
+                )
+            )
+
+    def test_api_failure_marks_ticket_failed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = {
+                "id": "PLF-005",
+                "name": "Call failing API",
+                "executor": {"kind": "api", "handler": "http://service.local/fail"},
+            }
+            planfile_calls: list[list[str]] = []
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                planfile_calls.append(command)
+                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                    return _ok(json.dumps(ticket))
+                return _ok()
+
+            def api_runner(_request: dict[str, object], _project: Path) -> SimpleNamespace:
+                return SimpleNamespace(
+                    returncode=1,
+                    stdout='{"ok":false}',
+                    stderr="HTTP 500",
+                    status_code=500,
+                    headers={},
+                )
+
+            result = run_next_planfile_task(
+                project=project,
+                planfile_runner=planfile_runner,
+                api_runner=api_runner,
+            )
+
+            self.assertEqual(result.status, "failed")
+            self.assertEqual(result.stderr, "HTTP 500")
+            self.assertTrue(
+                any(
+                    _ticket_args(call)[:3] == ["ticket", "fail", "PLF-005"]
+                    for call in planfile_calls
+                )
+            )
 
     def test_idle_when_planfile_returns_no_ticket(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -218,6 +318,33 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertTrue(
                 any(
                     _ticket_args(call)[:3] == ["ticket", "input", "PLF-030"]
+                    for call in calls
+                )
+            )
+
+    def test_api_ticket_without_endpoint_requests_input(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = {
+                "id": "PLF-031",
+                "name": "API with no endpoint",
+                "executor": {"kind": "api"},
+            }
+            calls: list[list[str]] = []
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                calls.append(command)
+                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                    return _ok(json.dumps(ticket))
+                return _ok()
+
+            result = run_next_planfile_task(project=project, planfile_runner=planfile_runner)
+
+            self.assertEqual(result.status, "waiting_input")
+            self.assertEqual(result.ticket_id, "PLF-031")
+            self.assertTrue(
+                any(
+                    _ticket_args(call)[:3] == ["ticket", "input", "PLF-031"]
                     for call in calls
                 )
             )

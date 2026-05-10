@@ -183,7 +183,7 @@ tasks:
   - id: KORU-B-022
     name: "Choose config templates to install"
     status: open
-    priority: medium
+    priority: normal
     blocked_by: [KORU-B-020]
     blocks: [KORU-B-031]
     labels: [koru-bootstrap, phase:config]
@@ -263,7 +263,7 @@ tasks:
   - id: KORU-B-040
     name: "Run first regix gate (establish baseline)"
     status: open
-    priority: medium
+    priority: normal
     blocked_by: [KORU-B-031]
     blocks: [KORU-B-050]
     labels: [koru-bootstrap, phase:baseline]
@@ -285,7 +285,7 @@ tasks:
   - id: KORU-B-041
     name: "Run first redup check (baseline duplicates)"
     status: open
-    priority: medium
+    priority: normal
     blocked_by: [KORU-B-031]
     blocks: []
     labels: [koru-bootstrap, phase:baseline]
@@ -371,7 +371,7 @@ tasks:
   - id: KORU-B-090
     name: "Commit initial koru config"
     status: open
-    priority: medium
+    priority: normal
     blocked_by: [KORU-B-051]
     blocks: [KORU-B-091]
     labels: [koru-bootstrap, phase:wrap]
@@ -397,7 +397,7 @@ tasks:
   - id: KORU-B-091
     name: "Show summary and next steps"
     status: open
-    priority: medium
+    priority: normal
     blocked_by: [KORU-B-090]
     blocks: []
     labels: [koru-bootstrap, phase:wrap]

@@ -48,10 +48,9 @@ tasks:
       - pip install -e ".[dev]" || pip install -e .
 
   install:tools:
-    desc: Install all underlying LLM tools (planfile, regix, redup, vallm, sumd, ...)
+    desc: Install all underlying LLM tools (planfile, regix, redup, vallm, sumd, redeploy, ...)
     cmds:
-      - '[ -d ../planfile ] && pip install -e ../planfile || pip install planfile'
-      - pip install regix redup vallm prefact pfix sumd code2llm doql
+      - pip install planfile regix redup vallm prefact pfix sumd code2llm doql redeploy
       - 'echo "✓ Core tools installed. For LLM-backed tools (redsl, llx, aider) install separately."'
 
   # =====================================================================
@@ -293,6 +292,19 @@ tasks:
         grep -q '^\.sumr/$' .gitignore 2>/dev/null || echo '.sumr/' >> .gitignore
       - 'echo "✓ SUMR stack installed. Next: task quality:sumr:install-hook (see workflows/sumr-refresh-loop.md)"'
 
+  template:install:redeploy:
+    desc: 'Copy redeploy templates (local + device baseline) to redeploy/'
+    cmds:
+      - mkdir -p redeploy/local redeploy/device
+      - cp templates/redeploy/local/deployment.md.template     redeploy/local/deployment.md
+      - cp templates/redeploy/device/manifest.yaml.template    redeploy/device/manifest.yaml
+      - cp templates/redeploy/device/migration.md.template     redeploy/device/migration.md
+      - cp templates/redeploy/device/diagnose.md.template      redeploy/device/diagnose.md
+      - 'echo "✓ redeploy templates installed at redeploy/"'
+      - 'echo "  Next: substitute placeholders (see workflows/redeploy-multi-device.md Krok 3)"'
+      - 'echo "        rename redeploy/device/ → redeploy/<your-device>/"'
+      - 'echo "        sed -i ''s/<APP_NAME>/myapp/g'' redeploy/local/*.md redeploy/device/*"'
+
   # =====================================================================
   # Scripts wrappers
   # =====================================================================
@@ -326,6 +338,66 @@ tasks:
     desc: Sync planfile tickets with TODO.md
     cmds:
       - python3 scripts/planfile-sync-todo.py
+
+  # =====================================================================
+  # Deploy (redeploy + markpact specs — local + multi-device)
+  # =====================================================================
+  # Templates: templates/redeploy/   |   Workflow: workflows/redeploy-multi-device.md
+  # Bootstrap: task template:install:redeploy
+
+  deploy:plan:
+    desc: 'Plan deploy without changes — DEVICE=<name> SPEC=<file> (defaults: local + deployment.md)'
+    cmds:
+      - redeploy run "redeploy/{{.DEVICE | default \"local\"}}/{{.SPEC | default \"deployment.md\"}}" --plan-only
+    preconditions:
+      - sh: which redeploy
+        msg: "redeploy not installed. Run: task install:tools (or pip install --user redeploy)"
+
+  deploy:dry:
+    desc: 'Dry run deploy (preview commands) — DEVICE=<name>'
+    cmds:
+      - redeploy run "redeploy/{{.DEVICE | default \"local\"}}/{{.SPEC | default \"deployment.md\"}}" --dry-run
+
+  deploy:local:
+    desc: Deploy locally via Docker Compose
+    cmds:
+      - redeploy run redeploy/local/deployment.md
+    preconditions:
+      - sh: test -f redeploy/local/deployment.md
+        msg: "redeploy/local/deployment.md missing. Run: task template:install:redeploy"
+
+  deploy:device:
+    desc: 'Deploy to remote device — DEVICE=<name> (e.g. pi109, edge01)'
+    cmds:
+      - redeploy run "redeploy/{{.DEVICE}}/migration.md"
+    requires:
+      vars: [DEVICE]
+    preconditions:
+      - sh: test -f "redeploy/{{.DEVICE}}/migration.md"
+        msg: "redeploy/{{.DEVICE}}/migration.md missing. Copy from templates/redeploy/device/ and customize."
+
+  deploy:diagnose:
+    desc: 'Read-only diagnose — DEVICE=<name> (default: local)'
+    cmds:
+      - redeploy run "redeploy/{{.DEVICE | default \"local\"}}/diagnose.md"
+
+  deploy:resume:
+    desc: 'Resume failed deploy — DEVICE=<name> STEP=<step_id>'
+    cmds:
+      - redeploy run "redeploy/{{.DEVICE}}/migration.md" --from-step {{.STEP}}
+    requires:
+      vars: [DEVICE, STEP]
+
+  deploy:drift:
+    desc: 'Snapshot device state into app.doql.less (drift baseline) — DEVICE_HOST=<user@host>'
+    cmds:
+      - doql adopt --from-device "{{.DEVICE_HOST}}" -o app.doql.less
+      - 'echo "✓ Intended state captured. Commit app.doql.less to lock baseline."'
+    requires:
+      vars: [DEVICE_HOST]
+    preconditions:
+      - sh: which doql
+        msg: "doql not installed. Run: pip install --user doql"
 
   # =====================================================================
   # Healing-webhook (generic alert → ticket service)

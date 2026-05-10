@@ -192,6 +192,57 @@ task tickets:export TID=PLF-052
 # → Generates a prompt with full context for pasting into Claude/GPT/etc.
 ```
 
+### Bootstrap a project from a flat pipeline YAML
+
+koru bridges two pipeline formats:
+
+- **Flat (authoring)** — top-level `tasks:` list, used in
+  `examples/bootstrap.planfile.yaml` and aligned with
+  `docs/planfile-execution-gateway.md`.
+- **Nested (runtime)** — planfile-native layout under
+  `.planfile/sprints/<sprint>.yaml`, read by `planfile` CLI and
+  `koru --queue`.
+
+The `--bootstrap` flag converts the flat format into the runtime layout:
+
+```bash
+# Import a flat pipeline into a fresh project
+mkdir -p /tmp/new-project && cd /tmp/new-project && git init -q
+koru --bootstrap \
+     --from /path/to/koru/examples/bootstrap.planfile.yaml \
+     --project . \
+     --sprint current
+# → koru bootstrap: ✓ imported
+# → tickets: 15 imported
+# → config:  .planfile/config.yaml created
+# → sprint:  .planfile/sprints/current.yaml created
+
+# Drain the queue task by task
+koru --queue --project .                # runs first ready ticket
+koru --queue --project . --dry-run      # preview next ticket only
+koru --queue --project . --actor agent-x  # set actor when claiming
+```
+
+Validation rules (see `koru.bootstrap.validate_flat_pipeline`):
+
+- Every task needs `id`, `name` (or `title`), and `executor.kind`
+  ∈ `{shell, human, llm, api, mcp}`
+- `priority` ∈ `{critical, high, normal, low}` (NOT `medium`)
+- `status` ∈ `{open, in_progress, review, done, blocked}`
+- `execution.state` ∈
+  `{pending, ready, running, waiting_input, done, failed, skipped}`
+- `blocked_by` references must resolve and the DAG must be acyclic
+
+If validation fails, `koru --bootstrap` exits non-zero and prints every
+error so they can be fixed in a single pass:
+
+```text
+koru bootstrap: examples/bootstrap.planfile.yaml: validation failed
+  - KORU-B-022: priority: 'medium' not in ['critical', 'high', 'low', 'normal']
+```
+
+To overwrite an existing sprint file, pass `--force`.
+
 ### Healing-webhook integration (auto-tickets)
 
 When alertmanager fires (e.g., `EndpointDown`), the healing-webhook

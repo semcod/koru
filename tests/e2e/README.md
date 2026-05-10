@@ -19,14 +19,17 @@ full stack: `koru --queue` → `planfile` CLI → file-based state in
 
 ```bash
 # Default: assumes 'planfile' is on PATH
-task test:e2e
+task test:e2e            # queue lifecycle (smoke.sh)
+task test:e2e:bootstrap  # bootstrap workflow (bootstrap.sh)
+task test:e2e:all        # both, sequentially
 
 # Or explicit binary (e.g. local source venv):
 PLANFILE_BIN=/home/you/github/semcod/planfile/.venv/bin/planfile \
-  task test:e2e
+  task test:e2e:all
 
-# Or run the script directly:
+# Or run scripts directly:
 bash tests/e2e/smoke.sh
+bash tests/e2e/bootstrap.sh
 ```
 
 ## What `smoke.sh` covers
@@ -47,6 +50,27 @@ Six end-to-end steps with a temp project (`/tmp/koru-e2e-smoke-$$`):
    recording the command
 6. Run `koru --queue` again — confirm it picks SMOKE-002 and returns
    `status=waiting_input` with the configured prompt
+
+## What `bootstrap.sh` covers
+
+Nine end-to-end steps with a temp project, exercising the full
+flat→nested pipeline conversion path:
+
+1. `koru --bootstrap --from examples/bootstrap.planfile.yaml` imports
+   the 15-task reference pipeline
+2. `.planfile/config.yaml` and `.planfile/sprints/current.yaml` are
+   created with the right structure
+3. `planfile ticket list --status all` returns all 15 tickets
+4. `planfile ticket next --format json` picks `KORU-B-001`
+   (highest priority, `execution.state=ready`)
+5. `koru --queue` executes `KORU-B-001` (`git rev-parse --git-dir`)
+6. `koru --queue` executes `KORU-B-002` (Python ≥ 3.10 check)
+7. `koru --queue --dry-run` correctly identifies `KORU-B-010` as the
+   next runnable task — its `blocked_by` deps (B-001 + B-002) just
+   completed, proving DAG resolution works end-to-end
+8. Re-running `koru --bootstrap` without `--force` is rejected with
+   "already exists"
+9. Re-running with `--force` succeeds and overwrites the sprint file
 
 ## CI integration
 
