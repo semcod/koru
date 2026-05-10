@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .bootstrap import import_flat_pipeline
 from .loop import discover_repositories, run_closed_loop
-from .planfile_queue import run_next_planfile_task
+from .planfile_queue import run_next_planfile_task, run_planfile_queue_loop
 from .watch import watch_planfile_events
 
 
@@ -76,6 +76,22 @@ def _build_parser() -> argparse.ArgumentParser:
             "the ticket is claimed/started/completed with the answer recorded "
             "in --note and --result-json."
         ),
+    )
+    parser.add_argument(
+        "--loop",
+        action="store_true",
+        help=(
+            "Drain the planfile queue: keep fetching and running the next "
+            "ticket until the queue is idle, a ticket needs human input we "
+            "cannot satisfy, or --max-iterations is reached. Combine with "
+            "--interactive to also handle human tickets in the same run."
+        ),
+    )
+    parser.add_argument(
+        "--max-iterations",
+        type=int,
+        default=100,
+        help="Safety cap on the number of tickets --loop will process (default 100).",
     )
     parser.add_argument(
         "--watch",
@@ -151,6 +167,41 @@ def main() -> int:
         return 0
 
     if args.queue:
+        if args.loop:
+            def _progress(r, i):  # noqa: ANN001 — internal helper
+                ticket = r.ticket_id or "-"
+                kind = r.executor_kind or "-"
+                marker = {
+                    "completed": "✓",
+                    "failed": "✗",
+                    "waiting_input": "⏸",
+                    "idle": "•",
+                    "dry_run": "?",
+                    "unsupported_executor": "!",
+                    "planfile_error": "!",
+                }.get(r.status, "·")
+                print(f"  [{i:>3}] {marker} {r.status:<22} {ticket:<14} ({kind})")
+
+            loop_result = run_planfile_queue_loop(
+                project=args.project,
+                actor=args.actor,
+                queue_name=args.queue_name,
+                interactive=args.interactive,
+                max_iterations=args.max_iterations,
+                progress_callback=_progress,
+            )
+            print()
+            print(f"koru queue loop: {loop_result.summary()}")
+            if loop_result.completed:
+                print(f"  completed: {', '.join(loop_result.completed)}")
+            if loop_result.failed:
+                print(f"  failed:    {', '.join(loop_result.failed)}")
+            if loop_result.waiting:
+                print(f"  waiting:   {', '.join(loop_result.waiting)}")
+            return 0 if loop_result.last_status in {
+                "completed", "idle", "waiting_input", "dry_run"
+            } else 1
+
         result = run_next_planfile_task(
             project=args.project,
             actor=args.actor,

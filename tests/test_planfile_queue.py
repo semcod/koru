@@ -471,5 +471,193 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(prompt_calls, 0)
 
 
+class TestPlanfileQueueLoop(unittest.TestCase):
+    """Tests for run_planfile_queue_loop — the queue-draining driver."""
+
+    def _make_runner(self, ticket_sequence: list[dict | None]):
+        """Build a planfile_runner that returns each ticket in sequence on
+        successive 'ticket next' calls, and acks all other commands.
+        ``None`` entries cause 'No runnable ticket found'."""
+        next_calls = {"i": 0}
+        all_calls: list[list[str]] = []
+
+        def planfile_runner(command: list[str], _project) -> SimpleNamespace:
+            all_calls.append(command)
+            if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                idx = next_calls["i"]
+                next_calls["i"] += 1
+                if idx >= len(ticket_sequence) or ticket_sequence[idx] is None:
+                    return _ok("No runnable ticket found.")
+                return _ok(json.dumps(ticket_sequence[idx]))
+            return _ok()
+
+        return planfile_runner, all_calls
+
+    def test_loop_drains_three_shell_tickets_to_idle(self) -> None:
+        from koru.planfile_queue import run_planfile_queue_loop
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+
+            def make_ticket(tid: str) -> dict:
+                return {
+                    "id": tid,
+                    "name": tid,
+                    "executor": {"kind": "shell", "handler": "echo " + tid},
+                }
+
+            sequence = [make_ticket("L-1"), make_ticket("L-2"), make_ticket("L-3"), None]
+            planfile_runner, _ = self._make_runner(sequence)
+
+            def shell_runner(_cmd: str, _project) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="ok\n", stderr="")
+
+            iterations_seen: list[int] = []
+            result = run_planfile_queue_loop(
+                project=project,
+                planfile_runner=planfile_runner,
+                shell_runner=shell_runner,
+                progress_callback=lambda r, i: iterations_seen.append(i),
+            )
+
+            self.assertEqual(result.iterations, 4)
+            self.assertEqual(result.completed, ["L-1", "L-2", "L-3"])
+            self.assertEqual(result.failed, [])
+            self.assertEqual(result.waiting, [])
+            self.assertEqual(result.last_status, "idle")
+            self.assertEqual(iterations_seen, [1, 2, 3, 4])
+
+    def test_loop_breaks_on_waiting_input_without_interactive(self) -> None:
+        from koru.planfile_queue import run_planfile_queue_loop
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            shell_t = {
+                "id": "L-10",
+                "name": "shell first",
+                "executor": {"kind": "shell", "handler": "echo a"},
+            }
+            human_t = {
+                "id": "L-11",
+                "name": "human prompt",
+                "executor": {"kind": "human"},
+                "inputs": {"prompt": "Need decision"},
+            }
+            never_reached = {
+                "id": "L-12",
+                "name": "should not run",
+                "executor": {"kind": "shell", "handler": "echo c"},
+            }
+            planfile_runner, _ = self._make_runner([shell_t, human_t, never_reached, None])
+
+            def shell_runner(_cmd, _proj) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="ok", stderr="")
+
+            result = run_planfile_queue_loop(
+                project=project,
+                planfile_runner=planfile_runner,
+                shell_runner=shell_runner,
+            )
+
+            self.assertEqual(result.completed, ["L-10"])
+            self.assertEqual(result.waiting, ["L-11"])
+            self.assertEqual(result.last_status, "waiting_input")
+            self.assertEqual(result.iterations, 2)  # never_reached not seen
+
+    def test_loop_continues_past_failed_ticket(self) -> None:
+        """A failing ticket should not stop the loop — next ticket runs."""
+        from koru.planfile_queue import run_planfile_queue_loop
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            failing = {
+                "id": "L-20",
+                "name": "failing",
+                "executor": {"kind": "shell", "handler": "false"},
+            }
+            ok_one = {
+                "id": "L-21",
+                "name": "ok",
+                "executor": {"kind": "shell", "handler": "true"},
+            }
+            planfile_runner, _ = self._make_runner([failing, ok_one, None])
+
+            def shell_runner(cmd: str, _proj) -> SimpleNamespace:
+                if cmd == "false":
+                    return SimpleNamespace(returncode=1, stdout="", stderr="boom")
+                return SimpleNamespace(returncode=0, stdout="ok", stderr="")
+
+            result = run_planfile_queue_loop(
+                project=project,
+                planfile_runner=planfile_runner,
+                shell_runner=shell_runner,
+            )
+
+            self.assertEqual(result.failed, ["L-20"])
+            self.assertEqual(result.completed, ["L-21"])
+            self.assertEqual(result.last_status, "idle")
+            self.assertEqual(result.iterations, 3)
+
+    def test_loop_respects_max_iterations_cap(self) -> None:
+        from koru.planfile_queue import run_planfile_queue_loop
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            tickets = [
+                {"id": f"L-{n}", "name": f"task {n}",
+                 "executor": {"kind": "shell", "handler": "echo " + str(n)}}
+                for n in range(10)
+            ]
+            planfile_runner, _ = self._make_runner(tickets)
+
+            def shell_runner(_cmd, _proj) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            result = run_planfile_queue_loop(
+                project=project,
+                planfile_runner=planfile_runner,
+                shell_runner=shell_runner,
+                max_iterations=3,
+            )
+
+            self.assertEqual(result.iterations, 3)
+            self.assertEqual(len(result.completed), 3)
+            self.assertEqual(result.last_status, "completed")
+
+    def test_loop_with_interactive_drains_human_tickets(self) -> None:
+        from koru.planfile_queue import run_planfile_queue_loop
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            sequence = [
+                {"id": "L-30", "name": "first human",
+                 "executor": {"kind": "human"}, "inputs": {"prompt": "decide A?"}},
+                {"id": "L-31", "name": "second human",
+                 "executor": {"kind": "human"}, "inputs": {"prompt": "decide B?"}},
+                None,
+            ]
+            planfile_runner, _ = self._make_runner(sequence)
+
+            def prompt_runner(_p, tid: str) -> str | None:
+                return f"answer for {tid}"
+
+            result = run_planfile_queue_loop(
+                project=project,
+                planfile_runner=planfile_runner,
+                interactive=True,
+                prompt_runner=prompt_runner,
+            )
+
+            self.assertEqual(result.completed, ["L-30", "L-31"])
+            self.assertEqual(result.waiting, [])
+            self.assertEqual(result.last_status, "idle")
+
+    def test_loop_validates_max_iterations(self) -> None:
+        from koru.planfile_queue import run_planfile_queue_loop
+
+        with self.assertRaisesRegex(ValueError, "max_iterations"):
+            run_planfile_queue_loop(project=Path("/tmp"), max_iterations=0)
+
+
 if __name__ == "__main__":
     unittest.main()

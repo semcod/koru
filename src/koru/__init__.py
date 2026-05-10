@@ -9,11 +9,17 @@ from .bootstrap import (
     validate_flat_pipeline,
 )
 from .loop import LoopReport, RunRecord, discover_repositories, run_closed_loop
-from .planfile_queue import QueueRunResult, run_next_planfile_task
+from .planfile_queue import (
+    QueueLoopResult,
+    QueueRunResult,
+    run_next_planfile_task,
+    run_planfile_queue_loop,
+)
 
 __all__ = [
     "ImportReport",
     "LoopReport",
+    "QueueLoopResult",
     "QueueRunResult",
     "RunRecord",
     "ValidationError",
@@ -23,5 +29,6 @@ __all__ = [
     "materialize_to_planfile",
     "run_closed_loop",
     "run_next_planfile_task",
+    "run_planfile_queue_loop",
     "validate_flat_pipeline",
 ]

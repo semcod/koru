@@ -285,6 +285,57 @@ echo "Yes, proceed with reusable-only scope." | \
   koru --queue --project . --interactive --actor ci-bot
 ```
 
+### Drain the queue with `--loop`
+
+`koru --queue` runs **one** ticket per invocation. For long pipelines
+(e.g. the 15-task bootstrap example), use `--loop` to drain the queue
+in a single command:
+
+```bash
+koru --queue --project . --loop --max-iterations 50
+#   [  1] ✓ completed              KORU-B-001     (shell)
+#   [  2] ✓ completed              KORU-B-002     (shell)
+#   [  3] ✓ completed              KORU-B-010     (shell)
+#   [  4] ✓ completed              KORU-B-011     (shell)
+#   [  5] ⏸ waiting_input          KORU-B-020     (human)
+#
+# koru queue loop: iterations=5 completed=4 failed=0 waiting=1 last_status=waiting_input
+#   completed: KORU-B-001, KORU-B-002, KORU-B-010, KORU-B-011
+#   waiting:   KORU-B-020
+```
+
+The loop terminates on:
+
+| `last_status` | Reason | Exit code |
+|---|---|---|
+| `idle` | Queue is fully drained | 0 |
+| `waiting_input` | A `human` ticket needs a person | 0 |
+| `unsupported_executor` | Encountered `llm`/`api`/`mcp` (not yet wired) | 1 |
+| `planfile_error` | `planfile ticket next` itself failed | 1 |
+| `failed` (max-iterations hit) | Cap reached without idling | 1 |
+
+**`failed` tickets do NOT halt the loop** — koru records them and moves
+on. This matches the design that one bad ticket should not block the
+rest of the pipeline.
+
+### Drain shell tickets AND answer humans in one shot
+
+Compose `--loop` with `--interactive` to get the most useful agent UX:
+
+```bash
+koru --queue --project . --loop --interactive --actor c2004-koru
+# … runs every shell ticket immediately,
+# … pauses on each human ticket so you can type the answer,
+# … and continues until idle or you Ctrl-C.
+```
+
+Or pipe answers in for scripted runs:
+
+```bash
+{ echo "yes — proceed"; echo "sk-or-v1-MY-KEY"; } | \
+  koru --queue --project . --loop --interactive --actor ci-bot
+```
+
 ### Healing-webhook integration (auto-tickets)
 
 When alertmanager fires (e.g., `EndpointDown`), the healing-webhook
