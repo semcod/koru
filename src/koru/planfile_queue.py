@@ -70,6 +70,26 @@ class ApiRunResult:
     headers: dict[str, str]
 
 
+@dataclass(frozen=True)
+class LlmRunResult:
+    """Result of an OpenRouter (or compatible) chat-completion call.
+
+    ``stdout`` carries the assistant's text content (extracted from
+    ``choices[0].message.content``) so the rest of the queue runner can
+    treat it like any other executor's stdout. ``model`` and ``usage``
+    expose model/token info for cost tracking and ``raw`` carries the
+    full JSON response in case downstream tooling wants it.
+    """
+
+    returncode: int
+    stdout: str
+    stderr: str
+    status_code: int
+    model: str
+    usage: dict[str, int]
+    raw: dict[str, Any]
+
+
 def _planfile_env() -> dict[str, str]:
     """Force a wide, non-TTY console so planfile's Rich output stays one
     JSON object per line. Without this, long handler strings get wrapped
@@ -144,6 +164,126 @@ def _run_api_request(request: dict[str, Any], _project: Path) -> ApiRunResult:
         )
 
 
+_DEFAULT_LLM_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
+_DEFAULT_LLM_MODEL = "openai/gpt-4o-mini"
+
+
+def _run_llm_request(request: dict[str, Any], _project: Path) -> LlmRunResult:
+    """Call an OpenAI-compatible chat-completion endpoint (default OpenRouter).
+
+    Reads ``OPENROUTER_API_KEY`` from the environment when ``endpoint``
+    points at openrouter.ai; falls back to ``OPENAI_API_KEY`` for the
+    OpenAI endpoint. Honours ``KORU_LLM_ENDPOINT`` for self-hosted
+    proxies (e.g. an Ollama OpenAI-compat shim).
+    """
+    endpoint = str(
+        request.get("endpoint")
+        or os.getenv("KORU_LLM_ENDPOINT")
+        or _DEFAULT_LLM_ENDPOINT
+    )
+    model = str(request.get("model") or _DEFAULT_LLM_MODEL)
+
+    if "openrouter.ai" in endpoint:
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        key_var = "OPENROUTER_API_KEY"
+    else:
+        api_key = os.getenv("OPENAI_API_KEY") or os.getenv("OPENROUTER_API_KEY")
+        key_var = "OPENAI_API_KEY"
+
+    if not api_key:
+        return LlmRunResult(
+            returncode=1,
+            stdout="",
+            stderr=(
+                f"{key_var} is not set — refusing to call {endpoint}. "
+                "Export the key (e.g. via .env) and retry, "
+                "or use executor.kind=human for this ticket."
+            ),
+            status_code=0,
+            model=model,
+            usage={},
+            raw={},
+        )
+
+    messages: list[dict[str, str]] = []
+    system = request.get("system_prompt")
+    if system:
+        messages.append({"role": "system", "content": str(system)})
+    messages.append({"role": "user", "content": str(request["prompt"])})
+
+    body: dict[str, Any] = {
+        "model": model,
+        "messages": messages,
+        "temperature": float(request.get("temperature", 0.0)),
+    }
+    if request.get("max_tokens") is not None:
+        body["max_tokens"] = int(request["max_tokens"])
+    schema = request.get("response_schema")
+    if schema:
+        body["response_format"] = {
+            "type": "json_schema",
+            "json_schema": {"name": "koru_response", "schema": schema, "strict": True},
+        }
+
+    headers = {
+        "authorization": f"Bearer {api_key}",
+        "content-type": "application/json",
+    }
+    referer = os.getenv("KORU_LLM_HTTP_REFERER")
+    title = os.getenv("KORU_LLM_X_TITLE", "koru")
+    if "openrouter.ai" in endpoint:
+        if referer:
+            headers["http-referer"] = referer
+        headers["x-title"] = title
+
+    api_request = urllib.request.Request(
+        endpoint,
+        data=json.dumps(body).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    timeout = float(request.get("timeout_seconds") or 60.0)
+
+    try:
+        with urllib.request.urlopen(api_request, timeout=timeout) as response:
+            payload = json.loads(response.read().decode("utf-8", errors="replace"))
+            content = ""
+            choices = payload.get("choices") or []
+            if choices:
+                msg = choices[0].get("message") or {}
+                content = str(msg.get("content") or "")
+            return LlmRunResult(
+                returncode=0 if content else 1,
+                stdout=content,
+                stderr="" if content else "LLM returned empty content",
+                status_code=int(response.status),
+                model=str(payload.get("model") or model),
+                usage=dict(payload.get("usage") or {}),
+                raw=payload,
+            )
+    except urllib.error.HTTPError as exc:
+        text = exc.read().decode("utf-8", errors="replace")
+        return LlmRunResult(
+            returncode=1,
+            stdout="",
+            stderr=f"HTTP {exc.code}: {text[:500]}",
+            status_code=int(exc.code),
+            model=model,
+            usage={},
+            raw={},
+        )
+    except urllib.error.URLError as exc:
+        return LlmRunResult(
+            returncode=1,
+            stdout="",
+            stderr=str(exc.reason),
+            status_code=0,
+            model=model,
+            usage={},
+            raw={},
+        )
+
+
 def _planfile_command(
     project: Path,
     args: Sequence[str],
@@ -170,6 +310,33 @@ def _ticket_command(ticket: dict) -> str | None:
     inputs = ticket.get("inputs") or {}
     executor = ticket.get("executor") or {}
     return inputs.get("script") or executor.get("handler")
+
+
+def _ticket_llm_request(ticket: dict) -> dict[str, Any] | None:
+    """Translate an executor.kind=llm ticket into an LLM HTTP call spec.
+
+    Returns None when the ticket lacks the minimum signal (a prompt to
+    send), so the caller can fall back to ``planfile ticket input``.
+    """
+    inputs = ticket.get("inputs") or {}
+    executor = ticket.get("executor") or {}
+    prompt = (
+        inputs.get("prompt")
+        or ticket.get("description")
+        or ticket.get("name")
+    )
+    if not prompt:
+        return None
+    return {
+        "endpoint": inputs.get("llm_endpoint") or executor.get("handler"),
+        "model": inputs.get("llm_model"),
+        "prompt": str(prompt),
+        "system_prompt": inputs.get("system_prompt"),
+        "max_tokens": inputs.get("llm_max_tokens"),
+        "temperature": inputs.get("llm_temperature", 0.0),
+        "response_schema": inputs.get("response_schema"),
+        "timeout_seconds": inputs.get("llm_timeout_seconds") or 60.0,
+    }
 
 
 def _ticket_api_request(ticket: dict) -> dict[str, Any] | None:
@@ -219,13 +386,17 @@ def _default_human_prompt(prompt: str, ticket_id: str) -> str | None:
 
 
 def _result_json(result: CommandResult) -> str:
-    payload = {
+    payload: dict[str, Any] = {
         "exit_code": result.returncode,
         "stdout": result.stdout[-4000:],
         "stderr": result.stderr[-4000:],
     }
     if hasattr(result, "status_code"):
         payload["status_code"] = result.status_code  # type: ignore[attr-defined]
+    if hasattr(result, "model"):
+        payload["llm_model"] = result.model  # type: ignore[attr-defined]
+    if hasattr(result, "usage"):
+        payload["llm_usage"] = result.usage  # type: ignore[attr-defined]
     return json.dumps(payload)
 
 
@@ -239,6 +410,7 @@ def run_next_planfile_task(
     planfile_runner: Callable[[Sequence[str], Path], CommandResult] = _run_process,
     shell_runner: Callable[[str, Path], CommandResult] = _run_shell_command,
     api_runner: Callable[[dict[str, Any], Path], CommandResult] = _run_api_request,
+    llm_runner: Callable[[dict[str, Any], Path], CommandResult] = _run_llm_request,
     prompt_runner: Callable[[str, str], str | None] = _default_human_prompt,
 ) -> QueueRunResult:
     """Execute one runnable planfile ticket, if any.
@@ -329,7 +501,7 @@ def run_next_planfile_task(
             message=answer,
         )
 
-    if executor_kind not in {"api", "shell"}:
+    if executor_kind not in {"api", "shell", "llm"}:
         return QueueRunResult(
             status="unsupported_executor",
             ticket_id=ticket_id,
@@ -340,6 +512,9 @@ def run_next_planfile_task(
     if executor_kind == "api":
         action = _ticket_api_request(ticket)
         missing_prompt = "API ticket is missing inputs.api_endpoint or executor.handler"
+    elif executor_kind == "llm":
+        action = _ticket_llm_request(ticket)
+        missing_prompt = "LLM ticket is missing inputs.prompt (or description / name)"
     else:
         action = _ticket_command(ticket)
         missing_prompt = "Shell ticket is missing inputs.script or executor.handler"
@@ -380,6 +555,9 @@ def run_next_planfile_task(
     if executor_kind == "api":
         result = api_runner(action, project)
         action_label = f"{action['method']} {action['endpoint']}"
+    elif executor_kind == "llm":
+        result = llm_runner(action, project)
+        action_label = f"llm {action.get('model') or _DEFAULT_LLM_MODEL}"
     else:
         result = shell_runner(str(action), project)
         action_label = str(action)
@@ -452,6 +630,7 @@ def run_planfile_queue_loop(
     planfile_runner: Callable[[Sequence[str], Path], CommandResult] = _run_process,
     shell_runner: Callable[[str, Path], CommandResult] = _run_shell_command,
     api_runner: Callable[[dict[str, Any], Path], CommandResult] = _run_api_request,
+    llm_runner: Callable[[dict[str, Any], Path], CommandResult] = _run_llm_request,
     prompt_runner: Callable[[str, str], str | None] = _default_human_prompt,
 ) -> QueueLoopResult:
     """Drain the planfile queue by repeatedly calling run_next_planfile_task.
@@ -486,6 +665,7 @@ def run_planfile_queue_loop(
             planfile_runner=planfile_runner,
             shell_runner=shell_runner,
             api_runner=api_runner,
+            llm_runner=llm_runner,
             prompt_runner=prompt_runner,
         )
         if progress_callback is not None:

@@ -336,6 +336,88 @@ Or pipe answers in for scripted runs:
   koru --queue --project . --loop --interactive --actor ci-bot
 ```
 
+### Auto-answer tickets with an LLM (`executor.kind=llm`)
+
+Tickets with `executor.kind=llm` are sent to an OpenAI-compatible
+chat-completion endpoint — by default OpenRouter
+(`https://openrouter.ai/api/v1/chat/completions`). The assistant's
+text reply lands in the ticket's `outputs.result`/`stdout`, and token
+usage is stored in `outputs.result.llm_usage`.
+
+Minimal LLM-backed ticket:
+
+```yaml
+- id: PLF-067-LLM
+  name: "Decide refactor scope"
+  status: open
+  priority: high
+  executor:
+    kind: llm
+    mode: automatic
+  execution:
+    queue: c2004-refactor
+    state: ready
+  inputs:
+    llm_model: openai/gpt-4o-mini
+    prompt: |
+      Should this refactor wave move only reusable frontend/backend
+      code to packages/, while connect-*/** keeps module-specific UI,
+      routes, scenarios, and runtime wiring? Answer 'yes' or 'no'
+      with one short sentence of rationale.
+    # Optional: structured response (sent as response_format json_schema)
+    response_schema:
+      type: object
+      required: [decision, rationale]
+      properties:
+        decision: {type: string, enum: [yes, no]}
+        rationale: {type: string}
+```
+
+Required environment:
+
+```bash
+# OpenRouter (default endpoint):
+export OPENROUTER_API_KEY="sk-or-v1-..."
+
+# Or use OpenAI directly via inputs.llm_endpoint or KORU_LLM_ENDPOINT:
+export OPENAI_API_KEY="sk-..."
+export KORU_LLM_ENDPOINT="https://api.openai.com/v1/chat/completions"
+
+# Optional OpenRouter ranking metadata:
+export KORU_LLM_HTTP_REFERER="https://github.com/your-org"
+export KORU_LLM_X_TITLE="koru-c2004-refactor"
+```
+
+Run it like any other queue task:
+
+```bash
+koru --queue --project . --actor c2004-koru
+# koru queue: status=completed ticket=PLF-067-LLM executor=llm
+# llm openai/gpt-4o-mini
+
+# Or drain everything (shell + llm + human via --interactive) in one shot:
+koru --queue --project . --loop --interactive --actor c2004-koru
+```
+
+Supported `inputs.*` fields:
+
+| Field | Default | Purpose |
+|---|---|---|
+| `prompt` | (required) | User message; falls back to `description` then `name` |
+| `llm_model` | `openai/gpt-4o-mini` | OpenRouter or OpenAI model ID |
+| `llm_endpoint` | OpenRouter | Override per-ticket (or via `executor.handler`) |
+| `system_prompt` | – | Sent as the system message |
+| `llm_max_tokens` | – | Cap on response length |
+| `llm_temperature` | `0.0` | Determinism (0 = greedy) |
+| `response_schema` | – | JSON Schema → forces structured JSON output |
+| `llm_timeout_seconds` | `60.0` | Per-call timeout |
+
+Safety: when neither `OPENROUTER_API_KEY` nor `OPENAI_API_KEY` is set,
+koru refuses the call and returns `status=failed` with a clear message
+("OPENROUTER_API_KEY is not set — refusing to call …"). No silent
+fallthrough to a human prompt — the failure is logged on the ticket via
+`planfile ticket fail`, so it shows up in dashboards.
+
 ### Healing-webhook integration (auto-tickets)
 
 When alertmanager fires (e.g., `EndpointDown`), the healing-webhook

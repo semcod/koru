@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -280,8 +281,8 @@ class TestPlanfileQueue(unittest.TestCase):
             project = Path(tmp_dir)
             ticket = {
                 "id": "PLF-020",
-                "name": "Future LLM task",
-                "executor": {"kind": "llm", "mode": "automatic"},
+                "name": "Future MCP task",
+                "executor": {"kind": "mcp", "mode": "automatic"},
             }
 
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
@@ -292,7 +293,7 @@ class TestPlanfileQueue(unittest.TestCase):
             result = run_next_planfile_task(project=project, planfile_runner=planfile_runner)
 
             self.assertEqual(result.status, "unsupported_executor")
-            self.assertEqual(result.executor_kind, "llm")
+            self.assertEqual(result.executor_kind, "mcp")
             self.assertEqual(result.ticket_id, "PLF-020")
 
     def test_shell_ticket_without_command_requests_input(self) -> None:
@@ -469,6 +470,213 @@ class TestPlanfileQueue(unittest.TestCase):
 
             self.assertEqual(result.status, "waiting_input")
             self.assertEqual(prompt_calls, 0)
+
+
+class TestPlanfileQueueLlm(unittest.TestCase):
+    """Tests for the executor.kind=llm path."""
+
+    def _llm_ticket(self, **overrides) -> dict:
+        ticket = {
+            "id": "LLM-001",
+            "name": "Decide refactor scope",
+            "executor": {"kind": "llm", "mode": "automatic"},
+            "inputs": {
+                "prompt": "Should we move only reusable code to packages/?",
+                "llm_model": "openai/gpt-4o-mini",
+            },
+        }
+        if overrides:
+            ticket = {**ticket, **overrides}
+        return ticket
+
+    def test_llm_ticket_runs_lifecycle_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = self._llm_ticket()
+            calls: list[list[str]] = []
+
+            def planfile_runner(command, _project) -> SimpleNamespace:
+                calls.append(command)
+                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                    return _ok(json.dumps(ticket))
+                return _ok()
+
+            captured: dict[str, dict] = {}
+
+            def llm_runner(request: dict, _project) -> SimpleNamespace:
+                captured["request"] = request
+                return SimpleNamespace(
+                    returncode=0,
+                    stdout="Yes — move only reusable code to packages/.",
+                    stderr="",
+                    status_code=200,
+                    model="openai/gpt-4o-mini",
+                    usage={"prompt_tokens": 42, "completion_tokens": 18},
+                )
+
+            result = run_next_planfile_task(
+                project=project,
+                actor="koru-llm",
+                planfile_runner=planfile_runner,
+                llm_runner=llm_runner,
+            )
+
+            self.assertEqual(result.status, "completed")
+            self.assertEqual(result.executor_kind, "llm")
+            self.assertEqual(result.ticket_id, "LLM-001")
+            # llm_runner received the parsed prompt + model
+            self.assertEqual(
+                captured["request"]["prompt"],
+                "Should we move only reusable code to packages/?",
+            )
+            self.assertEqual(captured["request"]["model"], "openai/gpt-4o-mini")
+            # planfile lifecycle: claim -> start -> complete
+            tail = [_ticket_args(c) for c in calls]
+            self.assertIn(
+                ["ticket", "claim", "LLM-001", "--assigned-to", "koru-llm"], tail
+            )
+            self.assertIn(
+                ["ticket", "start", "LLM-001", "--assigned-to", "koru-llm"], tail
+            )
+            complete_args = next(
+                args for args in tail if args[:3] == ["ticket", "complete", "LLM-001"]
+            )
+            # --result-json contains LLM-specific fields
+            result_json_idx = complete_args.index("--result-json") + 1
+            payload = json.loads(complete_args[result_json_idx])
+            self.assertEqual(payload["llm_model"], "openai/gpt-4o-mini")
+            self.assertEqual(payload["llm_usage"]["prompt_tokens"], 42)
+            self.assertIn("Yes", payload["stdout"])
+
+    def test_llm_ticket_failure_marks_failed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = self._llm_ticket()
+            calls: list[list[str]] = []
+
+            def planfile_runner(command, _project) -> SimpleNamespace:
+                calls.append(command)
+                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                    return _ok(json.dumps(ticket))
+                return _ok()
+
+            def llm_runner(_request, _project) -> SimpleNamespace:
+                return SimpleNamespace(
+                    returncode=1,
+                    stdout="",
+                    stderr="HTTP 401: invalid api key",
+                    status_code=401,
+                    model="openai/gpt-4o-mini",
+                    usage={},
+                )
+
+            result = run_next_planfile_task(
+                project=project,
+                planfile_runner=planfile_runner,
+                llm_runner=llm_runner,
+            )
+
+            self.assertEqual(result.status, "failed")
+            self.assertEqual(result.executor_kind, "llm")
+            tail = [_ticket_args(c) for c in calls]
+            fail_call = next(
+                args for args in tail if args[:3] == ["ticket", "fail", "LLM-001"]
+            )
+            self.assertIn("HTTP 401", " ".join(fail_call))
+
+    def test_llm_ticket_without_prompt_requests_input(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = {
+                "id": "LLM-002",
+                # name & description empty -> no prompt at all
+                "name": "",
+                "description": "",
+                "executor": {"kind": "llm"},
+                "inputs": {"llm_model": "openai/gpt-4o-mini"},
+            }
+            calls: list[list[str]] = []
+
+            def planfile_runner(command, _project) -> SimpleNamespace:
+                calls.append(command)
+                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                    return _ok(json.dumps(ticket))
+                return _ok()
+
+            def llm_runner(_request, _project) -> SimpleNamespace:
+                self.fail("llm_runner should NOT be called when prompt is missing")
+
+            result = run_next_planfile_task(
+                project=project,
+                planfile_runner=planfile_runner,
+                llm_runner=llm_runner,
+            )
+
+            self.assertEqual(result.status, "waiting_input")
+            self.assertEqual(result.executor_kind, "llm")
+            self.assertTrue(
+                any(
+                    _ticket_args(c)[:3] == ["ticket", "input", "LLM-002"]
+                    for c in calls
+                )
+            )
+
+    def test_llm_dry_run_returns_request_without_calling(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = self._llm_ticket()
+
+            def planfile_runner(command, _project) -> SimpleNamespace:
+                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                    return _ok(json.dumps(ticket))
+                return _ok()
+
+            llm_calls = 0
+
+            def llm_runner(_request, _project) -> SimpleNamespace:
+                nonlocal llm_calls
+                llm_calls += 1
+                return SimpleNamespace(
+                    returncode=0, stdout="x", stderr="",
+                    status_code=200, model="x", usage={},
+                )
+
+            result = run_next_planfile_task(
+                project=project,
+                dry_run=True,
+                planfile_runner=planfile_runner,
+                llm_runner=llm_runner,
+            )
+
+            self.assertEqual(result.status, "dry_run")
+            self.assertEqual(llm_calls, 0)
+            payload = json.loads(result.message)
+            self.assertEqual(payload["model"], "openai/gpt-4o-mini")
+            self.assertEqual(
+                payload["prompt"],
+                "Should we move only reusable code to packages/?",
+            )
+
+    def test_llm_default_runner_without_api_key_returns_clear_error(self) -> None:
+        """When OPENROUTER_API_KEY is unset, the default runner must
+        refuse to make a network call and return a helpful error."""
+        from koru.planfile_queue import _run_llm_request
+
+        env_backup = {
+            k: os.environ.pop(k, None)
+            for k in ("OPENROUTER_API_KEY", "OPENAI_API_KEY", "KORU_LLM_ENDPOINT")
+        }
+        try:
+            request = {"prompt": "hi", "model": "openai/gpt-4o-mini"}
+            result = _run_llm_request(request, Path("/tmp"))
+        finally:
+            for k, v in env_backup.items():
+                if v is not None:
+                    os.environ[k] = v
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.status_code, 0)
+        self.assertIn("OPENROUTER_API_KEY", result.stderr)
 
 
 class TestPlanfileQueueLoop(unittest.TestCase):

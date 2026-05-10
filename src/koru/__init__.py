@@ -10,6 +10,7 @@ from .bootstrap import (
 )
 from .loop import LoopReport, RunRecord, discover_repositories, run_closed_loop
 from .planfile_queue import (
+    LlmRunResult,
     QueueLoopResult,
     QueueRunResult,
     run_next_planfile_task,
@@ -18,6 +19,7 @@ from .planfile_queue import (
 
 __all__ = [
     "ImportReport",
+    "LlmRunResult",
     "LoopReport",
     "QueueLoopResult",
     "QueueRunResult",
