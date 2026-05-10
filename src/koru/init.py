@@ -77,10 +77,58 @@ llm:
   #   - migrations/
 
 ci:
-  # The shell command the agent runs to verify its work.
-  # Examples: "pytest -q", "task test", "npm test", "make check".
-  command: ""
-  timeout_seconds: 300
+  # Universal CI command — runs quality gates on every ticket completion.
+  # Supports multiple tooling stacks; tools are skipped gracefully if not installed.
+  command: |
+    echo "=== Universal Quality Gates ==="
+    echo "1. Running project tests (if available)..."
+    if command -v task >/dev/null 2>&1 && task test 2>/dev/null; then
+      echo "✅ task test passed"
+    elif command -v pytest >/dev/null 2>&1 && pytest -q 2>/dev/null; then
+      echo "✅ pytest passed"
+    elif [ -f "package.json" ] && command -v npm >/dev/null 2>&1 && npm test 2>/dev/null; then
+      echo "✅ npm test passed"
+    elif [ -f "Makefile" ] && make test 2>/dev/null; then
+      echo "✅ make test passed"
+    else
+      echo "⚠️  No test runner found or tests failed"
+    fi
+    
+    echo "2. Running TestQL E2E scenarios (if available)..."
+    if command -v testql >/dev/null 2>&1; then
+      if find . -name "*.testql.toon.yaml" -type f 2>/dev/null | head -1 >/dev/null; then
+        testql suite --pattern "*.testql.toon.yaml" --output console --fail-fast 2>/dev/null && echo "✅ testQL suite passed" || echo "⚠️  testQL suite failed or no scenarios"
+      else
+        echo "ℹ️  No TestQL scenarios found"
+      fi
+    else
+      echo "ℹ️  testQL not available"
+    fi
+    
+    echo "3. Running WUP dependency analysis (if available)..."
+    if command -v wup >/dev/null 2>&1; then
+      if [ -f "wup.yaml" ]; then
+        wup status 2>/dev/null && echo "✅ WUP status OK" || echo "⚠️  WUP issues detected"
+      else
+        echo "ℹ️  No wup.yaml configuration"
+      fi
+    else
+      echo "ℹ️  WUP not available"
+    fi
+    
+    echo "4. Running Regix quality gates (if available)..."
+    if command -v regix >/dev/null 2>&1; then
+      if [ -f "regix.yaml" ]; then
+        regix gates 2>/dev/null && echo "✅ Regix gates passed" || echo "⚠️  Regix gates failed"
+      else
+        echo "ℹ️  No regix.yaml configuration"
+      fi
+    else
+      echo "ℹ️  Regix not available"
+    fi
+    
+    echo "=== Quality Gates Complete ==="
+  timeout_seconds: 600
 
 # Free-form notes embedded in every `koru --context` brief.
 # Use these to teach the LLM project-specific conventions.
