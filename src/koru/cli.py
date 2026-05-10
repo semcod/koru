@@ -11,6 +11,7 @@ from pathlib import Path
 from .bootstrap import import_flat_pipeline
 from .context import build_context, render_markdown_handoff
 from .events import emit_management_event
+from .init import init_project
 from .loop import discover_repositories, run_closed_loop
 from .planfile_queue import run_next_planfile_task, run_planfile_queue_loop
 from .run_log import open_run_log_eagerly
@@ -136,6 +137,17 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Overwrite an existing sprint file during --bootstrap.",
     )
     parser.add_argument(
+        "--init",
+        action="store_true",
+        help=(
+            "Initialise a koru-managed project in --project: import a "
+            "flat pipeline (or generate a 2-ticket starter scaffold), "
+            "write .planfile/.koru/policy.yaml stub, and add "
+            ".planfile/.koru/ to .gitignore. Pass --from <yaml> to "
+            "import an existing pipeline; --force to re-init."
+        ),
+    )
+    parser.add_argument(
         "--context",
         action="store_true",
         help=(
@@ -166,8 +178,64 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _is_bare_invocation(args: argparse.Namespace) -> bool:
+    """True when the user typed only ``koru`` (or ``koru --project P``).
+
+    Bare = no action flag (init/bootstrap/context/queue/watch) and no
+    ``--command``. We route this to the markdown brief — the friendliest
+    starting point for both humans and LLM agents.
+    """
+    return not (
+        args.init
+        or args.bootstrap
+        or args.context
+        or args.queue
+        or args.watch
+        or args.command
+    )
+
+
 def main() -> int:
     args = _build_parser().parse_args()
+
+    # Friendliest default: ``koru`` with no action flag emits the
+    # markdown brief. LLM agents pasted into a chat just see the rules.
+    if _is_bare_invocation(args):
+        args.context = True
+        args.output_format = "markdown"
+
+    if args.init:
+        try:
+            report = init_project(
+                args.project,
+                from_file=args.from_file,
+                sprint=args.sprint,
+                force=args.force,
+            )
+        except FileExistsError as exc:
+            print(f"koru init: {exc}")
+            return 1
+        except (FileNotFoundError, ValueError) as exc:
+            print(f"koru init: {exc}")
+            return 2
+        print(f"koru init: ✓ project initialised at {report.project}")
+        print(report.summary())
+        print()
+        print("Next: run `koru` to get the LLM brief, or "
+              "`koru --queue --loop` to drain the starter sprint.")
+        emit_management_event(
+            tool="koru.init",
+            action="completed",
+            status="completed",
+            message=report.summary(),
+            queue=args.queue_name,
+            details={
+                "project": str(args.project),
+                "sprint": args.sprint,
+                "used_starter_pipeline": report.used_starter_pipeline,
+            },
+        )
+        return 0
 
     if args.context:
         ctx = build_context(

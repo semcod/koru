@@ -5,10 +5,10 @@
 ## AI Cost Tracking
 
 ![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$2.10-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-4.6h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$2.40-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-6.3h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $2.1000 (14 commits)
-- 👤 **Human dev:** ~$461 (4.6h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $2.4000 (16 commits)
+- 👤 **Human dev:** ~$633 (6.3h @ $100/h, 30min dedup)
 
 Generated on 2026-05-10 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -39,6 +39,25 @@ A meta-orchestrator that coordinates **LLM-augmented refactor tools** with
         ↑                                                  │
         └─────────── closed-loop feedback ─────────────────┘
 ```
+
+## Quick start — start an LLM session in 3 commands
+
+```bash
+cd /path/to/your/project
+koru --init                # 1. set up .planfile/ + .koru/ + .gitignore
+koru                       # 2. print the LLM brief (paste into Cascade/Cursor/aider)
+koru --queue --loop        # 3. drain the queue (the agent works on each ticket)
+```
+
+That is the entire onboarding. **`koru` (no args) is the command an LLM
+agent runs at the start of every session** — the markdown brief it
+prints contains the active ticket, the policy gates, and the exact
+`planfile ticket …` commands the agent is allowed to use. Nothing
+else needs to be memorised.
+
+If the project is not initialised yet, `koru` (no args) detects this
+and prints a **⚠ Setup required** section with the exact `koru --init`
+command to run — the LLM never has to guess.
 
 ## Two operational modes
 
@@ -221,7 +240,12 @@ koru artefacts elsewhere, please open an issue.
 
 When an LLM agent (Cascade, Cursor, aider, claude-code, local model, …)
 drives a koru-managed project, it must **read its instructions from
-koru, not from the human chat**. The contract is delivered by:
+koru, not from the human chat**.
+
+The agent's first command in every session is just `koru` — the
+markdown brief that comes back is the entire contract. If the project
+has never been initialised, the brief leads with **⚠ Setup required**
+and the exact `koru --init` command. The contract is delivered by:
 
 ```bash
 koru --context --project .                     # JSON brief (machine-readable)

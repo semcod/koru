@@ -131,33 +131,56 @@ def build_context(
     project = project.resolve()
     resolved_policy = policy if policy is not None else load_policy(project)
 
-    # Locate the ticket of interest.
-    if ticket_id:
-        ticket_args = ["ticket", "show", ticket_id, "--format", "json"]
-    else:
-        ticket_args = ["ticket", "next", "--format", "json"]
-        if queue_name:
-            ticket_args.extend(["--queue", queue_name])
-    ticket_proc = _run_planfile(project, ticket_args, runner=planfile_runner)
+    # Pre-flight: a project is "initialised" only when BOTH the planfile
+    # config and at least one sprint YAML exist. Calling planfile when
+    # the project is not initialised is harmful — planfile auto-creates
+    # a half-state config.yaml and the user ends up in an ambiguous
+    # state where `--init` then refuses with "already exists".
+    pf = planfile_dir(project)
+    sprints_dir = pf / "sprints"
+    planfile_present = (
+        (pf / "config.yaml").exists()
+        and sprints_dir.is_dir()
+        and any(sprints_dir.glob("*.yaml"))
+    )
+
     ticket_data: dict[str, Any] | None = None
     ticket_error: str | None = None
-    if ticket_proc.returncode == 0:
-        ticket_data = _safe_json(ticket_proc.stdout)
-        if ticket_data is None:
-            stripped = (ticket_proc.stdout or "").strip()
-            if "No runnable ticket" in stripped or not stripped:
-                ticket_data = None
-                ticket_error = "queue is idle"
-            else:
-                ticket_error = "planfile output was not JSON"
+
+    if not planfile_present:
+        ticket_error = "project not initialised"
     else:
-        ticket_error = (ticket_proc.stderr or "planfile error").strip().splitlines()[0]
+        if ticket_id:
+            ticket_args = ["ticket", "show", ticket_id, "--format", "json"]
+        else:
+            ticket_args = ["ticket", "next", "--format", "json"]
+            if queue_name:
+                ticket_args.extend(["--queue", queue_name])
+        ticket_proc = _run_planfile(project, ticket_args, runner=planfile_runner)
+        if ticket_proc.returncode == 0:
+            ticket_data = _safe_json(ticket_proc.stdout)
+            if ticket_data is None:
+                stripped = (ticket_proc.stdout or "").strip()
+                if "No runnable ticket" in stripped or not stripped:
+                    ticket_data = None
+                    ticket_error = "queue is idle"
+                else:
+                    ticket_error = "planfile output was not JSON"
+        else:
+            ticket_error = (ticket_proc.stderr or "planfile error").strip().splitlines()[0]
 
     git_state = (git_probe or _git_probe)(project)
-    planfile_present = (planfile_dir(project) / "config.yaml").exists()
 
-    instructions = _build_instructions(resolved_policy, ticket_data)
-    self_service = _build_self_service(resolved_policy, ticket_data)
+    instructions = _build_instructions(
+        resolved_policy,
+        ticket_data,
+        planfile_initialised=planfile_present,
+    )
+    self_service = _build_self_service(
+        resolved_policy,
+        ticket_data,
+        planfile_initialised=planfile_present,
+    )
 
     return {
         "schema_version": "1",
@@ -180,17 +203,53 @@ def build_context(
 # ---------------------------------------------------------------------------
 
 
-def _build_instructions(policy: Policy, ticket: dict[str, Any] | None) -> list[str]:
-    """Imperative, copy-paste-able rules for the LLM agent."""
-    rules: list[str] = []
-    rules.append(
+def _build_instructions(
+    policy: Policy,
+    ticket: dict[str, Any] | None,
+    *,
+    planfile_initialised: bool,
+) -> list[str]:
+    """Imperative, copy-paste-able rules for the LLM agent.
+
+    Two flavours:
+        - planfile_initialised=False ⇒ base rules + SETUP REQUIRED guide.
+          The agent must NOT try to claim/start/complete tickets when
+          there is no sprint file to claim from.
+        - planfile_initialised=True  ⇒ base rules + the policy-derived
+          DO NOT list + ticket-scope rule + escape hatches.
+    """
+    rules: list[str] = [
         "You are an LLM agent operating under koru. You MUST obey the "
-        "policy embedded in this brief. Violations terminate the session."
-    )
-    rules.append(
+        "policy embedded in this brief. Violations terminate the session.",
         "Use planfile commands for ALL state changes. Do not edit "
-        ".planfile/sprints/*.yaml directly."
-    )
+        ".planfile/sprints/*.yaml directly.",
+    ]
+    if not planfile_initialised:
+        rules.extend(_build_setup_instructions())
+    else:
+        rules.extend(_build_shared_rules(policy, ticket))
+    return rules
+
+
+def _build_setup_instructions() -> list[str]:
+    """Instructions shown when ``.planfile/`` is missing.
+
+    The LLM should NOT try to claim a ticket — it should ask the human
+    operator to initialise the project (or, if it has shell rights,
+    run ``koru --init`` itself).
+    """
+    return [
+        "This project has not been initialised yet — there is no "
+        "`.planfile/config.yaml` and no sprint to claim tickets from.",
+        "Ask the human operator to run `koru --init` from the project "
+        "root (or `koru --init --from <pipeline.yaml>` to import an "
+        "existing flat pipeline). DO NOT create planfile files manually.",
+        "After initialisation, re-run `koru` to refresh this brief.",
+    ]
+
+
+def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[str]:
+    rules: list[str] = []
     if not policy.allow_commit:
         rules.append("DO NOT run `git commit`. Commits are made by CI/CD or a human reviewer.")
     if not policy.allow_push:
@@ -229,12 +288,28 @@ def _build_instructions(policy: Policy, ticket: dict[str, Any] | None) -> list[s
     return rules
 
 
-def _build_self_service(policy: Policy, ticket: dict[str, Any] | None) -> dict[str, Any]:
-    """Concrete CLI invocations the LLM can use without guessing."""
+def _build_self_service(
+    policy: Policy,
+    ticket: dict[str, Any] | None,
+    *,
+    planfile_initialised: bool,
+) -> dict[str, Any]:
+    """Concrete CLI invocations the LLM can use without guessing.
+
+    When the project is not initialised, the only useful command is
+    ``koru --init`` — surfacing planfile ticket commands would be
+    misleading because there is no sprint to act on.
+    """
+    if not planfile_initialised:
+        return {
+            "init_project": "koru --init --project .",
+            "init_from_pipeline": "koru --init --project . --from <pipeline.yaml>",
+            "refresh_brief": "koru --project .",
+        }
     tid = ticket.get("id") if isinstance(ticket, dict) else None
     base = "planfile ticket"
     block: dict[str, Any] = {
-        "next_brief": "koru --context --project . --format json",
+        "next_brief": "koru --project .",
         "show_ticket": f"{base} show <id> --format json",
         "request_input": f"{base} input <id> --prompt \"<question>\"",
         "fail_ticket": f"{base} fail <id> --error \"<reason>\"",
@@ -269,7 +344,27 @@ def render_markdown_handoff(context: dict[str, Any]) -> str:
     lines.append(f"# koru handoff — {project}")
     lines.append("")
 
-    if ticket:
+    env = context.get("environment") or {}
+    initialised = bool(env.get("planfile_initialised"))
+
+    if not initialised:
+        lines.append("## ⚠ Setup required")
+        lines.append("")
+        lines.append(
+            "This project has no `.planfile/` directory yet, so there is "
+            "no sprint to claim tickets from."
+        )
+        lines.append("")
+        lines.append("Run **one** of these from the project root:")
+        lines.append("")
+        lines.append("```bash")
+        lines.append("koru --init --project .                       # 2-ticket starter scaffold")
+        lines.append("koru --init --project . --from pipeline.yaml  # import an existing flat pipeline")
+        lines.append("```")
+        lines.append("")
+        lines.append("Then re-run `koru` to refresh this brief.")
+        lines.append("")
+    elif ticket:
         tid = ticket.get("id", "?")
         name = ticket.get("name", "")
         executor = (ticket.get("executor") or {}).get("kind", "?")

@@ -28,9 +28,24 @@ def _no_git(_project: Path) -> dict:
     return {"branch": None, "head": None, "dirty": False, "remote": None}
 
 
+def _init_planfile(project: Path) -> None:
+    """Create marker files so build_context sees the project as initialised.
+
+    The pre-flight check requires BOTH ``.planfile/config.yaml`` AND
+    at least one sprint YAML, so the helper creates both.
+    """
+    pf = project / ".planfile"
+    (pf / "sprints").mkdir(parents=True, exist_ok=True)
+    (pf / "config.yaml").write_text("project: test\n", encoding="utf-8")
+    (pf / "sprints" / "current.yaml").write_text(
+        "sprint:\n  id: current\n  tickets: {}\n", encoding="utf-8"
+    )
+
+
 class TestBuildContext(unittest.TestCase):
     def test_brief_with_runnable_ticket(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
             ticket = {
                 "id": "PLF-074",
                 "name": "Verify OPENROUTER_API_KEY",
@@ -57,6 +72,7 @@ class TestBuildContext(unittest.TestCase):
 
     def test_brief_when_queue_idle(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
             def planfile_runner(_c, _p):
                 return _ok("No runnable ticket found.\n")
 
@@ -70,6 +86,7 @@ class TestBuildContext(unittest.TestCase):
 
     def test_brief_when_planfile_errors(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
             def planfile_runner(_c, _p):
                 return _fail("planfile config not found")
 
@@ -89,6 +106,7 @@ class TestBuildContext(unittest.TestCase):
             return _ok(json.dumps({"id": "PLF-074", "executor": {"kind": "shell"}}))
 
         with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
             build_context(
                 project=Path(tmp),
                 ticket_id="PLF-074",
@@ -101,6 +119,7 @@ class TestBuildContext(unittest.TestCase):
 
     def test_instructions_include_no_commit_rule(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
             ctx = build_context(
                 project=Path(tmp),
                 planfile_runner=lambda _c, _p: _ok(json.dumps(
@@ -114,6 +133,7 @@ class TestBuildContext(unittest.TestCase):
 
     def test_instructions_include_ci_command_when_set(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
             ctx = build_context(
                 project=Path(tmp),
                 policy=Policy(ci_command="pytest -q"),
@@ -127,6 +147,7 @@ class TestBuildContext(unittest.TestCase):
 
     def test_self_service_includes_concrete_ticket_commands(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
             ctx = build_context(
                 project=Path(tmp),
                 planfile_runner=lambda _c, _p: _ok(json.dumps(
@@ -141,6 +162,7 @@ class TestBuildContext(unittest.TestCase):
 
     def test_brief_is_json_serialisable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
             ctx = build_context(
                 project=Path(tmp),
                 planfile_runner=lambda _c, _p: _ok(json.dumps(
@@ -154,6 +176,7 @@ class TestBuildContext(unittest.TestCase):
 
     def test_files_in_scope_appear_in_instructions(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
             ctx = build_context(
                 project=Path(tmp),
                 planfile_runner=lambda _c, _p: _ok(json.dumps({
@@ -170,6 +193,7 @@ class TestBuildContext(unittest.TestCase):
 class TestMarkdownHandoff(unittest.TestCase):
     def test_renders_ticket_section(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
             ctx = build_context(
                 project=Path(tmp),
                 planfile_runner=lambda _c, _p: _ok(json.dumps({
@@ -190,6 +214,7 @@ class TestMarkdownHandoff(unittest.TestCase):
 
     def test_renders_policy_table(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
             ctx = build_context(
                 project=Path(tmp),
                 planfile_runner=lambda _c, _p: _ok(json.dumps({
@@ -204,6 +229,7 @@ class TestMarkdownHandoff(unittest.TestCase):
 
     def test_renders_idle_brief_without_crash(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
             ctx = build_context(
                 project=Path(tmp),
                 planfile_runner=lambda _c, _p: _ok("No runnable ticket found.\n"),
@@ -211,6 +237,60 @@ class TestMarkdownHandoff(unittest.TestCase):
             )
             md = render_markdown_handoff(ctx)
             self.assertIn("No active ticket", md)
+
+
+class TestSetupRequired(unittest.TestCase):
+    """When planfile is not initialised, the brief must steer to koru --init."""
+
+    def test_instructions_swap_to_setup_guide(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            # No .planfile/ here — uninitialised project.
+            ctx = build_context(
+                project=Path(tmp),
+                planfile_runner=lambda _c, _p: _fail("planfile not configured"),
+                git_probe=_no_git,
+            )
+            joined = " ".join(ctx["instructions"]).lower()
+            self.assertIn("koru --init", joined)
+            self.assertIn("not been initialised", joined)
+            # No DO NOT git commit rules — those only apply post-init.
+            self.assertNotIn("git commit", joined)
+
+    def test_self_service_exposes_init_only(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(
+                project=Path(tmp),
+                planfile_runner=lambda _c, _p: _fail(""),
+                git_probe=_no_git,
+            )
+            ss = ctx["self_service"]
+            self.assertIn("init_project", ss)
+            self.assertIn("init_from_pipeline", ss)
+            self.assertIn("refresh_brief", ss)
+            # Planfile ticket commands must NOT leak — the agent cannot
+            # use them yet.
+            self.assertNotIn("claim_this", ss)
+            self.assertNotIn("complete_this", ss)
+
+    def test_environment_planfile_initialised_false(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(
+                project=Path(tmp),
+                planfile_runner=lambda _c, _p: _fail(""),
+                git_probe=_no_git,
+            )
+            self.assertFalse(ctx["environment"]["planfile_initialised"])
+
+    def test_markdown_renders_setup_required_block(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(
+                project=Path(tmp),
+                planfile_runner=lambda _c, _p: _fail(""),
+                git_probe=_no_git,
+            )
+            md = render_markdown_handoff(ctx)
+            self.assertIn("Setup required", md)
+            self.assertIn("koru --init --project .", md)
 
 
 if __name__ == "__main__":

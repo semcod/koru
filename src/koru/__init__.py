@@ -17,6 +17,7 @@ from .planfile_queue import (
     run_planfile_queue_loop,
 )
 from .context import build_context, render_markdown_handoff
+from .init import InitReport, init_project
 from .policy import Policy, load_policy, policy_path, policy_violations
 from .run_log import RunLogWriter, open_run_log, open_run_log_eagerly
 from .runtime import (
@@ -29,6 +30,7 @@ from .runtime import (
 
 __all__ = [
     "ImportReport",
+    "InitReport",
     "LlmRunResult",
     "LoopReport",
     "Policy",
@@ -41,6 +43,7 @@ __all__ = [
     "discover_repositories",
     "ensure_runs_dir",
     "import_flat_pipeline",
+    "init_project",
     "load_flat_pipeline",
     "load_policy",
     "materialize_to_planfile",
