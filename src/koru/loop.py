@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import subprocess
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from pathlib import Path
-import subprocess
-from typing import Callable, Iterable, Protocol, Sequence
+from typing import Protocol
 
 
 class CommandResult(Protocol):

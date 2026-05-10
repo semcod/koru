@@ -60,22 +60,22 @@ tasks:
   test:
     desc: Run koru tests
     cmds:
-      - pytest tests/ -v {{.CLI_ARGS}}
+      - python3 -m pytest tests/ -v {{.CLI_ARGS}}
 
   test:fast:
     desc: Run tests without verbose output
     cmds:
-      - pytest tests/ -q
+      - python3 -m pytest tests/ -q
 
   lint:
     desc: Run ruff on koru sources and tests
     cmds:
-      - ruff check src tests
+      - python3 -m ruff check src tests
 
   lint:fix:
     desc: Run ruff with autofix
     cmds:
-      - ruff check src tests --fix
+      - python3 -m ruff check src tests --fix
 
   ci:
     desc: Local CI equivalent (lint + tests)

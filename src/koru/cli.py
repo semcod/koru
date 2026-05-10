@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import shlex
+from pathlib import Path
 
 from .loop import discover_repositories, run_closed_loop
 
@@ -17,7 +17,9 @@ def _command_value(value: str) -> str:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run closed-loop automation on semcod repositories.")
+    parser = argparse.ArgumentParser(
+        description="Run closed-loop automation on semcod repositories."
+    )
     parser.add_argument("--workspace", type=Path, default=Path.cwd(), help="Workspace root.")
     parser.add_argument(
         "--include",
@@ -44,11 +46,16 @@ def main() -> int:
     repositories = discover_repositories(args.workspace, args.include)
     command = shlex.split(args.command)
 
-    report = run_closed_loop(command=command, repositories=repositories, max_rounds=args.max_rounds)
+    report = run_closed_loop(
+        command=command,
+        repositories=repositories,
+        max_rounds=args.max_rounds,
+    )
 
     print(
         f"koru: repos={len(report.succeeded) + len(report.failed)} "
-        f"succeeded={len(report.succeeded)} failed={len(report.failed)} rounds={report.rounds_executed}"
+        f"succeeded={len(report.succeeded)} failed={len(report.failed)} "
+        f"rounds={report.rounds_executed}"
     )
     for repository in report.failed:
         print(f"FAILED: {repository}")
