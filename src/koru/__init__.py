@@ -16,6 +16,13 @@ from .planfile_queue import (
     run_next_planfile_task,
     run_planfile_queue_loop,
 )
+from .runtime import (
+    ensure_runs_dir,
+    new_run_id,
+    planfile_dir,
+    runs_dir,
+    runtime_dir,
+)
 
 __all__ = [
     "ImportReport",
@@ -26,11 +33,16 @@ __all__ = [
     "RunRecord",
     "ValidationError",
     "discover_repositories",
+    "ensure_runs_dir",
     "import_flat_pipeline",
     "load_flat_pipeline",
     "materialize_to_planfile",
+    "new_run_id",
+    "planfile_dir",
     "run_closed_loop",
     "run_next_planfile_task",
     "run_planfile_queue_loop",
+    "runs_dir",
+    "runtime_dir",
     "validate_flat_pipeline",
 ]

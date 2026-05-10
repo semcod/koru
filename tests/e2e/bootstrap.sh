@@ -14,10 +14,13 @@ set -euo pipefail
 KORU_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PLANFILE_BIN="${PLANFILE_BIN:-planfile}"
 DEMO_DIR="${DEMO_DIR:-/tmp/koru-bootstrap-smoke-$$}"
+OUT_DIR="$DEMO_DIR/.koru-test-output"
 ACTOR="${ACTOR:-koru-bs}"
 
 cleanup() { rm -rf "$DEMO_DIR"; }
 trap cleanup EXIT
+
+mkdir -p "$OUT_DIR"
 
 # Avoid Rich line-wrapping in planfile JSON output (matches koru's subprocess env).
 export COLUMNS=10000
@@ -33,9 +36,9 @@ PYTHONPATH="$KORU_REPO/src" python3 -m koru.cli \
   --bootstrap \
   --from "$KORU_REPO/examples/bootstrap.planfile.yaml" \
   --project "$DEMO_DIR" \
-  --sprint current >/tmp/koru-bs-out.txt 2>&1
-grep -q "✓ imported" /tmp/koru-bs-out.txt || { cat /tmp/koru-bs-out.txt; echo "FAIL: bootstrap did not report success"; exit 1; }
-grep -q "tickets: 15 imported" /tmp/koru-bs-out.txt || { cat /tmp/koru-bs-out.txt; echo "FAIL: expected 15 tickets"; exit 1; }
+  --sprint current >"$OUT_DIR/bs-out.txt" 2>&1
+grep -q "✓ imported" "$OUT_DIR/bs-out.txt" || { cat "$OUT_DIR/bs-out.txt"; echo "FAIL: bootstrap did not report success"; exit 1; }
+grep -q "tickets: 15 imported" "$OUT_DIR/bs-out.txt" || { cat "$OUT_DIR/bs-out.txt"; echo "FAIL: expected 15 tickets"; exit 1; }
 
 echo "==> 2. .planfile/ structure created"
 [ -f "$DEMO_DIR/.planfile/config.yaml" ] || { echo "FAIL: config.yaml missing"; exit 1; }
@@ -69,13 +72,13 @@ if PYTHONPATH="$KORU_REPO/src" python3 -m koru.cli \
     --bootstrap \
     --from "$KORU_REPO/examples/bootstrap.planfile.yaml" \
     --project "$DEMO_DIR" \
-    --sprint current >/tmp/koru-bs-err.txt 2>&1
+    --sprint current >"$OUT_DIR/bs-err.txt" 2>&1
 then
-    cat /tmp/koru-bs-err.txt
+    cat "$OUT_DIR/bs-err.txt"
     echo "FAIL: re-bootstrap should have errored"
     exit 1
 fi
-grep -q "already exists" /tmp/koru-bs-err.txt || { cat /tmp/koru-bs-err.txt; echo "FAIL: missing 'already exists' message"; exit 1; }
+grep -q "already exists" "$OUT_DIR/bs-err.txt" || { cat "$OUT_DIR/bs-err.txt"; echo "FAIL: missing 'already exists' message"; exit 1; }
 
 echo "==> 9. Re-bootstrap with --force succeeds"
 PYTHONPATH="$KORU_REPO/src" python3 -m koru.cli \
@@ -83,8 +86,8 @@ PYTHONPATH="$KORU_REPO/src" python3 -m koru.cli \
     --from "$KORU_REPO/examples/bootstrap.planfile.yaml" \
     --project "$DEMO_DIR" \
     --sprint current \
-    --force >/tmp/koru-bs-force.txt 2>&1
-grep -q "imported" /tmp/koru-bs-force.txt || { cat /tmp/koru-bs-force.txt; echo "FAIL force"; exit 1; }
+    --force >"$OUT_DIR/bs-force.txt" 2>&1
+grep -q "imported" "$OUT_DIR/bs-force.txt" || { cat "$OUT_DIR/bs-force.txt"; echo "FAIL force"; exit 1; }
 
 echo ""
 echo "==> ✅ All 9 bootstrap e2e steps passed"

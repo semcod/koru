@@ -5,10 +5,10 @@
 ## AI Cost Tracking
 
 ![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$1.65-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-4.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$2.10-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-4.6h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $1.6500 (11 commits)
-- 👤 **Human dev:** ~$404 (4.0h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $2.1000 (14 commits)
+- 👤 **Human dev:** ~$461 (4.6h @ $100/h, 30min dedup)
 
 Generated on 2026-05-10 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -180,6 +180,42 @@ change queue execution semantics.
 ```bash
 pip install "koru[watch]"
 ```
+
+## Filesystem contract
+
+**koru never writes outside `<project>/.planfile/`.** This is a hard
+rule for the production code path; any deviation is a bug.
+
+```
+<project>/.planfile/
+├── config.yaml                  # planfile-owned (project config)
+├── sprints/
+│   └── current.yaml             # planfile-owned (source of truth)
+└── .koru/                       # koru-owned, opt-in, gitignore-friendly
+    ├── runs/                    # one log per `koru --queue` invocation
+    ├── prompts/                 # captured `--interactive` answers
+    ├── llm-cache/               # opt-in LlmExecutor response cache
+    └── README.md                # in-place explainer
+```
+
+The `.koru/` subtree is **non-authoritative** — planfile sprint YAML is
+always the source of truth. Anything in `.koru/` can be deleted at any
+time without losing ticket state. Recommended `.gitignore` entry:
+
+```gitignore
+.planfile/.koru/
+```
+
+The path helpers exposed by `koru.runtime` (`runtime_dir`, `runs_dir`,
+`new_run_id`, `ensure_runs_dir`) are pure resolvers — they only touch
+disk via `ensure_runs_dir`, so a `--dry-run` invocation leaves zero
+trace.
+
+**`/tmp/` policy.** Production code does not use `/tmp/`. Test
+fixtures (`tests/` and `tests/e2e/*.sh`) are the only allowed
+`/tmp/` users and MUST be PID-scoped (`/tmp/koru-*-$$`) with
+`trap cleanup EXIT` so a failed run leaves nothing behind. If you find
+koru artefacts elsewhere, please open an issue.
 
 ## Documentation
 
