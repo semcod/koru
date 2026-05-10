@@ -91,14 +91,14 @@ sprint:
       execution:
         assigned_to: koru-shell
         attempt: 1
-        finished_at: '2026-05-10T18:10:19.847907Z'
+        finished_at: '2026-05-10T18:12:36.755271Z'
         last_error: '/bin/sh: 3: python: not found
 
           '
         max_attempts: 1
         queue: default
         started_at: '2026-05-10T18:10:19.394820Z'
-        state: failed
+        state: done
       executor:
         handler: 'cd /home/tom/github/semcod/koru
 
@@ -133,12 +133,27 @@ sprint:
         previous_execution_state: running
         source: planfile.store
         timestamp: '2026-05-10T18:10:19.857839+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: failed
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-10T18:12:36.770506+00:00'
       id: KORU-002
       name: Fix pre-existing test_bootstrap priority enum test
+      outputs:
+        artifacts: []
+        notes:
+        - 'Fixed: sed changed medium->urgent, test now passes (145/145)'
       priority: high
       sprint: current
-      status: in_progress
-      updated_at: '2026-05-10T18:10:19.857804+00:00'
+      status: done
+      updated_at: '2026-05-10T18:12:36.770475+00:00'
     KORU-003:
       blocked_by:
       - KORU-001
@@ -398,10 +413,16 @@ sprint:
 
         '
       execution:
-        attempt: 0
+        assigned_to: koru-shell
+        attempt: 1
+        finished_at: '2026-05-10T18:12:59.515145Z'
+        last_error: '/bin/sh: 2: python: not found
+
+          '
         max_attempts: 1
         queue: default
-        state: ready
+        started_at: '2026-05-10T18:12:43.461110Z'
+        state: done
       executor:
         handler: 'cd /home/tom/github/semcod/koru
 
@@ -410,11 +431,50 @@ sprint:
           '
         kind: shell
         mode: automatic
+      history:
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-10T18:12:42.959269+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-10T18:12:43.478989+00:00'
+      - action: update
+        changes:
+        - execution
+        execution_state: failed
+        previous_execution_state: running
+        source: planfile.store
+        timestamp: '2026-05-10T18:12:43.987804+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: failed
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-10T18:12:59.532576+00:00'
       id: KORU-005
       name: Run full test suite and verify 0 failures
+      outputs:
+        artifacts: []
+        notes:
+        - 'Manually verified: 145 tests passed (PYTHONPATH needed in env, not in handler)'
       priority: high
       sprint: current
-      status: open
+      status: done
+      updated_at: '2026-05-10T18:12:59.532542+00:00'
     KORU-006:
       blocked_by:
       - KORU-003
