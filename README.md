@@ -1,19 +1,18 @@
 # koru
 
+<img src="maori-koru-bold-400w.png" width="200" alt="koru">
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.1-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$0.45-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-2.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$1.65-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-4.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $0.4500 (3 commits)
-- 👤 **Human dev:** ~$200 (2.0h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $1.6500 (11 commits)
+- 👤 **Human dev:** ~$404 (4.0h @ $100/h, 30min dedup)
 
 Generated on 2026-05-10 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
 ---
-
-
 
 Python package for **closed-loop refactor automation** across multi-repo
 workspaces (validated on `semcod/*`, `maskservice/c2004`, and other monorepos).
@@ -28,13 +27,13 @@ A meta-orchestrator that coordinates **LLM-augmented refactor tools** with
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│                          KORU                                   │
+│                          KORU                                  │
 ├──────────┬──────────┬──────────┬──────────┬─────────┬──────────┤
 │ DETECT   │ PLAN     │ EXECUTE  │ VERIFY   │ HEAL    │ LEARN    │
 ├──────────┼──────────┼──────────┼──────────┼─────────┼──────────┤
 │ redup    │ planfile │ Windsurf │ regix    │ healing │ pyqual   │
 │ regix    │ tickets  │ Cursor   │ pytest   │ webhook │ metrics  │
-│ TestQL   │ Promet.  │ aider    │ TestQL   │ retry   │ dashboards│
+│ TestQL   │ Promet.  │ aider    │ TestQL   │ retry   │dashboards│
 │ Probe    │ Alertmgr │ vallm    │ vallm    │         │          │
 └──────────┴──────────┴──────────┴──────────┴─────────┴──────────┘
         ↑                                                  │
@@ -73,6 +72,9 @@ task install                  # pip install -e .
 task ci                       # local CI equivalent: lint + tests
 task install:tools            # planfile, regix, redup, vallm, prefact, pfix
 task tickets:next             # highest-priority open ticket
+task queue:run                # execute one runnable planfile queue task
+task queue:dry-run            # preview the next planfile queue task
+task queue:watch              # watch planfile WebSocket queue events
 task quality:regix            # regression metrics gate
 task quality:redup            # duplicate detection
 task template:install         # bootstrap configs in current dir
@@ -80,6 +82,104 @@ task webhook:run              # start healing-webhook on :8810
 ```
 
 Full examples: [`docs/cli-examples.md`](./docs/cli-examples.md)
+
+## Planfile queue runner
+
+`koru` can execute one runnable `planfile` ticket at a time, or drain
+the entire queue in a single call:
+
+```bash
+# Single tick (legacy, default):
+koru --queue --project . --actor koru-shell
+
+# Drain everything:
+koru --queue --project . --loop --max-iterations 50
+
+# Drain shell tickets AND answer humans interactively in one shot:
+koru --queue --project . --loop --interactive --actor c2004-koru
+
+# Preview without execution:
+koru --queue --project . --dry-run
+```
+
+By default koru uses the current Python environment's `planfile` module when
+available, then falls back to the `planfile` executable in `PATH`. To pin a
+specific command:
+
+```bash
+KORU_PLANFILE_CMD="python -m planfile.cli" koru --queue --project .
+```
+
+Supported executor kinds:
+
+- `executor.kind: shell` — claim, start, run `inputs.script` or `executor.handler`,
+  then complete or fail the ticket.
+- `executor.kind: api` — claim, start, call `inputs.api_endpoint` (or
+  `executor.handler`) with `inputs.api_method`, `inputs.api_headers`,
+  `inputs.api_body`, then complete or fail the ticket.
+- `executor.kind: llm` — claim, start, POST `inputs.prompt` to an
+  OpenAI-compatible chat-completion endpoint (default OpenRouter),
+  capture the assistant's text as the ticket's `stdout`, and store
+  `llm_model` + token `usage` in the result-json. Configure via
+  `OPENROUTER_API_KEY` / `OPENAI_API_KEY` / `KORU_LLM_ENDPOINT`. See
+  [`docs/cli-examples.md`](docs/cli-examples.md) for the full schema.
+- `executor.kind: human` — print the prompt and leave the task for
+  an operator. With `--interactive`, koru collects the answer on
+  stdin (multi-line, Ctrl-D submits, Ctrl-C cancels) and completes
+  the ticket itself.
+
+The remaining executor kind (`mcp`) is intentionally reported as
+unsupported until its adapter is wired (Phase 5).
+
+Minimal API ticket:
+
+```yaml
+tickets:
+  PLF-010:
+    name: "Notify deployment API"
+    status: open
+    priority: high
+    executor:
+      kind: api
+      mode: automatic
+    execution:
+      queue: default
+      state: ready
+    inputs:
+      api_endpoint: "http://localhost:8810/probe-failure"
+      api_method: POST
+      api_headers:
+        content-type: application/json
+      api_body:
+        source: koru
+```
+
+To watch queue changes streamed by the `planfile` API:
+
+```bash
+uvicorn planfile.api.server:app --reload --port 8000
+koru --watch --ws-url ws://localhost:8000/ws
+task queue:watch
+```
+
+For transparent management-layer logs in a dashboard, point koru at the
+planfile event-ingest endpoint:
+
+```bash
+export KORU_EVENTS_URL="http://localhost:8000/events/ingest"
+koru --queue --project . --dry-run
+```
+
+When configured, koru emits best-effort `management.event` entries for
+`koru.bootstrap`, `koru.queue`, `koru.watch`, and repository loop runs. This is
+intended for UI surfaces such as planfile's **Live Events** panel and does not
+change queue execution semantics.
+
+`watch` support uses the optional `websockets` package. Install it with:
+
+```bash
+pip install "koru[watch]"
+```
 
 ## Documentation
 
@@ -104,6 +204,17 @@ The full documentation lives in [`docs/`](./docs/):
   - [`prefact/`](./docs/llm-tools/prefact/) — proactive LLM-aware linter
   - [`pfix/`](./docs/llm-tools/pfix/) — auto-fix imports
   - [`llx/`](./docs/llm-tools/llx/) — LLM CLI wrapper
+  - [`sumd/`](./docs/llm-tools/sumd/) — LLM refactor snapshots (SUMR.md)
+  - [`redeploy/`](./docs/llm-tools/redeploy/) — multi-target deployment (markpact specs)
+  - [`goal/`](./docs/llm-tools/goal/) — automated git push + smart commits + release workflow
+  - [`doql/`](./docs/llm-tools/doql/) — declarative infrastructure-as-code (.doql files)
+  - [`costs/`](./docs/llm-tools/costs/) — zero-config AI cost tracker per commit
+  - [`op3/`](./docs/llm-tools/op3/) — layered infrastructure observation (multi-layer scan)
+  - [`toonic/`](./docs/llm-tools/toonic/) — universal TOON format platform (LLM-friendly compact files)
+  - [`protogate/`](./docs/llm-tools/protogate/) — migration tool dla legacy systems (bounded slices)
+  - [`rebuild/`](./docs/llm-tools/rebuild/) — code evolution intelligence (git history walker)
+  - [`mdflow/`](./docs/llm-tools/mdflow/) — markdown dependency analyzer
+  - [`metrun/`](./docs/llm-tools/metrun/) — execution intelligence + bottleneck detection
   - [`aider/`](./docs/llm-tools/aider/) — pair-programming agent
   - [`claude-code/`](./docs/llm-tools/claude-code/) — Anthropic agent
   - [`cursor/`](./docs/llm-tools/cursor/) — Cursor IDE setup
