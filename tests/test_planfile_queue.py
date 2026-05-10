@@ -349,6 +349,127 @@ class TestPlanfileQueue(unittest.TestCase):
                 )
             )
 
+    def test_interactive_human_ticket_completes_with_answer(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = {
+                "id": "PLF-100",
+                "name": "Confirm scope",
+                "executor": {"kind": "human", "mode": "interactive"},
+                "inputs": {"prompt": "Confirm refactor scope"},
+            }
+            calls: list[list[str]] = []
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                calls.append(command)
+                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                    return _ok(json.dumps(ticket))
+                return _ok()
+
+            captured: dict[str, str] = {}
+
+            def prompt_runner(prompt: str, ticket_id: str) -> str | None:
+                captured["prompt"] = prompt
+                captured["ticket_id"] = ticket_id
+                return "Yes — proceed with reusable-only scope"
+
+            result = run_next_planfile_task(
+                project=project,
+                actor="koru-i",
+                planfile_runner=planfile_runner,
+                interactive=True,
+                prompt_runner=prompt_runner,
+            )
+
+            self.assertEqual(result.status, "completed")
+            self.assertEqual(result.ticket_id, "PLF-100")
+            self.assertEqual(result.executor_kind, "human")
+            self.assertEqual(captured["prompt"], "Confirm refactor scope")
+            self.assertEqual(captured["ticket_id"], "PLF-100")
+
+            tail_calls = [_ticket_args(c) for c in calls]
+            self.assertIn(
+                ["ticket", "claim", "PLF-100", "--assigned-to", "koru-i"], tail_calls
+            )
+            self.assertIn(
+                ["ticket", "start", "PLF-100", "--assigned-to", "koru-i"], tail_calls
+            )
+            self.assertTrue(
+                any(
+                    args[:3] == ["ticket", "complete", "PLF-100"]
+                    and "Yes — proceed with reusable-only scope"
+                    in (args[4] if len(args) > 4 else "")
+                    for args in tail_calls
+                )
+            )
+
+    def test_interactive_human_ticket_cancellation_leaves_ticket(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = {
+                "id": "PLF-101",
+                "name": "Cancelled prompt",
+                "executor": {"kind": "human"},
+                "inputs": {"prompt": "Should we proceed?"},
+            }
+            calls: list[list[str]] = []
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                calls.append(command)
+                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                    return _ok(json.dumps(ticket))
+                return _ok()
+
+            def prompt_runner(_prompt: str, _ticket_id: str) -> str | None:
+                return None  # user cancelled
+
+            result = run_next_planfile_task(
+                project=project,
+                planfile_runner=planfile_runner,
+                interactive=True,
+                prompt_runner=prompt_runner,
+            )
+
+            self.assertEqual(result.status, "waiting_input")
+            self.assertEqual(result.ticket_id, "PLF-101")
+            for command in calls:
+                args = _ticket_args(command)
+                self.assertNotIn(args[1], {"claim", "start", "complete", "fail"})
+
+    def test_interactive_with_dry_run_does_not_prompt(self) -> None:
+        """Dry-run takes precedence over --interactive for safety."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = {
+                "id": "PLF-102",
+                "name": "No-op",
+                "executor": {"kind": "human"},
+                "inputs": {"prompt": "Confirm?"},
+            }
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                    return _ok(json.dumps(ticket))
+                return _ok()
+
+            prompt_calls = 0
+
+            def prompt_runner(_prompt: str, _ticket_id: str) -> str | None:
+                nonlocal prompt_calls
+                prompt_calls += 1
+                return "should not be called"
+
+            result = run_next_planfile_task(
+                project=project,
+                planfile_runner=planfile_runner,
+                interactive=True,
+                dry_run=True,
+                prompt_runner=prompt_runner,
+            )
+
+            self.assertEqual(result.status, "waiting_input")
+            self.assertEqual(prompt_calls, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -68,6 +68,16 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Preview the selected planfile queue task without executing it.",
     )
     parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help=(
+            "When the next ticket is a 'human' executor, prompt for the answer "
+            "on stdin (multi-line, Ctrl-D submits, Ctrl-C cancels). On submit, "
+            "the ticket is claimed/started/completed with the answer recorded "
+            "in --note and --result-json."
+        ),
+    )
+    parser.add_argument(
         "--watch",
         action="store_true",
         help="Watch planfile WebSocket events.",
@@ -146,6 +156,7 @@ def main() -> int:
             actor=args.actor,
             dry_run=args.dry_run,
             queue_name=args.queue_name,
+            interactive=args.interactive,
         )
         print(
             f"koru queue: status={result.status} "

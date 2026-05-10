@@ -166,6 +166,36 @@ def _ticket_api_request(ticket: dict) -> dict[str, Any] | None:
     }
 
 
+def _default_human_prompt(prompt: str, ticket_id: str) -> str | None:
+    """Read a multi-line human answer from stdin.
+
+    Returns the trimmed answer, or ``None`` if the user cancelled
+    (Ctrl-C) or submitted an empty response. Ctrl-D submits.
+    """
+    print()
+    print(f"📝 {ticket_id} — human input needed")
+    print("─" * 60)
+    print(prompt)
+    print("─" * 60)
+    print("Type your answer (Ctrl-D to submit, Ctrl-C to cancel):")
+    lines: list[str] = []
+    try:
+        while True:
+            try:
+                line = input("> ")
+            except EOFError:
+                break
+            lines.append(line)
+    except KeyboardInterrupt:
+        print("\n[cancelled — ticket left untouched]")
+        return None
+    answer = "\n".join(lines).strip()
+    if not answer:
+        print("[empty answer — ticket left untouched]")
+        return None
+    return answer
+
+
 def _result_json(result: CommandResult) -> str:
     payload = {
         "exit_code": result.returncode,
@@ -183,11 +213,21 @@ def run_next_planfile_task(
     actor: str = "koru-shell",
     dry_run: bool = False,
     queue_name: str | None = None,
+    interactive: bool = False,
     planfile_runner: Callable[[Sequence[str], Path], CommandResult] = _run_process,
     shell_runner: Callable[[str, Path], CommandResult] = _run_shell_command,
     api_runner: Callable[[dict[str, Any], Path], CommandResult] = _run_api_request,
+    prompt_runner: Callable[[str, str], str | None] = _default_human_prompt,
 ) -> QueueRunResult:
-    """Execute one runnable planfile ticket, if any."""
+    """Execute one runnable planfile ticket, if any.
+
+    When ``interactive`` is true and the next ticket is a ``human``
+    executor, ``prompt_runner(prompt, ticket_id)`` is invoked to collect
+    an answer. A non-empty answer triggers
+    ``planfile ticket complete`` with the answer captured in ``--note``
+    and ``--result-json``; cancellation (``None``) leaves the ticket
+    untouched and returns ``status=waiting_input`` as before.
+    """
     project = project.resolve()
     next_args = ["ticket", "next", "--format", "json"]
     if queue_name:
@@ -216,17 +256,55 @@ def run_next_planfile_task(
 
     if executor_kind == "human":
         inputs = ticket.get("inputs") or {}
-        prompt = (
+        prompt = str(
             inputs.get("prompt")
             or ticket.get("description")
             or ticket.get("name")
             or ticket_id
         )
+        if not interactive or dry_run:
+            return QueueRunResult(
+                status="waiting_input",
+                ticket_id=ticket_id,
+                executor_kind=executor_kind,
+                message=prompt,
+            )
+        answer = prompt_runner(prompt, ticket_id)
+        if not answer:
+            return QueueRunResult(
+                status="waiting_input",
+                ticket_id=ticket_id,
+                executor_kind=executor_kind,
+                message=prompt,
+            )
+        _planfile_command(
+            project,
+            ["ticket", "claim", ticket_id, "--assigned-to", actor],
+            runner=planfile_runner,
+        )
+        _planfile_command(
+            project,
+            ["ticket", "start", ticket_id, "--assigned-to", actor],
+            runner=planfile_runner,
+        )
+        _planfile_command(
+            project,
+            [
+                "ticket",
+                "complete",
+                ticket_id,
+                "--note",
+                f"Human answer ({actor}): {answer}",
+                "--result-json",
+                json.dumps({"answer": answer, "actor": actor, "prompt": prompt}),
+            ],
+            runner=planfile_runner,
+        )
         return QueueRunResult(
-            status="waiting_input",
+            status="completed",
             ticket_id=ticket_id,
             executor_kind=executor_kind,
-            message=str(prompt),
+            message=answer,
         )
 
     if executor_kind not in {"api", "shell"}:

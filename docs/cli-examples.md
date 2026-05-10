@@ -243,6 +243,48 @@ koru bootstrap: examples/bootstrap.planfile.yaml: validation failed
 
 To overwrite an existing sprint file, pass `--force`.
 
+### Answer human-input tickets interactively
+
+When the next runnable ticket has `executor.kind=human`, koru would
+normally exit with `status=waiting_input` and leave the ticket for a
+human operator to handle via `planfile ticket complete`. With
+`--interactive`, koru pauses to collect the answer on stdin and
+completes the ticket itself:
+
+```bash
+koru --queue --project . --interactive --actor c2004-koru
+# 📝 PLF-067 — human input needed
+# ────────────────────────────────────────────────────────────
+# Confirm that this refactor wave should only move reusable
+# frontend/backend code to packages/ or shared/, while
+# connect-*/** keeps module-specific UI, routes, scenarios,
+# and runtime wiring.
+# ────────────────────────────────────────────────────────────
+# Type your answer (Ctrl-D to submit, Ctrl-C to cancel):
+# > Yes — confirmed. Only reusable code to packages/, the
+# > connect-*/ tree stays module-specific for now.
+# > [Ctrl-D]
+# koru queue: status=completed ticket=PLF-067 executor=human
+```
+
+The recorded note captures `actor`, the original `prompt`, and the
+verbatim `answer`, all visible later via `planfile ticket show PLF-067`.
+
+Behaviour matrix:
+
+| Flag combo | Effect on `human` ticket |
+|---|---|
+| (default) | exit with `status=waiting_input`, ticket untouched |
+| `--interactive` | open stdin prompt, complete on submit, leave on cancel |
+| `--interactive --dry-run` | no prompt, no execution — still `waiting_input` (safety) |
+
+You can also pipe the answer non-interactively (handy for scripted CI):
+
+```bash
+echo "Yes, proceed with reusable-only scope." | \
+  koru --queue --project . --interactive --actor ci-bot
+```
+
 ### Healing-webhook integration (auto-tickets)
 
 When alertmanager fires (e.g., `EndpointDown`), the healing-webhook
