@@ -321,6 +321,39 @@ brief gave it. To make a change that ships, the agent has exactly two
 exits: complete the ticket (humans/CI take it from there) or call
 `planfile ticket input <id> --prompt "<question>"` and stop.
 
+### Universal quality gates (built-in)
+
+Every `koru --init` creates a **universal CI command** that automatically
+detects and runs quality tools when they're available:
+
+```bash
+# Runs on every ticket completion (if require_ci_pass_before_complete=true)
+echo "=== Universal Quality Gates ==="
+
+# 1. Project tests (auto-detects runner)
+# - task test (Taskfile)
+# - pytest -q (Python)
+# - npm test (Node.js)
+# - make test (Makefile)
+
+# 2. TestQL E2E scenarios (when *.testql.toon.yaml files exist)
+testql suite --pattern "*.testql.toon.yaml" --output console --fail-fast
+
+# 3. WUP dependency analysis (when wup.yaml exists)
+wup status
+
+# 4. Regix quality gates (when regix.yaml exists)
+regix gates
+```
+
+**Tools are gracefully skipped** if not installed or configured — no manual
+setup required for basic quality control. The universal gates ensure:
+
+- **Consistent quality** across all koru projects
+- **Automatic regression testing** with testQL scenarios
+- **Zero configuration** for basic validation
+- **Adaptive detection** of project-specific tooling
+
 ### Loosening the policy
 
 Editing `<project>/.planfile/.koru/policy.yaml` is the **only** way to
@@ -334,7 +367,7 @@ llm:
   allow_push: false         # never (recommended)
   allow_branch_create: true # opt-in: agent may create feature branches
 ci:
-  command: pytest -q        # how the agent verifies its work
+  command: pytest -q        # override universal gates (optional)
   timeout_seconds: 300
 notes:
   - "Always run `task lint` before `ticket complete`."
