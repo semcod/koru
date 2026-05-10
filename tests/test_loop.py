@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
 
+from koru.cli import _command_value
 from koru.loop import discover_repositories, run_closed_loop
 
 
@@ -71,6 +73,10 @@ class TestKoruLoop(unittest.TestCase):
             self.assertEqual(report.failed, ())
             self.assertEqual(report.succeeded, (repo_a, repo_b))
             self.assertEqual(report.rounds_executed, 1)
+
+    def test_command_value_rejects_blank_value(self) -> None:
+        with self.assertRaises(argparse.ArgumentTypeError):
+            _command_value("   ")
 
 
 if __name__ == "__main__":

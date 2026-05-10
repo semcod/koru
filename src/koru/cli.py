@@ -9,6 +9,13 @@ import shlex
 from .loop import discover_repositories, run_closed_loop
 
 
+def _command_value(value: str) -> str:
+    stripped = value.strip()
+    if not stripped:
+        raise argparse.ArgumentTypeError("Command cannot be empty")
+    return stripped
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run closed-loop automation on semcod repositories.")
     parser.add_argument("--workspace", type=Path, default=Path.cwd(), help="Workspace root.")
@@ -26,6 +33,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--command",
         required=True,
+        type=_command_value,
         help="Command to execute in each repository, e.g. 'python -m pytest -q'.",
     )
     return parser
@@ -35,8 +43,6 @@ def main() -> int:
     args = _build_parser().parse_args()
     repositories = discover_repositories(args.workspace, args.include)
     command = shlex.split(args.command)
-    if not command:
-        raise SystemExit("Command cannot be empty")
 
     report = run_closed_loop(command=command, repositories=repositories, max_rounds=args.max_rounds)
 

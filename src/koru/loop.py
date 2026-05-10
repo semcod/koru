@@ -6,7 +6,15 @@ from dataclasses import dataclass
 from fnmatch import fnmatch
 from pathlib import Path
 import subprocess
-from typing import Callable, Iterable, Sequence
+from typing import Callable, Iterable, Protocol, Sequence
+
+
+class CommandResult(Protocol):
+    """Protocol for subprocess-like command results."""
+
+    returncode: int
+    stdout: str
+    stderr: str
 
 
 @dataclass(frozen=True)
@@ -57,7 +65,7 @@ def run_closed_loop(
     command: Sequence[str],
     repositories: Iterable[Path],
     max_rounds: int = 3,
-    runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]] = _default_runner,
+    runner: Callable[[Sequence[str], Path], CommandResult] = _default_runner,
 ) -> LoopReport:
     """Run a command repeatedly on failed repositories until all pass or rounds end."""
     pending = sorted(set(Path(repo).resolve() for repo in repositories))
