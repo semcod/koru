@@ -1,0 +1,95 @@
+"""Closed-loop execution helpers for semcod repositories."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from fnmatch import fnmatch
+from pathlib import Path
+import subprocess
+from typing import Callable, Iterable, Sequence
+
+
+@dataclass(frozen=True)
+class RunRecord:
+    """Single command execution result for one repository in one attempt."""
+
+    repository: Path
+    attempt: int
+    exit_code: int
+    stdout: str
+    stderr: str
+
+
+@dataclass(frozen=True)
+class LoopReport:
+    """Aggregated execution report for a full closed-loop run."""
+
+    records: tuple[RunRecord, ...]
+    succeeded: tuple[Path, ...]
+    failed: tuple[Path, ...]
+    attempts: int
+
+
+def discover_repositories(workspace: Path, include_pattern: str = "semcod/*") -> list[Path]:
+    """Return git repositories under workspace matching include_pattern."""
+    workspace = workspace.resolve()
+    repositories: list[Path] = []
+    for git_dir in workspace.rglob(".git"):
+        candidate = git_dir.parent
+        rel_path = candidate.relative_to(workspace).as_posix()
+        if include_pattern == "*" or fnmatch(rel_path, include_pattern):
+            repositories.append(candidate)
+    return sorted(set(repositories))
+
+
+def _default_runner(command: Sequence[str], repository: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        command,
+        cwd=repository,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+def run_closed_loop(
+    *,
+    command: Sequence[str],
+    repositories: Iterable[Path],
+    max_rounds: int = 3,
+    runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]] = _default_runner,
+) -> LoopReport:
+    """Run a command repeatedly on failed repositories until all pass or rounds end."""
+    pending = sorted(set(Path(repo).resolve() for repo in repositories))
+    records: list[RunRecord] = []
+
+    for attempt in range(1, max_rounds + 1):
+        if not pending:
+            break
+
+        failures: list[Path] = []
+        for repository in pending:
+            result = runner(command, repository)
+            records.append(
+                RunRecord(
+                    repository=repository,
+                    attempt=attempt,
+                    exit_code=result.returncode,
+                    stdout=result.stdout,
+                    stderr=result.stderr,
+                )
+            )
+            if result.returncode != 0:
+                failures.append(repository)
+
+        pending = failures
+
+    by_repository: dict[Path, RunRecord] = {}
+    for record in records:
+        by_repository[record.repository] = record
+
+    succeeded = tuple(sorted(repo for repo, rec in by_repository.items() if rec.exit_code == 0))
+    failed = tuple(sorted(repo for repo, rec in by_repository.items() if rec.exit_code != 0))
+    attempts = max((record.attempt for record in records), default=0)
+
+    return LoopReport(records=tuple(records), succeeded=succeeded, failed=failed, attempts=attempts)
