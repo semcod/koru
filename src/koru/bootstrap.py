@@ -28,7 +28,7 @@ VALID_EXECUTOR_MODES: frozenset[str] = frozenset({"automatic", "interactive"})
 VALID_STATUSES: frozenset[str] = frozenset(
     {"open", "in_progress", "review", "done", "blocked"}
 )
-VALID_PRIORITIES: frozenset[str] = frozenset({"critical", "high", "normal", "low"})
+VALID_PRIORITIES: frozenset[str] = frozenset({"critical", "high", "medium", "normal", "low"})
 VALID_EXECUTION_STATES: frozenset[str] = frozenset(
     {"pending", "ready", "running", "waiting_input", "done", "failed", "skipped"}
 )

@@ -142,6 +142,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
 
+## [0.1.2] - 2026-05-10
+
+### Docs
+- Update README.md
+- Update SUMR.md
+- Update docs/llm-tools/README.md
+- Update docs/llm-tools/costs/README.md
+- Update docs/llm-tools/costs/install.sh
+- Update docs/llm-tools/doql/README.md
+- Update docs/llm-tools/doql/install.sh
+- Update docs/llm-tools/goal/README.md
+- Update docs/llm-tools/goal/install.sh
+- Update docs/llm-tools/mdflow/README.md
+- ... and 27 more files
+
+### Test
+- Update testql-scenarios/generated-cli-tests.testql.toon.yaml
+- Update testql-scenarios/generated-from-pytests.testql.toon.yaml
+- Update tests/test_bootstrap.py
+- Update tests/test_watch.py
+
+### Other
+- Update .gitignore
+- Update .redeployignore
+- Update Taskfile.yml
+- Update app.doql.less
+- Update examples/bootstrap.planfile.yaml.new
+- Update project/map.toon.yaml
+- Update redeploy/device/manifest.yaml
+- Update scripts/git-hooks/install.sh
+- Update scripts/git-hooks/post-commit
+- Update scripts/git-hooks/post-merge
+- ... and 25 more files
+
 ## [0.1.1] - 2026-05-10
 
 ### Docs

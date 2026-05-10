@@ -1,0 +1,125 @@
+# <APP_NAME> @ <DEVICE_NAME> — Deployment Manifest
+#
+# Multi-phase orchestration for SSH-based device deployment.
+# Substitute placeholders before first use:
+#   <APP_NAME>      — your application name (e.g. myapp)
+#   <DEVICE_NAME>   — short device id (e.g. pi109, edge01)
+#   <SSH_USER>      — remote user (e.g. pi, ubuntu)
+#   <SSH_HOST>      — remote host (IP or hostname)
+#   <VERSION>       — current app version (matches VERSION file)
+#   <RUNTIME>       — container runtime: podman_quadlet | docker_compose
+#
+# Run individual phases:
+#   redeploy run redeploy/<DEVICE_NAME>/<phase>.md
+# Or sequence (manual until `redeploy run --manifest` matures):
+#   for spec in hardware migration diagnose; do
+#     redeploy run "redeploy/<DEVICE_NAME>/${spec}.md"
+#   done
+
+manifest:
+  name: <APP_NAME>-<DEVICE_NAME>
+  version: "<VERSION>"
+  description: |
+    Full <APP_NAME> stack on <DEVICE_NAME>.
+    Runtime: <RUNTIME>.
+    Network: per-device (no public ingress assumed).
+
+  target:
+    host: <SSH_USER>@<SSH_HOST>
+    ssh_user: <SSH_USER>
+    hardware_profile: generic   # CHANGE: rpi5-waveshare-8-inch | x86_64-server | etc.
+    runtime: <RUNTIME>
+    remote_dir: "~/<APP_NAME>"
+
+  # Intended state — refresh after each successful deploy:
+  #   doql adopt --from-device <SSH_USER>@<SSH_HOST> -o app.doql.less
+  intended_state: app.doql.less
+
+  # Health assertions verified after each deploy.
+  health_checks:
+    - name: backend-api
+      url: http://localhost:8000/health
+      expected_status: 200
+      max_response_ms: 5000
+    - name: frontend-static
+      url: http://localhost:8100/
+      expected_status: 200
+      max_response_ms: 2000
+
+---
+# ── Lifecycle Phases ──────────────────────────────────────────────────────
+
+phases:
+
+  # ── Phase 0: Hardware Init (one-time, may reboot) ────────────────────────
+  - name: hardware-init
+    description: |
+      One-time hardware setup (overlays, kernel modules, peripheral configs).
+      Safe to skip on already-initialised hosts. May reboot.
+    spec: hardware-init.md
+    when: first_deploy
+    preconditions:
+      - command: "ssh <SSH_USER>@<SSH_HOST> 'test ! -f /var/lib/<APP_NAME>/.hw_init_done'"
+        fail_action: skip_phase
+    postconditions:
+      - command: "ssh <SSH_USER>@<SSH_HOST> 'sudo mkdir -p /var/lib/<APP_NAME> && sudo touch /var/lib/<APP_NAME>/.hw_init_done'"
+    expected_reboot: true
+    idempotent: false
+
+  # ── Phase 1: Deploy / Migrate ────────────────────────────────────────────
+  - name: deploy
+    description: |
+      Build images, push via scp/rsync, generate runtime configs,
+      reload systemd/compose, start containers.
+    spec: migration.md
+    when: always
+    preconditions:
+      - phase_completed: hardware-init
+        or: host_flag=/var/lib/<APP_NAME>/.hw_init_done
+    postconditions:
+      - health_check: backend-api
+      - health_check: frontend-static
+    idempotent: true
+    on_failure: diagnose
+
+  # ── Phase 2: Diagnose (read-only) ────────────────────────────────────────
+  - name: diagnose
+    description: Read-only infrastructure snapshot — safe at any time.
+    spec: diagnose.md
+    when: always
+    can_run_in_parallel: true
+    idempotent: true
+
+  # ── Phase 3: Detect intended state (companion: doql) ─────────────────────
+  - name: detect
+    description: |
+      Snapshot current device state into app.doql.less for drift detection.
+      Run after every successful deploy and commit the diff.
+    when: post_deploy
+    tool_hint: |
+      doql adopt --from-device <SSH_USER>@<SSH_HOST> -o app.doql.less
+    output: app.doql.less
+    idempotent: true
+
+  # ── Phase N: On-demand fixes (add as needed) ─────────────────────────────
+  # Example: kiosk recovery, hardware fix, network repair.
+  # - name: fix-<symptom>
+  #   description: <what it fixes>
+  #   spec: fix-<symptom>.md
+  #   when: on_demand
+  #   triggers:
+  #     - symptom: <name>
+  #       detect: "ssh <SSH_USER>@<SSH_HOST> '<test command>'"
+  #   idempotent: true
+
+---
+# ── Drift Configuration ───────────────────────────────────────────────────
+
+drift:
+  intended_file: app.doql.less
+  layers:
+    - runtime.container
+    - service.containers
+    - endpoint.http
+  # If drift detected during `redeploy run`, pause and ask.
+  action_on_drift: pause

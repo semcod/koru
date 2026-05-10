@@ -1,0 +1,10 @@
+[Unit]
+Description=<APP_NAME> internal network
+
+[Network]
+NetworkName=<APP_NAME>-network
+Subnet=10.42.0.0/24
+Gateway=10.42.0.1
+
+[Install]
+WantedBy=default.target

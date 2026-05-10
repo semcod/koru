@@ -1,0 +1,77 @@
+# .pre-commit-config.yaml — Git pre-commit hooks for <APP_NAME>.
+#
+# Wires lightweight static checks + quality gates so a commit
+# that breaches max_complexity / max_function_lines / forbidden_patterns
+# never lands in the tree.
+#
+# Install once per clone:
+#   pip install pre-commit
+#   pre-commit install
+#
+# Or via Taskfile:
+#   task quality:install-hook
+#
+# Substitute <APP_NAME> and adjust file path patterns for your project.
+
+repos:
+  # ── Generic hygiene ──────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.(svg|min\.(js|css))$|^archive/|^_archive/'
+      - id: end-of-file-fixer
+        exclude: '\.(svg|min\.(js|css))$|^archive/|^_archive/'
+      - id: check-yaml
+        args: ['--unsafe']
+        exclude: '^archive/|^_archive/'
+      - id: check-added-large-files
+        args: ['--maxkb=512']
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  # ── Python — adjust file patterns for your repo structure ───────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: ['--fix', '--exit-non-zero-on-fix']
+        files: '^(src|backend|packages/.*/src)/.*\.py$'
+      - id: ruff-format
+        files: '^(src|backend|packages/.*/src)/.*\.py$'
+
+  # ── Version drift gate ──────────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: version-drift
+        name: SSOT version drift check
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        # Skip silently if VERSION file doesn't exist yet.
+        entry: bash -c 'test -f VERSION && bash scripts/check-version-drift.sh --strict || true'
+
+  # ── regix regression check (advisory) ───────────────────────────────
+  - repo: local
+    hooks:
+      - id: regix
+        name: regix regression metrics
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        # Advisory only — set fail-on-regression flag to make it a gate.
+        entry: bash -c 'command -v regix >/dev/null && regix gate || echo "[regix] skipped (not installed)"'
+
+  # ── redsl quality gate (opt-in, requires Docker stack) ──────────────
+  # Uncomment if you've installed task quality:up stack.
+  # - repo: local
+  #   hooks:
+  #     - id: redsl-gate
+  #       name: redsl quality gate
+  #       language: system
+  #       pass_filenames: false
+  #       stages: [pre-commit]
+  #       entry: bash scripts/redsl-gate-precommit.sh
+
+  # ── Custom: add your own hooks here ─────────────────────────────────
+  # Example: link checker, security scan, secret detection, etc.

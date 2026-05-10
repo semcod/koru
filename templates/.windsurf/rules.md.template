@@ -1,0 +1,127 @@
+# Windsurf Rules — <APP_NAME>
+
+These rules instruct the Windsurf agent how to operate inside this
+monorepo. They optimize for **reusing the LLM that ships with Windsurf**
+(default: no OpenRouter API calls) by routing auto-fix work through
+tickets created by `healing-webhook`.
+
+> **Pełen przewodnik agenta (canonical):**
+> [`koru/docs/agent-guide.md`](https://github.com/semcod/koru/blob/main/docs/agent-guide.md)
+>
+> **Lokalny redirect:** [`docs/agent-guide.md`](../docs/agent-guide.md)
+>
+> **Heurystyka migracyjna:**
+>
+> - jeśli zmiana ma sens dla wielu repo → najpierw myśl o `koru`
+> - jeśli zmiana dotyczy runtime, hardware, domeny → zostaje tutaj
+
+---
+
+## 1. Architecture: how this repo uses LLMs
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ HEALING-WEBHOOK (server-side, default no LLM)               │
+│   alert → vallm syntax check → planfile ticket creation     │
+│   • default: DOES NOT call OpenAI/OpenRouter directly       │
+│   • opt-in: may call redsl improve when explicitly enabled  │
+│   • produces an LLM-ready ticket with full context          │
+└────────────────────────────┬────────────────────────────────┘
+                             │ ticket: PLF-XXX
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│ WINDSURF AGENT (you, using Windsurf-native LLM)             │
+│   • reads ticket via planfile                               │
+│   • edits code with Windsurf model (no external API)        │
+│   • runs validation: pytest, regix, redup, vallm            │
+│   • commits with conventional message (goal commit)         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## 2. Standard workflow (90% case)
+
+```bash
+# 1. Highest-priority ticket
+task tickets:next
+
+# 2. Read ticket + affected files
+task tickets:show -- PLF-XXX
+
+# 3. Edit code (Windsurf-native LLM)
+
+# 4. Self-validate (LLM-free)
+task quality:regix:local       # 0 errors required
+task test                      # all tests pass
+
+# 5. Add regression test (no exceptions)
+
+# 6. Commit (goal generates smart message)
+goal commit
+
+# 7. Mark done
+task tickets:done -- PLF-XXX
+```
+
+## 3. Tools available
+
+| Layer | Tools |
+|---|---|
+| **Detect** | `regix`, `redup`, `prefact`, `testql`, `planfile`, `vallm`, `sumd`, `op3` |
+| **Resolve** | Windsurf LLM (you), `pfix`, `aider`, `redsl` (opt-in OpenRouter) |
+| **Validate** | `ruff`, `pytest`, `regix`, `vallm` |
+| **Orchestrate** | `goal` (commits), `doql` (state), `costs` (tracking) |
+
+Per-tool docs: `docs/llm-tools/<tool>/README.md`.
+
+## 4. When to stop and ask user
+
+- Patch > 80 lines diff → split ticket
+- Need to touch file outside "Likely-affected areas"
+- Need to bump dependency version
+- Need to disable a test (even temporarily)
+- Reproduction fails for unclear reasons (3+ tries)
+- Not 80% sure of intent → don't guess
+
+Don't ask about:
+
+- Type hints, docstrings, local variable renames
+- Adding regression tests
+- Running `task` / pytest / regix to verify
+- Small in-method refactors
+
+## 5. Anti-patterns (red flags)
+
+❌ **No commit before:**
+
+- `task quality:regix:local` (must be 0 errors)
+- Regression test added
+- `git status` shows only intended files
+
+❌ **Don't `--no-verify`** to skip pre-commit. Fix the cause.
+
+❌ **Don't call `redsl improve` / `llx fix` / `aider`** in normal ticket
+flow. These are opt-in OpenRouter automation lane only.
+
+❌ **Don't modify generated code:** `**/*_pb2*.py`, `**/__generated__/**`.
+
+❌ **Don't `print()`** in production. Use `logging`.
+
+❌ **Don't guess imports** — find real symbol in neighboring files.
+
+## 6. Citation format
+
+Use absolute paths in backticks:
+
+```text
+`@/path/to/repo/src/file.py:42-48`
+```
+
+Never plain text. Never relative paths in chat output.
+
+## 7. Project-specific rules
+
+> Add custom rules below: hardware constraints, domain conventions,
+> deployment specifics, etc. Anything that's particular to <APP_NAME>
+> and shouldn't be moved up to koru.
+
+- (placeholder — add your rules here)

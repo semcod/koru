@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# check-version-drift.sh — SSOT version drift checker.
+#
+# Source of truth: ./VERSION (one-line semver string)
+#
+# Validates that all version-bearing files match VERSION:
+#   * pyproject.toml: project.version
+#   * package.json: version
+#   * **/__init__.py: __version__
+#   * .env: SERVICE_VERSION (if present)
+#   * Custom paths via CHECK_FILES env var
+#
+# Usage:
+#   bash scripts/check-version-drift.sh           # report only (exit 0 always)
+#   bash scripts/check-version-drift.sh --strict  # exit 1 on any drift
+#
+# CI parity: matches .github/workflows/version-drift.yml
+
+set -euo pipefail
+
+STRICT=0
+[[ "${1:-}" == "--strict" ]] && STRICT=1
+
+ROOT="${2:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+
+python3 - "$ROOT" "$STRICT" <<'PY'
+from __future__ import annotations
+import json
+import re
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1]).resolve()
+strict = sys.argv[2] == "1"
+
+# ── Read SSOT ──────────────────────────────────────────────────────────────
+version_file = root / "VERSION"
+if not version_file.exists():
+    print(f"FAIL: {version_file} missing — VERSION is required as SSOT")
+    sys.exit(1)
+
+ssot = version_file.read_text().strip()
+if not ssot:
+    print(f"FAIL: {version_file} is empty")
+    sys.exit(1)
+
+print(f"SSOT version: {ssot}")
+print()
+
+# ── Excluded directories ───────────────────────────────────────────────────
+excluded = {
+    ".git", ".mypy_cache", ".pytest_cache", ".venv", "venv",
+    "node_modules", "__pycache__", "dist", "build", "archive",
+    "_archive", ".tox", ".nox", ".ruff_cache",
+}
+
+def walk(p: Path):
+    for child in p.iterdir():
+        if child.name in excluded:
+            continue
+        if child.is_dir():
+            yield from walk(child)
+        else:
+            yield child
+
+# ── Detectors ──────────────────────────────────────────────────────────────
+mismatches: list[tuple[Path, str, str]] = []  # (file, found_version, source)
+
+for f in walk(root):
+    rel = f.relative_to(root)
+
+    # pyproject.toml
+    if f.name == "pyproject.toml":
+        try:
+            text = f.read_text()
+            m = re.search(r'^version\s*=\s*"([^"]+)"', text, re.MULTILINE)
+            if m and m.group(1) != ssot:
+                mismatches.append((rel, m.group(1), "pyproject.toml:version"))
+        except Exception:
+            pass
+
+    # package.json
+    elif f.name == "package.json":
+        try:
+            data = json.loads(f.read_text())
+            v = data.get("version")
+            if v and v != ssot:
+                mismatches.append((rel, v, "package.json:version"))
+        except Exception:
+            pass
+
+    # __init__.py with __version__
+    elif f.name == "__init__.py":
+        try:
+            text = f.read_text()
+            m = re.search(r'__version__\s*=\s*[\'"]([^\'"]+)', text)
+            if m and m.group(1) != ssot:
+                mismatches.append((rel, m.group(1), "__init__.py:__version__"))
+        except Exception:
+            pass
+
+    # .env / .env.example
+    elif f.name in (".env", ".env.example"):
+        try:
+            text = f.read_text()
+            m = re.search(r'^SERVICE_VERSION=([^\s\n#]+)', text, re.MULTILINE)
+            if m and m.group(1) != ssot:
+                mismatches.append((rel, m.group(1), ".env:SERVICE_VERSION"))
+        except Exception:
+            pass
+
+# ── Report ─────────────────────────────────────────────────────────────────
+if not mismatches:
+    print(f"OK: all version-bearing files match VERSION ({ssot})")
+    sys.exit(0)
+
+print(f"DRIFT detected ({len(mismatches)} files):")
+print()
+for rel, found, source in mismatches:
+    print(f"  {rel}")
+    print(f"      {source}: {found!r}")
+    print(f"      expected:        {ssot!r}")
+    print()
+
+if strict:
+    print(f"FAIL: drift detected (--strict)")
+    sys.exit(1)
+else:
+    print("(non-strict mode — exit 0)")
+    sys.exit(0)
+PY

@@ -14,6 +14,19 @@ def format_queue_event(event: dict[str, Any]) -> str:
 
     event_type = str(event.get("type") or "event")
     action = str(event.get("action") or "-")
+    if event_type == "management.event":
+        parts = [
+            event_type,
+            str(event.get("tool") or event.get("source") or "koru"),
+            action,
+            str(event.get("status") or event.get("level") or "info"),
+        ]
+        if event.get("queue"):
+            parts.append(f"queue={event['queue']}")
+        if event.get("message"):
+            parts.append(str(event["message"]))
+        return " | ".join(parts)
+
     ticket_id = str(event.get("ticket_id") or "-")
     ticket = event.get("ticket") if isinstance(event.get("ticket"), dict) else {}
     execution = ticket.get("execution") if isinstance(ticket.get("execution"), dict) else {}

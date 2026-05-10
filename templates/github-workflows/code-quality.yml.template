@@ -1,0 +1,83 @@
+name: Code Quality Gate
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  code-quality:
+    name: Lint + complexity + duplicates
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # regix needs git history
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install quality tools
+        run: |
+          pip install --upgrade ruff lizard regix redup vallm
+
+      - name: Ruff lint
+        run: ruff check .
+
+      - name: Ruff format check
+        run: ruff format --check .
+
+      - name: Lizard complexity (max CC = 15)
+        run: |
+          lizard . --CCN 15 --length 100 \
+            --exclude '**/_pb2*.py' \
+            --exclude '**/__generated__/**' \
+            --exclude '**/archive/**'
+
+      - name: regix gate (fail on regression)
+        run: regix gate --fail-on-regression
+        continue-on-error: false
+
+      - name: redup duplicate budget
+        run: redup check . --threshold 0.85 --fail || true
+        continue-on-error: true   # advisory; flip to false to block PRs
+
+      - name: vallm syntax check (tier-1, no LLM)
+        run: |
+          # Find changed Python files, validate syntax
+          git diff --name-only origin/${{ github.base_ref || 'main' }}...HEAD -- '*.py' | \
+            xargs -r vallm check --files
+        continue-on-error: true
+
+  test:
+    name: Pytest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: code-quality
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install package + test deps
+        run: |
+          pip install -e ".[dev]" || pip install -e .
+          pip install pytest pytest-cov
+
+      - name: Run pytest
+        run: pytest tests/ -v --tb=short
+
+      - name: Coverage report (advisory)
+        run: pytest tests/ --cov=src --cov-report=term --cov-fail-under=50
+        continue-on-error: true

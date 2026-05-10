@@ -1,0 +1,50 @@
+{
+  "_comment": [
+    "Reference MCP server configuration for Windsurf when working in <APP_NAME>.",
+    "",
+    "MERGE these entries into your global config:",
+    "  ~/.codeium/windsurf/mcp_config.json",
+    "",
+    "After saving, reload Windsurf (Cmd-Shift-P → 'Windsurf: Reload Window').",
+    "Each MCP server runs as a long-lived stdio process spawned by Windsurf;",
+    "the agent gains access to the listed tools using its OWN LLM (no",
+    "OpenRouter calls server-side).",
+    "",
+    "Pre-requisites (host install):",
+    "  pip install --user planfile testql redup vallm",
+    "",
+    "Verify each entry stand-alone before adding here:",
+    "  python3 -m planfile.mcp.server   --help",
+    "  python3 -m testql.mcp.server     --help",
+    "  python3 -m redup.mcp_server      --help",
+    "",
+    "Substitute <APP_NAME> and <REPO_PATH> placeholders before merging."
+  ],
+  "mcpServers": {
+    "planfile": {
+      "_purpose": "Read/list/update tickets created by healing-webhook.",
+      "command": "python3",
+      "args": ["-m", "planfile.mcp.server"],
+      "env": {
+        "PLANFILE_PROJECT": "<REPO_PATH>"
+      }
+    },
+    "testql": {
+      "_purpose": "Run TestQL scenarios, list available tests, fetch results.",
+      "command": "python3",
+      "args": ["-m", "testql.mcp.server"],
+      "env": {
+        "TESTQL_PROJECT": "<REPO_PATH>",
+        "TESTQL_BASE_URL": "http://localhost:8000"
+      }
+    },
+    "redup": {
+      "_purpose": "On-demand duplicate detection across the monorepo.",
+      "command": "python3",
+      "args": ["-m", "redup.mcp_server"],
+      "env": {
+        "REDUP_ROOT": "<REPO_PATH>"
+      }
+    }
+  }
+}

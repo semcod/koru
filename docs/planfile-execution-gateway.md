@@ -49,7 +49,28 @@ That means:
 - `c2004` should only provide a **reference deployment** and real-world
   examples of those capabilities.
 
-## Does this require a `planfile` update?
+## Current implementation status
+
+The first implementation slice is now in place:
+
+- `planfile` tickets carry `executor`, `execution`, `inputs`, and `outputs`.
+- `planfile ticket next` returns the next runnable ticket.
+- `planfile` exposes queue lifecycle commands: `claim`, `start`, `input`,
+  `ready`, `complete`, and `fail`.
+- `planfile` API exposes matching lifecycle endpoints and broadcasts ticket
+  change events over `/ws`.
+- `koru --queue --project .` executes one runnable ticket at a time.
+- `koru` currently supports `shell`, `api`, and human-facing prompts.
+- `koru --watch --ws-url ws://localhost:8000/ws` watches planfile queue
+  events over WebSocket.
+
+Remaining work:
+
+- add explicit adapters for `mcp` and `llm`,
+- add bootstrap templates that create a dependency tree of queued tasks,
+- add richer release/lease recovery semantics.
+
+## Did this require a `planfile` update?
 
 **Yes.**
 
@@ -63,10 +84,8 @@ Current `planfile` already has strong ticket primitives:
 - MCP server
 - WebSocket / DSL transport
 
-But it does **not yet model execution semantics explicitly**.
-
-To make `planfile` the gateway for `koru`, we need to extend the schema with
-executor metadata and execution state.
+It did. The schema has now been extended with executor metadata and execution
+state while preserving backward compatibility for existing ticket-only users.
 
 ## Proposed planfile schema extension
 
@@ -102,13 +121,17 @@ tasks:
       env_keys: ["OPENROUTER_API_KEY"]
       script: null
       api_endpoint: null
+      api_method: GET
+      api_headers: {}
+      api_body: null
+      api_timeout_seconds: 30
       mcp_tool: null
       llm_model: null
 
     outputs:
       artifacts: []
       notes: []
-+      result: null
+      result: null
 ```
 
 ## Executor kinds
@@ -174,6 +197,38 @@ Examples:
 - trigger CI,
 - call a webhook,
 - provision an integration.
+
+Expected koru behavior:
+
+- read `inputs.api_endpoint` or `executor.handler`,
+- send `inputs.api_method`, `inputs.api_headers`, and optional JSON
+  `inputs.api_body`,
+- mark HTTP 2xx/3xx responses as done,
+- mark transport errors and HTTP 4xx/5xx responses as failed,
+- attach status code and response body into `outputs.result`.
+
+Example:
+
+```yaml
+tickets:
+  PLF-220:
+    name: "Notify bootstrap webhook"
+    status: open
+    executor:
+      kind: api
+      mode: automatic
+    execution:
+      queue: default
+      state: ready
+    inputs:
+      api_endpoint: "http://localhost:8810/probe-failure"
+      api_method: POST
+      api_headers:
+        content-type: application/json
+      api_body:
+        source: koru
+        event: bootstrap-ready
+```
 
 ### `llm`
 
@@ -251,9 +306,14 @@ For live dashboards and shells:
 - task completed,
 - task failed,
 - queue advanced.
+- management tool activity visible as `management.event` entries.
 
 `planfile` already has a WebSocket-capable API surface, so the cheapest path
-is to extend that rather than invent a second queue protocol.
+is to extend that rather than invent a second queue protocol. `koru` emits
+best-effort management events when `KORU_EVENTS_URL` or `KORU_PLANFILE_API_URL`
+is configured, so operators can see `koru.bootstrap`, `koru.queue`,
+`koru.watch`, and repository loop activity in the same Live Events stream as
+ticket lifecycle changes.
 
 ## Bootstrap of a new project
 
@@ -295,6 +355,17 @@ koru task input PLF-201 --value "..."
 koru task skip PLF-201
 ```
 
+Implemented today:
+
+```bash
+koru --queue --project .
+koru --queue --project . --dry-run
+koru --watch --ws-url ws://localhost:8000/ws
+task queue:run
+task queue:dry-run
+task queue:watch
+```
+
 ## Recommended planfile changes
 
 These should happen in `semcod/planfile`:
@@ -307,12 +378,14 @@ These should happen in `semcod/planfile`:
 2. Add CLI support:
    - `planfile ticket next`
    - `planfile ticket claim`
-   - `planfile ticket release`
    - `planfile ticket complete`
    - `planfile ticket input`
 3. Add API support for queue-oriented operations.
 4. Add WebSocket events for execution-state transitions.
 5. Preserve backward compatibility for existing ticket-only users.
+
+Items 1, 2, 3, 4, and 5 have an initial working implementation. Release/lease
+recovery is still future work.
 
 ## Recommended koru changes
 
@@ -329,6 +402,9 @@ These should happen in `semcod/koru`:
 4. Add bootstrap-from-template flow for new repositories.
 5. Keep single-task queue semantics in v1.
 
+Items 1, `human`, `shell`, `api`, watch mode, and item 5 have an initial
+working implementation.
+
 ## Suggested rollout
 
 ### Phase 1
@@ -336,7 +412,7 @@ These should happen in `semcod/koru`:
 - CI for `koru`
 - docs/spec for execution gateway
 - task queue runner prototype in `koru`
-- no `planfile` schema changes yet
+- first `planfile` execution schema changes
 
 ### Phase 2
 

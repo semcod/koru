@@ -1,0 +1,125 @@
+# koru | 33f 3537L | shell:21,python:11,less:1 | 2026-05-10
+# stats: 54 func | 9 cls | 33 mod | CC̄=5.3 | critical:12 | cycles:0
+# alerts[5]: CC create_planfile_ticket=24; CC _run_redup_check=15; CC run_next_planfile_task=15; CC do_from_todo=12; CC run_closed_loop=12
+# hotspots[5]: create_planfile_ticket fan=23; do_from_todo fan=15; probe_failure fan=13; run_closed_loop fan=12; do_from_planfile fan=11
+# evolution: baseline
+# Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
+M[33]:
+  app.doql.less,60
+  docs/llm-tools/aider/install.sh,56
+  docs/llm-tools/claude-code/install.sh,61
+  docs/llm-tools/cursor/install.sh,89
+  docs/llm-tools/llx/install.sh,54
+  docs/llm-tools/pfix/install.sh,53
+  docs/llm-tools/planfile/install.sh,42
+  docs/llm-tools/prefact/install.sh,50
+  docs/llm-tools/redsl/install.sh,54
+  docs/llm-tools/redup/install.sh,42
+  docs/llm-tools/regix/install.sh,53
+  docs/llm-tools/sumd/install.sh,81
+  docs/llm-tools/testql/install.sh,50
+  docs/llm-tools/vallm/install.sh,56
+  scripts/git-hooks/install.sh,100
+  scripts/planfile-export-prompt.sh,82
+  scripts/planfile-sync-todo.py,220
+  scripts/redsl-gate-precommit.sh,32
+  scripts/redup-check.sh,142
+  scripts/redup-precommit.sh,42
+  scripts/redup-run.sh,30
+  scripts/regix-precommit.sh,52
+  scripts/sumr-refresh.sh,195
+  services/healing-webhook/app.py,674
+  services/healing-webhook/ticket_builder.py,224
+  src/koru/__init__.py,14
+  src/koru/cli.py,134
+  src/koru/loop.py,110
+  src/koru/planfile_queue.py,224
+  src/koru/watch.py,66
+  tests/test_loop.py,84
+  tests/test_planfile_queue.py,228
+  tests/test_watch.py,83
+D:
+  scripts/planfile-sync-todo.py:
+    e: run_planfile,load_tickets,build_auto_section,replace_auto_section,do_from_planfile,do_from_todo,_llm_stub,main
+    run_planfile()
+    load_tickets()
+    build_auto_section(tickets)
+    replace_auto_section(current;new_section)
+    do_from_planfile(check)
+    do_from_todo(heading;check)
+    _llm_stub(item;heading)
+    main()
+  services/healing-webhook/app.py:
+    e: _rate_limit_ok,_record_action,create_planfile_ticket,_run_docker,heal_redsl_gate,heal_redsl_improve,heal_rebuild_restore,heal_annotate,_run_vallm_check,_run_vallm_validate,_resolve_affected_files,heal_vallm_validate,_run_redup_check,heal_redup_check,_resolve_strategy,healthz,metrics,get_history,alertmanager_webhook,probe_failure,get_tickets
+    _rate_limit_ok()
+    _record_action(action;outcome;component;detail)
+    create_planfile_ticket(alert)
+    _run_docker(image;cmd;timeout)
+    heal_redsl_gate(component;detail)
+    heal_redsl_improve(component;detail)
+    heal_rebuild_restore(component;detail)
+    heal_annotate(component;detail)
+    _run_vallm_check(file_path;timeout)
+    _run_vallm_validate(file_path;model;timeout)
+    _resolve_affected_files(component;labels;max_files)
+    heal_vallm_validate(component;detail)
+    _run_redup_check(timeout)
+    heal_redup_check(component;detail)
+    _resolve_strategy(strategy_name)
+    healthz()
+    metrics()
+    get_history()
+    alertmanager_webhook(request)
+    probe_failure(request)
+    get_tickets()
+  services/healing-webhook/ticket_builder.py:
+    e: _git_commit,_infer_paths,_format_paths,_default_acceptance,_format_acceptance,_reproduction_for,build_ticket_payload
+    _git_commit(repo)
+    _infer_paths(component;labels)
+    _format_paths(paths)
+    _default_acceptance(instance)
+    _format_acceptance(items)
+    _reproduction_for(labels;failures)
+    build_ticket_payload(alert)
+  src/koru/__init__.py:
+  src/koru/cli.py:
+    e: _command_value,_build_parser,main
+    _command_value(value)
+    _build_parser()
+    main()
+  src/koru/loop.py:
+    e: discover_repositories,_default_runner,run_closed_loop,CommandResult,RunRecord,LoopReport
+    CommandResult:  # Protocol for subprocess-like command results.
+    RunRecord:  # Single command execution result for one repository in one at
+    LoopReport:  # Aggregated execution report for a full closed-loop run.
+    discover_repositories(workspace;include_pattern)
+    _default_runner(command;repository)
+    run_closed_loop()
+  src/koru/planfile_queue.py:
+    e: _run_process,_run_shell_command,_planfile_command,_parse_next_ticket,_ticket_command,_result_json,run_next_planfile_task,CommandResult,QueueRunResult
+    CommandResult:  # Protocol for subprocess-like command results.
+    QueueRunResult:  # Result of a single queue tick.
+    _run_process(command;project)
+    _run_shell_command(command;project)
+    _planfile_command(project;args;runner)
+    _parse_next_ticket(stdout)
+    _ticket_command(ticket)
+    _result_json(result)
+    run_next_planfile_task()
+  src/koru/watch.py:
+    e: format_queue_event,_default_connect,watch_planfile_events
+    format_queue_event(event)
+    _default_connect(ws_url)
+    watch_planfile_events(ws_url)
+  tests/test_loop.py:
+    e: TestKoruLoop
+    TestKoruLoop: test_discover_repositories_with_pattern(0),test_run_closed_loop_retries_failed_repositories(0),test_run_closed_loop_single_round_when_all_succeed(0),test_command_value_rejects_blank_value(0)
+  tests/test_planfile_queue.py:
+    e: _ok,_ticket_args,TestPlanfileQueue
+    TestPlanfileQueue: test_shell_ticket_runs_lifecycle_commands(0),test_human_ticket_returns_waiting_input(0),test_shell_failure_marks_ticket_failed(0),test_idle_when_planfile_returns_no_ticket(0),test_planfile_error_propagates(0),test_dry_run_returns_command_without_executing(0),test_unsupported_executor_kind(0),test_shell_ticket_without_command_requests_input(0)
+    _ok(stdout)
+    _ticket_args(command)
+  tests/test_watch.py:
+    e: FakeWebSocket,TestWatch
+    FakeWebSocket: __init__(1),__aenter__(0),__aexit__(0),recv(0)
+    TestWatch: test_format_queue_event_for_execution_change(0),test_watch_planfile_events_prints_compact_lines(0)

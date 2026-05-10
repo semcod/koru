@@ -26,8 +26,23 @@ WYKRYWANIE (LLM-free):              ROZWIĄZYWANIE (LLM):           WALIDACJA (L
   testql    [declarative scenarios]   redsl     [quality gate +      vallm      [tier-1 syntax]
   planfile  [ticket store]                       improve]
   vallm/1   [syntax check]            windsurf  [primary IDE,
-                                                 reuses agent LLM]
-  
+  sumd      [LLM snapshot for                    reuses agent LLM]
+             LLM agents]
+  op3       [multi-layer infra        redeploy  [markpact-based deploy:
+             observation]                        detect → plan → apply]
+
+ORCHESTRATION (LLM-free):
+  goal      [smart commits + versioning + changelog + release workflow]
+  doql      [declarative IaC: app.doql.less → build/sync/drift]
+  costs     [AI cost tracker per commit (badge w README.md)]
+  toonic    [TOON format converter (LLM-optimized compact YAML)]
+
+SPECIALIZED (LLM-free):
+  protogate [migration tool dla legacy systems (bounded slices)]
+  rebuild   [code evolution intelligence (git history walker)]
+  mdflow    [markdown dependency analyzer + Mermaid diagrams]
+  metrun    [execution intelligence + bottleneck detection]
+
   ALTERNATIVES:
     cursor       [IDE alternative to Windsurf]
     claude-code  [CLI agent alternative]
@@ -47,6 +62,17 @@ WYKRYWANIE (LLM-free):              ROZWIĄZYWANIE (LLM):           WALIDACJA (L
 | **testql** | brak | ✅ scenariusze YAML | [`testql/`](./testql/) |
 | **regix** | brak | ✅ `regix.yaml` | [`regix/`](./regix/) |
 | **redup** | brak | brak | [`redup/`](./redup/) |
+| **sumd/sumr** | brak | brak (env vars) | [`sumd/`](./sumd/) |
+| **redeploy** | brak | ✅ markpact specs (`*.md`) | [`redeploy/`](./redeploy/) |
+| **goal** | optional (PYPI/NPM/GH tokens dla publish) | ✅ `goal.yaml` | [`goal/`](./goal/) |
+| **doql** | brak | ✅ `app.doql.less` | [`doql/`](./doql/) |
+| **costs** | brak | optional (`[tool.costs]` w pyproject.toml) | [`costs/`](./costs/) |
+| **op3** | brak | brak (Pythonic API + CLI flags) | [`op3/`](./op3/) |
+| **toonic** | brak | brak (CLI flags) | [`toonic/`](./toonic/) |
+| **protogate** | brak | optional (`protogate.yaml`) | [`protogate/`](./protogate/) |
+| **rebuild** | brak | optional (reads `pyqual.yaml`) | [`rebuild/`](./rebuild/) |
+| **mdflow** | brak | brak (CLI flags) | [`mdflow/`](./mdflow/) |
+| **metrun** | brak | brak (CLI flags) | [`metrun/`](./metrun/) |
 | **windsurf** | (subskrypcja IDE) | ✅ `.windsurf/rules.md` | [`../windsurf-agent-guide.md`](../windsurf-agent-guide.md) |
 | **cursor** | (subskrypcja IDE) | ✅ `.cursorrules` | [`cursor/`](./cursor/) |
 | **claude-code** | ✅ ANTHROPIC_API_KEY | ✅ `.claude/` | [`claude-code/`](./claude-code/) |
@@ -55,7 +81,7 @@ WYKRYWANIE (LLM-free):              ROZWIĄZYWANIE (LLM):           WALIDACJA (L
 
 ```bash
 # Z głównego katalogu c2004
-for tool in redsl llx pfix vallm prefact planfile regix redup testql aider; do
+for tool in redsl llx pfix vallm prefact planfile regix redup sumd redeploy goal doql costs op3 toonic protogate rebuild mdflow metrun testql aider; do
   bash docs/llm-tools/$tool/install.sh
 done
 ```

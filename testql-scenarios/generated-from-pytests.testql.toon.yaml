@@ -1,0 +1,10 @@
+# SCENARIO: Auto-generated from Python Tests
+# TYPE: integration
+# GENERATED: true
+
+CONFIG[2]{key, value}:
+  base_url, ${api_url:-http://localhost:8101}
+  timeout_ms, 10000
+
+# NOTE: Python pytest files were detected but no convertible HTTP calls or assertions were found.
+# To run pytest tests directly, use: pytest <test_file>

@@ -1,0 +1,191 @@
+# docker-compose.observability.yml — Real-time monitoring + self-healing stack.
+#
+# Layered on top of your main docker-compose.yml. Brings up:
+#
+#   prometheus        :9090   metrics scraper
+#   blackbox-exporter :9115   synthetic HTTP probes
+#   cadvisor          :8082   container metrics
+#   node-exporter     :9100   host metrics
+#   alertmanager      :9093   alerts → healing-webhook
+#   grafana           :3000   dashboards (anonymous viewer by default)
+#   loki              :3100   log aggregation
+#   promtail          :9080   ship container logs → loki
+#   uptime-kuma       :3001   simple uptime UI
+#   healing-webhook   :8810   alert → planfile ticket / redsl improve
+#
+# Bring up:        task monitor:up
+# Tear down:       task monitor:down
+# Status:          task monitor:status
+#
+# IMPORTANT — placeholder substitution before first use:
+#   <APP_NAME>     — your app name (e.g. myapp)
+#   <APP_PORT>     — your app's HTTP port to probe (e.g. 8000)
+#   <APP_HOST>     — host IP or hostname (default: host.docker.internal)
+#
+# All services share `<APP_NAME>-quality-net` so healing-webhook can reach
+# downstream services (redsl, rebuild) when needed.
+
+x-common-labels: &common-labels
+  com.<APP_NAME>.observability: "true"
+
+services:
+
+  # ── Metrics pipeline ───────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: <APP_NAME>-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=14d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks: [quality-net]
+    labels: *common-labels
+    restart: unless-stopped
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: <APP_NAME>-blackbox
+    command: ['--config.file=/etc/blackbox/blackbox.yml']
+    ports: ["${BLACKBOX_PORT:-9115}:9115"]
+    volumes:
+      - ./monitoring/blackbox:/etc/blackbox:ro
+    networks: [quality-net]
+    labels: *common-labels
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: <APP_NAME>-node-exporter
+    command:
+      - '--path.rootfs=/host'
+    pid: host
+    volumes:
+      - '/:/host:ro,rslave'
+    ports: ["${NODE_EXPORTER_PORT:-9100}:9100"]
+    networks: [quality-net]
+    labels: *common-labels
+    restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: <APP_NAME>-cadvisor
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports: ["${CADVISOR_PORT:-8082}:8080"]
+    networks: [quality-net]
+    labels: *common-labels
+    restart: unless-stopped
+
+  # ── Alerting ───────────────────────────────────────────────────────────
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: <APP_NAME>-alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    ports: ["${ALERTMANAGER_PORT:-9093}:9093"]
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    networks: [quality-net]
+    labels: *common-labels
+    restart: unless-stopped
+
+  # ── Logging ────────────────────────────────────────────────────────────
+  loki:
+    image: grafana/loki:3.1.1
+    container_name: <APP_NAME>-loki
+    command: ['-config.file=/etc/loki/local-config.yaml']
+    ports: ["${LOKI_PORT:-3100}:3100"]
+    volumes:
+      - ./monitoring/loki:/etc/loki:ro
+      - loki_data:/loki
+    networks: [quality-net]
+    labels: *common-labels
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:3.1.1
+    container_name: <APP_NAME>-promtail
+    command: ['-config.file=/etc/promtail/config.yml']
+    volumes:
+      - ./monitoring/promtail:/etc/promtail:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    ports: ["${PROMTAIL_PORT:-9080}:9080"]
+    networks: [quality-net]
+    depends_on: [loki]
+    labels: *common-labels
+    restart: unless-stopped
+
+  # ── Dashboards ─────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: <APP_NAME>-grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports: ["${GRAFANA_PORT:-3000}:3000"]
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on: [prometheus, loki]
+    networks: [quality-net]
+    labels: *common-labels
+    restart: unless-stopped
+
+  # ── Uptime UI (independent simple monitoring) ─────────────────────────
+  uptime-kuma:
+    image: louislam/uptime-kuma:1.23.13
+    container_name: <APP_NAME>-uptime-kuma
+    ports: ["${UPTIME_KUMA_PORT:-3001}:3001"]
+    volumes:
+      - uptime_kuma_data:/app/data
+    networks: [quality-net]
+    labels: *common-labels
+    restart: unless-stopped
+
+  # ── Self-healing webhook (alert → planfile ticket / redsl improve) ────
+  healing-webhook:
+    build:
+      context: ./services/healing-webhook
+      dockerfile: Dockerfile
+    container_name: <APP_NAME>-healing-webhook
+    ports: ["${HEALING_WEBHOOK_PORT:-8810}:8810"]
+    volumes:
+      - ./planfile:/planfile           # ticket store
+      - .:/repo:ro                     # read-only repo for context
+    environment:
+      PLANFILE_PROJECT: /repo
+      WEBHOOK_PORT: "8810"
+      LOG_LEVEL: INFO
+    networks: [quality-net]
+    labels: *common-labels
+    restart: unless-stopped
+
+networks:
+  quality-net:
+    name: <APP_NAME>-quality-net
+    external: true   # created by `task monitor:net` — see Taskfile.yml
+
+volumes:
+  prometheus_data:
+  alertmanager_data:
+  loki_data:
+  grafana_data:
+  uptime_kuma_data:

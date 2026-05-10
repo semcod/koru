@@ -44,6 +44,25 @@ class TestWatch(unittest.TestCase):
             "state=ready | assigned_to=koru-shell",
         )
 
+    def test_format_management_event(self) -> None:
+        event = {
+            "type": "management.event",
+            "source": "koru",
+            "tool": "koru.queue",
+            "action": "completed",
+            "status": "dry_run",
+            "queue": "c2004-runtime",
+            "message": "PLF-074",
+        }
+
+        line = format_queue_event(event)
+
+        self.assertEqual(
+            line,
+            "management.event | koru.queue | completed | dry_run | "
+            "queue=c2004-runtime | PLF-074",
+        )
+
     def test_watch_planfile_events_prints_compact_lines(self) -> None:
         messages = [
             {"ok": True, "message": "planfile DSL ready. Type 'help' for commands."},

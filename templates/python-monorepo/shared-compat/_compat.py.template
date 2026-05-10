@@ -1,0 +1,148 @@
+"""Compatibility shim layer for monorepo with packages/ directory.
+
+Pattern: legacy code imports from `<APP_NAME>.shared.X`, ale canonical
+implementacja jest w `packages/<APP_NAME>-shared-py/src/shared/X`.
+Ten module dostarcza re-export helpers żeby legacy importy działały bez
+zmian, podczas gdy nowy kod używa canonical path.
+
+Usage in shim files (e.g. `<APP_NAME>/shared/types/base.py`):
+
+    \"\"\"Compatibility wrapper for shared.types.base.
+
+    Canonical implementation in:
+    `packages/<APP_NAME>-shared-py/src/shared/types/base.py`
+    \"\"\"
+    from __future__ import annotations
+    from <APP_NAME>.shared._compat import export_backend_shared_module
+
+    __all__ = export_backend_shared_module(globals(), "types/base")
+
+This pattern auto-imports all public symbols from canonical module and
+sets `__all__` so `from <APP_NAME>.shared.types.base import *` works.
+"""
+from __future__ import annotations
+
+import importlib.util
+import sys
+from pathlib import Path
+
+
+def _resolve_packages_root() -> Path:
+    """Find packages/<APP_NAME>-shared-py/src/shared/ via filesystem walk.
+
+    Walks UP from this file to find a `packages/` sibling directory.
+    Returns the canonical `shared/` path inside it.
+    """
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        candidate = parent / "packages" / "<APP_NAME>-shared-py" / "src" / "shared"
+        if candidate.is_dir():
+            return candidate
+    raise RuntimeError(
+        f"Cannot locate packages/<APP_NAME>-shared-py/src/shared from {here}"
+    )
+
+
+def _load_canonical_module(rel_path: str):
+    """Load canonical module from packages/ via importlib.
+
+    rel_path: relative path inside `packages/<APP_NAME>-shared-py/src/shared/`,
+              e.g. "types/base", "cqrs/method_adapters".
+    """
+    packages_root = _resolve_packages_root()
+    file_path = packages_root / f"{rel_path}.py"
+    if not file_path.exists():
+        # Try as a package
+        file_path = packages_root / rel_path / "__init__.py"
+        if not file_path.exists():
+            raise ImportError(
+                f"Canonical module not found: packages/.../{rel_path}.py "
+                f"(searched: {packages_root})"
+            )
+
+    module_name = f"<APP_NAME>_shared_canonical_{rel_path.replace('/', '_')}"
+    if module_name in sys.modules:
+        return sys.modules[module_name]
+
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot create spec for {file_path}")
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def export_backend_shared_module(target_globals: dict, rel_path: str) -> list[str]:
+    """Export all public symbols from canonical module to target_globals.
+
+    Args:
+        target_globals: result of `globals()` in the calling shim module
+        rel_path: relative path inside packages/.../shared/ (no .py extension)
+
+    Returns:
+        List of exported symbol names (use as __all__).
+
+    Behavior:
+        1. Load canonical module via importlib (avoids sys.path pollution)
+        2. Copy all public names (not starting with _) into target_globals
+        3. Honour canonical's __all__ if present, otherwise auto-detect
+    """
+    canonical = _load_canonical_module(rel_path)
+
+    # Use canonical's __all__ if defined
+    if hasattr(canonical, "__all__"):
+        names = list(canonical.__all__)
+    else:
+        names = [
+            name for name in dir(canonical)
+            if not name.startswith("_") and not name.endswith("__")
+        ]
+
+    for name in names:
+        target_globals[name] = getattr(canonical, name)
+
+    return names
+
+
+def export_connect_module(target_globals: dict, connect_module: str) -> list[str]:
+    """Export from connect-* package (sibling repo / submodule).
+
+    For monorepos with multiple connect-X subpackages where compatibility
+    wrappers are needed for cross-package imports.
+
+    Usage:
+        from <APP_NAME>.connect_compat import export_connect_module
+        __all__ = export_connect_module(globals(), "connect_data.events")
+    """
+    parts = connect_module.split(".")
+    pkg_name = parts[0]
+
+    # Try to find sibling package directory
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        candidate = parent / pkg_name.replace("_", "-") / "backend" / pkg_name
+        if candidate.is_dir():
+            # Add to sys.path (one-time)
+            sys_path_entry = str(candidate.parent)
+            if sys_path_entry not in sys.path:
+                sys.path.insert(0, sys_path_entry)
+            break
+
+    # Now import normally
+    import importlib
+    module = importlib.import_module(connect_module)
+
+    if hasattr(module, "__all__"):
+        names = list(module.__all__)
+    else:
+        names = [
+            name for name in dir(module)
+            if not name.startswith("_") and not name.endswith("__")
+        ]
+
+    for name in names:
+        target_globals[name] = getattr(module, name)
+
+    return names

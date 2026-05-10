@@ -1,0 +1,33 @@
+# Alertmanager — routes Prometheus alerts to healing-webhook.
+#
+# All alerts funnel into a single webhook; healing-webhook inspects
+# labels (severity, component, healing_strategy) and decides what to do.
+
+route:
+  receiver: <APP_NAME>-healing-webhook
+  group_by: [alertname, component]
+  group_wait: 30s
+  group_interval: 2m
+  repeat_interval: 4h
+  routes:
+    # Critical alerts bypass grouping — heal fast.
+    - receiver: <APP_NAME>-healing-webhook
+      matchers:
+        - severity = "critical"
+      group_wait: 10s
+      repeat_interval: 1h
+
+receivers:
+  - name: <APP_NAME>-healing-webhook
+    webhook_configs:
+      - url: http://healing-webhook:8810/alertmanager
+        send_resolved: true
+        max_alerts: 0     # no batch cap
+
+# Optional: silence after resolved (recommended)
+inhibit_rules:
+  - source_matchers:
+      - severity = "critical"
+    target_matchers:
+      - severity = "warning"
+    equal: [alertname, component]

@@ -1,0 +1,32 @@
+[Unit]
+Description=<APP_NAME> backend API
+PartOf=<APP_NAME>.container
+
+[Container]
+Image=localhost/<APP_NAME>-backend:latest
+ContainerName=<APP_NAME>-backend
+# Network=host          # uncomment for direct host networking (RPi/embedded)
+Network=<APP_NAME>.network
+PublishPort=<APP_PORT>:<APP_PORT>
+EnvironmentFile=%h/<APP_NAME>/.env
+Environment=API_HOST=0.0.0.0
+Environment=API_PORT=<APP_PORT>
+Environment=SERVICE_VERSION=<VERSION>
+
+# Mount logs / data dirs
+Volume=%h/<APP_NAME>/logs:/app/logs
+Volume=%h/<APP_NAME>/data:/app/data
+
+# Health check
+HealthCmd=curl -f http://localhost:<APP_PORT>/health
+HealthInterval=30s
+HealthRetries=3
+HealthTimeout=10s
+HealthStartPeriod=40s
+
+[Service]
+Restart=always
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

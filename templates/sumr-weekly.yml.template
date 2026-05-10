@@ -1,0 +1,185 @@
+# .github/workflows/sumr-weekly.yml
+#
+# Weekly refresh of SUMR.md (LLM refactor snapshot).
+#
+# Runs every Monday 04:00 UTC. Uses the same debounced helper as the local
+# post-merge hook — if the repo is already fresh (e.g. a contributor just
+# regenerated), the workflow skips the expensive parts and exits green
+# without opening a PR.
+#
+# If regeneration produces changes, the workflow opens (or updates) a single
+# long-lived PR on branch `automation/sumr-refresh`. Landing the PR is a
+# plain `Squash and merge` — no bot review required.
+#
+# Token strategy:
+#   * Default uses GITHUB_TOKEN (no extra setup). PRs from GITHUB_TOKEN do
+#     not trigger downstream workflow runs — which is fine here since no
+#     workflow keys off SUMR.md changes.
+#   * For richer behaviour (reviewers, status-check re-triggers), set a PAT
+#     in repo secrets as `SUMR_PAT`; the workflow auto-prefers it if present.
+
+name: SUMR Weekly Refresh
+
+on:
+  schedule:
+    # Monday 04:00 UTC — low-activity window across CET/UTC/EST.
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Ignore debounce (always regenerate)"
+        required: false
+        type: boolean
+        default: false
+      skip_deps:
+        description: "Skip sumd/code2llm/redup/doql upgrade (use last installed)"
+        required: false
+        type: boolean
+        default: false
+
+# Only one SUMR refresh at a time; cancel-in-progress keeps the PR in sync
+# with the latest main rather than racing against it.
+concurrency:
+  group: sumr-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write         # required to push the refresh branch
+  pull-requests: write    # required to open / update the PR
+
+jobs:
+  refresh:
+    name: Regenerate SUMR.md
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0          # sumr-refresh.sh reads git history for debounce
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Pick token (prefer SUMR_PAT when configured)
+        id: token
+        env:
+          SUMR_PAT: ${{ secrets.SUMR_PAT }}
+        run: |
+          if [ -n "${SUMR_PAT}" ]; then
+            echo "use_pat=true" >> "$GITHUB_OUTPUT"
+            echo "Using repo secret SUMR_PAT"
+          else
+            echo "use_pat=false" >> "$GITHUB_OUTPUT"
+            echo "Using default GITHUB_TOKEN"
+          fi
+
+      - name: Run debounced sumr-refresh
+        id: refresh
+        env:
+          SUMR_FORCE: ${{ inputs.force && '1' || '0' }}
+          SUMR_SKIP_DEPS: ${{ inputs.skip_deps && '1' || '0' }}
+          # Scheduled weekly runs always hit the 7-day threshold, so the
+          # default env does the right thing; inputs only matter for manual
+          # dispatches.
+        run: |
+          set -e
+          mkdir -p .sumr
+          bash scripts/sumr-refresh.sh | tee .sumr/weekly.log
+          # Propagate whether the helper actually regenerated SUMR.md
+          if grep -q "up-to-date — skipping" .sumr/weekly.log; then
+            echo "regenerated=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "regenerated=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Inspect git diff
+        id: diff
+        run: |
+          # Treat SUMR.md + app.doql.* as the PR payload. Ignore any noise
+          # the helper may leave behind in venv/ or .sumr/ (gitignored).
+          git status --short
+          if git diff --quiet -- SUMR.md app.doql.less app.doql.css 2>/dev/null; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No tracked SUMR changes — nothing to PR."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "stat<<EOF"
+              git diff --shortstat -- SUMR.md app.doql.less app.doql.css
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Capture sumd version
+        id: versions
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          pip show sumd 2>/dev/null | awk -F': ' '/^Version/ {print "sumd=" $2}' >> "$GITHUB_OUTPUT" || true
+          pip show code2llm 2>/dev/null | awk -F': ' '/^Version/ {print "code2llm=" $2}' >> "$GITHUB_OUTPUT" || true
+          pip show redup 2>/dev/null | awk -F': ' '/^Version/ {print "redup=" $2}' >> "$GITHUB_OUTPUT" || true
+          pip show doql 2>/dev/null | awk -F': ' '/^Version/ {print "doql=" $2}' >> "$GITHUB_OUTPUT" || true
+
+      - name: Open / update refresh PR
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ steps.token.outputs.use_pat == 'true' && secrets.SUMR_PAT || secrets.GITHUB_TOKEN }}
+          branch: automation/sumr-refresh
+          base: main
+          commit-message: "chore(sumr): weekly SUMR.md refresh"
+          title: "chore(sumr): weekly SUMR.md refresh"
+          author: "sumr-bot <sumr-bot@users.noreply.github.com>"
+          committer: "sumr-bot <sumr-bot@users.noreply.github.com>"
+          add-paths: |
+            SUMR.md
+            app.doql.less
+            app.doql.css
+          labels: |
+            automated
+            sumr
+            llm-snapshot
+          delete-branch: true
+          body: |
+            ## Weekly SUMR.md refresh
+
+            Regenerated by `scripts/sumr-refresh.sh` (see
+            `.github/workflows/sumr-weekly.yml`).
+
+            **Diff stat:** ${{ steps.diff.outputs.stat }}
+
+            **Tooling versions:**
+            - sumd: `${{ steps.versions.outputs.sumd || 'n/a' }}`
+            - code2llm: `${{ steps.versions.outputs.code2llm || 'n/a' }}`
+            - redup: `${{ steps.versions.outputs.redup || 'n/a' }}`
+            - doql: `${{ steps.versions.outputs.doql || 'n/a' }}`
+
+            **Trigger:** `${{ github.event_name }}`
+            **HEAD when regenerated:** `${{ github.sha }}`
+
+            ### How to review
+            - SUMR.md is an LLM-oriented refactor descriptor — diffs tend to
+              reflect code complexity & duplication drift, not hand-edits.
+            - Safe to `Squash and merge` after a quick sanity scan.
+            - To regenerate manually before merge:
+              ```bash
+              task quality:sumr:refresh
+              ```
+
+            ### Opt-out
+            Disable the schedule by editing `.github/workflows/sumr-weekly.yml`
+            or uninstall the local hook:
+            ```bash
+            task quality:sumr:uninstall-hook
+            ```
+
+      - name: No changes — summary
+        if: steps.diff.outputs.changed != 'true'
+        run: |
+          echo "::notice::SUMR.md is already up-to-date — no PR needed."
+          echo "regenerated=${{ steps.refresh.outputs.regenerated }}"

@@ -1,0 +1,88 @@
+# Generic app-level alerts — replace <APP_NAME>, thresholds for your app.
+#
+# Each alert routes through alertmanager → healing-webhook, which:
+#   * creates a planfile ticket (default — no LLM)
+#   * optional: triggers redsl improve / rebuild restore (opt-in)
+#
+# Healing strategies (set via `healing_strategy:` label):
+#   annotate         — POST Grafana annotation, no code change
+#   ticket_create    — open planfile ticket (default for product alerts)
+#   redsl_gate       — redsl gate check
+#   redsl_improve    — redsl improve (dry-run, single action)
+#   rebuild_restore  — rebuild restore <endpoint> from last green walk
+
+groups:
+
+  - name: <APP_NAME>-availability
+    interval: 30s
+    rules:
+
+      - alert: EndpointDown
+        expr: probe_success == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: endpoint
+          healing_strategy: ticket_create
+        annotations:
+          summary: "Endpoint {{ $labels.instance }} is DOWN"
+          description: |
+            Blackbox probe failed for {{ $labels.instance }} for 1+ minutes.
+            Run: redeploy run redeploy/local/diagnose.md
+
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m])) by (job)
+            / sum(rate(http_requests_total[5m])) by (job) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: endpoint
+          healing_strategy: ticket_create
+        annotations:
+          summary: "{{ $labels.job }} error rate >5% (5m)"
+
+  - name: <APP_NAME>-resources
+    interval: 30s
+    rules:
+
+      - alert: HighMemoryUsage
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          component: host
+          healing_strategy: annotate
+
+      - alert: ContainerRestarting
+        expr: |
+          rate(container_last_seen[10m]) == 0 and
+          container_last_seen{name=~"<APP_NAME>-.*"} > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: runtime
+          healing_strategy: ticket_create
+
+  - name: <APP_NAME>-quality
+    interval: 5m
+    rules:
+
+      - alert: DuplicationCheck
+        expr: <APP_NAME>_redup_budget_breach == 1
+        for: 1m
+        labels:
+          severity: warning
+          component: monorepo
+          healing_strategy: redup_check
+        annotations:
+          summary: "Duplicate budget exceeded — review redup report"
+
+      - alert: RegressionDetected
+        expr: <APP_NAME>_regix_errors > 0
+        for: 0m
+        labels:
+          severity: warning
+          component: code-quality
+          healing_strategy: ticket_create

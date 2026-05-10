@@ -1,0 +1,51 @@
+name: Version Drift Check
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - '**/VERSION'
+      - '**/package.json'
+      - '**/pyproject.toml'
+      - '**/__init__.py'
+      - 'scripts/check-version-drift.sh'
+      - '.github/workflows/version-drift.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - '**/VERSION'
+      - '**/package.json'
+      - '**/pyproject.toml'
+      - '**/__init__.py'
+      - 'scripts/check-version-drift.sh'
+
+jobs:
+  version-drift:
+    name: SSOT version consistency
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify VERSION file exists
+        run: |
+          if [ ! -f VERSION ]; then
+            echo "::error::VERSION file missing — required as SSOT for version drift check"
+            exit 1
+          fi
+          echo "VERSION = $(cat VERSION)"
+
+      - name: Run version drift check (strict)
+        run: bash scripts/check-version-drift.sh --strict
+
+      - name: Show drift summary on failure
+        if: failure()
+        run: |
+          echo "::error::Version drift detected. Run locally to see details:"
+          echo "  bash scripts/check-version-drift.sh"

@@ -1,0 +1,22 @@
+[Unit]
+Description=<APP_NAME> frontend
+PartOf=<APP_NAME>.container
+
+[Container]
+Image=localhost/<APP_NAME>-frontend:latest
+ContainerName=<APP_NAME>-frontend
+Network=<APP_NAME>.network
+PublishPort=<FRONTEND_PORT>:80
+Environment=BACKEND_URL=http://<APP_NAME>-backend:<APP_PORT>
+
+# Health check (assumes nginx serving static)
+HealthCmd=curl -f http://localhost:80/
+HealthInterval=30s
+HealthRetries=3
+HealthTimeout=10s
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

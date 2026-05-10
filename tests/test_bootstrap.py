@@ -116,7 +116,7 @@ class TestValidateFlatPipeline(unittest.TestCase):
             tasks:
               - id: T-1
                 name: x
-                priority: medium
+                priority: urgent
                 executor: {kind: shell, handler: x}
         """)
         errors = validate_flat_pipeline(tasks)
