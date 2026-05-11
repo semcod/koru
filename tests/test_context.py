@@ -99,10 +99,16 @@ class TestBuildContext(unittest.TestCase):
             self.assertIn("planfile", ctx["ticket_error"].lower())
 
     def test_specific_ticket_uses_show(self) -> None:
-        captured: dict[str, list[str]] = {}
+        # Capture every planfile invocation, not just the last one —
+        # build_context may issue follow-up `ticket list` calls (to
+        # populate `all_tickets` for the dashboard). The contract we
+        # assert here is "the requested ticket was fetched via
+        # `ticket show <id>`", which is independent of how many extra
+        # bookkeeping calls happen afterwards.
+        captured: list[list[str]] = []
 
         def planfile_runner(command, _project):
-            captured["cmd"] = list(command)
+            captured.append(list(command))
             return _ok(json.dumps({"id": "PLF-074", "executor": {"kind": "shell"}}))
 
         with tempfile.TemporaryDirectory() as tmp:
@@ -114,8 +120,11 @@ class TestBuildContext(unittest.TestCase):
                 git_probe=_no_git,
             )
 
-        self.assertIn("show", captured["cmd"])
-        self.assertIn("PLF-074", captured["cmd"])
+        show_calls = [cmd for cmd in captured if "show" in cmd and "PLF-074" in cmd]
+        self.assertTrue(
+            show_calls,
+            f"Expected at least one `ticket show PLF-074` call, got: {captured}",
+        )
 
     def test_instructions_include_no_commit_rule(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
