@@ -83,6 +83,9 @@ class TestBuildContext(unittest.TestCase):
             )
             self.assertIsNone(ctx["ticket"])
             self.assertEqual(ctx["ticket_error"], "queue is idle")
+            joined = " ".join(ctx["instructions"])
+            self.assertIn("DO NOT ask the human what to work on", joined)
+            self.assertIn("koru scan --apply", joined)
 
     def test_brief_when_planfile_errors(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -341,6 +344,9 @@ class TestMarkdownHandoff(unittest.TestCase):
             )
             md = render_markdown_handoff(ctx)
             self.assertIn("No active ticket", md)
+            self.assertIn("Immediate action (autopilot)", md)
+            self.assertIn("Do not ask the operator what to do next", md)
+            self.assertIn("koru scan --apply", md)
 
 
 class TestSetupRequired(unittest.TestCase):

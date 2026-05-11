@@ -563,6 +563,12 @@ def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[s
             "Touching anything else requires blocking the ticket first "
             "(`planfile ticket block <id> --reason \"out-of-scope edit needed\"`)."
         )
+    if ticket is None:
+        rules.extend([
+            "If there is no active ticket, DO NOT ask the human what to work on.",
+            "Immediately run `koru scan --apply` to discover or create actionable tickets.",
+            "After scan, run `planfile ticket next --format json`, then `planfile ticket start <id>` and begin implementation.",
+        ])
     # Auto-repair instructions for critical blocking tickets
     if ticket and ticket.get("priority") == "critical":
         rules.extend([
@@ -749,6 +755,16 @@ def render_markdown_handoff(context: dict[str, Any]) -> str:
     else:
         err = context.get("ticket_error") or "no ticket"
         lines.append(f"## No active ticket — {err}")
+        lines.append("")
+        lines.append("### Immediate action (autopilot)")
+        lines.append("")
+        lines.append("Do not ask the operator what to do next. Start this flow immediately:")
+        lines.append("")
+        lines.append("```bash")
+        lines.append("koru scan --apply")
+        lines.append("planfile ticket next --format json")
+        lines.append("planfile ticket start <id>")
+        lines.append("```")
     lines.append("")
 
     # On-change gates — wup + regix + testql triad. Only render when at
