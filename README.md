@@ -4,11 +4,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.12-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$5.10-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-11.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.13-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$5.25-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-11.2h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $5.1000 (34 commits)
-- 👤 **Human dev:** ~$1101 (11.0h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $5.2500 (35 commits)
+- 👤 **Human dev:** ~$1122 (11.2h @ $100/h, 30min dedup)
 
 Generated on 2026-05-11 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -76,13 +76,18 @@ The doctor probes 8 things and never writes anything: `git_repo`,
 `1` if any check fails, `0` if only warnings (warnings are advisory).
 Use it after `koru --init` and whenever a session starts mis-behaving.
 
-Natural-language intake is built in:
+Natural-language intake and housekeeping are built in:
 
 ```bash
 koru task "Dodaj feature importu raportów"
 koru agent --list          # show Windsurf/Cursor/Claude Code/aider/OpenRouter lanes
 koru agent                 # print and save the current LLM handoff prompt
 koru agent --launch        # launch the best available CLI agent when possible
+koru scan                  # auto-generate tickets from repo signals (TODOs, pytest errors)
+koru scan --apply          # create the proposed tickets in planfile
+koru gc                    # preview stale tickets eligible for cleanup
+koru gc --apply            # delete old done/failed/blocked tickets
+koru gate authorize PLF-070 --mode advisory --reason "..."  # record a gate waiver
 ```
 
 The no-args `koru` prompt includes detected project markers
@@ -231,6 +236,26 @@ change queue execution semantics.
 pip install "koru[watch]"
 ```
 
+## Queue garbage collection — `koru gc`
+
+Over time, completed and failed tickets accumulate in the sprint YAML.
+`koru gc` cleans them up:
+
+```bash
+koru gc                              # dry-run: preview what would be removed
+koru gc --apply                      # actually delete stale tickets
+koru gc --max-age 7                  # only keep tickets younger than 7 days
+koru gc --keep-last 5                # always keep the 5 newest done tickets
+koru gc --status done,failed         # only clean these statuses (default: done,failed,blocked)
+koru gc --no-archive                 # skip JSONL archive before deletion
+koru gc --format json                # machine-readable output
+```
+
+Before deletion, tickets are archived to
+`.planfile/.koru/gc/gc-YYYYMMDD-HHMMSS.jsonl` (disable with `--no-archive`).
+The `--keep-last N` flag protects the N most recently finished tickets per
+status even when they exceed `--max-age`.
+
 ## Filesystem contract
 
 **koru never writes outside `<project>/.planfile/`.** This is a hard
@@ -243,6 +268,7 @@ rule for the production code path; any deviation is a bug.
 │   └── current.yaml             # planfile-owned (source of truth)
 └── .koru/                       # koru-owned, opt-in, gitignore-friendly
     ├── runs/                    # one log per `koru --queue` invocation
+    ├── gc/                      # JSONL archives from `koru gc --apply`
     ├── prompts/                 # captured `--interactive` answers
     ├── llm-cache/               # opt-in LlmExecutor response cache
     └── README.md                # in-place explainer
