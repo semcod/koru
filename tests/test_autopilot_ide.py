@@ -78,6 +78,39 @@ def test_pick_target_empty_list_returns_none() -> None:
     assert ide_mod.pick_target([]) is None
 
 
+# ---- R13: focused-window arbitration ----
+
+
+def test_detect_focused_ide_id_from_active_pid(fake_proc: Path) -> None:
+    # PID 5678 is our fake JetBrains java process in the fixture.
+    assert ide_mod.detect_focused_ide_id(_active_pid=5678) == "jetbrains"
+
+
+def test_detect_focused_ide_id_returns_none_for_unknown_pid(fake_proc: Path) -> None:
+    assert ide_mod.detect_focused_ide_id(_active_pid=9999) is None
+
+
+def test_focused_ide_returns_matching_instance(fake_proc: Path) -> None:
+    detected = ide_mod.detect_running_ides(_pids=[1234, 5678])
+    focused = ide_mod.focused_ide(detected, focused_id="jetbrains")
+    assert focused is not None
+    assert focused.id == "jetbrains"
+
+
+def test_pick_target_prefers_focused_when_no_explicit_prefer(fake_proc: Path) -> None:
+    detected = ide_mod.detect_running_ides(_pids=[1234, 5678])
+    chosen = ide_mod.pick_target(detected, focused_id="jetbrains")
+    assert chosen is not None
+    assert chosen.id == "jetbrains"
+
+
+def test_pick_target_explicit_prefer_beats_focus(fake_proc: Path) -> None:
+    detected = ide_mod.detect_running_ides(_pids=[1234, 5678])
+    chosen = ide_mod.pick_target(detected, prefer="windsurf", focused_id="jetbrains")
+    assert chosen is not None
+    assert chosen.id == "windsurf"
+
+
 # ---- R5: detect_running_ides_cached ----
 
 

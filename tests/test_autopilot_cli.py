@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -53,6 +54,27 @@ def test_ide_list_empty(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.
     assert "no IDE processes" in capsys.readouterr().out
 
 
+def test_ide_list_marks_focused_ide(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        cli_command,
+        "detect_running_ides",
+        lambda: [
+            SimpleNamespace(id="windsurf", label="Windsurf", pid=10, exe="/opt/windsurf"),
+            SimpleNamespace(id="jetbrains", label="JetBrains IDE", pid=20, exe="/opt/idea"),
+        ],
+    )
+    monkeypatch.setattr(cli_command, "detect_focused_ide_id", lambda: "jetbrains")
+    rc = autopilot_main(["ide-list"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "windsurf" in out
+    assert "jetbrains" in out
+    assert "[focused]" in out
+
+
 def test_doctor_json_output(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch) -> None:
     class _FakeInjector:
         session = "x11"
@@ -66,12 +88,14 @@ def test_doctor_json_output(capsys: pytest.CaptureFixture[str], monkeypatch: pyt
 
     monkeypatch.setattr(cli_command, "Injector", _FakeInjector)
     monkeypatch.setattr(cli_command, "detect_running_ides", lambda: [])
+    monkeypatch.setattr(cli_command, "detect_focused_ide_id", lambda: "windsurf")
     rc = autopilot_main(["doctor", "--format", "json"])
     assert rc == 0
     payload = json.loads(capsys.readouterr().out)
     assert payload["selected_backend"] == "xdotool"
     assert payload["session"] == "x11"
     assert payload["backends"][0]["available"] is True
+    assert payload["focused_ide"] == "windsurf"
 
 
 def test_status_when_no_daemon(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:

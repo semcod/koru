@@ -9,6 +9,8 @@ the rest of autopilot is Linux-only anyway.
 from __future__ import annotations
 
 import os
+import shutil
+import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -121,17 +123,84 @@ def detect_running_ides(*, _pids: list[int] | None = None) -> list[RunningIDE]:
     return [seen[k] for k in _IDE_SIGNATURES if k in seen]
 
 
+def _active_window_pid_x11() -> int | None:
+    """Return PID of the active X11 window, if available.
+
+    Uses ``xdotool getactivewindow getwindowpid``. Returns ``None`` on
+    Wayland, when xdotool is unavailable, or on parsing/runtime errors.
+    """
+    if not os.environ.get("DISPLAY"):
+        return None
+    if not shutil.which("xdotool"):
+        return None
+    try:
+        proc = subprocess.run(
+            ["xdotool", "getactivewindow", "getwindowpid"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=0.5,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    raw = proc.stdout.strip()
+    if not raw.isdigit():
+        return None
+    pid = int(raw)
+    return pid if pid > 0 else None
+
+
+def detect_focused_ide_id(*, _active_pid: int | None = None) -> str | None:
+    """Detect which IDE currently owns desktop focus.
+
+    On X11 this maps active-window PID to one of our known IDE ids.
+    On unsupported environments this returns ``None``.
+    """
+    pid = _active_pid if _active_pid is not None else _active_window_pid_x11()
+    if pid is None:
+        return None
+    comm = _read_comm(pid)
+    cmdline = _read_cmdline(pid)
+    if not comm and not cmdline:
+        return None
+    for ide_id, (patterns, _label) in _IDE_SIGNATURES.items():
+        if _matches(comm, cmdline, patterns):
+            return ide_id
+    return None
+
+
+def focused_ide(
+    detected: list[RunningIDE],
+    *,
+    focused_id: str | None = None,
+) -> RunningIDE | None:
+    """Return the focused IDE from ``detected`` if one can be identified."""
+    if not detected:
+        return None
+    wanted = focused_id if focused_id is not None else detect_focused_ide_id()
+    if wanted is None:
+        return None
+    for ide in detected:
+        if ide.id == wanted:
+            return ide
+    return None
+
+
 def pick_target(
     detected: list[RunningIDE],
     *,
     prefer: str | None = None,
+    focused_id: str | None = None,
 ) -> RunningIDE | None:
     """Choose which detected IDE should receive the injection.
 
     Priority:
 
     1. ``prefer`` (the user's explicit ``--ide`` flag), if running.
-    2. The first IDE in :data:`_IDE_SIGNATURES` order — that order
+    2. Focused IDE window (when detectable).
+    3. The first IDE in :data:`_IDE_SIGNATURES` order — that order
        matches our backend reliability ranking (Windsurf has the
        richest extension API for chat, JetBrains the least).
     """
@@ -140,6 +209,9 @@ def pick_target(
             if ide.id == prefer:
                 return ide
         return None
+    focused = focused_ide(detected, focused_id=focused_id)
+    if focused is not None:
+        return focused
     return detected[0] if detected else None
 
 
@@ -182,7 +254,9 @@ __all__ = [
     "RunningIDE",
     "detect_running_ides",
     "detect_running_ides_cached",
+    "detect_focused_ide_id",
     "clear_detect_cache",
+    "focused_ide",
     "pick_target",
     "is_linux",
 ]

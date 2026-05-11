@@ -18,7 +18,7 @@ from . import default_socket_path
 from .audit import AuditLog, default_log_path
 from .client import AutopilotClient
 from .daemon import AutopilotDaemon
-from .ide import detect_running_ides
+from .ide import detect_focused_ide_id, detect_running_ides
 from .injector import Injector, InjectorError
 
 
@@ -296,8 +296,10 @@ def _action_ide_list(_args: argparse.Namespace) -> int:
     if not ides:
         print("koru autopilot: no IDE processes detected")
         return 0
+    focused = detect_focused_ide_id()
     for ide in ides:
-        print(f"  {ide.id:<10} pid={ide.pid:<7} {ide.label}  ({ide.exe})")
+        suffix = "  [focused]" if focused is not None and ide.id == focused else ""
+        print(f"  {ide.id:<10} pid={ide.pid:<7} {ide.label}  ({ide.exe}){suffix}")
     return 0
 
 
@@ -306,12 +308,14 @@ def _action_doctor(args: argparse.Namespace) -> int:
     statuses = injector.probe()
     selected = injector.select_backend()
     if args.output_format == "json":
+        focused = detect_focused_ide_id()
         print(json.dumps(
             {
                 "session": injector.session,
                 "selected_backend": selected,
                 "backends": [s.to_dict() for s in statuses],
                 "ides": [i.to_dict() for i in detect_running_ides()],
+                "focused_ide": focused,
             },
             indent=2, sort_keys=True,
         ))
@@ -323,9 +327,11 @@ def _action_doctor(args: argparse.Namespace) -> int:
         mark = "✓" if s.available else "✗"
         print(f"  {mark} {s.name:<10} {s.reason}")
     ides = detect_running_ides()
+    focused = detect_focused_ide_id()
     print(f"running IDEs ({len(ides)}):")
     for ide in ides:
-        print(f"  · {ide.label} (pid={ide.pid})")
+        marker = " [focused]" if focused is not None and ide.id == focused else ""
+        print(f"  · {ide.label} (pid={ide.pid}){marker}")
     return 0 if selected else 1
 
 
