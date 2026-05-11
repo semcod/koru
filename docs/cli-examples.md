@@ -336,6 +336,43 @@ Or pipe answers in for scripted runs:
   koru --queue --project . --loop --interactive --actor ci-bot
 ```
 
+### Run unattended autoloop (scan + queue + autopilot)
+
+For terminal-driven autonomy, use the built-in wrapper script via Taskfile:
+
+```bash
+# Continuous loop:
+# 1) koru scan --apply
+# 2) koru --queue --loop
+# 3) koru autopilot drive "continue with the next ticket"
+# 4) sleep 120s
+task queue:autoloop
+```
+
+Useful overrides:
+
+```bash
+# Faster cadence (every 30s) and larger queue pass
+task queue:autoloop SLEEP_SECONDS=30 MAX_ITERATIONS=100
+
+# Disable autopilot ping (queue-only daemon mode)
+task queue:autoloop ENABLE_AUTOPILOT_DRIVE=false
+
+# Restrict to one execution queue
+task queue:autoloop QUEUE_NAME=default
+
+# Allow interactive handling of human tickets inside the loop
+task queue:autoloop ENABLE_INTERACTIVE=true
+```
+
+Under the hood this runs `scripts/koru-autoloop.sh` (env-driven), so you
+can also launch it directly:
+
+```bash
+PROJECT=/path/to/repo ACTOR=c2004-koru SLEEP_SECONDS=60 \
+  bash scripts/koru-autoloop.sh
+```
+
 ### Auto-answer tickets with an LLM (`executor.kind=llm`)
 
 Tickets with `executor.kind=llm` are sent to an OpenAI-compatible

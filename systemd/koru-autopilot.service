@@ -1,0 +1,43 @@
+# koru autopilot — systemd --user unit (P2.6)
+#
+# Install with:
+#   koru autopilot install-unit          # writes to ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now koru-autopilot.service
+#
+# View logs:
+#   journalctl --user -u koru-autopilot -f
+#
+# Override settings (e.g. to enable auto-handoff for a specific project):
+#   systemctl --user edit koru-autopilot.service
+#   # then add:
+#   #   [Service]
+#   #   ExecStart=
+#   #   ExecStart=%h/.local/bin/koru autopilot daemon --project %h/work/myproj
+[Unit]
+Description=koru autopilot daemon — drive IDE chats from a terminal
+Documentation=https://github.com/semcod/koru/tree/main/docs/autopilot-quickstart.md
+# Tie lifecycle to the user's graphical session so the daemon stops
+# cleanly on logout and restarts on next login.
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+# --idempotent makes a second start a no-op (returns 0 instead of failing
+# on a stale socket); --no-handoff keeps the default install safe — the
+# user has to opt-in to auto-takeover with `systemctl --user edit`.
+ExecStart=%h/.local/bin/koru autopilot daemon --idempotent --no-handoff
+Restart=on-failure
+RestartSec=2
+# Tighten the environment a notch — koru autopilot is per-user, never root.
+NoNewPrivileges=true
+PrivateTmp=false
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/state/koru
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

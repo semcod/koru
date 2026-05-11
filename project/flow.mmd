@@ -1,0 +1,26 @@
+flowchart TD
+%% generated in 0.01s
+
+    %% Entry points (blue)
+    classDef entry fill:#4dabf7,stroke:#1971c2,color:#fff
+
+    subgraph Core
+        src__koru__runtime__planfile_dir["planfile_dir"]
+        src__koru__runtime__runtime_dir["runtime_dir"]
+        src__koru__watch__format_queue_event{{format_queue_event CC=19}}
+        src__koru__watch___default_connect["_default_connect"]
+        src__koru__context___git_probe["_git_probe"]
+        src__koru__context__build_context{{build_context CC=41}}
+        src__koru__context___auto_promote_blocking_tickets{{_auto_promote_blocking_tickets CC=25}}
+        src__koru__context___build_shared_rules{{_build_shared_rules CC=15}}
+        src__koru__context__render_markdown_handoff{{render_markdown_handoff CC=45}}
+        src__koru__semcod_tools__SemcodTool__to_dict["to_dict"]
+        src__koru__events__main["main"]
+        services__healing_webhook__app__create_planfile_ticket{{create_planfile_ticket CC=24}}
+        services__healing_webhook__app__heal_rebuild_restore["heal_rebuild_restore"]
+        services__healing_webhook__app__heal_annotate["heal_annotate"]
+        services__healing_webhook__app___run_vallm_validate["_run_vallm_validate"]
+        ...["+167 more"]
+    end
+
+    class src__koru__watch___default_connect,src__koru__context___git_probe,src__koru__semcod_tools__SemcodTool__to_dict,src__koru__events__main,services__healing_webhook__app__heal_rebuild_restore,services__healing_webhook__app__heal_annotate,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app__heal_redup_check,services__healing_webhook__app__healthz entry

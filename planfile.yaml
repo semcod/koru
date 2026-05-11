@@ -1,0 +1,1319 @@
+name: Code Quality Improvement
+project_name: ''
+project_type: prefactoring
+domain: dev-tools
+goal: Improve code quality using prefact
+goals:
+- Fix all prefact-detected issues
+- Improve code maintainability
+- Ensure consistent code style
+quality_gates:
+- metric: Prefact Issues
+  threshold: '0'
+sprints:
+- id: sprint-1
+  name: Code Quality Improvements
+  duration: 2 weeks
+  objectives:
+  - Fix code quality issues
+  task_patterns:
+  - id: ticket-df60c7f0
+    name: Fix relative-imports issues
+    description: Resolve 18 relative-imports issues in src/koru/__init__.py
+    task_type: prefactor
+    priority: high
+    estimate: 3d
+    files:
+    - src/koru/__init__.py
+    rule_id: relative-imports
+    count: 18
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-4db6394c
+    name: Fix string-concat issues
+    description: Resolve 2 string-concat issues in scripts/planfile-sync-todo.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - scripts/planfile-sync-todo.py
+    rule_id: string-concat
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-a4a995e4
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in scripts/planfile-sync-todo.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - scripts/planfile-sync-todo.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-e4000400
+    name: Fix magic-numbers issues
+    description: Resolve 1 magic-numbers issues in scripts/planfile-sync-todo.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - scripts/planfile-sync-todo.py
+    rule_id: magic-numbers
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-00ecf056
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in scripts/planfile-sync-todo.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - scripts/planfile-sync-todo.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-4979d10a
+    name: Fix magic-numbers issues
+    description: Resolve 3 magic-numbers issues in services/healing-webhook/ticket_builder.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - services/healing-webhook/ticket_builder.py
+    rule_id: magic-numbers
+    count: 3
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-3705da7f
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/autopilot/__init__.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/__init__.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-96ddfeb6
+    name: Fix string-concat issues
+    description: Resolve 2 string-concat issues in services/healing-webhook/app.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - services/healing-webhook/app.py
+    rule_id: string-concat
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-0338382e
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in services/healing-webhook/app.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - services/healing-webhook/app.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-43342122
+    name: Fix magic-numbers issues
+    description: Resolve 20 magic-numbers issues in services/healing-webhook/app.py
+    task_type: prefactor
+    priority: high
+    estimate: 3d
+    files:
+    - services/healing-webhook/app.py
+    rule_id: magic-numbers
+    count: 20
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-c7cbd75b
+    name: Fix llm-generated-code issues
+    description: Resolve 1 llm-generated-code issues in services/healing-webhook/app.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - services/healing-webhook/app.py
+    rule_id: llm-generated-code
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-8da0d779
+    name: Fix relative-imports issues
+    description: Resolve 4 relative-imports issues in src/koru/agents.py
+    task_type: prefactor
+    priority: medium
+    estimate: 2d
+    files:
+    - src/koru/agents.py
+    rule_id: relative-imports
+    count: 4
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-e20874cd
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/agents.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/agents.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-36924c04
+    name: Fix relative-imports issues
+    description: Resolve 4 relative-imports issues in src/koru/autopilot/client.py
+    task_type: prefactor
+    priority: medium
+    estimate: 2d
+    files:
+    - src/koru/autopilot/client.py
+    rule_id: relative-imports
+    count: 4
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-9d4026f3
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/autopilot/client.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/client.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-cad96eb7
+    name: Fix relative-imports issues
+    description: Resolve 14 relative-imports issues in src/koru/autopilot/cli_command.py
+    task_type: prefactor
+    priority: high
+    estimate: 3d
+    files:
+    - src/koru/autopilot/cli_command.py
+    rule_id: relative-imports
+    count: 14
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-608b1621
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in src/koru/autopilot/cli_command.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/cli_command.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-fc801415
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/autopilot/cli_command.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/cli_command.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-49c9c9c5
+    name: Fix magic-numbers issues
+    description: Resolve 1 magic-numbers issues in src/koru/autopilot/cli_command.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/cli_command.py
+    rule_id: magic-numbers
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-3b3357ce
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/autopilot/config.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/config.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-8d9ad20b
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in src/koru/autopilot/audit.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/audit.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-7a764393
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/autopilot/audit.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/audit.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-093c00aa
+    name: Fix magic-numbers issues
+    description: Resolve 2 magic-numbers issues in src/koru/autopilot/audit.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/audit.py
+    rule_id: magic-numbers
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-d47ebcbc
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/autopilot/ide.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/ide.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-7f1158ec
+    name: Fix relative-imports issues
+    description: Resolve 14 relative-imports issues in src/koru/autopilot/daemon.py
+    task_type: prefactor
+    priority: high
+    estimate: 3d
+    files:
+    - src/koru/autopilot/daemon.py
+    rule_id: relative-imports
+    count: 14
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-eac56b85
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/autopilot/daemon.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/daemon.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-fb0360b5
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in src/koru/autopilot/protocol.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/protocol.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-e6f909a4
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/autopilot/protocol.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/protocol.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-3c6aebf4
+    name: Fix relative-imports issues
+    description: Resolve 2 relative-imports issues in src/koru/autopilot/injector.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/injector.py
+    rule_id: relative-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-ca671eed
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in src/koru/autopilot/injector.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/injector.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-a7be5c1c
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/autopilot/injector.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/injector.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-6ebc4f95
+    name: Fix relative-imports issues
+    description: Resolve 34 relative-imports issues in src/koru/cli.py
+    task_type: prefactor
+    priority: high
+    estimate: 3d
+    files:
+    - src/koru/cli.py
+    rule_id: relative-imports
+    count: 34
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-c6a19a28
+    name: Fix string-concat issues
+    description: Resolve 3 string-concat issues in src/koru/cli.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/cli.py
+    rule_id: string-concat
+    count: 3
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-79ba281f
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/cli.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/cli.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-2f8a1a61
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in src/koru/cli.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/cli.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-d14c56ab
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in src/koru/bootstrap.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/bootstrap.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-2c1f1e0f
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/bootstrap.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/bootstrap.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-50ba1aa7
+    name: Fix relative-imports issues
+    description: Resolve 10 relative-imports issues in src/koru/context.py
+    task_type: prefactor
+    priority: high
+    estimate: 2d
+    files:
+    - src/koru/context.py
+    rule_id: relative-imports
+    count: 10
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-f1e7e2d6
+    name: Fix string-concat issues
+    description: Resolve 2 string-concat issues in src/koru/context.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/context.py
+    rule_id: string-concat
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-eb177141
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/context.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/context.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-8d13328a
+    name: Fix magic-numbers issues
+    description: Resolve 1 magic-numbers issues in src/koru/context.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/context.py
+    rule_id: magic-numbers
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-ff2879d8
+    name: Fix relative-imports issues
+    description: Resolve 6 relative-imports issues in src/koru/doctor.py
+    task_type: prefactor
+    priority: high
+    estimate: 2d
+    files:
+    - src/koru/doctor.py
+    rule_id: relative-imports
+    count: 6
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-7212e0d5
+    name: Fix string-concat issues
+    description: Resolve 4 string-concat issues in src/koru/doctor.py
+    task_type: prefactor
+    priority: medium
+    estimate: 2d
+    files:
+    - src/koru/doctor.py
+    rule_id: string-concat
+    count: 4
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-676b4c09
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/doctor.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/doctor.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-2db1406e
+    name: Fix magic-numbers issues
+    description: Resolve 1 magic-numbers issues in src/koru/doctor.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/doctor.py
+    rule_id: magic-numbers
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-b9312e6e
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/dotenv_loader.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/dotenv_loader.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-164ccfc7
+    name: Fix duplicate-imports issues
+    description: Resolve 2 duplicate-imports issues in src/koru/events.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/events.py
+    rule_id: duplicate-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-18e9417b
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/events.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/events.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-8faeb137
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in src/koru/events.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/events.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-e11f3ca1
+    name: Fix string-concat issues
+    description: Resolve 2 string-concat issues in src/koru/gate.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/gate.py
+    rule_id: string-concat
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-c53e0bb6
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/gate.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/gate.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-42f3229a
+    name: Fix relative-imports issues
+    description: Resolve 4 relative-imports issues in src/koru/init.py
+    task_type: prefactor
+    priority: medium
+    estimate: 2d
+    files:
+    - src/koru/init.py
+    rule_id: relative-imports
+    count: 4
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-ca610d9b
+    name: Fix string-concat issues
+    description: Resolve 2 string-concat issues in src/koru/init.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/init.py
+    rule_id: string-concat
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-ff4a380a
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/init.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/init.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-174985ce
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/gc.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/gc.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-1fb15901
+    name: Fix magic-numbers issues
+    description: Resolve 2 magic-numbers issues in src/koru/gc.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/gc.py
+    rule_id: magic-numbers
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-7b5daa64
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in src/koru/loop.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/loop.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-2043d52d
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/loop.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/loop.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-5b0ce565
+    name: Fix relative-imports issues
+    description: Resolve 2 relative-imports issues in src/koru/policy.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/policy.py
+    rule_id: relative-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-71583a1e
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/policy.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/policy.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-90f432d9
+    name: Fix magic-numbers issues
+    description: Resolve 2 magic-numbers issues in src/koru/policy.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/policy.py
+    rule_id: magic-numbers
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-434675f8
+    name: Fix relative-imports issues
+    description: Resolve 2 relative-imports issues in src/koru/queue_clean.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/queue_clean.py
+    rule_id: relative-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-821fb723
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in src/koru/queue_clean.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/queue_clean.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-c141f52a
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/queue_clean.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/queue_clean.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-46c07111
+    name: Fix duplicate-imports issues
+    description: Resolve 2 duplicate-imports issues in src/koru/planfile_queue.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/planfile_queue.py
+    rule_id: duplicate-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-04318be7
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in src/koru/planfile_queue.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/planfile_queue.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-cbcfbd1e
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/planfile_queue.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/planfile_queue.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-ad2e997e
+    name: Fix magic-numbers issues
+    description: Resolve 6 magic-numbers issues in src/koru/planfile_queue.py
+    task_type: prefactor
+    priority: high
+    estimate: 2d
+    files:
+    - src/koru/planfile_queue.py
+    rule_id: magic-numbers
+    count: 6
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-1abcf896
+    name: Fix relative-imports issues
+    description: Resolve 2 relative-imports issues in src/koru/run_log.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/run_log.py
+    rule_id: relative-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-cd3c6a54
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in src/koru/run_log.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/run_log.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-5dd5179a
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/run_log.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/run_log.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-072eeb06
+    name: Fix magic-numbers issues
+    description: Resolve 2 magic-numbers issues in src/koru/run_log.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/run_log.py
+    rule_id: magic-numbers
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-c4d3680e
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/runtime.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/runtime.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-33785319
+    name: Fix relative-imports issues
+    description: Resolve 2 relative-imports issues in src/koru/scan.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/scan.py
+    rule_id: relative-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-f1f786ff
+    name: Fix string-concat issues
+    description: Resolve 2 string-concat issues in src/koru/scan.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/scan.py
+    rule_id: string-concat
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-c4d9199a
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/scan.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/scan.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-88e20104
+    name: Fix magic-numbers issues
+    description: Resolve 3 magic-numbers issues in src/koru/scan.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/scan.py
+    rule_id: magic-numbers
+    count: 3
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-1c4d6d92
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/semcod_tools.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/semcod_tools.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-6f83ea0c
+    name: Fix relative-imports issues
+    description: Resolve 2 relative-imports issues in src/koru/serve.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/serve.py
+    rule_id: relative-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-e177bc99
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/serve.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/serve.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-690814b1
+    name: Fix magic-numbers issues
+    description: Resolve 7 magic-numbers issues in src/koru/serve.py
+    task_type: prefactor
+    priority: high
+    estimate: 2d
+    files:
+    - src/koru/serve.py
+    rule_id: magic-numbers
+    count: 7
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-16057a27
+    name: Fix string-concat issues
+    description: Resolve 2 string-concat issues in src/koru/tasks.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/tasks.py
+    rule_id: string-concat
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-2e9ca6b2
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/tasks.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/tasks.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-11ae8d32
+    name: Fix magic-numbers issues
+    description: Resolve 4 magic-numbers issues in src/koru/tasks.py
+    task_type: prefactor
+    priority: medium
+    estimate: 2d
+    files:
+    - src/koru/tasks.py
+    rule_id: magic-numbers
+    count: 4
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-bd7736ee
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/watch.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/watch.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-a572c882
+    name: Fix smart-return-type issues
+    description: Resolve 1 smart-return-type issues in tests/test_autopilot_audit.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - tests/test_autopilot_audit.py
+    rule_id: smart-return-type
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-82292562
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in tests/test_autopilot_audit.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - tests/test_autopilot_audit.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-9e5b9187
+    name: Fix unused-imports issues
+    description: Resolve 10 unused-imports issues in tests/test_autopilot_audit.py
+    task_type: prefactor
+    priority: high
+    estimate: 2d
+    files:
+    - tests/test_autopilot_audit.py
+    rule_id: unused-imports
+    count: 10
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-11348133
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in tests/test_autopilot_config.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - tests/test_autopilot_config.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-b656f940
+    name: Fix llm-hallucinations issues
+    description: Resolve 1 llm-hallucinations issues in tests/test_autopilot_config.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - tests/test_autopilot_config.py
+    rule_id: llm-hallucinations
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-b8bffb20
+    name: Fix smart-return-type issues
+    description: Resolve 3 smart-return-type issues in tests/test_autopilot_cli.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - tests/test_autopilot_cli.py
+    rule_id: smart-return-type
+    count: 3
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-29475b85
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in tests/test_autopilot_cli.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - tests/test_autopilot_cli.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-fe372ae0
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in tests/test_autopilot_cli.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - tests/test_autopilot_cli.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-eab5287c
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in tests/test_agents.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - tests/test_agents.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-c12f1cde
+    name: Fix llm-hallucinations issues
+    description: Resolve 1 llm-hallucinations issues in tests/test_agents.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - tests/test_agents.py
+    rule_id: llm-hallucinations
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-247474b0
+    name: Fix smart-return-type issues
+    description: Resolve 1 smart-return-type issues in tests/test_autopilot_daemon.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - tests/test_autopilot_daemon.py
+    rule_id: smart-return-type
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-0fdbde7e
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in tests/test_autopilot_daemon.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - tests/test_autopilot_daemon.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-513c873c
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in tests/test_autopilot_daemon.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - tests/test_autopilot_daemon.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-bc05499e
+    name: Fix llm-hallucinations issues
+    description: Resolve 2 llm-hallucinations issues in tests/test_autopilot_daemon.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - tests/test_autopilot_daemon.py
+    rule_id: llm-hallucinations
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-f56c986e
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in tests/test_autopilot_injector.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - tests/test_autopilot_injector.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced

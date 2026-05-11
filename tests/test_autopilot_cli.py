@@ -233,3 +233,66 @@ def test_tail_skips_malformed_lines(
     assert "ide=x" in out
     assert "ide=y" in out
     assert "not json" not in out
+
+
+# ---- P2.6: systemd --user unit --------------------------------------------
+
+
+def test_install_unit_print_renders_execstart(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(cli_command, "_resolve_koru_bin", lambda: "/opt/koru/bin/koru")
+    rc = autopilot_main(["install-unit", "--print"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "[Unit]" in out
+    assert "ExecStart=/opt/koru/bin/koru autopilot daemon --idempotent --no-handoff" in out
+
+
+def test_install_unit_writes_to_xdg_default_path(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "cfg"))
+    monkeypatch.setattr(cli_command, "_resolve_koru_bin", lambda: "/usr/bin/koru")
+    rc = autopilot_main(["install-unit"])
+    assert rc == 0
+    unit = tmp_path / "cfg" / "systemd" / "user" / "koru-autopilot.service"
+    assert unit.is_file()
+    text = unit.read_text(encoding="utf-8")
+    assert "ExecStart=/usr/bin/koru autopilot daemon --idempotent --no-handoff" in text
+    assert "installed" in capsys.readouterr().out
+
+
+def test_install_unit_refuses_overwrite_without_force(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    dest = tmp_path / "koru-autopilot.service"
+    dest.write_text("[Unit]\nDescription=existing\n", encoding="utf-8")
+    rc = autopilot_main(["install-unit", "--dest", str(dest)])
+    assert rc == 1
+    err = capsys.readouterr().err
+    assert "already exists" in err
+    assert "pass --force" in err
+
+
+def test_resolve_koru_bin_falls_back_to_sys_executable_sibling(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    venv_bin = tmp_path / "venv" / "bin"
+    venv_bin.mkdir(parents=True)
+    py = venv_bin / "python"
+    py.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    py.chmod(0o755)
+    koru = venv_bin / "koru"
+    koru.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    koru.chmod(0o755)
+
+    monkeypatch.setattr(cli_command.shutil, "which", lambda _name: None)
+    monkeypatch.setattr(cli_command.sys, "executable", str(py))
+
+    assert cli_command._resolve_koru_bin() == str(koru)

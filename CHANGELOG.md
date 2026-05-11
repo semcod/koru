@@ -5,6 +5,110 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10] - 2026-05-11
+
+### Fixed
+- Fix relative-imports issues (ticket-df60c7f0)
+- Fix string-concat issues (ticket-4db6394c)
+- Fix unused-imports issues (ticket-a4a995e4)
+- Fix magic-numbers issues (ticket-e4000400)
+- Fix ai-boilerplate issues (ticket-00ecf056)
+- Fix magic-numbers issues (ticket-4979d10a)
+- Fix unused-imports issues (ticket-3705da7f)
+- Fix string-concat issues (ticket-96ddfeb6)
+- Fix unused-imports issues (ticket-0338382e)
+- Fix magic-numbers issues (ticket-43342122)
+- Fix llm-generated-code issues (ticket-c7cbd75b)
+- Fix relative-imports issues (ticket-8da0d779)
+- Fix unused-imports issues (ticket-e20874cd)
+- Fix relative-imports issues (ticket-36924c04)
+- Fix unused-imports issues (ticket-9d4026f3)
+- Fix relative-imports issues (ticket-cad96eb7)
+- Fix string-concat issues (ticket-608b1621)
+- Fix unused-imports issues (ticket-fc801415)
+- Fix magic-numbers issues (ticket-49c9c9c5)
+- Fix unused-imports issues (ticket-3b3357ce)
+- Fix string-concat issues (ticket-8d9ad20b)
+- Fix unused-imports issues (ticket-7a764393)
+- Fix magic-numbers issues (ticket-093c00aa)
+- Fix unused-imports issues (ticket-d47ebcbc)
+- Fix relative-imports issues (ticket-7f1158ec)
+- Fix unused-imports issues (ticket-eac56b85)
+- Fix string-concat issues (ticket-fb0360b5)
+- Fix unused-imports issues (ticket-e6f909a4)
+- Fix relative-imports issues (ticket-3c6aebf4)
+- Fix string-concat issues (ticket-ca671eed)
+- Fix unused-imports issues (ticket-a7be5c1c)
+- Fix relative-imports issues (ticket-6ebc4f95)
+- Fix string-concat issues (ticket-c6a19a28)
+- Fix unused-imports issues (ticket-79ba281f)
+- Fix ai-boilerplate issues (ticket-2f8a1a61)
+- Fix string-concat issues (ticket-d14c56ab)
+- Fix unused-imports issues (ticket-2c1f1e0f)
+- Fix relative-imports issues (ticket-50ba1aa7)
+- Fix string-concat issues (ticket-f1e7e2d6)
+- Fix unused-imports issues (ticket-eb177141)
+- Fix magic-numbers issues (ticket-8d13328a)
+- Fix relative-imports issues (ticket-ff2879d8)
+- Fix string-concat issues (ticket-7212e0d5)
+- Fix unused-imports issues (ticket-676b4c09)
+- Fix magic-numbers issues (ticket-2db1406e)
+- Fix unused-imports issues (ticket-b9312e6e)
+- Fix duplicate-imports issues (ticket-164ccfc7)
+- Fix unused-imports issues (ticket-18e9417b)
+- Fix ai-boilerplate issues (ticket-8faeb137)
+- Fix string-concat issues (ticket-e11f3ca1)
+- Fix unused-imports issues (ticket-c53e0bb6)
+- Fix relative-imports issues (ticket-42f3229a)
+- Fix string-concat issues (ticket-ca610d9b)
+- Fix unused-imports issues (ticket-ff4a380a)
+- Fix unused-imports issues (ticket-174985ce)
+- Fix magic-numbers issues (ticket-1fb15901)
+- Fix string-concat issues (ticket-7b5daa64)
+- Fix unused-imports issues (ticket-2043d52d)
+- Fix relative-imports issues (ticket-5b0ce565)
+- Fix unused-imports issues (ticket-71583a1e)
+- Fix magic-numbers issues (ticket-90f432d9)
+- Fix relative-imports issues (ticket-434675f8)
+- Fix string-concat issues (ticket-821fb723)
+- Fix unused-imports issues (ticket-c141f52a)
+- Fix duplicate-imports issues (ticket-46c07111)
+- Fix string-concat issues (ticket-04318be7)
+- Fix unused-imports issues (ticket-cbcfbd1e)
+- Fix magic-numbers issues (ticket-ad2e997e)
+- Fix relative-imports issues (ticket-1abcf896)
+- Fix string-concat issues (ticket-cd3c6a54)
+- Fix unused-imports issues (ticket-5dd5179a)
+- Fix magic-numbers issues (ticket-072eeb06)
+- Fix unused-imports issues (ticket-c4d3680e)
+- Fix relative-imports issues (ticket-33785319)
+- Fix string-concat issues (ticket-f1f786ff)
+- Fix unused-imports issues (ticket-c4d9199a)
+- Fix magic-numbers issues (ticket-88e20104)
+- Fix unused-imports issues (ticket-1c4d6d92)
+- Fix relative-imports issues (ticket-6f83ea0c)
+- Fix unused-imports issues (ticket-e177bc99)
+- Fix magic-numbers issues (ticket-690814b1)
+- Fix string-concat issues (ticket-16057a27)
+- Fix unused-imports issues (ticket-2e9ca6b2)
+- Fix magic-numbers issues (ticket-11ae8d32)
+- Fix unused-imports issues (ticket-bd7736ee)
+- Fix smart-return-type issues (ticket-a572c882)
+- Fix string-concat issues (ticket-82292562)
+- Fix unused-imports issues (ticket-9e5b9187)
+- Fix unused-imports issues (ticket-11348133)
+- Fix llm-hallucinations issues (ticket-b656f940)
+- Fix smart-return-type issues (ticket-b8bffb20)
+- Fix string-concat issues (ticket-29475b85)
+- Fix unused-imports issues (ticket-fe372ae0)
+- Fix unused-imports issues (ticket-eab5287c)
+- Fix llm-hallucinations issues (ticket-c12f1cde)
+- Fix smart-return-type issues (ticket-247474b0)
+- Fix string-concat issues (ticket-0fdbde7e)
+- Fix unused-imports issues (ticket-513c873c)
+- Fix llm-hallucinations issues (ticket-bc05499e)
+- Fix unused-imports issues (ticket-f56c986e)
+
 ## [Unreleased]
 
 ### Added — Autopilot: drive an IDE's LLM chat from the terminal
@@ -241,6 +345,37 @@ $ koru autopilot tail -n 10
 
 Full suite: **388 passed, 0 regressions** (370 → 388).
 
+### Added — Phase 2 wave 3: systemd user unit + peercred regression (P2.6, R11)
+
+- **P2.6 / daemon persistence** — shipped
+  `systemd/koru-autopilot.service` for `systemd --user` installs:
+  `ExecStart=... koru autopilot daemon --idempotent --no-handoff`,
+  `Restart=on-failure`, journald wiring, and tightened service sandboxing
+  (`NoNewPrivileges`, `ProtectSystem`, `ProtectHome`, `ReadWritePaths`).
+- **New CLI action `koru autopilot install-unit`** — writes the user unit
+  to `$XDG_CONFIG_HOME/systemd/user/koru-autopilot.service` (or
+  `~/.config/systemd/user/` fallback) with flags:
+  - `--print` (render only)
+  - `--dest <path>` (custom output)
+  - `--force` (overwrite existing file)
+- **ExecStart path resolution hardened** — the installer now resolves the
+  `koru` binary in this order: `PATH` (`shutil.which`), sibling of
+  `sys.executable` (virtualenv-friendly), then `sys.prefix/bin/koru`,
+  with `%h/.local/bin/koru` as the final fallback.
+- **R11 / security regression test** — added a daemon test that
+  monkeypatches `_peer_uid` to a foreign UID and asserts the connection
+  is closed before any client registration (`SO_PEERCRED` same-UID gate).
+- **Docs refreshed:**
+  [`docs/autopilot-quickstart.md`](docs/autopilot-quickstart.md) now
+  recommends `install-unit` + `systemctl --user` flow; roadmap marks
+  **P2.6 ✅** and **R11 ✅**.
+
+**Tests added (5):** 4× `tests/test_autopilot_cli.py`
+(`install-unit` print/write/overwrite guard + resolver fallback),
+1× `tests/test_autopilot_daemon.py` (`SO_PEERCRED` rejection regression).
+
+Full suite: **393 passed, 8 subtests passed** (388 → 393).
+
 ### Added — On-change gates triad (wup + regix + testql)
 
 - **New brief section "On-change gates"** — `render_markdown_handoff()`
@@ -428,6 +563,37 @@ Full suite: **388 passed, 0 regressions** (370 → 388).
   `deploy:{plan,dry,local,device,diagnose,resume,drift}`.
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
+
+## [0.1.25] - 2026-05-11
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update docs/autopilot-quickstart.md
+- Update docs/autopilot-roadmap.md
+- Update docs/cli-examples.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_autopilot_cli.py
+- Update tests/test_autopilot_daemon.py
+
+### Other
+- Update Taskfile.yml
+- Update app.doql.less
+- Update planfile.yaml
+- Update prefact.yaml
+- Update project.sh
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- ... and 14 more files
 
 ## [0.1.24] - 2026-05-11
 

@@ -1,0 +1,144 @@
+# code2llm | 72f 14319L | python:34,shell:26,yaml:6,json:2,yml:1,toml:1,typescript:1 | 2026-05-11
+# generated in 0.02s
+# CC̄=5.1 | critical:15/331 | dups:0 | cycles:1
+
+HEALTH[17]:
+  🔴 GOD   src/koru/planfile_queue.py = 705L, 5 classes, 15m, max CC=24
+  🔴 CYCLE Circular dependency detected: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.scheduleRetry -> plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect. This indicates high coupling and may lead to infinite recursion or initialization issues.
+  🟡 CC    format_queue_event CC=19 (limit:15)
+  🟡 CC    build_context CC=41 (limit:15)
+  🟡 CC    _auto_promote_blocking_tickets CC=25 (limit:15)
+  🟡 CC    _build_shared_rules CC=15 (limit:15)
+  🟡 CC    render_markdown_handoff CC=45 (limit:15)
+  🟡 CC    create_planfile_ticket CC=24 (limit:15)
+  🟡 CC    _run_redup_check CC=15 (limit:15)
+  🟡 CC    policy_violations CC=22 (limit:15)
+  🟡 CC    _gc_main CC=18 (limit:15)
+  🟡 CC    main CC=59 (limit:15)
+  🟡 CC    find_candidates CC=15 (limit:15)
+  🟡 CC    validate_flat_pipeline CC=28 (limit:15)
+  🟡 CC    run_gc CC=26 (limit:15)
+  🟡 CC    _run_llm_request CC=23 (limit:15)
+  🟡 CC    run_next_planfile_task CC=24 (limit:15)
+
+REFACTOR[3]:
+  1. split src/koru/planfile_queue.py  (god module)
+  2. split 15 high-CC methods  (CC>15)
+  3. break 1 circular dependencies
+
+PIPELINES[135]:
+  [1] Src [_default_connect]: _default_connect
+      PURITY: 100% pure
+  [2] Src [_git_probe]: _git_probe
+      PURITY: 100% pure
+  [3] Src [main]: main → emit_management_event
+      PURITY: 100% pure
+  [4] Src [heal_rebuild_restore]: heal_rebuild_restore → _run_docker
+      PURITY: 100% pure
+  [5] Src [heal_annotate]: heal_annotate → _record_action
+      PURITY: 100% pure
+
+LAYERS:
+  services/                       CC̄=5.6    ←in:0  →out:0
+  │ !! app                        673L  0C   21m  CC=24     ←0
+  │ ticket_builder             223L  0C    7m  CC=11     ←1
+  │ Dockerfile                  36L  0C    0m  CC=0.0    ←0
+  │
+  src/                            CC̄=5.4    ←in:0  →out:0
+  │ !! cli                       1303L  0C   21m  CC=59     ←0
+  │ !! context                    869L  0C   16m  CC=45     ←4
+  │ !! planfile_queue             705L  5C   15m  CC=24     ←1
+  │ !! cli_command                537L  0C   17m  CC=10     ←0
+  │ !! serve                      529L  1C    3m  CC=4      ←1
+  │ !! daemon                     516L  2C   24m  CC=14     ←0
+  │ !! scan                       515L  2C   11m  CC=13     ←1
+  │ doctor                     425L  2C   16m  CC=11     ←1
+  │ !! bootstrap                  396L  2C   10m  CC=28     ←2
+  │ !! queue_clean                355L  2C   10m  CC=15     ←1
+  │ !! gc                         326L  2C    9m  CC=26     ←1
+  │ init                       317L  1C    4m  CC=8      ←1
+  │ injector                   255L  4C   12m  CC=12     ←0
+  │ !! policy                     240L  1C    4m  CC=22     ←2
+  │ agents                     222L  1C    9m  CC=14     ←1
+  │ gate                       204L  1C    5m  CC=12     ←1
+  │ protocol                   200L  2C   11m  CC=12     ←2
+  │ ide                        188L  1C   10m  CC=11     ←2
+  │ audit                      155L  2C    6m  CC=7      ←1
+  │ tasks                      139L  1C    5m  CC=5      ←1
+  │ loop                       131L  3C    4m  CC=12     ←1
+  │ semcod_tools               129L  1C    4m  CC=7      ←2
+  │ run_log                    124L  1C    7m  CC=4      ←1
+  │ config                     123L  1C    6m  CC=7      ←1
+  │ dotenv_loader              104L  0C    3m  CC=7      ←0
+  │ runtime                    103L  0C    5m  CC=2      ←6
+  │ events                      90L  0C    2m  CC=8      ←1
+  │ !! watch                       83L  0C    3m  CC=19     ←1
+  │ client                      79L  1C    7m  CC=5      ←0
+  │ __init__                    67L  0C    0m  CC=0.0    ←0
+  │ __init__                    38L  0C    1m  CC=3      ←3
+  │
+  scripts/                        CC̄=3.5    ←in:135  →out:0
+  │ planfile-sync-todo         219L  0C    8m  CC=12     ←0
+  │ koru-autoloop.sh           111L  0C    3m  CC=0.0    ←0
+  │ planfile-export-prompt.sh    81L  0C    2m  CC=0.0    ←10
+  │
+  plugins/                        CC̄=2.5    ←in:0  →out:0
+  │ extension.ts               213L  2C   30m  CC=12     ←1
+  │ package.json                65L  0C    0m  CC=0.0    ←0
+  │ tsconfig.json               15L  0C    0m  CC=0.0    ←0
+  │
+  ./                              CC̄=0.0    ←in:0  →out:0
+  │ !! Taskfile.yml               625L  0C    0m  CC=0.0    ←0
+  │ !! goal.yaml                  511L  0C    0m  CC=0.0    ←0
+  │ pipeline.yaml              142L  0C    0m  CC=0.0    ←0
+  │ pyproject.toml              87L  0C    0m  CC=0.0    ←0
+  │ project.sh                  48L  0C    0m  CC=0.0    ←0
+  │
+  docs/                           CC̄=0.0    ←in:0  →out:0
+  │ install.sh                  88L  0C    0m  CC=0.0    ←0
+  │ install.sh                  87L  0C    0m  CC=0.0    ←0
+  │ install.sh                  80L  0C    0m  CC=0.0    ←0
+  │ install.sh                  60L  0C    0m  CC=0.0    ←0
+  │ install.sh                  55L  0C    0m  CC=0.0    ←0
+  │ install.sh                  55L  0C    0m  CC=0.0    ←0
+  │ install.sh                  53L  0C    0m  CC=0.0    ←0
+  │ install.sh                  53L  0C    0m  CC=0.0    ←0
+  │ install.sh                  53L  0C    0m  CC=0.0    ←0
+  │ install.sh                  53L  0C    0m  CC=0.0    ←0
+  │ install.sh                  52L  0C    0m  CC=0.0    ←0
+  │ install.sh                  52L  0C    0m  CC=0.0    ←0
+  │ install.sh                  52L  0C    0m  CC=0.0    ←0
+  │ install.sh                  49L  0C    0m  CC=0.0    ←0
+  │ install.sh                  49L  0C    0m  CC=0.0    ←0
+  │ install.sh                  49L  0C    0m  CC=0.0    ←0
+  │ install.sh                  49L  0C    0m  CC=0.0    ←0
+  │ install.sh                  41L  0C    0m  CC=0.0    ←0
+  │ install.sh                  41L  0C    0m  CC=0.0    ←0
+  │ install.sh                  38L  0C    0m  CC=0.0    ←0
+  │ install.sh                  38L  0C    0m  CC=0.0    ←0
+  │ install.sh                  38L  0C    0m  CC=0.0    ←0
+  │ install.sh                  38L  0C    0m  CC=0.0    ←0
+  │
+  redeploy/                       CC̄=0.0    ←in:0  →out:0
+  │ manifest.yaml              125L  0C    0m  CC=0.0    ←0
+  │
+  examples/                       CC̄=0.0    ←in:0  →out:0
+  │ bootstrap.planfile.yaml    425L  0C    0m  CC=0.0    ←0
+  │
+  testql-scenarios/               CC̄=0.0    ←in:0  →out:0
+  │ generated-cli-tests.testql.toon.yaml    20L  0C    0m  CC=0.0    ←0
+  │ generated-from-pytests.testql.toon.yaml    10L  0C    0m  CC=0.0    ←0
+  │
+
+COUPLING:
+                                                      src.koru                        scripts  plugins.koru-autopilot-vscode
+                       src.koru                             ──                            135                              1  !! fan-out
+                        scripts                           ←135                             ──                                 hub
+  plugins.koru-autopilot-vscode                             ←1                                                            ──
+  CYCLES: 1
+  HUB: scripts/ (fan-in=135)
+  SMELL: src.koru/ fan-out=136 → split needed
+
+EXTERNAL:
+  validation: run `vallm batch .` → validation.toon
+  duplication: run `redup scan .` → duplication.toon

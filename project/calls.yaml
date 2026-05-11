@@ -1,0 +1,2763 @@
+project: /home/tom/github/semcod/koru
+generated_from: code2llm call graph analysis
+stats:
+  total_nodes: 228
+  total_edges: 247
+  modules_count: 35
+nodes:
+  src.koru.loop.run_closed_loop:
+    name: run_closed_loop
+    module: src.koru.loop
+    line: 86
+    cyclomatic_complexity: 12
+    calls_out: 18
+    calls_in: 1
+  src.koru.gate._resolve_actor:
+    name: _resolve_actor
+    module: src.koru.gate
+    line: 114
+    cyclomatic_complexity: 4
+    calls_out: 1
+    calls_in: 1
+  src.koru.cli._queue_main:
+    name: _queue_main
+    module: src.koru.cli
+    line: 748
+    cyclomatic_complexity: 9
+    calls_out: 15
+    calls_in: 0
+  src.koru.queue_clean.clean_queue:
+    name: clean_queue
+    module: src.koru.queue_clean
+    line: 304
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 1
+  src.koru.autopilot.cli_command._action_shutdown:
+    name: _action_shutdown
+    module: src.koru.autopilot.cli_command
+    line: 280
+    cyclomatic_complexity: 3
+    calls_out: 7
+    calls_in: 0
+  services.healing-webhook.app._record_action:
+    name: _record_action
+    module: services.healing-webhook.app
+    line: 127
+    cyclomatic_complexity: 1
+    calls_out: 7
+    calls_in: 11
+  src.koru.autopilot.config.default_config_path:
+    name: default_config_path
+    module: src.koru.autopilot.config
+    line: 64
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  src.koru.doctor._check_runtime_dir:
+    name: _check_runtime_dir
+    module: src.koru.doctor
+    line: 241
+    cyclomatic_complexity: 6
+    calls_out: 6
+    calls_in: 0
+  src.koru.scan.scan_todo_markers:
+    name: scan_todo_markers
+    module: src.koru.scan
+    line: 227
+    cyclomatic_complexity: 8
+    calls_out: 10
+    calls_in: 1
+  src.koru.dotenv_loader._parse_value:
+    name: _parse_value
+    module: src.koru.dotenv_loader
+    line: 45
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 1
+  src.koru.doctor.run_diagnostics:
+    name: run_diagnostics
+    module: src.koru.doctor
+    line: 113
+    cyclomatic_complexity: 6
+    calls_out: 11
+    calls_in: 1
+  src.koru.tasks._read_sprint:
+    name: _read_sprint
+    module: src.koru.tasks
+    line: 114
+    cyclomatic_complexity: 4
+    calls_out: 11
+    calls_in: 1
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.send:
+    name: send
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 121
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 9
+  src.koru.autopilot.daemon.AutopilotDaemon._drive_via_keyboard:
+    name: _drive_via_keyboard
+    module: src.koru.autopilot.daemon
+    line: 361
+    cyclomatic_complexity: 5
+    calls_out: 19
+    calls_in: 0
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.socketPath:
+    name: socketPath
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 43
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  src.koru.scan.scan_missing_gates:
+    name: scan_missing_gates
+    module: src.koru.scan
+    line: 281
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 1
+  src.koru.agents.detect_project_environment:
+    name: detect_project_environment
+    module: src.koru.agents
+    line: 128
+    cyclomatic_complexity: 4
+    calls_out: 22
+    calls_in: 1
+  src.koru.autopilot.daemon._default_handoff:
+    name: _default_handoff
+    module: src.koru.autopilot.daemon
+    line: 74
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 1
+  src.koru.autopilot.cli_command._action_tail:
+    name: _action_tail
+    module: src.koru.autopilot.cli_command
+    line: 394
+    cyclomatic_complexity: 10
+    calls_out: 13
+    calls_in: 0
+  scripts.planfile-export-prompt.print:
+    name: print
+    module: scripts.planfile-export-prompt
+    line: 43
+    cyclomatic_complexity: 0
+    calls_out: 0
+    calls_in: 144
+  src.koru.scan.scan_missing_tools:
+    name: scan_missing_tools
+    module: src.koru.scan
+    line: 307
+    cyclomatic_complexity: 13
+    calls_out: 15
+    calls_in: 1
+  services.healing-webhook.app._run_vallm_check:
+    name: _run_vallm_check
+    module: services.healing-webhook.app
+    line: 322
+    cyclomatic_complexity: 10
+    calls_out: 15
+    calls_in: 2
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.delay:
+    name: delay
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 93
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  src.koru.run_log.open_run_log_eagerly:
+    name: open_run_log_eagerly
+    module: src.koru.run_log
+    line: 115
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  src.koru.tasks.create_nl_task:
+    name: create_nl_task
+    module: src.koru.tasks
+    line: 20
+    cyclomatic_complexity: 5
+    calls_out: 17
+    calls_in: 1
+  src.koru.scan.run_scan:
+    name: run_scan
+    module: src.koru.scan
+    line: 480
+    cyclomatic_complexity: 7
+    calls_out: 11
+    calls_in: 1
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.onData:
+    name: onData
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 126
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 1
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.p:
+    name: p
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 51
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 0
+  src.koru.autopilot.daemon.AutopilotDaemon.__init__:
+    name: __init__
+    module: src.koru.autopilot.daemon
+    line: 134
+    cyclomatic_complexity: 7
+    calls_out: 8
+    calls_in: 0
+  src.koru.autopilot.cli_command._build_brief:
+    name: _build_brief
+    module: src.koru.autopilot.cli_command
+    line: 332
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  src.koru.context._build_instructions:
+    name: _build_instructions
+    module: src.koru.context
+    line: 482
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 1
+  src.koru.autopilot.cli_command._action_daemon:
+    name: _action_daemon
+    module: src.koru.autopilot.cli_command
+    line: 194
+    cyclomatic_complexity: 9
+    calls_out: 15
+    calls_in: 0
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.sock:
+    name: sock
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 52
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 0
+  src.koru.planfile_queue._parse_next_ticket:
+    name: _parse_next_ticket
+    module: src.koru.planfile_queue
+    line: 302
+    cyclomatic_complexity: 9
+    calls_out: 7
+    calls_in: 1
+  src.koru.planfile_queue._default_human_prompt:
+    name: _default_human_prompt
+    module: src.koru.planfile_queue
+    line: 379
+    cyclomatic_complexity: 5
+    calls_out: 12
+    calls_in: 0
+  src.koru.bootstrap.import_flat_pipeline:
+    name: import_flat_pipeline
+    module: src.koru.bootstrap
+    line: 355
+    cyclomatic_complexity: 9
+    calls_out: 12
+    calls_in: 2
+  services.healing-webhook.ticket_builder._format_paths:
+    name: _format_paths
+    module: services.healing-webhook.ticket_builder
+    line: 129
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  services.healing-webhook.app._run_redup_check:
+    name: _run_redup_check
+    module: services.healing-webhook.app
+    line: 454
+    cyclomatic_complexity: 15
+    calls_out: 24
+    calls_in: 1
+  src.koru.autopilot.ide.detect_running_ides:
+    name: detect_running_ides
+    module: src.koru.autopilot.ide
+    line: 101
+    cyclomatic_complexity: 11
+    calls_out: 7
+    calls_in: 6
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.detectIde:
+    name: detectIde
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 114
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 3
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.scheduleRetry:
+    name: scheduleRetry
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 89
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 1
+  src.koru.autopilot.cli_command._action_ide_list:
+    name: _action_ide_list
+    module: src.koru.autopilot.cli_command
+    line: 294
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 0
+  src.koru.autopilot.protocol.ack:
+    name: ack
+    module: src.koru.autopilot.protocol
+    line: 165
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 11
+  src.koru.runtime.planfile_dir:
+    name: planfile_dir
+    module: src.koru.runtime
+    line: 43
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 7
+  src.koru.context.render_markdown_handoff:
+    name: render_markdown_handoff
+    module: src.koru.context
+    line: 624
+    cyclomatic_complexity: 45
+    calls_out: 163
+    calls_in: 5
+  services.healing-webhook.app.heal_rebuild_restore:
+    name: heal_rebuild_restore
+    module: services.healing-webhook.app
+    line: 288
+    cyclomatic_complexity: 6
+    calls_out: 9
+    calls_in: 0
+  src.koru.runtime.runtime_dir:
+    name: runtime_dir
+    module: src.koru.runtime
+    line: 48
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 6
+  src.koru.autopilot.daemon.AutopilotDaemon._handle_hello:
+    name: _handle_hello
+    module: src.koru.autopilot.daemon
+    line: 396
+    cyclomatic_complexity: 5
+    calls_out: 12
+    calls_in: 0
+  src.koru.autopilot.daemon.AutopilotDaemon._handle_status:
+    name: _handle_status
+    module: src.koru.autopilot.daemon
+    line: 412
+    cyclomatic_complexity: 6
+    calls_out: 11
+    calls_in: 0
+  src.koru.context._is_fixture_ticket:
+    name: _is_fixture_ticket
+    module: src.koru.context
+    line: 66
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 4
+  src.koru.autopilot.ide.pick_target:
+    name: pick_target
+    module: src.koru.autopilot.ide
+    line: 124
+    cyclomatic_complexity: 5
+    calls_out: 0
+    calls_in: 1
+  src.koru.autopilot.cli_command._action_handoff:
+    name: _action_handoff
+    module: src.koru.autopilot.cli_command
+    line: 344
+    cyclomatic_complexity: 9
+    calls_out: 18
+    calls_in: 0
+  src.koru.context._fetch_all_tickets:
+    name: _fetch_all_tickets
+    module: src.koru.context
+    line: 115
+    cyclomatic_complexity: 9
+    calls_out: 5
+    calls_in: 2
+  src.koru.autopilot.daemon._peer_uid:
+    name: _peer_uid
+    module: src.koru.autopilot.daemon
+    line: 93
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 1
+  src.koru.bootstrap.validate_flat_pipeline:
+    name: validate_flat_pipeline
+    module: src.koru.bootstrap
+    line: 97
+    cyclomatic_complexity: 28
+    calls_out: 58
+    calls_in: 1
+  src.koru.cli._task_main:
+    name: _task_main
+    module: src.koru.cli
+    line: 811
+    cyclomatic_complexity: 3
+    calls_out: 11
+    calls_in: 0
+  src.koru.scan._existing_scan_titles:
+    name: _existing_scan_titles
+    module: src.koru.scan
+    line: 403
+    cyclomatic_complexity: 11
+    calls_out: 15
+    calls_in: 1
+  src.koru.autopilot.daemon._load_context_module:
+    name: _load_context_module
+    module: src.koru.autopilot.daemon
+    line: 61
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  services.healing-webhook.app._rate_limit_ok:
+    name: _rate_limit_ok
+    module: services.healing-webhook.app
+    line: 120
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 2
+  services.healing-webhook.app.alertmanager_webhook:
+    name: alertmanager_webhook
+    module: services.healing-webhook.app
+    line: 588
+    cyclomatic_complexity: 5
+    calls_out: 19
+    calls_in: 0
+  src.koru.gc._now_utc:
+    name: _now_utc
+    module: src.koru.gc
+    line: 79
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 2
+  src.koru.planfile_queue.run_next_planfile_task:
+    name: run_next_planfile_task
+    module: src.koru.planfile_queue
+    line: 424
+    cyclomatic_complexity: 24
+    calls_out: 40
+    calls_in: 2
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.ok:
+    name: ok
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 182
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  src.koru.serve._build_handler:
+    name: _build_handler
+    module: src.koru.serve
+    line: 406
+    cyclomatic_complexity: 1
+    calls_out: 30
+    calls_in: 1
+  src.koru.autopilot.ide._read_comm:
+    name: _read_comm
+    module: src.koru.autopilot.ide
+    line: 60
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  src.koru.autopilot.daemon.AutopilotDaemon._handle_ping:
+    name: _handle_ping
+    module: src.koru.autopilot.daemon
+    line: 495
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  src.koru.cli._build_serve_parser:
+    name: _build_serve_parser
+    module: src.koru.cli
+    line: 239
+    cyclomatic_complexity: 1
+    calls_out: 9
+    calls_in: 1
+  src.koru.autopilot.cli_command._action_status:
+    name: _action_status
+    module: src.koru.autopilot.cli_command
+    line: 266
+    cyclomatic_complexity: 3
+    calls_out: 7
+    calls_in: 0
+  src.koru.planfile_queue._planfile_env:
+    name: _planfile_env
+    module: src.koru.planfile_queue
+    line: 93
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 1
+  src.koru.autopilot.audit._isoformat_utc:
+    name: _isoformat_utc
+    module: src.koru.autopilot.audit
+    line: 62
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 1
+  src.koru.doctor._check_policy_yaml:
+    name: _check_policy_yaml
+    module: src.koru.doctor
+    line: 255
+    cyclomatic_complexity: 11
+    calls_out: 13
+    calls_in: 0
+  src.koru.queue_clean.find_candidates:
+    name: find_candidates
+    module: src.koru.queue_clean
+    line: 183
+    cyclomatic_complexity: 15
+    calls_out: 19
+    calls_in: 1
+  src.koru.autopilot.injector.Injector.type_text:
+    name: type_text
+    module: src.koru.autopilot.injector
+    line: 151
+    cyclomatic_complexity: 12
+    calls_out: 14
+    calls_in: 0
+  src.koru.agents.save_agent_prompt:
+    name: save_agent_prompt
+    module: src.koru.agents
+    line: 200
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 2
+  src.koru.autopilot.protocol.error:
+    name: error
+    module: src.koru.autopilot.protocol
+    line: 172
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 7
+  src.koru.autopilot.daemon.AutopilotDaemon._handle_ack:
+    name: _handle_ack
+    module: src.koru.autopilot.daemon
+    line: 427
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 0
+  src.koru.cli._build_scan_parser:
+    name: _build_scan_parser
+    module: src.koru.cli
+    line: 281
+    cyclomatic_complexity: 1
+    calls_out: 8
+    calls_in: 1
+  scripts.planfile-sync-todo.load_tickets:
+    name: load_tickets
+    module: scripts.planfile-sync-todo
+    line: 62
+    cyclomatic_complexity: 6
+    calls_out: 5
+    calls_in: 2
+  src.koru.context._planfile_command_base:
+    name: _planfile_command_base
+    module: src.koru.context
+    line: 102
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  services.healing-webhook.app._resolve_affected_files:
+    name: _resolve_affected_files
+    module: services.healing-webhook.app
+    line: 378
+    cyclomatic_complexity: 11
+    calls_out: 24
+    calls_in: 2
+  src.koru.queue_clean._parse_age_days:
+    name: _parse_age_days
+    module: src.koru.queue_clean
+    line: 128
+    cyclomatic_complexity: 8
+    calls_out: 10
+    calls_in: 2
+  src.koru.autopilot.daemon.AutopilotDaemon._accept:
+    name: _accept
+    module: src.koru.autopilot.daemon
+    line: 237
+    cyclomatic_complexity: 6
+    calls_out: 12
+    calls_in: 0
+  src.koru.cli._build_gate_parser:
+    name: _build_gate_parser
+    module: src.koru.cli
+    line: 401
+    cyclomatic_complexity: 1
+    calls_out: 11
+    calls_in: 1
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.clearTimeout:
+    name: clearTimeout
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 80
+    cyclomatic_complexity: 2
+    calls_out: 0
+    calls_in: 1
+  src.koru.context._build_setup_instructions:
+    name: _build_setup_instructions
+    module: src.koru.context
+    line: 510
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 1
+  src.koru.runtime.runs_dir:
+    name: runs_dir
+    module: src.koru.runtime
+    line: 53
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 2
+  src.koru.gc.run_gc:
+    name: run_gc
+    module: src.koru.gc
+    line: 217
+    cyclomatic_complexity: 26
+    calls_out: 22
+    calls_in: 1
+  src.koru.cli._serve_main:
+    name: _serve_main
+    module: src.koru.cli
+    line: 844
+    cyclomatic_complexity: 4
+    calls_out: 8
+    calls_in: 0
+  src.koru.doctor._check_pytest_collect:
+    name: _check_pytest_collect
+    module: src.koru.doctor
+    line: 319
+    cyclomatic_complexity: 8
+    calls_out: 5
+    calls_in: 0
+  src.koru.init._write_policy_stub_if_absent:
+    name: _write_policy_stub_if_absent
+    module: src.koru.init
+    line: 283
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 1
+  src.koru.autopilot.cli_command._render_unit:
+    name: _render_unit
+    module: src.koru.autopilot.cli_command
+    line: 448
+    cyclomatic_complexity: 5
+    calls_out: 8
+    calls_in: 1
+  src.koru.queue_clean._matched_rules:
+    name: _matched_rules
+    module: src.koru.queue_clean
+    line: 147
+    cyclomatic_complexity: 14
+    calls_out: 16
+    calls_in: 2
+  src.koru.agents._which:
+    name: _which
+    module: src.koru.agents
+    line: 40
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 5
+  src.koru.autopilot.protocol.decode:
+    name: decode
+    module: src.koru.autopilot.protocol
+    line: 116
+    cyclomatic_complexity: 12
+    calls_out: 21
+    calls_in: 2
+  src.koru.queue_clean._close_ticket:
+    name: _close_ticket
+    module: src.koru.queue_clean
+    line: 281
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 1
+  src.koru.dotenv_loader.parse_dotenv:
+    name: parse_dotenv
+    module: src.koru.dotenv_loader
+    line: 63
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 1
+  src.koru.autopilot.cli_command._resolve_koru_bin:
+    name: _resolve_koru_bin
+    module: src.koru.autopilot.cli_command
+    line: 431
+    cyclomatic_complexity: 4
+    calls_out: 7
+    calls_in: 1
+  src.koru.context.build_context:
+    name: build_context
+    module: src.koru.context
+    line: 212
+    cyclomatic_complexity: 41
+    calls_out: 36
+    calls_in: 6
+  services.healing-webhook.ticket_builder._reproduction_for:
+    name: _reproduction_for
+    module: services.healing-webhook.ticket_builder
+    line: 149
+    cyclomatic_complexity: 5
+    calls_out: 5
+    calls_in: 1
+  src.koru.autopilot.cli_command._action_install_unit:
+    name: _action_install_unit
+    module: src.koru.autopilot.cli_command
+    line: 485
+    cyclomatic_complexity: 6
+    calls_out: 18
+    calls_in: 0
+  services.healing-webhook.app.heal_vallm_validate:
+    name: heal_vallm_validate
+    module: services.healing-webhook.app
+    line: 409
+    cyclomatic_complexity: 9
+    calls_out: 21
+    calls_in: 0
+  src.koru.context._build_shared_rules:
+    name: _build_shared_rules
+    module: src.koru.context
+    line: 527
+    cyclomatic_complexity: 15
+    calls_out: 17
+    calls_in: 1
+  src.koru.scan._create_ticket:
+    name: _create_ticket
+    module: src.koru.scan
+    line: 446
+    cyclomatic_complexity: 5
+    calls_out: 5
+    calls_in: 1
+  src.koru.autopilot.config.cached_config:
+    name: cached_config
+    module: src.koru.autopilot.config
+    line: 107
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  services.healing-webhook.app.probe_failure:
+    name: probe_failure
+    module: services.healing-webhook.app
+    line: 619
+    cyclomatic_complexity: 7
+    calls_out: 21
+    calls_in: 0
+  src.koru.events.emit_management_event:
+    name: emit_management_event
+    module: src.koru.events
+    line: 13
+    cyclomatic_complexity: 8
+    calls_out: 7
+    calls_in: 23
+  src.koru.queue_clean._build_close_note:
+    name: _build_close_note
+    module: src.koru.queue_clean
+    line: 245
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 1
+  src.koru.dotenv_loader.load_dotenv:
+    name: load_dotenv
+    module: src.koru.dotenv_loader
+    line: 77
+    cyclomatic_complexity: 7
+    calls_out: 5
+    calls_in: 0
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.activate:
+    name: activate
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 198
+    cyclomatic_complexity: 3
+    calls_out: 7
+    calls_in: 0
+  src.koru.gc._run_planfile:
+    name: _run_planfile
+    module: src.koru.gc
+    line: 98
+    cyclomatic_complexity: 6
+    calls_out: 9
+    calls_in: 2
+  src.koru.context._load_project_dotenv:
+    name: _load_project_dotenv
+    module: src.koru.context
+    line: 88
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 1
+  src.koru.gc._parse_ts:
+    name: _parse_ts
+    module: src.koru.gc
+    line: 83
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 1
+  src.koru.agents.detect_agent_options:
+    name: detect_agent_options
+    module: src.koru.agents
+    line: 48
+    cyclomatic_complexity: 9
+    calls_out: 28
+    calls_in: 2
+  services.healing-webhook.app.heal_redsl_gate:
+    name: heal_redsl_gate
+    module: services.healing-webhook.app
+    line: 254
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 1
+  src.koru.serve.serve:
+    name: serve
+    module: src.koru.serve
+    line: 495
+    cyclomatic_complexity: 4
+    calls_out: 12
+    calls_in: 1
+  src.koru.loop.discover_repositories:
+    name: discover_repositories
+    module: src.koru.loop
+    line: 60
+    cyclomatic_complexity: 5
+    calls_out: 11
+    calls_in: 1
+  src.koru.agents.detect_agent_environment:
+    name: detect_agent_environment
+    module: src.koru.agents
+    line: 162
+    cyclomatic_complexity: 6
+    calls_out: 7
+    calls_in: 0
+  src.koru.autopilot.ide.detect_running_ides_cached:
+    name: detect_running_ides_cached
+    module: src.koru.autopilot.ide
+    line: 159
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 0
+  src.koru.cli._scan_main:
+    name: _scan_main
+    module: src.koru.cli
+    line: 371
+    cyclomatic_complexity: 4
+    calls_out: 16
+    calls_in: 0
+  src.koru.doctor._check_planfile_sprints_yaml:
+    name: _check_planfile_sprints_yaml
+    module: src.koru.doctor
+    line: 223
+    cyclomatic_complexity: 6
+    calls_out: 8
+    calls_in: 0
+  src.koru.watch.format_queue_event:
+    name: format_queue_event
+    module: src.koru.watch
+    line: 10
+    cyclomatic_complexity: 19
+    calls_out: 35
+    calls_in: 1
+  src.koru.cli._render_clean_report_text:
+    name: _render_clean_report_text
+    module: src.koru.cli
+    line: 704
+    cyclomatic_complexity: 12
+    calls_out: 28
+    calls_in: 1
+  src.koru.doctor._check_ci_command:
+    name: _check_ci_command
+    module: src.koru.doctor
+    line: 376
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 0
+  src.koru.autopilot.daemon.AutopilotDaemon._handle_shutdown:
+    name: _handle_shutdown
+    module: src.koru.autopilot.daemon
+    line: 489
+    cyclomatic_complexity: 2
+    calls_out: 6
+    calls_in: 0
+  services.healing-webhook.app._resolve_strategy:
+    name: _resolve_strategy
+    module: services.healing-webhook.app
+    line: 560
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 1
+  services.healing-webhook.app.create_planfile_ticket:
+    name: create_planfile_ticket
+    module: services.healing-webhook.app
+    line: 142
+    cyclomatic_complexity: 24
+    calls_out: 39
+    calls_in: 2
+  src.koru.loop._search_root_for_include:
+    name: _search_root_for_include
+    module: src.koru.loop
+    line: 44
+    cyclomatic_complexity: 6
+    calls_out: 6
+    calls_in: 1
+  src.koru.run_log.RunLogWriter.write_iteration:
+    name: write_iteration
+    module: src.koru.run_log
+    line: 69
+    cyclomatic_complexity: 3
+    calls_out: 9
+    calls_in: 0
+  src.koru.init.init_project:
+    name: init_project
+    module: src.koru.init
+    line: 211
+    cyclomatic_complexity: 6
+    calls_out: 15
+    calls_in: 1
+  src.koru.bootstrap.load_flat_pipeline:
+    name: load_flat_pipeline
+    module: src.koru.bootstrap
+    line: 76
+    cyclomatic_complexity: 9
+    calls_out: 12
+    calls_in: 1
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.bridge:
+    name: bridge
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 199
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  src.koru.bootstrap.materialize_to_planfile:
+    name: materialize_to_planfile
+    module: src.koru.bootstrap
+    line: 240
+    cyclomatic_complexity: 6
+    calls_out: 16
+    calls_in: 1
+  src.koru.autopilot.protocol.chat_send:
+    name: chat_send
+    module: src.koru.autopilot.protocol
+    line: 157
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 2
+  src.koru.gate.authorize_gate:
+    name: authorize_gate
+    module: src.koru.gate
+    line: 149
+    cyclomatic_complexity: 9
+    calls_out: 16
+    calls_in: 1
+  src.koru.planfile_queue.run_planfile_queue_loop:
+    name: run_planfile_queue_loop
+    module: src.koru.planfile_queue
+    line: 630
+    cyclomatic_complexity: 12
+    calls_out: 8
+    calls_in: 1
+  src.koru.autopilot.audit.AuditLog.__init__:
+    name: __init__
+    module: src.koru.autopilot.audit
+    line: 78
+    cyclomatic_complexity: 5
+    calls_out: 11
+    calls_in: 0
+  src.koru.cli.main:
+    name: main
+    module: src.koru.cli
+    line: 938
+    cyclomatic_complexity: 59
+    calls_out: 105
+    calls_in: 0
+  src.koru.tasks._read_config:
+    name: _read_config
+    module: src.koru.tasks
+    line: 103
+    cyclomatic_complexity: 4
+    calls_out: 7
+    calls_in: 1
+  scripts.planfile-sync-todo.do_from_todo:
+    name: do_from_todo
+    module: scripts.planfile-sync-todo
+    line: 140
+    cyclomatic_complexity: 12
+    calls_out: 20
+    calls_in: 1
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override:
+    name: override
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 45
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  src.koru.context._run_planfile:
+    name: _run_planfile
+    module: src.koru.context
+    line: 145
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 3
+  src.koru.autopilot.daemon.AutopilotDaemon._dispatch:
+    name: _dispatch
+    module: src.koru.autopilot.daemon
+    line: 287
+    cyclomatic_complexity: 3
+    calls_out: 9
+    calls_in: 0
+  src.koru.autopilot.client.AutopilotClient.__init__:
+    name: __init__
+    module: src.koru.autopilot.client
+    line: 20
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 0
+  src.koru.cli._build_queue_parser:
+    name: _build_queue_parser
+    module: src.koru.cli
+    line: 634
+    cyclomatic_complexity: 1
+    calls_out: 11
+    calls_in: 1
+  src.koru.autopilot.config._merge_submit_keys:
+    name: _merge_submit_keys
+    module: src.koru.autopilot.config
+    line: 71
+    cyclomatic_complexity: 7
+    calls_out: 5
+    calls_in: 1
+  src.koru.gc.collect_gc_candidates:
+    name: collect_gc_candidates
+    module: src.koru.gc
+    line: 166
+    cyclomatic_complexity: 9
+    calls_out: 21
+    calls_in: 1
+  src.koru.autopilot.audit.AuditLog.record:
+    name: record
+    module: src.koru.autopilot.audit
+    line: 120
+    cyclomatic_complexity: 7
+    calls_out: 6
+    calls_in: 0
+  services.healing-webhook.app._run_docker:
+    name: _run_docker
+    module: services.healing-webhook.app
+    line: 234
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 3
+  src.koru.semcod_tools._read_pyproject:
+    name: _read_pyproject
+    module: src.koru.semcod_tools
+    line: 75
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  src.koru.run_log.RunLogWriter.write_header:
+    name: write_header
+    module: src.koru.run_log
+    line: 56
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 0
+  plugins.koru-autopilot-vscode.src.extension.defaultSocketPath:
+    name: defaultSocketPath
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 21
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 1
+  src.koru.agents.launch_agent:
+    name: launch_agent
+    module: src.koru.agents
+    line: 208
+    cyclomatic_complexity: 4
+    calls_out: 8
+    calls_in: 1
+  src.koru.bootstrap._detect_cycle:
+    name: _detect_cycle
+    module: src.koru.bootstrap
+    line: 191
+    cyclomatic_complexity: 10
+    calls_out: 13
+    calls_in: 1
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.injectChat:
+    name: injectChat
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 160
+    cyclomatic_complexity: 12
+    calls_out: 7
+    calls_in: 3
+  src.koru.policy.policy_path:
+    name: policy_path
+    module: src.koru.policy
+    line: 122
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 2
+  src.koru.autopilot.cli_command._format_tail_entry:
+    name: _format_tail_entry
+    module: src.koru.autopilot.cli_command
+    line: 382
+    cyclomatic_complexity: 5
+    calls_out: 5
+    calls_in: 1
+  src.koru.cli._agent_main:
+    name: _agent_main
+    module: src.koru.cli
+    line: 873
+    cyclomatic_complexity: 7
+    calls_out: 14
+    calls_in: 0
+  scripts.planfile-sync-todo.run_planfile:
+    name: run_planfile
+    module: scripts.planfile-sync-todo
+    line: 52
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 2
+  src.koru.semcod_tools.detect_semcod_tools:
+    name: detect_semcod_tools
+    module: src.koru.semcod_tools
+    line: 96
+    cyclomatic_complexity: 7
+    calls_out: 9
+    calls_in: 2
+  src.koru.autopilot.cli_command.autopilot_main:
+    name: autopilot_main
+    module: src.koru.autopilot.cli_command
+    line: 531
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 0
+  src.koru.agents.select_agent:
+    name: select_agent
+    module: src.koru.agents
+    line: 175
+    cyclomatic_complexity: 14
+    calls_out: 8
+    calls_in: 1
+  src.koru.planfile_queue._run_process:
+    name: _run_process
+    module: src.koru.planfile_queue
+    line: 100
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  src.koru.autopilot.ide._matches:
+    name: _matches
+    module: src.koru.autopilot.ide
+    line: 76
+    cyclomatic_complexity: 7
+    calls_out: 5
+    calls_in: 1
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.disconnect:
+    name: disconnect
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 78
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 1
+  src.koru.run_log.open_run_log:
+    name: open_run_log
+    module: src.koru.run_log
+    line: 103
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 1
+  src.koru.gc._archive_tickets:
+    name: _archive_tickets
+    module: src.koru.gc
+    line: 148
+    cyclomatic_complexity: 2
+    calls_out: 6
+    calls_in: 1
+  src.koru.queue_clean._list_tickets:
+    name: _list_tickets
+    module: src.koru.queue_clean
+    line: 255
+    cyclomatic_complexity: 11
+    calls_out: 11
+    calls_in: 1
+  services.healing-webhook.app.heal_redsl_improve:
+    name: heal_redsl_improve
+    module: services.healing-webhook.app
+    line: 261
+    cyclomatic_complexity: 5
+    calls_out: 8
+    calls_in: 1
+  services.healing-webhook.ticket_builder.build_ticket_payload:
+    name: build_ticket_payload
+    module: services.healing-webhook.ticket_builder
+    line: 162
+    cyclomatic_complexity: 11
+    calls_out: 25
+    calls_in: 1
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.dispatch:
+    name: dispatch
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 143
+    cyclomatic_complexity: 6
+    calls_out: 2
+    calls_in: 3
+  src.koru.scan.collect_suggestions:
+    name: collect_suggestions
+    module: src.koru.scan
+    line: 386
+    cyclomatic_complexity: 2
+    calls_out: 11
+    calls_in: 1
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.submit:
+    name: submit
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 162
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 0
+  src.koru.doctor._check_planfile_config:
+    name: _check_planfile_config
+    module: src.koru.doctor
+    line: 181
+    cyclomatic_complexity: 4
+    calls_out: 7
+    calls_in: 0
+  src.koru.context._safe_json:
+    name: _safe_json
+    module: src.koru.context
+    line: 163
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 2
+  scripts.planfile-sync-todo.main:
+    name: main
+    module: scripts.planfile-sync-todo
+    line: 205
+    cyclomatic_complexity: 2
+    calls_out: 9
+    calls_in: 0
+  src.koru.run_log.RunLogWriter.write_footer:
+    name: write_footer
+    module: src.koru.run_log
+    line: 86
+    cyclomatic_complexity: 4
+    calls_out: 12
+    calls_in: 0
+  src.koru.gc._load_tickets_from_sprint:
+    name: _load_tickets_from_sprint
+    module: src.koru.gc
+    line: 133
+    cyclomatic_complexity: 7
+    calls_out: 7
+    calls_in: 2
+  src.koru.planfile_queue._planfile_command:
+    name: _planfile_command
+    module: src.koru.planfile_queue
+    line: 287
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 7
+  src.koru.autopilot.cli_command._action_doctor:
+    name: _action_doctor
+    module: src.koru.autopilot.cli_command
+    line: 304
+    cyclomatic_complexity: 10
+    calls_out: 16
+    calls_in: 0
+  services.healing-webhook.app.heal_annotate:
+    name: heal_annotate
+    module: services.healing-webhook.app
+    line: 308
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  src.koru.context._planfile_env:
+    name: _planfile_env
+    module: src.koru.context
+    line: 111
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 1
+  src.koru.autopilot.protocol._filter_extras:
+    name: _filter_extras
+    module: src.koru.autopilot.protocol
+    line: 76
+    cyclomatic_complexity: 6
+    calls_out: 4
+    calls_in: 1
+  src.koru.autopilot.audit.default_log_path:
+    name: default_log_path
+    module: src.koru.autopilot.audit
+    line: 48
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 3
+  src.koru.autopilot.ide._read_cmdline:
+    name: _read_cmdline
+    module: src.koru.autopilot.ide
+    line: 67
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 1
+  scripts.planfile-sync-todo.build_auto_section:
+    name: build_auto_section
+    module: scripts.planfile-sync-todo
+    line: 81
+    cyclomatic_complexity: 9
+    calls_out: 17
+    calls_in: 1
+  src.koru.watch.watch_planfile_events:
+    name: watch_planfile_events
+    module: src.koru.watch
+    line: 56
+    cyclomatic_complexity: 7
+    calls_out: 7
+    calls_in: 1
+  src.koru.autopilot.injector._submit_key_for:
+    name: _submit_key_for
+    module: src.koru.autopilot.injector
+    line: 24
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  src.koru.autopilot.ide._iter_proc_pids:
+    name: _iter_proc_pids
+    module: src.koru.autopilot.ide
+    line: 48
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 1
+  src.koru.init._ensure_gitignore_entry:
+    name: _ensure_gitignore_entry
+    module: src.koru.init
+    line: 298
+    cyclomatic_complexity: 8
+    calls_out: 12
+    calls_in: 1
+  src.koru.runtime.ensure_runs_dir:
+    name: ensure_runs_dir
+    module: src.koru.runtime
+    line: 69
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 1
+  services.healing-webhook.ticket_builder._default_acceptance:
+    name: _default_acceptance
+    module: services.healing-webhook.ticket_builder
+    line: 133
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  src.koru.cli._build_task_parser:
+    name: _build_task_parser
+    module: src.koru.cli
+    line: 226
+    cyclomatic_complexity: 1
+    calls_out: 7
+    calls_in: 1
+  scripts.planfile-sync-todo.do_from_planfile:
+    name: do_from_planfile
+    module: scripts.planfile-sync-todo
+    line: 120
+    cyclomatic_complexity: 10
+    calls_out: 14
+    calls_in: 1
+  src.koru.gc._planfile_env:
+    name: _planfile_env
+    module: src.koru.gc
+    line: 94
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 1
+  src.koru.cli._is_bare_invocation:
+    name: _is_bare_invocation
+    module: src.koru.cli
+    line: 908
+    cyclomatic_complexity: 7
+    calls_out: 0
+    calls_in: 1
+  src.koru.semcod_tools._config_present:
+    name: _config_present
+    module: src.koru.semcod_tools
+    line: 86
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 1
+  src.koru.autopilot.daemon.AutopilotDaemon._drive_via_plugin:
+    name: _drive_via_plugin
+    module: src.koru.autopilot.daemon
+    line: 342
+    cyclomatic_complexity: 2
+    calls_out: 9
+    calls_in: 0
+  src.koru.autopilot.default_socket_path:
+    name: default_socket_path
+    module: src.koru.autopilot
+    line: 20
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 4
+  src.koru.cli._gc_main:
+    name: _gc_main
+    module: src.koru.cli
+    line: 567
+    cyclomatic_complexity: 18
+    calls_out: 28
+    calls_in: 0
+  services.healing-webhook.ticket_builder._infer_paths:
+    name: _infer_paths
+    module: services.healing-webhook.ticket_builder
+    line: 101
+    cyclomatic_complexity: 7
+    calls_out: 1
+    calls_in: 2
+  src.koru.policy.load_policy:
+    name: load_policy
+    module: src.koru.policy
+    line: 127
+    cyclomatic_complexity: 9
+    calls_out: 43
+    calls_in: 2
+  src.koru.serve.build_server:
+    name: build_server
+    module: src.koru.serve
+    line: 489
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  src.koru.queue_clean._planfile_base:
+    name: _planfile_base
+    module: src.koru.queue_clean
+    line: 113
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 2
+  services.healing-webhook.app.heal_redup_check:
+    name: heal_redup_check
+    module: services.healing-webhook.app
+    line: 516
+    cyclomatic_complexity: 3
+    calls_out: 12
+    calls_in: 0
+  src.koru.run_log._iso:
+    name: _iso
+    module: src.koru.run_log
+    line: 123
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 3
+  src.koru.autopilot.client.AutopilotClient.request:
+    name: request
+    module: src.koru.autopilot.client
+    line: 37
+    cyclomatic_complexity: 5
+    calls_out: 11
+    calls_in: 0
+  src.koru.cli._build_gc_parser:
+    name: _build_gc_parser
+    module: src.koru.cli
+    line: 509
+    cyclomatic_complexity: 1
+    calls_out: 14
+    calls_in: 1
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.idx:
+    name: idx
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 129
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  src.koru.tasks._write_yaml:
+    name: _write_yaml
+    module: src.koru.tasks
+    line: 134
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 2
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.app:
+    name: app
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 115
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  src.koru.scan.scan_gitignore_drift:
+    name: scan_gitignore_drift
+    module: src.koru.scan
+    line: 353
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 1
+  src.koru.runtime.new_run_id:
+    name: new_run_id
+    module: src.koru.runtime
+    line: 58
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 1
+  scripts.planfile-sync-todo.replace_auto_section:
+    name: replace_auto_section
+    module: scripts.planfile-sync-todo
+    line: 108
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 1
+  src.koru.doctor._resolve_pytest_collect_timeout:
+    name: _resolve_pytest_collect_timeout
+    module: src.koru.doctor
+    line: 301
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 1
+  src.koru.context._build_self_service:
+    name: _build_self_service
+    module: src.koru.context
+    line: 584
+    cyclomatic_complexity: 5
+    calls_out: 2
+    calls_in: 1
+  src.koru.context._auto_promote_blocking_tickets:
+    name: _auto_promote_blocking_tickets
+    module: src.koru.context
+    line: 400
+    cyclomatic_complexity: 25
+    calls_out: 24
+    calls_in: 1
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.message:
+    name: message
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 187
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  src.koru.agents._marker:
+    name: _marker
+    module: src.koru.agents
+    line: 44
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 18
+  src.koru.autopilot.cli_command._action_drive:
+    name: _action_drive
+    module: src.koru.autopilot.cli_command
+    line: 229
+    cyclomatic_complexity: 8
+    calls_out: 17
+    calls_in: 0
+  src.koru.doctor._check_planfile_sprints:
+    name: _check_planfile_sprints
+    module: src.koru.doctor
+    line: 194
+    cyclomatic_complexity: 10
+    calls_out: 17
+    calls_in: 0
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.line:
+    name: line
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 131
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  src.koru.autopilot.config.load_config:
+    name: load_config
+    module: src.koru.autopilot.config
+    line: 85
+    cyclomatic_complexity: 4
+    calls_out: 10
+    calls_in: 1
+  src.koru.cli._gate_main:
+    name: _gate_main
+    module: src.koru.cli
+    line: 464
+    cyclomatic_complexity: 5
+    calls_out: 12
+    calls_in: 0
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.runCommand:
+    name: runCommand
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 101
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 1
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect:
+    name: connect
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 49
+    cyclomatic_complexity: 1
+    calls_out: 9
+    calls_in: 5
+  src.koru.run_log.RunLogWriter._emit:
+    name: _emit
+    module: src.koru.run_log
+    line: 42
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 0
+  src.koru.autopilot.cli_command._build_parser:
+    name: _build_parser
+    module: src.koru.autopilot.cli_command
+    line: 25
+    cyclomatic_complexity: 1
+    calls_out: 38
+    calls_in: 1
+  src.koru.autopilot.cli_command._client:
+    name: _client
+    module: src.koru.autopilot.cli_command
+    line: 188
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 4
+edges:
+- caller: src.koru.runtime.runtime_dir
+  callee: src.koru.runtime.planfile_dir
+  call_type: resolved
+- caller: src.koru.runtime.runs_dir
+  callee: src.koru.runtime.runtime_dir
+  call_type: resolved
+- caller: src.koru.runtime.ensure_runs_dir
+  callee: src.koru.runtime.runs_dir
+  call_type: resolved
+- caller: src.koru.runtime.ensure_runs_dir
+  callee: src.koru.runtime.runtime_dir
+  call_type: resolved
+- caller: services.healing-webhook.ticket_builder.build_ticket_payload
+  callee: services.healing-webhook.ticket_builder._format_paths
+  call_type: resolved
+- caller: services.healing-webhook.ticket_builder.build_ticket_payload
+  callee: services.healing-webhook.ticket_builder._default_acceptance
+  call_type: resolved
+- caller: services.healing-webhook.ticket_builder.build_ticket_payload
+  callee: services.healing-webhook.ticket_builder._reproduction_for
+  call_type: resolved
+- caller: src.koru.watch.watch_planfile_events
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+  call_type: resolved
+- caller: src.koru.watch.watch_planfile_events
+  callee: src.koru.watch.format_queue_event
+  call_type: resolved
+- caller: src.koru.context._fetch_all_tickets
+  callee: src.koru.context._safe_json
+  call_type: resolved
+- caller: src.koru.context._fetch_all_tickets
+  callee: src.koru.context._run_planfile
+  call_type: resolved
+- caller: src.koru.context._fetch_all_tickets
+  callee: src.koru.context._is_fixture_ticket
+  call_type: resolved
+- caller: src.koru.context._run_planfile
+  callee: src.koru.context._planfile_command_base
+  call_type: resolved
+- caller: src.koru.context._run_planfile
+  callee: src.koru.context._planfile_env
+  call_type: resolved
+- caller: src.koru.context.build_context
+  callee: src.koru.context._load_project_dotenv
+  call_type: resolved
+- caller: src.koru.context.build_context
+  callee: src.koru.runtime.planfile_dir
+  call_type: resolved
+- caller: src.koru.context.build_context
+  callee: src.koru.context._auto_promote_blocking_tickets
+  call_type: resolved
+- caller: src.koru.context.build_context
+  callee: src.koru.context._build_instructions
+  call_type: resolved
+- caller: src.koru.context.build_context
+  callee: src.koru.context._build_self_service
+  call_type: resolved
+- caller: src.koru.context.build_context
+  callee: src.koru.policy.load_policy
+  call_type: resolved
+- caller: src.koru.context._auto_promote_blocking_tickets
+  callee: src.koru.runtime.planfile_dir
+  call_type: resolved
+- caller: src.koru.context._auto_promote_blocking_tickets
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.context._build_instructions
+  callee: src.koru.context._build_setup_instructions
+  call_type: resolved
+- caller: src.koru.context._build_instructions
+  callee: src.koru.context._build_shared_rules
+  call_type: resolved
+- caller: src.koru.semcod_tools.detect_semcod_tools
+  callee: src.koru.semcod_tools._read_pyproject
+  call_type: resolved
+- caller: src.koru.semcod_tools.detect_semcod_tools
+  callee: src.koru.semcod_tools._config_present
+  call_type: resolved
+- caller: services.healing-webhook.app.create_planfile_ticket
+  callee: services.healing-webhook.ticket_builder.build_ticket_payload
+  call_type: resolved
+- caller: services.healing-webhook.app.create_planfile_ticket
+  callee: services.healing-webhook.app._resolve_affected_files
+  call_type: resolved
+- caller: services.healing-webhook.app.heal_redsl_gate
+  callee: services.healing-webhook.app._run_docker
+  call_type: resolved
+- caller: services.healing-webhook.app.heal_redsl_gate
+  callee: services.healing-webhook.app._record_action
+  call_type: resolved
+- caller: services.healing-webhook.app.heal_redsl_improve
+  callee: services.healing-webhook.app._run_docker
+  call_type: resolved
+- caller: services.healing-webhook.app.heal_redsl_improve
+  callee: services.healing-webhook.app._record_action
+  call_type: resolved
+- caller: services.healing-webhook.app.heal_redsl_improve
+  callee: services.healing-webhook.app._rate_limit_ok
+  call_type: resolved
+- caller: services.healing-webhook.app.heal_rebuild_restore
+  callee: services.healing-webhook.app._run_docker
+  call_type: resolved
+- caller: services.healing-webhook.app.heal_rebuild_restore
+  callee: services.healing-webhook.app._record_action
+  call_type: resolved
+- caller: services.healing-webhook.app.heal_rebuild_restore
+  callee: services.healing-webhook.app._rate_limit_ok
+  call_type: resolved
+- caller: services.healing-webhook.app.heal_annotate
+  callee: services.healing-webhook.app._record_action
+  call_type: resolved
+- caller: services.healing-webhook.app._resolve_affected_files
+  callee: services.healing-webhook.ticket_builder._infer_paths
+  call_type: resolved
+- caller: services.healing-webhook.app.heal_vallm_validate
+  callee: services.healing-webhook.app._resolve_affected_files
+  call_type: resolved
+- caller: services.healing-webhook.app.heal_vallm_validate
+  callee: services.healing-webhook.app._record_action
+  call_type: resolved
+- caller: services.healing-webhook.app.heal_vallm_validate
+  callee: services.healing-webhook.app._run_vallm_check
+  call_type: resolved
+- caller: services.healing-webhook.app.heal_redup_check
+  callee: services.healing-webhook.app._run_redup_check
+  call_type: resolved
+- caller: services.healing-webhook.app.heal_redup_check
+  callee: services.healing-webhook.app._record_action
+  call_type: resolved
+- caller: services.healing-webhook.app.alertmanager_webhook
+  callee: services.healing-webhook.app._resolve_strategy
+  call_type: resolved
+- caller: services.healing-webhook.app.probe_failure
+  callee: services.healing-webhook.app.create_planfile_ticket
+  call_type: resolved
+- caller: src.koru.policy.policy_path
+  callee: src.koru.runtime.runtime_dir
+  call_type: resolved
+- caller: src.koru.policy.load_policy
+  callee: src.koru.policy.policy_path
+  call_type: resolved
+- caller: src.koru.dotenv_loader.parse_dotenv
+  callee: src.koru.dotenv_loader._parse_value
+  call_type: resolved
+- caller: src.koru.dotenv_loader.load_dotenv
+  callee: src.koru.dotenv_loader.parse_dotenv
+  call_type: resolved
+- caller: src.koru.scan.collect_suggestions
+  callee: src.koru.scan.scan_todo_markers
+  call_type: resolved
+- caller: src.koru.scan.collect_suggestions
+  callee: src.koru.scan.scan_missing_gates
+  call_type: resolved
+- caller: src.koru.scan.collect_suggestions
+  callee: src.koru.scan.scan_missing_tools
+  call_type: resolved
+- caller: src.koru.scan.collect_suggestions
+  callee: src.koru.scan.scan_gitignore_drift
+  call_type: resolved
+- caller: src.koru.scan.run_scan
+  callee: src.koru.scan.collect_suggestions
+  call_type: resolved
+- caller: src.koru.scan.run_scan
+  callee: src.koru.scan._existing_scan_titles
+  call_type: resolved
+- caller: src.koru.scan.run_scan
+  callee: src.koru.scan._create_ticket
+  call_type: resolved
+- caller: src.koru.gate.authorize_gate
+  callee: src.koru.gate._resolve_actor
+  call_type: resolved
+- caller: src.koru.agents.detect_agent_options
+  callee: src.koru.agents._which
+  call_type: resolved
+- caller: src.koru.agents.detect_project_environment
+  callee: src.koru.agents._marker
+  call_type: resolved
+- caller: src.koru.agents.detect_agent_environment
+  callee: src.koru.agents.detect_agent_options
+  call_type: resolved
+- caller: src.koru.agents.detect_agent_environment
+  callee: src.koru.semcod_tools.detect_semcod_tools
+  call_type: resolved
+- caller: src.koru.agents.detect_agent_environment
+  callee: src.koru.agents.detect_project_environment
+  call_type: resolved
+- caller: src.koru.agents.select_agent
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.agents.save_agent_prompt
+  callee: src.koru.runtime.runtime_dir
+  call_type: resolved
+- caller: src.koru.agents.launch_agent
+  callee: src.koru.agents.save_agent_prompt
+  call_type: resolved
+- caller: src.koru.agents.launch_agent
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.autopilot.client.AutopilotClient.__init__
+  callee: src.koru.autopilot.default_socket_path
+  call_type: resolved
+- caller: src.koru.autopilot.client.AutopilotClient.request
+  callee: src.koru.autopilot.protocol.decode
+  call_type: resolved
+- caller: src.koru.autopilot.ide.detect_running_ides
+  callee: src.koru.autopilot.ide._iter_proc_pids
+  call_type: resolved
+- caller: src.koru.autopilot.ide.detect_running_ides
+  callee: src.koru.autopilot.ide._read_comm
+  call_type: resolved
+- caller: src.koru.autopilot.ide.detect_running_ides
+  callee: src.koru.autopilot.ide._read_cmdline
+  call_type: resolved
+- caller: src.koru.autopilot.ide.detect_running_ides
+  callee: src.koru.autopilot.ide._matches
+  call_type: resolved
+- caller: src.koru.autopilot.ide.detect_running_ides_cached
+  callee: src.koru.autopilot.ide.detect_running_ides
+  call_type: resolved
+- caller: src.koru.cli._scan_main
+  callee: src.koru.scan.run_scan
+  call_type: resolved
+- caller: src.koru.cli._scan_main
+  callee: src.koru.events.emit_management_event
+  call_type: resolved
+- caller: src.koru.cli._scan_main
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.cli._scan_main
+  callee: src.koru.cli._build_scan_parser
+  call_type: resolved
+- caller: src.koru.cli._gate_main
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.cli._gate_main
+  callee: src.koru.events.emit_management_event
+  call_type: resolved
+- caller: src.koru.cli._gate_main
+  callee: src.koru.gate.authorize_gate
+  call_type: resolved
+- caller: src.koru.cli._gate_main
+  callee: src.koru.cli._build_gate_parser
+  call_type: resolved
+- caller: src.koru.cli._gc_main
+  callee: src.koru.gc.run_gc
+  call_type: resolved
+- caller: src.koru.cli._gc_main
+  callee: src.koru.events.emit_management_event
+  call_type: resolved
+- caller: src.koru.cli._gc_main
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.cli._gc_main
+  callee: src.koru.cli._build_gc_parser
+  call_type: resolved
+- caller: src.koru.cli._queue_main
+  callee: src.koru.events.emit_management_event
+  call_type: resolved
+- caller: src.koru.cli._queue_main
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.cli._queue_main
+  callee: src.koru.queue_clean.clean_queue
+  call_type: resolved
+- caller: src.koru.cli._queue_main
+  callee: src.koru.cli._build_queue_parser
+  call_type: resolved
+- caller: src.koru.cli._queue_main
+  callee: src.koru.cli._render_clean_report_text
+  call_type: resolved
+- caller: src.koru.cli._task_main
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.cli._task_main
+  callee: src.koru.events.emit_management_event
+  call_type: resolved
+- caller: src.koru.cli._task_main
+  callee: src.koru.tasks.create_nl_task
+  call_type: resolved
+- caller: src.koru.cli._task_main
+  callee: src.koru.cli._build_task_parser
+  call_type: resolved
+- caller: src.koru.cli._serve_main
+  callee: src.koru.events.emit_management_event
+  call_type: resolved
+- caller: src.koru.cli._serve_main
+  callee: src.koru.serve.serve
+  call_type: resolved
+- caller: src.koru.cli._serve_main
+  callee: src.koru.cli._build_serve_parser
+  call_type: resolved
+- caller: src.koru.cli._agent_main
+  callee: src.koru.agents.detect_agent_options
+  call_type: resolved
+- caller: src.koru.cli._agent_main
+  callee: src.koru.context.build_context
+  call_type: resolved
+- caller: src.koru.cli._agent_main
+  callee: src.koru.context.render_markdown_handoff
+  call_type: resolved
+- caller: src.koru.cli._agent_main
+  callee: src.koru.agents.select_agent
+  call_type: resolved
+- caller: src.koru.cli._agent_main
+  callee: src.koru.agents.launch_agent
+  call_type: resolved
+- caller: src.koru.cli._agent_main
+  callee: src.koru.agents.save_agent_prompt
+  call_type: resolved
+- caller: src.koru.cli._agent_main
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.cli.main
+  callee: src.koru.cli._is_bare_invocation
+  call_type: resolved
+- caller: src.koru.cli.main
+  callee: src.koru.events.emit_management_event
+  call_type: resolved
+- caller: src.koru.cli.main
+  callee: src.koru.loop.discover_repositories
+  call_type: resolved
+- caller: src.koru.cli.main
+  callee: src.koru.loop.run_closed_loop
+  call_type: resolved
+- caller: src.koru.cli.main
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.cli.main
+  callee: src.koru.doctor.run_diagnostics
+  call_type: resolved
+- caller: src.koru.queue_clean.find_candidates
+  callee: src.koru.queue_clean._parse_age_days
+  call_type: resolved
+- caller: src.koru.queue_clean.find_candidates
+  callee: src.koru.queue_clean._matched_rules
+  call_type: resolved
+- caller: src.koru.queue_clean._list_tickets
+  callee: src.koru.queue_clean._planfile_base
+  call_type: resolved
+- caller: src.koru.queue_clean._close_ticket
+  callee: src.koru.queue_clean._build_close_note
+  call_type: resolved
+- caller: src.koru.queue_clean._close_ticket
+  callee: src.koru.queue_clean._planfile_base
+  call_type: resolved
+- caller: src.koru.queue_clean.clean_queue
+  callee: src.koru.queue_clean._list_tickets
+  call_type: resolved
+- caller: src.koru.queue_clean.clean_queue
+  callee: src.koru.queue_clean.find_candidates
+  call_type: resolved
+- caller: src.koru.queue_clean.clean_queue
+  callee: src.koru.queue_clean._close_ticket
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.socketPath
+  callee: plugins.koru-autopilot-vscode.src.extension.defaultSocketPath
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.disconnect
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.socketPath
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.send
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.detectIde
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.onData
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.scheduleRetry
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.p
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.send
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.p
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.detectIde
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.sock
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.send
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.sock
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.detectIde
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.disconnect
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.clearTimeout
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.scheduleRetry
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.delay
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.app
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.send
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.onData
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.dispatch
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.idx
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.dispatch
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.line
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.dispatch
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.dispatch
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.injectChat
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.dispatch
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.send
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.injectChat
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.send
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.injectChat
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.runCommand
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.submit
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.send
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.ok
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.send
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.message
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.send
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.activate
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.activate
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.injectChat
+  call_type: resolved
+- caller: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.bridge
+  callee: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.injectChat
+  call_type: resolved
+- caller: src.koru.tasks.create_nl_task
+  callee: src.koru.tasks._read_config
+  call_type: resolved
+- caller: src.koru.tasks.create_nl_task
+  callee: src.koru.tasks._write_yaml
+  call_type: resolved
+- caller: src.koru.tasks.create_nl_task
+  callee: src.koru.tasks._read_sprint
+  call_type: resolved
+- caller: src.koru.doctor._check_planfile_config
+  callee: src.koru.runtime.planfile_dir
+  call_type: resolved
+- caller: src.koru.doctor._check_planfile_sprints
+  callee: src.koru.runtime.planfile_dir
+  call_type: resolved
+- caller: src.koru.doctor._check_planfile_sprints_yaml
+  callee: src.koru.runtime.planfile_dir
+  call_type: resolved
+- caller: src.koru.doctor._check_runtime_dir
+  callee: src.koru.runtime.runtime_dir
+  call_type: resolved
+- caller: src.koru.doctor._check_policy_yaml
+  callee: src.koru.policy.policy_path
+  call_type: resolved
+- caller: src.koru.doctor._check_pytest_collect
+  callee: src.koru.doctor._resolve_pytest_collect_timeout
+  call_type: resolved
+- caller: src.koru.doctor._check_ci_command
+  callee: src.koru.policy.load_policy
+  call_type: resolved
+- caller: src.koru.autopilot.protocol.decode
+  callee: src.koru.autopilot.protocol._filter_extras
+  call_type: resolved
+- caller: scripts.planfile-sync-todo.load_tickets
+  callee: scripts.planfile-sync-todo.run_planfile
+  call_type: resolved
+- caller: scripts.planfile-sync-todo.do_from_planfile
+  callee: scripts.planfile-sync-todo.load_tickets
+  call_type: resolved
+- caller: scripts.planfile-sync-todo.do_from_planfile
+  callee: scripts.planfile-sync-todo.build_auto_section
+  call_type: resolved
+- caller: scripts.planfile-sync-todo.do_from_planfile
+  callee: scripts.planfile-sync-todo.replace_auto_section
+  call_type: resolved
+- caller: scripts.planfile-sync-todo.do_from_planfile
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: scripts.planfile-sync-todo.do_from_todo
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: scripts.planfile-sync-todo.main
+  callee: scripts.planfile-sync-todo.do_from_planfile
+  call_type: resolved
+- caller: scripts.planfile-sync-todo.main
+  callee: scripts.planfile-sync-todo.do_from_todo
+  call_type: resolved
+- caller: src.koru.init.init_project
+  callee: src.koru.runtime.planfile_dir
+  call_type: resolved
+- caller: src.koru.init.init_project
+  callee: src.koru.init._write_policy_stub_if_absent
+  call_type: resolved
+- caller: src.koru.init.init_project
+  callee: src.koru.init._ensure_gitignore_entry
+  call_type: resolved
+- caller: src.koru.init._write_policy_stub_if_absent
+  callee: src.koru.runtime.runtime_dir
+  call_type: resolved
+- caller: src.koru.autopilot.config.load_config
+  callee: src.koru.autopilot.config._merge_submit_keys
+  call_type: resolved
+- caller: src.koru.autopilot.config.load_config
+  callee: src.koru.autopilot.config.default_config_path
+  call_type: resolved
+- caller: src.koru.autopilot.config.load_config
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.autopilot.config.cached_config
+  callee: src.koru.autopilot.config.load_config
+  call_type: resolved
+- caller: src.koru.bootstrap.validate_flat_pipeline
+  callee: src.koru.bootstrap._detect_cycle
+  call_type: resolved
+- caller: src.koru.bootstrap.import_flat_pipeline
+  callee: src.koru.bootstrap.load_flat_pipeline
+  call_type: resolved
+- caller: src.koru.bootstrap.import_flat_pipeline
+  callee: src.koru.bootstrap.validate_flat_pipeline
+  call_type: resolved
+- caller: src.koru.bootstrap.import_flat_pipeline
+  callee: src.koru.bootstrap.materialize_to_planfile
+  call_type: resolved
+- caller: src.koru.autopilot.daemon._default_handoff
+  callee: src.koru.autopilot.daemon._load_context_module
+  call_type: resolved
+- caller: src.koru.autopilot.daemon._default_handoff
+  callee: src.koru.context.render_markdown_handoff
+  call_type: resolved
+- caller: src.koru.autopilot.daemon._default_handoff
+  callee: src.koru.context.build_context
+  call_type: resolved
+- caller: src.koru.autopilot.daemon.AutopilotDaemon.__init__
+  callee: src.koru.autopilot.default_socket_path
+  call_type: resolved
+- caller: src.koru.autopilot.daemon.AutopilotDaemon.__init__
+  callee: src.koru.autopilot.daemon._default_handoff
+  call_type: resolved
+- caller: src.koru.autopilot.daemon.AutopilotDaemon._accept
+  callee: src.koru.autopilot.daemon._peer_uid
+  call_type: resolved
+- caller: src.koru.autopilot.daemon.AutopilotDaemon._dispatch
+  callee: src.koru.autopilot.protocol.error
+  call_type: resolved
+- caller: src.koru.autopilot.daemon.AutopilotDaemon._drive_via_plugin
+  callee: src.koru.autopilot.protocol.chat_send
+  call_type: resolved
+- caller: src.koru.autopilot.daemon.AutopilotDaemon._drive_via_keyboard
+  callee: src.koru.autopilot.ide.detect_running_ides
+  call_type: resolved
+- caller: src.koru.autopilot.daemon.AutopilotDaemon._drive_via_keyboard
+  callee: src.koru.autopilot.ide.pick_target
+  call_type: resolved
+- caller: src.koru.autopilot.daemon.AutopilotDaemon._handle_hello
+  callee: src.koru.autopilot.protocol.ack
+  call_type: resolved
+- caller: src.koru.autopilot.daemon.AutopilotDaemon._handle_status
+  callee: src.koru.autopilot.ide.detect_running_ides
+  call_type: resolved
+- caller: src.koru.autopilot.daemon.AutopilotDaemon._handle_ack
+  callee: src.koru.autopilot.protocol.ack
+  call_type: resolved
+- caller: src.koru.autopilot.daemon.AutopilotDaemon._handle_shutdown
+  callee: src.koru.autopilot.protocol.ack
+  call_type: resolved
+- caller: src.koru.autopilot.daemon.AutopilotDaemon._handle_ping
+  callee: src.koru.autopilot.protocol.ack
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_daemon
+  callee: src.koru.autopilot.default_socket_path
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_daemon
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_drive
+  callee: src.koru.autopilot.cli_command._client
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_drive
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_status
+  callee: src.koru.autopilot.cli_command._client
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_status
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_shutdown
+  callee: src.koru.autopilot.cli_command._client
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_shutdown
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_ide_list
+  callee: src.koru.autopilot.ide.detect_running_ides
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_ide_list
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_doctor
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_doctor
+  callee: src.koru.autopilot.ide.detect_running_ides
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._build_brief
+  callee: src.koru.context.build_context
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._build_brief
+  callee: src.koru.context.render_markdown_handoff
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_handoff
+  callee: src.koru.autopilot.cli_command._client
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_handoff
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_handoff
+  callee: src.koru.autopilot.cli_command._build_brief
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_tail
+  callee: src.koru.autopilot.audit.default_log_path
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_tail
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_tail
+  callee: src.koru.autopilot.cli_command._format_tail_entry
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_install_unit
+  callee: src.koru.autopilot.cli_command._resolve_koru_bin
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_install_unit
+  callee: src.koru.autopilot.cli_command._render_unit
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command._action_install_unit
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.autopilot.cli_command.autopilot_main
+  callee: src.koru.autopilot.cli_command._build_parser
+  call_type: resolved
+- caller: src.koru.run_log.RunLogWriter._emit
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.run_log.RunLogWriter.write_header
+  callee: src.koru.run_log._iso
+  call_type: resolved
+- caller: src.koru.run_log.RunLogWriter.write_iteration
+  callee: src.koru.run_log._iso
+  call_type: resolved
+- caller: src.koru.run_log.RunLogWriter.write_footer
+  callee: src.koru.run_log._iso
+  call_type: resolved
+- caller: src.koru.run_log.open_run_log
+  callee: src.koru.runtime.new_run_id
+  call_type: resolved
+- caller: src.koru.run_log.open_run_log
+  callee: src.koru.runtime.runs_dir
+  call_type: resolved
+- caller: src.koru.run_log.open_run_log_eagerly
+  callee: src.koru.runtime.ensure_runs_dir
+  call_type: resolved
+- caller: src.koru.run_log.open_run_log_eagerly
+  callee: src.koru.run_log.open_run_log
+  call_type: resolved
+- caller: src.koru.gc._run_planfile
+  callee: src.koru.gc._planfile_env
+  call_type: resolved
+- caller: src.koru.gc._archive_tickets
+  callee: src.koru.gc._now_utc
+  call_type: resolved
+- caller: src.koru.gc.collect_gc_candidates
+  callee: src.koru.gc._now_utc
+  call_type: resolved
+- caller: src.koru.gc.collect_gc_candidates
+  callee: src.koru.gc._load_tickets_from_sprint
+  call_type: resolved
+- caller: src.koru.gc.collect_gc_candidates
+  callee: src.koru.gc._parse_ts
+  call_type: resolved
+- caller: src.koru.gc.run_gc
+  callee: src.koru.gc.collect_gc_candidates
+  call_type: resolved
+- caller: src.koru.gc.run_gc
+  callee: src.koru.gc._run_planfile
+  call_type: resolved
+- caller: src.koru.gc.run_gc
+  callee: src.koru.gc._load_tickets_from_sprint
+  call_type: resolved
+- caller: src.koru.serve.build_server
+  callee: src.koru.serve._build_handler
+  call_type: resolved
+- caller: src.koru.serve.serve
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.serve.serve
+  callee: src.koru.serve.build_server
+  call_type: resolved
+- caller: src.koru.autopilot.injector._submit_key_for
+  callee: src.koru.autopilot.config.cached_config
+  call_type: resolved
+- caller: src.koru.autopilot.injector.Injector.type_text
+  callee: src.koru.autopilot.injector._submit_key_for
+  call_type: resolved
+- caller: src.koru.loop.discover_repositories
+  callee: src.koru.loop._search_root_for_include
+  call_type: resolved
+- caller: src.koru.planfile_queue._run_process
+  callee: src.koru.planfile_queue._planfile_env
+  call_type: resolved
+- caller: src.koru.planfile_queue._default_human_prompt
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.planfile_queue.run_next_planfile_task
+  callee: src.koru.planfile_queue._planfile_command
+  call_type: resolved
+- caller: src.koru.planfile_queue.run_next_planfile_task
+  callee: src.koru.planfile_queue._parse_next_ticket
+  call_type: resolved
+- caller: src.koru.planfile_queue.run_planfile_queue_loop
+  callee: src.koru.planfile_queue.run_next_planfile_task
+  call_type: resolved
+- caller: src.koru.autopilot.audit.AuditLog.__init__
+  callee: src.koru.autopilot.audit.default_log_path
+  call_type: resolved
+- caller: src.koru.autopilot.audit.AuditLog.__init__
+  callee: scripts.planfile-export-prompt.print
+  call_type: resolved
+- caller: src.koru.autopilot.audit.AuditLog.record
+  callee: src.koru.autopilot.audit._isoformat_utc
+  call_type: resolved
+modules:
+  plugins.koru-autopilot-vscode.src.extension:
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.activate
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.app
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.bridge
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.clearTimeout
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.delay
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.detectIde
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.disconnect
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.dispatch
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.idx
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.injectChat
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.line
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.message
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.ok
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.onData
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.p
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.runCommand
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.scheduleRetry
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.send
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.sock
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.socketPath
+  - plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.submit
+  - plugins.koru-autopilot-vscode.src.extension.defaultSocketPath
+  scripts.planfile-export-prompt:
+  - scripts.planfile-export-prompt.print
+  scripts.planfile-sync-todo:
+  - scripts.planfile-sync-todo.build_auto_section
+  - scripts.planfile-sync-todo.do_from_planfile
+  - scripts.planfile-sync-todo.do_from_todo
+  - scripts.planfile-sync-todo.load_tickets
+  - scripts.planfile-sync-todo.main
+  - scripts.planfile-sync-todo.replace_auto_section
+  - scripts.planfile-sync-todo.run_planfile
+  services.healing-webhook.app:
+  - services.healing-webhook.app._rate_limit_ok
+  - services.healing-webhook.app._record_action
+  - services.healing-webhook.app._resolve_affected_files
+  - services.healing-webhook.app._resolve_strategy
+  - services.healing-webhook.app._run_docker
+  - services.healing-webhook.app._run_redup_check
+  - services.healing-webhook.app._run_vallm_check
+  - services.healing-webhook.app.alertmanager_webhook
+  - services.healing-webhook.app.create_planfile_ticket
+  - services.healing-webhook.app.heal_annotate
+  - services.healing-webhook.app.heal_rebuild_restore
+  - services.healing-webhook.app.heal_redsl_gate
+  - services.healing-webhook.app.heal_redsl_improve
+  - services.healing-webhook.app.heal_redup_check
+  - services.healing-webhook.app.heal_vallm_validate
+  - services.healing-webhook.app.probe_failure
+  services.healing-webhook.ticket_builder:
+  - services.healing-webhook.ticket_builder._default_acceptance
+  - services.healing-webhook.ticket_builder._format_paths
+  - services.healing-webhook.ticket_builder._infer_paths
+  - services.healing-webhook.ticket_builder._reproduction_for
+  - services.healing-webhook.ticket_builder.build_ticket_payload
+  src.koru.agents:
+  - src.koru.agents._marker
+  - src.koru.agents._which
+  - src.koru.agents.detect_agent_environment
+  - src.koru.agents.detect_agent_options
+  - src.koru.agents.detect_project_environment
+  - src.koru.agents.launch_agent
+  - src.koru.agents.save_agent_prompt
+  - src.koru.agents.select_agent
+  src.koru.autopilot:
+  - src.koru.autopilot.default_socket_path
+  src.koru.autopilot.audit:
+  - src.koru.autopilot.audit.AuditLog.__init__
+  - src.koru.autopilot.audit.AuditLog.record
+  - src.koru.autopilot.audit._isoformat_utc
+  - src.koru.autopilot.audit.default_log_path
+  src.koru.autopilot.cli_command:
+  - src.koru.autopilot.cli_command._action_daemon
+  - src.koru.autopilot.cli_command._action_doctor
+  - src.koru.autopilot.cli_command._action_drive
+  - src.koru.autopilot.cli_command._action_handoff
+  - src.koru.autopilot.cli_command._action_ide_list
+  - src.koru.autopilot.cli_command._action_install_unit
+  - src.koru.autopilot.cli_command._action_shutdown
+  - src.koru.autopilot.cli_command._action_status
+  - src.koru.autopilot.cli_command._action_tail
+  - src.koru.autopilot.cli_command._build_brief
+  - src.koru.autopilot.cli_command._build_parser
+  - src.koru.autopilot.cli_command._client
+  - src.koru.autopilot.cli_command._format_tail_entry
+  - src.koru.autopilot.cli_command._render_unit
+  - src.koru.autopilot.cli_command._resolve_koru_bin
+  - src.koru.autopilot.cli_command.autopilot_main
+  src.koru.autopilot.client:
+  - src.koru.autopilot.client.AutopilotClient.__init__
+  - src.koru.autopilot.client.AutopilotClient.request
+  src.koru.autopilot.config:
+  - src.koru.autopilot.config._merge_submit_keys
+  - src.koru.autopilot.config.cached_config
+  - src.koru.autopilot.config.default_config_path
+  - src.koru.autopilot.config.load_config
+  src.koru.autopilot.daemon:
+  - src.koru.autopilot.daemon.AutopilotDaemon.__init__
+  - src.koru.autopilot.daemon.AutopilotDaemon._accept
+  - src.koru.autopilot.daemon.AutopilotDaemon._dispatch
+  - src.koru.autopilot.daemon.AutopilotDaemon._drive_via_keyboard
+  - src.koru.autopilot.daemon.AutopilotDaemon._drive_via_plugin
+  - src.koru.autopilot.daemon.AutopilotDaemon._handle_ack
+  - src.koru.autopilot.daemon.AutopilotDaemon._handle_hello
+  - src.koru.autopilot.daemon.AutopilotDaemon._handle_ping
+  - src.koru.autopilot.daemon.AutopilotDaemon._handle_shutdown
+  - src.koru.autopilot.daemon.AutopilotDaemon._handle_status
+  - src.koru.autopilot.daemon._default_handoff
+  - src.koru.autopilot.daemon._load_context_module
+  - src.koru.autopilot.daemon._peer_uid
+  src.koru.autopilot.ide:
+  - src.koru.autopilot.ide._iter_proc_pids
+  - src.koru.autopilot.ide._matches
+  - src.koru.autopilot.ide._read_cmdline
+  - src.koru.autopilot.ide._read_comm
+  - src.koru.autopilot.ide.detect_running_ides
+  - src.koru.autopilot.ide.detect_running_ides_cached
+  - src.koru.autopilot.ide.pick_target
+  src.koru.autopilot.injector:
+  - src.koru.autopilot.injector.Injector.type_text
+  - src.koru.autopilot.injector._submit_key_for
+  src.koru.autopilot.protocol:
+  - src.koru.autopilot.protocol._filter_extras
+  - src.koru.autopilot.protocol.ack
+  - src.koru.autopilot.protocol.chat_send
+  - src.koru.autopilot.protocol.decode
+  - src.koru.autopilot.protocol.error
+  src.koru.bootstrap:
+  - src.koru.bootstrap._detect_cycle
+  - src.koru.bootstrap.import_flat_pipeline
+  - src.koru.bootstrap.load_flat_pipeline
+  - src.koru.bootstrap.materialize_to_planfile
+  - src.koru.bootstrap.validate_flat_pipeline
+  src.koru.cli:
+  - src.koru.cli._agent_main
+  - src.koru.cli._build_gate_parser
+  - src.koru.cli._build_gc_parser
+  - src.koru.cli._build_queue_parser
+  - src.koru.cli._build_scan_parser
+  - src.koru.cli._build_serve_parser
+  - src.koru.cli._build_task_parser
+  - src.koru.cli._gate_main
+  - src.koru.cli._gc_main
+  - src.koru.cli._is_bare_invocation
+  - src.koru.cli._queue_main
+  - src.koru.cli._render_clean_report_text
+  - src.koru.cli._scan_main
+  - src.koru.cli._serve_main
+  - src.koru.cli._task_main
+  - src.koru.cli.main
+  src.koru.context:
+  - src.koru.context._auto_promote_blocking_tickets
+  - src.koru.context._build_instructions
+  - src.koru.context._build_self_service
+  - src.koru.context._build_setup_instructions
+  - src.koru.context._build_shared_rules
+  - src.koru.context._fetch_all_tickets
+  - src.koru.context._is_fixture_ticket
+  - src.koru.context._load_project_dotenv
+  - src.koru.context._planfile_command_base
+  - src.koru.context._planfile_env
+  - src.koru.context._run_planfile
+  - src.koru.context._safe_json
+  - src.koru.context.build_context
+  - src.koru.context.render_markdown_handoff
+  src.koru.doctor:
+  - src.koru.doctor._check_ci_command
+  - src.koru.doctor._check_planfile_config
+  - src.koru.doctor._check_planfile_sprints
+  - src.koru.doctor._check_planfile_sprints_yaml
+  - src.koru.doctor._check_policy_yaml
+  - src.koru.doctor._check_pytest_collect
+  - src.koru.doctor._check_runtime_dir
+  - src.koru.doctor._resolve_pytest_collect_timeout
+  - src.koru.doctor.run_diagnostics
+  src.koru.dotenv_loader:
+  - src.koru.dotenv_loader._parse_value
+  - src.koru.dotenv_loader.load_dotenv
+  - src.koru.dotenv_loader.parse_dotenv
+  src.koru.events:
+  - src.koru.events.emit_management_event
+  src.koru.gate:
+  - src.koru.gate._resolve_actor
+  - src.koru.gate.authorize_gate
+  src.koru.gc:
+  - src.koru.gc._archive_tickets
+  - src.koru.gc._load_tickets_from_sprint
+  - src.koru.gc._now_utc
+  - src.koru.gc._parse_ts
+  - src.koru.gc._planfile_env
+  - src.koru.gc._run_planfile
+  - src.koru.gc.collect_gc_candidates
+  - src.koru.gc.run_gc
+  src.koru.init:
+  - src.koru.init._ensure_gitignore_entry
+  - src.koru.init._write_policy_stub_if_absent
+  - src.koru.init.init_project
+  src.koru.loop:
+  - src.koru.loop._search_root_for_include
+  - src.koru.loop.discover_repositories
+  - src.koru.loop.run_closed_loop
+  src.koru.planfile_queue:
+  - src.koru.planfile_queue._default_human_prompt
+  - src.koru.planfile_queue._parse_next_ticket
+  - src.koru.planfile_queue._planfile_command
+  - src.koru.planfile_queue._planfile_env
+  - src.koru.planfile_queue._run_process
+  - src.koru.planfile_queue.run_next_planfile_task
+  - src.koru.planfile_queue.run_planfile_queue_loop
+  src.koru.policy:
+  - src.koru.policy.load_policy
+  - src.koru.policy.policy_path
+  src.koru.queue_clean:
+  - src.koru.queue_clean._build_close_note
+  - src.koru.queue_clean._close_ticket
+  - src.koru.queue_clean._list_tickets
+  - src.koru.queue_clean._matched_rules
+  - src.koru.queue_clean._parse_age_days
+  - src.koru.queue_clean._planfile_base
+  - src.koru.queue_clean.clean_queue
+  - src.koru.queue_clean.find_candidates
+  src.koru.run_log:
+  - src.koru.run_log.RunLogWriter._emit
+  - src.koru.run_log.RunLogWriter.write_footer
+  - src.koru.run_log.RunLogWriter.write_header
+  - src.koru.run_log.RunLogWriter.write_iteration
+  - src.koru.run_log._iso
+  - src.koru.run_log.open_run_log
+  - src.koru.run_log.open_run_log_eagerly
+  src.koru.runtime:
+  - src.koru.runtime.ensure_runs_dir
+  - src.koru.runtime.new_run_id
+  - src.koru.runtime.planfile_dir
+  - src.koru.runtime.runs_dir
+  - src.koru.runtime.runtime_dir
+  src.koru.scan:
+  - src.koru.scan._create_ticket
+  - src.koru.scan._existing_scan_titles
+  - src.koru.scan.collect_suggestions
+  - src.koru.scan.run_scan
+  - src.koru.scan.scan_gitignore_drift
+  - src.koru.scan.scan_missing_gates
+  - src.koru.scan.scan_missing_tools
+  - src.koru.scan.scan_todo_markers
+  src.koru.semcod_tools:
+  - src.koru.semcod_tools._config_present
+  - src.koru.semcod_tools._read_pyproject
+  - src.koru.semcod_tools.detect_semcod_tools
+  src.koru.serve:
+  - src.koru.serve._build_handler
+  - src.koru.serve.build_server
+  - src.koru.serve.serve
+  src.koru.tasks:
+  - src.koru.tasks._read_config
+  - src.koru.tasks._read_sprint
+  - src.koru.tasks._write_yaml
+  - src.koru.tasks.create_nl_task
+  src.koru.watch:
+  - src.koru.watch.format_queue_event
+  - src.koru.watch.watch_planfile_events
+entry_points:
+- plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.activate
+- plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.app
+- plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.bridge
+- plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg
+- plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.deactivate
+- plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.delay
+- plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.env
+- plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.idx
+- plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.line
+- plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.message
+- plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.ok
+- plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override
+- plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.p
+- plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.sock
+- plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.submit
+- plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.text
+- plugins.koru-autopilot-vscode.src.extension.uid
+- plugins.koru-autopilot-vscode.src.extension.xdg
+- scripts.koru-autoloop.is_true
+- scripts.koru-autoloop.on_exit
+- scripts.koru-autoloop.require_cmd
+- scripts.planfile-export-prompt.render
+- scripts.planfile-sync-todo.main
+- services.healing-webhook.app._run_vallm_validate
+- services.healing-webhook.app.alertmanager_webhook
+- services.healing-webhook.app.get_history
+- services.healing-webhook.app.get_tickets
+- services.healing-webhook.app.heal_annotate
+- services.healing-webhook.app.heal_rebuild_restore
+- services.healing-webhook.app.heal_redup_check
+- services.healing-webhook.app.heal_vallm_validate
+- services.healing-webhook.app.healthz
+- services.healing-webhook.app.metrics
+- services.healing-webhook.app.probe_failure
+- src.koru.agents.AgentOption.to_dict
+- src.koru.agents.detect_agent_environment
+- src.koru.autopilot.audit.AuditLog.__init__
+- src.koru.autopilot.audit.AuditLog.close
+- src.koru.autopilot.audit.AuditLog.record
+- src.koru.autopilot.audit._JSONFormatter.format
+- src.koru.autopilot.cli_command._action_daemon
+- src.koru.autopilot.cli_command._action_doctor
+- src.koru.autopilot.cli_command._action_drive
+- src.koru.autopilot.cli_command._action_handoff
+- src.koru.autopilot.cli_command._action_ide_list
+- src.koru.autopilot.cli_command._action_install_unit
+- src.koru.autopilot.cli_command._action_shutdown
+- src.koru.autopilot.cli_command._action_status
+- src.koru.autopilot.cli_command._action_tail
+- src.koru.autopilot.cli_command.autopilot_main
+- src.koru.autopilot.client.AutopilotClient.__init__
+- src.koru.autopilot.client.AutopilotClient._connect
+- src.koru.autopilot.client.AutopilotClient.drive
+- src.koru.autopilot.client.AutopilotClient.is_running
+- src.koru.autopilot.client.AutopilotClient.request
+- src.koru.autopilot.client.AutopilotClient.shutdown
+- src.koru.autopilot.client.AutopilotClient.status
+- src.koru.autopilot.config.AutopilotConfig.submit_key_for
+- src.koru.autopilot.config.clear_config_cache
+- src.koru.autopilot.daemon.AutopilotDaemon.__init__
+- src.koru.autopilot.daemon.AutopilotDaemon._accept
+- src.koru.autopilot.daemon.AutopilotDaemon._build_handler_table
+- src.koru.autopilot.daemon.AutopilotDaemon._dispatch
+- src.koru.autopilot.daemon.AutopilotDaemon._drive_via_keyboard
+- src.koru.autopilot.daemon.AutopilotDaemon._drive_via_plugin
+- src.koru.autopilot.daemon.AutopilotDaemon._drop
+- src.koru.autopilot.daemon.AutopilotDaemon._handle_ack
+- src.koru.autopilot.daemon.AutopilotDaemon._handle_drive
+- src.koru.autopilot.daemon.AutopilotDaemon._handle_hello
+- src.koru.autopilot.daemon.AutopilotDaemon._handle_ping
+- src.koru.autopilot.daemon.AutopilotDaemon._handle_session_event
+- src.koru.autopilot.daemon.AutopilotDaemon._handle_shutdown
+- src.koru.autopilot.daemon.AutopilotDaemon._handle_status
+- src.koru.autopilot.daemon.AutopilotDaemon._on_readable
+- src.koru.autopilot.daemon.AutopilotDaemon._plugin_for
+- src.koru.autopilot.daemon.AutopilotDaemon._send
+- src.koru.autopilot.daemon.AutopilotDaemon._shutdown
+- src.koru.autopilot.daemon.AutopilotDaemon.serve_forever
+- src.koru.autopilot.daemon.AutopilotDaemon.start
+- src.koru.autopilot.daemon.AutopilotDaemon.stop
+- src.koru.autopilot.ide.RunningIDE.to_dict
+- src.koru.autopilot.ide.clear_detect_cache
+- src.koru.autopilot.ide.detect_running_ides_cached
+- src.koru.autopilot.ide.is_linux
+- src.koru.autopilot.injector.BackendStatus.to_dict
+- src.koru.autopilot.injector.InjectionResult.to_dict
+- src.koru.autopilot.injector.Injector._call
+- src.koru.autopilot.injector.Injector._press_wtype
+- src.koru.autopilot.injector.Injector._probe_one
+- src.koru.autopilot.injector.Injector.probe
+- src.koru.autopilot.injector.Injector.select_backend
+- src.koru.autopilot.injector.Injector.type_text
+- src.koru.autopilot.injector._default_runner
+- src.koru.autopilot.injector._session_type
+- src.koru.autopilot.injector._which
+- src.koru.autopilot.protocol.Message.encode
+- src.koru.autopilot.protocol.Message.to_dict
+- src.koru.autopilot.protocol.drive
+- src.koru.autopilot.protocol.hello
+- src.koru.autopilot.protocol.session_ended
+- src.koru.autopilot.protocol.session_started
+- src.koru.bootstrap.ImportReport.summary
+- src.koru.bootstrap.ValidationError.__str__
+- src.koru.cli._agent_main
+- src.koru.cli._command_value
+- src.koru.cli._gate_main
+- src.koru.cli._gc_main
+- src.koru.cli._queue_main
+- src.koru.cli._scan_main
+- src.koru.cli._serve_main
+- src.koru.cli._task_main
+- src.koru.cli.main
+- src.koru.context._git_probe
+- src.koru.doctor.Check.to_dict
+- src.koru.doctor.DoctorReport.summary
+- src.koru.doctor.DoctorReport.to_dict
+- src.koru.doctor._check_ci_command
+- src.koru.doctor._check_git_repo
+- src.koru.doctor._check_gitignore
+- src.koru.doctor._check_planfile_binary
+- src.koru.doctor._check_planfile_config
+- src.koru.doctor._check_planfile_sprints
+- src.koru.doctor._check_planfile_sprints_yaml
+- src.koru.doctor._check_policy_yaml
+- src.koru.doctor._check_pytest_collect
+- src.koru.doctor._check_runtime_dir
+- src.koru.doctor.render_text
+- src.koru.dotenv_loader.load_dotenv
+- src.koru.events.main
+- src.koru.gate.GateAuthorization.to_note
+- src.koru.gate.parse_authorizations
+- src.koru.gc.GcResult.summary
+- src.koru.init.InitReport.summary
+- src.koru.loop._default_runner
+- src.koru.planfile_queue.QueueLoopResult.summary
+- src.koru.planfile_queue._default_human_prompt
+- src.koru.planfile_queue._result_json
+- src.koru.planfile_queue._run_api_request
+- src.koru.planfile_queue._run_llm_request
+- src.koru.planfile_queue._run_process
+- src.koru.planfile_queue._run_shell_command
+- src.koru.policy.Policy.to_dict
+- src.koru.policy.policy_violations
+- src.koru.queue_clean.CleanupCandidate.explanation
+- src.koru.queue_clean.CleanupReport.to_dict
+- src.koru.run_log.RunLogWriter._emit
+- src.koru.run_log.RunLogWriter.write_footer
+- src.koru.run_log.RunLogWriter.write_header
+- src.koru.run_log.RunLogWriter.write_iteration
+- src.koru.scan.ScanResult.to_dict
+- src.koru.scan.Suggestion.to_dict
+- src.koru.semcod_tools.SemcodTool.to_dict
+- src.koru.watch._default_connect

@@ -1,0 +1,324 @@
+# code2llm call graph | /home/tom/github/semcod/koru
+# generated in 0.10s
+# nodes: 228 | edges: 247 | modules: 35
+# CC̄=5.1
+
+HUBS[20]:
+  src.koru.context.render_markdown_handoff
+    CC=45  in:5  out:163  total:168
+  scripts.planfile-export-prompt.print
+    CC=0  in:144  out:0  total:144
+  src.koru.cli.main
+    CC=59  in:0  out:105  total:105
+  src.koru.bootstrap.validate_flat_pipeline
+    CC=28  in:1  out:58  total:59
+  src.koru.policy.load_policy
+    CC=9  in:2  out:43  total:45
+  src.koru.planfile_queue.run_next_planfile_task
+    CC=24  in:2  out:40  total:42
+  src.koru.context.build_context
+    CC=41  in:6  out:36  total:42
+  services.healing-webhook.app.create_planfile_ticket
+    CC=24  in:2  out:39  total:41
+  src.koru.autopilot.cli_command._build_parser
+    CC=1  in:1  out:38  total:39
+  src.koru.watch.format_queue_event
+    CC=19  in:1  out:35  total:36
+  src.koru.serve._build_handler
+    CC=1  in:1  out:30  total:31
+  src.koru.events.emit_management_event
+    CC=8  in:23  out:7  total:30
+  src.koru.agents.detect_agent_options
+    CC=9  in:2  out:28  total:30
+  src.koru.cli._render_clean_report_text
+    CC=12  in:1  out:28  total:29
+  src.koru.cli._gc_main
+    CC=18  in:0  out:28  total:28
+  services.healing-webhook.app._resolve_affected_files
+    CC=11  in:2  out:24  total:26
+  services.healing-webhook.ticket_builder.build_ticket_payload
+    CC=11  in:1  out:25  total:26
+  services.healing-webhook.app._run_redup_check
+    CC=15  in:1  out:24  total:25
+  src.koru.context._auto_promote_blocking_tickets
+    CC=25  in:1  out:24  total:25
+  src.koru.agents.detect_project_environment
+    CC=4  in:1  out:22  total:23
+
+MODULES:
+  plugins.koru-autopilot-vscode.src.extension  [24 funcs]
+    activate  CC=3  out:7
+    app  CC=1  out:1
+    bridge  CC=2  out:3
+    clearTimeout  CC=2  out:0
+    connect  CC=1  out:9
+    delay  CC=2  out:3
+    detectIde  CC=4  out:2
+    disconnect  CC=4  out:2
+    dispatch  CC=6  out:2
+    idx  CC=2  out:3
+  scripts.planfile-export-prompt  [1 funcs]
+    print  CC=0  out:0
+  scripts.planfile-sync-todo  [7 funcs]
+    build_auto_section  CC=9  out:17
+    do_from_planfile  CC=10  out:14
+    do_from_todo  CC=12  out:20
+    load_tickets  CC=6  out:5
+    main  CC=2  out:9
+    replace_auto_section  CC=4  out:6
+    run_planfile  CC=2  out:4
+  services.healing-webhook.app  [16 funcs]
+    _rate_limit_ok  CC=3  out:3
+    _record_action  CC=1  out:7
+    _resolve_affected_files  CC=11  out:24
+    _resolve_strategy  CC=3  out:1
+    _run_docker  CC=1  out:3
+    _run_redup_check  CC=15  out:24
+    _run_vallm_check  CC=10  out:15
+    alertmanager_webhook  CC=5  out:19
+    create_planfile_ticket  CC=24  out:39
+    heal_annotate  CC=1  out:1
+  services.healing-webhook.ticket_builder  [5 funcs]
+    _default_acceptance  CC=2  out:1
+    _format_paths  CC=2  out:1
+    _infer_paths  CC=7  out:1
+    _reproduction_for  CC=5  out:5
+    build_ticket_payload  CC=11  out:25
+  src.koru.agents  [8 funcs]
+    _marker  CC=1  out:2
+    _which  CC=1  out:1
+    detect_agent_environment  CC=6  out:7
+    detect_agent_options  CC=9  out:28
+    detect_project_environment  CC=4  out:22
+    launch_agent  CC=4  out:8
+    save_agent_prompt  CC=1  out:3
+    select_agent  CC=14  out:8
+  src.koru.autopilot  [1 funcs]
+    default_socket_path  CC=3  out:5
+  src.koru.autopilot.audit  [4 funcs]
+    __init__  CC=5  out:11
+    record  CC=7  out:6
+    _isoformat_utc  CC=2  out:5
+    default_log_path  CC=2  out:3
+  src.koru.autopilot.cli_command  [16 funcs]
+    _action_daemon  CC=9  out:15
+    _action_doctor  CC=10  out:16
+    _action_drive  CC=8  out:17
+    _action_handoff  CC=9  out:18
+    _action_ide_list  CC=3  out:3
+    _action_install_unit  CC=6  out:18
+    _action_shutdown  CC=3  out:7
+    _action_status  CC=3  out:7
+    _action_tail  CC=10  out:13
+    _build_brief  CC=1  out:2
+  src.koru.autopilot.client  [2 funcs]
+    __init__  CC=2  out:1
+    request  CC=5  out:11
+  src.koru.autopilot.config  [4 funcs]
+    _merge_submit_keys  CC=7  out:5
+    cached_config  CC=1  out:2
+    default_config_path  CC=2  out:3
+    load_config  CC=4  out:10
+  src.koru.autopilot.daemon  [13 funcs]
+    __init__  CC=7  out:8
+    _accept  CC=6  out:12
+    _dispatch  CC=3  out:9
+    _drive_via_keyboard  CC=5  out:19
+    _drive_via_plugin  CC=2  out:9
+    _handle_ack  CC=5  out:6
+    _handle_hello  CC=5  out:12
+    _handle_ping  CC=2  out:3
+    _handle_shutdown  CC=2  out:6
+    _handle_status  CC=6  out:11
+  src.koru.autopilot.ide  [7 funcs]
+    _iter_proc_pids  CC=4  out:6
+    _matches  CC=7  out:5
+    _read_cmdline  CC=2  out:5
+    _read_comm  CC=2  out:3
+    detect_running_ides  CC=11  out:7
+    detect_running_ides_cached  CC=4  out:2
+    pick_target  CC=5  out:0
+  src.koru.autopilot.injector  [2 funcs]
+    type_text  CC=12  out:14
+    _submit_key_for  CC=1  out:2
+  src.koru.autopilot.protocol  [5 funcs]
+    _filter_extras  CC=6  out:4
+    ack  CC=2  out:2
+    chat_send  CC=1  out:1
+    decode  CC=12  out:21
+    error  CC=1  out:1
+  src.koru.bootstrap  [5 funcs]
+    _detect_cycle  CC=10  out:13
+    import_flat_pipeline  CC=9  out:12
+    load_flat_pipeline  CC=9  out:12
+    materialize_to_planfile  CC=6  out:16
+    validate_flat_pipeline  CC=28  out:58
+  src.koru.cli  [16 funcs]
+    _agent_main  CC=7  out:14
+    _build_gate_parser  CC=1  out:11
+    _build_gc_parser  CC=1  out:14
+    _build_queue_parser  CC=1  out:11
+    _build_scan_parser  CC=1  out:8
+    _build_serve_parser  CC=1  out:9
+    _build_task_parser  CC=1  out:7
+    _gate_main  CC=5  out:12
+    _gc_main  CC=18  out:28
+    _is_bare_invocation  CC=7  out:0
+  src.koru.context  [14 funcs]
+    _auto_promote_blocking_tickets  CC=25  out:24
+    _build_instructions  CC=2  out:4
+    _build_self_service  CC=5  out:2
+    _build_setup_instructions  CC=1  out:0
+    _build_shared_rules  CC=15  out:17
+    _fetch_all_tickets  CC=9  out:5
+    _is_fixture_ticket  CC=4  out:6
+    _load_project_dotenv  CC=3  out:2
+    _planfile_command_base  CC=3  out:3
+    _planfile_env  CC=1  out:0
+  src.koru.doctor  [9 funcs]
+    _check_ci_command  CC=5  out:6
+    _check_planfile_config  CC=4  out:7
+    _check_planfile_sprints  CC=10  out:17
+    _check_planfile_sprints_yaml  CC=6  out:8
+    _check_policy_yaml  CC=11  out:13
+    _check_pytest_collect  CC=8  out:5
+    _check_runtime_dir  CC=6  out:6
+    _resolve_pytest_collect_timeout  CC=4  out:3
+    run_diagnostics  CC=6  out:11
+  src.koru.dotenv_loader  [3 funcs]
+    _parse_value  CC=5  out:7
+    load_dotenv  CC=7  out:5
+    parse_dotenv  CC=5  out:7
+  src.koru.events  [1 funcs]
+    emit_management_event  CC=8  out:7
+  src.koru.gate  [2 funcs]
+    _resolve_actor  CC=4  out:1
+    authorize_gate  CC=9  out:16
+  src.koru.gc  [8 funcs]
+    _archive_tickets  CC=2  out:6
+    _load_tickets_from_sprint  CC=7  out:7
+    _now_utc  CC=1  out:1
+    _parse_ts  CC=3  out:2
+    _planfile_env  CC=1  out:0
+    _run_planfile  CC=6  out:9
+    collect_gc_candidates  CC=9  out:21
+    run_gc  CC=26  out:22
+  src.koru.init  [3 funcs]
+    _ensure_gitignore_entry  CC=8  out:12
+    _write_policy_stub_if_absent  CC=3  out:6
+    init_project  CC=6  out:15
+  src.koru.loop  [3 funcs]
+    _search_root_for_include  CC=6  out:6
+    discover_repositories  CC=5  out:11
+    run_closed_loop  CC=12  out:18
+  src.koru.planfile_queue  [7 funcs]
+    _default_human_prompt  CC=5  out:12
+    _parse_next_ticket  CC=9  out:7
+    _planfile_command  CC=3  out:4
+    _planfile_env  CC=1  out:0
+    _run_process  CC=1  out:2
+    run_next_planfile_task  CC=24  out:40
+    run_planfile_queue_loop  CC=12  out:8
+  src.koru.policy  [2 funcs]
+    load_policy  CC=9  out:43
+    policy_path  CC=1  out:1
+  src.koru.queue_clean  [8 funcs]
+    _build_close_note  CC=1  out:4
+    _close_ticket  CC=5  out:6
+    _list_tickets  CC=11  out:11
+    _matched_rules  CC=14  out:16
+    _parse_age_days  CC=8  out:10
+    _planfile_base  CC=4  out:3
+    clean_queue  CC=5  out:7
+    find_candidates  CC=15  out:19
+  src.koru.run_log  [7 funcs]
+    _emit  CC=3  out:5
+    write_footer  CC=4  out:12
+    write_header  CC=1  out:4
+    write_iteration  CC=3  out:9
+    _iso  CC=1  out:2
+    open_run_log  CC=1  out:4
+    open_run_log_eagerly  CC=1  out:2
+  src.koru.runtime  [5 funcs]
+    ensure_runs_dir  CC=2  out:5
+    new_run_id  CC=1  out:3
+    planfile_dir  CC=1  out:2
+    runs_dir  CC=1  out:1
+    runtime_dir  CC=1  out:1
+  src.koru.scan  [8 funcs]
+    _create_ticket  CC=5  out:5
+    _existing_scan_titles  CC=11  out:15
+    collect_suggestions  CC=2  out:11
+    run_scan  CC=7  out:11
+    scan_gitignore_drift  CC=4  out:3
+    scan_missing_gates  CC=5  out:6
+    scan_missing_tools  CC=13  out:15
+    scan_todo_markers  CC=8  out:10
+  src.koru.semcod_tools  [3 funcs]
+    _config_present  CC=3  out:2
+    _read_pyproject  CC=3  out:3
+    detect_semcod_tools  CC=7  out:9
+  src.koru.serve  [3 funcs]
+    _build_handler  CC=1  out:30
+    build_server  CC=1  out:2
+    serve  CC=4  out:12
+  src.koru.tasks  [4 funcs]
+    _read_config  CC=4  out:7
+    _read_sprint  CC=4  out:11
+    _write_yaml  CC=1  out:3
+    create_nl_task  CC=5  out:17
+  src.koru.watch  [2 funcs]
+    format_queue_event  CC=19  out:35
+    watch_planfile_events  CC=7  out:7
+
+EDGES:
+  src.koru.runtime.runtime_dir → src.koru.runtime.planfile_dir
+  src.koru.runtime.runs_dir → src.koru.runtime.runtime_dir
+  src.koru.runtime.ensure_runs_dir → src.koru.runtime.runs_dir
+  src.koru.runtime.ensure_runs_dir → src.koru.runtime.runtime_dir
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._format_paths
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._default_acceptance
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._reproduction_for
+  src.koru.watch.watch_planfile_events → plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+  src.koru.watch.watch_planfile_events → src.koru.watch.format_queue_event
+  src.koru.context._fetch_all_tickets → src.koru.context._safe_json
+  src.koru.context._fetch_all_tickets → src.koru.context._run_planfile
+  src.koru.context._fetch_all_tickets → src.koru.context._is_fixture_ticket
+  src.koru.context._run_planfile → src.koru.context._planfile_command_base
+  src.koru.context._run_planfile → src.koru.context._planfile_env
+  src.koru.context.build_context → src.koru.context._load_project_dotenv
+  src.koru.context.build_context → src.koru.runtime.planfile_dir
+  src.koru.context.build_context → src.koru.context._auto_promote_blocking_tickets
+  src.koru.context.build_context → src.koru.context._build_instructions
+  src.koru.context.build_context → src.koru.context._build_self_service
+  src.koru.context.build_context → src.koru.policy.load_policy
+  src.koru.context._auto_promote_blocking_tickets → src.koru.runtime.planfile_dir
+  src.koru.context._auto_promote_blocking_tickets → scripts.planfile-export-prompt.print
+  src.koru.context._build_instructions → src.koru.context._build_setup_instructions
+  src.koru.context._build_instructions → src.koru.context._build_shared_rules
+  src.koru.semcod_tools.detect_semcod_tools → src.koru.semcod_tools._read_pyproject
+  src.koru.semcod_tools.detect_semcod_tools → src.koru.semcod_tools._config_present
+  services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.ticket_builder.build_ticket_payload
+  services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._resolve_affected_files
+  services.healing-webhook.app.heal_redsl_gate → services.healing-webhook.app._run_docker
+  services.healing-webhook.app.heal_redsl_gate → services.healing-webhook.app._record_action
+  services.healing-webhook.app.heal_redsl_improve → services.healing-webhook.app._run_docker
+  services.healing-webhook.app.heal_redsl_improve → services.healing-webhook.app._record_action
+  services.healing-webhook.app.heal_redsl_improve → services.healing-webhook.app._rate_limit_ok
+  services.healing-webhook.app.heal_rebuild_restore → services.healing-webhook.app._run_docker
+  services.healing-webhook.app.heal_rebuild_restore → services.healing-webhook.app._record_action
+  services.healing-webhook.app.heal_rebuild_restore → services.healing-webhook.app._rate_limit_ok
+  services.healing-webhook.app.heal_annotate → services.healing-webhook.app._record_action
+  services.healing-webhook.app._resolve_affected_files → services.healing-webhook.ticket_builder._infer_paths
+  services.healing-webhook.app.heal_vallm_validate → services.healing-webhook.app._resolve_affected_files
+  services.healing-webhook.app.heal_vallm_validate → services.healing-webhook.app._record_action
+  services.healing-webhook.app.heal_vallm_validate → services.healing-webhook.app._run_vallm_check
+  services.healing-webhook.app.heal_redup_check → services.healing-webhook.app._run_redup_check
+  services.healing-webhook.app.heal_redup_check → services.healing-webhook.app._record_action
+  services.healing-webhook.app.alertmanager_webhook → services.healing-webhook.app._resolve_strategy
+  services.healing-webhook.app.probe_failure → services.healing-webhook.app.create_planfile_ticket
+  src.koru.policy.policy_path → src.koru.runtime.runtime_dir
+  src.koru.policy.load_policy → src.koru.policy.policy_path
+  src.koru.dotenv_loader.parse_dotenv → src.koru.dotenv_loader._parse_value
+  src.koru.dotenv_loader.load_dotenv → src.koru.dotenv_loader.parse_dotenv
+  src.koru.scan.collect_suggestions → src.koru.scan.scan_todo_markers

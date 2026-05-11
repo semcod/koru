@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -135,6 +137,28 @@ def _build_parser() -> argparse.ArgumentParser:
         "--dry-run",
         action="store_true",
         help="Print the brief and exit; do not contact the daemon.",
+    )
+
+    install_unit = sub.add_parser(
+        "install-unit",
+        help="Install the systemd --user service unit (P2.6).",
+    )
+    install_unit.add_argument(
+        "--dest",
+        type=Path,
+        default=None,
+        help="Override destination (default: $XDG_CONFIG_HOME/systemd/user/koru-autopilot.service).",
+    )
+    install_unit.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite an existing unit file.",
+    )
+    install_unit.add_argument(
+        "--print",
+        dest="print_only",
+        action="store_true",
+        help="Print the rendered unit to stdout instead of writing.",
     )
 
     tail = sub.add_parser(
@@ -397,6 +421,103 @@ def _action_tail(args: argparse.Namespace) -> int:
     return 0
 
 
+def _systemd_user_dir() -> Path:
+    """Resolve the XDG ``systemd/user`` directory."""
+    xdg = os.environ.get("XDG_CONFIG_HOME")
+    base = Path(xdg) if xdg else Path.home() / ".config"
+    return base / "systemd" / "user"
+
+
+def _resolve_koru_bin() -> str:
+    """Best-effort absolute path to the ``koru`` executable.
+
+    Priority:
+    1) ``koru`` on ``PATH``;
+    2) sibling of ``sys.executable`` (common for virtualenvs);
+    3) user-local default used in docs.
+    """
+    on_path = shutil.which("koru")
+    if on_path:
+        return on_path
+    sibling = Path(sys.executable).with_name("koru")
+    if sibling.is_file() and os.access(sibling, os.X_OK):
+        return str(sibling)
+    prefixed = Path(sys.prefix) / "bin" / "koru"
+    if prefixed.is_file() and os.access(prefixed, os.X_OK):
+        return str(prefixed)
+    return "%h/.local/bin/koru"
+
+
+def _render_unit(koru_bin: str) -> str:
+    """Build the systemd unit text with the resolved koru binary path.
+
+    The shipped template under ``systemd/koru-autopilot.service`` is the
+    source of truth; we read it, substitute the ExecStart line so it
+    matches the user's actual koru install, and write the result.
+    """
+    template_path = Path(__file__).resolve().parents[3] / "systemd" / "koru-autopilot.service"
+    try:
+        template = template_path.read_text(encoding="utf-8")
+    except OSError:
+        # Fallback to a minimal inline template if the file isn't shipped
+        # (e.g. in a wheel that excluded it).
+        template = (
+            "[Unit]\n"
+            "Description=koru autopilot daemon\n"
+            "After=graphical-session.target\n"
+            "PartOf=graphical-session.target\n\n"
+            "[Service]\n"
+            "Type=simple\n"
+            "ExecStart=__KORU_BIN__ autopilot daemon --idempotent --no-handoff\n"
+            "Restart=on-failure\n"
+            "RestartSec=2\n\n"
+            "[Install]\n"
+            "WantedBy=default.target\n"
+        )
+    # Replace the ExecStart line so the user gets the koru that's
+    # actually available in this environment, not a hard-coded path.
+    lines = []
+    for line in template.splitlines():
+        if line.startswith("ExecStart=") and "autopilot daemon" in line:
+            lines.append(f"ExecStart={koru_bin} autopilot daemon --idempotent --no-handoff")
+        else:
+            lines.append(line)
+    return "\n".join(lines) + "\n"
+
+
+def _action_install_unit(args: argparse.Namespace) -> int:
+    """P2.6: install the systemd --user service unit."""
+    koru_bin = _resolve_koru_bin()
+    rendered = _render_unit(koru_bin)
+    if args.print_only:
+        sys.stdout.write(rendered)
+        return 0
+    dest = args.dest or _systemd_user_dir() / "koru-autopilot.service"
+    if dest.exists() and not args.force:
+        print(
+            f"koru autopilot install-unit: {dest} already exists "
+            "(pass --force to overwrite).",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(rendered, encoding="utf-8")
+    except OSError as exc:
+        print(f"koru autopilot install-unit: {exc}", file=sys.stderr)
+        return 1
+    print(f"koru autopilot: installed {dest}")
+    print()
+    print("Next steps:")
+    print("  systemctl --user daemon-reload")
+    print("  systemctl --user enable --now koru-autopilot.service")
+    print("  journalctl --user -u koru-autopilot -f      # follow logs")
+    print()
+    print(f"To enable auto-handoff for a project, override ExecStart with:")
+    print(f"  systemctl --user edit koru-autopilot.service")
+    return 0
+
+
 _ACTIONS = {
     "daemon": _action_daemon,
     "drive": _action_drive,
@@ -406,6 +527,7 @@ _ACTIONS = {
     "doctor": _action_doctor,
     "handoff": _action_handoff,
     "tail": _action_tail,
+    "install-unit": _action_install_unit,
 }
 
 

@@ -134,6 +134,32 @@ tasks:
       MAX_EVENTS: '{{.MAX_EVENTS | default ""}}'
     interactive: true
 
+  queue:autoloop:
+    desc: 'Continuous intake+execution loop (scan --apply + queue --loop + autopilot drive)'
+    cmds:
+      - |
+        PROJECT="{{.PROJECT}}" \
+        ACTOR="{{.ACTOR}}" \
+        QUEUE_NAME="{{.QUEUE_NAME}}" \
+        MAX_ITERATIONS="{{.MAX_ITERATIONS}}" \
+        SLEEP_SECONDS="{{.SLEEP_SECONDS}}" \
+        ENABLE_SCAN="{{.ENABLE_SCAN}}" \
+        ENABLE_AUTOPILOT_DRIVE="{{.ENABLE_AUTOPILOT_DRIVE}}" \
+        ENABLE_INTERACTIVE="{{.ENABLE_INTERACTIVE}}" \
+        DRIVE_PROMPT="{{.DRIVE_PROMPT}}" \
+        bash scripts/koru-autoloop.sh
+    vars:
+      PROJECT: '{{.PROJECT | default "."}}'
+      ACTOR: '{{.ACTOR | default "koru-shell"}}'
+      QUEUE_NAME: '{{.QUEUE_NAME | default ""}}'
+      MAX_ITERATIONS: '{{.MAX_ITERATIONS | default "50"}}'
+      SLEEP_SECONDS: '{{.SLEEP_SECONDS | default "120"}}'
+      ENABLE_SCAN: '{{.ENABLE_SCAN | default "true"}}'
+      ENABLE_AUTOPILOT_DRIVE: '{{.ENABLE_AUTOPILOT_DRIVE | default "true"}}'
+      ENABLE_INTERACTIVE: '{{.ENABLE_INTERACTIVE | default "false"}}'
+      DRIVE_PROMPT: '{{.DRIVE_PROMPT | default "continue with the next ticket"}}'
+    interactive: true
+
   # =====================================================================
   # Quality gates (LLM-free, proxies to underlying tools)
   # =====================================================================

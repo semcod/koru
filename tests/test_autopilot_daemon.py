@@ -259,6 +259,40 @@ def test_status_reports_socket_and_plugins(running_daemon) -> None:
     assert info["plugins"] == []
 
 
+def test_accept_rejects_foreign_peer_uid(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """R11: enforce same-UID policy on every accept via SO_PEERCRED."""
+    _patch_no_running_ides(monkeypatch)
+    daemon_uid = 1000
+    foreign_uid = 1001
+    monkeypatch.setattr(daemon_mod.os, "getuid", lambda: daemon_uid)
+    monkeypatch.setattr(daemon_mod, "_peer_uid", lambda _sock: foreign_uid)
+
+    harness = _DaemonHarness(tmp_path)
+    harness.start()
+    try:
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.settimeout(1.0)
+        sock.connect(str(harness.sock_path))
+
+        # The daemon should close immediately on accept (before registration).
+        # Depending on timing/kernel, read can be EOF or connection-reset.
+        try:
+            data = sock.recv(1)
+            assert data == b""
+        except OSError:
+            pass
+        finally:
+            sock.close()
+
+        time.sleep(0.05)
+        assert harness.daemon._clients == {}
+    finally:
+        harness.stop()
+
+
 # ---------------------------------------------------------------------------
 # Plugin path
 # ---------------------------------------------------------------------------

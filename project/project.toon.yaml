@@ -1,0 +1,62 @@
+# koru | 331 func | 36f | 14319L | python | 2026-05-11
+# generated in 0.00s
+
+HEALTH:
+  CC̄=5.1  critical=41 (limit:10)  dup=1  cycles=1
+
+ALERTS[20]:
+  !!! cc_exceeded      main = 59 (limit:15)
+  !!! cc_exceeded      render_markdown_handoff = 45 (limit:15)
+  !!! cc_exceeded      build_context = 41 (limit:15)
+  !!! high_fan_out     main = 34 (limit:10)
+  !!! cc_exceeded      validate_flat_pipeline = 28 (limit:15)
+  !!! high_fan_out     create_planfile_ticket = 27 (limit:10)
+  !!! cc_exceeded      run_gc = 26 (limit:15)
+  !!! cc_exceeded      _auto_promote_blocking_tickets = 25 (limit:15)
+  !!! high_fan_out     build_context = 25 (limit:10)
+  !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
+
+MODULES[72] (top by size):
+  M[src/koru/cli.py] 1303L C:0 F:21 CC↑59 D:0 (python)
+  M[src/koru/context.py] 869L C:0 F:16 CC↑45 D:4 (python)
+  M[src/koru/planfile_queue.py] 705L C:5 F:15 CC↑24 D:1 (python)
+  M[services/healing-webhook/app.py] 673L C:0 F:21 CC↑24 D:0 (python)
+  M[Taskfile.yml] 625L C:0 F:0 CC↑0 D:0 (yml)
+  M[src/koru/autopilot/cli_command.py] 537L C:0 F:17 CC↑10 D:0 (python)
+  M[src/koru/serve.py] 529L C:1 F:3 CC↑4 D:1 (python)
+  M[src/koru/autopilot/daemon.py] 516L C:2 F:24 CC↑14 D:0 (python)
+  M[src/koru/scan.py] 515L C:2 F:11 CC↑13 D:1 (python)
+  M[goal.yaml] 511L C:0 F:0 CC↑0 D:0 (yaml)
+  M[src/koru/doctor.py] 425L C:2 F:16 CC↑11 D:1 (python)
+  M[examples/bootstrap.planfile.yaml] 425L C:0 F:0 CC↑0 D:0 (yaml)
+  M[src/koru/bootstrap.py] 396L C:2 F:10 CC↑28 D:2 (python)
+  M[src/koru/queue_clean.py] 355L C:2 F:10 CC↑15 D:1 (python)
+  M[src/koru/gc.py] 326L C:2 F:9 CC↑26 D:1 (python)
+  LANGS: python:34/shell:26/yaml:6/json:2/typescript:1/yml:1/toml:1/other:1
+
+HOTSPOTS[10]:
+  ★ main fan=34  // Orchestrates 34 calls
+  ★ create_planfile_ticket fan=27  // Create a planfile ticket for an alert.
+
+The ticket body is produced by ticket_bu
+  ★ build_context fan=25  // Assemble the LLM brief for a project.
+
+The function is fully injectable to keep 
+  ★ render_markdown_handoff fan=22  // Turn a context dict into a Markdown brief for the operator.
+
+Designed to be past
+  ★ run_gc fan=19  // Run garbage collection on the planfile queue.
+
+Parameters
+----------
+project : P
+
+REFACTOR[15]:
+  [1] H/L Split build_context (CC=41)
+  [2] H/L Split _auto_promote_blocking_tickets (CC=25)
+  [3] H/L Split render_markdown_handoff (CC=45)
+  [4] H/L Split main (CC=59)
+  [5] H/L Split validate_flat_pipeline (CC=28)
+
+EVOLUTION:
+  2026-05-11 CC̄=5.1 crit=41 14319L // Automated analysis

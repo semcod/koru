@@ -111,8 +111,25 @@ To run it in the background once you trust it:
 nohup koru autopilot daemon --project "$(pwd)" >/tmp/koru-autopilot.log 2>&1 &
 ```
 
-(A `systemd --user` unit is on the [roadmap](./autopilot-roadmap.md);
-`nohup` is the current recommendation.)
+(`nohup` works, but the `systemd --user` unit below is the recommended
+long-running setup.)
+
+#### Recommended: install a `systemd --user` unit (P2.6)
+
+```bash
+koru autopilot install-unit
+systemctl --user daemon-reload
+systemctl --user enable --now koru-autopilot.service
+journalctl --user -u koru-autopilot -f
+```
+
+This keeps the daemon alive across terminal closes and user logins.
+The generated unit defaults to `--idempotent --no-handoff`; if you want
+automatic handoff for a specific project, override `ExecStart` via:
+
+```bash
+systemctl --user edit koru-autopilot.service
+```
 
 ### 3. (optional) Install the VS Code / Windsurf / Cursor plugin
 
@@ -270,6 +287,11 @@ koru autopilot doctor --format json  # machine-readable
 
 koru autopilot shutdown              # ask the daemon to stop
 
+# P2.6 — systemd --user installation helper
+koru autopilot install-unit
+koru autopilot install-unit --print
+koru autopilot install-unit --force
+
 # P2.5 — one-shot brief injection (build koru brief + type into chat)
 koru autopilot handoff               # uses cwd as project
 koru autopilot handoff --project ~/path/to/repo --ide windsurf
@@ -344,9 +366,9 @@ shutdown` + `koru autopilot daemon`) to pick up the change.
   verifies `SO_PEERCRED` on each accept. A different user (or root in
   another namespace) cannot drive your IDE.
 - **No network listener.** There is intentionally no TCP mode.
-- **All injected text is logged** via `daemon.log(...)` (currently
-  stdout; a persistent audit log under `~/.local/state/koru/` is on
-  the [roadmap](./autopilot-roadmap.md)).
+- **All meaningful events are persisted** to
+  `~/.local/state/koru/autopilot.log` (or `$XDG_STATE_HOME/koru/`),
+  plus mirrored to daemon stdout.
 - **The plugin can refuse.** A VS Code-side extension can choose not
   to paste, e.g. when the chat view is not focused — the daemon
   receives `ack ok:false` and surfaces it to the CLI caller.
@@ -361,7 +383,7 @@ plugin uninstalled.
 |--------------------------------------------------------|----------------------------------|
 | First-time setup of a project                          | `koru --init` then `koru`        |
 | Want to paste a brief into a chat                      | `koru \| xclip` (manual)         |
-| Want to *type* the brief into a chat without focus     | `koru autopilot handoff` *(planned)* |
+| Want to *type* the brief into a chat without focus     | `koru autopilot handoff` |
 | Want koru to take over when an IDE session ends        | `koru autopilot daemon --handoff` |
 | Want a one-shot text injection from a script           | `koru autopilot drive --direct`  |
 

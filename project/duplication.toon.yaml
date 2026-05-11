@@ -1,0 +1,60 @@
+# redup/duplication | 4 groups | 34f 10582L | 2026-05-11
+
+SUMMARY:
+  files_scanned: 34
+  total_lines:   10582
+  dup_groups:    4
+  dup_fragments: 8
+  saved_lines:   26
+  scan_ms:       3463
+
+HOTSPOTS[5] (files with most duplication):
+  src/koru/autopilot/cli_command.py  dup=29L  groups=2  frags=3  (0.3%)
+  src/koru/scan.py  dup=12L  groups=1  frags=2  (0.1%)
+  src/koru/autopilot/config.py  dup=5L  groups=1  frags=1  (0.0%)
+  src/koru/policy.py  dup=3L  groups=1  frags=1  (0.0%)
+  src/koru/runtime.py  dup=3L  groups=1  frags=1  (0.0%)
+
+DUPLICATES[4] (ranked by impact):
+  [d6a3bae1fce80d51]   STRU  _action_status  L=12 N=2 saved=12 sim=1.00
+      src/koru/autopilot/cli_command.py:266-277  (_action_status)
+      src/koru/autopilot/cli_command.py:280-291  (_action_shutdown)
+  [19e35bb709780a8d]   EXAC  _default  L=6 N=2 saved=6 sim=1.00
+      src/koru/scan.py:414-419  (_default)
+      src/koru/scan.py:454-459  (_default)
+  [783e33d9df60e641]   STRU  _systemd_user_dir  L=5 N=2 saved=5 sim=1.00
+      src/koru/autopilot/cli_command.py:424-428  (_systemd_user_dir)
+      src/koru/autopilot/config.py:64-68  (default_config_path)
+  [568b0a8fd0ab06a4]   STRU  policy_path  L=3 N=2 saved=3 sim=1.00
+      src/koru/policy.py:122-124  (policy_path)
+      src/koru/runtime.py:48-50  (runtime_dir)
+
+REFACTOR[4] (ranked by priority):
+  [1] ○ extract_function   → src/koru/autopilot/utils/_action_status.py
+      WHY: 2 occurrences of 12-line block across 1 files — saves 12 lines
+      FILES: src/koru/autopilot/cli_command.py
+  [2] ○ extract_function   → src/koru/utils/_default.py
+      WHY: 2 occurrences of 6-line block across 1 files — saves 6 lines
+      FILES: src/koru/scan.py
+  [3] ○ extract_function   → src/koru/autopilot/utils/_systemd_user_dir.py
+      WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
+      FILES: src/koru/autopilot/cli_command.py, src/koru/autopilot/config.py
+  [4] ○ extract_function   → src/koru/utils/policy_path.py
+      WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
+      FILES: src/koru/policy.py, src/koru/runtime.py
+
+QUICK_WINS[2] (low risk, high savings — do first):
+  [1] extract_function   saved=12L  → src/koru/autopilot/utils/_action_status.py
+      FILES: cli_command.py
+  [2] extract_function   saved=6L  → src/koru/utils/_default.py
+      FILES: scan.py
+
+EFFORT_ESTIMATE (total ≈ 0.9h):
+  easy   _action_status                      saved=12L  ~24min
+  easy   _default                            saved=6L  ~12min
+  easy   _systemd_user_dir                   saved=5L  ~10min
+  easy   policy_path                         saved=3L  ~6min
+
+METRICS-TARGET:
+  dup_groups:  4 → 0
+  saved_lines: 26 lines recoverable
