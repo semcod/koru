@@ -296,6 +296,40 @@ class TestBuildContext(unittest.TestCase):
             self.assertIsNotNone(ctx["ticket"])
             self.assertEqual(ctx["ticket"]["id"], "PLF-090")
 
+    def test_all_tickets_are_populated_from_list(self) -> None:
+        """The ``all_tickets`` field must be populated from the full queue
+        listing, even when a specific ticket ID is requested."""
+        with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
+            active_ticket = {"id": "PLF-101", "status": "open", "executor": {"kind": "shell"}}
+            all_tickets_list = [
+                active_ticket,
+                {"id": "PLF-102", "status": "open", "executor": {"kind": "shell"}},
+            ]
+
+            captured_commands = []
+            def planfile_runner(command, _project):
+                captured_commands.append(command)
+                if "show" in command:
+                    return _ok(json.dumps(active_ticket))
+                elif "list" in command:
+                    return _ok(json.dumps(all_tickets_list))
+                return _fail("unexpected planfile call")
+
+            ctx = build_context(
+                project=Path(tmp),
+                ticket_id="PLF-101",
+                planfile_runner=planfile_runner,
+                git_probe=_no_git,
+            )
+
+            self.assertEqual(len(ctx["all_tickets"]), 2)
+            self.assertEqual([t["id"] for t in ctx["all_tickets"]], ["PLF-101", "PLF-102"])
+            
+            # Verify that both 'show' and 'list' were called
+            self.assertTrue(any("show" in cmd for cmd in captured_commands))
+            self.assertTrue(any("list" in cmd for cmd in captured_commands))
+
 
 class TestMarkdownHandoff(unittest.TestCase):
     def test_renders_ticket_section(self) -> None:

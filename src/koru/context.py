@@ -338,18 +338,12 @@ def build_context(
                     open_tickets = [ticket_data]
                 # `ticket next` returns only the active ticket — fetch
                 # the full list separately so the dashboard can show
-                # historical (done/in_progress) tickets too. Skip this
-                # extra round-trip when the caller already pinned a
-                # specific ticket — the dashboard only needs the wider
-                # queue when the agent is browsing.
-                if not ticket_id:
-                    all_tickets = _fetch_all_tickets(
-                        project,
-                        runner=planfile_runner,
-                        include_fixtures=_resolve_include_fixtures(include_fixtures),
-                    )
-                else:
-                    all_tickets = [ticket_data] if ticket_data else []
+                # historical (done/in_progress) tickets too.
+                all_tickets = _fetch_all_tickets(
+                    project,
+                    runner=planfile_runner,
+                    include_fixtures=_resolve_include_fixtures(include_fixtures),
+                )
         else:
             raw_err = (ticket_proc.stderr or "planfile error").strip()
             # Filter out Python warnings (e.g. pydantic UserWarning) that

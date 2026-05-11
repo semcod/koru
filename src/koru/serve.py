@@ -370,6 +370,7 @@ async function refresh() {
     const root = $("root");
     const activeId = (ctx.ticket || {}).id || null;
     root.innerHTML = [
+      renderSelfService(ctx.self_service),
       renderTicket(ctx.ticket, ctx.ticket_error),
       renderEnv(ctx.environment),
       renderOpenTickets(
@@ -378,7 +379,6 @@ async function refresh() {
       renderAgents(ctx.environment),
       renderSemcodTools(ctx.environment),
       renderPolicy(ctx.policy),
-      renderSelfService(ctx.self_service),
     ].join("");
   } catch (e) {
     $("root").innerHTML = `<div class="panel full err">
