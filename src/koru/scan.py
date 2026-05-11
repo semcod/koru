@@ -25,6 +25,7 @@ planfile tickets through ``planfile ticket create``.
 
 from __future__ import annotations
 
+import fnmatch
 import json
 import re
 import shutil
@@ -224,6 +225,59 @@ _DEFAULT_SCAN_EXCLUDES: frozenset[str] = frozenset(
 )
 
 
+def _load_koruignore_patterns(project: Path) -> tuple[str, ...]:
+    """Load optional scan ignore patterns from ``.koruignore``.
+
+    The format is intentionally minimal: one glob pattern per line,
+    blank lines and ``#`` comments are ignored.
+    """
+    ignore_file = project / ".koruignore"
+    if not ignore_file.is_file():
+        return ()
+    try:
+        lines = ignore_file.read_text(encoding="utf-8", errors="ignore").splitlines()
+    except OSError:
+        return ()
+
+    patterns: list[str] = []
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("./"):
+            line = line[2:]
+        elif line.startswith("/"):
+            line = line[1:]
+        patterns.append(line)
+    return tuple(patterns)
+
+
+def _is_koruignored(rel_path: Path, patterns: Sequence[str]) -> bool:
+    """Return ``True`` when ``rel_path`` matches a ``.koruignore`` pattern."""
+    if not patterns:
+        return False
+
+    rel = rel_path.as_posix()
+    basename = rel_path.name
+    for pattern in patterns:
+        if not pattern:
+            continue
+
+        if pattern.endswith("/"):
+            prefix = pattern.rstrip("/")
+            if rel == prefix or rel.startswith(f"{prefix}/"):
+                return True
+            continue
+
+        if fnmatch.fnmatch(rel, pattern):
+            return True
+        # Bare filename patterns should match in any directory.
+        if "/" not in pattern and fnmatch.fnmatch(basename, pattern):
+            return True
+
+    return False
+
+
 def scan_todo_markers(
     project: Path,
     *,
@@ -236,6 +290,7 @@ def scan_todo_markers(
     handful of historical TODOs that are not worth surfacing.
     """
     counts: Counter[str] = Counter()
+    koruignore_patterns = _load_koruignore_patterns(project)
     walked = 0
     for path in project.rglob("*.py"):
         walked += 1
@@ -243,13 +298,16 @@ def scan_todo_markers(
             break
         if any(part in _DEFAULT_SCAN_EXCLUDES for part in path.parts):
             continue
+        rel_path = path.relative_to(project)
+        if _is_koruignored(rel_path, koruignore_patterns):
+            continue
         try:
             text = path.read_text(encoding="utf-8", errors="ignore")
         except OSError:
             continue
         n = len(_MARKER_RE.findall(text))
         if n >= min_per_file:
-            counts[str(path.relative_to(project))] = n
+            counts[str(rel_path)] = n
     return [
         Suggestion(
             signal="todo_markers",

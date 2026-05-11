@@ -179,6 +179,27 @@ task tickets:list
 task tickets:show TID=PLF-052
 ```
 
+### Scan the repo and ignore local noise via `.koruignore`
+
+```bash
+# Dry-run suggestions
+koru scan
+
+# Apply suggestions as planfile tickets
+koru scan --apply
+```
+
+If local probe files create noisy TODO-marker suggestions, add a
+project-root `.koruignore` file (one glob per line):
+
+```text
+# Ignore temporary scan probes
+.koru_scan_*.py
+generated/
+```
+
+`koru scan` respects `.koruignore` for TODO/FIXME marker scanning.
+
 ### Mark done
 
 ```bash

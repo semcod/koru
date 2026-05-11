@@ -4,11 +4,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.26-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$3.09-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-16.2h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.27-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$3.10-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-16.3h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $3.0876 (49 commits)
-- 👤 **Human dev:** ~$1620 (16.2h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $3.0964 (50 commits)
+- 👤 **Human dev:** ~$1625 (16.3h @ $100/h, 30min dedup)
 
 Generated on 2026-05-11 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -104,18 +104,33 @@ clicks. Useful when an in-IDE session ends and you want koru to
 continue the loop from a separate terminal (or tmux pane, or SSH).
 
 ```bash
-# one-time, in a background terminal:
-koru autopilot daemon
+# 1) verify backends and IDE detection
+koru autopilot doctor
+koru autopilot ide-list
 
-# from anywhere — type into the focused IDE's chat:
+# 2) run daemon (recommended long-running setup via systemd --user)
+koru autopilot install-unit
+systemctl --user daemon-reload
+systemctl --user enable --now koru-autopilot.service
+
+# fallback: run daemon in a terminal/tmux pane
+koru autopilot daemon --project "$(pwd)"
+
+# 3) from anywhere — inject into IDE chat:
+koru autopilot handoff --project "$(pwd)" --ide windsurf
 koru autopilot drive 'continue with the next ticket'
 koru autopilot drive --ide jetbrains 'rerun the failing test'
+koru autopilot tail -n 50
 
 # diagnostics:
-koru autopilot doctor          # which keyboard backends are usable?
-koru autopilot ide-list        # which IDEs are running right now?
 koru autopilot status          # is the daemon up? plugins connected?
 ```
+
+Newer autopilot functions you can use directly from CLI:
+
+- `koru autopilot handoff` — build current koru brief and inject it in one shot.
+- `koru autopilot install-unit` — install `systemd --user` unit for persistent daemon.
+- `koru autopilot tail` — read persistent autopilot audit log (text or JSON).
 
 Two injection paths, picked automatically:
 
@@ -130,6 +145,75 @@ Two injection paths, picked automatically:
   30-second setup, full checklist, common pitfalls, security model.
 - **Architecture & wire protocol:** [`docs/autopilot-design.md`](docs/autopilot-design.md).
 - **What is shipped vs. planned:** [`docs/autopilot-roadmap.md`](docs/autopilot-roadmap.md).
+
+## Windsurf autonomous mode (hours, unattended)
+
+If you want `koru + Windsurf` to keep working for hours with minimal human input,
+use the built-in autoloop wrapper.
+
+### 1) Prepare once per machine
+
+```bash
+# verify keyboard/plugin path
+koru autopilot doctor
+
+# recommended persistent daemon setup
+koru autopilot install-unit
+systemctl --user daemon-reload
+systemctl --user enable --now koru-autopilot.service
+```
+
+Install and enable the VS Code/Windsurf plugin from
+[`plugins/koru-autopilot-vscode/`](plugins/koru-autopilot-vscode/) for the most
+reliable injection path on Wayland.
+
+### 2) Start autonomous loop in project root
+
+```bash
+cd /path/to/project
+task queue:autoloop
+```
+
+What each iteration does:
+
+1. `koru scan --apply`
+2. `koru --queue --loop --max-iterations ...`
+3. `koru autopilot drive "continue with the next ticket"`
+4. sleep (`SLEEP_SECONDS`, default `120`)
+
+This loop is resilient by design: if one step fails, it logs the error and
+continues next iteration.
+
+### 3) Useful long-run overrides
+
+```bash
+# faster cadence
+task queue:autoloop SLEEP_SECONDS=30 MAX_ITERATIONS=100
+
+# single execution queue only
+task queue:autoloop QUEUE_NAME=default
+
+# include interactive handling of human tickets
+task queue:autoloop ENABLE_INTERACTIVE=true
+
+# queue-only mode (without autopilot ping)
+task queue:autoloop ENABLE_AUTOPILOT_DRIVE=false
+```
+
+### 4) Monitor while it runs
+
+```bash
+koru autopilot status
+koru autopilot tail -n 200
+journalctl --user -u koru-autopilot -f
+```
+
+Related docs:
+
+- [`docs/autopilot-quickstart.md`](docs/autopilot-quickstart.md)
+- [`docs/cli-examples.md`](docs/cli-examples.md)
+- [`scripts/koru-autoloop.sh`](scripts/koru-autoloop.sh)
+- [`docs/agent-guide.md`](docs/agent-guide.md)
 
 ## Two operational modes
 
@@ -166,6 +250,7 @@ task tickets:next             # highest-priority open ticket
 task queue:run                # execute one runnable planfile queue task
 task queue:dry-run            # preview the next planfile queue task
 task queue:watch              # watch planfile WebSocket queue events
+task queue:autoloop           # unattended scan+queue+autopilot loop
 task quality:regix            # regression metrics gate
 task quality:redup            # duplicate detection
 task template:install         # bootstrap configs in current dir
@@ -530,6 +615,9 @@ sprint YAML remains the source of truth.
 
 The full documentation lives in [`docs/`](./docs/):
 
+- **[`docs/autopilot-quickstart.md`](./docs/autopilot-quickstart.md)** —
+  production setup for `koru autopilot` (doctor, daemon, plugin, systemd user unit,
+  handoff, audit log, troubleshooting).
 - **[`docs/agent-guide.md`](./docs/agent-guide.md)** — full LLM agent
   workflow guide (originally written for `maskservice/c2004` Windsurf
   agent, generalized for any koru-driven repo). Covers ticket workflow,

@@ -376,6 +376,33 @@ Full suite: **388 passed, 0 regressions** (370 → 388).
 
 Full suite: **393 passed, 8 subtests passed** (388 → 393).
 
+### Changed — Autopilot refactor pass 6: focused-window arbitration (R13)
+
+- **Focused IDE detection (X11)** in `src/koru/autopilot/ide.py`:
+  - `_active_window_pid_x11()` probes `xdotool getactivewindow getwindowpid`
+    with strict fallbacks (`DISPLAY` missing, xdotool absent, timeout,
+    non-numeric output → `None`).
+  - `detect_focused_ide_id()` maps active-window PID to autopilot IDE id
+    via existing process-signature matching.
+  - `focused_ide()` helper resolves focused item from an already detected
+    IDE list.
+- **Target arbitration update:** `pick_target()` now selects in order:
+  1) explicit `--ide` preference, 2) focused IDE (when detectable),
+  3) legacy signature-order fallback.
+- **CLI visibility** in `src/koru/autopilot/cli_command.py`:
+  - `koru autopilot ide-list` marks focused entry with `[focused]`.
+  - `koru autopilot doctor --format json` now includes
+    `"focused_ide": <id|null>`.
+  - text doctor output marks focused IDE in the list.
+
+**Tests added (6):**
+- 5× `tests/test_autopilot_ide.py` (focused id detection, helper mapping,
+  arbitration precedence).
+- 1× `tests/test_autopilot_cli.py` (+ JSON assertion extended) for
+  `[focused]` rendering and `focused_ide` field.
+
+Full suite: **399 passed, 8 subtests passed** (393 → 399).
+
 ### Added — On-change gates triad (wup + regix + testql)
 
 - **New brief section "On-change gates"** — `render_markdown_handoff()`
@@ -563,6 +590,20 @@ Full suite: **393 passed, 8 subtests passed** (388 → 393).
   `deploy:{plan,dry,local,device,diagnose,resume,drift}`.
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
+
+## [0.1.27] - 2026-05-11
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update docs/autopilot-roadmap.md
+- Update docs/cli-examples.md
+
+### Test
+- Update tests/test_scan.py
+
+### Other
+- Update uv.lock
 
 ## [0.1.26] - 2026-05-11
 

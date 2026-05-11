@@ -157,6 +157,38 @@ class TestScanTodoMarkers(unittest.TestCase):
                 self.assertEqual(s.priority, "low")
                 self.assertIn("scan", s.labels)
 
+    def test_respects_koruignore_file_glob(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".koruignore").write_text(".koru_scan_*.py\n")
+            (project / ".koru_scan_probe.py").write_text(
+                "# TODO: a\n# FIXME: b\n# XXX: c\n"
+            )
+            (project / "normal.py").write_text(
+                "# TODO: a\n# FIXME: b\n# XXX: c\n"
+            )
+
+            result = scan_todo_markers(project, min_per_file=3)
+            self.assertEqual(len(result), 1)
+            self.assertIn("normal.py", result[0].title)
+
+    def test_respects_koruignore_directory_prefix(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".koruignore").write_text("generated/\n")
+            generated = project / "generated"
+            generated.mkdir(parents=True)
+            (generated / "noise.py").write_text(
+                "# TODO: a\n# FIXME: b\n# XXX: c\n"
+            )
+            (project / "src.py").write_text(
+                "# TODO: a\n# FIXME: b\n# XXX: c\n"
+            )
+
+            result = scan_todo_markers(project, min_per_file=3)
+            self.assertEqual(len(result), 1)
+            self.assertIn("src.py", result[0].title)
+
 
 class TestScanMissingGates(unittest.TestCase):
     def test_no_suggestions_when_tool_missing(self) -> None:

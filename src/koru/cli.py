@@ -935,331 +935,314 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
 }
 
 
-def main() -> int:
-    raw_args = sys.argv[1:]
-    if raw_args and raw_args[0] in _SUBCOMMANDS:
-        return _SUBCOMMANDS[raw_args[0]](raw_args[1:])
+def _doctor_main(args: argparse.Namespace, raw_args: list[str]) -> int:
+    report = run_diagnostics(args.project)
+    explicit_format = "--format" in raw_args
+    if explicit_format and args.output_format == "json":
+        print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
+    elif explicit_format and args.output_format == "markdown":
+        print(render_doctor_text(report))
+    else:
+        print(render_doctor_text(report))
+    emit_management_event(
+        tool="koru.doctor",
+        action="completed",
+        status="failed" if report.has_failures else "completed",
+        level="error" if report.has_failures else "info",
+        message=", ".join(
+            f"{k}={v}" for k, v in report.summary().items() if v
+        ),
+        queue=args.queue_name,
+        details={"project": str(args.project)},
+    )
+    return 1 if report.has_failures else 0
 
-    args = _build_parser().parse_args(raw_args)
 
-    # Friendliest default: ``koru`` with no action flag emits the
-    # markdown brief. LLM agents pasted into a chat just see the rules.
-    if _is_bare_invocation(args):
-        args.context = True
-        args.output_format = "markdown"
-
-    if args.doctor:
-        report = run_diagnostics(args.project)
-        # Doctor's friendly default is text. We only honour an explicit
-        # --format choice; otherwise text wins regardless of the global
-        # --format default (which is "json" for context).
-        explicit_format = "--format" in raw_args
-        if explicit_format and args.output_format == "json":
-            print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
-        elif explicit_format and args.output_format == "markdown":
-            print(render_doctor_text(report))
-        else:
-            print(render_doctor_text(report))
-        emit_management_event(
-            tool="koru.doctor",
-            action="completed",
-            status="failed" if report.has_failures else "completed",
-            level="error" if report.has_failures else "info",
-            message=", ".join(
-                f"{k}={v}" for k, v in report.summary().items() if v
-            ),
-            queue=args.queue_name,
-            details={"project": str(args.project)},
+def _init_main(args: argparse.Namespace) -> int:
+    try:
+        report = init_project(
+            args.project,
+            from_file=args.from_file,
+            sprint=args.sprint,
+            force=args.force,
         )
-        return 1 if report.has_failures else 0
+    except FileExistsError as exc:
+        print(f"koru init: {exc}")
+        return 1
+    except (FileNotFoundError, ValueError) as exc:
+        print(f"koru init: {exc}")
+        return 2
+    print(f"koru init: ✓ project initialised at {report.project}")
+    print(report.summary())
+    print()
+    print("Next: run `koru` to get the LLM brief, or "
+          "`koru --queue --loop` to drain the starter sprint.")
+    emit_management_event(
+        tool="koru.init",
+        action="completed",
+        status="completed",
+        message=report.summary(),
+        queue=args.queue_name,
+        details={
+            "project": str(args.project),
+            "sprint": args.sprint,
+            "used_starter_pipeline": report.used_starter_pipeline,
+        },
+    )
+    return 0
 
-    if args.init:
-        try:
-            report = init_project(
-                args.project,
-                from_file=args.from_file,
-                sprint=args.sprint,
-                force=args.force,
-            )
-        except FileExistsError as exc:
-            print(f"koru init: {exc}")
-            return 1
-        except (FileNotFoundError, ValueError) as exc:
-            print(f"koru init: {exc}")
-            return 2
-        print(f"koru init: ✓ project initialised at {report.project}")
-        print(report.summary())
-        print()
-        print("Next: run `koru` to get the LLM brief, or "
-              "`koru --queue --loop` to drain the starter sprint.")
-        emit_management_event(
-            tool="koru.init",
-            action="completed",
-            status="completed",
-            message=report.summary(),
-            queue=args.queue_name,
-            details={
-                "project": str(args.project),
-                "sprint": args.sprint,
-                "used_starter_pipeline": report.used_starter_pipeline,
-            },
-        )
-        return 0
 
-    if args.context:
-        ctx = build_context(
-            project=args.project,
-            ticket_id=args.ticket,
-            queue_name=args.queue_name,
-            include_fixtures=getattr(args, "include_fixtures", None),
-        )
-        if args.output_format == "markdown":
-            print(render_markdown_handoff(ctx))
-        else:
-            print(json.dumps(ctx, indent=2, sort_keys=True))
-        return 0
+def _context_main(args: argparse.Namespace) -> int:
+    ctx = build_context(
+        project=args.project,
+        ticket_id=args.ticket,
+        queue_name=args.queue_name,
+        include_fixtures=getattr(args, "include_fixtures", None),
+    )
+    if args.output_format == "markdown":
+        print(render_markdown_handoff(ctx))
+    else:
+        print(json.dumps(ctx, indent=2, sort_keys=True))
+    return 0
 
-    if args.bootstrap:
-        emit_management_event(
-            tool="koru.bootstrap",
-            action="started",
-            status="running",
-            message=str(args.from_file or ""),
-            queue=args.queue_name,
-            details={"project": str(args.project), "sprint": args.sprint},
+
+def _bootstrap_main(args: argparse.Namespace) -> int:
+    emit_management_event(
+        tool="koru.bootstrap",
+        action="started",
+        status="running",
+        message=str(args.from_file or ""),
+        queue=args.queue_name,
+        details={"project": str(args.project), "sprint": args.sprint},
+    )
+    if args.from_file is None:
+        parser = _build_parser()
+        parser.error("--bootstrap requires --from PATH")
+    try:
+        report = import_flat_pipeline(
+            args.from_file,
+            args.project,
+            sprint=args.sprint,
+            overwrite=args.force,
         )
-        if args.from_file is None:
-            parser = _build_parser()
-            parser.error("--bootstrap requires --from PATH")
-        try:
-            report = import_flat_pipeline(
-                args.from_file,
-                args.project,
-                sprint=args.sprint,
-                overwrite=args.force,
-            )
-        except FileExistsError as exc:
-            print(f"koru bootstrap: {exc}")
-            emit_management_event(
-                tool="koru.bootstrap",
-                action="failed",
-                status="failed",
-                level="error",
-                message=str(exc),
-                queue=args.queue_name,
-            )
-            return 1
-        except (FileNotFoundError, ValueError) as exc:
-            print(f"koru bootstrap: {exc}")
-            emit_management_event(
-                tool="koru.bootstrap",
-                action="failed",
-                status="failed",
-                level="error",
-                message=str(exc),
-                queue=args.queue_name,
-            )
-            return 2
-        print("koru bootstrap: ✓ imported")
-        print(report.summary())
+    except FileExistsError as exc:
+        print(f"koru bootstrap: {exc}")
         emit_management_event(
             tool="koru.bootstrap",
-            action="completed",
-            status="completed",
-            message=report.summary(),
+            action="failed",
+            status="failed",
+            level="error",
+            message=str(exc),
             queue=args.queue_name,
-            details={"project": str(args.project), "sprint": args.sprint},
         )
-        return 0
+        return 1
+    except (FileNotFoundError, ValueError) as exc:
+        print(f"koru bootstrap: {exc}")
+        emit_management_event(
+            tool="koru.bootstrap",
+            action="failed",
+            status="failed",
+            level="error",
+            message=str(exc),
+            queue=args.queue_name,
+        )
+        return 2
+    print("koru bootstrap: ✓ imported")
+    print(report.summary())
+    emit_management_event(
+        tool="koru.bootstrap",
+        action="completed",
+        status="completed",
+        message=report.summary(),
+        queue=args.queue_name,
+        details={"project": str(args.project), "sprint": args.sprint},
+    )
+    return 0
 
-    if args.watch:
+
+def _watch_main(args: argparse.Namespace) -> int:
+    emit_management_event(
+        tool="koru.watch",
+        action="started",
+        status="running",
+        message=args.ws_url,
+        queue=args.queue_name,
+    )
+    try:
+        seen = asyncio.run(watch_planfile_events(args.ws_url, max_events=args.max_events))
+    except RuntimeError as exc:
+        print(f"koru watch: {exc}")
         emit_management_event(
             tool="koru.watch",
-            action="started",
-            status="running",
-            message=args.ws_url,
+            action="failed",
+            status="failed",
+            level="error",
+            message=str(exc),
             queue=args.queue_name,
         )
-        try:
-            seen = asyncio.run(watch_planfile_events(args.ws_url, max_events=args.max_events))
-        except RuntimeError as exc:
-            print(f"koru watch: {exc}")
-            emit_management_event(
-                tool="koru.watch",
-                action="failed",
-                status="failed",
-                level="error",
-                message=str(exc),
-                queue=args.queue_name,
-            )
-            return 1
-        emit_management_event(
-            tool="koru.watch",
-            action="completed",
-            status="completed",
-            message=f"seen={seen}",
-            queue=args.queue_name,
-            details={"ws_url": args.ws_url, "seen": seen},
-        )
-        return 0
+        return 1
+    emit_management_event(
+        tool="koru.watch",
+        action="completed",
+        status="completed",
+        message=f"seen={seen}",
+        queue=args.queue_name,
+        details={"ws_url": args.ws_url, "seen": seen},
+    )
+    return 0
 
-    if args.queue:
-        emit_management_event(
-            tool="koru.queue",
-            action="started",
-            status="running",
-            message="loop" if args.loop else "single",
-            queue=args.queue_name,
-            details={
-                "project": str(args.project),
-                "actor": args.actor,
-                "dry_run": args.dry_run,
-                "interactive": args.interactive,
-            },
-        )
-        # Per-run JSONL log under <project>/.planfile/.koru/runs/.
-        # Skip for --dry-run (preserves "dry-run leaves zero trace") and
-        # when the operator passes --no-log.
-        run_log = None
-        if not args.no_log and not args.dry_run:
-            run_log = open_run_log_eagerly(args.project, prefix="queue")
-            run_log.write_header(
-                project=args.project,
-                mode="loop" if args.loop else "single",
-                actor=args.actor,
-                queue_name=args.queue_name,
-                interactive=args.interactive,
-            )
 
-        if args.loop:
-            def _progress(r, i):  # noqa: ANN001 — internal helper
-                ticket = r.ticket_id or "-"
-                kind = r.executor_kind or "-"
-                marker = {
-                    "completed": "✓",
-                    "failed": "✗",
-                    "waiting_input": "⏸",
-                    "idle": "•",
-                    "dry_run": "?",
-                    "unsupported_executor": "!",
-                    "planfile_error": "!",
-                }.get(r.status, "·")
-                print(f"  [{i:>3}] {marker} {r.status:<22} {ticket:<14} ({kind})")
-                if run_log is not None:
-                    run_log.write_iteration(iteration=i, result=r)
-                emit_management_event(
-                    tool="koru.queue",
-                    action="iteration",
-                    status=r.status,
-                    level="error" if r.status in {"failed", "planfile_error"} else "info",
-                    message=r.message,
-                    queue=args.queue_name,
-                    details={
-                        "iteration": i,
-                        "ticket_id": r.ticket_id,
-                        "executor_kind": r.executor_kind,
-                        "exit_code": r.exit_code,
-                    },
-                )
-
-            loop_result = run_planfile_queue_loop(
-                project=args.project,
-                actor=args.actor,
-                queue_name=args.queue_name,
-                interactive=args.interactive,
-                max_iterations=args.max_iterations,
-                progress_callback=_progress,
-            )
-            if run_log is not None:
-                run_log.write_footer(summary=loop_result)
-            print()
-            print(f"koru queue loop: {loop_result.summary()}")
-            if loop_result.completed:
-                print(f"  completed: {', '.join(loop_result.completed)}")
-            if loop_result.failed:
-                print(f"  failed:    {', '.join(loop_result.failed)}")
-            if loop_result.waiting:
-                print(f"  waiting:   {', '.join(loop_result.waiting)}")
-            exit_code = 0 if loop_result.last_status in {
-                "completed", "idle", "waiting_input", "dry_run"
-            } else 1
-            emit_management_event(
-                tool="koru.queue",
-                action="completed" if exit_code == 0 else "failed",
-                status=loop_result.last_status,
-                level="error" if exit_code else "info",
-                message=loop_result.summary(),
-                queue=args.queue_name,
-                details={
-                    "completed": loop_result.completed,
-                    "failed": loop_result.failed,
-                    "waiting": loop_result.waiting,
-                    "iterations": loop_result.iterations,
-                },
-            )
-            return exit_code
-
-        result = run_next_planfile_task(
+def _queue_run_main(args: argparse.Namespace) -> int:
+    emit_management_event(
+        tool="koru.queue",
+        action="started",
+        status="running",
+        message="loop" if args.loop else "single",
+        queue=args.queue_name,
+        details={
+            "project": str(args.project),
+            "actor": args.actor,
+            "dry_run": args.dry_run,
+            "interactive": args.interactive,
+        },
+    )
+    run_log = None
+    if not args.no_log and not args.dry_run:
+        run_log = open_run_log_eagerly(args.project, prefix="queue")
+        run_log.write_header(
             project=args.project,
+            mode="loop" if args.loop else "single",
             actor=args.actor,
-            dry_run=args.dry_run,
             queue_name=args.queue_name,
             interactive=args.interactive,
         )
-        if run_log is not None:
-            run_log.write_iteration(iteration=1, result=result)
-            # Build a one-shot summary so the footer schema matches loop runs.
-            single_summary = type(
-                "SingleSummary",
-                (),
-                {
-                    "iterations": 1,
-                    "completed": (
-                        [result.ticket_id]
-                        if result.status == "completed" and result.ticket_id
-                        else []
-                    ),
-                    "failed": (
-                        [result.ticket_id]
-                        if result.status == "failed" and result.ticket_id
-                        else []
-                    ),
-                    "waiting": (
-                        [result.ticket_id]
-                        if result.status == "waiting_input" and result.ticket_id
-                        else []
-                    ),
-                    "last_status": result.status,
+
+    if args.loop:
+        def _progress(r, i):
+            ticket = r.ticket_id or "-"
+            kind = r.executor_kind or "-"
+            marker = {
+                "completed": "✓",
+                "failed": "✗",
+                "waiting_input": "⏸",
+                "idle": "•",
+                "dry_run": "?",
+                "unsupported_executor": "!",
+                "planfile_error": "!",
+            }.get(r.status, "·")
+            print(f"  [{i:>3}] {marker} {r.status:<22} {ticket:<14} ({kind})")
+            if run_log is not None:
+                run_log.write_iteration(iteration=i, result=r)
+            emit_management_event(
+                tool="koru.queue",
+                action="iteration",
+                status=r.status,
+                level="error" if r.status in {"failed", "planfile_error"} else "info",
+                message=r.message,
+                queue=args.queue_name,
+                details={
+                    "iteration": i,
+                    "ticket_id": r.ticket_id,
+                    "executor_kind": r.executor_kind,
+                    "exit_code": r.exit_code,
                 },
-            )()
-            run_log.write_footer(summary=single_summary)
-        print(
-            f"koru queue: status={result.status} "
-            f"ticket={result.ticket_id or '-'} executor={result.executor_kind or '-'}"
+            )
+
+        loop_result = run_planfile_queue_loop(
+            project=args.project,
+            actor=args.actor,
+            queue_name=args.queue_name,
+            interactive=args.interactive,
+            max_iterations=args.max_iterations,
+            progress_callback=_progress,
         )
-        if result.message:
-            print(result.message)
-        exit_code = 0 if result.status in {"completed", "idle", "waiting_input", "dry_run"} else 1
+        if run_log is not None:
+            run_log.write_footer(summary=loop_result)
+        print()
+        print(f"koru queue loop: {loop_result.summary()}")
+        if loop_result.completed:
+            print(f"  completed: {', '.join(loop_result.completed)}")
+        if loop_result.failed:
+            print(f"  failed:    {', '.join(loop_result.failed)}")
+        if loop_result.waiting:
+            print(f"  waiting:   {', '.join(loop_result.waiting)}")
+        exit_code = 0 if loop_result.last_status in {
+            "completed", "idle", "waiting_input", "dry_run"
+        } else 1
         emit_management_event(
             tool="koru.queue",
             action="completed" if exit_code == 0 else "failed",
-            status=result.status,
+            status=loop_result.last_status,
             level="error" if exit_code else "info",
-            message=result.message,
+            message=loop_result.summary(),
             queue=args.queue_name,
             details={
-                "ticket_id": result.ticket_id,
-                "executor_kind": result.executor_kind,
-                "exit_code": result.exit_code,
-                "dry_run": args.dry_run,
+                "completed": loop_result.completed,
+                "failed": loop_result.failed,
+                "waiting": loop_result.waiting,
+                "iterations": loop_result.iterations,
             },
         )
         return exit_code
 
-    if not args.command:
-        parser = _build_parser()
-        parser.error("--command is required unless --queue is used")
+    result = run_next_planfile_task(
+        project=args.project,
+        actor=args.actor,
+        dry_run=args.dry_run,
+        queue_name=args.queue_name,
+        interactive=args.interactive,
+    )
+    if run_log is not None:
+        run_log.write_iteration(iteration=1, result=result)
+        single_summary = type(
+            "SingleSummary",
+            (),
+            {
+                "iterations": 1,
+                "completed": (
+                    [result.ticket_id]
+                    if result.status == "completed" and result.ticket_id
+                    else []
+                ),
+                "failed": (
+                    [result.ticket_id]
+                    if result.status == "failed" and result.ticket_id
+                    else []
+                ),
+                "waiting": (
+                    [result.ticket_id]
+                    if result.status == "waiting_input" and result.ticket_id
+                    else []
+                ),
+                "last_status": result.status,
+            },
+        )()
+        run_log.write_footer(summary=single_summary)
+    print(
+        f"koru queue: status={result.status} "
+        f"ticket={result.ticket_id or '-'} executor={result.executor_kind or '-'}"
+    )
+    if result.message:
+        print(result.message)
+    exit_code = 0 if result.status in {"completed", "idle", "waiting_input", "dry_run"} else 1
+    emit_management_event(
+        tool="koru.queue",
+        action="completed" if exit_code == 0 else "failed",
+        status=result.status,
+        level="error" if exit_code else "info",
+        message=result.message,
+        queue=args.queue_name,
+        details={
+            "ticket_id": result.ticket_id,
+            "executor_kind": result.executor_kind,
+            "exit_code": result.exit_code,
+            "dry_run": args.dry_run,
+        },
+    )
+    return exit_code
 
+
+def _command_loop_main(args: argparse.Namespace) -> int:
     emit_management_event(
         tool="koru.loop",
         action="started",
@@ -1297,6 +1280,37 @@ def main() -> int:
         details={"failed": [str(item) for item in report.failed]},
     )
     return exit_code
+
+
+def main() -> int:
+    raw_args = sys.argv[1:]
+    if raw_args and raw_args[0] in _SUBCOMMANDS:
+        return _SUBCOMMANDS[raw_args[0]](raw_args[1:])
+
+    args = _build_parser().parse_args(raw_args)
+
+    if _is_bare_invocation(args):
+        args.context = True
+        args.output_format = "markdown"
+
+    if args.doctor:
+        return _doctor_main(args, raw_args)
+    if args.init:
+        return _init_main(args)
+    if args.context:
+        return _context_main(args)
+    if args.bootstrap:
+        return _bootstrap_main(args)
+    if args.watch:
+        return _watch_main(args)
+    if args.queue:
+        return _queue_run_main(args)
+
+    if not args.command:
+        parser = _build_parser()
+        parser.error("--command is required unless --queue is used")
+
+    return _command_loop_main(args)
 
 
 if __name__ == "__main__":
