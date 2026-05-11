@@ -135,30 +135,87 @@ tasks:
     interactive: true
 
   queue:autoloop:
-    desc: 'Continuous intake+execution loop (scan --apply + queue --loop + autopilot drive)'
+    desc: 'Continuous intake+execution loop (scan + queue --loop + idle diagnostics + autopilot drive). See scripts/koru-autoloop.sh header for all env vars.'
     cmds:
       - |
         PROJECT="{{.PROJECT}}" \
         ACTOR="{{.ACTOR}}" \
         QUEUE_NAME="{{.QUEUE_NAME}}" \
+        USE_ALL_QUEUES="{{.USE_ALL_QUEUES}}" \
         MAX_ITERATIONS="{{.MAX_ITERATIONS}}" \
+        MAX_CYCLES="{{.MAX_CYCLES}}" \
         SLEEP_SECONDS="{{.SLEEP_SECONDS}}" \
+        INITIAL_DELAY_SECONDS="{{.INITIAL_DELAY_SECONDS}}" \
         ENABLE_SCAN="{{.ENABLE_SCAN}}" \
-        ENABLE_AUTOPILOT_DRIVE="{{.ENABLE_AUTOPILOT_DRIVE}}" \
+        TICKET_SOURCES="{{.TICKET_SOURCES}}" \
         ENABLE_INTERACTIVE="{{.ENABLE_INTERACTIVE}}" \
+        ENABLE_AUTOPILOT_DRIVE="{{.ENABLE_AUTOPILOT_DRIVE}}" \
+        AUTOPILOT_ACTION="{{.AUTOPILOT_ACTION}}" \
+        AUTOPILOT_IDE="{{.AUTOPILOT_IDE}}" \
+        AUTOPILOT_SUBMIT="{{.AUTOPILOT_SUBMIT}}" \
+        AUTOPILOT_ON_IDLE_ONLY="{{.AUTOPILOT_ON_IDLE_ONLY}}" \
+        AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL="{{.AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL}}" \
         DRIVE_PROMPT="{{.DRIVE_PROMPT}}" \
+        ENABLE_IDLE_DIAGNOSTICS="{{.ENABLE_IDLE_DIAGNOSTICS}}" \
+        IDLE_DIAGNOSTICS_PROFILE="{{.IDLE_DIAGNOSTICS_PROFILE}}" \
+        STRICT_DIAGNOSTICS="{{.STRICT_DIAGNOSTICS}}" \
+        ENABLE_DIAGNOSTIC_TICKETS="{{.ENABLE_DIAGNOSTIC_TICKETS}}" \
+        DIAGNOSTIC_TICKET_QUEUE="{{.DIAGNOSTIC_TICKET_QUEUE}}" \
+        DIAGNOSTIC_TICKET_PRIORITY="{{.DIAGNOSTIC_TICKET_PRIORITY}}" \
+        DIAG_STATE_DIR="{{.DIAG_STATE_DIR}}" \
+        KORU_CMD="{{.KORU_CMD}}" \
+        KORU_PLANFILE_CMD="{{.KORU_PLANFILE_CMD}}" \
+        KORU_PYTHONPATH="{{.KORU_PYTHONPATH}}" \
         bash scripts/koru-autoloop.sh
     vars:
       PROJECT: '{{.PROJECT | default "."}}'
       ACTOR: '{{.ACTOR | default "koru-shell"}}'
       QUEUE_NAME: '{{.QUEUE_NAME | default ""}}'
+      USE_ALL_QUEUES: '{{.USE_ALL_QUEUES | default "false"}}'
       MAX_ITERATIONS: '{{.MAX_ITERATIONS | default "50"}}'
+      MAX_CYCLES: '{{.MAX_CYCLES | default "0"}}'
       SLEEP_SECONDS: '{{.SLEEP_SECONDS | default "120"}}'
+      INITIAL_DELAY_SECONDS: '{{.INITIAL_DELAY_SECONDS | default "0"}}'
       ENABLE_SCAN: '{{.ENABLE_SCAN | default "true"}}'
-      ENABLE_AUTOPILOT_DRIVE: '{{.ENABLE_AUTOPILOT_DRIVE | default "true"}}'
+      TICKET_SOURCES: '{{.TICKET_SOURCES | default "queue"}}'
       ENABLE_INTERACTIVE: '{{.ENABLE_INTERACTIVE | default "false"}}'
+      ENABLE_AUTOPILOT_DRIVE: '{{.ENABLE_AUTOPILOT_DRIVE | default "true"}}'
+      AUTOPILOT_ACTION: '{{.AUTOPILOT_ACTION | default "drive"}}'
+      AUTOPILOT_IDE: '{{.AUTOPILOT_IDE | default "auto"}}'
+      AUTOPILOT_SUBMIT: '{{.AUTOPILOT_SUBMIT | default "true"}}'
+      AUTOPILOT_ON_IDLE_ONLY: '{{.AUTOPILOT_ON_IDLE_ONLY | default "false"}}'
+      AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL: '{{.AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL | default "true"}}'
       DRIVE_PROMPT: '{{.DRIVE_PROMPT | default "continue with the next ticket"}}'
+      ENABLE_IDLE_DIAGNOSTICS: '{{.ENABLE_IDLE_DIAGNOSTICS | default "false"}}'
+      IDLE_DIAGNOSTICS_PROFILE: '{{.IDLE_DIAGNOSTICS_PROFILE | default "quick"}}'
+      STRICT_DIAGNOSTICS: '{{.STRICT_DIAGNOSTICS | default "false"}}'
+      ENABLE_DIAGNOSTIC_TICKETS: '{{.ENABLE_DIAGNOSTIC_TICKETS | default "false"}}'
+      DIAGNOSTIC_TICKET_QUEUE: '{{.DIAGNOSTIC_TICKET_QUEUE | default "default"}}'
+      DIAGNOSTIC_TICKET_PRIORITY: '{{.DIAGNOSTIC_TICKET_PRIORITY | default "high"}}'
+      DIAG_STATE_DIR: '{{.DIAG_STATE_DIR | default ".planfile/.koru/autoloop-diag"}}'
+      KORU_CMD: '{{.KORU_CMD | default "koru"}}'
+      KORU_PLANFILE_CMD: '{{.KORU_PLANFILE_CMD | default "planfile"}}'
+      KORU_PYTHONPATH: '{{.KORU_PYTHONPATH | default ""}}'
     interactive: true
+
+  queue:autoloop:reset-diag-markers:
+    desc: 'Clear autoloop diagnostic dedup markers; optionally close [AUTO-DIAG] tickets. Usage: task queue:autoloop:reset-diag-markers CLOSE_TICKETS=true CHECK=regix'
+    cmds:
+      - |
+        MARKER_DIR="{{.MARKER_DIR}}" \
+        CHECK="{{.CHECK}}" \
+        CLOSE_TICKETS="{{.CLOSE_TICKETS}}" \
+        CLOSE_STATUS="{{.CLOSE_STATUS}}" \
+        KORU_PLANFILE_CMD="{{.KORU_PLANFILE_CMD}}" \
+        KORU_PYTHONPATH="{{.KORU_PYTHONPATH}}" \
+        bash scripts/koru-autoloop-reset-diag-markers.sh
+    vars:
+      MARKER_DIR: '{{.MARKER_DIR | default ".planfile/.koru/autoloop-diag"}}'
+      CHECK: '{{.CHECK | default "all"}}'
+      CLOSE_TICKETS: '{{.CLOSE_TICKETS | default "false"}}'
+      CLOSE_STATUS: '{{.CLOSE_STATUS | default "done"}}'
+      KORU_PLANFILE_CMD: '{{.KORU_PLANFILE_CMD | default "planfile"}}'
+      KORU_PYTHONPATH: '{{.KORU_PYTHONPATH | default ""}}'
 
   # =====================================================================
   # Quality gates (LLM-free, proxies to underlying tools)

@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `scripts/koru-autoloop.sh` rewritten as the canonical unattended loop:
+  supports `TICKET_SOURCES=queue|scan|all`, optional idle diagnostics
+  (regix / wup / redup / testql / redsl / sumr) with `IDLE_DIAGNOSTICS_PROFILE`,
+  `STRICT_DIAGNOSTICS`, `[AUTO-DIAG]` ticket auto-creation with dedup markers,
+  autopilot `drive|handoff|off`, `MAX_CYCLES`, `INITIAL_DELAY_SECONDS`, and
+  source-install overrides (`KORU_CMD`, `KORU_PLANFILE_CMD`, `KORU_PYTHONPATH`).
+  Backward compatible: previous env vars (`PROJECT`, `ACTOR`, `QUEUE_NAME`,
+  `MAX_ITERATIONS`, `SLEEP_SECONDS`, `ENABLE_SCAN`, `ENABLE_AUTOPILOT_DRIVE`,
+  `ENABLE_INTERACTIVE`, `DRIVE_PROMPT`) keep their original semantics.
+- `scripts/koru-autoloop-reset-diag-markers.sh` (+ tiny
+  `scripts/_koru_autodiag_filter_tickets.py` helper) — clears autoloop
+  diagnostic dedup markers and optionally closes matching open `[AUTO-DIAG]`
+  tickets via `planfile ticket update`.
+- New `queue:autoloop:reset-diag-markers` Taskfile entry; `queue:autoloop`
+  extended to expose every new env var with sane defaults.
+
+### Changed
+- Consumer Taskfiles can now replace ~400-line inline autoloop blocks with a
+  thin `bash $KORU_HOME/scripts/koru-autoloop.sh` wrapper driven by env vars.
+
+## [0.1.30] - 2026-05-11
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Other
+- Update Taskfile.yml
+- Update scripts/_koru_autodiag_filter_tickets.py
+- Update scripts/koru-autoloop-reset-diag-markers.sh
+- Update scripts/koru-autoloop.sh
+- Update uv.lock
+
 ## [0.1.10] - 2026-05-11
 
 ### Fixed
