@@ -74,7 +74,7 @@ sprint:
             -q"
 
             '
-      priority: high
+      priority: critical
       sprint: current
       status: done
       updated_at: '2026-05-10T18:10:18.047645+00:00'
@@ -150,7 +150,7 @@ sprint:
         artifacts: []
         notes:
         - 'Fixed: sed changed medium->urgent, test now passes (145/145)'
-      priority: high
+      priority: critical
       sprint: current
       status: done
       updated_at: '2026-05-10T18:12:36.770475+00:00'
@@ -332,7 +332,7 @@ sprint:
           stdout: 'Created tests/e2e/init.sh
 
             '
-      priority: normal
+      priority: critical
       sprint: current
       status: done
       updated_at: '2026-05-10T18:10:21.668347+00:00'
@@ -399,7 +399,7 @@ sprint:
           stdout: 'Entry point already exists
 
             '
-      priority: normal
+      priority: critical
       sprint: current
       status: done
       updated_at: '2026-05-10T18:10:23.475947+00:00'
@@ -471,7 +471,7 @@ sprint:
         artifacts: []
         notes:
         - 'Manually verified: 145 tests passed (PYTHONPATH needed in env, not in handler)'
-      priority: high
+      priority: critical
       sprint: current
       status: done
       updated_at: '2026-05-10T18:12:59.532542+00:00'

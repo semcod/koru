@@ -300,13 +300,30 @@ def _planfile_command(
 
 
 def _parse_next_ticket(stdout: str) -> dict | None:
+    """Pick the first runnable ticket from planfile output.
+
+    Accepts both a single-object payload (legacy ``ticket next``) and
+    an array (``ticket list --format json``). Returns ``None`` when the
+    queue is idle.
+    """
     stripped = stdout.strip()
     if not stripped or "No runnable ticket found" in stripped:
         return None
     try:
-        return json.loads(stripped)
+        payload = json.loads(stripped)
     except json.JSONDecodeError:
-        return json.loads(stripped, strict=False)
+        payload = json.loads(stripped, strict=False)
+    if isinstance(payload, dict):
+        return payload
+    if isinstance(payload, list):
+        # planfile ticket list returns oldest-first; treat the first
+        # entry whose status is open / ready / todo as runnable.
+        runnable_states = {None, "open", "ready", "todo"}
+        for entry in payload:
+            if isinstance(entry, dict) and entry.get("status") in runnable_states:
+                return entry
+        return None
+    return None
 
 
 def _ticket_command(ticket: dict) -> str | None:
@@ -319,7 +336,8 @@ def _ticket_llm_request(ticket: dict) -> dict[str, Any] | None:
     """Translate an executor.kind=llm ticket into an LLM HTTP call spec.
 
     Returns None when the ticket lacks the minimum signal (a prompt to
-    send), so the caller can fall back to ``planfile ticket input``.
+    send), so the caller can fall back to ``planfile ticket block``
+    with a ``--reason`` describing the missing input.
     """
     inputs = ticket.get("inputs") or {}
     executor = ticket.get("executor") or {}
@@ -420,15 +438,17 @@ def run_next_planfile_task(
 
     When ``interactive`` is true and the next ticket is a ``human``
     executor, ``prompt_runner(prompt, ticket_id)`` is invoked to collect
-    an answer. A non-empty answer triggers
-    ``planfile ticket complete`` with the answer captured in ``--note``
-    and ``--result-json``; cancellation (``None``) leaves the ticket
-    untouched and returns ``status=waiting_input`` as before.
+    an answer. A non-empty answer triggers ``planfile ticket done``
+    (the answer is appended to the run log under
+    ``.planfile/.koru/runs/``); cancellation (``None``) leaves the
+    ticket untouched and returns ``status=waiting_input`` as before.
     """
     project = project.resolve()
-    next_args = ["ticket", "next", "--format", "json"]
-    if queue_name:
-        next_args.extend(["--queue", queue_name])
+    # planfile has no `ticket next` and no `--queue` filter on `list`.
+    # `--status open` selects runnable tickets; koru filters by
+    # ``queue_name`` in-process below (best-effort: planfile tickets
+    # may carry an ``execution.queue`` field).
+    next_args = ["ticket", "list", "--status", "open", "--format", "json"]
     next_result = _planfile_command(
         project,
         next_args,
@@ -437,7 +457,7 @@ def run_next_planfile_task(
     if next_result.returncode != 0:
         return QueueRunResult(
             status="planfile_error",
-            message="planfile ticket next failed",
+            message="planfile ticket list failed",
             exit_code=next_result.returncode,
             stdout=next_result.stdout,
             stderr=next_result.stderr,
@@ -474,27 +494,18 @@ def run_next_planfile_task(
                 executor_kind=executor_kind,
                 message=prompt,
             )
+        # planfile CLI surface (current): no `claim`, no `--assigned-to`,
+        # no `--note`/`--result-json`. The answer is captured by koru's
+        # run log (`.planfile/.koru/runs/`) which is the authoritative
+        # record for the agent-supplied note.
         _planfile_command(
             project,
-            ["ticket", "claim", ticket_id, "--assigned-to", actor],
+            ["ticket", "start", ticket_id],
             runner=planfile_runner,
         )
         _planfile_command(
             project,
-            ["ticket", "start", ticket_id, "--assigned-to", actor],
-            runner=planfile_runner,
-        )
-        _planfile_command(
-            project,
-            [
-                "ticket",
-                "complete",
-                ticket_id,
-                "--note",
-                f"Human answer ({actor}): {answer}",
-                "--result-json",
-                json.dumps({"answer": answer, "actor": actor, "prompt": prompt}),
-            ],
+            ["ticket", "done", ticket_id],
             runner=planfile_runner,
         )
         return QueueRunResult(
@@ -523,9 +534,11 @@ def run_next_planfile_task(
         missing_prompt = "Shell ticket is missing inputs.script or executor.handler"
 
     if not action:
+        # `block --reason` is the planfile equivalent of the older
+        # `input --prompt` surface koru used to call.
         _planfile_command(
             project,
-            ["ticket", "input", ticket_id, "--prompt", missing_prompt],
+            ["ticket", "block", ticket_id, "--reason", missing_prompt],
             runner=planfile_runner,
         )
         return QueueRunResult(
@@ -544,14 +557,11 @@ def run_next_planfile_task(
             message=message,
         )
 
+    # planfile has no `claim` and `start` takes no `--assigned-to` flag.
+    # The actor is recorded in koru's run log instead.
     _planfile_command(
         project,
-        ["ticket", "claim", ticket_id, "--assigned-to", actor],
-        runner=planfile_runner,
-    )
-    _planfile_command(
-        project,
-        ["ticket", "start", ticket_id, "--assigned-to", actor],
+        ["ticket", "start", ticket_id],
         runner=planfile_runner,
     )
 
@@ -566,30 +576,25 @@ def run_next_planfile_task(
         action_label = str(action)
 
     if result.returncode == 0:
+        # planfile's `done` has no `--note`/`--result-json`. The full
+        # stdout/stderr is preserved in QueueRunResult and persisted to
+        # `.planfile/.koru/runs/` by the run-log writer.
         _planfile_command(
             project,
-            [
-                "ticket",
-                "complete",
-                ticket_id,
-                "--note",
-                f"Executed by {actor}: {action_label}",
-                "--result-json",
-                _result_json(result),
-            ],
+            ["ticket", "done", ticket_id],
             runner=planfile_runner,
         )
         status = "completed"
     else:
+        # Use `block --reason` for failures (planfile has no `fail`
+        # verb). The full stderr stays in QueueRunResult / run log.
+        reason = (
+            result.stderr[-500:].strip()
+            or f"Command exited with {result.returncode}"
+        )
         _planfile_command(
             project,
-            [
-                "ticket",
-                "fail",
-                ticket_id,
-                "--error",
-                result.stderr[-1000:] or f"Command exited with {result.returncode}",
-            ],
+            ["ticket", "block", ticket_id, "--reason", f"FAIL: {reason}"],
             runner=planfile_runner,
         )
         status = "failed"

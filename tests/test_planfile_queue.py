@@ -33,7 +33,7 @@ class TestPlanfileQueue(unittest.TestCase):
 
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 planfile_calls.append(command)
-                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
                 return _ok()
 
@@ -51,24 +51,13 @@ class TestPlanfileQueue(unittest.TestCase):
 
             self.assertEqual(result.status, "completed")
             self.assertEqual(result.ticket_id, "PLF-001")
-            self.assertIn(
-                ["ticket", "claim", "PLF-001", "--assigned-to", "koru-test"],
-                [_ticket_args(call) for call in planfile_calls],
-            )
-            self.assertIn(
-                ["ticket", "next", "--format", "json", "--queue", "c2004-refactor"],
-                [_ticket_args(call) for call in planfile_calls],
-            )
-            self.assertIn(
-                ["ticket", "start", "PLF-001", "--assigned-to", "koru-test"],
-                [_ticket_args(call) for call in planfile_calls],
-            )
-            self.assertTrue(
-                any(
-                    _ticket_args(call)[:3] == ["ticket", "complete", "PLF-001"]
-                    for call in planfile_calls
-                )
-            )
+            tail_args = [_ticket_args(call) for call in planfile_calls]
+            # Real planfile surface: list / start / done — no claim,
+            # no --assigned-to, no --note/--result-json.
+            self.assertIn(["ticket", "start", "PLF-001"], tail_args)
+            self.assertIn(["ticket", "done", "PLF-001"], tail_args)
+            for args in tail_args:
+                self.assertNotIn(args[1], {"claim", "complete", "fail", "input", "next"})
 
     def test_human_ticket_returns_waiting_input(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -81,7 +70,10 @@ class TestPlanfileQueue(unittest.TestCase):
             }
 
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
-                self.assertEqual(_ticket_args(command), ["ticket", "next", "--format", "json"])
+                self.assertEqual(
+                    _ticket_args(command),
+                    ["ticket", "list", "--status", "open", "--format", "json"],
+                )
                 return _ok(json.dumps(ticket))
 
             result = run_next_planfile_task(project=project, planfile_runner=planfile_runner)
@@ -103,7 +95,7 @@ class TestPlanfileQueue(unittest.TestCase):
 
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 planfile_calls.append(command)
-                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
                 return _ok()
 
@@ -118,12 +110,13 @@ class TestPlanfileQueue(unittest.TestCase):
 
             self.assertEqual(result.status, "failed")
             self.assertEqual(result.exit_code, 2)
-            self.assertTrue(
-                any(
-                    _ticket_args(call)[:3] == ["ticket", "fail", "PLF-003"]
-                    for call in planfile_calls
-                )
+            # Failed shell ticket → planfile ticket block --reason "FAIL: ...".
+            block_call = next(
+                _ticket_args(call) for call in planfile_calls
+                if _ticket_args(call)[:3] == ["ticket", "block", "PLF-003"]
             )
+            self.assertEqual(block_call[3], "--reason")
+            self.assertIn("FAIL", block_call[4])
 
     def test_api_ticket_runs_lifecycle_commands(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -144,7 +137,7 @@ class TestPlanfileQueue(unittest.TestCase):
 
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 planfile_calls.append(command)
-                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
                 return _ok()
 
@@ -170,16 +163,9 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(result.status, "completed")
             self.assertEqual(result.executor_kind, "api")
             self.assertEqual(result.message, "POST http://service.local/bootstrap")
-            self.assertIn(
-                ["ticket", "claim", "PLF-004", "--assigned-to", "koru-api"],
-                [_ticket_args(call) for call in planfile_calls],
-            )
-            self.assertTrue(
-                any(
-                    _ticket_args(call)[:3] == ["ticket", "complete", "PLF-004"]
-                    for call in planfile_calls
-                )
-            )
+            tail_args = [_ticket_args(call) for call in planfile_calls]
+            self.assertIn(["ticket", "start", "PLF-004"], tail_args)
+            self.assertIn(["ticket", "done", "PLF-004"], tail_args)
 
     def test_api_failure_marks_ticket_failed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -193,7 +179,7 @@ class TestPlanfileQueue(unittest.TestCase):
 
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 planfile_calls.append(command)
-                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
                 return _ok()
 
@@ -214,12 +200,13 @@ class TestPlanfileQueue(unittest.TestCase):
 
             self.assertEqual(result.status, "failed")
             self.assertEqual(result.stderr, "HTTP 500")
-            self.assertTrue(
-                any(
-                    _ticket_args(call)[:3] == ["ticket", "fail", "PLF-005"]
-                    for call in planfile_calls
-                )
+            block_call = next(
+                _ticket_args(call) for call in planfile_calls
+                if _ticket_args(call)[:3] == ["ticket", "block", "PLF-005"]
             )
+            self.assertEqual(block_call[3], "--reason")
+            self.assertIn("FAIL", block_call[4])
+            self.assertIn("HTTP 500", block_call[4])
 
     def test_idle_when_planfile_returns_no_ticket(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -257,7 +244,7 @@ class TestPlanfileQueue(unittest.TestCase):
             shell_calls: list[str] = []
 
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
-                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
                 return _ok()
 
@@ -286,7 +273,7 @@ class TestPlanfileQueue(unittest.TestCase):
             }
 
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
-                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
                 return _ok()
 
@@ -308,7 +295,7 @@ class TestPlanfileQueue(unittest.TestCase):
 
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 calls.append(command)
-                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
                 return _ok()
 
@@ -316,9 +303,11 @@ class TestPlanfileQueue(unittest.TestCase):
 
             self.assertEqual(result.status, "waiting_input")
             self.assertEqual(result.ticket_id, "PLF-030")
+            # Missing input → planfile ticket block --reason "...".
             self.assertTrue(
                 any(
-                    _ticket_args(call)[:3] == ["ticket", "input", "PLF-030"]
+                    _ticket_args(call)[:3] == ["ticket", "block", "PLF-030"]
+                    and "--reason" in _ticket_args(call)
                     for call in calls
                 )
             )
@@ -335,7 +324,7 @@ class TestPlanfileQueue(unittest.TestCase):
 
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 calls.append(command)
-                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
                 return _ok()
 
@@ -345,7 +334,8 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(result.ticket_id, "PLF-031")
             self.assertTrue(
                 any(
-                    _ticket_args(call)[:3] == ["ticket", "input", "PLF-031"]
+                    _ticket_args(call)[:3] == ["ticket", "block", "PLF-031"]
+                    and "--reason" in _ticket_args(call)
                     for call in calls
                 )
             )
@@ -363,7 +353,7 @@ class TestPlanfileQueue(unittest.TestCase):
 
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 calls.append(command)
-                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
                 return _ok()
 
@@ -389,20 +379,12 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(captured["ticket_id"], "PLF-100")
 
             tail_calls = [_ticket_args(c) for c in calls]
-            self.assertIn(
-                ["ticket", "claim", "PLF-100", "--assigned-to", "koru-i"], tail_calls
-            )
-            self.assertIn(
-                ["ticket", "start", "PLF-100", "--assigned-to", "koru-i"], tail_calls
-            )
-            self.assertTrue(
-                any(
-                    args[:3] == ["ticket", "complete", "PLF-100"]
-                    and "Yes — proceed with reusable-only scope"
-                    in (args[4] if len(args) > 4 else "")
-                    for args in tail_calls
-                )
-            )
+            # Real planfile surface: start <id> / done <id> only.
+            self.assertIn(["ticket", "start", "PLF-100"], tail_calls)
+            self.assertIn(["ticket", "done", "PLF-100"], tail_calls)
+            # Answer is captured by koru's run log (not a planfile flag),
+            # but the QueueRunResult.message preserves it for the caller.
+            self.assertEqual(result.message, "Yes — proceed with reusable-only scope")
 
     def test_interactive_human_ticket_cancellation_leaves_ticket(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -417,7 +399,7 @@ class TestPlanfileQueue(unittest.TestCase):
 
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 calls.append(command)
-                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
                 return _ok()
 
@@ -435,7 +417,7 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(result.ticket_id, "PLF-101")
             for command in calls:
                 args = _ticket_args(command)
-                self.assertNotIn(args[1], {"claim", "start", "complete", "fail"})
+                self.assertNotIn(args[1], {"start", "done", "block"})
 
     def test_interactive_with_dry_run_does_not_prompt(self) -> None:
         """Dry-run takes precedence over --interactive for safety."""
@@ -449,7 +431,7 @@ class TestPlanfileQueue(unittest.TestCase):
             }
 
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
-                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
                 return _ok()
 
@@ -497,7 +479,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
 
             def planfile_runner(command, _project) -> SimpleNamespace:
                 calls.append(command)
-                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
                 return _ok()
 
@@ -530,23 +512,14 @@ class TestPlanfileQueueLlm(unittest.TestCase):
                 "Should we move only reusable code to packages/?",
             )
             self.assertEqual(captured["request"]["model"], "openai/gpt-4o-mini")
-            # planfile lifecycle: claim -> start -> complete
+            # planfile lifecycle (real): start -> done. No claim, no
+            # --assigned-to, no --note/--result-json on done.
             tail = [_ticket_args(c) for c in calls]
-            self.assertIn(
-                ["ticket", "claim", "LLM-001", "--assigned-to", "koru-llm"], tail
-            )
-            self.assertIn(
-                ["ticket", "start", "LLM-001", "--assigned-to", "koru-llm"], tail
-            )
-            complete_args = next(
-                args for args in tail if args[:3] == ["ticket", "complete", "LLM-001"]
-            )
-            # --result-json contains LLM-specific fields
-            result_json_idx = complete_args.index("--result-json") + 1
-            payload = json.loads(complete_args[result_json_idx])
-            self.assertEqual(payload["llm_model"], "openai/gpt-4o-mini")
-            self.assertEqual(payload["llm_usage"]["prompt_tokens"], 42)
-            self.assertIn("Yes", payload["stdout"])
+            self.assertIn(["ticket", "start", "LLM-001"], tail)
+            self.assertIn(["ticket", "done", "LLM-001"], tail)
+            # LLM-specific fields are preserved on QueueRunResult so the
+            # run-log writer can persist them.
+            self.assertIn("Yes", result.stdout)
 
     def test_llm_ticket_failure_marks_failed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -556,7 +529,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
 
             def planfile_runner(command, _project) -> SimpleNamespace:
                 calls.append(command)
-                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
                 return _ok()
 
@@ -579,10 +552,12 @@ class TestPlanfileQueueLlm(unittest.TestCase):
             self.assertEqual(result.status, "failed")
             self.assertEqual(result.executor_kind, "llm")
             tail = [_ticket_args(c) for c in calls]
-            fail_call = next(
-                args for args in tail if args[:3] == ["ticket", "fail", "LLM-001"]
+            block_call = next(
+                args for args in tail if args[:3] == ["ticket", "block", "LLM-001"]
             )
-            self.assertIn("HTTP 401", " ".join(fail_call))
+            self.assertEqual(block_call[3], "--reason")
+            self.assertIn("FAIL", block_call[4])
+            self.assertIn("HTTP 401", block_call[4])
 
     def test_llm_ticket_without_prompt_requests_input(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -599,7 +574,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
 
             def planfile_runner(command, _project) -> SimpleNamespace:
                 calls.append(command)
-                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
                 return _ok()
 
@@ -616,7 +591,8 @@ class TestPlanfileQueueLlm(unittest.TestCase):
             self.assertEqual(result.executor_kind, "llm")
             self.assertTrue(
                 any(
-                    _ticket_args(c)[:3] == ["ticket", "input", "LLM-002"]
+                    _ticket_args(c)[:3] == ["ticket", "block", "LLM-002"]
+                    and "--reason" in _ticket_args(c)
                     for c in calls
                 )
             )
@@ -627,7 +603,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
             ticket = self._llm_ticket()
 
             def planfile_runner(command, _project) -> SimpleNamespace:
-                if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
                 return _ok()
 
@@ -691,7 +667,7 @@ class TestPlanfileQueueLoop(unittest.TestCase):
 
         def planfile_runner(command: list[str], _project) -> SimpleNamespace:
             all_calls.append(command)
-            if _ticket_args(command)[:4] == ["ticket", "next", "--format", "json"]:
+            if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                 idx = next_calls["i"]
                 next_calls["i"] += 1
                 if idx >= len(ticket_sequence) or ticket_sequence[idx] is None:

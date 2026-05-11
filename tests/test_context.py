@@ -156,9 +156,14 @@ class TestBuildContext(unittest.TestCase):
                 git_probe=_no_git,
             )
             ss = ctx["self_service"]
-            self.assertIn("PLF-100", ss["claim_this"])
-            self.assertIn("PLF-100", ss["complete_this"])
-            self.assertIn("PLF-100", ss["fail_this"])
+            # Real planfile verbs only: start / done / block.
+            self.assertIn("PLF-100", ss["start_this"])
+            self.assertIn("PLF-100", ss["done_this"])
+            self.assertIn("PLF-100", ss["block_this"])
+            self.assertIn("ticket done", ss["done_this"])
+            self.assertIn("ticket block", ss["block_this"])
+            self.assertNotIn("complete", " ".join(ss.values()))
+            self.assertNotIn("claim", " ".join(ss.values()))
 
     def test_brief_is_json_serialisable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

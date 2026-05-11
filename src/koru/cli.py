@@ -23,6 +23,7 @@ from .init import init_project
 from .loop import discover_repositories, run_closed_loop
 from .planfile_queue import run_next_planfile_task, run_planfile_queue_loop
 from .run_log import open_run_log_eagerly
+from .serve import DEFAULT_HOST, DEFAULT_PORT, ServeConfig, serve
 from .tasks import create_nl_task
 from .watch import watch_planfile_events
 
@@ -210,6 +211,48 @@ def _build_task_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _build_serve_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru serve",
+        description=(
+            "Run a local dashboard for koru (live LLM brief, ticket, "
+            "policy, agent lanes). Binds to 127.0.0.1 by default."
+        ),
+    )
+    parser.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
+    parser.add_argument(
+        "--queue-name",
+        default=None,
+        help="Queue used when selecting the active ticket.",
+    )
+    parser.add_argument(
+        "--host",
+        default=DEFAULT_HOST,
+        help=f"Bind address (default {DEFAULT_HOST}).",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=DEFAULT_PORT,
+        help=f"TCP port to listen on (default {DEFAULT_PORT}).",
+    )
+    open_group = parser.add_mutually_exclusive_group()
+    open_group.add_argument(
+        "--open",
+        dest="open_browser",
+        action="store_true",
+        default=True,
+        help="Open the dashboard URL in the default browser (default).",
+    )
+    open_group.add_argument(
+        "--no-open",
+        dest="open_browser",
+        action="store_false",
+        help="Do not open a browser tab; just start the server.",
+    )
+    return parser
+
+
 def _build_agent_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="koru agent",
@@ -263,6 +306,35 @@ def _task_main(argv: list[str]) -> int:
         },
     )
     return 0
+
+
+def _serve_main(argv: list[str]) -> int:
+    args = _build_serve_parser().parse_args(argv)
+    config = ServeConfig(
+        project=args.project.resolve(),
+        host=args.host,
+        port=args.port,
+        open_browser=args.open_browser,
+        queue_name=args.queue_name,
+    )
+    emit_management_event(
+        tool="koru.serve",
+        action="started",
+        status="running",
+        message=f"http://{config.host}:{config.port}/",
+        queue=config.queue_name,
+        details={"project": str(config.project), "open_browser": config.open_browser},
+    )
+    exit_code = serve(config)
+    emit_management_event(
+        tool="koru.serve",
+        action="completed" if exit_code == 0 else "failed",
+        status="completed" if exit_code == 0 else "failed",
+        level="info" if exit_code == 0 else "error",
+        message=f"exit={exit_code}",
+        queue=config.queue_name,
+    )
+    return exit_code
 
 
 def _agent_main(argv: list[str]) -> int:
@@ -324,6 +396,8 @@ def main() -> int:
         return _task_main(raw_args[1:])
     if raw_args and raw_args[0] == "agent":
         return _agent_main(raw_args[1:])
+    if raw_args and raw_args[0] == "serve":
+        return _serve_main(raw_args[1:])
 
     args = _build_parser().parse_args(raw_args)
 

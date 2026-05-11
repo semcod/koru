@@ -154,7 +154,7 @@ tasks:
       1. Run `koru` (no args) and read the markdown brief.
       2. Confirm the policy table shows all gates as `False`.
       3. Confirm `STARTER-001` is the active ticket.
-      4. Run `planfile ticket complete STARTER-001 --note "wired"`.
+      4. Run `planfile ticket done STARTER-001`.
     executor:
       kind: shell
       handler: 'echo "koru is wired"'

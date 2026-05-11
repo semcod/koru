@@ -395,7 +395,7 @@ def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[s
         if policy.ci_command:
             rules.append(
                 f"Before completing a ticket, run `{policy.ci_command}` "
-                "and verify exit code 0. Only then call `planfile ticket complete`."
+                "and verify exit code 0. Only then call `planfile ticket done <id>`."
             )
         else:
             rules.append(
@@ -406,7 +406,8 @@ def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[s
         scope = ", ".join(str(f) for f in ticket["files"][:10])
         rules.append(
             f"Limit edits to the ticket's declared files: {scope}. "
-            "Touching anything else requires `planfile ticket input`."
+            "Touching anything else requires blocking the ticket first "
+            "(`planfile ticket block <id> --reason \"out-of-scope edit needed\"`)."
         )
     # Auto-repair instructions for critical blocking tickets
     if ticket and ticket.get("priority") == "critical":
@@ -415,12 +416,12 @@ def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[s
             "AUTO-REPAIR MODE: Fix this issue immediately to unblock the workflow.",
             "Do NOT ask for human input unless absolutely necessary.",
             "Use all available tools and knowledge to resolve the blocking issue.",
-            "After fixing, immediately call `planfile ticket complete` to continue."
+            "After fixing, immediately call `planfile ticket done <id>` to continue."
         ])
     else:
         rules.append(
             "If you are blocked or need a human decision, call "
-            "`planfile ticket input <id> --prompt \"<question>\"` and stop."
+            "`planfile ticket block <id> --reason \"<question>\"` and stop."
         )
     rules.extend(policy.notes)
     return rules
@@ -448,16 +449,14 @@ def _build_self_service(
     base = "planfile ticket"
     block: dict[str, Any] = {
         "next_brief": "koru --project .",
+        "list_open": f"{base} list --status open --format json",
         "show_ticket": f"{base} show <id> --format json",
-        "request_input": f"{base} input <id> --prompt \"<question>\"",
-        "fail_ticket": f"{base} fail <id> --error \"<reason>\"",
+        "block_for_input": f"{base} block <id> --reason \"<question or blocker>\"",
     }
     if tid:
-        block["claim_this"] = f"{base} claim {tid} --assigned-to <agent>"
-        block["start_this"] = f"{base} start {tid} --assigned-to <agent>"
-        block["complete_this"] = f"{base} complete {tid} --note \"<summary>\""
-        block["fail_this"] = f"{base} fail {tid} --error \"<reason>\""
-        block["input_this"] = f"{base} input {tid} --prompt \"<question>\""
+        block["start_this"] = f"{base} start {tid}"
+        block["done_this"] = f"{base} done {tid}"
+        block["block_this"] = f"{base} block {tid} --reason \"<question or blocker>\""
     if policy.ci_command:
         block["verify_ci"] = policy.ci_command
     return block
@@ -496,6 +495,7 @@ def render_markdown_handoff(context: dict[str, Any]) -> str:
     markers = project_env.get("markers") or {}
     agents = env.get("llm_agents") or []
     recommended = env.get("recommended_agent") or {}
+    semcod_tools = env.get("semcod_tools") or []
 
     lines.append("## Detected environment")
     lines.append("")
@@ -526,6 +526,35 @@ def render_markdown_handoff(context: dict[str, Any]) -> str:
             "No known LLM/IDE lanes detected. Paste this handoff into your preferred agent."
         )
     lines.append("")
+
+    # Available semcod tools — installed CLIs / libraries from the
+    # semcod ecosystem the LLM may invoke directly. The brief lists
+    # them up-front so the agent never has to guess `which goal` /
+    # `pip show pfix` to find out what's reachable.
+    if semcod_tools:
+        installed = [t for t in semcod_tools if t.get("available")]
+        missing = [t for t in semcod_tools if not t.get("available")]
+        lines.append("## Available semcod tools")
+        lines.append("")
+        if installed:
+            lines.append("| tool | via | role | command |")
+            lines.append("| --- | --- | --- | --- |")
+            for tool in installed:
+                cfg = " (configured)" if tool.get("config_present") else ""
+                lines.append(
+                    f"| `{tool.get('id')}` | `{tool.get('via')}`{cfg} | "
+                    f"{tool.get('role', '')} | `{tool.get('command_hint', '')}` |"
+                )
+        else:
+            lines.append("_No semcod tools detected on this machine._")
+        if missing:
+            lines.append("")
+            missing_ids = ", ".join(f"`{t.get('id')}`" for t in missing)
+            lines.append(
+                f"_Not installed: {missing_ids}. Install with `pip install <name>` "
+                "or skip — koru will not invoke them automatically._"
+            )
+        lines.append("")
 
     if not initialised:
         lines.append("## ⚠ Setup required")
@@ -582,7 +611,7 @@ def render_markdown_handoff(context: dict[str, Any]) -> str:
         lines.append(
             "These packages run automatically (or on demand via "
             "`/koru-gate`) to detect regressions BEFORE you call "
-            "`planfile ticket complete`. See "
+            "`planfile ticket done <id>`. See "
             "`workflows/on-change-gates.md` for the full cycle."
         )
         lines.append("")
@@ -645,6 +674,27 @@ def render_markdown_handoff(context: dict[str, Any]) -> str:
     lines.append("- **add_nl_task**: `koru task \"Describe the next change\"`")
     lines.append("- **agent_prompt**: `koru agent`")
     lines.append("- **launch_agent**: `koru agent --launch`")
+    lines.append("")
+
+    lines.append("## Dashboard")
+    lines.append("")
+    lines.append(
+        "Uruchom lokalny dashboard koru z automatycznym otwarciem "
+        "zakładki w przeglądarce:"
+    )
+    lines.append("")
+    lines.append("```bash")
+    lines.append("koru serve                        # http://127.0.0.1:8765 + auto-open tab")
+    lines.append("koru serve --port 9000            # custom port")
+    lines.append("koru serve --no-open              # start server, don't open browser")
+    lines.append("```")
+    lines.append("")
+    lines.append(
+        "Dashboard auto-odświeża co 5 s i pokazuje aktywny ticket, "
+        "policy, agent lanes oraz on-change gates. Endpointy: "
+        "`/api/context` (JSON), `/api/handoff` (markdown brief), "
+        "`/health`."
+    )
     lines.append("")
 
     return "\n".join(lines)

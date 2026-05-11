@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from .runtime import runtime_dir
+from .semcod_tools import detect_semcod_tools
 
 
 @dataclass(frozen=True)
@@ -162,10 +163,12 @@ def detect_agent_environment(project: Path) -> dict[str, Any]:
     """Combined environment block embedded in the LLM handoff."""
     agents = detect_agent_options(project)
     recommended = next((agent for agent in agents if agent.available), None)
+    semcod_tools = detect_semcod_tools(project)
     return {
         "project": detect_project_environment(project),
         "llm_agents": [agent.to_dict() for agent in agents],
         "recommended_agent": recommended.to_dict() if recommended else None,
+        "semcod_tools": [tool.to_dict() for tool in semcod_tools],
     }
 
 
