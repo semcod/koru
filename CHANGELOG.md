@@ -157,6 +157,90 @@ Full suite: **365 passed, 0 regressions.** Real-world smoke confirms
 (overridden), `jetbrains → ctrl+Return` (default kept), `custom_ide →
 alt+Return` (new IDE accepted), `unknown_ide → Return` (fallback).
 
+### Changed — Autopilot refactor pass 4 + Phase 2.1 (VSIX packaging)
+
+- **R6 / CLI dispatch table** — the eight-branch `if/elif` ladder in
+  `koru.cli.main` for subcommand routing (`task`, `agent`, `serve`,
+  `scan`, `gate`, `queue`, `gc`, `autopilot`) is replaced with a
+  single `_SUBCOMMANDS: dict[str, Callable[[list[str]], int]]`.
+  Adding a new subcommand is now one line.
+- **`TestSubcommandDispatch`** (5 tests + 8 subtests) — table-completeness,
+  per-subcommand routing, fall-through to argparse, bare invocation
+  doesn't trigger any handler.
+
+#### Added — Phase 2.1: VS Code extension packaging
+
+- **`npm run package`** — produces an installable `.vsix`
+  (`koru-autopilot-0.1.0.vsix`, 12.8 KB) via `@vscode/vsce`.
+  `vscode:prepublish` runs `npm run compile` automatically.
+- **Package metadata** — `repository`, `bugs`, `homepage`, `keywords`.
+- **`.vscodeignore`** trims the VSIX to the minimum runtime payload.
+- **`LICENSE`** copied from repo root.
+- **`plugins/koru-autopilot-vscode/CHANGELOG.md`** added.
+- **README** rewritten with VSIX install recipe for Windsurf / VS Code / Cursor.
+
+Verified end-to-end:
+```
+$ npm run package
+   Packaged: koru-autopilot-0.1.0.vsix (8 files, 12.79 KB)
+$ windsurf --install-extension koru-autopilot-0.1.0.vsix
+   Extension 'koru-autopilot-0.1.0.vsix' was successfully installed.
+$ windsurf --list-extensions | grep koru
+   semcod.koru-autopilot-vscode
+```
+
+Full suite: **370 passed, 0 regressions** (365 → 370).
+
+### Added — Phase 2 wave 2: handoff + audit log + tail (P2.5, P2.7, P2.8)
+
+- **`koru autopilot handoff`** (P2.5) — one-shot "build the koru brief
+  for `--project` and type it into the IDE chat". Internally lazy-imports
+  `koru.context.build_context` + `render_markdown_handoff`, then calls
+  `AutopilotClient.drive`. Flags: `--project`, `--ide`, `--no-submit`,
+  `--dry-run`. Returns a JSON summary (`{ok, chars, ide, submit, backend}`).
+- **Persistent audit log** (P2.7) — new module
+  `src/koru/autopilot/audit.py` ships `AuditLog`, `default_log_path()`,
+  rotation constants. Every meaningful event is appended as one
+  NDJSON line to `$XDG_STATE_HOME/koru/autopilot.log` (defaults to
+  `~/.local/state/koru/autopilot.log`). Rotation at 10 MiB × 5 backups
+  via `logging.handlers.RotatingFileHandler`. Permissions locked down
+  to `0600` on the file and `0700` on the directory.
+- **Events recorded:** `daemon_started`, `daemon_stopped`,
+  `plugin_connected`, `drive` (with `ide`/`backend`/`chars`/`submit`/`ok`,
+  plus `error` on failure), `handoff` (with `chat`/`reason`/`chars`),
+  `shutdown`.
+- **`koru autopilot tail`** (P2.8) — pretty-prints the last N audit
+  entries. Flags: `-n/--lines` (default 20), `--log` (override path),
+  `--format {text,json}`. Text rendering surfaces `ide`, `backend`,
+  `chars`, `submit`, `ok`, `chat`, `reason`. JSON dumps the full
+  parsed array. Gracefully skips malformed lines.
+- **Daemon CLI wiring** — `koru autopilot daemon` now constructs an
+  `AuditLog(enabled=True)` by default and prints the log path on
+  startup so the operator knows where to look.
+
+**Tests added (18):**
+- 10× `tests/test_autopilot_audit.py` — NDJSON shape, `None`-drop,
+  file/dir permissions, `XDG_STATE_HOME` honoured, ordering, rotation,
+  `enabled=False` no-op, unwritable directory silently disables.
+- 8× `tests/test_autopilot_cli.py` — `handoff --dry-run`, daemon-not-running
+  guard, happy-path drive forwarding; `tail` text + JSON + `-n` limit +
+  missing log + malformed lines.
+
+**Real-world smoke (maintainer's machine):**
+```
+$ koru autopilot daemon --project ~/github/semcod/koru
+   koru autopilot daemon: audit log at /home/tom/.local/state/koru/autopilot.log
+   koru autopilot daemon: handoff enabled for project=...
+$ koru autopilot handoff --dry-run
+   # koru handoff — /home/tom/github/semcod/koru
+   ...
+$ koru autopilot tail -n 10
+   2026-05-11T16:35:55Z  daemon_started  socket=/tmp/...  handoff=True
+   2026-05-11T16:36:05Z  drive  ide=windsurf  backend=keyboard  chars=5388  ok=False
+```
+
+Full suite: **388 passed, 0 regressions** (370 → 388).
+
 ### Added — On-change gates triad (wup + regix + testql)
 
 - **New brief section "On-change gates"** — `render_markdown_handoff()`
@@ -344,6 +428,21 @@ alt+Return` (new IDE accepted), `unknown_ide → Return` (fallback).
   `deploy:{plan,dry,local,device,diagnose,resume,drift}`.
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
+
+## [0.1.24] - 2026-05-11
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update docs/autopilot-quickstart.md
+- Update docs/autopilot-roadmap.md
+
+### Test
+- Update tests/test_autopilot_audit.py
+- Update tests/test_autopilot_cli.py
+
+### Other
+- Update uv.lock
 
 ## [0.1.23] - 2026-05-11
 

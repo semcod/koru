@@ -119,16 +119,34 @@ nohup koru autopilot daemon --project "$(pwd)" >/tmp/koru-autopilot.log 2>&1 &
 The plugin makes injection 100 % reliable (no focus-stealing race) and
 emits `session.ended` events that drive the auto-handoff.
 
+#### Fastest path — install a pre-built `.vsix`
+
 ```bash
 cd plugins/koru-autopilot-vscode
-npm install
-npm run compile
+npm install            # one-time
+npm run package        # produces koru-autopilot-0.1.0.vsix (~13 KB)
 
-# load it without packaging:
-code --extensionDevelopmentPath="$(pwd)"
-# or for Windsurf / Cursor:
+# install into whichever editor you use:
+windsurf --install-extension koru-autopilot-0.1.0.vsix
+code     --install-extension koru-autopilot-0.1.0.vsix
+cursor   --install-extension koru-autopilot-0.1.0.vsix
+```
+
+Verify:
+
+```bash
+windsurf --list-extensions | grep koru
+# → semcod.koru-autopilot-vscode
+```
+
+#### Alternative — run from source (no packaging)
+
+```bash
+cd plugins/koru-autopilot-vscode
+npm install && npm run compile
+code     --extensionDevelopmentPath="$(pwd)"
 windsurf --extensionDevelopmentPath="$(pwd)"
-cursor --extensionDevelopmentPath="$(pwd)"
+cursor   --extensionDevelopmentPath="$(pwd)"
 ```
 
 A status bar item `🔌 koru: on` appears in the bottom-right when the
@@ -251,7 +269,38 @@ koru autopilot doctor                # backend availability
 koru autopilot doctor --format json  # machine-readable
 
 koru autopilot shutdown              # ask the daemon to stop
+
+# P2.5 — one-shot brief injection (build koru brief + type into chat)
+koru autopilot handoff               # uses cwd as project
+koru autopilot handoff --project ~/path/to/repo --ide windsurf
+koru autopilot handoff --dry-run     # print the brief, don't drive
+
+# P2.7/P2.8 — persistent audit log
+koru autopilot tail                  # last 20 entries, human-readable
+koru autopilot tail -n 100           # more entries
+koru autopilot tail --format json    # machine-readable
 ```
+
+## Audit log
+
+Every injection request, plugin handshake, handoff, and shutdown is
+appended as one NDJSON line to
+`$XDG_STATE_HOME/koru/autopilot.log` (defaults to
+`~/.local/state/koru/autopilot.log`). The file is `0600`, the
+directory is `0700`, and the file rotates at 10 MiB with 5 archived
+backups.
+
+Example entry:
+
+```json
+{"ts":"2026-05-11T18:36:05.327Z","event":"drive","ide":"windsurf",
+ "backend":"plugin","chars":29,"submit":true,"ok":true}
+```
+
+`koru autopilot tail` is the convenience renderer — use `--format json`
+if you'd rather pipe to `jq`. The schema is append-only, so future
+fields land alongside the existing ones without breaking old tail
+output.
 
 ## Configuration (`~/.config/koru/autopilot.toml`)
 

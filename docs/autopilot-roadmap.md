@@ -34,14 +34,14 @@ contexts.
 
 | #     | Item                                                                                                                                                                                                                                                                                                                | Effort | Risk  |
 |-------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|-------|
-| P2.1  | **Compile + package the VS Code extension to a `.vsix`.** Add `npm run package` (uses `vsce`), commit a `package-lock.json`, document `code --install-extension koru-autopilot-0.1.0.vsix`.                                                                                                                        | S      | low   |
+| P2.1 ✅ | **Compile + package the VS Code extension to a `.vsix`.** Done: `npm run package` builds a 12.8 KB `.vsix` (LICENSE + readme + changelog + compiled JS + manifest). Verified install via `windsurf --install-extension koru-autopilot-0.1.0.vsix` → `semcod.koru-autopilot-vscode` listed by `windsurf --list-extensions`.                                                                                                                                                                                                                                                                                                                | S      | low   |
 | P2.2  | **Auto-publish the VSIX as a GitHub release asset** on every koru tag. Workflow under `.github/workflows/release-vsix.yml`.                                                                                                                                                                                          | S      | low   |
 | P2.3  | **Emit real `session.ended` from the VS Code extension.** Currently we connect & paste; we don't hook the chat lifecycle yet. Use `vscode.chat.onDidEndSession` (Copilot Chat ≥ 1.93) and the Cascade-specific event in Windsurf (TBD via reverse-eng or extension API request).                                    | M      | med   |
 | P2.4  | **Capture the LLM reply text** (read-side). Phase 4 in the design doc — pulled forward to Phase 2 because it unblocks the closed loop. Requires reading from the chat document via `vscode.workspace.openTextDocument(chatUri)` or similar.                                                                          | L      | high  |
-| P2.5  | **Plugin-side `koru autopilot handoff` shortcut.** Equivalent to `koru --context --format markdown \| koru autopilot drive`. Mentioned in the design doc but not wired yet.                                                                                                                                          | S      | low   |
+| P2.5 ✅ | ~~**Plugin-side `koru autopilot handoff` shortcut.**~~ Done: new `handoff` action builds the koru brief via `koru.context.build_context` and pipes through `client.drive`. Supports `--project`, `--ide`, `--no-submit`, `--dry-run`.                                                                              | S      | low   |
 | P2.6  | **systemd `--user` unit** for the daemon so it survives reboots without a babysitter terminal. Ship `systemd/koru-autopilot.service` + `task autopilot:install-unit`.                                                                                                                                                | S      | low   |
-| P2.7  | **Persistent audit log** under `~/.local/state/koru/autopilot.log` with 10 MiB rotation (design doc promises this). Use `logging.handlers.RotatingFileHandler`.                                                                                                                                                      | S      | low   |
-| P2.8  | **`koru autopilot tail`** subcommand that streams the audit log.                                                                                                                                                                                                                                                    | S      | low   |
+| P2.7 ✅ | ~~**Persistent audit log**~~ Done: NDJSON log at `$XDG_STATE_HOME/koru/autopilot.log` (defaults to `~/.local/state/koru/autopilot.log`), `0600` file / `0700` directory, rotated at 10 MiB with 5 backups via `RotatingFileHandler`. Events: `daemon_started`, `daemon_stopped`, `plugin_connected`, `drive`, `handoff`, `shutdown`. | S      | low   |
+| P2.8 ✅ | ~~**`koru autopilot tail`** subcommand that streams the audit log.~~ Done: text + JSON output, `-n` limit, graceful handling of missing files and malformed lines.                                                                                                                                                  | S      | low   |
 
 ---
 
@@ -102,12 +102,14 @@ subsystem reaches "stable" status.
 1. ~~**R1, R2** (mechanical cleanups), **R9** (split _handle_drive), **R10/R14** (extension): done in refactor pass 1.~~
 2. ~~**R3, R4, R5** (small wins), **R12** (protocol schema cap): done in refactor pass 2.~~
 3. ~~**R7** (TOML config for submit keymap): done in refactor pass 3.~~
-4. **R6** (CLI dispatch table) — pick up when next touching `koru.cli`.
+4. ~~**R6** (CLI dispatch table): done in refactor pass 4.~~
 5. ~~**R8** (clipboard race)~~ — partial fix landed; long-term move to `vscode.chat.sendMessage` still open.
 6. **R11** (peercred test) — only security gap visible in CI today; do after protocol stabilises.
 7. **R13** (focused-window arbitration) — pick up after plugin coverage is universal.
 
-**Status snapshot:** 10/14 refactor items shipped (R1, R2, R3, R4, R5, R7, R9, R10, R12, R14 ✅; R8 🟡). Remaining: R6, R11, R13.
+**Status snapshot:** 11/14 refactor items shipped (R1, R2, R3, R4, R5, R6, R7, R9, R10, R12, R14 ✅; R8 🟡). Remaining: R11, R13.
+
+Phase 2 progress: **P2.1, P2.5, P2.7, P2.8 ✅** shipped (VSIX builds + installs in Windsurf; `handoff` one-shot; audit log; `tail` renderer). Phase 2 still needs P2.2 (CI release), P2.3 (real `session.ended`), P2.4 (capture reply), P2.6 (systemd unit).
 
 ---
 

@@ -37,6 +37,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from . import default_socket_path
+from .audit import AuditLog
 from .ide import detect_running_ides_cached as detect_running_ides
 from .ide import pick_target
 from .injector import Injector, InjectorError
@@ -139,10 +140,14 @@ class AutopilotDaemon:
         handoff: HandoffBuilder | None = None,
         project: Path | None = None,
         handoff_cooldown: float = 2.0,
+        audit: AuditLog | None = None,
     ) -> None:
         self.socket_path = socket_path or default_socket_path()
         self.injector = injector or Injector()
         self.log = log or (lambda _msg: None)
+        # Optional persistent audit log (P2.7). ``None`` keeps the
+        # current behaviour (logging only via ``self.log``).
+        self.audit = audit or AuditLog(enabled=False)
         # Handoff is opt-in: callers must either pass ``project`` (to get
         # the default koru-brief builder) or a custom ``handoff`` callable.
         # Tests use the callable form; the CLI wires ``project`` from
@@ -182,6 +187,11 @@ class AutopilotDaemon:
         self._server = srv
         self._sel.register(srv, selectors.EVENT_READ, data="server")
         self.log(f"koru autopilot daemon: listening on {path}")
+        self.audit.record(
+            "daemon_started",
+            socket=str(path),
+            handoff=self.handoff is not None,
+        )
 
     def serve_forever(self) -> None:
         """Block until :meth:`stop` is called."""
@@ -219,6 +229,8 @@ class AutopilotDaemon:
         except OSError:
             pass
         self.log("koru autopilot daemon: stopped")
+        self.audit.record("daemon_stopped")
+        self.audit.close()
 
     # ----- selector callbacks --------------------------------------------
 
@@ -341,6 +353,10 @@ class AutopilotDaemon:
         self._send(plugin, chat_send(text, submit=submit, id=corr).encode())
         self._last_chat_send_at = time.monotonic()
         self.log(f"drive → plugin/{plugin.ide} ({len(text)} chars)")
+        self.audit.record(
+            "drive", ide=plugin.ide, backend="plugin",
+            chars=len(text), submit=submit, ok=True,
+        )
 
     def _drive_via_keyboard(
         self,
@@ -359,6 +375,10 @@ class AutopilotDaemon:
         except InjectorError as exc:
             self._send(client, error(msg.id, str(exc)).encode())
             self.log(f"drive failed: {exc}")
+            self.audit.record(
+                "drive", ide=target_id, backend="keyboard",
+                chars=len(text), submit=submit, ok=False, error=str(exc),
+            )
             return
         info: dict[str, Any] = {"backend": result.backend, "submitted": result.submitted}
         if target is not None:
@@ -368,6 +388,10 @@ class AutopilotDaemon:
             f"drive → {target_id} via {result.backend} "
             f"({len(text)} chars, submit={submit})"
         )
+        self.audit.record(
+            "drive", ide=target_id, backend=result.backend,
+            chars=len(text), submit=submit, ok=True,
+        )
 
     def _handle_hello(self, client: _Client, msg: Message) -> None:
         ide = msg.data.get("ide")
@@ -376,8 +400,14 @@ class AutopilotDaemon:
             return
         client.role = "plugin"
         client.ide = ide
-        self.log(f"plugin connected: ide={ide} version={msg.data.get('version')!r}")
+        version = msg.data.get("version")
+        self.log(f"plugin connected: ide={ide} version={version!r}")
         self._send(client, ack(msg.id or "", info={"role": "plugin"}).encode())
+        self.audit.record(
+            "plugin_connected",
+            ide=ide,
+            version=version if isinstance(version, str) else None,
+        )
 
     def _handle_status(self, client: _Client, msg: Message) -> None:
         plugins = [
@@ -451,10 +481,15 @@ class AutopilotDaemon:
         ack_info["chars"] = len(text)
         self._send(client, ack(msg.id or "session-event", info=ack_info).encode())
         self.log(f"handoff → plugin/{client.ide} ({len(text)} chars)")
+        self.audit.record(
+            "handoff", ide=client.ide, chat=chat,
+            reason=reason or None, chars=len(text), ok=True,
+        )
 
     def _handle_shutdown(self, client: _Client, msg: Message) -> None:
         self._send(client, ack(msg.id or "shutdown", info={"stopping": True}).encode())
         self.log("shutdown requested via socket")
+        self.audit.record("shutdown", source="socket")
         self.stop()
 
     def _handle_ping(self, client: _Client, msg: Message) -> None:

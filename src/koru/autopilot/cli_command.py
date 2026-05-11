@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 from . import default_socket_path
+from .audit import AuditLog, default_log_path
 from .client import AutopilotClient
 from .daemon import AutopilotDaemon
 from .ide import detect_running_ides
@@ -107,6 +108,56 @@ def _build_parser() -> argparse.ArgumentParser:
         default="text",
         help="Output format (default: text).",
     )
+
+    handoff = sub.add_parser(
+        "handoff",
+        help="Build the koru brief for --project and type it into the IDE chat.",
+    )
+    handoff.add_argument(
+        "--project",
+        type=Path,
+        default=Path.cwd(),
+        help="Project root used to build the brief (default: cwd).",
+    )
+    handoff.add_argument(
+        "--ide",
+        default="auto",
+        choices=("auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"),
+        help="Target IDE (default: auto-detect the focused one).",
+    )
+    handoff.add_argument(
+        "--no-submit",
+        dest="submit",
+        action="store_false",
+        help="Type the brief but do not press the submit key.",
+    )
+    handoff.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the brief and exit; do not contact the daemon.",
+    )
+
+    tail = sub.add_parser(
+        "tail",
+        help="Pretty-print the persistent audit log (P2.7/P2.8).",
+    )
+    tail.add_argument(
+        "-n", "--lines", type=int, default=20,
+        help="Number of trailing entries to show (default: 20).",
+    )
+    tail.add_argument(
+        "--log",
+        type=Path,
+        default=None,
+        help=f"Log file path (default: {default_log_path()}).",
+    )
+    tail.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format (default: text).",
+    )
     return parser
 
 
@@ -124,12 +175,16 @@ def _action_daemon(args: argparse.Namespace) -> int:
             print(f"koru autopilot: daemon already running on {socket_path}")
             return 0
     project = args.project.resolve() if args.handoff else None
+    audit = AuditLog(enabled=True)
     daemon = AutopilotDaemon(
         socket_path=socket_path,
         log=print,
         project=project,
         handoff_cooldown=args.handoff_cooldown,
+        audit=audit,
     )
+    if audit.enabled:
+        print(f"koru autopilot daemon: audit log at {audit.path}")
     try:
         daemon.start()
     except (OSError, RuntimeError) as exc:
@@ -250,6 +305,98 @@ def _action_doctor(args: argparse.Namespace) -> int:
     return 0 if selected else 1
 
 
+def _build_brief(project: Path) -> str:
+    """Build the koru markdown brief for ``project``.
+
+    Imported lazily so ``autopilot doctor`` / ``ide-list`` don't drag
+    in the heavy ``context`` stack on every CLI invocation.
+    """
+    from ..context import build_context, render_markdown_handoff
+
+    ctx = build_context(project=project)
+    return render_markdown_handoff(ctx)
+
+
+def _action_handoff(args: argparse.Namespace) -> int:
+    """P2.5: build the koru brief and pipe it through ``drive``."""
+    project = args.project.resolve()
+    try:
+        brief = _build_brief(project)
+    except Exception as exc:  # pragma: no cover — surfaces context errors
+        print(f"koru autopilot handoff: {exc}", file=sys.stderr)
+        return 1
+    if not brief.strip():
+        print("koru autopilot handoff: empty brief, refusing to drive", file=sys.stderr)
+        return 1
+    if args.dry_run:
+        print(brief)
+        return 0
+    client = _client(args)
+    if not client.is_running():
+        print(
+            "koru autopilot handoff: daemon not running. "
+            "Start it with `koru autopilot daemon`.",
+            file=sys.stderr,
+        )
+        return 2
+    try:
+        reply = client.drive(brief, submit=args.submit, ide=args.ide)
+    except (OSError, RuntimeError) as exc:
+        print(f"koru autopilot handoff: {exc}", file=sys.stderr)
+        return 1
+    summary = {
+        "ok": reply.get("ok", False),
+        "chars": len(brief),
+        "ide": args.ide,
+        "submit": args.submit,
+        "backend": reply.get("backend") or ("plugin" if reply.get("delivered") else "?"),
+    }
+    print(json.dumps(summary, indent=2, sort_keys=True))
+    return 0 if reply.get("ok", True) else 1
+
+
+def _format_tail_entry(entry: dict) -> str:
+    """Render one audit-log line as a single text row."""
+    ts = entry.get("ts", "?")
+    event = entry.get("event", "?")
+    parts = [ts, event]
+    for key in ("ide", "backend", "chars", "submit", "ok", "chat", "reason",
+                "version", "source", "socket", "handoff", "error"):
+        if key in entry and entry[key] is not None:
+            parts.append(f"{key}={entry[key]}")
+    return "  ".join(str(p) for p in parts)
+
+
+def _action_tail(args: argparse.Namespace) -> int:
+    """P2.8: dump the last ``--lines`` audit entries."""
+    log_path = args.log or default_log_path()
+    if not log_path.is_file():
+        print(f"koru autopilot tail: no log at {log_path}", file=sys.stderr)
+        return 1
+    try:
+        raw = log_path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError as exc:
+        print(f"koru autopilot tail: {exc}", file=sys.stderr)
+        return 1
+    tail = raw[-args.lines:] if args.lines > 0 else raw
+    if args.output_format == "json":
+        parsed = []
+        for line in tail:
+            try:
+                parsed.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+        print(json.dumps(parsed, indent=2, sort_keys=True))
+        return 0
+    for line in tail:
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        print(_format_tail_entry(entry))
+    return 0
+
+
 _ACTIONS = {
     "daemon": _action_daemon,
     "drive": _action_drive,
@@ -257,6 +404,8 @@ _ACTIONS = {
     "shutdown": _action_shutdown,
     "ide-list": _action_ide_list,
     "doctor": _action_doctor,
+    "handoff": _action_handoff,
+    "tail": _action_tail,
 }
 
 
