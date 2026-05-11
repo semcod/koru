@@ -1,0 +1,142 @@
+"""Tests for the injection backend picker."""
+
+from __future__ import annotations
+
+import subprocess
+
+import pytest
+
+from koru.autopilot.injector import Injector, InjectorError
+
+
+def _fake_runner(commands: list[list[str]], *, fail_on: list[str] | None = None):
+    fail_on = fail_on or []
+
+    def run(cmd: list[str], stdin: str | None) -> "subprocess.CompletedProcess[bytes]":
+        commands.append(cmd)
+        rc = 1 if cmd[0] in fail_on else 0
+        return subprocess.CompletedProcess(args=cmd, returncode=rc, stdout=b"", stderr=b"")
+
+    return run
+
+
+def _which_factory(present: set[str]):
+    def which(name: str) -> str | None:
+        return f"/usr/bin/{name}" if name in present else None
+    return which
+
+
+def test_select_backend_x11_prefers_xdotool() -> None:
+    inj = Injector(session="x11", which=_which_factory({"xdotool", "wtype"}))
+    assert inj.select_backend() == "xdotool"
+
+
+def test_select_backend_wayland_prefers_wtype_over_ydotool() -> None:
+    inj = Injector(session="wayland", which=_which_factory({"wtype", "ydotool"}))
+    assert inj.select_backend() == "wtype"
+
+
+def test_select_backend_wayland_falls_back_to_ydotool() -> None:
+    inj = Injector(session="wayland", which=_which_factory({"ydotool"}))
+    assert inj.select_backend() == "ydotool"
+
+
+def test_select_backend_no_tools_returns_none() -> None:
+    inj = Injector(session="x11", which=_which_factory(set()))
+    assert inj.select_backend() is None
+
+
+def test_type_text_dry_run_does_not_call_runner() -> None:
+    calls: list[list[str]] = []
+    inj = Injector(
+        session="x11",
+        which=_which_factory({"xdotool"}),
+        runner=_fake_runner(calls),
+    )
+    result = inj.type_text("hello", ide="vscode", dry_run=True)
+    assert result.dry_run is True
+    assert result.backend == "xdotool"
+    assert calls == []
+
+
+def test_type_text_xdotool_types_and_submits() -> None:
+    calls: list[list[str]] = []
+    inj = Injector(
+        session="x11",
+        which=_which_factory({"xdotool"}),
+        runner=_fake_runner(calls),
+    )
+    result = inj.type_text("hi", ide="vscode", submit=True)
+    assert result.backend == "xdotool"
+    assert result.submitted is True
+    assert calls[0][:2] == ["xdotool", "type"]
+    assert "hi" in calls[0]
+    assert calls[1][:2] == ["xdotool", "key"]
+    assert "Return" in calls[1]
+
+
+def test_type_text_wtype_uses_modifiers_for_jetbrains() -> None:
+    calls: list[list[str]] = []
+    inj = Injector(
+        session="wayland",
+        which=_which_factory({"wtype"}),
+        runner=_fake_runner(calls),
+    )
+    inj.type_text("payload", ide="jetbrains", submit=True)
+    type_call, key_call = calls
+    assert type_call[0] == "wtype"
+    assert "payload" in type_call
+    # jetbrains → ctrl+Return: press ctrl, send Return, release ctrl
+    assert key_call[0] == "wtype"
+    assert "-M" in key_call and "ctrl" in key_call
+    assert "-k" in key_call and "Return" in key_call
+
+
+def test_type_text_no_submit_only_types() -> None:
+    calls: list[list[str]] = []
+    inj = Injector(
+        session="x11",
+        which=_which_factory({"xdotool"}),
+        runner=_fake_runner(calls),
+    )
+    inj.type_text("hi", submit=False)
+    assert len(calls) == 1
+
+
+def test_type_text_propagates_runner_error() -> None:
+    calls: list[list[str]] = []
+    inj = Injector(
+        session="x11",
+        which=_which_factory({"xdotool"}),
+        runner=_fake_runner(calls, fail_on=["xdotool"]),
+    )
+    with pytest.raises(InjectorError, match="xdotool exited 1"):
+        inj.type_text("hi")
+
+
+def test_type_text_empty_raises() -> None:
+    inj = Injector(session="x11", which=_which_factory({"xdotool"}))
+    with pytest.raises(InjectorError, match="empty text"):
+        inj.type_text("")
+
+
+def test_type_text_no_backend_raises() -> None:
+    inj = Injector(session="x11", which=_which_factory(set()))
+    with pytest.raises(InjectorError, match="no keyboard injection backend"):
+        inj.type_text("hi")
+
+
+def test_probe_marks_unavailable_when_missing_tool() -> None:
+    inj = Injector(session="x11", which=_which_factory({"xdotool"}))
+    statuses = {s.name: s for s in inj.probe()}
+    assert statuses["xdotool"].available is True
+    assert statuses["wtype"].available is False
+    assert "not in PATH" in statuses["wtype"].reason
+
+
+def test_probe_marks_unavailable_on_wrong_session() -> None:
+    # wtype is installed but we're on X11 — it shouldn't be reported as usable.
+    inj = Injector(session="x11", which=_which_factory({"xdotool", "wtype"}))
+    statuses = {s.name: s for s in inj.probe()}
+    assert statuses["wtype"].available is False
+    assert "wayland" in statuses["wtype"].reason

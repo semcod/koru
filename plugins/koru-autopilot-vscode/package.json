@@ -1,0 +1,50 @@
+{
+  "name": "koru-autopilot-vscode",
+  "displayName": "koru autopilot",
+  "description": "Bridge between VS Code / Windsurf / Cursor and the koru autopilot daemon.",
+  "version": "0.1.0",
+  "publisher": "semcod",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "koruAutopilot.connect",
+        "title": "koru: Connect autopilot daemon"
+      },
+      {
+        "command": "koruAutopilot.sendChat",
+        "title": "koru: Send text to active chat"
+      }
+    ],
+    "configuration": {
+      "title": "koru autopilot",
+      "properties": {
+        "koruAutopilot.socketPath": {
+          "type": "string",
+          "default": "",
+          "description": "Unix-socket path. Empty = $XDG_RUNTIME_DIR/koru-autopilot.sock or /tmp/koru-autopilot-<uid>.sock."
+        },
+        "koruAutopilot.autoConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Connect to the daemon automatically when the editor starts."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.4.0"
+  }
+}

@@ -95,6 +95,40 @@ The no-args `koru` prompt includes detected project markers
 `.planfile/`), available LLM/IDE lanes, the recommended agent, the active
 ticket, and the exact lifecycle commands the agent may use.
 
+## Autopilot — drive your IDE from the terminal
+
+`koru autopilot` lets a terminal-side koru take over the LLM chat in
+**Windsurf / VS Code / Cursor / JetBrains**: it types the next ticket
+brief directly into the chat panel and presses submit, with zero
+clicks. Useful when an in-IDE session ends and you want koru to
+continue the loop from a separate terminal (or tmux pane, or SSH).
+
+```bash
+# one-time, in a background terminal:
+koru autopilot daemon
+
+# from anywhere — type into the focused IDE's chat:
+koru autopilot drive 'continue with the next ticket'
+koru autopilot drive --ide jetbrains 'rerun the failing test'
+
+# diagnostics:
+koru autopilot doctor          # which keyboard backends are usable?
+koru autopilot ide-list        # which IDEs are running right now?
+koru autopilot status          # is the daemon up? plugins connected?
+```
+
+Two injection paths, picked automatically:
+
+1. **IDE plugin** — if `plugins/koru-autopilot-vscode/` is loaded in
+   the editor, the daemon forwards `chat.send` to it and the
+   extension pastes + submits via the editor's own API. Most reliable;
+   works on Wayland.
+2. **Keyboard simulation** — fallback for editors without the plugin.
+   Uses `xdotool` on X11, `wtype`/`ydotool` on Wayland.
+
+Architecture, wire protocol and security model: see
+[`docs/autopilot-design.md`](docs/autopilot-design.md).
+
 ## Two operational modes
 
 | Mode | When | What runs |

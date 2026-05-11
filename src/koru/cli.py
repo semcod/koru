@@ -15,6 +15,7 @@ from .agents import (
     save_agent_prompt,
     select_agent,
 )
+from .autopilot.cli_command import autopilot_main
 from .bootstrap import import_flat_pipeline
 from .context import build_context, render_markdown_handoff
 from .doctor import render_text as render_doctor_text, run_diagnostics
@@ -937,6 +938,8 @@ def main() -> int:
         return _queue_main(raw_args[1:])
     if raw_args and raw_args[0] == "gc":
         return _gc_main(raw_args[1:])
+    if raw_args and raw_args[0] == "autopilot":
+        return autopilot_main(raw_args[1:])
 
     args = _build_parser().parse_args(raw_args)
 
