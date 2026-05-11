@@ -88,6 +88,75 @@ Full suite still **343 passed, 0 regressions** after these changes.
 Real-world smoke (`koru autopilot daemon` + scripted plugin) still
 delivers the 5388-char brief in one round trip.
 
+### Changed — Autopilot refactor pass 2
+
+- **R12 / protocol schema cap** — new `_FIELD_SCHEMA` whitelist in
+  `src/koru/autopilot/protocol.py`. `decode()` now silently drops
+  unknown fields per message type, e.g. a plugin sending
+  `{"type":"hello","ide":"vscode","version":"…","pid":1,"__proto__":"evil"}`
+  no longer propagates `__proto__` into `Message.data`. Strict types:
+  `hello`, `chat.send`, `drive`, `session.{started,ended}`, `ping`,
+  `shutdown`, `status`. Pass-through (informational): `ack`, `error`.
+- **R4 / lazy-import memoisation** — `_default_handoff` no longer
+  re-imports `koru.context` on every `session.ended`. The new
+  `_load_context_module()` is `functools.lru_cache(maxsize=1)`.
+- **R5 / IDE detection cache** — `ide.detect_running_ides_cached(ttl=2.0)`
+  + `clear_detect_cache()`. The daemon now binds the cached entry-point
+  via `from .ide import detect_running_ides_cached as detect_running_ides`,
+  so a tight loop of `drive` / `status` calls doesn't rescan `/proc`.
+- **R3 / fail loud on multi-modifier wtype combos** —
+  `Injector._press_wtype` now raises `InjectorError` when a submit key
+  has more than one modifier (e.g. `ctrl+shift+Return`), preventing
+  silent misbehaviour from the previous naive press/release ordering.
+
+**Tests added (11):** 6× protocol field whitelist (strict drop, ack
+pass-through, error pass-through, drive valid, ping zero-field, fixed
+schema), 2× wtype modifier guard (rejects multi, accepts single), 3×
+IDE detection cache (within-TTL, ttl=0 refresh, clear forces refresh).
+
+Full suite: **354 passed, 0 regressions.** Real-world smoke now also
+confirms protocol cap (plugin `hello` with `__proto__:"evil"` produces
+clean ack with no propagation).
+
+### Added — Autopilot user config (R7, refactor pass 3)
+
+- **New module** `src/koru/autopilot/config.py` reads
+  `$XDG_CONFIG_HOME/koru/autopilot.toml` (defaults to
+  `~/.config/koru/autopilot.toml`). Provides `AutopilotConfig`,
+  `load_config()`, process-cached `cached_config()`, and
+  `clear_config_cache()`.
+- **`[submit_keys]` section** lets the operator override the submit
+  shortcut per IDE without patching code, e.g.:
+  ```toml
+  [submit_keys]
+  windsurf  = "Return"
+  jetbrains = "ctrl+Return"
+  fleet     = "alt+Return"   # teach autopilot a new IDE id
+  ```
+- `injector._submit_key_for(ide)` is the single resolution point —
+  consults the config, falls back to built-in defaults defined in
+  `config._BUILTIN_SUBMIT_KEYS`. The previous module-level
+  `_SUBMIT_KEY` dict in `injector.py` is gone; adding a new editor no
+  longer requires a code edit.
+- Loader is fail-safe by design: missing file → defaults silently;
+  malformed TOML → defaults + one stderr warning (autopilot never
+  crashes because of a bad config); non-string values inside
+  `[submit_keys]` are ignored individually.
+- **Quickstart docs** updated with a "Configuration" section showing
+  the TOML schema and override rules
+  ([`docs/autopilot-quickstart.md`](docs/autopilot-quickstart.md#configuration)).
+
+**Tests added (11):** missing file → defaults, user keys override,
+malformed TOML survives with stderr warning, non-string values
+ignored, unrelated sections accepted, `submit_key_for` fallback chain
+(3 cases), `XDG_CONFIG_HOME` honoured, `HOME` fallback, `cached_config`
+memoisation + cache invalidation.
+
+Full suite: **365 passed, 0 regressions.** Real-world smoke confirms
+`XDG_CONFIG_HOME` override loads correctly: `windsurf → ctrl+Return`
+(overridden), `jetbrains → ctrl+Return` (default kept), `custom_ide →
+alt+Return` (new IDE accepted), `unknown_ide → Return` (fallback).
+
 ### Added — On-change gates triad (wup + regix + testql)
 
 - **New brief section "On-change gates"** — `render_markdown_handoff()`
@@ -275,6 +344,21 @@ delivers the 5388-char brief in one round trip.
   `deploy:{plan,dry,local,device,diagnose,resume,drift}`.
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
+
+## [0.1.22] - 2026-05-11
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update docs/autopilot-quickstart.md
+- Update docs/autopilot-roadmap.md
+
+### Test
+- Update tests/test_autopilot_config.py
+- Update tests/test_autopilot_injector.py
+
+### Other
+- Update uv.lock
 
 ## [0.1.21] - 2026-05-11
 

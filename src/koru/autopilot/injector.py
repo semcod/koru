@@ -18,19 +18,18 @@ import subprocess
 from dataclasses import dataclass, field
 from typing import Callable
 
+from .config import cached_config
 
-# Per-IDE submit shortcut. Defaults to a plain ``Return``.
-# Note: for VS Code-family chats (Windsurf, Cursor, VS Code) the chat
-# panel takes a single ``Return`` to submit and ``Shift+Return`` for
-# newlines, so our default is correct. JetBrains AI Assistant uses
-# ``ctrl+Return`` — overridden below.
-_SUBMIT_KEY: dict[str, str] = {
-    "default": "Return",
-    "windsurf": "Return",
-    "vscode": "Return",
-    "cursor": "Return",
-    "jetbrains": "ctrl+Return",
-}
+
+def _submit_key_for(ide: str) -> str:
+    """Resolve the submit shortcut for ``ide``.
+
+    Looks up the user's ``~/.config/koru/autopilot.toml`` first (R7);
+    falls back to the built-in defaults defined in
+    :mod:`koru.autopilot.config`. JetBrains uses ``ctrl+Return``; VS
+    Code, Windsurf, Cursor and Zed all submit on a plain ``Return``.
+    """
+    return cached_config().submit_key_for(ide)
 
 
 def _which(name: str) -> str | None:
@@ -169,7 +168,7 @@ class Injector:
                 "no keyboard injection backend found "
                 "(install xdotool on X11 or wtype/ydotool on Wayland)"
             )
-        submit_key = _SUBMIT_KEY.get(ide, _SUBMIT_KEY["default"]) if submit else None
+        submit_key = _submit_key_for(ide) if submit else None
         if dry_run:
             return InjectionResult(
                 backend=backend,
@@ -230,7 +229,7 @@ class Injector:
         # release ordering required for ``ctrl+shift+x`` differs per
         # compositor and would silently misbehave under the previous
         # naive implementation. Better to fail loud and let the caller
-        # extend ``_SUBMIT_KEY``.
+        # set a different key in ``~/.config/koru/autopilot.toml``.
         parts = combo.split("+")
         key = parts[-1]
         modifiers = parts[:-1]

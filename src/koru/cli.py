@@ -922,24 +922,22 @@ def _is_bare_invocation(args: argparse.Namespace) -> bool:
     )
 
 
+_SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
+    "task": _task_main,
+    "agent": _agent_main,
+    "serve": _serve_main,
+    "scan": _scan_main,
+    "gate": _gate_main,
+    "queue": _queue_main,
+    "gc": _gc_main,
+    "autopilot": autopilot_main,
+}
+
+
 def main() -> int:
     raw_args = sys.argv[1:]
-    if raw_args and raw_args[0] == "task":
-        return _task_main(raw_args[1:])
-    if raw_args and raw_args[0] == "agent":
-        return _agent_main(raw_args[1:])
-    if raw_args and raw_args[0] == "serve":
-        return _serve_main(raw_args[1:])
-    if raw_args and raw_args[0] == "scan":
-        return _scan_main(raw_args[1:])
-    if raw_args and raw_args[0] == "gate":
-        return _gate_main(raw_args[1:])
-    if raw_args and raw_args[0] == "queue":
-        return _queue_main(raw_args[1:])
-    if raw_args and raw_args[0] == "gc":
-        return _gc_main(raw_args[1:])
-    if raw_args and raw_args[0] == "autopilot":
-        return autopilot_main(raw_args[1:])
+    if raw_args and raw_args[0] in _SUBCOMMANDS:
+        return _SUBCOMMANDS[raw_args[0]](raw_args[1:])
 
     args = _build_parser().parse_args(raw_args)
 

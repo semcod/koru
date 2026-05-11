@@ -253,6 +253,42 @@ koru autopilot doctor --format json  # machine-readable
 koru autopilot shutdown              # ask the daemon to stop
 ```
 
+## Configuration (`~/.config/koru/autopilot.toml`)
+
+The config file is **optional**. Without it, autopilot uses safe
+built-in defaults: `Return` for VS Code / Windsurf / Cursor / Zed,
+`ctrl+Return` for JetBrains.
+
+You only need to write a config if you want to override the submit
+shortcut for an IDE or teach autopilot about a new one.
+
+```toml
+# ~/.config/koru/autopilot.toml
+
+[submit_keys]
+# IDE id matches what `koru autopilot ide-list` prints.
+windsurf  = "Return"
+vscode    = "Return"
+cursor    = "Return"
+jetbrains = "ctrl+Return"
+# Adding a new editor only requires this line — no code change:
+fleet     = "alt+Return"
+```
+
+Rules:
+
+- Missing file → defaults, silently.
+- Malformed TOML → defaults + one warning on stderr (autopilot **never
+  crashes** because of a bad config).
+- Non-string values inside `[submit_keys]` are ignored.
+- Multi-modifier combos (e.g. `"ctrl+shift+Return"`) are rejected at
+  injection time with a clear error — only `Mod+Key` is supported by
+  the keyboard backends today (R3).
+
+The config is loaded once per process and cached. If you edit the file
+while the daemon is running, restart the daemon (`koru autopilot
+shutdown` + `koru autopilot daemon`) to pick up the change.
+
 ## Security model — what you are trusting
 
 - **Same UID only.** The unix socket is `0600` and the daemon

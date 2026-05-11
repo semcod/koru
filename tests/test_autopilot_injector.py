@@ -147,6 +147,7 @@ def test_probe_marks_unavailable_on_wrong_session() -> None:
 
 def test_wtype_rejects_multi_modifier_submit_key(monkeypatch: pytest.MonkeyPatch) -> None:
     """A future IDE entry using ``ctrl+shift+Return`` must raise, not run."""
+    from koru.autopilot import config as config_mod
     from koru.autopilot import injector as injector_mod
 
     calls: list[list[str]] = []
@@ -155,7 +156,13 @@ def test_wtype_rejects_multi_modifier_submit_key(monkeypatch: pytest.MonkeyPatch
         which=_which_factory({"wtype"}),
         runner=_fake_runner(calls),
     )
-    monkeypatch.setitem(injector_mod._SUBMIT_KEY, "evil", "ctrl+shift+Return")
+    # Inject a config with a multi-modifier mapping and patch the
+    # injector-side binding (``injector_mod.cached_config`` is the
+    # symbol the resolver actually reads).
+    fake_config = config_mod.AutopilotConfig(
+        submit_keys={"default": "Return", "evil": "ctrl+shift+Return"},
+    )
+    monkeypatch.setattr(injector_mod, "cached_config", lambda: fake_config)
     with pytest.raises(InjectorError, match="only single-modifier combos"):
         inj.type_text("hi", ide="evil", submit=True)
     # Type ran, but the failing submit press must not have produced a key call.
