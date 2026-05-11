@@ -21,6 +21,11 @@ in this order so reports diff cleanly across runs):
     gitignore         — `.gitignore` ignores `.planfile/.koru/` (only
                         emitted when `.git/` is present)
     ci_command        — `policy.ci_command` first token resolves on PATH
+    pytest_collect    — `python3 -m pytest --collect-only` exits 0 within
+                        15 s (override via ``KORU_DOCTOR_PYTEST_TIMEOUT``).
+                        Only emitted when ``pyproject.toml`` or ``tests/``
+                        exists; pairs with ``koru scan``'s timeout fix to
+                        catch hung collection (see PLF-093 post-mortem).
 
 Exit-code contract for the CLI wrapper: ``has_failures`` ⇒ ``1``;
 warnings alone ⇒ ``0`` (warnings are advisory, not blocking).
@@ -31,8 +36,10 @@ The module is intentionally side-effect-free (no writes, no network).
 from __future__ import annotations
 
 import os
+import re
 import shlex
 import shutil
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -40,6 +47,13 @@ import yaml
 
 from .policy import policy_path
 from .runtime import planfile_dir, runtime_dir
+
+
+# Default timeout for the pytest-collect probe. Doctor is meant to be
+# *interactive and fast*; we deliberately keep this tighter than
+# ``scan_pytest_collect``'s 30 s so the operator does not stare at a
+# black terminal for half a minute. Override via ``KORU_DOCTOR_PYTEST_TIMEOUT``.
+DEFAULT_PYTEST_COLLECT_TIMEOUT_SECONDS: float = 15.0
 
 
 PASS = "pass"
@@ -119,6 +133,12 @@ def run_diagnostics(project: Path) -> DoctorReport:
     if has_git:
         probes.append(("gitignore", _check_gitignore))
     probes.append(("ci_command", _check_ci_command))
+    # pytest_collect runs last because it's the slowest probe (subprocess
+    # + 15 s timeout). Putting it at the end means the cheaper checks
+    # complete first — the operator can already start reading their
+    # results while pytest is still warming up.
+    if (project / "tests").exists() or (project / "pyproject.toml").exists():
+        probes.append(("pytest_collect", _check_pytest_collect))
 
     for name, fn in probes:
         try:
@@ -270,6 +290,87 @@ def _check_gitignore(project: Path) -> tuple[str, str]:
     if any(line.strip() == needle for line in text.splitlines()):
         return PASS, f"ignores {needle}"
     return WARN, f".gitignore does not list {needle} — re-run `koru --init`"
+
+
+_PYTEST_COLLECT_COUNT_RE = re.compile(
+    r"(\d+)\s+tests?\s+collected", re.IGNORECASE
+)
+_PYTEST_NO_TESTS_RE = re.compile(r"no tests ran|collected 0 items", re.IGNORECASE)
+
+
+def _resolve_pytest_collect_timeout() -> float:
+    """Return the timeout from env var with a safe fallback.
+
+    Env override exists for two reasons: (1) operators on slow CI boxes
+    can extend it; (2) tests can shrink it to keep the suite fast.
+    Invalid values silently fall back to the default — the operator
+    should not be punished for a typo in their shell rc.
+    """
+    raw = os.environ.get("KORU_DOCTOR_PYTEST_TIMEOUT", "").strip()
+    if not raw:
+        return DEFAULT_PYTEST_COLLECT_TIMEOUT_SECONDS
+    try:
+        value = float(raw)
+    except ValueError:
+        return DEFAULT_PYTEST_COLLECT_TIMEOUT_SECONDS
+    return value if value > 0 else DEFAULT_PYTEST_COLLECT_TIMEOUT_SECONDS
+
+
+def _check_pytest_collect(project: Path) -> tuple[str, str]:
+    """Run ``pytest --collect-only`` and report whether collection works.
+
+    This is the fast diagnostic counterpart to ``koru scan``'s pytest
+    probe. The two share the same root concern — *can pytest even load
+    its tests?* — but with different roles:
+
+    - ``koru scan`` creates a ticket when collection fails or times out.
+    - ``koru doctor`` returns a status line so the operator can see the
+      health of the test infrastructure at a glance, without committing
+      anything to the queue.
+
+    Status mapping:
+      PASS — exit 0; report N tests collected if parseable.
+      WARN — exit non-zero; collection broke. Suggest ``koru scan`` for
+             per-file detail rather than dumping pytest's stderr here.
+      FAIL — timeout. Strongest signal: pytest is hung, not just broken.
+             The operator should treat this as a release blocker.
+      SKIP — pytest binary missing; doctor cannot diagnose further.
+    """
+    timeout_seconds = _resolve_pytest_collect_timeout()
+    try:
+        result = subprocess.run(
+            ["python3", "-m", "pytest", "--collect-only", "-q", "--no-header"],
+            cwd=project,
+            capture_output=True,
+            text=True,
+            timeout=timeout_seconds,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return FAIL, (
+            f"pytest --collect-only hung > {timeout_seconds:g}s — investigate "
+            "heavy conftest imports or runaway test discovery "
+            "(see `koru scan` for a queueable ticket with checklist)"
+        )
+    except (FileNotFoundError, OSError):
+        return SKIP, "pytest not invokable (python3/pytest missing on PATH)"
+
+    output = (result.stdout or "") + "\n" + (result.stderr or "")
+    if result.returncode == 0:
+        match = _PYTEST_COLLECT_COUNT_RE.search(output)
+        if match:
+            return PASS, f"{match.group(1)} test(s) collected"
+        if _PYTEST_NO_TESTS_RE.search(output):
+            return WARN, "0 tests collected — verify testpaths / discovery rules"
+        return PASS, "collection clean (count not parseable)"
+
+    # Non-zero exit: collection failed. Keep the detail short — `koru
+    # scan` is the place to dig into per-file errors. We just tell the
+    # operator *that* it's broken and where to look.
+    return WARN, (
+        "pytest --collect-only failed — run `koru scan` for actionable "
+        "per-file tickets"
+    )
 
 
 def _check_ci_command(project: Path) -> tuple[str, str]:

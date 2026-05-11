@@ -8,15 +8,18 @@ from __future__ import annotations
 
 import os
 import shutil
+import subprocess
 import tempfile
 import textwrap
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from koru.doctor import (
     FAIL,
     PASS,
+    SKIP,
     WARN,
     Check,
     DoctorReport,
@@ -211,6 +214,134 @@ class TestCiCommandCheck(unittest.TestCase):
             )
             report = _run(project)
             self.assertEqual(_named(report, "ci_command").status, PASS)
+
+
+class TestPytestCollectProbe(unittest.TestCase):
+    """Behaviour of the ``pytest_collect`` doctor probe.
+
+    The probe maps real subprocess outcomes to the four doctor states
+    (PASS/WARN/FAIL/SKIP). The mapping is the contract — we mock
+    ``subprocess.run`` directly to keep tests deterministic and fast.
+    """
+
+    def _scaffold_with_pyproject(self, project: Path) -> None:
+        _scaffold(project)
+        # The probe only registers when pyproject.toml or tests/ exists,
+        # so we always provide one.
+        (project / "pyproject.toml").write_text(
+            "[project]\nname = 'test'\n", encoding="utf-8"
+        )
+
+    def test_pass_when_collection_succeeds_with_count(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            self._scaffold_with_pyproject(project)
+            fake = SimpleNamespace(
+                returncode=0,
+                stdout="42 tests collected in 0.13s",
+                stderr="",
+            )
+            with patch("subprocess.run", return_value=fake):
+                report = _run(project)
+            check = _named(report, "pytest_collect")
+            self.assertEqual(check.status, PASS)
+            self.assertIn("42", check.detail)
+
+    def test_pass_when_count_not_parseable(self) -> None:
+        """rc==0 but no parseable count line — still pass, just no number."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            self._scaffold_with_pyproject(project)
+            fake = SimpleNamespace(returncode=0, stdout="", stderr="")
+            with patch("subprocess.run", return_value=fake):
+                report = _run(project)
+            self.assertEqual(_named(report, "pytest_collect").status, PASS)
+
+    def test_warn_when_zero_tests_collected(self) -> None:
+        """Empty test suite is suspicious — warn but don't fail."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            self._scaffold_with_pyproject(project)
+            fake = SimpleNamespace(
+                returncode=0, stdout="collected 0 items", stderr="",
+            )
+            with patch("subprocess.run", return_value=fake):
+                report = _run(project)
+            check = _named(report, "pytest_collect")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("0 tests collected", check.detail)
+
+    def test_warn_when_collection_errors(self) -> None:
+        """Non-zero exit means errors — point operator at koru scan."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            self._scaffold_with_pyproject(project)
+            fake = SimpleNamespace(
+                returncode=2,
+                stdout="",
+                stderr="ImportError: foo",
+            )
+            with patch("subprocess.run", return_value=fake):
+                report = _run(project)
+            check = _named(report, "pytest_collect")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("koru scan", check.detail)
+
+    def test_fail_when_collection_times_out(self) -> None:
+        """Hangs are the strongest signal — promote to FAIL.
+
+        This is the doctor counterpart of the scan timeout fix
+        (PLF-093 post-mortem, 2026-05-11). Both surfaces must agree:
+        a hung pytest is a real, blocking problem.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            self._scaffold_with_pyproject(project)
+
+            def boom(*_args, **_kwargs):
+                raise subprocess.TimeoutExpired(cmd="pytest", timeout=15)
+
+            with patch("subprocess.run", side_effect=boom):
+                report = _run(project)
+            check = _named(report, "pytest_collect")
+            self.assertEqual(check.status, FAIL)
+            self.assertIn("hung", check.detail.lower())
+            self.assertIn("koru scan", check.detail)
+
+    def test_skip_when_pytest_not_installed(self) -> None:
+        """Missing pytest binary is environmental, not actionable here."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            self._scaffold_with_pyproject(project)
+
+            def missing(*_a, **_kw):
+                raise FileNotFoundError("python3 not found")
+
+            with patch("subprocess.run", side_effect=missing):
+                report = _run(project)
+            self.assertEqual(_named(report, "pytest_collect").status, SKIP)
+
+    def test_probe_skipped_entirely_when_no_pyproject_and_no_tests(self) -> None:
+        """Bare project (no pyproject, no tests dir) — probe not even run."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)  # scaffold only, no pyproject, no tests/
+            report = _run(project)
+            names = [c.name for c in report.checks]
+            self.assertNotIn("pytest_collect", names)
+
+    def test_env_var_overrides_timeout(self) -> None:
+        """KORU_DOCTOR_PYTEST_TIMEOUT lets ops tighten/extend the limit."""
+        from koru.doctor import _resolve_pytest_collect_timeout
+
+        with patch.dict(os.environ, {"KORU_DOCTOR_PYTEST_TIMEOUT": "3"}):
+            self.assertEqual(_resolve_pytest_collect_timeout(), 3.0)
+        # Garbage values fall back silently — no surprises for typos.
+        with patch.dict(os.environ, {"KORU_DOCTOR_PYTEST_TIMEOUT": "not-a-num"}):
+            self.assertEqual(_resolve_pytest_collect_timeout(), 15.0)
+        # Negative / zero also falls back to default.
+        with patch.dict(os.environ, {"KORU_DOCTOR_PYTEST_TIMEOUT": "-5"}):
+            self.assertEqual(_resolve_pytest_collect_timeout(), 15.0)
 
 
 class TestReportShape(unittest.TestCase):
