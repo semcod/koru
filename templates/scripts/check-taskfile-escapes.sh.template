@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# scripts/check-taskfile-escapes.sh
+#
+# Detect the `$${VAR:-default}` footgun in Taskfile.yml family files.
+#
+# Background
+# ----------
+# Task v3 does NOT escape `$$` back to `$` before handing the command to the
+# shell. The shell then interprets `$$` as the current process PID, so:
+#
+#     curl "http://localhost:$${PORT:-8810}/healthz"
+#
+# Actually executes as:
+#
+#     curl "http://localhost:<PID>{PORT:-8810}/healthz"
+#
+# Which curl rejects with:
+#     curl: (3) URL rejected: Port number was not a decimal number between 0 and 65535
+#
+# This bit c2004's PLF-065 (monitor:test-heal) badly. The correct form uses a
+# single `$`:
+#
+#     curl "http://localhost:${PORT:-8810}/healthz"
+#
+# Usage
+# -----
+#   bash scripts/check-taskfile-escapes.sh           # advisory (warn only)
+#   TASKFILE_ESCAPE_STRICT=true bash scripts/...    # blocking (exit 1)
+#
+# Wired automatically by `wup` (on-change gate) and the koru pre-commit hook
+# when `Taskfile.yml` is staged.
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$REPO_ROOT"
+
+# Find every Taskfile within the repo (top-level + nested per-module ones).
+mapfile -t TASKFILES < <(
+  find . \
+    -type d \( -name node_modules -o -name .venv -o -name .git \) -prune -o \
+    \( -name 'Taskfile.yml' -o -name 'Taskfile.yaml' -o -name 'Taskfile.*.yml' \) \
+    -type f -print
+)
+
+if [ "${#TASKFILES[@]}" -eq 0 ]; then
+  echo "[taskfile-lint] no Taskfile.yml files found — skipping"
+  exit 0
+fi
+
+# Pattern: literal `$$` followed by `{<UPPERCASE_OR_UNDERSCORE>...}`
+# (PID + bash brace expansion form). We anchor on uppercase first letter to
+# avoid matching `$${{ template }}` or `$$` used inside heredocs deliberately.
+PATTERN='\$\${[A-Z_]'
+
+VIOLATIONS=0
+OUTPUT=""
+for tf in "${TASKFILES[@]}"; do
+  if matches="$(grep -nE "$PATTERN" "$tf" 2>/dev/null)"; then
+    while IFS= read -r line; do
+      VIOLATIONS=$((VIOLATIONS + 1))
+      OUTPUT+="$tf:$line\n"
+    done <<<"$matches"
+  fi
+done
+
+if [ "$VIOLATIONS" -eq 0 ]; then
+  echo "[taskfile-lint] ✓ no \$\${VAR} escape footguns"
+  exit 0
+fi
+
+cat <<EOF
+
+[taskfile-lint] Found $VIOLATIONS occurrence(s) of \$\${VAR…} in Taskfile(s).
+
+Task v3 does NOT collapse \$\$ → \$. The shell sees \$\$ as PID and
+\${VAR:-default} is never expanded. Replace with single \$:
+
+    \$\${PORT:-8810}    →    \${PORT:-8810}
+
+Affected lines:
+$(echo -e "$OUTPUT")
+EOF
+
+if [ "${TASKFILE_ESCAPE_STRICT:-false}" = "true" ]; then
+  echo "[taskfile-lint] ❌ strict mode → blocking"
+  exit 1
+fi
+echo "[taskfile-lint] ⚠ advisory mode (set TASKFILE_ESCAPE_STRICT=true to block)"
+exit 0

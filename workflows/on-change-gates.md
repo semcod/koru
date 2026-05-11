@@ -55,6 +55,26 @@ save    │  layer 1: detect    │
 
 `wup` owns the cycle. `testql` and `regix` are atomic invocations.
 
+### Supplementary lints (cheap, opt-in)
+
+| Lint | Detects | Script |
+|---|---|---|
+| `taskfile-escapes` | `$${VAR}` footgun (Task v3 leaks `$$` to shell as PID) | `scripts/check-taskfile-escapes.sh` |
+| `version-drift` | Inconsistent version pins across manifests | `scripts/check-version-drift.sh` |
+| `redup` | New cross-module duplicates | `scripts/redup-precommit.sh` |
+
+These run on save (via wup `lint_strategy`) and as the koru pre-commit hook
+when `Taskfile.yml` / `requirements*.txt` / `*.py` files are staged. Each
+exits 0 with an advisory message by default; export the matching
+`*_STRICT=true` to make it blocking.
+
+> **Why `taskfile-escapes` deserves its own lint:** the `$${VAR:-default}`
+> pattern silently produces URLs like `http://localhost:<PID>{PORT:-8810}/…`
+> at runtime — curl rejects them with `Port number was not a decimal
+> number between 0 and 65535`. The bug looks like an env-var problem until
+> you trace the shell substitution. PLF-065 in c2004 spent significant
+> debug time on this; this lint catches the whole class in <1 s.
+
 ## Lifecycle integration with koru
 
 When a koru-managed project (markers: `git`, `planfile`, `wup_yaml`,

@@ -18,10 +18,8 @@ classifiers = [
 dependencies = [
     "pyyaml>=6.0",
 ]
+license = "Apache-2.0"
 license-files = ["LICEN[CS]E*"]
-
-[project.license]
-text = "Apache-2.0"
 
 [project.urls]
 Homepage = "https://github.com/semcod/koru"

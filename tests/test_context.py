@@ -194,6 +194,96 @@ class TestBuildContext(unittest.TestCase):
             joined = " ".join(ctx["instructions"])
             self.assertIn("src/a.py", joined)
 
+    # ------------------------------------------------------------------
+    # Fixture-skip behaviour (PLF-koru improvement #4)
+    # ------------------------------------------------------------------
+
+    def test_fixture_tickets_are_skipped_by_default(self) -> None:
+        """When the planfile queue contains only fixture tickets, the
+        active ticket should be ``None`` and the error should explain why."""
+        with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
+            queue = [
+                {"id": "PLF-086", "status": "open",
+                 "labels": ["test-only", "dryrun"]},
+                {"id": "PLF-090", "status": "open",
+                 "labels": ["synthetic", "auto-close"]},
+            ]
+            ctx = build_context(
+                project=Path(tmp),
+                planfile_runner=lambda _c, _p: _ok(json.dumps(queue)),
+                git_probe=_no_git,
+            )
+            self.assertIsNone(ctx["ticket"])
+            self.assertEqual(ctx["ticket_error"], "queue is idle")
+
+    def test_real_ticket_picked_over_fixture_in_mixed_queue(self) -> None:
+        """Mixed queue: agent must see the real ticket, not the fixture."""
+        with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
+            queue = [
+                {"id": "PLF-086", "status": "open",
+                 "labels": ["test-only", "dryrun"]},
+                {"id": "PLF-093", "status": "open",
+                 "labels": ["bug", "ci"]},
+            ]
+            ctx = build_context(
+                project=Path(tmp),
+                planfile_runner=lambda _c, _p: _ok(json.dumps(queue)),
+                git_probe=_no_git,
+            )
+            self.assertIsNotNone(ctx["ticket"])
+            self.assertEqual(ctx["ticket"]["id"], "PLF-093")
+
+    def test_include_fixtures_flag_brings_them_back(self) -> None:
+        """`--include-fixtures` (CLI) maps to ``include_fixtures=True``."""
+        with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
+            queue = [
+                {"id": "PLF-086", "status": "open",
+                 "labels": ["test-only", "dryrun"]},
+            ]
+            ctx = build_context(
+                project=Path(tmp),
+                planfile_runner=lambda _c, _p: _ok(json.dumps(queue)),
+                git_probe=_no_git,
+                include_fixtures=True,
+            )
+            self.assertIsNotNone(ctx["ticket"])
+            self.assertEqual(ctx["ticket"]["id"], "PLF-086")
+
+    def test_single_object_fixture_is_filtered(self) -> None:
+        """Legacy `ticket next` returns a single object; if it happens to
+        be a fixture (e.g. SyntheticTest from monitor:test-heal), still
+        suppress it from the active slot."""
+        with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
+            fixture = {"id": "PLF-090", "status": "open",
+                       "labels": ["synthetic", "auto-close"]}
+            ctx = build_context(
+                project=Path(tmp),
+                planfile_runner=lambda _c, _p: _ok(json.dumps(fixture)),
+                git_probe=_no_git,
+            )
+            self.assertIsNone(ctx["ticket"])
+            self.assertIn("fixture", (ctx["ticket_error"] or ""))
+
+    def test_explicit_ticket_id_bypasses_fixture_filter(self) -> None:
+        """When the user asks for a specific fixture (e.g. to debug the
+        fixture rendering itself), they must always get it."""
+        with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
+            fixture = {"id": "PLF-090", "status": "open",
+                       "labels": ["synthetic"]}
+            ctx = build_context(
+                project=Path(tmp),
+                ticket_id="PLF-090",
+                planfile_runner=lambda _c, _p: _ok(json.dumps(fixture)),
+                git_probe=_no_git,
+            )
+            self.assertIsNotNone(ctx["ticket"])
+            self.assertEqual(ctx["ticket"]["id"], "PLF-090")
+
 
 class TestMarkdownHandoff(unittest.TestCase):
     def test_renders_ticket_section(self) -> None:

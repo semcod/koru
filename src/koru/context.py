@@ -42,6 +42,49 @@ from .runtime import planfile_dir
 _DOTENV_LOADED: set[Path] = set()
 
 
+# Labels that mark a ticket as test/dryrun infrastructure rather than
+# real work. Tickets carrying ANY of these labels are filtered out of
+# `koru --context` by default to prevent the queue surface from getting
+# clouded by planfile/koru self-test fixtures.
+#
+# This addresses the c2004 PLF-koru #4 issue where `koru --context`
+# happily pointed an agent at `PLF-083 Test blocked ticket` (label
+# `test, blocked`) — a planfile workflow test fixture, not real work.
+#
+# Opt out per invocation with `--include-fixtures` or the env var
+# `KORU_INCLUDE_FIXTURES=true` (useful when explicitly testing fixture
+# rendering itself).
+FIXTURE_LABELS: frozenset[str] = frozenset({
+    "test-only",
+    "dryrun",
+    "dry-run",
+    "synthetic",
+    "auto-close",
+})
+
+
+def _is_fixture_ticket(ticket: dict[str, Any]) -> bool:
+    """Return True when the ticket's labels mark it as a test fixture."""
+    labels = ticket.get("labels") or []
+    if not isinstance(labels, list):
+        return False
+    label_set = {str(label).strip().lower() for label in labels}
+    return bool(label_set & FIXTURE_LABELS)
+
+
+def _resolve_include_fixtures(explicit: bool | None) -> bool:
+    """Resolve the include-fixtures decision from CLI flag + env var.
+
+    Explicit CLI value (``--include-fixtures`` / ``--no-include-fixtures``)
+    always wins; falls back to ``KORU_INCLUDE_FIXTURES`` env (``true``,
+    ``1``, ``yes`` enable it). Default: exclude fixtures.
+    """
+    if explicit is not None:
+        return explicit
+    raw = os.environ.get("KORU_INCLUDE_FIXTURES", "").strip().lower()
+    return raw in ("true", "1", "yes", "on")
+
+
 def _load_project_dotenv(project: Path) -> None:
     if project in _DOTENV_LOADED:
         return
@@ -148,6 +191,7 @@ def build_context(
     git_probe: Callable[[Path], dict[str, Any]] | None = None,
     environment_probe: Callable[[Path], dict[str, Any]] | None = None,
     policy: Policy | None = None,
+    include_fixtures: bool | None = None,
 ) -> dict[str, Any]:
     """Assemble the LLM brief for a project.
 
@@ -219,13 +263,32 @@ def build_context(
                     t for t in ticket_data
                     if isinstance(t, dict) and t.get("status") in (None, "open", "ready", "todo")
                 ]
+                # Filter out test/dryrun fixtures unless the caller
+                # opted in (CLI flag --include-fixtures or env var
+                # KORU_INCLUDE_FIXTURES=true).
+                if not _resolve_include_fixtures(include_fixtures):
+                    open_tickets = [
+                        t for t in open_tickets if not _is_fixture_ticket(t)
+                    ]
                 ticket_data = open_tickets[0] if open_tickets else None  # type: ignore[assignment]
                 if ticket_data is None:
                     ticket_error = "queue is idle"
             elif isinstance(ticket_data, dict):
                 # Single-object payload (legacy `ticket next`). Treat as
-                # a one-entry queue for dashboard consistency.
-                open_tickets = [ticket_data]
+                # a one-entry queue for dashboard consistency. Apply
+                # fixture filter only to one-entry payloads to avoid
+                # ever returning a fixture as the active ticket — unless
+                # the caller asked for it explicitly.
+                if (
+                    not _resolve_include_fixtures(include_fixtures)
+                    and not ticket_id
+                    and _is_fixture_ticket(ticket_data)
+                ):
+                    ticket_error = "queue has only fixture tickets"
+                    ticket_data = None
+                    open_tickets = []
+                else:
+                    open_tickets = [ticket_data]
         else:
             raw_err = (ticket_proc.stderr or "planfile error").strip()
             # Filter out Python warnings (e.g. pydantic UserWarning) that

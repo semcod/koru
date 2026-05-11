@@ -19,6 +19,7 @@ from .bootstrap import import_flat_pipeline
 from .context import build_context, render_markdown_handoff
 from .doctor import render_text as render_doctor_text, run_diagnostics
 from .events import emit_management_event
+from .gate import VALID_MODES as GATE_VALID_MODES, authorize_gate
 from .init import init_project
 from .loop import discover_repositories, run_closed_loop
 from .planfile_queue import run_next_planfile_task, run_planfile_queue_loop
@@ -189,6 +190,25 @@ def _build_parser() -> argparse.ArgumentParser:
         choices=["json", "markdown", "text"],
         default="json",
         help="Output format for --context (default: json).",
+    )
+    parser.add_argument(
+        "--include-fixtures",
+        dest="include_fixtures",
+        action="store_true",
+        default=None,
+        help=(
+            "Include test/dryrun fixture tickets (labels test-only, "
+            "dryrun, synthetic, auto-close) in --context. Default is "
+            "to skip them so the agent isn't pointed at planfile/koru "
+            "self-test artifacts. Also controlled via the "
+            "KORU_INCLUDE_FIXTURES env var."
+        ),
+    )
+    parser.add_argument(
+        "--no-include-fixtures",
+        dest="include_fixtures",
+        action="store_false",
+        help="Explicitly hide fixtures (overrides KORU_INCLUDE_FIXTURES env).",
     )
     parser.add_argument(
         "--no-log",
@@ -374,6 +394,114 @@ def _scan_main(argv: list[str]) -> int:
     return 0
 
 
+def _build_gate_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru gate",
+        description=(
+            "Manage CI/quality gate authorizations on planfile tickets. "
+            "Subcommands: authorize."
+        ),
+    )
+    sub = parser.add_subparsers(dest="subcommand", required=True)
+
+    auth = sub.add_parser(
+        "authorize",
+        help="Record an advisory waiver / explicit gate authorization on a ticket.",
+        description=(
+            "Append a structured KORU-GATE-AUTH note to the ticket. The note "
+            "records who authorized which gate mode, why, and which gates "
+            "were skipped — so the audit trail is parseable, not buried in "
+            "free-text."
+        ),
+    )
+    auth.add_argument("ticket_id", help="Ticket ID (e.g. PLF-070).")
+    auth.add_argument(
+        "--mode",
+        required=True,
+        choices=list(GATE_VALID_MODES),
+        help=(
+            "advisory: agent ran a subset; full CI deferred. "
+            "auto: full CI executed by queue. "
+            "mandatory_human: do not advance until a human verifies."
+        ),
+    )
+    auth.add_argument(
+        "--skipped",
+        action="append",
+        default=[],
+        help=(
+            "Gate name skipped under this authorization "
+            "(repeat for multiple gates, e.g. --skipped 'task test' "
+            "--skipped 'task quality:gate')."
+        ),
+    )
+    auth.add_argument(
+        "--reason",
+        required=True,
+        help=(
+            "Why the waiver was granted. Future readers (and your future "
+            "self) need this — keep it specific."
+        ),
+    )
+    auth.add_argument(
+        "--authorized-by",
+        default=None,
+        help="Override the actor identifier (defaults to $USER / $LOGNAME).",
+    )
+    auth.add_argument(
+        "--project",
+        type=Path,
+        default=Path.cwd(),
+        help="Project root containing .planfile/.",
+    )
+    return parser
+
+
+def _gate_main(argv: list[str]) -> int:
+    args = _build_gate_parser().parse_args(argv)
+    if args.subcommand != "authorize":
+        print(f"koru gate: unknown subcommand {args.subcommand!r}", file=sys.stderr)
+        return 2
+    try:
+        auth = authorize_gate(
+            args.ticket_id,
+            mode=args.mode,
+            skipped=args.skipped,
+            reason=args.reason,
+            project=args.project,
+            authorized_by=args.authorized_by,
+        )
+    except ValueError as exc:
+        print(f"koru gate authorize: {exc}", file=sys.stderr)
+        return 2
+    except RuntimeError as exc:
+        print(f"koru gate authorize: {exc}", file=sys.stderr)
+        return 1
+
+    print(
+        f"koru gate: ✓ {auth.mode} waiver recorded on {auth.ticket} "
+        f"by {auth.authorized_by} at {auth.authorized_at}"
+    )
+    if auth.skipped:
+        print(f"  skipped: {', '.join(auth.skipped)}")
+    print(f"  reason : {auth.reason}")
+    emit_management_event(
+        tool="koru.gate",
+        action="authorized",
+        status="completed",
+        message=f"{auth.mode} waiver on {auth.ticket}",
+        details={
+            "ticket": auth.ticket,
+            "mode": auth.mode,
+            "skipped": list(auth.skipped),
+            "reason": auth.reason,
+            "authorized_by": auth.authorized_by,
+            "authorized_at": auth.authorized_at,
+        },
+    )
+    return 0
+
+
 def _build_agent_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="koru agent",
@@ -521,6 +649,8 @@ def main() -> int:
         return _serve_main(raw_args[1:])
     if raw_args and raw_args[0] == "scan":
         return _scan_main(raw_args[1:])
+    if raw_args and raw_args[0] == "gate":
+        return _gate_main(raw_args[1:])
 
     args = _build_parser().parse_args(raw_args)
 
@@ -593,6 +723,7 @@ def main() -> int:
             project=args.project,
             ticket_id=args.ticket,
             queue_name=args.queue_name,
+            include_fixtures=getattr(args, "include_fixtures", None),
         )
         if args.output_format == "markdown":
             print(render_markdown_handoff(ctx))

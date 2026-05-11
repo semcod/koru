@@ -517,3 +517,13 @@ sprint:
       sprint: current
       status: done
       updated_at: '2026-05-10T18:14:12.446544+00:00'
+    KORU-007:
+      name: "Improve doctor command to validate YAML syntax"
+      description: "The doctor command should validate the YAML syntax of config.yaml and current.yaml."
+      executor:
+        kind: shell
+        mode: automatic
+      execution:
+        state: done
+      priority: high
+      status: done

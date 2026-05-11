@@ -112,6 +112,7 @@ def run_diagnostics(project: Path) -> DoctorReport:
         ("planfile_binary", _check_planfile_binary),
         ("planfile_config", _check_planfile_config),
         ("planfile_sprints", _check_planfile_sprints),
+        ("planfile_sprints_yaml", _check_planfile_sprints_yaml),
         ("runtime_dir", _check_runtime_dir),
         ("policy_yaml", _check_policy_yaml),
     ]
@@ -164,7 +165,7 @@ def _check_planfile_config(project: Path) -> tuple[str, str]:
     try:
         data = yaml.safe_load(cfg.read_text(encoding="utf-8"))
     except yaml.YAMLError as exc:
-        return FAIL, f"YAML parse error: {exc.__class__.__name__}"
+        return FAIL, f"YAML parse error in {cfg.relative_to(project)}: {exc}"
     if not isinstance(data, dict):
         return FAIL, "config.yaml is not a YAML mapping"
     return PASS, "valid"
@@ -197,6 +198,24 @@ def _check_planfile_sprints(project: Path) -> tuple[str, str]:
     if total_tickets == 0:
         return WARN, f"{len(yamls)} sprint(s), 0 tickets — nothing to drain"
     return PASS, f"{len(yamls)} sprint(s), {total_tickets} ticket(s)"
+
+
+def _check_planfile_sprints_yaml(project: Path) -> tuple[str, str]:
+    sprints = planfile_dir(project) / "sprints"
+    if not sprints.is_dir():
+        return SKIP, "no .planfile/sprints/ directory"
+    yamls = sorted(sprints.glob("*.yaml"))
+    if not yamls:
+        return SKIP, ".planfile/sprints/ is empty"
+    errors = []
+    for path in yamls:
+        try:
+            yaml.safe_load(path.read_text(encoding="utf-8"))
+        except yaml.YAMLError as exc:
+            errors.append(f"{path.name}: {exc}")
+    if errors:
+        return FAIL, f"YAML parse errors in: {', '.join(errors)}"
+    return PASS, "all sprint files have valid YAML syntax"
 
 
 def _check_runtime_dir(project: Path) -> tuple[str, str]:

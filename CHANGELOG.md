@@ -199,6 +199,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Docs
 - Update README.md
+- Update workflows/on-change-gates.md
+
+### Test
+- Update tests/test_context.py
+- Update tests/test_gate.py
+
+### Other
+- Update .planfile/sprints/current.yaml
+- Update VERSION
+- Update templates/scripts/check-taskfile-escapes.sh.template
+
+## [0.1.11] - 2026-05-11
+
+### Docs
+- Update README.md
 
 ### Other
 - Update uv.lock
