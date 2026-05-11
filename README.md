@@ -4,13 +4,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.4-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$3.00-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-7.8h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.5-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$3.90-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-8.7h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $3.0000 (20 commits)
-- 👤 **Human dev:** ~$777 (7.8h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $3.9000 (26 commits)
+- 👤 **Human dev:** ~$867 (8.7h @ $100/h, 30min dedup)
 
-Generated on 2026-05-10 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
+Generated on 2026-05-11 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
 ---
 
@@ -406,6 +406,27 @@ critical (blocking tickets + high-priority bugs)
 - **Automatic triage** — no manual priority adjustments needed
 - **Predictable execution** — bugs always jump ahead of same-priority features
 - **Quality assurance** — prevents feature development while bugs exist
+
+### Integration with planfile
+
+Koru's priority system is **fully integrated with planfile**:
+
+#### **Shared priority logic**
+- **Same promotion rules** applied in both koru and planfile core
+- **Consistent ticket ordering** across all planfile commands
+- **Unified bug-first workflow** throughout the ecosystem
+
+#### **Planfile commands enhanced**
+- `planfile ticket next` — respects bug-first priorities
+- `planfile ticket list` — shows promoted priorities
+- `planfile queue` — processes bugs before features
+- **All planfile operations** use the same priority hierarchy
+
+#### **Seamless workflow**
+1. **Koru auto-promotes** tickets on `--context` call
+2. **Planfile respects** promoted priorities natively
+3. **Consistent execution** whether using koru or planfile directly
+4. **No conflicts** — both systems use identical priority logic
 
 ### Loosening the policy
 

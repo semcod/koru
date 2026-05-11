@@ -43,6 +43,14 @@ SPECIALIZED (LLM-free):
   mdflow    [markdown dependency analyzer + Mermaid diagrams]
   metrun    [execution intelligence + bottleneck detection]
 
+ON-CHANGE GATES TRIAD (LLM-free, continuous):
+  wup       [intelligent file watcher → priority/full testql probes]
+  + regix     (delta gate, see WALIDACJA above)
+  + testql    (HTTP probe, see WYKRYWANIE above)
+  → koru brief surfaces all three in "On-change gates" section
+  → /koru-gate slash command runs the triad on demand
+  → see workflows/on-change-gates.md for the full cycle
+
   ALTERNATIVES:
     cursor       [IDE alternative to Windsurf]
     claude-code  [CLI agent alternative]
@@ -61,6 +69,7 @@ SPECIALIZED (LLM-free):
 | **planfile** | optional (init) | ✅ `planfile.yaml` | [`planfile/`](./planfile/) |
 | **testql** | brak | ✅ scenariusze YAML | [`testql/`](./testql/) |
 | **regix** | brak | ✅ `regix.yaml` | [`regix/`](./regix/) |
+| **wup** | brak | ✅ `wup.yaml` (z koru template) | [`wup/`](./wup/) |
 | **redup** | brak | brak | [`redup/`](./redup/) |
 | **sumd/sumr** | brak | brak (env vars) | [`sumd/`](./sumd/) |
 | **redeploy** | brak | ✅ markpact specs (`*.md`) | [`redeploy/`](./redeploy/) |

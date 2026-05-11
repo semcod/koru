@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — On-change gates triad (wup + regix + testql)
+
+- **New brief section "On-change gates"** — `render_markdown_handoff()`
+  now emits a dedicated table whenever a project has any of the three
+  on-change gate packages configured. Detection markers (in
+  `agents.detect_project_environment()`):
+  - `wup_yaml`         → `wup.yaml` at project root
+  - `regix_yaml`       → `regix.yaml` at project root
+  - `testql_scenarios` → `testql-testing/scenarios/` or `testql-scenarios/`
+  Section lists each gate, whether it's configured, its role, and the
+  exact command to invoke it. Skipped silently when none are present
+  (no noise for non-adopting projects).
+- **New template** `templates/wup.yaml.template` — base file watcher
+  config with debounce, gitignore-aware excludes, 2-layer test strategy
+  (quick: ≤3 testql endpoints; full: only on quick-fail), and CPU
+  throttling. Placeholder `__PROJECT__` substituted by the install task.
+- **New install tasks**:
+  - `task template:install:wup PROJECT=<name>` — copies wup.yaml
+    template, substitutes `__PROJECT__`, prints next-steps (map-deps,
+    testql-endpoints, watch).
+  - `task template:install:on-change-gates PROJECT=<name>` — composite:
+    wup.yaml + regix.yaml + reminder for testql scenarios.
+- **New workflow doc** `workflows/on-change-gates.md` — full description
+  of the wup→testql→regix cycle with ASCII diagram, package
+  responsibilities table, bootstrap recipe, and failure-mode escape
+  hatches. Documents the rationale: behaviour probe + metric gate +
+  blame report = continuous per-save analogue of `quality:gate`.
+- **New slash command** `.windsurf/workflows/koru-gate.md` (`/koru-gate`)
+  — read-only manual triad invocation: detect → regix gates → testql
+  smoke → wup status → aggregate decision. Used by the agent before
+  `planfile ticket complete`.
+
 ### Added — Onboarding & diagnostics (Phase 5)
 - `koru --init [--from <yaml>] [--force]` — one-command project bootstrap.
   Creates `.planfile/{config.yaml, sprints/current.yaml}`,
@@ -162,6 +194,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `deploy:{plan,dry,local,device,diagnose,resume,drift}`.
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
+
+## [0.1.5] - 2026-05-11
+
+### Docs
+- Update .windsurf/workflows/koru-gate.md
+- Update CHANGELOG.md
+- Update README.md
+- Update docs/llm-tools/README.md
+- Update workflows/on-change-gates.md
+
+### Other
+- Update Taskfile.yml
+- Update templates/wup.yaml.template
+- Update uv.lock
 
 ## [0.1.4] - 2026-05-10
 

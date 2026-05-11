@@ -345,6 +345,34 @@ tasks:
       - 'echo "✓ .pre-commit-config.yaml installed."'
       - 'echo "  Next: substitute <APP_NAME>, then: pip install pre-commit && pre-commit install"'
 
+  template:install:wup:
+    desc: 'Copy wup.yaml template (on-change file watcher feeding testql gates)'
+    cmds:
+      - cp templates/wup.yaml.template ./wup.yaml
+      - |
+        if [ -n "${PROJECT:-}" ]; then
+          sed -i "s/__PROJECT__/${PROJECT}/g" ./wup.yaml
+          echo "✓ wup.yaml installed (project=${PROJECT})"
+        else
+          echo "✓ wup.yaml installed (no PROJECT set; placeholder __PROJECT__ left in file)"
+        fi
+      - 'echo "  Next: 1) review wup.yaml services/paths"'
+      - 'echo "        2) wup map-deps         (build dependency map)"'
+      - 'echo "        3) wup testql-endpoints (verify scenarios reachable)"'
+      - 'echo "        4) wup watch            (start daemon, foreground)"'
+      - 'echo "  See: workflows/on-change-gates.md for the full triad cycle"'
+
+  template:install:on-change-gates:
+    desc: 'Bootstrap on-change gate triad configs (wup.yaml + regix.yaml)'
+    cmds:
+      - task: template:install:wup
+        vars: {PROJECT: '{{.PROJECT}}'}
+      - test -f regix.yaml || cp templates/regix.yaml.template ./regix.yaml
+      - 'echo "✓ on-change gate triad installed (wup.yaml + regix.yaml)"'
+      - 'echo "  testql scenarios are project-specific — re-use existing testql-testing/scenarios/ or write new TOON YAML by hand"'
+      - 'echo "  Workflow guide: see koru workflows/on-change-gates.md"'
+      - 'echo "  Slash command:  /koru-gate (invokes all three on demand)"'
+
   # =====================================================================
   # Scripts wrappers
   # =====================================================================

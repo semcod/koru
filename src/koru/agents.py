@@ -139,6 +139,15 @@ def detect_project_environment(project: Path) -> dict[str, Any]:
         or any(project.glob("docker-compose*.yaml")),
         "windsurf_rules": _marker(project, ".windsurf", "rules.md"),
         "cursor_rules": _marker(project, ".cursor"),
+        # On-change gate triad — surfaced in the brief's "On-change gates"
+        # section so the agent immediately sees which packages are wired
+        # to validate the project on every file save / pre-complete check.
+        "wup_yaml": _marker(project, "wup.yaml"),
+        "regix_yaml": _marker(project, "regix.yaml"),
+        "testql_scenarios": (
+            _marker(project, "testql-testing", "scenarios")
+            or _marker(project, "testql-scenarios")
+        ),
     }
     return {
         "cwd": str(project),

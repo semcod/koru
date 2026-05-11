@@ -568,6 +568,51 @@ def render_markdown_handoff(context: dict[str, Any]) -> str:
         lines.append(f"## No active ticket — {err}")
     lines.append("")
 
+    # On-change gates — wup + regix + testql triad. Only render when at
+    # least one of the three is configured, otherwise skip silently to
+    # avoid noise in projects that don't use the pattern.
+    gate_markers = {
+        "wup": markers.get("wup_yaml", False),
+        "regix": markers.get("regix_yaml", False),
+        "testql": markers.get("testql_scenarios", False),
+    }
+    if any(gate_markers.values()):
+        lines.append("## On-change gates")
+        lines.append("")
+        lines.append(
+            "These packages run automatically (or on demand via "
+            "`/koru-gate`) to detect regressions BEFORE you call "
+            "`planfile ticket complete`. See "
+            "`workflows/on-change-gates.md` for the full cycle."
+        )
+        lines.append("")
+        lines.append("| gate | configured | role | command |")
+        lines.append("| --- | --- | --- | --- |")
+        lines.append(
+            f"| `wup` | `{gate_markers['wup']}` | "
+            "intelligent file watcher (3-layer: detect → quick → full) | "
+            "`wup watch` (daemon) / `wup status` |"
+        )
+        lines.append(
+            f"| `regix` | `{gate_markers['regix']}` | "
+            "regression metrics (CC / MI / coverage delta) | "
+            "`regix gates` (absolute) / `regix compare` (delta) |"
+        )
+        lines.append(
+            f"| `testql` | `{gate_markers['testql']}` | "
+            "behavioural HTTP probes (TOON YAML scenarios) | "
+            "`testql run <scenario>` |"
+        )
+        lines.append("")
+        missing = [name for name, present in gate_markers.items() if not present]
+        if missing:
+            lines.append(
+                f"_Not yet configured: {', '.join(f'`{m}`' for m in missing)}. "
+                "Bootstrap any of them with `task template:install:wup` "
+                "(in koru) or follow `workflows/on-change-gates.md`._"
+            )
+            lines.append("")
+
     lines.append("## Policy (you MUST obey)")
     lines.append("")
     lines.append("| gate | value |")

@@ -1,0 +1,112 @@
+# wup.yaml — WUP (What's Up) intelligent on-change regression watcher.
+#
+# Purpose
+# -------
+# Sit BETWEEN file save and `git commit`. Every save triggers a 3-layer
+# decision tree so the agent (and the human) learn within seconds whether
+# a change broke anything observable, instead of catching it in CI.
+#
+#   [1] Detection   — file watcher with debounce + gitignore-aware excludes
+#   [2] Priority    — quick smoke: ≤3 testql endpoints related to changed
+#                     service (via dependency map)
+#   [3] Detail      — only on quick-fail: full testql scenarios + blame
+#                     report (which commit / file / line introduced the
+#                     regression).
+#
+# Pairs with:
+#   - testql           — declarative HTTP scenarios (TOON YAML)
+#   - regix.yaml       — quality regressions (CC, MI, coverage delta)
+#   - koru             — handoff section "On-change gates" reads
+#                        wup status + testql scenario count + regix gate
+#                        result, so the agent sees gate health upfront.
+#   - healing-webhook  — receives wup blame reports as alerts (optional)
+#
+# Common usage:
+#   wup init                   # generate this file (interactive)
+#   wup watch                  # start daemon (foreground)
+#   wup map-deps               # rebuild dependency map (run after big refactor)
+#   wup testql-endpoints       # introspect testql scenarios → endpoints
+#   wup status                 # show map + config summary
+#
+# CI: not for CI (use `task quality:gate` there). wup is dev-loop only.
+
+# ── Project metadata ────────────────────────────────────────────────────
+project:
+  name: "__PROJECT__"                  # replaced by template:install:wup
+  description: "On-change regression watcher driven by testql scenarios."
+
+# ── Layer 1: Detection ──────────────────────────────────────────────────
+# Which files trigger which strategy. Keep paths tight to avoid wakes
+# from doc/test churn.
+watch:
+  paths:
+    - "src/**"
+    - "backend/**"
+    - "frontend/src/**"
+    - "modules/**"
+  file_types:
+    - ".py"
+    - ".ts"
+    - ".tsx"
+    - ".js"
+  excludes:
+    - "**/__pycache__/**"
+    - "**/.venv/**"
+    - "**/node_modules/**"
+    - "**/dist/**"
+    - "**/build/**"
+    - "**/*.test.*"
+    - "**/*.spec.*"
+    - "**/*.md"
+
+# ── Layer 2 + 3: Test strategy per service ──────────────────────────────
+# A service maps a code subtree to the testql scenarios that exercise it.
+# `quick_tests` runs on every change inside the service. `full_tests`
+# runs ONLY when quick_tests fail (cost gate).
+services:
+  - name: "backend"
+    root: "backend"
+    paths:
+      - "backend/**"
+    type: "auto"                       # auto-detect FastAPI/Flask/etc.
+    quick_tests:
+      scope: "all"                     # or "endpoints", "tags:smoke"
+      max_endpoints: 3
+    full_tests:
+      scenario: "testql-testing/scenarios/realtime-health.testql.toon.yaml"
+
+  - name: "frontend"
+    root: "frontend/src"
+    paths:
+      - "frontend/src/**"
+    type: "auto"
+    quick_tests:
+      scope: "all"
+      max_endpoints: 3
+
+# ── Test strategy timing ────────────────────────────────────────────────
+test_strategy:
+  quick:
+    debounce_s: 2                      # collapse rapid saves
+    max_queue: 5                       # drop older if backlog
+    timeout_s: 10                      # quick test must be fast
+  full:
+    debounce_s: 5
+    timeout_s: 60
+    only_on_quick_fail: true
+
+# ── Reporting ───────────────────────────────────────────────────────────
+# Where blame reports land when a regression is detected.
+reporting:
+  # Stdout dashboard via Rich — interactive, colorful, filterable.
+  dashboard: true
+  # Append blame to .wup/blame-history.jsonl for later inspection.
+  blame_log: ".wup/blame-history.jsonl"
+  # If healing-webhook is up (port 8810), forward alerts.
+  webhook_url: "${WUP_WEBHOOK_URL:-}"
+
+# ── CPU throttling ──────────────────────────────────────────────────────
+# Honor system load. Below threshold, defer non-critical tests.
+resources:
+  max_cpu_percent: 70
+  defer_below_idle_percent: 20
