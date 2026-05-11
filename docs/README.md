@@ -21,6 +21,10 @@ For LLM agents starting a session in a koru-driven repository:
    lane, multi-repo refactor).
 5. **[`llm-tools/`](./llm-tools/)** — per-tool docs and install scripts
    for every component in the koru pipeline.
+6. **[`autopilot-quickstart.md`](./autopilot-quickstart.md)** — how to
+   drive your IDE's LLM chat from a terminal (`koru autopilot`).
+   Companion design doc: [`autopilot-design.md`](./autopilot-design.md);
+   open items in [`autopilot-roadmap.md`](./autopilot-roadmap.md).
 
 For human operators / DevOps:
 

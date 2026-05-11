@@ -150,6 +150,7 @@ class AutopilotDaemon:
         self._clients: dict[int, _Client] = {}
         self._stop = threading.Event()
         self._lock = threading.Lock()
+        self._handlers = self._build_handler_table()
 
     # ----- lifecycle -----------------------------------------------------
 
@@ -262,12 +263,12 @@ class AutopilotDaemon:
     # ----- dispatch ------------------------------------------------------
 
     def _dispatch(self, client: _Client, msg: Message) -> None:
-        handler = _HANDLERS.get(msg.type)
+        handler = self._handlers.get(msg.type)
         if handler is None:
             self._send(client, error(msg.id, f"unhandled type {msg.type!r}").encode())
             return
         try:
-            handler(self, client, msg)
+            handler(client, msg)
         except Exception as exc:  # pragma: no cover — defensive
             self.log(f"handler {msg.type} raised: {exc}")
             self._send(client, error(msg.id, f"internal error: {exc}").encode())
@@ -307,21 +308,41 @@ class AutopilotDaemon:
         if not isinstance(text, str) or not text:
             self._send(client, error(msg.id, "missing 'text'").encode())
             return
-        ide_pref = msg.data.get("ide") if isinstance(msg.data.get("ide"), str) else None
+        raw_ide = msg.data.get("ide") if isinstance(msg.data.get("ide"), str) else None
+        ide_pref = raw_ide if raw_ide not in (None, "auto") else None
         submit = bool(msg.data.get("submit", True))
-        # 1. Try the plugin path.
-        plugin = self._plugin_for(ide_pref if ide_pref not in (None, "auto") else None)
+        plugin = self._plugin_for(ide_pref)
         if plugin is not None:
-            corr = msg.id or f"drive-{time.monotonic_ns():x}"
-            plugin.awaiting_plugin = (client, corr)
-            forwarded = chat_send(text, submit=submit, id=corr).encode()
-            self._send(plugin, forwarded)
-            self._last_chat_send_at = time.monotonic()
-            self.log(f"drive → plugin/{plugin.ide} ({len(text)} chars)")
+            self._drive_via_plugin(client, msg, plugin, text, submit)
             return
-        # 2. Keyboard-simulation fallback.
+        self._drive_via_keyboard(client, msg, ide_pref, text, submit)
+
+    def _drive_via_plugin(
+        self,
+        client: _Client,
+        msg: Message,
+        plugin: _Client,
+        text: str,
+        submit: bool,
+    ) -> None:
+        """Forward a drive request to a connected plugin for that IDE."""
+        corr = msg.id or f"drive-{time.monotonic_ns():x}"
+        plugin.awaiting_plugin = (client, corr)
+        self._send(plugin, chat_send(text, submit=submit, id=corr).encode())
+        self._last_chat_send_at = time.monotonic()
+        self.log(f"drive → plugin/{plugin.ide} ({len(text)} chars)")
+
+    def _drive_via_keyboard(
+        self,
+        client: _Client,
+        msg: Message,
+        ide_pref: str | None,
+        text: str,
+        submit: bool,
+    ) -> None:
+        """Fallback: type the text via the local keyboard injector."""
         detected = detect_running_ides()
-        target = pick_target(detected, prefer=ide_pref if ide_pref not in (None, "auto") else None)
+        target = pick_target(detected, prefer=ide_pref)
         target_id = target.id if target else "default"
         try:
             result = self.injector.type_text(text, ide=target_id, submit=submit)
@@ -429,26 +450,22 @@ class AutopilotDaemon:
     def _handle_ping(self, client: _Client, msg: Message) -> None:
         self._send(client, ack(msg.id or "ping", info={"pong": True}).encode())
 
+    def _build_handler_table(self) -> dict[str, Callable[[_Client, Message], None]]:
+        """Return the per-instance dispatch table.
 
-def _h_drive(d: AutopilotDaemon, c: _Client, m: Message) -> None: d._handle_drive(c, m)
-def _h_hello(d: AutopilotDaemon, c: _Client, m: Message) -> None: d._handle_hello(c, m)
-def _h_status(d: AutopilotDaemon, c: _Client, m: Message) -> None: d._handle_status(c, m)
-def _h_ack(d: AutopilotDaemon, c: _Client, m: Message) -> None: d._handle_ack(c, m)
-def _h_sess(d: AutopilotDaemon, c: _Client, m: Message) -> None: d._handle_session_event(c, m)
-def _h_shut(d: AutopilotDaemon, c: _Client, m: Message) -> None: d._handle_shutdown(c, m)
-def _h_ping(d: AutopilotDaemon, c: _Client, m: Message) -> None: d._handle_ping(c, m)
-
-
-_HANDLERS: dict[str, Callable[[AutopilotDaemon, _Client, Message], None]] = {
-    "drive": _h_drive,
-    "hello": _h_hello,
-    "status": _h_status,
-    "ack": _h_ack,
-    "session.started": _h_sess,
-    "session.ended": _h_sess,
-    "shutdown": _h_shut,
-    "ping": _h_ping,
-}
+        Bound methods are already closures over ``self``, so dispatch
+        is one dict lookup + one call — no thin wrapper functions.
+        """
+        return {
+            "drive": self._handle_drive,
+            "hello": self._handle_hello,
+            "status": self._handle_status,
+            "ack": self._handle_ack,
+            "session.started": self._handle_session_event,
+            "session.ended": self._handle_session_event,
+            "shutdown": self._handle_shutdown,
+            "ping": self._handle_ping,
+        }
 
 
 __all__ = ["AutopilotDaemon"]

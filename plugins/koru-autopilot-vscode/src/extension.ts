@@ -88,11 +88,27 @@ class AutopilotBridge {
 
   private scheduleRetry(): void {
     if (this.retryTimer) return;
+    // Add ~±500 ms of jitter so 30 IDE windows don't all reconnect in
+    // the same 3 s window after the daemon restarts (R10).
+    const delay = 3000 + Math.floor((Math.random() - 0.5) * 1000);
     this.retryTimer = setTimeout(() => {
       this.retryTimer = null;
       const cfg = vscode.workspace.getConfiguration("koruAutopilot");
       if (cfg.get<boolean>("autoConnect", true)) this.connect();
-    }, 3000);
+    }, delay);
+  }
+
+  private async runCommand(command: string): Promise<boolean> {
+    // Wrap a Thenable in a real Promise so we can ``.catch`` it.
+    // VS Code's ``Thenable<T>`` lacks ``catch``; ``Promise.resolve``
+    // upgrades it without losing the resolved value.
+    try {
+      await Promise.resolve(vscode.commands.executeCommand(command));
+      return true;
+    } catch (err) {
+      console.error(`koru autopilot: command ${command} failed`, err);
+      return false;
+    }
   }
 
   private detectIde(): string {
@@ -148,25 +164,33 @@ class AutopilotBridge {
       this.send({ type: "ack", id: env.id, ok: false, message: "empty text" });
       return;
     }
+    // Snapshot the user's clipboard BEFORE we do anything else so we
+    // can always restore it — even if focus/paste/submit throws (R8).
+    let previous: string | null = null;
+    try {
+      previous = await vscode.env.clipboard.readText();
+    } catch {
+      previous = null;
+    }
     try {
       // Best-effort path: focus the active chat view (works in
       // VS Code GitHub Copilot Chat, Windsurf Cascade and most forks).
-      await vscode.commands.executeCommand("workbench.action.chat.open").catch(() => undefined);
-      // Place the text on the clipboard, paste, then optionally submit.
-      const previous = await vscode.env.clipboard.readText();
+      await this.runCommand("workbench.action.chat.open");
       await vscode.env.clipboard.writeText(text);
-      await vscode.commands.executeCommand("editor.action.clipboardPasteAction");
+      await this.runCommand("editor.action.clipboardPasteAction");
       if (submit) {
-        await vscode.commands
-          .executeCommand("workbench.action.chat.submit")
-          .catch(() => vscode.commands.executeCommand("workbench.action.chat.acceptInput"));
+        const ok = await this.runCommand("workbench.action.chat.submit");
+        if (!ok) await this.runCommand("workbench.action.chat.acceptInput");
       }
-      // Restore clipboard.
-      try { await vscode.env.clipboard.writeText(previous); } catch { /* ignore */ }
       this.send({ type: "ack", id: env.id, ok: true, delivered: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.send({ type: "ack", id: env.id, ok: false, message });
+    } finally {
+      // Restore clipboard regardless of outcome.
+      if (previous !== null) {
+        try { await vscode.env.clipboard.writeText(previous); } catch { /* ignore */ }
+      }
     }
   }
 }

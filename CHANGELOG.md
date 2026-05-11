@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Autopilot: drive an IDE's LLM chat from the terminal
+
+- **New subsystem `koru.autopilot`** — `src/koru/autopilot/{protocol,
+  injector, ide, daemon, client, cli_command}.py`. Brokers between IDE
+  plugins and CLI clients over a local unix socket
+  (`$XDG_RUNTIME_DIR/koru-autopilot.sock`, mode `0600`,
+  `SO_PEERCRED`-enforced same-UID). Wire protocol is NDJSON with a 1
+  MiB per-line cap and a fixed type whitelist (see
+  [`docs/autopilot-design.md`](docs/autopilot-design.md)).
+- **New CLI verb `koru autopilot`** with sub-actions `daemon`, `drive`,
+  `status`, `shutdown`, `ide-list`, `doctor`. Wired in
+  `src/koru/cli.py` alongside the existing `task`, `agent`, `serve`,
+  `scan`, `gate`, `queue`, `gc` subcommand routes.
+- **Auto-handoff** — when an IDE-side plugin emits `session.ended`,
+  the daemon builds the canonical koru brief
+  (`koru.context.build_context` + `render_markdown_handoff`) and
+  injects it back into the chat as `chat.send`. Anti-loop cooldown
+  via `--handoff-cooldown` (default 2 s); fully opt-outable with
+  `--no-handoff`. Real-world smoke shipped a 5388-char brief in
+  one round trip.
+- **Three injection backends** (auto-picked by session type): plugin
+  socket → `xdotool` (X11) → `wtype` / `ydotool` (Wayland). Per-IDE
+  submit keymap (`Return` for VS Code family, `Ctrl+Return` for
+  JetBrains).
+- **IDE process scan** (`src/koru/autopilot/ide.py`) recognises
+  Windsurf, VS Code / VSCodium / code-oss, Cursor, JetBrains IDEs
+  (idea / pycharm / webstorm / phpstorm / goland / clion / rubymine),
+  and Zed via `/proc/<pid>/comm` + `cmdline` matching.
+- **VS Code / Windsurf / Cursor extension scaffolding**
+  (`plugins/koru-autopilot-vscode/`, TypeScript): connects to the
+  daemon, status bar indicator, paste-and-submit injection, auto-
+  reconnect.
+- **JetBrains plugin stub** (`plugins/koru-autopilot-jetbrains/`) —
+  Phase 3 placeholder. JetBrains users currently get keyboard-sim.
+- **Documentation:** new
+  [`docs/autopilot-quickstart.md`](docs/autopilot-quickstart.md),
+  [`docs/autopilot-design.md`](docs/autopilot-design.md), and
+  [`docs/autopilot-roadmap.md`](docs/autopilot-roadmap.md); README
+  section "Autopilot — drive your IDE from the terminal" added under
+  the no-args brief description.
+- **Tests:** 53 new in `tests/test_autopilot_{protocol,injector,ide,
+  daemon,cli}.py` (protocol round-trip, backend selection per
+  session type, IDE process scan, in-thread daemon round-trip,
+  plugin-forward path, handoff happy path / disabled / cooldown,
+  CLI smoke). Full suite: **343 passed, 0 regressions**.
+
 ### Added — On-change gates triad (wup + regix + testql)
 
 - **New brief section "On-change gates"** — `render_markdown_handoff()`
@@ -194,6 +240,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `deploy:{plan,dry,local,device,diagnose,resume,drift}`.
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
+
+## [0.1.20] - 2026-05-11
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update docs/README.md
+- Update docs/autopilot-quickstart.md
+- Update docs/autopilot-roadmap.md
+
+### Test
+- Update tests/test_autopilot_daemon.py
+
+### Other
+- Update .gitignore
+- Update plugins/koru-autopilot-vscode/out/extension.js
+- Update plugins/koru-autopilot-vscode/out/extension.js.map
+- Update plugins/koru-autopilot-vscode/package-lock.json
+- Update plugins/koru-autopilot-vscode/src/extension.ts
+- Update uv.lock
 
 ## [0.1.19] - 2026-05-11
 
