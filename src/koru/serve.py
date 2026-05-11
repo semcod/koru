@@ -257,6 +257,68 @@ function renderSelfService(ss) {
     `<table><tbody>${rows}</tbody></table>`);
 }
 
+function priorityPill(prio) {
+  const cls = prio === "critical" ? "err"
+            : prio === "high" ? "warn"
+            : prio === "low" ? "" : "ok";
+  return `<span class="pill ${cls}">${esc(prio || "normal")}</span>`;
+}
+
+function renderOpenTickets(tickets, activeId) {
+  tickets = tickets || [];
+  if (!tickets.length) {
+    return panel("Open tickets",
+      `<div class="muted">queue is idle — no open tickets</div>`, true);
+  }
+  const rows = tickets.map(t => {
+    const id = esc(t.id || "?");
+    const isActive = activeId && t.id === activeId;
+    const star = isActive ? '<span class="pill ok">active</span> ' : "";
+    const exec = esc(((t.executor) || {}).kind || "?");
+    const name = esc(t.name || "");
+    const status = esc(t.status || "open");
+    const prio = priorityPill(t.priority);
+    return `<tr>
+      <td><code>${id}</code></td>
+      <td>${star}${name}</td>
+      <td>${prio}</td>
+      <td><span class="pill">${status}</span></td>
+      <td><code>${exec}</code></td>
+    </tr>`;
+  }).join("");
+  return panel("Open tickets",
+    `<table><thead><tr>
+      <th>id</th><th>name</th><th>priority</th>
+      <th>status</th><th>executor</th>
+    </tr></thead><tbody>${rows}</tbody></table>`, true);
+}
+
+function renderSemcodTools(env) {
+  const tools = (env && env.semcod_tools) || [];
+  if (!tools.length) return "";
+  const installed = tools.filter(t => t.available);
+  const missing = tools.filter(t => !t.available);
+  const rows = installed.map(t => `<tr>
+    <td><code>${esc(t.id)}</code></td>
+    <td><code>${esc(t.via)}</code>${
+      t.config_present ? ' <span class="pill ok">configured</span>' : ''
+    }</td>
+    <td class="muted">${esc(t.role || "")}</td>
+    <td><code>${esc(t.command_hint || "")}</code></td>
+  </tr>`).join("");
+  const missingNote = missing.length
+    ? `<div class="muted" style="margin-top:8px">Not installed: ${
+        missing.map(t => `<code>${esc(t.id)}</code>`).join(", ")
+      }</div>`
+    : "";
+  const body = installed.length
+    ? `<table><thead><tr>
+        <th>tool</th><th>via</th><th>role</th><th>command</th>
+       </tr></thead><tbody>${rows}</tbody></table>${missingNote}`
+    : `<div class="muted">No semcod tools detected.</div>${missingNote}`;
+  return panel("Available semcod tools", body, true);
+}
+
 async function refresh() {
   try {
     const res = await fetch("/api/context", { cache: "no-store" });
@@ -265,12 +327,15 @@ async function refresh() {
     $("project").textContent = ctx.project || "?";
     $("ts").textContent = new Date().toLocaleTimeString();
     const root = $("root");
+    const activeId = (ctx.ticket || {}).id || null;
     root.innerHTML = [
       renderTicket(ctx.ticket, ctx.ticket_error),
       renderEnv(ctx.environment),
+      renderOpenTickets(ctx.open_tickets, activeId),
+      renderAgents(ctx.environment),
+      renderSemcodTools(ctx.environment),
       renderPolicy(ctx.policy),
       renderSelfService(ctx.self_service),
-      renderAgents(ctx.environment),
     ].join("");
   } catch (e) {
     $("root").innerHTML = `<div class="panel full err">
@@ -309,12 +374,25 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
             body: bytes,
             content_type: str = "text/plain; charset=utf-8",
         ) -> None:
-            self.send_response(status)
-            self.send_header("Content-Type", content_type)
-            self.send_header("Content-Length", str(len(body)))
-            self.send_header("Cache-Control", "no-store")
-            self.end_headers()
-            self.wfile.write(body)
+            try:
+                self.send_response(status)
+                self.send_header("Content-Type", content_type)
+                self.send_header("Content-Length", str(len(body)))
+                # Aggressive no-cache: the dashboard ships embedded HTML
+                # and koru releases may change its structure. Stale
+                # browser cache otherwise shows tabs from old koru
+                # versions (e.g. self-service commands that no longer
+                # exist on the new planfile CLI surface).
+                self.send_header("Cache-Control", "no-store, no-cache, must-revalidate")
+                self.send_header("Pragma", "no-cache")
+                self.send_header("Expires", "0")
+                self.end_headers()
+                self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError):
+                # Client closed the connection mid-write. Auto-refresh
+                # navigations and tab closures trigger this routinely;
+                # it's not an error worth a traceback.
+                return
 
         def _send_json(self, payload: Any, status: int = 200) -> None:
             body = json.dumps(payload, indent=2, sort_keys=True).encode("utf-8")

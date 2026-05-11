@@ -31,8 +31,25 @@ from pathlib import Path
 from typing import Any
 
 from .agents import detect_agent_environment
+from .dotenv_loader import load_dotenv as _load_dotenv_impl
 from .policy import Policy, load_policy
 from .runtime import planfile_dir
+
+
+# Cache so we only load `.env` once per project per process (multiple
+# `build_context` calls — e.g. dashboard auto-refresh — would otherwise
+# re-read the file on every 5-second tick).
+_DOTENV_LOADED: set[Path] = set()
+
+
+def _load_project_dotenv(project: Path) -> None:
+    if project in _DOTENV_LOADED:
+        return
+    try:
+        _load_dotenv_impl(project)
+    except Exception:  # pragma: no cover — never break the brief over .env
+        pass
+    _DOTENV_LOADED.add(project)
 
 # ---------------------------------------------------------------------------
 # planfile helpers (mirror of planfile_queue's resolution but read-only)
@@ -138,6 +155,10 @@ def build_context(
     use, callers just pass ``project`` and let everything else default.
     """
     project = project.resolve()
+    # Load project-local `.env` so capability probes (e.g.
+    # OPENROUTER_API_KEY) see what the user already has on disk.
+    # No-op when the file is absent; never overrides existing env.
+    _load_project_dotenv(project)
     resolved_policy = policy if policy is not None else load_policy(project)
 
     # Pre-flight: a project is "initialised" only when BOTH the planfile
@@ -155,6 +176,7 @@ def build_context(
 
     ticket_data: dict[str, Any] | None = None
     ticket_error: str | None = None
+    open_tickets: list[dict[str, Any]] = []
 
     if not planfile_present:
         ticket_error = "project not initialised"
@@ -190,7 +212,9 @@ def build_context(
                 else:
                     ticket_error = "planfile output was not JSON"
             elif isinstance(ticket_data, list):
-                # `ticket list` returns an array — pick the first open ticket
+                # `ticket list` returns an array — keep the full list of
+                # open tickets so the dashboard can show the whole queue,
+                # then pick the first one as the active ticket.
                 open_tickets = [
                     t for t in ticket_data
                     if isinstance(t, dict) and t.get("status") in (None, "open", "ready", "todo")
@@ -198,6 +222,10 @@ def build_context(
                 ticket_data = open_tickets[0] if open_tickets else None  # type: ignore[assignment]
                 if ticket_data is None:
                     ticket_error = "queue is idle"
+            elif isinstance(ticket_data, dict):
+                # Single-object payload (legacy `ticket next`). Treat as
+                # a one-entry queue for dashboard consistency.
+                open_tickets = [ticket_data]
         else:
             raw_err = (ticket_proc.stderr or "planfile error").strip()
             # Filter out Python warnings (e.g. pydantic UserWarning) that
@@ -232,6 +260,7 @@ def build_context(
         "project": str(project),
         "ticket": ticket_data,
         "ticket_error": ticket_error,
+        "open_tickets": open_tickets,
         "policy": resolved_policy.to_dict(),
         "environment": {
             "git": git_state,
@@ -674,6 +703,11 @@ def render_markdown_handoff(context: dict[str, Any]) -> str:
     lines.append("- **add_nl_task**: `koru task \"Describe the next change\"`")
     lines.append("- **agent_prompt**: `koru agent`")
     lines.append("- **launch_agent**: `koru agent --launch`")
+    lines.append(
+        "- **scan_repo**: `koru scan` (dry-run) / `koru scan --apply` "
+        "(create tickets from pytest collect errors, TODO/FIXME, missing "
+        "gates and semcod tools)"
+    )
     lines.append("")
 
     lines.append("## Dashboard")
