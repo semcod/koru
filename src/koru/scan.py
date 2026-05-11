@@ -124,7 +124,48 @@ def scan_pytest_collect(
             ["python3", "-m", "pytest", "--collect-only", "-q", "--no-header"],
             project,
         )
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+    except subprocess.TimeoutExpired:
+        # A timeout is a *real signal*, not a quiet success. Hiding it
+        # behind ``return []`` produced false-positive "repo looks clean"
+        # reports (see PLF-093 post-mortem). Surface it as its own ticket
+        # so the next agent investigates the hang instead of trusting a
+        # silent green light.
+        return [
+            Suggestion(
+                signal="pytest_collect_timeout",
+                title="pytest collection timed out — investigate hangs",
+                description=(
+                    f"`pytest --collect-only` did not finish within "
+                    f"{timeout_seconds:g}s when invoked from the project "
+                    "root. koru scan cannot tell whether the suite is "
+                    "healthy or broken — it just hung.\n\n"
+                    "Common root causes:\n"
+                    "- heavy module-level imports in `conftest.py` "
+                    "(database connect, network, model loading) running "
+                    "during *collection* instead of inside fixtures;\n"
+                    "- a pytest plugin (e.g. pytest-asyncio, pytest-django) "
+                    "blocking on a fixture that never resolves;\n"
+                    "- unbounded test discovery walking generated/build "
+                    "directories — fix with `norecursedirs` or `testpaths`;\n"
+                    "- circular imports between sub-packages that pytest "
+                    "tries to load as a single rootdir.\n\n"
+                    "Reproduce locally:\n"
+                    "    timeout 60 python3 -m pytest --collect-only -q\n\n"
+                    "If it still hangs, narrow scope:\n"
+                    "    pytest --collect-only -q --rootdir=. tests/\n"
+                    "    pytest --collect-only -q -p no:asyncio\n\n"
+                    "Until this is fixed, `koru scan`'s pytest probe is "
+                    "non-actionable: it cannot distinguish a clean repo "
+                    "from a broken one."
+                ),
+                priority="high",
+                labels=("ci", "bug", "scan", "timeout"),
+            )
+        ]
+    except (FileNotFoundError, OSError):
+        # pytest not installed / not invokable in this environment — that's
+        # an environmental gap, not a project bug. Stay silent (the user
+        # would not be able to act on it from inside the repo).
         return []
 
     if result.returncode == 0:

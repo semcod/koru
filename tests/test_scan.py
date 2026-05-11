@@ -72,15 +72,66 @@ class TestScanPytestCollect(unittest.TestCase):
             self.assertIn("Fix package import path", result[0].title)
             self.assertIn("pythonpath", result[0].description)
 
-    def test_timeout_or_missing_pytest_returns_empty(self) -> None:
+    def test_collection_timeout_emits_diagnostic_ticket(self) -> None:
+        """A timeout is a *real* problem — koru must NOT swallow it.
+
+        Historical bug (PLF-093 post-mortem, 2026-05-11): timeouts were
+        treated as silent success ("no suggestions — repo looks clean").
+        That produced false-positive green lights when pytest collection
+        actually hung. Pin the corrected behavior: surface the timeout
+        as its own actionable ticket.
+        """
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             (project / "pyproject.toml").write_text("[project]\nname='x'\n")
 
             def boom(_cmd, _proj):
-                raise subprocess.TimeoutExpired(cmd="pytest", timeout=1)
+                raise subprocess.TimeoutExpired(cmd="pytest", timeout=30)
 
-            self.assertEqual(scan_pytest_collect(project, runner=boom), [])
+            result = scan_pytest_collect(
+                project, runner=boom, timeout_seconds=30.0,
+            )
+            self.assertEqual(len(result), 1)
+            ticket = result[0]
+            self.assertEqual(ticket.signal, "pytest_collect_timeout")
+            self.assertEqual(ticket.priority, "high")
+            self.assertIn("timeout", ticket.labels)
+            self.assertIn("ci", ticket.labels)
+            # The description must be actionable — not just "it hung".
+            self.assertIn("conftest", ticket.description)
+            self.assertIn("norecursedirs", ticket.description)
+            self.assertIn("30", ticket.description)  # the actual timeout value
+
+    def test_timeout_value_is_reflected_in_ticket(self) -> None:
+        """If the operator overrides timeout_seconds, the ticket says so."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "pyproject.toml").write_text("[project]\nname='x'\n")
+
+            def boom(_cmd, _proj):
+                raise subprocess.TimeoutExpired(cmd="pytest", timeout=5)
+
+            result = scan_pytest_collect(
+                project, runner=boom, timeout_seconds=5.0,
+            )
+            self.assertEqual(len(result), 1)
+            self.assertIn("5s", result[0].description)
+
+    def test_pytest_not_installed_stays_silent(self) -> None:
+        """Missing pytest binary is environmental, not a project bug.
+
+        We deliberately do *not* create a ticket here — the operator
+        cannot act on it from inside the repo. Distinguish carefully
+        from the timeout case above.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "pyproject.toml").write_text("[project]\nname='x'\n")
+
+            def missing(_cmd, _proj):
+                raise FileNotFoundError("python3: command not found")
+
+            self.assertEqual(scan_pytest_collect(project, runner=missing), [])
 
 
 class TestScanTodoMarkers(unittest.TestCase):
