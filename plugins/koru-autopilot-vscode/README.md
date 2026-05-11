@@ -19,13 +19,49 @@ npm install
 npm run compile
 ```
 
-To use it locally without packaging:
+## Run locally (no install required)
 
 ```bash
 # inside this folder:
 code --extensionDevelopmentPath=$(pwd)
-# or for Windsurf:
+# or for Windsurf / Cursor (they share the VS Code extension API):
 windsurf --extensionDevelopmentPath=$(pwd)
+cursor   --extensionDevelopmentPath=$(pwd)
+```
+
+## Package a `.vsix` for distribution
+
+```bash
+npm install
+npm run package        # produces koru-autopilot-0.1.0.vsix
+```
+
+`npm run package` invokes `vsce package` and writes the file next to
+`package.json`. Behind the scenes the script runs `tsc -p ./` first
+(via `vscode:prepublish`).
+
+## Install the `.vsix`
+
+For everyday users who don't want to clone this repo:
+
+```bash
+# Cascade / Windsurf:
+windsurf --install-extension koru-autopilot-0.1.0.vsix
+
+# VS Code:
+code --install-extension koru-autopilot-0.1.0.vsix
+
+# Cursor:
+cursor --install-extension koru-autopilot-0.1.0.vsix
+```
+
+After install, the IDE shows a `🔌 koru: on` indicator in its status
+bar as soon as `koru autopilot daemon` is running.
+
+## Clean rebuild
+
+```bash
+npm run clean && npm install && npm run package
 ```
 
 ## Configuration

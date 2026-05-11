@@ -5,10 +5,20 @@
   "version": "0.1.0",
   "publisher": "semcod",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/semcod/koru.git",
+    "directory": "plugins/koru-autopilot-vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/semcod/koru/issues"
+  },
+  "homepage": "https://github.com/semcod/koru/tree/main/plugins/koru-autopilot-vscode#readme",
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": ["Other"],
+  "keywords": ["koru", "autopilot", "cascade", "windsurf", "cursor", "automation"],
   "activationEvents": ["onStartupFinished"],
   "main": "./out/extension.js",
   "contributes": {
@@ -40,11 +50,16 @@
   },
   "scripts": {
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile",
+    "package": "vsce package --no-dependencies --out koru-autopilot-${npm_package_version}.vsix",
+    "publish": "vsce publish --no-dependencies",
+    "clean": "rm -rf out node_modules *.vsix"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
     "typescript": "^5.4.0"
   }
 }

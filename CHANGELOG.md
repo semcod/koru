@@ -345,6 +345,26 @@ alt+Return` (new IDE accepted), `unknown_ide → Return` (fallback).
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
 
+## [0.1.23] - 2026-05-11
+
+### Docs
+- Update README.md
+- Update docs/autopilot-roadmap.md
+- Update plugins/koru-autopilot-vscode/CHANGELOG.md
+- Update plugins/koru-autopilot-vscode/README.md
+
+### Test
+- Update tests/test_cli.py
+
+### Other
+- Update .gitignore
+- Update plugins/koru-autopilot-vscode/.gitignore
+- Update plugins/koru-autopilot-vscode/.vscodeignore
+- Update plugins/koru-autopilot-vscode/LICENSE
+- Update plugins/koru-autopilot-vscode/package-lock.json
+- Update plugins/koru-autopilot-vscode/package.json
+- Update uv.lock
+
 ## [0.1.22] - 2026-05-11
 
 ### Docs

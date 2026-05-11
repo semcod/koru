@@ -12,7 +12,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from koru.cli import _build_parser, _is_bare_invocation, main
+from koru.cli import _build_parser, _is_bare_invocation, _SUBCOMMANDS, main
 
 
 def _tmp_git_project(prefix: str = "koru-cli-test-") -> Path:
@@ -163,3 +163,59 @@ class TestBareEmitsMarkdown(unittest.TestCase):
         code, output = _run_main("--project", str(self.project))
         self.assertEqual(code, 0)
         self.assertIn("# koru handoff", output)
+
+
+class TestSubcommandDispatch(unittest.TestCase):
+    """R6: routing through ``_SUBCOMMANDS`` dispatch table.
+
+    We verify (a) the table contains every documented subcommand, and
+    (b) routing dispatches to exactly the handler bound under each key,
+    with the residual argv (``raw_args[1:]``) forwarded as-is.
+    """
+
+    EXPECTED_KEYS = frozenset(
+        {"task", "agent", "serve", "scan", "gate", "queue", "gc", "autopilot"}
+    )
+
+    def test_table_contains_all_documented_subcommands(self) -> None:
+        self.assertEqual(self.EXPECTED_KEYS, set(_SUBCOMMANDS.keys()))
+
+    def test_table_values_are_callables(self) -> None:
+        for name, fn in _SUBCOMMANDS.items():
+            self.assertTrue(callable(fn), f"{name!r} → {fn!r} is not callable")
+
+    def test_each_subcommand_routes_to_its_handler(self) -> None:
+        """``koru <name> a b c`` must call ``_SUBCOMMANDS[<name>](['a','b','c'])``."""
+        for name in self.EXPECTED_KEYS:
+            with self.subTest(subcommand=name):
+                fake = mock.Mock(return_value=0)
+                with mock.patch.dict(_SUBCOMMANDS, {name: fake}):
+                    with mock.patch("sys.argv", ["koru", name, "a", "b", "c"]):
+                        code = main()
+                    # Assert INSIDE the patch context so the mock is still bound.
+                    fake.assert_called_once_with(["a", "b", "c"])
+                self.assertEqual(code, 0)
+
+    def test_unknown_first_arg_falls_through_to_argparse(self) -> None:
+        """A non-subcommand argv MUST NOT trigger any handler."""
+        # Pick a flag that argparse will accept (--doctor exits cleanly).
+        project = _tmp_git_project("koru-cli-fallthrough-")
+        try:
+            for handler_name in self.EXPECTED_KEYS:
+                with mock.patch.dict(
+                    _SUBCOMMANDS, {handler_name: mock.Mock(side_effect=AssertionError)},
+                ):
+                    code, _ = _run_main("--doctor", "--project", str(project))
+                    self.assertIsInstance(code, int)
+        finally:
+            shutil.rmtree(project, ignore_errors=True)
+
+    def test_empty_argv_does_not_call_any_handler(self) -> None:
+        project = _tmp_git_project("koru-cli-empty-")
+        try:
+            sentinels = {name: mock.Mock(side_effect=AssertionError)
+                         for name in self.EXPECTED_KEYS}
+            with mock.patch.dict(_SUBCOMMANDS, sentinels):
+                _run_main("--project", str(project))
+        finally:
+            shutil.rmtree(project, ignore_errors=True)

@@ -8,6 +8,7 @@ import json
 import shlex
 import sys
 from pathlib import Path
+from typing import Callable
 
 from .agents import (
     detect_agent_options,

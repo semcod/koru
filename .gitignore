@@ -1,5 +1,7 @@
 # Byte-compiled / optimized / DLL files
+plugins/koru-autopilot-vscode/.vscodeignore
 node_modules
+*.vsix
 .env.example
 .idea
 .idea/inspectionProfiles/profiles_settings.xml
