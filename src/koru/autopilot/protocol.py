@@ -48,6 +48,39 @@ CLI_TO_DAEMON = frozenset({
 ALL_TYPES = PLUGIN_TO_DAEMON | DAEMON_TO_PLUGIN | CLI_TO_DAEMON
 
 
+# Per-type field schema (R12). Only fields listed here are kept in
+# ``Message.data`` after decoding; everything else is dropped silently.
+#
+# A type mapped to ``None`` accepts ARBITRARY informational fields (used
+# for ``ack`` / ``error`` which legitimately carry caller-defined info
+# blocks). Types not present in the map default to the empty set, i.e.
+# "no extra fields allowed".
+#
+# Updating this map is part of the wire-protocol contract — bump
+# clients/plugins in lockstep.
+_FIELD_SCHEMA: dict[str, frozenset[str] | None] = {
+    "hello":           frozenset({"ide", "version", "pid"}),
+    "session.started": frozenset({"chat"}),
+    "session.ended":   frozenset({"chat", "reason"}),
+    "chat.send":       frozenset({"text", "submit"}),
+    "drive":           frozenset({"text", "submit", "ide"}),
+    "ping":            frozenset(),
+    "shutdown":        frozenset(),
+    "status":          frozenset(),
+    # Informational envelopes — pass-through.
+    "ack":             None,
+    "error":           None,
+}
+
+
+def _filter_extras(msg_type: str, obj: dict[str, Any]) -> dict[str, Any]:
+    """Apply the per-type whitelist; drop unrecognised keys."""
+    allowed = _FIELD_SCHEMA.get(msg_type, frozenset())
+    if allowed is None:
+        return {k: v for k, v in obj.items() if k not in ("type", "id")}
+    return {k: v for k, v in obj.items() if k in allowed}
+
+
 class ProtocolError(ValueError):
     """Raised when a line cannot be decoded into a valid message."""
 
@@ -111,7 +144,7 @@ def decode(line: bytes | str) -> Message:
     msg_id = obj.get("id")
     if msg_id is not None and not isinstance(msg_id, str):
         raise ProtocolError("'id' must be a string when present")
-    extras = {k: v for k, v in obj.items() if k not in ("type", "id")}
+    extras = _filter_extras(msg_type, obj)
     return Message(type=msg_type, id=msg_id, data=extras)
 
 

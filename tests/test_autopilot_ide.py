@@ -76,3 +76,45 @@ def test_pick_target_defaults_to_first(fake_proc: Path) -> None:
 
 def test_pick_target_empty_list_returns_none() -> None:
     assert ide_mod.pick_target([]) is None
+
+
+# ---- R5: detect_running_ides_cached ----
+
+
+def test_detect_cached_uses_cache_within_ttl(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Second call within ``ttl`` must NOT trigger a fresh ``/proc`` scan."""
+    ide_mod.clear_detect_cache()
+    calls: list[None] = []
+
+    def fake_detect(*, _pids: list[int] | None = None) -> list:
+        calls.append(None)
+        return []
+
+    monkeypatch.setattr(ide_mod, "detect_running_ides", fake_detect)
+    ide_mod.detect_running_ides_cached(ttl=10.0)
+    ide_mod.detect_running_ides_cached(ttl=10.0)
+    ide_mod.detect_running_ides_cached(ttl=10.0)
+    assert len(calls) == 1
+
+
+def test_detect_cached_ttl_zero_always_refreshes(monkeypatch: pytest.MonkeyPatch) -> None:
+    ide_mod.clear_detect_cache()
+    calls: list[None] = []
+    monkeypatch.setattr(
+        ide_mod, "detect_running_ides", lambda **_: (calls.append(None) or [])
+    )
+    ide_mod.detect_running_ides_cached(ttl=0)
+    ide_mod.detect_running_ides_cached(ttl=0)
+    assert len(calls) == 2
+
+
+def test_clear_detect_cache_forces_refresh(monkeypatch: pytest.MonkeyPatch) -> None:
+    ide_mod.clear_detect_cache()
+    calls: list[None] = []
+    monkeypatch.setattr(
+        ide_mod, "detect_running_ides", lambda **_: (calls.append(None) or [])
+    )
+    ide_mod.detect_running_ides_cached(ttl=10.0)
+    ide_mod.clear_detect_cache()
+    ide_mod.detect_running_ides_cached(ttl=10.0)
+    assert len(calls) == 2

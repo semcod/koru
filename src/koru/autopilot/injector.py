@@ -225,10 +225,20 @@ class Injector:
             )
 
     def _press_wtype(self, combo: str) -> None:
-        # Translate ``ctrl+Return`` into the wtype invocation.
+        # Translate e.g. ``ctrl+Return`` into the wtype invocation.
+        # R3: refuse multi-modifier combos explicitly — the press /
+        # release ordering required for ``ctrl+shift+x`` differs per
+        # compositor and would silently misbehave under the previous
+        # naive implementation. Better to fail loud and let the caller
+        # extend ``_SUBMIT_KEY``.
         parts = combo.split("+")
         key = parts[-1]
         modifiers = parts[:-1]
+        if len(modifiers) > 1:
+            raise InjectorError(
+                f"wtype submit key {combo!r} has {len(modifiers)} modifiers; "
+                "only single-modifier combos are supported"
+            )
         argv = ["wtype"]
         for m in modifiers:
             argv += ["-M", m]

@@ -101,3 +101,53 @@ def test_error_carries_message() -> None:
     msg = error("r1", "boom")
     assert msg.data["message"] == "boom"
     assert msg.data["ok"] is False
+
+
+# ---- R12: per-type field schema cap ----
+
+
+def test_decode_drops_unknown_fields_for_strict_type() -> None:
+    """``hello`` accepts {ide, version, pid}; anything else is dropped."""
+    raw = (
+        b'{"type":"hello","id":"h","ide":"vscode","version":"0.1","pid":1,'
+        b'"__proto__":"evil","arbitrary":"stuff"}\n'
+    )
+    msg = decode(raw)
+    assert msg.data == {"ide": "vscode", "version": "0.1", "pid": 1}
+    assert "__proto__" not in msg.data
+    assert "arbitrary" not in msg.data
+
+
+def test_decode_drops_unknown_fields_on_chat_send() -> None:
+    raw = b'{"type":"chat.send","id":"c","text":"hi","submit":true,"side":"evil"}\n'
+    msg = decode(raw)
+    assert msg.data == {"text": "hi", "submit": True}
+
+
+def test_decode_drops_all_extras_on_zero_field_type() -> None:
+    """``ping`` and ``status`` declare an empty allowed set."""
+    msg = decode(b'{"type":"ping","id":"p","payload":"junk"}\n')
+    assert msg.data == {}
+
+
+def test_decode_keeps_arbitrary_extras_for_ack() -> None:
+    """``ack`` legitimately carries info blocks; pass-through (no cap)."""
+    raw = b'{"type":"ack","id":"r","ok":true,"backend":"stub","ide":{"id":"vscode"}}\n'
+    msg = decode(raw)
+    assert msg.data["ok"] is True
+    assert msg.data["backend"] == "stub"
+    assert msg.data["ide"] == {"id": "vscode"}
+
+
+def test_decode_keeps_arbitrary_extras_for_error() -> None:
+    msg = decode(b'{"type":"error","id":"r","ok":false,"message":"x","trace":"..."}\n')
+    assert msg.data["ok"] is False
+    assert msg.data["message"] == "x"
+    assert msg.data["trace"] == "..."
+
+
+def test_drive_with_unknown_ide_field_value_passes_known_fields() -> None:
+    """The schema caps WHICH fields are accepted, not which VALUES."""
+    raw = b'{"type":"drive","id":"d","text":"hi","ide":"jetbrains","submit":false,"x":1}\n'
+    msg = decode(raw)
+    assert msg.data == {"text": "hi", "ide": "jetbrains", "submit": False}

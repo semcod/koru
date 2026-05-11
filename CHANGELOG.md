@@ -53,6 +53,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   plugin-forward path, handoff happy path / disabled / cooldown,
   CLI smoke). Full suite: **343 passed, 0 regressions**.
 
+### Changed — Autopilot refactor pass 1
+
+- **R14 / TS compile fix** (`plugins/koru-autopilot-vscode/src/extension.ts`)
+  — `Thenable<T>` has no `.catch`, which broke `npm run compile`.
+  New `runCommand()` helper wraps each `vscode.commands.executeCommand`
+  call in `Promise.resolve(...)` + `try/catch`, returns a `boolean`,
+  and logs failures.
+- **R10 / reconnect jitter** — the VS Code extension's reconnect timer
+  now uses `3000 ± 500 ms` instead of a fixed 3 s, so when the daemon
+  restarts with N IDE windows open they no longer dog-pile in the same
+  window.
+- **R8 (partial) / clipboard restore** — `injectChat` now snapshots
+  the clipboard *before* the `try` block and restores it in a `finally`,
+  so a thrown paste/submit no longer strands our payload in the
+  user's clipboard. The long-term plan (switch to
+  `vscode.chat.sendMessage` once it stabilises) is still open.
+- **R1 / handler-dispatch indirection** — the module-level
+  `_HANDLERS` dict and the seven `_h_*` thin wrappers are gone.
+  `AutopilotDaemon._build_handler_table()` now builds a per-instance
+  `{type → bound method}` dispatch table; `_dispatch` calls the bound
+  method directly.
+- **R9 / `_handle_drive` split** — the plugin-path and
+  keyboard-simulation branches now live in dedicated
+  `_drive_via_plugin` / `_drive_via_keyboard` methods, each testable
+  in isolation.
+- **R2 / test plumbing** — extracted `_DaemonHarness` context manager,
+  `_LineReader` (stateful NDJSON parser), `_connect_plugin()` and
+  `_assert_no_more_data()` helpers in
+  `tests/test_autopilot_daemon.py`. Every socket-level test now uses
+  the helpers; future tests will need ~5 lines instead of ~20.
+
+Full suite still **343 passed, 0 regressions** after these changes.
+Real-world smoke (`koru autopilot daemon` + scripted plugin) still
+delivers the 5388-char brief in one round trip.
+
 ### Added — On-change gates triad (wup + regix + testql)
 
 - **New brief section "On-change gates"** — `render_markdown_handoff()`
@@ -240,6 +275,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `deploy:{plan,dry,local,device,diagnose,resume,drift}`.
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
+
+## [0.1.21] - 2026-05-11
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update docs/autopilot-roadmap.md
+
+### Test
+- Update tests/test_autopilot_ide.py
+- Update tests/test_autopilot_injector.py
+- Update tests/test_autopilot_protocol.py
+
+### Other
+- Update uv.lock
 
 ## [0.1.20] - 2026-05-11
 

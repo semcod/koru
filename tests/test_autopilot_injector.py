@@ -140,3 +140,36 @@ def test_probe_marks_unavailable_on_wrong_session() -> None:
     statuses = {s.name: s for s in inj.probe()}
     assert statuses["wtype"].available is False
     assert "wayland" in statuses["wtype"].reason
+
+
+# ---- R3: _press_wtype fails loud on multi-modifier combos ----
+
+
+def test_wtype_rejects_multi_modifier_submit_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A future IDE entry using ``ctrl+shift+Return`` must raise, not run."""
+    from koru.autopilot import injector as injector_mod
+
+    calls: list[list[str]] = []
+    inj = Injector(
+        session="wayland",
+        which=_which_factory({"wtype"}),
+        runner=_fake_runner(calls),
+    )
+    monkeypatch.setitem(injector_mod._SUBMIT_KEY, "evil", "ctrl+shift+Return")
+    with pytest.raises(InjectorError, match="only single-modifier combos"):
+        inj.type_text("hi", ide="evil", submit=True)
+    # Type ran, but the failing submit press must not have produced a key call.
+    assert len(calls) == 1
+    assert calls[0][0] == "wtype"  # the type call
+
+
+def test_wtype_single_modifier_still_works() -> None:
+    calls: list[list[str]] = []
+    inj = Injector(
+        session="wayland",
+        which=_which_factory({"wtype"}),
+        runner=_fake_runner(calls),
+    )
+    inj.type_text("payload", ide="jetbrains", submit=True)
+    _, key_call = calls
+    assert key_call[:2] == ["wtype", "-M"]

@@ -24,6 +24,7 @@ don't need throughput; we need predictability and a tiny footprint.
 from __future__ import annotations
 
 import errno
+import functools
 import os
 import selectors
 import socket
@@ -36,7 +37,8 @@ from pathlib import Path
 from typing import Any, Callable
 
 from . import default_socket_path
-from .ide import detect_running_ides, pick_target
+from .ide import detect_running_ides_cached as detect_running_ides
+from .ide import pick_target
 from .injector import Injector, InjectorError
 from .protocol import (
     MAX_LINE_BYTES,
@@ -54,17 +56,25 @@ from .protocol import (
 HandoffBuilder = Callable[[dict[str, Any]], str]
 
 
-def _default_handoff(project: Path) -> HandoffBuilder:
-    """Build the canonical koru brief for ``project`` on demand.
+@functools.lru_cache(maxsize=1)
+def _load_context_module() -> tuple[Callable[..., dict[str, Any]], Callable[[dict[str, Any]], str]]:
+    """Import ``koru.context`` exactly once (R4).
 
-    Imported lazily to keep ``koru.autopilot`` importable without
-    pulling in the heavy ``context`` module during ``koru autopilot
-    doctor`` / ``ide-list`` smoke tests.
+    Lazy + cached: the first ``session.ended`` pays the import cost; all
+    subsequent handoffs reuse the same module references. Also keeps
+    ``koru.autopilot`` importable for ``doctor`` / ``ide-list`` smoke
+    tests that should not need the planfile stack.
     """
+    from ..context import build_context, render_markdown_handoff
+
+    return build_context, render_markdown_handoff
+
+
+def _default_handoff(project: Path) -> HandoffBuilder:
+    """Build the canonical koru brief for ``project`` on demand."""
 
     def _build(_event: dict[str, Any]) -> str:
-        from ..context import build_context, render_markdown_handoff
-
+        build_context, render_markdown_handoff = _load_context_module()
         try:
             ctx = build_context(project=project)
         except Exception as exc:  # pragma: no cover — defensive

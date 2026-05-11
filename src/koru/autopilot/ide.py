@@ -9,6 +9,7 @@ the rest of autopilot is Linux-only anyway.
 from __future__ import annotations
 
 import os
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -146,4 +147,42 @@ def is_linux() -> bool:
     return os.name == "posix" and Path("/proc").is_dir()
 
 
-__all__ = ["RunningIDE", "detect_running_ides", "pick_target", "is_linux"]
+# R5: cache ``detect_running_ides`` to avoid scanning ``/proc`` on every
+# ``drive`` and every ``status``. TTL is short (default 2 s) because the
+# scan is mostly used to decide which IDE to drive — a stale answer for
+# ~2 s is fine, and the cache pays off when tests / loops call us
+# rapidly.
+_DETECT_TTL_DEFAULT = 2.0
+_detect_cache: tuple[float, list[RunningIDE]] | None = None
+
+
+def detect_running_ides_cached(*, ttl: float = _DETECT_TTL_DEFAULT) -> list[RunningIDE]:
+    """Return :func:`detect_running_ides` results, cached for ``ttl`` seconds.
+
+    Pass ``ttl=0`` to force a fresh scan. The cache is keyed only on
+    time, not on arguments, because there are no arguments that affect
+    the result.
+    """
+    global _detect_cache
+    now = time.monotonic()
+    if ttl > 0 and _detect_cache is not None and (now - _detect_cache[0]) < ttl:
+        return _detect_cache[1]
+    fresh = detect_running_ides()
+    _detect_cache = (now, fresh)
+    return fresh
+
+
+def clear_detect_cache() -> None:
+    """Drop the cached scan. Used by tests and ``koru autopilot doctor``."""
+    global _detect_cache
+    _detect_cache = None
+
+
+__all__ = [
+    "RunningIDE",
+    "detect_running_ides",
+    "detect_running_ides_cached",
+    "clear_detect_cache",
+    "pick_target",
+    "is_linux",
+]
