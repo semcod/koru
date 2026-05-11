@@ -20,9 +20,11 @@ from .context import build_context, render_markdown_handoff
 from .doctor import render_text as render_doctor_text, run_diagnostics
 from .events import emit_management_event
 from .gate import VALID_MODES as GATE_VALID_MODES, authorize_gate
+from .gc import DEFAULT_KEEP_LAST, DEFAULT_MAX_AGE_DAYS, GC_STATUSES, run_gc
 from .init import init_project
 from .loop import discover_repositories, run_closed_loop
 from .planfile_queue import run_next_planfile_task, run_planfile_queue_loop
+from .queue_clean import CleanupReport, clean_queue
 from .run_log import open_run_log_eagerly
 from .scan import ScanResult, run_scan
 from .serve import DEFAULT_HOST, DEFAULT_PORT, ServeConfig, serve
@@ -502,6 +504,286 @@ def _gate_main(argv: list[str]) -> int:
     return 0
 
 
+def _build_gc_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru gc",
+        description=(
+            "Garbage-collect stale planfile tickets. Removes done, failed, "
+            "and blocked tickets that exceed --max-age days. Dry-run by "
+            "default; pass --apply to actually delete."
+        ),
+    )
+    parser.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="Actually delete stale tickets (default is dry-run preview).",
+    )
+    parser.add_argument(
+        "--max-age",
+        type=int,
+        default=DEFAULT_MAX_AGE_DAYS,
+        help=f"Delete tickets finished more than N days ago (default {DEFAULT_MAX_AGE_DAYS}).",
+    )
+    parser.add_argument(
+        "--keep-last",
+        type=int,
+        default=DEFAULT_KEEP_LAST,
+        help=(
+            "Always keep the N most recently finished tickets per status, "
+            f"even if older than --max-age (default {DEFAULT_KEEP_LAST})."
+        ),
+    )
+    parser.add_argument(
+        "--status",
+        default=",".join(sorted(GC_STATUSES)),
+        help=(
+            "Comma-separated ticket statuses to clean "
+            f"(default: {','.join(sorted(GC_STATUSES))})."
+        ),
+    )
+    parser.add_argument(
+        "--sprint",
+        default="current",
+        help="Sprint YAML to scan (default: current).",
+    )
+    parser.add_argument(
+        "--no-archive",
+        action="store_true",
+        help="Skip archiving removed tickets to .planfile/.koru/gc/.",
+    )
+    parser.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format (default: text).",
+    )
+    return parser
+
+
+def _gc_main(argv: list[str]) -> int:
+    args = _build_gc_parser().parse_args(argv)
+    statuses = frozenset(s.strip() for s in args.status.split(",") if s.strip())
+    result = run_gc(
+        args.project.resolve(),
+        apply=args.apply,
+        statuses=statuses,
+        max_age_days=args.max_age,
+        keep_last=args.keep_last,
+        sprint=args.sprint,
+        archive=not args.no_archive,
+    )
+    if args.output_format == "json":
+        payload = {
+            "dry_run": result.dry_run,
+            "candidates": [
+                {
+                    "ticket_id": c.ticket_id,
+                    "name": c.name,
+                    "status": c.status,
+                    "age_days": c.age_days,
+                }
+                for c in result.candidates
+            ],
+            "removed": result.removed,
+            "kept": result.kept,
+            "archived_to": str(result.archived_to) if result.archived_to else None,
+            "errors": result.errors,
+        }
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        mode = "DRY RUN" if result.dry_run else "APPLIED"
+        if not result.candidates:
+            print(f"koru gc ({mode}): no stale tickets found (max-age={args.max_age}d)")
+        else:
+            print(f"koru gc ({mode}): {result.summary()}")
+            print()
+            for c in result.candidates:
+                marker = "✗" if c.ticket_id in result.removed else "·"
+                age = f"{c.age_days:.0f}d" if c.age_days != float("inf") else "??d"
+                print(f"  {marker} {c.ticket_id:<14} {c.status:<10} {age:>6}  {c.name[:60]}")
+            if result.removed:
+                print(f"\n  → {'Would remove' if result.dry_run else 'Removed'}: {len(result.removed)} ticket(s)")
+            if result.kept:
+                print(f"  → Kept: {len(result.kept)} ticket(s)")
+            if result.archived_to:
+                print(f"  → Archived to: {result.archived_to}")
+            if result.errors:
+                print(f"  → Errors: {len(result.errors)}")
+                for err in result.errors:
+                    print(f"    {err}")
+    emit_management_event(
+        tool="koru.gc",
+        action="applied" if args.apply else "previewed",
+        status="completed",
+        message=result.summary(),
+        details={
+            "project": str(args.project),
+            "removed": result.removed,
+            "kept": result.kept,
+            "max_age_days": args.max_age,
+            "keep_last": args.keep_last,
+        },
+    )
+    return 0
+
+
+def _build_queue_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru queue",
+        description=(
+            "Manage the planfile queue. Subcommands: clean (sweep stale "
+            "test fixtures)."
+        ),
+    )
+    sub = parser.add_subparsers(dest="subcommand", required=True)
+
+    clean = sub.add_parser(
+        "clean",
+        help="Sweep stale fixture/test tickets out of the queue (dry-run by default).",
+        description=(
+            "Identify ``open`` / ``ready`` tickets that look like test "
+            "fixtures (labels match FIXTURE_LABELS, optionally also "
+            "names matching ^TEST:/^Test ) and complete them with a "
+            "structured KORU-QUEUE-CLEAN audit note. Default is dry-run; "
+            "pass --apply to actually close them."
+        ),
+    )
+    clean.add_argument(
+        "--apply",
+        action="store_true",
+        help="Actually close the candidates. Without this, prints what would happen.",
+    )
+    clean.add_argument(
+        "--include-names",
+        action="store_true",
+        help="Also match tickets whose name starts with 'Test ' or 'TEST:'.",
+    )
+    clean.add_argument(
+        "--include-active",
+        action="store_true",
+        help=(
+            "DANGEROUS: also consider in_progress / waiting_input tickets. "
+            "By default these are surfaced as 'skipped active' so the "
+            "operator can decide whether to interrupt them."
+        ),
+    )
+    clean.add_argument(
+        "--max-age-days",
+        type=float,
+        default=None,
+        help=(
+            "Only sweep matching tickets older than N days. Used as a "
+            "safety modifier on top of label/name match — never on its own."
+        ),
+    )
+    clean.add_argument(
+        "--reason",
+        default="swept by koru queue clean",
+        help="Free-text reason recorded in the audit note.",
+    )
+    clean.add_argument(
+        "--project",
+        type=Path,
+        default=Path.cwd(),
+        help="Project root containing .planfile/.",
+    )
+    clean.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format for the report.",
+    )
+    return parser
+
+
+def _render_clean_report_text(report: CleanupReport) -> str:
+    lines: list[str] = []
+    mode = "DRY-RUN" if report.dry_run else "APPLIED"
+    header = f"koru queue clean [{mode}]"
+    lines.append(header)
+    lines.append("=" * len(header))
+    if not report.candidates:
+        lines.append("No fixture-like tickets found in the queue. Nothing to do.")
+        if report.skipped_active:
+            lines.append("")
+            lines.append(
+                f"Active tickets matching cleanup rules but skipped "
+                f"(use --include-active to override): {', '.join(report.skipped_active)}"
+            )
+        return "\n".join(lines)
+    lines.append(f"Candidates ({len(report.candidates)}):")
+    for c in report.candidates:
+        labels = ",".join(c.labels) if c.labels else "(no labels)"
+        lines.append(f"  - {c.ticket_id} [{c.status}] {c.name[:60]}")
+        lines.append(f"      labels: {labels}")
+        lines.append(f"      rules : {', '.join(c.matched_rules)}")
+        if c.age_days is not None:
+            lines.append(f"      age   : {c.age_days:.1f} days")
+    if report.dry_run:
+        lines.append("")
+        lines.append("Re-run with --apply to actually close these tickets.")
+    else:
+        if report.applied:
+            lines.append("")
+            lines.append(f"✓ Closed: {', '.join(report.applied)}")
+        if report.failed:
+            lines.append("")
+            lines.append("✗ Failed:")
+            for tid, err in report.failed:
+                lines.append(f"  - {tid}: {err}")
+    if report.skipped_active:
+        lines.append("")
+        lines.append(
+            f"⚠ Active tickets matching cleanup rules (skipped, use "
+            f"--include-active to override): {', '.join(report.skipped_active)}"
+        )
+    return "\n".join(lines)
+
+
+def _queue_main(argv: list[str]) -> int:
+    args = _build_queue_parser().parse_args(argv)
+    if args.subcommand != "clean":
+        print(f"koru queue: unknown subcommand {args.subcommand!r}", file=sys.stderr)
+        return 2
+    try:
+        report = clean_queue(
+            args.project,
+            include_names=args.include_names,
+            include_active=args.include_active,
+            max_age_days=args.max_age_days,
+            apply=args.apply,
+            reason=args.reason,
+        )
+    except RuntimeError as exc:
+        print(f"koru queue clean: {exc}", file=sys.stderr)
+        return 1
+
+    if args.output_format == "json":
+        print(json.dumps(report.to_dict(), indent=2, sort_keys=True, default=str))
+    else:
+        print(_render_clean_report_text(report))
+
+    emit_management_event(
+        tool="koru.queue.clean",
+        action="completed" if not report.failed else "failed",
+        status="completed" if not report.failed else "failed",
+        level="error" if report.failed else "info",
+        message=(
+            f"{'dry-run' if report.dry_run else 'applied'}: "
+            f"{len(report.candidates)} candidates, "
+            f"{len(report.applied)} applied, "
+            f"{len(report.failed)} failed"
+        ),
+        details=report.to_dict(),
+    )
+    if report.failed:
+        return 1
+    return 0
+
+
 def _build_agent_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="koru agent",
@@ -651,6 +933,10 @@ def main() -> int:
         return _scan_main(raw_args[1:])
     if raw_args and raw_args[0] == "gate":
         return _gate_main(raw_args[1:])
+    if raw_args and raw_args[0] == "queue":
+        return _queue_main(raw_args[1:])
+    if raw_args and raw_args[0] == "gc":
+        return _gc_main(raw_args[1:])
 
     args = _build_parser().parse_args(raw_args)
 

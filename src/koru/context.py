@@ -112,6 +112,36 @@ def _planfile_env() -> dict[str, str]:
     return {**os.environ, "COLUMNS": "10000", "TERM": "dumb", "PYTHONWARNINGS": "ignore"}
 
 
+def _fetch_all_tickets(
+    project: Path,
+    *,
+    runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]] | None = None,
+    include_fixtures: bool = False,
+) -> list[dict[str, Any]]:
+    """Fetch every ticket via ``planfile ticket list --format json``.
+
+    Used by the dashboard to show historical tickets (``done`` /
+    ``in_progress``) when the "open" slice is empty — so the user sees
+    *something* instead of a terminal "queue is idle" screen.
+    Never raises; returns ``[]`` on any error.
+    """
+    try:
+        proc = _run_planfile(
+            project, ["ticket", "list", "--format", "json"], runner=runner,
+        )
+    except Exception:  # pragma: no cover — defensive
+        return []
+    if proc.returncode != 0:
+        return []
+    data = _safe_json(proc.stdout)
+    if not isinstance(data, list):
+        return []
+    result = [t for t in data if isinstance(t, dict)]
+    if not include_fixtures:
+        result = [t for t in result if not _is_fixture_ticket(t)]
+    return result
+
+
 def _run_planfile(
     project: Path,
     args: Sequence[str],
@@ -221,6 +251,7 @@ def build_context(
     ticket_data: dict[str, Any] | None = None
     ticket_error: str | None = None
     open_tickets: list[dict[str, Any]] = []
+    all_tickets: list[dict[str, Any]] = []
 
     if not planfile_present:
         ticket_error = "project not initialised"
@@ -253,23 +284,39 @@ def build_context(
                 if "No runnable ticket" in stripped or not stripped:
                     ticket_data = None
                     ticket_error = "queue is idle"
+                    # Even when the active slot is empty, the user
+                    # still wants to see the historical timeline in
+                    # the dashboard — never let them face a blank
+                    # screen when 6 done tickets sit on disk.
+                    all_tickets = _fetch_all_tickets(
+                        project,
+                        runner=planfile_runner,
+                        include_fixtures=_resolve_include_fixtures(include_fixtures),
+                    )
                 else:
                     ticket_error = "planfile output was not JSON"
             elif isinstance(ticket_data, list):
                 # `ticket list` returns an array — keep the full list of
                 # open tickets so the dashboard can show the whole queue,
                 # then pick the first one as the active ticket.
+                raw_list = [t for t in ticket_data if isinstance(t, dict)]
                 open_tickets = [
-                    t for t in ticket_data
-                    if isinstance(t, dict) and t.get("status") in (None, "open", "ready", "todo")
+                    t for t in raw_list
+                    if t.get("status") in (None, "open", "ready", "todo")
                 ]
                 # Filter out test/dryrun fixtures unless the caller
                 # opted in (CLI flag --include-fixtures or env var
                 # KORU_INCLUDE_FIXTURES=true).
-                if not _resolve_include_fixtures(include_fixtures):
+                include = _resolve_include_fixtures(include_fixtures)
+                if not include:
                     open_tickets = [
                         t for t in open_tickets if not _is_fixture_ticket(t)
                     ]
+                    all_tickets = [
+                        t for t in raw_list if not _is_fixture_ticket(t)
+                    ]
+                else:
+                    all_tickets = list(raw_list)
                 ticket_data = open_tickets[0] if open_tickets else None  # type: ignore[assignment]
                 if ticket_data is None:
                     ticket_error = "queue is idle"
@@ -289,6 +336,20 @@ def build_context(
                     open_tickets = []
                 else:
                     open_tickets = [ticket_data]
+                # `ticket next` returns only the active ticket — fetch
+                # the full list separately so the dashboard can show
+                # historical (done/in_progress) tickets too. Skip this
+                # extra round-trip when the caller already pinned a
+                # specific ticket — the dashboard only needs the wider
+                # queue when the agent is browsing.
+                if not ticket_id:
+                    all_tickets = _fetch_all_tickets(
+                        project,
+                        runner=planfile_runner,
+                        include_fixtures=_resolve_include_fixtures(include_fixtures),
+                    )
+                else:
+                    all_tickets = [ticket_data] if ticket_data else []
         else:
             raw_err = (ticket_proc.stderr or "planfile error").strip()
             # Filter out Python warnings (e.g. pydantic UserWarning) that
@@ -324,6 +385,7 @@ def build_context(
         "ticket": ticket_data,
         "ticket_error": ticket_error,
         "open_tickets": open_tickets,
+        "all_tickets": all_tickets,
         "policy": resolved_policy.to_dict(),
         "environment": {
             "git": git_state,

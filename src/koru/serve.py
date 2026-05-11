@@ -264,33 +264,74 @@ function priorityPill(prio) {
   return `<span class="pill ${cls}">${esc(prio || "normal")}</span>`;
 }
 
-function renderOpenTickets(tickets, activeId) {
-  tickets = tickets || [];
-  if (!tickets.length) {
+function statusPill(status) {
+  const cls = status === "done" ? "ok"
+            : status === "in_progress" ? "warn"
+            : status === "blocked" ? "err"
+            : "";
+  return `<span class="pill ${cls}">${esc(status || "open")}</span>`;
+}
+
+function ticketRow(t, activeId) {
+  const id = esc(t.id || "?");
+  const isActive = activeId && t.id === activeId;
+  const star = isActive ? '<span class="pill ok">active</span> ' : "";
+  const exec = esc(((t.executor) || {}).kind || "?");
+  const name = esc(t.name || "");
+  return `<tr>
+    <td><code>${id}</code></td>
+    <td>${star}${name}</td>
+    <td>${priorityPill(t.priority)}</td>
+    <td>${statusPill(t.status)}</td>
+    <td><code>${exec}</code></td>
+  </tr>`;
+}
+
+function ticketsTable(tickets, activeId) {
+  return `<table><thead><tr>
+    <th>id</th><th>name</th><th>priority</th>
+    <th>status</th><th>executor</th>
+  </tr></thead><tbody>${
+    tickets.map(t => ticketRow(t, activeId)).join("")
+  }</tbody></table>`;
+}
+
+function renderOpenTickets(openTickets, allTickets, activeId, ticketError) {
+  openTickets = openTickets || [];
+  allTickets = allTickets || [];
+
+  // Happy path: open queue has work in it.
+  if (openTickets.length) {
     return panel("Open tickets",
-      `<div class="muted">queue is idle — no open tickets</div>`, true);
+      ticketsTable(openTickets, activeId), true);
   }
-  const rows = tickets.map(t => {
-    const id = esc(t.id || "?");
-    const isActive = activeId && t.id === activeId;
-    const star = isActive ? '<span class="pill ok">active</span> ' : "";
-    const exec = esc(((t.executor) || {}).kind || "?");
-    const name = esc(t.name || "");
-    const status = esc(t.status || "open");
-    const prio = priorityPill(t.priority);
-    return `<tr>
-      <td><code>${id}</code></td>
-      <td>${star}${name}</td>
-      <td>${prio}</td>
-      <td><span class="pill">${status}</span></td>
-      <td><code>${exec}</code></td>
-    </tr>`;
-  }).join("");
-  return panel("Open tickets",
-    `<table><thead><tr>
-      <th>id</th><th>name</th><th>priority</th>
-      <th>status</th><th>executor</th>
-    </tr></thead><tbody>${rows}</tbody></table>`, true);
+
+  // Idle queue, but we have history — show it.
+  if (allTickets.length) {
+    const counts = allTickets.reduce((acc, t) => {
+      const s = t.status || "open";
+      acc[s] = (acc[s] || 0) + 1;
+      return acc;
+    }, {});
+    const summary = Object.entries(counts).map(
+      ([s, n]) => `${statusPill(s)} <strong>${n}</strong>`
+    ).join(" · ");
+    const hint = `<div class="muted" style="margin-bottom:8px">
+      <strong>queue is idle</strong> — ${esc(ticketError || "no open tickets")}.
+      ${summary} ·
+      run <code>koru scan --apply</code> to generate new tickets
+      from real repo signals (pytest collect errors, TODO/FIXME,
+      missing gates).
+    </div>`;
+    return panel("Recent tickets",
+      hint + ticketsTable(allTickets, activeId), true);
+  }
+
+  // Truly empty.
+  return panel("Tickets",
+    `<div class="muted">queue is idle — no tickets recorded.
+     Try <code>koru scan --apply</code> or <code>koru task "&lt;desc&gt;"</code>.</div>`,
+    true);
 }
 
 function renderSemcodTools(env) {
@@ -331,7 +372,9 @@ async function refresh() {
     root.innerHTML = [
       renderTicket(ctx.ticket, ctx.ticket_error),
       renderEnv(ctx.environment),
-      renderOpenTickets(ctx.open_tickets, activeId),
+      renderOpenTickets(
+        ctx.open_tickets, ctx.all_tickets, activeId, ctx.ticket_error
+      ),
       renderAgents(ctx.environment),
       renderSemcodTools(ctx.environment),
       renderPolicy(ctx.policy),
