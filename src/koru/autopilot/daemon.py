@@ -434,11 +434,12 @@ class AutopilotDaemon:
         if msg.id != corr:
             return
         client.awaiting_plugin = None
-        relay = ack(
-            corr,
-            ok=bool(msg.data.get("ok", True)),
-            info={k: v for k, v in msg.data.items() if k != "ok"},
-        )
+        info = {k: v for k, v in msg.data.items() if k != "ok"}
+        # IDE plugins typically send ``delivered`` without ``backend``; CLI
+        # summaries (e.g. ``koru autonomous``) expect a stable backend label.
+        if info.get("delivered") is True and "backend" not in info:
+            info["backend"] = "plugin"
+        relay = ack(corr, ok=bool(msg.data.get("ok", True)), info=info)
         self._send(cli_client, relay.encode())
 
     def _handle_session_event(self, client: _Client, msg: Message) -> None:

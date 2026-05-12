@@ -326,6 +326,7 @@ def test_plugin_hello_then_drive_forwards(tmp_path: Path, monkeypatch: pytest.Mo
         assert cli_reply.type == "ack"
         assert cli_reply.data.get("ok") is True
         assert cli_reply.data.get("delivered") is True
+        assert cli_reply.data.get("backend") == "plugin"
 
         # Injector must NOT have been invoked — plugin path took over.
         assert h.injector.calls == []
