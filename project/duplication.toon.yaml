@@ -1,12 +1,12 @@
-# redup/duplication | 4 groups | 58f 14998L | 2026-05-12
+# redup/duplication | 4 groups | 58f 15001L | 2026-05-12
 
 SUMMARY:
   files_scanned: 58
-  total_lines:   14998
+  total_lines:   15001
   dup_groups:    4
   dup_fragments: 8
   saved_lines:   26
-  scan_ms:       4558
+  scan_ms:       4434
 
 HOTSPOTS[4] (files with most duplication):
   src/koru/serve.py  dup=20L  groups=2  frags=3  (0.1%)

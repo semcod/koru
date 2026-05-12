@@ -34,22 +34,23 @@ import subprocess
 import sys
 from pathlib import Path
 
-def _resolve_repo_and_scripts_dir() -> tuple[Path, Path]:
-    """Return (repo_root, scripts_dir) for imports and planfile cwd.
 
-    When this entrypoint is symlinked from another repo (e.g. c2004 → koru),
-    ``__file__`` resolves to the target path; prefer ``cwd/scripts/`` when it
-    contains ``planfile_sync_todo_settings.py``.
-    """
-    here = Path(__file__).resolve()
-    cwd = Path.cwd().resolve()
-    candidate = cwd / "scripts" / "planfile_sync_todo_settings.py"
-    if candidate.is_file():
-        return cwd, cwd / "scripts"
-    return here.parent.parent, here.parent
+def _find_scripts_dir_with_settings() -> Path:
+    """Locate ``planfile_sync_todo_settings.py`` (supports symlinked entrypoints)."""
+    cwd_scripts = Path.cwd().resolve() / "scripts"
+    if (cwd_scripts / "planfile_sync_todo_settings.py").is_file():
+        return cwd_scripts
+    here_scripts = Path(__file__).resolve().parent
+    if (here_scripts / "planfile_sync_todo_settings.py").is_file():
+        return here_scripts
+    raise SystemExit(
+        "planfile_sync_todo_settings.py not found in ./scripts (cwd) or next to "
+        "this script. Run from the project root (e.g. cd …/c2004)."
+    )
 
 
-REPO, _SCRIPTS_DIR = _resolve_repo_and_scripts_dir()
+_SCRIPTS_DIR = _find_scripts_dir_with_settings()
+REPO = Path.cwd().resolve()
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
@@ -62,6 +63,8 @@ from planfile_sync_todo_settings import (
     render_auto_generated_markdown,
 )
 
+
+def run_planfile(*args: str) -> str:
     """Invoke the planfile CLI with stderr silenced (pydantic warnings pollute it)."""
     cmd = ["planfile", *args]
     proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO, timeout=15)

@@ -1,12 +1,12 @@
-# koru | 102f 19469L | yaml:9,yml:2,toml:1,txt:1,shell:28,python:55,json:2,typescript:2 | 2026-05-12
+# koru | 103f 19707L | yaml:9,yml:2,txt:1,shell:28,python:56,json:2,typescript:2,toml:1 | 2026-05-12
 # generated in 0.01s
-# stats: 493 func | 0 cls | 102 mod | CC̄=4.9 | critical:24 | cycles:0
+# stats: 502 func | 0 cls | 103 mod | CC̄=4.9 | critical:25 | cycles:0
 # alerts[5]: CC _fetch_ticket_data=36; fan-out _build_handler=36; CC _action_up=28; fan-out create_planfile_ticket=27; CC _queue_run_main=26
-# hotspots[5]: _build_handler fan=36; create_planfile_ticket fan=27; init_project fan=21; render_markdown_handoff fan=21; create_nl_task fan=21
+# hotspots[5]: _build_handler fan=36; create_planfile_ticket fan=27; do_from_todo fan=24; init_project fan=21; render_markdown_handoff fan=21
 # evolution: CC̄ 5.1→4.9 (improved -0.2)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[102]:
-  Dockerfile,70
+M[103]:
+  Dockerfile,73
   Taskfile.yml,758
   docker-compose.yml,92
   docs/ai-tool-registry-2026.yaml,290
@@ -50,6 +50,7 @@ M[102]:
   scripts/koru-autoloop.sh,562
   scripts/koru-autoloop-reset-diag-markers.sh,96
   scripts/planfile-export-prompt.sh,81
+  scripts/planfile-sync-todo.py,235
   services/healing-webhook/Dockerfile,36
   services/healing-webhook/app.py,673
   services/healing-webhook/ticket_builder.py,223
@@ -250,6 +251,17 @@ D:
     _extension_is_installed(command;runner)
     install_plugin_for_ide()
     format_plugin_install_result(result)
+  scripts/planfile-sync-todo.py:
+    e: _find_scripts_dir_with_settings,run_planfile,load_tickets,build_auto_section,replace_auto_section,do_from_planfile,do_from_todo,_llm_stub,main
+    _find_scripts_dir_with_settings()
+    run_planfile()
+    load_tickets()
+    build_auto_section(tickets)
+    replace_auto_section(current;new_section)
+    do_from_planfile(check)
+    do_from_todo(heading;check)
+    _llm_stub(item;heading;source_name)
+    main()
   src/koru/bootstrap.py:
     e: ValidationError,ImportReport,load_flat_pipeline,_validate_task,_validate_cross_task_dependencies,validate_flat_pipeline,_detect_cycle,materialize_to_planfile,_normalise_task,_next_id_after,import_flat_pipeline,_infer_prefix
     ValidationError: __str__(0)
@@ -600,14 +612,11 @@ The c...
     ApiRunResult:  # Result of a direct HTTP API executor call...
     LlmRunResult:  # Result of an OpenRouter (or compatible) chat-completion call...
   goal.yaml:
-  planfile.yaml:
   docker-compose.yml:
-  pyproject.toml:
   todo.txt:
   pipeline.yaml:
   prefact.yaml:
   Taskfile.yml:
-  Dockerfile:
   project.sh:
   docs/ai-tool-registry-2026.yaml:
   docs/llm-tools/costs/install.sh:
@@ -678,3 +687,6 @@ The c...
     main()
   testql-scenarios/generated-from-pytests.testql.toon.yaml:
   testql-scenarios/generated-cli-tests.testql.toon.yaml:
+  planfile.yaml:
+  pyproject.toml:
+  Dockerfile:

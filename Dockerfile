@@ -13,6 +13,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     jq \
     && rm -rf /var/lib/apt/lists/*
 
+# Cache bust arg — set to src/ hash by the test fixture to force rebuild on code change
+ARG CACHE_BUST=none
+
 # Copy source code first
 COPY src/ ./src/
 COPY templates/ ./templates/

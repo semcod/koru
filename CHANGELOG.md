@@ -74,6 +74,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `quality:regix` ↔ `gate:regix`, `quality:redup*` ↔ `gate:redup`,
   `quality:sumr:*` ↔ `gate:sumr`.
 
+## [0.1.58] - 2026-05-12
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_docker_e2e.py
+
+### Other
+- Update .code2llm_cache/Dockerfile_1778596139000000000_1532.pkl
+- Update .code2llm_cache/planfile-sync-todo_1778596054089531179_8721.pkl
+- Update .code2llm_cache/planfile_1778596141701942870_35943.pkl
+- Update .code2llm_cache/pyproject_1778596186490937936_2031.pkl
+- Update planfile.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- ... and 10 more files
+
 ## [0.1.57] - 2026-05-12
 
 ### Docs

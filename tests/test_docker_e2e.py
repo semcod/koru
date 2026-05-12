@@ -29,8 +29,18 @@ class TestDockerE2E:
     @pytest.fixture(scope="class")
     def docker_image(self):
         """Build Docker image for testing."""
+        import hashlib
+        src_dir = Path(__file__).parent.parent / "src"
+        hasher = hashlib.md5()
+        for f in sorted(src_dir.rglob("*.py")):
+            hasher.update(f.read_bytes())
+        src_hash = hasher.hexdigest()[:12]
         result = subprocess.run(
-            ["docker", "build", "-t", "koru:test", "."],
+            [
+                "docker", "build",
+                "--build-arg", f"CACHE_BUST={src_hash}",
+                "-t", "koru:test", ".",
+            ],
             cwd=Path(__file__).parent.parent,
             capture_output=True,
             text=True,

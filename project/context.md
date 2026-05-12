@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 55, shell: 28, yaml: 9, yml: 2, json: 2
+- **Languages**: python: 56, shell: 28, yaml: 9, yml: 2, json: 2
 - **Analysis Mode**: static
-- **Total Functions**: 493
+- **Total Functions**: 502
 - **Total Classes**: 44
-- **Modules**: 102
-- **Entry Points**: 197
+- **Modules**: 103
+- **Entry Points**: 199
 
 ## Architecture by Module
 
@@ -100,13 +100,13 @@
 - **Classes**: 1
 - **File**: `init.py`
 
+### src.koru.autonomous
+- **Functions**: 9
+- **File**: `autonomous.py`
+
 ### src.koru.tools
 - **Functions**: 9
 - **File**: `tools.py`
-
-### plugins.koru-autopilot-vscode.src.socketPath
-- **Functions**: 9
-- **File**: `socketPath.ts`
 
 ## Key Entry Points
 
@@ -505,6 +505,9 @@ Returns them in insertion order so callers ca
 > Best-effort parse of a ticket's age in days from ``created_at``.
 - **Output to**: max, ticket.get, ticket.get, datetime.fromisoformat, created.replace
 
+### src.koru.autonomous._build_parser
+- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_subparsers, sub.add_parser, up.add_argument
+
 ### src.koru.gc._parse_ts
 > Best-effort ISO-8601 timestamp parse.
 - **Output to**: datetime.fromisoformat, raw.replace
@@ -516,10 +519,6 @@ Returns them in insertion order so callers ca
 ### src.koru.dotenv_loader._parse_value
 > Strip surrounding quotes and trailing whitespace from a raw value.
 - **Output to**: raw.strip, len, None.replace, None.replace, None.replace
-
-### src.koru.dotenv_loader.parse_dotenv
-> Return the ``KEY=value`` pairs from a ``.env``-style text.
-- **Output to**: text.splitlines, raw_line.strip, _LINE_RE.match, src.koru.dotenv_loader._parse_value, line.startswith
 
 ## Behavioral Patterns
 
@@ -540,6 +539,7 @@ Functions exposed as public API (no underscore prefix):
 - `services.healing-webhook.app.create_planfile_ticket` - 39 calls
 - `src.koru.tasks.create_nl_task` - 39 calls
 - `src.koru.watch.format_queue_event` - 35 calls
+- `scripts.planfile-sync-todo.do_from_todo` - 31 calls
 - `src.koru.queue.runners.run_api_request` - 30 calls
 - `src.koru.autopilot.plugin_installer.install_plugin_for_ide` - 27 calls
 - `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
@@ -555,6 +555,7 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.gc.collect_gc_candidates` - 21 calls
 - `src.koru.autopilot.protocol.decode` - 21 calls
 - `src.koru.tools.render_tools_detect_text` - 20 calls
+- `scripts.planfile-sync-todo.do_from_planfile` - 20 calls
 - `services.healing-webhook.app.alertmanager_webhook` - 19 calls
 - `src.koru.queue_clean.find_candidates` - 19 calls
 - `src.koru.loop.run_closed_loop` - 18 calls
@@ -570,8 +571,6 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.queue.ticket.ticket_llm_request` - 14 calls
 - `src.koru.autopilot.default_socket_path` - 14 calls
 - `scripts._koru_autodiag_filter_tickets.main` - 14 calls
-- `src.koru.cli.main` - 13 calls
-- `src.koru.tools.load_tool_registry` - 13 calls
 
 ## System Interactions
 

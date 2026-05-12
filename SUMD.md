@@ -1495,10 +1495,10 @@ pip install -e .[dev]
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 134f 28147L | python:95,shell:34,javascript:2,typescript:2,less:1 | 2026-05-12
-# stats: 589 func | 127 cls | 134 mod | CC̄=4.7 | critical:70 | cycles:0
+# koru | 134f 28186L | python:95,shell:34,javascript:2,typescript:2,less:1 | 2026-05-12
+# stats: 590 func | 127 cls | 134 mod | CC̄=4.7 | critical:70 | cycles:0
 # alerts[5]: CC _fetch_ticket_data=36; CC _action_up=28; CC _queue_run_main=26; CC run_next_planfile_task=26; CC detect_tools=26
-# hotspots[5]: _build_handler fan=30; create_planfile_ticket fan=23; render_markdown_handoff fan=19; init_project fan=19; create_nl_task fan=19
+# hotspots[5]: _build_handler fan=30; do_from_todo fan=23; create_planfile_ticket fan=23; render_markdown_handoff fan=19; init_project fan=19
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
 M[134]:
@@ -1536,13 +1536,13 @@ M[134]:
   scripts/koru-autoloop-reset-diag-markers.sh,97
   scripts/koru-autoloop.sh,563
   scripts/planfile-export-prompt.sh,82
-  scripts/planfile-sync-todo.py,220
+  scripts/planfile-sync-todo.py,236
   services/healing-webhook/app.py,674
   services/healing-webhook/ticket_builder.py,224
   src/koru/__init__.py,70
   src/koru/__main__.py,9
   src/koru/agents.py,348
-  src/koru/autonomous.py,371
+  src/koru/autonomous.py,384
   src/koru/autopilot/__init__.py,68
   src/koru/autopilot/audit.py,156
   src/koru/autopilot/cli_command.py,782
@@ -1616,7 +1616,7 @@ M[134]:
   tests/test_bootstrap.py,296
   tests/test_cli.py,327
   tests/test_context.py,494
-  tests/test_docker_e2e.py,538
+  tests/test_docker_e2e.py,548
   tests/test_doctor.py,407
   tests/test_dotenv_loader.py,117
   tests/test_e2e.py,946
@@ -1641,14 +1641,15 @@ D:
     e: main
     main()
   scripts/planfile-sync-todo.py:
-    e: run_planfile,load_tickets,build_auto_section,replace_auto_section,do_from_planfile,do_from_todo,_llm_stub,main
+    e: _find_scripts_dir_with_settings,run_planfile,load_tickets,build_auto_section,replace_auto_section,do_from_planfile,do_from_todo,_llm_stub,main
+    _find_scripts_dir_with_settings()
     run_planfile()
     load_tickets()
     build_auto_section(tickets)
     replace_auto_section(current;new_section)
     do_from_planfile(check)
     do_from_todo(heading;check)
-    _llm_stub(item;heading)
+    _llm_stub(item;heading;source_name)
     main()
   services/healing-webhook/app.py:
     e: _rate_limit_ok,_record_action,create_planfile_ticket,_run_docker,heal_redsl_gate,heal_redsl_improve,heal_rebuild_restore,heal_annotate,_run_vallm_check,_run_vallm_validate,_resolve_affected_files,heal_vallm_validate,_run_redup_check,heal_redup_check,_resolve_strategy,healthz,metrics,get_history,alertmanager_webhook,probe_failure,get_tickets
@@ -2538,13 +2539,13 @@ D:
 
 ## Call Graph
 
-*355 nodes · 433 edges · 49 modules · CC̄=4.9*
+*348 nodes · 425 edges · 48 modules · CC̄=4.9*
 
 ### Hubs (by degree)
 
 | Function | CC | in | out | total |
 |----------|----|----|-----|-------|
-| `print` *(in scripts.planfile-export-prompt)* | 0 | 232 | 0 | **232** |
+| `print` *(in scripts.planfile-export-prompt)* | 0 | 223 | 0 | **223** |
 | `_build_handler` *(in src.koru.serve)* | 1 | 1 | 86 | **87** |
 | `detect_agent_options` *(in src.koru.agents)* | 16 ⚠ | 2 | 50 | **52** |
 | `render_markdown_handoff` *(in src.koru.context)* | 10 ⚠ | 5 | 45 | **50** |
@@ -2556,12 +2557,12 @@ D:
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
 # generated in 0.15s
-# nodes: 355 | edges: 433 | modules: 49
+# nodes: 348 | edges: 425 | modules: 48
 # CC̄=4.9
 
 HUBS[20]:
   scripts.planfile-export-prompt.print
-    CC=0  in:232  out:0  total:232
+    CC=0  in:223  out:0  total:223
   src.koru.serve._build_handler
     CC=1  in:1  out:86  total:87
   src.koru.agents.detect_agent_options
@@ -2592,14 +2593,14 @@ HUBS[20]:
     CC=17  in:0  out:33  total:33
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
+  src.koru.autopilot.cli_command._action_doctor
+    CC=21  in:0  out:29  total:29
   src.koru.autonomous._action_up
     CC=28  in:1  out:28  total:29
   src.koru.cli._queue_run_main
     CC=26  in:1  out:28  total:29
-  src.koru.autopilot.cli_command._action_doctor
-    CC=21  in:0  out:29  total:29
-  src.koru.cli._gc_main
-    CC=18  in:0  out:28  total:28
+  src.koru.autopilot.plugin_installer.install_plugin_for_ide
+    CC=19  in:1  out:27  total:28
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [28 funcs]
@@ -2621,14 +2622,6 @@ MODULES:
     slugInstance  CC=2  out:2
   scripts.planfile-export-prompt  [1 funcs]
     print  CC=0  out:0
-  scripts.planfile-sync-todo  [7 funcs]
-    build_auto_section  CC=9  out:17
-    do_from_planfile  CC=10  out:14
-    do_from_todo  CC=12  out:20
-    load_tickets  CC=6  out:5
-    main  CC=2  out:9
-    replace_auto_section  CC=4  out:6
-    run_planfile  CC=2  out:4
   services.healing-webhook.app  [16 funcs]
     _rate_limit_ok  CC=3  out:3
     _record_action  CC=1  out:7
@@ -2964,20 +2957,20 @@ EDGES:
   src.koru.bootstrap.import_flat_pipeline → src.koru.bootstrap.load_flat_pipeline
   src.koru.bootstrap.import_flat_pipeline → src.koru.bootstrap.validate_flat_pipeline
   src.koru.bootstrap.import_flat_pipeline → src.koru.bootstrap.materialize_to_planfile
-  src.koru.loop.discover_repositories → src.koru.loop._search_root_for_include
-  src.koru.queue_clean.find_candidates → src.koru.queue_clean._parse_age_days
-  src.koru.queue_clean.find_candidates → src.koru.queue_clean._matched_rules
-  src.koru.queue_clean._list_tickets → src.koru.queue_clean._planfile_base
-  src.koru.queue_clean._close_ticket → src.koru.queue_clean._build_close_note
-  src.koru.queue_clean._close_ticket → src.koru.queue_clean._planfile_base
-  src.koru.queue_clean.clean_queue → src.koru.queue_clean._list_tickets
-  src.koru.queue_clean.clean_queue → src.koru.queue_clean.find_candidates
-  src.koru.queue_clean.clean_queue → src.koru.queue_clean._close_ticket
-  src.koru.autonomous._apply_agent_lane_environ → src.koru.init.resolve_project_agent_lane
-  src.koru.autonomous._apply_agent_lane_environ → src.koru.agents.agent_lane_environment
-  src.koru.autonomous._ensure_init → src.koru.init.init_project
-  src.koru.autonomous._ensure_init → scripts.planfile-export-prompt.print
-  src.koru.autonomous._start_or_reuse_daemon → scripts.planfile-export-prompt.print
+  src.koru.cli._tools_main → src.koru.tools.load_tool_registry
+  src.koru.cli._tools_main → src.koru.tools.detect_tools
+  src.koru.cli._tools_main → src.koru.events.emit_management_event
+  src.koru.cli._tools_main → scripts.planfile-export-prompt.print
+  src.koru.cli._tools_main → src.koru.cli._build_tools_parser
+  src.koru.cli._scan_main → src.koru.scan.run_scan
+  src.koru.cli._scan_main → src.koru.events.emit_management_event
+  src.koru.cli._scan_main → scripts.planfile-export-prompt.print
+  src.koru.cli._scan_main → src.koru.cli._build_scan_parser
+  src.koru.cli._gate_main → scripts.planfile-export-prompt.print
+  src.koru.cli._gate_main → src.koru.events.emit_management_event
+  src.koru.cli._gate_main → src.koru.gate.authorize_gate
+  src.koru.cli._gate_main → src.koru.cli._build_gate_parser
+  src.koru.cli._gc_main → src.koru.gc.run_gc
 ```
 
 ## Test Contracts

@@ -30,45 +30,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-4db6394c
-    name: Fix string-concat issues
-    description: Resolve 2 string-concat issues in scripts/planfile-sync-todo.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - scripts/planfile-sync-todo.py
-    rule_id: string-concat
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-a4a995e4
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in scripts/planfile-sync-todo.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - scripts/planfile-sync-todo.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e4000400
-    name: Fix magic-numbers issues
-    description: Resolve 1 magic-numbers issues in scripts/planfile-sync-todo.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - scripts/planfile-sync-todo.py
-    rule_id: magic-numbers
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-00ecf056
     name: Fix ai-boilerplate issues
     description: Resolve 1 ai-boilerplate issues in scripts/planfile-sync-todo.py
@@ -1314,6 +1275,45 @@ sprints:
     - src/koru/__main__.py
     rule_id: unused-imports
     count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-4577c0f1
+    name: Fix wildcard-imports issues
+    description: Resolve 2 wildcard-imports issues in scripts/planfile-sync-todo.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - scripts/planfile-sync-todo.py
+    rule_id: wildcard-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-f68e6a91
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in src/koru/__main__.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/__main__.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-c4df3c8f
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in src/koru/agents.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/agents.py
+    rule_id: string-concat
+    count: 1
     model_hints:
       planning: balanced
       implementation: balanced

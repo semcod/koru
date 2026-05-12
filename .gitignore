@@ -1,4 +1,8 @@
 # Byte-compiled / optimized / DLL files
+.code2llm_cache/Dockerfile_1778596139000000000_1532.pkl
+.code2llm_cache/planfile-sync-todo_1778596054089531179_8721.pkl
+.code2llm_cache/planfile_1778596141701942870_35943.pkl
+.code2llm_cache/pyproject_1778596186490937936_2031.pkl
 .code2llm_cache/autonomous_1778595812604000000_13364.pkl
 .code2llm_cache/__init___1778594399140000000_445.pkl
 .code2llm_cache/__init___1778594426633000000_710.pkl

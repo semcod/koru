@@ -1,6 +1,6 @@
-# code2llm | 103f 19469L | python:55,shell:28,yaml:9,yml:2,json:2,typescript:2,toml:1,txt:1 | 2026-05-12
+# code2llm | 104f 19707L | python:56,shell:28,yaml:9,yml:2,json:2,typescript:2,txt:1,toml:1 | 2026-05-12
 # generated in 0.02s
-# CC̄=4.9 | critical:24/493 | dups:0 | cycles:0
+# CC̄=4.9 | critical:25/502 | dups:0 | cycles:0
 
 HEALTH[20]:
   🟡 CC    create_planfile_ticket CC=24 (limit:15)
@@ -13,6 +13,7 @@ HEALTH[20]:
   🟡 CC    _topology_main CC=17 (limit:15)
   🟡 CC    _queue_run_main CC=26 (limit:15)
   🟡 CC    find_candidates CC=15 (limit:15)
+  🟡 CC    _action_up CC=28 (limit:15)
   🟡 CC    detect_tools CC=26 (limit:15)
   🟡 CC    build_tool_task_scaffold CC=16 (limit:15)
   🟡 CC    _fetch_ticket_data CC=36 (limit:15)
@@ -22,12 +23,11 @@ HEALTH[20]:
   🟡 CC    detect_agent_options CC=16 (limit:15)
   🟡 CC    create_nl_task CC=16 (limit:15)
   🟡 CC    run_llm_request CC=23 (limit:15)
-  🟡 CC    run_next_planfile_task CC=26 (limit:15)
 
 REFACTOR[1]:
   1. split 20 high-CC methods  (CC>15)
 
-PIPELINES[160]:
+PIPELINES[162]:
   [1] Src [heal_rebuild_restore]: heal_rebuild_restore → _run_docker
       PURITY: 100% pure
   [2] Src [heal_annotate]: heal_annotate → _record_action
@@ -106,11 +106,12 @@ LAYERS:
   │ socketPath.ts               27L  0C    9m  CC=9      ←0
   │ tsconfig.json               15L  0C    0m  CC=0.0    ←0
   │
-  scripts/                        CC̄=0.5    ←in:222  →out:0
+  scripts/                        CC̄=2.1    ←in:222  →out:0
   │ !! koru-autoloop.sh           562L  0C   14m  CC=0.0    ←0
+  │ !! planfile-sync-todo         235L  0C    9m  CC=19     ←0
   │ autopilot-ide-autodetect-smoke.sh   182L  1C    4m  CC=0.0    ←0
   │ koru-autoloop-reset-diag-markers.sh    96L  0C    1m  CC=0.0    ←0
-  │ planfile-export-prompt.sh    81L  0C    2m  CC=0.0    ←13
+  │ planfile-export-prompt.sh    81L  0C    2m  CC=0.0    ←14
   │ _koru_autodiag_filter_tickets    55L  0C    1m  CC=12     ←0
   │
   ./                              CC̄=0.0    ←in:0  →out:0
@@ -121,7 +122,7 @@ LAYERS:
   │ docker-compose.yml          92L  0C    0m  CC=0.0    ←0
   │ prefact.yaml                91L  0C    0m  CC=0.0    ←0
   │ pyproject.toml              90L  0C    0m  CC=0.0    ←0
-  │ Dockerfile                  70L  0C    0m  CC=0.0    ←0
+  │ Dockerfile                  73L  0C    0m  CC=0.0    ←0
   │ project.sh                  54L  0C    0m  CC=0.0    ←0
   │ todo.txt                     3L  0C    0m  CC=0.0    ←0
   │
