@@ -17,6 +17,10 @@ in isolation):
 - **missing semcod tools listed in pyproject** — when a tool appears
   as a dependency but is not installed / not invokable.
 - **gitignore drift** — ``.planfile/.koru/`` should be gitignored.
+- **Optional semcod / quality exports** — when ``--semcod-artifacts`` or
+  ``KORU_SCAN_SEMCOD_ARTIFACTS=1``: read **jscpd** JSON, **code2llm**
+  ``analysis.toon*``, **TestQL** text export, optional **redup** JSON to
+  open backlog tickets for duplication / refactors / API regressions.
 
 The output is dry-run by default (a list of :class:`Suggestion`
 dataclasses); pass ``apply=True`` to ``run_scan`` to persist them as
@@ -27,6 +31,7 @@ from __future__ import annotations
 
 import fnmatch
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -437,6 +442,137 @@ def scan_gitignore_drift(project: Path) -> list[Suggestion]:
     ]
 
 
+def _scan_jscpd_report(project: Path) -> list[Suggestion]:
+    path = project / ".jscpd" / "jscpd-report.json"
+    if not path.is_file():
+        return []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    total = (data.get("statistics") or {}).get("total") or {}
+    dup_lines = int(total.get("duplicatedLines") or 0)
+    if dup_lines <= 0:
+        return []
+    pct = float(total.get("percentage") or 0)
+    clones = int(total.get("clones") or 0)
+    rel = str(path.relative_to(project))
+    pr = "high" if pct >= 15.0 or dup_lines >= 50_000 else "normal"
+    return [
+        Suggestion(
+            signal="jscpd_report",
+            title="Reduce jscpd duplicate-code hotspots (semcod scan)",
+            description=(
+                f"`{rel}`: {dup_lines} duplicated lines ({pct:.1f}% of scanned LOC), "
+                f"{clones} clone groups. Triage largest clones first; re-run jscpd after refactors."
+            ),
+            priority=pr,
+            labels=("quality", "duplication", "jscpd", "scan"),
+            files=(rel,),
+        )
+    ]
+
+
+def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
+    candidates = (
+        project / "project" / "analysis.toon.yaml",
+        project / "project" / "analysis.toon",
+        project / "analysis.toon.yaml",
+    )
+    path = next((p for p in candidates if p.is_file()), None)
+    if path is None:
+        return []
+    try:
+        lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    except OSError:
+        return []
+    god = sum(1 for ln in lines if "🔴 GOD" in ln)
+    critical = sum(1 for ln in lines if "🔴" in ln)
+    if god < 1 and critical < 8:
+        return []
+    rel = str(path.relative_to(project))
+    pr = "high" if god >= 3 else "normal"
+    return [
+        Suggestion(
+            signal="code2llm_analysis",
+            title="Execute code2llm REFACTOR plan (god modules / critical)",
+            description=(
+                f"`{rel}` lists ~{god} god-module rows and {critical} critical (🔴) markers. "
+                "Work through the REFACTOR section; re-run `code2llm ./ -f toon` to refresh."
+            ),
+            priority=pr,
+            labels=("code2llm", "refactor", "scan"),
+            files=(rel,),
+        )
+    ]
+
+
+def _scan_testql_export(project: Path) -> list[Suggestion]:
+    path = project / "testql_api_results.json"
+    if not path.is_file():
+        return []
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return []
+    failed_scenarios = len(re.findall(r"(?m)^❌\s+\S+\.(?:yaml|yml)", text))
+    if failed_scenarios < 3:
+        return []
+    rel = str(path.relative_to(project))
+    pr = "high" if failed_scenarios >= 15 else "normal"
+    return [
+        Suggestion(
+            signal="testql_export",
+            title="Repair failing TestQL API scenarios (exported log)",
+            description=(
+                f"`{rel}` shows ~{failed_scenarios} failing scenario(s). "
+                "Fix backend routes or refresh generated scenarios; re-export after green runs."
+            ),
+            priority=pr,
+            labels=("testql", "regression", "api", "scan"),
+            files=(rel,),
+        )
+    ]
+
+
+def _scan_redup_filtered(project: Path) -> list[Suggestion]:
+    path = project / ".redup" / "check.filtered.json"
+    if not path.is_file():
+        return []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    groups = data if isinstance(data, list) else data.get("groups") or data.get("clusters")
+    if not isinstance(groups, list) or len(groups) < 20:
+        return []
+    rel = str(path.relative_to(project))
+    return [
+        Suggestion(
+            signal="redup_filtered",
+            title="Drive down redup duplicate groups (filtered JSON)",
+            description=(
+                f"`{rel}` lists {len(groups)} duplicate groups over the hygiene threshold. "
+                "Extract shared helpers / modules; re-run `task quality:redup:report`."
+            ),
+            priority="normal",
+            labels=("redup", "duplication", "python", "scan"),
+            files=(rel,),
+        )
+    ]
+
+
+def scan_semcod_quality_artifacts(project: Path) -> list[Suggestion]:
+    """Quality tickets from semcod-adjacent tool exports (jscpd, code2llm, testql, redup)."""
+    project = project.resolve()
+    out: list[Suggestion] = []
+    out.extend(_scan_jscpd_report(project))
+    out.extend(_scan_code2llm_analysis(project))
+    out.extend(_scan_testql_export(project))
+    out.extend(_scan_redup_filtered(project))
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Orchestration
 # ---------------------------------------------------------------------------
@@ -446,6 +582,7 @@ def collect_suggestions(
     project: Path,
     *,
     skip_pytest: bool = False,
+    include_semcod_artifacts: bool = False,
 ) -> list[Suggestion]:
     """Run every probe and concatenate the results."""
     project = project.resolve()
@@ -456,6 +593,8 @@ def collect_suggestions(
     out.extend(scan_missing_gates(project))
     out.extend(scan_missing_tools(project))
     out.extend(scan_gitignore_drift(project))
+    if include_semcod_artifacts:
+        out.extend(scan_semcod_quality_artifacts(project))
     return out
 
 
@@ -528,12 +667,21 @@ def run_scan(
     apply: bool = False,
     limit: int | None = None,
     skip_pytest: bool = False,
+    include_semcod_artifacts: bool | None = None,
     source: str = "koru-scan",
     runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]] | None = None,
 ) -> ScanResult:
     """End-to-end scan: collect signals, optionally create planfile tickets."""
     project = project.resolve()
-    suggestions = collect_suggestions(project, skip_pytest=skip_pytest)
+    if include_semcod_artifacts is None:
+        include_semcod_artifacts = os.environ.get(
+            "KORU_SCAN_SEMCOD_ARTIFACTS", ""
+        ).strip().lower() in ("1", "true", "yes", "on")
+    suggestions = collect_suggestions(
+        project,
+        skip_pytest=skip_pytest,
+        include_semcod_artifacts=include_semcod_artifacts,
+    )
     # Stable ordering: priority (critical > high > normal > low), then signal.
     priority_rank = {"critical": 0, "high": 1, "normal": 2, "low": 3}
     suggestions.sort(

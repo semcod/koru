@@ -18,9 +18,12 @@ flowchart TD
         services__healing_webhook__app__alertmanager_webhook["alertmanager_webhook"]
         services__healing_webhook__app__probe_failure["probe_failure"]
         services__healing_webhook__app__get_tickets["get_tickets"]
-        src__koru__runtime__planfile_dir["planfile_dir"]
-        src__koru__runtime__runtime_dir["runtime_dir"]
-        ...["+184 more"]
+        src__koru__watch__format_queue_event{{format_queue_event CC=19}}
+        src__koru__watch___default_connect["_default_connect"]
+        ...["+222 more"]
+    end
+
+    subgraph Exporters
     end
 
     class services__healing_webhook__app__heal_rebuild_restore,services__healing_webhook__app__heal_annotate,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app__heal_redup_check,services__healing_webhook__app__healthz,services__healing_webhook__app__metrics,services__healing_webhook__app__get_history,services__healing_webhook__app__alertmanager_webhook,services__healing_webhook__app__probe_failure entry

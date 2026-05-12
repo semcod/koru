@@ -16,6 +16,7 @@ from koru.scan import (
     scan_missing_gates,
     scan_missing_tools,
     scan_pytest_collect,
+    scan_semcod_quality_artifacts,
     scan_todo_markers,
 )
 
@@ -257,7 +258,7 @@ class TestRunScan(unittest.TestCase):
             (project / "lots.py").write_text(
                 "# TODO 1\n# FIXME 2\n# XXX 3\n# HACK 4\n"
             )
-            result = run_scan(project, skip_pytest=True)
+            result = run_scan(project, skip_pytest=True, include_semcod_artifacts=False)
             self.assertGreater(len(result.suggestions), 0)
             self.assertEqual(result.applied, [])
             self.assertEqual(result.skipped, [])
@@ -280,7 +281,13 @@ class TestRunScan(unittest.TestCase):
                     return _ok("OK")
                 return _ok()
 
-            result = run_scan(project, apply=True, skip_pytest=True, runner=runner)
+            result = run_scan(
+                project,
+                apply=True,
+                skip_pytest=True,
+                include_semcod_artifacts=False,
+                runner=runner,
+            )
             # Duplicate is skipped, no create call for it
             self.assertIn(existing_titles[0], result.skipped)
             for cmd in captured:
@@ -299,7 +306,13 @@ class TestRunScan(unittest.TestCase):
                     return _ok("err", returncode=2, stderr="boom")
                 return _ok()
 
-            result = run_scan(project, apply=True, skip_pytest=True, runner=runner)
+            result = run_scan(
+                project,
+                apply=True,
+                skip_pytest=True,
+                include_semcod_artifacts=False,
+                runner=runner,
+            )
             # Failed create -> skipped, never applied
             self.assertEqual(result.applied, [])
             self.assertGreater(len(result.skipped), 0)
@@ -311,7 +324,7 @@ class TestRunScan(unittest.TestCase):
                 (project / f"f{i}.py").write_text(
                     "# TODO a\n# FIXME b\n# XXX c\n"
                 )
-            result = run_scan(project, skip_pytest=True, limit=2)
+            result = run_scan(project, skip_pytest=True, limit=2, include_semcod_artifacts=False)
             self.assertLessEqual(len(result.suggestions), 2)
 
     def test_priority_ordering_critical_first(self) -> None:
@@ -322,12 +335,68 @@ class TestRunScan(unittest.TestCase):
             (project / "many.py").write_text(
                 "# TODO 1\n# FIXME 2\n# XXX 3\n"  # also low
             )
-            result = run_scan(project, skip_pytest=True)
+            result = run_scan(project, skip_pytest=True, include_semcod_artifacts=False)
             priorities = [s.priority for s in result.suggestions]
             ranks = {"critical": 0, "high": 1, "normal": 2, "low": 3}
             self.assertEqual(
                 priorities, sorted(priorities, key=lambda p: ranks.get(p, 99))
             )
+
+
+class TestScanSemcodArtifacts(unittest.TestCase):
+    def test_jscpd_report_emits_when_duplicates(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".jscpd").mkdir()
+            (project / ".jscpd" / "jscpd-report.json").write_text(
+                json.dumps(
+                    {
+                        "statistics": {
+                            "total": {
+                                "duplicatedLines": 100,
+                                "percentage": 5.0,
+                                "clones": 12,
+                            }
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            self.assertTrue(any(s.signal == "jscpd_report" for s in out))
+
+    def test_code2llm_analysis_emits_when_god_rows(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "project").mkdir()
+            (project / "project" / "analysis.toon.yaml").write_text(
+                "HEALTH:\n  🔴 GOD   big.py = 900L\n",
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            self.assertTrue(any(s.signal == "code2llm_analysis" for s in out))
+
+    def test_testql_export_emits_when_many_failures(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            body = "\n".join(
+                [f"❌ scenario-{i}.yaml: 0/1 passed, 1 failed" for i in range(5)]
+            )
+            (project / "testql_api_results.json").write_text(body, encoding="utf-8")
+            out = scan_semcod_quality_artifacts(project)
+            self.assertTrue(any(s.signal == "testql_export" for s in out))
+
+    def test_redup_filtered_emits_when_many_groups(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".redup").mkdir()
+            groups = [{"id": i, "files": [f"m{i}.py"]} for i in range(20)]
+            (project / ".redup" / "check.filtered.json").write_text(
+                json.dumps(groups),
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            self.assertTrue(any(s.signal == "redup_filtered" for s in out))
 
 
 if __name__ == "__main__":

@@ -1,121 +1,187 @@
-# koru | 97f 21916L | python:64,shell:30,less:1,javascript:1,typescript:1 | 2026-05-12
-# stats: 436 func | 114 cls | 97 mod | CC̄=4.8 | critical:49 | cycles:0
-# alerts[5]: CC render_markdown_handoff=45; CC build_context=41; CC validate_flat_pipeline=28; CC _queue_run_main=26; CC run_gc=26
-# hotspots[5]: _build_handler fan=30; build_context fan=25; create_planfile_ticket fan=23; run_next_planfile_task fan=16; do_from_todo fan=15
-# evolution: baseline
+# koru | 95f 19338L | yaml:9,shell:28,python:48,json:2,yml:2,txt:1,toml:1,typescript:2 | 2026-05-12
+# generated in 0.01s
+# stats: 494 func | 0 cls | 95 mod | CC̄=4.9 | critical:24 | cycles:0
+# alerts[5]: CC _fetch_ticket_data=36; fan-out _build_handler=36; CC _action_up=28; fan-out create_planfile_ticket=27; CC _queue_run_main=26
+# hotspots[5]: _build_handler fan=36; create_planfile_ticket fan=27; create_nl_task fan=21; run_next_planfile_task fan=21; render_markdown_handoff fan=20
+# evolution: CC̄ 5.1→4.9 (improved -0.2)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[97]:
-  app.doql.less,504
-  docs/llm-tools/aider/install.sh,56
-  docs/llm-tools/claude-code/install.sh,61
-  docs/llm-tools/costs/install.sh,50
-  docs/llm-tools/cursor/install.sh,89
-  docs/llm-tools/doql/install.sh,53
-  docs/llm-tools/goal/install.sh,54
-  docs/llm-tools/llx/install.sh,54
-  docs/llm-tools/mdflow/install.sh,39
-  docs/llm-tools/metrun/install.sh,39
-  docs/llm-tools/op3/install.sh,54
-  docs/llm-tools/pfix/install.sh,53
-  docs/llm-tools/planfile/install.sh,42
-  docs/llm-tools/prefact/install.sh,50
-  docs/llm-tools/protogate/install.sh,39
-  docs/llm-tools/rebuild/install.sh,39
-  docs/llm-tools/redeploy/install.sh,88
-  docs/llm-tools/redsl/install.sh,54
-  docs/llm-tools/redup/install.sh,42
-  docs/llm-tools/regix/install.sh,53
-  docs/llm-tools/sumd/install.sh,81
-  docs/llm-tools/testql/install.sh,50
-  docs/llm-tools/toonic/install.sh,50
-  docs/llm-tools/vallm/install.sh,56
-  plugins/koru-autopilot-vscode/out/extension.js,249
-  plugins/koru-autopilot-vscode/src/extension.ts,214
+M[95]:
+  Dockerfile,70
+  Taskfile.yml,758
+  docker-compose.yml,92
+  docs/ai-tool-registry-2026.yaml,290
+  docs/llm-tools/aider/install.sh,55
+  docs/llm-tools/claude-code/install.sh,60
+  docs/llm-tools/costs/install.sh,49
+  docs/llm-tools/cursor/install.sh,88
+  docs/llm-tools/doql/install.sh,52
+  docs/llm-tools/goal/install.sh,53
+  docs/llm-tools/llx/install.sh,53
+  docs/llm-tools/mdflow/install.sh,38
+  docs/llm-tools/metrun/install.sh,38
+  docs/llm-tools/op3/install.sh,53
+  docs/llm-tools/pfix/install.sh,52
+  docs/llm-tools/planfile/install.sh,41
+  docs/llm-tools/prefact/install.sh,49
+  docs/llm-tools/protogate/install.sh,38
+  docs/llm-tools/rebuild/install.sh,38
+  docs/llm-tools/redeploy/install.sh,87
+  docs/llm-tools/redsl/install.sh,53
+  docs/llm-tools/redup/install.sh,41
+  docs/llm-tools/regix/install.sh,52
+  docs/llm-tools/sumd/install.sh,80
+  docs/llm-tools/testql/install.sh,49
+  docs/llm-tools/toonic/install.sh,49
+  docs/llm-tools/vallm/install.sh,55
+  examples/bootstrap.planfile.yaml,425
+  goal.yaml,511
+  pipeline.yaml,142
+  planfile.yaml,1319
+  plugins/koru-autopilot-vscode/package.json,71
+  plugins/koru-autopilot-vscode/src/extension.ts,248
+  plugins/koru-autopilot-vscode/src/socketPath.ts,27
+  plugins/koru-autopilot-vscode/tsconfig.json,15
+  prefact.yaml,91
   project.sh,54
-  scripts/_koru_autodiag_filter_tickets.py,56
-  scripts/koru-autoloop-reset-diag-markers.sh,97
-  scripts/koru-autoloop.sh,563
-  scripts/planfile-export-prompt.sh,82
-  scripts/planfile-sync-todo.py,220
-  services/healing-webhook/app.py,674
-  services/healing-webhook/ticket_builder.py,224
-  src/koru/__init__.py,68
-  src/koru/agents.py,223
-  src/koru/autopilot/__init__.py,39
-  src/koru/autopilot/audit.py,156
-  src/koru/autopilot/cli_command.py,547
-  src/koru/autopilot/client.py,80
-  src/koru/autopilot/config.py,124
+  pyproject.toml,90
+  redeploy/device/manifest.yaml,125
+  scripts/_koru_autodiag_filter_tickets.py,55
+  scripts/autopilot-ide-autodetect-smoke.sh,182
+  scripts/koru-autoloop.sh,562
+  scripts/koru-autoloop-reset-diag-markers.sh,96
+  scripts/planfile-export-prompt.sh,81
+  scripts/planfile-sync-todo.py,219
+  services/healing-webhook/Dockerfile,36
+  services/healing-webhook/app.py,673
+  services/healing-webhook/ticket_builder.py,223
+  src/koru/__init__.py,69
+  src/koru/__main__.py,8
+  src/koru/agents.py,347
+  src/koru/autonomous.py,370
+  src/koru/autopilot/__init__.py,67
+  src/koru/autopilot/audit.py,155
+  src/koru/autopilot/cli_command.py,781
+  src/koru/autopilot/client.py,92
+  src/koru/autopilot/config.py,122
   src/koru/autopilot/daemon.py,517
-  src/koru/autopilot/ide.py,263
-  src/koru/autopilot/injector.py,256
-  src/koru/autopilot/protocol.py,201
-  src/koru/bootstrap.py,397
-  src/koru/cli.py,1527
-  src/koru/context.py,870
-  src/koru/doctor.py,426
-  src/koru/dotenv_loader.py,105
-  src/koru/events.py,91
-  src/koru/gate.py,205
-  src/koru/gc.py,327
-  src/koru/init.py,318
-  src/koru/loop.py,132
-  src/koru/planfile_queue.py,706
+  src/koru/autopilot/host_setup.py,210
+  src/koru/autopilot/ide.py,262
+  src/koru/autopilot/injector.py,293
+  src/koru/autopilot/plugin_installer.py,309
+  src/koru/autopilot/protocol.py,200
+  src/koru/autopilot/utils/__init__.py,5
+  src/koru/autopilot/utils/client_helpers.py,53
+  src/koru/bootstrap.py,413
+  src/koru/cli/__init__.py,55
+  src/koru/cli/__main__.py,8
+  src/koru/cli/commands.py,0
+  src/koru/cli/parsers.py,0
+  src/koru/context.py,1045
+  src/koru/doctor.py,427
+  src/koru/dotenv_loader.py,104
+  src/koru/events.py,90
+  src/koru/gate.py,204
+  src/koru/gc.py,374
+  src/koru/init.py,490
+  src/koru/loop.py,131
+  src/koru/planfile_queue.py,811
   src/koru/policy.py,241
-  src/koru/queue_clean.py,356
-  src/koru/run_log.py,125
+  src/koru/queue_clean.py,355
+  src/koru/run_log.py,124
   src/koru/runtime.py,104
-  src/koru/scan.py,574
-  src/koru/semcod_tools.py,130
-  src/koru/serve.py,822
-  src/koru/tasks.py,140
-  src/koru/topology.py,356
-  src/koru/watch.py,84
-  tests/e2e/bootstrap.sh,94
-  tests/e2e/init.sh,29
-  tests/e2e/smoke.sh,112
-  tests/test_agents.py,50
-  tests/test_autopilot_audit.py,124
-  tests/test_autopilot_cli.py,323
-  tests/test_autopilot_config.py,156
-  tests/test_autopilot_daemon.py,480
-  tests/test_autopilot_ide.py,154
-  tests/test_autopilot_injector.py,183
-  tests/test_autopilot_protocol.py,154
-  tests/test_bootstrap.py,296
-  tests/test_cli.py,233
-  tests/test_context.py,442
-  tests/test_doctor.py,383
-  tests/test_dotenv_loader.py,117
-  tests/test_e2e.py,903
-  tests/test_events.py,67
-  tests/test_gate.py,167
-  tests/test_gc.py,277
-  tests/test_init.py,163
-  tests/test_loop.py,95
-  tests/test_planfile_queue.py,848
-  tests/test_policy.py,183
-  tests/test_queue_clean.py,309
-  tests/test_run_log.py,139
-  tests/test_runtime.py,131
-  tests/test_scan.py,335
-  tests/test_serve.py,123
-  tests/test_tasks.py,51
-  tests/test_watch.py,102
+  src/koru/scan.py,708
+  src/koru/semcod_tools.py,129
+  src/koru/serve.py,1008
+  src/koru/tasks.py,165
+  src/koru/tools.py,248
+  src/koru/topology.py,407
+  src/koru/utils/__init__.py,5
+  src/koru/utils/subprocess_runner.py,38
+  src/koru/watch.py,83
+  testql-scenarios/generated-cli-tests.testql.toon.yaml,20
+  testql-scenarios/generated-from-pytests.testql.toon.yaml,10
+  todo.txt,3
 D:
-  scripts/_koru_autodiag_filter_tickets.py:
-    e: main
-    main()
-  scripts/planfile-sync-todo.py:
-    e: run_planfile,load_tickets,build_auto_section,replace_auto_section,do_from_planfile,do_from_todo,_llm_stub,main
-    run_planfile()
-    load_tickets()
-    build_auto_section(tickets)
-    replace_auto_section(current;new_section)
-    do_from_planfile(check)
-    do_from_todo(heading;check)
-    _llm_stub(item;heading)
-    main()
+  src/koru/context.py:
+    e: _is_fixture_ticket,_resolve_include_fixtures,_load_project_dotenv,_planfile_command_base,_planfile_env,_fetch_all_tickets,_run_planfile,_safe_json,_git_probe,_fetch_ticket_data,build_context,_auto_promote_blocking_tickets,_build_instructions,_build_setup_instructions,_build_shared_rules,_build_self_service,_render_header,_render_environment,_render_agent_lanes,_render_autonomous_mode,_render_ai_tool_support_2026,_render_semcod_tools,_render_setup_required,_render_active_ticket,_render_no_active_ticket,_render_gates,_render_policy,_render_rules,_render_self_service,_render_dashboard,render_markdown_handoff
+    _is_fixture_ticket(ticket)
+    _resolve_include_fixtures(explicit)
+    _load_project_dotenv(project)
+    _planfile_command_base()
+    _planfile_env()
+    _fetch_all_tickets(project)
+    _run_planfile(project;args;runner)
+    _safe_json(text)
+    _git_probe(project)
+    _fetch_ticket_data(project;ticket_id;queue_name;planfile_present;planfile_runner;include_fixtures)
+    build_context()
+    _auto_promote_blocking_tickets(project;runner)
+    _build_instructions(policy;ticket)
+    _build_setup_instructions()
+    _build_shared_rules(policy;ticket)
+    _build_self_service(policy;ticket)
+    _render_header(project)
+    _render_environment(env;project)
+    _render_agent_lanes(agents)
+    _render_autonomous_mode()
+    _render_ai_tool_support_2026()
+    _render_semcod_tools(semcod_tools)
+    _render_setup_required(project)
+    _render_active_ticket(ticket)
+    _render_no_active_ticket(ticket_error)
+    _render_gates(markers)
+    _render_policy(policy)
+    _render_rules(instructions)
+    _render_self_service(self_service)
+    _render_dashboard()
+    render_markdown_handoff(context)
+  src/koru/autonomous.py:
+    e: _resolve_autopilot_ide,_apply_agent_lane_environ,_build_parser,_ensure_init,_start_or_reuse_daemon,_effective_flags,_run_cycle,_action_up,autonomous_main
+    _resolve_autopilot_ide(cli_value)
+    _apply_agent_lane_environ(project;agent_lane)
+    _build_parser()
+    _ensure_init(project)
+    _start_or_reuse_daemon()
+    _effective_flags(ticket_sources)
+    _run_cycle()
+    _action_up(args)
+    autonomous_main(argv)
+  src/koru/tools.py:
+    e: default_registry_path,resolve_registry_path,load_tool_registry,_first_token,detect_tools,find_tool_entry,infer_adapter_kind,build_tool_task_scaffold,render_tools_detect_text
+    default_registry_path()
+    resolve_registry_path(path_override)
+    load_tool_registry(path_override)
+    _first_token(command)
+    detect_tools(project;registry)
+    find_tool_entry(registry;tool_id)
+    infer_adapter_kind(tool)
+    build_tool_task_scaffold(tool)
+    render_tools_detect_text(results)
+  src/koru/planfile_queue.py:
+    e: CommandResult,QueueRunResult,QueueLoopResult,ApiRunResult,LlmRunResult,_planfile_env,_run_process,_run_shell_command,_run_api_request,_run_llm_request,_queue_lock_wanted,_queue_runner_lock,_claim_lease_seconds_str,_ticket_claim_or_error,_planfile_command,_parse_next_ticket,_ticket_command,_ticket_llm_request,_ticket_api_request,_default_human_prompt,_result_json,run_next_planfile_task,run_planfile_queue_loop
+    CommandResult(Protocol):  # Protocol for subprocess-like command results...
+    QueueRunResult:  # Result of a single queue tick...
+    QueueLoopResult: summary(0)  # Aggregate result of draining the planfile queue with run_pla...
+    ApiRunResult:  # Result of a direct HTTP API executor call...
+    LlmRunResult:  # Result of an OpenRouter (or compatible) chat-completion call...
+    _planfile_env()
+    _run_process(command;project)
+    _run_shell_command(command;project)
+    _run_api_request(request;_project)
+    _run_llm_request(request;_project)
+    _queue_lock_wanted()
+    _queue_runner_lock(project)
+    _claim_lease_seconds_str()
+    _ticket_claim_or_error(project;ticket_id;actor)
+    _planfile_command(project;args;runner)
+    _parse_next_ticket(stdout)
+    _ticket_command(ticket)
+    _ticket_llm_request(ticket)
+    _ticket_api_request(ticket)
+    _default_human_prompt(prompt;ticket_id)
+    _result_json(result)
+    run_next_planfile_task()
+    run_planfile_queue_loop()
   services/healing-webhook/app.py:
     e: _rate_limit_ok,_record_action,create_planfile_ticket,_run_docker,heal_redsl_gate,heal_redsl_improve,heal_rebuild_restore,heal_annotate,_run_vallm_check,_run_vallm_validate,_resolve_affected_files,heal_vallm_validate,_run_redup_check,heal_redup_check,_resolve_strategy,healthz,metrics,get_history,alertmanager_webhook,probe_failure,get_tickets
     _rate_limit_ok()
@@ -139,38 +205,14 @@ D:
     alertmanager_webhook(request)
     probe_failure(request)
     get_tickets()
-  services/healing-webhook/ticket_builder.py:
-    e: _git_commit,_infer_paths,_format_paths,_default_acceptance,_format_acceptance,_reproduction_for,build_ticket_payload
-    _git_commit(repo)
-    _infer_paths(component;labels)
-    _format_paths(paths)
-    _default_acceptance(instance)
-    _format_acceptance(items)
-    _reproduction_for(labels;failures)
-    build_ticket_payload(alert)
-  src/koru/__init__.py:
-  src/koru/agents.py:
-    e: _which,_marker,detect_agent_options,detect_project_environment,detect_agent_environment,select_agent,save_agent_prompt,launch_agent,AgentOption
-    AgentOption: to_dict(0)
-    _which(command)
-    _marker(project)
-    detect_agent_options(project)
-    detect_project_environment(project)
-    detect_agent_environment(project)
-    select_agent(agents)
-    save_agent_prompt(project;prompt)
-    launch_agent(agent;project;prompt)
-  src/koru/autopilot/__init__.py:
-    e: default_socket_path
-    default_socket_path()
-  src/koru/autopilot/audit.py:
-    e: default_log_path,_isoformat_utc,_JSONFormatter,AuditLog
-    _JSONFormatter: format(1)  # Emit ``record.msg`` verbatim — we hand it in pre-serialised.
-    AuditLog: __init__(0),record(1),close(0)  # Append-only audit log for autopilot events.
-    default_log_path()
-    _isoformat_utc(ts)
+  src/koru/policy.py:
+    e: Policy,policy_path,load_policy,policy_violations
+    Policy: to_dict(0)  # Resolved policy for an LLM agent operating on a koru project...
+    policy_path(project)
+    load_policy(project)
+    policy_violations(policy;command)
   src/koru/autopilot/cli_command.py:
-    e: _build_parser,_client,_action_daemon,_action_drive,_action_status,_action_shutdown,_action_ide_list,_action_doctor,_build_brief,_action_handoff,_format_tail_entry,_action_tail,_systemd_user_dir,_resolve_koru_bin,_render_unit,_action_install_unit,autopilot_main
+    e: _build_parser,_client,_action_daemon,_action_drive,_action_status,_action_shutdown,_action_ide_list,_doctor_fix_payload,_action_doctor,_action_setup_host,_plugin_repo_dir,_resolve_plugin_vsix_path,_ide_from_terminal_env,_resolve_plugin_target_ide,_resolve_plugin_editor_bin,_action_install_plugin,_build_brief,_action_handoff,_format_tail_entry,_action_tail,_systemd_user_dir,_resolve_koru_bin,_render_unit,_action_install_unit,autopilot_main
     _build_parser()
     _client(args)
     _action_daemon(args)
@@ -178,7 +220,15 @@ D:
     _action_status(args)
     _action_shutdown(args)
     _action_ide_list(_args)
+    _doctor_fix_payload()
     _action_doctor(args)
+    _action_setup_host(args)
+    _plugin_repo_dir()
+    _resolve_plugin_vsix_path(vsix)
+    _ide_from_terminal_env()
+    _resolve_plugin_target_ide(raw_ide)
+    _resolve_plugin_editor_bin(ide)
+    _action_install_plugin(args)
     _build_brief(project)
     _action_handoff(args)
     _format_tail_entry(entry)
@@ -188,53 +238,134 @@ D:
     _render_unit(koru_bin)
     _action_install_unit(args)
     autopilot_main(argv)
-  src/koru/autopilot/client.py:
-    e: AutopilotClient
-    AutopilotClient: __init__(0),_connect(0),request(1),is_running(0),drive(1),status(0),shutdown(0)  # Connect, send one message, read one reply, disconnect.
-  src/koru/autopilot/config.py:
-    e: default_config_path,_merge_submit_keys,load_config,cached_config,clear_config_cache,AutopilotConfig
-    AutopilotConfig: submit_key_for(1)  # In-memory view of ``autopilot.toml`` (or defaults).
-    default_config_path()
-    _merge_submit_keys(raw)
-    load_config(path)
-    cached_config()
-    clear_config_cache()
+  src/koru/watch.py:
+    e: format_queue_event,_default_connect,watch_planfile_events
+    format_queue_event(event)
+    _default_connect(ws_url)
+    watch_planfile_events(ws_url)
+  src/koru/autopilot/plugin_installer.py:
+    e: PluginInstallResult,_valid_ide,_ide_from_terminal_env,resolve_target_ide,resolve_extension_vsix,_resolve_ide_command,_settings_path_for_ide,_configure_socket_path,_run,_extension_is_installed,install_plugin_for_ide,format_plugin_install_result
+    PluginInstallResult: to_dict(0)
+    _valid_ide(raw)
+    _ide_from_terminal_env()
+    resolve_target_ide(requested)
+    resolve_extension_vsix()
+    _resolve_ide_command(ide)
+    _settings_path_for_ide(ide)
+    _configure_socket_path(ide;socket_path)
+    _run(cmd)
+    _extension_is_installed(command;runner)
+    install_plugin_for_ide()
+    format_plugin_install_result(result)
+  src/koru/bootstrap.py:
+    e: ValidationError,ImportReport,load_flat_pipeline,_validate_task,_validate_cross_task_dependencies,validate_flat_pipeline,_detect_cycle,materialize_to_planfile,_normalise_task,_next_id_after,import_flat_pipeline,_infer_prefix
+    ValidationError: __str__(0)
+    ImportReport: summary(0)
+    load_flat_pipeline(path)
+    _validate_task(task;seen_ids)
+    _validate_cross_task_dependencies(tasks)
+    validate_flat_pipeline(tasks)
+    _detect_cycle(tasks)
+    materialize_to_planfile(flat_tasks;project_dir)
+    _normalise_task(task)
+    _next_id_after(tasks;prefix)
+    import_flat_pipeline(flat_path;project_dir)
+    _infer_prefix(tasks)
+  src/koru/agents.py:
+    e: AgentOption,_which,_marker,detect_agent_options,detect_project_environment,detect_agent_environment,select_agent,save_agent_prompt,normalize_agent_lane_id,agent_lane_environment,format_agent_lane_exports,launch_agent
+    AgentOption: to_dict(0)
+    _which(command)
+    _marker(project)
+    detect_agent_options(project)
+    detect_project_environment(project)
+    detect_agent_environment(project)
+    select_agent(agents)
+    save_agent_prompt(project;prompt)
+    normalize_agent_lane_id(raw)
+    agent_lane_environment(agent_id)
+    format_agent_lane_exports(env)
+    launch_agent(agent;project;prompt)
+  src/koru/tasks.py:
+    e: CreatedTask,create_nl_task,_title_from_text,_read_config,_read_sprint,_write_yaml
+    CreatedTask:
+    create_nl_task(project;text)
+    _title_from_text(text)
+    _read_config(path)
+    _read_sprint(path)
+    _write_yaml(path;data)
+  src/koru/queue_clean.py:
+    e: CleanupCandidate,CleanupReport,_planfile_base,_parse_age_days,_matched_rules,find_candidates,_build_close_note,_list_tickets,_close_ticket,clean_queue
+    CleanupCandidate: explanation(0)  # A planfile ticket selected for cleanup, with the reasons why...
+    CleanupReport: to_dict(0)  # Outcome of a (dry-run or applied) sweep...
+    _planfile_base()
+    _parse_age_days(ticket)
+    _matched_rules(ticket)
+    find_candidates(tickets)
+    _build_close_note(candidate;reason)
+    _list_tickets(project;runner)
+    _close_ticket(project;candidate;reason;runner)
+    clean_queue(project)
+  src/koru/autopilot/host_setup.py:
+    e: _package_manager_hint,_human_followups,build_setup_host_report,_try_apt_install,run_host_setup,_print_text_report
+    _package_manager_hint()
+    _human_followups(injector;selected)
+    build_setup_host_report()
+    _try_apt_install(packages)
+    run_host_setup()
+    _print_text_report(report)
   src/koru/autopilot/daemon.py:
-    e: _load_context_module,_default_handoff,_peer_uid,_Client,AutopilotDaemon
-    _Client:  # In-memory state for one connected socket.
+    e: _Client,AutopilotDaemon,_load_context_module,_default_handoff,_peer_uid
+    _Client:  # In-memory state for one connected socket...
     AutopilotDaemon: __init__(0),start(0),serve_forever(0),stop(0),_shutdown(0),_accept(0),_on_readable(1),_dispatch(2),_send(2),_drop(1),_plugin_for(1),_handle_drive(2),_drive_via_plugin(5),_drive_via_keyboard(5),_handle_hello(2),_handle_status(2),_handle_ack(2),_handle_session_event(2),_handle_shutdown(2),_handle_ping(2),_build_handler_table(0)  # Selector-based unix-socket broker.
+
+Parameters
+----------
+so...
     _load_context_module()
     _default_handoff(project)
     _peer_uid(sock)
-  src/koru/autopilot/ide.py:
-    e: _iter_proc_pids,_read_comm,_read_cmdline,_matches,detect_running_ides,_active_window_pid_x11,detect_focused_ide_id,focused_ide,pick_target,is_linux,detect_running_ides_cached,clear_detect_cache,RunningIDE
-    RunningIDE: to_dict(0)  # A single IDE process discovered on the system.
-    _iter_proc_pids()
-    _read_comm(pid)
-    _read_cmdline(pid)
-    _matches(comm;cmdline;patterns)
-    detect_running_ides()
-    _active_window_pid_x11()
-    detect_focused_ide_id()
-    focused_ide(detected)
-    pick_target(detected)
-    is_linux()
-    detect_running_ides_cached()
-    clear_detect_cache()
-  src/koru/autopilot/injector.py:
-    e: _submit_key_for,_which,_session_type,_default_runner,BackendStatus,InjectionResult,InjectorError,Injector
-    BackendStatus: to_dict(0)  # Result of probing a single backend.
-    InjectionResult: to_dict(0)
-    InjectorError:  # No usable backend, or the backend call failed.
-    Injector: probe(0),select_backend(0),type_text(1),_probe_one(1),_call(1),_press_wtype(1)  # Pick the best available backend and type text through it.
-    _submit_key_for(ide)
-    _which(name)
-    _session_type()
-    _default_runner(cmd;stdin)
+  src/koru/scan.py:
+    e: Suggestion,ScanResult,scan_pytest_collect,_load_koruignore_patterns,_is_koruignored,scan_todo_markers,scan_missing_gates,scan_missing_tools,scan_gitignore_drift,_scan_jscpd_report,_scan_code2llm_analysis,_scan_testql_export,_scan_redup_filtered,scan_semcod_quality_artifacts,collect_suggestions,_existing_scan_titles,_create_ticket,run_scan
+    Suggestion: to_dict(0)  # One proposed planfile ticket derived from a repo signal...
+    ScanResult: to_dict(0)  # Aggregate output of ``run_scan``...
+    scan_pytest_collect(project)
+    _load_koruignore_patterns(project)
+    _is_koruignored(rel_path;patterns)
+    scan_todo_markers(project)
+    scan_missing_gates(project)
+    scan_missing_tools(project)
+    scan_gitignore_drift(project)
+    _scan_jscpd_report(project)
+    _scan_code2llm_analysis(project)
+    _scan_testql_export(project)
+    _scan_redup_filtered(project)
+    scan_semcod_quality_artifacts(project)
+    collect_suggestions(project)
+    _existing_scan_titles(project)
+    _create_ticket(project;suggestion)
+    run_scan(project)
+  src/koru/gate.py:
+    e: GateAuthorization,parse_authorizations,_resolve_actor,_planfile_base,authorize_gate
+    GateAuthorization: to_note(0)  # Parsed gate-authorization record extracted from a ticket not...
+    parse_authorizations(notes)
+    _resolve_actor(explicit)
+    _planfile_base()
+    authorize_gate(ticket_id)
+  src/koru/loop.py:
+    e: CommandResult,RunRecord,LoopReport,_search_root_for_include,discover_repositories,_default_runner,run_closed_loop
+    CommandResult(Protocol):  # Protocol for subprocess-like command results...
+    RunRecord:  # Single command execution result for one repository in one at...
+    LoopReport:  # Aggregated execution report for a full closed-loop run...
+    _search_root_for_include(workspace;include_pattern)
+    discover_repositories(workspace;include_pattern)
+    _default_runner(command;repository)
+    run_closed_loop()
   src/koru/autopilot/protocol.py:
-    e: _filter_extras,decode,hello,chat_send,drive,ack,error,session_started,session_ended,ProtocolError,Message
-    ProtocolError:  # Raised when a line cannot be decoded into a valid message.
+    e: ProtocolError,Message,_filter_extras,decode,hello,chat_send,drive,ack,error,session_started,session_ended
+    ProtocolError(ValueError):  # Raised when a line cannot be decoded into a valid message...
     Message: to_dict(0),encode(0)  # A single protocol envelope.
+
+The constructor is intentionall...
     _filter_extras(msg_type;obj)
     decode(line)
     hello()
@@ -244,222 +375,22 @@ D:
     error(reply_to;message)
     session_started()
     session_ended()
-  src/koru/bootstrap.py:
-    e: load_flat_pipeline,validate_flat_pipeline,_detect_cycle,materialize_to_planfile,_normalise_task,_next_id_after,import_flat_pipeline,_infer_prefix,ValidationError,ImportReport
-    ValidationError: __str__(0)
-    ImportReport: summary(0)
-    load_flat_pipeline(path)
-    validate_flat_pipeline(tasks)
-    _detect_cycle(tasks)
-    materialize_to_planfile(flat_tasks;project_dir)
-    _normalise_task(task)
-    _next_id_after(tasks;prefix)
-    import_flat_pipeline(flat_path;project_dir)
-    _infer_prefix(tasks)
-  src/koru/cli.py:
-    e: _command_value,_build_parser,_build_task_parser,_build_serve_parser,_build_scan_parser,_render_scan_text,_render_scan_markdown,_scan_main,_build_gate_parser,_gate_main,_build_gc_parser,_gc_main,_build_queue_parser,_render_clean_report_text,_queue_main,_build_agent_parser,_task_main,_serve_main,_agent_main,_is_bare_invocation,_build_topology_parser,_render_topology_text,_topology_main,_build_runtime_context_parser,_render_runtime_context_text,_runtime_context_main,_doctor_main,_init_main,_context_main,_bootstrap_main,_watch_main,_queue_run_main,_command_loop_main,main
-    _command_value(value)
-    _build_parser()
-    _build_task_parser()
-    _build_serve_parser()
-    _build_scan_parser()
-    _render_scan_text(result)
-    _render_scan_markdown(result)
-    _scan_main(argv)
-    _build_gate_parser()
-    _gate_main(argv)
-    _build_gc_parser()
-    _gc_main(argv)
-    _build_queue_parser()
-    _render_clean_report_text(report)
-    _queue_main(argv)
-    _build_agent_parser()
-    _task_main(argv)
-    _serve_main(argv)
-    _agent_main(argv)
-    _is_bare_invocation(args)
-    _build_topology_parser()
-    _render_topology_text(topology)
-    _topology_main(argv)
-    _build_runtime_context_parser()
-    _render_runtime_context_text(context)
-    _runtime_context_main(argv)
-    _doctor_main(args;raw_args)
-    _init_main(args)
-    _context_main(args)
-    _bootstrap_main(args)
-    _watch_main(args)
-    _queue_run_main(args)
-    _command_loop_main(args)
+  scripts/planfile-sync-todo.py:
+    e: run_planfile,load_tickets,build_auto_section,replace_auto_section,do_from_planfile,do_from_todo,_llm_stub,main
+    run_planfile()
+    load_tickets()
+    build_auto_section(tickets)
+    replace_auto_section(current;new_section)
+    do_from_planfile(check)
+    do_from_todo(heading;check)
+    _llm_stub(item;heading)
     main()
-  src/koru/context.py:
-    e: _is_fixture_ticket,_resolve_include_fixtures,_load_project_dotenv,_planfile_command_base,_planfile_env,_fetch_all_tickets,_run_planfile,_safe_json,_git_probe,build_context,_auto_promote_blocking_tickets,_build_instructions,_build_setup_instructions,_build_shared_rules,_build_self_service,render_markdown_handoff
-    _is_fixture_ticket(ticket)
-    _resolve_include_fixtures(explicit)
-    _load_project_dotenv(project)
-    _planfile_command_base()
-    _planfile_env()
-    _fetch_all_tickets(project)
-    _run_planfile(project;args;runner)
-    _safe_json(text)
-    _git_probe(project)
-    build_context()
-    _auto_promote_blocking_tickets(project;runner)
-    _build_instructions(policy;ticket)
-    _build_setup_instructions()
-    _build_shared_rules(policy;ticket)
-    _build_self_service(policy;ticket)
-    render_markdown_handoff(context)
-  src/koru/doctor.py:
-    e: run_diagnostics,_check_git_repo,_check_planfile_binary,_check_planfile_config,_check_planfile_sprints,_check_planfile_sprints_yaml,_check_runtime_dir,_check_policy_yaml,_check_gitignore,_resolve_pytest_collect_timeout,_check_pytest_collect,_check_ci_command,render_text,Check,DoctorReport
-    Check: to_dict(0)  # A single diagnostic outcome.
-    DoctorReport: has_failures(0),has_warnings(0),summary(0),to_dict(0)  # Aggregate result of ``run_diagnostics``.
-    run_diagnostics(project)
-    _check_git_repo(project)
-    _check_planfile_binary(_project)
-    _check_planfile_config(project)
-    _check_planfile_sprints(project)
-    _check_planfile_sprints_yaml(project)
-    _check_runtime_dir(project)
-    _check_policy_yaml(project)
-    _check_gitignore(project)
-    _resolve_pytest_collect_timeout()
-    _check_pytest_collect(project)
-    _check_ci_command(project)
-    render_text(report)
-  src/koru/dotenv_loader.py:
-    e: _parse_value,parse_dotenv,load_dotenv
-    _parse_value(raw)
-    parse_dotenv(text)
-    load_dotenv(project)
-  src/koru/events.py:
-    e: emit_management_event,main
-    emit_management_event()
+  scripts/_koru_autodiag_filter_tickets.py:
+    e: main
     main()
-  src/koru/gate.py:
-    e: parse_authorizations,_resolve_actor,_planfile_base,authorize_gate,GateAuthorization
-    GateAuthorization: to_note(0)  # Parsed gate-authorization record extracted from a ticket not
-    parse_authorizations(notes)
-    _resolve_actor(explicit)
-    _planfile_base()
-    authorize_gate(ticket_id)
-  src/koru/gc.py:
-    e: _now_utc,_parse_ts,_planfile_env,_run_planfile,_load_tickets_from_sprint,_archive_tickets,collect_gc_candidates,run_gc,GcCandidate,GcResult
-    GcCandidate:  # A ticket eligible for garbage collection.
-    GcResult: summary(0)  # Outcome of a gc run.
-    _now_utc()
-    _parse_ts(raw)
-    _planfile_env()
-    _run_planfile(args;project;runner)
-    _load_tickets_from_sprint(project;sprint)
-    _archive_tickets(tickets;project)
-    collect_gc_candidates(project)
-    run_gc(project)
-  src/koru/init.py:
-    e: init_project,_write_policy_stub_if_absent,_ensure_gitignore_entry,InitReport
-    InitReport: summary(0)  # Summary of what ``init_project`` actually changed on disk.
-    init_project(project)
-    _write_policy_stub_if_absent(project)
-    _ensure_gitignore_entry(project)
-  src/koru/loop.py:
-    e: _search_root_for_include,discover_repositories,_default_runner,run_closed_loop,CommandResult,RunRecord,LoopReport
-    CommandResult:  # Protocol for subprocess-like command results.
-    RunRecord:  # Single command execution result for one repository in one at
-    LoopReport:  # Aggregated execution report for a full closed-loop run.
-    _search_root_for_include(workspace;include_pattern)
-    discover_repositories(workspace;include_pattern)
-    _default_runner(command;repository)
-    run_closed_loop()
-  src/koru/planfile_queue.py:
-    e: _planfile_env,_run_process,_run_shell_command,_run_api_request,_run_llm_request,_planfile_command,_parse_next_ticket,_ticket_command,_ticket_llm_request,_ticket_api_request,_default_human_prompt,_result_json,run_next_planfile_task,run_planfile_queue_loop,CommandResult,QueueRunResult,QueueLoopResult,ApiRunResult,LlmRunResult
-    CommandResult:  # Protocol for subprocess-like command results.
-    QueueRunResult:  # Result of a single queue tick.
-    QueueLoopResult: summary(0)  # Aggregate result of draining the planfile queue with run_pla
-    ApiRunResult:  # Result of a direct HTTP API executor call.
-    LlmRunResult:  # Result of an OpenRouter (or compatible) chat-completion call
-    _planfile_env()
-    _run_process(command;project)
-    _run_shell_command(command;project)
-    _run_api_request(request;_project)
-    _run_llm_request(request;_project)
-    _planfile_command(project;args;runner)
-    _parse_next_ticket(stdout)
-    _ticket_command(ticket)
-    _ticket_llm_request(ticket)
-    _ticket_api_request(ticket)
-    _default_human_prompt(prompt;ticket_id)
-    _result_json(result)
-    run_next_planfile_task()
-    run_planfile_queue_loop()
-  src/koru/policy.py:
-    e: policy_path,load_policy,policy_violations,Policy
-    Policy: to_dict(0)  # Resolved policy for an LLM agent operating on a koru project
-    policy_path(project)
-    load_policy(project)
-    policy_violations(policy;command)
-  src/koru/queue_clean.py:
-    e: _planfile_base,_parse_age_days,_matched_rules,find_candidates,_build_close_note,_list_tickets,_close_ticket,clean_queue,CleanupCandidate,CleanupReport
-    CleanupCandidate: explanation(0)  # A planfile ticket selected for cleanup, with the reasons why
-    CleanupReport: to_dict(0)  # Outcome of a (dry-run or applied) sweep.
-    _planfile_base()
-    _parse_age_days(ticket)
-    _matched_rules(ticket)
-    find_candidates(tickets)
-    _build_close_note(candidate;reason)
-    _list_tickets(project;runner)
-    _close_ticket(project;candidate;reason;runner)
-    clean_queue(project)
-  src/koru/run_log.py:
-    e: open_run_log,open_run_log_eagerly,_iso,RunLogWriter
-    RunLogWriter: _emit(1),write_header(0),write_iteration(0),write_footer(0)  # Append-only JSONL writer with best-effort durability.
-    open_run_log(project)
-    open_run_log_eagerly(project)
-    _iso(epoch)
-  src/koru/runtime.py:
-    e: planfile_dir,runtime_dir,runs_dir,new_run_id,ensure_runs_dir
-    planfile_dir(project)
-    runtime_dir(project)
-    runs_dir(project)
-    new_run_id(prefix)
-    ensure_runs_dir(project)
-  src/koru/scan.py:
-    e: scan_pytest_collect,_load_koruignore_patterns,_is_koruignored,scan_todo_markers,scan_missing_gates,scan_missing_tools,scan_gitignore_drift,collect_suggestions,_existing_scan_titles,_create_ticket,run_scan,Suggestion,ScanResult
-    Suggestion: to_dict(0)  # One proposed planfile ticket derived from a repo signal.
-    ScanResult: to_dict(0)  # Aggregate output of ``run_scan``.
-    scan_pytest_collect(project)
-    _load_koruignore_patterns(project)
-    _is_koruignored(rel_path;patterns)
-    scan_todo_markers(project)
-    scan_missing_gates(project)
-    scan_missing_tools(project)
-    scan_gitignore_drift(project)
-    collect_suggestions(project)
-    _existing_scan_titles(project)
-    _create_ticket(project;suggestion)
-    run_scan(project)
-  src/koru/semcod_tools.py:
-    e: _read_pyproject,_config_present,detect_semcod_tools,SemcodTool
-    SemcodTool: to_dict(0)  # One detected (or absent) semcod tool.
-    _read_pyproject(project)
-    _config_present(pyproject;tool_id)
-    detect_semcod_tools(project)
-  src/koru/serve.py:
-    e: _build_handler,build_server,serve,ServeConfig
-    ServeConfig:
-    _build_handler(config)
-    build_server(config)
-    serve(config)
-  src/koru/tasks.py:
-    e: create_nl_task,_title_from_text,_read_config,_read_sprint,_write_yaml,CreatedTask
-    CreatedTask:
-    create_nl_task(project;text)
-    _title_from_text(text)
-    _read_config(path)
-    _read_sprint(path)
-    _write_yaml(path;data)
   src/koru/topology.py:
-    e: topology_path,_read_yaml,_merge_components,_merge_pipelines,load_topology,_strip_to_persisted,save_topology,_toggle,set_component_enabled,set_pipeline_enabled,is_component_enabled,is_pipeline_enabled,enabled_components_for_pipeline,default_component_ids,default_pipeline_ids,ToggleResult
-    ToggleResult:  # Outcome of a single enable/disable mutation.
+    e: ToggleResult,topology_path,_read_yaml,_merge_components,_merge_pipelines,load_topology,_strip_to_persisted,save_topology,_toggle,set_component_enabled,set_pipeline_enabled,is_component_enabled,is_pipeline_enabled,enabled_components_for_pipeline,default_component_ids,default_pipeline_ids
+    ToggleResult:  # Outcome of a single enable/disable mutation...
     topology_path(project)
     _read_yaml(path)
     _merge_components(saved;detected)
@@ -475,308 +406,256 @@ D:
     enabled_components_for_pipeline(project;pipeline_id)
     default_component_ids()
     default_pipeline_ids()
-  src/koru/watch.py:
-    e: format_queue_event,_default_connect,watch_planfile_events
-    format_queue_event(event)
-    _default_connect(ws_url)
-    watch_planfile_events(ws_url)
-  tests/test_agents.py:
-    e: TestAgentDetection
-    TestAgentDetection: test_detects_project_hints_without_cli(0),test_detects_openrouter_lane_from_env(0),test_select_agent_prefers_launchable_when_noninteractive(0)
-  tests/test_autopilot_audit.py:
-    e: _read_lines,test_disabled_audit_is_silent,test_record_writes_ndjson,test_record_drops_none_values,test_log_file_is_owner_only,test_directory_is_owner_only,test_default_log_path_uses_xdg_state,test_default_log_path_falls_back_to_home,test_multiple_records_appear_in_order,test_rotation_caps_file_size,test_unwritable_directory_disables_silently
-    _read_lines(path)
-    test_disabled_audit_is_silent(tmp_path)
-    test_record_writes_ndjson(tmp_path)
-    test_record_drops_none_values(tmp_path)
-    test_log_file_is_owner_only(tmp_path)
-    test_directory_is_owner_only(tmp_path)
-    test_default_log_path_uses_xdg_state(tmp_path;monkeypatch)
-    test_default_log_path_falls_back_to_home(monkeypatch)
-    test_multiple_records_appear_in_order(tmp_path)
-    test_rotation_caps_file_size(tmp_path)
-    test_unwritable_directory_disables_silently(tmp_path;capsys;monkeypatch)
-  tests/test_autopilot_cli.py:
-    e: test_autopilot_parser_requires_action,test_drive_without_daemon_errors,test_drive_dry_run_direct,test_ide_list_empty,test_ide_list_marks_focused_ide,test_doctor_json_output,test_status_when_no_daemon,test_shutdown_when_no_daemon,test_handoff_dry_run_prints_brief_and_skips_daemon,test_handoff_requires_running_daemon,test_handoff_drives_brief_through_client,_write_audit_log,test_tail_text_format_renders_entries,test_tail_json_format_returns_array,test_tail_n_limits_output,test_tail_missing_log_errors_cleanly,test_tail_skips_malformed_lines,test_install_unit_print_renders_execstart,test_install_unit_writes_to_xdg_default_path,test_install_unit_refuses_overwrite_without_force,test_resolve_koru_bin_falls_back_to_sys_executable_sibling
-    test_autopilot_parser_requires_action()
-    test_drive_without_daemon_errors(capsys;tmp_path)
-    test_drive_dry_run_direct(capsys;monkeypatch)
-    test_ide_list_empty(capsys;monkeypatch)
-    test_ide_list_marks_focused_ide(capsys;monkeypatch)
-    test_doctor_json_output(capsys;monkeypatch)
-    test_status_when_no_daemon(capsys;tmp_path)
-    test_shutdown_when_no_daemon(capsys;tmp_path)
-    test_handoff_dry_run_prints_brief_and_skips_daemon(tmp_path;capsys;monkeypatch)
-    test_handoff_requires_running_daemon(tmp_path;capsys;monkeypatch)
-    test_handoff_drives_brief_through_client(tmp_path;capsys;monkeypatch)
-    _write_audit_log(path;entries)
-    test_tail_text_format_renders_entries(tmp_path;capsys)
-    test_tail_json_format_returns_array(tmp_path;capsys)
-    test_tail_n_limits_output(tmp_path;capsys)
-    test_tail_missing_log_errors_cleanly(tmp_path;capsys)
-    test_tail_skips_malformed_lines(tmp_path;capsys)
-    test_install_unit_print_renders_execstart(capsys;monkeypatch)
-    test_install_unit_writes_to_xdg_default_path(tmp_path;capsys;monkeypatch)
-    test_install_unit_refuses_overwrite_without_force(tmp_path;capsys)
-    test_resolve_koru_bin_falls_back_to_sys_executable_sibling(tmp_path;monkeypatch)
-  tests/test_autopilot_config.py:
-    e: test_load_config_returns_defaults_when_file_missing,test_load_config_user_keys_override_defaults,test_load_config_malformed_toml_falls_back_to_defaults,test_load_config_skips_non_string_entries,test_load_config_ignores_unrelated_sections,test_submit_key_for_falls_back_to_default,test_submit_key_for_uses_explicit_default_when_present,test_submit_key_for_falls_back_when_no_default_key,test_default_config_path_uses_xdg_when_set,test_default_config_path_falls_back_to_home,test_cached_config_is_memoised
-    test_load_config_returns_defaults_when_file_missing(tmp_path)
-    test_load_config_user_keys_override_defaults(tmp_path)
-    test_load_config_malformed_toml_falls_back_to_defaults(tmp_path;capsys)
-    test_load_config_skips_non_string_entries(tmp_path)
-    test_load_config_ignores_unrelated_sections(tmp_path)
-    test_submit_key_for_falls_back_to_default()
-    test_submit_key_for_uses_explicit_default_when_present()
-    test_submit_key_for_falls_back_when_no_default_key()
-    test_default_config_path_uses_xdg_when_set(tmp_path;monkeypatch)
-    test_default_config_path_falls_back_to_home(monkeypatch)
-    test_cached_config_is_memoised(monkeypatch)
-  tests/test_autopilot_daemon.py:
-    e: _patch_no_running_ides,_daemon,_connect_plugin,_assert_no_more_data,running_daemon,test_ping_round_trip,test_is_running_true_when_daemon_alive,test_drive_falls_back_to_injector_when_no_plugin,test_drive_reports_injector_failure,test_drive_empty_text_returns_error,test_drive_unknown_type_returns_error,test_status_reports_socket_and_plugins,test_accept_rejects_foreign_peer_uid,test_plugin_hello_then_drive_forwards,test_default_handoff_builds_brief_for_uninitialised_project,test_session_ended_triggers_handoff_chat_send,test_session_ended_no_handoff_when_disabled,test_session_ended_skipped_during_cooldown,test_session_started_event_just_acks,test_shutdown_stops_daemon,_StubInjector,_LineReader,_DaemonHarness
-    _StubInjector: __init__(0),type_text(1),probe(0),select_backend(0)  # Replaces :class:`koru.autopilot.injector.Injector` for tests
-    _LineReader: __init__(1),read_line(0),read_message(0)  # Stateful NDJSON line reader over a blocking socket.
-    _DaemonHarness: __init__(1),start(0),stop(0),client(1)  # Spin up :class:`AutopilotDaemon` on a thread and tear it dow
-    _patch_no_running_ides(monkeypatch)
-    _daemon(tmp_path;monkeypatch)
-    _connect_plugin(sock_path)
-    _assert_no_more_data(sock)
-    running_daemon(tmp_path;monkeypatch)
-    test_ping_round_trip(running_daemon)
-    test_is_running_true_when_daemon_alive(running_daemon)
-    test_drive_falls_back_to_injector_when_no_plugin(running_daemon)
-    test_drive_reports_injector_failure(tmp_path;monkeypatch)
-    test_drive_empty_text_returns_error(running_daemon)
-    test_drive_unknown_type_returns_error(running_daemon)
-    test_status_reports_socket_and_plugins(running_daemon)
-    test_accept_rejects_foreign_peer_uid(tmp_path;monkeypatch)
-    test_plugin_hello_then_drive_forwards(tmp_path;monkeypatch)
-    test_default_handoff_builds_brief_for_uninitialised_project(tmp_path)
-    test_session_ended_triggers_handoff_chat_send(tmp_path;monkeypatch)
-    test_session_ended_no_handoff_when_disabled(tmp_path;monkeypatch)
-    test_session_ended_skipped_during_cooldown(tmp_path;monkeypatch)
-    test_session_started_event_just_acks(tmp_path;monkeypatch)
-    test_shutdown_stops_daemon(tmp_path;monkeypatch)
-  tests/test_autopilot_ide.py:
-    e: fake_proc,test_detect_running_ides_finds_windsurf_and_jetbrains,test_detect_running_ides_deduplicates_same_ide,test_detect_running_ides_skips_unknown_processes,test_pick_target_prefers_user_choice,test_pick_target_returns_none_when_pref_not_running,test_pick_target_defaults_to_first,test_pick_target_empty_list_returns_none,test_detect_focused_ide_id_from_active_pid,test_detect_focused_ide_id_returns_none_for_unknown_pid,test_focused_ide_returns_matching_instance,test_pick_target_prefers_focused_when_no_explicit_prefer,test_pick_target_explicit_prefer_beats_focus,test_detect_cached_uses_cache_within_ttl,test_detect_cached_ttl_zero_always_refreshes,test_clear_detect_cache_forces_refresh
-    fake_proc(tmp_path;monkeypatch)
-    test_detect_running_ides_finds_windsurf_and_jetbrains(fake_proc)
-    test_detect_running_ides_deduplicates_same_ide(fake_proc)
-    test_detect_running_ides_skips_unknown_processes(fake_proc)
-    test_pick_target_prefers_user_choice(fake_proc)
-    test_pick_target_returns_none_when_pref_not_running(fake_proc)
-    test_pick_target_defaults_to_first(fake_proc)
-    test_pick_target_empty_list_returns_none()
-    test_detect_focused_ide_id_from_active_pid(fake_proc)
-    test_detect_focused_ide_id_returns_none_for_unknown_pid(fake_proc)
-    test_focused_ide_returns_matching_instance(fake_proc)
-    test_pick_target_prefers_focused_when_no_explicit_prefer(fake_proc)
-    test_pick_target_explicit_prefer_beats_focus(fake_proc)
-    test_detect_cached_uses_cache_within_ttl(monkeypatch)
-    test_detect_cached_ttl_zero_always_refreshes(monkeypatch)
-    test_clear_detect_cache_forces_refresh(monkeypatch)
-  tests/test_autopilot_injector.py:
-    e: _fake_runner,_which_factory,test_select_backend_x11_prefers_xdotool,test_select_backend_wayland_prefers_wtype_over_ydotool,test_select_backend_wayland_falls_back_to_ydotool,test_select_backend_no_tools_returns_none,test_type_text_dry_run_does_not_call_runner,test_type_text_xdotool_types_and_submits,test_type_text_wtype_uses_modifiers_for_jetbrains,test_type_text_no_submit_only_types,test_type_text_propagates_runner_error,test_type_text_empty_raises,test_type_text_no_backend_raises,test_probe_marks_unavailable_when_missing_tool,test_probe_marks_unavailable_on_wrong_session,test_wtype_rejects_multi_modifier_submit_key,test_wtype_single_modifier_still_works
-    _fake_runner(commands)
-    _which_factory(present)
-    test_select_backend_x11_prefers_xdotool()
-    test_select_backend_wayland_prefers_wtype_over_ydotool()
-    test_select_backend_wayland_falls_back_to_ydotool()
-    test_select_backend_no_tools_returns_none()
-    test_type_text_dry_run_does_not_call_runner()
-    test_type_text_xdotool_types_and_submits()
-    test_type_text_wtype_uses_modifiers_for_jetbrains()
-    test_type_text_no_submit_only_types()
-    test_type_text_propagates_runner_error()
-    test_type_text_empty_raises()
-    test_type_text_no_backend_raises()
-    test_probe_marks_unavailable_when_missing_tool()
-    test_probe_marks_unavailable_on_wrong_session()
-    test_wtype_rejects_multi_modifier_submit_key(monkeypatch)
-    test_wtype_single_modifier_still_works()
-  tests/test_autopilot_protocol.py:
-    e: test_encode_round_trip_minimal,test_encode_strips_reserved_keys_from_data,test_decode_rejects_unknown_type,test_decode_rejects_malformed_json,test_decode_rejects_oversized_line,test_decode_rejects_non_object_top_level,test_decode_requires_type_field,test_decode_id_must_be_string_when_present,test_decode_extra_fields_land_in_data,test_builders_produce_valid_envelopes,test_ack_default_ok_true,test_error_carries_message,test_decode_drops_unknown_fields_for_strict_type,test_decode_drops_unknown_fields_on_chat_send,test_decode_drops_all_extras_on_zero_field_type,test_decode_keeps_arbitrary_extras_for_ack,test_decode_keeps_arbitrary_extras_for_error,test_drive_with_unknown_ide_field_value_passes_known_fields
-    test_encode_round_trip_minimal()
-    test_encode_strips_reserved_keys_from_data()
-    test_decode_rejects_unknown_type()
-    test_decode_rejects_malformed_json()
-    test_decode_rejects_oversized_line()
-    test_decode_rejects_non_object_top_level()
-    test_decode_requires_type_field()
-    test_decode_id_must_be_string_when_present()
-    test_decode_extra_fields_land_in_data()
-    test_builders_produce_valid_envelopes()
-    test_ack_default_ok_true()
-    test_error_carries_message()
-    test_decode_drops_unknown_fields_for_strict_type()
-    test_decode_drops_unknown_fields_on_chat_send()
-    test_decode_drops_all_extras_on_zero_field_type()
-    test_decode_keeps_arbitrary_extras_for_ack()
-    test_decode_keeps_arbitrary_extras_for_error()
-    test_drive_with_unknown_ide_field_value_passes_known_fields()
-  tests/test_bootstrap.py:
-    e: _write_yaml,TestLoadFlatPipeline,TestValidateFlatPipeline,TestMaterializeToPlanfile,TestImportFlatPipeline,TestImportReport,TestValidationError
-    TestLoadFlatPipeline: test_loads_header_and_tasks(0),test_missing_file_raises(0),test_missing_tasks_raises(0)
-    TestValidateFlatPipeline: test_valid_pipeline_has_no_errors(0),test_missing_id_reported(0),test_duplicate_id_reported(0),test_invalid_executor_kind(0),test_invalid_priority_reported(0),test_unknown_blocked_by_reference(0),test_cycle_detected(0),_load(1)
-    TestMaterializeToPlanfile: test_creates_planfile_structure(0),test_default_execution_state_ready_for_unblocked(0),test_default_execution_state_pending_for_blocked(0),test_overwrite_protection(0)
-    TestImportFlatPipeline: test_full_round_trip(0),test_invalid_pipeline_raises_value_error(0)
-    TestImportReport: test_summary_includes_key_facts(0)
-    TestValidationError: test_str_format(0)
-    _write_yaml(path;content)
-  tests/test_cli.py:
-    e: _tmp_git_project,_run_main,TestBareInvocation,TestDoctorDispatch,TestInitDispatch,TestContextDispatch,TestBareEmitsMarkdown,TestSubcommandDispatch
-    TestBareInvocation: _parse(0),test_no_args_is_bare(0),test_project_only_is_bare(0),test_init_is_not_bare(0),test_doctor_is_not_bare(0),test_context_is_not_bare(0),test_queue_is_not_bare(0),test_watch_is_not_bare(0),test_bootstrap_is_not_bare(0),test_command_is_not_bare(0)  # ``koru`` with no action flag should route to markdown brief.
-    TestDoctorDispatch: setUp(0),tearDown(0),test_doctor_default_is_text(0),test_doctor_json(0),test_doctor_exit_0_on_no_failures(0)  # --doctor uses text by default, json when --format json.
-    TestInitDispatch: setUp(0),tearDown(0),test_init_creates_planfile(0),test_init_duplicate_rejected(0)  # --init creates project scaffold.
-    TestContextDispatch: setUp(0),tearDown(0),test_context_json_default(0),test_context_markdown(0)  # --context emits JSON or markdown.
-    TestBareEmitsMarkdown: setUp(0),tearDown(0),test_bare_produces_markdown(0)  # Bare ``koru`` should produce a markdown brief.
-    TestSubcommandDispatch: test_table_contains_all_documented_subcommands(0),test_table_values_are_callables(0),test_each_subcommand_routes_to_its_handler(0),test_unknown_first_arg_falls_through_to_argparse(0),test_empty_argv_does_not_call_any_handler(0)  # R6: routing through ``_SUBCOMMANDS`` dispatch table.
-    _tmp_git_project(prefix)
-    _run_main()
-  tests/test_context.py:
-    e: _ok,_fail,_no_git,_init_planfile,TestBuildContext,TestMarkdownHandoff,TestSetupRequired
-    TestBuildContext: test_brief_with_runnable_ticket(0),test_brief_when_queue_idle(0),test_brief_when_planfile_errors(0),test_specific_ticket_uses_show(0),test_instructions_include_no_commit_rule(0),test_instructions_include_ci_command_when_set(0),test_self_service_includes_concrete_ticket_commands(0),test_brief_is_json_serialisable(0),test_files_in_scope_appear_in_instructions(0),test_fixture_tickets_are_skipped_by_default(0),test_real_ticket_picked_over_fixture_in_mixed_queue(0),test_include_fixtures_flag_brings_them_back(0),test_single_object_fixture_is_filtered(0),test_explicit_ticket_id_bypasses_fixture_filter(0),test_all_tickets_are_populated_from_list(0)
-    TestMarkdownHandoff: test_renders_ticket_section(0),test_renders_policy_table(0),test_renders_idle_brief_without_crash(0)
-    TestSetupRequired: test_instructions_swap_to_setup_guide(0),test_self_service_exposes_init_only(0),test_environment_planfile_initialised_false(0),test_markdown_renders_setup_required_block(0)  # When planfile is not initialised, the brief must steer to ko
-    _ok(stdout)
-    _fail(stderr)
-    _no_git(_project)
-    _init_planfile(project)
-  tests/test_doctor.py:
-    e: _scaffold,_run,_named,TestHappyPath,TestGitRepoCheck,TestPlanfileBinary,TestPlanfileConfigCheck,TestSprintsCheck,TestPolicyYamlCheck,TestGitignoreCheck,TestCiCommandCheck,TestPytestCollectProbe,TestReportShape
-    TestHappyPath: test_full_scaffold_passes_all_required_checks(0)
-    TestGitRepoCheck: test_warns_when_no_git(0)
-    TestPlanfileBinary: test_explicit_env_var_resolves(0),test_missing_binary_fails(0)
-    TestPlanfileConfigCheck: test_missing_config_fails(0),test_malformed_config_fails(0)
-    TestSprintsCheck: test_empty_sprint_warns(0),test_no_sprints_dir_fails(0)
-    TestPolicyYamlCheck: test_absent_policy_passes(0),test_malformed_policy_fails(0),test_string_truthy_value_warns(0)
-    TestGitignoreCheck: test_warns_when_runtime_not_ignored(0)
-    TestCiCommandCheck: test_empty_warns(0),test_resolved_passes(0)
-    TestPytestCollectProbe: _scaffold_with_pyproject(1),test_pass_when_collection_succeeds_with_count(0),test_pass_when_count_not_parseable(0),test_warn_when_zero_tests_collected(0),test_warn_when_collection_errors(0),test_fail_when_collection_times_out(0),test_skip_when_pytest_not_installed(0),test_probe_skipped_entirely_when_no_pyproject_and_no_tests(0),test_env_var_overrides_timeout(0)  # Behaviour of the ``pytest_collect`` doctor probe.
-    TestReportShape: test_to_dict_keys_stable(0),test_render_text_groups_status(0),test_summary_counts_match_checks(0)
-    _scaffold(project)
-    _run(project)
-    _named(report;name)
-  tests/test_dotenv_loader.py:
-    e: TestParseDotenv,TestLoadDotenv
-    TestParseDotenv: test_simple_pairs(0),test_export_prefix_supported(0),test_double_quoted_with_escapes(0),test_single_quoted_literal(0),test_inline_comments_stripped(0),test_skips_blank_and_comment_lines(0),test_invalid_lines_silently_skipped(0),test_openrouter_realworld_line(0)
-    TestLoadDotenv: setUp(0),tearDown(0),test_no_dotenv_returns_empty(0),test_loads_keys_into_environ(0),test_does_not_override_existing_env(0),test_override_flag_replaces_existing(0),test_env_local_overrides_env(0),test_openrouter_key_propagated(0)
-  tests/test_e2e.py:
-    e: _tmp_git_project,_run_main,_write_sprint,_write_config,_ts,_done_ticket,_init_project,_extract_json,TestE2EInitDoctorContext,TestE2ETask,TestE2EGc,TestE2EScan,TestE2EQueueLoop,TestE2EQueueLoopMode,TestE2EBootstrap,TestE2EGate,TestE2EFullLifecycle,TestE2EInitFromPipeline,TestE2EHumanTicket,TestE2EContextFixtureFiltering
-    TestE2EInitDoctorContext: setUp(0),tearDown(0),test_init_then_doctor_passes(0),test_init_then_bare_koru_emits_markdown(0),test_init_then_context_json_has_policy(0),test_init_then_context_markdown_has_ticket(0),test_doctor_json_format(0),test_doctor_fails_on_empty_project(0),test_double_init_rejected(0)  # Full lifecycle: init → doctor → bare koru → context JSON.
-    TestE2ETask: setUp(0),tearDown(0),test_task_creates_ticket(0),test_task_increments_id(0),test_task_empty_text_fails(0),test_task_with_priority(0)  # koru task "..." creates a ticket in the sprint YAML.
-    TestE2EGc: setUp(0),tearDown(0),test_gc_dry_run_text(0),test_gc_dry_run_json(0),test_gc_keep_last_protects_newest(0),test_gc_custom_statuses(0),test_gc_no_stale_tickets_message(0),test_gc_apply_with_fake_runner(0)  # koru gc: dry-run, apply, archive, keep-last.
-    TestE2EScan: setUp(0),tearDown(0),test_scan_detects_todo_markers(0),test_scan_json_format(0),test_scan_with_limit(0),test_scan_clean_project_no_suggestions(0)  # koru scan detects project issues and suggests tickets.
-    TestE2EQueueLoop: setUp(0),tearDown(0),test_queue_dry_run(0),test_queue_processes_next_ticket(0),test_queue_idle_when_no_runnable_tickets(0)  # koru --queue processes shell tickets end-to-end.
-    TestE2EQueueLoopMode: setUp(0),tearDown(0),test_loop_finds_and_processes_tickets(0),test_loop_reports_completed_count(0)  # koru --queue --loop drains multiple tickets.
-    TestE2EBootstrap: setUp(0),tearDown(0),test_bootstrap_creates_planfile_structure(0),test_bootstrap_ticket_count(0),test_bootstrap_rejects_without_force(0),test_bootstrap_force_overwrites(0)  # koru --bootstrap imports a flat pipeline YAML.
-    TestE2EGate: setUp(0),tearDown(0),test_gate_authorize_dry_run(0),test_gate_authorize_json_format(0)  # koru gate authorize writes a structured note.
-    TestE2EFullLifecycle: setUp(0),tearDown(0),test_full_lifecycle(0)  # Simulate a complete project lifecycle through the CLI.
-    TestE2EInitFromPipeline: setUp(0),tearDown(0),test_init_from_custom_pipeline(0)  # koru --init --from <yaml> imports a custom pipeline.
-    TestE2EHumanTicket: setUp(0),tearDown(0),test_human_ticket_returns_waiting_input(0)  # koru --queue on a human ticket returns waiting_input.
-    TestE2EContextFixtureFiltering: setUp(0),tearDown(0),test_context_without_fixtures_skips_synthetic(0),test_context_with_fixtures_includes_all(0)  # --include-fixtures / --no-include-fixtures controls ticket f
-    _tmp_git_project(prefix)
-    _run_main()
-    _write_sprint(project;tickets;sprint)
-    _write_config(project;prefix;next_id)
-    _ts(days_ago)
-    _done_ticket(name;days_ago)
-    _init_project(project)
-    _extract_json(text)
-  tests/test_events.py:
-    e: FakeResponse,TestManagementEvents
-    FakeResponse: __enter__(0),__exit__(0)
-    TestManagementEvents: test_emit_management_event_posts_expected_payload(0),test_emit_management_event_is_disabled_without_url(0)
-  tests/test_gate.py:
-    e: _ok,_fail,test_authorize_gate_records_structured_note,test_authorize_gate_rejects_unknown_mode,test_authorize_gate_requires_reason,test_authorize_gate_propagates_planfile_failure,test_parse_authorizations_round_trip,test_parse_authorizations_ignores_malformed_or_unrelated_notes,test_parse_authorizations_returns_records_in_insertion_order,test_valid_modes_constant_matches_documented_set
-    _ok(stdout)
-    _fail(stderr)
-    test_authorize_gate_records_structured_note(tmp_path)
-    test_authorize_gate_rejects_unknown_mode(tmp_path)
-    test_authorize_gate_requires_reason(tmp_path)
-    test_authorize_gate_propagates_planfile_failure(tmp_path)
-    test_parse_authorizations_round_trip()
-    test_parse_authorizations_ignores_malformed_or_unrelated_notes()
-    test_parse_authorizations_returns_records_in_insertion_order()
-    test_valid_modes_constant_matches_documented_set()
-  tests/test_gc.py:
-    e: _write_sprint,_ts,_ticket,TestCollectGcCandidates,TestRunGc
-    TestCollectGcCandidates: test_finds_old_done_tickets(0),test_includes_failed_and_blocked(0),test_no_candidates_when_all_recent(0),test_missing_timestamp_treated_as_old(0),test_empty_sprint(0),test_custom_statuses(0)
-    TestRunGc: test_dry_run_does_not_delete(0),test_keep_last_protects_recent(0),test_keep_last_larger_than_candidates_keeps_all(0),test_apply_calls_planfile_delete(0),test_apply_creates_archive(0),test_no_archive_flag(0),test_no_candidates_returns_empty_result(0),test_delete_failure_records_error(0),test_summary_string(0)
-    _write_sprint(project;tickets;sprint)
-    _ts(days_ago)
-    _ticket(name;status;exec_state;days_ago)
-  tests/test_init.py:
-    e: TestStarterInit,TestForceAndConflicts,TestFromExternalPipeline,TestRuntimeContract
-    TestStarterInit: test_creates_planfile_layout(0),test_writes_policy_stub_and_loads_safe_defaults(0),test_policy_stub_constant_is_valid_yaml(0),test_appends_gitignore_entry(0),test_gitignore_idempotent(0),test_preserves_existing_gitignore_content(0),test_policy_stub_not_overwritten_on_force(0),test_no_starter_yaml_left_behind(0)
-    TestForceAndConflicts: test_re_init_without_force_raises(0),test_re_init_with_force_succeeds(0)
-    TestFromExternalPipeline: test_imports_user_supplied_pipeline(0)
-    TestRuntimeContract: test_init_does_not_leave_files_outside_planfile(0)
-  tests/test_loop.py:
-    e: TestKoruLoop
-    TestKoruLoop: test_search_root_for_include_uses_literal_prefix(0),test_discover_repositories_with_pattern(0),test_run_closed_loop_retries_failed_repositories(0),test_run_closed_loop_single_round_when_all_succeed(0),test_command_value_rejects_blank_value(0)
-  tests/test_planfile_queue.py:
-    e: _ok,_ticket_args,TestPlanfileQueue,TestPlanfileQueueLlm,TestPlanfileQueueLoop
-    TestPlanfileQueue: test_shell_ticket_runs_lifecycle_commands(0),test_human_ticket_returns_waiting_input(0),test_shell_failure_marks_ticket_failed(0),test_api_ticket_runs_lifecycle_commands(0),test_api_failure_marks_ticket_failed(0),test_idle_when_planfile_returns_no_ticket(0),test_planfile_error_propagates(0),test_dry_run_returns_command_without_executing(0),test_unsupported_executor_kind(0),test_shell_ticket_without_command_requests_input(0),test_api_ticket_without_endpoint_requests_input(0),test_interactive_human_ticket_completes_with_answer(0),test_interactive_human_ticket_cancellation_leaves_ticket(0),test_interactive_with_dry_run_does_not_prompt(0)
-    TestPlanfileQueueLlm: _llm_ticket(0),test_llm_ticket_runs_lifecycle_commands(0),test_llm_ticket_failure_marks_failed(0),test_llm_ticket_without_prompt_requests_input(0),test_llm_dry_run_returns_request_without_calling(0),test_llm_default_runner_without_api_key_returns_clear_error(0)  # Tests for the executor.kind=llm path.
-    TestPlanfileQueueLoop: _make_runner(1),test_loop_drains_three_shell_tickets_to_idle(0),test_loop_breaks_on_waiting_input_without_interactive(0),test_loop_continues_past_failed_ticket(0),test_loop_respects_max_iterations_cap(0),test_loop_with_interactive_drains_human_tickets(0),test_loop_validates_max_iterations(0)  # Tests for run_planfile_queue_loop — the queue-draining drive
-    _ok(stdout)
-    _ticket_args(command)
-  tests/test_policy.py:
-    e: _write_policy,TestDefaults,TestLoad,TestViolations
-    TestDefaults: test_defaults_are_strict(0),test_default_forbidden_paths_include_critical(0),test_default_shell_patterns_include_critical(0),test_to_dict_keys_are_sorted(0)
-    TestLoad: test_missing_file_returns_defaults(0),test_malformed_yaml_falls_back_to_defaults(0),test_top_level_non_mapping_falls_back_to_defaults(0),test_string_truthy_value_is_rejected(0),test_explicit_loosening_is_honoured(0),test_zero_or_negative_timeout_falls_back_to_default(0),test_unknown_keys_are_ignored(0)
-    TestViolations: test_git_commit_blocked_by_default(0),test_git_push_blocked_by_default(0),test_force_push_double_flag(0),test_branch_create_blocked(0),test_rm_rf_root_blocked(0),test_safe_command_passes(0),test_empty_command_passes(0),test_loosened_policy_allows_commit(0),test_path_helper_resolves(0)
-    _write_policy(project;content)
-  tests/test_queue_clean.py:
-    e: _ok,_fail,test_label_match_picks_only_fixture_labelled_tickets,test_name_heuristic_only_runs_when_explicit,test_name_heuristic_does_not_match_real_tickets_with_test_word,test_active_tickets_skipped_by_default_but_surfaced,test_include_active_promotes_skipped_back_to_candidates,test_max_age_modifies_but_never_alone,test_age_calculation_handles_z_suffix_and_naive_dates,_list_response,test_clean_queue_dry_run_lists_but_does_not_close,test_clean_queue_apply_closes_each_candidate_with_audit_note,test_clean_queue_records_failures_per_ticket,test_clean_queue_propagates_list_failure_as_runtime_error,test_clean_queue_handles_empty_list_gracefully,test_cleanup_candidate_explanation_is_human_readable,test_report_to_dict_is_json_serialisable
-    _ok(stdout)
-    _fail(stderr;code)
-    test_label_match_picks_only_fixture_labelled_tickets()
-    test_name_heuristic_only_runs_when_explicit()
-    test_name_heuristic_does_not_match_real_tickets_with_test_word()
-    test_active_tickets_skipped_by_default_but_surfaced()
-    test_include_active_promotes_skipped_back_to_candidates()
-    test_max_age_modifies_but_never_alone()
-    test_age_calculation_handles_z_suffix_and_naive_dates()
-    _list_response(tickets)
-    test_clean_queue_dry_run_lists_but_does_not_close(tmp_path)
-    test_clean_queue_apply_closes_each_candidate_with_audit_note(tmp_path)
-    test_clean_queue_records_failures_per_ticket(tmp_path)
-    test_clean_queue_propagates_list_failure_as_runtime_error(tmp_path)
-    test_clean_queue_handles_empty_list_gracefully(tmp_path)
-    test_cleanup_candidate_explanation_is_human_readable()
-    test_report_to_dict_is_json_serialisable()
-  tests/test_run_log.py:
-    e: _result,TestOpenRunLog,TestWriteEvents,TestErrorTolerance
-    TestOpenRunLog: test_constructor_does_not_create_file(0),test_eager_creates_runs_dir_only(0),test_path_is_under_planfile_dot_koru_runs(0)
-    TestWriteEvents: test_header_iteration_footer_round_trip(0),test_each_line_is_json(0),test_keys_are_sorted_in_output(0),test_message_truncation_500_chars(0)
-    TestErrorTolerance: test_io_error_does_not_propagate(0)
-    _result()
-  tests/test_runtime.py:
-    e: TestPathHelpers,TestRunIdGenerator,TestEnsureRunsDir
-    TestPathHelpers: test_planfile_dir_is_under_project(0),test_runtime_dir_is_under_planfile(0),test_runs_dir_is_under_runtime_dir(0),test_path_helpers_do_not_create_directories(0),test_path_helpers_resolve_relative_input(0)  # Path resolvers must be pure: no filesystem mutation.
-    TestRunIdGenerator: test_run_id_format(0),test_run_id_custom_prefix(0),test_run_ids_sort_chronologically(0),test_run_id_does_not_contain_path_separators(0)
-    TestEnsureRunsDir: test_creates_full_subtree(0),test_writes_readme_stub_on_first_call(0),test_idempotent_does_not_overwrite_readme(0),test_does_not_write_outside_planfile(0)
-  tests/test_scan.py:
-    e: _ok,TestScanPytestCollect,TestScanTodoMarkers,TestScanMissingGates,TestScanMissingTools,TestScanGitignoreDrift,TestRunScan
-    TestScanPytestCollect: test_returns_empty_when_no_tests_and_no_pyproject(0),test_empty_on_clean_collect(0),test_parses_per_file_collection_errors(0),test_falls_back_to_umbrella_import_ticket(0),test_collection_timeout_emits_diagnostic_ticket(0),test_timeout_value_is_reflected_in_ticket(0),test_pytest_not_installed_stays_silent(0)
-    TestScanTodoMarkers: test_filters_files_below_threshold(0),test_groups_markers_per_file(0),test_respects_koruignore_file_glob(0),test_respects_koruignore_directory_prefix(0)
-    TestScanMissingGates: test_no_suggestions_when_tool_missing(0),test_skips_when_config_already_present(0)
-    TestScanMissingTools: test_no_pyproject_returns_empty(0),test_skips_tools_not_in_registry(0)
-    TestScanGitignoreDrift: test_no_gitignore_returns_empty(0),test_present_entry_skips_suggestion(0),test_missing_entry_suggests(0)
-    TestRunScan: test_dry_run_returns_suggestions_no_apply(0),test_apply_creates_tickets_and_skips_duplicates(0),test_apply_create_failure_is_skipped(0),test_limit_caps_suggestions(0),test_priority_ordering_critical_first(0)
-    _ok(stdout;returncode;stderr)
-  tests/test_serve.py:
-    e: _free_port,_start,_get,TestServe
-    TestServe: setUp(0),tearDown(0),test_health_endpoint(0),test_dashboard_html_served_on_root(0),test_api_context_returns_brief(0),test_api_handoff_returns_markdown(0),test_unknown_path_returns_404(0)
-    _free_port()
-    _start(project;port)
-    _get(port;path)
-  tests/test_tasks.py:
-    e: TestNaturalLanguageTask
-    TestNaturalLanguageTask: test_creates_planfile_ticket_from_sentence(0),test_increments_next_id(0),test_rejects_empty_text(0)
-  tests/test_watch.py:
-    e: FakeWebSocket,TestWatch
-    FakeWebSocket: __init__(1),__aenter__(0),__aexit__(0),recv(0)
-    TestWatch: test_format_queue_event_for_execution_change(0),test_format_management_event(0),test_watch_planfile_events_prints_compact_lines(0)
+  plugins/koru-autopilot-vscode/src/extension.ts:
+    i: ./socketPath,net,vscode
+    e: Envelope,AutopilotBridge
+    Envelope:
+    AutopilotBridge: socketPath(-1),cfg(-1),override(-1),connect(-1),p(-1),sock(-1),disconnect(-1),clearTimeout(-1),scheduleRetry(-1),delay(-1),cfg(-1),runCommand(-1),submitChat(-1),focusChat(-1),cfg(-1),primary(-1),commands(-1),detectIde(-1),app(-1),send(-1),onData(-1),idx(-1),line(-1),env(-1),dispatch(-1),injectChat(-1),text(-1),submit(-1),opened(-1),submitted(-1),message(-1),activate(-1),bridge(-1),text(-1),cfg(-1),deactivate(-1)
+  src/koru/init.py:
+    e: InitReport,init_project,refresh_init_agent_lane,_resolve_init_agent_lane,resolve_project_agent_lane,_write_autopilot_host_setup_script,_write_agent_lane_artifacts,_remove_agent_lane_artifacts,_write_policy_stub_if_absent,_ensure_gitignore_entry
+    InitReport: summary(0)  # Summary of what ``init_project`` actually changed on disk...
+    init_project(project)
+    refresh_init_agent_lane(project)
+    _resolve_init_agent_lane(project;agent_lane)
+    resolve_project_agent_lane(project;agent_lane)
+    _write_autopilot_host_setup_script(project)
+    _write_agent_lane_artifacts(project;lane)
+    _remove_agent_lane_artifacts(rt)
+    _write_policy_stub_if_absent(project)
+    _ensure_gitignore_entry(project)
+  services/healing-webhook/ticket_builder.py:
+    e: _git_commit,_infer_paths,_format_paths,_default_acceptance,_format_acceptance,_reproduction_for,build_ticket_payload
+    _git_commit(repo)
+    _infer_paths(component;labels)
+    _format_paths(paths)
+    _default_acceptance(instance)
+    _format_acceptance(items)
+    _reproduction_for(labels;failures)
+    build_ticket_payload(alert)
+  src/koru/autopilot/ide.py:
+    e: RunningIDE,_iter_proc_pids,_read_comm,_read_cmdline,_matches,detect_running_ides,_active_window_pid_x11,detect_focused_ide_id,focused_ide,pick_target,is_linux,detect_running_ides_cached,clear_detect_cache
+    RunningIDE: to_dict(0)  # A single IDE process discovered on the system...
+    _iter_proc_pids()
+    _read_comm(pid)
+    _read_cmdline(pid)
+    _matches(comm;cmdline;patterns)
+    detect_running_ides()
+    _active_window_pid_x11()
+    detect_focused_ide_id()
+    focused_ide(detected)
+    pick_target(detected)
+    is_linux()
+    detect_running_ides_cached()
+    clear_detect_cache()
+  src/koru/doctor.py:
+    e: Check,DoctorReport,run_diagnostics,_check_git_repo,_check_planfile_binary,_check_planfile_config,_check_planfile_sprints,_check_planfile_sprints_yaml,_check_runtime_dir,_check_policy_yaml,_check_gitignore,_resolve_pytest_collect_timeout,_check_pytest_collect,_check_ci_command,render_text
+    Check: to_dict(0)  # A single diagnostic outcome...
+    DoctorReport: summary(0),to_dict(0)  # Aggregate result of ``run_diagnostics``...
+    run_diagnostics(project)
+    _check_git_repo(project)
+    _check_planfile_binary(_project)
+    _check_planfile_config(project)
+    _check_planfile_sprints(project)
+    _check_planfile_sprints_yaml(project)
+    _check_runtime_dir(project)
+    _check_policy_yaml(project)
+    _check_gitignore(project)
+    _resolve_pytest_collect_timeout()
+    _check_pytest_collect(project)
+    _check_ci_command(project)
+    render_text(report)
+  src/koru/gc.py:
+    e: GcCandidate,GcResult,_now_utc,_parse_ts,_planfile_env,_run_planfile,_load_tickets_from_sprint,_archive_tickets,collect_gc_candidates,_apply_keep_last,_archive_tickets_before_delete,_delete_tickets,run_gc
+    GcCandidate:  # A ticket eligible for garbage collection...
+    GcResult: summary(0)  # Outcome of a gc run...
+    _now_utc()
+    _parse_ts(raw)
+    _planfile_env()
+    _run_planfile(args;project;runner)
+    _load_tickets_from_sprint(project;sprint)
+    _archive_tickets(tickets;project)
+    collect_gc_candidates(project)
+    _apply_keep_last(candidates;keep_last;kept_ids)
+    _archive_tickets_before_delete(to_remove;project;sprint)
+    _delete_tickets(to_remove;project;planfile_runner)
+    run_gc(project)
+  plugins/koru-autopilot-vscode/src/socketPath.ts:
+    i: os,path
+    e: slugInstance,cleaned,defaultSocketPathFromEnv,explicit,inst,name,xdg,uid,stem
+    slugInstance()
+    cleaned()
+    defaultSocketPathFromEnv()
+    explicit()
+    inst()
+    name()
+    xdg()
+    uid()
+    stem()
+  src/koru/events.py:
+    e: emit_management_event,main
+    emit_management_event()
+    main()
+  src/koru/serve.py:
+    e: ServeConfig,serve_endpoint_path,read_serve_endpoint,_build_handler,build_server,write_serve_endpoint_file,bind_serve_server,serve,start_serve_background
+    ServeConfig:
+    serve_endpoint_path(project)
+    read_serve_endpoint(project)
+    _build_handler(config)
+    build_server(config)
+    write_serve_endpoint_file(config)
+    bind_serve_server(config)
+    serve(config)
+    start_serve_background(config)
+  src/koru/autopilot/injector.py:
+    e: BackendStatus,InjectionResult,InjectorError,Injector,_submit_key_for,_which,_session_type,_forced_injector_backend,_default_runner
+    BackendStatus: to_dict(0)  # Result of probing a single backend...
+    InjectionResult: to_dict(0)
+    InjectorError(RuntimeError):  # No usable backend, or the backend call failed...
+    Injector: probe(0),_candidate_backends(0),select_backend(0),_type_with_backend(3),type_text(1),_probe_one(1),_call(1),_press_wtype(1)  # Pick the best available backend and type text through it.
+
+P...
+    _submit_key_for(ide)
+    _which(name)
+    _session_type()
+    _forced_injector_backend()
+    _default_runner(cmd;stdin)
+  src/koru/semcod_tools.py:
+    e: SemcodTool,_read_pyproject,_config_present,detect_semcod_tools
+    SemcodTool: to_dict(0)  # One detected (or absent) semcod tool...
+    _read_pyproject(project)
+    _config_present(pyproject;tool_id)
+    detect_semcod_tools(project)
+  src/koru/dotenv_loader.py:
+    e: _parse_value,parse_dotenv,load_dotenv
+    _parse_value(raw)
+    parse_dotenv(text)
+    load_dotenv(project)
+  src/koru/autopilot/audit.py:
+    e: _JSONFormatter,AuditLog,default_log_path,_isoformat_utc
+    _JSONFormatter(logging.Formatter): format(1)  # Emit ``record.msg`` verbatim — we hand it in pre-serialised...
+    AuditLog: __init__(0),record(1),close(0)  # Append-only audit log for autopilot events.
+
+Construct once ...
+    default_log_path()
+    _isoformat_utc(ts)
+  src/koru/autopilot/config.py:
+    e: AutopilotConfig,default_config_path,_merge_submit_keys,load_config,cached_config,clear_config_cache
+    AutopilotConfig: submit_key_for(1)  # In-memory view of ``autopilot.toml`` (or defaults)...
+    default_config_path()
+    _merge_submit_keys(raw)
+    load_config(path)
+    cached_config()
+    clear_config_cache()
+  src/koru/autopilot/__init__.py:
+    e: _autopilot_socket_basename,default_socket_path
+    _autopilot_socket_basename()
+    default_socket_path()
+  src/koru/autopilot/client.py:
+    e: AutopilotClient
+    AutopilotClient: __init__(0),_connect(0),request(1),is_running(0),drive(1),status(0),shutdown(0)  # Connect, send one message, read one reply, disconnect...
+  src/koru/run_log.py:
+    e: RunLogWriter,open_run_log,open_run_log_eagerly,_iso
+    RunLogWriter: _emit(1),write_header(0),write_iteration(0),write_footer(0)  # Append-only JSONL writer with best-effort durability.
+
+The c...
+    open_run_log(project)
+    open_run_log_eagerly(project)
+    _iso(epoch)
+  src/koru/autopilot/utils/client_helpers.py:
+    e: call_daemon_method,resolve_xdg_path
+    call_daemon_method(client;method_name;error_message_prefix;not_running_return_code)
+    resolve_xdg_path(relative_path)
+  src/koru/cli/__init__.py:
+    e: _load_legacy_cli_module,__getattr__
+    _load_legacy_cli_module()
+    __getattr__(name)
+  src/koru/utils/subprocess_runner.py:
+    e: default_subprocess_runner,resolve_planfile_subpath,get_python_cmd
+    default_subprocess_runner(cmd;cwd)
+    resolve_planfile_subpath(project)
+    get_python_cmd(project)
+  src/koru/runtime.py:
+    e: planfile_dir,runtime_dir,runs_dir,new_run_id,ensure_runs_dir
+    planfile_dir(project)
+    runtime_dir(project)
+    runs_dir(project)
+    new_run_id(prefix)
+    ensure_runs_dir(project)
+  planfile.yaml:
+  pipeline.yaml:
+  prefact.yaml:
+  project.sh:
+  docs/llm-tools/costs/install.sh:
+  docs/llm-tools/redeploy/install.sh:
+  docs/llm-tools/prefact/install.sh:
+  docs/llm-tools/metrun/install.sh:
+  docs/llm-tools/vallm/install.sh:
+  docs/llm-tools/sumd/install.sh:
+  docs/llm-tools/aider/install.sh:
+  docs/llm-tools/protogate/install.sh:
+  docs/llm-tools/claude-code/install.sh:
+  docs/llm-tools/pfix/install.sh:
+  docs/llm-tools/mdflow/install.sh:
+  docs/llm-tools/planfile/install.sh:
+  docs/llm-tools/goal/install.sh:
+  docs/llm-tools/redup/install.sh:
+  docs/llm-tools/rebuild/install.sh:
+  docs/llm-tools/regix/install.sh:
+  docs/llm-tools/cursor/install.sh:
+  docs/llm-tools/doql/install.sh:
+  docs/llm-tools/toonic/install.sh:
+  docs/llm-tools/llx/install.sh:
+  docs/llm-tools/op3/install.sh:
+  docs/llm-tools/testql/install.sh:
+  docs/llm-tools/redsl/install.sh:
+  redeploy/device/manifest.yaml:
+  examples/bootstrap.planfile.yaml:
+  services/healing-webhook/Dockerfile:
+  plugins/koru-autopilot-vscode/tsconfig.json:
+  scripts/planfile-export-prompt.sh:
+    e: print,render
+    print()
+    render()
+  scripts/koru-autoloop-reset-diag-markers.sh:
+    e: is_true
+    is_true()
+  testql-scenarios/generated-from-pytests.testql.toon.yaml:
+  testql-scenarios/generated-cli-tests.testql.toon.yaml:
+  docker-compose.yml:
+  todo.txt:
+  goal.yaml:
+  Taskfile.yml:
+  docs/ai-tool-registry-2026.yaml:
+  Dockerfile:
+  pyproject.toml:
+  src/koru/__init__.py:
+  src/koru/cli/commands.py:
+  src/koru/cli/parsers.py:
+  src/koru/__main__.py:
+  src/koru/cli/__main__.py:
+  src/koru/utils/__init__.py:
+  src/koru/autopilot/utils/__init__.py:
+  plugins/koru-autopilot-vscode/package.json:
+  scripts/koru-autoloop.sh:
+    e: is_true,run_koru,status_in_skip_list,current_head,init_topology_support,topology_is_enabled,compute_backoff_sleep,parse_waiting_ticket_id,on_exit,clear_diag_marker,mark_diag_failure,run_check,run_idle_diagnostics,run_autopilot
+    is_true()
+    run_koru()
+    status_in_skip_list()
+    current_head()
+    init_topology_support()
+    topology_is_enabled()
+    compute_backoff_sleep()
+    parse_waiting_ticket_id()
+    on_exit()
+    clear_diag_marker()
+    mark_diag_failure()
+    run_check()
+    run_idle_diagnostics()
+    run_autopilot()
+  scripts/autopilot-ide-autodetect-smoke.sh:
+    e: StubInjector,__init__,type_text,_parser,main
+    StubInjector:
+    __init__()
+    type_text()
+    _parser()
+    main()

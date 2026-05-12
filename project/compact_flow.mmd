@@ -1,11 +1,11 @@
 flowchart TD
 %% generated in 0.01s
-    plugins__koru_autopilot_vscode["plugins.koru-autopilot-vscode<br/>30 funcs"]
+    plugins__koru_autopilot_vscode["plugins.koru-autopilot-vscode<br/>41 funcs"]
     scripts___koru_autodiag_filter_tickets["scripts._koru_autodiag_filter_tickets<br/>1 funcs"]
     scripts__planfile_export_prompt["scripts.planfile-export-prompt<br/>2 funcs"]
     scripts__planfile_sync_todo["scripts.planfile-sync-todo<br/>8 funcs"]
-    src__koru["src.koru<br/>293 funcs"]
-    src__koru ==>|149| scripts__planfile_export_prompt
+    src__koru["src.koru<br/>395 funcs"]
+    src__koru ==>|222| scripts__planfile_export_prompt
     scripts__planfile_sync_todo ==>|9| scripts__planfile_export_prompt
     src__koru -->|1| plugins__koru_autopilot_vscode
     scripts___koru_autodiag_filter_tickets -->|1| scripts__planfile_export_prompt

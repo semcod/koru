@@ -435,6 +435,15 @@ def _build_scan_parser() -> argparse.ArgumentParser:
         help="Do not run `pytest --collect-only` (faster scan).",
     )
     parser.add_argument(
+        "--semcod-artifacts",
+        action="store_true",
+        help=(
+            "Include semcod-style quality exports (jscpd JSON, code2llm analysis.toon*, "
+            "testql_api_results.json, redup filtered JSON). "
+            "Otherwise only when KORU_SCAN_SEMCOD_ARTIFACTS is truthy."
+        ),
+    )
+    parser.add_argument(
         "--source",
         default="koru-scan",
         help="`--source` tag used when creating tickets (default: koru-scan).",
@@ -504,6 +513,7 @@ def _scan_main(argv: list[str]) -> int:
         apply=args.apply,
         limit=args.limit,
         skip_pytest=args.skip_pytest,
+        include_semcod_artifacts=True if args.semcod_artifacts else None,
         source=args.source,
     )
     if args.output_format == "json":
