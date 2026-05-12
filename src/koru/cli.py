@@ -30,7 +30,7 @@ from .events import emit_management_event
 from .gate import VALID_MODES as GATE_VALID_MODES
 from .gate import authorize_gate
 from .gc import DEFAULT_KEEP_LAST, DEFAULT_MAX_AGE_DAYS, GC_STATUSES, run_gc
-from .init import init_project
+from .init import init_project, refresh_init_agent_lane
 from .loop import discover_repositories, run_closed_loop
 from .planfile_queue import run_next_planfile_task, run_planfile_queue_loop
 from .queue_clean import CleanupReport, clean_queue
@@ -175,10 +175,10 @@ def _build_parser() -> argparse.ArgumentParser:
         default="auto",
         metavar="LANE",
         help=(
-            "With --init: write .planfile/.koru/shell-env.sh and "
-            "run-autonomous.sh for that lane. Use auto (default) to pick "
-            "cursor or windsurf from project dotdirs, else local; use "
-            "none/off to skip generated shell helpers."
+            "With --init or --init-agent-lane: write .planfile/.koru/"
+            "shell-env.sh and run-autonomous.sh for that lane. "
+            "Use auto (default) to pick cursor or windsurf from project "
+            "dotdirs, else local; use none/off to skip or remove helpers."
         ),
     )
     parser.add_argument(
@@ -191,6 +191,17 @@ def _build_parser() -> argparse.ArgumentParser:
             ".planfile/.koru/ to .gitignore, and (unless --agent-lane none) "
             "emit shell-env.sh + run-autonomous.sh. Pass --from <yaml> to "
             "import an existing pipeline; --force to re-init."
+        ),
+    )
+    parser.add_argument(
+        "--init-agent-lane",
+        action="store_true",
+        dest="init_agent_lane",
+        help=(
+            "On a project that already has .planfile/config.yaml, only "
+            "write or remove shell-env.sh and run-autonomous.sh per "
+            "--agent-lane. Does not touch sprint, policy, or pipelines. "
+            "Use when `koru --init` refuses without --force."
         ),
     )
     parser.add_argument(
@@ -1117,6 +1128,7 @@ def _is_bare_invocation(args: argparse.Namespace) -> bool:
     """
     return not (
         args.init
+        or args.init_agent_lane
         or args.doctor
         or args.bootstrap
         or args.context
@@ -1414,6 +1426,42 @@ def _init_main(args: argparse.Namespace) -> int:
             "project": str(args.project),
             "sprint": args.sprint,
             "used_starter_pipeline": report.used_starter_pipeline,
+            "agent_lane": report.agent_lane,
+            "agent_lane_files_written": report.agent_lane_files_written,
+        },
+    )
+    return 0
+
+
+def _init_agent_lane_main(args: argparse.Namespace) -> int:
+    try:
+        report = refresh_init_agent_lane(
+            args.project,
+            agent_lane=args.agent_lane,
+        )
+    except FileNotFoundError as exc:
+        print(f"koru init-agent-lane: {exc}")
+        return 2
+    print(f"koru init-agent-lane: ✓ {report.project}")
+    print(report.summary())
+    print()
+    next_parts: list[str] = []
+    if report.agent_lane_files_written and report.agent_lane:
+        next_parts.append(
+            "source `.planfile/.koru/shell-env.sh` or run "
+            "`./.planfile/.koru/run-autonomous.sh` before autonomous runs"
+        )
+    elif report.agent_lane is None:
+        next_parts.append("shell helpers removed (use --agent-lane auto to restore)")
+    print("Next: " + "; ".join(next_parts or ["no shell helpers to run"]) + ".")
+    emit_management_event(
+        tool="koru.init_agent_lane",
+        action="completed",
+        status="completed",
+        message=report.summary(),
+        queue=args.queue_name,
+        details={
+            "project": str(args.project),
             "agent_lane": report.agent_lane,
             "agent_lane_files_written": report.agent_lane_files_written,
         },
@@ -1724,6 +1772,8 @@ def main() -> int:
 
     if args.doctor:
         return _doctor_main(args, raw_args)
+    if args.init_agent_lane:
+        return _init_agent_lane_main(args)
     if args.init:
         return _init_main(args)
     if args.context:

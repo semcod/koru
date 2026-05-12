@@ -48,6 +48,10 @@ class TestBareInvocation(unittest.TestCase):
         args = self._parse("--init")
         self.assertFalse(_is_bare_invocation(args))
 
+    def test_init_agent_lane_is_not_bare(self) -> None:
+        args = self._parse("--init-agent-lane")
+        self.assertFalse(_is_bare_invocation(args))
+
     def test_doctor_is_not_bare(self) -> None:
         args = self._parse("--doctor")
         self.assertFalse(_is_bare_invocation(args))
@@ -140,6 +144,33 @@ class TestInitDispatch(unittest.TestCase):
             self.assertFalse((p2 / ".planfile" / ".koru" / "run-autonomous.sh").exists())
         finally:
             shutil.rmtree(p2, ignore_errors=True)
+
+
+class TestInitAgentLaneDispatch(unittest.TestCase):
+    """--init-agent-lane refreshes shell helpers without full re-init."""
+
+    def setUp(self) -> None:
+        self.project = _tmp_git_project("koru-cli-ial-")
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.project, ignore_errors=True)
+
+    def test_fails_without_planfile(self) -> None:
+        code, output = _run_main(
+            "--init-agent-lane", "--project", str(self.project)
+        )
+        self.assertEqual(code, 2)
+        self.assertIn("not found", output)
+
+    def test_ok_when_planfile_exists(self) -> None:
+        code, _ = _run_main("--init", "--project", str(self.project))
+        self.assertEqual(code, 0)
+        code, output = _run_main(
+            "--init-agent-lane", "--project", str(self.project)
+        )
+        self.assertEqual(code, 0, output)
+        runner = self.project / ".planfile" / ".koru" / "run-autonomous.sh"
+        self.assertTrue(runner.is_file())
 
 
 class TestContextDispatch(unittest.TestCase):

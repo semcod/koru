@@ -22,6 +22,7 @@ from koru.init import (
     GITIGNORE_LINE,
     POLICY_STUB,
     init_project,
+    refresh_init_agent_lane,
 )
 from koru.policy import load_policy
 from koru.runtime import planfile_dir, runtime_dir
@@ -191,6 +192,26 @@ class TestAgentLaneArtifacts(unittest.TestCase):
             rt = runtime_dir(project)
             self.assertFalse((rt / "shell-env.sh").exists())
             self.assertFalse((rt / "run-autonomous.sh").exists())
+
+
+class TestRefreshInitAgentLane(unittest.TestCase):
+    def test_requires_planfile(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            with self.assertRaises(FileNotFoundError) as ctx:
+                refresh_init_agent_lane(project)
+            self.assertIn("koru --init", str(ctx.exception))
+
+    def test_writes_after_init_with_agent_lane_none(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            init_project(project, agent_lane="none")
+            rt = runtime_dir(project)
+            self.assertFalse((rt / "shell-env.sh").exists())
+            report = refresh_init_agent_lane(project)
+            self.assertTrue(report.agent_lane_files_written)
+            self.assertEqual(report.agent_lane, "local")
+            self.assertTrue((rt / "shell-env.sh").is_file())
 
 
 if __name__ == "__main__":

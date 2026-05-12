@@ -30,7 +30,9 @@ Inputs:
 Idempotency: a re-run on an already-initialised project errors out
 unless ``--force`` is passed. ``--force`` overwrites the sprint and
 the policy stub, but never the runtime README or run logs (those
-belong to koru's lifecycle, not its setup).
+belong to koru's lifecycle, not its setup). To add or refresh only
+the agent-lane shell helpers on an existing project, use
+``koru --init-agent-lane`` (see ``--agent-lane``).
 """
 
 from __future__ import annotations
@@ -207,8 +209,18 @@ class InitReport:
     used_starter_pipeline: bool
     agent_lane: str | None = None
     agent_lane_files_written: bool = False
+    agent_lane_refresh_only: bool = False
 
     def summary(self) -> str:
+        if self.agent_lane_refresh_only:
+            if self.agent_lane_files_written and self.agent_lane:
+                return (
+                    f"agent-lane: {self.agent_lane} "
+                    "(shell-env.sh, run-autonomous.sh)"
+                )
+            if self.agent_lane is None:
+                return "agent-lane: off (shell helpers removed)"
+            return "agent-lane: refresh"
         bits = [f"tickets: {self.sprint_imported} imported"]
         if self.policy_written:
             bits.append("policy: stub written")
@@ -297,6 +309,42 @@ def init_project(
         used_starter_pipeline=used_starter,
         agent_lane=lane,
         agent_lane_files_written=agent_written,
+        agent_lane_refresh_only=False,
+    )
+
+
+def refresh_init_agent_lane(
+    project: Path,
+    *,
+    agent_lane: str = "auto",
+) -> InitReport:
+    """Write or remove agent-lane shell helpers on an existing koru project.
+
+    Requires ``.planfile/config.yaml``. Does not import a pipeline or
+    touch sprint/policy/gitignore.
+    """
+    project = project.resolve()
+    config_path = planfile_dir(project) / "config.yaml"
+    if not config_path.is_file():
+        raise FileNotFoundError(
+            f"{config_path} not found; run `koru --init` in this project first."
+        )
+    lane = _resolve_init_agent_lane(project, agent_lane)
+    agent_written = False
+    if lane is None:
+        _remove_agent_lane_artifacts(runtime_dir(project))
+    else:
+        agent_written = _write_agent_lane_artifacts(project, lane)
+    return InitReport(
+        project=project,
+        planfile_created=False,
+        sprint_imported=0,
+        policy_written=False,
+        gitignore_updated=False,
+        used_starter_pipeline=False,
+        agent_lane=lane,
+        agent_lane_files_written=agent_written,
+        agent_lane_refresh_only=True,
     )
 
 

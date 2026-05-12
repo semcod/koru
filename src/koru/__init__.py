@@ -10,7 +10,7 @@ from .bootstrap import (
 )
 from .context import build_context, render_markdown_handoff
 from .doctor import Check, DoctorReport, run_diagnostics
-from .init import InitReport, init_project
+from .init import InitReport, init_project, refresh_init_agent_lane
 from .loop import LoopReport, RunRecord, discover_repositories, run_closed_loop
 from .planfile_queue import (
     LlmRunResult,
@@ -47,6 +47,7 @@ __all__ = [
     "ensure_runs_dir",
     "import_flat_pipeline",
     "init_project",
+    "refresh_init_agent_lane",
     "load_flat_pipeline",
     "load_policy",
     "materialize_to_planfile",
