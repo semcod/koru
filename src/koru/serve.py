@@ -4,6 +4,12 @@ Serves a small HTML page that calls back into ``build_context`` to show
 the live LLM brief (active ticket, policy, agent lanes, gates). No
 external dependencies — uses ``http.server`` from the stdlib.
 
+TCP port defaults to ``8765``. Use ``--auto-port`` or set
+``KORU_SERVE_AUTO_PORT=1`` to try the next ports (then an ephemeral
+port) when the preferred port is busy. The resolved URL is written to
+``.planfile/.koru/serve-endpoint.json`` for other tooling
+(``read_serve_endpoint``).
+
 Endpoints:
     GET  /              -> HTML dashboard (auto-refreshing)
     GET  /api/context   -> JSON brief (``build_context`` output)

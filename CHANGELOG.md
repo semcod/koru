@@ -60,6 +60,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `quality:regix` ↔ `gate:regix`, `quality:redup*` ↔ `gate:redup`,
   `quality:sumr:*` ↔ `gate:sumr`.
 
+## [0.1.39] - 2026-05-12
+
+### Docs
+- Update README.md
+- Update docs/ai-tool-registry-2026.yaml
+
+### Test
+- Update tests/test_agent_cli.py
+- Update tests/test_agents.py
+
+### Other
+- Update uv.lock
+
 ## [0.1.38] - 2026-05-12
 
 ### Docs

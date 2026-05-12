@@ -913,6 +913,13 @@ def _build_agent_parser() -> argparse.ArgumentParser:
         help="Launch the selected agent if it has a CLI.",
     )
     parser.add_argument("--list", action="store_true", help="List detected agents and exit.")
+    parser.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format for --list (default: text).",
+    )
     return parser
 
 
@@ -1001,6 +1008,22 @@ def _agent_main(argv: list[str]) -> int:
     agents = detect_agent_options(project)
 
     if args.list:
+        if args.output_format == "json":
+            payload_agents = [agent.to_dict() for agent in agents]
+            available = [a for a in payload_agents if a.get("available")]
+            launchable = [a for a in payload_agents if a.get("launchable")]
+            payload = {
+                "project": str(project),
+                "summary": {
+                    "total": len(payload_agents),
+                    "available": len(available),
+                    "launchable": len(launchable),
+                    "ready": bool(launchable),
+                },
+                "agents": payload_agents,
+            }
+            print(json.dumps(payload, indent=2, sort_keys=True))
+            return 0
         for agent in agents:
             marker = "✓" if agent.available else "·"
             launch = "launchable" if agent.launchable else "manual"

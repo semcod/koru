@@ -100,14 +100,14 @@ tools:
   - id: cline
     name: Cline
     category: cli_agent
-    lane: adapter
+    lane: native
     stability: beta
     detect:
       commands: ["cline"]
       markers: []
       env: []
-    invoke: "planfile shell/api ticket"
-    notes: "Treat as adapter until stable CLI contract."
+    invoke: "koru agent --agent cline --launch"
+    notes: "Native agent lane (phase-3 promotion)."
 
   - id: qwen-code
     name: Qwen Code

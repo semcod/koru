@@ -72,3 +72,28 @@ class TestAgentDetection(unittest.TestCase):
             selected = select_agent(agents, interactive=False)
             self.assertIsNotNone(selected)
             self.assertEqual(selected.id, "gemini-cli")
+
+    def test_detects_cline_when_available(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            def fake_which(command: str) -> str | None:
+                return "/usr/bin/cline" if command == "cline" else None
+
+            with patch("shutil.which", side_effect=fake_which):
+                agents = detect_agent_options(Path(tmp))
+
+            cline = next(agent for agent in agents if agent.id == "cline")
+            self.assertTrue(cline.available)
+            self.assertTrue(cline.launchable)
+            self.assertEqual(cline.command, "/usr/bin/cline")
+
+    def test_select_agent_can_pick_cline_when_only_launchable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            def fake_which(command: str) -> str | None:
+                return "/usr/bin/cline" if command == "cline" else None
+
+            with patch("shutil.which", side_effect=fake_which):
+                agents = detect_agent_options(Path(tmp))
+
+            selected = select_agent(agents, interactive=False)
+            self.assertIsNotNone(selected)
+            self.assertEqual(selected.id, "cline")
