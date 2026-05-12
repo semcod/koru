@@ -385,24 +385,13 @@ def _doctor_fix_payload() -> dict[str, object]:
     }
 
 
-def _action_doctor(args: argparse.Namespace) -> int:
-    injector = Injector()
-    statuses = injector.probe()
-    selected = injector.select_backend()
-    fix_payload = _doctor_fix_payload() if args.fix else None
-    if args.output_format == "json":
-        focused = detect_focused_ide_id()
-        payload = {
-            "session": injector.session,
-            "selected_backend": selected,
-            "backends": [s.to_dict() for s in statuses],
-            "ides": [i.to_dict() for i in detect_running_ides()],
-            "focused_ide": focused,
-        }
-        if fix_payload is not None:
-            payload["fix"] = fix_payload
-        print(json.dumps(payload, indent=2, sort_keys=True))
-        return 0
+def _render_doctor_text(
+    injector: Injector,
+    statuses: list,
+    selected: str | None,
+    fix_payload: dict[str, object] | None,
+) -> None:
+    """Render doctor output in text format."""
     print(f"session: {injector.session or 'unknown'}")
     print(f"selected backend: {selected or '(none — install xdotool/wtype/ydotool)'}")
     print("backends:")
@@ -427,6 +416,37 @@ def _action_doctor(args: argparse.Namespace) -> int:
             print("human actions still required:")
             for line in human_actions:
                 print(f"  - {line}")
+
+
+def _render_doctor_json(
+    injector: Injector,
+    statuses: list,
+    selected: str | None,
+    fix_payload: dict[str, object] | None,
+) -> None:
+    """Render doctor output in JSON format."""
+    focused = detect_focused_ide_id()
+    payload = {
+        "session": injector.session,
+        "selected_backend": selected,
+        "backends": [s.to_dict() for s in statuses],
+        "ides": [i.to_dict() for i in detect_running_ides()],
+        "focused_ide": focused,
+    }
+    if fix_payload is not None:
+        payload["fix"] = fix_payload
+    print(json.dumps(payload, indent=2, sort_keys=True))
+
+
+def _action_doctor(args: argparse.Namespace) -> int:
+    injector = Injector()
+    statuses = injector.probe()
+    selected = injector.select_backend()
+    fix_payload = _doctor_fix_payload() if args.fix else None
+    if args.output_format == "json":
+        _render_doctor_json(injector, statuses, selected, fix_payload)
+        return 0
+    _render_doctor_text(injector, statuses, selected, fix_payload)
     return 0 if selected else 1
 
 
@@ -516,6 +536,61 @@ def _resolve_plugin_editor_bin(ide: str) -> str:
     raise RuntimeError(f"could not find editor CLI in PATH for {ide} (tried: {choices})")
 
 
+def _render_install_plugin_dry_run(
+    ide: str,
+    editor_bin: str,
+    vsix_path: Path,
+    cmd: list[str],
+    output_format: str,
+) -> None:
+    """Render install-plugin dry-run output."""
+    payload = {
+        "ide": ide,
+        "editor": editor_bin,
+        "vsix": str(vsix_path),
+        "command": cmd,
+        "dry_run": True,
+        "ok": True,
+    }
+    if output_format == "json":
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print("koru autopilot install-plugin: dry-run")
+        print("  " + " ".join(cmd))
+
+
+def _render_install_plugin_result(
+    ide: str,
+    editor_bin: str,
+    cmd: list[str],
+    ok: bool,
+    stdout: str,
+    stderr: str,
+    output_format: str,
+) -> None:
+    """Render install-plugin execution result."""
+    payload = {
+        "ide": ide,
+        "editor": editor_bin,
+        "command": cmd,
+        "ok": ok,
+        "returncode": 0 if ok else 1,
+        "stdout": stdout,
+        "stderr": stderr,
+    }
+    if output_format == "json":
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        if ok:
+            print(f"koru autopilot install-plugin: installed for {ide} via {editor_bin}")
+        else:
+            print(f"koru autopilot install-plugin: install failed for {ide}", file=sys.stderr)
+        if stdout:
+            print(stdout)
+        if stderr:
+            print(stderr, file=sys.stderr)
+
+
 def _action_install_plugin(args: argparse.Namespace) -> int:
     try:
         ide = _resolve_plugin_target_ide(args.ide)
@@ -529,20 +604,8 @@ def _action_install_plugin(args: argparse.Namespace) -> int:
     if args.force:
         cmd.append("--force")
 
-    payload = {
-        "ide": ide,
-        "editor": editor_bin,
-        "vsix": str(vsix_path),
-        "command": cmd,
-        "dry_run": bool(args.dry_run),
-    }
     if args.dry_run:
-        payload["ok"] = True
-        if args.output_format == "json":
-            print(json.dumps(payload, indent=2, sort_keys=True))
-        else:
-            print("koru autopilot install-plugin: dry-run")
-            print("  " + " ".join(cmd))
+        _render_install_plugin_dry_run(ide, editor_bin, vsix_path, cmd, args.output_format)
         return 0
 
     try:
@@ -552,21 +615,15 @@ def _action_install_plugin(args: argparse.Namespace) -> int:
         return 1
 
     ok = proc.returncode == 0
-    payload["ok"] = ok
-    payload["returncode"] = proc.returncode
-    payload["stdout"] = proc.stdout.strip()
-    payload["stderr"] = proc.stderr.strip()
-    if args.output_format == "json":
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        if ok:
-            print(f"koru autopilot install-plugin: installed for {ide} via {editor_bin}")
-        else:
-            print(f"koru autopilot install-plugin: install failed for {ide}", file=sys.stderr)
-        if payload["stdout"]:
-            print(payload["stdout"])
-        if payload["stderr"]:
-            print(payload["stderr"], file=sys.stderr)
+    _render_install_plugin_result(
+        ide,
+        editor_bin,
+        cmd,
+        ok,
+        proc.stdout.strip(),
+        proc.stderr.strip(),
+        args.output_format,
+    )
     return 0 if ok else 1
 
 
@@ -632,6 +689,27 @@ def _format_tail_entry(entry: dict) -> str:
     return "  ".join(str(p) for p in parts)
 
 
+def _render_tail_json(tail: list[str]) -> None:
+    """Render tail output in JSON format."""
+    parsed = []
+    for line in tail:
+        try:
+            parsed.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    print(json.dumps(parsed, indent=2, sort_keys=True))
+
+
+def _render_tail_text(tail: list[str]) -> None:
+    """Render tail output in text format."""
+    for line in tail:
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        print(_format_tail_entry(entry))
+
+
 def _action_tail(args: argparse.Namespace) -> int:
     """P2.8: dump the last ``--lines`` audit entries."""
     log_path = args.log or default_log_path()
@@ -645,20 +723,9 @@ def _action_tail(args: argparse.Namespace) -> int:
         return 1
     tail = raw[-args.lines:] if args.lines > 0 else raw
     if args.output_format == "json":
-        parsed = []
-        for line in tail:
-            try:
-                parsed.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue
-        print(json.dumps(parsed, indent=2, sort_keys=True))
+        _render_tail_json(tail)
         return 0
-    for line in tail:
-        try:
-            entry = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        print(_format_tail_entry(entry))
+    _render_tail_text(tail)
     return 0
 
 

@@ -94,8 +94,8 @@ def load_flat_pipeline(path: str | Path) -> tuple[dict[str, Any], list[dict[str,
     return header, tasks
 
 
-def _validate_task(task: dict[str, Any], seen_ids: set[str]) -> list[ValidationError]:
-    """Validate a single task. Returns a list of errors."""
+def _validate_id(task: dict[str, Any], seen_ids: set[str]) -> list[ValidationError]:
+    """Validate task id field."""
     errors: list[ValidationError] = []
     tid = str(task.get("id") or "<missing-id>")
 
@@ -106,66 +106,120 @@ def _validate_task(task: dict[str, Any], seen_ids: set[str]) -> list[ValidationE
         errors.append(ValidationError(tid, "id", "duplicate"))
         return errors
 
-    # name
-    if not (task.get("name") or task.get("title")):
-        errors.append(ValidationError(tid, "name", "missing (or 'title')"))
+    return errors
 
-    # status
+
+def _validate_name(task: dict[str, Any]) -> list[ValidationError]:
+    """Validate task name/title field."""
+    tid = str(task.get("id") or "<missing-id>")
+    if not (task.get("name") or task.get("title")):
+        return [ValidationError(tid, "name", "missing (or 'title')")]
+    return []
+
+
+def _validate_status(task: dict[str, Any]) -> list[ValidationError]:
+    """Validate task status field."""
+    tid = str(task.get("id") or "<missing-id>")
     status = task.get("status", "open")
     if status not in VALID_STATUSES:
-        errors.append(
-            ValidationError(tid, "status", f"{status!r} not in {sorted(VALID_STATUSES)}")
-        )
+        return [
+            ValidationError(
+                tid, "status", f"{status!r} not in {sorted(VALID_STATUSES)}"
+            )
+        ]
+    return []
 
-    # priority
+
+def _validate_priority(task: dict[str, Any]) -> list[ValidationError]:
+    """Validate task priority field."""
+    tid = str(task.get("id") or "<missing-id>")
     priority = task.get("priority", "normal")
     if isinstance(priority, str) and priority not in VALID_PRIORITIES:
-        errors.append(
+        return [
             ValidationError(
                 tid, "priority", f"{priority!r} not in {sorted(VALID_PRIORITIES)}"
             )
+        ]
+    return []
+
+
+def _validate_executor(task: dict[str, Any]) -> list[ValidationError]:
+    """Validate task executor field."""
+    tid = str(task.get("id") or "<missing-id>")
+    errors: list[ValidationError] = []
+    executor = task.get("executor")
+
+    if not isinstance(executor, dict):
+        return [ValidationError(tid, "executor", "missing or not a mapping")]
+
+    kind = executor.get("kind")
+    if kind not in VALID_EXECUTOR_KINDS:
+        errors.append(
+            ValidationError(
+                tid, "executor.kind", f"{kind!r} not in {sorted(VALID_EXECUTOR_KINDS)}"
+            )
         )
 
-    # executor
-    executor = task.get("executor")
-    if not isinstance(executor, dict):
-        errors.append(ValidationError(tid, "executor", "missing or not a mapping"))
-    else:
-        kind = executor.get("kind")
-        if kind not in VALID_EXECUTOR_KINDS:
-            errors.append(
-                ValidationError(
-                    tid, "executor.kind", f"{kind!r} not in {sorted(VALID_EXECUTOR_KINDS)}"
-                )
+    mode = executor.get("mode", "automatic")
+    if mode not in VALID_EXECUTOR_MODES:
+        errors.append(
+            ValidationError(
+                tid, "executor.mode", f"{mode!r} not in {sorted(VALID_EXECUTOR_MODES)}"
             )
-        mode = executor.get("mode", "automatic")
-        if mode not in VALID_EXECUTOR_MODES:
-            errors.append(
-                ValidationError(
-                    tid, "executor.mode", f"{mode!r} not in {sorted(VALID_EXECUTOR_MODES)}"
-                )
-            )
+        )
 
-    # execution.state
+    return errors
+
+
+def _validate_execution_state(task: dict[str, Any]) -> list[ValidationError]:
+    """Validate task execution.state field."""
+    tid = str(task.get("id") or "<missing-id>")
     execution = task.get("execution") or {}
     state = execution.get("state", "pending")
     if state not in VALID_EXECUTION_STATES:
-        errors.append(
+        return [
             ValidationError(
                 tid, "execution.state", f"{state!r} not in {sorted(VALID_EXECUTION_STATES)}"
             )
-        )
+        ]
+    return []
 
-    # blocked_by must be list[str]
+
+def _validate_blocked_by(task: dict[str, Any]) -> list[ValidationError]:
+    """Validate task blocked_by field."""
+    tid = str(task.get("id") or "<missing-id>")
+    errors: list[ValidationError] = []
     blocked_by = task.get("blocked_by", []) or []
+
     if not isinstance(blocked_by, list):
-        errors.append(ValidationError(tid, "blocked_by", "must be a list"))
-    else:
-        for dep in blocked_by:
-            if not isinstance(dep, str):
-                errors.append(
-                    ValidationError(tid, "blocked_by", f"non-string entry: {dep!r}")
-                )
+        return [ValidationError(tid, "blocked_by", "must be a list")]
+
+    for dep in blocked_by:
+        if not isinstance(dep, str):
+            errors.append(
+                ValidationError(tid, "blocked_by", f"non-string entry: {dep!r}")
+            )
+
+    return errors
+
+
+def _validate_task(task: dict[str, Any], seen_ids: set[str]) -> list[ValidationError]:
+    """Validate a single task. Returns a list of errors."""
+    errors: list[ValidationError] = []
+
+    errors.extend(_validate_id(task, seen_ids))
+    tid = str(task.get("id") or "<missing-id>")
+    
+    # Early return if id is missing or duplicate
+    if any(e.field == "id" for e in errors):
+        return errors
+
+    errors.extend(_validate_name(task))
+    errors.extend(_validate_status(task))
+    errors.extend(_validate_priority(task))
+    errors.extend(_validate_executor(task))
+    errors.extend(_validate_execution_state(task))
+    errors.extend(_validate_blocked_by(task))
 
     return errors
 

@@ -743,6 +743,8 @@ def _create_ticket(
         "--priority", suggestion.priority,
         "--source", source,
         "--description", suggestion.description,
+        "--executor-kind", "shell",
+        "--script", "true",
     ]
     for label in suggestion.labels:
         cmd.extend(["--label", label])

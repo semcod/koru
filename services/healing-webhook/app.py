@@ -139,6 +139,83 @@ def _record_action(action: str, outcome: str, component: str, detail: dict) -> N
     )
 
 
+def _enrich_ticket_with_vallm(alert: dict, payload: dict) -> None:
+    """Add vallm pre-flight summary to ticket description."""
+    try:
+        labels = alert.get("labels", {}) or {}
+        component = labels.get("component", "unknown")
+        files = _resolve_affected_files(component, labels, max_files=5)
+        if files:
+            vallm_results = [_run_vallm_check(f) for f in files]
+            avg = sum(r.get("score", 0.0) for r in vallm_results) / len(vallm_results)
+            lines = [f"\n## 🔍 vallm pre-flight (tier-1 syntax check)\n"]
+            lines.append(f"**Average score:** {avg:.2f} ({len(files)} file(s) checked)\n")
+            for f, r in zip(files, vallm_results):
+                icon = "✅" if r.get("ok") else "❌"
+                rel = f.replace(f"{REPO_PATH}/", "")
+                lines.append(f"- {icon} `{rel}` — score `{r.get('score', 0):.2f}`")
+            payload["description"] = payload["description"] + "\n" + "\n".join(lines)
+    except Exception as exc:  # noqa: BLE001
+        log.debug("vallm enrichment skipped: %s", exc)
+
+
+def _build_planfile_command(payload: dict) -> list[str]:
+    """Build planfile ticket create command from payload."""
+    cmd = [
+        PLANFILE_BIN,
+        "ticket",
+        "create",
+        payload["name"],
+        "--priority",
+        payload["priority"],
+        "--sprint",
+        PLANFILE_SPRINT,
+        "--source",
+        payload["source"],
+        "--description",
+        payload["description"],
+    ]
+    for label in payload["labels"]:
+        cmd.extend(["--label", label])
+    return cmd
+
+
+def _extract_ticket_id_from_stdout(stdout: str) -> str | None:
+    """Extract PLF-* ticket ID from planfile stdout."""
+    for line in (stdout or "").splitlines():
+        if "PLF-" in line:
+            for word in line.split():
+                if word.startswith("PLF-"):
+                    return word.strip(":,.")
+    return None
+
+
+def _execute_planfile_create(cmd: list[str], severity: str) -> dict:
+    """Execute planfile ticket create command and return result."""
+    try:
+        proc = subprocess.run(
+            cmd, capture_output=True, text=True, cwd=REPO_PATH, timeout=15
+        )
+        outcome = "success" if proc.returncode == 0 else "failed"
+        TICKETS_CREATED.labels(severity=severity, outcome=outcome).inc()
+        new_id = _extract_ticket_id_from_stdout(proc.stdout or "")
+        log.info("planfile ticket create -> %s (%s)", outcome, new_id or "?")
+        return {
+            "outcome": outcome,
+            "ticket_id": new_id,
+            "stdout": (proc.stdout or "")[-300:],
+            "stderr": (proc.stderr or "")[-300:],
+        }
+    except FileNotFoundError:
+        TICKETS_CREATED.labels(severity=severity, outcome="no_cli").inc()
+        log.warning("planfile CLI not installed in this container; skipping ticket")
+        return {"error": "planfile CLI not found"}
+    except Exception as exc:  # noqa: BLE001
+        TICKETS_CREATED.labels(severity=severity, outcome="exception").inc()
+        log.warning("planfile ticket create failed: %s", exc)
+        return {"error": str(exc)}
+
+
 def create_planfile_ticket(alert: dict, *, source: str = "healing-webhook") -> dict:
     """Create a planfile ticket for an alert.
 
@@ -159,76 +236,14 @@ def create_planfile_ticket(alert: dict, *, source: str = "healing-webhook") -> d
         TICKETS_CREATED.labels(severity="unknown", outcome="build_failed").inc()
         return {"error": f"ticket_builder failed: {exc}"}
 
-    # Enrich the ticket description with a vallm pre-flight summary of the
-    # affected files. This gives the LLM agent immediate insight into whether
-    # the files are syntactically clean or already broken (saves a round trip).
-    try:
-        labels = alert.get("labels", {}) or {}
-        component = labels.get("component", "unknown")
-        files = _resolve_affected_files(component, labels, max_files=5)
-        if files:
-            vallm_results = [_run_vallm_check(f) for f in files]
-            avg = sum(r.get("score", 0.0) for r in vallm_results) / len(vallm_results)
-            lines = [f"\n## 🔍 vallm pre-flight (tier-1 syntax check)\n"]
-            lines.append(f"**Average score:** {avg:.2f} ({len(files)} file(s) checked)\n")
-            for f, r in zip(files, vallm_results):
-                icon = "✅" if r.get("ok") else "❌"
-                rel = f.replace(f"{REPO_PATH}/", "")
-                lines.append(f"- {icon} `{rel}` — score `{r.get('score', 0):.2f}`")
-            payload["description"] = payload["description"] + "\n" + "\n".join(lines)
-    except Exception as exc:  # noqa: BLE001
-        log.debug("vallm enrichment skipped: %s", exc)
+    _enrich_ticket_with_vallm(alert, payload)
 
     severity = next(
         (lbl.split(":", 1)[1] for lbl in payload["labels"] if lbl.startswith("severity:")),
         "unknown",
     )
-    cmd = [
-        PLANFILE_BIN,
-        "ticket",
-        "create",
-        payload["name"],
-        "--priority",
-        payload["priority"],
-        "--sprint",
-        PLANFILE_SPRINT,
-        "--source",
-        payload["source"],
-        "--description",
-        payload["description"],
-    ]
-    for label in payload["labels"]:
-        cmd.extend(["--label", label])
-
-    try:
-        proc = subprocess.run(
-            cmd, capture_output=True, text=True, cwd=REPO_PATH, timeout=15
-        )
-        outcome = "success" if proc.returncode == 0 else "failed"
-        TICKETS_CREATED.labels(severity=severity, outcome=outcome).inc()
-        # Extract the new ticket ID from planfile's stdout when possible.
-        new_id = None
-        for line in (proc.stdout or "").splitlines():
-            if "PLF-" in line:
-                for word in line.split():
-                    if word.startswith("PLF-"):
-                        new_id = word.strip(":,.")
-                        break
-        log.info("planfile ticket create -> %s (%s)", outcome, new_id or "?")
-        return {
-            "outcome": outcome,
-            "ticket_id": new_id,
-            "stdout": (proc.stdout or "")[-300:],
-            "stderr": (proc.stderr or "")[-300:],
-        }
-    except FileNotFoundError:
-        TICKETS_CREATED.labels(severity=severity, outcome="no_cli").inc()
-        log.warning("planfile CLI not installed in this container; skipping ticket")
-        return {"error": "planfile CLI not found"}
-    except Exception as exc:  # noqa: BLE001
-        TICKETS_CREATED.labels(severity=severity, outcome="exception").inc()
-        log.warning("planfile ticket create failed: %s", exc)
-        return {"error": str(exc)}
+    cmd = _build_planfile_command(payload)
+    return _execute_planfile_create(cmd, severity)
 
 
 def _run_docker(image: str, cmd: list[str], timeout: int = 120) -> tuple[int, str, str]:
@@ -451,6 +466,38 @@ def heal_vallm_validate(component: str, detail: dict) -> dict:
 # is breached we still create a ticket — the budget check is enforced by
 # scripts/redup-check.sh exit code (non-zero = breach).
 
+def _parse_redup_summary(payload: dict) -> dict:
+    """Parse redup-check.sh JSON payload into summary dict."""
+    s = payload.get("summary", {}) or {}
+    summary = {
+        "groups": int(s.get("total_groups", 0)),
+        "saved_lines": int(s.get("total_saved_lines", 0)),
+        "top_groups": [],
+    }
+    # Top 3 groups by fragment count for ticket context
+    groups = sorted(
+        payload.get("groups", []) or [],
+        key=lambda g: len(g.get("fragments", []) or []),
+        reverse=True,
+    )[:3]
+    summary["top_groups"] = [
+        {
+            "fragments": len(g.get("fragments", []) or []),
+            "files": sorted({f.get("file", "?") for f in (g.get("fragments") or [])})[:5],
+            "function": (g.get("fragments") or [{}])[0].get("function_name", "(module)"),
+        }
+        for g in groups
+    ]
+    return summary
+
+
+def _update_redup_metrics(summary: dict, breach: bool) -> None:
+    """Update Prometheus metrics for redup check results."""
+    REDUP_GROUPS.set(summary["groups"])
+    REDUP_SAVED_LINES.set(summary["saved_lines"])
+    REDUP_BUDGET_BREACH.set(1 if breach else 0)
+
+
 def _run_redup_check(timeout: int = 180) -> dict:
     """Run redup-check.sh and parse the filtered JSON report.
 
@@ -478,29 +525,11 @@ def _run_redup_check(timeout: int = 180) -> dict:
         import json as _json
         with open(filtered_json, "r", encoding="utf-8") as fh:
             payload = _json.load(fh)
-        s = payload.get("summary", {}) or {}
-        summary["groups"] = int(s.get("total_groups", 0))
-        summary["saved_lines"] = int(s.get("total_saved_lines", 0))
-        # Top 3 groups by fragment count for ticket context
-        groups = sorted(
-            payload.get("groups", []) or [],
-            key=lambda g: len(g.get("fragments", []) or []),
-            reverse=True,
-        )[:3]
-        summary["top_groups"] = [
-            {
-                "fragments": len(g.get("fragments", []) or []),
-                "files": sorted({f.get("file", "?") for f in (g.get("fragments") or [])})[:5],
-                "function": (g.get("fragments") or [{}])[0].get("function_name", "(module)"),
-            }
-            for g in groups
-        ]
+        summary = _parse_redup_summary(payload)
     except Exception as exc:  # noqa: BLE001
         log.debug("redup filtered report parse failed: %s", exc)
 
-    REDUP_GROUPS.set(summary["groups"])
-    REDUP_SAVED_LINES.set(summary["saved_lines"])
-    REDUP_BUDGET_BREACH.set(1 if breach else 0)
+    _update_redup_metrics(summary, breach)
 
     return {
         "ok": not breach,
