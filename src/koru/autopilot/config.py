@@ -63,9 +63,8 @@ class AutopilotConfig:
 
 def default_config_path() -> Path:
     """Resolve the XDG-style config path for autopilot."""
-    xdg = os.environ.get("XDG_CONFIG_HOME")
-    base = Path(xdg) if xdg else Path.home() / ".config"
-    return base / "koru" / "autopilot.toml"
+    from .utils.client_helpers import resolve_xdg_path
+    return resolve_xdg_path("koru/autopilot.toml")
 
 
 def _merge_submit_keys(raw: object) -> dict[str, str]:

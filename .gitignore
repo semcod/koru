@@ -1,4 +1,19 @@
 # Byte-compiled / optimized / DLL files
+.code2llm_cache/Taskfile_1778525237055265475_27883.pkl
+.code2llm_cache/_koru_autodiag_filter_tickets_1778524403703486605_1528.pkl
+.code2llm_cache/cli_1778567150374650580_51708.pkl
+.code2llm_cache/cli_command_1778518432434194270_18308.pkl
+.code2llm_cache/goal_1778518324199028450_12224.pkl
+.code2llm_cache/ide_1778518418959049129_8357.pkl
+.code2llm_cache/koru-autoloop-reset-diag-markers_1778524392710367896_3447.pkl
+.code2llm_cache/koru-autoloop_1778525155990423131_17609.pkl
+.code2llm_cache/planfile_1778518061975203793_35931.pkl
+.code2llm_cache/prefact_1778517966479175023_1664.pkl
+.code2llm_cache/project_1778518270855453863_1589.pkl
+.code2llm_cache/pyproject_1778524901466835329_1947.pkl
+.code2llm_cache/scan_1778518882359040182_20280.pkl
+.code2llm_cache/serve_1778567234770841539_27612.pkl
+.code2llm_cache/topology_1778566705908262903_14006.pkl
 plugins/koru-autopilot-vscode/.vscodeignore
 node_modules
 *.vsix

@@ -163,6 +163,11 @@ tasks:
         DIAGNOSTIC_TICKET_QUEUE="{{.DIAGNOSTIC_TICKET_QUEUE}}" \
         DIAGNOSTIC_TICKET_PRIORITY="{{.DIAGNOSTIC_TICKET_PRIORITY}}" \
         DIAG_STATE_DIR="{{.DIAG_STATE_DIR}}" \
+        AUTOPILOT_SKIP_STATUSES="{{.AUTOPILOT_SKIP_STATUSES}}" \
+        BACKOFF_ON_STAGNATION="{{.BACKOFF_ON_STAGNATION}}" \
+        MAX_SLEEP_SECONDS="{{.MAX_SLEEP_SECONDS}}" \
+        SCAN_SKIP_IF_CLEAN="{{.SCAN_SKIP_IF_CLEAN}}" \
+        SCAN_SKIP_AFTER="{{.SCAN_SKIP_AFTER}}" \
         KORU_CMD="{{.KORU_CMD}}" \
         KORU_PLANFILE_CMD="{{.KORU_PLANFILE_CMD}}" \
         KORU_PYTHONPATH="{{.KORU_PYTHONPATH}}" \
@@ -193,6 +198,11 @@ tasks:
       DIAGNOSTIC_TICKET_QUEUE: '{{.DIAGNOSTIC_TICKET_QUEUE | default "default"}}'
       DIAGNOSTIC_TICKET_PRIORITY: '{{.DIAGNOSTIC_TICKET_PRIORITY | default "high"}}'
       DIAG_STATE_DIR: '{{.DIAG_STATE_DIR | default ".planfile/.koru/autoloop-diag"}}'
+      AUTOPILOT_SKIP_STATUSES: '{{.AUTOPILOT_SKIP_STATUSES | default "waiting_input"}}'
+      BACKOFF_ON_STAGNATION: '{{.BACKOFF_ON_STAGNATION | default "true"}}'
+      MAX_SLEEP_SECONDS: '{{.MAX_SLEEP_SECONDS | default "900"}}'
+      SCAN_SKIP_IF_CLEAN: '{{.SCAN_SKIP_IF_CLEAN | default "false"}}'
+      SCAN_SKIP_AFTER: '{{.SCAN_SKIP_AFTER | default "1"}}'
       KORU_CMD: '{{.KORU_CMD | default "koru"}}'
       KORU_PLANFILE_CMD: '{{.KORU_PLANFILE_CMD | default "planfile"}}'
       KORU_PYTHONPATH: '{{.KORU_PYTHONPATH | default ""}}'
@@ -224,7 +234,18 @@ tasks:
   quality:regix:
     desc: Run regix gate locally (LLM-free regression metrics)
     cmds:
-      - regix gate
+      - |
+        set -euo pipefail
+        if python3 -m koru.cli topology --project . --is-enabled gate:regix >/dev/null 2>&1; then
+          regix gate
+        else
+          rc=$?
+          if [ "$rc" -eq 1 ]; then
+            echo "quality:regix skipped (gate:regix disabled in topology)"
+            exit 0
+          fi
+          regix gate
+        fi
     preconditions:
       - sh: which regix
         msg: "regix not installed. Run: task install:tools"
@@ -232,7 +253,18 @@ tasks:
   quality:redup:
     desc: 'Run redup duplicate detection (default: current dir)'
     cmds:
-      - redup scan . --min-lines 10
+      - |
+        set -euo pipefail
+        if python3 -m koru.cli topology --project . --is-enabled gate:redup >/dev/null 2>&1; then
+          redup scan . --min-lines 10
+        else
+          rc=$?
+          if [ "$rc" -eq 1 ]; then
+            echo "quality:redup skipped (gate:redup disabled in topology)"
+            exit 0
+          fi
+          redup scan . --min-lines 10
+        fi
     preconditions:
       - sh: which redup
         msg: "redup not installed. Run: task install:tools"
@@ -240,7 +272,18 @@ tasks:
   quality:redup:check:
     desc: Run redup with budget check (uses scripts/redup-check.sh)
     cmds:
-      - bash scripts/redup-check.sh "{{.PATH | default \".\"}}"
+      - |
+        set -euo pipefail
+        if python3 -m koru.cli topology --project . --is-enabled gate:redup >/dev/null 2>&1; then
+          bash scripts/redup-check.sh "{{.PATH | default "."}}"
+        else
+          rc=$?
+          if [ "$rc" -eq 1 ]; then
+            echo "quality:redup:check skipped (gate:redup disabled in topology)"
+            exit 0
+          fi
+          bash scripts/redup-check.sh "{{.PATH | default "."}}"
+        fi
 
   quality:vallm:
     desc: 'Validate file with vallm (FILE=path/to/file.py)'
@@ -264,7 +307,18 @@ tasks:
   quality:sumr:status:
     desc: Show SUMR.md staleness vs HEAD (LLM-free; exit 1 if stale)
     cmds:
-      - scripts/sumr-refresh.sh --status
+      - |
+        set -euo pipefail
+        if python3 -m koru.cli topology --project . --is-enabled gate:sumr >/dev/null 2>&1; then
+          scripts/sumr-refresh.sh --status
+        else
+          rc=$?
+          if [ "$rc" -eq 1 ]; then
+            echo "quality:sumr:status skipped (gate:sumr disabled in topology)"
+            exit 0
+          fi
+          scripts/sumr-refresh.sh --status
+        fi
     preconditions:
       - sh: test -x scripts/sumr-refresh.sh
         msg: "scripts/sumr-refresh.sh missing. Run: task template:install:sumr"
@@ -272,12 +326,34 @@ tasks:
   quality:sumr:auto:
     desc: Refresh SUMR.md only if stale (debounced; safe for hooks/cron)
     cmds:
-      - scripts/sumr-refresh.sh
+      - |
+        set -euo pipefail
+        if python3 -m koru.cli topology --project . --is-enabled gate:sumr >/dev/null 2>&1; then
+          scripts/sumr-refresh.sh
+        else
+          rc=$?
+          if [ "$rc" -eq 1 ]; then
+            echo "quality:sumr:auto skipped (gate:sumr disabled in topology)"
+            exit 0
+          fi
+          scripts/sumr-refresh.sh
+        fi
 
   quality:sumr:refresh:
     desc: Force-refresh SUMR.md (bumps sumd/code2llm/redup/doql + regenerates)
     cmds:
-      - scripts/sumr-refresh.sh --force
+      - |
+        set -euo pipefail
+        if python3 -m koru.cli topology --project . --is-enabled gate:sumr >/dev/null 2>&1; then
+          scripts/sumr-refresh.sh --force
+        else
+          rc=$?
+          if [ "$rc" -eq 1 ]; then
+            echo "quality:sumr:refresh skipped (gate:sumr disabled in topology)"
+            exit 0
+          fi
+          scripts/sumr-refresh.sh --force
+        fi
 
   quality:sumr:install-hook:
     desc: 'Install git post-merge hook (HOOK=post-commit|both for alt)'

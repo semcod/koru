@@ -8,6 +8,8 @@ Endpoints:
     GET  /              -> HTML dashboard (auto-refreshing)
     GET  /api/context   -> JSON brief (``build_context`` output)
     GET  /api/handoff   -> raw markdown handoff (``render_markdown_handoff``)
+    GET  /api/topology  -> merged topology JSON (defaults + persisted overrides)
+    POST /api/topology  -> persist topology enable/disable edits
     GET  /health        -> ``{"ok": true}``
 
 Bound to ``127.0.0.1`` by default — never exposed to the network unless
@@ -25,6 +27,12 @@ from pathlib import Path
 from typing import Any
 
 from .context import build_context, render_markdown_handoff
+from .topology import (
+    load_topology,
+    save_topology,
+    set_component_enabled,
+    set_pipeline_enabled,
+)
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
@@ -148,6 +156,8 @@ _DASHBOARD_HTML = """<!doctype html>
 <footer>
   Local-only · <code>127.0.0.1</code> · auto-refresh 5 s ·
   <a href="/api/context">JSON</a> · <a href="/api/handoff">Markdown</a>
+  · <a href="/api/topology">Topology JSON</a>
+  · <a href="/api/runtime-context">Runtime context JSON</a>
 </footer>
 <script>
 const $ = (id) => document.getElementById(id);
@@ -360,11 +370,185 @@ function renderSemcodTools(env) {
   return panel("Available semcod tools", body, true);
 }
 
+function renderTopology(topo) {
+  if (!topo) return "";
+  const components = topo.components || {};
+  const pipelines = topo.pipelines || {};
+  const compRows = Object.entries(components).map(([id, c]) => {
+    const checked = c.enabled ? "checked" : "";
+    const avail = c.available
+      ? '<span class="pill ok">installed</span>'
+      : '<span class="pill">missing</span>';
+    const via = c.via && c.via !== "missing"
+      ? `<code>${esc(c.via)}</code>` : '<span class="muted">—</span>';
+    return `<tr>
+      <td><label><input type="checkbox" data-kind="component"
+        data-id="${esc(id)}" ${checked}/> <code>${esc(id)}</code></label></td>
+      <td>${avail}</td>
+      <td>${via}</td>
+      <td class="muted">${esc(c.role || "")}</td>
+    </tr>`;
+  }).join("");
+  const pipeRows = Object.entries(pipelines).map(([id, p]) => {
+    const checked = p.enabled ? "checked" : "";
+    const comps = (p.components || []).map(c =>
+      `<code>${esc(c)}</code>`).join(", ") || '<span class="muted">—</span>';
+    return `<tr>
+      <td><label><input type="checkbox" data-kind="pipeline"
+        data-id="${esc(id)}" ${checked}/> <code>${esc(id)}</code></label></td>
+      <td><span class="pill">${esc(p.trigger || "manual")}</span></td>
+      <td>${comps}</td>
+      <td class="muted">${esc(p.description || "")}</td>
+    </tr>`;
+  }).join("");
+  const savedNote = topo.exists
+    ? `<span class="pill ok">persisted</span>`
+    : `<span class="pill">defaults only — first edit creates ${esc(topo.path || ".koru/topology.yaml")}</span>`;
+  const body = `
+    <div style="margin-bottom:12px">${savedNote}
+      <span class="muted" style="margin-left:8px">
+        Toggle a checkbox to update <code>.koru/topology.yaml</code>.
+        Pipelines (gates, autoloop, idle-diagnostics) honour these flags.
+      </span>
+    </div>
+    <h3 style="margin:8px 0 4px;font-size:12px;color:var(--muted);
+               text-transform:uppercase;letter-spacing:0.05em">Components</h3>
+    <table><thead><tr>
+      <th>component</th><th>availability</th><th>via</th><th>role</th>
+    </tr></thead><tbody>${compRows}</tbody></table>
+    <h3 style="margin:16px 0 4px;font-size:12px;color:var(--muted);
+               text-transform:uppercase;letter-spacing:0.05em">Pipelines</h3>
+    <table><thead><tr>
+      <th>pipeline</th><th>trigger</th><th>components</th><th>description</th>
+    </tr></thead><tbody>${pipeRows}</tbody></table>
+    <div id="topology-status" class="muted"
+         style="margin-top:8px;min-height:1.2em"></div>
+  `;
+  return panel("Topology & pipelines", body, true);
+}
+
+function renderRuntimeContext(runtime) {
+  if (!runtime || runtime.error) {
+    return panel("Runtime context", `<div class="muted">${esc((runtime && runtime.error) || "not available")}</div>`, true);
+  }
+  const summary = runtime.summary || {};
+  const enabled = ((runtime.config || {}).enabled) || {};
+  const labels = {
+    systems: "systems", libraries: "libraries", algorithms: "algorithms",
+    apis: "apis", applications: "applications", pipelines: "pipelines", topology: "topology"
+  };
+  const checks = Object.entries(labels).map(([key, label]) => `
+    <label style="display:inline-block;margin:2px 12px 6px 0">
+      <input type="checkbox" data-runtime-section="${esc(key)}" ${enabled[key] ? "checked" : ""}/>
+      <code>${esc(label)}</code>
+    </label>
+  `).join("");
+  const systems = (runtime.systems || []).slice(0, 12).map(s =>
+    `<span class="pill">${esc(s.name || "?")}</span>`
+  ).join("");
+  const body = `
+    <div class="kv">
+      <dt>project</dt><dd><code>${esc(summary.project || runtime.project_root || "?")}</code></dd>
+      <dt>version</dt><dd>${esc(summary.version || "-")}</dd>
+      <dt>services</dt><dd>${esc(summary.services || 0)}</dd>
+      <dt>workspaces</dt><dd>${esc(summary.workspaces || 0)}</dd>
+      <dt>pipelines</dt><dd>${esc(summary.pipelines || 0)}</dd>
+      <dt>topology nodes</dt><dd>${esc(summary.topology_nodes || 0)}</dd>
+    </div>
+    <div style="margin-top:12px">${checks}</div>
+    <div class="muted" style="margin-top:8px">First services: ${systems || "none"}</div>
+    <div id="runtime-context-status" class="muted" style="margin-top:8px;min-height:1.2em"></div>
+  `;
+  return panel("Runtime context", body, true);
+}
+
+async function postTopologyToggle(kind, id, enabled) {
+  const status = document.getElementById("topology-status");
+  if (status) status.textContent = `saving ${kind} ${id}…`;
+  try {
+    const body = kind === "component"
+      ? { components: { [id]: enabled } }
+      : { pipelines:  { [id]: enabled } };
+    const res = await fetch("/api/topology", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error("HTTP " + res.status + ": " + text);
+    }
+    const data = await res.json();
+    if (status) {
+      status.textContent = `saved ${kind} ${id} = ${enabled} `
+        + `(path: ${data.path || ".koru/topology.yaml"})`;
+      status.classList.remove("err");
+      status.classList.add("ok");
+    }
+  } catch (e) {
+    if (status) {
+      status.textContent = "save failed: " + e.message;
+      status.classList.remove("ok");
+      status.classList.add("err");
+    }
+  }
+}
+
+async function postRuntimeContextToggle(section, enabled) {
+  const status = document.getElementById("runtime-context-status");
+  if (status) status.textContent = `saving ${section}…`;
+  try {
+    const res = await fetch("/api/runtime-context/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: { [section]: enabled } }),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error("HTTP " + res.status + ": " + text);
+    }
+    if (status) {
+      status.textContent = `saved ${section} = ${enabled}`;
+      status.classList.remove("err");
+      status.classList.add("ok");
+    }
+    setTimeout(refresh, 150);
+  } catch (e) {
+    if (status) {
+      status.textContent = "save failed: " + e.message;
+      status.classList.remove("ok");
+      status.classList.add("err");
+    }
+  }
+}
+
+document.addEventListener("change", (ev) => {
+  const t = ev.target;
+  if (!(t instanceof HTMLInputElement)) return;
+  if (t.type !== "checkbox") return;
+  const runtimeSection = t.getAttribute("data-runtime-section");
+  if (runtimeSection) {
+    postRuntimeContextToggle(runtimeSection, t.checked);
+    return;
+  }
+  const kind = t.getAttribute("data-kind");
+  const id = t.getAttribute("data-id");
+  if (!kind || !id) return;
+  postTopologyToggle(kind, id, t.checked);
+});
+
 async function refresh() {
   try {
-    const res = await fetch("/api/context", { cache: "no-store" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const ctx = await res.json();
+    const [ctxRes, topoRes, runtimeRes] = await Promise.all([
+      fetch("/api/context",  { cache: "no-store" }),
+      fetch("/api/topology", { cache: "no-store" }),
+      fetch("/api/runtime-context", { cache: "no-store" }),
+    ]);
+    if (!ctxRes.ok)  throw new Error("HTTP " + ctxRes.status);
+    if (!topoRes.ok) throw new Error("HTTP " + topoRes.status);
+    const ctx = await ctxRes.json();
+    const topo = await topoRes.json();
+    const runtime = runtimeRes.ok ? await runtimeRes.json() : {error: "runtime context unavailable"};
     $("project").textContent = ctx.project || "?";
     $("ts").textContent = new Date().toLocaleTimeString();
     const root = $("root");
@@ -378,6 +562,8 @@ async function refresh() {
       ),
       renderAgents(ctx.environment),
       renderSemcodTools(ctx.environment),
+      renderRuntimeContext(runtime),
+      renderTopology(topo),
       renderPolicy(ctx.policy),
     ].join("");
   } catch (e) {
@@ -441,6 +627,14 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
             body = json.dumps(payload, indent=2, sort_keys=True).encode("utf-8")
             self._send(status, body, "application/json; charset=utf-8")
 
+        def _read_json_body(self) -> dict[str, Any]:
+            length = int(self.headers.get("Content-Length", "0") or "0")
+            if length <= 0:
+                return {}
+            raw = self.rfile.read(length).decode("utf-8")
+            data = json.loads(raw)
+            return data if isinstance(data, dict) else {}
+
         def do_GET(self) -> None:  # noqa: N802 — stdlib API
             path = self.path.split("?", 1)[0]
             if path in ("/", "/index.html"):
@@ -466,6 +660,25 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
                     return
                 self._send_json(ctx)
                 return
+            if path == "/api/topology":
+                try:
+                    topo = load_topology(config.project)
+                except Exception as exc:  # pragma: no cover — surface errors
+                    self._send_json(
+                        {"error": str(exc), "type": type(exc).__name__},
+                        status=500,
+                    )
+                    return
+                self._send_json(topo)
+                return
+            if path == "/api/runtime-context":
+                try:
+                    from planfile.runtime_context import build_runtime_context
+                    runtime = build_runtime_context(config.project)
+                except Exception as exc:  # pragma: no cover — optional planfile integration
+                    runtime = {"error": str(exc), "type": type(exc).__name__}
+                self._send_json(runtime)
+                return
             if path == "/api/handoff":
                 try:
                     ctx = build_context(
@@ -480,6 +693,85 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
                     200, md.encode("utf-8"),
                     "text/markdown; charset=utf-8",
                 )
+                return
+            self._send(404, b"not found")
+
+        def do_POST(self) -> None:  # noqa: N802 — stdlib API
+            path = self.path.split("?", 1)[0]
+            try:
+                body = self._read_json_body()
+            except Exception as exc:
+                self._send_json({"error": str(exc)}, status=400)
+                return
+
+            if path == "/api/topology":
+                components = body.get("components") or {}
+                pipelines = body.get("pipelines") or {}
+                if not isinstance(components, dict) or not isinstance(pipelines, dict):
+                    self._send_json(
+                        {"error": "`components` and `pipelines` must be objects"},
+                        status=400,
+                    )
+                    return
+
+                if not components and not pipelines:
+                    self._send_json(
+                        {"error": "empty update; provide `components` and/or `pipelines`"},
+                        status=400,
+                    )
+                    return
+
+                topo = load_topology(config.project)
+                errors: list[str] = []
+                applied: list[dict[str, Any]] = []
+
+                for component_id, enabled in components.items():
+                    if not isinstance(enabled, bool):
+                        errors.append(f"component {component_id!r}: value must be boolean")
+                        continue
+                    result = set_component_enabled(topo, str(component_id), enabled)
+                    if not result.found:
+                        errors.append(f"unknown component: {component_id!r}")
+                        continue
+                    applied.append({"kind": "component", "id": result.id, "enabled": result.current})
+
+                for pipeline_id, enabled in pipelines.items():
+                    if not isinstance(enabled, bool):
+                        errors.append(f"pipeline {pipeline_id!r}: value must be boolean")
+                        continue
+                    result = set_pipeline_enabled(topo, str(pipeline_id), enabled)
+                    if not result.found:
+                        errors.append(f"unknown pipeline: {pipeline_id!r}")
+                        continue
+                    applied.append({"kind": "pipeline", "id": result.id, "enabled": result.current})
+
+                if errors:
+                    self._send_json({"error": "invalid topology update", "details": errors}, status=400)
+                    return
+
+                saved = save_topology(config.project, topo)
+                merged = load_topology(config.project)
+                merged["path"] = str(saved)
+                merged["saved"] = applied
+                self._send_json(merged)
+                return
+
+            if path == "/api/runtime-context/config":
+                try:
+                    from planfile.runtime_context import (
+                        load_runtime_context_config,
+                        save_runtime_context_config,
+                    )
+                    current = load_runtime_context_config(config.project)
+                    merged = {
+                        "enabled": {**(current.get("enabled") or {}), **(body.get("enabled") or {})},
+                        "overrides": {**(current.get("overrides") or {}), **(body.get("overrides") or {})},
+                    }
+                    saved_config = save_runtime_context_config(config.project, merged)
+                except Exception as exc:  # pragma: no cover — optional planfile integration
+                    self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+                    return
+                self._send_json(saved_config)
                 return
             self._send(404, b"not found")
 

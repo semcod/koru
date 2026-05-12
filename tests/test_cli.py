@@ -165,6 +165,44 @@ class TestBareEmitsMarkdown(unittest.TestCase):
         self.assertIn("# koru handoff", output)
 
 
+class TestTopologySubcommand(unittest.TestCase):
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory(prefix="koru-cli-topology-")
+        self.project = Path(self._tmp.name)
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
+
+    def test_topology_json_lists_components_and_pipelines(self) -> None:
+        code, output = _run_main("topology", "--project", str(self.project), "--format", "json")
+        self.assertEqual(code, 0)
+        data = json.loads(output)
+        self.assertIn("components", data)
+        self.assertIn("pipelines", data)
+        self.assertIn("regix", data["components"])
+
+    def test_topology_disable_then_is_enabled_false(self) -> None:
+        code1, _ = _run_main("topology", "--project", str(self.project), "--disable", "regix")
+        self.assertEqual(code1, 0)
+
+        code2, output2 = _run_main("topology", "--project", str(self.project), "--is-enabled", "regix")
+        self.assertEqual(code2, 1)
+        self.assertEqual(output2.strip(), "false")
+
+    def test_topology_enabled_components_for_pipeline(self) -> None:
+        _run_main("topology", "--project", str(self.project), "--disable", "wup")
+        code, output = _run_main(
+            "topology",
+            "--project",
+            str(self.project),
+            "--enabled-components-for",
+            "idle-diagnostics",
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("regix", output)
+        self.assertNotIn("wup", output)
+
+
 class TestSubcommandDispatch(unittest.TestCase):
     """R6: routing through ``_SUBCOMMANDS`` dispatch table.
 
@@ -174,7 +212,18 @@ class TestSubcommandDispatch(unittest.TestCase):
     """
 
     EXPECTED_KEYS = frozenset(
-        {"task", "agent", "serve", "scan", "gate", "queue", "gc", "autopilot"}
+        {
+            "task",
+            "agent",
+            "serve",
+            "scan",
+            "gate",
+            "queue",
+            "gc",
+            "autopilot",
+            "topology",
+            "runtime-context",
+        }
     )
 
     def test_table_contains_all_documented_subcommands(self) -> None:

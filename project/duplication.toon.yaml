@@ -1,12 +1,12 @@
-# redup/duplication | 4 groups | 34f 10582L | 2026-05-11
+# redup/duplication | 4 groups | 36f 11595L | 2026-05-12
 
 SUMMARY:
-  files_scanned: 34
-  total_lines:   10582
+  files_scanned: 36
+  total_lines:   11595
   dup_groups:    4
   dup_fragments: 8
   saved_lines:   26
-  scan_ms:       3463
+  scan_ms:       3569
 
 HOTSPOTS[5] (files with most duplication):
   src/koru/autopilot/cli_command.py  dup=29L  groups=2  frags=3  (0.3%)
@@ -20,10 +20,10 @@ DUPLICATES[4] (ranked by impact):
       src/koru/autopilot/cli_command.py:266-277  (_action_status)
       src/koru/autopilot/cli_command.py:280-291  (_action_shutdown)
   [19e35bb709780a8d]   EXAC  _default  L=6 N=2 saved=6 sim=1.00
-      src/koru/scan.py:414-419  (_default)
-      src/koru/scan.py:454-459  (_default)
+      src/koru/scan.py:472-477  (_default)
+      src/koru/scan.py:512-517  (_default)
   [783e33d9df60e641]   STRU  _systemd_user_dir  L=5 N=2 saved=5 sim=1.00
-      src/koru/autopilot/cli_command.py:424-428  (_systemd_user_dir)
+      src/koru/autopilot/cli_command.py:430-434  (_systemd_user_dir)
       src/koru/autopilot/config.py:64-68  (default_config_path)
   [568b0a8fd0ab06a4]   STRU  policy_path  L=3 N=2 saved=3 sim=1.00
       src/koru/policy.py:122-124  (policy_path)

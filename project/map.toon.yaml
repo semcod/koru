@@ -1,11 +1,11 @@
-# koru | 94f 20159L | python:62,shell:29,less:1,javascript:1,typescript:1 | 2026-05-11
-# stats: 396 func | 113 cls | 94 mod | CC̄=4.8 | critical:41 | cycles:0
-# alerts[5]: CC main=59; CC render_markdown_handoff=45; CC build_context=41; CC validate_flat_pipeline=28; CC run_gc=26
-# hotspots[5]: main fan=33; build_context fan=25; create_planfile_ticket fan=23; run_next_planfile_task fan=16; do_from_todo fan=15
+# koru | 97f 21916L | python:64,shell:30,less:1,javascript:1,typescript:1 | 2026-05-12
+# stats: 436 func | 114 cls | 97 mod | CC̄=4.8 | critical:49 | cycles:0
+# alerts[5]: CC render_markdown_handoff=45; CC build_context=41; CC validate_flat_pipeline=28; CC _queue_run_main=26; CC run_gc=26
+# hotspots[5]: _build_handler fan=30; build_context fan=25; create_planfile_ticket fan=23; run_next_planfile_task fan=16; do_from_todo fan=15
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[94]:
-  app.doql.less,469
+M[97]:
+  app.doql.less,504
   docs/llm-tools/aider/install.sh,56
   docs/llm-tools/claude-code/install.sh,61
   docs/llm-tools/costs/install.sh,50
@@ -31,8 +31,10 @@ M[94]:
   docs/llm-tools/vallm/install.sh,56
   plugins/koru-autopilot-vscode/out/extension.js,249
   plugins/koru-autopilot-vscode/src/extension.ts,214
-  project.sh,48
-  scripts/koru-autoloop.sh,112
+  project.sh,54
+  scripts/_koru_autodiag_filter_tickets.py,56
+  scripts/koru-autoloop-reset-diag-markers.sh,97
+  scripts/koru-autoloop.sh,563
   scripts/planfile-export-prompt.sh,82
   scripts/planfile-sync-todo.py,220
   services/healing-webhook/app.py,674
@@ -41,15 +43,15 @@ M[94]:
   src/koru/agents.py,223
   src/koru/autopilot/__init__.py,39
   src/koru/autopilot/audit.py,156
-  src/koru/autopilot/cli_command.py,538
+  src/koru/autopilot/cli_command.py,547
   src/koru/autopilot/client.py,80
   src/koru/autopilot/config.py,124
   src/koru/autopilot/daemon.py,517
-  src/koru/autopilot/ide.py,189
+  src/koru/autopilot/ide.py,263
   src/koru/autopilot/injector.py,256
   src/koru/autopilot/protocol.py,201
   src/koru/bootstrap.py,397
-  src/koru/cli.py,1304
+  src/koru/cli.py,1527
   src/koru/context.py,870
   src/koru/doctor.py,426
   src/koru/dotenv_loader.py,105
@@ -63,24 +65,25 @@ M[94]:
   src/koru/queue_clean.py,356
   src/koru/run_log.py,125
   src/koru/runtime.py,104
-  src/koru/scan.py,516
+  src/koru/scan.py,574
   src/koru/semcod_tools.py,130
-  src/koru/serve.py,530
+  src/koru/serve.py,822
   src/koru/tasks.py,140
+  src/koru/topology.py,356
   src/koru/watch.py,84
   tests/e2e/bootstrap.sh,94
   tests/e2e/init.sh,29
   tests/e2e/smoke.sh,112
   tests/test_agents.py,50
   tests/test_autopilot_audit.py,124
-  tests/test_autopilot_cli.py,299
+  tests/test_autopilot_cli.py,323
   tests/test_autopilot_config.py,156
   tests/test_autopilot_daemon.py,480
-  tests/test_autopilot_ide.py,121
+  tests/test_autopilot_ide.py,154
   tests/test_autopilot_injector.py,183
   tests/test_autopilot_protocol.py,154
   tests/test_bootstrap.py,296
-  tests/test_cli.py,222
+  tests/test_cli.py,233
   tests/test_context.py,442
   tests/test_doctor.py,383
   tests/test_dotenv_loader.py,117
@@ -95,11 +98,14 @@ M[94]:
   tests/test_queue_clean.py,309
   tests/test_run_log.py,139
   tests/test_runtime.py,131
-  tests/test_scan.py,303
+  tests/test_scan.py,335
   tests/test_serve.py,123
   tests/test_tasks.py,51
   tests/test_watch.py,102
 D:
+  scripts/_koru_autodiag_filter_tickets.py:
+    e: main
+    main()
   scripts/planfile-sync-todo.py:
     e: run_planfile,load_tickets,build_auto_section,replace_auto_section,do_from_planfile,do_from_todo,_llm_stub,main
     run_planfile()
@@ -201,13 +207,16 @@ D:
     _default_handoff(project)
     _peer_uid(sock)
   src/koru/autopilot/ide.py:
-    e: _iter_proc_pids,_read_comm,_read_cmdline,_matches,detect_running_ides,pick_target,is_linux,detect_running_ides_cached,clear_detect_cache,RunningIDE
+    e: _iter_proc_pids,_read_comm,_read_cmdline,_matches,detect_running_ides,_active_window_pid_x11,detect_focused_ide_id,focused_ide,pick_target,is_linux,detect_running_ides_cached,clear_detect_cache,RunningIDE
     RunningIDE: to_dict(0)  # A single IDE process discovered on the system.
     _iter_proc_pids()
     _read_comm(pid)
     _read_cmdline(pid)
     _matches(comm;cmdline;patterns)
     detect_running_ides()
+    _active_window_pid_x11()
+    detect_focused_ide_id()
+    focused_ide(detected)
     pick_target(detected)
     is_linux()
     detect_running_ides_cached()
@@ -248,7 +257,7 @@ D:
     import_flat_pipeline(flat_path;project_dir)
     _infer_prefix(tasks)
   src/koru/cli.py:
-    e: _command_value,_build_parser,_build_task_parser,_build_serve_parser,_build_scan_parser,_render_scan_text,_render_scan_markdown,_scan_main,_build_gate_parser,_gate_main,_build_gc_parser,_gc_main,_build_queue_parser,_render_clean_report_text,_queue_main,_build_agent_parser,_task_main,_serve_main,_agent_main,_is_bare_invocation,main
+    e: _command_value,_build_parser,_build_task_parser,_build_serve_parser,_build_scan_parser,_render_scan_text,_render_scan_markdown,_scan_main,_build_gate_parser,_gate_main,_build_gc_parser,_gc_main,_build_queue_parser,_render_clean_report_text,_queue_main,_build_agent_parser,_task_main,_serve_main,_agent_main,_is_bare_invocation,_build_topology_parser,_render_topology_text,_topology_main,_build_runtime_context_parser,_render_runtime_context_text,_runtime_context_main,_doctor_main,_init_main,_context_main,_bootstrap_main,_watch_main,_queue_run_main,_command_loop_main,main
     _command_value(value)
     _build_parser()
     _build_task_parser()
@@ -269,6 +278,19 @@ D:
     _serve_main(argv)
     _agent_main(argv)
     _is_bare_invocation(args)
+    _build_topology_parser()
+    _render_topology_text(topology)
+    _topology_main(argv)
+    _build_runtime_context_parser()
+    _render_runtime_context_text(context)
+    _runtime_context_main(argv)
+    _doctor_main(args;raw_args)
+    _init_main(args)
+    _context_main(args)
+    _bootstrap_main(args)
+    _watch_main(args)
+    _queue_run_main(args)
+    _command_loop_main(args)
     main()
   src/koru/context.py:
     e: _is_fixture_ticket,_resolve_include_fixtures,_load_project_dotenv,_planfile_command_base,_planfile_env,_fetch_all_tickets,_run_planfile,_safe_json,_git_probe,build_context,_auto_promote_blocking_tickets,_build_instructions,_build_setup_instructions,_build_shared_rules,_build_self_service,render_markdown_handoff
@@ -401,10 +423,12 @@ D:
     new_run_id(prefix)
     ensure_runs_dir(project)
   src/koru/scan.py:
-    e: scan_pytest_collect,scan_todo_markers,scan_missing_gates,scan_missing_tools,scan_gitignore_drift,collect_suggestions,_existing_scan_titles,_create_ticket,run_scan,Suggestion,ScanResult
+    e: scan_pytest_collect,_load_koruignore_patterns,_is_koruignored,scan_todo_markers,scan_missing_gates,scan_missing_tools,scan_gitignore_drift,collect_suggestions,_existing_scan_titles,_create_ticket,run_scan,Suggestion,ScanResult
     Suggestion: to_dict(0)  # One proposed planfile ticket derived from a repo signal.
     ScanResult: to_dict(0)  # Aggregate output of ``run_scan``.
     scan_pytest_collect(project)
+    _load_koruignore_patterns(project)
+    _is_koruignored(rel_path;patterns)
     scan_todo_markers(project)
     scan_missing_gates(project)
     scan_missing_tools(project)
@@ -433,6 +457,24 @@ D:
     _read_config(path)
     _read_sprint(path)
     _write_yaml(path;data)
+  src/koru/topology.py:
+    e: topology_path,_read_yaml,_merge_components,_merge_pipelines,load_topology,_strip_to_persisted,save_topology,_toggle,set_component_enabled,set_pipeline_enabled,is_component_enabled,is_pipeline_enabled,enabled_components_for_pipeline,default_component_ids,default_pipeline_ids,ToggleResult
+    ToggleResult:  # Outcome of a single enable/disable mutation.
+    topology_path(project)
+    _read_yaml(path)
+    _merge_components(saved;detected)
+    _merge_pipelines(saved)
+    load_topology(project)
+    _strip_to_persisted(topology)
+    save_topology(project;topology)
+    _toggle(topology;section;target_id;enabled)
+    set_component_enabled(topology;component_id;enabled)
+    set_pipeline_enabled(topology;pipeline_id;enabled)
+    is_component_enabled(project;component_id)
+    is_pipeline_enabled(project;pipeline_id)
+    enabled_components_for_pipeline(project;pipeline_id)
+    default_component_ids()
+    default_pipeline_ids()
   src/koru/watch.py:
     e: format_queue_event,_default_connect,watch_planfile_events
     format_queue_event(event)
@@ -455,11 +497,12 @@ D:
     test_rotation_caps_file_size(tmp_path)
     test_unwritable_directory_disables_silently(tmp_path;capsys;monkeypatch)
   tests/test_autopilot_cli.py:
-    e: test_autopilot_parser_requires_action,test_drive_without_daemon_errors,test_drive_dry_run_direct,test_ide_list_empty,test_doctor_json_output,test_status_when_no_daemon,test_shutdown_when_no_daemon,test_handoff_dry_run_prints_brief_and_skips_daemon,test_handoff_requires_running_daemon,test_handoff_drives_brief_through_client,_write_audit_log,test_tail_text_format_renders_entries,test_tail_json_format_returns_array,test_tail_n_limits_output,test_tail_missing_log_errors_cleanly,test_tail_skips_malformed_lines,test_install_unit_print_renders_execstart,test_install_unit_writes_to_xdg_default_path,test_install_unit_refuses_overwrite_without_force,test_resolve_koru_bin_falls_back_to_sys_executable_sibling
+    e: test_autopilot_parser_requires_action,test_drive_without_daemon_errors,test_drive_dry_run_direct,test_ide_list_empty,test_ide_list_marks_focused_ide,test_doctor_json_output,test_status_when_no_daemon,test_shutdown_when_no_daemon,test_handoff_dry_run_prints_brief_and_skips_daemon,test_handoff_requires_running_daemon,test_handoff_drives_brief_through_client,_write_audit_log,test_tail_text_format_renders_entries,test_tail_json_format_returns_array,test_tail_n_limits_output,test_tail_missing_log_errors_cleanly,test_tail_skips_malformed_lines,test_install_unit_print_renders_execstart,test_install_unit_writes_to_xdg_default_path,test_install_unit_refuses_overwrite_without_force,test_resolve_koru_bin_falls_back_to_sys_executable_sibling
     test_autopilot_parser_requires_action()
     test_drive_without_daemon_errors(capsys;tmp_path)
     test_drive_dry_run_direct(capsys;monkeypatch)
     test_ide_list_empty(capsys;monkeypatch)
+    test_ide_list_marks_focused_ide(capsys;monkeypatch)
     test_doctor_json_output(capsys;monkeypatch)
     test_status_when_no_daemon(capsys;tmp_path)
     test_shutdown_when_no_daemon(capsys;tmp_path)
@@ -515,7 +558,7 @@ D:
     test_session_started_event_just_acks(tmp_path;monkeypatch)
     test_shutdown_stops_daemon(tmp_path;monkeypatch)
   tests/test_autopilot_ide.py:
-    e: fake_proc,test_detect_running_ides_finds_windsurf_and_jetbrains,test_detect_running_ides_deduplicates_same_ide,test_detect_running_ides_skips_unknown_processes,test_pick_target_prefers_user_choice,test_pick_target_returns_none_when_pref_not_running,test_pick_target_defaults_to_first,test_pick_target_empty_list_returns_none,test_detect_cached_uses_cache_within_ttl,test_detect_cached_ttl_zero_always_refreshes,test_clear_detect_cache_forces_refresh
+    e: fake_proc,test_detect_running_ides_finds_windsurf_and_jetbrains,test_detect_running_ides_deduplicates_same_ide,test_detect_running_ides_skips_unknown_processes,test_pick_target_prefers_user_choice,test_pick_target_returns_none_when_pref_not_running,test_pick_target_defaults_to_first,test_pick_target_empty_list_returns_none,test_detect_focused_ide_id_from_active_pid,test_detect_focused_ide_id_returns_none_for_unknown_pid,test_focused_ide_returns_matching_instance,test_pick_target_prefers_focused_when_no_explicit_prefer,test_pick_target_explicit_prefer_beats_focus,test_detect_cached_uses_cache_within_ttl,test_detect_cached_ttl_zero_always_refreshes,test_clear_detect_cache_forces_refresh
     fake_proc(tmp_path;monkeypatch)
     test_detect_running_ides_finds_windsurf_and_jetbrains(fake_proc)
     test_detect_running_ides_deduplicates_same_ide(fake_proc)
@@ -524,6 +567,11 @@ D:
     test_pick_target_returns_none_when_pref_not_running(fake_proc)
     test_pick_target_defaults_to_first(fake_proc)
     test_pick_target_empty_list_returns_none()
+    test_detect_focused_ide_id_from_active_pid(fake_proc)
+    test_detect_focused_ide_id_returns_none_for_unknown_pid(fake_proc)
+    test_focused_ide_returns_matching_instance(fake_proc)
+    test_pick_target_prefers_focused_when_no_explicit_prefer(fake_proc)
+    test_pick_target_explicit_prefer_beats_focus(fake_proc)
     test_detect_cached_uses_cache_within_ttl(monkeypatch)
     test_detect_cached_ttl_zero_always_refreshes(monkeypatch)
     test_clear_detect_cache_forces_refresh(monkeypatch)
@@ -713,7 +761,7 @@ D:
   tests/test_scan.py:
     e: _ok,TestScanPytestCollect,TestScanTodoMarkers,TestScanMissingGates,TestScanMissingTools,TestScanGitignoreDrift,TestRunScan
     TestScanPytestCollect: test_returns_empty_when_no_tests_and_no_pyproject(0),test_empty_on_clean_collect(0),test_parses_per_file_collection_errors(0),test_falls_back_to_umbrella_import_ticket(0),test_collection_timeout_emits_diagnostic_ticket(0),test_timeout_value_is_reflected_in_ticket(0),test_pytest_not_installed_stays_silent(0)
-    TestScanTodoMarkers: test_filters_files_below_threshold(0),test_groups_markers_per_file(0)
+    TestScanTodoMarkers: test_filters_files_below_threshold(0),test_groups_markers_per_file(0),test_respects_koruignore_file_glob(0),test_respects_koruignore_directory_prefix(0)
     TestScanMissingGates: test_no_suggestions_when_tool_missing(0),test_skips_when_config_already_present(0)
     TestScanMissingTools: test_no_pyproject_returns_empty(0),test_skips_tools_not_in_registry(0)
     TestScanGitignoreDrift: test_no_gitignore_returns_empty(0),test_present_entry_skips_suggestion(0),test_missing_entry_suggests(0)

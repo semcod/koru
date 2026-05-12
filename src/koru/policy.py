@@ -121,7 +121,8 @@ class Policy:
 
 def policy_path(project: Path) -> Path:
     """Return the policy YAML location: ``<project>/.planfile/.koru/policy.yaml``."""
-    return runtime_dir(project) / POLICY_FILENAME
+    from .utils.subprocess_runner import resolve_planfile_subpath
+    return resolve_planfile_subpath(project, ".koru", POLICY_FILENAME)
 
 
 def load_policy(project: Path) -> Policy:

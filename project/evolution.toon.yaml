@@ -1,58 +1,58 @@
-# code2llm/evolution | 318 func | 33f | 2026-05-11
+# code2llm/evolution | 351 func | 34f | 2026-05-12
 # generated in 0.00s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           src/koru/cli.py
-      WHY: 1303L, 0 classes, max CC=59
-      EFFORT: ~4h  IMPACT: 76877
+      WHY: 1526L, 0 classes, max CC=26
+      EFFORT: ~4h  IMPACT: 39676
 
   [2] !! SPLIT           src/koru/context.py
       WHY: 869L, 0 classes, max CC=45
       EFFORT: ~4h  IMPACT: 39105
 
-  [3] !! SPLIT           src/koru/planfile_queue.py
-      WHY: 705L, 5 classes, max CC=24
-      EFFORT: ~4h  IMPACT: 16920
-
-  [4] !! SPLIT-FUNC      main  CC=59  fan=34
-      WHY: CC=59 exceeds 15
-      EFFORT: ~1h  IMPACT: 2006
-
-  [5] !! SPLIT-FUNC      build_context  CC=41  fan=25
+  [3] !! SPLIT-FUNC      build_context  CC=41  fan=25
       WHY: CC=41 exceeds 15
       EFFORT: ~1h  IMPACT: 1025
 
-  [6] !! SPLIT-FUNC      render_markdown_handoff  CC=45  fan=22
+  [4] !! SPLIT-FUNC      render_markdown_handoff  CC=45  fan=22
       WHY: CC=45 exceeds 15
       EFFORT: ~1h  IMPACT: 990
 
-  [7] !  SPLIT-FUNC      create_planfile_ticket  CC=24  fan=27
+  [5] !  SPLIT-FUNC      create_planfile_ticket  CC=24  fan=27
       WHY: CC=24 exceeds 15
       EFFORT: ~1h  IMPACT: 648
 
-  [8] !! SPLIT-FUNC      run_gc  CC=26  fan=19
+  [6] !! SPLIT-FUNC      run_gc  CC=26  fan=19
       WHY: CC=26 exceeds 15
       EFFORT: ~1h  IMPACT: 494
 
-  [9] !  SPLIT-FUNC      run_next_planfile_task  CC=24  fan=19
+  [7] !  SPLIT-FUNC      run_next_planfile_task  CC=24  fan=19
       WHY: CC=24 exceeds 15
       EFFORT: ~1h  IMPACT: 456
 
-  [10] !  SPLIT-FUNC      _run_llm_request  CC=23  fan=19
+  [8] !  SPLIT-FUNC      _run_llm_request  CC=23  fan=19
       WHY: CC=23 exceeds 15
       EFFORT: ~1h  IMPACT: 437
 
+  [9] !! SPLIT-FUNC      validate_flat_pipeline  CC=28  fan=13
+      WHY: CC=28 exceeds 15
+      EFFORT: ~1h  IMPACT: 364
+
+  [10] !! SPLIT-FUNC      _queue_run_main  CC=26  fan=13
+      WHY: CC=26 exceeds 15
+      EFFORT: ~1h  IMPACT: 338
+
 
 RISKS[3]:
-  ⚠ Splitting src/koru/cli.py may break 21 import paths
+  ⚠ Splitting src/koru/cli.py may break 34 import paths
+  ⚠ Splitting planfile.yaml may break 0 import paths
   ⚠ Splitting src/koru/context.py may break 16 import paths
-  ⚠ Splitting src/koru/planfile_queue.py may break 15 import paths
 
 METRICS-TARGET:
-  CC̄:          5.2 → ≤3.6
-  max-CC:      59 → ≤20
-  god-modules: 10 → 0
-  high-CC(≥15): 15 → ≤7
+  CC̄:          5.1 → ≤3.6
+  max-CC:      45 → ≤20
+  god-modules: 11 → 0
+  high-CC(≥15): 17 → ≤8
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  (first run — no previous data)
+  prev CC̄=5.2 → now CC̄=5.1

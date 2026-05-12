@@ -20,6 +20,7 @@ from .client import AutopilotClient
 from .daemon import AutopilotDaemon
 from .ide import detect_focused_ide_id, detect_running_ides
 from .injector import Injector, InjectorError
+from .utils.client_helpers import call_daemon_method, resolve_xdg_path
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -265,30 +266,16 @@ def _action_drive(args: argparse.Namespace) -> int:
 
 def _action_status(args: argparse.Namespace) -> int:
     client = _client(args)
-    if not client.is_running():
-        print("koru autopilot: daemon is NOT running")
-        return 1
-    try:
-        info = client.status()
-    except (OSError, RuntimeError) as exc:
-        print(f"koru autopilot status: {exc}", file=sys.stderr)
-        return 1
-    print(json.dumps(info, indent=2, sort_keys=True))
-    return 0
+    return call_daemon_method(
+        client, "status", "koru autopilot status", not_running_return_code=1
+    )
 
 
 def _action_shutdown(args: argparse.Namespace) -> int:
     client = _client(args)
-    if not client.is_running():
-        print("koru autopilot: daemon is not running")
-        return 0
-    try:
-        info = client.shutdown()
-    except (OSError, RuntimeError) as exc:
-        print(f"koru autopilot shutdown: {exc}", file=sys.stderr)
-        return 1
-    print(json.dumps(info, indent=2, sort_keys=True))
-    return 0
+    return call_daemon_method(
+        client, "shutdown", "koru autopilot shutdown", not_running_return_code=0
+    )
 
 
 def _action_ide_list(_args: argparse.Namespace) -> int:
@@ -429,9 +416,7 @@ def _action_tail(args: argparse.Namespace) -> int:
 
 def _systemd_user_dir() -> Path:
     """Resolve the XDG ``systemd/user`` directory."""
-    xdg = os.environ.get("XDG_CONFIG_HOME")
-    base = Path(xdg) if xdg else Path.home() / ".config"
-    return base / "systemd" / "user"
+    return resolve_xdg_path("systemd/user")
 
 
 def _resolve_koru_bin() -> str:

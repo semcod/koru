@@ -37,6 +37,7 @@ from pathlib import Path
 from typing import Any, Callable, Sequence
 
 from .semcod_tools import detect_semcod_tools
+from .utils.subprocess_runner import default_subprocess_runner
 
 
 # ---------------------------------------------------------------------------
@@ -469,14 +470,7 @@ def _existing_scan_titles(
     Used to deduplicate ``--apply`` runs: re-running ``koru scan --apply``
     should not pile up identical tickets.
     """
-    def _default(
-        cmd: Sequence[str], cwd: Path
-    ) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(
-            list(cmd), cwd=cwd, capture_output=True, text=True, check=False,
-        )
-
-    use_runner = runner or _default
+    use_runner = runner or default_subprocess_runner
     try:
         result = use_runner(
             ["planfile", "ticket", "list", "--source", source, "--format", "json"],
@@ -509,14 +503,7 @@ def _create_ticket(
     runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]] | None = None,
 ) -> bool:
     """Create one ticket via ``planfile ticket create``. Returns success."""
-    def _default(
-        cmd: Sequence[str], cwd: Path
-    ) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(
-            list(cmd), cwd=cwd, capture_output=True, text=True, check=False,
-        )
-
-    use_runner = runner or _default
+    use_runner = runner or default_subprocess_runner
     cmd: list[str] = [
         "planfile", "ticket", "create",
         suggestion.title,

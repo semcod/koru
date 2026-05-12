@@ -21,7 +21,7 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.24`
+- **version**: `0.1.30`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -41,7 +41,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.24;
+  version: 0.1.30;
 }
 
 dependencies {
@@ -127,13 +127,48 @@ workflow[name="queue:autoloop"] {
   step-1: run cmd=PROJECT="{{.PROJECT}}" \
 ACTOR="{{.ACTOR}}" \
 QUEUE_NAME="{{.QUEUE_NAME}}" \
+USE_ALL_QUEUES="{{.USE_ALL_QUEUES}}" \
 MAX_ITERATIONS="{{.MAX_ITERATIONS}}" \
+MAX_CYCLES="{{.MAX_CYCLES}}" \
 SLEEP_SECONDS="{{.SLEEP_SECONDS}}" \
+INITIAL_DELAY_SECONDS="{{.INITIAL_DELAY_SECONDS}}" \
 ENABLE_SCAN="{{.ENABLE_SCAN}}" \
-ENABLE_AUTOPILOT_DRIVE="{{.ENABLE_AUTOPILOT_DRIVE}}" \
+TICKET_SOURCES="{{.TICKET_SOURCES}}" \
 ENABLE_INTERACTIVE="{{.ENABLE_INTERACTIVE}}" \
+ENABLE_AUTOPILOT_DRIVE="{{.ENABLE_AUTOPILOT_DRIVE}}" \
+AUTOPILOT_ACTION="{{.AUTOPILOT_ACTION}}" \
+AUTOPILOT_IDE="{{.AUTOPILOT_IDE}}" \
+AUTOPILOT_SUBMIT="{{.AUTOPILOT_SUBMIT}}" \
+AUTOPILOT_ON_IDLE_ONLY="{{.AUTOPILOT_ON_IDLE_ONLY}}" \
+AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL="{{.AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL}}" \
 DRIVE_PROMPT="{{.DRIVE_PROMPT}}" \
+ENABLE_IDLE_DIAGNOSTICS="{{.ENABLE_IDLE_DIAGNOSTICS}}" \
+IDLE_DIAGNOSTICS_PROFILE="{{.IDLE_DIAGNOSTICS_PROFILE}}" \
+STRICT_DIAGNOSTICS="{{.STRICT_DIAGNOSTICS}}" \
+ENABLE_DIAGNOSTIC_TICKETS="{{.ENABLE_DIAGNOSTIC_TICKETS}}" \
+DIAGNOSTIC_TICKET_QUEUE="{{.DIAGNOSTIC_TICKET_QUEUE}}" \
+DIAGNOSTIC_TICKET_PRIORITY="{{.DIAGNOSTIC_TICKET_PRIORITY}}" \
+DIAG_STATE_DIR="{{.DIAG_STATE_DIR}}" \
+AUTOPILOT_SKIP_STATUSES="{{.AUTOPILOT_SKIP_STATUSES}}" \
+BACKOFF_ON_STAGNATION="{{.BACKOFF_ON_STAGNATION}}" \
+MAX_SLEEP_SECONDS="{{.MAX_SLEEP_SECONDS}}" \
+SCAN_SKIP_IF_CLEAN="{{.SCAN_SKIP_IF_CLEAN}}" \
+SCAN_SKIP_AFTER="{{.SCAN_SKIP_AFTER}}" \
+KORU_CMD="{{.KORU_CMD}}" \
+KORU_PLANFILE_CMD="{{.KORU_PLANFILE_CMD}}" \
+KORU_PYTHONPATH="{{.KORU_PYTHONPATH}}" \
 bash scripts/koru-autoloop.sh;
+}
+
+workflow[name="queue:autoloop:reset-diag-markers"] {
+  trigger: manual;
+  step-1: run cmd=MARKER_DIR="{{.MARKER_DIR}}" \
+CHECK="{{.CHECK}}" \
+CLOSE_TICKETS="{{.CLOSE_TICKETS}}" \
+CLOSE_STATUS="{{.CLOSE_STATUS}}" \
+KORU_PLANFILE_CMD="{{.KORU_PLANFILE_CMD}}" \
+KORU_PYTHONPATH="{{.KORU_PYTHONPATH}}" \
+bash scripts/koru-autoloop-reset-diag-markers.sh;
 }
 
 workflow[name="quality:regix"] {
@@ -697,30 +732,97 @@ tasks:
     interactive: true
 
   queue:autoloop:
-    desc: 'Continuous intake+execution loop (scan --apply + queue --loop + autopilot drive)'
+    desc: 'Continuous intake+execution loop (scan + queue --loop + idle diagnostics + autopilot drive). See scripts/koru-autoloop.sh header for all env vars.'
     cmds:
       - |
         PROJECT="{{.PROJECT}}" \
         ACTOR="{{.ACTOR}}" \
         QUEUE_NAME="{{.QUEUE_NAME}}" \
+        USE_ALL_QUEUES="{{.USE_ALL_QUEUES}}" \
         MAX_ITERATIONS="{{.MAX_ITERATIONS}}" \
+        MAX_CYCLES="{{.MAX_CYCLES}}" \
         SLEEP_SECONDS="{{.SLEEP_SECONDS}}" \
+        INITIAL_DELAY_SECONDS="{{.INITIAL_DELAY_SECONDS}}" \
         ENABLE_SCAN="{{.ENABLE_SCAN}}" \
-        ENABLE_AUTOPILOT_DRIVE="{{.ENABLE_AUTOPILOT_DRIVE}}" \
+        TICKET_SOURCES="{{.TICKET_SOURCES}}" \
         ENABLE_INTERACTIVE="{{.ENABLE_INTERACTIVE}}" \
+        ENABLE_AUTOPILOT_DRIVE="{{.ENABLE_AUTOPILOT_DRIVE}}" \
+        AUTOPILOT_ACTION="{{.AUTOPILOT_ACTION}}" \
+        AUTOPILOT_IDE="{{.AUTOPILOT_IDE}}" \
+        AUTOPILOT_SUBMIT="{{.AUTOPILOT_SUBMIT}}" \
+        AUTOPILOT_ON_IDLE_ONLY="{{.AUTOPILOT_ON_IDLE_ONLY}}" \
+        AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL="{{.AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL}}" \
         DRIVE_PROMPT="{{.DRIVE_PROMPT}}" \
+        ENABLE_IDLE_DIAGNOSTICS="{{.ENABLE_IDLE_DIAGNOSTICS}}" \
+        IDLE_DIAGNOSTICS_PROFILE="{{.IDLE_DIAGNOSTICS_PROFILE}}" \
+        STRICT_DIAGNOSTICS="{{.STRICT_DIAGNOSTICS}}" \
+        ENABLE_DIAGNOSTIC_TICKETS="{{.ENABLE_DIAGNOSTIC_TICKETS}}" \
+        DIAGNOSTIC_TICKET_QUEUE="{{.DIAGNOSTIC_TICKET_QUEUE}}" \
+        DIAGNOSTIC_TICKET_PRIORITY="{{.DIAGNOSTIC_TICKET_PRIORITY}}" \
+        DIAG_STATE_DIR="{{.DIAG_STATE_DIR}}" \
+        AUTOPILOT_SKIP_STATUSES="{{.AUTOPILOT_SKIP_STATUSES}}" \
+        BACKOFF_ON_STAGNATION="{{.BACKOFF_ON_STAGNATION}}" \
+        MAX_SLEEP_SECONDS="{{.MAX_SLEEP_SECONDS}}" \
+        SCAN_SKIP_IF_CLEAN="{{.SCAN_SKIP_IF_CLEAN}}" \
+        SCAN_SKIP_AFTER="{{.SCAN_SKIP_AFTER}}" \
+        KORU_CMD="{{.KORU_CMD}}" \
+        KORU_PLANFILE_CMD="{{.KORU_PLANFILE_CMD}}" \
+        KORU_PYTHONPATH="{{.KORU_PYTHONPATH}}" \
         bash scripts/koru-autoloop.sh
     vars:
       PROJECT: '{{.PROJECT | default "."}}'
       ACTOR: '{{.ACTOR | default "koru-shell"}}'
       QUEUE_NAME: '{{.QUEUE_NAME | default ""}}'
+      USE_ALL_QUEUES: '{{.USE_ALL_QUEUES | default "false"}}'
       MAX_ITERATIONS: '{{.MAX_ITERATIONS | default "50"}}'
+      MAX_CYCLES: '{{.MAX_CYCLES | default "0"}}'
       SLEEP_SECONDS: '{{.SLEEP_SECONDS | default "120"}}'
+      INITIAL_DELAY_SECONDS: '{{.INITIAL_DELAY_SECONDS | default "0"}}'
       ENABLE_SCAN: '{{.ENABLE_SCAN | default "true"}}'
-      ENABLE_AUTOPILOT_DRIVE: '{{.ENABLE_AUTOPILOT_DRIVE | default "true"}}'
+      TICKET_SOURCES: '{{.TICKET_SOURCES | default "queue"}}'
       ENABLE_INTERACTIVE: '{{.ENABLE_INTERACTIVE | default "false"}}'
+      ENABLE_AUTOPILOT_DRIVE: '{{.ENABLE_AUTOPILOT_DRIVE | default "true"}}'
+      AUTOPILOT_ACTION: '{{.AUTOPILOT_ACTION | default "drive"}}'
+      AUTOPILOT_IDE: '{{.AUTOPILOT_IDE | default "auto"}}'
+      AUTOPILOT_SUBMIT: '{{.AUTOPILOT_SUBMIT | default "true"}}'
+      AUTOPILOT_ON_IDLE_ONLY: '{{.AUTOPILOT_ON_IDLE_ONLY | default "false"}}'
+      AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL: '{{.AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL | default "true"}}'
       DRIVE_PROMPT: '{{.DRIVE_PROMPT | default "continue with the next ticket"}}'
+      ENABLE_IDLE_DIAGNOSTICS: '{{.ENABLE_IDLE_DIAGNOSTICS | default "false"}}'
+      IDLE_DIAGNOSTICS_PROFILE: '{{.IDLE_DIAGNOSTICS_PROFILE | default "quick"}}'
+      STRICT_DIAGNOSTICS: '{{.STRICT_DIAGNOSTICS | default "false"}}'
+      ENABLE_DIAGNOSTIC_TICKETS: '{{.ENABLE_DIAGNOSTIC_TICKETS | default "false"}}'
+      DIAGNOSTIC_TICKET_QUEUE: '{{.DIAGNOSTIC_TICKET_QUEUE | default "default"}}'
+      DIAGNOSTIC_TICKET_PRIORITY: '{{.DIAGNOSTIC_TICKET_PRIORITY | default "high"}}'
+      DIAG_STATE_DIR: '{{.DIAG_STATE_DIR | default ".planfile/.koru/autoloop-diag"}}'
+      AUTOPILOT_SKIP_STATUSES: '{{.AUTOPILOT_SKIP_STATUSES | default "waiting_input"}}'
+      BACKOFF_ON_STAGNATION: '{{.BACKOFF_ON_STAGNATION | default "true"}}'
+      MAX_SLEEP_SECONDS: '{{.MAX_SLEEP_SECONDS | default "900"}}'
+      SCAN_SKIP_IF_CLEAN: '{{.SCAN_SKIP_IF_CLEAN | default "false"}}'
+      SCAN_SKIP_AFTER: '{{.SCAN_SKIP_AFTER | default "1"}}'
+      KORU_CMD: '{{.KORU_CMD | default "koru"}}'
+      KORU_PLANFILE_CMD: '{{.KORU_PLANFILE_CMD | default "planfile"}}'
+      KORU_PYTHONPATH: '{{.KORU_PYTHONPATH | default ""}}'
     interactive: true
+
+  queue:autoloop:reset-diag-markers:
+    desc: 'Clear autoloop diagnostic dedup markers; optionally close [AUTO-DIAG] tickets. Usage: task queue:autoloop:reset-diag-markers CLOSE_TICKETS=true CHECK=regix'
+    cmds:
+      - |
+        MARKER_DIR="{{.MARKER_DIR}}" \
+        CHECK="{{.CHECK}}" \
+        CLOSE_TICKETS="{{.CLOSE_TICKETS}}" \
+        CLOSE_STATUS="{{.CLOSE_STATUS}}" \
+        KORU_PLANFILE_CMD="{{.KORU_PLANFILE_CMD}}" \
+        KORU_PYTHONPATH="{{.KORU_PYTHONPATH}}" \
+        bash scripts/koru-autoloop-reset-diag-markers.sh
+    vars:
+      MARKER_DIR: '{{.MARKER_DIR | default ".planfile/.koru/autoloop-diag"}}'
+      CHECK: '{{.CHECK | default "all"}}'
+      CLOSE_TICKETS: '{{.CLOSE_TICKETS | default "false"}}'
+      CLOSE_STATUS: '{{.CLOSE_STATUS | default "done"}}'
+      KORU_PLANFILE_CMD: '{{.KORU_PLANFILE_CMD | default "planfile"}}'
+      KORU_PYTHONPATH: '{{.KORU_PYTHONPATH | default ""}}'
 
   # =====================================================================
   # Quality gates (LLM-free, proxies to underlying tools)
@@ -1192,7 +1294,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.24
+  version: 0.1.30
   env: local
 ```
 
@@ -1245,21 +1347,21 @@ pip install -e .[dev]
 - **commits**: `conventional` scope=`koru`
 - **changelog**: `keep-a-changelog`
 - **build strategies**: `python`, `nodejs`, `rust`
-- **version files**: `VERSION`, `pyproject.toml:version`, `venv/lib/python3.13/site-packages/matplotlib/__init__.py:__version__`
+- **version files**: `VERSION`, `pyproject.toml:version`, `venv/lib/python3.13/site-packages/cryptography/__init__.py:__version__`
 
 ## Code Analysis
 
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 94f 20159L | python:62,shell:29,less:1,javascript:1,typescript:1 | 2026-05-11
-# stats: 396 func | 113 cls | 94 mod | CC̄=4.8 | critical:41 | cycles:0
-# alerts[5]: CC main=59; CC render_markdown_handoff=45; CC build_context=41; CC validate_flat_pipeline=28; CC run_gc=26
-# hotspots[5]: main fan=33; build_context fan=25; create_planfile_ticket fan=23; run_next_planfile_task fan=16; do_from_todo fan=15
+# koru | 97f 21916L | python:64,shell:30,less:1,javascript:1,typescript:1 | 2026-05-12
+# stats: 436 func | 114 cls | 97 mod | CC̄=4.8 | critical:49 | cycles:0
+# alerts[5]: CC render_markdown_handoff=45; CC build_context=41; CC validate_flat_pipeline=28; CC _queue_run_main=26; CC run_gc=26
+# hotspots[5]: _build_handler fan=30; build_context fan=25; create_planfile_ticket fan=23; run_next_planfile_task fan=16; do_from_todo fan=15
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[94]:
-  app.doql.less,469
+M[97]:
+  app.doql.less,504
   docs/llm-tools/aider/install.sh,56
   docs/llm-tools/claude-code/install.sh,61
   docs/llm-tools/costs/install.sh,50
@@ -1285,8 +1387,10 @@ M[94]:
   docs/llm-tools/vallm/install.sh,56
   plugins/koru-autopilot-vscode/out/extension.js,249
   plugins/koru-autopilot-vscode/src/extension.ts,214
-  project.sh,48
-  scripts/koru-autoloop.sh,112
+  project.sh,54
+  scripts/_koru_autodiag_filter_tickets.py,56
+  scripts/koru-autoloop-reset-diag-markers.sh,97
+  scripts/koru-autoloop.sh,563
   scripts/planfile-export-prompt.sh,82
   scripts/planfile-sync-todo.py,220
   services/healing-webhook/app.py,674
@@ -1295,15 +1399,15 @@ M[94]:
   src/koru/agents.py,223
   src/koru/autopilot/__init__.py,39
   src/koru/autopilot/audit.py,156
-  src/koru/autopilot/cli_command.py,538
+  src/koru/autopilot/cli_command.py,547
   src/koru/autopilot/client.py,80
   src/koru/autopilot/config.py,124
   src/koru/autopilot/daemon.py,517
-  src/koru/autopilot/ide.py,189
+  src/koru/autopilot/ide.py,263
   src/koru/autopilot/injector.py,256
   src/koru/autopilot/protocol.py,201
   src/koru/bootstrap.py,397
-  src/koru/cli.py,1304
+  src/koru/cli.py,1527
   src/koru/context.py,870
   src/koru/doctor.py,426
   src/koru/dotenv_loader.py,105
@@ -1317,24 +1421,25 @@ M[94]:
   src/koru/queue_clean.py,356
   src/koru/run_log.py,125
   src/koru/runtime.py,104
-  src/koru/scan.py,516
+  src/koru/scan.py,574
   src/koru/semcod_tools.py,130
-  src/koru/serve.py,530
+  src/koru/serve.py,822
   src/koru/tasks.py,140
+  src/koru/topology.py,356
   src/koru/watch.py,84
   tests/e2e/bootstrap.sh,94
   tests/e2e/init.sh,29
   tests/e2e/smoke.sh,112
   tests/test_agents.py,50
   tests/test_autopilot_audit.py,124
-  tests/test_autopilot_cli.py,299
+  tests/test_autopilot_cli.py,323
   tests/test_autopilot_config.py,156
   tests/test_autopilot_daemon.py,480
-  tests/test_autopilot_ide.py,121
+  tests/test_autopilot_ide.py,154
   tests/test_autopilot_injector.py,183
   tests/test_autopilot_protocol.py,154
   tests/test_bootstrap.py,296
-  tests/test_cli.py,222
+  tests/test_cli.py,233
   tests/test_context.py,442
   tests/test_doctor.py,383
   tests/test_dotenv_loader.py,117
@@ -1349,11 +1454,14 @@ M[94]:
   tests/test_queue_clean.py,309
   tests/test_run_log.py,139
   tests/test_runtime.py,131
-  tests/test_scan.py,303
+  tests/test_scan.py,335
   tests/test_serve.py,123
   tests/test_tasks.py,51
   tests/test_watch.py,102
 D:
+  scripts/_koru_autodiag_filter_tickets.py:
+    e: main
+    main()
   scripts/planfile-sync-todo.py:
     e: run_planfile,load_tickets,build_auto_section,replace_auto_section,do_from_planfile,do_from_todo,_llm_stub,main
     run_planfile()
@@ -1455,13 +1563,16 @@ D:
     _default_handoff(project)
     _peer_uid(sock)
   src/koru/autopilot/ide.py:
-    e: _iter_proc_pids,_read_comm,_read_cmdline,_matches,detect_running_ides,pick_target,is_linux,detect_running_ides_cached,clear_detect_cache,RunningIDE
+    e: _iter_proc_pids,_read_comm,_read_cmdline,_matches,detect_running_ides,_active_window_pid_x11,detect_focused_ide_id,focused_ide,pick_target,is_linux,detect_running_ides_cached,clear_detect_cache,RunningIDE
     RunningIDE: to_dict(0)  # A single IDE process discovered on the system.
     _iter_proc_pids()
     _read_comm(pid)
     _read_cmdline(pid)
     _matches(comm;cmdline;patterns)
     detect_running_ides()
+    _active_window_pid_x11()
+    detect_focused_ide_id()
+    focused_ide(detected)
     pick_target(detected)
     is_linux()
     detect_running_ides_cached()
@@ -1502,7 +1613,7 @@ D:
     import_flat_pipeline(flat_path;project_dir)
     _infer_prefix(tasks)
   src/koru/cli.py:
-    e: _command_value,_build_parser,_build_task_parser,_build_serve_parser,_build_scan_parser,_render_scan_text,_render_scan_markdown,_scan_main,_build_gate_parser,_gate_main,_build_gc_parser,_gc_main,_build_queue_parser,_render_clean_report_text,_queue_main,_build_agent_parser,_task_main,_serve_main,_agent_main,_is_bare_invocation,main
+    e: _command_value,_build_parser,_build_task_parser,_build_serve_parser,_build_scan_parser,_render_scan_text,_render_scan_markdown,_scan_main,_build_gate_parser,_gate_main,_build_gc_parser,_gc_main,_build_queue_parser,_render_clean_report_text,_queue_main,_build_agent_parser,_task_main,_serve_main,_agent_main,_is_bare_invocation,_build_topology_parser,_render_topology_text,_topology_main,_build_runtime_context_parser,_render_runtime_context_text,_runtime_context_main,_doctor_main,_init_main,_context_main,_bootstrap_main,_watch_main,_queue_run_main,_command_loop_main,main
     _command_value(value)
     _build_parser()
     _build_task_parser()
@@ -1523,6 +1634,19 @@ D:
     _serve_main(argv)
     _agent_main(argv)
     _is_bare_invocation(args)
+    _build_topology_parser()
+    _render_topology_text(topology)
+    _topology_main(argv)
+    _build_runtime_context_parser()
+    _render_runtime_context_text(context)
+    _runtime_context_main(argv)
+    _doctor_main(args;raw_args)
+    _init_main(args)
+    _context_main(args)
+    _bootstrap_main(args)
+    _watch_main(args)
+    _queue_run_main(args)
+    _command_loop_main(args)
     main()
   src/koru/context.py:
     e: _is_fixture_ticket,_resolve_include_fixtures,_load_project_dotenv,_planfile_command_base,_planfile_env,_fetch_all_tickets,_run_planfile,_safe_json,_git_probe,build_context,_auto_promote_blocking_tickets,_build_instructions,_build_setup_instructions,_build_shared_rules,_build_self_service,render_markdown_handoff
@@ -1655,10 +1779,12 @@ D:
     new_run_id(prefix)
     ensure_runs_dir(project)
   src/koru/scan.py:
-    e: scan_pytest_collect,scan_todo_markers,scan_missing_gates,scan_missing_tools,scan_gitignore_drift,collect_suggestions,_existing_scan_titles,_create_ticket,run_scan,Suggestion,ScanResult
+    e: scan_pytest_collect,_load_koruignore_patterns,_is_koruignored,scan_todo_markers,scan_missing_gates,scan_missing_tools,scan_gitignore_drift,collect_suggestions,_existing_scan_titles,_create_ticket,run_scan,Suggestion,ScanResult
     Suggestion: to_dict(0)  # One proposed planfile ticket derived from a repo signal.
     ScanResult: to_dict(0)  # Aggregate output of ``run_scan``.
     scan_pytest_collect(project)
+    _load_koruignore_patterns(project)
+    _is_koruignored(rel_path;patterns)
     scan_todo_markers(project)
     scan_missing_gates(project)
     scan_missing_tools(project)
@@ -1687,6 +1813,24 @@ D:
     _read_config(path)
     _read_sprint(path)
     _write_yaml(path;data)
+  src/koru/topology.py:
+    e: topology_path,_read_yaml,_merge_components,_merge_pipelines,load_topology,_strip_to_persisted,save_topology,_toggle,set_component_enabled,set_pipeline_enabled,is_component_enabled,is_pipeline_enabled,enabled_components_for_pipeline,default_component_ids,default_pipeline_ids,ToggleResult
+    ToggleResult:  # Outcome of a single enable/disable mutation.
+    topology_path(project)
+    _read_yaml(path)
+    _merge_components(saved;detected)
+    _merge_pipelines(saved)
+    load_topology(project)
+    _strip_to_persisted(topology)
+    save_topology(project;topology)
+    _toggle(topology;section;target_id;enabled)
+    set_component_enabled(topology;component_id;enabled)
+    set_pipeline_enabled(topology;pipeline_id;enabled)
+    is_component_enabled(project;component_id)
+    is_pipeline_enabled(project;pipeline_id)
+    enabled_components_for_pipeline(project;pipeline_id)
+    default_component_ids()
+    default_pipeline_ids()
   src/koru/watch.py:
     e: format_queue_event,_default_connect,watch_planfile_events
     format_queue_event(event)
@@ -1709,11 +1853,12 @@ D:
     test_rotation_caps_file_size(tmp_path)
     test_unwritable_directory_disables_silently(tmp_path;capsys;monkeypatch)
   tests/test_autopilot_cli.py:
-    e: test_autopilot_parser_requires_action,test_drive_without_daemon_errors,test_drive_dry_run_direct,test_ide_list_empty,test_doctor_json_output,test_status_when_no_daemon,test_shutdown_when_no_daemon,test_handoff_dry_run_prints_brief_and_skips_daemon,test_handoff_requires_running_daemon,test_handoff_drives_brief_through_client,_write_audit_log,test_tail_text_format_renders_entries,test_tail_json_format_returns_array,test_tail_n_limits_output,test_tail_missing_log_errors_cleanly,test_tail_skips_malformed_lines,test_install_unit_print_renders_execstart,test_install_unit_writes_to_xdg_default_path,test_install_unit_refuses_overwrite_without_force,test_resolve_koru_bin_falls_back_to_sys_executable_sibling
+    e: test_autopilot_parser_requires_action,test_drive_without_daemon_errors,test_drive_dry_run_direct,test_ide_list_empty,test_ide_list_marks_focused_ide,test_doctor_json_output,test_status_when_no_daemon,test_shutdown_when_no_daemon,test_handoff_dry_run_prints_brief_and_skips_daemon,test_handoff_requires_running_daemon,test_handoff_drives_brief_through_client,_write_audit_log,test_tail_text_format_renders_entries,test_tail_json_format_returns_array,test_tail_n_limits_output,test_tail_missing_log_errors_cleanly,test_tail_skips_malformed_lines,test_install_unit_print_renders_execstart,test_install_unit_writes_to_xdg_default_path,test_install_unit_refuses_overwrite_without_force,test_resolve_koru_bin_falls_back_to_sys_executable_sibling
     test_autopilot_parser_requires_action()
     test_drive_without_daemon_errors(capsys;tmp_path)
     test_drive_dry_run_direct(capsys;monkeypatch)
     test_ide_list_empty(capsys;monkeypatch)
+    test_ide_list_marks_focused_ide(capsys;monkeypatch)
     test_doctor_json_output(capsys;monkeypatch)
     test_status_when_no_daemon(capsys;tmp_path)
     test_shutdown_when_no_daemon(capsys;tmp_path)
@@ -1769,7 +1914,7 @@ D:
     test_session_started_event_just_acks(tmp_path;monkeypatch)
     test_shutdown_stops_daemon(tmp_path;monkeypatch)
   tests/test_autopilot_ide.py:
-    e: fake_proc,test_detect_running_ides_finds_windsurf_and_jetbrains,test_detect_running_ides_deduplicates_same_ide,test_detect_running_ides_skips_unknown_processes,test_pick_target_prefers_user_choice,test_pick_target_returns_none_when_pref_not_running,test_pick_target_defaults_to_first,test_pick_target_empty_list_returns_none,test_detect_cached_uses_cache_within_ttl,test_detect_cached_ttl_zero_always_refreshes,test_clear_detect_cache_forces_refresh
+    e: fake_proc,test_detect_running_ides_finds_windsurf_and_jetbrains,test_detect_running_ides_deduplicates_same_ide,test_detect_running_ides_skips_unknown_processes,test_pick_target_prefers_user_choice,test_pick_target_returns_none_when_pref_not_running,test_pick_target_defaults_to_first,test_pick_target_empty_list_returns_none,test_detect_focused_ide_id_from_active_pid,test_detect_focused_ide_id_returns_none_for_unknown_pid,test_focused_ide_returns_matching_instance,test_pick_target_prefers_focused_when_no_explicit_prefer,test_pick_target_explicit_prefer_beats_focus,test_detect_cached_uses_cache_within_ttl,test_detect_cached_ttl_zero_always_refreshes,test_clear_detect_cache_forces_refresh
     fake_proc(tmp_path;monkeypatch)
     test_detect_running_ides_finds_windsurf_and_jetbrains(fake_proc)
     test_detect_running_ides_deduplicates_same_ide(fake_proc)
@@ -1778,6 +1923,11 @@ D:
     test_pick_target_returns_none_when_pref_not_running(fake_proc)
     test_pick_target_defaults_to_first(fake_proc)
     test_pick_target_empty_list_returns_none()
+    test_detect_focused_ide_id_from_active_pid(fake_proc)
+    test_detect_focused_ide_id_returns_none_for_unknown_pid(fake_proc)
+    test_focused_ide_returns_matching_instance(fake_proc)
+    test_pick_target_prefers_focused_when_no_explicit_prefer(fake_proc)
+    test_pick_target_explicit_prefer_beats_focus(fake_proc)
     test_detect_cached_uses_cache_within_ttl(monkeypatch)
     test_detect_cached_ttl_zero_always_refreshes(monkeypatch)
     test_clear_detect_cache_forces_refresh(monkeypatch)
@@ -1967,7 +2117,7 @@ D:
   tests/test_scan.py:
     e: _ok,TestScanPytestCollect,TestScanTodoMarkers,TestScanMissingGates,TestScanMissingTools,TestScanGitignoreDrift,TestRunScan
     TestScanPytestCollect: test_returns_empty_when_no_tests_and_no_pyproject(0),test_empty_on_clean_collect(0),test_parses_per_file_collection_errors(0),test_falls_back_to_umbrella_import_ticket(0),test_collection_timeout_emits_diagnostic_ticket(0),test_timeout_value_is_reflected_in_ticket(0),test_pytest_not_installed_stays_silent(0)
-    TestScanTodoMarkers: test_filters_files_below_threshold(0),test_groups_markers_per_file(0)
+    TestScanTodoMarkers: test_filters_files_below_threshold(0),test_groups_markers_per_file(0),test_respects_koruignore_file_glob(0),test_respects_koruignore_directory_prefix(0)
     TestScanMissingGates: test_no_suggestions_when_tool_missing(0),test_skips_when_config_already_present(0)
     TestScanMissingTools: test_no_pyproject_returns_empty(0),test_skips_tools_not_in_registry(0)
     TestScanGitignoreDrift: test_no_gitignore_returns_empty(0),test_present_entry_skips_suggestion(0),test_missing_entry_suggests(0)
@@ -1990,15 +2140,15 @@ D:
 
 ## Call Graph
 
-*228 nodes · 247 edges · 35 modules · CC̄=5.1*
+*258 nodes · 303 edges · 36 modules · CC̄=5.0*
 
 ### Hubs (by degree)
 
 | Function | CC | in | out | total |
 |----------|----|----|-----|-------|
 | `render_markdown_handoff` *(in src.koru.context)* | 45 ⚠ | 5 | 163 | **168** |
-| `print` *(in scripts.planfile-export-prompt)* | 0 | 144 | 0 | **144** |
-| `main` *(in src.koru.cli)* | 59 ⚠ | 0 | 105 | **105** |
+| `print` *(in scripts.planfile-export-prompt)* | 0 | 159 | 0 | **159** |
+| `_build_handler` *(in src.koru.serve)* | 1 | 1 | 71 | **72** |
 | `validate_flat_pipeline` *(in src.koru.bootstrap)* | 28 ⚠ | 1 | 58 | **59** |
 | `load_policy` *(in src.koru.policy)* | 9 | 2 | 43 | **45** |
 | `run_next_planfile_task` *(in src.koru.planfile_queue)* | 24 ⚠ | 2 | 40 | **42** |
@@ -2007,17 +2157,17 @@ D:
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.10s
-# nodes: 228 | edges: 247 | modules: 35
-# CC̄=5.1
+# generated in 0.11s
+# nodes: 258 | edges: 303 | modules: 36
+# CC̄=5.0
 
 HUBS[20]:
   src.koru.context.render_markdown_handoff
     CC=45  in:5  out:163  total:168
   scripts.planfile-export-prompt.print
-    CC=0  in:144  out:0  total:144
-  src.koru.cli.main
-    CC=59  in:0  out:105  total:105
+    CC=0  in:159  out:0  total:159
+  src.koru.serve._build_handler
+    CC=1  in:1  out:71  total:72
   src.koru.bootstrap.validate_flat_pipeline
     CC=28  in:1  out:58  total:59
   src.koru.policy.load_policy
@@ -2032,26 +2182,26 @@ HUBS[20]:
     CC=1  in:1  out:38  total:39
   src.koru.watch.format_queue_event
     CC=19  in:1  out:35  total:36
-  src.koru.serve._build_handler
-    CC=1  in:1  out:30  total:31
-  src.koru.events.emit_management_event
-    CC=8  in:23  out:7  total:30
+  src.koru.cli._build_parser
+    CC=1  in:3  out:30  total:33
+  src.koru.cli._topology_main
+    CC=17  in:0  out:33  total:33
   src.koru.agents.detect_agent_options
     CC=9  in:2  out:28  total:30
+  src.koru.events.emit_management_event
+    CC=8  in:23  out:7  total:30
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
+  src.koru.cli._queue_run_main
+    CC=26  in:1  out:28  total:29
   src.koru.cli._gc_main
     CC=18  in:0  out:28  total:28
-  services.healing-webhook.app._resolve_affected_files
-    CC=11  in:2  out:24  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
-  services.healing-webhook.app._run_redup_check
-    CC=15  in:1  out:24  total:25
+  services.healing-webhook.app._resolve_affected_files
+    CC=11  in:2  out:24  total:26
   src.koru.context._auto_promote_blocking_tickets
     CC=25  in:1  out:24  total:25
-  src.koru.agents.detect_project_environment
-    CC=4  in:1  out:22  total:23
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [24 funcs]
@@ -2110,10 +2260,10 @@ MODULES:
     default_log_path  CC=2  out:3
   src.koru.autopilot.cli_command  [16 funcs]
     _action_daemon  CC=9  out:15
-    _action_doctor  CC=10  out:16
+    _action_doctor  CC=12  out:18
     _action_drive  CC=8  out:17
     _action_handoff  CC=9  out:18
-    _action_ide_list  CC=3  out:3
+    _action_ide_list  CC=5  out:4
     _action_install_unit  CC=6  out:18
     _action_shutdown  CC=3  out:7
     _action_status  CC=3  out:7
@@ -2138,14 +2288,17 @@ MODULES:
     _handle_ping  CC=2  out:3
     _handle_shutdown  CC=2  out:6
     _handle_status  CC=6  out:11
-  src.koru.autopilot.ide  [7 funcs]
+  src.koru.autopilot.ide  [10 funcs]
+    _active_window_pid_x11  CC=7  out:6
     _iter_proc_pids  CC=4  out:6
     _matches  CC=7  out:5
     _read_cmdline  CC=2  out:5
     _read_comm  CC=2  out:3
+    detect_focused_ide_id  CC=7  out:5
     detect_running_ides  CC=11  out:7
     detect_running_ides_cached  CC=4  out:2
-    pick_target  CC=5  out:0
+    focused_ide  CC=6  out:1
+    pick_target  CC=6  out:1
   src.koru.autopilot.injector  [2 funcs]
     type_text  CC=12  out:14
     _submit_key_for  CC=1  out:2
@@ -2161,17 +2314,17 @@ MODULES:
     load_flat_pipeline  CC=9  out:12
     materialize_to_planfile  CC=6  out:16
     validate_flat_pipeline  CC=28  out:58
-  src.koru.cli  [16 funcs]
+  src.koru.cli  [28 funcs]
     _agent_main  CC=7  out:14
+    _bootstrap_main  CC=5  out:18
     _build_gate_parser  CC=1  out:11
     _build_gc_parser  CC=1  out:14
+    _build_parser  CC=1  out:30
     _build_queue_parser  CC=1  out:11
+    _build_runtime_context_parser  CC=1  out:4
     _build_scan_parser  CC=1  out:8
     _build_serve_parser  CC=1  out:9
     _build_task_parser  CC=1  out:7
-    _gate_main  CC=5  out:12
-    _gc_main  CC=18  out:28
-    _is_bare_invocation  CC=7  out:0
   src.koru.context  [14 funcs]
     _auto_promote_blocking_tickets  CC=25  out:24
     _build_instructions  CC=2  out:4
@@ -2253,21 +2406,23 @@ MODULES:
     planfile_dir  CC=1  out:2
     runs_dir  CC=1  out:1
     runtime_dir  CC=1  out:1
-  src.koru.scan  [8 funcs]
+  src.koru.scan  [10 funcs]
     _create_ticket  CC=5  out:5
     _existing_scan_titles  CC=11  out:15
+    _is_koruignored  CC=10  out:6
+    _load_koruignore_patterns  CC=8  out:9
     collect_suggestions  CC=2  out:11
     run_scan  CC=7  out:11
     scan_gitignore_drift  CC=4  out:3
     scan_missing_gates  CC=5  out:6
     scan_missing_tools  CC=13  out:15
-    scan_todo_markers  CC=8  out:10
+    scan_todo_markers  CC=9  out:12
   src.koru.semcod_tools  [3 funcs]
     _config_present  CC=3  out:2
     _read_pyproject  CC=3  out:3
     detect_semcod_tools  CC=7  out:9
   src.koru.serve  [3 funcs]
-    _build_handler  CC=1  out:30
+    _build_handler  CC=1  out:71
     build_server  CC=1  out:2
     serve  CC=4  out:12
   src.koru.tasks  [4 funcs]
@@ -2275,37 +2430,22 @@ MODULES:
     _read_sprint  CC=4  out:11
     _write_yaml  CC=1  out:3
     create_nl_task  CC=5  out:17
+  src.koru.topology  [13 funcs]
+    _merge_components  CC=12  out:21
+    _merge_pipelines  CC=9  out:10
+    _read_yaml  CC=5  out:4
+    _strip_to_persisted  CC=8  out:16
+    _toggle  CC=2  out:11
+    enabled_components_for_pipeline  CC=9  out:11
+    is_component_enabled  CC=3  out:6
+    is_pipeline_enabled  CC=3  out:6
+    load_topology  CC=1  out:9
+    save_topology  CC=1  out:6
   src.koru.watch  [2 funcs]
     format_queue_event  CC=19  out:35
     watch_planfile_events  CC=7  out:7
 
 EDGES:
-  src.koru.runtime.runtime_dir → src.koru.runtime.planfile_dir
-  src.koru.runtime.runs_dir → src.koru.runtime.runtime_dir
-  src.koru.runtime.ensure_runs_dir → src.koru.runtime.runs_dir
-  src.koru.runtime.ensure_runs_dir → src.koru.runtime.runtime_dir
-  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._format_paths
-  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._default_acceptance
-  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._reproduction_for
-  src.koru.watch.watch_planfile_events → plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
-  src.koru.watch.watch_planfile_events → src.koru.watch.format_queue_event
-  src.koru.context._fetch_all_tickets → src.koru.context._safe_json
-  src.koru.context._fetch_all_tickets → src.koru.context._run_planfile
-  src.koru.context._fetch_all_tickets → src.koru.context._is_fixture_ticket
-  src.koru.context._run_planfile → src.koru.context._planfile_command_base
-  src.koru.context._run_planfile → src.koru.context._planfile_env
-  src.koru.context.build_context → src.koru.context._load_project_dotenv
-  src.koru.context.build_context → src.koru.runtime.planfile_dir
-  src.koru.context.build_context → src.koru.context._auto_promote_blocking_tickets
-  src.koru.context.build_context → src.koru.context._build_instructions
-  src.koru.context.build_context → src.koru.context._build_self_service
-  src.koru.context.build_context → src.koru.policy.load_policy
-  src.koru.context._auto_promote_blocking_tickets → src.koru.runtime.planfile_dir
-  src.koru.context._auto_promote_blocking_tickets → scripts.planfile-export-prompt.print
-  src.koru.context._build_instructions → src.koru.context._build_setup_instructions
-  src.koru.context._build_instructions → src.koru.context._build_shared_rules
-  src.koru.semcod_tools.detect_semcod_tools → src.koru.semcod_tools._read_pyproject
-  src.koru.semcod_tools.detect_semcod_tools → src.koru.semcod_tools._config_present
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.ticket_builder.build_ticket_payload
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._resolve_affected_files
   services.healing-webhook.app.heal_redsl_gate → services.healing-webhook.app._run_docker
@@ -2325,11 +2465,37 @@ EDGES:
   services.healing-webhook.app.heal_redup_check → services.healing-webhook.app._record_action
   services.healing-webhook.app.alertmanager_webhook → services.healing-webhook.app._resolve_strategy
   services.healing-webhook.app.probe_failure → services.healing-webhook.app.create_planfile_ticket
-  src.koru.policy.policy_path → src.koru.runtime.runtime_dir
-  src.koru.policy.load_policy → src.koru.policy.policy_path
-  src.koru.dotenv_loader.parse_dotenv → src.koru.dotenv_loader._parse_value
-  src.koru.dotenv_loader.load_dotenv → src.koru.dotenv_loader.parse_dotenv
-  src.koru.scan.collect_suggestions → src.koru.scan.scan_todo_markers
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._format_paths
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._default_acceptance
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._reproduction_for
+  src.koru.runtime.runtime_dir → src.koru.runtime.planfile_dir
+  src.koru.runtime.runs_dir → src.koru.runtime.runtime_dir
+  src.koru.runtime.ensure_runs_dir → src.koru.runtime.runs_dir
+  src.koru.runtime.ensure_runs_dir → src.koru.runtime.runtime_dir
+  src.koru.watch.watch_planfile_events → plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+  src.koru.watch.watch_planfile_events → src.koru.watch.format_queue_event
+  src.koru.gate.authorize_gate → src.koru.gate._resolve_actor
+  src.koru.bootstrap.validate_flat_pipeline → src.koru.bootstrap._detect_cycle
+  src.koru.bootstrap.import_flat_pipeline → src.koru.bootstrap.load_flat_pipeline
+  src.koru.bootstrap.import_flat_pipeline → src.koru.bootstrap.validate_flat_pipeline
+  src.koru.bootstrap.import_flat_pipeline → src.koru.bootstrap.materialize_to_planfile
+  src.koru.loop.discover_repositories → src.koru.loop._search_root_for_include
+  src.koru.queue_clean.find_candidates → src.koru.queue_clean._parse_age_days
+  src.koru.queue_clean.find_candidates → src.koru.queue_clean._matched_rules
+  src.koru.queue_clean._list_tickets → src.koru.queue_clean._planfile_base
+  src.koru.queue_clean._close_ticket → src.koru.queue_clean._build_close_note
+  src.koru.queue_clean._close_ticket → src.koru.queue_clean._planfile_base
+  src.koru.queue_clean.clean_queue → src.koru.queue_clean._list_tickets
+  src.koru.queue_clean.clean_queue → src.koru.queue_clean.find_candidates
+  src.koru.queue_clean.clean_queue → src.koru.queue_clean._close_ticket
+  src.koru.init.init_project → src.koru.runtime.planfile_dir
+  src.koru.init.init_project → src.koru.init._write_policy_stub_if_absent
+  src.koru.init.init_project → src.koru.init._ensure_gitignore_entry
+  src.koru.init._write_policy_stub_if_absent → src.koru.runtime.runtime_dir
+  src.koru.doctor._check_planfile_config → src.koru.runtime.planfile_dir
+  src.koru.doctor._check_planfile_sprints → src.koru.runtime.planfile_dir
+  src.koru.doctor._check_planfile_sprints_yaml → src.koru.runtime.planfile_dir
+  src.koru.doctor._check_runtime_dir → src.koru.runtime.runtime_dir
 ```
 
 ## Test Contracts

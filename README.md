@@ -4,13 +4,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.30-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$3.10-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-17.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$3.10-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-18.1h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $3.0985 (53 commits)
-- 👤 **Human dev:** ~$1702 (17.0h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $3.0978 (54 commits)
+- 👤 **Human dev:** ~$1810 (18.1h @ $100/h, 30min dedup)
 
-Generated on 2026-05-11 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
+Generated on 2026-05-12 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
 ---
 
@@ -59,6 +59,43 @@ else needs to be memorised.
 If the project is not initialised yet, `koru` (no args) detects this
 and prints a **⚠ Setup required** section with the exact `koru --init`
 command to run — the LLM never has to guess.
+
+## Topology & pipelines — what is active right now
+
+If you want a live answer to:
+
+- which systems/tools are active (`regix`, `testql`, `wup`, `redup`, `sumr`, …),
+- which pipelines are enabled (`idle-diagnostics`, `gate:regix`, `scan:on-change`,
+  `autoloop:queue`, `autopilot:drive`),
+- and how they are connected,
+
+use topology mode:
+
+```bash
+# terminal view
+koru topology
+koru topology --format json
+
+# toggle one component or pipeline
+koru topology --disable redsl
+koru topology --enable-pipeline gate:sumr
+
+# predicate (exit 0/1)
+koru topology --is-enabled gate:regix
+koru topology --enabled-components-for idle-diagnostics
+```
+
+State is persisted in `.koru/topology.yaml`.
+
+Dashboard (`koru serve`) now includes a **Topology & pipelines** panel with
+checkboxes. Toggling a checkbox updates `.koru/topology.yaml` via
+`POST /api/topology`.
+
+These flags are honored by runtime behavior:
+
+- `scripts/koru-autoloop.sh` respects pipeline toggles for scan/queue/idle-diagnostics/autopilot,
+- quality tasks (`quality:regix`, `quality:redup`, `quality:sumr:*`) skip when the matching
+  topology pipeline is disabled.
 
 ## Diagnostics — `koru --doctor`
 

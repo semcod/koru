@@ -8,7 +8,7 @@ import json
 import shlex
 import sys
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 from .agents import (
     detect_agent_options,
@@ -923,6 +923,213 @@ def _is_bare_invocation(args: argparse.Namespace) -> bool:
     )
 
 
+def _build_topology_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru topology",
+        description=(
+            "Show & edit the project topology: which semcod components "
+            "(regix, testql, wup, …) and pipelines (idle-diagnostics, "
+            "gate:regix, autoloop:queue, …) are enabled. State is "
+            "persisted to .koru/topology.yaml."
+        ),
+    )
+    parser.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
+    parser.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format for the listing (default text).",
+    )
+    parser.add_argument("--enable", metavar="ID", help="Enable component ID and persist.")
+    parser.add_argument("--disable", metavar="ID", help="Disable component ID and persist.")
+    parser.add_argument(
+        "--enable-pipeline", metavar="ID", help="Enable pipeline ID and persist.",
+    )
+    parser.add_argument(
+        "--disable-pipeline", metavar="ID", help="Disable pipeline ID and persist.",
+    )
+    parser.add_argument(
+        "--is-enabled",
+        metavar="ID",
+        help=(
+            "Print 'true' or 'false' for the given component or pipeline id "
+            "(component takes precedence on collision) and exit 0/1."
+        ),
+    )
+    parser.add_argument(
+        "--enabled-components-for",
+        metavar="PIPELINE",
+        help="Print comma-separated enabled component ids for the pipeline and exit.",
+    )
+    return parser
+
+
+def _render_topology_text(topology: dict[str, Any]) -> str:
+    lines: list[str] = []
+    lines.append(f"koru topology: {topology['project']}")
+    lines.append(f"  config: {topology['path']} ({'present' if topology['exists'] else 'defaults only'})")
+    lines.append("")
+    lines.append("Components:")
+    lines.append(f"  {'id':<12} {'enabled':<7} {'available':<9} {'via':<8} role")
+    for cid, comp in (topology.get("components") or {}).items():
+        en = "yes" if comp.get("enabled") else "no"
+        avail = "yes" if comp.get("available") else "no"
+        via = (comp.get("via") or "")[:8]
+        role = (comp.get("role") or "")[:60]
+        lines.append(f"  {cid:<12} {en:<7} {avail:<9} {via:<8} {role}")
+    lines.append("")
+    lines.append("Pipelines:")
+    lines.append(f"  {'id':<22} {'enabled':<7} {'trigger':<16} description")
+    for pid, pipe in (topology.get("pipelines") or {}).items():
+        en = "yes" if pipe.get("enabled") else "no"
+        trig = (pipe.get("trigger") or "")[:16]
+        desc = (pipe.get("description") or "")[:60]
+        comps = ", ".join(pipe.get("components") or [])
+        lines.append(f"  {pid:<22} {en:<7} {trig:<16} {desc}")
+        if comps:
+            lines.append(f"  {'':<22} {'':<7} {'':<16}   components: {comps}")
+    return "\n".join(lines)
+
+
+def _topology_main(argv: list[str]) -> int:
+    from .topology import (
+        load_topology,
+        save_topology,
+        set_component_enabled,
+        set_pipeline_enabled,
+    )
+
+    args = _build_topology_parser().parse_args(argv)
+    project = args.project.resolve()
+
+    # Predicate modes — print value and exit; do not mutate.
+    if args.is_enabled:
+        topo = load_topology(project)
+        target = args.is_enabled
+        comp = (topo.get("components") or {}).get(target)
+        pipe = (topo.get("pipelines") or {}).get(target)
+        if isinstance(comp, dict):
+            enabled = bool(comp.get("enabled", True))
+        elif isinstance(pipe, dict):
+            enabled = bool(pipe.get("enabled", True))
+        else:
+            print(f"koru topology: unknown id {target!r}", file=sys.stderr)
+            return 2
+        print("true" if enabled else "false")
+        return 0 if enabled else 1
+
+    if args.enabled_components_for:
+        from .topology import enabled_components_for_pipeline
+        ids = enabled_components_for_pipeline(project, args.enabled_components_for)
+        print(",".join(ids))
+        return 0
+
+    topo = load_topology(project)
+    mutated = False
+    for target_id, enabled in (
+        (args.enable, True),
+        (args.disable, False),
+    ):
+        if target_id:
+            res = set_component_enabled(topo, target_id, enabled)
+            if not res.found:
+                print(f"koru topology: unknown component {target_id!r}", file=sys.stderr)
+                return 2
+            mutated = True
+            print(
+                f"koru topology: component {res.id} {res.previous} -> {res.current}"
+            )
+    for target_id, enabled in (
+        (args.enable_pipeline, True),
+        (args.disable_pipeline, False),
+    ):
+        if target_id:
+            res = set_pipeline_enabled(topo, target_id, enabled)
+            if not res.found:
+                print(f"koru topology: unknown pipeline {target_id!r}", file=sys.stderr)
+                return 2
+            mutated = True
+            print(
+                f"koru topology: pipeline {res.id} {res.previous} -> {res.current}"
+            )
+
+    if mutated:
+        path = save_topology(project, topo)
+        print(f"koru topology: saved {path}")
+        # Reload to surface the merged view back to the user.
+        topo = load_topology(project)
+
+    if args.output_format == "json":
+        print(json.dumps(topo, indent=2, sort_keys=True, default=str))
+    else:
+        print(_render_topology_text(topo))
+    return 0
+
+
+def _build_runtime_context_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru runtime-context",
+        description=(
+            "Show the current project runtime context: systems, libraries, "
+            "algorithms, APIs, applications, pipelines, and topology."
+        ),
+    )
+    parser.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
+    parser.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("json", "text"),
+        default="json",
+        help="Output format (default json).",
+    )
+    return parser
+
+
+def _render_runtime_context_text(context: dict[str, Any]) -> str:
+    summary = context.get("summary") or {}
+    lines = [
+        f"koru runtime-context: {summary.get('project') or context.get('project_root')}",
+        f"  version: {summary.get('version') or '-'}",
+        f"  services: {summary.get('services', 0)}",
+        f"  workspaces: {summary.get('workspaces', 0)}",
+        f"  pipelines: {summary.get('pipelines', 0)}",
+        f"  topology nodes: {summary.get('topology_nodes', 0)}",
+        "",
+        "Systems:",
+    ]
+    for service in context.get("systems") or []:
+        ports = ", ".join(service.get("ports") or []) or "-"
+        files = ", ".join(service.get("compose_files") or []) or "-"
+        lines.append(f"  {service.get('name')}: ports={ports} compose={files}")
+    lines.append("")
+    lines.append("Pipelines:")
+    for pipeline in context.get("pipelines") or []:
+        mode = "interactive" if pipeline.get("interactive") else "batch"
+        lines.append(f"  {pipeline.get('name')}: {mode} — {pipeline.get('description') or '-'}")
+    return "\n".join(lines)
+
+
+def _runtime_context_main(argv: list[str]) -> int:
+    args = _build_runtime_context_parser().parse_args(argv)
+    try:
+        from planfile.runtime_context import build_runtime_context
+    except ImportError as exc:
+        print(
+            "koru runtime-context: planfile.runtime_context is not available. "
+            "Install/update semcod/planfile or add it to PYTHONPATH.",
+            file=sys.stderr,
+        )
+        print(str(exc), file=sys.stderr)
+        return 2
+    context = build_runtime_context(args.project)
+    if args.output_format == "text":
+        print(_render_runtime_context_text(context))
+    else:
+        print(json.dumps(context, indent=2, sort_keys=True, default=str))
+    return 0
+
+
 _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "task": _task_main,
     "agent": _agent_main,
@@ -932,6 +1139,8 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "queue": _queue_main,
     "gc": _gc_main,
     "autopilot": autopilot_main,
+    "topology": _topology_main,
+    "runtime-context": _runtime_context_main,
 }
 
 

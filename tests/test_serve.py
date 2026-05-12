@@ -13,6 +13,7 @@ import tempfile
 import threading
 import time
 import unittest
+import urllib.error
 import urllib.request
 from contextlib import closing
 from http.server import ThreadingHTTPServer
@@ -53,6 +54,21 @@ def _get(port: int, path: str) -> tuple[int, str, str]:
         body = resp.read().decode("utf-8")
         content_type = resp.headers.get("Content-Type", "")
         return resp.status, content_type, body
+
+
+def _post_json(port: int, path: str, payload: dict[str, object]) -> tuple[int, str, str]:
+    url = f"http://127.0.0.1:{port}{path}"
+    body = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=body,
+        method="POST",
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310
+        text = resp.read().decode("utf-8")
+        content_type = resp.headers.get("Content-Type", "")
+        return resp.status, content_type, text
 
 
 class TestServe(unittest.TestCase):
@@ -107,6 +123,48 @@ class TestServe(unittest.TestCase):
         self.assertIn("# koru handoff", body)
         # Dashboard section must remain in the brief.
         self.assertIn("Dashboard", body)
+
+    def test_api_topology_returns_components_and_pipelines(self) -> None:
+        status, ctype, body = _get(self.port, "/api/topology")
+        self.assertEqual(status, 200)
+        self.assertIn("application/json", ctype)
+        payload = json.loads(body)
+        self.assertIn("components", payload)
+        self.assertIn("pipelines", payload)
+        self.assertIn("regix", payload["components"])
+        self.assertIn("idle-diagnostics", payload["pipelines"])
+
+    def test_api_topology_post_persists_toggle(self) -> None:
+        status, ctype, body = _post_json(
+            self.port,
+            "/api/topology",
+            {
+                "components": {"redsl": True},
+                "pipelines": {"gate:wup": False},
+            },
+        )
+        self.assertEqual(status, 200)
+        self.assertIn("application/json", ctype)
+        payload = json.loads(body)
+        self.assertTrue(payload["components"]["redsl"]["enabled"])
+        self.assertFalse(payload["pipelines"]["gate:wup"]["enabled"])
+
+        status2, _, body2 = _get(self.port, "/api/topology")
+        self.assertEqual(status2, 200)
+        payload2 = json.loads(body2)
+        self.assertTrue(payload2["components"]["redsl"]["enabled"])
+        self.assertFalse(payload2["pipelines"]["gate:wup"]["enabled"])
+
+    def test_api_topology_post_rejects_empty_update(self) -> None:
+        req = urllib.request.Request(
+            f"http://127.0.0.1:{self.port}/api/topology",
+            data=b"{}",
+            method="POST",
+            headers={"Content-Type": "application/json"},
+        )
+        with self.assertRaises(urllib.error.HTTPError) as exc_ctx:
+            urllib.request.urlopen(req, timeout=5)  # noqa: S310
+        self.assertEqual(exc_ctx.exception.code, 400)
 
     def test_unknown_path_returns_404(self) -> None:
         url = f"http://127.0.0.1:{self.port}/does-not-exist"

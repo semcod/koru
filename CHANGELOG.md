@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (autoloop stagnation control)
+- `scripts/koru-autoloop.sh` now detects stagnation (same
+  `last_status + waiting_ticket_id` across consecutive cycles) and reacts:
+  - **Skip-autopilot-on-stuck-status** — `AUTOPILOT_SKIP_STATUSES`
+    (default `waiting_input`): autopilot drive fires once when the status
+    appears, then is skipped on subsequent identical cycles to stop hammering
+    a ticket that is genuinely blocked on human input.
+  - **Exponential sleep backoff** — `BACKOFF_ON_STAGNATION=true` (default) +
+    `MAX_SLEEP_SECONDS=900`: sleep grows `SLEEP_SECONDS × 2^streak` capped at
+    `MAX_SLEEP_SECONDS`. Resets when status or waiting ticket id changes.
+  - **Scan-skip-if-clean** — `SCAN_SKIP_IF_CLEAN=false` (opt-in) +
+    `SCAN_SKIP_AFTER=1`: after N consecutive `koru scan: no suggestions`
+    outputs, subsequent scans are skipped while `git rev-parse HEAD` is
+    unchanged.
+- Per-cycle summary line now includes `waiting=<ticket_id|none>`,
+  `streak=<n>`, and the effective `sleep=<seconds>s`.
+- New vars surfaced in `queue:autoloop` Taskfile entry with sane defaults.
+
 ### Added
 - `scripts/koru-autoloop.sh` rewritten as the canonical unattended loop:
   supports `TICKET_SOURCES=queue|scan|all`, optional idle diagnostics
@@ -27,6 +45,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Consumer Taskfiles can now replace ~400-line inline autoloop blocks with a
   thin `bash $KORU_HOME/scripts/koru-autoloop.sh` wrapper driven by env vars.
+- Added project topology support (`.koru/topology.yaml`) and new
+  `koru topology` subcommand for viewing/editing component and pipeline
+  enablement from CLI (`--format json`, `--enable/--disable`,
+  `--enable-pipeline/--disable-pipeline`, `--is-enabled`).
+- `koru serve` dashboard now exposes `GET/POST /api/topology` and renders a
+  new **Topology & pipelines** panel with checkbox-based edits persisted to
+  `.koru/topology.yaml`.
+- `scripts/koru-autoloop.sh` now honors topology toggles:
+  `scan:on-change`, `autoloop:queue`, `idle-diagnostics`, `autopilot:drive`
+  pipelines and per-tool diagnostic component switches (regix/wup/redup/
+  testql/redsl/sumr).
+- Quality tasks now honor topology gate flags:
+  `quality:regix` ↔ `gate:regix`, `quality:redup*` ↔ `gate:redup`,
+  `quality:sumr:*` ↔ `gate:sumr`.
+
+## [0.1.31] - 2026-05-12
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_cli.py
+- Update tests/test_serve.py
+- Update tests/test_topology.py
+
+### Other
+- Update .code2llm_cache/Taskfile_1778525237055265475_27883.pkl
+- Update .code2llm_cache/_koru_autodiag_filter_tickets_1778524403703486605_1528.pkl
+- Update .code2llm_cache/cli_1778567150374650580_51708.pkl
+- Update .code2llm_cache/cli_command_1778518432434194270_18308.pkl
+- Update .code2llm_cache/goal_1778518324199028450_12224.pkl
+- Update .code2llm_cache/ide_1778518418959049129_8357.pkl
+- Update .code2llm_cache/koru-autoloop-reset-diag-markers_1778524392710367896_3447.pkl
+- Update .code2llm_cache/koru-autoloop_1778525155990423131_17609.pkl
+- Update .code2llm_cache/planfile_1778518061975203793_35931.pkl
+- Update .code2llm_cache/prefact_1778517966479175023_1664.pkl
+- ... and 25 more files
 
 ## [0.1.30] - 2026-05-11
 
