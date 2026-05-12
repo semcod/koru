@@ -18,12 +18,22 @@ def test_resolve_target_ide_prefers_autopilot_env(monkeypatch) -> None:
 
 def test_resolve_target_ide_uses_running_supported_ide(monkeypatch) -> None:
     monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.delenv("TERM_PROGRAM", raising=False)
+    monkeypatch.delenv("VSCODE_PID", raising=False)
     monkeypatch.setattr(plugin_installer, "detect_focused_ide_id", lambda: None)
     monkeypatch.setattr(
         plugin_installer,
         "detect_running_ides",
         lambda: [SimpleNamespace(id="cursor")],
     )
+
+    assert plugin_installer.resolve_target_ide("auto") == "cursor"
+
+
+def test_resolve_target_ide_uses_integrated_terminal_hint(monkeypatch) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.setenv("TERM_PROGRAM", "cursor")
+    monkeypatch.setattr(plugin_installer, "detect_focused_ide_id", lambda: "windsurf")
 
     assert plugin_installer.resolve_target_ide("auto") == "cursor"
 

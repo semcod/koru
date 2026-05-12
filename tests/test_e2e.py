@@ -270,6 +270,27 @@ class TestE2ETask(unittest.TestCase):
         self.assertIn("adapter-scaffold", ticket.get("labels", []))
         self.assertIn("TOOL ADAPTER SCAFFOLD", ticket.get("inputs", {}).get("prompt", ""))
 
+    def test_task_with_plugin_bridge_scaffold(self) -> None:
+        code, out, _ = _run_main(
+            "task", "Prepare Copilot plugin bridge",
+            "--project", str(self.project),
+            "--tool", "github-copilot",
+        )
+        self.assertEqual(code, 0, out)
+        sprint = yaml.safe_load(
+            (self.project / ".planfile/sprints/current.yaml").read_text()
+        )
+        tickets = sprint["sprint"]["tickets"]
+        matches = [
+            t for t in tickets.values()
+            if t.get("source", {}).get("tool") == "koru-cli-plugin-bridge"
+            and t.get("source", {}).get("context", {}).get("tool_id") == "github-copilot"
+        ]
+        self.assertTrue(matches)
+        ticket = matches[0]
+        self.assertIn("plugin-bridge-scaffold", ticket.get("labels", []))
+        self.assertIn("PLUGIN BRIDGE SCAFFOLD", ticket.get("inputs", {}).get("prompt", ""))
+
 
 # ===========================================================================
 # E2E: GC lifecycle

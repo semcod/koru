@@ -104,8 +104,9 @@ Priority candidates:
 1. Gemini CLI
 2. Cline
 3. Qwen Code
-4. Zed deep integration
-5. JetBrains-native AI channels (Junie-equivalent route)
+4. OpenCode
+5. Zed deep integration
+6. JetBrains-native AI channels (Junie-equivalent route)
 
 Deliverables:
 - Native launcher + health command per promoted tool.
@@ -121,6 +122,7 @@ Exit criteria:
 Deliverables:
 - Unified plugin bridge contract for Copilot/Tabnine/Gemini/CodeWhisperer/Cody.
 - Compatibility table: features available by plugin host (VSCode/JetBrains/Zed).
+- Scaffolded bridge tickets via `koru task --tool <plugin-id>` with explicit bridge metadata.
 
 Exit criteria:
 - At least read-only status + invoke capability for each plugin family.

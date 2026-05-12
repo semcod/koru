@@ -89,3 +89,21 @@ def test_build_tool_task_scaffold_contains_expected_fields() -> None:
     assert "tool-gemini-cli" in scaffold["labels"]
     assert scaffold["inputs"]["tool_id"] == "gemini-cli"
     assert "TOOL ADAPTER SCAFFOLD" in scaffold["prompt_suffix"]
+
+
+def test_build_tool_task_scaffold_plugin_bridge_shape() -> None:
+    scaffold = build_tool_task_scaffold(
+        {
+            "id": "github-copilot",
+            "lane": "manual",
+            "category": "plugin",
+            "stability": "stable",
+            "invoke": "manual plugin workflow",
+            "notes": "No stable external control surface in koru.",
+        }
+    )
+    assert scaffold["source_tool"] == "koru-cli-plugin-bridge"
+    assert "plugin-bridge-scaffold" in scaffold["labels"]
+    assert scaffold["source_context"]["plugin_bridge"] is True
+    assert scaffold["inputs"]["plugin_bridge"] is True
+    assert "PLUGIN BRIDGE SCAFFOLD" in scaffold["prompt_suffix"]

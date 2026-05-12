@@ -103,6 +103,9 @@ koru task "Fix login form validation" --project . --priority high
 # phase-2 adapter scaffold from tool registry
 koru task "Prepare Gemini adapter" --project . --tool gemini-cli
 
+# phase-4 plugin bridge scaffold for IDE plugins
+koru task "Prepare Copilot plugin bridge" --project . --tool github-copilot
+
 # override inferred executor hint for the scaffold
 koru task "Prepare n8n webhook adapter" --project . --tool n8n --tool-kind api
 

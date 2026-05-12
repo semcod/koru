@@ -56,6 +56,18 @@ def _valid_ide(raw: str | None) -> str | None:
     return ide if ide in {"auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"} else None
 
 
+def _ide_from_terminal_env() -> str | None:
+    """Best-effort IDE hint from an integrated terminal environment."""
+    term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
+    if term_program in ("vscode", "code"):
+        return "vscode"
+    if term_program in SUPPORTED_IDES:
+        return term_program
+    if os.environ.get("VSCODE_PID"):
+        return "vscode"
+    return None
+
+
 def resolve_target_ide(requested: str = "auto") -> str | None:
     """Resolve the IDE that should receive the plugin install."""
     explicit = _valid_ide(requested)
@@ -65,6 +77,10 @@ def resolve_target_ide(requested: str = "auto") -> str | None:
     env_ide = _valid_ide(os.environ.get("KORU_AUTOPILOT_IDE"))
     if env_ide and env_ide != "auto":
         return env_ide
+
+    terminal_ide = _ide_from_terminal_env()
+    if terminal_ide is not None:
+        return terminal_ide
 
     focused = detect_focused_ide_id()
     if focused:

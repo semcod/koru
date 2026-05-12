@@ -152,8 +152,12 @@ def build_tool_task_scaffold(
     if kind not in {"human", "shell", "api", "llm"}:
         raise ValueError(f"unsupported adapter kind: {kind}")
 
+    plugin_bridge = category == "plugin"
+    source_tool = "koru-cli-plugin-bridge" if plugin_bridge else "koru-cli-tool-adapter"
+    scaffold_title = "PLUGIN BRIDGE SCAFFOLD" if plugin_bridge else "TOOL ADAPTER SCAFFOLD"
+
     prompt_lines = [
-        "[TOOL ADAPTER SCAFFOLD]",
+        f"[{scaffold_title}]",
         f"- tool_id: {tool_id}",
         f"- lane: {lane}",
         f"- category: {category}",
@@ -164,12 +168,43 @@ def build_tool_task_scaffold(
         prompt_lines.append(f"- invoke_hint: {invoke}")
     if notes:
         prompt_lines.append(f"- notes: {notes}")
-    prompt_lines.append(
-        "- required_next_step: convert this scaffold into concrete executor inputs before queue run"
-    )
+
+    if plugin_bridge:
+        prompt_lines.extend(
+            [
+                "- bridge_hosts: vscode, jetbrains, zed",
+                "- bridge_mode: read-only status first, then explicit invoke actions",
+                "- required_next_step: define plugin host + invocation contract before queue run",
+            ]
+        )
+    else:
+        prompt_lines.append(
+            "- required_next_step: convert this scaffold into concrete executor inputs before queue run"
+        )
+
+    labels = ["adapter-scaffold", f"tool-{tool_id}", f"lane-{lane}"]
+    if plugin_bridge:
+        labels.append("plugin-bridge-scaffold")
+
+    inputs = {
+        "tool_id": tool_id,
+        "tool_lane": lane,
+        "tool_category": category,
+        "tool_stability": stability,
+        "adapter_executor_hint": kind,
+        "tool_invoke_hint": invoke,
+    }
+    if plugin_bridge:
+        inputs.update(
+            {
+                "plugin_bridge": True,
+                "plugin_bridge_hosts": ["vscode", "jetbrains", "zed"],
+                "plugin_bridge_mode": "read-only-first",
+            }
+        )
 
     return {
-        "source_tool": "koru-cli-tool-adapter",
+        "source_tool": source_tool,
         "source_context": {
             "tool_id": tool_id,
             "tool_lane": lane,
@@ -177,16 +212,10 @@ def build_tool_task_scaffold(
             "tool_stability": stability,
             "adapter_kind": kind,
             "invoke_hint": invoke,
+            "plugin_bridge": plugin_bridge,
         },
-        "labels": ["adapter-scaffold", f"tool-{tool_id}", f"lane-{lane}"],
-        "inputs": {
-            "tool_id": tool_id,
-            "tool_lane": lane,
-            "tool_category": category,
-            "tool_stability": stability,
-            "adapter_executor_hint": kind,
-            "tool_invoke_hint": invoke,
-        },
+        "labels": labels,
+        "inputs": inputs,
         "prompt_suffix": "\n".join(prompt_lines),
     }
 
