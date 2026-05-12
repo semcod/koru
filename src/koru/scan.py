@@ -36,8 +36,9 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Callable, Sequence
 
+from .runtime import runtime_dir
 from .semcod_tools import detect_semcod_tools
-from .utils.subprocess_runner import default_subprocess_runner
+from .utils.subprocess_runner import default_subprocess_runner, get_python_cmd
 
 
 # ---------------------------------------------------------------------------
@@ -97,7 +98,6 @@ _IMPORT_ERROR_RE = re.compile(
     re.MULTILINE,
 )
 
-
 def scan_pytest_collect(
     project: Path,
     *,
@@ -121,11 +121,9 @@ def scan_pytest_collect(
         )
 
     use_runner = runner or _default_runner
+    cmd = get_python_cmd(project) + ["-m", "pytest", "--collect-only", "-q", "--no-header"]
     try:
-        result = use_runner(
-            ["python3", "-m", "pytest", "--collect-only", "-q", "--no-header"],
-            project,
-        )
+        result = use_runner(cmd, project)
     except subprocess.TimeoutExpired:
         # A timeout is a *real signal*, not a quiet success. Hiding it
         # behind ``return []`` produced false-positive "repo looks clean"
@@ -190,7 +188,8 @@ def scan_pytest_collect(
                 description=(
                     f"`pytest --collect-only` cannot import `{path}`.\n\n"
                     f"Reason: {msg}\n\n"
-                    "This blocks the CI gate; resolve before any other ticket."
+                    "This blocks the CI gate; resolve before any other ticket.\n\n"
+                    f"Raw error context:\n```\n{output[-1000:].strip()}\n```"
                 ),
                 priority="high",
                 labels=("ci", "bug", "scan"),
@@ -211,7 +210,8 @@ def scan_pytest_collect(
                         f"test:\n\n    {imp.group('exc')}: {imp.group('msg').strip()}\n\n"
                         "Likely cause: missing `[tool.pytest.ini_options] "
                         "pythonpath = [\"src\"]` (or equivalent) in "
-                        "`pyproject.toml`, or an editable install missing."
+                        "`pyproject.toml`, or an editable install missing.\n\n"
+                        f"Full traceback snippet:\n```\n{output[-1500:].strip()}\n```"
                     ),
                     priority="high",
                     labels=("ci", "bug", "scan"),

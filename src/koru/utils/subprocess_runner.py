@@ -25,3 +25,14 @@ def resolve_planfile_subpath(project: Path, *parts: str) -> Path:
         Absolute path under <project>/.planfile/.
     """
     return Path(project).resolve() / ".planfile" / Path(*parts)
+
+
+def get_python_cmd(project: Path) -> list[str]:
+    """Return command list starting the best available Python interpreter.
+    Prefers project-local .venv/bin/python if it exists.
+    """
+    for venv_name in (".venv", "venv"):
+        candidate = Path(project) / venv_name / "bin" / "python"
+        if candidate.is_file():
+            return [str(candidate)]
+    return ["python3"]

@@ -1,0 +1,3 @@
+tak, kontynuuj
+sprawdz czy nadal wystepuja bledy i kontynuuj
+w prawym dolnym rogu widać w windsurf ikone koru z informacja OFF

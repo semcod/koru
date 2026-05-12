@@ -47,6 +47,7 @@ import yaml
 
 from .policy import policy_path
 from .runtime import planfile_dir, runtime_dir
+from .utils.subprocess_runner import get_python_cmd
 
 
 # Default timeout for the pytest-collect probe. Doctor is meant to be
@@ -337,9 +338,10 @@ def _check_pytest_collect(project: Path) -> tuple[str, str]:
       SKIP — pytest binary missing; doctor cannot diagnose further.
     """
     timeout_seconds = _resolve_pytest_collect_timeout()
+    cmd = get_python_cmd(project) + ["-m", "pytest", "--collect-only", "-q", "--no-header"]
     try:
         result = subprocess.run(
-            ["python3", "-m", "pytest", "--collect-only", "-q", "--no-header"],
+            cmd,
             cwd=project,
             capture_output=True,
             text=True,
