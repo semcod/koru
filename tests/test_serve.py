@@ -24,6 +24,7 @@ from koru.serve import (
     bind_serve_server,
     build_server,
     read_serve_endpoint,
+    start_serve_background,
     write_serve_endpoint_file,
 )
 
@@ -246,6 +247,28 @@ class TestServeAutoPort(unittest.TestCase):
         finally:
             blocker.close()
             tmp.cleanup()
+
+
+def test_start_serve_background_shutdown() -> None:
+    tmp, project = _minimal_planfile_project()
+    try:
+        cfg = ServeConfig(
+            project=project,
+            host="127.0.0.1",
+            port=0,
+            open_browser=False,
+            auto_port=True,
+        )
+        srv, th = start_serve_background(cfg, log=lambda _msg: None)
+        port = int(srv.server_address[1])
+        status, _, _ = _get(port, "/health")
+        assert status == 200
+        srv.shutdown()
+        srv.server_close()
+        th.join(timeout=3.0)
+        assert not th.is_alive()
+    finally:
+        tmp.cleanup()
 
 
 if __name__ == "__main__":  # pragma: no cover

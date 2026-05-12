@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  koru:
+    build:
+      context: .
+      target: production
+    image: koru:latest
+    container_name: koru-test
+    volumes:
+      - ./test-data:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /workspace
+    environment:
+      - PYTHONPATH=/app/src
+      - KORU_AUTOPILOT_IDE=auto
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+    command: tail -f /dev/null
+    profiles:
+      - test
+
+  koru-dev:
+    build:
+      context: .
+      target: development
+    image: koru:dev
+    container_name: koru-dev
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app/src
+      - KORU_AUTOPILOT_IDE=auto
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+    command: bash
+    profiles:
+      - dev
+
+  # External dependencies for testing
+  planfile:
+    image: semcod/planfile:latest
+    container_name: planfile-test
+    volumes:
+      - ./test-data:/workspace
+    working_dir: /workspace
+    command: tail -f /dev/null
+    profiles:
+      - deps
+
+  regix:
+    image: semcod/regix:latest
+    container_name: regix-test
+    volumes:
+      - ./test-data:/workspace
+    working_dir: /workspace
+    command: tail -f /dev/null
+    profiles:
+      - deps
+
+  testql:
+    image: semcod/testql:latest
+    container_name: testql-test
+    volumes:
+      - ./test-data:/workspace
+    working_dir: /workspace
+    command: tail -f /dev/null
+    profiles:
+      - deps
+
+  healing-webhook:
+    build:
+      context: ./services/healing-webhook
+    image: koru/healing-webhook:latest
+    container_name: healing-webhook-test
+    ports:
+      - "8810:8810"
+    volumes:
+      - ./test-data:/repo
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - REPO_PATH=/repo
+      - DRY_RUN=true
+      - PORT=8810
+    profiles:
+      - deps
+
+networks:
+  default:
+    name: koru-test-network

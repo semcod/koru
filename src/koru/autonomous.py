@@ -3,6 +3,8 @@
 `koru autonomous up` (or `koru autonomous` with the same flags) bootstraps
 the project if needed, applies ``--agent-lane`` exports like
 ``shell-env.sh``, then runs scan + queue + autopilot in a loop.
+By default it also starts ``koru serve`` in the background so the local
+dashboard (auto-refresh ~5s) tracks queue/context; use ``--no-serve`` to skip.
 """
 
 from __future__ import annotations
@@ -16,20 +18,18 @@ from pathlib import Path
 from .autopilot import default_socket_path
 from .autopilot.client import AutopilotClient
 from .autopilot.daemon import AutopilotDaemon
-from .autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide
 from .agents import agent_lane_environment
 from .init import init_project, resolve_project_agent_lane
 from .planfile_queue import QueueLoopResult, run_planfile_queue_loop
 from .scan import ScanResult, run_scan
 
 _VALID_AUTOPILOT_IDE = frozenset({"auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"})
-_AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
 
 def _resolve_autopilot_ide(cli_value: str) -> str:
-    """``KORU_AUTOPILOT_IDE`` overrides CLI when set to a concrete IDE."""
+    """``KORU_AUTOPILOT_IDE`` overrides CLI when set to a known token."""
     raw = os.environ.get("KORU_AUTOPILOT_IDE", "").strip().lower()
-    if raw in _VALID_AUTOPILOT_IDE and raw != "auto":
+    if raw in _VALID_AUTOPILOT_IDE:
         return raw
     return cli_value
 
@@ -132,28 +132,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Disable autopilot drive step.",
     )
     up.add_argument(
-        "--no-install-plugin",
-        dest="install_plugin",
-        action="store_false",
-        help="Do not auto-install the koru IDE plugin before starting autopilot.",
-    )
-    up.add_argument(
-        "--keep-waiting-input",
-        dest="stop_on_waiting_input",
-        action="store_false",
-        help="Keep looping when the queue is waiting for human input.",
-    )
-    up.add_argument(
         "--force-init",
         action="store_true",
         help="Force `koru --init` re-initialization if project is already initialized.",
     )
-    up.set_defaults(
-        submit=True,
-        enable_autopilot=True,
-        install_plugin=True,
-        stop_on_waiting_input=True,
-    )
+    up.set_defaults(submit=True, enable_autopilot=True)
 
     return parser
 
@@ -232,18 +215,15 @@ def _run_cycle(
 
     autopilot_status = "skipped"
     if enable_autopilot and client is not None:
-        if queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES:
-            print(f"  autopilot: skipped (queue_status={queue_result.last_status})")
+        reply = client.drive(drive_prompt, submit=submit, ide=autopilot_ide)
+        ok = bool(reply.get("ok", True))
+        autopilot_status = "ok" if ok else "failed"
+        if ok:
+            backend = reply.get("backend", "?")
+            print(f"  autopilot: ok (ide={autopilot_ide}, backend={backend})")
         else:
-            reply = client.drive(drive_prompt, submit=submit, ide=autopilot_ide)
-            ok = bool(reply.get("ok", True))
-            autopilot_status = "ok" if ok else "failed"
-            if ok:
-                backend = reply.get("backend", "?")
-                print(f"  autopilot: ok (ide={autopilot_ide}, backend={backend})")
-            else:
-                message = reply.get("message", "unknown error")
-                print(f"  autopilot: failed ({message})")
+            message = reply.get("message", "unknown error")
+            print(f"  autopilot: failed ({message})")
 
     print(
         f"koru autonomous: cycle={cycle} queue={queue_result.last_status} "
@@ -261,27 +241,23 @@ def _action_up(args: argparse.Namespace) -> int:
     if lane is not None:
         print(f"koru autonomous: agent-lane={lane} (env applied)")
 
-    autopilot_ide = _resolve_autopilot_ide(args.autopilot_ide)
-
     client: AutopilotClient | None = None
     daemon: AutopilotDaemon | None = None
     thread: threading.Thread | None = None
     socket_path: Path | None = None
     if args.enable_autopilot:
         socket_path = (args.socket or default_socket_path()).resolve()
-        if args.install_plugin:
-            result = install_plugin_for_ide(ide=autopilot_ide, socket_path=socket_path)
-            print(format_plugin_install_result(result))
         client, daemon, thread = _start_or_reuse_daemon(project=project, socket_path=socket_path)
 
-    # Avoid reconnect noise when no socket ever existed; still recover when the
-    # socket disappears after a healthy boot (e.g. external autopilot daemon exited).
+    # Avoid reconnect noise in tests / misconfigured hosts where no socket ever
+    # existed; still recover when the socket disappears after a healthy boot.
     autopilot_socket_observed_at_boot = (
         bool(socket_path and socket_path.exists()) if args.enable_autopilot else False
     )
 
     enable_scan, use_all_queues = _effective_flags(args.ticket_sources)
     queue_name = None if use_all_queues else args.queue_name
+    autopilot_ide = _resolve_autopilot_ide(args.autopilot_ide)
 
     cycle = 0
     try:
@@ -313,7 +289,7 @@ def _action_up(args: argparse.Namespace) -> int:
                 client, daemon, thread = _start_or_reuse_daemon(
                     project=project, socket_path=socket_path
                 )
-            _scan_result, queue_result, _autopilot_status = _run_cycle(
+            _run_cycle(
                 cycle=cycle,
                 project=project,
                 actor=args.actor,
@@ -326,16 +302,6 @@ def _action_up(args: argparse.Namespace) -> int:
                 submit=args.submit,
                 client=client,
             )
-
-            if (
-                args.stop_on_waiting_input
-                and queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES
-            ):
-                print(
-                    "koru autonomous: queue is waiting_input; stopping until "
-                    "human/manual ticket recovery marks it ready or done"
-                )
-                return 0
 
             if args.max_cycles > 0 and cycle >= args.max_cycles:
                 print(f"koru autonomous: reached max-cycles={args.max_cycles}; stopping")

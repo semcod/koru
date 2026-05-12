@@ -65,6 +65,7 @@ def test_autonomous_main_prepends_up_for_flags(tmp_path, monkeypatch) -> None:
 
     rc = autonomous_mod.autonomous_main(
         [
+            "--no-serve",
             "--project",
             str(tmp_path),
             "--max-cycles",
@@ -104,6 +105,7 @@ def test_up_single_cycle_queue_only_no_autopilot(
     rc = autonomous_mod.autonomous_main(
         [
             "up",
+            "--no-serve",
             "--project",
             str(tmp_path),
             "--max-cycles",
@@ -148,6 +150,7 @@ def test_up_single_cycle_all_sources_runs_scan(
     rc = autonomous_mod.autonomous_main(
         [
             "up",
+            "--no-serve",
             "--project",
             str(tmp_path),
             "--max-cycles",
@@ -207,6 +210,7 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
     rc = autonomous_mod.autonomous_main(
         [
             "up",
+            "--no-serve",
             "--project",
             str(tmp_path),
             "--max-cycles",
@@ -298,6 +302,7 @@ def test_up_stops_on_waiting_input_by_default(
     rc = autonomous_mod.autonomous_main(
         [
             "up",
+            "--no-serve",
             "--project",
             str(tmp_path),
             "--sleep-seconds",
@@ -366,6 +371,7 @@ def test_up_restarts_autopilot_when_socket_disappears_between_cycles(
     rc = autonomous_mod.autonomous_main(
         [
             "up",
+            "--no-serve",
             "--project",
             str(tmp_path),
             "--max-cycles",

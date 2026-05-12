@@ -28,7 +28,9 @@ import json
 import os
 import sys
 import threading
+import time
 import webbrowser
+from collections.abc import Callable
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -954,3 +956,53 @@ def serve(config: ServeConfig) -> int:
     finally:
         server.server_close()
     return 0
+
+
+def start_serve_background(
+    config: ServeConfig,
+    *,
+    log: Callable[[str], None] = print,
+) -> tuple[ThreadingHTTPServer, threading.Thread]:
+    """Bind the dashboard, write ``serve-endpoint.json``, and run ``serve_forever`` on a thread.
+
+    The caller should ``shutdown()`` the server, ``server_close()``, and
+    ``join()`` the returned thread when tearing down (e.g. ``koru autonomous``).
+    """
+    server, actual, requested = bind_serve_server(config)
+    write_serve_endpoint_file(config)
+    url = f"http://{config.host}:{config.port}/"
+    if config.auto_port and actual != requested:
+        log(f"koru serve: port {requested} busy — bound to {actual} instead")
+    log(f"koru serve: dashboard at {url}")
+    log(f"koru serve: project = {config.project}")
+    emit_management_event(
+        tool="koru.serve",
+        action="started",
+        status="running",
+        message=url,
+        queue=config.queue_name,
+        details={
+            "project": str(config.project),
+            "open_browser": config.open_browser,
+            "port": config.port,
+            "requested_port": requested,
+            "background": True,
+        },
+    )
+    if config.open_browser:
+        def _open_later() -> None:
+            try:
+                webbrowser.open(url, new=2)
+            except Exception:  # pragma: no cover — best-effort
+                pass
+
+        threading.Timer(0.3, _open_later).start()
+
+    thread = threading.Thread(
+        target=server.serve_forever,
+        name="koru-serve-bg",
+        daemon=True,
+    )
+    thread.start()
+    time.sleep(0.05)
+    return server, thread

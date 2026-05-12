@@ -16,7 +16,7 @@ import os
 import shutil
 import subprocess
 from dataclasses import dataclass, field
-from typing import Callable
+from typing import Callable, ClassVar
 
 from .config import cached_config
 
