@@ -112,14 +112,14 @@ tools:
   - id: qwen-code
     name: Qwen Code
     category: cli_agent
-    lane: adapter
+    lane: native
     stability: beta
     detect:
       commands: ["qwen", "qwen-code"]
       markers: []
       env: []
-    invoke: "planfile shell ticket"
-    notes: "Adapter-first strategy."
+    invoke: "koru agent --agent qwen-code --launch"
+    notes: "Native agent lane (phase-3 promotion)."
 
   - id: opencode
     name: OpenCode

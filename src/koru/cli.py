@@ -13,7 +13,9 @@ from pathlib import Path
 from typing import Any
 
 from .agents import (
+    agent_lane_environment,
     detect_agent_options,
+    format_agent_lane_exports,
     launch_agent,
     save_agent_prompt,
     select_agent,
@@ -918,7 +920,29 @@ def _build_agent_parser() -> argparse.ArgumentParser:
         dest="output_format",
         choices=("text", "json"),
         default="text",
-        help="Output format for --list (default: text).",
+        help="With --list: machine-readable json (default: text).",
+    )
+    parser.add_argument(
+        "--lane",
+        dest="lane_id",
+        default=None,
+        help=(
+            "Agent lane id for --env-exports / --env-json (e.g. cursor, windsurf, claude-code). "
+            "Falls back to --agent when set."
+        ),
+    )
+    parser.add_argument(
+        "--env-exports",
+        action="store_true",
+        help=(
+            "Print shell exports for KORU_AUTOPILOT_* / queue actor hints; "
+            "requires --lane or --agent."
+        ),
+    )
+    parser.add_argument(
+        "--env-json",
+        action="store_true",
+        help="Print recommended lane env as JSON (requires --lane or --agent).",
     )
     return parser
 
@@ -1007,27 +1031,46 @@ def _agent_main(argv: list[str]) -> int:
     project = args.project.resolve()
     agents = detect_agent_options(project)
 
+    lane_for_env = (args.lane_id or args.agent_id or "").strip()
+    if args.env_json or args.env_exports:
+        if not lane_for_env:
+            print(
+                "koru agent: --env-exports / --env-json require --lane or --agent <id>",
+                file=sys.stderr,
+            )
+            return 2
+        env_map = agent_lane_environment(lane_for_env)
+        if args.env_json:
+            print(json.dumps(env_map, indent=2, sort_keys=True))
+        else:
+            print(format_agent_lane_exports(env_map), end="")
+        return 0
+
     if args.list:
         if args.output_format == "json":
             payload_agents = [agent.to_dict() for agent in agents]
-            available = [a for a in payload_agents if a.get("available")]
-            launchable = [a for a in payload_agents if a.get("launchable")]
-            payload = {
-                "project": str(project),
-                "summary": {
-                    "total": len(payload_agents),
-                    "available": len(available),
-                    "launchable": len(launchable),
-                    "ready": bool(launchable),
-                },
-                "agents": payload_agents,
-            }
-            print(json.dumps(payload, indent=2, sort_keys=True))
-            return 0
-        for agent in agents:
-            marker = "✓" if agent.available else "·"
-            launch = "launchable" if agent.launchable else "manual"
-            print(f"{marker} {agent.id:<14} {launch:<10} {agent.reason}")
+            available_ct = sum(1 for a in agents if a.available)
+            launchable_ct = sum(1 for a in agents if a.launchable)
+            print(
+                json.dumps(
+                    {
+                        "summary": {
+                            "total": len(agents),
+                            "available": available_ct,
+                            "launchable": launchable_ct,
+                            "ready": launchable_ct > 0,
+                        },
+                        "agents": payload_agents,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        else:
+            for agent in agents:
+                marker = "✓" if agent.available else "·"
+                launch = "launchable" if agent.launchable else "manual"
+                print(f"{marker} {agent.id:<14} {launch:<10} {agent.reason}")
         return 0
 
     ctx = build_context(

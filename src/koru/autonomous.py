@@ -8,6 +8,7 @@ run a continuous scan + queue + autopilot loop.
 from __future__ import annotations
 
 import argparse
+import os
 import threading
 import time
 from pathlib import Path
@@ -18,6 +19,16 @@ from .autopilot.daemon import AutopilotDaemon
 from .init import init_project
 from .planfile_queue import QueueLoopResult, run_planfile_queue_loop
 from .scan import ScanResult, run_scan
+
+_VALID_AUTOPILOT_IDE = frozenset({"auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"})
+
+
+def _resolve_autopilot_ide(cli_value: str) -> str:
+    """``KORU_AUTOPILOT_IDE`` overrides CLI when set to a known token."""
+    raw = os.environ.get("KORU_AUTOPILOT_IDE", "").strip().lower()
+    if raw in _VALID_AUTOPILOT_IDE:
+        return raw
+    return cli_value
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -212,6 +223,7 @@ def _action_up(args: argparse.Namespace) -> int:
 
     enable_scan, use_all_queues = _effective_flags(args.ticket_sources)
     queue_name = None if use_all_queues else args.queue_name
+    autopilot_ide = _resolve_autopilot_ide(args.autopilot_ide)
 
     cycle = 0
     try:
@@ -226,7 +238,7 @@ def _action_up(args: argparse.Namespace) -> int:
                 enable_scan=enable_scan,
                 max_iterations=args.max_iterations,
                 enable_autopilot=args.enable_autopilot,
-                autopilot_ide=args.autopilot_ide,
+                autopilot_ide=autopilot_ide,
                 drive_prompt=args.drive_prompt,
                 submit=args.submit,
                 client=client,

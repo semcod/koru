@@ -44,15 +44,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = activate;
 exports.deactivate = deactivate;
 const net = __importStar(require("net"));
-const path = __importStar(require("path"));
 const vscode = __importStar(require("vscode"));
-function defaultSocketPath() {
-    const xdg = process.env.XDG_RUNTIME_DIR;
-    if (xdg)
-        return path.join(xdg, "koru-autopilot.sock");
-    const uid = (process.getuid?.() ?? 0).toString();
-    return `/tmp/koru-autopilot-${uid}.sock`;
-}
+const socketPath_1 = require("./socketPath");
 class AutopilotBridge {
     context;
     socket = null;
@@ -71,7 +64,7 @@ class AutopilotBridge {
     socketPath() {
         const cfg = vscode.workspace.getConfiguration("koruAutopilot");
         const override = (cfg.get("socketPath") || "").trim();
-        return override || defaultSocketPath();
+        return override || (0, socketPath_1.defaultSocketPathFromEnv)();
     }
     connect() {
         this.disconnect();
@@ -140,6 +133,21 @@ class AutopilotBridge {
             return false;
         }
     }
+    async focusChat() {
+        const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+        const primary = (cfg.get("chatOpenCommands") || []).filter(Boolean);
+        const defaults = [
+            "workbench.action.chat.open",
+            "composer.showComposer",
+            "aichat.newchataction",
+        ];
+        const commands = primary.length > 0 ? primary : defaults;
+        for (const cmd of commands) {
+            if (await this.runCommand(cmd))
+                return true;
+        }
+        return false;
+    }
     detectIde() {
         const app = (vscode.env.appName || "").toLowerCase();
         if (app.includes("windsurf"))
@@ -205,9 +213,16 @@ class AutopilotBridge {
             previous = null;
         }
         try {
-            // Best-effort path: focus the active chat view (works in
-            // VS Code GitHub Copilot Chat, Windsurf Cascade and most forks).
-            await this.runCommand("workbench.action.chat.open");
+            const opened = await this.focusChat();
+            if (!opened) {
+                this.send({
+                    type: "ack",
+                    id: env.id,
+                    ok: false,
+                    message: "no chat open command succeeded — check koruAutopilot.chatOpenCommands",
+                });
+                return;
+            }
             await vscode.env.clipboard.writeText(text);
             await this.runCommand("editor.action.clipboardPasteAction");
             if (submit) {

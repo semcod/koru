@@ -1,0 +1,27 @@
+// Mirrors koru Python ``default_socket_path()`` / ``KORU_AUTOPILOT_*`` env.
+
+import * as os from "os";
+import * as path from "path";
+
+function slugInstance(raw: string): string {
+  const cleaned = raw
+    .slice(0, 64)
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return cleaned || "instance";
+}
+
+export function defaultSocketPathFromEnv(): string {
+  const explicit = (process.env.KORU_AUTOPILOT_SOCKET || "").trim();
+  if (explicit) return path.resolve(explicit);
+
+  const inst = (process.env.KORU_AUTOPILOT_INSTANCE || "").trim();
+  const name = inst ? `koru-autopilot-${slugInstance(inst)}.sock` : "koru-autopilot.sock";
+  const xdg = process.env.XDG_RUNTIME_DIR;
+  if (xdg) return path.join(xdg, name);
+
+  const uid = (process.getuid?.() ?? 0).toString();
+  if (name === "koru-autopilot.sock") return `/tmp/koru-autopilot-${uid}.sock`;
+  const stem = name.replace(/\.sock$/i, "");
+  return `/tmp/${stem}-${uid}.sock`;
+}

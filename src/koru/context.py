@@ -778,10 +778,10 @@ def _render_ai_tool_support_2026() -> list[str]:
         "3. **manual lane** — no stable automation API yet; operator uses it directly.",
         "",
         "Current native lane includes: `windsurf`, `vscode`, `cursor`, `jetbrains`, `zed`, "
-        "`claude-code`, `aider`, `codex`, `gemini-cli`, `cline` and OpenRouter-compatible "
-        "`llm` tickets.",
+        "`claude-code`, `aider`, `codex`, `gemini-cli`, `cline`, `qwen-code` and "
+        "OpenRouter-compatible `llm` tickets.",
         "",
-        "For tools not listed as native (e.g. OpenCode, Qwen Code, "
+        "For tools not listed as native (e.g. OpenCode, "
         "Copilot/Tabnine plugins, app builders), use adapter lane first; promote to native "
         "only when reliability is proven.",
         "",

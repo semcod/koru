@@ -60,6 +60,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `quality:regix` ↔ `gate:regix`, `quality:redup*` ↔ `gate:redup`,
   `quality:sumr:*` ↔ `gate:sumr`.
 
+## [0.1.40] - 2026-05-12
+
+### Docs
+- Update README.md
+- Update docs/ai-tool-registry-2026.yaml
+- Update docs/autopilot-quickstart.md
+
+### Test
+- Update tests/test_agent_cli.py
+- Update tests/test_agents.py
+- Update tests/test_autonomous.py
+
+### Other
+- Update plugins/koru-autopilot-vscode/out/extension.js
+- Update plugins/koru-autopilot-vscode/out/extension.js.map
+- Update plugins/koru-autopilot-vscode/package.json
+- Update plugins/koru-autopilot-vscode/src/extension.ts
+- Update plugins/koru-autopilot-vscode/src/socketPath.ts
+- Update uv.lock
+
 ## [0.1.39] - 2026-05-12
 
 ### Docs

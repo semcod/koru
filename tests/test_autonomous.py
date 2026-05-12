@@ -14,6 +14,18 @@ def test_effective_flags_matrix() -> None:
     assert autonomous_mod._effective_flags("all") == (True, True)
 
 
+def test_resolve_autopilot_ide_env_overrides_cli(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_IDE", "cursor")
+    assert autonomous_mod._resolve_autopilot_ide("vscode") == "cursor"
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    assert autonomous_mod._resolve_autopilot_ide("vscode") == "vscode"
+
+
+def test_resolve_autopilot_ide_ignores_bad_env(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_IDE", "not-a-real-ide")
+    assert autonomous_mod._resolve_autopilot_ide("jetbrains") == "jetbrains"
+
+
 def test_up_single_cycle_queue_only_no_autopilot(
     tmp_path,
     monkeypatch,

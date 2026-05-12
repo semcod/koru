@@ -35,6 +35,7 @@ fight each other:
 | **Autopilot Unix socket** | Default is one socket per login (`$XDG_RUNTIME_DIR/koru-autopilot.sock`). Set **`KORU_AUTOPILOT_INSTANCE`** to a unique label per IDE window (e.g. `cursor-main`, `windsurf-2`); the socket becomes `koru-autopilot-<label>.sock`. Or set **`KORU_AUTOPILOT_SOCKET`** to an absolute path per instance. |
 | **Planfile queue** | Koru takes an exclusive **`flock`** on `.planfile/.koru/queue-runner.lock` while running `run_next_planfile_task` (POSIX). A second drain **waits** instead of stealing the same ticket. Set **`KORU_QUEUE_RUNNER_LOCK=0`** only if you accept duplicate work. |
 | **Ticket ownership** | Before `ticket start`, koru runs **`planfile ticket claim --assigned-to <actor> --lease-seconds …`**. Give each lane a distinct **`--actor`** name so ownership is visible. Tune lease with **`KORU_TICKET_LEASE_SECONDS`** (default 3600, clamped). |
+| **Shell per lane** | Run `eval "$(koru agent --env-exports --lane cursor)"` (or `--agent cursor`) in each IDE terminal. For JSON (CI), use `koru agent --env-json --lane windsurf`. |
 
 ## What gets installed where
 

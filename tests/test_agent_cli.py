@@ -32,6 +32,15 @@ def test_agent_list_json_includes_ready_summary() -> None:
                 "project_hint": False,
             },
             {
+                "id": "qwen-code",
+                "label": "Qwen Code",
+                "available": True,
+                "launchable": True,
+                "command": "/usr/bin/qwen-code",
+                "reason": "Qwen Code CLI detected in PATH.",
+                "project_hint": False,
+            },
+            {
                 "id": "openrouter",
                 "label": "OpenRouter automation lane",
                 "available": False,
@@ -61,8 +70,21 @@ def test_agent_list_json_includes_ready_summary() -> None:
 
         assert code == 0
         payload = json.loads(output)
-        assert payload["summary"]["total"] == 2
-        assert payload["summary"]["available"] == 1
-        assert payload["summary"]["launchable"] == 1
+        assert payload["summary"]["total"] == 3
+        assert payload["summary"]["available"] == 2
+        assert payload["summary"]["launchable"] == 2
         assert payload["summary"]["ready"] is True
-        assert payload["agents"][0]["id"] == "gemini-cli"
+        ids = [a["id"] for a in payload["agents"]]
+        assert "gemini-cli" in ids
+        assert "qwen-code" in ids
+
+
+def test_agent_env_exports_cursor_lane() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        code, output = _run_main(
+            "agent", "--project", str(Path(tmp)), "--lane", "cursor", "--env-exports"
+        )
+    assert code == 0
+    assert "KORU_AUTOPILOT_INSTANCE" in output
+    assert "cursor" in output
+    assert "KORU_AUTOPILOT_IDE" in output

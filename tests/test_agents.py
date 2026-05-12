@@ -6,7 +6,14 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from koru.agents import detect_agent_environment, detect_agent_options, select_agent
+from koru.agents import (
+    agent_lane_environment,
+    detect_agent_environment,
+    detect_agent_options,
+    format_agent_lane_exports,
+    normalize_agent_lane_id,
+    select_agent,
+)
 
 
 class TestAgentDetection(unittest.TestCase):
@@ -97,3 +104,50 @@ class TestAgentDetection(unittest.TestCase):
             selected = select_agent(agents, interactive=False)
             self.assertIsNotNone(selected)
             self.assertEqual(selected.id, "cline")
+
+    def test_agent_lane_environment_cursor(self) -> None:
+        env = agent_lane_environment("cursor")
+        self.assertEqual(env["KORU_AUTOPILOT_INSTANCE"], "cursor")
+        self.assertEqual(env["KORU_AUTOPILOT_IDE"], "cursor")
+        self.assertIn("koru-cursor", env["KORU_SUGGESTED_QUEUE_ACTOR"])
+
+    def test_normalize_agent_lane_id_strips_garbage(self) -> None:
+        self.assertEqual(normalize_agent_lane_id("Cursor : A"), "cursor---a")
+
+    def test_format_agent_lane_exports_is_shell_safe(self) -> None:
+        env = {"KORU_X": "a'b"}
+        out = format_agent_lane_exports(env)
+        self.assertIn("export KORU_X=", out)
+        self.assertIn("a'\"'\"'b", out)
+
+    def test_detects_qwen_code_when_available(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            def fake_which(command: str) -> str | None:
+                return "/usr/bin/qwen-code" if command == "qwen-code" else None
+
+            with patch("shutil.which", side_effect=fake_which):
+                agents = detect_agent_options(Path(tmp))
+
+            qwen = next(agent for agent in agents if agent.id == "qwen-code")
+            self.assertTrue(qwen.available)
+            self.assertTrue(qwen.launchable)
+            self.assertEqual(qwen.command, "/usr/bin/qwen-code")
+
+    def test_select_agent_can_pick_qwen_when_only_launchable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            def fake_which(command: str) -> str | None:
+                return "/usr/bin/qwen" if command == "qwen" else None
+
+            with patch("shutil.which", side_effect=fake_which):
+                agents = detect_agent_options(Path(tmp))
+
+            selected = select_agent(agents, interactive=False)
+            self.assertIsNotNone(selected)
+            self.assertEqual(selected.id, "qwen-code")
+
+
+class TestAgentLaneEnv(unittest.TestCase):
+    def test_qwen_lane_env_defaults(self) -> None:
+        env = agent_lane_environment("qwen-code")
+        self.assertEqual(env["KORU_AUTOPILOT_IDE"], "auto")
+        self.assertEqual(env["KORU_SUGGESTED_QUEUE_ACTOR"], "koru-qwen-code")

@@ -38,7 +38,13 @@
         "koruAutopilot.socketPath": {
           "type": "string",
           "default": "",
-          "description": "Unix-socket path. Empty = $XDG_RUNTIME_DIR/koru-autopilot.sock or /tmp/koru-autopilot-<uid>.sock."
+          "description": "Unix socket override. Empty = KORU_AUTOPILOT_SOCKET, else KORU_AUTOPILOT_INSTANCE / XDG_RUNTIME_DIR (matches koru Python)."
+        },
+        "koruAutopilot.chatOpenCommands": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Commands to open AI chat, tried in order (Cursor Composer, Copilot Chat, …). Empty = extension defaults."
         },
         "koruAutopilot.autoConnect": {
           "type": "boolean",
