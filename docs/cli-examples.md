@@ -94,6 +94,23 @@ task loop:test
 task loop:lint
 ```
 
+### Create task tickets (including tool-adapter scaffold)
+
+```bash
+# standard NL ticket
+koru task "Fix login form validation" --project . --priority high
+
+# phase-2 adapter scaffold from tool registry
+koru task "Prepare Gemini adapter" --project . --tool gemini-cli
+
+# override inferred executor hint for the scaffold
+koru task "Prepare n8n webhook adapter" --project . --tool n8n --tool-kind api
+
+# use custom registry file
+koru task "Prepare custom tool adapter" --project . --tool my-tool \
+  --tool-registry /path/to/ai-tool-registry-2026.yaml
+```
+
 ### Real-world example (semcod org)
 
 ```bash

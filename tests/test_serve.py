@@ -19,7 +19,24 @@ from contextlib import closing
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 
-from koru.serve import ServeConfig, build_server
+from koru.serve import (
+    ServeConfig,
+    bind_serve_server,
+    build_server,
+    read_serve_endpoint,
+    write_serve_endpoint_file,
+)
+
+
+def _minimal_planfile_project() -> tuple[tempfile.TemporaryDirectory, Path]:
+    tmp = tempfile.TemporaryDirectory()
+    project = Path(tmp.name)
+    (project / ".planfile" / "sprints").mkdir(parents=True)
+    (project / ".planfile" / "config.yaml").write_text("project: test\n", encoding="utf-8")
+    (project / ".planfile" / "sprints" / "current.yaml").write_text(
+        "sprint:\n  id: current\n  tickets: {}\n", encoding="utf-8"
+    )
+    return tmp, project
 
 
 def _free_port() -> int:
@@ -174,6 +191,61 @@ class TestServe(unittest.TestCase):
             self.assertEqual(exc.code, 404)
         else:
             self.fail("expected HTTPError 404")
+
+
+class TestServeAutoPort(unittest.TestCase):
+    def test_auto_port_skips_busy_port(self) -> None:
+        tmp, project = _minimal_planfile_project()
+        blocker = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            blocker.bind(("127.0.0.1", 0))
+            busy = blocker.getsockname()[1]
+            blocker.listen(1)
+            cfg = ServeConfig(
+                project=project,
+                host="127.0.0.1",
+                port=busy,
+                open_browser=False,
+                auto_port=True,
+            )
+            server, actual, requested = bind_serve_server(cfg)
+            self.assertEqual(requested, busy)
+            self.assertNotEqual(actual, busy)
+            write_serve_endpoint_file(cfg)
+            data = read_serve_endpoint(project)
+            self.assertIsNotNone(data)
+            assert data is not None
+            self.assertEqual(data["port"], actual)
+            self.assertEqual(data["http_base"], f"http://127.0.0.1:{actual}")
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            time.sleep(0.05)
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2.0)
+        finally:
+            blocker.close()
+            tmp.cleanup()
+
+    def test_without_auto_port_busy_raises(self) -> None:
+        tmp, project = _minimal_planfile_project()
+        blocker = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            blocker.bind(("127.0.0.1", 0))
+            busy = blocker.getsockname()[1]
+            blocker.listen(1)
+            cfg = ServeConfig(
+                project=project,
+                host="127.0.0.1",
+                port=busy,
+                open_browser=False,
+                auto_port=False,
+            )
+            with self.assertRaises(OSError):
+                bind_serve_server(cfg)
+        finally:
+            blocker.close()
+            tmp.cleanup()
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -19,6 +19,8 @@ Bound to ``127.0.0.1`` by default — never exposed to the network unless
 from __future__ import annotations
 
 import json
+import os
+import sys
 import threading
 import webbrowser
 from dataclasses import dataclass
@@ -27,6 +29,7 @@ from pathlib import Path
 from typing import Any
 
 from .context import build_context, render_markdown_handoff
+from .events import emit_management_event
 from .topology import (
     load_topology,
     save_topology,
@@ -36,6 +39,25 @@ from .topology import (
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
+
+_SERVE_ENDPOINT_REL = Path(".planfile") / ".koru" / "serve-endpoint.json"
+
+
+def serve_endpoint_path(project: Path) -> Path:
+    """JSON path where the last successful ``koru serve`` bind is recorded."""
+    return project.resolve() / _SERVE_ENDPOINT_REL
+
+
+def read_serve_endpoint(project: Path) -> dict[str, Any] | None:
+    """Load ``serve-endpoint.json`` if present; return ``None`` on missing/invalid."""
+    path = serve_endpoint_path(project)
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
 
 
 _DASHBOARD_HTML = """<!doctype html>
@@ -595,6 +617,7 @@ class ServeConfig:
     port: int = DEFAULT_PORT
     open_browser: bool = True
     queue_name: str | None = None
+    auto_port: bool = False
 
 
 def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
@@ -813,21 +836,98 @@ def build_server(config: ServeConfig) -> ThreadingHTTPServer:
     return ThreadingHTTPServer((config.host, config.port), handler)
 
 
+def write_serve_endpoint_file(config: ServeConfig) -> None:
+    """Persist dashboard base URL and port for other tools (``read_serve_endpoint``)."""
+    koru_dir = config.project.resolve() / ".planfile" / ".koru"
+    koru_dir.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "http_base": f"http://{config.host}:{config.port}",
+        "host": config.host,
+        "port": config.port,
+        "pid": os.getpid(),
+    }
+    (koru_dir / "serve-endpoint.json").write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def bind_serve_server(config: ServeConfig) -> tuple[ThreadingHTTPServer, int, int]:
+    """Bind a server; set ``config.port`` to the listening port.
+
+    Returns ``(server, actual_port, requested_port)``.
+    """
+    requested = config.port
+    if not config.auto_port:
+        server = build_server(config)
+        return server, config.port, requested
+
+    ceiling = min(requested + 33, 65536)
+    candidates = [requested] + [p for p in range(requested + 1, ceiling) if p != requested]
+    last_err: OSError | None = None
+    for p in candidates:
+        config.port = p
+        try:
+            server = build_server(config)
+            return server, p, requested
+        except OSError as exc:
+            last_err = exc
+            continue
+
+    config.port = 0
+    try:
+        server = build_server(config)
+    except OSError as exc:
+        msg = f"koru serve: cannot bind {config.host} starting from port {requested}"
+        if last_err is not None:
+            msg += f" — {last_err}"
+        raise OSError(msg) from exc
+    actual = int(server.server_address[1])
+    config.port = actual
+    return server, actual, requested
+
+
 def serve(config: ServeConfig) -> int:
     """Start the dashboard server and block until Ctrl-C.
 
     Returns the process exit code (0 on clean shutdown).
     """
     try:
-        server = build_server(config)
+        server, actual, requested = bind_serve_server(config)
     except OSError as exc:
-        print(f"koru serve: cannot bind {config.host}:{config.port} — {exc}")
+        if not config.auto_port:
+            print(
+                f"koru serve: cannot bind {config.host}:{config.port} — {exc}",
+                file=sys.stderr,
+            )
+        else:
+            print(str(exc), file=sys.stderr)
         return 1
 
+    write_serve_endpoint_file(config)
     url = f"http://{config.host}:{config.port}/"
+    if config.auto_port and actual != requested:
+        print(
+            f"koru serve: port {requested} busy — bound to {actual} instead",
+            file=sys.stderr,
+        )
     print(f"koru serve: dashboard at {url}")
     print(f"koru serve: project = {config.project}")
     print("koru serve: Ctrl-C to stop")
+
+    emit_management_event(
+        tool="koru.serve",
+        action="started",
+        status="running",
+        message=url,
+        queue=config.queue_name,
+        details={
+            "project": str(config.project),
+            "open_browser": config.open_browser,
+            "port": config.port,
+            "requested_port": requested,
+        },
+    )
 
     if config.open_browser:
         # Open browser after server is listening, on a background thread,

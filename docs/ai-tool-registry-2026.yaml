@@ -88,14 +88,14 @@ tools:
   - id: gemini-cli
     name: Gemini CLI
     category: cli_agent
-    lane: adapter
+    lane: native
     stability: beta
     detect:
       commands: ["gemini"]
       markers: []
       env: ["GEMINI_API_KEY"]
-    invoke: "planfile shell ticket with `gemini` command"
-    notes: "Adapter lane pending native integration."
+    invoke: "koru agent --agent gemini-cli --launch"
+    notes: "Native agent lane (phase-3 promotion); adapter tickets still supported."
 
   - id: cline
     name: Cline

@@ -248,6 +248,28 @@ class TestE2ETask(unittest.TestCase):
         self.assertTrue(urgent)
         self.assertEqual(urgent[0]["priority"], "critical")
 
+    def test_task_with_tool_scaffold(self) -> None:
+        code, out, _ = _run_main(
+            "task", "Prepare Gemini adapter",
+            "--project", str(self.project),
+            "--tool", "gemini-cli",
+        )
+        self.assertEqual(code, 0, out)
+        self.assertIn("tool:  gemini-cli", out)
+        sprint = yaml.safe_load(
+            (self.project / ".planfile/sprints/current.yaml").read_text()
+        )
+        tickets = sprint["sprint"]["tickets"]
+        matches = [
+            t for t in tickets.values()
+            if t.get("source", {}).get("tool") == "koru-cli-tool-adapter"
+            and t.get("source", {}).get("context", {}).get("tool_id") == "gemini-cli"
+        ]
+        self.assertTrue(matches)
+        ticket = matches[0]
+        self.assertIn("adapter-scaffold", ticket.get("labels", []))
+        self.assertIn("TOOL ADAPTER SCAFFOLD", ticket.get("inputs", {}).get("prompt", ""))
+
 
 # ===========================================================================
 # E2E: GC lifecycle

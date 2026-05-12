@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -24,6 +25,7 @@ def create_nl_task(
     sprint: str = "current",
     queue_name: str | None = None,
     priority: str = "normal",
+    scaffold: dict[str, Any] | None = None,
 ) -> CreatedTask:
     """Create a planfile ticket from a normal-language sentence."""
     text = text.strip()
@@ -48,6 +50,29 @@ def create_nl_task(
     tickets = sprint_data["sprint"].setdefault("tickets", {})
     now = datetime.now(UTC).isoformat()
     name = _title_from_text(text)
+    scaffold = scaffold or {}
+    prompt_suffix = str(scaffold.get("prompt_suffix") or "").strip()
+    full_prompt = text if not prompt_suffix else f"{text}\n\n{prompt_suffix}"
+
+    labels = ["koru", "nl-task", "llm-ready"]
+    labels.extend(str(v) for v in (scaffold.get("labels") or []) if str(v).strip())
+    labels = list(dict.fromkeys(labels))
+
+    source_tool = str(scaffold.get("source_tool") or "koru-cli-nl")
+    source_context: dict[str, Any] = {
+        "input": text,
+        **(
+            scaffold.get("source_context")
+            if isinstance(scaffold.get("source_context"), dict)
+            else {}
+        ),
+    }
+
+    inputs_extra = (
+        scaffold.get("inputs") if isinstance(scaffold.get("inputs"), dict) else {}
+    )
+    executor_kind = str(scaffold.get("executor_kind") or "human")
+    executor_mode = str(scaffold.get("executor_mode") or "interactive")
     tickets[ticket_id] = {
         "id": ticket_id,
         "name": name,
@@ -55,16 +80,16 @@ def create_nl_task(
         "priority": priority,
         "sprint": sprint,
         "source": {
-            "tool": "koru-cli-nl",
+            "tool": source_tool,
             "timestamp": now,
-            "context": {"input": text},
+            "context": source_context,
         },
         "description": text,
-        "labels": ["koru", "nl-task", "llm-ready"],
+        "labels": labels,
         "blocked_by": [],
         "blocks": [],
         "files": [],
-        "executor": {"kind": "human", "mode": "interactive"},
+        "executor": {"kind": executor_kind, "mode": executor_mode},
         "execution": {
             "queue": queue_name or "default",
             "state": "ready",
@@ -72,11 +97,12 @@ def create_nl_task(
             "max_attempts": 1,
         },
         "inputs": {
-            "prompt": text,
+            "prompt": full_prompt,
             "env_keys": [],
             "api_method": "GET",
             "api_headers": {},
             "api_timeout_seconds": 30.0,
+            **inputs_extra,
         },
         "outputs": {"artifacts": [], "notes": []},
         "sync": {},

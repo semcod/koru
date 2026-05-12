@@ -5,7 +5,7 @@ from __future__ import annotations
 import textwrap
 from pathlib import Path
 
-from koru.tools import detect_tools, load_tool_registry
+from koru.tools import build_tool_task_scaffold, detect_tools, infer_adapter_kind, load_tool_registry
 
 
 def test_load_registry_from_explicit_path(tmp_path: Path) -> None:
@@ -66,3 +66,26 @@ def test_detect_tools_marks_available_via_marker(tmp_path: Path) -> None:
     out = detect_tools(tmp_path, registry)
     assert out[0]["available"] is True
     assert ".windsurf/rules.md" in out[0]["detected_via"]["markers"]
+
+
+def test_infer_adapter_kind_defaults() -> None:
+    assert infer_adapter_kind({"lane": "manual", "category": "plugin"}) == "human"
+    assert infer_adapter_kind({"lane": "adapter", "category": "specialist"}) == "api"
+    assert infer_adapter_kind({"lane": "adapter", "category": "cli_agent"}) == "shell"
+
+
+def test_build_tool_task_scaffold_contains_expected_fields() -> None:
+    scaffold = build_tool_task_scaffold(
+        {
+            "id": "gemini-cli",
+            "lane": "adapter",
+            "category": "cli_agent",
+            "stability": "beta",
+            "invoke": "planfile shell ticket",
+            "notes": "Adapter lane pending native integration.",
+        }
+    )
+    assert scaffold["source_tool"] == "koru-cli-tool-adapter"
+    assert "tool-gemini-cli" in scaffold["labels"]
+    assert scaffold["inputs"]["tool_id"] == "gemini-cli"
+    assert "TOOL ADAPTER SCAFFOLD" in scaffold["prompt_suffix"]

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import shlex
 import sys
 from collections.abc import Callable
@@ -34,8 +35,18 @@ from .queue_clean import CleanupReport, clean_queue
 from .run_log import open_run_log_eagerly
 from .scan import ScanResult, run_scan
 from .serve import DEFAULT_HOST, DEFAULT_PORT, ServeConfig, serve
+
+
+def _env_truthy(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in ("1", "true", "yes", "on")
 from .tasks import create_nl_task
-from .tools import detect_tools, load_tool_registry, render_tools_detect_text
+from .tools import (
+    build_tool_task_scaffold,
+    detect_tools,
+    find_tool_entry,
+    load_tool_registry,
+    render_tools_detect_text,
+)
 from .watch import watch_planfile_events
 
 
@@ -295,6 +306,29 @@ def _build_task_parser() -> argparse.ArgumentParser:
     parser.add_argument("--sprint", default="current", help="Target planfile sprint.")
     parser.add_argument("--queue-name", default=None, help="Execution queue for the new ticket.")
     parser.add_argument("--priority", default="normal", help="Ticket priority.")
+    parser.add_argument(
+        "--tool",
+        dest="tool_id",
+        default=None,
+        help=(
+            "Build a tool-adapter scaffold ticket for this tool id "
+            "(from docs/ai-tool-registry-2026.yaml)."
+        ),
+    )
+    parser.add_argument(
+        "--tool-kind",
+        dest="tool_kind",
+        choices=("human", "shell", "api", "llm"),
+        default=None,
+        help="Override scaffolded executor hint for --tool.",
+    )
+    parser.add_argument(
+        "--tool-registry",
+        dest="tool_registry",
+        type=Path,
+        default=None,
+        help="Override tool registry path for --tool lookup.",
+    )
     return parser
 
 
@@ -322,6 +356,14 @@ def _build_serve_parser() -> argparse.ArgumentParser:
         type=int,
         default=DEFAULT_PORT,
         help=f"TCP port to listen on (default {DEFAULT_PORT}).",
+    )
+    parser.add_argument(
+        "--auto-port",
+        action="store_true",
+        help=(
+            "If the port is busy, try the next ports (then an ephemeral port). "
+            "Also on when KORU_SERVE_AUTO_PORT is 1/true/yes."
+        ),
     )
     open_group = parser.add_mutually_exclusive_group()
     open_group.add_argument(
@@ -876,6 +918,26 @@ def _build_agent_parser() -> argparse.ArgumentParser:
 
 def _task_main(argv: list[str]) -> int:
     args = _build_task_parser().parse_args(argv)
+    scaffold: dict[str, Any] | None = None
+    if args.tool_id:
+        registry, registry_path = load_tool_registry(args.tool_registry)
+        if not registry:
+            print(
+                "koru task: tool registry is empty or missing. "
+                "Use --tool-registry PATH or ensure docs/ai-tool-registry-2026.yaml exists."
+            )
+            return 2
+        tool = find_tool_entry(registry, args.tool_id)
+        if tool is None:
+            known = ", ".join(sorted(str(t.get("id")) for t in registry if t.get("id")))
+            print(f"koru task: unknown --tool '{args.tool_id}'. Known ids: {known}")
+            return 2
+        scaffold = build_tool_task_scaffold(tool, adapter_kind=args.tool_kind)
+        if registry_path is not None:
+            scaffold.setdefault("source_context", {})
+            if isinstance(scaffold.get("source_context"), dict):
+                scaffold["source_context"]["registry"] = str(registry_path)
+
     try:
         created = create_nl_task(
             args.project,
@@ -883,6 +945,7 @@ def _task_main(argv: list[str]) -> int:
             sprint=args.sprint,
             queue_name=args.queue_name,
             priority=args.priority,
+            scaffold=scaffold,
         )
     except ValueError as exc:
         print(f"koru task: {exc}")
@@ -890,6 +953,9 @@ def _task_main(argv: list[str]) -> int:
     print(f"koru task: ✓ created {created.ticket_id} in {created.path}")
     print(f"  name:  {created.name}")
     print(f"  queue: {args.queue_name or 'default'}")
+    if args.tool_id:
+        print(f"  tool:  {args.tool_id}")
+        print("  note: scaffold ticket created — fill concrete executor inputs before queue run")
     print("Next: run `koru` to get the LLM prompt, or `koru --queue` to execute one task.")
     emit_management_event(
         tool="koru.task",
@@ -915,14 +981,7 @@ def _serve_main(argv: list[str]) -> int:
         port=args.port,
         open_browser=args.open_browser,
         queue_name=args.queue_name,
-    )
-    emit_management_event(
-        tool="koru.serve",
-        action="started",
-        status="running",
-        message=f"http://{config.host}:{config.port}/",
-        queue=config.queue_name,
-        details={"project": str(config.project), "open_browser": config.open_browser},
+        auto_port=bool(args.auto_port) or _env_truthy("KORU_SERVE_AUTO_PORT"),
     )
     exit_code = serve(config)
     emit_management_event(

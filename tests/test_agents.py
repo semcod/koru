@@ -47,3 +47,28 @@ class TestAgentDetection(unittest.TestCase):
             selected = select_agent(agents, interactive=False)
             self.assertIsNotNone(selected)
             self.assertEqual(selected.id, "claude-code")
+
+    def test_detects_gemini_cli_when_available(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            def fake_which(command: str) -> str | None:
+                return "/usr/bin/gemini" if command == "gemini" else None
+
+            with patch("shutil.which", side_effect=fake_which):
+                agents = detect_agent_options(Path(tmp))
+
+            gemini = next(agent for agent in agents if agent.id == "gemini-cli")
+            self.assertTrue(gemini.available)
+            self.assertTrue(gemini.launchable)
+            self.assertEqual(gemini.command, "/usr/bin/gemini")
+
+    def test_select_agent_can_pick_gemini_when_only_launchable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            def fake_which(command: str) -> str | None:
+                return "/usr/bin/gemini" if command == "gemini" else None
+
+            with patch("shutil.which", side_effect=fake_which):
+                agents = detect_agent_options(Path(tmp))
+
+            selected = select_agent(agents, interactive=False)
+            self.assertIsNotNone(selected)
+            self.assertEqual(selected.id, "gemini-cli")

@@ -48,3 +48,29 @@ class TestNaturalLanguageTask(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(ValueError):
                 create_nl_task(Path(tmp), "   ")
+
+    def test_scaffold_overrides_ticket_shape(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            created = create_nl_task(
+                project,
+                "Integrate adapter flow",
+                scaffold={
+                    "source_tool": "koru-cli-tool-adapter",
+                    "source_context": {"tool_id": "gemini-cli"},
+                    "labels": ["adapter-scaffold", "tool-gemini-cli"],
+                    "executor_kind": "shell",
+                    "executor_mode": "automatic",
+                    "prompt_suffix": "[TOOL ADAPTER SCAFFOLD]",
+                    "inputs": {"tool_id": "gemini-cli", "adapter_executor_hint": "shell"},
+                },
+            )
+            data = yaml.safe_load(created.path.read_text(encoding="utf-8"))
+            ticket = data["sprint"]["tickets"][created.ticket_id]
+            self.assertEqual(ticket["source"]["tool"], "koru-cli-tool-adapter")
+            self.assertEqual(ticket["source"]["context"]["tool_id"], "gemini-cli")
+            self.assertIn("adapter-scaffold", ticket["labels"])
+            self.assertEqual(ticket["executor"]["kind"], "shell")
+            self.assertEqual(ticket["executor"]["mode"], "automatic")
+            self.assertIn("[TOOL ADAPTER SCAFFOLD]", ticket["inputs"]["prompt"])
+            self.assertEqual(ticket["inputs"]["tool_id"], "gemini-cli")

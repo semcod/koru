@@ -113,6 +113,84 @@ def detect_tools(project: Path, registry: list[dict[str, Any]]) -> list[dict[str
     return out
 
 
+def find_tool_entry(registry: list[dict[str, Any]], tool_id: str) -> dict[str, Any] | None:
+    """Return a registry entry by id (case-insensitive), or ``None``."""
+    target = tool_id.strip().lower()
+    for item in registry:
+        current = str(item.get("id") or "").strip().lower()
+        if current == target:
+            return item
+    return None
+
+
+def infer_adapter_kind(tool: dict[str, Any]) -> str:
+    """Pick a safe default adapter kind for a tool registry entry."""
+    lane = str(tool.get("lane") or "manual")
+    category = str(tool.get("category") or "")
+
+    if lane == "manual":
+        return "human"
+    if category in {"app_builder", "specialist"}:
+        return "api"
+    return "shell"
+
+
+def build_tool_task_scaffold(
+    tool: dict[str, Any],
+    *,
+    adapter_kind: str | None = None,
+) -> dict[str, Any]:
+    """Build task scaffold payload for ``create_nl_task(..., scaffold=...)``."""
+    tool_id = str(tool.get("id") or "unknown")
+    lane = str(tool.get("lane") or "manual")
+    category = str(tool.get("category") or "unknown")
+    stability = str(tool.get("stability") or "unknown")
+    invoke = str(tool.get("invoke") or "")
+    notes = str(tool.get("notes") or "")
+
+    kind = adapter_kind or infer_adapter_kind(tool)
+    if kind not in {"human", "shell", "api", "llm"}:
+        raise ValueError(f"unsupported adapter kind: {kind}")
+
+    prompt_lines = [
+        "[TOOL ADAPTER SCAFFOLD]",
+        f"- tool_id: {tool_id}",
+        f"- lane: {lane}",
+        f"- category: {category}",
+        f"- stability: {stability}",
+        f"- suggested_executor_kind: {kind}",
+    ]
+    if invoke:
+        prompt_lines.append(f"- invoke_hint: {invoke}")
+    if notes:
+        prompt_lines.append(f"- notes: {notes}")
+    prompt_lines.append(
+        "- required_next_step: convert this scaffold into concrete executor inputs before queue run"
+    )
+
+    return {
+        "source_tool": "koru-cli-tool-adapter",
+        "source_context": {
+            "tool_id": tool_id,
+            "tool_lane": lane,
+            "tool_category": category,
+            "tool_stability": stability,
+            "adapter_kind": kind,
+            "invoke_hint": invoke,
+        },
+        "labels": ["adapter-scaffold", f"tool-{tool_id}", f"lane-{lane}"],
+        "inputs": {
+            "tool_id": tool_id,
+            "tool_lane": lane,
+            "tool_category": category,
+            "tool_stability": stability,
+            "adapter_executor_hint": kind,
+            "tool_invoke_hint": invoke,
+        },
+        "prompt_suffix": "\n".join(prompt_lines),
+    }
+
+
 def render_tools_detect_text(results: list[dict[str, Any]], *, registry_path: Path | None) -> str:
     """Render a compact text report for ``koru tools detect``."""
     available = sum(1 for r in results if r.get("available"))

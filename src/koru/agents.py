@@ -53,6 +53,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
     claude_cmd = _which("claude")
     aider_cmd = _which("aider")
     codex_cmd = _which("codex")
+    gemini_cmd = _which("gemini")
     openrouter_ready = bool(os.getenv("OPENROUTER_API_KEY"))
     antigravity_ready = bool(os.getenv("ANTIGRAVITY_AGENT"))
 
@@ -88,6 +89,18 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             launchable=bool(codex_cmd),
             command=codex_cmd,
             reason="Codex CLI detected in PATH." if codex_cmd else "Codex CLI is not in PATH.",
+        ),
+        AgentOption(
+            id="gemini-cli",
+            label="Gemini CLI",
+            available=bool(gemini_cmd),
+            launchable=bool(gemini_cmd),
+            command=gemini_cmd,
+            reason=(
+                "Gemini CLI detected in PATH."
+                if gemini_cmd
+                else "Gemini CLI is not in PATH."
+            ),
         ),
         AgentOption(
             id="cursor",
