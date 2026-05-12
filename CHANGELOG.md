@@ -60,6 +60,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `quality:regix` ↔ `gate:regix`, `quality:redup*` ↔ `gate:redup`,
   `quality:sumr:*` ↔ `gate:sumr`.
 
+## [0.1.48] - 2026-05-12
+
+### Docs
+- Update README.md
+- Update docs/autopilot-quickstart.md
+
+### Test
+- Update tests/test_autonomous.py
+- Update tests/test_autopilot_cli.py
+- Update tests/test_autopilot_host_setup.py
+- Update tests/test_autopilot_plugin_installer.py
+
+### Other
+- Update uv.lock
+
 ## [0.1.47] - 2026-05-12
 
 ### Docs

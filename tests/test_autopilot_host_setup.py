@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 from unittest import mock
 
@@ -41,6 +42,14 @@ def test_run_host_setup_install_dry_run_no_sudo(monkeypatch: pytest.MonkeyPatch)
             "automated_apt_suggestion": "sudo apt-get install -y wtype",
         },
     )
+    real_which = shutil.which
+
+    def which(name: str) -> str | None:
+        if name == "apt-get":
+            return "/usr/bin/apt-get"
+        return real_which(name)
+
+    monkeypatch.setattr("koru.autopilot.host_setup.shutil.which", which)
     code = run_host_setup(output_format="json", install=True, install_dry_run=True)
     assert code == 0
 
@@ -48,9 +57,8 @@ def test_run_host_setup_install_dry_run_no_sudo(monkeypatch: pytest.MonkeyPatch)
 def test_run_host_setup_install_calls_apt_when_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(
-        "koru.autopilot.host_setup.build_setup_host_report",
-        lambda: {
+    reports = [
+        {
             "session": "wayland",
             "selected_backend": None,
             "backends": [],
@@ -58,35 +66,10 @@ def test_run_host_setup_install_calls_apt_when_missing(
             "focused_ide": None,
             "package_manager": "apt",
             "deb_packages_missing": ["xdotool"],
-            "human_actions_required": ["x"],
+            "human_actions_required": [],
             "automated_apt_suggestion": "sudo apt-get install -y xdotool",
         },
-    )
-    monkeypatch.setattr("koru.autopilot.host_setup.shutil.which", lambda _: "/usr/bin/apt-get")
-
-    def fake_run(cmd, **kwargs):
-        assert cmd[:3] == ["sudo", "apt-get", "install"]
-        assert "xdotool" in cmd
-        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
-
-    monkeypatch.setattr("koru.autopilot.host_setup.subprocess.run", fake_run)
-    calls = {"n": 0}
-
-    def second_report():
-        calls["n"] += 1
-        if calls["n"] == 1:
-            return {
-                "session": "wayland",
-                "selected_backend": None,
-                "backends": [],
-                "ides": [],
-                "focused_ide": None,
-                "package_manager": "apt",
-                "deb_packages_missing": ["xdotool"],
-                "human_actions_required": [],
-                "automated_apt_suggestion": "sudo apt-get install -y xdotool",
-            }
-        return {
+        {
             "session": "wayland",
             "selected_backend": "xdotool",
             "backends": [],
@@ -96,18 +79,43 @@ def test_run_host_setup_install_calls_apt_when_missing(
             "deb_packages_missing": [],
             "human_actions_required": [],
             "automated_apt_suggestion": None,
-        }
+        },
+    ]
+    idx = {"i": 0}
 
-    monkeypatch.setattr("koru.autopilot.host_setup.build_setup_host_report", second_report)
+    def next_report() -> dict:
+        i = min(idx["i"], len(reports) - 1)
+        idx["i"] += 1
+        return reports[i]
+
+    monkeypatch.setattr(
+        "koru.autopilot.host_setup.build_setup_host_report", next_report
+    )
+
+    real_which = shutil.which
+
+    def which(name: str) -> str | None:
+        if name == "apt-get":
+            return "/usr/bin/apt-get"
+        return real_which(name)
+
+    monkeypatch.setattr("koru.autopilot.host_setup.shutil.which", which)
+
+    def fake_run(cmd, **kwargs):
+        assert cmd[:3] == ["sudo", "apt-get", "install"]
+        assert "xdotool" in cmd
+        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+    monkeypatch.setattr("koru.autopilot.host_setup.subprocess.run", fake_run)
     code = run_host_setup(output_format="json", install=True, install_dry_run=False)
     assert code == 0
 
 
 def test_autopilot_cli_setup_host_invokes_runner() -> None:
-    from koru.autopilot.cli_command import autopilot_main
+    from koru.autopilot import cli_command as cc
 
     with mock.patch("koru.autopilot.host_setup.run_host_setup", return_value=0) as m:
-        rc = autopilot_main(["setup-host", "--format", "json"])
+        rc = cc.autopilot_main(["setup-host", "--format", "json"])
     assert rc == 0
     m.assert_called_once()
     kwargs = m.call_args.kwargs

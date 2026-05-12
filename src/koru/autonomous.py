@@ -16,6 +16,7 @@ from pathlib import Path
 from .autopilot import default_socket_path
 from .autopilot.client import AutopilotClient
 from .autopilot.daemon import AutopilotDaemon
+from .autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide
 from .agents import agent_lane_environment
 from .init import init_project, resolve_project_agent_lane
 from .planfile_queue import QueueLoopResult, run_planfile_queue_loop
@@ -26,9 +27,9 @@ _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
 
 def _resolve_autopilot_ide(cli_value: str) -> str:
-    """``KORU_AUTOPILOT_IDE`` overrides CLI when set to a known token."""
+    """``KORU_AUTOPILOT_IDE`` overrides CLI when set to a concrete IDE."""
     raw = os.environ.get("KORU_AUTOPILOT_IDE", "").strip().lower()
-    if raw in _VALID_AUTOPILOT_IDE:
+    if raw in _VALID_AUTOPILOT_IDE and raw != "auto":
         return raw
     return cli_value
 
@@ -131,11 +132,17 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Disable autopilot drive step.",
     )
     up.add_argument(
+        "--no-install-plugin",
+        dest="install_plugin",
+        action="store_false",
+        help="Do not auto-install the koru IDE plugin before starting autopilot.",
+    )
+    up.add_argument(
         "--force-init",
         action="store_true",
         help="Force `koru --init` re-initialization if project is already initialized.",
     )
-    up.set_defaults(submit=True, enable_autopilot=True)
+    up.set_defaults(submit=True, enable_autopilot=True, install_plugin=True)
 
     return parser
 
@@ -243,16 +250,20 @@ def _action_up(args: argparse.Namespace) -> int:
     if lane is not None:
         print(f"koru autonomous: agent-lane={lane} (env applied)")
 
+    autopilot_ide = _resolve_autopilot_ide(args.autopilot_ide)
+
     client: AutopilotClient | None = None
     daemon: AutopilotDaemon | None = None
     thread: threading.Thread | None = None
     if args.enable_autopilot:
+        if args.install_plugin:
+            result = install_plugin_for_ide(ide=autopilot_ide)
+            print(format_plugin_install_result(result))
         socket_path = (args.socket or default_socket_path()).resolve()
         client, daemon, thread = _start_or_reuse_daemon(project=project, socket_path=socket_path)
 
     enable_scan, use_all_queues = _effective_flags(args.ticket_sources)
     queue_name = None if use_all_queues else args.queue_name
-    autopilot_ide = _resolve_autopilot_ide(args.autopilot_ide)
 
     cycle = 0
     try:

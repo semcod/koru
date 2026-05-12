@@ -62,6 +62,10 @@ for missing `xdotool`/`wtype`/`ydotool` on Debian/Ubuntu), run:
 koru autopilot setup-host
 koru autopilot setup-host --install --dry-run
 koru autopilot setup-host --install
+
+# auto-install plugin for the current IDE terminal/focus
+koru autopilot install-plugin
+koru autopilot install-plugin --dry-run --format json
 ```
 
 Expected output looks like:
@@ -312,6 +316,8 @@ koru autopilot doctor --format json  # machine-readable
 koru autopilot setup-host            # guided host readiness report
 koru autopilot setup-host --install --dry-run
 koru autopilot setup-host --install
+koru autopilot install-plugin        # auto-detect IDE and install .vsix
+koru autopilot install-plugin --ide cursor --force
 
 koru autopilot shutdown              # ask the daemon to stop
 

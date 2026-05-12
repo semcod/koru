@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -147,6 +148,46 @@ def _build_parser() -> argparse.ArgumentParser:
         dest="install_dry_run",
         action="store_true",
         help="With --install, print the apt-get command but do not run it.",
+    )
+
+    install_plugin = sub.add_parser(
+        "install-plugin",
+        help=(
+            "Install the koru autopilot editor extension for the current IDE "
+            "(auto-detect from terminal/focus/running IDEs)."
+        ),
+    )
+    install_plugin.add_argument(
+        "--ide",
+        default="auto",
+        choices=("auto", "windsurf", "vscode", "cursor"),
+        help="Target editor CLI (default: auto-detect current IDE).",
+    )
+    install_plugin.add_argument(
+        "--vsix",
+        type=Path,
+        default=None,
+        help=(
+            "Path to .vsix package (default: newest plugins/koru-autopilot-vscode/"
+            "koru-autopilot-*.vsix)."
+        ),
+    )
+    install_plugin.add_argument(
+        "--force",
+        action="store_true",
+        help="Pass --force to the editor extension installer.",
+    )
+    install_plugin.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the resolved install command without executing it.",
+    )
+    install_plugin.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format (default: text).",
     )
 
     handoff = sub.add_parser(
@@ -337,6 +378,7 @@ def _doctor_fix_payload() -> dict[str, object]:
             "koru autopilot setup-host",
             "koru autopilot setup-host --install --dry-run",
             "koru autopilot setup-host --install",
+            "koru autopilot install-plugin",
         ],
         "automated_apt_suggestion": report.get("automated_apt_suggestion"),
         "human_actions_required": report.get("human_actions_required") or [],
@@ -396,6 +438,136 @@ def _action_setup_host(args: argparse.Namespace) -> int:
         install=args.install,
         install_dry_run=args.install_dry_run,
     )
+
+
+_PLUGIN_IDE_CLI: dict[str, tuple[str, ...]] = {
+    "windsurf": ("windsurf",),
+    "cursor": ("cursor",),
+    "vscode": ("code", "code-insiders", "code-oss", "vscodium", "codium"),
+}
+
+
+def _plugin_repo_dir() -> Path:
+    return Path(__file__).resolve().parents[3] / "plugins" / "koru-autopilot-vscode"
+
+
+def _resolve_plugin_vsix_path(vsix: Path | None) -> Path:
+    if vsix is not None:
+        candidate = vsix.expanduser().resolve()
+        if not candidate.is_file():
+            raise RuntimeError(f"vsix not found: {candidate}")
+        return candidate
+    plugin_dir = _plugin_repo_dir()
+    matches = sorted(
+        plugin_dir.glob("koru-autopilot-*.vsix"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    if not matches:
+        raise RuntimeError(
+            "no packaged .vsix found under plugins/koru-autopilot-vscode; "
+            "build one with: `cd plugins/koru-autopilot-vscode && npm install && npm run package`"
+        )
+    return matches[0]
+
+
+def _ide_from_terminal_env() -> str | None:
+    term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
+    if term_program in ("vscode", "code"):
+        return "vscode"
+    if term_program == "cursor":
+        return "cursor"
+    if term_program == "windsurf":
+        return "windsurf"
+    if os.environ.get("VSCODE_PID"):
+        return "vscode"
+    return None
+
+
+def _resolve_plugin_target_ide(raw_ide: str) -> str:
+    if raw_ide != "auto":
+        return raw_ide
+    env_guess = _ide_from_terminal_env()
+    if env_guess is not None:
+        return env_guess
+    focused = detect_focused_ide_id()
+    if focused in _PLUGIN_IDE_CLI:
+        return str(focused)
+    detected = [ide for ide in detect_running_ides() if ide.id in _PLUGIN_IDE_CLI]
+    if len(detected) == 1:
+        return detected[0].id
+    if not detected:
+        raise RuntimeError(
+            "could not detect running editor for plugin install; pass --ide windsurf|vscode|cursor"
+        )
+    ids = ", ".join(ide.id for ide in detected)
+    raise RuntimeError(
+        "multiple supported IDEs detected with no clear active one "
+        f"({ids}); pass --ide windsurf|vscode|cursor"
+    )
+
+
+def _resolve_plugin_editor_bin(ide: str) -> str:
+    for candidate in _PLUGIN_IDE_CLI[ide]:
+        resolved = shutil.which(candidate)
+        if resolved:
+            return resolved
+    choices = "|".join(_PLUGIN_IDE_CLI[ide])
+    raise RuntimeError(f"could not find editor CLI in PATH for {ide} (tried: {choices})")
+
+
+def _action_install_plugin(args: argparse.Namespace) -> int:
+    try:
+        ide = _resolve_plugin_target_ide(args.ide)
+        editor_bin = _resolve_plugin_editor_bin(ide)
+        vsix_path = _resolve_plugin_vsix_path(args.vsix)
+    except RuntimeError as exc:
+        print(f"koru autopilot install-plugin: {exc}", file=sys.stderr)
+        return 1
+
+    cmd = [editor_bin, "--install-extension", str(vsix_path)]
+    if args.force:
+        cmd.append("--force")
+
+    payload = {
+        "ide": ide,
+        "editor": editor_bin,
+        "vsix": str(vsix_path),
+        "command": cmd,
+        "dry_run": bool(args.dry_run),
+    }
+    if args.dry_run:
+        payload["ok"] = True
+        if args.output_format == "json":
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print("koru autopilot install-plugin: dry-run")
+            print("  " + " ".join(cmd))
+        return 0
+
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    except OSError as exc:
+        print(f"koru autopilot install-plugin: {exc}", file=sys.stderr)
+        return 1
+
+    ok = proc.returncode == 0
+    payload["ok"] = ok
+    payload["returncode"] = proc.returncode
+    payload["stdout"] = proc.stdout.strip()
+    payload["stderr"] = proc.stderr.strip()
+    if args.output_format == "json":
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        if ok:
+            print(f"koru autopilot install-plugin: installed for {ide} via {editor_bin}")
+        else:
+            print(f"koru autopilot install-plugin: install failed for {ide}", file=sys.stderr)
+        if payload["stdout"]:
+            print(payload["stdout"])
+        if payload["stderr"]:
+            print(payload["stderr"], file=sys.stderr)
+    return 0 if ok else 1
 
 
 def _build_brief(project: Path) -> str:
@@ -593,6 +765,7 @@ _ACTIONS = {
     "ide-list": _action_ide_list,
     "doctor": _action_doctor,
     "setup-host": _action_setup_host,
+    "install-plugin": _action_install_plugin,
     "handoff": _action_handoff,
     "tail": _action_tail,
     "install-unit": _action_install_unit,

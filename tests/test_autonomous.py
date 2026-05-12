@@ -27,6 +27,11 @@ def test_resolve_autopilot_ide_ignores_bad_env(monkeypatch) -> None:
     assert autonomous_mod._resolve_autopilot_ide("jetbrains") == "jetbrains"
 
 
+def test_resolve_autopilot_ide_auto_env_does_not_override_cli(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_IDE", "auto")
+    assert autonomous_mod._resolve_autopilot_ide("cursor") == "cursor"
+
+
 def test_apply_agent_lane_environ_auto_cursor(tmp_path, monkeypatch) -> None:
     monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
     (tmp_path / ".cursor").mkdir()
@@ -156,6 +161,69 @@ def test_up_single_cycle_all_sources_runs_scan(
     )
 
     assert rc == 0
+
+
+def test_up_auto_installs_plugin_before_autopilot_loop(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        autonomous_mod,
+        "init_project",
+        lambda project, force=False: SimpleNamespace(project=project),
+    )
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=0 last_status=idle",
+            last_status="idle",
+        ),
+    )
+    monkeypatch.setattr(autonomous_mod.time, "sleep", lambda _s: None)
+
+    install_calls: list[str] = []
+
+    def fake_install_plugin_for_ide(*, ide):
+        install_calls.append(ide)
+        return SimpleNamespace(status="installed", ide=ide, message="ok", command=None)
+
+    class FakeClient:
+        def drive(self, *_args, **_kwargs):
+            return {"ok": True, "backend": "plugin"}
+
+    monkeypatch.setattr(autonomous_mod, "install_plugin_for_ide", fake_install_plugin_for_ide)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "format_plugin_install_result",
+        lambda result: f"plugin {result.status} {result.ide}",
+    )
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_start_or_reuse_daemon",
+        lambda **kwargs: (FakeClient(), None, None),
+    )
+
+    rc = autonomous_mod.autonomous_main(
+        [
+            "up",
+            "--project",
+            str(tmp_path),
+            "--max-cycles",
+            "1",
+            "--sleep-seconds",
+            "0",
+            "--ticket-sources",
+            "queue",
+            "--agent-lane",
+            "none",
+            "--autopilot-ide",
+            "cursor",
+        ]
+    )
+
+    assert rc == 0
+    assert install_calls == ["cursor"]
 
 
 def test_run_cycle_skips_autopilot_when_queue_waits_for_input(

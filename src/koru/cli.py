@@ -1461,6 +1461,10 @@ def _init_agent_lane_main(args: argparse.Namespace) -> int:
         )
     elif report.agent_lane is None:
         next_parts.append("shell helpers removed (use --agent-lane auto to restore)")
+    if report.autopilot_host_setup_written:
+        next_parts.append(
+            "`./.planfile/.koru/setup-autopilot-host.sh` or `koru autopilot setup-host`"
+        )
     print("Next: " + "; ".join(next_parts or ["no shell helpers to run"]) + ".")
     emit_management_event(
         tool="koru.init_agent_lane",
@@ -1472,6 +1476,7 @@ def _init_agent_lane_main(args: argparse.Namespace) -> int:
             "project": str(args.project),
             "agent_lane": report.agent_lane,
             "agent_lane_files_written": report.agent_lane_files_written,
+            "autopilot_host_setup_written": report.autopilot_host_setup_written,
         },
     )
     return 0

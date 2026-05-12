@@ -18,7 +18,8 @@ What this module produces:
         └── .koru/
             ├── policy.yaml              # commented stub with safe defaults
             ├── shell-env.sh             # optional: autopilot/queue lane exports
-            ├── run-autonomous.sh        # optional: source shell-env + autonomous up
+            ├── run-autonomous.sh        # optional: koru autonomous up wrapper
+            ├── setup-autopilot-host.sh # optional: injector / apt vs human checklist
             └── README.md                # written lazily by runtime helpers
 
 Inputs:

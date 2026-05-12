@@ -164,6 +164,77 @@ def test_doctor_fix_json_output(capsys: pytest.CaptureFixture[str], monkeypatch:
     assert payload["fix"]["human_actions_required"][0] == "Start ydotoold service."
 
 
+def test_install_plugin_dry_run_auto_detect_from_term_program(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    vsix = tmp_path / "koru-autopilot-0.1.0.vsix"
+    vsix.write_text("fake", encoding="utf-8")
+
+    monkeypatch.setenv("TERM_PROGRAM", "vscode")
+    monkeypatch.setattr(cli_command.shutil, "which", lambda name: "/usr/bin/code" if name == "code" else None)
+    monkeypatch.setattr(cli_command, "_resolve_plugin_vsix_path", lambda _p: vsix)
+
+    rc = autopilot_main(["install-plugin", "--dry-run", "--format", "json"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+    assert payload["ide"] == "vscode"
+    assert payload["editor"] == "/usr/bin/code"
+    assert payload["vsix"] == str(vsix)
+    assert payload["command"][0] == "/usr/bin/code"
+
+
+def test_install_plugin_auto_detect_ambiguous_running_ides_errors(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("TERM_PROGRAM", raising=False)
+    monkeypatch.delenv("VSCODE_PID", raising=False)
+    monkeypatch.setattr(cli_command, "detect_focused_ide_id", lambda: None)
+    monkeypatch.setattr(
+        cli_command,
+        "detect_running_ides",
+        lambda: [
+            SimpleNamespace(id="cursor", label="Cursor", pid=1, exe="/usr/bin/cursor"),
+            SimpleNamespace(id="windsurf", label="Windsurf", pid=2, exe="/usr/bin/windsurf"),
+        ],
+    )
+
+    rc = autopilot_main(["install-plugin", "--dry-run"])
+    assert rc == 1
+    err = capsys.readouterr().err
+    assert "multiple supported IDEs detected" in err
+
+
+def test_install_plugin_exec_success_json_payload(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    vsix = tmp_path / "koru-autopilot-0.1.0.vsix"
+    vsix.write_text("fake", encoding="utf-8")
+
+    monkeypatch.setattr(cli_command, "_resolve_plugin_target_ide", lambda _raw: "cursor")
+    monkeypatch.setattr(cli_command, "_resolve_plugin_editor_bin", lambda _ide: "/usr/bin/cursor")
+    monkeypatch.setattr(cli_command, "_resolve_plugin_vsix_path", lambda _p: vsix)
+
+    def _fake_run(cmd, capture_output, text, check):
+        assert cmd[0] == "/usr/bin/cursor"
+        return cli_command.subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
+
+    monkeypatch.setattr(cli_command.subprocess, "run", _fake_run)
+
+    rc = autopilot_main(["install-plugin", "--ide", "cursor", "--format", "json", "--force"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+    assert payload["returncode"] == 0
+    assert payload["ide"] == "cursor"
+    assert payload["command"][-1] == "--force"
+
+
 def test_status_when_no_daemon(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
     socket = tmp_path / "missing.sock"
     rc = autopilot_main(["--socket", str(socket), "status"])
