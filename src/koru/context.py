@@ -623,12 +623,18 @@ def _build_self_service(
         return {
             "init_project": "koru --init --project .",
             "init_from_pipeline": "koru --init --project . --from <pipeline.yaml>",
+            "autonomous_bootstrap": (
+                "koru autonomous up --project . --max-cycles 1 "
+                "--sleep-seconds 0 --no-autopilot"
+            ),
             "refresh_brief": "koru --project .",
         }
     tid = ticket.get("id") if isinstance(ticket, dict) else None
     base = "planfile ticket"
     block: dict[str, Any] = {
         "next_brief": "koru --project .",
+        "autonomous_up": "koru autonomous up --project .",
+        "autonomous_smoke": "koru autonomous up --project . --max-cycles 1 --sleep-seconds 0",
         "list_open": f"{base} list --status open --format json",
         "show_ticket": f"{base} show <id> --format json",
         "block_for_input": f"{base} block <id> --reason \"<question or blocker>\"",
@@ -700,7 +706,77 @@ def _render_agent_lanes(agents: list[dict[str, Any]]) -> list[str]:
             "No known LLM/IDE lanes detected. Paste this handoff into your preferred agent."
         )
     lines.append("")
+    lines.append(
+        "Coverage note: koru only orchestrates lanes shown above (plus planfile/scan/queue). "
+        "Other AI tools can still be used manually, but are not auto-driven by koru unless "
+        "wrapped as shell/api/llm tickets."
+    )
+    lines.append("")
     return lines
+
+
+def _render_autonomous_mode(*, planfile_initialised: bool) -> list[str]:
+    """Render autonomous-mode instructions for LLM operators."""
+    lines = [
+        "## Autonomous mode (one-command)",
+        "",
+    ]
+    if not planfile_initialised:
+        lines.extend(
+            [
+                "Project is not initialized yet. Use one command:",
+                "",
+                "```bash",
+                "koru autonomous up --project . --max-cycles 1 --sleep-seconds 0 --no-autopilot",
+                "```",
+                "",
+                "This bootstraps `.planfile/` first, then runs one safe queue cycle.",
+                "",
+            ]
+        )
+        return lines
+
+    lines.extend(
+        [
+            "Use this when operator asks for unattended execution:",
+            "",
+            "```bash",
+            "koru autonomous up --project .",
+            "```",
+            "",
+            "Useful flags:",
+            "- `--max-cycles 1 --sleep-seconds 0` for a smoke run",
+            "- `--ticket-sources all` to include scan intake",
+            "- `--no-autopilot` for queue/scan only",
+            "- `--autopilot-ide auto|windsurf|jetbrains|cursor|vscode|zed`",
+            "",
+        ]
+    )
+    return lines
+
+
+def _render_ai_tool_support_2026() -> list[str]:
+    """Render a concise support matrix for popular 2026 AI coding tools."""
+    return [
+        "## AI tool support (2026)",
+        "",
+        "Koru does not need a bespoke hardcoded integration for every tool. "
+        "It supports three modes:",
+        "",
+        "1. **native lane** — directly orchestrated by koru (`autopilot`, `agent`, `queue`).",
+        "2. **adapter lane** — tool used via `planfile` executors (`shell` / `api` / `llm`).",
+        "3. **manual lane** — no stable automation API yet; operator uses it directly.",
+        "",
+        "Current native lane includes: `windsurf`, `vscode`, `cursor`, `jetbrains`, `zed`, "
+        "`claude-code`, `aider`, `codex` and OpenRouter-compatible `llm` tickets.",
+        "",
+        "For tools not listed as native (e.g. Gemini CLI, Cline, OpenCode, Qwen Code, "
+        "Copilot/Tabnine plugins, app builders), use adapter lane first; promote to native "
+        "only when reliability is proven.",
+        "",
+        "Roadmap: `docs/ai-tool-support-roadmap-2026.md`.",
+        "",
+    ]
 
 
 def _render_semcod_tools(semcod_tools: list[dict[str, Any]]) -> list[str]:
@@ -945,6 +1021,9 @@ def render_markdown_handoff(context: dict[str, Any]) -> str:
     else:
         ticket_error = context.get("ticket_error") or "no ticket"
         lines.extend(_render_no_active_ticket(ticket_error))
+
+    lines.extend(_render_autonomous_mode(planfile_initialised=initialised))
+    lines.extend(_render_ai_tool_support_2026())
 
     lines.extend(_render_gates(markers))
     lines.extend(_render_policy(policy))

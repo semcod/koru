@@ -381,6 +381,11 @@ class TestMarkdownHandoff(unittest.TestCase):
             self.assertIn("Immediate action (autopilot)", md)
             self.assertIn("Do not ask the operator what to do next", md)
             self.assertIn("koru scan --apply", md)
+            self.assertIn("Autonomous mode (one-command)", md)
+            self.assertIn("koru autonomous up --project .", md)
+            self.assertIn("Coverage note:", md)
+            self.assertIn("AI tool support (2026)", md)
+            self.assertIn("ai-tool-support-roadmap-2026.md", md)
 
 
 class TestSetupRequired(unittest.TestCase):
@@ -410,6 +415,7 @@ class TestSetupRequired(unittest.TestCase):
             ss = ctx["self_service"]
             self.assertIn("init_project", ss)
             self.assertIn("init_from_pipeline", ss)
+            self.assertIn("autonomous_bootstrap", ss)
             self.assertIn("refresh_brief", ss)
             # Planfile ticket commands must NOT leak — the agent cannot
             # use them yet.
@@ -435,6 +441,8 @@ class TestSetupRequired(unittest.TestCase):
             md = render_markdown_handoff(ctx)
             self.assertIn("Setup required", md)
             self.assertIn("koru --init --project .", md)
+            self.assertIn("Autonomous mode (one-command)", md)
+            self.assertIn("koru autonomous up --project . --max-cycles 1", md)
 
 
 if __name__ == "__main__":

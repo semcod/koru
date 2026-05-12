@@ -377,6 +377,11 @@ koru autonomous up --actor koru-bot --queue-name default
 
 # disable autopilot injection (queue/scan only)
 koru autonomous up --no-autopilot
+
+# inspect AI tool coverage from registry (phase 1)
+koru tools detect
+koru tools detect --format json
+koru tools detect --registry docs/ai-tool-registry-2026.yaml
 ```
 
 For terminal-driven autonomy, use the built-in wrapper script via Taskfile:

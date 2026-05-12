@@ -225,6 +225,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "gate",
             "queue",
             "gc",
+            "tools",
             "autopilot",
             "autonomous",
             "topology",

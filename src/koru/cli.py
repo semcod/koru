@@ -35,6 +35,7 @@ from .run_log import open_run_log_eagerly
 from .scan import ScanResult, run_scan
 from .serve import DEFAULT_HOST, DEFAULT_PORT, ServeConfig, serve
 from .tasks import create_nl_task
+from .tools import detect_tools, load_tool_registry, render_tools_detect_text
 from .watch import watch_planfile_events
 
 
@@ -225,6 +226,63 @@ def _build_parser() -> argparse.ArgumentParser:
              "Has no effect outside --queue mode.",
     )
     return parser
+
+
+def _build_tools_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru tools",
+        description="Inspect AI tool registry/detection status.",
+    )
+    sub = parser.add_subparsers(dest="subcommand", required=True)
+    detect = sub.add_parser("detect", help="Detect tools from the 2026 registry.")
+    detect.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
+    detect.add_argument(
+        "--registry",
+        type=Path,
+        default=None,
+        help="Override registry YAML path (default: docs/ai-tool-registry-2026.yaml).",
+    )
+    detect.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format (default: text).",
+    )
+    return parser
+
+
+def _tools_main(argv: list[str]) -> int:
+    args = _build_tools_parser().parse_args(argv)
+    if args.subcommand != "detect":
+        print(f"koru tools: unknown subcommand {args.subcommand!r}", file=sys.stderr)
+        return 2
+
+    registry, registry_path = load_tool_registry(args.registry)
+    results = detect_tools(args.project.resolve(), registry)
+
+    if args.output_format == "json":
+        payload = {
+            "project": str(args.project),
+            "registry": str(registry_path) if registry_path else None,
+            "tools": results,
+        }
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(render_tools_detect_text(results, registry_path=registry_path))
+
+    emit_management_event(
+        tool="koru.tools.detect",
+        action="completed",
+        status="completed",
+        message=f"tools={len(results)}",
+        details={
+            "project": str(args.project),
+            "registry": str(registry_path) if registry_path else None,
+            "available": sum(1 for r in results if r.get("available")),
+        },
+    )
+    return 0
 
 
 def _build_task_parser() -> argparse.ArgumentParser:
@@ -1147,6 +1205,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "gate": _gate_main,
     "queue": _queue_main,
     "gc": _gc_main,
+    "tools": _tools_main,
     "autopilot": autopilot_main,
     "autonomous": autonomous_main,
     "topology": _topology_main,

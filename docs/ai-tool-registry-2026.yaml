@@ -1,0 +1,290 @@
+version: 2026-05
+source: "curated roadmap baseline"
+tools:
+  - id: cursor
+    name: Cursor
+    category: ide
+    lane: native
+    stability: stable
+    detect:
+      commands: ["cursor"]
+      markers: [".cursor"]
+      env: []
+    invoke: "koru autopilot drive --ide cursor '<prompt>'"
+    notes: "Native lane via autopilot + agent detection."
+
+  - id: windsurf
+    name: Windsurf
+    category: ide
+    lane: native
+    stability: stable
+    detect:
+      commands: ["windsurf"]
+      markers: [".windsurf/rules.md"]
+      env: []
+    invoke: "koru autopilot drive --ide windsurf '<prompt>'"
+    notes: "Primary native IDE lane."
+
+  - id: zed
+    name: Zed
+    category: ide
+    lane: native
+    stability: beta
+    detect:
+      commands: ["zed"]
+      markers: []
+      env: []
+    invoke: "koru autopilot drive --ide zed '<prompt>'"
+    notes: "Native autopilot lane; maturity still improving."
+
+  - id: jetbrains
+    name: JetBrains IDEs
+    category: ide
+    lane: native
+    stability: beta
+    detect:
+      commands: ["idea", "pycharm"]
+      markers: []
+      env: []
+    invoke: "koru autopilot drive --ide jetbrains '<prompt>'"
+    notes: "Native autopilot route via process detection."
+
+  - id: claude-code
+    name: Claude Code
+    category: cli_agent
+    lane: native
+    stability: stable
+    detect:
+      commands: ["claude"]
+      markers: []
+      env: []
+    invoke: "koru agent --agent claude-code --launch"
+    notes: "Native agent lane."
+
+  - id: aider
+    name: Aider
+    category: cli_agent
+    lane: native
+    stability: stable
+    detect:
+      commands: ["aider"]
+      markers: []
+      env: []
+    invoke: "koru agent --agent aider --launch"
+    notes: "Native agent lane."
+
+  - id: codex-cli
+    name: Codex CLI
+    category: cli_agent
+    lane: native
+    stability: beta
+    detect:
+      commands: ["codex"]
+      markers: []
+      env: []
+    invoke: "koru agent --agent codex --launch"
+    notes: "Native lane when installed."
+
+  - id: gemini-cli
+    name: Gemini CLI
+    category: cli_agent
+    lane: adapter
+    stability: beta
+    detect:
+      commands: ["gemini"]
+      markers: []
+      env: ["GEMINI_API_KEY"]
+    invoke: "planfile shell ticket with `gemini` command"
+    notes: "Adapter lane pending native integration."
+
+  - id: cline
+    name: Cline
+    category: cli_agent
+    lane: adapter
+    stability: beta
+    detect:
+      commands: ["cline"]
+      markers: []
+      env: []
+    invoke: "planfile shell/api ticket"
+    notes: "Treat as adapter until stable CLI contract."
+
+  - id: qwen-code
+    name: Qwen Code
+    category: cli_agent
+    lane: adapter
+    stability: beta
+    detect:
+      commands: ["qwen", "qwen-code"]
+      markers: []
+      env: []
+    invoke: "planfile shell ticket"
+    notes: "Adapter-first strategy."
+
+  - id: opencode
+    name: OpenCode
+    category: cli_agent
+    lane: adapter
+    stability: beta
+    detect:
+      commands: ["opencode"]
+      markers: []
+      env: []
+    invoke: "planfile shell ticket"
+    notes: "Adapter lane only."
+
+  - id: github-copilot
+    name: GitHub Copilot
+    category: plugin
+    lane: manual
+    stability: stable
+    detect:
+      commands: []
+      markers: []
+      env: []
+    invoke: "Use in IDE manually; optionally wrap actions as planfile tickets"
+    notes: "No stable external control surface in koru."
+
+  - id: tabnine
+    name: Tabnine
+    category: plugin
+    lane: manual
+    stability: stable
+    detect:
+      commands: []
+      markers: []
+      env: []
+    invoke: "Manual plugin workflow"
+    notes: "Plugin-only path."
+
+  - id: gemini-code-assist
+    name: Gemini Code Assist
+    category: plugin
+    lane: manual
+    stability: beta
+    detect:
+      commands: []
+      markers: []
+      env: []
+    invoke: "Manual plugin workflow"
+    notes: "Roadmap candidate for plugin bridge phase."
+
+  - id: codewhisperer
+    name: Amazon CodeWhisperer
+    category: plugin
+    lane: manual
+    stability: stable
+    detect:
+      commands: []
+      markers: []
+      env: []
+    invoke: "Manual plugin workflow"
+    notes: "Roadmap plugin bridge candidate."
+
+  - id: cody
+    name: Cody
+    category: plugin
+    lane: manual
+    stability: stable
+    detect:
+      commands: []
+      markers: []
+      env: []
+    invoke: "Manual plugin workflow"
+    notes: "Roadmap plugin bridge candidate."
+
+  - id: replit
+    name: Replit Agent
+    category: app_builder
+    lane: adapter
+    stability: beta
+    detect:
+      commands: ["replit"]
+      markers: []
+      env: []
+    invoke: "planfile api/shell ticket"
+    notes: "Adapter lane in workflow phase."
+
+  - id: lovable
+    name: Lovable
+    category: app_builder
+    lane: adapter
+    stability: beta
+    detect:
+      commands: []
+      markers: []
+      env: []
+    invoke: "planfile api ticket"
+    notes: "No native lane yet."
+
+  - id: bolt-new
+    name: Bolt.new
+    category: app_builder
+    lane: adapter
+    stability: beta
+    detect:
+      commands: []
+      markers: []
+      env: []
+    invoke: "planfile api ticket"
+    notes: "No native lane yet."
+
+  - id: v0
+    name: v0
+    category: app_builder
+    lane: adapter
+    stability: beta
+    detect:
+      commands: []
+      markers: []
+      env: []
+    invoke: "planfile api ticket"
+    notes: "No native lane yet."
+
+  - id: n8n
+    name: n8n
+    category: specialist
+    lane: adapter
+    stability: stable
+    detect:
+      commands: ["n8n"]
+      markers: []
+      env: []
+    invoke: "planfile api ticket to n8n webhook"
+    notes: "Automation bridge candidate."
+
+  - id: perplexity
+    name: Perplexity
+    category: specialist
+    lane: adapter
+    stability: beta
+    detect:
+      commands: []
+      markers: []
+      env: ["PERPLEXITY_API_KEY"]
+    invoke: "planfile api ticket"
+    notes: "Research lane through API executor."
+
+  - id: notebooklm
+    name: NotebookLM
+    category: specialist
+    lane: manual
+    stability: beta
+    detect:
+      commands: []
+      markers: []
+      env: []
+    invoke: "Manual web workflow"
+    notes: "No public stable automation API in koru."
+
+  - id: grammarly
+    name: Grammarly
+    category: specialist
+    lane: manual
+    stability: stable
+    detect:
+      commands: []
+      markers: []
+      env: []
+    invoke: "Manual editor/browser workflow"
+    notes: "Out of scope for code execution orchestration."
