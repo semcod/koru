@@ -10,6 +10,7 @@ Contract:
 """
 from __future__ import annotations
 
+import os
 import tempfile
 import textwrap
 import unittest
@@ -156,6 +157,40 @@ class TestRuntimeContract(unittest.TestCase):
             entries = sorted(p.name for p in project.iterdir())
             # Allowed at project root: .planfile/ and .gitignore.
             self.assertEqual(entries, [".gitignore", ".planfile"])
+
+
+class TestAgentLaneArtifacts(unittest.TestCase):
+    def test_auto_local_writes_shell_helpers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            report = init_project(project)
+            self.assertEqual(report.agent_lane, "local")
+            self.assertTrue(report.agent_lane_files_written)
+            rt = runtime_dir(project)
+            self.assertTrue((rt / "shell-env.sh").is_file())
+            self.assertTrue((rt / "run-autonomous.sh").is_file())
+            self.assertTrue(os.access(rt / "run-autonomous.sh", os.X_OK))
+
+    def test_auto_cursor_when_dot_cursor(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".cursor").mkdir()
+            report = init_project(project)
+            self.assertEqual(report.agent_lane, "cursor")
+            shell = (runtime_dir(project) / "shell-env.sh").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("KORU_AUTOPILOT_INSTANCE='cursor'", shell)
+
+    def test_none_skips_helpers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            report = init_project(project, agent_lane="none")
+            self.assertIsNone(report.agent_lane)
+            self.assertFalse(report.agent_lane_files_written)
+            rt = runtime_dir(project)
+            self.assertFalse((rt / "shell-env.sh").exists())
+            self.assertFalse((rt / "run-autonomous.sh").exists())
 
 
 if __name__ == "__main__":

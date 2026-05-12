@@ -171,13 +171,25 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Overwrite an existing sprint file during --bootstrap.",
     )
     parser.add_argument(
+        "--agent-lane",
+        default="auto",
+        metavar="LANE",
+        help=(
+            "With --init: write .planfile/.koru/shell-env.sh and "
+            "run-autonomous.sh for that lane. Use auto (default) to pick "
+            "cursor or windsurf from project dotdirs, else local; use "
+            "none/off to skip generated shell helpers."
+        ),
+    )
+    parser.add_argument(
         "--init",
         action="store_true",
         help=(
             "Initialise a koru-managed project in --project: import a "
             "flat pipeline (or generate a 2-ticket starter scaffold), "
-            "write .planfile/.koru/policy.yaml stub, and add "
-            ".planfile/.koru/ to .gitignore. Pass --from <yaml> to "
+            "write .planfile/.koru/policy.yaml stub, add "
+            ".planfile/.koru/ to .gitignore, and (unless --agent-lane none) "
+            "emit shell-env.sh + run-autonomous.sh. Pass --from <yaml> to "
             "import an existing pipeline; --force to re-init."
         ),
     )
@@ -1368,6 +1380,7 @@ def _init_main(args: argparse.Namespace) -> int:
             from_file=args.from_file,
             sprint=args.sprint,
             force=args.force,
+            agent_lane=args.agent_lane,
         )
     except FileExistsError as exc:
         print(f"koru init: {exc}")
@@ -1378,8 +1391,19 @@ def _init_main(args: argparse.Namespace) -> int:
     print(f"koru init: ✓ project initialised at {report.project}")
     print(report.summary())
     print()
-    print("Next: run `koru` to get the LLM brief, or "
-          "`koru --queue --loop` to drain the starter sprint.")
+    next_parts: list[str] = []
+    if report.agent_lane_files_written and report.agent_lane:
+        next_parts.append(
+            "source `.planfile/.koru/shell-env.sh` or run "
+            "`./.planfile/.koru/run-autonomous.sh` before autonomous runs"
+        )
+    next_parts.extend(
+        [
+            "run `koru` for the LLM brief",
+            "`koru --queue --loop` to drain the starter sprint",
+        ]
+    )
+    print("Next: " + "; ".join(next_parts) + ".")
     emit_management_event(
         tool="koru.init",
         action="completed",
@@ -1390,6 +1414,8 @@ def _init_main(args: argparse.Namespace) -> int:
             "project": str(args.project),
             "sprint": args.sprint,
             "used_starter_pipeline": report.used_starter_pipeline,
+            "agent_lane": report.agent_lane,
+            "agent_lane_files_written": report.agent_lane_files_written,
         },
     )
     return 0

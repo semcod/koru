@@ -4,11 +4,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.40-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$3.12-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-21.2h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.41-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$3.13-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-21.3h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $3.1187 (63 commits)
-- 👤 **Human dev:** ~$2123 (21.2h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $3.1296 (64 commits)
+- 👤 **Human dev:** ~$2131 (21.3h @ $100/h, 30min dedup)
 
 Generated on 2026-05-12 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -173,6 +173,7 @@ koru task "Prepare Gemini adapter" --project . --tool gemini-cli
 koru agent --agent gemini-cli --project . --launch
 koru agent --agent cline --project . --launch
 koru agent --agent qwen-code --project . --launch
+koru agent --agent opencode --project . --launch
 
 # machine-readable agent readiness report
 koru agent --project . --list --format json

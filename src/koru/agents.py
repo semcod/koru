@@ -56,6 +56,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
     gemini_cmd = _which("gemini")
     cline_cmd = _which("cline")
     qwen_cmd = _which("qwen-code") or _which("qwen")
+    opencode_cmd = _which("opencode")
     openrouter_ready = bool(os.getenv("OPENROUTER_API_KEY"))
     antigravity_ready = bool(os.getenv("ANTIGRAVITY_AGENT"))
 
@@ -122,6 +123,18 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
                 "Qwen Code CLI detected in PATH."
                 if qwen_cmd
                 else "Qwen Code CLI is not in PATH."
+            ),
+        ),
+        AgentOption(
+            id="opencode",
+            label="OpenCode",
+            available=bool(opencode_cmd),
+            launchable=bool(opencode_cmd),
+            command=opencode_cmd,
+            reason=(
+                "OpenCode CLI detected in PATH."
+                if opencode_cmd
+                else "OpenCode CLI is not in PATH."
             ),
         ),
         AgentOption(
@@ -265,6 +278,7 @@ _LANE_AUTOPILOT_IDE: dict[str, str] = {
     "gemini-cli": "auto",
     "cline": "auto",
     "qwen-code": "auto",
+    "opencode": "auto",
     "aider": "auto",
     "openrouter": "auto",
     "antigravity": "auto",

@@ -117,11 +117,29 @@ class TestInitDispatch(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertTrue((self.project / ".planfile" / "config.yaml").exists())
         self.assertTrue((self.project / ".planfile" / ".koru" / "policy.yaml").exists())
+        helper = self.project / ".planfile" / ".koru" / "run-autonomous.sh"
+        self.assertTrue(helper.is_file(), "default --agent-lane auto writes runner")
 
     def test_init_duplicate_rejected(self) -> None:
         _run_main("--init", "--project", str(self.project))
         code, _ = _run_main("--init", "--project", str(self.project))
         self.assertEqual(code, 1)
+
+    def test_init_agent_lane_none_skips_helpers(self) -> None:
+        p2 = _tmp_git_project("koru-cli-init-none-")
+        try:
+            code, out = _run_main(
+                "--init",
+                "--project",
+                str(p2),
+                "--agent-lane",
+                "none",
+            )
+            self.assertEqual(code, 0, out)
+            self.assertFalse((p2 / ".planfile" / ".koru" / "shell-env.sh").exists())
+            self.assertFalse((p2 / ".planfile" / ".koru" / "run-autonomous.sh").exists())
+        finally:
+            shutil.rmtree(p2, ignore_errors=True)
 
 
 class TestContextDispatch(unittest.TestCase):

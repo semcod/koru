@@ -124,14 +124,14 @@ tools:
   - id: opencode
     name: OpenCode
     category: cli_agent
-    lane: adapter
+    lane: native
     stability: beta
     detect:
       commands: ["opencode"]
       markers: []
       env: []
-    invoke: "planfile shell ticket"
-    notes: "Adapter lane only."
+    invoke: "koru agent --agent opencode --launch"
+    notes: "Native agent lane (phase-3 promotion)."
 
   - id: github-copilot
     name: GitHub Copilot

@@ -145,9 +145,39 @@ class TestAgentDetection(unittest.TestCase):
             self.assertIsNotNone(selected)
             self.assertEqual(selected.id, "qwen-code")
 
+    def test_detects_opencode_when_available(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            def fake_which(command: str) -> str | None:
+                return "/usr/bin/opencode" if command == "opencode" else None
+
+            with patch("shutil.which", side_effect=fake_which):
+                agents = detect_agent_options(Path(tmp))
+
+            opencode = next(agent for agent in agents if agent.id == "opencode")
+            self.assertTrue(opencode.available)
+            self.assertTrue(opencode.launchable)
+            self.assertEqual(opencode.command, "/usr/bin/opencode")
+
+    def test_select_agent_can_pick_opencode_when_only_launchable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            def fake_which(command: str) -> str | None:
+                return "/usr/bin/opencode" if command == "opencode" else None
+
+            with patch("shutil.which", side_effect=fake_which):
+                agents = detect_agent_options(Path(tmp))
+
+            selected = select_agent(agents, interactive=False)
+            self.assertIsNotNone(selected)
+            self.assertEqual(selected.id, "opencode")
+
 
 class TestAgentLaneEnv(unittest.TestCase):
     def test_qwen_lane_env_defaults(self) -> None:
         env = agent_lane_environment("qwen-code")
         self.assertEqual(env["KORU_AUTOPILOT_IDE"], "auto")
         self.assertEqual(env["KORU_SUGGESTED_QUEUE_ACTOR"], "koru-qwen-code")
+
+    def test_opencode_lane_env_defaults(self) -> None:
+        env = agent_lane_environment("opencode")
+        self.assertEqual(env["KORU_AUTOPILOT_IDE"], "auto")
+        self.assertEqual(env["KORU_SUGGESTED_QUEUE_ACTOR"], "koru-opencode")

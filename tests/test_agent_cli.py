@@ -41,6 +41,15 @@ def test_agent_list_json_includes_ready_summary() -> None:
                 "project_hint": False,
             },
             {
+                "id": "opencode",
+                "label": "OpenCode",
+                "available": True,
+                "launchable": True,
+                "command": "/usr/bin/opencode",
+                "reason": "OpenCode CLI detected in PATH.",
+                "project_hint": False,
+            },
+            {
                 "id": "openrouter",
                 "label": "OpenRouter automation lane",
                 "available": False,
@@ -70,13 +79,14 @@ def test_agent_list_json_includes_ready_summary() -> None:
 
         assert code == 0
         payload = json.loads(output)
-        assert payload["summary"]["total"] == 3
-        assert payload["summary"]["available"] == 2
-        assert payload["summary"]["launchable"] == 2
+        assert payload["summary"]["total"] == 4
+        assert payload["summary"]["available"] == 3
+        assert payload["summary"]["launchable"] == 3
         assert payload["summary"]["ready"] is True
         ids = [a["id"] for a in payload["agents"]]
         assert "gemini-cli" in ids
         assert "qwen-code" in ids
+        assert "opencode" in ids
 
 
 def test_agent_env_exports_cursor_lane() -> None:
