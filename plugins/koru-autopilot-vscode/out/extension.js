@@ -133,6 +133,24 @@ class AutopilotBridge {
             return false;
         }
     }
+    async submitChat() {
+        // Try every known chat-submit command across VS Code / Windsurf /
+        // Cursor / Code OSS. Order: most common → niche fallbacks.
+        const candidates = [
+            "workbench.action.chat.submit",
+            "workbench.action.chat.acceptInput",
+            "workbench.action.chat.send",
+            "workbench.action.chat.sendMessage",
+            "workbench.action.interactive.accept",
+            "composer.submit",
+            "aichat.submit",
+        ];
+        for (const cmd of candidates) {
+            if (await this.runCommand(cmd))
+                return true;
+        }
+        return false;
+    }
     async focusChat() {
         const cfg = vscode.workspace.getConfiguration("koruAutopilot");
         const primary = (cfg.get("chatOpenCommands") || []).filter(Boolean);
@@ -225,12 +243,14 @@ class AutopilotBridge {
             }
             await vscode.env.clipboard.writeText(text);
             await this.runCommand("editor.action.clipboardPasteAction");
+            let submitted = false;
             if (submit) {
-                const ok = await this.runCommand("workbench.action.chat.submit");
-                if (!ok)
-                    await this.runCommand("workbench.action.chat.acceptInput");
+                // Small delay so the chat input has time to process the paste
+                // before we try to submit (R13).
+                await new Promise(r => setTimeout(r, 150));
+                submitted = await this.submitChat();
             }
-            this.send({ type: "ack", id: env.id, ok: true, delivered: true });
+            this.send({ type: "ack", id: env.id, ok: true, delivered: true, submitted });
         }
         catch (err) {
             const message = err instanceof Error ? err.message : String(err);

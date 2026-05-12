@@ -29,6 +29,10 @@ in this order so reports diff cleanly across runs):
     koru_project_pipeline — root ``koru.yaml`` exists and parses when the
                         project is planfile-initialised (``SKIP`` before
                         ``.planfile/config.yaml``).
+    koru_package_version — installed ``koru`` distribution version (``WARN`` if
+                        metadata missing, e.g. bare source tree).
+    planfile_cli_version — ``planfile --version`` / ``KORU_PLANFILE_CMD … --version``
+                        (``SKIP`` when no planfile executable).
 
 Exit-code contract for the CLI wrapper: ``has_failures`` ⇒ ``1``;
 warnings alone ⇒ ``0`` (warnings are advisory, not blocking).
@@ -129,6 +133,8 @@ def run_diagnostics(project: Path) -> DoctorReport:
     probes = [
         ("git_repo", _check_git_repo),
         ("planfile_binary", _check_planfile_binary),
+        ("koru_package_version", _check_koru_package_version),
+        ("planfile_cli_version", _check_planfile_cli_version),
         ("planfile_config", _check_planfile_config),
         ("planfile_sprints", _check_planfile_sprints),
         ("planfile_sprints_yaml", _check_planfile_sprints_yaml),
@@ -182,6 +188,48 @@ def _check_planfile_binary(_project: Path) -> tuple[str, str]:
     if on_path:
         return PASS, on_path
     return FAIL, "`planfile` not on PATH and KORU_PLANFILE_CMD unset"
+
+
+def _planfile_version_argv() -> list[str] | None:
+    explicit = os.environ.get("KORU_PLANFILE_CMD", "").strip()
+    if explicit:
+        return shlex.split(explicit) + ["--version"]
+    exe = shutil.which("planfile")
+    if exe:
+        return [exe, "--version"]
+    return None
+
+
+def _check_koru_package_version(_project: Path) -> tuple[str, str]:
+    del _project
+    try:
+        from importlib.metadata import PackageNotFoundError, version
+
+        ver = version("koru")
+    except (ImportError, PackageNotFoundError, ValueError):
+        return WARN, "koru version metadata unavailable (editable install / src only)"
+    return PASS, f"koru {ver}"
+
+
+def _check_planfile_cli_version(project: Path) -> tuple[str, str]:
+    argv = _planfile_version_argv()
+    if not argv:
+        return SKIP, "no planfile executable"
+    try:
+        proc = subprocess.run(
+            argv,
+            capture_output=True,
+            text=True,
+            timeout=8,
+            cwd=str(project.resolve()),
+        )
+    except (FileNotFoundError, OSError, subprocess.TimeoutExpired) as exc:
+        return WARN, f"planfile --version failed: {exc}"
+    blob = (proc.stdout or "") + "\n" + (proc.stderr or "")
+    for line in blob.splitlines():
+        if "version" in line.lower() and any(ch.isdigit() for ch in line):
+            return PASS, line.strip()[:180]
+    return WARN, "planfile --version produced no parseable version line"
 
 
 def _check_planfile_config(project: Path) -> tuple[str, str]:

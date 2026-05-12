@@ -90,6 +90,8 @@ class TestHappyPath(unittest.TestCase):
             self.assertEqual(_named(report, "policy_yaml").status, PASS)
             self.assertEqual(_named(report, "gitignore").status, PASS)
             self.assertEqual(_named(report, "koru_project_pipeline").status, PASS)
+            self.assertIn(_named(report, "koru_package_version").status, (PASS, WARN))
+            self.assertIn(_named(report, "planfile_cli_version").status, (PASS, WARN, SKIP))
 
 
 class TestKoruProjectPipelineProbe(unittest.TestCase):
@@ -100,6 +102,31 @@ class TestKoruProjectPipelineProbe(unittest.TestCase):
             with patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"):
                 report = _run(project)
             self.assertEqual(_named(report, "koru_project_pipeline").status, WARN)
+
+
+class TestPlanfileCliVersionProbe(unittest.TestCase):
+    def test_parses_version_from_stderr(self) -> None:
+        from koru.doctor import _check_planfile_cli_version
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            with (
+                patch(
+                    "koru.doctor.subprocess.run",
+                    return_value=SimpleNamespace(
+                        stdout="",
+                        stderr="Planfile CLI version: 9.8.7\n",
+                        returncode=0,
+                    ),
+                ),
+                patch(
+                    "koru.doctor._planfile_version_argv",
+                    return_value=["planfile", "--version"],
+                ),
+            ):
+                status, detail = _check_planfile_cli_version(project)
+            self.assertEqual(status, PASS)
+            self.assertIn("9.8.7", detail)
 
 
 class TestGitRepoCheck(unittest.TestCase):
