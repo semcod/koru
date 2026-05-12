@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from types import SimpleNamespace
 
 from koru import autonomous as autonomous_mod
@@ -24,6 +25,53 @@ def test_resolve_autopilot_ide_env_overrides_cli(monkeypatch) -> None:
 def test_resolve_autopilot_ide_ignores_bad_env(monkeypatch) -> None:
     monkeypatch.setenv("KORU_AUTOPILOT_IDE", "not-a-real-ide")
     assert autonomous_mod._resolve_autopilot_ide("jetbrains") == "jetbrains"
+
+
+def test_apply_agent_lane_environ_auto_cursor(tmp_path, monkeypatch) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    (tmp_path / ".cursor").mkdir()
+    lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "auto")
+    assert lane == "cursor"
+    assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "cursor"
+
+
+def test_apply_agent_lane_environ_none_is_noop(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "keep-me")
+    lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "none")
+    assert lane is None
+    assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "keep-me"
+
+
+def test_autonomous_main_prepends_up_for_flags(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(
+        autonomous_mod,
+        "init_project",
+        lambda project, force=False: SimpleNamespace(project=project),
+    )
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=0 last_status=idle",
+            last_status="idle",
+        ),
+    )
+    monkeypatch.setattr(autonomous_mod.time, "sleep", lambda _s: None)
+
+    rc = autonomous_mod.autonomous_main(
+        [
+            "--project",
+            str(tmp_path),
+            "--max-cycles",
+            "1",
+            "--sleep-seconds",
+            "0",
+            "--ticket-sources",
+            "queue",
+            "--no-autopilot",
+        ]
+    )
+    assert rc == 0
 
 
 def test_up_single_cycle_queue_only_no_autopilot(

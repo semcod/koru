@@ -518,12 +518,488 @@ sprint:
       status: done
       updated_at: '2026-05-10T18:14:12.446544+00:00'
     KORU-007:
-      name: "Improve doctor command to validate YAML syntax"
-      description: "The doctor command should validate the YAML syntax of config.yaml and current.yaml."
+      description: The doctor command should validate the YAML syntax of config.yaml
+        and current.yaml.
+      execution:
+        state: done
       executor:
         kind: shell
         mode: automatic
-      execution:
-        state: done
+      name: Improve doctor command to validate YAML syntax
       priority: high
       status: done
+    STARTER-003:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:35:46.028044Z'
+      description: '`regix` is installed but no `regix.yaml` config exists in the
+        project root. Bootstrap with `task template:install:regix` (in koru) or follow
+        `workflows/on-change-gates.md`.
+
+
+        Role: regression metrics gate (CC / MI / coverage delta).'
+      files: []
+      history: []
+      id: STARTER-003
+      labels:
+      - bootstrap
+      - gates
+      - scan
+      name: Bootstrap regix on-change gate
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:35:46.027190Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:35:46.028048Z'
+    STARTER-004:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:35:46.468373Z'
+      description: '`wup` is installed but no `wup.yaml` config exists in the project
+        root. Bootstrap with `task template:install:wup` (in koru) or follow `workflows/on-change-gates.md`.
+
+
+        Role: intelligent file watcher (3-layer: detect → quick → full).'
+      files: []
+      history: []
+      id: STARTER-004
+      labels:
+      - bootstrap
+      - gates
+      - scan
+      name: Bootstrap wup on-change gate
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:35:46.467501Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:35:46.468376Z'
+    STARTER-005:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:35:46.904797Z'
+      description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
+        Either address them or convert each into an explicit planfile ticket so backlog
+        stays honest.
+      files:
+      - tests/test_e2e.py
+      history: []
+      id: STARTER-005
+      labels:
+      - cleanup
+      - scan
+      name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      priority: low
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:35:46.903938Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:35:46.904800Z'
+    STARTER-006:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:35:47.350832Z'
+      description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
+        Either address them or convert each into an explicit planfile ticket so backlog
+        stays honest.
+      files:
+      - tests/test_scan.py
+      history: []
+      id: STARTER-006
+      labels:
+      - cleanup
+      - scan
+      name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      priority: low
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:35:47.349954Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:35:47.350835Z'
+    STARTER-007:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:36:20.717563Z'
+      description: '`regix` is installed but no `regix.yaml` config exists in the
+        project root. Bootstrap with `task template:install:regix` (in koru) or follow
+        `workflows/on-change-gates.md`.
+
+
+        Role: regression metrics gate (CC / MI / coverage delta).'
+      files: []
+      history: []
+      id: STARTER-007
+      labels:
+      - bootstrap
+      - gates
+      - scan
+      name: Bootstrap regix on-change gate
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:36:20.716683Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:36:20.717566Z'
+    STARTER-008:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:36:21.311014Z'
+      description: '`wup` is installed but no `wup.yaml` config exists in the project
+        root. Bootstrap with `task template:install:wup` (in koru) or follow `workflows/on-change-gates.md`.
+
+
+        Role: intelligent file watcher (3-layer: detect → quick → full).'
+      files: []
+      history: []
+      id: STARTER-008
+      labels:
+      - bootstrap
+      - gates
+      - scan
+      name: Bootstrap wup on-change gate
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:36:21.309889Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:36:21.311018Z'
+    STARTER-009:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:36:21.990406Z'
+      description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
+        Either address them or convert each into an explicit planfile ticket so backlog
+        stays honest.
+      files:
+      - tests/test_e2e.py
+      history: []
+      id: STARTER-009
+      labels:
+      - cleanup
+      - scan
+      name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      priority: low
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:36:21.989217Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:36:21.990411Z'
+    STARTER-010:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:36:22.646986Z'
+      description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
+        Either address them or convert each into an explicit planfile ticket so backlog
+        stays honest.
+      files:
+      - tests/test_scan.py
+      history: []
+      id: STARTER-010
+      labels:
+      - cleanup
+      - scan
+      name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      priority: low
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:36:22.645593Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:36:22.646991Z'
+    STARTER-011:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:36:56.065021Z'
+      description: '`regix` is installed but no `regix.yaml` config exists in the
+        project root. Bootstrap with `task template:install:regix` (in koru) or follow
+        `workflows/on-change-gates.md`.
+
+
+        Role: regression metrics gate (CC / MI / coverage delta).'
+      files: []
+      history: []
+      id: STARTER-011
+      labels:
+      - bootstrap
+      - gates
+      - scan
+      name: Bootstrap regix on-change gate
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:36:56.064117Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:36:56.065024Z'
+    STARTER-012:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:36:56.531067Z'
+      description: '`wup` is installed but no `wup.yaml` config exists in the project
+        root. Bootstrap with `task template:install:wup` (in koru) or follow `workflows/on-change-gates.md`.
+
+
+        Role: intelligent file watcher (3-layer: detect → quick → full).'
+      files: []
+      history: []
+      id: STARTER-012
+      labels:
+      - bootstrap
+      - gates
+      - scan
+      name: Bootstrap wup on-change gate
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:36:56.530009Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:36:56.531071Z'
+    STARTER-013:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:36:57.020677Z'
+      description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
+        Either address them or convert each into an explicit planfile ticket so backlog
+        stays honest.
+      files:
+      - tests/test_e2e.py
+      history: []
+      id: STARTER-013
+      labels:
+      - cleanup
+      - scan
+      name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      priority: low
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:36:57.019711Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:36:57.020682Z'
+    STARTER-014:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:36:57.487111Z'
+      description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
+        Either address them or convert each into an explicit planfile ticket so backlog
+        stays honest.
+      files:
+      - tests/test_scan.py
+      history: []
+      id: STARTER-014
+      labels:
+      - cleanup
+      - scan
+      name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      priority: low
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:36:57.486131Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:36:57.487115Z'
+    STARTER-015:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:37:30.515432Z'
+      description: '`regix` is installed but no `regix.yaml` config exists in the
+        project root. Bootstrap with `task template:install:regix` (in koru) or follow
+        `workflows/on-change-gates.md`.
+
+
+        Role: regression metrics gate (CC / MI / coverage delta).'
+      files: []
+      history: []
+      id: STARTER-015
+      labels:
+      - bootstrap
+      - gates
+      - scan
+      name: Bootstrap regix on-change gate
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:37:30.514552Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:37:30.515435Z'
+    STARTER-016:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:37:31.015787Z'
+      description: '`wup` is installed but no `wup.yaml` config exists in the project
+        root. Bootstrap with `task template:install:wup` (in koru) or follow `workflows/on-change-gates.md`.
+
+
+        Role: intelligent file watcher (3-layer: detect → quick → full).'
+      files: []
+      history: []
+      id: STARTER-016
+      labels:
+      - bootstrap
+      - gates
+      - scan
+      name: Bootstrap wup on-change gate
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:37:31.014731Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:37:31.015790Z'
+    STARTER-017:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:37:31.537835Z'
+      description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
+        Either address them or convert each into an explicit planfile ticket so backlog
+        stays honest.
+      files:
+      - tests/test_e2e.py
+      history: []
+      id: STARTER-017
+      labels:
+      - cleanup
+      - scan
+      name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      priority: low
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:37:31.536643Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:37:31.537838Z'
+    STARTER-018:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:37:32.087987Z'
+      description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
+        Either address them or convert each into an explicit planfile ticket so backlog
+        stays honest.
+      files:
+      - tests/test_scan.py
+      history: []
+      id: STARTER-018
+      labels:
+      - cleanup
+      - scan
+      name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      priority: low
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:37:32.086950Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:37:32.087990Z'
+    STARTER-019:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:38:04.754917Z'
+      description: '`regix` is installed but no `regix.yaml` config exists in the
+        project root. Bootstrap with `task template:install:regix` (in koru) or follow
+        `workflows/on-change-gates.md`.
+
+
+        Role: regression metrics gate (CC / MI / coverage delta).'
+      files: []
+      history: []
+      id: STARTER-019
+      labels:
+      - bootstrap
+      - gates
+      - scan
+      name: Bootstrap regix on-change gate
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:38:04.754065Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:38:04.754919Z'
+    STARTER-020:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T09:38:05.228192Z'
+      description: '`wup` is installed but no `wup.yaml` config exists in the project
+        root. Bootstrap with `task template:install:wup` (in koru) or follow `workflows/on-change-gates.md`.
+
+
+        Role: intelligent file watcher (3-layer: detect → quick → full).'
+      files: []
+      history: []
+      id: STARTER-020
+      labels:
+      - bootstrap
+      - gates
+      - scan
+      name: Bootstrap wup on-change gate
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-12T09:38:05.227131Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-12T09:38:05.228195Z'

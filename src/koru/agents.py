@@ -58,7 +58,8 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
     qwen_cmd = _which("qwen-code") or _which("qwen")
     opencode_cmd = _which("opencode")
     openrouter_ready = bool(os.getenv("OPENROUTER_API_KEY"))
-    antigravity_ready = bool(os.getenv("ANTIGRAVITY_AGENT"))
+    antigravity_home = Path.home() / ".gemini" / "antigravity"
+    antigravity_ready = bool(os.getenv("ANTIGRAVITY_AGENT")) or antigravity_home.exists()
 
     return [
         AgentOption(

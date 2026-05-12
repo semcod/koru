@@ -1406,8 +1406,9 @@ def _init_main(args: argparse.Namespace) -> int:
     next_parts: list[str] = []
     if report.agent_lane_files_written and report.agent_lane:
         next_parts.append(
-            "source `.planfile/.koru/shell-env.sh` or run "
-            "`./.planfile/.koru/run-autonomous.sh` before autonomous runs"
+            "run `koru autonomous up --project . --agent-lane auto` "
+            "(sets lane env; optional: source `.planfile/.koru/shell-env.sh` "
+            "for other terminals)"
         )
     next_parts.extend(
         [
@@ -1448,8 +1449,9 @@ def _init_agent_lane_main(args: argparse.Namespace) -> int:
     next_parts: list[str] = []
     if report.agent_lane_files_written and report.agent_lane:
         next_parts.append(
-            "source `.planfile/.koru/shell-env.sh` or run "
-            "`./.planfile/.koru/run-autonomous.sh` before autonomous runs"
+            "run `koru autonomous up --project . --agent-lane auto` "
+            "(sets lane env; optional: source `.planfile/.koru/shell-env.sh` "
+            "for other terminals)"
         )
     elif report.agent_lane is None:
         next_parts.append("shell helpers removed (use --agent-lane auto to restore)")

@@ -1,8 +1,8 @@
 """One-command autonomous mode for freshly installed koru.
 
-`koru autonomous up` is meant for the post-`pip install koru` flow:
-bootstrap project if needed, ensure autopilot daemon is available, then
-run a continuous scan + queue + autopilot loop.
+`koru autonomous up` (or `koru autonomous` with the same flags) bootstraps
+the project if needed, applies ``--agent-lane`` exports like
+``shell-env.sh``, then runs scan + queue + autopilot in a loop.
 """
 
 from __future__ import annotations
@@ -16,7 +16,8 @@ from pathlib import Path
 from .autopilot import default_socket_path
 from .autopilot.client import AutopilotClient
 from .autopilot.daemon import AutopilotDaemon
-from .init import init_project
+from .agents import agent_lane_environment
+from .init import init_project, resolve_project_agent_lane
 from .planfile_queue import QueueLoopResult, run_planfile_queue_loop
 from .scan import ScanResult, run_scan
 
@@ -29,6 +30,16 @@ def _resolve_autopilot_ide(cli_value: str) -> str:
     if raw in _VALID_AUTOPILOT_IDE:
         return raw
     return cli_value
+
+
+def _apply_agent_lane_environ(project: Path, agent_lane: str) -> str | None:
+    """Set lane exports in ``os.environ``; returns lane id or ``None`` if skipped."""
+    lane = resolve_project_agent_lane(project, agent_lane)
+    if lane is None:
+        return None
+    for key, val in agent_lane_environment(lane).items():
+        os.environ[key] = val
+    return lane
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -52,6 +63,16 @@ def _build_parser() -> argparse.ArgumentParser:
 
     up = sub.add_parser("up", help="Configure and start autonomous loop.")
     up.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
+    up.add_argument(
+        "--agent-lane",
+        default="auto",
+        metavar="LANE",
+        help=(
+            "Set KORU_AUTOPILOT_* / queue actor env for this lane before the "
+            "loop (auto|cursor|windsurf|local|…); same rules as koru --init. "
+            "Use none to use the current process environment as-is. Default: auto."
+        ),
+    )
     up.add_argument("--actor", default="koru-shell", help="Queue actor id.")
     up.add_argument(
         "--queue-name",
@@ -214,6 +235,10 @@ def _action_up(args: argparse.Namespace) -> int:
     project.mkdir(parents=True, exist_ok=True)
     _ensure_init(project, force=args.force_init)
 
+    lane = _apply_agent_lane_environ(project, args.agent_lane)
+    if lane is not None:
+        print(f"koru autonomous: agent-lane={lane} (env applied)")
+
     client: AutopilotClient | None = None
     daemon: AutopilotDaemon | None = None
     thread: threading.Thread | None = None
@@ -261,6 +286,10 @@ def _action_up(args: argparse.Namespace) -> int:
 
 
 def autonomous_main(argv: list[str]) -> int:
+    if not argv:
+        argv = ["up"]
+    elif argv[0] != "up" and argv[0] not in ("-h", "--help"):
+        argv = ["up", *argv]
     args = _build_parser().parse_args(argv)
     if args.action == "up":
         return _action_up(args)
