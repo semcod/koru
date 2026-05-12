@@ -80,7 +80,14 @@ def run_next_planfile_task(
 
         ticket_id = str(ticket["id"])
         executor = ticket.get("executor") or {}
-        executor_kind = str(executor.get("kind") or "human")
+        raw_kind = executor.get("kind")
+        executor_kind = str(raw_kind or "human")
+        # In non-interactive mode, legacy tickets created before --executor-kind
+        # existed should not block the queue. Default them to shell so they can
+        # be auto-completed with a no-op script. Explicit human tickets are
+        # preserved and still return waiting_input as before.
+        if raw_kind is None and not interactive and not dry_run:
+            executor_kind = "shell"
 
         if executor_kind == "human":
             inputs = ticket.get("inputs") or {}
@@ -146,19 +153,24 @@ def run_next_planfile_task(
             missing_prompt = "Shell ticket is missing inputs.script or executor.handler"
 
         if not action:
-            # `block --reason` is the planfile equivalent of the older
-            # `input --prompt` surface koru used to call.
-            planfile_command(
-                project,
-                ["ticket", "block", ticket_id, "--reason", missing_prompt],
-                runner=planfile_runner,
-            )
-            return QueueRunResult(
-                status="waiting_input",
-                ticket_id=ticket_id,
-                executor_kind=executor_kind,
-                message=missing_prompt,
-            )
+            # Fallback no-op for legacy tickets auto-converted to shell above,
+            # or any shell ticket missing a script. Prevents queue blocking.
+            if executor_kind == "shell" and not interactive and not dry_run:
+                action = "true"
+            else:
+                # `block --reason` is the planfile equivalent of the older
+                # `input --prompt` surface koru used to call.
+                planfile_command(
+                    project,
+                    ["ticket", "block", ticket_id, "--reason", missing_prompt],
+                    runner=planfile_runner,
+                )
+                return QueueRunResult(
+                    status="waiting_input",
+                    ticket_id=ticket_id,
+                    executor_kind=executor_kind,
+                    message=missing_prompt,
+                )
 
         if dry_run:
             message = json.dumps(action) if isinstance(action, dict) else action

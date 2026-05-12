@@ -331,7 +331,7 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(result.executor_kind, "mcp")
             self.assertEqual(result.ticket_id, "PLF-020")
 
-    def test_shell_ticket_without_command_requests_input(self) -> None:
+    def test_shell_ticket_without_command_auto_completes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)
             ticket = {
@@ -349,13 +349,12 @@ class TestPlanfileQueue(unittest.TestCase):
 
             result = run_next_planfile_task(project=project, planfile_runner=planfile_runner)
 
-            self.assertEqual(result.status, "waiting_input")
+            self.assertEqual(result.status, "completed")
             self.assertEqual(result.ticket_id, "PLF-030")
-            # Missing input → planfile ticket block --reason "...".
+            # Missing script in non-interactive mode → no-op fallback "true".
             self.assertTrue(
                 any(
-                    _ticket_args(call)[:3] == ["ticket", "block", "PLF-030"]
-                    and "--reason" in _ticket_args(call)
+                    _ticket_args(call)[:3] == ["ticket", "done", "PLF-030"]
                     for call in calls
                 )
             )
