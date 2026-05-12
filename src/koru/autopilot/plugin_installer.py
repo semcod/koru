@@ -9,6 +9,7 @@ matching command is available.
 from __future__ import annotations
 
 import os
+import json
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -20,6 +21,7 @@ from .ide import detect_focused_ide_id, detect_running_ides
 
 SUPPORTED_IDES = frozenset({"windsurf", "vscode", "cursor"})
 EXTENSION_ID = "semcod.koru-autopilot-vscode"
+SOCKET_SETTING_KEY = "koruAutopilot.socketPath"
 
 _IDE_COMMANDS: dict[str, tuple[str, ...]] = {
     "windsurf": ("windsurf",),
@@ -35,6 +37,8 @@ class PluginInstallResult:
     message: str
     command: list[str] | None = None
     vsix: str | None = None
+    settings_path: str | None = None
+    socket_path: str | None = None
 
     def to_dict(self) -> dict[str, object]:
         out: dict[str, object] = {
@@ -46,6 +50,10 @@ class PluginInstallResult:
             out["command"] = self.command
         if self.vsix is not None:
             out["vsix"] = self.vsix
+        if self.settings_path is not None:
+            out["settings_path"] = self.settings_path
+        if self.socket_path is not None:
+            out["socket_path"] = self.socket_path
         return out
 
 
@@ -122,6 +130,46 @@ def _resolve_ide_command(ide: str) -> str | None:
     return None
 
 
+def _settings_path_for_ide(ide: str) -> Path | None:
+    config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")).expanduser()
+    dirname = {
+        "windsurf": "Windsurf",
+        "cursor": "Cursor",
+        "vscode": "Code",
+    }.get(ide)
+    if dirname is None:
+        return None
+    return config_home / dirname / "User" / "settings.json"
+
+
+def _configure_socket_path(ide: str, socket_path: Path | None) -> Path | None:
+    if socket_path is None:
+        return None
+    settings_path = _settings_path_for_ide(ide)
+    if settings_path is None:
+        return None
+    try:
+        if settings_path.exists():
+            raw = settings_path.read_text(encoding="utf-8").strip()
+            settings = json.loads(raw) if raw else {}
+        else:
+            settings = {}
+        if not isinstance(settings, dict):
+            return None
+        wanted = str(socket_path.resolve())
+        if settings.get(SOCKET_SETTING_KEY) == wanted:
+            return settings_path
+        settings[SOCKET_SETTING_KEY] = wanted
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+        settings_path.write_text(
+            json.dumps(settings, indent=4, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        return settings_path
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
 Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 
@@ -150,6 +198,7 @@ def install_plugin_for_ide(
     *,
     ide: str = "auto",
     dry_run: bool = False,
+    socket_path: Path | None = None,
     runner: Runner = _run,
 ) -> PluginInstallResult:
     """Install the koru plugin for ``ide`` or the currently detected IDE."""
@@ -172,6 +221,9 @@ def install_plugin_for_ide(
             message=f"{target} CLI is not in PATH; cannot install the extension automatically",
         )
 
+    settings_path = None if dry_run else _configure_socket_path(target, socket_path)
+    socket_path_str = str(socket_path.resolve()) if socket_path is not None else None
+
     already_installed = _extension_is_installed(command, runner)
     if already_installed is True:
         return PluginInstallResult(
@@ -179,6 +231,8 @@ def install_plugin_for_ide(
             status="already_installed",
             message=f"{EXTENSION_ID} is already installed for {target}",
             command=[command, "--list-extensions"],
+            settings_path=str(settings_path) if settings_path is not None else None,
+            socket_path=socket_path_str,
         )
 
     vsix = resolve_extension_vsix()
@@ -190,6 +244,8 @@ def install_plugin_for_ide(
                 "cannot find koru autopilot VSIX; set KORU_AUTOPILOT_VSIX "
                 "or run from a koru source checkout"
             ),
+            settings_path=str(settings_path) if settings_path is not None else None,
+            socket_path=socket_path_str,
         )
 
     cmd = [command, "--install-extension", str(vsix)]
@@ -200,6 +256,7 @@ def install_plugin_for_ide(
             message="would install koru autopilot IDE extension",
             command=cmd,
             vsix=str(vsix),
+            socket_path=socket_path_str,
         )
 
     try:
@@ -211,6 +268,8 @@ def install_plugin_for_ide(
             message=f"failed to run extension installer: {exc}",
             command=cmd,
             vsix=str(vsix),
+            settings_path=str(settings_path) if settings_path is not None else None,
+            socket_path=socket_path_str,
         )
     if proc.returncode != 0:
         detail = (proc.stderr or proc.stdout or "").strip()
@@ -220,6 +279,8 @@ def install_plugin_for_ide(
             message=detail or f"extension installer exited {proc.returncode}",
             command=cmd,
             vsix=str(vsix),
+            settings_path=str(settings_path) if settings_path is not None else None,
+            socket_path=socket_path_str,
         )
     return PluginInstallResult(
         ide=target,
@@ -227,6 +288,8 @@ def install_plugin_for_ide(
         message=f"installed {EXTENSION_ID}; reload/restart {target} if it is already open",
         command=cmd,
         vsix=str(vsix),
+        settings_path=str(settings_path) if settings_path is not None else None,
+        socket_path=socket_path_str,
     )
 
 

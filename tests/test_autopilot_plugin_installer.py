@@ -63,6 +63,39 @@ def test_install_plugin_dry_run_builds_editor_command(
     assert result.command == ["/usr/bin/cursor", "--install-extension", str(vsix)]
 
 
+def test_install_plugin_configures_socket_path(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    vsix = tmp_path / "koru-autopilot-0.1.0.vsix"
+    vsix.write_text("fake", encoding="utf-8")
+    socket_path = tmp_path / "koru-autopilot-windsurf.sock"
+    config_home = tmp_path / "config"
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(config_home))
+    monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda: vsix)
+    monkeypatch.setattr(plugin_installer.shutil, "which", lambda name: f"/usr/bin/{name}")
+
+    def fake_runner(cmd, **_kwargs):
+        if cmd[1] == "--list-extensions":
+            return subprocess.CompletedProcess(cmd, 0, stdout=plugin_installer.EXTENSION_ID, stderr="")
+        raise AssertionError("already-installed path should not reinstall")
+
+    result = plugin_installer.install_plugin_for_ide(
+        ide="windsurf",
+        socket_path=socket_path,
+        runner=fake_runner,
+    )
+
+    settings_path = config_home / "Windsurf" / "User" / "settings.json"
+    assert result.status == "already_installed"
+    assert result.settings_path == str(settings_path)
+    assert result.socket_path == str(socket_path)
+    assert f'"{plugin_installer.SOCKET_SETTING_KEY}": "{socket_path}"' in settings_path.read_text(
+        encoding="utf-8"
+    )
+
+
 def test_install_plugin_skips_when_extension_already_installed(monkeypatch) -> None:
     monkeypatch.setattr(plugin_installer.shutil, "which", lambda name: f"/usr/bin/{name}")
 

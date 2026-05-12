@@ -4,11 +4,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.50-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$2.47-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-22.7h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.51-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$2.47-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-22.8h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $2.4710 (73 commits)
-- 👤 **Human dev:** ~$2273 (22.7h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $2.4703 (74 commits)
+- 👤 **Human dev:** ~$2282 (22.8h @ $100/h, 30min dedup)
 
 Generated on 2026-05-12 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -59,6 +59,33 @@ else needs to be memorised.
 If the project is not initialised yet, `koru` (no args) detects this
 and prints a **⚠ Setup required** section with the exact `koru --init`
 command to run — the LLM never has to guess.
+
+### Fast local startup (existing repo)
+
+```bash
+python -m venv .venv
+. .venv/bin/activate
+python -m pip install -U pip
+python -m pip install -e ".[dev]"
+
+# smoke-run one autonomous cycle (no IDE injection)
+koru autonomous up --project . --max-cycles 1 --sleep-seconds 0 --no-autopilot
+
+# start dashboard even if 8765 is already occupied
+koru serve --project . --auto-port --no-open
+```
+
+Use explicit `up` for compatibility (`koru autonomous up --project .`),
+especially when switching between local source checkouts and older PyPI builds.
+
+### Quick troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| `koru autonomous: ... invalid choice: '.' (choose from 'up')` | Run `koru autonomous up --project .` |
+| `koru serve: cannot bind 127.0.0.1:8765` | Run `koru serve --auto-port` or free the port via `ss -ltnp \| rg 8765` then `kill <pid>` |
+| CLI seems to ignore freshly installed version | Verify environment alignment with `which koru` and `python -m pip show koru`; prefer `.venv/bin/koru` in project-local workflows |
+| `goal -a` takes too long to fail | Keep `strategies.python.test` fail-fast (`--maxfail=1`) for quick feedback; run full suite explicitly when needed |
 
 ## Topology & pipelines — what is active right now
 

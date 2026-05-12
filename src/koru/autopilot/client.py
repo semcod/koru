@@ -64,8 +64,21 @@ class AutopilotClient:
         return bool(reply.data.get("ok", False))
 
     def drive(self, text: str, *, submit: bool = True, ide: str = "auto") -> dict[str, Any]:
-        reply = self.request(drive_msg(text, submit=submit, ide=ide, id="cli-drive"))
-        return reply.to_dict()
+        try:
+            reply = self.request(drive_msg(text, submit=submit, ide=ide, id="cli-drive"))
+            return reply.to_dict()
+        except FileNotFoundError as exc:
+            return {
+                "ok": False,
+                "message": f"autopilot socket missing: {self.socket_path} ({exc})",
+                "backend": None,
+            }
+        except (ConnectionError, OSError) as exc:
+            return {
+                "ok": False,
+                "message": f"autopilot daemon unreachable: {exc}",
+                "backend": None,
+            }
 
     def status(self) -> dict[str, Any]:
         reply = self.request(Message(type="status", id="cli-status"))

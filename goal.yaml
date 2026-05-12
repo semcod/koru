@@ -222,7 +222,7 @@ git:
     format: '{prefix}{version}'
 strategies:
   python:
-    test: pytest tests/ -v
+    test: pytest -q --maxfail=1 tests/
     build: python -m build
     publish: twine upload dist/koru-{version}*
     publish_enabled: true

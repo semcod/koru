@@ -159,8 +159,21 @@ Produkcyjnie w `maskservice/c2004`:
 | `goal: command not found` | `pip install --user --upgrade goal` |
 | "No version drift detected" gdy jest | `goal check-versions --verbose` pokaże mismatch lub plik bez `version:` field |
 | Commit message zawiera "update" / "fix" | `quality.commit_summary.generic_terms` w `goal.yaml` blokuje generic terms; przepisz |
-| `goal -a` zawisa na `pytest` | używa `strategies.python.test` z `goal.yaml` — sprawdź czy `pytest tests/` faktycznie nie hangnie |
+| `goal -a` zawisa na `pytest` | używa `strategies.python.test` z `goal.yaml` — uruchom ręcznie `pytest -q --maxfail=1 tests/` i napraw pierwszy błąd |
 | Bump version niezgodny z conventional commits | sprawdź `versioning.bump_rules` (patch=10 = wystarczy 10 nieprzyłapanych zmian dla bumpa) |
+
+Szybka ścieżka dla koru (najkrótszy feedback loop):
+
+```bash
+# 1) szybki test fail-fast zamiast pełnego goal -a
+pytest -q --maxfail=1 tests/
+
+# 2) commit po przejściu testów
+goal commit
+
+# 3) pełny workflow dopiero gdy lokalnie jest zielono
+goal -a
+```
 
 ## Linki
 

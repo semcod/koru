@@ -38,6 +38,23 @@ task -d /path/to/koru tickets:next
 task -d /path/to/koru quality:regix
 ```
 
+Fast path when you are already inside a repo managed by koru:
+
+```bash
+# one autonomous cycle (quick smoke check)
+koru autonomous up --project . --max-cycles 1 --sleep-seconds 0 --no-autopilot
+
+# dashboard with automatic fallback port
+koru serve --project . --auto-port --no-open
+```
+
+If your shell has multiple Python environments, prefer explicit binary invocation:
+
+```bash
+.venv/bin/koru autonomous up --project .
+.venv/bin/koru serve --auto-port
+```
+
 ---
 
 ## Installation
@@ -621,6 +638,24 @@ curl -X POST http://localhost:8810/alert \
 ---
 
 ## Common scenarios
+
+### Troubleshooting: fastest recovery commands
+
+```bash
+# autonomous parser complains about '.' argument
+koru autonomous up --project .
+
+# port 8765 is already in use
+koru serve --auto-port
+ss -ltnp | rg 8765
+
+# check if shell uses expected koru installation
+which koru
+python -m pip show koru
+
+# fastest feedback for one failing test (example)
+pytest -q --maxfail=1 tests/test_autonomous.py::test_up_auto_installs_plugin_before_autopilot_loop
+```
 
 ### Scenario 1: Bootstrap a new project
 

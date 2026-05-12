@@ -138,11 +138,22 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Do not auto-install the koru IDE plugin before starting autopilot.",
     )
     up.add_argument(
+        "--keep-waiting-input",
+        dest="stop_on_waiting_input",
+        action="store_false",
+        help="Keep looping when the queue is waiting for human input.",
+    )
+    up.add_argument(
         "--force-init",
         action="store_true",
         help="Force `koru --init` re-initialization if project is already initialized.",
     )
-    up.set_defaults(submit=True, enable_autopilot=True, install_plugin=True)
+    up.set_defaults(
+        submit=True,
+        enable_autopilot=True,
+        install_plugin=True,
+        stop_on_waiting_input=True,
+    )
 
     return parser
 
@@ -255,12 +266,19 @@ def _action_up(args: argparse.Namespace) -> int:
     client: AutopilotClient | None = None
     daemon: AutopilotDaemon | None = None
     thread: threading.Thread | None = None
+    socket_path: Path | None = None
     if args.enable_autopilot:
-        if args.install_plugin:
-            result = install_plugin_for_ide(ide=autopilot_ide)
-            print(format_plugin_install_result(result))
         socket_path = (args.socket or default_socket_path()).resolve()
+        if args.install_plugin:
+            result = install_plugin_for_ide(ide=autopilot_ide, socket_path=socket_path)
+            print(format_plugin_install_result(result))
         client, daemon, thread = _start_or_reuse_daemon(project=project, socket_path=socket_path)
+
+    # Avoid reconnect noise when no socket ever existed; still recover when the
+    # socket disappears after a healthy boot (e.g. external autopilot daemon exited).
+    autopilot_socket_observed_at_boot = (
+        bool(socket_path and socket_path.exists()) if args.enable_autopilot else False
+    )
 
     enable_scan, use_all_queues = _effective_flags(args.ticket_sources)
     queue_name = None if use_all_queues else args.queue_name
@@ -270,7 +288,32 @@ def _action_up(args: argparse.Namespace) -> int:
         while True:
             cycle += 1
             print(f"\n=== koru autonomous cycle #{cycle} ===")
-            _run_cycle(
+            if (
+                args.enable_autopilot
+                and client is not None
+                and socket_path is not None
+                and not socket_path.exists()
+                and (
+                    autopilot_socket_observed_at_boot
+                    or daemon is not None
+                    or thread is not None
+                )
+            ):
+                print(
+                    f"koru autonomous: autopilot socket missing at {socket_path}; "
+                    "restarting or taking over daemon…"
+                )
+                if daemon is not None:
+                    try:
+                        daemon.stop()
+                    except OSError:
+                        pass
+                if thread is not None:
+                    thread.join(timeout=2.0)
+                client, daemon, thread = _start_or_reuse_daemon(
+                    project=project, socket_path=socket_path
+                )
+            _scan_result, queue_result, _autopilot_status = _run_cycle(
                 cycle=cycle,
                 project=project,
                 actor=args.actor,
@@ -283,6 +326,16 @@ def _action_up(args: argparse.Namespace) -> int:
                 submit=args.submit,
                 client=client,
             )
+
+            if (
+                args.stop_on_waiting_input
+                and queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES
+            ):
+                print(
+                    "koru autonomous: queue is waiting_input; stopping until "
+                    "human/manual ticket recovery marks it ready or done"
+                )
+                return 0
 
             if args.max_cycles > 0 and cycle >= args.max_cycles:
                 print(f"koru autonomous: reached max-cycles={args.max_cycles}; stopping")

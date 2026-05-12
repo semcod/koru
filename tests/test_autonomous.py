@@ -184,8 +184,8 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
 
     install_calls: list[str] = []
 
-    def fake_install_plugin_for_ide(*, ide):
-        install_calls.append(ide)
+    def fake_install_plugin_for_ide(*, ide, socket_path):
+        install_calls.append(f"{ide}:{socket_path.name}")
         return SimpleNamespace(status="installed", ide=ide, message="ok", command=None)
 
     class FakeClient:
@@ -223,7 +223,7 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
     )
 
     assert rc == 0
-    assert install_calls == ["cursor"]
+    assert install_calls == ["cursor:koru-autopilot-local.sock"]
 
 
 def test_run_cycle_skips_autopilot_when_queue_waits_for_input(
@@ -259,3 +259,124 @@ def test_run_cycle_skips_autopilot_when_queue_waits_for_input(
 
     assert queue_result.last_status == "waiting_input"
     assert autopilot_status == "skipped"
+
+
+def test_up_stops_on_waiting_input_by_default(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        autonomous_mod,
+        "init_project",
+        lambda project, force=False: SimpleNamespace(project=project),
+    )
+
+    calls = 0
+
+    def fake_queue_loop(**kwargs):
+        nonlocal calls
+        calls += 1
+        return SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=1 last_status=waiting_input",
+            last_status="waiting_input",
+        )
+
+    class FailIfDrivenClient:
+        def drive(self, *_args, **_kwargs):
+            raise AssertionError("autopilot should not drive waiting_input queues")
+
+    monkeypatch.setattr(autonomous_mod, "run_planfile_queue_loop", fake_queue_loop)
+    monkeypatch.setattr(autonomous_mod, "install_plugin_for_ide", lambda **_kwargs: SimpleNamespace(status="skipped", ide="auto", message="ok", command=None))
+    monkeypatch.setattr(autonomous_mod, "format_plugin_install_result", lambda result: result.status)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_start_or_reuse_daemon",
+        lambda **kwargs: (FailIfDrivenClient(), None, None),
+    )
+    monkeypatch.setattr(autonomous_mod.time, "sleep", lambda _s: None)
+
+    rc = autonomous_mod.autonomous_main(
+        [
+            "up",
+            "--project",
+            str(tmp_path),
+            "--sleep-seconds",
+            "0",
+            "--ticket-sources",
+            "queue",
+            "--agent-lane",
+            "none",
+        ]
+    )
+
+    assert rc == 0
+    assert calls == 1
+
+
+def test_up_restarts_autopilot_when_socket_disappears_between_cycles(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    """If the unix socket vanishes after boot, autonomous should call _start_or_reuse_daemon again."""
+    monkeypatch.setattr(
+        autonomous_mod,
+        "init_project",
+        lambda project, force=False: SimpleNamespace(project=project),
+    )
+    monkeypatch.setattr(autonomous_mod.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "install_plugin_for_ide",
+        lambda **_kwargs: SimpleNamespace(status="skipped", ide="auto", message="ok", command=None),
+    )
+    monkeypatch.setattr(
+        autonomous_mod,
+        "format_plugin_install_result",
+        lambda result: result.status,
+    )
+
+    sock = tmp_path / "koru-autopilot-test.sock"
+    sock.write_text("", encoding="utf-8")
+
+    daemon_starts: list[int] = []
+
+    class FakeClient:
+        def drive(self, *_args, **_kwargs):
+            return {"ok": True, "backend": "fake"}
+
+    def fake_start_or_reuse_daemon(**_kwargs):
+        daemon_starts.append(1)
+        return (FakeClient(), None, None)
+
+    cycle = {"n": 0}
+
+    def fake_run_planfile_queue_loop(**_kwargs):
+        cycle["n"] += 1
+        if cycle["n"] == 1:
+            sock.unlink(missing_ok=True)
+        return SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=0 last_status=idle",
+            last_status="idle",
+        )
+
+    monkeypatch.setattr(autonomous_mod, "_start_or_reuse_daemon", fake_start_or_reuse_daemon)
+    monkeypatch.setattr(autonomous_mod, "run_planfile_queue_loop", fake_run_planfile_queue_loop)
+    monkeypatch.setattr(autonomous_mod, "default_socket_path", lambda: sock)
+
+    rc = autonomous_mod.autonomous_main(
+        [
+            "up",
+            "--project",
+            str(tmp_path),
+            "--max-cycles",
+            "2",
+            "--sleep-seconds",
+            "0",
+            "--ticket-sources",
+            "queue",
+            "--agent-lane",
+            "none",
+        ]
+    )
+    assert rc == 0
+    assert len(daemon_starts) == 2
