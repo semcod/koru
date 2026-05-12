@@ -37,7 +37,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "--socket",
         type=Path,
         default=None,
-        help=f"Unix-socket path (default: {default_socket_path()}).",
+        help=(
+            "Unix-socket path (default from KORU_AUTOPILOT_SOCKET / "
+            "KORU_AUTOPILOT_INSTANCE / XDG_RUNTIME_DIR — see koru autopilot docs)."
+        ),
     )
     sub = parser.add_subparsers(dest="action", required=True)
 

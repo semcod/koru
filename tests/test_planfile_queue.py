@@ -52,12 +52,49 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(result.status, "completed")
             self.assertEqual(result.ticket_id, "PLF-001")
             tail_args = [_ticket_args(call) for call in planfile_calls]
-            # Real planfile surface: list / start / done — no claim,
-            # no --assigned-to, no --note/--result-json.
+            claim = [
+                "ticket",
+                "claim",
+                "PLF-001",
+                "--assigned-to",
+                "koru-test",
+                "--lease-seconds",
+                "3600",
+            ]
+            self.assertIn(claim, tail_args)
+            self.assertLess(tail_args.index(claim), tail_args.index(["ticket", "start", "PLF-001"]))
             self.assertIn(["ticket", "start", "PLF-001"], tail_args)
             self.assertIn(["ticket", "done", "PLF-001"], tail_args)
             for args in tail_args:
-                self.assertNotIn(args[1], {"claim", "complete", "fail", "input", "next"})
+                self.assertNotIn(args[1], {"complete", "fail", "input", "next"})
+
+    def test_ticket_claim_failure_returns_claim_failed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = {
+                "id": "PLF-0X",
+                "name": "Run",
+                "executor": {"kind": "shell", "handler": "echo ok"},
+                "execution": {"state": "ready"},
+            }
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                ta = _ticket_args(command)
+                if ta[:5] == ["ticket", "list", "--status", "open", "--format"]:
+                    return _ok(json.dumps(ticket))
+                if ta[:3] == ["ticket", "claim", "PLF-0X"]:
+                    return SimpleNamespace(returncode=1, stdout="", stderr="already claimed")
+                return _ok()
+
+            result = run_next_planfile_task(
+                project=project,
+                actor="koru-test",
+                planfile_runner=planfile_runner,
+            )
+
+            self.assertEqual(result.status, "claim_failed")
+            self.assertEqual(result.ticket_id, "PLF-0X")
+            self.assertEqual(result.message, "already claimed")
 
     def test_human_ticket_returns_waiting_input(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -164,6 +201,17 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(result.executor_kind, "api")
             self.assertEqual(result.message, "POST http://service.local/bootstrap")
             tail_args = [_ticket_args(call) for call in planfile_calls]
+            claim = [
+                "ticket",
+                "claim",
+                "PLF-004",
+                "--assigned-to",
+                "koru-api",
+                "--lease-seconds",
+                "3600",
+            ]
+            self.assertIn(claim, tail_args)
+            self.assertLess(tail_args.index(claim), tail_args.index(["ticket", "start", "PLF-004"]))
             self.assertIn(["ticket", "start", "PLF-004"], tail_args)
             self.assertIn(["ticket", "done", "PLF-004"], tail_args)
 
@@ -379,7 +427,20 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(captured["ticket_id"], "PLF-100")
 
             tail_calls = [_ticket_args(c) for c in calls]
-            # Real planfile surface: start <id> / done <id> only.
+            claim = [
+                "ticket",
+                "claim",
+                "PLF-100",
+                "--assigned-to",
+                "koru-i",
+                "--lease-seconds",
+                "3600",
+            ]
+            self.assertIn(claim, tail_calls)
+            self.assertLess(
+                tail_calls.index(claim),
+                tail_calls.index(["ticket", "start", "PLF-100"]),
+            )
             self.assertIn(["ticket", "start", "PLF-100"], tail_calls)
             self.assertIn(["ticket", "done", "PLF-100"], tail_calls)
             # Answer is captured by koru's run log (not a planfile flag),
@@ -512,9 +573,18 @@ class TestPlanfileQueueLlm(unittest.TestCase):
                 "Should we move only reusable code to packages/?",
             )
             self.assertEqual(captured["request"]["model"], "openai/gpt-4o-mini")
-            # planfile lifecycle (real): start -> done. No claim, no
-            # --assigned-to, no --note/--result-json on done.
             tail = [_ticket_args(c) for c in calls]
+            claim = [
+                "ticket",
+                "claim",
+                "LLM-001",
+                "--assigned-to",
+                "koru-llm",
+                "--lease-seconds",
+                "3600",
+            ]
+            self.assertIn(claim, tail)
+            self.assertLess(tail.index(claim), tail.index(["ticket", "start", "LLM-001"]))
             self.assertIn(["ticket", "start", "LLM-001"], tail)
             self.assertIn(["ticket", "done", "LLM-001"], tail)
             # LLM-specific fields are preserved on QueueRunResult so the

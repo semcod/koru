@@ -32,7 +32,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "--socket",
         type=Path,
         default=None,
-        help=f"Autopilot daemon socket path (default: {default_socket_path()}).",
+        help=(
+            "Autopilot daemon socket path (default: $XDG_RUNTIME_DIR/koru-autopilot.sock; "
+            "override with KORU_AUTOPILOT_SOCKET or KORU_AUTOPILOT_INSTANCE — see docs)."
+        ),
     )
     sub = parser.add_subparsers(dest="action", required=True)
 

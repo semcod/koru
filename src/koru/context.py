@@ -750,6 +750,16 @@ def _render_autonomous_mode(*, planfile_initialised: bool) -> list[str]:
             "- `--no-autopilot` for queue/scan only",
             "- `--autopilot-ide auto|windsurf|jetbrains|cursor|vscode|zed`",
             "",
+            "Multi-IDE / several chat panes on one machine:",
+            "- Set a **distinct** `KORU_AUTOPILOT_INSTANCE` per IDE window (e.g. `cursor-a`,",
+            "  `windsurf-b`) so each autopilot daemon gets its own Unix socket; or set",
+            "  `KORU_AUTOPILOT_SOCKET` to an absolute path.",
+            "- Queue drains for the same repo are **serialized** via "
+            "`.planfile/.koru/queue-runner.lock` (POSIX); disable only if you accept races:",
+            "  `KORU_QUEUE_RUNNER_LOCK=0`.",
+            "- Use a **unique** `--actor` / `ACTOR` per automated lane so `ticket claim`",
+            "  ownership is visible in planfile.",
+            "",
         ]
     )
     return lines

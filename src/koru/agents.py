@@ -54,8 +54,21 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
     aider_cmd = _which("aider")
     codex_cmd = _which("codex")
     openrouter_ready = bool(os.getenv("OPENROUTER_API_KEY"))
+    antigravity_ready = bool(os.getenv("ANTIGRAVITY_AGENT"))
 
     return [
+        AgentOption(
+            id="antigravity",
+            label="Antigravity Agent",
+            available=antigravity_ready,
+            launchable=False,
+            command=None,
+            reason=(
+                "Antigravity runtime detected; operating natively within context."
+                if antigravity_ready
+                else "Antigravity environment not found."
+            ),
+        ),
         AgentOption(
             id="claude-code",
             label="Claude Code",
