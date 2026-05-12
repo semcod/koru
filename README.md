@@ -4,11 +4,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.33-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$3.22-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-19.1h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.34-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$3.16-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-20.5h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $3.2162 (56 commits)
-- 👤 **Human dev:** ~$1910 (19.1h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $3.1623 (57 commits)
+- 👤 **Human dev:** ~$2054 (20.5h @ $100/h, 30min dedup)
 
 Generated on 2026-05-12 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -161,6 +161,10 @@ koru autopilot tail -n 50
 
 # diagnostics:
 koru autopilot status          # is the daemon up? plugins connected?
+
+# non-invasive smoke test (daemon routing + IDE autodetect, no real key injection)
+scripts/autopilot-ide-autodetect-smoke.sh --require-running-ide
+scripts/autopilot-ide-autodetect-smoke.sh --check-ide jetbrains --check-ide windsurf
 ```
 
 Newer autopilot functions you can use directly from CLI:
