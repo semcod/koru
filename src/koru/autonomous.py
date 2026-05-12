@@ -22,6 +22,7 @@ from .planfile_queue import QueueLoopResult, run_planfile_queue_loop
 from .scan import ScanResult, run_scan
 
 _VALID_AUTOPILOT_IDE = frozenset({"auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"})
+_AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
 
 def _resolve_autopilot_ide(cli_value: str) -> str:
@@ -213,15 +214,18 @@ def _run_cycle(
 
     autopilot_status = "skipped"
     if enable_autopilot and client is not None:
-        reply = client.drive(drive_prompt, submit=submit, ide=autopilot_ide)
-        ok = bool(reply.get("ok", True))
-        autopilot_status = "ok" if ok else "failed"
-        if ok:
-            backend = reply.get("backend", "?")
-            print(f"  autopilot: ok (ide={autopilot_ide}, backend={backend})")
+        if queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES:
+            print(f"  autopilot: skipped (queue_status={queue_result.last_status})")
         else:
-            message = reply.get("message", "unknown error")
-            print(f"  autopilot: failed ({message})")
+            reply = client.drive(drive_prompt, submit=submit, ide=autopilot_ide)
+            ok = bool(reply.get("ok", True))
+            autopilot_status = "ok" if ok else "failed"
+            if ok:
+                backend = reply.get("backend", "?")
+                print(f"  autopilot: ok (ide={autopilot_ide}, backend={backend})")
+            else:
+                message = reply.get("message", "unknown error")
+                print(f"  autopilot: failed ({message})")
 
     print(
         f"koru autonomous: cycle={cycle} queue={queue_result.last_status} "

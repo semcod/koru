@@ -555,6 +555,7 @@ _ACTIONS = {
     "shutdown": _action_shutdown,
     "ide-list": _action_ide_list,
     "doctor": _action_doctor,
+    "setup-host": _action_setup_host,
     "handoff": _action_handoff,
     "tail": _action_tail,
     "install-unit": _action_install_unit,

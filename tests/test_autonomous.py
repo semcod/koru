@@ -156,3 +156,38 @@ def test_up_single_cycle_all_sources_runs_scan(
     )
 
     assert rc == 0
+
+
+def test_run_cycle_skips_autopilot_when_queue_waits_for_input(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    class FailIfDrivenClient:
+        def drive(self, *_args, **_kwargs):
+            raise AssertionError("autopilot should not drive waiting_input queues")
+
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=1 last_status=waiting_input",
+            last_status="waiting_input",
+        ),
+    )
+
+    _scan_result, queue_result, autopilot_status = autonomous_mod._run_cycle(
+        cycle=1,
+        project=tmp_path,
+        actor="koru-test",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=50,
+        enable_autopilot=True,
+        autopilot_ide="auto",
+        drive_prompt="continue with the next ticket",
+        submit=True,
+        client=FailIfDrivenClient(),
+    )
+
+    assert queue_result.last_status == "waiting_input"
+    assert autopilot_status == "skipped"

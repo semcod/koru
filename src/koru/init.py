@@ -210,6 +210,7 @@ class InitReport:
     agent_lane: str | None = None
     agent_lane_files_written: bool = False
     agent_lane_refresh_only: bool = False
+    autopilot_host_setup_written: bool = False
 
     def summary(self) -> str:
         if self.agent_lane_refresh_only:
@@ -220,6 +221,8 @@ class InitReport:
                 )
             if self.agent_lane is None:
                 return "agent-lane: off (shell helpers removed)"
+            if self.autopilot_host_setup_written:
+                return "agent-lane: refresh; autopilot-host: setup-autopilot-host.sh"
             return "agent-lane: refresh"
         bits = [f"tickets: {self.sprint_imported} imported"]
         if self.policy_written:
@@ -232,6 +235,8 @@ class InitReport:
             bits.append(
                 f"agent-lane: {self.agent_lane} (shell-env.sh, run-autonomous.sh)"
             )
+        if self.autopilot_host_setup_written:
+            bits.append("autopilot-host: setup-autopilot-host.sh")
         return ", ".join(bits)
 
 
@@ -300,6 +305,8 @@ def init_project(
     else:
         agent_written = _write_agent_lane_artifacts(project, lane)
 
+    host_setup_written = _write_autopilot_host_setup_script(project)
+
     return InitReport(
         project=project,
         planfile_created=True,
@@ -310,6 +317,7 @@ def init_project(
         agent_lane=lane,
         agent_lane_files_written=agent_written,
         agent_lane_refresh_only=False,
+        autopilot_host_setup_written=host_setup_written,
     )
 
 
@@ -335,6 +343,7 @@ def refresh_init_agent_lane(
         _remove_agent_lane_artifacts(runtime_dir(project))
     else:
         agent_written = _write_agent_lane_artifacts(project, lane)
+    host_setup_written = _write_autopilot_host_setup_script(project)
     return InitReport(
         project=project,
         planfile_created=False,
@@ -345,6 +354,7 @@ def refresh_init_agent_lane(
         agent_lane=lane,
         agent_lane_files_written=agent_written,
         agent_lane_refresh_only=True,
+        autopilot_host_setup_written=host_setup_written,
     )
 
 
@@ -382,6 +392,31 @@ _PROJECT="$(cd "${_KORU_RT}/../.." && pwd)"
 cd "${_PROJECT}"
 exec koru autonomous up --project "${_PROJECT}" --agent-lane auto "$@"
 """
+
+SETUP_AUTOPILOT_HOST_SH = """#!/usr/bin/env bash
+set -euo pipefail
+_RT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_PROJECT="$(cd "${_RT}/../.." && pwd)"
+cd "${_PROJECT}"
+if command -v koru >/dev/null 2>&1; then
+  exec koru autopilot setup-host "$@"
+elif command -v python3 >/dev/null 2>&1; then
+  exec python3 -m koru.cli autopilot setup-host "$@"
+else
+  echo "koru: command not found; add koru to PATH or run: python3 -m koru.cli autopilot setup-host" >&2
+  exit 127
+fi
+"""
+
+
+def _write_autopilot_host_setup_script(project: Path) -> bool:
+    rt = runtime_dir(project)
+    rt.mkdir(parents=True, exist_ok=True)
+    path = rt / "setup-autopilot-host.sh"
+    path.write_text(SETUP_AUTOPILOT_HOST_SH, encoding="utf-8")
+    mode = path.stat().st_mode
+    path.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    return True
 
 
 def _write_agent_lane_artifacts(project: Path, lane: str) -> bool:
