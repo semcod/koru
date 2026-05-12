@@ -269,7 +269,22 @@ def _run_cycle(
     autopilot_status = "skipped"
     if enable_autopilot and client is not None:
         if queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES:
-            print(f"  autopilot: skipped (queue_status={queue_result.last_status})")
+            # Queue needs human/LLM attention — drive the actual ticket
+            # content instead of the generic drive_prompt so the IDE's LLM
+            # knows exactly what to work on.
+            ticket_prompt = queue_result.last_message.strip() if queue_result.last_message else ""
+            if ticket_prompt:
+                reply = client.drive(ticket_prompt, submit=submit, ide=autopilot_ide)
+                ok = bool(reply.get("ok", True))
+                autopilot_status = "ok" if ok else "failed"
+                if ok:
+                    backend = reply.get("backend", "?")
+                    print(f"  autopilot: ok (ticket={queue_result.ticket_id}, ide={autopilot_ide}, backend={backend})")
+                else:
+                    message = reply.get("message", "unknown error")
+                    print(f"  autopilot: failed ({message})")
+            else:
+                print(f"  autopilot: skipped (queue_status={queue_result.last_status}, empty message)")
         else:
             reply = client.drive(drive_prompt, submit=submit, ide=autopilot_ide)
             ok = bool(reply.get("ok", True))

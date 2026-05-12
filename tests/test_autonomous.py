@@ -244,6 +244,7 @@ def test_run_cycle_skips_autopilot_when_queue_waits_for_input(
         lambda **kwargs: SimpleNamespace(
             summary=lambda: "iterations=1 completed=0 failed=0 waiting=1 last_status=waiting_input",
             last_status="waiting_input",
+            last_message="",
         ),
     )
 
@@ -284,6 +285,7 @@ def test_up_stops_on_waiting_input_by_default(
         return SimpleNamespace(
             summary=lambda: "iterations=1 completed=0 failed=0 waiting=1 last_status=waiting_input",
             last_status="waiting_input",
+            last_message="",
         )
 
     class FailIfDrivenClient:

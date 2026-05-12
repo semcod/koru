@@ -74,6 +74,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `quality:regix` ↔ `gate:regix`, `quality:redup*` ↔ `gate:redup`,
   `quality:sumr:*` ↔ `gate:sumr`.
 
+## [0.1.62] - 2026-05-12
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_autonomous.py
+
+### Other
+- Update uv.lock
+
 ## [0.1.61] - 2026-05-12
 
 ### Docs

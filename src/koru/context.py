@@ -210,6 +210,94 @@ def _git_probe(project: Path) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+def _build_ticket_args(
+    ticket_id: str | None,
+    queue_name: str | None,
+) -> list[str]:
+    """Build planfile ticket command arguments."""
+    if ticket_id:
+        return ["ticket", "show", ticket_id, "--format", "json"]
+    else:
+        args = ["ticket", "next", "--format", "json"]
+        if queue_name:
+            args.extend(["--queue", queue_name])
+        return args
+
+
+def _try_fallback_ticket_list(
+    project: Path,
+    planfile_runner: Callable | None,
+) -> subprocess.CompletedProcess[str]:
+    """Fallback to ticket list when ticket next is unavailable."""
+    return _run_planfile(
+        project,
+        ["ticket", "list", "--format", "json"],
+        runner=planfile_runner,
+    )
+
+
+def _process_list_payload(
+    ticket_data: list[dict[str, Any]],
+    include_fixtures: bool | None,
+) -> tuple[dict[str, Any] | None, list[dict[str, Any]], list[dict[str, Any]], str | None]:
+    """Process ticket list payload from planfile.
+
+    Returns:
+        Tuple of (active_ticket, open_tickets, all_tickets, error)
+    """
+    raw_list = [t for t in ticket_data if isinstance(t, dict)]
+    open_tickets = [
+        t for t in raw_list
+        if t.get("status") in (None, "open", "ready", "todo")
+    ]
+    include = _resolve_include_fixtures(include_fixtures)
+    if not include:
+        open_tickets = [
+            t for t in open_tickets if not _is_fixture_ticket(t)
+        ]
+        all_tickets = [
+            t for t in raw_list if not _is_fixture_ticket(t)
+        ]
+    else:
+        all_tickets = list(raw_list)
+    
+    active_ticket = open_tickets[0] if open_tickets else None
+    error = "queue is idle" if active_ticket is None else None
+    return active_ticket, open_tickets, all_tickets, error
+
+
+def _process_dict_payload(
+    ticket_data: dict[str, Any],
+    ticket_id: str | None,
+    include_fixtures: bool | None,
+) -> tuple[dict[str, Any] | None, list[dict[str, Any]], str | None]:
+    """Process single ticket dict payload from planfile.
+
+    Returns:
+        Tuple of (ticket_data, open_tickets, error)
+    """
+    if (
+        not _resolve_include_fixtures(include_fixtures)
+        and not ticket_id
+        and _is_fixture_ticket(ticket_data)
+    ):
+        return None, [], "queue has only fixture tickets"
+    else:
+        return ticket_data, [ticket_data], None
+
+
+def _extract_error_from_stderr(stderr: str) -> str:
+    """Extract the actual error message from stderr, filtering out warnings."""
+    raw_err = stderr.strip()
+    err_lines = [
+        ln for ln in raw_err.splitlines()
+        if not ln.startswith("/") and "UserWarning" not in ln
+        and "warnings.warn" not in ln
+        and "You may be able to resolve" not in ln
+    ]
+    return err_lines[0] if err_lines else raw_err.splitlines()[0]
+
+
 def _fetch_ticket_data(
     project: Path,
     ticket_id: str | None,
@@ -232,12 +320,7 @@ def _fetch_ticket_data(
         ticket_error = "project not initialised"
         return ticket_data, ticket_error, open_tickets, all_tickets
 
-    if ticket_id:
-        ticket_args = ["ticket", "show", ticket_id, "--format", "json"]
-    else:
-        ticket_args = ["ticket", "next", "--format", "json"]
-        if queue_name:
-            ticket_args.extend(["--queue", queue_name])
+    ticket_args = _build_ticket_args(ticket_id, queue_name)
     ticket_proc = _run_planfile(project, ticket_args, runner=planfile_runner)
 
     # Fallback: if `ticket next` is not available (older planfile),
@@ -247,11 +330,7 @@ def _fetch_ticket_data(
         and not ticket_id
         and "Usage:" in (ticket_proc.stderr or "")
     ):
-        ticket_proc = _run_planfile(
-            project,
-            ["ticket", "list", "--format", "json"],
-            runner=planfile_runner,
-        )
+        ticket_proc = _try_fallback_ticket_list(project, planfile_runner)
 
     if ticket_proc.returncode == 0:
         ticket_data = _safe_json(ticket_proc.stdout)
@@ -272,65 +351,24 @@ def _fetch_ticket_data(
             else:
                 ticket_error = "planfile output was not JSON"
         elif isinstance(ticket_data, list):
-            # `ticket list` returns an array — keep the full list of
-            # open tickets so the dashboard can show the whole queue,
-            # then pick the first one as the active ticket.
-            raw_list = [t for t in ticket_data if isinstance(t, dict)]
-            open_tickets = [
-                t for t in raw_list
-                if t.get("status") in (None, "open", "ready", "todo")
-            ]
-            # Filter out test/dryrun fixtures unless the caller
-            # opted in (CLI flag --include-fixtures or env var
-            # KORU_INCLUDE_FIXTURES=true).
-            include = _resolve_include_fixtures(include_fixtures)
-            if not include:
-                open_tickets = [
-                    t for t in open_tickets if not _is_fixture_ticket(t)
-                ]
-                all_tickets = [
-                    t for t in raw_list if not _is_fixture_ticket(t)
-                ]
-            else:
-                all_tickets = list(raw_list)
-            ticket_data = open_tickets[0] if open_tickets else None  # type: ignore[assignment]
-            if ticket_data is None:
-                ticket_error = "queue is idle"
-        elif isinstance(ticket_data, dict):
-            # Single-object payload (legacy `ticket next`). Treat as
-            # a one-entry queue for dashboard consistency. Apply
-            # fixture filter only to one-entry payloads to avoid
-            # ever returning a fixture as the active ticket — unless
-            # the caller asked for it explicitly.
-            if (
-                not _resolve_include_fixtures(include_fixtures)
-                and not ticket_id
-                and _is_fixture_ticket(ticket_data)
-            ):
-                ticket_error = "queue has only fixture tickets"
-                ticket_data = None
-                open_tickets = []
-            else:
-                open_tickets = [ticket_data]
-            # `ticket next` returns only the active ticket — fetch
-            # the full list separately so the dashboard can show
-            # historical (done/in_progress) tickets too.
-            all_tickets = _fetch_all_tickets(
-                project,
-                runner=planfile_runner,
-                include_fixtures=_resolve_include_fixtures(include_fixtures),
+            ticket_data, open_tickets, all_tickets, ticket_error = _process_list_payload(
+                ticket_data, include_fixtures
             )
+        elif isinstance(ticket_data, dict):
+            ticket_data, open_tickets, ticket_error = _process_dict_payload(
+                ticket_data, ticket_id, include_fixtures
+            )
+            if ticket_data is not None:
+                # `ticket next` returns only the active ticket — fetch
+                # the full list separately so the dashboard can show
+                # historical (done/in_progress) tickets too.
+                all_tickets = _fetch_all_tickets(
+                    project,
+                    runner=planfile_runner,
+                    include_fixtures=_resolve_include_fixtures(include_fixtures),
+                )
     else:
-        raw_err = (ticket_proc.stderr or "planfile error").strip()
-        # Filter out Python warnings (e.g. pydantic UserWarning) that
-        # leak into stderr but aren't the real error message.
-        err_lines = [
-            ln for ln in raw_err.splitlines()
-            if not ln.startswith("/") and "UserWarning" not in ln
-            and "warnings.warn" not in ln
-            and "You may be able to resolve" not in ln
-        ]
-        ticket_error = (err_lines[0] if err_lines else raw_err.splitlines()[0])
+        ticket_error = _extract_error_from_stderr(ticket_proc.stderr or "planfile error")
 
     return ticket_data, ticket_error, open_tickets, all_tickets
 
@@ -426,86 +464,121 @@ def build_context(
 # ---------------------------------------------------------------------------
 
 
-def _auto_promote_blocking_tickets(project: Path, runner: Callable | None = None) -> None:
-    """Automatically promote tickets that are blocking others to critical priority.
-    
-    Also ensures bugs are prioritized over features when they have the same priority.
-    This ensures that blocking issues are resolved first, allowing the main
-    workflow to continue without manual intervention.
-    """
+def _load_sprint_data(project: Path) -> dict[str, Any] | None:
+    """Load sprint data from current.yaml file."""
     from .runtime import planfile_dir
-    
+
     pf = planfile_dir(project)
     sprint_file = pf / "sprints" / "current.yaml"
-    
+
     if not sprint_file.exists():
-        return
-    
+        return None
+
     try:
         import yaml
         with open(sprint_file, "r", encoding="utf-8") as f:
             sprint_data = yaml.safe_load(f)
-        
+
         if not sprint_data or "sprint" not in sprint_data:
-            return
-        
+            return None
+
         sprint_info = sprint_data["sprint"]
         if "tickets" not in sprint_info:
-            return
-        
-        tickets = sprint_info["tickets"]
-        blocking_tickets = set()
-        
-        # Find all tickets that are blocking others
-        for ticket_id, ticket in tickets.items():
-            if isinstance(ticket, dict):
-                blocked_by = ticket.get("blocked_by", [])
-                if blocked_by:
-                    if isinstance(blocked_by, str):
-                        blocking_tickets.add(blocked_by)
-                    elif isinstance(blocked_by, list):
-                        blocking_tickets.update(blocked_by)
-        
-        # Promote blocking tickets to critical priority
-        promoted = False
-        for blocking_id in blocking_tickets:
-            if blocking_id in tickets and isinstance(tickets[blocking_id], dict):
-                current_priority = tickets[blocking_id].get("priority", "normal")
-                if current_priority != "critical":
-                    tickets[blocking_id]["priority"] = "critical"
+            return None
+
+        return sprint_data
+    except Exception:
+        return None
+
+
+def _find_blocking_tickets(tickets: dict[str, Any]) -> set[str]:
+    """Find all ticket IDs that are blocking other tickets."""
+    blocking_tickets = set()
+    for ticket_id, ticket in tickets.items():
+        if isinstance(ticket, dict):
+            blocked_by = ticket.get("blocked_by", [])
+            if blocked_by:
+                if isinstance(blocked_by, str):
+                    blocking_tickets.add(blocked_by)
+                elif isinstance(blocked_by, list):
+                    blocking_tickets.update(blocked_by)
+    return blocking_tickets
+
+
+def _promote_blocking_to_critical(
+    tickets: dict[str, Any],
+    blocking_tickets: set[str],
+) -> bool:
+    """Promote blocking tickets to critical priority. Returns True if any promoted."""
+    promoted = False
+    for blocking_id in blocking_tickets:
+        if blocking_id in tickets and isinstance(tickets[blocking_id], dict):
+            current_priority = tickets[blocking_id].get("priority", "normal")
+            if current_priority != "critical":
+                tickets[blocking_id]["priority"] = "critical"
+                promoted = True
+                print(f"🔥 Auto-promoted {blocking_id} from {current_priority} to critical (blocking)")
+    return promoted
+
+
+def _promote_bug_priority(tickets: dict[str, Any]) -> bool:
+    """Promote bugs to higher priority. Returns True if any promoted."""
+    promoted = False
+    for ticket_id, ticket in tickets.items():
+        if isinstance(ticket, dict):
+            labels = ticket.get("labels", [])
+            if "bug" in labels and ticket.get("status") in ["open", "ready"]:
+                current_priority = ticket.get("priority", "normal")
+                new_priority = None
+
+                if current_priority == "low":
+                    new_priority = "normal"
+                elif current_priority == "normal":
+                    new_priority = "high"
+                elif current_priority == "high":
+                    new_priority = "critical"
+
+                if new_priority and new_priority != current_priority:
+                    ticket["priority"] = new_priority
                     promoted = True
-                    print(f"🔥 Auto-promoted {blocking_id} from {current_priority} to critical (blocking)")
-        
-        # Promote bugs over features within same priority level
-        # Bugs get priority boost: critical stays, high→critical, normal→high, low→normal
-        for ticket_id, ticket in tickets.items():
-            if isinstance(ticket, dict):
-                labels = ticket.get("labels", [])
-                if "bug" in labels and ticket.get("status") in ["open", "ready"]:
-                    current_priority = ticket.get("priority", "normal")
-                    new_priority = None
-                    
-                    if current_priority == "low":
-                        new_priority = "normal"
-                    elif current_priority == "normal":
-                        new_priority = "high"
-                    elif current_priority == "high":
-                        new_priority = "critical"
-                    # critical stays critical
-                    
-                    if new_priority and new_priority != current_priority:
-                        ticket["priority"] = new_priority
-                        promoted = True
-                        print(f"🐛 Auto-promoted bug {ticket_id} from {current_priority} to {new_priority}")
-        
-        # Write back if any tickets were promoted
-        if promoted:
-            with open(sprint_file, "w", encoding="utf-8") as f:
-                yaml.dump(sprint_data, f, default_flow_style=False, allow_unicode=True)
+                    print(f"🐛 Auto-promoted bug {ticket_id} from {current_priority} to {new_priority}")
+    return promoted
+
+
+def _write_sprint_data(project: Path, sprint_data: dict[str, Any]) -> None:
+    """Write sprint data back to current.yaml file."""
+    from .runtime import planfile_dir
+
+    pf = planfile_dir(project)
+    sprint_file = pf / "sprints" / "current.yaml"
+
+    try:
+        import yaml
+        with open(sprint_file, "w", encoding="utf-8") as f:
+            yaml.dump(sprint_data, f, default_flow_style=False, allow_unicode=True)
     except Exception as e:
-        # Silently fail - priority promotion is nice-to-have, not critical
-        print(f"⚠️ Auto-promotion failed: {e}")
-        pass
+        print(f"⚠️ Failed to write sprint data: {e}")
+
+
+def _auto_promote_blocking_tickets(project: Path, runner: Callable | None = None) -> None:
+    """Automatically promote tickets that are blocking others to critical priority.
+
+    Also ensures bugs are prioritized over features when they have the same priority.
+    This ensures that blocking issues are resolved first, allowing the main
+    workflow to continue without manual intervention.
+    """
+    sprint_data = _load_sprint_data(project)
+    if not sprint_data:
+        return
+
+    tickets = sprint_data["sprint"]["tickets"]
+    blocking_tickets = _find_blocking_tickets(tickets)
+
+    promoted = _promote_blocking_to_critical(tickets, blocking_tickets)
+    promoted = _promote_bug_priority(tickets) or promoted
+
+    if promoted:
+        _write_sprint_data(project, sprint_data)
 
 
 def _build_instructions(
