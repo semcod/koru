@@ -9,6 +9,8 @@ edit.
 What this module produces:
 
     <project>/
+    ├── koru.yaml                        # optional: when/what pipeline
+    │                                    # (created on first --init if absent)
     ├── .gitignore                       # appended (or created) so
     │                                    # .planfile/.koru/ is ignored
     └── .planfile/
@@ -31,7 +33,9 @@ Inputs:
 Idempotency: a re-run on an already-initialised project errors out
 unless ``--force`` is passed. ``--force`` overwrites the sprint and
 the policy stub, but never the runtime README or run logs (those
-belong to koru's lifecycle, not its setup). To add or refresh only
+belong to koru's lifecycle, not its setup). Root ``koru.yaml`` is
+**never** overwritten after the first creation — edit it in git like
+any other config. To add or refresh only
 the agent-lane shell helpers on an existing project, use
 ``koru --init-agent-lane`` (see ``--agent-lane``).
 """
@@ -51,6 +55,7 @@ from .agents import (
     normalize_agent_lane_id,
 )
 from .bootstrap import import_flat_pipeline
+from .project_pipeline import write_koru_project_pipeline_if_absent
 from .runtime import planfile_dir, runtime_dir
 
 POLICY_STUB = """\
@@ -212,6 +217,7 @@ class InitReport:
     agent_lane_files_written: bool = False
     agent_lane_refresh_only: bool = False
     autopilot_host_setup_written: bool = False
+    koru_project_pipeline_yaml_written: bool = False
 
     def summary(self) -> str:
         if self.agent_lane_refresh_only:
@@ -238,6 +244,8 @@ class InitReport:
             )
         if self.autopilot_host_setup_written:
             bits.append("autopilot-host: setup-autopilot-host.sh")
+        if self.koru_project_pipeline_yaml_written:
+            bits.append("koru.yaml: created")
         return ", ".join(bits)
 
 
@@ -256,8 +264,7 @@ def init_project(
         2. Import flat pipeline (``from_file`` or generated starter).
         3. Write ``.planfile/.koru/policy.yaml`` stub if absent.
         4. Append ``.planfile/.koru/`` to ``.gitignore`` if absent.
-
-    The function is destructive only on the sprint file (when
+        5. Write root ``koru.yaml`` (project pipeline map) if absent.
     ``--force`` is given) — policy and ``.gitignore`` are never
     overwritten if they already contain user content.
     """
@@ -307,6 +314,7 @@ def init_project(
         agent_written = _write_agent_lane_artifacts(project, lane)
 
     host_setup_written = _write_autopilot_host_setup_script(project)
+    pipeline_yaml_written = write_koru_project_pipeline_if_absent(project)
 
     return InitReport(
         project=project,
@@ -319,6 +327,7 @@ def init_project(
         agent_lane_files_written=agent_written,
         agent_lane_refresh_only=False,
         autopilot_host_setup_written=host_setup_written,
+        koru_project_pipeline_yaml_written=pipeline_yaml_written,
     )
 
 
@@ -356,6 +365,7 @@ def refresh_init_agent_lane(
         agent_lane_files_written=agent_written,
         agent_lane_refresh_only=True,
         autopilot_host_setup_written=host_setup_written,
+        koru_project_pipeline_yaml_written=False,
     )
 
 

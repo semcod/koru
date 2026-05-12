@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-from koru.planfile_queue import run_next_planfile_task
+from koru.queue import run_next_planfile_task
 
 
 def _ok(stdout: str = "") -> SimpleNamespace:
@@ -706,7 +706,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
     def test_llm_default_runner_without_api_key_returns_clear_error(self) -> None:
         """When OPENROUTER_API_KEY is unset, the default runner must
         refuse to make a network call and return a helpful error."""
-        from koru.planfile_queue import _run_llm_request
+        from koru.queue.runners import run_llm_request as _run_llm_request
 
         env_backup = {
             k: os.environ.pop(k, None)
@@ -748,7 +748,7 @@ class TestPlanfileQueueLoop(unittest.TestCase):
         return planfile_runner, all_calls
 
     def test_loop_drains_three_shell_tickets_to_idle(self) -> None:
-        from koru.planfile_queue import run_planfile_queue_loop
+        from koru.queue import run_planfile_queue_loop
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)
@@ -766,11 +766,23 @@ class TestPlanfileQueueLoop(unittest.TestCase):
             def shell_runner(_cmd: str, _project) -> SimpleNamespace:
                 return SimpleNamespace(returncode=0, stdout="ok\n", stderr="")
 
+            def api_runner(_req, _proj) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            def llm_runner(_req, _proj) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            def prompt_runner(_p, _tid) -> str | None:
+                return None
+
             iterations_seen: list[int] = []
             result = run_planfile_queue_loop(
                 project=project,
                 planfile_runner=planfile_runner,
                 shell_runner=shell_runner,
+                api_runner=api_runner,
+                llm_runner=llm_runner,
+                prompt_runner=prompt_runner,
                 progress_callback=lambda r, i: iterations_seen.append(i),
             )
 
@@ -782,7 +794,7 @@ class TestPlanfileQueueLoop(unittest.TestCase):
             self.assertEqual(iterations_seen, [1, 2, 3, 4])
 
     def test_loop_breaks_on_waiting_input_without_interactive(self) -> None:
-        from koru.planfile_queue import run_planfile_queue_loop
+        from koru.queue import run_planfile_queue_loop
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)
@@ -807,10 +819,22 @@ class TestPlanfileQueueLoop(unittest.TestCase):
             def shell_runner(_cmd, _proj) -> SimpleNamespace:
                 return SimpleNamespace(returncode=0, stdout="ok", stderr="")
 
+            def api_runner(_req, _proj) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            def llm_runner(_req, _proj) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            def prompt_runner(_p, _tid) -> str | None:
+                return None
+
             result = run_planfile_queue_loop(
                 project=project,
                 planfile_runner=planfile_runner,
                 shell_runner=shell_runner,
+                api_runner=api_runner,
+                llm_runner=llm_runner,
+                prompt_runner=prompt_runner,
             )
 
             self.assertEqual(result.completed, ["L-10"])
@@ -820,7 +844,7 @@ class TestPlanfileQueueLoop(unittest.TestCase):
 
     def test_loop_continues_past_failed_ticket(self) -> None:
         """A failing ticket should not stop the loop — next ticket runs."""
-        from koru.planfile_queue import run_planfile_queue_loop
+        from koru.queue import run_planfile_queue_loop
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)
@@ -841,10 +865,22 @@ class TestPlanfileQueueLoop(unittest.TestCase):
                     return SimpleNamespace(returncode=1, stdout="", stderr="boom")
                 return SimpleNamespace(returncode=0, stdout="ok", stderr="")
 
+            def api_runner(_req, _proj) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            def llm_runner(_req, _proj) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            def prompt_runner(_p, _tid) -> str | None:
+                return None
+
             result = run_planfile_queue_loop(
                 project=project,
                 planfile_runner=planfile_runner,
                 shell_runner=shell_runner,
+                api_runner=api_runner,
+                llm_runner=llm_runner,
+                prompt_runner=prompt_runner,
             )
 
             self.assertEqual(result.failed, ["L-20"])
@@ -853,7 +889,7 @@ class TestPlanfileQueueLoop(unittest.TestCase):
             self.assertEqual(result.iterations, 3)
 
     def test_loop_respects_max_iterations_cap(self) -> None:
-        from koru.planfile_queue import run_planfile_queue_loop
+        from koru.queue import run_planfile_queue_loop
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)
@@ -867,10 +903,22 @@ class TestPlanfileQueueLoop(unittest.TestCase):
             def shell_runner(_cmd, _proj) -> SimpleNamespace:
                 return SimpleNamespace(returncode=0, stdout="", stderr="")
 
+            def api_runner(_req, _proj) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            def llm_runner(_req, _proj) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            def prompt_runner(_p, _tid) -> str | None:
+                return None
+
             result = run_planfile_queue_loop(
                 project=project,
                 planfile_runner=planfile_runner,
                 shell_runner=shell_runner,
+                api_runner=api_runner,
+                llm_runner=llm_runner,
+                prompt_runner=prompt_runner,
                 max_iterations=3,
             )
 
@@ -879,7 +927,7 @@ class TestPlanfileQueueLoop(unittest.TestCase):
             self.assertEqual(result.last_status, "completed")
 
     def test_loop_with_interactive_drains_human_tickets(self) -> None:
-        from koru.planfile_queue import run_planfile_queue_loop
+        from koru.queue import run_planfile_queue_loop
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)
@@ -892,6 +940,15 @@ class TestPlanfileQueueLoop(unittest.TestCase):
             ]
             planfile_runner, _ = self._make_runner(sequence)
 
+            def shell_runner(_cmd, _proj) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            def api_runner(_req, _proj) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            def llm_runner(_req, _proj) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
             def prompt_runner(_p, tid: str) -> str | None:
                 return f"answer for {tid}"
 
@@ -899,6 +956,9 @@ class TestPlanfileQueueLoop(unittest.TestCase):
                 project=project,
                 planfile_runner=planfile_runner,
                 interactive=True,
+                shell_runner=shell_runner,
+                api_runner=api_runner,
+                llm_runner=llm_runner,
                 prompt_runner=prompt_runner,
             )
 
@@ -907,10 +967,33 @@ class TestPlanfileQueueLoop(unittest.TestCase):
             self.assertEqual(result.last_status, "idle")
 
     def test_loop_validates_max_iterations(self) -> None:
-        from koru.planfile_queue import run_planfile_queue_loop
+        from koru.queue import run_planfile_queue_loop
+
+        def planfile_runner(_cmd, _proj) -> SimpleNamespace:
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+        def shell_runner(_cmd, _proj) -> SimpleNamespace:
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+        def api_runner(_req, _proj) -> SimpleNamespace:
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+        def llm_runner(_req, _proj) -> SimpleNamespace:
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+        def prompt_runner(_p, _tid) -> str | None:
+            return None
 
         with self.assertRaisesRegex(ValueError, "max_iterations"):
-            run_planfile_queue_loop(project=Path("/tmp"), max_iterations=0)
+            run_planfile_queue_loop(
+                project=Path("/tmp"), 
+                max_iterations=0,
+                planfile_runner=planfile_runner,
+                shell_runner=shell_runner,
+                api_runner=api_runner,
+                llm_runner=llm_runner,
+                prompt_runner=prompt_runner,
+            )
 
 
 if __name__ == "__main__":

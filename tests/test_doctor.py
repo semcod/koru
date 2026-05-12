@@ -28,7 +28,7 @@ from koru.doctor import (
 )
 
 
-def _scaffold(project: Path) -> None:
+def _scaffold(project: Path, *, write_koru_yaml: bool = True) -> None:
     """Build a minimally valid koru project so individual probes pass."""
     pf = project / ".planfile"
     (pf / "sprints").mkdir(parents=True)
@@ -48,6 +48,19 @@ def _scaffold(project: Path) -> None:
     )
     (project / ".gitignore").write_text(".planfile/.koru/\n", encoding="utf-8")
     (project / ".git").mkdir()
+    if write_koru_yaml:
+        (project / "koru.yaml").write_text(
+            textwrap.dedent("""\
+                schema: "1.0"
+                project: t
+                when:
+                  smoke:
+                    description: test
+                    commands:
+                      - "true"
+                """),
+            encoding="utf-8",
+        )
 
 
 def _run(project: Path) -> DoctorReport:
@@ -76,6 +89,17 @@ class TestHappyPath(unittest.TestCase):
             self.assertEqual(_named(report, "runtime_dir").status, PASS)
             self.assertEqual(_named(report, "policy_yaml").status, PASS)
             self.assertEqual(_named(report, "gitignore").status, PASS)
+            self.assertEqual(_named(report, "koru_project_pipeline").status, PASS)
+
+
+class TestKoruProjectPipelineProbe(unittest.TestCase):
+    def test_warns_when_planfile_ok_but_koru_yaml_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project, write_koru_yaml=False)
+            with patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"):
+                report = _run(project)
+            self.assertEqual(_named(report, "koru_project_pipeline").status, WARN)
 
 
 class TestGitRepoCheck(unittest.TestCase):

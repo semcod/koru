@@ -1,10 +1,10 @@
-# code2llm/evolution | 464 func | 42f | 2026-05-12
+# code2llm/evolution | 471 func | 49f | 2026-05-12
 # generated in 0.00s
 
 NEXT[10] (ranked by impact):
-  [1] !! SPLIT           src/koru/context.py
-      WHY: 1045L, 0 classes, max CC=36
-      EFFORT: ~4h  IMPACT: 37620
+  [1] !! SPLIT           src/koru/autopilot/cli_command.py
+      WHY: 781L, 0 classes, max CC=21
+      EFFORT: ~4h  IMPACT: 16401
 
   [2] !! SPLIT           src/koru/serve.py
       WHY: 1008L, 1 classes, max CC=8
@@ -22,7 +22,7 @@ NEXT[10] (ranked by impact):
       WHY: CC=28 exceeds 15
       EFFORT: ~1h  IMPACT: 504
 
-  [6] !  SPLIT-FUNC      _run_llm_request  CC=23  fan=19
+  [6] !  SPLIT-FUNC      run_llm_request  CC=23  fan=19
       WHY: CC=23 exceeds 15
       EFFORT: ~1h  IMPACT: 437
 
@@ -45,13 +45,13 @@ NEXT[10] (ranked by impact):
 
 RISKS[3]:
   ⚠ Splitting planfile.yaml may break 0 import paths
-  ⚠ Splitting src/koru/context.py may break 31 import paths
   ⚠ Splitting src/koru/serve.py may break 8 import paths
+  ⚠ Splitting src/koru/autopilot/cli_command.py may break 25 import paths
 
 METRICS-TARGET:
   CC̄:          5.1 → ≤3.6
   max-CC:      36 → ≤18
-  god-modules: 10 → 0
+  god-modules: 9 → 0
   high-CC(≥15): 24 → ≤12
   hub-types:   0 → ≤0
 

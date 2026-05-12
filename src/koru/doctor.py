@@ -26,6 +26,9 @@ in this order so reports diff cleanly across runs):
                         Only emitted when ``pyproject.toml`` or ``tests/``
                         exists; pairs with ``koru scan``'s timeout fix to
                         catch hung collection (see PLF-093 post-mortem).
+    koru_project_pipeline — root ``koru.yaml`` exists and parses when the
+                        project is planfile-initialised (``SKIP`` before
+                        ``.planfile/config.yaml``).
 
 Exit-code contract for the CLI wrapper: ``has_failures`` ⇒ ``1``;
 warnings alone ⇒ ``0`` (warnings are advisory, not blocking).
@@ -46,6 +49,7 @@ from pathlib import Path
 import yaml
 
 from .policy import policy_path
+from .project_pipeline import KORU_PROJECT_PIPELINE_FILENAME, project_pipeline_path
 from .runtime import planfile_dir, runtime_dir
 from .utils.subprocess_runner import get_python_cmd
 
@@ -130,6 +134,7 @@ def run_diagnostics(project: Path) -> DoctorReport:
         ("planfile_sprints_yaml", _check_planfile_sprints_yaml),
         ("runtime_dir", _check_runtime_dir),
         ("policy_yaml", _check_policy_yaml),
+        ("koru_project_pipeline", _check_koru_project_pipeline),
     ]
     if has_git:
         probes.append(("gitignore", _check_gitignore))
@@ -251,6 +256,28 @@ def _check_runtime_dir(project: Path) -> tuple[str, str]:
     if not parent.exists():
         return WARN, "no .planfile/ yet — run `koru --init`"
     return FAIL, f".planfile/ exists but is not writable"
+
+
+def _check_koru_project_pipeline(project: Path) -> tuple[str, str]:
+    cfg = planfile_dir(project) / "config.yaml"
+    if not cfg.is_file():
+        return SKIP, "no planfile config (project not initialised)"
+    path = project_pipeline_path(project)
+    if not path.is_file():
+        return WARN, (
+            f"missing {KORU_PROJECT_PIPELINE_FILENAME} — "
+            "`koru --init` on a fresh repo creates one; copy from another project or add manually"
+        )
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        return FAIL, f"{KORU_PROJECT_PIPELINE_FILENAME}: {exc}"
+    if not isinstance(data, dict):
+        return FAIL, f"{KORU_PROJECT_PIPELINE_FILENAME}: expected YAML mapping at top level"
+    schema = data.get("schema")
+    if schema is not None and str(schema) not in ("1.0", "1"):
+        return WARN, f"unknown schema {schema!r} (expected 1.0)"
+    return PASS, f"{KORU_PROJECT_PIPELINE_FILENAME} present"
 
 
 def _check_policy_yaml(project: Path) -> tuple[str, str]:

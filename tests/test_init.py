@@ -108,6 +108,27 @@ class TestStarterInit(unittest.TestCase):
                 (planfile_dir(project) / "_starter.planfile.yaml").exists()
             )
 
+    def test_writes_koru_yaml_on_first_init(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            report = init_project(project)
+            kf = project / "koru.yaml"
+            self.assertTrue(kf.is_file())
+            self.assertTrue(report.koru_project_pipeline_yaml_written)
+            data = yaml.safe_load(kf.read_text(encoding="utf-8"))
+            self.assertEqual(data.get("schema"), "1.0")
+            self.assertIn("when", data)
+
+    def test_force_init_preserves_existing_koru_yaml(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            init_project(project)
+            kf = project / "koru.yaml"
+            kf.write_text("schema: '1.0'\nproject: kept\nwhen: {}\n", encoding="utf-8")
+            report = init_project(project, force=True)
+            self.assertFalse(report.koru_project_pipeline_yaml_written)
+            self.assertEqual(yaml.safe_load(kf.read_text())["project"], "kept")
+
 
 class TestForceAndConflicts(unittest.TestCase):
     def test_re_init_without_force_raises(self) -> None:
@@ -147,17 +168,18 @@ class TestFromExternalPipeline(unittest.TestCase):
             report = init_project(project, from_file=pipeline)
             self.assertFalse(report.used_starter_pipeline)
             self.assertEqual(report.sprint_imported, 1)
+            self.assertTrue((project / "koru.yaml").is_file())
 
 
 class TestRuntimeContract(unittest.TestCase):
     def test_init_does_not_leave_files_outside_planfile(self) -> None:
-        """All koru-owned writes go under <project>/.planfile/."""
+        """Koru-owned state lives under .planfile/; root may have .gitignore + koru.yaml."""
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             init_project(project)
             entries = sorted(p.name for p in project.iterdir())
-            # Allowed at project root: .planfile/ and .gitignore.
-            self.assertEqual(entries, [".gitignore", ".planfile"])
+            # Allowed at project root: .planfile/, .gitignore, koru.yaml.
+            self.assertEqual(entries, [".gitignore", ".planfile", "koru.yaml"])
 
 
 class TestAgentLaneArtifacts(unittest.TestCase):

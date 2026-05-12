@@ -849,32 +849,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-46c07111
-    name: Fix duplicate-imports issues
-    description: Resolve 2 duplicate-imports issues in src/koru/planfile_queue.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/planfile_queue.py
-    rule_id: duplicate-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-04318be7
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in src/koru/planfile_queue.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/planfile_queue.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-cbcfbd1e
     name: Fix unused-imports issues
     description: Resolve 2 unused-imports issues in src/koru/planfile_queue.py
@@ -885,19 +859,6 @@ sprints:
     - src/koru/planfile_queue.py
     rule_id: unused-imports
     count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-ad2e997e
-    name: Fix magic-numbers issues
-    description: Resolve 6 magic-numbers issues in src/koru/planfile_queue.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - src/koru/planfile_queue.py
-    rule_id: magic-numbers
-    count: 6
     model_hints:
       planning: balanced
       implementation: balanced
@@ -1312,6 +1273,45 @@ sprints:
     estimate: 1d
     files:
     - tests/test_autopilot_injector.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-de208989
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in scripts/_koru_autodiag_filter_tickets.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - scripts/_koru_autodiag_filter_tickets.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-844c8511
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in scripts/_koru_autodiag_filter_tickets.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - scripts/_koru_autodiag_filter_tickets.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-67ef5047
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/__main__.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/__main__.py
     rule_id: unused-imports
     count: 2
     model_hints:

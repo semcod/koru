@@ -33,6 +33,7 @@ from typing import Any
 from .agents import detect_agent_environment
 from .dotenv_loader import load_dotenv as _load_dotenv_impl
 from .policy import Policy, load_policy
+from .project_pipeline import build_project_pipeline_brief
 from .runtime import planfile_dir
 
 
@@ -398,6 +399,7 @@ def build_context(
         ticket_data,
         planfile_initialised=planfile_present,
     )
+    project_pipeline = build_project_pipeline_brief(project)
 
     return {
         "schema_version": "1",
@@ -415,6 +417,7 @@ def build_context(
         },
         "instructions": instructions,
         "self_service": self_service,
+        "project_pipeline": project_pipeline,
     }
 
 
@@ -778,10 +781,9 @@ def _render_ai_tool_support_2026() -> list[str]:
         "3. **manual lane** — no stable automation API yet; operator uses it directly.",
         "",
         "Current native lane includes: `windsurf`, `vscode`, `cursor`, `jetbrains`, `zed`, "
-        "`claude-code`, `aider`, `codex`, `gemini-cli`, `cline`, `qwen-code`, `opencode` and "
-        "OpenRouter-compatible `llm` tickets.",
+        "`claude-code`, `aider`, `codex` and OpenRouter-compatible `llm` tickets.",
         "",
-        "For tools not listed as native (e.g. "
+        "For tools not listed as native (e.g. Gemini CLI, Cline, OpenCode, Qwen Code, "
         "Copilot/Tabnine plugins, app builders), use adapter lane first; promote to native "
         "only when reliability is proven.",
         "",
@@ -925,6 +927,39 @@ def _render_gates(markers: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _render_project_pipeline(pipeline: dict[str, Any] | None) -> list[str]:
+    if not pipeline:
+        return []
+    lines = [
+        "## Project pipeline (`koru.yaml`)",
+        "",
+        f"Root file: `{pipeline.get('path', 'koru.yaml')}` "
+        f"(schema `{pipeline.get('schema', '?')}`).",
+        "",
+    ]
+    prof = pipeline.get("extends_profile")
+    if prof:
+        lines.append(f"Profile reference: `{prof}`")
+        lines.append("")
+    for ph in pipeline.get("phases") or []:
+        pid = ph.get("id", "?")
+        desc = (ph.get("description") or "").strip()
+        if desc:
+            lines.append(f"### `{pid}` — {desc}")
+        else:
+            lines.append(f"### `{pid}`")
+        lines.append("")
+        for cmd in ph.get("commands") or []:
+            lines.append(f"- `{cmd}`")
+        lines.append("")
+    lines.append(
+        "_This section is advisory — koru does not execute these commands "
+        "automatically._"
+    )
+    lines.append("")
+    return lines
+
+
 def _render_policy(policy: dict[str, Any]) -> list[str]:
     """Render the policy section."""
     lines = [
@@ -1036,6 +1071,7 @@ def render_markdown_handoff(context: dict[str, Any]) -> str:
     lines.extend(_render_autonomous_mode(planfile_initialised=initialised))
     lines.extend(_render_ai_tool_support_2026())
 
+    lines.extend(_render_project_pipeline(context.get("project_pipeline")))
     lines.extend(_render_gates(markers))
     lines.extend(_render_policy(policy))
     lines.extend(_render_rules(context.get("instructions", [])))

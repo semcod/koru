@@ -2628,3 +2628,47 @@ sprint:
       status: open
       sync: {}
       updated_at: '2026-05-12T09:46:46.702826Z'
+    STARTER-083:
+      id: STARTER-083
+      name: JetBrains/PyCharm autopilot plugin
+      status: open
+      priority: high
+      sprint: current
+      source:
+        tool: koru-cli-nl
+        timestamp: '2026-05-12T13:59:17.075555+00:00'
+        context:
+          input: JetBrains/PyCharm autopilot plugin
+      description: JetBrains/PyCharm autopilot plugin
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      blocked_by: []
+      blocks: []
+      files: []
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: JetBrains/PyCharm autopilot plugin
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-12T13:59:17.075555+00:00'
+        action: created
+        source: koru task
+        message: JetBrains/PyCharm autopilot plugin
+      created_at: '2026-05-12T13:59:17.075555+00:00'
+      updated_at: '2026-05-12T13:59:17.075555+00:00'

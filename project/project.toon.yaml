@@ -1,62 +1,59 @@
-# koru | 375 func | 39f | 17290L | python | 2026-05-12
+# koru | 493 func | 54f | 19469L | python | 2026-05-12
 # generated in 0.00s
 
 HEALTH:
-  CC̄=5.0  critical=49 (limit:10)  dup=1  cycles=0
+  CC̄=4.9  critical=67 (limit:10)  dup=1  cycles=0
 
 ALERTS[20]:
-  !!! cc_exceeded      render_markdown_handoff = 45 (limit:15)
-  !!! cc_exceeded      build_context = 41 (limit:15)
-  !!! high_fan_out     _build_handler = 34 (limit:10)
-  !!! cc_exceeded      validate_flat_pipeline = 28 (limit:15)
+  !!! cc_exceeded      _fetch_ticket_data = 36 (limit:15)
+  !!! high_fan_out     _build_handler = 36 (limit:10)
+  !!! cc_exceeded      _action_up = 28 (limit:15)
   !!! high_fan_out     create_planfile_ticket = 27 (limit:10)
-  !!! cc_exceeded      run_gc = 26 (limit:15)
   !!! cc_exceeded      _queue_run_main = 26 (limit:15)
+  !!! cc_exceeded      detect_tools = 26 (limit:15)
+  !!! cc_exceeded      run_next_planfile_task = 26 (limit:15)
   !!! cc_exceeded      _auto_promote_blocking_tickets = 25 (limit:15)
-  !!! high_fan_out     build_context = 25 (limit:10)
-  !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
+  !!! high_fan_out     init_project = 21 (limit:10)
+  !!! high_fan_out     render_markdown_handoff = 21 (limit:10)
 
-MODULES[77] (top by size):
-  M[src/koru/cli.py] 1526L C:0 F:34 CC↑26 D:0 (python)
+MODULES[103] (top by size):
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
-  M[src/koru/context.py] 869L C:0 F:16 CC↑45 D:4 (python)
-  M[src/koru/serve.py] 768L C:1 F:3 CC↑4 D:1 (python)
-  M[src/koru/planfile_queue.py] 705L C:5 F:15 CC↑24 D:1 (python)
-  M[Taskfile.yml] 692L C:0 F:0 CC↑0 D:0 (yml)
+  M[src/koru/context.py] 1081L C:0 F:32 CC↑36 D:4 (python)
+  M[src/koru/serve.py] 1008L C:1 F:8 CC↑8 D:1 (python)
+  M[src/koru/autopilot/cli_command.py] 781L C:0 F:25 CC↑21 D:0 (python)
+  M[Taskfile.yml] 758L C:0 F:0 CC↑0 D:0 (yml)
+  M[src/koru/scan.py] 708L C:2 F:18 CC↑13 D:2 (python)
   M[services/healing-webhook/app.py] 673L C:0 F:21 CC↑24 D:0 (python)
-  M[src/koru/scan.py] 573L C:2 F:13 CC↑13 D:1 (python)
-  M[src/koru/autopilot/cli_command.py] 546L C:0 F:17 CC↑12 D:0 (python)
-  M[src/koru/autopilot/daemon.py] 516L C:2 F:24 CC↑14 D:0 (python)
+  M[scripts/koru-autoloop.sh] 562L C:0 F:14 CC↑0 D:0 (shell)
+  M[src/koru/autopilot/daemon.py] 517L C:2 F:24 CC↑14 D:0 (python)
   M[goal.yaml] 511L C:0 F:0 CC↑0 D:0 (yaml)
-  M[scripts/koru-autoloop.sh] 490L C:0 F:12 CC↑0 D:0 (shell)
-  M[src/koru/doctor.py] 425L C:2 F:16 CC↑11 D:1 (python)
+  M[src/koru/init.py] 500L C:1 F:10 CC↑13 D:2 (python)
+  M[src/koru/doctor.py] 454L C:2 F:17 CC↑11 D:1 (python)
   M[examples/bootstrap.planfile.yaml] 425L C:0 F:0 CC↑0 D:0 (yaml)
-  M[src/koru/bootstrap.py] 396L C:2 F:10 CC↑28 D:2 (python)
-  LANGS: python:36/shell:27/yaml:8/json:2/typescript:1/yml:1/toml:1/other:1
+  M[src/koru/bootstrap.py] 413L C:2 F:12 CC↑18 D:2 (python)
+  M[src/koru/topology.py] 407L C:1 F:15 CC↑12 D:2 (python)
+  LANGS: python:56/shell:28/yaml:9/typescript:2/other:2/yml:2/json:2/toml:1/txt:1
 
 HOTSPOTS[10]:
-  ★ _build_handler fan=34  // Create a request handler closure bound to ``config``.
+  ★ _build_handler fan=36  // Create a request handler closure bound to ``config``.
   ★ create_planfile_ticket fan=27  // Create a planfile ticket for an alert.
 
 The ticket body is produced by ticket_bu
-  ★ build_context fan=25  // Assemble the LLM brief for a project.
+  ★ init_project fan=21  // Initialise (or re-initialise with ``force``) a koru project.
 
-The function is fully injectable to keep 
-  ★ render_markdown_handoff fan=22  // Turn a context dict into a Markdown brief for the operator.
+Steps:
+    1. Refu
+  ★ render_markdown_handoff fan=21  // Turn a context dict into a Markdown brief for the operator.
 
 Designed to be past
-  ★ run_gc fan=19  // Run garbage collection on the planfile queue.
-
-Parameters
-----------
-project : P
+  ★ create_nl_task fan=21  // Create a planfile ticket from a normal-language sentence.
 
 REFACTOR[15]:
-  [1] H/L Split validate_flat_pipeline (CC=28)
-  [2] H/L Split run_gc (CC=26)
-  [3] H/L Split build_context (CC=41)
+  [1] H/L Split _queue_run_main (CC=26)
+  [2] H/L Split detect_tools (CC=26)
+  [3] H/L Split _fetch_ticket_data (CC=36)
   [4] H/L Split _auto_promote_blocking_tickets (CC=25)
-  [5] H/L Split render_markdown_handoff (CC=45)
+  [5] H/L Split run_next_planfile_task (CC=26)
 
 EVOLUTION:
-  2026-05-12 CC̄=5.0 crit=49 17290L // Automated analysis
+  2026-05-12 CC̄=4.9 crit=67 19469L // Automated analysis

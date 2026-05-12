@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10] - 2026-05-12
+
+### Fixed
+- Fix wildcard-imports issues (ticket-4577c0f1)
+- Fix ai-boilerplate issues (ticket-f68e6a91)
+- Fix string-concat issues (ticket-c4df3c8f)
+
+## [0.1.10] - 2026-05-12
+
+### Fixed
+- Fix unused-imports issues (ticket-de208989)
+- Fix ai-boilerplate issues (ticket-844c8511)
+- Fix unused-imports issues (ticket-67ef5047)
+
 ## [Unreleased]
 
 ### Added (autoloop stagnation control)
@@ -59,6 +73,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Quality tasks now honor topology gate flags:
   `quality:regix` ↔ `gate:regix`, `quality:redup*` ↔ `gate:redup`,
   `quality:sumr:*` ↔ `gate:sumr`.
+
+## [0.1.57] - 2026-05-12
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_context.py
+- Update tests/test_doctor.py
+- Update tests/test_init.py
+- Update tests/test_planfile_queue.py
+
+### Other
+- Update .code2llm_cache/autonomous_1778595812604000000_13364.pkl
+- Update .gitignore
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update app.doql.less
+- Update planfile.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- ... and 14 more files
 
 ## [0.1.56] - 2026-05-12
 

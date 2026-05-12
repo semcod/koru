@@ -32,7 +32,15 @@ from .gate import authorize_gate
 from .gc import DEFAULT_KEEP_LAST, DEFAULT_MAX_AGE_DAYS, GC_STATUSES, run_gc
 from .init import init_project, refresh_init_agent_lane
 from .loop import discover_repositories, run_closed_loop
-from .planfile_queue import run_next_planfile_task, run_planfile_queue_loop
+from .queue import (
+    run_api_request as _queue_run_api_request,
+    run_llm_request as _queue_run_llm_request,
+    run_next_planfile_task,
+    run_planfile_queue_loop,
+    run_process as _queue_run_process,
+    run_shell_command as _queue_run_shell_command,
+    default_human_prompt as _queue_default_human_prompt,
+)
 from .queue_clean import CleanupReport, clean_queue
 from .run_log import open_run_log_eagerly
 from .scan import ScanResult, run_scan
@@ -1445,6 +1453,7 @@ def _init_main(args: argparse.Namespace) -> int:
             "agent_lane": report.agent_lane,
             "agent_lane_files_written": report.agent_lane_files_written,
             "autopilot_host_setup_written": report.autopilot_host_setup_written,
+            "koru_project_pipeline_yaml_written": report.koru_project_pipeline_yaml_written,
         },
     )
     return 0
@@ -1655,6 +1664,11 @@ def _queue_run_main(args: argparse.Namespace) -> int:
             interactive=args.interactive,
             max_iterations=args.max_iterations,
             progress_callback=_progress,
+            planfile_runner=_queue_run_process,
+            shell_runner=_queue_run_shell_command,
+            api_runner=_queue_run_api_request,
+            llm_runner=_queue_run_llm_request,
+            prompt_runner=_queue_default_human_prompt,
         )
         if run_log is not None:
             run_log.write_footer(summary=loop_result)
@@ -1691,6 +1705,11 @@ def _queue_run_main(args: argparse.Namespace) -> int:
         dry_run=args.dry_run,
         queue_name=args.queue_name,
         interactive=args.interactive,
+        planfile_runner=_queue_run_process,
+        shell_runner=_queue_run_shell_command,
+        api_runner=_queue_run_api_request,
+        llm_runner=_queue_run_llm_request,
+        prompt_runner=_queue_default_human_prompt,
     )
     if run_log is not None:
         run_log.write_iteration(iteration=1, result=result)

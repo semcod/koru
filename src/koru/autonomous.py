@@ -21,7 +21,15 @@ from .autopilot.daemon import AutopilotDaemon
 from .autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide
 from .agents import agent_lane_environment
 from .init import init_project, resolve_project_agent_lane
-from .planfile_queue import QueueLoopResult, run_planfile_queue_loop
+from .queue import (
+    QueueLoopResult,
+    default_human_prompt as _default_human_prompt,
+    run_api_request as _run_api_request,
+    run_llm_request as _run_llm_request,
+    run_planfile_queue_loop,
+    run_process as _run_process,
+    run_shell_command as _run_shell_command,
+)
 from .scan import ScanResult, run_scan
 
 _VALID_AUTOPILOT_IDE = frozenset({"auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"})
@@ -230,6 +238,11 @@ def _run_cycle(
         actor=actor,
         queue_name=queue_name,
         max_iterations=max_iterations,
+        planfile_runner=_run_process,
+        shell_runner=_run_shell_command,
+        api_runner=_run_api_request,
+        llm_runner=_run_llm_request,
+        prompt_runner=_default_human_prompt,
     )
     print(f"  queue: {queue_result.summary()}")
 

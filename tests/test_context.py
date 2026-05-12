@@ -388,6 +388,50 @@ class TestMarkdownHandoff(unittest.TestCase):
             self.assertIn("ai-tool-support-roadmap-2026.md", md)
 
 
+class TestProjectPipelineInHandoff(unittest.TestCase):
+    def test_context_includes_pipeline_when_koru_yaml_present(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _init_planfile(project)
+            (project / "koru.yaml").write_text(
+                'schema: "1.0"\nwhen:\n  qa:\n'
+                '    description: Run gates\n'
+                '    commands:\n      - task quality:regix:local\n',
+                encoding="utf-8",
+            )
+
+            def planfile_runner(_c, _p):
+                return _ok("No runnable ticket found.\n")
+
+            ctx = build_context(
+                project=project,
+                planfile_runner=planfile_runner,
+                git_probe=_no_git,
+            )
+            self.assertIsNotNone(ctx["project_pipeline"])
+            self.assertEqual(ctx["project_pipeline"]["schema"], "1.0")
+            phases = ctx["project_pipeline"]["phases"]
+            self.assertTrue(any(p["id"] == "qa" for p in phases))
+            md = render_markdown_handoff(ctx)
+            self.assertIn("Project pipeline", md)
+            self.assertIn("task quality:regix:local", md)
+
+    def test_pipeline_absent_without_koru_yaml(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _init_planfile(project)
+
+            def planfile_runner(_c, _p):
+                return _ok("No runnable ticket found.\n")
+
+            ctx = build_context(
+                project=project,
+                planfile_runner=planfile_runner,
+                git_probe=_no_git,
+            )
+            self.assertIsNone(ctx.get("project_pipeline"))
+
+
 class TestSetupRequired(unittest.TestCase):
     """When planfile is not initialised, the brief must steer to koru --init."""
 

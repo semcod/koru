@@ -2,7 +2,7 @@
 
 app {
   name: koru;
-  version: 0.1.30;
+  version: 0.1.56;
 }
 
 dependencies {
@@ -134,17 +134,47 @@ bash scripts/koru-autoloop-reset-diag-markers.sh;
 
 workflow[name="quality:regix"] {
   trigger: manual;
-  step-1: run cmd=regix gate;
+  step-1: run cmd=set -euo pipefail
+if python3 -m koru.cli topology --project . --is-enabled gate:regix >/dev/null 2>&1; then
+  regix gate
+else
+  rc=$?
+  if [ "$rc" -eq 1 ]; then
+    echo "quality:regix skipped (gate:regix disabled in topology)"
+    exit 0
+  fi
+  regix gate
+fi;
 }
 
 workflow[name="quality:redup"] {
   trigger: manual;
-  step-1: run cmd=redup scan . --min-lines 10;
+  step-1: run cmd=set -euo pipefail
+if python3 -m koru.cli topology --project . --is-enabled gate:redup >/dev/null 2>&1; then
+  redup scan . --min-lines 10
+else
+  rc=$?
+  if [ "$rc" -eq 1 ]; then
+    echo "quality:redup skipped (gate:redup disabled in topology)"
+    exit 0
+  fi
+  redup scan . --min-lines 10
+fi;
 }
 
 workflow[name="quality:redup:check"] {
   trigger: manual;
-  step-1: run cmd=bash scripts/redup-check.sh "{{.PATH | default \".\"}}";
+  step-1: run cmd=set -euo pipefail
+if python3 -m koru.cli topology --project . --is-enabled gate:redup >/dev/null 2>&1; then
+  bash scripts/redup-check.sh "{{.PATH | default "."}}"
+else
+  rc=$?
+  if [ "$rc" -eq 1 ]; then
+    echo "quality:redup:check skipped (gate:redup disabled in topology)"
+    exit 0
+  fi
+  bash scripts/redup-check.sh "{{.PATH | default "."}}"
+fi;
 }
 
 workflow[name="quality:vallm"] {
@@ -159,17 +189,47 @@ workflow[name="quality:vallm:semantic"] {
 
 workflow[name="quality:sumr:status"] {
   trigger: manual;
-  step-1: run cmd=scripts/sumr-refresh.sh --status;
+  step-1: run cmd=set -euo pipefail
+if python3 -m koru.cli topology --project . --is-enabled gate:sumr >/dev/null 2>&1; then
+  scripts/sumr-refresh.sh --status
+else
+  rc=$?
+  if [ "$rc" -eq 1 ]; then
+    echo "quality:sumr:status skipped (gate:sumr disabled in topology)"
+    exit 0
+  fi
+  scripts/sumr-refresh.sh --status
+fi;
 }
 
 workflow[name="quality:sumr:auto"] {
   trigger: manual;
-  step-1: run cmd=scripts/sumr-refresh.sh;
+  step-1: run cmd=set -euo pipefail
+if python3 -m koru.cli topology --project . --is-enabled gate:sumr >/dev/null 2>&1; then
+  scripts/sumr-refresh.sh
+else
+  rc=$?
+  if [ "$rc" -eq 1 ]; then
+    echo "quality:sumr:auto skipped (gate:sumr disabled in topology)"
+    exit 0
+  fi
+  scripts/sumr-refresh.sh
+fi;
 }
 
 workflow[name="quality:sumr:refresh"] {
   trigger: manual;
-  step-1: run cmd=scripts/sumr-refresh.sh --force;
+  step-1: run cmd=set -euo pipefail
+if python3 -m koru.cli topology --project . --is-enabled gate:sumr >/dev/null 2>&1; then
+  scripts/sumr-refresh.sh --force
+else
+  rc=$?
+  if [ "$rc" -eq 1 ]; then
+    echo "quality:sumr:refresh skipped (gate:sumr disabled in topology)"
+    exit 0
+  fi
+  scripts/sumr-refresh.sh --force
+fi;
 }
 
 workflow[name="quality:sumr:install-hook"] {
@@ -493,7 +553,8 @@ workflow[name="workflow:show"] {
 }
 
 deploy {
-  target: docker;
+  target: docker-compose;
+  compose_file: docker-compose.yml;
 }
 
 environment[name="local"] {

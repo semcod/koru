@@ -1,59 +1,58 @@
-# redup/duplication | 4 groups | 36f 11595L | 2026-05-12
+# redup/duplication | 4 groups | 58f 14998L | 2026-05-12
 
 SUMMARY:
-  files_scanned: 36
-  total_lines:   11595
+  files_scanned: 58
+  total_lines:   14998
   dup_groups:    4
   dup_fragments: 8
   saved_lines:   26
-  scan_ms:       3569
+  scan_ms:       4558
 
-HOTSPOTS[5] (files with most duplication):
-  src/koru/autopilot/cli_command.py  dup=29L  groups=2  frags=3  (0.3%)
-  src/koru/scan.py  dup=12L  groups=1  frags=2  (0.1%)
-  src/koru/autopilot/config.py  dup=5L  groups=1  frags=1  (0.0%)
-  src/koru/policy.py  dup=3L  groups=1  frags=1  (0.0%)
-  src/koru/runtime.py  dup=3L  groups=1  frags=1  (0.0%)
+HOTSPOTS[4] (files with most duplication):
+  src/koru/serve.py  dup=20L  groups=2  frags=3  (0.1%)
+  src/koru/topology.py  dup=12L  groups=1  frags=2  (0.1%)
+  src/koru/project_pipeline.py  dup=10L  groups=1  frags=1  (0.1%)
+  src/koru/autopilot/cli_command.py  dup=10L  groups=1  frags=2  (0.1%)
 
 DUPLICATES[4] (ranked by impact):
-  [d6a3bae1fce80d51]   STRU  _action_status  L=12 N=2 saved=12 sim=1.00
-      src/koru/autopilot/cli_command.py:266-277  (_action_status)
-      src/koru/autopilot/cli_command.py:280-291  (_action_shutdown)
-  [19e35bb709780a8d]   EXAC  _default  L=6 N=2 saved=6 sim=1.00
-      src/koru/scan.py:472-477  (_default)
-      src/koru/scan.py:512-517  (_default)
-  [783e33d9df60e641]   STRU  _systemd_user_dir  L=5 N=2 saved=5 sim=1.00
-      src/koru/autopilot/cli_command.py:430-434  (_systemd_user_dir)
-      src/koru/autopilot/config.py:64-68  (default_config_path)
-  [568b0a8fd0ab06a4]   STRU  policy_path  L=3 N=2 saved=3 sim=1.00
-      src/koru/policy.py:122-124  (policy_path)
-      src/koru/runtime.py:48-50  (runtime_dir)
+  [db3e3e3ad621b70e]   STRU  load_koru_project_pipeline  L=10 N=2 saved=10 sim=1.00
+      src/koru/project_pipeline.py:87-96  (load_koru_project_pipeline)
+      src/koru/serve.py:59-68  (read_serve_endpoint)
+  [c7374d52504d8e71]   STRU  set_component_enabled  L=6 N=2 saved=6 sim=1.00
+      src/koru/topology.py:346-351  (set_component_enabled)
+      src/koru/topology.py:354-359  (set_pipeline_enabled)
+  [a0375ffb77746a3f]   EXAC  _open_later  L=5 N=2 saved=5 sim=1.00
+      src/koru/serve.py:943-947  (_open_later)
+      src/koru/serve.py:993-997  (_open_later)
+  [be027ff698a2786c]   STRU  _action_status  L=5 N=2 saved=5 sim=1.00
+      src/koru/autopilot/cli_command.py:345-349  (_action_status)
+      src/koru/autopilot/cli_command.py:352-356  (_action_shutdown)
 
 REFACTOR[4] (ranked by priority):
-  [1] ○ extract_function   → src/koru/autopilot/utils/_action_status.py
-      WHY: 2 occurrences of 12-line block across 1 files — saves 12 lines
-      FILES: src/koru/autopilot/cli_command.py
-  [2] ○ extract_function   → src/koru/utils/_default.py
+  [1] ○ extract_function   → src/koru/utils/load_koru_project_pipeline.py
+      WHY: 2 occurrences of 10-line block across 2 files — saves 10 lines
+      FILES: src/koru/project_pipeline.py, src/koru/serve.py
+  [2] ○ extract_function   → src/koru/utils/set_component_enabled.py
       WHY: 2 occurrences of 6-line block across 1 files — saves 6 lines
-      FILES: src/koru/scan.py
-  [3] ○ extract_function   → src/koru/autopilot/utils/_systemd_user_dir.py
-      WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
-      FILES: src/koru/autopilot/cli_command.py, src/koru/autopilot/config.py
-  [4] ○ extract_function   → src/koru/utils/policy_path.py
-      WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
-      FILES: src/koru/policy.py, src/koru/runtime.py
+      FILES: src/koru/topology.py
+  [3] ○ extract_function   → src/koru/utils/_open_later.py
+      WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
+      FILES: src/koru/serve.py
+  [4] ○ extract_function   → src/koru/autopilot/utils/_action_status.py
+      WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
+      FILES: src/koru/autopilot/cli_command.py
 
 QUICK_WINS[2] (low risk, high savings — do first):
-  [1] extract_function   saved=12L  → src/koru/autopilot/utils/_action_status.py
-      FILES: cli_command.py
-  [2] extract_function   saved=6L  → src/koru/utils/_default.py
-      FILES: scan.py
+  [1] extract_function   saved=10L  → src/koru/utils/load_koru_project_pipeline.py
+      FILES: project_pipeline.py, serve.py
+  [2] extract_function   saved=6L  → src/koru/utils/set_component_enabled.py
+      FILES: topology.py
 
 EFFORT_ESTIMATE (total ≈ 0.9h):
-  easy   _action_status                      saved=12L  ~24min
-  easy   _default                            saved=6L  ~12min
-  easy   _systemd_user_dir                   saved=5L  ~10min
-  easy   policy_path                         saved=3L  ~6min
+  easy   load_koru_project_pipeline          saved=10L  ~20min
+  easy   set_component_enabled               saved=6L  ~12min
+  easy   _open_later                         saved=5L  ~10min
+  easy   _action_status                      saved=5L  ~10min
 
 METRICS-TARGET:
   dup_groups:  4 → 0

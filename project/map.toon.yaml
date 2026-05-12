@@ -1,11 +1,11 @@
-# koru | 95f 19338L | yaml:9,shell:28,python:48,json:2,yml:2,txt:1,toml:1,typescript:2 | 2026-05-12
+# koru | 102f 19469L | yaml:9,yml:2,toml:1,txt:1,shell:28,python:55,json:2,typescript:2 | 2026-05-12
 # generated in 0.01s
-# stats: 494 func | 0 cls | 95 mod | CC̄=4.9 | critical:24 | cycles:0
+# stats: 493 func | 0 cls | 102 mod | CC̄=4.9 | critical:24 | cycles:0
 # alerts[5]: CC _fetch_ticket_data=36; fan-out _build_handler=36; CC _action_up=28; fan-out create_planfile_ticket=27; CC _queue_run_main=26
-# hotspots[5]: _build_handler fan=36; create_planfile_ticket fan=27; create_nl_task fan=21; run_next_planfile_task fan=21; render_markdown_handoff fan=20
+# hotspots[5]: _build_handler fan=36; create_planfile_ticket fan=27; init_project fan=21; render_markdown_handoff fan=21; create_nl_task fan=21
 # evolution: CC̄ 5.1→4.9 (improved -0.2)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[95]:
+M[102]:
   Dockerfile,70
   Taskfile.yml,758
   docker-compose.yml,92
@@ -50,14 +50,13 @@ M[95]:
   scripts/koru-autoloop.sh,562
   scripts/koru-autoloop-reset-diag-markers.sh,96
   scripts/planfile-export-prompt.sh,81
-  scripts/planfile-sync-todo.py,219
   services/healing-webhook/Dockerfile,36
   services/healing-webhook/app.py,673
   services/healing-webhook/ticket_builder.py,223
   src/koru/__init__.py,69
   src/koru/__main__.py,8
   src/koru/agents.py,347
-  src/koru/autonomous.py,370
+  src/koru/autonomous.py,383
   src/koru/autopilot/__init__.py,67
   src/koru/autopilot/audit.py,155
   src/koru/autopilot/cli_command.py,781
@@ -75,17 +74,25 @@ M[95]:
   src/koru/cli/__init__.py,55
   src/koru/cli/__main__.py,8
   src/koru/cli/commands.py,0
-  src/koru/cli/parsers.py,0
-  src/koru/context.py,1045
-  src/koru/doctor.py,427
+  src/koru/context.py,1081
+  src/koru/doctor.py,454
   src/koru/dotenv_loader.py,104
   src/koru/events.py,90
   src/koru/gate.py,204
   src/koru/gc.py,374
-  src/koru/init.py,490
+  src/koru/init.py,500
   src/koru/loop.py,131
-  src/koru/planfile_queue.py,811
+  src/koru/planfile_queue.py,37
   src/koru/policy.py,241
+  src/koru/project_pipeline.py,126
+  src/koru/queue/__init__.py,33
+  src/koru/queue/human.py,31
+  src/koru/queue/locking.py,87
+  src/koru/queue/loop.py,107
+  src/koru/queue/runner.py,225
+  src/koru/queue/runners.py,210
+  src/koru/queue/ticket.py,139
+  src/koru/queue/types.py,80
   src/koru/queue_clean.py,355
   src/koru/run_log.py,124
   src/koru/runtime.py,104
@@ -103,7 +110,7 @@ M[95]:
   todo.txt,3
 D:
   src/koru/context.py:
-    e: _is_fixture_ticket,_resolve_include_fixtures,_load_project_dotenv,_planfile_command_base,_planfile_env,_fetch_all_tickets,_run_planfile,_safe_json,_git_probe,_fetch_ticket_data,build_context,_auto_promote_blocking_tickets,_build_instructions,_build_setup_instructions,_build_shared_rules,_build_self_service,_render_header,_render_environment,_render_agent_lanes,_render_autonomous_mode,_render_ai_tool_support_2026,_render_semcod_tools,_render_setup_required,_render_active_ticket,_render_no_active_ticket,_render_gates,_render_policy,_render_rules,_render_self_service,_render_dashboard,render_markdown_handoff
+    e: _is_fixture_ticket,_resolve_include_fixtures,_load_project_dotenv,_planfile_command_base,_planfile_env,_fetch_all_tickets,_run_planfile,_safe_json,_git_probe,_fetch_ticket_data,build_context,_auto_promote_blocking_tickets,_build_instructions,_build_setup_instructions,_build_shared_rules,_build_self_service,_render_header,_render_environment,_render_agent_lanes,_render_autonomous_mode,_render_ai_tool_support_2026,_render_semcod_tools,_render_setup_required,_render_active_ticket,_render_no_active_ticket,_render_gates,_render_project_pipeline,_render_policy,_render_rules,_render_self_service,_render_dashboard,render_markdown_handoff
     _is_fixture_ticket(ticket)
     _resolve_include_fixtures(explicit)
     _load_project_dotenv(project)
@@ -130,6 +137,7 @@ D:
     _render_active_ticket(ticket)
     _render_no_active_ticket(ticket_error)
     _render_gates(markers)
+    _render_project_pipeline(pipeline)
     _render_policy(policy)
     _render_rules(instructions)
     _render_self_service(self_service)
@@ -157,31 +165,9 @@ D:
     infer_adapter_kind(tool)
     build_tool_task_scaffold(tool)
     render_tools_detect_text(results)
-  src/koru/planfile_queue.py:
-    e: CommandResult,QueueRunResult,QueueLoopResult,ApiRunResult,LlmRunResult,_planfile_env,_run_process,_run_shell_command,_run_api_request,_run_llm_request,_queue_lock_wanted,_queue_runner_lock,_claim_lease_seconds_str,_ticket_claim_or_error,_planfile_command,_parse_next_ticket,_ticket_command,_ticket_llm_request,_ticket_api_request,_default_human_prompt,_result_json,run_next_planfile_task,run_planfile_queue_loop
-    CommandResult(Protocol):  # Protocol for subprocess-like command results...
-    QueueRunResult:  # Result of a single queue tick...
-    QueueLoopResult: summary(0)  # Aggregate result of draining the planfile queue with run_pla...
-    ApiRunResult:  # Result of a direct HTTP API executor call...
-    LlmRunResult:  # Result of an OpenRouter (or compatible) chat-completion call...
-    _planfile_env()
-    _run_process(command;project)
-    _run_shell_command(command;project)
-    _run_api_request(request;_project)
-    _run_llm_request(request;_project)
-    _queue_lock_wanted()
-    _queue_runner_lock(project)
-    _claim_lease_seconds_str()
-    _ticket_claim_or_error(project;ticket_id;actor)
-    _planfile_command(project;args;runner)
-    _parse_next_ticket(stdout)
-    _ticket_command(ticket)
-    _ticket_llm_request(ticket)
-    _ticket_api_request(ticket)
-    _default_human_prompt(prompt;ticket_id)
-    _result_json(result)
+  src/koru/queue/runner.py:
+    e: run_next_planfile_task
     run_next_planfile_task()
-    run_planfile_queue_loop()
   services/healing-webhook/app.py:
     e: _rate_limit_ok,_record_action,create_planfile_ticket,_run_docker,heal_redsl_gate,heal_redsl_improve,heal_rebuild_restore,heal_annotate,_run_vallm_check,_run_vallm_validate,_resolve_affected_files,heal_vallm_validate,_run_redup_check,heal_redup_check,_resolve_strategy,healthz,metrics,get_history,alertmanager_webhook,probe_failure,get_tickets
     _rate_limit_ok()
@@ -205,6 +191,13 @@ D:
     alertmanager_webhook(request)
     probe_failure(request)
     get_tickets()
+  src/koru/queue/runners.py:
+    e: _planfile_env,run_process,run_shell_command,run_api_request,run_llm_request
+    _planfile_env()
+    run_process(command;project)
+    run_shell_command(command;project)
+    run_api_request(request;_project)
+    run_llm_request(request;_project)
   src/koru/policy.py:
     e: Policy,policy_path,load_policy,policy_violations
     Policy: to_dict(0)  # Resolved policy for an LLM agent operating on a koru project...
@@ -324,6 +317,18 @@ so...
     _load_context_module()
     _default_handoff(project)
     _peer_uid(sock)
+  src/koru/init.py:
+    e: InitReport,init_project,refresh_init_agent_lane,_resolve_init_agent_lane,resolve_project_agent_lane,_write_autopilot_host_setup_script,_write_agent_lane_artifacts,_remove_agent_lane_artifacts,_write_policy_stub_if_absent,_ensure_gitignore_entry
+    InitReport: summary(0)  # Summary of what ``init_project`` actually changed on disk...
+    init_project(project)
+    refresh_init_agent_lane(project)
+    _resolve_init_agent_lane(project;agent_lane)
+    resolve_project_agent_lane(project;agent_lane)
+    _write_autopilot_host_setup_script(project)
+    _write_agent_lane_artifacts(project;lane)
+    _remove_agent_lane_artifacts(rt)
+    _write_policy_stub_if_absent(project)
+    _ensure_gitignore_entry(project)
   src/koru/scan.py:
     e: Suggestion,ScanResult,scan_pytest_collect,_load_koruignore_patterns,_is_koruignored,scan_todo_markers,scan_missing_gates,scan_missing_tools,scan_gitignore_drift,_scan_jscpd_report,_scan_code2llm_analysis,_scan_testql_export,_scan_redup_filtered,scan_semcod_quality_artifacts,collect_suggestions,_existing_scan_titles,_create_ticket,run_scan
     Suggestion: to_dict(0)  # One proposed planfile ticket derived from a repo signal...
@@ -360,34 +365,6 @@ so...
     discover_repositories(workspace;include_pattern)
     _default_runner(command;repository)
     run_closed_loop()
-  src/koru/autopilot/protocol.py:
-    e: ProtocolError,Message,_filter_extras,decode,hello,chat_send,drive,ack,error,session_started,session_ended
-    ProtocolError(ValueError):  # Raised when a line cannot be decoded into a valid message...
-    Message: to_dict(0),encode(0)  # A single protocol envelope.
-
-The constructor is intentionall...
-    _filter_extras(msg_type;obj)
-    decode(line)
-    hello()
-    chat_send(text)
-    drive(text)
-    ack(reply_to)
-    error(reply_to;message)
-    session_started()
-    session_ended()
-  scripts/planfile-sync-todo.py:
-    e: run_planfile,load_tickets,build_auto_section,replace_auto_section,do_from_planfile,do_from_todo,_llm_stub,main
-    run_planfile()
-    load_tickets()
-    build_auto_section(tickets)
-    replace_auto_section(current;new_section)
-    do_from_planfile(check)
-    do_from_todo(heading;check)
-    _llm_stub(item;heading)
-    main()
-  scripts/_koru_autodiag_filter_tickets.py:
-    e: main
-    main()
   src/koru/topology.py:
     e: ToggleResult,topology_path,_read_yaml,_merge_components,_merge_pipelines,load_topology,_strip_to_persisted,save_topology,_toggle,set_component_enabled,set_pipeline_enabled,is_component_enabled,is_pipeline_enabled,enabled_components_for_pipeline,default_component_ids,default_pipeline_ids
     ToggleResult:  # Outcome of a single enable/disable mutation...
@@ -406,23 +383,32 @@ The constructor is intentionall...
     enabled_components_for_pipeline(project;pipeline_id)
     default_component_ids()
     default_pipeline_ids()
+  src/koru/queue/loop.py:
+    e: run_planfile_queue_loop
+    run_planfile_queue_loop()
+  src/koru/autopilot/protocol.py:
+    e: ProtocolError,Message,_filter_extras,decode,hello,chat_send,drive,ack,error,session_started,session_ended
+    ProtocolError(ValueError):  # Raised when a line cannot be decoded into a valid message...
+    Message: to_dict(0),encode(0)  # A single protocol envelope.
+
+The constructor is intentionall...
+    _filter_extras(msg_type;obj)
+    decode(line)
+    hello()
+    chat_send(text)
+    drive(text)
+    ack(reply_to)
+    error(reply_to;message)
+    session_started()
+    session_ended()
   plugins/koru-autopilot-vscode/src/extension.ts:
     i: ./socketPath,net,vscode
     e: Envelope,AutopilotBridge
     Envelope:
     AutopilotBridge: socketPath(-1),cfg(-1),override(-1),connect(-1),p(-1),sock(-1),disconnect(-1),clearTimeout(-1),scheduleRetry(-1),delay(-1),cfg(-1),runCommand(-1),submitChat(-1),focusChat(-1),cfg(-1),primary(-1),commands(-1),detectIde(-1),app(-1),send(-1),onData(-1),idx(-1),line(-1),env(-1),dispatch(-1),injectChat(-1),text(-1),submit(-1),opened(-1),submitted(-1),message(-1),activate(-1),bridge(-1),text(-1),cfg(-1),deactivate(-1)
-  src/koru/init.py:
-    e: InitReport,init_project,refresh_init_agent_lane,_resolve_init_agent_lane,resolve_project_agent_lane,_write_autopilot_host_setup_script,_write_agent_lane_artifacts,_remove_agent_lane_artifacts,_write_policy_stub_if_absent,_ensure_gitignore_entry
-    InitReport: summary(0)  # Summary of what ``init_project`` actually changed on disk...
-    init_project(project)
-    refresh_init_agent_lane(project)
-    _resolve_init_agent_lane(project;agent_lane)
-    resolve_project_agent_lane(project;agent_lane)
-    _write_autopilot_host_setup_script(project)
-    _write_agent_lane_artifacts(project;lane)
-    _remove_agent_lane_artifacts(rt)
-    _write_policy_stub_if_absent(project)
-    _ensure_gitignore_entry(project)
+  scripts/_koru_autodiag_filter_tickets.py:
+    e: main
+    main()
   services/healing-webhook/ticket_builder.py:
     e: _git_commit,_infer_paths,_format_paths,_default_acceptance,_format_acceptance,_reproduction_for,build_ticket_payload
     _git_commit(repo)
@@ -432,23 +418,8 @@ The constructor is intentionall...
     _format_acceptance(items)
     _reproduction_for(labels;failures)
     build_ticket_payload(alert)
-  src/koru/autopilot/ide.py:
-    e: RunningIDE,_iter_proc_pids,_read_comm,_read_cmdline,_matches,detect_running_ides,_active_window_pid_x11,detect_focused_ide_id,focused_ide,pick_target,is_linux,detect_running_ides_cached,clear_detect_cache
-    RunningIDE: to_dict(0)  # A single IDE process discovered on the system...
-    _iter_proc_pids()
-    _read_comm(pid)
-    _read_cmdline(pid)
-    _matches(comm;cmdline;patterns)
-    detect_running_ides()
-    _active_window_pid_x11()
-    detect_focused_ide_id()
-    focused_ide(detected)
-    pick_target(detected)
-    is_linux()
-    detect_running_ides_cached()
-    clear_detect_cache()
   src/koru/doctor.py:
-    e: Check,DoctorReport,run_diagnostics,_check_git_repo,_check_planfile_binary,_check_planfile_config,_check_planfile_sprints,_check_planfile_sprints_yaml,_check_runtime_dir,_check_policy_yaml,_check_gitignore,_resolve_pytest_collect_timeout,_check_pytest_collect,_check_ci_command,render_text
+    e: Check,DoctorReport,run_diagnostics,_check_git_repo,_check_planfile_binary,_check_planfile_config,_check_planfile_sprints,_check_planfile_sprints_yaml,_check_runtime_dir,_check_koru_project_pipeline,_check_policy_yaml,_check_gitignore,_resolve_pytest_collect_timeout,_check_pytest_collect,_check_ci_command,render_text
     Check: to_dict(0)  # A single diagnostic outcome...
     DoctorReport: summary(0),to_dict(0)  # Aggregate result of ``run_diagnostics``...
     run_diagnostics(project)
@@ -458,6 +429,7 @@ The constructor is intentionall...
     _check_planfile_sprints(project)
     _check_planfile_sprints_yaml(project)
     _check_runtime_dir(project)
+    _check_koru_project_pipeline(project)
     _check_policy_yaml(project)
     _check_gitignore(project)
     _resolve_pytest_collect_timeout()
@@ -479,6 +451,36 @@ The constructor is intentionall...
     _archive_tickets_before_delete(to_remove;project;sprint)
     _delete_tickets(to_remove;project;planfile_runner)
     run_gc(project)
+  src/koru/autopilot/ide.py:
+    e: RunningIDE,_iter_proc_pids,_read_comm,_read_cmdline,_matches,detect_running_ides,_active_window_pid_x11,detect_focused_ide_id,focused_ide,pick_target,is_linux,detect_running_ides_cached,clear_detect_cache
+    RunningIDE: to_dict(0)  # A single IDE process discovered on the system...
+    _iter_proc_pids()
+    _read_comm(pid)
+    _read_cmdline(pid)
+    _matches(comm;cmdline;patterns)
+    detect_running_ides()
+    _active_window_pid_x11()
+    detect_focused_ide_id()
+    focused_ide(detected)
+    pick_target(detected)
+    is_linux()
+    detect_running_ides_cached()
+    clear_detect_cache()
+  src/koru/queue/ticket.py:
+    e: parse_next_ticket,ticket_command,ticket_llm_request,ticket_api_request,planfile_command,result_json
+    parse_next_ticket(stdout)
+    ticket_command(ticket)
+    ticket_llm_request(ticket)
+    ticket_api_request(ticket)
+    planfile_command(project;args;runner)
+    result_json(result)
+  src/koru/project_pipeline.py:
+    e: project_pipeline_path,default_koru_project_pipeline_text,write_koru_project_pipeline_if_absent,load_koru_project_pipeline,build_project_pipeline_brief
+    project_pipeline_path(project)
+    default_koru_project_pipeline_text()
+    write_koru_project_pipeline_if_absent(project)
+    load_koru_project_pipeline(project)
+    build_project_pipeline_brief(project)
   plugins/koru-autopilot-vscode/src/socketPath.ts:
     i: os,path
     e: slugInstance,cleaned,defaultSocketPathFromEnv,explicit,inst,name,xdg,uid,stem
@@ -530,14 +532,6 @@ P...
     _parse_value(raw)
     parse_dotenv(text)
     load_dotenv(project)
-  src/koru/autopilot/audit.py:
-    e: _JSONFormatter,AuditLog,default_log_path,_isoformat_utc
-    _JSONFormatter(logging.Formatter): format(1)  # Emit ``record.msg`` verbatim — we hand it in pre-serialised...
-    AuditLog: __init__(0),record(1),close(0)  # Append-only audit log for autopilot events.
-
-Construct once ...
-    default_log_path()
-    _isoformat_utc(ts)
   src/koru/autopilot/config.py:
     e: AutopilotConfig,default_config_path,_merge_submit_keys,load_config,cached_config,clear_config_cache
     AutopilotConfig: submit_key_for(1)  # In-memory view of ``autopilot.toml`` (or defaults)...
@@ -546,13 +540,28 @@ Construct once ...
     load_config(path)
     cached_config()
     clear_config_cache()
+  src/koru/autopilot/audit.py:
+    e: _JSONFormatter,AuditLog,default_log_path,_isoformat_utc
+    _JSONFormatter(logging.Formatter): format(1)  # Emit ``record.msg`` verbatim — we hand it in pre-serialised...
+    AuditLog: __init__(0),record(1),close(0)  # Append-only audit log for autopilot events.
+
+Construct once ...
+    default_log_path()
+    _isoformat_utc(ts)
   src/koru/autopilot/__init__.py:
     e: _autopilot_socket_basename,default_socket_path
     _autopilot_socket_basename()
     default_socket_path()
+  src/koru/queue/human.py:
+    e: default_human_prompt
+    default_human_prompt(prompt;ticket_id)
   src/koru/autopilot/client.py:
     e: AutopilotClient
     AutopilotClient: __init__(0),_connect(0),request(1),is_running(0),drive(1),status(0),shutdown(0)  # Connect, send one message, read one reply, disconnect...
+  src/koru/cli/__init__.py:
+    e: _load_legacy_cli_module,__getattr__
+    _load_legacy_cli_module()
+    __getattr__(name)
   src/koru/run_log.py:
     e: RunLogWriter,open_run_log,open_run_log_eagerly,_iso
     RunLogWriter: _emit(1),write_header(0),write_iteration(0),write_footer(0)  # Append-only JSONL writer with best-effort durability.
@@ -561,14 +570,16 @@ The c...
     open_run_log(project)
     open_run_log_eagerly(project)
     _iso(epoch)
+  src/koru/queue/locking.py:
+    e: queue_lock_wanted,queue_runner_lock,claim_lease_seconds_str,ticket_claim_or_error
+    queue_lock_wanted()
+    queue_runner_lock(project)
+    claim_lease_seconds_str()
+    ticket_claim_or_error(project;ticket_id;actor)
   src/koru/autopilot/utils/client_helpers.py:
     e: call_daemon_method,resolve_xdg_path
     call_daemon_method(client;method_name;error_message_prefix;not_running_return_code)
     resolve_xdg_path(relative_path)
-  src/koru/cli/__init__.py:
-    e: _load_legacy_cli_module,__getattr__
-    _load_legacy_cli_module()
-    __getattr__(name)
   src/koru/utils/subprocess_runner.py:
     e: default_subprocess_runner,resolve_planfile_subpath,get_python_cmd
     default_subprocess_runner(cmd;cwd)
@@ -581,10 +592,24 @@ The c...
     runs_dir(project)
     new_run_id(prefix)
     ensure_runs_dir(project)
+  src/koru/queue/types.py:
+    e: CommandResult,QueueRunResult,QueueLoopResult,ApiRunResult,LlmRunResult
+    CommandResult(Protocol):  # Protocol for subprocess-like command results...
+    QueueRunResult:  # Result of a single queue tick...
+    QueueLoopResult: summary(0)  # Aggregate result of draining the planfile queue with run_pla...
+    ApiRunResult:  # Result of a direct HTTP API executor call...
+    LlmRunResult:  # Result of an OpenRouter (or compatible) chat-completion call...
+  goal.yaml:
   planfile.yaml:
+  docker-compose.yml:
+  pyproject.toml:
+  todo.txt:
   pipeline.yaml:
   prefact.yaml:
+  Taskfile.yml:
+  Dockerfile:
   project.sh:
+  docs/ai-tool-registry-2026.yaml:
   docs/llm-tools/costs/install.sh:
   docs/llm-tools/redeploy/install.sh:
   docs/llm-tools/prefact/install.sh:
@@ -611,7 +636,16 @@ The c...
   redeploy/device/manifest.yaml:
   examples/bootstrap.planfile.yaml:
   services/healing-webhook/Dockerfile:
+  src/koru/__init__.py:
+  src/koru/__main__.py:
+  src/koru/planfile_queue.py:
+  src/koru/cli/commands.py:
+  src/koru/cli/__main__.py:
+  src/koru/queue/__init__.py:
+  src/koru/utils/__init__.py:
+  src/koru/autopilot/utils/__init__.py:
   plugins/koru-autopilot-vscode/tsconfig.json:
+  plugins/koru-autopilot-vscode/package.json:
   scripts/planfile-export-prompt.sh:
     e: print,render
     print()
@@ -619,23 +653,6 @@ The c...
   scripts/koru-autoloop-reset-diag-markers.sh:
     e: is_true
     is_true()
-  testql-scenarios/generated-from-pytests.testql.toon.yaml:
-  testql-scenarios/generated-cli-tests.testql.toon.yaml:
-  docker-compose.yml:
-  todo.txt:
-  goal.yaml:
-  Taskfile.yml:
-  docs/ai-tool-registry-2026.yaml:
-  Dockerfile:
-  pyproject.toml:
-  src/koru/__init__.py:
-  src/koru/cli/commands.py:
-  src/koru/cli/parsers.py:
-  src/koru/__main__.py:
-  src/koru/cli/__main__.py:
-  src/koru/utils/__init__.py:
-  src/koru/autopilot/utils/__init__.py:
-  plugins/koru-autopilot-vscode/package.json:
   scripts/koru-autoloop.sh:
     e: is_true,run_koru,status_in_skip_list,current_head,init_topology_support,topology_is_enabled,compute_backoff_sleep,parse_waiting_ticket_id,on_exit,clear_diag_marker,mark_diag_failure,run_check,run_idle_diagnostics,run_autopilot
     is_true()
@@ -659,3 +676,5 @@ The c...
     type_text()
     _parser()
     main()
+  testql-scenarios/generated-from-pytests.testql.toon.yaml:
+  testql-scenarios/generated-cli-tests.testql.toon.yaml:

@@ -1,0 +1,210 @@
+"""Process execution runners for different executor types."""
+
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import urllib.error
+import urllib.request
+from pathlib import Path
+from typing import Any
+
+from .types import ApiRunResult, CommandResult, LlmRunResult
+
+
+def _planfile_env() -> dict[str, str]:
+    """Force a wide, non-TTY console so planfile's Rich output stays one
+    JSON object per line. Without this, long handler strings get wrapped
+    by Rich and break json.loads on the koru side."""
+    return {**os.environ, "COLUMNS": "10000", "TERM": "dumb", "PYTHONWARNINGS": "ignore"}
+
+
+def run_process(command: list[str], project: Path) -> subprocess.CompletedProcess[str]:
+    """Run a subprocess command with planfile-friendly environment."""
+    return subprocess.run(
+        command,
+        cwd=project,
+        text=True,
+        capture_output=True,
+        check=False,
+        env=_planfile_env(),
+    )
+
+
+def run_shell_command(command: str, project: Path) -> subprocess.CompletedProcess[str]:
+    """Run a shell command."""
+    return subprocess.run(
+        command,
+        cwd=project,
+        shell=True,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+def run_api_request(request: dict[str, Any], _project: Path) -> ApiRunResult:
+    """Execute an HTTP API request."""
+    body = request.get("body")
+    data: bytes | None = None
+    headers = {str(k): str(v) for k, v in (request.get("headers") or {}).items()}
+    if body is not None:
+        data = json.dumps(body).encode("utf-8")
+        headers.setdefault("content-type", "application/json")
+
+    api_request = urllib.request.Request(
+        str(request["endpoint"]),
+        data=data,
+        headers=headers,
+        method=str(request.get("method") or "GET").upper(),
+    )
+    timeout = float(request.get("timeout_seconds") or 30.0)
+
+    try:
+        with urllib.request.urlopen(api_request, timeout=timeout) as response:
+            text = response.read().decode("utf-8", errors="replace")
+            return ApiRunResult(
+                returncode=0,
+                stdout=text,
+                stderr="",
+                status_code=int(response.status),
+                headers=dict(response.headers.items()),
+            )
+    except urllib.error.HTTPError as exc:
+        text = exc.read().decode("utf-8", errors="replace")
+        return ApiRunResult(
+            returncode=1,
+            stdout=text,
+            stderr=f"HTTP {exc.code}",
+            status_code=int(exc.code),
+            headers=dict(exc.headers.items()),
+        )
+    except urllib.error.URLError as exc:
+        return ApiRunResult(
+            returncode=1,
+            stdout="",
+            stderr=str(exc.reason),
+            status_code=0,
+            headers={},
+        )
+
+
+_DEFAULT_LLM_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
+_DEFAULT_LLM_MODEL = "openai/gpt-4o-mini"
+
+
+def run_llm_request(request: dict[str, Any], _project: Path) -> LlmRunResult:
+    """Call an OpenAI-compatible chat-completion endpoint (default OpenRouter).
+
+    Reads ``OPENROUTER_API_KEY`` from the environment when ``endpoint``
+    points at openrouter.ai; falls back to ``OPENAI_API_KEY`` for the
+    OpenAI endpoint. Honours ``KORU_LLM_ENDPOINT`` for self-hosted
+    proxies (e.g. an Ollama OpenAI-compat shim).
+    """
+    endpoint = str(
+        request.get("endpoint")
+        or os.getenv("KORU_LLM_ENDPOINT")
+        or _DEFAULT_LLM_ENDPOINT
+    )
+    model = str(request.get("model") or _DEFAULT_LLM_MODEL)
+
+    if "openrouter.ai" in endpoint:
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        key_var = "OPENROUTER_API_KEY"
+    else:
+        api_key = os.getenv("OPENAI_API_KEY") or os.getenv("OPENROUTER_API_KEY")
+        key_var = "OPENAI_API_KEY"
+
+    if not api_key:
+        return LlmRunResult(
+            returncode=1,
+            stdout="",
+            stderr=(
+                f"{key_var} is not set — refusing to call {endpoint}. "
+                "Export the key (e.g. via .env) and retry, "
+                "or use executor.kind=human for this ticket."
+            ),
+            status_code=0,
+            model=model,
+            usage={},
+            raw={},
+        )
+
+    messages: list[dict[str, str]] = []
+    system = request.get("system_prompt")
+    if system:
+        messages.append({"role": "system", "content": str(system)})
+    messages.append({"role": "user", "content": str(request["prompt"])})
+
+    body: dict[str, Any] = {
+        "model": model,
+        "messages": messages,
+        "temperature": float(request.get("temperature", 0.0)),
+    }
+    if request.get("max_tokens") is not None:
+        body["max_tokens"] = int(request["max_tokens"])
+    schema = request.get("response_schema")
+    if schema:
+        body["response_format"] = {
+            "type": "json_schema",
+            "json_schema": {"name": "koru_response", "schema": schema, "strict": True},
+        }
+
+    headers = {
+        "authorization": f"Bearer {api_key}",
+        "content-type": "application/json",
+    }
+    referer = os.getenv("KORU_LLM_HTTP_REFERER")
+    title = os.getenv("KORU_LLM_X_TITLE", "koru")
+    if "openrouter.ai" in endpoint:
+        if referer:
+            headers["http-referer"] = referer
+        headers["x-title"] = title
+
+    api_request = urllib.request.Request(
+        endpoint,
+        data=json.dumps(body).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    timeout = float(request.get("timeout_seconds") or 60.0)
+
+    try:
+        with urllib.request.urlopen(api_request, timeout=timeout) as response:
+            payload = json.loads(response.read().decode("utf-8", errors="replace"))
+            content = ""
+            choices = payload.get("choices") or []
+            if choices:
+                msg = choices[0].get("message") or {}
+                content = str(msg.get("content") or "")
+            return LlmRunResult(
+                returncode=0 if content else 1,
+                stdout=content,
+                stderr="" if content else "LLM returned empty content",
+                status_code=int(response.status),
+                model=str(payload.get("model") or model),
+                usage=dict(payload.get("usage") or {}),
+                raw=payload,
+            )
+    except urllib.error.HTTPError as exc:
+        text = exc.read().decode("utf-8", errors="replace")
+        return LlmRunResult(
+            returncode=1,
+            stdout="",
+            stderr=f"HTTP {exc.code}: {text[:500]}",
+            status_code=int(exc.code),
+            model=model,
+            usage={},
+            raw={},
+        )
+    except urllib.error.URLError as exc:
+        return LlmRunResult(
+            returncode=1,
+            stdout="",
+            stderr=str(exc.reason),
+            status_code=0,
+            model=model,
+            usage={},
+            raw={},
+        )
