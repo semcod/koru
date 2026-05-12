@@ -115,6 +115,32 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Output format (default: text).",
     )
 
+    setup_host = sub.add_parser(
+        "setup-host",
+        help=(
+            "Probe injector tools, list apt install hints, and optional apt install "
+            "(Debian/Ubuntu). Separates automated steps from human (uinput, IDE plugin)."
+        ),
+    )
+    setup_host.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format (default: text).",
+    )
+    setup_host.add_argument(
+        "--install",
+        action="store_true",
+        help="Run sudo apt-get install -y for missing xdotool/wtype/ydotool (requires apt).",
+    )
+    setup_host.add_argument(
+        "--dry-run",
+        dest="install_dry_run",
+        action="store_true",
+        help="With --install, print the apt-get command but do not run it.",
+    )
+
     handoff = sub.add_parser(
         "handoff",
         help="Build the koru brief for --project and type it into the IDE chat.",
@@ -323,6 +349,16 @@ def _action_doctor(args: argparse.Namespace) -> int:
         marker = " [focused]" if focused is not None and ide.id == focused else ""
         print(f"  · {ide.label} (pid={ide.pid}){marker}")
     return 0 if selected else 1
+
+
+def _action_setup_host(args: argparse.Namespace) -> int:
+    from .host_setup import run_host_setup
+
+    return run_host_setup(
+        output_format=args.output_format,
+        install=args.install,
+        install_dry_run=args.install_dry_run,
+    )
 
 
 def _build_brief(project: Path) -> str:
