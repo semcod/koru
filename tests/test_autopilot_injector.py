@@ -110,7 +110,7 @@ def test_type_text_propagates_runner_error() -> None:
         which=_which_factory({"xdotool"}),
         runner=_fake_runner(calls, fail_on=["xdotool"]),
     )
-    with pytest.raises(InjectorError, match="xdotool exited 1"):
+    with pytest.raises(InjectorError, match="all keyboard injection backends failed"):
         inj.type_text("hi")
 
 
@@ -168,6 +168,35 @@ def test_wtype_rejects_multi_modifier_submit_key(monkeypatch: pytest.MonkeyPatch
     # Type ran, but the failing submit press must not have produced a key call.
     assert len(calls) == 1
     assert calls[0][0] == "wtype"  # the type call
+
+
+def test_type_text_wayland_falls_back_when_wtype_fails() -> None:
+    calls: list[list[str]] = []
+
+    def run(cmd: list[str], stdin: str | None) -> "subprocess.CompletedProcess[bytes]":
+        calls.append(cmd)
+        if cmd[0] == "wtype":
+            return subprocess.CompletedProcess(
+                args=cmd, returncode=1, stdout=b"", stderr=b"wtype failed",
+            )
+        return subprocess.CompletedProcess(args=cmd, returncode=0, stdout=b"", stderr=b"")
+
+    inj = Injector(
+        session="wayland",
+        which=_which_factory({"wtype", "ydotool"}),
+        runner=run,
+    )
+    result = inj.type_text("hi", ide="vscode", submit=False)
+    assert result.backend == "ydotool"
+    assert calls[0][0] == "wtype"
+    assert any(c[0] == "ydotool" for c in calls)
+
+
+def test_injector_forced_backend(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("KORU_INJECTOR_BACKEND", "ydotool")
+    inj = Injector(session="wayland", which=_which_factory({"wtype", "ydotool"}))
+    assert inj._candidate_backends() == ["ydotool"]
+    monkeypatch.delenv("KORU_INJECTOR_BACKEND", raising=False)
 
 
 def test_wtype_single_modifier_still_works() -> None:

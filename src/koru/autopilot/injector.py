@@ -48,6 +48,14 @@ def _session_type() -> str:
     return ""
 
 
+def _forced_injector_backend() -> str | None:
+    """Optional ``KORU_INJECTOR_BACKEND=xdotool|wtype|ydotool`` — use only that tool."""
+    raw = os.environ.get("KORU_INJECTOR_BACKEND", "").strip().lower()
+    if raw in ("xdotool", "wtype", "ydotool"):
+        return raw
+    return None
+
+
 @dataclass
 class BackendStatus:
     """Result of probing a single backend."""
@@ -125,28 +133,60 @@ class Injector:
             self._probe_one("xclip", session_required="x11"),
         ]
 
+    def _candidate_backends(self) -> list[str]:
+        """Ordered injectors to try (session-aware), deduplicated.
+
+        If ``KORU_INJECTOR_BACKEND`` is set, only that tool is attempted.
+        """
+        forced = _forced_injector_backend()
+        if forced is not None:
+            return [forced] if self.which(forced) else []
+
+        out: list[str] = []
+
+        def add(name: str) -> None:
+            if self.which(name) and name not in out:
+                out.append(name)
+
+        if self.session == "x11":
+            add("xdotool")
+        elif self.session == "wayland":
+            add("wtype")
+            add("ydotool")
+        # Same fallbacks as legacy ``select_backend`` (cross-session last resort).
+        add("xdotool")
+        add("wtype")
+        add("ydotool")
+        return out
+
     def select_backend(self) -> str | None:
         """Pick the most reliable backend for the current session.
 
         Returns ``None`` when no backend is available.
         """
-        # X11 → xdotool wins (mature, no permissions issues).
-        if self.session == "x11" and self.which("xdotool"):
-            return "xdotool"
-        # Wayland → wtype works in sway/Hyprland; ydotool needs uinput
-        # but works on gnome.
-        if self.session == "wayland":
-            if self.which("wtype"):
-                return "wtype"
-            if self.which("ydotool"):
-                return "ydotool"
-        # Last resort: clipboard + keystroke. Requires a key-injector
-        # to send ctrl+v afterwards, so we still need xdotool or wtype.
-        if self.which("xdotool"):
-            return "xdotool"
-        if self.which("wtype"):
-            return "wtype"
-        return None
+        candidates = self._candidate_backends()
+        return candidates[0] if candidates else None
+
+    def _type_with_backend(
+        self,
+        backend: str,
+        text: str,
+        submit_key: str | None,
+    ) -> None:
+        if backend == "xdotool":
+            self._call(["xdotool", "type", "--delay", "5", "--clearmodifiers", "--", text])
+            if submit_key:
+                self._call(["xdotool", "key", "--clearmodifiers", submit_key])
+        elif backend == "wtype":
+            self._call(["wtype", "--", text])
+            if submit_key:
+                self._press_wtype(submit_key)
+        elif backend == "ydotool":
+            self._call(["ydotool", "type", "--", text])
+            if submit_key:
+                self._call(["ydotool", "key", "28:1", "28:0"])  # 28 = KEY_ENTER
+        else:
+            raise InjectorError(f"unreachable: unknown backend {backend!r}")
 
     def type_text(
         self,
@@ -162,42 +202,40 @@ class Injector:
         """
         if not text:
             raise InjectorError("refusing to inject empty text")
-        backend = self.select_backend()
-        if backend is None:
+        backends = self._candidate_backends()
+        if not backends:
             raise InjectorError(
                 "no keyboard injection backend found "
                 "(install xdotool on X11 or wtype/ydotool on Wayland)"
             )
         submit_key = _submit_key_for(ide) if submit else None
+        backend0 = backends[0]
         if dry_run:
             return InjectionResult(
-                backend=backend,
+                backend=backend0,
                 submitted=submit,
                 dry_run=True,
-                output=f"[dry-run] would type {len(text)} chars via {backend}"
+                output=f"[dry-run] would type {len(text)} chars via {backend0}"
                 + (f" then press {submit_key}" if submit_key else ""),
             )
-        if backend == "xdotool":
-            self._call(["xdotool", "type", "--delay", "5", "--clearmodifiers", "--", text])
-            if submit_key:
-                self._call(["xdotool", "key", "--clearmodifiers", submit_key])
-        elif backend == "wtype":
-            self._call(["wtype", "--", text])
-            if submit_key:
-                # wtype uses ``-k`` for key names and lowercase + comma syntax
-                # for chords. ``Return`` works as-is; ``ctrl+Return`` requires
-                # ``-M ctrl -k Return -m ctrl``.
-                self._press_wtype(submit_key)
-        elif backend == "ydotool":
-            # ydotool's ``type`` reads from argv directly.
-            self._call(["ydotool", "type", "--", text])
-            if submit_key:
-                # ydotool key syntax uses ``KEY:1`` press / ``KEY:0`` release.
-                # For the simple ``Return`` case we tap ENTER.
-                self._call(["ydotool", "key", "28:1", "28:0"])  # 28 = KEY_ENTER
-        else:
-            raise InjectorError(f"unreachable: unknown backend {backend!r}")
-        return InjectionResult(backend=backend, submitted=submit)
+        errors: list[str] = []
+        for backend in backends:
+            try:
+                self._type_with_backend(backend, text, submit_key)
+                return InjectionResult(backend=backend, submitted=submit)
+            except InjectorError as exc:
+                errors.append(f"{backend}: {exc}")
+        hint = (
+            " Connect the koru autopilot extension for your IDE (preferred on Wayland), "
+            "or install a working tool: `apt install wtype` (Sway/Hyprland), "
+            "or fix ydotool/uinput per `koru autopilot doctor` / docs/autopilot-quickstart.md. "
+            "Override order with KORU_INJECTOR_BACKEND=wtype|xdotool|ydotool."
+        )
+        raise InjectorError(
+            "all keyboard injection backends failed: "
+            + "; ".join(errors)
+            + hint
+        )
 
     # ----- internals -----------------------------------------------------
 
