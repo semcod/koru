@@ -18,18 +18,21 @@ from pathlib import Path
 from .autopilot import default_socket_path
 from .autopilot.client import AutopilotClient
 from .autopilot.daemon import AutopilotDaemon
+from .autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide
 from .agents import agent_lane_environment
 from .init import init_project, resolve_project_agent_lane
 from .planfile_queue import QueueLoopResult, run_planfile_queue_loop
 from .scan import ScanResult, run_scan
 
 _VALID_AUTOPILOT_IDE = frozenset({"auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"})
+_AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
 
 def _resolve_autopilot_ide(cli_value: str) -> str:
-    """``KORU_AUTOPILOT_IDE`` overrides CLI when set to a known token."""
+    """``KORU_AUTOPILOT_IDE`` overrides CLI when set to a specific IDE (not 'auto')."""
     raw = os.environ.get("KORU_AUTOPILOT_IDE", "").strip().lower()
-    if raw in _VALID_AUTOPILOT_IDE:
+    # env 'auto' should not override explicit CLI value
+    if raw in _VALID_AUTOPILOT_IDE and raw != "auto":
         return raw
     return cli_value
 
@@ -132,11 +135,28 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Disable autopilot drive step.",
     )
     up.add_argument(
+        "--no-serve",
+        dest="enable_serve",
+        action="store_false",
+        help="Compatibility flag; serve mode was removed from autonomous up.",
+    )
+    up.add_argument(
+        "--keep-waiting-input",
+        dest="stop_on_waiting_input",
+        action="store_false",
+        help="Continue autonomous loop even when queue status is waiting_input.",
+    )
+    up.add_argument(
         "--force-init",
         action="store_true",
         help="Force `koru --init` re-initialization if project is already initialized.",
     )
-    up.set_defaults(submit=True, enable_autopilot=True)
+    up.set_defaults(
+        submit=True,
+        enable_autopilot=True,
+        enable_serve=True,
+        stop_on_waiting_input=True,
+    )
 
     return parser
 
@@ -215,15 +235,18 @@ def _run_cycle(
 
     autopilot_status = "skipped"
     if enable_autopilot and client is not None:
-        reply = client.drive(drive_prompt, submit=submit, ide=autopilot_ide)
-        ok = bool(reply.get("ok", True))
-        autopilot_status = "ok" if ok else "failed"
-        if ok:
-            backend = reply.get("backend", "?")
-            print(f"  autopilot: ok (ide={autopilot_ide}, backend={backend})")
+        if queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES:
+            print(f"  autopilot: skipped (queue_status={queue_result.last_status})")
         else:
-            message = reply.get("message", "unknown error")
-            print(f"  autopilot: failed ({message})")
+            reply = client.drive(drive_prompt, submit=submit, ide=autopilot_ide)
+            ok = bool(reply.get("ok", True))
+            autopilot_status = "ok" if ok else "failed"
+            if ok:
+                backend = reply.get("backend", "?")
+                print(f"  autopilot: ok (ide={autopilot_ide}, backend={backend})")
+            else:
+                message = reply.get("message", "unknown error")
+                print(f"  autopilot: failed ({message})")
 
     print(
         f"koru autonomous: cycle={cycle} queue={queue_result.last_status} "
@@ -259,6 +282,10 @@ def _action_up(args: argparse.Namespace) -> int:
     queue_name = None if use_all_queues else args.queue_name
     autopilot_ide = _resolve_autopilot_ide(args.autopilot_ide)
 
+    if args.enable_autopilot and socket_path is not None:
+        plugin_result = install_plugin_for_ide(ide=autopilot_ide, socket_path=socket_path)
+        print(format_plugin_install_result(plugin_result))
+
     cycle = 0
     try:
         while True:
@@ -289,7 +316,7 @@ def _action_up(args: argparse.Namespace) -> int:
                 client, daemon, thread = _start_or_reuse_daemon(
                     project=project, socket_path=socket_path
                 )
-            _run_cycle(
+            _scan_result, queue_result, _autopilot_status = _run_cycle(
                 cycle=cycle,
                 project=project,
                 actor=args.actor,
@@ -302,6 +329,16 @@ def _action_up(args: argparse.Namespace) -> int:
                 submit=args.submit,
                 client=client,
             )
+
+            if (
+                args.stop_on_waiting_input
+                and queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES
+            ):
+                print(
+                    "koru autonomous: queue is waiting_input; stopping until "
+                    "human/manual ticket recovery marks it ready or done"
+                )
+                return 0
 
             if args.max_cycles > 0 and cycle >= args.max_cycles:
                 print(f"koru autonomous: reached max-cycles={args.max_cycles}; stopping")
