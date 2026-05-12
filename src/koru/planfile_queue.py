@@ -390,13 +390,27 @@ def _parse_next_ticket(stdout: str) -> dict | None:
     if isinstance(payload, dict):
         return payload
     if isinstance(payload, list):
-        # planfile ticket list returns oldest-first; treat the first
-        # entry whose status is open / ready / todo as runnable.
+        # planfile ticket list returns oldest-first; sort by priority
+        # then treat the first entry whose status is open / ready / todo as runnable.
         runnable_states = {None, "open", "ready", "todo"}
-        for entry in payload:
-            if isinstance(entry, dict) and entry.get("status") in runnable_states:
-                return entry
-        return None
+        priority_order = {"critical": 0, "high": 1, "normal": 2, "low": 3}
+        
+        # Filter runnable tickets first
+        runnable_tickets = [
+            entry for entry in payload
+            if isinstance(entry, dict) and entry.get("status") in runnable_states
+        ]
+        
+        if not runnable_tickets:
+            return None
+            
+        # Sort by priority (critical first), then by creation date as tiebreaker
+        runnable_tickets.sort(key=lambda t: (
+            priority_order.get(t.get("priority", "normal"), 2),
+            t.get("created_at", "")
+        ))
+        
+        return runnable_tickets[0]
     return None
 
 
