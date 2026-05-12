@@ -403,7 +403,9 @@ function renderTopology(topo) {
   }).join("");
   const savedNote = topo.exists
     ? `<span class="pill ok">persisted</span>`
-    : `<span class="pill">defaults only — first edit creates ${esc(topo.path || ".koru/topology.yaml")}</span>`;
+    : `<span class="pill">defaults only — first edit creates ${
+        esc(topo.path || ".koru/topology.yaml")
+      }</span>`;
   const body = `
     <div style="margin-bottom:12px">${savedNote}
       <span class="muted" style="margin-left:8px">
@@ -429,7 +431,11 @@ function renderTopology(topo) {
 
 function renderRuntimeContext(runtime) {
   if (!runtime || runtime.error) {
-    return panel("Runtime context", `<div class="muted">${esc((runtime && runtime.error) || "not available")}</div>`, true);
+    return panel(
+      "Runtime context",
+      `<div class="muted">${esc((runtime && runtime.error) || "not available")}</div>`,
+      true,
+    );
   }
   const summary = runtime.summary || {};
   const enabled = ((runtime.config || {}).enabled) || {};
@@ -548,7 +554,9 @@ async function refresh() {
     if (!topoRes.ok) throw new Error("HTTP " + topoRes.status);
     const ctx = await ctxRes.json();
     const topo = await topoRes.json();
-    const runtime = runtimeRes.ok ? await runtimeRes.json() : {error: "runtime context unavailable"};
+    const runtime = runtimeRes.ok
+      ? await runtimeRes.json()
+      : { error: "runtime context unavailable" };
     $("project").textContent = ctx.project || "?";
     $("ts").textContent = new Date().toLocaleTimeString();
     const root = $("root");
@@ -733,7 +741,13 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
                     if not result.found:
                         errors.append(f"unknown component: {component_id!r}")
                         continue
-                    applied.append({"kind": "component", "id": result.id, "enabled": result.current})
+                    applied.append(
+                        {
+                            "kind": "component",
+                            "id": result.id,
+                            "enabled": result.current,
+                        }
+                    )
 
                 for pipeline_id, enabled in pipelines.items():
                     if not isinstance(enabled, bool):
@@ -743,10 +757,19 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
                     if not result.found:
                         errors.append(f"unknown pipeline: {pipeline_id!r}")
                         continue
-                    applied.append({"kind": "pipeline", "id": result.id, "enabled": result.current})
+                    applied.append(
+                        {
+                            "kind": "pipeline",
+                            "id": result.id,
+                            "enabled": result.current,
+                        }
+                    )
 
                 if errors:
-                    self._send_json({"error": "invalid topology update", "details": errors}, status=400)
+                    self._send_json(
+                        {"error": "invalid topology update", "details": errors},
+                        status=400,
+                    )
                     return
 
                 saved = save_topology(config.project, topo)
@@ -764,8 +787,14 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
                     )
                     current = load_runtime_context_config(config.project)
                     merged = {
-                        "enabled": {**(current.get("enabled") or {}), **(body.get("enabled") or {})},
-                        "overrides": {**(current.get("overrides") or {}), **(body.get("overrides") or {})},
+                        "enabled": {
+                            **(current.get("enabled") or {}),
+                            **(body.get("enabled") or {}),
+                        },
+                        "overrides": {
+                            **(current.get("overrides") or {}),
+                            **(body.get("overrides") or {}),
+                        },
                     }
                     saved_config = save_runtime_context_config(config.project, merged)
                 except Exception as exc:  # pragma: no cover — optional planfile integration

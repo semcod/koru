@@ -7,8 +7,9 @@ import asyncio
 import json
 import shlex
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from .agents import (
     detect_agent_options,
@@ -19,9 +20,11 @@ from .agents import (
 from .autopilot.cli_command import autopilot_main
 from .bootstrap import import_flat_pipeline
 from .context import build_context, render_markdown_handoff
-from .doctor import render_text as render_doctor_text, run_diagnostics
+from .doctor import render_text as render_doctor_text
+from .doctor import run_diagnostics
 from .events import emit_management_event
-from .gate import VALID_MODES as GATE_VALID_MODES, authorize_gate
+from .gate import VALID_MODES as GATE_VALID_MODES
+from .gate import authorize_gate
 from .gc import DEFAULT_KEEP_LAST, DEFAULT_MAX_AGE_DAYS, GC_STATUSES, run_gc
 from .init import init_project
 from .loop import discover_repositories, run_closed_loop
@@ -604,9 +607,13 @@ def _gc_main(argv: list[str]) -> int:
             for c in result.candidates:
                 marker = "✗" if c.ticket_id in result.removed else "·"
                 age = f"{c.age_days:.0f}d" if c.age_days != float("inf") else "??d"
-                print(f"  {marker} {c.ticket_id:<14} {c.status:<10} {age:>6}  {c.name[:60]}")
+                print(
+                    f"  {marker} {c.ticket_id:<14} {c.status:<10} {age:>6}  "
+                    f"{c.name[:60]}"
+                )
             if result.removed:
-                print(f"\n  → {'Would remove' if result.dry_run else 'Removed'}: {len(result.removed)} ticket(s)")
+                action = "Would remove" if result.dry_run else "Removed"
+                print(f"\n  → {action}: {len(result.removed)} ticket(s)")
             if result.kept:
                 print(f"  → Kept: {len(result.kept)} ticket(s)")
             if result.archived_to:
@@ -968,7 +975,8 @@ def _build_topology_parser() -> argparse.ArgumentParser:
 def _render_topology_text(topology: dict[str, Any]) -> str:
     lines: list[str] = []
     lines.append(f"koru topology: {topology['project']}")
-    lines.append(f"  config: {topology['path']} ({'present' if topology['exists'] else 'defaults only'})")
+    status = "present" if topology["exists"] else "defaults only"
+    lines.append(f"  config: {topology['path']} ({status})")
     lines.append("")
     lines.append("Components:")
     lines.append(f"  {'id':<12} {'enabled':<7} {'available':<9} {'via':<8} role")

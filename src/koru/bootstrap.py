@@ -94,84 +94,85 @@ def load_flat_pipeline(path: str | Path) -> tuple[dict[str, Any], list[dict[str,
     return header, tasks
 
 
-def validate_flat_pipeline(tasks: list[dict[str, Any]]) -> list[ValidationError]:
-    """Validate a flat pipeline. Returns a list of errors (empty == valid)."""
+def _validate_task(task: dict[str, Any], seen_ids: set[str]) -> list[ValidationError]:
+    """Validate a single task. Returns a list of errors."""
     errors: list[ValidationError] = []
-    seen_ids: set[str] = set()
+    tid = str(task.get("id") or "<missing-id>")
 
-    for task in tasks:
-        tid = str(task.get("id") or "<missing-id>")
+    if "id" not in task:
+        errors.append(ValidationError(tid, "id", "missing"))
+        return errors
+    if tid in seen_ids:
+        errors.append(ValidationError(tid, "id", "duplicate"))
+        return errors
 
-        if "id" not in task:
-            errors.append(ValidationError(tid, "id", "missing"))
-            continue
-        if tid in seen_ids:
-            errors.append(ValidationError(tid, "id", "duplicate"))
-            continue
-        seen_ids.add(tid)
+    # name
+    if not (task.get("name") or task.get("title")):
+        errors.append(ValidationError(tid, "name", "missing (or 'title')"))
 
-        # name
-        if not (task.get("name") or task.get("title")):
-            errors.append(ValidationError(tid, "name", "missing (or 'title')"))
+    # status
+    status = task.get("status", "open")
+    if status not in VALID_STATUSES:
+        errors.append(
+            ValidationError(tid, "status", f"{status!r} not in {sorted(VALID_STATUSES)}")
+        )
 
-        # status
-        status = task.get("status", "open")
-        if status not in VALID_STATUSES:
-            errors.append(
-                ValidationError(tid, "status", f"{status!r} not in {sorted(VALID_STATUSES)}")
+    # priority
+    priority = task.get("priority", "normal")
+    if isinstance(priority, str) and priority not in VALID_PRIORITIES:
+        errors.append(
+            ValidationError(
+                tid, "priority", f"{priority!r} not in {sorted(VALID_PRIORITIES)}"
             )
+        )
 
-        # priority
-        priority = task.get("priority", "normal")
-        if isinstance(priority, str) and priority not in VALID_PRIORITIES:
-            errors.append(
-                ValidationError(
-                    tid, "priority", f"{priority!r} not in {sorted(VALID_PRIORITIES)}"
-                )
-            )
-
-        # executor
-        executor = task.get("executor")
-        if not isinstance(executor, dict):
-            errors.append(ValidationError(tid, "executor", "missing or not a mapping"))
-        else:
-            kind = executor.get("kind")
-            if kind not in VALID_EXECUTOR_KINDS:
-                errors.append(
-                    ValidationError(
-                        tid, "executor.kind", f"{kind!r} not in {sorted(VALID_EXECUTOR_KINDS)}"
-                    )
-                )
-            mode = executor.get("mode", "automatic")
-            if mode not in VALID_EXECUTOR_MODES:
-                errors.append(
-                    ValidationError(
-                        tid, "executor.mode", f"{mode!r} not in {sorted(VALID_EXECUTOR_MODES)}"
-                    )
-                )
-
-        # execution.state
-        execution = task.get("execution") or {}
-        state = execution.get("state", "pending")
-        if state not in VALID_EXECUTION_STATES:
+    # executor
+    executor = task.get("executor")
+    if not isinstance(executor, dict):
+        errors.append(ValidationError(tid, "executor", "missing or not a mapping"))
+    else:
+        kind = executor.get("kind")
+        if kind not in VALID_EXECUTOR_KINDS:
             errors.append(
                 ValidationError(
-                    tid, "execution.state", f"{state!r} not in {sorted(VALID_EXECUTION_STATES)}"
+                    tid, "executor.kind", f"{kind!r} not in {sorted(VALID_EXECUTOR_KINDS)}"
+                )
+            )
+        mode = executor.get("mode", "automatic")
+        if mode not in VALID_EXECUTOR_MODES:
+            errors.append(
+                ValidationError(
+                    tid, "executor.mode", f"{mode!r} not in {sorted(VALID_EXECUTOR_MODES)}"
                 )
             )
 
-        # blocked_by must be list[str]
-        blocked_by = task.get("blocked_by", []) or []
-        if not isinstance(blocked_by, list):
-            errors.append(ValidationError(tid, "blocked_by", "must be a list"))
-        else:
-            for dep in blocked_by:
-                if not isinstance(dep, str):
-                    errors.append(
-                        ValidationError(tid, "blocked_by", f"non-string entry: {dep!r}")
-                    )
+    # execution.state
+    execution = task.get("execution") or {}
+    state = execution.get("state", "pending")
+    if state not in VALID_EXECUTION_STATES:
+        errors.append(
+            ValidationError(
+                tid, "execution.state", f"{state!r} not in {sorted(VALID_EXECUTION_STATES)}"
+            )
+        )
 
-    # Cross-task validation: all blocked_by references resolve, no cycles
+    # blocked_by must be list[str]
+    blocked_by = task.get("blocked_by", []) or []
+    if not isinstance(blocked_by, list):
+        errors.append(ValidationError(tid, "blocked_by", "must be a list"))
+    else:
+        for dep in blocked_by:
+            if not isinstance(dep, str):
+                errors.append(
+                    ValidationError(tid, "blocked_by", f"non-string entry: {dep!r}")
+                )
+
+    return errors
+
+
+def _validate_cross_task_dependencies(tasks: list[dict[str, Any]]) -> list[ValidationError]:
+    """Validate cross-task dependencies (blocked_by references and cycles)."""
+    errors: list[ValidationError] = []
     ids = {str(t.get("id")) for t in tasks if t.get("id")}
     for task in tasks:
         tid = str(task.get("id") or "")
@@ -185,6 +186,22 @@ def validate_flat_pipeline(tasks: list[dict[str, Any]]) -> list[ValidationError]
         errors.append(
             ValidationError(cycle[0], "blocked_by", f"cycle detected: {' → '.join(cycle)}")
         )
+    return errors
+
+
+def validate_flat_pipeline(tasks: list[dict[str, Any]]) -> list[ValidationError]:
+    """Validate a flat pipeline. Returns a list of errors (empty == valid)."""
+    errors: list[ValidationError] = []
+    seen_ids: set[str] = set()
+
+    for task in tasks:
+        task_errors = _validate_task(task, seen_ids)
+        errors.extend(task_errors)
+        if task.get("id"):
+            seen_ids.add(str(task.get("id")))
+
+    # Cross-task validation: all blocked_by references resolve, no cycles
+    errors.extend(_validate_cross_task_dependencies(tasks))
     return errors
 
 

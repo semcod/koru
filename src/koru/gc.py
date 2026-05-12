@@ -214,6 +214,86 @@ def collect_gc_candidates(
     return candidates
 
 
+def _apply_keep_last(
+    candidates: list[GcCandidate],
+    keep_last: int,
+    kept_ids: list[str],
+) -> list[GcCandidate]:
+    """Apply keep_last logic to filter candidates.
+    
+    Returns list of candidates that can be removed.
+    """
+    if keep_last <= 0:
+        return list(candidates)
+    
+    to_remove: list[GcCandidate] = []
+    by_status: dict[str, list[GcCandidate]] = {}
+    for c in candidates:
+        by_status.setdefault(c.status, []).append(c)
+    for status, group in by_status.items():
+        # group is sorted oldest-first; the last keep_last are newest
+        removable = group[:-keep_last] if len(group) > keep_last else []
+        protected = group[-keep_last:] if len(group) > keep_last else group
+        to_remove.extend(removable)
+        kept_ids.extend(c.ticket_id for c in protected)
+    return to_remove
+
+
+def _archive_tickets_before_delete(
+    to_remove: list[GcCandidate],
+    project: Path,
+    sprint: str,
+) -> str | None:
+    """Archive tickets before deletion.
+    
+    Returns archive file path if any tickets were archived, None otherwise.
+    """
+    all_tickets = _load_tickets_from_sprint(project, sprint)
+    remove_ids = {c.ticket_id for c in to_remove}
+    tickets_to_archive = [t for t in all_tickets if t.get("id") in remove_ids]
+    if tickets_to_archive:
+        return _archive_tickets(tickets_to_archive, project)
+    return None
+
+
+def _delete_tickets(
+    to_remove: list[GcCandidate],
+    project: Path,
+    planfile_runner: Callable | None,
+) -> tuple[list[str], list[str], list[str]]:
+    """Delete tickets via planfile CLI.
+    
+    Returns tuple of (removed_ids, kept_ids, errors).
+    """
+    removed_ids: list[str] = []
+    kept_ids: list[str] = []
+    errors: list[str] = []
+    remove_ids_list = [c.ticket_id for c in to_remove]
+    
+    proc = _run_planfile(
+        ["ticket", "delete", "--force", *remove_ids_list],
+        project,
+        runner=planfile_runner,
+    )
+    if proc.returncode == 0:
+        removed_ids = remove_ids_list
+    else:
+        # If bulk delete failed, try one by one
+        for tid in remove_ids_list:
+            proc = _run_planfile(
+                ["ticket", "delete", "--force", tid],
+                project,
+                runner=planfile_runner,
+            )
+            if proc.returncode == 0:
+                removed_ids.append(tid)
+            else:
+                errors.append(f"{tid}: {(proc.stderr or '').strip()[:200]}")
+                kept_ids.append(tid)
+    
+    return removed_ids, kept_ids, errors
+
+
 def run_gc(
     project: Path,
     *,
@@ -263,19 +343,7 @@ def run_gc(
         return result
 
     # Apply keep_last: per status, protect the N most recent tickets.
-    to_remove: list[GcCandidate] = []
-    if keep_last > 0:
-        by_status: dict[str, list[GcCandidate]] = {}
-        for c in candidates:
-            by_status.setdefault(c.status, []).append(c)
-        for status, group in by_status.items():
-            # group is sorted oldest-first; the last keep_last are newest
-            removable = group[:-keep_last] if len(group) > keep_last else []
-            protected = group[-keep_last:] if len(group) > keep_last else group
-            to_remove.extend(removable)
-            result.kept.extend(c.ticket_id for c in protected)
-    else:
-        to_remove = list(candidates)
+    to_remove = _apply_keep_last(candidates, keep_last, result.kept)
 
     if not to_remove:
         result.kept = [c.ticket_id for c in candidates]
@@ -291,36 +359,16 @@ def run_gc(
 
     # Archive before delete
     if archive:
-        all_tickets = _load_tickets_from_sprint(project, sprint)
-        remove_ids = {c.ticket_id for c in to_remove}
-        tickets_to_archive = [t for t in all_tickets if t.get("id") in remove_ids]
-        if tickets_to_archive:
-            result.archived_to = _archive_tickets(tickets_to_archive, project)
+        result.archived_to = _archive_tickets_before_delete(to_remove, project, sprint)
 
     # Delete via planfile CLI
-    remove_ids_list = [c.ticket_id for c in to_remove]
-    proc = _run_planfile(
-        ["ticket", "delete", "--force", *remove_ids_list],
-        project,
-        runner=planfile_runner,
-    )
-    if proc.returncode == 0:
-        result.removed = remove_ids_list
-        result.kept = [
-            c.ticket_id for c in candidates if c.ticket_id not in set(remove_ids_list)
-        ]
-    else:
-        # If bulk delete failed, try one by one
-        for tid in remove_ids_list:
-            proc = _run_planfile(
-                ["ticket", "delete", "--force", tid],
-                project,
-                runner=planfile_runner,
-            )
-            if proc.returncode == 0:
-                result.removed.append(tid)
-            else:
-                result.errors.append(f"{tid}: {(proc.stderr or '').strip()[:200]}")
-                result.kept.append(tid)
+    removed_ids, kept_ids, errors = _delete_tickets(to_remove, project, planfile_runner)
+    result.removed = removed_ids
+    result.kept.extend(kept_ids)
+    result.errors = errors
+    # Update kept list to include all candidates that weren't removed
+    result.kept = [
+        c.ticket_id for c in candidates if c.ticket_id not in set(removed_ids)
+    ]
 
     return result

@@ -39,19 +39,51 @@ TOPOLOGY_FILENAME = "topology.yaml"
 # Each component maps to a semcod_tools id when applicable. ``kind`` is a
 # free-form label rendered in the dashboard ("cli" / "library" / "service").
 _DEFAULT_COMPONENTS: dict[str, dict[str, Any]] = {
-    "regix":    {"enabled": True,  "kind": "cli",     "role": "regression metrics gate"},
-    "testql":   {"enabled": True,  "kind": "cli",     "role": "behavioural HTTP probes / autonomy loop"},
-    "wup":      {"enabled": True,  "kind": "cli",     "role": "intelligent file watcher / on-change router"},
-    "redup":    {"enabled": True,  "kind": "cli",     "role": "duplicate / redundancy detection"},
-    "redsl":    {"enabled": False, "kind": "cli",     "role": "redundancy slicer (semantic dedup)"},
-    "sumr":     {"enabled": False, "kind": "cli",     "role": "weekly project summary refresh"},
-    "vallm":    {"enabled": False, "kind": "cli",     "role": "LLM-as-judge semantic validation"},
-    "goal":     {"enabled": False, "kind": "cli",     "role": "strategic goal alignment"},
-    "pfix":     {"enabled": False, "kind": "cli",     "role": "self-healing Python auto-fix"},
-    "costs":    {"enabled": False, "kind": "cli",     "role": "AI cost tracking + badge"},
-    "rebuild":  {"enabled": False, "kind": "cli",     "role": "git history walker / quality replay"},
-    "planfile": {"enabled": True,  "kind": "cli",     "role": "ticket lifecycle (source of truth)"},
-    "koru":     {"enabled": True,  "kind": "cli",     "role": "closed-loop automation orchestrator"},
+    "regix": {"enabled": True, "kind": "cli", "role": "regression metrics gate"},
+    "testql": {
+        "enabled": True,
+        "kind": "cli",
+        "role": "behavioural HTTP probes / autonomy loop",
+    },
+    "wup": {
+        "enabled": True,
+        "kind": "cli",
+        "role": "intelligent file watcher / on-change router",
+    },
+    "redup": {
+        "enabled": True,
+        "kind": "cli",
+        "role": "duplicate / redundancy detection",
+    },
+    "redsl": {
+        "enabled": False,
+        "kind": "cli",
+        "role": "redundancy slicer (semantic dedup)",
+    },
+    "sumr": {"enabled": False, "kind": "cli", "role": "weekly project summary refresh"},
+    "vallm": {
+        "enabled": False,
+        "kind": "cli",
+        "role": "LLM-as-judge semantic validation",
+    },
+    "goal": {"enabled": False, "kind": "cli", "role": "strategic goal alignment"},
+    "pfix": {"enabled": False, "kind": "cli", "role": "self-healing Python auto-fix"},
+    "costs": {"enabled": False, "kind": "cli", "role": "AI cost tracking + badge"},
+    "rebuild": {
+        "enabled": False,
+        "kind": "cli",
+        "role": "git history walker / quality replay",
+    },
+    "planfile": {
+        "enabled": True,
+        "kind": "cli",
+        "role": "ticket lifecycle (source of truth)",
+    },
+    "koru": {
+        "enabled": True,
+        "kind": "cli",
+        "role": "closed-loop automation orchestrator",
+    },
 }
 
 # Pipelines are constellations of components triggered together. ``trigger``
@@ -293,17 +325,37 @@ def _toggle(
     bucket = topology.setdefault(section, {})
     entry = bucket.get(target_id)
     if not isinstance(entry, dict):
-        return ToggleResult(id=target_id, kind=section.rstrip("s"), previous=None, current=enabled, found=False)
+        return ToggleResult(
+            id=target_id,
+            kind=section.rstrip("s"),
+            previous=None,
+            current=enabled,
+            found=False,
+        )
     previous = bool(entry.get("enabled", True))
     entry["enabled"] = bool(enabled)
-    return ToggleResult(id=target_id, kind=section.rstrip("s"), previous=previous, current=bool(enabled), found=True)
+    return ToggleResult(
+        id=target_id,
+        kind=section.rstrip("s"),
+        previous=previous,
+        current=bool(enabled),
+        found=True,
+    )
 
 
-def set_component_enabled(topology: dict[str, Any], component_id: str, enabled: bool) -> ToggleResult:
+def set_component_enabled(
+    topology: dict[str, Any],
+    component_id: str,
+    enabled: bool,
+) -> ToggleResult:
     return _toggle(topology, "components", component_id, enabled)
 
 
-def set_pipeline_enabled(topology: dict[str, Any], pipeline_id: str, enabled: bool) -> ToggleResult:
+def set_pipeline_enabled(
+    topology: dict[str, Any],
+    pipeline_id: str,
+    enabled: bool,
+) -> ToggleResult:
     return _toggle(topology, "pipelines", pipeline_id, enabled)
 
 

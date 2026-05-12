@@ -6,13 +6,12 @@ import io
 import json
 import shutil
 import subprocess
-import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
 
-from koru.cli import _build_parser, _is_bare_invocation, _SUBCOMMANDS, main
+from koru.cli import _SUBCOMMANDS, _build_parser, _is_bare_invocation, main
 
 
 def _tmp_git_project(prefix: str = "koru-cli-test-") -> Path:
@@ -185,7 +184,13 @@ class TestTopologySubcommand(unittest.TestCase):
         code1, _ = _run_main("topology", "--project", str(self.project), "--disable", "regix")
         self.assertEqual(code1, 0)
 
-        code2, output2 = _run_main("topology", "--project", str(self.project), "--is-enabled", "regix")
+        code2, output2 = _run_main(
+            "topology",
+            "--project",
+            str(self.project),
+            "--is-enabled",
+            "regix",
+        )
         self.assertEqual(code2, 1)
         self.assertEqual(output2.strip(), "false")
 
