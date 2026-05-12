@@ -473,6 +473,23 @@ def _scan_jscpd_report(project: Path) -> list[Suggestion]:
     ]
 
 
+_TOON_GOD_RE = re.compile(
+    r"^\s*🔴\s+GOD\s+(?P<path>\S+)\s*=\s*(?P<loc>\d+)L,\s*(?P<classes>\d+)\s+classes?,\s*(?P<methods>\d+)m",
+    re.MULTILINE,
+)
+_TOON_CC_RE = re.compile(
+    r"^\s*🟡\s+CC\s+(?P<func>\S+)\s+CC=(?P<cc>\d+)\s+\(limit:\s*(?P<limit>\d+)\)",
+    re.MULTILINE,
+)
+_TOON_DUP_RE = re.compile(
+    r"^\s*🔴\s+DUP\s+(?P<count>\d+)\s+classes?\s+duplicated",
+    re.MULTILINE,
+)
+_TOON_REFACTOR_ITEM_RE = re.compile(
+    r"^\s*(?P<num>\d+)\.\s+(?P<desc>.+?)\s*\((?P<note>[^)]+)\)\s*$"
+)
+
+
 def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
     candidates = (
         project / "project" / "analysis.toon.yaml",
@@ -483,28 +500,105 @@ def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
     if path is None:
         return []
     try:
-        lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+        text = path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
         return []
-    god = sum(1 for ln in lines if "🔴 GOD" in ln)
-    critical = sum(1 for ln in lines if "🔴" in ln)
-    if god < 1 and critical < 8:
-        return []
     rel = str(path.relative_to(project))
-    pr = "high" if god >= 3 else "normal"
-    return [
-        Suggestion(
-            signal="code2llm_analysis",
-            title="Execute code2llm REFACTOR plan (god modules / critical)",
-            description=(
-                f"`{rel}` lists ~{god} god-module rows and {critical} critical (🔴) markers. "
-                "Work through the REFACTOR section; re-run `code2llm ./ -f toon` to refresh."
-            ),
-            priority=pr,
-            labels=("code2llm", "refactor", "scan"),
-            files=(rel,),
+
+    suggestions: list[Suggestion] = []
+
+    # --- HEALTH: DUP ---
+    dup_match = _TOON_DUP_RE.search(text)
+    if dup_match:
+        count = int(dup_match.group("count"))
+        suggestions.append(
+            Suggestion(
+                signal="code2llm_dup",
+                title=f"Remove {count} duplicated classes (code2llm analysis)",
+                description=(
+                    f"`{rel}` reports **{count}** duplicated classes. "
+                    "Extract shared helpers/modules; re-run `code2llm ./ -f toon` to refresh."
+                ),
+                priority="high",
+                labels=("code2llm", "duplication", "refactor", "scan"),
+                files=(rel,),
+            )
         )
-    ]
+
+    # --- HEALTH: GOD modules ---
+    for m in _TOON_GOD_RE.finditer(text):
+        file_path = m.group("path").strip()
+        loc = m.group("loc")
+        classes = m.group("classes")
+        methods = m.group("methods")
+        suggestions.append(
+            Suggestion(
+                signal="code2llm_god",
+                title=f"Split god module: {file_path}",
+                description=(
+                    f"`{rel}` flags `{file_path}` as a god module "
+                    f"({loc} lines, {classes} classes, {methods} methods). "
+                    "Split into focused submodules by responsibility."
+                ),
+                priority="high",
+                labels=("code2llm", "god-module", "refactor", "scan"),
+                files=(file_path, rel),
+            )
+        )
+
+    # --- HEALTH: high-CC methods ---
+    cc_seen: set[str] = set()
+    for m in _TOON_CC_RE.finditer(text):
+        func = m.group("func").strip()
+        cc = int(m.group("cc"))
+        limit = int(m.group("limit"))
+        if func in cc_seen:
+            continue
+        cc_seen.add(func)
+        suggestions.append(
+            Suggestion(
+                signal="code2llm_cc",
+                title=f"Reduce cyclomatic complexity: {func} (CC={cc}, limit={limit})",
+                description=(
+                    f"`{rel}` reports `{func}` with CC={cc} (limit={limit}). "
+                    "Extract sub-functions, simplify conditionals, or split into strategy pattern."
+                ),
+                priority="normal",
+                labels=("code2llm", "complexity", "refactor", "scan"),
+                files=(rel,),
+            )
+        )
+
+    # --- REFACTOR plan items ---
+    in_refactor = False
+    for line in text.splitlines():
+        if line.startswith("REFACTOR"):
+            in_refactor = True
+            continue
+        if in_refactor and line.startswith(("HEALTH", "PIPELINES", "LAYERS")):
+            break
+        if not in_refactor:
+            continue
+        rm = _TOON_REFACTOR_ITEM_RE.match(line)
+        if not rm:
+            continue
+        desc = rm.group("desc").strip()
+        note = rm.group("note").strip()
+        suggestions.append(
+            Suggestion(
+                signal="code2llm_refactor",
+                title=f"code2llm refactor: {desc}",
+                description=(
+                    f"REFACTOR item from `{rel}`: **{desc}** ({note}). "
+                    "Execute this refactor step; re-run `code2llm ./ -f toon` to verify."
+                ),
+                priority="normal",
+                labels=("code2llm", "refactor", "scan"),
+                files=(rel,),
+            )
+        )
+
+    return suggestions
 
 
 def _scan_testql_export(project: Path) -> list[Suggestion]:

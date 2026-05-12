@@ -370,11 +370,47 @@ class TestScanSemcodArtifacts(unittest.TestCase):
             project = Path(tmp)
             (project / "project").mkdir()
             (project / "project" / "analysis.toon.yaml").write_text(
-                "HEALTH:\n  🔴 GOD   big.py = 900L\n",
+                "HEALTH[1]:\n  🔴 GOD   big.py = 900L, 5 classes, 16m, max CC=11\n",
                 encoding="utf-8",
             )
             out = scan_semcod_quality_artifacts(project)
-            self.assertTrue(any(s.signal == "code2llm_analysis" for s in out))
+            self.assertTrue(any(s.signal == "code2llm_god" for s in out))
+
+    def test_code2llm_analysis_emits_dup_ticket(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "project").mkdir()
+            (project / "project" / "analysis.toon.yaml").write_text(
+                "HEALTH[1]:\n  🔴 DUP   28 classes duplicated\n",
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            self.assertTrue(any(s.signal == "code2llm_dup" for s in out))
+
+    def test_code2llm_analysis_emits_cc_ticket(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "project").mkdir()
+            (project / "project" / "analysis.toon.yaml").write_text(
+                "HEALTH[1]:\n  🟡 CC    my_func CC=18 (limit:15)\n",
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            self.assertTrue(any(s.signal == "code2llm_cc" for s in out))
+
+    def test_code2llm_analysis_emits_refactor_items(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "project").mkdir()
+            (project / "project" / "analysis.toon.yaml").write_text(
+                "REFACTOR[2]:\n"
+                "  1. rm duplicates  (-28 dup classes)\n"
+                "  2. split big.py  (god module)\n",
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            refactor_tickets = [s for s in out if s.signal == "code2llm_refactor"]
+            self.assertEqual(len(refactor_tickets), 2)
 
     def test_testql_export_emits_when_many_failures(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

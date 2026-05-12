@@ -159,11 +159,28 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Force `koru --init` re-initialization if project is already initialized.",
     )
+    up.add_argument(
+        "--semcod-artifacts",
+        action="store_true",
+        default=None,
+        help=(
+            "Include semcod quality artifacts in `koru scan` "
+            "(jscpd, code2llm/SUMR refactor analysis, testql export, redup). "
+            "Enabled by default in autonomous mode."
+        ),
+    )
+    up.add_argument(
+        "--no-semcod-artifacts",
+        dest="semcod_artifacts",
+        action="store_false",
+        help="Disable semcod artifact scanning.",
+    )
     up.set_defaults(
         submit=True,
         enable_autopilot=True,
         enable_serve=True,
         stop_on_waiting_input=True,
+        semcod_artifacts=True,
     )
 
     return parser
@@ -217,12 +234,15 @@ def _run_cycle(
     autopilot_ide: str,
     drive_prompt: str,
     submit: bool,
+    include_semcod_artifacts: bool | None,
     client: AutopilotClient | None,
 ) -> tuple[ScanResult | None, QueueLoopResult, str]:
     scan_result: ScanResult | None = None
     if enable_scan:
-        print("+ koru scan --apply")
-        scan_result = run_scan(project=project, apply=True)
+        print("+ koru scan --apply" + (" --semcod-artifacts" if include_semcod_artifacts else ""))
+        scan_result = run_scan(
+            project=project, apply=True, include_semcod_artifacts=include_semcod_artifacts
+        )
         print(
             f"  scan: suggestions={len(scan_result.suggestions)} "
             f"applied={len(scan_result.applied)} skipped={len(scan_result.skipped)}"
@@ -340,6 +360,7 @@ def _action_up(args: argparse.Namespace) -> int:
                 autopilot_ide=autopilot_ide,
                 drive_prompt=args.drive_prompt,
                 submit=args.submit,
+                include_semcod_artifacts=args.semcod_artifacts,
                 client=client,
             )
 

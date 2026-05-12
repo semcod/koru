@@ -258,6 +258,7 @@ def test_run_cycle_skips_autopilot_when_queue_waits_for_input(
         autopilot_ide="auto",
         drive_prompt="continue with the next ticket",
         submit=True,
+        include_semcod_artifacts=True,
         client=FailIfDrivenClient(),
     )
 
