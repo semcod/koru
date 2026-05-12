@@ -52,6 +52,16 @@ fight each other:
 
 ```bash
 koru autopilot doctor
+koru autopilot doctor --fix
+```
+
+If you want guided host remediation (including optional apt auto-install
+for missing `xdotool`/`wtype`/`ydotool` on Debian/Ubuntu), run:
+
+```bash
+koru autopilot setup-host
+koru autopilot setup-host --install --dry-run
+koru autopilot setup-host --install
 ```
 
 Expected output looks like:
@@ -296,7 +306,12 @@ koru autopilot drive --ide jetbrains 'z'   # force target IDE
 koru autopilot status                # daemon health + connected plugins
 koru autopilot ide-list              # IDEs detected on /proc
 koru autopilot doctor                # backend availability
+koru autopilot doctor --fix          # print guided next steps
 koru autopilot doctor --format json  # machine-readable
+
+koru autopilot setup-host            # guided host readiness report
+koru autopilot setup-host --install --dry-run
+koru autopilot setup-host --install
 
 koru autopilot shutdown              # ask the daemon to stop
 

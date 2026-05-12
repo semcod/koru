@@ -98,6 +98,72 @@ def test_doctor_json_output(capsys: pytest.CaptureFixture[str], monkeypatch: pyt
     assert payload["focused_ide"] == "windsurf"
 
 
+def test_doctor_fix_text_output(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch) -> None:
+    class _FakeInjector:
+        session = "wayland"
+
+        def probe(self):
+            from koru.autopilot.injector import BackendStatus
+            return [BackendStatus(name="ydotool", available=True, reason="/usr/bin/ydotool")]
+
+        def select_backend(self) -> str:
+            return "ydotool"
+
+    monkeypatch.setattr(cli_command, "Injector", _FakeInjector)
+    monkeypatch.setattr(cli_command, "detect_running_ides", lambda: [])
+    monkeypatch.setattr(cli_command, "detect_focused_ide_id", lambda: None)
+    monkeypatch.setattr(
+        cli_command,
+        "_doctor_fix_payload",
+        lambda: {
+            "commands": ["koru autopilot setup-host"],
+            "automated_apt_suggestion": "sudo apt-get install -y wtype",
+            "human_actions_required": ["Relogin after adding input group."],
+        },
+    )
+
+    rc = autopilot_main(["doctor", "--fix"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "next steps (guided fix):" in out
+    assert "koru autopilot setup-host" in out
+    assert "apt suggestion" in out
+    assert "human actions still required:" in out
+
+
+def test_doctor_fix_json_output(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch) -> None:
+    class _FakeInjector:
+        session = "wayland"
+
+        def probe(self):
+            from koru.autopilot.injector import BackendStatus
+            return [BackendStatus(name="ydotool", available=True, reason="/usr/bin/ydotool")]
+
+        def select_backend(self) -> str:
+            return "ydotool"
+
+    monkeypatch.setattr(cli_command, "Injector", _FakeInjector)
+    monkeypatch.setattr(cli_command, "detect_running_ides", lambda: [])
+    monkeypatch.setattr(cli_command, "detect_focused_ide_id", lambda: None)
+    monkeypatch.setattr(
+        cli_command,
+        "_doctor_fix_payload",
+        lambda: {
+            "commands": ["koru autopilot setup-host --install --dry-run"],
+            "automated_apt_suggestion": None,
+            "human_actions_required": ["Start ydotoold service."],
+        },
+    )
+
+    rc = autopilot_main(["doctor", "--format", "json", "--fix"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["selected_backend"] == "ydotool"
+    assert "fix" in payload
+    assert payload["fix"]["commands"][0] == "koru autopilot setup-host --install --dry-run"
+    assert payload["fix"]["human_actions_required"][0] == "Start ydotoold service."
+
+
 def test_status_when_no_daemon(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
     socket = tmp_path / "missing.sock"
     rc = autopilot_main(["--socket", str(socket), "status"])

@@ -114,6 +114,14 @@ def _build_parser() -> argparse.ArgumentParser:
         default="text",
         help="Output format (default: text).",
     )
+    doctor.add_argument(
+        "--fix",
+        action="store_true",
+        help=(
+            "Show guided remediation and next commands "
+            "(including optional package auto-install)."
+        ),
+    )
 
     setup_host = sub.add_parser(
         "setup-host",
@@ -319,22 +327,39 @@ def _action_ide_list(_args: argparse.Namespace) -> int:
     return 0
 
 
+def _doctor_fix_payload() -> dict[str, object]:
+    """Guided remediation payload reused by text and json outputs."""
+    from .host_setup import build_setup_host_report
+
+    report = build_setup_host_report()
+    return {
+        "commands": [
+            "koru autopilot setup-host",
+            "koru autopilot setup-host --install --dry-run",
+            "koru autopilot setup-host --install",
+        ],
+        "automated_apt_suggestion": report.get("automated_apt_suggestion"),
+        "human_actions_required": report.get("human_actions_required") or [],
+    }
+
+
 def _action_doctor(args: argparse.Namespace) -> int:
     injector = Injector()
     statuses = injector.probe()
     selected = injector.select_backend()
+    fix_payload = _doctor_fix_payload() if args.fix else None
     if args.output_format == "json":
         focused = detect_focused_ide_id()
-        print(json.dumps(
-            {
-                "session": injector.session,
-                "selected_backend": selected,
-                "backends": [s.to_dict() for s in statuses],
-                "ides": [i.to_dict() for i in detect_running_ides()],
-                "focused_ide": focused,
-            },
-            indent=2, sort_keys=True,
-        ))
+        payload = {
+            "session": injector.session,
+            "selected_backend": selected,
+            "backends": [s.to_dict() for s in statuses],
+            "ides": [i.to_dict() for i in detect_running_ides()],
+            "focused_ide": focused,
+        }
+        if fix_payload is not None:
+            payload["fix"] = fix_payload
+        print(json.dumps(payload, indent=2, sort_keys=True))
         return 0
     print(f"session: {injector.session or 'unknown'}")
     print(f"selected backend: {selected or '(none — install xdotool/wtype/ydotool)'}")
@@ -348,6 +373,18 @@ def _action_doctor(args: argparse.Namespace) -> int:
     for ide in ides:
         marker = " [focused]" if focused is not None and ide.id == focused else ""
         print(f"  · {ide.label} (pid={ide.pid}){marker}")
+    if fix_payload is not None:
+        print("\nnext steps (guided fix):")
+        for cmd in fix_payload.get("commands", []):
+            print(f"  - {cmd}")
+        apt_hint = fix_payload.get("automated_apt_suggestion")
+        if isinstance(apt_hint, str) and apt_hint:
+            print(f"  - apt suggestion: {apt_hint}")
+        human_actions = fix_payload.get("human_actions_required")
+        if isinstance(human_actions, list) and human_actions:
+            print("human actions still required:")
+            for line in human_actions:
+                print(f"  - {line}")
     return 0 if selected else 1
 
 

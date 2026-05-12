@@ -1410,6 +1410,11 @@ def _init_main(args: argparse.Namespace) -> int:
             "(sets lane env; optional: source `.planfile/.koru/shell-env.sh` "
             "for other terminals)"
         )
+    if report.autopilot_host_setup_written:
+        next_parts.append(
+            "run `./.planfile/.koru/setup-autopilot-host.sh` "
+            "(or `koru autopilot setup-host`) to check injectors / apt vs human steps"
+        )
     next_parts.extend(
         [
             "run `koru` for the LLM brief",
@@ -1429,6 +1434,7 @@ def _init_main(args: argparse.Namespace) -> int:
             "used_starter_pipeline": report.used_starter_pipeline,
             "agent_lane": report.agent_lane,
             "agent_lane_files_written": report.agent_lane_files_written,
+            "autopilot_host_setup_written": report.autopilot_host_setup_written,
         },
     )
     return 0

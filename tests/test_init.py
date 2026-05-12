@@ -167,10 +167,13 @@ class TestAgentLaneArtifacts(unittest.TestCase):
             report = init_project(project)
             self.assertEqual(report.agent_lane, "local")
             self.assertTrue(report.agent_lane_files_written)
+            self.assertTrue(report.autopilot_host_setup_written)
             rt = runtime_dir(project)
             self.assertTrue((rt / "shell-env.sh").is_file())
             self.assertTrue((rt / "run-autonomous.sh").is_file())
+            self.assertTrue((rt / "setup-autopilot-host.sh").is_file())
             self.assertTrue(os.access(rt / "run-autonomous.sh", os.X_OK))
+            self.assertTrue(os.access(rt / "setup-autopilot-host.sh", os.X_OK))
 
     def test_auto_cursor_when_dot_cursor(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
