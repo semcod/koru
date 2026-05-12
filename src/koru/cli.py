@@ -17,6 +17,7 @@ from .agents import (
     save_agent_prompt,
     select_agent,
 )
+from .autonomous import autonomous_main
 from .autopilot.cli_command import autopilot_main
 from .bootstrap import import_flat_pipeline
 from .context import build_context, render_markdown_handoff
@@ -1147,6 +1148,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "queue": _queue_main,
     "gc": _gc_main,
     "autopilot": autopilot_main,
+    "autonomous": autonomous_main,
     "topology": _topology_main,
     "runtime-context": _runtime_context_main,
 }

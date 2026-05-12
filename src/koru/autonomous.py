@@ -1,0 +1,255 @@
+"""One-command autonomous mode for freshly installed koru.
+
+`koru autonomous up` is meant for the post-`pip install koru` flow:
+bootstrap project if needed, ensure autopilot daemon is available, then
+run a continuous scan + queue + autopilot loop.
+"""
+
+from __future__ import annotations
+
+import argparse
+import threading
+import time
+from pathlib import Path
+
+from .autopilot import default_socket_path
+from .autopilot.client import AutopilotClient
+from .autopilot.daemon import AutopilotDaemon
+from .init import init_project
+from .planfile_queue import QueueLoopResult, run_planfile_queue_loop
+from .scan import ScanResult, run_scan
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru autonomous",
+        description=(
+            "Bootstrap and run koru in autonomous mode: optional init, "
+            "scan intake, queue drain, and autopilot drive loop."
+        ),
+    )
+    parser.add_argument(
+        "--socket",
+        type=Path,
+        default=None,
+        help=f"Autopilot daemon socket path (default: {default_socket_path()}).",
+    )
+    sub = parser.add_subparsers(dest="action", required=True)
+
+    up = sub.add_parser("up", help="Configure and start autonomous loop.")
+    up.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
+    up.add_argument("--actor", default="koru-shell", help="Queue actor id.")
+    up.add_argument(
+        "--queue-name",
+        default="default",
+        help="Execution queue name (ignored when ticket-sources=all).",
+    )
+    up.add_argument(
+        "--ticket-sources",
+        choices=("queue", "scan", "all"),
+        default="all",
+        help=(
+            "queue: only existing queue tickets; scan: add `koru scan --apply`; "
+            "all: scan + all queues."
+        ),
+    )
+    up.add_argument(
+        "--max-iterations",
+        type=int,
+        default=50,
+        help="Max queue tickets per cycle (default: 50).",
+    )
+    up.add_argument(
+        "--max-cycles",
+        type=int,
+        default=0,
+        help="Outer loop cycles (0 = infinite, default).",
+    )
+    up.add_argument(
+        "--sleep-seconds",
+        type=float,
+        default=30.0,
+        help="Sleep between cycles (default: 30s).",
+    )
+    up.add_argument(
+        "--autopilot-ide",
+        default="auto",
+        choices=("auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"),
+        help="IDE target for autopilot drive (default: auto).",
+    )
+    up.add_argument(
+        "--drive-prompt",
+        default="continue with the next ticket",
+        help="Prompt sent in each autopilot drive step.",
+    )
+    up.add_argument(
+        "--no-submit",
+        dest="submit",
+        action="store_false",
+        help="Type prompt but do not press submit key.",
+    )
+    up.add_argument(
+        "--no-autopilot",
+        dest="enable_autopilot",
+        action="store_false",
+        help="Disable autopilot drive step.",
+    )
+    up.add_argument(
+        "--force-init",
+        action="store_true",
+        help="Force `koru --init` re-initialization if project is already initialized.",
+    )
+    up.set_defaults(submit=True, enable_autopilot=True)
+
+    return parser
+
+
+def _ensure_init(project: Path, *, force: bool) -> None:
+    config_path = project / ".planfile" / "config.yaml"
+    if config_path.exists() and not force:
+        return
+    report = init_project(project, force=force)
+    print(f"koru autonomous: init {'re-' if force else ''}done at {report.project}")
+
+
+def _start_or_reuse_daemon(
+    *,
+    project: Path,
+    socket_path: Path,
+) -> tuple[AutopilotClient, AutopilotDaemon | None, threading.Thread | None]:
+    socket_path.parent.mkdir(parents=True, exist_ok=True)
+    probe = AutopilotClient(socket_path=socket_path, timeout=0.5)
+    if probe.is_running():
+        print(f"koru autonomous: reusing autopilot daemon on {socket_path}")
+        return AutopilotClient(socket_path=socket_path), None, None
+
+    daemon = AutopilotDaemon(socket_path=socket_path, project=project, log=print)
+    daemon.start()
+    thread = threading.Thread(target=daemon.serve_forever, daemon=True)
+    thread.start()
+    time.sleep(0.05)
+    print(f"koru autonomous: started autopilot daemon on {socket_path}")
+    return AutopilotClient(socket_path=socket_path), daemon, thread
+
+
+def _effective_flags(ticket_sources: str) -> tuple[bool, bool]:
+    if ticket_sources == "queue":
+        return False, False
+    if ticket_sources == "scan":
+        return True, False
+    return True, True
+
+
+def _run_cycle(
+    *,
+    cycle: int,
+    project: Path,
+    actor: str,
+    queue_name: str | None,
+    enable_scan: bool,
+    max_iterations: int,
+    enable_autopilot: bool,
+    autopilot_ide: str,
+    drive_prompt: str,
+    submit: bool,
+    client: AutopilotClient | None,
+) -> tuple[ScanResult | None, QueueLoopResult, str]:
+    scan_result: ScanResult | None = None
+    if enable_scan:
+        print("+ koru scan --apply")
+        scan_result = run_scan(project=project, apply=True)
+        print(
+            f"  scan: suggestions={len(scan_result.suggestions)} "
+            f"applied={len(scan_result.applied)} skipped={len(scan_result.skipped)}"
+        )
+
+    print(
+        "+ koru --queue --loop "
+        f"--max-iterations {max_iterations}"
+        + (" --all-queues" if queue_name is None else f" --queue-name {queue_name}")
+    )
+    queue_result = run_planfile_queue_loop(
+        project=project,
+        actor=actor,
+        queue_name=queue_name,
+        max_iterations=max_iterations,
+    )
+    print(f"  queue: {queue_result.summary()}")
+
+    autopilot_status = "skipped"
+    if enable_autopilot and client is not None:
+        reply = client.drive(drive_prompt, submit=submit, ide=autopilot_ide)
+        ok = bool(reply.get("ok", True))
+        autopilot_status = "ok" if ok else "failed"
+        if ok:
+            backend = reply.get("backend", "?")
+            print(f"  autopilot: ok (ide={autopilot_ide}, backend={backend})")
+        else:
+            message = reply.get("message", "unknown error")
+            print(f"  autopilot: failed ({message})")
+
+    print(
+        f"koru autonomous: cycle={cycle} queue={queue_result.last_status} "
+        f"autopilot={autopilot_status}"
+    )
+    return scan_result, queue_result, autopilot_status
+
+
+def _action_up(args: argparse.Namespace) -> int:
+    project = args.project.resolve()
+    project.mkdir(parents=True, exist_ok=True)
+    _ensure_init(project, force=args.force_init)
+
+    client: AutopilotClient | None = None
+    daemon: AutopilotDaemon | None = None
+    thread: threading.Thread | None = None
+    if args.enable_autopilot:
+        socket_path = (args.socket or default_socket_path()).resolve()
+        client, daemon, thread = _start_or_reuse_daemon(project=project, socket_path=socket_path)
+
+    enable_scan, use_all_queues = _effective_flags(args.ticket_sources)
+    queue_name = None if use_all_queues else args.queue_name
+
+    cycle = 0
+    try:
+        while True:
+            cycle += 1
+            print(f"\n=== koru autonomous cycle #{cycle} ===")
+            _run_cycle(
+                cycle=cycle,
+                project=project,
+                actor=args.actor,
+                queue_name=queue_name,
+                enable_scan=enable_scan,
+                max_iterations=args.max_iterations,
+                enable_autopilot=args.enable_autopilot,
+                autopilot_ide=args.autopilot_ide,
+                drive_prompt=args.drive_prompt,
+                submit=args.submit,
+                client=client,
+            )
+
+            if args.max_cycles > 0 and cycle >= args.max_cycles:
+                print(f"koru autonomous: reached max-cycles={args.max_cycles}; stopping")
+                return 0
+
+            if args.sleep_seconds > 0:
+                time.sleep(args.sleep_seconds)
+    except KeyboardInterrupt:
+        print("\nkoru autonomous: interrupted")
+        return 0
+    finally:
+        if daemon is not None:
+            daemon.stop()
+        if thread is not None:
+            thread.join(timeout=2.0)
+
+
+def autonomous_main(argv: list[str]) -> int:
+    args = _build_parser().parse_args(argv)
+    if args.action == "up":
+        return _action_up(args)
+    return 2
+
+
+__all__ = ["autonomous_main"]

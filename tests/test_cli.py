@@ -226,6 +226,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "queue",
             "gc",
             "autopilot",
+            "autonomous",
             "topology",
             "runtime-context",
         }

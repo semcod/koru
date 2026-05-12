@@ -359,6 +359,26 @@ Or pipe answers in for scripted runs:
 
 ### Run unattended autoloop (scan + queue + autopilot)
 
+After `pip install koru`, the shortest setup is now one command:
+
+```bash
+cd /path/to/repo
+koru autonomous up
+```
+
+Useful flags:
+
+```bash
+# one-cycle smoke check
+koru autonomous up --max-cycles 1 --sleep-seconds 0
+
+# explicit actor + queue
+koru autonomous up --actor koru-bot --queue-name default
+
+# disable autopilot injection (queue/scan only)
+koru autonomous up --no-autopilot
+```
+
 For terminal-driven autonomy, use the built-in wrapper script via Taskfile:
 
 ```bash
