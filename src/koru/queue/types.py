@@ -52,6 +52,8 @@ class QueueLoopResult:
             f"waiting={len(self.waiting)}",
             f"last_status={self.last_status}",
         ]
+        waiting_ticket = self.waiting[-1] if self.waiting else "none"
+        lines.append(f"waiting_ticket={waiting_ticket}")
         return " ".join(lines)
 
 

@@ -839,6 +839,8 @@ class TestPlanfileQueueLoop(unittest.TestCase):
             self.assertEqual(result.completed, ["L-10"])
             self.assertEqual(result.waiting, ["L-11"])
             self.assertEqual(result.last_status, "waiting_input")
+            self.assertEqual(result.last_ticket_id, "L-11")
+            self.assertEqual(result.ticket_id, "L-11")
             self.assertEqual(result.iterations, 2)  # never_reached not seen
 
     def test_loop_continues_past_failed_ticket(self) -> None:
@@ -924,6 +926,8 @@ class TestPlanfileQueueLoop(unittest.TestCase):
             self.assertEqual(result.iterations, 3)
             self.assertEqual(len(result.completed), 3)
             self.assertEqual(result.last_status, "completed")
+            self.assertEqual(result.last_ticket_id, "L-2")
+            self.assertEqual(result.ticket_id, "L-2")
 
     def test_loop_with_interactive_drains_human_tickets(self) -> None:
         from koru.queue import run_planfile_queue_loop

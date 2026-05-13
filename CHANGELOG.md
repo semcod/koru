@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `koru autonomous up`: `QueueLoopResult` has no `ticket_id` — log line after
+  autopilot `drive` on `waiting_input` now uses the last id from ``waiting``;
+  added `_queue_loop_waiting_ticket_label` helper.
+
 ### Added (autoloop stagnation control)
 - `scripts/koru-autoloop.sh` now detects stagnation (same
   `last_status + waiting_ticket_id` across consecutive cycles) and reacts:
@@ -78,6 +83,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Quality tasks now honor topology gate flags:
   `quality:regix` ↔ `gate:regix`, `quality:redup*` ↔ `gate:redup`,
   `quality:sumr:*` ↔ `gate:sumr`.
+
+## [0.1.73] - 2026-05-13
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Test
+- Update tests/test_planfile_queue.py
+
+### Other
+- Update uv.lock
 
 ## [0.1.72] - 2026-05-13
 

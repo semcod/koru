@@ -222,6 +222,12 @@ def _effective_flags(ticket_sources: str) -> tuple[bool, bool]:
     return True, True
 
 
+def _queue_loop_waiting_ticket_label(queue_result: QueueLoopResult) -> str:
+    """Last ticket id in ``waiting`` (terminal queue state), or ``-`` if unknown."""
+    waiting = getattr(queue_result, "waiting", None) or []
+    return waiting[-1] if waiting else "-"
+
+
 def _run_cycle(
     *,
     cycle: int,
@@ -279,8 +285,7 @@ def _run_cycle(
                 autopilot_status = "ok" if ok else "failed"
                 if ok:
                     backend = reply.get("backend", "?")
-                    waiting = getattr(queue_result, "waiting", None) or []
-                    waiting_ticket = waiting[-1] if waiting else "-"
+                    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
                     print(
                         f"  autopilot: ok (ticket={waiting_ticket}, ide={autopilot_ide}, backend={backend})"
                     )
