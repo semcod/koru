@@ -50,7 +50,7 @@ class AutopilotBridge {
         type: "hello",
         id: "vscode-hello",
         ide: this.detectIde(),
-        version: "0.1.0",
+        version: vscode.extensions.getExtension("semcod.koru-autopilot-vscode")?.packageJSON.version || "unknown",
         pid: process.pid,
       });
     });
