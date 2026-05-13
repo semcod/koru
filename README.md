@@ -4,11 +4,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$2.58-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-37.5h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.80-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$2.18-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-39.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $2.5759 (104 commits)
-- 👤 **Human dev:** ~$3754 (37.5h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $2.1797 (105 commits)
+- 👤 **Human dev:** ~$3899 (39.0h @ $100/h, 30min dedup)
 
 Generated on 2026-05-13 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -77,6 +77,25 @@ koru serve --project . --auto-port --no-open
 
 Use explicit `up` for compatibility (`koru autonomous up --project .`),
 especially when switching between local source checkouts and older PyPI builds.
+
+### Structured stdio (NDJSON / JSON Lines)
+
+`koru autonomous up` defaults to human-readable logs. For **versioned,
+pipe-friendly control-plane records** (CQRS-style commands/events on
+stdout), use:
+
+```bash
+koru autonomous up --project . --max-cycles 1 --sleep-seconds 0 --emit-events jsonl --no-autopilot \
+  2>/dev/null | jq -c .
+```
+
+Or set `KORU_STDIO_FORMAT=jsonl` so the default matches (still overridable
+with `--emit-events human`). In `jsonl` mode, incidental status lines go to
+**stderr** so stdout stays one JSON object per line. JSON Schema:
+`schemas/koru-stdio-event.schema.json`. Event `type` values include
+`SessionStarted`, `CycleStarted`, `ScanCompleted`, `ScanSkipped`,
+`QueueIteration`, `DiagnosticsCompleted`, `WupHealthChanged`,
+`AutopilotDecision`, `CycleCompleted`, and `AutonomousStopped`.
 
 ### Quick troubleshooting
 

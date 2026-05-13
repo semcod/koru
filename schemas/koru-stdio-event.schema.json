@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://koru.dev/schemas/koru-stdio-event.schema.json",
+  "title": "Koru stdio NDJSON event",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["type", "schema_version", "ts", "correlation_id", "payload"],
+  "properties": {
+    "type": { "type": "string", "minLength": 1 },
+    "schema_version": { "type": "string", "pattern": "^1\\.0$" },
+    "ts": { "type": "string", "description": "UTC instant, RFC3339 subset (Z suffix)" },
+    "correlation_id": { "type": "string", "minLength": 1 },
+    "payload": { "type": "object" },
+    "command": { "type": "string", "description": "Optional outbound command line or API id" }
+  }
+}

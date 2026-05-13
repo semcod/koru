@@ -14,8 +14,10 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import threading
 import time
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -45,11 +47,17 @@ from .queue import (
     run_shell_command as _run_shell_command,
 )
 from .scan import ScanResult, run_scan
+from .stdio_events import default_stdio_format_from_env, write_stdio_event
 from .tasks import create_nl_task
 from .topology import is_component_enabled, is_pipeline_enabled
 
 _VALID_AUTOPILOT_IDE = frozenset({"auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"})
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
+
+
+def _stdio_info(msg: str, *, fmt: str) -> None:
+    """Human-oriented status; jsonl mode routes to stderr so stdout stays NDJSON-only."""
+    print(msg, file=sys.stderr if fmt == "jsonl" else sys.stdout)
 
 
 @dataclass(frozen=True)
@@ -387,6 +395,16 @@ def _build_parser() -> argparse.ArgumentParser:
         default="default",
         help="Queue for WUP regression tickets.",
     )
+    up.add_argument(
+        "--emit-events",
+        choices=("human", "jsonl"),
+        default=default_stdio_format_from_env(),
+        help=(
+            "Stdout format: human log lines (default) or NDJSON control-plane events. "
+            "Default follows KORU_STDIO_FORMAT=human|jsonl when set. "
+            "jsonl: structured events on stdout; incidental status on stderr."
+        ),
+    )
     up.set_defaults(
         submit=True,
         enable_autopilot=True,
@@ -456,31 +474,38 @@ def _env_apply_autoloop_defaults(args: argparse.Namespace) -> None:
     args.wup_ticket_queue = os.environ.get("WUP_TICKET_QUEUE", args.wup_ticket_queue)
 
 
-def _ensure_init(project: Path, *, force: bool) -> None:
+def _ensure_init(project: Path, *, force: bool, stdio_format: str = "human") -> None:
     config_path = project / ".planfile" / "config.yaml"
     if config_path.exists() and not force:
         return
     report = init_project(project, force=force)
-    print(f"koru autonomous: init {'re-' if force else ''}done at {report.project}")
+    _stdio_info(
+        f"koru autonomous: init {'re-' if force else ''}done at {report.project}", fmt=stdio_format
+    )
 
 
 def _start_or_reuse_daemon(
     *,
     project: Path,
     socket_path: Path,
+    stdio_format: str = "human",
 ) -> tuple[AutopilotClient, AutopilotDaemon | None, threading.Thread | None]:
     socket_path.parent.mkdir(parents=True, exist_ok=True)
     probe = AutopilotClient(socket_path=socket_path, timeout=0.5)
     if probe.is_running():
-        print(f"koru autonomous: reusing autopilot daemon on {socket_path}")
+        _stdio_info(f"koru autonomous: reusing autopilot daemon on {socket_path}", fmt=stdio_format)
         return AutopilotClient(socket_path=socket_path), None, None
 
-    daemon = AutopilotDaemon(socket_path=socket_path, project=project, log=print)
+    daemon = AutopilotDaemon(
+        socket_path=socket_path,
+        project=project,
+        log=lambda m: _stdio_info(m, fmt=stdio_format),
+    )
     daemon.start()
     thread = threading.Thread(target=daemon.serve_forever, daemon=True)
     thread.start()
     time.sleep(0.05)
-    print(f"koru autonomous: started autopilot daemon on {socket_path}")
+    _stdio_info(f"koru autonomous: started autopilot daemon on {socket_path}", fmt=stdio_format)
     return AutopilotClient(socket_path=socket_path), daemon, thread
 
 
@@ -535,17 +560,20 @@ def _status_in_skip_list(status: str, skip_statuses: str) -> bool:
     }
 
 
-def _run_command_check(project: Path, check_id: str, command: list[str]) -> bool:
-    print("+ " + " ".join(command))
+def _run_command_check(
+    project: Path, check_id: str, command: list[str], *, stdio_format: str = "human"
+) -> bool:
+    _stdio_info("+ " + " ".join(command), fmt=stdio_format)
     result = subprocess.run(command, cwd=project, check=False)
     if result.returncode != 0:
-        print(f"! {check_id} failed (continuing loop)")
+        _stdio_info(f"! {check_id} failed (continuing loop)", fmt=stdio_format)
         return False
     return True
 
 
 def _create_diagnostic_ticket(
     *,
+    stdio_format: str = "human",
     project: Path,
     check_id: str,
     summary: str,
@@ -558,7 +586,9 @@ def _create_diagnostic_ticket(
     state_dir.mkdir(parents=True, exist_ok=True)
     marker = state_dir / f"{check_id}.failed"
     if marker.exists():
-        print(f"- diagnostic ticket marker exists for {check_id}, skipping create")
+        _stdio_info(
+            f"- diagnostic ticket marker exists for {check_id}, skipping create", fmt=stdio_format
+        )
         return
     title = f"[AUTO-DIAG] {check_id} needs attention"
     prompt = (
@@ -568,7 +598,10 @@ def _create_diagnostic_ticket(
     )
     created = create_nl_task(project, prompt, queue_name=queue_name, priority=priority)
     marker.write_text(created.ticket_id, encoding="utf-8")
-    print(f"+ created diagnostic ticket {created.ticket_id} for {check_id} (queue={queue_name})")
+    _stdio_info(
+        f"+ created diagnostic ticket {created.ticket_id} for {check_id} (queue={queue_name})",
+        fmt=stdio_format,
+    )
 
 
 def _clear_diagnostic_marker(state_dir: Path, check_id: str) -> None:
@@ -634,7 +667,7 @@ def _wup_autodetect(config: WupWatchConfig) -> bool:
 
 
 def _start_wup_watch(
-    config: WupWatchConfig, *, topology_integration: bool
+    config: WupWatchConfig, *, topology_integration: bool, stdio_format: str = "human"
 ) -> subprocess.Popen | None:
     auto = config.enabled is None
     if config.enabled is False:
@@ -644,27 +677,38 @@ def _start_wup_watch(
     if auto:
         if not wup_available or not wup_yaml_present:
             return None
-        print("koru autonomous: WUP auto-detected (wup.yaml + wup binary present)")
+        _stdio_info(
+            "koru autonomous: WUP auto-detected (wup.yaml + wup binary present)", fmt=stdio_format
+        )
     else:
         if not wup_available:
-            print("koru autonomous: WUP watch requested but `wup` is not in PATH")
+            _stdio_info(
+                "koru autonomous: WUP watch requested but `wup` is not in PATH", fmt=stdio_format
+            )
             return None
         if not wup_yaml_present:
-            print("koru autonomous: WUP watch requested but no wup.yaml found")
+            _stdio_info(
+                "koru autonomous: WUP watch requested but no wup.yaml found", fmt=stdio_format
+            )
             return None
     if not _is_topology_enabled(
         config.project, "gate:wup", fallback=True, enabled=topology_integration
     ):
-        print("koru autonomous: WUP watch disabled in topology")
+        _stdio_info("koru autonomous: WUP watch disabled in topology", fmt=stdio_format)
         return None
     command = _wup_watch_command(config)
-    print("+ " + " ".join(command))
+    _stdio_info("+ " + " ".join(command), fmt=stdio_format)
     process = subprocess.Popen(command, cwd=config.project)
-    print(f"koru autonomous: started WUP watcher pid={process.pid} mode={config.mode}")
+    _stdio_info(
+        f"koru autonomous: started WUP watcher pid={process.pid} mode={config.mode}",
+        fmt=stdio_format,
+    )
     return process
 
 
-def _stop_process(process: subprocess.Popen | None, label: str) -> None:
+def _stop_process(
+    process: subprocess.Popen | None, label: str, *, stdio_format: str = "human"
+) -> None:
     if process is None or process.poll() is not None:
         return
     process.terminate()
@@ -673,7 +717,7 @@ def _stop_process(process: subprocess.Popen | None, label: str) -> None:
     except subprocess.TimeoutExpired:
         process.kill()
         process.wait(timeout=5)
-    print(f"koru autonomous: stopped {label}")
+    _stdio_info(f"koru autonomous: stopped {label}", fmt=stdio_format)
 
 
 def _read_wup_health(
@@ -730,6 +774,7 @@ def _read_wup_health(
 
 def _run_idle_diagnostics(
     *,
+    stdio_format: str = "human",
     project: Path,
     profile: str,
     cycle: int,
@@ -742,14 +787,17 @@ def _run_idle_diagnostics(
 ) -> DiagnosticResult:
     profile = profile.lower()
     if profile in {"off", "none"}:
-        print("koru autonomous: idle diagnostics profile=off (skipping)")
+        _stdio_info("koru autonomous: idle diagnostics profile=off (skipping)", fmt=stdio_format)
         return DiagnosticResult(status="off", failed=[])
     if not _is_topology_enabled(
         project, "idle-diagnostics", fallback=True, enabled=topology_integration
     ):
-        print("koru autonomous: idle diagnostics disabled in topology")
+        _stdio_info("koru autonomous: idle diagnostics disabled in topology", fmt=stdio_format)
         return DiagnosticResult(status="disabled(topology)", failed=[])
-    print(f"koru autonomous: queue idle -> running semcod diagnostics (profile={profile})")
+    _stdio_info(
+        f"koru autonomous: queue idle -> running semcod diagnostics (profile={profile})",
+        fmt=stdio_format,
+    )
     checks: list[tuple[str, str, list[str]]] = []
     if shutil.which("regix"):
         checks.append(
@@ -800,9 +848,9 @@ def _run_idle_diagnostics(
     diagnostic_state_dir.mkdir(parents=True, exist_ok=True)
     for check_id, summary, command in checks:
         if not _is_topology_enabled(project, check_id, fallback=True, enabled=topology_integration):
-            print(f"- {check_id} disabled in topology, skipping")
+            _stdio_info(f"- {check_id} disabled in topology, skipping", fmt=stdio_format)
             continue
-        if _run_command_check(project, check_id, command):
+        if _run_command_check(project, check_id, command, stdio_format=stdio_format):
             _clear_diagnostic_marker(diagnostic_state_dir, check_id)
             continue
         failed.append(check_id)
@@ -851,14 +899,42 @@ def _run_cycle(
     scan_skip_if_clean: bool = False,
     scan_skip_after: int = 1,
     topology_integration: bool = True,
+    stdio_format: str = "human",
+    correlation_id: str = "",
 ) -> tuple[ScanResult | None, QueueLoopResult, str, DiagnosticResult]:
     state = state or AutoloopState()
+
+    def _emit(event_type: str, payload: dict, command: str | None = None) -> None:
+        if stdio_format == "jsonl":
+            write_stdio_event(
+                sys.stdout,
+                event_type=event_type,
+                correlation_id=correlation_id,
+                payload=payload,
+                command=command,
+            )
+
+    def _hp(msg: str) -> None:
+        if stdio_format == "human":
+            print(msg)
+
+    scan_result: ScanResult | None = None
+
+    _emit(
+        "CycleStarted",
+        {"cycle": cycle, "project": str(project.resolve())},
+    )
+
     scan_result: ScanResult | None = None
     if enable_scan:
         if not _is_topology_enabled(
             project, "scan:on-change", fallback=True, enabled=topology_integration
         ):
-            print("- koru scan --apply skipped (scan:on-change disabled in topology)")
+            _hp("- koru scan --apply skipped (scan:on-change disabled in topology)")
+            _emit(
+                "ScanSkipped",
+                {"cycle": cycle, "reason": "topology:scan:on-change_disabled"},
+            )
         else:
             head_now = _current_head(project)
             if (
@@ -867,21 +943,41 @@ def _run_cycle(
                 and head_now
                 and head_now == state.scan_last_head
             ):
-                print(
+                _hp(
                     f"- koru scan --apply skipped "
                     f"(clean_streak={state.scan_clean_streak}, HEAD unchanged)"
                 )
-            else:
-                print(
-                    "+ koru scan --apply"
-                    + (" --semcod-artifacts" if include_semcod_artifacts else "")
+                _emit(
+                    "ScanSkipped",
+                    {
+                        "cycle": cycle,
+                        "reason": "clean_git_head_unchanged",
+                        "clean_streak": state.scan_clean_streak,
+                        "head": head_now,
+                    },
                 )
+            else:
+                scan_cmd = "koru scan --apply" + (
+                    " --semcod-artifacts" if include_semcod_artifacts else ""
+                )
+                _hp("+ " + scan_cmd)
                 scan_result = run_scan(
                     project=project, apply=True, include_semcod_artifacts=include_semcod_artifacts
                 )
-                print(
+                _hp(
                     f"  scan: suggestions={len(scan_result.suggestions)} "
                     f"applied={len(scan_result.applied)} skipped={len(scan_result.skipped)}"
+                )
+                _emit(
+                    "ScanCompleted",
+                    {
+                        "cycle": cycle,
+                        "suggestions_count": len(scan_result.suggestions),
+                        "applied_count": len(scan_result.applied),
+                        "skipped_count": len(scan_result.skipped),
+                        "semcod_artifacts": bool(include_semcod_artifacts),
+                    },
+                    command=scan_cmd,
                 )
                 if not scan_result.suggestions:
                     state.scan_clean_streak += 1
@@ -892,14 +988,13 @@ def _run_cycle(
     if not _is_topology_enabled(
         project, "autoloop:queue", fallback=True, enabled=topology_integration
     ):
-        print("- autoloop queue phase skipped (autoloop:queue disabled in topology)")
+        _hp("- autoloop queue phase skipped (autoloop:queue disabled in topology)")
         queue_result = QueueLoopResult(0, [], [], [], "disabled", "")
     else:
-        print(
-            "+ koru --queue --loop "
-            f"--max-iterations {max_iterations}"
-            + (" --all-queues" if queue_name is None else f" --queue-name {queue_name}")
+        qcmd = f"koru --queue --loop --max-iterations {max_iterations}" + (
+            " --all-queues" if queue_name is None else f" --queue-name {queue_name}"
         )
+        _hp("+ " + qcmd)
         queue_result = run_planfile_queue_loop(
             project=project,
             actor=actor,
@@ -911,7 +1006,30 @@ def _run_cycle(
             llm_runner=_run_llm_request,
             prompt_runner=_default_human_prompt,
         )
-        print(f"  queue: {queue_result.summary()}")
+        _hp(f"  queue: {queue_result.summary()}")
+        qname = "__all__" if queue_name is None else queue_name
+        _sum_fn = getattr(queue_result, "summary", None)
+        if callable(_sum_fn):
+            _queue_summary = _sum_fn()
+        else:
+            _queue_summary = str(_sum_fn or "")
+        _emit(
+            "QueueIteration",
+            {
+                "cycle": cycle,
+                "queue_name": qname,
+                "actor": actor,
+                "iterations": int(getattr(queue_result, "iterations", 0)),
+                "completed": list(getattr(queue_result, "completed", []) or []),
+                "failed": list(getattr(queue_result, "failed", []) or []),
+                "waiting": list(getattr(queue_result, "waiting", []) or []),
+                "last_status": str(getattr(queue_result, "last_status", "")),
+                "last_message": str(getattr(queue_result, "last_message", "")),
+                "last_ticket_id": getattr(queue_result, "last_ticket_id", None),
+                "summary": _queue_summary,
+            },
+            command=qcmd,
+        )
 
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
     signature = f"{queue_result.last_status}:{waiting_ticket}"
@@ -924,6 +1042,7 @@ def _run_cycle(
     diag_result = DiagnosticResult(status="skipped", failed=[])
     if queue_result.last_status == "idle" and idle_diagnostics not in {"off", "none"}:
         diag_result = _run_idle_diagnostics(
+            stdio_format=stdio_format,
             project=project,
             profile=idle_diagnostics,
             cycle=cycle,
@@ -934,6 +1053,7 @@ def _run_cycle(
             diagnostic_state_dir=diagnostic_state_dir or project / ".planfile/.koru/autoloop-diag",
             topology_integration=topology_integration,
         )
+
     wup_health = WupHealthResult(status="skipped", failing_services=[], new_events=0)
     if wup_watch_enabled:
         wup_health = _read_wup_health(
@@ -944,92 +1064,169 @@ def _run_cycle(
             state_dir=diagnostic_state_dir or project / ".planfile/.koru/autoloop-diag",
         )
         if wup_health.status != "ok":
-            print(
+            _hp(
                 f"koru autonomous: WUP health={wup_health.status} "
                 f"failing={','.join(wup_health.failing_services) or '-'} "
                 f"new_events={wup_health.new_events}"
             )
             if diag_result.status in {"skipped", "off", "ok"} and wup_health.status == "failed":
                 diag_result = DiagnosticResult(status="failed", failed=["wup"])
+    _emit(
+        "WupHealthChanged",
+        {
+            "cycle": cycle,
+            "watcher_enabled": wup_watch_enabled,
+            "status": wup_health.status,
+            "failing_services": list(wup_health.failing_services),
+            "new_events": wup_health.new_events,
+        },
+    )
+    _emit(
+        "DiagnosticsCompleted",
+        {
+            "cycle": cycle,
+            "status": diag_result.status,
+            "failed": list(diag_result.failed),
+        },
+    )
+
     if strict_diagnostics and diag_result.status == "failed":
-        print("koru autonomous: strict diagnostics enabled -> stopping on diagnostics failure")
+        _emit(
+            "AutonomousStopped",
+            {"reason": "strict_diagnostics_failure", "cycle": cycle},
+        )
+        _stdio_info(
+            "koru autonomous: strict diagnostics enabled -> stopping on diagnostics failure",
+            fmt=stdio_format,
+        )
         raise SystemExit(2)
 
     autopilot_status = "skipped"
+    autopilot_backend: str | None = None
+    autopilot_drive_kind: str | None = None
     if enable_autopilot and client is not None:
         if not _is_topology_enabled(
             project, "autopilot:drive", fallback=True, enabled=topology_integration
         ):
-            print("- autopilot skipped (autopilot:drive disabled in topology)")
+            _hp("- autopilot skipped (autopilot:drive disabled in topology)")
             autopilot_status = "skipped(topology)"
         elif autopilot_action == "off":
-            print("- autopilot action set to off, skipping")
+            _hp("- autopilot action set to off, skipping")
         elif autopilot_on_idle_only and queue_result.last_status != "idle":
-            print("- autopilot skipped (idle_only)")
+            _hp("- autopilot skipped (idle_only)")
             autopilot_status = "skipped(idle_only)"
         elif autopilot_skip_on_diagnostics_fail and diag_result.status == "failed":
-            print("- autopilot skipped (diagnostics_fail)")
+            _hp("- autopilot skipped (diagnostics_fail)")
             autopilot_status = "skipped(diagnostics_fail)"
         elif state.stagnation_streak > 0 and _status_in_skip_list(
             queue_result.last_status, autopilot_skip_statuses
         ):
-            print(
-                f"- autopilot skipped (stuck_{queue_result.last_status}_streak_{state.stagnation_streak})"
+            _hp(
+                "- autopilot skipped (stuck_"
+                f"{queue_result.last_status}_streak_{state.stagnation_streak})"
             )
             autopilot_status = f"skipped(stuck_{queue_result.last_status})"
         elif autopilot_action == "handoff":
+            autopilot_drive_kind = "handoff"
             reply = client.drive(drive_prompt, submit=submit, ide=autopilot_ide)
             ok = bool(reply.get("ok", True))
             autopilot_status = "ok" if ok else "failed"
+            autopilot_backend = (
+                str(reply.get("backend")) if reply.get("backend") is not None else None
+            )
         elif queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES:
-            # Queue needs human/LLM attention — drive the actual ticket
-            # content instead of the generic drive_prompt so the IDE's LLM
-            # knows exactly what to work on.
             ticket_prompt = queue_result.last_message.strip() if queue_result.last_message else ""
             if ticket_prompt:
+                autopilot_drive_kind = "ticket_prompt"
                 reply = client.drive(ticket_prompt, submit=submit, ide=autopilot_ide)
                 ok = bool(reply.get("ok", True))
                 autopilot_status = "ok" if ok else "failed"
+                autopilot_backend = (
+                    str(reply.get("backend")) if reply.get("backend") is not None else None
+                )
                 if ok:
                     backend = reply.get("backend", "?")
                     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
-                    print(
-                        f"  autopilot: ok (ticket={waiting_ticket}, ide={autopilot_ide}, backend={backend})"
+                    _hp(
+                        "  autopilot: ok (ticket="
+                        f"{waiting_ticket}, ide={autopilot_ide}, backend={backend})"
                     )
                 else:
                     message = reply.get("message", "unknown error")
-                    print(f"  autopilot: failed ({message})")
+                    _hp(f"  autopilot: failed ({message})")
             else:
-                print(
+                autopilot_drive_kind = "blocked_empty_message"
+                _hp(
                     f"  autopilot: skipped (queue_status={queue_result.last_status}, empty message)"
                 )
         else:
+            autopilot_drive_kind = "drive_prompt"
             reply = client.drive(drive_prompt, submit=submit, ide=autopilot_ide)
             ok = bool(reply.get("ok", True))
             autopilot_status = "ok" if ok else "failed"
+            autopilot_backend = (
+                str(reply.get("backend")) if reply.get("backend") is not None else None
+            )
             if ok:
                 backend = reply.get("backend", "?")
-                print(f"  autopilot: ok (ide={autopilot_ide}, backend={backend})")
+                _hp(f"  autopilot: ok (ide={autopilot_ide}, backend={backend})")
             else:
                 message = reply.get("message", "unknown error")
-                print(f"  autopilot: failed ({message})")
+                _hp(f"  autopilot: failed ({message})")
 
-    print(
+    _emit(
+        "AutopilotDecision",
+        {
+            "cycle": cycle,
+            "decision": autopilot_status,
+            "queue_status": queue_result.last_status,
+            "ide": autopilot_ide,
+            "backend": autopilot_backend,
+            "drive_kind": autopilot_drive_kind,
+        },
+    )
+
+    _hp(
         f"koru autonomous: cycle={cycle} queue={queue_result.last_status} "
         f"diagnostics={diag_result.status} wup={wup_health.status} autopilot={autopilot_status}"
     )
+    _emit(
+        "CycleCompleted",
+        {
+            "cycle": cycle,
+            "queue_status": queue_result.last_status,
+            "diagnostics_status": diag_result.status,
+            "wup_status": wup_health.status,
+            "autopilot_status": autopilot_status,
+        },
+    )
+
     return scan_result, queue_result, autopilot_status, diag_result
 
 
 def _action_up(args: argparse.Namespace) -> int:
     _env_apply_autoloop_defaults(args)
+    correlation_id = str(uuid.uuid4())
     project = args.project.resolve()
     project.mkdir(parents=True, exist_ok=True)
-    _ensure_init(project, force=args.force_init)
+    if args.emit_events == "jsonl":
+        write_stdio_event(
+            sys.stdout,
+            event_type="SessionStarted",
+            correlation_id=correlation_id,
+            payload={
+                "project": str(project),
+                "ticket_sources": args.ticket_sources,
+                "max_cycles": args.max_cycles,
+                "max_iterations": args.max_iterations,
+                "sleep_seconds": args.sleep_seconds,
+            },
+        )
+    _ensure_init(project, force=args.force_init, stdio_format=args.emit_events)
 
     lane = _apply_agent_lane_environ(project, args.agent_lane)
     if lane is not None:
-        print(f"koru autonomous: agent-lane={lane} (env applied)")
+        _stdio_info(f"koru autonomous: agent-lane={lane} (env applied)", fmt=args.emit_events)
 
     client: AutopilotClient | None = None
     daemon: AutopilotDaemon | None = None
@@ -1037,7 +1234,11 @@ def _action_up(args: argparse.Namespace) -> int:
     socket_path: Path | None = None
     if args.enable_autopilot:
         socket_path = (args.socket or default_socket_path()).resolve()
-        client, daemon, thread = _start_or_reuse_daemon(project=project, socket_path=socket_path)
+        client, daemon, thread = _start_or_reuse_daemon(
+            project=project,
+            socket_path=socket_path,
+            stdio_format=args.emit_events,
+        )
 
     # Avoid reconnect noise in tests / misconfigured hosts where no socket ever
     # existed; still recover when the socket disappears after a healthy boot.
@@ -1054,17 +1255,19 @@ def _action_up(args: argparse.Namespace) -> int:
     wup_process = _start_wup_watch(
         wup_config,
         topology_integration=args.topology_integration,
+        stdio_format=args.emit_events,
     )
 
     if args.enable_autopilot and socket_path is not None:
         plugin_result = install_plugin_for_ide(ide=autopilot_ide, socket_path=socket_path)
-        print(format_plugin_install_result(plugin_result))
+        _stdio_info(format_plugin_install_result(plugin_result), fmt=args.emit_events)
 
     cycle = 0
     try:
         while True:
             cycle += 1
-            print(f"\n=== koru autonomous cycle #{cycle} ===")
+            if args.emit_events == "human":
+                print(f"\n=== koru autonomous cycle #{cycle} ===")
             if (
                 args.enable_autopilot
                 and client is not None
@@ -1072,9 +1275,10 @@ def _action_up(args: argparse.Namespace) -> int:
                 and not socket_path.exists()
                 and (autopilot_socket_observed_at_boot or daemon is not None or thread is not None)
             ):
-                print(
+                _stdio_info(
                     f"koru autonomous: autopilot socket missing at {socket_path}; "
-                    "restarting or taking over daemon…"
+                    "restarting or taking over daemon…",
+                    fmt=args.emit_events,
                 )
                 if daemon is not None:
                     try:
@@ -1084,7 +1288,9 @@ def _action_up(args: argparse.Namespace) -> int:
                 if thread is not None:
                     thread.join(timeout=2.0)
                 client, daemon, thread = _start_or_reuse_daemon(
-                    project=project, socket_path=socket_path
+                    project=project,
+                    socket_path=socket_path,
+                    stdio_format=args.emit_events,
                 )
             _scan_result, queue_result, _autopilot_status, diag_result = _run_cycle(
                 cycle=cycle,
@@ -1116,20 +1322,44 @@ def _action_up(args: argparse.Namespace) -> int:
                 scan_skip_if_clean=args.scan_skip_if_clean,
                 scan_skip_after=args.scan_skip_after,
                 topology_integration=args.topology_integration,
+                stdio_format=args.emit_events,
+                correlation_id=correlation_id,
             )
 
             if (
                 args.stop_on_waiting_input
                 and queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES
             ):
-                print(
+                if args.emit_events == "jsonl":
+                    write_stdio_event(
+                        sys.stdout,
+                        event_type="AutonomousStopped",
+                        correlation_id=correlation_id,
+                        payload={"reason": "waiting_input", "cycle": cycle},
+                    )
+                _stdio_info(
                     "koru autonomous: queue is waiting_input; stopping until "
-                    "human/manual ticket recovery marks it ready or done"
+                    "human/manual ticket recovery marks it ready or done",
+                    fmt=args.emit_events,
                 )
                 return 0
 
             if args.max_cycles > 0 and cycle >= args.max_cycles:
-                print(f"koru autonomous: reached max-cycles={args.max_cycles}; stopping")
+                if args.emit_events == "jsonl":
+                    write_stdio_event(
+                        sys.stdout,
+                        event_type="AutonomousStopped",
+                        correlation_id=correlation_id,
+                        payload={
+                            "reason": "max_cycles",
+                            "cycle": cycle,
+                            "max_cycles": args.max_cycles,
+                        },
+                    )
+                _stdio_info(
+                    f"koru autonomous: reached max-cycles={args.max_cycles}; stopping",
+                    fmt=args.emit_events,
+                )
                 return 0
 
             effective_sleep = _compute_backoff_sleep(
@@ -1138,23 +1368,31 @@ def _action_up(args: argparse.Namespace) -> int:
                 args.max_sleep_seconds,
                 args.backoff_on_stagnation,
             )
-            print(
+            _stdio_info(
                 f"koru autonomous: summary cycle={cycle} queue={queue_result.last_status} "
                 f"waiting={_queue_loop_waiting_ticket_label(queue_result)} "
                 f"streak={loop_state.stagnation_streak} diagnostics={diag_result.status} "
-                f"autopilot={_autopilot_status} sleep={effective_sleep}s"
+                f"autopilot={_autopilot_status} sleep={effective_sleep}s",
+                fmt=args.emit_events,
             )
             if effective_sleep > 0:
                 time.sleep(effective_sleep)
     except KeyboardInterrupt:
-        print("\nkoru autonomous: interrupted")
+        if args.emit_events == "jsonl":
+            write_stdio_event(
+                sys.stdout,
+                event_type="AutonomousStopped",
+                correlation_id=correlation_id,
+                payload={"reason": "keyboard_interrupt"},
+            )
+        _stdio_info("\nkoru autonomous: interrupted", fmt=args.emit_events)
         return 0
     finally:
         if daemon is not None:
             daemon.stop()
         if thread is not None:
             thread.join(timeout=2.0)
-        _stop_process(wup_process, "WUP watcher")
+        _stop_process(wup_process, "WUP watcher", stdio_format=args.emit_events)
 
 
 def autonomous_main(argv: list[str]) -> int:
