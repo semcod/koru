@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import json
 from types import SimpleNamespace
 
 from koru import autonomous as autonomous_mod
@@ -487,6 +488,14 @@ def test_env_apply_autoloop_defaults_enables_full_diagnostics(monkeypatch) -> No
         backoff_on_stagnation=True,
         scan_skip_if_clean=False,
         topology_integration=True,
+        wup_watch=False,
+        wup_mode="testql",
+        wup_deps="deps.json",
+        wup_scenarios_dir="testql-scenarios",
+        wup_testql_bin="testql",
+        wup_track_dir=".wup/tracks",
+        wup_diagnostic_tickets=True,
+        wup_ticket_queue="default",
     )
     monkeypatch.setenv("ENABLE_IDLE_DIAGNOSTICS", "true")
     monkeypatch.setenv("ENABLE_DIAGNOSTIC_TICKETS", "true")
@@ -516,3 +525,60 @@ def test_run_idle_diagnostics_creates_deduped_ticket(tmp_path, monkeypatch) -> N
     assert (tmp_path / ".planfile/.koru/autoloop-diag/regix.failed").exists()
     sprint = tmp_path / ".planfile/sprints/current.yaml"
     assert "[AUTO-DIAG] regix needs attention" in sprint.read_text(encoding="utf-8")
+
+
+def test_wup_watch_command_uses_testql_mode(tmp_path) -> None:
+    config = autonomous_mod.WupWatchConfig(
+        enabled=True,
+        mode="testql",
+        project=tmp_path,
+        deps_file="deps.json",
+        scenarios_dir="testql-scenarios",
+        testql_bin="testql",
+        track_dir=".wup/tracks",
+        debounce=2,
+        cooldown=300,
+        cpu_throttle=0.8,
+        quick_limit=3,
+        config=None,
+    )
+    command = autonomous_mod._wup_watch_command(config)
+    assert command[:3] == ["wup", "watch", str(tmp_path)]
+    assert "--mode" in command
+    assert "testql" in command
+    assert "--scenarios-dir" in command
+    assert "--quick-limit" in command
+
+
+def test_read_wup_health_creates_high_priority_planfile_ticket(tmp_path) -> None:
+    health_dir = tmp_path / ".wup"
+    health_dir.mkdir()
+    (health_dir / "service-health.json").write_text(
+        json.dumps(
+            {
+                "api": {
+                    "status": "down",
+                    "stage": "quick",
+                    "message": "TestQL scenario failed",
+                    "track_file": ".wup/tracks/api.json",
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    state = autonomous_mod.AutoloopState()
+    result = autonomous_mod._read_wup_health(
+        project=tmp_path,
+        state=state,
+        diagnostic_tickets=True,
+        ticket_queue="default",
+        state_dir=tmp_path / ".planfile/.koru/autoloop-diag",
+    )
+    assert result.status == "failed"
+    assert result.failing_services == ["api"]
+    marker = tmp_path / ".planfile/.koru/autoloop-diag/wup-api.failed"
+    assert marker.exists()
+    sprint = tmp_path / ".planfile/sprints/current.yaml"
+    text = sprint.read_text(encoding="utf-8")
+    assert "[AUTO-DIAG] wup-api needs attention" in text
+    assert "priority: high" in text

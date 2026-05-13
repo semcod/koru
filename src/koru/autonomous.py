@@ -10,6 +10,7 @@ dashboard (auto-refresh ~5s) tracks queue/context; use ``--no-serve`` to skip.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import subprocess
@@ -53,6 +54,30 @@ class AutoloopState:
     stagnation_streak: int = 0
     scan_clean_streak: int = 0
     scan_last_head: str = ""
+    wup_seen_events: int = 0
+
+
+@dataclass(frozen=True)
+class WupWatchConfig:
+    enabled: bool
+    mode: str
+    project: Path
+    deps_file: str
+    scenarios_dir: str
+    testql_bin: str
+    track_dir: str
+    debounce: int
+    cooldown: int
+    cpu_throttle: float
+    quick_limit: int
+    config: Path | None
+
+
+@dataclass(frozen=True)
+class WupHealthResult:
+    status: str
+    failing_services: list[str]
+    new_events: int
 
 
 def _resolve_autopilot_ide(cli_value: str) -> str:
@@ -276,6 +301,78 @@ def _build_parser() -> argparse.ArgumentParser:
         default=True,
         help="Respect .koru/topology.yaml component and pipeline toggles.",
     )
+    up.add_argument(
+        "--wup-watch",
+        action="store_true",
+        help="Start WUP watcher in autonomous mode and monitor its health output.",
+    )
+    up.add_argument(
+        "--wup-mode",
+        choices=("default", "testql"),
+        default="testql",
+        help="WUP watch mode. testql runs selective TestQL scenarios for changed services.",
+    )
+    up.add_argument(
+        "--wup-deps",
+        default="deps.json",
+        help="Dependency map file passed to wup watch --deps.",
+    )
+    up.add_argument(
+        "--wup-scenarios-dir",
+        default="testql-scenarios",
+        help="Scenario directory passed to wup watch --scenarios-dir in testql mode.",
+    )
+    up.add_argument(
+        "--wup-testql-bin",
+        default="testql",
+        help="TestQL binary passed to wup watch --testql-bin.",
+    )
+    up.add_argument(
+        "--wup-track-dir",
+        default=".wup/tracks",
+        help="Track directory passed to wup watch --track-dir.",
+    )
+    up.add_argument(
+        "--wup-debounce",
+        type=int,
+        default=2,
+        help="Debounce seconds passed to wup watch.",
+    )
+    up.add_argument(
+        "--wup-cooldown",
+        type=int,
+        default=300,
+        help="Cooldown seconds passed to wup watch.",
+    )
+    up.add_argument(
+        "--wup-cpu-throttle",
+        type=float,
+        default=0.8,
+        help="CPU throttle passed to wup watch.",
+    )
+    up.add_argument(
+        "--wup-quick-limit",
+        type=int,
+        default=3,
+        help="Maximum quick TestQL scenarios passed to wup watch --quick-limit.",
+    )
+    up.add_argument(
+        "--wup-config",
+        type=Path,
+        default=None,
+        help="Optional config path passed to wup watch --config.",
+    )
+    up.add_argument(
+        "--wup-diagnostic-tickets",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Create high-priority planfile tickets when WUP reports failing services.",
+    )
+    up.add_argument(
+        "--wup-ticket-queue",
+        default="default",
+        help="Queue for WUP regression tickets.",
+    )
     up.set_defaults(
         submit=True,
         enable_autopilot=True,
@@ -329,6 +426,18 @@ def _env_apply_autoloop_defaults(args: argparse.Namespace) -> None:
     args.topology_integration = _env_default_bool(
         "TOPOLOGY_INTEGRATION", args.topology_integration
     )
+    args.wup_watch = _env_default_bool("WUP_WATCH", args.wup_watch)
+    args.wup_mode = os.environ.get("WUP_MODE", args.wup_mode).lower()
+    if args.wup_mode not in {"default", "testql"}:
+        args.wup_mode = "testql"
+    args.wup_deps = os.environ.get("WUP_DEPS", args.wup_deps)
+    args.wup_scenarios_dir = os.environ.get("WUP_SCENARIOS_DIR", args.wup_scenarios_dir)
+    args.wup_testql_bin = os.environ.get("WUP_TESTQL_BIN", args.wup_testql_bin)
+    args.wup_track_dir = os.environ.get("WUP_TRACK_DIR", args.wup_track_dir)
+    args.wup_diagnostic_tickets = _env_default_bool(
+        "WUP_DIAGNOSTIC_TICKETS", args.wup_diagnostic_tickets
+    )
+    args.wup_ticket_queue = os.environ.get("WUP_TICKET_QUEUE", args.wup_ticket_queue)
 
 
 def _ensure_init(project: Path, *, force: bool) -> None:
@@ -450,6 +559,142 @@ def _clear_diagnostic_marker(state_dir: Path, check_id: str) -> None:
     (state_dir / f"{check_id}.failed").unlink(missing_ok=True)
 
 
+def _build_wup_watch_config(args: argparse.Namespace, project: Path) -> WupWatchConfig:
+    return WupWatchConfig(
+        enabled=bool(args.wup_watch),
+        mode=args.wup_mode,
+        project=project,
+        deps_file=args.wup_deps,
+        scenarios_dir=args.wup_scenarios_dir,
+        testql_bin=args.wup_testql_bin,
+        track_dir=args.wup_track_dir,
+        debounce=args.wup_debounce,
+        cooldown=args.wup_cooldown,
+        cpu_throttle=args.wup_cpu_throttle,
+        quick_limit=args.wup_quick_limit,
+        config=args.wup_config,
+    )
+
+
+def _wup_watch_command(config: WupWatchConfig) -> list[str]:
+    command = [
+        "wup",
+        "watch",
+        str(config.project),
+        "--deps",
+        config.deps_file,
+        "--cpu-throttle",
+        str(config.cpu_throttle),
+        "--debounce",
+        str(config.debounce),
+        "--cooldown",
+        str(config.cooldown),
+        "--mode",
+        config.mode,
+    ]
+    if config.mode == "testql":
+        command.extend(
+            [
+                "--scenarios-dir",
+                config.scenarios_dir,
+                "--testql-bin",
+                config.testql_bin,
+                "--track-dir",
+                config.track_dir,
+                "--quick-limit",
+                str(config.quick_limit),
+            ]
+        )
+    if config.config is not None:
+        command.extend(["--config", str(config.config)])
+    return command
+
+
+def _start_wup_watch(config: WupWatchConfig, *, topology_integration: bool) -> subprocess.Popen | None:
+    if not config.enabled:
+        return None
+    if not _is_topology_enabled(
+        config.project, "gate:wup", fallback=True, enabled=topology_integration
+    ):
+        print("koru autonomous: WUP watch disabled in topology")
+        return None
+    if shutil.which("wup") is None:
+        print("koru autonomous: WUP watch requested but `wup` is not in PATH")
+        return None
+    if not (config.project / "wup.yaml").is_file() and config.config is None:
+        print("koru autonomous: WUP watch requested but no wup.yaml found")
+        return None
+    command = _wup_watch_command(config)
+    print("+ " + " ".join(command))
+    process = subprocess.Popen(command, cwd=config.project)
+    print(f"koru autonomous: started WUP watcher pid={process.pid} mode={config.mode}")
+    return process
+
+
+def _stop_process(process: subprocess.Popen | None, label: str) -> None:
+    if process is None or process.poll() is not None:
+        return
+    process.terminate()
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=5)
+    print(f"koru autonomous: stopped {label}")
+
+
+def _read_wup_health(
+    *,
+    project: Path,
+    state: AutoloopState,
+    diagnostic_tickets: bool,
+    ticket_queue: str,
+    state_dir: Path,
+) -> WupHealthResult:
+    health_path = project / ".wup" / "service-health.json"
+    events_path = project / ".wup" / "service-health-events.jsonl"
+    health: dict[str, dict] = {}
+    if health_path.is_file():
+        try:
+            payload = json.loads(health_path.read_text(encoding="utf-8"))
+            if isinstance(payload, dict):
+                health = {str(k): v for k, v in payload.items() if isinstance(v, dict)}
+        except (OSError, json.JSONDecodeError):
+            health = {}
+    failing = [
+        service
+        for service, data in sorted(health.items())
+        if str(data.get("status", "")).lower() in {"down", "failed", "failure", "error"}
+    ]
+    if diagnostic_tickets:
+        for service in failing:
+            data = health.get(service, {})
+            stage = str(data.get("stage") or "wup")
+            message = str(data.get("message") or "WUP reported failing service")
+            track_file = str(data.get("track_file") or "")
+            _create_diagnostic_ticket(
+                project=project,
+                check_id=f"wup-{service}",
+                summary=f"WUP service={service} stage={stage} message={message} track={track_file}",
+                cycle=0,
+                queue_status="wup_failure",
+                queue_name=ticket_queue,
+                priority="high",
+                state_dir=state_dir,
+            )
+    event_count = 0
+    if events_path.is_file():
+        try:
+            with events_path.open("r", encoding="utf-8") as handle:
+                event_count = sum(1 for line in handle if line.strip())
+        except OSError:
+            event_count = state.wup_seen_events
+    new_events = max(0, event_count - state.wup_seen_events)
+    state.wup_seen_events = max(state.wup_seen_events, event_count)
+    status = "failed" if failing else ("changed" if new_events else "ok")
+    return WupHealthResult(status=status, failing_services=failing, new_events=new_events)
+
+
 def _run_idle_diagnostics(
     *,
     project: Path,
@@ -530,6 +775,9 @@ def _run_cycle(
     diagnostic_ticket_queue: str = "default",
     diagnostic_ticket_priority: str = "high",
     diagnostic_state_dir: Path | None = None,
+    wup_watch_enabled: bool = False,
+    wup_diagnostic_tickets: bool = True,
+    wup_ticket_queue: str = "default",
     strict_diagnostics: bool = False,
     autopilot_action: str = "drive",
     autopilot_on_idle_only: bool = False,
@@ -614,6 +862,23 @@ def _run_cycle(
             diagnostic_state_dir=diagnostic_state_dir or project / ".planfile/.koru/autoloop-diag",
             topology_integration=topology_integration,
         )
+    wup_health = WupHealthResult(status="skipped", failing_services=[], new_events=0)
+    if wup_watch_enabled:
+        wup_health = _read_wup_health(
+            project=project,
+            state=state,
+            diagnostic_tickets=wup_diagnostic_tickets,
+            ticket_queue=wup_ticket_queue,
+            state_dir=diagnostic_state_dir or project / ".planfile/.koru/autoloop-diag",
+        )
+        if wup_health.status != "ok":
+            print(
+                f"koru autonomous: WUP health={wup_health.status} "
+                f"failing={','.join(wup_health.failing_services) or '-'} "
+                f"new_events={wup_health.new_events}"
+            )
+            if diag_result.status in {"skipped", "off", "ok"} and wup_health.status == "failed":
+                diag_result = DiagnosticResult(status="failed", failed=["wup"])
     if strict_diagnostics and diag_result.status == "failed":
         print("koru autonomous: strict diagnostics enabled -> stopping on diagnostics failure")
         raise SystemExit(2)
@@ -673,7 +938,7 @@ def _run_cycle(
 
     print(
         f"koru autonomous: cycle={cycle} queue={queue_result.last_status} "
-        f"diagnostics={diag_result.status} autopilot={autopilot_status}"
+        f"diagnostics={diag_result.status} wup={wup_health.status} autopilot={autopilot_status}"
     )
     return scan_result, queue_result, autopilot_status, diag_result
 
@@ -707,6 +972,11 @@ def _action_up(args: argparse.Namespace) -> int:
     autopilot_ide = _resolve_autopilot_ide(args.autopilot_ide)
     loop_state = AutoloopState()
     diagnostic_state_dir = (project / args.diagnostic_state_dir).resolve()
+    wup_config = _build_wup_watch_config(args, project)
+    wup_process = _start_wup_watch(
+        wup_config,
+        topology_integration=args.topology_integration,
+    )
 
     if args.enable_autopilot and socket_path is not None:
         plugin_result = install_plugin_for_ide(ide=autopilot_ide, socket_path=socket_path)
@@ -761,6 +1031,9 @@ def _action_up(args: argparse.Namespace) -> int:
                 diagnostic_ticket_queue=args.diagnostic_ticket_queue,
                 diagnostic_ticket_priority=args.diagnostic_ticket_priority,
                 diagnostic_state_dir=diagnostic_state_dir,
+                wup_watch_enabled=args.wup_watch,
+                wup_diagnostic_tickets=args.wup_diagnostic_tickets,
+                wup_ticket_queue=args.wup_ticket_queue,
                 strict_diagnostics=args.strict_diagnostics,
                 autopilot_action=args.autopilot_action,
                 autopilot_on_idle_only=args.autopilot_on_idle_only,
@@ -807,6 +1080,7 @@ def _action_up(args: argparse.Namespace) -> int:
             daemon.stop()
         if thread is not None:
             thread.join(timeout=2.0)
+        _stop_process(wup_process, "WUP watcher")
 
 
 def autonomous_main(argv: list[str]) -> int:
