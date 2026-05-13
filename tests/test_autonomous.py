@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import os
 import json
+import os
 from types import SimpleNamespace
 
 from koru import autonomous as autonomous_mod
@@ -368,8 +368,14 @@ def test_up_stops_on_waiting_input_by_default(
             raise AssertionError("autopilot should not drive waiting_input queues")
 
     monkeypatch.setattr(autonomous_mod, "run_planfile_queue_loop", fake_queue_loop)
-    monkeypatch.setattr(autonomous_mod, "install_plugin_for_ide", lambda **_kwargs: SimpleNamespace(status="skipped", ide="auto", message="ok", command=None))
-    monkeypatch.setattr(autonomous_mod, "format_plugin_install_result", lambda result: result.status)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "install_plugin_for_ide",
+        lambda **_kwargs: SimpleNamespace(status="skipped", ide="auto", message="ok", command=None),
+    )
+    monkeypatch.setattr(
+        autonomous_mod, "format_plugin_install_result", lambda result: result.status
+    )
     monkeypatch.setattr(
         autonomous_mod,
         "_start_or_reuse_daemon",
@@ -400,7 +406,7 @@ def test_up_restarts_autopilot_when_socket_disappears_between_cycles(
     tmp_path,
     monkeypatch,
 ) -> None:
-    """If the unix socket vanishes after boot, autonomous should call _start_or_reuse_daemon again."""
+    """Unix socket vanishes after boot: autonomous restarts daemon via _start_or_reuse_daemon."""
     monkeypatch.setattr(
         autonomous_mod,
         "init_project",
@@ -506,8 +512,29 @@ def test_env_apply_autoloop_defaults_enables_full_diagnostics(monkeypatch) -> No
     assert args.autopilot_action == "off"
 
 
+def test_run_idle_diagnostics_profile_off_message(tmp_path, capsys) -> None:
+    result = autonomous_mod._run_idle_diagnostics(
+        stdio_format="human",
+        project=tmp_path,
+        profile="off",
+        cycle=1,
+        queue_status="idle",
+        diagnostic_tickets=False,
+        diagnostic_ticket_queue="default",
+        diagnostic_ticket_priority="high",
+        diagnostic_state_dir=tmp_path / ".planfile/.koru/autoloop-diag",
+        topology_integration=False,
+    )
+    assert result.status == "off"
+    captured = capsys.readouterr().out
+    assert "disabled (profile=off)" in captured
+    assert "(skipping)" not in captured
+
+
 def test_run_idle_diagnostics_creates_deduped_ticket(tmp_path, monkeypatch) -> None:
-    monkeypatch.setattr(autonomous_mod.shutil, "which", lambda name: "/bin/false" if name == "regix" else None)
+    monkeypatch.setattr(
+        autonomous_mod.shutil, "which", lambda name: "/bin/false" if name == "regix" else None
+    )
     monkeypatch.setattr(autonomous_mod, "_run_command_check", lambda *_args, **_kwargs: False)
     monkeypatch.setattr(autonomous_mod, "_is_topology_enabled", lambda *_args, **_kwargs: True)
     result = autonomous_mod._run_idle_diagnostics(

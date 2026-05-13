@@ -2,9 +2,14 @@
 
 `koru autonomous up` (or `koru autonomous` with the same flags) bootstraps
 the project if needed, applies ``--agent-lane`` exports like
-``shell-env.sh``, then runs scan + queue + autopilot in a loop.
-By default it also starts ``koru serve`` in the background so the local
-dashboard (auto-refresh ~5s) tracks queue/context; use ``--no-serve`` to skip.
+``shell-env.sh``, then starts optional background services (autopilot daemon,
+WUP ``wup watch`` when auto-detected), and runs an outer loop.
+
+Each cycle (see ``_run_cycle``): ``koru scan --apply`` when ticket sources
+include scan, then ``koru --queue --loop``, then optional idle diagnostics
+when the queue is idle, a WUP health read if the watcher is running, then
+autopilot. ``--no-serve`` is a compatibility no-op (``koru serve`` is not
+started here).
 """
 
 from __future__ import annotations
@@ -214,7 +219,11 @@ def _build_parser() -> argparse.ArgumentParser:
         "--keep-waiting-input",
         dest="stop_on_waiting_input",
         action="store_false",
-        help="Continue autonomous loop even when queue status is waiting_input.",
+        help=(
+            "Keep the outer loop running when the queue is waiting_input so each "
+            "cycle still runs scan/queue/WUP health/autopilot. Without it, the "
+            "process exits and the background WUP watcher is stopped."
+        ),
     )
     up.add_argument(
         "--force-init",
@@ -787,7 +796,10 @@ def _run_idle_diagnostics(
 ) -> DiagnosticResult:
     profile = profile.lower()
     if profile in {"off", "none"}:
-        _stdio_info("koru autonomous: idle diagnostics profile=off (skipping)", fmt=stdio_format)
+        _stdio_info(
+            f"koru autonomous: idle diagnostics disabled (profile={profile})",
+            fmt=stdio_format,
+        )
         return DiagnosticResult(status="off", failed=[])
     if not _is_topology_enabled(
         project, "idle-diagnostics", fallback=True, enabled=topology_integration
@@ -925,7 +937,6 @@ def _run_cycle(
         {"cycle": cycle, "project": str(project.resolve())},
     )
 
-    scan_result: ScanResult | None = None
     if enable_scan:
         if not _is_topology_enabled(
             project, "scan:on-change", fallback=True, enabled=topology_integration
