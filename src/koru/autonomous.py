@@ -59,7 +59,7 @@ class AutoloopState:
 
 @dataclass(frozen=True)
 class WupWatchConfig:
-    enabled: bool
+    enabled: bool | None
     mode: str
     project: Path
     deps_file: str
@@ -303,8 +303,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     up.add_argument(
         "--wup-watch",
-        action="store_true",
-        help="Start WUP watcher in autonomous mode and monitor its health output.",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=(
+            "Start WUP watcher in autonomous mode (default: auto-enable when "
+            "wup.yaml and `wup` binary are present). Use --no-wup-watch to disable."
+        ),
     )
     up.add_argument(
         "--wup-mode",
@@ -426,7 +430,11 @@ def _env_apply_autoloop_defaults(args: argparse.Namespace) -> None:
     args.topology_integration = _env_default_bool(
         "TOPOLOGY_INTEGRATION", args.topology_integration
     )
-    args.wup_watch = _env_default_bool("WUP_WATCH", args.wup_watch)
+    env_wup_watch = os.environ.get("WUP_WATCH")
+    if env_wup_watch is not None:
+        args.wup_watch = env_wup_watch.strip().lower() in {"1", "true", "yes", "y", "on"}
+    elif args.wup_watch is None:
+        args.wup_watch = None
     args.wup_mode = os.environ.get("WUP_MODE", args.wup_mode).lower()
     if args.wup_mode not in {"default", "testql"}:
         args.wup_mode = "testql"
@@ -610,19 +618,35 @@ def _wup_watch_command(config: WupWatchConfig) -> list[str]:
     return command
 
 
+def _wup_autodetect(config: WupWatchConfig) -> bool:
+    """Return True when wup binary and wup.yaml are both present."""
+    return (
+        shutil.which("wup") is not None
+        and ((config.project / "wup.yaml").is_file() or config.config is not None)
+    )
+
+
 def _start_wup_watch(config: WupWatchConfig, *, topology_integration: bool) -> subprocess.Popen | None:
-    if not config.enabled:
+    auto = config.enabled is None
+    if config.enabled is False:
         return None
+    wup_available = shutil.which("wup") is not None
+    wup_yaml_present = (config.project / "wup.yaml").is_file() or config.config is not None
+    if auto:
+        if not wup_available or not wup_yaml_present:
+            return None
+        print("koru autonomous: WUP auto-detected (wup.yaml + wup binary present)")
+    else:
+        if not wup_available:
+            print("koru autonomous: WUP watch requested but `wup` is not in PATH")
+            return None
+        if not wup_yaml_present:
+            print("koru autonomous: WUP watch requested but no wup.yaml found")
+            return None
     if not _is_topology_enabled(
         config.project, "gate:wup", fallback=True, enabled=topology_integration
     ):
         print("koru autonomous: WUP watch disabled in topology")
-        return None
-    if shutil.which("wup") is None:
-        print("koru autonomous: WUP watch requested but `wup` is not in PATH")
-        return None
-    if not (config.project / "wup.yaml").is_file() and config.config is None:
-        print("koru autonomous: WUP watch requested but no wup.yaml found")
         return None
     command = _wup_watch_command(config)
     print("+ " + " ".join(command))
@@ -1031,7 +1055,7 @@ def _action_up(args: argparse.Namespace) -> int:
                 diagnostic_ticket_queue=args.diagnostic_ticket_queue,
                 diagnostic_ticket_priority=args.diagnostic_ticket_priority,
                 diagnostic_state_dir=diagnostic_state_dir,
-                wup_watch_enabled=args.wup_watch,
+                wup_watch_enabled=wup_process is not None,
                 wup_diagnostic_tickets=args.wup_diagnostic_tickets,
                 wup_ticket_queue=args.wup_ticket_queue,
                 strict_diagnostics=args.strict_diagnostics,
