@@ -275,7 +275,7 @@ def test_run_cycle_skips_autopilot_when_queue_waits_for_input(
         ),
     )
 
-    _scan_result, queue_result, autopilot_status = autonomous_mod._run_cycle(
+    _scan_result, queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
         cycle=1,
         project=tmp_path,
         actor="koru-test",
@@ -318,7 +318,7 @@ def test_run_cycle_autopilot_waiting_input_logs_ticket_from_waiting_list(
         ),
     )
 
-    _scan_result, queue_result, autopilot_status = autonomous_mod._run_cycle(
+    _scan_result, queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
         cycle=1,
         project=tmp_path,
         actor="koru-test",
@@ -463,3 +463,56 @@ def test_up_restarts_autopilot_when_socket_disappears_between_cycles(
     )
     assert rc == 0
     assert len(daemon_starts) == 2
+
+
+def test_compute_backoff_sleep_caps_stagnation() -> None:
+    assert autonomous_mod._compute_backoff_sleep(30, 0, 900, True) == 30
+    assert autonomous_mod._compute_backoff_sleep(30, 2, 900, True) == 120
+    assert autonomous_mod._compute_backoff_sleep(30, 10, 100, True) == 100
+    assert autonomous_mod._compute_backoff_sleep(30, 2, 900, False) == 30
+
+
+def test_env_apply_autoloop_defaults_enables_full_diagnostics(monkeypatch) -> None:
+    args = SimpleNamespace(
+        idle_diagnostics="off",
+        diagnostic_tickets=False,
+        diagnostic_ticket_queue="default",
+        diagnostic_ticket_priority="high",
+        diagnostic_state_dir=".planfile/.koru/autoloop-diag",
+        strict_diagnostics=False,
+        autopilot_action="drive",
+        autopilot_on_idle_only=False,
+        autopilot_skip_on_diagnostics_fail=True,
+        autopilot_skip_statuses="waiting_input",
+        backoff_on_stagnation=True,
+        scan_skip_if_clean=False,
+        topology_integration=True,
+    )
+    monkeypatch.setenv("ENABLE_IDLE_DIAGNOSTICS", "true")
+    monkeypatch.setenv("ENABLE_DIAGNOSTIC_TICKETS", "true")
+    monkeypatch.setenv("AUTOPILOT_ACTION", "off")
+    autonomous_mod._env_apply_autoloop_defaults(args)
+    assert args.idle_diagnostics == "full"
+    assert args.diagnostic_tickets is True
+    assert args.autopilot_action == "off"
+
+
+def test_run_idle_diagnostics_creates_deduped_ticket(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(autonomous_mod.shutil, "which", lambda name: "/bin/false" if name == "regix" else None)
+    monkeypatch.setattr(autonomous_mod, "_run_command_check", lambda *_args, **_kwargs: False)
+    monkeypatch.setattr(autonomous_mod, "_is_topology_enabled", lambda *_args, **_kwargs: True)
+    result = autonomous_mod._run_idle_diagnostics(
+        project=tmp_path,
+        profile="quick",
+        cycle=1,
+        queue_status="idle",
+        diagnostic_tickets=True,
+        diagnostic_ticket_queue="diag",
+        diagnostic_ticket_priority="high",
+        diagnostic_state_dir=tmp_path / ".planfile/.koru/autoloop-diag",
+        topology_integration=False,
+    )
+    assert result.status == "failed"
+    assert (tmp_path / ".planfile/.koru/autoloop-diag/regix.failed").exists()
+    sprint = tmp_path / ".planfile/sprints/current.yaml"
+    assert "[AUTO-DIAG] regix needs attention" in sprint.read_text(encoding="utf-8")
