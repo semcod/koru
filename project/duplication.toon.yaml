@@ -6,7 +6,7 @@ SUMMARY:
   dup_groups:    4
   dup_fragments: 8
   saved_lines:   26
-  scan_ms:       3695
+  scan_ms:       4254
 
 HOTSPOTS[4] (files with most duplication):
   src/koru/serve.py  dup=20L  groups=2  frags=3  (0.1%)
