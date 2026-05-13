@@ -178,8 +178,53 @@ class AutopilotBridge {
         return false;
     }
     async pasteText(text) {
+        const ide = this.detectIde();
+        // Try IDE-specific direct text-insertion commands first (avoids
+        // clipboard-paste landing in the terminal / wrong editor).
+        const directCommands = [];
+        if (ide === "windsurf") {
+            directCommands.push("windsurf.action.chat.typeText", "windsurf.action.cascade.typeText", "cascade.typeText");
+        }
+        else if (ide === "cursor") {
+            directCommands.push("cursor.action.chat.typeText", "composer.typeText");
+        }
+        else {
+            directCommands.push("workbench.action.chat.insertText", "workbench.action.chat.typeText");
+        }
+        for (const cmd of directCommands) {
+            try {
+                await Promise.resolve(vscode.commands.executeCommand(cmd, text));
+                // If the command didn't throw we optimistically assume it worked.
+                return true;
+            }
+            catch {
+                /* command doesn't exist — try next */
+            }
+        }
+        // Fallback: clipboard + paste.  Before pasting, try to move focus
+        // away from the terminal and into the chat / editor area.
+        await this.focusChatInput();
         await vscode.env.clipboard.writeText(text);
         return await this.runCommand("editor.action.clipboardPasteAction");
+    }
+    async focusChatInput() {
+        const ide = this.detectIde();
+        const candidates = [
+            ...(ide === "windsurf"
+                ? [
+                    "windsurf.action.focusChatInput",
+                    "cascade.focusInput",
+                    "windsurf.action.focusCascadeInput",
+                ]
+                : []),
+            "workbench.action.focusActiveEditorGroup",
+            "workbench.action.focusSideBar",
+        ];
+        for (const cmd of candidates) {
+            if (await this.runCommand(cmd))
+                return true;
+        }
+        return false;
     }
     detectIde() {
         const app = (vscode.env.appName || "").toLowerCase();
@@ -247,15 +292,29 @@ class AutopilotBridge {
         }
         try {
             const opened = await this.focusChat();
+            if (!opened) {
+                // Even if focusChat failed, try the direct text-insertion path
+                // (some IDEs accept text without explicitly opening the panel).
+                const directPasted = await this.pasteText(text);
+                if (!directPasted) {
+                    this.send({
+                        type: "ack",
+                        id: env.id,
+                        ok: false,
+                        message: "no chat open command succeeded and paste fallback failed — check koruAutopilot.chatOpenCommands",
+                    });
+                    return;
+                }
+                this.send({ type: "ack", id: env.id, ok: true, delivered: true, opened: false, submitted: false });
+                return;
+            }
             const pasted = await this.pasteText(text);
             if (!pasted) {
                 this.send({
                     type: "ack",
                     id: env.id,
                     ok: false,
-                    message: opened
-                        ? "chat opened but paste command failed"
-                        : "no chat open command succeeded and paste fallback failed — check koruAutopilot.chatOpenCommands",
+                    message: "chat opened but paste command failed",
                 });
                 return;
             }

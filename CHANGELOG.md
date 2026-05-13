@@ -74,6 +74,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `quality:regix` ↔ `gate:regix`, `quality:redup*` ↔ `gate:redup`,
   `quality:sumr:*` ↔ `gate:sumr`.
 
+## [0.1.67] - 2026-05-13
+
+### Docs
+- Update README.md
+
+### Other
+- Update plugins/koru-autopilot-vscode/out/extension.js
+- Update plugins/koru-autopilot-vscode/out/extension.js.map
+- Update plugins/koru-autopilot-vscode/src/extension.ts
+- Update uv.lock
+
 ## [0.1.66] - 2026-05-13
 
 ### Docs
