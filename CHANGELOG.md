@@ -24,7 +24,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix ai-boilerplate issues (ticket-844c8511)
 - Fix unused-imports issues (ticket-67ef5047)
 
-## [Unreleased]
+## [0.1.77] - 2026-05-13
+
+### Added (WUP watch integration in `koru autonomous up`)
+- `--wup-watch` flag: starts `wup watch <project> --mode testql` as a
+  background subprocess alongside the autonomous loop; auto-detected via
+  `wup.yaml` presence; respects `gate:wup` topology toggle.
+- Per-cycle WUP health read from `.wup/service-health.json`: services with
+  status `down`, `failed`, `failure`, or `error` are treated as diagnostics
+  failures.
+- **Automatic high-priority Planfile tickets** for every failing WUP service:
+  `[AUTO-DIAG] wup-<service> needs attention` created in the queue specified
+  by `--wup-ticket-queue` (default `default`) with `priority: high`;
+  deduplicated via `.planfile/.koru/autoloop-diag/wup-<service>.failed` marker
+  files — duplicate tickets are never created until the marker is removed.
+- `--wup-diagnostic-tickets / --no-wup-diagnostic-tickets` (default on).
+- `--wup-mode {default,testql}` (default `testql`): passed to `wup watch --mode`.
+- Full `wup watch` CLI forwarding: `--wup-deps`, `--wup-scenarios-dir`,
+  `--wup-testql-bin`, `--wup-track-dir`, `--wup-debounce`, `--wup-cooldown`,
+  `--wup-cpu-throttle`, `--wup-quick-limit`, `--wup-config`.
+- Env-var overrides: `WUP_WATCH`, `WUP_MODE`, `WUP_DEPS`,
+  `WUP_SCENARIOS_DIR`, `WUP_TESTQL_BIN`, `WUP_TRACK_DIR`,
+  `WUP_DIAGNOSTIC_TICKETS`, `WUP_TICKET_QUEUE`.
+- `wup=<status>` field in per-cycle summary line; WUP subprocess cleanly
+  terminated on loop exit/interrupt via `_stop_process`.
+
+### Added (package-native autoloop diagnostics, previously shell-only)
+- `--idle-diagnostics {off,quick,full,deep}`: runs `regix`, `wup status`,
+  `redup`, `testql suite`, `redsl gate check`, `sumr` when queue is idle.
+- `--diagnostic-tickets`: creates deduplicated Planfile tickets for each
+  failing diagnostic check; controlled by `ENABLE_DIAGNOSTIC_TICKETS`.
+- `--strict-diagnostics`: stops loop with exit code 2 on diagnostics failure.
+- `--autopilot-action {drive,handoff,off}`, `--autopilot-on-idle-only`,
+  `--autopilot-skip-on-diagnostics-fail`, `--autopilot-skip-statuses`.
+- `--backoff-on-stagnation / --no-backoff-on-stagnation` + `--max-sleep-seconds`.
+- `--scan-skip-if-clean` + `--scan-skip-after N`.
+- `--topology-integration / --no-topology-integration`.
+- Full legacy env-var compatibility: `ENABLE_IDLE_DIAGNOSTICS`,
+  `IDLE_DIAGNOSTICS_PROFILE`, `ENABLE_DIAGNOSTIC_TICKETS`,
+  `DIAGNOSTIC_TICKET_QUEUE`, `DIAGNOSTIC_TICKET_PRIORITY`, `DIAG_STATE_DIR`,
+  `STRICT_DIAGNOSTICS`, `AUTOPILOT_ACTION`, `AUTOPILOT_ON_IDLE_ONLY`,
+  `AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL`, `AUTOPILOT_SKIP_STATUSES`,
+  `BACKOFF_ON_STAGNATION`, `SCAN_SKIP_IF_CLEAN`, `TOPOLOGY_INTEGRATION`.
 
 ### Fixed
 - `koru autonomous up`: `QueueLoopResult` has no `ticket_id` — log line after
