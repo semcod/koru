@@ -37,6 +37,12 @@ class QueueLoopResult:
     waiting: list[str]
     last_status: str
     last_message: str = ""
+    last_ticket_id: str | None = None
+
+    @property
+    def ticket_id(self) -> str | None:
+        """Backward-compatible alias for the final iteration's ticket id."""
+        return self.last_ticket_id
 
     def summary(self) -> str:
         lines = [

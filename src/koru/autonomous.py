@@ -279,7 +279,11 @@ def _run_cycle(
                 autopilot_status = "ok" if ok else "failed"
                 if ok:
                     backend = reply.get("backend", "?")
-                    print(f"  autopilot: ok (ticket={queue_result.ticket_id}, ide={autopilot_ide}, backend={backend})")
+                    waiting = getattr(queue_result, "waiting", None) or []
+                    waiting_ticket = waiting[-1] if waiting else "-"
+                    print(
+                        f"  autopilot: ok (ticket={waiting_ticket}, ide={autopilot_ide}, backend={backend})"
+                    )
                 else:
                     message = reply.get("message", "unknown error")
                     print(f"  autopilot: failed ({message})")
@@ -343,7 +347,7 @@ def _action_up(args: argparse.Namespace) -> int:
                 args.enable_autopilot
                 and client is not None
                 and socket_path is not None
-                and not client.is_running()
+                and not socket_path.exists()
                 and (
                     autopilot_socket_observed_at_boot
                     or daemon is not None
@@ -351,7 +355,7 @@ def _action_up(args: argparse.Namespace) -> int:
                 )
             ):
                 print(
-                    f"koru autonomous: autopilot socket unavailable at {socket_path}; "
+                    f"koru autonomous: autopilot socket missing at {socket_path}; "
                     "restarting or taking over daemon…"
                 )
                 if daemon is not None:

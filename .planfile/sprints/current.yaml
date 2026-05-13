@@ -2629,46 +2629,610 @@ sprint:
       sync: {}
       updated_at: '2026-05-12T09:46:46.702826Z'
     STARTER-083:
-      id: STARTER-083
-      name: JetBrains/PyCharm autopilot plugin
-      status: open
-      priority: high
-      sprint: current
-      source:
-        tool: koru-cli-nl
-        timestamp: '2026-05-12T13:59:17.075555+00:00'
-        context:
-          input: JetBrains/PyCharm autopilot plugin
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-12T13:59:17.075555+00:00'
       description: JetBrains/PyCharm autopilot plugin
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: JetBrains/PyCharm autopilot plugin
+        source: koru task
+        timestamp: '2026-05-12T13:59:17.075555+00:00'
+      id: STARTER-083
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: JetBrains/PyCharm autopilot plugin
       labels:
       - koru
       - nl-task
       - llm-ready
-      blocked_by: []
-      blocks: []
-      files: []
-      executor:
-        kind: human
-        mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: JetBrains/PyCharm autopilot plugin
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
+      name: JetBrains/PyCharm autopilot plugin
       outputs:
         artifacts: []
         notes: []
+      priority: high
+      source:
+        context:
+          input: JetBrains/PyCharm autopilot plugin
+        timestamp: '2026-05-12T13:59:17.075555+00:00'
+        tool: koru-cli-nl
+      sprint: current
+      status: open
       sync: {}
-      history:
-      - timestamp: '2026-05-12T13:59:17.075555+00:00'
-        action: created
-        source: koru task
-        message: JetBrains/PyCharm autopilot plugin
-      created_at: '2026-05-12T13:59:17.075555+00:00'
       updated_at: '2026-05-12T13:59:17.075555+00:00'
+    STARTER-084:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:12.562505Z'
+      description: '`project/analysis.toon.yaml` reports `_action_up` with CC=28 (limit=15).
+        Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-084
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _action_up (CC=28, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:12.560749Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:12.562509Z'
+    STARTER-085:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:13.434905Z'
+      description: '`project/analysis.toon.yaml` reports `_agent_main` with CC=19
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-085
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _agent_main (CC=19, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:13.433798Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:13.434909Z'
+    STARTER-086:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:14.269965Z'
+      description: '`project/analysis.toon.yaml` reports `_build_shared_rules` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-086
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _build_shared_rules (CC=15, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:14.268475Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:14.269971Z'
+    STARTER-087:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:15.229787Z'
+      description: '`project/analysis.toon.yaml` reports `_fetch_ticket_data` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-087
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _fetch_ticket_data (CC=15, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:15.227576Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:15.229795Z'
+    STARTER-088:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:16.311923Z'
+      description: '`project/analysis.toon.yaml` reports `_gc_main` with CC=18 (limit=15).
+        Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-088
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _gc_main (CC=18, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:16.310598Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:16.311928Z'
+    STARTER-089:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:17.109271Z'
+      description: '`project/analysis.toon.yaml` reports `_print_text_report` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-089
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _print_text_report (CC=15, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:17.108261Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:17.109274Z'
+    STARTER-090:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:17.799011Z'
+      description: '`project/analysis.toon.yaml` reports `_queue_run_main` with CC=26
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-090
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _queue_run_main (CC=26, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:17.797882Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:17.799015Z'
+    STARTER-091:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:18.583902Z'
+      description: '`project/analysis.toon.yaml` reports `_render_doctor_text` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-091
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _render_doctor_text (CC=15, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:18.582210Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:18.583905Z'
+    STARTER-092:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:19.531893Z'
+      description: '`project/analysis.toon.yaml` reports `_render_topology_text` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-092
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _render_topology_text (CC=15, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:19.530766Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:19.531897Z'
+    STARTER-093:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:20.284596Z'
+      description: '`project/analysis.toon.yaml` reports `_scan_code2llm_analysis`
+        with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-093
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _scan_code2llm_analysis (CC=15, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:20.283440Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:20.284599Z'
+    STARTER-094:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:20.920342Z'
+      description: '`project/analysis.toon.yaml` reports `_topology_main` with CC=17
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-094
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _topology_main (CC=17, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:20.919343Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:20.920345Z'
+    STARTER-095:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:21.573128Z'
+      description: '`project/analysis.toon.yaml` reports `build_tool_task_scaffold`
+        with CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-095
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: build_tool_task_scaffold (CC=16, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:21.572211Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:21.573136Z'
+    STARTER-096:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:22.236168Z'
+      description: '`project/analysis.toon.yaml` reports `create_nl_task` with CC=16
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-096
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: create_nl_task (CC=16, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:22.228131Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:22.236172Z'
+    STARTER-097:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:22.877441Z'
+      description: '`project/analysis.toon.yaml` reports `detect_agent_options` with
+        CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-097
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: detect_agent_options (CC=16, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:22.876554Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:22.877445Z'
+    STARTER-098:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:23.529121Z'
+      description: '`project/analysis.toon.yaml` reports `detect_tools` with CC=26
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-098
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: detect_tools (CC=26, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:23.528118Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:23.529124Z'
+    STARTER-099:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:24.182090Z'
+      description: '`project/analysis.toon.yaml` reports `find_candidates` with CC=15
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-099
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: find_candidates (CC=15, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:24.180943Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:24.182094Z'
+    STARTER-100:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:24.889160Z'
+      description: '`project/analysis.toon.yaml` reports `format_queue_event` with
+        CC=19 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-100
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: format_queue_event (CC=19, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:24.888143Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:24.889164Z'
+    STARTER-101:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:25.571637Z'
+      description: '`project/analysis.toon.yaml` reports `policy_violations` with
+        CC=22 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-101
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: policy_violations (CC=22, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:25.570652Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:25.571640Z'
+    STARTER-102:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:26.280286Z'
+      description: '`project/analysis.toon.yaml` reports `run_llm_request` with CC=23
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-102
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: run_llm_request (CC=23, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:26.279388Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:26.280289Z'
+    STARTER-103:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:26.973745Z'
+      description: '`project/analysis.toon.yaml` reports `run_next_planfile_task`
+        with CC=32 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-103
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: run_next_planfile_task (CC=32, limit=15)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:26.972800Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:26.973749Z'
+    STARTER-104:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-13T11:56:27.683872Z'
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split 20 high-CC
+        methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+        to verify.'
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-104
+      labels:
+      - code2llm
+      - refactor
+      - scan
+      name: 'code2llm refactor: split 20 high-CC methods'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-13T11:56:27.682919Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-13T11:56:27.683875Z'
