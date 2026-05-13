@@ -136,6 +136,7 @@ class AutopilotBridge {
     async submitChat() {
         // Try every known chat-submit command across VS Code / Windsurf /
         // Cursor / Code OSS. Order: most common → niche fallbacks.
+        const ide = this.detectIde();
         const candidates = [
             "workbench.action.chat.submit",
             "workbench.action.chat.acceptInput",
@@ -144,6 +145,10 @@ class AutopilotBridge {
             "workbench.action.interactive.accept",
             "composer.submit",
             "aichat.submit",
+            ...(ide === "windsurf" ? [
+                "windsurf.action.submitChat",
+                "windsurf.action.cascade.submit",
+            ] : []),
         ];
         for (const cmd of candidates) {
             if (await this.runCommand(cmd))
@@ -154,10 +159,16 @@ class AutopilotBridge {
     async focusChat() {
         const cfg = vscode.workspace.getConfiguration("koruAutopilot");
         const primary = (cfg.get("chatOpenCommands") || []).filter(Boolean);
+        const ide = this.detectIde();
         const defaults = [
             "workbench.action.chat.open",
             "composer.showComposer",
             "aichat.newchataction",
+            ...(ide === "windsurf" ? [
+                "windsurf.action.openChat",
+                "windsurf.action.openCascade",
+                "cascade.focus",
+            ] : []),
         ];
         const commands = primary.length > 0 ? primary : defaults;
         for (const cmd of commands) {
@@ -165,6 +176,10 @@ class AutopilotBridge {
                 return true;
         }
         return false;
+    }
+    async pasteText(text) {
+        await vscode.env.clipboard.writeText(text);
+        return await this.runCommand("editor.action.clipboardPasteAction");
     }
     detectIde() {
         const app = (vscode.env.appName || "").toLowerCase();
@@ -232,17 +247,18 @@ class AutopilotBridge {
         }
         try {
             const opened = await this.focusChat();
-            if (!opened) {
+            const pasted = await this.pasteText(text);
+            if (!pasted) {
                 this.send({
                     type: "ack",
                     id: env.id,
                     ok: false,
-                    message: "no chat open command succeeded — check koruAutopilot.chatOpenCommands",
+                    message: opened
+                        ? "chat opened but paste command failed"
+                        : "no chat open command succeeded and paste fallback failed — check koruAutopilot.chatOpenCommands",
                 });
                 return;
             }
-            await vscode.env.clipboard.writeText(text);
-            await this.runCommand("editor.action.clipboardPasteAction");
             let submitted = false;
             if (submit) {
                 // Small delay so the chat input has time to process the paste
@@ -250,7 +266,7 @@ class AutopilotBridge {
                 await new Promise(r => setTimeout(r, 150));
                 submitted = await this.submitChat();
             }
-            this.send({ type: "ack", id: env.id, ok: true, delivered: true, submitted });
+            this.send({ type: "ack", id: env.id, ok: true, delivered: true, opened, submitted });
         }
         catch (err) {
             const message = err instanceof Error ? err.message : String(err);

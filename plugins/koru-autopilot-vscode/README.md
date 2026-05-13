@@ -66,10 +66,25 @@ npm run clean && npm install && npm run package
 
 ## Configuration
 
-| Setting                           | Default | Purpose                              |
-|-----------------------------------|---------|--------------------------------------|
-| `koruAutopilot.socketPath`        | `""`    | Override unix-socket path.           |
-| `koruAutopilot.autoConnect`       | `true`  | Connect automatically on startup.    |
+| Setting                          | Default | Purpose                               |
+|----------------------------------|---------|---------------------------------------|
+| `koruAutopilot.socketPath`       | `""`    | Override unix-socket path.            |
+| `koruAutopilot.autoConnect`      | `true`  | Connect automatically on startup.     |
+| `koruAutopilot.chatOpenCommands` | `[]`    | Custom commands to open chat panel.   |
+
+### IDE-specific chat commands
+
+The extension detects the IDE (`windsurf`, `cursor`, or `vscode`) and automatically
+tries the right commands to open and submit the chat panel.
+
+| IDE        | Open commands (auto-detected)                                              | Submit commands (auto-detected)                                |
+|------------|----------------------------------------------------------------------------|----------------------------------------------------------------|
+| VS Code    | `workbench.action.chat.open`                                               | `workbench.action.chat.submit`                               |
+| Cursor     | `workbench.action.chat.open`                                               | `workbench.action.chat.submit`                               |
+| **Windsurf** | `windsurf.action.openChat`, `windsurf.action.openCascade`, `cascade.focus` | `windsurf.action.submitChat`, `windsurf.action.cascade.submit` |
+
+If the auto-detected commands fail, you can override them via the
+`koruAutopilot.chatOpenCommands` setting in your IDE's `settings.json`.
 
 ## Status bar
 

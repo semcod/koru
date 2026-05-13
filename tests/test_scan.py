@@ -317,6 +317,35 @@ class TestRunScan(unittest.TestCase):
             self.assertEqual(result.applied, [])
             self.assertGreater(len(result.skipped), 0)
 
+    def test_apply_deduplicates_planfile_source_tool_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".gitignore").write_text("# nothing\n")
+            existing = "Gitignore `.planfile/.koru/` runtime directory"
+            created: list[list[str]] = []
+
+            def runner(cmd, _proj) -> SimpleNamespace:
+                if cmd == ["planfile", "ticket", "list", "--source", "koru-scan", "--format", "json"]:
+                    return _ok("[]")
+                if cmd == ["planfile", "ticket", "list", "--format", "json"]:
+                    return _ok(json.dumps([{"name": existing, "source": {"tool": "koru-scan"}}]))
+                if cmd[:3] == ["planfile", "ticket", "create"]:
+                    created.append(list(cmd))
+                    return _ok("OK")
+                return _ok()
+
+            result = run_scan(
+                project,
+                apply=True,
+                skip_pytest=True,
+                include_semcod_artifacts=False,
+                runner=runner,
+            )
+
+            self.assertIn(existing, result.skipped)
+            for cmd in created:
+                self.assertNotIn(existing, cmd)
+
     def test_limit_caps_suggestions(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

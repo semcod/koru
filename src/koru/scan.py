@@ -704,28 +704,44 @@ def _existing_scan_titles(
     should not pile up identical tickets.
     """
     use_runner = runner or default_subprocess_runner
-    try:
-        result = use_runner(
-            ["planfile", "ticket", "list", "--source", source, "--format", "json"],
-            project,
-        )
-    except (FileNotFoundError, OSError):
-        return set()
-    if result.returncode != 0:
-        return set()
-    try:
-        payload = json.loads(result.stdout or "[]")
-    except json.JSONDecodeError:
-        return set()
-    if not isinstance(payload, list):
-        return set()
-    titles: set[str] = set()
-    for entry in payload:
-        if isinstance(entry, dict):
+    def _load_titles(cmd: list[str], *, filter_source: bool = False) -> set[str]:
+        try:
+            result = use_runner(cmd, project)
+        except (FileNotFoundError, OSError):
+            return set()
+        if result.returncode != 0:
+            return set()
+        try:
+            payload = json.loads(result.stdout or "[]")
+        except json.JSONDecodeError:
+            return set()
+        if not isinstance(payload, list):
+            return set()
+        titles: set[str] = set()
+        for entry in payload:
+            if not isinstance(entry, dict):
+                continue
+            if filter_source:
+                entry_source = entry.get("source")
+                if isinstance(entry_source, dict):
+                    if entry_source.get("tool") != source:
+                        continue
+                elif entry_source != source:
+                    continue
             name = entry.get("name") or entry.get("title")
             if isinstance(name, str):
                 titles.add(name)
-    return titles
+        return titles
+
+    titles = _load_titles(
+        ["planfile", "ticket", "list", "--source", source, "--format", "json"],
+    )
+    if titles:
+        return titles
+    return _load_titles(
+        ["planfile", "ticket", "list", "--format", "json"],
+        filter_source=True,
+    )
 
 
 def _create_ticket(
@@ -743,8 +759,6 @@ def _create_ticket(
         "--priority", suggestion.priority,
         "--source", source,
         "--description", suggestion.description,
-        "--executor-kind", "shell",
-        "--script", "true",
     ]
     for label in suggestion.labels:
         cmd.extend(["--label", label])
