@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10] - 2026-05-13
+
+### Fixed
+- Fix string-concat issues (ticket-4db6394c)
+
 ## [0.1.10] - 2026-05-12
 
 ### Fixed
@@ -73,6 +78,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Quality tasks now honor topology gate flags:
   `quality:regix` ↔ `gate:regix`, `quality:redup*` ↔ `gate:redup`,
   `quality:sumr:*` ↔ `gate:sumr`.
+
+## [0.1.69] - 2026-05-13
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update .code2llm_cache/app_1778613276699000000_28970.pkl
+- Update .code2llm_cache/autonomous_1778659699568702189_15048.pkl
+- Update .code2llm_cache/bootstrap_1778612883007000000_15786.pkl
+- Update .code2llm_cache/cli_command_1778651740833531424_27525.pkl
+- Update .code2llm_cache/context_1778651740838531442_42132.pkl
+- Update .code2llm_cache/doctor_1778651740875531574_19704.pkl
+- Update .code2llm_cache/extension_1778666364997964239_11430.pkl
+- Update .code2llm_cache/extension_1778668075114051194_11664.pkl
+- Update .code2llm_cache/package_1778666405224925115_2330.pkl
+- Update .code2llm_cache/package_1778668061289910171_2330.pkl
+- ... and 28 more files
 
 ## [0.1.68] - 2026-05-13
 

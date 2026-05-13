@@ -5,12 +5,10 @@ flowchart TD
     classDef entry fill:#4dabf7,stroke:#1971c2,color:#fff
 
     subgraph Core
-        services__healing_webhook__app__create_planfile_ticket{{create_planfile_ticket CC=24}}
         services__healing_webhook__app__heal_rebuild_restore["heal_rebuild_restore"]
         services__healing_webhook__app__heal_annotate["heal_annotate"]
         services__healing_webhook__app___run_vallm_validate["_run_vallm_validate"]
         services__healing_webhook__app__heal_vallm_validate["heal_vallm_validate"]
-        services__healing_webhook__app___run_redup_check{{_run_redup_check CC=15}}
         services__healing_webhook__app__heal_redup_check["heal_redup_check"]
         services__healing_webhook__app__healthz["healthz"]
         services__healing_webhook__app__metrics["metrics"]
@@ -20,7 +18,9 @@ flowchart TD
         services__healing_webhook__app__get_tickets["get_tickets"]
         src__koru__watch__format_queue_event{{format_queue_event CC=19}}
         src__koru__watch___default_connect["_default_connect"]
-        ...["+223 more"]
+        src__koru__gate__GateAuthorization__to_note["to_note"]
+        src__koru__gate__parse_authorizations["parse_authorizations"]
+        ...["+232 more"]
     end
 
     subgraph Exporters

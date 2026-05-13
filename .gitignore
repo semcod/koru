@@ -1,4 +1,19 @@
 # Byte-compiled / optimized / DLL files
+.code2llm_cache/app_1778613276699000000_28970.pkl
+.code2llm_cache/autonomous_1778659699568702189_15048.pkl
+.code2llm_cache/bootstrap_1778612883007000000_15786.pkl
+.code2llm_cache/cli_command_1778651740833531424_27525.pkl
+.code2llm_cache/context_1778651740838531442_42132.pkl
+.code2llm_cache/doctor_1778651740875531574_19704.pkl
+.code2llm_cache/extension_1778666364997964239_11430.pkl
+.code2llm_cache/extension_1778668075114051194_11664.pkl
+.code2llm_cache/package_1778666405224925115_2330.pkl
+.code2llm_cache/package_1778668061289910171_2330.pkl
+.code2llm_cache/planfile_1778666711518686067_35934.pkl
+.code2llm_cache/pyproject_1778664804487838503_2031.pkl
+.code2llm_cache/pyproject_1778666698895390623_2031.pkl
+.code2llm_cache/runner_1778613443952879220_9103.pkl
+.code2llm_cache/scan_1778656970099563261_29504.pkl
 .code2llm_cache/Dockerfile_1778596139000000000_1532.pkl
 .code2llm_cache/planfile-sync-todo_1778596054089531179_8721.pkl
 .code2llm_cache/planfile_1778596141701942870_35943.pkl

@@ -1278,19 +1278,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-4577c0f1
-    name: Fix wildcard-imports issues
-    description: Resolve 2 wildcard-imports issues in scripts/planfile-sync-todo.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - scripts/planfile-sync-todo.py
-    rule_id: wildcard-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-f68e6a91
     name: Fix ai-boilerplate issues
     description: Resolve 1 ai-boilerplate issues in src/koru/__main__.py
@@ -1314,6 +1301,19 @@ sprints:
     - src/koru/agents.py
     rule_id: string-concat
     count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-4db6394c
+    name: Fix string-concat issues
+    description: Resolve 2 string-concat issues in scripts/planfile-sync-todo.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - scripts/planfile-sync-todo.py
+    rule_id: string-concat
+    count: 2
     model_hints:
       planning: balanced
       implementation: balanced

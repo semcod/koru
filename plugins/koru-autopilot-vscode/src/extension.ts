@@ -180,11 +180,20 @@ class AutopilotBridge {
       }
     }
 
-    // Fallback: clipboard + paste.  Before pasting, try to move focus
-    // away from the terminal and into the chat / editor area.
+    // Fallback: synthetic typing via the ``type`` command.
+    // ``editor.action.clipboardPasteAction`` only works in text editors,
+    // not in webview-based chat panels.  The ``type`` command sends
+    // keystrokes to whatever DOM element currently has focus, so we
+    // must ensure the chat input is focused first.
     await this.focusChatInput();
-    await vscode.env.clipboard.writeText(text);
-    return await this.runCommand("editor.action.clipboardPasteAction");
+    try {
+      await Promise.resolve(
+        vscode.commands.executeCommand("type", { text })
+      );
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   private async focusChatInput(): Promise<boolean> {

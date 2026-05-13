@@ -201,11 +201,19 @@ class AutopilotBridge {
                 /* command doesn't exist — try next */
             }
         }
-        // Fallback: clipboard + paste.  Before pasting, try to move focus
-        // away from the terminal and into the chat / editor area.
+        // Fallback: synthetic typing via the ``type`` command.
+        // ``editor.action.clipboardPasteAction`` only works in text editors,
+        // not in webview-based chat panels.  The ``type`` command sends
+        // keystrokes to whatever DOM element currently has focus, so we
+        // must ensure the chat input is focused first.
         await this.focusChatInput();
-        await vscode.env.clipboard.writeText(text);
-        return await this.runCommand("editor.action.clipboardPasteAction");
+        try {
+            await Promise.resolve(vscode.commands.executeCommand("type", { text }));
+            return true;
+        }
+        catch {
+            return false;
+        }
     }
     async focusChatInput() {
         const ide = this.detectIde();
@@ -217,8 +225,12 @@ class AutopilotBridge {
                     "windsurf.action.focusCascadeInput",
                 ]
                 : []),
-            "workbench.action.focusActiveEditorGroup",
-            "workbench.action.focusSideBar",
+            // Focus the sidebar / panel areas where the chat lives.
+            // Do NOT use focusActiveEditorGroup — that moves focus back
+            // to the editor and the paste lands there instead of the chat.
+            "workbench.action.focusAuxiliaryBar", // secondary sidebar (right)
+            "workbench.action.focusPanel", // bottom panel
+            "workbench.action.focusSideBar", // primary sidebar (left)
         ];
         for (const cmd of candidates) {
             if (await this.runCommand(cmd))
@@ -292,6 +304,11 @@ class AutopilotBridge {
         }
         try {
             const opened = await this.focusChat();
+            if (opened) {
+                // Give the chat panel time to render and grab focus before we
+                // try to paste (otherwise the editor may still be focused).
+                await new Promise(r => setTimeout(r, 300));
+            }
             if (!opened) {
                 // Even if focusChat failed, try the direct text-insertion path
                 // (some IDEs accept text without explicitly opening the panel).

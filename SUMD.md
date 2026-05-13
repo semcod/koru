@@ -21,7 +21,7 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.56`
+- **version**: `0.1.68`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -41,7 +41,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.56;
+  version: 0.1.68;
 }
 
 dependencies {
@@ -1421,7 +1421,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.56
+  version: 0.1.68
   env: local
 ```
 
@@ -1495,10 +1495,10 @@ pip install -e .[dev]
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 134f 28186L | python:95,shell:34,javascript:2,typescript:2,less:1 | 2026-05-12
-# stats: 590 func | 127 cls | 134 mod | CC̄=4.7 | critical:70 | cycles:0
-# alerts[5]: CC _fetch_ticket_data=36; CC _action_up=28; CC _queue_run_main=26; CC run_next_planfile_task=26; CC detect_tools=26
-# hotspots[5]: _build_handler fan=30; do_from_todo fan=23; create_planfile_ticket fan=23; render_markdown_handoff fan=19; init_project fan=19
+# koru | 134f 28986L | python:95,shell:34,javascript:2,typescript:2,less:1 | 2026-05-13
+# stats: 623 func | 128 cls | 134 mod | CC̄=4.6 | critical:66 | cycles:0
+# alerts[5]: CC run_next_planfile_task=32; CC _action_up=28; CC _queue_run_main=26; CC detect_tools=26; CC run_llm_request=23
+# hotspots[5]: _build_handler fan=30; do_from_todo fan=23; render_markdown_handoff fan=19; init_project fan=19; create_nl_task fan=19
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
 M[134]:
@@ -1526,9 +1526,9 @@ M[134]:
   docs/llm-tools/testql/install.sh,50
   docs/llm-tools/toonic/install.sh,50
   docs/llm-tools/vallm/install.sh,56
-  plugins/koru-autopilot-vscode/out/extension.js,264
+  plugins/koru-autopilot-vscode/out/extension.js,368
   plugins/koru-autopilot-vscode/out/socketPath.js,61
-  plugins/koru-autopilot-vscode/src/extension.ts,249
+  plugins/koru-autopilot-vscode/src/extension.ts,344
   plugins/koru-autopilot-vscode/src/socketPath.ts,28
   project.sh,54
   scripts/_koru_autodiag_filter_tickets.py,56
@@ -1537,15 +1537,15 @@ M[134]:
   scripts/koru-autoloop.sh,563
   scripts/planfile-export-prompt.sh,82
   scripts/planfile-sync-todo.py,236
-  services/healing-webhook/app.py,674
+  services/healing-webhook/app.py,703
   services/healing-webhook/ticket_builder.py,224
   src/koru/__init__.py,70
   src/koru/__main__.py,9
   src/koru/agents.py,348
-  src/koru/autonomous.py,384
+  src/koru/autonomous.py,420
   src/koru/autopilot/__init__.py,68
   src/koru/autopilot/audit.py,156
-  src/koru/autopilot/cli_command.py,782
+  src/koru/autopilot/cli_command.py,849
   src/koru/autopilot/client.py,93
   src/koru/autopilot/config.py,123
   src/koru/autopilot/daemon.py,518
@@ -1556,14 +1556,14 @@ M[134]:
   src/koru/autopilot/protocol.py,201
   src/koru/autopilot/utils/__init__.py,6
   src/koru/autopilot/utils/client_helpers.py,54
-  src/koru/bootstrap.py,414
+  src/koru/bootstrap.py,468
   src/koru/cli/__init__.py,56
   src/koru/cli/__main__.py,9
   src/koru/cli/commands.py,1
   src/koru/cli/parsers.py,1
   src/koru/cli.py,1839
-  src/koru/context.py,1082
-  src/koru/doctor.py,455
+  src/koru/context.py,1155
+  src/koru/doctor.py,503
   src/koru/dotenv_loader.py,105
   src/koru/events.py,91
   src/koru/gate.py,205
@@ -1577,14 +1577,14 @@ M[134]:
   src/koru/queue/human.py,32
   src/koru/queue/locking.py,88
   src/koru/queue/loop.py,108
-  src/koru/queue/runner.py,226
+  src/koru/queue/runner.py,238
   src/koru/queue/runners.py,211
   src/koru/queue/ticket.py,140
   src/koru/queue/types.py,81
   src/koru/queue_clean.py,356
   src/koru/run_log.py,125
   src/koru/runtime.py,105
-  src/koru/scan.py,709
+  src/koru/scan.py,819
   src/koru/semcod_tools.py,130
   src/koru/serve.py,1009
   src/koru/tasks.py,166
@@ -1601,7 +1601,7 @@ M[134]:
   tests/e2e/smoke.sh,112
   tests/test_agent_cli.py,101
   tests/test_agents.py,184
-  tests/test_autonomous.py,389
+  tests/test_autonomous.py,470
   tests/test_autopilot_audit.py,124
   tests/test_autopilot_cli.py,460
   tests/test_autopilot_client_drive_errors.py,16
@@ -1617,7 +1617,7 @@ M[134]:
   tests/test_cli.py,327
   tests/test_context.py,494
   tests/test_docker_e2e.py,548
-  tests/test_doctor.py,407
+  tests/test_doctor.py,434
   tests/test_dotenv_loader.py,117
   tests/test_e2e.py,946
   tests/test_events.py,67
@@ -1625,12 +1625,12 @@ M[134]:
   tests/test_gc.py,277
   tests/test_init.py,244
   tests/test_loop.py,95
-  tests/test_planfile_queue.py,1001
+  tests/test_planfile_queue.py,1000
   tests/test_policy.py,183
   tests/test_queue_clean.py,309
   tests/test_run_log.py,139
   tests/test_runtime.py,131
-  tests/test_scan.py,404
+  tests/test_scan.py,469
   tests/test_serve.py,276
   tests/test_tasks.py,77
   tests/test_tools.py,110
@@ -1652,9 +1652,13 @@ D:
     _llm_stub(item;heading;source_name)
     main()
   services/healing-webhook/app.py:
-    e: _rate_limit_ok,_record_action,create_planfile_ticket,_run_docker,heal_redsl_gate,heal_redsl_improve,heal_rebuild_restore,heal_annotate,_run_vallm_check,_run_vallm_validate,_resolve_affected_files,heal_vallm_validate,_run_redup_check,heal_redup_check,_resolve_strategy,healthz,metrics,get_history,alertmanager_webhook,probe_failure,get_tickets
+    e: _rate_limit_ok,_record_action,_enrich_ticket_with_vallm,_build_planfile_command,_extract_ticket_id_from_stdout,_execute_planfile_create,create_planfile_ticket,_run_docker,heal_redsl_gate,heal_redsl_improve,heal_rebuild_restore,heal_annotate,_run_vallm_check,_run_vallm_validate,_resolve_affected_files,heal_vallm_validate,_parse_redup_summary,_update_redup_metrics,_run_redup_check,heal_redup_check,_resolve_strategy,healthz,metrics,get_history,alertmanager_webhook,probe_failure,get_tickets
     _rate_limit_ok()
     _record_action(action;outcome;component;detail)
+    _enrich_ticket_with_vallm(alert;payload)
+    _build_planfile_command(payload)
+    _extract_ticket_id_from_stdout(stdout)
+    _execute_planfile_create(cmd;severity)
     create_planfile_ticket(alert)
     _run_docker(image;cmd;timeout)
     heal_redsl_gate(component;detail)
@@ -1665,6 +1669,8 @@ D:
     _run_vallm_validate(file_path;model;timeout)
     _resolve_affected_files(component;labels;max_files)
     heal_vallm_validate(component;detail)
+    _parse_redup_summary(payload)
+    _update_redup_metrics(summary;breach)
     _run_redup_check(timeout)
     heal_redup_check(component;detail)
     _resolve_strategy(strategy_name)
@@ -1721,7 +1727,7 @@ D:
     default_log_path()
     _isoformat_utc(ts)
   src/koru/autopilot/cli_command.py:
-    e: _build_parser,_client,_action_daemon,_action_drive,_action_status,_action_shutdown,_action_ide_list,_doctor_fix_payload,_action_doctor,_action_setup_host,_plugin_repo_dir,_resolve_plugin_vsix_path,_ide_from_terminal_env,_resolve_plugin_target_ide,_resolve_plugin_editor_bin,_action_install_plugin,_build_brief,_action_handoff,_format_tail_entry,_action_tail,_systemd_user_dir,_resolve_koru_bin,_render_unit,_action_install_unit,autopilot_main
+    e: _build_parser,_client,_action_daemon,_action_drive,_action_status,_action_shutdown,_action_ide_list,_doctor_fix_payload,_render_doctor_text,_render_doctor_json,_action_doctor,_action_setup_host,_plugin_repo_dir,_resolve_plugin_vsix_path,_ide_from_terminal_env,_resolve_plugin_target_ide,_resolve_plugin_editor_bin,_render_install_plugin_dry_run,_render_install_plugin_result,_action_install_plugin,_build_brief,_action_handoff,_format_tail_entry,_render_tail_json,_render_tail_text,_action_tail,_systemd_user_dir,_resolve_koru_bin,_render_unit,_action_install_unit,autopilot_main
     _build_parser()
     _client(args)
     _action_daemon(args)
@@ -1730,6 +1736,8 @@ D:
     _action_shutdown(args)
     _action_ide_list(_args)
     _doctor_fix_payload()
+    _render_doctor_text(injector;statuses;selected;fix_payload)
+    _render_doctor_json(injector;statuses;selected;fix_payload)
     _action_doctor(args)
     _action_setup_host(args)
     _plugin_repo_dir()
@@ -1737,10 +1745,14 @@ D:
     _ide_from_terminal_env()
     _resolve_plugin_target_ide(raw_ide)
     _resolve_plugin_editor_bin(ide)
+    _render_install_plugin_dry_run(ide;editor_bin;vsix_path;cmd;output_format)
+    _render_install_plugin_result(ide;editor_bin;cmd;ok;stdout;stderr;output_format)
     _action_install_plugin(args)
     _build_brief(project)
     _action_handoff(args)
     _format_tail_entry(entry)
+    _render_tail_json(tail)
+    _render_tail_text(tail)
     _action_tail(args)
     _systemd_user_dir()
     _resolve_koru_bin()
@@ -1832,10 +1844,17 @@ D:
     call_daemon_method(client;method_name;error_message_prefix;not_running_return_code)
     resolve_xdg_path(relative_path)
   src/koru/bootstrap.py:
-    e: load_flat_pipeline,_validate_task,_validate_cross_task_dependencies,validate_flat_pipeline,_detect_cycle,materialize_to_planfile,_normalise_task,_next_id_after,import_flat_pipeline,_infer_prefix,ValidationError,ImportReport
+    e: load_flat_pipeline,_validate_id,_validate_name,_validate_status,_validate_priority,_validate_executor,_validate_execution_state,_validate_blocked_by,_validate_task,_validate_cross_task_dependencies,validate_flat_pipeline,_detect_cycle,materialize_to_planfile,_normalise_task,_next_id_after,import_flat_pipeline,_infer_prefix,ValidationError,ImportReport
     ValidationError: __str__(0)
     ImportReport: summary(0)
     load_flat_pipeline(path)
+    _validate_id(task;seen_ids)
+    _validate_name(task)
+    _validate_status(task)
+    _validate_priority(task)
+    _validate_executor(task)
+    _validate_execution_state(task)
+    _validate_blocked_by(task)
     _validate_task(task;seen_ids)
     _validate_cross_task_dependencies(tasks)
     validate_flat_pipeline(tasks)
@@ -1893,7 +1912,7 @@ D:
     _command_loop_main(args)
     main()
   src/koru/context.py:
-    e: _is_fixture_ticket,_resolve_include_fixtures,_load_project_dotenv,_planfile_command_base,_planfile_env,_fetch_all_tickets,_run_planfile,_safe_json,_git_probe,_fetch_ticket_data,build_context,_auto_promote_blocking_tickets,_build_instructions,_build_setup_instructions,_build_shared_rules,_build_self_service,_render_header,_render_environment,_render_agent_lanes,_render_autonomous_mode,_render_ai_tool_support_2026,_render_semcod_tools,_render_setup_required,_render_active_ticket,_render_no_active_ticket,_render_gates,_render_project_pipeline,_render_policy,_render_rules,_render_self_service,_render_dashboard,render_markdown_handoff
+    e: _is_fixture_ticket,_resolve_include_fixtures,_load_project_dotenv,_planfile_command_base,_planfile_env,_fetch_all_tickets,_run_planfile,_safe_json,_git_probe,_build_ticket_args,_try_fallback_ticket_list,_process_list_payload,_process_dict_payload,_extract_error_from_stderr,_fetch_ticket_data,build_context,_load_sprint_data,_find_blocking_tickets,_promote_blocking_to_critical,_promote_bug_priority,_write_sprint_data,_auto_promote_blocking_tickets,_build_instructions,_build_setup_instructions,_build_shared_rules,_build_self_service,_render_header,_render_environment,_render_agent_lanes,_render_autonomous_mode,_render_ai_tool_support_2026,_render_semcod_tools,_render_setup_required,_render_active_ticket,_render_no_active_ticket,_render_gates,_render_project_pipeline,_render_policy,_render_rules,_render_self_service,_render_dashboard,render_markdown_handoff
     _is_fixture_ticket(ticket)
     _resolve_include_fixtures(explicit)
     _load_project_dotenv(project)
@@ -1903,8 +1922,18 @@ D:
     _run_planfile(project;args;runner)
     _safe_json(text)
     _git_probe(project)
+    _build_ticket_args(ticket_id;queue_name)
+    _try_fallback_ticket_list(project;planfile_runner)
+    _process_list_payload(ticket_data;include_fixtures)
+    _process_dict_payload(ticket_data;ticket_id;include_fixtures)
+    _extract_error_from_stderr(stderr)
     _fetch_ticket_data(project;ticket_id;queue_name;planfile_present;planfile_runner;include_fixtures)
     build_context()
+    _load_sprint_data(project)
+    _find_blocking_tickets(tickets)
+    _promote_blocking_to_critical(tickets;blocking_tickets)
+    _promote_bug_priority(tickets)
+    _write_sprint_data(project;sprint_data)
     _auto_promote_blocking_tickets(project;runner)
     _build_instructions(policy;ticket)
     _build_setup_instructions()
@@ -1927,12 +1956,15 @@ D:
     _render_dashboard()
     render_markdown_handoff(context)
   src/koru/doctor.py:
-    e: run_diagnostics,_check_git_repo,_check_planfile_binary,_check_planfile_config,_check_planfile_sprints,_check_planfile_sprints_yaml,_check_runtime_dir,_check_koru_project_pipeline,_check_policy_yaml,_check_gitignore,_resolve_pytest_collect_timeout,_check_pytest_collect,_check_ci_command,render_text,Check,DoctorReport
+    e: run_diagnostics,_check_git_repo,_check_planfile_binary,_planfile_version_argv,_check_koru_package_version,_check_planfile_cli_version,_check_planfile_config,_check_planfile_sprints,_check_planfile_sprints_yaml,_check_runtime_dir,_check_koru_project_pipeline,_check_policy_yaml,_check_gitignore,_resolve_pytest_collect_timeout,_check_pytest_collect,_check_ci_command,render_text,Check,DoctorReport
     Check: to_dict(0)  # A single diagnostic outcome.
     DoctorReport: has_failures(0),has_warnings(0),summary(0),to_dict(0)  # Aggregate result of ``run_diagnostics``.
     run_diagnostics(project)
     _check_git_repo(project)
     _check_planfile_binary(_project)
+    _planfile_version_argv()
+    _check_koru_package_version(_project)
+    _check_planfile_cli_version(project)
     _check_planfile_config(project)
     _check_planfile_sprints(project)
     _check_planfile_sprints_yaml(project)
@@ -2168,7 +2200,7 @@ D:
     TestAgentDetection: test_detects_project_hints_without_cli(0),test_detects_openrouter_lane_from_env(0),test_select_agent_prefers_launchable_when_noninteractive(0),test_detects_gemini_cli_when_available(0),test_select_agent_can_pick_gemini_when_only_launchable(0),test_detects_cline_when_available(0),test_select_agent_can_pick_cline_when_only_launchable(0),test_agent_lane_environment_cursor(0),test_normalize_agent_lane_id_strips_garbage(0),test_format_agent_lane_exports_is_shell_safe(0),test_detects_qwen_code_when_available(0),test_select_agent_can_pick_qwen_when_only_launchable(0),test_detects_opencode_when_available(0),test_select_agent_can_pick_opencode_when_only_launchable(0)
     TestAgentLaneEnv: test_qwen_lane_env_defaults(0),test_opencode_lane_env_defaults(0)
   tests/test_autonomous.py:
-    e: test_effective_flags_matrix,test_resolve_autopilot_ide_env_overrides_cli,test_resolve_autopilot_ide_ignores_bad_env,test_resolve_autopilot_ide_auto_env_does_not_override_cli,test_apply_agent_lane_environ_auto_cursor,test_apply_agent_lane_environ_none_is_noop,test_autonomous_main_prepends_up_for_flags,test_up_single_cycle_queue_only_no_autopilot,test_up_single_cycle_all_sources_runs_scan,test_up_auto_installs_plugin_before_autopilot_loop,test_run_cycle_skips_autopilot_when_queue_waits_for_input,test_up_stops_on_waiting_input_by_default,test_up_restarts_autopilot_when_socket_disappears_between_cycles
+    e: test_effective_flags_matrix,test_resolve_autopilot_ide_env_overrides_cli,test_resolve_autopilot_ide_ignores_bad_env,test_resolve_autopilot_ide_auto_env_does_not_override_cli,test_apply_agent_lane_environ_auto_cursor,test_apply_agent_lane_environ_none_is_noop,test_autonomous_main_prepends_up_for_flags,test_up_single_cycle_queue_only_no_autopilot,test_up_single_cycle_all_sources_runs_scan,test_up_auto_installs_plugin_before_autopilot_loop,test_run_cycle_skips_autopilot_when_queue_waits_for_input,test_up_stops_on_waiting_input_by_default,test_up_restarts_autopilot_when_socket_disappears_between_cycles,test_up_restarts_autopilot_when_socket_exists_but_unhealthy
     test_effective_flags_matrix()
     test_resolve_autopilot_ide_env_overrides_cli(monkeypatch)
     test_resolve_autopilot_ide_ignores_bad_env(monkeypatch)
@@ -2182,6 +2214,7 @@ D:
     test_run_cycle_skips_autopilot_when_queue_waits_for_input(tmp_path;monkeypatch)
     test_up_stops_on_waiting_input_by_default(tmp_path;monkeypatch)
     test_up_restarts_autopilot_when_socket_disappears_between_cycles(tmp_path;monkeypatch)
+    test_up_restarts_autopilot_when_socket_exists_but_unhealthy(tmp_path;monkeypatch)
   tests/test_autopilot_audit.py:
     e: _read_lines,test_disabled_audit_is_silent,test_record_writes_ndjson,test_record_drops_none_values,test_log_file_is_owner_only,test_directory_is_owner_only,test_default_log_path_uses_xdg_state,test_default_log_path_falls_back_to_home,test_multiple_records_appear_in_order,test_rotation_caps_file_size,test_unwritable_directory_disables_silently
     _read_lines(path)
@@ -2379,9 +2412,10 @@ D:
     TestDockerE2E: docker_image(0),test_project(1),test_docker_image_builds_successfully(1),test_koru_help_in_docker(1),test_koru_doctor_in_docker(1),test_koru_init_in_docker(1),test_task_creation_with_priority_in_docker(2),test_autonomous_mode_single_cycle_in_docker(2),test_priority_ordering_in_docker(2),test_external_tool_detection_in_docker(1),test_agent_detection_in_docker(1),test_full_workflow_in_docker(2)  # Test Koru functionality in Docker containers.
     TestDockerComposeIntegration: test_docker_compose_build(0),test_docker_compose_test_profile(0),test_docker_compose_deps_profile(0)  # Test Docker Compose integration.
   tests/test_doctor.py:
-    e: _scaffold,_run,_named,TestHappyPath,TestKoruProjectPipelineProbe,TestGitRepoCheck,TestPlanfileBinary,TestPlanfileConfigCheck,TestSprintsCheck,TestPolicyYamlCheck,TestGitignoreCheck,TestCiCommandCheck,TestPytestCollectProbe,TestReportShape
+    e: _scaffold,_run,_named,TestHappyPath,TestKoruProjectPipelineProbe,TestPlanfileCliVersionProbe,TestGitRepoCheck,TestPlanfileBinary,TestPlanfileConfigCheck,TestSprintsCheck,TestPolicyYamlCheck,TestGitignoreCheck,TestCiCommandCheck,TestPytestCollectProbe,TestReportShape
     TestHappyPath: test_full_scaffold_passes_all_required_checks(0)
     TestKoruProjectPipelineProbe: test_warns_when_planfile_ok_but_koru_yaml_missing(0)
+    TestPlanfileCliVersionProbe: test_parses_version_from_stderr(0)
     TestGitRepoCheck: test_warns_when_no_git(0)
     TestPlanfileBinary: test_explicit_env_var_resolves(0),test_missing_binary_fails(0)
     TestPlanfileConfigCheck: test_missing_config_fails(0),test_malformed_config_fails(0)
@@ -2456,7 +2490,7 @@ D:
     TestKoruLoop: test_search_root_for_include_uses_literal_prefix(0),test_discover_repositories_with_pattern(0),test_run_closed_loop_retries_failed_repositories(0),test_run_closed_loop_single_round_when_all_succeed(0),test_command_value_rejects_blank_value(0)
   tests/test_planfile_queue.py:
     e: _ok,_ticket_args,TestPlanfileQueue,TestPlanfileQueueLlm,TestPlanfileQueueLoop
-    TestPlanfileQueue: test_shell_ticket_runs_lifecycle_commands(0),test_ticket_claim_failure_returns_claim_failed(0),test_human_ticket_returns_waiting_input(0),test_shell_failure_marks_ticket_failed(0),test_api_ticket_runs_lifecycle_commands(0),test_api_failure_marks_ticket_failed(0),test_idle_when_planfile_returns_no_ticket(0),test_planfile_error_propagates(0),test_dry_run_returns_command_without_executing(0),test_unsupported_executor_kind(0),test_shell_ticket_without_command_requests_input(0),test_api_ticket_without_endpoint_requests_input(0),test_interactive_human_ticket_completes_with_answer(0),test_interactive_human_ticket_cancellation_leaves_ticket(0),test_interactive_with_dry_run_does_not_prompt(0)
+    TestPlanfileQueue: test_shell_ticket_runs_lifecycle_commands(0),test_ticket_claim_failure_returns_claim_failed(0),test_human_ticket_returns_waiting_input(0),test_shell_failure_marks_ticket_failed(0),test_api_ticket_runs_lifecycle_commands(0),test_api_failure_marks_ticket_failed(0),test_idle_when_planfile_returns_no_ticket(0),test_planfile_error_propagates(0),test_dry_run_returns_command_without_executing(0),test_unsupported_executor_kind(0),test_shell_ticket_without_command_auto_completes(0),test_api_ticket_without_endpoint_requests_input(0),test_interactive_human_ticket_completes_with_answer(0),test_interactive_human_ticket_cancellation_leaves_ticket(0),test_interactive_with_dry_run_does_not_prompt(0)
     TestPlanfileQueueLlm: _llm_ticket(0),test_llm_ticket_runs_lifecycle_commands(0),test_llm_ticket_failure_marks_failed(0),test_llm_ticket_without_prompt_requests_input(0),test_llm_dry_run_returns_request_without_calling(0),test_llm_default_runner_without_api_key_returns_clear_error(0)  # Tests for the executor.kind=llm path.
     TestPlanfileQueueLoop: _make_runner(1),test_loop_drains_three_shell_tickets_to_idle(0),test_loop_breaks_on_waiting_input_without_interactive(0),test_loop_continues_past_failed_ticket(0),test_loop_respects_max_iterations_cap(0),test_loop_with_interactive_drains_human_tickets(0),test_loop_validates_max_iterations(0)  # Tests for run_planfile_queue_loop — the queue-draining drive
     _ok(stdout)
@@ -2504,8 +2538,8 @@ D:
     TestScanMissingGates: test_no_suggestions_when_tool_missing(0),test_skips_when_config_already_present(0)
     TestScanMissingTools: test_no_pyproject_returns_empty(0),test_skips_tools_not_in_registry(0)
     TestScanGitignoreDrift: test_no_gitignore_returns_empty(0),test_present_entry_skips_suggestion(0),test_missing_entry_suggests(0)
-    TestRunScan: test_dry_run_returns_suggestions_no_apply(0),test_apply_creates_tickets_and_skips_duplicates(0),test_apply_create_failure_is_skipped(0),test_limit_caps_suggestions(0),test_priority_ordering_critical_first(0)
-    TestScanSemcodArtifacts: test_jscpd_report_emits_when_duplicates(0),test_code2llm_analysis_emits_when_god_rows(0),test_testql_export_emits_when_many_failures(0),test_redup_filtered_emits_when_many_groups(0)
+    TestRunScan: test_dry_run_returns_suggestions_no_apply(0),test_apply_creates_tickets_and_skips_duplicates(0),test_apply_create_failure_is_skipped(0),test_apply_deduplicates_planfile_source_tool_payload(0),test_limit_caps_suggestions(0),test_priority_ordering_critical_first(0)
+    TestScanSemcodArtifacts: test_jscpd_report_emits_when_duplicates(0),test_code2llm_analysis_emits_when_god_rows(0),test_code2llm_analysis_emits_dup_ticket(0),test_code2llm_analysis_emits_cc_ticket(0),test_code2llm_analysis_emits_refactor_items(0),test_testql_export_emits_when_many_failures(0),test_redup_filtered_emits_when_many_groups(0)
     _ok(stdout;returncode;stderr)
   tests/test_serve.py:
     e: _minimal_planfile_project,_free_port,_start,_get,_post_json,test_start_serve_background_shutdown,TestServe,TestServeAutoPort
@@ -2539,30 +2573,30 @@ D:
 
 ## Call Graph
 
-*348 nodes · 425 edges · 48 modules · CC̄=4.9*
+*384 nodes · 480 edges · 49 modules · CC̄=4.7*
 
 ### Hubs (by degree)
 
 | Function | CC | in | out | total |
 |----------|----|----|-----|-------|
-| `print` *(in scripts.planfile-export-prompt)* | 0 | 223 | 0 | **223** |
+| `print` *(in scripts.planfile-export-prompt)* | 0 | 234 | 0 | **234** |
 | `_build_handler` *(in src.koru.serve)* | 1 | 1 | 86 | **87** |
 | `detect_agent_options` *(in src.koru.agents)* | 16 ⚠ | 2 | 50 | **52** |
 | `render_markdown_handoff` *(in src.koru.context)* | 10 ⚠ | 5 | 45 | **50** |
 | `_build_parser` *(in src.koru.autopilot.cli_command)* | 1 | 1 | 48 | **49** |
+| `run_next_planfile_task` *(in src.koru.queue.runner)* | 32 ⚠ | 2 | 43 | **45** |
 | `load_policy` *(in src.koru.policy)* | 9 | 2 | 43 | **45** |
-| `run_next_planfile_task` *(in src.koru.queue.runner)* | 26 ⚠ | 2 | 43 | **45** |
-| `_validate_task` *(in src.koru.bootstrap)* | 18 ⚠ | 1 | 43 | **44** |
+| `create_nl_task` *(in src.koru.tasks)* | 16 ⚠ | 1 | 39 | **40** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.15s
-# nodes: 348 | edges: 425 | modules: 48
-# CC̄=4.9
+# generated in 0.26s
+# nodes: 384 | edges: 480 | modules: 49
+# CC̄=4.7
 
 HUBS[20]:
   scripts.planfile-export-prompt.print
-    CC=0  in:223  out:0  total:223
+    CC=0  in:234  out:0  total:234
   src.koru.serve._build_handler
     CC=1  in:1  out:86  total:87
   src.koru.agents.detect_agent_options
@@ -2571,16 +2605,14 @@ HUBS[20]:
     CC=10  in:5  out:45  total:50
   src.koru.autopilot.cli_command._build_parser
     CC=1  in:1  out:48  total:49
+  src.koru.queue.runner.run_next_planfile_task
+    CC=32  in:2  out:43  total:45
   src.koru.policy.load_policy
     CC=9  in:2  out:43  total:45
-  src.koru.queue.runner.run_next_planfile_task
-    CC=26  in:2  out:43  total:45
-  src.koru.bootstrap._validate_task
-    CC=18  in:1  out:43  total:44
-  services.healing-webhook.app.create_planfile_ticket
-    CC=24  in:2  out:39  total:41
   src.koru.tasks.create_nl_task
     CC=16  in:1  out:39  total:40
+  src.koru.scan._scan_code2llm_analysis
+    CC=15  in:1  out:39  total:40
   src.koru.autopilot.host_setup._print_text_report
     CC=15  in:1  out:38  total:39
   src.koru.watch.format_queue_event
@@ -2591,19 +2623,21 @@ HUBS[20]:
     CC=8  in:26  out:7  total:33
   src.koru.cli._topology_main
     CC=17  in:0  out:33  total:33
+  scripts.planfile-sync-todo.do_from_todo
+    CC=19  in:1  out:31  total:32
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
-  src.koru.autopilot.cli_command._action_doctor
-    CC=21  in:0  out:29  total:29
-  src.koru.autonomous._action_up
-    CC=28  in:1  out:28  total:29
   src.koru.cli._queue_run_main
     CC=26  in:1  out:28  total:29
+  src.koru.autonomous._action_up
+    CC=28  in:1  out:28  total:29
   src.koru.autopilot.plugin_installer.install_plugin_for_ide
     CC=19  in:1  out:27  total:28
+  src.koru.cli._gc_main
+    CC=18  in:0  out:28  total:28
 
 MODULES:
-  plugins.koru-autopilot-vscode.src.extension  [28 funcs]
+  plugins.koru-autopilot-vscode.src.extension  [32 funcs]
     activate  CC=3  out:7
     app  CC=1  out:1
     bridge  CC=2  out:3
@@ -2612,8 +2646,8 @@ MODULES:
     connect  CC=1  out:9
     delay  CC=2  out:3
     detectIde  CC=4  out:2
+    directPasted  CC=2  out:1
     disconnect  CC=4  out:2
-    dispatch  CC=6  out:2
   plugins.koru-autopilot-vscode.src.socketPath  [5 funcs]
     defaultSocketPathFromEnv  CC=9  out:6
     explicit  CC=2  out:1
@@ -2622,17 +2656,25 @@ MODULES:
     slugInstance  CC=2  out:2
   scripts.planfile-export-prompt  [1 funcs]
     print  CC=0  out:0
-  services.healing-webhook.app  [16 funcs]
+  scripts.planfile-sync-todo  [7 funcs]
+    build_auto_section  CC=1  out:2
+    do_from_planfile  CC=14  out:20
+    do_from_todo  CC=19  out:31
+    load_tickets  CC=6  out:5
+    main  CC=2  out:9
+    replace_auto_section  CC=4  out:6
+    run_planfile  CC=2  out:4
+  services.healing-webhook.app  [22 funcs]
+    _build_planfile_command  CC=2  out:1
+    _enrich_ticket_with_vallm  CC=8  out:16
+    _execute_planfile_create  CC=8  out:12
+    _extract_ticket_id_from_stdout  CC=6  out:4
+    _parse_redup_summary  CC=9  out:16
     _rate_limit_ok  CC=3  out:3
     _record_action  CC=1  out:7
     _resolve_affected_files  CC=11  out:24
     _resolve_strategy  CC=3  out:1
     _run_docker  CC=1  out:3
-    _run_redup_check  CC=15  out:24
-    _run_vallm_check  CC=10  out:15
-    alertmanager_webhook  CC=5  out:19
-    create_planfile_ticket  CC=24  out:39
-    heal_annotate  CC=1  out:1
   services.healing-webhook.ticket_builder  [5 funcs]
     _default_acceptance  CC=2  out:1
     _format_paths  CC=2  out:1
@@ -2653,11 +2695,11 @@ MODULES:
   src.koru.autonomous  [9 funcs]
     _action_up  CC=28  out:28
     _apply_agent_lane_environ  CC=3  out:3
-    _build_parser  CC=1  out:21
+    _build_parser  CC=1  out:23
     _effective_flags  CC=3  out:0
     _ensure_init  CC=4  out:3
     _resolve_autopilot_ide  CC=3  out:3
-    _run_cycle  CC=8  out:19
+    _run_cycle  CC=13  out:27
     _start_or_reuse_daemon  CC=2  out:12
     autonomous_main  CC=5  out:3
   src.koru.autopilot  [2 funcs]
@@ -2668,13 +2710,13 @@ MODULES:
     record  CC=7  out:6
     _isoformat_utc  CC=2  out:5
     default_log_path  CC=2  out:3
-  src.koru.autopilot.cli_command  [25 funcs]
+  src.koru.autopilot.cli_command  [31 funcs]
     _action_daemon  CC=9  out:15
-    _action_doctor  CC=21  out:29
+    _action_doctor  CC=4  out:6
     _action_drive  CC=8  out:17
     _action_handoff  CC=9  out:18
     _action_ide_list  CC=5  out:4
-    _action_install_plugin  CC=11  out:23
+    _action_install_plugin  CC=6  out:12
     _action_install_unit  CC=6  out:18
     _action_setup_host  CC=1  out:1
     _action_shutdown  CC=1  out:2
@@ -2740,10 +2782,11 @@ MODULES:
   src.koru.autopilot.utils.client_helpers  [2 funcs]
     call_daemon_method  CC=4  out:7
     resolve_xdg_path  CC=2  out:3
-  src.koru.bootstrap  [7 funcs]
+  src.koru.bootstrap  [8 funcs]
     _detect_cycle  CC=10  out:13
     _validate_cross_task_dependencies  CC=10  out:13
-    _validate_task  CC=18  out:43
+    _validate_id  CC=4  out:6
+    _validate_task  CC=4  out:17
     import_flat_pipeline  CC=9  out:12
     load_flat_pipeline  CC=9  out:12
     materialize_to_planfile  CC=6  out:16
@@ -2759,28 +2802,28 @@ MODULES:
     _build_scan_parser  CC=1  out:9
     _build_serve_parser  CC=1  out:10
     _build_tools_parser  CC=1  out:7
-  src.koru.context  [16 funcs]
-    _auto_promote_blocking_tickets  CC=25  out:24
+  src.koru.context  [26 funcs]
+    _auto_promote_blocking_tickets  CC=4  out:5
     _build_instructions  CC=2  out:4
     _build_self_service  CC=5  out:2
     _build_setup_instructions  CC=1  out:0
     _build_shared_rules  CC=15  out:17
+    _build_ticket_args  CC=3  out:1
+    _extract_error_from_stderr  CC=7  out:4
     _fetch_all_tickets  CC=9  out:5
-    _fetch_ticket_data  CC=36  out:23
-    _is_fixture_ticket  CC=4  out:6
-    _load_project_dotenv  CC=3  out:2
-    _planfile_command_base  CC=3  out:3
-  src.koru.doctor  [10 funcs]
+    _fetch_ticket_data  CC=15  out:14
+    _find_blocking_tickets  CC=6  out:8
+  src.koru.doctor  [12 funcs]
     _check_ci_command  CC=5  out:6
     _check_koru_project_pipeline  CC=7  out:9
+    _check_planfile_cli_version  CC=9  out:9
     _check_planfile_config  CC=4  out:7
     _check_planfile_sprints  CC=10  out:17
     _check_planfile_sprints_yaml  CC=6  out:8
     _check_policy_yaml  CC=11  out:13
     _check_pytest_collect  CC=8  out:6
     _check_runtime_dir  CC=6  out:6
-    _resolve_pytest_collect_timeout  CC=4  out:3
-    run_diagnostics  CC=6  out:11
+    _planfile_version_argv  CC=3  out:4
   src.koru.dotenv_loader  [3 funcs]
     _parse_value  CC=5  out:7
     load_dotenv  CC=7  out:5
@@ -2834,7 +2877,7 @@ MODULES:
   src.koru.queue.loop  [1 funcs]
     run_planfile_queue_loop  CC=12  out:8
   src.koru.queue.runner  [1 funcs]
-    run_next_planfile_task  CC=26  out:43
+    run_next_planfile_task  CC=32  out:43
   src.koru.queue.runners  [2 funcs]
     _planfile_env  CC=1  out:0
     run_process  CC=1  out:2
@@ -2866,10 +2909,10 @@ MODULES:
     runtime_dir  CC=1  out:1
   src.koru.scan  [16 funcs]
     _create_ticket  CC=5  out:3
-    _existing_scan_titles  CC=11  out:13
+    _existing_scan_titles  CC=3  out:18
     _is_koruignored  CC=10  out:6
     _load_koruignore_patterns  CC=8  out:9
-    _scan_code2llm_analysis  CC=12  out:9
+    _scan_code2llm_analysis  CC=15  out:39
     _scan_jscpd_report  CC=11  out:14
     _scan_redup_filtered  CC=7  out:12
     _scan_testql_export  CC=5  out:7
@@ -2921,25 +2964,6 @@ MODULES:
     watch_planfile_events  CC=7  out:7
 
 EDGES:
-  services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.ticket_builder.build_ticket_payload
-  services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._resolve_affected_files
-  services.healing-webhook.app.heal_redsl_gate → services.healing-webhook.app._run_docker
-  services.healing-webhook.app.heal_redsl_gate → services.healing-webhook.app._record_action
-  services.healing-webhook.app.heal_redsl_improve → services.healing-webhook.app._run_docker
-  services.healing-webhook.app.heal_redsl_improve → services.healing-webhook.app._record_action
-  services.healing-webhook.app.heal_redsl_improve → services.healing-webhook.app._rate_limit_ok
-  services.healing-webhook.app.heal_rebuild_restore → services.healing-webhook.app._run_docker
-  services.healing-webhook.app.heal_rebuild_restore → services.healing-webhook.app._record_action
-  services.healing-webhook.app.heal_rebuild_restore → services.healing-webhook.app._rate_limit_ok
-  services.healing-webhook.app.heal_annotate → services.healing-webhook.app._record_action
-  services.healing-webhook.app._resolve_affected_files → services.healing-webhook.ticket_builder._infer_paths
-  services.healing-webhook.app.heal_vallm_validate → services.healing-webhook.app._resolve_affected_files
-  services.healing-webhook.app.heal_vallm_validate → services.healing-webhook.app._record_action
-  services.healing-webhook.app.heal_vallm_validate → services.healing-webhook.app._run_vallm_check
-  services.healing-webhook.app.heal_redup_check → services.healing-webhook.app._run_redup_check
-  services.healing-webhook.app.heal_redup_check → services.healing-webhook.app._record_action
-  services.healing-webhook.app.alertmanager_webhook → services.healing-webhook.app._resolve_strategy
-  services.healing-webhook.app.probe_failure → services.healing-webhook.app.create_planfile_ticket
   services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._format_paths
   services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._default_acceptance
   services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._reproduction_for
@@ -2951,12 +2975,6 @@ EDGES:
   src.koru.watch.watch_planfile_events → plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
   src.koru.watch.watch_planfile_events → src.koru.watch.format_queue_event
   src.koru.gate.authorize_gate → src.koru.gate._resolve_actor
-  src.koru.bootstrap._validate_cross_task_dependencies → src.koru.bootstrap._detect_cycle
-  src.koru.bootstrap.validate_flat_pipeline → src.koru.bootstrap._validate_task
-  src.koru.bootstrap.validate_flat_pipeline → src.koru.bootstrap._validate_cross_task_dependencies
-  src.koru.bootstrap.import_flat_pipeline → src.koru.bootstrap.load_flat_pipeline
-  src.koru.bootstrap.import_flat_pipeline → src.koru.bootstrap.validate_flat_pipeline
-  src.koru.bootstrap.import_flat_pipeline → src.koru.bootstrap.materialize_to_planfile
   src.koru.cli._tools_main → src.koru.tools.load_tool_registry
   src.koru.cli._tools_main → src.koru.tools.detect_tools
   src.koru.cli._tools_main → src.koru.events.emit_management_event
@@ -2971,6 +2989,31 @@ EDGES:
   src.koru.cli._gate_main → src.koru.gate.authorize_gate
   src.koru.cli._gate_main → src.koru.cli._build_gate_parser
   src.koru.cli._gc_main → src.koru.gc.run_gc
+  src.koru.cli._gc_main → src.koru.events.emit_management_event
+  src.koru.cli._gc_main → scripts.planfile-export-prompt.print
+  src.koru.cli._gc_main → src.koru.cli._build_gc_parser
+  src.koru.cli._queue_main → src.koru.events.emit_management_event
+  src.koru.cli._queue_main → scripts.planfile-export-prompt.print
+  src.koru.cli._queue_main → src.koru.queue_clean.clean_queue
+  src.koru.cli._queue_main → src.koru.cli._build_queue_parser
+  src.koru.cli._queue_main → src.koru.cli._render_clean_report_text
+  src.koru.cli._task_main → scripts.planfile-export-prompt.print
+  src.koru.cli._task_main → src.koru.events.emit_management_event
+  src.koru.cli._task_main → src.koru.tools.load_tool_registry
+  src.koru.cli._task_main → src.koru.tools.find_tool_entry
+  src.koru.cli._task_main → src.koru.tools.build_tool_task_scaffold
+  src.koru.cli._task_main → src.koru.tasks.create_nl_task
+  src.koru.cli._serve_main → src.koru.serve.serve
+  src.koru.cli._serve_main → src.koru.events.emit_management_event
+  src.koru.cli._serve_main → src.koru.cli._build_serve_parser
+  src.koru.cli._serve_main → src.koru.cli._env_truthy
+  src.koru.cli._agent_main → src.koru.agents.detect_agent_options
+  src.koru.cli._agent_main → src.koru.context.build_context
+  src.koru.cli._agent_main → src.koru.context.render_markdown_handoff
+  src.koru.cli._agent_main → src.koru.agents.select_agent
+  src.koru.cli._agent_main → src.koru.agents.launch_agent
+  src.koru.cli._agent_main → src.koru.agents.agent_lane_environment
+  src.koru.cli._agent_main → src.koru.agents.save_agent_prompt
 ```
 
 ## Test Contracts
