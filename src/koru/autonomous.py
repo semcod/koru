@@ -343,7 +343,7 @@ def _action_up(args: argparse.Namespace) -> int:
                 args.enable_autopilot
                 and client is not None
                 and socket_path is not None
-                and not socket_path.exists()
+                and not client.is_running()
                 and (
                     autopilot_socket_observed_at_boot
                     or daemon is not None
@@ -351,7 +351,7 @@ def _action_up(args: argparse.Namespace) -> int:
                 )
             ):
                 print(
-                    f"koru autonomous: autopilot socket missing at {socket_path}; "
+                    f"koru autonomous: autopilot socket unavailable at {socket_path}; "
                     "restarting or taking over daemon…"
                 )
                 if daemon is not None:

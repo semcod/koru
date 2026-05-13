@@ -192,6 +192,9 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
         return SimpleNamespace(status="installed", ide=ide, message="ok", command=None)
 
     class FakeClient:
+        def is_running(self):
+            return True
+
         def drive(self, *_args, **_kwargs):
             return {"ok": True, "backend": "plugin"}
 
@@ -289,6 +292,9 @@ def test_up_stops_on_waiting_input_by_default(
         )
 
     class FailIfDrivenClient:
+        def is_running(self):
+            return True
+
         def drive(self, *_args, **_kwargs):
             raise AssertionError("autopilot should not drive waiting_input queues")
 
@@ -349,6 +355,9 @@ def test_up_restarts_autopilot_when_socket_disappears_between_cycles(
     daemon_starts: list[int] = []
 
     class FakeClient:
+        def is_running(self):
+            return sock.exists()
+
         def drive(self, *_args, **_kwargs):
             return {"ok": True, "backend": "fake"}
 
@@ -387,5 +396,74 @@ def test_up_restarts_autopilot_when_socket_disappears_between_cycles(
             "none",
         ]
     )
+    assert rc == 0
+    assert len(daemon_starts) == 2
+
+
+def test_up_restarts_autopilot_when_socket_exists_but_unhealthy(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        autonomous_mod,
+        "init_project",
+        lambda project, force=False: SimpleNamespace(project=project),
+    )
+    monkeypatch.setattr(autonomous_mod.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "install_plugin_for_ide",
+        lambda **_kwargs: SimpleNamespace(status="skipped", ide="auto", message="ok", command=None),
+    )
+    monkeypatch.setattr(
+        autonomous_mod,
+        "format_plugin_install_result",
+        lambda result: result.status,
+    )
+
+    sock = tmp_path / "koru-autopilot-test.sock"
+    sock.write_text("", encoding="utf-8")
+    daemon_starts: list[int] = []
+    health = [True, False, True]
+
+    class FakeClient:
+        def is_running(self):
+            return health.pop(0) if health else True
+
+        def drive(self, *_args, **_kwargs):
+            return {"ok": True, "backend": "fake"}
+
+    def fake_start_or_reuse_daemon(**_kwargs):
+        daemon_starts.append(1)
+        return (FakeClient(), None, None)
+
+    monkeypatch.setattr(autonomous_mod, "_start_or_reuse_daemon", fake_start_or_reuse_daemon)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **_kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=0 last_status=idle",
+            last_status="idle",
+        ),
+    )
+    monkeypatch.setattr(autonomous_mod, "default_socket_path", lambda: sock)
+
+    rc = autonomous_mod.autonomous_main(
+        [
+            "up",
+            "--no-serve",
+            "--project",
+            str(tmp_path),
+            "--max-cycles",
+            "2",
+            "--sleep-seconds",
+            "0",
+            "--ticket-sources",
+            "queue",
+            "--agent-lane",
+            "none",
+        ]
+    )
+
     assert rc == 0
     assert len(daemon_starts) == 2
