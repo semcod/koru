@@ -6,6 +6,7 @@ import os
 from types import SimpleNamespace
 
 from koru import autonomous as autonomous_mod
+from koru.queue.types import QueueLoopResult
 from koru.scan import ScanResult
 
 
@@ -13,6 +14,32 @@ def test_effective_flags_matrix() -> None:
     assert autonomous_mod._effective_flags("queue") == (False, False)
     assert autonomous_mod._effective_flags("scan") == (True, False)
     assert autonomous_mod._effective_flags("all") == (True, True)
+
+
+def test_queue_loop_result_summary_includes_waiting_ticket() -> None:
+    empty = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=[],
+        last_status="idle",
+        last_message="",
+    )
+    assert "waiting_ticket=none" in empty.summary()
+    one = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-001"],
+        last_status="waiting_input",
+        last_message="?",
+    )
+    assert "waiting_ticket=PLF-001" in one.summary()
+
+
+def test_queue_loop_waiting_ticket_label_helper() -> None:
+    r = QueueLoopResult(1, [], [], ["PLF-A", "PLF-B"], "waiting_input", "")
+    assert autonomous_mod._queue_loop_waiting_ticket_label(r) == "PLF-B"
 
 
 def test_resolve_autopilot_ide_env_overrides_cli(monkeypatch) -> None:
