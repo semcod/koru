@@ -27,13 +27,11 @@ injection time by :mod:`koru.autopilot.injector` with a clear error.
 
 from __future__ import annotations
 
-import os
 import sys
 import tomllib
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-
 
 # Single source of truth for built-in submit keys. ``default`` is the
 # fallback used when an IDE id has no explicit mapping.
@@ -51,9 +49,7 @@ _BUILTIN_SUBMIT_KEYS: dict[str, str] = {
 class AutopilotConfig:
     """In-memory view of ``autopilot.toml`` (or defaults)."""
 
-    submit_keys: dict[str, str] = field(
-        default_factory=lambda: dict(_BUILTIN_SUBMIT_KEYS)
-    )
+    submit_keys: dict[str, str] = field(default_factory=lambda: dict(_BUILTIN_SUBMIT_KEYS))
     source: Path | None = None
 
     def submit_key_for(self, ide: str) -> str:
@@ -64,6 +60,7 @@ class AutopilotConfig:
 def default_config_path() -> Path:
     """Resolve the XDG-style config path for autopilot."""
     from .utils.client_helpers import resolve_xdg_path
+
     return resolve_xdg_path("koru/autopilot.toml")
 
 

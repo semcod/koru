@@ -68,9 +68,7 @@ def create_nl_task(
         ),
     }
 
-    inputs_extra = (
-        scaffold.get("inputs") if isinstance(scaffold.get("inputs"), dict) else {}
-    )
+    inputs_extra = scaffold.get("inputs") if isinstance(scaffold.get("inputs"), dict) else {}
     executor_kind = str(scaffold.get("executor_kind") or "human")
     executor_mode = str(scaffold.get("executor_mode") or "interactive")
     tickets[ticket_id] = {

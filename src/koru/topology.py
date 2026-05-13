@@ -220,9 +220,17 @@ def _merge_pipelines(saved: dict[str, Any]) -> dict[str, dict[str, Any]]:
         if extra_id not in ids:
             ids.append(extra_id)
     for pid in ids:
-        defaults = dict(_DEFAULT_PIPELINES.get(pid, {
-            "enabled": True, "description": "", "components": [], "trigger": "manual",
-        }))
+        defaults = dict(
+            _DEFAULT_PIPELINES.get(
+                pid,
+                {
+                    "enabled": True,
+                    "description": "",
+                    "components": [],
+                    "trigger": "manual",
+                },
+            )
+        )
         override = saved_pipelines.get(pid)
         if isinstance(override, dict):
             for key in ("enabled", "description", "components", "trigger"):

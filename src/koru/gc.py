@@ -21,15 +21,15 @@ import subprocess
 import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
 import yaml
 
-
 # -- data types --------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class GcCandidate:
@@ -76,8 +76,9 @@ GC_STATUSES: frozenset[str] = frozenset({"done", "failed", "blocked"})
 
 # -- helpers -----------------------------------------------------------------
 
+
 def _now_utc() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _parse_ts(raw: str | None) -> datetime | None:
@@ -105,6 +106,7 @@ def _run_planfile(
         configured = os.getenv("KORU_PLANFILE_CMD")
         if configured:
             import shlex
+
             base = shlex.split(configured)
         elif find_spec("planfile") is not None:
             base = [sys.executable, "-m", "planfile.cli"]
@@ -115,6 +117,7 @@ def _run_planfile(
     configured = os.getenv("KORU_PLANFILE_CMD")
     if configured:
         import shlex
+
         base = shlex.split(configured)
     elif find_spec("planfile") is not None:
         base = [sys.executable, "-m", "planfile.cli"]
@@ -139,9 +142,7 @@ def _load_tickets_from_sprint(project: Path, sprint: str = "current") -> list[di
     sprint_data = data.get("sprint") or {}
     tickets_map = sprint_data.get("tickets") or {}
     return [
-        {**ticket, "id": tid}
-        for tid, ticket in tickets_map.items()
-        if isinstance(ticket, dict)
+        {**ticket, "id": tid} for tid, ticket in tickets_map.items() if isinstance(ticket, dict)
     ]
 
 
@@ -162,6 +163,7 @@ def _archive_tickets(
 
 
 # -- core --------------------------------------------------------------------
+
 
 def collect_gc_candidates(
     project: Path,
@@ -189,10 +191,7 @@ def collect_gc_candidates(
             continue
 
         execution = ticket.get("execution") or {}
-        finished_raw = (
-            execution.get("finished_at")
-            or ticket.get("updated_at")
-        )
+        finished_raw = execution.get("finished_at") or ticket.get("updated_at")
         finished = _parse_ts(str(finished_raw) if finished_raw else None)
 
         if finished is not None and finished > cutoff:
@@ -200,14 +199,16 @@ def collect_gc_candidates(
 
         age_days = (now - finished).total_seconds() / 86400 if finished else float("inf")
 
-        candidates.append(GcCandidate(
-            ticket_id=str(ticket.get("id", "")),
-            name=str(ticket.get("name", "")),
-            status=status,
-            execution_state=str(execution.get("state", "")),
-            finished_at=finished,
-            age_days=round(age_days, 1),
-        ))
+        candidates.append(
+            GcCandidate(
+                ticket_id=str(ticket.get("id", "")),
+                name=str(ticket.get("name", "")),
+                status=status,
+                execution_state=str(execution.get("state", "")),
+                finished_at=finished,
+                age_days=round(age_days, 1),
+            )
+        )
 
     # Sort oldest first
     candidates.sort(key=lambda c: c.age_days, reverse=True)
@@ -220,12 +221,12 @@ def _apply_keep_last(
     kept_ids: list[str],
 ) -> list[GcCandidate]:
     """Apply keep_last logic to filter candidates.
-    
+
     Returns list of candidates that can be removed.
     """
     if keep_last <= 0:
         return list(candidates)
-    
+
     to_remove: list[GcCandidate] = []
     by_status: dict[str, list[GcCandidate]] = {}
     for c in candidates:
@@ -245,7 +246,7 @@ def _archive_tickets_before_delete(
     sprint: str,
 ) -> str | None:
     """Archive tickets before deletion.
-    
+
     Returns archive file path if any tickets were archived, None otherwise.
     """
     all_tickets = _load_tickets_from_sprint(project, sprint)
@@ -262,14 +263,14 @@ def _delete_tickets(
     planfile_runner: Callable | None,
 ) -> tuple[list[str], list[str], list[str]]:
     """Delete tickets via planfile CLI.
-    
+
     Returns tuple of (removed_ids, kept_ids, errors).
     """
     removed_ids: list[str] = []
     kept_ids: list[str] = []
     errors: list[str] = []
     remove_ids_list = [c.ticket_id for c in to_remove]
-    
+
     proc = _run_planfile(
         ["ticket", "delete", "--force", *remove_ids_list],
         project,
@@ -290,7 +291,7 @@ def _delete_tickets(
             else:
                 errors.append(f"{tid}: {(proc.stderr or '').strip()[:200]}")
                 kept_ids.append(tid)
-    
+
     return removed_ids, kept_ids, errors
 
 
@@ -352,9 +353,7 @@ def run_gc(
     if not apply:
         # Dry run — mark all removable as "would remove"
         result.removed = [c.ticket_id for c in to_remove]
-        result.kept = [
-            c.ticket_id for c in candidates if c.ticket_id not in set(result.removed)
-        ]
+        result.kept = [c.ticket_id for c in candidates if c.ticket_id not in set(result.removed)]
         return result
 
     # Archive before delete
@@ -367,8 +366,6 @@ def run_gc(
     result.kept.extend(kept_ids)
     result.errors = errors
     # Update kept list to include all candidates that weren't removed
-    result.kept = [
-        c.ticket_id for c in candidates if c.ticket_id not in set(removed_ids)
-    ]
+    result.kept = [c.ticket_id for c in candidates if c.ticket_id not in set(removed_ids)]
 
     return result

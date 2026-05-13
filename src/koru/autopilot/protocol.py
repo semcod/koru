@@ -17,33 +17,38 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
-
 # Hard cap so one misbehaving client cannot blow up the daemon's memory.
 MAX_LINE_BYTES = 1024 * 1024  # 1 MiB
 
 # All accepted message types, grouped by direction:
-PLUGIN_TO_DAEMON = frozenset({
-    "hello",
-    "session.started",
-    "session.ended",
-    "ack",
-    "error",
-})
+PLUGIN_TO_DAEMON = frozenset(
+    {
+        "hello",
+        "session.started",
+        "session.ended",
+        "ack",
+        "error",
+    }
+)
 
-DAEMON_TO_PLUGIN = frozenset({
-    "chat.send",
-    "ping",
-    "shutdown",
-    "ack",
-    "error",
-})
+DAEMON_TO_PLUGIN = frozenset(
+    {
+        "chat.send",
+        "ping",
+        "shutdown",
+        "ack",
+        "error",
+    }
+)
 
-CLI_TO_DAEMON = frozenset({
-    "drive",
-    "status",
-    "shutdown",
-    "ping",
-})
+CLI_TO_DAEMON = frozenset(
+    {
+        "drive",
+        "status",
+        "shutdown",
+        "ping",
+    }
+)
 
 ALL_TYPES = PLUGIN_TO_DAEMON | DAEMON_TO_PLUGIN | CLI_TO_DAEMON
 
@@ -59,17 +64,17 @@ ALL_TYPES = PLUGIN_TO_DAEMON | DAEMON_TO_PLUGIN | CLI_TO_DAEMON
 # Updating this map is part of the wire-protocol contract — bump
 # clients/plugins in lockstep.
 _FIELD_SCHEMA: dict[str, frozenset[str] | None] = {
-    "hello":           frozenset({"ide", "version", "pid"}),
+    "hello": frozenset({"ide", "version", "pid"}),
     "session.started": frozenset({"chat"}),
-    "session.ended":   frozenset({"chat", "reason"}),
-    "chat.send":       frozenset({"text", "submit"}),
-    "drive":           frozenset({"text", "submit", "ide"}),
-    "ping":            frozenset(),
-    "shutdown":        frozenset(),
-    "status":          frozenset(),
+    "session.ended": frozenset({"chat", "reason"}),
+    "chat.send": frozenset({"text", "submit"}),
+    "drive": frozenset({"text", "submit", "ide"}),
+    "ping": frozenset(),
+    "shutdown": frozenset(),
+    "status": frozenset(),
     # Informational envelopes — pass-through.
-    "ack":             None,
-    "error":           None,
+    "ack": None,
+    "error": None,
 }
 
 
@@ -149,6 +154,7 @@ def decode(line: bytes | str) -> Message:
 
 
 # ----- builder helpers ------------------------------------------------------
+
 
 def hello(*, ide: str, version: str, pid: int, id: str | None = None) -> Message:
     return Message(type="hello", id=id, data={"ide": ide, "version": version, "pid": pid})

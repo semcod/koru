@@ -678,7 +678,8 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
             path = self.path.split("?", 1)[0]
             if path in ("/", "/index.html"):
                 self._send(
-                    200, _DASHBOARD_HTML.encode("utf-8"),
+                    200,
+                    _DASHBOARD_HTML.encode("utf-8"),
                     "text/html; charset=utf-8",
                 )
                 return
@@ -713,6 +714,7 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
             if path == "/api/runtime-context":
                 try:
                     from planfile.runtime_context import build_runtime_context
+
                     runtime = build_runtime_context(config.project)
                 except Exception as exc:  # pragma: no cover — optional planfile integration
                     runtime = {"error": str(exc), "type": type(exc).__name__}
@@ -729,7 +731,8 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
                     self._send(500, str(exc).encode("utf-8"))
                     return
                 self._send(
-                    200, md.encode("utf-8"),
+                    200,
+                    md.encode("utf-8"),
                     "text/markdown; charset=utf-8",
                 )
                 return
@@ -816,6 +819,7 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
                         load_runtime_context_config,
                         save_runtime_context_config,
                     )
+
                     current = load_runtime_context_config(config.project)
                     merged = {
                         "enabled": {
@@ -990,6 +994,7 @@ def start_serve_background(
         },
     )
     if config.open_browser:
+
         def _open_later() -> None:
             try:
                 webbrowser.open(url, new=2)

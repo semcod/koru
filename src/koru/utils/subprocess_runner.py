@@ -1,16 +1,18 @@
 """Subprocess runner utilities."""
 
 import subprocess
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from pathlib import Path
 
 
-def default_subprocess_runner(
-    cmd: Sequence[str], cwd: Path
-) -> subprocess.CompletedProcess[str]:
+def default_subprocess_runner(cmd: Sequence[str], cwd: Path) -> subprocess.CompletedProcess[str]:
     """Default subprocess runner with standard options."""
     return subprocess.run(
-        list(cmd), cwd=cwd, capture_output=True, text=True, check=False,
+        list(cmd),
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=False,
     )
 
 

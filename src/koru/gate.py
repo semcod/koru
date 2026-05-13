@@ -30,6 +30,7 @@ Schema
 
 PLF-koru improvement #1.
 """
+
 from __future__ import annotations
 
 import json
@@ -38,10 +39,9 @@ import subprocess
 import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 GATE_AUTH_TAG = "KORU-GATE-AUTH"
 """Single-token marker that prefixes every gate-authorization note."""
@@ -87,7 +87,7 @@ def parse_authorizations(notes: Sequence[str]) -> list[GateAuthorization]:
         if not note.startswith(GATE_AUTH_TAG + " "):
             continue
         try:
-            payload = json.loads(note[len(GATE_AUTH_TAG) + 1:])
+            payload = json.loads(note[len(GATE_AUTH_TAG) + 1 :])
         except json.JSONDecodeError:
             continue
         if not isinstance(payload, dict) or payload.get("kind") != "gate_authorization":
@@ -162,9 +162,7 @@ def authorize_gate(
     a clear error to the operator instead of silently storing junk.
     """
     if mode not in VALID_MODES:
-        raise ValueError(
-            f"unknown gate mode {mode!r}; expected one of {VALID_MODES}"
-        )
+        raise ValueError(f"unknown gate mode {mode!r}; expected one of {VALID_MODES}")
     if not reason.strip():
         raise ValueError("--reason is required so future readers know why")
 
@@ -173,7 +171,7 @@ def authorize_gate(
         skipped=tuple(s for s in skipped if s.strip()),
         reason=reason.strip(),
         authorized_by=_resolve_actor(authorized_by),
-        authorized_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        authorized_at=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         ticket=ticket_id,
     )
 

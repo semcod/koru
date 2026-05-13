@@ -57,7 +57,6 @@ from .project_pipeline import KORU_PROJECT_PIPELINE_FILENAME, project_pipeline_p
 from .runtime import planfile_dir, runtime_dir
 from .utils.subprocess_runner import get_python_cmd
 
-
 # Default timeout for the pytest-collect probe. Doctor is meant to be
 # *interactive and fast*; we deliberately keep this tighter than
 # ``scan_pytest_collect``'s 30 s so the operator does not stare at a
@@ -296,14 +295,14 @@ def _check_runtime_dir(project: Path) -> tuple[str, str]:
     rt = runtime_dir(project)
     if rt.is_dir():
         if os.access(rt, os.W_OK):
-            return PASS, f".planfile/.koru/ writable"
+            return PASS, ".planfile/.koru/ writable"
         return FAIL, ".planfile/.koru/ exists but is not writable"
     parent = rt.parent
     if parent.is_dir() and os.access(parent, os.W_OK):
         return PASS, ".planfile/.koru/ will be created on first write"
     if not parent.exists():
         return WARN, "no .planfile/ yet — run `koru --init`"
-    return FAIL, f".planfile/ exists but is not writable"
+    return FAIL, ".planfile/ exists but is not writable"
 
 
 def _check_koru_project_pipeline(project: Path) -> tuple[str, str]:
@@ -368,9 +367,7 @@ def _check_gitignore(project: Path) -> tuple[str, str]:
     return WARN, f".gitignore does not list {needle} — re-run `koru --init`"
 
 
-_PYTEST_COLLECT_COUNT_RE = re.compile(
-    r"(\d+)\s+tests?\s+collected", re.IGNORECASE
-)
+_PYTEST_COLLECT_COUNT_RE = re.compile(r"(\d+)\s+tests?\s+collected", re.IGNORECASE)
 _PYTEST_NO_TESTS_RE = re.compile(r"no tests ran|collected 0 items", re.IGNORECASE)
 
 
@@ -444,10 +441,7 @@ def _check_pytest_collect(project: Path) -> tuple[str, str]:
     # Non-zero exit: collection failed. Keep the detail short — `koru
     # scan` is the place to dig into per-file errors. We just tell the
     # operator *that* it's broken and where to look.
-    return WARN, (
-        "pytest --collect-only failed — run `koru scan` for actionable "
-        "per-file tickets"
-    )
+    return WARN, ("pytest --collect-only failed — run `koru scan` for actionable per-file tickets")
 
 
 def _check_ci_command(project: Path) -> tuple[str, str]:

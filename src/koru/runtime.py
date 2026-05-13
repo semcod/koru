@@ -43,6 +43,7 @@ KORU_SUBDIR = ".koru"
 def planfile_dir(project: Path) -> Path:
     """Return ``<project>/.planfile``. Does not create it."""
     from .utils.subprocess_runner import resolve_planfile_subpath
+
     return resolve_planfile_subpath(project)
 
 

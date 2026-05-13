@@ -15,8 +15,8 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable, ClassVar
 
 from .config import cached_config
 
@@ -93,7 +93,7 @@ class InjectorError(RuntimeError):
 Runner = Callable[[list[str], str | None], "subprocess.CompletedProcess[bytes]"]
 
 
-def _default_runner(cmd: list[str], stdin: str | None) -> "subprocess.CompletedProcess[bytes]":
+def _default_runner(cmd: list[str], stdin: str | None) -> subprocess.CompletedProcess[bytes]:
     return subprocess.run(  # noqa: S603 — caller passes a fixed argv
         cmd,
         input=stdin.encode("utf-8") if stdin is not None else None,
@@ -231,11 +231,7 @@ class Injector:
             "or fix ydotool/uinput per `koru autopilot doctor` / docs/autopilot-quickstart.md. "
             "Override order with KORU_INJECTOR_BACKEND=wtype|xdotool|ydotool."
         )
-        raise InjectorError(
-            "all keyboard injection backends failed: "
-            + "; ".join(errors)
-            + hint
-        )
+        raise InjectorError("all keyboard injection backends failed: " + "; ".join(errors) + hint)
 
     # ----- internals -----------------------------------------------------
 
@@ -243,7 +239,9 @@ class Injector:
         path = self.which(tool)
         if not path:
             return BackendStatus(
-                name=tool, available=False, reason=f"{tool!r} is not in PATH",
+                name=tool,
+                available=False,
+                reason=f"{tool!r} is not in PATH",
             )
         if self.session and session_required and self.session != session_required:
             return BackendStatus(
@@ -257,9 +255,7 @@ class Injector:
         result = self.runner(cmd, None)
         if result.returncode != 0:
             stderr = (result.stderr or b"").decode("utf-8", errors="replace").strip()
-            raise InjectorError(
-                f"{cmd[0]} exited {result.returncode}: {stderr or '(no stderr)'}"
-            )
+            raise InjectorError(f"{cmd[0]} exited {result.returncode}: {stderr or '(no stderr)'}")
 
     def _press_wtype(self, combo: str) -> None:
         # Translate e.g. ``ctrl+Return`` into the wtype invocation.

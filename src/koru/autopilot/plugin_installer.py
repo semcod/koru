@@ -8,16 +8,15 @@ matching command is available.
 
 from __future__ import annotations
 
-import os
 import json
+import os
 import shutil
 import subprocess
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 
 from .ide import detect_focused_ide_id, detect_running_ides
-
 
 SUPPORTED_IDES = frozenset({"windsurf", "vscode", "cursor"})
 EXTENSION_ID = "semcod.koru-autopilot-vscode"
@@ -208,8 +207,7 @@ def install_plugin_for_ide(
             ide=target,
             status="unsupported",
             message=(
-                "no installable koru plugin for this IDE yet "
-                "(supported: windsurf, cursor, vscode)"
+                "no installable koru plugin for this IDE yet (supported: windsurf, cursor, vscode)"
             ),
         )
 

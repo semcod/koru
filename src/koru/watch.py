@@ -76,8 +76,6 @@ async def watch_planfile_events(
                     printer(format_queue_event(payload))
                 seen += 1
     except Exception as exc:
-        raise RuntimeError(
-            f"Could not connect to planfile WebSocket at {ws_url}: {exc}"
-        ) from exc
+        raise RuntimeError(f"Could not connect to planfile WebSocket at {ws_url}: {exc}") from exc
 
     return seen

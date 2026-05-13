@@ -33,13 +33,23 @@ from .gc import DEFAULT_KEEP_LAST, DEFAULT_MAX_AGE_DAYS, GC_STATUSES, run_gc
 from .init import init_project, refresh_init_agent_lane
 from .loop import discover_repositories, run_closed_loop
 from .queue import (
+    default_human_prompt as _queue_default_human_prompt,
+)
+from .queue import (
     run_api_request as _queue_run_api_request,
+)
+from .queue import (
     run_llm_request as _queue_run_llm_request,
+)
+from .queue import (
     run_next_planfile_task,
     run_planfile_queue_loop,
+)
+from .queue import (
     run_process as _queue_run_process,
+)
+from .queue import (
     run_shell_command as _queue_run_shell_command,
-    default_human_prompt as _queue_default_human_prompt,
 )
 from .queue_clean import CleanupReport, clean_queue
 from .run_log import open_run_log_eagerly
@@ -49,6 +59,8 @@ from .serve import DEFAULT_HOST, DEFAULT_PORT, ServeConfig, serve
 
 def _env_truthy(name: str) -> bool:
     return os.environ.get(name, "").strip().lower() in ("1", "true", "yes", "on")
+
+
 from .tasks import create_nl_task
 from .tools import (
     build_tool_task_scaffold,
@@ -235,7 +247,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--ticket",
         default=None,
         help="Target a specific ticket id (e.g. PLF-074) for --context. "
-             "Default is the next runnable ticket from the queue.",
+        "Default is the next runnable ticket from the queue.",
     )
     parser.add_argument(
         "--format",
@@ -267,7 +279,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--no-log",
         action="store_true",
         help="Disable the per-run JSONL log under .planfile/.koru/runs/. "
-             "Has no effect outside --queue mode.",
+        "Has no effect outside --queue mode.",
     )
     return parser
 
@@ -471,9 +483,7 @@ def _render_scan_text(result: ScanResult) -> str:
         return "koru scan: no suggestions — repo looks clean."
     lines: list[str] = [f"koru scan: {len(result.suggestions)} suggestion(s)"]
     for s in result.suggestions:
-        marker = {"critical": "!!", "high": "!", "normal": "·", "low": " "}.get(
-            s.priority, "·"
-        )
+        marker = {"critical": "!!", "high": "!", "normal": "·", "low": " "}.get(s.priority, "·")
         lines.append(f"  [{marker}] {s.priority:<8} {s.signal:<15} {s.title}")
     if result.applied:
         lines.append("")
@@ -549,8 +559,7 @@ def _build_gate_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="koru gate",
         description=(
-            "Manage CI/quality gate authorizations on planfile tickets. "
-            "Subcommands: authorize."
+            "Manage CI/quality gate authorizations on planfile tickets. Subcommands: authorize."
         ),
     )
     sub = parser.add_subparsers(dest="subcommand", required=True)
@@ -687,8 +696,7 @@ def _build_gc_parser() -> argparse.ArgumentParser:
         "--status",
         default=",".join(sorted(GC_STATUSES)),
         help=(
-            "Comma-separated ticket statuses to clean "
-            f"(default: {','.join(sorted(GC_STATUSES))})."
+            f"Comma-separated ticket statuses to clean (default: {','.join(sorted(GC_STATUSES))})."
         ),
     )
     parser.add_argument(
@@ -751,10 +759,7 @@ def _gc_main(argv: list[str]) -> int:
             for c in result.candidates:
                 marker = "✗" if c.ticket_id in result.removed else "·"
                 age = f"{c.age_days:.0f}d" if c.age_days != float("inf") else "??d"
-                print(
-                    f"  {marker} {c.ticket_id:<14} {c.status:<10} {age:>6}  "
-                    f"{c.name[:60]}"
-                )
+                print(f"  {marker} {c.ticket_id:<14} {c.status:<10} {age:>6}  {c.name[:60]}")
             if result.removed:
                 action = "Would remove" if result.dry_run else "Removed"
                 print(f"\n  → {action}: {len(result.removed)} ticket(s)")
@@ -785,10 +790,7 @@ def _gc_main(argv: list[str]) -> int:
 def _build_queue_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="koru queue",
-        description=(
-            "Manage the planfile queue. Subcommands: clean (sweep stale "
-            "test fixtures)."
-        ),
+        description=("Manage the planfile queue. Subcommands: clean (sweep stale test fixtures)."),
     )
     sub = parser.add_subparsers(dest="subcommand", required=True)
 
@@ -1177,10 +1179,14 @@ def _build_topology_parser() -> argparse.ArgumentParser:
     parser.add_argument("--enable", metavar="ID", help="Enable component ID and persist.")
     parser.add_argument("--disable", metavar="ID", help="Disable component ID and persist.")
     parser.add_argument(
-        "--enable-pipeline", metavar="ID", help="Enable pipeline ID and persist.",
+        "--enable-pipeline",
+        metavar="ID",
+        help="Enable pipeline ID and persist.",
     )
     parser.add_argument(
-        "--disable-pipeline", metavar="ID", help="Disable pipeline ID and persist.",
+        "--disable-pipeline",
+        metavar="ID",
+        help="Disable pipeline ID and persist.",
     )
     parser.add_argument(
         "--is-enabled",
@@ -1255,6 +1261,7 @@ def _topology_main(argv: list[str]) -> int:
 
     if args.enabled_components_for:
         from .topology import enabled_components_for_pipeline
+
         ids = enabled_components_for_pipeline(project, args.enabled_components_for)
         print(",".join(ids))
         return 0
@@ -1271,9 +1278,7 @@ def _topology_main(argv: list[str]) -> int:
                 print(f"koru topology: unknown component {target_id!r}", file=sys.stderr)
                 return 2
             mutated = True
-            print(
-                f"koru topology: component {res.id} {res.previous} -> {res.current}"
-            )
+            print(f"koru topology: component {res.id} {res.previous} -> {res.current}")
     for target_id, enabled in (
         (args.enable_pipeline, True),
         (args.disable_pipeline, False),
@@ -1284,9 +1289,7 @@ def _topology_main(argv: list[str]) -> int:
                 print(f"koru topology: unknown pipeline {target_id!r}", file=sys.stderr)
                 return 2
             mutated = True
-            print(
-                f"koru topology: pipeline {res.id} {res.previous} -> {res.current}"
-            )
+            print(f"koru topology: pipeline {res.id} {res.previous} -> {res.current}")
 
     if mutated:
         path = save_topology(project, topo)
@@ -1394,9 +1397,7 @@ def _doctor_main(args: argparse.Namespace, raw_args: list[str]) -> int:
         action="completed",
         status="failed" if report.has_failures else "completed",
         level="error" if report.has_failures else "info",
-        message=", ".join(
-            f"{k}={v}" for k, v in report.summary().items() if v
-        ),
+        message=", ".join(f"{k}={v}" for k, v in report.summary().items() if v),
         queue=args.queue_name,
         details={"project": str(args.project)},
     )
@@ -1627,6 +1628,7 @@ def _queue_run_main(args: argparse.Namespace) -> int:
         )
 
     if args.loop:
+
         def _progress(r, i):
             ticket = r.ticket_id or "-"
             kind = r.executor_kind or "-"
@@ -1680,9 +1682,9 @@ def _queue_run_main(args: argparse.Namespace) -> int:
             print(f"  failed:    {', '.join(loop_result.failed)}")
         if loop_result.waiting:
             print(f"  waiting:   {', '.join(loop_result.waiting)}")
-        exit_code = 0 if loop_result.last_status in {
-            "completed", "idle", "waiting_input", "dry_run"
-        } else 1
+        exit_code = (
+            0 if loop_result.last_status in {"completed", "idle", "waiting_input", "dry_run"} else 1
+        )
         emit_management_event(
             tool="koru.queue",
             action="completed" if exit_code == 0 else "failed",
@@ -1719,14 +1721,10 @@ def _queue_run_main(args: argparse.Namespace) -> int:
             {
                 "iterations": 1,
                 "completed": (
-                    [result.ticket_id]
-                    if result.status == "completed" and result.ticket_id
-                    else []
+                    [result.ticket_id] if result.status == "completed" and result.ticket_id else []
                 ),
                 "failed": (
-                    [result.ticket_id]
-                    if result.status == "failed" and result.ticket_id
-                    else []
+                    [result.ticket_id] if result.status == "failed" and result.ticket_id else []
                 ),
                 "waiting": (
                     [result.ticket_id]

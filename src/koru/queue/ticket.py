@@ -11,7 +11,7 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
-from .types import CommandResult, QueueRunResult
+from .types import CommandResult
 
 
 def parse_next_ticket(stdout: str) -> dict | None:
@@ -35,22 +35,25 @@ def parse_next_ticket(stdout: str) -> dict | None:
         # then treat the first entry whose status is open / ready / todo as runnable.
         runnable_states = {None, "open", "ready", "todo"}
         priority_order = {"critical": 0, "high": 1, "normal": 2, "low": 3}
-        
+
         # Filter runnable tickets first
         runnable_tickets = [
-            entry for entry in payload
+            entry
+            for entry in payload
             if isinstance(entry, dict) and entry.get("status") in runnable_states
         ]
-        
+
         if not runnable_tickets:
             return None
-            
+
         # Sort by priority (critical first), then by creation date as tiebreaker
-        runnable_tickets.sort(key=lambda t: (
-            priority_order.get(t.get("priority", "normal"), 2),
-            t.get("created_at", "")
-        ))
-        
+        runnable_tickets.sort(
+            key=lambda t: (
+                priority_order.get(t.get("priority", "normal"), 2),
+                t.get("created_at", ""),
+            )
+        )
+
         return runnable_tickets[0]
     return None
 
@@ -71,11 +74,7 @@ def ticket_llm_request(ticket: dict) -> dict[str, Any] | None:
     """
     inputs = ticket.get("inputs") or {}
     executor = ticket.get("executor") or {}
-    prompt = (
-        inputs.get("prompt")
-        or ticket.get("description")
-        or ticket.get("name")
-    )
+    prompt = inputs.get("prompt") or ticket.get("description") or ticket.get("name")
     if not prompt:
         return None
     return {

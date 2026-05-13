@@ -25,9 +25,7 @@ import yaml
 
 VALID_EXECUTOR_KINDS: frozenset[str] = frozenset({"shell", "human", "llm", "api", "mcp"})
 VALID_EXECUTOR_MODES: frozenset[str] = frozenset({"automatic", "interactive"})
-VALID_STATUSES: frozenset[str] = frozenset(
-    {"open", "in_progress", "review", "done", "blocked"}
-)
+VALID_STATUSES: frozenset[str] = frozenset({"open", "in_progress", "review", "done", "blocked"})
 VALID_PRIORITIES: frozenset[str] = frozenset({"critical", "high", "medium", "normal", "low"})
 VALID_EXECUTION_STATES: frozenset[str] = frozenset(
     {"pending", "ready", "running", "waiting_input", "done", "failed", "skipped"}
@@ -122,11 +120,7 @@ def _validate_status(task: dict[str, Any]) -> list[ValidationError]:
     tid = str(task.get("id") or "<missing-id>")
     status = task.get("status", "open")
     if status not in VALID_STATUSES:
-        return [
-            ValidationError(
-                tid, "status", f"{status!r} not in {sorted(VALID_STATUSES)}"
-            )
-        ]
+        return [ValidationError(tid, "status", f"{status!r} not in {sorted(VALID_STATUSES)}")]
     return []
 
 
@@ -135,11 +129,7 @@ def _validate_priority(task: dict[str, Any]) -> list[ValidationError]:
     tid = str(task.get("id") or "<missing-id>")
     priority = task.get("priority", "normal")
     if isinstance(priority, str) and priority not in VALID_PRIORITIES:
-        return [
-            ValidationError(
-                tid, "priority", f"{priority!r} not in {sorted(VALID_PRIORITIES)}"
-            )
-        ]
+        return [ValidationError(tid, "priority", f"{priority!r} not in {sorted(VALID_PRIORITIES)}")]
     return []
 
 
@@ -155,17 +145,13 @@ def _validate_executor(task: dict[str, Any]) -> list[ValidationError]:
     kind = executor.get("kind")
     if kind not in VALID_EXECUTOR_KINDS:
         errors.append(
-            ValidationError(
-                tid, "executor.kind", f"{kind!r} not in {sorted(VALID_EXECUTOR_KINDS)}"
-            )
+            ValidationError(tid, "executor.kind", f"{kind!r} not in {sorted(VALID_EXECUTOR_KINDS)}")
         )
 
     mode = executor.get("mode", "automatic")
     if mode not in VALID_EXECUTOR_MODES:
         errors.append(
-            ValidationError(
-                tid, "executor.mode", f"{mode!r} not in {sorted(VALID_EXECUTOR_MODES)}"
-            )
+            ValidationError(tid, "executor.mode", f"{mode!r} not in {sorted(VALID_EXECUTOR_MODES)}")
         )
 
     return errors
@@ -196,9 +182,7 @@ def _validate_blocked_by(task: dict[str, Any]) -> list[ValidationError]:
 
     for dep in blocked_by:
         if not isinstance(dep, str):
-            errors.append(
-                ValidationError(tid, "blocked_by", f"non-string entry: {dep!r}")
-            )
+            errors.append(ValidationError(tid, "blocked_by", f"non-string entry: {dep!r}"))
 
     return errors
 
@@ -209,7 +193,7 @@ def _validate_task(task: dict[str, Any], seen_ids: set[str]) -> list[ValidationE
 
     errors.extend(_validate_id(task, seen_ids))
     tid = str(task.get("id") or "<missing-id>")
-    
+
     # Early return if id is missing or duplicate
     if any(e.field == "id" for e in errors):
         return errors
@@ -232,9 +216,7 @@ def _validate_cross_task_dependencies(tasks: list[dict[str, Any]]) -> list[Valid
         tid = str(task.get("id") or "")
         for dep in task.get("blocked_by") or []:
             if isinstance(dep, str) and dep not in ids:
-                errors.append(
-                    ValidationError(tid, "blocked_by", f"unknown task id {dep!r}")
-                )
+                errors.append(ValidationError(tid, "blocked_by", f"unknown task id {dep!r}"))
     cycle = _detect_cycle(tasks)
     if cycle:
         errors.append(
@@ -266,9 +248,7 @@ def _detect_cycle(tasks: list[dict[str, Any]]) -> list[str]:
         tid = str(t.get("id") or "")
         if not tid:
             continue
-        graph[tid] = [
-            d for d in (t.get("blocked_by") or []) if isinstance(d, str)
-        ]
+        graph[tid] = [d for d in (t.get("blocked_by") or []) if isinstance(d, str)]
 
     WHITE, GRAY, BLACK = 0, 1, 2
     color: dict[str, int] = dict.fromkeys(graph, WHITE)
@@ -411,7 +391,7 @@ def _next_id_after(tasks: list[dict[str, Any]], prefix: str) -> int:
         tid = str(task.get("id") or "")
         if tid.startswith(pref):
             try:
-                num = int(tid[len(pref):].split("-")[-1])
+                num = int(tid[len(pref) :].split("-")[-1])
                 max_id = max(max_id, num)
             except ValueError:
                 continue

@@ -135,8 +135,7 @@ def do_from_planfile(check: bool) -> int:
     n_match = sum(
         1
         for t in tickets
-        if isinstance(t, dict)
-        and all(x in (t.get("labels") or []) for x in required)
+        if isinstance(t, dict) and all(x in (t.get("labels") or []) for x in required)
     )
     print(f"wrote {todo_file} ({n_match} ticket(s) matching profile labels)")
     return 0
@@ -150,7 +149,7 @@ def do_from_todo(heading: str, check: bool) -> int:
     text = todo_file.read_text(encoding="utf-8")
     # Grab everything under `## <heading>` or `### <heading>` until the next heading of equal/higher level.
     pattern = re.compile(
-        rf"^(#{2,3})\s+{re.escape(heading)}\s*$(.*?)(?=^\1\s|\Z)",
+        rf"^(#{2, 3})\s+{re.escape(heading)}\s*$(.*?)(?=^\1\s|\Z)",
         re.MULTILINE | re.DOTALL,
     )
     match = pattern.search(text)
@@ -191,9 +190,7 @@ def do_from_todo(heading: str, check: bool) -> int:
         for lab in import_labels:
             cmd.extend(["--label", lab])
         cmd.extend(["--description", _llm_stub(item, heading, todo_file.name)])
-        proc = subprocess.run(
-            cmd, capture_output=True, text=True, cwd=REPO, timeout=60
-        )
+        proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO, timeout=60)
         if proc.returncode != 0:
             sys.stderr.write(proc.stderr or "")
             raise SystemExit(f"planfile ticket create failed ({proc.returncode})")
@@ -221,7 +218,9 @@ def _llm_stub(item: str, heading: str, source_name: str) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     grp = ap.add_mutually_exclusive_group()
-    grp.add_argument("--from-planfile", action="store_true", help="sync tickets → human list (default)")
+    grp.add_argument(
+        "--from-planfile", action="store_true", help="sync tickets → human list (default)"
+    )
     grp.add_argument("--from-todo", metavar="HEADING", help="import items under an H2/H3 heading")
     ap.add_argument("--check", action="store_true", help="don't write, report diff only")
     args = ap.parse_args()

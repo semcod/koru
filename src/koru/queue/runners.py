@@ -10,7 +10,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from .types import ApiRunResult, CommandResult, LlmRunResult
+from .types import ApiRunResult, LlmRunResult
 
 
 def _planfile_env() -> dict[str, str]:
@@ -103,9 +103,7 @@ def run_llm_request(request: dict[str, Any], _project: Path) -> LlmRunResult:
     proxies (e.g. an Ollama OpenAI-compat shim).
     """
     endpoint = str(
-        request.get("endpoint")
-        or os.getenv("KORU_LLM_ENDPOINT")
-        or _DEFAULT_LLM_ENDPOINT
+        request.get("endpoint") or os.getenv("KORU_LLM_ENDPOINT") or _DEFAULT_LLM_ENDPOINT
     )
     model = str(request.get("model") or _DEFAULT_LLM_MODEL)
 

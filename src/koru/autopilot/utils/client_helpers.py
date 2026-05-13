@@ -25,7 +25,11 @@ def call_daemon_method(
         Exit code (0 for success, 1 for failure).
     """
     if not client.is_running():
-        print(f"koru autopilot: daemon is NOT running" if not_running_return_code == 1 else "koru autopilot: daemon is not running")
+        print(
+            "koru autopilot: daemon is NOT running"
+            if not_running_return_code == 1
+            else "koru autopilot: daemon is not running"
+        )
         return not_running_return_code
 
     try:

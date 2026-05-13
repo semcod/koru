@@ -100,11 +100,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             available=bool(gemini_cmd),
             launchable=bool(gemini_cmd),
             command=gemini_cmd,
-            reason=(
-                "Gemini CLI detected in PATH."
-                if gemini_cmd
-                else "Gemini CLI is not in PATH."
-            ),
+            reason=("Gemini CLI detected in PATH." if gemini_cmd else "Gemini CLI is not in PATH."),
         ),
         AgentOption(
             id="cline",
@@ -121,9 +117,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             launchable=bool(qwen_cmd),
             command=qwen_cmd,
             reason=(
-                "Qwen Code CLI detected in PATH."
-                if qwen_cmd
-                else "Qwen Code CLI is not in PATH."
+                "Qwen Code CLI detected in PATH." if qwen_cmd else "Qwen Code CLI is not in PATH."
             ),
         ),
         AgentOption(
@@ -133,9 +127,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             launchable=bool(opencode_cmd),
             command=opencode_cmd,
             reason=(
-                "OpenCode CLI detected in PATH."
-                if opencode_cmd
-                else "OpenCode CLI is not in PATH."
+                "OpenCode CLI detected in PATH." if opencode_cmd else "OpenCode CLI is not in PATH."
             ),
         ),
         AgentOption(
@@ -208,8 +200,7 @@ def detect_project_environment(project: Path) -> dict[str, Any]:
         "wup_yaml": _marker(project, "wup.yaml"),
         "regix_yaml": _marker(project, "regix.yaml"),
         "testql_scenarios": (
-            _marker(project, "testql-testing", "scenarios")
-            or _marker(project, "testql-scenarios")
+            _marker(project, "testql-testing", "scenarios") or _marker(project, "testql-scenarios")
         ),
     }
     return {

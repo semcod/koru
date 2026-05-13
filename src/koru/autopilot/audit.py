@@ -39,7 +39,6 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any
 
-
 LOG_NAME = "koru.autopilot.audit"
 MAX_BYTES = 10 * 1024 * 1024  # 10 MiB
 BACKUP_COUNT = 5
@@ -108,7 +107,10 @@ class AuditLog:
             self.enabled = False
             return
         handler = RotatingFileHandler(
-            self.path, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8",
+            self.path,
+            maxBytes=max_bytes,
+            backupCount=backup_count,
+            encoding="utf-8",
         )
         handler.setFormatter(_JSONFormatter())
         self._logger.addHandler(handler)

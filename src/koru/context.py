@@ -36,7 +36,6 @@ from .policy import Policy, load_policy
 from .project_pipeline import build_project_pipeline_brief
 from .runtime import planfile_dir
 
-
 # Cache so we only load `.env` once per project per process (multiple
 # `build_context` calls — e.g. dashboard auto-refresh — would otherwise
 # re-read the file on every 5-second tick).
@@ -55,13 +54,15 @@ _DOTENV_LOADED: set[Path] = set()
 # Opt out per invocation with `--include-fixtures` or the env var
 # `KORU_INCLUDE_FIXTURES=true` (useful when explicitly testing fixture
 # rendering itself).
-FIXTURE_LABELS: frozenset[str] = frozenset({
-    "test-only",
-    "dryrun",
-    "dry-run",
-    "synthetic",
-    "auto-close",
-})
+FIXTURE_LABELS: frozenset[str] = frozenset(
+    {
+        "test-only",
+        "dryrun",
+        "dry-run",
+        "synthetic",
+        "auto-close",
+    }
+)
 
 
 def _is_fixture_ticket(ticket: dict[str, Any]) -> bool:
@@ -94,6 +95,7 @@ def _load_project_dotenv(project: Path) -> None:
     except Exception:  # pragma: no cover — never break the brief over .env
         pass
     _DOTENV_LOADED.add(project)
+
 
 # ---------------------------------------------------------------------------
 # planfile helpers (mirror of planfile_queue's resolution but read-only)
@@ -128,7 +130,9 @@ def _fetch_all_tickets(
     """
     try:
         proc = _run_planfile(
-            project, ["ticket", "list", "--format", "json"], runner=runner,
+            project,
+            ["ticket", "list", "--format", "json"],
+            runner=runner,
         )
     except Exception:  # pragma: no cover — defensive
         return []
@@ -246,21 +250,14 @@ def _process_list_payload(
         Tuple of (active_ticket, open_tickets, all_tickets, error)
     """
     raw_list = [t for t in ticket_data if isinstance(t, dict)]
-    open_tickets = [
-        t for t in raw_list
-        if t.get("status") in (None, "open", "ready", "todo")
-    ]
+    open_tickets = [t for t in raw_list if t.get("status") in (None, "open", "ready", "todo")]
     include = _resolve_include_fixtures(include_fixtures)
     if not include:
-        open_tickets = [
-            t for t in open_tickets if not _is_fixture_ticket(t)
-        ]
-        all_tickets = [
-            t for t in raw_list if not _is_fixture_ticket(t)
-        ]
+        open_tickets = [t for t in open_tickets if not _is_fixture_ticket(t)]
+        all_tickets = [t for t in raw_list if not _is_fixture_ticket(t)]
     else:
         all_tickets = list(raw_list)
-    
+
     active_ticket = open_tickets[0] if open_tickets else None
     error = "queue is idle" if active_ticket is None else None
     return active_ticket, open_tickets, all_tickets, error
@@ -290,8 +287,10 @@ def _extract_error_from_stderr(stderr: str) -> str:
     """Extract the actual error message from stderr, filtering out warnings."""
     raw_err = stderr.strip()
     err_lines = [
-        ln for ln in raw_err.splitlines()
-        if not ln.startswith("/") and "UserWarning" not in ln
+        ln
+        for ln in raw_err.splitlines()
+        if not ln.startswith("/")
+        and "UserWarning" not in ln
         and "warnings.warn" not in ln
         and "You may be able to resolve" not in ln
     ]
@@ -325,11 +324,7 @@ def _fetch_ticket_data(
 
     # Fallback: if `ticket next` is not available (older planfile),
     # try `ticket list` and pick the first open ticket.
-    if (
-        ticket_proc.returncode != 0
-        and not ticket_id
-        and "Usage:" in (ticket_proc.stderr or "")
-    ):
+    if ticket_proc.returncode != 0 and not ticket_id and "Usage:" in (ticket_proc.stderr or ""):
         ticket_proc = _try_fallback_ticket_list(project, planfile_runner)
 
     if ticket_proc.returncode == 0:
@@ -381,7 +376,8 @@ def build_context(
     planfile_runner: Callable[
         [Sequence[str], Path],
         subprocess.CompletedProcess[str],
-    ] | None = None,
+    ]
+    | None = None,
     git_probe: Callable[[Path], dict[str, Any]] | None = None,
     environment_probe: Callable[[Path], dict[str, Any]] | None = None,
     policy: Policy | None = None,
@@ -407,9 +403,7 @@ def build_context(
     pf = planfile_dir(project)
     sprints_dir = pf / "sprints"
     planfile_present = (
-        (pf / "config.yaml").exists()
-        and sprints_dir.is_dir()
-        and any(sprints_dir.glob("*.yaml"))
+        (pf / "config.yaml").exists() and sprints_dir.is_dir() and any(sprints_dir.glob("*.yaml"))
     )
 
     ticket_data, ticket_error, open_tickets, all_tickets = _fetch_ticket_data(
@@ -476,7 +470,8 @@ def _load_sprint_data(project: Path) -> dict[str, Any] | None:
 
     try:
         import yaml
-        with open(sprint_file, "r", encoding="utf-8") as f:
+
+        with open(sprint_file, encoding="utf-8") as f:
             sprint_data = yaml.safe_load(f)
 
         if not sprint_data or "sprint" not in sprint_data:
@@ -517,7 +512,9 @@ def _promote_blocking_to_critical(
             if current_priority != "critical":
                 tickets[blocking_id]["priority"] = "critical"
                 promoted = True
-                print(f"🔥 Auto-promoted {blocking_id} from {current_priority} to critical (blocking)")
+                print(
+                    f"🔥 Auto-promoted {blocking_id} from {current_priority} to critical (blocking)"
+                )
     return promoted
 
 
@@ -541,7 +538,9 @@ def _promote_bug_priority(tickets: dict[str, Any]) -> bool:
                 if new_priority and new_priority != current_priority:
                     ticket["priority"] = new_priority
                     promoted = True
-                    print(f"🐛 Auto-promoted bug {ticket_id} from {current_priority} to {new_priority}")
+                    print(
+                        f"🐛 Auto-promoted bug {ticket_id} from {current_priority} to {new_priority}"
+                    )
     return promoted
 
 
@@ -554,6 +553,7 @@ def _write_sprint_data(project: Path, sprint_data: dict[str, Any]) -> None:
 
     try:
         import yaml
+
         with open(sprint_file, "w", encoding="utf-8") as f:
             yaml.dump(sprint_data, f, default_flow_style=False, allow_unicode=True)
     except Exception as e:
@@ -638,8 +638,7 @@ def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[s
         rules.append("DO NOT create git tags.")
     if not policy.allow_destructive_shell:
         rules.append(
-            "DO NOT run destructive shell commands "
-            "(rm -rf /, dd, mkfs, shutdown, force-pushes, …)."
+            "DO NOT run destructive shell commands (rm -rf /, dd, mkfs, shutdown, force-pushes, …)."
         )
     if policy.require_ci_pass_before_complete:
         if policy.ci_command:
@@ -657,27 +656,31 @@ def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[s
         rules.append(
             f"Limit edits to the ticket's declared files: {scope}. "
             "Touching anything else requires blocking the ticket first "
-            "(`planfile ticket block <id> --reason \"out-of-scope edit needed\"`)."
+            '(`planfile ticket block <id> --reason "out-of-scope edit needed"`).'
         )
     if ticket is None:
-        rules.extend([
-            "If there is no active ticket, DO NOT ask the human what to work on.",
-            "Immediately run `koru scan --apply` to discover or create actionable tickets.",
-            "After scan, run `planfile ticket next --format json`, then `planfile ticket start <id>` and begin implementation.",
-        ])
+        rules.extend(
+            [
+                "If there is no active ticket, DO NOT ask the human what to work on.",
+                "Immediately run `koru scan --apply` to discover or create actionable tickets.",
+                "After scan, run `planfile ticket next --format json`, then `planfile ticket start <id>` and begin implementation.",
+            ]
+        )
     # Auto-repair instructions for critical blocking tickets
     if ticket and ticket.get("priority") == "critical":
-        rules.extend([
-            "CRITICAL PRIORITY: This ticket is blocking other work.",
-            "AUTO-REPAIR MODE: Fix this issue immediately to unblock the workflow.",
-            "Do NOT ask for human input unless absolutely necessary.",
-            "Use all available tools and knowledge to resolve the blocking issue.",
-            "After fixing, immediately call `planfile ticket done <id>` to continue."
-        ])
+        rules.extend(
+            [
+                "CRITICAL PRIORITY: This ticket is blocking other work.",
+                "AUTO-REPAIR MODE: Fix this issue immediately to unblock the workflow.",
+                "Do NOT ask for human input unless absolutely necessary.",
+                "Use all available tools and knowledge to resolve the blocking issue.",
+                "After fixing, immediately call `planfile ticket done <id>` to continue.",
+            ]
+        )
     else:
         rules.append(
             "If you are blocked or need a human decision, call "
-            "`planfile ticket block <id> --reason \"<question>\"` and stop."
+            '`planfile ticket block <id> --reason "<question>"` and stop.'
         )
     rules.extend(policy.notes)
     return rules
@@ -700,8 +703,7 @@ def _build_self_service(
             "init_project": "koru --init --project .",
             "init_from_pipeline": "koru --init --project . --from <pipeline.yaml>",
             "autonomous_bootstrap": (
-                "koru autonomous up --project . --max-cycles 1 "
-                "--sleep-seconds 0 --no-autopilot"
+                "koru autonomous up --project . --max-cycles 1 --sleep-seconds 0 --no-autopilot"
             ),
             "refresh_brief": "koru --project .",
         }
@@ -713,12 +715,12 @@ def _build_self_service(
         "autonomous_smoke": "koru autonomous up --project . --max-cycles 1 --sleep-seconds 0",
         "list_open": f"{base} list --status open --format json",
         "show_ticket": f"{base} show <id> --format json",
-        "block_for_input": f"{base} block <id> --reason \"<question or blocker>\"",
+        "block_for_input": f'{base} block <id> --reason "<question or blocker>"',
     }
     if tid:
         block["start_this"] = f"{base} start {tid}"
         block["done_this"] = f"{base} done {tid}"
-        block["block_this"] = f"{base} block {tid} --reason \"<question or blocker>\""
+        block["block_this"] = f'{base} block {tid} --reason "<question or blocker>"'
     if policy.ci_command:
         block["verify_ci"] = policy.ci_command
     return block
@@ -1025,10 +1027,7 @@ def _render_project_pipeline(pipeline: dict[str, Any] | None) -> list[str]:
         for cmd in ph.get("commands") or []:
             lines.append(f"- `{cmd}`")
         lines.append("")
-    lines.append(
-        "_This section is advisory — koru does not execute these commands "
-        "automatically._"
-    )
+    lines.append("_This section is advisory — koru does not execute these commands automatically._")
     lines.append("")
     return lines
 
@@ -1075,7 +1074,7 @@ def _render_self_service(self_service: dict[str, Any]) -> list[str]:
     ]
     for k, v in self_service.items():
         lines.append(f"- **{k}**: `{v}`")
-    lines.append("- **add_nl_task**: `koru task \"Describe the next change\"`")
+    lines.append('- **add_nl_task**: `koru task "Describe the next change"`')
     lines.append("- **agent_prompt**: `koru agent`")
     lines.append("- **launch_agent**: `koru agent --launch`")
     lines.append(
@@ -1092,8 +1091,7 @@ def _render_dashboard() -> list[str]:
     return [
         "## Dashboard",
         "",
-        "Uruchom lokalny dashboard koru z automatycznym otwarciem "
-        "zakładki w przeglądarce:",
+        "Uruchom lokalny dashboard koru z automatycznym otwarciem zakładki w przeglądarce:",
         "",
         "```bash",
         "koru serve                        # http://127.0.0.1:8765 + auto-open tab",

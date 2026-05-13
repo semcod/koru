@@ -79,7 +79,9 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     drive = sub.add_parser("drive", help="Type text into the active IDE chat.")
-    drive.add_argument("text", nargs="+", help="Text to type. Multiple args are joined with spaces.")
+    drive.add_argument(
+        "text", nargs="+", help="Text to type. Multiple args are joined with spaces."
+    )
     drive.add_argument(
         "--ide",
         default="auto",
@@ -119,8 +121,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--fix",
         action="store_true",
         help=(
-            "Show guided remediation and next commands "
-            "(including optional package auto-install)."
+            "Show guided remediation and next commands (including optional package auto-install)."
         ),
     )
 
@@ -245,7 +246,10 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Pretty-print the persistent audit log (P2.7/P2.8).",
     )
     tail.add_argument(
-        "-n", "--lines", type=int, default=20,
+        "-n",
+        "--lines",
+        type=int,
+        default=20,
         help="Number of trailing entries to show (default: 20).",
     )
     tail.add_argument(
@@ -269,6 +273,7 @@ def _client(args: argparse.Namespace) -> AutopilotClient:
 
 
 # ----- action handlers ------------------------------------------------------
+
 
 def _action_daemon(args: argparse.Namespace) -> int:
     socket_path = args.socket or default_socket_path()
@@ -344,9 +349,7 @@ def _action_drive(args: argparse.Namespace) -> int:
 
 def _action_status(args: argparse.Namespace) -> int:
     client = _client(args)
-    return call_daemon_method(
-        client, "status", "koru autopilot status", not_running_return_code=1
-    )
+    return call_daemon_method(client, "status", "koru autopilot status", not_running_return_code=1)
 
 
 def _action_shutdown(args: argparse.Namespace) -> int:
@@ -656,8 +659,7 @@ def _action_handoff(args: argparse.Namespace) -> int:
     client = _client(args)
     if not client.is_running():
         print(
-            "koru autopilot handoff: daemon not running. "
-            "Start it with `koru autopilot daemon`.",
+            "koru autopilot handoff: daemon not running. Start it with `koru autopilot daemon`.",
             file=sys.stderr,
         )
         return 2
@@ -682,8 +684,20 @@ def _format_tail_entry(entry: dict) -> str:
     ts = entry.get("ts", "?")
     event = entry.get("event", "?")
     parts = [ts, event]
-    for key in ("ide", "backend", "chars", "submit", "ok", "chat", "reason",
-                "version", "source", "socket", "handoff", "error"):
+    for key in (
+        "ide",
+        "backend",
+        "chars",
+        "submit",
+        "ok",
+        "chat",
+        "reason",
+        "version",
+        "source",
+        "socket",
+        "handoff",
+        "error",
+    ):
         if key in entry and entry[key] is not None:
             parts.append(f"{key}={entry[key]}")
     return "  ".join(str(p) for p in parts)
@@ -721,7 +735,7 @@ def _action_tail(args: argparse.Namespace) -> int:
     except OSError as exc:
         print(f"koru autopilot tail: {exc}", file=sys.stderr)
         return 1
-    tail = raw[-args.lines:] if args.lines > 0 else raw
+    tail = raw[-args.lines :] if args.lines > 0 else raw
     if args.output_format == "json":
         _render_tail_json(tail)
         return 0
@@ -801,8 +815,7 @@ def _action_install_unit(args: argparse.Namespace) -> int:
     dest = args.dest or _systemd_user_dir() / "koru-autopilot.service"
     if dest.exists() and not args.force:
         print(
-            f"koru autopilot install-unit: {dest} already exists "
-            "(pass --force to overwrite).",
+            f"koru autopilot install-unit: {dest} already exists (pass --force to overwrite).",
             file=sys.stderr,
         )
         return 1
@@ -819,8 +832,8 @@ def _action_install_unit(args: argparse.Namespace) -> int:
     print("  systemctl --user enable --now koru-autopilot.service")
     print("  journalctl --user -u koru-autopilot -f      # follow logs")
     print()
-    print(f"To enable auto-handoff for a project, override ExecStart with:")
-    print(f"  systemctl --user edit koru-autopilot.service")
+    print("To enable auto-handoff for a project, override ExecStart with:")
+    print("  systemctl --user edit koru-autopilot.service")
     return 0
 
 

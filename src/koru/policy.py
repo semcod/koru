@@ -28,8 +28,6 @@ from typing import Any
 
 import yaml
 
-from .runtime import runtime_dir
-
 POLICY_FILENAME = "policy.yaml"
 
 
@@ -38,21 +36,21 @@ POLICY_FILENAME = "policy.yaml"
 DEFAULT_FORBIDDEN_PATHS: tuple[str, ...] = (
     ".git/",
     ".github/",
-    ".planfile/",      # planfile owns this — only via planfile CLI
+    ".planfile/",  # planfile owns this — only via planfile CLI
     ".env",
     "secrets/",
     "*.pem",
     "*.key",
     "id_rsa",
     "id_ed25519",
-    "node_modules/",   # never let the agent touch installed deps
+    "node_modules/",  # never let the agent touch installed deps
 )
 
 DEFAULT_FORBIDDEN_SHELL_PATTERNS: tuple[str, ...] = (
     "rm -rf /",
     "rm -rf ~",
     "rm -rf $HOME",
-    ":(){:|:&};:",     # fork bomb
+    ":(){:|:&};:",  # fork bomb
     "dd if=",
     "mkfs",
     "> /dev/sda",
@@ -60,7 +58,7 @@ DEFAULT_FORBIDDEN_SHELL_PATTERNS: tuple[str, ...] = (
     "reboot",
     "git push --force",
     "git push -f",
-    "git reset --hard HEAD~",   # rewrite history
+    "git reset --hard HEAD~",  # rewrite history
 )
 
 
@@ -122,6 +120,7 @@ class Policy:
 def policy_path(project: Path) -> Path:
     """Return the policy YAML location: ``<project>/.planfile/.koru/policy.yaml``."""
     from .utils.subprocess_runner import resolve_planfile_subpath
+
     return resolve_planfile_subpath(project, ".koru", POLICY_FILENAME)
 
 
@@ -185,9 +184,7 @@ def load_policy(project: Path) -> Policy:
             "forbidden_shell_patterns", DEFAULT_FORBIDDEN_SHELL_PATTERNS
         ),
         require_planfile_lifecycle=_b("require_planfile_lifecycle", True),
-        require_ci_pass_before_complete=_b(
-            "require_ci_pass_before_complete", True
-        ),
+        require_ci_pass_before_complete=_b("require_ci_pass_before_complete", True),
         ci_command=_ci_str("command", ""),
         ci_timeout_seconds=_ci_int("timeout_seconds", 300),
         notes=notes,
@@ -216,18 +213,14 @@ def policy_violations(policy: Policy, command: str) -> list[str]:
         or "git checkout -b" in command
         or "git switch -c" in command
     ):
-        violations.append(
-            "policy.allow_branch_create=false: creating branches is forbidden"
-        )
-    if not policy.allow_branch_switch and (
-        "git checkout " in command and "-b" not in command
-    ) or (
-        "git switch " in command and "-c" not in command
+        violations.append("policy.allow_branch_create=false: creating branches is forbidden")
+    if (
+        not policy.allow_branch_switch
+        and ("git checkout " in command and "-b" not in command)
+        or ("git switch " in command and "-c" not in command)
     ):
         # Light heuristic: 'git checkout <ref>' or 'git switch <branch>'.
-        violations.append(
-            "policy.allow_branch_switch=false: switching branches is forbidden"
-        )
+        violations.append("policy.allow_branch_switch=false: switching branches is forbidden")
     if not policy.allow_tag and "git tag" in command:
         violations.append("policy.allow_tag=false: tagging is forbidden")
 

@@ -15,7 +15,6 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-
 # Map of IDE id -> (process-name patterns, friendly label).
 # Patterns are matched against ``comm`` (basename of the executable)
 # as well as the full ``cmdline`` so we catch electron wrappers like

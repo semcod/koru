@@ -22,7 +22,7 @@ from .ticket import (
     ticket_command,
     ticket_llm_request,
 )
-from .types import ApiRunResult, CommandResult, LlmRunResult, QueueRunResult
+from .types import CommandResult, QueueRunResult
 
 
 def run_next_planfile_task(
@@ -92,10 +92,7 @@ def run_next_planfile_task(
         if executor_kind == "human":
             inputs = ticket.get("inputs") or {}
             prompt = str(
-                inputs.get("prompt")
-                or ticket.get("description")
-                or ticket.get("name")
-                or ticket_id
+                inputs.get("prompt") or ticket.get("description") or ticket.get("name") or ticket_id
             )
             if not interactive or dry_run:
                 return QueueRunResult(
@@ -181,9 +178,7 @@ def run_next_planfile_task(
                 message=message,
             )
 
-        claimed = ticket_claim_or_error(
-            project, ticket_id, actor, planfile_runner=planfile_runner
-        )
+        claimed = ticket_claim_or_error(project, ticket_id, actor, planfile_runner=planfile_runner)
         if claimed:
             return claimed
         planfile_command(
@@ -215,10 +210,7 @@ def run_next_planfile_task(
         else:
             # Use `block --reason` for failures (planfile has no `fail`
             # verb). The full stderr stays in QueueRunResult / run log.
-            reason = (
-                result.stderr[-500:].strip()
-                or f"Command exited with {result.returncode}"
-            )
+            reason = result.stderr[-500:].strip() or f"Command exited with {result.returncode}"
             planfile_command(
                 project,
                 ["ticket", "block", ticket_id, "--reason", f"FAIL: {reason}"],

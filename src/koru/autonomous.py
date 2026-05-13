@@ -19,19 +19,29 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from .agents import agent_lane_environment
 from .autopilot import default_socket_path
 from .autopilot.client import AutopilotClient
 from .autopilot.daemon import AutopilotDaemon
 from .autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide
-from .agents import agent_lane_environment
 from .init import init_project, resolve_project_agent_lane
 from .queue import (
     QueueLoopResult,
-    default_human_prompt as _default_human_prompt,
-    run_api_request as _run_api_request,
-    run_llm_request as _run_llm_request,
     run_planfile_queue_loop,
+)
+from .queue import (
+    default_human_prompt as _default_human_prompt,
+)
+from .queue import (
+    run_api_request as _run_api_request,
+)
+from .queue import (
+    run_llm_request as _run_llm_request,
+)
+from .queue import (
     run_process as _run_process,
+)
+from .queue import (
     run_shell_command as _run_shell_command,
 )
 from .scan import ScanResult, run_scan
@@ -427,9 +437,7 @@ def _env_apply_autoloop_defaults(args: argparse.Namespace) -> None:
         "BACKOFF_ON_STAGNATION", args.backoff_on_stagnation
     )
     args.scan_skip_if_clean = _env_default_bool("SCAN_SKIP_IF_CLEAN", args.scan_skip_if_clean)
-    args.topology_integration = _env_default_bool(
-        "TOPOLOGY_INTEGRATION", args.topology_integration
-    )
+    args.topology_integration = _env_default_bool("TOPOLOGY_INTEGRATION", args.topology_integration)
     env_wup_watch = os.environ.get("WUP_WATCH")
     if env_wup_watch is not None:
         args.wup_watch = env_wup_watch.strip().lower() in {"1", "true", "yes", "y", "on"}
@@ -620,13 +628,14 @@ def _wup_watch_command(config: WupWatchConfig) -> list[str]:
 
 def _wup_autodetect(config: WupWatchConfig) -> bool:
     """Return True when wup binary and wup.yaml are both present."""
-    return (
-        shutil.which("wup") is not None
-        and ((config.project / "wup.yaml").is_file() or config.config is not None)
+    return shutil.which("wup") is not None and (
+        (config.project / "wup.yaml").is_file() or config.config is not None
     )
 
 
-def _start_wup_watch(config: WupWatchConfig, *, topology_integration: bool) -> subprocess.Popen | None:
+def _start_wup_watch(
+    config: WupWatchConfig, *, topology_integration: bool
+) -> subprocess.Popen | None:
     auto = config.enabled is None
     if config.enabled is False:
         return None
@@ -743,18 +752,50 @@ def _run_idle_diagnostics(
     print(f"koru autonomous: queue idle -> running semcod diagnostics (profile={profile})")
     checks: list[tuple[str, str, list[str]]] = []
     if shutil.which("regix"):
-        checks.append(("regix", "regix compare HEAD --local --format rich", ["regix", "compare", "HEAD", "--local", "--format", "rich"]))
+        checks.append(
+            (
+                "regix",
+                "regix compare HEAD --local --format rich",
+                ["regix", "compare", "HEAD", "--local", "--format", "rich"],
+            )
+        )
     if shutil.which("wup") and (project / "wup.yaml").is_file():
         checks.append(("wup", "wup status", ["wup", "status"]))
     if profile in {"full", "deep"}:
         if shutil.which("redup"):
-            checks.append(("redup", "redup scan . --min-lines 10", ["redup", "scan", ".", "--min-lines", "10"]))
+            checks.append(
+                (
+                    "redup",
+                    "redup scan . --min-lines 10",
+                    ["redup", "scan", ".", "--min-lines", "10"],
+                )
+            )
         if shutil.which("testql") and any(project.rglob("*.testql.toon.yaml")):
-            checks.append(("testql", "testql suite --pattern *.testql.toon.yaml --output console --fail-fast", ["testql", "suite", "--pattern", "*.testql.toon.yaml", "--output", "console", "--fail-fast"]))
+            checks.append(
+                (
+                    "testql",
+                    "testql suite --pattern *.testql.toon.yaml --output console --fail-fast",
+                    [
+                        "testql",
+                        "suite",
+                        "--pattern",
+                        "*.testql.toon.yaml",
+                        "--output",
+                        "console",
+                        "--fail-fast",
+                    ],
+                )
+            )
         if shutil.which("redsl"):
             checks.append(("redsl", "redsl gate check .", ["redsl", "gate", "check", "."]))
         if (project / "scripts" / "sumr-refresh.sh").is_file():
-            checks.append(("sumr", "bash scripts/sumr-refresh.sh --status", ["bash", "scripts/sumr-refresh.sh", "--status"]))
+            checks.append(
+                (
+                    "sumr",
+                    "bash scripts/sumr-refresh.sh --status",
+                    ["bash", "scripts/sumr-refresh.sh", "--status"],
+                )
+            )
     failed: list[str] = []
     diagnostic_state_dir.mkdir(parents=True, exist_ok=True)
     for check_id, summary, command in checks:
@@ -814,7 +855,9 @@ def _run_cycle(
     state = state or AutoloopState()
     scan_result: ScanResult | None = None
     if enable_scan:
-        if not _is_topology_enabled(project, "scan:on-change", fallback=True, enabled=topology_integration):
+        if not _is_topology_enabled(
+            project, "scan:on-change", fallback=True, enabled=topology_integration
+        ):
             print("- koru scan --apply skipped (scan:on-change disabled in topology)")
         else:
             head_now = _current_head(project)
@@ -829,7 +872,10 @@ def _run_cycle(
                     f"(clean_streak={state.scan_clean_streak}, HEAD unchanged)"
                 )
             else:
-                print("+ koru scan --apply" + (" --semcod-artifacts" if include_semcod_artifacts else ""))
+                print(
+                    "+ koru scan --apply"
+                    + (" --semcod-artifacts" if include_semcod_artifacts else "")
+                )
                 scan_result = run_scan(
                     project=project, apply=True, include_semcod_artifacts=include_semcod_artifacts
                 )
@@ -843,7 +889,9 @@ def _run_cycle(
                     state.scan_clean_streak = 0
                 state.scan_last_head = head_now
 
-    if not _is_topology_enabled(project, "autoloop:queue", fallback=True, enabled=topology_integration):
+    if not _is_topology_enabled(
+        project, "autoloop:queue", fallback=True, enabled=topology_integration
+    ):
         print("- autoloop queue phase skipped (autoloop:queue disabled in topology)")
         queue_result = QueueLoopResult(0, [], [], [], "disabled", "")
     else:
@@ -909,7 +957,9 @@ def _run_cycle(
 
     autopilot_status = "skipped"
     if enable_autopilot and client is not None:
-        if not _is_topology_enabled(project, "autopilot:drive", fallback=True, enabled=topology_integration):
+        if not _is_topology_enabled(
+            project, "autopilot:drive", fallback=True, enabled=topology_integration
+        ):
             print("- autopilot skipped (autopilot:drive disabled in topology)")
             autopilot_status = "skipped(topology)"
         elif autopilot_action == "off":
@@ -923,7 +973,9 @@ def _run_cycle(
         elif state.stagnation_streak > 0 and _status_in_skip_list(
             queue_result.last_status, autopilot_skip_statuses
         ):
-            print(f"- autopilot skipped (stuck_{queue_result.last_status}_streak_{state.stagnation_streak})")
+            print(
+                f"- autopilot skipped (stuck_{queue_result.last_status}_streak_{state.stagnation_streak})"
+            )
             autopilot_status = f"skipped(stuck_{queue_result.last_status})"
         elif autopilot_action == "handoff":
             reply = client.drive(drive_prompt, submit=submit, ide=autopilot_ide)
@@ -948,7 +1000,9 @@ def _run_cycle(
                     message = reply.get("message", "unknown error")
                     print(f"  autopilot: failed ({message})")
             else:
-                print(f"  autopilot: skipped (queue_status={queue_result.last_status}, empty message)")
+                print(
+                    f"  autopilot: skipped (queue_status={queue_result.last_status}, empty message)"
+                )
         else:
             reply = client.drive(drive_prompt, submit=submit, ide=autopilot_ide)
             ok = bool(reply.get("ok", True))
@@ -1016,11 +1070,7 @@ def _action_up(args: argparse.Namespace) -> int:
                 and client is not None
                 and socket_path is not None
                 and not socket_path.exists()
-                and (
-                    autopilot_socket_observed_at_boot
-                    or daemon is not None
-                    or thread is not None
-                )
+                and (autopilot_socket_observed_at_boot or daemon is not None or thread is not None)
             ):
                 print(
                     f"koru autonomous: autopilot socket missing at {socket_path}; "

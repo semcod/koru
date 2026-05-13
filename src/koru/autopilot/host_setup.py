@@ -85,9 +85,7 @@ def build_setup_host_report() -> dict[str, Any]:
     injector = Injector()
     statuses = [s.to_dict() for s in injector.probe()]
     selected = injector.select_backend()
-    deb_missing = [
-        deb for name, deb in _INSTRUMENT_DEB if injector.which(name) is None
-    ]
+    deb_missing = [deb for name, deb in _INSTRUMENT_DEB if injector.which(name) is None]
     return {
         "session": injector.session or "unknown",
         "selected_backend": selected,
@@ -98,8 +96,7 @@ def build_setup_host_report() -> dict[str, Any]:
         "deb_packages_missing": deb_missing,
         "human_actions_required": _human_followups(injector, selected),
         "automated_apt_suggestion": (
-            "sudo apt-get update -qq && sudo apt-get install -y "
-            + " ".join(deb_missing)
+            "sudo apt-get update -qq && sudo apt-get install -y " + " ".join(deb_missing)
             if deb_missing
             else None
         ),

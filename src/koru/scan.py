@@ -36,15 +36,14 @@ import re
 import shutil
 import subprocess
 from collections import Counter
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any
 
-from .runtime import runtime_dir
 from .semcod_tools import detect_semcod_tools
 from .utils.subprocess_runner import default_subprocess_runner, get_python_cmd
-
 
 # ---------------------------------------------------------------------------
 # Public dataclass
@@ -103,6 +102,7 @@ _IMPORT_ERROR_RE = re.compile(
     re.MULTILINE,
 )
 
+
 def scan_pytest_collect(
     project: Path,
     *,
@@ -113,9 +113,7 @@ def scan_pytest_collect(
     if not (project / "tests").exists() and not (project / "pyproject.toml").exists():
         return []
 
-    def _default_runner(
-        cmd: Sequence[str], cwd: Path
-    ) -> subprocess.CompletedProcess[str]:
+    def _default_runner(cmd: Sequence[str], cwd: Path) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             list(cmd),
             cwd=cwd,
@@ -214,7 +212,7 @@ def scan_pytest_collect(
                         "`pytest --collect-only` fails before collecting any "
                         f"test:\n\n    {imp.group('exc')}: {imp.group('msg').strip()}\n\n"
                         "Likely cause: missing `[tool.pytest.ini_options] "
-                        "pythonpath = [\"src\"]` (or equivalent) in "
+                        'pythonpath = ["src"]` (or equivalent) in '
                         "`pyproject.toml`, or an editable install missing.\n\n"
                         f"Full traceback snippet:\n```\n{output[-1500:].strip()}\n```"
                     ),
@@ -485,9 +483,7 @@ _TOON_DUP_RE = re.compile(
     r"^\s*🔴\s+DUP\s+(?P<count>\d+)\s+classes?\s+duplicated",
     re.MULTILINE,
 )
-_TOON_REFACTOR_ITEM_RE = re.compile(
-    r"^\s*(?P<num>\d+)\.\s+(?P<desc>.+?)\s*\((?P<note>[^)]+)\)\s*$"
-)
+_TOON_REFACTOR_ITEM_RE = re.compile(r"^\s*(?P<num>\d+)\.\s+(?P<desc>.+?)\s*\((?P<note>[^)]+)\)\s*$")
 
 
 def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
@@ -704,6 +700,7 @@ def _existing_scan_titles(
     should not pile up identical tickets.
     """
     use_runner = runner or default_subprocess_runner
+
     def _load_titles(cmd: list[str], *, filter_source: bool = False) -> set[str]:
         try:
             result = use_runner(cmd, project)
@@ -754,11 +751,16 @@ def _create_ticket(
     """Create one ticket via ``planfile ticket create``. Returns success."""
     use_runner = runner or default_subprocess_runner
     cmd: list[str] = [
-        "planfile", "ticket", "create",
+        "planfile",
+        "ticket",
+        "create",
         suggestion.title,
-        "--priority", suggestion.priority,
-        "--source", source,
-        "--description", suggestion.description,
+        "--priority",
+        suggestion.priority,
+        "--source",
+        source,
+        "--description",
+        suggestion.description,
     ]
     for label in suggestion.labels:
         cmd.extend(["--label", label])
@@ -794,9 +796,7 @@ def run_scan(
     )
     # Stable ordering: priority (critical > high > normal > low), then signal.
     priority_rank = {"critical": 0, "high": 1, "normal": 2, "low": 3}
-    suggestions.sort(
-        key=lambda s: (priority_rank.get(s.priority, 99), s.signal, s.title)
-    )
+    suggestions.sort(key=lambda s: (priority_rank.get(s.priority, 99), s.signal, s.title))
     if limit is not None and limit >= 0:
         suggestions = suggestions[:limit]
 

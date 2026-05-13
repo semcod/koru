@@ -42,7 +42,6 @@ the agent-lane shell helpers on an existing project, use
 
 from __future__ import annotations
 
-import os
 import stat
 from dataclasses import dataclass
 from pathlib import Path
@@ -222,10 +221,7 @@ class InitReport:
     def summary(self) -> str:
         if self.agent_lane_refresh_only:
             if self.agent_lane_files_written and self.agent_lane:
-                return (
-                    f"agent-lane: {self.agent_lane} "
-                    "(shell-env.sh, run-autonomous.sh)"
-                )
+                return f"agent-lane: {self.agent_lane} (shell-env.sh, run-autonomous.sh)"
             if self.agent_lane is None:
                 return "agent-lane: off (shell helpers removed)"
             if self.autopilot_host_setup_written:
@@ -239,9 +235,7 @@ class InitReport:
         if self.used_starter_pipeline:
             bits.append("pipeline: starter scaffold")
         if self.agent_lane_files_written and self.agent_lane:
-            bits.append(
-                f"agent-lane: {self.agent_lane} (shell-env.sh, run-autonomous.sh)"
-            )
+            bits.append(f"agent-lane: {self.agent_lane} (shell-env.sh, run-autonomous.sh)")
         if self.autopilot_host_setup_written:
             bits.append("autopilot-host: setup-autopilot-host.sh")
         if self.koru_project_pipeline_yaml_written:

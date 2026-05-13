@@ -6,8 +6,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from .runner import run_next_planfile_task
-from .types import CommandResult, LlmRunResult, QueueLoopResult, QueueRunResult
-
+from .types import CommandResult, QueueLoopResult, QueueRunResult
 
 # Statuses that should NOT terminate the loop (a transient outcome for the
 # current ticket, but we can still try the next one).

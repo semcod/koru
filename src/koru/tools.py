@@ -27,7 +27,9 @@ def resolve_registry_path(path_override: Path | None = None) -> Path | None:
     return candidate if candidate.is_file() else None
 
 
-def load_tool_registry(path_override: Path | None = None) -> tuple[list[dict[str, Any]], Path | None]:
+def load_tool_registry(
+    path_override: Path | None = None,
+) -> tuple[list[dict[str, Any]], Path | None]:
     """Load YAML registry and return ``(entries, path_used)``.
 
     Accepts either:
@@ -226,7 +228,7 @@ def render_tools_detect_text(results: list[dict[str, Any]], *, registry_path: Pa
     lines = [
         "koru tools detect",
         f"registry: {registry_path if registry_path else '(not found)'}",
-        f"summary: total={len(results)} available={available} missing={len(results)-available}",
+        f"summary: total={len(results)} available={available} missing={len(results) - available}",
         "",
         "| id | lane | category | available | via |",
         "| --- | --- | --- | --- | --- |",

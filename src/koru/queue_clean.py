@@ -31,6 +31,7 @@ A ticket is a cleanup candidate when **any** of the following holds:
 * ``--max-age-days N`` is set and the ticket has been open longer than
   that many days (combined with the above — never a sole criterion).
 """
+
 from __future__ import annotations
 
 import json
@@ -41,12 +42,11 @@ import subprocess
 import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from .context import FIXTURE_LABELS
-
 
 QUEUE_CLEAN_TAG = "KORU-QUEUE-CLEAN"
 """Marker prefix written to ``outputs.notes`` on every cleaned ticket."""
@@ -138,8 +138,8 @@ def _parse_age_days(ticket: dict[str, Any], *, now: datetime | None = None) -> f
     except (TypeError, ValueError):
         return None
     if created.tzinfo is None:
-        created = created.replace(tzinfo=timezone.utc)
-    reference = now or datetime.now(timezone.utc)
+        created = created.replace(tzinfo=UTC)
+    reference = now or datetime.now(UTC)
     delta = reference - created
     return max(delta.total_seconds() / 86_400.0, 0.0)
 
@@ -154,11 +154,7 @@ def _matched_rules(
     """Return the rule names that consider this ticket a cleanup target."""
     rules: list[str] = []
     labels = ticket.get("labels") or []
-    label_set = (
-        {str(x).strip().lower() for x in labels}
-        if isinstance(labels, list)
-        else set()
-    )
+    label_set = {str(x).strip().lower() for x in labels} if isinstance(labels, list) else set()
     label_hits = label_set & FIXTURE_LABELS
     if label_hits:
         rules.append(f"fixture-label({','.join(sorted(label_hits))})")
@@ -247,7 +243,7 @@ def _build_close_note(candidate: CleanupCandidate, reason: str) -> str:
         "kind": "queue_cleanup",
         "rules": list(candidate.matched_rules),
         "reason": reason,
-        "cleaned_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "cleaned_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
     return f"{QUEUE_CLEAN_TAG} {json.dumps(payload, sort_keys=True)}"
 
@@ -296,8 +292,7 @@ def _close_ticket(
     result = runner(cmd, cwd=str(project), capture_output=True, text=True, check=False)
     if result.returncode != 0:
         raise RuntimeError(
-            (result.stderr or result.stdout or "").strip()
-            or f"exit {result.returncode}"
+            (result.stderr or result.stdout or "").strip() or f"exit {result.returncode}"
         )
 
 

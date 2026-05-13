@@ -11,7 +11,8 @@ from pathlib import Path
 from typing import Any
 
 from . import default_socket_path
-from .protocol import MAX_LINE_BYTES, Message, decode, drive as drive_msg
+from .protocol import MAX_LINE_BYTES, Message, decode
+from .protocol import drive as drive_msg
 
 
 class AutopilotClient:

@@ -32,9 +32,10 @@ import stat
 import struct
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from . import default_socket_path
 from .audit import AuditLog
@@ -114,7 +115,7 @@ class _Client:
     # Pending CLI ack: when a CLI sends ``drive`` and we forward to a
     # plugin, we remember the CLI socket so we can reply after the
     # plugin acks.
-    awaiting_plugin: tuple["_Client", str] | None = None
+    awaiting_plugin: tuple[_Client, str] | None = None
 
 
 class AutopilotDaemon:
@@ -354,8 +355,12 @@ class AutopilotDaemon:
         self._last_chat_send_at = time.monotonic()
         self.log(f"drive → plugin/{plugin.ide} ({len(text)} chars)")
         self.audit.record(
-            "drive", ide=plugin.ide, backend="plugin",
-            chars=len(text), submit=submit, ok=True,
+            "drive",
+            ide=plugin.ide,
+            backend="plugin",
+            chars=len(text),
+            submit=submit,
+            ok=True,
         )
 
     def _drive_via_keyboard(
@@ -376,21 +381,27 @@ class AutopilotDaemon:
             self._send(client, error(msg.id, str(exc)).encode())
             self.log(f"drive failed: {exc}")
             self.audit.record(
-                "drive", ide=target_id, backend="keyboard",
-                chars=len(text), submit=submit, ok=False, error=str(exc),
+                "drive",
+                ide=target_id,
+                backend="keyboard",
+                chars=len(text),
+                submit=submit,
+                ok=False,
+                error=str(exc),
             )
             return
         info: dict[str, Any] = {"backend": result.backend, "submitted": result.submitted}
         if target is not None:
             info["ide"] = target.to_dict()
         self._send(client, ack(msg.id or "", info=info).encode())
-        self.log(
-            f"drive → {target_id} via {result.backend} "
-            f"({len(text)} chars, submit={submit})"
-        )
+        self.log(f"drive → {target_id} via {result.backend} ({len(text)} chars, submit={submit})")
         self.audit.record(
-            "drive", ide=target_id, backend=result.backend,
-            chars=len(text), submit=submit, ok=True,
+            "drive",
+            ide=target_id,
+            backend=result.backend,
+            chars=len(text),
+            submit=submit,
+            ok=True,
         )
 
     def _handle_hello(self, client: _Client, msg: Message) -> None:
@@ -483,8 +494,12 @@ class AutopilotDaemon:
         self._send(client, ack(msg.id or "session-event", info=ack_info).encode())
         self.log(f"handoff → plugin/{client.ide} ({len(text)} chars)")
         self.audit.record(
-            "handoff", ide=client.ide, chat=chat,
-            reason=reason or None, chars=len(text), ok=True,
+            "handoff",
+            ide=client.ide,
+            chat=chat,
+            reason=reason or None,
+            chars=len(text),
+            ok=True,
         )
 
     def _handle_shutdown(self, client: _Client, msg: Message) -> None:
