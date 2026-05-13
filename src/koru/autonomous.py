@@ -569,7 +569,7 @@ def _clear_diagnostic_marker(state_dir: Path, check_id: str) -> None:
 
 def _build_wup_watch_config(args: argparse.Namespace, project: Path) -> WupWatchConfig:
     return WupWatchConfig(
-        enabled=bool(args.wup_watch),
+        enabled=args.wup_watch,
         mode=args.wup_mode,
         project=project,
         deps_file=args.wup_deps,
