@@ -3,7 +3,8 @@
 > Companion to [`autopilot-design.md`](./autopilot-design.md) and
 > [`autopilot-quickstart.md`](./autopilot-quickstart.md). Tracks what is
 > shipped (Phase 1) and what remains. Items are scoped so each one is
-> a single planfile ticket.
+> a single planfile ticket. Polish gap analysis vs Cursor IDE:
+> [`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md).
 >
 > Status legend: ✅ done · 🟡 in progress · ⬜ planned · ❄ frozen / out of scope.
 

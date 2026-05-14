@@ -31,6 +31,8 @@ For LLM agents starting a session in a koru-driven repository:
    drive your IDE's LLM chat from a terminal (`koru autopilot`).
    Companion design doc: [`autopilot-design.md`](./autopilot-design.md);
    open items in [`autopilot-roadmap.md`](./autopilot-roadmap.md).
+7. **[`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md)** (PL) — autonomia
+   koru vs Cursor IDE: luka funkcjonalna i checklista wdrożeniowa.
 
 For human operators / DevOps:
 
