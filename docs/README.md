@@ -4,6 +4,7 @@ This directory contains the full documentation for **koru** — a closed-loop
 refactor automation system for multi-repo workspaces.
 
 - **[`roadmap-competition.md`](./roadmap-competition.md)** (PL) — porównanie z Grit, Moderne/OpenRewrite, Gitar, Git AutoReview i kierunek roadmapy.
+- **[`recipes/README.md`](./recipes/README.md)** (PL) — szkic katalogu przepisów koru (propozycje, przykłady YAML).
 - **[`ci-github.md`](./ci-github.md)** (PL) — szablon thin CI na GitHub Actions (`koru-ci.yml`).
 - **[`ci-gitlab.md`](./ci-gitlab.md)** (PL) — ten sam smoke na GitLab CI (przykład w `examples/ci/gitlab-ci.example.yml`).
 - **[`quickstart-10min.md`](./quickstart-10min.md)** — krótka ścieżka: instalacja, `koru --init`, CI, pierwszy ticket.

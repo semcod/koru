@@ -1,0 +1,14 @@
+# Szkic przepisu (placeholder) — baseline jakości Pythona dla adopters koru.
+# Nie jest konsumowany przez żaden parser w tym repozytorium; służy jako wzorzec nazewnictwa.
+#
+# Docelowo pola mogłyby opisywać np. zestaw bramek (ruff, pytest) i kolejność;
+# na razie tylko struktura demonstracyjna.
+
+recipe:
+  id: python-quality-baseline
+  title: "Baseline jakości Python (szkic)"
+  status: draft
+  language_hints:
+    - python
+  notes: "Uzupełnij po uzgodnieniu kontraktu recipe w koru CLI."
+  gates_placeholder: []

@@ -88,6 +88,7 @@ warstwy** nad planfile i metrykami, a nie duplikat platformy Moderne.
 
 ### Epic 8 — Multi-lang, BYOM, quickstart (P2–P3)
 
+- Stub dokumentacji przyszłego **katalogu przepisów (recipes)** PL: [`docs/recipes/README.md`](./recipes/README.md).
 - Jako org z Javą chcę roadmapę i pierwszy oficjalny adapter poza Pythonem (P3 dla języka, P2 dla dokumentacji ścieżki).
 - Jako użytkownik chcę `llm.yaml` z wyborem dostawcy i `doctor-llm` wykrywającym brak kluczy (P2).
 - Jako nowy użytkownik chcę `koru init --quickstart` z minimalnym `.koru` i przykładowym ticketem (P2).
