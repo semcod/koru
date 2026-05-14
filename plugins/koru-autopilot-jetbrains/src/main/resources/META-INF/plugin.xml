@@ -1,0 +1,24 @@
+<idea-plugin>
+    <id>com.semcod.koru.autopilot</id>
+    <name>koru Autopilot</name>
+    <vendor email="tom@sapletta.com" url="https://github.com/semcod/koru">Semcod</vendor>
+
+    <description><![CDATA[
+        Terminal-to-IDE bridge for koru autopilot.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="com.semcod.koru.autopilot.KoruAutopilotService"/>
+    </extensions>
+
+    <actions>
+        <action id="KoruAutopilot.Reconnect"
+                class="com.semcod.koru.autopilot.KoruAutopilotReconnectAction"
+                text="Reconnect koru Autopilot"
+                description="Reconnect to the local koru autopilot daemon">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>

@@ -53,8 +53,8 @@ experience as VS Code users.
 
 | #     | Item                                                                                                                                                                                                       | Effort | Risk |
 |-------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|------|
-| P3.1  | Replace `plugins/koru-autopilot-jetbrains/README.md` stub with a real Gradle / IntelliJ-Platform plugin skeleton (`build.gradle.kts`, `plugin.xml`).                                                       | M      | low  |
-| P3.2  | Unix-socket bridge in Kotlin (parity with the TS extension): `hello`, listen for `chat.send`, paste into the AI Assistant chat window via `EditorActionManager` / clipboard.                               | M      | med  |
+| P3.1 ✅ | ~~Replace `plugins/koru-autopilot-jetbrains/README.md` stub with a real Gradle / IntelliJ-Platform plugin skeleton (`build.gradle.kts`, `plugin.xml`).~~ Done: Gradle scaffold, plugin metadata, application service, socket path helper, reconnect action.                                                       | M      | low  |
+| P3.2  | Unix-socket bridge in Kotlin (parity with the TS extension): `hello`, listen for `chat.send`, paste into the AI Assistant chat window via `EditorActionManager` / clipboard. First slice sends `hello`; read loop and chat injection remain.                               | M      | med  |
 | P3.3  | Hook the JetBrains AI Assistant lifecycle (`AIAssistantChatSessionListener` once it exists, or polling fallback) to emit `session.ended`.                                                                  | L      | high |
 | P3.4  | Publish to the JetBrains Marketplace. Optional; sideload via "Install from Disk" works for the MVP.                                                                                                        | M      | low  |
 | P3.5  | Add `tests/test_autopilot_jetbrains.py` — at minimum a smoke test that runs the Kotlin daemon-shim against the Python daemon to verify protocol compatibility.                                             | S      | low  |
@@ -110,6 +110,8 @@ subsystem reaches "stable" status.
 **Status snapshot:** 13/14 refactor items shipped (R1, R2, R3, R4, R5, R6, R7, R9, R10, R11, R12, R13, R14 ✅; R8 🟡).
 
 Phase 2 progress: **P2.1, P2.5, P2.6, P2.7, P2.8 ✅** shipped (VSIX builds + installs in Windsurf; `handoff` one-shot; systemd user unit; audit log; `tail` renderer). Phase 2 still needs P2.2 (CI release), P2.3 (real `session.ended`), P2.4 (capture reply).
+
+Phase 3 progress: **P3.1 ✅** shipped (JetBrains Gradle scaffold and minimal socket bridge). P3.2 still needs daemon read-loop handling for `chat.send` plus AI Assistant paste/submit.
 
 ---
 

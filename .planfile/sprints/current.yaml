@@ -2634,10 +2634,13 @@ sprint:
       created_at: '2026-05-12T13:59:17.075555+00:00'
       description: JetBrains/PyCharm autopilot plugin
       execution:
+        assigned_to: codex
         attempt: 0
+        finished_at: '2026-05-14T11:06:14.607899Z'
         max_attempts: 1
         queue: default
-        state: ready
+        started_at: '2026-05-14T11:06:13.804864Z'
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -2647,6 +2650,27 @@ sprint:
         message: JetBrains/PyCharm autopilot plugin
         source: koru task
         timestamp: '2026-05-12T13:59:17.075555+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T11:06:13.953018+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T11:06:14.765996+00:00'
       id: STARTER-083
       inputs:
         api_headers: {}
@@ -2660,8 +2684,18 @@ sprint:
       - llm-ready
       name: JetBrains/PyCharm autopilot plugin
       outputs:
-        artifacts: []
-        notes: []
+        artifacts:
+        - plugins/koru-autopilot-jetbrains
+        - tests/test_autopilot_jetbrains_scaffold.py
+        notes:
+        - 'Implemented JetBrains autopilot plugin scaffold: Gradle/IntelliJ Platform
+          metadata, plugin.xml service/action, Kotlin unix-socket hello bridge, socket
+          path helper, docs, and scaffold smoke tests.'
+        result:
+          gradle_build: not_run_gradle_missing
+          status: done
+          tests:
+          - uv run pytest -q tests/test_autopilot_jetbrains_scaffold.py tests/test_autopilot_plugin_installer.py
       priority: high
       source:
         context:
@@ -2669,9 +2703,9 @@ sprint:
         timestamp: '2026-05-12T13:59:17.075555+00:00'
         tool: koru-cli-nl
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T13:59:17.075555+00:00'
+      updated_at: '2026-05-14T11:06:14.765942+00:00'
     STARTER-084:
       acceptance_criteria: []
       blocked_by: []
