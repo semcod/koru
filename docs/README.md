@@ -27,11 +27,14 @@ For LLM agents starting a session in a koru-driven repository:
    lane, multi-repo refactor).
 5. **[`llm-tools/`](./llm-tools/)** — per-tool docs and install scripts
    for every component in the koru pipeline.
-6. **[`autopilot-quickstart.md`](./autopilot-quickstart.md)** — how to
+6. **[`agent-backends-architecture.md`](./agent-backends-architecture.md)** —
+   layered map: plugin+socket, MCP, vendor CLIs, OS injectors (no single
+   universal “wake LLM” API).
+7. **[`autopilot-quickstart.md`](./autopilot-quickstart.md)** — how to
    drive your IDE's LLM chat from a terminal (`koru autopilot`).
    Companion design doc: [`autopilot-design.md`](./autopilot-design.md);
    open items in [`autopilot-roadmap.md`](./autopilot-roadmap.md).
-7. **[`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md)** (PL) — autonomia
+8. **[`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md)** (PL) — autonomia
    koru vs Cursor IDE: luka funkcjonalna i checklista wdrożeniowa.
 
 For human operators / DevOps:
@@ -82,7 +85,6 @@ planfile ticket show PLF-XXX
 # ...
 
 # Validate locally (no LLM API calls)
-task quality:wup
 task quality:regix:local
 task test
 task monitor:probe
