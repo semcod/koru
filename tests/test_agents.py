@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from koru.agents import (
     agent_lane_environment,
+    autopilot_backend_for_agent_id,
     detect_agent_environment,
     detect_agent_options,
     format_agent_lane_exports,
@@ -42,6 +43,7 @@ class TestAgentDetection(unittest.TestCase):
             )
             self.assertTrue(openrouter["available"])
             self.assertFalse(openrouter["launchable"])
+            self.assertEqual(openrouter["autopilot_backend"], "headless")
 
     def test_select_agent_prefers_launchable_when_noninteractive(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -109,6 +111,7 @@ class TestAgentDetection(unittest.TestCase):
         env = agent_lane_environment("cursor")
         self.assertEqual(env["KORU_AUTOPILOT_INSTANCE"], "cursor")
         self.assertEqual(env["KORU_AUTOPILOT_IDE"], "cursor")
+        self.assertEqual(env["KORU_AUTOPILOT_BACKEND"], "plugin_socket")
         self.assertIn("koru-cursor", env["KORU_SUGGESTED_QUEUE_ACTOR"])
 
     def test_normalize_agent_lane_id_strips_garbage(self) -> None:
@@ -175,9 +178,18 @@ class TestAgentLaneEnv(unittest.TestCase):
     def test_qwen_lane_env_defaults(self) -> None:
         env = agent_lane_environment("qwen-code")
         self.assertEqual(env["KORU_AUTOPILOT_IDE"], "auto")
+        self.assertEqual(env["KORU_AUTOPILOT_BACKEND"], "cursor_cli")
         self.assertEqual(env["KORU_SUGGESTED_QUEUE_ACTOR"], "koru-qwen-code")
 
     def test_opencode_lane_env_defaults(self) -> None:
         env = agent_lane_environment("opencode")
         self.assertEqual(env["KORU_AUTOPILOT_IDE"], "auto")
+        self.assertEqual(env["KORU_AUTOPILOT_BACKEND"], "cursor_cli")
         self.assertEqual(env["KORU_SUGGESTED_QUEUE_ACTOR"], "koru-opencode")
+
+
+class TestAutopilotBackendForLane(unittest.TestCase):
+    def test_backend_matrix(self) -> None:
+        self.assertEqual(autopilot_backend_for_agent_id("windsurf"), "plugin_socket")
+        self.assertEqual(autopilot_backend_for_agent_id("openrouter"), "headless")
+        self.assertEqual(autopilot_backend_for_agent_id("codex"), "cursor_cli")

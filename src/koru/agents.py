@@ -15,6 +15,37 @@ from .runtime import runtime_dir
 from .semcod_tools import detect_semcod_tools
 
 
+def normalize_agent_lane_id(raw: str) -> str:
+    """Lowercase slug safe for env / socket instance labels."""
+    s = raw.strip().lower().replace(" ", "-")
+    out = []
+    for ch in s[:80]:
+        if ch.isalnum() or ch in "-_":
+            out.append(ch)
+        elif ch not in " \t":
+            out.append("-")
+    slug = "".join(out).strip("-") or "lane"
+    return slug
+
+
+def autopilot_backend_for_agent_id(agent_id: str) -> str:
+    """Autopilot transport for a lane (``KORU_AUTOPILOT_BACKEND`` / ``AgentOption.autopilot_backend``)."""
+    norm = normalize_agent_lane_id(agent_id)
+    if norm in {"openrouter", "antigravity"}:
+        return "headless"
+    if norm in {
+        "claude-code",
+        "codex",
+        "gemini-cli",
+        "cline",
+        "qwen-code",
+        "opencode",
+        "aider",
+    }:
+        return "cursor_cli"
+    return "plugin_socket"
+
+
 @dataclass(frozen=True)
 class AgentOption:
     id: str
@@ -24,6 +55,7 @@ class AgentOption:
     command: str | None = None
     reason: str = ""
     project_hint: bool = False
+    autopilot_backend: str = "plugin_socket"
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -34,6 +66,7 @@ class AgentOption:
             "command": self.command,
             "reason": self.reason,
             "project_hint": self.project_hint,
+            "autopilot_backend": self.autopilot_backend,
         }
 
 
@@ -68,6 +101,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             available=antigravity_ready,
             launchable=False,
             command=None,
+            autopilot_backend=autopilot_backend_for_agent_id("antigravity"),
             reason=(
                 "Antigravity runtime detected; operating natively within context."
                 if antigravity_ready
@@ -80,6 +114,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             available=bool(claude_cmd),
             launchable=bool(claude_cmd),
             command=claude_cmd,
+            autopilot_backend=autopilot_backend_for_agent_id("claude-code"),
             reason=(
                 "Claude Code CLI detected in PATH."
                 if claude_cmd
@@ -92,6 +127,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             available=bool(codex_cmd),
             launchable=bool(codex_cmd),
             command=codex_cmd,
+            autopilot_backend=autopilot_backend_for_agent_id("codex"),
             reason="Codex CLI detected in PATH." if codex_cmd else "Codex CLI is not in PATH.",
         ),
         AgentOption(
@@ -100,6 +136,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             available=bool(gemini_cmd),
             launchable=bool(gemini_cmd),
             command=gemini_cmd,
+            autopilot_backend=autopilot_backend_for_agent_id("gemini-cli"),
             reason=("Gemini CLI detected in PATH." if gemini_cmd else "Gemini CLI is not in PATH."),
         ),
         AgentOption(
@@ -108,6 +145,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             available=bool(cline_cmd),
             launchable=bool(cline_cmd),
             command=cline_cmd,
+            autopilot_backend=autopilot_backend_for_agent_id("cline"),
             reason="Cline CLI detected in PATH." if cline_cmd else "Cline CLI is not in PATH.",
         ),
         AgentOption(
@@ -116,6 +154,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             available=bool(qwen_cmd),
             launchable=bool(qwen_cmd),
             command=qwen_cmd,
+            autopilot_backend=autopilot_backend_for_agent_id("qwen-code"),
             reason=(
                 "Qwen Code CLI detected in PATH." if qwen_cmd else "Qwen Code CLI is not in PATH."
             ),
@@ -126,6 +165,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             available=bool(opencode_cmd),
             launchable=bool(opencode_cmd),
             command=opencode_cmd,
+            autopilot_backend=autopilot_backend_for_agent_id("opencode"),
             reason=(
                 "OpenCode CLI detected in PATH." if opencode_cmd else "OpenCode CLI is not in PATH."
             ),
@@ -137,6 +177,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             launchable=bool(cursor_cmd),
             command=cursor_cmd,
             project_hint=_marker(project, ".cursor"),
+            autopilot_backend=autopilot_backend_for_agent_id("cursor"),
             reason=(
                 "Cursor CLI detected."
                 if cursor_cmd
@@ -150,6 +191,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             launchable=bool(windsurf_cmd),
             command=windsurf_cmd,
             project_hint=_marker(project, ".windsurf"),
+            autopilot_backend=autopilot_backend_for_agent_id("windsurf"),
             reason=(
                 "Windsurf CLI detected."
                 if windsurf_cmd
@@ -162,6 +204,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             available=bool(aider_cmd),
             launchable=bool(aider_cmd),
             command=aider_cmd,
+            autopilot_backend=autopilot_backend_for_agent_id("aider"),
             reason="aider detected in PATH." if aider_cmd else "aider is not in PATH.",
         ),
         AgentOption(
@@ -170,6 +213,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             available=openrouter_ready,
             launchable=False,
             command=None,
+            autopilot_backend=autopilot_backend_for_agent_id("openrouter"),
             reason=(
                 "OPENROUTER_API_KEY is set; executor.kind=llm can run headless."
                 if openrouter_ready
@@ -277,19 +321,6 @@ _LANE_AUTOPILOT_IDE: dict[str, str] = {
 }
 
 
-def normalize_agent_lane_id(raw: str) -> str:
-    """Lowercase slug safe for env / socket instance labels."""
-    s = raw.strip().lower().replace(" ", "-")
-    out = []
-    for ch in s[:80]:
-        if ch.isalnum() or ch in "-_":
-            out.append(ch)
-        elif ch not in " \t":
-            out.append("-")
-    slug = "".join(out).strip("-") or "lane"
-    return slug
-
-
 def agent_lane_environment(agent_id: str) -> dict[str, str]:
     """Recommended env for koru autopilot + queue when sharing one machine across lanes.
 
@@ -303,6 +334,7 @@ def agent_lane_environment(agent_id: str) -> dict[str, str]:
         "KORU_AUTOPILOT_INSTANCE": norm,
         "KORU_SUGGESTED_QUEUE_ACTOR": actor,
         "KORU_AUTOPILOT_IDE": ide,
+        "KORU_AUTOPILOT_BACKEND": autopilot_backend_for_agent_id(agent_id),
     }
     return env
 

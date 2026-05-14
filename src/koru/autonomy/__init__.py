@@ -6,6 +6,7 @@ that mirror ``scripts/koru-autoloop.sh``.
 
 from __future__ import annotations
 
+from .config import AutonomyConfig
 from .env import (
     AUTOLOOP_ENV_DEFAULTS,
     apply_autoloop_env_to_args,
@@ -15,6 +16,7 @@ from .env import (
 )
 
 __all__ = [
+    "AutonomyConfig",
     "AUTOLOOP_ENV_DEFAULTS",
     "apply_autoloop_env_to_args",
     "autonomous_environ_doctor_probe",

@@ -11,7 +11,9 @@
 #   5) sleep SLEEP_SECONDS
 # Stops when MAX_CYCLES reached (0 = infinite) or Ctrl-C.
 #
-# Env vars (every flag is optional, sane defaults applied):
+# Env vars (every flag is optional, sane defaults applied).
+# Default *names and string defaults* are duplicated in Python as
+# ``koru.autonomy.env.AUTOLOOP_ENV_DEFAULTS`` — update both when adding knobs.
 #
 #   Core:
 #     PROJECT=/path/to/repo          (default: cwd)

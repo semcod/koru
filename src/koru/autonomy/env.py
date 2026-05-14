@@ -93,7 +93,6 @@ def apply_autoloop_env_to_args(
     environ: Mapping[str, str] | None = None,
 ) -> None:
     """Mutate ``args`` with environment defaults (shell-autoloop parity)."""
-    env = os.environ if environ is None else environ
     args.ticket_sources = _env_ticket_sources(args.ticket_sources, environ)
     args.idle_diagnostics = _env_get(
         "IDLE_DIAGNOSTICS_PROFILE",

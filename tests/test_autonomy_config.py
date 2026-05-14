@@ -5,9 +5,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
-from koru.autonomy.config import AutonomyConfig
+from koru.autonomy import AutonomyConfig
 
 
 def test_autonomy_config_defaults():
