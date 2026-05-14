@@ -1,9 +1,9 @@
+# Full matrix + full test suite on main. PRs use koru-ci.yml (fast smoke).
 name: CI
 
 on:
   push:
     branches: ["main"]
-  pull_request:
   workflow_dispatch:
 
 jobs:

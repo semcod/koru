@@ -257,6 +257,16 @@ class TestTopologySubcommand(unittest.TestCase):
         self.assertNotIn("wup", output)
 
 
+class TestInitCiSubcommand(unittest.TestCase):
+    def test_init_ci_exits_zero_with_paths(self) -> None:
+        code, out = _run_main("init-ci")
+        self.assertEqual(code, 0)
+        self.assertIn(".github/workflows/koru-ci.yml", out)
+        self.assertIn("ci-github.md", out)
+        self.assertIn("examples/ci/gitlab-ci.example.yml", out)
+        self.assertIn("ci-gitlab.md", out)
+
+
 class TestSubcommandDispatch(unittest.TestCase):
     """R6: routing through ``_SUBCOMMANDS`` dispatch table.
 
@@ -267,6 +277,7 @@ class TestSubcommandDispatch(unittest.TestCase):
 
     EXPECTED_KEYS = frozenset(
         {
+            "init-ci",
             "task",
             "agent",
             "local-serve",

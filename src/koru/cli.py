@@ -1424,7 +1424,27 @@ def _runtime_context_main(argv: list[str]) -> int:
     return 0
 
 
+def _init_ci_main(_argv: list[str]) -> int:
+    """Print where to copy the reference GitHub Actions workflow (Epic 2 thin CI)."""
+    print(
+        "koru init-ci:\n"
+        "  After copying the reference workflow, it should live at:\n"
+        "    .github/workflows/koru-ci.yml\n"
+        "  Upstream reference (semcod/koru):\n"
+        "    https://github.com/semcod/koru/blob/main/.github/workflows/koru-ci.yml\n"
+        "  How to adapt for your repo:\n"
+        "    https://github.com/semcod/koru/blob/main/docs/ci-github.md\n"
+        "  GitLab — example pipeline in this repo:\n"
+        "    examples/ci/gitlab-ci.example.yml\n"
+        "    https://github.com/semcod/koru/blob/main/examples/ci/gitlab-ci.example.yml\n"
+        "  GitLab — how to adapt:\n"
+        "    https://github.com/semcod/koru/blob/main/docs/ci-gitlab.md"
+    )
+    return 0
+
+
 _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
+    "init-ci": _init_ci_main,
     "task": _task_main,
     "agent": _agent_main,
     "local-serve": _local_serve_main,
