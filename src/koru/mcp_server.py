@@ -33,6 +33,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from .queue.koru_queue_argv import build_koru_queue_argv
+
 try:
     import psutil
 
@@ -427,22 +429,6 @@ def _update_job(job_id: str, project: Path | None = None, **fields: Any) -> None
     _save_jobs(_jobs, project)
 
 
-def _build_queue_command(project: Path, mode: str, max_steps: int | None) -> list[str]:
-    cmd = [
-        sys.executable,
-        "-m",
-        "koru",
-        "--queue",
-        "--project",
-        str(project),
-    ]
-    if mode == "dry":
-        cmd.append("--dry-run")
-    if max_steps:
-        cmd.extend(["--max-iterations", str(max_steps)])
-    return cmd
-
-
 def _collect_process_logs(
     result: subprocess.CompletedProcess[str], *, limit: int = 20
 ) -> list[str]:
@@ -465,7 +451,7 @@ def tool_run_ticket(arguments: dict[str, Any]) -> dict[str, Any]:
     oom_action = arguments.get("oom_action", "kill")
 
     job_id = _create_job(ticket_id, mode, project)
-    cmd_args = _build_queue_command(project, mode, max_steps)
+    cmd_args = build_koru_queue_argv(project, mode=mode, max_steps=max_steps)
     _update_job(job_id, project, current_step="running_queue", progress=0.3)
 
     try:
