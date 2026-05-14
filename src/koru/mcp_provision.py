@@ -237,6 +237,39 @@ def remove_from_config(config_path: Path, *, dry_run: bool = False) -> dict[str,
     return {"action": "removed", "path": str(config_path), "dry_run": dry_run}
 
 
+def ensure_koru_mcp_not_disabled(project: Path) -> list[dict[str, Any]]:
+    """Best-effort: fix workspace MCP JSON so ``koru`` can start after IDE reload.
+
+    - Upgrades a bare ``\"command\": \"koru\"`` to an absolute path (same logic
+      as ``init-ide``) so GUI IDEs with minimal PATH can spawn the server.
+    - Removes ``\"disabled\": true`` on the ``koru`` server entry when present;
+      some products persist the OFF toggle in this file.
+
+    Does **not** flip purely UI-internal state stored only outside the repo.
+    """
+    out: list[dict[str, Any]] = []
+    for config_path in (
+        _cursor_project_config(project),
+        _vscode_project_config(project),
+        _windsurf_project_config(project),
+    ):
+        if not config_path.is_file():
+            continue
+        config = _read_json(config_path)
+        servers = config.get("mcpServers")
+        if not isinstance(servers, dict) or "koru" not in servers:
+            continue
+        mutated = _maybe_upgrade_koru_command(servers)
+        koru = servers.get("koru")
+        if isinstance(koru, dict) and koru.get("disabled") is True:
+            koru.pop("disabled", None)
+            mutated = True
+        if mutated:
+            _write_json(config_path, config, dry_run=False)
+            out.append({"action": "mcp_refreshed", "path": str(config_path)})
+    return out
+
+
 _PROVISIONERS: dict[str, Any] = {
     "windsurf": provision_windsurf,
     "cursor": provision_cursor,

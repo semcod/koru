@@ -93,3 +93,38 @@ def test_init_ide_main_json_output_for_cursor_dry_run(capsys, tmp_path: Path) ->
     assert isinstance(payload, list)
     assert payload[0]["ide"] == "cursor"
     assert payload[0]["action"] in {"added", "already_configured", "updated"}
+
+
+def test_ensure_koru_mcp_not_disabled_clears_disabled_and_keeps_command(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    cfg = tmp_path / ".cursor" / "mcp.json"
+    cfg.parent.mkdir(parents=True, exist_ok=True)
+    fake_koru = tmp_path / "bin-koru"
+    fake_koru.write_text("#!/bin/sh\necho\n", encoding="utf-8")
+    fake_koru.chmod(0o755)
+    monkeypatch.setattr(mcp_provision.shutil, "which", lambda _c: str(fake_koru) if _c == "koru" else None)
+
+    cfg.write_text(
+        json.dumps(
+            {
+                "mcpServers": {
+                    "koru": {
+                        "disabled": True,
+                        "command": "koru",
+                        "args": ["mcp-serve"],
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    rows = mcp_provision.ensure_koru_mcp_not_disabled(tmp_path)
+    assert len(rows) == 1
+    assert rows[0]["action"] == "mcp_refreshed"
+
+    payload = json.loads(cfg.read_text(encoding="utf-8"))
+    koru = payload["mcpServers"]["koru"]
+    assert "disabled" not in koru
+    assert koru["command"] == str(fake_koru)

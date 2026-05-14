@@ -1110,6 +1110,20 @@ def _action_up(args: argparse.Namespace) -> int:
         stdio_format=args.emit_events,
     )
 
+    try:
+        from .mcp_provision import ensure_koru_mcp_not_disabled
+
+        for row in ensure_koru_mcp_not_disabled(project):
+            _stdio_info(
+                f"koru autonomous: {row['action']} → {row['path']}",
+                fmt=args.emit_events,
+            )
+    except (OSError, TypeError, ValueError) as exc:
+        _stdio_info(
+            f"koru autonomous: mcp workspace refresh skipped ({exc})",
+            fmt=args.emit_events,
+        )
+
     if args.enable_autopilot and socket_path is not None:
         plugin_result = install_plugin_for_ide(ide=autopilot_ide, socket_path=socket_path)
         _stdio_info(format_plugin_install_result(plugin_result), fmt=args.emit_events)
