@@ -14,6 +14,10 @@
 > [`maskservice/c2004`](https://github.com/maskservice/c2004). Sections
 > mentioning `c2004` apply to any koru-aligned repo with equivalent
 > infrastructure (`Taskfile.yml`, `pyqual.yaml`, `planfile`, `redup`, `regix`).
+>
+> **IDE vs headless routing:** see [ide-router.md](ide-router.md) and run
+> `koru ide-router --format json` to inspect how this shell merges
+> `--autopilot-ide` with `KORU_AUTOPILOT_IDE` / headless probes.
 
 ---
 

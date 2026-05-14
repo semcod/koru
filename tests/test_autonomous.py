@@ -339,6 +339,19 @@ def test_resolve_autopilot_ide_auto_env_does_not_override_cli(monkeypatch) -> No
     assert autonomous_mod._resolve_autopilot_ide("cursor") == "cursor"
 
 
+def test_resolve_autopilot_ide_headless_forces_auto(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_HEADLESS", "1")
+    monkeypatch.setenv("KORU_AUTOPILOT_IDE", "cursor")
+    assert autonomous_mod._resolve_autopilot_ide("vscode") == "auto"
+
+
+def test_resolve_autopilot_ide_headless_allow_autopilot_honors_env(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_HEADLESS", "1")
+    monkeypatch.setenv("KORU_HEADLESS_ALLOW_AUTOPILOT", "1")
+    monkeypatch.setenv("KORU_AUTOPILOT_IDE", "cursor")
+    assert autonomous_mod._resolve_autopilot_ide("vscode") == "cursor"
+
+
 def test_apply_agent_lane_environ_auto_cursor(tmp_path, monkeypatch) -> None:
     monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
     monkeypatch.delenv("CI", raising=False)

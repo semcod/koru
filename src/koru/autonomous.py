@@ -29,7 +29,6 @@ from pathlib import Path
 from typing import Any
 
 from .agents import agent_lane_environment
-from .autonomy.prompts import build_prompt
 from .autonomous_env import (
     apply_autonomous_env_overrides as _env_apply_autoloop_defaults,
 )
@@ -47,10 +46,12 @@ from .autonomous_wup import (
 from .autonomous_wup import (
     _read_wup_health as _read_wup_health_impl,
 )
+from .autonomy.prompts import build_prompt
 from .autopilot import default_socket_path
 from .autopilot.client import AutopilotClient
 from .autopilot.daemon import AutopilotDaemon
 from .autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide
+from .ide_router import resolve_ide_route
 from .init import init_project, resolve_project_agent_lane
 from .queue import (
     QueueLoopResult,
@@ -76,7 +77,6 @@ from .stdio_events import default_stdio_format_from_env, write_stdio_event
 from .tasks import create_nl_task
 from .topology import is_component_enabled, is_pipeline_enabled
 
-_VALID_AUTOPILOT_IDE = frozenset({"auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"})
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
 
@@ -118,12 +118,8 @@ class ExistingManagedProcess:
 
 
 def _resolve_autopilot_ide(cli_value: str) -> str:
-    """``KORU_AUTOPILOT_IDE`` overrides CLI when set to a specific IDE (not 'auto')."""
-    raw = os.environ.get("KORU_AUTOPILOT_IDE", "").strip().lower()
-    # env 'auto' should not override explicit CLI value
-    if raw in _VALID_AUTOPILOT_IDE and raw != "auto":
-        return raw
-    return cli_value
+    """Resolve autopilot ``--ide`` via :mod:`koru.ide_router` (headless + env merge)."""
+    return resolve_ide_route(cli_autopilot_ide=cli_value).autopilot_ide
 
 
 def _apply_agent_lane_environ(project: Path, agent_lane: str) -> str | None:

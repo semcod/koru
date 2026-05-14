@@ -1522,6 +1522,43 @@ def _init_ide_main(argv: list[str]) -> int:
     return init_ide_main(argv)
 
 
+def ide_router_main(argv: list[str]) -> int:
+    """CLI: ``koru ide-router`` — print resolved IDE / headless routing."""
+    import argparse
+    import json
+
+    from .ide_router import resolve_ide_route
+
+    p = argparse.ArgumentParser(prog="koru ide-router")
+    p.add_argument(
+        "--cli-ide",
+        default="auto",
+        help="Preview merge as if autonomous passed --autopilot-ide (default: auto).",
+    )
+    p.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="text lines (default) or json for scripts",
+    )
+    args = p.parse_args(argv)
+    route = resolve_ide_route(cli_autopilot_ide=args.cli_ide)
+    payload = {
+        "autopilot_ide": route.autopilot_ide,
+        "headless": route.headless,
+        "primary_surface": route.primary_surface,
+        "recommend_mcp": route.recommend_mcp,
+        "recommend_autopilot_drive": route.recommend_autopilot_drive,
+        "notes": route.notes,
+    }
+    if args.format == "json":
+        print(json.dumps(payload, sort_keys=True))
+    else:
+        for key, val in payload.items():
+            print(f"{key}: {val}")
+    return 0
+
+
 _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "init-ci": _init_ci_main,
     "init-ide": _init_ide_main,
@@ -1536,6 +1573,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "gc": _gc_main,
     "tools": _tools_main,
     "mcp-serve": _mcp_serve_main,
+    "ide-router": ide_router_main,
     "autopilot": autopilot_main,
     "autonomous": autonomous_main,
     "topology": _topology_main,
