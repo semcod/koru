@@ -126,8 +126,13 @@ class AutopilotBridge {
         // Wrap a Thenable in a real Promise so we can ``.catch`` it.
         // VS Code's ``Thenable<T>`` lacks ``catch``; ``Promise.resolve``
         // upgrades it without losing the resolved value.
+        // Some commands resolve ``false`` when they did not run (no-op) — treat
+        // that as failure so Windsurf/Cascade fallbacks still run (R15).
         try {
-            await Promise.resolve(vscode.commands.executeCommand(command));
+            const result = await Promise.resolve(vscode.commands.executeCommand(command));
+            if (result === false) {
+                return false;
+            }
             return true;
         }
         catch (err) {
@@ -136,10 +141,10 @@ class AutopilotBridge {
         }
     }
     async submitChat() {
-        // Try every known chat-submit command across VS Code / Windsurf /
-        // Cursor / Code OSS. Order: most common → niche fallbacks.
+        // Windsurf Cascade often ignores generic workbench chat.submit — try
+        // Cascade-specific command IDs first.
         const ide = this.detectIde();
-        const candidates = [
+        const generic = [
             "workbench.action.chat.submit",
             "workbench.action.chat.acceptInput",
             "workbench.action.chat.send",
@@ -147,11 +152,16 @@ class AutopilotBridge {
             "workbench.action.interactive.accept",
             "composer.submit",
             "aichat.submit",
-            ...(ide === "windsurf" ? [
-                "windsurf.action.submitChat",
-                "windsurf.action.cascade.submit",
-            ] : []),
         ];
+        const windsurfFirst = [
+            "windsurf.action.cascade.submit",
+            "windsurf.action.submitCascade",
+            "windsurf.action.submitChat",
+            "windsurf.action.chat.submit",
+            "cascade.submit",
+            ...generic,
+        ];
+        const candidates = ide === "windsurf" ? windsurfFirst : generic;
         for (const cmd of candidates) {
             if (await this.runCommand(cmd))
                 return true;
@@ -162,16 +172,21 @@ class AutopilotBridge {
         const cfg = vscode.workspace.getConfiguration("koruAutopilot");
         const primary = (cfg.get("chatOpenCommands") || []).filter(Boolean);
         const ide = this.detectIde();
-        const defaults = [
-            "workbench.action.chat.open",
-            "composer.showComposer",
-            "aichat.newchataction",
-            ...(ide === "windsurf" ? [
-                "windsurf.action.openChat",
+        const defaults = ide === "windsurf"
+            ? [
                 "windsurf.action.openCascade",
+                "windsurf.action.openChat",
                 "cascade.focus",
-            ] : []),
-        ];
+                "windsurf.action.showCascade",
+                "composer.showComposer",
+                "workbench.action.chat.open",
+                "aichat.newchataction",
+            ]
+            : [
+                "workbench.action.chat.open",
+                "composer.showComposer",
+                "aichat.newchataction",
+            ];
         const commands = primary.length > 0 ? primary : defaults;
         for (const cmd of commands) {
             if (await this.runCommand(cmd))

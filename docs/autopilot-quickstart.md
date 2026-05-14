@@ -5,8 +5,7 @@
 > from anywhere — another tmux pane, another TTY, even SSH.
 >
 > Architecture: [`autopilot-design.md`](./autopilot-design.md) ·
-> Roadmap: [`autopilot-roadmap.md`](./autopilot-roadmap.md) ·
-> Cursor autonomy gap: [`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md)
+> Roadmap: [`autopilot-roadmap.md`](./autopilot-roadmap.md)
 
 ---
 
@@ -161,10 +160,8 @@ systemctl --user edit koru-autopilot.service
 
 ### 3. (optional) Install the VS Code / Windsurf / Cursor plugin
 
-The plugin makes injection 100 % reliable (no focus-stealing race). A
-real IDE lifecycle hook for `session.ended` is still tracked in
-[`autopilot-roadmap.md`](./autopilot-roadmap.md); the daemon already knows
-how to react when a client emits that event.
+The plugin makes injection 100 % reliable (no focus-stealing race) and
+emits `session.ended` events that drive the auto-handoff.
 
 #### Fastest path — install a pre-built `.vsix`
 
@@ -306,6 +303,7 @@ koru autopilot daemon --no-handoff   # broker without auto-takeover
 koru autopilot daemon --idempotent   # exit 0 if already running
 
 koru autopilot drive 'text'          # send through daemon (preferred)
+koru autopilot drive --prompt 'TAK'  # same, explicit string (shell-friendly)
 koru autopilot drive --direct 'x'    # skip daemon, inject locally
 koru autopilot drive --dry-run 'y'   # print what would happen, no keystrokes
 koru autopilot drive --ide jetbrains 'z'   # force target IDE

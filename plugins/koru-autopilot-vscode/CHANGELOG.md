@@ -4,6 +4,17 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.5] — 2026-05-14
+
+### Fixed
+- **Windsurf / Cascade**: open Cascade **before** generic `workbench.action.chat.open`
+  so `chat.send` targets the built-in agent, not a no-op web panel.
+- **Submit**: try Cascade-specific submit command IDs **before** generic
+  `workbench.action.chat.*` (those often resolve without throwing but do not
+  submit in Windsurf).
+- **`executeCommand` false**: treat resolved `false` as failure and try the
+  next candidate command.
+
 ## [0.1.1] — 2026-05-13
 
 ### Added

@@ -152,6 +152,8 @@ koru autopilot daemon --idempotent --no-handoff
 
 # type text into the focused IDE's chat
 koru autopilot drive 'continue with the next ticket'
+koru autopilot drive --prompt 'TAK'
+koru autopilot drive -p "multi word answer"
 koru autopilot drive --no-submit 'partial line, do not press Enter'
 koru autopilot drive --ide vscode 'force VS Code'
 

@@ -9,7 +9,8 @@ the same extension API) and the koru autopilot daemon.
    (default: `$XDG_RUNTIME_DIR/koru-autopilot.sock`).
 2. Sends a `hello` so the daemon knows which IDE is connected.
 3. Listens for `chat.send` messages and pastes the supplied text into
-   the active chat panel (Copilot Chat / Cascade / Cursor Chat).
+   the IDE chat agent (Windsurf **Cascade** first when detected, else
+   Copilot Chat / Cursor Chat — not external browser windows).
 4. (Phase 2) Forwards `session.started` / `session.ended` events.
 
 ## Build

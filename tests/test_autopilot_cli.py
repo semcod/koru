@@ -25,7 +25,41 @@ def test_drive_without_daemon_errors(capsys: pytest.CaptureFixture[str], tmp_pat
     assert "daemon not running" in err
 
 
-def test_drive_dry_run_direct(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch) -> None:
+def test_drive_missing_text_errors(capsys: pytest.CaptureFixture[str]) -> None:
+    rc = autopilot_main(["drive"])
+    assert rc == 2
+    assert "missing text" in capsys.readouterr().err
+
+
+def test_drive_prompt_flag(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    captured: dict[str, object] = {}
+
+    class _C:
+        def is_running(self) -> bool:
+            return True
+
+        def drive(self, text: str, *, submit: bool = True, ide: str = "auto"):
+            captured["text"] = text
+            captured["submit"] = submit
+            captured["ide"] = ide
+            return {"ok": True, "backend": "plugin"}
+
+    monkeypatch.setattr(cli_command, "_client", lambda _a: _C())
+    rc = autopilot_main(["drive", "--prompt", "TAK", "--ide", "windsurf"])
+    assert rc == 0
+    assert captured["text"] == "TAK"
+    assert captured["ide"] == "windsurf"
+    out = json.loads(capsys.readouterr().out)
+    assert out["ok"] is True
+
+
+def test_drive_dry_run_direct(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     # Force the injector to find xdotool so dry-run can pick a backend.
     class _FakeInjector:
         def __init__(self) -> None:
@@ -47,7 +81,10 @@ def test_drive_dry_run_direct(capsys: pytest.CaptureFixture[str], monkeypatch: p
     assert payload["backend"] == "xdotool"
 
 
-def test_ide_list_empty(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch) -> None:
+def test_ide_list_empty(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(cli_command, "detect_running_ides", lambda: [])
     rc = autopilot_main(["ide-list"])
     assert rc == 0
@@ -75,7 +112,10 @@ def test_ide_list_marks_focused_ide(
     assert "[focused]" in out
 
 
-def test_doctor_json_output(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch) -> None:
+def test_doctor_json_output(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     class _FakeInjector:
         session = "x11"
 
@@ -98,7 +138,10 @@ def test_doctor_json_output(capsys: pytest.CaptureFixture[str], monkeypatch: pyt
     assert payload["focused_ide"] == "windsurf"
 
 
-def test_doctor_fix_text_output(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch) -> None:
+def test_doctor_fix_text_output(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     class _FakeInjector:
         session = "wayland"
 
@@ -131,7 +174,10 @@ def test_doctor_fix_text_output(capsys: pytest.CaptureFixture[str], monkeypatch:
     assert "human actions still required:" in out
 
 
-def test_doctor_fix_json_output(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch) -> None:
+def test_doctor_fix_json_output(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     class _FakeInjector:
         session = "wayland"
 
@@ -173,7 +219,11 @@ def test_install_plugin_dry_run_auto_detect_from_term_program(
     vsix.write_text("fake", encoding="utf-8")
 
     monkeypatch.setenv("TERM_PROGRAM", "vscode")
-    monkeypatch.setattr(cli_command.shutil, "which", lambda name: "/usr/bin/code" if name == "code" else None)
+    monkeypatch.setattr(
+        cli_command.shutil,
+        "which",
+        lambda name: "/usr/bin/code" if name == "code" else None,
+    )
     monkeypatch.setattr(cli_command, "_resolve_plugin_vsix_path", lambda _p: vsix)
 
     rc = autopilot_main(["install-plugin", "--dry-run", "--format", "json"])

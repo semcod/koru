@@ -80,7 +80,17 @@ def _build_parser() -> argparse.ArgumentParser:
 
     drive = sub.add_parser("drive", help="Type text into the active IDE chat.")
     drive.add_argument(
-        "text", nargs="+", help="Text to type. Multiple args are joined with spaces."
+        "text",
+        nargs="*",
+        default=[],
+        help="Text to type (joined with spaces). Omit when using --prompt.",
+    )
+    drive.add_argument(
+        "--prompt",
+        "-p",
+        default=None,
+        metavar="TEXT",
+        help="Full prompt string (alternative to positional words; avoids quoting issues).",
     )
     drive.add_argument(
         "--ide",
@@ -314,7 +324,17 @@ def _action_daemon(args: argparse.Namespace) -> int:
 
 
 def _action_drive(args: argparse.Namespace) -> int:
-    text = " ".join(args.text)
+    if args.prompt is not None:
+        text = str(args.prompt).strip()
+    else:
+        text = " ".join(args.text).strip()
+    if not text:
+        print(
+            "koru autopilot drive: missing text — pass words after `drive`, "
+            "or use --prompt / -p '...'",
+            file=sys.stderr,
+        )
+        return 2
     if args.direct:
         injector = Injector()
         try:
