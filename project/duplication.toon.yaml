@@ -1,70 +1,97 @@
-# redup/duplication | 5 groups | 61f 16795L | 2026-05-14
+# redup/duplication | 8 groups | 66f 18477L | 2026-05-14
 
 SUMMARY:
-  files_scanned: 61
-  total_lines:   16795
-  dup_groups:    5
-  dup_fragments: 10
-  saved_lines:   33
-  scan_ms:       2530
+  files_scanned: 66
+  total_lines:   18477
+  dup_groups:    8
+  dup_fragments: 17
+  saved_lines:   55
+  scan_ms:       2381
 
-HOTSPOTS[6] (files with most duplication):
+HOTSPOTS[7] (files with most duplication):
+  src/koru/mcp_provision.py  dup=33L  groups=2  frags=5  (0.2%)
   src/koru/serve.py  dup=20L  groups=2  frags=3  (0.1%)
   src/koru/topology.py  dup=12L  groups=1  frags=2  (0.1%)
   src/koru/project_pipeline.py  dup=10L  groups=1  frags=1  (0.1%)
-  src/koru/autonomous.py  dup=9L  groups=1  frags=1  (0.1%)
-  src/koru/autonomous_wup.py  dup=9L  groups=1  frags=1  (0.1%)
-  src/koru/autopilot/cli_command.py  dup=8L  groups=1  frags=2  (0.0%)
+  src/koru/autonomous.py  dup=9L  groups=1  frags=1  (0.0%)
+  src/koru/autonomous_wup.py  dup=9L  groups=1  frags=1  (0.0%)
+  src/koru/cli.py  dup=8L  groups=1  frags=2  (0.0%)
 
-DUPLICATES[5] (ranked by impact):
+DUPLICATES[8] (ranked by impact):
+  [57539813b10601d9]   STRU  provision_cursor  L=12 N=2 saved=12 sim=1.00
+      src/koru/mcp_provision.py:158-169  (provision_cursor)
+      src/koru/mcp_provision.py:172-183  (provision_vscode)
   [db3e3e3ad621b70e]   STRU  load_koru_project_pipeline  L=10 N=2 saved=10 sim=1.00
-      src/koru/project_pipeline.py:87-96  (load_koru_project_pipeline)
+      src/koru/project_pipeline.py:111-120  (load_koru_project_pipeline)
       src/koru/serve.py:59-68  (read_serve_endpoint)
   [e29ad3fb5eb111af]   STRU  _is_topology_enabled  L=9 N=2 saved=9 sim=1.00
       src/koru/autonomous.py:522-530  (_is_topology_enabled)
       src/koru/autonomous_wup.py:22-30  (_wup_topology_gate)
+  [d3fe48eeadbdaf2c]   STRU  _cursor_project_config  L=3 N=3 saved=6 sim=1.00
+      src/koru/mcp_provision.py:37-39  (_cursor_project_config)
+      src/koru/mcp_provision.py:42-44  (_vscode_project_config)
+      src/koru/mcp_provision.py:47-49  (_windsurf_project_config)
   [c7374d52504d8e71]   STRU  set_component_enabled  L=6 N=2 saved=6 sim=1.00
       src/koru/topology.py:354-359  (set_component_enabled)
       src/koru/topology.py:362-367  (set_pipeline_enabled)
   [a0375ffb77746a3f]   EXAC  _open_later  L=5 N=2 saved=5 sim=1.00
       src/koru/serve.py:947-951  (_open_later)
       src/koru/serve.py:998-1002  (_open_later)
+  [077cfa61a2943c36]   STRU  _mcp_serve_main  L=4 N=2 saved=4 sim=1.00
+      src/koru/cli.py:1446-1449  (_mcp_serve_main)
+      src/koru/cli.py:1452-1455  (_init_ide_main)
   [be027ff698a2786c]   STRU  _action_status  L=3 N=2 saved=3 sim=1.00
-      src/koru/autopilot/cli_command.py:350-352  (_action_status)
-      src/koru/autopilot/cli_command.py:355-359  (_action_shutdown)
+      src/koru/autopilot/cli_command.py:353-355  (_action_status)
+      src/koru/autopilot/cli_command.py:358-362  (_action_shutdown)
 
-REFACTOR[5] (ranked by priority):
-  [1] ○ extract_function   → src/koru/utils/load_koru_project_pipeline.py
+REFACTOR[8] (ranked by priority):
+  [1] ○ extract_function   → src/koru/utils/provision_cursor.py
+      WHY: 2 occurrences of 12-line block across 1 files — saves 12 lines
+      FILES: src/koru/mcp_provision.py
+  [2] ○ extract_function   → src/koru/utils/load_koru_project_pipeline.py
       WHY: 2 occurrences of 10-line block across 2 files — saves 10 lines
       FILES: src/koru/project_pipeline.py, src/koru/serve.py
-  [2] ○ extract_function   → src/koru/utils/_is_topology_enabled.py
+  [3] ○ extract_function   → src/koru/utils/_is_topology_enabled.py
       WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_wup.py
-  [3] ○ extract_function   → src/koru/utils/set_component_enabled.py
+  [4] ○ extract_function   → src/koru/utils/_cursor_project_config.py
+      WHY: 3 occurrences of 3-line block across 1 files — saves 6 lines
+      FILES: src/koru/mcp_provision.py
+  [5] ○ extract_function   → src/koru/utils/set_component_enabled.py
       WHY: 2 occurrences of 6-line block across 1 files — saves 6 lines
       FILES: src/koru/topology.py
-  [4] ○ extract_function   → src/koru/utils/_open_later.py
+  [6] ○ extract_function   → src/koru/utils/_open_later.py
       WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
       FILES: src/koru/serve.py
-  [5] ○ extract_function   → src/koru/autopilot/utils/_action_status.py
+  [7] ○ extract_function   → src/koru/utils/_mcp_serve_main.py
+      WHY: 2 occurrences of 4-line block across 1 files — saves 4 lines
+      FILES: src/koru/cli.py
+  [8] ○ extract_function   → src/koru/autopilot/utils/_action_status.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: src/koru/autopilot/cli_command.py
 
-QUICK_WINS[3] (low risk, high savings — do first):
-  [1] extract_function   saved=10L  → src/koru/utils/load_koru_project_pipeline.py
+QUICK_WINS[5] (low risk, high savings — do first):
+  [1] extract_function   saved=12L  → src/koru/utils/provision_cursor.py
+      FILES: mcp_provision.py
+  [2] extract_function   saved=10L  → src/koru/utils/load_koru_project_pipeline.py
       FILES: project_pipeline.py, serve.py
-  [2] extract_function   saved=9L  → src/koru/utils/_is_topology_enabled.py
+  [3] extract_function   saved=9L  → src/koru/utils/_is_topology_enabled.py
       FILES: autonomous.py, autonomous_wup.py
-  [3] extract_function   saved=6L  → src/koru/utils/set_component_enabled.py
+  [4] extract_function   saved=6L  → src/koru/utils/_cursor_project_config.py
+      FILES: mcp_provision.py
+  [5] extract_function   saved=6L  → src/koru/utils/set_component_enabled.py
       FILES: topology.py
 
-EFFORT_ESTIMATE (total ≈ 1.1h):
+EFFORT_ESTIMATE (total ≈ 1.8h):
+  easy   provision_cursor                    saved=12L  ~24min
   easy   load_koru_project_pipeline          saved=10L  ~20min
   easy   _is_topology_enabled                saved=9L  ~18min
+  easy   _cursor_project_config              saved=6L  ~12min
   easy   set_component_enabled               saved=6L  ~12min
   easy   _open_later                         saved=5L  ~10min
+  easy   _mcp_serve_main                     saved=4L  ~8min
   easy   _action_status                      saved=3L  ~6min
 
 METRICS-TARGET:
-  dup_groups:  5 → 0
-  saved_lines: 33 lines recoverable
+  dup_groups:  8 → 0
+  saved_lines: 55 lines recoverable

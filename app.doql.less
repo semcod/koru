@@ -2,12 +2,12 @@
 
 app {
   name: koru;
-  version: 0.1.81;
+  version: 0.1.88;
 }
 
 dependencies {
   runtime: pyyaml>=6.0;
-  dev: "pytest>=8.0, ruff>=0.11, goal>=2.1.0, costs>=0.1.20, pfix>=0.1.60";
+  dev: "pytest>=8.0, pytest-xdist>=3.0, ruff>=0.11, goal>=2.1.0, costs>=0.1.20, pfix>=0.1.60";
 }
 
 interface[type="api"] {
@@ -56,6 +56,16 @@ workflow[name="test"] {
 workflow[name="test:fast"] {
   trigger: manual;
   step-1: run cmd=python3 -m pytest tests/ -q;
+}
+
+workflow[name="test:quick"] {
+  trigger: manual;
+  step-1: run cmd=python3 -m pytest tests/ -q --maxfail=1 --no-header;
+}
+
+workflow[name="test:parallel"] {
+  trigger: manual;
+  step-1: run cmd=python3 -m pytest tests/ -q -n auto --maxfail=1;
 }
 
 workflow[name="lint"] {
@@ -136,14 +146,34 @@ workflow[name="quality:regix"] {
   trigger: manual;
   step-1: run cmd=set -euo pipefail
 if python3 -m koru.cli topology --project . --is-enabled gate:regix >/dev/null 2>&1; then
-  regix gate
+  regix gates
 else
   rc=$?
   if [ "$rc" -eq 1 ]; then
     echo "quality:regix skipped (gate:regix disabled in topology)"
     exit 0
   fi
-  regix gate
+  regix gates
+fi;
+}
+
+workflow[name="quality:regix:local"] {
+  trigger: manual;
+  step-1: run cmd=regix compare HEAD --local;
+}
+
+workflow[name="quality:wup"] {
+  trigger: manual;
+  step-1: run cmd=set -euo pipefail
+if python3 -m koru.cli topology --project . --is-enabled gate:wup >/dev/null 2>&1; then
+  wup status
+else
+  rc=$?
+  if [ "$rc" -eq 1 ]; then
+    echo "quality:wup skipped (gate:wup disabled in topology)"
+    exit 0
+  fi
+  wup status
 fi;
 }
 

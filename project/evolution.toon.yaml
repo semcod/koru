@@ -1,4 +1,4 @@
-# code2llm/evolution | 544 func | 52f | 2026-05-14
+# code2llm/evolution | 616 func | 61f | 2026-05-14
 # generated in 0.00s
 
 NEXT[10] (ranked by impact):
@@ -6,21 +6,21 @@ NEXT[10] (ranked by impact):
       WHY: 1267L, 2 classes, max CC=53
       EFFORT: ~4h  IMPACT: 67151
 
-  [2] !! SPLIT           src/koru/context.py
-      WHY: 1152L, 0 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 17280
+  [2] !! SPLIT           src/koru/cli.py
+      WHY: 1933L, 0 classes, max CC=26
+      EFFORT: ~4h  IMPACT: 50258
 
   [3] !! SPLIT-FUNC      _run_cycle  CC=53  fan=32
       WHY: CC=53 exceeds 15
       EFFORT: ~1h  IMPACT: 1696
 
-  [4] !! SPLIT-FUNC      _action_up  CC=33  fan=29
+  [4] !! SPLIT-FUNC      run_next_planfile_task  CC=37  fan=26
+      WHY: CC=37 exceeds 15
+      EFFORT: ~1h  IMPACT: 962
+
+  [5] !! SPLIT-FUNC      _action_up  CC=33  fan=29
       WHY: CC=33 exceeds 15
       EFFORT: ~1h  IMPACT: 957
-
-  [5] !! SPLIT-FUNC      run_next_planfile_task  CC=32  fan=21
-      WHY: CC=32 exceeds 15
-      EFFORT: ~1h  IMPACT: 672
 
   [6] !  SPLIT-FUNC      run_llm_request  CC=23  fan=19
       WHY: CC=23 exceeds 15
@@ -44,15 +44,15 @@ NEXT[10] (ranked by impact):
 
 
 RISKS[3]:
+  ⚠ Splitting src/koru/cli.py may break 43 import paths
   ⚠ Splitting planfile.yaml may break 0 import paths
   ⚠ Splitting src/koru/autonomous.py may break 22 import paths
-  ⚠ Splitting src/koru/context.py may break 42 import paths
 
 METRICS-TARGET:
-  CC̄:          4.9 → ≤3.4
+  CC̄:          4.7 → ≤3.3
   max-CC:      53 → ≤20
-  god-modules: 10 → 0
-  high-CC(≥15): 25 → ≤12
+  god-modules: 13 → 0
+  high-CC(≥15): 26 → ≤13
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.9 → now CC̄=4.9
+  prev CC̄=4.9 → now CC̄=4.7
