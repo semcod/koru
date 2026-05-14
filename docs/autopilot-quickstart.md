@@ -161,8 +161,10 @@ systemctl --user edit koru-autopilot.service
 
 ### 3. (optional) Install the VS Code / Windsurf / Cursor plugin
 
-The plugin makes injection 100 % reliable (no focus-stealing race) and
-emits `session.ended` events that drive the auto-handoff.
+The plugin makes injection 100 % reliable (no focus-stealing race). A
+real IDE lifecycle hook for `session.ended` is still tracked in
+[`autopilot-roadmap.md`](./autopilot-roadmap.md); the daemon already knows
+how to react when a client emits that event.
 
 #### Fastest path — install a pre-built `.vsix`
 

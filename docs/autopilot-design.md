@@ -8,16 +8,16 @@
 
 ## Goals
 
-1. **One command, zero clicks.** `koru drive '<text>'` types the given
+1. **One command, zero clicks.** `koru autopilot drive '<text>'` types the given
    text directly into the active chat panel of whatever IDE is in
    focus and submits it.
 2. **Session handoff.** When an in-IDE LLM session ends (Cascade reports
-   "done", Copilot Chat closes, etc.) the IDE-side plugin notifies the
+   "done", Copilot Chat closes, etc.) an IDE-side client can notify the
    koru daemon over a unix socket; koru can then continue the loop —
    read the next planfile ticket, build a brief, type it into the chat,
    submit, and watch for the next event.
 3. **Headless reach.** From any terminal — even a different tmux pane,
-   different TTY, or SSH session — `koru drive '...'` reaches the IDE
+   different TTY, or SSH session — `koru autopilot drive '...'` reaches the IDE
    running in the user's desktop session.
 4. **Same UX as `goal`/`glon`.** Calling `koru` with no extra
    ceremony still works. New verbs are subcommands; defaults are safe.
@@ -26,31 +26,24 @@
 
 - Headless IDE driving (no display). Autopilot assumes an active
   graphical session.
-- Capturing the LLM's reply text out of the IDE. The plugin only
-  reports lifecycle events ("session started/ended"); reading the
-  reply contents is a Phase 3 stretch.
+- Capturing the LLM's reply text out of the IDE. Reading reply contents
+  is tracked separately as the closed-loop autonomy work in the roadmap.
 - Cross-machine driving. The unix socket is local-only.
 
 ## Components
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                            user desktop                             │
-│  ┌──────────────┐                                                   │
-│  │ IDE (VS Code │  ── koru-autopilot plugin ─►  unix socket         │
-│  │  / Windsurf  │  ◄── injected text via plugin's chat API ───────  │
-│  │  / JetBrains)│                                              │    │
-│  └──────────────┘                                              ▼    │
-│                                                       ┌──────────┐  │
-│   any terminal  ── `koru drive '...' ` ─► CLI client ►│ daemon   │  │
-│                                                       │  (koru   │  │
-│                                                       │ autopilot│  │
-│                                                       │  daemon) │  │
-│                                                       └────┬─────┘  │
-│                                                            │        │
-│                                fallback: keyboard sim      ▼        │
-│                       (xdotool / wtype / ydotool / pynput)          │
-└─────────────────────────────────────────────────────────────────────┘
+any terminal
+  └─ `koru autopilot drive '...'`
+      └─ CLI client
+          └─ unix socket
+              └─ `koru autopilot daemon`
+                  ├─ IDE plugin path: paste/submit through the extension
+                  └─ fallback path: keyboard sim (`xdotool` / `wtype` / `ydotool`)
+
+IDE plugin
+  └─ unix socket
+      └─ daemon-side `session.ended` routing
 ```
 
 ### Modules (`src/koru/autopilot/`)
@@ -131,29 +124,31 @@ Detection order in `injector.py`:
 
 ## Triggers — when does koru "take over"?
 
-The IDE-side plugin emits **session lifecycle events** to the daemon.
-Three event sources, all routed through the same `session.ended`
-message type, are supported in MVP:
+The daemon accepts **session lifecycle events** from IDE-side clients.
+The message type is `session.ended`; the real IDE chat lifecycle hook is
+tracked as P2.3 in [`autopilot-roadmap.md`](./autopilot-roadmap.md).
+The MVP path supports the same daemon-side routing once an event source
+emits that frame:
 
 | Source              | Description                                       |
 |---------------------|---------------------------------------------------|
-| **plugin event**    | The plugin listens to the IDE chat API (e.g. VS  |
-|                     | Code `chat.onDidEndSession`) and sends `ended`.   |
-| **explicit CLI**    | The user runs `koru drive '...'` directly; no    |
+| **plugin event**    | Planned P2.3: the plugin listens to the IDE chat |
+|                     | API and sends `session.ended`.                   |
+| **explicit CLI**    | The user runs `koru autopilot drive '...'`; no   |
 |                     | event needed.                                     |
-| **file-watch**      | The daemon optionally watches `.planfile/.koru/   |
-|                     | events/*.json`; tools like cascade hooks drop a   |
-|                     | `session.ended.json` and the daemon picks it up.  |
+| **protocol client** | Any trusted same-UID client can send an NDJSON    |
+|                     | `session.ended` frame over the unix socket.       |
 
-Routing handlers live in `daemon.py:_on_session_ended()` and decide
+Routing handlers live in `daemon.py:_handle_session_event()` and decide
 what to type next (typically: `koru` markdown brief for the active
 ticket).
 
 ## CLI surface
 
 ```bash
-# start daemon (foreground; use `--background` to fork)
-koru autopilot daemon [--socket PATH] [--background]
+# start daemon in the foreground
+koru autopilot daemon --project "$(pwd)"
+koru autopilot daemon --idempotent --no-handoff
 
 # type text into the focused IDE's chat
 koru autopilot drive 'continue with the next ticket'
@@ -163,7 +158,7 @@ koru autopilot drive --ide vscode 'force VS Code'
 # diagnostics
 koru autopilot status         # is daemon up? plugin connected? backends?
 koru autopilot doctor         # detailed backend / dependency report
-koru autopilot ide list       # detected running IDEs
+koru autopilot ide-list       # detected running IDEs
 
 # end-to-end shortcut: paste the active koru brief into the IDE
 koru autopilot handoff        # = koru --context --format markdown | koru autopilot drive
