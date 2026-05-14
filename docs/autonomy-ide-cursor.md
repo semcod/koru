@@ -43,7 +43,52 @@
 
 ---
 
-## Lista zadań wdrożeniowych
+## Checklista uruchomienia obecnej autonomii
+
+### Krok 1: Wymagania systemowe
+
+- [ ] **Python 3.12+** z `pip` i `venv`
+- [ ] **System operacyjny Linux** (X11 lub Wayland)
+- [ ] **IDE**: VS Code, Windsurf, Cursor, JetBrains albo Zed
+- [ ] **Backend wstrzykiwania tekstu**: preferowany plugin VS Code/Windsurf/Cursor; fallback X11 `xdotool`, Wayland `wtype` albo `ydotool`
+- [ ] **Clipboard tools**: `wl-clipboard` lub `xclip`, gdy używasz backendu klawiaturowego
+
+### Krok 2: Instalacja koru
+
+- [ ] **Klonowanie repozytorium**: `git clone https://github.com/semcod/koru.git`
+- [ ] **Wirtualne środowisko**: `python3 -m venv .venv && source .venv/bin/activate`
+- [ ] **Instalacja w trybie editable**: `pip install -e .`
+- [ ] **Weryfikacja instalacji**: `koru --help`
+- [ ] **Inicjalizacja projektu**: `koru --init` (tworzy `.planfile/`)
+
+### Krok 3: Konfiguracja autopilota
+
+- [ ] **Diagnostyka hosta**: `koru autopilot doctor` i opcjonalnie `koru autopilot setup-host --install`
+- [ ] **Instalacja pluginu IDE**: `koru autopilot install-plugin` lub ręczne zbudowanie `.vsix` z `plugins/koru-autopilot-vscode/`
+- [ ] **Uruchomienie daemona w terminalu**: `koru autopilot daemon --project "$(pwd)"`
+- [ ] **Weryfikacja połączenia**: `koru autopilot status`
+- [ ] **Test wstrzykiwania**: `koru autopilot drive 'test prompt'`
+- [ ] **Opcjonalnie: systemd user unit**: `koru autopilot install-unit --force`, potem `systemctl --user daemon-reload && systemctl --user enable --now koru-autopilot`
+
+### Krok 4: Konfiguracja autonomous mode
+
+- [ ] **Podstawowa pętla**: `koru autonomous up --project . --ticket-sources all --max-cycles 0`
+- [ ] **Konfiguracja agent lane**: `--agent-lane=cursor` (lub `windsurf`, `local`)
+- [ ] **Włączenie diagnostyki idle**: `--idle-diagnostics=full --diagnostic-tickets`
+- [ ] **Konfiguracja WUP** (jeśli dotyczy): `--wup-watch --wup-mode testql --wup-diagnostic-tickets` oraz `wup.yaml` w katalogu projektu
+- [ ] **Topologia** (opcjonalnie): `.koru/topology.yaml` z toggles dla komponentów
+
+### Krok 5: Walidacja
+
+- [ ] **Test diagnostyki**: `koru autonomous up --idle-diagnostics=quick --max-cycles=1`
+- [ ] **Test WUP** (jeśli skonfigurowany): Sprawdź `.wup/service-health.json`
+- [ ] **Test autopilot drive**: `koru autopilot drive 'continue with next ticket'`
+- [ ] **Test handoff**: `koru autopilot handoff`
+- [ ] **Sprawdź logi**: `koru autopilot tail`
+
+---
+
+## Lista zadań wdrożeniowych (dla deweloperów)
 
 ### Protokół IDE
 
