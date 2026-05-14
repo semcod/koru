@@ -23,11 +23,32 @@ def test_provision_cursor_writes_file_and_then_is_idempotent(tmp_path: Path) -> 
     assert cfg_path.exists()
 
     payload = json.loads(cfg_path.read_text(encoding="utf-8"))
-    assert payload["mcpServers"]["koru"]["command"] == "koru"
-    assert payload["mcpServers"]["koru"]["args"] == ["mcp-serve"]
+    cmd = payload["mcpServers"]["koru"]["command"]
+    assert cmd == "koru" or Path(cmd).name == "koru"
 
     second = mcp_provision.provision_cursor(tmp_path, dry_run=False)
     assert second["action"] == "already_configured"
+
+
+def test_provision_upgrades_bare_koru_command_to_absolute(tmp_path: Path, monkeypatch) -> None:
+    cfg_path = tmp_path / ".cursor" / "mcp.json"
+    cfg_path.parent.mkdir(parents=True, exist_ok=True)
+    fake_koru = tmp_path / "bin-koru-fake"
+    fake_koru.write_text("#!/bin/sh\necho\n", encoding="utf-8")
+    fake_koru.chmod(0o755)
+
+    monkeypatch.setattr(mcp_provision.shutil, "which", lambda _cmd: str(fake_koru) if _cmd == "koru" else None)
+
+    cfg_path.write_text(
+        json.dumps({"mcpServers": {"koru": {"command": "koru", "args": ["mcp-serve"]}}}),
+        encoding="utf-8",
+    )
+
+    result = mcp_provision.provision_cursor(tmp_path, dry_run=False)
+    assert result["action"] == "updated"
+
+    payload = json.loads(cfg_path.read_text(encoding="utf-8"))
+    assert payload["mcpServers"]["koru"]["command"] == str(fake_koru)
 
 
 def test_remove_from_config_removes_koru_entry(tmp_path: Path) -> None:
@@ -71,4 +92,4 @@ def test_init_ide_main_json_output_for_cursor_dry_run(capsys, tmp_path: Path) ->
     payload = json.loads(output)
     assert isinstance(payload, list)
     assert payload[0]["ide"] == "cursor"
-    assert payload[0]["action"] in {"added", "already_configured"}
+    assert payload[0]["action"] in {"added", "already_configured", "updated"}

@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -53,10 +54,22 @@ def _windsurf_project_config(project: Path) -> Path:
 # Koru MCP server entry
 # ---------------------------------------------------------------------------
 
+def _resolved_koru_command() -> str:
+    """Return an absolute ``koru`` path when on PATH.
+
+    GUI IDEs (Windsurf, Cursor) often spawn MCP with a minimal environment and
+    no shell PATH — a bare ``\"command\": \"koru\"`` then fails and the server
+    stays OFF. ``shutil.which`` uses the PATH of the *provisioning* process
+    (e.g. conda/venv from ``task koru:mcp:bootstrap``).
+    """
+    found = shutil.which("koru")
+    return found if found else "koru"
+
+
 def _koru_mcp_entry() -> dict[str, Any]:
     """Build the MCP server entry for koru (stdio transport)."""
     return {
-        "command": "koru",
+        "command": _resolved_koru_command(),
         "args": ["mcp-serve"],
         "env": {
             "KORU_PROJECT_ROOT": "${workspaceFolder}",
@@ -67,10 +80,30 @@ def _koru_mcp_entry() -> dict[str, Any]:
 def _koru_mcp_entry_cursor() -> dict[str, Any]:
     """Build the MCP server entry for koru in Cursor format."""
     return {
-        "command": "koru",
+        "command": _resolved_koru_command(),
         "args": ["mcp-serve"],
         "transport": "stdio",
     }
+
+
+def _maybe_upgrade_koru_command(servers: dict[str, Any]) -> bool:
+    """If ``koru`` is registered with a bare ``command``, rewrite to absolute path.
+
+    Returns True when ``servers`` was mutated (caller should persist config).
+    """
+    if "koru" not in servers:
+        return False
+    resolved = _resolved_koru_command()
+    if resolved == "koru":
+        return False
+    entry = servers["koru"]
+    if not isinstance(entry, dict):
+        return False
+    cur = entry.get("command")
+    if cur == "koru":
+        entry["command"] = resolved
+        return True
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -148,6 +181,9 @@ def provision_windsurf(project: Path, *, dry_run: bool = False) -> dict[str, Any
     servers = config.setdefault("mcpServers", {})
 
     if "koru" in servers:
+        if _maybe_upgrade_koru_command(servers):
+            written = _write_json(config_path, config, dry_run=dry_run)
+            return {"ide": "windsurf", "action": "updated", "path": written, "dry_run": dry_run}
         return {"ide": "windsurf", "action": "already_configured", "path": str(config_path)}
 
     servers["koru"] = _koru_mcp_entry()
@@ -162,6 +198,9 @@ def provision_cursor(project: Path, *, dry_run: bool = False) -> dict[str, Any]:
     servers = config.setdefault("mcpServers", {})
 
     if "koru" in servers:
+        if _maybe_upgrade_koru_command(servers):
+            written = _write_json(config_path, config, dry_run=dry_run)
+            return {"ide": "cursor", "action": "updated", "path": written, "dry_run": dry_run}
         return {"ide": "cursor", "action": "already_configured", "path": str(config_path)}
 
     servers["koru"] = _koru_mcp_entry_cursor()
@@ -176,6 +215,9 @@ def provision_vscode(project: Path, *, dry_run: bool = False) -> dict[str, Any]:
     servers = config.setdefault("mcpServers", {})
 
     if "koru" in servers:
+        if _maybe_upgrade_koru_command(servers):
+            written = _write_json(config_path, config, dry_run=dry_run)
+            return {"ide": "vscode", "action": "updated", "path": written, "dry_run": dry_run}
         return {"ide": "vscode", "action": "already_configured", "path": str(config_path)}
 
     servers["koru"] = _koru_mcp_entry()
