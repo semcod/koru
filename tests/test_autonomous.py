@@ -352,6 +352,12 @@ def test_resolve_autopilot_ide_headless_allow_autopilot_honors_env(monkeypatch) 
     assert autonomous_mod._resolve_autopilot_ide("vscode") == "cursor"
 
 
+def test_resolve_autopilot_ide_koru_ide_mode_headless(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_IDE_MODE", "headless")
+    monkeypatch.setenv("KORU_AUTOPILOT_IDE", "cursor")
+    assert autonomous_mod._resolve_autopilot_ide("vscode") == "auto"
+
+
 def test_apply_agent_lane_environ_auto_cursor(tmp_path, monkeypatch) -> None:
     monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
     monkeypatch.delenv("CI", raising=False)
