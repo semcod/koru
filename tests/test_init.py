@@ -23,6 +23,7 @@ from koru.init import (
     POLICY_STUB,
     init_project,
     refresh_init_agent_lane,
+    resolve_project_agent_lane,
 )
 from koru.policy import load_policy
 from koru.runtime import planfile_dir, runtime_dir
@@ -248,6 +249,19 @@ class TestAgentLaneArtifacts(unittest.TestCase):
             finally:
                 _reattach_ci_env(ci_backup)
             self.assertEqual(report.agent_lane, "cursor")
+
+    def test_auto_prefers_persisted_shell_env_lane(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".cursor").mkdir()
+            (project / ".windsurf").mkdir()
+            ci_backup = _detach_ci_env()
+            try:
+                init_project(project, agent_lane="windsurf")
+                lane = resolve_project_agent_lane(project, "auto")
+            finally:
+                _reattach_ci_env(ci_backup)
+            self.assertEqual(lane, "windsurf")
 
     def test_auto_ci_forces_local_even_with_dot_cursor(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

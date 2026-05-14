@@ -38,14 +38,16 @@ belong to koru's lifecycle, not its setup). Root ``koru.yaml`` is
 any other config. To add or refresh only
 the agent-lane shell helpers on an existing project, use
 ``koru --init-agent-lane`` (see ``--agent-lane``). With ``--agent-lane auto``,
+an existing ``.planfile/.koru/shell-env.sh`` lane is honoured first; otherwise
 lane markers are read in a fixed order (``.cursor``, ``.windsurf``, ``.vscode``,
-``.idea``, ``.zed``) before falling back to ``local``; ``CI`` / ``GITHUB_ACTIONS``
+``.idea``, ``.zed``) before falling back to ``local``. ``CI`` / ``GITHUB_ACTIONS``
 force ``local`` so CI jobs do not pick a lane from committed IDE folders.
 """
 
 from __future__ import annotations
 
 import os
+import re
 import stat
 from dataclasses import dataclass
 from pathlib import Path
@@ -392,6 +394,10 @@ def refresh_init_agent_lane(
 def _init_auto_agent_lane(project: Path) -> str:
     """Resolve ``--agent-lane auto`` from repo markers (stable, IDE-agnostic order).
 
+    If the project already has generated lane helpers, that explicit runtime
+    choice wins over marker detection. This keeps plain ``koru autonomous up``
+    aligned with the lane selected by ``koru --init-agent-lane --agent-lane ...``.
+
     When several IDE config trees exist, the first match in the fixed list wins so
     Linux/macOS and different checkouts behave the same. ``CI`` / ``GITHUB_ACTIONS``
     force ``local`` so headless runners never inherit a committed ``.cursor`` /
@@ -400,6 +406,9 @@ def _init_auto_agent_lane(project: Path) -> str:
     ci = os.environ.get("CI", "").strip().lower()
     if ci in ("1", "true", "yes") or os.environ.get("GITHUB_ACTIONS", "").strip() == "true":
         return "local"
+    persisted_lane = _read_persisted_agent_lane(project)
+    if persisted_lane:
+        return persisted_lane
     # Order is documented in the default root ``koru.yaml`` (``koru --init``).
     markers: tuple[tuple[str, Path], ...] = (
         ("cursor", project / ".cursor"),
@@ -412,6 +421,41 @@ def _init_auto_agent_lane(project: Path) -> str:
         if path.exists():
             return lane
     return "local"
+
+
+_EXPORT_RE = re.compile(
+    r"^export\s+(KORU_AUTOPILOT_INSTANCE|KORU_AUTOPILOT_IDE)=(?P<value>.+)$"
+)
+
+
+def _read_persisted_agent_lane(project: Path) -> str | None:
+    """Read the generated shell helper's lane, if present."""
+    shell_path = runtime_dir(project) / "shell-env.sh"
+    if not shell_path.is_file():
+        return None
+    try:
+        lines = shell_path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+
+    values: dict[str, str] = {}
+    for line in lines:
+        match = _EXPORT_RE.match(line.strip())
+        if not match:
+            continue
+        raw = match.group("value").strip()
+        if (raw.startswith("'") and raw.endswith("'")) or (
+            raw.startswith('"') and raw.endswith('"')
+        ):
+            raw = raw[1:-1]
+        key = line.strip().split("=", 1)[0].removeprefix("export ").strip()
+        values[key] = raw
+
+    for key in ("KORU_AUTOPILOT_INSTANCE", "KORU_AUTOPILOT_IDE"):
+        raw = values.get(key, "").strip().lower()
+        if raw and raw != "auto":
+            return normalize_agent_lane_id(raw)
+    return None
 
 
 def _resolve_init_agent_lane(project: Path, agent_lane: str) -> str | None:
