@@ -8,6 +8,27 @@
 
 **MCP** w stacku koru jest **osobnym torem** (konfiguracja serwerów MCP, provisioning, integracja z workflow) — nie należy mylić go z autopilotem: MCP rozwiązuje integrację narzędzi z LLM w IDE, ale **nie zastępuje** protokołu odczytu odpowiedzi LLM ani jednolitego kanału shell↔IDE w sensie sterowania agentem.
 
+### Aktualny stan implementacji
+
+**Zaimplementowane:**
+- [x] `koru autonomous up` — pętla orkiestracji autonomicznej (scan → queue → autopilot)
+- [x] `koru autopilot daemon` — unix-socket broker z SO_PEERCRED
+- [x] `koru autopilot drive` — wstrzykiwanie tekstu do czatu IDE
+- [x] `koru autopilot handoff` — automatyczne przejęcie po `session.ended`
+- [x] VS Code/Windsurf plugin — rozszerzenie z protokołem NDJSON
+- [x] Keyboard simulation fallback — xdotool/wtype/ydotool
+- [x] WUP integration — `--wup-watch` z testql mode
+- [x] Idle diagnostics — regix, redup, testql, redsl, sumr
+- [x] Diagnostic tickets — automatyczne tworzenie ticketów przy błędach
+- [x] Topology integration — `.koru/topology.yaml` toggles
+
+**Braki funkcjonalne (vs pełna autonomia):**
+- [ ] Odczyt odpowiedzi LLM z IDE (read-side)
+- [ ] Sterowanie narzędziami agenta (edycja plików, terminal IDE)
+- [ ] Jeden spójny kanał shell ↔ IDE (stdout/stderr agenta vs zdarzenia czatu)
+- [ ] Centralna polityka IDE sterowana z koru
+- [ ] Twarde powiązanie ticketów z sesją IDE
+
 ### Co brakuje do „pełnej” integracji z IDE (Cursor)
 
 | Obszar | Co brakuje (krótko) |
