@@ -142,6 +142,11 @@ def save_profile(profile: OsInjectorProfile, *, config_path: Path | None = None)
     return path
 
 
+def profile_from_mouse(tool_id: str, *, x: int, y: int) -> OsInjectorProfile:
+    """Build a profile from calibration coordinates (after :func:`capture_mouse_xy`)."""
+    return OsInjectorProfile(tool_id=tool_id, chat_x=x, chat_y=y)
+
+
 def capture_mouse_xy() -> tuple[int, int]:
     """Return ``(x, y)`` from ``xdotool getmouselocation --shell``."""
     proc = subprocess.run(

@@ -13,6 +13,7 @@ from koru.autopilot.os_injector import (
     inject_with_profile,
     iter_config_paths,
     load_profile,
+    profile_from_mouse,
     save_profile,
     try_drive_with_profile,
     try_load_profile,
@@ -39,6 +40,11 @@ def test_load_profile_accepts_legacy_window_id(tmp_path: Path) -> None:
     p = load_profile("cursor", config_path=config)
     assert p.window_id == 99
     assert p.chat_x == 1
+
+
+def test_profile_from_mouse_builds_profile() -> None:
+    p = profile_from_mouse("windsurf", x=10, y=20)
+    assert p == OsInjectorProfile(tool_id="windsurf", chat_x=10, chat_y=20)
 
 
 def test_capture_from_xdotool_parses_shell_output(
