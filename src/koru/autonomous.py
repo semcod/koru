@@ -104,6 +104,14 @@ class ExistingAutonomousProcess:
     cwd: Path | None = None
 
 
+@dataclass(frozen=True)
+class ExistingManagedProcess:
+    pid: int
+    kind: str
+    command: str
+    cwd: Path | None = None
+
+
 def _resolve_autopilot_ide(cli_value: str) -> str:
     """``KORU_AUTOPILOT_IDE`` overrides CLI when set to a specific IDE (not 'auto')."""
     raw = os.environ.get("KORU_AUTOPILOT_IDE", "").strip().lower()
@@ -180,12 +188,61 @@ def _find_existing_autonomous_processes(project: Path) -> list[ExistingAutonomou
     return matches
 
 
-def _terminate_existing_autonomous_processes(
-    processes: list[ExistingAutonomousProcess], *, stdio_format: str
+def _find_existing_wup_processes(project: Path) -> list[ExistingManagedProcess]:
+    """Return stale/running ``wup watch`` processes for ``project`` except this tree."""
+    try:
+        result = subprocess.run(
+            ["ps", "-eo", "pid=,ppid=,command="],
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+    except OSError:
+        return []
+    if result.returncode != 0:
+        return []
+
+    current_pid = os.getpid()
+    project = project.resolve()
+    matches: list[ExistingManagedProcess] = []
+    for raw_line in result.stdout.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        first, _, rest = line.partition(" ")
+        second, _, command = rest.strip().partition(" ")
+        try:
+            pid = int(first)
+            ppid = int(second)
+        except ValueError:
+            continue
+        if pid == current_pid or ppid == current_pid:
+            continue
+        if "wup" not in command or " watch " not in f" {command} ":
+            continue
+        cwd = _process_cwd(pid)
+        if cwd == project or str(project) in command:
+            matches.append(
+                ExistingManagedProcess(pid=pid, kind="wup-watch", command=command, cwd=cwd)
+            )
+    return matches
+
+
+def _as_managed(proc: ExistingAutonomousProcess) -> ExistingManagedProcess:
+    return ExistingManagedProcess(
+        pid=proc.pid,
+        kind="autonomous-loop",
+        command=proc.command,
+        cwd=proc.cwd,
+    )
+
+
+def _terminate_existing_processes(
+    processes: list[ExistingManagedProcess], *, stdio_format: str
 ) -> None:
     for proc in processes:
         _stdio_info(
-            f"koru autonomous: stopping existing loop pid={proc.pid}",
+            f"koru autonomous: stopping existing {proc.kind} pid={proc.pid}",
             fmt=stdio_format,
         )
         try:
@@ -194,7 +251,7 @@ def _terminate_existing_autonomous_processes(
             continue
         except PermissionError:
             _stdio_info(
-                f"koru autonomous: no permission to stop existing loop pid={proc.pid}",
+                f"koru autonomous: no permission to stop existing {proc.kind} pid={proc.pid}",
                 fmt=stdio_format,
             )
 
@@ -215,48 +272,54 @@ def _terminate_existing_autonomous_processes(
         try:
             os.kill(proc.pid, signal.SIGKILL)
             _stdio_info(
-                f"koru autonomous: force-stopped existing loop pid={proc.pid}",
+                f"koru autonomous: force-stopped existing {proc.kind} pid={proc.pid}",
                 fmt=stdio_format,
             )
         except (ProcessLookupError, PermissionError):
             pass
 
 
-def _confirm_replace_existing(processes: list[ExistingAutonomousProcess]) -> bool:
-    print("koru autonomous: existing loop(s) for this project are already running:")
+def _confirm_replace_existing(processes: list[ExistingManagedProcess]) -> bool:
+    print("koru autonomous: existing managed process(es) for this project are already running:")
     for proc in processes:
         where = f" cwd={proc.cwd}" if proc.cwd else ""
-        print(f"  pid={proc.pid}{where} :: {proc.command}")
-    answer = input("Stop existing loop(s) and start this one? [y/N] ").strip().lower()
+        print(f"  {proc.kind} pid={proc.pid}{where} :: {proc.command}")
+    answer = input("Stop existing process(es) and start this one? [y/N] ").strip().lower()
     return answer in {"y", "yes", "t", "tak"}
 
 
 def _guard_existing_autonomous_processes(args: argparse.Namespace, project: Path) -> int:
     if args.allow_duplicate:
         return 0
-    existing = _find_existing_autonomous_processes(project)
+    existing = [
+        *(_as_managed(proc) for proc in _find_existing_autonomous_processes(project)),
+        *_find_existing_wup_processes(project),
+    ]
     if not existing:
         return 0
     if args.replace_existing:
-        _terminate_existing_autonomous_processes(existing, stdio_format=args.emit_events)
+        _terminate_existing_processes(existing, stdio_format=args.emit_events)
         return 0
     if args.emit_events == "human" and sys.stdin.isatty():
         if _confirm_replace_existing(existing):
-            _terminate_existing_autonomous_processes(existing, stdio_format=args.emit_events)
+            _terminate_existing_processes(existing, stdio_format=args.emit_events)
             return 0
         _stdio_info(
-            "koru autonomous: keeping existing loop(s); not starting a duplicate. "
+            "koru autonomous: keeping existing process(es); not starting a duplicate. "
             "Use --allow-duplicate to override.",
             fmt=args.emit_events,
         )
         return 2
     _stdio_info(
-        "koru autonomous: another loop is already running for this project; "
+        "koru autonomous: another managed process is already running for this project; "
         "use --replace-existing to stop it first or --allow-duplicate to run anyway.",
         fmt=args.emit_events,
     )
     for proc in existing:
-        _stdio_info(f"  existing pid={proc.pid}: {proc.command}", fmt=args.emit_events)
+        _stdio_info(
+            f"  existing {proc.kind} pid={proc.pid}: {proc.command}",
+            fmt=args.emit_events,
+        )
     return 2
 
 

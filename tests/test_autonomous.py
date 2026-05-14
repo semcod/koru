@@ -167,7 +167,7 @@ def test_guard_existing_autonomous_replace_existing_terminates(tmp_path, monkeyp
     )
     monkeypatch.setattr(
         autonomous_mod,
-        "_terminate_existing_autonomous_processes",
+        "_terminate_existing_processes",
         lambda processes, **kwargs: stopped.extend(proc.pid for proc in processes),
     )
     args = SimpleNamespace(
@@ -180,6 +180,37 @@ def test_guard_existing_autonomous_replace_existing_terminates(tmp_path, monkeyp
 
     assert rc == 0
     assert stopped == [123]
+
+
+def test_guard_existing_autonomous_replace_existing_terminates_stale_wup(
+    tmp_path, monkeypatch
+) -> None:
+    wup = [
+        autonomous_mod.ExistingManagedProcess(
+            pid=456,
+            kind="wup-watch",
+            command="wup watch " + str(tmp_path),
+            cwd=tmp_path,
+        )
+    ]
+    stopped: list[int] = []
+    monkeypatch.setattr(autonomous_mod, "_find_existing_autonomous_processes", lambda project: [])
+    monkeypatch.setattr(autonomous_mod, "_find_existing_wup_processes", lambda project: wup)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_terminate_existing_processes",
+        lambda processes, **kwargs: stopped.extend(proc.pid for proc in processes),
+    )
+    args = SimpleNamespace(
+        allow_duplicate=False,
+        replace_existing=True,
+        emit_events="human",
+    )
+
+    rc = autonomous_mod._guard_existing_autonomous_processes(args, tmp_path)
+
+    assert rc == 0
+    assert stopped == [456]
 
 
 def test_guard_existing_autonomous_interactive_decline_blocks_duplicate(
