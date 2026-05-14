@@ -1522,6 +1522,25 @@ def _init_ide_main(argv: list[str]) -> int:
     return init_ide_main(argv)
 
 
+def _refactor_planfile_handoff_main(argv: list[str]) -> int:
+    """CLI: ``koru refactor-planfile-handoff`` — markdown for IDE chat (planfile tickets)."""
+    import argparse
+
+    from .refactor_planfile_handoff import render_planfile_refactor_handoff
+
+    p = argparse.ArgumentParser(
+        prog="koru refactor-planfile-handoff",
+        description=(
+            "Print markdown instructions for attaching project/analysis.toon.yaml "
+            "and drafting planfile refactor tickets in the IDE chat."
+        ),
+    )
+    p.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
+    args = p.parse_args(argv)
+    print(render_planfile_refactor_handoff(args.project), end="")
+    return 0
+
+
 def ide_router_main(argv: list[str]) -> int:
     """CLI: ``koru ide-router`` — print resolved IDE / headless routing."""
     import argparse
@@ -1568,6 +1587,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "local-serve": _local_serve_main,
     "serve": _serve_main,
     "scan": _scan_main,
+    "refactor-planfile-handoff": _refactor_planfile_handoff_main,
     "gate": _gate_main,
     "queue": _queue_main,
     "gc": _gc_main,

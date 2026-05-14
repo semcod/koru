@@ -112,6 +112,7 @@ def test_autonomy_config_stagnation_control_fields():
     """Test stagnation control configuration fields."""
     config = AutonomyConfig(
         autopilot_skip_statuses="waiting_input,blocked",
+        autopilot_skip_drive_idle_streak=2,
         backoff_on_stagnation=True,
         max_sleep_seconds=1800,
         scan_skip_if_clean=True,
@@ -119,10 +120,18 @@ def test_autonomy_config_stagnation_control_fields():
     )
     
     assert config.autopilot_skip_statuses == "waiting_input,blocked"
+    assert config.autopilot_skip_drive_idle_streak == 2
     assert config.backoff_on_stagnation is True
     assert config.max_sleep_seconds == 1800
     assert config.scan_skip_if_clean is True
     assert config.scan_skip_after == 3
+
+
+def test_autonomy_config_from_env_idle_streak() -> None:
+    """AUTOPILOT_SKIP_DRIVE_IDLE_STREAK parses as a non-negative int."""
+    with patch.dict(os.environ, {"AUTOPILOT_SKIP_DRIVE_IDLE_STREAK": "4"}, clear=True):
+        config = AutonomyConfig.from_env()
+    assert config.autopilot_skip_drive_idle_streak == 4
 
 
 def test_autonomy_config_diag_state_dir_default():

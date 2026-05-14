@@ -1,4 +1,25 @@
 # Byte-compiled / optimized / DLL files
+.code2llm_cache/Taskfile_1778770940785187964_31416.pkl
+.code2llm_cache/__init___1778773067640290020_617.pkl
+.code2llm_cache/agent_backend_runtime_1778773067652150450_4286.pkl
+.code2llm_cache/agents_1778773067664162990_13136.pkl
+.code2llm_cache/autonomous_1778777351650257101_59478.pkl
+.code2llm_cache/autonomous_env_1778773067652150450_638.pkl
+.code2llm_cache/cli_1778774456720991623_71681.pkl
+.code2llm_cache/config_1778773067738163831_4693.pkl
+.code2llm_cache/context_1778773253273257052_42568.pkl
+.code2llm_cache/env_1778773067652150450_7512.pkl
+.code2llm_cache/environment_1778774530631903742_7217.pkl
+.code2llm_cache/extension_1778773067738163831_13510.pkl
+.code2llm_cache/heal_1778774549253599638_3443.pkl
+.code2llm_cache/ide_router_1778774546670306675_3225.pkl
+.code2llm_cache/koru-autoloop_1778773067681163183_20167.pkl
+.code2llm_cache/koru-queue-diagnose_1778772019510258326_4408.pkl
+.code2llm_cache/koru_queue_argv_1778773067664162990_1235.pkl
+.code2llm_cache/mcp_server_1778773067681163183_33836.pkl
+.code2llm_cache/prompts_1778772301432966032_4026.pkl
+.code2llm_cache/pyproject_1778777439100372289_2086.pkl
+.code2llm_cache/serve_1778773067739163843_39464.pkl
 .code2llm_cache/app_1778613276699000000_28970.pkl
 .code2llm_cache/autonomous_1778659699568702189_15048.pkl
 .code2llm_cache/bootstrap_1778612883007000000_15786.pkl

@@ -10,6 +10,7 @@ import pytest
 from koru.agent_backend_runtime import (
     McpToolBackend,
     NoopBackend,
+    OsInjectorBackend,
     PluginSocketBackend,
     build_agent_backend,
 )
@@ -100,6 +101,24 @@ def test_factory_resolves_none_to_noop() -> None:
         backend = build_agent_backend(backend_id=bid, noop_reason="test-reason")
         assert isinstance(backend, NoopBackend)
         assert backend.reason == "test-reason"
+
+
+def test_factory_resolves_os_injector_from_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_OS_INJECTOR_PROFILE", "windsurf")
+    monkeypatch.setenv("KORU_OS_INJECTOR_CONFIG", "/tmp/koru-os.json")
+    backend = build_agent_backend(backend_id="os_injector")
+    assert isinstance(backend, OsInjectorBackend)
+    assert backend.profile_id == "windsurf"
+
+
+def test_factory_os_injector_requires_profile_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("KORU_OS_INJECTOR_PROFILE", raising=False)
+    with pytest.raises(ValueError, match="KORU_OS_INJECTOR_PROFILE"):
+        build_agent_backend(backend_id="os_injector")
 
 
 def test_factory_normalizes_case_and_whitespace() -> None:

@@ -4,6 +4,18 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.6] — 2026-05-14
+
+### Fixed
+- **Windsurf command drift**: added speculative Windsurf / Cascade command IDs
+  (`windsurf.chat.open`, `windsurf.cascade.submit`, `windsurf.chat.typeText`, …)
+  to cover IDE versions where the older `windsurf.action.*` namespace no longer
+  exists.
+- **`console.warn` diagnostics**: every failed `focusChat`, `pasteText`, and
+  `submitChat` command is now logged to the browser console so users can see
+  exactly which VS Code command IDs are missing and configure
+  `koruAutopilot.chatOpenCommands` accordingly.
+
 ## [0.1.5] — 2026-05-14
 
 ### Fixed

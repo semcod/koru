@@ -34,7 +34,7 @@ cursor   --extensionDevelopmentPath=$(pwd)
 
 ```bash
 npm install
-npm run package        # produces koru-autopilot-0.1.0.vsix
+npm run package        # produces koru-autopilot-0.1.6.vsix
 ```
 
 `npm run package` invokes `vsce package` and writes the file next to
@@ -47,13 +47,13 @@ For everyday users who don't want to clone this repo:
 
 ```bash
 # Cascade / Windsurf:
-windsurf --install-extension koru-autopilot-0.1.0.vsix
+windsurf --install-extension koru-autopilot-0.1.6.vsix
 
 # VS Code:
-code --install-extension koru-autopilot-0.1.0.vsix
+code --install-extension koru-autopilot-0.1.6.vsix
 
 # Cursor:
-cursor --install-extension koru-autopilot-0.1.0.vsix
+cursor --install-extension koru-autopilot-0.1.6.vsix
 ```
 
 After install, the IDE shows a `🔌 koru: on` indicator in its status
@@ -78,14 +78,57 @@ npm run clean && npm install && npm run package
 The extension detects the IDE (`windsurf`, `cursor`, or `vscode`) and automatically
 tries the right commands to open and submit the chat panel.
 
-| IDE        | Open commands (auto-detected)                                              | Submit commands (auto-detected)                                |
-|------------|----------------------------------------------------------------------------|----------------------------------------------------------------|
-| VS Code    | `workbench.action.chat.open`                                               | `workbench.action.chat.submit`                               |
-| Cursor     | `workbench.action.chat.open`                                               | `workbench.action.chat.submit`                               |
-| **Windsurf** | `windsurf.action.openChat`, `windsurf.action.openCascade`, `cascade.focus` | `windsurf.action.submitChat`, `windsurf.action.cascade.submit` |
+| IDE        | Open commands (auto-detected)                                                                                                                                    | Submit commands (auto-detected)                                                                                                        |
+|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| VS Code    | `workbench.action.chat.open`                                                                                                                                     | `workbench.action.chat.submit`                                                                                                         |
+| Cursor     | `workbench.action.chat.open`                                                                                                                                     | `workbench.action.chat.submit`                                                                                                         |
+| **Windsurf** | `windsurf.chat.open`, `windsurf.cascade.open`, `windsurf.action.openChat`, `windsurf.action.openCascade`, `cascade.focus`, `windsurf.panel.chat`, `composer.showComposer` | `windsurf.chat.submit`, `windsurf.cascade.submit`, `windsurf.action.submitChat`, `windsurf.action.cascade.submit`, `cascade.submit`, `workbench.action.chat.submit` |
 
-If the auto-detected commands fail, you can override them via the
-`koruAutopilot.chatOpenCommands` setting in your IDE's `settings.json`.
+Windsurf is a fast-moving fork; command IDs change between releases. The extension
+maintains a speculative list and tries every candidate until one succeeds. If you
+see `opened: false, submitted: false` in the daemon logs, the commands for your
+Windsurf build have drifted again.
+
+### Customising chat commands
+
+Override the auto-detected commands via `settings.json`:
+
+```json
+{
+  "koruAutopilot.chatOpenCommands": [
+    "windsurf.chat.open",
+    "windsurf.action.openCascade"
+  ]
+}
+```
+
+Then reload the window (`Developer: Reload Window`).
+
+## Troubleshooting
+
+### Plugin connects but messages never appear in Windsurf Cascade
+
+1. **Open the browser console** (Windsurf: `Ctrl+Shift+P` → `Developer: Toggle Developer Tools` → Console tab).
+2. Look for yellow warnings starting with `koru autopilot: ... command not available`. These list the exact VS Code command IDs that Windsurf rejected.
+3. Find the working ones by running in the Console:
+
+   ```js
+   vscode.commands.getCommands().then(c =>
+     c.filter(x => x.includes('chat') || x.includes('cascade'))
+   )
+   ```
+
+4. Add the working commands to `koruAutopilot.chatOpenCommands` in your `settings.json` (see *Customising chat commands* above) and reload the window.
+
+### Daemon reports `autopilot: ok` but nothing was sent
+
+Since 0.1.6 the koru daemon detects when the plugin returns `submitted: false` and reports `ok: false` instead of a silent false-positive. If you see:
+
+```text
+plugin connected but could not submit to chat (outdated IDE commands)
+```
+
+…it means the plugin socket is alive but the IDE command IDs have drifted. Follow the console-debug steps above.
 
 ## Status bar
 

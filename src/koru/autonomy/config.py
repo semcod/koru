@@ -58,6 +58,7 @@ class AutonomyConfig:
 
     # Stagnation control
     autopilot_skip_statuses: str = "waiting_input"
+    autopilot_skip_drive_idle_streak: int = 0
     backoff_on_stagnation: bool = True
     max_sleep_seconds: int = 900
     scan_skip_if_clean: bool = False
@@ -70,6 +71,14 @@ class AutonomyConfig:
     def from_env(cls) -> AutonomyConfig:
         """Create config from environment variables (shell compatibility)."""
         import os
+
+        _idle_raw = os.getenv("AUTOPILOT_SKIP_DRIVE_IDLE_STREAK", "0")
+        autopilot_skip_drive_idle_streak = 0
+        if _idle_raw is not None and str(_idle_raw).strip():
+            try:
+                autopilot_skip_drive_idle_streak = max(0, int(str(_idle_raw).strip()))
+            except ValueError:
+                autopilot_skip_drive_idle_streak = 0
 
         return cls(
             project=Path(os.getenv("PROJECT", str(Path.cwd()))),
@@ -100,6 +109,7 @@ class AutonomyConfig:
             diagnostic_ticket_priority=os.getenv("DIAGNOSTIC_TICKET_PRIORITY", "high"),
             diag_state_dir=Path(os.getenv("DIAG_STATE_DIR", ".planfile/.koru/autoloop-diag")),
             autopilot_skip_statuses=os.getenv("AUTOPILOT_SKIP_STATUSES", "waiting_input"),
+            autopilot_skip_drive_idle_streak=autopilot_skip_drive_idle_streak,
             backoff_on_stagnation=env_truthy("BACKOFF_ON_STAGNATION", True),
             max_sleep_seconds=int(os.getenv("MAX_SLEEP_SECONDS", "900")),
             scan_skip_if_clean=env_truthy("SCAN_SKIP_IF_CLEAN", False),

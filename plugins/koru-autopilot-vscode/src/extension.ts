@@ -130,12 +130,15 @@ class AutopilotBridge {
       "windsurf.action.submitCascade",
       "windsurf.action.submitChat",
       "windsurf.action.chat.submit",
+      "windsurf.chat.submit",
+      "windsurf.cascade.submit",
       "cascade.submit",
       ...generic,
     ];
     const candidates = ide === "windsurf" ? windsurfFirst : generic;
     for (const cmd of candidates) {
       if (await this.runCommand(cmd)) return true;
+      console.warn(`koru autopilot: submitChat command not available: ${cmd}`);
     }
     return false;
   }
@@ -149,6 +152,9 @@ class AutopilotBridge {
         ? [
             "windsurf.action.openCascade",
             "windsurf.action.openChat",
+            "windsurf.chat.open",
+            "windsurf.cascade.open",
+            "windsurf.panel.chat",
             "cascade.focus",
             "windsurf.action.showCascade",
             "composer.showComposer",
@@ -163,6 +169,7 @@ class AutopilotBridge {
     const commands = primary.length > 0 ? primary : defaults;
     for (const cmd of commands) {
       if (await this.runCommand(cmd)) return true;
+      console.warn(`koru autopilot: focusChat command not available: ${cmd}`);
     }
     return false;
   }
@@ -177,6 +184,8 @@ class AutopilotBridge {
       directCommands.push(
         "windsurf.action.chat.typeText",
         "windsurf.action.cascade.typeText",
+        "windsurf.chat.typeText",
+        "windsurf.cascade.typeText",
         "cascade.typeText",
       );
     } else if (ide === "cursor") {
@@ -222,6 +231,8 @@ class AutopilotBridge {
       ...(ide === "windsurf"
         ? [
             "windsurf.action.focusChatInput",
+            "windsurf.chat.focusInput",
+            "windsurf.cascade.focusInput",
             "cascade.focusInput",
             "windsurf.action.focusCascadeInput",
           ]

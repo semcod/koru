@@ -1,0 +1,188 @@
+from __future__ import annotations
+
+import shutil
+import subprocess
+from pathlib import Path
+from typing import Any
+
+from .autonomous_wup import WupHealthResult
+from .autonomous_wup import _read_wup_health as _read_wup_health_impl
+from .tasks import create_nl_task
+
+
+def create_diagnostic_ticket(
+    *,
+    stdio_info: Any,
+    stdio_format: str = "human",
+    project: Path,
+    check_id: str,
+    summary: str,
+    cycle: int,
+    queue_status: str,
+    queue_name: str,
+    priority: str,
+    state_dir: Path,
+) -> None:
+    state_dir.mkdir(parents=True, exist_ok=True)
+    marker = state_dir / f"{check_id}.failed"
+    if marker.exists():
+        stdio_info(
+            f"- diagnostic ticket marker exists for {check_id}, skipping create", fmt=stdio_format
+        )
+        return
+    title = f"[AUTO-DIAG] {check_id} needs attention"
+    prompt = (
+        f"{title} in cycle {cycle}. queue_status={queue_status}. "
+        f"Check: {summary}. Investigate and fix regression, stale quality artifact, "
+        "or broken diagnostic gate."
+    )
+    created = create_nl_task(project, prompt, queue_name=queue_name, priority=priority)
+    marker.write_text(created.ticket_id, encoding="utf-8")
+    stdio_info(
+        f"+ created diagnostic ticket {created.ticket_id} for {check_id} (queue={queue_name})",
+        fmt=stdio_format,
+    )
+
+
+def clear_diagnostic_marker(state_dir: Path, check_id: str) -> None:
+    (state_dir / f"{check_id}.failed").unlink(missing_ok=True)
+
+
+def run_command_check(
+    *,
+    stdio_info: Any,
+    project: Path,
+    check_id: str,
+    command: list[str],
+    stdio_format: str = "human",
+) -> bool:
+    stdio_info("+ " + " ".join(command), fmt=stdio_format)
+    result = subprocess.run(command, cwd=project, check=False)
+    if result.returncode != 0:
+        stdio_info(f"! {check_id} failed (continuing loop)", fmt=stdio_format)
+        return False
+    return True
+
+
+def read_wup_health(
+    *,
+    project: Path,
+    state: Any,
+    diagnostic_tickets: bool,
+    ticket_queue: str,
+    state_dir: Path,
+    create_ticket: Any,
+) -> WupHealthResult:
+    return _read_wup_health_impl(
+        project=project,
+        state=state,
+        diagnostic_tickets=diagnostic_tickets,
+        ticket_queue=ticket_queue,
+        state_dir=state_dir,
+        create_diagnostic_ticket=create_ticket,
+    )
+
+
+def run_idle_diagnostics(
+    *,
+    stdio_info: Any,
+    is_topology_enabled: Any,
+    run_command: Any,
+    clear_marker: Any,
+    create_ticket: Any,
+    make_result: Any,
+    stdio_format: str = "human",
+    project: Path,
+    profile: str,
+    cycle: int,
+    queue_status: str,
+    diagnostic_tickets: bool,
+    diagnostic_ticket_queue: str,
+    diagnostic_ticket_priority: str,
+    diagnostic_state_dir: Path,
+    topology_integration: bool,
+) -> Any:
+    profile = profile.lower()
+    if profile in {"off", "none"}:
+        stdio_info(
+            f"koru autonomous: idle diagnostics disabled (profile={profile})",
+            fmt=stdio_format,
+        )
+        return make_result(status="off", failed=[])
+    if not is_topology_enabled(
+        project, "idle-diagnostics", fallback=True, enabled=topology_integration
+    ):
+        stdio_info("koru autonomous: idle diagnostics disabled in topology", fmt=stdio_format)
+        return make_result(status="disabled(topology)", failed=[])
+    stdio_info(
+        f"koru autonomous: queue idle -> running semcod diagnostics (profile={profile})",
+        fmt=stdio_format,
+    )
+    checks: list[tuple[str, str, list[str]]] = []
+    if shutil.which("regix"):
+        checks.append(
+            (
+                "regix",
+                "regix compare HEAD --local --format rich",
+                ["regix", "compare", "HEAD", "--local", "--format", "rich"],
+            )
+        )
+    if shutil.which("wup") and (project / "wup.yaml").is_file():
+        checks.append(("wup", "wup status", ["wup", "status"]))
+    if profile in {"full", "deep"}:
+        if shutil.which("redup"):
+            checks.append(
+                (
+                    "redup",
+                    "redup scan . --min-lines 10",
+                    ["redup", "scan", ".", "--min-lines", "10"],
+                )
+            )
+        if shutil.which("testql") and any(project.rglob("*.testql.toon.yaml")):
+            checks.append(
+                (
+                    "testql",
+                    "testql suite --pattern *.testql.toon.yaml --output console --fail-fast",
+                    [
+                        "testql",
+                        "suite",
+                        "--pattern",
+                        "*.testql.toon.yaml",
+                        "--output",
+                        "console",
+                        "--fail-fast",
+                    ],
+                )
+            )
+        if shutil.which("redsl"):
+            checks.append(("redsl", "redsl gate check .", ["redsl", "gate", "check", "."]))
+        if (project / "scripts" / "sumr-refresh.sh").is_file():
+            checks.append(
+                (
+                    "sumr",
+                    "bash scripts/sumr-refresh.sh --status",
+                    ["bash", "scripts/sumr-refresh.sh", "--status"],
+                )
+            )
+    failed: list[str] = []
+    diagnostic_state_dir.mkdir(parents=True, exist_ok=True)
+    for check_id, summary, command in checks:
+        if not is_topology_enabled(project, check_id, fallback=True, enabled=topology_integration):
+            stdio_info(f"- {check_id} disabled in topology, skipping", fmt=stdio_format)
+            continue
+        if run_command(project, check_id, command, stdio_format=stdio_format):
+            clear_marker(diagnostic_state_dir, check_id)
+            continue
+        failed.append(check_id)
+        if diagnostic_tickets:
+            create_ticket(
+                project=project,
+                check_id=check_id,
+                summary=summary,
+                cycle=cycle,
+                queue_status=queue_status,
+                queue_name=diagnostic_ticket_queue,
+                priority=diagnostic_ticket_priority,
+                state_dir=diagnostic_state_dir,
+            )
+    return make_result(status="failed" if failed else "ok", failed=failed)

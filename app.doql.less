@@ -2,7 +2,7 @@
 
 app {
   name: koru;
-  version: 0.1.88;
+  version: 0.1.108;
 }
 
 dependencies {
@@ -51,6 +51,11 @@ workflow[name="install:tools"] {
 workflow[name="test"] {
   trigger: manual;
   step-1: run cmd=python3 -m pytest tests/ -v {{.CLI_ARGS}};
+}
+
+workflow[name="test:all"] {
+  trigger: manual;
+  step-1: run cmd=python3 -m pytest tests/ -v -m "" {{.CLI_ARGS}};
 }
 
 workflow[name="test:fast"] {

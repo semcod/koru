@@ -84,6 +84,7 @@ _PROFILES: Final[tuple[AgentBackendProfile, ...]] = (
 _BACKEND_ALIASES: Final[dict[str, str]] = {
     "plugin_socket": "vscode_family_plugin_socket",
     "mcp_tool": "mcp_stdio_server",
+    "os_injector": "os_keyboard_injector",
 }
 
 

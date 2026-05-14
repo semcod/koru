@@ -114,6 +114,9 @@ Detection order in `injector.py`:
 
 1. **Plugin** — if a plugin is connected for the target IDE, send
    `chat.send` over the socket. Most reliable; works on Wayland.
+   If the plugin acks with `submitted: false` (e.g. Windsurf changed its
+   VS Code command IDs), the daemon now reports `ok: false` instead of a
+   silent false-positive, so the caller can fall back or warn the user.
 2. **VS Code CLI** — `code --command workbench.action.chat.sendMessage`
    (works on VS Code 1.93+, but text must already be in the chat box;
    used as a fallback if plugin is missing).

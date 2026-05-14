@@ -29,6 +29,9 @@ from pathlib import Path
 from typing import Any
 
 from .agents import agent_lane_environment
+from .ide_router import resolve_ide_route
+from .autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
+from .autonomy.prompts import build_prompt
 from .autonomous_env import (
     apply_autonomous_env_overrides as _env_apply_autoloop_defaults,
 )
@@ -46,12 +49,11 @@ from .autonomous_wup import (
 from .autonomous_wup import (
     _read_wup_health as _read_wup_health_impl,
 )
-from .autonomy.prompts import build_prompt
 from .autopilot import default_socket_path
 from .autopilot.client import AutopilotClient
 from .autopilot.daemon import AutopilotDaemon
+from .autopilot.os_injector import OsInjectorError, inject_with_profile, load_profile
 from .autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide
-from .ide_router import resolve_ide_route
 from .init import init_project, resolve_project_agent_lane
 from .queue import (
     QueueLoopResult,
@@ -80,6 +82,23 @@ from .topology import is_component_enabled, is_pipeline_enabled
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
 
+def _try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | None:
+    """Best-effort global fallback via coordinate profile.
+
+    Enabled only when ``KORU_OS_INJECTOR_PROFILE`` is set.
+    """
+    profile_id = os.environ.get("KORU_OS_INJECTOR_PROFILE", "").strip()
+    if not profile_id:
+        return None
+    raw_cfg = os.environ.get("KORU_OS_INJECTOR_CONFIG", "").strip()
+    cfg = Path(raw_cfg).expanduser().resolve() if raw_cfg else None
+    try:
+        profile = load_profile(profile_id, config_path=cfg)
+        return inject_with_profile(profile=profile, text=prompt, submit=submit, dry_run=False)
+    except OsInjectorError as exc:
+        return {"ok": False, "backend": "os_injector", "message": str(exc), "type": "error"}
+
+
 def _stdio_info(msg: str, *, fmt: str) -> None:
     """Human-oriented status; jsonl mode routes to stderr so stdout stays NDJSON-only."""
     print(msg, file=sys.stderr if fmt == "jsonl" else sys.stdout)
@@ -100,6 +119,10 @@ class AutoloopState:
     wup_seen_events: int = 0
     autopilot_events: list[dict[str, Any]] = field(default_factory=list)
     last_message_sent_ts: float = 0.0
+    telemetry_autopilot_idle_streak_skips: int = 0
+    telemetry_scan_after_idle_runs: int = 0
+    telemetry_scan_after_idle_tickets_applied: int = 0
+    last_scan_after_idle_ts: float = -1.0
 
 
 @dataclass(frozen=True)
@@ -386,27 +409,6 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="action", required=True)
 
-    doctor = sub.add_parser(
-        "doctor",
-        help="Probe autodetect: IDE / MCP / autopilot socket. Read-only.",
-    )
-    doctor.add_argument(
-        "--project", type=Path, default=Path.cwd(), help="Project root."
-    )
-
-    heal = sub.add_parser(
-        "self-heal",
-        help="Apply safe automatic repairs (stale sockets, etc).",
-    )
-    heal.add_argument(
-        "--project", type=Path, default=Path.cwd(), help="Project root."
-    )
-    heal.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Only print what would be repaired; do not mutate state.",
-    )
-
     up = sub.add_parser("up", help="Configure and start autonomous loop.")
     up.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
     up.add_argument(
@@ -584,6 +586,16 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Comma-separated statuses skipped after repeated same waiting signature.",
     )
     up.add_argument(
+        "--autopilot-skip-drive-idle-streak",
+        type=int,
+        default=0,
+        help=(
+            "When >0, skip autopilot drive after this many consecutive identical "
+            "queue signatures while last_status is idle (0 = disabled; same counter "
+            "as stagnation backoff)."
+        ),
+    )
+    up.add_argument(
         "--backoff-on-stagnation",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -605,6 +617,25 @@ def _build_parser() -> argparse.ArgumentParser:
         type=int,
         default=1,
         help="Clean scan streak required before scan skip can apply.",
+    )
+    up.add_argument(
+        "--scan-after-idle-queue",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "After the queue drain reports idle, run `koru scan --apply` once per cycle "
+            "(e.g. with ticket-sources=queue: refresh code2llm / semcod-driven tickets)."
+        ),
+    )
+    up.add_argument(
+        "--scan-after-idle-min-interval",
+        type=float,
+        default=0.0,
+        metavar="SECONDS",
+        help=(
+            "Minimum wall-clock seconds between scan-after-idle-queue runs (0 = no limit). "
+            "Reduces repeated scans when the queue stays idle."
+        ),
     )
     up.add_argument(
         "--topology-integration",
@@ -1003,14 +1034,23 @@ def _run_cycle(
     autopilot_action: str = "drive",
     autopilot_on_idle_only: bool = False,
     autopilot_skip_on_diagnostics_fail: bool = True,
+    autopilot_skip_drive_idle_streak: int = 0,
     autopilot_skip_statuses: str = "waiting_input",
     scan_skip_if_clean: bool = False,
     scan_skip_after: int = 1,
+    scan_after_idle_queue: bool = False,
+    scan_after_idle_min_interval_seconds: float = 0.0,
     topology_integration: bool = True,
     stdio_format: str = "human",
     correlation_id: str = "",
 ) -> tuple[ScanResult | None, QueueLoopResult, str, DiagnosticResult]:
     state = state or AutoloopState()
+    cycle_telemetry: dict[str, Any] = {
+        "autopilot_skipped_idle_streak": False,
+        "scan_after_idle_run": False,
+        "scan_after_idle_applied": 0,
+        "scan_after_idle_skipped_rate_limit": False,
+    }
 
     # Auto-heal: best-effort stale socket removal so daemon restart can bind.
     try:
@@ -1018,13 +1058,13 @@ def _run_cycle(
         from .autonomy.heal import remove_stale_socket
         from .autopilot import default_socket_path
 
-        _sock = probe_socket_health(default_socket_path())
-        if _sock.stale:
-            _res = remove_stale_socket(_sock)
-            if _res.status == "fixed":
-                print(f"koru autonomous: auto-healed stale socket {_sock.path}")
+        sock = probe_socket_health(default_socket_path())
+        if sock.stale:
+            result = remove_stale_socket(sock)
+            if result.status == "fixed":
+                print(f"koru autonomous: auto-healed stale socket {sock.path}")
     except Exception:
-        pass  # never block the cycle for cleanup
+        pass
 
     def _emit(event_type: str, payload: dict, command: str | None = None) -> None:
         if stdio_format == "jsonl":
@@ -1164,6 +1204,65 @@ def _run_cycle(
             command=qcmd,
         )
 
+    if (
+        scan_after_idle_queue
+        and queue_result.last_status == "idle"
+        and _is_topology_enabled(
+            project, "scan:on-change", fallback=True, enabled=topology_integration
+        )
+    ):
+        now = time.time()
+        too_soon = (
+            scan_after_idle_min_interval_seconds > 0.0
+            and state.last_scan_after_idle_ts >= 0.0
+            and now - state.last_scan_after_idle_ts < scan_after_idle_min_interval_seconds
+        )
+        if too_soon:
+            wait = scan_after_idle_min_interval_seconds - (now - state.last_scan_after_idle_ts)
+            _hp(
+                f"- koru scan after idle skipped (min-interval "
+                f"{scan_after_idle_min_interval_seconds}s, ~{wait:.0f}s remaining)"
+            )
+            _emit(
+                "ScanSkipped",
+                {
+                    "cycle": cycle,
+                    "reason": "after_idle_rate_limit",
+                    "min_interval_seconds": scan_after_idle_min_interval_seconds,
+                },
+            )
+            cycle_telemetry["scan_after_idle_skipped_rate_limit"] = True
+        else:
+            scan_cmd = "koru scan --apply" + (
+                " --semcod-artifacts" if include_semcod_artifacts else ""
+            )
+            _hp("+ " + scan_cmd + " (queue idle → intake scan)")
+            idle_scan = run_scan(
+                project=project, apply=True, include_semcod_artifacts=include_semcod_artifacts
+            )
+            scan_result = idle_scan
+            state.last_scan_after_idle_ts = now
+            state.telemetry_scan_after_idle_runs += 1
+            state.telemetry_scan_after_idle_tickets_applied += len(idle_scan.applied)
+            cycle_telemetry["scan_after_idle_run"] = True
+            cycle_telemetry["scan_after_idle_applied"] = len(idle_scan.applied)
+            _hp(
+                f"  scan: suggestions={len(idle_scan.suggestions)} "
+                f"applied={len(idle_scan.applied)} skipped={len(idle_scan.skipped)}"
+            )
+            _emit(
+                "ScanCompleted",
+                {
+                    "cycle": cycle,
+                    "suggestions_count": len(idle_scan.suggestions),
+                    "applied_count": len(idle_scan.applied),
+                    "skipped_count": len(idle_scan.skipped),
+                    "semcod_artifacts": bool(include_semcod_artifacts),
+                    "phase": "after_idle_queue",
+                },
+                command=scan_cmd,
+            )
+
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
     signature = f"{queue_result.last_status}:{waiting_ticket}"
     if state.previous_signature and state.previous_signature == signature:
@@ -1251,6 +1350,18 @@ def _run_cycle(
         elif autopilot_skip_on_diagnostics_fail and diag_result.status == "failed":
             _hp("- autopilot skipped (diagnostics_fail)")
             autopilot_status = "skipped(diagnostics_fail)"
+        elif (
+            autopilot_skip_drive_idle_streak > 0
+            and queue_result.last_status == "idle"
+            and state.stagnation_streak >= autopilot_skip_drive_idle_streak
+        ):
+            _hp(
+                "- autopilot skipped "
+                f"(idle_streak_{state.stagnation_streak}>={autopilot_skip_drive_idle_streak})"
+            )
+            autopilot_status = "skipped(idle_streak)"
+            state.telemetry_autopilot_idle_streak_skips += 1
+            cycle_telemetry["autopilot_skipped_idle_streak"] = True
         elif state.stagnation_streak > 0 and _status_in_skip_list(
             queue_result.last_status, autopilot_skip_statuses
         ):
@@ -1273,6 +1384,12 @@ def _run_cycle(
             autopilot_drive_kind = decision.kind
             reply = client.drive(decision.prompt, submit=submit, ide=autopilot_ide)
             ok = bool(reply.get("ok", True))
+            if not ok:
+                fallback = _try_os_injector_fallback(decision.prompt, submit=submit)
+                if fallback is not None and bool(fallback.get("ok", False)):
+                    reply = fallback
+                    ok = True
+                    autopilot_drive_kind = f"{decision.kind}+os_injector_fallback"
             autopilot_status = "ok" if ok else "failed"
             autopilot_backend = (
                 str(reply.get("backend")) if reply.get("backend") is not None else None
@@ -1319,6 +1436,30 @@ def _run_cycle(
             "diagnostics_status": diag_result.status,
             "wup_status": wup_health.status,
             "autopilot_status": autopilot_status,
+            "telemetry": {
+                "cycle": cycle_telemetry,
+                "cumulative": {
+                    "autopilot_idle_streak_skips": state.telemetry_autopilot_idle_streak_skips,
+                    "scan_after_idle_runs": state.telemetry_scan_after_idle_runs,
+                    "scan_after_idle_tickets_applied": state.telemetry_scan_after_idle_tickets_applied,
+                },
+            },
+        },
+    )
+
+    write_autonomy_cycle_telemetry(
+        project,
+        cycle=cycle,
+        cumulative={
+            "autopilot_idle_streak_skips": state.telemetry_autopilot_idle_streak_skips,
+            "scan_after_idle_runs": state.telemetry_scan_after_idle_runs,
+            "scan_after_idle_tickets_applied": state.telemetry_scan_after_idle_tickets_applied,
+        },
+        cycle_metrics=cycle_telemetry,
+        knobs={
+            "scan_after_idle_queue": scan_after_idle_queue,
+            "scan_after_idle_min_interval_seconds": scan_after_idle_min_interval_seconds,
+            "autopilot_skip_drive_idle_streak": autopilot_skip_drive_idle_streak,
         },
     )
 
@@ -1469,9 +1610,12 @@ def _action_up(args: argparse.Namespace) -> int:
                 autopilot_action=args.autopilot_action,
                 autopilot_on_idle_only=args.autopilot_on_idle_only,
                 autopilot_skip_on_diagnostics_fail=args.autopilot_skip_on_diagnostics_fail,
+                autopilot_skip_drive_idle_streak=args.autopilot_skip_drive_idle_streak,
                 autopilot_skip_statuses=args.autopilot_skip_statuses,
                 scan_skip_if_clean=args.scan_skip_if_clean,
                 scan_skip_after=args.scan_skip_after,
+                scan_after_idle_queue=args.scan_after_idle_queue,
+                scan_after_idle_min_interval_seconds=args.scan_after_idle_min_interval,
                 topology_integration=args.topology_integration,
                 stdio_format=args.emit_events,
                 correlation_id=correlation_id,
@@ -1583,78 +1727,12 @@ def autonomous_main(argv: list[str]) -> int:
             "--no-semcod-artifacts",
             *argv[1:],
         ]
-    else:
-        # Find first non-option token to see if a subcommand was already given.
-        first_non_opt = None
-        for token in argv:
-            if not token.startswith("-"):
-                first_non_opt = token
-                break
-        if first_non_opt not in ("up", "doctor", "self-heal"):
-            argv = ["up", *argv]
+    elif argv[0] != "up" and argv[0] not in ("-h", "--help"):
+        argv = ["up", *argv]
     args = _build_parser().parse_args(argv)
     if args.action == "up":
         return _action_up(args)
-    if args.action == "doctor":
-        return _action_doctor(args)
-    if args.action == "self-heal":
-        return _action_self_heal(args)
     return 2
-
-
-def _action_doctor(args: argparse.Namespace) -> int:
-    """Print autodetected environment + fixable issues (read-only)."""
-    from .autonomy.environment import probe_environment
-    from .autopilot import default_socket_path
-
-    project = args.project.resolve()
-    socket_path = (args.socket or default_socket_path()).resolve()
-    report = probe_environment(project, autopilot_socket=socket_path)
-
-    print(f"koru autonomous doctor — project: {project}")
-    print(f"  headless:               {report.headless}")
-    print(f"  installed IDEs:         {', '.join(report.installed_ides) or '(none)'}")
-    print(f"  MCP enabled for:        {', '.join(report.mcp_enabled_ides) or '(none)'}")
-    if report.autopilot_socket is not None:
-        s = report.autopilot_socket
-        state = "healthy" if s.healthy else ("stale" if s.stale else "missing")
-        print(f"  autopilot socket:       {state} ({s.path})")
-    print(f"  can use plugin_socket:  {report.can_use_plugin_socket}")
-    print(f"  can use mcp:            {report.can_use_mcp}")
-    if report.notes:
-        print("  notes:")
-        for n in report.notes:
-            print(f"    - {n}")
-    if report.fixable_issues:
-        print("  fixable issues:")
-        for i in report.fixable_issues:
-            print(f"    - {i}")
-        print("  run `koru autonomous self-heal` to apply automatic repairs")
-        return 1
-    print("  no issues detected.")
-    return 0
-
-
-def _action_self_heal(args: argparse.Namespace) -> int:
-    """Apply safe, idempotent repairs to the autonomy environment."""
-    from .autonomy.environment import probe_environment
-    from .autonomy.heal import heal_environment, summarise
-    from .autopilot import default_socket_path
-
-    project = args.project.resolve()
-    socket_path = (args.socket or default_socket_path()).resolve()
-    report = probe_environment(project, autopilot_socket=socket_path)
-    results = heal_environment(report, dry_run=args.dry_run)
-
-    print(f"koru autonomous self-heal — project: {project} (dry_run={args.dry_run})")
-    if not results:
-        print("  nothing to fix.")
-        return 0
-    for r in results:
-        print(f"  [{r.status}] {r.action}: {r.detail}")
-    print(f"  {summarise(results)}")
-    failed = sum(1 for r in results if r.status == "failed")
-    return 1 if failed else 0
 
 
 __all__ = [

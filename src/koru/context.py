@@ -35,6 +35,7 @@ from .dotenv_loader import load_dotenv as _load_dotenv_impl
 from .policy import Policy, load_policy
 from .project_pipeline import build_project_pipeline_brief
 from .runtime import planfile_dir
+from .autonomy.telemetry_snapshot import build_autonomy_loop_brief
 
 # Cache so we only load `.env` once per project per process (multiple
 # `build_context` calls — e.g. dashboard auto-refresh — would otherwise
@@ -460,6 +461,7 @@ def build_context(
         "instructions": instructions,
         "self_service": self_service,
         "project_pipeline": project_pipeline,
+        "autonomy_loop": build_autonomy_loop_brief(project),
     }
 
 
@@ -1121,6 +1123,36 @@ def _render_dashboard() -> list[str]:
     ]
 
 
+def _render_autonomy_loop_brief(ctx: dict[str, Any]) -> list[str]:
+    block = ctx.get("autonomy_loop") or {}
+    lines: list[str] = ["## Autonomy loop (koru autonomous)", ""]
+    snap = block.get("last_run_snapshot")
+    if isinstance(snap, dict) and snap:
+        lines.append("_Last completed cycle (`.planfile/.koru/autonomy-telemetry.json`):_")
+        lines.append("")
+        lines.append("```json")
+        lines.append(json.dumps(snap, indent=2, sort_keys=True))
+        lines.append("```")
+        lines.append("")
+    else:
+        lines.append(
+            "_No autonomy telemetry file yet — it appears after at least one "
+            "`koru autonomous up` cycle._"
+        )
+        lines.append("")
+    hints = block.get("environment_hints") or {}
+    if hints:
+        lines.append("Relevant process environment (only non-empty keys):")
+        for key in sorted(hints):
+            lines.append(f"- `{key}`={hints[key]!r}")
+        lines.append("")
+    tf = block.get("telemetry_file")
+    if tf:
+        lines.append(f"Telemetry path: `{tf}`")
+        lines.append("")
+    return lines
+
+
 def render_markdown_handoff(context: dict[str, Any]) -> str:
     """Turn a context dict into a Markdown brief for the operator.
 
@@ -1142,6 +1174,7 @@ def render_markdown_handoff(context: dict[str, Any]) -> str:
     semcod_tools = env.get("semcod_tools") or []
 
     lines.extend(_render_environment(env, project))
+    lines.extend(_render_autonomy_loop_brief(context))
     lines.extend(_render_agent_lanes(agents))
     lines.extend(_render_semcod_tools(semcod_tools))
 

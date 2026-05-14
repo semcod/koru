@@ -10,6 +10,7 @@ from __future__ import annotations
 import errno
 import json
 import socket
+import subprocess
 import tempfile
 import threading
 import time
@@ -23,6 +24,7 @@ from unittest import mock
 
 from koru.serve import (
     ServeConfig,
+    _bulk_waiting_input_action,
     bind_serve_server,
     build_server,
     read_serve_endpoint,
@@ -258,6 +260,43 @@ def test_cmdline_suggests_koru_serve_from_bytes() -> None:
     )
     assert _cmdline_suggests_koru_serve_from_bytes(b"/opt/koru\x00serve\x00")
     assert not _cmdline_suggests_koru_serve_from_bytes(b"/usr/bin/koru\x00mcp-serve\x00")
+
+
+def test_bulk_waiting_input_action_approve() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        project = Path(tmp)
+        tickets = [{"id": "A-1", "status": "waiting_input"}]
+        ok = subprocess.CompletedProcess(args=["planfile"], returncode=0, stdout="", stderr="")
+        with mock.patch("koru.serve._list_tickets", return_value=tickets):
+            with mock.patch("koru.serve.planfile_command", return_value=ok) as cmd:
+                out = _bulk_waiting_input_action(
+                    project,
+                    ticket_ids=["A-1"],
+                    action="approve",
+                    reason="",
+                )
+        assert out["ok"] is True
+        assert out["applied"][0]["ok"] is True
+        assert cmd.call_count == 3
+
+
+def test_bulk_waiting_input_action_reject() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        project = Path(tmp)
+        tickets = [{"id": "A-2", "status": "waiting_input"}]
+        ok = subprocess.CompletedProcess(args=["planfile"], returncode=0, stdout="", stderr="")
+        with mock.patch("koru.serve._list_tickets", return_value=tickets):
+            with mock.patch("koru.serve.planfile_command", return_value=ok) as cmd:
+                out = _bulk_waiting_input_action(
+                    project,
+                    ticket_ids=["A-2"],
+                    action="reject",
+                    reason="manual reject",
+                )
+        assert out["ok"] is True
+        assert out["applied"][0]["action"] == "reject"
+        assert out["applied"][0]["ok"] is True
+        assert cmd.call_count == 1
     assert not _cmdline_suggests_koru_serve_from_bytes(b"/usr/bin/python\x00-m\x00http.server\x00")
 
 

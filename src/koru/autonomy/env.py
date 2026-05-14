@@ -29,12 +29,15 @@ AUTOLOOP_ENV_DEFAULTS: dict[str, str] = {
     "AUTOPILOT_SUBMIT": "true",
     "AUTOPILOT_ON_IDLE_ONLY": "false",
     "AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL": "true",
+    "AUTOPILOT_SKIP_DRIVE_IDLE_STREAK": "0",
     "ENABLE_IDLE_DIAGNOSTICS": "false",
     "IDLE_DIAGNOSTICS_PROFILE": "quick",
     "STRICT_DIAGNOSTICS": "false",
     "ENABLE_DIAGNOSTIC_TICKETS": "false",
     "DIAGNOSTIC_TICKET_QUEUE": "default",
     "DIAGNOSTIC_TICKET_PRIORITY": "high",
+    "SCAN_AFTER_IDLE_QUEUE": "false",
+    "SCAN_AFTER_IDLE_MIN_INTERVAL_SECONDS": "0",
     "TOPOLOGY_INTEGRATION": "true",
     "USE_ALL_QUEUES": "false",
     "MAX_ITERATIONS": "50",
@@ -123,10 +126,25 @@ def apply_autoloop_env_to_args(
     args.autopilot_skip_statuses = _env_get(
         "AUTOPILOT_SKIP_STATUSES", args.autopilot_skip_statuses, environ
     ) or args.autopilot_skip_statuses
+    _idle_streak_raw = _env_get("AUTOPILOT_SKIP_DRIVE_IDLE_STREAK", None, environ)
+    if _idle_streak_raw is not None and str(_idle_streak_raw).strip():
+        try:
+            args.autopilot_skip_drive_idle_streak = max(0, int(str(_idle_streak_raw).strip()))
+        except ValueError:
+            pass
     args.backoff_on_stagnation = env_truthy(
         "BACKOFF_ON_STAGNATION", args.backoff_on_stagnation, environ=environ
     )
     args.scan_skip_if_clean = env_truthy("SCAN_SKIP_IF_CLEAN", args.scan_skip_if_clean, environ=environ)
+    args.scan_after_idle_queue = env_truthy(
+        "SCAN_AFTER_IDLE_QUEUE", args.scan_after_idle_queue, environ=environ
+    )
+    _idle_min_raw = _env_get("SCAN_AFTER_IDLE_MIN_INTERVAL_SECONDS", None, environ)
+    if _idle_min_raw is not None and str(_idle_min_raw).strip():
+        try:
+            args.scan_after_idle_min_interval = max(0.0, float(str(_idle_min_raw).strip()))
+        except ValueError:
+            pass
     args.topology_integration = env_truthy("TOPOLOGY_INTEGRATION", args.topology_integration, environ=environ)
     _emap = os.environ if environ is None else environ
     env_wup_watch = _emap.get("WUP_WATCH")

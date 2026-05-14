@@ -1016,23 +1016,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:50:49.986787Z'
+        lease_expires_at: '2026-05-14T17:50:47.442399Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:50:48.276544Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:50:47.603385+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:50:48.443450+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:50:50.146254+00:00'
       id: STARTER-011
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:36:56.064117Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:36:56.065024Z'
+      updated_at: '2026-05-14T16:50:50.146221+00:00'
     STARTER-012:
       acceptance_criteria: []
       blocked_by: []
@@ -1043,23 +1083,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:50:53.926060Z'
+        lease_expires_at: '2026-05-14T17:50:51.386399Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:50:52.213747Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:50:51.549053+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:50:52.375254+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:50:54.090859+00:00'
       id: STARTER-012
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:36:56.530009Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:36:56.531071Z'
+      updated_at: '2026-05-14T16:50:54.090826+00:00'
     STARTER-013:
       acceptance_criteria: []
       blocked_by: []
@@ -1121,23 +1201,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:50:57.967134Z'
+        lease_expires_at: '2026-05-14T17:50:55.355100Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:50:56.217961Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:50:55.529105+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:50:56.384238+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:50:58.140549+00:00'
       id: STARTER-015
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:37:30.514552Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:37:30.515435Z'
+      updated_at: '2026-05-14T16:50:58.140516+00:00'
     STARTER-016:
       acceptance_criteria: []
       blocked_by: []
@@ -1148,23 +1268,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:51:01.890269Z'
+        lease_expires_at: '2026-05-14T17:50:59.370706Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:51:00.206871Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:50:59.535213+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:51:00.371646+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:51:02.053318+00:00'
       id: STARTER-016
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:37:31.014731Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:37:31.015790Z'
+      updated_at: '2026-05-14T16:51:02.053289+00:00'
     STARTER-017:
       acceptance_criteria: []
       blocked_by: []
@@ -1226,23 +1386,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:51:05.925953Z'
+        lease_expires_at: '2026-05-14T17:51:03.330869Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:51:04.205287Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:51:03.522493+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:51:04.376168+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:51:06.093742+00:00'
       id: STARTER-019
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:38:04.754065Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:38:04.754919Z'
+      updated_at: '2026-05-14T16:51:06.093712+00:00'
     STARTER-020:
       acceptance_criteria: []
       blocked_by: []
@@ -1253,23 +1453,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:51:09.872979Z'
+        lease_expires_at: '2026-05-14T17:51:07.335564Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:51:08.181011Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:51:07.503421+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:51:08.354313+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:51:10.043302+00:00'
       id: STARTER-020
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:38:05.227131Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:38:05.228195Z'
+      updated_at: '2026-05-14T16:51:10.043270+00:00'
     STARTER-021:
       acceptance_criteria: []
       blocked_by: []
@@ -1331,23 +1571,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:51:14.088930Z'
+        lease_expires_at: '2026-05-14T17:51:11.360452Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:51:12.208164Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:51:11.535552+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:51:12.378856+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:51:14.265942+00:00'
       id: STARTER-023
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:38:39.061356Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:38:39.062258Z'
+      updated_at: '2026-05-14T16:51:14.265887+00:00'
     STARTER-024:
       acceptance_criteria: []
       blocked_by: []
@@ -1358,23 +1638,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:51:18.320016Z'
+        lease_expires_at: '2026-05-14T17:51:15.578789Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:51:16.474081Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:51:15.759286+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:51:16.656103+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:51:18.500178+00:00'
       id: STARTER-024
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:38:39.559594Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:38:39.560457Z'
+      updated_at: '2026-05-14T16:51:18.500142+00:00'
     STARTER-025:
       acceptance_criteria: []
       blocked_by: []
@@ -1436,23 +1756,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:51:22.464184Z'
+        lease_expires_at: '2026-05-14T17:51:19.841846Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:51:20.718901Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:51:20.017052+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:51:20.893602+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:51:22.674308+00:00'
       id: STARTER-027
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:39:13.420390Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:39:13.421245Z'
+      updated_at: '2026-05-14T16:51:22.674251+00:00'
     STARTER-028:
       acceptance_criteria: []
       blocked_by: []
@@ -1463,23 +1823,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:51:26.614719Z'
+        lease_expires_at: '2026-05-14T17:51:23.977282Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:51:24.830123Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:51:24.151675+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:51:25.028868+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:51:26.794028+00:00'
       id: STARTER-028
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:39:13.895943Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:39:13.896797Z'
+      updated_at: '2026-05-14T16:51:26.793998+00:00'
     STARTER-029:
       acceptance_criteria: []
       blocked_by: []
@@ -1541,23 +1941,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:51:30.661800Z'
+        lease_expires_at: '2026-05-14T17:51:28.072047Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:51:28.947797Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:51:28.261291+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:51:29.129634+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:51:30.841462+00:00'
       id: STARTER-031
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:39:47.750239Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:39:47.751092Z'
+      updated_at: '2026-05-14T16:51:30.841430+00:00'
     STARTER-032:
       acceptance_criteria: []
       blocked_by: []
@@ -1568,23 +2008,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:51:35.915621Z'
+        lease_expires_at: '2026-05-14T17:51:32.114273Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:51:33.271066Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:51:32.332286+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:51:33.636655+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:51:36.144947+00:00'
       id: STARTER-032
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:39:48.225115Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:39:48.225994Z'
+      updated_at: '2026-05-14T16:51:36.144908+00:00'
     STARTER-033:
       acceptance_criteria: []
       blocked_by: []
@@ -1646,23 +2126,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:51:42.925822Z'
+        lease_expires_at: '2026-05-14T17:51:38.218751Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:51:39.639761Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:51:38.494993+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:51:40.002773+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:51:43.181516+00:00'
       id: STARTER-035
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:40:22.189546Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:40:22.190422Z'
+      updated_at: '2026-05-14T16:51:43.181480+00:00'
     STARTER-036:
       acceptance_criteria: []
       blocked_by: []
@@ -1673,23 +2193,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:51:48.508530Z'
+        lease_expires_at: '2026-05-14T17:51:45.117124Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:51:46.634683Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:51:45.492163+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:51:46.865115+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:51:48.694162+00:00'
       id: STARTER-036
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:40:22.666070Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:40:22.666919Z'
+      updated_at: '2026-05-14T16:51:48.694129+00:00'
     STARTER-037:
       acceptance_criteria: []
       blocked_by: []
@@ -1751,23 +2311,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:51:52.668962Z'
+        lease_expires_at: '2026-05-14T17:51:49.986169Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:51:50.899199Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:51:50.177918+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:51:51.089673+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:51:52.859026+00:00'
       id: STARTER-039
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:40:56.708373Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:40:56.709272Z'
+      updated_at: '2026-05-14T16:51:52.858996+00:00'
     STARTER-040:
       acceptance_criteria: []
       blocked_by: []
@@ -1778,23 +2378,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:51:56.883364Z'
+        lease_expires_at: '2026-05-14T17:51:54.136911Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:51:55.060325Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:51:54.322303+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:51:55.256508+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:51:57.072443+00:00'
       id: STARTER-040
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:40:57.213167Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:40:57.214062Z'
+      updated_at: '2026-05-14T16:51:57.072406+00:00'
     STARTER-041:
       acceptance_criteria: []
       blocked_by: []
@@ -1856,23 +2496,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:52:01.219701Z'
+        lease_expires_at: '2026-05-14T17:51:58.394302Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:51:59.342532Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:51:58.594989+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:51:59.543714+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:52:01.418312+00:00'
       id: STARTER-043
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:41:31.298703Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:41:31.299673Z'
+      updated_at: '2026-05-14T16:52:01.418276+00:00'
     STARTER-044:
       acceptance_criteria: []
       blocked_by: []
@@ -1883,23 +2563,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:52:05.504769Z'
+        lease_expires_at: '2026-05-14T17:52:02.749702Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:52:03.666776Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:52:02.945613+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:52:03.860419+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:52:05.698630+00:00'
       id: STARTER-044
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:41:31.830832Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:41:31.831909Z'
+      updated_at: '2026-05-14T16:52:05.698592+00:00'
     STARTER-045:
       acceptance_criteria: []
       blocked_by: []
@@ -1961,23 +2681,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:52:09.837352Z'
+        lease_expires_at: '2026-05-14T17:52:07.087016Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:52:08.053079Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:52:07.295268+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:52:08.251329+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:52:10.070598+00:00'
       id: STARTER-047
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:42:06.201392Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:42:06.202274Z'
+      updated_at: '2026-05-14T16:52:10.070567+00:00'
     STARTER-048:
       acceptance_criteria: []
       blocked_by: []
@@ -1988,23 +2748,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:52:14.228475Z'
+        lease_expires_at: '2026-05-14T17:52:11.420482Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:52:12.388981Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:52:11.630379+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:52:12.595349+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:52:14.434180+00:00'
       id: STARTER-048
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:42:06.746314Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:42:06.747328Z'
+      updated_at: '2026-05-14T16:52:14.434139+00:00'
     STARTER-049:
       acceptance_criteria: []
       blocked_by: []
@@ -2066,23 +2866,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:52:18.598445Z'
+        lease_expires_at: '2026-05-14T17:52:15.778454Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:52:16.715733Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:52:15.980628+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:52:16.916193+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:52:18.813557+00:00'
       id: STARTER-051
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:42:41.141715Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:42:41.142602Z'
+      updated_at: '2026-05-14T16:52:18.813523+00:00'
     STARTER-052:
       acceptance_criteria: []
       blocked_by: []
@@ -2093,23 +2933,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:52:23.353565Z'
+        lease_expires_at: '2026-05-14T17:52:20.283732Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:52:21.313626Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:52:20.496846+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:52:21.529742+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:52:23.577436+00:00'
       id: STARTER-052
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:42:41.673477Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:42:41.674372Z'
+      updated_at: '2026-05-14T16:52:23.577394+00:00'
     STARTER-053:
       acceptance_criteria: []
       blocked_by: []
@@ -2171,23 +3051,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:52:28.718342Z'
+        lease_expires_at: '2026-05-14T17:52:25.046336Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:52:26.152448Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:52:25.266505+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:52:26.421095+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:52:28.970220+00:00'
       id: STARTER-055
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:43:15.867535Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:43:15.868454Z'
+      updated_at: '2026-05-14T16:52:28.970188+00:00'
     STARTER-056:
       acceptance_criteria: []
       blocked_by: []
@@ -2198,23 +3118,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:52:34.270021Z'
+        lease_expires_at: '2026-05-14T17:52:30.614422Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:52:31.944525Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:52:30.904136+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:52:32.238116+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:52:34.521665+00:00'
       id: STARTER-056
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:43:16.417068Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:43:16.418157Z'
+      updated_at: '2026-05-14T16:52:34.521622+00:00'
     STARTER-057:
       acceptance_criteria: []
       blocked_by: []
@@ -2276,23 +3236,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:52:39.356285Z'
+        lease_expires_at: '2026-05-14T17:52:36.207915Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:52:37.254631Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:52:36.445154+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:52:37.487670+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:52:39.582420+00:00'
       id: STARTER-059
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:43:50.612318Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:43:50.613245Z'
+      updated_at: '2026-05-14T16:52:39.582385+00:00'
     STARTER-060:
       acceptance_criteria: []
       blocked_by: []
@@ -2303,23 +3303,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:52:44.671016Z'
+        lease_expires_at: '2026-05-14T17:52:41.198899Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:52:42.276313Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:52:41.423329+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:52:42.525986+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:52:44.900009+00:00'
       id: STARTER-060
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:43:51.136035Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:43:51.136939Z'
+      updated_at: '2026-05-14T16:52:44.899977+00:00'
     STARTER-061:
       acceptance_criteria: []
       blocked_by: []
@@ -2381,23 +3421,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:52:49.816872Z'
+        lease_expires_at: '2026-05-14T17:52:46.675572Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:52:47.748437Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:52:46.911884+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:52:47.970980+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:52:50.047399+00:00'
       id: STARTER-063
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:44:25.291624Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:44:25.292474Z'
+      updated_at: '2026-05-14T16:52:50.047356+00:00'
     STARTER-064:
       acceptance_criteria: []
       blocked_by: []
@@ -2408,23 +3488,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:52:54.837974Z'
+        lease_expires_at: '2026-05-14T17:52:51.618095Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:52:52.739276Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:52:51.878530+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:52:52.962331+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:52:55.077483+00:00'
       id: STARTER-064
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:44:25.819776Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:44:25.820643Z'
+      updated_at: '2026-05-14T16:52:55.077448+00:00'
     STARTER-065:
       acceptance_criteria: []
       blocked_by: []
@@ -2486,23 +3606,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:52:59.722744Z'
+        lease_expires_at: '2026-05-14T17:52:56.568218Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:52:57.638434Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:52:56.797965+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:52:57.857772+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:52:59.971642+00:00'
       id: STARTER-067
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:44:59.997745Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:44:59.998618Z'
+      updated_at: '2026-05-14T16:52:59.971605+00:00'
     STARTER-068:
       acceptance_criteria: []
       blocked_by: []
@@ -2513,23 +3673,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:53:04.615674Z'
+        lease_expires_at: '2026-05-14T17:53:01.572487Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:53:02.618718Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:53:01.795294+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:53:02.839174+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:53:04.847317+00:00'
       id: STARTER-068
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:45:00.585353Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:45:00.586234Z'
+      updated_at: '2026-05-14T16:53:04.847281+00:00'
     STARTER-069:
       acceptance_criteria: []
       blocked_by: []
@@ -2591,23 +3791,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:53:09.603966Z'
+        lease_expires_at: '2026-05-14T17:53:06.376862Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:53:07.493694Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:53:06.619122+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:53:07.729672+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:53:09.846839+00:00'
       id: STARTER-071
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:45:34.997768Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:45:34.999007Z'
+      updated_at: '2026-05-14T16:53:09.846796+00:00'
     STARTER-072:
       acceptance_criteria: []
       blocked_by: []
@@ -2618,23 +3858,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:53:14.696502Z'
+        lease_expires_at: '2026-05-14T17:53:11.454660Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:53:12.581975Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:53:11.702286+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:53:12.810088+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:53:14.933158+00:00'
       id: STARTER-072
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:45:35.567387Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:45:35.568318Z'
+      updated_at: '2026-05-14T16:53:14.933117+00:00'
     STARTER-073:
       acceptance_criteria: []
       blocked_by: []
@@ -2696,23 +3976,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:53:19.837085Z'
+        lease_expires_at: '2026-05-14T17:53:16.673538Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:53:17.748616Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:53:16.907507+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:53:17.983244+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:53:20.089333+00:00'
       id: STARTER-075
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:46:09.861874Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:46:09.862775Z'
+      updated_at: '2026-05-14T16:53:20.089291+00:00'
     STARTER-076:
       acceptance_criteria: []
       blocked_by: []
@@ -2723,23 +4043,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:53:24.707713Z'
+        lease_expires_at: '2026-05-14T17:53:21.620189Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:53:22.666132Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:53:21.851827+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:53:22.903895+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:53:24.941497+00:00'
       id: STARTER-076
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:46:10.451883Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:46:10.452841Z'
+      updated_at: '2026-05-14T16:53:24.941460+00:00'
     STARTER-077:
       acceptance_criteria: []
       blocked_by: []
@@ -2801,23 +4161,63 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:53:29.707205Z'
+        lease_expires_at: '2026-05-14T17:53:26.441092Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:53:27.638023Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:53:26.704060+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:53:27.884839+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:53:29.948825+00:00'
       id: STARTER-079
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:46:44.832895Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:46:44.833825Z'
+      updated_at: '2026-05-14T16:53:29.948789+00:00'
     STARTER-080:
       acceptance_criteria: []
       blocked_by: []
@@ -2828,23 +4228,63 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:53:34.529167Z'
+        lease_expires_at: '2026-05-14T17:53:31.431025Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:53:32.492588Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:53:31.667224+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:53:32.738446+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:53:34.764789+00:00'
       id: STARTER-080
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:46:45.447866Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:46:45.448752Z'
+      updated_at: '2026-05-14T16:53:34.764744+00:00'
     STARTER-081:
       acceptance_criteria: []
       blocked_by: []
@@ -2980,9 +4420,46 @@ sprint:
       created_at: '2026-05-13T11:56:12.562505Z'
       description: '`project/analysis.toon.yaml` reports `_action_up` with CC=28 (limit=15).
         Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:53:41.016550Z'
+        lease_expires_at: '2026-05-14T17:53:36.253358Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:53:37.313213Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:53:36.495014+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:53:37.564349+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:53:41.348559+00:00'
       id: STARTER-084
       labels:
       - code2llm
@@ -2990,15 +4467,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: _action_up (CC=28, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:12.560749Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:12.562509Z'
+      updated_at: '2026-05-14T16:53:41.348519+00:00'
     STARTER-085:
       acceptance_criteria: []
       blocked_by: []
@@ -3007,9 +4487,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `_agent_main` with CC=19
         (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
         pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:53:49.151083Z'
+        lease_expires_at: '2026-05-14T17:53:43.455619Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:53:45.304036Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:53:43.884215+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:53:45.826316+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:53:49.735578+00:00'
       id: STARTER-085
       labels:
       - code2llm
@@ -3017,15 +4534,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: _agent_main (CC=19, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:13.433798Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:13.434909Z'
+      updated_at: '2026-05-14T16:53:49.735524+00:00'
     STARTER-086:
       acceptance_criteria: []
       blocked_by: []
@@ -3034,9 +4554,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `_build_shared_rules` with
         CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
         strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:53:56.729947Z'
+        lease_expires_at: '2026-05-14T17:53:52.465538Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:53:54.317989Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:53:52.925765+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:53:54.729388+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:53:56.980315+00:00'
       id: STARTER-086
       labels:
       - code2llm
@@ -3044,15 +4601,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: _build_shared_rules (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:14.268475Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:14.269971Z'
+      updated_at: '2026-05-14T16:53:56.980279+00:00'
     STARTER-087:
       acceptance_criteria: []
       blocked_by: []
@@ -3061,9 +4621,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `_fetch_ticket_data` with
         CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
         strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:54:01.685341Z'
+        lease_expires_at: '2026-05-14T17:53:58.533307Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:53:59.605631Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:53:58.785422+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:53:59.849495+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:54:01.932748+00:00'
       id: STARTER-087
       labels:
       - code2llm
@@ -3071,15 +4668,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: _fetch_ticket_data (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:15.227576Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:15.229795Z'
+      updated_at: '2026-05-14T16:54:01.932714+00:00'
     STARTER-088:
       acceptance_criteria: []
       blocked_by: []
@@ -3087,9 +4687,46 @@ sprint:
       created_at: '2026-05-13T11:56:16.311923Z'
       description: '`project/analysis.toon.yaml` reports `_gc_main` with CC=18 (limit=15).
         Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T16:54:06.817490Z'
+        lease_expires_at: '2026-05-14T17:54:03.574976Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T16:54:04.716228Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T16:54:03.846367+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T16:54:04.973305+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T16:54:07.071040+00:00'
       id: STARTER-088
       labels:
       - code2llm
@@ -3097,15 +4734,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: _gc_main (CC=18, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:16.310598Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:16.311928Z'
+      updated_at: '2026-05-14T16:54:07.071005+00:00'
     STARTER-089:
       acceptance_criteria: []
       blocked_by: []

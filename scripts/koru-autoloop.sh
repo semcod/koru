@@ -56,6 +56,10 @@
 #                                              autopilot drive is skipped on the
 #                                              SECOND+ consecutive cycle with the
 #                                              same status+waiting_ticket_id)
+#     AUTOPILOT_SKIP_DRIVE_IDLE_STREAK=0      (when >0, skip autopilot drive when
+#                                              queue is idle and stagnation_streak
+#                                              reaches this threshold; same counter
+#                                              as BACKOFF_ON_STAGNATION)
 #     BACKOFF_ON_STAGNATION=true              (when (status,waiting_id) repeats,
 #                                              multiply SLEEP_SECONDS by 2^streak,
 #                                              capped at MAX_SLEEP_SECONDS)
@@ -115,6 +119,7 @@ DIAGNOSTIC_TICKET_PRIORITY="${DIAGNOSTIC_TICKET_PRIORITY:-high}"
 DIAG_STATE_DIR="${DIAG_STATE_DIR:-.planfile/.koru/autoloop-diag}"
 
 AUTOPILOT_SKIP_STATUSES="${AUTOPILOT_SKIP_STATUSES:-waiting_input}"
+AUTOPILOT_SKIP_DRIVE_IDLE_STREAK="${AUTOPILOT_SKIP_DRIVE_IDLE_STREAK:-0}"
 BACKOFF_ON_STAGNATION="${BACKOFF_ON_STAGNATION:-true}"
 MAX_SLEEP_SECONDS="${MAX_SLEEP_SECONDS:-900}"
 SCAN_SKIP_IF_CLEAN="${SCAN_SKIP_IF_CLEAN:-false}"
@@ -410,7 +415,7 @@ echo "koru:autoloop scan=$ENABLE_SCAN autopilot_drive=$ENABLE_AUTOPILOT_DRIVE in
 echo "koru:autoloop ticket_sources=$TICKET_SOURCES -> scan=$effective_enable_scan use_all_queues=$effective_use_all_queues idle_diag=$effective_enable_idle_diagnostics profile=$effective_idle_profile"
 echo "koru:autoloop diagnostic_tickets=$effective_enable_diag_tickets queue=$DIAGNOSTIC_TICKET_QUEUE priority=$DIAGNOSTIC_TICKET_PRIORITY"
 echo "koru:autoloop strict_diagnostics=$STRICT_DIAGNOSTICS autopilot_skip_on_diag_fail=$AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL"
-echo "koru:autoloop stagnation: skip_statuses=$AUTOPILOT_SKIP_STATUSES backoff=$BACKOFF_ON_STAGNATION max_sleep=${MAX_SLEEP_SECONDS}s scan_skip_if_clean=$SCAN_SKIP_IF_CLEAN"
+echo "koru:autoloop stagnation: skip_statuses=$AUTOPILOT_SKIP_STATUSES skip_idle_streak=${AUTOPILOT_SKIP_DRIVE_IDLE_STREAK:-0} backoff=$BACKOFF_ON_STAGNATION max_sleep=${MAX_SLEEP_SECONDS}s scan_skip_if_clean=$SCAN_SKIP_IF_CLEAN"
 echo "koru:autoloop topology_integration=$TOPOLOGY_INTEGRATION topology_supported=${topology_supported}"
 
 if [ "$INITIAL_DELAY_SECONDS" != "0" ]; then
@@ -540,6 +545,13 @@ while true; do
       if [ "$stagnation_streak" -gt 0 ] && status_in_skip_list "$queue_last_status"; then
         should_run=false
         skip_reason="stuck_${queue_last_status}_streak_${stagnation_streak}"
+      fi
+      if [ "$should_run" = "true" ] \
+        && [ "${AUTOPILOT_SKIP_DRIVE_IDLE_STREAK:-0}" -gt 0 ] \
+        && [ "$queue_idle" = "true" ] \
+        && [ "$stagnation_streak" -ge "$AUTOPILOT_SKIP_DRIVE_IDLE_STREAK" ]; then
+        should_run=false
+        skip_reason="idle_streak"
       fi
       if [ "$should_run" = "true" ]; then
         run_autopilot

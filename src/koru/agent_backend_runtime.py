@@ -18,10 +18,12 @@ Lane → backend resolution lives in :func:`build_agent_backend`.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from pathlib import Path
 from typing import Any, Protocol
 
 from .autopilot.client import AutopilotClient
+from .autopilot.os_injector import OsInjectorError, inject_with_profile, load_profile
 
 
 class AgentBackend(Protocol):
@@ -113,6 +115,30 @@ class NoopBackend:
         }
 
 
+@dataclass
+class OsInjectorBackend:
+    """Coordinate-based fallback backend (X11 + xdotool)."""
+
+    profile_id: str
+    config_path: Path | None = None
+
+    def send_chat(
+        self,
+        project: Path,
+        prompt: str,
+        *,
+        ide: str,
+        submit: bool,
+        ticket_id: str | None = None,
+    ) -> dict[str, Any]:
+        del project, ide, ticket_id
+        try:
+            profile = load_profile(self.profile_id, config_path=self.config_path)
+            return inject_with_profile(profile=profile, text=prompt, submit=submit, dry_run=False)
+        except OsInjectorError as exc:
+            return {"ok": False, "backend": "os_injector", "message": str(exc), "type": "error"}
+
+
 def build_agent_backend(
     *,
     backend_id: str,
@@ -123,7 +149,7 @@ def build_agent_backend(
     """Resolve a lane backend id into a concrete :class:`AgentBackend`.
 
     Lane ids follow :mod:`koru.agent_backends` (``plugin_socket``,
-    ``mcp_tool``, ``none``).
+    ``mcp_tool``, ``os_injector``, ``none``).
     """
     bid = (backend_id or "").strip().lower()
     if bid == "plugin_socket":
@@ -132,6 +158,13 @@ def build_agent_backend(
         return PluginSocketBackend(client=client)
     if bid == "mcp_tool":
         return McpToolBackend(mcp_server=mcp_server)
+    if bid == "os_injector":
+        profile = os.environ.get("KORU_OS_INJECTOR_PROFILE", "").strip()
+        if not profile:
+            raise ValueError("os_injector backend requires KORU_OS_INJECTOR_PROFILE")
+        raw_cfg = os.environ.get("KORU_OS_INJECTOR_CONFIG", "").strip()
+        cfg = Path(raw_cfg).expanduser().resolve() if raw_cfg else None
+        return OsInjectorBackend(profile_id=profile, config_path=cfg)
     if bid in ("none", "noop", ""):
         return NoopBackend(reason=noop_reason)
     raise ValueError(f"unknown agent backend id: {backend_id!r}")
@@ -141,6 +174,7 @@ __all__ = [
     "AgentBackend",
     "PluginSocketBackend",
     "McpToolBackend",
+    "OsInjectorBackend",
     "NoopBackend",
     "build_agent_backend",
 ]

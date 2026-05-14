@@ -70,6 +70,29 @@ class TestBuildContext(unittest.TestCase):
             self.assertEqual(ctx["policy"]["allow_commit"], False)
             self.assertEqual(ctx["policy"]["allow_push"], False)
 
+    def test_autonomy_loop_brief_reads_telemetry_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _init_planfile(root)
+            koru_dir = root / ".planfile" / ".koru"
+            koru_dir.mkdir(parents=True, exist_ok=True)
+            snap = {"cycle": 2, "knobs": {"scan_after_idle_queue": True}}
+            (koru_dir / "autonomy-telemetry.json").write_text(
+                json.dumps(snap), encoding="utf-8"
+            )
+
+            def planfile_runner(_c, _p):
+                return _ok("No runnable ticket found.\n")
+
+            ctx = build_context(
+                project=root,
+                planfile_runner=planfile_runner,
+                git_probe=_no_git,
+            )
+            al = ctx.get("autonomy_loop") or {}
+            self.assertEqual(al.get("last_run_snapshot", {}).get("cycle"), 2)
+            self.assertIn("autonomy-telemetry.json", str(al.get("telemetry_file", "")))
+
     def test_brief_when_queue_idle(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             _init_planfile(Path(tmp))

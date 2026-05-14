@@ -300,6 +300,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "local-serve",
             "serve",
             "scan",
+            "refactor-planfile-handoff",
             "gate",
             "queue",
             "gc",

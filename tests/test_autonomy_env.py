@@ -17,6 +17,9 @@ def test_auto_loop_env_defaults_cover_core_autoloop_flags() -> None:
         "TICKET_SOURCES",
         "ENABLE_AUTOPILOT_DRIVE",
         "TOPOLOGY_INTEGRATION",
+        "AUTOPILOT_SKIP_DRIVE_IDLE_STREAK",
+        "SCAN_AFTER_IDLE_QUEUE",
+        "SCAN_AFTER_IDLE_MIN_INTERVAL_SECONDS",
         "ENABLE_IDLE_DIAGNOSTICS",
     ):
         assert key in d
@@ -44,8 +47,11 @@ def test_apply_autoloop_env_to_args_custom_environ() -> None:
         autopilot_on_idle_only=False,
         autopilot_skip_on_diagnostics_fail=True,
         autopilot_skip_statuses="waiting_input",
+        autopilot_skip_drive_idle_streak=0,
         backoff_on_stagnation=True,
         scan_skip_if_clean=False,
+        scan_after_idle_queue=False,
+        scan_after_idle_min_interval=0.0,
         topology_integration=True,
         wup_watch=None,
         wup_mode="testql",
@@ -56,7 +62,17 @@ def test_apply_autoloop_env_to_args_custom_environ() -> None:
         wup_diagnostic_tickets=True,
         wup_ticket_queue="default",
     )
-    fake_env = {**os.environ, "TICKET_SOURCES": "scan", "AUTOPILOT_ACTION": "HANDOFF"}
+    fake_env = {
+        **os.environ,
+        "TICKET_SOURCES": "scan",
+        "AUTOPILOT_ACTION": "HANDOFF",
+        "AUTOPILOT_SKIP_DRIVE_IDLE_STREAK": "2",
+        "SCAN_AFTER_IDLE_QUEUE": "true",
+        "SCAN_AFTER_IDLE_MIN_INTERVAL_SECONDS": "90",
+    }
     autonomy_env.apply_autoloop_env_to_args(args, environ=fake_env)
     assert args.ticket_sources == "scan"
     assert args.autopilot_action == "handoff"
+    assert args.autopilot_skip_drive_idle_streak == 2
+    assert args.scan_after_idle_queue is True
+    assert args.scan_after_idle_min_interval == 90.0

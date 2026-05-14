@@ -47,6 +47,8 @@ from typing import Any
 
 from .context import build_context, render_markdown_handoff
 from .events import emit_management_event
+from .queue.runners import run_process
+from .queue.ticket import planfile_command
 from .topology import (
     load_topology,
     save_topology,
@@ -58,6 +60,80 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
 
 _SERVE_ENDPOINT_REL = Path(".planfile") / ".koru" / "serve-endpoint.json"
+
+
+def _list_tickets(project: Path) -> list[dict[str, Any]]:
+    """Return all planfile tickets as JSON list (empty on errors)."""
+    result = planfile_command(project, ["ticket", "list", "--format", "json"], runner=run_process)
+    if result.returncode != 0:
+        return []
+    try:
+        payload = json.loads((result.stdout or "").strip() or "[]")
+    except json.JSONDecodeError:
+        return []
+    if isinstance(payload, list):
+        return [item for item in payload if isinstance(item, dict)]
+    return [payload] if isinstance(payload, dict) else []
+
+
+def _bulk_waiting_input_action(
+    project: Path,
+    *,
+    ticket_ids: list[str],
+    action: str,
+    reason: str,
+) -> dict[str, Any]:
+    tickets = _list_tickets(project)
+    waiting = {
+        str(t.get("id"))
+        for t in tickets
+        if isinstance(t, dict) and str(t.get("status") or "") == "waiting_input"
+    }
+    selected = [tid for tid in ticket_ids if tid in waiting]
+    if not selected:
+        return {"ok": False, "error": "no waiting_input tickets selected", "applied": []}
+
+    applied: list[dict[str, Any]] = []
+    for tid in selected:
+        if action == "approve":
+            claim = planfile_command(
+                project,
+                ["ticket", "claim", tid, "--assigned-to", "koru-web"],
+                runner=run_process,
+            )
+            if claim.returncode != 0:
+                applied.append({"id": tid, "ok": False, "step": "claim", "stderr": claim.stderr[-500:]})
+                continue
+            start = planfile_command(project, ["ticket", "start", tid], runner=run_process)
+            if start.returncode != 0:
+                applied.append({"id": tid, "ok": False, "step": "start", "stderr": start.stderr[-500:]})
+                continue
+            done = planfile_command(project, ["ticket", "done", tid], runner=run_process)
+            applied.append(
+                {
+                    "id": tid,
+                    "ok": done.returncode == 0,
+                    "action": "approve",
+                    "stderr": done.stderr[-500:],
+                }
+            )
+            continue
+
+        block = planfile_command(
+            project,
+            ["ticket", "block", tid, "--reason", reason or "Rejected in koru web dashboard"],
+            runner=run_process,
+        )
+        applied.append(
+            {
+                "id": tid,
+                "ok": block.returncode == 0,
+                "action": "reject",
+                "stderr": block.stderr[-500:],
+            }
+        )
+
+    return {"ok": True, "action": action, "requested": ticket_ids, "applied": applied}
 
 
 def _address_in_use(exc: BaseException) -> bool:
@@ -476,6 +552,34 @@ function renderOpenTickets(openTickets, allTickets, activeId, ticketError) {
     true);
 }
 
+function renderWaitingInputActions(allTickets) {
+  const waiting = (allTickets || []).filter(t => (t.status || "") === "waiting_input");
+  if (!waiting.length) return "";
+  const rows = waiting.map(t => `
+    <tr>
+      <td><input type="checkbox" class="wi-ticket" value="${esc(t.id || "")}" checked></td>
+      <td><code>${esc(t.id || "")}</code></td>
+      <td>${esc(t.name || "")}</td>
+      <td><code>${esc(((t.executor) || {}).kind || "?")}</code></td>
+    </tr>
+  `).join("");
+  const body = `
+    <div class="muted" style="margin-bottom:8px">
+      Queue is blocked on <code>waiting_input</code>. Select tickets and approve or reject in bulk.
+    </div>
+    <table><thead><tr>
+      <th>select</th><th>id</th><th>name</th><th>executor</th>
+    </tr></thead><tbody>${rows}</tbody></table>
+    <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button id="wi-approve">Approve selected</button>
+      <button id="wi-reject">Reject selected</button>
+      <input id="wi-reason" placeholder="Reject reason (optional)" style="min-width:320px" />
+    </div>
+    <div id="wi-status" class="muted" style="margin-top:8px;min-height:1.2em"></div>
+  `;
+  return panel("Waiting Input Actions", body, true);
+}
+
 function renderSemcodTools(env) {
   const tools = (env && env.semcod_tools) || [];
   if (!tools.length) return "";
@@ -660,6 +764,47 @@ async function postRuntimeContextToggle(section, enabled) {
   }
 }
 
+function selectedWaitingTickets() {
+  return Array.from(document.querySelectorAll(".wi-ticket"))
+    .filter(el => el.checked)
+    .map(el => el.value)
+    .filter(Boolean);
+}
+
+async function postWaitingInputAction(action) {
+  const status = $("wi-status");
+  const ticket_ids = selectedWaitingTickets();
+  if (!ticket_ids.length) {
+    if (status) status.textContent = "select at least one ticket";
+    return;
+  }
+  const reasonEl = $("wi-reason");
+  const reason = reasonEl ? reasonEl.value : "";
+  if (status) status.textContent = `${action} ${ticket_ids.length} ticket(s)…`;
+  try {
+    const res = await fetch("/api/tickets/waiting-input/bulk", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, ticket_ids, reason }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
+    const okCount = (data.applied || []).filter(x => x.ok).length;
+    if (status) {
+      status.textContent = `${action}: ${okCount}/${(data.applied || []).length} succeeded`;
+      status.classList.remove("err");
+      status.classList.add("ok");
+    }
+    setTimeout(refresh, 150);
+  } catch (e) {
+    if (status) {
+      status.textContent = "action failed: " + e.message;
+      status.classList.remove("ok");
+      status.classList.add("err");
+    }
+  }
+}
+
 document.addEventListener("change", (ev) => {
   const t = ev.target;
   if (!(t instanceof HTMLInputElement)) return;
@@ -673,6 +818,16 @@ document.addEventListener("change", (ev) => {
   const id = t.getAttribute("data-id");
   if (!kind || !id) return;
   postTopologyToggle(kind, id, t.checked);
+});
+
+document.addEventListener("click", (ev) => {
+  const t = ev.target;
+  if (!(t instanceof HTMLElement)) return;
+  if (t.id === "wi-approve") {
+    postWaitingInputAction("approve");
+  } else if (t.id === "wi-reject") {
+    postWaitingInputAction("reject");
+  }
 });
 
 async function refresh() {
@@ -697,6 +852,7 @@ async function refresh() {
       renderSelfService(ctx.self_service),
       renderTicket(ctx.ticket, ctx.ticket_error),
       renderEnv(ctx.environment),
+      renderWaitingInputActions(ctx.all_tickets),
       renderOpenTickets(
         ctx.open_tickets, ctx.all_tickets, activeId, ctx.ticket_error
       ),
@@ -938,6 +1094,28 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
                     self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
                     return
                 self._send_json(saved_config)
+                return
+            if path == "/api/tickets/waiting-input/bulk":
+                action = str(body.get("action") or "").strip().lower()
+                if action not in {"approve", "reject"}:
+                    self._send_json({"error": "action must be approve|reject"}, status=400)
+                    return
+                ticket_ids_raw = body.get("ticket_ids")
+                if not isinstance(ticket_ids_raw, list):
+                    self._send_json({"error": "ticket_ids must be an array"}, status=400)
+                    return
+                ticket_ids = [str(x).strip() for x in ticket_ids_raw if str(x).strip()]
+                reason = str(body.get("reason") or "").strip()
+                result = _bulk_waiting_input_action(
+                    config.project,
+                    ticket_ids=ticket_ids,
+                    action=action,
+                    reason=reason,
+                )
+                if not result.get("ok"):
+                    self._send_json(result, status=400)
+                    return
+                self._send_json(result)
                 return
             self._send(404, b"not found")
 

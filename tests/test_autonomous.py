@@ -23,6 +23,204 @@ def test_effective_flags_matrix() -> None:
     assert autonomous_mod._effective_flags("queue") == (False, False)
 
 
+def test_scan_after_idle_queue_runs_scan_when_queue_idle(tmp_path, monkeypatch) -> None:
+    calls: list[dict] = []
+
+    def spy_run_scan(**kwargs):
+        calls.append(kwargs)
+        return ScanResult(suggestions=[], applied=[], skipped=[])
+
+    monkeypatch.setattr(autonomous_mod, "run_scan", spy_run_scan)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: QueueLoopResult(
+            iterations=1,
+            completed=[],
+            failed=[],
+            waiting=[],
+            last_status="idle",
+            last_message="",
+            last_ticket_id=None,
+        ),
+    )
+    autonomous_mod._run_cycle(
+        cycle=1,
+        project=tmp_path,
+        actor="t",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=1,
+        enable_autopilot=False,
+        autopilot_ide="auto",
+        drive_prompt="",
+        submit=True,
+        include_semcod_artifacts=None,
+        client=None,
+        state=autonomous_mod.AutoloopState(),
+        idle_diagnostics="off",
+        diagnostic_tickets=False,
+        diagnostic_ticket_queue="default",
+        diagnostic_ticket_priority="high",
+        diagnostic_state_dir=None,
+        wup_watch_enabled=False,
+        wup_diagnostic_tickets=False,
+        wup_ticket_queue="default",
+        strict_diagnostics=False,
+        autopilot_action="drive",
+        autopilot_on_idle_only=False,
+        autopilot_skip_on_diagnostics_fail=True,
+        autopilot_skip_drive_idle_streak=0,
+        autopilot_skip_statuses="waiting_input",
+        scan_skip_if_clean=False,
+        scan_skip_after=1,
+        scan_after_idle_queue=True,
+        topology_integration=False,
+        stdio_format="human",
+        correlation_id="idle-scan-test",
+    )
+    assert len(calls) == 1
+    assert calls[0]["apply"] is True
+
+
+def test_scan_after_idle_min_interval_skips_second_scan(tmp_path, monkeypatch) -> None:
+    calls: list[dict] = []
+
+    def spy_run_scan(**kwargs):
+        calls.append(kwargs)
+        return ScanResult(suggestions=[], applied=[], skipped=[])
+
+    monkeypatch.setattr(autonomous_mod, "run_scan", spy_run_scan)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: QueueLoopResult(
+            iterations=1,
+            completed=[],
+            failed=[],
+            waiting=[],
+            last_status="idle",
+            last_message="",
+            last_ticket_id=None,
+        ),
+    )
+    clock = [0.0]
+
+    def fake_time() -> float:
+        return clock[0]
+
+    monkeypatch.setattr(autonomous_mod.time, "time", fake_time)
+    common = dict(
+        project=tmp_path,
+        actor="t",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=1,
+        enable_autopilot=False,
+        autopilot_ide="auto",
+        drive_prompt="",
+        submit=True,
+        include_semcod_artifacts=None,
+        client=None,
+        state=autonomous_mod.AutoloopState(),
+        idle_diagnostics="off",
+        diagnostic_tickets=False,
+        diagnostic_ticket_queue="default",
+        diagnostic_ticket_priority="high",
+        diagnostic_state_dir=None,
+        wup_watch_enabled=False,
+        wup_diagnostic_tickets=False,
+        wup_ticket_queue="default",
+        strict_diagnostics=False,
+        autopilot_action="drive",
+        autopilot_on_idle_only=False,
+        autopilot_skip_on_diagnostics_fail=True,
+        autopilot_skip_drive_idle_streak=0,
+        autopilot_skip_statuses="waiting_input",
+        scan_skip_if_clean=False,
+        scan_skip_after=1,
+        scan_after_idle_queue=True,
+        scan_after_idle_min_interval_seconds=60.0,
+        topology_integration=False,
+        stdio_format="human",
+        correlation_id="rate-limit-test",
+    )
+    autonomous_mod._run_cycle(cycle=1, **common)
+    assert len(calls) == 1
+    clock[0] = 30.0
+    autonomous_mod._run_cycle(cycle=2, **common)
+    assert len(calls) == 1
+    clock[0] = 100.0
+    autonomous_mod._run_cycle(cycle=3, **common)
+    assert len(calls) == 2
+
+
+def test_idle_streak_skip_increments_telemetry(tmp_path, monkeypatch) -> None:
+    driven: list[str] = []
+
+    class RecordingClient:
+        def drive(self, prompt: str, **_kwargs):
+            driven.append(prompt)
+            return {"ok": True, "backend": "test"}
+
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: QueueLoopResult(
+            iterations=1,
+            completed=[],
+            failed=[],
+            waiting=[],
+            last_status="idle",
+            last_message="",
+            last_ticket_id=None,
+        ),
+    )
+    monkeypatch.setattr(autonomous_mod, "run_scan", lambda **kwargs: ScanResult([], [], []))
+    st = autonomous_mod.AutoloopState()
+    common = dict(
+        project=tmp_path,
+        actor="t",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=1,
+        enable_autopilot=True,
+        autopilot_ide="auto",
+        drive_prompt="go",
+        submit=True,
+        include_semcod_artifacts=None,
+        client=RecordingClient(),
+        state=st,
+        idle_diagnostics="off",
+        diagnostic_tickets=False,
+        diagnostic_ticket_queue="default",
+        diagnostic_ticket_priority="high",
+        diagnostic_state_dir=None,
+        wup_watch_enabled=False,
+        wup_diagnostic_tickets=False,
+        wup_ticket_queue="default",
+        strict_diagnostics=False,
+        autopilot_action="drive",
+        autopilot_on_idle_only=False,
+        autopilot_skip_on_diagnostics_fail=True,
+        autopilot_skip_drive_idle_streak=1,
+        autopilot_skip_statuses="waiting_input",
+        scan_skip_if_clean=False,
+        scan_skip_after=1,
+        scan_after_idle_queue=False,
+        scan_after_idle_min_interval_seconds=0.0,
+        topology_integration=False,
+        stdio_format="human",
+        correlation_id="idle-streak-telemetry",
+    )
+    autonomous_mod._run_cycle(cycle=1, **common)
+    assert len(driven) == 1
+    assert st.telemetry_autopilot_idle_streak_skips == 0
+    autonomous_mod._run_cycle(cycle=2, **common)
+    assert len(driven) == 1
+    assert st.telemetry_autopilot_idle_streak_skips == 1
+
+
 def test_ticket_sources_env_overrides_cli_queue_to_scan(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("TICKET_SOURCES", "scan")
     monkeypatch.setattr(
@@ -738,6 +936,64 @@ def test_run_cycle_autopilot_waiting_input_logs_ticket_from_waiting_list(
     assert "backend=plugin" in out
 
 
+def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    class FailingClient:
+        def drive(self, *_args, **_kwargs):
+            return {"ok": False, "backend": "plugin", "message": "submit failed"}
+
+    monkeypatch.setenv("KORU_OS_INJECTOR_PROFILE", "windsurf")
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=0 last_status=idle",
+            last_status="idle",
+            last_message="",
+            waiting=[],
+        ),
+    )
+    monkeypatch.setattr(
+        autonomous_mod,
+        "load_profile",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            tool_id="windsurf",
+            window_id=1,
+            chat_x=100,
+            chat_y=200,
+        ),
+    )
+    fallback_calls: list[dict] = []
+    monkeypatch.setattr(
+        autonomous_mod,
+        "inject_with_profile",
+        lambda **kwargs: fallback_calls.append(kwargs)
+        or {"ok": True, "backend": "os_injector", "submitted": kwargs["submit"]},
+    )
+
+    _scan_result, queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
+        cycle=1,
+        project=tmp_path,
+        actor="koru-test",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=50,
+        enable_autopilot=True,
+        autopilot_ide="windsurf",
+        drive_prompt="continue with the next ticket",
+        submit=True,
+        include_semcod_artifacts=False,
+        client=FailingClient(),
+    )
+
+    assert queue_result.last_status == "idle"
+    assert autopilot_status == "ok"
+    assert len(fallback_calls) == 1
+    assert fallback_calls[0]["submit"] is True
+
+
 def test_up_stops_on_waiting_input_by_default(
     tmp_path,
     monkeypatch,
@@ -890,9 +1146,12 @@ def test_env_apply_autoloop_defaults_enables_full_diagnostics(monkeypatch) -> No
         autopilot_action="drive",
         autopilot_on_idle_only=False,
         autopilot_skip_on_diagnostics_fail=True,
+        autopilot_skip_drive_idle_streak=0,
         autopilot_skip_statuses="waiting_input",
         backoff_on_stagnation=True,
         scan_skip_if_clean=False,
+        scan_after_idle_queue=False,
+        scan_after_idle_min_interval=0.0,
         topology_integration=True,
         wup_watch=False,
         wup_mode="testql",

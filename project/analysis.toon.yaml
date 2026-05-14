@@ -1,33 +1,34 @@
-# code2llm | 145f 25877L | python:64,shell:39,yaml:14,yml:8,kotlin:6,typescript:4,json:3,txt:1,toml:1,properties:1,xml:1 | 2026-05-14
+# code2llm | 153f 26473L | python:75,shell:36,yaml:14,yml:8,kotlin:6,typescript:4,json:3,toml:1,txt:1,properties:1,xml:1 | 2026-05-14
 # generated in 0.03s
-# CC̄=4.5 | critical:27/661 | dups:0 | cycles:0
+# CC̄=4.7 | critical:29/729 | dups:0 | cycles:0
 
 HEALTH[20]:
+  🔴 GOD   src/koru/autonomous.py = 1666L, 4 classes, 33m, max CC=53
   🟡 CC    format_queue_event CC=19 (limit:15)
+  🟡 CC    _gc_main CC=18 (limit:15)
+  🟡 CC    _agent_main CC=19 (limit:15)
+  🟡 CC    _render_topology_text CC=15 (limit:15)
+  🟡 CC    _topology_main CC=17 (limit:15)
+  🟡 CC    _queue_run_main CC=26 (limit:15)
   🟡 CC    find_candidates CC=15 (limit:15)
   🟡 CC    _run_idle_diagnostics CC=17 (limit:15)
   🟡 CC    _run_cycle CC=53 (limit:15)
-  🟡 CC    _action_up CC=33 (limit:15)
+  🟡 CC    _action_up CC=41 (limit:15)
+  🟡 CC    detect_tools CC=26 (limit:15)
+  🟡 CC    build_tool_task_scaffold CC=16 (limit:15)
   🟡 CC    _scan_code2llm_analysis CC=15 (limit:15)
+  🟡 CC    _fetch_ticket_data CC=18 (limit:15)
+  🟡 CC    _build_shared_rules CC=15 (limit:15)
   🟡 CC    policy_violations CC=22 (limit:15)
   🟡 CC    detect_agent_options CC=16 (limit:15)
   🟡 CC    create_nl_task CC=16 (limit:15)
   🟡 CC    _read_wup_health CC=21 (limit:15)
-  🟡 CC    run_llm_request CC=23 (limit:15)
-  🟡 CC    _print_text_report CC=15 (limit:15)
-  🟡 CC    install_plugin_for_ide CC=19 (limit:15)
-  🟡 CC    do_from_todo CC=19 (limit:15)
-  🟡 CC    injectChat CC=16 (limit:15)
-  🟡 CC    run_next_planfile_task CC=37 (limit:15)
-  🟡 CC    tool_list_tickets CC=15 (limit:15)
-  🟡 CC    _fetch_ticket_data CC=15 (limit:15)
-  🟡 CC    _build_shared_rules CC=15 (limit:15)
-  🟡 CC    detect_tools CC=26 (limit:15)
 
-REFACTOR[1]:
-  1. split 20 high-CC methods  (CC>15)
+REFACTOR[2]:
+  1. split src/koru/autonomous.py  (god module)
+  2. split 19 high-CC methods  (CC>15)
 
-PIPELINES[192]:
+PIPELINES[209]:
   [1] Src [heal_rebuild_restore]: heal_rebuild_restore → _run_docker
       PURITY: 100% pure
   [2] Src [heal_annotate]: heal_annotate → _record_action
@@ -40,51 +41,53 @@ PIPELINES[192]:
       PURITY: 100% pure
 
 LAYERS:
-  services/                       CC̄=4.9    ←in:0  →out:0
-  │ !! app                        702L  0C   27m  CC=11     ←0
-  │ ticket_builder             223L  0C    7m  CC=11     ←1
-  │ Dockerfile                  36L  0C    0m  CC=0.0    ←0
-  │
-  src/                            CC̄=4.9    ←in:0  →out:0
-  │ !! cli                       1933L  0C   43m  CC=26     ←0
-  │ !! autonomous                1267L  2C   22m  CC=53     ←0
-  │ !! context                   1156L  0C   42m  CC=15     ←5
-  │ !! serve                     1013L  1C    8m  CC=8      ←1
-  │ !! cli_command                864L  0C   31m  CC=15     ←0
+  src/                            CC̄=5.0    ←in:0  →out:0
+  │ !! autonomous                1666L  4C   33m  CC=53     ←0
+  │ !! context                   1166L  0C   42m  CC=18     ←5
+  │ !! serve                     1123L  1C   13m  CC=12     ←1
+  │ !! mcp_server                1023L  0C   32m  CC=15     ←1
+  │ !! cli_command                884L  0C   31m  CC=15     ←0
   │ !! scan                       818L  2C   18m  CC=15     ←2
-  │ !! mcp_server                 770L  0C   28m  CC=15     ←1
-  │ !! init                       536L  1C   11m  CC=13     ←2
-  │ !! daemon                     532L  2C   24m  CC=14     ←0
-  │ doctor                     496L  2C   20m  CC=11     ←1
+  │ !! init                       580L  1C   12m  CC=13     ←2
+  │ !! daemon                     563L  2C   26m  CC=14     ←0
+  │ !! doctor                     513L  2C   21m  CC=11     ←1
   │ bootstrap                  446L  2C   19m  CC=10     ←2
   │ topology                   415L  1C   15m  CC=12     ←5
+  │ mcp_provision              397L  0C   21m  CC=10     ←3
   │ gc                         371L  2C   12m  CC=11     ←1
+  │ !! agents                     370L  1C   13m  CC=16     ←3
   │ !! queue_clean                350L  2C   10m  CC=15     ←1
-  │ !! agents                     338L  1C   12m  CC=16     ←3
-  │ mcp_provision              315L  0C   18m  CC=10     ←1
-  │ !! plugin_installer           307L  1C   12m  CC=19     ←1
+  │ !! plugin_installer           330L  1C   13m  CC=27     ←1
   │ injector                   289L  4C   15m  CC=8      ←0
   │ !! runner                     274L  0C    1m  CC=37     ←2
   │ ide                        261L  1C   13m  CC=11     ←5
+  │ protocol                   257L  2C   14m  CC=12     ←2
   │ !! tools                      251L  0C    9m  CC=26     ←1
   │ !! policy                     234L  1C    4m  CC=22     ←2
   │ !! autonomous_wup             224L  3C    8m  CC=21     ←1
+  │ !! environment                224L  3C    3m  CC=15     ←1
+  │ agent_backends             213L  3C    7m  CC=11     ←2
   │ !! runners                    208L  0C    5m  CC=23     ←0
   │ !! host_setup                 207L  0C    6m  CC=15     ←1
-  │ protocol                   206L  2C   11m  CC=12     ←2
   │ local_service              203L  2C   10m  CC=3      ←1
   │ gate                       202L  1C    5m  CC=12     ←1
+  │ !! env                        174L  0C    6m  CC=19     ←3
   │ !! tasks                      163L  1C    5m  CC=16     ←2
   │ audit                      157L  2C    6m  CC=7      ←1
   │ project_pipeline           150L  0C    5m  CC=9      ←3
+  │ agent_backend_runtime      146L  4C    5m  CC=6      ←0
   │ ticket                     138L  0C    6m  CC=10     ←3
   │ loop                       131L  3C    4m  CC=12     ←1
   │ semcod_tools               129L  1C    4m  CC=7      ←3
   │ run_log                    124L  1C    7m  CC=4      ←2
   │ config                     119L  1C    6m  CC=7      ←1
+  │ heal                       112L  1C    3m  CC=5      ←1
+  │ config                     111L  1C    1m  CC=1      ←0
   │ loop                       109L  0C    1m  CC=12     ←2
   │ runtime                    105L  0C    5m  CC=2      ←5
   │ dotenv_loader              104L  0C    3m  CC=7      ←0
+  │ ide_router                  98L  1C    2m  CC=8      ←3
+  │ prompts                     98L  1C    1m  CC=8      ←1
   │ client                      93L  1C    7m  CC=5      ←0
   │ events                      90L  0C    2m  CC=8      ←2
   │ types                       88L  5C    1m  CC=2      ←0
@@ -95,20 +98,29 @@ LAYERS:
   │ __init__                    67L  0C    2m  CC=6      ←4
   │ client_helpers              57L  0C    2m  CC=4      ←2
   │ planfile_ticket_note        56L  0C    2m  CC=5      ←1
+  │ __init__                    55L  0C    2m  CC=4      ←0
   │ stdio_events                49L  0C    3m  CC=3      ←1
+  │ koru_queue_argv             44L  0C    1m  CC=5      ←1
   │ subprocess_runner           40L  0C    3m  CC=3      ←5
+  │ __init__                    38L  0C    0m  CC=0.0    ←0
   │ planfile_queue              37L  0C    0m  CC=0.0    ←0
-  │ __init__                    36L  0C    0m  CC=0.0    ←0
   │ human                       31L  0C    1m  CC=5      ←0
+  │ autonomous_env              26L  0C    1m  CC=1      ←0
+  │ __init__                    25L  0C    0m  CC=0.0    ←0
   │ __main__                     8L  0C    0m  CC=0.0    ←0
   │ __main__                     8L  0C    0m  CC=0.0    ←0
   │ __init__                     5L  0C    0m  CC=0.0    ←0
   │ __init__                     5L  0C    0m  CC=0.0    ←0
-  │ __init__                     0L  0C    2m  CC=4      ←0
+  │ !! cli                          0L  0C   47m  CC=26     ←0
   │ commands                     0L  0C    0m  CC=0.0    ←0
   │
+  services/                       CC̄=4.9    ←in:0  →out:0
+  │ !! app                        702L  0C   27m  CC=11     ←0
+  │ ticket_builder             223L  0C    7m  CC=11     ←1
+  │ Dockerfile                  36L  0C    0m  CC=0.0    ←0
+  │
   plugins/                        CC̄=2.8    ←in:0  →out:0
-  │ !! extension.ts               375L  2C   39m  CC=16     ←1
+  │ !! extension.ts               400L  2C   41m  CC=17     ←1
   │ KoruAutopilotService.kt    136L  1C    5m  CC=0.0    ←0
   │ package.json                72L  0C    0m  CC=0.0    ←0
   │ build.gradle.kts            49L  0C    4m  CC=0.0    ←0
@@ -123,23 +135,24 @@ LAYERS:
   │ settings.gradle.kts          8L  0C    2m  CC=0.0    ←0
   │ gradle.properties            6L  0C    0m  CC=0.0    ←0
   │
-  scripts/                        CC̄=2.7    ←in:221  →out:0
-  │ !! koru-autoloop.sh           562L  0C   14m  CC=0.0    ←0
+  scripts/                        CC̄=2.7    ←in:256  →out:0
+  │ !! koru-autoloop.sh           564L  0C   14m  CC=0.0    ←0
   │ koru-gate-capture          314L  0C   14m  CC=9      ←0
   │ !! planfile-sync-todo         234L  0C    9m  CC=19     ←0
   │ autopilot-ide-autodetect-smoke.sh   182L  1C    4m  CC=0.0    ←0
+  │ koru-queue-diagnose.sh     124L  0C    0m  CC=0.0    ←0
   │ koru-autoloop-reset-diag-markers.sh    96L  0C    1m  CC=0.0    ←0
-  │ planfile-export-prompt.sh    81L  0C    2m  CC=0.0    ←19
+  │ planfile-export-prompt.sh    81L  0C    2m  CC=0.0    ←20
   │ _koru_autodiag_filter_tickets    55L  0C    1m  CC=12     ←0
   │
   ./                              CC̄=0.0    ←in:0  →out:0
   │ !! planfile.yaml             1319L  0C    0m  CC=0.0    ←0
-  │ !! Taskfile.yml               797L  0C    0m  CC=0.0    ←0
+  │ !! Taskfile.yml               802L  0C    0m  CC=0.0    ←0
   │ !! goal.yaml                  511L  0C    0m  CC=0.0    ←0
   │ pipeline.yaml              142L  0C    0m  CC=0.0    ←0
   │ docker-compose.yml          92L  0C    0m  CC=0.0    ←0
+  │ pyproject.toml              92L  0C    0m  CC=0.0    ←0
   │ prefact.yaml                91L  0C    0m  CC=0.0    ←0
-  │ pyproject.toml              91L  0C    0m  CC=0.0    ←0
   │ Dockerfile                  73L  0C    0m  CC=0.0    ←0
   │ wup.yaml                    56L  0C    0m  CC=0.0    ←0
   │ project.sh                  54L  0C    0m  CC=0.0    ←0
@@ -190,14 +203,10 @@ LAYERS:
   │ e2e.sh                      19L  0C    0m  CC=0.0    ←0
   │ e2e.sh                      15L  0C    0m  CC=0.0    ←0
   │ docker-compose.yml           7L  0C    0m  CC=0.0    ←0
-  │ docker-compose.yml           7L  0C    0m  CC=0.0    ←0
   │ run-docker.sh                7L  0C    0m  CC=0.0    ←0
   │ docker-compose.yml           7L  0C    0m  CC=0.0    ←0
-  │ run-docker.sh                7L  0C    0m  CC=0.0    ←0
-  │ run-docker.sh                7L  0C    0m  CC=0.0    ←0
   │ docker-compose.yml           7L  0C    0m  CC=0.0    ←0
-  │ run-docker.sh                7L  0C    0m  CC=0.0    ←0
-  │ run-docker.sh                7L  0C    0m  CC=0.0    ←0
+  │ docker-compose.yml           7L  0C    0m  CC=0.0    ←0
   │ docker-compose.yml           7L  0C    0m  CC=0.0    ←0
   │
   testql-scenarios/               CC̄=0.0    ←in:0  →out:0
@@ -208,17 +217,17 @@ LAYERS:
   │ realtime-health.testql.toon.yaml    11L  0C    0m  CC=0.0    ←0
   │
   ── zero ──
-     src/koru/cli/__init__.py                  0L
+     src/koru/cli.py                           0L
      src/koru/cli/commands.py                  0L
 
 COUPLING:
                                                       src.koru                        scripts  plugins.koru-autopilot-vscode
-                       src.koru                             ──                            221                              1  !! fan-out
-                        scripts                           ←221                             ──                                 hub
+                       src.koru                             ──                            256                              1  !! fan-out
+                        scripts                           ←256                             ──                                 hub
   plugins.koru-autopilot-vscode                             ←1                                                            ──
   CYCLES: none
-  HUB: scripts/ (fan-in=221)
-  SMELL: src.koru/ fan-out=222 → split needed
+  HUB: scripts/ (fan-in=256)
+  SMELL: src.koru/ fan-out=257 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon
