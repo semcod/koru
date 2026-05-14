@@ -72,9 +72,11 @@ Behaviour:
   present (same as auto once a profile exists; still no profile → keyboard fallback).
 - ``KORU_OS_INJECTOR_DRY_RUN=1`` logs the planned injection without running ``xdotool``.
 
-On **Wayland** the OS injector is skipped (xdotool is X11-only). For a full
-calibration workflow in a monorepo, see the c2004 doc
-``.koru/workflows/ide-os-injector.md`` and ``task koru:ide-os:calibrate``.
+Injection uses ``xdotool`` (X11 / XWayland). A desktop session reported as
+Wayland no longer blocks this path when ``xdotool`` is installed — many setups
+still run IDE windows under XWayland. For a full calibration workflow in a
+monorepo, see the c2004 doc ``.koru/workflows/ide-os-injector.md`` and
+``task koru:ide-os:calibrate``.
 
 ## Full setup checklist
 

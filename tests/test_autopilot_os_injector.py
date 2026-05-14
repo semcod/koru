@@ -103,20 +103,26 @@ def test_iter_config_paths_dedupes_project_and_cwd(tmp_path: Path) -> None:
     assert len(paths) == len({str(p.resolve()) for p in paths})
 
 
-def test_try_drive_with_profile_skips_wayland(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_try_drive_with_profile_works_when_xdg_session_type_wayland(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Regression: Wayland session must not hide a working xdotool + profile path."""
     import koru.autopilot.os_injector as oi
 
+    monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
     monkeypatch.setattr(oi.shutil, "which", lambda _n: "/xdotool")
-    assert (
-        try_drive_with_profile(
-            tool_id="cursor",
-            text="hi",
-            submit=True,
-            project=None,
-            session_type="wayland",
-        )
-        is None
+    cfg = tmp_path / ".koru" / "ide-os-injector.json"
+    cfg.parent.mkdir(parents=True)
+    cfg.write_text(
+        json.dumps({"cursor": {"window_id": 1, "chat_x": 2, "chat_y": 3}}),
+        encoding="utf-8",
     )
+    monkeypatch.chdir(tmp_path)
+    out = try_drive_with_profile(
+        tool_id="cursor", text="x", submit=False, project=None, cli_dry_run=True,
+    )
+    assert out is not None
+    assert out["backend"] == "os_injector"
 
 
 def test_try_drive_with_profile_skips_when_env_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -130,7 +136,6 @@ def test_try_drive_with_profile_skips_when_env_disabled(monkeypatch: pytest.Monk
             text="hi",
             submit=True,
             project=None,
-            session_type="x11",
         )
         is None
     )
@@ -152,7 +157,6 @@ def test_try_drive_with_profile_uses_config(tmp_path: Path, monkeypatch: pytest.
         text="x",
         submit=False,
         project=None,
-        session_type="x11",
         cli_dry_run=True,
     )
     assert out is not None

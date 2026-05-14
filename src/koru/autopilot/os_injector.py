@@ -117,7 +117,11 @@ def save_profile(profile: OsInjectorProfile, *, config_path: Path | None = None)
 
 
 def capture_from_xdotool() -> tuple[int, int, int]:
-    """Return ``(window_id, x, y)`` from ``xdotool getmouselocation --shell``."""
+    """Return ``(window_id, x, y)`` from xdotool.
+
+    ``window_id`` is taken from ``getactivewindow`` (more reliable for IDE
+    top-level focus) with fallback to ``getmouselocation --shell`` WINDOW.
+    """
     proc = subprocess.run(
         ["xdotool", "getmouselocation", "--shell"],
         capture_output=True,
@@ -131,8 +135,20 @@ def capture_from_xdotool() -> tuple[int, int, int]:
         if "=" in line:
             key, value = line.split("=", 1)
             kv[key.strip()] = value.strip()
+    active_id: int | None = None
+    proc_active = subprocess.run(
+        ["xdotool", "getactivewindow"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc_active.returncode == 0:
+        raw = (proc_active.stdout or "").strip()
+        if raw.isdigit():
+            active_id = int(raw)
     try:
-        return int(kv["WINDOW"]), int(kv["X"]), int(kv["Y"])
+        fallback_window = int(kv["WINDOW"])
+        return (active_id or fallback_window), int(kv["X"]), int(kv["Y"])
     except (KeyError, ValueError) as exc:
         raise OsInjectorError("xdotool output missing WINDOW/X/Y") from exc
 
@@ -187,47 +203,18 @@ def try_drive_with_profile(
     tool_id: str,
     text: str,
     submit: bool,
-    project: Path | None = None,
-    session_type: str = "",
-    cli_dry_run: bool = False,
-) -> dict[str, Any] | None:
-    """Try OS-injector profile path; return None when not applicable.
-
-    Applies environment toggles:
-      - ``KORU_OS_INJECTOR=0`` disables this path
-      - ``KORU_OS_INJECTOR=1`` forces dry-run/env semantics but still needs profile
-      - ``KORU_OS_INJECTOR_DRY_RUN=1`` forces dry-run response
-    """
-    if os_injector_env_disabled():
-        return None
-    if session_type and session_type != "x11":
-        return None
-    profile = try_load_profile(tool_id, project=project)
-    if profile is None:
-        return None
-    dry = bool(cli_dry_run or dry_run_from_env())
-    return inject_with_profile(profile=profile, text=text, submit=submit, dry_run=dry)
-
-
-def try_drive_with_profile(
-    *,
-    tool_id: str,
-    text: str,
-    submit: bool,
     project: Path | None,
-    session_type: str,
     cli_dry_run: bool = False,
 ) -> dict[str, Any] | None:
     """If a profile applies, run :func:`inject_with_profile`; else return ``None``.
 
     Used by the autopilot daemon and ``koru autopilot drive --direct``.
-    Raises :class:`OsInjectorError` when injection is attempted but fails.
+    Requires ``xdotool`` on ``PATH`` (X11 or XWayland). Raises
+    :class:`OsInjectorError` when injection is attempted but fails.
     """
     if tool_id == "default":
         return None
     if os_injector_env_disabled():
-        return None
-    if session_type == "wayland":
         return None
     if shutil.which("xdotool") is None:
         return None

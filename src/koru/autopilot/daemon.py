@@ -43,7 +43,7 @@ from . import default_socket_path
 from .audit import AuditLog
 from .ide import detect_running_ides_cached as detect_running_ides
 from .ide import pick_target
-from .injector import Injector, InjectorError, _session_type
+from .injector import Injector, InjectorError
 from .protocol import (
     MAX_LINE_BYTES,
     Message,
@@ -376,7 +376,6 @@ class AutopilotDaemon:
                 text=text,
                 submit=submit,
                 project=self.project,
-                session_type=_session_type(),
                 cli_dry_run=False,
             )
         except oi.OsInjectorError as exc:

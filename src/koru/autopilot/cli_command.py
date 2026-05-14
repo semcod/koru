@@ -20,7 +20,7 @@ from .audit import AuditLog, default_log_path
 from .client import AutopilotClient
 from .daemon import AutopilotDaemon
 from .ide import detect_focused_ide_id, detect_running_ides, pick_target
-from .injector import Injector, InjectorError, _session_type
+from .injector import Injector, InjectorError
 from .utils.client_helpers import call_daemon_method, resolve_xdg_path
 
 
@@ -358,14 +358,12 @@ def _action_drive(args: argparse.Namespace) -> int:
         else:
             target_id = args.ide
 
-        session = getattr(injector, "session", None) or _session_type()
         try:
             os_res = oi.try_drive_with_profile(
                 tool_id=target_id,
                 text=text,
                 submit=args.submit,
                 project=args.project,
-                session_type=session,
                 cli_dry_run=args.dry_run,
             )
             if os_res is not None:
