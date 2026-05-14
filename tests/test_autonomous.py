@@ -7,6 +7,7 @@ import os
 from types import SimpleNamespace
 
 from koru import autonomous as autonomous_mod
+from koru import autonomous_wup as autonomous_wup_mod
 from koru.queue.types import QueueLoopResult
 from koru.scan import ScanResult
 
@@ -555,7 +556,7 @@ def test_run_idle_diagnostics_creates_deduped_ticket(tmp_path, monkeypatch) -> N
 
 
 def test_wup_watch_command_uses_testql_mode(tmp_path) -> None:
-    config = autonomous_mod.WupWatchConfig(
+    config = autonomous_wup_mod.WupWatchConfig(
         enabled=True,
         mode="testql",
         project=tmp_path,
@@ -569,7 +570,7 @@ def test_wup_watch_command_uses_testql_mode(tmp_path) -> None:
         quick_limit=3,
         config=None,
     )
-    command = autonomous_mod._wup_watch_command(config)
+    command = autonomous_wup_mod._wup_watch_command(config)
     assert command[:3] == ["wup", "watch", str(tmp_path)]
     assert "--mode" in command
     assert "testql" in command
