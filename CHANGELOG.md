@@ -1350,6 +1350,16 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
 
+## [0.1.97] - 2026-05-14
+
+### Docs
+- Update README.md
+- Update docs/agent-backends-architecture.md
+
+### Test
+- Update tests/test_agent_backend_runtime.py
+- Update tests/test_agent_backends.py
+
 ## [0.1.96] - 2026-05-14
 
 ### Docs
