@@ -26,6 +26,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .agents import agent_lane_environment
+from .autonomous_env import (
+    apply_autonomous_env_overrides as _env_apply_autoloop_defaults,
+)
+from .autonomous_env import (
+    effective_ticket_source_flags as _effective_flags,
+)
 from .autonomous_wup import (
     WupHealthResult,
     WupWatchConfig,  # noqa: F401
@@ -412,64 +418,6 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _env_default_bool(name: str, default: bool) -> bool:
-    raw = os.environ.get(name)
-    if raw is None:
-        return default
-    return raw.strip().lower() in {"1", "true", "yes", "y", "on"}
-
-
-def _env_apply_autoloop_defaults(args: argparse.Namespace) -> None:
-    args.idle_diagnostics = os.environ.get(
-        "IDLE_DIAGNOSTICS_PROFILE",
-        "full" if _env_default_bool("ENABLE_IDLE_DIAGNOSTICS", False) else args.idle_diagnostics,
-    )
-    args.diagnostic_tickets = _env_default_bool(
-        "ENABLE_DIAGNOSTIC_TICKETS", args.diagnostic_tickets
-    )
-    args.diagnostic_ticket_queue = os.environ.get(
-        "DIAGNOSTIC_TICKET_QUEUE", args.diagnostic_ticket_queue
-    )
-    args.diagnostic_ticket_priority = os.environ.get(
-        "DIAGNOSTIC_TICKET_PRIORITY", args.diagnostic_ticket_priority
-    )
-    args.diagnostic_state_dir = os.environ.get("DIAG_STATE_DIR", args.diagnostic_state_dir)
-    args.strict_diagnostics = _env_default_bool("STRICT_DIAGNOSTICS", args.strict_diagnostics)
-    args.autopilot_action = os.environ.get("AUTOPILOT_ACTION", args.autopilot_action).lower()
-    if args.autopilot_action not in {"drive", "handoff", "off"}:
-        args.autopilot_action = "drive"
-    args.autopilot_on_idle_only = _env_default_bool(
-        "AUTOPILOT_ON_IDLE_ONLY", args.autopilot_on_idle_only
-    )
-    args.autopilot_skip_on_diagnostics_fail = _env_default_bool(
-        "AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL", args.autopilot_skip_on_diagnostics_fail
-    )
-    args.autopilot_skip_statuses = os.environ.get(
-        "AUTOPILOT_SKIP_STATUSES", args.autopilot_skip_statuses
-    )
-    args.backoff_on_stagnation = _env_default_bool(
-        "BACKOFF_ON_STAGNATION", args.backoff_on_stagnation
-    )
-    args.scan_skip_if_clean = _env_default_bool("SCAN_SKIP_IF_CLEAN", args.scan_skip_if_clean)
-    args.topology_integration = _env_default_bool("TOPOLOGY_INTEGRATION", args.topology_integration)
-    env_wup_watch = os.environ.get("WUP_WATCH")
-    if env_wup_watch is not None:
-        args.wup_watch = env_wup_watch.strip().lower() in {"1", "true", "yes", "y", "on"}
-    elif args.wup_watch is None:
-        args.wup_watch = None
-    args.wup_mode = os.environ.get("WUP_MODE", args.wup_mode).lower()
-    if args.wup_mode not in {"default", "testql"}:
-        args.wup_mode = "testql"
-    args.wup_deps = os.environ.get("WUP_DEPS", args.wup_deps)
-    args.wup_scenarios_dir = os.environ.get("WUP_SCENARIOS_DIR", args.wup_scenarios_dir)
-    args.wup_testql_bin = os.environ.get("WUP_TESTQL_BIN", args.wup_testql_bin)
-    args.wup_track_dir = os.environ.get("WUP_TRACK_DIR", args.wup_track_dir)
-    args.wup_diagnostic_tickets = _env_default_bool(
-        "WUP_DIAGNOSTIC_TICKETS", args.wup_diagnostic_tickets
-    )
-    args.wup_ticket_queue = os.environ.get("WUP_TICKET_QUEUE", args.wup_ticket_queue)
-
-
 def _ensure_init(project: Path, *, force: bool, stdio_format: str = "human") -> None:
     config_path = project / ".planfile" / "config.yaml"
     if config_path.exists() and not force:
@@ -503,14 +451,6 @@ def _start_or_reuse_daemon(
     time.sleep(0.05)
     _stdio_info(f"koru autonomous: started autopilot daemon on {socket_path}", fmt=stdio_format)
     return AutopilotClient(socket_path=socket_path), daemon, thread
-
-
-def _effective_flags(ticket_sources: str) -> tuple[bool, bool]:
-    if ticket_sources == "queue":
-        return False, False
-    if ticket_sources == "scan":
-        return True, False
-    return True, True
 
 
 def _queue_loop_waiting_ticket_label(queue_result: QueueLoopResult) -> str:

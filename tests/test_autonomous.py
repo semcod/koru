@@ -7,15 +7,105 @@ import os
 from types import SimpleNamespace
 
 from koru import autonomous as autonomous_mod
+from koru import autonomous_env as autonomous_env_mod
 from koru import autonomous_wup as autonomous_wup_mod
 from koru.queue.types import QueueLoopResult
 from koru.scan import ScanResult
 
 
 def test_effective_flags_matrix() -> None:
+    assert autonomous_env_mod.effective_ticket_source_flags("queue") == (False, False)
+    assert autonomous_env_mod.effective_ticket_source_flags("scan") == (True, False)
+    assert autonomous_env_mod.effective_ticket_source_flags("all") == (True, True)
     assert autonomous_mod._effective_flags("queue") == (False, False)
-    assert autonomous_mod._effective_flags("scan") == (True, False)
-    assert autonomous_mod._effective_flags("all") == (True, True)
+
+
+def test_ticket_sources_env_overrides_cli_queue_to_scan(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("TICKET_SOURCES", "scan")
+    monkeypatch.setattr(
+        autonomous_mod,
+        "init_project",
+        lambda project, force=False: SimpleNamespace(project=project),
+    )
+    scan_calls: list[dict] = []
+
+    def spy_run_scan(**kwargs):
+        scan_calls.append(kwargs)
+        return ScanResult(suggestions=[], applied=[], skipped=[])
+
+    monkeypatch.setattr(autonomous_mod, "run_scan", spy_run_scan)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=0 last_status=idle",
+            last_status="idle",
+        ),
+    )
+    monkeypatch.setattr(autonomous_mod.time, "sleep", lambda _s: None)
+
+    rc = autonomous_mod.autonomous_main(
+        [
+            "up",
+            "--no-serve",
+            "--project",
+            str(tmp_path),
+            "--max-cycles",
+            "1",
+            "--sleep-seconds",
+            "0",
+            "--ticket-sources",
+            "queue",
+            "--no-autopilot",
+        ]
+    )
+    assert rc == 0
+    assert len(scan_calls) == 1
+
+
+def test_ticket_sources_env_invalid_keeps_cli_queue(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.setenv("TICKET_SOURCES", "bogus")
+    monkeypatch.setattr(
+        autonomous_mod,
+        "init_project",
+        lambda project, force=False: SimpleNamespace(project=project),
+    )
+    scan_calls: list[dict] = []
+
+    def spy_run_scan(**kwargs):
+        scan_calls.append(kwargs)
+        return ScanResult(suggestions=[], applied=[], skipped=[])
+
+    monkeypatch.setattr(autonomous_mod, "run_scan", spy_run_scan)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=0 last_status=idle",
+            last_status="idle",
+        ),
+    )
+    monkeypatch.setattr(autonomous_mod.time, "sleep", lambda _s: None)
+
+    rc = autonomous_mod.autonomous_main(
+        [
+            "up",
+            "--no-serve",
+            "--project",
+            str(tmp_path),
+            "--max-cycles",
+            "1",
+            "--sleep-seconds",
+            "0",
+            "--ticket-sources",
+            "queue",
+            "--no-autopilot",
+        ]
+    )
+    assert rc == 0
+    assert scan_calls == []
+    err = capsys.readouterr().err
+    assert "unknown TICKET_SOURCES" in err
 
 
 def test_queue_loop_result_summary_includes_waiting_ticket() -> None:
@@ -484,6 +574,7 @@ def test_compute_backoff_sleep_caps_stagnation() -> None:
 
 def test_env_apply_autoloop_defaults_enables_full_diagnostics(monkeypatch) -> None:
     args = SimpleNamespace(
+        ticket_sources="all",
         idle_diagnostics="off",
         diagnostic_tickets=False,
         diagnostic_ticket_queue="default",
