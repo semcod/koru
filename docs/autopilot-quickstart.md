@@ -65,8 +65,11 @@ to prepend ``DIR/.koru/…`` like ``koru autopilot daemon --project``).
 
 Behaviour:
 
-- If a profile exists for the resolved IDE and the session is **X11** with
-  ``xdotool`` on ``PATH``, that path is used automatically.
+- Profiles store only ``chat_x`` / ``chat_y`` (calibrate with the pointer over the chat input).
+  No ``window_id`` is used for targeting (legacy keys in JSON are ignored).
+- If a profile exists for the resolved IDE and ``xdotool`` is on ``PATH``, that path runs automatically.
+- ``KORU_OS_INJECTOR_FOCUS=click`` (default): move, then left-click to focus; ``return``: move, then Return (no click).
+- ``KORU_OS_INJECTOR_INPUT=auto`` (default): paste via ``xclip``/``xsel`` + Ctrl+V when available, else ``xdotool type``; set ``type`` or ``paste`` to force.
 - Set ``KORU_OS_INJECTOR=0`` to disable and always use the plain keyboard injector.
 - Set ``KORU_OS_INJECTOR=1`` to insist on the profile path when a profile is
   present (same as auto once a profile exists; still no profile → keyboard fallback).

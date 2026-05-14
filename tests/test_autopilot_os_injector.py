@@ -21,12 +21,24 @@ from koru.autopilot.os_injector import (
 
 def test_save_and_load_profile(tmp_path: Path) -> None:
     config = tmp_path / "profiles.json"
-    profile = OsInjectorProfile(tool_id="windsurf", window_id=11, chat_x=222, chat_y=333)
+    profile = OsInjectorProfile(tool_id="windsurf", chat_x=222, chat_y=333)
     save_profile(profile, config_path=config)
     loaded = load_profile("windsurf", config_path=config)
     assert loaded == profile
     payload = json.loads(config.read_text(encoding="utf-8"))
-    assert payload["windsurf"]["window_id"] == 11
+    assert "window_id" not in payload["windsurf"]
+    assert payload["windsurf"] == {"chat_x": 222, "chat_y": 333}
+
+
+def test_load_profile_accepts_legacy_window_id(tmp_path: Path) -> None:
+    config = tmp_path / "p.json"
+    config.write_text(
+        json.dumps({"cursor": {"window_id": 99, "chat_x": 1, "chat_y": 2}}),
+        encoding="utf-8",
+    )
+    p = load_profile("cursor", config_path=config)
+    assert p.window_id == 99
+    assert p.chat_x == 1
 
 
 def test_capture_from_xdotool_parses_shell_output(
@@ -43,50 +55,63 @@ def test_capture_from_xdotool_parses_shell_output(
         ),
     )
     window_id, x, y = capture_from_xdotool()
-    assert (window_id, x, y) == (300, 100, 200)
+    assert (window_id, x, y) == (0, 100, 200)
 
 
-def test_inject_with_profile_runs_expected_xdotool_sequence(
+def test_inject_with_profile_paste_path_uses_clipboard_then_ctrl_v(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    import koru.autopilot.os_injector as oi
+
     calls: list[list[str]] = []
 
     def _run(cmd, **kwargs):
         calls.append(list(cmd))
-        return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
+        return subprocess.CompletedProcess(args=cmd, returncode=0, stdout=b"", stderr=b"")
 
     monkeypatch.setattr(subprocess, "run", _run)
+    monkeypatch.setattr(oi.shutil, "which", lambda n: f"/bin/{n}")
+    monkeypatch.setenv("KORU_OS_INJECTOR_INPUT", "paste")
     out = inject_with_profile(
-        profile=OsInjectorProfile(tool_id="cursor", window_id=77, chat_x=20, chat_y=30),
+        profile=OsInjectorProfile(tool_id="cursor", chat_x=20, chat_y=30),
         text="hello",
         submit=True,
         dry_run=False,
     )
     assert out["ok"] is True
-    assert calls[0][:2] == ["xdotool", "mousemove"]
-    assert calls[1][:2] == ["xdotool", "type"]
-    assert calls[2][:2] == ["xdotool", "key"]
+    assert out["input_method"] == "paste"
+    joined = "\n".join(" ".join(c) for c in calls)
+    assert "windowactivate" not in joined
+    assert calls[0][:4] == ["xdotool", "mousemove", "--sync", "20"]
+    assert calls[1][:2] == ["xdotool", "click"]
+    assert any(c[:2] == ["/bin/xclip", "-selection"] for c in calls)
+    assert any("ctrl+v" in " ".join(c) for c in calls)
 
 
-def test_inject_with_profile_focus_window_opt_in(
+def test_inject_with_profile_type_fallback_when_no_clip_tools(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    import koru.autopilot.os_injector as oi
+
     calls: list[list[str]] = []
 
     def _run(cmd, **kwargs):
         calls.append(list(cmd))
-        return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
+        return subprocess.CompletedProcess(args=cmd, returncode=0, stdout=b"", stderr=b"")
 
-    monkeypatch.setenv("KORU_OS_INJECTOR_FOCUS_WINDOW", "1")
     monkeypatch.setattr(subprocess, "run", _run)
+    monkeypatch.setattr(oi.shutil, "which", lambda n: "/xdotool" if n == "xdotool" else None)
+    monkeypatch.setenv("KORU_OS_INJECTOR_INPUT", "type")
     out = inject_with_profile(
-        profile=OsInjectorProfile(tool_id="cursor", window_id=77, chat_x=20, chat_y=30),
-        text="hello",
+        profile=OsInjectorProfile(tool_id="cursor", chat_x=5, chat_y=6),
+        text="hi",
         submit=False,
         dry_run=False,
     )
-    assert out["ok"] is True
-    assert calls[0][:3] == ["xdotool", "windowactivate", "--sync"]
+    assert out["input_method"] == "type"
+    assert calls[0][1:4] == ["mousemove", "--sync", "5"]
+    assert calls[1][:2] == ["xdotool", "click"]
+    assert calls[2][:2] == ["xdotool", "type"]
 
 
 def test_load_profile_missing_raises(tmp_path: Path) -> None:
@@ -100,7 +125,7 @@ def test_try_load_profile_prefers_project_over_cwd(
     proj_cfg = tmp_path / ".koru" / "ide-os-injector.json"
     proj_cfg.parent.mkdir(parents=True)
     proj_cfg.write_text(
-        json.dumps({"cursor": {"window_id": 1, "chat_x": 2, "chat_y": 3}}),
+        json.dumps({"cursor": {"chat_x": 2, "chat_y": 3}}),
         encoding="utf-8",
     )
     other = tmp_path / "sub"
@@ -108,13 +133,13 @@ def test_try_load_profile_prefers_project_over_cwd(
     cwd_cfg = other / ".koru" / "ide-os-injector.json"
     cwd_cfg.parent.mkdir(parents=True)
     cwd_cfg.write_text(
-        json.dumps({"cursor": {"window_id": 9, "chat_x": 8, "chat_y": 7}}),
+        json.dumps({"cursor": {"chat_x": 8, "chat_y": 7}}),
         encoding="utf-8",
     )
     monkeypatch.chdir(other)
     loaded = try_load_profile("cursor", project=tmp_path)
     assert loaded is not None
-    assert loaded.window_id == 1
+    assert loaded.chat_x == 2
 
 
 def test_iter_config_paths_dedupes_project_and_cwd(tmp_path: Path) -> None:
@@ -134,7 +159,7 @@ def test_try_drive_with_profile_works_when_xdg_session_type_wayland(
     cfg = tmp_path / ".koru" / "ide-os-injector.json"
     cfg.parent.mkdir(parents=True)
     cfg.write_text(
-        json.dumps({"cursor": {"window_id": 1, "chat_x": 2, "chat_y": 3}}),
+        json.dumps({"cursor": {"chat_x": 2, "chat_y": 3}}),
         encoding="utf-8",
     )
     monkeypatch.chdir(tmp_path)
@@ -168,7 +193,7 @@ def test_try_drive_with_profile_uses_config(tmp_path: Path, monkeypatch: pytest.
     cfg = tmp_path / ".koru" / "ide-os-injector.json"
     cfg.parent.mkdir(parents=True)
     cfg.write_text(
-        json.dumps({"cursor": {"window_id": 1, "chat_x": 2, "chat_y": 3}}),
+        json.dumps({"cursor": {"chat_x": 2, "chat_y": 3}}),
         encoding="utf-8",
     )
     monkeypatch.chdir(tmp_path)

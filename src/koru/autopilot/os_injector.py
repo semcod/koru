@@ -2,6 +2,11 @@
 
 This backend is intentionally best-effort and X11/xdotool-focused.
 Use it only as a fallback when plugin/MCP paths are unavailable.
+
+Injection uses **only** stored mouse coordinates (``chat_x`` / ``chat_y``):
+move the pointer there, focus the field (left click or Return), then paste
+or type the prompt. Legacy ``window_id`` keys in JSON are ignored and no
+longer written by :func:`save_profile`.
 """
 
 from __future__ import annotations
@@ -21,10 +26,12 @@ class OsInjectorError(RuntimeError):
 
 @dataclass(frozen=True)
 class OsInjectorProfile:
+    """Chat anchor: pixel position under the cursor at calibration time."""
+
     tool_id: str
-    window_id: int
     chat_x: int
     chat_y: int
+    window_id: int = 0  # legacy JSON only; never used for windowactivate
 
 
 def default_config_path() -> Path:
@@ -64,10 +71,24 @@ def dry_run_from_env() -> bool:
     return raw in ("1", "true", "yes", "on")
 
 
-def focus_window_from_env() -> bool:
-    """Opt-in focus before click/type (disabled by default = mouse-only)."""
-    raw = os.environ.get("KORU_OS_INJECTOR_FOCUS_WINDOW", "").strip().lower()
-    return raw in ("1", "true", "yes", "on")
+def focus_mode_from_env() -> str:
+    """How to focus the chat field after moving the pointer.
+
+    ``click`` (default): left-click at ``(chat_x, chat_y)``.
+    ``return``: press Return at that position (no mouse click).
+    """
+    raw = os.environ.get("KORU_OS_INJECTOR_FOCUS", "click").strip().lower()
+    if raw in ("return", "enter"):
+        return "return"
+    return "click"
+
+
+def input_mode_from_env() -> str:
+    """How to insert text: ``auto`` (paste if xclip/xsel else type), ``paste``, ``type``."""
+    raw = os.environ.get("KORU_OS_INJECTOR_INPUT", "auto").strip().lower()
+    if raw in ("paste", "type", "auto"):
+        return raw
+    return "auto"
 
 
 def try_load_profile(tool_id: str, *, project: Path | None = None) -> OsInjectorProfile | None:
@@ -101,9 +122,9 @@ def load_profile(tool_id: str, *, config_path: Path | None = None) -> OsInjector
     try:
         return OsInjectorProfile(
             tool_id=tool_id,
-            window_id=int(raw["window_id"]),
             chat_x=int(raw["chat_x"]),
             chat_y=int(raw["chat_y"]),
+            window_id=int(raw.get("window_id") or 0),
         )
     except (KeyError, TypeError, ValueError) as exc:
         raise OsInjectorError(f"invalid profile {tool_id!r} in {path}: {exc}") from exc
@@ -114,7 +135,6 @@ def save_profile(profile: OsInjectorProfile, *, config_path: Path | None = None)
     path.parent.mkdir(parents=True, exist_ok=True)
     data = _read_json(path) if path.exists() else {}
     data[profile.tool_id] = {
-        "window_id": profile.window_id,
         "chat_x": profile.chat_x,
         "chat_y": profile.chat_y,
     }
@@ -122,12 +142,8 @@ def save_profile(profile: OsInjectorProfile, *, config_path: Path | None = None)
     return path
 
 
-def capture_from_xdotool() -> tuple[int, int, int]:
-    """Return ``(window_id, x, y)`` from xdotool.
-
-    ``window_id`` is taken from ``getactivewindow`` (more reliable for IDE
-    top-level focus) with fallback to ``getmouselocation --shell`` WINDOW.
-    """
+def capture_mouse_xy() -> tuple[int, int]:
+    """Return ``(x, y)`` from ``xdotool getmouselocation --shell``."""
     proc = subprocess.run(
         ["xdotool", "getmouselocation", "--shell"],
         capture_output=True,
@@ -141,22 +157,48 @@ def capture_from_xdotool() -> tuple[int, int, int]:
         if "=" in line:
             key, value = line.split("=", 1)
             kv[key.strip()] = value.strip()
-    active_id: int | None = None
-    proc_active = subprocess.run(
-        ["xdotool", "getactivewindow"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if proc_active.returncode == 0:
-        raw = (proc_active.stdout or "").strip()
-        if raw.isdigit():
-            active_id = int(raw)
     try:
-        fallback_window = int(kv["WINDOW"])
-        return (active_id or fallback_window), int(kv["X"]), int(kv["Y"])
+        return int(kv["X"]), int(kv["Y"])
     except (KeyError, ValueError) as exc:
-        raise OsInjectorError("xdotool output missing WINDOW/X/Y") from exc
+        raise OsInjectorError("xdotool output missing X/Y") from exc
+
+
+def capture_from_xdotool() -> tuple[int, int, int]:
+    """Return ``(0, x, y)`` — window id is unused; kept for older calibration scripts."""
+    x, y = capture_mouse_xy()
+    return 0, x, y
+
+
+def _run_cmd(cmd: list[str], *, stdin: bytes | None = None) -> None:
+    proc = subprocess.run(cmd, input=stdin, capture_output=True, text=False, check=False)
+    if proc.returncode != 0:
+        err = (proc.stderr or b"").decode("utf-8", errors="replace").strip()
+        raise OsInjectorError(f"{cmd[0]} failed ({proc.returncode}): {err or '(no stderr)'}")
+
+
+def _xdotool(argv_tail: list[str]) -> None:
+    _run_cmd(["xdotool", *argv_tail])
+
+
+def _clipboard_backend() -> str | None:
+    if shutil.which("xclip"):
+        return "xclip"
+    if shutil.which("xsel"):
+        return "xsel"
+    return None
+
+
+def _set_clipboard(text: str) -> str:
+    data = text.encode("utf-8")
+    xclip = shutil.which("xclip")
+    if xclip:
+        _run_cmd([xclip, "-selection", "clipboard"], stdin=data)
+        return "xclip"
+    xsel = shutil.which("xsel")
+    if xsel:
+        _run_cmd([xsel, "--clipboard", "--input"], stdin=data)
+        return "xsel"
+    raise OsInjectorError("clipboard paste needs xclip or xsel on PATH")
 
 
 def inject_with_profile(
@@ -168,6 +210,15 @@ def inject_with_profile(
 ) -> dict[str, Any]:
     if not text.strip():
         raise OsInjectorError("refusing to inject empty text")
+
+    focus = focus_mode_from_env()
+    mode = input_mode_from_env()
+    clip_ok = _clipboard_backend() is not None
+    use_paste = mode == "paste" or (mode == "auto" and clip_ok)
+    if mode == "paste" and not clip_ok:
+        raise OsInjectorError("KORU_OS_INJECTOR_INPUT=paste requires xclip or xsel on PATH")
+    input_method: str = "paste" if use_paste else "type"
+
     if dry_run:
         return {
             "ok": True,
@@ -175,36 +226,39 @@ def inject_with_profile(
             "tool_id": profile.tool_id,
             "submitted": submit,
             "dry_run": True,
-            "window_id": profile.window_id,
             "chat_x": profile.chat_x,
             "chat_y": profile.chat_y,
+            "focus": focus,
+            "input_method": input_method,
         }
 
-    commands: list[list[str]] = []
-    if focus_window_from_env():
-        commands.append(["xdotool", "windowactivate", "--sync", str(profile.window_id)])
-    commands.extend(
-        [
-            ["xdotool", "mousemove", str(profile.chat_x), str(profile.chat_y), "click", "1"],
-            ["xdotool", "type", "--delay", "5", "--clearmodifiers", "--", text],
-        ]
-    )
-    if submit:
-        commands.append(["xdotool", "key", "--clearmodifiers", "Return"])
+    x, y = profile.chat_x, profile.chat_y
+    _xdotool(["mousemove", "--sync", str(x), str(y)])
+    if focus == "click":
+        _xdotool(["click", "1"])
+    else:
+        _xdotool(["key", "--clearmodifiers", "Return"])
 
-    for cmd in commands:
-        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
-        if proc.returncode != 0:
-            raise OsInjectorError(f"{cmd[0]} failed ({proc.returncode}): {proc.stderr.strip()}")
+    if use_paste:
+        clip_tool = _set_clipboard(text)
+        _xdotool(["sleep", "0.08"])
+        _xdotool(["key", "--clearmodifiers", "ctrl+v"])
+    else:
+        _xdotool(["type", "--delay", "5", "--clearmodifiers", "--", text])
+
+    if submit:
+        _xdotool(["key", "--clearmodifiers", "Return"])
+
     return {
         "ok": True,
         "backend": "os_injector",
         "tool_id": profile.tool_id,
         "submitted": submit,
         "dry_run": False,
-        "window_id": profile.window_id,
         "chat_x": profile.chat_x,
         "chat_y": profile.chat_y,
+        "focus": focus,
+        "input_method": input_method,
     }
 
 

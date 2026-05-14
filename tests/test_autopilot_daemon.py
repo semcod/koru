@@ -253,7 +253,7 @@ def test_drive_uses_os_injector_when_profile_available(
     monkeypatch.setattr(daemon_mod, "detect_running_ides", lambda **_: [fake])
     monkeypatch.setattr(oi_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None)
 
-    prof = OsInjectorProfile(tool_id="cursor", window_id=1, chat_x=2, chat_y=3)
+    prof = OsInjectorProfile(tool_id="cursor", chat_x=2, chat_y=3)
 
     def fake_try_load(tool_id: str, project=None):
         assert tool_id == "cursor"
@@ -300,7 +300,7 @@ def test_drive_os_injector_skipped_when_env_disabled(
 
     def counted_try_load(*_a, **_k):
         tried["n"] += 1
-        return OsInjectorProfile(tool_id="cursor", window_id=1, chat_x=0, chat_y=0)
+        return OsInjectorProfile(tool_id="cursor", chat_x=0, chat_y=0)
 
     monkeypatch.setattr(oi_mod, "try_load_profile", counted_try_load)
 
