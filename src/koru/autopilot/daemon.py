@@ -29,7 +29,6 @@ import functools
 import json
 import os
 import selectors
-import shutil
 import socket
 import stat
 import struct
@@ -369,29 +368,16 @@ class AutopilotDaemon:
 
     def _try_os_injector_drive(self, target_id: str, text: str, submit: bool) -> dict[str, Any] | None:
         """Run :mod:`os_injector` when configured; ``None`` means use keyboard."""
-        if target_id == "default":
-            return None
         from . import os_injector as oi
 
-        if oi.os_injector_env_disabled():
-            return None
-        if _session_type() == "wayland":
-            return None
-        if shutil.which("xdotool") is None:
-            return None
-
-        profile = oi.try_load_profile(target_id, project=self.project)
-        if profile is None and not oi.os_injector_env_forced():
-            return None
-        if profile is None:
-            return None
-
         try:
-            return oi.inject_with_profile(
-                profile=profile,
+            return oi.try_drive_with_profile(
+                tool_id=target_id,
                 text=text,
                 submit=submit,
-                dry_run=oi.dry_run_from_env(),
+                project=self.project,
+                session_type=_session_type(),
+                cli_dry_run=False,
             )
         except oi.OsInjectorError as exc:
             raise InjectorError(str(exc)) from exc

@@ -60,8 +60,13 @@ def test_drive_dry_run_direct(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    from koru.autopilot import os_injector as oi
+
+    monkeypatch.setattr(oi, "try_drive_with_profile", lambda **_k: None)
     # Force the injector to find xdotool so dry-run can pick a backend.
     class _FakeInjector:
+        session = "x11"
+
         def __init__(self) -> None:
             pass
 
@@ -79,6 +84,37 @@ def test_drive_dry_run_direct(
     payload = json.loads(out)
     assert payload["dry_run"] is True
     assert payload["backend"] == "xdotool"
+
+
+def test_drive_direct_prefers_os_injector_profile(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru.autopilot import os_injector as oi_mod
+    from koru.autopilot.ide import RunningIDE
+
+    class _Inj:
+        session = "x11"
+
+        def type_text(self, *_a, **_k):
+            raise AssertionError("keyboard injector should not run")
+
+    monkeypatch.setattr(cli_command, "Injector", lambda: _Inj())
+    monkeypatch.setattr(
+        cli_command,
+        "detect_running_ides",
+        lambda: [RunningIDE(id="vscode", label="VS Code", pid=1, exe="/e")],
+    )
+
+    def _fake_try(**kwargs):
+        assert kwargs["tool_id"] == "vscode"
+        return {"ok": True, "backend": "os_injector", "tool_id": "vscode", "submitted": True}
+
+    monkeypatch.setattr(oi_mod, "try_drive_with_profile", _fake_try)
+    rc = autopilot_main(["drive", "--direct", "--prompt", "go"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["backend"] == "os_injector"
 
 
 def test_ide_list_empty(

@@ -19,8 +19,8 @@ from . import default_socket_path
 from .audit import AuditLog, default_log_path
 from .client import AutopilotClient
 from .daemon import AutopilotDaemon
-from .ide import detect_focused_ide_id, detect_running_ides
-from .injector import Injector, InjectorError
+from .ide import detect_focused_ide_id, detect_running_ides, pick_target
+from .injector import Injector, InjectorError, _session_type
 from .utils.client_helpers import call_daemon_method, resolve_xdg_path
 
 
@@ -113,6 +113,17 @@ def _build_parser() -> argparse.ArgumentParser:
         "--direct",
         action="store_true",
         help="Bypass the daemon and inject directly via local backends.",
+    )
+    drive.add_argument(
+        "--project",
+        type=Path,
+        default=None,
+        metavar="DIR",
+        help=(
+            "With --direct, include DIR/.koru/ide-os-injector.json first in OS-injector "
+            "profile search (default: cwd-only + home; same order as the daemon when "
+            "given --project)."
+        ),
     )
 
     sub.add_parser("status", help="Print daemon health + connected plugins.")
@@ -336,14 +347,39 @@ def _action_drive(args: argparse.Namespace) -> int:
         )
         return 2
     if args.direct:
+        from . import os_injector as oi
+
         injector = Injector()
+        detected = detect_running_ides()
+        ide_pref = None if args.ide == "auto" else args.ide
+        target = pick_target(detected, prefer=ide_pref)
+        if args.ide == "auto":
+            target_id = target.id if target is not None else "default"
+        else:
+            target_id = args.ide
+
+        session = getattr(injector, "session", None) or _session_type()
         try:
+            os_res = oi.try_drive_with_profile(
+                tool_id=target_id,
+                text=text,
+                submit=args.submit,
+                project=args.project,
+                session_type=session,
+                cli_dry_run=args.dry_run,
+            )
+            if os_res is not None:
+                print(json.dumps(os_res, indent=2, sort_keys=True))
+                return 0
             result = injector.type_text(
                 text,
-                ide="default" if args.ide == "auto" else args.ide,
+                ide=target_id,
                 submit=args.submit,
                 dry_run=args.dry_run,
             )
+        except oi.OsInjectorError as exc:
+            print(f"koru autopilot drive: {exc}", file=sys.stderr)
+            return 1
         except InjectorError as exc:
             print(f"koru autopilot drive: {exc}", file=sys.stderr)
             return 1

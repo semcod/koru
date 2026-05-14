@@ -252,7 +252,7 @@ def test_drive_uses_os_injector_when_profile_available(
     monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [fake])
     monkeypatch.setattr(daemon_mod, "detect_running_ides", lambda **_: [fake])
     monkeypatch.setattr(daemon_mod, "_session_type", lambda: "x11")
-    monkeypatch.setattr(daemon_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None)
+    monkeypatch.setattr(oi_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None)
 
     prof = OsInjectorProfile(tool_id="cursor", window_id=1, chat_x=2, chat_y=3)
 
@@ -296,7 +296,7 @@ def test_drive_os_injector_skipped_when_env_disabled(
     monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [fake])
     monkeypatch.setattr(daemon_mod, "detect_running_ides", lambda **_: [fake])
     monkeypatch.setattr(daemon_mod, "_session_type", lambda: "x11")
-    monkeypatch.setattr(daemon_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None)
+    monkeypatch.setattr(oi_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None)
 
     tried = {"n": 0}
 
@@ -322,7 +322,7 @@ def test_drive_os_injector_forced_without_profile_falls_back_to_keyboard(
     monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [fake])
     monkeypatch.setattr(daemon_mod, "detect_running_ides", lambda **_: [fake])
     monkeypatch.setattr(daemon_mod, "_session_type", lambda: "x11")
-    monkeypatch.setattr(daemon_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None)
+    monkeypatch.setattr(oi_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None)
     monkeypatch.setattr(oi_mod, "try_load_profile", lambda *a, **k: None)
 
     with _daemon(tmp_path, monkeypatch, patch_ides=False) as h:

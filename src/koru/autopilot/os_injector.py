@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -180,3 +181,62 @@ def inject_with_profile(
         "chat_y": profile.chat_y,
     }
 
+
+def try_drive_with_profile(
+    *,
+    tool_id: str,
+    text: str,
+    submit: bool,
+    project: Path | None = None,
+    session_type: str = "",
+    cli_dry_run: bool = False,
+) -> dict[str, Any] | None:
+    """Try OS-injector profile path; return None when not applicable.
+
+    Applies environment toggles:
+      - ``KORU_OS_INJECTOR=0`` disables this path
+      - ``KORU_OS_INJECTOR=1`` forces dry-run/env semantics but still needs profile
+      - ``KORU_OS_INJECTOR_DRY_RUN=1`` forces dry-run response
+    """
+    if os_injector_env_disabled():
+        return None
+    if session_type and session_type != "x11":
+        return None
+    profile = try_load_profile(tool_id, project=project)
+    if profile is None:
+        return None
+    dry = bool(cli_dry_run or dry_run_from_env())
+    return inject_with_profile(profile=profile, text=text, submit=submit, dry_run=dry)
+
+
+def try_drive_with_profile(
+    *,
+    tool_id: str,
+    text: str,
+    submit: bool,
+    project: Path | None,
+    session_type: str,
+    cli_dry_run: bool = False,
+) -> dict[str, Any] | None:
+    """If a profile applies, run :func:`inject_with_profile`; else return ``None``.
+
+    Used by the autopilot daemon and ``koru autopilot drive --direct``.
+    Raises :class:`OsInjectorError` when injection is attempted but fails.
+    """
+    if tool_id == "default":
+        return None
+    if os_injector_env_disabled():
+        return None
+    if session_type == "wayland":
+        return None
+    if shutil.which("xdotool") is None:
+        return None
+
+    profile = try_load_profile(tool_id, project=project)
+    if profile is None and not os_injector_env_forced():
+        return None
+    if profile is None:
+        return None
+
+    dry = cli_dry_run or dry_run_from_env()
+    return inject_with_profile(profile=profile, text=text, submit=submit, dry_run=dry)

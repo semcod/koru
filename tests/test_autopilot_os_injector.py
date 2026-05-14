@@ -14,6 +14,7 @@ from koru.autopilot.os_injector import (
     iter_config_paths,
     load_profile,
     save_profile,
+    try_drive_with_profile,
     try_load_profile,
 )
 
@@ -100,3 +101,60 @@ def test_iter_config_paths_dedupes_project_and_cwd(tmp_path: Path) -> None:
     resolved = tmp_path.resolve()
     paths = iter_config_paths(project=resolved)
     assert len(paths) == len({str(p.resolve()) for p in paths})
+
+
+def test_try_drive_with_profile_skips_wayland(monkeypatch: pytest.MonkeyPatch) -> None:
+    import koru.autopilot.os_injector as oi
+
+    monkeypatch.setattr(oi.shutil, "which", lambda _n: "/xdotool")
+    assert (
+        try_drive_with_profile(
+            tool_id="cursor",
+            text="hi",
+            submit=True,
+            project=None,
+            session_type="wayland",
+        )
+        is None
+    )
+
+
+def test_try_drive_with_profile_skips_when_env_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    import koru.autopilot.os_injector as oi
+
+    monkeypatch.setenv("KORU_OS_INJECTOR", "0")
+    monkeypatch.setattr(oi.shutil, "which", lambda _n: "/xdotool")
+    assert (
+        try_drive_with_profile(
+            tool_id="cursor",
+            text="hi",
+            submit=True,
+            project=None,
+            session_type="x11",
+        )
+        is None
+    )
+
+
+def test_try_drive_with_profile_uses_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import koru.autopilot.os_injector as oi
+
+    monkeypatch.setattr(oi.shutil, "which", lambda _n: "/xdotool")
+    cfg = tmp_path / ".koru" / "ide-os-injector.json"
+    cfg.parent.mkdir(parents=True)
+    cfg.write_text(
+        json.dumps({"cursor": {"window_id": 1, "chat_x": 2, "chat_y": 3}}),
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    out = try_drive_with_profile(
+        tool_id="cursor",
+        text="x",
+        submit=False,
+        project=None,
+        session_type="x11",
+        cli_dry_run=True,
+    )
+    assert out is not None
+    assert out["backend"] == "os_injector"
+    assert out["dry_run"] is True

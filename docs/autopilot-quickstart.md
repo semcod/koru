@@ -60,6 +60,9 @@ Config is merged JSON keyed by IDE id (``cursor``, ``windsurf``, ``vscode``,
 2. ``$PWD/.koru/ide-os-injector.json``
 3. ``~/.koru/ide-os-injector.json``
 
+``koru autopilot drive --direct`` uses the same search (pass ``--project DIR``
+to prepend ``DIR/.koru/…`` like ``koru autopilot daemon --project``).
+
 Behaviour:
 
 - If a profile exists for the resolved IDE and the session is **X11** with
