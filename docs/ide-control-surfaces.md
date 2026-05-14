@@ -7,6 +7,9 @@ styles that stay useful without turning everything into “type into chat”.
 See also: [ide-router.md](ide-router.md) (headless vs IDE shell merge for
 `--autopilot-ide`).
 
+[MCP IDE flow](mcp-ide-flow.md) — stdio tools (`koru mcp-serve`) wiring.  
+[Autopilot design](autopilot-design.md) — terminal → chat injection architecture.
+
 ---
 
 ## 1. IDE plugin as a small RPC client (structured Koru → IDE)

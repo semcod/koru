@@ -13,6 +13,8 @@ def test_ide_control_surfaces_doc_exists_with_key_sections() -> None:
     assert "DAP" in text or "Debug Adapter" in text
     assert "Neovim" in text
     assert "ide-router.md" in text
+    assert "mcp-ide-flow.md" in text
+    assert "autopilot-design.md" in text
 
 
 def test_ide_router_doc_links_to_ide_control_surfaces() -> None:
