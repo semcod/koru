@@ -268,6 +268,27 @@ tasks:
       - sh: which regix
         msg: "regix not installed. Run: task install:tools"
 
+  quality:wup:
+    desc: Check WUP on-change watcher configuration
+    cmds:
+      - |
+        set -euo pipefail
+        if python3 -m koru.cli topology --project . --is-enabled gate:wup >/dev/null 2>&1; then
+          wup status
+        else
+          rc=$?
+          if [ "$rc" -eq 1 ]; then
+            echo "quality:wup skipped (gate:wup disabled in topology)"
+            exit 0
+          fi
+          wup status
+        fi
+    preconditions:
+      - sh: which wup
+        msg: "wup not installed. Run: task install:tools"
+      - sh: test -f wup.yaml
+        msg: "wup.yaml missing. Run: task template:install:wup"
+
   quality:redup:
     desc: 'Run redup duplicate detection (default: current dir)'
     cmds:

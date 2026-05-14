@@ -612,23 +612,68 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: codex
+        attempt: 0
+        finished_at: '2026-05-14T11:15:42.775900Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T11:15:41.961161Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T11:15:42.112255+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T11:15:42.927604+00:00'
       id: STARTER-004
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts:
+        - wup.yaml
+        - Taskfile.yml
+        - docs/llm-tools/wup/README.md
+        - tests/test_wup_taskfile.py
+        notes:
+        - wup.yaml already existed; added a topology-aware quality:wup task that validates
+          the on-change watcher with wup status, documented the WUP loop, and added
+          regression coverage for Taskfile wiring and root config.
+        result:
+          status: done
+          tests:
+          - uv run pytest -q tests/test_wup_taskfile.py
+          - task quality:wup
+          - git diff --check
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:35:46.467501Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:35:46.468376Z'
+      updated_at: '2026-05-14T11:15:42.927572+00:00'
     STARTER-005:
       acceptance_criteria: []
       blocked_by: []

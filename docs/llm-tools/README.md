@@ -45,6 +45,7 @@ SPECIALIZED (LLM-free):
 
 ON-CHANGE GATES TRIAD (LLM-free, continuous):
   wup       [intelligent file watcher → priority/full testql probes]
+            task quality:wup checks watcher config; wup watch runs the loop
   + regix     (delta gate, see WALIDACJA above)
   + testql    (HTTP probe, see WYKRYWANIE above)
   → koru brief surfaces all three in "On-change gates" section

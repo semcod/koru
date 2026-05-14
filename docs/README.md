@@ -82,6 +82,7 @@ planfile ticket show PLF-XXX
 # ...
 
 # Validate locally (no LLM API calls)
+task quality:wup
 task quality:regix:local
 task test
 task monitor:probe
