@@ -1,9 +1,18 @@
 """Runtime *agent UI* backends — how ``autonomous`` reaches an IDE-side LLM.
 
 Static capability profiles live in :mod:`koru.agent_backends`; this module holds
-the small :class:`AgentBackend` protocol and the first concrete implementation
-(Unix socket + autopilot ``drive``), so :mod:`koru.autonomous` does not call
-:class:`~koru.autopilot.client.AutopilotClient` directly.
+the small :class:`AgentBackend` protocol and concrete implementations:
+
+  * :class:`PluginSocketBackend` — IDE plugin + unix socket (windsurf, vscode,
+    cursor, jetbrains via koru-autopilot plugin).
+  * :class:`McpToolBackend` — MCP tool path (Cursor / any MCP-aware IDE that
+    runs ``koru mcp-server runstdio``); send_chat is a no-op since the LLM is
+    expected to call ``koru_run_ticket`` itself. Used to keep the autonomy
+    loop running when no plugin socket is available.
+  * :class:`NoopBackend` — explicit "headless / smoke" backend; useful for CI
+    and `--no-autopilot` smoke tests.
+
+Lane → backend resolution lives in :func:`build_agent_backend`.
 """
 
 from __future__ import annotations
@@ -50,4 +59,88 @@ class PluginSocketBackend:
         return self.client.drive(prompt, submit=submit, ide=ide)
 
 
-__all__ = ["AgentBackend", "PluginSocketBackend"]
+@dataclass
+class McpToolBackend:
+    """MCP-only backend (e.g. Cursor with koru_run_ticket).
+
+    No socket / plugin: the LLM in the IDE is expected to call MCP tools on
+    its own. ``send_chat`` is a no-op that returns ``ok=True`` with a marker
+    so the autonomy loop keeps running and prompts are still emitted to the
+    event stream / logs.
+    """
+
+    mcp_server: str | None = None
+
+    def send_chat(
+        self,
+        project: Path,
+        prompt: str,
+        *,
+        ide: str,
+        submit: bool,
+        ticket_id: str | None = None,
+    ) -> dict[str, Any]:
+        del project, prompt, ide, submit, ticket_id
+        # IDE LLM drives itself via MCP; nothing to push from autonomy side.
+        return {
+            "ok": True,
+            "message": "mcp_tool: prompt logged; LLM drives via MCP tools",
+            "backend": "mcp_tool",
+            "mcp_server": self.mcp_server,
+        }
+
+
+@dataclass
+class NoopBackend:
+    """Explicit no-op backend for headless / smoke / CI runs."""
+
+    reason: str = "headless"
+
+    def send_chat(
+        self,
+        project: Path,
+        prompt: str,
+        *,
+        ide: str,
+        submit: bool,
+        ticket_id: str | None = None,
+    ) -> dict[str, Any]:
+        del project, prompt, ide, submit, ticket_id
+        return {
+            "ok": True,
+            "message": f"noop ({self.reason})",
+            "backend": "noop",
+        }
+
+
+def build_agent_backend(
+    *,
+    backend_id: str,
+    client: AutopilotClient | None = None,
+    mcp_server: str | None = None,
+    noop_reason: str = "headless",
+) -> AgentBackend:
+    """Resolve a lane backend id into a concrete :class:`AgentBackend`.
+
+    Lane ids follow :mod:`koru.agent_backends` (``plugin_socket``,
+    ``mcp_tool``, ``none``).
+    """
+    bid = (backend_id or "").strip().lower()
+    if bid == "plugin_socket":
+        if client is None:
+            raise ValueError("plugin_socket backend requires an AutopilotClient")
+        return PluginSocketBackend(client=client)
+    if bid == "mcp_tool":
+        return McpToolBackend(mcp_server=mcp_server)
+    if bid in ("none", "noop", ""):
+        return NoopBackend(reason=noop_reason)
+    raise ValueError(f"unknown agent backend id: {backend_id!r}")
+
+
+__all__ = [
+    "AgentBackend",
+    "PluginSocketBackend",
+    "McpToolBackend",
+    "NoopBackend",
+    "build_agent_backend",
+]

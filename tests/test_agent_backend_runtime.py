@@ -5,7 +5,14 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from koru.agent_backend_runtime import PluginSocketBackend
+import pytest
+
+from koru.agent_backend_runtime import (
+    McpToolBackend,
+    NoopBackend,
+    PluginSocketBackend,
+    build_agent_backend,
+)
 
 
 def test_plugin_socket_backend_forwards_send_chat_to_drive() -> None:
@@ -22,3 +29,108 @@ def test_plugin_socket_backend_forwards_send_chat_to_drive() -> None:
     )
     client.drive.assert_called_once_with("hello agent", submit=True, ide="windsurf")
     assert out == {"ok": True, "backend": "mock"}
+
+
+# --- McpToolBackend ----------------------------------------------------------
+
+
+def test_mcp_tool_backend_returns_ok_marker() -> None:
+    """MCP backend is a no-op push: returns ok with backend marker."""
+    backend = McpToolBackend(mcp_server="koru-stdio")
+    out = backend.send_chat(
+        Path("/tmp/p"),
+        "ignored prompt",
+        ide="cursor",
+        submit=True,
+        ticket_id="PLF-7",
+    )
+    assert out["ok"] is True
+    assert out["backend"] == "mcp_tool"
+    assert out["mcp_server"] == "koru-stdio"
+    assert "MCP" in out["message"] or "mcp" in out["message"].lower()
+
+
+def test_mcp_tool_backend_no_server_field() -> None:
+    backend = McpToolBackend()
+    out = backend.send_chat(Path("/tmp"), "x", ide="cursor", submit=False)
+    assert out["ok"] is True
+    assert out["mcp_server"] is None
+
+
+# --- NoopBackend -------------------------------------------------------------
+
+
+def test_noop_backend_returns_ok_with_reason() -> None:
+    backend = NoopBackend(reason="ci-smoke")
+    out = backend.send_chat(Path("/tmp"), "anything", ide="auto", submit=True)
+    assert out["ok"] is True
+    assert out["backend"] == "noop"
+    assert "ci-smoke" in out["message"]
+
+
+# --- build_agent_backend factory --------------------------------------------
+
+
+def test_factory_resolves_plugin_socket_with_client() -> None:
+    client = MagicMock()
+    backend = build_agent_backend(backend_id="plugin_socket", client=client)
+    assert isinstance(backend, PluginSocketBackend)
+    assert backend.client is client
+
+
+def test_factory_plugin_socket_requires_client() -> None:
+    with pytest.raises(ValueError, match="plugin_socket"):
+        build_agent_backend(backend_id="plugin_socket", client=None)
+
+
+def test_factory_resolves_mcp_tool() -> None:
+    backend = build_agent_backend(backend_id="mcp_tool", mcp_server="koru-stdio")
+    assert isinstance(backend, McpToolBackend)
+    assert backend.mcp_server == "koru-stdio"
+
+
+def test_factory_resolves_mcp_tool_without_server() -> None:
+    backend = build_agent_backend(backend_id="mcp_tool")
+    assert isinstance(backend, McpToolBackend)
+    assert backend.mcp_server is None
+
+
+def test_factory_resolves_none_to_noop() -> None:
+    for bid in ("none", "noop", ""):
+        backend = build_agent_backend(backend_id=bid, noop_reason="test-reason")
+        assert isinstance(backend, NoopBackend)
+        assert backend.reason == "test-reason"
+
+
+def test_factory_normalizes_case_and_whitespace() -> None:
+    backend = build_agent_backend(backend_id=" Plugin_Socket ", client=MagicMock())
+    assert isinstance(backend, PluginSocketBackend)
+
+
+def test_factory_rejects_unknown_backend_id() -> None:
+    with pytest.raises(ValueError, match="unknown agent backend id"):
+        build_agent_backend(backend_id="custom_thing")
+
+
+# --- All backends conform to AgentBackend protocol --------------------------
+
+
+@pytest.mark.parametrize(
+    "backend_id, kwargs",
+    [
+        ("plugin_socket", {"client": MagicMock(drive=MagicMock(return_value={"ok": True}))}),
+        ("mcp_tool", {}),
+        ("none", {}),
+    ],
+)
+def test_all_backends_implement_send_chat(backend_id, kwargs) -> None:
+    backend = build_agent_backend(backend_id=backend_id, **kwargs)
+    out = backend.send_chat(
+        Path("/tmp"),
+        "test prompt",
+        ide="auto",
+        submit=True,
+        ticket_id=None,
+    )
+    assert isinstance(out, dict)
+    assert "ok" in out

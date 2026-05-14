@@ -4,25 +4,29 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 from koru.autonomous import (
-    _run_cycle,
-    autonomous_main,
     AutoloopState,
     QueueLoopResult,
     ScanResult,
+    _run_cycle,
+    autonomous_main,
 )
 
 
 def test_autonomous_main_safe_up_expands_args():
     """Test that safe-up subcommand expands to safe defaults."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        argv = ["safe-up", "--project", tmpdir]
-        result = autonomous_main(argv)
-        # The command should expand safe-up to up with safe defaults
-        # We're testing that it doesn't crash and returns a valid exit code
-        assert result in (0, 2)  # 0=success, 2=argparse error (expected)
+        with patch("koru.autonomous._action_up", return_value=0) as action_up:
+            result = autonomous_main(["safe-up", "--project", tmpdir])
+
+        assert result == 0
+        args = action_up.call_args.args[0]
+        assert args.action == "up"
+        assert args.ticket_sources == "queue"
+        assert args.idle_diagnostics == "quick"
+        assert args.diagnostic_tickets is True
+        assert args.enable_autopilot is False
+        assert args.max_cycles == 1
 
 
 def test_autonomous_cycle_smoke_scenario():

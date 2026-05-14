@@ -588,13 +588,23 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
     assert install_calls == ["cursor:koru-autopilot-local.sock"]
 
 
-def test_run_cycle_skips_autopilot_when_queue_waits_for_input(
+def test_run_cycle_sends_fallback_prompt_when_waiting_input_empty_message(
     tmp_path,
     monkeypatch,
 ) -> None:
-    class FailIfDrivenClient:
-        def drive(self, *_args, **_kwargs):
-            raise AssertionError("autopilot should not drive waiting_input queues")
+    """waiting_input + empty message: send a fallback prompt instead of no-op.
+
+    Previous behaviour was to skip silently ('blocked_empty_message'), causing
+    tickets to stall forever. Now we send a generic continue-prompt so the IDE
+    LLM at least picks the next ticket. Repeated stagnation is still guarded
+    by ``autopilot_skip_statuses`` + ``stagnation_streak``.
+    """
+    drive_calls: list[tuple[str, dict]] = []
+
+    class RecordingClient:
+        def drive(self, prompt, **kwargs):
+            drive_calls.append((prompt, kwargs))
+            return {"ok": True, "message": "sent", "backend": "test"}
 
     monkeypatch.setattr(
         autonomous_mod,
@@ -618,11 +628,15 @@ def test_run_cycle_skips_autopilot_when_queue_waits_for_input(
         drive_prompt="continue with the next ticket",
         submit=True,
         include_semcod_artifacts=True,
-        client=FailIfDrivenClient(),
+        client=RecordingClient(),
     )
 
     assert queue_result.last_status == "waiting_input"
-    assert autopilot_status == "skipped"
+    assert autopilot_status == "ok"
+    assert len(drive_calls) == 1
+    sent_prompt = drive_calls[0][0]
+    # Fallback prompt asks IDE to pick next ticket / update status
+    assert "next" in sent_prompt.lower() or "continue" in sent_prompt.lower()
 
 
 def test_run_cycle_autopilot_waiting_input_logs_ticket_from_waiting_list(
@@ -693,9 +707,10 @@ def test_up_stops_on_waiting_input_by_default(
             last_message="",
         )
 
-    class FailIfDrivenClient:
+    class StubClient:
+        """Accepts drive (fallback prompt) but tracks if --stop-on-waiting-input fires."""
         def drive(self, *_args, **_kwargs):
-            raise AssertionError("autopilot should not drive waiting_input queues")
+            return {"ok": True, "message": "sent", "backend": "test"}
 
     monkeypatch.setattr(autonomous_mod, "run_planfile_queue_loop", fake_queue_loop)
     monkeypatch.setattr(
@@ -709,7 +724,7 @@ def test_up_stops_on_waiting_input_by_default(
     monkeypatch.setattr(
         autonomous_mod,
         "_start_or_reuse_daemon",
-        lambda **kwargs: (FailIfDrivenClient(), None, None),
+        lambda **kwargs: (StubClient(), None, None),
     )
     monkeypatch.setattr(autonomous_mod.time, "sleep", lambda _s: None)
 
@@ -728,6 +743,8 @@ def test_up_stops_on_waiting_input_by_default(
         ]
     )
 
+    # --stop-on-waiting-input is default-true → outer loop stops after 1 cycle
+    # even though autopilot now sends a fallback prompt within that cycle.
     assert rc == 0
     assert calls == 1
 

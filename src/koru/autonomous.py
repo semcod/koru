@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Any
 
 from .agents import agent_lane_environment
+from .autonomy.prompts import build_prompt
 from .autonomous_env import (
     apply_autonomous_env_overrides as _env_apply_autoloop_defaults,
 )
@@ -1227,42 +1228,19 @@ def _run_cycle(
                 f"{queue_result.last_status}_streak_{state.stagnation_streak})"
             )
             autopilot_status = f"skipped(stuck_{queue_result.last_status})"
-        elif autopilot_action == "handoff":
-            autopilot_drive_kind = "handoff"
-            reply = client.drive(drive_prompt, submit=submit, ide=autopilot_ide)
-            ok = bool(reply.get("ok", True))
-            autopilot_status = "ok" if ok else "failed"
-            autopilot_backend = (
-                str(reply.get("backend")) if reply.get("backend") is not None else None
-            )
-        elif queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES:
-            ticket_prompt = queue_result.last_message.strip() if queue_result.last_message else ""
-            if ticket_prompt:
-                autopilot_drive_kind = "ticket_prompt"
-                reply = client.drive(ticket_prompt, submit=submit, ide=autopilot_ide)
-                ok = bool(reply.get("ok", True))
-                autopilot_status = "ok" if ok else "failed"
-                autopilot_backend = (
-                    str(reply.get("backend")) if reply.get("backend") is not None else None
-                )
-                if ok:
-                    backend = reply.get("backend", "?")
-                    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
-                    _hp(
-                        "  autopilot: ok (ticket="
-                        f"{waiting_ticket}, ide={autopilot_ide}, backend={backend})"
-                    )
-                else:
-                    message = reply.get("message", "unknown error")
-                    _hp(f"  autopilot: failed ({message})")
-            else:
-                autopilot_drive_kind = "blocked_empty_message"
-                _hp(
-                    f"  autopilot: skipped (queue_status={queue_result.last_status}, empty message)"
-                )
         else:
-            autopilot_drive_kind = "drive_prompt"
-            reply = client.drive(drive_prompt, submit=submit, ide=autopilot_ide)
+            # Unified path: PromptStrategy picks the right prompt + kind
+            # based on queue status, ticket message, and stagnation streak.
+            decision = build_prompt(
+                queue_status=queue_result.last_status,
+                last_message=getattr(queue_result, "last_message", "") or "",
+                waiting_ticket_id=getattr(queue_result, "last_ticket_id", None),
+                drive_prompt=drive_prompt,
+                autopilot_action=autopilot_action,
+                stagnation_streak=state.stagnation_streak,
+            )
+            autopilot_drive_kind = decision.kind
+            reply = client.drive(decision.prompt, submit=submit, ide=autopilot_ide)
             ok = bool(reply.get("ok", True))
             autopilot_status = "ok" if ok else "failed"
             autopilot_backend = (
@@ -1270,10 +1248,21 @@ def _run_cycle(
             )
             if ok:
                 backend = reply.get("backend", "?")
-                _hp(f"  autopilot: ok (ide={autopilot_ide}, backend={backend})")
+                if decision.kind == "ticket_prompt":
+                    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
+                    _hp(
+                        "  autopilot: ok (ticket="
+                        f"{waiting_ticket}, ide={autopilot_ide}, backend={backend}, "
+                        f"kind={decision.kind})"
+                    )
+                else:
+                    _hp(
+                        f"  autopilot: ok (ide={autopilot_ide}, backend={backend}, "
+                        f"kind={decision.kind})"
+                    )
             else:
                 message = reply.get("message", "unknown error")
-                _hp(f"  autopilot: failed ({message})")
+                _hp(f"  autopilot: failed ({message}, kind={decision.kind})")
 
     _emit(
         "AutopilotDecision",

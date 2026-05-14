@@ -22,6 +22,8 @@ import yaml
 from koru.bootstrap import import_flat_pipeline
 from koru.tasks import create_nl_task
 
+pytestmark = pytest.mark.slow
+
 
 class TestDockerE2E:
     """Test Koru functionality in Docker containers."""

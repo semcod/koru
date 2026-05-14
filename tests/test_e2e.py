@@ -21,9 +21,12 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest import mock
 
+import pytest
 import yaml
 
 from koru.cli import main
+
+pytestmark = pytest.mark.slow
 
 _HAS_PLANFILE = shutil.which("planfile") is not None
 

@@ -58,9 +58,14 @@ tasks:
   # =====================================================================
 
   test:
-    desc: Run koru tests
+    desc: Run default koru tests (slow Docker/integration tests are deselected by pytest addopts)
     cmds:
       - python3 -m pytest tests/ -v {{.CLI_ARGS}}
+
+  test:all:
+    desc: Run every koru test, including slow Docker/integration tests
+    cmds:
+      - python3 -m pytest tests/ -v -m "" {{.CLI_ARGS}}
 
   test:fast:
     desc: Run tests without verbose output
