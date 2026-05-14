@@ -49,6 +49,7 @@ MCP. MCP is the inverse direction: **IDE agent → koru tools**.
 | MCP tools | `src/koru/mcp_server.py`, `mcp_provision.py` |
 | OS injector | `src/koru/autopilot/injector.py` |
 | Experimental registry (profiles) | `src/koru/agent_backends.py`, `koru agent-backends` |
+| Runtime ``AgentBackend`` (socket ``drive``) | `src/koru/agent_backend_runtime.py` |
 | Tool registry YAML | `docs/ai-tool-registry-2026.yaml` |
 
 ## Roadmap (incremental)
@@ -61,7 +62,34 @@ MCP. MCP is the inverse direction: **IDE agent → koru tools**.
    `planfile` executors (separate tickets).
 4. **Optional Python façade** — `koru.agent_backends` exposes **profiles**
    only (CLI: `koru agent-backends`, doctor: `agent_backends_registry`);
-   real `send_chat` stays in autopilot until a refactor merges paths.
+   `koru.agent_backend_runtime` exposes **AgentBackend** + `PluginSocketBackend`
+   (autopilot ``drive``); real `send_chat` from :mod:`koru.autonomous` should
+   converge on these types as more backends land.
+
+## Project config
+
+`koru.yaml` may declare the durable IDE / LLM lane map under
+`ide_integration`. This does not replace generated IDE files yet; it gives
+`koru --doctor` and future `autonomous` refactors one project-level contract:
+
+```yaml
+ide_integration:
+  default_lane: windsurf
+  lanes:
+    windsurf:
+      backend: plugin_socket
+      ide: windsurf
+      socket: /run/user/1000/koru-autopilot-windsurf.sock
+      prompt_mode: continue_ticket
+    cursor:
+      backend: mcp_tool
+      mcp_server: koru
+```
+
+Backend aliases are normalized by `koru.agent_backends`:
+`plugin_socket` maps to `vscode_family_plugin_socket`, and `mcp_tool` maps
+to `mcp_stdio_server`. `koru --doctor` reports invalid lane/backend
+combinations as `agent_integration_config` failures.
 
 ## References (external)
 
