@@ -36,6 +36,9 @@ For LLM agents starting a session in a koru-driven repository:
    open items in [`autopilot-roadmap.md`](./autopilot-roadmap.md).
 8. **[`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md)** (PL) — autonomia
    koru vs Cursor IDE: luka funkcjonalna i checklista wdrożeniowa.
+9. **[`autodiagnostics-auto-repair.md`](./autodiagnostics-auto-repair.md)** —
+   implemented doctor, guided repair, autopilot host repair, and safe
+   autonomous diagnostic-ticket loops.
 
 For human operators / DevOps:
 

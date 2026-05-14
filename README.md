@@ -4,11 +4,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.99-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.100-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 ![AI Cost](https://img.shields.io/badge/AI%20Cost-$1.38-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-49.4h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $1.3812 (148 commits)
-- 👤 **Human dev:** ~$4935 (49.4h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $1.3797 (149 commits)
+- 👤 **Human dev:** ~$4945 (49.4h @ $100/h, 30min dedup)
 
 Generated on 2026-05-14 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -151,13 +151,15 @@ not taking effect), run:
 ```bash
 koru --doctor                 # human-readable PASS/WARN/FAIL list
 koru --doctor --format json   # machine-readable for the LLM itself
+koru --doctor --fix           # read-only guided repair commands
 ```
 
-The doctor probes 8 things and never writes anything: `git_repo`,
-`planfile_binary`, `planfile_config`, `planfile_sprints`,
-`runtime_dir`, `policy_yaml`, `gitignore`, `ci_command`. Exit code is
-`1` if any check fails, `0` if only warnings (warnings are advisory).
-Use it after `koru --init` and whenever a session starts mis-behaving.
+The doctor probes project, planfile, policy, topology, autonomous env,
+agent-backend, CI, and pytest-collection health. It never writes anything.
+Exit code is `1` if any check fails, `0` if only warnings (warnings are
+advisory). Use it after `koru --init` and whenever a session starts
+mis-behaving. For the full repair checklist, see
+[`docs/autodiagnostics-auto-repair.md`](docs/autodiagnostics-auto-repair.md).
 
 Natural-language intake and housekeeping are built in:
 

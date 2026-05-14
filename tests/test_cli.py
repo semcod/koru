@@ -102,6 +102,23 @@ class TestDoctorDispatch(unittest.TestCase):
         self.assertIn("checks", data)
         self.assertIn("project", data)
 
+    def test_doctor_fix_text_is_guidance_only(self) -> None:
+        code, output = _run_main("--doctor", "--fix", "--project", str(self.project))
+        self.assertIn("Guided repair (--fix):", output)
+        self.assertIn("koru autopilot doctor --fix", output)
+        self.assertIn("koru autonomous up --project", output)
+        self.assertIsInstance(code, int)
+
+    def test_doctor_fix_json(self) -> None:
+        code, output = _run_main(
+            "--doctor", "--fix", "--project", str(self.project), "--format", "json"
+        )
+        data = json.loads(output)
+        self.assertIn("fix", data)
+        self.assertFalse(data["fix"]["writes_by_default"])
+        self.assertIn("commands", data["fix"])
+        self.assertIsInstance(code, int)
+
     def test_doctor_exit_0_on_no_failures(self) -> None:
         code, _ = _run_main("--doctor", "--project", str(self.project))
         self.assertIsInstance(code, int)
