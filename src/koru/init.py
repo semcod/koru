@@ -42,6 +42,7 @@ the agent-lane shell helpers on an existing project, use
 
 from __future__ import annotations
 
+import os
 import stat
 from dataclasses import dataclass
 from pathlib import Path
@@ -113,7 +114,12 @@ ci:
     echo "2. Running TestQL E2E scenarios (if available)..."
     if command -v testql >/dev/null 2>&1; then
       if find . -name "*.testql.toon.yaml" -type f 2>/dev/null | head -1 >/dev/null; then
-        testql suite --pattern "*.testql.toon.yaml" --output console --fail-fast 2>/dev/null && echo "✅ testQL suite passed" || echo "⚠️  testQL suite failed or no scenarios"
+        if testql suite --pattern '*.testql.toon.yaml' \\
+          --output console --fail-fast 2>/dev/null; then
+          echo "✅ testQL suite passed"
+        else
+          echo "⚠️  testQL suite failed or no scenarios"
+        fi
       else
         echo "ℹ️  No TestQL scenarios found"
       fi
@@ -368,17 +374,38 @@ def refresh_init_agent_lane(
 # ---------------------------------------------------------------------------
 
 
+def _init_auto_agent_lane(project: Path) -> str:
+    """Resolve ``--agent-lane auto`` from repo markers (stable, IDE-agnostic order).
+
+    When several IDE config trees exist, the first match in the fixed list wins so
+    Linux/macOS and different checkouts behave the same. ``CI`` / ``GITHUB_ACTIONS``
+    force ``local`` so headless runners never inherit a committed ``.cursor`` /
+    ``.vscode`` layout as an autopilot lane.
+    """
+    ci = os.environ.get("CI", "").strip().lower()
+    if ci in ("1", "true", "yes") or os.environ.get("GITHUB_ACTIONS", "").strip() == "true":
+        return "local"
+    # Order is documented in the default root ``koru.yaml`` (``koru --init``).
+    markers: tuple[tuple[str, Path], ...] = (
+        ("cursor", project / ".cursor"),
+        ("windsurf", project / ".windsurf"),
+        ("vscode", project / ".vscode"),
+        ("jetbrains", project / ".idea"),
+        ("zed", project / ".zed"),
+    )
+    for lane, path in markers:
+        if path.exists():
+            return lane
+    return "local"
+
+
 def _resolve_init_agent_lane(project: Path, agent_lane: str) -> str | None:
     """Pick lane id for init artefacts (``none`` / ``auto`` / explicit slug)."""
     raw = (agent_lane or "auto").strip().lower()
     if raw in ("", "none", "off", "false", "0"):
         return None
     if raw == "auto":
-        if (project / ".cursor").is_dir():
-            return "cursor"
-        if (project / ".windsurf").is_dir():
-            return "windsurf"
-        return "local"
+        return _init_auto_agent_lane(project)
     return normalize_agent_lane_id(raw)
 
 
@@ -408,7 +435,7 @@ if command -v koru >/dev/null 2>&1; then
 elif command -v python3 >/dev/null 2>&1; then
   exec python3 -m koru.cli autopilot setup-host "$@"
 else
-  echo "koru: command not found; add koru to PATH or run: python3 -m koru.cli autopilot setup-host" >&2
+  echo "koru: not in PATH; try: python3 -m koru.cli autopilot setup-host" >&2
   exit 127
 fi
 """

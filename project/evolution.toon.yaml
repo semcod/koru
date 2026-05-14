@@ -1,58 +1,58 @@
-# code2llm/evolution | 508 func | 49f | 2026-05-13
+# code2llm/evolution | 544 func | 52f | 2026-05-14
 # generated in 0.00s
 
 NEXT[10] (ranked by impact):
-  [1] !! SPLIT           src/koru/context.py
-      WHY: 1154L, 0 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 17310
+  [1] !! SPLIT           src/koru/autonomous.py
+      WHY: 1267L, 2 classes, max CC=53
+      EFFORT: ~4h  IMPACT: 67151
 
-  [2] !! SPLIT           src/koru/serve.py
-      WHY: 1008L, 1 classes, max CC=8
-      EFFORT: ~4h  IMPACT: 8064
+  [2] !! SPLIT           src/koru/context.py
+      WHY: 1152L, 0 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 17280
 
-  [3] !! SPLIT-FUNC      run_next_planfile_task  CC=32  fan=21
+  [3] !! SPLIT-FUNC      _run_cycle  CC=53  fan=32
+      WHY: CC=53 exceeds 15
+      EFFORT: ~1h  IMPACT: 1696
+
+  [4] !! SPLIT-FUNC      _action_up  CC=33  fan=29
+      WHY: CC=33 exceeds 15
+      EFFORT: ~1h  IMPACT: 957
+
+  [5] !! SPLIT-FUNC      run_next_planfile_task  CC=32  fan=21
       WHY: CC=32 exceeds 15
       EFFORT: ~1h  IMPACT: 672
 
-  [4] !! SPLIT-FUNC      _action_up  CC=28  fan=19
-      WHY: CC=28 exceeds 15
-      EFFORT: ~1h  IMPACT: 532
-
-  [5] !  SPLIT-FUNC      run_llm_request  CC=23  fan=19
+  [6] !  SPLIT-FUNC      run_llm_request  CC=23  fan=19
       WHY: CC=23 exceeds 15
       EFFORT: ~1h  IMPACT: 437
 
-  [6] !  SPLIT-FUNC      _agent_main  CC=19  fan=18
+  [7] !  SPLIT-FUNC      _read_wup_health  CC=21  fan=19
+      WHY: CC=21 exceeds 15
+      EFFORT: ~1h  IMPACT: 399
+
+  [8] !  SPLIT-FUNC      _agent_main  CC=19  fan=18
       WHY: CC=19 exceeds 15
       EFFORT: ~1h  IMPACT: 342
 
-  [7] !! SPLIT-FUNC      _queue_run_main  CC=26  fan=13
+  [9] !! SPLIT-FUNC      _queue_run_main  CC=26  fan=13
       WHY: CC=26 exceeds 15
       EFFORT: ~1h  IMPACT: 338
 
-  [8] !  SPLIT-FUNC      create_nl_task  CC=16  fan=21
+  [10] !  SPLIT-FUNC      create_nl_task  CC=16  fan=21
       WHY: CC=16 exceeds 15
       EFFORT: ~1h  IMPACT: 336
-
-  [9] !  SPLIT-FUNC      _topology_main  CC=17  fan=18
-      WHY: CC=17 exceeds 15
-      EFFORT: ~1h  IMPACT: 306
-
-  [10] !  SPLIT-FUNC      _scan_code2llm_analysis  CC=15  fan=20
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 300
 
 
 RISKS[3]:
   ⚠ Splitting planfile.yaml may break 0 import paths
+  ⚠ Splitting src/koru/autonomous.py may break 22 import paths
   ⚠ Splitting src/koru/context.py may break 42 import paths
-  ⚠ Splitting src/koru/serve.py may break 8 import paths
 
 METRICS-TARGET:
   CC̄:          4.9 → ≤3.4
-  max-CC:      32 → ≤16
-  god-modules: 11 → 0
-  high-CC(≥15): 22 → ≤11
+  max-CC:      53 → ≤20
+  god-modules: 10 → 0
+  high-CC(≥15): 25 → ≤12
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

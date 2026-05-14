@@ -261,7 +261,7 @@ advanced:
   auto_update_config: true
   performance:
     max_files: 50
-    timeout_test: 300
+    timeout_test: 60
   file_validation:
     max_file_size_mb: 10
     block_large_files: true

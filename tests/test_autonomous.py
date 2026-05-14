@@ -63,6 +63,8 @@ def test_resolve_autopilot_ide_auto_env_does_not_override_cli(monkeypatch) -> No
 
 def test_apply_agent_lane_environ_auto_cursor(tmp_path, monkeypatch) -> None:
     monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("CI", raising=False)
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
     (tmp_path / ".cursor").mkdir()
     lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "auto")
     assert lane == "cursor"

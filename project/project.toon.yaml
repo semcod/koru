@@ -1,57 +1,52 @@
-# koru | 539 func | 55f | 20240L | python | 2026-05-13
+# koru | 575 func | 58f | 21560L | python | 2026-05-14
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.7  critical=65 (limit:10)  dup=1  cycles=0
+  CC̄=4.7  critical=67 (limit:10)  dup=1  cycles=0
 
 ALERTS[20]:
+  !!! cc_exceeded      _run_cycle = 53 (limit:15)
   !!! high_fan_out     _build_handler = 36 (limit:10)
+  !!! cc_exceeded      _action_up = 33 (limit:15)
   !!! cc_exceeded      run_next_planfile_task = 32 (limit:15)
-  !!! cc_exceeded      _action_up = 28 (limit:15)
+  !!! high_fan_out     _run_cycle = 32 (limit:10)
+  !!! high_fan_out     _action_up = 29 (limit:10)
   !!! cc_exceeded      _queue_run_main = 26 (limit:15)
   !!! cc_exceeded      detect_tools = 26 (limit:15)
+  !!! high_fan_out     _build_handler = 25 (limit:10)
   !!! high_fan_out     do_from_todo = 24 (limit:10)
-  !!! high_fan_out     init_project = 21 (limit:10)
-  !!! high_fan_out     render_markdown_handoff = 21 (limit:10)
-  !!! high_fan_out     create_nl_task = 21 (limit:10)
-  !!! high_fan_out     run_next_planfile_task = 21 (limit:10)
 
-MODULES[104] (top by size):
+MODULES[108] (top by size):
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
-  M[src/koru/context.py] 1154L C:0 F:42 CC↑15 D:4 (python)
-  M[src/koru/serve.py] 1008L C:1 F:8 CC↑8 D:1 (python)
-  M[src/koru/autopilot/cli_command.py] 848L C:0 F:31 CC↑15 D:0 (python)
+  M[src/koru/autonomous.py] 1267L C:2 F:22 CC↑53 D:0 (python)
+  M[src/koru/context.py] 1152L C:0 F:42 CC↑15 D:4 (python)
+  M[src/koru/serve.py] 1013L C:1 F:8 CC↑8 D:1 (python)
+  M[src/koru/autopilot/cli_command.py] 861L C:0 F:31 CC↑15 D:0 (python)
   M[src/koru/scan.py] 818L C:2 F:18 CC↑15 D:2 (python)
   M[Taskfile.yml] 758L C:0 F:0 CC↑0 D:0 (yml)
   M[services/healing-webhook/app.py] 702L C:0 F:27 CC↑11 D:0 (python)
   M[scripts/koru-autoloop.sh] 562L C:0 F:14 CC↑0 D:0 (shell)
-  M[src/koru/autopilot/daemon.py] 517L C:2 F:24 CC↑14 D:0 (python)
+  M[src/koru/autopilot/daemon.py] 532L C:2 F:24 CC↑14 D:0 (python)
   M[goal.yaml] 511L C:0 F:0 CC↑0 D:0 (yaml)
-  M[src/koru/doctor.py] 502L C:2 F:20 CC↑11 D:1 (python)
-  M[src/koru/init.py] 500L C:1 F:10 CC↑13 D:2 (python)
-  M[src/koru/bootstrap.py] 467L C:2 F:19 CC↑10 D:2 (python)
+  M[src/koru/doctor.py] 496L C:2 F:20 CC↑11 D:1 (python)
+  M[src/koru/init.py] 494L C:1 F:10 CC↑13 D:2 (python)
+  M[src/koru/bootstrap.py] 447L C:2 F:19 CC↑10 D:2 (python)
   M[examples/bootstrap.planfile.yaml] 425L C:0 F:0 CC↑0 D:0 (yaml)
-  M[src/koru/autonomous.py] 419L C:0 F:9 CC↑28 D:0 (python)
-  LANGS: python:57/shell:28/yaml:9/typescript:2/other:2/yml:2/json:2/toml:1/txt:1
+  LANGS: python:60/shell:28/yaml:9/json:3/typescript:2/other:2/yml:2/toml:1/txt:1
 
 HOTSPOTS[10]:
   ★ _build_handler fan=36  // Create a request handler closure bound to ``config``.
+  ★ _run_cycle fan=32  // Orchestrates 32 calls
+  ★ _action_up fan=29  // Orchestrates 29 calls
+  ★ _build_handler fan=25  // Orchestrates 25 calls
   ★ do_from_todo fan=24  // Orchestrates 24 calls
-  ★ init_project fan=21  // Initialise (or re-initialise with ``force``) a koru project.
-
-Steps:
-    1. Refu
-  ★ render_markdown_handoff fan=21  // Turn a context dict into a Markdown brief for the operator.
-
-Designed to be past
-  ★ create_nl_task fan=21  // Create a planfile ticket from a normal-language sentence.
 
 REFACTOR[15]:
-  [1] H/L Split _queue_run_main (CC=26)
-  [2] H/L Split _action_up (CC=28)
-  [3] H/L Split detect_tools (CC=26)
-  [4] H/L Split run_next_planfile_task (CC=32)
-  [5] H/H Split god module src/koru/autopilot/cli_command.py (848L, 0 classes)
+  [1] H/L Split _run_cycle (CC=53)
+  [2] H/L Split _action_up (CC=33)
+  [3] H/L Split run_next_planfile_task (CC=32)
+  [4] H/L Split _queue_run_main (CC=26)
+  [5] H/L Split detect_tools (CC=26)
 
 EVOLUTION:
-  2026-05-13 CC̄=4.7 crit=65 20240L // Automated analysis
+  2026-05-14 CC̄=4.7 crit=67 21560L // Automated analysis

@@ -28,6 +28,20 @@ from koru.policy import load_policy
 from koru.runtime import planfile_dir, runtime_dir
 
 
+def _detach_ci_env() -> dict[str, str]:
+    """Remove CI markers so IDE folder detection is deterministic in tests."""
+    backup: dict[str, str] = {}
+    for key in ("CI", "GITHUB_ACTIONS"):
+        if key in os.environ:
+            backup[key] = os.environ[key]
+            del os.environ[key]
+    return backup
+
+
+def _reattach_ci_env(backup: dict[str, str]) -> None:
+    os.environ.update(backup)
+
+
 class TestStarterInit(unittest.TestCase):
     def test_creates_planfile_layout(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -201,12 +215,54 @@ class TestAgentLaneArtifacts(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             (project / ".cursor").mkdir()
-            report = init_project(project)
+            ci_backup = _detach_ci_env()
+            try:
+                report = init_project(project)
+            finally:
+                _reattach_ci_env(ci_backup)
             self.assertEqual(report.agent_lane, "cursor")
             shell = (runtime_dir(project) / "shell-env.sh").read_text(
                 encoding="utf-8"
             )
             self.assertIn("KORU_AUTOPILOT_INSTANCE='cursor'", shell)
+
+    def test_auto_vscode_when_dot_vscode(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".vscode").mkdir()
+            ci_backup = _detach_ci_env()
+            try:
+                report = init_project(project)
+            finally:
+                _reattach_ci_env(ci_backup)
+            self.assertEqual(report.agent_lane, "vscode")
+
+    def test_auto_cursor_beats_vscode_when_both(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".cursor").mkdir()
+            (project / ".vscode").mkdir()
+            ci_backup = _detach_ci_env()
+            try:
+                report = init_project(project)
+            finally:
+                _reattach_ci_env(ci_backup)
+            self.assertEqual(report.agent_lane, "cursor")
+
+    def test_auto_ci_forces_local_even_with_dot_cursor(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".cursor").mkdir()
+            old_ci = os.environ.get("CI")
+            os.environ["CI"] = "true"
+            try:
+                report = init_project(project)
+            finally:
+                if old_ci is None:
+                    os.environ.pop("CI", None)
+                else:
+                    os.environ["CI"] = old_ci
+            self.assertEqual(report.agent_lane, "local")
 
     def test_none_skips_helpers(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
