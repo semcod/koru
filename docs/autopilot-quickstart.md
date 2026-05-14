@@ -128,6 +128,21 @@ If everything is `✗`, install one of:
 | Wayland (sway/Hyprland) | `sudo apt install wtype`  | no permissions needed                |
 | Wayland (GNOME / KDE)   | `sudo apt install ydotool` + start `ydotoold` service | needs uinput / a daemon — see below |
 
+#### ``wtype`` and “Compositor does not support the virtual keyboard protocol”
+
+``wtype`` talks to the Wayland **virtual-keyboard-v1** protocol. **Mutter (GNOME),
+many KDE sessions, and several other compositors do not expose it**, so you can
+get:
+
+```text
+Compositor does not support the virtual keyboard protocol
+```
+
+That is expected on those desktops — ``wtype`` is not broken; the compositor
+simply does not offer that API. Prefer **ydotool** (above), run the IDE on
+**XWayland** so ``xdotool`` / the OS-injector path can work, or use the **koru
+autopilot editor extension** (best on Wayland).
+
 #### ydotool one-time setup (Wayland on GNOME/KDE)
 
 `ydotool` writes to `/dev/uinput`, which is root-only by default.
