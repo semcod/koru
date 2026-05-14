@@ -6,7 +6,7 @@
 
 **Autopilot (`koru autopilot`)** to w praktyce **wstrzykiwanie promptów** do czatu IDE (wklejka + submit), a nie pełne API Cursor ani pełna kontrola nad modelem, narzędziami agenta ani cyklem sesji po stronie Cursor. Działa to jak **most terminal ↔ pole czatu**, nie jak headless agent API.
 
-**MCP** w stacku koru jest **osobnym tor**em (konfiguracja serwerów MCP, provisioning, integracja z workflow) — nie należy mylić go z autopilotem: MCP rozwiązuje integrację narzędzi z LLM w IDE, ale **nie zastępuje** protokołu odczytu odpowiedzi LLM ani jednolitego kanału shell↔IDE w sensie sterowania agentem.
+**MCP** w stacku koru jest **osobnym torem** (konfiguracja serwerów MCP, provisioning, integracja z workflow) — nie należy mylić go z autopilotem: MCP rozwiązuje integrację narzędzi z LLM w IDE, ale **nie zastępuje** protokołu odczytu odpowiedzi LLM ani jednolitego kanału shell↔IDE w sensie sterowania agentem.
 
 ### Co brakuje do „pełnej” integracji z IDE (Cursor)
 

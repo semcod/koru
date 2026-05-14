@@ -5,7 +5,8 @@
 > from anywhere — another tmux pane, another TTY, even SSH.
 >
 > Architecture: [`autopilot-design.md`](./autopilot-design.md) ·
-> Roadmap: [`autopilot-roadmap.md`](./autopilot-roadmap.md)
+> Roadmap: [`autopilot-roadmap.md`](./autopilot-roadmap.md) ·
+> Cursor autonomy gap: [`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md)
 
 ---
 
