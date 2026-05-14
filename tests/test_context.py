@@ -87,6 +87,37 @@ class TestBuildContext(unittest.TestCase):
             self.assertIn("DO NOT ask the human what to work on", joined)
             self.assertIn("koru scan --apply", joined)
 
+    def test_brief_when_queue_idle_ticket_next_json_null(self) -> None:
+        """planfile ``ticket next --format json`` returns JSON ``null`` when idle."""
+        sample = [
+            {
+                "id": "PLF-901",
+                "name": "Idle list probe",
+                "status": "open",
+                "executor": {"kind": "shell"},
+                "files": [],
+            }
+        ]
+
+        with tempfile.TemporaryDirectory() as tmp:
+
+            def planfile_runner(command, _project):
+                if "next" in command:
+                    return _ok("null\n")
+                if "list" in command:
+                    return _ok(json.dumps(sample))
+                return _fail(f"unexpected planfile argv: {command!r}")
+
+            _init_planfile(Path(tmp))
+            ctx = build_context(
+                project=Path(tmp),
+                planfile_runner=planfile_runner,
+                git_probe=_no_git,
+            )
+            self.assertIsNone(ctx["ticket"])
+            self.assertEqual(ctx["ticket_error"], "queue is idle")
+            self.assertEqual(ctx["all_tickets"], sample)
+
     def test_brief_when_planfile_errors(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             _init_planfile(Path(tmp))

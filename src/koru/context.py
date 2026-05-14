@@ -331,7 +331,17 @@ def _fetch_ticket_data(
         ticket_data = _safe_json(ticket_proc.stdout)
         if ticket_data is None:
             stripped = (ticket_proc.stdout or "").strip()
-            if "No runnable ticket" in stripped or not stripped:
+            json_null_idle = False
+            if stripped:
+                try:
+                    json_null_idle = json.loads(stripped) is None
+                except (TypeError, ValueError):
+                    pass
+            if (
+                "No runnable ticket" in stripped
+                or not stripped
+                or json_null_idle
+            ):
                 ticket_data = None
                 ticket_error = "queue is idle"
                 # Even when the active slot is empty, the user
