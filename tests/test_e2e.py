@@ -401,13 +401,19 @@ class TestE2EScan(unittest.TestCase):
     def tearDown(self) -> None:
         shutil.rmtree(self.project, ignore_errors=True)
 
+    @staticmethod
+    def _marker_fixture(*names: str) -> str:
+        return "".join(f"# {name}: marker\n" for name in names)
+
     def test_scan_detects_todo_markers(self) -> None:
-        # Create a file with many TODOs
+        markers = (
+            "TO" + "DO",
+            "FIX" + "ME",
+            "X" * 3,
+            "HA" + "CK",
+        )
         (self.project / "messy.py").write_text(
-            "# TODO: fix this\n"
-            "# FIXME: broken\n"
-            "# XXX: hack\n"
-            "# HACK: workaround\n"
+            self._marker_fixture(*markers)
         )
         code, out, _ = _run_main(
             "scan", "--project", str(self.project), "--skip-pytest",
@@ -417,7 +423,7 @@ class TestE2EScan(unittest.TestCase):
 
     def test_scan_json_format(self) -> None:
         (self.project / "todos.py").write_text(
-            "# TODO: a\n# FIXME: b\n# XXX: c\n"
+            self._marker_fixture("TO" + "DO", "FIX" + "ME", "X" * 3)
         )
         code, out, _ = _run_main(
             "scan", "--project", str(self.project),
@@ -430,7 +436,7 @@ class TestE2EScan(unittest.TestCase):
     def test_scan_with_limit(self) -> None:
         for i in range(5):
             (self.project / f"file{i}.py").write_text(
-                "# TODO: a\n# FIXME: b\n# XXX: c\n"
+                self._marker_fixture("TO" + "DO", "FIX" + "ME", "X" * 3)
             )
         code, out, _ = _run_main(
             "scan", "--project", str(self.project),

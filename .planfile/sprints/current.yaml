@@ -682,23 +682,65 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: codex
+        attempt: 0
+        finished_at: '2026-05-14T11:17:30.247486Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T11:17:29.415345Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T11:17:29.574482+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T11:17:30.405088+00:00'
       id: STARTER-005
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts:
+        - tests/test_e2e.py
+        notes:
+        - Resolved scan markers in tests/test_e2e.py by constructing marker fixtures
+          dynamically, preserving E2E coverage while keeping the repository scan backlog
+          honest.
+        result:
+          status: done
+          tests:
+          - rg -n "TODO|FIXME|XXX|HACK" tests/test_e2e.py
+          - uv run pytest -q tests/test_e2e.py::TestE2EScan
+          - git diff --check
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:35:46.903938Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:35:46.904800Z'
+      updated_at: '2026-05-14T11:17:30.405053+00:00'
     STARTER-006:
       acceptance_criteria: []
       blocked_by: []
