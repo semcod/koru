@@ -1350,6 +1350,20 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
 
+## [0.1.85] - 2026-05-14
+
+### Docs
+- Update .windsurf/workflows/koru-gate.md
+- Update README.md
+
+### Test
+- Update testql-testing/scenarios/realtime-health.testql.toon.yaml
+
+### Other
+- Update regix.yaml
+- Update uv.lock
+- Update wup.yaml
+
 ## [0.1.84] - 2026-05-14
 
 ### Docs

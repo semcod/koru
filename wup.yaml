@@ -1,0 +1,56 @@
+project:
+  name: "koru"
+  description: "On-change watcher for koru core and autopilot plugin."
+
+watch:
+  paths:
+    - "src/**"
+    - "plugins/koru-autopilot-vscode/src/**"
+  file_types:
+    - ".py"
+    - ".ts"
+    - ".js"
+  excludes:
+    - "**/__pycache__/**"
+    - "**/.venv/**"
+    - "**/node_modules/**"
+    - "**/out/**"
+    - "**/*.md"
+
+services:
+  - name: "koru-core"
+    root: "src"
+    paths:
+      - "src/**"
+    type: "auto"
+    quick_tests:
+      scope: "all"
+      max_endpoints: 3
+
+  - name: "koru-autopilot-vscode"
+    root: "plugins/koru-autopilot-vscode/src"
+    paths:
+      - "plugins/koru-autopilot-vscode/src/**"
+    type: "auto"
+    quick_tests:
+      scope: "all"
+      max_endpoints: 3
+
+test_strategy:
+  quick:
+    debounce_s: 2
+    max_queue: 5
+    timeout_s: 10
+  full:
+    debounce_s: 5
+    timeout_s: 60
+    only_on_quick_fail: true
+
+reporting:
+  dashboard: true
+  blame_log: ".wup/blame-history.jsonl"
+  webhook_url: "${WUP_WEBHOOK_URL:-}"
+
+resources:
+  max_cpu_percent: 70
+  defer_below_idle_percent: 20

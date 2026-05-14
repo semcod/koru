@@ -1,11 +1,12 @@
 ---
-description: run on-change gates (regix + testql + wup status) for the current koru-managed project
+description: run on-change gates (regix + testql + wup status + plugin tests) for the current koru-managed project
 ---
 
 # /koru-gate — manual on-change gate run
 
 Use this when you want to verify the current state before continuing
 edits, especially:
+
 - Right after a series of file changes inside a ticket scope.
 - Before calling `planfile ticket complete` (mandatory if policy
   `require_ci_pass_before_complete: true` and `task quality:gate` is
@@ -29,6 +30,7 @@ test -d testql-testing/scenarios && \
 If `regix.yaml` exists:
 
 // turbo
+
 ```bash
 regix gates 2>&1 | tail -20
 ```
@@ -44,6 +46,7 @@ scenarios that cover those files. Otherwise default to
 `realtime-health.testql.toon.yaml` if it exists.
 
 // turbo
+
 ```bash
 SCENARIO="${1:-testql-testing/scenarios/realtime-health.testql.toon.yaml}"
 test -f "$SCENARIO" && testql run "$SCENARIO" --output console 2>&1 | tail -10 || echo "(no scenario at $SCENARIO)"
@@ -56,11 +59,26 @@ so this only reports presence; do not start/stop it from the slash
 command (that is the human's choice).
 
 // turbo
+
 ```bash
 test -f wup.yaml && wup status 2>&1 | head -20 || echo "(wup not configured)"
 ```
 
-### 5. Aggregate & decide
+### 5. koru autopilot plugin tests (optional)
+
+If this repository contains the VS Code autopilot plugin, run its local
+test suite so slash-workflow gates match the default `POLICY_STUB`
+behavior.
+
+// turbo
+
+```bash
+test -f plugins/koru-autopilot-vscode/package.json && (
+  cd plugins/koru-autopilot-vscode && npm test 2>&1 | tail -20
+) || echo "(koru-autopilot-vscode plugin not present)"
+```
+
+### 6. Aggregate & decide
 
 - **All green** — say so, return control to the user.
 - **Any red** — do NOT proceed with edits or `ticket complete`. Instead
@@ -69,10 +87,14 @@ test -f wup.yaml && wup status 2>&1 | head -20 || echo "(wup not configured)"
 
 ## Rationale
 
-The triad covers three orthogonal failure modes:
+The core triad covers three orthogonal failure modes:
+
 - `regix` — *quality regression* (metric got worse).
 - `testql` — *behavioral regression* (HTTP probe broken).
 - `wup` — *coverage of incremental change* (the watcher itself is up).
+
+For the `koru` repo itself, the optional plugin check adds IDE bridge
+stability coverage (`koru-autopilot-vscode`).
 
 A clean run means the change has been pre-validated by each layer. A
 red run is a hard signal to pause and route through planfile lifecycle

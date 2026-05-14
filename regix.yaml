@@ -1,0 +1,43 @@
+regix:
+  workdir: .
+
+  metrics:
+    cc_max: 15
+    mi_min: 20
+    coverage_min: 0
+    length_max: 120
+    docstring_min: 0
+
+  thresholds:
+    delta_warn: 2
+    delta_error: 5
+
+  backends:
+    cc: lizard
+    mi: radon
+    coverage: pytest-cov
+    quality: none
+
+  include:
+    - "src/**"
+    - "plugins/koru-autopilot-vscode/src/**"
+
+  exclude:
+    - "tests/**"
+    - "**/__pycache__/**"
+    - "**/node_modules/**"
+    - "**/.venv/**"
+    - "**/out/**"
+
+  output:
+    format: rich
+    show_improvements: true
+    max_symbols: 30
+
+  gates:
+    on_regression: warn
+    fail_exit_code: 1
+    block_on_smells:
+      - god_function
+      - stub_regression
+      - monolith_collapse
