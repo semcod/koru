@@ -14,7 +14,8 @@
 - [x] `koru autonomous up` — pętla orkiestracji autonomicznej (scan → queue → autopilot)
 - [x] `koru autopilot daemon` — unix-socket broker z SO_PEERCRED
 - [x] `koru autopilot drive` — wstrzykiwanie tekstu do czatu IDE
-- [x] `koru autopilot handoff` — automatyczne przejęcie po `session.ended`
+- [x] `koru autopilot handoff` — jednorazowe wstrzyknięcie bieżącego briefu koru do IDE
+- [x] Daemon-side handoff — obsługa zdarzenia `session.ended`, gdy klient IDE je wyemituje
 - [x] VS Code/Windsurf plugin — rozszerzenie z protokołem NDJSON
 - [x] Keyboard simulation fallback — xdotool/wtype/ydotool
 - [x] WUP integration — `--wup-watch` z testql mode
@@ -24,6 +25,7 @@
 
 **Braki funkcjonalne (vs pełna autonomia):**
 - [ ] Odczyt odpowiedzi LLM z IDE (read-side)
+- [ ] Realne zdarzenie zakończenia sesji z API IDE, nie tylko ścieżka obsługi po stronie daemona
 - [ ] Sterowanie narzędziami agenta (edycja plików, terminal IDE)
 - [ ] Jeden spójny kanał shell ↔ IDE (stdout/stderr agenta vs zdarzenia czatu)
 - [ ] Centralna polityka IDE sterowana z koru
