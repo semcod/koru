@@ -804,7 +804,7 @@ Real metrics from c2004 (May 2026):
 
 - **88% size reduction** in compatibility shim files (14640 → 1812 bytes)
 - **8 stale alerts auto-closed** in single workflow run
-- **0 errors / 42 improvements** per regix gate after refactor
+- **0 errors / 42 improvements** via regix gates after refactor
 - **58/58 endpoint health probes** post-migration
 
 ## License

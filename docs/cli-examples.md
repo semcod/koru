@@ -134,11 +134,11 @@ koru task "Prepare custom tool adapter" --project . --tool my-tool \
 ### Real-world example (semcod org)
 
 ```bash
-# Run regix gate across all semcod/* repos, retry on failure
+# Run regix gates across all semcod/* repos, retry on failure
 koru \
   --workspace ~/github \
   --include "semcod/*" \
-  --command "regix gate" \
+  --command "regix gates" \
   --max-rounds 3
 ```
 
@@ -152,7 +152,7 @@ LLM-free local validation. Use these before committing.
 
 ```bash
 # Direct
-regix gate
+regix gates
 
 # Via koru
 task quality:regix
@@ -756,7 +756,7 @@ koru \
 koru \
   --workspace ~/github/semcod \
   --include "*" \
-  --command "regix gate"
+  --command "regix gates"
 ```
 
 ---

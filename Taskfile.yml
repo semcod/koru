@@ -242,20 +242,28 @@ tasks:
   # =====================================================================
 
   quality:regix:
-    desc: Run regix gate locally (LLM-free regression metrics)
+    desc: Run regix gates locally (LLM-free regression metrics)
     cmds:
       - |
         set -euo pipefail
         if python3 -m koru.cli topology --project . --is-enabled gate:regix >/dev/null 2>&1; then
-          regix gate
+          regix gates
         else
           rc=$?
           if [ "$rc" -eq 1 ]; then
             echo "quality:regix skipped (gate:regix disabled in topology)"
             exit 0
           fi
-          regix gate
+          regix gates
         fi
+    preconditions:
+      - sh: which regix
+        msg: "regix not installed. Run: task install:tools"
+
+  quality:regix:local:
+    desc: Compare working tree against HEAD with regix
+    cmds:
+      - regix compare HEAD --local
     preconditions:
       - sh: which regix
         msg: "regix not installed. Run: task install:tools"

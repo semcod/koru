@@ -17,7 +17,7 @@
 #   - testql           — declarative HTTP scenarios (TOON YAML)
 #   - regix.yaml       — quality regressions (CC, MI, coverage delta)
 #   - koru             — handoff section "On-change gates" reads
-#                        wup status + testql scenario count + regix gate
+#                        wup status + testql scenario count + regix gates
 #                        result, so the agent sees gate health upfront.
 #   - healing-webhook  — receives wup blame reports as alerts (optional)
 #

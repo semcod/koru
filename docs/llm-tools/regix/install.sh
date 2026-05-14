@@ -37,11 +37,11 @@ else
 fi
 
 # Smoke test
-echo "→ Test: regix check (working tree vs HEAD)"
-if regix check 2>&1 | head -3 | grep -qE "PASS|FAIL"; then
-    echo "  ✓ regix check działa"
+echo "→ Test: regix compare HEAD --local (working tree vs HEAD)"
+if regix compare HEAD --local 2>&1 | head -3 | grep -qE "PASS|FAIL|Regression"; then
+    echo "  ✓ regix compare działa"
 else
-    echo "  ⚠ regix check nie odpowiada (może brak commitów)"
+    echo "  ⚠ regix compare nie odpowiada (może brak commitów)"
 fi
 
 # Taskfile integration
@@ -49,4 +49,4 @@ if grep -q "quality:regix:local" Taskfile.yml 2>/dev/null; then
     echo "  ✓ Taskfile ma quality:regix:local"
 fi
 
-echo "✓ regix gotowy. Komenda: task quality:regix:local | regix compare HEAD~1 HEAD"
+echo "✓ regix gotowy. Komenda: task quality:regix (lub: regix gates)"

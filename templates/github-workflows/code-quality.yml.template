@@ -40,8 +40,8 @@ jobs:
             --exclude '**/__generated__/**' \
             --exclude '**/archive/**'
 
-      - name: regix gate (fail on regression)
-        run: regix gate --fail-on-regression
+      - name: regix gates (fail on regression)
+        run: regix gates --fail-on error
         continue-on-error: false
 
       - name: redup duplicate budget

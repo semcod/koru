@@ -10,7 +10,7 @@ między dwoma git refs lub working tree a HEAD. **W 100% LLM-free.**
 | Scenariusz | Komenda |
 |---|---|
 | Pre-commit gate (auto) | (hook w `.pre-commit-config.yaml`) |
-| Working tree vs HEAD | `regix check` lub `task quality:regix:local` |
+| Working tree vs HEAD | `regix compare HEAD --local` lub `task quality:regix:local` |
 | Branch vs main | `regix compare main HEAD` |
 | Historical trends | `regix history --commits 10` |
 | Strict CI gate | `regix compare HEAD~1 HEAD --fail-on error` |
@@ -52,7 +52,7 @@ Brak — czysto deterministyczne tooling.
 
 ```bash
 # Working tree vs HEAD (pre-commit)
-regix check                                 # exit 0 = OK, non-zero = regression
+regix compare HEAD --local                  # exit 0 = OK, non-zero = regression
 
 # Compare dwa refs
 regix compare HEAD~3 HEAD --format rich
@@ -107,7 +107,7 @@ regix używa kilku backendów (wszystkie LLM-free):
 |---|---|
 | `regix: command not found` | `pip install --user regix` |
 | `Backend 'vallm' not available` | `pip install --user vallm` (wymaga Python 3.12+) |
-| Coverage brak danych | `pytest --cov` przed `regix check` |
+| Coverage brak danych | `pytest --cov` przed `regix compare HEAD --local` |
 | Zbyt wiele false positive | Edycja `regix.yaml` — `paths.exclude` lub `delta error` ↑ |
 | Pre-commit hook blokuje OK commit | Sprawdź sensowność `delta error` thresholds |
 

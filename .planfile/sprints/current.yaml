@@ -539,23 +539,69 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: codex
+        attempt: 0
+        finished_at: '2026-05-14T11:12:21.231353Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T11:12:20.424153Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T11:12:20.574828+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T11:12:21.393321+00:00'
       id: STARTER-003
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts:
+        - regix.yaml
+        - Taskfile.yml
+        - tests/test_regix_taskfile.py
+        notes:
+        - regix.yaml already existed; wired the current regix CLI into Taskfile, workflow
+          templates, docs, and added an on-change quality:regix:local gate plus regression
+          test. task quality:regix:local passes; full task quality:regix invokes regix
+          gates but fails existing repository metric debt.
+        result:
+          full_regix_gate: invokes_regix_gates_but_fails_existing_metric_debt
+          status: done
+          tests:
+          - uv run pytest -q tests/test_regix_taskfile.py
+          - git diff --check
+          - task quality:regix:local
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:35:46.027190Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:35:46.028048Z'
+      updated_at: '2026-05-14T11:12:21.393288+00:00'
     STARTER-004:
       acceptance_criteria: []
       blocked_by: []
