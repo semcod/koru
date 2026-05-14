@@ -20,8 +20,8 @@
 | P1.4  | Keyboard-sim injector (`xdotool` / `wtype` / `ydotool`) with session autodetection      | ✅     |
 | P1.5  | IDE process scan via `/proc` (Windsurf, VS Code, Cursor, JetBrains, Zed)                | ✅     |
 | P1.6  | CLI verbs: `daemon`, `drive`, `status`, `shutdown`, `ide-list`, `doctor`                | ✅     |
-| P1.7  | Auto-handoff on `session.ended` with `--handoff-cooldown` anti-loop                     | ✅     |
-| P1.8  | VS Code extension shell (TypeScript, paste-and-submit, status bar, reconnect)           | ✅     |
+| P1.7  | Daemon-side auto-handoff when a client emits `session.ended`, with `--handoff-cooldown` anti-loop | ✅     |
+| P1.8  | VS Code extension shell (TypeScript, paste-and-submit, status bar, reconnect; lifecycle hook remains P2.3) | ✅     |
 | P1.9  | 53 unit + integration tests (`tests/test_autopilot_*.py`)                               | ✅     |
 | P1.10 | Quickstart + design doc + roadmap                                                       | ✅     |
 
