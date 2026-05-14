@@ -6,6 +6,15 @@ stages:
 
 variables:
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  key:
+    files:
+      - pyproject.toml
+      - uv.lock
+  paths:
+    - .cache/pip
 
 smoke:
   stage: smoke
