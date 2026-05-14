@@ -10,6 +10,11 @@ port) when the preferred port is busy. The resolved URL is written to
 ``.planfile/.koru/serve-endpoint.json`` for other tooling
 (``read_serve_endpoint``).
 
+When the preferred port is busy with a **previous** ``koru serve`` listener
+(same host/port), a second ``koru serve`` sends **SIGTERM** to that PID and
+retries the bind once (Linux: uses ``ss``). Other processes (e.g. planfile
+on :8765) are left untouched. Set ``KORU_SERVE_NO_REPLACE=1`` to disable.
+
 Endpoints:
     GET  /              -> HTML dashboard (auto-refreshing)
     GET  /api/context   -> JSON brief (``build_context`` output)
@@ -24,8 +29,12 @@ Bound to ``127.0.0.1`` by default — never exposed to the network unless
 
 from __future__ import annotations
 
+import errno
 import json
 import os
+import re
+import signal
+import subprocess
 import sys
 import threading
 import time
@@ -49,6 +58,99 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
 
 _SERVE_ENDPOINT_REL = Path(".planfile") / ".koru" / "serve-endpoint.json"
+
+
+def _address_in_use(exc: BaseException) -> bool:
+    if isinstance(exc, OSError):
+        if exc.errno in (errno.EADDRINUSE, getattr(errno, "WSAEADDRINUSE", -1)):
+            return True
+        winerr = getattr(exc, "winerror", None)
+        if winerr == 10048:  # WSAEADDRINUSE
+            return True
+    return "Address already in use" in str(exc)
+
+
+def _listener_pids_for_tcp_port(port: int) -> list[int]:
+    """Return PIDs listening on *port* (Linux ``ss``); empty if unknown."""
+    if sys.platform == "win32":
+        return []
+    try:
+        proc = subprocess.run(
+            ["ss", "-H", "-ltnp", f"sport = :{port}"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return []
+    text = (proc.stdout or "") + "\n" + (proc.stderr or "")
+    pids: list[int] = []
+    for m in re.finditer(r"pid=(\d+)", text):
+        try:
+            pids.append(int(m.group(1)))
+        except ValueError:
+            continue
+    return list(dict.fromkeys(pids))
+
+
+def _cmdline_suggests_koru_serve_from_bytes(raw: bytes) -> bool:
+    """True if *raw* is a ``/proc/*/cmdline`` blob for ``koru … serve`` (not ``mcp-serve``)."""
+    s = raw.replace(b"\x00", b" ").decode("utf-8", errors="replace").lower()
+    if re.search(r"\bmcp-serve\b", s):
+        return False
+    if re.search(r"-m\s+koru\.cli\s+serve\b", s):
+        return True
+    return bool(re.search(r"(^|[\s/])koru(\.cli)?\s+serve\b", s))
+
+
+def _cmdline_suggests_koru_serve(pid: int) -> bool:
+    if sys.platform == "win32":
+        return False
+    try:
+        raw = Path(f"/proc/{pid}/cmdline").read_bytes()
+    except OSError:
+        return False
+    return _cmdline_suggests_koru_serve_from_bytes(raw)
+
+
+def _try_stop_prior_koru_serve_listener(host: str, port: int) -> bool:
+    """SIGTERM prior ``koru serve`` on *port*; return True if we sent a signal."""
+    del host  # ss filter is port-centric; 127.0.0.1 vs 0.0.0.0 both match sport
+    if os.environ.get("KORU_SERVE_NO_REPLACE", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    ):
+        return False
+    killed = False
+    for pid in _listener_pids_for_tcp_port(port):
+        if pid == os.getpid():
+            continue
+        if not _cmdline_suggests_koru_serve(pid):
+            continue
+        try:
+            print(
+                f"koru serve: port {port} busy — stopping prior listener pid={pid}",
+                file=sys.stderr,
+            )
+            os.kill(pid, signal.SIGTERM)
+            killed = True
+        except ProcessLookupError:
+            continue
+    if not killed:
+        return False
+    for _ in range(40):
+        remaining = [
+            p
+            for p in _listener_pids_for_tcp_port(port)
+            if p != os.getpid() and _cmdline_suggests_koru_serve(p)
+        ]
+        if not remaining:
+            break
+        time.sleep(0.1)
+    return True
 
 
 def serve_endpoint_path(project: Path) -> Path:
@@ -871,8 +973,16 @@ def bind_serve_server(config: ServeConfig) -> tuple[ThreadingHTTPServer, int, in
     """
     requested = config.port
     if not config.auto_port:
-        server = build_server(config)
-        return server, config.port, requested
+        try:
+            server = build_server(config)
+            return server, config.port, requested
+        except OSError as exc:
+            if not _address_in_use(exc):
+                raise
+            if _try_stop_prior_koru_serve_listener(config.host, config.port):
+                server = build_server(config)
+                return server, config.port, requested
+            raise
 
     ceiling = min(requested + 33, 65536)
     candidates = [requested] + [p for p in range(requested + 1, ceiling) if p != requested]

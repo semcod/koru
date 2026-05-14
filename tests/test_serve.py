@@ -7,6 +7,7 @@ without touching the real workspace.
 """
 from __future__ import annotations
 
+import errno
 import json
 import socket
 import tempfile
@@ -18,6 +19,7 @@ import urllib.request
 from contextlib import closing
 from http.server import ThreadingHTTPServer
 from pathlib import Path
+from unittest import mock
 
 from koru.serve import (
     ServeConfig,
@@ -26,6 +28,7 @@ from koru.serve import (
     read_serve_endpoint,
     start_serve_background,
     write_serve_endpoint_file,
+    _cmdline_suggests_koru_serve_from_bytes,
 )
 
 
@@ -246,6 +249,52 @@ class TestServeAutoPort(unittest.TestCase):
                 bind_serve_server(cfg)
         finally:
             blocker.close()
+            tmp.cleanup()
+
+
+def test_cmdline_suggests_koru_serve_from_bytes() -> None:
+    assert _cmdline_suggests_koru_serve_from_bytes(
+        b"/usr/bin/python\x00-m\x00koru.cli\x00serve\x00"
+    )
+    assert _cmdline_suggests_koru_serve_from_bytes(b"/opt/koru\x00serve\x00")
+    assert not _cmdline_suggests_koru_serve_from_bytes(b"/usr/bin/koru\x00mcp-serve\x00")
+    assert not _cmdline_suggests_koru_serve_from_bytes(b"/usr/bin/python\x00-m\x00http.server\x00")
+
+
+class TestServeReplacePrior(unittest.TestCase):
+    def test_bind_retries_after_prior_listener_stopped(self) -> None:
+        tmp, project = _minimal_planfile_project()
+        try:
+            port = _free_port()
+            cfg = ServeConfig(
+                project=project,
+                host="127.0.0.1",
+                port=port,
+                open_browser=False,
+                auto_port=False,
+            )
+            built = {"n": 0}
+            real_build = build_server
+
+            def fake_build(c: ServeConfig) -> ThreadingHTTPServer:
+                built["n"] += 1
+                if built["n"] == 1:
+                    raise OSError(errno.EADDRINUSE, "Address already in use")
+                return real_build(c)
+
+            from koru import serve as serve_mod
+
+            with mock.patch.object(serve_mod, "build_server", side_effect=fake_build), mock.patch.object(
+                serve_mod,
+                "_try_stop_prior_koru_serve_listener",
+                return_value=True,
+            ):
+                srv, actual, req = serve_mod.bind_serve_server(cfg)
+            self.assertEqual(built["n"], 2)
+            self.assertEqual(actual, port)
+            self.assertEqual(req, port)
+            srv.server_close()
+        finally:
             tmp.cleanup()
 
 
