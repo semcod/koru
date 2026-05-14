@@ -28,10 +28,14 @@ from pathlib import Path
 from .agents import agent_lane_environment
 from .autonomous_wup import (
     WupHealthResult,
+    WupWatchConfig,  # noqa: F401
     _build_wup_watch_config,
-    _read_wup_health as _read_wup_health_impl,
     _start_wup_watch,
     _stop_process,
+    _wup_watch_command,  # noqa: F401
+)
+from .autonomous_wup import (
+    _read_wup_health as _read_wup_health_impl,
 )
 from .autopilot import default_socket_path
 from .autopilot.client import AutopilotClient

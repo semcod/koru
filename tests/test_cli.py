@@ -269,6 +269,7 @@ class TestSubcommandDispatch(unittest.TestCase):
         {
             "task",
             "agent",
+            "local-serve",
             "serve",
             "scan",
             "gate",

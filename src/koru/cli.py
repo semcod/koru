@@ -31,6 +31,11 @@ from .gate import VALID_MODES as GATE_VALID_MODES
 from .gate import authorize_gate
 from .gc import DEFAULT_KEEP_LAST, DEFAULT_MAX_AGE_DAYS, GC_STATUSES, run_gc
 from .init import init_project, refresh_init_agent_lane
+from .local_service import (
+    LocalServiceConfig,
+    default_local_service_config,
+    run_local_service,
+)
 from .loop import discover_repositories, run_closed_loop
 from .queue import (
     default_human_prompt as _queue_default_human_prompt,
@@ -55,12 +60,6 @@ from .queue_clean import CleanupReport, clean_queue
 from .run_log import open_run_log_eagerly
 from .scan import ScanResult, run_scan
 from .serve import DEFAULT_HOST, DEFAULT_PORT, ServeConfig, serve
-
-
-def _env_truthy(name: str) -> bool:
-    return os.environ.get(name, "").strip().lower() in ("1", "true", "yes", "on")
-
-
 from .tasks import create_nl_task
 from .tools import (
     build_tool_task_scaffold,
@@ -70,6 +69,10 @@ from .tools import (
     render_tools_detect_text,
 )
 from .watch import watch_planfile_events
+
+
+def _env_truthy(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in ("1", "true", "yes", "on")
 
 
 def _command_value(value: str) -> str:
@@ -247,7 +250,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--ticket",
         default=None,
         help="Target a specific ticket id (e.g. PLF-074) for --context. "
-        "Default is the next runnable ticket from the queue.",
+             "Default is the next runnable ticket from the queue.",
     )
     parser.add_argument(
         "--format",
@@ -279,7 +282,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--no-log",
         action="store_true",
         help="Disable the per-run JSONL log under .planfile/.koru/runs/. "
-        "Has no effect outside --queue mode.",
+             "Has no effect outside --queue mode.",
     )
     return parser
 
@@ -427,6 +430,37 @@ def _build_serve_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _build_local_serve_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru local-serve",
+        description=(
+            "Minimal localhost JSON/NDJSON hub for scripts and HTTP clients "
+            "(see docs/local-service.md)."
+        ),
+    )
+    parser.add_argument(
+        "--host",
+        default=None,
+        help="Bind address (default: KORU_LOCAL_SERVICE_HOST or 127.0.0.1).",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=None,
+        help=(
+            "TCP port (default: KORU_LOCAL_SERVICE_PORT or 18766). "
+            "Use 0 for an ephemeral OS-assigned port."
+        ),
+    )
+    parser.add_argument(
+        "--max-events",
+        type=int,
+        default=None,
+        help="Ring buffer size (default: KORU_LOCAL_SERVICE_MAX_EVENTS or 256).",
+    )
+    return parser
+
+
 def _build_scan_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="koru scan",
@@ -483,7 +517,9 @@ def _render_scan_text(result: ScanResult) -> str:
         return "koru scan: no suggestions — repo looks clean."
     lines: list[str] = [f"koru scan: {len(result.suggestions)} suggestion(s)"]
     for s in result.suggestions:
-        marker = {"critical": "!!", "high": "!", "normal": "·", "low": " "}.get(s.priority, "·")
+        marker = {"critical": "!!", "high": "!", "normal": "·", "low": " "}.get(
+            s.priority, "·"
+        )
         lines.append(f"  [{marker}] {s.priority:<8} {s.signal:<15} {s.title}")
     if result.applied:
         lines.append("")
@@ -559,7 +595,8 @@ def _build_gate_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="koru gate",
         description=(
-            "Manage CI/quality gate authorizations on planfile tickets. Subcommands: authorize."
+            "Manage CI/quality gate authorizations on planfile tickets. "
+            "Subcommands: authorize."
         ),
     )
     sub = parser.add_subparsers(dest="subcommand", required=True)
@@ -696,7 +733,8 @@ def _build_gc_parser() -> argparse.ArgumentParser:
         "--status",
         default=",".join(sorted(GC_STATUSES)),
         help=(
-            f"Comma-separated ticket statuses to clean (default: {','.join(sorted(GC_STATUSES))})."
+            "Comma-separated ticket statuses to clean "
+            f"(default: {','.join(sorted(GC_STATUSES))})."
         ),
     )
     parser.add_argument(
@@ -759,7 +797,10 @@ def _gc_main(argv: list[str]) -> int:
             for c in result.candidates:
                 marker = "✗" if c.ticket_id in result.removed else "·"
                 age = f"{c.age_days:.0f}d" if c.age_days != float("inf") else "??d"
-                print(f"  {marker} {c.ticket_id:<14} {c.status:<10} {age:>6}  {c.name[:60]}")
+                print(
+                    f"  {marker} {c.ticket_id:<14} {c.status:<10} {age:>6}  "
+                    f"{c.name[:60]}"
+                )
             if result.removed:
                 action = "Would remove" if result.dry_run else "Removed"
                 print(f"\n  → {action}: {len(result.removed)} ticket(s)")
@@ -790,7 +831,10 @@ def _gc_main(argv: list[str]) -> int:
 def _build_queue_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="koru queue",
-        description=("Manage the planfile queue. Subcommands: clean (sweep stale test fixtures)."),
+        description=(
+            "Manage the planfile queue. Subcommands: clean (sweep stale "
+            "test fixtures)."
+        ),
     )
     sub = parser.add_subparsers(dest="subcommand", required=True)
 
@@ -1069,6 +1113,20 @@ def _serve_main(argv: list[str]) -> int:
     return exit_code
 
 
+def _local_serve_main(argv: list[str]) -> int:
+    args = _build_local_serve_parser().parse_args(argv)
+    base = default_local_service_config()
+    host = (args.host if args.host is not None else base.host).strip() or base.host
+    port = base.port if args.port is None else args.port
+    max_events = base.max_events if args.max_events is None else args.max_events
+    if max_events < 1:
+        print("koru local-serve: --max-events must be >= 1", file=sys.stderr)
+        return 2
+    max_events = min(max_events, 10_000)
+    config = LocalServiceConfig(host=host, port=port, max_events=max_events)
+    return run_local_service(config)
+
+
 def _agent_main(argv: list[str]) -> int:
     args = _build_agent_parser().parse_args(argv)
     project = args.project.resolve()
@@ -1179,14 +1237,10 @@ def _build_topology_parser() -> argparse.ArgumentParser:
     parser.add_argument("--enable", metavar="ID", help="Enable component ID and persist.")
     parser.add_argument("--disable", metavar="ID", help="Disable component ID and persist.")
     parser.add_argument(
-        "--enable-pipeline",
-        metavar="ID",
-        help="Enable pipeline ID and persist.",
+        "--enable-pipeline", metavar="ID", help="Enable pipeline ID and persist.",
     )
     parser.add_argument(
-        "--disable-pipeline",
-        metavar="ID",
-        help="Disable pipeline ID and persist.",
+        "--disable-pipeline", metavar="ID", help="Disable pipeline ID and persist.",
     )
     parser.add_argument(
         "--is-enabled",
@@ -1261,7 +1315,6 @@ def _topology_main(argv: list[str]) -> int:
 
     if args.enabled_components_for:
         from .topology import enabled_components_for_pipeline
-
         ids = enabled_components_for_pipeline(project, args.enabled_components_for)
         print(",".join(ids))
         return 0
@@ -1278,7 +1331,9 @@ def _topology_main(argv: list[str]) -> int:
                 print(f"koru topology: unknown component {target_id!r}", file=sys.stderr)
                 return 2
             mutated = True
-            print(f"koru topology: component {res.id} {res.previous} -> {res.current}")
+            print(
+                f"koru topology: component {res.id} {res.previous} -> {res.current}"
+            )
     for target_id, enabled in (
         (args.enable_pipeline, True),
         (args.disable_pipeline, False),
@@ -1289,7 +1344,9 @@ def _topology_main(argv: list[str]) -> int:
                 print(f"koru topology: unknown pipeline {target_id!r}", file=sys.stderr)
                 return 2
             mutated = True
-            print(f"koru topology: pipeline {res.id} {res.previous} -> {res.current}")
+            print(
+                f"koru topology: pipeline {res.id} {res.previous} -> {res.current}"
+            )
 
     if mutated:
         path = save_topology(project, topo)
@@ -1370,6 +1427,7 @@ def _runtime_context_main(argv: list[str]) -> int:
 _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "task": _task_main,
     "agent": _agent_main,
+    "local-serve": _local_serve_main,
     "serve": _serve_main,
     "scan": _scan_main,
     "gate": _gate_main,
@@ -1397,7 +1455,9 @@ def _doctor_main(args: argparse.Namespace, raw_args: list[str]) -> int:
         action="completed",
         status="failed" if report.has_failures else "completed",
         level="error" if report.has_failures else "info",
-        message=", ".join(f"{k}={v}" for k, v in report.summary().items() if v),
+        message=", ".join(
+            f"{k}={v}" for k, v in report.summary().items() if v
+        ),
         queue=args.queue_name,
         details={"project": str(args.project)},
     )
@@ -1628,7 +1688,6 @@ def _queue_run_main(args: argparse.Namespace) -> int:
         )
 
     if args.loop:
-
         def _progress(r, i):
             ticket = r.ticket_id or "-"
             kind = r.executor_kind or "-"
@@ -1682,9 +1741,9 @@ def _queue_run_main(args: argparse.Namespace) -> int:
             print(f"  failed:    {', '.join(loop_result.failed)}")
         if loop_result.waiting:
             print(f"  waiting:   {', '.join(loop_result.waiting)}")
-        exit_code = (
-            0 if loop_result.last_status in {"completed", "idle", "waiting_input", "dry_run"} else 1
-        )
+        exit_code = 0 if loop_result.last_status in {
+            "completed", "idle", "waiting_input", "dry_run"
+        } else 1
         emit_management_event(
             tool="koru.queue",
             action="completed" if exit_code == 0 else "failed",
@@ -1721,10 +1780,14 @@ def _queue_run_main(args: argparse.Namespace) -> int:
             {
                 "iterations": 1,
                 "completed": (
-                    [result.ticket_id] if result.status == "completed" and result.ticket_id else []
+                    [result.ticket_id]
+                    if result.status == "completed" and result.ticket_id
+                    else []
                 ),
                 "failed": (
-                    [result.ticket_id] if result.status == "failed" and result.ticket_id else []
+                    [result.ticket_id]
+                    if result.status == "failed" and result.ticket_id
+                    else []
                 ),
                 "waiting": (
                     [result.ticket_id]
