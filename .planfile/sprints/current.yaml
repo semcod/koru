@@ -819,23 +819,69 @@ sprint:
 
 
         Role: regression metrics gate (CC / MI / coverage delta).'
+      execution:
+        assigned_to: codex
+        attempt: 0
+        finished_at: '2026-05-14T11:38:13.333428Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T11:38:12.415912Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T11:38:12.584805+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T11:38:13.498806+00:00'
       id: STARTER-007
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap regix on-change gate
+      outputs:
+        artifacts:
+        - regix.yaml
+        - Taskfile.yml
+        - tests/test_regix_taskfile.py
+        notes:
+        - 'Duplicate bootstrap ticket already satisfied by current repo state: regix.yaml
+          exists, Taskfile uses current regix gates/compare commands, and tests cover
+          command drift.'
+        result:
+          resolution: duplicate_already_satisfied
+          status: done
+          tests:
+          - uv run pytest -q tests/test_regix_taskfile.py
+          - task quality:regix:local
+          - rg -n "regix gate(\\s|$)|regix check|--fail-on-regression" Taskfile.yml
+            README.md docs templates scripts src tests .github
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:36:20.716683Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:36:20.717566Z'
+      updated_at: '2026-05-14T11:38:13.498772+00:00'
     STARTER-008:
       acceptance_criteria: []
       blocked_by: []
