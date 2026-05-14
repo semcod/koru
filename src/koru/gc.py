@@ -231,7 +231,7 @@ def _apply_keep_last(
     by_status: dict[str, list[GcCandidate]] = {}
     for c in candidates:
         by_status.setdefault(c.status, []).append(c)
-    for status, group in by_status.items():
+    for _status, group in by_status.items():
         # group is sorted oldest-first; the last keep_last are newest
         removable = group[:-keep_last] if len(group) > keep_last else []
         protected = group[-keep_last:] if len(group) > keep_last else group

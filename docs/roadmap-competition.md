@@ -46,6 +46,11 @@ warstwy** nad planfile i metrykami, a nie duplikat platformy Moderne.
 
 ### Epic 2 — koru-checks i thin CI (P1)
 
+#### Status / wdrożenie (fragment)
+
+- Cienki workflow GitHub Actions + instrukcja kopiowania: **[`docs/ci-github.md`](./ci-github.md)** (workflow źródłowy: `.github/workflows/koru-ci.yml`; pełna macierz na `main`: `.github/workflows/ci.yml`).
+- Analog na GitLabie: **[`docs/ci-gitlab.md`](./ci-gitlab.md)** (przykład: [`examples/ci/gitlab-ci.example.yml`](../examples/ci/gitlab-ci.example.yml) — ten sam smoke co `koru-ci.yml`).
+
 - Jako adopters chcę skopiować jeden plik workflow i mieć działające gates bez czytania całego monorepo semcod.
 - Jako release manager chcę wersjonowany obraz / akcję marketplace z pinowaną wersją koru.
 - Jako dev chcę cache zależności i szybki fail na pierwszej bramce.

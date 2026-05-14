@@ -227,7 +227,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "--dest",
         type=Path,
         default=None,
-        help="Override destination (default: $XDG_CONFIG_HOME/systemd/user/koru-autopilot.service).",
+        help=(
+            "Override destination (default: "
+            "$XDG_CONFIG_HOME/systemd/user/koru-autopilot.service)."
+        ),
     )
     install_unit.add_argument(
         "--force",

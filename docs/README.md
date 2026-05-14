@@ -4,6 +4,9 @@ This directory contains the full documentation for **koru** — a closed-loop
 refactor automation system for multi-repo workspaces.
 
 - **[`roadmap-competition.md`](./roadmap-competition.md)** (PL) — porównanie z Grit, Moderne/OpenRewrite, Gitar, Git AutoReview i kierunek roadmapy.
+- **[`ci-github.md`](./ci-github.md)** (PL) — szablon thin CI na GitHub Actions (`koru-ci.yml`).
+- **[`ci-gitlab.md`](./ci-gitlab.md)** (PL) — ten sam smoke na GitLab CI (przykład w `examples/ci/gitlab-ci.example.yml`).
+- **[`quickstart-10min.md`](./quickstart-10min.md)** — krótka ścieżka: instalacja, `koru --init`, CI, pierwszy ticket.
 
 ## Reading order
 
@@ -32,9 +35,10 @@ For human operators / DevOps:
 
 1. **[`../README.md`](../README.md)** — top-level project description and
    architecture overview.
-2. **[`llm-tools/README.md`](./llm-tools/README.md)** — tool catalog and
+2. **[`ci-github.md`](./ci-github.md)** / **[`ci-gitlab.md`](./ci-gitlab.md)** — minimalne pipeline’y smoke (Epic 2).
+3. **[`llm-tools/README.md`](./llm-tools/README.md)** — tool catalog and
    when to use which.
-3. **[`../templates/`](../templates/)** — copy-paste config templates for
+4. **[`../templates/`](../templates/)** — copy-paste config templates for
    `pyqual.yaml`, `redup.toml`, `redsl.yaml`, `regix.yaml`.
 
 ## The two-mode philosophy

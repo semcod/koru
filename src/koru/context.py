@@ -489,7 +489,7 @@ def _load_sprint_data(project: Path) -> dict[str, Any] | None:
 def _find_blocking_tickets(tickets: dict[str, Any]) -> set[str]:
     """Find all ticket IDs that are blocking other tickets."""
     blocking_tickets = set()
-    for ticket_id, ticket in tickets.items():
+    for _ticket_id, ticket in tickets.items():
         if isinstance(ticket, dict):
             blocked_by = ticket.get("blocked_by", [])
             if blocked_by:
@@ -539,7 +539,8 @@ def _promote_bug_priority(tickets: dict[str, Any]) -> bool:
                     ticket["priority"] = new_priority
                     promoted = True
                     print(
-                        f"🐛 Auto-promoted bug {ticket_id} from {current_priority} to {new_priority}"
+                        f"🐛 Auto-promoted bug {ticket_id} from {current_priority} "
+                        f"to {new_priority}"
                     )
     return promoted
 
@@ -663,7 +664,10 @@ def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[s
             [
                 "If there is no active ticket, DO NOT ask the human what to work on.",
                 "Immediately run `koru scan --apply` to discover or create actionable tickets.",
-                "After scan, run `planfile ticket next --format json`, then `planfile ticket start <id>` and begin implementation.",
+                (
+                    "After scan, run `planfile ticket next --format json`, "
+                    "then `planfile ticket start <id>` and begin implementation."
+                ),
             ]
         )
     # Auto-repair instructions for critical blocking tickets

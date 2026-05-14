@@ -1,0 +1,23 @@
+# Thin CI smoke (Epic 2 — mirror of .github/workflows/koru-ci.yml; see docs/ci-gitlab.md).
+# Copy to .gitlab-ci.yml in your repo root (or include from a path) and adjust paths/deps.
+
+stages:
+  - smoke
+
+variables:
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+smoke:
+  stage: smoke
+  image: python:3.12-bookworm
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
+  before_script:
+    - python -m pip install --upgrade pip
+    - python -m pip install -e ".[dev]"
+  script:
+    - python -m ruff check src/koru
+    - python -m pytest tests/test_init.py tests/test_autopilot_cli.py -q
+    - koru --help
+    - python -m koru --doctor --project .

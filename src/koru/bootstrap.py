@@ -192,7 +192,6 @@ def _validate_task(task: dict[str, Any], seen_ids: set[str]) -> list[ValidationE
     errors: list[ValidationError] = []
 
     errors.extend(_validate_id(task, seen_ids))
-    tid = str(task.get("id") or "<missing-id>")
 
     # Early return if id is missing or duplicate
     if any(e.field == "id" for e in errors):

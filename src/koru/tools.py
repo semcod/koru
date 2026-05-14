@@ -181,7 +181,8 @@ def build_tool_task_scaffold(
         )
     else:
         prompt_lines.append(
-            "- required_next_step: convert this scaffold into concrete executor inputs before queue run"
+            "- required_next_step: convert this scaffold into concrete "
+            "executor inputs before queue run"
         )
 
     labels = ["adapter-scaffold", f"tool-{tool_id}", f"lane-{lane}"]
