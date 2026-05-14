@@ -152,6 +152,17 @@ ci:
     else
       echo "ℹ️  Regix not available"
     fi
+
+    echo "5. Running koru autopilot plugin tests (if available)..."
+    if [ -f "plugins/koru-autopilot-vscode/package.json" ] && command -v npm >/dev/null 2>&1; then
+      if (cd plugins/koru-autopilot-vscode && npm test 2>/dev/null); then
+        echo "✅ koru-autopilot-vscode tests passed"
+      else
+        echo "⚠️  koru-autopilot-vscode tests failed"
+      fi
+    else
+      echo "ℹ️  koru-autopilot-vscode plugin not present"
+    fi
     
     echo "=== Quality Gates Complete ==="
   timeout_seconds: 600

@@ -45,6 +45,7 @@ exports.activate = activate;
 exports.deactivate = deactivate;
 const net = __importStar(require("net"));
 const vscode = __importStar(require("vscode"));
+const dispatch_plan_1 = require("./dispatch-plan");
 const socketPath_1 = require("./socketPath");
 let activeBridge = null;
 class AutopilotBridge {
@@ -280,23 +281,23 @@ class AutopilotBridge {
         }
     }
     async dispatch(env) {
-        switch (env.type) {
-            case "chat.send":
+        const plan = (0, dispatch_plan_1.planDispatch)(env);
+        switch (plan.kind) {
+            case "injectChat":
                 await this.injectChat(env);
-                break;
-            case "ping":
-                this.send({ type: "ack", id: env.id, ok: true, pong: true });
-                break;
+                return;
             case "ack":
-            case "error":
-                // Server-initiated ack/error — informational only.
-                break;
-            case "shutdown":
-                this.send({ type: "ack", id: env.id, ok: true, shutdown: true });
+                this.send({ type: "ack", id: env.id, ok: true, ...plan.info });
+                return;
+            case "ignore":
+                return;
+            case "ackAndDisconnect":
+                this.send({ type: "ack", id: env.id, ok: true, ...plan.info });
                 this.disconnect();
-                break;
-            default:
-                this.send({ type: "error", id: env.id, ok: false, message: `unhandled ${env.type}` });
+                return;
+            case "error":
+                this.send({ type: "error", id: env.id, ok: false, message: plan.message });
+                return;
         }
     }
     async injectChat(env) {
