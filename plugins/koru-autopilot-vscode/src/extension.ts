@@ -352,6 +352,9 @@ class AutopilotBridge {
         await new Promise(r => setTimeout(r, 150));
         submitted = await this.submitChat();
       }
+      if (submitted) {
+        this.send({ type: "message.sent", chat: "default", text: text.substring(0, 200), length: text.length });
+      }
       this.send({ type: "ack", id: env.id, ok: true, delivered: true, opened, submitted });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

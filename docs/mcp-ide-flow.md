@@ -205,17 +205,21 @@
 
 ## OOM Protection Flags
 
-**Current status**: Not implemented in codebase
+**Current status**: Implemented in MCP tools (koru_run_ticket, koru_run_quality_gates)
 
-**Planned flags** (future work):
-- `--oom-kill-threshold`: Memory limit before killing subprocess (MB)
-- `--oom-monitor-interval`: Polling interval for memory stats (seconds)
-- `--oom-action`: Action on OOM (kill | warn | continue)
+**Implemented flags**:
+- `oom_kill_threshold_mb`: Memory limit before killing subprocess (MB, default: 4096 for tickets, 2048 for gates)
+- `oom_monitor_interval_seconds`: Polling interval for memory stats (seconds, default: 5)
+- `oom_action`: Action on OOM (kill | warn | continue, default: kill)
 
 **Integration points**:
-- `koru_run_ticket`: Wrap subprocess with memory monitoring
-- `koru_run_quality_gates`: Apply per-gate memory limits
-- `autonomous queue loop`: Global memory budget enforcement
+- `koru_run_ticket`: Wraps subprocess with memory monitoring via psutil (if available)
+- `koru_run_quality_gates`: Applies per-gate memory limits with monitoring
+- `autonomous queue loop`: Not yet implemented (future work for global memory budget)
+
+**Requirements**:
+- `psutil` package for memory monitoring (optional, gracefully degrades without it)
+- Subprocess execution via `Popen` with daemon thread for OOM polling
 
 ## Operational Commands
 

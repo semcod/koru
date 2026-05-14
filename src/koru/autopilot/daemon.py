@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import errno
 import functools
+import json
 import os
 import selectors
 import socket
@@ -453,10 +454,37 @@ class AutopilotDaemon:
         relay = ack(corr, ok=bool(msg.data.get("ok", True)), info=info)
         self._send(cli_client, relay.encode())
 
-    def _handle_session_event(self, client: _Client, msg: Message) -> None:
+    def _event_path(self) -> Path:
+        """Path to the NDJSON event file shared with autonomous."""
+        return Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "koru-autopilot-events.ndjson"
+
+    def _append_event(self, client: _Client, msg: Message) -> None:
+        """Persist plugin event to the shared NDJSON file."""
+        try:
+            path = self._event_path()
+            payload = {
+                "ts": time.time(),
+                "type": msg.type,
+                "ide": client.ide,
+            }
+            payload.update(msg.data)
+            with path.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(payload, separators=(",", ":")) + "\n")
+        except OSError:
+            pass
+
+    def _handle_plugin_event(self, client: _Client, msg: Message) -> None:
         chat = msg.data.get("chat") or "default"
         reason = msg.data.get("reason") or ""
         self.log(f"event {msg.type} ide={client.ide} chat={chat} reason={reason!r}")
+        # Persist every plugin event so autonomous can react.
+        self._append_event(client, msg)
+        self.audit.record(
+            "plugin_event",
+            type=msg.type,
+            ide=client.ide,
+            **msg.data,
+        )
         # Always ack the event first so the plugin doesn't time out.
         ack_info: dict[str, Any] = {"event": msg.type}
         if msg.type != "session.ended" or self.handoff is None:
@@ -522,8 +550,11 @@ class AutopilotDaemon:
             "hello": self._handle_hello,
             "status": self._handle_status,
             "ack": self._handle_ack,
-            "session.started": self._handle_session_event,
-            "session.ended": self._handle_session_event,
+            "session.started": self._handle_plugin_event,
+            "session.ended": self._handle_plugin_event,
+            "message.sent": self._handle_plugin_event,
+            "message.received": self._handle_plugin_event,
+            "status.error": self._handle_plugin_event,
             "shutdown": self._handle_shutdown,
             "ping": self._handle_ping,
         }

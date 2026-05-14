@@ -26,11 +26,19 @@ import json
 import os
 import subprocess
 import sys
+import time
 import traceback
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+try:
+    import psutil
+
+    _PSUTIL_AVAILABLE = True
+except ImportError:
+    _PSUTIL_AVAILABLE = False
 
 # ---------------------------------------------------------------------------
 # Lazy imports — avoid pulling heavy modules until a tool is actually called.
@@ -44,8 +52,90 @@ _PROJECT_ROOT_DESCRIPTION = "Absolute path to project root on disk."
 _DEFAULT_GATES = ["regix", "redup"]
 _RUN_TICKET_TIMEOUT_SECONDS = 300
 
+# Job store file path (relative to project root)
+_JOB_STORE_FILE = ".planfile/.koru/jobs.json"
+
+
+def _get_job_store_path(project: Path | None = None) -> Path:
+    """Get the job store file path for a project."""
+    if project is None:
+        # Default to current directory if no project specified
+        project = Path.cwd()
+    return project / _JOB_STORE_FILE
+
+
+def _load_jobs(project: Path | None = None) -> dict[str, dict[str, Any]]:
+    """Load jobs from the JSON file."""
+    job_store_path = _get_job_store_path(project)
+    if not job_store_path.exists():
+        return {}
+    try:
+        with job_store_path.open(encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
 # In-memory job store for long-running operations
-_jobs: dict[str, dict[str, Any]] = {}
+_jobs: dict[str, dict[str, Any]] = _load_jobs()
+
+
+def _save_jobs(jobs: dict[str, dict[str, Any]], project: Path | None = None) -> None:
+    """Save jobs to the JSON file."""
+    job_store_path = _get_job_store_path(project)
+    job_store_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with open(job_store_path, "w", encoding="utf-8") as f:
+            json.dump(jobs, f, indent=2, default=str)
+    except OSError:
+        pass  # Silently fail if we can't write (e.g., read-only filesystem)
+
+
+def _get_process_memory_mb(pid: int) -> float:
+    """Get process memory usage in MB."""
+    if not _PSUTIL_AVAILABLE:
+        return 0.0
+    try:
+        process = psutil.Process(pid)
+        return process.memory_info().rss / (1024 * 1024)
+    except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+        return 0.0
+
+
+def _monitor_subprocess_oom(
+    proc: subprocess.Popen[str],
+    threshold_mb: int,
+    interval_seconds: int,
+    action: str,
+) -> tuple[bool, list[str]]:
+    """Monitor subprocess for OOM conditions.
+
+    Returns (should_kill, logs) tuple.
+    """
+    logs: list[str] = []
+    if threshold_mb == 0 or not _PSUTIL_AVAILABLE:
+        return False, logs
+
+    try:
+        while proc.poll() is None:
+            memory_mb = _get_process_memory_mb(proc.pid)
+            if memory_mb > threshold_mb:
+                msg = (
+                    f"Process {proc.pid} exceeded OOM threshold: "
+                    f"{memory_mb:.1f}MB > {threshold_mb}MB"
+                )
+                logs.append(msg)
+                if action == "kill":
+                    logs.append(f"Killing process {proc.pid} due to OOM")
+                    proc.kill()
+                    return True, logs
+                elif action == "warn":
+                    logs.append("Warning: OOM detected but continuing (action=warn)")
+                # action == "continue": do nothing
+            time.sleep(interval_seconds)
+    except Exception as exc:
+        logs.append(f"OOM monitoring error: {exc}")
+    return False, logs
 
 
 # ---------------------------------------------------------------------------
@@ -108,6 +198,28 @@ TOOLS: list[dict[str, Any]] = [
                     "minimum": 1,
                     "description": "Optional safety limit on number of steps/iterations.",
                 },
+                "oom_kill_threshold_mb": {
+                    "type": "integer",
+                    "minimum": 100,
+                    "description": (
+                        "Memory limit in MB before killing subprocess (default: 4096). "
+                        "Set to 0 to disable."
+                    ),
+                },
+                "oom_monitor_interval_seconds": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Polling interval for memory stats in seconds (default: 5).",
+                },
+                "oom_action": {
+                    "type": "string",
+                    "enum": ["kill", "warn", "continue"],
+                    "default": "kill",
+                    "description": (
+                        "Action when OOM is detected: kill subprocess, warn only, "
+                        "or continue."
+                    ),
+                },
             },
             "required": ["project_root", "ticket_id"],
         },
@@ -151,6 +263,28 @@ TOOLS: list[dict[str, Any]] = [
                     "type": "boolean",
                     "default": True,
                     "description": "Stop on first failing gate when true.",
+                },
+                "oom_kill_threshold_mb": {
+                    "type": "integer",
+                    "minimum": 100,
+                    "description": (
+                        "Memory limit in MB before killing subprocess (default: 2048). "
+                        "Set to 0 to disable."
+                    ),
+                },
+                "oom_monitor_interval_seconds": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Polling interval for memory stats in seconds (default: 5).",
+                },
+                "oom_action": {
+                    "type": "string",
+                    "enum": ["kill", "warn", "continue"],
+                    "default": "kill",
+                    "description": (
+                        "Action when OOM is detected: kill subprocess, warn only, "
+                        "or continue."
+                    ),
                 },
             },
             "required": ["project_root"],
@@ -273,7 +407,7 @@ def tool_list_tickets(arguments: dict[str, Any]) -> dict[str, Any]:
     return {"tickets": result_tickets}
 
 
-def _create_job(ticket_id: str, mode: str) -> str:
+def _create_job(ticket_id: str, mode: str, project: Path | None = None) -> str:
     job_id = f"JOB-{uuid.uuid4().hex[:8]}"
     _jobs[job_id] = {
         "status": "running",
@@ -284,11 +418,13 @@ def _create_job(ticket_id: str, mode: str) -> str:
         "progress": 0.0,
         "current_step": "starting",
     }
+    _save_jobs(_jobs, project)
     return job_id
 
 
-def _update_job(job_id: str, **fields: Any) -> None:
+def _update_job(job_id: str, project: Path | None = None, **fields: Any) -> None:
     _jobs[job_id].update(fields)
+    _save_jobs(_jobs, project)
 
 
 def _build_queue_command(project: Path, mode: str, max_steps: int | None) -> list[str]:
@@ -307,7 +443,9 @@ def _build_queue_command(project: Path, mode: str, max_steps: int | None) -> lis
     return cmd
 
 
-def _collect_process_logs(result: subprocess.CompletedProcess[str], *, limit: int = 20) -> list[str]:
+def _collect_process_logs(
+    result: subprocess.CompletedProcess[str], *, limit: int = 20
+) -> list[str]:
     logs: list[str] = []
     if result.stdout:
         logs.extend(result.stdout.strip().split("\n"))
@@ -322,24 +460,98 @@ def tool_run_ticket(arguments: dict[str, Any]) -> dict[str, Any]:
     ticket_id = arguments["ticket_id"]
     mode = arguments.get("mode", "apply")
     max_steps = arguments.get("max_steps")
+    oom_threshold = arguments.get("oom_kill_threshold_mb", 4096)
+    oom_interval = arguments.get("oom_monitor_interval_seconds", 5)
+    oom_action = arguments.get("oom_action", "kill")
 
-    job_id = _create_job(ticket_id, mode)
+    job_id = _create_job(ticket_id, mode, project)
     cmd_args = _build_queue_command(project, mode, max_steps)
-    _update_job(job_id, current_step="running_queue", progress=0.3)
+    _update_job(job_id, project, current_step="running_queue", progress=0.3)
 
     try:
-        result = subprocess.run(
+        proc = subprocess.Popen(
             cmd_args,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=_RUN_TICKET_TIMEOUT_SECONDS,
             cwd=str(project),
         )
 
+        # Start OOM monitoring in a thread if psutil is available and threshold > 0
+        import threading
+
+        oom_killed = False
+        oom_logs: list[str] = []
+
+        if oom_threshold > 0 and _PSUTIL_AVAILABLE:
+            def _oom_monitor():
+                nonlocal oom_killed, oom_logs
+                oom_killed, oom_logs = _monitor_subprocess_oom(
+                    proc, oom_threshold, oom_interval, oom_action
+                )
+
+            monitor_thread = threading.Thread(target=_oom_monitor, daemon=True)
+            monitor_thread.start()
+
+        try:
+            stdout, stderr = proc.communicate(timeout=_RUN_TICKET_TIMEOUT_SECONDS)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            stdout, stderr = proc.communicate()
+            timeout_logs = [f"Operation timed out after {_RUN_TICKET_TIMEOUT_SECONDS} seconds."]
+            _update_job(
+                job_id,
+                project,
+                status="timeout",
+                current_step="timeout",
+                progress=1.0,
+                logs=timeout_logs,
+            )
+            return {
+                "status": "timeout",
+                "ticket_id": ticket_id,
+                "mode": mode,
+                "job_id": job_id,
+                "logs": timeout_logs,
+            }
+
+        if oom_killed:
+            logs = oom_logs + _collect_process_logs(
+                subprocess.CompletedProcess(
+                    args=cmd_args,
+                    returncode=-9,
+                    stdout=stdout,
+                    stderr=stderr,
+                )
+            )
+            _update_job(
+                job_id,
+                project,
+                status="killed",
+                current_step="oom_killed",
+                progress=1.0,
+                logs=logs,
+            )
+            return {
+                "status": "killed",
+                "ticket_id": ticket_id,
+                "mode": mode,
+                "job_id": job_id,
+                "logs": logs,
+                "reason": "oom",
+            }
+
+        result = subprocess.CompletedProcess(
+            args=cmd_args,
+            returncode=proc.returncode,
+            stdout=stdout,
+            stderr=stderr,
+        )
         logs = _collect_process_logs(result)
         is_success = result.returncode == 0
         _update_job(
             job_id,
+            project,
             progress=1.0,
             status="success" if is_success else "failed",
             current_step="completed" if is_success else "failed",
@@ -360,26 +572,11 @@ def tool_run_ticket(arguments: dict[str, Any]) -> dict[str, Any]:
         else:
             response["exit_code"] = result.returncode
         return response
-    except subprocess.TimeoutExpired:
-        timeout_logs = [f"Operation timed out after {_RUN_TICKET_TIMEOUT_SECONDS} seconds."]
-        _update_job(
-            job_id,
-            status="timeout",
-            current_step="timeout",
-            progress=1.0,
-            logs=timeout_logs,
-        )
-        return {
-            "status": "timeout",
-            "ticket_id": ticket_id,
-            "mode": mode,
-            "job_id": job_id,
-            "logs": timeout_logs,
-        }
     except Exception as exc:
         error_message = str(exc)
         _update_job(
             job_id,
+            project,
             status="error",
             current_step="error",
             progress=1.0,
@@ -434,7 +631,11 @@ def _detect_enabled_gates(project: Path, known_gates: list[str]) -> list[str]:
         return []
 
 
-def _resolve_gates(project: Path, requested: list[str], commands: dict[str, list[str]]) -> list[str]:
+def _resolve_gates(
+    project: Path,
+    requested: list[str],
+    commands: dict[str, list[str]],
+) -> list[str]:
     if requested:
         return requested
     detected = _detect_enabled_gates(project, list(commands.keys()))
@@ -443,18 +644,64 @@ def _resolve_gates(project: Path, requested: list[str], commands: dict[str, list
     return list(commands.keys()) or list(_DEFAULT_GATES)
 
 
-def _run_single_gate(project: Path, gate_name: str, cmd: list[str]) -> tuple[str, dict[str, Any]]:
+def _run_single_gate(
+    project: Path,
+    gate_name: str,
+    cmd: list[str],
+    oom_threshold_mb: int = 2048,
+    oom_interval_seconds: int = 5,
+    oom_action: str = "kill",
+) -> tuple[str, dict[str, Any]]:
     try:
-        proc = subprocess.run(
+        proc = subprocess.Popen(
             cmd,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=120,
             cwd=str(project),
         )
+
+        # Start OOM monitoring in a thread if psutil is available and threshold > 0
+        import threading
+
+        oom_killed = False
+        oom_logs: list[str] = []
+
+        if oom_threshold_mb > 0 and _PSUTIL_AVAILABLE:
+            def _oom_monitor():
+                nonlocal oom_killed, oom_logs
+                oom_killed, oom_logs = _monitor_subprocess_oom(
+                    proc, oom_threshold_mb, oom_interval_seconds, oom_action
+                )
+
+            monitor_thread = threading.Thread(target=_oom_monitor, daemon=True)
+            monitor_thread.start()
+
+        try:
+            stdout, stderr = proc.communicate(timeout=120)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            stdout, stderr = proc.communicate()
+            return "timeout", {
+                "gate": gate_name,
+                "status": "timeout",
+                "issues": ["Gate timed out after 120 seconds."],
+            }
+
+        if oom_killed:
+            output_lines = (stdout or "").strip().split("\n")
+            error_lines = (stderr or "").strip().split("\n")
+            issues = oom_logs + (output_lines + error_lines)[-10:]
+            return "killed", {
+                "gate": gate_name,
+                "status": "killed",
+                "issues": issues,
+                "reason": "oom",
+            }
+
         if proc.returncode == 0:
             return "passed", {"gate": gate_name, "status": "passed", "issues": []}
-        issues = ((proc.stdout or "").strip().split("\n") + (proc.stderr or "").strip().split("\n"))[-10:]
+        issues = ((stdout or "").strip().split("\n") + (stderr or "").strip().split("\n"))[-10:]
         return "failed", {"gate": gate_name, "status": "failed", "issues": issues}
     except FileNotFoundError:
         return "not_installed", {
@@ -462,12 +709,6 @@ def _run_single_gate(project: Path, gate_name: str, cmd: list[str]) -> tuple[str
             "status": "not_installed",
             "issues": [],
             "message": f"{cmd[0]} not found in PATH",
-        }
-    except subprocess.TimeoutExpired:
-        return "timeout", {
-            "gate": gate_name,
-            "status": "timeout",
-            "issues": ["Gate timed out after 120 seconds."],
         }
     except Exception as exc:
         return "error", {"gate": gate_name, "status": "error", "issues": [str(exc)]}
@@ -478,6 +719,9 @@ def tool_run_quality_gates(arguments: dict[str, Any]) -> dict[str, Any]:
     project = Path(arguments["project_root"]).resolve()
     requested_gates = arguments.get("gates") or []
     fail_fast = arguments.get("fail_fast", True)
+    oom_threshold = arguments.get("oom_kill_threshold_mb", 2048)
+    oom_interval = arguments.get("oom_monitor_interval_seconds", 5)
+    oom_action = arguments.get("oom_action", "kill")
 
     gate_commands = _gate_commands(project)
     gates = _resolve_gates(project, requested_gates, gate_commands)
@@ -495,10 +739,17 @@ def tool_run_quality_gates(arguments: dict[str, Any]) -> dict[str, Any]:
             })
             continue
 
-        status, payload = _run_single_gate(project, gate_name, cmd)
+        status, payload = _run_single_gate(
+            project,
+            gate_name,
+            cmd,
+            oom_threshold_mb=oom_threshold,
+            oom_interval_seconds=oom_interval,
+            oom_action=oom_action,
+        )
         results.append(payload)
 
-        if status in {"failed", "timeout"}:
+        if status in {"failed", "timeout", "killed"}:
             overall = "failed"
             if fail_fast:
                 break

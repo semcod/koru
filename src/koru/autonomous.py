@@ -15,6 +15,7 @@ started here).
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import signal
@@ -23,8 +24,9 @@ import sys
 import threading
 import time
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from .agents import agent_lane_environment
 from .autonomous_env import (
@@ -95,6 +97,8 @@ class AutoloopState:
     scan_clean_streak: int = 0
     scan_last_head: str = ""
     wup_seen_events: int = 0
+    autopilot_events: list[dict[str, Any]] = field(default_factory=list)
+    last_message_sent_ts: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -215,10 +219,10 @@ def _find_existing_autonomous_processes(project: Path) -> list[ExistingAutonomou
         ppid_text, _, command = rest.strip().partition(" ")
         try:
             pid = int(pid_text)
-            ppid = int(ppid_text)
+            int(ppid_text)
         except ValueError:
             continue
-        if pid in excluded or ppid in excluded:
+        if pid in excluded:
             continue
         if not _looks_like_autonomous_up_command(command):
             continue
@@ -256,10 +260,10 @@ def _find_existing_wup_processes(project: Path) -> list[ExistingManagedProcess]:
         second, _, command = rest.strip().partition(" ")
         try:
             pid = int(first)
-            ppid = int(second)
+            int(second)
         except ValueError:
             continue
-        if pid in excluded or ppid in excluded:
+        if pid in excluded:
             continue
         if "wup" not in command or " watch " not in f" {command} ":
             continue
@@ -930,6 +934,30 @@ def _run_idle_diagnostics(
     return DiagnosticResult(status="failed" if failed else "ok", failed=failed)
 
 
+def _autopilot_event_path() -> Path:
+    return Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "koru-autopilot-events.ndjson"
+
+
+def _drain_autopilot_events(state: AutoloopState) -> list[dict[str, Any]]:
+    """Read plugin events from the shared NDJSON file and clear it."""
+    path = _autopilot_event_path()
+    if not path.exists():
+        return []
+    raw = path.read_text(encoding="utf-8")
+    events: list[dict[str, Any]] = []
+    for line in raw.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            events.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    if events:
+        path.write_text("", encoding="utf-8")
+    return events
+
+
 def _run_cycle(
     *,
     cycle: int,
@@ -979,6 +1007,18 @@ def _run_cycle(
     def _hp(msg: str) -> None:
         if stdio_format == "human":
             print(msg)
+
+    # Drain plugin events from the autopilot daemon.
+    events = _drain_autopilot_events(state)
+    if events:
+        for ev in events:
+            ev_type = ev.get("type", "unknown")
+            _hp(f"  event: {ev_type} ide={ev.get('ide', '?')}")
+        state.autopilot_events.extend(events)
+        # Track when the last prompt was delivered to the IDE.
+        for ev in events:
+            if ev.get("type") == "message.sent":
+                state.last_message_sent_ts = ev.get("ts", time.time())
 
     scan_result: ScanResult | None = None
 
@@ -1459,6 +1499,14 @@ def _action_up(args: argparse.Namespace) -> int:
                 args.max_sleep_seconds,
                 args.backoff_on_stagnation,
             )
+            # If a prompt was just delivered to the IDE and queue is idle,
+            # check sooner so we can react when the LLM finishes.
+            if (
+                queue_result.last_status == "idle"
+                and loop_state.last_message_sent_ts > 0
+                and time.time() - loop_state.last_message_sent_ts < 120.0
+            ):
+                effective_sleep = min(effective_sleep, 15.0)
             _stdio_info(
                 f"koru autonomous: summary cycle={cycle} queue={queue_result.last_status} "
                 f"waiting={_queue_loop_waiting_ticket_label(queue_result)} "

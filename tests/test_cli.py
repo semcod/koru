@@ -277,6 +277,7 @@ class TestSubcommandDispatch(unittest.TestCase):
         {
             "init-ci",
             "init-ide",
+            "agent-backends",
             "task",
             "agent",
             "local-serve",

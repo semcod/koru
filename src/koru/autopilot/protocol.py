@@ -26,6 +26,9 @@ PLUGIN_TO_DAEMON = frozenset(
         "hello",
         "session.started",
         "session.ended",
+        "message.sent",
+        "message.received",
+        "status.error",
         "ack",
         "error",
     }
@@ -67,6 +70,9 @@ _FIELD_SCHEMA: dict[str, frozenset[str] | None] = {
     "hello": frozenset({"ide", "version", "pid"}),
     "session.started": frozenset({"chat"}),
     "session.ended": frozenset({"chat", "reason"}),
+    "message.sent": frozenset({"chat", "text", "length"}),
+    "message.received": frozenset({"chat", "text", "summary"}),
+    "status.error": frozenset({"message", "severity", "source"}),
     "chat.send": frozenset({"text", "submit"}),
     "drive": frozenset({"text", "submit", "ide"}),
     "ping": frozenset(),
@@ -187,6 +193,48 @@ def session_ended(*, chat: str = "default", reason: str = "", id: str | None = N
     return Message(type="session.ended", id=id, data={"chat": chat, "reason": reason})
 
 
+def message_sent(
+    *,
+    chat: str = "default",
+    text: str = "",
+    length: int = 0,
+    id: str | None = None,
+) -> Message:
+    return Message(
+        type="message.sent",
+        id=id,
+        data={"chat": chat, "text": text, "length": length},
+    )
+
+
+def message_received(
+    *,
+    chat: str = "default",
+    text: str = "",
+    summary: str = "",
+    id: str | None = None,
+) -> Message:
+    return Message(
+        type="message.received",
+        id=id,
+        data={"chat": chat, "text": text, "summary": summary},
+    )
+
+
+def status_error(
+    *,
+    message: str = "",
+    severity: str = "error",
+    source: str = "",
+    id: str | None = None,
+) -> Message:
+    return Message(
+        type="status.error",
+        id=id,
+        data={"message": message, "severity": severity, "source": source},
+    )
+
+
 __all__ = [
     "MAX_LINE_BYTES",
     "PLUGIN_TO_DAEMON",
@@ -203,4 +251,7 @@ __all__ = [
     "error",
     "session_started",
     "session_ended",
+    "message_sent",
+    "message_received",
+    "status_error",
 ]
