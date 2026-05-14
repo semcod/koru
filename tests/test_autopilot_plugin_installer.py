@@ -79,7 +79,9 @@ def test_install_plugin_configures_socket_path(
     def fake_runner(cmd, **_kwargs):
         if cmd[1] == "--list-extensions":
             return subprocess.CompletedProcess(cmd, 0, stdout=plugin_installer.EXTENSION_ID, stderr="")
-        raise AssertionError("already-installed path should not reinstall")
+        if cmd[1] == "--install-extension" and cmd[2] == plugin_installer.EXTENSION_ID:
+            return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
+        raise AssertionError(f"unexpected cmd {cmd}")
 
     result = plugin_installer.install_plugin_for_ide(
         ide="windsurf",
@@ -94,9 +96,11 @@ def test_install_plugin_configures_socket_path(
     assert f'"{plugin_installer.SOCKET_SETTING_KEY}": "{socket_path}"' in settings_path.read_text(
         encoding="utf-8"
     )
+    assert "reassert rc=0" in result.message
 
 
 def test_install_plugin_skips_when_extension_already_installed(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_REASSERT_INSTALL", "0")
     monkeypatch.setattr(plugin_installer.shutil, "which", lambda name: f"/usr/bin/{name}")
 
     def fake_runner(cmd, **_kwargs):

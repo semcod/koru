@@ -244,15 +244,22 @@ def ensure_koru_mcp_not_disabled(project: Path) -> list[dict[str, Any]]:
       as ``init-ide``) so GUI IDEs with minimal PATH can spawn the server.
     - Removes ``\"disabled\": true`` on the ``koru`` server entry when present;
       some products persist the OFF toggle in this file.
+    - Also checks Windsurf **global** ``~/.codeium/windsurf/mcp_config.json`` when
+      that file exists (Windsurf often uses global MCP instead of per-repo).
 
-    Does **not** flip purely UI-internal state stored only outside the repo.
+    Does **not** flip purely UI-internal state stored only outside these files.
     """
     out: list[dict[str, Any]] = []
-    for config_path in (
+    global_windsurf = _windsurf_global_config()
+    paths: list[Path] = [
         _cursor_project_config(project),
         _vscode_project_config(project),
         _windsurf_project_config(project),
-    ):
+    ]
+    if global_windsurf not in paths:
+        paths.append(global_windsurf)
+
+    for config_path in paths:
         if not config_path.is_file():
             continue
         config = _read_json(config_path)

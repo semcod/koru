@@ -3,7 +3,10 @@
 The current shipped plugin targets the VS Code extension API, which is shared
 by VS Code, Windsurf and Cursor. Installation is best-effort and intentionally
 non-privileged: we call the editor's own ``--install-extension`` CLI when the
-matching command is available.
+matching command is available. When the extension is already installed,
+``--install-extension <id>`` is run again by default (helps Windsurf/Cursor
+recover from a disabled extension); set ``KORU_AUTOPILOT_REASSERT_INSTALL=0``
+to skip that step.
 """
 
 from __future__ import annotations
@@ -182,6 +185,11 @@ def _run(cmd: list[str], *, timeout: float = 30.0) -> subprocess.CompletedProces
     )
 
 
+def _env_reassert_extension_install() -> bool:
+    raw = os.environ.get("KORU_AUTOPILOT_REASSERT_INSTALL", "1").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
 def _extension_is_installed(command: str, runner: Runner) -> bool | None:
     try:
         proc = runner([command, "--list-extensions"])
@@ -224,11 +232,26 @@ def install_plugin_for_ide(
 
     already_installed = _extension_is_installed(command, runner)
     if already_installed is True:
+        last_cmd: list[str] = [command, "--list-extensions"]
+        extra = ""
+        if not dry_run and _env_reassert_extension_install():
+            reassert_cmd = [command, "--install-extension", EXTENSION_ID]
+            try:
+                proc = runner(reassert_cmd, timeout=90.0)
+            except (OSError, subprocess.SubprocessError) as exc:
+                extra = f"; reassert failed: {exc}"
+            else:
+                last_cmd = reassert_cmd
+                extra = f"; reassert rc={proc.returncode}"
+                if proc.returncode != 0:
+                    hint = (proc.stderr or proc.stdout or "").strip()
+                    if hint:
+                        extra += f" ({hint[:240]})"
         return PluginInstallResult(
             ide=target,
             status="already_installed",
-            message=f"{EXTENSION_ID} is already installed for {target}",
-            command=[command, "--list-extensions"],
+            message=f"{EXTENSION_ID} is already installed for {target}{extra}",
+            command=last_cmd,
             settings_path=str(settings_path) if settings_path is not None else None,
             socket_path=socket_path_str,
         )

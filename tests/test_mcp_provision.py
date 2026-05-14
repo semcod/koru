@@ -128,3 +128,26 @@ def test_ensure_koru_mcp_not_disabled_clears_disabled_and_keeps_command(
     koru = payload["mcpServers"]["koru"]
     assert "disabled" not in koru
     assert koru["command"] == str(fake_koru)
+
+
+def test_ensure_koru_mcp_not_disabled_includes_global_windsurf(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    gpath = tmp_path / "windsurf-global-mcp.json"
+    monkeypatch.setattr(mcp_provision, "_windsurf_global_config", lambda: gpath)
+    fake_koru = tmp_path / "bin-koru"
+    fake_koru.write_text("#!/bin/sh\necho\n", encoding="utf-8")
+    fake_koru.chmod(0o755)
+    monkeypatch.setattr(mcp_provision.shutil, "which", lambda _c: str(fake_koru) if _c == "koru" else None)
+
+    gpath.write_text(
+        json.dumps(
+            {"mcpServers": {"koru": {"disabled": True, "command": "koru", "args": ["mcp-serve"]}}}
+        ),
+        encoding="utf-8",
+    )
+
+    rows = mcp_provision.ensure_koru_mcp_not_disabled(tmp_path)
+    assert any(r["path"] == str(gpath) for r in rows)
+    payload = json.loads(gpath.read_text(encoding="utf-8"))
+    assert "disabled" not in payload["mcpServers"]["koru"]
