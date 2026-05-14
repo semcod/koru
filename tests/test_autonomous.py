@@ -377,6 +377,20 @@ def test_resolve_autopilot_ide_ssh_with_display_uses_cli(monkeypatch) -> None:
     assert autonomous_mod._resolve_autopilot_ide("zed") == "zed"
 
 
+def test_resolve_autopilot_ide_os_environ_autopilot_ide(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_IDE", "vscode")
+    monkeypatch.delenv("KORU_HEADLESS", raising=False)
+    monkeypatch.delenv("KORU_IDE_MODE", raising=False)
+    assert autonomous_mod._resolve_autopilot_ide("auto") == "vscode"
+
+
+def test_resolve_autopilot_ide_headless_allow_yes(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_HEADLESS", "1")
+    monkeypatch.setenv("KORU_HEADLESS_ALLOW_AUTOPILOT", "yes")
+    monkeypatch.setenv("KORU_AUTOPILOT_IDE", "zed")
+    assert autonomous_mod._resolve_autopilot_ide("cursor") == "zed"
+
+
 def test_apply_agent_lane_environ_auto_cursor(tmp_path, monkeypatch) -> None:
     monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
     monkeypatch.delenv("CI", raising=False)

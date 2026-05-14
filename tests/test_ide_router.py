@@ -200,3 +200,57 @@ def test_resolve_ide_route_headless_allow_autopilot_honors_env() -> None:
 def test_is_headless_via_ide_mode() -> None:
     env = {"KORU_IDE_MODE": "headless"}
     assert is_headless_environment(env) is True
+
+
+def test_resolve_ide_route_cli_ide_whitespace_normalized() -> None:
+    r = resolve_ide_route(cli_autopilot_ide="  CuRsOr  ", environ={})
+    assert r.autopilot_ide == "cursor"
+
+
+def test_resolve_ide_route_headless_allow_autopilot_yes_string() -> None:
+    env = {
+        "KORU_HEADLESS": "1",
+        "KORU_HEADLESS_ALLOW_AUTOPILOT": "yes",
+        "KORU_AUTOPILOT_IDE": "windsurf",
+    }
+    r = resolve_ide_route(cli_autopilot_ide="vscode", environ=env)
+    assert r.autopilot_ide == "windsurf"
+    assert r.headless is False
+
+
+def test_resolve_ide_route_environ_none_uses_os_environ(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_IDE", "zed")
+    monkeypatch.delenv("KORU_HEADLESS", raising=False)
+    monkeypatch.delenv("KORU_IDE_MODE", raising=False)
+    r = resolve_ide_route(cli_autopilot_ide="auto", environ=None)
+    assert r.autopilot_ide == "zed"
+
+
+def test_resolve_ide_route_headless_all_recommend_flags_false() -> None:
+    r = resolve_ide_route(cli_autopilot_ide="cursor", environ={"KORU_HEADLESS": "true"})
+    assert r.headless is True
+    assert r.recommend_mcp is False
+    assert r.recommend_autopilot_drive is False
+
+
+def test_ide_router_main_json_when_headless(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setenv("KORU_HEADLESS", "1")
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+
+    from koru.cli import ide_router_main
+
+    assert ide_router_main(["--format", "json", "--cli-ide", "cursor"]) == 0
+    payload = json.loads(capsys.readouterr().out.strip())
+    assert payload["headless"] is True
+    assert payload["autopilot_ide"] == "auto"
+    assert payload["recommend_mcp"] is False
+
+
+def test_resolve_ide_route_vscode_explicit_env() -> None:
+    r = resolve_ide_route(cli_autopilot_ide="auto", environ={"KORU_AUTOPILOT_IDE": "vscode"})
+    assert r.autopilot_ide == "vscode"
