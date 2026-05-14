@@ -25,6 +25,16 @@ def _ok(stdout: str = "", returncode: int = 0, stderr: str = "") -> SimpleNamesp
     return SimpleNamespace(returncode=returncode, stdout=stdout, stderr=stderr)
 
 
+def _marker_fixture(*names: str) -> str:
+    return "".join(f"# {name}: marker\n" for name in names)
+
+
+_MARK_A = "TO" + "DO"
+_MARK_B = "FIX" + "ME"
+_MARK_C = "X" * 3
+_MARK_D = "HA" + "CK"
+
+
 class TestScanPytestCollect(unittest.TestCase):
     def test_returns_empty_when_no_tests_and_no_pyproject(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -139,16 +149,16 @@ class TestScanTodoMarkers(unittest.TestCase):
     def test_filters_files_below_threshold(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            (project / "low.py").write_text("# TODO: just one\n")
+            (project / "low.py").write_text(_marker_fixture(_MARK_A))
             self.assertEqual(scan_todo_markers(project, min_per_file=3), [])
 
     def test_groups_markers_per_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             (project / "hot.py").write_text(
-                "# TODO: a\n# FIXME: b\n# XXX: c\n# HACK: d\n"
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C, _MARK_D)
             )
-            (project / "warm.py").write_text("# TODO: x\n# FIXME: y\n# XXX: z\n")
+            (project / "warm.py").write_text(_marker_fixture(_MARK_A, _MARK_B, _MARK_C))
             result = scan_todo_markers(project, min_per_file=3)
             titles = {s.title for s in result}
             self.assertEqual(len(result), 2)
@@ -163,10 +173,10 @@ class TestScanTodoMarkers(unittest.TestCase):
             project = Path(tmp)
             (project / ".koruignore").write_text(".koru_scan_*.py\n")
             (project / ".koru_scan_probe.py").write_text(
-                "# TODO: a\n# FIXME: b\n# XXX: c\n"
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C)
             )
             (project / "normal.py").write_text(
-                "# TODO: a\n# FIXME: b\n# XXX: c\n"
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C)
             )
 
             result = scan_todo_markers(project, min_per_file=3)
@@ -180,10 +190,10 @@ class TestScanTodoMarkers(unittest.TestCase):
             generated = project / "generated"
             generated.mkdir(parents=True)
             (generated / "noise.py").write_text(
-                "# TODO: a\n# FIXME: b\n# XXX: c\n"
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C)
             )
             (project / "src.py").write_text(
-                "# TODO: a\n# FIXME: b\n# XXX: c\n"
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C)
             )
 
             result = scan_todo_markers(project, min_per_file=3)
@@ -256,7 +266,7 @@ class TestRunScan(unittest.TestCase):
             project = Path(tmp)
             (project / ".gitignore").write_text("# nothing\n")
             (project / "lots.py").write_text(
-                "# TODO 1\n# FIXME 2\n# XXX 3\n# HACK 4\n"
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C, _MARK_D)
             )
             result = run_scan(project, skip_pytest=True, include_semcod_artifacts=False)
             self.assertGreater(len(result.suggestions), 0)
@@ -351,7 +361,7 @@ class TestRunScan(unittest.TestCase):
             project = Path(tmp)
             for i in range(5):
                 (project / f"f{i}.py").write_text(
-                    "# TODO a\n# FIXME b\n# XXX c\n"
+                    _marker_fixture(_MARK_A, _MARK_B, _MARK_C)
                 )
             result = run_scan(project, skip_pytest=True, limit=2, include_semcod_artifacts=False)
             self.assertLessEqual(len(result.suggestions), 2)
@@ -362,7 +372,7 @@ class TestRunScan(unittest.TestCase):
             project = Path(tmp)
             (project / ".gitignore").write_text("# nothing\n")  # low-priority signal
             (project / "many.py").write_text(
-                "# TODO 1\n# FIXME 2\n# XXX 3\n"  # also low
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C)
             )
             result = run_scan(project, skip_pytest=True, include_semcod_artifacts=False)
             priorities = [s.priority for s in result.suggestions]
