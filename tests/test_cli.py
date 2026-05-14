@@ -305,6 +305,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "gc",
             "tools",
             "mcp-serve",
+            "ide-router",
             "autopilot",
             "autonomous",
             "topology",

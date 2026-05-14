@@ -171,3 +171,28 @@ def test_autonomous_cycle_autopilot_skipped_when_no_client():
                 
                 # Test passes if no exception is raised
                 # Autopilot is skipped when client=None
+
+
+def test_autonomous_main_doctor_reports_environment():
+    """Test that doctor subcommand prints environment report."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with patch("koru.autonomous._action_doctor", return_value=0) as action_doctor:
+            result = autonomous_main(["doctor", "--project", tmpdir])
+
+        assert result == 0
+        action_doctor.assert_called_once()
+        args = action_doctor.call_args.args[0]
+        assert args.action == "doctor"
+
+
+def test_autonomous_main_self_heal_dry_run():
+    """Test that self-heal subcommand runs in dry-run mode."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with patch("koru.autonomous._action_self_heal", return_value=0) as action_heal:
+            result = autonomous_main(["self-heal", "--project", tmpdir, "--dry-run"])
+
+        assert result == 0
+        action_heal.assert_called_once()
+        args = action_heal.call_args.args[0]
+        assert args.action == "self-heal"
+        assert args.dry_run is True

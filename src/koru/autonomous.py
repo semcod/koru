@@ -386,6 +386,27 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="action", required=True)
 
+    doctor = sub.add_parser(
+        "doctor",
+        help="Probe autodetect: IDE / MCP / autopilot socket. Read-only.",
+    )
+    doctor.add_argument(
+        "--project", type=Path, default=Path.cwd(), help="Project root."
+    )
+
+    heal = sub.add_parser(
+        "self-heal",
+        help="Apply safe automatic repairs (stale sockets, etc).",
+    )
+    heal.add_argument(
+        "--project", type=Path, default=Path.cwd(), help="Project root."
+    )
+    heal.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Only print what would be repaired; do not mutate state.",
+    )
+
     up = sub.add_parser("up", help="Configure and start autonomous loop.")
     up.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
     up.add_argument(
@@ -1548,12 +1569,78 @@ def autonomous_main(argv: list[str]) -> int:
             "--no-semcod-artifacts",
             *argv[1:],
         ]
-    elif argv[0] != "up" and argv[0] not in ("-h", "--help"):
-        argv = ["up", *argv]
+    else:
+        # Find first non-option token to see if a subcommand was already given.
+        first_non_opt = None
+        for token in argv:
+            if not token.startswith("-"):
+                first_non_opt = token
+                break
+        if first_non_opt not in ("up", "doctor", "self-heal"):
+            argv = ["up", *argv]
     args = _build_parser().parse_args(argv)
     if args.action == "up":
         return _action_up(args)
+    if args.action == "doctor":
+        return _action_doctor(args)
+    if args.action == "self-heal":
+        return _action_self_heal(args)
     return 2
+
+
+def _action_doctor(args: argparse.Namespace) -> int:
+    """Print autodetected environment + fixable issues (read-only)."""
+    from .autonomy.environment import probe_environment
+    from .autopilot import default_socket_path
+
+    project = args.project.resolve()
+    socket_path = (args.socket or default_socket_path()).resolve()
+    report = probe_environment(project, autopilot_socket=socket_path)
+
+    print(f"koru autonomous doctor — project: {project}")
+    print(f"  headless:               {report.headless}")
+    print(f"  installed IDEs:         {', '.join(report.installed_ides) or '(none)'}")
+    print(f"  MCP enabled for:        {', '.join(report.mcp_enabled_ides) or '(none)'}")
+    if report.autopilot_socket is not None:
+        s = report.autopilot_socket
+        state = "healthy" if s.healthy else ("stale" if s.stale else "missing")
+        print(f"  autopilot socket:       {state} ({s.path})")
+    print(f"  can use plugin_socket:  {report.can_use_plugin_socket}")
+    print(f"  can use mcp:            {report.can_use_mcp}")
+    if report.notes:
+        print("  notes:")
+        for n in report.notes:
+            print(f"    - {n}")
+    if report.fixable_issues:
+        print("  fixable issues:")
+        for i in report.fixable_issues:
+            print(f"    - {i}")
+        print("  run `koru autonomous self-heal` to apply automatic repairs")
+        return 1
+    print("  no issues detected.")
+    return 0
+
+
+def _action_self_heal(args: argparse.Namespace) -> int:
+    """Apply safe, idempotent repairs to the autonomy environment."""
+    from .autonomy.environment import probe_environment
+    from .autonomy.heal import heal_environment, summarise
+    from .autopilot import default_socket_path
+
+    project = args.project.resolve()
+    socket_path = (args.socket or default_socket_path()).resolve()
+    report = probe_environment(project, autopilot_socket=socket_path)
+    results = heal_environment(report, dry_run=args.dry_run)
+
+    print(f"koru autonomous self-heal — project: {project} (dry_run={args.dry_run})")
+    if not results:
+        print("  nothing to fix.")
+        return 0
+    for r in results:
+        print(f"  [{r.status}] {r.action}: {r.detail}")
+    print(f"  {summarise(results)}")
+    failed = sum(1 for r in results if r.status == "failed")
+    return 1 if failed else 0
 
 
 __all__ = [
