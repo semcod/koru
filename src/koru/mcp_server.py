@@ -410,7 +410,7 @@ def tool_job_status(arguments: dict[str, Any]) -> dict[str, Any]:
 
 def _gate_commands(project: Path) -> dict[str, list[str]]:
     return {
-        "regix": ["regix", "--project", str(project)],
+        "regix": ["regix", "gates", "--workdir", str(project)],
         "redup": ["redup", str(project)],
         "vallm": ["vallm", str(project)],
         "sumr": ["sumr", str(project)],

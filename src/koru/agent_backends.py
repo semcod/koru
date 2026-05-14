@@ -71,7 +71,7 @@ _PROFILES: Final[tuple[AgentBackendProfile, ...]] = (
         can_pull_chat_text=False,
         needs_gui_session=False,
         mcp_tools_only=False,
-        primary_code="src/koru/queue/runners.py (run_process pattern)",
+        primary_code="src/koru/queue.py (run_process pattern)",
     ),
 )
 
@@ -79,6 +79,11 @@ _PROFILES: Final[tuple[AgentBackendProfile, ...]] = (
 def list_agent_backend_ids() -> tuple[str, ...]:
     """Return stable backend profile ids (for config validation / docs)."""
     return tuple(p.id for p in _PROFILES)
+
+
+def iter_agent_backend_profiles() -> tuple[AgentBackendProfile, ...]:
+    """Return every registered profile (stable order)."""
+    return _PROFILES
 
 
 def get_agent_backend_profile(backend_id: str) -> AgentBackendProfile | None:
@@ -92,5 +97,6 @@ def get_agent_backend_profile(backend_id: str) -> AgentBackendProfile | None:
 __all__ = [
     "AgentBackendProfile",
     "get_agent_backend_profile",
+    "iter_agent_backend_profiles",
     "list_agent_backend_ids",
 ]

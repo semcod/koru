@@ -4,7 +4,6 @@ Each probe is exercised in at least one pass and one non-pass state.
 The renderer and the JSON shape are also verified — the LLM consumer
 relies on stable keys and order.
 """
-
 from __future__ import annotations
 
 import os
@@ -91,6 +90,7 @@ class TestHappyPath(unittest.TestCase):
             self.assertEqual(_named(report, "policy_yaml").status, PASS)
             self.assertEqual(_named(report, "gitignore").status, PASS)
             self.assertEqual(_named(report, "koru_project_pipeline").status, PASS)
+            self.assertEqual(_named(report, "agent_backends_registry").status, PASS)
             self.assertIn(_named(report, "koru_package_version").status, (PASS, WARN))
             self.assertIn(_named(report, "planfile_cli_version").status, (PASS, WARN, SKIP))
 
@@ -151,7 +151,6 @@ class TestAutonomousEnvironDoctorIntegration(unittest.TestCase):
                     report = _run(project)
             self.assertEqual(_named(report, "autonomous_environ").status, FAIL)
             self.assertTrue(report.has_failures)
-
     def test_warns_when_no_git(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
@@ -181,7 +180,8 @@ class TestPlanfileBinary(unittest.TestCase):
             project = Path(tmp)
             _scaffold(project)
             env = {k: v for k, v in os.environ.items() if k != "KORU_PLANFILE_CMD"}
-            with patch.dict(os.environ, env, clear=True), patch("shutil.which", return_value=None):
+            with patch.dict(os.environ, env, clear=True), \
+                 patch("shutil.which", return_value=None):
                 report = _run(project)
             self.assertEqual(_named(report, "planfile_binary").status, FAIL)
 
@@ -300,7 +300,9 @@ class TestPytestCollectProbe(unittest.TestCase):
         _scaffold(project)
         # The probe only registers when pyproject.toml or tests/ exists,
         # so we always provide one.
-        (project / "pyproject.toml").write_text("[project]\nname = 'test'\n", encoding="utf-8")
+        (project / "pyproject.toml").write_text(
+            "[project]\nname = 'test'\n", encoding="utf-8"
+        )
 
     def test_pass_when_collection_succeeds_with_count(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -333,9 +335,7 @@ class TestPytestCollectProbe(unittest.TestCase):
             project = Path(tmp)
             self._scaffold_with_pyproject(project)
             fake = SimpleNamespace(
-                returncode=0,
-                stdout="collected 0 items",
-                stderr="",
+                returncode=0, stdout="collected 0 items", stderr="",
             )
             with patch("subprocess.run", return_value=fake):
                 report = _run(project)
@@ -422,16 +422,10 @@ class TestReportShape(unittest.TestCase):
             project = Path(tmp)
             _scaffold(project)
             d = _run(project).to_dict()
-            self.assertEqual(
-                set(d),
-                {
-                    "schema_version",
-                    "project",
-                    "summary",
-                    "has_failures",
-                    "checks",
-                },
-            )
+            self.assertEqual(set(d), {
+                "schema_version", "project", "summary",
+                "has_failures", "checks",
+            })
             for check in d["checks"]:
                 self.assertEqual(set(check), {"name", "status", "detail"})
 
@@ -451,7 +445,9 @@ class TestReportShape(unittest.TestCase):
             _scaffold(project)
             report = _run(project)
             counts = report.summary()
-            self.assertEqual(sum(counts.values()), len(report.checks))
+            self.assertEqual(
+                sum(counts.values()), len(report.checks)
+            )
 
 
 if __name__ == "__main__":

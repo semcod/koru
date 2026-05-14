@@ -32,6 +32,9 @@ in this order so reports diff cleanly across runs):
     autonomous_environ — ``TICKET_SOURCES`` / idle-diag / WUP-related env vars
                         for ``koru autonomous up`` (``FAIL`` on invalid
                         ``TICKET_SOURCES``).
+    agent_backends_registry — static profile ids from ``koru.agent_backends``
+                        (``PASS`` when the registry loads; see
+                        ``koru agent-backends``).
     koru_package_version — installed ``koru`` distribution version (``WARN`` if
                         metadata missing, e.g. bare source tree).
     planfile_cli_version — ``planfile --version`` / ``KORU_PLANFILE_CMD … --version``
@@ -145,6 +148,7 @@ def run_diagnostics(project: Path) -> DoctorReport:
         ("policy_yaml", _check_policy_yaml),
         ("koru_project_pipeline", _check_koru_project_pipeline),
         ("autonomous_environ", autonomous_environ_doctor_probe),
+        ("agent_backends_registry", _check_agent_backends_registry),
     ]
     if has_git:
         probes.append(("gitignore", _check_gitignore))
@@ -169,6 +173,14 @@ def run_diagnostics(project: Path) -> DoctorReport:
 # ---------------------------------------------------------------------------
 # Individual probes
 # ---------------------------------------------------------------------------
+
+
+def _check_agent_backends_registry(_project: Path) -> tuple[str, str]:
+    del _project
+    from .agent_backends import list_agent_backend_ids
+
+    ids = list_agent_backend_ids()
+    return PASS, f"{len(ids)} profiles: {', '.join(ids)}"
 
 
 def _check_git_repo(project: Path) -> tuple[str, str]:

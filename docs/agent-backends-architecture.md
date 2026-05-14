@@ -48,7 +48,7 @@ MCP. MCP is the inverse direction: **IDE agent → koru tools**.
 | JetBrains scaffold | `plugins/koru-autopilot-jetbrains/` |
 | MCP tools | `src/koru/mcp_server.py`, `mcp_provision.py` |
 | OS injector | `src/koru/autopilot/injector.py` |
-| Experimental registry (profiles) | `src/koru/agent_backends.py` |
+| Experimental registry (profiles) | `src/koru/agent_backends.py`, `koru agent-backends` |
 | Tool registry YAML | `docs/ai-tool-registry-2026.yaml` |
 
 ## Roadmap (incremental)
@@ -58,9 +58,10 @@ MCP. MCP is the inverse direction: **IDE agent → koru tools**.
 2. **Treat B as default for “agent does work”** — tickets, scan, gates via
    MCP; document that MCP does **not** push text into the chat.
 3. **Add C per vendor** — thin `run_process` wrappers + policy in
-   `planfile` executors (separate tickets; see `src/koru/queue/runners.py`).
+   `planfile` executors (separate tickets).
 4. **Optional Python façade** — `koru.agent_backends` exposes **profiles**
-   only; real `send_chat` stays in autopilot until a refactor merges paths.
+   only (CLI: `koru agent-backends`, doctor: `agent_backends_registry`);
+   real `send_chat` stays in autopilot until a refactor merges paths.
 
 ## References (external)
 
