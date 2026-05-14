@@ -1350,6 +1350,33 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
 
+## [0.1.83] - 2026-05-14
+
+### Docs
+- Update README.md
+- Update examples/README.md
+- Update examples/ci/headless-autonomous-jsonl/README.md
+- Update examples/planfile/http-api-curl/README.md
+- Update examples/planfile/queue-cli-dryrun/README.md
+- Update examples/protocol/autopilot-socket-smoke/README.md
+- Update examples/runtime/koru-serve-health/README.md
+
+### Test
+- Update tests/test_autopilot_daemon.py
+
+### Other
+- Update Taskfile.yml
+- Update examples/ci/headless-autonomous-jsonl/docker-compose.yml
+- Update examples/ci/headless-autonomous-jsonl/e2e.sh
+- Update examples/ci/headless-autonomous-jsonl/run-docker.sh
+- Update examples/docker/koru-e2e.Dockerfile
+- Update examples/planfile/http-api-curl/docker-compose.yml
+- Update examples/planfile/http-api-curl/e2e.sh
+- Update examples/planfile/http-api-curl/run-docker.sh
+- Update examples/planfile/queue-cli-dryrun/docker-compose.yml
+- Update examples/planfile/queue-cli-dryrun/e2e.sh
+- ... and 13 more files
+
 ## [0.1.82] - 2026-05-14
 
 ### Docs

@@ -1,0 +1,14 @@
+name: Koru examples Docker E2E
+
+# Optional smoke: does not run on every push. Use workflow_dispatch or run
+# ./examples/run-e2e.sh locally / in your pipeline when Docker is available.
+on:
+  workflow_dispatch:
+
+jobs:
+  examples-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Docker E2E (all examples)
+        run: ./examples/run-e2e.sh

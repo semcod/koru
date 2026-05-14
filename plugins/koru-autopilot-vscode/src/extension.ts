@@ -9,6 +9,7 @@
 
 import * as net from "net";
 import * as vscode from "vscode";
+import { planDispatch } from "./dispatch-plan";
 import { defaultSocketPathFromEnv } from "./socketPath";
 
 interface Envelope {
@@ -16,6 +17,8 @@ interface Envelope {
   id?: string;
   [k: string]: unknown;
 }
+
+let activeBridge: AutopilotBridge | null = null;
 
 class AutopilotBridge {
   private socket: net.Socket | null = null;
@@ -241,7 +244,15 @@ class AutopilotBridge {
       if (!line.trim()) continue;
       try {
         const env = JSON.parse(line) as Envelope;
-        this.dispatch(env);
+        if (!env || typeof env !== "object" || typeof env.type !== "string") {
+          console.error("koru autopilot: malformed envelope", env);
+          continue;
+        }
+        void this.dispatch(env).catch((err) => {
+          const message = err instanceof Error ? err.message : String(err);
+          console.error("koru autopilot: dispatch failed", env, err);
+          this.send({ type: "error", id: env.id, ok: false, message });
+        });
       } catch (err) {
         console.error("koru autopilot: bad envelope", line, err);
       }
@@ -249,19 +260,23 @@ class AutopilotBridge {
   }
 
   private async dispatch(env: Envelope): Promise<void> {
-    switch (env.type) {
-      case "chat.send":
+    const plan = planDispatch(env);
+    switch (plan.kind) {
+      case "injectChat":
         await this.injectChat(env);
-        break;
-      case "ping":
-        this.send({ type: "ack", id: env.id, ok: true, pong: true });
-        break;
+        return;
       case "ack":
+        this.send({ type: "ack", id: env.id, ok: true, ...plan.info });
+        return;
+      case "ignore":
+        return;
+      case "ackAndDisconnect":
+        this.send({ type: "ack", id: env.id, ok: true, ...plan.info });
+        this.disconnect();
+        return;
       case "error":
-        // Server-initiated ack/error — informational only.
-        break;
-      default:
-        this.send({ type: "error", id: env.id, ok: false, message: `unhandled ${env.type}` });
+        this.send({ type: "error", id: env.id, ok: false, message: plan.message });
+        return;
     }
   }
 
@@ -332,15 +347,20 @@ class AutopilotBridge {
       }
     }
   }
+
+  async sendManualChat(text: string): Promise<void> {
+    await this.injectChat({ type: "chat.send", text, submit: true });
+  }
 }
 
 export function activate(context: vscode.ExtensionContext): void {
   const bridge = new AutopilotBridge(context);
+  activeBridge = bridge;
   context.subscriptions.push(
     vscode.commands.registerCommand("koruAutopilot.connect", () => bridge.connect()),
     vscode.commands.registerCommand("koruAutopilot.sendChat", async () => {
       const text = await vscode.window.showInputBox({ prompt: "Send to chat:" });
-      if (text) (bridge as any).injectChat({ type: "chat.send", text, submit: true });
+      if (text) await bridge.sendManualChat(text);
     }),
   );
   const cfg = vscode.workspace.getConfiguration("koruAutopilot");
@@ -348,5 +368,8 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {
-  /* no-op — sockets are released by the runtime */
+  if (activeBridge) {
+    activeBridge.disconnect();
+    activeBridge = null;
+  }
 }

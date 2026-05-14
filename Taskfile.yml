@@ -63,14 +63,19 @@ tasks:
       - python3 -m pytest tests/ -v {{.CLI_ARGS}}
 
   test:fast:
-    desc: Run tests in parallel without verbose output
+    desc: Run tests without verbose output
     cmds:
-      - python3 -m pytest tests/ -q -n auto
+      - python3 -m pytest tests/ -q
 
   test:quick:
-    desc: Fastest possible test run (fail fast, no header, parallel)
+    desc: Fastest possible test run (fail fast, no header)
     cmds:
-      - python3 -m pytest tests/ -q --maxfail=1 --no-header -n auto
+      - python3 -m pytest tests/ -q --maxfail=1 --no-header
+
+  test:parallel:
+    desc: Run tests in parallel (safe only for isolated subsets)
+    cmds:
+      - python3 -m pytest tests/ -q -n auto --maxfail=1
 
   lint:
     desc: Run ruff on koru sources and tests

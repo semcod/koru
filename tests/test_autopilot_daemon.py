@@ -334,6 +334,48 @@ def test_plugin_hello_then_drive_forwards(tmp_path: Path, monkeypatch: pytest.Mo
         cli.close()
 
 
+def test_plugin_ack_with_shutdown_info_is_relayed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Plugin ACK metadata (including ``shutdown``) must be preserved for CLI."""
+    with _daemon(tmp_path, monkeypatch) as h:
+        plugin, plugin_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
+
+        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli.settimeout(2.0)
+        cli.connect(str(h.sock_path))
+        cli_reader = _LineReader(cli)
+        cli.sendall(
+            Message(
+                type="drive",
+                id="d-shutdown",
+                data={"text": "hi", "ide": "vscode", "submit": True},
+            ).encode()
+        )
+
+        forwarded = plugin_reader.read_message()
+        assert forwarded.type == "chat.send"
+        plugin.sendall(
+            Message(
+                type="ack",
+                id=forwarded.id,
+                data={"ok": True, "delivered": True, "shutdown": True},
+            ).encode()
+        )
+
+        cli_reply = cli_reader.read_message()
+        assert cli_reply.type == "ack"
+        assert cli_reply.data.get("ok") is True
+        assert cli_reply.data.get("delivered") is True
+        assert cli_reply.data.get("shutdown") is True
+        assert cli_reply.data.get("backend") == "plugin"
+
+        assert h.injector.calls == []
+        plugin.close()
+        cli.close()
+
+
 # ---------------------------------------------------------------------------
 # Auto-handoff
 # ---------------------------------------------------------------------------

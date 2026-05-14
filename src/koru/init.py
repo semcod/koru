@@ -37,7 +37,10 @@ belong to koru's lifecycle, not its setup). Root ``koru.yaml`` is
 **never** overwritten after the first creation — edit it in git like
 any other config. To add or refresh only
 the agent-lane shell helpers on an existing project, use
-``koru --init-agent-lane`` (see ``--agent-lane``).
+``koru --init-agent-lane`` (see ``--agent-lane``). With ``--agent-lane auto``,
+lane markers are read in a fixed order (``.cursor``, ``.windsurf``, ``.vscode``,
+``.idea``, ``.zed``) before falling back to ``local``; ``CI`` / ``GITHUB_ACTIONS``
+force ``local`` so CI jobs do not pick a lane from committed IDE folders.
 """
 
 from __future__ import annotations
@@ -114,8 +117,9 @@ ci:
     echo "2. Running TestQL E2E scenarios (if available)..."
     if command -v testql >/dev/null 2>&1; then
       if find . -name "*.testql.toon.yaml" -type f 2>/dev/null | head -1 >/dev/null; then
-        if testql suite --pattern '*.testql.toon.yaml' \\
-          --output console --fail-fast 2>/dev/null; then
+        if testql suite \\
+          --pattern '*.testql.toon.yaml' --output console --fail-fast \\
+          2>/dev/null; then
           echo "✅ testQL suite passed"
         else
           echo "⚠️  testQL suite failed or no scenarios"

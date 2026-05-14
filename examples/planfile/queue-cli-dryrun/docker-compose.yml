@@ -1,0 +1,7 @@
+services:
+  e2e:
+    build:
+      context: ../../..
+      dockerfile: examples/docker/koru-e2e.Dockerfile
+      args:
+        E2E_SCRIPT: examples/planfile/queue-cli-dryrun/e2e.sh
