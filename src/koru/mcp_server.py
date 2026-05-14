@@ -189,6 +189,14 @@ TOOLS: list[dict[str, Any]] = [
                     "type": "string",
                     "description": "Ticket ID from koru queue.",
                 },
+                "queue_name": {
+                    "type": "string",
+                    "description": "Optional planfile execution queue (koru --queue-name).",
+                },
+                "actor": {
+                    "type": "string",
+                    "description": "Optional actor for ticket claim metadata (koru --actor).",
+                },
                 "mode": {
                     "type": "string",
                     "enum": ["dry", "apply"],
@@ -446,12 +454,20 @@ def tool_run_ticket(arguments: dict[str, Any]) -> dict[str, Any]:
     ticket_id = arguments["ticket_id"]
     mode = arguments.get("mode", "apply")
     max_steps = arguments.get("max_steps")
+    queue_name = arguments.get("queue_name")
+    actor = arguments.get("actor")
     oom_threshold = arguments.get("oom_kill_threshold_mb", 4096)
     oom_interval = arguments.get("oom_monitor_interval_seconds", 5)
     oom_action = arguments.get("oom_action", "kill")
 
     job_id = _create_job(ticket_id, mode, project)
-    cmd_args = build_koru_queue_argv(project, mode=mode, max_steps=max_steps)
+    cmd_args = build_koru_queue_argv(
+        project,
+        mode=mode,
+        max_steps=max_steps,
+        actor=actor if isinstance(actor, str) and actor.strip() else None,
+        queue_name=queue_name if isinstance(queue_name, str) and queue_name.strip() else None,
+    )
     _update_job(job_id, project, current_step="running_queue", progress=0.3)
 
     try:
