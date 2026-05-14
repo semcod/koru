@@ -64,6 +64,12 @@ def dry_run_from_env() -> bool:
     return raw in ("1", "true", "yes", "on")
 
 
+def focus_window_from_env() -> bool:
+    """Opt-in focus before click/type (disabled by default = mouse-only)."""
+    raw = os.environ.get("KORU_OS_INJECTOR_FOCUS_WINDOW", "").strip().lower()
+    return raw in ("1", "true", "yes", "on")
+
+
 def try_load_profile(tool_id: str, *, project: Path | None = None) -> OsInjectorProfile | None:
     """Load the first matching profile from :func:`iter_config_paths`."""
     for path in iter_config_paths(project=project):
@@ -174,11 +180,15 @@ def inject_with_profile(
             "chat_y": profile.chat_y,
         }
 
-    commands: list[list[str]] = [
-        ["xdotool", "windowactivate", "--sync", str(profile.window_id)],
-        ["xdotool", "mousemove", str(profile.chat_x), str(profile.chat_y), "click", "1"],
-        ["xdotool", "type", "--delay", "5", "--clearmodifiers", "--", text],
-    ]
+    commands: list[list[str]] = []
+    if focus_window_from_env():
+        commands.append(["xdotool", "windowactivate", "--sync", str(profile.window_id)])
+    commands.extend(
+        [
+            ["xdotool", "mousemove", str(profile.chat_x), str(profile.chat_y), "click", "1"],
+            ["xdotool", "type", "--delay", "5", "--clearmodifiers", "--", text],
+        ]
+    )
     if submit:
         commands.append(["xdotool", "key", "--clearmodifiers", "Return"])
 

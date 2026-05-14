@@ -63,10 +63,30 @@ def test_inject_with_profile_runs_expected_xdotool_sequence(
         dry_run=False,
     )
     assert out["ok"] is True
+    assert calls[0][:2] == ["xdotool", "mousemove"]
+    assert calls[1][:2] == ["xdotool", "type"]
+    assert calls[2][:2] == ["xdotool", "key"]
+
+
+def test_inject_with_profile_focus_window_opt_in(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[list[str]] = []
+
+    def _run(cmd, **kwargs):
+        calls.append(list(cmd))
+        return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
+
+    monkeypatch.setenv("KORU_OS_INJECTOR_FOCUS_WINDOW", "1")
+    monkeypatch.setattr(subprocess, "run", _run)
+    out = inject_with_profile(
+        profile=OsInjectorProfile(tool_id="cursor", window_id=77, chat_x=20, chat_y=30),
+        text="hello",
+        submit=False,
+        dry_run=False,
+    )
+    assert out["ok"] is True
     assert calls[0][:3] == ["xdotool", "windowactivate", "--sync"]
-    assert calls[1][:2] == ["xdotool", "mousemove"]
-    assert calls[2][:2] == ["xdotool", "type"]
-    assert calls[3][:2] == ["xdotool", "key"]
 
 
 def test_load_profile_missing_raises(tmp_path: Path) -> None:
