@@ -128,6 +128,87 @@ def test_autonomous_environ_doctor_probe_pass_summary(tmp_path, monkeypatch) -> 
     assert "WUP_MODE=testql" in detail
 
 
+def test_guard_existing_autonomous_noninteractive_blocks_duplicate(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_find_existing_autonomous_processes",
+        lambda project: [
+            autonomous_mod.ExistingAutonomousProcess(
+                pid=123,
+                command="koru autonomous up --project " + str(tmp_path),
+                cwd=tmp_path,
+            )
+        ],
+    )
+    args = SimpleNamespace(
+        allow_duplicate=False,
+        replace_existing=False,
+        emit_events="human",
+    )
+
+    rc = autonomous_mod._guard_existing_autonomous_processes(args, tmp_path)
+
+    assert rc == 2
+
+
+def test_guard_existing_autonomous_replace_existing_terminates(tmp_path, monkeypatch) -> None:
+    existing = [
+        autonomous_mod.ExistingAutonomousProcess(
+            pid=123,
+            command="koru autonomous up --project " + str(tmp_path),
+            cwd=tmp_path,
+        )
+    ]
+    stopped: list[int] = []
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_find_existing_autonomous_processes",
+        lambda project: existing,
+    )
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_terminate_existing_autonomous_processes",
+        lambda processes, **kwargs: stopped.extend(proc.pid for proc in processes),
+    )
+    args = SimpleNamespace(
+        allow_duplicate=False,
+        replace_existing=True,
+        emit_events="human",
+    )
+
+    rc = autonomous_mod._guard_existing_autonomous_processes(args, tmp_path)
+
+    assert rc == 0
+    assert stopped == [123]
+
+
+def test_guard_existing_autonomous_interactive_decline_blocks_duplicate(
+    tmp_path, monkeypatch
+) -> None:
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_find_existing_autonomous_processes",
+        lambda project: [
+            autonomous_mod.ExistingAutonomousProcess(
+                pid=123,
+                command="koru autonomous up --project " + str(tmp_path),
+                cwd=tmp_path,
+            )
+        ],
+    )
+    monkeypatch.setattr(autonomous_mod.sys.stdin, "isatty", lambda: True)
+    monkeypatch.setattr("builtins.input", lambda _prompt: "n")
+    args = SimpleNamespace(
+        allow_duplicate=False,
+        replace_existing=False,
+        emit_events="human",
+    )
+
+    rc = autonomous_mod._guard_existing_autonomous_processes(args, tmp_path)
+
+    assert rc == 2
+
+
 def test_autonomous_jsonl_keyboard_interrupt_emits_reason(tmp_path, monkeypatch) -> None:
     """AutonomousStopped must distinguish SIGTERM (handled elsewhere) from Ctrl+C."""
     import contextlib
