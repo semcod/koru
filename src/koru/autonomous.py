@@ -1012,6 +1012,20 @@ def _run_cycle(
 ) -> tuple[ScanResult | None, QueueLoopResult, str, DiagnosticResult]:
     state = state or AutoloopState()
 
+    # Auto-heal: best-effort stale socket removal so daemon restart can bind.
+    try:
+        from .autonomy.environment import probe_socket_health
+        from .autonomy.heal import remove_stale_socket
+        from .autopilot import default_socket_path
+
+        _sock = probe_socket_health(default_socket_path())
+        if _sock.stale:
+            _res = remove_stale_socket(_sock)
+            if _res.status == "fixed":
+                print(f"koru autonomous: auto-healed stale socket {_sock.path}")
+    except Exception:
+        pass  # never block the cycle for cleanup
+
     def _emit(event_type: str, payload: dict, command: str | None = None) -> None:
         if stdio_format == "jsonl":
             write_stdio_event(
