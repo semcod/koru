@@ -97,6 +97,13 @@ class AutoloopState:
     wup_seen_events: int = 0
 
 
+@dataclass(frozen=True)
+class ExistingAutonomousProcess:
+    pid: int
+    command: str
+    cwd: Path | None = None
+
+
 def _resolve_autopilot_ide(cli_value: str) -> str:
     """``KORU_AUTOPILOT_IDE`` overrides CLI when set to a specific IDE (not 'auto')."""
     raw = os.environ.get("KORU_AUTOPILOT_IDE", "").strip().lower()
@@ -114,6 +121,143 @@ def _apply_agent_lane_environ(project: Path, agent_lane: str) -> str | None:
     for key, val in agent_lane_environment(lane).items():
         os.environ[key] = val
     return lane
+
+
+def _command_project(command: str) -> Path | None:
+    """Best-effort parse of ``--project`` from a process command line."""
+    parts = command.split()
+    for idx, part in enumerate(parts):
+        if part == "--project" and idx + 1 < len(parts):
+            return Path(parts[idx + 1]).expanduser().resolve()
+        if part.startswith("--project="):
+            return Path(part.split("=", 1)[1]).expanduser().resolve()
+    return None
+
+
+def _process_cwd(pid: int) -> Path | None:
+    proc_cwd = Path("/proc") / str(pid) / "cwd"
+    try:
+        return proc_cwd.resolve()
+    except OSError:
+        return None
+
+
+def _find_existing_autonomous_processes(project: Path) -> list[ExistingAutonomousProcess]:
+    """Return running ``koru autonomous up`` processes for ``project`` except this PID."""
+    try:
+        result = subprocess.run(
+            ["ps", "-eo", "pid=,command="],
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+    except OSError:
+        return []
+    if result.returncode != 0:
+        return []
+
+    current_pid = os.getpid()
+    project = project.resolve()
+    matches: list[ExistingAutonomousProcess] = []
+    for raw_line in result.stdout.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        pid_text, _, command = line.partition(" ")
+        try:
+            pid = int(pid_text)
+        except ValueError:
+            continue
+        if pid == current_pid:
+            continue
+        if "koru" not in command or "autonomous" not in command or " up" not in f" {command} ":
+            continue
+
+        cwd = _process_cwd(pid)
+        cmd_project = _command_project(command)
+        if cwd == project or cmd_project == project:
+            matches.append(ExistingAutonomousProcess(pid=pid, command=command, cwd=cwd))
+    return matches
+
+
+def _terminate_existing_autonomous_processes(
+    processes: list[ExistingAutonomousProcess], *, stdio_format: str
+) -> None:
+    for proc in processes:
+        _stdio_info(
+            f"koru autonomous: stopping existing loop pid={proc.pid}",
+            fmt=stdio_format,
+        )
+        try:
+            os.kill(proc.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            continue
+        except PermissionError:
+            _stdio_info(
+                f"koru autonomous: no permission to stop existing loop pid={proc.pid}",
+                fmt=stdio_format,
+            )
+
+    deadline = time.monotonic() + 8
+    while time.monotonic() < deadline:
+        alive = []
+        for proc in processes:
+            try:
+                os.kill(proc.pid, 0)
+            except ProcessLookupError:
+                continue
+            alive.append(proc)
+        if not alive:
+            return
+        time.sleep(0.2)
+
+    for proc in processes:
+        try:
+            os.kill(proc.pid, signal.SIGKILL)
+            _stdio_info(
+                f"koru autonomous: force-stopped existing loop pid={proc.pid}",
+                fmt=stdio_format,
+            )
+        except (ProcessLookupError, PermissionError):
+            pass
+
+
+def _confirm_replace_existing(processes: list[ExistingAutonomousProcess]) -> bool:
+    print("koru autonomous: existing loop(s) for this project are already running:")
+    for proc in processes:
+        where = f" cwd={proc.cwd}" if proc.cwd else ""
+        print(f"  pid={proc.pid}{where} :: {proc.command}")
+    answer = input("Stop existing loop(s) and start this one? [y/N] ").strip().lower()
+    return answer in {"y", "yes", "t", "tak"}
+
+
+def _guard_existing_autonomous_processes(args: argparse.Namespace, project: Path) -> int:
+    if args.allow_duplicate:
+        return 0
+    existing = _find_existing_autonomous_processes(project)
+    if not existing:
+        return 0
+    if args.replace_existing:
+        _terminate_existing_autonomous_processes(existing, stdio_format=args.emit_events)
+        return 0
+    if args.emit_events == "human" and sys.stdin.isatty():
+        if _confirm_replace_existing(existing):
+            _terminate_existing_autonomous_processes(existing, stdio_format=args.emit_events)
+            return 0
+        _stdio_info(
+            "koru autonomous: keeping existing loop(s); not starting a duplicate. "
+            "Use --allow-duplicate to override.",
+            fmt=args.emit_events,
+        )
+        return 2
+    _stdio_info(
+        "koru autonomous: another loop is already running for this project; "
+        "use --replace-existing to stop it first or --allow-duplicate to run anyway.",
+        fmt=args.emit_events,
+    )
+    for proc in existing:
+        _stdio_info(f"  existing pid={proc.pid}: {proc.command}", fmt=args.emit_events)
+    return 2
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -137,6 +281,22 @@ def _build_parser() -> argparse.ArgumentParser:
 
     up = sub.add_parser("up", help="Configure and start autonomous loop.")
     up.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
+    up.add_argument(
+        "--replace-existing",
+        action="store_true",
+        help=(
+            "If another `koru autonomous up` is already running for this project, "
+            "terminate it before starting this instance."
+        ),
+    )
+    up.add_argument(
+        "--allow-duplicate",
+        action="store_true",
+        help=(
+            "Allow multiple autonomous loops for the same project. This can duplicate "
+            "scan/WUP/autopilot work and should be used only deliberately."
+        ),
+    )
     up.add_argument(
         "--agent-lane",
         default="auto",
@@ -1004,6 +1164,9 @@ def _action_up(args: argparse.Namespace) -> int:
     correlation_id = str(uuid.uuid4())
     project = args.project.resolve()
     project.mkdir(parents=True, exist_ok=True)
+    guard_rc = _guard_existing_autonomous_processes(args, project)
+    if guard_rc:
+        return guard_rc
     if args.emit_events == "jsonl":
         write_stdio_event(
             sys.stdout,
@@ -1053,25 +1216,11 @@ def _action_up(args: argparse.Namespace) -> int:
         stdio_format=args.emit_events,
     )
 
-    try:
-        from .mcp_provision import ensure_koru_mcp_not_disabled
-
-        for row in ensure_koru_mcp_not_disabled(project):
-            _stdio_info(
-                f"koru autonomous: {row['action']} → {row['path']}",
-                fmt=args.emit_events,
-            )
-    except (OSError, TypeError, ValueError) as exc:
-        _stdio_info(
-            f"koru autonomous: mcp workspace refresh skipped ({exc})",
-            fmt=args.emit_events,
-        )
-
-    if args.enable_autopilot and socket_path is not None:
-        plugin_result = install_plugin_for_ide(ide=autopilot_ide, socket_path=socket_path)
-        _stdio_info(format_plugin_install_result(plugin_result), fmt=args.emit_events)
+    stopped_by_sigterm = False
 
     def _sigterm_to_interrupt(_signo: int, _frame: object) -> None:
+        nonlocal stopped_by_sigterm
+        stopped_by_sigterm = True
         _stdio_info(
             "koru autonomous: SIGTERM received (typical: OOM killer, systemd stop, "
             "`kill`, cgroup memory limit, or IDE tool timeout) — cleaning up",
@@ -1080,8 +1229,26 @@ def _action_up(args: argparse.Namespace) -> int:
         raise KeyboardInterrupt()
 
     previous_sigterm = signal.signal(signal.SIGTERM, _sigterm_to_interrupt)
-    cycle = 0
     try:
+        try:
+            from .mcp_provision import ensure_koru_mcp_not_disabled
+
+            for row in ensure_koru_mcp_not_disabled(project):
+                _stdio_info(
+                    f"koru autonomous: {row['action']} → {row['path']}",
+                    fmt=args.emit_events,
+                )
+        except (OSError, TypeError, ValueError) as exc:
+            _stdio_info(
+                f"koru autonomous: mcp workspace refresh skipped ({exc})",
+                fmt=args.emit_events,
+            )
+
+        if args.enable_autopilot and socket_path is not None:
+            plugin_result = install_plugin_for_ide(ide=autopilot_ide, socket_path=socket_path)
+            _stdio_info(format_plugin_install_result(plugin_result), fmt=args.emit_events)
+
+        cycle = 0
         while True:
             cycle += 1
             if args.emit_events == "human":
@@ -1196,14 +1363,23 @@ def _action_up(args: argparse.Namespace) -> int:
             if effective_sleep > 0:
                 time.sleep(effective_sleep)
     except KeyboardInterrupt:
+        stop_reason = "sigterm" if stopped_by_sigterm else "keyboard_interrupt"
         if args.emit_events == "jsonl":
             write_stdio_event(
                 sys.stdout,
                 event_type="AutonomousStopped",
                 correlation_id=correlation_id,
-                payload={"reason": "keyboard_interrupt"},
+                payload={"reason": stop_reason},
             )
-        _stdio_info("\nkoru autonomous: interrupted", fmt=args.emit_events)
+        if stopped_by_sigterm:
+            _stdio_info(
+                "\nkoru autonomous: stopped after SIGTERM (WUP watcher stopped; "
+                "if scan was heavy, try --no-semcod-artifacts or "
+                "KORU_SCAN_SEMCOD_ARTIFACTS=0)",
+                fmt=args.emit_events,
+            )
+        else:
+            _stdio_info("\nkoru autonomous: interrupted (Ctrl+C)", fmt=args.emit_events)
         return 0
     finally:
         signal.signal(signal.SIGTERM, previous_sigterm)

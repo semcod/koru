@@ -128,6 +128,62 @@ def test_autonomous_environ_doctor_probe_pass_summary(tmp_path, monkeypatch) -> 
     assert "WUP_MODE=testql" in detail
 
 
+def test_autonomous_jsonl_keyboard_interrupt_emits_reason(tmp_path, monkeypatch) -> None:
+    """AutonomousStopped must distinguish SIGTERM (handled elsewhere) from Ctrl+C."""
+    import contextlib
+    import io
+
+    monkeypatch.setattr(
+        autonomous_mod,
+        "init_project",
+        lambda project, force=False: SimpleNamespace(project=project),
+    )
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_scan",
+        lambda **kwargs: ScanResult(suggestions=[], applied=[], skipped=[]),
+    )
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=0 last_status=idle",
+            last_status="idle",
+        ),
+    )
+    n_sleep = 0
+
+    def sleep_side(_s: float) -> None:
+        nonlocal n_sleep
+        n_sleep += 1
+        if n_sleep == 1:
+            raise KeyboardInterrupt()
+
+    monkeypatch.setattr(autonomous_mod.time, "sleep", sleep_side)
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = autonomous_mod.autonomous_main(
+            [
+                "up",
+                "--project",
+                str(tmp_path),
+                "--max-cycles",
+                "0",
+                "--sleep-seconds",
+                "1",
+                "--emit-events",
+                "jsonl",
+                "--no-autopilot",
+                "--no-wup-watch",
+            ]
+        )
+    assert rc == 0
+    events = [json.loads(line) for line in buf.getvalue().splitlines() if line.strip()]
+    stopped = [e for e in events if e.get("type") == "AutonomousStopped"]
+    assert stopped
+    assert stopped[-1]["payload"]["reason"] == "keyboard_interrupt"
+
+
 def test_queue_loop_result_summary_includes_waiting_ticket() -> None:
     empty = QueueLoopResult(
         iterations=1,
