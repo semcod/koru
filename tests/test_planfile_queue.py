@@ -72,7 +72,7 @@ class TestPlanfileQueue(unittest.TestCase):
                 for ta in tail_args
                 if len(ta) >= 5
                 and ta[:3] == ["ticket", "update", "PLF-001"]
-                and ta[3] == "--note"
+                and ta[3] in ("--note", "-n")
             ]
             self.assertTrue(update_calls, "expected shell evidence ticket update")
             self.assertGreater(tail_args.index(update_calls[0]), start_i)
@@ -1003,7 +1003,7 @@ class TestPlanfileQueueLoop(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "max_iterations"):
             run_planfile_queue_loop(
-                project=Path("/tmp"), 
+                project=Path("/tmp"),
                 max_iterations=0,
                 planfile_runner=planfile_runner,
                 shell_runner=shell_runner,
@@ -1011,6 +1011,85 @@ class TestPlanfileQueueLoop(unittest.TestCase):
                 llm_runner=llm_runner,
                 prompt_runner=prompt_runner,
             )
+
+
+class TestAppendShellEvidenceNote(unittest.TestCase):
+    """Regression: planfile CLIs without ``--note`` still persist shell evidence."""
+
+    def test_short_flag_when_long_option_unsupported(self) -> None:
+        from koru.queue.planfile_ticket_note import append_shell_evidence_note
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            calls: list[list[str]] = []
+
+            def planfile_runner(command: list[str], _p: Path) -> SimpleNamespace:
+                calls.append(command)
+                ta = _ticket_args(command)
+                if len(ta) >= 5 and ta[:3] == ["ticket", "update", "PLF-X"]:
+                    if ta[3] == "--note":
+                        return SimpleNamespace(
+                            returncode=2,
+                            stdout="",
+                            stderr="No such option: --note",
+                        )
+                return _ok()
+
+            res, kind = append_shell_evidence_note(
+                project,
+                "PLF-X",
+                "evidence-body",
+                run_id="run1",
+                planfile_runner=planfile_runner,
+            )
+            self.assertEqual(res.returncode, 0)
+            self.assertEqual(kind, "cli")
+            updates = [
+                _ticket_args(c)
+                for c in calls
+                if _ticket_args(c)[:3] == ["ticket", "update", "PLF-X"]
+            ]
+            self.assertEqual(len(updates), 2)
+            self.assertEqual(updates[0][3], "--note")
+            self.assertEqual(updates[1][3], "-n")
+            self.assertEqual(updates[1][4], "evidence-body")
+
+    def test_artifact_when_both_note_flags_missing(self) -> None:
+        from koru.queue.planfile_ticket_note import append_shell_evidence_note
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+
+            def planfile_runner(command: list[str], _p: Path) -> SimpleNamespace:
+                ta = _ticket_args(command)
+                if len(ta) >= 5 and ta[:3] == ["ticket", "update", "PLF-Y"]:
+                    if ta[3] == "--note":
+                        return SimpleNamespace(
+                            returncode=2,
+                            stdout="",
+                            stderr="No such option: --note",
+                        )
+                    if ta[3] == "-n":
+                        return SimpleNamespace(
+                            returncode=2,
+                            stdout="",
+                            stderr="No such option: -n",
+                        )
+                return _ok()
+
+            res, kind = append_shell_evidence_note(
+                project,
+                "PLF-Y",
+                "artifact-payload",
+                run_id="ab12",
+                planfile_runner=planfile_runner,
+            )
+            self.assertEqual(res.returncode, 0)
+            self.assertEqual(kind, "artifact")
+            path = project / ".planfile" / ".koru" / "runs" / "PLF-Y-ab12.shell-evidence.txt"
+            self.assertTrue(path.is_file())
+            self.assertEqual(path.read_text(encoding="utf-8"), "artifact-payload")
+            self.assertIn(str(path), res.stdout)
 
 
 if __name__ == "__main__":

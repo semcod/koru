@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .human import default_human_prompt
 from .locking import queue_runner_lock, ticket_claim_or_error
+from .planfile_ticket_note import append_shell_evidence_note
 from .runners import (
     _DEFAULT_LLM_MODEL,
     run_api_request,
@@ -203,9 +204,9 @@ def run_next_planfile_task(
             action_label = str(action)
 
         if result.returncode == 0:
-            # Shell stdout/stderr: also append a truncated snapshot to the
-            # ticket via `ticket update --note` (best-effort). Full streams
-            # remain in QueueRunResult / `.planfile/.koru/runs/`.
+            # Shell stdout/stderr: append via `ticket update --note` / `-n`
+            # when the installed planfile supports it; else a run artifact under
+            # `.planfile/.koru/runs/`. Full streams remain in QueueRunResult.
             if executor_kind == "shell":
                 run_id = uuid.uuid4().hex[:16]
                 note = format_shell_run_note(
@@ -214,17 +215,28 @@ def run_next_planfile_task(
                     stdout=result.stdout,
                     stderr=result.stderr,
                 )
-                up = planfile_command(
+                up, evidence_kind = append_shell_evidence_note(
                     project,
-                    ["ticket", "update", ticket_id, "--note", note],
-                    runner=planfile_runner,
+                    ticket_id,
+                    note,
+                    run_id=run_id,
+                    planfile_runner=planfile_runner,
                 )
                 if up.returncode == 0:
-                    _logger.info(
-                        "koru.queue.shell_evidence_appended ticket_id=%s run_id=%s",
-                        ticket_id,
-                        run_id,
-                    )
+                    if evidence_kind == "artifact":
+                        _logger.info(
+                            "koru.queue.shell_evidence_appended_artifact ticket_id=%s "
+                            "run_id=%s path=%s",
+                            ticket_id,
+                            run_id,
+                            (up.stdout or "").strip(),
+                        )
+                    else:
+                        _logger.info(
+                            "koru.queue.shell_evidence_appended ticket_id=%s run_id=%s",
+                            ticket_id,
+                            run_id,
+                        )
                 else:
                     _logger.warning(
                         "koru.queue.shell_evidence_note_failed ticket_id=%s run_id=%s "

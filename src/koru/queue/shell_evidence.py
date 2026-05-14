@@ -1,8 +1,10 @@
 """Format planfile ticket notes that capture shell executor output.
 
 Each successful shell queue run can append a ``KORU-SHELL-RUN`` note via
-``planfile ticket update <id> --note …`` so ``planfile ticket show``
-surfaces stdout/stderr without opening ``.planfile/.koru/runs/``.
+``planfile ticket update <id> --note`` or ``-n`` (see
+``planfile_ticket_note.append_shell_evidence_note``) so ``planfile ticket
+show`` surfaces stdout/stderr. When the installed planfile CLI omits both
+flags, the same payload is written under ``.planfile/.koru/runs/``.
 
 Notes carry a fresh ``run_id`` (UUID fragment) so operators or tooling
 can correlate duplicates if a step is retried.
