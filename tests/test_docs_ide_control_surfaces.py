@@ -23,6 +23,13 @@ def test_ide_router_doc_links_to_ide_control_surfaces() -> None:
     assert "ide-control-surfaces.md" in text
 
 
+def test_ide_router_doc_links_mcp_and_autopilot() -> None:
+    root = Path(__file__).resolve().parent.parent
+    text = (root / "docs" / "ide-router.md").read_text(encoding="utf-8")
+    assert "mcp-ide-flow.md" in text
+    assert "autopilot-design.md" in text
+
+
 def test_mcp_ide_flow_doc_links_to_ide_control_surfaces() -> None:
     root = Path(__file__).resolve().parent.parent
     text = (root / "docs" / "mcp-ide-flow.md").read_text(encoding="utf-8")
