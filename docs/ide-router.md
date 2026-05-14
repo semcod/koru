@@ -44,3 +44,6 @@ files; the router does **not** auto-enable MCP in Cursor/Windsurf.
 
 For product-level agent lanes, see `koru agent --env-exports` and
 `docs/agent-guide.md`.
+
+Broader control options (RPC plugin, DAP/tasks, profiles, Neovim, OS fallback):
+[ide-control-surfaces.md](ide-control-surfaces.md).

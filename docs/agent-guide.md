@@ -18,6 +18,9 @@
 > **IDE vs headless routing:** see [ide-router.md](ide-router.md) and run
 > `koru ide-router --format json` to inspect how this shell merges
 > `--autopilot-ide` with `KORU_AUTOPILOT_IDE` / headless probes.
+>
+> **Broader IDE control map** (RPC plugin, DAP/tasks, profiles, Neovim, OS fallback):
+> [ide-control-surfaces.md](ide-control-surfaces.md).
 
 ---
 
