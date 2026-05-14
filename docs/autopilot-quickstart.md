@@ -45,6 +45,33 @@ fight each other:
 | VS Code / Windsurf / Cursor plugin | `plugins/koru-autopilot-vscode/` (this repo)        | preferred chat injection path            |
 | JetBrains plugin                   | `plugins/koru-autopilot-jetbrains/` (stub, Phase 3) | currently keyboard-sim fallback only     |
 | Keyboard backends                  | system packages (`xdotool` / `wtype` / `ydotool`)   | fallback when no plugin is loaded        |
+| **OS injector (X11)**              | ``xdotool`` + ``.koru/ide-os-injector.json``         | optional click-to-focus chat before typing |
+
+### OS injector (X11 coordinates)
+
+When no autopilot plugin is connected, the daemon can use a **calibrated**
+coordinate profile (window id + chat click point) before typing, instead of
+blind ``xdotool type`` into whatever window is focused.
+
+Config is merged JSON keyed by IDE id (``cursor``, ``windsurf``, ``vscode``,
+…). Search order:
+
+1. ``<daemon --project>/.koru/ide-os-injector.json``
+2. ``$PWD/.koru/ide-os-injector.json``
+3. ``~/.koru/ide-os-injector.json``
+
+Behaviour:
+
+- If a profile exists for the resolved IDE and the session is **X11** with
+  ``xdotool`` on ``PATH``, that path is used automatically.
+- Set ``KORU_OS_INJECTOR=0`` to disable and always use the plain keyboard injector.
+- Set ``KORU_OS_INJECTOR=1`` to insist on the profile path when a profile is
+  present (same as auto once a profile exists; still no profile → keyboard fallback).
+- ``KORU_OS_INJECTOR_DRY_RUN=1`` logs the planned injection without running ``xdotool``.
+
+On **Wayland** the OS injector is skipped (xdotool is X11-only). For a full
+calibration workflow in a monorepo, see the c2004 doc
+``.koru/workflows/ide-os-injector.md`` and ``task koru:ide-os:calibrate``.
 
 ## Full setup checklist
 

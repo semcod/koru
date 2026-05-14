@@ -14,7 +14,8 @@ When ``drive`` arrives:
 
 1. If a plugin is connected for the requested IDE → forward as
    ``chat.send`` and relay the plugin's ack.
-2. Otherwise → fall back to :class:`Injector` (keyboard sim).
+2. Otherwise → optional X11 :mod:`os_injector` profile, then
+   :class:`Injector` (keyboard sim).
 3. Always log the event so the user can audit what was typed.
 
 The daemon is intentionally single-threaded and selector-based. We
@@ -28,6 +29,7 @@ import functools
 import json
 import os
 import selectors
+import shutil
 import socket
 import stat
 import struct
@@ -42,7 +44,7 @@ from . import default_socket_path
 from .audit import AuditLog
 from .ide import detect_running_ides_cached as detect_running_ides
 from .ide import pick_target
-from .injector import Injector, InjectorError
+from .injector import Injector, InjectorError, _session_type
 from .protocol import (
     MAX_LINE_BYTES,
     Message,
@@ -146,6 +148,7 @@ class AutopilotDaemon:
     ) -> None:
         self.socket_path = socket_path or default_socket_path()
         self.injector = injector or Injector()
+        self.project = project
         self.log = log or (lambda _msg: None)
         # Optional persistent audit log (P2.7). ``None`` keeps the
         # current behaviour (logging only via ``self.log``).
@@ -364,6 +367,35 @@ class AutopilotDaemon:
             ok=True,
         )
 
+    def _try_os_injector_drive(self, target_id: str, text: str, submit: bool) -> dict[str, Any] | None:
+        """Run :mod:`os_injector` when configured; ``None`` means use keyboard."""
+        if target_id == "default":
+            return None
+        from . import os_injector as oi
+
+        if oi.os_injector_env_disabled():
+            return None
+        if _session_type() == "wayland":
+            return None
+        if shutil.which("xdotool") is None:
+            return None
+
+        profile = oi.try_load_profile(target_id, project=self.project)
+        if profile is None and not oi.os_injector_env_forced():
+            return None
+        if profile is None:
+            return None
+
+        try:
+            return oi.inject_with_profile(
+                profile=profile,
+                text=text,
+                submit=submit,
+                dry_run=oi.dry_run_from_env(),
+            )
+        except oi.OsInjectorError as exc:
+            raise InjectorError(str(exc)) from exc
+
     def _drive_via_keyboard(
         self,
         client: _Client,
@@ -372,11 +404,38 @@ class AutopilotDaemon:
         text: str,
         submit: bool,
     ) -> None:
-        """Fallback: type the text via the local keyboard injector."""
+        """Fallback: OS injector profile (X11) or :class:`Injector` keyboard sim."""
         detected = detect_running_ides()
         target = pick_target(detected, prefer=ide_pref)
         target_id = target.id if target else "default"
         try:
+            os_res = self._try_os_injector_drive(target_id, text, submit)
+            if os_res is not None:
+                info: dict[str, Any] = {
+                    "backend": str(os_res.get("backend", "os_injector")),
+                    "submitted": bool(os_res.get("submitted", submit)),
+                }
+                if os_res.get("dry_run"):
+                    info["dry_run"] = True
+                tid = os_res.get("tool_id")
+                if isinstance(tid, str):
+                    info["tool_id"] = tid
+                if target is not None:
+                    info["ide"] = target.to_dict()
+                self._send(client, ack(msg.id or "", info=info).encode())
+                self.log(
+                    f"drive → {target_id} via {info['backend']} ({len(text)} chars, submit={submit})"
+                )
+                self.audit.record(
+                    "drive",
+                    ide=target_id,
+                    backend=str(info["backend"]),
+                    chars=len(text),
+                    submit=submit,
+                    ok=True,
+                )
+                return
+
             result = self.injector.type_text(text, ide=target_id, submit=submit)
         except InjectorError as exc:
             self._send(client, error(msg.id, str(exc)).encode())
@@ -391,7 +450,7 @@ class AutopilotDaemon:
                 error=str(exc),
             )
             return
-        info: dict[str, Any] = {"backend": result.backend, "submitted": result.submitted}
+        info = {"backend": result.backend, "submitted": result.submitted}
         if target is not None:
             info["ide"] = target.to_dict()
         self._send(client, ack(msg.id or "", info=info).encode())

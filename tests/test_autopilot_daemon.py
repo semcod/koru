@@ -30,7 +30,9 @@ from koru.autopilot import daemon as daemon_mod
 from koru.autopilot import ide as ide_mod
 from koru.autopilot.client import AutopilotClient
 from koru.autopilot.daemon import AutopilotDaemon
+from koru.autopilot.ide import RunningIDE
 from koru.autopilot.injector import InjectionResult, InjectorError
+from koru.autopilot.os_injector import OsInjectorProfile
 from koru.autopilot.protocol import Message, decode, hello
 
 
@@ -116,6 +118,7 @@ class _DaemonHarness:
         injector: _StubInjector | None = None,
         handoff=None,
         handoff_cooldown: float = 0.0,
+        project: Path | None = None,
     ) -> None:
         self.sock_path = tmp_path / "autopilot.sock"
         self.injector = injector or _StubInjector()
@@ -124,6 +127,7 @@ class _DaemonHarness:
             injector=self.injector,
             handoff=handoff,
             handoff_cooldown=handoff_cooldown,
+            project=project,
         )
         self._thread: threading.Thread | None = None
 
@@ -151,13 +155,17 @@ def _daemon(
     injector: _StubInjector | None = None,
     handoff=None,
     handoff_cooldown: float = 0.0,
+    project: Path | None = None,
+    patch_ides: bool = True,
 ) -> Iterator[_DaemonHarness]:
-    _patch_no_running_ides(monkeypatch)
+    if patch_ides:
+        _patch_no_running_ides(monkeypatch)
     harness = _DaemonHarness(
         tmp_path,
         injector=injector,
         handoff=handoff,
         handoff_cooldown=handoff_cooldown,
+        project=project,
     )
     harness.start()
     try:
@@ -231,6 +239,96 @@ def test_drive_reports_injector_failure(tmp_path: Path, monkeypatch: pytest.Monk
         reply = h.client().drive("hi")
         assert reply["type"] == "error"
         assert "stub failure" in reply["message"]
+
+
+def test_drive_uses_os_injector_when_profile_available(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru.autopilot import os_injector as oi_mod
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    fake = RunningIDE(id="cursor", label="Cursor", pid=1, exe="/opt/Cursor")
+    monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [fake])
+    monkeypatch.setattr(daemon_mod, "detect_running_ides", lambda **_: [fake])
+    monkeypatch.setattr(daemon_mod, "_session_type", lambda: "x11")
+    monkeypatch.setattr(daemon_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None)
+
+    prof = OsInjectorProfile(tool_id="cursor", window_id=1, chat_x=2, chat_y=3)
+
+    def fake_try_load(tool_id: str, project=None):
+        assert tool_id == "cursor"
+        assert project == repo
+        return prof
+
+    calls: list[dict[str, Any]] = []
+
+    def fake_inject(*, profile, text, submit, dry_run):
+        calls.append({"text": text, "submit": submit, "dry_run": dry_run})
+        return {
+            "ok": True,
+            "backend": "os_injector",
+            "tool_id": profile.tool_id,
+            "submitted": submit,
+            "dry_run": dry_run,
+        }
+
+    monkeypatch.setattr(oi_mod, "try_load_profile", fake_try_load)
+    monkeypatch.setattr(oi_mod, "inject_with_profile", fake_inject)
+
+    with _daemon(tmp_path, monkeypatch, project=repo, patch_ides=False) as h:
+        reply = h.client().drive("hello", submit=False, ide="auto")
+    assert reply["type"] == "ack"
+    assert reply["ok"] is True
+    assert reply["backend"] == "os_injector"
+    assert reply["tool_id"] == "cursor"
+    assert h.injector.calls == []
+    assert calls == [{"text": "hello", "submit": False, "dry_run": False}]
+
+
+def test_drive_os_injector_skipped_when_env_disabled(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru.autopilot import os_injector as oi_mod
+
+    monkeypatch.setenv("KORU_OS_INJECTOR", "0")
+    fake = RunningIDE(id="cursor", label="Cursor", pid=1, exe="/opt/Cursor")
+    monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [fake])
+    monkeypatch.setattr(daemon_mod, "detect_running_ides", lambda **_: [fake])
+    monkeypatch.setattr(daemon_mod, "_session_type", lambda: "x11")
+    monkeypatch.setattr(daemon_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None)
+
+    tried = {"n": 0}
+
+    def counted_try_load(*_a, **_k):
+        tried["n"] += 1
+        return OsInjectorProfile(tool_id="cursor", window_id=1, chat_x=0, chat_y=0)
+
+    monkeypatch.setattr(oi_mod, "try_load_profile", counted_try_load)
+
+    with _daemon(tmp_path, monkeypatch, patch_ides=False) as h:
+        reply = h.client().drive("x", ide="auto")
+    assert reply["backend"] == "stub"
+    assert tried["n"] == 0
+
+
+def test_drive_os_injector_forced_without_profile_falls_back_to_keyboard(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru.autopilot import os_injector as oi_mod
+
+    monkeypatch.setenv("KORU_OS_INJECTOR", "1")
+    fake = RunningIDE(id="cursor", label="Cursor", pid=1, exe="/opt/Cursor")
+    monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [fake])
+    monkeypatch.setattr(daemon_mod, "detect_running_ides", lambda **_: [fake])
+    monkeypatch.setattr(daemon_mod, "_session_type", lambda: "x11")
+    monkeypatch.setattr(daemon_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None)
+    monkeypatch.setattr(oi_mod, "try_load_profile", lambda *a, **k: None)
+
+    with _daemon(tmp_path, monkeypatch, patch_ides=False) as h:
+        reply = h.client().drive("y", ide="auto")
+    assert reply["backend"] == "stub"
+    assert h.injector.calls == [{"text": "y", "ide": "cursor", "submit": True}]
 
 
 def test_drive_empty_text_returns_error(running_daemon) -> None:
