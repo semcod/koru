@@ -1350,6 +1350,24 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
 
+## [0.1.87] - 2026-05-14
+
+### Docs
+- Update .windsurf/workflows/koru-gate.md
+- Update README.md
+
+### Test
+- Update tests/test_koru_gate_capture.py
+- Update tests/test_mcp_provision.py
+- Update tests/test_mcp_server.py
+
+### Other
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update scripts/koru-gate-capture.py
+- Update templates/.windsurf/mcp_config.example.json.template
+- Update uv.lock
+
 ## [0.1.86] - 2026-05-14
 
 ### Docs

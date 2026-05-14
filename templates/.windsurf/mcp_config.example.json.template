@@ -21,6 +21,14 @@
     "Substitute <APP_NAME> and <REPO_PATH> placeholders before merging."
   ],
   "mcpServers": {
+    "koru": {
+      "_purpose": "Orchestrate planfile tickets, run quality gates, propose edits via koru.",
+      "command": "koru",
+      "args": ["mcp-serve"],
+      "env": {
+        "KORU_PROJECT_ROOT": "<REPO_PATH>"
+      }
+    },
     "planfile": {
       "_purpose": "Read/list/update tickets created by healing-webhook.",
       "command": "python3",

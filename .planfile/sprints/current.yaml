@@ -3236,3 +3236,113 @@ sprint:
       status: open
       sync: {}
       updated_at: '2026-05-13T11:56:27.683875Z'
+    STARTER-105:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-14T08:59:52.295196Z'
+      description: 'Gate `regix` failed.
+
+
+        - Failing line: `cc: 13 (target: ≤ 10.0)`
+
+        - Command: `regix gates 2>&1 | tail -20`
+
+        - Next step: Lower offending complexity/quality metric or relax gate threshold
+        intentionally.
+
+        '
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: waiting_input
+      files: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - inputs
+        execution_state: waiting_input
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T09:04:21.242804+00:00'
+      id: STARTER-105
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[gate-finding:7fb1145121dc] still failing @ 2026-05-14T09:04:20Z;
+          gate=regix; line=cc: 13 (target: ≤ 10.0); cmd=regix gates 2>&1 | tail -20
+
+
+          (autoupdate via koru-gate-capture fallback: ticket input)'
+      labels:
+      - gates
+      - gate-regix
+      name: '[gate-finding:7fb1145121dc] regix gate failure'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-14T08:59:52.294295Z'
+        tool: koru-gate
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-14T09:04:21.242769+00:00'
+    STARTER-106:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-14T09:18:43.313782Z'
+      description: 'Gate `synthetic-e2e` failed.
+
+
+        - Failing line: `KORU_CAPTURE_E2E_FAIL`
+
+        - Command: `bash -lc ''echo KORU_CAPTURE_E2E_FAIL && exit 1''`
+
+        - Next step: Synthetic validation: no action required.
+
+        '
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: waiting_input
+      files: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - inputs
+        execution_state: waiting_input
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T09:18:53.877216+00:00'
+      id: STARTER-106
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[gate-finding:d320c036b3e9] still failing @ 2026-05-14T09:18:52Z;
+          gate=synthetic-e2e; line=KORU_CAPTURE_E2E_FAIL; cmd=bash -lc ''echo KORU_CAPTURE_E2E_FAIL
+          && exit 1''
+
+
+          (autoupdate via koru-gate-capture fallback: ticket input)'
+      labels:
+      - gates
+      - gate-synthetic-e2e
+      name: '[gate-finding:d320c036b3e9] synthetic-e2e gate failure'
+      priority: low
+      source:
+        context: {}
+        timestamp: '2026-05-14T09:18:43.312892Z'
+        tool: koru-gate
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-14T09:18:53.877178+00:00'

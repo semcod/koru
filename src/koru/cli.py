@@ -1443,8 +1443,21 @@ def _init_ci_main(_argv: list[str]) -> int:
     return 0
 
 
+def _mcp_serve_main(argv: list[str]) -> int:
+    from .mcp_server import mcp_serve_main
+
+    return mcp_serve_main(argv)
+
+
+def _init_ide_main(argv: list[str]) -> int:
+    from .mcp_provision import init_ide_main
+
+    return init_ide_main(argv)
+
+
 _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "init-ci": _init_ci_main,
+    "init-ide": _init_ide_main,
     "task": _task_main,
     "agent": _agent_main,
     "local-serve": _local_serve_main,
@@ -1454,6 +1467,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "queue": _queue_main,
     "gc": _gc_main,
     "tools": _tools_main,
+    "mcp-serve": _mcp_serve_main,
     "autopilot": autopilot_main,
     "autonomous": autonomous_main,
     "topology": _topology_main,

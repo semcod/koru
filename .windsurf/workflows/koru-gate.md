@@ -1,5 +1,5 @@
 ---
-description: run on-change gates (regix + testql + wup status + plugin tests) for the current koru-managed project
+description: run on-change gates (regix + testql + wup status + plugin tests) with real-time deduplicated task capture
 ---
 
 # /koru-gate — manual on-change gate run
@@ -32,7 +32,13 @@ If `regix.yaml` exists:
 // turbo
 
 ```bash
-regix gates 2>&1 | tail -20
+test -f regix.yaml && python scripts/koru-gate-capture.py \
+  --gate regix \
+  --command "regix gates 2>&1 | tail -20" \
+  --fail-regex "target:|failed|violation" \
+  --update-existing \
+  --next-step "Lower offending complexity/quality metric or relax gate threshold intentionally." || \
+echo "(regix not configured)"
 ```
 
 Exit 0 = green. Exit non-zero = at least one absolute threshold (CC,
@@ -49,7 +55,12 @@ scenarios that cover those files. Otherwise default to
 
 ```bash
 SCENARIO="${1:-testql-testing/scenarios/realtime-health.testql.toon.yaml}"
-test -f "$SCENARIO" && testql run "$SCENARIO" --output console 2>&1 | tail -10 || echo "(no scenario at $SCENARIO)"
+test -f "$SCENARIO" && python scripts/koru-gate-capture.py \
+  --gate testql \
+  --command "testql run '$SCENARIO' --output console 2>&1 | tail -20" \
+  --update-existing \
+  --next-step "Fix failing scenario assertion or align endpoint behavior." || \
+echo "(no scenario at $SCENARIO)"
 ```
 
 ### 4. wup — daemon status
@@ -61,7 +72,13 @@ command (that is the human's choice).
 // turbo
 
 ```bash
-test -f wup.yaml && wup status 2>&1 | head -20 || echo "(wup not configured)"
+test -f wup.yaml && python scripts/koru-gate-capture.py \
+  --gate wup \
+  --command "wup status 2>&1 | head -20" \
+  --fail-regex "error|failed|not running|down" \
+  --update-existing \
+  --next-step "Restart/fix wup daemon and verify configuration paths." || \
+echo "(wup not configured)"
 ```
 
 ### 5. koru autopilot plugin tests (optional)
@@ -74,16 +91,41 @@ behavior.
 
 ```bash
 test -f plugins/koru-autopilot-vscode/package.json && (
-  cd plugins/koru-autopilot-vscode && npm test 2>&1 | tail -20
+  python scripts/koru-gate-capture.py \
+    --gate plugin \
+    --command "cd plugins/koru-autopilot-vscode && npm test 2>&1 | tail -20" \
+    --update-existing \
+    --next-step "Fix failing plugin unit/compile checks in koru-autopilot-vscode."
 ) || echo "(koru-autopilot-vscode plugin not present)"
 ```
 
-### 6. Aggregate & decide
+### 6. Aggregate, capture, continue
 
 - **All green** — say so, return control to the user.
-- **Any red** — do NOT proceed with edits or `ticket complete`. Instead
-  call `planfile ticket input <id> --prompt "<what failed, with the
-  exact failing line>"` and stop, per koru policy.
+- **Any red** — do NOT drop context and do NOT duplicate findings.
+  Immediately record a follow-up in planfile with a stable finding key,
+  then continue the flow.
+
+Real-time capture contract for each red gate:
+
+1. Build `finding_key` from gate + normalized failing line, e.g.
+   `[gate-finding:regix|cc>10|src/koru/init.py]`.
+2. Check existing `koru-gate` tickets for the same `finding_key`.
+3. If key exists: append a `still failing` note (timestamp + latest line),
+   do NOT create a duplicate problem ticket.
+4. If key does not exist: create a new planfile ticket with:
+   - exact failing line,
+   - command that produced it,
+   - shortest next action to fix.
+
+Use:
+
+```bash
+planfile ticket create "[gate-finding:<finding_key>] <gate> gate failure" --source koru-gate --description "<exact line + command + next step>"
+```
+
+After capture, continue with remaining gates so the user sees full
+problem set in one pass.
 
 ## Rationale
 
@@ -97,12 +139,13 @@ For the `koru` repo itself, the optional plugin check adds IDE bridge
 stability coverage (`koru-autopilot-vscode`).
 
 A clean run means the change has been pre-validated by each layer. A
-red run is a hard signal to pause and route through planfile lifecycle
-instead of pushing through.
+red run is a signal to create/update a deduplicated planfile task in
+real time, so remediation is explicit and traceable without stopping
+the whole loop.
 
 ## Footnotes
 
-- This slash command is read-only. It never edits files, runs git, or
-  mutates planfile state. It only emits diagnostics.
+- This slash command may mutate planfile state only to create
+  deduplicated gate tickets via `planfile ticket create`.
 - For a continuous (per-save) version of the same gates, run
   `wup watch` in a side terminal. See `workflows/on-change-gates.md`.
