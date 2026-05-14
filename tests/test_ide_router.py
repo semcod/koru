@@ -22,6 +22,66 @@ def test_is_headless_koru_headless_on() -> None:
     assert is_headless_environment({"KORU_HEADLESS": "on"}) is True
 
 
+def test_is_headless_koru_headless_false_explicit() -> None:
+    assert is_headless_environment({"KORU_HEADLESS": "0"}) is False
+    assert is_headless_environment({"KORU_HEADLESS": "false"}) is False
+
+
+def test_is_headless_ide_mode_whitespace_case_insensitive() -> None:
+    env = {"KORU_IDE_MODE": "  HEADLESS  "}
+    assert is_headless_environment(env) is True
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="SSH+DISPLAY heuristic is POSIX-specific")
+def test_is_headless_ssh_empty_display_still_headless() -> None:
+    env = {"SSH_CONNECTION": "127.0.0.1 1 127.0.0.1 22", "DISPLAY": ""}
+    assert is_headless_environment(env) is True
+
+
+def test_resolve_ide_route_env_ide_case_insensitive() -> None:
+    env = {"KORU_AUTOPILOT_IDE": "  CuRsOr  "}
+    r = resolve_ide_route(cli_autopilot_ide="vscode", environ=env)
+    assert r.autopilot_ide == "cursor"
+
+
+def test_resolve_ide_route_headless_sets_primary_surface() -> None:
+    r = resolve_ide_route(cli_autopilot_ide="cursor", environ={"KORU_HEADLESS": "1"})
+    assert r.primary_surface == "headless_terminal"
+    assert r.recommend_autopilot_drive is False
+
+
+def test_resolve_ide_route_ide_shell_surface() -> None:
+    r = resolve_ide_route(cli_autopilot_ide="windsurf", environ={})
+    assert r.primary_surface == "ide_shell"
+
+
+def test_ide_router_main_help_exits_zero() -> None:
+    from koru.cli import ide_router_main
+
+    with pytest.raises(SystemExit) as exc:
+        ide_router_main(["--help"])
+    assert exc.value.code == 0
+
+
+def test_ide_router_main_unknown_flag_exits_nonzero() -> None:
+    from koru.cli import ide_router_main
+
+    with pytest.raises(SystemExit) as exc:
+        ide_router_main(["--not-a-flag"])
+    assert exc.value.code == 2
+
+
+def test_ide_router_main_bad_format_exits_nonzero(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru.cli import ide_router_main
+
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    with pytest.raises(SystemExit) as exc:
+        ide_router_main(["--format", "yaml"])
+    assert exc.value.code == 2
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="SSH+DISPLAY heuristic is POSIX-specific")
 def test_is_headless_ssh_without_display() -> None:
     env = {"SSH_CONNECTION": "127.0.0.1 12345 127.0.0.1 22"}

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from types import SimpleNamespace
+
+import pytest
 
 from koru import autonomous as autonomous_mod
 from koru import autonomous_env as autonomous_env_mod
@@ -356,6 +359,22 @@ def test_resolve_autopilot_ide_koru_ide_mode_headless(monkeypatch) -> None:
     monkeypatch.setenv("KORU_IDE_MODE", "headless")
     monkeypatch.setenv("KORU_AUTOPILOT_IDE", "cursor")
     assert autonomous_mod._resolve_autopilot_ide("vscode") == "auto"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="SSH+DISPLAY heuristic is POSIX-specific")
+def test_resolve_autopilot_ide_ssh_without_display_headless(monkeypatch) -> None:
+    monkeypatch.delenv("DISPLAY", raising=False)
+    monkeypatch.setenv("SSH_CONNECTION", "127.0.0.1 1 127.0.0.1 22")
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    assert autonomous_mod._resolve_autopilot_ide("cursor") == "auto"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="SSH+DISPLAY heuristic is POSIX-specific")
+def test_resolve_autopilot_ide_ssh_with_display_uses_cli(monkeypatch) -> None:
+    monkeypatch.setenv("SSH_CONNECTION", "127.0.0.1 1 127.0.0.1 22")
+    monkeypatch.setenv("DISPLAY", ":0")
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    assert autonomous_mod._resolve_autopilot_ide("zed") == "zed"
 
 
 def test_apply_agent_lane_environ_auto_cursor(tmp_path, monkeypatch) -> None:
