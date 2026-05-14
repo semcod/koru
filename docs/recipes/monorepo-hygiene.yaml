@@ -1,0 +1,13 @@
+# Szkic przepisu (placeholder) — higiena monorepo (struktura katalogów, artefakty, ignorowane ścieżki).
+# Nie jest konsumowany przez żaden parser w tym repozytorium; służy jako wzorzec nazewnictwa.
+#
+# Docelowo pola mogłyby opisywać np. spójne reguły .gitignore, limity rozmiaru diffów,
+# politykę lockfile’i i skan „śmieciowych” katalogów; na razie tylko struktura demonstracyjna.
+
+recipe:
+  id: monorepo-hygiene
+  title: "Higiena monorepo (szkic)"
+  status: draft
+  language_hints: []
+  notes: "Uzupełnij po uzgodnieniu kontraktu recipe w koru CLI."
+  gates_placeholder: []

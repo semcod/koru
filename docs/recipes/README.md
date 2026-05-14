@@ -17,5 +17,6 @@ jest obowiązkowo ładowane przez parser** — to miejsce na propozycje i przyk�
 
 ## Przykłady w repozytorium
 
-- [`python-quality-baseline.yaml`](./python-quality-baseline.yaml) — szkielet
-  opisujący baseline jakości Pythona (tylko dokumentacja / placeholder).
+- [`python-quality-baseline.yaml`](./python-quality-baseline.yaml),
+  [`monorepo-hygiene.yaml`](./monorepo-hygiene.yaml) — szkice placeholderów
+  (baseline jakości Pythona oraz higiena monorepo; tylko dokumentacja).

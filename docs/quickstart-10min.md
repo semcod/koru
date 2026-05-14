@@ -63,3 +63,10 @@ Szczegóły cyklu życia ticketów: [`agent-guide.md`](./agent-guide.md), [`plan
 
 - Autopilot IDE: [`autopilot-quickstart.md`](./autopilot-quickstart.md)
 - Pełna lista dokumentacji: [`README.md`](./README.md)
+- Szkice przyszłych przepisów koru (YAML, tylko dokumentacja): [`recipes/README.md`](./recipes/README.md)
+
+## Szablony przepisów (opcjonalnie)
+
+- Katalog **recipes** opisuje propozycje wersjonowanych „recept” — zacznij od
+  [`recipes/README.md`](./recipes/README.md); same pliki YAML to na razie placeholdery
+  do dyskusji w PR, nie ładują się automatycznie w parser koru.

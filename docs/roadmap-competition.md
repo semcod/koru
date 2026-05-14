@@ -50,6 +50,7 @@ warstwy** nad planfile i metrykami, a nie duplikat platformy Moderne.
 
 - Cienki workflow GitHub Actions + instrukcja kopiowania: **[`docs/ci-github.md`](./ci-github.md)** (workflow źródłowy: `.github/workflows/koru-ci.yml`; pełna macierz na `main`: `.github/workflows/ci.yml`).
 - Analog na GitLabie: **[`docs/ci-gitlab.md`](./ci-gitlab.md)** (przykład: [`examples/ci/gitlab-ci.example.yml`](../examples/ci/gitlab-ci.example.yml) — ten sam smoke co `koru-ci.yml`).
+- **GitLab:** `interruptible: true` na jobach smoke + (na nowszych instancjach) `workflow:auto_cancel:on_new_commit` — ułatwia anulowanie zbędnych pipeline’ów przy kolejnych pushach (wymaga ustawień auto-cancel w projekcie).
 - **cache pip w CI (GitHub + GitLab)**.
 
 - Jako adopters chcę skopiować jeden plik workflow i mieć działające gates bez czytania całego monorepo semcod.

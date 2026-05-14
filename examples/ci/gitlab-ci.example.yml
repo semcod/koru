@@ -1,5 +1,13 @@
 # Thin CI smoke (Epic 2 — mirror of .github/workflows/koru-ci.yml; see docs/ci-gitlab.md).
 # Copy to .gitlab-ci.yml in your repo root (or include from a path) and adjust paths/deps.
+#
+# Redundant pipelines: enable "Auto-cancel redundant pipelines" in project CI/CD settings.
+# Mark interruptible jobs so GitLab can stop them when a newer pipeline supersedes this ref.
+# On newer GitLab you can also set pipeline policy explicitly, e.g.:
+#   workflow:
+#     auto_cancel:
+#       on_new_commit: interruptible
+# (YAML support varies by version; interruptible on jobs is the portable baseline.)
 
 stages:
   - smoke
@@ -19,6 +27,7 @@ cache:
 smoke:
   stage: smoke
   image: python:3.12-bookworm
+  interruptible: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_PIPELINE_SOURCE == "web"
