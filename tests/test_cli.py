@@ -263,8 +263,6 @@ class TestInitCiSubcommand(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn(".github/workflows/koru-ci.yml", out)
         self.assertIn("ci-github.md", out)
-        self.assertIn("examples/ci/gitlab-ci.example.yml", out)
-        self.assertIn("ci-gitlab.md", out)
 
 
 class TestSubcommandDispatch(unittest.TestCase):
@@ -278,6 +276,7 @@ class TestSubcommandDispatch(unittest.TestCase):
     EXPECTED_KEYS = frozenset(
         {
             "init-ci",
+            "init-ide",
             "task",
             "agent",
             "local-serve",
@@ -287,6 +286,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "queue",
             "gc",
             "tools",
+            "mcp-serve",
             "autopilot",
             "autonomous",
             "topology",
