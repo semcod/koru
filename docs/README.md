@@ -3,6 +3,8 @@
 This directory contains the full documentation for **koru** — a closed-loop
 refactor automation system for multi-repo workspaces.
 
+- **[`roadmap-competition.md`](./roadmap-competition.md)** (PL) — porównanie z Grit, Moderne/OpenRewrite, Gitar, Git AutoReview i kierunek roadmapy.
+
 ## Reading order
 
 For LLM agents starting a session in a koru-driven repository:
