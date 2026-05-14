@@ -892,23 +892,69 @@ sprint:
 
 
         Role: intelligent file watcher (3-layer: detect → quick → full).'
+      execution:
+        assigned_to: codex
+        attempt: 0
+        finished_at: '2026-05-14T11:52:20.315355Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T11:52:19.200984Z'
+        state: done
       files: []
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T11:52:19.451431+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T11:52:20.503222+00:00'
       id: STARTER-008
       labels:
       - bootstrap
       - gates
       - scan
       name: Bootstrap wup on-change gate
+      outputs:
+        artifacts:
+        - wup.yaml
+        - Taskfile.yml
+        - docs/llm-tools/wup/README.md
+        - tests/test_wup_taskfile.py
+        notes:
+        - 'Duplicate WUP bootstrap ticket already satisfied by current repo state:
+          wup.yaml exists, quality:wup validates wup status with topology gate wiring,
+          and docs/tests cover the on-change watcher.'
+        result:
+          resolution: duplicate_already_satisfied
+          status: done
+          tests:
+          - uv run pytest -q tests/test_wup_taskfile.py
+          - task quality:wup
+          - git diff --check
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-12T09:36:21.309889Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:36:21.311018Z'
+      updated_at: '2026-05-14T11:52:20.503172+00:00'
     STARTER-009:
       acceptance_criteria: []
       blocked_by: []
