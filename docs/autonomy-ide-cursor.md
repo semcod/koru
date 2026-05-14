@@ -25,7 +25,7 @@
 
 **Braki funkcjonalne (vs pełna autonomia):**
 - [ ] Odczyt odpowiedzi LLM z IDE (read-side)
-- [ ] Realne zdarzenie zakończenia sesji z API IDE, nie tylko ścieżka obsługi po stronie daemona
+- [x] Realne zdarzenie zakończenia sesji z API IDE, nie tylko ścieżka obsługi po stronie daemona (VS Code plugin obsługuje `session.ended`)
 - [ ] Sterowanie narzędziami agenta (edycja plików, terminal IDE)
 - [ ] Jeden spójny kanał shell ↔ IDE (stdout/stderr agenta vs zdarzenia czatu)
 - [ ] Centralna polityka IDE sterowana z koru
@@ -92,10 +92,10 @@
 
 ### Protokół IDE
 
-- [ ] **Zdarzenia `session.ended`** — emitowanie i konsumpcja na kanale socket/NDJSON między daemonem a rozszerzeniem IDE (spójny kontrakt, nie tylko heurystyka czasu).
+- [x] **Zdarzenia `session.ended`** — emitowanie i konsumpcja na kanale socket/NDJSON między daemonem a rozszerzeniem IDE (spójny kontrakt, nie tylko heurystyka czasu).
 - [ ] **Read-side odpowiedzi LLM** — prototyp odczytu treści ostatniej odpowiedzi z dokumentu czatu (`openTextDocument(chatUri)` lub równoważnik) z testem integracyjnym na jednym IDE.
-- [ ] **Wersjonowanie protokołu** — pole `protocol_version` w każdej ramce NDJSON i test odrzucenia niezgodnych klientów.
-- [ ] **Heartbeat / reconnect** — metryka „czas od ostatniego ping” w `koru autopilot status` + automatyczne ponowne podłączenie rozszerzenia po restarcie IDE.
+- [x] **Wersjonowanie protokołu** — pole `protocol_version` w każdej ramce NDJSON i test odrzucenia niezgodnych klientów.
+- [x] **Heartbeat / reconnect** — metryka „czas od ostatniego ping” w `koru autopilot status` + automatyczne ponowne podłączenie rozszerzenia po restarcie IDE.
 
 ### Integracja planfile
 
@@ -112,13 +112,14 @@
 ### Bezpieczeństwo i UX
 
 - [ ] **Allowlista komend shell** z planfile — konfiguracja regex + test odrzucenia komend spoza listy dla `run_next_planfile_task`.
-- [ ] **Rate-limit `drive`** — max N wiadomości/min na socket per UID z komunikatem błędu i logiem audytowym.
-- [ ] **UX: podgląd kolejki** — `koru autopilot status --json` z listą oczekujących promptów i TTL (czytelne dla operatora).
+- [x] **Rate-limit `drive`** — max N wiadomości/min na socket per UID z komunikatem błędu i logiem audytowym.
+- [x] **UX: podgląd kolejki** — `koru autopilot status --json` z listą oczekujących promptów i TTL (czytelne dla operatora).
+- [x] **Audit log** — NDJSON log at `$XDG_STATE_HOME/koru/autopilot.log` z rotacją 10 MiB, zdarzenia: `daemon_started`, `daemon_stopped`, `plugin_connected`, `drive`, `handoff`, `shutdown`.
 
 ### Testy
 
-- [ ] **Test: pełna ścieżka daemon → mock IDE** — fixture socket + nagranie ramek NDJSON (regresja na limit 1 MiB i typy).
-- [ ] **Test: `SO_PEERCRED` odrzuca obcy UID** — asercja na odmowę połączenia przy symulowanym innym UID (gdzie środowisko CI na to pozwala; w przeciwnym razie skip z jasnym powodem).
+- [x] **Test: pełna ścieżka daemon → mock IDE** — fixture socket + nagranie ramek NDJSON (regresja na limit 1 MiB i typy).
+- [x] **Test: `SO_PEERCRED` odrzuca obcy UID** — asercja na odmowę połączenia przy symulowanym innym UID (gdzie środowisko CI na to pozwala; w przeciwnym razie skip z jasnym powodem).
 - [ ] **Test kontraktu planfile** — ticket YAML z sekcją „wynik ostatniego runu” po appendzie — diff złoty vs. wygenerowany.
 
 ---
