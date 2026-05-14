@@ -9,6 +9,7 @@ from .runners import (
     run_process,
     run_shell_command,
 )
+from .shell_evidence import SHELL_RUN_NOTE_TAG, format_shell_run_note
 from .types import (
     ApiRunResult,
     CommandResult,
@@ -18,6 +19,8 @@ from .types import (
 )
 
 __all__ = [
+    "SHELL_RUN_NOTE_TAG",
+    "format_shell_run_note",
     "run_next_planfile_task",
     "run_planfile_queue_loop",
     "CommandResult",

@@ -31,7 +31,7 @@
 
 ### Integracja planfile
 
-- [ ] **Append wyniku shell do opisu ticketu** — po `task`/`run` (stdout/stderr, limit rozmiaru) dopisanie sekcji do `planfile ticket comment` lub pola w YAML z idempotencją (`run_id`).
+- [x] **Append wyniku shell do opisu ticketu** — po sukcesie `executor.kind=shell` w `run_next_planfile_task` wywołanie `planfile ticket update <id> --note` z notatką `KORU-SHELL-RUN` + stdout/stderr (tail-truncate, `run_id` w JSON); przy błędzie update tylko log `warning`, potem i tak `ticket done`. Helper: `koru.queue.shell_evidence.format_shell_run_note`.
 - [ ] **`ticket claim` ↔ sesja autopilota** — zapis `actor` + `lease` + hash ostatniego promptu w metadanych ticketu (audyt: kto i co wstrzyknął).
 - [ ] **Handoff kolejki** — przy `session.ended` automatyczne `planfile ticket show` następnego PLF z etykietą `koru` i wstrzyknięcie skrótu ≤ N znaków do czatu (test E2E na fixture).
 

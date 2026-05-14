@@ -65,6 +65,20 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertLess(tail_args.index(claim), tail_args.index(["ticket", "start", "PLF-001"]))
             self.assertIn(["ticket", "start", "PLF-001"], tail_args)
             self.assertIn(["ticket", "done", "PLF-001"], tail_args)
+            start_i = tail_args.index(["ticket", "start", "PLF-001"])
+            done_i = tail_args.index(["ticket", "done", "PLF-001"])
+            update_calls = [
+                ta
+                for ta in tail_args
+                if len(ta) >= 5
+                and ta[:3] == ["ticket", "update", "PLF-001"]
+                and ta[3] == "--note"
+            ]
+            self.assertTrue(update_calls, "expected shell evidence ticket update")
+            self.assertGreater(tail_args.index(update_calls[0]), start_i)
+            self.assertLess(tail_args.index(update_calls[0]), done_i)
+            self.assertIn("KORU-SHELL-RUN", update_calls[0][4])
+            self.assertIn("ok", update_calls[0][4])
             for args in tail_args:
                 self.assertNotIn(args[1], {"complete", "fail", "input", "next"})
 

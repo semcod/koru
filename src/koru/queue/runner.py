@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import logging
+import uuid
 from collections.abc import Callable
 from pathlib import Path
 
@@ -15,6 +17,7 @@ from .runners import (
     run_process,
     run_shell_command,
 )
+from .shell_evidence import format_shell_run_note
 from .ticket import (
     parse_next_ticket,
     planfile_command,
@@ -23,6 +26,8 @@ from .ticket import (
     ticket_llm_request,
 )
 from .types import CommandResult, QueueRunResult
+
+_logger = logging.getLogger(__name__)
 
 
 def run_next_planfile_task(
@@ -198,9 +203,37 @@ def run_next_planfile_task(
             action_label = str(action)
 
         if result.returncode == 0:
-            # planfile's `done` has no `--note`/`--result-json`. The full
-            # stdout/stderr is preserved in QueueRunResult and persisted to
-            # `.planfile/.koru/runs/` by the run-log writer.
+            # Shell stdout/stderr: also append a truncated snapshot to the
+            # ticket via `ticket update --note` (best-effort). Full streams
+            # remain in QueueRunResult / `.planfile/.koru/runs/`.
+            if executor_kind == "shell":
+                run_id = uuid.uuid4().hex[:16]
+                note = format_shell_run_note(
+                    run_id=run_id,
+                    exit_code=result.returncode,
+                    stdout=result.stdout,
+                    stderr=result.stderr,
+                )
+                up = planfile_command(
+                    project,
+                    ["ticket", "update", ticket_id, "--note", note],
+                    runner=planfile_runner,
+                )
+                if up.returncode == 0:
+                    _logger.info(
+                        "koru.queue.shell_evidence_appended ticket_id=%s run_id=%s",
+                        ticket_id,
+                        run_id,
+                    )
+                else:
+                    _logger.warning(
+                        "koru.queue.shell_evidence_note_failed ticket_id=%s run_id=%s "
+                        "planfile_exit=%s planfile_stderr=%s",
+                        ticket_id,
+                        run_id,
+                        up.returncode,
+                        (up.stderr or "")[:500],
+                    )
             planfile_command(
                 project,
                 ["ticket", "done", ticket_id],
