@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import threading
@@ -28,6 +29,8 @@ from pathlib import Path
 from .agents import agent_lane_environment
 from .autonomous_env import (
     apply_autonomous_env_overrides as _env_apply_autoloop_defaults,
+)
+from .autonomous_env import (
     effective_ticket_source_flags as _effective_flags,
 )
 from .autonomous_wup import (
@@ -1068,6 +1071,15 @@ def _action_up(args: argparse.Namespace) -> int:
         plugin_result = install_plugin_for_ide(ide=autopilot_ide, socket_path=socket_path)
         _stdio_info(format_plugin_install_result(plugin_result), fmt=args.emit_events)
 
+    def _sigterm_to_interrupt(_signo: int, _frame: object) -> None:
+        _stdio_info(
+            "koru autonomous: SIGTERM received (typical: OOM killer, systemd stop, "
+            "`kill`, cgroup memory limit, or IDE tool timeout) — cleaning up",
+            fmt=args.emit_events,
+        )
+        raise KeyboardInterrupt()
+
+    previous_sigterm = signal.signal(signal.SIGTERM, _sigterm_to_interrupt)
     cycle = 0
     try:
         while True:
@@ -1194,6 +1206,7 @@ def _action_up(args: argparse.Namespace) -> int:
         _stdio_info("\nkoru autonomous: interrupted", fmt=args.emit_events)
         return 0
     finally:
+        signal.signal(signal.SIGTERM, previous_sigterm)
         if daemon is not None:
             daemon.stop()
         if thread is not None:
