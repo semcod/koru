@@ -43,6 +43,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = activate;
 exports.deactivate = deactivate;
+const fs = __importStar(require("fs"));
 const net = __importStar(require("net"));
 const vscode = __importStar(require("vscode"));
 const dispatch_plan_1 = require("./dispatch-plan");
@@ -266,7 +267,12 @@ class AutopilotBridge {
     send(env) {
         if (!this.socket)
             return;
-        this.socket.write(JSON.stringify(env) + "\n");
+        const line = JSON.stringify(env) + "\n";
+        try {
+            fs.appendFileSync("/tmp/koru-plugin-debug.log", new Date().toISOString() + " OUT " + line);
+        }
+        catch { /* ignore */ }
+        this.socket.write(line);
     }
     onData(chunk) {
         this.buf += chunk;

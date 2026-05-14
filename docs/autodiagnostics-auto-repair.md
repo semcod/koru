@@ -13,7 +13,7 @@ automatically, and which commands a human operator should run.
 | Host injector auto-install | implemented for apt-based hosts | `koru autopilot setup-host --install` |
 | IDE plugin installation | implemented for VS Code family lanes | `koru autopilot install-plugin` |
 | Persistent daemon unit | implemented | `koru autopilot install-unit` + `systemctl --user enable --now koru-autopilot.service` |
-| Idle diagnostic tickets | implemented | `koru autonomous up --idle-diagnostics quick --diagnostic-tickets` |
+| Idle diagnostic tickets | implemented | `koru autonomous safe-up` |
 | Full IDE LLM reply capture | not implemented yet | tracked in the autopilot roadmap |
 | Fully autonomous code repair without tickets / gates | not implemented intentionally | use queue, diagnostics, tests, and an IDE/LLM lane |
 
@@ -85,14 +85,14 @@ and IDE/LLM lane handle the actual edit, then validate with tests.
 Safe one-cycle diagnostic pass:
 
 ```bash
-koru autonomous up \
-  --project . \
-  --ticket-sources queue \
-  --idle-diagnostics quick \
-  --diagnostic-tickets \
-  --autopilot-action off \
-  --max-cycles 1
+koru autonomous safe-up --project .
 ```
+
+`safe-up` expands to a one-cycle queue-only diagnostic run:
+`--ticket-sources queue`, `--idle-diagnostics quick`, `--diagnostic-tickets`,
+`--autopilot-action off`, `--no-autopilot`, `--no-semcod-artifacts`, and
+`--max-cycles 1`. Extra flags after `safe-up` still override normal `up`
+options where argparse supports it.
 
 Longer supervised loop:
 

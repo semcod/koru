@@ -1547,6 +1547,22 @@ def _action_up(args: argparse.Namespace) -> int:
 def autonomous_main(argv: list[str]) -> int:
     if not argv:
         argv = ["up"]
+    elif argv[0] == "safe-up":
+        argv = [
+            "up",
+            "--ticket-sources",
+            "queue",
+            "--idle-diagnostics",
+            "quick",
+            "--diagnostic-tickets",
+            "--autopilot-action",
+            "off",
+            "--no-autopilot",
+            "--max-cycles",
+            "1",
+            "--no-semcod-artifacts",
+            *argv[1:],
+        ]
     elif argv[0] != "up" and argv[0] not in ("-h", "--help"):
         argv = ["up", *argv]
     args = _build_parser().parse_args(argv)

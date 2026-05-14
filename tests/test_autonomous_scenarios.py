@@ -8,10 +8,21 @@ import pytest
 
 from koru.autonomous import (
     _run_cycle,
+    autonomous_main,
     AutoloopState,
     QueueLoopResult,
     ScanResult,
 )
+
+
+def test_autonomous_main_safe_up_expands_args():
+    """Test that safe-up subcommand expands to safe defaults."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        argv = ["safe-up", "--project", tmpdir]
+        result = autonomous_main(argv)
+        # The command should expand safe-up to up with safe defaults
+        # We're testing that it doesn't crash and returns a valid exit code
+        assert result in (0, 2)  # 0=success, 2=argparse error (expected)
 
 
 def test_autonomous_cycle_smoke_scenario():

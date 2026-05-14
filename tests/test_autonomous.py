@@ -432,6 +432,55 @@ def test_up_single_cycle_queue_only_no_autopilot(
     assert queue_calls[0]["queue_name"] == "default"
 
 
+def test_safe_up_uses_queue_diagnostics_without_autopilot(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        autonomous_mod,
+        "init_project",
+        lambda project, force=False: SimpleNamespace(project=project),
+    )
+
+    queue_calls: list[dict] = []
+    diagnostic_calls: list[dict] = []
+
+    def fake_queue_loop(**kwargs):
+        queue_calls.append(kwargs)
+        return SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=0 last_status=idle",
+            last_status="idle",
+        )
+
+    def fake_idle_diagnostics(**kwargs):
+        diagnostic_calls.append(kwargs)
+        return autonomous_mod.DiagnosticResult(status="ok", failed=[])
+
+    monkeypatch.setattr(autonomous_mod, "run_planfile_queue_loop", fake_queue_loop)
+    monkeypatch.setattr(autonomous_mod, "_run_idle_diagnostics", fake_idle_diagnostics)
+    monkeypatch.setattr(autonomous_mod.time, "sleep", lambda _s: None)
+
+    rc = autonomous_mod.autonomous_main(
+        [
+            "safe-up",
+            "--no-serve",
+            "--project",
+            str(tmp_path),
+            "--sleep-seconds",
+            "0",
+            "--agent-lane",
+            "none",
+        ]
+    )
+
+    assert rc == 0
+    assert len(queue_calls) == 1
+    assert queue_calls[0]["queue_name"] == "default"
+    assert len(diagnostic_calls) == 1
+    assert diagnostic_calls[0]["profile"] == "quick"
+    assert diagnostic_calls[0]["diagnostic_tickets"] is True
+
+
 def test_up_single_cycle_all_sources_runs_scan(
     tmp_path,
     monkeypatch,

@@ -1593,12 +1593,7 @@ def _doctor_fix_payload(report: Any) -> dict[str, object]:
             "koru autopilot install-plugin --dry-run --format json",
             "koru autopilot install-plugin",
             "koru autopilot install-unit",
-            (
-                "koru autonomous up --project "
-                f"{shlex.quote(project)} --ticket-sources queue "
-                "--idle-diagnostics quick --diagnostic-tickets "
-                "--autopilot-action off --max-cycles 1"
-            ),
+            f"koru autonomous safe-up --project {shlex.quote(project)}",
         ],
         "notes": [
             "`koru --doctor --fix` only prints guidance; it does not edit files.",

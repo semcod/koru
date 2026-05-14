@@ -7,6 +7,7 @@
 //
 // Wire protocol: see ../docs/autopilot-design.md.
 
+import * as fs from "fs";
 import * as net from "net";
 import * as vscode from "vscode";
 import { planDispatch } from "./dispatch-plan";
@@ -247,7 +248,11 @@ class AutopilotBridge {
 
   private send(env: Envelope): void {
     if (!this.socket) return;
-    this.socket.write(JSON.stringify(env) + "\n");
+    const line = JSON.stringify(env) + "\n";
+    try {
+      fs.appendFileSync("/tmp/koru-plugin-debug.log", new Date().toISOString() + " OUT " + line);
+    } catch { /* ignore */ }
+    this.socket.write(line);
   }
 
   private onData(chunk: string): void {

@@ -106,7 +106,7 @@ class TestDoctorDispatch(unittest.TestCase):
         code, output = _run_main("--doctor", "--fix", "--project", str(self.project))
         self.assertIn("Guided repair (--fix):", output)
         self.assertIn("koru autopilot doctor --fix", output)
-        self.assertIn("koru autonomous up --project", output)
+        self.assertIn("koru autonomous safe-up --project", output)
         self.assertIsInstance(code, int)
 
     def test_doctor_fix_json(self) -> None:
