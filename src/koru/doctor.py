@@ -29,6 +29,9 @@ in this order so reports diff cleanly across runs):
     koru_project_pipeline — root ``koru.yaml`` exists and parses when the
                         project is planfile-initialised (``SKIP`` before
                         ``.planfile/config.yaml``).
+    autonomous_environ — ``TICKET_SOURCES`` / idle-diag / WUP-related env vars
+                        for ``koru autonomous up`` (``FAIL`` on invalid
+                        ``TICKET_SOURCES``).
     koru_package_version — installed ``koru`` distribution version (``WARN`` if
                         metadata missing, e.g. bare source tree).
     planfile_cli_version — ``planfile --version`` / ``KORU_PLANFILE_CMD … --version``
@@ -52,6 +55,7 @@ from pathlib import Path
 
 import yaml
 
+from .autonomous_env import autonomous_environ_doctor_probe
 from .policy import policy_path
 from .project_pipeline import KORU_PROJECT_PIPELINE_FILENAME, project_pipeline_path
 from .runtime import planfile_dir, runtime_dir
@@ -140,6 +144,7 @@ def run_diagnostics(project: Path) -> DoctorReport:
         ("runtime_dir", _check_runtime_dir),
         ("policy_yaml", _check_policy_yaml),
         ("koru_project_pipeline", _check_koru_project_pipeline),
+        ("autonomous_environ", autonomous_environ_doctor_probe),
     ]
     if has_git:
         probes.append(("gitignore", _check_gitignore))

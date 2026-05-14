@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from pathlib import Path
 from typing import Final
 
 _VALID_TICKET_SOURCES: Final[frozenset[str]] = frozenset({"queue", "scan", "all"})
@@ -98,3 +99,29 @@ def apply_autonomous_env_overrides(args: argparse.Namespace) -> None:
         "WUP_DIAGNOSTIC_TICKETS", args.wup_diagnostic_tickets
     )
     args.wup_ticket_queue = os.environ.get("WUP_TICKET_QUEUE", args.wup_ticket_queue)
+
+
+def autonomous_environ_doctor_probe(project: Path) -> tuple[str, str]:
+    """Return ``(status, detail)`` for ``koru --doctor``; process-global, no I/O."""
+    del project
+    raw = os.environ.get("TICKET_SOURCES")
+    if raw is not None and str(raw).strip():
+        v = str(raw).strip().lower()
+        if v not in _VALID_TICKET_SOURCES:
+            return "fail", f"invalid TICKET_SOURCES={raw!r} (use queue|scan|all)"
+    bits: list[str] = []
+    if raw is not None and str(raw).strip():
+        bits.append(f"TICKET_SOURCES={str(raw).strip()}")
+    else:
+        bits.append("TICKET_SOURCES unset")
+    if _env_default_bool("ENABLE_IDLE_DIAGNOSTICS", False):
+        bits.append("ENABLE_IDLE_DIAGNOSTICS=true")
+    idp = os.environ.get("IDLE_DIAGNOSTICS_PROFILE")
+    if idp and str(idp).strip():
+        bits.append(f"IDLE_DIAGNOSTICS_PROFILE={str(idp).strip()}")
+    wm = os.environ.get("WUP_MODE")
+    if wm and str(wm).strip():
+        bits.append(f"WUP_MODE={str(wm).strip()}")
+    if _env_default_bool("ENABLE_DIAGNOSTIC_TICKETS", False):
+        bits.append("ENABLE_DIAGNOSTIC_TICKETS=true")
+    return "pass", "; ".join(bits)

@@ -28,8 +28,6 @@ from pathlib import Path
 from .agents import agent_lane_environment
 from .autonomous_env import (
     apply_autonomous_env_overrides as _env_apply_autoloop_defaults,
-)
-from .autonomous_env import (
     effective_ticket_source_flags as _effective_flags,
 )
 from .autonomous_wup import (
@@ -158,7 +156,9 @@ def _build_parser() -> argparse.ArgumentParser:
         default="all",
         help=(
             "queue: only existing queue tickets; scan: add `koru scan --apply`; "
-            "all: scan + all queues."
+            "all: scan + all queues. "
+            "Env TICKET_SOURCES=queue|scan|all overrides when set; invalid values "
+            "fail `koru --doctor` and are ignored at autonomous runtime (stderr)."
         ),
     )
     up.add_argument(

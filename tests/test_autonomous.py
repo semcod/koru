@@ -108,6 +108,26 @@ def test_ticket_sources_env_invalid_keeps_cli_queue(tmp_path, monkeypatch, capsy
     assert "unknown TICKET_SOURCES" in err
 
 
+def test_autonomous_environ_doctor_probe_invalid_ticket_sources(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("TICKET_SOURCES", "nope")
+    status, detail = autonomous_env_mod.autonomous_environ_doctor_probe(tmp_path)
+    assert status == "fail"
+    assert "invalid" in detail
+
+
+def test_autonomous_environ_doctor_probe_pass_summary(tmp_path, monkeypatch) -> None:
+    monkeypatch.delenv("TICKET_SOURCES", raising=False)
+    monkeypatch.delenv("WUP_MODE", raising=False)
+    monkeypatch.delenv("IDLE_DIAGNOSTICS_PROFILE", raising=False)
+    monkeypatch.delenv("ENABLE_IDLE_DIAGNOSTICS", raising=False)
+    monkeypatch.delenv("ENABLE_DIAGNOSTIC_TICKETS", raising=False)
+    monkeypatch.setenv("WUP_MODE", "testql")
+    status, detail = autonomous_env_mod.autonomous_environ_doctor_probe(tmp_path)
+    assert status == "pass"
+    assert "TICKET_SOURCES unset" in detail
+    assert "WUP_MODE=testql" in detail
+
+
 def test_queue_loop_result_summary_includes_waiting_ticket() -> None:
     empty = QueueLoopResult(
         iterations=1,

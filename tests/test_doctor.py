@@ -4,6 +4,7 @@ Each probe is exercised in at least one pass and one non-pass state.
 The renderer and the JSON shape are also verified — the LLM consumer
 relies on stable keys and order.
 """
+
 from __future__ import annotations
 
 import os
@@ -129,7 +130,28 @@ class TestPlanfileCliVersionProbe(unittest.TestCase):
             self.assertIn("9.8.7", detail)
 
 
-class TestGitRepoCheck(unittest.TestCase):
+class TestAutonomousEnvironDoctorIntegration(unittest.TestCase):
+    def test_doctor_includes_autonomous_environ_check(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            with patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"):
+                with patch.dict(os.environ, {"TICKET_SOURCES": "scan"}, clear=False):
+                    report = _run(project)
+            check = _named(report, "autonomous_environ")
+            self.assertEqual(check.status, PASS)
+            self.assertIn("TICKET_SOURCES=scan", check.detail)
+
+    def test_doctor_fails_on_invalid_ticket_sources_env(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            with patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"):
+                with patch.dict(os.environ, {"TICKET_SOURCES": "bogus"}, clear=False):
+                    report = _run(project)
+            self.assertEqual(_named(report, "autonomous_environ").status, FAIL)
+            self.assertTrue(report.has_failures)
+
     def test_warns_when_no_git(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
@@ -159,8 +181,7 @@ class TestPlanfileBinary(unittest.TestCase):
             project = Path(tmp)
             _scaffold(project)
             env = {k: v for k, v in os.environ.items() if k != "KORU_PLANFILE_CMD"}
-            with patch.dict(os.environ, env, clear=True), \
-                 patch("shutil.which", return_value=None):
+            with patch.dict(os.environ, env, clear=True), patch("shutil.which", return_value=None):
                 report = _run(project)
             self.assertEqual(_named(report, "planfile_binary").status, FAIL)
 
@@ -279,9 +300,7 @@ class TestPytestCollectProbe(unittest.TestCase):
         _scaffold(project)
         # The probe only registers when pyproject.toml or tests/ exists,
         # so we always provide one.
-        (project / "pyproject.toml").write_text(
-            "[project]\nname = 'test'\n", encoding="utf-8"
-        )
+        (project / "pyproject.toml").write_text("[project]\nname = 'test'\n", encoding="utf-8")
 
     def test_pass_when_collection_succeeds_with_count(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -314,7 +333,9 @@ class TestPytestCollectProbe(unittest.TestCase):
             project = Path(tmp)
             self._scaffold_with_pyproject(project)
             fake = SimpleNamespace(
-                returncode=0, stdout="collected 0 items", stderr="",
+                returncode=0,
+                stdout="collected 0 items",
+                stderr="",
             )
             with patch("subprocess.run", return_value=fake):
                 report = _run(project)
@@ -401,10 +422,16 @@ class TestReportShape(unittest.TestCase):
             project = Path(tmp)
             _scaffold(project)
             d = _run(project).to_dict()
-            self.assertEqual(set(d), {
-                "schema_version", "project", "summary",
-                "has_failures", "checks",
-            })
+            self.assertEqual(
+                set(d),
+                {
+                    "schema_version",
+                    "project",
+                    "summary",
+                    "has_failures",
+                    "checks",
+                },
+            )
             for check in d["checks"]:
                 self.assertEqual(set(check), {"name", "status", "detail"})
 
@@ -424,9 +451,7 @@ class TestReportShape(unittest.TestCase):
             _scaffold(project)
             report = _run(project)
             counts = report.summary()
-            self.assertEqual(
-                sum(counts.values()), len(report.checks)
-            )
+            self.assertEqual(sum(counts.values()), len(report.checks))
 
 
 if __name__ == "__main__":
