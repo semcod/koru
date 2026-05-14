@@ -4,6 +4,10 @@
 > Target: Windsurf, Cursor, VS Code
 > Version: 2026-05-14
 
+**See also:** [ide-router.md](ide-router.md) (CLI `koru ide-router`, headless merge) and
+[ide-control-surfaces.md](ide-control-surfaces.md) (full map: MCP, autopilot, RPC,
+DAP/tasks, profiles, Neovim, OS fallback).
+
 ## Architecture Overview
 
 ```

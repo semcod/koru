@@ -13,3 +13,33 @@ def test_ide_control_surfaces_doc_exists_with_key_sections() -> None:
     assert "DAP" in text or "Debug Adapter" in text
     assert "Neovim" in text
     assert "ide-router.md" in text
+
+
+def test_ide_router_doc_links_to_ide_control_surfaces() -> None:
+    root = Path(__file__).resolve().parent.parent
+    text = (root / "docs" / "ide-router.md").read_text(encoding="utf-8")
+    assert "ide-control-surfaces.md" in text
+
+
+def test_mcp_ide_flow_doc_links_to_ide_control_surfaces() -> None:
+    root = Path(__file__).resolve().parent.parent
+    text = (root / "docs" / "mcp-ide-flow.md").read_text(encoding="utf-8")
+    assert "ide-control-surfaces.md" in text
+
+
+def test_autopilot_design_doc_links_to_ide_control_surfaces() -> None:
+    root = Path(__file__).resolve().parent.parent
+    text = (root / "docs" / "autopilot-design.md").read_text(encoding="utf-8")
+    assert "ide-control-surfaces.md" in text
+
+
+def test_agent_guide_links_to_ide_control_surfaces() -> None:
+    root = Path(__file__).resolve().parent.parent
+    text = (root / "docs" / "agent-guide.md").read_text(encoding="utf-8")
+    assert "ide-control-surfaces.md" in text
+
+
+def test_readme_links_ide_control_surfaces() -> None:
+    root = Path(__file__).resolve().parent.parent
+    text = (root / "README.md").read_text(encoding="utf-8")
+    assert "docs/ide-control-surfaces.md" in text

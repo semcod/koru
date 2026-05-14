@@ -30,6 +30,13 @@
   is tracked separately as the closed-loop autonomy work in the roadmap.
 - Cross-machine driving. The unix socket is local-only.
 
+## Related documentation
+
+- [ide-control-surfaces.md](ide-control-surfaces.md) — broader IDE control options
+  beyond chat injection (RPC plugin, DAP/tasks, Neovim, OS injector backend).
+- [ide-router.md](ide-router.md) — `koru ide-router` and headless vs IDE-shell merge
+  for `--autopilot-ide` / `KORU_AUTOPILOT_IDE`.
+
 ## Components
 
 ```
