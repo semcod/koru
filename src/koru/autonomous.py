@@ -150,11 +150,50 @@ def _process_cwd(pid: int) -> Path | None:
         return None
 
 
+def _ancestor_pids(pid: int) -> set[int]:
+    """Return best-effort parent chain for ``pid`` on Linux."""
+    ancestors: set[int] = set()
+    current = pid
+    while current > 1:
+        stat_path = Path("/proc") / str(current) / "stat"
+        try:
+            stat_text = stat_path.read_text(encoding="utf-8")
+        except OSError:
+            break
+        parts = stat_text.split()
+        if len(parts) < 4:
+            break
+        try:
+            parent = int(parts[3])
+        except ValueError:
+            break
+        if parent <= 1 or parent in ancestors:
+            break
+        ancestors.add(parent)
+        current = parent
+    return ancestors
+
+
+def _looks_like_autonomous_up_command(command: str) -> bool:
+    parts = command.split()
+    for idx, part in enumerate(parts):
+        if Path(part).name == "koru" and parts[idx + 1 : idx + 3] == ["autonomous", "up"]:
+            return True
+        if (
+            part == "-m"
+            and idx + 3 < len(parts)
+            and parts[idx + 1] == "koru.cli"
+            and parts[idx + 2 : idx + 4] == ["autonomous", "up"]
+        ):
+            return True
+    return False
+
+
 def _find_existing_autonomous_processes(project: Path) -> list[ExistingAutonomousProcess]:
     """Return running ``koru autonomous up`` processes for ``project`` except this PID."""
     try:
         result = subprocess.run(
-            ["ps", "-eo", "pid=,command="],
+            ["ps", "-eo", "pid=,ppid=,command="],
             check=False,
             text=True,
             capture_output=True,
@@ -165,20 +204,23 @@ def _find_existing_autonomous_processes(project: Path) -> list[ExistingAutonomou
         return []
 
     current_pid = os.getpid()
+    excluded = {current_pid, *_ancestor_pids(current_pid)}
     project = project.resolve()
     matches: list[ExistingAutonomousProcess] = []
     for raw_line in result.stdout.splitlines():
         line = raw_line.strip()
         if not line:
             continue
-        pid_text, _, command = line.partition(" ")
+        pid_text, _, rest = line.partition(" ")
+        ppid_text, _, command = rest.strip().partition(" ")
         try:
             pid = int(pid_text)
+            ppid = int(ppid_text)
         except ValueError:
             continue
-        if pid == current_pid:
+        if pid in excluded or ppid in excluded:
             continue
-        if "koru" not in command or "autonomous" not in command or " up" not in f" {command} ":
+        if not _looks_like_autonomous_up_command(command):
             continue
 
         cwd = _process_cwd(pid)
@@ -203,6 +245,7 @@ def _find_existing_wup_processes(project: Path) -> list[ExistingManagedProcess]:
         return []
 
     current_pid = os.getpid()
+    excluded = {current_pid, *_ancestor_pids(current_pid)}
     project = project.resolve()
     matches: list[ExistingManagedProcess] = []
     for raw_line in result.stdout.splitlines():
@@ -216,7 +259,7 @@ def _find_existing_wup_processes(project: Path) -> list[ExistingManagedProcess]:
             ppid = int(second)
         except ValueError:
             continue
-        if pid == current_pid or ppid == current_pid:
+        if pid in excluded or ppid in excluded:
             continue
         if "wup" not in command or " watch " not in f" {command} ":
             continue
