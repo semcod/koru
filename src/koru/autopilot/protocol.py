@@ -74,7 +74,7 @@ _FIELD_SCHEMA: dict[str, frozenset[str] | None] = {
     "message.received": frozenset({"chat", "text", "summary"}),
     "status.error": frozenset({"message", "severity", "source"}),
     "chat.send": frozenset({"text", "submit"}),
-    "drive": frozenset({"text", "submit", "ide"}),
+    "drive": frozenset({"text", "submit", "ide", "require_plugin"}),
     "ping": frozenset(),
     "shutdown": frozenset(),
     "status": frozenset(),
@@ -170,8 +170,19 @@ def chat_send(text: str, *, submit: bool = True, id: str | None = None) -> Messa
     return Message(type="chat.send", id=id, data={"text": text, "submit": submit})
 
 
-def drive(text: str, *, submit: bool = True, ide: str = "auto", id: str | None = None) -> Message:
-    return Message(type="drive", id=id, data={"text": text, "submit": submit, "ide": ide})
+def drive(
+    text: str,
+    *,
+    submit: bool = True,
+    ide: str = "auto",
+    require_plugin: bool = False,
+    id: str | None = None,
+) -> Message:
+    return Message(
+        type="drive",
+        id=id,
+        data={"text": text, "submit": submit, "ide": ide, "require_plugin": require_plugin},
+    )
 
 
 def ack(reply_to: str, *, ok: bool = True, info: dict[str, Any] | None = None) -> Message:

@@ -64,9 +64,24 @@ class AutopilotClient:
             return False
         return bool(reply.data.get("ok", False))
 
-    def drive(self, text: str, *, submit: bool = True, ide: str = "auto") -> dict[str, Any]:
+    def drive(
+        self,
+        text: str,
+        *,
+        submit: bool = True,
+        ide: str = "auto",
+        require_plugin: bool = False,
+    ) -> dict[str, Any]:
         try:
-            reply = self.request(drive_msg(text, submit=submit, ide=ide, id="cli-drive"))
+            reply = self.request(
+                drive_msg(
+                    text,
+                    submit=submit,
+                    ide=ide,
+                    require_plugin=require_plugin,
+                    id="cli-drive",
+                )
+            )
             return reply.to_dict()
         except FileNotFoundError as exc:
             return {

@@ -4,11 +4,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.112-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$1.68-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-53.9h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.113-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$1.92-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-54.9h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $1.6787 (166 commits)
-- 👤 **Human dev:** ~$5391 (53.9h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $1.9216 (167 commits)
+- 👤 **Human dev:** ~$5491 (54.9h @ $100/h, 30min dedup)
 
 Generated on 2026-05-15 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -642,7 +642,7 @@ echo "=== Universal Quality Gates ==="
 # 2. TestQL E2E scenarios (when *.testql.toon.yaml files exist)
 testql suite --pattern "*.testql.toon.yaml" --output console --fail-fast
 
-# 3. WUP dependency analysis (when wup.yaml exists)
+# 3. WUP dependency analysis (semcod/wup, when wup.yaml exists)
 wup status
 
 # 4. Regix quality gates (when regix.yaml exists)
@@ -654,8 +654,30 @@ setup required for basic quality control. The universal gates ensure:
 
 - **Consistent quality** across all koru projects
 - **Automatic regression testing** with testQL scenarios
+- **Real-time regression monitoring** with `wup watch` when you want an
+  on-change loop for files and services
 - **Zero configuration** for basic validation
 - **Adaptive detection** of project-specific tooling
+
+For continuous monitoring, use the `semcod/wup` package directly:
+
+```bash
+wup map-deps
+wup testql-endpoints testql-scenarios
+wup watch . \
+  --deps deps.json \
+  --cpu-throttle 0.8 \
+  --mode testql \
+  --scenarios-dir testql-scenarios \
+  --testql-bin scripts/koru-wup-testql \
+  --track-dir .wup/tracks \
+  --quick-limit 3
+```
+
+`wup` watches the paths from `wup.yaml`, maps changed files to affected
+services, runs quick TestQL probes first, and writes live service status to
+`.wup/service-health.json`. Use `regix` separately for git/metric regressions
+against `HEAD`.
 
 ### Auto-promotion & auto-repair for blocking tickets
 

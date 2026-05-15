@@ -23,7 +23,13 @@ def _wup_topology_gate(project: Path, key: str, *, fallback: bool, enabled: bool
     if not enabled:
         return fallback
     try:
-        if key in {"idle-diagnostics", "autoloop:queue", "scan:on-change", "autopilot:drive"}:
+        if key in {
+            "idle-diagnostics",
+            "autoloop:queue",
+            "scan:on-change",
+            "autopilot:drive",
+            "gate:wup",
+        }:
             return is_pipeline_enabled(project, key)
         return is_component_enabled(project, key)
     except Exception:
@@ -74,6 +80,24 @@ def _build_wup_watch_config(args: argparse.Namespace, project: Path) -> WupWatch
     )
 
 
+def _resolve_wup_testql_bin(config: WupWatchConfig) -> str:
+    if config.testql_bin != "testql":
+        return config.testql_bin
+    project_wrapper = config.project / "scripts" / "koru-wup-testql"
+    if project_wrapper.is_file():
+        return str(project_wrapper)
+    installed_wrapper = shutil.which("koru-wup-testql")
+    if installed_wrapper is not None:
+        return installed_wrapper
+    return config.testql_bin
+
+
+def _wup_cpu_throttle_arg(value: float) -> str:
+    if value > 1:
+        value = value / 100
+    return str(value)
+
+
 def _wup_watch_command(config: WupWatchConfig) -> list[str]:
     command = [
         "wup",
@@ -82,7 +106,7 @@ def _wup_watch_command(config: WupWatchConfig) -> list[str]:
         "--deps",
         config.deps_file,
         "--cpu-throttle",
-        str(config.cpu_throttle),
+        _wup_cpu_throttle_arg(config.cpu_throttle),
         "--debounce",
         str(config.debounce),
         "--cooldown",
@@ -96,7 +120,7 @@ def _wup_watch_command(config: WupWatchConfig) -> list[str]:
                 "--scenarios-dir",
                 config.scenarios_dir,
                 "--testql-bin",
-                config.testql_bin,
+                _resolve_wup_testql_bin(config),
                 "--track-dir",
                 config.track_dir,
                 "--quick-limit",

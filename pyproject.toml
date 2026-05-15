@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "koru"
-version = "0.1.112"
+version = "0.1.113"
 description = "Closed-loop automation across semcod/* repositories."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -41,6 +41,7 @@ dev = [
 
 [project.scripts]
 koru = "koru.cli:main"
+koru-wup-testql = "koru.wup_testql_compat:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

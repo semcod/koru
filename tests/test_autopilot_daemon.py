@@ -234,6 +234,16 @@ def test_drive_falls_back_to_injector_when_no_plugin(running_daemon) -> None:
     assert injector.calls == [{"text": "hello there", "ide": "default", "submit": True}]
 
 
+def test_drive_require_plugin_blocks_keyboard_fallback(running_daemon) -> None:
+    _, client, injector = running_daemon
+    reply = client.drive("hello there", submit=True, ide="windsurf", require_plugin=True)
+    assert reply["ok"] is False
+    assert reply["type"] == "error"
+    assert "no connected autopilot plugin" in reply["message"]
+    assert "keyboard fallback disabled" in reply["message"]
+    assert injector.calls == []
+
+
 def test_drive_reports_injector_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     with _daemon(tmp_path, monkeypatch, injector=_StubInjector(fail=True)) as h:
         reply = h.client().drive("hi")

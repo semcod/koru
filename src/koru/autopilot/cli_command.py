@@ -279,6 +279,14 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Print what would be typed and exit without touching the keyboard.",
     )
     drive.add_argument(
+        "--require-plugin",
+        action="store_true",
+        help=(
+            "Require a connected IDE plugin; fail instead of falling back to global "
+            "keyboard injection."
+        ),
+    )
+    drive.add_argument(
         "--direct",
         action="store_true",
         help="Bypass the daemon and inject directly via local backends.",
@@ -493,6 +501,14 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Print the brief and exit; do not contact the daemon.",
     )
+    handoff.add_argument(
+        "--require-plugin",
+        action="store_true",
+        help=(
+            "Require a connected IDE plugin; fail instead of falling back to global "
+            "keyboard injection."
+        ),
+    )
 
     install_unit = sub.add_parser(
         "install-unit",
@@ -679,7 +695,12 @@ def _action_drive(args: argparse.Namespace) -> int:
         print(f"[dry-run] would send {len(text)} chars to daemon ide={args.ide}")
         return 0
     try:
-        reply = client.drive(text, submit=args.submit, ide=args.ide)
+        reply = client.drive(
+            text,
+            submit=args.submit,
+            ide=args.ide,
+            require_plugin=args.require_plugin,
+        )
     except (OSError, RuntimeError) as exc:
         print(f"koru autopilot drive: {exc}", file=sys.stderr)
         return 1
@@ -1004,7 +1025,12 @@ def _action_handoff(args: argparse.Namespace) -> int:
         )
         return 2
     try:
-        reply = client.drive(brief, submit=args.submit, ide=args.ide)
+        reply = client.drive(
+            brief,
+            submit=args.submit,
+            ide=args.ide,
+            require_plugin=args.require_plugin,
+        )
     except (OSError, RuntimeError) as exc:
         print(f"koru autopilot handoff: {exc}", file=sys.stderr)
         return 1

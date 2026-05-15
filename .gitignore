@@ -323,3 +323,6 @@ __marimo__/
 
 # koru runtime artefacts (generated)
 .planfile/.koru/
+.wup/
+deps.json
+testql-deps.json

@@ -84,6 +84,11 @@ def _status_in_skip_list(status: str, skip_statuses: str) -> bool:
     }
 
 
+def _allow_keyboard_autopilot_fallback() -> bool:
+    raw = os.environ.get("KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK", "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
 def _run_command_check(
     project: Path, check_id: str, command: list[str], *, stdio_format: str = "human"
 ) -> bool:
@@ -626,7 +631,12 @@ def run_cycle(
                 stagnation_streak=state.stagnation_streak,
             )
             autopilot_drive_kind = decision.kind
-            reply = client.drive(decision.prompt, submit=submit, ide=autopilot_ide)
+            reply = client.drive(
+                decision.prompt,
+                submit=submit,
+                ide=autopilot_ide,
+                require_plugin=not _allow_keyboard_autopilot_fallback(),
+            )
             ok = bool(reply.get("ok", True))
             autopilot_status = "ok" if ok else "failed"
             autopilot_backend = (

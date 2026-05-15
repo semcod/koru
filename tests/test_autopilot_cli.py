@@ -41,17 +41,26 @@ def test_drive_prompt_flag(
         def is_running(self) -> bool:
             return True
 
-        def drive(self, text: str, *, submit: bool = True, ide: str = "auto"):
+        def drive(
+            self,
+            text: str,
+            *,
+            submit: bool = True,
+            ide: str = "auto",
+            require_plugin: bool = False,
+        ):
             captured["text"] = text
             captured["submit"] = submit
             captured["ide"] = ide
+            captured["require_plugin"] = require_plugin
             return {"ok": True, "backend": "plugin"}
 
     monkeypatch.setattr(cli_command, "_client", lambda _a: _C())
-    rc = autopilot_main(["drive", "--prompt", "TAK", "--ide", "windsurf"])
+    rc = autopilot_main(["drive", "--prompt", "TAK", "--ide", "vscode", "--require-plugin"])
     assert rc == 0
     assert captured["text"] == "TAK"
-    assert captured["ide"] == "windsurf"
+    assert captured["ide"] == "vscode"
+    assert captured["require_plugin"] is True
     out = json.loads(capsys.readouterr().out)
     assert out["ok"] is True
 
@@ -657,8 +666,13 @@ def test_handoff_drives_brief_through_client(
         def is_running(self) -> bool:
             return True
 
-        def drive(self, text, *, submit=True, ide="auto"):
-            self.drive_called_with = {"text": text, "submit": submit, "ide": ide}
+        def drive(self, text, *, submit=True, ide="auto", require_plugin=False):
+            self.drive_called_with = {
+                "text": text,
+                "submit": submit,
+                "ide": ide,
+                "require_plugin": require_plugin,
+            }
             return {"ok": True, "delivered": True, "type": "ack"}
 
     fake = _FakeClient()
@@ -668,6 +682,7 @@ def test_handoff_drives_brief_through_client(
     assert fake.drive_called_with["text"] == "# the brief"
     assert fake.drive_called_with["submit"] is True
     assert fake.drive_called_with["ide"] == "auto"
+    assert fake.drive_called_with["require_plugin"] is False
     payload = json.loads(capsys.readouterr().out)
     assert payload["ok"] is True
     assert payload["chars"] == len("# the brief")

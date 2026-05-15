@@ -39,9 +39,6 @@ export function socketCandidatesFromEnv(ideId: string, override?: string): strin
   const explicit = (process.env.KORU_AUTOPILOT_SOCKET || "").trim();
   if (explicit) push(explicit);
 
-  // Default "single-instance" socket.
-  push(defaultSocketPathFromEnv());
-
   // Also try per-IDE instance sockets when env doesn't point there.
   // This matches common autonomous lanes: koru-autopilot-windsurf.sock, etc.
   const xdg = process.env.XDG_RUNTIME_DIR;
@@ -57,5 +54,10 @@ export function socketCandidatesFromEnv(ideId: string, override?: string): strin
     push(`/tmp/koru-autopilot-vscode-${uid}.sock`);
     push(`/tmp/koru-autopilot-cursor-${uid}.sock`);
   }
+
+  // Default "single-instance" socket last. A different project may have a
+  // healthy singleton daemon; autonomous lanes should prefer their per-IDE
+  // socket when no explicit override/env socket was provided.
+  push(defaultSocketPathFromEnv());
   return out;
 }

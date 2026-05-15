@@ -591,12 +591,33 @@ def test_resolve_autopilot_ide_headless_allow_yes(monkeypatch) -> None:
 
 def test_apply_agent_lane_environ_auto_cursor(tmp_path, monkeypatch) -> None:
     monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.delenv("VSCODE_NLS_CONFIG", raising=False)
+    monkeypatch.delenv("VSCODE_IPC_HOOK", raising=False)
+    monkeypatch.delenv("VSCODE_PID", raising=False)
+    monkeypatch.delenv("VSCODE_CWD", raising=False)
+    monkeypatch.delenv("VSCODE_CODE_CACHE_PATH", raising=False)
     monkeypatch.delenv("CI", raising=False)
     monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
     (tmp_path / ".cursor").mkdir()
     lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "auto")
     assert lane == "cursor"
     assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "cursor"
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+
+
+def test_apply_agent_lane_environ_auto_prefers_vscode_terminal(tmp_path, monkeypatch) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.setenv("VSCODE_NLS_CONFIG", "{}")
+    (tmp_path / ".windsurf").mkdir()
+    lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "auto")
+    assert lane == "vscode"
+    assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "vscode"
+    assert os.environ["KORU_AUTOPILOT_IDE"] == "vscode"
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
 
 
 def test_apply_agent_lane_environ_none_is_noop(tmp_path, monkeypatch) -> None:
@@ -814,6 +835,8 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
         "_start_or_reuse_daemon",
         lambda **kwargs: (FakeClient(), None, None),
     )
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
 
     rc = autonomous_mod.autonomous_main(
         [
@@ -835,7 +858,7 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
     )
 
     assert rc == 0
-    assert install_calls == ["cursor:koru-autopilot-local.sock"]
+    assert install_calls == ["cursor:koru-autopilot.sock"]
 
 
 def test_run_cycle_sends_fallback_prompt_when_waiting_input_empty_message(
@@ -884,6 +907,7 @@ def test_run_cycle_sends_fallback_prompt_when_waiting_input_empty_message(
     assert queue_result.last_status == "waiting_input"
     assert autopilot_status == "ok"
     assert len(drive_calls) == 1
+    assert drive_calls[0][1]["require_plugin"] is True
     sent_prompt = drive_calls[0][0]
     # Fallback prompt asks IDE to pick next ticket / update status
     assert "next" in sent_prompt.lower() or "continue" in sent_prompt.lower()
@@ -1214,6 +1238,10 @@ def test_run_idle_diagnostics_creates_deduped_ticket(tmp_path, monkeypatch) -> N
 
 
 def test_wup_watch_command_uses_testql_mode(tmp_path) -> None:
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    wrapper = scripts / "koru-wup-testql"
+    wrapper.write_text("#!/bin/sh\nexec testql \"$@\"\n", encoding="utf-8")
     config = autonomous_wup_mod.WupWatchConfig(
         enabled=True,
         mode="testql",
@@ -1234,6 +1262,65 @@ def test_wup_watch_command_uses_testql_mode(tmp_path) -> None:
     assert "testql" in command
     assert "--scenarios-dir" in command
     assert "--quick-limit" in command
+    assert str(wrapper) in command
+
+
+def test_wup_watch_command_keeps_explicit_testql_bin(tmp_path) -> None:
+    config = autonomous_wup_mod.WupWatchConfig(
+        enabled=True,
+        mode="testql",
+        project=tmp_path,
+        deps_file="deps.json",
+        scenarios_dir="testql-scenarios",
+        testql_bin="/usr/local/bin/testql",
+        track_dir=".wup/tracks",
+        debounce=2,
+        cooldown=300,
+        cpu_throttle=0.8,
+        quick_limit=3,
+        config=None,
+    )
+    command = autonomous_wup_mod._wup_watch_command(config)
+    assert "/usr/local/bin/testql" in command
+
+
+def test_wup_watch_command_normalizes_percent_cpu_throttle(tmp_path) -> None:
+    config = autonomous_wup_mod.WupWatchConfig(
+        enabled=True,
+        mode="default",
+        project=tmp_path,
+        deps_file="deps.json",
+        scenarios_dir="testql-scenarios",
+        testql_bin="testql",
+        track_dir=".wup/tracks",
+        debounce=2,
+        cooldown=300,
+        cpu_throttle=70,
+        quick_limit=3,
+        config=None,
+    )
+    command = autonomous_wup_mod._wup_watch_command(config)
+    assert command[command.index("--cpu-throttle") + 1] == "0.7"
+
+
+def test_wup_topology_gate_uses_pipeline_for_gate_wup(tmp_path, monkeypatch) -> None:
+    calls: list[str] = []
+
+    def fake_pipeline(_project: Path, key: str) -> bool:
+        calls.append(key)
+        return True
+
+    monkeypatch.setattr(autonomous_wup_mod, "is_pipeline_enabled", fake_pipeline)
+    monkeypatch.setattr(
+        autonomous_wup_mod,
+        "is_component_enabled",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("component lookup")),
+    )
+
+    assert autonomous_wup_mod._wup_topology_gate(
+        tmp_path, "gate:wup", fallback=False, enabled=True
+    )
+    assert calls == ["gate:wup"]
 
 
 def test_read_wup_health_creates_high_priority_planfile_ticket(tmp_path) -> None:

@@ -5,26 +5,34 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 75, shell: 36, yaml: 14, yml: 8, kotlin: 6
+- **Languages**: python: 84, shell: 36, yaml: 14, yml: 8, kotlin: 6
 - **Analysis Mode**: static
-- **Total Functions**: 729
-- **Total Classes**: 71
-- **Modules**: 152
-- **Entry Points**: 263
+- **Total Functions**: 832
+- **Total Classes**: 78
+- **Modules**: 161
+- **Entry Points**: 299
 
 ## Architecture by Module
 
 ### plugins.koru-autopilot-vscode.src.extension
-- **Functions**: 50
+- **Functions**: 64
 - **Classes**: 2
 - **File**: `extension.ts`
 
+### src.koru.cli
+- **Functions**: 48
+- **File**: `cli.py`
+
 ### src.koru.context
-- **Functions**: 42
+- **Functions**: 43
 - **File**: `context.py`
 
+### src.koru.autopilot.cli_command
+- **Functions**: 35
+- **File**: `cli_command.py`
+
 ### src.koru.autonomous
-- **Functions**: 33
+- **Functions**: 34
 - **Classes**: 4
 - **File**: `autonomous.py`
 
@@ -32,18 +40,19 @@
 - **Functions**: 32
 - **File**: `mcp_server.py`
 
-### src.koru.autopilot.cli_command
-- **Functions**: 31
-- **File**: `cli_command.py`
-
 ### services.healing-webhook.app
 - **Functions**: 27
 - **File**: `app.py`
 
 ### src.koru.autopilot.daemon
-- **Functions**: 26
+- **Functions**: 27
 - **Classes**: 2
 - **File**: `daemon.py`
+
+### src.koru.autopilot.os_injector
+- **Functions**: 24
+- **Classes**: 2
+- **File**: `os_injector.py`
 
 ### src.koru.mcp_provision
 - **Functions**: 21
@@ -53,6 +62,11 @@
 - **Functions**: 21
 - **Classes**: 2
 - **File**: `doctor.py`
+
+### src.koru.autopilot.injector
+- **Functions**: 20
+- **Classes**: 4
+- **File**: `injector.py`
 
 ### src.koru.bootstrap
 - **Functions**: 19
@@ -64,52 +78,47 @@
 - **Classes**: 2
 - **File**: `scan.py`
 
+### plugins.koru-autopilot-vscode.src.socketPath
+- **Functions**: 16
+- **File**: `socketPath.ts`
+
 ### src.koru.topology
 - **Functions**: 15
 - **Classes**: 1
 - **File**: `topology.py`
 
-### src.koru.autopilot.injector
+### src.koru.autopilot.ide
 - **Functions**: 15
-- **Classes**: 4
-- **File**: `injector.py`
+- **Classes**: 1
+- **File**: `ide.py`
 
-### src.koru.autopilot.protocol
-- **Functions**: 14
-- **Classes**: 2
-- **File**: `protocol.py`
+### src.koru.serve
+- **Functions**: 15
+- **Classes**: 1
+- **File**: `serve.py`
 
 ### scripts.koru-gate-capture
 - **Functions**: 14
 - **File**: `koru-gate-capture.py`
 
-### scripts.koru-autoloop
+### src.koru.autonomous_cycle
 - **Functions**: 14
-- **File**: `koru-autoloop.sh`
-
-### src.koru.serve
-- **Functions**: 13
-- **Classes**: 1
-- **File**: `serve.py`
-
-### src.koru.agents
-- **Functions**: 13
-- **Classes**: 1
-- **File**: `agents.py`
-
-### src.koru.autopilot.ide
-- **Functions**: 13
-- **Classes**: 1
-- **File**: `ide.py`
-
-### src.koru.autopilot.plugin_installer
-- **Functions**: 13
-- **Classes**: 1
-- **File**: `plugin_installer.py`
+- **Classes**: 2
+- **File**: `autonomous_cycle.py`
 
 ## Key Entry Points
 
 Main execution flows into the system:
+
+### src.koru.autonomous_cycle.run_cycle
+- **Calls**: src.koru.autonomous_cycle._drain_autopilot_events, src.koru.run_log.RunLogWriter._emit, src.koru.autonomous_cycle._queue_loop_waiting_ticket_label, DiagnosticResult, WupHealthResult, src.koru.run_log.RunLogWriter._emit, src.koru.run_log.RunLogWriter._emit, src.koru.run_log.RunLogWriter._emit
+
+### src.koru.autonomous_parser.build_parser
+- **Calls**: argparse.ArgumentParser, parser.add_argument, parser.add_subparsers, sub.add_parser, doctor.add_argument, sub.add_parser, heal.add_argument, heal.add_argument
+
+### src.koru.autonomy.config.AutonomyConfig.from_env
+> Create config from environment variables (shell compatibility).
+- **Calls**: os.getenv, cls, None.strip, max, Path, os.getenv, os.getenv, src.koru.autonomy.env.env_truthy
 
 ### src.koru.queue.runners.run_llm_request
 > Call an OpenAI-compatible chat-completion endpoint (default OpenRouter).
@@ -118,27 +127,36 @@ Reads ``OPENROUTER_API_KEY`` from the environment when ``endpoint``
 points a
 - **Calls**: str, str, request.get, messages.append, request.get, os.getenv, os.getenv, urllib.request.Request
 
-### src.koru.autonomy.config.AutonomyConfig.from_env
-> Create config from environment variables (shell compatibility).
-- **Calls**: cls, Path, os.getenv, os.getenv, src.koru.autonomy.env.env_truthy, int, int, int
+### src.koru.autopilot.daemon.AutopilotDaemon._drive_via_keyboard
+> Fallback: OS injector profile (X11) or :class:`Injector` keyboard sim.
+- **Calls**: src.koru.autopilot.ide.detect_running_ides, src.koru.autopilot.ide.pick_target, self._send, self.log, self.audit.record, self._try_os_injector_drive, self.injector.type_text, target.to_dict
+
+### src.koru.autopilot.cli_command._action_drive
+- **Calls**: src.koru.autopilot.cli_command._client, scripts.planfile-export-prompt.print, None.strip, None.strip, scripts.planfile-export-prompt.print, Injector, src.koru.autopilot.cli_command._resolve_direct_injection_ids, scripts.planfile-export-prompt.print
 
 ### src.koru.autopilot.daemon.AutopilotDaemon._handle_plugin_event
 - **Calls**: self.log, self._append_event, self.audit.record, None.encode, self._send, time.monotonic, len, self._send
-
-### src.koru.cli._topology_main
-- **Calls**: None.parse_args, args.project.resolve, src.koru.topology.load_topology, src.koru.topology.load_topology, None.get, None.get, isinstance, scripts.planfile-export-prompt.print
 
 ### src.koru.mcp_server.tool_run_ticket
 > Run the koru pipeline for a single ticket.
 - **Calls**: None.resolve, arguments.get, arguments.get, arguments.get, arguments.get, arguments.get, arguments.get, arguments.get
 
+### src.koru.cli._topology_main
+- **Calls**: None.parse_args, args.project.resolve, src.koru.topology.load_topology, src.koru.topology.load_topology, None.get, None.get, isinstance, scripts.planfile-export-prompt.print
+
 ### src.koru.queue.runners.run_api_request
 > Execute an HTTP API request.
 - **Calls**: request.get, urllib.request.Request, float, str, str, None.encode, headers.setdefault, str
 
+### src.koru.autonomous_diagnostics.run_idle_diagnostics
+- **Calls**: profile.lower, stdio_info, shutil.which, diagnostic_state_dir.mkdir, make_result, stdio_info, make_result, is_topology_enabled
+
 ### src.koru.autonomy.env.autonomous_environ_doctor_probe
 > Return ``(status, detail)`` for ``koru --doctor``; process-global, no I/O.
 - **Calls**: os.environ.get, src.koru.autonomy.env.env_truthy, os.environ.get, os.environ.get, src.koru.autonomy.env.env_truthy, None.strip, None.lower, None.strip
+
+### src.koru.autopilot.cli_command._action_session_start
+- **Calls**: src.koru.autopilot.cli_command._resolve_session_ides, max, captured.items, scripts.planfile-export-prompt.print, scripts.planfile-export-prompt.print, float, scripts.planfile-export-prompt.print, time.sleep
 
 ### src.koru.cli._gc_main
 - **Calls**: None.parse_args, frozenset, src.koru.gc.run_gc, src.koru.events.emit_management_event, args.project.resolve, scripts.planfile-export-prompt.print, src.koru.cli._build_gc_parser, s.strip
@@ -178,8 +196,11 @@ syntact
 > Human-readable rendering — fixed-width status column.
 - **Calls**: lines.append, lines.append, max, report.summary, sum, counts.get, counts.get, counts.get
 
-### src.koru.autopilot.cli_command._action_drive
-- **Calls**: src.koru.autopilot.cli_command._client, scripts.planfile-export-prompt.print, None.strip, None.strip, scripts.planfile-export-prompt.print, Injector, scripts.planfile-export-prompt.print, client.is_running
+### src.koru.autopilot.injector.Injector._type_with_backend
+- **Calls**: src.koru.autopilot.injector._extra_enter_count, self._call, self._call, range, self._call, self._call, self._press_wtype, range
+
+### src.koru.autopilot.daemon.AutopilotDaemon._handle_drive
+- **Calls**: msg.data.get, bool, bool, self._plugin_for, self._drive_via_keyboard, self._send, isinstance, msg.data.get
 
 ### services.healing-webhook.app.alertmanager_webhook
 > Accept the Alertmanager webhook payload (v4).
@@ -192,10 +213,6 @@ syntact
 ### src.koru.autopilot.daemon.AutopilotDaemon._on_readable
 - **Calls**: client.buf.extend, client.sock.recv, self._drop, len, self._send, self._drop, client.buf.partition, bytearray
 
-### src.koru.autopilot.daemon.AutopilotDaemon._drive_via_keyboard
-> Fallback: type the text via the local keyboard injector.
-- **Calls**: src.koru.autopilot.ide.detect_running_ides, src.koru.autopilot.ide.pick_target, self._send, self.log, self.audit.record, self.injector.type_text, target.to_dict, None.encode
-
 ### src.koru.agent_backends.load_agent_integration_config
 > Load ``ide_integration`` from ``<project>/koru.yaml`` if present.
 - **Calls**: data.get, block.get, block.get, raw_lanes.items, AgentIntegrationConfig, path.is_file, isinstance, isinstance
@@ -203,52 +220,68 @@ syntact
 ### src.koru.cli._tools_main
 - **Calls**: None.parse_args, src.koru.tools.load_tool_registry, src.koru.tools.detect_tools, src.koru.events.emit_management_event, scripts.planfile-export-prompt.print, args.project.resolve, scripts.planfile-export-prompt.print, scripts.planfile-export-prompt.print
 
-### src.koru.autopilot.cli_command._action_handoff
-> P2.5: build the koru brief and pipe it through ``drive``.
-- **Calls**: args.project.resolve, src.koru.autopilot.cli_command._client, scripts.planfile-export-prompt.print, src.koru.autopilot.cli_command._build_brief, brief.strip, scripts.planfile-export-prompt.print, scripts.planfile-export-prompt.print, client.is_running
-
-### src.koru.autopilot.cli_command._action_install_unit
-> P2.6: install the systemd --user service unit.
-- **Calls**: src.koru.autopilot.cli_command._resolve_koru_bin, src.koru.autopilot.cli_command._render_unit, scripts.planfile-export-prompt.print, scripts.planfile-export-prompt.print, scripts.planfile-export-prompt.print, scripts.planfile-export-prompt.print, scripts.planfile-export-prompt.print, scripts.planfile-export-prompt.print
-
-### src.koru.doctor._check_planfile_sprints
-- **Calls**: sorted, src.koru.runtime.planfile_dir, sprints.is_dir, sprints.glob, data.get, isinstance, yaml.safe_load, isinstance
-
-### services.healing-webhook.app._run_vallm_validate
-> Full pipeline including LLM-as-judge (tier 2). Slower; uses LLM API key.
-- **Calls**: cmd.extend, subprocess.run, None.set, None.inc, _json.loads, float, None.inc, None.inc
-
-### src.koru.cli._scan_main
-- **Calls**: None.parse_args, src.koru.scan.run_scan, src.koru.events.emit_management_event, scripts.planfile-export-prompt.print, src.koru.cli._build_scan_parser, args.project.resolve, json.dumps, scripts.planfile-export-prompt.print
-
-### src.koru.mcp_server.tool_propose_edits
-> Generate proposed file edits for a ticket (read-only, no writes).
-- **Calls**: None.resolve, arguments.get, src.koru.mcp_server._find_ticket, inputs.get, ticket.get, arguments.get, src.koru.context.build_context, ctx.get
-
-### scripts.koru-gate-capture.main
-- **Calls**: scripts.koru-gate-capture._parse_args, None.resolve, scripts.koru-gate-capture._run_gate_command, scripts.koru-gate-capture._matched_failure_line, scripts.koru-gate-capture._existing_finding_tickets, scripts.koru-gate-capture._handle_existing_finding, scripts.koru-gate-capture._create_ticket, scripts.planfile-export-prompt.print
+### src.koru.autopilot.cli_command._action_calibrate
+- **Calls**: None.strip, max, scripts.planfile-export-prompt.print, time.sleep, raw.lower, src.koru.autopilot.cli_command._resolve_direct_injection_ids, float, oi.capture_mouse_xy
 
 ## Process Flows
 
 Key execution flows identified:
 
-### Flow 1: run_llm_request
+### Flow 1: run_cycle
+```
+run_cycle [src.koru.autonomous_cycle]
+  └─> _drain_autopilot_events
+      └─> _autopilot_event_path
+  └─> _queue_loop_waiting_ticket_label
+  └─ →> _emit
+      └─ →> print
+```
+
+### Flow 2: build_parser
+```
+build_parser [src.koru.autonomous_parser]
+```
+
+### Flow 3: from_env
+```
+from_env [src.koru.autonomy.config.AutonomyConfig]
+```
+
+### Flow 4: run_llm_request
 ```
 run_llm_request [src.koru.queue.runners]
 ```
 
-### Flow 2: from_env
+### Flow 5: _drive_via_keyboard
 ```
-from_env [src.koru.autonomy.config.AutonomyConfig]
-  └─ →> env_truthy
+_drive_via_keyboard [src.koru.autopilot.daemon.AutopilotDaemon]
+  └─ →> detect_running_ides
+      └─> _iter_proc_pids
+      └─> _read_comm
+  └─ →> pick_target
+      └─> focused_ide
+          └─> detect_focused_ide_id
 ```
 
-### Flow 3: _handle_plugin_event
+### Flow 6: _action_drive
+```
+_action_drive [src.koru.autopilot.cli_command]
+  └─> _client
+  └─ →> print
+  └─ →> print
+```
+
+### Flow 7: _handle_plugin_event
 ```
 _handle_plugin_event [src.koru.autopilot.daemon.AutopilotDaemon]
 ```
 
-### Flow 4: _topology_main
+### Flow 8: tool_run_ticket
+```
+tool_run_ticket [src.koru.mcp_server]
+```
+
+### Flow 9: _topology_main
 ```
 _topology_main [src.koru.cli]
   └─ →> load_topology
@@ -261,50 +294,16 @@ _topology_main [src.koru.cli]
       └─ →> detect_semcod_tools
 ```
 
-### Flow 5: tool_run_ticket
-```
-tool_run_ticket [src.koru.mcp_server]
-```
-
-### Flow 6: run_api_request
+### Flow 10: run_api_request
 ```
 run_api_request [src.koru.queue.runners]
-```
-
-### Flow 7: autonomous_environ_doctor_probe
-```
-autonomous_environ_doctor_probe [src.koru.autonomy.env]
-  └─> env_truthy
-  └─> env_truthy
-```
-
-### Flow 8: _gc_main
-```
-_gc_main [src.koru.cli]
-  └─ →> run_gc
-      └─> collect_gc_candidates
-          └─> _now_utc
-          └─> _load_tickets_from_sprint
-  └─ →> emit_management_event
-```
-
-### Flow 9: _read_wup_health
-```
-_read_wup_health [src.koru.autonomous_wup]
-```
-
-### Flow 10: _task_main
-```
-_task_main [src.koru.cli]
-  └─ →> print
-  └─ →> print
 ```
 
 ## Key Classes
 
 ### plugins.koru-autopilot-vscode.src.extension.AutopilotBridge
-- **Methods**: 50
-- **Key Methods**: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.p, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.sock, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.disconnect, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.clearTimeout, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.scheduleRetry, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.delay
+- **Methods**: 62
+- **Key Methods**: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.tryConnectNext, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.p, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.debugLog, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.sock
 
 ### src.koru.autopilot.daemon.AutopilotDaemon
 > Selector-based unix-socket broker.
@@ -313,7 +312,7 @@ Parameters
 ----------
 socket_path:
     Where to bind. Defaults t
-- **Methods**: 23
+- **Methods**: 24
 - **Key Methods**: src.koru.autopilot.daemon.AutopilotDaemon.__init__, src.koru.autopilot.daemon.AutopilotDaemon.start, src.koru.autopilot.daemon.AutopilotDaemon.serve_forever, src.koru.autopilot.daemon.AutopilotDaemon.stop, src.koru.autopilot.daemon.AutopilotDaemon._shutdown, src.koru.autopilot.daemon.AutopilotDaemon._accept, src.koru.autopilot.daemon.AutopilotDaemon._on_readable, src.koru.autopilot.daemon.AutopilotDaemon._dispatch, src.koru.autopilot.daemon.AutopilotDaemon._send, src.koru.autopilot.daemon.AutopilotDaemon._drop
 
 ### src.koru.autopilot.injector.Injector
@@ -323,8 +322,8 @@ Parameters
 ----------
 session:
     Overri
-- **Methods**: 8
-- **Key Methods**: src.koru.autopilot.injector.Injector.probe, src.koru.autopilot.injector.Injector._candidate_backends, src.koru.autopilot.injector.Injector.select_backend, src.koru.autopilot.injector.Injector._type_with_backend, src.koru.autopilot.injector.Injector.type_text, src.koru.autopilot.injector.Injector._probe_one, src.koru.autopilot.injector.Injector._call, src.koru.autopilot.injector.Injector._press_wtype
+- **Methods**: 9
+- **Key Methods**: src.koru.autopilot.injector.Injector.probe, src.koru.autopilot.injector.Injector._candidate_backends, src.koru.autopilot.injector.Injector.select_backend, src.koru.autopilot.injector.Injector._type_with_backend, src.koru.autopilot.injector.Injector.type_text, src.koru.autopilot.injector.Injector.submit_only, src.koru.autopilot.injector.Injector._probe_one, src.koru.autopilot.injector.Injector._call, src.koru.autopilot.injector.Injector._press_wtype
 
 ### src.koru.autopilot.client.AutopilotClient
 > Connect, send one message, read one reply, disconnect.
@@ -398,11 +397,6 @@ The constructor is intentionally permissive — extra fields land in
 - **Methods**: 1
 - **Key Methods**: src.koru.queue_clean.CleanupReport.to_dict
 
-### src.koru.init.InitReport
-> Summary of what ``init_project`` actually changed on disk.
-- **Methods**: 1
-- **Key Methods**: src.koru.init.InitReport.summary
-
 ### src.koru.doctor.Check
 > A single diagnostic outcome.
 - **Methods**: 1
@@ -417,6 +411,11 @@ The constructor is intentionally permissive — extra fields land in
 > One proposed planfile ticket derived from a repo signal.
 - **Methods**: 1
 - **Key Methods**: src.koru.scan.Suggestion.to_dict
+
+### src.koru.scan.ScanResult
+> Aggregate output of ``run_scan``.
+- **Methods**: 1
+- **Key Methods**: src.koru.scan.ScanResult.to_dict
 
 ## Data Transformation Functions
 
@@ -441,13 +440,6 @@ Cheap pre-flight gate: block
 
 ### services.healing-webhook.ticket_builder._format_acceptance
 - **Output to**: None.join
-
-### src.koru.agent_backends._parse_lane
-- **Output to**: raw.get, raw.get, raw.get, raw.get, raw.get
-
-### src.koru.agent_backends.validate_agent_integration_config
-> Return human-readable validation errors (empty list when OK).
-- **Output to**: config.lanes.items, errors.append, src.koru.agent_backends.get_agent_backend_profile, errors.append
 
 ### src.koru.watch.format_queue_event
 > Return a compact human-readable line for a planfile WebSocket event.
@@ -499,58 +491,76 @@ Returns them in insertion order so callers ca
 > Validate a flat pipeline. Returns a list of errors (empty == valid).
 - **Output to**: set, errors.extend, src.koru.bootstrap._validate_task, errors.extend, task.get
 
-### src.koru.cli._build_parser
-- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.add_argument, parser.add_argument
+### src.koru.queue_clean._parse_age_days
+> Best-effort parse of a ticket's age in days from ``created_at``.
+- **Output to**: max, ticket.get, ticket.get, datetime.fromisoformat, created.replace
 
-### src.koru.cli._build_tools_parser
-- **Output to**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, detect.add_argument, detect.add_argument
+### src.koru.gc._parse_ts
+> Best-effort ISO-8601 timestamp parse.
+- **Output to**: datetime.fromisoformat, raw.replace
 
-### src.koru.cli._build_task_parser
-- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.add_argument, parser.add_argument
+### src.koru.agents.format_agent_lane_exports
+> POSIX ``export`` lines for eval in bash/zsh.
+- **Output to**: sorted, val.replace, env.keys, lines.append, None.join
 
-### src.koru.cli._build_serve_parser
-- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.add_argument, parser.add_argument
+### src.koru.stdio_events.default_stdio_format_from_env
+- **Output to**: None.lower, None.strip, os.environ.get
 
-### src.koru.cli._build_local_serve_parser
-- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.add_argument
+### src.koru.dotenv_loader._parse_value
+> Strip surrounding quotes and trailing whitespace from a raw value.
+- **Output to**: raw.strip, len, None.replace, None.replace, None.replace
 
-### src.koru.cli._build_scan_parser
-- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.add_argument, parser.add_argument
+### src.koru.dotenv_loader.parse_dotenv
+> Return the ``KEY=value`` pairs from a ``.env``-style text.
+- **Output to**: text.splitlines, raw_line.strip, _LINE_RE.match, src.koru.dotenv_loader._parse_value, line.startswith
+
+### src.koru.mcp_server._get_process_memory_mb
+> Get process memory usage in MB.
+- **Output to**: psutil.Process, process.memory_info
+
+### src.koru.mcp_server._monitor_subprocess_oom
+> Monitor subprocess for OOM conditions.
+
+Returns (should_kill, logs) tuple.
+- **Output to**: proc.poll, src.koru.mcp_server._get_process_memory_mb, time.sleep, logs.append, logs.append
 
 ## Behavioral Patterns
 
 ### state_machine_AutopilotBridge
 - **Type**: state_machine
 - **Confidence**: 0.70
-- **Functions**: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.p
+- **Functions**: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg
 
 ## Public API Surface
 
 Functions exposed as public API (no underscore prefix):
 
+- `src.koru.autonomous_cycle.run_cycle` - 120 calls
+- `src.koru.autonomous_parser.build_parser` - 64 calls
 - `src.koru.agents.detect_agent_options` - 61 calls
 - `src.koru.queue.runner.run_next_planfile_task` - 50 calls
+- `src.koru.autonomy.config.AutonomyConfig.from_env` - 50 calls
+- `src.koru.context.render_markdown_handoff` - 47 calls
 - `src.koru.queue.runners.run_llm_request` - 46 calls
-- `src.koru.context.render_markdown_handoff` - 45 calls
+- `src.koru.autonomy.env.apply_autoloop_env_to_args` - 45 calls
 - `src.koru.policy.load_policy` - 43 calls
-- `src.koru.autonomy.config.AutonomyConfig.from_env` - 43 calls
 - `src.koru.tasks.create_nl_task` - 39 calls
 - `src.koru.watch.format_queue_event` - 35 calls
 - `src.koru.mcp_server.tool_run_ticket` - 33 calls
+- `src.koru.autopilot.plugin_installer.install_plugin_for_ide` - 32 calls
 - `scripts.planfile-sync-todo.do_from_todo` - 31 calls
-- `src.koru.autonomy.env.apply_autoloop_env_to_args` - 30 calls
 - `src.koru.queue.runners.run_api_request` - 30 calls
-- `src.koru.autopilot.plugin_installer.install_plugin_for_ide` - 30 calls
+- `src.koru.autonomous_diagnostics.run_idle_diagnostics` - 30 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
 - `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
 - `src.koru.tools.detect_tools` - 25 calls
 - `src.koru.scan.scan_pytest_collect` - 24 calls
 - `src.koru.gate.parse_authorizations` - 22 calls
 - `src.koru.agents.detect_project_environment` - 22 calls
+- `src.koru.init.init_project` - 22 calls
 - `services.healing-webhook.app.heal_vallm_validate` - 21 calls
 - `services.healing-webhook.app.probe_failure` - 21 calls
 - `src.koru.tools.build_tool_task_scaffold` - 21 calls
-- `src.koru.init.init_project` - 21 calls
 - `src.koru.doctor.render_text` - 21 calls
 - `src.koru.gc.collect_gc_candidates` - 21 calls
 - `src.koru.autopilot.protocol.decode` - 21 calls
@@ -559,15 +569,12 @@ Functions exposed as public API (no underscore prefix):
 - `services.healing-webhook.app.alertmanager_webhook` - 19 calls
 - `src.koru.queue_clean.find_candidates` - 19 calls
 - `src.koru.mcp_server.tool_list_tickets` - 19 calls
-- `src.koru.agent_backends.load_agent_integration_config` - 18 calls
+- `src.koru.autopilot.os_injector.inject_with_profile` - 19 calls
 - `src.koru.loop.run_closed_loop` - 18 calls
+- `src.koru.init_host_environment.build_host_environment_report` - 18 calls
+- `src.koru.agent_backends.load_agent_integration_config` - 18 calls
+- `src.koru.autopilot.plugin_installer.resolve_extension_vsix` - 18 calls
 - `src.koru.serve.serve` - 18 calls
-- `src.koru.mcp_provision.ensure_koru_mcp_not_disabled` - 17 calls
-- `src.koru.autonomy.environment.probe_ide_presence` - 17 calls
-- `src.koru.gate.authorize_gate` - 16 calls
-- `src.koru.bootstrap.materialize_to_planfile` - 16 calls
-- `src.koru.mcp_server.tool_propose_edits` - 16 calls
-- `scripts.koru-gate-capture.main` - 16 calls
 
 ## System Interactions
 
@@ -575,36 +582,36 @@ How components interact:
 
 ```mermaid
 graph TD
+    run_cycle --> _drain_autopilot_eve
+    run_cycle --> _emit
+    run_cycle --> _queue_loop_waiting_
+    run_cycle --> DiagnosticResult
+    run_cycle --> WupHealthResult
+    build_parser --> ArgumentParser
+    build_parser --> add_argument
+    build_parser --> add_subparsers
+    build_parser --> add_parser
+    from_env --> getenv
+    from_env --> cls
+    from_env --> strip
+    from_env --> max
+    from_env --> Path
     run_llm_request --> str
     run_llm_request --> get
     run_llm_request --> append
-    from_env --> cls
-    from_env --> Path
-    from_env --> getenv
-    from_env --> env_truthy
+    _drive_via_keyboard --> detect_running_ides
+    _drive_via_keyboard --> pick_target
+    _drive_via_keyboard --> _send
+    _drive_via_keyboard --> log
+    _drive_via_keyboard --> record
+    _action_drive --> _client
+    _action_drive --> print
+    _action_drive --> strip
     _handle_plugin_event --> log
     _handle_plugin_event --> _append_event
     _handle_plugin_event --> record
     _handle_plugin_event --> encode
     _handle_plugin_event --> _send
-    _topology_main --> parse_args
-    _topology_main --> resolve
-    _topology_main --> load_topology
-    _topology_main --> get
-    tool_run_ticket --> resolve
-    tool_run_ticket --> get
-    run_api_request --> get
-    run_api_request --> Request
-    run_api_request --> float
-    run_api_request --> str
-    autonomous_environ_d --> get
-    autonomous_environ_d --> env_truthy
-    _gc_main --> parse_args
-    _gc_main --> frozenset
-    _gc_main --> run_gc
-    _gc_main --> emit_management_even
-    _gc_main --> resolve
-    _read_wup_health --> is_file
 ```
 
 ## Reverse Engineering Guidelines

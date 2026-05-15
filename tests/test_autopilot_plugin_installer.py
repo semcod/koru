@@ -79,7 +79,7 @@ def test_install_plugin_configures_socket_path(
     def fake_runner(cmd, **_kwargs):
         if cmd[1] == "--list-extensions":
             return subprocess.CompletedProcess(cmd, 0, stdout=plugin_installer.EXTENSION_ID, stderr="")
-        if cmd[1] == "--install-extension" and cmd[2] == plugin_installer.EXTENSION_ID:
+        if cmd[1] == "--install-extension" and cmd[2] == str(vsix) and cmd[3] == "--force":
             return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
         raise AssertionError(f"unexpected cmd {cmd}")
 
@@ -97,6 +97,48 @@ def test_install_plugin_configures_socket_path(
         encoding="utf-8"
     )
     assert "reassert rc=0" in result.message
+    assert result.command == ["/usr/bin/windsurf", "--install-extension", str(vsix), "--force"]
+
+
+def test_install_plugin_targets_vscodium_from_integrated_terminal(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    vsix = tmp_path / "koru-autopilot-0.1.8.vsix"
+    vsix.write_text("fake", encoding="utf-8")
+    socket_path = tmp_path / "koru-autopilot-vscode.sock"
+    config_home = tmp_path / "config"
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(config_home))
+    monkeypatch.setenv("VSCODE_PID", "123")
+    monkeypatch.setenv("VSCODE_NLS_CONFIG", "/snap/codium/current/resources/app")
+    monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda: vsix)
+    monkeypatch.setattr(
+        plugin_installer.shutil,
+        "which",
+        lambda name: f"/usr/bin/{name}" if name in {"code", "codium"} else None,
+    )
+
+    def fake_runner(cmd, **_kwargs):
+        assert cmd[0] == "/usr/bin/codium"
+        if cmd[1] == "--list-extensions":
+            return subprocess.CompletedProcess(cmd, 0, stdout=plugin_installer.EXTENSION_ID, stderr="")
+        if cmd[1] == "--install-extension":
+            return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
+        raise AssertionError(f"unexpected cmd {cmd}")
+
+    result = plugin_installer.install_plugin_for_ide(
+        ide="vscode",
+        socket_path=socket_path,
+        runner=fake_runner,
+    )
+
+    settings_path = config_home / "VSCodium" / "User" / "settings.json"
+    assert result.status == "already_installed"
+    assert result.settings_path == str(settings_path)
+    assert f'"{plugin_installer.SOCKET_SETTING_KEY}": "{socket_path}"' in settings_path.read_text(
+        encoding="utf-8"
+    )
 
 
 def test_install_plugin_skips_when_extension_already_installed(monkeypatch) -> None:

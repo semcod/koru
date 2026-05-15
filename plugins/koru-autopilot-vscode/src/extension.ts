@@ -21,6 +21,15 @@ interface Envelope {
 
 let activeBridge: AutopilotBridge | null = null;
 
+function debugLog(message: string, data?: unknown): void {
+  try {
+    const suffix = data === undefined ? "" : " " + JSON.stringify(data);
+    fs.appendFileSync("/tmp/koru-plugin-debug.log", `${new Date().toISOString()} ${message}${suffix}\n`);
+  } catch {
+    /* ignore */
+  }
+}
+
 class AutopilotBridge {
   private socket: net.Socket | null = null;
   private buf = "";
@@ -50,6 +59,11 @@ class AutopilotBridge {
     const override = (cfg.get<string>("socketPath") || "").trim();
     this.connectCandidates = socketCandidatesFromEnv(this.detectIde(), override);
     this.connectIndex = 0;
+    debugLog("CONNECT_CANDIDATES", {
+      ide: this.detectIde(),
+      override,
+      candidates: this.connectCandidates,
+    });
     this.tryConnectNext();
   }
 
@@ -61,6 +75,7 @@ class AutopilotBridge {
       return;
     }
     const p = this.connectCandidates[this.connectIndex++];
+    debugLog("CONNECT_TRY", { path: p });
     const sock = net.createConnection(p);
     sock.setEncoding("utf-8");
     let connected = false;
@@ -69,6 +84,7 @@ class AutopilotBridge {
       this.socket = sock;
       this.status.text = "$(plug) koru: on";
       this.status.tooltip = `koru autopilot: connected ${p}`;
+      debugLog("CONNECT_OK", { path: p, ide: this.detectIde() });
       this.send({
         type: "hello",
         id: "vscode-hello",
@@ -79,6 +95,7 @@ class AutopilotBridge {
     });
     sock.on("data", (chunk: string) => this.onData(chunk));
     sock.on("error", (err: Error) => {
+      debugLog("CONNECT_ERROR", { path: p, connected, message: err.message });
       if (!connected) {
         // Try next candidate immediately on initial connect failure.
         try { sock.destroy(); } catch { /* ignore */ }
@@ -90,6 +107,7 @@ class AutopilotBridge {
       this.scheduleRetry();
     });
     sock.on("close", () => {
+      debugLog("CONNECT_CLOSE", { path: p, connected });
       if (!connected) return;
       this.status.text = "$(plug) koru: off";
       this.socket = null;
@@ -98,6 +116,7 @@ class AutopilotBridge {
   }
 
   disconnect(): void {
+    debugLog("DISCONNECT");
     if (this.retryTimer) {
       clearTimeout(this.retryTimer);
       this.retryTimer = null;
@@ -328,9 +347,7 @@ class AutopilotBridge {
   private send(env: Envelope): void {
     if (!this.socket) return;
     const line = JSON.stringify(env) + "\n";
-    try {
-      fs.appendFileSync("/tmp/koru-plugin-debug.log", new Date().toISOString() + " OUT " + line);
-    } catch { /* ignore */ }
+    debugLog("OUT", env);
     this.socket.write(line);
   }
 
@@ -460,6 +477,15 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("koruAutopilot.sendChat", async () => {
       const text = await vscode.window.showInputBox({ prompt: "Send to chat:" });
       if (text) await bridge.sendManualChat(text);
+    }),
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (
+        event.affectsConfiguration("koruAutopilot.socketPath") ||
+        event.affectsConfiguration("koruAutopilot.autoConnect")
+      ) {
+        const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+        if (cfg.get<boolean>("autoConnect", true)) bridge.connect();
+      }
     }),
   );
   const cfg = vscode.workspace.getConfiguration("koruAutopilot");

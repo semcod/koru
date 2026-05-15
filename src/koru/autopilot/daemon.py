@@ -337,9 +337,30 @@ class AutopilotDaemon:
         raw_ide = msg.data.get("ide") if isinstance(msg.data.get("ide"), str) else None
         ide_pref = raw_ide if raw_ide not in (None, "auto") else None
         submit = bool(msg.data.get("submit", True))
+        require_plugin = bool(msg.data.get("require_plugin", False))
         plugin = self._plugin_for(ide_pref)
         if plugin is not None:
             self._drive_via_plugin(client, msg, plugin, text, submit)
+            return
+        if require_plugin:
+            label = ide_pref or "auto"
+            message = (
+                f"no connected autopilot plugin for ide={label}; "
+                "keyboard fallback disabled for this request. "
+                "Reload the IDE window or run the `koru: Connect autopilot daemon` command "
+                "so the extension connects to this socket."
+            )
+            self._send(client, error(msg.id, message).encode())
+            self.log(f"drive blocked: {message}")
+            self.audit.record(
+                "drive",
+                ide=label,
+                backend="plugin_required",
+                chars=len(text),
+                submit=submit,
+                ok=False,
+                error=message,
+            )
             return
         self._drive_via_keyboard(client, msg, ide_pref, text, submit)
 

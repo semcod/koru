@@ -78,6 +78,24 @@ def _ide_from_terminal_env() -> str | None:
     return None
 
 
+def _terminal_vscode_flavor() -> str | None:
+    """Return the VS Code-family CLI/config flavor for the current integrated terminal."""
+    hints = " ".join(
+        os.environ.get(key, "")
+        for key in (
+            "VSCODE_NLS_CONFIG",
+            "VSCODE_CODE_CACHE_PATH",
+            "VSCODE_IPC_HOOK",
+            "SNAP_NAME",
+        )
+    ).lower()
+    if "codium" in hints or "vscodium" in hints:
+        return "vscodium"
+    if os.environ.get("VSCODE_PID"):
+        return "vscode"
+    return None
+
+
 def resolve_target_ide(requested: str = "auto") -> str | None:
     """Resolve the IDE that should receive the plugin install."""
     explicit = _valid_ide(requested)
@@ -118,13 +136,23 @@ def resolve_extension_vsix() -> Path | None:
     cwd_plugin = Path.cwd() / "plugins" / "koru-autopilot-vscode"
     candidates.extend(cwd_plugin.glob("*.vsix"))
 
+    candidates = sorted(
+        {candidate.resolve() for candidate in candidates if candidate.is_file()},
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
     for candidate in candidates:
         if candidate.is_file():
-            return candidate.resolve()
+            return candidate
     return None
 
 
 def _resolve_ide_command(ide: str) -> str | None:
+    if ide == "vscode" and _terminal_vscode_flavor() == "vscodium":
+        for name in ("codium", "vscodium"):
+            resolved = shutil.which(name)
+            if resolved:
+                return resolved
     for name in _IDE_COMMANDS.get(ide, ()):
         resolved = shutil.which(name)
         if resolved:
@@ -137,7 +165,7 @@ def _settings_path_for_ide(ide: str) -> Path | None:
     dirname = {
         "windsurf": "Windsurf",
         "cursor": "Cursor",
-        "vscode": "Code",
+        "vscode": "VSCodium" if _terminal_vscode_flavor() == "vscodium" else "Code",
     }.get(ide)
     if dirname is None:
         return None
@@ -235,7 +263,12 @@ def install_plugin_for_ide(
         last_cmd: list[str] = [command, "--list-extensions"]
         extra = ""
         if not dry_run and _env_reassert_extension_install():
-            reassert_cmd = [command, "--install-extension", EXTENSION_ID]
+            vsix = resolve_extension_vsix()
+            reassert_cmd = (
+                [command, "--install-extension", str(vsix), "--force"]
+                if vsix is not None
+                else [command, "--install-extension", EXTENSION_ID]
+            )
             try:
                 proc = runner(reassert_cmd, timeout=90.0)
             except (OSError, subprocess.SubprocessError) as exc:
@@ -250,7 +283,10 @@ def install_plugin_for_ide(
         return PluginInstallResult(
             ide=target,
             status="already_installed",
-            message=f"{EXTENSION_ID} is already installed for {target}{extra}",
+            message=(
+                f"{EXTENSION_ID} is already installed for {target}{extra}; "
+                "reload the IDE window or run `koru: Connect autopilot daemon` if it is already open"
+            ),
             command=last_cmd,
             settings_path=str(settings_path) if settings_path is not None else None,
             socket_path=socket_path_str,

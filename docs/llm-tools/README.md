@@ -44,7 +44,7 @@ SPECIALIZED (LLM-free):
   metrun    [execution intelligence + bottleneck detection]
 
 ON-CHANGE GATES TRIAD (LLM-free, continuous):
-  wup       [intelligent file watcher → priority/full testql probes]
+  wup       [semcod/wup: intelligent file/service watcher → priority/full testql probes]
             task quality:wup checks watcher config; wup watch runs the loop
   + regix     (delta gate, see WALIDACJA above)
   + testql    (HTTP probe, see WYKRYWANIE above)
@@ -70,7 +70,7 @@ ON-CHANGE GATES TRIAD (LLM-free, continuous):
 | **planfile** | optional (init) | ✅ `planfile.yaml` | [`planfile/`](./planfile/) |
 | **testql** | brak | ✅ scenariusze YAML | [`testql/`](./testql/) |
 | **regix** | brak | ✅ `regix.yaml` | [`regix/`](./regix/) |
-| **wup** | brak | ✅ `wup.yaml` (z koru template) | [`wup/`](./wup/) |
+| **wup** | brak | ✅ `wup.yaml` (z koru template); opcjonalnie `testql-scenarios/` | [`wup/`](./wup/) |
 | **redup** | brak | brak | [`redup/`](./redup/) |
 | **sumd/sumr** | brak | brak (env vars) | [`sumd/`](./sumd/) |
 | **redeploy** | brak | ✅ markpact specs (`*.md`) | [`redeploy/`](./redeploy/) |

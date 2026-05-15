@@ -26,7 +26,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from .agents import agent_lane_environment
 from .ide_router import resolve_ide_route
@@ -104,6 +104,11 @@ def _stdio_info(msg: str, *, fmt: str) -> None:
     print(msg, file=sys.stderr if fmt == "jsonl" else sys.stdout)
 
 
+def _allow_keyboard_autopilot_fallback() -> bool:
+    raw = os.environ.get("KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK", "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
 @dataclass(frozen=True)
 class DiagnosticResult:
     status: str
@@ -145,9 +150,32 @@ def _resolve_autopilot_ide(cli_value: str) -> str:
     return resolve_ide_route(cli_autopilot_ide=cli_value).autopilot_ide
 
 
+def _terminal_agent_lane_from_env(environ: Mapping[str, str] | None = None) -> str | None:
+    env = os.environ if environ is None else environ
+    explicit = (env.get("KORU_AUTOPILOT_IDE") or "").strip().lower()
+    if explicit and explicit != "auto":
+        return explicit
+    term_program = (env.get("TERM_PROGRAM") or "").strip().lower()
+    if term_program in {"windsurf", "vscode", "code", "codium", "vscodium"}:
+        return "vscode" if term_program in {"vscode", "code", "codium", "vscodium"} else "windsurf"
+    vscode_markers = (
+        "VSCODE_NLS_CONFIG",
+        "VSCODE_IPC_HOOK",
+        "VSCODE_PID",
+        "VSCODE_CWD",
+        "VSCODE_CODE_CACHE_PATH",
+    )
+    if any(env.get(key) for key in vscode_markers):
+        return "vscode"
+    return None
+
+
 def _apply_agent_lane_environ(project: Path, agent_lane: str) -> str | None:
     """Set lane exports in ``os.environ``; returns lane id or ``None`` if skipped."""
-    lane = resolve_project_agent_lane(project, agent_lane)
+    raw_lane = (agent_lane or "auto").strip().lower()
+    lane = _terminal_agent_lane_from_env() if raw_lane == "auto" else None
+    if lane is None:
+        lane = resolve_project_agent_lane(project, agent_lane)
     if lane is None:
         return None
     for key, val in agent_lane_environment(lane).items():
@@ -1382,7 +1410,12 @@ def _run_cycle(
                 stagnation_streak=state.stagnation_streak,
             )
             autopilot_drive_kind = decision.kind
-            reply = client.drive(decision.prompt, submit=submit, ide=autopilot_ide)
+            reply = client.drive(
+                decision.prompt,
+                submit=submit,
+                ide=autopilot_ide,
+                require_plugin=not _allow_keyboard_autopilot_fallback(),
+            )
             ok = bool(reply.get("ok", True))
             if not ok:
                 fallback = _try_os_injector_fallback(decision.prompt, submit=submit)
