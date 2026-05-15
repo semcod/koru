@@ -963,23 +963,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:06:30.054848Z'
+        lease_expires_at: '2026-05-14T21:06:26.945458Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:06:28.082765Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:06:27.234830+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:06:28.372536+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:06:30.350036+00:00'
       id: STARTER-009
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:36:21.989217Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:36:21.990411Z'
+      updated_at: '2026-05-14T20:06:30.350006+00:00'
     STARTER-010:
       acceptance_criteria: []
       blocked_by: []
@@ -988,23 +1028,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:06:34.977172Z'
+        lease_expires_at: '2026-05-14T21:06:31.868285Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:06:33.010013Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:06:32.164309+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:06:33.306211+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:06:35.269611+00:00'
       id: STARTER-010
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:36:22.645593Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:36:22.646991Z'
+      updated_at: '2026-05-14T20:06:35.269580+00:00'
     STARTER-011:
       acceptance_criteria: []
       blocked_by: []
@@ -1148,23 +1228,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:06:39.936124Z'
+        lease_expires_at: '2026-05-14T21:06:36.811187Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:06:37.964231Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:06:37.114825+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:06:38.257483+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:06:40.229619+00:00'
       id: STARTER-013
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:36:57.019711Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:36:57.020682Z'
+      updated_at: '2026-05-14T20:06:40.229589+00:00'
     STARTER-014:
       acceptance_criteria: []
       blocked_by: []
@@ -1173,23 +1293,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:06:44.900775Z'
+        lease_expires_at: '2026-05-14T21:06:41.763418Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:06:42.922849Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:06:42.064235+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:06:43.219414+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:06:45.200138+00:00'
       id: STARTER-014
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:36:57.486131Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:36:57.487115Z'
+      updated_at: '2026-05-14T20:06:45.200107+00:00'
     STARTER-015:
       acceptance_criteria: []
       blocked_by: []
@@ -1333,23 +1493,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:06:49.881685Z'
+        lease_expires_at: '2026-05-14T21:06:46.737755Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:06:47.897267Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:06:47.036526+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:06:48.197309+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:06:50.207109+00:00'
       id: STARTER-017
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:37:31.536643Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:37:31.537838Z'
+      updated_at: '2026-05-14T20:06:50.207078+00:00'
     STARTER-018:
       acceptance_criteria: []
       blocked_by: []
@@ -1358,23 +1558,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:06:54.893378Z'
+        lease_expires_at: '2026-05-14T21:06:51.742687Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:06:52.908531Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:06:52.039390+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:06:53.209577+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:06:55.193084+00:00'
       id: STARTER-018
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:37:32.086950Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:37:32.087990Z'
+      updated_at: '2026-05-14T20:06:55.193054+00:00'
     STARTER-019:
       acceptance_criteria: []
       blocked_by: []
@@ -1518,23 +1758,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:06:59.904671Z'
+        lease_expires_at: '2026-05-14T21:06:56.728861Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:06:57.900111Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:06:57.032533+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:06:58.207490+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:07:00.209129+00:00'
       id: STARTER-021
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:38:05.690183Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:38:05.691061Z'
+      updated_at: '2026-05-14T20:07:00.209096+00:00'
     STARTER-022:
       acceptance_criteria: []
       blocked_by: []
@@ -1543,23 +1823,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:07:04.949084Z'
+        lease_expires_at: '2026-05-14T21:07:01.772883Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:07:02.946327Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:07:02.073715+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:07:03.252456+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:07:05.256266+00:00'
       id: STARTER-022
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:38:06.146327Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:38:06.147409Z'
+      updated_at: '2026-05-14T20:07:05.256237+00:00'
     STARTER-023:
       acceptance_criteria: []
       blocked_by: []
@@ -1703,23 +2023,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:07:10.022986Z'
+        lease_expires_at: '2026-05-14T21:07:06.821308Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:07:07.997648Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:07:07.127376+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:07:08.308080+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:07:10.334848+00:00'
       id: STARTER-025
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:38:40.015706Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:38:40.016560Z'
+      updated_at: '2026-05-14T20:07:10.334816+00:00'
     STARTER-026:
       acceptance_criteria: []
       blocked_by: []
@@ -1728,23 +2088,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:07:15.093937Z'
+        lease_expires_at: '2026-05-14T21:07:11.911177Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:07:13.100058Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:07:12.220643+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:07:13.411161+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:07:15.399542+00:00'
       id: STARTER-026
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:38:40.472678Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:38:40.473531Z'
+      updated_at: '2026-05-14T20:07:15.399511+00:00'
     STARTER-027:
       acceptance_criteria: []
       blocked_by: []
@@ -1888,9 +2288,34 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        lease_expires_at: '2026-05-14T21:07:16.973534Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:07:18.173500Z'
+        state: running
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:07:17.287029+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:07:18.487193+00:00'
       id: STARTER-029
       labels:
       - cleanup
@@ -1902,9 +2327,9 @@ sprint:
         timestamp: '2026-05-12T09:39:14.361596Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: in_progress
       sync: {}
-      updated_at: '2026-05-12T09:39:14.362444Z'
+      updated_at: '2026-05-14T20:07:18.487162+00:00'
     STARTER-030:
       acceptance_criteria: []
       blocked_by: []
@@ -1913,23 +2338,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:07:42.462540Z'
+        lease_expires_at: '2026-05-14T21:07:39.088176Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:07:40.364314Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:07:39.440200+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:07:40.677805+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:07:42.791851+00:00'
       id: STARTER-030
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:39:14.824682Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:39:14.825517Z'
+      updated_at: '2026-05-14T20:07:42.791814+00:00'
     STARTER-031:
       acceptance_criteria: []
       blocked_by: []
@@ -2073,23 +2538,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:07:47.841702Z'
+        lease_expires_at: '2026-05-14T21:07:44.467517Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:07:45.721075Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:07:44.796516+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:07:46.036679+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:07:48.178984+00:00'
       id: STARTER-033
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:39:48.731105Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:39:48.732002Z'
+      updated_at: '2026-05-14T20:07:48.178950+00:00'
     STARTER-034:
       acceptance_criteria: []
       blocked_by: []
@@ -2098,23 +2603,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:07:53.339532Z'
+        lease_expires_at: '2026-05-14T21:07:49.944907Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:07:51.240497Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:07:50.287914+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:07:51.569637+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:07:53.663753+00:00'
       id: STARTER-034
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:39:49.217211Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:39:49.218144Z'
+      updated_at: '2026-05-14T20:07:53.663719+00:00'
     STARTER-035:
       acceptance_criteria: []
       blocked_by: []
@@ -2258,23 +2803,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:07:58.921632Z'
+        lease_expires_at: '2026-05-14T21:07:55.307490Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:07:56.541850Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:07:55.639859+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:07:56.857115+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:07:59.257496+00:00'
       id: STARTER-037
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:40:23.154972Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:40:23.155843Z'
+      updated_at: '2026-05-14T20:07:59.257462+00:00'
     STARTER-038:
       acceptance_criteria: []
       blocked_by: []
@@ -2283,23 +2868,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:08:04.602766Z'
+        lease_expires_at: '2026-05-14T21:08:01.205946Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:08:02.547327Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:08:01.599515+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:08:02.870200+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:08:04.922511+00:00'
       id: STARTER-038
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:40:23.651212Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:40:23.652102Z'
+      updated_at: '2026-05-14T20:08:04.922478+00:00'
     STARTER-039:
       acceptance_criteria: []
       blocked_by: []
@@ -2443,23 +3068,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:08:10.137711Z'
+        lease_expires_at: '2026-05-14T21:08:06.773708Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:08:08.032860Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:08:07.095043+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:08:08.359490+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:08:10.464930+00:00'
       id: STARTER-041
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:40:57.713841Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:40:57.714748Z'
+      updated_at: '2026-05-14T20:08:10.464897+00:00'
     STARTER-042:
       acceptance_criteria: []
       blocked_by: []
@@ -2468,23 +3133,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:08:15.542413Z'
+        lease_expires_at: '2026-05-14T21:08:12.202391Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:08:13.440323Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:08:12.528797+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:08:13.783198+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:08:15.878010+00:00'
       id: STARTER-042
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:40:58.215743Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:40:58.216687Z'
+      updated_at: '2026-05-14T20:08:15.877979+00:00'
     STARTER-043:
       acceptance_criteria: []
       blocked_by: []
@@ -2628,23 +3333,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:08:20.924839Z'
+        lease_expires_at: '2026-05-14T21:08:17.531168Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:08:18.800669Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:08:17.853662+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:08:19.142095+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:08:21.256498+00:00'
       id: STARTER-045
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:41:32.349572Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:41:32.350496Z'
+      updated_at: '2026-05-14T20:08:21.256466+00:00'
     STARTER-046:
       acceptance_criteria: []
       blocked_by: []
@@ -2653,23 +3398,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:08:26.263966Z'
+        lease_expires_at: '2026-05-14T21:08:22.877858Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:08:24.143878Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:08:23.214192+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:08:24.479273+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:08:26.595756+00:00'
       id: STARTER-046
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:41:32.875459Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:41:32.876359Z'
+      updated_at: '2026-05-14T20:08:26.595714+00:00'
     STARTER-047:
       acceptance_criteria: []
       blocked_by: []
@@ -2813,23 +3598,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:08:31.683648Z'
+        lease_expires_at: '2026-05-14T21:08:28.225624Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:08:29.504395Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:08:28.559820+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:08:29.837450+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:08:32.017469+00:00'
       id: STARTER-049
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:42:07.292538Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:42:07.293473Z'
+      updated_at: '2026-05-14T20:08:32.017438+00:00'
     STARTER-050:
       acceptance_criteria: []
       blocked_by: []
@@ -2838,23 +3663,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:08:37.019668Z'
+        lease_expires_at: '2026-05-14T21:08:33.645192Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:08:34.889226Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:08:33.977458+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:08:35.228180+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:08:37.348009+00:00'
       id: STARTER-050
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:42:07.875780Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:42:07.876767Z'
+      updated_at: '2026-05-14T20:08:37.347977+00:00'
     STARTER-051:
       acceptance_criteria: []
       blocked_by: []
@@ -2998,23 +3863,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:08:42.304256Z'
+        lease_expires_at: '2026-05-14T21:08:38.982169Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:08:40.236173Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:08:39.316936+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:08:40.563629+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:08:42.640118+00:00'
       id: STARTER-053
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:42:42.200627Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:42:42.201508Z'
+      updated_at: '2026-05-14T20:08:42.640087+00:00'
     STARTER-054:
       acceptance_criteria: []
       blocked_by: []
@@ -3023,23 +3928,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:08:47.628731Z'
+        lease_expires_at: '2026-05-14T21:08:44.279321Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:08:45.543811Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:08:44.616090+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:08:45.885834+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:08:47.962311+00:00'
       id: STARTER-054
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:42:42.730889Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:42:42.731789Z'
+      updated_at: '2026-05-14T20:08:47.962282+00:00'
     STARTER-055:
       acceptance_criteria: []
       blocked_by: []
@@ -3183,23 +4128,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:08:52.934482Z'
+        lease_expires_at: '2026-05-14T21:08:49.588947Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:08:50.841834Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:08:49.922910+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:08:51.175894+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:08:53.272872+00:00'
       id: STARTER-057
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:43:16.970747Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:43:16.971661Z'
+      updated_at: '2026-05-14T20:08:53.272830+00:00'
     STARTER-058:
       acceptance_criteria: []
       blocked_by: []
@@ -3208,23 +4193,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:08:58.271793Z'
+        lease_expires_at: '2026-05-14T21:08:54.915296Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:08:56.169904Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:08:55.251556+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:08:56.508562+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:08:58.608840+00:00'
       id: STARTER-058
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:43:17.516249Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:43:17.517276Z'
+      updated_at: '2026-05-14T20:08:58.608810+00:00'
     STARTER-059:
       acceptance_criteria: []
       blocked_by: []
@@ -3368,23 +4393,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:09:03.666782Z'
+        lease_expires_at: '2026-05-14T21:09:00.272052Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:09:01.556083Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:09:00.614094+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:09:01.903389+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:09:04.005701+00:00'
       id: STARTER-061
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:43:51.696859Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:43:51.697764Z'
+      updated_at: '2026-05-14T20:09:04.005668+00:00'
     STARTER-062:
       acceptance_criteria: []
       blocked_by: []
@@ -3393,23 +4458,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:09:09.073305Z'
+        lease_expires_at: '2026-05-14T21:09:05.666007Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:09:06.975644Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:09:06.012260+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:09:07.318263+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:09:09.419230+00:00'
       id: STARTER-062
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:43:52.234301Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:43:52.235151Z'
+      updated_at: '2026-05-14T20:09:09.419197+00:00'
     STARTER-063:
       acceptance_criteria: []
       blocked_by: []
@@ -3553,23 +4658,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:09:14.475137Z'
+        lease_expires_at: '2026-05-14T21:09:11.102235Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:09:12.368264Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:09:11.442884+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:09:12.715798+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:09:14.823068+00:00'
       id: STARTER-065
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:44:26.348950Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:44:26.349793Z'
+      updated_at: '2026-05-14T20:09:14.823037+00:00'
     STARTER-066:
       acceptance_criteria: []
       blocked_by: []
@@ -3578,23 +4723,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:09:19.923859Z'
+        lease_expires_at: '2026-05-14T21:09:16.523262Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:09:17.813228Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:09:16.871079+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:09:18.158633+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:09:20.270632+00:00'
       id: STARTER-066
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:44:26.875060Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:44:26.875908Z'
+      updated_at: '2026-05-14T20:09:20.270598+00:00'
     STARTER-067:
       acceptance_criteria: []
       blocked_by: []
@@ -3738,23 +4923,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:09:25.317563Z'
+        lease_expires_at: '2026-05-14T21:09:21.931888Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:09:23.212353Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:09:22.279112+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:09:23.561645+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:09:25.668552+00:00'
       id: STARTER-069
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:45:01.129591Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:45:01.130447Z'
+      updated_at: '2026-05-14T20:09:25.668523+00:00'
     STARTER-070:
       acceptance_criteria: []
       blocked_by: []
@@ -3763,23 +4988,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:09:30.772616Z'
+        lease_expires_at: '2026-05-14T21:09:27.360842Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:09:28.649897Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:09:27.711824+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:09:28.999781+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:09:31.133484+00:00'
       id: STARTER-070
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:45:01.686091Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:45:01.687015Z'
+      updated_at: '2026-05-14T20:09:31.133454+00:00'
     STARTER-071:
       acceptance_criteria: []
       blocked_by: []
@@ -3923,23 +5188,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:09:36.265225Z'
+        lease_expires_at: '2026-05-14T21:09:32.794231Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:09:34.110632Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:09:33.152563+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:09:34.474284+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:09:36.643034+00:00'
       id: STARTER-073
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:45:36.126038Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:45:36.126941Z'
+      updated_at: '2026-05-14T20:09:36.642985+00:00'
     STARTER-074:
       acceptance_criteria: []
       blocked_by: []
@@ -3948,23 +5253,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:09:41.913782Z'
+        lease_expires_at: '2026-05-14T21:09:38.346006Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:09:39.663007Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:09:38.701708+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:09:40.034756+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:09:42.266116+00:00'
       id: STARTER-074
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:45:36.689817Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:45:36.690721Z'
+      updated_at: '2026-05-14T20:09:42.266083+00:00'
     STARTER-075:
       acceptance_criteria: []
       blocked_by: []
@@ -4108,23 +5453,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:09:47.585031Z'
+        lease_expires_at: '2026-05-14T21:09:44.021075Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:09:45.364103Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:09:44.379091+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:09:45.728493+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:09:47.948089+00:00'
       id: STARTER-077
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:46:11.021055Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:46:11.022103Z'
+      updated_at: '2026-05-14T20:09:47.948053+00:00'
     STARTER-078:
       acceptance_criteria: []
       blocked_by: []
@@ -4133,23 +5518,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:09:53.212369Z'
+        lease_expires_at: '2026-05-14T21:09:49.720681Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:09:51.042346Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:09:50.085013+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:09:51.398075+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:09:53.581093+00:00'
       id: STARTER-078
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:46:11.596904Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:46:11.597847Z'
+      updated_at: '2026-05-14T20:09:53.581062+00:00'
     STARTER-079:
       acceptance_criteria: []
       blocked_by: []
@@ -4293,23 +5718,63 @@ sprint:
       description: Static scan found **10** TODO/FIXME/XXX/HACK markers in `tests/test_e2e.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:09:58.869501Z'
+        lease_expires_at: '2026-05-14T21:09:55.303124Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:09:56.640292Z'
+        state: done
       files:
       - tests/test_e2e.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:09:55.662515+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:09:56.997369+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:09:59.280924+00:00'
       id: STARTER-081
       labels:
       - cleanup
       - scan
       name: Resolve 10 TODO/FIXME markers in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:46:46.091537Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:46:46.092464Z'
+      updated_at: '2026-05-14T20:09:59.280888+00:00'
     STARTER-082:
       acceptance_criteria: []
       blocked_by: []
@@ -4318,23 +5783,63 @@ sprint:
       description: Static scan found **30** TODO/FIXME/XXX/HACK markers in `tests/test_scan.py`.
         Either address them or convert each into an explicit planfile ticket so backlog
         stays honest.
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:10:04.465001Z'
+        lease_expires_at: '2026-05-14T21:10:00.994171Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:10:02.315124Z'
+        state: done
       files:
       - tests/test_scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:10:01.357516+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:10:02.673027+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:10:04.826317+00:00'
       id: STARTER-082
       labels:
       - cleanup
       - scan
       name: Resolve 30 TODO/FIXME markers in tests/test_scan.py
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-12T09:46:46.701482Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-12T09:46:46.702826Z'
+      updated_at: '2026-05-14T20:10:04.826286+00:00'
     STARTER-083:
       blocked_by: []
       blocks: []
@@ -4754,9 +6259,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `_print_text_report` with
         CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
         strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:04:31.043429Z'
+        lease_expires_at: '2026-05-14T21:04:28.162797Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:04:29.187759Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:04:28.407479+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:04:29.437484+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:04:31.294144+00:00'
       id: STARTER-089
       labels:
       - code2llm
@@ -4764,15 +6306,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: _print_text_report (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:17.108261Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:17.109274Z'
+      updated_at: '2026-05-14T20:04:31.294112+00:00'
     STARTER-090:
       acceptance_criteria: []
       blocked_by: []
@@ -4781,9 +6326,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `_queue_run_main` with CC=26
         (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
         pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:04:35.608093Z'
+        lease_expires_at: '2026-05-14T21:04:32.697562Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:04:33.738490Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:04:32.950869+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:04:33.989139+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:04:35.855738+00:00'
       id: STARTER-090
       labels:
       - code2llm
@@ -4791,15 +6373,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: _queue_run_main (CC=26, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:17.797882Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:17.799015Z'
+      updated_at: '2026-05-14T20:04:35.855708+00:00'
     STARTER-091:
       acceptance_criteria: []
       blocked_by: []
@@ -4808,9 +6393,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `_render_doctor_text` with
         CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
         strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:04:40.166924Z'
+        lease_expires_at: '2026-05-14T21:04:37.265727Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:04:38.298292Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:04:37.515213+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:04:38.550895+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:04:40.418317+00:00'
       id: STARTER-091
       labels:
       - code2llm
@@ -4818,15 +6440,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: _render_doctor_text (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:18.582210Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:18.583905Z'
+      updated_at: '2026-05-14T20:04:40.418285+00:00'
     STARTER-092:
       acceptance_criteria: []
       blocked_by: []
@@ -4835,9 +6460,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `_render_topology_text` with
         CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
         strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:04:44.726865Z'
+        lease_expires_at: '2026-05-14T21:04:41.835284Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:04:42.867499Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:04:42.088143+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:04:43.119075+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:04:44.981072+00:00'
       id: STARTER-092
       labels:
       - code2llm
@@ -4845,15 +6507,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: _render_topology_text (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:19.530766Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:19.531897Z'
+      updated_at: '2026-05-14T20:04:44.981041+00:00'
     STARTER-093:
       acceptance_criteria: []
       blocked_by: []
@@ -4862,9 +6527,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `_scan_code2llm_analysis`
         with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
         into strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:04:49.349520Z'
+        lease_expires_at: '2026-05-14T21:04:46.392224Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:04:47.434133Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:04:46.644400+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:04:47.685838+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:04:49.602310+00:00'
       id: STARTER-093
       labels:
       - code2llm
@@ -4872,15 +6574,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: _scan_code2llm_analysis (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:20.283440Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:20.284599Z'
+      updated_at: '2026-05-14T20:04:49.602281+00:00'
     STARTER-094:
       acceptance_criteria: []
       blocked_by: []
@@ -4889,9 +6594,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `_topology_main` with CC=17
         (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
         pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:04:53.969417Z'
+        lease_expires_at: '2026-05-14T21:04:51.046002Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:04:52.088498Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:04:51.301665+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:04:52.343146+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:04:54.228031+00:00'
       id: STARTER-094
       labels:
       - code2llm
@@ -4899,15 +6641,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: _topology_main (CC=17, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:20.919343Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:20.920345Z'
+      updated_at: '2026-05-14T20:04:54.228000+00:00'
     STARTER-095:
       acceptance_criteria: []
       blocked_by: []
@@ -4916,9 +6661,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `build_tool_task_scaffold`
         with CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
         into strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:04:58.593196Z'
+        lease_expires_at: '2026-05-14T21:04:55.654455Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:04:56.713454Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:04:55.913056+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:04:56.973559+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:04:58.852445+00:00'
       id: STARTER-095
       labels:
       - code2llm
@@ -4926,15 +6708,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: build_tool_task_scaffold (CC=16, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:21.572211Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:21.573136Z'
+      updated_at: '2026-05-14T20:04:58.852403+00:00'
     STARTER-096:
       acceptance_criteria: []
       blocked_by: []
@@ -4943,9 +6728,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `create_nl_task` with CC=16
         (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
         pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:05:03.307939Z'
+        lease_expires_at: '2026-05-14T21:05:00.335579Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:05:01.406337Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:05:00.597053+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:05:01.678852+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:05:03.567415+00:00'
       id: STARTER-096
       labels:
       - code2llm
@@ -4953,15 +6775,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: create_nl_task (CC=16, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:22.228131Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:22.236172Z'
+      updated_at: '2026-05-14T20:05:03.567384+00:00'
     STARTER-097:
       acceptance_criteria: []
       blocked_by: []
@@ -4970,9 +6795,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `detect_agent_options` with
         CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split into
         strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:05:07.979728Z'
+        lease_expires_at: '2026-05-14T21:05:05.004400Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:05:06.070805Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:05:05.265636+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:05:06.333744+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:05:08.245006+00:00'
       id: STARTER-097
       labels:
       - code2llm
@@ -4980,15 +6842,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: detect_agent_options (CC=16, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:22.876554Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:22.877445Z'
+      updated_at: '2026-05-14T20:05:08.244973+00:00'
     STARTER-098:
       acceptance_criteria: []
       blocked_by: []
@@ -4997,9 +6862,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `detect_tools` with CC=26
         (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
         pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:05:12.787392Z'
+        lease_expires_at: '2026-05-14T21:05:09.732445Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:05:10.810743Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:05:09.997388+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:05:11.078201+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:05:13.101114+00:00'
       id: STARTER-098
       labels:
       - code2llm
@@ -5007,15 +6909,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: detect_tools (CC=26, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:23.528118Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:23.529124Z'
+      updated_at: '2026-05-14T20:05:13.101083+00:00'
     STARTER-099:
       acceptance_criteria: []
       blocked_by: []
@@ -5024,9 +6929,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `find_candidates` with CC=15
         (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
         pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:05:17.668271Z'
+        lease_expires_at: '2026-05-14T21:05:14.621190Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:05:15.741311Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:05:14.898453+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:05:16.011473+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:05:17.938286+00:00'
       id: STARTER-099
       labels:
       - code2llm
@@ -5034,15 +6976,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: find_candidates (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:24.180943Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:24.182094Z'
+      updated_at: '2026-05-14T20:05:17.938252+00:00'
     STARTER-100:
       acceptance_criteria: []
       blocked_by: []
@@ -5051,9 +6996,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `format_queue_event` with
         CC=19 (limit=15). Extract sub-functions, simplify conditionals, or split into
         strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:05:22.530642Z'
+        lease_expires_at: '2026-05-14T21:05:19.451110Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:05:20.555006Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:05:19.724978+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:05:20.828184+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:05:22.799943+00:00'
       id: STARTER-100
       labels:
       - code2llm
@@ -5061,15 +7043,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: format_queue_event (CC=19, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:24.888143Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:24.889164Z'
+      updated_at: '2026-05-14T20:05:22.799901+00:00'
     STARTER-101:
       acceptance_criteria: []
       blocked_by: []
@@ -5078,9 +7063,34 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `policy_violations` with
         CC=22 (limit=15). Extract sub-functions, simplify conditionals, or split into
         strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        lease_expires_at: '2026-05-14T21:05:24.269055Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:05:25.364732Z'
+        state: running
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:05:24.539142+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:05:25.636199+00:00'
       id: STARTER-101
       labels:
       - code2llm
@@ -5094,9 +7104,9 @@ sprint:
         timestamp: '2026-05-13T11:56:25.570652Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: in_progress
       sync: {}
-      updated_at: '2026-05-13T11:56:25.571640Z'
+      updated_at: '2026-05-14T20:05:25.636169+00:00'
     STARTER-102:
       acceptance_criteria: []
       blocked_by: []
@@ -5105,9 +7115,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `run_llm_request` with CC=23
         (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
         pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:05:36.824524Z'
+        lease_expires_at: '2026-05-14T21:05:33.828819Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:05:34.911746Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:05:34.100243+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:05:35.180972+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:05:37.091933+00:00'
       id: STARTER-102
       labels:
       - code2llm
@@ -5115,15 +7162,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: run_llm_request (CC=23, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:26.279388Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:26.280289Z'
+      updated_at: '2026-05-14T20:05:37.091903+00:00'
     STARTER-103:
       acceptance_criteria: []
       blocked_by: []
@@ -5132,9 +7182,46 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `run_next_planfile_task`
         with CC=32 (limit=15). Extract sub-functions, simplify conditionals, or split
         into strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:05:41.554061Z'
+        lease_expires_at: '2026-05-14T21:05:38.561990Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:05:39.642564Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:05:38.828474+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:05:39.912733+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:05:41.826627+00:00'
       id: STARTER-103
       labels:
       - code2llm
@@ -5142,15 +7229,18 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: run_next_planfile_task (CC=32, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:26.972800Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:26.973749Z'
+      updated_at: '2026-05-14T20:05:41.826588+00:00'
     STARTER-104:
       acceptance_criteria: []
       blocked_by: []
@@ -5159,24 +7249,64 @@ sprint:
       description: 'REFACTOR item from `project/analysis.toon.yaml`: **split 20 high-CC
         methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
         to verify.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:05:46.315503Z'
+        lease_expires_at: '2026-05-14T21:05:43.301161Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:05:44.394180Z'
+        state: done
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:05:43.571416+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:05:44.666874+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:05:46.592230+00:00'
       id: STARTER-104
       labels:
       - code2llm
       - refactor
       - scan
       name: 'code2llm refactor: split 20 high-CC methods'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-13T11:56:27.682919Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-13T11:56:27.683875Z'
+      updated_at: '2026-05-14T20:05:46.592199+00:00'
     STARTER-105:
       acceptance_criteria: []
       blocked_by: []
@@ -5194,10 +7324,14 @@ sprint:
 
         '
       execution:
+        assigned_to: koru-shell
         attempt: 0
+        finished_at: '2026-05-14T20:05:51.138579Z'
+        lease_expires_at: '2026-05-14T21:05:48.083452Z'
         max_attempts: 1
         queue: default
-        state: waiting_input
+        started_at: '2026-05-14T20:05:49.180996Z'
+        state: done
       files: []
       history:
       - action: update
@@ -5208,6 +7342,32 @@ sprint:
         previous_execution_state: null
         source: planfile.store
         timestamp: '2026-05-14T09:04:21.242804+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-14T20:05:48.361278+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: waiting_input
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:05:49.461217+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:05:51.420864+00:00'
       id: STARTER-105
       inputs:
         api_headers: {}
@@ -5223,15 +7383,18 @@ sprint:
       - gates
       - gate-regix
       name: '[gate-finding:7fb1145121dc] regix gate failure'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-14T08:59:52.294295Z'
         tool: koru-gate
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-14T09:04:21.242769+00:00'
+      updated_at: '2026-05-14T20:05:51.420829+00:00'
     STARTER-106:
       acceptance_criteria: []
       blocked_by: []
@@ -5248,10 +7411,14 @@ sprint:
 
         '
       execution:
+        assigned_to: koru-shell
         attempt: 0
+        finished_at: '2026-05-14T20:10:10.015668Z'
+        lease_expires_at: '2026-05-14T21:10:06.517226Z'
         max_attempts: 1
         queue: default
-        state: waiting_input
+        started_at: '2026-05-14T20:10:07.864530Z'
+        state: done
       files: []
       history:
       - action: update
@@ -5262,6 +7429,32 @@ sprint:
         previous_execution_state: null
         source: planfile.store
         timestamp: '2026-05-14T09:18:53.877216+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-14T20:10:06.874095+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: waiting_input
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:10:08.228074+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:10:10.375987+00:00'
       id: STARTER-106
       inputs:
         api_headers: {}
@@ -5278,12 +7471,548 @@ sprint:
       - gates
       - gate-synthetic-e2e
       name: '[gate-finding:d320c036b3e9] synthetic-e2e gate failure'
+      outputs:
+        artifacts: []
+        notes: []
       priority: low
       source:
         context: {}
         timestamp: '2026-05-14T09:18:43.312892Z'
         tool: koru-gate
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-14T09:18:53.877178+00:00'
+      updated_at: '2026-05-14T20:10:10.375955+00:00'
+    STARTER-107:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-14T20:04:16.485846Z'
+      description: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as
+        a god module (1666 lines, 4 classes, 33 methods). Split into focused submodules
+        by responsibility.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:04:26.508130Z'
+        lease_expires_at: '2026-05-14T21:04:23.666470Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:04:24.673972Z'
+        state: done
+      files:
+      - src/koru/autonomous.py
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:04:23.908737+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:04:24.915737+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:04:26.754344+00:00'
+      id: STARTER-107
+      labels:
+      - code2llm
+      - god-module
+      - refactor
+      - scan
+      name: 'Split god module: src/koru/autonomous.py'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-14T20:04:16.484988Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-14T20:04:26.754314+00:00'
+    STARTER-108:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-14T20:04:17.429389Z'
+      description: '`project/analysis.toon.yaml` reports `_action_up` with CC=41 (limit=15).
+        Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:05:55.959947Z'
+        lease_expires_at: '2026-05-14T21:05:52.933588Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:05:54.033060Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:05:53.209081+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:05:54.309250+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:05:56.236981+00:00'
+      id: STARTER-108
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _action_up (CC=41, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-14T20:04:17.428491Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-14T20:05:56.236941+00:00'
+    STARTER-109:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-14T20:04:18.191752Z'
+      description: '`project/analysis.toon.yaml` reports `_fetch_ticket_data` with
+        CC=18 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:06:00.785843Z'
+        lease_expires_at: '2026-05-14T21:05:57.729730Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:05:58.837059Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:05:58.007546+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:05:59.119615+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:06:01.064917+00:00'
+      id: STARTER-109
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _fetch_ticket_data (CC=18, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-14T20:04:18.190905Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-14T20:06:01.064887+00:00'
+    STARTER-110:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-14T20:04:18.946896Z'
+      description: '`project/analysis.toon.yaml` reports `_read_wup_health` with CC=21
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:06:05.609536Z'
+        lease_expires_at: '2026-05-14T21:06:02.559079Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:06:03.673909Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:06:02.840741+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:06:03.957088+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:06:05.891405+00:00'
+      id: STARTER-110
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _read_wup_health (CC=21, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-14T20:04:18.946023Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-14T20:06:05.891374+00:00'
+    STARTER-111:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-14T20:04:19.711361Z'
+      description: '`project/analysis.toon.yaml` reports `_run_cycle` with CC=53 (limit=15).
+        Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:06:10.466058Z'
+        lease_expires_at: '2026-05-14T21:06:07.385711Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:06:08.519336Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:06:07.667133+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:06:08.799455+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:06:10.746698+00:00'
+      id: STARTER-111
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _run_cycle (CC=53, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-14T20:04:19.710470Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-14T20:06:10.746666+00:00'
+    STARTER-112:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-14T20:04:20.469911Z'
+      description: '`project/analysis.toon.yaml` reports `_run_idle_diagnostics` with
+        CC=17 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:06:15.338129Z'
+        lease_expires_at: '2026-05-14T21:06:12.248830Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:06:13.380789Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:06:12.534080+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:06:13.666511+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:06:15.625942+00:00'
+      id: STARTER-112
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _run_idle_diagnostics (CC=17, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-14T20:04:20.468881Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-14T20:06:15.625909+00:00'
+    STARTER-113:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-14T20:04:21.235748Z'
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split 19 high-CC
+        methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+        to verify.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:06:20.244126Z'
+        lease_expires_at: '2026-05-14T21:06:17.141572Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:06:18.279788Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:06:17.428294+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:06:18.563997+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:06:20.532525+00:00'
+      id: STARTER-113
+      labels:
+      - code2llm
+      - refactor
+      - scan
+      name: 'code2llm refactor: split 19 high-CC methods'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-14T20:04:21.234861Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-14T20:06:20.532493+00:00'
+    STARTER-114:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-14T20:04:22.008528Z'
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+        (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+        verify.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-14T20:06:25.137310Z'
+        lease_expires_at: '2026-05-14T21:06:22.040538Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-14T20:06:23.175670Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-14T20:06:22.330853+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-14T20:06:23.465386+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-14T20:06:25.425995+00:00'
+      id: STARTER-114
+      labels:
+      - code2llm
+      - refactor
+      - scan
+      name: 'code2llm refactor: split src/koru/autonomous.py'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-14T20:04:22.007633Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-14T20:06:25.425965+00:00'

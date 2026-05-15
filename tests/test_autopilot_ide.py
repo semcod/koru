@@ -49,6 +49,39 @@ def test_detect_running_ides_deduplicates_same_ide(fake_proc: Path) -> None:
     assert sum(1 for d in detected if d.id == "windsurf") == 1
 
 
+def test_detect_running_ides_prefers_primary_windsurf_over_devin_helper(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for pid, comm, cmd in [
+        (1111, "devin", ["/usr/share/windsurf/resources/app/extensions/windsurf/devin/bin/devin"]),
+        (2222, "windsurf", ["/usr/share/windsurf/windsurf", "--type=browser"]),
+    ]:
+        d = tmp_path / str(pid)
+        d.mkdir()
+        (d / "comm").write_text(comm + "\n")
+        (d / "cmdline").write_bytes(b"\x00".join(c.encode() for c in cmd) + b"\x00")
+
+    monkeypatch.setattr(
+        ide_mod, "_read_comm", lambda pid: (tmp_path / str(pid) / "comm").read_text().strip()
+    )
+    monkeypatch.setattr(
+        ide_mod,
+        "_read_cmdline",
+        lambda pid: (tmp_path / str(pid) / "cmdline").read_bytes().replace(b"\x00", b" ").decode().strip(),
+    )
+    monkeypatch.setattr(
+        ide_mod,
+        "_read_exe",
+        lambda pid: "/usr/share/windsurf/resources/app/extensions/windsurf/devin/bin/devin"
+        if pid == 1111
+        else "/usr/share/windsurf/windsurf",
+    )
+    detected = ide_mod.detect_running_ides(_pids=[1111, 2222])
+    ws = next(d for d in detected if d.id == "windsurf")
+    assert ws.pid == 2222
+    assert ws.exe.endswith("/windsurf")
+
+
 def test_detect_running_ides_skips_unknown_processes(fake_proc: Path) -> None:
     detected = ide_mod.detect_running_ides(_pids=[9999])
     assert detected == []

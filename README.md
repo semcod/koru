@@ -4,13 +4,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.111-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$1.67-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-53.6h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.112-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$1.68-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-53.9h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $1.6708 (164 commits)
-- 👤 **Human dev:** ~$5360 (53.6h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $1.6787 (166 commits)
+- 👤 **Human dev:** ~$5391 (53.9h @ $100/h, 30min dedup)
 
-Generated on 2026-05-14 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
+Generated on 2026-05-15 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
 ---
 
@@ -220,9 +220,13 @@ koru autopilot tail -n 50
 # optional: coordinate fallback (X11) for global focus+click+type
 python3 -m koru.cli autopilot calibrate --ide windsurf
 koru autopilot drive --direct --os-profile windsurf --prompt 'continue with the next ticket'
+koru autopilot drive --direct --os-profile windsurf --delay-seconds 5 --prompt 'continue with the next ticket'
 
 # multi-IDE session bootstrap: calibrate each IDE + immediate smoke prompt to chat LLM
 python3 -m koru.cli autopilot session-start --ides auto --delay-seconds 5
+
+# if PATH points to an older installed koru, run from source checkout:
+PYTHONPATH=src python3 -m koru.cli autopilot calibrate --ide windsurf --delay-seconds 8
 
 # optional: autonomous fallback when plugin submit fails
 export KORU_OS_INJECTOR_PROFILE=windsurf

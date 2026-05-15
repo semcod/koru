@@ -48,6 +48,12 @@ class TestBareInvocation(unittest.TestCase):
         args = self._parse("--init")
         self.assertFalse(_is_bare_invocation(args))
 
+    def test_init_skip_host_environment_flag(self) -> None:
+        args = self._parse("--init", "--skip-host-environment")
+        self.assertTrue(args.skip_host_environment)
+        args2 = self._parse("--init")
+        self.assertFalse(args2.skip_host_environment)
+
     def test_init_agent_lane_is_not_bare(self) -> None:
         args = self._parse("--init-agent-lane")
         self.assertFalse(_is_bare_invocation(args))
@@ -294,23 +300,23 @@ class TestSubcommandDispatch(unittest.TestCase):
         {
             "init-ci",
             "init-ide",
+            "ide-router",
             "agent-backends",
             "task",
             "agent",
             "local-serve",
             "serve",
             "scan",
-            "refactor-planfile-handoff",
             "gate",
             "queue",
             "gc",
             "tools",
             "mcp-serve",
-            "ide-router",
             "autopilot",
             "autonomous",
             "topology",
             "runtime-context",
+            "refactor-planfile-handoff",
         }
     )
 

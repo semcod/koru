@@ -13,6 +13,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from . import default_socket_path
@@ -22,6 +23,170 @@ from .daemon import AutopilotDaemon
 from .ide import detect_focused_ide_id, detect_running_ides, pick_target
 from .injector import Injector, InjectorError
 from .utils.client_helpers import call_daemon_method, resolve_xdg_path
+
+
+def _resolve_direct_injection_ids(
+    ide_arg: str,
+    os_profile: str | None,
+) -> tuple[str, str]:
+    """Resolve ``(keyboard_ide, os_injector_tool_id)`` for ``drive --direct``.
+
+    ``--ide auto`` (or empty) uses :func:`pick_target` on running IDEs.
+    When ``os_profile`` is set, it overrides only the OS-injector JSON key.
+    """
+    detected = detect_running_ides()
+    raw = (ide_arg or "").strip()
+    is_auto = not raw or raw.lower() == "auto"
+    prefer = None if is_auto else raw
+    target = pick_target(detected, prefer=prefer)
+    if is_auto:
+        keyboard = target.id if target is not None else "default"
+    else:
+        keyboard = prefer or "default"
+    stripped_profile = (os_profile or "").strip()
+    profile_key = stripped_profile if stripped_profile else keyboard
+    return keyboard, profile_key
+
+
+def _resolve_session_ides(raw: str) -> list[str]:
+    text = (raw or "").strip()
+    if not text or text == "auto":
+        detected = [ide.id for ide in detect_running_ides()]
+        out: list[str] = []
+        seen: set[str] = set()
+        for ide_id in detected:
+            if ide_id in seen:
+                continue
+            seen.add(ide_id)
+            out.append(ide_id)
+        return out
+    return [chunk.strip() for chunk in text.split(",") if chunk.strip()]
+
+
+def _action_calibrate(args: argparse.Namespace) -> int:
+    from . import os_injector as oi
+
+    raw = str(args.ide).strip()
+    if raw.lower() in ("", "auto"):
+        _kb, ide = _resolve_direct_injection_ids("auto", None)
+        if ide == "default":
+            print(
+                "koru autopilot calibrate: no running IDE detected; "
+                "open an editor or pass --ide windsurf|vscode|cursor|…",
+                file=sys.stderr,
+            )
+            return 2
+        auto_detected = True
+    else:
+        ide = raw
+        auto_detected = False
+
+    delay = max(0.0, float(args.delay_seconds))
+    print(f"Place mouse over IDE chat input; capturing in {delay:.1f}s...")
+    time.sleep(delay)
+    try:
+        x, y = oi.capture_mouse_xy()
+        profile = oi.profile_from_mouse(ide, x=x, y=y)
+        config_path = oi.save_profile(profile, config_path=args.config)
+        payload: dict[str, object] = {
+            "ok": True,
+            "profile": ide,
+            "chat_x": x,
+            "chat_y": y,
+            "config": str(config_path),
+            "window_id": 0,
+            "auto_detected": auto_detected,
+        }
+        if args.prompt:
+            payload["smoke"] = oi.inject_with_profile(
+                profile=profile,
+                text=str(args.prompt),
+                submit=True,
+                dry_run=False,
+            )
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return 0
+    except oi.OsInjectorError as exc:
+        print(f"koru autopilot calibrate: {exc}", file=sys.stderr)
+        return 1
+
+
+def _action_session_start(args: argparse.Namespace) -> int:
+    from . import os_injector as oi
+
+    ides = _resolve_session_ides(args.ides)
+    if not ides:
+        print(
+            "koru autopilot session-start: no IDE ids resolved "
+            "(pass --ides windsurf,cursor or run an IDE first)",
+            file=sys.stderr,
+        )
+        return 2
+
+    delay = max(0.0, float(args.delay_seconds))
+    targets: list[dict[str, object]] = []
+    ok = True
+    captured: dict[tuple[int, int], list[str]] = {}
+
+    for ide in ides:
+        print(f"[{ide}] Place mouse over IDE chat input; capturing in {delay:.1f}s...")
+        time.sleep(delay)
+        try:
+            x, y = oi.capture_mouse_xy()
+            profile = oi.profile_from_mouse(ide, x=x, y=y)
+            config_path = oi.save_profile(profile, config_path=args.config)
+            pair = (x, y)
+            captured.setdefault(pair, []).append(ide)
+            row: dict[str, object] = {
+                "ok": True,
+                "ide": ide,
+                "backend": "os_injector",
+                "chat_x": x,
+                "chat_y": y,
+                "window_id": 0,
+                "config": str(config_path),
+            }
+            if args.prompt:
+                try:
+                    row["smoke"] = oi.inject_with_profile(
+                        profile=profile,
+                        text=str(args.prompt),
+                        submit=True,
+                        dry_run=False,
+                    )
+                except oi.OsInjectorError as smoke_exc:
+                    row["smoke"] = {"ok": False, "error": str(smoke_exc)}
+                    row["warning"] = "profile_saved_but_smoke_failed"
+            targets.append(row)
+        except oi.OsInjectorError as exc:
+            ok = False
+            targets.append({"ok": False, "ide": ide, "error": str(exc)})
+
+    for row in targets:
+        if row.get("ok") is not True:
+            continue
+        pair = (int(row["chat_x"]), int(row["chat_y"]))
+        peers = [i for i in captured.get(pair, []) if i != row["ide"]]
+        if peers:
+            row["shared_with"] = sorted(peers)
+            row["warning"] = "shared_coordinates_with_other_ides"
+
+    payload: dict[str, object] = {"ok": ok, "targets": targets}
+    dups: list[dict[str, object]] = []
+    for pair, id_list in captured.items():
+        if len(id_list) > 1:
+            dups.append({"chat_x": pair[0], "chat_y": pair[1], "ides": sorted(id_list)})
+    if dups:
+        payload["warnings"] = {
+            "duplicate_coordinates": dups,
+            "message": (
+                "Multiple IDE profiles captured identical coordinates; recalibrate each IDE "
+                "with its own chat input focus."
+            ),
+        }
+
+    print(json.dumps(payload, indent=2, sort_keys=True))
+    return 0 if ok else 1
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -96,7 +261,11 @@ def _build_parser() -> argparse.ArgumentParser:
         "--ide",
         default="auto",
         choices=("auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"),
-        help="Target IDE (default: auto-detect the focused one).",
+        help=(
+            "Target IDE for keyboard fallback (default: auto). "
+            "With --direct and without --os-profile, this is also the OS-injector "
+            "profile key in ide-os-injector.json."
+        ),
     )
     drive.add_argument(
         "--no-submit",
@@ -124,6 +293,91 @@ def _build_parser() -> argparse.ArgumentParser:
             "profile search (default: cwd-only + home; same order as the daemon when "
             "given --project)."
         ),
+    )
+    drive.add_argument(
+        "--os-profile",
+        default=None,
+        metavar="IDE",
+        help=(
+            "With --direct, force OS-injector profile id in ide-os-injector.json "
+            "(e.g. windsurf). When unset, the profile key matches --ide (including auto-detect)."
+        ),
+    )
+    drive.add_argument(
+        "--delay-seconds",
+        type=float,
+        default=0.0,
+        metavar="SECONDS",
+        help=(
+            "With --direct, wait before injection so you can focus the target IDE window."
+        ),
+    )
+
+    calibrate = sub.add_parser(
+        "calibrate",
+        help=(
+            "Capture chat input coordinates after a short delay and save an OS-injector profile."
+        ),
+    )
+    calibrate.add_argument(
+        "--ide",
+        default="auto",
+        metavar="IDE",
+        help=(
+            "Profile id (windsurf, vscode, cursor, …). Default auto: same detection as "
+            "`drive --direct --ide auto` (focused IDE when known, else first running)."
+        ),
+    )
+    calibrate.add_argument(
+        "--delay-seconds",
+        type=float,
+        default=5.0,
+        metavar="SECONDS",
+        help="Seconds to wait before capturing the mouse position (default: 5).",
+    )
+    calibrate.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        metavar="FILE",
+        help="Optional ide-os-injector.json path (default: ~/.koru/ide-os-injector.json).",
+    )
+    calibrate.add_argument(
+        "--prompt",
+        default=None,
+        metavar="TEXT",
+        help="Optional smoke prompt injected immediately after saving the profile.",
+    )
+
+    session_start = sub.add_parser(
+        "session-start",
+        help="Calibrate one or more IDE profiles in sequence and optionally send a smoke prompt.",
+    )
+    session_start.add_argument(
+        "--ides",
+        default="auto",
+        metavar="LIST",
+        help="Comma-separated ids or 'auto' for all running IDE ids (default: auto).",
+    )
+    session_start.add_argument(
+        "--delay-seconds",
+        type=float,
+        default=6.0,
+        metavar="SECONDS",
+        help="Delay before each capture (default: 6).",
+    )
+    session_start.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        metavar="FILE",
+        help="Optional ide-os-injector.json path (default: ~/.koru/ide-os-injector.json).",
+    )
+    session_start.add_argument(
+        "--prompt",
+        default=None,
+        metavar="TEXT",
+        help="Optional smoke prompt after each profile is saved.",
     )
 
     sub.add_parser("status", help="Print daemon health + connected plugins.")
@@ -350,17 +604,18 @@ def _action_drive(args: argparse.Namespace) -> int:
         from . import os_injector as oi
 
         injector = Injector()
-        detected = detect_running_ides()
-        ide_pref = None if args.ide == "auto" else args.ide
-        target = pick_target(detected, prefer=ide_pref)
-        if args.ide == "auto":
-            target_id = target.id if target is not None else "default"
-        else:
-            target_id = args.ide
+        target_id, profile_id = _resolve_direct_injection_ids(args.ide, args.os_profile)
 
         try:
+            if float(args.delay_seconds) > 0:
+                print(
+                    f"koru autopilot drive: waiting {args.delay_seconds:.1f}s "
+                    "before direct injection (focus the target IDE now)...",
+                    file=sys.stderr,
+                )
+                time.sleep(float(args.delay_seconds))
             os_res = oi.try_drive_with_profile(
-                tool_id=target_id,
+                tool_id=profile_id,
                 text=text,
                 submit=args.submit,
                 project=args.project,
@@ -369,6 +624,14 @@ def _action_drive(args: argparse.Namespace) -> int:
             if os_res is not None:
                 print(json.dumps(os_res, indent=2, sort_keys=True))
                 return 0
+            if args.os_profile:
+                print(
+                    "koru autopilot drive: requested --os-profile but os-injector path is unavailable. "
+                    "On Wayland this path is disabled by default; set KORU_OS_INJECTOR=1 to force it, "
+                    "or drop --os-profile and use keyboard/plugin backend.",
+                    file=sys.stderr,
+                )
+                return 2
             result = injector.type_text(
                 text,
                 ide=target_id,
@@ -376,8 +639,28 @@ def _action_drive(args: argparse.Namespace) -> int:
                 dry_run=args.dry_run,
             )
         except oi.OsInjectorError as exc:
-            print(f"koru autopilot drive: {exc}", file=sys.stderr)
-            return 1
+            if args.os_profile:
+                print(
+                    f"koru autopilot drive: os-injector failed for requested profile "
+                    f"{profile_id!r}: {exc}",
+                    file=sys.stderr,
+                )
+                return 1
+            print(
+                "koru autopilot drive: os-injector failed; falling back to keyboard injector: "
+                f"{exc}",
+                file=sys.stderr,
+            )
+            try:
+                result = injector.type_text(
+                    text,
+                    ide=target_id,
+                    submit=args.submit,
+                    dry_run=args.dry_run,
+                )
+            except InjectorError as inner_exc:
+                print(f"koru autopilot drive: {inner_exc}", file=sys.stderr)
+                return 1
         except InjectorError as exc:
             print(f"koru autopilot drive: {exc}", file=sys.stderr)
             return 1
@@ -897,6 +1180,8 @@ def _action_install_unit(args: argparse.Namespace) -> int:
 _ACTIONS = {
     "daemon": _action_daemon,
     "drive": _action_drive,
+    "calibrate": _action_calibrate,
+    "session-start": _action_session_start,
     "status": _action_status,
     "shutdown": _action_shutdown,
     "ide-list": _action_ide_list,

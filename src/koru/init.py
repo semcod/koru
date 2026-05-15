@@ -22,6 +22,8 @@ What this module produces:
             ├── shell-env.sh             # optional: autopilot/queue lane exports
             ├── run-autonomous.sh        # optional: koru autonomous up wrapper
             ├── setup-autopilot-host.sh # optional: injector / apt vs human checklist
+            ├── host-environment.json    # optional: desktop + injector probe (koru --init)
+            ├── host-environment.md      # human-readable companion
             └── README.md                # written lazily by runtime helpers
 
 Inputs:
@@ -60,6 +62,7 @@ from .agents import (
     normalize_agent_lane_id,
 )
 from .bootstrap import import_flat_pipeline
+from .init_host_environment import write_host_environment_bundle
 from .project_pipeline import write_koru_project_pipeline_if_absent
 from .runtime import planfile_dir, runtime_dir
 
@@ -240,16 +243,27 @@ class InitReport:
     agent_lane_refresh_only: bool = False
     autopilot_host_setup_written: bool = False
     koru_project_pipeline_yaml_written: bool = False
+    host_environment_written: bool = False
 
     def summary(self) -> str:
+        env_bit = (
+            "; host-environment: .planfile/.koru/host-environment.{json,md}"
+            if self.host_environment_written
+            else ""
+        )
         if self.agent_lane_refresh_only:
             if self.agent_lane_files_written and self.agent_lane:
-                return f"agent-lane: {self.agent_lane} (shell-env.sh, run-autonomous.sh)"
+                return (
+                    f"agent-lane: {self.agent_lane} (shell-env.sh, run-autonomous.sh){env_bit}"
+                )
             if self.agent_lane is None:
-                return "agent-lane: off (shell helpers removed)"
+                return f"agent-lane: off (shell helpers removed){env_bit}"
             if self.autopilot_host_setup_written:
-                return "agent-lane: refresh; autopilot-host: setup-autopilot-host.sh"
-            return "agent-lane: refresh"
+                return (
+                    "agent-lane: refresh; autopilot-host: setup-autopilot-host.sh"
+                    f"{env_bit}"
+                )
+            return f"agent-lane: refresh{env_bit}"
         bits = [f"tickets: {self.sprint_imported} imported"]
         if self.policy_written:
             bits.append("policy: stub written")
@@ -263,6 +277,8 @@ class InitReport:
             bits.append("autopilot-host: setup-autopilot-host.sh")
         if self.koru_project_pipeline_yaml_written:
             bits.append("koru.yaml: created")
+        if self.host_environment_written:
+            bits.append("host-environment: host-environment.{json,md}")
         return ", ".join(bits)
 
 
@@ -273,17 +289,21 @@ def init_project(
     sprint: str = "current",
     force: bool = False,
     agent_lane: str = "auto",
+    prepare_host_environment: bool = True,
 ) -> InitReport:
     """Initialise (or re-initialise with ``force``) a koru project.
 
     Steps:
-        1. Refuse if ``.planfile/config.yaml`` already exists and not ``--force``.
+        1. Refuse if ``.planfile/config.yaml`` already exists and not ``force``.
         2. Import flat pipeline (``from_file`` or generated starter).
         3. Write ``.planfile/.koru/policy.yaml`` stub if absent.
         4. Append ``.planfile/.koru/`` to ``.gitignore`` if absent.
         5. Write root ``koru.yaml`` (project pipeline map) if absent.
-    ``--force`` is given) — policy and ``.gitignore`` are never
-    overwritten if they already contain user content.
+        6. If ``prepare_host_environment`` is true, write
+           ``.planfile/.koru/host-environment.{json,md}`` (host/session snapshot).
+
+    With ``force``, the sprint and policy stub may be overwritten; policy and
+    ``.gitignore`` are not blindly replaced if they already contain user content.
     """
     project = project.resolve()
     project.mkdir(parents=True, exist_ok=True)
@@ -333,6 +353,10 @@ def init_project(
     host_setup_written = _write_autopilot_host_setup_script(project)
     pipeline_yaml_written = write_koru_project_pipeline_if_absent(project)
 
+    host_env_written = False
+    if prepare_host_environment:
+        host_env_written = write_host_environment_bundle(project)
+
     return InitReport(
         project=project,
         planfile_created=True,
@@ -345,6 +369,7 @@ def init_project(
         agent_lane_refresh_only=False,
         autopilot_host_setup_written=host_setup_written,
         koru_project_pipeline_yaml_written=pipeline_yaml_written,
+        host_environment_written=host_env_written,
     )
 
 
@@ -352,6 +377,7 @@ def refresh_init_agent_lane(
     project: Path,
     *,
     agent_lane: str = "auto",
+    prepare_host_environment: bool = True,
 ) -> InitReport:
     """Write or remove agent-lane shell helpers on an existing koru project.
 
@@ -371,6 +397,9 @@ def refresh_init_agent_lane(
     else:
         agent_written = _write_agent_lane_artifacts(project, lane)
     host_setup_written = _write_autopilot_host_setup_script(project)
+    host_env_written = False
+    if prepare_host_environment:
+        host_env_written = write_host_environment_bundle(project)
     return InitReport(
         project=project,
         planfile_created=False,
@@ -383,6 +412,7 @@ def refresh_init_agent_lane(
         agent_lane_refresh_only=True,
         autopilot_host_setup_written=host_setup_written,
         koru_project_pipeline_yaml_written=False,
+        host_environment_written=host_env_written,
     )
 
 

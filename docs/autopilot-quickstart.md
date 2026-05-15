@@ -63,6 +63,13 @@ Config is merged JSON keyed by IDE id (``cursor``, ``windsurf``, ``vscode``,
 ``koru autopilot drive --direct`` uses the same search (pass ``--project DIR``
 to prepend ``DIR/.koru/…`` like ``koru autopilot daemon --project``).
 
+**One command across IDEs (``--ide auto``, default):** ``koru autopilot drive --direct``
+uses the same IDE id for the OS-injector profile as ``ide-list`` / ``pick_target``
+(focused window when X11 can see it, otherwise the first running match). You do
+not need ``--os-profile`` unless the profile key should differ from that choice
+(e.g. ``--ide vscode --os-profile windsurf``). ``koru autopilot calibrate`` uses
+the same default: ``--ide auto`` resolves the profile id before capture.
+
 Behaviour:
 
 - Profiles store only ``chat_x`` / ``chat_y`` (calibrate with the pointer over the chat input).
@@ -70,16 +77,18 @@ Behaviour:
 - If a profile exists for the resolved IDE and ``xdotool`` is on ``PATH``, that path runs automatically.
 - ``KORU_OS_INJECTOR_FOCUS=click`` (default): move, then left-click to focus; ``return``: move, then Return (no click).
 - ``KORU_OS_INJECTOR_INPUT=auto`` (default): paste via ``xclip``/``xsel`` + Ctrl+V when available, else ``xdotool type``; set ``type`` or ``paste`` to force.
+- ``KORU_OS_INJECTOR_POST_FOCUS_DELAY`` (seconds, default ``0.12``): sleep after the focus click/Return before paste/type; Electron chat fields often need this. Set ``0`` to disable.
 - Set ``KORU_OS_INJECTOR=0`` to disable and always use the plain keyboard injector.
-- Set ``KORU_OS_INJECTOR=1`` to insist on the profile path when a profile is
-  present (same as auto once a profile exists; still no profile → keyboard fallback).
+- On **Wayland**, OS-injector is skipped by default unless ``KORU_OS_INJECTOR=1``
+  (use when xdotool + your profile work — e.g. after successful ``calibrate``).
+  With ``KORU_OS_INJECTOR=1``, a profile is still required unless you rely on keyboard fallback.
 - ``KORU_OS_INJECTOR_DRY_RUN=1`` logs the planned injection without running ``xdotool``.
 
-Injection uses ``xdotool`` (X11 / XWayland). A desktop session reported as
-Wayland no longer blocks this path when ``xdotool`` is installed — many setups
-still run IDE windows under XWayland. For a full calibration workflow in a
-monorepo, see the c2004 doc ``.koru/workflows/ide-os-injector.md`` and
-``task koru:ide-os:calibrate``.
+Injection uses ``xdotool`` (X11 / XWayland). On Wayland, ``koru autopilot drive``
+may still use the keyboard injector unless ``KORU_OS_INJECTOR=1`` — many setups
+still run IDE windows under XWayland, so forcing the profile is opt-in. For a
+full calibration workflow in a monorepo, see the c2004 doc
+``.koru/workflows/ide-os-injector.md`` and ``task koru:ide-os:calibrate``.
 
 ## Full setup checklist
 

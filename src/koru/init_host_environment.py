@@ -1,0 +1,260 @@
+"""Host / desktop snapshot written during ``koru --init``.
+
+Produces machine-readable and human-readable summaries so every checkout
+documents what that workstation needs for autopilot (plugin vs keyboard
+injectors, Wayland vs X11, clipboard helpers, ``/dev/uinput``).
+"""
+
+from __future__ import annotations
+
+import grp
+import json
+import os
+import shutil
+import stat
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+from .autopilot.host_setup import build_setup_host_report
+from .runtime import runtime_dir
+
+
+def _read_os_release() -> dict[str, str]:
+    path = Path("/etc/os-release")
+    if not path.is_file():
+        return {}
+    out: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if "=" in line and not line.strip().startswith("#"):
+            k, _, v = line.partition("=")
+            key = k.strip()
+            val = v.strip().strip('"')
+            if key:
+                out[key] = val
+    return out
+
+
+def _id_group_names() -> list[str]:
+    try:
+        proc = subprocess.run(
+            ["id", "-Gn"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=3,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    if proc.returncode != 0 or not proc.stdout:
+        return []
+    return proc.stdout.strip().split()
+
+
+def _uinput_snapshot() -> dict[str, Any]:
+    path = Path("/dev/uinput")
+    if not path.exists():
+        return {"present": False}
+    try:
+        st = path.stat()
+    except OSError as exc:
+        return {"present": True, "stat_error": str(exc)}
+    try:
+        group_name = grp.getgrgid(st.st_gid).gr_name
+    except (KeyError, OSError):
+        group_name = str(st.st_gid)
+    return {
+        "present": True,
+        "mode": stat.filemode(st.st_mode),
+        "gid": st.st_gid,
+        "group": group_name,
+    }
+
+
+def build_host_environment_report() -> dict[str, Any]:
+    """Merge autopilot ``setup-host`` probe with OS/session hints."""
+    base = build_setup_host_report()
+    os_release = _read_os_release()
+    groups = _id_group_names()
+    session = (base.get("session") or "").lower()
+    extras: dict[str, Any] = {
+        "koru_platform": sys.platform,
+        "os_release_id": os_release.get("ID", ""),
+        "os_release_pretty": os_release.get("PRETTY_NAME", ""),
+        "xdg_session_type": os.environ.get("XDG_SESSION_TYPE", ""),
+        "wayland_display": bool(os.environ.get("WAYLAND_DISPLAY")),
+        "display": bool(os.environ.get("DISPLAY")),
+        "clipboard": {
+            "xclip": shutil.which("xclip") is not None,
+            "xsel": shutil.which("xsel") is not None,
+        },
+        "uinput": _uinput_snapshot(),
+        "user_in_input_group": "input" in groups,
+        "user_groups_sample": groups[:20],
+        "recommended_next_steps": _recommended_next_steps(base, groups),
+    }
+    merged = dict(base)
+    merged.update(extras)
+    return merged
+
+
+def _recommended_next_steps(base: dict[str, Any], groups: list[str]) -> list[str]:
+    steps: list[str] = []
+    session = (base.get("session") or "").lower()
+    selected = base.get("selected_backend")
+    pm = base.get("package_manager")
+
+    steps.append(
+        "Tier 0: install the koru autopilot editor extension and run "
+        "`koru autopilot daemon --project .` (works on X11 and Wayland)."
+    )
+
+    if not selected:
+        steps.append(
+            "No keyboard injector candidate passed the probe — install tools or use the plugin "
+            "(see `automated_apt_suggestion` when on Debian/Ubuntu)."
+        )
+
+    if session == "wayland":
+        steps.append(
+            "Wayland: GNOME/KDE often lack wtype's virtual-keyboard protocol — prefer ydotool "
+            "(+ ydotoold, `input` group, full re-login) or the IDE extension."
+        )
+        if shutil.which("ydotool") and "input" not in groups:
+            steps.append(
+                "ydotool is on PATH but this login session is not in the `input` group — "
+                "run `sudo usermod -aG input \"$USER\"` then log out and back in."
+            )
+    elif session == "x11":
+        steps.append(
+            "X11: `xdotool` is the usual keyboard path; optional OS injector uses "
+            "`xclip`/`xsel`+Ctrl+V when available (see docs/autopilot-quickstart.md)."
+        )
+
+    if pm == "apt" and base.get("automated_apt_suggestion"):
+        steps.append(
+            "Debian/Ubuntu: run `.planfile/.koru/setup-autopilot-host.sh --install --dry-run` "
+            "then `--install` when satisfied."
+        )
+    elif pm and pm != "apt":
+        steps.append(
+            f"Package manager hint: {pm} — install xdotool / wtype / ydotool / xclip with that "
+            "stack (koru only auto-installs via apt-get)."
+        )
+
+    if session == "wayland" and shutil.which("wtype") and not shutil.which("ydotool"):
+        steps.append(
+            "If `wtype` fails with “virtual keyboard protocol”, switch to ydotool or the IDE "
+            "extension — that error is compositor-side, not a broken wtype install."
+        )
+
+    if not groups:
+        steps.append("Could not read `id -Gn` — verify group membership manually if ydotool fails.")
+
+    return steps
+
+
+def _render_host_environment_md(report: dict[str, Any]) -> str:
+    lines = [
+        "# Host environment (koru --init)",
+        "",
+        "Auto-generated snapshot of this machine for **koru autopilot** fallbacks.",
+        "Re-run `koru --init --force …` or `koru --init-agent-lane …` to refresh.",
+        "",
+        "## Session",
+        "",
+        f"- **platform:** `{report.get('koru_platform', '')}`",
+        f"- **desktop session (injector view):** `{report.get('session', '')}`",
+        f"- **XDG_SESSION_TYPE:** `{report.get('xdg_session_type', '')}`",
+        f"- **DISPLAY set:** {report.get('display')}",
+        f"- **WAYLAND_DISPLAY set:** {report.get('wayland_display')}",
+        "",
+    ]
+    pretty = report.get("os_release_pretty") or report.get("os_release_id")
+    if pretty:
+        lines.extend(["## OS", "", f"- {pretty}", ""])
+
+    lines.extend(
+        [
+            "## Injector probe (same data as `koru autopilot doctor`)",
+            "",
+            f"- **selected_backend:** `{report.get('selected_backend') or '—'}`",
+            "",
+        ]
+    )
+    for b in report.get("backends") or []:
+        mark = "✓" if b.get("available") else "✗"
+        lines.append(f"- {mark} **{b.get('name')}** — {b.get('reason', '')}")
+    lines.append("")
+
+    clip = report.get("clipboard") or {}
+    lines.extend(
+        [
+            "## Clipboard (OS injector paste path)",
+            "",
+            f"- xclip: {clip.get('xclip')}",
+            f"- xsel: {clip.get('xsel')}",
+            "",
+        ]
+    )
+
+    ui = report.get("uinput") or {}
+    if ui.get("present"):
+        lines.extend(
+            [
+                "## /dev/uinput",
+                "",
+                f"- mode: `{ui.get('mode', '')}` group: `{ui.get('group', '')}`",
+                f"- user in `input` group (this session): **{report.get('user_in_input_group')}**",
+                "",
+            ]
+        )
+    else:
+        lines.extend(["## /dev/uinput", "", "- device not present (non-Linux or minimal rootfs)", ""])
+
+    lines.extend(["## Recommended next steps", ""])
+    for step in report.get("recommended_next_steps") or []:
+        lines.append(f"1. {step}")
+    lines.append("")
+
+    if report.get("human_actions_required"):
+        lines.extend(["## Human follow-ups (from setup-host)", ""])
+        for h in report["human_actions_required"]:
+            lines.append(f"- {h}")
+        lines.append("")
+
+    if report.get("automated_apt_suggestion"):
+        lines.extend(["## Suggested apt (when packages missing)", "", "```bash", report["automated_apt_suggestion"], "```", ""])
+
+    return "\n".join(lines)
+
+
+def write_host_environment_bundle(project: Path) -> bool:
+    """Write ``host-environment.{json,md}`` under ``.planfile/.koru/``.
+
+    Never raises: a probe failure still leaves a stub so ``koru --init`` can
+    complete in sandboxes without ``/proc`` or ``id``.
+    """
+    project = project.resolve()
+    rt = runtime_dir(project)
+    rt.mkdir(parents=True, exist_ok=True)
+    try:
+        report = build_host_environment_report()
+    except Exception as exc:  # noqa: BLE001 — best-effort host snapshot
+        err = {"probe_error": str(exc), "koru_platform": sys.platform}
+        (rt / "host-environment.json").write_text(
+            json.dumps(err, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        (rt / "host-environment.md").write_text(
+            f"# Host environment (koru --init)\n\nProbe failed: `{exc}`.\n",
+            encoding="utf-8",
+        )
+        return True
+    (rt / "host-environment.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True, default=str) + "\n",
+        encoding="utf-8",
+    )
+    (rt / "host-environment.md").write_text(_render_host_environment_md(report), encoding="utf-8")
+    return True

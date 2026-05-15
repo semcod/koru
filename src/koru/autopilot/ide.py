@@ -74,6 +74,13 @@ def _read_cmdline(pid: int) -> str:
     return raw.replace(b"\x00", b" ").decode("utf-8", errors="replace").strip()
 
 
+def _read_exe(pid: int) -> str:
+    try:
+        return os.readlink(f"/proc/{pid}/exe")
+    except OSError:
+        return ""
+
+
 def _matches(comm: str, cmdline: str, patterns: tuple[str, ...]) -> bool:
     comm_l = comm.lower()
     cmd_l = cmdline.lower()
@@ -99,27 +106,71 @@ def _matches(comm: str, cmdline: str, patterns: tuple[str, ...]) -> bool:
     return False
 
 
+def _candidate_score(ide_id: str, pid: int, comm: str, cmdline: str, exe: str) -> int:
+    """Rank multiple process matches for the same IDE.
+
+    Higher score means "more likely the primary IDE process".
+    """
+    score = 0
+    comm_l = comm.lower()
+    cmd_l = cmdline.lower()
+    exe_l = exe.lower()
+    # Prefer canonical process names.
+    canonical_comm = {
+        "windsurf": ("windsurf",),
+        "vscode": ("code", "code-insiders", "code-oss", "codium", "vscodium"),
+        "cursor": ("cursor",),
+        "zed": ("zed",),
+    }
+    if ide_id in canonical_comm and comm_l in canonical_comm[ide_id]:
+        score += 100
+    # Prefer main executable path if available.
+    if exe_l:
+        if ide_id == "windsurf":
+            if exe_l.endswith("/windsurf") and "/extensions/" not in exe_l:
+                score += 120
+            if "/extensions/" in exe_l or "/devin/" in exe_l:
+                score -= 80
+        elif ide_id == "vscode":
+            if exe_l.endswith("/code") or exe_l.endswith("/code-insiders"):
+                score += 120
+        elif ide_id == "cursor":
+            if exe_l.endswith("/cursor"):
+                score += 120
+    # Renderer / utility processes are worse than browser/main.
+    if "--type=renderer" in cmd_l or "--type=utility" in cmd_l:
+        score -= 20
+    if "--type=browser" in cmd_l:
+        score += 10
+    # Deterministic tie-breaker: prefer lower pid (usually older/main proc).
+    score -= pid // 100000
+    return score
+
+
 def detect_running_ides(*, _pids: list[int] | None = None) -> list[RunningIDE]:
     """Return a deduplicated list of IDEs visible in ``/proc``.
 
     The ``_pids`` hook is used by tests to inject a fixed snapshot.
     """
     pids = _pids if _pids is not None else _iter_proc_pids()
-    seen: dict[str, RunningIDE] = {}
+    seen: dict[str, tuple[RunningIDE, int]] = {}
     for pid in pids:
         comm = _read_comm(pid)
         cmdline = _read_cmdline(pid)
+        exe_link = _read_exe(pid)
         if not comm and not cmdline:
             continue
         for ide_id, (patterns, label) in _IDE_SIGNATURES.items():
-            if ide_id in seen:
-                continue
             if _matches(comm, cmdline, patterns):
-                exe = cmdline.split(" ", 1)[0] if cmdline else comm
-                seen[ide_id] = RunningIDE(id=ide_id, label=label, pid=pid, exe=exe)
+                exe = exe_link or (cmdline.split(" ", 1)[0] if cmdline else comm)
+                row = RunningIDE(id=ide_id, label=label, pid=pid, exe=exe)
+                score = _candidate_score(ide_id, pid, comm, cmdline, exe)
+                prev = seen.get(ide_id)
+                if prev is None or score > prev[1]:
+                    seen[ide_id] = (row, score)
                 break
     # Stable order: declared order in _IDE_SIGNATURES.
-    return [seen[k] for k in _IDE_SIGNATURES if k in seen]
+    return [seen[k][0] for k in _IDE_SIGNATURES if k in seen]
 
 
 def _active_window_pid_x11() -> int | None:

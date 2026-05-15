@@ -75,6 +75,69 @@ def test_type_text_xdotool_types_and_submits() -> None:
     assert "Return" in calls[1]
 
 
+def test_type_text_xdotool_supports_extra_enter(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("KORU_INJECTOR_EXTRA_ENTER", "1")
+    calls: list[list[str]] = []
+    inj = Injector(
+        session="x11",
+        which=_which_factory({"xdotool"}),
+        runner=_fake_runner(calls),
+    )
+    inj.type_text("hi", ide="vscode", submit=True)
+    key_calls = [c for c in calls if c[:2] == ["xdotool", "key"]]
+    assert len(key_calls) == 2
+    monkeypatch.delenv("KORU_INJECTOR_EXTRA_ENTER", raising=False)
+
+
+def test_type_text_ydotool_uses_configurable_enter_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("KORU_YDOTOOL_ENTER_KEYCODE", "96")
+    calls: list[list[str]] = []
+    inj = Injector(
+        session="wayland",
+        which=_which_factory({"ydotool"}),
+        runner=_fake_runner(calls),
+    )
+    inj.type_text("hi", ide="vscode", submit=True)
+    key_calls = [c for c in calls if c[:2] == ["ydotool", "key"]]
+    assert key_calls
+    assert "96:1" in key_calls[0]
+    assert "96:0" in key_calls[0]
+    monkeypatch.delenv("KORU_YDOTOOL_ENTER_KEYCODE", raising=False)
+
+
+def test_type_text_ydotool_submit_newline_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("KORU_YDOTOOL_SUBMIT_MODE", "newline")
+    calls: list[list[str]] = []
+    inj = Injector(
+        session="wayland",
+        which=_which_factory({"ydotool"}),
+        runner=_fake_runner(calls),
+    )
+    inj.type_text("hi", ide="vscode", submit=True)
+    assert any(c[:3] == ["ydotool", "type", "--"] and c[-1] == "\n" for c in calls)
+    assert not any(c[:2] == ["ydotool", "key"] for c in calls)
+    monkeypatch.delenv("KORU_YDOTOOL_SUBMIT_MODE", raising=False)
+
+
+def test_type_text_ydotool_submit_ctrl_enter_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("KORU_YDOTOOL_SUBMIT_MODE", "ctrl-enter")
+    monkeypatch.setenv("KORU_YDOTOOL_ENTER_KEYCODE", "96")
+    monkeypatch.setenv("KORU_YDOTOOL_CTRL_KEYCODE", "29")
+    calls: list[list[str]] = []
+    inj = Injector(
+        session="wayland",
+        which=_which_factory({"ydotool"}),
+        runner=_fake_runner(calls),
+    )
+    inj.type_text("hi", ide="vscode", submit=True)
+    key_calls = [c for c in calls if c[:2] == ["ydotool", "key"]]
+    assert key_calls
+    assert key_calls[0][2:] == ["29:1", "96:1", "96:0", "29:0"]
+    monkeypatch.delenv("KORU_YDOTOOL_SUBMIT_MODE", raising=False)
+    monkeypatch.delenv("KORU_YDOTOOL_ENTER_KEYCODE", raising=False)
+    monkeypatch.delenv("KORU_YDOTOOL_CTRL_KEYCODE", raising=False)
+
+
 def test_type_text_wtype_uses_modifiers_for_jetbrains() -> None:
     calls: list[list[str]] = []
     inj = Injector(

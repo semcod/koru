@@ -134,6 +134,24 @@ class TestStarterInit(unittest.TestCase):
             self.assertEqual(data.get("schema"), "1.0")
             self.assertIn("when", data)
 
+    def test_host_environment_bundle_written_by_default(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            report = init_project(project)
+            self.assertTrue(report.host_environment_written)
+            rt = runtime_dir(project)
+            self.assertTrue((rt / "host-environment.json").is_file())
+            self.assertTrue((rt / "host-environment.md").is_file())
+
+    def test_host_environment_skipped_when_disabled(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            report = init_project(project, prepare_host_environment=False)
+            self.assertFalse(report.host_environment_written)
+            self.assertFalse(
+                (runtime_dir(project) / "host-environment.json").exists()
+            )
+
     def test_force_init_preserves_existing_koru_yaml(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

@@ -117,7 +117,7 @@ class _Client:
     # Pending CLI ack: when a CLI sends ``drive`` and we forward to a
     # plugin, we remember the CLI socket so we can reply after the
     # plugin acks.
-    awaiting_plugin: tuple[_Client, str] | None = None
+    awaiting_plugin: tuple[_Client, str, bool, str | None, str] | None = None
 
 
 class AutopilotDaemon:
@@ -353,7 +353,7 @@ class AutopilotDaemon:
     ) -> None:
         """Forward a drive request to a connected plugin for that IDE."""
         corr = msg.id or f"drive-{time.monotonic_ns():x}"
-        plugin.awaiting_plugin = (client, corr)
+        plugin.awaiting_plugin = (client, corr, submit, plugin.ide, text)
         self._send(plugin, chat_send(text, submit=submit, id=corr).encode())
         self._last_chat_send_at = time.monotonic()
         self.log(f"drive → plugin/{plugin.ide} ({len(text)} chars)")
@@ -486,16 +486,40 @@ class AutopilotDaemon:
         pending = client.awaiting_plugin
         if pending is None:
             return
-        cli_client, corr = pending
+        cli_client, corr, submit_requested, plugin_ide, original_text = pending
         if msg.id != corr:
             return
         client.awaiting_plugin = None
         info = {k: v for k, v in msg.data.items() if k != "ok"}
+        plugin_ok = bool(msg.data.get("ok", True))
+        focus_error = "chat input is not focused/open" in str(info.get("message", "")).lower()
+        if (not plugin_ok) and focus_error and plugin_ide:
+            try:
+                os_res = self._try_os_injector_drive(plugin_ide, original_text, submit_requested)
+            except InjectorError as exc:
+                info["os_fallback"] = "failed"
+                info["os_fallback_error"] = str(exc)
+            else:
+                if os_res is not None:
+                    relay = ack(
+                        corr,
+                        ok=True,
+                        info={
+                            "backend": os_res.get("backend", "os_injector"),
+                            "ok": True,
+                            "delivered": True,
+                            "opened": True,
+                            "submitted": bool(os_res.get("submitted", submit_requested)),
+                            "os_fallback": "used",
+                        },
+                    )
+                    self._send(cli_client, relay.encode())
+                    return
         # IDE plugins typically send ``delivered`` without ``backend``; CLI
         # summaries (e.g. ``koru autonomous``) expect a stable backend label.
         if info.get("delivered") is True and "backend" not in info:
             info["backend"] = "plugin"
-        relay = ack(corr, ok=bool(msg.data.get("ok", True)), info=info)
+        relay = ack(corr, ok=plugin_ok, info=info)
         self._send(cli_client, relay.encode())
 
     def _event_path(self) -> Path:

@@ -25,3 +25,37 @@ export function defaultSocketPathFromEnv(): string {
   const stem = name.replace(/\.sock$/i, "");
   return `/tmp/${stem}-${uid}.sock`;
 }
+
+export function socketCandidatesFromEnv(ideId: string, override?: string): string[] {
+  const out: string[] = [];
+  const push = (p: string) => {
+    const r = path.resolve(p);
+    if (!out.includes(r)) out.push(r);
+  };
+
+  const ov = (override || "").trim();
+  if (ov) push(ov);
+
+  const explicit = (process.env.KORU_AUTOPILOT_SOCKET || "").trim();
+  if (explicit) push(explicit);
+
+  // Default "single-instance" socket.
+  push(defaultSocketPathFromEnv());
+
+  // Also try per-IDE instance sockets when env doesn't point there.
+  // This matches common autonomous lanes: koru-autopilot-windsurf.sock, etc.
+  const xdg = process.env.XDG_RUNTIME_DIR;
+  if (xdg) {
+    push(path.join(xdg, `koru-autopilot-${ideId}.sock`));
+    push(path.join(xdg, "koru-autopilot-windsurf.sock"));
+    push(path.join(xdg, "koru-autopilot-vscode.sock"));
+    push(path.join(xdg, "koru-autopilot-cursor.sock"));
+  } else {
+    const uid = (process.getuid?.() ?? 0).toString();
+    push(`/tmp/koru-autopilot-${ideId}-${uid}.sock`);
+    push(`/tmp/koru-autopilot-windsurf-${uid}.sock`);
+    push(`/tmp/koru-autopilot-vscode-${uid}.sock`);
+    push(`/tmp/koru-autopilot-cursor-${uid}.sock`);
+  }
+  return out;
+}

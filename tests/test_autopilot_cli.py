@@ -117,6 +117,280 @@ def test_drive_direct_prefers_os_injector_profile(
     assert payload["backend"] == "os_injector"
 
 
+def test_drive_direct_honors_os_profile_override(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru.autopilot import os_injector as oi_mod
+
+    monkeypatch.setattr(cli_command, "detect_running_ides", lambda: [])
+
+    class _Inj:
+        session = "x11"
+
+        def type_text(self, *_a, **_k):
+            raise AssertionError("keyboard injector should not run")
+
+    seen: dict[str, object] = {}
+
+    def _fake_try(**kwargs):
+        seen.update(kwargs)
+        return {"ok": True, "backend": "os_injector", "tool_id": kwargs["tool_id"]}
+
+    monkeypatch.setattr(cli_command, "Injector", lambda: _Inj())
+    monkeypatch.setattr(oi_mod, "try_drive_with_profile", _fake_try)
+    rc = autopilot_main(
+        ["drive", "--direct", "--os-profile", "windsurf", "--prompt", "go"]
+    )
+    assert rc == 0
+    assert seen["tool_id"] == "windsurf"
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["tool_id"] == "windsurf"
+
+
+def test_drive_direct_os_profile_requires_os_injector_when_not_available(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru.autopilot import os_injector as oi_mod
+    from koru.autopilot.injector import InjectionResult
+
+    class _Inj:
+        session = "wayland"
+
+        def type_text(self, text, *, ide="default", submit=True, dry_run=False):
+            return InjectionResult(
+                backend="ydotool",
+                submitted=submit,
+                dry_run=dry_run,
+                output=text,
+            )
+
+    monkeypatch.setattr(cli_command, "Injector", lambda: _Inj())
+    monkeypatch.setattr(oi_mod, "try_drive_with_profile", lambda **_k: None)
+    rc = autopilot_main(
+        ["drive", "--direct", "--os-profile", "windsurf", "--prompt", "go"]
+    )
+    assert rc == 2
+    err = capsys.readouterr().err
+    assert "requested --os-profile but os-injector path is unavailable" in err
+
+
+def test_drive_direct_os_profile_os_injector_error_no_fallback(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru.autopilot import os_injector as oi_mod
+    from koru.autopilot.os_injector import OsInjectorError
+
+    class _Inj:
+        session = "wayland"
+
+        def type_text(self, *_a, **_k):
+            raise AssertionError("must not fallback when --os-profile is explicit")
+
+    monkeypatch.setattr(cli_command, "Injector", lambda: _Inj())
+    monkeypatch.setattr(
+        oi_mod,
+        "try_drive_with_profile",
+        lambda **_k: (_ for _ in ()).throw(OsInjectorError("xdotool timed out")),
+    )
+    rc = autopilot_main(
+        ["drive", "--direct", "--os-profile", "windsurf", "--prompt", "go"]
+    )
+    assert rc == 1
+    err = capsys.readouterr().err
+    assert "os-injector failed for requested profile" in err
+
+
+def test_drive_direct_falls_back_when_os_injector_fails(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru.autopilot import os_injector as oi_mod
+    from koru.autopilot.os_injector import OsInjectorError
+    from koru.autopilot.injector import InjectionResult
+
+    class _Inj:
+        session = "wayland"
+
+        def type_text(self, text, *, ide="default", submit=True, dry_run=False):
+            return InjectionResult(
+                backend="ydotool",
+                submitted=submit,
+                dry_run=dry_run,
+                output=text,
+            )
+
+    monkeypatch.setattr(cli_command, "Injector", lambda: _Inj())
+    monkeypatch.setattr(
+        oi_mod,
+        "try_drive_with_profile",
+        lambda **_k: (_ for _ in ()).throw(OsInjectorError("xdotool timed out")),
+    )
+    rc = autopilot_main(["drive", "--direct", "--prompt", "go"])
+    assert rc == 0
+    err = capsys.readouterr().err
+    assert "falling back to keyboard injector" in err
+
+
+def test_calibrate_auto_ide_resolves_from_running_processes(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from koru.autopilot import os_injector as oi_mod
+    from koru.autopilot.ide import RunningIDE
+
+    monkeypatch.setattr(cli_command.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(oi_mod, "capture_mouse_xy", lambda: (9, 9))
+    monkeypatch.setattr(
+        cli_command,
+        "detect_running_ides",
+        lambda: [RunningIDE(id="cursor", label="Cursor", pid=1, exe="/c")],
+    )
+    rc = autopilot_main(
+        [
+            "calibrate",
+            "--ide",
+            "auto",
+            "--delay-seconds",
+            "0",
+            "--config",
+            str(tmp_path / "auto.json"),
+        ]
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    payload = json.loads("\n".join(out.splitlines()[1:]))
+    assert payload["profile"] == "cursor"
+    assert payload["auto_detected"] is True
+
+
+def test_calibrate_writes_profile_from_mouse(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from koru.autopilot import os_injector as oi_mod
+
+    monkeypatch.setattr(cli_command.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(oi_mod, "capture_mouse_xy", lambda: (123, 456))
+    rc = autopilot_main(
+        [
+            "calibrate",
+            "--ide",
+            "windsurf",
+            "--delay-seconds",
+            "0",
+            "--config",
+            str(tmp_path / "profiles.json"),
+        ]
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    # JSON payload is printed after one human instruction line.
+    payload = json.loads("\n".join(out.splitlines()[1:]))
+    assert payload["profile"] == "windsurf"
+    assert payload["chat_x"] == 123
+    assert payload["chat_y"] == 456
+
+
+def test_session_start_explicit_ides(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from koru.autopilot import os_injector as oi_mod
+
+    monkeypatch.setattr(cli_command.time, "sleep", lambda _s: None)
+    coords = iter([(10, 20), (30, 40)])
+    monkeypatch.setattr(oi_mod, "capture_mouse_xy", lambda: next(coords))
+    rc = autopilot_main(
+        [
+            "session-start",
+            "--ides",
+            "windsurf,cursor",
+            "--delay-seconds",
+            "0",
+            "--config",
+            str(tmp_path / "session.json"),
+        ]
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    payload = json.loads("\n".join(line for line in out.splitlines() if not line.startswith("[")))
+    assert payload["ok"] is True
+    assert [t["ide"] for t in payload["targets"]] == ["windsurf", "cursor"]
+
+
+def test_session_start_keeps_profile_when_smoke_fails(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from koru.autopilot import os_injector as oi_mod
+    from koru.autopilot.os_injector import OsInjectorError
+
+    monkeypatch.setattr(cli_command.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(oi_mod, "capture_mouse_xy", lambda: (10, 20))
+    monkeypatch.setattr(
+        oi_mod,
+        "inject_with_profile",
+        lambda **_k: (_ for _ in ()).throw(OsInjectorError("xdotool timed out")),
+    )
+    rc = autopilot_main(
+        [
+            "session-start",
+            "--ides",
+            "windsurf",
+            "--delay-seconds",
+            "0",
+            "--config",
+            str(tmp_path / "session.json"),
+            "--prompt",
+            "smoke",
+        ]
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    payload = json.loads("\n".join(line for line in out.splitlines() if not line.startswith("[")))
+    assert payload["ok"] is True
+    assert payload["targets"][0]["warning"] == "profile_saved_but_smoke_failed"
+
+
+def test_session_start_warns_on_duplicate_coordinates(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from koru.autopilot import os_injector as oi_mod
+
+    monkeypatch.setattr(cli_command.time, "sleep", lambda _s: None)
+    coords = iter([(11, 22), (11, 22)])
+    monkeypatch.setattr(oi_mod, "capture_mouse_xy", lambda: next(coords))
+    rc = autopilot_main(
+        [
+            "session-start",
+            "--ides",
+            "windsurf,cursor",
+            "--delay-seconds",
+            "0",
+            "--config",
+            str(tmp_path / "session.json"),
+        ]
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    payload = json.loads("\n".join(line for line in out.splitlines() if not line.startswith("[")))
+    assert payload["ok"] is True
+    assert "warnings" in payload
+    dup = payload["warnings"]["duplicate_coordinates"][0]
+    assert dup["chat_x"] == 11
+    assert set(dup["ides"]) == {"windsurf", "cursor"}
+    assert payload["targets"][0]["warning"] == "shared_coordinates_with_other_ides"
+
+
 def test_ide_list_empty(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,

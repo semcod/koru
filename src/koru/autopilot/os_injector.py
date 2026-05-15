@@ -4,9 +4,10 @@ This backend is intentionally best-effort and X11/xdotool-focused.
 Use it only as a fallback when plugin/MCP paths are unavailable.
 
 Injection uses **only** stored mouse coordinates (``chat_x`` / ``chat_y``):
-move the pointer there, focus the field (left click or Return), then paste
-or type the prompt. Legacy ``window_id`` keys in JSON are ignored and no
-longer written by :func:`save_profile`.
+move the pointer there, focus the field (left click or Return), wait briefly
+(see ``KORU_OS_INJECTOR_POST_FOCUS_DELAY``), then paste or type the prompt.
+Legacy ``window_id`` keys in JSON are ignored and no longer written by
+:func:`save_profile`.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ import json
 import os
 import shutil
 import subprocess
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -89,6 +91,38 @@ def input_mode_from_env() -> str:
     if raw in ("paste", "type", "auto"):
         return raw
     return "auto"
+
+
+def _is_wayland_session() -> bool:
+    return os.environ.get("XDG_SESSION_TYPE", "").strip().lower() == "wayland"
+
+
+def _cmd_timeout_seconds() -> float:
+    raw = os.environ.get("KORU_OS_INJECTOR_CMD_TIMEOUT", "").strip()
+    if not raw:
+        return 2.0
+    try:
+        value = float(raw)
+    except ValueError:
+        return 2.0
+    return max(0.2, value)
+
+
+def _post_focus_delay_seconds() -> float:
+    """Pause after focus (click/Return) before typing/pasting.
+
+    Electron chat fields often need a short delay or keystrokes go to the
+    previous focus target. Override with ``KORU_OS_INJECTOR_POST_FOCUS_DELAY``
+    (seconds); ``0`` disables.
+    """
+    raw = os.environ.get("KORU_OS_INJECTOR_POST_FOCUS_DELAY", "").strip()
+    if not raw:
+        return 0.12
+    try:
+        value = float(raw)
+    except ValueError:
+        return 0.12
+    return max(0.0, min(value, 2.0))
 
 
 def try_load_profile(tool_id: str, *, project: Path | None = None) -> OsInjectorProfile | None:
@@ -175,7 +209,17 @@ def capture_from_xdotool() -> tuple[int, int, int]:
 
 
 def _run_cmd(cmd: list[str], *, stdin: bytes | None = None) -> None:
-    proc = subprocess.run(cmd, input=stdin, capture_output=True, text=False, check=False)
+    try:
+        proc = subprocess.run(
+            cmd,
+            input=stdin,
+            capture_output=True,
+            text=False,
+            check=False,
+            timeout=_cmd_timeout_seconds(),
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise OsInjectorError(f"{cmd[0]} timed out after {_cmd_timeout_seconds():.1f}s") from exc
     if proc.returncode != 0:
         err = (proc.stderr or b"").decode("utf-8", errors="replace").strip()
         raise OsInjectorError(f"{cmd[0]} failed ({proc.returncode}): {err or '(no stderr)'}")
@@ -183,6 +227,18 @@ def _run_cmd(cmd: list[str], *, stdin: bytes | None = None) -> None:
 
 def _xdotool(argv_tail: list[str]) -> None:
     _run_cmd(["xdotool", *argv_tail])
+
+
+def _tool_pid(tool_id: str) -> int | None:
+    try:
+        from .ide import detect_running_ides
+
+        for ide in detect_running_ides():
+            if ide.id == tool_id:
+                return int(ide.pid)
+    except Exception:
+        return None
+    return None
 
 
 def _clipboard_backend() -> str | None:
@@ -219,10 +275,11 @@ def inject_with_profile(
     focus = focus_mode_from_env()
     mode = input_mode_from_env()
     clip_ok = _clipboard_backend() is not None
-    use_paste = mode == "paste" or (mode == "auto" and clip_ok)
+    use_paste = mode == "paste" or (mode == "auto" and clip_ok and not _is_wayland_session())
     if mode == "paste" and not clip_ok:
         raise OsInjectorError("KORU_OS_INJECTOR_INPUT=paste requires xclip or xsel on PATH")
     input_method: str = "paste" if use_paste else "type"
+    post_focus_delay = _post_focus_delay_seconds()
 
     if dry_run:
         return {
@@ -235,14 +292,18 @@ def inject_with_profile(
             "chat_y": profile.chat_y,
             "focus": focus,
             "input_method": input_method,
+            "post_focus_delay": post_focus_delay,
         }
 
     x, y = profile.chat_x, profile.chat_y
-    _xdotool(["mousemove", "--sync", str(x), str(y)])
+    _xdotool(["mousemove", str(x), str(y)])
     if focus == "click":
         _xdotool(["click", "1"])
     else:
         _xdotool(["key", "--clearmodifiers", "Return"])
+
+    if post_focus_delay > 0:
+        time.sleep(post_focus_delay)
 
     if use_paste:
         clip_tool = _set_clipboard(text)
@@ -264,6 +325,7 @@ def inject_with_profile(
         "chat_y": profile.chat_y,
         "focus": focus,
         "input_method": input_method,
+        "post_focus_delay": post_focus_delay,
     }
 
 
@@ -284,6 +346,8 @@ def try_drive_with_profile(
     if tool_id == "default":
         return None
     if os_injector_env_disabled():
+        return None
+    if _is_wayland_session() and not os_injector_env_forced():
         return None
     if shutil.which("xdotool") is None:
         return None

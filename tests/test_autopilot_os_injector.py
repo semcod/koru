@@ -76,6 +76,7 @@ def test_inject_with_profile_paste_path_uses_clipboard_then_ctrl_v(
         return subprocess.CompletedProcess(args=cmd, returncode=0, stdout=b"", stderr=b"")
 
     monkeypatch.setattr(subprocess, "run", _run)
+    monkeypatch.setattr(oi.time, "sleep", lambda _s: None)
     monkeypatch.setattr(oi.shutil, "which", lambda n: f"/bin/{n}")
     monkeypatch.setenv("KORU_OS_INJECTOR_INPUT", "paste")
     out = inject_with_profile(
@@ -88,7 +89,7 @@ def test_inject_with_profile_paste_path_uses_clipboard_then_ctrl_v(
     assert out["input_method"] == "paste"
     joined = "\n".join(" ".join(c) for c in calls)
     assert "windowactivate" not in joined
-    assert calls[0][:4] == ["xdotool", "mousemove", "--sync", "20"]
+    assert calls[0][:3] == ["xdotool", "mousemove", "20"]
     assert calls[1][:2] == ["xdotool", "click"]
     assert any(c[:2] == ["/bin/xclip", "-selection"] for c in calls)
     assert any("ctrl+v" in " ".join(c) for c in calls)
@@ -106,6 +107,7 @@ def test_inject_with_profile_type_fallback_when_no_clip_tools(
         return subprocess.CompletedProcess(args=cmd, returncode=0, stdout=b"", stderr=b"")
 
     monkeypatch.setattr(subprocess, "run", _run)
+    monkeypatch.setattr(oi.time, "sleep", lambda _s: None)
     monkeypatch.setattr(oi.shutil, "which", lambda n: "/xdotool" if n == "xdotool" else None)
     monkeypatch.setenv("KORU_OS_INJECTOR_INPUT", "type")
     out = inject_with_profile(
@@ -115,7 +117,7 @@ def test_inject_with_profile_type_fallback_when_no_clip_tools(
         dry_run=False,
     )
     assert out["input_method"] == "type"
-    assert calls[0][1:4] == ["mousemove", "--sync", "5"]
+    assert calls[0][1:3] == ["mousemove", "5"]
     assert calls[1][:2] == ["xdotool", "click"]
     assert calls[2][:2] == ["xdotool", "type"]
 
@@ -123,6 +125,29 @@ def test_inject_with_profile_type_fallback_when_no_clip_tools(
 def test_load_profile_missing_raises(tmp_path: Path) -> None:
     with pytest.raises(OsInjectorError, match="missing profile"):
         load_profile("vscode", config_path=tmp_path / "nope.json")
+
+
+def test_inject_with_profile_paste_timeout_is_reported(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import koru.autopilot.os_injector as oi
+
+    def _run(cmd, **kwargs):
+        if cmd and cmd[0] == "/bin/xclip":
+            raise subprocess.TimeoutExpired(cmd=cmd, timeout=2.0)
+        return subprocess.CompletedProcess(args=cmd, returncode=0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(subprocess, "run", _run)
+    monkeypatch.setattr(oi.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(oi.shutil, "which", lambda n: f"/bin/{n}")
+    monkeypatch.setenv("KORU_OS_INJECTOR_INPUT", "paste")
+    with pytest.raises(OsInjectorError, match="xclip timed out"):
+        inject_with_profile(
+            profile=OsInjectorProfile(tool_id="windsurf", chat_x=1, chat_y=2),
+            text="hello",
+            submit=True,
+            dry_run=False,
+        )
 
 
 def test_try_load_profile_prefers_project_over_cwd(
@@ -154,10 +179,10 @@ def test_iter_config_paths_dedupes_project_and_cwd(tmp_path: Path) -> None:
     assert len(paths) == len({str(p.resolve()) for p in paths})
 
 
-def test_try_drive_with_profile_works_when_xdg_session_type_wayland(
+def test_try_drive_with_profile_skips_by_default_on_wayland(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Regression: Wayland session must not hide a working xdotool + profile path."""
+    """Wayland should prefer non-xdotool injectors unless explicitly forced."""
     import koru.autopilot.os_injector as oi
 
     monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
@@ -169,9 +194,23 @@ def test_try_drive_with_profile_works_when_xdg_session_type_wayland(
         encoding="utf-8",
     )
     monkeypatch.chdir(tmp_path)
-    out = try_drive_with_profile(
-        tool_id="cursor", text="x", submit=False, project=None, cli_dry_run=True,
-    )
+    out = try_drive_with_profile(tool_id="cursor", text="x", submit=False, project=None, cli_dry_run=True)
+    assert out is None
+
+
+def test_try_drive_with_profile_forced_works_on_wayland(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import koru.autopilot.os_injector as oi
+
+    monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
+    monkeypatch.setenv("KORU_OS_INJECTOR", "1")
+    monkeypatch.setattr(oi.shutil, "which", lambda _n: "/xdotool")
+    cfg = tmp_path / ".koru" / "ide-os-injector.json"
+    cfg.parent.mkdir(parents=True)
+    cfg.write_text(json.dumps({"cursor": {"chat_x": 2, "chat_y": 3}}), encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    out = try_drive_with_profile(tool_id="cursor", text="x", submit=False, project=None, cli_dry_run=True)
     assert out is not None
     assert out["backend"] == "os_injector"
 
@@ -195,6 +234,7 @@ def test_try_drive_with_profile_skips_when_env_disabled(monkeypatch: pytest.Monk
 def test_try_drive_with_profile_uses_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     import koru.autopilot.os_injector as oi
 
+    monkeypatch.setenv("XDG_SESSION_TYPE", "x11")
     monkeypatch.setattr(oi.shutil, "which", lambda _n: "/xdotool")
     cfg = tmp_path / ".koru" / "ide-os-injector.json"
     cfg.parent.mkdir(parents=True)
@@ -213,3 +253,53 @@ def test_try_drive_with_profile_uses_config(tmp_path: Path, monkeypatch: pytest.
     assert out is not None
     assert out["backend"] == "os_injector"
     assert out["dry_run"] is True
+
+
+def test_inject_post_focus_delay_env_controls_sleep(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import koru.autopilot.os_injector as oi
+
+    calls: list[list[str]] = []
+    sleeps: list[float] = []
+
+    def _run(cmd, **kwargs):
+        calls.append(list(cmd))
+        return subprocess.CompletedProcess(args=cmd, returncode=0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(subprocess, "run", _run)
+    monkeypatch.setattr(oi.time, "sleep", lambda s: sleeps.append(float(s)))
+    monkeypatch.setattr(oi.shutil, "which", lambda n: f"/bin/{n}")
+    monkeypatch.setenv("KORU_OS_INJECTOR_INPUT", "paste")
+    monkeypatch.setenv("KORU_OS_INJECTOR_POST_FOCUS_DELAY", "0.25")
+    inject_with_profile(
+        profile=OsInjectorProfile(tool_id="cursor", chat_x=1, chat_y=2),
+        text="x",
+        submit=False,
+        dry_run=False,
+    )
+    assert sleeps == [0.25]
+
+
+def test_inject_post_focus_delay_zero_skips_sleep(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import koru.autopilot.os_injector as oi
+
+    calls: list[list[str]] = []
+
+    def _run(cmd, **kwargs):
+        calls.append(list(cmd))
+        return subprocess.CompletedProcess(args=cmd, returncode=0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(subprocess, "run", _run)
+    monkeypatch.setattr(oi.time, "sleep", lambda s: (_ for _ in ()).throw(AssertionError("sleep")))
+    monkeypatch.setattr(oi.shutil, "which", lambda n: f"/bin/{n}")
+    monkeypatch.setenv("KORU_OS_INJECTOR_INPUT", "paste")
+    monkeypatch.setenv("KORU_OS_INJECTOR_POST_FOCUS_DELAY", "0")
+    inject_with_profile(
+        profile=OsInjectorProfile(tool_id="cursor", chat_x=1, chat_y=2),
+        text="x",
+        submit=False,
+        dry_run=False,
+    )

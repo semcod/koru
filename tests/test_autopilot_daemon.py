@@ -246,6 +246,10 @@ def test_drive_uses_os_injector_when_profile_available(
 ) -> None:
     from koru.autopilot import os_injector as oi_mod
 
+    # Wayland hosts skip try_drive_with_profile unless KORU_OS_INJECTOR=1;
+    # this test exercises the X11 / XWayland xdotool path explicitly.
+    monkeypatch.setenv("XDG_SESSION_TYPE", "x11")
+
     repo = tmp_path / "repo"
     repo.mkdir()
     fake = RunningIDE(id="cursor", label="Cursor", pid=1, exe="/opt/Cursor")

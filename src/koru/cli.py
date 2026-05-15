@@ -172,6 +172,15 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Stop --watch after this many events, useful for smoke tests.",
     )
     parser.add_argument(
+        "--skip-host-environment",
+        action="store_true",
+        help=(
+            "With --init or --init-agent-lane: skip writing .planfile/.koru/"
+            "host-environment.{json,md} (desktop + injector probe). "
+            "Use in CI or minimal sandboxes."
+        ),
+    )
+    parser.add_argument(
         "--bootstrap",
         action="store_true",
         help="Import a flat-format pipeline YAML into .planfile/ for queue-mode execution.",
@@ -212,7 +221,9 @@ def _build_parser() -> argparse.ArgumentParser:
             "flat pipeline (or generate a 2-ticket starter scaffold), "
             "write .planfile/.koru/policy.yaml stub, add "
             ".planfile/.koru/ to .gitignore, and (unless --agent-lane none) "
-            "emit shell-env.sh + run-autonomous.sh. Pass --from <yaml> to "
+            "emit shell-env.sh + run-autonomous.sh, and write a host-environment "
+            "snapshot (host-environment.json + .md) for autopilot setup. Pass "
+            "--from <yaml> to "
             "import an existing pipeline; --force to re-init."
         ),
     )
@@ -1685,6 +1696,7 @@ def _init_main(args: argparse.Namespace) -> int:
             sprint=args.sprint,
             force=args.force,
             agent_lane=args.agent_lane,
+            prepare_host_environment=not args.skip_host_environment,
         )
     except FileExistsError as exc:
         print(f"koru init: {exc}")
@@ -1707,6 +1719,10 @@ def _init_main(args: argparse.Namespace) -> int:
             "run `./.planfile/.koru/setup-autopilot-host.sh` "
             "(or `koru autopilot setup-host`) to check injectors / apt vs human steps"
         )
+    if report.host_environment_written:
+        next_parts.append(
+            "read `.planfile/.koru/host-environment.md` for this machine's autopilot checklist"
+        )
     next_parts.extend(
         [
             "run `koru` for the LLM brief",
@@ -1728,6 +1744,7 @@ def _init_main(args: argparse.Namespace) -> int:
             "agent_lane_files_written": report.agent_lane_files_written,
             "autopilot_host_setup_written": report.autopilot_host_setup_written,
             "koru_project_pipeline_yaml_written": report.koru_project_pipeline_yaml_written,
+            "host_environment_written": report.host_environment_written,
         },
     )
     return 0
@@ -1738,6 +1755,7 @@ def _init_agent_lane_main(args: argparse.Namespace) -> int:
         report = refresh_init_agent_lane(
             args.project,
             agent_lane=args.agent_lane,
+            prepare_host_environment=not args.skip_host_environment,
         )
     except FileNotFoundError as exc:
         print(f"koru init-agent-lane: {exc}")
@@ -1758,6 +1776,8 @@ def _init_agent_lane_main(args: argparse.Namespace) -> int:
         next_parts.append(
             "`./.planfile/.koru/setup-autopilot-host.sh` or `koru autopilot setup-host`"
         )
+    if report.host_environment_written:
+        next_parts.append("read `.planfile/.koru/host-environment.md` for this machine")
     print("Next: " + "; ".join(next_parts or ["no shell helpers to run"]) + ".")
     emit_management_event(
         tool="koru.init_agent_lane",
@@ -1770,6 +1790,7 @@ def _init_agent_lane_main(args: argparse.Namespace) -> int:
             "agent_lane": report.agent_lane,
             "agent_lane_files_written": report.agent_lane_files_written,
             "autopilot_host_setup_written": report.autopilot_host_setup_written,
+            "host_environment_written": report.host_environment_written,
         },
     )
     return 0

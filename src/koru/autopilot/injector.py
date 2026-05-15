@@ -56,6 +56,51 @@ def _forced_injector_backend() -> str | None:
     return None
 
 
+def _ydotool_enter_keycode() -> str:
+    """Keycode used by ydotool for submit.
+
+    Default remains ``28`` (classic Enter), but some hosts/layout stacks map it
+    differently. Override with ``KORU_YDOTOOL_ENTER_KEYCODE`` (e.g. ``96`` for KP Enter).
+    """
+    raw = os.environ.get("KORU_YDOTOOL_ENTER_KEYCODE", "").strip()
+    if raw.isdigit():
+        return raw
+    return "28"
+
+
+def _ydotool_submit_mode() -> str:
+    """How to submit for ydotool: ``keycode`` (default), ``newline``, ``ctrl-enter``."""
+    raw = os.environ.get("KORU_YDOTOOL_SUBMIT_MODE", "").strip().lower()
+    if raw in ("newline", "nl", "linefeed"):
+        return "newline"
+    if raw in ("ctrl-enter", "ctrl_enter", "ctrl+enter"):
+        return "ctrl-enter"
+    return "keycode"
+
+
+def _ydotool_ctrl_keycode() -> str:
+    """Keycode used for Ctrl in ydotool chord submit mode."""
+    raw = os.environ.get("KORU_YDOTOOL_CTRL_KEYCODE", "").strip()
+    if raw.isdigit():
+        return raw
+    return "29"
+
+
+def _extra_enter_count() -> int:
+    """Optional extra submit presses after normal submit.
+
+    Controlled by ``KORU_INJECTOR_EXTRA_ENTER`` (integer, default 0).
+    """
+    raw = os.environ.get("KORU_INJECTOR_EXTRA_ENTER", "").strip()
+    if not raw:
+        return 0
+    try:
+        value = int(raw)
+    except ValueError:
+        return 0
+    return max(0, value)
+
+
 @dataclass
 class BackendStatus:
     """Result of probing a single backend."""
@@ -173,18 +218,56 @@ class Injector:
         text: str,
         submit_key: str | None,
     ) -> None:
+        extra_enters = _extra_enter_count()
         if backend == "xdotool":
             self._call(["xdotool", "type", "--delay", "5", "--clearmodifiers", "--", text])
             if submit_key:
                 self._call(["xdotool", "key", "--clearmodifiers", submit_key])
+                for _ in range(extra_enters):
+                    self._call(["xdotool", "key", "--clearmodifiers", "Return"])
         elif backend == "wtype":
             self._call(["wtype", "--", text])
             if submit_key:
                 self._press_wtype(submit_key)
+                for _ in range(extra_enters):
+                    self._call(["wtype", "-k", "Return"])
         elif backend == "ydotool":
+            enter_code = _ydotool_enter_keycode()
+            submit_mode = _ydotool_submit_mode()
+            ctrl_code = _ydotool_ctrl_keycode()
             self._call(["ydotool", "type", "--", text])
             if submit_key:
-                self._call(["ydotool", "key", "28:1", "28:0"])  # 28 = KEY_ENTER
+                if submit_mode == "newline":
+                    self._call(["ydotool", "type", "--", "\n"])
+                elif submit_mode == "ctrl-enter":
+                    self._call(
+                        [
+                            "ydotool",
+                            "key",
+                            f"{ctrl_code}:1",
+                            f"{enter_code}:1",
+                            f"{enter_code}:0",
+                            f"{ctrl_code}:0",
+                        ]
+                    )
+                else:
+                    self._call(["ydotool", "key", f"{enter_code}:1", f"{enter_code}:0"])
+                for _ in range(extra_enters):
+                    if submit_mode == "newline":
+                        self._call(["ydotool", "type", "--", "\n"])
+                    elif submit_mode == "ctrl-enter":
+                        self._call(
+                            [
+                                "ydotool",
+                                "key",
+                                f"{ctrl_code}:1",
+                                f"{enter_code}:1",
+                                f"{enter_code}:0",
+                                f"{ctrl_code}:0",
+                            ]
+                        )
+                    else:
+                        self._call(["ydotool", "key", f"{enter_code}:1", f"{enter_code}:0"])
         else:
             raise InjectorError(f"unreachable: unknown backend {backend!r}")
 
@@ -232,6 +315,37 @@ class Injector:
             "Override order with KORU_INJECTOR_BACKEND=wtype|xdotool|ydotool."
         )
         raise InjectorError("all keyboard injection backends failed: " + "; ".join(errors) + hint)
+
+    def submit_only(
+        self,
+        *,
+        ide: str = "default",
+        dry_run: bool = False,
+    ) -> InjectionResult:
+        """Press only the IDE submit key via the selected backend."""
+        backends = self._candidate_backends()
+        if not backends:
+            raise InjectorError(
+                "no keyboard injection backend found "
+                "(install xdotool on X11 or wtype/ydotool on Wayland)"
+            )
+        submit_key = _submit_key_for(ide)
+        backend0 = backends[0]
+        if dry_run:
+            return InjectionResult(
+                backend=backend0,
+                submitted=True,
+                dry_run=True,
+                output=f"[dry-run] would press {submit_key} via {backend0}",
+            )
+        errors: list[str] = []
+        for backend in backends:
+            try:
+                self._type_with_backend(backend, "", submit_key)
+                return InjectionResult(backend=backend, submitted=True)
+            except InjectorError as exc:
+                errors.append(f"{backend}: {exc}")
+        raise InjectorError("all keyboard submit backends failed: " + "; ".join(errors))
 
     # ----- internals -----------------------------------------------------
 

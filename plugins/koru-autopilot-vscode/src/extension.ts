@@ -11,7 +11,7 @@ import * as fs from "fs";
 import * as net from "net";
 import * as vscode from "vscode";
 import { planDispatch } from "./dispatch-plan";
-import { defaultSocketPathFromEnv } from "./socketPath";
+import { defaultSocketPathFromEnv, socketCandidatesFromEnv } from "./socketPath";
 
 interface Envelope {
   type: string;
@@ -26,6 +26,8 @@ class AutopilotBridge {
   private buf = "";
   private status: vscode.StatusBarItem;
   private retryTimer: NodeJS.Timeout | null = null;
+  private connectCandidates: string[] = [];
+  private connectIndex = 0;
 
   constructor(private context: vscode.ExtensionContext) {
     this.status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 50);
@@ -44,12 +46,29 @@ class AutopilotBridge {
 
   connect(): void {
     this.disconnect();
-    const p = this.socketPath();
+    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+    const override = (cfg.get<string>("socketPath") || "").trim();
+    this.connectCandidates = socketCandidatesFromEnv(this.detectIde(), override);
+    this.connectIndex = 0;
+    this.tryConnectNext();
+  }
+
+  private tryConnectNext(): void {
+    if (this.connectIndex >= this.connectCandidates.length) {
+      this.status.text = "$(warning) koru: off";
+      this.status.tooltip = "koru autopilot: no reachable socket candidate";
+      this.scheduleRetry();
+      return;
+    }
+    const p = this.connectCandidates[this.connectIndex++];
     const sock = net.createConnection(p);
     sock.setEncoding("utf-8");
+    let connected = false;
     sock.on("connect", () => {
+      connected = true;
       this.socket = sock;
       this.status.text = "$(plug) koru: on";
+      this.status.tooltip = `koru autopilot: connected ${p}`;
       this.send({
         type: "hello",
         id: "vscode-hello",
@@ -60,11 +79,18 @@ class AutopilotBridge {
     });
     sock.on("data", (chunk: string) => this.onData(chunk));
     sock.on("error", (err: Error) => {
+      if (!connected) {
+        // Try next candidate immediately on initial connect failure.
+        try { sock.destroy(); } catch { /* ignore */ }
+        this.tryConnectNext();
+        return;
+      }
       this.status.text = "$(warning) koru: err";
       this.status.tooltip = `koru autopilot: ${err.message}`;
       this.scheduleRetry();
     });
     sock.on("close", () => {
+      if (!connected) return;
       this.status.text = "$(plug) koru: off";
       this.socket = null;
       this.scheduleRetry();
@@ -140,7 +166,26 @@ class AutopilotBridge {
       if (await this.runCommand(cmd)) return true;
       console.warn(`koru autopilot: submitChat command not available: ${cmd}`);
     }
-    return false;
+    // Extra fallback for IDEs where chat input is focused but command IDs are hidden.
+    try {
+      await Promise.resolve(vscode.commands.executeCommand("workbench.action.acceptSelectedQuickOpenItem"));
+      return true;
+    } catch {
+      // ignore
+    }
+    // Last resort: synthetic Enter in currently focused chat input.
+    try {
+      await Promise.resolve(vscode.commands.executeCommand("type", { text: "\n" }));
+      return true;
+    } catch {
+      // Some hosts react to CR (\r) but not LF (\n) for submit.
+      try {
+        await Promise.resolve(vscode.commands.executeCommand("type", { text: "\r" }));
+        return true;
+      } catch {
+        return false;
+      }
+    }
   }
 
   private async focusChat(): Promise<boolean> {
@@ -166,10 +211,29 @@ class AutopilotBridge {
             "composer.showComposer",
             "aichat.newchataction",
           ];
-    const commands = primary.length > 0 ? primary : defaults;
-    for (const cmd of commands) {
+    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(true)));
+    const runList = async (commands: string[]): Promise<boolean> => {
+      for (const cmd of commands) {
+        if (!existing.has(cmd)) {
+          console.warn(`koru autopilot: focusChat command not registered: ${cmd}`);
+          continue;
+        }
+        if (await this.runCommand(cmd)) return true;
+        console.warn(`koru autopilot: focusChat command not available: ${cmd}`);
+      }
+      return false;
+    };
+    // If user configured custom commands, try them first, then always fallback
+    // to built-ins to avoid hard lock-in on stale command IDs.
+    if (primary.length > 0 && (await runList(primary))) {
+      return true;
+    }
+    for (const cmd of defaults) {
+      if (primary.includes(cmd)) continue;
+      if (!existing.has(cmd)) {
+        continue;
+      }
       if (await this.runCommand(cmd)) return true;
-      console.warn(`koru autopilot: focusChat command not available: ${cmd}`);
     }
     return false;
   }
@@ -227,6 +291,7 @@ class AutopilotBridge {
 
   private async focusChatInput(): Promise<boolean> {
     const ide = this.detectIde();
+    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(true)));
     const candidates = [
       ...(ide === "windsurf"
         ? [
@@ -245,6 +310,9 @@ class AutopilotBridge {
       "workbench.action.focusSideBar",      // primary sidebar (left)
     ];
     for (const cmd of candidates) {
+      if (!existing.has(cmd)) {
+        continue;
+      }
       if (await this.runCommand(cmd)) return true;
     }
     return false;
@@ -335,20 +403,15 @@ class AutopilotBridge {
         await new Promise(r => setTimeout(r, 300));
       }
       if (!opened) {
-        // Even if focusChat failed, try the direct text-insertion path
-        // (some IDEs accept text without explicitly opening the panel).
-        const directPasted = await this.pasteText(text);
-        if (!directPasted) {
-          this.send({
-            type: "ack",
-            id: env.id,
-            ok: false,
-            message:
-              "no chat open command succeeded and paste fallback failed — check koruAutopilot.chatOpenCommands",
-          });
-          return;
-        }
-        this.send({ type: "ack", id: env.id, ok: true, delivered: true, opened: false, submitted: false });
+        this.send({
+          type: "ack",
+          id: env.id,
+          ok: false,
+          opened: false,
+          submitted: false,
+          message:
+            "chat input is not focused/open (no supported focus command in this IDE build). Open chat input manually, then retry.",
+        });
         return;
       }
       const pasted = await this.pasteText(text);
