@@ -152,9 +152,6 @@ def _resolve_autopilot_ide(cli_value: str) -> str:
 
 def _terminal_agent_lane_from_env(environ: Mapping[str, str] | None = None) -> str | None:
     env = os.environ if environ is None else environ
-    explicit = (env.get("KORU_AUTOPILOT_IDE") or "").strip().lower()
-    if explicit and explicit != "auto":
-        return explicit
     term_program = (env.get("TERM_PROGRAM") or "").strip().lower()
     if term_program in {"windsurf", "vscode", "code", "codium", "vscodium"}:
         return "vscode" if term_program in {"vscode", "code", "codium", "vscodium"} else "windsurf"
@@ -167,6 +164,9 @@ def _terminal_agent_lane_from_env(environ: Mapping[str, str] | None = None) -> s
     )
     if any(env.get(key) for key in vscode_markers):
         return "vscode"
+    explicit = (env.get("KORU_AUTOPILOT_IDE") or "").strip().lower()
+    if explicit and explicit != "auto":
+        return explicit
     return None
 
 

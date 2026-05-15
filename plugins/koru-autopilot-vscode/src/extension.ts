@@ -470,6 +470,11 @@ class AutopilotBridge {
 }
 
 export function activate(context: vscode.ExtensionContext): void {
+  debugLog("ACTIVATE", {
+    appName: vscode.env.appName,
+    extensionMode: context.extensionMode,
+    extensionPath: context.extensionPath,
+  });
   const bridge = new AutopilotBridge(context);
   activeBridge = bridge;
   context.subscriptions.push(

@@ -498,6 +498,11 @@ class AutopilotBridge {
     }
 }
 function activate(context) {
+    debugLog("ACTIVATE", {
+        appName: vscode.env.appName,
+        extensionMode: context.extensionMode,
+        extensionPath: context.extensionPath,
+    });
     const bridge = new AutopilotBridge(context);
     activeBridge = bridge;
     context.subscriptions.push(vscode.commands.registerCommand("koruAutopilot.connect", () => bridge.connect()), vscode.commands.registerCommand("koruAutopilot.sendChat", async () => {

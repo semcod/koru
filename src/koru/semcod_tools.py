@@ -59,16 +59,30 @@ class SemcodTool:
 # Python libraries shipped under a different name than their CLI, but
 # in the semcod ecosystem they match.
 _TOOLS: tuple[tuple[str, str, str, str | None], ...] = (
+    ("planfile", "ticket lifecycle (source of truth)", "planfile ticket <verb>", "planfile"),
+    ("koru", "this gate — closed-loop automation", "koru / koru scan / koru --queue", "koru"),
+    ("wup", "real-time file/service watcher", "wup watch / wup status", "wup"),
+    ("testql", "behavioural HTTP probes", "testql suite / testql run <scenario>", "testql"),
+    ("regix", "regression metrics gate", "regix gates / regix compare", "regix"),
+    ("redup", "duplicate-code detector", "redup scan . / redup check", "redup"),
+    ("sumr", "debounced project summary", "sumr generate / scripts/sumr-refresh.sh", "sumr"),
+    ("sumd", "LLM-friendly project snapshot", "sumd . / code2llm ./ -f toon", "sumd"),
+    ("prefact", "pre-refactor checks", "prefact check", "prefact"),
+    ("pfix", "self-healing Python auto-fix", "pfix run", "pfix"),
+    ("vallm", "syntax / semantic validation", "vallm validate -f <file>", "vallm"),
+    ("redsl", "quality gate + LLM-backed improve lane", "redsl gate check .", "redsl"),
+    ("llx", "LLM model router", "llx run / llx chat", "llx"),
+    ("doql", "declarative infrastructure/app sync", "doql build / doql sync", "doql"),
+    ("redeploy", "deployment planning and rollout", "redeploy plan / redeploy apply", "redeploy"),
     ("goal", "strategic goal alignment", "goal status / goal sync", "goal"),
     ("costs", "AI cost tracking + badge", "costs analyze", "costs"),
-    ("pfix", "self-healing Python (auto-fix)", "pfix run", "pfix"),
-    ("sumr", "weekly project summaries", "sumr generate", "sumr"),
+    ("op3", "multi-layer infra observation", "op3 observe / op3 report", "op3"),
+    ("toonic", "TOON format conversion", "toonic convert", "toonic"),
+    ("protogate", "bounded legacy migration gates", "protogate plan / protogate check", "protogate"),
     ("rebuild", "git history walker / quality replay", "rebuild walk / rebuild serve", "rebuild"),
-    ("regix", "regression metrics gate", "regix gates / regix compare", "regix"),
-    ("wup", "intelligent file watcher", "wup watch / wup status", "wup"),
-    ("testql", "behavioural HTTP probes", "testql run <scenario>", "testql"),
-    ("planfile", "ticket lifecycle (source of truth)", "planfile ticket <verb>", "planfile"),
-    ("koru", "this gate — closed-loop automation", "koru / koru --queue / koru serve", "koru"),
+    ("mdflow", "markdown dependency analyzer", "mdflow graph / mdflow check", "mdflow"),
+    ("metrun", "execution intelligence and bottlenecks", "metrun run / metrun report", "metrun"),
+    ("aider", "interactive code agent adapter", "aider", "aider"),
 )
 
 

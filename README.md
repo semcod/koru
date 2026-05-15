@@ -4,11 +4,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.113-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$1.92-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-54.9h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.114-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$2.42-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-55.9h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $1.9216 (167 commits)
-- 👤 **Human dev:** ~$5491 (54.9h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $2.4174 (168 commits)
+- 👤 **Human dev:** ~$5594 (55.9h @ $100/h, 30min dedup)
 
 Generated on 2026-05-15 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -401,12 +401,13 @@ koru \
 task                          # list all tasks (40+)
 task install                  # pip install -e .
 task ci                       # local CI equivalent: lint + tests
-task install:tools            # planfile, regix, redup, vallm, prefact, pfix
+task install:tools            # semcod toolchain: planfile, wup, testql, regix, redup, ...
 task tickets:next             # highest-priority open ticket
 task queue:run                # execute one runnable planfile queue task
 task queue:dry-run            # preview the next planfile queue task
 task queue:watch              # watch planfile WebSocket queue events
 task queue:autoloop           # unattended scan+queue+autopilot loop
+task quality:semcod:planfile  # semcod gates -> deduplicated planfile tickets
 task quality:regix            # regression metrics gate
 task quality:redup            # duplicate detection
 task template:install         # bootstrap configs in current dir
@@ -678,6 +679,36 @@ wup watch . \
 services, runs quick TestQL probes first, and writes live service status to
 `.wup/service-health.json`. Use `regix` separately for git/metric regressions
 against `HEAD`.
+
+### semcod/* control loop → planfile tickets
+
+Koru also has a single operator command for the full semcod toolchain:
+
+```bash
+task install:tools
+task quality:semcod:planfile
+```
+
+That command is intentionally LLM-free. It:
+
+1. runs `koru scan --apply --semcod-artifacts`;
+2. detects configured `semcod/*` tools (`wup`, `testql`, `regix`, `redup`,
+   `sumr/sumd`, `doql`, `redsl`, plus the rest surfaced in the Koru brief);
+3. runs only the gates that are both installed and configured in the project;
+4. uses `scripts/koru-gate-capture.py` to create or update deduplicated
+   `planfile` tickets marked with `[gate-finding:<hash>]`.
+
+Useful variants:
+
+```bash
+DRY_RUN=1 task quality:semcod:planfile        # show what tickets would be created
+UPDATE_EXISTING=1 task quality:semcod:planfile # append notes to existing findings
+PRIORITY=critical task quality:semcod:planfile # promote new gate findings
+```
+
+The source of truth stays in `.planfile/`; Koru does not hand-edit sprint YAML.
+Agents should consume the resulting work through `planfile ticket next` or
+`koru --queue`.
 
 ### Auto-promotion & auto-repair for blocking tickets
 

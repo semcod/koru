@@ -127,6 +127,34 @@ W praktyce wygląda to tak:
    - [`../windsurf-agent-guide.md`](../windsurf-agent-guide.md)
    - [`../../.windsurf/rules.md`](../../.windsurf/rules.md)
 
+### Koru jako kontroler semcod/* → planfile
+
+W repo zarządzanym przez Koru standardowa komenda operatorska to:
+
+```bash
+task install:tools
+task quality:semcod:planfile
+```
+
+`quality:semcod:planfile` uruchamia tylko realnie dostępne i skonfigurowane
+bramki, a każdą awarię zapisuje jako deduplikowany ticket w `planfile`:
+
+- `koru scan --apply --semcod-artifacts` — tickety z realnych sygnałów repo;
+- `regix gates` — regresje metryk;
+- `wup status` — stan watchera plików/usług;
+- `testql suite ...` — awarie scenariuszy HTTP/API;
+- `redup scan ...` — przekroczone progi duplikacji;
+- `scripts/sumr-refresh.sh --status` — nieświeże snapshoty SUMR/SUMD;
+- `doql check app.doql.less` i `redsl gate check .`, gdy są skonfigurowane.
+
+Każdy ticket dostaje znacznik `[gate-finding:<hash>]`, więc ponowny przebieg
+nie produkuje duplikatów; przy `UPDATE_EXISTING=1` dopisuje notatkę do
+istniejącego zgłoszenia. Do bezpiecznego sprawdzenia użyj:
+
+```bash
+DRY_RUN=1 task quality:semcod:planfile
+```
+
 3. **Walidacja**  
    Przed zakończeniem patcha agent powinien przejść co najmniej:
 

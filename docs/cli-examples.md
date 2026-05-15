@@ -65,7 +65,7 @@ If your shell has multiple Python environments, prefer explicit binary invocatio
 git clone https://github.com/semcod/koru.git
 cd koru
 pip install -e .
-task install:tools     # planfile, regix, redup, vallm, prefact, pfix
+task install:tools     # semcod toolchain: planfile, wup, testql, regix, redup, ...
 ```
 
 ### From PyPI (when published)
@@ -147,6 +147,21 @@ koru \
 ## Quality gates
 
 LLM-free local validation. Use these before committing.
+
+### semcod/* gates into planfile
+
+```bash
+# Preview findings without creating tickets
+DRY_RUN=1 task quality:semcod:planfile
+
+# Create/update deduplicated planfile tickets for failing semcod gates
+task quality:semcod:planfile
+```
+
+This runs `koru scan --semcod-artifacts`, then configured gates such as
+`regix`, `wup`, `testql`, `redup`, `sumr/sumd`, `doql`, and `redsl`. Failures
+are tracked with `[gate-finding:<hash>]` markers so repeated runs update the
+same ticket instead of flooding the sprint.
 
 ### regix (regression metrics)
 

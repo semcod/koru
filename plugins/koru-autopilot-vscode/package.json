@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscode",
   "displayName": "koru autopilot",
   "description": "Bridge between VS Code / Windsurf / Cursor and the koru autopilot daemon.",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -29,6 +29,9 @@
     "automation"
   ],
   "activationEvents": [
+    "*",
+    "onCommand:koruAutopilot.connect",
+    "onCommand:koruAutopilot.sendChat",
     "onStartupFinished"
   ],
   "main": "./out/extension.js",

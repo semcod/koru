@@ -620,6 +620,24 @@ def test_apply_agent_lane_environ_auto_prefers_vscode_terminal(tmp_path, monkeyp
     monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
 
 
+def test_apply_agent_lane_environ_auto_vscode_terminal_overrides_stale_windsurf_env(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.setenv("KORU_AUTOPILOT_IDE", "windsurf")
+    monkeypatch.setenv("VSCODE_IPC_HOOK", "/run/user/1000/vscode-ipc.sock")
+    (tmp_path / ".windsurf").mkdir()
+
+    lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "auto")
+
+    assert lane == "vscode"
+    assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "vscode"
+    assert os.environ["KORU_AUTOPILOT_IDE"] == "vscode"
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+
+
 def test_apply_agent_lane_environ_none_is_noop(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "keep-me")
     lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "none")
