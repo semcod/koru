@@ -47,6 +47,44 @@ function testSocketCandidatesPreferIdeInstanceBeforeSingleton(): void {
   }
 }
 
+function testSocketCandidatesDoNotCrossIdeFallback(): void {
+  const oldSocket = process.env.KORU_AUTOPILOT_SOCKET;
+  const oldInstance = process.env.KORU_AUTOPILOT_INSTANCE;
+  const oldRuntime = process.env.XDG_RUNTIME_DIR;
+  try {
+    delete process.env.KORU_AUTOPILOT_SOCKET;
+    process.env.KORU_AUTOPILOT_INSTANCE = "windsurf";
+    process.env.XDG_RUNTIME_DIR = "/run/user/1000";
+    const candidates = socketCandidatesFromEnv("vscode");
+    assert(
+      candidates.includes("/run/user/1000/koru-autopilot-vscode.sock"),
+      "vscode socket should be considered",
+    );
+    assert(
+      !candidates.includes("/run/user/1000/koru-autopilot-windsurf.sock"),
+      "vscode plugin must not fall back to Windsurf socket",
+    );
+  } finally {
+    if (oldSocket === undefined) delete process.env.KORU_AUTOPILOT_SOCKET;
+    else process.env.KORU_AUTOPILOT_SOCKET = oldSocket;
+    if (oldInstance === undefined) delete process.env.KORU_AUTOPILOT_INSTANCE;
+    else process.env.KORU_AUTOPILOT_INSTANCE = oldInstance;
+    if (oldRuntime === undefined) delete process.env.XDG_RUNTIME_DIR;
+    else process.env.XDG_RUNTIME_DIR = oldRuntime;
+  }
+}
+
+function testSocketCandidatesTreatOverrideAsExactTarget(): void {
+  const candidates = socketCandidatesFromEnv("vscode", "/run/user/1000/koru-autopilot-vscode.sock");
+  assert(candidates.length === 1, "explicit override should be the only socket candidate");
+  assert(
+    candidates[0] === "/run/user/1000/koru-autopilot-vscode.sock",
+    "explicit override path should be preserved",
+  );
+}
+
 testShutdownPlan();
 testUnknownTypePlan();
 testSocketCandidatesPreferIdeInstanceBeforeSingleton();
+testSocketCandidatesDoNotCrossIdeFallback();
+testSocketCandidatesTreatOverrideAsExactTarget();

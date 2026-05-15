@@ -839,6 +839,9 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
         return SimpleNamespace(status="installed", ide=ide, message="ok", command=None)
 
     class FakeClient:
+        def status(self):
+            return {"plugins": [{"ide": "cursor"}]}
+
         def drive(self, *_args, **_kwargs):
             return {"ok": True, "backend": "plugin"}
 
@@ -877,6 +880,43 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
 
     assert rc == 0
     assert install_calls == ["cursor:koru-autopilot.sock"]
+
+
+def test_status_has_autopilot_plugin_matches_specific_ide() -> None:
+    assert autonomous_mod._status_has_autopilot_plugin(
+        {"plugins": [{"ide": "vscode"}, {"ide": "windsurf"}]},
+        "vscode",
+    )
+    assert not autonomous_mod._status_has_autopilot_plugin(
+        {"plugins": [{"ide": "windsurf"}]},
+        "vscode",
+    )
+
+
+def test_wait_for_autopilot_plugin_polls_until_connected(monkeypatch) -> None:
+    sleeps: list[float] = []
+
+    class FakeClient:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def status(self):
+            self.calls += 1
+            if self.calls == 1:
+                return {"plugins": []}
+            return {"plugins": [{"ide": "vscode"}]}
+
+    ticks = iter([0.0, 0.1, 0.2])
+    monkeypatch.setattr(autonomous_mod.time, "monotonic", lambda: next(ticks))
+    monkeypatch.setattr(autonomous_mod.time, "sleep", lambda seconds: sleeps.append(seconds))
+
+    assert autonomous_mod._wait_for_autopilot_plugin(
+        FakeClient(),
+        "vscode",
+        timeout_seconds=1.0,
+        interval_seconds=0.25,
+    )
+    assert sleeps == [0.25]
 
 
 def test_run_cycle_sends_fallback_prompt_when_waiting_input_empty_message(

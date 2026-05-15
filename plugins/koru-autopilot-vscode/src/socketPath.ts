@@ -34,30 +34,27 @@ export function socketCandidatesFromEnv(ideId: string, override?: string): strin
   };
 
   const ov = (override || "").trim();
-  if (ov) push(ov);
+  if (ov) {
+    push(ov);
+    return out;
+  }
 
   const explicit = (process.env.KORU_AUTOPILOT_SOCKET || "").trim();
-  if (explicit) push(explicit);
+  if (explicit) {
+    push(explicit);
+    return out;
+  }
 
-  // Also try per-IDE instance sockets when env doesn't point there.
-  // This matches common autonomous lanes: koru-autopilot-windsurf.sock, etc.
+  // Try only this editor's lane plus the singleton socket. Falling through to
+  // other IDE sockets can attach a VS Code window to a stale Windsurf daemon.
   const xdg = process.env.XDG_RUNTIME_DIR;
   if (xdg) {
     push(path.join(xdg, `koru-autopilot-${ideId}.sock`));
-    push(path.join(xdg, "koru-autopilot-windsurf.sock"));
-    push(path.join(xdg, "koru-autopilot-vscode.sock"));
-    push(path.join(xdg, "koru-autopilot-cursor.sock"));
+    push(path.join(xdg, "koru-autopilot.sock"));
   } else {
     const uid = (process.getuid?.() ?? 0).toString();
     push(`/tmp/koru-autopilot-${ideId}-${uid}.sock`);
-    push(`/tmp/koru-autopilot-windsurf-${uid}.sock`);
-    push(`/tmp/koru-autopilot-vscode-${uid}.sock`);
-    push(`/tmp/koru-autopilot-cursor-${uid}.sock`);
+    push(`/tmp/koru-autopilot-${uid}.sock`);
   }
-
-  // Default "single-instance" socket last. A different project may have a
-  // healthy singleton daemon; autonomous lanes should prefer their per-IDE
-  // socket when no explicit override/env socket was provided.
-  push(defaultSocketPathFromEnv());
   return out;
 }

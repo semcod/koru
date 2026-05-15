@@ -507,6 +507,12 @@ def _build_parser() -> argparse.ArgumentParser:
         help="IDE target for autopilot drive (default: auto).",
     )
     up.add_argument(
+        "--autopilot-plugin-wait-seconds",
+        type=float,
+        default=5.0,
+        help="Wait this many seconds for the IDE autopilot plugin before the first drive.",
+    )
+    up.add_argument(
         "--drive-prompt",
         default="continue with the next ticket",
         help="Prompt sent in each autopilot drive step.",
@@ -801,6 +807,42 @@ def _start_or_reuse_daemon(
     time.sleep(0.05)
     _stdio_info(f"koru autonomous: started autopilot daemon on {socket_path}", fmt=stdio_format)
     return AutopilotClient(socket_path=socket_path), daemon, thread
+
+
+def _status_has_autopilot_plugin(status: Mapping[str, Any], ide: str) -> bool:
+    plugins = status.get("plugins")
+    if not isinstance(plugins, list):
+        return False
+    for plugin in plugins:
+        if not isinstance(plugin, Mapping):
+            continue
+        plugin_ide = plugin.get("ide")
+        if plugin_ide == ide or ide == "auto":
+            return True
+    return False
+
+
+def _wait_for_autopilot_plugin(
+    client: AutopilotClient,
+    ide: str,
+    *,
+    timeout_seconds: float,
+    interval_seconds: float = 0.25,
+) -> bool:
+    if timeout_seconds <= 0:
+        return False
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        try:
+            if _status_has_autopilot_plugin(client.status(), ide):
+                return True
+        except OSError:
+            pass
+        time.sleep(interval_seconds)
+    try:
+        return _status_has_autopilot_plugin(client.status(), ide)
+    except OSError:
+        return False
 
 
 def _queue_loop_waiting_ticket_label(queue_result: QueueLoopResult) -> str:
@@ -1587,6 +1629,24 @@ def _action_up(args: argparse.Namespace) -> int:
         if args.enable_autopilot and socket_path is not None:
             plugin_result = install_plugin_for_ide(ide=autopilot_ide, socket_path=socket_path)
             _stdio_info(format_plugin_install_result(plugin_result), fmt=args.emit_events)
+            if client is not None and not _allow_keyboard_autopilot_fallback():
+                plugin_ready = _wait_for_autopilot_plugin(
+                    client,
+                    autopilot_ide,
+                    timeout_seconds=max(0.0, args.autopilot_plugin_wait_seconds),
+                )
+                if plugin_ready:
+                    _stdio_info(
+                        f"koru autonomous: autopilot plugin connected ide={autopilot_ide}",
+                        fmt=args.emit_events,
+                    )
+                else:
+                    _stdio_info(
+                        "koru autonomous: no connected autopilot plugin "
+                        f"for ide={autopilot_ide} after "
+                        f"{max(0.0, args.autopilot_plugin_wait_seconds):.1f}s; continuing",
+                        fmt=args.emit_events,
+                    )
 
         cycle = 0
         while True:
