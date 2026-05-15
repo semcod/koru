@@ -1102,6 +1102,9 @@ def test_up_stops_on_waiting_input_by_default(
         def drive(self, *_args, **_kwargs):
             return {"ok": True, "message": "sent", "backend": "test"}
 
+        def status(self):
+            return {"plugins": [{"ide": "auto"}]}
+
     monkeypatch.setattr(autonomous_mod, "run_planfile_queue_loop", fake_queue_loop)
     monkeypatch.setattr(
         autonomous_mod,
@@ -1169,6 +1172,9 @@ def test_up_restarts_autopilot_when_socket_disappears_between_cycles(
     class FakeClient:
         def drive(self, *_args, **_kwargs):
             return {"ok": True, "backend": "fake"}
+
+        def status(self):
+            return {"plugins": [{"ide": "auto"}]}
 
     def fake_start_or_reuse_daemon(**_kwargs):
         daemon_starts.append(1)
