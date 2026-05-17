@@ -1,0 +1,190 @@
+"""Startup IDE / environment probe for ``koru autonomous up``."""
+
+from __future__ import annotations
+
+import importlib.metadata
+import os
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+
+from .autopilot import default_socket_path
+from .autopilot.ide import detect_running_ides, pick_target
+from .ide_router import is_headless_environment, resolve_ide_route
+
+_PLUGIN_IDE_LANES = frozenset({"windsurf", "vscode", "cursor", "jetbrains", "zed"})
+
+
+def koru_distribution_version() -> str:
+    try:
+        return importlib.metadata.version("koru")
+    except importlib.metadata.PackageNotFoundError:
+        return "unknown"
+
+
+def _session_label() -> str:
+    if (os.environ.get("WAYLAND_DISPLAY") or "").strip():
+        return "wayland"
+    if (os.environ.get("DISPLAY") or "").strip():
+        return "x11"
+    return "headless"
+
+
+def _terminal_agent_lane_from_env() -> str | None:
+    term_program = (os.environ.get("TERM_PROGRAM") or "").strip().lower()
+    if term_program in {"windsurf", "vscode", "code", "codium", "vscodium"}:
+        return "vscode" if term_program in {"vscode", "code", "codium", "vscodium"} else "windsurf"
+    vscode_markers = (
+        "VSCODE_NLS_CONFIG",
+        "VSCODE_IPC_HOOK",
+        "VSCODE_PID",
+        "VSCODE_CWD",
+        "VSCODE_CODE_CACHE_PATH",
+    )
+    if any(os.environ.get(key) for key in vscode_markers):
+        return "vscode"
+    explicit = (os.environ.get("KORU_AUTOPILOT_IDE") or "").strip().lower()
+    if explicit and explicit != "auto":
+        return explicit
+    return None
+
+
+def resolve_agent_lane_id(
+    project: Path,
+    agent_lane_cli: str,
+    *,
+    resolve_project_lane,
+) -> tuple[str | None, str]:
+    """Resolve ``--agent-lane``; return ``(lane_id, source_label)``."""
+    raw = (agent_lane_cli or "auto").strip().lower()
+    if raw == "none":
+        return None, "cli:none"
+    if raw != "auto":
+        lane = resolve_project_lane(project, raw)
+        return lane, f"cli:{raw}"
+
+    terminal = _terminal_agent_lane_from_env()
+    if terminal:
+        return terminal, "terminal"
+
+    running = detect_running_ides()
+    if running:
+        picked = pick_target(running)
+        if picked is not None:
+            return picked.id, f"running:{picked.label}"
+
+    marker = resolve_project_lane(project, "auto")
+    return marker, "project-markers"
+
+
+def resolve_autopilot_ide_for_autonomous(
+    autopilot_ide_cli: str,
+    lane: str | None,
+    *,
+    resolve_ide_route_fn,
+) -> tuple[str, str]:
+    """Return ``(autopilot_ide, source_label)`` aligned with the resolved lane."""
+    raw = (autopilot_ide_cli or "auto").strip().lower()
+    if raw != "auto":
+        route = resolve_ide_route_fn(cli_autopilot_ide=raw)
+        return route.autopilot_ide, f"cli:{raw}"
+    if lane in _PLUGIN_IDE_LANES:
+        return lane, "lane"
+    route = resolve_ide_route_fn(cli_autopilot_ide="auto")
+    return route.autopilot_ide, "router:auto"
+
+
+@dataclass(frozen=True)
+class AutonomousStartupProbe:
+    koru_version: str
+    python_version: str
+    project: Path
+    agent_lane_cli: str
+    autopilot_ide_cli: str
+    resolved_lane: str | None
+    lane_source: str
+    resolved_autopilot_ide: str
+    autopilot_ide_source: str
+    running_ides: tuple[str, ...]
+    terminal_lane: str | None
+    socket_path: str
+    session: str
+    term_program: str
+    headless: bool
+    xdg_runtime_dir: str
+
+
+def build_startup_probe(
+    project: Path,
+    *,
+    agent_lane_cli: str,
+    autopilot_ide_cli: str,
+    resolve_project_lane,
+    resolve_ide_route_fn=resolve_ide_route,
+) -> AutonomousStartupProbe:
+    lane, lane_source = resolve_agent_lane_id(
+        project, agent_lane_cli, resolve_project_lane=resolve_project_lane
+    )
+    autopilot_ide, ide_source = resolve_autopilot_ide_for_autonomous(
+        autopilot_ide_cli, lane, resolve_ide_route_fn=resolve_ide_route_fn
+    )
+    running = detect_running_ides()
+    running_labels = tuple(f"{ide.label} (pid={ide.pid})" for ide in running)
+    return AutonomousStartupProbe(
+        koru_version=koru_distribution_version(),
+        python_version=sys.version.split()[0],
+        project=project.resolve(),
+        agent_lane_cli=(agent_lane_cli or "auto").strip().lower(),
+        autopilot_ide_cli=(autopilot_ide_cli or "auto").strip().lower(),
+        resolved_lane=lane,
+        lane_source=lane_source,
+        resolved_autopilot_ide=autopilot_ide,
+        autopilot_ide_source=ide_source,
+        running_ides=running_labels,
+        terminal_lane=_terminal_agent_lane_from_env(),
+        socket_path=str(default_socket_path()),
+        session=_session_label(),
+        term_program=(os.environ.get("TERM_PROGRAM") or "").strip() or "-",
+        headless=is_headless_environment(),
+        xdg_runtime_dir=(os.environ.get("XDG_RUNTIME_DIR") or "").strip() or "-",
+    )
+
+
+def format_startup_banner(probe: AutonomousStartupProbe) -> list[str]:
+    lines = [
+        f"koru autonomous: koru {probe.koru_version} (python {probe.python_version})",
+        f"koru autonomous: project {probe.project}",
+        f"koru autonomous: session={probe.session} TERM_PROGRAM={probe.term_program} "
+        f"XDG_RUNTIME_DIR={probe.xdg_runtime_dir}",
+    ]
+    if probe.running_ides:
+        lines.append("koru autonomous: running IDEs: " + "; ".join(probe.running_ides))
+    else:
+        lines.append("koru autonomous: running IDEs: (none detected)")
+    if probe.terminal_lane:
+        lines.append(f"koru autonomous: terminal hint → {probe.terminal_lane}")
+    lines.append(
+        f"koru autonomous: lane={probe.resolved_lane or 'none'} "
+        f"(from {probe.lane_source}, cli --agent-lane={probe.agent_lane_cli})"
+    )
+    lines.append(
+        f"koru autonomous: autopilot IDE={probe.resolved_autopilot_ide} "
+        f"(from {probe.autopilot_ide_source}, cli --autopilot-ide={probe.autopilot_ide_cli})"
+    )
+    lines.append(f"koru autonomous: autopilot socket → {probe.socket_path}")
+    if probe.headless:
+        lines.append(
+            "koru autonomous: headless environment — plugin drive disabled unless "
+            "KORU_HEADLESS_ALLOW_AUTOPILOT=1"
+        )
+    return lines
+
+
+__all__ = [
+    "AutonomousStartupProbe",
+    "build_startup_probe",
+    "format_startup_banner",
+    "koru_distribution_version",
+    "resolve_agent_lane_id",
+    "resolve_autopilot_ide_for_autonomous",
+]
