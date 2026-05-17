@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10] - 2026-05-17
+
+### Fixed
+- Fix unused-imports issues (ticket-a4a995e4)
+- Fix magic-numbers issues (ticket-e4000400)
+- Fix unused-imports issues (ticket-2c96edda)
+- Fix magic-numbers issues (ticket-b4d2f46e)
+- Fix ai-boilerplate issues (ticket-d939da3b)
+- Fix magic-numbers issues (ticket-fc4c2035)
+- Fix unused-imports issues (ticket-bac2611c)
+
 ## [0.1.10] - 2026-05-13
 
 ### Fixed
@@ -1349,6 +1360,32 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
   `deploy:{plan,dry,local,device,diagnose,resume,drift}`.
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
+
+## [0.1.122] - 2026-05-17
+
+### Docs
+- Update CHANGELOG.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_koruide_bridges.py
+
+### Other
+- Update .code2llm_cache/agent_backend_runtime_1779019420499000000_5560.pkl
+- Update .code2llm_cache/audit_1779028565099000000_4907.pkl
+- Update .code2llm_cache/audit_1779028593707000000_207.pkl
+- Update .code2llm_cache/autonomous_1779029552973000000_66358.pkl
+- Update .code2llm_cache/autonomous_startup_1779028512013606777_6347.pkl
+- Update .code2llm_cache/cli_command_1779028599014000000_39861.pkl
+- Update .code2llm_cache/client_1779019143082000000_261.pkl
+- Update .code2llm_cache/daemon_1779027721508000000_398.pkl
+- Update .code2llm_cache/daemon_1779028596470000000_24874.pkl
+- Update .code2llm_cache/host_setup_1779029407578000000_6895.pkl
+- ... and 30 more files
 
 ## [0.1.121] - 2026-05-17
 

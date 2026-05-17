@@ -1,4 +1,26 @@
 # Byte-compiled / optimized / DLL files
+.code2llm_cache/agent_backend_runtime_1779019420499000000_5560.pkl
+.code2llm_cache/audit_1779028565099000000_4907.pkl
+.code2llm_cache/audit_1779028593707000000_207.pkl
+.code2llm_cache/autonomous_1779029552973000000_66358.pkl
+.code2llm_cache/autonomous_startup_1779028512013606777_6347.pkl
+.code2llm_cache/cli_command_1779028599014000000_39861.pkl
+.code2llm_cache/client_1779019143082000000_261.pkl
+.code2llm_cache/daemon_1779027721508000000_398.pkl
+.code2llm_cache/daemon_1779028596470000000_24874.pkl
+.code2llm_cache/host_setup_1779029407578000000_6895.pkl
+.code2llm_cache/host_setup_1779029454218000000_227.pkl
+.code2llm_cache/ide_1779027913984000000_10186.pkl
+.code2llm_cache/ide_1779028079934000000_199.pkl
+.code2llm_cache/ide_runtime_1779029458517000000_1302.pkl
+.code2llm_cache/injector_1779027998739000000_14196.pkl
+.code2llm_cache/injector_1779028120425000000_219.pkl
+.code2llm_cache/os_injector_1779028039881000000_11903.pkl
+.code2llm_cache/os_injector_1779028158336000000_231.pkl
+.code2llm_cache/plugin_installer_1779029478960000000_12357.pkl
+.code2llm_cache/plugin_installer_1779029547248000000_251.pkl
+.code2llm_cache/protocol_1779019167851000000_873.pkl
+.code2llm_cache/pyproject_1779038980406746520_2134.pkl
 .code2llm_cache/Taskfile_1778838435307206648_31557.pkl
 .code2llm_cache/__init___1778944016390000000_256.pkl
 .code2llm_cache/agent_backend_runtime_1778943674736000000_5563.pkl

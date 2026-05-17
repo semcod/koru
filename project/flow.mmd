@@ -16,11 +16,11 @@ flowchart TD
         services__healing_webhook__app__alertmanager_webhook["alertmanager_webhook"]
         services__healing_webhook__app__probe_failure["probe_failure"]
         services__healing_webhook__app__get_tickets["get_tickets"]
-        src__koru__agent_backends__load_agent_integration_config["load_agent_integration_config"]
-        src__koru__agent_backends__validate_agent_integration_config["validate_agent_integration_con"]
-        src__koru__autonomous_diagnostics__clear_diagnostic_marker["clear_diagnostic_marker"]
-        src__koru__autonomous_diagnostics__run_command_check["run_command_check"]
-        ...["+380 more"]
+        src__koruide__protocol__Message__encode["encode"]
+        src__koruide__protocol__hello["hello"]
+        src__koruide__protocol__drive["drive"]
+        src__koruide__protocol__session_started["session_started"]
+        ...["+363 more"]
     end
 
     subgraph Exporters

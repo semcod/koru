@@ -18,7 +18,7 @@ import subprocess
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
-from koru.autopilot.config import cached_config
+from koruide.config import cached_config
 
 
 def _submit_key_for(ide: str) -> str:

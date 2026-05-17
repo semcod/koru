@@ -8,6 +8,7 @@ from koru.autopilot import host_setup as legacy_host_setup_mod
 from koru.autopilot import ide as legacy_ide_mod
 from koru.autopilot import injector as legacy_injector_mod
 from koru.autopilot import os_injector as legacy_os_injector_mod
+from koru.autopilot import config as legacy_config_mod
 from koru.autopilot import plugin_installer as legacy_plugin_installer_mod
 from koruide import audit as koruide_audit_mod
 from koruide import daemon as koruide_daemon_mod
@@ -15,6 +16,7 @@ from koruide import host_setup as koruide_host_setup_mod
 from koruide import ide as koruide_ide_mod
 from koruide import injector as koruide_injector_mod
 from koruide import os_injector as koruide_os_injector_mod
+from koruide import config as koruide_config_mod
 from koruide import plugin_installer as koruide_plugin_installer_mod
 
 
@@ -55,3 +57,9 @@ def test_autopilot_host_setup_shim_points_to_koruide_implementation() -> None:
 def test_autopilot_plugin_installer_shim_points_to_koruide_implementation() -> None:
     assert legacy_plugin_installer_mod.install_plugin_for_ide is koruide_plugin_installer_mod.install_plugin_for_ide
     assert legacy_plugin_installer_mod.PluginInstallResult is koruide_plugin_installer_mod.PluginInstallResult
+
+
+def test_autopilot_config_shim_points_to_koruide_implementation() -> None:
+    assert legacy_config_mod.AutopilotConfig is koruide_config_mod.AutopilotConfig
+    assert legacy_config_mod.cached_config is koruide_config_mod.cached_config
+    assert legacy_config_mod.clear_config_cache is koruide_config_mod.clear_config_cache

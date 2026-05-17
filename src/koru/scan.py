@@ -688,16 +688,23 @@ def collect_suggestions(
     return out
 
 
+# Terminal planfile statuses: scan may re-apply when the signal is still present.
+_SCAN_DEDUP_SKIP_STATUSES: frozenset[str] = frozenset(
+    {"done", "canceled", "cancelled", "closed"}
+)
+
+
 def _existing_scan_titles(
     project: Path,
     *,
     source: str,
     runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]] | None = None,
 ) -> set[str]:
-    """Return titles of tickets already created by previous `koru scan` runs.
+    """Return titles of *active* tickets from previous ``koru scan`` runs.
 
     Used to deduplicate ``--apply`` runs: re-running ``koru scan --apply``
-    should not pile up identical tickets.
+    should not pile up identical open tickets. Closed tickets (``done``,
+    ``canceled``) are ignored so a regressing signal can open a fresh ticket.
     """
     use_runner = runner or default_subprocess_runner
 
@@ -725,6 +732,9 @@ def _existing_scan_titles(
                         continue
                 elif entry_source != source:
                     continue
+            status = str(entry.get("status") or "").lower()
+            if status in _SCAN_DEDUP_SKIP_STATUSES:
+                continue
             name = entry.get("name") or entry.get("title")
             if isinstance(name, str):
                 titles.add(name)

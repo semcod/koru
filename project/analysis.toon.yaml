@@ -1,9 +1,9 @@
-# code2llm | 170f 30878L | python:91,shell:37,yaml:14,yml:8,kotlin:6,typescript:4,json:3,toml:1,txt:1,properties:1,xml:1 | 2026-05-17
-# generated in 0.05s
-# CC̄=4.7 | critical:38/876 | dups:0 | cycles:0
+# code2llm | 177f 30830L | python:98,shell:37,yaml:14,yml:8,kotlin:6,typescript:4,json:3,txt:1,properties:1,xml:1,toml:1 | 2026-05-17
+# generated in 0.04s
+# CC̄=4.8 | critical:38/861 | dups:0 | cycles:0
 
 HEALTH[20]:
-  🔴 GOD   src/koru/autonomous.py = 1837L, 4 classes, 36m, max CC=66
+  🔴 GOD   src/koru/autonomous.py = 1835L, 4 classes, 35m, max CC=66
   🟡 CC    run_idle_diagnostics CC=17 (limit:15)
   🟡 CC    format_queue_event CC=19 (limit:15)
   🟡 CC    _gc_main CC=18 (limit:15)
@@ -28,7 +28,7 @@ REFACTOR[2]:
   1. split src/koru/autonomous.py  (god module)
   2. split 19 high-CC methods  (CC>15)
 
-PIPELINES[274]:
+PIPELINES[256]:
   [1] Src [heal_rebuild_restore]: heal_rebuild_restore → _run_docker
       PURITY: 100% pure
   [2] Src [heal_annotate]: heal_annotate → _record_action
@@ -41,8 +41,8 @@ PIPELINES[274]:
       PURITY: 100% pure
 
 LAYERS:
-  src/                            CC̄=5.0    ←in:0  →out:0
-  │ !! autonomous                1837L  4C   36m  CC=66     ←0
+  src/                            CC̄=5.1    ←in:0  →out:0
+  │ !! autonomous                1835L  4C   35m  CC=66     ←0
   │ !! serve                     1301L  1C   15m  CC=13     ←1
   │ !! cli_command               1229L  0C   35m  CC=15     ←0
   │ !! context                   1199L  0C   43m  CC=18     ←5
@@ -56,20 +56,19 @@ LAYERS:
   │ topology                   415L  1C   15m  CC=12     ←6
   │ injector                   403L  4C   20m  CC=14     ←0
   │ mcp_provision              397L  0C   21m  CC=10     ←3
+  │ os_injector                383L  2C   24m  CC=13     ←2
   │ gc                         371L  2C   12m  CC=11     ←1
   │ !! agents                     370L  1C   13m  CC=16     ←3
   │ autonomous_parser          369L  0C    1m  CC=1      ←0
   │ !! plugin_installer           366L  1C   14m  CC=28     ←1
-  │ os_injector                362L  2C   24m  CC=13     ←2
-  │ !! queue_clean                350L  2C   10m  CC=15     ←2
-  │ !! ide                        312L  1C   15m  CC=17     ←6
+  │ !! queue_clean                350L  2C   10m  CC=15     ←1
+  │ !! ide                        312L  1C   15m  CC=17     ←7
   │ !! runner                     274L  0C    1m  CC=37     ←2
-  │ protocol                   268L  2C   14m  CC=12     ←3
   │ !! init_host_environment      260L  0C    7m  CC=15     ←1
   │ !! autonomous_wup             253L  3C   10m  CC=23     ←1
   │ !! tools                      251L  0C    9m  CC=26     ←1
   │ !! policy                     234L  1C    4m  CC=22     ←2
-  │ protocol                   231L  2C   14m  CC=12     ←0
+  │ protocol                   231L  2C   14m  CC=12     ←3
   │ !! environment                224L  3C    3m  CC=15     ←2
   │ agent_backends             214L  3C    7m  CC=11     ←2
   │ autonomous_process_guard   213L  2C    9m  CC=11     ←0
@@ -78,6 +77,7 @@ LAYERS:
   │ local_service              203L  2C   10m  CC=3      ←1
   │ gate                       202L  1C    5m  CC=12     ←1
   │ !! env                        192L  0C    6m  CC=25     ←3
+  │ autonomous_startup         190L  1C    7m  CC=9      ←1
   │ !! autonomous_diagnostics     188L  0C    5m  CC=17     ←1
   │ agent_backend_runtime      180L  5C    6m  CC=9      ←0
   │ !! tasks                      163L  1C    5m  CC=16     ←4
@@ -93,10 +93,9 @@ LAYERS:
   │ config                     119L  1C    6m  CC=7      ←1
   │ heal                       112L  1C    3m  CC=5      ←2
   │ loop                       109L  0C    1m  CC=12     ←3
-  │ client                     108L  1C    7m  CC=5      ←0
   │ runtime                    105L  0C    5m  CC=2      ←6
   │ dotenv_loader              104L  0C    3m  CC=7      ←0
-  │ ide_router                  98L  1C    2m  CC=8      ←3
+  │ ide_router                  98L  1C    2m  CC=8      ←4
   │ prompts                     98L  1C    1m  CC=8      ←2
   │ events                      90L  0C    2m  CC=8      ←2
   │ types                       88L  5C    1m  CC=2      ←0
@@ -105,13 +104,14 @@ LAYERS:
   │ telemetry_snapshot          79L  0C    3m  CC=5      ←3
   │ shell_evidence              72L  0C    2m  CC=7      ←1
   │ __init__                    69L  0C    0m  CC=0.0    ←0
-  │ __init__                    67L  0C    2m  CC=6      ←6
+  │ __init__                    67L  0C    2m  CC=6      ←0
   │ wup_testql_compat           65L  0C    4m  CC=6      ←0
   │ client_helpers              57L  0C    2m  CC=4      ←2
   │ planfile_ticket_note        56L  0C    2m  CC=5      ←1
   │ __init__                    55L  0C    2m  CC=4      ←0
   │ stdio_events                49L  0C    3m  CC=3      ←2
-  │ socket                      45L  0C    2m  CC=6      ←0
+  │ protocol                    49L  0C    0m  CC=0.0    ←0
+  │ socket                      45L  0C    2m  CC=6      ←6
   │ koru_queue_argv             44L  0C    1m  CC=5      ←1
   │ ide_runtime                 44L  0C    2m  CC=5      ←1
   │ refactor_planfile_handoff    42L  0C    1m  CC=6      ←1
@@ -121,8 +121,15 @@ LAYERS:
   │ human                       31L  0C    1m  CC=5      ←0
   │ autonomous_env              26L  0C    1m  CC=1      ←0
   │ __init__                    25L  0C    0m  CC=0.0    ←0
-  │ daemon                      11L  0C    0m  CC=0.0    ←0
+  │ daemon                      16L  0C    0m  CC=0.0    ←0
+  │ client                      11L  0C    0m  CC=0.0    ←0
   │ __init__                     9L  0C    0m  CC=0.0    ←0
+  │ host_setup                   9L  0C    0m  CC=0.0    ←0
+  │ ide                          9L  0C    0m  CC=0.0    ←0
+  │ injector                     9L  0C    0m  CC=0.0    ←0
+  │ os_injector                  9L  0C    0m  CC=0.0    ←0
+  │ audit                        9L  0C    0m  CC=0.0    ←0
+  │ plugin_installer             9L  0C    0m  CC=0.0    ←0
   │ __main__                     8L  0C    0m  CC=0.0    ←0
   │ __main__                     8L  0C    0m  CC=0.0    ←0
   │ __init__                     5L  0C    0m  CC=0.0    ←0
@@ -239,13 +246,15 @@ LAYERS:
 
 COUPLING:
                                                       src.koru                        scripts                    src.koruide  plugins.koru-autopilot-vscode
-                       src.koru                             ──                            258                             ←2                              1  !! fan-out
-                        scripts                           ←258                             ──                                                                hub
-                    src.koruide                              2                                                            ──                               
+                       src.koru                             ──                            232                             32                              1  !! fan-out
+                        scripts                           ←232                             ──                            ←26                                 hub
+                    src.koruide                              3                             26                             ──                                 hub
   plugins.koru-autopilot-vscode                             ←1                                                                                           ──
   CYCLES: none
   HUB: scripts/ (fan-in=258)
-  SMELL: src.koru/ fan-out=259 → split needed
+  HUB: src.koruide/ (fan-in=32)
+  SMELL: src.koru/ fan-out=265 → split needed
+  SMELL: src.koruide/ fan-out=29 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon
