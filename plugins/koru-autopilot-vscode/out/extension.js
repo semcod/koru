@@ -473,9 +473,21 @@ class AutopilotBridge {
                 await new Promise(r => setTimeout(r, 150));
                 submitted = await this.submitChat();
             }
-            if (submit) {
+            if (submit && submitted) {
                 console.log("koru autopilot: sending message.sent");
                 this.send({ type: "message.sent", chat: "default", text: text.substring(0, 200), length: text.length });
+            }
+            if (submit && !submitted) {
+                this.send({
+                    type: "ack",
+                    id: env.id,
+                    ok: false,
+                    delivered: false,
+                    opened,
+                    submitted,
+                    message: "chat opened and text injected, but submit command failed",
+                });
+                return;
             }
             this.send({ type: "ack", id: env.id, ok: true, delivered: true, opened, submitted });
         }
