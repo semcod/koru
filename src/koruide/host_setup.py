@@ -1,0 +1,207 @@
+"""Host dependency report and best-effort installs for autopilot keyboard injectors.
+
+``koru --init`` drops ``.planfile/.koru/setup-autopilot-host.sh`` which wraps
+``koru autopilot setup-host``.  The goal is to separate:
+
+* what koru can probe or install automatically (Debian/Ubuntu ``apt``), and
+* steps that need a human (uinput permissions, ydotoold, IDE extension).
+"""
+
+from __future__ import annotations
+
+import json
+import shutil
+import subprocess
+import sys
+from typing import Any
+
+from koruide.ide import detect_focused_ide_id, detect_running_ides
+from koruide.injector import Injector
+
+_INSTRUMENT_DEB = (
+    ("xdotool", "xdotool"),
+    ("wtype", "wtype"),
+    ("ydotool", "ydotool"),
+)
+
+
+def _package_manager_hint() -> str | None:
+    if shutil.which("apt-get"):
+        return "apt"
+    if shutil.which("dnf"):
+        return "dnf"
+    if shutil.which("pacman"):
+        return "pacman"
+    if shutil.which("brew"):
+        return "brew"
+    return None
+
+
+def _human_followups(injector: Injector, selected: str | None) -> list[str]:
+    """Reasons automation cannot fully fix the host."""
+    out: list[str] = []
+    session = injector.session or ""
+    have_w = injector.which("wtype")
+    have_y = injector.which("ydotool")
+    have_x = injector.which("xdotool")
+
+    out.append(
+        "Install the koru autopilot IDE extension (Cursor/VS Code/Windsurf) so "
+        "`drive` can use the editor API instead of xdotool/ydotool."
+    )
+
+    if not selected:
+        out.append(
+            "No keyboard injector backend selected: install packages (see "
+            "“Automated apt” below) or rely on the IDE extension above."
+        )
+
+    if session == "wayland" and have_y and not have_w:
+        out.append(
+            "Wayland with only ydotool: requires ydotoold and a usable "
+            "/dev/uinput (input group, permissions). See docs/autopilot-quickstart.md. "
+            "On Sway/Hyprland, `wtype` is often easier."
+        )
+
+    if session == "wayland" and not have_w and not have_y and not have_x:
+        out.append(
+            "Wayland session but no wtype/ydotool/xdotool on PATH — without them "
+            "(or the IDE plugin) `koru autonomous` cannot type into chat."
+        )
+
+    if session == "x11" and not have_x and not have_w:
+        out.append("X11 session without xdotool: install `xdotool` or use the IDE extension.")
+
+    if shutil.which("apt-get") is None:
+        out.append(
+            "`--install` only automates apt (Debian/Ubuntu). On this system install "
+            "xdotool/wtype/ydotool via dnf/pacman/brew manually."
+        )
+
+    return out
+
+
+def build_setup_host_report() -> dict[str, Any]:
+    injector = Injector()
+    statuses = [s.to_dict() for s in injector.probe()]
+    selected = injector.select_backend()
+    deb_missing = [deb for name, deb in _INSTRUMENT_DEB if injector.which(name) is None]
+    return {
+        "session": injector.session or "unknown",
+        "selected_backend": selected,
+        "backends": statuses,
+        "ides": [i.to_dict() for i in detect_running_ides()],
+        "focused_ide": detect_focused_ide_id(),
+        "package_manager": _package_manager_hint(),
+        "deb_packages_missing": deb_missing,
+        "human_actions_required": _human_followups(injector, selected),
+        "automated_apt_suggestion": (
+            "sudo apt-get update -qq && sudo apt-get install -y " + " ".join(deb_missing)
+            if deb_missing
+            else None
+        ),
+    }
+
+
+def _try_apt_install(
+    packages: list[str],
+    *,
+    dry_run: bool,
+) -> tuple[int, list[str]]:
+    log: list[str] = []
+    if not packages:
+        log.append("All injector tools (xdotool, wtype, ydotool) are already on PATH.")
+        return 0, log
+    cmd = ["sudo", "apt-get", "install", "-y", *packages]
+    log.append(" ".join(cmd))
+    if dry_run:
+        log.append("(dry-run: apt-get not executed)")
+        return 0, log
+    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+    if proc.stdout.strip():
+        log.append(proc.stdout.strip())
+    if proc.stderr.strip():
+        log.append(proc.stderr.strip())
+    return proc.returncode, log
+
+
+def run_host_setup(
+    *,
+    output_format: str = "text",
+    install: bool = False,
+    install_dry_run: bool = False,
+) -> int:
+    report = build_setup_host_report()
+    exit_code = 0
+
+    if install:
+        if shutil.which("apt-get") is None:
+            report["install_error"] = "apt-get not found — install packages manually."
+            exit_code = 1
+        else:
+            missing = list(report["deb_packages_missing"])
+            code, ilog = _try_apt_install(missing, dry_run=install_dry_run)
+            report["install_log"] = ilog
+            report["install_exit_code"] = code
+            if code != 0:
+                exit_code = 1
+            elif not install_dry_run:
+                report = build_setup_host_report()
+
+    if output_format == "json":
+        print(json.dumps(report, indent=2, sort_keys=True, default=str))
+    else:
+        _print_text_report(report)
+
+    return exit_code
+
+
+def _print_text_report(report: dict[str, Any]) -> None:
+    print("=== koru autopilot setup-host ===\n")
+    print(f"Desktop session: {report['session']}")
+    print(f"Selected injector (first candidate): {report.get('selected_backend') or '— none'}\n")
+
+    print("Backends (same probes as `koru autopilot doctor`):")
+    for b in report["backends"]:
+        mark = "✓" if b.get("available") else "✗"
+        print(f"  {mark} {b.get('name', '?'):<10} {b.get('reason', '')}")
+    print()
+
+    ides = report.get("ides") or []
+    print(f"Running IDEs: {len(ides)}")
+    for ide in ides:
+        print(f"  · {ide.get('label', ide)}")
+    if report.get("focused_ide"):
+        print(f"  (focus: {report['focused_ide']})")
+    print()
+
+    print("--- Automated (apt) ---")
+    if report.get("automated_apt_suggestion"):
+        print(report["automated_apt_suggestion"])
+        print("Run: koru autopilot setup-host --install   (or --install --dry-run)")
+    else:
+        print("xdotool/wtype/ydotool are on PATH — no apt step needed.")
+    print()
+
+    print("--- Likely human follow-ups ---")
+    for line in report.get("human_actions_required") or []:
+        print(f"  • {line}")
+    print()
+
+    if report.get("install_error"):
+        print(f"Install error: {report['install_error']}\n")
+    if report.get("install_log"):
+        print("Install log:")
+        for line in report["install_log"]:
+            print(f"  {line}")
+        print()
+
+    if report.get("package_manager"):
+        print(f"Detected package manager hint: {report['package_manager']}")
+
+    # Exit hints for shell users
+    if report.get("install_exit_code") not in (None, 0):
+        print("\napt install failed — fix sudo/repos and retry.", file=sys.stderr)
+
+
+__all__ = ["build_setup_host_report", "run_host_setup"]

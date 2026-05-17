@@ -13,7 +13,7 @@ from typing import Any
 def build_host_setup_report() -> dict[str, Any]:
     """Return host injector/setup probe report from the current runtime backend."""
 
-    from .autopilot.host_setup import build_setup_host_report
+    from koruide.host_setup import build_setup_host_report
 
     return build_setup_host_report()
 

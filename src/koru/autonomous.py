@@ -61,7 +61,7 @@ from .autonomous_startup import (
     _terminal_agent_lane_from_env,
 )
 from .autopilot import default_socket_path
-from .autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide
+from koruide.plugin_installer import format_plugin_install_result, install_plugin_for_ide
 from .ide_client import IDEControlClient, build_ide_client
 from .init import init_project, resolve_project_agent_lane
 from .queue import (
