@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 
 from . import default_socket_path
-from .audit import AuditLog, default_log_path
+from koruide.audit import AuditLog, default_log_path
 from .client import AutopilotClient
 from .daemon import AutopilotDaemon
 from .ide import detect_focused_ide_id, detect_running_ides, pick_target

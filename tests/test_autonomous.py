@@ -6,6 +6,7 @@ import json
 import os
 import sys
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 
@@ -600,7 +601,8 @@ def test_apply_agent_lane_environ_auto_cursor(tmp_path, monkeypatch) -> None:
     monkeypatch.delenv("CI", raising=False)
     monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
     (tmp_path / ".cursor").mkdir()
-    lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "auto")
+    with patch("koru.autonomous_startup.detect_running_ides", return_value=[]):
+        lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "auto")
     assert lane == "cursor"
     assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "cursor"
     monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)

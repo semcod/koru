@@ -39,7 +39,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from koru.autopilot.audit import AuditLog
+from koruide.audit import AuditLog
 from koruide.ide import detect_running_ides_cached as detect_running_ides
 from koruide.ide import pick_target
 from koruide.injector import Injector, InjectorError

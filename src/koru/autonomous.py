@@ -49,6 +49,17 @@ from .autonomous_wup import (
 from .autonomous_wup import (
     _read_wup_health as _read_wup_health_impl,
 )
+from .autonomous_startup import (
+    build_startup_probe,
+    format_startup_banner,
+    resolve_autopilot_ide_for_autonomous,
+)
+from .autonomous_startup import (
+    resolve_agent_lane_id as _resolve_agent_lane_id,
+)
+from .autonomous_startup import (
+    _terminal_agent_lane_from_env,
+)
 from .autopilot import default_socket_path
 from .autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide
 from .ide_client import IDEControlClient, build_ide_client
@@ -150,32 +161,11 @@ def _resolve_autopilot_ide(cli_value: str) -> str:
     return resolve_ide_route(cli_autopilot_ide=cli_value).autopilot_ide
 
 
-def _terminal_agent_lane_from_env(environ: Mapping[str, str] | None = None) -> str | None:
-    env = os.environ if environ is None else environ
-    term_program = (env.get("TERM_PROGRAM") or "").strip().lower()
-    if term_program in {"windsurf", "vscode", "code", "codium", "vscodium"}:
-        return "vscode" if term_program in {"vscode", "code", "codium", "vscodium"} else "windsurf"
-    vscode_markers = (
-        "VSCODE_NLS_CONFIG",
-        "VSCODE_IPC_HOOK",
-        "VSCODE_PID",
-        "VSCODE_CWD",
-        "VSCODE_CODE_CACHE_PATH",
-    )
-    if any(env.get(key) for key in vscode_markers):
-        return "vscode"
-    explicit = (env.get("KORU_AUTOPILOT_IDE") or "").strip().lower()
-    if explicit and explicit != "auto":
-        return explicit
-    return None
-
-
 def _apply_agent_lane_environ(project: Path, agent_lane: str) -> str | None:
     """Set lane exports in ``os.environ``; returns lane id or ``None`` if skipped."""
-    raw_lane = (agent_lane or "auto").strip().lower()
-    lane = _terminal_agent_lane_from_env() if raw_lane == "auto" else None
-    if lane is None:
-        lane = resolve_project_agent_lane(project, agent_lane)
+    lane, _source = _resolve_agent_lane_id(
+        project, agent_lane, resolve_project_lane=resolve_project_agent_lane
+    )
     if lane is None:
         return None
     for key, val in agent_lane_environment(lane).items():
@@ -1565,8 +1555,14 @@ def _action_up(args: argparse.Namespace) -> int:
     _ensure_init(project, force=args.force_init, stdio_format=args.emit_events)
 
     lane = _apply_agent_lane_environ(project, args.agent_lane)
-    if lane is not None:
-        _stdio_info(f"koru autonomous: agent-lane={lane} (env applied)", fmt=args.emit_events)
+    startup_probe = build_startup_probe(
+        project,
+        agent_lane_cli=args.agent_lane,
+        autopilot_ide_cli=args.autopilot_ide,
+        resolve_project_lane=resolve_project_agent_lane,
+    )
+    for line in format_startup_banner(startup_probe):
+        _stdio_info(line, fmt=args.emit_events)
 
     client: IDEControlClient | None = None
     daemon: AutopilotDaemon | None = None
@@ -1588,7 +1584,9 @@ def _action_up(args: argparse.Namespace) -> int:
 
     enable_scan, use_all_queues = _effective_flags(args.ticket_sources)
     queue_name = None if use_all_queues else args.queue_name
-    autopilot_ide = _resolve_autopilot_ide(args.autopilot_ide)
+    autopilot_ide, _autopilot_ide_source = resolve_autopilot_ide_for_autonomous(
+        args.autopilot_ide, lane, resolve_ide_route_fn=resolve_ide_route
+    )
     loop_state = AutoloopState()
     diagnostic_state_dir = (project / args.diagnostic_state_dir).resolve()
     wup_config = _build_wup_watch_config(args, project)
