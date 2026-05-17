@@ -217,24 +217,29 @@ def _read_wup_health(
         for service, data in sorted(health.items())
         if str(data.get("status", "")).lower() in {"down", "failed", "failure", "error"}
     ]
-    if diagnostic_tickets and failing:
-        if create_diagnostic_ticket is None:
+    if diagnostic_tickets:
+        if failing and create_diagnostic_ticket is None:
             raise TypeError("create_diagnostic_ticket is required when diagnostic_tickets is True")
-        for service in failing:
-            data = health.get(service, {})
-            stage = str(data.get("stage") or "wup")
-            message = str(data.get("message") or "WUP reported failing service")
-            track_file = str(data.get("track_file") or "")
-            create_diagnostic_ticket(
-                project=project,
-                check_id=f"wup-{service}",
-                summary=f"WUP service={service} stage={stage} message={message} track={track_file}",
-                cycle=0,
-                queue_status="wup_failure",
-                queue_name=ticket_queue,
-                priority="high",
-                state_dir=state_dir,
-            )
+        for service, data in sorted(health.items()):
+            check_id = f"wup-{service}"
+            if service in failing:
+                if create_diagnostic_ticket is None:
+                    continue
+                stage = str(data.get("stage") or "wup")
+                message = str(data.get("message") or "WUP reported failing service")
+                track_file = str(data.get("track_file") or "")
+                create_diagnostic_ticket(
+                    project=project,
+                    check_id=check_id,
+                    summary=f"WUP service={service} stage={stage} message={message} track={track_file}",
+                    cycle=0,
+                    queue_status="wup_failure",
+                    queue_name=ticket_queue,
+                    priority="high",
+                    state_dir=state_dir,
+                )
+            else:
+                (state_dir / f"{check_id}.failed").unlink(missing_ok=True)
     event_count = 0
     if events_path.is_file():
         try:

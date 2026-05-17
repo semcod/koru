@@ -6,6 +6,18 @@ from pathlib import Path
 from koru import mcp_provision
 
 
+def test_detect_ides_uses_runtime_bridge(monkeypatch) -> None:
+    monkeypatch.setattr(
+        mcp_provision,
+        "detect_running_ides",
+        lambda: [{"id": "cursor"}, {"id": "vscode"}],
+    )
+
+    out = mcp_provision.detect_ides()
+
+    assert out == ["cursor", "vscode"]
+
+
 def test_provision_cursor_dry_run_does_not_write(tmp_path: Path) -> None:
     result = mcp_provision.provision_cursor(tmp_path, dry_run=True)
 

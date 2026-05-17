@@ -22,8 +22,8 @@ import os
 from pathlib import Path
 from typing import Any, Protocol
 
-from .autopilot.client import AutopilotClient
 from .autopilot.os_injector import OsInjectorError, inject_with_profile, load_profile
+from .ide_client import IDEControlClient
 
 
 class AgentBackend(Protocol):
@@ -38,7 +38,7 @@ class AgentBackend(Protocol):
         submit: bool,
         ticket_id: str | None = None,
     ) -> dict[str, Any]:
-        """Return the same shape as :meth:`AutopilotClient.drive` (``ok``, ``message``, …)."""
+        """Return the same shape as :meth:`IDEControlClient.drive` (``ok``, ``message``, …)."""
         ...
 
 
@@ -46,7 +46,7 @@ class AgentBackend(Protocol):
 class PluginSocketBackend:
     """Plugin + unix socket — maps ``send_chat`` to autopilot ``drive``."""
 
-    client: AutopilotClient
+    client: IDEControlClient
 
     def send_chat(
         self,
@@ -142,7 +142,7 @@ class OsInjectorBackend:
 def build_agent_backend(
     *,
     backend_id: str,
-    client: AutopilotClient | None = None,
+    client: IDEControlClient | None = None,
     mcp_server: str | None = None,
     noop_reason: str = "headless",
 ) -> AgentBackend:
@@ -154,7 +154,7 @@ def build_agent_backend(
     bid = (backend_id or "").strip().lower()
     if bid == "plugin_socket":
         if client is None:
-            raise ValueError("plugin_socket backend requires an AutopilotClient")
+            raise ValueError("plugin_socket backend requires an IDEControlClient")
         return PluginSocketBackend(client=client)
     if bid == "mcp_tool":
         return McpToolBackend(mcp_server=mcp_server)

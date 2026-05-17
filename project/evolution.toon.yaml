@@ -1,14 +1,14 @@
-# code2llm/evolution | 787 func | 80f | 2026-05-15
+# code2llm/evolution | 829 func | 85f | 2026-05-17
 # generated in 0.00s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous.py
-      WHY: 1777L, 4 classes, max CC=66
-      EFFORT: ~4h  IMPACT: 117282
+      WHY: 1837L, 4 classes, max CC=66
+      EFFORT: ~4h  IMPACT: 121242
 
-  [2] !! SPLIT           src/koru/cli.py
-      WHY: 2133L, 0 classes, max CC=26
-      EFFORT: ~4h  IMPACT: 55458
+  [2] !! SPLIT           src/koru/serve.py
+      WHY: 1301L, 1 classes, max CC=13
+      EFFORT: ~4h  IMPACT: 16913
 
   [3] !! SPLIT-FUNC      _run_cycle  CC=66  fan=43
       WHY: CC=66 exceeds 15
@@ -18,9 +18,9 @@ NEXT[10] (ranked by impact):
       WHY: CC=63 exceeds 15
       EFFORT: ~1h  IMPACT: 2583
 
-  [5] !! SPLIT-FUNC      _action_up  CC=41  fan=35
-      WHY: CC=41 exceeds 15
-      EFFORT: ~1h  IMPACT: 1435
+  [5] !! SPLIT-FUNC      _action_up  CC=44  fan=38
+      WHY: CC=44 exceeds 15
+      EFFORT: ~1h  IMPACT: 1672
 
   [6] !! SPLIT-FUNC      run_next_planfile_task  CC=37  fan=26
       WHY: CC=37 exceeds 15
@@ -30,9 +30,9 @@ NEXT[10] (ranked by impact):
       WHY: CC=23 exceeds 15
       EFFORT: ~1h  IMPACT: 437
 
-  [8] !  SPLIT-FUNC      _read_wup_health  CC=21  fan=19
-      WHY: CC=21 exceeds 15
-      EFFORT: ~1h  IMPACT: 399
+  [8] !  SPLIT-FUNC      _read_wup_health  CC=23  fan=19
+      WHY: CC=23 exceeds 15
+      EFFORT: ~1h  IMPACT: 437
 
   [9] !  SPLIT-FUNC      _agent_main  CC=19  fan=18
       WHY: CC=19 exceeds 15
@@ -44,14 +44,14 @@ NEXT[10] (ranked by impact):
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/cli.py may break 48 import paths
-  ⚠ Splitting src/koru/autonomous.py may break 34 import paths
+  ⚠ Splitting src/koru/autonomous.py may break 36 import paths
   ⚠ Splitting planfile.yaml may break 0 import paths
+  ⚠ Splitting src/koru/serve.py may break 15 import paths
 
 METRICS-TARGET:
-  CC̄:          4.9 → ≤3.4
+  CC̄:          4.8 → ≤3.4
   max-CC:      66 → ≤20
-  god-modules: 16 → 0
+  god-modules: 15 → 0
   high-CC(≥15): 37 → ≤18
   hub-types:   0 → ≤0
 
@@ -80,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.8 → now CC̄=4.9
+  prev CC̄=4.9 → now CC̄=4.8

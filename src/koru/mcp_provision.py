@@ -25,6 +25,8 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from .ide_runtime import detect_running_ides
+
 
 # ---------------------------------------------------------------------------
 # IDE config locations
@@ -107,15 +109,13 @@ def _maybe_upgrade_koru_command(servers: dict[str, Any]) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# IDE detection (reuses autopilot.ide when available)
+# IDE detection
 # ---------------------------------------------------------------------------
 
 def detect_ides() -> list[str]:
     """Return list of IDE ids detected on this system."""
     detected: list[str] = []
     try:
-        from .autopilot.ide import detect_running_ides
-
         for ide_info in detect_running_ides():
             ide_id = ide_info.get("id") if isinstance(ide_info, dict) else str(ide_info)
             if ide_id:

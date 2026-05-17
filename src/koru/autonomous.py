@@ -50,10 +50,9 @@ from .autonomous_wup import (
     _read_wup_health as _read_wup_health_impl,
 )
 from .autopilot import default_socket_path
-from .autopilot.client import AutopilotClient
-from .autopilot.daemon import AutopilotDaemon
 from .autopilot.os_injector import OsInjectorError, inject_with_profile, load_profile
 from .autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide
+from .ide_client import IDEControlClient, build_ide_client
 from .init import init_project, resolve_project_agent_lane
 from .queue import (
     QueueLoopResult,
@@ -78,6 +77,7 @@ from .scan import ScanResult, run_scan
 from .stdio_events import default_stdio_format_from_env, write_stdio_event
 from .tasks import create_nl_task
 from .topology import is_component_enabled, is_pipeline_enabled
+from koruide.daemon import AutopilotDaemon
 
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
@@ -789,12 +789,12 @@ def _start_or_reuse_daemon(
     project: Path,
     socket_path: Path,
     stdio_format: str = "human",
-) -> tuple[AutopilotClient, AutopilotDaemon | None, threading.Thread | None]:
+) -> tuple[IDEControlClient, AutopilotDaemon | None, threading.Thread | None]:
     socket_path.parent.mkdir(parents=True, exist_ok=True)
-    probe = AutopilotClient(socket_path=socket_path, timeout=0.5)
+    probe = build_ide_client(socket_path=socket_path, timeout=0.5)
     if probe.is_running():
         _stdio_info(f"koru autonomous: reusing autopilot daemon on {socket_path}", fmt=stdio_format)
-        return AutopilotClient(socket_path=socket_path), None, None
+        return build_ide_client(socket_path=socket_path), None, None
 
     daemon = AutopilotDaemon(
         socket_path=socket_path,
@@ -806,7 +806,7 @@ def _start_or_reuse_daemon(
     thread.start()
     time.sleep(0.05)
     _stdio_info(f"koru autonomous: started autopilot daemon on {socket_path}", fmt=stdio_format)
-    return AutopilotClient(socket_path=socket_path), daemon, thread
+    return build_ide_client(socket_path=socket_path), daemon, thread
 
 
 def _status_has_autopilot_plugin(status: Mapping[str, Any], ide: str) -> bool:
@@ -823,7 +823,7 @@ def _status_has_autopilot_plugin(status: Mapping[str, Any], ide: str) -> bool:
 
 
 def _wait_for_autopilot_plugin(
-    client: AutopilotClient,
+    client: IDEControlClient,
     ide: str,
     *,
     timeout_seconds: float,
@@ -1090,7 +1090,7 @@ def _run_cycle(
     drive_prompt: str,
     submit: bool,
     include_semcod_artifacts: bool | None,
-    client: AutopilotClient | None,
+    client: IDEControlClient | None,
     state: AutoloopState | None = None,
     idle_diagnostics: str = "off",
     diagnostic_tickets: bool = False,
@@ -1568,7 +1568,7 @@ def _action_up(args: argparse.Namespace) -> int:
     if lane is not None:
         _stdio_info(f"koru autonomous: agent-lane={lane} (env applied)", fmt=args.emit_events)
 
-    client: AutopilotClient | None = None
+    client: IDEControlClient | None = None
     daemon: AutopilotDaemon | None = None
     thread: threading.Thread | None = None
     socket_path: Path | None = None

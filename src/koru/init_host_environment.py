@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from .autopilot.host_setup import build_setup_host_report
+from .ide_runtime import build_host_setup_report
 from .runtime import runtime_dir
 
 
@@ -74,7 +74,7 @@ def _uinput_snapshot() -> dict[str, Any]:
 
 def build_host_environment_report() -> dict[str, Any]:
     """Merge autopilot ``setup-host`` probe with OS/session hints."""
-    base = build_setup_host_report()
+    base = build_host_setup_report()
     os_release = _read_os_release()
     groups = _id_group_names()
     session = (base.get("session") or "").lower()

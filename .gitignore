@@ -1,4 +1,25 @@
 # Byte-compiled / optimized / DLL files
+.code2llm_cache/Taskfile_1778838435307206648_31557.pkl
+.code2llm_cache/__init___1778944016390000000_256.pkl
+.code2llm_cache/agent_backend_runtime_1778943674736000000_5563.pkl
+.code2llm_cache/autonomous_1778843854309127812_66635.pkl
+.code2llm_cache/autonomous_1778944378166000000_66652.pkl
+.code2llm_cache/autonomous_wup_1778943284946034076_8255.pkl
+.code2llm_cache/client_1778944305723000000_4100.pkl
+.code2llm_cache/daemon_1778944369628000000_277.pkl
+.code2llm_cache/dispatch-plan.test_1778844015739898870_3668.pkl
+.code2llm_cache/extension_1778839116373289210_17311.pkl
+.code2llm_cache/ide_client_1778944046870000000_3380.pkl
+.code2llm_cache/ide_runtime_1778943879287000000_1324.pkl
+.code2llm_cache/init_host_environment_1778943885825000000_9112.pkl
+.code2llm_cache/koru-semcod-gates_1778838559923461625_3193.pkl
+.code2llm_cache/mcp_provision_1778943892444000000_13868.pkl
+.code2llm_cache/package_1778844019457939651_2550.pkl
+.code2llm_cache/protocol_1778944242562000000_6193.pkl
+.code2llm_cache/pyproject_1778849152198928740_2134.pkl
+.code2llm_cache/semcod_tools_1778838435306206638_5860.pkl
+.code2llm_cache/socketPath_1778844010589842381_1892.pkl
+.code2llm_cache/socket_1778944220099000000_1419.pkl
 .code2llm_cache/Taskfile_1778770940785187964_31416.pkl
 .code2llm_cache/__init___1778773067640290020_617.pkl
 .code2llm_cache/agent_backend_runtime_1778773067652150450_4286.pkl

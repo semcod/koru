@@ -2,7 +2,7 @@
 
 app {
   name: koru;
-  version: 0.1.113;
+  version: 0.1.115;
 }
 
 dependencies {
@@ -44,8 +44,8 @@ workflow[name="install:dev"] {
 
 workflow[name="install:tools"] {
   trigger: manual;
-  step-1: run cmd=pip install planfile regix redup vallm prefact pfix sumd code2llm doql redeploy goal costs op3 toonic protogate rebuild mdflow metrun;
-  step-2: run cmd=echo "✓ Core tools installed (16). For LLM-backed tools (redsl, llx, aider) install separately.";
+  step-1: run cmd=pip install planfile wup testql regix redup vallm prefact pfix sumd sumr code2llm redsl llx doql redeploy goal costs op3 toonic protogate rebuild mdflow metrun;
+  step-2: run cmd=echo "✓ semcod toolchain installed. Optional interactive agent: pip install aider-chat";
 }
 
 workflow[name="test"] {
@@ -275,6 +275,11 @@ workflow[name="quality:sumr:install-hook"] {
 workflow[name="quality:sumr:uninstall-hook"] {
   trigger: manual;
   step-1: run cmd=bash scripts/git-hooks/install.sh --uninstall;
+}
+
+workflow[name="quality:semcod:planfile"] {
+  trigger: manual;
+  step-1: run cmd=bash scripts/koru-semcod-gates.sh;
 }
 
 workflow[name="tickets:next"] {

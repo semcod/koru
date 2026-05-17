@@ -1350,6 +1350,39 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
 
+## [0.1.116] - 2026-05-17
+
+### Docs
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update docs/adr/adr-kide-001-koru-vs-koruide-boundary.md
+- Update docs/specs/kide-002-koruide-api-v1.md
+- Update docs/specs/kide-003-koruide-api-v2.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_autonomous.py
+- Update tests/test_ide_client.py
+- Update tests/test_ide_client_contract.py
+- Update tests/test_ide_runtime.py
+- Update tests/test_koruide_client.py
+- Update tests/test_mcp_provision.py
+
+### Other
+- Update .code2llm_cache/Taskfile_1778838435307206648_31557.pkl
+- Update .code2llm_cache/__init___1778944016390000000_256.pkl
+- Update .code2llm_cache/agent_backend_runtime_1778943674736000000_5563.pkl
+- Update .code2llm_cache/autonomous_1778843854309127812_66635.pkl
+- Update .code2llm_cache/autonomous_1778944378166000000_66652.pkl
+- Update .code2llm_cache/autonomous_wup_1778943284946034076_8255.pkl
+- Update .code2llm_cache/client_1778944305723000000_4100.pkl
+- Update .code2llm_cache/daemon_1778944369628000000_277.pkl
+- Update .code2llm_cache/dispatch-plan.test_1778844015739898870_3668.pkl
+- Update .code2llm_cache/extension_1778839116373289210_17311.pkl
+- ... and 29 more files
+
 ## [0.1.115] - 2026-05-15
 
 ### Docs

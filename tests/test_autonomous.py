@@ -1419,3 +1419,35 @@ def test_read_wup_health_creates_high_priority_planfile_ticket(tmp_path) -> None
     text = sprint.read_text(encoding="utf-8")
     assert "[AUTO-DIAG] wup-api needs attention" in text
     assert "priority: high" in text
+
+
+def test_read_wup_health_ignores_degraded_fleet_and_clears_marker(tmp_path) -> None:
+    health_dir = tmp_path / ".wup"
+    health_dir.mkdir()
+    diag_dir = tmp_path / ".planfile/.koru/autoloop-diag"
+    diag_dir.mkdir(parents=True)
+    (diag_dir / "wup-c2004.failed").write_text("PLF-9999", encoding="utf-8")
+    (health_dir / "service-health.json").write_text(
+        json.dumps(
+            {
+                "frontend": {"status": "up", "stage": "quick"},
+                "c2004": {
+                    "status": "degraded",
+                    "stage": "health_scenario",
+                    "message": "66/74 passed, 8 failed",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    state = autonomous_mod.AutoloopState()
+    result = autonomous_mod._read_wup_health(
+        project=tmp_path,
+        state=state,
+        diagnostic_tickets=True,
+        ticket_queue="default",
+        state_dir=diag_dir,
+    )
+    assert result.status == "ok"
+    assert result.failing_services == []
+    assert not (diag_dir / "wup-c2004.failed").exists()
