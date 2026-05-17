@@ -6,7 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from koru.autopilot import _autopilot_socket_basename, default_socket_path
+from koru.autopilot import default_socket_path
+from koruide.socket import _autopilot_socket_basename
 
 
 def test_explicit_socket_env_overrides_all(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

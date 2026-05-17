@@ -13,6 +13,7 @@ from typing import Any
 from .autonomous_wup import WupHealthResult
 from .autonomous_wup import _read_wup_health as _read_wup_health_impl
 from .autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
+from .autonomy.ide_work import resolve_idle_drive_prompt
 from .autonomy.prompts import build_prompt
 from .queue import QueueLoopResult, run_planfile_queue_loop
 from .queue import default_human_prompt as _default_human_prompt
@@ -622,15 +623,23 @@ def run_cycle(
             )
             autopilot_status = f"skipped(stuck_{queue_result.last_status})"
         else:
+            effective_drive_prompt = drive_prompt
+            idle_prompt_kind: str | None = None
+            if queue_result.last_status == "idle":
+                effective_drive_prompt, idle_prompt_kind = resolve_idle_drive_prompt(
+                    project,
+                    drive_prompt=drive_prompt,
+                    runner=_run_process,
+                )
             decision = build_prompt(
                 queue_status=queue_result.last_status,
                 last_message=getattr(queue_result, "last_message", "") or "",
                 waiting_ticket_id=getattr(queue_result, "last_ticket_id", None),
-                drive_prompt=drive_prompt,
+                drive_prompt=effective_drive_prompt,
                 autopilot_action=autopilot_action,
                 stagnation_streak=state.stagnation_streak,
             )
-            autopilot_drive_kind = decision.kind
+            autopilot_drive_kind = idle_prompt_kind or decision.kind
             reply = client.drive(
                 decision.prompt,
                 submit=submit,

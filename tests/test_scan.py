@@ -356,6 +356,29 @@ class TestRunScan(unittest.TestCase):
             for cmd in created:
                 self.assertNotIn(existing, cmd)
 
+    def test_existing_scan_titles_ignores_done_tickets(self) -> None:
+        from koru.scan import _existing_scan_titles
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            title = "Fix package import path for pytest collection"
+
+            def runner(cmd, _proj) -> SimpleNamespace:
+                if cmd[:3] == ["planfile", "ticket", "list"]:
+                    return _ok(
+                        json.dumps(
+                            [
+                                {"name": title, "status": "done", "source": {"tool": "koru-scan"}},
+                                {"name": "Still open", "status": "open", "source": {"tool": "koru-scan"}},
+                            ]
+                        )
+                    )
+                return _ok()
+
+            titles = _existing_scan_titles(project, source="koru-scan", runner=runner)
+            self.assertNotIn(title, titles)
+            self.assertIn("Still open", titles)
+
     def test_limit_caps_suggestions(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

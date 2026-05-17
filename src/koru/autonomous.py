@@ -31,6 +31,7 @@ from typing import Any, Mapping
 from .agents import agent_lane_environment
 from .ide_router import resolve_ide_route
 from .autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
+from .autonomy.ide_work import release_in_progress_tickets, resolve_idle_drive_prompt
 from .autonomy.prompts import build_prompt
 from .autonomous_env import (
     apply_autonomous_env_overrides as _env_apply_autoloop_defaults,
@@ -61,7 +62,7 @@ from .autonomous_startup import (
     _terminal_agent_lane_from_env,
 )
 from .autopilot import default_socket_path
-from koruide.plugin_installer import format_plugin_install_result, install_plugin_for_ide
+from .autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide
 from .ide_client import IDEControlClient, build_ide_client
 from .init import init_project, resolve_project_agent_lane
 from .queue import (
@@ -1433,15 +1434,23 @@ def _run_cycle(
         else:
             # Unified path: PromptStrategy picks the right prompt + kind
             # based on queue status, ticket message, and stagnation streak.
+            effective_drive_prompt = drive_prompt
+            idle_prompt_kind: str | None = None
+            if queue_result.last_status == "idle":
+                effective_drive_prompt, idle_prompt_kind = resolve_idle_drive_prompt(
+                    project,
+                    drive_prompt=drive_prompt,
+                    runner=_run_process,
+                )
             decision = build_prompt(
                 queue_status=queue_result.last_status,
                 last_message=getattr(queue_result, "last_message", "") or "",
                 waiting_ticket_id=getattr(queue_result, "last_ticket_id", None),
-                drive_prompt=drive_prompt,
+                drive_prompt=effective_drive_prompt,
                 autopilot_action=autopilot_action,
                 stagnation_streak=state.stagnation_streak,
             )
-            autopilot_drive_kind = decision.kind
+            autopilot_drive_kind = idle_prompt_kind or decision.kind
             reply = client.drive(
                 decision.prompt,
                 submit=submit,
@@ -1645,6 +1654,19 @@ def _action_up(args: argparse.Namespace) -> int:
                         f"{max(0.0, args.autopilot_plugin_wait_seconds):.1f}s; continuing",
                         fmt=args.emit_events,
                     )
+
+        if os.environ.get("KORU_QUEUE_UNBLOCK", "").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        ):
+            released = release_in_progress_tickets(project, runner=_run_process)
+            if released:
+                _stdio_info(
+                    f"koru autonomous: queue unblock — reopened {released} in_progress ticket(s)",
+                    fmt=args.emit_events,
+                )
 
         cycle = 0
         while True:

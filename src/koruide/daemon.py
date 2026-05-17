@@ -514,7 +514,33 @@ class AutopilotDaemon:
         info = {k: v for k, v in msg.data.items() if k != "ok"}
         plugin_ok = bool(msg.data.get("ok", True))
         focus_error = "chat input is not focused/open" in str(info.get("message", "")).lower()
+        submit_failed = (
+            submit_requested and info.get("submitted") is False
+        )
+        undelivered = info.get("delivered") is False
         if (not plugin_ok) and focus_error and plugin_ide:
+            try:
+                os_res = self._try_os_injector_drive(plugin_ide, original_text, submit_requested)
+            except InjectorError as exc:
+                info["os_fallback"] = "failed"
+                info["os_fallback_error"] = str(exc)
+            else:
+                if os_res is not None:
+                    relay = ack(
+                        corr,
+                        ok=True,
+                        info={
+                            "backend": os_res.get("backend", "os_injector"),
+                            "ok": True,
+                            "delivered": True,
+                            "opened": True,
+                            "submitted": bool(os_res.get("submitted", submit_requested)),
+                            "os_fallback": "used",
+                        },
+                    )
+                    self._send(cli_client, relay.encode())
+                    return
+        if ((not plugin_ok) or submit_failed or undelivered) and plugin_ide:
             try:
                 os_res = self._try_os_injector_drive(plugin_ide, original_text, submit_requested)
             except InjectorError as exc:
