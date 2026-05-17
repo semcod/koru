@@ -50,7 +50,6 @@ from .autonomous_wup import (
     _read_wup_health as _read_wup_health_impl,
 )
 from .autopilot import default_socket_path
-from .autopilot.os_injector import OsInjectorError, inject_with_profile, load_profile
 from .autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide
 from .ide_client import IDEControlClient, build_ide_client
 from .init import init_project, resolve_project_agent_lane
@@ -78,6 +77,7 @@ from .stdio_events import default_stdio_format_from_env, write_stdio_event
 from .tasks import create_nl_task
 from .topology import is_component_enabled, is_pipeline_enabled
 from koruide.daemon import AutopilotDaemon
+from koruide.os_injector import OsInjectorError, inject_with_profile, load_profile
 
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 

@@ -22,8 +22,8 @@ import os
 from pathlib import Path
 from typing import Any, Protocol
 
-from .autopilot.os_injector import OsInjectorError, inject_with_profile, load_profile
 from .ide_client import IDEControlClient
+from koruide.os_injector import OsInjectorError, inject_with_profile, load_profile
 
 
 class AgentBackend(Protocol):

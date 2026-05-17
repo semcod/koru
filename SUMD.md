@@ -21,7 +21,7 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.115`
+- **version**: `0.1.116`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -41,7 +41,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.115;
+  version: 0.1.116;
 }
 
 dependencies {
@@ -1510,7 +1510,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.115
+  version: 0.1.116
   env: local
 ```
 
@@ -1585,13 +1585,13 @@ pip install -e .[dev]
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 207f 43977L | python:147,shell:51,javascript:4,typescript:4,less:1 | 2026-05-16
-# stats: 1115 func | 162 cls | 207 mod | CC̄=4.5 | critical:102 | cycles:0
+# koru | 218f 44656L | python:158,shell:51,javascript:4,typescript:4,less:1 | 2026-05-17
+# stats: 1144 func | 165 cls | 218 mod | CC̄=4.5 | critical:102 | cycles:0
 # alerts[5]: CC _run_cycle=66; CC run_cycle=63; CC _action_up=44; CC run_next_planfile_task=37; CC install_plugin_for_ide=28
 # hotspots[5]: _run_cycle fan=41; run_cycle fan=40; _action_up fan=37; _build_handler fan=33; _build_handler fan=24
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[207]:
+M[218]:
   app.doql.less,605
   docs/llm-tools/aider/install.sh,56
   docs/llm-tools/claude-code/install.sh,61
@@ -1662,7 +1662,7 @@ M[207]:
   src/koru/autonomous_env.py,27
   src/koru/autonomous_parser.py,370
   src/koru/autonomous_process_guard.py,214
-  src/koru/autonomous_wup.py,249
+  src/koru/autonomous_wup.py,254
   src/koru/autonomy/__init__.py,26
   src/koru/autonomy/config.py,122
   src/koru/autonomy/env.py,193
@@ -1673,7 +1673,7 @@ M[207]:
   src/koru/autopilot/__init__.py,68
   src/koru/autopilot/audit.py,158
   src/koru/autopilot/cli_command.py,1230
-  src/koru/autopilot/client.py,109
+  src/koru/autopilot/client.py,12
   src/koru/autopilot/config.py,120
   src/koru/autopilot/daemon.py,653
   src/koru/autopilot/host_setup.py,208
@@ -1681,7 +1681,7 @@ M[207]:
   src/koru/autopilot/injector.py,404
   src/koru/autopilot/os_injector.py,363
   src/koru/autopilot/plugin_installer.py,367
-  src/koru/autopilot/protocol.py,269
+  src/koru/autopilot/protocol.py,50
   src/koru/autopilot/utils/__init__.py,6
   src/koru/autopilot/utils/client_helpers.py,58
   src/koru/bootstrap.py,447
@@ -1696,7 +1696,9 @@ M[207]:
   src/koru/events.py,91
   src/koru/gate.py,203
   src/koru/gc.py,372
+  src/koru/ide_client.py,129
   src/koru/ide_router.py,99
+  src/koru/ide_runtime.py,45
   src/koru/init.py,611
   src/koru/init_host_environment.py,261
   src/koru/local_service.py,204
@@ -1732,6 +1734,11 @@ M[207]:
   src/koru/utils/subprocess_runner.py,41
   src/koru/watch.py,82
   src/koru/wup_testql_compat.py,66
+  src/koruide/__init__.py,10
+  src/koruide/client.py,129
+  src/koruide/daemon.py,12
+  src/koruide/protocol.py,232
+  src/koruide/socket.py,46
   test-data/.planfile/.koru/run-autonomous.sh,7
   test-data/.planfile/.koru/setup-autopilot-host.sh,14
   test-data/.planfile/.koru/shell-env.sh,5
@@ -1743,7 +1750,7 @@ M[207]:
   tests/test_agent_backends_cli.py,34
   tests/test_agent_cli.py,101
   tests/test_agents.py,196
-  tests/test_autonomous.py,1422
+  tests/test_autonomous.py,1454
   tests/test_autonomous_process_detection.py,37
   tests/test_autonomous_scenarios.py,305
   tests/test_autonomy_config.py,141
@@ -1774,13 +1781,17 @@ M[207]:
   tests/test_events.py,67
   tests/test_gate.py,167
   tests/test_gc.py,277
+  tests/test_ide_client.py,115
+  tests/test_ide_client_contract.py,106
   tests/test_ide_router.py,257
+  tests/test_ide_runtime.py,39
   tests/test_init.py,332
   tests/test_koru_gate_capture.py,35
   tests/test_koru_queue_argv.py,24
+  tests/test_koruide_client.py,83
   tests/test_local_service.py,97
   tests/test_loop.py,95
-  tests/test_mcp_provision.py,154
+  tests/test_mcp_provision.py,166
   tests/test_mcp_server.py,229
   tests/test_planfile_queue.py,1097
   tests/test_policy.py,183
@@ -2089,8 +2100,6 @@ D:
     _action_install_unit(args)
     autopilot_main(argv)
   src/koru/autopilot/client.py:
-    e: AutopilotClient
-    AutopilotClient: __init__(0),_connect(0),request(1),is_running(0),drive(1),status(0),shutdown(0)  # Connect, send one message, read one reply, disconnect.
   src/koru/autopilot/config.py:
     e: default_config_path,_merge_submit_keys,load_config,cached_config,clear_config_cache,AutopilotConfig
     AutopilotConfig: submit_key_for(1)  # In-memory view of ``autopilot.toml`` (or defaults).
@@ -2191,21 +2200,6 @@ D:
     install_plugin_for_ide()
     format_plugin_install_result(result)
   src/koru/autopilot/protocol.py:
-    e: _filter_extras,decode,hello,chat_send,drive,ack,error,session_started,session_ended,message_sent,message_received,status_error,ProtocolError,Message
-    ProtocolError:  # Raised when a line cannot be decoded into a valid message.
-    Message: to_dict(0),encode(0)  # A single protocol envelope.
-    _filter_extras(msg_type;obj)
-    decode(line)
-    hello()
-    chat_send(text)
-    drive(text)
-    ack(reply_to)
-    error(reply_to;message)
-    session_started()
-    session_ended()
-    message_sent()
-    message_received()
-    status_error()
   src/koru/autopilot/utils/__init__.py:
   src/koru/autopilot/utils/client_helpers.py:
     e: call_daemon_method,resolve_xdg_path
@@ -2387,11 +2381,23 @@ D:
     _archive_tickets_before_delete(to_remove;project;sprint)
     _delete_tickets(to_remove;project;planfile_runner)
     run_gc(project)
+  src/koru/ide_client.py:
+    e: adapt_legacy_autopilot_client,build_legacy_ide_client,build_koruide_client,build_ide_client,IDEControlClient,LegacyAutopilotClientAdapter
+    IDEControlClient: is_running(0),drive(1),status(0),shutdown(0)  # Minimal interface `koru` runtime code expects from an IDE cl
+    LegacyAutopilotClientAdapter: is_running(0),drive(1),status(0),shutdown(0)  # Expose legacy :class:`AutopilotClient` through :class:`IDECo
+    adapt_legacy_autopilot_client(client)
+    build_legacy_ide_client()
+    build_koruide_client()
+    build_ide_client()
   src/koru/ide_router.py:
     e: is_headless_environment,resolve_ide_route,IDERoute
     IDERoute:  # Resolved routing decision for one Koru process.
     is_headless_environment(environ)
     resolve_ide_route()
+  src/koru/ide_runtime.py:
+    e: build_host_setup_report,detect_running_ides
+    build_host_setup_report()
+    detect_running_ides()
   src/koru/init.py:
     e: init_project,refresh_init_agent_lane,_init_auto_agent_lane,_read_persisted_agent_lane,_resolve_init_agent_lane,resolve_project_agent_lane,_write_autopilot_host_setup_script,_write_agent_lane_artifacts,_remove_agent_lane_artifacts,_write_policy_stub_if_absent,_ensure_gitignore_entry,InitReport
     InitReport: summary(0)  # Summary of what ``init_project`` actually changed on disk.
@@ -2686,6 +2692,32 @@ D:
     _normalize_args(args)
     _real_testql()
     main(argv)
+  src/koruide/__init__.py:
+  src/koruide/client.py:
+    e: build_client,KoruIDEClient
+    KoruIDEClient: __init__(0),_connect(0),request(1),is_running(0),drive(1),status(0),shutdown(0)  # Connect, send one message, read one reply, disconnect.
+    build_client()
+  src/koruide/daemon.py:
+  src/koruide/protocol.py:
+    e: _filter_extras,decode,hello,chat_send,drive,ack,error,session_started,session_ended,message_sent,message_received,status_error,ProtocolError,Message
+    ProtocolError:  # Raised when a line cannot be decoded into a valid message.
+    Message: to_dict(0),encode(0)
+    _filter_extras(msg_type;obj)
+    decode(line)
+    hello()
+    chat_send(text)
+    drive(text)
+    ack(reply_to)
+    error(reply_to;message)
+    session_started()
+    session_ended()
+    message_sent()
+    message_received()
+    status_error()
+  src/koruide/socket.py:
+    e: _autopilot_socket_basename,default_socket_path
+    _autopilot_socket_basename()
+    default_socket_path()
   tests/test_agent_backend_runtime.py:
     e: test_plugin_socket_backend_forwards_send_chat_to_drive,test_mcp_tool_backend_returns_ok_marker,test_mcp_tool_backend_no_server_field,test_noop_backend_returns_ok_with_reason,test_factory_resolves_plugin_socket_with_client,test_factory_plugin_socket_requires_client,test_factory_resolves_mcp_tool,test_factory_resolves_mcp_tool_without_server,test_factory_resolves_none_to_noop,test_factory_resolves_os_injector_from_env,test_factory_os_injector_requires_profile_env,test_factory_normalizes_case_and_whitespace,test_factory_rejects_unknown_backend_id,test_all_backends_implement_send_chat
     test_plugin_socket_backend_forwards_send_chat_to_drive()
@@ -2728,7 +2760,7 @@ D:
     TestAgentLaneEnv: test_qwen_lane_env_defaults(0),test_opencode_lane_env_defaults(0)
     TestAutopilotBackendForLane: test_backend_matrix(0)
   tests/test_autonomous.py:
-    e: test_effective_flags_matrix,test_scan_after_idle_queue_runs_scan_when_queue_idle,test_scan_after_idle_min_interval_skips_second_scan,test_idle_streak_skip_increments_telemetry,test_ticket_sources_env_overrides_cli_queue_to_scan,test_ticket_sources_env_invalid_keeps_cli_queue,test_autonomous_environ_doctor_probe_invalid_ticket_sources,test_autonomous_environ_doctor_probe_pass_summary,test_guard_existing_autonomous_noninteractive_blocks_duplicate,test_guard_existing_autonomous_replace_existing_terminates,test_guard_existing_autonomous_replace_existing_terminates_stale_wup,test_guard_existing_autonomous_interactive_decline_blocks_duplicate,test_autonomous_jsonl_keyboard_interrupt_emits_reason,test_queue_loop_result_summary_includes_waiting_ticket,test_queue_loop_waiting_ticket_label_helper,test_resolve_autopilot_ide_env_overrides_cli,test_resolve_autopilot_ide_ignores_bad_env,test_resolve_autopilot_ide_auto_env_does_not_override_cli,test_resolve_autopilot_ide_headless_forces_auto,test_resolve_autopilot_ide_headless_allow_autopilot_honors_env,test_resolve_autopilot_ide_koru_ide_mode_headless,test_resolve_autopilot_ide_ssh_without_display_headless,test_resolve_autopilot_ide_ssh_with_display_uses_cli,test_resolve_autopilot_ide_os_environ_autopilot_ide,test_resolve_autopilot_ide_headless_allow_yes,test_apply_agent_lane_environ_auto_cursor,test_apply_agent_lane_environ_auto_prefers_vscode_terminal,test_apply_agent_lane_environ_auto_vscode_terminal_overrides_stale_windsurf_env,test_apply_agent_lane_environ_none_is_noop,test_autonomous_main_prepends_up_for_flags,test_up_single_cycle_queue_only_no_autopilot,test_safe_up_uses_queue_diagnostics_without_autopilot,test_up_single_cycle_all_sources_runs_scan,test_up_auto_installs_plugin_before_autopilot_loop,test_status_has_autopilot_plugin_matches_specific_ide,test_wait_for_autopilot_plugin_polls_until_connected,test_run_cycle_sends_fallback_prompt_when_waiting_input_empty_message,test_run_cycle_autopilot_waiting_input_logs_ticket_from_waiting_list,test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure,test_up_stops_on_waiting_input_by_default,test_up_restarts_autopilot_when_socket_disappears_between_cycles,test_compute_backoff_sleep_caps_stagnation,test_env_apply_autoloop_defaults_enables_full_diagnostics,test_run_idle_diagnostics_profile_off_message,test_run_idle_diagnostics_creates_deduped_ticket,test_wup_watch_command_uses_testql_mode,test_wup_watch_command_keeps_explicit_testql_bin,test_wup_watch_command_normalizes_percent_cpu_throttle,test_wup_topology_gate_uses_pipeline_for_gate_wup,test_read_wup_health_creates_high_priority_planfile_ticket
+    e: test_effective_flags_matrix,test_scan_after_idle_queue_runs_scan_when_queue_idle,test_scan_after_idle_min_interval_skips_second_scan,test_idle_streak_skip_increments_telemetry,test_ticket_sources_env_overrides_cli_queue_to_scan,test_ticket_sources_env_invalid_keeps_cli_queue,test_autonomous_environ_doctor_probe_invalid_ticket_sources,test_autonomous_environ_doctor_probe_pass_summary,test_guard_existing_autonomous_noninteractive_blocks_duplicate,test_guard_existing_autonomous_replace_existing_terminates,test_guard_existing_autonomous_replace_existing_terminates_stale_wup,test_guard_existing_autonomous_interactive_decline_blocks_duplicate,test_autonomous_jsonl_keyboard_interrupt_emits_reason,test_queue_loop_result_summary_includes_waiting_ticket,test_queue_loop_waiting_ticket_label_helper,test_resolve_autopilot_ide_env_overrides_cli,test_resolve_autopilot_ide_ignores_bad_env,test_resolve_autopilot_ide_auto_env_does_not_override_cli,test_resolve_autopilot_ide_headless_forces_auto,test_resolve_autopilot_ide_headless_allow_autopilot_honors_env,test_resolve_autopilot_ide_koru_ide_mode_headless,test_resolve_autopilot_ide_ssh_without_display_headless,test_resolve_autopilot_ide_ssh_with_display_uses_cli,test_resolve_autopilot_ide_os_environ_autopilot_ide,test_resolve_autopilot_ide_headless_allow_yes,test_apply_agent_lane_environ_auto_cursor,test_apply_agent_lane_environ_auto_prefers_vscode_terminal,test_apply_agent_lane_environ_auto_vscode_terminal_overrides_stale_windsurf_env,test_apply_agent_lane_environ_none_is_noop,test_autonomous_main_prepends_up_for_flags,test_up_single_cycle_queue_only_no_autopilot,test_safe_up_uses_queue_diagnostics_without_autopilot,test_up_single_cycle_all_sources_runs_scan,test_up_auto_installs_plugin_before_autopilot_loop,test_status_has_autopilot_plugin_matches_specific_ide,test_wait_for_autopilot_plugin_polls_until_connected,test_run_cycle_sends_fallback_prompt_when_waiting_input_empty_message,test_run_cycle_autopilot_waiting_input_logs_ticket_from_waiting_list,test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure,test_up_stops_on_waiting_input_by_default,test_up_restarts_autopilot_when_socket_disappears_between_cycles,test_compute_backoff_sleep_caps_stagnation,test_env_apply_autoloop_defaults_enables_full_diagnostics,test_run_idle_diagnostics_profile_off_message,test_run_idle_diagnostics_creates_deduped_ticket,test_wup_watch_command_uses_testql_mode,test_wup_watch_command_keeps_explicit_testql_bin,test_wup_watch_command_normalizes_percent_cpu_throttle,test_wup_topology_gate_uses_pipeline_for_gate_wup,test_read_wup_health_creates_high_priority_planfile_ticket,test_read_wup_health_ignores_degraded_fleet_and_clears_marker
     test_effective_flags_matrix()
     test_scan_after_idle_queue_runs_scan_when_queue_idle(tmp_path;monkeypatch)
     test_scan_after_idle_min_interval_skips_second_scan(tmp_path;monkeypatch)
@@ -2779,6 +2811,7 @@ D:
     test_wup_watch_command_normalizes_percent_cpu_throttle(tmp_path)
     test_wup_topology_gate_uses_pipeline_for_gate_wup(tmp_path;monkeypatch)
     test_read_wup_health_creates_high_priority_planfile_ticket(tmp_path)
+    test_read_wup_health_ignores_degraded_fleet_and_clears_marker(tmp_path)
   tests/test_autonomous_process_detection.py:
     e: test_find_existing_autonomous_does_not_skip_sibling_from_same_shell
     test_find_existing_autonomous_does_not_skip_sibling_from_same_shell(tmp_path;monkeypatch)
@@ -3160,6 +3193,23 @@ D:
     _write_sprint(project;tickets;sprint)
     _ts(days_ago)
     _ticket(name;status;exec_state;days_ago)
+  tests/test_ide_client.py:
+    e: test_legacy_adapter_forwards_all_operations,test_build_legacy_ide_client_uses_autopilot_client,test_build_koruide_client_uses_koruide_package,test_build_ide_client_defaults_to_legacy,test_build_ide_client_can_select_koruide,test_build_ide_client_uses_env_when_backend_not_passed
+    test_legacy_adapter_forwards_all_operations()
+    test_build_legacy_ide_client_uses_autopilot_client(monkeypatch)
+    test_build_koruide_client_uses_koruide_package(monkeypatch)
+    test_build_ide_client_defaults_to_legacy(monkeypatch)
+    test_build_ide_client_can_select_koruide(monkeypatch)
+    test_build_ide_client_uses_env_when_backend_not_passed(monkeypatch)
+  tests/test_ide_client_contract.py:
+    e: _legacy_factory,_koruide_factory,test_contract_is_running,test_contract_drive,test_contract_status,test_contract_shutdown,_TransportStub
+    _TransportStub: __init__(0),is_running(0),drive(1),status(0),shutdown(0)
+    _legacy_factory(transport)
+    _koruide_factory(transport)
+    test_contract_is_running(factory)
+    test_contract_drive(factory)
+    test_contract_status(factory)
+    test_contract_shutdown(factory)
   tests/test_ide_router.py:
     e: test_is_headless_false_minimal_env,test_is_headless_koru_headless_yes,test_is_headless_koru_headless_on,test_is_headless_koru_headless_false_explicit,test_is_headless_ide_mode_whitespace_case_insensitive,test_is_headless_ssh_empty_display_still_headless,test_resolve_ide_route_env_ide_case_insensitive,test_resolve_ide_route_headless_sets_primary_surface,test_resolve_ide_route_ide_shell_surface,test_ide_router_main_help_exits_zero,test_ide_router_main_unknown_flag_exits_nonzero,test_ide_router_main_bad_format_exits_nonzero,test_is_headless_ssh_without_display,test_is_headless_ssh_with_display_not_headless,test_is_headless_windows_ignores_ssh_without_display,test_resolve_ide_route_bad_env_uses_cli,test_resolve_ide_route_whitespace_env_treated_as_missing,test_resolve_ide_route_cli_invalid_env_empty_uses_auto,test_resolve_ide_route_cli_auto_env_empty,test_resolve_ide_route_headless_notes_mention_escape_hatch,test_resolve_ide_route_ide_shell_notes_mention_mcp,test_ide_router_main_json,test_ide_router_main_text,test_resolve_ide_route_env_overrides_cli,test_resolve_ide_route_auto_env_does_not_override_cli,test_resolve_ide_route_headless_forces_auto,test_resolve_ide_route_headless_allow_autopilot_honors_env,test_is_headless_via_ide_mode,test_resolve_ide_route_cli_ide_whitespace_normalized,test_resolve_ide_route_headless_allow_autopilot_yes_string,test_resolve_ide_route_environ_none_uses_os_environ,test_resolve_ide_route_headless_all_recommend_flags_false,test_ide_router_main_json_when_headless,test_resolve_ide_route_vscode_explicit_env
     test_is_headless_false_minimal_env()
@@ -3196,6 +3246,10 @@ D:
     test_resolve_ide_route_headless_all_recommend_flags_false()
     test_ide_router_main_json_when_headless(monkeypatch;capsys)
     test_resolve_ide_route_vscode_explicit_env()
+  tests/test_ide_runtime.py:
+    e: test_build_host_setup_report_delegates_to_legacy_backend,test_detect_running_ides_normalizes_rows
+    test_build_host_setup_report_delegates_to_legacy_backend(monkeypatch)
+    test_detect_running_ides_normalizes_rows(monkeypatch)
   tests/test_init.py:
     e: _detach_ci_env,_reattach_ci_env,TestStarterInit,TestForceAndConflicts,TestFromExternalPipeline,TestRuntimeContract,TestAgentLaneArtifacts,TestRefreshInitAgentLane
     TestStarterInit: test_creates_planfile_layout(0),test_writes_policy_stub_and_loads_safe_defaults(0),test_policy_stub_constant_is_valid_yaml(0),test_appends_gitignore_entry(0),test_gitignore_idempotent(0),test_preserves_existing_gitignore_content(0),test_policy_stub_not_overwritten_on_force(0),test_no_starter_yaml_left_behind(0),test_writes_koru_yaml_on_first_init(0),test_host_environment_bundle_written_by_default(0),test_host_environment_skipped_when_disabled(0),test_force_init_preserves_existing_koru_yaml(0)
@@ -3214,6 +3268,12 @@ D:
     e: test_build_queue_argv_apply_minimal,test_build_queue_argv_dry_and_max_steps
     test_build_queue_argv_apply_minimal(tmp_path)
     test_build_queue_argv_dry_and_max_steps(tmp_path)
+  tests/test_koruide_client.py:
+    e: test_koruide_client_forwards_all_operations,test_build_client_sets_socket_path_and_timeout,test_injected_client_without_request_raises_on_request_path,test_drive_missing_socket_returns_ok_false
+    test_koruide_client_forwards_all_operations()
+    test_build_client_sets_socket_path_and_timeout()
+    test_injected_client_without_request_raises_on_request_path()
+    test_drive_missing_socket_returns_ok_false(tmp_path)
   tests/test_local_service.py:
     e: _urlopen_json,_urlopen_bytes,local_service_server,test_health_returns_ok_and_version,test_post_event_roundtrip_and_ndjson_events,test_post_enqueue_alias,test_post_empty_body_is_400,test_unknown_path_404
     _urlopen_json(url)
@@ -3228,7 +3288,8 @@ D:
     e: TestKoruLoop
     TestKoruLoop: test_search_root_for_include_uses_literal_prefix(0),test_discover_repositories_with_pattern(0),test_run_closed_loop_retries_failed_repositories(0),test_run_closed_loop_single_round_when_all_succeed(0),test_command_value_rejects_blank_value(0)
   tests/test_mcp_provision.py:
-    e: test_provision_cursor_dry_run_does_not_write,test_provision_cursor_writes_file_and_then_is_idempotent,test_provision_upgrades_bare_koru_command_to_absolute,test_remove_from_config_removes_koru_entry,test_init_ide_main_json_output_for_cursor_dry_run,test_ensure_koru_mcp_not_disabled_clears_disabled_and_keeps_command,test_ensure_koru_mcp_not_disabled_includes_global_windsurf
+    e: test_detect_ides_uses_runtime_bridge,test_provision_cursor_dry_run_does_not_write,test_provision_cursor_writes_file_and_then_is_idempotent,test_provision_upgrades_bare_koru_command_to_absolute,test_remove_from_config_removes_koru_entry,test_init_ide_main_json_output_for_cursor_dry_run,test_ensure_koru_mcp_not_disabled_clears_disabled_and_keeps_command,test_ensure_koru_mcp_not_disabled_includes_global_windsurf
+    test_detect_ides_uses_runtime_bridge(monkeypatch)
     test_provision_cursor_dry_run_does_not_write(tmp_path)
     test_provision_cursor_writes_file_and_then_is_idempotent(tmp_path)
     test_provision_upgrades_bare_koru_command_to_absolute(tmp_path;monkeypatch)
@@ -3365,7 +3426,7 @@ D:
 
 ## Call Graph
 
-*408 nodes · 500 edges · 65 modules · CC̄=4.8*
+*423 nodes · 500 edges · 65 modules · CC̄=4.7*
 
 ### Hubs (by degree)
 
@@ -3374,17 +3435,17 @@ D:
 | `print` *(in scripts.planfile-export-prompt)* | 0 | 273 | 0 | **273** |
 | `run_cycle` *(in src.koru.autonomous_cycle)* | 63 ⚠ | 0 | 120 | **120** |
 | `_build_handler` *(in src.koru.serve)* | 1 | 1 | 105 | **106** |
+| `_build_parser` *(in src.koru.autopilot.cli_command)* | 1 | 1 | 64 | **65** |
 | `detect_agent_options` *(in src.koru.agents)* | 16 ⚠ | 2 | 61 | **63** |
 | `run_next_planfile_task` *(in src.koru.queue.runner)* | 37 ⚠ | 2 | 50 | **52** |
 | `render_markdown_handoff` *(in src.koru.context)* | 10 ⚠ | 5 | 47 | **52** |
 | `from_env` *(in src.koru.autonomy.config.AutonomyConfig)* | 4 | 0 | 50 | **50** |
-| `apply_autoloop_env_to_args` *(in src.koru.autonomy.env)* | 25 ⚠ | 1 | 45 | **46** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.18s
-# nodes: 408 | edges: 500 | modules: 65
-# CC̄=4.8
+# generated in 0.28s
+# nodes: 423 | edges: 500 | modules: 65
+# CC̄=4.7
 
 HUBS[20]:
   scripts.planfile-export-prompt.print
@@ -3393,6 +3454,8 @@ HUBS[20]:
     CC=63  in:0  out:120  total:120
   src.koru.serve._build_handler
     CC=1  in:1  out:105  total:106
+  src.koru.autopilot.cli_command._build_parser
+    CC=1  in:1  out:64  total:65
   src.koru.agents.detect_agent_options
     CC=16  in:2  out:61  total:63
   src.koru.queue.runner.run_next_planfile_task
@@ -3411,22 +3474,20 @@ HUBS[20]:
     CC=1  in:1  out:39  total:40
   src.koru.scan._scan_code2llm_analysis
     CC=15  in:1  out:39  total:40
-  src.koru.init_host_environment._render_host_environment_md
+  src.koru.autopilot.host_setup._print_text_report
     CC=15  in:1  out:38  total:39
   src.koru.cli._build_parser
     CC=1  in:3  out:34  total:37
   src.koru.watch.format_queue_event
     CC=19  in:1  out:35  total:36
+  src.koru.autopilot.daemon.AutopilotDaemon._drive_via_keyboard
+    CC=10  in:0  out:36  total:36
   src.koru.autopilot.cli_command._action_drive
     CC=15  in:0  out:34  total:34
-  src.koru.mcp_server.tool_run_ticket
-    CC=14  in:0  out:33  total:33
-  src.koru.cli._topology_main
-    CC=17  in:0  out:33  total:33
   src.koru.events.emit_management_event
     CC=8  in:26  out:7  total:33
-  src.koru.autonomous_cycle._run_idle_diagnostics
-    CC=17  in:1  out:30  total:31
+  src.koru.cli._topology_main
+    CC=17  in:0  out:33  total:33
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [1 funcs]
@@ -3450,8 +3511,6 @@ MODULES:
     _infer_paths  CC=7  out:1
     _reproduction_for  CC=5  out:5
     build_ticket_payload  CC=11  out:25
-  src.koru.agent_backend_runtime  [1 funcs]
-    send_chat  CC=2  out:3
   src.koru.agent_backends  [7 funcs]
     _parse_lane  CC=8  out:14
     get_agent_backend_profile  CC=3  out:1
@@ -3492,14 +3551,6 @@ MODULES:
     find_existing_autonomous_processes  CC=10  out:16
     find_existing_wup_processes  CC=11  out:15
     process_cwd  CC=2  out:3
-  src.koru.autonomous_wup  [7 funcs]
-    _resolve_wup_testql_bin  CC=4  out:3
-    _start_wup_watch  CC=9  out:12
-    _stop_process  CC=4  out:6
-    _wup_cpu_throttle_arg  CC=2  out:1
-    _wup_stdio_info  CC=2  out:1
-    _wup_topology_gate  CC=4  out:2
-    _wup_watch_command  CC=3  out:9
   src.koru.autonomy.config  [1 funcs]
     from_env  CC=4  out:50
   src.koru.autonomy.env  [5 funcs]
@@ -3519,37 +3570,57 @@ MODULES:
     autonomy_telemetry_path  CC=1  out:1
     build_autonomy_loop_brief  CC=5  out:12
     write_autonomy_cycle_telemetry  CC=2  out:9
-  src.koru.autopilot  [1 funcs]
+  src.koru.autopilot  [2 funcs]
+    _autopilot_socket_basename  CC=6  out:7
     default_socket_path  CC=5  out:14
-  src.koru.autopilot.cli_command  [15 funcs]
+  src.koru.autopilot.audit  [1 funcs]
+    default_log_path  CC=2  out:3
+  src.koru.autopilot.cli_command  [35 funcs]
     _action_calibrate  CC=5  out:18
     _action_daemon  CC=9  out:15
     _action_doctor  CC=4  out:6
     _action_drive  CC=15  out:34
+    _action_handoff  CC=9  out:18
     _action_ide_list  CC=5  out:4
+    _action_install_plugin  CC=6  out:12
+    _action_install_unit  CC=6  out:18
     _action_session_start  CC=15  out:29
     _action_setup_host  CC=1  out:1
-    _action_shutdown  CC=1  out:2
-    _action_status  CC=1  out:2
-    _client  CC=1  out:1
+  src.koru.autopilot.client  [1 funcs]
+    __init__  CC=2  out:1
   src.koru.autopilot.config  [4 funcs]
     _merge_submit_keys  CC=7  out:5
     cached_config  CC=1  out:2
     default_config_path  CC=1  out:1
     load_config  CC=4  out:10
-  src.koru.autopilot.host_setup  [2 funcs]
+  src.koru.autopilot.daemon  [13 funcs]
+    __init__  CC=7  out:8
+    _accept  CC=6  out:12
+    _dispatch  CC=3  out:9
+    _drive_via_keyboard  CC=10  out:36
+    _drive_via_plugin  CC=2  out:9
+    _handle_ack  CC=13  out:18
+    _handle_hello  CC=5  out:12
+    _handle_ping  CC=2  out:3
+    _handle_shutdown  CC=2  out:6
+    _handle_status  CC=6  out:11
+  src.koru.autopilot.host_setup  [6 funcs]
+    _human_followups  CC=14  out:10
+    _package_manager_hint  CC=5  out:4
+    _print_text_report  CC=15  out:38
+    _try_apt_install  CC=5  out:11
     build_setup_host_report  CC=7  out:11
     run_host_setup  CC=6  out:8
   src.koru.autopilot.ide  [3 funcs]
     detect_focused_ide_id  CC=7  out:5
     detect_running_ides  CC=13  out:10
     pick_target  CC=6  out:1
-  src.koru.autopilot.os_injector  [2 funcs]
-    inject_with_profile  CC=13  out:19
-    load_profile  CC=5  out:12
-  src.koru.autopilot.protocol  [2 funcs]
+  src.koru.autopilot.protocol  [5 funcs]
     _filter_extras  CC=6  out:4
+    ack  CC=2  out:2
+    chat_send  CC=1  out:1
     decode  CC=12  out:21
+    error  CC=1  out:1
   src.koru.autopilot.utils.client_helpers  [2 funcs]
     call_daemon_method  CC=4  out:7
     resolve_xdg_path  CC=2  out:3
@@ -3630,11 +3701,7 @@ MODULES:
     _write_policy_stub_if_absent  CC=3  out:6
     init_project  CC=8  out:22
     refresh_init_agent_lane  CC=4  out:11
-  src.koru.init_host_environment  [5 funcs]
-    _id_group_names  CC=4  out:3
-    _read_os_release  CC=6  out:10
-    _render_host_environment_md  CC=15  out:38
-    build_host_environment_report  CC=2  out:18
+  src.koru.init_host_environment  [1 funcs]
     write_host_environment_bundle  CC=2  out:12
   src.koru.local_service  [7 funcs]
     _build_handler  CC=1  out:39
@@ -3648,17 +3715,12 @@ MODULES:
     _search_root_for_include  CC=6  out:6
     discover_repositories  CC=5  out:11
     run_closed_loop  CC=12  out:18
-  src.koru.mcp_provision  [21 funcs]
-    _apply_target  CC=4  out:5
+  src.koru.mcp_provision  [5 funcs]
     _cursor_project_config  CC=1  out:0
-    _koru_mcp_entry  CC=1  out:1
-    _koru_mcp_entry_cursor  CC=1  out:1
-    _maybe_upgrade_koru_command  CC=5  out:3
-    _read_json  CC=3  out:3
-    _removal_paths_for_ide  CC=4  out:4
-    _render_results  CC=5  out:8
-    _resolve_targets  CC=4  out:4
-    _resolved_koru_command  CC=2  out:1
+    _vscode_project_config  CC=1  out:0
+    _windsurf_global_config  CC=1  out:1
+    _windsurf_project_config  CC=1  out:0
+    init_ide_main  CC=2  out:13
   src.koru.mcp_server  [25 funcs]
     _create_job  CC=1  out:4
     _detect_enabled_gates  CC=5  out:6
@@ -3740,7 +3802,9 @@ MODULES:
     _scan_testql_export  CC=5  out:7
     collect_suggestions  CC=3  out:13
     run_scan  CC=8  out:14
-  src.koru.semcod_tools  [1 funcs]
+  src.koru.semcod_tools  [3 funcs]
+    _config_present  CC=3  out:2
+    _read_pyproject  CC=3  out:3
     detect_semcod_tools  CC=7  out:9
   src.koru.serve  [15 funcs]
     _address_in_use  CC=4  out:4
@@ -3839,11 +3903,11 @@ EDGES:
   src.koru.wup_testql_compat._normalize_args → src.koru.wup_testql_compat._normalize_timeout
   src.koru.wup_testql_compat.main → src.koru.wup_testql_compat._normalize_args
   src.koru.wup_testql_compat.main → src.koru.wup_testql_compat._real_testql
-  src.koru.mcp_provision._koru_mcp_entry → src.koru.mcp_provision._resolved_koru_command
-  src.koru.mcp_provision._koru_mcp_entry_cursor → src.koru.mcp_provision._resolved_koru_command
-  src.koru.mcp_provision._maybe_upgrade_koru_command → src.koru.mcp_provision._resolved_koru_command
-  src.koru.mcp_provision.detect_ides → src.koru.autopilot.ide.detect_running_ides
-  src.koru.mcp_provision.detect_ides → src.koru.mcp_provision._windsurf_global_config
+  src.koru.watch.watch_planfile_events → plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+  src.koru.watch.watch_planfile_events → src.koru.watch.format_queue_event
+  src.koru.gate.authorize_gate → src.koru.gate._resolve_actor
+  src.koru.bootstrap._validate_task → src.koru.bootstrap._validate_id
+  src.koru.bootstrap._validate_task → src.koru.bootstrap._validate_name
 ```
 
 ## Test Contracts

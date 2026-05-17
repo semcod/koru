@@ -1,8 +1,8 @@
-# koru | 838 func | 88f | 30277L | python | 2026-05-16
+# koru | 876 func | 93f | 30878L | python | 2026-05-17
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.8  critical=104 (limit:10)  dup=5  cycles=0
+  CC̄=4.7  critical=105 (limit:10)  dup=7  cycles=0
 
 ALERTS[20]:
   !!! cc_exceeded      _run_cycle = 66 (limit:15)
@@ -16,7 +16,7 @@ ALERTS[20]:
   !!! cc_exceeded      install_plugin_for_ide = 28 (limit:15)
   !!! cc_exceeded      _queue_run_main = 26 (limit:15)
 
-MODULES[163] (top by size):
+MODULES[170] (top by size):
   M[src/koru/autonomous.py] 1837L C:4 F:36 CC↑66 D:0 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
   M[src/koru/serve.py] 1301L C:1 F:15 CC↑13 D:1 (python)
@@ -32,7 +32,7 @@ MODULES[163] (top by size):
   M[scripts/koru-autoloop.sh] 576L C:0 F:14 CC↑0 D:0 (shell)
   M[src/koru/doctor.py] 513L C:2 F:21 CC↑11 D:1 (python)
   M[goal.yaml] 511L C:0 F:0 CC↑0 D:0 (yaml)
-  LANGS: python:85/shell:37/yaml:14/yml:8/kotlin:6/typescript:4/json:3/other:2/properties:1/xml:1/toml:1/txt:1
+  LANGS: python:92/shell:37/yaml:14/yml:8/kotlin:6/typescript:4/json:3/other:2/properties:1/xml:1/toml:1/txt:1
 
 HOTSPOTS[10]:
   ★ _run_cycle fan=43  // Orchestrates 43 calls
@@ -51,4 +51,4 @@ REFACTOR[15]:
   [5] H/L Split run_next_planfile_task (CC=37)
 
 EVOLUTION:
-  2026-05-16 CC̄=4.8 crit=104 30277L // Automated analysis
+  2026-05-17 CC̄=4.7 crit=105 30878L // Automated analysis

@@ -1350,6 +1350,30 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
 
+## [0.1.117] - 2026-05-17
+
+### Docs
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+
+### Test
+- Update tests/test_ide_runtime.py
+- Update tests/test_koruide_bridges.py
+
+### Other
+- Update app.doql.less
+- Update project/calls.png
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/flow.png
+- Update project/index.html
+- Update project/map.toon.yaml
+- Update project/project.toon.yaml
+- Update project/prompt.txt
+- Update uv.lock
+
 ## [0.1.116] - 2026-05-17
 
 ### Docs

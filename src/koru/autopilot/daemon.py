@@ -39,12 +39,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from . import default_socket_path
 from .audit import AuditLog
-from .ide import detect_running_ides_cached as detect_running_ides
-from .ide import pick_target
-from .injector import Injector, InjectorError
-from .protocol import (
+from koruide.ide import detect_running_ides_cached as detect_running_ides
+from koruide.ide import pick_target
+from koruide.injector import Injector, InjectorError
+from koruide.protocol import (
     MAX_LINE_BYTES,
     Message,
     ProtocolError,
@@ -53,6 +52,7 @@ from .protocol import (
     decode,
     error,
 )
+from koruide.socket import default_socket_path
 
 # Type alias: a HandoffBuilder takes the ended-session metadata and
 # returns the text to type back into the chat (typically the koru
@@ -389,7 +389,7 @@ class AutopilotDaemon:
 
     def _try_os_injector_drive(self, target_id: str, text: str, submit: bool) -> dict[str, Any] | None:
         """Run :mod:`os_injector` when configured; ``None`` means use keyboard."""
-        from . import os_injector as oi
+        from koruide import os_injector as oi
 
         try:
             return oi.try_drive_with_profile(

@@ -21,10 +21,10 @@ def build_host_setup_report() -> dict[str, Any]:
 def detect_running_ides() -> list[dict[str, Any]]:
     """Return running IDE entries as plain dictionaries.
 
-    The legacy backend currently proxies :mod:`koru.autopilot.ide`.
+    The current backend proxies :mod:`koruide.ide`.
     """
 
-    from .autopilot.ide import detect_running_ides as detect_legacy_running_ides
+    from koruide.ide import detect_running_ides as detect_legacy_running_ides
 
     rows: list[dict[str, Any]] = []
     for ide in detect_legacy_running_ides():
