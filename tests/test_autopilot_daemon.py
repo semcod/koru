@@ -26,7 +26,6 @@ from typing import Any, Iterator
 
 import pytest
 
-from koru.autopilot import daemon as daemon_mod
 from koru.autopilot import ide as ide_mod
 from koru.autopilot.client import AutopilotClient
 from koru.autopilot.daemon import AutopilotDaemon
@@ -34,6 +33,7 @@ from koru.autopilot.ide import RunningIDE
 from koru.autopilot.injector import InjectionResult, InjectorError
 from koru.autopilot.os_injector import OsInjectorProfile
 from koru.autopilot.protocol import Message, decode, hello
+from koruide import daemon as koruide_daemon_mod
 
 
 # ---------------------------------------------------------------------------
@@ -44,7 +44,7 @@ from koru.autopilot.protocol import Message, decode, hello
 def _patch_no_running_ides(monkeypatch: pytest.MonkeyPatch) -> None:
     """Make IDE detection a no-op for both the ide module and daemon import."""
     monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [])
-    monkeypatch.setattr(daemon_mod, "detect_running_ides", lambda **_: [])
+    monkeypatch.setattr(koruide_daemon_mod, "detect_running_ides", lambda **_: [])
 
 
 class _StubInjector:
@@ -264,7 +264,7 @@ def test_drive_uses_os_injector_when_profile_available(
     repo.mkdir()
     fake = RunningIDE(id="cursor", label="Cursor", pid=1, exe="/opt/Cursor")
     monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [fake])
-    monkeypatch.setattr(daemon_mod, "detect_running_ides", lambda **_: [fake])
+    monkeypatch.setattr(koruide_daemon_mod, "detect_running_ides", lambda **_: [fake])
     monkeypatch.setattr(oi_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None)
 
     prof = OsInjectorProfile(tool_id="cursor", chat_x=2, chat_y=3)
@@ -307,7 +307,7 @@ def test_drive_os_injector_skipped_when_env_disabled(
     monkeypatch.setenv("KORU_OS_INJECTOR", "0")
     fake = RunningIDE(id="cursor", label="Cursor", pid=1, exe="/opt/Cursor")
     monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [fake])
-    monkeypatch.setattr(daemon_mod, "detect_running_ides", lambda **_: [fake])
+    monkeypatch.setattr(koruide_daemon_mod, "detect_running_ides", lambda **_: [fake])
     monkeypatch.setattr(oi_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None)
 
     tried = {"n": 0}
@@ -332,7 +332,7 @@ def test_drive_os_injector_forced_without_profile_falls_back_to_keyboard(
     monkeypatch.setenv("KORU_OS_INJECTOR", "1")
     fake = RunningIDE(id="cursor", label="Cursor", pid=1, exe="/opt/Cursor")
     monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [fake])
-    monkeypatch.setattr(daemon_mod, "detect_running_ides", lambda **_: [fake])
+    monkeypatch.setattr(koruide_daemon_mod, "detect_running_ides", lambda **_: [fake])
     monkeypatch.setattr(oi_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None)
     monkeypatch.setattr(oi_mod, "try_load_profile", lambda *a, **k: None)
 
@@ -376,8 +376,8 @@ def test_accept_rejects_foreign_peer_uid(
     _patch_no_running_ides(monkeypatch)
     daemon_uid = 1000
     foreign_uid = 1001
-    monkeypatch.setattr(daemon_mod.os, "getuid", lambda: daemon_uid)
-    monkeypatch.setattr(daemon_mod, "_peer_uid", lambda _sock: foreign_uid)
+    monkeypatch.setattr(koruide_daemon_mod.os, "getuid", lambda: daemon_uid)
+    monkeypatch.setattr(koruide_daemon_mod, "_peer_uid", lambda _sock: foreign_uid)
 
     harness = _DaemonHarness(tmp_path)
     harness.start()
