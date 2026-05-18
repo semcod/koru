@@ -736,6 +736,11 @@ def _existing_scan_titles(
             status = str(entry.get("status") or "").lower()
             if status in _SCAN_DEDUP_SKIP_STATUSES:
                 continue
+            entry_context = entry.get("source", {}).get("context")
+            if isinstance(entry_context, dict):
+                signal = entry_context.get("signal")
+                if isinstance(signal, str) and signal:
+                    titles.add(f"signal:{signal}")
             name = entry.get("name") or entry.get("title")
             if isinstance(name, str):
                 titles.add(name)
@@ -769,6 +774,7 @@ def _create_ticket(
                 scaffold={
                     "labels": suggestion.labels,
                     "files": suggestion.files,
+                    "title": suggestion.title,
                     "source_tool": source,
                     "source_context": {"signal": suggestion.signal},
                     "executor_kind": "human",
@@ -837,7 +843,7 @@ def run_scan(
     applied: list[str] = []
     skipped: list[str] = []
     for s in suggestions:
-        if s.title in existing:
+        if s.title in existing or f"signal:{s.signal}" in existing:
             skipped.append(s.title)
             continue
         ok = _create_ticket(project, s, source=source, runner=runner)

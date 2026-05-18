@@ -49,8 +49,9 @@ def create_nl_task(
     sprint_data = _read_sprint(sprint_path, sprint=sprint)
     tickets = sprint_data["sprint"].setdefault("tickets", {})
     now = datetime.now(UTC).isoformat()
-    name = _title_from_text(text)
     scaffold = scaffold or {}
+    scaffold_title = str(scaffold.get("title") or "").strip()
+    name = scaffold_title or _title_from_text(text)
     prompt_suffix = str(scaffold.get("prompt_suffix") or "").strip()
     full_prompt = text if not prompt_suffix else f"{text}\n\n{prompt_suffix}"
 
