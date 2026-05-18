@@ -31,6 +31,13 @@ from .types import CommandResult, QueueRunResult
 _logger = logging.getLogger(__name__)
 
 
+def _source_tool(ticket: dict) -> str:
+    source = ticket.get("source")
+    if isinstance(source, dict):
+        return str(source.get("tool") or "")
+    return str(source or "")
+
+
 def run_next_planfile_task(
     *,
     project: Path,
@@ -103,7 +110,9 @@ def run_next_planfile_task(
         # existed should not block the queue. Default them to shell so they can
         # be auto-completed with a no-op script. Explicit human tickets are
         # preserved and still return waiting_input as before.
-        if raw_kind is None and not interactive and not dry_run:
+        if raw_kind is None and _source_tool(ticket) == "koru-scan":
+            executor_kind = "human"
+        elif raw_kind is None and not interactive and not dry_run:
             executor_kind = "shell"
 
         if executor_kind == "human":

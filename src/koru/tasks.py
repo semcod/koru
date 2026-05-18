@@ -71,6 +71,7 @@ def create_nl_task(
     inputs_extra = scaffold.get("inputs") if isinstance(scaffold.get("inputs"), dict) else {}
     executor_kind = str(scaffold.get("executor_kind") or "human")
     executor_mode = str(scaffold.get("executor_mode") or "interactive")
+    files = [str(v) for v in (scaffold.get("files") or []) if str(v).strip()]
     tickets[ticket_id] = {
         "id": ticket_id,
         "name": name,
@@ -86,7 +87,7 @@ def create_nl_task(
         "labels": labels,
         "blocked_by": [],
         "blocks": [],
-        "files": [],
+        "files": files,
         "executor": {"kind": executor_kind, "mode": executor_mode},
         "execution": {
             "queue": queue_name or "default",

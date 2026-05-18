@@ -373,6 +373,28 @@ class TestPlanfileQueue(unittest.TestCase):
                 )
             )
 
+    def test_scan_ticket_without_executor_waits_for_ide_prompt(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = {
+                "id": "PLF-040",
+                "name": "Scan refactor",
+                "description": "Refactor this hotspot",
+                "source": {"tool": "koru-scan"},
+            }
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
+                    return _ok(json.dumps(ticket))
+                return _ok()
+
+            result = run_next_planfile_task(project=project, planfile_runner=planfile_runner)
+
+            self.assertEqual(result.status, "waiting_input")
+            self.assertEqual(result.ticket_id, "PLF-040")
+            self.assertEqual(result.executor_kind, "human")
+            self.assertIn("Refactor this hotspot", result.message)
+
     def test_api_ticket_without_endpoint_requests_input(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)

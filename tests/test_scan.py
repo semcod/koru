@@ -327,6 +327,33 @@ class TestRunScan(unittest.TestCase):
             self.assertEqual(result.applied, [])
             self.assertGreater(len(result.skipped), 0)
 
+    def test_apply_creates_human_executor_tickets_without_custom_runner(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".gitignore").write_text("# nothing\n")
+            (project / ".planfile" / "sprints").mkdir(parents=True)
+            (project / ".planfile" / "config.yaml").write_text(
+                "prefix: PLF\nnext_id: 1\n", encoding="utf-8"
+            )
+            (project / ".planfile" / "sprints" / "current.yaml").write_text(
+                "sprint:\n  name: current\n  tickets: {}\n", encoding="utf-8"
+            )
+
+            result = run_scan(
+                project,
+                apply=True,
+                skip_pytest=True,
+                include_semcod_artifacts=False,
+            )
+
+            self.assertTrue(result.applied)
+            raw = (project / ".planfile" / "sprints" / "current.yaml").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("kind: human", raw)
+            self.assertIn("mode: interactive", raw)
+            self.assertIn("tool: koru-scan", raw)
+
     def test_apply_deduplicates_planfile_source_tool_payload(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

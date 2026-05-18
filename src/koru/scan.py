@@ -43,6 +43,7 @@ from pathlib import Path
 from typing import Any
 
 from .semcod_tools import detect_semcod_tools
+from .tasks import create_nl_task
 from .utils.subprocess_runner import default_subprocess_runner, get_python_cmd
 
 # ---------------------------------------------------------------------------
@@ -759,6 +760,25 @@ def _create_ticket(
     runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]] | None = None,
 ) -> bool:
     """Create one ticket via ``planfile ticket create``. Returns success."""
+    if runner is None:
+        try:
+            create_nl_task(
+                project,
+                suggestion.description,
+                priority=suggestion.priority,
+                scaffold={
+                    "labels": suggestion.labels,
+                    "files": suggestion.files,
+                    "source_tool": source,
+                    "source_context": {"signal": suggestion.signal},
+                    "executor_kind": "human",
+                    "executor_mode": "interactive",
+                },
+            )
+            return True
+        except (OSError, ValueError):
+            return False
+
     use_runner = runner or default_subprocess_runner
     cmd: list[str] = [
         "planfile",
