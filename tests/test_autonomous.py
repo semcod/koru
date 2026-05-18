@@ -1103,6 +1103,55 @@ def test_run_cycle_autopilot_waiting_input_logs_ticket_from_waiting_list(
     assert "backend=plugin" in out
 
 
+def test_run_cycle_escalates_stuck_waiting_input_instead_of_skipping(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    driven: list[str] = []
+
+    class RecordingClient:
+        def drive(self, prompt: str, **_kwargs):
+            driven.append(prompt)
+            return {"ok": True, "backend": "plugin"}
+
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=1 last_status=waiting_input",
+            last_status="waiting_input",
+            last_message="original ticket prompt",
+            waiting=["PLF-1305"],
+        ),
+    )
+    state = autonomous_mod.AutoloopState(
+        previous_signature="waiting_input:PLF-1305",
+        stagnation_streak=2,
+    )
+
+    _scan_result, queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
+        cycle=4,
+        project=tmp_path,
+        actor="koru-test",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=50,
+        enable_autopilot=True,
+        autopilot_ide="vscode",
+        drive_prompt="ignored when blocked",
+        submit=True,
+        include_semcod_artifacts=False,
+        client=RecordingClient(),
+        state=state,
+    )
+
+    assert queue_result.last_status == "waiting_input"
+    assert state.stagnation_streak == 3
+    assert autopilot_status == "ok"
+    assert len(driven) == 1
+    assert "Ticket PLF-1305 has been stuck" in driven[0]
+
+
 def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(
     tmp_path,
     monkeypatch,

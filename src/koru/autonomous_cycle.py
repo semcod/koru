@@ -24,7 +24,7 @@ from .autonomy.post_run_verify import (
     verify_after_ide_work,
     verify_completed_tickets,
 )
-from .autonomy.prompts import build_prompt
+from .autonomy.prompts import DEFAULT_ESCALATION_THRESHOLD, build_prompt
 from .queue import QueueLoopResult, run_planfile_queue_loop
 from .queue import default_human_prompt as _default_human_prompt
 from .queue import run_api_request as _run_api_request
@@ -718,8 +718,11 @@ def run_cycle(
             autopilot_status = "skipped(idle_streak)"
             state.telemetry_autopilot_idle_streak_skips += 1
             cycle_telemetry["autopilot_skipped_idle_streak"] = True
-        elif state.stagnation_streak > 0 and _status_in_skip_list(
+        elif (
+            0 < state.stagnation_streak < DEFAULT_ESCALATION_THRESHOLD
+            and _status_in_skip_list(
             queue_result.last_status, autopilot_skip_statuses
+            )
         ):
             _hp(
                 "- autopilot skipped "
@@ -738,7 +741,11 @@ def run_cycle(
             decision = build_prompt(
                 queue_status=queue_result.last_status,
                 last_message=getattr(queue_result, "last_message", "") or "",
-                waiting_ticket_id=getattr(queue_result, "last_ticket_id", None),
+                waiting_ticket_id=(
+                    waiting_ticket
+                    if waiting_ticket != "-"
+                    else getattr(queue_result, "last_ticket_id", None)
+                ),
                 drive_prompt=effective_drive_prompt,
                 autopilot_action=autopilot_action,
                 stagnation_streak=state.stagnation_streak,
