@@ -295,3 +295,1506 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-05-17T19:15:04.902173+00:00'
+    STARTER-010:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:50.725677+00:00'
+      description: 'BLOCKED: FAIL: task: Task "koru:mcp:bootstrap" does not exist'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:23:12.131813Z'
+        lease_expires_at: '2026-05-18T20:21:02.070989Z'
+        max_attempts: 1
+        queue: operator
+        started_at: '2026-05-18T19:21:02.562153Z'
+        state: done
+      executor:
+        kind: shell
+        mode: noninteractive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] MCP „koru” w IDE: brak „koru” w .cursor/mcp.json — task
+          koru:mcp:bootstrap, potem Reload Window
+
+
+          Shell: `task koru:mcp:bootstrap`'
+        source: koru task
+        timestamp: '2026-05-18T19:20:50.725677+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:02.112047+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:02.602778+00:00'
+      - action: update
+        changes:
+        - description
+        - status
+        previous_status: in_progress
+        source: planfile.store
+        status: blocked
+        timestamp: '2026-05-18T19:21:03.126075+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: blocked
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:23:12.218006+00:00'
+      id: STARTER-010
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] MCP „koru” w IDE: brak „koru” w .cursor/mcp.json — task
+          koru:mcp:bootstrap, potem Reload Window
+
+
+          Shell: `task koru:mcp:bootstrap`'
+        script: task koru:mcp:bootstrap
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:mcp_koru
+      name: '[OPERATOR] MCP „koru” w IDE: brak „koru” w .cursor/mcp.json — task koru:mcp:bootstrap,
+        potem Reload Window Shell: `ta...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: '[OPERATOR] MCP „koru” w IDE: brak „koru” w .cursor/mcp.json — task
+            koru:mcp:bootstrap, potem Reload Window
+
+
+            Shell: `task koru:mcp:bootstrap`'
+          step_id: mcp_koru
+        timestamp: '2026-05-18T19:20:50.725677+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:23:12.217977+00:00'
+    STARTER-011:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:52.444177Z'
+      description: '`project/analysis.toon.yaml` reports `_agent_main` with CC=19
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:05.890312Z'
+        lease_expires_at: '2026-05-18T20:21:04.019632Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:04.515565Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:04.061895+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:04.558301+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:05.936413+00:00'
+      id: STARTER-011
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _agent_main (CC=19, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:52.443319Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:05.936388+00:00'
+    STARTER-012:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:52.861002Z'
+      description: '`project/analysis.toon.yaml` reports `_build_shared_rules` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:08.760242Z'
+        lease_expires_at: '2026-05-18T20:21:06.842333Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:07.357004Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:06.888356+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:07.404174+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:08.807853+00:00'
+      id: STARTER-012
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _build_shared_rules (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:52.860147Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:08.807829+00:00'
+    STARTER-013:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:53.287970Z'
+      description: '`project/analysis.toon.yaml` reports `_candidate_score` with CC=17
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:11.702113Z'
+        lease_expires_at: '2026-05-18T20:21:09.782038Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:10.305104Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:09.830957+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:10.353694+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:11.751269+00:00'
+      id: STARTER-013
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _candidate_score (CC=17, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:53.287153Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:11.751245+00:00'
+    STARTER-014:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:53.711887Z'
+      description: '`project/analysis.toon.yaml` reports `_fetch_ticket_data` with
+        CC=18 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:14.676046Z'
+        lease_expires_at: '2026-05-18T20:21:12.631720Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:13.161299Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:12.682268+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:13.214099+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:14.729743+00:00'
+      id: STARTER-014
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _fetch_ticket_data (CC=18, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:53.711021Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:14.729717+00:00'
+    STARTER-015:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:54.130531Z'
+      description: '`project/analysis.toon.yaml` reports `_gc_main` with CC=18 (limit=15).
+        Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:17.556677Z'
+        lease_expires_at: '2026-05-18T20:21:15.647830Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:16.174128Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:15.700579+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:16.227436+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:17.609777+00:00'
+      id: STARTER-015
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _gc_main (CC=18, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:54.129671Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:17.609753+00:00'
+    STARTER-016:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:54.549049Z'
+      description: '`project/analysis.toon.yaml` reports `_handle_ack` with CC=21
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:20.538952Z'
+        lease_expires_at: '2026-05-18T20:21:18.519624Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:19.068729Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:18.574667+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:19.138905+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:20.594378+00:00'
+      id: STARTER-016
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _handle_ack (CC=21, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:54.548229Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:20.594352+00:00'
+    STARTER-017:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:54.980452Z'
+      description: '`project/analysis.toon.yaml` reports `_print_text_report` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:23.508579Z'
+        lease_expires_at: '2026-05-18T20:21:21.518532Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:22.061515Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:21.575714+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:22.118927+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:23.570118+00:00'
+      id: STARTER-017
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _print_text_report (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:54.979618Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:23.570077+00:00'
+    STARTER-018:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:55.405736Z'
+      description: '`project/analysis.toon.yaml` reports `_queue_run_main` with CC=26
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:26.558675Z'
+        lease_expires_at: '2026-05-18T20:21:24.565336Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:25.147621Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:24.626348+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:25.208230+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:26.618174+00:00'
+      id: STARTER-018
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _queue_run_main (CC=26, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:55.404746Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:26.618148+00:00'
+    STARTER-019:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:55.837146Z'
+      description: '`project/analysis.toon.yaml` reports `_render_topology_text` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:29.559857Z'
+        lease_expires_at: '2026-05-18T20:21:27.548875Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:28.098246Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:27.608584+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:28.159173+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:29.623261+00:00'
+      id: STARTER-019
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _render_topology_text (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:55.836282Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:29.623235+00:00'
+    STARTER-020:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:56.263972Z'
+      description: '`project/analysis.toon.yaml` reports `_scan_code2llm_analysis`
+        with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:32.709323Z'
+        lease_expires_at: '2026-05-18T20:21:30.641093Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:31.205538Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:30.701376+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:31.269915+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:32.771991+00:00'
+      id: STARTER-020
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _scan_code2llm_analysis (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:56.263150Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:32.771966+00:00'
+    STARTER-021:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:56.695422Z'
+      description: '`project/analysis.toon.yaml` reports `_topology_main` with CC=17
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:35.727318Z'
+        lease_expires_at: '2026-05-18T20:21:33.734995Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:34.294805Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:33.797323+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:34.358770+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:35.793697+00:00'
+      id: STARTER-021
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _topology_main (CC=17, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:56.694581Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:35.793654+00:00'
+    STARTER-022:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:57.127414Z'
+      description: '`project/analysis.toon.yaml` reports `build_tool_task_scaffold`
+        with CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:38.773165Z'
+        lease_expires_at: '2026-05-18T20:21:36.744783Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:37.342156Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:36.810942+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:37.409045+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:38.841533+00:00'
+      id: STARTER-022
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: build_tool_task_scaffold (CC=16, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:57.126574Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:38.841507+00:00'
+    STARTER-023:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:57.562914Z'
+      description: '`project/analysis.toon.yaml` reports `detect_agent_options` with
+        CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:41.829093Z'
+        lease_expires_at: '2026-05-18T20:21:39.791545Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:40.378741Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:39.858605+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:40.447911+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:41.901108+00:00'
+      id: STARTER-023
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: detect_agent_options (CC=16, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:57.562074Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:41.901070+00:00'
+    STARTER-024:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:58.004425Z'
+      description: '`project/analysis.toon.yaml` reports `detect_tools` with CC=26
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:44.877580Z'
+        lease_expires_at: '2026-05-18T20:21:42.865204Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:43.440926Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:42.934498+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:43.510177+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:44.949779+00:00'
+      id: STARTER-024
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: detect_tools (CC=26, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:58.003501Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:44.949753+00:00'
+    STARTER-025:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:58.439730Z'
+      description: '`project/analysis.toon.yaml` reports `find_candidates` with CC=15
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:48.021967Z'
+        lease_expires_at: '2026-05-18T20:21:45.957249Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:46.562272Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:46.027540+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:46.642487+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:48.093777+00:00'
+      id: STARTER-025
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: find_candidates (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:58.438856Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:48.093751+00:00'
+    STARTER-026:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:58.882363Z'
+      description: '`project/analysis.toon.yaml` reports `format_queue_event` with
+        CC=19 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:51.110951Z'
+        lease_expires_at: '2026-05-18T20:21:49.054007Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:49.625325Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:49.126196+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:49.698903+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:51.191799+00:00'
+      id: STARTER-026
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: format_queue_event (CC=19, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:58.881484Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:51.191768+00:00'
+    STARTER-027:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:59.321666Z'
+      description: '`project/analysis.toon.yaml` reports `install_plugin_for_ide`
+        with CC=28 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:54.199025Z'
+        lease_expires_at: '2026-05-18T20:21:52.154849Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:52.744352Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:52.230450+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:52.819756+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:54.275008+00:00'
+      id: STARTER-027
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: install_plugin_for_ide (CC=28, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:59.320823Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:54.274981+00:00'
+    STARTER-028:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:20:59.771737Z'
+      description: '`project/analysis.toon.yaml` reports `policy_violations` with
+        CC=22 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:21:57.332747Z'
+        lease_expires_at: '2026-05-18T20:21:55.251865Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:55.851530Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:55.328418+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:55.939079+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:21:57.410123+00:00'
+      id: STARTER-028
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: policy_violations (CC=22, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:20:59.770820Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:21:57.410092+00:00'
+    STARTER-029:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:21:00.224889Z'
+      description: '`project/analysis.toon.yaml` reports `run_idle_diagnostics` with
+        CC=17 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:22:00.426124Z'
+        lease_expires_at: '2026-05-18T20:21:58.367631Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:21:58.969767Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:21:58.445260+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:21:59.049502+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:22:00.505713+00:00'
+      id: STARTER-029
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: run_idle_diagnostics (CC=17, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:21:00.224043Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:22:00.505688+00:00'
+    STARTER-030:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:21:00.682396Z'
+      description: '`project/analysis.toon.yaml` reports `summary` with CC=15 (limit=15).
+        Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:22:03.668276Z'
+        lease_expires_at: '2026-05-18T20:22:01.496817Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:22:02.114822Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:22:01.577828+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:22:02.197506+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:22:03.750213+00:00'
+      id: STARTER-030
+      labels:
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: summary (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:21:00.681518Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:22:03.750188+00:00'
+    STARTER-031:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-18T19:21:01.138470Z'
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split 20 high-CC
+        methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+        to verify.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-18T19:22:06.888891Z'
+        lease_expires_at: '2026-05-18T20:22:04.741441Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-18T19:22:05.362961Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-18T19:22:04.824091+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-18T19:22:05.444667+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-18T19:22:06.969455+00:00'
+      id: STARTER-031
+      labels:
+      - code2llm
+      - refactor
+      - scan
+      name: 'code2llm refactor: split 20 high-CC methods'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-18T19:21:01.137609Z'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-18T19:22:06.969431+00:00'

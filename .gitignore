@@ -211,6 +211,9 @@ cython_debug/
 #   and can be added to the global gitignore or merged into this file. However, if you prefer, 
 #   you could uncomment the following to ignore the entire vscode folder
 # .vscode/
+.cursor/mcp.json
+.vscode/mcp.json
+.windsurf/mcp_config.json
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
 

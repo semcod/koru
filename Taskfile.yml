@@ -248,6 +248,42 @@ tasks:
       KORU_PYTHONPATH: '{{.KORU_PYTHONPATH | default ""}}'
 
   # =====================================================================
+  # Koru operator helpers
+  # =====================================================================
+
+  koru:server:
+    desc: Start the local koru dashboard/API for operator checks
+    cmds:
+      - python3 -m koru.cli serve --project . --host "{{.HOST}}" --port "{{.PORT}}" --auto-port --no-open
+    vars:
+      HOST: '{{.HOST | default "127.0.0.1"}}'
+      PORT: '{{.PORT | default "8765"}}'
+    interactive: true
+
+  koru:mcp:bootstrap:
+    desc: Provision koru MCP config for Cursor, VS Code, and Windsurf
+    cmds:
+      - python3 -m koru.cli init-ide --project . --ide all
+
+  koru:operator:plugin-probe:
+    desc: Check autopilot daemon/plugin status
+    cmds:
+      - python3 -m koru.cli autopilot status
+
+  koru:operator:setup-host:
+    desc: Probe host injector dependencies for autopilot
+    cmds:
+      - python3 -m koru.cli autopilot setup-host
+
+  koru:ide-os:calibrate:
+    desc: Calibrate OS injector chat coordinates for an IDE (IDE=vscode|cursor|windsurf|jetbrains|zed)
+    cmds:
+      - python3 -m koru.cli autopilot calibrate --ide "{{.IDE}}"
+    vars:
+      IDE: '{{.IDE | default "auto"}}'
+    interactive: true
+
+  # =====================================================================
   # Quality gates (LLM-free, proxies to underlying tools)
   # =====================================================================
 

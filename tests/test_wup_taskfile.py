@@ -17,6 +17,17 @@ def test_quality_wup_checks_status_and_respects_topology_gate() -> None:
     assert "test -f wup.yaml" in taskfile
 
 
+def test_operator_pipeline_taskfile_commands_exist() -> None:
+    taskfile = (ROOT / "Taskfile.yml").read_text(encoding="utf-8")
+
+    assert "koru:server:" in taskfile
+    assert "koru:mcp:bootstrap:" in taskfile
+    assert "python3 -m koru.cli init-ide --project . --ide all" in taskfile
+    assert "koru:operator:plugin-probe:" in taskfile
+    assert "koru:operator:setup-host:" in taskfile
+    assert "koru:ide-os:calibrate:" in taskfile
+
+
 def test_wup_yaml_is_bootstrapped_for_koru_project() -> None:
     wup_yaml = (ROOT / "wup.yaml").read_text(encoding="utf-8")
 

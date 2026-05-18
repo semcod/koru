@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -109,3 +110,41 @@ def test_run_startup_operator_pipeline_dedup_markers(
     )
     assert first.tickets_created
     assert not second.tickets_created
+
+
+def test_run_startup_operator_pipeline_closes_resolved_marker_ticket(
+    tmp_path: Path, probe: AutonomousStartupProbe, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / ".cursor").mkdir()
+    (tmp_path / ".cursor" / "mcp.json").write_text(
+        json.dumps({"mcpServers": {"koru": {"command": "koru", "args": ["mcp-serve"]}}}),
+        encoding="utf-8",
+    )
+    marker_dir = tmp_path / ".planfile" / ".koru" / "operator-steps"
+    marker_dir.mkdir(parents=True)
+    marker = marker_dir / "autopilot_plugin.ticket"
+    marker.write_text("PLF-1280", encoding="utf-8")
+    monkeypatch.setattr(op, "_planfile_api_ok", lambda _p: (True, "ok"))
+    monkeypatch.setattr(op, "_host_injectors_ok", lambda: (True, "ok"))
+    monkeypatch.setattr(op, "_os_profile_ok", lambda _i, _p: (True, "ok"))
+
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, **_kwargs):
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0, stdout="done", stderr="")
+
+    monkeypatch.setattr(op.subprocess, "run", fake_run)
+
+    result = op.run_startup_operator_pipeline(
+        project=tmp_path,
+        probe=probe,
+        plugin_connected=True,
+        create_tickets=True,
+    )
+
+    assert calls == [["planfile", "ticket", "done", "PLF-1280"]]
+    assert not marker.exists()
+    plugin_step = next(s for s in result.steps if s.step_id == "autopilot_plugin")
+    assert plugin_step.status == "ok"
+    assert plugin_step.ticket_id is None

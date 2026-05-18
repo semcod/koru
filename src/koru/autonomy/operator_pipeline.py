@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
@@ -60,6 +61,49 @@ def _write_marker(state_dir: Path, step_id: str, ticket_id: str) -> None:
     _marker_path(state_dir, step_id).write_text(ticket_id, encoding="utf-8")
 
 
+def _clear_marker(state_dir: Path, step_id: str) -> None:
+    try:
+        _marker_path(state_dir, step_id).unlink()
+    except FileNotFoundError:
+        pass
+
+
+def _close_resolved_step_ticket(
+    project: Path,
+    *,
+    step_id: str,
+    ticket_id: str,
+    state_dir: Path,
+    stdio_format: str,
+) -> bool:
+    from koru.activity_log import activity
+
+    proc = subprocess.run(
+        ["planfile", "ticket", "done", ticket_id],
+        cwd=project,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout or "").strip()
+        activity(
+            "TICKET",
+            f"operator {step_id}: nie zamknięto starego ticketa {ticket_id}",
+            fmt=stdio_format,
+            preview=detail,
+        )
+        return False
+    _clear_marker(state_dir, step_id)
+    activity(
+        "TICKET",
+        f"operator {step_id}: zamknięto rozwiązany ticket {ticket_id}",
+        fmt=stdio_format,
+    )
+    return True
+
+
 def _mcp_koru_configured(project: Path) -> tuple[bool, str]:
     for rel in (".cursor/mcp.json", ".vscode/mcp.json"):
         path = project / rel
@@ -72,7 +116,11 @@ def _mcp_koru_configured(project: Path) -> tuple[bool, str]:
         servers = data.get("mcpServers") or {}
         if isinstance(servers, dict) and "koru" in servers:
             return True, f"serwer „koru” w {rel}"
-    return False, "brak „koru” w .cursor/mcp.json — task koru:mcp:bootstrap, potem Reload Window"
+    return (
+        False,
+        "brak „koru” w .cursor/mcp.json / .vscode/mcp.json — "
+        "task koru:mcp:bootstrap, potem Reload Window",
+    )
 
 
 def _planfile_api_ok(project: Path) -> tuple[bool, str]:
@@ -338,6 +386,16 @@ def run_startup_operator_pipeline(
     state_dir = _operator_state_dir(project)
     for i, step in enumerate(steps, start=1):
         ticket_id: str | None = _read_marker(state_dir, step.step_id)
+        if create_tickets and step.status == "ok" and ticket_id is not None:
+            closed = _close_resolved_step_ticket(
+                project,
+                step_id=step.step_id,
+                ticket_id=ticket_id,
+                state_dir=state_dir,
+                stdio_format=stdio_format,
+            )
+            if closed:
+                ticket_id = None
         if create_tickets and step.status == "pending" and ticket_id is None:
             created = _create_step_ticket(
                 project,
