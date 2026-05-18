@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -330,6 +331,70 @@ def test_autonomous_environ_doctor_probe_pass_summary(tmp_path, monkeypatch) -> 
     assert "WUP_MODE=testql" in detail
 
 
+def test_looks_like_autonomous_matches_koru_cli_auto() -> None:
+    assert autonomous_mod._looks_like_autonomous_up_command(
+        "python3 -m koru.cli auto --project /tmp/x"
+    )
+
+
+def test_looks_like_autonomous_matches_koru_autonomous_regex() -> None:
+    assert autonomous_mod._looks_like_autonomous_up_command(
+        "python3 -m koru.cli autonomous up --project /tmp"
+    )
+
+
+def test_auto_main_argv_injects_replace_existing(tmp_path: Path) -> None:
+    from koru.cli import _auto_main
+
+    calls: list[list[str]] = []
+    stopped: list[Path] = []
+
+    def fake_stop(project: Path, **kwargs: object) -> None:
+        stopped.append(project)
+
+    def fake_autonomous(argv: list[str], *, invoked_as_auto: bool = False) -> int:
+        calls.append(list(argv))
+        return 0
+
+    with patch(
+        "koru._legacy_cli_impl.stop_prior_autonomous_for_auto_start",
+        side_effect=fake_stop,
+    ):
+        with patch(
+            "koru._legacy_cli_impl.autonomous_main",
+            side_effect=fake_autonomous,
+        ):
+            assert _auto_main(["--project", str(tmp_path)]) == 0
+
+    assert stopped == [tmp_path.resolve()]
+    assert calls
+    assert "--replace-existing" in calls[0]
+
+
+def test_stop_prior_autonomous_for_auto_start_terminates(tmp_path, monkeypatch) -> None:
+    existing = [
+        autonomous_mod.ExistingAutonomousProcess(
+            pid=99,
+            command="python3 -m koru.cli auto --project " + str(tmp_path),
+            cwd=tmp_path,
+        )
+    ]
+    stopped: list[int] = []
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_find_existing_autonomous_processes",
+        lambda project, any_project=False: existing if any_project else [],
+    )
+    monkeypatch.setattr(autonomous_mod, "_find_existing_wup_processes", lambda project: [])
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_terminate_existing_processes",
+        lambda processes, **kwargs: stopped.extend(proc.pid for proc in processes),
+    )
+    autonomous_mod.stop_prior_autonomous_for_auto_start(tmp_path)
+    assert stopped == [99]
+
+
 def test_guard_existing_autonomous_noninteractive_blocks_duplicate(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(
         autonomous_mod,
@@ -590,18 +655,35 @@ def test_resolve_autopilot_ide_headless_allow_yes(monkeypatch) -> None:
     assert autonomous_mod._resolve_autopilot_ide("cursor") == "zed"
 
 
+def _isolate_integrated_terminal_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Drop IDE terminal env leaked from the host (Cursor sets VSCODE_* + CURSOR_*)."""
+    for key in (
+        "KORU_AUTOPILOT_INSTANCE",
+        "KORU_AUTOPILOT_IDE",
+        "CURSOR_AGENT",
+        "CURSOR_CLI",
+        "CHROME_DESKTOP",
+        "WINDSURF_CSRF_TOKEN",
+        "WINDSURF_VERSION",
+        "TERM_PROGRAM",
+        "VSCODE_PID",
+        "VSCODE_NLS_CONFIG",
+        "VSCODE_IPC_HOOK",
+        "VSCODE_CODE_CACHE_PATH",
+        "VSCODE_CWD",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+
 def test_apply_agent_lane_environ_auto_cursor(tmp_path, monkeypatch) -> None:
-    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
-    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
-    monkeypatch.delenv("VSCODE_NLS_CONFIG", raising=False)
-    monkeypatch.delenv("VSCODE_IPC_HOOK", raising=False)
-    monkeypatch.delenv("VSCODE_PID", raising=False)
-    monkeypatch.delenv("VSCODE_CWD", raising=False)
-    monkeypatch.delenv("VSCODE_CODE_CACHE_PATH", raising=False)
+    _isolate_integrated_terminal_env(monkeypatch)
     monkeypatch.delenv("CI", raising=False)
     monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
     (tmp_path / ".cursor").mkdir()
-    with patch("koru.autonomous_startup.detect_running_ides", return_value=[]):
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=[]),
+        patch("koru.autonomous_startup.detect_terminal_host_ide_id", return_value=None),
+    ):
         lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "auto")
     assert lane == "cursor"
     assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "cursor"
@@ -610,11 +692,11 @@ def test_apply_agent_lane_environ_auto_cursor(tmp_path, monkeypatch) -> None:
 
 
 def test_apply_agent_lane_environ_auto_prefers_vscode_terminal(tmp_path, monkeypatch) -> None:
-    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
-    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    _isolate_integrated_terminal_env(monkeypatch)
     monkeypatch.setenv("VSCODE_NLS_CONFIG", "{}")
     (tmp_path / ".windsurf").mkdir()
-    lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "auto")
+    with patch("koru.autonomous_startup.detect_running_ides", return_value=[]):
+        lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "auto")
     assert lane == "vscode"
     assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "vscode"
     assert os.environ["KORU_AUTOPILOT_IDE"] == "vscode"
@@ -626,12 +708,13 @@ def test_apply_agent_lane_environ_auto_vscode_terminal_overrides_stale_windsurf_
     tmp_path,
     monkeypatch,
 ) -> None:
-    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    _isolate_integrated_terminal_env(monkeypatch)
     monkeypatch.setenv("KORU_AUTOPILOT_IDE", "windsurf")
     monkeypatch.setenv("VSCODE_IPC_HOOK", "/run/user/1000/vscode-ipc.sock")
     (tmp_path / ".windsurf").mkdir()
 
-    lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "auto")
+    with patch("koru.autonomous_startup.detect_running_ides", return_value=[]):
+        lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "auto")
 
     assert lane == "vscode"
     assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "vscode"
@@ -1078,7 +1161,62 @@ def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(
     assert fallback_calls[0]["submit"] is True
 
 
-def test_up_stops_on_waiting_input_by_default(
+@pytest.fixture(autouse=True)
+def _fast_autonomous_up(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep unit tests from running real operator pipeline or infinite outer loops."""
+    monkeypatch.setattr(autonomous_mod, "run_startup_operator_pipeline", lambda **_kw: None)
+    monkeypatch.setattr(autonomous_mod, "_load_loop_checkpoint", lambda *_a, **_k: None)
+    monkeypatch.setattr(autonomous_mod, "_save_loop_checkpoint", lambda *_a, **_k: None)
+
+
+def test_up_keeps_running_on_waiting_input_by_default(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        autonomous_mod,
+        "init_project",
+        lambda project, force=False: SimpleNamespace(project=project),
+    )
+
+    calls = 0
+
+    def fake_queue_loop(**kwargs):
+        nonlocal calls
+        calls += 1
+        return SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=1 last_status=waiting_input",
+            last_status="waiting_input",
+            last_message="",
+        )
+
+    monkeypatch.setattr(autonomous_mod, "run_planfile_queue_loop", fake_queue_loop)
+    monkeypatch.setattr(autonomous_mod.time, "sleep", lambda _s: None)
+
+    rc = autonomous_mod.autonomous_main(
+        [
+            "up",
+            "--no-serve",
+            "--no-operator-pipeline",
+            "--project",
+            str(tmp_path),
+            "--max-cycles",
+            "3",
+            "--sleep-seconds",
+            "0",
+            "--ticket-sources",
+            "queue",
+            "--no-autopilot",
+            "--agent-lane",
+            "none",
+        ]
+    )
+
+    assert rc == 0
+    assert calls == 3
+
+
+def test_up_stops_on_waiting_input_when_flag_set(
     tmp_path,
     monkeypatch,
 ) -> None:
@@ -1100,7 +1238,6 @@ def test_up_stops_on_waiting_input_by_default(
         )
 
     class StubClient:
-        """Accepts drive (fallback prompt) but tracks if --stop-on-waiting-input fires."""
         def drive(self, *_args, **_kwargs):
             return {"ok": True, "message": "sent", "backend": "test"}
 
@@ -1127,8 +1264,10 @@ def test_up_stops_on_waiting_input_by_default(
         [
             "up",
             "--no-serve",
+            "--no-operator-pipeline",
             "--project",
             str(tmp_path),
+            "--stop-on-waiting-input",
             "--sleep-seconds",
             "0",
             "--ticket-sources",
@@ -1138,8 +1277,6 @@ def test_up_stops_on_waiting_input_by_default(
         ]
     )
 
-    # --stop-on-waiting-input is default-true → outer loop stops after 1 cycle
-    # even though autopilot now sends a fallback prompt within that cycle.
     assert rc == 0
     assert calls == 1
 

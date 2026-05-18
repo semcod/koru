@@ -288,6 +288,66 @@ class TestInitCiSubcommand(unittest.TestCase):
         self.assertIn("ci-github.md", out)
 
 
+class TestAutoMain(unittest.TestCase):
+    """``koru auto`` stops prior loops and forwards ``--replace-existing`` without a full run."""
+
+    def test_auto_main_stops_prior_and_injects_replace_existing(self) -> None:
+        from koru.cli import _auto_main
+
+        stopped: list[Path] = []
+        calls: list[tuple[list[str], bool]] = []
+
+        def fake_stop(project: Path, **kwargs: object) -> None:
+            stopped.append(project)
+
+        def fake_autonomous(argv: list[str], *, invoked_as_auto: bool = False) -> int:
+            calls.append((list(argv), invoked_as_auto))
+            return 0
+
+        with mock.patch(
+            "koru._legacy_cli_impl.stop_prior_autonomous_for_auto_start",
+            side_effect=fake_stop,
+        ):
+            with mock.patch(
+                "koru._legacy_cli_impl.autonomous_main",
+                side_effect=fake_autonomous,
+            ):
+                code = _auto_main(["--project", "/tmp/proj"])
+
+        self.assertEqual(code, 0)
+        self.assertEqual(len(stopped), 1)
+        self.assertEqual(stopped[0], Path("/tmp/proj").resolve())
+        self.assertEqual(len(calls), 1)
+        self.assertIn("--replace-existing", calls[0][0])
+        self.assertTrue(calls[0][1])
+
+    def test_auto_main_allow_duplicate_skips_stop_and_replace_flag(self) -> None:
+        from koru.cli import _auto_main
+
+        calls: list[list[str]] = []
+
+        with mock.patch(
+            "koru._legacy_cli_impl.stop_prior_autonomous_for_auto_start",
+            side_effect=AssertionError("stop should not run"),
+        ):
+            with mock.patch(
+                "koru._legacy_cli_impl.autonomous_main",
+                side_effect=lambda argv, **kw: calls.append(list(argv)) or 0,
+            ):
+                code = _auto_main(["--allow-duplicate", "--project", "/tmp/x"])
+
+        self.assertEqual(code, 0)
+        self.assertEqual(len(calls), 1)
+        self.assertNotIn("--replace-existing", calls[0])
+
+    def test_subcommand_auto_routes_to_auto_main(self) -> None:
+        with mock.patch("koru._legacy_cli_impl._auto_main", return_value=7) as auto_main:
+            with mock.patch("sys.argv", ["koru", "auto", "--project", "/tmp/p"]):
+                code = main()
+        auto_main.assert_called_once_with(["--project", "/tmp/p"])
+        self.assertEqual(code, 7)
+
+
 class TestSubcommandDispatch(unittest.TestCase):
     """R6: routing through ``_SUBCOMMANDS`` dispatch table.
 
@@ -314,6 +374,9 @@ class TestSubcommandDispatch(unittest.TestCase):
             "mcp-serve",
             "autopilot",
             "autonomous",
+            "auto",
+            "dsl",
+            "api",
             "topology",
             "runtime-context",
             "refactor-planfile-handoff",

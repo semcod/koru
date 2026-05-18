@@ -1,54 +1,54 @@
-# koru | 861 func | 92f | 30830L | python | 2026-05-17
+# koru | 901 func | 98f | 31424L | python | 2026-05-18
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.8  critical=103 (limit:10)  dup=5  cycles=0
+  CC̄=4.7  critical=109 (limit:10)  dup=3  cycles=0
 
 ALERTS[20]:
-  !!! cc_exceeded      _run_cycle = 66 (limit:15)
-  !!! cc_exceeded      run_cycle = 63 (limit:15)
-  !!! cc_exceeded      _action_up = 44 (limit:15)
-  !!! high_fan_out     _run_cycle = 43 (limit:10)
-  !!! high_fan_out     run_cycle = 41 (limit:10)
+  !!! cc_exceeded      run_cycle = 86 (limit:15)
+  !!! high_fan_out     run_cycle = 53 (limit:10)
+  !!! cc_exceeded      _action_up = 47 (limit:15)
+  !!! high_fan_out     _action_up = 46 (limit:10)
   !!! high_fan_out     _build_handler = 40 (limit:10)
-  !!! high_fan_out     _action_up = 40 (limit:10)
   !!! cc_exceeded      run_next_planfile_task = 37 (limit:15)
   !!! cc_exceeded      install_plugin_for_ide = 28 (limit:15)
   !!! cc_exceeded      _queue_run_main = 26 (limit:15)
+  !!! cc_exceeded      detect_tools = 26 (limit:15)
+  !!! high_fan_out     run_next_planfile_task = 26 (limit:10)
 
-MODULES[177] (top by size):
-  M[src/koru/autonomous.py] 1835L C:4 F:35 CC↑66 D:0 (python)
+MODULES[184] (top by size):
+  M[src/koru/autonomous.py] 1534L C:2 F:35 CC↑47 D:0 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
   M[src/koru/serve.py] 1301L C:1 F:15 CC↑13 D:1 (python)
   M[src/koru/autopilot/cli_command.py] 1229L C:0 F:35 CC↑15 D:0 (python)
   M[src/koru/context.py] 1199L C:0 F:43 CC↑18 D:5 (python)
   M[src/koru/mcp_server.py] 1023L C:0 F:32 CC↑15 D:1 (python)
-  M[src/koru/scan.py] 818L C:2 F:18 CC↑15 D:3 (python)
-  M[Taskfile.yml] 807L C:0 F:0 CC↑0 D:0 (yml)
-  M[src/koru/autonomous_cycle.py] 718L C:2 F:14 CC↑63 D:0 (python)
+  M[Taskfile.yml] 857L C:0 F:0 CC↑0 D:0 (yml)
+  M[src/koru/scan.py] 828L C:2 F:18 CC↑15 D:2 (python)
+  M[src/koru/autonomous_cycle.py] 826L C:2 F:15 CC↑86 D:0 (python)
   M[services/healing-webhook/app.py] 702L C:0 F:27 CC↑11 D:0 (python)
-  M[src/koruide/daemon.py] 652L C:2 F:27 CC↑14 D:0 (python)
+  M[src/koruide/daemon.py] 678L C:2 F:27 CC↑21 D:0 (python)
   M[src/koru/init.py] 610L C:1 F:12 CC↑15 D:2 (python)
   M[scripts/koru-autoloop.sh] 576L C:0 F:14 CC↑0 D:0 (shell)
+  M[plugins/koru-autopilot-vscode/src/extension.ts] 517L C:2 F:46 CC↑18 D:1 (typescript)
   M[src/koru/doctor.py] 513L C:2 F:21 CC↑11 D:1 (python)
-  M[goal.yaml] 511L C:0 F:0 CC↑0 D:0 (yaml)
-  LANGS: python:99/shell:37/yaml:14/yml:8/kotlin:6/typescript:4/json:3/other:2/properties:1/xml:1/toml:1/txt:1
+  LANGS: python:101/shell:41/yaml:15/yml:8/kotlin:6/typescript:4/json:3/other:2/properties:1/xml:1/toml:1/txt:1
 
 HOTSPOTS[10]:
-  ★ _run_cycle fan=43  // Orchestrates 43 calls
-  ★ run_cycle fan=41  // Orchestrates 41 calls
+  ★ run_cycle fan=53  // Orchestrates 53 calls
+  ★ _action_up fan=46  // Orchestrates 46 calls
   ★ _build_handler fan=40  // Create a request handler closure bound to ``config``.
-  ★ _action_up fan=40  // Orchestrates 40 calls
   ★ run_next_planfile_task fan=26  // Execute one runnable planfile ticket, if any.
 
 When ``interactive`` is true and 
+  ★ _build_handler fan=25  // Orchestrates 25 calls
 
 REFACTOR[15]:
-  [1] H/L Split _queue_run_main (CC=26)
-  [2] H/L Split detect_tools (CC=26)
-  [3] H/L Split run_cycle (CC=63)
+  [1] H/L Split install_plugin_for_ide (CC=28)
+  [2] H/L Split _queue_run_main (CC=26)
+  [3] H/L Split detect_tools (CC=26)
   [4] H/L Split apply_autoloop_env_to_args (CC=25)
   [5] H/L Split run_next_planfile_task (CC=37)
 
 EVOLUTION:
-  2026-05-17 CC̄=4.8 crit=103 30830L // Automated analysis
+  2026-05-18 CC̄=4.7 crit=109 31424L // Automated analysis

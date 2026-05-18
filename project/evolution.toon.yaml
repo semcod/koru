@@ -1,46 +1,46 @@
-# code2llm/evolution | 814 func | 84f | 2026-05-17
+# code2llm/evolution | 836 func | 86f | 2026-05-18
 # generated in 0.00s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous.py
-      WHY: 1835L, 4 classes, max CC=66
-      EFFORT: ~4h  IMPACT: 121110
+      WHY: 1534L, 2 classes, max CC=47
+      EFFORT: ~4h  IMPACT: 72098
 
   [2] !! SPLIT           src/koru/serve.py
       WHY: 1301L, 1 classes, max CC=13
       EFFORT: ~4h  IMPACT: 16913
 
-  [3] !! SPLIT-FUNC      _run_cycle  CC=66  fan=43
-      WHY: CC=66 exceeds 15
-      EFFORT: ~1h  IMPACT: 2838
+  [3] !! SPLIT-FUNC      run_cycle  CC=86  fan=53
+      WHY: CC=86 exceeds 15
+      EFFORT: ~1h  IMPACT: 4558
 
-  [4] !! SPLIT-FUNC      run_cycle  CC=63  fan=41
-      WHY: CC=63 exceeds 15
-      EFFORT: ~1h  IMPACT: 2583
+  [4] !! SPLIT-FUNC      _action_up  CC=47  fan=46
+      WHY: CC=47 exceeds 15
+      EFFORT: ~1h  IMPACT: 2162
 
-  [5] !! SPLIT-FUNC      _action_up  CC=44  fan=40
-      WHY: CC=44 exceeds 15
-      EFFORT: ~1h  IMPACT: 1760
-
-  [6] !! SPLIT-FUNC      run_next_planfile_task  CC=37  fan=26
+  [5] !! SPLIT-FUNC      run_next_planfile_task  CC=37  fan=26
       WHY: CC=37 exceeds 15
       EFFORT: ~1h  IMPACT: 962
 
-  [7] !  SPLIT-FUNC      _read_wup_health  CC=23  fan=19
+  [6] !  SPLIT-FUNC      _read_wup_health  CC=23  fan=19
       WHY: CC=23 exceeds 15
       EFFORT: ~1h  IMPACT: 437
 
-  [8] !  SPLIT-FUNC      run_llm_request  CC=23  fan=19
+  [7] !  SPLIT-FUNC      run_llm_request  CC=23  fan=19
       WHY: CC=23 exceeds 15
       EFFORT: ~1h  IMPACT: 437
 
-  [9] !  SPLIT-FUNC      _agent_main  CC=19  fan=18
+  [8] !  SPLIT-FUNC      _agent_main  CC=19  fan=18
       WHY: CC=19 exceeds 15
       EFFORT: ~1h  IMPACT: 342
 
-  [10] !! SPLIT-FUNC      _queue_run_main  CC=26  fan=13
+  [9] !! SPLIT-FUNC      _queue_run_main  CC=26  fan=13
       WHY: CC=26 exceeds 15
       EFFORT: ~1h  IMPACT: 338
+
+  [10] !  SPLIT-FUNC      create_nl_task  CC=16  fan=21
+      WHY: CC=16 exceeds 15
+      EFFORT: ~1h  IMPACT: 336
 
 
 RISKS[3]:
@@ -50,9 +50,9 @@ RISKS[3]:
 
 METRICS-TARGET:
   CC̄:          4.9 → ≤3.4
-  max-CC:      66 → ≤20
+  max-CC:      86 → ≤20
   god-modules: 15 → 0
-  high-CC(≥15): 37 → ≤18
+  high-CC(≥15): 38 → ≤19
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.8 → now CC̄=4.9
+  prev CC̄=4.9 → now CC̄=4.9

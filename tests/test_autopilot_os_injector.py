@@ -179,13 +179,14 @@ def test_iter_config_paths_dedupes_project_and_cwd(tmp_path: Path) -> None:
     assert len(paths) == len({str(p.resolve()) for p in paths})
 
 
-def test_try_drive_with_profile_skips_by_default_on_wayland(
+def test_try_drive_with_profile_uses_saved_profile_on_wayland(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Wayland should prefer non-xdotool injectors unless explicitly forced."""
+    """Regression: calibrated coordinates must work on Wayland without KORU_OS_INJECTOR=1."""
     import koru.autopilot.os_injector as oi
 
     monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
+    monkeypatch.delenv("KORU_OS_INJECTOR", raising=False)
     monkeypatch.setattr(oi.shutil, "which", lambda _n: "/xdotool")
     cfg = tmp_path / ".koru" / "ide-os-injector.json"
     cfg.parent.mkdir(parents=True)
@@ -195,7 +196,8 @@ def test_try_drive_with_profile_skips_by_default_on_wayland(
     )
     monkeypatch.chdir(tmp_path)
     out = try_drive_with_profile(tool_id="cursor", text="x", submit=False, project=None, cli_dry_run=True)
-    assert out is None
+    assert out is not None
+    assert out["backend"] == "os_injector"
 
 
 def test_try_drive_with_profile_forced_works_on_wayland(

@@ -116,6 +116,17 @@ def create_nl_task(
         "updated_at": now,
     }
     _write_yaml(sprint_path, sprint_data)
+    try:
+        from .activity_log import activity
+
+        activity(
+            "TICKET",
+            f"utworzono {ticket_id} ({name}) kolejka={queue_name or 'default'} "
+            f"executor={executor_kind}",
+            preview=text,
+        )
+    except Exception:
+        pass
     return CreatedTask(ticket_id=ticket_id, sprint=sprint, path=sprint_path, name=name)
 
 

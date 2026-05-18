@@ -13,7 +13,17 @@ from typing import Any
 from .autonomous_wup import WupHealthResult
 from .autonomous_wup import _read_wup_health as _read_wup_health_impl
 from .autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
-from .autonomy.ide_work import resolve_idle_drive_prompt
+from .autonomy.ide_work import (
+    extract_ticket_id_from_text,
+    release_stale_in_progress_tickets,
+    resolve_idle_drive_prompt,
+    resolve_in_progress_stale_minutes,
+)
+from .autonomy.post_run_verify import (
+    load_post_run_verify_config,
+    verify_after_ide_work,
+    verify_completed_tickets,
+)
 from .autonomy.prompts import build_prompt
 from .queue import QueueLoopResult, run_planfile_queue_loop
 from .queue import default_human_prompt as _default_human_prompt
@@ -28,7 +38,9 @@ from .topology import is_component_enabled, is_pipeline_enabled
 
 
 def _stdio_info(msg: str, *, fmt: str) -> None:
-    print(msg, file=sys.stderr if fmt == "jsonl" else sys.stdout)
+    from .activity_log import activity_info
+
+    activity_info(msg, fmt=fmt)
 
 
 @dataclass(frozen=True)
@@ -50,6 +62,8 @@ class AutoloopState:
     telemetry_scan_after_idle_runs: int = 0
     telemetry_scan_after_idle_tickets_applied: int = 0
     last_scan_after_idle_ts: float = -1.0
+    pending_ide_verify_id: str | None = None
+    post_verify_seen: set[str] = field(default_factory=set)
 
 
 def _queue_loop_waiting_ticket_label(queue_result: QueueLoopResult) -> str:
@@ -88,6 +102,13 @@ def _status_in_skip_list(status: str, skip_statuses: str) -> bool:
 def _allow_keyboard_autopilot_fallback() -> bool:
     raw = os.environ.get("KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK", "").strip().lower()
     return raw in {"1", "true", "yes", "on"}
+
+
+def _try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | None:
+    """Delegate to :func:`koru.autonomous._try_os_injector_fallback` (monkeypatch-friendly)."""
+    from . import autonomous as _autonomous_mod
+
+    return _autonomous_mod._try_os_injector_fallback(prompt, submit=submit)
 
 
 def _run_command_check(
@@ -348,8 +369,20 @@ def run_cycle(
             )
 
     def _hp(msg: str) -> None:
-        if stdio_format == "human":
-            print(msg)
+        from .activity_log import activity, activity_info
+
+        if msg.startswith("+ "):
+            activity("RUN", msg[2:], fmt=stdio_format)
+        elif msg.startswith("  scan:"):
+            activity("SCAN", msg.strip(), fmt=stdio_format)
+        elif msg.startswith("  queue:"):
+            activity("QUEUE", msg.strip(), fmt=stdio_format)
+        elif msg.startswith("  autopilot:"):
+            activity("CHAT", msg.strip(), fmt=stdio_format)
+        elif stdio_format == "human":
+            activity_info(msg, fmt=stdio_format)
+        else:
+            activity_info(msg, fmt=stdio_format)
 
     events = _drain_autopilot_events(state)
     if events:
@@ -363,6 +396,46 @@ def run_cycle(
 
     scan_result: ScanResult | None = None
     _emit("CycleStarted", {"cycle": cycle, "project": str(project.resolve())})
+
+    stale_minutes = resolve_in_progress_stale_minutes(project)
+    if stale_minutes is not None:
+        released_stale = release_stale_in_progress_tickets(
+            project, stale_minutes=stale_minutes, runner=_run_process
+        )
+        if released_stale:
+            _hp(
+                f"  queue hygiene: reopened {released_stale} stale in_progress "
+                f"(>{stale_minutes:.0f}m)"
+            )
+            _emit(
+                "QueueStaleReleased",
+                {"cycle": cycle, "count": released_stale, "stale_minutes": stale_minutes},
+            )
+
+    verify_config = load_post_run_verify_config(project)
+    ide_verify_outcomes = verify_after_ide_work(
+        project,
+        state,
+        config=verify_config,
+        planfile_runner=_run_process,
+        shell_runner=_run_shell_command,
+    )
+    if ide_verify_outcomes:
+        failed_ide = [o for o in ide_verify_outcomes if not o.get("ok")]
+        _hp(
+            f"  post_run_verify (IDE): tickets={len(ide_verify_outcomes)} "
+            f"failed={len(failed_ide)}"
+        )
+        _emit(
+            "PostRunVerifyIdeCompleted",
+            {
+                "cycle": cycle,
+                "ticket_count": len(ide_verify_outcomes),
+                "failed_count": len(failed_ide),
+                "outcomes": ide_verify_outcomes,
+            },
+            command="; ".join(verify_config.commands) if verify_config else None,
+        )
 
     if enable_scan:
         if not _is_topology_enabled(
@@ -461,6 +534,37 @@ def run_cycle(
             },
             command=qcmd,
         )
+
+        completed_ids = list(getattr(queue_result, "completed", []) or [])
+        if completed_ids and verify_config is not None:
+            verify_outcomes = verify_completed_tickets(
+                project,
+                completed_ids,
+                config=verify_config,
+                planfile_runner=_run_process,
+                shell_runner=_run_shell_command,
+            )
+            failed = [o for o in verify_outcomes if not o.get("ok")]
+            for outcome in verify_outcomes:
+                if outcome.get("ok"):
+                    tid = str(outcome.get("ticket_id") or "").strip()
+                    if tid:
+                        state.post_verify_seen.add(tid)
+            if verify_outcomes:
+                _hp(
+                    f"  post_run_verify (queue): tickets={len(completed_ids)} "
+                    f"failed={len(failed)}"
+                )
+                _emit(
+                    "PostRunVerifyCompleted",
+                    {
+                        "cycle": cycle,
+                        "ticket_count": len(completed_ids),
+                        "failed_count": len(failed),
+                        "outcomes": verify_outcomes,
+                    },
+                    command="; ".join(verify_config.commands),
+                )
 
     if (
         scan_after_idle_queue
@@ -647,10 +751,19 @@ def run_cycle(
                 require_plugin=not _allow_keyboard_autopilot_fallback(),
             )
             ok = bool(reply.get("ok", True))
+            if not ok:
+                fallback = _try_os_injector_fallback(decision.prompt, submit=submit)
+                if fallback is not None:
+                    reply = fallback
+                    ok = bool(reply.get("ok", True))
             autopilot_status = "ok" if ok else "failed"
             autopilot_backend = (
                 str(reply.get("backend")) if reply.get("backend") is not None else None
             )
+            if ok and autopilot_drive_kind == "idle_ticket_prompt":
+                ticket_id = extract_ticket_id_from_text(decision.prompt)
+                if ticket_id:
+                    state.pending_ide_verify_id = ticket_id
             if ok:
                 backend = reply.get("backend", "?")
                 if decision.kind == "ticket_prompt":

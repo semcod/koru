@@ -24,10 +24,16 @@ def fake_proc(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     write_pid(9999, "bash", ["bash"])  # noise — must not match any IDE
 
     def fake_read_comm(pid: int) -> str:
-        return (tmp_path / str(pid) / "comm").read_text().strip()
+        path = tmp_path / str(pid) / "comm"
+        if not path.is_file():
+            return ""
+        return path.read_text().strip()
 
     def fake_read_cmdline(pid: int) -> str:
-        raw = (tmp_path / str(pid) / "cmdline").read_bytes()
+        path = tmp_path / str(pid) / "cmdline"
+        if not path.is_file():
+            return ""
+        raw = path.read_bytes()
         return raw.replace(b"\x00", b" ").decode().strip()
 
     monkeypatch.setattr(ide_mod, "_read_comm", fake_read_comm)
@@ -100,10 +106,37 @@ def test_pick_target_returns_none_when_pref_not_running(fake_proc: Path) -> None
     assert chosen is None
 
 
-def test_pick_target_defaults_to_first(fake_proc: Path) -> None:
+def test_pick_target_defaults_to_first(
+    fake_proc: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.setattr(ide_mod, "detect_terminal_host_ide_id", lambda **_k: None)
+    monkeypatch.setattr(ide_mod, "detect_focused_ide_id", lambda **_k: None)
     detected = ide_mod.detect_running_ides(_pids=[5678, 1234])
     chosen = ide_mod.pick_target(detected)
     # windsurf comes first in declared order, regardless of pid order.
+    assert chosen is not None
+    assert chosen.id == "windsurf"
+
+
+def test_pick_target_prefers_koru_autopilot_ide_env(
+    fake_proc: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_IDE", "jetbrains")
+    detected = ide_mod.detect_running_ides(_pids=[1234, 5678])
+    chosen = ide_mod.pick_target(detected)
+    assert chosen is not None
+    assert chosen.id == "jetbrains"
+
+
+def test_pick_target_ignores_koru_autopilot_ide_env_when_not_running(
+    fake_proc: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_IDE", "cursor")
+    monkeypatch.setattr(ide_mod, "detect_terminal_host_ide_id", lambda **_k: None)
+    monkeypatch.setattr(ide_mod, "detect_focused_ide_id", lambda **_k: None)
+    detected = ide_mod.detect_running_ides(_pids=[1234, 5678])
+    chosen = ide_mod.pick_target(detected)
     assert chosen is not None
     assert chosen.id == "windsurf"
 
@@ -143,6 +176,120 @@ def test_pick_target_explicit_prefer_beats_focus(fake_proc: Path) -> None:
     chosen = ide_mod.pick_target(detected, prefer="windsurf", focused_id="jetbrains")
     assert chosen is not None
     assert chosen.id == "windsurf"
+
+
+def test_resolve_drive_target_auto_picks_first_ide_with_profile(
+    fake_proc: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    detected = ide_mod.detect_running_ides(_pids=[1234, 5678, 9999])
+    monkeypatch.setattr(ide_mod, "detect_running_ides", lambda: detected)
+    profiles = {"windsurf"}
+
+    def has_profile(tool_id: str, project) -> bool:
+        return tool_id in profiles
+
+    kb, profile, reason = ide_mod.resolve_drive_target(
+        "auto",
+        None,
+        has_profile=has_profile,
+    )
+    assert kb == "windsurf"
+    assert profile == "windsurf"
+    assert reason in ("auto:profile", "auto:running-profile")
+
+
+def test_detect_terminal_host_ide_id_cursor_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("WINDSURF_CSRF_TOKEN", raising=False)
+    monkeypatch.setenv("CHROME_DESKTOP", "cursor.desktop")
+    monkeypatch.setenv("VSCODE_PID", "201464")
+    monkeypatch.setenv("VSCODE_CODE_CACHE_PATH", "/home/tom/.config/Cursor/CachedData/x")
+    assert ide_mod.detect_terminal_host_ide_id() == "cursor"
+
+
+def test_detect_terminal_host_ide_id_cursor_beats_windsurf_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("CHROME_DESKTOP", "cursor.desktop")
+    monkeypatch.setenv("WINDSURF_CSRF_TOKEN", "deadbeef")
+    monkeypatch.setenv("VSCODE_PID", "1")
+    assert ide_mod.detect_terminal_host_ide_id() == "cursor"
+
+
+def test_detect_terminal_host_ide_id_vscode_nls_without_pid(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for key in (
+        "CURSOR_AGENT",
+        "CURSOR_CLI",
+        "CHROME_DESKTOP",
+        "VSCODE_PID",
+        "VSCODE_CODE_CACHE_PATH",
+        "VSCODE_IPC_HOOK",
+        "WINDSURF_VERSION",
+        "WINDSURF_CSRF_TOKEN",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("VSCODE_NLS_CONFIG", "{}")
+    assert ide_mod.detect_terminal_host_ide_id() == "vscode"
+
+
+def test_pick_target_prefers_terminal_host_over_signature_order(
+    fake_proc: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    detected = ide_mod.detect_running_ides(_pids=[1234, 5678])
+    monkeypatch.setattr(ide_mod, "detect_terminal_host_ide_id", lambda **_k: "jetbrains")
+    chosen = ide_mod.pick_target(detected)
+    assert chosen is not None
+    assert chosen.id == "jetbrains"
+
+
+def test_resolve_drive_target_terminal_without_profile_skips_other_profiles(
+    fake_proc: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    detected = ide_mod.detect_running_ides(_pids=[1234, 5678, 9999])
+    detected = [
+        *detected,
+        ide_mod.RunningIDE(id="cursor", label="Cursor", pid=42, exe="/opt/cursor"),
+    ]
+    monkeypatch.setattr(ide_mod, "detect_running_ides", lambda: detected)
+    monkeypatch.setattr(ide_mod, "detect_terminal_host_ide_id", lambda **_k: "cursor")
+    profiles = {"windsurf"}
+
+    def has_profile(tool_id: str, project) -> bool:
+        return tool_id in profiles
+
+    kb, profile, reason = ide_mod.resolve_drive_target(
+        "auto",
+        None,
+        has_profile=has_profile,
+    )
+    assert kb == "cursor"
+    assert profile == "cursor"
+    assert reason == "auto:terminal-no-profile"
+
+
+def test_resolve_drive_target_auto_prefers_focused_when_it_has_profile(
+    fake_proc: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    detected = ide_mod.detect_running_ides(_pids=[1234, 5678, 9999])
+    monkeypatch.setattr(ide_mod, "detect_running_ides", lambda: detected)
+    profiles = {"jetbrains"}
+
+    def has_profile(tool_id: str, project) -> bool:
+        return tool_id in profiles
+
+    monkeypatch.setattr(ide_mod, "detect_focused_ide_id", lambda: "jetbrains")
+    kb, profile, reason = ide_mod.resolve_drive_target(
+        "auto",
+        None,
+        has_profile=has_profile,
+    )
+    assert profile == "jetbrains"
+    assert reason == "auto:focused-profile"
 
 
 # ---- R5: detect_running_ides_cached ----

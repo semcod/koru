@@ -72,6 +72,34 @@ npm run clean && npm install && npm run package
 | `koruAutopilot.socketPath`       | `""`    | Override unix-socket path.            |
 | `koruAutopilot.autoConnect`      | `true`  | Connect automatically on startup.     |
 | `koruAutopilot.chatOpenCommands` | `[]`    | Custom commands to open chat panel.   |
+| `koruAutopilot.probeLadder`      | `true`  | Verify focus/paste; cache winners.    |
+| `koruAutopilot.probeFocusDelayMs`| `220`   | Ms after open before verify.          |
+| `koruAutopilot.probePasteDelayMs`| `120`   | Ms after paste before verify.         |
+
+### After `koru autonomous up`
+
+Koru prints an operator checklist in the terminal (`co zrobić teraz`). In short:
+
+1. Reload the IDE window and enable MCP **koru**.
+2. Run **`koru: Connect autopilot daemon`** until the status bar shows **`koru: on`**.
+3. Match `koruAutopilot.socketPath` to the daemon socket from the log.
+4. Verify: `export KORU_AUTOPILOT_INSTANCE=<ide> && koru autopilot status` → `plugins` not empty.
+5. Test: `koru autopilot drive --ide <ide> --require-plugin 'probe test'`.
+
+Project guide (c2004): `docs/autonomy-ide-cursor.md` § *Po starcie*.
+
+### Probe ladder (0.1.12+)
+
+When `koruAutopilot.probeLadder` is enabled (default), the extension:
+
+1. Tries chat open / paste / submit commands in order (cached winners first).
+2. **Verifies** focus left a file editor and paste did not land in the active `.py` buffer.
+3. Stores winning command IDs in extension global state for the next drive.
+
+**Calibrate:** Command Palette → `koru: Calibrate chat probe ladder` — injects a harmless
+`__koru_probe_*__` token and shows which commands succeeded.
+
+Daemon `ack` replies include `winning_focus_open`, `winning_paste`, `winning_submit`.
 
 ### IDE-specific chat commands
 

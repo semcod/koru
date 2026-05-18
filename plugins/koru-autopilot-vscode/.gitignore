@@ -3,3 +3,6 @@ out/
 *.vsix
 *.log
 .vscode-test/
+
+# koru runtime artefacts (generated)
+.planfile/.koru/

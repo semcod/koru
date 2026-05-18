@@ -50,7 +50,7 @@ flowchart TD
         plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__message["message"]
         plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__dispatch["dispatch"]
         plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__plan["plan"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__injectChat{{injectChat CC=15}}
+        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__injectChat{{injectChat CC=18}}
         plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__text["text"]
         plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submit["submit"]
         plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__opened["opened"]
@@ -123,6 +123,32 @@ flowchart TD
         scripts__koru_semcod_gates__has_cmd["has_cmd"]
         scripts__koru_semcod_gates__run_gate["run_gate"]
     end
+    subgraph scripts__koru_soak_monitor
+        scripts__koru_soak_monitor__find_pid["find_pid"]
+        scripts__koru_soak_monitor__pid_elapsed["pid_elapsed"]
+        scripts__koru_soak_monitor__state_field["state_field"]
+        scripts__koru_soak_monitor__print["print"]
+        scripts__koru_soak_monitor__error_count["error_count"]
+        scripts__koru_soak_monitor__write_report["write_report"]
+    end
+    subgraph scripts__koru_soak_start
+        scripts__koru_soak_start__find_soak_pid["find_soak_pid"]
+    end
+    subgraph scripts__koru_soak_status
+        scripts__koru_soak_status__find_pid["find_pid"]
+        scripts__koru_soak_status__pid_etime["pid_etime"]
+        scripts__koru_soak_status__state_field["state_field"]
+        scripts__koru_soak_status__print["print"]
+        scripts__koru_soak_status__error_count["error_count"]
+        scripts__koru_soak_status__ticket_status["ticket_status"]
+    end
+    subgraph scripts__koru_soak_stop
+        scripts__koru_soak_stop__find_pid["find_pid"]
+        scripts__koru_soak_stop__state_field["state_field"]
+        scripts__koru_soak_stop__print["print"]
+        scripts__koru_soak_stop__pid_elapsed["pid_elapsed"]
+        scripts__koru_soak_stop__write_report["write_report"]
+    end
     subgraph scripts__planfile_export_prompt
         scripts__planfile_export_prompt__print["print"]
         scripts__planfile_export_prompt__render["render"]
@@ -175,6 +201,27 @@ flowchart TD
         services__healing_webhook__ticket_builder__build_ticket_payload("build_ticket_payload CC=11")
     end
     subgraph src__koru
+        src__koru__autopilot__ide__RunningIDE__to_dict["to_dict"]
+        src__koru__autopilot__ide___iter_proc_pids["_iter_proc_pids"]
+        src__koru__autopilot__ide___read_comm["_read_comm"]
+        src__koru__autopilot__ide___read_cmdline["_read_cmdline"]
+        src__koru__autopilot__ide___read_exe["_read_exe"]
+        src__koru__autopilot__ide___matches["_matches"]
+        src__koru__autopilot__ide___candidate_score{{_candidate_score CC=17}}
+        src__koru__autopilot__ide__detect_running_ides("detect_running_ides CC=13")
+        src__koru__autopilot__ide___active_window_pid_x11["_active_window_pid_x11"]
+        src__koru__autopilot__ide__detect_focused_ide_id["detect_focused_ide_id"]
+        src__koru__autopilot__ide__focused_ide["focused_ide"]
+        src__koru__autopilot__ide__pick_target["pick_target"]
+        src__koru__autopilot__ide__is_linux["is_linux"]
+        src__koru__autopilot__ide__detect_running_ides_cached["detect_running_ides_cached"]
+        src__koru__autopilot__ide__clear_detect_cache["clear_detect_cache"]
+        src__koru__autopilot__audit__default_log_path["default_log_path"]
+        src__koru__autopilot__audit___JSONFormatter__format["format"]
+        src__koru__autopilot__audit___isoformat_utc["_isoformat_utc"]
+        src__koru__autopilot__audit__AuditLog____init__["__init__"]
+        src__koru__autopilot__audit__AuditLog__record["record"]
+        src__koru__autopilot__audit__AuditLog__close["close"]
         src__koru__runtime__planfile_dir["planfile_dir"]
         src__koru__runtime__runtime_dir["runtime_dir"]
         src__koru__runtime__runs_dir["runs_dir"]
@@ -214,29 +261,14 @@ flowchart TD
         src__koru__mcp_provision__provision_vscode["provision_vscode"]
         src__koru__mcp_provision__remove_from_config["remove_from_config"]
         src__koru__mcp_provision__ensure_koru_mcp_not_disabled("ensure_koru_mcp_not_disabled CC=9")
-        src__koru__mcp_provision___resolve_targets["_resolve_targets"]
-        src__koru__mcp_provision___removal_paths_for_ide["_removal_paths_for_ide"]
-        src__koru__mcp_provision___apply_target["_apply_target"]
-        src__koru__mcp_provision___render_results["_render_results"]
-        src__koru__mcp_provision__init_ide_main["init_ide_main"]
-        src__koru__watch__format_queue_event{{format_queue_event CC=19}}
-        src__koru__watch___default_connect["_default_connect"]
-        src__koru__watch__watch_planfile_events["watch_planfile_events"]
-        src__koru__gate__GateAuthorization__to_note["to_note"]
-        src__koru__gate__parse_authorizations("parse_authorizations CC=12")
-        src__koru__gate___resolve_actor["_resolve_actor"]
-        src__koru__gate___planfile_base["_planfile_base"]
-        src__koru__gate__authorize_gate("authorize_gate CC=9")
-        src__koru__bootstrap__ValidationError____str__["__str__"]
-        src__koru__bootstrap__ImportReport__summary["summary"]
-        src__koru__bootstrap__load_flat_pipeline("load_flat_pipeline CC=9")
-        src__koru__bootstrap___validate_id["_validate_id"]
-        src__koru__bootstrap___validate_name["_validate_name"]
-        src__koru__bootstrap___validate_status["_validate_status"]
-        src__koru__bootstrap___validate_priority["_validate_priority"]
-        src__koru__bootstrap___validate_executor["_validate_executor"]
     end
     subgraph src__koruide
+        src__koruide__config__AutopilotConfig__submit_key_for["submit_key_for"]
+        src__koruide__config__default_config_path["default_config_path"]
+        src__koruide__config___merge_submit_keys["_merge_submit_keys"]
+        src__koruide__config__load_config["load_config"]
+        src__koruide__config__cached_config["cached_config"]
+        src__koruide__config__clear_config_cache["clear_config_cache"]
         src__koruide__protocol___filter_extras["_filter_extras"]
         src__koruide__protocol__Message__to_dict["to_dict"]
         src__koruide__protocol__Message__encode["encode"]
@@ -251,16 +283,6 @@ flowchart TD
         src__koruide__protocol__message_sent["message_sent"]
         src__koruide__protocol__message_received["message_received"]
         src__koruide__protocol__status_error["status_error"]
-        src__koruide__client__KoruIDEClient____init__["__init__"]
-        src__koruide__client__KoruIDEClient___connect["_connect"]
-        src__koruide__client__KoruIDEClient__request["request"]
-        src__koruide__client__KoruIDEClient__is_running["is_running"]
-        src__koruide__client__KoruIDEClient__drive["drive"]
-        src__koruide__client__KoruIDEClient__status["status"]
-        src__koruide__client__KoruIDEClient__shutdown["shutdown"]
-        src__koruide__client__build_client["build_client"]
-        src__koruide__socket___autopilot_socket_basename["_autopilot_socket_basename"]
-        src__koruide__socket__default_socket_path["default_socket_path"]
         src__koruide__host_setup___package_manager_hint["_package_manager_hint"]
         src__koruide__host_setup___human_followups("_human_followups CC=14")
         src__koruide__host_setup__build_setup_host_report["build_setup_host_report"]
@@ -287,16 +309,20 @@ flowchart TD
         src__koruide__daemon__AutopilotDaemon___drive_via_keyboard("_drive_via_keyboard CC=10")
         src__koruide__daemon__AutopilotDaemon___handle_hello["_handle_hello"]
         src__koruide__daemon__AutopilotDaemon___handle_status["_handle_status"]
-        src__koruide__daemon__AutopilotDaemon___handle_ack("_handle_ack CC=13")
+        src__koruide__daemon__AutopilotDaemon___handle_ack{{_handle_ack CC=21}}
         src__koruide__daemon__AutopilotDaemon___event_path["_event_path"]
         src__koruide__daemon__AutopilotDaemon___append_event["_append_event"]
         src__koruide__daemon__AutopilotDaemon___handle_plugin_event("_handle_plugin_event CC=14")
         src__koruide__daemon__AutopilotDaemon___handle_shutdown["_handle_shutdown"]
         src__koruide__daemon__AutopilotDaemon___handle_ping["_handle_ping"]
         src__koruide__daemon__AutopilotDaemon___build_handler_table["_build_handler_table"]
-        src__koruide__ide__RunningIDE__to_dict["to_dict"]
-        src__koruide__ide___iter_proc_pids["_iter_proc_pids"]
-        src__koruide__ide___read_comm["_read_comm"]
+        src__koruide__client__KoruIDEClient____init__["__init__"]
+        src__koruide__client__KoruIDEClient___connect["_connect"]
+        src__koruide__client__KoruIDEClient__request["request"]
+        src__koruide__client__KoruIDEClient__is_running["is_running"]
+        src__koruide__client__KoruIDEClient__drive["drive"]
+        src__koruide__client__KoruIDEClient__status["status"]
+        src__koruide__client__KoruIDEClient__shutdown["shutdown"]
     end
     services__healing_webhook__app___enrich_ticket_with_vallm --> services__healing_webhook__app___resolve_affected_files
     services__healing_webhook__app___enrich_ticket_with_vallm --> services__healing_webhook__app___run_vallm_check
@@ -329,10 +355,101 @@ flowchart TD
     services__healing_webhook__ticket_builder__build_ticket_payload --> services__healing_webhook__ticket_builder___format_paths
     services__healing_webhook__ticket_builder__build_ticket_payload --> services__healing_webhook__ticket_builder___default_acceptance
     services__healing_webhook__ticket_builder__build_ticket_payload --> services__healing_webhook__ticket_builder___reproduction_for
+    src__koruide__config__default_config_path --> src__koruide__utils__resolve_xdg_path
+    src__koruide__config__load_config --> src__koruide__config___merge_submit_keys
+    src__koruide__config__load_config --> src__koruide__config__default_config_path
+    src__koruide__config__load_config --> scripts__planfile_export_prompt__print
+    src__koruide__config__cached_config --> src__koruide__config__load_config
     src__koruide__protocol__decode --> src__koruide__protocol___filter_extras
+    src__koruide__host_setup__build_setup_host_report --> src__koru__autopilot__ide__detect_focused_ide_id
+    src__koruide__host_setup__build_setup_host_report --> src__koruide__host_setup___package_manager_hint
+    src__koruide__host_setup__build_setup_host_report --> src__koruide__host_setup___human_followups
+    src__koruide__host_setup__build_setup_host_report --> src__koru__autopilot__ide__detect_running_ides
+    src__koruide__host_setup__run_host_setup --> src__koruide__host_setup__build_setup_host_report
+    src__koruide__host_setup__run_host_setup --> scripts__planfile_export_prompt__print
+    src__koruide__host_setup__run_host_setup --> src__koruide__host_setup___print_text_report
+    src__koruide__host_setup__run_host_setup --> src__koruide__host_setup___try_apt_install
+    src__koruide__host_setup___print_text_report --> scripts__planfile_export_prompt__print
+    src__koruide__daemon___default_handoff --> src__koruide__daemon___load_context_module
+    src__koruide__daemon___default_handoff --> src__koru__context__render_markdown_handoff
+    src__koruide__daemon___default_handoff --> src__koru__context__build_context
+    src__koruide__daemon__AutopilotDaemon____init__ --> src__koruide__socket__default_socket_path
+    src__koruide__daemon__AutopilotDaemon____init__ --> src__koruide__daemon___default_handoff
+    src__koruide__daemon__AutopilotDaemon___accept --> src__koruide__daemon___peer_uid
+    src__koruide__daemon__AutopilotDaemon___on_readable --> src__koruide__protocol__decode
+    src__koruide__daemon__AutopilotDaemon___dispatch --> src__koruide__protocol__error
+    src__koruide__daemon__AutopilotDaemon___drive_via_plugin --> src__koruide__protocol__chat_send
+    src__koruide__daemon__AutopilotDaemon___drive_via_keyboard --> src__koru__autopilot__ide__detect_running_ides
+    src__koruide__daemon__AutopilotDaemon___drive_via_keyboard --> src__koru__autopilot__ide__pick_target
+    src__koruide__daemon__AutopilotDaemon___handle_hello --> src__koruide__protocol__ack
+    src__koruide__daemon__AutopilotDaemon___handle_hello --> src__koruide__protocol__error
+    src__koruide__daemon__AutopilotDaemon___handle_status --> src__koru__autopilot__ide__detect_running_ides
+    src__koruide__daemon__AutopilotDaemon___handle_status --> src__koruide__protocol__ack
+    src__koruide__daemon__AutopilotDaemon___handle_ack --> src__koruide__protocol__ack
+    src__koruide__daemon__AutopilotDaemon___handle_shutdown --> src__koruide__protocol__ack
+    src__koruide__daemon__AutopilotDaemon___handle_ping --> src__koruide__protocol__ack
     src__koruide__client__KoruIDEClient____init__ --> src__koruide__socket__default_socket_path
     src__koruide__client__KoruIDEClient__request --> src__koruide__protocol__decode
+    src__koru__autopilot__ide__detect_running_ides --> src__koru__autopilot__ide___iter_proc_pids
+    src__koru__autopilot__ide__detect_running_ides --> src__koru__autopilot__ide___read_comm
+    src__koru__autopilot__ide__detect_running_ides --> src__koru__autopilot__ide___read_cmdline
+    src__koru__autopilot__ide__detect_running_ides --> src__koru__autopilot__ide___read_exe
+    src__koru__autopilot__ide__detect_running_ides --> src__koru__autopilot__ide___matches
+    src__koru__autopilot__ide__detect_running_ides --> src__koru__autopilot__ide___candidate_score
+    src__koru__autopilot__ide__detect_focused_ide_id --> src__koru__autopilot__ide___read_comm
+    src__koru__autopilot__ide__detect_focused_ide_id --> src__koru__autopilot__ide___read_cmdline
+    src__koru__autopilot__ide__detect_focused_ide_id --> src__koru__autopilot__ide___active_window_pid_x11
+    src__koru__autopilot__ide__detect_focused_ide_id --> src__koru__autopilot__ide___matches
+    src__koru__autopilot__ide__focused_ide --> src__koru__autopilot__ide__detect_focused_ide_id
+    src__koru__autopilot__ide__pick_target --> src__koru__autopilot__ide__focused_ide
+    src__koru__autopilot__ide__detect_running_ides_cached --> src__koru__autopilot__ide__detect_running_ides
+    src__koruide__injector___submit_key_for --> src__koruide__config__cached_config
+    src__koruide__injector__Injector___candidate_backends --> src__koruide__injector___forced_injector_backend
+    src__koruide__injector__Injector___type_with_backend --> src__koruide__injector___extra_enter_count
+    src__koruide__injector__Injector___type_with_backend --> src__koruide__injector___ydotool_enter_keycode
+    src__koruide__injector__Injector___type_with_backend --> src__koruide__injector___ydotool_submit_mode
+    src__koruide__injector__Injector___type_with_backend --> src__koruide__injector___ydotool_ctrl_keycode
+    src__koruide__injector__Injector__type_text --> src__koruide__injector___submit_key_for
+    src__koruide__injector__Injector__submit_only --> src__koruide__injector___submit_key_for
+    src__koruide__os_injector__try_load_profile --> src__koruide__os_injector__iter_config_paths
+    src__koruide__os_injector__try_load_profile --> src__koruide__os_injector__load_profile
+    src__koruide__os_injector__load_profile --> src__koruide__os_injector___read_json
+    src__koruide__os_injector__load_profile --> src__koruide__os_injector__default_config_path
+    src__koruide__os_injector__save_profile --> src__koruide__os_injector___read_json
+    src__koruide__os_injector__save_profile --> src__koruide__os_injector__default_config_path
+    src__koruide__os_injector__capture_from_xdotool --> src__koruide__os_injector__capture_mouse_xy
+    src__koruide__os_injector___run_cmd --> src__koruide__os_injector___cmd_timeout_seconds
+    src__koruide__os_injector___xdotool --> src__koruide__os_injector___run_cmd
+    src__koruide__os_injector___tool_pid --> src__koru__autopilot__ide__detect_running_ides
+    src__koruide__os_injector___set_clipboard --> src__koruide__os_injector___run_cmd
+    src__koruide__os_injector__inject_with_profile --> src__koruide__os_injector__focus_mode_from_env
+    src__koruide__os_injector__inject_with_profile --> src__koruide__os_injector__input_mode_from_env
+    src__koruide__os_injector__inject_with_profile --> src__koruide__os_injector___post_focus_delay_seconds
+    src__koruide__os_injector__inject_with_profile --> src__koruide__os_injector___xdotool
+    src__koruide__os_injector__inject_with_profile --> src__koruide__os_injector___clipboard_backend
+    src__koruide__os_injector__inject_with_profile --> src__koruide__os_injector___set_clipboard
+    src__koruide__os_injector__try_drive_with_profile --> src__koruide__os_injector__os_injector_env_disabled
+    src__koruide__os_injector__try_drive_with_profile --> src__koruide__os_injector__try_load_profile
+    src__koruide__os_injector__try_drive_with_profile --> src__koruide__os_injector__inject_with_profile
+    src__koruide__os_injector__try_drive_with_profile --> src__koruide__os_injector___is_wayland_session
+    src__koruide__os_injector__try_drive_with_profile --> src__koruide__os_injector__dry_run_from_env
+    src__koruide__os_injector__try_drive_with_profile --> src__koruide__os_injector__os_injector_env_forced
     src__koruide__socket__default_socket_path --> src__koruide__socket___autopilot_socket_basename
+    src__koru__autopilot__audit__AuditLog____init__ --> src__koru__autopilot__audit__default_log_path
+    src__koru__autopilot__audit__AuditLog____init__ --> scripts__planfile_export_prompt__print
+    src__koru__autopilot__audit__AuditLog__record --> src__koru__autopilot__audit___isoformat_utc
+    src__koruide__plugin_installer__resolve_target_ide --> src__koruide__plugin_installer___valid_ide
+    src__koruide__plugin_installer__resolve_target_ide --> src__koruide__plugin_installer___ide_from_terminal_env
+    src__koruide__plugin_installer__resolve_target_ide --> src__koru__autopilot__ide__detect_focused_ide_id
+    src__koruide__plugin_installer__resolve_target_ide --> src__koru__autopilot__ide__detect_running_ides
+    src__koruide__plugin_installer___resolve_ide_command --> src__koruide__plugin_installer___terminal_vscode_flavor
+    src__koruide__plugin_installer___settings_path_for_ide --> src__koruide__plugin_installer___terminal_vscode_flavor
+    src__koruide__plugin_installer___configure_socket_path --> src__koruide__plugin_installer___settings_path_for_ide
+    src__koruide__plugin_installer__install_plugin_for_ide --> src__koruide__plugin_installer___resolve_ide_command
+    src__koruide__plugin_installer__install_plugin_for_ide --> src__koruide__plugin_installer___extension_is_installed
+    src__koruide__plugin_installer__install_plugin_for_ide --> src__koruide__plugin_installer__resolve_extension_vsix
+    src__koruide__plugin_installer__install_plugin_for_ide --> src__koruide__plugin_installer__resolve_target_ide
+    src__koruide__plugin_installer__install_plugin_for_ide --> src__koruide__plugin_installer___configure_socket_path
     src__koru__runtime__planfile_dir --> src__koru__utils__subprocess_runner__resolve_planfile_subpath
     src__koru__runtime__runtime_dir --> src__koru__runtime__planfile_dir
     src__koru__runtime__runs_dir --> src__koru__runtime__runtime_dir
@@ -352,7 +469,7 @@ flowchart TD
     src__koru__mcp_provision___koru_mcp_entry --> src__koru__mcp_provision___resolved_koru_command
     src__koru__mcp_provision___koru_mcp_entry_cursor --> src__koru__mcp_provision___resolved_koru_command
     src__koru__mcp_provision___maybe_upgrade_koru_command --> src__koru__mcp_provision___resolved_koru_command
-    src__koru__mcp_provision__detect_ides --> src__koruide__ide__detect_running_ides
+    src__koru__mcp_provision__detect_ides --> src__koru__autopilot__ide__detect_running_ides
     src__koru__mcp_provision__detect_ides --> src__koru__mcp_provision___windsurf_global_config
     src__koru__mcp_provision__provision_windsurf --> src__koru__mcp_provision___windsurf_project_config
     src__koru__mcp_provision__provision_windsurf --> src__koru__mcp_provision___read_json
@@ -525,6 +642,17 @@ flowchart TD
     src__koru__queue_clean__clean_queue --> src__koru__queue_clean___list_tickets
     src__koru__queue_clean__clean_queue --> src__koru__queue_clean__find_candidates
     src__koru__queue_clean__clean_queue --> src__koru__queue_clean___close_ticket
+    src__koru__autonomous_startup__resolve_agent_lane_id --> src__koru__autonomous_startup___terminal_agent_lane_from_env
+    src__koru__autonomous_startup__resolve_agent_lane_id --> src__koru__autopilot__ide__detect_running_ides
+    src__koru__autonomous_startup__resolve_agent_lane_id --> src__koru__autopilot__ide__pick_target
+    src__koru__autonomous_startup__build_startup_probe --> src__koru__autonomous_startup__resolve_agent_lane_id
+    src__koru__autonomous_startup__build_startup_probe --> src__koru__autonomous_startup__resolve_autopilot_ide_for_autonomous
+    src__koru__autonomous_startup__build_startup_probe --> src__koru__autopilot__ide__detect_running_ides
+    src__koru__autonomous_startup__build_startup_probe --> src__koru__autonomous_startup__koru_distribution_version
+    src__koru__autonomous_startup__build_startup_probe --> src__koru__autonomous_startup___terminal_agent_lane_from_env
+    src__koru__autonomous_startup__build_startup_probe --> src__koru__autonomous_startup___session_label
+    src__koru__autonomous_startup__build_startup_probe --> src__koru__ide_router__is_headless_environment
+    src__koru__autonomous_startup__build_startup_probe --> src__koruide__socket__default_socket_path
     src__koru__ide_client__build_legacy_ide_client --> src__koru__ide_client__adapt_legacy_autopilot_client
     src__koru__ide_client__build_ide_client --> src__koru__ide_client__build_legacy_ide_client
     src__koru__ide_client__build_ide_client --> src__koru__ide_client__build_koruide_client
@@ -588,21 +716,8 @@ flowchart TD
     src__koru__gc__run_gc --> src__koru__gc___apply_keep_last
     src__koru__gc__run_gc --> src__koru__gc___delete_tickets
     src__koru__gc__run_gc --> src__koru__gc___archive_tickets_before_delete
-    src__koru__autonomous_cycle___stdio_info --> scripts__planfile_export_prompt__print
-    src__koru__autonomous_cycle___is_topology_enabled --> src__koru__topology__is_component_enabled
-    src__koru__autonomous_cycle___is_topology_enabled --> src__koru__topology__is_pipeline_enabled
-    src__koru__autonomous_cycle___run_command_check --> src__koru__autonomous_cycle___stdio_info
-    src__koru__autonomous_cycle___create_diagnostic_ticket --> src__koru__tasks__create_nl_task
-    src__koru__autonomous_cycle___create_diagnostic_ticket --> src__koru__autonomous_cycle___stdio_info
-    src__koru__autonomous_cycle___run_idle_diagnostics --> src__koru__autonomous_cycle___stdio_info
-    src__koru__autonomous_cycle___run_idle_diagnostics --> src__koru__autonomous_cycle___is_topology_enabled
-    src__koru__autonomous_cycle___drain_autopilot_events --> src__koru__autonomous_cycle___autopilot_event_path
-    src__koru__autonomous_cycle__run_cycle --> src__koru__autonomous_cycle___drain_autopilot_events
-    src__koru__autonomous_cycle__run_cycle --> src__koru__run_log__RunLogWriter___emit
-    src__koru__autonomous_cycle__run_cycle --> src__koru__autonomous_cycle___queue_loop_waiting_ticket_label
-    src__koru__autonomous_cycle__run_cycle --> src__koru__autonomy__telemetry_snapshot__write_autonomy_cycle_telemetry
-    src__koru__autonomous_cycle__run_cycle --> src__koru__autonomy__environment__probe_socket_health
-    src__koru__autonomous_cycle__run_cycle --> src__koru__autonomous_cycle___is_topology_enabled
+    src__koru__ide_runtime__build_host_setup_report --> src__koruide__host_setup__build_setup_host_report
+    src__koru__ide_runtime__detect_running_ides --> src__koruide__protocol__Message__to_dict
     src__koru__serve___list_tickets --> src__koru__queue__ticket__planfile_command
     src__koru__serve___bulk_waiting_input_action --> src__koru__serve___list_tickets
     src__koru__serve___bulk_waiting_input_action --> src__koru__queue__ticket__planfile_command
@@ -749,6 +864,8 @@ flowchart TD
     src__koru__autonomous_wup___start_wup_watch --> src__koru__autonomous_wup___wup_stdio_info
     src__koru__autonomous_wup___start_wup_watch --> src__koru__autonomous_wup___wup_topology_gate
     src__koru__autonomous_wup___stop_process --> src__koru__autonomous_wup___wup_stdio_info
+    src__koru__agent_backend_runtime__OsInjectorBackend__send_chat --> src__koruide__os_injector__load_profile
+    src__koru__agent_backend_runtime__OsInjectorBackend__send_chat --> src__koruide__os_injector__inject_with_profile
     src__koru__dotenv_loader__parse_dotenv --> src__koru__dotenv_loader___parse_value
     src__koru__dotenv_loader__load_dotenv --> src__koru__dotenv_loader__parse_dotenv
     src__koru__mcp_server___load_jobs --> src__koru__mcp_server___get_job_store_path
@@ -785,6 +902,13 @@ flowchart TD
     src__koru__autonomy__telemetry_snapshot__write_autonomy_cycle_telemetry --> src__koru__autonomy__telemetry_snapshot__autonomy_telemetry_path
     src__koru__autonomy__telemetry_snapshot__build_autonomy_loop_brief --> src__koru__autonomy__telemetry_snapshot__autonomy_telemetry_path
     src__koru__autonomy__heal__heal_environment --> src__koru__autonomy__heal__remove_stale_socket
+    src__koru__autonomy__ide_work__fetch_next_open_ticket --> src__koru__autonomy__ide_work___parse_open_tickets
+    src__koru__autonomy__ide_work__resolve_idle_drive_prompt --> src__koru__autonomy__ide_work__fetch_next_open_ticket
+    src__koru__autonomy__ide_work__resolve_idle_drive_prompt --> src__koru__autonomy__ide_work__build_ide_work_prompt
+    src__koru__autonomy__ide_work___ticket_in_progress_started_at --> src__koru__autonomy__ide_work___parse_iso_datetime
+    src__koru__autonomy__ide_work__release_stale_in_progress_tickets --> src__koru__autonomy__ide_work___list_in_progress_tickets
+    src__koru__autonomy__ide_work__release_stale_in_progress_tickets --> src__koru__autonomy__ide_work___ticket_in_progress_started_at
+    src__koru__autonomy__ide_work__resolve_in_progress_stale_minutes --> src__koru__project_pipeline__load_koru_project_pipeline
     src__koru__autonomy__env___env_ticket_sources --> scripts__planfile_export_prompt__print
     src__koru__autonomy__env__apply_autoloop_env_to_args --> src__koru__autonomy__env___env_ticket_sources
     src__koru__autonomy__env__apply_autoloop_env_to_args --> src__koru__autonomy__env__env_truthy
@@ -800,106 +924,8 @@ flowchart TD
     src__koru__queue__loop__run_planfile_queue_loop --> src__koru__queue__runner__run_next_planfile_task
     src__koru__queue__runners__run_process --> src__koru__queue__runners___planfile_env
     src__koru__queue__locking__queue_runner_lock --> src__koru__queue__locking__queue_lock_wanted
-    src__koru__queue__locking__ticket_claim_or_error --> src__koru__queue__ticket__planfile_command
-    src__koru__queue__locking__ticket_claim_or_error --> src__koru__queue__locking__claim_lease_seconds_str
-    src__koru__queue__runner__run_next_planfile_task --> src__koru__queue__locking__queue_runner_lock
-    src__koru__queue__runner__run_next_planfile_task --> src__koru__queue__ticket__planfile_command
-    src__koru__queue__runner__run_next_planfile_task --> src__koru__queue__ticket__parse_next_ticket
-    src__koru__queue__runner__run_next_planfile_task --> src__koru__queue__locking__ticket_claim_or_error
-    src__koru__queue__human__default_human_prompt --> scripts__planfile_export_prompt__print
-    src__koru__queue__shell_evidence__format_shell_run_note --> src__koru__queue__shell_evidence___tail_stream
-    src__koru__queue__planfile_ticket_note__append_shell_evidence_note --> src__koru__queue__ticket__planfile_command
-    src__koru__queue__planfile_ticket_note__append_shell_evidence_note --> src__koru__queue__planfile_ticket_note___stderr_unknown_option
-    src__koru__autopilot__config__default_config_path --> src__koru__autopilot__utils__client_helpers__resolve_xdg_path
-    src__koru__autopilot__config__load_config --> src__koru__autopilot__config___merge_submit_keys
-    src__koru__autopilot__config__load_config --> src__koru__autopilot__config__default_config_path
-    src__koru__autopilot__config__load_config --> scripts__planfile_export_prompt__print
-    src__koru__autopilot__config__cached_config --> src__koru__autopilot__config__load_config
-    src__koru__autopilot__default_socket_path --> src__koru__autopilot___autopilot_socket_basename
-    src__koru__autopilot__utils__client_helpers__call_daemon_method --> scripts__planfile_export_prompt__print
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__override --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__debugLog
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__override --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__detectIde
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__connect --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__disconnect
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__connect --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__detectIde
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__connect --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__debugLog
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__connect --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__tryConnectNext
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__tryConnectNext --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__scheduleRetry
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__tryConnectNext --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__debugLog
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__tryConnectNext --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__detectIde
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__tryConnectNext --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__send
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__tryConnectNext --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__onData
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__p --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__debugLog
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__debugLog --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__onData
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__sock --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__debugLog
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__sock --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__detectIde
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__sock --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__send
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__connected --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__debugLog
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__connected --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__detectIde
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__connected --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__send
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__disconnect --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__debugLog
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__disconnect --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__clearTimeout
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__scheduleRetry --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__connect
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__delay --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__connect
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submitChat --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__detectIde
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submitChat --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__runCommand
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__ide --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__runCommand
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__candidates --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__runCommand
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__focusChat --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__detectIde
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__focusChat --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__runCommand
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__focusChat --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__runList
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__primary --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__runCommand
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__existing --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__runCommand
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__runList --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__runCommand
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__pasteText --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__detectIde
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__pasteText --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__focusChatInput
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__focusChatInput --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__detectIde
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__focusChatInput --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__runCommand
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__app --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__send
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__send --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__debugLog
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__line --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__dispatch
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__line --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__send
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__onData --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__dispatch
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__onData --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__send
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__idx --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__dispatch
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__idx --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__send
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__message --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__send
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__dispatch --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__injectChat
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__dispatch --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__send
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__dispatch --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__disconnect
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__plan --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__injectChat
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__plan --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__send
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__plan --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__disconnect
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__injectChat --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__send
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__injectChat --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__focusChat
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__injectChat --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__pasteText
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__injectChat --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submit
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__injectChat --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submitChat
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submit --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__send
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__pasted --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__send
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submitted --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submit
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submitted --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submitChat
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__sendManualChat --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__injectChat
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__activate --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__debugLog
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__activate --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__connect
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__activate --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__sendManualChat
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__bridge --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__sendManualChat
-    plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__deactivate --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__disconnect
-    plugins__koru_autopilot_vscode__src__dispatch_plan__test__testShutdownPlan --> plugins__koru_autopilot_vscode__src__dispatch_plan__test__assert
-    plugins__koru_autopilot_vscode__src__dispatch_plan__test__testUnknownTypePlan --> plugins__koru_autopilot_vscode__src__dispatch_plan__test__assert
-    plugins__koru_autopilot_vscode__src__dispatch_plan__test__testSocketCandidatesPreferIdeInstanceBeforeSingleton --> plugins__koru_autopilot_vscode__src__dispatch_plan__test__assert
-    plugins__koru_autopilot_vscode__src__dispatch_plan__test__oldSocket --> plugins__koru_autopilot_vscode__src__dispatch_plan__test__assert
-    plugins__koru_autopilot_vscode__src__dispatch_plan__test__oldInstance --> plugins__koru_autopilot_vscode__src__dispatch_plan__test__assert
-    plugins__koru_autopilot_vscode__src__dispatch_plan__test__oldRuntime --> plugins__koru_autopilot_vscode__src__dispatch_plan__test__assert
-    plugins__koru_autopilot_vscode__src__dispatch_plan__test__testSocketCandidatesDoNotCrossIdeFallback --> plugins__koru_autopilot_vscode__src__dispatch_plan__test__assert
-    plugins__koru_autopilot_vscode__src__dispatch_plan__test__testSocketCandidatesTreatOverrideAsExactTarget --> plugins__koru_autopilot_vscode__src__dispatch_plan__test__assert
-    plugins__koru_autopilot_vscode__src__socketPath__defaultSocketPathFromEnv --> plugins__koru_autopilot_vscode__src__socketPath__slugInstance
-    plugins__koru_autopilot_vscode__src__socketPath__explicit --> plugins__koru_autopilot_vscode__src__socketPath__push
-    plugins__koru_autopilot_vscode__src__socketPath__inst --> plugins__koru_autopilot_vscode__src__socketPath__slugInstance
-    plugins__koru_autopilot_vscode__src__socketPath__name --> plugins__koru_autopilot_vscode__src__socketPath__slugInstance
-    plugins__koru_autopilot_vscode__src__socketPath__xdg --> plugins__koru_autopilot_vscode__src__socketPath__push
-    plugins__koru_autopilot_vscode__src__socketPath__uid --> plugins__koru_autopilot_vscode__src__socketPath__push
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class src__koru__autonomous_diagnostics__run_idle_diagnostics,src__koru__watch__format_queue_event,src__koru__cli___gc_main,src__koru__cli___agent_main,src__koru__cli___render_topology_text,src__koru__cli___topology_main,src__koru__cli___queue_run_main,src__koru__queue_clean__find_candidates,src__koru__tools__detect_tools,src__koru__tools__build_tool_task_scaffold,src__koru__init__InitReport__summary,src__koru__autonomous_cycle___run_idle_diagnostics,src__koru__autonomous_cycle__run_cycle,src__koru__scan___scan_code2llm_analysis,src__koru__context___fetch_ticket_data,src__koru__context___build_shared_rules,src__koru__policy__policy_violations,src__koru__agents__detect_agent_options,src__koru__tasks__create_nl_task,src__koru__init_host_environment___recommended_next_steps,src__koru__init_host_environment___render_host_environment_md,src__koru__autonomous_wup___read_wup_health,src__koru__mcp_server__tool_list_tickets,src__koru__autonomy__env__apply_autoloop_env_to_args,src__koru__autonomy__environment__probe_environment,src__koru__queue__runners__run_llm_request,src__koru__queue__runner__run_next_planfile_task,plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__injectChat,scripts__planfile_sync_todo__do_from_todo,src__koruide__host_setup___print_text_report highCC
-    class services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,services__healing_webhook__ticket_builder__build_ticket_payload,src__koruide__protocol__decode,src__koru__agent_backends___parse_lane,src__koru__agent_backends__load_agent_integration_config,src__koru__ide_router__is_headless_environment,src__koru__ide_router__resolve_ide_route,src__koru__mcp_provision__detect_ides,src__koru__mcp_provision__ensure_koru_mcp_not_disabled,src__koru__gate__parse_authorizations,src__koru__gate__authorize_gate,src__koru__bootstrap__load_flat_pipeline,src__koru__bootstrap___validate_cross_task_dependencies,src__koru__bootstrap___detect_cycle,src__koru__bootstrap___normalise_task,src__koru__bootstrap__import_flat_pipeline,src__koru__cli___render_clean_report_text,src__koru__cli___queue_main,src__koru__cli___task_main,src__koru__cli___is_bare_invocation,src__koru__cli___render_runtime_context_text,src__koru__cli___agent_backends_main,src__koru__cli___doctor_main,src__koru__cli___init_agent_lane_main medCC
+    class src__koruide__host_setup___print_text_report,src__koruide__daemon__AutopilotDaemon___handle_ack,src__koru__autopilot__ide___candidate_score,src__koruide__plugin_installer__install_plugin_for_ide,src__koru__autonomous_diagnostics__run_idle_diagnostics,src__koru__watch__format_queue_event,src__koru__cli___gc_main,src__koru__cli___agent_main,src__koru__cli___render_topology_text,src__koru__cli___topology_main,src__koru__cli___queue_run_main,src__koru__queue_clean__find_candidates,src__koru__tools__detect_tools,src__koru__tools__build_tool_task_scaffold,src__koru__init__InitReport__summary,src__koru__scan___scan_code2llm_analysis,src__koru__context___fetch_ticket_data,src__koru__context___build_shared_rules,src__koru__policy__policy_violations,src__koru__agents__detect_agent_options,src__koru__tasks__create_nl_task,src__koru__init_host_environment___recommended_next_steps,src__koru__init_host_environment___render_host_environment_md,src__koru__autonomous_wup___read_wup_health,src__koru__mcp_server__tool_list_tickets,src__koru__autonomy__env__apply_autoloop_env_to_args,src__koru__autonomy__environment__probe_environment,src__koru__queue__runners__run_llm_request,src__koru__queue__runner__run_next_planfile_task,src__koru__autopilot__cli_command___action_session_start highCC
+    class services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,services__healing_webhook__ticket_builder__build_ticket_payload,src__koruide__protocol__decode,src__koruide__host_setup___human_followups,src__koruide__daemon__AutopilotDaemon___handle_drive,src__koruide__daemon__AutopilotDaemon___drive_via_keyboard,src__koruide__daemon__AutopilotDaemon___handle_plugin_event,src__koru__autopilot__ide__detect_running_ides,src__koruide__injector__Injector___type_with_backend,src__koruide__injector__Injector__type_text,src__koruide__os_injector__inject_with_profile,src__koruide__os_injector__try_drive_with_profile,src__koruide__plugin_installer__resolve_target_ide,src__koruide__plugin_installer__resolve_extension_vsix,src__koruide__plugin_installer___configure_socket_path,src__koru__agent_backends___parse_lane,src__koru__agent_backends__load_agent_integration_config,src__koru__ide_router__is_headless_environment,src__koru__ide_router__resolve_ide_route,src__koru__mcp_provision__detect_ides,src__koru__mcp_provision__ensure_koru_mcp_not_disabled,src__koru__gate__parse_authorizations,src__koru__gate__authorize_gate,src__koru__bootstrap__load_flat_pipeline medCC

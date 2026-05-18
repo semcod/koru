@@ -65,6 +65,93 @@ def test_drive_prompt_flag(
     assert out["ok"] is True
 
 
+def test_drive_auto_fallbacks_to_direct_when_daemon_cannot_focus(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    class _C:
+        def is_running(self) -> bool:
+            return True
+
+        def drive(
+            self,
+            text: str,
+            *,
+            submit: bool = True,
+            ide: str = "auto",
+            require_plugin: bool = False,
+        ):
+            return {
+                "ok": False,
+                "message": "chat input is not focused/open (no supported focus command)",
+                "opened": False,
+                "submitted": False,
+                "type": "ack",
+            }
+
+    monkeypatch.setattr(cli_command, "_client", lambda _a: _C())
+    monkeypatch.setattr(
+        cli_command,
+        "_run_direct_drive",
+        lambda _args, _text, emit_payload=False: (
+            0,
+            {"ok": True, "backend": "ydotool", "submitted": True},
+        ),
+    )
+
+    rc = autopilot_main(["drive", "hello"])
+    assert rc == 0
+    captured = capsys.readouterr()
+    assert "falling back to local --direct injection" in captured.err
+    payload = json.loads(captured.out)
+    assert payload["backend"] == "ydotool"
+    assert payload["daemon_fallback"]["opened"] is False
+    assert payload["daemon_fallback"]["submitted"] is False
+
+
+def test_drive_auto_fallback_can_be_disabled_by_env(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    class _C:
+        def is_running(self) -> bool:
+            return True
+
+        def drive(
+            self,
+            text: str,
+            *,
+            submit: bool = True,
+            ide: str = "auto",
+            require_plugin: bool = False,
+        ):
+            return {
+                "ok": False,
+                "message": "chat input is not focused/open",
+                "opened": False,
+                "submitted": False,
+                "type": "ack",
+            }
+
+    monkeypatch.setenv("KORU_AUTOPILOT_DRIVE_AUTO_DIRECT", "0")
+    monkeypatch.setattr(cli_command, "_client", lambda _a: _C())
+
+    def _should_not_fallback(*_a, **_k):
+        raise AssertionError("should not fallback")
+
+    monkeypatch.setattr(
+        cli_command,
+        "_run_direct_drive",
+        _should_not_fallback,
+    )
+
+    rc = autopilot_main(["drive", "hello"])
+    assert rc == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["opened"] is False
+
+
 def test_drive_dry_run_direct(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
@@ -111,8 +198,8 @@ def test_drive_direct_prefers_os_injector_profile(
     monkeypatch.setattr(cli_command, "Injector", lambda: _Inj())
     monkeypatch.setattr(
         cli_command,
-        "detect_running_ides",
-        lambda: [RunningIDE(id="vscode", label="VS Code", pid=1, exe="/e")],
+        "resolve_drive_target",
+        lambda *_a, **_k: ("vscode", "vscode", "test:explicit"),
     )
 
     def _fake_try(**kwargs):
@@ -248,16 +335,16 @@ def test_calibrate_auto_ide_resolves_from_running_processes(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
+    from koru.autopilot import ide as ide_mod
     from koru.autopilot import os_injector as oi_mod
     from koru.autopilot.ide import RunningIDE
 
     monkeypatch.setattr(cli_command.time, "sleep", lambda _s: None)
     monkeypatch.setattr(oi_mod, "capture_mouse_xy", lambda: (9, 9))
-    monkeypatch.setattr(
-        cli_command,
-        "detect_running_ides",
-        lambda: [RunningIDE(id="cursor", label="Cursor", pid=1, exe="/c")],
-    )
+    cursor_only = [RunningIDE(id="cursor", label="Cursor", pid=1, exe="/c")]
+    monkeypatch.setattr(ide_mod, "detect_running_ides", lambda: cursor_only)
+    monkeypatch.setattr(ide_mod, "detect_terminal_host_ide_id", lambda: None)
+    monkeypatch.setattr(ide_mod, "detect_focused_ide_id", lambda: None)
     rc = autopilot_main(
         [
             "calibrate",

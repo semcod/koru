@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "koru"
-version = "0.1.123"
+version = "0.1.124"
 description = "Closed-loop automation across semcod/* repositories."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -42,6 +42,8 @@ dev = [
 [project.scripts]
 koru = "koru.cli:main"
 koru-wup-testql = "koru.wup_testql_compat:main"
+koru-dsl = "korudsl.cli:main"
+koru-api = "koruapi.cli:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -80,8 +82,8 @@ min_severity = "low"
 deduplicate = true
 
 [tool.costs]
-# AI Cost tracking configuration
-badge = true
+# AI Cost tracking configuration (requires optional dep: pip install -e ".[dev]")
+badge = false
 update_readme = true
 readme_path = "README.md"
 default_model = "openrouter/qwen/qwen3-coder-next"

@@ -20,7 +20,7 @@ from .agents import (
     save_agent_prompt,
     select_agent,
 )
-from .autonomous import autonomous_main
+from .autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
 from .autopilot.cli_command import autopilot_main
 from .bootstrap import import_flat_pipeline
 from .context import build_context, render_markdown_handoff
@@ -1111,39 +1111,15 @@ def _task_main(argv: list[str]) -> int:
 
 
 def _serve_main(argv: list[str]) -> int:
-    args = _build_serve_parser().parse_args(argv)
-    config = ServeConfig(
-        project=args.project.resolve(),
-        host=args.host,
-        port=args.port,
-        open_browser=args.open_browser,
-        queue_name=args.queue_name,
-        auto_port=bool(args.auto_port) or _env_truthy("KORU_SERVE_AUTO_PORT"),
-    )
-    exit_code = serve(config)
-    emit_management_event(
-        tool="koru.serve",
-        action="completed" if exit_code == 0 else "failed",
-        status="completed" if exit_code == 0 else "failed",
-        level="info" if exit_code == 0 else "error",
-        message=f"exit={exit_code}",
-        queue=config.queue_name,
-    )
-    return exit_code
+    from koruapi.dashboard import dashboard_main
+
+    return dashboard_main(argv)
 
 
 def _local_serve_main(argv: list[str]) -> int:
-    args = _build_local_serve_parser().parse_args(argv)
-    base = default_local_service_config()
-    host = (args.host if args.host is not None else base.host).strip() or base.host
-    port = base.port if args.port is None else args.port
-    max_events = base.max_events if args.max_events is None else args.max_events
-    if max_events < 1:
-        print("koru local-serve: --max-events must be >= 1", file=sys.stderr)
-        return 2
-    max_events = min(max_events, 10_000)
-    config = LocalServiceConfig(host=host, port=port, max_events=max_events)
-    return run_local_service(config)
+    from koruapi.local import local_main
+
+    return local_main(argv)
 
 
 def _agent_main(argv: list[str]) -> int:
@@ -1463,9 +1439,9 @@ def _init_ci_main(_argv: list[str]) -> int:
 
 
 def _mcp_serve_main(argv: list[str]) -> int:
-    from .mcp_server import mcp_serve_main
+    from koruapi.mcp import mcp_main
 
-    return mcp_serve_main(argv)
+    return mcp_main(argv)
 
 
 def _agent_backends_main(argv: list[str]) -> int:
@@ -1589,6 +1565,37 @@ def ide_router_main(argv: list[str]) -> int:
     return 0
 
 
+def _dsl_main(argv: list[str]) -> int:
+    from korudsl.cli import main as dsl_main
+
+    return dsl_main(argv)
+
+
+def _api_main(argv: list[str]) -> int:
+    from koruapi.cli import main as api_main
+
+    return api_main(argv)
+
+
+def _peek_project_from_argv(argv: list[str]) -> Path:
+    for idx, part in enumerate(argv):
+        if part == "--project" and idx + 1 < len(argv):
+            return Path(argv[idx + 1]).expanduser().resolve()
+        if part.startswith("--project="):
+            return Path(part.split("=", 1)[1]).expanduser().resolve()
+    return Path.cwd().resolve()
+
+
+def _auto_main(argv: list[str]) -> int:
+    """``koru auto``: stop prior autonomous/auto loops, then start with ``--replace-existing``."""
+    if "--allow-duplicate" not in argv:
+        stdio = os.environ.get("KORU_STDIO_FORMAT", "human")
+        stop_prior_autonomous_for_auto_start(_peek_project_from_argv(argv), stdio_format=stdio)
+    if "--replace-existing" not in argv and "--allow-duplicate" not in argv:
+        argv = ["--replace-existing", *argv]
+    return autonomous_main(argv, invoked_as_auto=True)
+
+
 _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "init-ci": _init_ci_main,
     "init-ide": _init_ide_main,
@@ -1607,6 +1614,9 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "ide-router": ide_router_main,
     "autopilot": autopilot_main,
     "autonomous": autonomous_main,
+    "auto": lambda argv: _auto_main(argv),
+    "dsl": _dsl_main,
+    "api": _api_main,
     "topology": _topology_main,
     "runtime-context": _runtime_context_main,
 }

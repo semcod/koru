@@ -4,6 +4,17 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.12] — 2026-05-18
+
+### Added
+- **Probe ladder** (`koruAutopilot.probeLadder`, default on): tries focus/paste/submit
+  commands in order, verifies focus left the file editor and paste did not contaminate
+  the active editor, caches winning command IDs in extension global state.
+- **`koru: Calibrate chat probe ladder`**: runs a harmless probe token through the
+  ladder and shows which commands won.
+- **`ack` metadata**: `winning_focus_open`, `winning_paste`, `winning_submit`,
+  `probe_ladder` for daemon diagnostics.
+
 ## [0.1.6] — 2026-05-14
 
 ### Fixed

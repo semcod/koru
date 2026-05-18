@@ -2,7 +2,7 @@
 
 app {
   name: koru;
-  version: 0.1.121;
+  version: 0.1.123;
 }
 
 dependencies {
@@ -56,6 +56,11 @@ workflow[name="test"] {
 workflow[name="test:all"] {
   trigger: manual;
   step-1: run cmd=python3 -m pytest tests/ -v -m "" {{.CLI_ARGS}};
+}
+
+workflow[name="test:docker"] {
+  trigger: manual;
+  step-1: run cmd=python3 -m pytest tests/test_docker_e2e.py -v -m "" {{.CLI_ARGS}};
 }
 
 workflow[name="test:fast"] {
@@ -454,6 +459,42 @@ workflow[name="scripts:redsl:precommit"] {
 workflow[name="scripts:planfile:sync-todo"] {
   trigger: manual;
   step-1: run cmd=python3 scripts/planfile-sync-todo.py;
+}
+
+workflow[name="scripts:soak:start"] {
+  trigger: manual;
+  step-1: run cmd=bash scripts/koru-soak-start.sh;
+}
+
+workflow[name="scripts:soak:status"] {
+  trigger: manual;
+  step-1: run cmd=bash scripts/koru-soak-status.sh;
+}
+
+workflow[name="scripts:soak:monitor"] {
+  trigger: manual;
+  step-1: run cmd=mkdir -p .planfile/.koru
+if ! pgrep -f "autonomous up.*--max-cycles 0" >/dev/null 2>&1; then
+  echo "! no running soak process found; start with: task scripts:soak:start"
+  exit 1
+fi
+pkill -f koru-soak-monitor.sh || true
+nohup env PROJECT="$PWD" TICKET_ID="{{.TID | default "STARTER-009"}}" \
+  POLL_SECONDS="{{.POLL_SECONDS | default "60"}}" \
+  bash scripts/koru-soak-monitor.sh > .planfile/.koru/soak-monitor.log 2>&1 &
+echo "✓ soak monitor started for {{.TID | default "STARTER-009"}}";
+}
+
+workflow[name="scripts:soak:report"] {
+  trigger: manual;
+  step-1: run cmd=test -f .planfile/.koru/soak-interim-report.md && cat .planfile/.koru/soak-interim-report.md || true
+test -f .planfile/.koru/soak-final-report.md && cat .planfile/.koru/soak-final-report.md || true
+test -f .planfile/.koru/soak-stop-report.md && cat .planfile/.koru/soak-stop-report.md || true;
+}
+
+workflow[name="scripts:soak:stop"] {
+  trigger: manual;
+  step-1: run cmd=bash scripts/koru-soak-stop.sh;
 }
 
 workflow[name="deploy:plan"] {

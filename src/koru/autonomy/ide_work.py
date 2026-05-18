@@ -3,13 +3,26 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 from collections.abc import Callable, Sequence
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from ..project_pipeline import load_koru_project_pipeline
+
 _PRIORITY_RANK = {"critical": 0, "high": 1, "normal": 2, "low": 3}
+_TICKET_ID_RE = re.compile(r"\b(PLF-\d+)\b", re.IGNORECASE)
+
+
+def extract_ticket_id_from_text(text: str) -> str | None:
+    """Return the first planfile ticket id embedded in ``text`` (e.g. IDE prompt)."""
+    match = _TICKET_ID_RE.search(text or "")
+    if not match:
+        return None
+    return match.group(1).upper()
 
 
 def _parse_open_tickets(stdout: str) -> list[dict[str, Any]]:
@@ -119,6 +132,128 @@ def resolve_idle_drive_prompt(
     )
 
 
+def _parse_iso_datetime(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    text = str(value).strip()
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    try:
+        dt = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=UTC)
+    return dt
+
+
+def _ticket_in_progress_started_at(ticket: dict[str, Any]) -> datetime | None:
+    execution = ticket.get("execution")
+    if isinstance(execution, dict):
+        started = _parse_iso_datetime(execution.get("started_at"))
+        if started is not None:
+            return started
+    return _parse_iso_datetime(ticket.get("updated_at"))
+
+
+def _list_in_progress_tickets(
+    project: Path,
+    *,
+    runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]],
+) -> list[dict[str, Any]]:
+    try:
+        result = runner(
+            [
+                "planfile",
+                "ticket",
+                "list",
+                "--status",
+                "in_progress",
+                "--format",
+                "json",
+            ],
+            project,
+        )
+    except (FileNotFoundError, OSError):
+        return []
+    if result.returncode != 0:
+        return []
+    try:
+        payload = json.loads((result.stdout or "").strip() or "[]")
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(payload, list):
+        return []
+    return [entry for entry in payload if isinstance(entry, dict)]
+
+
+def release_stale_in_progress_tickets(
+    project: Path,
+    *,
+    stale_minutes: float,
+    runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]],
+) -> int:
+    """Reopen ``in_progress`` tickets older than ``stale_minutes``. Returns count."""
+    if stale_minutes <= 0:
+        return 0
+    cutoff = datetime.now(UTC) - timedelta(minutes=stale_minutes)
+    released = 0
+    for ticket in _list_in_progress_tickets(project, runner=runner):
+        ticket_id = str(ticket.get("id") or "").strip()
+        if not ticket_id:
+            continue
+        started = _ticket_in_progress_started_at(ticket)
+        if started is None or started > cutoff:
+            continue
+        note = (
+            f"koru: stale in_progress (>{stale_minutes:.0f}m since "
+            f"{started.isoformat()}) — reopened for queue/IDE"
+        )
+        result = runner(
+            [
+                "planfile",
+                "ticket",
+                "update",
+                ticket_id,
+                "--status",
+                "open",
+                "--note",
+                note,
+            ],
+            project,
+        )
+        if result.returncode == 0:
+            released += 1
+    return released
+
+
+def resolve_in_progress_stale_minutes(project: Path | None = None) -> float | None:
+    """Env ``KORU_INPROGRESS_STALE_MINUTES`` or ``queue.in_progress_stale_minutes`` in koru.yaml."""
+    env_raw = os.environ.get("KORU_INPROGRESS_STALE_MINUTES", "").strip()
+    if env_raw:
+        try:
+            value = float(env_raw)
+            return value if value > 0 else None
+        except ValueError:
+            return None
+    if project is None:
+        return None
+    raw = load_koru_project_pipeline(project)
+    if not isinstance(raw, dict):
+        return None
+    queue = raw.get("queue")
+    if not isinstance(queue, dict):
+        return None
+    yaml_val = queue.get("in_progress_stale_minutes")
+    if yaml_val is None:
+        return None
+    try:
+        value = float(yaml_val)
+    except (TypeError, ValueError):
+        return None
+    return value if value > 0 else None
+
+
 def release_in_progress_tickets(
     project: Path,
     *,
@@ -152,7 +287,10 @@ def release_in_progress_tickets(
 
 __all__ = [
     "build_ide_work_prompt",
+    "extract_ticket_id_from_text",
     "fetch_next_open_ticket",
     "release_in_progress_tickets",
+    "release_stale_in_progress_tickets",
     "resolve_idle_drive_prompt",
+    "resolve_in_progress_stale_minutes",
 ]

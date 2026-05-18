@@ -296,6 +296,17 @@ def inject_with_profile(
         }
 
     x, y = profile.chat_x, profile.chat_y
+    try:
+        from koru.activity_log import activity, preview_text
+
+        activity(
+            "CHAT",
+            f"os_injector/{profile.tool_id}: focus=({x},{y}) method={input_method} "
+            f"submit={submit}",
+            preview=text,
+        )
+    except Exception:
+        pass
     _xdotool(["mousemove", str(x), str(y)])
     if focus == "click":
         _xdotool(["click", "1"])
@@ -346,8 +357,6 @@ def try_drive_with_profile(
     if tool_id == "default":
         return None
     if os_injector_env_disabled():
-        return None
-    if _is_wayland_session() and not os_injector_env_forced():
         return None
     if shutil.which("xdotool") is None:
         return None

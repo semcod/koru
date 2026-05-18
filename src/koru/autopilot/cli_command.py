@@ -15,37 +15,20 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 from . import default_socket_path
 from koruide.audit import AuditLog, default_log_path
 from .client import AutopilotClient
 from .daemon import AutopilotDaemon
-from .ide import detect_focused_ide_id, detect_running_ides, pick_target
+from .ide import (
+    detect_focused_ide_id,
+    detect_running_ides,
+    pick_target,
+    resolve_drive_target,
+)
 from .injector import Injector, InjectorError
 from .utils.client_helpers import call_daemon_method, resolve_xdg_path
-
-
-def _resolve_direct_injection_ids(
-    ide_arg: str,
-    os_profile: str | None,
-) -> tuple[str, str]:
-    """Resolve ``(keyboard_ide, os_injector_tool_id)`` for ``drive --direct``.
-
-    ``--ide auto`` (or empty) uses :func:`pick_target` on running IDEs.
-    When ``os_profile`` is set, it overrides only the OS-injector JSON key.
-    """
-    detected = detect_running_ides()
-    raw = (ide_arg or "").strip()
-    is_auto = not raw or raw.lower() == "auto"
-    prefer = None if is_auto else raw
-    target = pick_target(detected, prefer=prefer)
-    if is_auto:
-        keyboard = target.id if target is not None else "default"
-    else:
-        keyboard = prefer or "default"
-    stripped_profile = (os_profile or "").strip()
-    profile_key = stripped_profile if stripped_profile else keyboard
-    return keyboard, profile_key
 
 
 def _resolve_session_ides(raw: str) -> list[str]:
@@ -68,7 +51,7 @@ def _action_calibrate(args: argparse.Namespace) -> int:
 
     raw = str(args.ide).strip()
     if raw.lower() in ("", "auto"):
-        _kb, ide = _resolve_direct_injection_ids("auto", None)
+        _kb, ide, _reason = resolve_drive_target("auto", None)
         if ide == "default":
             print(
                 "koru autopilot calibrate: no running IDE detected; "
@@ -604,6 +587,120 @@ def _action_daemon(args: argparse.Namespace) -> int:
     return 0
 
 
+def _auto_direct_fallback_enabled() -> bool:
+    raw = os.environ.get("KORU_AUTOPILOT_DRIVE_AUTO_DIRECT", "").strip().lower()
+    if not raw:
+        return True
+    return raw not in {"0", "false", "no", "off"}
+
+
+def _should_fallback_to_direct(args: argparse.Namespace, reply: dict[str, Any]) -> bool:
+    if args.require_plugin:
+        return False
+    if not _auto_direct_fallback_enabled():
+        return False
+    if bool(reply.get("ok", True)):
+        return False
+    message = str(reply.get("message") or "").lower()
+    if "chat input is not focused/open" in message:
+        return True
+    return bool(reply.get("opened") is False and reply.get("submitted") is False)
+
+
+def _run_direct_drive(
+    args: argparse.Namespace,
+    text: str,
+    *,
+    emit_payload: bool = True,
+) -> tuple[int, dict[str, Any] | None]:
+    from . import os_injector as oi
+
+    injector = Injector()
+    target_id, profile_id, selection = resolve_drive_target(
+        args.ide,
+        args.os_profile,
+        project=args.project,
+    )
+    raw_ide = (args.ide or "").strip().lower()
+    if raw_ide in ("", "auto") and not (args.os_profile or "").strip():
+        print(
+            f"koru autopilot drive: auto-selected {profile_id} ({selection})",
+            file=sys.stderr,
+        )
+
+    try:
+        if float(args.delay_seconds) > 0:
+            print(
+                f"koru autopilot drive: waiting {args.delay_seconds:.1f}s "
+                "before direct injection (focus the target IDE now)...",
+                file=sys.stderr,
+            )
+            time.sleep(float(args.delay_seconds))
+        os_res = oi.try_drive_with_profile(
+            tool_id=profile_id,
+            text=text,
+            submit=args.submit,
+            project=args.project,
+            cli_dry_run=args.dry_run,
+        )
+        if os_res is not None:
+            if emit_payload:
+                print(json.dumps(os_res, indent=2, sort_keys=True))
+            return 0, os_res
+        if args.os_profile:
+            print(
+                "koru autopilot drive: requested --os-profile but os-injector path is unavailable. "
+                "Run `koru autopilot calibrate --ide <id>` first, or install xdotool.",
+                file=sys.stderr,
+            )
+            return 2, None
+        if injector.session == "wayland":
+            print(
+                "koru autopilot drive: no OS-injector profile for "
+                f"{profile_id!r}; using ydotool/wtype (keystrokes go only to the "
+                "currently focused window — click the IDE chat first, or run "
+                "`koru autopilot calibrate --ide auto`).",
+                file=sys.stderr,
+            )
+        result = injector.type_text(
+            text,
+            ide=target_id,
+            submit=args.submit,
+            dry_run=args.dry_run,
+        )
+    except oi.OsInjectorError as exc:
+        if args.os_profile:
+            print(
+                f"koru autopilot drive: os-injector failed for requested profile "
+                f"{profile_id!r}: {exc}",
+                file=sys.stderr,
+            )
+            return 1, None
+        print(
+            "koru autopilot drive: os-injector failed; falling back to keyboard injector: "
+            f"{exc}",
+            file=sys.stderr,
+        )
+        try:
+            result = injector.type_text(
+                text,
+                ide=target_id,
+                submit=args.submit,
+                dry_run=args.dry_run,
+            )
+        except InjectorError as inner_exc:
+            print(f"koru autopilot drive: {inner_exc}", file=sys.stderr)
+            return 1, None
+    except InjectorError as exc:
+        print(f"koru autopilot drive: {exc}", file=sys.stderr)
+        return 1, None
+
+    payload = result.to_dict()
+    if emit_payload:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    return 0, payload
+
+
 def _action_drive(args: argparse.Namespace) -> int:
     if args.prompt is not None:
         text = str(args.prompt).strip()
@@ -617,71 +714,8 @@ def _action_drive(args: argparse.Namespace) -> int:
         )
         return 2
     if args.direct:
-        from . import os_injector as oi
-
-        injector = Injector()
-        target_id, profile_id = _resolve_direct_injection_ids(args.ide, args.os_profile)
-
-        try:
-            if float(args.delay_seconds) > 0:
-                print(
-                    f"koru autopilot drive: waiting {args.delay_seconds:.1f}s "
-                    "before direct injection (focus the target IDE now)...",
-                    file=sys.stderr,
-                )
-                time.sleep(float(args.delay_seconds))
-            os_res = oi.try_drive_with_profile(
-                tool_id=profile_id,
-                text=text,
-                submit=args.submit,
-                project=args.project,
-                cli_dry_run=args.dry_run,
-            )
-            if os_res is not None:
-                print(json.dumps(os_res, indent=2, sort_keys=True))
-                return 0
-            if args.os_profile:
-                print(
-                    "koru autopilot drive: requested --os-profile but os-injector path is unavailable. "
-                    "On Wayland this path is disabled by default; set KORU_OS_INJECTOR=1 to force it, "
-                    "or drop --os-profile and use keyboard/plugin backend.",
-                    file=sys.stderr,
-                )
-                return 2
-            result = injector.type_text(
-                text,
-                ide=target_id,
-                submit=args.submit,
-                dry_run=args.dry_run,
-            )
-        except oi.OsInjectorError as exc:
-            if args.os_profile:
-                print(
-                    f"koru autopilot drive: os-injector failed for requested profile "
-                    f"{profile_id!r}: {exc}",
-                    file=sys.stderr,
-                )
-                return 1
-            print(
-                "koru autopilot drive: os-injector failed; falling back to keyboard injector: "
-                f"{exc}",
-                file=sys.stderr,
-            )
-            try:
-                result = injector.type_text(
-                    text,
-                    ide=target_id,
-                    submit=args.submit,
-                    dry_run=args.dry_run,
-                )
-            except InjectorError as inner_exc:
-                print(f"koru autopilot drive: {inner_exc}", file=sys.stderr)
-                return 1
-        except InjectorError as exc:
-            print(f"koru autopilot drive: {exc}", file=sys.stderr)
-            return 1
-        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
-        return 0
+        rc, _payload = _run_direct_drive(args, text, emit_payload=True)
+        return rc
     client = _client(args)
     if not client.is_running():
         print(
@@ -704,6 +738,25 @@ def _action_drive(args: argparse.Namespace) -> int:
     except (OSError, RuntimeError) as exc:
         print(f"koru autopilot drive: {exc}", file=sys.stderr)
         return 1
+    if _should_fallback_to_direct(args, reply):
+        print(
+            "koru autopilot drive: daemon could not open/focus chat input; "
+            "falling back to local --direct injection",
+            file=sys.stderr,
+        )
+        rc, direct_payload = _run_direct_drive(args, text, emit_payload=False)
+        if direct_payload is None:
+            print(json.dumps(reply, indent=2, sort_keys=True))
+            return 1
+        direct_payload = dict(direct_payload)
+        direct_payload["daemon_fallback"] = {
+            "ok": reply.get("ok"),
+            "message": reply.get("message"),
+            "opened": reply.get("opened"),
+            "submitted": reply.get("submitted"),
+        }
+        print(json.dumps(direct_payload, indent=2, sort_keys=True))
+        return rc
     print(json.dumps(reply, indent=2, sort_keys=True))
     return 0 if reply.get("ok", True) else 1
 

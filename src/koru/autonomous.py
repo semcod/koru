@@ -1,6 +1,6 @@
 """One-command autonomous mode for freshly installed koru.
 
-`koru autonomous up` (or `koru autonomous` with the same flags) bootstraps
+`koru auto` and `koru autonomous up` (or bare `koru autonomous`) bootstrap
 the project if needed, applies ``--agent-lane`` exports like
 ``shell-env.sh``, then starts optional background services (autopilot daemon,
 WUP ``wup watch`` when auto-detected), and runs an outer loop.
@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -24,7 +25,7 @@ import sys
 import threading
 import time
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -39,6 +40,11 @@ from .autonomous_env import (
 from .autonomous_env import (
     effective_ticket_source_flags as _effective_flags,
 )
+from . import autonomous_cycle as _autonomous_cycle_module
+from .autonomous_cycle import (
+    AutoloopState,
+    DiagnosticResult,
+)
 from .autonomous_wup import (
     WupHealthResult,
     WupWatchConfig,  # noqa: F401
@@ -52,9 +58,11 @@ from .autonomous_wup import (
 )
 from .autonomous_startup import (
     build_startup_probe,
+    format_post_startup_operator_hints,
     format_startup_banner,
     resolve_autopilot_ide_for_autonomous,
 )
+from .autonomy.operator_pipeline import run_startup_operator_pipeline
 from .autonomous_startup import (
     resolve_agent_lane_id as _resolve_agent_lane_id,
 )
@@ -113,33 +121,23 @@ def _try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | 
 
 def _stdio_info(msg: str, *, fmt: str) -> None:
     """Human-oriented status; jsonl mode routes to stderr so stdout stays NDJSON-only."""
-    print(msg, file=sys.stderr if fmt == "jsonl" else sys.stdout)
+    from .activity_log import activity_info
+
+    activity_info(msg, fmt=fmt)
+
+
+def _daemon_activity_log(msg: str, *, fmt: str) -> None:
+    from .activity_log import activity
+
+    if msg.startswith("drive"):
+        activity("DAEMON", msg, fmt=fmt)
+    else:
+        activity("DAEMON", msg, fmt=fmt)
 
 
 def _allow_keyboard_autopilot_fallback() -> bool:
     raw = os.environ.get("KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK", "").strip().lower()
     return raw in {"1", "true", "yes", "on"}
-
-
-@dataclass(frozen=True)
-class DiagnosticResult:
-    status: str
-    failed: list[str]
-
-
-@dataclass
-class AutoloopState:
-    previous_signature: str = ""
-    stagnation_streak: int = 0
-    scan_clean_streak: int = 0
-    scan_last_head: str = ""
-    wup_seen_events: int = 0
-    autopilot_events: list[dict[str, Any]] = field(default_factory=list)
-    last_message_sent_ts: float = 0.0
-    telemetry_autopilot_idle_streak_skips: int = 0
-    telemetry_scan_after_idle_runs: int = 0
-    telemetry_scan_after_idle_tickets_applied: int = 0
-    last_scan_after_idle_ts: float = -1.0
 
 
 @dataclass(frozen=True)
@@ -218,22 +216,28 @@ def _ancestor_pids(pid: int) -> set[int]:
 
 
 def _looks_like_autonomous_up_command(command: str) -> bool:
+    """Match koru autonomous/auto loops (cf. ``pkill -f 'koru.*autonomous'`` and ``koru auto``)."""
+    if re.search(r"koru.{0,120}autonomous", command):
+        return True
     parts = command.split()
     for idx, part in enumerate(parts):
+        if Path(part).name == "koru" and idx + 1 < len(parts) and parts[idx + 1] == "auto":
+            return True
         if Path(part).name == "koru" and parts[idx + 1 : idx + 3] == ["autonomous", "up"]:
             return True
-        if (
-            part == "-m"
-            and idx + 3 < len(parts)
-            and parts[idx + 1] == "koru.cli"
-            and parts[idx + 2 : idx + 4] == ["autonomous", "up"]
-        ):
-            return True
+        if part == "-m" and idx + 2 < len(parts) and parts[idx + 1] == "koru.cli":
+            sub = parts[idx + 2]
+            if sub == "auto":
+                return True
+            if sub == "autonomous" and idx + 3 < len(parts) and parts[idx + 3] == "up":
+                return True
     return False
 
 
-def _find_existing_autonomous_processes(project: Path) -> list[ExistingAutonomousProcess]:
-    """Return running ``koru autonomous up`` processes for ``project`` except this PID."""
+def _find_existing_autonomous_processes(
+    project: Path, *, any_project: bool = False
+) -> list[ExistingAutonomousProcess]:
+    """Return running koru autonomous/auto processes except this PID tree."""
     try:
         result = subprocess.run(
             ["ps", "-eo", "pid=,ppid=,command="],
@@ -268,9 +272,30 @@ def _find_existing_autonomous_processes(project: Path) -> list[ExistingAutonomou
 
         cwd = _process_cwd(pid)
         cmd_project = _command_project(command)
-        if cwd == project or cmd_project == project:
+        if any_project or cwd == project or cmd_project == project:
             matches.append(ExistingAutonomousProcess(pid=pid, command=command, cwd=cwd))
     return matches
+
+
+def stop_prior_autonomous_for_auto_start(
+    project: Path,
+    *,
+    stdio_format: str = "human",
+) -> None:
+    """Stop koru autonomous/auto loops (any project) and WUP watch for ``project``."""
+    project = project.resolve()
+    existing = [
+        *(_as_managed(proc) for proc in _find_existing_autonomous_processes(project, any_project=True)),
+        *_find_existing_wup_processes(project),
+    ]
+    if not existing:
+        return
+    _stdio_info(
+        f"koru auto: stopping {len(existing)} prior managed process(es) "
+        "(koru autonomous/auto, wup watch)",
+        fmt=stdio_format,
+    )
+    _terminate_existing_processes(existing, stdio_format=stdio_format)
 
 
 def _find_existing_wup_processes(project: Path) -> list[ExistingManagedProcess]:
@@ -384,6 +409,11 @@ def _guard_existing_autonomous_processes(args: argparse.Namespace, project: Path
     if not existing:
         return 0
     if args.replace_existing:
+        if getattr(args, "replace_existing_global", False):
+            existing = [
+                *(_as_managed(proc) for proc in _find_existing_autonomous_processes(project, any_project=True)),
+                *_find_existing_wup_processes(project),
+            ]
         _terminate_existing_processes(existing, stdio_format=args.emit_events)
         return 0
     if args.emit_events == "human" and sys.stdin.isatty():
@@ -532,8 +562,16 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_false",
         help=(
             "Keep the outer loop running when the queue is waiting_input so each "
-            "cycle still runs scan/queue/WUP health/autopilot. Without it, the "
-            "process exits and the background WUP watcher is stopped."
+            "cycle still runs scan/queue/WUP health/autopilot (default)."
+        ),
+    )
+    up.add_argument(
+        "--stop-on-waiting-input",
+        dest="stop_on_waiting_input",
+        action="store_true",
+        help=(
+            "Stop the outer loop when the queue reports waiting_input "
+            "(legacy behavior)."
         ),
     )
     up.add_argument(
@@ -754,12 +792,39 @@ def _build_parser() -> argparse.ArgumentParser:
             "jsonl: structured events on stdout; incidental status on stderr."
         ),
     )
+    up.add_argument(
+        "--operator-pipeline",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "After startup, print numbered operator steps and create planfile "
+            "tickets on --operator-ticket-queue (human + task koru:* shell steps)."
+        ),
+    )
+    up.add_argument(
+        "--operator-tickets",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Create [OPERATOR] planfile tickets for pending pipeline steps.",
+    )
+    up.add_argument(
+        "--operator-ticket-queue",
+        default="operator",
+        help="Planfile queue for operator-pipeline tickets (default: operator).",
+    )
+    up.add_argument(
+        "--operator-ticket-priority",
+        default="high",
+        help="Priority for operator-pipeline tickets.",
+    )
     up.set_defaults(
         submit=True,
         enable_autopilot=True,
         enable_serve=True,
-        stop_on_waiting_input=True,
+        stop_on_waiting_input=False,
         semcod_artifacts=True,
+        operator_pipeline=True,
+        operator_tickets=True,
     )
 
     return parser
@@ -873,6 +938,80 @@ def _compute_backoff_sleep(base: float, streak: int, cap: float, enabled: bool) 
     return candidate
 
 
+def _load_loop_checkpoint(
+    path: Path,
+    *,
+    state: AutoloopState,
+    stdio_format: str = "human",
+) -> int | None:
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        return None
+    try:
+        cycle = int(payload.get("cycle", 0))
+    except (TypeError, ValueError):
+        cycle = 0
+    state_payload = payload.get("state")
+    if isinstance(state_payload, dict):
+        for key in (
+            "previous_signature",
+            "stagnation_streak",
+            "scan_clean_streak",
+            "scan_last_head",
+            "wup_seen_events",
+            "last_message_sent_ts",
+            "telemetry_autopilot_idle_streak_skips",
+            "telemetry_scan_after_idle_runs",
+            "telemetry_scan_after_idle_tickets_applied",
+            "last_scan_after_idle_ts",
+        ):
+            if key in state_payload:
+                setattr(state, key, state_payload[key])
+        events = state_payload.get("autopilot_events")
+        if isinstance(events, list):
+            state.autopilot_events = [ev for ev in events if isinstance(ev, dict)]
+    if cycle > 0:
+        _stdio_info(f"koru autonomous: restored checkpoint cycle={cycle}", fmt=stdio_format)
+        return cycle
+    return None
+
+
+def _save_loop_checkpoint(
+    path: Path,
+    *,
+    cycle: int,
+    state: AutoloopState,
+    queue_status: str,
+    waiting_ticket: str,
+) -> None:
+    payload = {
+        "cycle": cycle,
+        "saved_at": time.time(),
+        "queue_status": queue_status,
+        "waiting_ticket": waiting_ticket,
+        "state": {
+            "previous_signature": state.previous_signature,
+            "stagnation_streak": state.stagnation_streak,
+            "scan_clean_streak": state.scan_clean_streak,
+            "scan_last_head": state.scan_last_head,
+            "wup_seen_events": state.wup_seen_events,
+            "autopilot_events": list(state.autopilot_events)[-50:],
+            "last_message_sent_ts": state.last_message_sent_ts,
+            "telemetry_autopilot_idle_streak_skips": state.telemetry_autopilot_idle_streak_skips,
+            "telemetry_scan_after_idle_runs": state.telemetry_scan_after_idle_runs,
+            "telemetry_scan_after_idle_tickets_applied": state.telemetry_scan_after_idle_tickets_applied,
+            "last_scan_after_idle_ts": state.last_scan_after_idle_ts,
+        },
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(payload, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
+    tmp.replace(path)
+
+
 def _status_in_skip_list(status: str, skip_statuses: str) -> bool:
     return status.lower() in {
         item.strip().lower() for item in skip_statuses.split(",") if item.strip()
@@ -915,8 +1054,12 @@ def _create_diagnostic_ticket(
         f"Check: {summary}. Investigate and fix regression, stale quality artifact, "
         "or broken diagnostic gate."
     )
+    from .activity_log import activity
+
+    activity("TICKET", f"[AUTO-DIAG] tworzę ticket dla {check_id}", preview=prompt)
     created = create_nl_task(project, prompt, queue_name=queue_name, priority=priority)
     marker.write_text(created.ticket_id, encoding="utf-8")
+    activity("TICKET", f"[AUTO-DIAG] {check_id} → {created.ticket_id} (queue={queue_name})")
     _stdio_info(
         f"+ created diagnostic ticket {created.ticket_id} for {check_id} (queue={queue_name})",
         fmt=stdio_format,
@@ -1044,30 +1187,6 @@ def _run_idle_diagnostics(
     return DiagnosticResult(status="failed" if failed else "ok", failed=failed)
 
 
-def _autopilot_event_path() -> Path:
-    return Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "koru-autopilot-events.ndjson"
-
-
-def _drain_autopilot_events(state: AutoloopState) -> list[dict[str, Any]]:
-    """Read plugin events from the shared NDJSON file and clear it."""
-    path = _autopilot_event_path()
-    if not path.exists():
-        return []
-    raw = path.read_text(encoding="utf-8")
-    events: list[dict[str, Any]] = []
-    for line in raw.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            events.append(json.loads(line))
-        except json.JSONDecodeError:
-            continue
-    if events:
-        path.write_text("", encoding="utf-8")
-    return events
-
-
 def _run_cycle(
     *,
     cycle: int,
@@ -1105,449 +1224,73 @@ def _run_cycle(
     stdio_format: str = "human",
     correlation_id: str = "",
 ) -> tuple[ScanResult | None, QueueLoopResult, str, DiagnosticResult]:
-    state = state or AutoloopState()
-    cycle_telemetry: dict[str, Any] = {
-        "autopilot_skipped_idle_streak": False,
-        "scan_after_idle_run": False,
-        "scan_after_idle_applied": 0,
-        "scan_after_idle_skipped_rate_limit": False,
-    }
+    # Keep historical monkeypatch points on ``koru.autonomous`` working by
+    # forwarding the current module callables into the canonical cycle module.
+    _autonomous_cycle_module.time = time
+    _autonomous_cycle_module.run_scan = run_scan
+    _autonomous_cycle_module.run_planfile_queue_loop = run_planfile_queue_loop
+    _autonomous_cycle_module._run_process = _run_process
+    _autonomous_cycle_module._run_shell_command = _run_shell_command
+    _autonomous_cycle_module._run_api_request = _run_api_request
+    _autonomous_cycle_module._run_llm_request = _run_llm_request
+    _autonomous_cycle_module._default_human_prompt = _default_human_prompt
+    _autonomous_cycle_module.resolve_idle_drive_prompt = resolve_idle_drive_prompt
+    _autonomous_cycle_module.build_prompt = build_prompt
+    _autonomous_cycle_module.write_autonomy_cycle_telemetry = write_autonomy_cycle_telemetry
+    _autonomous_cycle_module.create_nl_task = create_nl_task
+    _autonomous_cycle_module.is_component_enabled = is_component_enabled
+    _autonomous_cycle_module.is_pipeline_enabled = is_pipeline_enabled
+    _autonomous_cycle_module._run_idle_diagnostics = _run_idle_diagnostics
+    _autonomous_cycle_module._try_os_injector_fallback = _try_os_injector_fallback
 
-    # Auto-heal: best-effort stale socket removal so daemon restart can bind.
-    try:
-        from .autonomy.environment import probe_socket_health
-        from .autonomy.heal import remove_stale_socket
-        from .autopilot import default_socket_path
-
-        sock = probe_socket_health(default_socket_path())
-        if sock.stale:
-            result = remove_stale_socket(sock)
-            if result.status == "fixed":
-                print(f"koru autonomous: auto-healed stale socket {sock.path}")
-    except Exception:
-        pass
-
-    def _emit(event_type: str, payload: dict, command: str | None = None) -> None:
-        if stdio_format == "jsonl":
-            write_stdio_event(
-                sys.stdout,
-                event_type=event_type,
-                correlation_id=correlation_id,
-                payload=payload,
-                command=command,
-            )
-
-    def _hp(msg: str) -> None:
-        if stdio_format == "human":
-            print(msg)
-
-    # Drain plugin events from the autopilot daemon.
-    events = _drain_autopilot_events(state)
-    if events:
-        for ev in events:
-            ev_type = ev.get("type", "unknown")
-            _hp(f"  event: {ev_type} ide={ev.get('ide', '?')}")
-        state.autopilot_events.extend(events)
-        # Track when the last prompt was delivered to the IDE.
-        for ev in events:
-            if ev.get("type") == "message.sent":
-                state.last_message_sent_ts = ev.get("ts", time.time())
-
-    scan_result: ScanResult | None = None
-
-    _emit(
-        "CycleStarted",
-        {"cycle": cycle, "project": str(project.resolve())},
-    )
-
-    if enable_scan:
-        if not _is_topology_enabled(
-            project, "scan:on-change", fallback=True, enabled=topology_integration
-        ):
-            _hp("- koru scan --apply skipped (scan:on-change disabled in topology)")
-            _emit(
-                "ScanSkipped",
-                {"cycle": cycle, "reason": "topology:scan:on-change_disabled"},
-            )
-        else:
-            head_now = _current_head(project)
-            if (
-                scan_skip_if_clean
-                and state.scan_clean_streak >= scan_skip_after
-                and head_now
-                and head_now == state.scan_last_head
-            ):
-                _hp(
-                    f"- koru scan --apply skipped "
-                    f"(clean_streak={state.scan_clean_streak}, HEAD unchanged)"
-                )
-                _emit(
-                    "ScanSkipped",
-                    {
-                        "cycle": cycle,
-                        "reason": "clean_git_head_unchanged",
-                        "clean_streak": state.scan_clean_streak,
-                        "head": head_now,
-                    },
-                )
-            else:
-                scan_cmd = "koru scan --apply" + (
-                    " --semcod-artifacts" if include_semcod_artifacts else ""
-                )
-                _hp("+ " + scan_cmd)
-                scan_result = run_scan(
-                    project=project, apply=True, include_semcod_artifacts=include_semcod_artifacts
-                )
-                _hp(
-                    f"  scan: suggestions={len(scan_result.suggestions)} "
-                    f"applied={len(scan_result.applied)} skipped={len(scan_result.skipped)}"
-                )
-                _emit(
-                    "ScanCompleted",
-                    {
-                        "cycle": cycle,
-                        "suggestions_count": len(scan_result.suggestions),
-                        "applied_count": len(scan_result.applied),
-                        "skipped_count": len(scan_result.skipped),
-                        "semcod_artifacts": bool(include_semcod_artifacts),
-                    },
-                    command=scan_cmd,
-                )
-                if not scan_result.suggestions:
-                    state.scan_clean_streak += 1
-                else:
-                    state.scan_clean_streak = 0
-                state.scan_last_head = head_now
-
-    if not _is_topology_enabled(
-        project, "autoloop:queue", fallback=True, enabled=topology_integration
-    ):
-        _hp("- autoloop queue phase skipped (autoloop:queue disabled in topology)")
-        queue_result = QueueLoopResult(0, [], [], [], "disabled", "")
-    else:
-        qcmd = f"koru --queue --loop --max-iterations {max_iterations}" + (
-            " --all-queues" if queue_name is None else f" --queue-name {queue_name}"
-        )
-        _hp("+ " + qcmd)
-        queue_result = run_planfile_queue_loop(
-            project=project,
-            actor=actor,
-            queue_name=queue_name,
-            max_iterations=max_iterations,
-            planfile_runner=_run_process,
-            shell_runner=_run_shell_command,
-            api_runner=_run_api_request,
-            llm_runner=_run_llm_request,
-            prompt_runner=_default_human_prompt,
-        )
-        _hp(f"  queue: {queue_result.summary()}")
-        qname = "__all__" if queue_name is None else queue_name
-        _sum_fn = getattr(queue_result, "summary", None)
-        if callable(_sum_fn):
-            _queue_summary = _sum_fn()
-        else:
-            _queue_summary = str(_sum_fn or "")
-        _emit(
-            "QueueIteration",
-            {
-                "cycle": cycle,
-                "queue_name": qname,
-                "actor": actor,
-                "iterations": int(getattr(queue_result, "iterations", 0)),
-                "completed": list(getattr(queue_result, "completed", []) or []),
-                "failed": list(getattr(queue_result, "failed", []) or []),
-                "waiting": list(getattr(queue_result, "waiting", []) or []),
-                "last_status": str(getattr(queue_result, "last_status", "")),
-                "last_message": str(getattr(queue_result, "last_message", "")),
-                "last_ticket_id": getattr(queue_result, "last_ticket_id", None),
-                "summary": _queue_summary,
-            },
-            command=qcmd,
-        )
-
-    if (
-        scan_after_idle_queue
-        and queue_result.last_status == "idle"
-        and _is_topology_enabled(
-            project, "scan:on-change", fallback=True, enabled=topology_integration
-        )
-    ):
-        now = time.time()
-        too_soon = (
-            scan_after_idle_min_interval_seconds > 0.0
-            and state.last_scan_after_idle_ts >= 0.0
-            and now - state.last_scan_after_idle_ts < scan_after_idle_min_interval_seconds
-        )
-        if too_soon:
-            wait = scan_after_idle_min_interval_seconds - (now - state.last_scan_after_idle_ts)
-            _hp(
-                f"- koru scan after idle skipped (min-interval "
-                f"{scan_after_idle_min_interval_seconds}s, ~{wait:.0f}s remaining)"
-            )
-            _emit(
-                "ScanSkipped",
-                {
-                    "cycle": cycle,
-                    "reason": "after_idle_rate_limit",
-                    "min_interval_seconds": scan_after_idle_min_interval_seconds,
-                },
-            )
-            cycle_telemetry["scan_after_idle_skipped_rate_limit"] = True
-        else:
-            scan_cmd = "koru scan --apply" + (
-                " --semcod-artifacts" if include_semcod_artifacts else ""
-            )
-            _hp("+ " + scan_cmd + " (queue idle → intake scan)")
-            idle_scan = run_scan(
-                project=project, apply=True, include_semcod_artifacts=include_semcod_artifacts
-            )
-            scan_result = idle_scan
-            state.last_scan_after_idle_ts = now
-            state.telemetry_scan_after_idle_runs += 1
-            state.telemetry_scan_after_idle_tickets_applied += len(idle_scan.applied)
-            cycle_telemetry["scan_after_idle_run"] = True
-            cycle_telemetry["scan_after_idle_applied"] = len(idle_scan.applied)
-            _hp(
-                f"  scan: suggestions={len(idle_scan.suggestions)} "
-                f"applied={len(idle_scan.applied)} skipped={len(idle_scan.skipped)}"
-            )
-            _emit(
-                "ScanCompleted",
-                {
-                    "cycle": cycle,
-                    "suggestions_count": len(idle_scan.suggestions),
-                    "applied_count": len(idle_scan.applied),
-                    "skipped_count": len(idle_scan.skipped),
-                    "semcod_artifacts": bool(include_semcod_artifacts),
-                    "phase": "after_idle_queue",
-                },
-                command=scan_cmd,
-            )
-
-    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
-    signature = f"{queue_result.last_status}:{waiting_ticket}"
-    if state.previous_signature and state.previous_signature == signature:
-        state.stagnation_streak += 1
-    else:
-        state.stagnation_streak = 0
-    state.previous_signature = signature
-
-    diag_result = DiagnosticResult(status="skipped", failed=[])
-    if queue_result.last_status == "idle" and idle_diagnostics not in {"off", "none"}:
-        diag_result = _run_idle_diagnostics(
-            stdio_format=stdio_format,
-            project=project,
-            profile=idle_diagnostics,
-            cycle=cycle,
-            queue_status=queue_result.last_status,
-            diagnostic_tickets=diagnostic_tickets,
-            diagnostic_ticket_queue=diagnostic_ticket_queue,
-            diagnostic_ticket_priority=diagnostic_ticket_priority,
-            diagnostic_state_dir=diagnostic_state_dir or project / ".planfile/.koru/autoloop-diag",
-            topology_integration=topology_integration,
-        )
-
-    wup_health = WupHealthResult(status="skipped", failing_services=[], new_events=0)
-    if wup_watch_enabled:
-        wup_health = _read_wup_health(
-            project=project,
-            state=state,
-            diagnostic_tickets=wup_diagnostic_tickets,
-            ticket_queue=wup_ticket_queue,
-            state_dir=diagnostic_state_dir or project / ".planfile/.koru/autoloop-diag",
-        )
-        if wup_health.status != "ok":
-            _hp(
-                f"koru autonomous: WUP health={wup_health.status} "
-                f"failing={','.join(wup_health.failing_services) or '-'} "
-                f"new_events={wup_health.new_events}"
-            )
-            if diag_result.status in {"skipped", "off", "ok"} and wup_health.status == "failed":
-                diag_result = DiagnosticResult(status="failed", failed=["wup"])
-    _emit(
-        "WupHealthChanged",
-        {
-            "cycle": cycle,
-            "watcher_enabled": wup_watch_enabled,
-            "status": wup_health.status,
-            "failing_services": list(wup_health.failing_services),
-            "new_events": wup_health.new_events,
-        },
-    )
-    _emit(
-        "DiagnosticsCompleted",
-        {
-            "cycle": cycle,
-            "status": diag_result.status,
-            "failed": list(diag_result.failed),
-        },
-    )
-
-    if strict_diagnostics and diag_result.status == "failed":
-        _emit(
-            "AutonomousStopped",
-            {"reason": "strict_diagnostics_failure", "cycle": cycle},
-        )
-        _stdio_info(
-            "koru autonomous: strict diagnostics enabled -> stopping on diagnostics failure",
-            fmt=stdio_format,
-        )
-        raise SystemExit(2)
-
-    autopilot_status = "skipped"
-    autopilot_backend: str | None = None
-    autopilot_drive_kind: str | None = None
-    if enable_autopilot and client is not None:
-        if not _is_topology_enabled(
-            project, "autopilot:drive", fallback=True, enabled=topology_integration
-        ):
-            _hp("- autopilot skipped (autopilot:drive disabled in topology)")
-            autopilot_status = "skipped(topology)"
-        elif autopilot_action == "off":
-            _hp("- autopilot action set to off, skipping")
-        elif autopilot_on_idle_only and queue_result.last_status != "idle":
-            _hp("- autopilot skipped (idle_only)")
-            autopilot_status = "skipped(idle_only)"
-        elif autopilot_skip_on_diagnostics_fail and diag_result.status == "failed":
-            _hp("- autopilot skipped (diagnostics_fail)")
-            autopilot_status = "skipped(diagnostics_fail)"
-        elif (
-            autopilot_skip_drive_idle_streak > 0
-            and queue_result.last_status == "idle"
-            and state.stagnation_streak >= autopilot_skip_drive_idle_streak
-        ):
-            _hp(
-                "- autopilot skipped "
-                f"(idle_streak_{state.stagnation_streak}>={autopilot_skip_drive_idle_streak})"
-            )
-            autopilot_status = "skipped(idle_streak)"
-            state.telemetry_autopilot_idle_streak_skips += 1
-            cycle_telemetry["autopilot_skipped_idle_streak"] = True
-        elif state.stagnation_streak > 0 and _status_in_skip_list(
-            queue_result.last_status, autopilot_skip_statuses
-        ):
-            _hp(
-                "- autopilot skipped (stuck_"
-                f"{queue_result.last_status}_streak_{state.stagnation_streak})"
-            )
-            autopilot_status = f"skipped(stuck_{queue_result.last_status})"
-        else:
-            # Unified path: PromptStrategy picks the right prompt + kind
-            # based on queue status, ticket message, and stagnation streak.
-            effective_drive_prompt = drive_prompt
-            idle_prompt_kind: str | None = None
-            if queue_result.last_status == "idle":
-                effective_drive_prompt, idle_prompt_kind = resolve_idle_drive_prompt(
-                    project,
-                    drive_prompt=drive_prompt,
-                    runner=_run_process,
-                )
-            decision = build_prompt(
-                queue_status=queue_result.last_status,
-                last_message=getattr(queue_result, "last_message", "") or "",
-                waiting_ticket_id=getattr(queue_result, "last_ticket_id", None),
-                drive_prompt=effective_drive_prompt,
-                autopilot_action=autopilot_action,
-                stagnation_streak=state.stagnation_streak,
-            )
-            autopilot_drive_kind = idle_prompt_kind or decision.kind
-            reply = client.drive(
-                decision.prompt,
-                submit=submit,
-                ide=autopilot_ide,
-                require_plugin=not _allow_keyboard_autopilot_fallback(),
-            )
-            ok = bool(reply.get("ok", True))
-            if not ok:
-                fallback = _try_os_injector_fallback(decision.prompt, submit=submit)
-                if fallback is not None and bool(fallback.get("ok", False)):
-                    reply = fallback
-                    ok = True
-                    autopilot_drive_kind = f"{decision.kind}+os_injector_fallback"
-            autopilot_status = "ok" if ok else "failed"
-            autopilot_backend = (
-                str(reply.get("backend")) if reply.get("backend") is not None else None
-            )
-            if ok:
-                backend = reply.get("backend", "?")
-                if decision.kind == "ticket_prompt":
-                    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
-                    _hp(
-                        "  autopilot: ok (ticket="
-                        f"{waiting_ticket}, ide={autopilot_ide}, backend={backend}, "
-                        f"kind={decision.kind})"
-                    )
-                else:
-                    _hp(
-                        f"  autopilot: ok (ide={autopilot_ide}, backend={backend}, "
-                        f"kind={decision.kind})"
-                    )
-            else:
-                message = reply.get("message", "unknown error")
-                _hp(f"  autopilot: failed ({message}, kind={decision.kind})")
-
-    _emit(
-        "AutopilotDecision",
-        {
-            "cycle": cycle,
-            "decision": autopilot_status,
-            "queue_status": queue_result.last_status,
-            "ide": autopilot_ide,
-            "backend": autopilot_backend,
-            "drive_kind": autopilot_drive_kind,
-        },
-    )
-
-    _hp(
-        f"koru autonomous: cycle={cycle} queue={queue_result.last_status} "
-        f"diagnostics={diag_result.status} wup={wup_health.status} autopilot={autopilot_status}"
-    )
-    _emit(
-        "CycleCompleted",
-        {
-            "cycle": cycle,
-            "queue_status": queue_result.last_status,
-            "diagnostics_status": diag_result.status,
-            "wup_status": wup_health.status,
-            "autopilot_status": autopilot_status,
-            "telemetry": {
-                "cycle": cycle_telemetry,
-                "cumulative": {
-                    "autopilot_idle_streak_skips": state.telemetry_autopilot_idle_streak_skips,
-                    "scan_after_idle_runs": state.telemetry_scan_after_idle_runs,
-                    "scan_after_idle_tickets_applied": state.telemetry_scan_after_idle_tickets_applied,
-                },
-            },
-        },
-    )
-
-    write_autonomy_cycle_telemetry(
-        project,
+    return _autonomous_cycle_module.run_cycle(
         cycle=cycle,
-        cumulative={
-            "autopilot_idle_streak_skips": state.telemetry_autopilot_idle_streak_skips,
-            "scan_after_idle_runs": state.telemetry_scan_after_idle_runs,
-            "scan_after_idle_tickets_applied": state.telemetry_scan_after_idle_tickets_applied,
-        },
-        cycle_metrics=cycle_telemetry,
-        knobs={
-            "scan_after_idle_queue": scan_after_idle_queue,
-            "scan_after_idle_min_interval_seconds": scan_after_idle_min_interval_seconds,
-            "autopilot_skip_drive_idle_streak": autopilot_skip_drive_idle_streak,
-        },
+        project=project,
+        actor=actor,
+        queue_name=queue_name,
+        enable_scan=enable_scan,
+        max_iterations=max_iterations,
+        enable_autopilot=enable_autopilot,
+        autopilot_ide=autopilot_ide,
+        drive_prompt=drive_prompt,
+        submit=submit,
+        include_semcod_artifacts=include_semcod_artifacts,
+        client=client,
+        state=state,
+        idle_diagnostics=idle_diagnostics,
+        diagnostic_tickets=diagnostic_tickets,
+        diagnostic_ticket_queue=diagnostic_ticket_queue,
+        diagnostic_ticket_priority=diagnostic_ticket_priority,
+        diagnostic_state_dir=diagnostic_state_dir,
+        wup_watch_enabled=wup_watch_enabled,
+        wup_diagnostic_tickets=wup_diagnostic_tickets,
+        wup_ticket_queue=wup_ticket_queue,
+        strict_diagnostics=strict_diagnostics,
+        autopilot_action=autopilot_action,
+        autopilot_on_idle_only=autopilot_on_idle_only,
+        autopilot_skip_on_diagnostics_fail=autopilot_skip_on_diagnostics_fail,
+        autopilot_skip_drive_idle_streak=autopilot_skip_drive_idle_streak,
+        autopilot_skip_statuses=autopilot_skip_statuses,
+        scan_skip_if_clean=scan_skip_if_clean,
+        scan_skip_after=scan_skip_after,
+        scan_after_idle_queue=scan_after_idle_queue,
+        scan_after_idle_min_interval_seconds=scan_after_idle_min_interval_seconds,
+        topology_integration=topology_integration,
+        stdio_format=stdio_format,
+        correlation_id=correlation_id,
     )
-
-    return scan_result, queue_result, autopilot_status, diag_result
 
 
 def _action_up(args: argparse.Namespace) -> int:
     _env_apply_autoloop_defaults(args)
+    previous_stdio_format_env = os.environ.get("KORU_STDIO_FORMAT")
     correlation_id = str(uuid.uuid4())
     project = args.project.resolve()
     project.mkdir(parents=True, exist_ok=True)
     guard_rc = _guard_existing_autonomous_processes(args, project)
     if guard_rc:
         return guard_rc
+    os.environ["KORU_STDIO_FORMAT"] = args.emit_events
     if args.emit_events == "jsonl":
         write_stdio_event(
             sys.stdout,
@@ -1597,6 +1340,12 @@ def _action_up(args: argparse.Namespace) -> int:
         args.autopilot_ide, lane, resolve_ide_route_fn=resolve_ide_route
     )
     loop_state = AutoloopState()
+    checkpoint_path = (project / ".planfile/.koru/autonomous-state.json").resolve()
+    restored_cycle = _load_loop_checkpoint(
+        checkpoint_path,
+        state=loop_state,
+        stdio_format=args.emit_events,
+    )
     diagnostic_state_dir = (project / args.diagnostic_state_dir).resolve()
     wup_config = _build_wup_watch_config(args, project)
     wup_process = _start_wup_watch(
@@ -1618,11 +1367,13 @@ def _action_up(args: argparse.Namespace) -> int:
         raise KeyboardInterrupt()
 
     previous_sigterm = signal.signal(signal.SIGTERM, _sigterm_to_interrupt)
+    mcp_provision_ran = False
     try:
         try:
             from .mcp_provision import ensure_koru_mcp_not_disabled
 
             for row in ensure_koru_mcp_not_disabled(project):
+                mcp_provision_ran = True
                 _stdio_info(
                     f"koru autonomous: {row['action']} → {row['path']}",
                     fmt=args.emit_events,
@@ -1633,6 +1384,7 @@ def _action_up(args: argparse.Namespace) -> int:
                 fmt=args.emit_events,
             )
 
+        plugin_connected: bool | None = None
         if args.enable_autopilot and socket_path is not None:
             plugin_result = install_plugin_for_ide(ide=autopilot_ide, socket_path=socket_path)
             _stdio_info(format_plugin_install_result(plugin_result), fmt=args.emit_events)
@@ -1642,6 +1394,7 @@ def _action_up(args: argparse.Namespace) -> int:
                     autopilot_ide,
                     timeout_seconds=max(0.0, args.autopilot_plugin_wait_seconds),
                 )
+                plugin_connected = plugin_ready
                 if plugin_ready:
                     _stdio_info(
                         f"koru autonomous: autopilot plugin connected ide={autopilot_ide}",
@@ -1654,6 +1407,24 @@ def _action_up(args: argparse.Namespace) -> int:
                         f"{max(0.0, args.autopilot_plugin_wait_seconds):.1f}s; continuing",
                         fmt=args.emit_events,
                     )
+
+        for hint in format_post_startup_operator_hints(
+            startup_probe, plugin_connected=plugin_connected
+        ):
+            _stdio_info(hint, fmt=args.emit_events)
+
+        if args.operator_pipeline:
+            run_startup_operator_pipeline(
+                project=project,
+                probe=startup_probe,
+                plugin_connected=plugin_connected,
+                stdio_format=args.emit_events,
+                create_tickets=args.operator_tickets,
+                ticket_queue=args.operator_ticket_queue,
+                ticket_priority=args.operator_ticket_priority,
+                mcp_already_bootstrapped=mcp_provision_ran,
+                correlation_id=correlation_id,
+            )
 
         if os.environ.get("KORU_QUEUE_UNBLOCK", "").strip().lower() in (
             "1",
@@ -1668,7 +1439,7 @@ def _action_up(args: argparse.Namespace) -> int:
                     fmt=args.emit_events,
                 )
 
-        cycle = 0
+        cycle = restored_cycle or 0
         while True:
             cycle += 1
             if args.emit_events == "human":
@@ -1732,6 +1503,13 @@ def _action_up(args: argparse.Namespace) -> int:
                 topology_integration=args.topology_integration,
                 stdio_format=args.emit_events,
                 correlation_id=correlation_id,
+            )
+            _save_loop_checkpoint(
+                checkpoint_path,
+                cycle=cycle,
+                state=loop_state,
+                queue_status=queue_result.last_status,
+                waiting_ticket=_queue_loop_waiting_ticket_label(queue_result),
             )
 
             if (
@@ -1813,6 +1591,10 @@ def _action_up(args: argparse.Namespace) -> int:
             _stdio_info("\nkoru autonomous: interrupted (Ctrl+C)", fmt=args.emit_events)
         return 0
     finally:
+        if previous_stdio_format_env is None:
+            os.environ.pop("KORU_STDIO_FORMAT", None)
+        else:
+            os.environ["KORU_STDIO_FORMAT"] = previous_stdio_format_env
         signal.signal(signal.SIGTERM, previous_sigterm)
         if daemon is not None:
             daemon.stop()
@@ -1821,7 +1603,7 @@ def _action_up(args: argparse.Namespace) -> int:
         _stop_process(wup_process, "WUP watcher", stdio_format=args.emit_events)
 
 
-def autonomous_main(argv: list[str]) -> int:
+def autonomous_main(argv: list[str], *, invoked_as_auto: bool = False) -> int:
     if not argv:
         argv = ["up"]
     elif argv[0] == "safe-up":
@@ -1843,6 +1625,12 @@ def autonomous_main(argv: list[str]) -> int:
     elif argv[0] != "up" and argv[0] not in ("-h", "--help"):
         argv = ["up", *argv]
     args = _build_parser().parse_args(argv)
+    if invoked_as_auto:
+        args.replace_existing_global = True
+        if not args.allow_duplicate and not args.replace_existing:
+            args.replace_existing = True
+    elif not hasattr(args, "replace_existing_global"):
+        args.replace_existing_global = False
     if args.action == "up":
         return _action_up(args)
     return 2
@@ -1854,4 +1642,5 @@ __all__ = [
     "_read_wup_health",
     "_wup_watch_command",
     "autonomous_main",
+    "stop_prior_autonomous_for_auto_start",
 ]

@@ -42,9 +42,14 @@ from koruide import daemon as koruide_daemon_mod
 
 
 def _patch_no_running_ides(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Make IDE detection a no-op for both the ide module and daemon import."""
+    """Isolate daemon tests from the host IDE / OS-injector profile."""
+    from koruide import os_injector as oi_mod
+
     monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [])
+    monkeypatch.setattr(ide_mod, "detect_running_ides_cached", lambda **_: [])
+    monkeypatch.setattr(ide_mod, "detect_focused_ide_id", lambda **_k: None)
     monkeypatch.setattr(koruide_daemon_mod, "detect_running_ides", lambda **_: [])
+    monkeypatch.setattr(oi_mod, "try_load_profile", lambda _tool_id, project=None: None)
 
 
 class _StubInjector:
@@ -254,18 +259,31 @@ def test_drive_reports_injector_failure(tmp_path: Path, monkeypatch: pytest.Monk
 def test_drive_uses_os_injector_when_profile_available(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from koru.autopilot import os_injector as oi_mod
+    from koruide import os_injector as koruide_oi
 
-    # Wayland hosts skip try_drive_with_profile unless KORU_OS_INJECTOR=1;
-    # this test exercises the X11 / XWayland xdotool path explicitly.
+    # Daemon imports koruide.os_injector at request time; isolate from host IDE env.
     monkeypatch.setenv("XDG_SESSION_TYPE", "x11")
+    monkeypatch.delenv("KORU_OS_INJECTOR", raising=False)
+    monkeypatch.delenv("CURSOR_AGENT", raising=False)
+    monkeypatch.delenv("CURSOR_CLI", raising=False)
+    monkeypatch.delenv("VSCODE_PID", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    ide_mod.clear_detect_cache()
 
     repo = tmp_path / "repo"
     repo.mkdir()
     fake = RunningIDE(id="cursor", label="Cursor", pid=1, exe="/opt/Cursor")
-    monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [fake])
-    monkeypatch.setattr(koruide_daemon_mod, "detect_running_ides", lambda **_: [fake])
-    monkeypatch.setattr(oi_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None)
+    running = lambda **_: [fake]
+    monkeypatch.setattr(ide_mod, "detect_running_ides", running)
+    monkeypatch.setattr(ide_mod, "detect_running_ides_cached", running)
+    monkeypatch.setattr(koruide_daemon_mod, "detect_running_ides", running)
+    monkeypatch.setattr(ide_mod, "detect_focused_ide_id", lambda **_k: None)
+    monkeypatch.setattr(ide_mod, "detect_terminal_host_ide_id", lambda **_k: None)
+    monkeypatch.setattr(
+        koruide_oi.shutil,
+        "which",
+        lambda name: "/bin/xdotool" if name == "xdotool" else None,
+    )
 
     prof = OsInjectorProfile(tool_id="cursor", chat_x=2, chat_y=3)
 
@@ -286,12 +304,12 @@ def test_drive_uses_os_injector_when_profile_available(
             "dry_run": dry_run,
         }
 
-    monkeypatch.setattr(oi_mod, "try_load_profile", fake_try_load)
-    monkeypatch.setattr(oi_mod, "inject_with_profile", fake_inject)
+    monkeypatch.setattr(koruide_oi, "try_load_profile", fake_try_load)
+    monkeypatch.setattr(koruide_oi, "inject_with_profile", fake_inject)
 
     with _daemon(tmp_path, monkeypatch, project=repo, patch_ides=False) as h:
         reply = h.client().drive("hello", submit=False, ide="auto")
-    assert reply["type"] == "ack"
+    assert reply.get("type") == "ack", reply
     assert reply["ok"] is True
     assert reply["backend"] == "os_injector"
     assert reply["tool_id"] == "cursor"
@@ -481,6 +499,62 @@ def test_plugin_ack_with_shutdown_info_is_relayed(
         assert cli_reply.data.get("backend") == "plugin"
 
         assert h.injector.calls == []
+        plugin.close()
+        cli.close()
+
+
+def test_plugin_ack_submit_failure_uses_os_fallback(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """When plugin cannot submit, daemon should try os-injector fallback."""
+    with _daemon(tmp_path, monkeypatch) as h:
+        plugin, plugin_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
+
+        def fake_os_fallback(_ide: str, _text: str, submit: bool):
+            return {
+                "ok": True,
+                "backend": "os_injector",
+                "submitted": submit,
+            }
+
+        monkeypatch.setattr(h.daemon, "_try_os_injector_drive", fake_os_fallback)
+
+        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli.settimeout(2.0)
+        cli.connect(str(h.sock_path))
+        cli_reader = _LineReader(cli)
+        cli.sendall(
+            Message(
+                type="drive",
+                id="d-submit-fail",
+                data={"text": "continue", "ide": "vscode", "submit": True},
+            ).encode()
+        )
+
+        forwarded = plugin_reader.read_message()
+        assert forwarded.type == "chat.send"
+        plugin.sendall(
+            Message(
+                type="ack",
+                id=forwarded.id,
+                data={
+                    "ok": False,
+                    "delivered": False,
+                    "submitted": False,
+                    "message": "chat opened and text injected, but submit command failed",
+                },
+            ).encode()
+        )
+
+        cli_reply = cli_reader.read_message()
+        assert cli_reply.type == "ack"
+        assert cli_reply.data.get("ok") is True
+        assert cli_reply.data.get("backend") == "os_injector"
+        assert cli_reply.data.get("submitted") is True
+        assert cli_reply.data.get("os_fallback") == "used"
+        assert h.injector.calls == []
+
         plugin.close()
         cli.close()
 

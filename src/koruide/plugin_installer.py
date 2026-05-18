@@ -19,7 +19,11 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from koruide.ide import detect_focused_ide_id, detect_running_ides
+from koruide.ide import (
+    detect_focused_ide_id,
+    detect_running_ides,
+    detect_terminal_host_ide_id,
+)
 
 SUPPORTED_IDES = frozenset({"windsurf", "vscode", "cursor"})
 EXTENSION_ID = "semcod.koru-autopilot-vscode"
@@ -68,14 +72,7 @@ def _valid_ide(raw: str | None) -> str | None:
 
 def _ide_from_terminal_env() -> str | None:
     """Best-effort IDE hint from an integrated terminal environment."""
-    term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
-    if term_program in ("vscode", "code"):
-        return "vscode"
-    if term_program in SUPPORTED_IDES:
-        return term_program
-    if os.environ.get("VSCODE_PID"):
-        return "vscode"
-    return None
+    return detect_terminal_host_ide_id()
 
 
 def _terminal_vscode_flavor() -> str | None:
@@ -107,7 +104,7 @@ def resolve_target_ide(requested: str = "auto") -> str | None:
         return env_ide
 
     terminal_ide = _ide_from_terminal_env()
-    if terminal_ide is not None:
+    if terminal_ide in SUPPORTED_IDES:
         return terminal_ide
 
     focused = detect_focused_ide_id()

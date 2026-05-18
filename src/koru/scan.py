@@ -823,6 +823,16 @@ def run_scan(
         ok = _create_ticket(project, s, source=source, runner=runner)
         if ok:
             applied.append(s.title)
+            try:
+                from .activity_log import activity
+
+                activity(
+                    "SCAN",
+                    f"ticket ze skanu: {s.title} (priority={s.priority})",
+                    preview=s.description,
+                )
+            except Exception:
+                pass
         else:
             skipped.append(s.title)
     return ScanResult(suggestions=suggestions, applied=applied, skipped=skipped)

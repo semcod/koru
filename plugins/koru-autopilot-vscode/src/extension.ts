@@ -11,6 +11,20 @@ import * as fs from "fs";
 import * as net from "net";
 import * as vscode from "vscode";
 import { planDispatch } from "./dispatch-plan";
+import {
+  buildFocusInputCommands,
+  buildFocusOpenCommands,
+  buildPasteDirectCommands,
+  buildSubmitCommands,
+  captureEditorSnapshot,
+  filterRegistered,
+  loadProbeCache,
+  mergeProbeCache,
+  orderWithCache,
+  pasteLandedInEditor,
+  type ProbeCacheEntry,
+  verifyFocusAfterOpen,
+} from "./probe-ladder";
 import { defaultSocketPathFromEnv, socketCandidatesFromEnv } from "./socketPath";
 
 interface Envelope {
@@ -157,184 +171,201 @@ class AutopilotBridge {
     }
   }
 
-  private async submitChat(): Promise<boolean> {
-    // Windsurf Cascade often ignores generic workbench chat.submit — try
-    // Cascade-specific command IDs first.
-    const ide = this.detectIde();
-    const generic = [
-      "workbench.action.chat.submit",
-      "workbench.action.chat.acceptInput",
-      "workbench.action.chat.send",
-      "workbench.action.chat.sendMessage",
-      "workbench.action.interactive.accept",
-      "composer.submit",
-      "aichat.submit",
-    ];
-    const windsurfFirst = [
-      "windsurf.action.cascade.submit",
-      "windsurf.action.submitCascade",
-      "windsurf.action.submitChat",
-      "windsurf.action.chat.submit",
-      "windsurf.chat.submit",
-      "windsurf.cascade.submit",
-      "cascade.submit",
-      ...generic,
-    ];
-    const candidates = ide === "windsurf" ? windsurfFirst : generic;
-    for (const cmd of candidates) {
-      if (await this.runCommand(cmd)) return true;
-      console.warn(`koru autopilot: submitChat command not available: ${cmd}`);
-    }
-    // Extra fallback for IDEs where chat input is focused but command IDs are hidden.
-    try {
-      await Promise.resolve(vscode.commands.executeCommand("workbench.action.acceptSelectedQuickOpenItem"));
-      return true;
-    } catch {
-      // ignore
-    }
-    // Last resort: synthetic Enter in currently focused chat input.
-    try {
-      await Promise.resolve(vscode.commands.executeCommand("type", { text: "\n" }));
-      return true;
-    } catch {
-      // Some hosts react to CR (\r) but not LF (\n) for submit.
-      try {
-        await Promise.resolve(vscode.commands.executeCommand("type", { text: "\r" }));
-        return true;
-      } catch {
-        return false;
-      }
-    }
+  private probeLadderEnabled(): boolean {
+    return vscode.workspace.getConfiguration("koruAutopilot").get<boolean>("probeLadder", true);
   }
 
-  private async focusChat(): Promise<boolean> {
+  private probeFocusDelayMs(): number {
+    return vscode.workspace.getConfiguration("koruAutopilot").get<number>("probeFocusDelayMs", 220);
+  }
+
+  private probePasteDelayMs(): number {
+    return vscode.workspace.getConfiguration("koruAutopilot").get<number>("probePasteDelayMs", 120);
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private editorSnapshot(): ReturnType<typeof captureEditorSnapshot> {
+    return captureEditorSnapshot(vscode.window.activeTextEditor);
+  }
+
+  private getProbeCache(): ProbeCacheEntry | undefined {
+    const raw = this.context.globalState.get<unknown>("probeCache");
+    return loadProbeCache(raw, this.detectIde(), vscode.env.appName || "");
+  }
+
+  private async saveProbeCache(
+    wins: Partial<Pick<ProbeCacheEntry, "focusOpen" | "focusInput" | "paste" | "submit">>
+  ): Promise<void> {
+    const next = mergeProbeCache(
+      this.getProbeCache(),
+      this.detectIde(),
+      vscode.env.appName || "",
+      wins
+    );
+    await this.context.globalState.update("probeCache", next);
+    debugLog("PROBE_CACHE", next);
+  }
+
+  private async submitChat(): Promise<{ ok: boolean; command?: string }> {
+    const ide = this.detectIde();
+    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(true)));
+    const cache = this.getProbeCache();
+    const candidates = filterRegistered(
+      orderWithCache(buildSubmitCommands(ide), cache?.submit),
+      existing
+    );
+    for (const cmd of candidates) {
+      if (await this.runCommand(cmd)) {
+        if (this.probeLadderEnabled()) {
+          await this.saveProbeCache({ submit: cmd });
+        }
+        return { ok: true, command: cmd };
+      }
+      console.warn(`koru autopilot: submitChat command not available: ${cmd}`);
+    }
+    const fallbacks = [
+      "workbench.action.acceptSelectedQuickOpenItem",
+      "type:\\n",
+      "type:\\r",
+    ];
+    for (const fb of fallbacks) {
+      if (fb === "type:\\n") {
+        try {
+          await Promise.resolve(vscode.commands.executeCommand("type", { text: "\n" }));
+          if (this.probeLadderEnabled()) {
+            await this.saveProbeCache({ submit: "type:\\n" });
+          }
+          return { ok: true, command: "type:\\n" };
+        } catch {
+          continue;
+        }
+      }
+      if (fb === "type:\\r") {
+        try {
+          await Promise.resolve(vscode.commands.executeCommand("type", { text: "\r" }));
+          if (this.probeLadderEnabled()) {
+            await this.saveProbeCache({ submit: "type:\\r" });
+          }
+          return { ok: true, command: "type:\\r" };
+        } catch {
+          continue;
+        }
+      }
+      try {
+        await Promise.resolve(vscode.commands.executeCommand(fb));
+        if (this.probeLadderEnabled()) {
+          await this.saveProbeCache({ submit: fb });
+        }
+        return { ok: true, command: fb };
+      } catch {
+        /* try next */
+      }
+    }
+    return { ok: false };
+  }
+
+  private async focusChat(): Promise<{ ok: boolean; command?: string }> {
     const cfg = vscode.workspace.getConfiguration("koruAutopilot");
     const primary = (cfg.get<string[]>("chatOpenCommands") || []).filter(Boolean);
     const ide = this.detectIde();
-    const defaults =
-      ide === "windsurf"
-        ? [
-            "windsurf.action.openCascade",
-            "windsurf.action.openChat",
-            "windsurf.chat.open",
-            "windsurf.cascade.open",
-            "windsurf.panel.chat",
-            "cascade.focus",
-            "windsurf.action.showCascade",
-            "composer.showComposer",
-            "workbench.action.chat.open",
-            "aichat.newchataction",
-          ]
-        : [
-            "workbench.action.chat.open",
-            "composer.showComposer",
-            "aichat.newchataction",
-          ];
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(true)));
-    const runList = async (commands: string[]): Promise<boolean> => {
-      for (const cmd of commands) {
-        if (!existing.has(cmd)) {
-          console.warn(`koru autopilot: focusChat command not registered: ${cmd}`);
-          continue;
-        }
-        if (await this.runCommand(cmd)) return true;
+    const cache = this.getProbeCache();
+    const useProbe = this.probeLadderEnabled();
+    const commands = filterRegistered(
+      orderWithCache(buildFocusOpenCommands(ide, primary), cache?.focusOpen),
+      existing
+    );
+    const before = this.editorSnapshot();
+    for (const cmd of commands) {
+      if (!(await this.runCommand(cmd))) {
         console.warn(`koru autopilot: focusChat command not available: ${cmd}`);
-      }
-      return false;
-    };
-    // If user configured custom commands, try them first, then always fallback
-    // to built-ins to avoid hard lock-in on stale command IDs.
-    if (primary.length > 0 && (await runList(primary))) {
-      return true;
-    }
-    for (const cmd of defaults) {
-      if (primary.includes(cmd)) continue;
-      if (!existing.has(cmd)) {
         continue;
       }
-      if (await this.runCommand(cmd)) return true;
+      await this.sleep(this.probeFocusDelayMs());
+      const after = this.editorSnapshot();
+      if (!useProbe || verifyFocusAfterOpen(before, after)) {
+        if (useProbe) {
+          await this.saveProbeCache({ focusOpen: cmd });
+        }
+        return { ok: true, command: cmd };
+      }
+      debugLog("PROBE_FOCUS_REJECT", { cmd, before, after });
     }
-    return false;
+    return { ok: false };
   }
 
-  private async pasteText(text: string): Promise<boolean> {
+  private async pasteText(text: string): Promise<{ ok: boolean; command?: string }> {
     const ide = this.detectIde();
+    const useProbe = this.probeLadderEnabled();
+    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(true)));
+    const cache = this.getProbeCache();
+    const before = this.editorSnapshot();
 
-    // Try IDE-specific direct text-insertion commands first (avoids
-    // clipboard-paste landing in the terminal / wrong editor).
-    const directCommands: string[] = [];
-    if (ide === "windsurf") {
-      directCommands.push(
-        "windsurf.action.chat.typeText",
-        "windsurf.action.cascade.typeText",
-        "windsurf.chat.typeText",
-        "windsurf.cascade.typeText",
-        "cascade.typeText",
-      );
-    } else if (ide === "cursor") {
-      directCommands.push(
-        "cursor.action.chat.typeText",
-        "composer.typeText",
-      );
-    } else {
-      directCommands.push(
-        "workbench.action.chat.insertText",
-        "workbench.action.chat.typeText",
-      );
-    }
+    const directCommands = filterRegistered(
+      orderWithCache(buildPasteDirectCommands(ide), cache?.paste),
+      existing
+    );
     for (const cmd of directCommands) {
       try {
-        await Promise.resolve(vscode.commands.executeCommand(cmd, text));
-        // If the command didn't throw we optimistically assume it worked.
-        return true;
+        const result = await Promise.resolve(vscode.commands.executeCommand(cmd, text));
+        if (result === false) {
+          continue;
+        }
+        await this.sleep(this.probePasteDelayMs());
+        const after = this.editorSnapshot();
+        if (useProbe && pasteLandedInEditor(before, after, text)) {
+          debugLog("PROBE_PASTE_REJECT", { cmd, reason: "landed_in_editor" });
+          continue;
+        }
+        if (useProbe) {
+          await this.saveProbeCache({ paste: cmd });
+        }
+        return { ok: true, command: cmd };
       } catch {
         /* command doesn't exist — try next */
       }
     }
 
-    // Fallback: synthetic typing via the ``type`` command.
-    // ``editor.action.clipboardPasteAction`` only works in text editors,
-    // not in webview-based chat panels.  The ``type`` command sends
-    // keystrokes to whatever DOM element currently has focus, so we
-    // must ensure the chat input is focused first.
-    await this.focusChatInput();
+    const inputFocused = await this.focusChatInput();
+    if (!inputFocused.ok) {
+      debugLog("PROBE_PASTE_NO_INPUT_FOCUS");
+    }
     try {
-      await Promise.resolve(
-        vscode.commands.executeCommand("type", { text })
-      );
-      return true;
+      await Promise.resolve(vscode.commands.executeCommand("type", { text }));
+      await this.sleep(this.probePasteDelayMs());
+      const after = this.editorSnapshot();
+      if (useProbe && pasteLandedInEditor(before, after, text)) {
+        return { ok: false };
+      }
+      if (useProbe) {
+        await this.saveProbeCache({ paste: "type" });
+      }
+      return { ok: true, command: "type" };
     } catch {
-      return false;
+      return { ok: false };
     }
   }
 
-  private async focusChatInput(): Promise<boolean> {
+  private async focusChatInput(): Promise<{ ok: boolean; command?: string }> {
     const ide = this.detectIde();
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(true)));
-    const candidates = [
-      ...(ide === "windsurf"
-        ? [
-            "windsurf.action.focusChatInput",
-            "windsurf.chat.focusInput",
-            "windsurf.cascade.focusInput",
-            "cascade.focusInput",
-            "windsurf.action.focusCascadeInput",
-          ]
-        : []),
-      // Focus the sidebar / panel areas where the chat lives.
-      // Do NOT use focusActiveEditorGroup — that moves focus back
-      // to the editor and the paste lands there instead of the chat.
-      "workbench.action.focusAuxiliaryBar",   // secondary sidebar (right)
-      "workbench.action.focusPanel",          // bottom panel
-      "workbench.action.focusSideBar",      // primary sidebar (left)
-    ];
+    const cache = this.getProbeCache();
+    const candidates = filterRegistered(
+      orderWithCache(buildFocusInputCommands(ide), cache?.focusInput),
+      existing
+    );
     for (const cmd of candidates) {
-      if (!existing.has(cmd)) {
-        continue;
+      if (await this.runCommand(cmd)) {
+        if (this.probeLadderEnabled()) {
+          await this.saveProbeCache({ focusInput: cmd });
+        }
+        return { ok: true, command: cmd };
       }
-      if (await this.runCommand(cmd)) return true;
     }
-    return false;
+    return { ok: false };
   }
 
   private detectIde(): string {
@@ -413,40 +444,44 @@ class AutopilotBridge {
       previous = null;
     }
     try {
-      const opened = await this.focusChat();
-      if (opened) {
-        // Give the chat panel time to render and grab focus before we
-        // try to paste (otherwise the editor may still be focused).
-        await new Promise(r => setTimeout(r, 300));
+      const focus = await this.focusChat();
+      if (focus.ok) {
+        // Extra settle time after verified open (R13).
+        await this.sleep(80);
       }
-      if (!opened) {
+      if (!focus.ok) {
         this.send({
           type: "ack",
           id: env.id,
           ok: false,
           opened: false,
           submitted: false,
+          probe_ladder: this.probeLadderEnabled(),
           message:
             "chat input is not focused/open (no supported focus command in this IDE build). Open chat input manually, then retry.",
         });
         return;
       }
       const pasted = await this.pasteText(text);
-      if (!pasted) {
+      if (!pasted.ok) {
         this.send({
           type: "ack",
           id: env.id,
           ok: false,
-          message: "chat opened but paste command failed",
+          opened: true,
+          probe_ladder: this.probeLadderEnabled(),
+          winning_focus_open: focus.command,
+          message: "chat opened but paste command failed (probe rejected editor contamination)",
         });
         return;
       }
       let submitted = false;
+      let submitCmd: string | undefined;
       if (submit) {
-        // Small delay so the chat input has time to process the paste
-        // before we try to submit (R13).
-        await new Promise(r => setTimeout(r, 150));
-        submitted = await this.submitChat();
+        await this.sleep(150);
+        const submitResult = await this.submitChat();
+        submitted = submitResult.ok;
+        submitCmd = submitResult.command;
       }
       if (submit && submitted) {
         console.log("koru autopilot: sending message.sent");
@@ -458,13 +493,27 @@ class AutopilotBridge {
           id: env.id,
           ok: false,
           delivered: false,
-          opened,
+          opened: true,
           submitted,
+          probe_ladder: this.probeLadderEnabled(),
+          winning_focus_open: focus.command,
+          winning_paste: pasted.command,
           message: "chat opened and text injected, but submit command failed",
         });
         return;
       }
-      this.send({ type: "ack", id: env.id, ok: true, delivered: true, opened, submitted });
+      this.send({
+        type: "ack",
+        id: env.id,
+        ok: true,
+        delivered: true,
+        opened: true,
+        submitted,
+        probe_ladder: this.probeLadderEnabled(),
+        winning_focus_open: focus.command,
+        winning_paste: pasted.command,
+        winning_submit: submitCmd,
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.send({ type: "ack", id: env.id, ok: false, message });
@@ -474,6 +523,29 @@ class AutopilotBridge {
         try { await vscode.env.clipboard.writeText(previous); } catch { /* ignore */ }
       }
     }
+  }
+
+  async calibrateProbe(): Promise<void> {
+    const token = `__koru_probe_${Math.random().toString(36).slice(2, 10)}__`;
+    const lines: string[] = [`IDE: ${this.detectIde()} (${vscode.env.appName})`];
+    const focus = await this.focusChat();
+    lines.push(focus.ok ? `focus open: ${focus.command}` : "focus open: FAILED");
+    if (!focus.ok) {
+      void vscode.window.showWarningMessage(`koru probe: could not open chat.\n${lines.join("\n")}`);
+      return;
+    }
+    await this.sleep(this.probeFocusDelayMs());
+    const pasted = await this.pasteText(token);
+    lines.push(pasted.ok ? `paste: ${pasted.command}` : "paste: FAILED");
+    if (!pasted.ok) {
+      void vscode.window.showWarningMessage(`koru probe: paste failed.\n${lines.join("\n")}`);
+      return;
+    }
+    const cache = this.getProbeCache();
+    if (cache) {
+      lines.push(`cache: ${JSON.stringify(cache)}`);
+    }
+    void vscode.window.showInformationMessage(`koru probe OK\n${lines.join("\n")}`);
   }
 
   async sendManualChat(text: string): Promise<void> {
@@ -495,6 +567,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const text = await vscode.window.showInputBox({ prompt: "Send to chat:" });
       if (text) await bridge.sendManualChat(text);
     }),
+    vscode.commands.registerCommand("koruAutopilot.calibrateProbe", () => bridge.calibrateProbe()),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (
         event.affectsConfiguration("koruAutopilot.socketPath") ||

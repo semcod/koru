@@ -1,47 +1,44 @@
-# redup/duplication | 28 groups | 97f 24564L | 2026-05-17
+# redup/duplication | 26 groups | 101f 25105L | 2026-05-18
 
 SUMMARY:
-  files_scanned: 97
-  total_lines:   24564
-  dup_groups:    28
-  dup_fragments: 58
-  saved_lines:   365
-  scan_ms:       2720
+  files_scanned: 101
+  total_lines:   25105
+  dup_groups:    26
+  dup_fragments: 54
+  saved_lines:   320
+  scan_ms:       2681
 
 HOTSPOTS[7] (files with most duplication):
-  src/koru/autonomous.py  dup=245L  groups=16  frags=16  (1.0%)
-  src/koru/autonomous_cycle.py  dup=210L  groups=12  frags=12  (0.9%)
-  src/koru/autopilot/__init__.py  dup=43L  groups=2  frags=2  (0.2%)
+  src/koru/autonomous.py  dup=215L  groups=13  frags=13  (0.9%)
+  src/koru/autonomous_cycle.py  dup=181L  groups=9  frags=9  (0.7%)
   src/koru/mcp_provision.py  dup=39L  groups=2  frags=5  (0.2%)
   src/koru/autonomous_process_guard.py  dup=33L  groups=4  frags=4  (0.1%)
-  src/koruide/socket.py  dup=32L  groups=2  frags=2  (0.1%)
   src/koruide/protocol.py  dup=24L  groups=1  frags=2  (0.1%)
+  src/koru/serve.py  dup=20L  groups=2  frags=3  (0.1%)
+  src/koruide/injector.py  dup=16L  groups=1  frags=2  (0.1%)
 
-DUPLICATES[28] (ranked by impact):
+DUPLICATES[26] (ranked by impact):
   [b9219889c3cb4859] ! EXAC  _run_idle_diagnostics  L=97 N=2 saved=97 sim=1.00
-      src/koru/autonomous.py:947-1043  (_run_idle_diagnostics)
-      src/koru/autonomous_cycle.py:158-254  (_run_idle_diagnostics)
+      src/koru/autonomous.py:1014-1110  (_run_idle_diagnostics)
+      src/koru/autonomous_cycle.py:178-274  (_run_idle_diagnostics)
   [c5f3a2b0a34d653a] ! EXAC  _create_diagnostic_ticket  L=31 N=2 saved=31 sim=1.00
-      src/koru/autonomous.py:892-922  (_create_diagnostic_ticket)
-      src/koru/autonomous_cycle.py:103-133  (_create_diagnostic_ticket)
-  [fc29fe417102effb]   STRU  default_socket_path  L=30 N=2 saved=30 sim=1.00
-      src/koru/autopilot/__init__.py:35-64  (default_socket_path)
-      src/koruide/socket.py:24-42  (default_socket_path)
-  [4ef39a8717ff72e4]   EXAC  _drain_autopilot_events  L=18 N=2 saved=18 sim=1.00
-      src/koru/autonomous.py:1050-1067  (_drain_autopilot_events)
-      src/koru/autonomous_cycle.py:261-277  (_drain_autopilot_events)
+      src/koru/autonomous.py:959-989  (_create_diagnostic_ticket)
+      src/koru/autonomous_cycle.py:123-153  (_create_diagnostic_ticket)
   [13996a2247a97ed8]   EXAC  _read_wup_health  L=16 N=2 saved=16 sim=1.00
-      src/koru/autonomous.py:929-944  (_read_wup_health)
-      src/koru/autonomous_cycle.py:140-155  (_read_wup_health)
+      src/koru/autonomous.py:996-1011  (_read_wup_health)
+      src/koru/autonomous_cycle.py:160-175  (_read_wup_health)
   [400f9f906a729d1a]   STRU  provision_cursor  L=15 N=2 saved=15 sim=1.00
       src/koru/mcp_provision.py:194-208  (provision_cursor)
       src/koru/mcp_provision.py:211-225  (provision_vscode)
-  [805cba22d3ffeba5]   EXAC  _autopilot_socket_basename  L=13 N=2 saved=13 sim=1.00
-      src/koru/autopilot/__init__.py:20-32  (_autopilot_socket_basename)
-      src/koruide/socket.py:9-21  (_autopilot_socket_basename)
+  [d69cbedeb6dc8f2f]   EXAC  _parse_iso_datetime  L=13 N=2 saved=13 sim=1.00
+      src/koru/autonomy/ide_work.py:135-147  (_parse_iso_datetime)
+      src/koru/autonomy/post_run_verify.py:107-119  (_parse_iso_datetime)
   [f54ec37ee70db79d]   STRU  _looks_like_autonomous_up_command  L=13 N=2 saved=13 sim=1.00
-      src/koru/autonomous.py:219-231  (_looks_like_autonomous_up_command)
+      src/koru/autonomous.py:204-216  (_looks_like_autonomous_up_command)
       src/koru/autonomous_process_guard.py:68-80  (looks_like_autonomous_up_command)
+  [07394d97ab843be1]   STRU  resolve_xdg_path  L=12 N=2 saved=12 sim=1.00
+      src/koru/autopilot/utils/client_helpers.py:46-57  (resolve_xdg_path)
+      src/koruide/utils.py:9-21  (resolve_xdg_path)
   [d4d1a15bc8e8affa]   STRU  message_received  L=12 N=2 saved=12 sim=1.00
       src/koruide/protocol.py:184-195  (message_received)
       src/koruide/protocol.py:198-209  (status_error)
@@ -52,25 +49,22 @@ DUPLICATES[28] (ranked by impact):
       src/koruide/injector.py:59-68  (_ydotool_enter_keycode)
       src/koruide/injector.py:81-86  (_ydotool_ctrl_keycode)
   [30376722d90c4f75]   EXAC  _is_topology_enabled  L=9 N=2 saved=9 sim=1.00
-      src/koru/autonomous.py:844-852  (_is_topology_enabled)
-      src/koru/autonomous_cycle.py:59-67  (_is_topology_enabled)
+      src/koru/autonomous.py:837-845  (_is_topology_enabled)
+      src/koru/autonomous_cycle.py:72-80  (_is_topology_enabled)
   [0a213b0b7ddbf9fc]   EXAC  _current_head  L=9 N=2 saved=9 sim=1.00
-      src/koru/autonomous.py:855-863  (_current_head)
-      src/koru/autonomous_cycle.py:70-78  (_current_head)
+      src/koru/autonomous.py:848-856  (_current_head)
+      src/koru/autonomous_cycle.py:83-91  (_current_head)
   [66e72bbc9f334365]   EXAC  _run_command_check  L=9 N=2 saved=9 sim=1.00
-      src/koru/autonomous.py:881-889  (_run_command_check)
-      src/koru/autonomous_cycle.py:92-100  (_run_command_check)
-  [c7b7dd41867b1232]   EXAC  _emit  L=9 N=2 saved=9 sim=1.00
-      src/koru/autonomous.py:1129-1137  (_emit)
-      src/koru/autonomous_cycle.py:339-347  (_emit)
+      src/koru/autonomous.py:948-956  (_run_command_check)
+      src/koru/autonomous_cycle.py:112-120  (_run_command_check)
   [abf90bbbadf601ec]   STRU  _as_managed  L=7 N=2 saved=7 sim=1.00
-      src/koru/autonomous.py:316-322  (_as_managed)
+      src/koru/autonomous.py:301-307  (_as_managed)
       src/koru/autonomous_process_guard.py:163-169  (as_managed)
   [8e12ae22db3cad29]   STRU  _confirm_replace_existing  L=7 N=2 saved=7 sim=1.00
-      src/koru/autonomous.py:367-373  (_confirm_replace_existing)
+      src/koru/autonomous.py:352-358  (_confirm_replace_existing)
       src/koru/autonomous_process_guard.py:207-213  (confirm_replace_existing)
   [9b7967c4c573e5f1]   STRU  _process_cwd  L=6 N=2 saved=6 sim=1.00
-      src/koru/autonomous.py:187-192  (_process_cwd)
+      src/koru/autonomous.py:172-177  (_process_cwd)
       src/koru/autonomous_process_guard.py:37-42  (process_cwd)
   [d3fe48eeadbdaf2c]   STRU  _cursor_project_config  L=3 N=3 saved=6 sim=1.00
       src/koru/mcp_provision.py:40-42  (_cursor_project_config)
@@ -87,145 +81,139 @@ DUPLICATES[28] (ranked by impact):
       src/koru/serve.py:1235-1239  (_open_later)
       src/koru/serve.py:1286-1290  (_open_later)
   [774459a6d92b5dbd]   EXAC  _queue_loop_waiting_ticket_label  L=4 N=2 saved=4 sim=1.00
-      src/koru/autonomous.py:838-841  (_queue_loop_waiting_ticket_label)
-      src/koru/autonomous_cycle.py:54-56  (_queue_loop_waiting_ticket_label)
+      src/koru/autonomous.py:831-834  (_queue_loop_waiting_ticket_label)
+      src/koru/autonomous_cycle.py:67-69  (_queue_loop_waiting_ticket_label)
   [a7174a018322bcf8]   EXAC  _status_in_skip_list  L=4 N=2 saved=4 sim=1.00
-      src/koru/autonomous.py:875-878  (_status_in_skip_list)
-      src/koru/autonomous_cycle.py:81-84  (_status_in_skip_list)
+      src/koru/autonomous.py:942-945  (_status_in_skip_list)
+      src/koru/autonomous_cycle.py:94-97  (_status_in_skip_list)
   [077cfa61a2943c36]   STRU  _mcp_serve_main  L=4 N=2 saved=4 sim=1.00
       src/koru/cli.py:1465-1468  (_mcp_serve_main)
       src/koru/cli.py:1530-1533  (_init_ide_main)
   [fdccb72b1fbbe81c]   EXAC  _allow_keyboard_autopilot_fallback  L=3 N=2 saved=3 sim=1.00
-      src/koru/autonomous.py:118-120  (_allow_keyboard_autopilot_fallback)
-      src/koru/autonomous_cycle.py:87-89  (_allow_keyboard_autopilot_fallback)
-  [a7c1b303f999f40e]   EXAC  _hp  L=3 N=2 saved=3 sim=1.00
-      src/koru/autonomous.py:1139-1141  (_hp)
-      src/koru/autonomous_cycle.py:349-351  (_hp)
+      src/koru/autonomous.py:124-126  (_allow_keyboard_autopilot_fallback)
+      src/koru/autonomous_cycle.py:100-102  (_allow_keyboard_autopilot_fallback)
   [be027ff698a2786c]   STRU  _action_status  L=3 N=2 saved=3 sim=1.00
       src/koru/autopilot/cli_command.py:711-713  (_action_status)
       src/koru/autopilot/cli_command.py:716-720  (_action_shutdown)
+  [781cd2265323c713]   STRU  _systemd_user_dir  L=3 N=2 saved=3 sim=1.00
+      src/koru/autopilot/cli_command.py:1112-1114  (_systemd_user_dir)
+      src/koruide/config.py:63-65  (default_config_path)
 
-REFACTOR[28] (ranked by priority):
+REFACTOR[26] (ranked by priority):
   [1] ◐ extract_module     → src/koru/utils/_run_idle_diagnostics.py
       WHY: 2 occurrences of 97-line block across 2 files — saves 97 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
   [2] ◐ extract_function   → src/koru/utils/_create_diagnostic_ticket.py
       WHY: 2 occurrences of 31-line block across 2 files — saves 31 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [3] ○ extract_function   → src/utils/default_socket_path.py
-      WHY: 2 occurrences of 30-line block across 2 files — saves 30 lines
-      FILES: src/koru/autopilot/__init__.py, src/koruide/socket.py
-  [4] ○ extract_function   → src/koru/utils/_drain_autopilot_events.py
-      WHY: 2 occurrences of 18-line block across 2 files — saves 18 lines
-      FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [5] ○ extract_function   → src/koru/utils/_read_wup_health.py
+  [3] ○ extract_function   → src/koru/utils/_read_wup_health.py
       WHY: 2 occurrences of 16-line block across 2 files — saves 16 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [6] ○ extract_function   → src/koru/utils/provision_cursor.py
+  [4] ○ extract_function   → src/koru/utils/provision_cursor.py
       WHY: 2 occurrences of 15-line block across 1 files — saves 15 lines
       FILES: src/koru/mcp_provision.py
-  [7] ○ extract_function   → src/utils/_autopilot_socket_basename.py
+  [5] ○ extract_function   → src/koru/autonomy/utils/_parse_iso_datetime.py
       WHY: 2 occurrences of 13-line block across 2 files — saves 13 lines
-      FILES: src/koru/autopilot/__init__.py, src/koruide/socket.py
-  [8] ○ extract_function   → src/koru/utils/_looks_like_autonomous_up_command.py
+      FILES: src/koru/autonomy/ide_work.py, src/koru/autonomy/post_run_verify.py
+  [6] ○ extract_function   → src/koru/utils/_looks_like_autonomous_up_command.py
       WHY: 2 occurrences of 13-line block across 2 files — saves 13 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_process_guard.py
-  [9] ○ extract_function   → src/koruide/utils/message_received.py
+  [7] ○ extract_function   → src/utils/resolve_xdg_path.py
+      WHY: 2 occurrences of 12-line block across 2 files — saves 12 lines
+      FILES: src/koru/autopilot/utils/client_helpers.py, src/koruide/utils.py
+  [8] ○ extract_function   → src/koruide/utils/message_received.py
       WHY: 2 occurrences of 12-line block across 1 files — saves 12 lines
       FILES: src/koruide/protocol.py
-  [10] ○ extract_function   → src/koru/utils/load_koru_project_pipeline.py
+  [9] ○ extract_function   → src/koru/utils/load_koru_project_pipeline.py
       WHY: 2 occurrences of 10-line block across 2 files — saves 10 lines
       FILES: src/koru/project_pipeline.py, src/koru/serve.py
-  [11] ○ extract_function   → src/koruide/utils/_ydotool_enter_keycode.py
+  [10] ○ extract_function   → src/koruide/utils/_ydotool_enter_keycode.py
       WHY: 2 occurrences of 10-line block across 1 files — saves 10 lines
       FILES: src/koruide/injector.py
-  [12] ○ extract_function   → src/koru/utils/_is_topology_enabled.py
+  [11] ○ extract_function   → src/koru/utils/_is_topology_enabled.py
       WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [13] ○ extract_function   → src/koru/utils/_current_head.py
+  [12] ○ extract_function   → src/koru/utils/_current_head.py
       WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [14] ○ extract_function   → src/koru/utils/_run_command_check.py
+  [13] ○ extract_function   → src/koru/utils/_run_command_check.py
       WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [15] ○ extract_function   → src/koru/utils/_emit.py
-      WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
-      FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [16] ○ extract_function   → src/koru/utils/_as_managed.py
+  [14] ○ extract_function   → src/koru/utils/_as_managed.py
       WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_process_guard.py
-  [17] ○ extract_function   → src/koru/utils/_confirm_replace_existing.py
+  [15] ○ extract_function   → src/koru/utils/_confirm_replace_existing.py
       WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_process_guard.py
-  [18] ○ extract_function   → src/koru/utils/_process_cwd.py
+  [16] ○ extract_function   → src/koru/utils/_process_cwd.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_process_guard.py
-  [19] ○ extract_function   → src/koru/utils/_cursor_project_config.py
+  [17] ○ extract_function   → src/koru/utils/_cursor_project_config.py
       WHY: 3 occurrences of 3-line block across 1 files — saves 6 lines
       FILES: src/koru/mcp_provision.py
-  [20] ○ extract_function   → src/koru/utils/set_component_enabled.py
+  [18] ○ extract_function   → src/koru/utils/set_component_enabled.py
       WHY: 2 occurrences of 6-line block across 1 files — saves 6 lines
       FILES: src/koru/topology.py
-  [21] ○ extract_function   → src/koruide/utils/os_injector_env_disabled.py
+  [19] ○ extract_function   → src/koruide/utils/os_injector_env_disabled.py
       WHY: 3 occurrences of 3-line block across 1 files — saves 6 lines
       FILES: src/koruide/os_injector.py
-  [22] ○ extract_function   → src/koru/utils/_open_later.py
+  [20] ○ extract_function   → src/koru/utils/_open_later.py
       WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
       FILES: src/koru/serve.py
-  [23] ○ extract_function   → src/koru/utils/_queue_loop_waiting_ticket_label.py
+  [21] ○ extract_function   → src/koru/utils/_queue_loop_waiting_ticket_label.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [24] ○ extract_function   → src/koru/utils/_status_in_skip_list.py
+  [22] ○ extract_function   → src/koru/utils/_status_in_skip_list.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [25] ○ extract_function   → src/koru/utils/_mcp_serve_main.py
+  [23] ○ extract_function   → src/koru/utils/_mcp_serve_main.py
       WHY: 2 occurrences of 4-line block across 1 files — saves 4 lines
       FILES: src/koru/cli.py
-  [26] ○ extract_function   → src/koru/utils/_allow_keyboard_autopilot_fallback.py
+  [24] ○ extract_function   → src/koru/utils/_allow_keyboard_autopilot_fallback.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [27] ○ extract_function   → src/koru/utils/_hp.py
-      WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
-      FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [28] ○ extract_function   → src/koru/autopilot/utils/_action_status.py
+  [25] ○ extract_function   → src/koru/autopilot/utils/_action_status.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: src/koru/autopilot/cli_command.py
+  [26] ○ extract_function   → src/utils/_systemd_user_dir.py
+      WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
+      FILES: src/koru/autopilot/cli_command.py, src/koruide/config.py
 
-QUICK_WINS[19] (low risk, high savings — do first):
-  [3] extract_function   saved=30L  → src/utils/default_socket_path.py
-      FILES: __init__.py, socket.py
-  [4] extract_function   saved=18L  → src/koru/utils/_drain_autopilot_events.py
+QUICK_WINS[17] (low risk, high savings — do first):
+  [3] extract_function   saved=16L  → src/koru/utils/_read_wup_health.py
       FILES: autonomous.py, autonomous_cycle.py
-  [5] extract_function   saved=16L  → src/koru/utils/_read_wup_health.py
-      FILES: autonomous.py, autonomous_cycle.py
-  [6] extract_function   saved=15L  → src/koru/utils/provision_cursor.py
+  [4] extract_function   saved=15L  → src/koru/utils/provision_cursor.py
       FILES: mcp_provision.py
-  [7] extract_function   saved=13L  → src/utils/_autopilot_socket_basename.py
-      FILES: __init__.py, socket.py
-  [8] extract_function   saved=13L  → src/koru/utils/_looks_like_autonomous_up_command.py
+  [5] extract_function   saved=13L  → src/koru/autonomy/utils/_parse_iso_datetime.py
+      FILES: ide_work.py, post_run_verify.py
+  [6] extract_function   saved=13L  → src/koru/utils/_looks_like_autonomous_up_command.py
       FILES: autonomous.py, autonomous_process_guard.py
-  [9] extract_function   saved=12L  → src/koruide/utils/message_received.py
+  [7] extract_function   saved=12L  → src/utils/resolve_xdg_path.py
+      FILES: client_helpers.py, utils.py
+  [8] extract_function   saved=12L  → src/koruide/utils/message_received.py
       FILES: protocol.py
-  [10] extract_function   saved=10L  → src/koru/utils/load_koru_project_pipeline.py
+  [9] extract_function   saved=10L  → src/koru/utils/load_koru_project_pipeline.py
       FILES: project_pipeline.py, serve.py
-  [11] extract_function   saved=10L  → src/koruide/utils/_ydotool_enter_keycode.py
+  [10] extract_function   saved=10L  → src/koruide/utils/_ydotool_enter_keycode.py
       FILES: injector.py
-  [12] extract_function   saved=9L  → src/koru/utils/_is_topology_enabled.py
+  [11] extract_function   saved=9L  → src/koru/utils/_is_topology_enabled.py
+      FILES: autonomous.py, autonomous_cycle.py
+  [12] extract_function   saved=9L  → src/koru/utils/_current_head.py
       FILES: autonomous.py, autonomous_cycle.py
 
-EFFORT_ESTIMATE (total ≈ 14.3h):
+EFFORT_ESTIMATE (total ≈ 12.8h):
   hard   _run_idle_diagnostics               saved=97L  ~291min
   hard   _create_diagnostic_ticket           saved=31L  ~93min
-  medium default_socket_path                 saved=30L  ~60min
-  medium _drain_autopilot_events             saved=18L  ~36min
   medium _read_wup_health                    saved=16L  ~32min
   medium provision_cursor                    saved=15L  ~30min
-  easy   _autopilot_socket_basename          saved=13L  ~26min
+  easy   _parse_iso_datetime                 saved=13L  ~26min
   easy   _looks_like_autonomous_up_command   saved=13L  ~26min
+  easy   resolve_xdg_path                    saved=12L  ~24min
   easy   message_received                    saved=12L  ~24min
   easy   load_koru_project_pipeline          saved=10L  ~20min
-  ... +18 more (~220min)
+  easy   _ydotool_enter_keycode              saved=10L  ~20min
+  ... +16 more (~182min)
 
 METRICS-TARGET:
-  dup_groups:  28 → 0
-  saved_lines: 365 lines recoverable
+  dup_groups:  26 → 0
+  saved_lines: 320 lines recoverable

@@ -8,8 +8,9 @@ def build_parser(*, default_stdio_format: str) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="koru autonomous",
         description=(
-            "Bootstrap and run koru in autonomous mode: optional init, "
-            "scan intake, queue drain, and autopilot drive loop."
+            "Bootstrap and run koru in autonomous mode (alias: ``koru auto``): "
+            "optional init, scan intake, queue drain, autopilot daemon thread, "
+            "optional WUP watch, and IDE drive loop."
         ),
     )
     parser.add_argument(
@@ -138,8 +139,16 @@ def build_parser(*, default_stdio_format: str) -> argparse.ArgumentParser:
         action="store_false",
         help=(
             "Keep the outer loop running when the queue is waiting_input so each "
-            "cycle still runs scan/queue/WUP health/autopilot. Without it, the "
-            "process exits and the background WUP watcher is stopped."
+            "cycle still runs scan/queue/WUP health/autopilot (default)."
+        ),
+    )
+    up.add_argument(
+        "--stop-on-waiting-input",
+        dest="stop_on_waiting_input",
+        action="store_true",
+        help=(
+            "Stop the outer loop when the queue reports waiting_input "
+            "(legacy behavior)."
         ),
     )
     up.add_argument(
@@ -361,7 +370,7 @@ def build_parser(*, default_stdio_format: str) -> argparse.ArgumentParser:
         submit=True,
         enable_autopilot=True,
         enable_serve=True,
-        stop_on_waiting_input=True,
+        stop_on_waiting_input=False,
         semcod_artifacts=True,
     )
 

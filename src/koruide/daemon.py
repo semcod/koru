@@ -41,7 +41,7 @@ from typing import Any
 
 from koruide.audit import AuditLog
 from koruide.ide import detect_running_ides_cached as detect_running_ides
-from koruide.ide import pick_target
+from koruide.ide import pick_target, resolve_drive_target
 from koruide.injector import Injector, InjectorError
 from koruide.protocol import (
     MAX_LINE_BYTES,
@@ -377,7 +377,11 @@ class AutopilotDaemon:
         plugin.awaiting_plugin = (client, corr, submit, plugin.ide, text)
         self._send(plugin, chat_send(text, submit=submit, id=corr).encode())
         self._last_chat_send_at = time.monotonic()
-        self.log(f"drive → plugin/{plugin.ide} ({len(text)} chars)")
+        preview = text.replace("\n", " ")[:100]
+        self.log(
+            f"drive → plugin/{plugin.ide}: wklejam do czatu ({len(text)} zn, "
+            f"submit={submit}) «{preview}»"
+        )
         self.audit.record(
             "drive",
             ide=plugin.ide,
@@ -411,12 +415,24 @@ class AutopilotDaemon:
         submit: bool,
     ) -> None:
         """Fallback: OS injector profile (X11) or :class:`Injector` keyboard sim."""
-        detected = detect_running_ides()
-        target = pick_target(detected, prefer=ide_pref)
-        target_id = target.id if target else "default"
+        ide_arg = ide_pref if ide_pref else "auto"
+        target_id, profile_id, selection = resolve_drive_target(
+            ide_arg,
+            None,
+            project=self.project,
+        )
+        if ide_arg == "auto":
+            self.log(f"drive auto-selected {profile_id} ({selection})")
+        preview = text.replace("\n", " ")[:100]
+        target = pick_target(detect_running_ides(), prefer=ide_pref)
         try:
-            os_res = self._try_os_injector_drive(target_id, text, submit)
+            os_res = self._try_os_injector_drive(profile_id, text, submit)
             if os_res is not None:
+                self.log(
+                    f"drive → os_injector/{profile_id}: klik ({os_res.get('chat_x')}, "
+                    f"{os_res.get('chat_y')}) + {os_res.get('input_method', 'type')} "
+                    f"«{preview}»"
+                )
                 info: dict[str, Any] = {
                     "backend": str(os_res.get("backend", "os_injector")),
                     "submitted": bool(os_res.get("submitted", submit)),
@@ -442,6 +458,10 @@ class AutopilotDaemon:
                 )
                 return
 
+            self.log(
+                f"drive → keyboard/{target_id}: {self.injector.select_backend()} "
+                f"({len(text)} zn) «{preview}»"
+            )
             result = self.injector.type_text(text, ide=target_id, submit=submit)
         except InjectorError as exc:
             self._send(client, error(msg.id, str(exc)).encode())

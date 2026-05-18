@@ -26,18 +26,12 @@ export function defaultSocketPathFromEnv(): string {
   return `/tmp/${stem}-${uid}.sock`;
 }
 
-export function socketCandidatesFromEnv(ideId: string, override?: string): string[] {
+function defaultSocketCandidates(ideId: string): string[] {
   const out: string[] = [];
   const push = (p: string) => {
     const r = path.resolve(p);
     if (!out.includes(r)) out.push(r);
   };
-
-  const ov = (override || "").trim();
-  if (ov) {
-    push(ov);
-    return out;
-  }
 
   const explicit = (process.env.KORU_AUTOPILOT_SOCKET || "").trim();
   if (explicit) {
@@ -45,8 +39,7 @@ export function socketCandidatesFromEnv(ideId: string, override?: string): strin
     return out;
   }
 
-  // Try only this editor's lane plus the singleton socket. Falling through to
-  // other IDE sockets can attach a VS Code window to a stale Windsurf daemon.
+  // This editor's lane plus the singleton socket. Do not add other IDE sockets.
   const xdg = process.env.XDG_RUNTIME_DIR;
   if (xdg) {
     push(path.join(xdg, `koru-autopilot-${ideId}.sock`));
@@ -55,6 +48,19 @@ export function socketCandidatesFromEnv(ideId: string, override?: string): strin
     const uid = (process.getuid?.() ?? 0).toString();
     push(`/tmp/koru-autopilot-${ideId}-${uid}.sock`);
     push(`/tmp/koru-autopilot-${uid}.sock`);
+  }
+  return out;
+}
+
+export function socketCandidatesFromEnv(ideId: string, override?: string): string[] {
+  const ov = (override || "").trim();
+  if (!ov) {
+    return defaultSocketCandidates(ideId);
+  }
+  const resolved = path.resolve(ov);
+  const out = [resolved];
+  for (const p of defaultSocketCandidates(ideId)) {
+    if (!out.includes(p)) out.push(p);
   }
   return out;
 }

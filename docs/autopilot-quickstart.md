@@ -24,6 +24,28 @@ automatically. If your IDE has the koru-autopilot extension installed,
 the daemon will also type the next ticket brief back into the chat the
 moment Cascade/Copilot signals it has finished its turn.
 
+## After `koru autonomous up` (operator checklist)
+
+Long-running autonomy prints a block **`co zrobić teraz (operator IDE)`** after
+the autopilot daemon starts. Do this in the **same IDE** shown in the log
+(`autopilot IDE=…`, `autopilot socket → …`):
+
+1. Open the project root in Cursor / VS Code (not terminal-only).
+2. Reload the window after `task koru:mcp:bootstrap`; enable MCP server **koru**.
+3. Command Palette → **`koru: Connect autopilot daemon`** → status bar **`koru: on`**.
+4. Set `koruAutopilot.socketPath` to the socket from the log (or leave empty and
+   `export KORU_AUTOPILOT_INSTANCE=<ide>` in the shell).
+5. Verify: `koru autopilot status` → **`plugins` must not be `[]`**.
+6. Test: `koru autopilot drive --ide <ide> --require-plugin 'probe test'` →
+   `ok: true` with `winning_*` fields (not `backend: ydotool`).
+
+If `plugins` stays empty, the daemon is fine but the extension is not connected
+(wrong socket, wrong IDE window, or Connect not run in Cursor). Use
+`--require-plugin` on drive while debugging so you never silently fall back to
+keyboard injection.
+
+Monorepo guide: `maskservice/c2004/docs/autonomy-ide-cursor.md` (section *Po starcie*).
+
 ## Multiple IDE windows on one machine
 
 Several editors can run koru against the **same** git checkout. Use
@@ -64,11 +86,14 @@ Config is merged JSON keyed by IDE id (``cursor``, ``windsurf``, ``vscode``,
 to prepend ``DIR/.koru/…`` like ``koru autopilot daemon --project``).
 
 **One command across IDEs (``--ide auto``, default):** ``koru autopilot drive --direct``
-uses the same IDE id for the OS-injector profile as ``ide-list`` / ``pick_target``
-(focused window when X11 can see it, otherwise the first running match). You do
-not need ``--os-profile`` unless the profile key should differ from that choice
-(e.g. ``--ide vscode --os-profile windsurf``). ``koru autopilot calibrate`` uses
-the same default: ``--ide auto`` resolves the profile id before capture.
+auto-selects the first IDE that has a saved profile in ``ide-os-injector.json``,
+in order: **integrated terminal host** (``CURSOR_*`` / ``VSCODE_PID`` / parent walk)
+→ **focused window** (X11) → **running match** → other detected editors.
+When the terminal is Cursor but only Windsurf is calibrated, selection stays on
+Cursor (``auto:terminal-no-profile``) instead of injecting Windsurf coordinates.
+The CLI prints ``auto-selected <id> (…)`` on stderr. You do not need
+``--os-profile windsurf`` unless the profile key must differ from the auto pick.
+``koru autopilot calibrate --ide auto`` uses the same resolution before capture.
 
 Behaviour:
 
@@ -79,9 +104,9 @@ Behaviour:
 - ``KORU_OS_INJECTOR_INPUT=auto`` (default): paste via ``xclip``/``xsel`` + Ctrl+V when available, else ``xdotool type``; set ``type`` or ``paste`` to force.
 - ``KORU_OS_INJECTOR_POST_FOCUS_DELAY`` (seconds, default ``0.12``): sleep after the focus click/Return before paste/type; Electron chat fields often need this. Set ``0`` to disable.
 - Set ``KORU_OS_INJECTOR=0`` to disable and always use the plain keyboard injector.
-- On **Wayland**, OS-injector is skipped by default unless ``KORU_OS_INJECTOR=1``
-  (use when xdotool + your profile work — e.g. after successful ``calibrate``).
-  With ``KORU_OS_INJECTOR=1``, a profile is still required unless you rely on keyboard fallback.
+- On **Wayland**, a saved profile in ``ide-os-injector.json`` is used automatically
+  (after ``calibrate``). Without a profile, ``drive --direct`` falls back to
+  ``ydotool``/``wtype`` into whichever window has focus — click the IDE chat first.
 - ``KORU_OS_INJECTOR_DRY_RUN=1`` logs the planned injection without running ``xdotool``.
 
 Injection uses ``xdotool`` (X11 / XWayland). On Wayland, ``koru autopilot drive``

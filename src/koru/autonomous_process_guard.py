@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import signal
 import subprocess
 import time
@@ -66,21 +67,26 @@ def ancestor_pids(pid: int) -> set[int]:
 
 
 def looks_like_autonomous_up_command(command: str) -> bool:
+    if re.search(r"koru.{0,120}autonomous", command):
+        return True
     parts = command.split()
     for idx, part in enumerate(parts):
+        if Path(part).name == "koru" and idx + 1 < len(parts) and parts[idx + 1] == "auto":
+            return True
         if Path(part).name == "koru" and parts[idx + 1 : idx + 3] == ["autonomous", "up"]:
             return True
-        if (
-            part == "-m"
-            and idx + 3 < len(parts)
-            and parts[idx + 1] == "koru.cli"
-            and parts[idx + 2 : idx + 4] == ["autonomous", "up"]
-        ):
-            return True
+        if part == "-m" and idx + 2 < len(parts) and parts[idx + 1] == "koru.cli":
+            sub = parts[idx + 2]
+            if sub == "auto":
+                return True
+            if sub == "autonomous" and idx + 3 < len(parts) and parts[idx + 3] == "up":
+                return True
     return False
 
 
-def find_existing_autonomous_processes(project: Path) -> list[ExistingAutonomousProcess]:
+def find_existing_autonomous_processes(
+    project: Path, *, any_project: bool = False
+) -> list[ExistingAutonomousProcess]:
     try:
         result = subprocess.run(
             ["ps", "-eo", "pid=,ppid=,command="],
@@ -115,7 +121,7 @@ def find_existing_autonomous_processes(project: Path) -> list[ExistingAutonomous
 
         cwd = process_cwd(pid)
         cmd_project = command_project(command)
-        if cwd == project or cmd_project == project:
+        if any_project or cwd == project or cmd_project == project:
             matches.append(ExistingAutonomousProcess(pid=pid, command=command, cwd=cwd))
     return matches
 

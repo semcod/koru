@@ -56,7 +56,24 @@ class LegacyAutopilotClientAdapter:
         ide: str = "auto",
         require_plugin: bool = False,
     ) -> dict[str, Any]:
-        return self.client.drive(text, submit=submit, ide=ide, require_plugin=require_plugin)
+        from .activity_log import activity
+
+        activity(
+            "CHAT",
+            f"drive → ide={ide} submit={submit} require_plugin={require_plugin} "
+            f"({len(text)} znaków)",
+            preview=text,
+        )
+        reply = self.client.drive(
+            text, submit=submit, ide=ide, require_plugin=require_plugin
+        )
+        backend = reply.get("backend", "?")
+        ok = bool(reply.get("ok", True))
+        activity(
+            "CHAT",
+            f"drive wynik: ok={ok} backend={backend} tool_id={reply.get('tool_id', '-')}",
+        )
+        return reply
 
     def status(self) -> dict[str, Any]:
         return self.client.status()

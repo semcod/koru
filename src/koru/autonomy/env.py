@@ -164,6 +164,24 @@ def apply_autoloop_env_to_args(
         "WUP_DIAGNOSTIC_TICKETS", args.wup_diagnostic_tickets, environ=environ
     )
     args.wup_ticket_queue = _env_get("WUP_TICKET_QUEUE", args.wup_ticket_queue, environ) or args.wup_ticket_queue
+    if hasattr(args, "operator_pipeline"):
+        args.operator_pipeline = env_truthy(
+            "KORU_OPERATOR_PIPELINE", args.operator_pipeline, environ=environ
+        )
+    if hasattr(args, "operator_tickets"):
+        args.operator_tickets = env_truthy(
+            "KORU_OPERATOR_TICKETS", args.operator_tickets, environ=environ
+        )
+    if hasattr(args, "operator_ticket_queue"):
+        args.operator_ticket_queue = (
+            _env_get("OPERATOR_TICKET_QUEUE", args.operator_ticket_queue, environ)
+            or args.operator_ticket_queue
+        )
+    if hasattr(args, "operator_ticket_priority"):
+        args.operator_ticket_priority = (
+            _env_get("OPERATOR_TICKET_PRIORITY", args.operator_ticket_priority, environ)
+            or args.operator_ticket_priority
+        )
 
 
 def autonomous_environ_doctor_probe(project: Path) -> tuple[str, str]:

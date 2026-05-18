@@ -20,6 +20,10 @@ def test_resolve_target_ide_uses_running_supported_ide(monkeypatch) -> None:
     monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
     monkeypatch.delenv("TERM_PROGRAM", raising=False)
     monkeypatch.delenv("VSCODE_PID", raising=False)
+    monkeypatch.delenv("VSCODE_NLS_CONFIG", raising=False)
+    monkeypatch.delenv("VSCODE_IPC_HOOK", raising=False)
+    monkeypatch.delenv("CURSOR_AGENT", raising=False)
+    monkeypatch.setattr(plugin_installer, "detect_terminal_host_ide_id", lambda **_k: None)
     monkeypatch.setattr(plugin_installer, "detect_focused_ide_id", lambda: None)
     monkeypatch.setattr(
         plugin_installer,

@@ -4,13 +4,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.123-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$3.48-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-59.2h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.124-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$3.91-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-59.9h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $3.4800 (177 commits)
-- 👤 **Human dev:** ~$5917 (59.2h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $3.9077 (181 commits)
+- 👤 **Human dev:** ~$5987 (59.9h @ $100/h, 30min dedup)
 
-Generated on 2026-05-17 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
+Generated on 2026-05-18 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
 ---
 
@@ -95,7 +95,15 @@ with `--emit-events human`). In `jsonl` mode, incidental status lines go to
 `schemas/koru-stdio-event.schema.json`. Event `type` values include
 `SessionStarted`, `CycleStarted`, `ScanCompleted`, `ScanSkipped`,
 `QueueIteration`, `DiagnosticsCompleted`, `WupHealthChanged`,
+`PostRunVerifyCompleted`, `PostRunVerifyIdeCompleted`, `QueueStaleReleased`,
 `AutopilotDecision`, `CycleCompleted`, and `AutonomousStopped`.
+
+### Post-run verify (closed loop after `done`)
+
+Projects can declare regression gates in root **`koru.yaml`** under
+`queue.post_run_verify`. `koru autonomous up` runs them after the queue
+closes tickets and after the IDE marks tickets `done` in planfile (status
+poll — not chat readback). See [docs/post-run-verify.md](docs/post-run-verify.md).
 
 ### Quick troubleshooting
 
@@ -105,6 +113,8 @@ with `--emit-events human`). In `jsonl` mode, incidental status lines go to
 | `koru serve: cannot bind 127.0.0.1:8765` | Run `koru serve --auto-port` or free the port via `ss -ltnp \| rg 8765` then `kill <pid>` |
 | CLI seems to ignore freshly installed version | Verify environment alignment with `which koru` and `python -m pip show koru`; prefer `.venv/bin/koru` in project-local workflows |
 | `goal -a` takes too long to fail | Keep `strategies.python.test` fail-fast (`--maxfail=1`) for quick feedback; run full suite explicitly when needed |
+| `goal -a`: `No module named 'costs'` | Install dev extras: `pip install -e ".[dev]"`, or set `[tool.costs] badge = false` in `pyproject.toml` |
+| `goal -a` unstages `.code2llm_cache/*.pkl` | Ensure `.code2llm_cache/` is in `.gitignore` (not per-file pickle lines) |
 
 ## Topology & pipelines — what is active right now
 

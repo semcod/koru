@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscode",
   "displayName": "koru autopilot",
   "description": "Bridge between VS Code / Windsurf / Cursor and the koru autopilot daemon.",
-  "version": "0.1.11",
+  "version": "0.1.13",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -32,6 +32,7 @@
     "*",
     "onCommand:koruAutopilot.connect",
     "onCommand:koruAutopilot.sendChat",
+    "onCommand:koruAutopilot.calibrateProbe",
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
@@ -44,6 +45,10 @@
       {
         "command": "koruAutopilot.sendChat",
         "title": "koru: Send text to active chat"
+      },
+      {
+        "command": "koruAutopilot.calibrateProbe",
+        "title": "koru: Calibrate chat probe ladder"
       }
     ],
     "configuration": {
@@ -66,13 +71,32 @@
           "type": "boolean",
           "default": true,
           "description": "Connect to the daemon automatically when the editor starts."
+        },
+        "koruAutopilot.probeLadder": {
+          "type": "boolean",
+          "default": true,
+          "description": "Try chat commands in order with focus/paste verification; cache winning command IDs per IDE."
+        },
+        "koruAutopilot.probeFocusDelayMs": {
+          "type": "number",
+          "default": 220,
+          "minimum": 50,
+          "maximum": 2000,
+          "description": "Milliseconds to wait after a focus-open command before verifying UI state."
+        },
+        "koruAutopilot.probePasteDelayMs": {
+          "type": "number",
+          "default": 120,
+          "minimum": 50,
+          "maximum": 2000,
+          "description": "Milliseconds to wait after paste before checking the text did not land in a file editor."
         }
       }
     }
   },
   "scripts": {
     "compile": "tsc -p ./",
-    "test": "npm run compile && node out/dispatch-plan.test.js",
+    "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js",
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
     "package": "vsce package --no-dependencies --out koru-autopilot-${npm_package_version}.vsix",

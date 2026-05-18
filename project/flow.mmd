@@ -16,11 +16,11 @@ flowchart TD
         services__healing_webhook__app__alertmanager_webhook["alertmanager_webhook"]
         services__healing_webhook__app__probe_failure["probe_failure"]
         services__healing_webhook__app__get_tickets["get_tickets"]
+        src__koruide__config__AutopilotConfig__submit_key_for["submit_key_for"]
+        src__koruide__config__clear_config_cache["clear_config_cache"]
         src__koruide__protocol__Message__encode["encode"]
         src__koruide__protocol__hello["hello"]
-        src__koruide__protocol__drive["drive"]
-        src__koruide__protocol__session_started["session_started"]
-        ...["+363 more"]
+        ...["+366 more"]
     end
 
     subgraph Exporters

@@ -1361,6 +1361,47 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
 
+## [0.1.124] - 2026-05-18
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update docs/autonomy-ide-cursor.md
+- Update docs/autopilot-quickstart.md
+- Update docs/korudsl-koruapi.md
+- Update docs/post-run-verify.md
+- Update plugins/koru-autopilot-vscode/CHANGELOG.md
+- Update plugins/koru-autopilot-vscode/README.md
+- ... and 2 more files
+
+### Test
+- Update tests/test_activity_log.py
+- Update tests/test_autonomous.py
+- Update tests/test_autonomous_startup.py
+- Update tests/test_autopilot_cli.py
+- Update tests/test_autopilot_daemon.py
+- Update tests/test_autopilot_ide.py
+- Update tests/test_autopilot_os_injector.py
+- Update tests/test_autopilot_plugin_installer.py
+- Update tests/test_cli.py
+- Update tests/test_ide_work.py
+- ... and 5 more files
+
+### Other
+- Update .gitignore
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update Taskfile.yml
+- Update app.doql.less
+- Update koru.yaml
+- Update plugins/koru-autopilot-vscode/.gitignore
+- Update plugins/koru-autopilot-vscode/.planfile/config.yaml
+- Update plugins/koru-autopilot-vscode/.planfile/sprints/current.yaml
+- Update plugins/koru-autopilot-vscode/koru.yaml
+- ... and 29 more files
+
 ## [0.1.123] - 2026-05-17
 
 ### Other

@@ -85,6 +85,17 @@ def run_next_planfile_task(
             return QueueRunResult(status="idle", message="No runnable ticket found")
 
         ticket_id = str(ticket["id"])
+        ticket_name = str(ticket.get("name") or ticket_id)
+        try:
+            from koru.activity_log import activity
+
+            activity(
+                "QUEUE",
+                f"start {ticket_id} ({ticket_name}) executor="
+                f"{(ticket.get('executor') or {}).get('kind', 'human')}",
+            )
+        except Exception:
+            pass
         executor = ticket.get("executor") or {}
         raw_kind = executor.get("kind")
         executor_kind = str(raw_kind or "human")
@@ -200,6 +211,12 @@ def run_next_planfile_task(
             result = llm_runner(action, project)
             action_label = f"llm {action.get('model') or _DEFAULT_LLM_MODEL}"
         else:
+            try:
+                from koru.activity_log import activity
+
+                activity("QUEUE", f"shell {ticket_id}: {action}")
+            except Exception:
+                pass
             result = shell_runner(str(action), project)
             action_label = str(action)
 
