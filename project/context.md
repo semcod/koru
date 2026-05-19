@@ -354,6 +354,11 @@ session:
 - **Methods**: 4
 - **Key Methods**: src.koru.ide_client.LegacyAutopilotClientAdapter.is_running, src.koru.ide_client.LegacyAutopilotClientAdapter.drive, src.koru.ide_client.LegacyAutopilotClientAdapter.status, src.koru.ide_client.LegacyAutopilotClientAdapter.shutdown
 
+### src.koru.init.InitReport
+> Summary of what ``init_project`` actually changed on disk.
+- **Methods**: 4
+- **Key Methods**: src.koru.init.InitReport._env_bit, src.koru.init.InitReport._lane_summary, src.koru.init.InitReport._init_summary, src.koru.init.InitReport.summary
+
 ### src.koru.doctor.DoctorReport
 > Aggregate result of ``run_diagnostics``.
 - **Methods**: 4
@@ -365,11 +370,6 @@ session:
 The constructor does not open the file — that
 - **Methods**: 4
 - **Key Methods**: src.koru.run_log.RunLogWriter._emit, src.koru.run_log.RunLogWriter.write_header, src.koru.run_log.RunLogWriter.write_iteration, src.koru.run_log.RunLogWriter.write_footer
-
-### src.koru.init.InitReport
-> Summary of what ``init_project`` actually changed on disk.
-- **Methods**: 4
-- **Key Methods**: src.koru.init.InitReport._env_bit, src.koru.init.InitReport._lane_summary, src.koru.init.InitReport._init_summary, src.koru.init.InitReport.summary
 
 ### src.koruapi.server.KoruAPIHandler
 - **Methods**: 3
@@ -544,8 +544,8 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.tasks.create_nl_task` - 28 calls
 - `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
 - `src.koru.scan.scan_pytest_collect` - 24 calls
-- `src.koru.autonomy.ide_work.build_ide_work_prompt` - 23 calls
 - `src.koru.init.init_project` - 23 calls
+- `src.koru.autonomy.ide_work.build_ide_work_prompt` - 23 calls
 - `src.koruapi.dashboard_serve.apply_topology_post_update` - 22 calls
 - `src.koru.gate.parse_authorizations` - 22 calls
 - `src.koru.agents.detect_project_environment` - 22 calls

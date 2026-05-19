@@ -6,8 +6,8 @@ HEALTH:
 
 ALERTS[20]:
   !!! high_fan_out     _build_handler = 34 (limit:10)
-  !!! high_fan_out     run_cycle = 23 (limit:10)
   !!! high_fan_out     init_project = 23 (limit:10)
+  !!! high_fan_out     run_cycle = 23 (limit:10)
   !!! high_fan_out     _action_up = 22 (limit:10)
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
   !!! high_fan_out     _build_handler = 20 (limit:10)
@@ -36,11 +36,11 @@ MODULES[214] (top by size):
 
 HOTSPOTS[10]:
   ★ _build_handler fan=34  // Create a request handler closure bound to ``config``.
-  ★ run_cycle fan=23  // Orchestrates 23 calls
   ★ init_project fan=23  // Initialise (or re-initialise with ``force``) a koru project.
 
 Steps:
     1. Refu
+  ★ run_cycle fan=23  // Orchestrates 23 calls
   ★ _action_up fan=22  // Orchestrates 22 calls
   ★ render_markdown_handoff fan=22  // Turn a context dict into a Markdown brief for the operator.
 

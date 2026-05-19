@@ -269,14 +269,14 @@ COUPLING:
                     src.korudsl                                                                                           ←4                                                                                           ──                               
        services.healing-webhook                                                                                                                                                          1                                                            ──
   CYCLES: none
-  HUB: src.koru/ (fan-in=45)
-  HUB: plugins.koru-autopilot-vscode/ (fan-in=6)
-  HUB: scripts/ (fan-in=267)
-  HUB: src.koruapi/ (fan-in=5)
   HUB: src.koruide/ (fan-in=35)
-  SMELL: src.koru/ fan-out=265 → split needed
-  SMELL: src.koruapi/ fan-out=66 → split needed
+  HUB: plugins.koru-autopilot-vscode/ (fan-in=6)
+  HUB: src.koruapi/ (fan-in=5)
+  HUB: scripts/ (fan-in=267)
+  HUB: src.koru/ (fan-in=45)
   SMELL: src.koruide/ fan-out=30 → split needed
+  SMELL: src.koruapi/ fan-out=66 → split needed
+  SMELL: src.koru/ fan-out=265 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

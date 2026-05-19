@@ -21,7 +21,7 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.148`
+- **version**: `0.1.149`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -41,7 +41,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.148;
+  version: 0.1.149;
 }
 
 dependencies {
@@ -1677,7 +1677,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.148
+  version: 0.1.149
   env: local
 ```
 
@@ -4167,12 +4167,12 @@ D:
 | `_drive_via_keyboard` *(in src.koruide.daemon.AutopilotDaemon)* | 11 ⚠ | 0 | 46 | **46** |
 | `activity` *(in src.koru.activity_log)* | 4 | 33 | 7 | **40** |
 | `_build_parser` *(in src.koru.cli)* | 1 | 3 | 34 | **37** |
-| `tool_run_ticket` *(in src.koruapi.mcp_server)* | 14 ⚠ | 1 | 33 | **34** |
 | `create_nl_task` *(in src.koru.tasks)* | 12 ⚠ | 6 | 28 | **34** |
+| `tool_run_ticket` *(in src.koruapi.mcp_server)* | 14 ⚠ | 1 | 33 | **34** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.18s
+# generated in 0.20s
 # nodes: 432 | edges: 500 | modules: 70
 # CC̄=4.0
 
@@ -4189,34 +4189,34 @@ HUBS[20]:
     CC=4  in:33  out:7  total:40
   src.koru.cli._build_parser
     CC=1  in:3  out:34  total:37
-  src.koruapi.mcp_server.tool_run_ticket
-    CC=14  in:1  out:33  total:34
   src.koru.tasks.create_nl_task
     CC=12  in:6  out:28  total:34
-  src.koru.events.emit_management_event
-    CC=8  in:25  out:7  total:32
+  src.koruapi.mcp_server.tool_run_ticket
+    CC=14  in:1  out:33  total:34
   src.koru.cli._topology_main
     CC=12  in:0  out:32  total:32
-  src.koru.autonomy.env.env_truthy
-    CC=3  in:29  out:3  total:32
+  src.koru.events.emit_management_event
+    CC=8  in:25  out:7  total:32
   src.koru.autonomous._stdio_info
     CC=1  in:31  out:1  total:32
+  src.koru.autonomy.env.env_truthy
+    CC=3  in:29  out:3  total:32
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
   src.koru.cli._task_main
     CC=11  in:0  out:27  total:27
-  src.koruide.ide.detect_running_ides
-    CC=13  in:16  out:10  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
+  src.koruide.ide.detect_running_ides
+    CC=13  in:16  out:10  total:26
   src.koru.init.init_project
     CC=7  in:2  out:23  total:25
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
-  src.koru.cli._render_runtime_context_text
-    CC=14  in:1  out:23  total:24
+  src.koru.agents.detect_agent_options
+    CC=4  in:3  out:21  total:24
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]

@@ -50,7 +50,7 @@ tasks:
   install:tools:
     desc: Install semcod toolchain used by koru (planfile, wup, testql, regix, redup, sumr/sumd, doql, redeploy, ...)
     cmds:
-      - pip install planfile wup testql regix redup vallm prefact pfix sumd sumr code2llm redsl llx doql redeploy goal costs op3 toonic protogate rebuild mdflow metrun
+      - pip install planfile wup testql regix "redup>=0.4.27" vallm prefact pfix sumd sumr code2llm redsl llx doql redeploy goal costs op3 toonic protogate rebuild mdflow metrun
       - 'echo "✓ semcod toolchain installed. Optional interactive agent: pip install aider-chat"'
 
   # =====================================================================
