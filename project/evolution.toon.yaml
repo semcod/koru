@@ -1,4 +1,4 @@
-# code2llm/evolution | 1116 func | 107f | 2026-05-19
+# code2llm/evolution | 1124 func | 107f | 2026-05-19
 # generated in 0.00s
 
 NEXT[10] (ranked by impact):
@@ -10,37 +10,37 @@ NEXT[10] (ranked by impact):
       WHY: 1282L, 0 classes, max CC=15
       EFFORT: ~4h  IMPACT: 19230
 
-  [3] !! SPLIT-FUNC      run_next_planfile_task  CC=43  fan=29
-      WHY: CC=43 exceeds 15
-      EFFORT: ~1h  IMPACT: 1247
-
-  [4] !  SPLIT-FUNC      _action_up  CC=17  fan=31
+  [3] !  SPLIT-FUNC      _action_up  CC=17  fan=31
       WHY: CC=17 exceeds 15
       EFFORT: ~1h  IMPACT: 527
 
-  [5] !! SPLIT-FUNC      _handle_autopilot_phase  CC=29  fan=15
+  [4] !! SPLIT-FUNC      _handle_autopilot_phase  CC=29  fan=15
       WHY: CC=29 exceeds 15
       EFFORT: ~1h  IMPACT: 435
 
-  [6] !  SPLIT-FUNC      _handle_queue_loop_phase  CC=19  fan=19
+  [5] !  SPLIT-FUNC      _handle_queue_loop_phase  CC=19  fan=19
       WHY: CC=19 exceeds 15
       EFFORT: ~1h  IMPACT: 361
 
-  [7] !  SPLIT-FUNC      _action_session_start  CC=15  fan=21
+  [6] !  SPLIT-FUNC      _action_session_start  CC=15  fan=21
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 315
 
-  [8] !  SPLIT-FUNC      _scan_code2llm_analysis  CC=15  fan=20
+  [7] !  SPLIT-FUNC      _scan_code2llm_analysis  CC=15  fan=20
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 300
 
-  [9] !  SPLIT-FUNC      run_startup_operator_pipeline  CC=15  fan=19
+  [8] !  SPLIT-FUNC      run_startup_operator_pipeline  CC=15  fan=19
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 285
 
-  [10] !  SPLIT-FUNC      AutopilotBridge.injectChat  CC=18  fan=14
+  [9] !  SPLIT-FUNC      AutopilotBridge.injectChat  CC=18  fan=14
       WHY: CC=18 exceeds 15
       EFFORT: ~1h  IMPACT: 252
+
+  [10] !  SPLIT-FUNC      AutopilotBridge.submitChat  CC=15  fan=13
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 195
 
 
 RISKS[3]:
@@ -50,9 +50,9 @@ RISKS[3]:
 
 METRICS-TARGET:
   CC̄:          4.3 → ≤3.0
-  max-CC:      43 → ≤20
+  max-CC:      29 → ≤14
   god-modules: 14 → 0
-  high-CC(≥15): 20 → ≤10
+  high-CC(≥15): 19 → ≤9
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.5 → now CC̄=4.3
+  prev CC̄=4.3 → now CC̄=4.3

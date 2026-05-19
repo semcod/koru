@@ -1,20 +1,20 @@
-# koru | 1181 func | 119f | 38105L | python | 2026-05-19
+# koru | 1189 func | 119f | 38189L | python | 2026-05-19
 # generated in 0.00s
 
 HEALTH:
   CC̄=4.2  critical=117 (limit:10)  dup=3  cycles=0
 
 ALERTS[20]:
-  !!! cc_exceeded      run_next_planfile_task = 43 (limit:15)
   !!! high_fan_out     _build_handler = 34 (limit:10)
   !!! high_fan_out     _action_up = 31 (limit:10)
   !!! cc_exceeded      _handle_autopilot_phase = 29 (limit:15)
-  !!! high_fan_out     run_next_planfile_task = 29 (limit:10)
   !!! high_fan_out     do_from_todo = 24 (limit:10)
   !!! high_fan_out     run_cycle = 23 (limit:10)
   !!! high_fan_out     init_project = 22 (limit:10)
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
   !!! high_fan_out     _action_session_start = 21 (limit:10)
+  !!! high_fan_out     _build_handler = 20 (limit:10)
+  !!! high_fan_out     _scan_code2llm_analysis = 20 (limit:10)
 
 MODULES[213] (top by size):
   M[src/koru/cli.py] 1868L C:0 F:52 CC↑14 D:0 (python)
@@ -37,18 +37,19 @@ MODULES[213] (top by size):
 HOTSPOTS[10]:
   ★ _build_handler fan=34  // Create a request handler closure bound to ``config``.
   ★ _action_up fan=31  // Orchestrates 31 calls
-  ★ run_next_planfile_task fan=29  // Execute one runnable planfile ticket, if any.
-
-When ``interactive`` is true and 
   ★ do_from_todo fan=24  // Orchestrates 24 calls
   ★ run_cycle fan=23  // Orchestrates 23 calls
+  ★ init_project fan=22  // Initialise (or re-initialise with ``force``) a koru project.
+
+Steps:
+    1. Refu
 
 REFACTOR[15]:
-  [1] H/L Split run_next_planfile_task (CC=43)
-  [2] H/L Split _handle_autopilot_phase (CC=29)
-  [3] H/H Split god module src/koru/autonomous_cycle.py (1046L, 2 classes)
-  [4] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (590L, 2 classes)
-  [5] H/H Split god module src/koru/autonomous.py (1666L, 2 classes)
+  [1] H/L Split _handle_autopilot_phase (CC=29)
+  [2] H/H Split god module src/koru/autonomous_cycle.py (1046L, 2 classes)
+  [3] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (590L, 2 classes)
+  [4] H/H Split god module src/koru/autonomous.py (1666L, 2 classes)
+  [5] H/H Split god module src/koru/autonomy/operator_pipeline.py (531L, 2 classes)
 
 EVOLUTION:
-  2026-05-19 CC̄=4.2 crit=117 38105L // Automated analysis
+  2026-05-19 CC̄=4.2 crit=117 38189L // Automated analysis

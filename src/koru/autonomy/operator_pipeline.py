@@ -87,7 +87,7 @@ def _close_resolved_step_ticket(
         check=False,
         capture_output=True,
         text=True,
-        timeout=10,
+        timeout=60,
     )
     if proc.returncode != 0:
         detail = (proc.stderr or proc.stdout or "").strip()

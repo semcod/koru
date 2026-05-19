@@ -1,16 +1,16 @@
-# redup/duplication | 34 groups | 126f 28810L | 2026-05-19
+# redup/duplication | 34 groups | 126f 28894L | 2026-05-19
 
 SUMMARY:
   files_scanned: 126
-  total_lines:   28810
+  total_lines:   28894
   dup_groups:    34
   dup_fragments: 79
   saved_lines:   369
-  scan_ms:       3067
+  scan_ms:       2849
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/autonomous.py  dup=115L  groups=12  frags=12  (0.4%)
-  src/koru/cli.py  dup=101L  groups=3  frags=8  (0.4%)
+  src/koru/cli.py  dup=101L  groups=3  frags=8  (0.3%)
   src/koru/autonomous_cycle.py  dup=93L  groups=9  frags=9  (0.3%)
   src/koruapi/dashboard.py  dup=45L  groups=1  frags=1  (0.2%)
   src/koru/mcp_provision.py  dup=39L  groups=2  frags=5  (0.1%)

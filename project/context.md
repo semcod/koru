@@ -7,7 +7,7 @@
 - **Primary Language**: python
 - **Languages**: python: 127, shell: 42, yaml: 15, yml: 8, typescript: 6
 - **Analysis Mode**: static
-- **Total Functions**: 1181
+- **Total Functions**: 1189
 - **Total Classes**: 90
 - **Modules**: 213
 - **Entry Points**: 422
@@ -97,14 +97,14 @@
 - **Classes**: 2
 - **File**: `scan.py`
 
+### plugins.koru-autopilot-vscode.src.socketPath
+- **Functions**: 18
+- **File**: `socketPath.ts`
+
 ### src.koru.autonomy.operator_pipeline
 - **Functions**: 18
 - **Classes**: 2
 - **File**: `operator_pipeline.py`
-
-### plugins.koru-autopilot-vscode.src.socketPath
-- **Functions**: 18
-- **File**: `socketPath.ts`
 
 ## Key Entry Points
 
@@ -134,12 +134,12 @@ Main execution flows into the system:
 > Execute an HTTP API request.
 - **Calls**: request.get, urllib.request.Request, float, str, str, None.encode, headers.setdefault, str
 
-### src.koru.autopilot.cli_command._action_session_start
-- **Calls**: src.koru.autopilot.cli_command._resolve_session_ides, max, captured.items, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, float, scripts.koru-soak-monitor.print, time.sleep
-
 ### src.koru.autonomy.env.autonomous_environ_doctor_probe
 > Return ``(status, detail)`` for ``koru --doctor``; process-global, no I/O.
 - **Calls**: os.environ.get, src.koru.autonomy.env.env_truthy, os.environ.get, os.environ.get, src.koru.autonomy.env.env_truthy, None.strip, None.lower, None.strip
+
+### src.koru.autopilot.cli_command._action_session_start
+- **Calls**: src.koru.autopilot.cli_command._resolve_session_ides, max, captured.items, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, float, scripts.koru-soak-monitor.print, time.sleep
 
 ### src.koru.autopilot.cli_command._action_drive
 - **Calls**: src.koru.autopilot.cli_command._client, src.koru.autopilot.cli_command._should_fallback_to_direct, scripts.koru-soak-monitor.print, None.strip, None.strip, scripts.koru-soak-monitor.print, src.koru.autopilot.cli_command._run_direct_drive, client.is_running
@@ -287,19 +287,19 @@ _topology_main [koru.cli]
 run_api_request [src.koru.queue.runners]
 ```
 
-### Flow 8: _action_session_start
+### Flow 8: autonomous_environ_doctor_probe
+```
+autonomous_environ_doctor_probe [src.koru.autonomy.env]
+  └─> env_truthy
+  └─> env_truthy
+```
+
+### Flow 9: _action_session_start
 ```
 _action_session_start [src.koru.autopilot.cli_command]
   └─> _resolve_session_ides
   └─ →> print
   └─ →> print
-```
-
-### Flow 9: autonomous_environ_doctor_probe
-```
-autonomous_environ_doctor_probe [src.koru.autonomy.env]
-  └─> env_truthy
-  └─> env_truthy
 ```
 
 ### Flow 10: _action_drive
@@ -533,7 +533,6 @@ Functions exposed as public API (no underscore prefix):
 
 - `src.koru.autonomous_parser.build_parser` - 65 calls
 - `src.koru.agents.detect_agent_options` - 61 calls
-- `src.koru.queue.runner.run_next_planfile_task` - 57 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 50 calls
 - `src.koru.context.render_markdown_handoff` - 47 calls
 - `src.koru.policy.load_policy` - 43 calls
@@ -545,24 +544,25 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.tasks.create_nl_task` - 28 calls
 - `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
 - `src.koru.scan.scan_pytest_collect` - 24 calls
-- `src.koru.autonomy.operator_pipeline.run_startup_operator_pipeline` - 23 calls
 - `src.koru.autonomy.ide_work.build_ide_work_prompt` - 23 calls
+- `src.koru.autonomy.operator_pipeline.run_startup_operator_pipeline` - 23 calls
 - `src.koruapi.dashboard_serve.apply_topology_post_update` - 22 calls
 - `src.koru.gate.parse_authorizations` - 22 calls
 - `src.koru.init.init_project` - 22 calls
 - `src.koru.agents.detect_project_environment` - 22 calls
+- `src.koru.queue.runner.run_next_planfile_task` - 22 calls
 - `services.healing-webhook.app.heal_vallm_validate` - 21 calls
 - `services.healing-webhook.app.probe_failure` - 21 calls
 - `src.koruide.protocol.decode` - 21 calls
 - `src.koru.autonomous_startup.build_startup_probe` - 21 calls
+- `src.koru.tools.build_tool_task_scaffold` - 21 calls
 - `src.koru.doctor.render_text` - 21 calls
 - `src.koru.gc.collect_gc_candidates` - 21 calls
-- `src.koru.tools.build_tool_task_scaffold` - 21 calls
 - `src.koruapi.cli.main` - 20 calls
 - `src.koruide.os_injector.inject_with_profile` - 20 calls
 - `src.koru.autonomous_diagnostics.build_idle_checks` - 20 calls
-- `scripts.planfile-sync-todo.do_from_planfile` - 20 calls
 - `src.koru.tools.render_tools_detect_text` - 20 calls
+- `scripts.planfile-sync-todo.do_from_planfile` - 20 calls
 - `services.healing-webhook.app.alertmanager_webhook` - 19 calls
 - `plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.focusChat` - 19 calls
 - `src.korudsl.cli.main` - 18 calls

@@ -1,28 +1,28 @@
-# code2llm | 213f 38105L | python:127,shell:42,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:1,properties:1,xml:1,toml:1 | 2026-05-19
+# code2llm | 213f 38189L | python:127,shell:42,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:1,properties:1,xml:1,toml:1 | 2026-05-19
 # generated in 0.06s
-# CC̄=4.2 | critical:21/1181 | dups:0 | cycles:0
+# CC̄=4.2 | critical:20/1189 | dups:0 | cycles:0
 
 HEALTH[20]:
+  🟡 CC    _action_up CC=17 (limit:15)
+  🟡 CC    build_tool_task_scaffold CC=16 (limit:15)
   🟡 CC    summary CC=15 (limit:15)
+  🟡 CC    _handle_queue_loop_phase CC=19 (limit:15)
+  🟡 CC    _handle_autopilot_phase CC=29 (limit:15)
   🟡 CC    _scan_code2llm_analysis CC=15 (limit:15)
   🟡 CC    looks_like_autonomous_up_command CC=15 (limit:15)
+  🟡 CC    _build_shared_rules CC=15 (limit:15)
   🟡 CC    looks_like_autonomous_up_command CC=15 (limit:15)
   🟡 CC    detect_agent_options CC=16 (limit:15)
   🟡 CC    _recommended_next_steps CC=15 (limit:15)
   🟡 CC    _render_host_environment_md CC=15 (limit:15)
-  🟡 CC    run_startup_operator_pipeline CC=15 (limit:15)
   🟡 CC    probe_environment CC=15 (limit:15)
-  🟡 CC    run_next_planfile_task CC=43 (limit:15)
   🟡 CC    _action_session_start CC=15 (limit:15)
   🟡 CC    _run_direct_drive CC=15 (limit:15)
   🟡 CC    _render_doctor_text CC=15 (limit:15)
   🟡 CC    submitChat CC=15 (limit:15)
   🟡 CC    injectChat CC=18 (limit:15)
   🟡 CC    do_from_todo CC=19 (limit:15)
-  🟡 CC    _action_up CC=17 (limit:15)
-  🟡 CC    build_tool_task_scaffold CC=16 (limit:15)
-  🟡 CC    _handle_queue_loop_phase CC=19 (limit:15)
-  🟡 CC    _handle_autopilot_phase CC=29 (limit:15)
+  🟡 CC    run_startup_operator_pipeline CC=15 (limit:15)
 
 REFACTOR[1]:
   1. split 20 high-CC methods  (CC>15)
@@ -67,10 +67,10 @@ LAYERS:
   │ mcp_provision              397L  0C   21m  CC=10     ←3
   │ os_injector                392L  2C   24m  CC=14     ←2
   │ queue_clean                392L  2C   13m  CC=14     ←1
+  │ runner                     384L  0C   10m  CC=14     ←2
   │ post_run_verify            379L  2C   16m  CC=14     ←1
   │ gc                         371L  2C   12m  CC=11     ←1
   │ !! agents                     370L  1C   13m  CC=16     ←4
-  │ !! runner                     300L  0C    2m  CC=43     ←2
   │ ide_work                   296L  0C   11m  CC=12     ←2
   │ autonomous_wup             286L  3C   14m  CC=9      ←1
   │ !! tools                      282L  0C   14m  CC=16     ←1
@@ -289,15 +289,15 @@ COUPLING:
                     src.korudsl                                                                                                                          ←4                                                                                           ──                               
        services.healing-webhook                                                                                                                                                                                         1                                                            ──
   CYCLES: none
-  HUB: plugins.koru-autopilot-vscode/ (fan-in=6)
-  HUB: src.koruapi/ (fan-in=5)
   HUB: src.koruide/ (fan-in=33)
-  HUB: scripts/ (fan-in=267)
   HUB: src.koru/ (fan-in=110)
-  SMELL: src.koruapi/ fan-out=66 → split needed
+  HUB: src.koruapi/ (fan-in=5)
+  HUB: plugins.koru-autopilot-vscode/ (fan-in=6)
+  HUB: scripts/ (fan-in=267)
   SMELL: src.koruide/ fan-out=29 → split needed
-  SMELL: koru/ fan-out=148 → split needed
   SMELL: src.koru/ fan-out=181 → split needed
+  SMELL: src.koruapi/ fan-out=66 → split needed
+  SMELL: koru/ fan-out=148 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon
