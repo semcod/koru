@@ -84,7 +84,7 @@ class TestWatch(unittest.TestCase):
                 max_events=2,
                 printer=printed.append,
                 connector=connector,
-            )
+            ),
         )
 
         self.assertEqual(seen, 2)

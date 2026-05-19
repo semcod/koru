@@ -108,7 +108,7 @@ def run_closed_loop(
                     exit_code=result.returncode,
                     stdout=result.stdout,
                     stderr=result.stderr,
-                )
+                ),
             )
             if result.returncode != 0:
                 failures.append(repository)

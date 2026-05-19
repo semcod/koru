@@ -337,7 +337,7 @@ def verify_completed_tickets(
         return []
 
     ok, detail, exit_code = run_verify_commands(
-        project, config.commands, shell_runner=shell_runner
+        project, config.commands, shell_runner=shell_runner,
     )
     if ok:
         return [
@@ -362,7 +362,7 @@ def verify_completed_tickets(
                 "action": action,
                 "detail": detail,
                 "exit_code": exit_code,
-            }
+            },
         )
     return outcomes
 

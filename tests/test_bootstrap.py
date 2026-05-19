@@ -196,7 +196,7 @@ class TestMaterializeToPlanfile(unittest.TestCase):
             _, tasks = load_flat_pipeline(yaml_path)
             materialize_to_planfile(tasks, project)
             sprint = yaml.safe_load(
-                (project / ".planfile" / "sprints" / "current.yaml").read_text()
+                (project / ".planfile" / "sprints" / "current.yaml").read_text(),
             )
             self.assertEqual(sprint["sprint"]["tickets"]["T-1"]["execution"]["state"], "ready")
 
@@ -220,11 +220,11 @@ class TestMaterializeToPlanfile(unittest.TestCase):
             _, tasks = load_flat_pipeline(yaml_path)
             materialize_to_planfile(tasks, project)
             sprint = yaml.safe_load(
-                (project / ".planfile" / "sprints" / "current.yaml").read_text()
+                (project / ".planfile" / "sprints" / "current.yaml").read_text(),
             )
             self.assertEqual(sprint["sprint"]["tickets"]["T-1"]["execution"]["state"], "ready")
             self.assertEqual(
-                sprint["sprint"]["tickets"]["T-2"]["execution"]["state"], "pending"
+                sprint["sprint"]["tickets"]["T-2"]["execution"]["state"], "pending",
             )
 
     def test_overwrite_protection(self) -> None:

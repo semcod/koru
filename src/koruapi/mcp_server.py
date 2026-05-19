@@ -443,7 +443,7 @@ def _update_job(job_id: str, project: Path | None = None, **fields: Any) -> None
 
 
 def _collect_process_logs(
-    result: subprocess.CompletedProcess[str], *, limit: int = 20
+    result: subprocess.CompletedProcess[str], *, limit: int = 20,
 ) -> list[str]:
     logs: list[str] = []
     if result.stdout:
@@ -494,7 +494,7 @@ def tool_run_ticket(arguments: dict[str, Any]) -> dict[str, Any]:
             def _oom_monitor():
                 nonlocal oom_killed, oom_logs
                 oom_killed, oom_logs = _monitor_subprocess_oom(
-                    proc, oom_threshold, oom_interval, oom_action
+                    proc, oom_threshold, oom_interval, oom_action,
                 )
 
             monitor_thread = threading.Thread(target=_oom_monitor, daemon=True)
@@ -529,7 +529,7 @@ def tool_run_ticket(arguments: dict[str, Any]) -> dict[str, Any]:
                     returncode=-9,
                     stdout=stdout,
                     stderr=stderr,
-                )
+                ),
             )
             _update_job(
                 job_id,
@@ -678,7 +678,7 @@ def _run_single_gate(
             def _oom_monitor():
                 nonlocal oom_killed, oom_logs
                 oom_killed, oom_logs = _monitor_subprocess_oom(
-                    proc, oom_threshold_mb, oom_interval_seconds, oom_action
+                    proc, oom_threshold_mb, oom_interval_seconds, oom_action,
                 )
 
             monitor_thread = threading.Thread(target=_oom_monitor, daemon=True)
@@ -912,7 +912,7 @@ def _handle_tools_call(params: dict[str, Any]) -> dict[str, Any]:
                 {
                     "type": "text",
                     "text": json.dumps(result, indent=2, sort_keys=True, default=str),
-                }
+                },
             ],
         }
     except Exception as exc:

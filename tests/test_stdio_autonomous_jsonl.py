@@ -62,7 +62,7 @@ def test_jsonl_session_emits_versioned_envelope(tmp_path, monkeypatch) -> None:
             "jsonl",
             "--agent-lane",
             "none",
-        ]
+        ],
     )
     assert rc == 0
     events = _parse_jsonl(buf.getvalue())

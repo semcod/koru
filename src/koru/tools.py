@@ -140,7 +140,7 @@ def detect_tools(project: Path, registry: list[dict[str, Any]]) -> list[dict[str
         available = bool(found_commands or found_markers or found_env)
 
         out.append(
-            _build_detection_result(item, available, found_commands, found_markers, found_env)
+            _build_detection_result(item, available, found_commands, found_markers, found_env),
         )
 
     return out
@@ -214,12 +214,12 @@ def _build_scaffold_prompt_lines(
                 "- bridge_hosts: vscode, jetbrains, zed",
                 "- bridge_mode: read-only status first, then explicit invoke actions",
                 "- required_next_step: define plugin host + invocation contract before queue run",
-            ]
+            ],
         )
     else:
         prompt_lines.append(
             "- required_next_step: convert this scaffold into concrete "
-            "executor inputs before queue run"
+            "executor inputs before queue run",
         )
     return prompt_lines
 
@@ -252,7 +252,7 @@ def _build_scaffold_inputs(
                 "plugin_bridge": True,
                 "plugin_bridge_hosts": ["vscode", "jetbrains", "zed"],
                 "plugin_bridge_mode": "read-only-first",
-            }
+            },
         )
     return inputs
 
@@ -313,6 +313,6 @@ def render_tools_detect_text(results: list[dict[str, Any]], *, registry_path: Pa
         via = ",".join(via_parts) if via_parts else "-"
         lines.append(
             f"| `{r.get('id')}` | `{r.get('lane')}` | `{r.get('category')}` | "
-            f"`{r.get('available')}` | `{via}` |"
+            f"`{r.get('available')}` | `{via}` |",
         )
     return "\n".join(lines)

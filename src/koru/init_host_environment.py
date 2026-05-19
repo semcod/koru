@@ -107,46 +107,46 @@ def _recommended_next_steps(base: dict[str, Any], groups: list[str]) -> list[str
 
     steps.append(
         "Tier 0: install the koru autopilot editor extension and run "
-        "`koru autopilot daemon --project .` (works on X11 and Wayland)."
+        "`koru autopilot daemon --project .` (works on X11 and Wayland).",
     )
 
     if not selected:
         steps.append(
             "No keyboard injector candidate passed the probe — install tools or use the plugin "
-            "(see `automated_apt_suggestion` when on Debian/Ubuntu)."
+            "(see `automated_apt_suggestion` when on Debian/Ubuntu).",
         )
 
     if session == "wayland":
         steps.append(
             "Wayland: GNOME/KDE often lack wtype's virtual-keyboard protocol — prefer ydotool "
-            "(+ ydotoold, `input` group, full re-login) or the IDE extension."
+            "(+ ydotoold, `input` group, full re-login) or the IDE extension.",
         )
         if shutil.which("ydotool") and "input" not in groups:
             steps.append(
                 "ydotool is on PATH but this login session is not in the `input` group — "
-                "run `sudo usermod -aG input \"$USER\"` then log out and back in."
+                "run `sudo usermod -aG input \"$USER\"` then log out and back in.",
             )
     elif session == "x11":
         steps.append(
             "X11: `xdotool` is the usual keyboard path; optional OS injector uses "
-            "`xclip`/`xsel`+Ctrl+V when available (see docs/autopilot-quickstart.md)."
+            "`xclip`/`xsel`+Ctrl+V when available (see docs/autopilot-quickstart.md).",
         )
 
     if pm == "apt" and base.get("automated_apt_suggestion"):
         steps.append(
             "Debian/Ubuntu: run `.planfile/.koru/setup-autopilot-host.sh --install --dry-run` "
-            "then `--install` when satisfied."
+            "then `--install` when satisfied.",
         )
     elif pm and pm != "apt":
         steps.append(
             f"Package manager hint: {pm} — install xdotool / wtype / ydotool / xclip with that "
-            "stack (koru only auto-installs via apt-get)."
+            "stack (koru only auto-installs via apt-get).",
         )
 
     if session == "wayland" and shutil.which("wtype") and not shutil.which("ydotool"):
         steps.append(
             "If `wtype` fails with “virtual keyboard protocol”, switch to ydotool or the IDE "
-            "extension — that error is compositor-side, not a broken wtype install."
+            "extension — that error is compositor-side, not a broken wtype install.",
         )
 
     if not groups:

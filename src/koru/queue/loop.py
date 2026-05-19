@@ -24,7 +24,7 @@ _LOOP_TERMINAL_STATUSES: frozenset[str] = frozenset(
         "planfile_error",
         "dry_run",
         "claim_failed",
-    }
+    },
 )
 
 

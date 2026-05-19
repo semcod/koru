@@ -98,7 +98,7 @@ def test_install_plugin_configures_socket_path(
     assert result.settings_path == str(settings_path)
     assert result.socket_path == str(socket_path)
     assert f'"{plugin_installer.SOCKET_SETTING_KEY}": "{socket_path}"' in settings_path.read_text(
-        encoding="utf-8"
+        encoding="utf-8",
     )
     assert "reassert rc=0" in result.message
     assert result.command == ["/usr/bin/windsurf", "--install-extension", str(vsix), "--force"]
@@ -141,7 +141,7 @@ def test_install_plugin_targets_vscodium_from_integrated_terminal(
     assert result.status == "already_installed"
     assert result.settings_path == str(settings_path)
     assert f'"{plugin_installer.SOCKET_SETTING_KEY}": "{socket_path}"' in settings_path.read_text(
-        encoding="utf-8"
+        encoding="utf-8",
     )
 
 

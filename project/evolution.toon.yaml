@@ -3,39 +3,39 @@
 
 NEXT[6] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous.py
-      WHY: 1666L, 2 classes, max CC=17
-      EFFORT: ~4h  IMPACT: 28322
+      WHY: 1663L, 2 classes, max CC=17
+      EFFORT: ~4h  IMPACT: 28271
 
-  [2] !! SPLIT           src/koru/autopilot/cli_command.py
+  [2] !! SPLIT           src/koru/cli.py
+      WHY: 1853L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 25942
+
+  [3] !! SPLIT           src/koru/autopilot/cli_command.py
       WHY: 1329L, 0 classes, max CC=14
       EFFORT: ~4h  IMPACT: 18606
 
-  [3] !  SPLIT-FUNC      _action_up  CC=17  fan=31
+  [4] !  SPLIT-FUNC      _action_up  CC=17  fan=31
       WHY: CC=17 exceeds 15
       EFFORT: ~1h  IMPACT: 527
 
-  [4] !  SPLIT-FUNC      AutopilotBridge.injectChat  CC=15  fan=16
+  [5] !  SPLIT-FUNC      AutopilotBridge.injectChat  CC=15  fan=16
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 240
 
-  [5] !  SPLIT-FUNC      AutopilotBridge.submitChat  CC=15  fan=13
+  [6] !  SPLIT-FUNC      AutopilotBridge.submitChat  CC=15  fan=13
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 195
 
-  [6] !! SPLIT           planfile.yaml
-      WHY: 1319L, 0 classes, max CC=0
-      EFFORT: ~4h  IMPACT: 0
-
 
 RISKS[3]:
+  ⚠ Splitting src/koru/cli.py may break 52 import paths
   ⚠ Splitting src/koru/autonomous.py may break 47 import paths
   ⚠ Splitting src/koru/autopilot/cli_command.py may break 45 import paths
-  ⚠ Splitting planfile.yaml may break 0 import paths
 
 METRICS-TARGET:
   CC̄:          4.2 → ≤2.9
   max-CC:      17 → ≤8
-  god-modules: 15 → 0
+  god-modules: 18 → 0
   high-CC(≥15): 8 → ≤4
   hub-types:   0 → ≤0
 

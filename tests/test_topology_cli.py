@@ -16,9 +16,9 @@ def test_render_topology_text_includes_components_and_pipelines():
                     "trigger": "idle",
                     "description": "queue",
                     "components": ["scan"],
-                }
+                },
             },
-        }
+        },
     )
     assert "koru topology: /tmp/p" in text
     assert "scan" in text

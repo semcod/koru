@@ -8,7 +8,7 @@ from koru import mcp_server
 
 def test_initialize_message_returns_server_info() -> None:
     response = mcp_server.handle_message(
-        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
     )
 
     assert response is not None
@@ -19,7 +19,7 @@ def test_initialize_message_returns_server_info() -> None:
 
 def test_tools_list_includes_required_koru_tools() -> None:
     response = mcp_server.handle_message(
-        {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
     )
 
     assert response is not None
@@ -41,7 +41,7 @@ def test_tools_call_unknown_tool_returns_error_payload() -> None:
             "id": 3,
             "method": "tools/call",
             "params": {"name": "unknown_tool", "arguments": {}},
-        }
+        },
     )
 
     assert response is not None
@@ -82,7 +82,7 @@ def test_run_ticket_invokes_queue_mode_without_ticket_flag(monkeypatch, tmp_path
             "ticket_id": "PLF-123",
             "mode": "dry",
             "max_steps": 2,
-        }
+        },
     )
 
     assert result["status"] == "success"
@@ -121,7 +121,7 @@ def test_run_ticket_timeout_updates_job_status(monkeypatch, tmp_path: Path) -> N
             "project_root": str(tmp_path),
             "ticket_id": "PLF-TIMEOUT",
             "mode": "apply",
-        }
+        },
     )
 
     assert result["status"] == "timeout"
@@ -153,7 +153,7 @@ def test_run_ticket_error_updates_job_status(monkeypatch, tmp_path: Path) -> Non
             "project_root": str(tmp_path),
             "ticket_id": "PLF-ERROR",
             "mode": "apply",
-        }
+        },
     )
 
     assert result["status"] == "error"

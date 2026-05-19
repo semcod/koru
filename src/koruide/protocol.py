@@ -22,7 +22,7 @@ PLUGIN_TO_DAEMON = frozenset(
         "status.error",
         "ack",
         "error",
-    }
+    },
 )
 
 DAEMON_TO_PLUGIN = frozenset(
@@ -32,7 +32,7 @@ DAEMON_TO_PLUGIN = frozenset(
         "shutdown",
         "ack",
         "error",
-    }
+    },
 )
 
 CLI_TO_DAEMON = frozenset(
@@ -41,7 +41,7 @@ CLI_TO_DAEMON = frozenset(
         "status",
         "shutdown",
         "ping",
-    }
+    },
 )
 
 ALL_TYPES = PLUGIN_TO_DAEMON | DAEMON_TO_PLUGIN | CLI_TO_DAEMON

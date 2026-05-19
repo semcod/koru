@@ -47,26 +47,26 @@ def _human_followups(injector: Injector, selected: str | None) -> list[str]:
 
     out.append(
         "Install the koru autopilot IDE extension (Cursor/VS Code/Windsurf) so "
-        "`drive` can use the editor API instead of xdotool/ydotool."
+        "`drive` can use the editor API instead of xdotool/ydotool.",
     )
 
     if not selected:
         out.append(
             "No keyboard injector backend selected: install packages (see "
-            "“Automated apt” below) or rely on the IDE extension above."
+            "“Automated apt” below) or rely on the IDE extension above.",
         )
 
     if session == "wayland" and have_y and not have_w:
         out.append(
             "Wayland with only ydotool: requires ydotoold and a usable "
             "/dev/uinput (input group, permissions). See docs/autopilot-quickstart.md. "
-            "On Sway/Hyprland, `wtype` is often easier."
+            "On Sway/Hyprland, `wtype` is often easier.",
         )
 
     if session == "wayland" and not have_w and not have_y and not have_x:
         out.append(
             "Wayland session but no wtype/ydotool/xdotool on PATH — without them "
-            "(or the IDE plugin) `koru autonomous` cannot type into chat."
+            "(or the IDE plugin) `koru autonomous` cannot type into chat.",
         )
 
     if session == "x11" and not have_x and not have_w:
@@ -75,7 +75,7 @@ def _human_followups(injector: Injector, selected: str | None) -> list[str]:
     if shutil.which("apt-get") is None:
         out.append(
             "`--install` only automates apt (Debian/Ubuntu). On this system install "
-            "xdotool/wtype/ydotool via dnf/pacman/brew manually."
+            "xdotool/wtype/ydotool via dnf/pacman/brew manually.",
         )
 
     return out

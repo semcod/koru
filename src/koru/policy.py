@@ -181,7 +181,7 @@ def load_policy(project: Path) -> Policy:
         allow_destructive_shell=_b("allow_destructive_shell", False),
         forbidden_paths=_str_tuple("forbidden_paths", DEFAULT_FORBIDDEN_PATHS),
         forbidden_shell_patterns=_str_tuple(
-            "forbidden_shell_patterns", DEFAULT_FORBIDDEN_SHELL_PATTERNS
+            "forbidden_shell_patterns", DEFAULT_FORBIDDEN_SHELL_PATTERNS,
         ),
         require_planfile_lifecycle=_b("require_planfile_lifecycle", True),
         require_ci_pass_before_complete=_b("require_ci_pass_before_complete", True),
@@ -235,7 +235,7 @@ def _check_destructive_shell_policy(policy: Policy, command: str, violations: li
         for pattern in policy.forbidden_shell_patterns:
             if pattern and pattern in command:
                 violations.append(
-                    f"policy.allow_destructive_shell=false: forbidden pattern '{pattern}'"
+                    f"policy.allow_destructive_shell=false: forbidden pattern '{pattern}'",
                 )
 
 

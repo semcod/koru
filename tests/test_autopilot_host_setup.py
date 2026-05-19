@@ -89,7 +89,7 @@ def test_run_host_setup_install_calls_apt_when_missing(
         return reports[i]
 
     monkeypatch.setattr(
-        "koru.autopilot.host_setup.build_setup_host_report", next_report
+        "koru.autopilot.host_setup.build_setup_host_report", next_report,
     )
 
     real_which = shutil.which

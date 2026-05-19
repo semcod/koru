@@ -55,7 +55,7 @@ def print_agent_list(args: Namespace, agents: list[Any]) -> None:
                 },
                 indent=2,
                 sort_keys=True,
-            )
+            ),
         )
         return
     for agent in agents:

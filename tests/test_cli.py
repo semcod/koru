@@ -102,7 +102,7 @@ class TestDoctorDispatch(unittest.TestCase):
 
     def test_doctor_json(self) -> None:
         code, output = _run_main(
-            "--doctor", "--project", str(self.project), "--format", "json"
+            "--doctor", "--project", str(self.project), "--format", "json",
         )
         data = json.loads(output)
         self.assertIn("checks", data)
@@ -117,7 +117,7 @@ class TestDoctorDispatch(unittest.TestCase):
 
     def test_doctor_fix_json(self) -> None:
         code, output = _run_main(
-            "--doctor", "--fix", "--project", str(self.project), "--format", "json"
+            "--doctor", "--fix", "--project", str(self.project), "--format", "json",
         )
         data = json.loads(output)
         self.assertIn("fix", data)
@@ -180,7 +180,7 @@ class TestInitAgentLaneDispatch(unittest.TestCase):
 
     def test_fails_without_planfile(self) -> None:
         code, output = _run_main(
-            "--init-agent-lane", "--project", str(self.project)
+            "--init-agent-lane", "--project", str(self.project),
         )
         self.assertEqual(code, 2)
         self.assertIn("not found", output)
@@ -189,7 +189,7 @@ class TestInitAgentLaneDispatch(unittest.TestCase):
         code, _ = _run_main("--init", "--project", str(self.project))
         self.assertEqual(code, 0)
         code, output = _run_main(
-            "--init-agent-lane", "--project", str(self.project)
+            "--init-agent-lane", "--project", str(self.project),
         )
         self.assertEqual(code, 0, output)
         runner = self.project / ".planfile" / ".koru" / "run-autonomous.sh"
@@ -207,7 +207,7 @@ class TestContextDispatch(unittest.TestCase):
 
     def test_context_json_default(self) -> None:
         code, output = _run_main(
-            "--context", "--project", str(self.project)
+            "--context", "--project", str(self.project),
         )
         data = json.loads(output)
         self.assertIn("policy", data)
@@ -215,7 +215,7 @@ class TestContextDispatch(unittest.TestCase):
 
     def test_context_markdown(self) -> None:
         code, output = _run_main(
-            "--context", "--project", str(self.project), "--format", "markdown"
+            "--context", "--project", str(self.project), "--format", "markdown",
         )
         self.assertIn("# koru handoff", output)
         self.assertEqual(code, 0)
@@ -380,7 +380,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "topology",
             "runtime-context",
             "refactor-planfile-handoff",
-        }
+        },
     )
 
     def test_table_contains_all_documented_subcommands(self) -> None:

@@ -44,7 +44,7 @@ def _parse_open_tickets(stdout: str) -> list[dict[str, Any]]:
         key=lambda t: (
             _PRIORITY_RANK.get(str(t.get("priority") or "normal"), 2),
             str(t.get("created_at") or ""),
-        )
+        ),
     )
     return tickets
 
@@ -100,12 +100,12 @@ def build_ide_work_prompt(
                 f"- koru_list_tickets (project_root = this workspace)",
                 f"- koru_run_ticket(ticket_id={ticket_id!r}, mode=apply)",
                 "Implement the change, run local regression gates, then mark the ticket done in planfile.",
-            ]
+            ],
         )
     else:
         lines.append("")
         lines.append(
-            "Implement the change, run tests/regression gates, then mark the ticket done in planfile."
+            "Implement the change, run tests/regression gates, then mark the ticket done in planfile.",
         )
     prompt = "\n".join(lines).strip()
     return prompt if prompt else fallback

@@ -85,7 +85,7 @@ def looks_like_autonomous_up_command(command: str) -> bool:
 
 
 def find_existing_autonomous_processes(
-    project: Path, *, any_project: bool = False
+    project: Path, *, any_project: bool = False,
 ) -> list[ExistingAutonomousProcess]:
     try:
         result = subprocess.run(
@@ -161,7 +161,7 @@ def find_existing_wup_processes(project: Path) -> list[ExistingManagedProcess]:
         cwd = process_cwd(pid)
         if cwd == project or str(project) in command:
             matches.append(
-                ExistingManagedProcess(pid=pid, kind="wup-watch", command=command, cwd=cwd)
+                ExistingManagedProcess(pid=pid, kind="wup-watch", command=command, cwd=cwd),
             )
     return matches
 
@@ -176,7 +176,7 @@ def as_managed(proc: ExistingAutonomousProcess) -> ExistingManagedProcess:
 
 
 def terminate_existing_processes(
-    processes: list[ExistingManagedProcess], *, stdio_format: str, stdio_info: Callable[[str], None]
+    processes: list[ExistingManagedProcess], *, stdio_format: str, stdio_info: Callable[[str], None],
 ) -> None:
     for proc in processes:
         stdio_info(f"koru autonomous: stopping existing {proc.kind} pid={proc.pid}")
@@ -186,7 +186,7 @@ def terminate_existing_processes(
             continue
         except PermissionError:
             stdio_info(
-                f"koru autonomous: no permission to stop existing {proc.kind} pid={proc.pid}"
+                f"koru autonomous: no permission to stop existing {proc.kind} pid={proc.pid}",
             )
 
     deadline = time.monotonic() + 8

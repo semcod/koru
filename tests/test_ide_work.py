@@ -33,8 +33,8 @@ class TestIdeWork(unittest.TestCase):
                         [
                             {"id": "PLF-2", "status": "open", "priority": "normal", "name": "b"},
                             {"id": "PLF-1", "status": "open", "priority": "critical", "name": "a"},
-                        ]
-                    )
+                        ],
+                    ),
                 )
 
             ticket = fetch_next_open_ticket(project, runner=runner)
@@ -55,13 +55,13 @@ class TestIdeWork(unittest.TestCase):
                                 "priority": "high",
                                 "name": "Fix service health",
                                 "description": "Repair failing probe",
-                            }
-                        ]
-                    )
+                            },
+                        ],
+                    ),
                 )
 
             prompt, kind = resolve_idle_drive_prompt(
-                project, drive_prompt="continue", runner=runner
+                project, drive_prompt="continue", runner=runner,
             )
             self.assertEqual(kind, "idle_ticket_prompt")
             self.assertIn("PLF-99", prompt)
@@ -75,7 +75,7 @@ class TestIdeWork(unittest.TestCase):
                 return _ok("[]")
 
             prompt, kind = resolve_idle_drive_prompt(
-                project, drive_prompt="continue with the next ticket", runner=runner
+                project, drive_prompt="continue with the next ticket", runner=runner,
             )
             self.assertEqual(kind, "drive_prompt")
             self.assertEqual(prompt, "continue with the next ticket")
@@ -95,15 +95,15 @@ class TestIdeWork(unittest.TestCase):
                                     "id": "PLF-7",
                                     "status": "in_progress",
                                     "execution": {"started_at": old},
-                                }
-                            ]
-                        )
+                                },
+                            ],
+                        ),
                     )
                 updates.append(list(cmd))
                 return _ok()
 
             count = release_stale_in_progress_tickets(
-                project, stale_minutes=60, runner=runner
+                project, stale_minutes=60, runner=runner,
             )
             self.assertEqual(count, 1)
             self.assertTrue(
@@ -111,7 +111,7 @@ class TestIdeWork(unittest.TestCase):
                     c[:4] == ["planfile", "ticket", "update", "PLF-7"]
                     and "open" in c
                     for c in updates
-                )
+                ),
             )
 
     def test_extract_ticket_id_from_text(self) -> None:

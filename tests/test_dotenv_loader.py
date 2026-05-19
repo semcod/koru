@@ -102,7 +102,7 @@ class TestLoadDotenv(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             (project / ".env").write_text(
-                "OPENROUTER_API_KEY=sk-or-test-12345\n"
+                "OPENROUTER_API_KEY=sk-or-test-12345\n",
             )
             os.environ.pop("OPENROUTER_API_KEY", None)
             load_dotenv(project)

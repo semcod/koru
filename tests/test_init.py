@@ -50,7 +50,7 @@ class TestStarterInit(unittest.TestCase):
             report = init_project(project)
             self.assertTrue((planfile_dir(project) / "config.yaml").exists())
             self.assertTrue(
-                (planfile_dir(project) / "sprints" / "current.yaml").exists()
+                (planfile_dir(project) / "sprints" / "current.yaml").exists(),
             )
             self.assertGreaterEqual(report.sprint_imported, 2)
             self.assertTrue(report.used_starter_pipeline)
@@ -111,7 +111,7 @@ class TestStarterInit(unittest.TestCase):
             policy_file.write_text("USER EDIT — keep me", encoding="utf-8")
             init_project(project, force=True)
             self.assertEqual(
-                policy_file.read_text(encoding="utf-8"), "USER EDIT — keep me"
+                policy_file.read_text(encoding="utf-8"), "USER EDIT — keep me",
             )
 
     def test_no_starter_yaml_left_behind(self) -> None:
@@ -120,7 +120,7 @@ class TestStarterInit(unittest.TestCase):
             project = Path(tmp)
             init_project(project)
             self.assertFalse(
-                (planfile_dir(project) / "_starter.planfile.yaml").exists()
+                (planfile_dir(project) / "_starter.planfile.yaml").exists(),
             )
 
     def test_writes_koru_yaml_on_first_init(self) -> None:
@@ -149,7 +149,7 @@ class TestStarterInit(unittest.TestCase):
             report = init_project(project, prepare_host_environment=False)
             self.assertFalse(report.host_environment_written)
             self.assertFalse(
-                (runtime_dir(project) / "host-environment.json").exists()
+                (runtime_dir(project) / "host-environment.json").exists(),
             )
 
     def test_force_init_preserves_existing_koru_yaml(self) -> None:
@@ -241,7 +241,7 @@ class TestAgentLaneArtifacts(unittest.TestCase):
                 _reattach_ci_env(ci_backup)
             self.assertEqual(report.agent_lane, "cursor")
             shell = (runtime_dir(project) / "shell-env.sh").read_text(
-                encoding="utf-8"
+                encoding="utf-8",
             )
             self.assertIn("KORU_AUTOPILOT_INSTANCE='cursor'", shell)
 

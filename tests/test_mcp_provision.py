@@ -72,8 +72,8 @@ def test_remove_from_config_removes_koru_entry(tmp_path: Path) -> None:
                 "mcpServers": {
                     "koru": {"command": "koru", "args": ["mcp-serve"]},
                     "other": {"command": "python3", "args": ["-m", "x"]},
-                }
-            }
+                },
+            },
         ),
         encoding="utf-8",
     )
@@ -96,7 +96,7 @@ def test_init_ide_main_json_output_for_cursor_dry_run(capsys, tmp_path: Path) ->
             "--dry-run",
             "--format",
             "json",
-        ]
+        ],
     )
 
     assert code == 0
@@ -125,9 +125,9 @@ def test_ensure_koru_mcp_not_disabled_clears_disabled_and_keeps_command(
                         "disabled": True,
                         "command": "koru",
                         "args": ["mcp-serve"],
-                    }
-                }
-            }
+                    },
+                },
+            },
         ),
         encoding="utf-8",
     )
@@ -154,7 +154,7 @@ def test_ensure_koru_mcp_not_disabled_includes_global_windsurf(
 
     gpath.write_text(
         json.dumps(
-            {"mcpServers": {"koru": {"disabled": True, "command": "koru", "args": ["mcp-serve"]}}}
+            {"mcpServers": {"koru": {"disabled": True, "command": "koru", "args": ["mcp-serve"]}}},
         ),
         encoding="utf-8",
     )

@@ -51,7 +51,7 @@ def parse_next_ticket(stdout: str) -> dict | None:
             key=lambda t: (
                 priority_order.get(t.get("priority", "normal"), 2),
                 t.get("created_at", ""),
-            )
+            ),
         )
 
         return runnable_tickets[0]

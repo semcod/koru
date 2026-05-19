@@ -229,7 +229,7 @@ def _merge_pipelines(saved: dict[str, Any]) -> dict[str, dict[str, Any]]:
                     "components": [],
                     "trigger": "manual",
                 },
-            )
+            ),
         )
         override = saved_pipelines.get(pid)
         if isinstance(override, dict):

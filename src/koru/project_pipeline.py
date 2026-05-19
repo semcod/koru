@@ -139,7 +139,7 @@ def build_project_pipeline_brief(project: Path) -> dict[str, Any] | None:
                     "id": str(key),
                     "description": str(block.get("description") or ""),
                     "commands": [str(c) for c in cmds if c is not None],
-                }
+                },
             )
     rel = KORU_PROJECT_PIPELINE_FILENAME
     return {

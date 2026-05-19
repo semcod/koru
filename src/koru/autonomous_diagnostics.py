@@ -24,7 +24,7 @@ def build_idle_checks(project: Path, profile: str) -> list[IdleCheck]:
                 "regix",
                 "regix compare HEAD --local --format rich",
                 ["regix", "compare", "HEAD", "--local", "--format", "rich"],
-            )
+            ),
         )
     if shutil.which("wup") and (project / "wup.yaml").is_file():
         checks.append(("wup", "wup status", ["wup", "status"]))
@@ -39,7 +39,7 @@ def build_idle_checks(project: Path, profile: str) -> list[IdleCheck]:
                     "python3 -m koru.redup_integration changed-scan "
                     "--output .redup/wup-changed.json",
                     command,
-                )
+                ),
             )
         else:
             checks.append(
@@ -47,7 +47,7 @@ def build_idle_checks(project: Path, profile: str) -> list[IdleCheck]:
                     "redup",
                     "redup scan . --min-lines 10",
                     redup_scan_command(),
-                )
+                ),
             )
     if shutil.which("testql") and any(project.rglob("*.testql.toon.yaml")):
         checks.append(
@@ -63,7 +63,7 @@ def build_idle_checks(project: Path, profile: str) -> list[IdleCheck]:
                     "console",
                     "--fail-fast",
                 ],
-            )
+            ),
         )
     if shutil.which("redsl"):
         checks.append(("redsl", "redsl gate check .", ["redsl", "gate", "check", "."]))
@@ -73,7 +73,7 @@ def build_idle_checks(project: Path, profile: str) -> list[IdleCheck]:
                 "sumr",
                 "bash scripts/sumr-refresh.sh --status",
                 ["bash", "scripts/sumr-refresh.sh", "--status"],
-            )
+            ),
         )
     return checks
 
@@ -138,7 +138,7 @@ def create_diagnostic_ticket(
     marker = state_dir / f"{check_id}.failed"
     if marker.exists():
         stdio_info(
-            f"- diagnostic ticket marker exists for {check_id}, skipping create", fmt=stdio_format
+            f"- diagnostic ticket marker exists for {check_id}, skipping create", fmt=stdio_format,
         )
         return
     title = f"[AUTO-DIAG] {check_id} needs attention"
@@ -221,7 +221,7 @@ def run_idle_diagnostics(
         )
         return make_result("off", [])
     if not is_topology_enabled(
-        project, "idle-diagnostics", fallback=True, enabled=topology_integration
+        project, "idle-diagnostics", fallback=True, enabled=topology_integration,
     ):
         stdio_info("koru autonomous: idle diagnostics disabled in topology", fmt=stdio_format)
         return make_result("disabled(topology)", [])

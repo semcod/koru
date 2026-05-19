@@ -58,14 +58,14 @@ def _handle_if(line: str, goal: dict[str, Any] | None) -> None:
 def _handle_error(line: str, goal: dict[str, Any] | None) -> None:
     if goal is not None:
         goal["objectives"].append(
-            {"type": "error", "message": line[6:].strip().strip("\"'")}
+            {"type": "error", "message": line[6:].strip().strip("\"'")},
         )
 
 
 def _handle_correct(line: str, goal: dict[str, Any] | None) -> None:
     if goal is not None:
         goal["objectives"].append(
-            {"type": "success", "message": line[8:].strip().strip("\"'")}
+            {"type": "success", "message": line[8:].strip().strip("\"'")},
         )
 
 

@@ -78,7 +78,7 @@ def test_contract_drive(factory) -> None:
                 "ide": "cursor",
                 "require_plugin": True,
             },
-        )
+        ),
     ]
 
 

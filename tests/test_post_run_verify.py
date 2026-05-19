@@ -72,7 +72,7 @@ queue:
                 project,
                 ["PLF-1"],
                 config=PostRunVerifyConfig(
-                    enabled=True, commands=("pytest -q",), on_failure="reopen"
+                    enabled=True, commands=("pytest -q",), on_failure="reopen",
                 ),
                 planfile_runner=planfile_runner,
                 shell_runner=shell_runner,
@@ -85,7 +85,7 @@ queue:
                     c[:4] == ["planfile", "ticket", "update", "PLF-1"]
                     and "--status" in c
                     for c in calls
-                )
+                ),
             )
 
     def test_verify_after_ide_work_pending_done(self) -> None:
@@ -125,12 +125,12 @@ queue:
                         [
                             {"id": "PLF-1", "updated_at": recent},
                             {"id": "PLF-2", "updated_at": "2020-01-01T00:00:00+00:00"},
-                        ]
-                    )
+                        ],
+                    ),
                 )
 
             ids = fetch_recently_done_ticket_ids(
-                project, within_minutes=60, runner=runner
+                project, within_minutes=60, runner=runner,
             )
             self.assertEqual(ids, ["PLF-1"])
 

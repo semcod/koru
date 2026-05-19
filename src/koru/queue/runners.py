@@ -99,7 +99,7 @@ def _resolve_llm_endpoint_and_key(
 ) -> tuple[str, str, str]:
     """Resolve endpoint, API key, and key variable name."""
     endpoint = str(
-        request.get("endpoint") or os.getenv("KORU_LLM_ENDPOINT") or _DEFAULT_LLM_ENDPOINT
+        request.get("endpoint") or os.getenv("KORU_LLM_ENDPOINT") or _DEFAULT_LLM_ENDPOINT,
     )
     if "openrouter.ai" in endpoint:
         api_key = os.getenv("OPENROUTER_API_KEY")

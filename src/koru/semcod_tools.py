@@ -138,6 +138,6 @@ def detect_semcod_tools(project: Path) -> list[SemcodTool]:
                 via=via,
                 command=bin_path,
                 config_present=cfg,
-            )
+            ),
         )
     return result

@@ -28,7 +28,7 @@ VALID_EXECUTOR_MODES: frozenset[str] = frozenset({"automatic", "interactive"})
 VALID_STATUSES: frozenset[str] = frozenset({"open", "in_progress", "review", "done", "blocked"})
 VALID_PRIORITIES: frozenset[str] = frozenset({"critical", "high", "medium", "normal", "low"})
 VALID_EXECUTION_STATES: frozenset[str] = frozenset(
-    {"pending", "ready", "running", "waiting_input", "done", "failed", "skipped"}
+    {"pending", "ready", "running", "waiting_input", "done", "failed", "skipped"},
 )
 
 
@@ -145,13 +145,13 @@ def _validate_executor(task: dict[str, Any]) -> list[ValidationError]:
     kind = executor.get("kind")
     if kind not in VALID_EXECUTOR_KINDS:
         errors.append(
-            ValidationError(tid, "executor.kind", f"{kind!r} not in {sorted(VALID_EXECUTOR_KINDS)}")
+            ValidationError(tid, "executor.kind", f"{kind!r} not in {sorted(VALID_EXECUTOR_KINDS)}"),
         )
 
     mode = executor.get("mode", "automatic")
     if mode not in VALID_EXECUTOR_MODES:
         errors.append(
-            ValidationError(tid, "executor.mode", f"{mode!r} not in {sorted(VALID_EXECUTOR_MODES)}")
+            ValidationError(tid, "executor.mode", f"{mode!r} not in {sorted(VALID_EXECUTOR_MODES)}"),
         )
 
     return errors
@@ -165,8 +165,8 @@ def _validate_execution_state(task: dict[str, Any]) -> list[ValidationError]:
     if state not in VALID_EXECUTION_STATES:
         return [
             ValidationError(
-                tid, "execution.state", f"{state!r} not in {sorted(VALID_EXECUTION_STATES)}"
-            )
+                tid, "execution.state", f"{state!r} not in {sorted(VALID_EXECUTION_STATES)}",
+            ),
         ]
     return []
 
@@ -219,7 +219,7 @@ def _validate_cross_task_dependencies(tasks: list[dict[str, Any]]) -> list[Valid
     cycle = _detect_cycle(tasks)
     if cycle:
         errors.append(
-            ValidationError(cycle[0], "blocked_by", f"cycle detected: {' → '.join(cycle)}")
+            ValidationError(cycle[0], "blocked_by", f"cycle detected: {' → '.join(cycle)}"),
         )
     return errors
 
@@ -322,7 +322,7 @@ def materialize_to_planfile(
 
     if sprint_path.exists() and not overwrite:
         raise FileExistsError(
-            f"{sprint_path} already exists. Use overwrite=True (or --force) to replace it."
+            f"{sprint_path} already exists. Use overwrite=True (or --force) to replace it.",
         )
 
     tickets: dict[str, dict[str, Any]] = {}
@@ -337,7 +337,7 @@ def materialize_to_planfile(
             "name": sprint_name,
             "status": "active",
             "tickets": tickets,
-        }
+        },
     }
     if sprint_path.exists():
         report.sprint_file_overwritten = True

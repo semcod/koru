@@ -58,7 +58,7 @@ class TestManagementEvents(unittest.TestCase):
     def test_emit_management_event_is_disabled_without_url(self) -> None:
         with patch.dict("os.environ", {}, clear=True):
             self.assertFalse(
-                emit_management_event(tool="koru.queue", action="completed")
+                emit_management_event(tool="koru.queue", action="completed"),
             )
 
 

@@ -46,12 +46,12 @@ def build_openapi_document(*, host: str = "127.0.0.1", port: int = 8790) -> dict
                                             "ok": {"type": "boolean"},
                                             "service": {"type": "string"},
                                         },
-                                    }
-                                }
+                                    },
+                                },
                             },
-                        }
+                        },
                     },
-                }
+                },
             },
             "/api/v1/integrations": {
                 "get": {
@@ -63,7 +63,7 @@ def build_openapi_document(*, host: str = "127.0.0.1", port: int = 8790) -> dict
                             "required": False,
                             "schema": {"type": "string"},
                             "description": "Filter integrations by tag.",
-                        }
+                        },
                     ],
                     "responses": {
                         "200": {
@@ -82,12 +82,12 @@ def build_openapi_document(*, host: str = "127.0.0.1", port: int = 8790) -> dict
                                                 },
                                             },
                                         },
-                                    }
-                                }
+                                    },
+                                },
                             },
-                        }
+                        },
                     },
-                }
+                },
             },
             "/api/v1/invoke": {
                 "post": {
@@ -126,8 +126,8 @@ def build_openapi_document(*, host: str = "127.0.0.1", port: int = 8790) -> dict
                                             "additionalProperties": True,
                                         },
                                     },
-                                }
-                            }
+                                },
+                            },
                         },
                     },
                     "responses": {
@@ -135,13 +135,13 @@ def build_openapi_document(*, host: str = "127.0.0.1", port: int = 8790) -> dict
                         "400": {"description": "Invalid request or invoke error"},
                         "500": {"description": "Internal error"},
                     },
-                }
+                },
             },
             "/api/v1/openapi.json": {
                 "get": {
                     "summary": "This OpenAPI document",
                     "responses": {"200": {"description": "OpenAPI JSON"}},
-                }
+                },
             },
         },
         "components": {
@@ -149,7 +149,7 @@ def build_openapi_document(*, host: str = "127.0.0.1", port: int = 8790) -> dict
                 "Integration": {
                     "type": "object",
                     "properties": integration_props,
-                }
-            }
+                },
+            },
         },
     }

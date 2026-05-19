@@ -92,7 +92,7 @@ def test_agent_list_json_includes_ready_summary() -> None:
 def test_agent_env_exports_cursor_lane() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         code, output = _run_main(
-            "agent", "--project", str(Path(tmp)), "--lane", "cursor", "--env-exports"
+            "agent", "--project", str(Path(tmp)), "--lane", "cursor", "--env-exports",
         )
     assert code == 0
     assert "KORU_AUTOPILOT_INSTANCE" in output

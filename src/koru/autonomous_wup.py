@@ -125,7 +125,7 @@ def _wup_watch_command(config: WupWatchConfig) -> list[str]:
                 config.track_dir,
                 "--quick-limit",
                 str(config.quick_limit),
-            ]
+            ],
         )
     if config.config is not None:
         command.extend(["--config", str(config.config)])
@@ -140,7 +140,7 @@ def _wup_autodetect(config: WupWatchConfig) -> bool:
 
 
 def _start_wup_watch(
-    config: WupWatchConfig, *, topology_integration: bool, stdio_format: str = "human"
+    config: WupWatchConfig, *, topology_integration: bool, stdio_format: str = "human",
 ) -> subprocess.Popen | None:
     auto = config.enabled is None
     if config.enabled is False:
@@ -151,21 +151,21 @@ def _start_wup_watch(
         if not wup_available or not wup_yaml_present:
             return None
         _wup_stdio_info(
-            "koru autonomous: WUP auto-detected (wup.yaml + wup binary present)", fmt=stdio_format
+            "koru autonomous: WUP auto-detected (wup.yaml + wup binary present)", fmt=stdio_format,
         )
     else:
         if not wup_available:
             _wup_stdio_info(
-                "koru autonomous: WUP watch requested but `wup` is not in PATH", fmt=stdio_format
+                "koru autonomous: WUP watch requested but `wup` is not in PATH", fmt=stdio_format,
             )
             return None
         if not wup_yaml_present:
             _wup_stdio_info(
-                "koru autonomous: WUP watch requested but no wup.yaml found", fmt=stdio_format
+                "koru autonomous: WUP watch requested but no wup.yaml found", fmt=stdio_format,
             )
             return None
     if not _wup_topology_gate(
-        config.project, "gate:wup", fallback=True, enabled=topology_integration
+        config.project, "gate:wup", fallback=True, enabled=topology_integration,
     ):
         _wup_stdio_info("koru autonomous: WUP watch disabled in topology", fmt=stdio_format)
         return None
@@ -180,7 +180,7 @@ def _start_wup_watch(
 
 
 def _stop_process(
-    process: subprocess.Popen | None, label: str, *, stdio_format: str = "human"
+    process: subprocess.Popen | None, label: str, *, stdio_format: str = "human",
 ) -> None:
     if process is None or process.poll() is not None:
         return
@@ -277,7 +277,7 @@ def _read_wup_health(
             raise TypeError("create_diagnostic_ticket is required when diagnostic_tickets is True")
         if create_diagnostic_ticket is not None:
             _create_wup_diagnostic_tickets(
-                health, failing, project, ticket_queue, state_dir, create_diagnostic_ticket
+                health, failing, project, ticket_queue, state_dir, create_diagnostic_ticket,
             )
     
     event_count, new_events = _count_wup_events(events_path, state.wup_seen_events)

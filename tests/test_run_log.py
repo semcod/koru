@@ -67,7 +67,7 @@ class TestWriteEvents(unittest.TestCase):
             writer.write_header(project=project, mode="loop", actor="koru-test")
             writer.write_iteration(iteration=1, result=_result())
             writer.write_iteration(
-                iteration=2, result=_result(status="failed", exit_code=2)
+                iteration=2, result=_result(status="failed", exit_code=2),
             )
             writer.write_footer(summary=SimpleNamespace(
                 iterations=2,
@@ -128,7 +128,7 @@ class TestErrorTolerance(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             writer = open_run_log(Path(tmp))
             with mock.patch(
-                "koru.run_log.open", side_effect=PermissionError("nope")
+                "koru.run_log.open", side_effect=PermissionError("nope"),
             ):
                 # Must not raise.
                 writer.write_iteration(iteration=1, result=_result())

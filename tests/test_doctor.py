@@ -201,7 +201,7 @@ class TestPlanfileConfigCheck(unittest.TestCase):
             project = Path(tmp)
             _scaffold(project)
             (project / ".planfile" / "config.yaml").write_text(
-                "this: is: not: valid", encoding="utf-8"
+                "this: is: not: valid", encoding="utf-8",
             )
             report = _run(project)
             self.assertEqual(_named(report, "planfile_config").status, FAIL)
@@ -213,7 +213,7 @@ class TestSprintsCheck(unittest.TestCase):
             project = Path(tmp)
             _scaffold(project)
             (project / ".planfile" / "sprints" / "current.yaml").write_text(
-                "sprint:\n  id: current\n  tickets: {}\n", encoding="utf-8"
+                "sprint:\n  id: current\n  tickets: {}\n", encoding="utf-8",
             )
             report = _run(project)
             self.assertEqual(_named(report, "planfile_sprints").status, WARN)
@@ -240,7 +240,7 @@ class TestPolicyYamlCheck(unittest.TestCase):
             project = Path(tmp)
             _scaffold(project)
             (project / ".planfile" / ".koru" / "policy.yaml").write_text(
-                "this: is: not: valid", encoding="utf-8"
+                "this: is: not: valid", encoding="utf-8",
             )
             report = _run(project)
             self.assertEqual(_named(report, "policy_yaml").status, FAIL)
@@ -251,7 +251,7 @@ class TestPolicyYamlCheck(unittest.TestCase):
             project = Path(tmp)
             _scaffold(project)
             (project / ".planfile" / ".koru" / "policy.yaml").write_text(
-                'llm:\n  allow_commit: "true"\n', encoding="utf-8"
+                'llm:\n  allow_commit: "true"\n', encoding="utf-8",
             )
             report = _run(project)
             self.assertEqual(_named(report, "policy_yaml").status, WARN)
@@ -282,7 +282,7 @@ class TestCiCommandCheck(unittest.TestCase):
             project = Path(tmp)
             _scaffold(project)
             (project / ".planfile" / ".koru" / "policy.yaml").write_text(
-                'ci:\n  command: "echo hi"\n', encoding="utf-8"
+                'ci:\n  command: "echo hi"\n', encoding="utf-8",
             )
             report = _run(project)
             self.assertEqual(_named(report, "ci_command").status, PASS)
@@ -301,7 +301,7 @@ class TestPytestCollectProbe(unittest.TestCase):
         # The probe only registers when pyproject.toml or tests/ exists,
         # so we always provide one.
         (project / "pyproject.toml").write_text(
-            "[project]\nname = 'test'\n", encoding="utf-8"
+            "[project]\nname = 'test'\n", encoding="utf-8",
         )
 
     def test_pass_when_collection_succeeds_with_count(self) -> None:
@@ -446,7 +446,7 @@ class TestReportShape(unittest.TestCase):
             report = _run(project)
             counts = report.summary()
             self.assertEqual(
-                sum(counts.values()), len(report.checks)
+                sum(counts.values()), len(report.checks),
             )
 
 

@@ -198,7 +198,7 @@ def run_queue_single_mode(
         run_log.write_footer(summary=_single_task_summary(result))
     print(
         f"koru queue: status={result.status} "
-        f"ticket={result.ticket_id or '-'} executor={result.executor_kind or '-'}"
+        f"ticket={result.ticket_id or '-'} executor={result.executor_kind or '-'}",
     )
     if result.message:
         print(result.message)

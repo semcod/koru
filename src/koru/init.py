@@ -314,7 +314,7 @@ def init_project(
         raise FileExistsError(
             f"{config_path} already exists. Use --force to re-initialise "
             "(this overwrites the sprint and the policy stub but keeps "
-            ".planfile/.koru/runs/ intact)."
+            ".planfile/.koru/runs/ intact).",
         )
 
     used_starter = from_file is None
@@ -388,7 +388,7 @@ def refresh_init_agent_lane(
     config_path = planfile_dir(project) / "config.yaml"
     if not config_path.is_file():
         raise FileNotFoundError(
-            f"{config_path} not found; run `koru --init` in this project first."
+            f"{config_path} not found; run `koru --init` in this project first.",
         )
     lane = _resolve_init_agent_lane(project, agent_lane)
     agent_written = False
@@ -454,7 +454,7 @@ def _init_auto_agent_lane(project: Path) -> str:
 
 
 _EXPORT_RE = re.compile(
-    r"^export\s+(KORU_AUTOPILOT_INSTANCE|KORU_AUTOPILOT_IDE)=(?P<value>.+)$"
+    r"^export\s+(KORU_AUTOPILOT_INSTANCE|KORU_AUTOPILOT_IDE)=(?P<value>.+)$",
 )
 
 

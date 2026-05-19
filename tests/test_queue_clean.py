@@ -291,7 +291,7 @@ def test_report_to_dict_is_json_serialisable():
                 labels=("test-only",),
                 age_days=1.0,
                 matched_rules=("fixture-label(test-only)",),
-            )
+            ),
         ],
         applied=["PLF-1"],
         failed=[("PLF-2", "boom")],

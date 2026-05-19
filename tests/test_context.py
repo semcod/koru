@@ -38,7 +38,7 @@ def _init_planfile(project: Path) -> None:
     (pf / "sprints").mkdir(parents=True, exist_ok=True)
     (pf / "config.yaml").write_text("project: test\n", encoding="utf-8")
     (pf / "sprints" / "current.yaml").write_text(
-        "sprint:\n  id: current\n  tickets: {}\n", encoding="utf-8"
+        "sprint:\n  id: current\n  tickets: {}\n", encoding="utf-8",
     )
 
 
@@ -78,7 +78,7 @@ class TestBuildContext(unittest.TestCase):
             koru_dir.mkdir(parents=True, exist_ok=True)
             snap = {"cycle": 2, "knobs": {"scan_after_idle_queue": True}}
             (koru_dir / "autonomy-telemetry.json").write_text(
-                json.dumps(snap), encoding="utf-8"
+                json.dumps(snap), encoding="utf-8",
             )
 
             def planfile_runner(_c, _p):
@@ -119,7 +119,7 @@ class TestBuildContext(unittest.TestCase):
                 "status": "open",
                 "executor": {"kind": "shell"},
                 "files": [],
-            }
+            },
         ]
 
         with tempfile.TemporaryDirectory() as tmp:
@@ -189,7 +189,7 @@ class TestBuildContext(unittest.TestCase):
             ctx = build_context(
                 project=Path(tmp),
                 planfile_runner=lambda _c, _p: _ok(json.dumps(
-                    {"id": "X", "executor": {"kind": "shell"}}
+                    {"id": "X", "executor": {"kind": "shell"}},
                 )),
                 git_probe=_no_git,
             )
@@ -204,7 +204,7 @@ class TestBuildContext(unittest.TestCase):
                 project=Path(tmp),
                 policy=Policy(ci_command="pytest -q"),
                 planfile_runner=lambda _c, _p: _ok(json.dumps(
-                    {"id": "X", "executor": {"kind": "shell"}}
+                    {"id": "X", "executor": {"kind": "shell"}},
                 )),
                 git_probe=_no_git,
             )
@@ -217,7 +217,7 @@ class TestBuildContext(unittest.TestCase):
             ctx = build_context(
                 project=Path(tmp),
                 planfile_runner=lambda _c, _p: _ok(json.dumps(
-                    {"id": "PLF-100", "executor": {"kind": "shell"}}
+                    {"id": "PLF-100", "executor": {"kind": "shell"}},
                 )),
                 git_probe=_no_git,
             )
@@ -237,7 +237,7 @@ class TestBuildContext(unittest.TestCase):
             ctx = build_context(
                 project=Path(tmp),
                 planfile_runner=lambda _c, _p: _ok(json.dumps(
-                    {"id": "X", "executor": {"kind": "shell"}}
+                    {"id": "X", "executor": {"kind": "shell"}},
                 )),
                 git_probe=_no_git,
             )

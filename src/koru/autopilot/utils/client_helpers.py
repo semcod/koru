@@ -28,7 +28,7 @@ def call_daemon_method(
         print(
             "koru autopilot: daemon is NOT running"
             if not_running_return_code == 1
-            else "koru autopilot: daemon is not running"
+            else "koru autopilot: daemon is not running",
         )
         return not_running_return_code
 

@@ -62,7 +62,7 @@ def _handle_human_ticket(
     """Handle human executor ticket."""
     inputs = ticket.get("inputs") or {}
     prompt = str(
-        inputs.get("prompt") or ticket.get("description") or ticket.get("name") or ticket_id
+        inputs.get("prompt") or ticket.get("description") or ticket.get("name") or ticket_id,
     )
     if not interactive or dry_run:
         return QueueRunResult(
@@ -80,7 +80,7 @@ def _handle_human_ticket(
             message=prompt,
         )
     claimed = ticket_claim_or_error(
-        project, ticket_id, actor, planfile_runner=planfile_runner
+        project, ticket_id, actor, planfile_runner=planfile_runner,
     )
     if claimed:
         return claimed

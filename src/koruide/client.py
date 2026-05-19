@@ -86,7 +86,7 @@ class KoruIDEClient:
                     ide=ide,
                     require_plugin=require_plugin,
                     id="cli-drive",
-                )
+                ),
             )
             return reply.to_dict()
         except FileNotFoundError as exc:

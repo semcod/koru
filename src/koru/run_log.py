@@ -63,7 +63,7 @@ class RunLogWriter:
                 "mode": mode,
                 "pid": os.getpid(),
                 **extra,
-            }
+            },
         )
 
     def write_iteration(self, *, iteration: int, result: Any) -> None:
@@ -80,7 +80,7 @@ class RunLogWriter:
                 "message": (getattr(result, "message", "") or "")[:500],
                 "stderr_tail": (getattr(result, "stderr", "") or "")[-500:],
                 "at": _iso(time.time()),
-            }
+            },
         )
 
     def write_footer(self, *, summary: Any) -> None:
@@ -96,7 +96,7 @@ class RunLogWriter:
                 "failed": list(getattr(summary, "failed", []) or []),
                 "waiting": list(getattr(summary, "waiting", []) or []),
                 "last_status": getattr(summary, "last_status", None),
-            }
+            },
         )
 
 

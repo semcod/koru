@@ -247,7 +247,7 @@ def build_operator_steps(
             status="ok" if api_ok else "pending",
             detail=api_detail,
             task_command=None if api_ok else "task koru:server",
-        )
+        ),
     )
 
     mcp_ok, mcp_detail = _mcp_koru_configured(project)
@@ -261,7 +261,7 @@ def build_operator_steps(
             status="ok" if mcp_ok else "pending",
             detail=mcp_detail,
             task_command=None if mcp_ok else "task koru:mcp:bootstrap",
-        )
+        ),
     )
 
     if plugin_connected is True:
@@ -285,7 +285,7 @@ def build_operator_steps(
             status=plug_status,
             detail=plug_detail,
             task_command=plug_task,
-        )
+        ),
     )
 
     host_ok, host_detail = _host_injectors_ok()
@@ -297,7 +297,7 @@ def build_operator_steps(
             status="ok" if host_ok else "pending",
             detail=host_detail,
             task_command=None if host_ok else "task koru:operator:setup-host",
-        )
+        ),
     )
 
     prof_ok, prof_detail = _os_profile_ok(ide, project)
@@ -309,7 +309,7 @@ def build_operator_steps(
             status="ok" if prof_ok else "pending",
             detail=prof_detail,
             task_command=None if prof_ok else f"task koru:ide-os:calibrate IDE={ide}",
-        )
+        ),
     )
 
     steps.append(
@@ -320,7 +320,7 @@ def build_operator_steps(
             status="ok",
             detail="Koru kontynuuje cykle; tickety operatora można zamykać równolegle",
             task_command=None,
-        )
+        ),
     )
     return steps
 
@@ -350,7 +350,7 @@ def _emit_step(
         stream.write(f"koru autonomous:     uruchom: {step.task_command}\n")
     if step.ticket_id:
         stream.write(
-            f"koru autonomous:     ticket {step.ticket_id} (kolejka operator)\n"
+            f"koru autonomous:     ticket {step.ticket_id} (kolejka operator)\n",
         )
     stream.flush()
 
@@ -528,7 +528,7 @@ def run_startup_operator_pipeline(
     out.write("\nkoru autonomous: === pipeline operatora (interaktywny) ===\n")
     out.write(
         "koru autonomous: kroki z ticketami idą do kolejki „operator“; "
-        "pętla główna (scan/queue/IDE) działa równolegle.\n"
+        "pętla główna (scan/queue/IDE) działa równolegle.\n",
     )
     out.flush()
 
@@ -553,7 +553,7 @@ def run_startup_operator_pipeline(
     pending = sum(1 for s in result.steps if s.status == "pending")
     out.write(
         f"koru autonomous: pipeline operatora: {pending} krok(ów) do zrobienia, "
-        f"{len(result.tickets_created)} nowych ticketów\n"
+        f"{len(result.tickets_created)} nowych ticketów\n",
     )
     out.flush()
     return result

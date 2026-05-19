@@ -300,7 +300,7 @@ def _list_tickets(
     if result.returncode != 0:
         raise RuntimeError(
             f"planfile ticket list failed (exit {result.returncode}): "
-            f"{(result.stderr or result.stdout or '').strip()}"
+            f"{(result.stderr or result.stdout or '').strip()}",
         )
     stdout = (result.stdout or "").strip()
     if not stdout:
@@ -334,7 +334,7 @@ def _close_ticket(
     result = runner(cmd, cwd=str(project), capture_output=True, text=True, check=False)
     if result.returncode != 0:
         raise RuntimeError(
-            (result.stderr or result.stdout or "").strip() or f"exit {result.returncode}"
+            (result.stderr or result.stdout or "").strip() or f"exit {result.returncode}",
         )
 
 

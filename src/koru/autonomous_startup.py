@@ -126,10 +126,10 @@ def build_startup_probe(
     resolve_ide_route_fn=resolve_ide_route,
 ) -> AutonomousStartupProbe:
     lane, lane_source = resolve_agent_lane_id(
-        project, agent_lane_cli, resolve_project_lane=resolve_project_lane
+        project, agent_lane_cli, resolve_project_lane=resolve_project_lane,
     )
     autopilot_ide, ide_source = resolve_autopilot_ide_for_autonomous(
-        autopilot_ide_cli, lane, resolve_ide_route_fn=resolve_ide_route_fn
+        autopilot_ide_cli, lane, resolve_ide_route_fn=resolve_ide_route_fn,
     )
     running = detect_running_ides()
     running_labels = tuple(f"{ide.label} (pid={ide.pid})" for ide in running)
@@ -168,17 +168,17 @@ def format_startup_banner(probe: AutonomousStartupProbe) -> list[str]:
         lines.append(f"koru autonomous: terminal hint → {probe.terminal_lane}")
     lines.append(
         f"koru autonomous: lane={probe.resolved_lane or 'none'} "
-        f"(from {probe.lane_source}, cli --agent-lane={probe.agent_lane_cli})"
+        f"(from {probe.lane_source}, cli --agent-lane={probe.agent_lane_cli})",
     )
     lines.append(
         f"koru autonomous: autopilot IDE={probe.resolved_autopilot_ide} "
-        f"(from {probe.autopilot_ide_source}, cli --autopilot-ide={probe.autopilot_ide_cli})"
+        f"(from {probe.autopilot_ide_source}, cli --autopilot-ide={probe.autopilot_ide_cli})",
     )
     lines.append(f"koru autonomous: autopilot socket → {probe.socket_path}")
     if probe.headless:
         lines.append(
             "koru autonomous: headless environment — plugin drive disabled unless "
-            "KORU_HEADLESS_ALLOW_AUTOPILOT=1"
+            "KORU_HEADLESS_ALLOW_AUTOPILOT=1",
         )
     return lines
 
@@ -204,27 +204,27 @@ def format_post_startup_operator_hints(
     ]
     if plugin_connected is True:
         lines.append(
-            f"koru autonomous: [ok] plugin połączony (ide={ide}) — prompty idą do czatu, nie ydotool"
+            f"koru autonomous: [ok] plugin połączony (ide={ide}) — prompty idą do czatu, nie ydotool",
         )
     elif plugin_connected is False:
         lines.append(
             f"koru autonomous: [!] brak pluginu na {sock} — drive może użyć klawiatury "
-            "(zły fokus). Napraw zanim zostawisz długi run."
+            "(zły fokus). Napraw zanim zostawisz długi run.",
         )
     else:
         lines.append(
-            "koru autonomous: [?] czekam na plugin — jeśli poniżej nie ma [ok], wykonaj kroki 1–6"
+            "koru autonomous: [?] czekam na plugin — jeśli poniżej nie ma [ok], wykonaj kroki 1–6",
         )
 
     if ide == "cursor" and probe.autopilot_ide_cli == "vscode":
         lines.append(
             "koru autonomous: [!] CLI --autopilot-ide=vscode przy pracy w Cursorze — "
-            "użyj IDE=cursor / --autopilot-ide cursor"
+            "użyj IDE=cursor / --autopilot-ide cursor",
         )
     if probe.terminal_lane == "vscode" and ide == "cursor":
         lines.append(
             "koru autonomous: [!] TERM_PROGRAM=vscode w terminalu Cursora — "
-            "jawnie ustaw --agent-lane cursor jeśli auto myli VS Code"
+            "jawnie ustaw --agent-lane cursor jeśli auto myli VS Code",
         )
 
     lines.extend(
@@ -240,7 +240,7 @@ def format_post_startup_operator_hints(
             "koru autonomous: 7) (opcjonalnie) Command Palette → „koru: Calibrate chat probe ladder”",
             "koru autonomous: 8) Dashboard: task koru:server → http://localhost:8765/",
             "koru autonomous: --- docs: <project>/docs/autonomy-ide-cursor.md (sekcja „Po starcie”) ---",
-        ]
+        ],
     )
     return lines
 

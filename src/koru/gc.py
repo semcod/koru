@@ -207,7 +207,7 @@ def collect_gc_candidates(
                 execution_state=str(execution.get("state", "")),
                 finished_at=finished,
                 age_days=round(age_days, 1),
-            )
+            ),
         )
 
     # Sort oldest first

@@ -164,7 +164,7 @@ def scan_pytest_collect(
                 ),
                 priority="high",
                 labels=("ci", "bug", "scan", "timeout"),
-            )
+            ),
         ]
     except (FileNotFoundError, OSError):
         # pytest not installed / not invokable in this environment — that's
@@ -198,7 +198,7 @@ def scan_pytest_collect(
                 priority="high",
                 labels=("ci", "bug", "scan"),
                 files=(path,),
-            )
+            ),
         )
 
     # No per-file match but stderr mentions an import error → one umbrella ticket.
@@ -219,14 +219,14 @@ def scan_pytest_collect(
                     ),
                     priority="high",
                     labels=("ci", "bug", "scan"),
-                )
+                ),
             )
     return suggestions
 
 
 _MARKER_RE = re.compile(r"\b(TODO|FIXME|XXX|HACK)\b[: ]")
 _DEFAULT_SCAN_EXCLUDES: frozenset[str] = frozenset(
-    {".git", "__pycache__", ".venv", "venv", "node_modules", "build", "dist"}
+    {".git", "__pycache__", ".venv", "venv", "node_modules", "build", "dist"},
 )
 
 
@@ -362,7 +362,7 @@ def scan_missing_gates(project: Path) -> list[Suggestion]:
                 ),
                 priority="normal",
                 labels=("bootstrap", "gates", "scan"),
-            )
+            ),
         )
     return suggestions
 
@@ -408,7 +408,7 @@ def scan_missing_tools(project: Path) -> list[Suggestion]:
                 ),
                 priority="normal",
                 labels=("bootstrap", "deps", "scan"),
-            )
+            ),
         )
     return suggestions
 
@@ -437,7 +437,7 @@ def scan_gitignore_drift(project: Path) -> list[Suggestion]:
             priority="low",
             labels=("hygiene", "scan"),
             files=(".gitignore",),
-        )
+        ),
     ]
 
 
@@ -468,7 +468,7 @@ def _scan_jscpd_report(project: Path) -> list[Suggestion]:
             priority=pr,
             labels=("quality", "duplication", "jscpd", "scan"),
             files=(rel,),
-        )
+        ),
     ]
 
 
@@ -517,7 +517,7 @@ def _parse_dup_suggestions(text: str, rel: str) -> list[Suggestion]:
                 priority="high",
                 labels=("code2llm", "duplication", "refactor", "scan"),
                 files=(rel,),
-            )
+            ),
         )
     return suggestions
 
@@ -542,7 +542,7 @@ def _parse_god_module_suggestions(text: str, rel: str) -> list[Suggestion]:
                 priority="high",
                 labels=("code2llm", "god-module", "refactor", "scan"),
                 files=(file_path, rel),
-            )
+            ),
         )
     return suggestions
 
@@ -569,7 +569,7 @@ def _parse_high_cc_suggestions(text: str, rel: str) -> list[Suggestion]:
                 priority="normal",
                 labels=("code2llm", "complexity", "refactor", "scan"),
                 files=(rel,),
-            )
+            ),
         )
     return suggestions
 
@@ -602,7 +602,7 @@ def _parse_refactor_suggestions(text: str, rel: str) -> list[Suggestion]:
                 priority="normal",
                 labels=("code2llm", "refactor", "scan"),
                 files=(rel,),
-            )
+            ),
         )
     return suggestions
 
@@ -648,7 +648,7 @@ def _scan_testql_export(project: Path) -> list[Suggestion]:
             priority=pr,
             labels=("testql", "regression", "api", "scan"),
             files=(rel,),
-        )
+        ),
     ]
 
 
@@ -675,7 +675,7 @@ def _scan_redup_filtered(project: Path) -> list[Suggestion]:
             priority="normal",
             labels=("redup", "duplication", "python", "scan"),
             files=(rel,),
-        )
+        ),
     ]
 
 
@@ -702,7 +702,7 @@ def _scan_redup_changed(project: Path) -> list[Suggestion]:
             priority="normal",
             labels=("redup", "duplication", "wup", "scan"),
             files=(rel,),
-        )
+        ),
     ]
 
 
@@ -745,7 +745,7 @@ def collect_suggestions(
 
 # Terminal planfile statuses: scan may re-apply when the signal is still present.
 _SCAN_DEDUP_SKIP_STATUSES: frozenset[str] = frozenset(
-    {"done", "canceled", "cancelled", "closed"}
+    {"done", "canceled", "cancelled", "closed"},
 )
 
 
@@ -877,7 +877,7 @@ def run_scan(
     project = project.resolve()
     if include_semcod_artifacts is None:
         include_semcod_artifacts = os.environ.get(
-            "KORU_SCAN_SEMCOD_ARTIFACTS", ""
+            "KORU_SCAN_SEMCOD_ARTIFACTS", "",
         ).strip().lower() in ("1", "true", "yes", "on")
     suggestions = collect_suggestions(
         project,

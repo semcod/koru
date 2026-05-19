@@ -169,7 +169,7 @@ def _bulk_waiting_input_action(
                     "ok": done.returncode == 0,
                     "action": "approve",
                     "stderr": done.stderr[-500:],
-                }
+                },
             )
             continue
 
@@ -184,7 +184,7 @@ def _bulk_waiting_input_action(
                 "ok": block.returncode == 0,
                 "action": "reject",
                 "stderr": block.stderr[-500:],
-            }
+            },
         )
 
     return {"ok": True, "action": action, "requested": ticket_ids, "applied": applied}

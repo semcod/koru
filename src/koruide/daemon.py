@@ -66,7 +66,7 @@ def _env_truthy(name: str) -> bool:
 
 def _prefer_keyboard_drive() -> bool:
     return _env_truthy("KORU_AUTOPILOT_PREFER_KEYBOARD") or _env_truthy(
-        "KORU_AUTOPILOT_VISIBLE_TYPING"
+        "KORU_AUTOPILOT_VISIBLE_TYPING",
     )
 
 
@@ -390,7 +390,7 @@ class AutopilotDaemon:
         preview = text.replace("\n", " ")[:100]
         self.log(
             f"drive → plugin/{plugin.ide}: wklejam do czatu ({len(text)} zn, "
-            f"submit={submit}) «{preview}»"
+            f"submit={submit}) «{preview}»",
         )
         self.audit.record(
             "drive",
@@ -441,7 +441,7 @@ class AutopilotDaemon:
                 self.log(
                     f"drive → os_injector/{profile_id}: klik ({os_res.get('chat_x')}, "
                     f"{os_res.get('chat_y')}) + {os_res.get('input_method', 'type')} "
-                    f"«{preview}»"
+                    f"«{preview}»",
                 )
                 info: dict[str, Any] = {
                     "backend": str(os_res.get("backend", "os_injector")),
@@ -456,7 +456,7 @@ class AutopilotDaemon:
                     info["ide"] = target.to_dict()
                 self._send(client, ack(msg.id or "", info=info).encode())
                 self.log(
-                    f"drive → {target_id} via {info['backend']} ({len(text)} chars, submit={submit})"
+                    f"drive → {target_id} via {info['backend']} ({len(text)} chars, submit={submit})",
                 )
                 self.audit.record(
                     "drive",
@@ -470,7 +470,7 @@ class AutopilotDaemon:
 
             self.log(
                 f"drive → keyboard/{target_id}: {self.injector.select_backend()} "
-                f"({len(text)} zn) «{preview}»"
+                f"({len(text)} zn) «{preview}»",
             )
             result = self.injector.type_text(text, ide=target_id, submit=submit)
         except InjectorError as exc:
@@ -596,7 +596,7 @@ class AutopilotDaemon:
             submit_requested=submit_requested,
             plugin_ide=plugin_ide,
         ) and self._relay_os_fallback_ack(
-            cli_client, corr, plugin_ide, original_text, submit_requested, info
+            cli_client, corr, plugin_ide, original_text, submit_requested, info,
         ):
             return
         # IDE plugins typically send ``delivered`` without ``backend``; CLI

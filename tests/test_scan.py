@@ -42,7 +42,7 @@ class TestScanPytestCollect(unittest.TestCase):
             project = Path(tmp)
             (project / "pyproject.toml").write_text("[project]\nname='x'\n")
             result = scan_pytest_collect(
-                project, runner=lambda _c, _p: _ok("4 tests collected")
+                project, runner=lambda _c, _p: _ok("4 tests collected"),
             )
             self.assertEqual(result, [])
 
@@ -153,7 +153,7 @@ class TestScanTodoMarkers(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             (project / "hot.py").write_text(
-                _marker_fixture(_MARK_A, _MARK_B, _MARK_C, _MARK_D)
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C, _MARK_D),
             )
             (project / "warm.py").write_text(_marker_fixture(_MARK_A, _MARK_B, _MARK_C))
             result = scan_todo_markers(project, min_per_file=3)
@@ -170,10 +170,10 @@ class TestScanTodoMarkers(unittest.TestCase):
             project = Path(tmp)
             (project / ".koruignore").write_text(".koru_scan_*.py\n")
             (project / ".koru_scan_probe.py").write_text(
-                _marker_fixture(_MARK_A, _MARK_B, _MARK_C)
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C),
             )
             (project / "normal.py").write_text(
-                _marker_fixture(_MARK_A, _MARK_B, _MARK_C)
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C),
             )
 
             result = scan_todo_markers(project, min_per_file=3)
@@ -187,10 +187,10 @@ class TestScanTodoMarkers(unittest.TestCase):
             generated = project / "generated"
             generated.mkdir(parents=True)
             (generated / "noise.py").write_text(
-                _marker_fixture(_MARK_A, _MARK_B, _MARK_C)
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C),
             )
             (project / "src.py").write_text(
-                _marker_fixture(_MARK_A, _MARK_B, _MARK_C)
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C),
             )
 
             result = scan_todo_markers(project, min_per_file=3)
@@ -229,7 +229,7 @@ class TestScanMissingTools(unittest.TestCase):
             project = Path(tmp)
             (project / "pyproject.toml").write_text(
                 "[project]\nname='x'\n"
-                "dependencies = ['requests>=2.0', 'urllib3']\n"
+                "dependencies = ['requests>=2.0', 'urllib3']\n",
             )
             # Neither requests nor urllib3 are in the semcod tool registry.
             self.assertEqual(scan_missing_tools(project), [])
@@ -263,7 +263,7 @@ class TestRunScan(unittest.TestCase):
             project = Path(tmp)
             (project / ".gitignore").write_text("# nothing\n")
             (project / "lots.py").write_text(
-                _marker_fixture(_MARK_A, _MARK_B, _MARK_C, _MARK_D)
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C, _MARK_D),
             )
             result = run_scan(project, skip_pytest=True, include_semcod_artifacts=False)
             self.assertGreater(len(result.suggestions), 0)
@@ -330,10 +330,10 @@ class TestRunScan(unittest.TestCase):
             (project / ".gitignore").write_text("# nothing\n")
             (project / ".planfile" / "sprints").mkdir(parents=True)
             (project / ".planfile" / "config.yaml").write_text(
-                "prefix: PLF\nnext_id: 1\n", encoding="utf-8"
+                "prefix: PLF\nnext_id: 1\n", encoding="utf-8",
             )
             (project / ".planfile" / "sprints" / "current.yaml").write_text(
-                "sprint:\n  name: current\n  tickets: {}\n", encoding="utf-8"
+                "sprint:\n  name: current\n  tickets: {}\n", encoding="utf-8",
             )
 
             result = run_scan(
@@ -345,7 +345,7 @@ class TestRunScan(unittest.TestCase):
 
             self.assertTrue(result.applied)
             raw = (project / ".planfile" / "sprints" / "current.yaml").read_text(
-                encoding="utf-8"
+                encoding="utf-8",
             )
             self.assertIn("kind: human", raw)
             self.assertIn("mode: interactive", raw)
@@ -357,10 +357,10 @@ class TestRunScan(unittest.TestCase):
             (project / ".gitignore").write_text("# nothing\n")
             (project / ".planfile" / "sprints").mkdir(parents=True)
             (project / ".planfile" / "config.yaml").write_text(
-                "prefix: PLF\nnext_id: 1\n", encoding="utf-8"
+                "prefix: PLF\nnext_id: 1\n", encoding="utf-8",
             )
             (project / ".planfile" / "sprints" / "current.yaml").write_text(
-                "sprint:\n  name: current\n  tickets: {}\n", encoding="utf-8"
+                "sprint:\n  name: current\n  tickets: {}\n", encoding="utf-8",
             )
 
             first = run_scan(
@@ -380,7 +380,7 @@ class TestRunScan(unittest.TestCase):
             self.assertEqual(second.applied, [])
             self.assertGreater(len(second.skipped), 0)
             raw = (project / ".planfile" / "sprints" / "current.yaml").read_text(
-                encoding="utf-8"
+                encoding="utf-8",
             )
             self.assertIn("Gitignore `.planfile/.koru/` runtime directory", raw)
             self.assertEqual(raw.count("Gitignore `.planfile/.koru/` runtime directory"), 1)
@@ -445,8 +445,8 @@ class TestRunScan(unittest.TestCase):
                                     "status": "open",
                                     "source": {"tool": "koru-scan"},
                                 },
-                            ]
-                        )
+                            ],
+                        ),
                     )
                 return _ok()
 
@@ -459,7 +459,7 @@ class TestRunScan(unittest.TestCase):
             project = Path(tmp)
             for i in range(5):
                 (project / f"f{i}.py").write_text(
-                    _marker_fixture(_MARK_A, _MARK_B, _MARK_C)
+                    _marker_fixture(_MARK_A, _MARK_B, _MARK_C),
                 )
             result = run_scan(project, skip_pytest=True, limit=2, include_semcod_artifacts=False)
             self.assertLessEqual(len(result.suggestions), 2)
@@ -470,13 +470,13 @@ class TestRunScan(unittest.TestCase):
             project = Path(tmp)
             (project / ".gitignore").write_text("# nothing\n")  # low-priority signal
             (project / "many.py").write_text(
-                _marker_fixture(_MARK_A, _MARK_B, _MARK_C)
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C),
             )
             result = run_scan(project, skip_pytest=True, include_semcod_artifacts=False)
             priorities = [s.priority for s in result.suggestions]
             ranks = {"critical": 0, "high": 1, "normal": 2, "low": 3}
             self.assertEqual(
-                priorities, sorted(priorities, key=lambda p: ranks.get(p, 99))
+                priorities, sorted(priorities, key=lambda p: ranks.get(p, 99)),
             )
 
 
@@ -493,9 +493,9 @@ class TestScanSemcodArtifacts(unittest.TestCase):
                                 "duplicatedLines": 100,
                                 "percentage": 5.0,
                                 "clones": 12,
-                            }
-                        }
-                    }
+                            },
+                        },
+                    },
                 ),
                 encoding="utf-8",
             )
@@ -553,7 +553,7 @@ class TestScanSemcodArtifacts(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             body = "\n".join(
-                [f"❌ scenario-{i}.yaml: 0/1 passed, 1 failed" for i in range(5)]
+                [f"❌ scenario-{i}.yaml: 0/1 passed, 1 failed" for i in range(5)],
             )
             (project / "testql_api_results.json").write_text(body, encoding="utf-8")
             out = scan_semcod_quality_artifacts(project)

@@ -248,7 +248,7 @@ class Injector:
                             f"{enter_code}:1",
                             f"{enter_code}:0",
                             f"{ctrl_code}:0",
-                        ]
+                        ],
                     )
                 else:
                     self._call(["ydotool", "key", f"{enter_code}:1", f"{enter_code}:0"])
@@ -264,7 +264,7 @@ class Injector:
                                 f"{enter_code}:1",
                                 f"{enter_code}:0",
                                 f"{ctrl_code}:0",
-                            ]
+                            ],
                         )
                     else:
                         self._call(["ydotool", "key", f"{enter_code}:1", f"{enter_code}:0"])
@@ -289,7 +289,7 @@ class Injector:
         if not backends:
             raise InjectorError(
                 "no keyboard injection backend found "
-                "(install xdotool on X11 or wtype/ydotool on Wayland)"
+                "(install xdotool on X11 or wtype/ydotool on Wayland)",
             )
         submit_key = _submit_key_for(ide) if submit else None
         backend0 = backends[0]
@@ -327,7 +327,7 @@ class Injector:
         if not backends:
             raise InjectorError(
                 "no keyboard injection backend found "
-                "(install xdotool on X11 or wtype/ydotool on Wayland)"
+                "(install xdotool on X11 or wtype/ydotool on Wayland)",
             )
         submit_key = _submit_key_for(ide)
         backend0 = backends[0]
@@ -384,7 +384,7 @@ class Injector:
         if len(modifiers) > 1:
             raise InjectorError(
                 f"wtype submit key {combo!r} has {len(modifiers)} modifiers; "
-                "only single-modifier combos are supported"
+                "only single-modifier combos are supported",
             )
         argv = ["wtype"]
         for m in modifiers:

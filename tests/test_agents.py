@@ -34,7 +34,7 @@ class TestAgentDetection(unittest.TestCase):
     def test_detects_openrouter_lane_from_env(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             with patch("shutil.which", return_value=None), patch.dict(
-                os.environ, {"OPENROUTER_API_KEY": "test"}, clear=True
+                os.environ, {"OPENROUTER_API_KEY": "test"}, clear=True,
             ):
                 env = detect_agent_environment(Path(tmp))
 

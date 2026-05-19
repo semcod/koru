@@ -24,7 +24,7 @@ def invoke_integration(
     handler = INTEGRATION_HANDLERS.get(integration_id)
     if handler is None:
         raise InvokeError(
-            f"integration {integration_id!r} is catalogued but not wired for method={method!r}"
+            f"integration {integration_id!r} is catalogued but not wired for method={method!r}",
         )
 
     payload = body or {}

@@ -57,7 +57,7 @@ def test_detect_running_ides_deduplicates_same_ide(fake_proc: Path) -> None:
 
 
 def test_detect_running_ides_prefers_primary_windsurf_over_devin_helper(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     for pid, comm, cmd in [
         (1111, "devin", ["/usr/share/windsurf/resources/app/extensions/windsurf/devin/bin/devin"]),
@@ -69,7 +69,7 @@ def test_detect_running_ides_prefers_primary_windsurf_over_devin_helper(
         (d / "cmdline").write_bytes(b"\x00".join(c.encode() for c in cmd) + b"\x00")
 
     monkeypatch.setattr(
-        ide_mod, "_read_comm", lambda pid: (tmp_path / str(pid) / "comm").read_text().strip()
+        ide_mod, "_read_comm", lambda pid: (tmp_path / str(pid) / "comm").read_text().strip(),
     )
     monkeypatch.setattr(
         ide_mod,
@@ -108,7 +108,7 @@ def test_pick_target_returns_none_when_pref_not_running(fake_proc: Path) -> None
 
 
 def test_pick_target_defaults_to_first(
-    fake_proc: Path, monkeypatch: pytest.MonkeyPatch
+    fake_proc: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
     monkeypatch.setattr(ide_mod, "detect_terminal_host_ide_id", lambda **_k: None)
@@ -121,7 +121,7 @@ def test_pick_target_defaults_to_first(
 
 
 def test_pick_target_prefers_koru_autopilot_ide_env(
-    fake_proc: Path, monkeypatch: pytest.MonkeyPatch
+    fake_proc: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("KORU_AUTOPILOT_IDE", "jetbrains")
     detected = ide_mod.detect_running_ides(_pids=[1234, 5678])
@@ -131,7 +131,7 @@ def test_pick_target_prefers_koru_autopilot_ide_env(
 
 
 def test_pick_target_ignores_koru_autopilot_ide_env_when_not_running(
-    fake_proc: Path, monkeypatch: pytest.MonkeyPatch
+    fake_proc: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("KORU_AUTOPILOT_IDE", "cursor")
     monkeypatch.setattr(ide_mod, "detect_terminal_host_ide_id", lambda **_k: None)
@@ -317,7 +317,7 @@ def test_detect_cached_ttl_zero_always_refreshes(monkeypatch: pytest.MonkeyPatch
     ide_mod.clear_detect_cache()
     calls: list[None] = []
     monkeypatch.setattr(
-        ide_mod, "detect_running_ides", lambda **_: (calls.append(None) or [])
+        ide_mod, "detect_running_ides", lambda **_: (calls.append(None) or []),
     )
     ide_mod.detect_running_ides_cached(ttl=0)
     ide_mod.detect_running_ides_cached(ttl=0)
@@ -328,7 +328,7 @@ def test_clear_detect_cache_forces_refresh(monkeypatch: pytest.MonkeyPatch) -> N
     ide_mod.clear_detect_cache()
     calls: list[None] = []
     monkeypatch.setattr(
-        ide_mod, "detect_running_ides", lambda **_: (calls.append(None) or [])
+        ide_mod, "detect_running_ides", lambda **_: (calls.append(None) or []),
     )
     ide_mod.detect_running_ides_cached(ttl=10.0)
     ide_mod.clear_detect_cache()

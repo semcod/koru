@@ -106,7 +106,7 @@ def parse_authorizations(notes: Sequence[str]) -> list[GateAuthorization]:
                 authorized_by=str(payload.get("authorized_by", "")),
                 authorized_at=str(payload.get("authorized_at", "")),
                 ticket=str(payload.get("ticket", "")),
-            )
+            ),
         )
     return out
 
@@ -188,7 +188,7 @@ def authorize_gate(
     if result.returncode != 0:
         raise RuntimeError(
             f"planfile ticket update failed (exit {result.returncode}): "
-            f"{(result.stderr or result.stdout or '').strip()}"
+            f"{(result.stderr or result.stdout or '').strip()}",
         )
     return authorization
 

@@ -370,7 +370,7 @@ class TestPlanfileQueue(unittest.TestCase):
                 any(
                     _ticket_args(call)[:3] == ["ticket", "done", "PLF-030"]
                     for call in calls
-                )
+                ),
             )
 
     def test_scan_ticket_without_executor_waits_for_ide_prompt(self) -> None:
@@ -420,7 +420,7 @@ class TestPlanfileQueue(unittest.TestCase):
                     _ticket_args(call)[:3] == ["ticket", "block", "PLF-031"]
                     and "--reason" in _ticket_args(call)
                     for call in calls
-                )
+                ),
             )
 
     def test_interactive_human_ticket_completes_with_answer(self) -> None:
@@ -699,7 +699,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
                     _ticket_args(c)[:3] == ["ticket", "block", "LLM-002"]
                     and "--reason" in _ticket_args(c)
                     for c in calls
-                )
+                ),
             )
 
     def test_llm_dry_run_returns_request_without_calling(self) -> None:

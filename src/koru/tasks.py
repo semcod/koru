@@ -109,7 +109,7 @@ def _build_ticket_dict(
                 "action": "created",
                 "source": "koru task",
                 "message": text,
-            }
+            },
         ],
         "created_at": now,
         "updated_at": now,
@@ -156,7 +156,7 @@ def create_nl_task(
 
     tickets[ticket_id] = _build_ticket_dict(
         ticket_id, name, text, priority, sprint, queue_name, labels, source, inputs,
-        executor_kind, executor_mode, files, now
+        executor_kind, executor_mode, files, now,
     )
     _write_yaml(sprint_path, sprint_data)
     try:
@@ -205,7 +205,7 @@ def _read_sprint(path: Path, *, sprint: str) -> dict:
             "name": sprint.title(),
             "status": "active",
             "tickets": {},
-        }
+        },
     }
 
 
