@@ -1,5 +1,5 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.19s
+# generated in 0.24s
 # nodes: 432 | edges: 500 | modules: 70
 # CC̄=4.1
 
@@ -20,30 +20,30 @@ HUBS[20]:
     CC=14  in:1  out:33  total:34
   src.koru.tasks.create_nl_task
     CC=12  in:6  out:28  total:34
-  src.koru.events.emit_management_event
-    CC=8  in:25  out:7  total:32
   src.koru.cli._topology_main
     CC=12  in:0  out:32  total:32
   src.koru.autonomous._stdio_info
     CC=1  in:31  out:1  total:32
+  src.koru.events.emit_management_event
+    CC=8  in:25  out:7  total:32
   src.koru.autonomy.env.env_truthy
     CC=3  in:29  out:3  total:32
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
   src.koru.cli._task_main
     CC=11  in:0  out:27  total:27
-  services.healing-webhook.app._resolve_affected_files
-    CC=11  in:2  out:24  total:26
   src.koruide.ide.detect_running_ides
     CC=13  in:16  out:10  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
+  services.healing-webhook.app._resolve_affected_files
+    CC=11  in:2  out:24  total:26
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
-  src.koru.cli._render_runtime_context_text
-    CC=14  in:1  out:23  total:24
   src.koru.init.init_project
     CC=8  in:2  out:22  total:24
+  src.koru.agents.detect_agent_options
+    CC=4  in:3  out:21  total:24
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]

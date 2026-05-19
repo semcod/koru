@@ -15,7 +15,7 @@ import subprocess
 import tempfile
 import textwrap
 import unittest
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from pathlib import Path
 from unittest import mock
 
@@ -87,7 +87,7 @@ def _write_config(project: Path, prefix: str = "E2E", next_id: int = 1) -> None:
 
 
 def _ts(days_ago: float) -> str:
-    dt = datetime.now(timezone.utc) - timedelta(days=days_ago)
+    dt = datetime.now(UTC) - timedelta(days=days_ago)
     return dt.isoformat()
 
 

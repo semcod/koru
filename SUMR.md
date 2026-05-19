@@ -16,7 +16,7 @@ SUMD - Structured Unified Markdown Descriptor for AI-aware project refactorizati
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.141`
+- **version**: `0.1.142`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -36,7 +36,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.141;
+  version: 0.1.142;
 }
 
 dependencies {
@@ -1650,8 +1650,8 @@ pfix>=0.1.60
 | `_drive_via_keyboard` *(in src.koruide.daemon.AutopilotDaemon)* | 11 ⚠ | 0 | 46 | **46** |
 | `activity` *(in src.koru.activity_log)* | 4 | 33 | 7 | **40** |
 | `_build_parser` *(in src.koru.cli)* | 1 | 3 | 34 | **37** |
-| `create_nl_task` *(in src.koru.tasks)* | 12 ⚠ | 6 | 28 | **34** |
 | `tool_run_ticket` *(in src.koruapi.mcp_server)* | 14 ⚠ | 1 | 33 | **34** |
+| `create_nl_task` *(in src.koru.tasks)* | 12 ⚠ | 6 | 28 | **34** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
@@ -1672,34 +1672,34 @@ HUBS[20]:
     CC=4  in:33  out:7  total:40
   src.koru.cli._build_parser
     CC=1  in:3  out:34  total:37
-  src.koru.tasks.create_nl_task
-    CC=12  in:6  out:28  total:34
   src.koruapi.mcp_server.tool_run_ticket
     CC=14  in:1  out:33  total:34
-  src.koru.autonomy.env.env_truthy
-    CC=3  in:29  out:3  total:32
-  src.koru.autonomous._stdio_info
-    CC=1  in:31  out:1  total:32
-  src.koru.cli._topology_main
-    CC=12  in:0  out:32  total:32
+  src.koru.tasks.create_nl_task
+    CC=12  in:6  out:28  total:34
   src.koru.events.emit_management_event
     CC=8  in:25  out:7  total:32
+  src.koru.cli._topology_main
+    CC=12  in:0  out:32  total:32
+  src.koru.autonomous._stdio_info
+    CC=1  in:31  out:1  total:32
+  src.koru.autonomy.env.env_truthy
+    CC=3  in:29  out:3  total:32
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
   src.koru.cli._task_main
     CC=11  in:0  out:27  total:27
+  services.healing-webhook.app._resolve_affected_files
+    CC=11  in:2  out:24  total:26
   src.koruide.ide.detect_running_ides
     CC=13  in:16  out:10  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
-  services.healing-webhook.app._resolve_affected_files
-    CC=11  in:2  out:24  total:26
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
-  src.koru.agents.detect_agent_options
-    CC=4  in:3  out:21  total:24
   src.koru.cli._render_runtime_context_text
     CC=14  in:1  out:23  total:24
+  src.koru.init.init_project
+    CC=8  in:2  out:22  total:24
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -2154,34 +2154,34 @@ HUBS[20]:
     CC=4  in:33  out:7  total:40
   src.koru.cli._build_parser
     CC=1  in:3  out:34  total:37
-  src.koru.tasks.create_nl_task
-    CC=12  in:6  out:28  total:34
   src.koruapi.mcp_server.tool_run_ticket
     CC=14  in:1  out:33  total:34
-  src.koru.autonomy.env.env_truthy
-    CC=3  in:29  out:3  total:32
-  src.koru.autonomous._stdio_info
-    CC=1  in:31  out:1  total:32
-  src.koru.cli._topology_main
-    CC=12  in:0  out:32  total:32
+  src.koru.tasks.create_nl_task
+    CC=12  in:6  out:28  total:34
   src.koru.events.emit_management_event
     CC=8  in:25  out:7  total:32
+  src.koru.cli._topology_main
+    CC=12  in:0  out:32  total:32
+  src.koru.autonomous._stdio_info
+    CC=1  in:31  out:1  total:32
+  src.koru.autonomy.env.env_truthy
+    CC=3  in:29  out:3  total:32
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
   src.koru.cli._task_main
     CC=11  in:0  out:27  total:27
+  services.healing-webhook.app._resolve_affected_files
+    CC=11  in:2  out:24  total:26
   src.koruide.ide.detect_running_ides
     CC=13  in:16  out:10  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
-  services.healing-webhook.app._resolve_affected_files
-    CC=11  in:2  out:24  total:26
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
-  src.koru.agents.detect_agent_options
-    CC=4  in:3  out:21  total:24
   src.koru.cli._render_runtime_context_text
     CC=14  in:1  out:23  total:24
+  src.koru.init.init_project
+    CC=8  in:2  out:22  total:24
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -2602,9 +2602,9 @@ EDGES:
 ### Code Analysis (`project/analysis.toon.yaml`)
 
 ```toon markpact:analysis path=project/analysis.toon.yaml
-# code2llm | 213f 36641L | python:126,shell:42,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:1,properties:1,xml:1,toml:1 | 2026-05-19
-# generated in 0.07s
-# CC̄=4.1 | critical:9/1236 | dups:0 | cycles:0
+# code2llm | 213f 36683L | python:126,shell:42,yaml:15,yml:8,typescript:6,kotlin:6,json:3,toml:1,txt:1,properties:1,xml:1 | 2026-05-19
+# generated in 0.06s
+# CC̄=4.1 | critical:9/1237 | dups:0 | cycles:0
 
 HEALTH[9]:
   🟡 CC    _action_up CC=17 (limit:15)
@@ -2643,7 +2643,7 @@ LAYERS:
   │ !! cli_command               1329L  0C   45m  CC=14     ←0
   │ !! dashboard_serve           1296L  1C   16m  CC=14     ←1
   │ !! context                   1226L  0C   46m  CC=15     ←7
-  │ !! autonomous_cycle          1169L  2C   36m  CC=12     ←0
+  │ !! autonomous_cycle          1211L  2C   37m  CC=14     ←0
   │ !! mcp_server                1028L  0C   34m  CC=14     ←2
   │ !! scan                       918L  2C   24m  CC=13     ←3
   │ !! daemon                     715L  2C   31m  CC=14     ←0
@@ -2882,13 +2882,13 @@ COUPLING:
                     src.korudsl                                                                                           ←4                                                                                           ──                               
        services.healing-webhook                                                                                                                                                          1                                                            ──
   CYCLES: none
-  HUB: src.koruide/ (fan-in=33)
+  HUB: plugins.koru-autopilot-vscode/ (fan-in=6)
   HUB: scripts/ (fan-in=267)
   HUB: src.koruapi/ (fan-in=5)
-  HUB: plugins.koru-autopilot-vscode/ (fan-in=6)
+  HUB: src.koruide/ (fan-in=33)
   HUB: src.koru/ (fan-in=45)
-  SMELL: src.koruide/ fan-out=29 → split needed
   SMELL: src.koruapi/ fan-out=66 → split needed
+  SMELL: src.koruide/ fan-out=29 → split needed
   SMELL: src.koru/ fan-out=264 → split needed
 
 EXTERNAL:
@@ -2899,15 +2899,15 @@ EXTERNAL:
 ### Duplication (`project/duplication.toon.yaml`)
 
 ```toon markpact:analysis path=project/duplication.toon.yaml
-# redup/duplication | 34 groups | 126f 29139L | 2026-05-19
+# redup/duplication | 34 groups | 126f 29181L | 2026-05-19
 
 SUMMARY:
   files_scanned: 126
-  total_lines:   29139
+  total_lines:   29181
   dup_groups:    34
   dup_fragments: 79
   saved_lines:   369
-  scan_ms:       2869
+  scan_ms:       4083
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/autonomous.py  dup=115L  groups=12  frags=12  (0.4%)
@@ -2924,7 +2924,7 @@ DUPLICATES[34] (ranked by impact):
       src/koruapi/dashboard.py:17-61  (build_serve_parser)
   [e6df54c38573f3c8] ! EXAC  _run_idle_diagnostics  L=36 N=2 saved=36 sim=1.00
       src/koru/autonomous.py:1075-1110  (_run_idle_diagnostics)
-      src/koru/autonomous_cycle.py:186-221  (_run_idle_diagnostics)
+      src/koru/autonomous_cycle.py:188-223  (_run_idle_diagnostics)
   [cfa0e91c669b55c5]   STRU  _build_local_serve_parser  L=29 N=2 saved=29 sim=1.00
       src/koru/cli.py:437-465  (_build_local_serve_parser)
       src/koruapi/local.py:11-19  (build_local_parser)
@@ -2940,7 +2940,7 @@ DUPLICATES[34] (ranked by impact):
       src/koru/autonomous_process_guard.py:69-84  (looks_like_autonomous_up_command)
   [13996a2247a97ed8]   EXAC  _read_wup_health  L=16 N=2 saved=16 sim=1.00
       src/koru/autonomous.py:1057-1072  (_read_wup_health)
-      src/koru/autonomous_cycle.py:168-183  (_read_wup_health)
+      src/koru/autonomous_cycle.py:170-185  (_read_wup_health)
   [400f9f906a729d1a]   STRU  provision_cursor  L=15 N=2 saved=15 sim=1.00
       src/koru/mcp_provision.py:193-207  (provision_cursor)
       src/koru/mcp_provision.py:210-224  (provision_vscode)
@@ -2961,13 +2961,13 @@ DUPLICATES[34] (ranked by impact):
       src/koruide/injector.py:81-86  (_ydotool_ctrl_keycode)
   [30376722d90c4f75]   EXAC  _is_topology_enabled  L=9 N=2 saved=9 sim=1.00
       src/koru/autonomous.py:894-902  (_is_topology_enabled)
-      src/koru/autonomous_cycle.py:73-81  (_is_topology_enabled)
+      src/koru/autonomous_cycle.py:75-83  (_is_topology_enabled)
   [0a213b0b7ddbf9fc]   EXAC  _current_head  L=9 N=2 saved=9 sim=1.00
       src/koru/autonomous.py:905-913  (_current_head)
-      src/koru/autonomous_cycle.py:84-92  (_current_head)
+      src/koru/autonomous_cycle.py:86-94  (_current_head)
   [05c9344a645b52a1]   EXAC  _run_command_check  L=9 N=2 saved=9 sim=1.00
       src/koru/autonomous.py:1005-1013  (_run_command_check)
-      src/koru/autonomous_cycle.py:120-128  (_run_command_check)
+      src/koru/autonomous_cycle.py:122-130  (_run_command_check)
   [823aa4659db9c93d]   STRU  _handle_wait  L=3 N=4 saved=9 sim=1.00
       src/korudsl/library.py:38-40  (_handle_wait)
       src/korudsl/library.py:43-45  (_handle_get)
@@ -3007,7 +3007,7 @@ DUPLICATES[34] (ranked by impact):
       src/koruide/os_injector.py:71-73  (dry_run_from_env)
   [825007d92835d4b3]   EXAC  _stdio_info  L=5 N=2 saved=5 sim=1.00
       src/koru/autonomous.py:119-123  (_stdio_info)
-      src/koru/autonomous_cycle.py:39-42  (_stdio_info)
+      src/koru/autonomous_cycle.py:41-44  (_stdio_info)
   [a0375ffb77746a3f]   EXAC  _open_later  L=5 N=2 saved=5 sim=1.00
       src/koruapi/dashboard_serve.py:1230-1234  (_open_later)
       src/koruapi/dashboard_serve.py:1281-1285  (_open_later)
@@ -3016,13 +3016,13 @@ DUPLICATES[34] (ranked by impact):
       src/korudsl/library.py:65-69  (_handle_correct)
   [774459a6d92b5dbd]   EXAC  _queue_loop_waiting_ticket_label  L=4 N=2 saved=4 sim=1.00
       src/koru/autonomous.py:888-891  (_queue_loop_waiting_ticket_label)
-      src/koru/autonomous_cycle.py:68-70  (_queue_loop_waiting_ticket_label)
+      src/koru/autonomous_cycle.py:70-72  (_queue_loop_waiting_ticket_label)
   [a7174a018322bcf8]   EXAC  _status_in_skip_list  L=4 N=2 saved=4 sim=1.00
       src/koru/autonomous.py:999-1002  (_status_in_skip_list)
-      src/koru/autonomous_cycle.py:95-98  (_status_in_skip_list)
+      src/koru/autonomous_cycle.py:97-100  (_status_in_skip_list)
   [fdccb72b1fbbe81c]   EXAC  _allow_keyboard_autopilot_fallback  L=3 N=2 saved=3 sim=1.00
       src/koru/autonomous.py:135-137  (_allow_keyboard_autopilot_fallback)
-      src/koru/autonomous_cycle.py:101-103  (_allow_keyboard_autopilot_fallback)
+      src/koru/autonomous_cycle.py:103-105  (_allow_keyboard_autopilot_fallback)
   [be027ff698a2786c]   STRU  _action_status  L=3 N=2 saved=3 sim=1.00
       src/koru/autopilot/cli_command.py:790-792  (_action_status)
       src/koru/autopilot/cli_command.py:795-799  (_action_shutdown)
@@ -3180,7 +3180,7 @@ METRICS-TARGET:
 ### Evolution / Churn (`project/evolution.toon.yaml`)
 
 ```toon markpact:analysis path=project/evolution.toon.yaml
-# code2llm/evolution | 1171 func | 107f | 2026-05-19
+# code2llm/evolution | 1172 func | 107f | 2026-05-19
 # generated in 0.00s
 
 NEXT[6] (ranked by impact):

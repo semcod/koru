@@ -1,12 +1,12 @@
-# redup/duplication | 34 groups | 126f 29139L | 2026-05-19
+# redup/duplication | 34 groups | 126f 29181L | 2026-05-19
 
 SUMMARY:
   files_scanned: 126
-  total_lines:   29139
+  total_lines:   29181
   dup_groups:    34
   dup_fragments: 79
   saved_lines:   369
-  scan_ms:       2869
+  scan_ms:       4083
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/autonomous.py  dup=115L  groups=12  frags=12  (0.4%)
@@ -23,7 +23,7 @@ DUPLICATES[34] (ranked by impact):
       src/koruapi/dashboard.py:17-61  (build_serve_parser)
   [e6df54c38573f3c8] ! EXAC  _run_idle_diagnostics  L=36 N=2 saved=36 sim=1.00
       src/koru/autonomous.py:1075-1110  (_run_idle_diagnostics)
-      src/koru/autonomous_cycle.py:186-221  (_run_idle_diagnostics)
+      src/koru/autonomous_cycle.py:188-223  (_run_idle_diagnostics)
   [cfa0e91c669b55c5]   STRU  _build_local_serve_parser  L=29 N=2 saved=29 sim=1.00
       src/koru/cli.py:437-465  (_build_local_serve_parser)
       src/koruapi/local.py:11-19  (build_local_parser)
@@ -39,7 +39,7 @@ DUPLICATES[34] (ranked by impact):
       src/koru/autonomous_process_guard.py:69-84  (looks_like_autonomous_up_command)
   [13996a2247a97ed8]   EXAC  _read_wup_health  L=16 N=2 saved=16 sim=1.00
       src/koru/autonomous.py:1057-1072  (_read_wup_health)
-      src/koru/autonomous_cycle.py:168-183  (_read_wup_health)
+      src/koru/autonomous_cycle.py:170-185  (_read_wup_health)
   [400f9f906a729d1a]   STRU  provision_cursor  L=15 N=2 saved=15 sim=1.00
       src/koru/mcp_provision.py:193-207  (provision_cursor)
       src/koru/mcp_provision.py:210-224  (provision_vscode)
@@ -60,13 +60,13 @@ DUPLICATES[34] (ranked by impact):
       src/koruide/injector.py:81-86  (_ydotool_ctrl_keycode)
   [30376722d90c4f75]   EXAC  _is_topology_enabled  L=9 N=2 saved=9 sim=1.00
       src/koru/autonomous.py:894-902  (_is_topology_enabled)
-      src/koru/autonomous_cycle.py:73-81  (_is_topology_enabled)
+      src/koru/autonomous_cycle.py:75-83  (_is_topology_enabled)
   [0a213b0b7ddbf9fc]   EXAC  _current_head  L=9 N=2 saved=9 sim=1.00
       src/koru/autonomous.py:905-913  (_current_head)
-      src/koru/autonomous_cycle.py:84-92  (_current_head)
+      src/koru/autonomous_cycle.py:86-94  (_current_head)
   [05c9344a645b52a1]   EXAC  _run_command_check  L=9 N=2 saved=9 sim=1.00
       src/koru/autonomous.py:1005-1013  (_run_command_check)
-      src/koru/autonomous_cycle.py:120-128  (_run_command_check)
+      src/koru/autonomous_cycle.py:122-130  (_run_command_check)
   [823aa4659db9c93d]   STRU  _handle_wait  L=3 N=4 saved=9 sim=1.00
       src/korudsl/library.py:38-40  (_handle_wait)
       src/korudsl/library.py:43-45  (_handle_get)
@@ -106,7 +106,7 @@ DUPLICATES[34] (ranked by impact):
       src/koruide/os_injector.py:71-73  (dry_run_from_env)
   [825007d92835d4b3]   EXAC  _stdio_info  L=5 N=2 saved=5 sim=1.00
       src/koru/autonomous.py:119-123  (_stdio_info)
-      src/koru/autonomous_cycle.py:39-42  (_stdio_info)
+      src/koru/autonomous_cycle.py:41-44  (_stdio_info)
   [a0375ffb77746a3f]   EXAC  _open_later  L=5 N=2 saved=5 sim=1.00
       src/koruapi/dashboard_serve.py:1230-1234  (_open_later)
       src/koruapi/dashboard_serve.py:1281-1285  (_open_later)
@@ -115,13 +115,13 @@ DUPLICATES[34] (ranked by impact):
       src/korudsl/library.py:65-69  (_handle_correct)
   [774459a6d92b5dbd]   EXAC  _queue_loop_waiting_ticket_label  L=4 N=2 saved=4 sim=1.00
       src/koru/autonomous.py:888-891  (_queue_loop_waiting_ticket_label)
-      src/koru/autonomous_cycle.py:68-70  (_queue_loop_waiting_ticket_label)
+      src/koru/autonomous_cycle.py:70-72  (_queue_loop_waiting_ticket_label)
   [a7174a018322bcf8]   EXAC  _status_in_skip_list  L=4 N=2 saved=4 sim=1.00
       src/koru/autonomous.py:999-1002  (_status_in_skip_list)
-      src/koru/autonomous_cycle.py:95-98  (_status_in_skip_list)
+      src/koru/autonomous_cycle.py:97-100  (_status_in_skip_list)
   [fdccb72b1fbbe81c]   EXAC  _allow_keyboard_autopilot_fallback  L=3 N=2 saved=3 sim=1.00
       src/koru/autonomous.py:135-137  (_allow_keyboard_autopilot_fallback)
-      src/koru/autonomous_cycle.py:101-103  (_allow_keyboard_autopilot_fallback)
+      src/koru/autonomous_cycle.py:103-105  (_allow_keyboard_autopilot_fallback)
   [be027ff698a2786c]   STRU  _action_status  L=3 N=2 saved=3 sim=1.00
       src/koru/autopilot/cli_command.py:790-792  (_action_status)
       src/koru/autopilot/cli_command.py:795-799  (_action_shutdown)

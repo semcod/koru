@@ -13,7 +13,7 @@ The cleaner has three responsibilities that all need pinning down:
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from types import SimpleNamespace
 
 import pytest
@@ -111,7 +111,7 @@ def test_include_active_promotes_skipped_back_to_candidates():
 
 def test_max_age_modifies_but_never_alone():
     """max-age is a *filter on top of* fixture match — never the sole reason."""
-    now = datetime(2026, 5, 11, tzinfo=timezone.utc)
+    now = datetime(2026, 5, 11, tzinfo=UTC)
     old_unrelated = (now - timedelta(days=30)).isoformat()
     young_fixture = (now - timedelta(days=1)).isoformat()
     old_fixture = (now - timedelta(days=14)).isoformat()
@@ -140,7 +140,7 @@ def test_max_age_modifies_but_never_alone():
 
 
 def test_age_calculation_handles_z_suffix_and_naive_dates():
-    now = datetime(2026, 5, 11, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 5, 11, 12, 0, tzinfo=UTC)
     tickets = [
         {"id": "PLF-Z", "name": "Test", "status": "open",
          "labels": ["test-only"], "created_at": "2026-05-01T12:00:00Z"},

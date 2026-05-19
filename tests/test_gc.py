@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from pathlib import Path
 
 import yaml
@@ -36,7 +36,7 @@ def _write_sprint(project: Path, tickets: dict, sprint: str = "current") -> None
 
 def _ts(days_ago: float) -> str:
     """ISO timestamp N days in the past."""
-    dt = datetime.now(timezone.utc) - timedelta(days=days_ago)
+    dt = datetime.now(UTC) - timedelta(days=days_ago)
     return dt.isoformat()
 
 

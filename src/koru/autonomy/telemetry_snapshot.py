@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 from typing import Any
 
@@ -27,7 +27,7 @@ def write_autonomy_cycle_telemetry(
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         payload = {
-            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
             "cycle": cycle,
             "cumulative": dict(cumulative),
             "last_cycle": dict(cycle_metrics),

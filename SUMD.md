@@ -21,7 +21,7 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.141`
+- **version**: `0.1.142`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -41,7 +41,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.141;
+  version: 0.1.142;
 }
 
 dependencies {
@@ -1677,7 +1677,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.141
+  version: 0.1.142
   env: local
 ```
 
@@ -1752,7 +1752,7 @@ pip install -e .[dev]
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 284f 52809L | python:209,shell:62,javascript:6,typescript:6,less:1 | 2026-05-19
+# koru | 284f 52810L | python:209,shell:62,javascript:6,typescript:6,less:1 | 2026-05-19
 # stats: 1526 func | 176 cls | 284 mod | CC̄=4.1 | critical:110 | cycles:0
 # alerts[5]: CC do_from_todo=19; CC _action_up=17; CC test_autonomy_config_from_env=16; CC looks_like_autonomous_up_command=15; fan-out _action_up=31
 # hotspots[5]: _action_up fan=31; _build_handler fan=29; do_from_todo fan=23; run_cycle fan=23; render_markdown_handoff fan=20
@@ -1984,7 +1984,7 @@ M[284]:
   tests/test_autopilot_config.py,155
   tests/test_autopilot_daemon.py,736
   tests/test_autopilot_host_setup.py,124
-  tests/test_autopilot_ide.py,337
+  tests/test_autopilot_ide.py,338
   tests/test_autopilot_injector.py,275
   tests/test_autopilot_jetbrains_scaffold.py,45
   tests/test_autopilot_os_injector.py,308
@@ -4152,8 +4152,8 @@ D:
 | `_drive_via_keyboard` *(in src.koruide.daemon.AutopilotDaemon)* | 11 ⚠ | 0 | 46 | **46** |
 | `activity` *(in src.koru.activity_log)* | 4 | 33 | 7 | **40** |
 | `_build_parser` *(in src.koru.cli)* | 1 | 3 | 34 | **37** |
-| `create_nl_task` *(in src.koru.tasks)* | 12 ⚠ | 6 | 28 | **34** |
 | `tool_run_ticket` *(in src.koruapi.mcp_server)* | 14 ⚠ | 1 | 33 | **34** |
+| `create_nl_task` *(in src.koru.tasks)* | 12 ⚠ | 6 | 28 | **34** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
@@ -4174,34 +4174,34 @@ HUBS[20]:
     CC=4  in:33  out:7  total:40
   src.koru.cli._build_parser
     CC=1  in:3  out:34  total:37
-  src.koru.tasks.create_nl_task
-    CC=12  in:6  out:28  total:34
   src.koruapi.mcp_server.tool_run_ticket
     CC=14  in:1  out:33  total:34
-  src.koru.autonomy.env.env_truthy
-    CC=3  in:29  out:3  total:32
-  src.koru.autonomous._stdio_info
-    CC=1  in:31  out:1  total:32
-  src.koru.cli._topology_main
-    CC=12  in:0  out:32  total:32
+  src.koru.tasks.create_nl_task
+    CC=12  in:6  out:28  total:34
   src.koru.events.emit_management_event
     CC=8  in:25  out:7  total:32
+  src.koru.cli._topology_main
+    CC=12  in:0  out:32  total:32
+  src.koru.autonomous._stdio_info
+    CC=1  in:31  out:1  total:32
+  src.koru.autonomy.env.env_truthy
+    CC=3  in:29  out:3  total:32
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
   src.koru.cli._task_main
     CC=11  in:0  out:27  total:27
+  services.healing-webhook.app._resolve_affected_files
+    CC=11  in:2  out:24  total:26
   src.koruide.ide.detect_running_ides
     CC=13  in:16  out:10  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
-  services.healing-webhook.app._resolve_affected_files
-    CC=11  in:2  out:24  total:26
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
-  src.koru.agents.detect_agent_options
-    CC=4  in:3  out:21  total:24
   src.koru.cli._render_runtime_context_text
     CC=14  in:1  out:23  total:24
+  src.koru.init.init_project
+    CC=8  in:2  out:22  total:24
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]

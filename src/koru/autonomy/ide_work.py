@@ -97,7 +97,7 @@ def build_ide_work_prompt(
             [
                 "",
                 "Use koru MCP tools when available:",
-                f"- koru_list_tickets (project_root = this workspace)",
+                "- koru_list_tickets (project_root = this workspace)",
                 f"- koru_run_ticket(ticket_id={ticket_id!r}, mode=apply)",
                 "Implement the change, run local regression gates, then mark the ticket done in planfile.",
             ],

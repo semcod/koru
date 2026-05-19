@@ -1,5 +1,5 @@
-# koru | 212f 36683L | yaml:15,yml:8,toml:1,shell:42,txt:1,json:3,python:126,typescript:6,kotlin:6,properties:1,xml:1 | 2026-05-19
-# generated in 0.02s
+# koru | 212f 36683L | yaml:15,yml:8,shell:42,txt:1,json:3,python:126,typescript:6,kotlin:6,properties:1,xml:1,toml:1 | 2026-05-19
+# generated in 0.03s
 # stats: 1237 func | 0 cls | 212 mod | CC̄=4.1 | critical:9 | cycles:0
 # alerts[5]: fan-out _build_handler=34; fan-out _action_up=31; fan-out do_from_todo=24; fan-out run_cycle=23; fan-out init_project=22
 # hotspots[5]: _build_handler fan=34; _action_up fan=31; do_from_todo fan=24; run_cycle fan=23; init_project fan=22
@@ -526,6 +526,47 @@ P...
     _list_tickets(project;runner)
     _close_ticket(project;candidate;reason;runner)
     clean_queue(project)
+  src/koru/autonomous_cycle.py:
+    e: DiagnosticResult,AutoloopState,_stdio_info,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_status_in_skip_list,_allow_keyboard_autopilot_fallback,_prefer_keyboard_autopilot,_try_os_injector_fallback,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_autopilot_event_path,_drain_autopilot_events,_initialize_cycle_telemetry,_heal_stale_socket,_handle_autopilot_events,_handle_queue_hygiene,_handle_post_run_verify_ide,_handle_scan_phase,_build_queue_command,_run_queue_loop,_emit_queue_iteration_event,_handle_post_run_verify,_handle_queue_loop_phase,_handle_scan_after_idle,_update_stagnation_state,_waiting_ticket_has_label,_handle_diagnostics,_check_autopilot_skip_conditions,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result,_handle_autopilot_phase,_emit_cycle_completion_events,run_cycle
+    DiagnosticResult:
+    AutoloopState:
+    _stdio_info(msg)
+    _queue_loop_waiting_ticket_label(queue_result)
+    _is_topology_enabled(project;key)
+    _current_head(project)
+    _status_in_skip_list(status;skip_statuses)
+    _allow_keyboard_autopilot_fallback()
+    _prefer_keyboard_autopilot()
+    _try_os_injector_fallback(prompt)
+    _run_command_check(project;check_id;command)
+    _create_diagnostic_ticket()
+    _clear_diagnostic_marker(state_dir;check_id)
+    _read_wup_health()
+    _run_idle_diagnostics()
+    _autopilot_event_path()
+    _drain_autopilot_events(state)
+    _initialize_cycle_telemetry()
+    _heal_stale_socket()
+    _handle_autopilot_events(state;_hp)
+    _handle_queue_hygiene(project;cycle;_hp;_emit)
+    _handle_post_run_verify_ide(project;state;cycle;_hp;_emit)
+    _handle_scan_phase(project;state;cycle;enable_scan;include_semcod_artifacts;scan_skip_if_clean;scan_skip_after;topology_integration;_hp;_emit)
+    _build_queue_command(max_iterations;queue_name)
+    _run_queue_loop(project;actor;queue_name;max_iterations)
+    _emit_queue_iteration_event(queue_result;cycle;queue_name;actor;qcmd;_emit)
+    _handle_post_run_verify(project;state;cycle;queue_result;verify_config;_hp;_emit)
+    _handle_queue_loop_phase(project;state;cycle;actor;queue_name;max_iterations;topology_integration;verify_config;_hp;_emit)
+    _handle_scan_after_idle(project;state;cycle;queue_result;scan_after_idle_queue;include_semcod_artifacts;scan_after_idle_min_interval_seconds;topology_integration;cycle_telemetry;_hp;_emit)
+    _update_stagnation_state(state;queue_result)
+    _waiting_ticket_has_label(project;queue_result;label)
+    _handle_diagnostics(project;state;cycle;queue_result;idle_diagnostics;diagnostic_tickets;diagnostic_ticket_queue;diagnostic_ticket_priority;diagnostic_state_dir;wup_watch_enabled;wup_diagnostic_tickets;wup_ticket_queue;topology_integration;_hp;_emit)
+    _check_autopilot_skip_conditions(project;queue_result;state;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp)
+    _execute_autopilot_drive(project;state;queue_result;client;autopilot_ide;drive_prompt;submit;autopilot_action;_hp)
+    _update_autopilot_state(state;ok;decision_kind;autopilot_drive_kind;decision_prompt)
+    _log_autopilot_result(ok;queue_result;autopilot_ide;decision_kind;reply;_hp)
+    _handle_autopilot_phase(project;state;cycle;queue_result;enable_autopilot;client;autopilot_ide;drive_prompt;submit;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp;_emit)
+    _emit_cycle_completion_events(project;state;cycle;queue_result;diag_result;wup_health;autopilot_status;autopilot_ide;autopilot_backend;autopilot_drive_kind;cycle_telemetry;scan_after_idle_queue;scan_after_idle_min_interval_seconds;autopilot_skip_drive_idle_streak;_hp;_emit)
+    run_cycle()
   src/koru/agents.py:
     e: AgentOption,normalize_agent_lane_id,autopilot_backend_for_agent_id,_which,_marker,_detect_agent_commands,_build_cli_agent_option,detect_agent_options,detect_project_environment,detect_agent_environment,select_agent,save_agent_prompt,agent_lane_environment,format_agent_lane_exports,launch_agent
     AgentOption: to_dict(0)
@@ -635,47 +676,6 @@ Designed to ...
     _render_unit(koru_bin)
     _action_install_unit(args)
     autopilot_main(argv)
-  src/koru/autonomous_cycle.py:
-    e: DiagnosticResult,AutoloopState,_stdio_info,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_status_in_skip_list,_allow_keyboard_autopilot_fallback,_prefer_keyboard_autopilot,_try_os_injector_fallback,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_autopilot_event_path,_drain_autopilot_events,_initialize_cycle_telemetry,_heal_stale_socket,_handle_autopilot_events,_handle_queue_hygiene,_handle_post_run_verify_ide,_handle_scan_phase,_build_queue_command,_run_queue_loop,_emit_queue_iteration_event,_handle_post_run_verify,_handle_queue_loop_phase,_handle_scan_after_idle,_update_stagnation_state,_waiting_ticket_has_label,_handle_diagnostics,_check_autopilot_skip_conditions,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result,_handle_autopilot_phase,_emit_cycle_completion_events,run_cycle
-    DiagnosticResult:
-    AutoloopState:
-    _stdio_info(msg)
-    _queue_loop_waiting_ticket_label(queue_result)
-    _is_topology_enabled(project;key)
-    _current_head(project)
-    _status_in_skip_list(status;skip_statuses)
-    _allow_keyboard_autopilot_fallback()
-    _prefer_keyboard_autopilot()
-    _try_os_injector_fallback(prompt)
-    _run_command_check(project;check_id;command)
-    _create_diagnostic_ticket()
-    _clear_diagnostic_marker(state_dir;check_id)
-    _read_wup_health()
-    _run_idle_diagnostics()
-    _autopilot_event_path()
-    _drain_autopilot_events(state)
-    _initialize_cycle_telemetry()
-    _heal_stale_socket()
-    _handle_autopilot_events(state;_hp)
-    _handle_queue_hygiene(project;cycle;_hp;_emit)
-    _handle_post_run_verify_ide(project;state;cycle;_hp;_emit)
-    _handle_scan_phase(project;state;cycle;enable_scan;include_semcod_artifacts;scan_skip_if_clean;scan_skip_after;topology_integration;_hp;_emit)
-    _build_queue_command(max_iterations;queue_name)
-    _run_queue_loop(project;actor;queue_name;max_iterations)
-    _emit_queue_iteration_event(queue_result;cycle;queue_name;actor;qcmd;_emit)
-    _handle_post_run_verify(project;state;cycle;queue_result;verify_config;_hp;_emit)
-    _handle_queue_loop_phase(project;state;cycle;actor;queue_name;max_iterations;topology_integration;verify_config;_hp;_emit)
-    _handle_scan_after_idle(project;state;cycle;queue_result;scan_after_idle_queue;include_semcod_artifacts;scan_after_idle_min_interval_seconds;topology_integration;cycle_telemetry;_hp;_emit)
-    _update_stagnation_state(state;queue_result)
-    _waiting_ticket_has_label(project;queue_result;label)
-    _handle_diagnostics(project;state;cycle;queue_result;idle_diagnostics;diagnostic_tickets;diagnostic_ticket_queue;diagnostic_ticket_priority;diagnostic_state_dir;wup_watch_enabled;wup_diagnostic_tickets;wup_ticket_queue;topology_integration;_hp;_emit)
-    _check_autopilot_skip_conditions(project;queue_result;state;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp)
-    _execute_autopilot_drive(project;state;queue_result;client;autopilot_ide;drive_prompt;submit;autopilot_action;_hp)
-    _update_autopilot_state(state;ok;decision_kind;autopilot_drive_kind;decision_prompt)
-    _log_autopilot_result(ok;queue_result;autopilot_ide;decision_kind;reply;_hp)
-    _handle_autopilot_phase(project;state;cycle;queue_result;enable_autopilot;client;autopilot_ide;drive_prompt;submit;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp;_emit)
-    _emit_cycle_completion_events(project;state;cycle;queue_result;diag_result;wup_health;autopilot_status;autopilot_ide;autopilot_backend;autopilot_drive_kind;cycle_telemetry;scan_after_idle_queue;scan_after_idle_min_interval_seconds;autopilot_skip_drive_idle_streak;_hp;_emit)
-    run_cycle()
   src/koruide/ide.py:
     e: RunningIDE,_iter_proc_pids,_read_comm,_read_cmdline,_read_exe,_matches,_score_comm_name,_score_exe_path,_score_cmdline_flags,_candidate_score,detect_running_ides,_active_window_pid_x11,_ide_id_from_process,detect_focused_ide_id,_vscode_family_env_present,_vscode_family_flavor_from_env,_terminal_ide_from_env,_terminal_ide_from_parent_chain,detect_terminal_host_ide_id,focused_ide,pick_target,is_linux,detect_running_ides_cached,clear_detect_cache,_has_os_injector_profile,_auto_profile_candidate_ids,_resolve_explicit_drive_target,_resolve_auto_drive_target,resolve_drive_target
     RunningIDE: to_dict(0)  # A single IDE process discovered on the system...
@@ -1516,7 +1516,6 @@ The c...
   koru.yaml:
   wup.yaml:
   docker-compose.yml:
-  pyproject.toml:
   tree.sh:
   todo.txt:
   pipeline.yaml:
@@ -1691,3 +1690,4 @@ The c...
   testql-scenarios/generated-from-pytests.testql.toon.yaml:
   testql-scenarios/generated-cli-tests.testql.toon.yaml:
   testql-testing/scenarios/realtime-health.testql.toon.yaml:
+  pyproject.toml:

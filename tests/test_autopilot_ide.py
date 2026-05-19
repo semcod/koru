@@ -39,6 +39,7 @@ def fake_proc(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setattr(ide_mod, "_read_comm", fake_read_comm)
     monkeypatch.setattr(ide_mod, "_read_cmdline", fake_read_cmdline)
     monkeypatch.setattr(ide_mod, "_active_window_pid_x11", lambda: None)
+    monkeypatch.setattr(ide_mod, "detect_terminal_host_ide_id", lambda: None)
     monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
     return tmp_path
 
