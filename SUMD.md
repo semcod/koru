@@ -21,7 +21,7 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.139`
+- **version**: `0.1.140`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -41,7 +41,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.139;
+  version: 0.1.140;
 }
 
 dependencies {
@@ -1677,7 +1677,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.139
+  version: 0.1.140
   env: local
 ```
 
@@ -1752,8 +1752,8 @@ pip install -e .[dev]
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 284f 52664L | python:209,shell:62,javascript:6,typescript:6,less:1 | 2026-05-19
-# stats: 1523 func | 176 cls | 284 mod | CC̄=4.1 | critical:109 | cycles:0
+# koru | 284f 52707L | python:209,shell:62,javascript:6,typescript:6,less:1 | 2026-05-19
+# stats: 1524 func | 176 cls | 284 mod | CC̄=4.1 | critical:109 | cycles:0
 # alerts[5]: CC do_from_todo=19; CC _action_up=17; CC test_autonomy_config_from_env=16; CC looks_like_autonomous_up_command=15; fan-out _action_up=31
 # hotspots[5]: _action_up fan=31; _build_handler fan=29; do_from_todo fan=23; run_cycle fan=23; render_markdown_handoff fan=20
 # evolution: baseline
@@ -1854,7 +1854,7 @@ M[284]:
   src/koru/autonomy/environment.py,248
   src/koru/autonomy/heal.py,111
   src/koru/autonomy/ide_work.py,297
-  src/koru/autonomy/operator_pipeline.py,576
+  src/koru/autonomy/operator_pipeline.py,585
   src/koru/autonomy/post_run_verify.py,380
   src/koru/autonomy/prompts.py,102
   src/koru/autonomy/telemetry_snapshot.py,80
@@ -2021,7 +2021,7 @@ M[284]:
   tests/test_loop.py,95
   tests/test_mcp_provision.py,166
   tests/test_mcp_server.py,235
-  tests/test_operator_pipeline.py,191
+  tests/test_operator_pipeline.py,225
   tests/test_planfile_queue.py,1119
   tests/test_policy.py,183
   tests/test_post_run_verify.py,153
@@ -3995,7 +3995,7 @@ D:
     test_job_store_is_ephemeral_across_imports(tmp_path)
     test_job_store_persists_to_disk_and_reloads(tmp_path)
   tests/test_operator_pipeline.py:
-    e: probe,test_build_operator_steps_mcp_pending_without_config,test_build_operator_steps_mcp_ok_when_configured,test_run_startup_operator_pipeline_creates_tickets,test_run_startup_operator_pipeline_autostarts_planfile_api_when_missing,test_candidate_planfile_health_urls_use_serve_endpoint,test_run_startup_operator_pipeline_dedup_markers,test_run_startup_operator_pipeline_closes_resolved_marker_ticket
+    e: probe,test_build_operator_steps_mcp_pending_without_config,test_build_operator_steps_mcp_ok_when_configured,test_run_startup_operator_pipeline_creates_tickets,test_run_startup_operator_pipeline_autostarts_planfile_api_when_missing,test_candidate_planfile_health_urls_use_serve_endpoint,test_run_startup_operator_pipeline_dedup_markers,test_run_startup_operator_pipeline_closes_resolved_marker_ticket,test_run_startup_operator_pipeline_keeps_marker_when_close_times_out
     probe(tmp_path)
     test_build_operator_steps_mcp_pending_without_config(tmp_path;probe)
     test_build_operator_steps_mcp_ok_when_configured(tmp_path;probe)
@@ -4004,6 +4004,7 @@ D:
     test_candidate_planfile_health_urls_use_serve_endpoint(tmp_path)
     test_run_startup_operator_pipeline_dedup_markers(tmp_path;probe;monkeypatch)
     test_run_startup_operator_pipeline_closes_resolved_marker_ticket(tmp_path;probe;monkeypatch)
+    test_run_startup_operator_pipeline_keeps_marker_when_close_times_out(tmp_path;probe;monkeypatch)
   tests/test_planfile_queue.py:
     e: _ok,_ticket_args,TestPlanfileQueue,TestPlanfileQueueLlm,TestPlanfileQueueLoop,TestAppendShellEvidenceNote
     TestPlanfileQueue: test_shell_ticket_runs_lifecycle_commands(0),test_ticket_claim_failure_returns_claim_failed(0),test_human_ticket_returns_waiting_input(0),test_shell_failure_marks_ticket_failed(0),test_api_ticket_runs_lifecycle_commands(0),test_api_failure_marks_ticket_failed(0),test_idle_when_planfile_returns_no_ticket(0),test_planfile_error_propagates(0),test_dry_run_returns_command_without_executing(0),test_unsupported_executor_kind(0),test_shell_ticket_without_command_auto_completes(0),test_scan_ticket_without_executor_waits_for_ide_prompt(0),test_api_ticket_without_endpoint_requests_input(0),test_interactive_human_ticket_completes_with_answer(0),test_interactive_human_ticket_cancellation_leaves_ticket(0),test_interactive_with_dry_run_does_not_prompt(0)
@@ -4149,12 +4150,12 @@ D:
 | `_drive_via_keyboard` *(in src.koruide.daemon.AutopilotDaemon)* | 11 ⚠ | 0 | 46 | **46** |
 | `activity` *(in src.koru.activity_log)* | 4 | 32 | 7 | **39** |
 | `_build_parser` *(in src.koru.cli)* | 1 | 3 | 34 | **37** |
-| `tool_run_ticket` *(in src.koruapi.mcp_server)* | 14 ⚠ | 1 | 33 | **34** |
 | `create_nl_task` *(in src.koru.tasks)* | 12 ⚠ | 6 | 28 | **34** |
+| `tool_run_ticket` *(in src.koruapi.mcp_server)* | 14 ⚠ | 1 | 33 | **34** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.21s
+# generated in 0.20s
 # nodes: 432 | edges: 500 | modules: 70
 # CC̄=4.1
 
@@ -4171,26 +4172,26 @@ HUBS[20]:
     CC=4  in:32  out:7  total:39
   src.koru.cli._build_parser
     CC=1  in:3  out:34  total:37
-  src.koruapi.mcp_server.tool_run_ticket
-    CC=14  in:1  out:33  total:34
   src.koru.tasks.create_nl_task
     CC=12  in:6  out:28  total:34
-  src.koru.autonomous._stdio_info
-    CC=1  in:31  out:1  total:32
+  src.koruapi.mcp_server.tool_run_ticket
+    CC=14  in:1  out:33  total:34
   src.koru.cli._topology_main
     CC=12  in:0  out:32  total:32
-  src.koru.events.emit_management_event
-    CC=8  in:25  out:7  total:32
   src.koru.autonomy.env.env_truthy
     CC=3  in:29  out:3  total:32
+  src.koru.autonomous._stdio_info
+    CC=1  in:31  out:1  total:32
+  src.koru.events.emit_management_event
+    CC=8  in:25  out:7  total:32
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
   src.koru.cli._task_main
     CC=11  in:0  out:27  total:27
-  services.healing-webhook.ticket_builder.build_ticket_payload
-    CC=11  in:1  out:25  total:26
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
+  services.healing-webhook.ticket_builder.build_ticket_payload
+    CC=11  in:1  out:25  total:26
   src.koruide.ide.detect_running_ides
     CC=13  in:16  out:10  total:26
   src.koru.context.build_context

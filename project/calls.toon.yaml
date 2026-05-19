@@ -1,5 +1,5 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.21s
+# generated in 0.20s
 # nodes: 432 | edges: 500 | modules: 70
 # CC̄=4.1
 
@@ -16,26 +16,26 @@ HUBS[20]:
     CC=4  in:32  out:7  total:39
   src.koru.cli._build_parser
     CC=1  in:3  out:34  total:37
-  src.koruapi.mcp_server.tool_run_ticket
-    CC=14  in:1  out:33  total:34
   src.koru.tasks.create_nl_task
     CC=12  in:6  out:28  total:34
-  src.koru.autonomous._stdio_info
-    CC=1  in:31  out:1  total:32
+  src.koruapi.mcp_server.tool_run_ticket
+    CC=14  in:1  out:33  total:34
   src.koru.cli._topology_main
     CC=12  in:0  out:32  total:32
-  src.koru.events.emit_management_event
-    CC=8  in:25  out:7  total:32
   src.koru.autonomy.env.env_truthy
     CC=3  in:29  out:3  total:32
+  src.koru.autonomous._stdio_info
+    CC=1  in:31  out:1  total:32
+  src.koru.events.emit_management_event
+    CC=8  in:25  out:7  total:32
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
   src.koru.cli._task_main
     CC=11  in:0  out:27  total:27
-  services.healing-webhook.ticket_builder.build_ticket_payload
-    CC=11  in:1  out:25  total:26
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
+  services.healing-webhook.ticket_builder.build_ticket_payload
+    CC=11  in:1  out:25  total:26
   src.koruide.ide.detect_running_ides
     CC=13  in:16  out:10  total:26
   src.koru.context.build_context

@@ -81,14 +81,23 @@ def _close_resolved_step_ticket(
 ) -> bool:
     from koru.activity_log import activity
 
-    proc = subprocess.run(
-        ["planfile", "ticket", "done", ticket_id],
-        cwd=project,
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
+    try:
+        proc = subprocess.run(
+            ["planfile", "ticket", "done", ticket_id],
+            cwd=project,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired as exc:
+        activity(
+            "TICKET",
+            f"operator {step_id}: timeout przy zamykaniu starego ticketa {ticket_id}",
+            fmt=stdio_format,
+            preview=str(exc),
+        )
+        return False
     if proc.returncode != 0:
         detail = (proc.stderr or proc.stdout or "").strip()
         activity(
