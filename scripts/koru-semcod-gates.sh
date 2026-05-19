@@ -70,11 +70,11 @@ else
   echo "semcod gate: testql skipped (missing command or testql-scenarios/)"
 fi
 
-if has_cmd redup; then
-  run_gate "redup" "redup scan . --min-lines 10" "fail|error|duplicate|threshold" \
-    'Triage duplicate-code output, extract shared code, then rerun `redup scan . --min-lines 10`.'
+if python3 -m redup --help >/dev/null 2>&1; then
+  run_gate "redup" "python3 -m redup scan . --min-lines 10" "fail|error|duplicate|threshold" \
+    'Triage duplicate-code output, extract shared code, then rerun `python3 -m redup scan . --min-lines 10`.'
 else
-  echo "semcod gate: redup skipped (missing command)"
+  echo "semcod gate: redup skipped (missing Python module)"
 fi
 
 if [ -x "$ROOT/scripts/sumr-refresh.sh" ]; then

@@ -13,6 +13,27 @@ def test_changed_scan_command_uses_current_python_module():
     assert "--changed-only" in command
 
 
+def test_scan_and_check_commands_use_current_python_module(tmp_path: Path):
+    assert redup_integration.redup_scan_command(tmp_path) == [
+        sys.executable,
+        "-m",
+        "redup",
+        "scan",
+        str(tmp_path),
+        "--min-lines",
+        "10",
+    ]
+    assert redup_integration.redup_check_command(tmp_path) == [
+        sys.executable,
+        "-m",
+        "redup",
+        "check",
+        str(tmp_path),
+        "--min-lines",
+        "10",
+    ]
+
+
 def test_changed_scan_runner_uses_current_python():
     command = redup_integration.redup_changed_scan_runner_command()
 

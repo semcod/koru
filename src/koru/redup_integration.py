@@ -21,12 +21,12 @@ def _redup_module_command() -> list[str]:
 
 def redup_scan_command(path: str | Path = ".", *, min_lines: int = DEFAULT_MIN_LINES) -> list[str]:
     """Build a full reDUP scan command."""
-    return ["redup", "scan", str(path), "--min-lines", str(min_lines)]
+    return [*_redup_module_command(), "scan", str(path), "--min-lines", str(min_lines)]
 
 
 def redup_check_command(path: str | Path = ".", *, min_lines: int = DEFAULT_MIN_LINES) -> list[str]:
     """Build a reDUP budget-check command."""
-    return ["redup", "check", str(path), "--min-lines", str(min_lines)]
+    return [*_redup_module_command(), "check", str(path), "--min-lines", str(min_lines)]
 
 
 def redup_changed_scan_command(

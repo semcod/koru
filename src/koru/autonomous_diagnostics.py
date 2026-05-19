@@ -3,6 +3,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 from collections.abc import Callable
+from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,10 @@ from .redup_integration import redup_changed_scan_runner_command, redup_scan_com
 from .tasks import create_nl_task
 
 IdleCheck = tuple[str, str, list[str]]
+
+
+def _has_redup_module() -> bool:
+    return shutil.which("redup") is not None or find_spec("redup") is not None
 
 
 def build_idle_checks(project: Path, profile: str) -> list[IdleCheck]:
@@ -30,13 +35,13 @@ def build_idle_checks(project: Path, profile: str) -> list[IdleCheck]:
         checks.append(("wup", "wup status", ["wup", "status"]))
     if profile not in {"full", "deep"}:
         return checks
-    if shutil.which("redup"):
+    if _has_redup_module():
         if (project / "wup.yaml").is_file():
             command = redup_changed_scan_runner_command()
             checks.append(
                 (
                     "redup",
-                    "python3 -m koru.redup_integration changed-scan "
+                    "python -m koru.redup_integration changed-scan "
                     "--output .redup/wup-changed.json",
                     command,
                 ),
@@ -45,7 +50,7 @@ def build_idle_checks(project: Path, profile: str) -> list[IdleCheck]:
             checks.append(
                 (
                     "redup",
-                    "redup scan . --min-lines 10",
+                    "python -m redup scan . --min-lines 10",
                     redup_scan_command(),
                 ),
             )

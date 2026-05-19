@@ -50,7 +50,7 @@ tasks:
   install:tools:
     desc: Install semcod toolchain used by koru (planfile, wup, testql, regix, redup, sumr/sumd, doql, redeploy, ...)
     cmds:
-      - pip install planfile wup testql regix "redup>=0.4.27" vallm prefact pfix sumd sumr code2llm redsl llx doql redeploy goal costs op3 toonic protogate rebuild mdflow metrun
+      - pip install planfile wup testql regix "redup>=0.4.28" vallm prefact pfix sumd sumr code2llm redsl llx doql redeploy goal costs op3 toonic protogate rebuild mdflow metrun
       - 'echo "✓ semcod toolchain installed. Optional interactive agent: pip install aider-chat"'
 
   # =====================================================================
@@ -341,26 +341,26 @@ tasks:
       - |
         set -euo pipefail
         if python3 -m koru.cli topology --project . --is-enabled gate:redup >/dev/null 2>&1; then
-          redup scan . --min-lines 10
+          python3 -m redup scan . --min-lines 10
         else
           rc=$?
           if [ "$rc" -eq 1 ]; then
             echo "quality:redup skipped (gate:redup disabled in topology)"
             exit 0
           fi
-          redup scan . --min-lines 10
+          python3 -m redup scan . --min-lines 10
         fi
     preconditions:
-      - sh: which redup
-        msg: "redup not installed. Run: task install:tools"
+      - sh: python3 -m redup --help >/dev/null
+        msg: "redup Python module not installed. Run: task install:tools"
 
   quality:redup:changed:
     desc: 'Run incremental redup scan over files changed since BASE_REF (default: HEAD)'
     cmds:
-      - bash -lc 'set -euo pipefail; BASE_REF="${BASE_REF:-HEAD}"; OUT="${OUT:-.redup/wup-changed.json}"; if python3 -m koru.cli topology --project . --is-enabled gate:redup >/dev/null 2>&1; then python3 -m koru.redup_integration changed-scan --base-ref "$BASE_REF" --output "$OUT" --min-lines 10; else rc=$?; if [ "$rc" -eq 1 ]; then echo "quality:redup:changed skipped (gate:redup disabled in topology)"; exit 0; fi; python3 -m koru.redup_integration changed-scan --base-ref "$BASE_REF" --output "$OUT" --min-lines 10; fi'
+      - bash -lc 'set -euo pipefail; BASE_REF="${BASE_REF:-{{.BASE_REF | default "HEAD"}}}"; OUT="${OUT:-{{.OUT | default ".redup/wup-changed.json"}}}"; if python3 -m koru.cli topology --project . --is-enabled gate:redup >/dev/null 2>&1; then python3 -m koru.redup_integration changed-scan --base-ref "$BASE_REF" --output "$OUT" --min-lines 10; else rc=$?; if [ "$rc" -eq 1 ]; then echo "quality:redup:changed skipped (gate:redup disabled in topology)"; exit 0; fi; python3 -m koru.redup_integration changed-scan --base-ref "$BASE_REF" --output "$OUT" --min-lines 10; fi'
     preconditions:
-      - sh: which redup
-        msg: "redup not installed. Run: task install:tools"
+      - sh: python3 -m redup --help >/dev/null
+        msg: "redup Python module not installed. Run: task install:tools"
 
   quality:redup:check:
     desc: Run redup with budget check (uses scripts/redup-check.sh)

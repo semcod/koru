@@ -337,9 +337,9 @@ run_idle_diagnostics() {
   fi
 
   if [ "$profile_lc" = "full" ] || [ "$profile_lc" = "deep" ]; then
-    run_check redup 'command -v redup' \
-      'redup scan . --min-lines 10' \
-      redup scan . --min-lines 10
+    run_check redup 'python3 -m redup --help >/dev/null 2>&1' \
+      'python3 -m redup scan . --min-lines 10' \
+      python3 -m redup scan . --min-lines 10
 
     if command -v testql >/dev/null 2>&1; then
       if find . -name '*.testql.toon.yaml' -print -quit | grep -q .; then
