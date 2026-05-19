@@ -19,6 +19,7 @@ from .autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
 from .autopilot.cli_command import autopilot_main
 from .bootstrap import import_flat_pipeline
 from .context import build_context, render_markdown_handoff
+from .dev_sync import dev_main
 from .doctor import render_text as render_doctor_text
 from .doctor import run_diagnostics
 from .events import emit_management_event
@@ -1437,6 +1438,8 @@ def _peek_project_from_argv(argv: list[str]) -> Path:
 
 def _auto_main(argv: list[str]) -> int:
     """``koru auto``: stop prior autonomous/auto loops, then start with ``--replace-existing``."""
+    if any(arg in {"-h", "--help"} for arg in argv):
+        return autonomous_main(argv, invoked_as_auto=True)
     if "--allow-duplicate" not in argv:
         stdio = os.environ.get("KORU_STDIO_FORMAT", "human")
         stop_prior_autonomous_for_auto_start(_peek_project_from_argv(argv), stdio_format=stdio)
@@ -1468,6 +1471,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "api": _api_main,
     "topology": _topology_main,
     "runtime-context": _runtime_context_main,
+    "dev": dev_main,
 }
 
 

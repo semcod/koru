@@ -365,6 +365,17 @@ class TestAutoMain(unittest.TestCase):
         auto_main.assert_called_once_with(["--project", "/tmp/p"])
         self.assertEqual(code, 7)
 
+    def test_auto_main_help_does_not_stop_existing_loop(self) -> None:
+        from koru.cli import _auto_main
+
+        with mock.patch("koru._legacy_cli_impl.autonomous_main", return_value=0) as autonomous:
+            with mock.patch("koru._legacy_cli_impl.stop_prior_autonomous_for_auto_start") as stop:
+                code = _auto_main(["--help"])
+
+        self.assertEqual(code, 0)
+        stop.assert_not_called()
+        autonomous.assert_called_once_with(["--help"], invoked_as_auto=True)
+
 
 class TestSubcommandDispatch(unittest.TestCase):
     """R6: routing through ``_SUBCOMMANDS`` dispatch table.
@@ -398,6 +409,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "topology",
             "runtime-context",
             "refactor-planfile-handoff",
+            "dev",
         },
     )
 
