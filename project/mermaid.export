@@ -80,66 +80,66 @@ flowchart TD
         plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__when["when"]
     end
     subgraph plugins__koru_autopilot_vscode
-        plugins__koru_autopilot_vscode__src__extension__debugLog["debugLog"]
-        plugins__koru_autopilot_vscode__src__extension__suffix["suffix"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__socketPath["socketPath"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__cfg["cfg"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__override["override"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__connect["connect"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__tryConnectNext["tryConnectNext"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__p["p"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__debugLog["debugLog"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__sock["sock"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__connected["connected"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__disconnect["disconnect"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__clearTimeout["clearTimeout"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__scheduleRetry["scheduleRetry"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__delay["delay"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__runCommand["runCommand"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__result["result"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__probeLadderEnabled["probeLadderEnabled"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__probeFocusDelayMs["probeFocusDelayMs"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__probePasteDelayMs["probePasteDelayMs"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__sleep["sleep"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__editorSnapshot["editorSnapshot"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__getProbeCache["getProbeCache"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__raw["raw"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__next["next"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submitChat{{submitChat CC=15}}
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__ide["ide"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__existing["existing"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__cache["cache"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__candidates["candidates"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__orderWithCache["orderWithCache"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__focusChat("focusChat CC=9")
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__primary["primary"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__useProbe["useProbe"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__commands["commands"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__before["before"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__after["after"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__pasteText("pasteText CC=14")
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__directCommands["directCommands"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__inputFocused["inputFocused"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__focusChatInput["focusChatInput"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__detectIde["detectIde"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__app["app"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__send["send"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__line["line"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__onData("onData CC=10")
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__idx["idx"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__env["env"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__message["message"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__dispatch["dispatch"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__plan["plan"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__injectChat{{injectChat CC=18}}
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__text["text"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submit["submit"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__focus["focus"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__pasted["pasted"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submitted["submitted"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submitResult["submitResult"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__calibrateProbe["calibrateProbe"]
-        plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__sendManualChat["sendManualChat"]
+        plugins__koru_autopilot_vscode__src__dispatch_plan__planDispatch["planDispatch"]
+        plugins__koru_autopilot_vscode__src__dispatch_plan__test__assert["assert"]
+        plugins__koru_autopilot_vscode__src__dispatch_plan__test__testShutdownPlan["testShutdownPlan"]
+        plugins__koru_autopilot_vscode__src__dispatch_plan__test__plan["plan"]
+        plugins__koru_autopilot_vscode__src__dispatch_plan__test__testUnknownTypePlan["testUnknownTypePlan"]
+        plugins__koru_autopilot_vscode__src__dispatch_plan__test__testSocketCandidatesPreferIdeInstanceBeforeSingleton["testSocketCandidatesPreferIdeInstan"]
+        plugins__koru_autopilot_vscode__src__dispatch_plan__test__oldSocket["oldSocket"]
+        plugins__koru_autopilot_vscode__src__dispatch_plan__test__oldInstance["oldInstance"]
+        plugins__koru_autopilot_vscode__src__dispatch_plan__test__oldRuntime["oldRuntime"]
+        plugins__koru_autopilot_vscode__src__dispatch_plan__test__candidates["candidates"]
+        plugins__koru_autopilot_vscode__src__dispatch_plan__test__testSocketCandidatesDoNotCrossIdeFallback["testSocketCandidatesDoNotCrossIdeFa"]
+        plugins__koru_autopilot_vscode__src__dispatch_plan__test__testSocketCandidatesPreferOverrideThenDefaults["testSocketCandidatesPreferOverrideT"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__test__assert["assert"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__test__testOrderWithCache["testOrderWithCache"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__test__ordered["ordered"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__test__testChatFocusHeuristic["testChatFocusHeuristic"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__test__testVerifyFocusAfterOpen["testVerifyFocusAfterOpen"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__test__testPasteLandedInEditor["testPasteLandedInEditor"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__test__testMergeUnique["testMergeUnique"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__test__testBuildFocusOpenCursorFirst["testBuildFocusOpenCursorFirst"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__test__cmds["cmds"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__PROBE_CACHE_VERSION["PROBE_CACHE_VERSION"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__captureEditorSnapshot["captureEditorSnapshot"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__scheme["scheme"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__isFileLike["isFileLike"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__chatFocusHeuristic["chatFocusHeuristic"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__verifyFocusAfterOpen["verifyFocusAfterOpen"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__pasteLandedInEditor["pasteLandedInEditor"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__trimmed["trimmed"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__wasInBefore["wasInBefore"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__isInAfter["isInAfter"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__orderWithCache["orderWithCache"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__rest["rest"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__mergeUnique["mergeUnique"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__seen["seen"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__buildFocusOpenCommands["buildFocusOpenCommands"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__defaults["defaults"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__buildFocusInputCommands["buildFocusInputCommands"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__buildPasteDirectCommands["buildPasteDirectCommands"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__buildSubmitCommands["buildSubmitCommands"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__filterRegistered["filterRegistered"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__loadProbeCache["loadProbeCache"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__entry["entry"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__makeProbeCache["makeProbeCache"]
+        plugins__koru_autopilot_vscode__src__probe_ladder__mergeProbeCache("mergeProbeCache CC=9")
+        plugins__koru_autopilot_vscode__src__socketPath__slugInstance["slugInstance"]
+        plugins__koru_autopilot_vscode__src__socketPath__cleaned["cleaned"]
+        plugins__koru_autopilot_vscode__src__socketPath__defaultSocketPathFromEnv("defaultSocketPathFromEnv CC=9")
+        plugins__koru_autopilot_vscode__src__socketPath__explicit["explicit"]
+        plugins__koru_autopilot_vscode__src__socketPath__inst["inst"]
+        plugins__koru_autopilot_vscode__src__socketPath__name["name"]
+        plugins__koru_autopilot_vscode__src__socketPath__xdg["xdg"]
+        plugins__koru_autopilot_vscode__src__socketPath__uid["uid"]
+        plugins__koru_autopilot_vscode__src__socketPath__stem["stem"]
+        plugins__koru_autopilot_vscode__src__socketPath__defaultSocketCandidates["defaultSocketCandidates"]
+        plugins__koru_autopilot_vscode__src__socketPath__push["push"]
+        plugins__koru_autopilot_vscode__src__socketPath__r["r"]
+        plugins__koru_autopilot_vscode__src__socketPath__socketCandidatesFromEnv["socketCandidatesFromEnv"]
+        plugins__koru_autopilot_vscode__src__socketPath__ov["ov"]
+        plugins__koru_autopilot_vscode__src__socketPath__resolved["resolved"]
     end
     subgraph scripts___koru_autodiag_filter_tickets
         scripts___koru_autodiag_filter_tickets__main("main CC=12")
@@ -706,8 +706,8 @@ flowchart TD
     src__koruide__ide__detect_terminal_host_ide_id --> src__koruide__ide___terminal_ide_from_env
     src__koruide__ide__detect_terminal_host_ide_id --> src__koruide__ide___terminal_ide_from_parent_chain
     src__koruide__ide__focused_ide --> src__koruide__ide__detect_focused_ide_id
-    src__koruide__ide__pick_target --> src__koruide__ide__detect_terminal_host_ide_id
     src__koruide__ide__pick_target --> src__koruide__ide__focused_ide
+    src__koruide__ide__pick_target --> src__koruide__ide__detect_terminal_host_ide_id
     src__koruide__ide__detect_running_ides_cached --> src__koruide__ide__detect_running_ides
     src__koruide__ide___auto_profile_candidate_ids --> src__koruide__ide__detect_terminal_host_ide_id
     src__koruide__ide___auto_profile_candidate_ids --> src__koruide__ide__detect_focused_ide_id
@@ -1074,14 +1074,14 @@ flowchart TD
     src__koru__tools__detect_tools --> src__koru__tools___check_markers_exist
     src__koru__tools__detect_tools --> src__koru__tools___check_env_vars_exist
     src__koru__tools__detect_tools --> src__koru__tools___build_detection_result
-    src__koru__tools__build_tool_task_scaffold --> src__koru__tools__infer_adapter_kind
-    src__koru__init__init_project --> src__koru__runtime__planfile_dir
-    src__koru__init__init_project --> src__koru__init___write_policy_stub_if_absent
-    src__koru__init__init_project --> src__koru__init___ensure_gitignore_entry
-    src__koru__init__init_project --> src__koru__init___resolve_init_agent_lane
-    src__koru__init__init_project --> src__koru__init___write_autopilot_host_setup_script
+    src__koru__tools___validate_adapter_kind --> src__koru__tools__infer_adapter_kind
+    src__koru__tools__build_tool_task_scaffold --> src__koru__tools___extract_tool_metadata
+    src__koru__tools__build_tool_task_scaffold --> src__koru__tools___validate_adapter_kind
+    src__koru__tools__build_tool_task_scaffold --> src__koru__tools___build_scaffold_prompt_lines
+    src__koru__tools__build_tool_task_scaffold --> src__koru__tools___build_scaffold_labels
+    src__koru__tools__build_tool_task_scaffold --> src__koru__tools___build_scaffold_inputs
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class src__koru__autonomous___action_up,src__koru__tools__build_tool_task_scaffold,src__koru__init__InitReport__summary,src__koru__autonomous_cycle___handle_queue_loop_phase,src__koru__autonomous_cycle___handle_autopilot_phase,src__koru__scan___scan_code2llm_analysis,src__koru__autonomous_parser__looks_like_autonomous_up_command,src__koru__context___build_shared_rules,src__koru__autonomous_process_guard__looks_like_autonomous_up_command,src__koru__agents__detect_agent_options,src__koru__init_host_environment___recommended_next_steps,src__koru__init_host_environment___render_host_environment_md,src__koru__autonomy__environment__probe_environment,src__koru__autopilot__cli_command___action_session_start,src__koru__autopilot__cli_command___run_direct_drive,src__koru__autopilot__cli_command___render_doctor_text,plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submitChat,plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__injectChat,scripts__planfile_sync_todo__do_from_todo,src__koru__autonomy__operator_pipeline__run_startup_operator_pipeline highCC
+    class src__koru__autonomous___action_up,src__koru__init__InitReport__summary,src__koru__autonomous_parser__looks_like_autonomous_up_command,src__koru__context___build_shared_rules,src__koru__autonomous_process_guard__looks_like_autonomous_up_command,src__koru__init_host_environment___recommended_next_steps,scripts__planfile_sync_todo__do_from_todo,plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submitChat,plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__injectChat highCC
     class services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,services__healing_webhook__ticket_builder__build_ticket_payload,src__korudsl__cli__main,src__korudsl__transform__library_from_any,src__korudsl__library__convert_goals_json_to_library,src__korudsl__library___emit_step,src__korudsl__library___emit_goal,src__koruapi__cli__main,src__koruapi__server___parse_invoke_request,src__koruapi__dashboard_serve___list_tickets,src__koruapi__dashboard_serve__apply_topology_post_update,src__koruapi__dashboard_serve___bulk_waiting_input_action,src__koruapi__dashboard_serve___try_stop_prior_koru_serve_listener,src__koruapi__dashboard_serve__bind_serve_server,src__koruapi__mcp_server___monitor_subprocess_oom,src__koruapi__mcp_server___parse_tickets_json,src__koruapi__mcp_server___tickets_for_status_filter,src__koruapi__mcp_server__tool_run_ticket,src__koruapi__mcp_server___run_single_gate,src__koruapi__mcp_server__tool_propose_edits,src__koruide__protocol__decode,src__koruide__host_setup___human_followups,src__koruide__daemon__AutopilotDaemon___handle_drive,src__koruide__daemon__AutopilotDaemon___drive_via_keyboard medCC

@@ -1,58 +1,42 @@
-# code2llm/evolution | 1124 func | 107f | 2026-05-19
+# code2llm/evolution | 1171 func | 107f | 2026-05-19
 # generated in 0.00s
 
-NEXT[10] (ranked by impact):
+NEXT[6] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous.py
       WHY: 1666L, 2 classes, max CC=17
       EFFORT: ~4h  IMPACT: 28322
 
   [2] !! SPLIT           src/koru/autopilot/cli_command.py
-      WHY: 1282L, 0 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 19230
+      WHY: 1329L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 18606
 
   [3] !  SPLIT-FUNC      _action_up  CC=17  fan=31
       WHY: CC=17 exceeds 15
       EFFORT: ~1h  IMPACT: 527
 
-  [4] !! SPLIT-FUNC      _handle_autopilot_phase  CC=29  fan=15
-      WHY: CC=29 exceeds 15
-      EFFORT: ~1h  IMPACT: 435
-
-  [5] !  SPLIT-FUNC      _handle_queue_loop_phase  CC=19  fan=19
-      WHY: CC=19 exceeds 15
-      EFFORT: ~1h  IMPACT: 361
-
-  [6] !  SPLIT-FUNC      _action_session_start  CC=15  fan=21
+  [4] !  SPLIT-FUNC      AutopilotBridge.injectChat  CC=15  fan=16
       WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 315
+      EFFORT: ~1h  IMPACT: 240
 
-  [7] !  SPLIT-FUNC      _scan_code2llm_analysis  CC=15  fan=20
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 300
-
-  [8] !  SPLIT-FUNC      run_startup_operator_pipeline  CC=15  fan=19
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 285
-
-  [9] !  SPLIT-FUNC      AutopilotBridge.injectChat  CC=18  fan=14
-      WHY: CC=18 exceeds 15
-      EFFORT: ~1h  IMPACT: 252
-
-  [10] !  SPLIT-FUNC      AutopilotBridge.submitChat  CC=15  fan=13
+  [5] !  SPLIT-FUNC      AutopilotBridge.submitChat  CC=15  fan=13
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 195
+
+  [6] !! SPLIT           planfile.yaml
+      WHY: 1319L, 0 classes, max CC=0
+      EFFORT: ~4h  IMPACT: 0
 
 
 RISKS[3]:
   ⚠ Splitting src/koru/autonomous.py may break 47 import paths
+  ⚠ Splitting src/koru/autopilot/cli_command.py may break 45 import paths
   ⚠ Splitting planfile.yaml may break 0 import paths
-  ⚠ Splitting src/koru/autopilot/cli_command.py may break 37 import paths
 
 METRICS-TARGET:
-  CC̄:          4.3 → ≤3.0
-  max-CC:      29 → ≤14
-  god-modules: 14 → 0
-  high-CC(≥15): 19 → ≤9
+  CC̄:          4.2 → ≤2.9
+  max-CC:      17 → ≤8
+  god-modules: 15 → 0
+  high-CC(≥15): 8 → ≤4
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +64,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.3 → now CC̄=4.3
+  prev CC̄=4.2 → now CC̄=4.2

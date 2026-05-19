@@ -1,12 +1,12 @@
-# redup/duplication | 34 groups | 126f 28894L | 2026-05-19
+# redup/duplication | 34 groups | 126f 29153L | 2026-05-19
 
 SUMMARY:
   files_scanned: 126
-  total_lines:   28894
+  total_lines:   29153
   dup_groups:    34
   dup_fragments: 79
   saved_lines:   369
-  scan_ms:       2849
+  scan_ms:       3200
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/autonomous.py  dup=115L  groups=12  frags=12  (0.4%)
@@ -123,10 +123,10 @@ DUPLICATES[34] (ranked by impact):
       src/koru/autonomous.py:138-140  (_allow_keyboard_autopilot_fallback)
       src/koru/autonomous_cycle.py:102-104  (_allow_keyboard_autopilot_fallback)
   [be027ff698a2786c]   STRU  _action_status  L=3 N=2 saved=3 sim=1.00
-      src/koru/autopilot/cli_command.py:764-766  (_action_status)
-      src/koru/autopilot/cli_command.py:769-773  (_action_shutdown)
+      src/koru/autopilot/cli_command.py:790-792  (_action_status)
+      src/koru/autopilot/cli_command.py:795-799  (_action_shutdown)
   [781cd2265323c713]   STRU  _systemd_user_dir  L=3 N=2 saved=3 sim=1.00
-      src/koru/autopilot/cli_command.py:1165-1167  (_systemd_user_dir)
+      src/koru/autopilot/cli_command.py:1212-1214  (_systemd_user_dir)
       src/koruide/config.py:63-65  (default_config_path)
   [58ffcb67f5092308]   STRU  redup_scan_command  L=3 N=2 saved=3 sim=1.00
       src/koru/redup_integration.py:14-16  (redup_scan_command)

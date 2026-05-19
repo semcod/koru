@@ -7,15 +7,15 @@
 - **Primary Language**: python
 - **Languages**: python: 127, shell: 42, yaml: 15, yml: 8, typescript: 6
 - **Analysis Mode**: static
-- **Total Functions**: 1189
+- **Total Functions**: 1236
 - **Total Classes**: 90
 - **Modules**: 213
-- **Entry Points**: 422
+- **Entry Points**: 423
 
 ## Architecture by Module
 
 ### plugins.koru-autopilot-vscode.src.extension
-- **Functions**: 102
+- **Functions**: 107
 - **Classes**: 2
 - **File**: `extension.ts`
 
@@ -33,8 +33,13 @@
 - **File**: `context.py`
 
 ### src.koru.autopilot.cli_command
-- **Functions**: 37
+- **Functions**: 45
 - **File**: `cli_command.py`
+
+### src.koru.autonomous_cycle
+- **Functions**: 36
+- **Classes**: 2
+- **File**: `autonomous_cycle.py`
 
 ### src.koruapi.mcp_server
 - **Functions**: 34
@@ -50,11 +55,6 @@
 - **Classes**: 1
 - **File**: `ide.py`
 
-### src.koru.autonomous_cycle
-- **Functions**: 28
-- **Classes**: 2
-- **File**: `autonomous_cycle.py`
-
 ### services.healing-webhook.app
 - **Functions**: 27
 - **File**: `app.py`
@@ -63,6 +63,11 @@
 - **Functions**: 24
 - **Classes**: 2
 - **File**: `os_injector.py`
+
+### src.koru.scan
+- **Functions**: 24
+- **Classes**: 2
+- **File**: `scan.py`
 
 ### plugins.koru-autopilot-vscode.src.probe-ladder
 - **Functions**: 24
@@ -78,6 +83,11 @@
 - **Classes**: 2
 - **File**: `doctor.py`
 
+### src.koru.autonomy.operator_pipeline
+- **Functions**: 21
+- **Classes**: 2
+- **File**: `operator_pipeline.py`
+
 ### src.koruide.injector
 - **Functions**: 20
 - **Classes**: 4
@@ -92,19 +102,9 @@
 - **Classes**: 2
 - **File**: `bootstrap.py`
 
-### src.koru.scan
+### src.koru.tools
 - **Functions**: 19
-- **Classes**: 2
-- **File**: `scan.py`
-
-### plugins.koru-autopilot-vscode.src.socketPath
-- **Functions**: 18
-- **File**: `socketPath.ts`
-
-### src.koru.autonomy.operator_pipeline
-- **Functions**: 18
-- **Classes**: 2
-- **File**: `operator_pipeline.py`
+- **File**: `tools.py`
 
 ## Key Entry Points
 
@@ -137,9 +137,6 @@ Main execution flows into the system:
 ### src.koru.autonomy.env.autonomous_environ_doctor_probe
 > Return ``(status, detail)`` for ``koru --doctor``; process-global, no I/O.
 - **Calls**: os.environ.get, src.koru.autonomy.env.env_truthy, os.environ.get, os.environ.get, src.koru.autonomy.env.env_truthy, None.strip, None.lower, None.strip
-
-### src.koru.autopilot.cli_command._action_session_start
-- **Calls**: src.koru.autopilot.cli_command._resolve_session_ides, max, captured.items, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, float, scripts.koru-soak-monitor.print, time.sleep
 
 ### src.koru.autopilot.cli_command._action_drive
 - **Calls**: src.koru.autopilot.cli_command._client, src.koru.autopilot.cli_command._should_fallback_to_direct, scripts.koru-soak-monitor.print, None.strip, None.strip, scripts.koru-soak-monitor.print, src.koru.autopilot.cli_command._run_direct_drive, client.is_running
@@ -222,6 +219,10 @@ Returns the process exit code (0 on clean shutdown).
 ### src.koru.doctor._check_planfile_sprints
 - **Calls**: sorted, src.koru.runtime.planfile_dir, sprints.is_dir, sprints.glob, data.get, isinstance, yaml.safe_load, isinstance
 
+### services.healing-webhook.app._run_vallm_validate
+> Full pipeline including LLM-as-judge (tier 2). Slower; uses LLM API key.
+- **Calls**: cmd.extend, subprocess.run, None.set, None.inc, _json.loads, float, None.inc, None.inc
+
 ## Process Flows
 
 Key execution flows identified:
@@ -244,9 +245,9 @@ _drive_via_keyboard [src.koruide.daemon.AutopilotDaemon]
           └─> _iter_proc_pids
           └─> _read_comm
   └─ →> pick_target
+      └─> focused_ide
+          └─> detect_focused_ide_id
       └─> detect_terminal_host_ide_id
-          └─> _terminal_ide_from_env
-          └─> _terminal_ide_from_parent_chain
 ```
 
 ### Flow 4: _handle_plugin_event
@@ -294,15 +295,7 @@ autonomous_environ_doctor_probe [src.koru.autonomy.env]
   └─> env_truthy
 ```
 
-### Flow 9: _action_session_start
-```
-_action_session_start [src.koru.autopilot.cli_command]
-  └─> _resolve_session_ides
-  └─ →> print
-  └─ →> print
-```
-
-### Flow 10: _action_drive
+### Flow 9: _action_drive
 ```
 _action_drive [src.koru.autopilot.cli_command]
   └─> _client
@@ -311,10 +304,17 @@ _action_drive [src.koru.autopilot.cli_command]
   └─ →> print
 ```
 
+### Flow 10: _task_main
+```
+_task_main [koru.cli]
+  └─ →> print
+  └─ →> print
+```
+
 ## Key Classes
 
 ### plugins.koru-autopilot-vscode.src.extension.AutopilotBridge
-- **Methods**: 100
+- **Methods**: 105
 - **Key Methods**: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.tryConnectNext, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.p, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.debugLog, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.sock
 
 ### src.koruide.daemon.AutopilotDaemon
@@ -532,7 +532,6 @@ Returns (should_kill, logs) tuple.
 Functions exposed as public API (no underscore prefix):
 
 - `src.koru.autonomous_parser.build_parser` - 65 calls
-- `src.koru.agents.detect_agent_options` - 61 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 50 calls
 - `src.koru.context.render_markdown_handoff` - 47 calls
 - `src.koru.policy.load_policy` - 43 calls
@@ -545,7 +544,6 @@ Functions exposed as public API (no underscore prefix):
 - `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
 - `src.koru.scan.scan_pytest_collect` - 24 calls
 - `src.koru.autonomy.ide_work.build_ide_work_prompt` - 23 calls
-- `src.koru.autonomy.operator_pipeline.run_startup_operator_pipeline` - 23 calls
 - `src.koruapi.dashboard_serve.apply_topology_post_update` - 22 calls
 - `src.koru.gate.parse_authorizations` - 22 calls
 - `src.koru.init.init_project` - 22 calls
@@ -555,9 +553,9 @@ Functions exposed as public API (no underscore prefix):
 - `services.healing-webhook.app.probe_failure` - 21 calls
 - `src.koruide.protocol.decode` - 21 calls
 - `src.koru.autonomous_startup.build_startup_probe` - 21 calls
-- `src.koru.tools.build_tool_task_scaffold` - 21 calls
 - `src.koru.doctor.render_text` - 21 calls
 - `src.koru.gc.collect_gc_candidates` - 21 calls
+- `src.koru.agents.detect_agent_options` - 21 calls
 - `src.koruapi.cli.main` - 20 calls
 - `src.koruide.os_injector.inject_with_profile` - 20 calls
 - `src.koru.autonomous_diagnostics.build_idle_checks` - 20 calls
@@ -571,6 +569,8 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.agent_backends.load_agent_integration_config` - 18 calls
 - `src.koru.loop.run_closed_loop` - 18 calls
 - `src.koru.init_host_environment.build_host_environment_report` - 18 calls
+- `src.koru.autonomy.operator_pipeline.run_startup_operator_pipeline` - 18 calls
+- `src.koru.mcp_provision.ensure_koru_mcp_not_disabled` - 17 calls
 
 ## System Interactions
 

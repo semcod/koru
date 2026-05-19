@@ -1,15 +1,13 @@
 # code2llm call graph | /home/tom/github/semcod/koru
 # generated in 0.19s
 # nodes: 432 | edges: 500 | modules: 70
-# CC̄=4.2
+# CC̄=4.1
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
     CC=0  in:282  out:0  total:282
   src.koruapi.dashboard_serve._build_handler
     CC=1  in:1  out:82  total:83
-  src.koru.agents.detect_agent_options
-    CC=16  in:3  out:61  total:64
   src.koru.context.render_markdown_handoff
     CC=10  in:5  out:47  total:52
   src.koruide.daemon.AutopilotDaemon._drive_via_keyboard
@@ -34,16 +32,18 @@ HUBS[20]:
     CC=12  in:1  out:28  total:29
   koru.cli._task_main
     CC=11  in:0  out:27  total:27
+  services.healing-webhook.app._resolve_affected_files
+    CC=11  in:2  out:24  total:26
   src.koruide.ide.detect_running_ides
     CC=13  in:16  out:10  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
-  services.healing-webhook.app._resolve_affected_files
-    CC=11  in:2  out:24  total:26
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
-  src.koru.init.init_project
-    CC=8  in:2  out:22  total:24
+  src.koru.agents.detect_agent_options
+    CC=4  in:3  out:21  total:24
+  koru.cli._render_runtime_context_text
+    CC=14  in:1  out:23  total:24
 
 MODULES:
   koru.cli  [41 funcs]
@@ -100,7 +100,7 @@ MODULES:
     try_agent_env_exports  CC=7  out:7
   src.koru.agents  [2 funcs]
     agent_lane_environment  CC=1  out:3
-    detect_agent_options  CC=16  out:61
+    detect_agent_options  CC=4  out:21
   src.koru.autonomous  [28 funcs]
     _ancestor_pids  CC=7  out:8
     _apply_agent_lane_environ  CC=3  out:3
@@ -215,7 +215,7 @@ MODULES:
   src.koru.tasks  [1 funcs]
     create_nl_task  CC=12  out:28
   src.koru.tools  [4 funcs]
-    build_tool_task_scaffold  CC=16  out:21
+    build_tool_task_scaffold  CC=2  out:6
     detect_tools  CC=4  out:8
     find_tool_entry  CC=4  out:6
     load_tool_registry  CC=11  out:13

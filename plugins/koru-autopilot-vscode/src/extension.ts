@@ -428,6 +428,88 @@ class AutopilotBridge {
     }
   }
 
+  private async saveClipboard(): Promise<string | null> {
+    try {
+      return await vscode.env.clipboard.readText();
+    } catch {
+      return null;
+    }
+  }
+
+  private async restoreClipboard(previous: string | null): Promise<void> {
+    if (previous !== null) {
+      try {
+        await vscode.env.clipboard.writeText(previous);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  private sendFocusFailureAck(env: Envelope, focus: { ok: boolean; command?: string }): void {
+    this.send({
+      type: "ack",
+      id: env.id,
+      ok: false,
+      opened: false,
+      submitted: false,
+      probe_ladder: this.probeLadderEnabled(),
+      message:
+        "chat input is not focused/open (no supported focus command in this IDE build). Open chat input manually, then retry.",
+    });
+  }
+
+  private sendPasteFailureAck(env: Envelope, focus: { ok: boolean; command?: string }): void {
+    this.send({
+      type: "ack",
+      id: env.id,
+      ok: false,
+      opened: true,
+      probe_ladder: this.probeLadderEnabled(),
+      winning_focus_open: focus.command,
+      message: "chat opened but paste command failed (probe rejected editor contamination)",
+    });
+  }
+
+  private sendSubmitFailureAck(
+    env: Envelope,
+    focus: { ok: boolean; command?: string },
+    pasted: { ok: boolean; command?: string }
+  ): void {
+    this.send({
+      type: "ack",
+      id: env.id,
+      ok: false,
+      delivered: false,
+      opened: true,
+      submitted: false,
+      probe_ladder: this.probeLadderEnabled(),
+      winning_focus_open: focus.command,
+      winning_paste: pasted.command,
+      message: "chat opened and text injected, but submit command failed",
+    });
+  }
+
+  private sendSuccessAck(
+    env: Envelope,
+    focus: { ok: boolean; command?: string },
+    pasted: { ok: boolean; command?: string },
+    submitCmd: string | undefined
+  ): void {
+    this.send({
+      type: "ack",
+      id: env.id,
+      ok: true,
+      delivered: true,
+      opened: true,
+      submitted: true,
+      probe_ladder: this.probeLadderEnabled(),
+      winning_focus_open: focus.command,
+      winning_paste: pasted.command,
+      winning_submit: submitCmd,
+    });
+  }
+
   private async injectChat(env: Envelope): Promise<void> {
     const text = typeof env.text === "string" ? env.text : "";
     const submit = env.submit !== false;
@@ -437,12 +519,7 @@ class AutopilotBridge {
     }
     // Snapshot the user's clipboard BEFORE we do anything else so we
     // can always restore it — even if focus/paste/submit throws (R8).
-    let previous: string | null = null;
-    try {
-      previous = await vscode.env.clipboard.readText();
-    } catch {
-      previous = null;
-    }
+    const previous = await this.saveClipboard();
     try {
       const focus = await this.focusChat();
       if (focus.ok) {
@@ -450,29 +527,12 @@ class AutopilotBridge {
         await this.sleep(80);
       }
       if (!focus.ok) {
-        this.send({
-          type: "ack",
-          id: env.id,
-          ok: false,
-          opened: false,
-          submitted: false,
-          probe_ladder: this.probeLadderEnabled(),
-          message:
-            "chat input is not focused/open (no supported focus command in this IDE build). Open chat input manually, then retry.",
-        });
+        this.sendFocusFailureAck(env, focus);
         return;
       }
       const pasted = await this.pasteText(text);
       if (!pasted.ok) {
-        this.send({
-          type: "ack",
-          id: env.id,
-          ok: false,
-          opened: true,
-          probe_ladder: this.probeLadderEnabled(),
-          winning_focus_open: focus.command,
-          message: "chat opened but paste command failed (probe rejected editor contamination)",
-        });
+        this.sendPasteFailureAck(env, focus);
         return;
       }
       let submitted = false;
@@ -488,40 +548,16 @@ class AutopilotBridge {
         this.send({ type: "message.sent", chat: "default", text: text.substring(0, 200), length: text.length });
       }
       if (submit && !submitted) {
-        this.send({
-          type: "ack",
-          id: env.id,
-          ok: false,
-          delivered: false,
-          opened: true,
-          submitted,
-          probe_ladder: this.probeLadderEnabled(),
-          winning_focus_open: focus.command,
-          winning_paste: pasted.command,
-          message: "chat opened and text injected, but submit command failed",
-        });
+        this.sendSubmitFailureAck(env, focus, pasted);
         return;
       }
-      this.send({
-        type: "ack",
-        id: env.id,
-        ok: true,
-        delivered: true,
-        opened: true,
-        submitted,
-        probe_ladder: this.probeLadderEnabled(),
-        winning_focus_open: focus.command,
-        winning_paste: pasted.command,
-        winning_submit: submitCmd,
-      });
+      this.sendSuccessAck(env, focus, pasted, submitCmd);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.send({ type: "ack", id: env.id, ok: false, message });
     } finally {
       // Restore clipboard regardless of outcome.
-      if (previous !== null) {
-        try { await vscode.env.clipboard.writeText(previous); } catch { /* ignore */ }
-      }
+      await this.restoreClipboard(previous);
     }
   }
 
