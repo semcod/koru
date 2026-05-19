@@ -1487,6 +1487,107 @@ def _cleanup_autonomous_session(
     _stop_process(wup_process, "WUP watcher", stdio_format=stdio_format)
 
 
+def _run_autonomous_cycle(
+    *,
+    cycle: int,
+    args: argparse.Namespace,
+    project: Path,
+    client: object,
+    daemon: object,
+    thread: threading.Thread,
+    socket_path: Path,
+    autopilot_socket_observed_at_boot: bool,
+    queue_name: str | None,
+    enable_scan: bool,
+    loop_state: object,
+    checkpoint_path: Path,
+    diagnostic_state_dir: Path,
+    wup_process: subprocess.Popen | None,
+    correlation_id: str,
+) -> bool:
+    """Run one autonomous cycle. Returns True if the loop should exit."""
+    if args.emit_events == "human":
+        print(f"\n=== koru autonomous cycle #{cycle} ===")
+    client, daemon, thread = _restart_daemon_if_needed(
+        args,
+        client,
+        socket_path,
+        daemon,
+        thread,
+        autopilot_socket_observed_at_boot,
+        project,
+    )
+    _scan_result, queue_result, _autopilot_status, diag_result = _run_cycle(
+        cycle=cycle,
+        project=project,
+        actor=args.actor,
+        queue_name=queue_name,
+        enable_scan=enable_scan,
+        max_iterations=args.max_iterations,
+        enable_autopilot=args.enable_autopilot,
+        autopilot_ide=args.autopilot_ide,
+        drive_prompt=args.drive_prompt,
+        submit=args.submit,
+        include_semcod_artifacts=args.semcod_artifacts,
+        client=client,
+        state=loop_state,
+        idle_diagnostics=args.idle_diagnostics,
+        diagnostic_tickets=args.diagnostic_tickets,
+        diagnostic_ticket_queue=args.diagnostic_ticket_queue,
+        diagnostic_ticket_priority=args.diagnostic_ticket_priority,
+        diagnostic_state_dir=diagnostic_state_dir,
+        wup_watch_enabled=wup_process is not None,
+        wup_diagnostic_tickets=args.wup_diagnostic_tickets,
+        wup_ticket_queue=args.wup_ticket_queue,
+        strict_diagnostics=args.strict_diagnostics,
+        autopilot_action=args.autopilot_action,
+        autopilot_on_idle_only=args.autopilot_on_idle_only,
+        autopilot_skip_on_diagnostics_fail=args.autopilot_skip_on_diagnostics_fail,
+        autopilot_skip_drive_idle_streak=args.autopilot_skip_drive_idle_streak,
+        autopilot_skip_statuses=args.autopilot_skip_statuses,
+        scan_skip_if_clean=args.scan_skip_if_clean,
+        scan_skip_after=args.scan_skip_after,
+        scan_after_idle_queue=args.scan_after_idle_queue,
+        scan_after_idle_min_interval_seconds=args.scan_after_idle_min_interval,
+        topology_integration=args.topology_integration,
+        stdio_format=args.emit_events,
+        correlation_id=correlation_id,
+    )
+    _save_loop_checkpoint(
+        checkpoint_path,
+        cycle=cycle,
+        state=loop_state,
+        queue_status=queue_result.last_status,
+        waiting_ticket=_queue_loop_waiting_ticket_label(queue_result),
+    )
+
+    if _handle_cycle_exit_conditions(args, queue_result, cycle, correlation_id):
+        return True
+
+    effective_sleep = _compute_backoff_sleep(
+        args.sleep_seconds,
+        loop_state.stagnation_streak,
+        args.max_sleep_seconds,
+        args.backoff_on_stagnation,
+    )
+    if (
+        queue_result.last_status == "idle"
+        and loop_state.last_message_sent_ts > 0
+        and time.time() - loop_state.last_message_sent_ts < 120.0
+    ):
+        effective_sleep = min(effective_sleep, 15.0)
+    _stdio_info(
+        f"koru autonomous: summary cycle={cycle} queue={queue_result.last_status} "
+        f"waiting={_queue_loop_waiting_ticket_label(queue_result)} "
+        f"streak={loop_state.stagnation_streak} diagnostics={diag_result.status} "
+        f"autopilot={_autopilot_status} sleep={effective_sleep}s",
+        fmt=args.emit_events,
+    )
+    if effective_sleep > 0:
+        time.sleep(effective_sleep)
+    return False
+
+
 def _action_up(args: argparse.Namespace) -> int:
     previous_stdio_format_env = os.environ.get("KORU_STDIO_FORMAT")
     correlation_id, project, guard_rc = _setup_autonomous_session(args)
@@ -1544,85 +1645,25 @@ def _action_up(args: argparse.Namespace) -> int:
         cycle = restored_cycle or 0
         while True:
             cycle += 1
-            if args.emit_events == "human":
-                print(f"\n=== koru autonomous cycle #{cycle} ===")
-            client, daemon, thread = _restart_daemon_if_needed(
-                args,
-                client,
-                socket_path,
-                daemon,
-                thread,
-                autopilot_socket_observed_at_boot,
-                project,
-            )
-            _scan_result, queue_result, _autopilot_status, diag_result = _run_cycle(
+            should_exit = _run_autonomous_cycle(
                 cycle=cycle,
+                args=args,
                 project=project,
-                actor=args.actor,
+                client=client,
+                daemon=daemon,
+                thread=thread,
+                socket_path=socket_path,
+                autopilot_socket_observed_at_boot=autopilot_socket_observed_at_boot,
                 queue_name=queue_name,
                 enable_scan=enable_scan,
-                max_iterations=args.max_iterations,
-                enable_autopilot=args.enable_autopilot,
-                autopilot_ide=autopilot_ide,
-                drive_prompt=args.drive_prompt,
-                submit=args.submit,
-                include_semcod_artifacts=args.semcod_artifacts,
-                client=client,
-                state=loop_state,
-                idle_diagnostics=args.idle_diagnostics,
-                diagnostic_tickets=args.diagnostic_tickets,
-                diagnostic_ticket_queue=args.diagnostic_ticket_queue,
-                diagnostic_ticket_priority=args.diagnostic_ticket_priority,
+                loop_state=loop_state,
+                checkpoint_path=checkpoint_path,
                 diagnostic_state_dir=diagnostic_state_dir,
-                wup_watch_enabled=wup_process is not None,
-                wup_diagnostic_tickets=args.wup_diagnostic_tickets,
-                wup_ticket_queue=args.wup_ticket_queue,
-                strict_diagnostics=args.strict_diagnostics,
-                autopilot_action=args.autopilot_action,
-                autopilot_on_idle_only=args.autopilot_on_idle_only,
-                autopilot_skip_on_diagnostics_fail=args.autopilot_skip_on_diagnostics_fail,
-                autopilot_skip_drive_idle_streak=args.autopilot_skip_drive_idle_streak,
-                autopilot_skip_statuses=args.autopilot_skip_statuses,
-                scan_skip_if_clean=args.scan_skip_if_clean,
-                scan_skip_after=args.scan_skip_after,
-                scan_after_idle_queue=args.scan_after_idle_queue,
-                scan_after_idle_min_interval_seconds=args.scan_after_idle_min_interval,
-                topology_integration=args.topology_integration,
-                stdio_format=args.emit_events,
+                wup_process=wup_process,
                 correlation_id=correlation_id,
             )
-            _save_loop_checkpoint(
-                checkpoint_path,
-                cycle=cycle,
-                state=loop_state,
-                queue_status=queue_result.last_status,
-                waiting_ticket=_queue_loop_waiting_ticket_label(queue_result),
-            )
-
-            if _handle_cycle_exit_conditions(args, queue_result, cycle, correlation_id):
+            if should_exit:
                 return 0
-
-            effective_sleep = _compute_backoff_sleep(
-                args.sleep_seconds,
-                loop_state.stagnation_streak,
-                args.max_sleep_seconds,
-                args.backoff_on_stagnation,
-            )
-            if (
-                queue_result.last_status == "idle"
-                and loop_state.last_message_sent_ts > 0
-                and time.time() - loop_state.last_message_sent_ts < 120.0
-            ):
-                effective_sleep = min(effective_sleep, 15.0)
-            _stdio_info(
-                f"koru autonomous: summary cycle={cycle} queue={queue_result.last_status} "
-                f"waiting={_queue_loop_waiting_ticket_label(queue_result)} "
-                f"streak={loop_state.stagnation_streak} diagnostics={diag_result.status} "
-                f"autopilot={_autopilot_status} sleep={effective_sleep}s",
-                fmt=args.emit_events,
-            )
-            if effective_sleep > 0:
-                time.sleep(effective_sleep)
     except KeyboardInterrupt:
         stop_reason = "sigterm" if stopped_by_sigterm else "keyboard_interrupt"
         if args.emit_events == "jsonl":

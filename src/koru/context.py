@@ -667,7 +667,8 @@ def _build_setup_instructions() -> list[str]:
     ]
 
 
-def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[str]:
+def _build_policy_rules(policy: Policy) -> list[str]:
+    """Return rules derived from policy booleans and CI settings."""
     rules: list[str] = []
     if not policy.allow_commit:
         rules.append("DO NOT run `git commit`. Commits are made by CI/CD or a human reviewer.")
@@ -695,6 +696,12 @@ def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[s
                 "Before completing a ticket, ask the human operator to "
                 "run the project's CI gate. Do not self-certify.",
             )
+    return rules
+
+
+def _build_ticket_rules(ticket: dict[str, Any] | None) -> list[str]:
+    """Return rules derived from ticket state and priority."""
+    rules: list[str] = []
     if ticket and isinstance(ticket.get("files"), list) and ticket["files"]:
         scope = ", ".join(str(f) for f in ticket["files"][:10])
         rules.append(
@@ -729,6 +736,11 @@ def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[s
             "If you are blocked or need a human decision, call "
             '`planfile ticket block <id> --reason "<question>"` and stop.',
         )
+    return rules
+
+
+def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[str]:
+    rules = _build_policy_rules(policy) + _build_ticket_rules(ticket)
     rules.extend(policy.notes)
     return rules
 

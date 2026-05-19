@@ -149,17 +149,37 @@ def _wup_config_path(config: WupWatchConfig) -> Path:
     return config.config if config.config is not None else config.project / "wup.yaml"
 
 
-def _profiled_compose_services(config: WupWatchConfig) -> list[tuple[str, tuple[str, ...], str]]:
-    """Return compose services that require opt-in profiles from the WUP manifest."""
+def _parse_wup_services(config: WupWatchConfig) -> dict | None:
+    """Load and parse WUP YAML, returning the services dict or None."""
     path = _wup_config_path(config)
     try:
         raw = yaml.safe_load(path.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError):
-        return []
+        return None
     if not isinstance(raw, dict):
-        return []
+        return None
     services = raw.get("monitoring", {}).get("wup_services", {})
-    if not isinstance(services, dict):
+    return services if isinstance(services, dict) else None
+
+
+def _extract_docker_items(service: dict) -> list[tuple[str, tuple[str, ...], str]]:
+    """Extract compose service items from one WUP service entry."""
+    items: list[tuple[str, tuple[str, ...], str]] = []
+    for docker in service.get("docker", []) or []:
+        if not isinstance(docker, dict):
+            continue
+        compose_service = str(docker.get("compose_service") or "").strip()
+        compose_file = str(docker.get("compose_file") or "docker-compose.yml").strip()
+        profiles = tuple(str(p).strip() for p in docker.get("profiles", []) or [] if str(p).strip())
+        if compose_service and compose_file and profiles:
+            items.append((compose_file, profiles, compose_service))
+    return items
+
+
+def _profiled_compose_services(config: WupWatchConfig) -> list[tuple[str, tuple[str, ...], str]]:
+    """Return compose services that require opt-in profiles from the WUP manifest."""
+    services = _parse_wup_services(config)
+    if services is None:
         return []
 
     needed: list[tuple[str, tuple[str, ...], str]] = []
@@ -167,15 +187,7 @@ def _profiled_compose_services(config: WupWatchConfig) -> list[tuple[str, tuple[
     for service in services.values():
         if not isinstance(service, dict):
             continue
-        for docker in service.get("docker", []) or []:
-            if not isinstance(docker, dict):
-                continue
-            compose_service = str(docker.get("compose_service") or "").strip()
-            compose_file = str(docker.get("compose_file") or "docker-compose.yml").strip()
-            profiles = tuple(str(p).strip() for p in docker.get("profiles", []) or [] if str(p).strip())
-            if not compose_service or not compose_file or not profiles:
-                continue
-            item = (compose_file, profiles, compose_service)
+        for item in _extract_docker_items(service):
             if item not in seen:
                 seen.add(item)
                 needed.append(item)
@@ -188,7 +200,8 @@ def _ensure_wup_profiled_compose_services(
     stdio_format: str = "human",
 ) -> None:
     """Start profiled compose services that WUP live probes depend on."""
-    if os.environ.get("KORU_WUP_COMPOSE_PROFILES", "1").strip().lower() in {"0", "false", "no", "off"}:
+    env_flag = os.environ.get("KORU_WUP_COMPOSE_PROFILES", "1").strip().lower()
+    if env_flag in {"0", "false", "no", "off"}:
         return
     if shutil.which("docker") is None:
         return

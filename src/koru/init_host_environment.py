@@ -99,17 +99,13 @@ def build_host_environment_report() -> dict[str, Any]:
     return merged
 
 
-def _recommended_next_steps(base: dict[str, Any], groups: list[str]) -> list[str]:
+def _build_backend_steps(
+    session: str,
+    selected: str | None,
+    groups: list[str],
+) -> list[str]:
+    """Return backend-related next steps based on session type."""
     steps: list[str] = []
-    session = (base.get("session") or "").lower()
-    selected = base.get("selected_backend")
-    pm = base.get("package_manager")
-
-    steps.append(
-        "Tier 0: install the koru autopilot editor extension and run "
-        "`koru autopilot daemon --project .` (works on X11 and Wayland).",
-    )
-
     if not selected:
         steps.append(
             "No keyboard injector candidate passed the probe — install tools or use the plugin "
@@ -132,6 +128,17 @@ def _recommended_next_steps(base: dict[str, Any], groups: list[str]) -> list[str
             "`xclip`/`xsel`+Ctrl+V when available (see docs/autopilot-quickstart.md).",
         )
 
+    if session == "wayland" and shutil.which("wtype") and not shutil.which("ydotool"):
+        steps.append(
+            "If `wtype` fails with “virtual keyboard protocol”, switch to ydotool or the IDE "
+            "extension — that error is compositor-side, not a broken wtype install.",
+        )
+    return steps
+
+
+def _build_pm_steps(pm: str | None, base: dict[str, Any]) -> list[str]:
+    """Return package-manager-related next steps."""
+    steps: list[str] = []
     if pm == "apt" and base.get("automated_apt_suggestion"):
         steps.append(
             "Debian/Ubuntu: run `.planfile/.koru/setup-autopilot-host.sh --install --dry-run` "
@@ -142,16 +149,22 @@ def _recommended_next_steps(base: dict[str, Any], groups: list[str]) -> list[str
             f"Package manager hint: {pm} — install xdotool / wtype / ydotool / xclip with that "
             "stack (koru only auto-installs via apt-get).",
         )
+    return steps
 
-    if session == "wayland" and shutil.which("wtype") and not shutil.which("ydotool"):
-        steps.append(
-            "If `wtype` fails with “virtual keyboard protocol”, switch to ydotool or the IDE "
-            "extension — that error is compositor-side, not a broken wtype install.",
-        )
 
+def _recommended_next_steps(base: dict[str, Any], groups: list[str]) -> list[str]:
+    session = (base.get("session") or "").lower()
+    selected = base.get("selected_backend")
+    pm = base.get("package_manager")
+
+    steps = [
+        "Tier 0: install the koru autopilot editor extension and run "
+        "`koru autopilot daemon --project .` (works on X11 and Wayland).",
+    ]
+    steps.extend(_build_backend_steps(session, selected, groups))
+    steps.extend(_build_pm_steps(pm, base))
     if not groups:
         steps.append("Could not read `id -Gn` — verify group membership manually if ydotool fails.")
-
     return steps
 
 

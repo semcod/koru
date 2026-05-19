@@ -160,7 +160,10 @@ flowchart TD
         scripts__planfile_sync_todo__build_auto_section["build_auto_section"]
         scripts__planfile_sync_todo__replace_auto_section["replace_auto_section"]
         scripts__planfile_sync_todo__do_from_planfile("do_from_planfile CC=14")
-        scripts__planfile_sync_todo__do_from_todo{{do_from_todo CC=19}}
+        scripts__planfile_sync_todo___extract_todo_items["_extract_todo_items"]
+        scripts__planfile_sync_todo___resolve_import_labels["_resolve_import_labels"]
+        scripts__planfile_sync_todo___create_ticket["_create_ticket"]
+        scripts__planfile_sync_todo__do_from_todo("do_from_todo CC=10")
         scripts__planfile_sync_todo___llm_stub["_llm_stub"]
         scripts__planfile_sync_todo__main["main"]
     end
@@ -909,81 +912,6 @@ flowchart TD
     src__koru__queue_clean__clean_queue --> src__koru__queue_clean___list_tickets
     src__koru__queue_clean__clean_queue --> src__koru__queue_clean__find_candidates
     src__koru__queue_clean__clean_queue --> src__koru__queue_clean___close_ticket
-    src__koru__autonomous___try_os_injector_fallback --> src__koruide__os_injector__load_profile
-    src__koru__autonomous___try_os_injector_fallback --> src__koruide__os_injector__inject_with_profile
-    src__koru__autonomous___stdio_info --> src__koru__activity_log__activity_info
-    src__koru__autonomous___daemon_activity_log --> src__koru__activity_log__activity
-    src__koru__autonomous___resolve_autopilot_ide --> src__koru__ide_router__resolve_ide_route
-    src__koru__autonomous___apply_agent_lane_environ --> src__koru__agents__agent_lane_environment
-    src__koru__autonomous___looks_like_autonomous_up_command --> src__koru__autonomous_parser__looks_like_autonomous_up_command
-    src__koru__autonomous___find_existing_autonomous_processes --> src__koru__autonomous___process_cwd
-    src__koru__autonomous___find_existing_autonomous_processes --> src__koru__autonomous___command_project
-    src__koru__autonomous___find_existing_autonomous_processes --> src__koru__autonomous___ancestor_pids
-    src__koru__autonomous___find_existing_autonomous_processes --> src__koru__autonomous___looks_like_autonomous_up_command
-    src__koru__autonomous__stop_prior_autonomous_for_auto_start --> src__koru__autonomous___stdio_info
-    src__koru__autonomous__stop_prior_autonomous_for_auto_start --> src__koru__autonomous___terminate_existing_processes
-    src__koru__autonomous__stop_prior_autonomous_for_auto_start --> src__koru__autonomous___find_existing_wup_processes
-    src__koru__autonomous__stop_prior_autonomous_for_auto_start --> src__koru__autonomous___as_managed
-    src__koru__autonomous__stop_prior_autonomous_for_auto_start --> src__koru__autonomous___find_existing_autonomous_processes
-    src__koru__autonomous___find_existing_wup_processes --> src__koru__autonomous___process_cwd
-    src__koru__autonomous___find_existing_wup_processes --> src__koru__autonomous___ancestor_pids
-    src__koru__autonomous___terminate_existing_processes --> src__koru__autonomous___stdio_info
-    src__koru__autonomous___confirm_replace_existing --> scripts__koru_soak_monitor__print
-    src__koru__autonomous___guard_existing_autonomous_processes --> src__koru__autonomous___stdio_info
-    src__koru__autonomous___guard_existing_autonomous_processes --> src__koru__autonomous___terminate_existing_processes
-    src__koru__autonomous___guard_existing_autonomous_processes --> src__koru__autonomous___confirm_replace_existing
-    src__koru__autonomous___guard_existing_autonomous_processes --> src__koru__autonomous___find_existing_wup_processes
-    src__koru__autonomous___guard_existing_autonomous_processes --> src__koru__autonomous___as_managed
-    src__koru__autonomous___guard_existing_autonomous_processes --> src__koru__autonomous___find_existing_autonomous_processes
-    src__koru__autonomous___ensure_init --> src__koru__init__init_project
-    src__koru__autonomous___ensure_init --> src__koru__autonomous___stdio_info
-    src__koru__autonomous___start_or_reuse_daemon --> src__koru__ide_client__build_ide_client
-    src__koru__autonomous___start_or_reuse_daemon --> src__koru__autonomous___stdio_info
-    src__koru__autonomous___wait_for_autopilot_plugin --> src__koru__autonomous___status_has_autopilot_plugin
-    src__koru__autonomous___is_topology_enabled --> src__koru__topology__is_component_enabled
-    src__koru__autonomous___is_topology_enabled --> src__koru__topology__is_pipeline_enabled
-    src__koru__autonomous___load_loop_checkpoint --> src__koru__autonomous___stdio_info
-    src__koru__autonomous___run_command_check --> src__koru__autonomous___stdio_info
-    src__koru__autonomous___create_diagnostic_ticket --> src__koru__activity_log__activity
-    src__koru__autonomous___create_diagnostic_ticket --> src__koru__tasks__create_nl_task
-    src__koru__autonomous___create_diagnostic_ticket --> src__koru__autonomous___stdio_info
-    src__koru__autonomous___run_idle_diagnostics --> src__koru__autonomous___create_diagnostic_ticket
-    src__koru__autonomous___setup_autonomous_session --> src__koru__autonomous___guard_existing_autonomous_processes
-    src__koru__autonomous___setup_autonomous_session --> src__koru__autonomous___ensure_init
-    src__koru__autonomous___setup_autonomous_session --> src__koru__stdio_events__write_stdio_event
-    src__koru__autonomous___setup_autopilot_daemon --> src__koru__autonomous___start_or_reuse_daemon
-    src__koru__autonomous___setup_autopilot_daemon --> src__koruide__socket__default_socket_path
-    src__koru__autonomous___configure_loop_state --> src__koru__autonomous___apply_agent_lane_environ
-    src__koru__autonomous___configure_loop_state --> src__koru__autonomous_startup__resolve_autopilot_ide_for_autonomous
-    src__koru__autonomous___configure_loop_state --> src__koru__autonomous___load_loop_checkpoint
-    src__koru__autonomous___run_mcp_provision --> src__koru__mcp_provision__ensure_koru_mcp_not_disabled
-    src__koru__autonomous___run_mcp_provision --> src__koru__autonomous___stdio_info
-    src__koru__autonomous___setup_autopilot_plugin --> src__koruide__plugin_installer__install_plugin_for_ide
-    src__koru__autonomous___setup_autopilot_plugin --> src__koru__autonomous___stdio_info
-    src__koru__autonomous___setup_autopilot_plugin --> src__koruide__plugin_installer__format_plugin_install_result
-    src__koru__autonomous___setup_autopilot_plugin --> src__koru__autonomous___wait_for_autopilot_plugin
-    src__koru__autonomous___setup_autopilot_plugin --> src__koru__autonomous___allow_keyboard_autopilot_fallback
-    src__koru__autonomous___run_operator_pipeline --> src__koru__autonomous_startup__format_post_startup_operator_hints
-    src__koru__autonomous___run_operator_pipeline --> src__koru__autonomous___stdio_info
-    src__koru__autonomous___run_operator_pipeline --> src__koru__autonomy__operator_pipeline__run_startup_operator_pipeline
-    src__koru__autonomous___unblock_queue_if_needed --> src__koru__autonomy__ide_work__release_in_progress_tickets
-    src__koru__autonomous___unblock_queue_if_needed --> src__koru__autonomous___stdio_info
-    src__koru__autonomous___restart_daemon_if_needed --> src__koru__autonomous___stdio_info
-    src__koru__autonomous___restart_daemon_if_needed --> src__koru__autonomous___start_or_reuse_daemon
-    src__koru__autonomous___handle_cycle_exit_conditions --> src__koru__autonomous___stdio_info
-    src__koru__autonomous___handle_cycle_exit_conditions --> src__koru__stdio_events__write_stdio_event
-    src__koru__autonomous___cleanup_autonomous_session --> src__koru__autonomous_wup___stop_process
-    src__koru__autonomous___action_up --> src__koru__autonomous___setup_autonomous_session
-    src__koru__autonomous___action_up --> src__koru__autonomous___apply_agent_lane_environ
-    src__koru__autonomous___action_up --> src__koru__autonomous_startup__build_startup_probe
-    src__koru__autonomous___action_up --> src__koru__autonomous_startup__format_startup_banner
-    src__koru__autonomous___action_up --> src__koru__autonomous___setup_autopilot_daemon
-    src__koru__autonomous___action_up --> src__koru__autonomous___configure_loop_state
-    src__koru__autonomous___action_up --> src__koru__autonomous_wup___build_wup_watch_config
-    src__koru__autonomous___action_up --> src__koru__autonomous_wup___start_wup_watch
-    src__koru__autonomous___action_up --> src__koru__autonomous___stdio_info
-    src__koru__autonomous__autonomous_main --> src__koru__autonomous___action_up
-    src__koru__autonomous__autonomous_main --> src__koru__autonomous___build_parser
     src__koru__autonomous_startup___terminal_agent_lane_from_env --> src__koruide__ide__detect_terminal_host_ide_id
     src__koru__autonomous_startup__resolve_agent_lane_id --> src__koru__autonomous_startup___terminal_agent_lane_from_env
     src__koru__autonomous_startup__resolve_agent_lane_id --> src__koruide__ide__detect_running_ides
@@ -1014,8 +942,83 @@ flowchart TD
     src__koru__tools__build_tool_task_scaffold --> src__koru__tools___build_scaffold_prompt_lines
     src__koru__tools__build_tool_task_scaffold --> src__koru__tools___build_scaffold_labels
     src__koru__tools__build_tool_task_scaffold --> src__koru__tools___build_scaffold_inputs
+    src__koru__init__init_project --> src__koru__runtime__planfile_dir
+    src__koru__init__init_project --> src__koru__init___write_policy_stub_if_absent
+    src__koru__init__init_project --> src__koru__init___ensure_gitignore_entry
+    src__koru__init__init_project --> src__koru__init___resolve_init_agent_lane
+    src__koru__init__init_project --> src__koru__init___write_autopilot_host_setup_script
+    src__koru__init__init_project --> src__koru__project_pipeline__write_koru_project_pipeline_if_absent
+    src__koru__init__init_project --> src__koru__bootstrap__import_flat_pipeline
+    src__koru__init__refresh_init_agent_lane --> src__koru__init___resolve_init_agent_lane
+    src__koru__init__refresh_init_agent_lane --> src__koru__init___write_autopilot_host_setup_script
+    src__koru__init__refresh_init_agent_lane --> src__koru__runtime__planfile_dir
+    src__koru__init__refresh_init_agent_lane --> src__koru__init___remove_agent_lane_artifacts
+    src__koru__init__refresh_init_agent_lane --> src__koru__init___write_agent_lane_artifacts
+    src__koru__init__refresh_init_agent_lane --> src__koru__init_host_environment__write_host_environment_bundle
+    src__koru__init__refresh_init_agent_lane --> src__koru__runtime__runtime_dir
+    src__koru__init___init_auto_agent_lane --> src__koru__init___read_persisted_agent_lane
+    src__koru__init___read_persisted_agent_lane --> src__koru__runtime__runtime_dir
+    src__koru__init___read_persisted_agent_lane --> src__koru__agents__normalize_agent_lane_id
+    src__koru__init___resolve_init_agent_lane --> src__koru__agents__normalize_agent_lane_id
+    src__koru__init___resolve_init_agent_lane --> src__koru__init___init_auto_agent_lane
+    src__koru__init__resolve_project_agent_lane --> src__koru__init___resolve_init_agent_lane
+    src__koru__init___write_autopilot_host_setup_script --> src__koru__runtime__runtime_dir
+    src__koru__init___write_agent_lane_artifacts --> src__koru__runtime__runtime_dir
+    src__koru__init___write_agent_lane_artifacts --> src__koru__agents__agent_lane_environment
+    src__koru__init___write_agent_lane_artifacts --> src__koru__agents__format_agent_lane_exports
+    src__koru__init___write_policy_stub_if_absent --> src__koru__runtime__runtime_dir
+    src__koru__local_service__default_local_service_config --> src__koru__local_service___env_int
+    src__koru__local_service___build_handler --> src__koru__local_service___read_bounded_json_object
+    src__koru__local_service__build_local_service_server --> src__koru__local_service___build_handler
+    src__koru__local_service__build_local_service_server --> src__koru__local_service___koru_version
+    src__koru__local_service__run_local_service --> scripts__koru_soak_monitor__print
+    src__koru__local_service__run_local_service --> src__koru__local_service__build_local_service_server
+    src__koru__local_service__start_local_service_background --> src__koru__local_service__build_local_service_server
+    src__koru__doctor___check_agent_backends_registry --> src__koru__agent_backends__list_agent_backend_ids
+    src__koru__doctor___check_planfile_cli_version --> src__koru__doctor___planfile_version_argv
+    src__koru__doctor___check_planfile_config --> src__koru__runtime__planfile_dir
+    src__koru__doctor___check_planfile_sprints --> src__koru__runtime__planfile_dir
+    src__koru__doctor___check_planfile_sprints_yaml --> src__koru__runtime__planfile_dir
+    src__koru__doctor___check_runtime_dir --> src__koru__runtime__runtime_dir
+    src__koru__doctor___check_koru_project_pipeline --> src__koru__project_pipeline__project_pipeline_path
+    src__koru__doctor___check_koru_project_pipeline --> src__koru__runtime__planfile_dir
+    src__koru__doctor___check_policy_yaml --> src__koru__policy__policy_path
+    src__koru__doctor___check_pytest_collect --> src__koru__doctor___resolve_pytest_collect_timeout
+    src__koru__doctor___check_pytest_collect --> src__koru__utils__subprocess_runner__get_python_cmd
+    src__koru__doctor___check_ci_command --> src__koru__policy__load_policy
+    src__koru__events__main --> src__koru__events__emit_management_event
+    src__koru__gc___run_planfile --> src__koru__gc___planfile_env
+    src__koru__gc___archive_tickets --> src__koru__gc___now_utc
+    src__koru__gc__collect_gc_candidates --> src__koru__gc___now_utc
+    src__koru__gc__collect_gc_candidates --> src__koru__gc___load_tickets_from_sprint
+    src__koru__gc__collect_gc_candidates --> src__koru__gc___parse_ts
+    src__koru__gc___archive_tickets_before_delete --> src__koru__gc___load_tickets_from_sprint
+    src__koru__gc___archive_tickets_before_delete --> src__koru__gc___archive_tickets
+    src__koru__gc___delete_tickets --> src__koru__gc___run_planfile
+    src__koru__gc__run_gc --> src__koru__gc__collect_gc_candidates
+    src__koru__gc__run_gc --> src__koru__gc___apply_keep_last
+    src__koru__gc__run_gc --> src__koru__gc___delete_tickets
+    src__koru__gc__run_gc --> src__koru__gc___archive_tickets_before_delete
+    src__koru__ide_runtime__build_host_setup_report --> src__koruide__host_setup__build_setup_host_report
+    src__koru__ide_runtime__detect_running_ides --> src__koruide__protocol__Message__to_dict
+    src__koru__autonomous_cycle___stdio_info --> src__koru__activity_log__activity_info
+    src__koru__autonomous_cycle___is_topology_enabled --> src__koru__topology__is_component_enabled
+    src__koru__autonomous_cycle___is_topology_enabled --> src__koru__topology__is_pipeline_enabled
+    src__koru__autonomous_cycle___run_command_check --> src__koru__autonomous_cycle___stdio_info
+    src__koru__autonomous_cycle___create_diagnostic_ticket --> src__koru__tasks__create_nl_task
+    src__koru__autonomous_cycle___create_diagnostic_ticket --> src__koru__autonomous_cycle___stdio_info
+    src__koru__autonomous_cycle___run_idle_diagnostics --> src__koru__autonomous_cycle___create_diagnostic_ticket
+    src__koru__autonomous_cycle___drain_autopilot_events --> src__koru__autonomous_cycle___autopilot_event_path
+    src__koru__autonomous_cycle___heal_stale_socket --> src__koru__autonomy__environment__probe_socket_health
+    src__koru__autonomous_cycle___heal_stale_socket --> src__koruide__socket__default_socket_path
+    src__koru__autonomous_cycle___heal_stale_socket --> src__koru__autonomy__heal__remove_stale_socket
+    src__koru__autonomous_cycle___heal_stale_socket --> scripts__koru_soak_monitor__print
+    src__koru__autonomous_cycle___handle_autopilot_events --> src__koru__autonomous_cycle___drain_autopilot_events
+    src__koru__autonomous_cycle___handle_queue_hygiene --> src__koru__autonomy__ide_work__resolve_in_progress_stale_minutes
+    src__koru__autonomous_cycle___handle_queue_hygiene --> src__koru__autonomy__ide_work__release_stale_in_progress_tickets
+    src__koru__autonomous_cycle___handle_queue_hygiene --> src__koru__run_log__RunLogWriter___emit
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class src__koru__autonomous___action_up,src__koru__init__InitReport__summary,src__koru__autonomous_parser__looks_like_autonomous_up_command,src__koru__context___build_shared_rules,src__koru__autonomous_process_guard__looks_like_autonomous_up_command,src__koru__init_host_environment___recommended_next_steps,plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submitChat,plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__injectChat,scripts__planfile_sync_todo__do_from_todo,src__koru__autonomous_wup___profiled_compose_services highCC
+    class src__koru__init__InitReport__summary,src__koru__autonomous_parser__looks_like_autonomous_up_command,src__koru__context___build_shared_rules,src__koru__autonomous_process_guard__looks_like_autonomous_up_command,src__koru__init_host_environment___recommended_next_steps,plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submitChat,plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__injectChat highCC
     class services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,services__healing_webhook__ticket_builder__build_ticket_payload,src__korudsl__cli__main,src__korudsl__transform__library_from_any,src__korudsl__library__convert_goals_json_to_library,src__korudsl__library___emit_step,src__korudsl__library___emit_goal,src__koruapi__cli__main,src__koruapi__server___parse_invoke_request,src__koruapi__dashboard_serve___list_tickets,src__koruapi__dashboard_serve__apply_topology_post_update,src__koruapi__dashboard_serve___bulk_waiting_input_action,src__koruapi__dashboard_serve___try_stop_prior_koru_serve_listener,src__koruapi__dashboard_serve__bind_serve_server,src__koruapi__mcp_server___monitor_subprocess_oom,src__koruapi__mcp_server___parse_tickets_json,src__koruapi__mcp_server___tickets_for_status_filter,src__koruapi__mcp_server__tool_run_ticket,src__koruapi__mcp_server___run_single_gate,src__koruapi__mcp_server__tool_propose_edits,src__koruide__protocol__decode,src__koruide__host_setup___human_followups,src__koruide__daemon__AutopilotDaemon___handle_drive,src__koruide__daemon__AutopilotDaemon___drive_via_keyboard medCC

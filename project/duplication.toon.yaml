@@ -1,12 +1,12 @@
-# redup/duplication | 34 groups | 126f 29437L | 2026-05-19
+# redup/duplication | 34 groups | 126f 29519L | 2026-05-19
 
 SUMMARY:
   files_scanned: 126
-  total_lines:   29437
+  total_lines:   29519
   dup_groups:    34
   dup_fragments: 79
   saved_lines:   375
-  scan_ms:       2886
+  scan_ms:       5066
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/autonomous.py  dup=119L  groups=12  frags=12  (0.4%)

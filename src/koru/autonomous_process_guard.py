@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import os
-import re
 import signal
 import subprocess
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+
+from .autonomous_parser import looks_like_autonomous_up_command
 
 
 @dataclass(frozen=True)
@@ -64,24 +65,6 @@ def ancestor_pids(pid: int) -> set[int]:
         ancestors.add(parent)
         current = parent
     return ancestors
-
-
-def looks_like_autonomous_up_command(command: str) -> bool:
-    if re.search(r"koru.{0,120}autonomous", command):
-        return True
-    parts = command.split()
-    for idx, part in enumerate(parts):
-        if Path(part).name == "koru" and idx + 1 < len(parts) and parts[idx + 1] == "auto":
-            return True
-        if Path(part).name == "koru" and parts[idx + 1 : idx + 3] == ["autonomous", "up"]:
-            return True
-        if part == "-m" and idx + 2 < len(parts) and parts[idx + 1] == "koru.cli":
-            sub = parts[idx + 2]
-            if sub == "auto":
-                return True
-            if sub == "autonomous" and idx + 3 < len(parts) and parts[idx + 3] == "up":
-                return True
-    return False
 
 
 def find_existing_autonomous_processes(

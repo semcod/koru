@@ -375,11 +375,8 @@ def build_parser(*, default_stdio_format: str) -> argparse.ArgumentParser:
     return parser
 
 
-def looks_like_autonomous_up_command(command: str) -> bool:
-    """Match koru autonomous/auto loops (cf. ``pkill -f 'koru.*autonomous'`` and ``koru auto``)."""
-    if re.search(r"koru.{0,120}autonomous", command):
-        return True
-    parts = command.split()
+def _match_koru_auto_parts(parts: list[str]) -> bool:
+    """Check if command parts indicate an autonomous/auto loop."""
     for idx, part in enumerate(parts):
         if Path(part).name == "koru" and idx + 1 < len(parts) and parts[idx + 1] == "auto":
             return True
@@ -392,3 +389,10 @@ def looks_like_autonomous_up_command(command: str) -> bool:
             if sub == "autonomous" and idx + 3 < len(parts) and parts[idx + 3] == "up":
                 return True
     return False
+
+
+def looks_like_autonomous_up_command(command: str) -> bool:
+    """Match koru autonomous/auto loops (cf. ``pkill -f 'koru.*autonomous'`` and ``koru auto``)."""
+    if re.search(r"koru.{0,120}autonomous", command):
+        return True
+    return _match_koru_auto_parts(command.split())

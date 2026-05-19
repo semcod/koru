@@ -141,60 +141,86 @@ def do_from_planfile(check: bool) -> int:
     return 0
 
 
+def _extract_todo_items(text: str, heading: str) -> list[str] | None:
+    """Grab open todo items under ``## <heading>`` or ``### <heading>``."""
+    pattern = re.compile(
+        rf"^(#{{2, 3}})\s+{re.escape(heading)}\s*$(.*?)(?=^\1\s|\Z)",
+        re.MULTILINE | re.DOTALL,
+    )
+    match = pattern.search(text)
+    if not match:
+        return None
+    body = match.group(2)
+    items = re.findall(r"^\s*-\s*\[ \]\s+(.+?)\s*$", body, re.MULTILINE)
+    return items
+
+
+def _resolve_import_labels(repo: Path) -> list[str]:
+    """Return validated import labels from config."""
+    m2p = markdown_to_planfile_settings(repo)
+    import_labels = m2p.get("import_labels") or ["imported-from-todo", "llm-ready"]
+    if not isinstance(import_labels, list):
+        import_labels = ["imported-from-todo", "llm-ready"]
+    return [str(x) for x in import_labels if str(x).strip()]
+
+
+def _create_ticket(
+    item: str,
+    heading: str,
+    todo_file_name: str,
+    import_labels: list[str],
+    existing_names: set[str],
+    check: bool,
+) -> str | None:
+    """Create a single ticket or return None if skipped/duplicate."""
+    name = f"[{todo_file_name}] {item}"
+    if any(name in n for n in existing_names):
+        return None
+    if check:
+        return name
+    cmd: list[str] = [
+        "planfile",
+        "ticket",
+        "create",
+        name,
+        "--priority",
+        "normal",
+        "--source",
+        todo_file_name,
+    ]
+    for lab in import_labels:
+        cmd.extend(["--label", lab])
+    cmd.extend(["--description", _llm_stub(item, heading, todo_file_name)])
+    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO, timeout=60)
+    if proc.returncode != 0:
+        sys.stderr.write(proc.stderr or "")
+        raise SystemExit(f"planfile ticket create failed ({proc.returncode})")
+    return name
+
+
 def do_from_todo(heading: str, check: bool) -> int:
     todo_file = human_list_path(REPO)
     if not todo_file.exists():
         print(f"{todo_file.name} not found; nothing to import", file=sys.stderr)
         return 2
-    text = todo_file.read_text(encoding="utf-8")
-    # Grab everything under `## <heading>` or `### <heading>` until the next heading of equal/higher level.
-    pattern = re.compile(
-        rf"^(#{2, 3})\s+{re.escape(heading)}\s*$(.*?)(?=^\1\s|\Z)",
-        re.MULTILINE | re.DOTALL,
-    )
-    match = pattern.search(text)
-    if not match:
+
+    items = _extract_todo_items(todo_file.read_text(encoding="utf-8"), heading)
+    if items is None:
         print(f"heading '{heading}' not found in {todo_file.name}", file=sys.stderr)
         return 2
-    body = match.group(2)
-    items = re.findall(r"^\s*-\s*\[ \]\s+(.+?)\s*$", body, re.MULTILINE)
     if not items:
         print("no open items under that heading")
         return 0
 
-    m2p = markdown_to_planfile_settings(REPO)
-    import_labels = m2p.get("import_labels") or ["imported-from-todo", "llm-ready"]
-    if not isinstance(import_labels, list):
-        import_labels = ["imported-from-todo", "llm-ready"]
-    import_labels = [str(x) for x in import_labels if str(x).strip()]
-
+    import_labels = _resolve_import_labels(REPO)
     existing_names = {t.get("name") or "" for t in load_tickets()}
-    created: list[str] = []
-    for item in items:
-        name = f"[{todo_file.name}] {item}"
-        if any(name in n for n in existing_names):
-            continue
-        if check:
-            created.append(name)
-            continue
-        cmd: list[str] = [
-            "planfile",
-            "ticket",
-            "create",
-            name,
-            "--priority",
-            "normal",
-            "--source",
-            todo_file.name,
-        ]
-        for lab in import_labels:
-            cmd.extend(["--label", lab])
-        cmd.extend(["--description", _llm_stub(item, heading, todo_file.name)])
-        proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO, timeout=60)
-        if proc.returncode != 0:
-            sys.stderr.write(proc.stderr or "")
-            raise SystemExit(f"planfile ticket create failed ({proc.returncode})")
-        created.append(name)
+    created = [
+        name
+        for item in items
+        if (name := _create_ticket(item, heading, todo_file.name, import_labels, existing_names, check))
+        is not None
+    ]
+
     action = "would create" if check else "created"
     print(f"{action} {len(created)} ticket(s)")
     for n in created[:10]:

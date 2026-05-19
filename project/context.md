@@ -1,5 +1,5 @@
 # System Architecture Analysis
-<!-- generated in 0.00s -->
+<!-- generated in 0.01s -->
 
 ## Overview
 
@@ -7,10 +7,10 @@
 - **Primary Language**: python
 - **Languages**: python: 127, shell: 42, yaml: 15, yml: 8, typescript: 6
 - **Analysis Mode**: static
-- **Total Functions**: 1240
+- **Total Functions**: 1245
 - **Total Classes**: 90
 - **Modules**: 213
-- **Entry Points**: 423
+- **Entry Points**: 429
 
 ## Architecture by Module
 
@@ -102,9 +102,10 @@
 - **Functions**: 19
 - **File**: `tools.py`
 
-### plugins.koru-autopilot-vscode.src.socketPath
-- **Functions**: 18
-- **File**: `socketPath.ts`
+### src.koru.autonomous_wup
+- **Functions**: 19
+- **Classes**: 3
+- **File**: `autonomous_wup.py`
 
 ## Key Entry Points
 
@@ -537,7 +538,6 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.policy.load_policy` - 43 calls
 - `src.koruapi.mcp_server.tool_run_ticket` - 33 calls
 - `src.koru.autonomous_cycle.run_cycle` - 33 calls
-- `scripts.planfile-sync-todo.do_from_todo` - 31 calls
 - `src.koru.queue.runners.run_api_request` - 30 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
 - `src.koru.tasks.create_nl_task` - 28 calls
@@ -571,6 +571,7 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.init_host_environment.build_host_environment_report` - 18 calls
 - `src.koru.autonomy.operator_pipeline.run_startup_operator_pipeline` - 18 calls
 - `src.koru.mcp_provision.ensure_koru_mcp_not_disabled` - 17 calls
+- `src.koru.autonomy.environment.probe_ide_presence` - 17 calls
 
 ## System Interactions
 

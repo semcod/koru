@@ -1,9 +1,8 @@
-# code2llm | 214f 37147L | python:127,shell:42,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:1,properties:1,xml:1,toml:1 | 2026-05-19
-# generated in 0.07s
-# CC̄=4.1 | critical:10/1240 | dups:0 | cycles:0
+# code2llm | 214f 37125L | python:127,shell:42,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:1,properties:1,xml:1,toml:1 | 2026-05-19
+# generated in 0.09s
+# CC̄=4.1 | critical:7/1245 | dups:0 | cycles:0
 
-HEALTH[10]:
-  🟡 CC    _action_up CC=17 (limit:15)
+HEALTH[7]:
   🟡 CC    summary CC=15 (limit:15)
   🟡 CC    looks_like_autonomous_up_command CC=15 (limit:15)
   🟡 CC    _build_shared_rules CC=15 (limit:15)
@@ -11,13 +10,11 @@ HEALTH[10]:
   🟡 CC    _recommended_next_steps CC=15 (limit:15)
   🟡 CC    submitChat CC=15 (limit:15)
   🟡 CC    injectChat CC=15 (limit:15)
-  🟡 CC    do_from_todo CC=19 (limit:15)
-  🟡 CC    _profiled_compose_services CC=18 (limit:15)
 
 REFACTOR[1]:
-  1. split 10 high-CC methods  (CC>15)
+  1. split 7 high-CC methods  (CC>15)
 
-PIPELINES[330]:
+PIPELINES[336]:
   [1] Src [heal_rebuild_restore]: heal_rebuild_restore → _run_docker
       PURITY: 100% pure
   [2] Src [heal_annotate]: heal_annotate → _record_action
@@ -36,7 +33,7 @@ LAYERS:
   │ Dockerfile                  36L  0C    0m  CC=0.0    ←0
   │
   src/                            CC̄=4.3    ←in:0  →out:0
-  │ !! autonomous                1696L  2C   47m  CC=17     ←1
+  │ !! autonomous                1636L  2C   47m  CC=12     ←1
   │ !! cli_command               1331L  0C   45m  CC=14     ←0
   │ !! dashboard_serve           1297L  1C   16m  CC=14     ←1
   │ !! autonomous_cycle          1231L  2C   37m  CC=14     ←0
@@ -53,11 +50,11 @@ LAYERS:
   │ plugin_installer           411L  1C   17m  CC=10     ←1
   │ injector                   403L  4C   20m  CC=14     ←0
   │ mcp_provision              399L  0C   21m  CC=10     ←3
+  │ autonomous_wup             399L  3C   19m  CC=12     ←1
   │ !! autonomous_parser          394L  0C    2m  CC=15     ←1
   │ runner                     394L  0C   10m  CC=14     ←2
   │ queue_clean                392L  2C   13m  CC=14     ←1
   │ os_injector                391L  2C   24m  CC=14     ←2
-  │ !! autonomous_wup             387L  3C   17m  CC=18     ←1
   │ post_run_verify            382L  2C   16m  CC=14     ←1
   │ gc                         371L  2C   12m  CC=11     ←1
   │ agents                     322L  1C   15m  CC=14     ←4
@@ -178,10 +175,10 @@ LAYERS:
   │ settings.gradle.kts          8L  0C    2m  CC=0.0    ←0
   │ gradle.properties            6L  0C    0m  CC=0.0    ←0
   │
-  scripts/                        CC̄=1.8    ←in:267  →out:0
+  scripts/                        CC̄=1.8    ←in:266  →out:0
   │ !! koru-autoloop.sh           576L  0C   14m  CC=0.0    ←0
   │ koru-gate-capture          314L  0C   14m  CC=9      ←0
-  │ !! planfile-sync-todo         234L  0C    9m  CC=19     ←0
+  │ planfile-sync-todo         260L  0C   12m  CC=14     ←0
   │ autopilot-ide-autodetect-smoke.sh   182L  1C    4m  CC=0.0    ←0
   │ koru-soak-monitor.sh       129L  0C    6m  CC=0.0    ←31
   │ koru-queue-diagnose.sh     124L  0C    0m  CC=0.0    ←0
@@ -272,8 +269,8 @@ LAYERS:
 
 COUPLING:
                                                       src.koru                        scripts                    src.koruapi                    src.koruide  plugins.koru-autopilot-vscode                    src.korudsl       services.healing-webhook
-                       src.koru                             ──                            220                              5                             35                              5                                                                hub
-                        scripts                           ←220                             ──                            ←20                            ←27                                                                                               hub
+                       src.koru                             ──                            219                              5                             35                              5                                                                hub
+                        scripts                           ←219                             ──                            ←20                            ←27                                                                                               hub
                     src.koruapi                             42                             20                             ──                                                                                            4                                 hub
                     src.koruide                              3                             27                                                            ──                                                                                               hub
   plugins.koru-autopilot-vscode                             ←5                                                                                                                          ──                                                            ←1  hub
@@ -281,11 +278,11 @@ COUPLING:
        services.healing-webhook                                                                                                                                                          1                                                            ──
   CYCLES: none
   HUB: src.koru/ (fan-in=45)
+  HUB: scripts/ (fan-in=266)
   HUB: src.koruapi/ (fan-in=5)
-  HUB: src.koruide/ (fan-in=35)
-  HUB: scripts/ (fan-in=267)
   HUB: plugins.koru-autopilot-vscode/ (fan-in=6)
-  SMELL: src.koru/ fan-out=265 → split needed
+  HUB: src.koruide/ (fan-in=35)
+  SMELL: src.koru/ fan-out=264 → split needed
   SMELL: src.koruapi/ fan-out=66 → split needed
   SMELL: src.koruide/ fan-out=30 → split needed
 
