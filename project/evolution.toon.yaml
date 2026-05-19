@@ -1,7 +1,7 @@
-# code2llm/evolution | 1182 func | 107f | 2026-05-19
+# code2llm/evolution | 1187 func | 107f | 2026-05-19
 # generated in 0.00s
 
-NEXT[5] (ranked by impact):
+NEXT[3] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous.py
       WHY: 1737L, 2 classes, max CC=12
       EFFORT: ~4h  IMPACT: 20844
@@ -10,15 +10,7 @@ NEXT[5] (ranked by impact):
       WHY: 1331L, 0 classes, max CC=14
       EFFORT: ~4h  IMPACT: 18634
 
-  [3] !  SPLIT-FUNC      AutopilotBridge.injectChat  CC=15  fan=16
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 240
-
-  [4] !  SPLIT-FUNC      AutopilotBridge.submitChat  CC=15  fan=13
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 195
-
-  [5] !! SPLIT           planfile.yaml
+  [3] !! SPLIT           planfile.yaml
       WHY: 1319L, 0 classes, max CC=0
       EFFORT: ~4h  IMPACT: 0
 
@@ -30,9 +22,9 @@ RISKS[3]:
 
 METRICS-TARGET:
   CC̄:          4.2 → ≤2.9
-  max-CC:      15 → ≤7
+  max-CC:      14 → ≤7
   god-modules: 17 → 0
-  high-CC(≥15): 3 → ≤1
+  high-CC(≥15): 0 → ≤0
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

@@ -7,15 +7,15 @@
 - **Primary Language**: python
 - **Languages**: python: 127, shell: 42, yaml: 15, yml: 8, typescript: 6
 - **Analysis Mode**: static
-- **Total Functions**: 1250
+- **Total Functions**: 1255
 - **Total Classes**: 90
 - **Modules**: 213
-- **Entry Points**: 423
+- **Entry Points**: 425
 
 ## Architecture by Module
 
 ### plugins.koru-autopilot-vscode.src.extension
-- **Functions**: 107
+- **Functions**: 110
 - **Classes**: 2
 - **File**: `extension.ts`
 
@@ -315,7 +315,7 @@ _task_main [src.koru.cli]
 ## Key Classes
 
 ### plugins.koru-autopilot-vscode.src.extension.AutopilotBridge
-- **Methods**: 105
+- **Methods**: 108
 - **Key Methods**: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.tryConnectNext, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.p, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.debugLog, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.sock
 
 ### src.koruide.daemon.AutopilotDaemon
@@ -365,6 +365,11 @@ session:
 The constructor does not open the file — that
 - **Methods**: 4
 - **Key Methods**: src.koru.run_log.RunLogWriter._emit, src.koru.run_log.RunLogWriter.write_header, src.koru.run_log.RunLogWriter.write_iteration, src.koru.run_log.RunLogWriter.write_footer
+
+### src.koru.init.InitReport
+> Summary of what ``init_project`` actually changed on disk.
+- **Methods**: 4
+- **Key Methods**: src.koru.init.InitReport._env_bit, src.koru.init.InitReport._lane_summary, src.koru.init.InitReport._init_summary, src.koru.init.InitReport.summary
 
 ### src.koruapi.server.KoruAPIHandler
 - **Methods**: 3
@@ -423,10 +428,6 @@ Designed to be cheap (<200 ms) so it can be called o
 - **Methods**: 1
 - **Key Methods**: src.koruide.audit._JSONFormatter.format
 - **Inherits**: logging.Formatter
-
-### src.koruide.plugin_installer.PluginInstallResult
-- **Methods**: 1
-- **Key Methods**: src.koruide.plugin_installer.PluginInstallResult.to_dict
 
 ## Data Transformation Functions
 
@@ -543,8 +544,8 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.tasks.create_nl_task` - 28 calls
 - `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
 - `src.koru.scan.scan_pytest_collect` - 24 calls
-- `src.koru.init.init_project` - 23 calls
 - `src.koru.autonomy.ide_work.build_ide_work_prompt` - 23 calls
+- `src.koru.init.init_project` - 23 calls
 - `src.koruapi.dashboard_serve.apply_topology_post_update` - 22 calls
 - `src.koru.gate.parse_authorizations` - 22 calls
 - `src.koru.agents.detect_project_environment` - 22 calls
@@ -568,8 +569,8 @@ Functions exposed as public API (no underscore prefix):
 - `src.koruide.plugin_installer.resolve_extension_vsix` - 18 calls
 - `src.koru.agent_backends.load_agent_integration_config` - 18 calls
 - `src.koru.loop.run_closed_loop` - 18 calls
-- `src.koru.autonomy.operator_pipeline.run_startup_operator_pipeline` - 18 calls
 - `src.koru.init_host_environment.build_host_environment_report` - 18 calls
+- `src.koru.autonomy.operator_pipeline.run_startup_operator_pipeline` - 18 calls
 - `src.koru.mcp_provision.ensure_koru_mcp_not_disabled` - 17 calls
 - `src.koru.autonomy.environment.probe_ide_presence` - 17 calls
 

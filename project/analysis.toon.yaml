@@ -1,16 +1,12 @@
-# code2llm | 214f 37239L | python:127,shell:42,yaml:15,yml:8,typescript:6,kotlin:6,json:3,toml:1,txt:1,properties:1,xml:1 | 2026-05-19
+# code2llm | 214f 37247L | python:127,shell:42,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:1,properties:1,xml:1,toml:1 | 2026-05-19
 # generated in 0.06s
-# CC̄=4.0 | critical:3/1250 | dups:0 | cycles:0
+# CC̄=4.0 | critical:0/1255 | dups:0 | cycles:0
 
-HEALTH[3]:
-  🟡 CC    summary CC=15 (limit:15)
-  🟡 CC    submitChat CC=15 (limit:15)
-  🟡 CC    injectChat CC=15 (limit:15)
+HEALTH[0]: ok
 
-REFACTOR[1]:
-  1. split 3 high-CC methods  (CC>15)
+REFACTOR[0]: none needed
 
-PIPELINES[330]:
+PIPELINES[332]:
   [1] Src [heal_rebuild_restore]: heal_rebuild_restore → _run_docker
       PURITY: 100% pure
   [2] Src [heal_annotate]: heal_annotate → _record_action
@@ -37,7 +33,7 @@ LAYERS:
   │ !! mcp_server                1040L  0C   34m  CC=14     ←2
   │ !! scan                       919L  2C   24m  CC=13     ←3
   │ !! daemon                     714L  2C   31m  CC=14     ←0
-  │ !! init                       602L  1C   12m  CC=15     ←2
+  │ !! init                       611L  1C   15m  CC=12     ←2
   │ !! operator_pipeline          581L  2C   21m  CC=13     ←1
   │ !! ide                        547L  1C   29m  CC=13     ←7
   │ !! doctor                     514L  2C   21m  CC=11     ←2
@@ -153,8 +149,8 @@ LAYERS:
   │ cli                          0L  0C   52m  CC=14     ←0
   │ commands                     0L  0C    0m  CC=0.0    ←0
   │
-  plugins/                        CC̄=3.1    ←in:0  →out:0
-  │ !! extension.ts               626L  2C   68m  CC=15     ←5
+  plugins/                        CC̄=3.0    ←in:0  →out:0
+  │ !! extension.ts               625L  2C   70m  CC=14     ←5
   │ probe-ladder.ts            251L  3C   24m  CC=9      ←0
   │ KoruAutopilotService.kt    136L  1C    5m  CC=0.0    ←0
   │ package.json               112L  0C    0m  CC=0.0    ←0
@@ -273,14 +269,14 @@ COUPLING:
                     src.korudsl                                                                                           ←4                                                                                           ──                               
        services.healing-webhook                                                                                                                                                          1                                                            ──
   CYCLES: none
-  HUB: src.koruide/ (fan-in=35)
-  HUB: src.koruapi/ (fan-in=5)
   HUB: src.koru/ (fan-in=45)
   HUB: plugins.koru-autopilot-vscode/ (fan-in=6)
   HUB: scripts/ (fan-in=267)
-  SMELL: src.koruide/ fan-out=30 → split needed
-  SMELL: src.koruapi/ fan-out=66 → split needed
+  HUB: src.koruapi/ (fan-in=5)
+  HUB: src.koruide/ (fan-in=35)
   SMELL: src.koru/ fan-out=265 → split needed
+  SMELL: src.koruapi/ fan-out=66 → split needed
+  SMELL: src.koruide/ fan-out=30 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon
