@@ -89,6 +89,9 @@ def _resolve_wup_testql_bin(config: WupWatchConfig) -> str:
     project_wrapper = config.project / "scripts" / "koru-wup-testql"
     if project_wrapper.is_file():
         return str(project_wrapper)
+    project_venv_wrapper = config.project / ".venv" / "bin" / "koru-wup-testql"
+    if project_venv_wrapper.is_file():
+        return str(project_venv_wrapper)
     installed_wrapper = shutil.which("koru-wup-testql")
     if installed_wrapper is not None:
         return installed_wrapper

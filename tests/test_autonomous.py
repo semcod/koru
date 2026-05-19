@@ -1630,6 +1630,28 @@ def test_wup_watch_command_uses_testql_mode(tmp_path) -> None:
     assert str(wrapper) in command
 
 
+def test_wup_watch_command_prefers_project_venv_wrapper(tmp_path) -> None:
+    wrapper = tmp_path / ".venv" / "bin" / "koru-wup-testql"
+    wrapper.parent.mkdir(parents=True)
+    wrapper.write_text('#!/bin/sh\nexec testql "$@"\n', encoding="utf-8")
+    config = autonomous_wup_mod.WupWatchConfig(
+        enabled=True,
+        mode="testql",
+        project=tmp_path,
+        deps_file="deps.json",
+        scenarios_dir="testql-scenarios",
+        testql_bin="testql",
+        track_dir=".wup/tracks",
+        debounce=2,
+        cooldown=300,
+        cpu_throttle=0.8,
+        quick_limit=3,
+        config=None,
+    )
+    command = autonomous_wup_mod._wup_watch_command(config)
+    assert str(wrapper) in command
+
+
 def test_wup_watch_command_keeps_explicit_testql_bin(tmp_path) -> None:
     config = autonomous_wup_mod.WupWatchConfig(
         enabled=True,
