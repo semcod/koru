@@ -156,17 +156,21 @@ def run_host_setup(
     return exit_code
 
 
-def _print_text_report(report: dict[str, Any]) -> None:
+def _print_setup_host_header(report: dict[str, Any]) -> None:
     print("=== koru autopilot setup-host ===\n")
     print(f"Desktop session: {report['session']}")
     print(f"Selected injector (first candidate): {report.get('selected_backend') or '— none'}\n")
 
+
+def _print_setup_host_backends(report: dict[str, Any]) -> None:
     print("Backends (same probes as `koru autopilot doctor`):")
     for b in report["backends"]:
         mark = "✓" if b.get("available") else "✗"
         print(f"  {mark} {b.get('name', '?'):<10} {b.get('reason', '')}")
     print()
 
+
+def _print_setup_host_ides(report: dict[str, Any]) -> None:
     ides = report.get("ides") or []
     print(f"Running IDEs: {len(ides)}")
     for ide in ides:
@@ -175,6 +179,8 @@ def _print_text_report(report: dict[str, Any]) -> None:
         print(f"  (focus: {report['focused_ide']})")
     print()
 
+
+def _print_setup_host_apt_section(report: dict[str, Any]) -> None:
     print("--- Automated (apt) ---")
     if report.get("automated_apt_suggestion"):
         print(report["automated_apt_suggestion"])
@@ -183,11 +189,15 @@ def _print_text_report(report: dict[str, Any]) -> None:
         print("xdotool/wtype/ydotool are on PATH — no apt step needed.")
     print()
 
+
+def _print_setup_host_human_followups(report: dict[str, Any]) -> None:
     print("--- Likely human follow-ups ---")
     for line in report.get("human_actions_required") or []:
         print(f"  • {line}")
     print()
 
+
+def _print_setup_host_install_details(report: dict[str, Any]) -> None:
     if report.get("install_error"):
         print(f"Install error: {report['install_error']}\n")
     if report.get("install_log"):
@@ -195,13 +205,22 @@ def _print_text_report(report: dict[str, Any]) -> None:
         for line in report["install_log"]:
             print(f"  {line}")
         print()
-
     if report.get("package_manager"):
         print(f"Detected package manager hint: {report['package_manager']}")
-
-    # Exit hints for shell users
     if report.get("install_exit_code") not in (None, 0):
         print("\napt install failed — fix sudo/repos and retry.", file=sys.stderr)
+
+
+def _print_text_report(report: dict[str, Any]) -> None:
+    for section in (
+        _print_setup_host_header,
+        _print_setup_host_backends,
+        _print_setup_host_ides,
+        _print_setup_host_apt_section,
+        _print_setup_host_human_followups,
+        _print_setup_host_install_details,
+    ):
+        section(report)
 
 
 __all__ = ["build_setup_host_report", "run_host_setup"]

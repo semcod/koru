@@ -26,6 +26,71 @@ def _json_response(handler: BaseHTTPRequestHandler, status: int, payload: dict[s
     handler.wfile.write(body)
 
 
+def _read_json_body(handler: BaseHTTPRequestHandler) -> dict[str, Any]:
+    length = int(handler.headers.get("Content-Length", "0") or "0")
+    raw = handler.rfile.read(length) if length else b"{}"
+    body = json.loads(raw.decode("utf-8") or "{}")
+    if not isinstance(body, dict):
+        raise ValueError("JSON body must be an object")
+    return body
+
+
+def _parse_invoke_request(body: dict[str, Any], default_project: Path) -> tuple[str, str, Path, dict[str, Any]]:
+    integration_id = str(body.get("integration_id") or body.get("id") or "")
+    method = str(body.get("method") or "run")
+    project_raw = body.get("project") or str(default_project)
+    project = Path(str(project_raw)).resolve()
+    payload = body.get("body") if isinstance(body.get("body"), dict) else body.get("payload")
+    if not isinstance(payload, dict):
+        payload = {
+            k: v
+            for k, v in body.items()
+            if k not in {"integration_id", "id", "method", "project", "body", "payload"}
+        }
+    return integration_id, method, project, payload
+
+
+def _handle_invoke_post(
+    handler: BaseHTTPRequestHandler,
+    *,
+    default_project: Path,
+) -> None:
+    try:
+        body = _read_json_body(handler)
+    except json.JSONDecodeError as exc:
+        _json_response(handler, 400, {"ok": False, "error": "invalid_json", "message": str(exc)})
+        return
+    except ValueError as exc:
+        _json_response(handler, 400, {"ok": False, "error": "invalid_json", "message": str(exc)})
+        return
+    integration_id, method, project, payload = _parse_invoke_request(body, default_project)
+    try:
+        result = invoke_integration(
+            integration_id,
+            project=project,
+            method=method,
+            body=payload,
+        )
+        _json_response(
+            handler,
+            200,
+            {"ok": True, "integration_id": integration_id, "method": method, "result": result},
+        )
+    except InvokeError as exc:
+        _json_response(handler, 400, {"ok": False, "error": "invoke_error", "message": str(exc)})
+    except Exception as exc:
+        _json_response(
+            handler,
+            500,
+            {
+                "ok": False,
+                "error": "internal",
+                "message": str(exc),
+                "traceback": traceback.format_exc(),
+            },
+        )
+
+
 class KoruAPIHandler(BaseHTTPRequestHandler):
     project: Path
     server_version = "koruapi/0.1"
@@ -79,45 +144,7 @@ class KoruAPIHandler(BaseHTTPRequestHandler):
         if parsed.path != "/api/v1/invoke":
             _json_response(self, 404, {"ok": False, "error": "not_found"})
             return
-        length = int(self.headers.get("Content-Length", "0") or "0")
-        raw = self.rfile.read(length) if length else b"{}"
-        try:
-            body = json.loads(raw.decode("utf-8") or "{}")
-        except json.JSONDecodeError as exc:
-            _json_response(self, 400, {"ok": False, "error": "invalid_json", "message": str(exc)})
-            return
-        integration_id = str(body.get("integration_id") or body.get("id") or "")
-        method = str(body.get("method") or "run")
-        project_raw = body.get("project") or str(self.project)
-        project = Path(str(project_raw)).resolve()
-        payload = body.get("body") if isinstance(body.get("body"), dict) else body.get("payload")
-        if not isinstance(payload, dict):
-            payload = {k: v for k, v in body.items() if k not in {"integration_id", "id", "method", "project", "body", "payload"}}
-        try:
-            result = invoke_integration(
-                integration_id,
-                project=project,
-                method=method,
-                body=payload,
-            )
-            _json_response(
-                self,
-                200,
-                {"ok": True, "integration_id": integration_id, "method": method, "result": result},
-            )
-        except InvokeError as exc:
-            _json_response(self, 400, {"ok": False, "error": "invoke_error", "message": str(exc)})
-        except Exception as exc:
-            _json_response(
-                self,
-                500,
-                {
-                    "ok": False,
-                    "error": "internal",
-                    "message": str(exc),
-                    "traceback": traceback.format_exc(),
-                },
-            )
+        _handle_invoke_post(self, default_project=self.project)
 
 
 def serve(

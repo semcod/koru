@@ -226,82 +226,68 @@ def _extension_is_installed(command: str, runner: Runner) -> bool | None:
     return EXTENSION_ID.lower() in installed
 
 
-def install_plugin_for_ide(
+def _reassert_extension_extra(
+    command: str,
     *,
-    ide: str = "auto",
-    dry_run: bool = False,
-    socket_path: Path | None = None,
-    runner: Runner = _run,
-) -> PluginInstallResult:
-    """Install the koru plugin for ``ide`` or the currently detected IDE."""
-    target = resolve_target_ide(ide) or "auto"
-    if target not in SUPPORTED_IDES:
-        return PluginInstallResult(
-            ide=target,
-            status="unsupported",
-            message=(
-                "no installable koru plugin for this IDE yet (supported: windsurf, cursor, vscode)"
-            ),
-        )
-
-    command = _resolve_ide_command(target)
-    if command is None:
-        return PluginInstallResult(
-            ide=target,
-            status="missing_cli",
-            message=f"{target} CLI is not in PATH; cannot install the extension automatically",
-        )
-
-    settings_path = None if dry_run else _configure_socket_path(target, socket_path)
-    socket_path_str = str(socket_path.resolve()) if socket_path is not None else None
-
-    already_installed = _extension_is_installed(command, runner)
-    if already_installed is True:
-        last_cmd: list[str] = [command, "--list-extensions"]
-        extra = ""
-        if not dry_run and _env_reassert_extension_install():
-            vsix = resolve_extension_vsix()
-            reassert_cmd = (
-                [command, "--install-extension", str(vsix), "--force"]
-                if vsix is not None
-                else [command, "--install-extension", EXTENSION_ID]
-            )
-            try:
-                proc = runner(reassert_cmd, timeout=90.0)
-            except (OSError, subprocess.SubprocessError) as exc:
-                extra = f"; reassert failed: {exc}"
-            else:
-                last_cmd = reassert_cmd
-                extra = f"; reassert rc={proc.returncode}"
-                if proc.returncode != 0:
-                    hint = (proc.stderr or proc.stdout or "").strip()
-                    if hint:
-                        extra += f" ({hint[:240]})"
-        return PluginInstallResult(
-            ide=target,
-            status="already_installed",
-            message=(
-                f"{EXTENSION_ID} is already installed for {target}{extra}; "
-                "reload the IDE window or run `koru: Connect autopilot daemon` if it is already open"
-            ),
-            command=last_cmd,
-            settings_path=str(settings_path) if settings_path is not None else None,
-            socket_path=socket_path_str,
-        )
-
+    dry_run: bool,
+    runner: Runner,
+) -> tuple[list[str], str]:
+    last_cmd: list[str] = [command, "--list-extensions"]
+    extra = ""
+    if dry_run or not _env_reassert_extension_install():
+        return last_cmd, extra
     vsix = resolve_extension_vsix()
-    if vsix is None:
-        return PluginInstallResult(
-            ide=target,
-            status="missing_vsix",
-            message=(
-                "cannot find koru autopilot VSIX; set KORU_AUTOPILOT_VSIX "
-                "or run from a koru source checkout"
-            ),
-            settings_path=str(settings_path) if settings_path is not None else None,
-            socket_path=socket_path_str,
-        )
+    reassert_cmd = (
+        [command, "--install-extension", str(vsix), "--force"]
+        if vsix is not None
+        else [command, "--install-extension", EXTENSION_ID]
+    )
+    try:
+        proc = runner(reassert_cmd, timeout=90.0)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return last_cmd, f"; reassert failed: {exc}"
+    last_cmd = reassert_cmd
+    extra = f"; reassert rc={proc.returncode}"
+    if proc.returncode != 0:
+        hint = (proc.stderr or proc.stdout or "").strip()
+        if hint:
+            extra += f" ({hint[:240]})"
+    return last_cmd, extra
 
+
+def _result_already_installed(
+    target: str,
+    command: str,
+    *,
+    dry_run: bool,
+    runner: Runner,
+    settings_path: Path | None,
+    socket_path_str: str | None,
+) -> PluginInstallResult:
+    last_cmd, extra = _reassert_extension_extra(command, dry_run=dry_run, runner=runner)
+    return PluginInstallResult(
+        ide=target,
+        status="already_installed",
+        message=(
+            f"{EXTENSION_ID} is already installed for {target}{extra}; "
+            "reload the IDE window or run `koru: Connect autopilot daemon` if it is already open"
+        ),
+        command=last_cmd,
+        settings_path=str(settings_path) if settings_path is not None else None,
+        socket_path=socket_path_str,
+    )
+
+
+def _install_extension_vsix(
+    target: str,
+    command: str,
+    vsix: Path,
+    *,
+    dry_run: bool,
+    runner: Runner,
+    settings_path: Path | None,
+    socket_path_str: str | None,
+) -> PluginInstallResult:
     cmd = [command, "--install-extension", str(vsix)]
     if dry_run:
         return PluginInstallResult(
@@ -312,7 +298,6 @@ def install_plugin_for_ide(
             vsix=str(vsix),
             socket_path=socket_path_str,
         )
-
     try:
         proc = runner(cmd, timeout=120.0)
     except (OSError, subprocess.SubprocessError) as exc:
@@ -344,6 +329,69 @@ def install_plugin_for_ide(
         vsix=str(vsix),
         settings_path=str(settings_path) if settings_path is not None else None,
         socket_path=socket_path_str,
+    )
+
+
+def install_plugin_for_ide(
+    *,
+    ide: str = "auto",
+    dry_run: bool = False,
+    socket_path: Path | None = None,
+    runner: Runner = _run,
+) -> PluginInstallResult:
+    """Install the koru plugin for ``ide`` or the currently detected IDE."""
+    target = resolve_target_ide(ide) or "auto"
+    if target not in SUPPORTED_IDES:
+        return PluginInstallResult(
+            ide=target,
+            status="unsupported",
+            message=(
+                "no installable koru plugin for this IDE yet (supported: windsurf, cursor, vscode)"
+            ),
+        )
+
+    command = _resolve_ide_command(target)
+    if command is None:
+        return PluginInstallResult(
+            ide=target,
+            status="missing_cli",
+            message=f"{target} CLI is not in PATH; cannot install the extension automatically",
+        )
+
+    settings_path = None if dry_run else _configure_socket_path(target, socket_path)
+    socket_path_str = str(socket_path.resolve()) if socket_path is not None else None
+
+    if _extension_is_installed(command, runner) is True:
+        return _result_already_installed(
+            target,
+            command,
+            dry_run=dry_run,
+            runner=runner,
+            settings_path=settings_path,
+            socket_path_str=socket_path_str,
+        )
+
+    vsix = resolve_extension_vsix()
+    if vsix is None:
+        return PluginInstallResult(
+            ide=target,
+            status="missing_vsix",
+            message=(
+                "cannot find koru autopilot VSIX; set KORU_AUTOPILOT_VSIX "
+                "or run from a koru source checkout"
+            ),
+            settings_path=str(settings_path) if settings_path is not None else None,
+            socket_path=socket_path_str,
+        )
+
+    return _install_extension_vsix(
+        target,
+        command,
+        vsix,
+        dry_run=dry_run,
+        runner=runner,
+        settings_path=settings_path,
+        socket_path_str=socket_path_str,
     )
 
 

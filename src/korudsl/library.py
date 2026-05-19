@@ -164,29 +164,44 @@ def _emit_objective(obj: dict[str, Any]) -> str | None:
     return None
 
 
-def library_to_dsl(library: dict[str, Any] | None) -> str:
-    """Serialize OQL library JSON back to DSL text."""
-    lib = ensure_library_structure(library)
+def _emit_functions(lib: dict[str, Any]) -> list[str]:
     lines: list[str] = []
     for func_name, spec in sorted(lib.get("functions", {}).items()):
         if isinstance(spec, dict) and spec.get("code"):
             lines.append(str(spec["code"]))
         else:
             lines.append(f"FUNC: {func_name}")
+    return lines
+
+
+def _emit_goal(goal: dict[str, Any]) -> list[str]:
+    lines: list[str] = []
+    name = str(goal.get("name") or "unnamed")
+    lines.append(f"GOAL: {name}")
+    for step in goal.get("steps") or []:
+        if isinstance(step, dict):
+            lines.extend(_emit_step(step))
+    for obj in goal.get("objectives") or []:
+        if isinstance(obj, dict):
+            row = _emit_objective(obj)
+            if row:
+                lines.append(row)
+    lines.append("")
+    return lines
+
+
+def _emit_goals(lib: dict[str, Any]) -> list[str]:
+    lines: list[str] = []
     for goal in lib.get("goals", []):
-        if not isinstance(goal, dict):
-            continue
-        name = str(goal.get("name") or "unnamed")
-        lines.append(f"GOAL: {name}")
-        for step in goal.get("steps") or []:
-            if isinstance(step, dict):
-                lines.extend(_emit_step(step))
-        for obj in goal.get("objectives") or []:
-            if isinstance(obj, dict):
-                row = _emit_objective(obj)
-                if row:
-                    lines.append(row)
-        lines.append("")
+        if isinstance(goal, dict):
+            lines.extend(_emit_goal(goal))
+    return lines
+
+
+def library_to_dsl(library: dict[str, Any] | None) -> str:
+    """Serialize OQL library JSON back to DSL text."""
+    lib = ensure_library_structure(library)
+    lines = _emit_functions(lib) + _emit_goals(lib)
     while lines and not lines[-1].strip():
         lines.pop()
     return "\n".join(lines) + ("\n" if lines else "")

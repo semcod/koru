@@ -68,6 +68,30 @@ class _EventBuffer:
             return list(self._items)
 
 
+def _read_bounded_json_object(
+    handler: BaseHTTPRequestHandler,
+    *,
+    max_bytes: int = MAX_BODY_BYTES,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None, int]:
+    """Parse POST JSON body; return ``(data, error_payload, http_status)``."""
+    try:
+        length = int(handler.headers.get("Content-Length", "0") or "0")
+    except ValueError:
+        return None, {"error": "invalid Content-Length"}, 400
+    if length > max_bytes:
+        return None, {"error": "body too large"}, 413
+    if length <= 0:
+        return None, {"error": "expected JSON object body"}, 400
+    raw = handler.rfile.read(length)
+    try:
+        data = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        return None, {"error": f"invalid JSON: {exc}"}, 400
+    if not isinstance(data, dict):
+        return None, {"error": "JSON body must be an object"}, 400
+    return data, None, 200
+
+
 def default_local_service_config() -> LocalServiceConfig:
     """Defaults from env ``KORU_LOCAL_SERVICE_*`` (see docs/local-service.md)."""
     host = os.environ.get("KORU_LOCAL_SERVICE_HOST", DEFAULT_HOST).strip() or DEFAULT_HOST
@@ -120,25 +144,9 @@ def _build_handler(buffer: _EventBuffer, koru_version: str) -> type[BaseHTTPRequ
             if path not in ("/event", "/enqueue"):
                 self._send_json({"error": "not found"}, 404)
                 return
-            try:
-                length = int(self.headers.get("Content-Length", "0") or "0")
-            except ValueError:
-                self._send_json({"error": "invalid Content-Length"}, status=400)
-                return
-            if length > MAX_BODY_BYTES:
-                self._send_json({"error": "body too large"}, status=413)
-                return
-            if length <= 0:
-                self._send_json({"error": "expected JSON object body"}, status=400)
-                return
-            raw = self.rfile.read(length)
-            try:
-                data = json.loads(raw.decode("utf-8"))
-            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-                self._send_json({"error": f"invalid JSON: {exc}"}, status=400)
-                return
-            if not isinstance(data, dict):
-                self._send_json({"error": "JSON body must be an object"}, status=400)
+            data, err, status = _read_bounded_json_object(self)
+            if err is not None:
+                self._send_json(err, status=status)
                 return
             eid = uuid.uuid4().hex
             record = {

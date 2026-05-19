@@ -216,22 +216,9 @@ def _ancestor_pids(pid: int) -> set[int]:
 
 
 def _looks_like_autonomous_up_command(command: str) -> bool:
-    """Match koru autonomous/auto loops (cf. ``pkill -f 'koru.*autonomous'`` and ``koru auto``)."""
-    if re.search(r"koru.{0,120}autonomous", command):
-        return True
-    parts = command.split()
-    for idx, part in enumerate(parts):
-        if Path(part).name == "koru" and idx + 1 < len(parts) and parts[idx + 1] == "auto":
-            return True
-        if Path(part).name == "koru" and parts[idx + 1 : idx + 3] == ["autonomous", "up"]:
-            return True
-        if part == "-m" and idx + 2 < len(parts) and parts[idx + 1] == "koru.cli":
-            sub = parts[idx + 2]
-            if sub == "auto":
-                return True
-            if sub == "autonomous" and idx + 3 < len(parts) and parts[idx + 3] == "up":
-                return True
-    return False
+    from .autonomous_parser import looks_like_autonomous_up_command
+
+    return looks_like_autonomous_up_command(command)
 
 
 def _find_existing_autonomous_processes(
@@ -1101,90 +1088,29 @@ def _run_idle_diagnostics(
     diagnostic_state_dir: Path,
     topology_integration: bool,
 ) -> DiagnosticResult:
-    profile = profile.lower()
-    if profile in {"off", "none"}:
-        _stdio_info(
-            f"koru autonomous: idle diagnostics disabled (profile={profile})",
-            fmt=stdio_format,
-        )
-        return DiagnosticResult(status="off", failed=[])
-    if not _is_topology_enabled(
-        project, "idle-diagnostics", fallback=True, enabled=topology_integration
-    ):
-        _stdio_info("koru autonomous: idle diagnostics disabled in topology", fmt=stdio_format)
-        return DiagnosticResult(status="disabled(topology)", failed=[])
-    _stdio_info(
-        f"koru autonomous: queue idle -> running semcod diagnostics (profile={profile})",
-        fmt=stdio_format,
+    from . import autonomous_diagnostics as diag
+
+    def create_ticket(**kwargs: Any) -> None:
+        _create_diagnostic_ticket(stdio_format=stdio_format, **kwargs)
+
+    return diag.run_idle_diagnostics(
+        stdio_info=_stdio_info,
+        is_topology_enabled=_is_topology_enabled,
+        run_command=_run_command_check,
+        clear_marker=_clear_diagnostic_marker,
+        create_ticket=create_ticket,
+        make_result=lambda status, failed: DiagnosticResult(status=status, failed=failed),
+        stdio_format=stdio_format,
+        project=project,
+        profile=profile,
+        cycle=cycle,
+        queue_status=queue_status,
+        diagnostic_tickets=diagnostic_tickets,
+        diagnostic_ticket_queue=diagnostic_ticket_queue,
+        diagnostic_ticket_priority=diagnostic_ticket_priority,
+        diagnostic_state_dir=diagnostic_state_dir,
+        topology_integration=topology_integration,
     )
-    checks: list[tuple[str, str, list[str]]] = []
-    if shutil.which("regix"):
-        checks.append(
-            (
-                "regix",
-                "regix compare HEAD --local --format rich",
-                ["regix", "compare", "HEAD", "--local", "--format", "rich"],
-            )
-        )
-    if shutil.which("wup") and (project / "wup.yaml").is_file():
-        checks.append(("wup", "wup status", ["wup", "status"]))
-    if profile in {"full", "deep"}:
-        if shutil.which("redup"):
-            checks.append(
-                (
-                    "redup",
-                    "redup scan . --min-lines 10",
-                    ["redup", "scan", ".", "--min-lines", "10"],
-                )
-            )
-        if shutil.which("testql") and any(project.rglob("*.testql.toon.yaml")):
-            checks.append(
-                (
-                    "testql",
-                    "testql suite --pattern *.testql.toon.yaml --output console --fail-fast",
-                    [
-                        "testql",
-                        "suite",
-                        "--pattern",
-                        "*.testql.toon.yaml",
-                        "--output",
-                        "console",
-                        "--fail-fast",
-                    ],
-                )
-            )
-        if shutil.which("redsl"):
-            checks.append(("redsl", "redsl gate check .", ["redsl", "gate", "check", "."]))
-        if (project / "scripts" / "sumr-refresh.sh").is_file():
-            checks.append(
-                (
-                    "sumr",
-                    "bash scripts/sumr-refresh.sh --status",
-                    ["bash", "scripts/sumr-refresh.sh", "--status"],
-                )
-            )
-    failed: list[str] = []
-    diagnostic_state_dir.mkdir(parents=True, exist_ok=True)
-    for check_id, summary, command in checks:
-        if not _is_topology_enabled(project, check_id, fallback=True, enabled=topology_integration):
-            _stdio_info(f"- {check_id} disabled in topology, skipping", fmt=stdio_format)
-            continue
-        if _run_command_check(project, check_id, command, stdio_format=stdio_format):
-            _clear_diagnostic_marker(diagnostic_state_dir, check_id)
-            continue
-        failed.append(check_id)
-        if diagnostic_tickets:
-            _create_diagnostic_ticket(
-                project=project,
-                check_id=check_id,
-                summary=summary,
-                cycle=cycle,
-                queue_status=queue_status,
-                queue_name=diagnostic_ticket_queue,
-                priority=diagnostic_ticket_priority,
-                state_dir=diagnostic_state_dir,
-            )
-    return DiagnosticResult(status="failed" if failed else "ok", failed=failed)
 
 
 def _run_cycle(

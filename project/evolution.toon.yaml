@@ -1,30 +1,29 @@
-# code2llm/evolution | 972 func | 101f | 2026-05-19
-# generated in 0.00s
+# code2llm/evolution | 878 func | 95f | 2026-05-19
 
 NEXT[10] (ranked by impact):
-  [1] !! SPLIT           src/koru/autonomous.py
-      WHY: 1646L, 2 classes, max CC=50
-      EFFORT: ~4h  IMPACT: 82300
+  [1] !! SPLIT           koru/autonomous.py
+      WHY: 1572L, 2 classes, max CC=50
+      EFFORT: ~4h  IMPACT: 78600
 
-  [2] !! SPLIT           src/koru/cli.py
-      WHY: 2143L, 0 classes, max CC=26
-      EFFORT: ~4h  IMPACT: 55718
+  [2] !! SPLIT           koru/cli.py
+      WHY: 1868L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 26152
 
-  [3] !! SPLIT-FUNC      run_cycle  CC=89  fan=58
+  [3] !! SPLIT           koruapi/dashboard_serve.py
+      WHY: 1296L, 1 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 18144
+
+  [4] !! SPLIT-FUNC      run_cycle  CC=89  fan=58
       WHY: CC=89 exceeds 15
       EFFORT: ~1h  IMPACT: 5162
 
-  [4] !! SPLIT-FUNC      _action_up  CC=50  fan=49
+  [5] !! SPLIT-FUNC      _action_up  CC=50  fan=49
       WHY: CC=50 exceeds 15
       EFFORT: ~1h  IMPACT: 2450
 
-  [5] !! SPLIT-FUNC      run_next_planfile_task  CC=43  fan=29
+  [6] !! SPLIT-FUNC      run_next_planfile_task  CC=43  fan=29
       WHY: CC=43 exceeds 15
       EFFORT: ~1h  IMPACT: 1247
-
-  [6] !! SPLIT-FUNC      invoke_integration  CC=35  fan=35
-      WHY: CC=35 exceeds 15
-      EFFORT: ~1h  IMPACT: 1225
 
   [7] !  SPLIT-FUNC      create_nl_task  CC=23  fan=22
       WHY: CC=23 exceeds 15
@@ -38,21 +37,21 @@ NEXT[10] (ranked by impact):
       WHY: CC=23 exceeds 15
       EFFORT: ~1h  IMPACT: 437
 
-  [10] !  SPLIT-FUNC      _agent_main  CC=19  fan=18
-      WHY: CC=19 exceeds 15
-      EFFORT: ~1h  IMPACT: 342
+  [10] !! SPLIT-FUNC      apply_autoloop_env_to_args  CC=31  fan=11
+      WHY: CC=31 exceeds 15
+      EFFORT: ~1h  IMPACT: 341
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/cli.py may break 52 import paths
-  ⚠ Splitting src/koru/autonomous.py may break 37 import paths
-  ⚠ Splitting planfile.yaml may break 0 import paths
+  ⚠ Splitting koru/cli.py may break 52 import paths
+  ⚠ Splitting koru/autonomous.py may break 37 import paths
+  ⚠ Splitting koruapi/dashboard_serve.py may break 16 import paths
 
 METRICS-TARGET:
   CC̄:          4.8 → ≤3.4
   max-CC:      89 → ≤20
-  god-modules: 18 → 0
-  high-CC(≥15): 47 → ≤23
+  god-modules: 13 → 0
+  high-CC(≥15): 25 → ≤12
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +79,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.9 → now CC̄=4.8
+  prev CC̄=4.6 → now CC̄=4.8

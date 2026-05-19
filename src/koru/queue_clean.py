@@ -176,6 +176,62 @@ def _matched_rules(
     return tuple(rules)
 
 
+def _cleanable_statuses(*, include_active: bool) -> frozenset[str]:
+    return CLEANABLE_STATUSES_DEFAULT | (ACTIVE_STATUSES if include_active else frozenset())
+
+
+def _maybe_skip_active_ticket(
+    ticket: dict[str, Any],
+    ticket_id: str,
+    status: str,
+    *,
+    include_names: bool,
+    include_active: bool,
+    max_age_days: float | None,
+    now: datetime | None,
+) -> bool:
+    """Return True when an active ticket would match but is protected."""
+    if status in ACTIVE_STATUSES and not include_active:
+        age = _parse_age_days(ticket, now=now)
+        rules = _matched_rules(
+            ticket,
+            include_names=include_names,
+            max_age_days=max_age_days,
+            age_days=age,
+        )
+        return bool(rules)
+    return False
+
+
+def _candidate_from_ticket(
+    ticket: dict[str, Any],
+    ticket_id: str,
+    status: str,
+    *,
+    include_names: bool,
+    max_age_days: float | None,
+    now: datetime | None,
+) -> CleanupCandidate | None:
+    age_days = _parse_age_days(ticket, now=now)
+    rules = _matched_rules(
+        ticket,
+        include_names=include_names,
+        max_age_days=max_age_days,
+        age_days=age_days,
+    )
+    if not rules:
+        return None
+    labels = ticket.get("labels") or []
+    return CleanupCandidate(
+        ticket_id=ticket_id,
+        name=str(ticket.get("name") or ""),
+        status=status,
+        labels=tuple(str(x) for x in (labels if isinstance(labels, list) else [])),
+        age_days=age_days,
+        matched_rules=rules,
+    )
+
+
 def find_candidates(
     tickets: Sequence[dict[str, Any]],
     *,
@@ -191,9 +247,7 @@ def find_candidates(
     *skipped_active* lets the CLI surface "would have cleaned but
     you're working on it — pass --include-active to override."
     """
-    cleanable_statuses = CLEANABLE_STATUSES_DEFAULT | (
-        ACTIVE_STATUSES if include_active else frozenset()
-    )
+    cleanable_statuses = _cleanable_statuses(include_active=include_active)
     candidates: list[CleanupCandidate] = []
     skipped_active: list[str] = []
     for ticket in tickets:
@@ -202,39 +256,27 @@ def find_candidates(
             continue
         status = str(ticket.get("status") or "").lower()
         if status not in cleanable_statuses:
-            # If it would have matched but is active, surface so the
-            # operator knows to use --include-active deliberately.
-            if status in ACTIVE_STATUSES and not include_active:
-                age = _parse_age_days(ticket, now=now)
-                rules = _matched_rules(
-                    ticket,
-                    include_names=include_names,
-                    max_age_days=max_age_days,
-                    age_days=age,
-                )
-                if rules:
-                    skipped_active.append(ticket_id)
+            if _maybe_skip_active_ticket(
+                ticket,
+                ticket_id,
+                status,
+                include_names=include_names,
+                include_active=include_active,
+                max_age_days=max_age_days,
+                now=now,
+            ):
+                skipped_active.append(ticket_id)
             continue
-        age_days = _parse_age_days(ticket, now=now)
-        rules = _matched_rules(
+        candidate = _candidate_from_ticket(
             ticket,
+            ticket_id,
+            status,
             include_names=include_names,
             max_age_days=max_age_days,
-            age_days=age_days,
+            now=now,
         )
-        if not rules:
-            continue
-        labels = ticket.get("labels") or []
-        candidates.append(
-            CleanupCandidate(
-                ticket_id=ticket_id,
-                name=str(ticket.get("name") or ""),
-                status=status,
-                labels=tuple(str(x) for x in (labels if isinstance(labels, list) else [])),
-                age_days=age_days,
-                matched_rules=rules,
-            )
-        )
+        if candidate is not None:
+            candidates.append(candidate)
     return candidates, skipped_active
 
 

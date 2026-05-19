@@ -653,6 +653,33 @@ def _scan_redup_filtered(project: Path) -> list[Suggestion]:
     ]
 
 
+def _scan_redup_changed(project: Path) -> list[Suggestion]:
+    path = project / ".redup" / "wup-changed.json"
+    if not path.is_file():
+        return []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    groups = data if isinstance(data, list) else data.get("groups") or data.get("clusters")
+    if not isinstance(groups, list) or not groups:
+        return []
+    rel = str(path.relative_to(project))
+    return [
+        Suggestion(
+            signal="redup_changed",
+            title="Review duplicate groups touching recent changes",
+            description=(
+                f"`{rel}` lists {len(groups)} duplicate group(s) from the WUP/on-change "
+                "redup scan. Triage these before running a full duplicate budget gate."
+            ),
+            priority="normal",
+            labels=("redup", "duplication", "wup", "scan"),
+            files=(rel,),
+        )
+    ]
+
+
 def scan_semcod_quality_artifacts(project: Path) -> list[Suggestion]:
     """Quality tickets from semcod-adjacent tool exports (jscpd, code2llm, testql, redup)."""
     project = project.resolve()
@@ -661,6 +688,7 @@ def scan_semcod_quality_artifacts(project: Path) -> list[Suggestion]:
     out.extend(_scan_code2llm_analysis(project))
     out.extend(_scan_testql_export(project))
     out.extend(_scan_redup_filtered(project))
+    out.extend(_scan_redup_changed(project))
     return out
 
 

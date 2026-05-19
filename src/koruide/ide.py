@@ -107,45 +107,56 @@ def _matches(comm: str, cmdline: str, patterns: tuple[str, ...]) -> bool:
     return False
 
 
+_CANONICAL_COMM: dict[str, tuple[str, ...]] = {
+    "windsurf": ("windsurf",),
+    "vscode": ("code", "code-insiders", "code-oss", "codium", "vscodium"),
+    "cursor": ("cursor",),
+    "zed": ("zed",),
+}
+
+
+def _score_comm_name(ide_id: str, comm: str) -> int:
+    canonical = _CANONICAL_COMM.get(ide_id, ())
+    return 100 if comm.lower() in canonical else 0
+
+
+def _score_exe_path(ide_id: str, exe: str) -> int:
+    exe_l = exe.lower()
+    if not exe_l:
+        return 0
+    if ide_id == "windsurf":
+        if exe_l.endswith("/windsurf") and "/extensions/" not in exe_l:
+            return 120
+        if "/extensions/" in exe_l or "/devin/" in exe_l:
+            return -80
+    if ide_id == "vscode" and (exe_l.endswith("/code") or exe_l.endswith("/code-insiders")):
+        return 120
+    if ide_id == "cursor" and exe_l.endswith("/cursor"):
+        return 120
+    return 0
+
+
+def _score_cmdline_flags(cmdline: str) -> int:
+    cmd_l = cmdline.lower()
+    score = 0
+    if "--type=renderer" in cmd_l or "--type=utility" in cmd_l:
+        score -= 20
+    if "--type=browser" in cmd_l:
+        score += 10
+    return score
+
+
 def _candidate_score(ide_id: str, pid: int, comm: str, cmdline: str, exe: str) -> int:
     """Rank multiple process matches for the same IDE.
 
     Higher score means "more likely the primary IDE process".
     """
-    score = 0
-    comm_l = comm.lower()
-    cmd_l = cmdline.lower()
-    exe_l = exe.lower()
-    # Prefer canonical process names.
-    canonical_comm = {
-        "windsurf": ("windsurf",),
-        "vscode": ("code", "code-insiders", "code-oss", "codium", "vscodium"),
-        "cursor": ("cursor",),
-        "zed": ("zed",),
-    }
-    if ide_id in canonical_comm and comm_l in canonical_comm[ide_id]:
-        score += 100
-    # Prefer main executable path if available.
-    if exe_l:
-        if ide_id == "windsurf":
-            if exe_l.endswith("/windsurf") and "/extensions/" not in exe_l:
-                score += 120
-            if "/extensions/" in exe_l or "/devin/" in exe_l:
-                score -= 80
-        elif ide_id == "vscode":
-            if exe_l.endswith("/code") or exe_l.endswith("/code-insiders"):
-                score += 120
-        elif ide_id == "cursor":
-            if exe_l.endswith("/cursor"):
-                score += 120
-    # Renderer / utility processes are worse than browser/main.
-    if "--type=renderer" in cmd_l or "--type=utility" in cmd_l:
-        score -= 20
-    if "--type=browser" in cmd_l:
-        score += 10
-    # Deterministic tie-breaker: prefer lower pid (usually older/main proc).
-    score -= pid // 100000
-    return score
+    return (
+        _score_comm_name(ide_id, comm)
+        + _score_exe_path(ide_id, exe)
+        + _score_cmdline_flags(cmdline)
+        - pid // 100000
+    )
 
 
 def detect_running_ides(*, _pids: list[int] | None = None) -> list[RunningIDE]:
@@ -263,33 +274,24 @@ def _vscode_family_flavor_from_env() -> str | None:
     return None
 
 
-def detect_terminal_host_ide_id(*, _start_pid: int | None = None) -> str | None:
-    """IDE that owns the shell running this command (integrated terminal).
-
-    Uses editor-specific env vars first (works on Wayland), then walks
-    ``/proc`` parents. Cursor must be checked before generic ``VSCODE_*``
-    because Cursor also sets ``VSCODE_PID``.
-    """
+def _terminal_ide_from_env() -> str | None:
     chrome = os.environ.get("CHROME_DESKTOP", "").strip().lower()
     if chrome == "cursor.desktop" or os.environ.get("CURSOR_AGENT") or os.environ.get("CURSOR_CLI"):
         return "cursor"
-
     term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
     if term_program in _IDE_SIGNATURES:
         return term_program
-
-    # Before stale WINDSURF_CSRF_TOKEN: VS Code / Cursor / Windsurf set VSCODE_* in the shell.
     if _vscode_family_env_present():
-        flavor = _vscode_family_flavor_from_env()
-        if flavor is not None:
-            return flavor
-
+        return _vscode_family_flavor_from_env()
     if os.environ.get("WINDSURF_VERSION") or (
         os.environ.get("WINDSURF_CSRF_TOKEN") and "cursor" not in chrome
     ):
         return "windsurf"
+    return None
 
-    pid = _start_pid if _start_pid is not None else os.getpid()
+
+def _terminal_ide_from_parent_chain(start_pid: int) -> str | None:
+    pid = start_pid
     seen: set[int] = set()
     chain: list[str] = []
     for _ in range(40):
@@ -313,6 +315,20 @@ def detect_terminal_host_ide_id(*, _start_pid: int | None = None) -> str | None:
         if preferred in chain:
             return preferred
     return chain[0]
+
+
+def detect_terminal_host_ide_id(*, _start_pid: int | None = None) -> str | None:
+    """IDE that owns the shell running this command (integrated terminal).
+
+    Uses editor-specific env vars first (works on Wayland), then walks
+    ``/proc`` parents. Cursor must be checked before generic ``VSCODE_*``
+    because Cursor also sets ``VSCODE_PID``.
+    """
+    from_env = _terminal_ide_from_env()
+    if from_env is not None:
+        return from_env
+    start = _start_pid if _start_pid is not None else os.getpid()
+    return _terminal_ide_from_parent_chain(start)
 
 
 def focused_ide(
@@ -434,6 +450,54 @@ def _auto_profile_candidate_ids(detected: list[RunningIDE]) -> list[str]:
     return order
 
 
+def _resolve_explicit_drive_target(
+    prefer: str,
+    target: RunningIDE | None,
+    *,
+    project: Path | None,
+    profile_check: Callable[[str, Path | None], bool],
+) -> tuple[str, str, str]:
+    keyboard = prefer or "default"
+    if target is None and prefer:
+        return keyboard, keyboard, f"explicit-missing:{keyboard}"
+    keyboard = target.id if target is not None else keyboard
+    if profile_check(keyboard, project):
+        return keyboard, keyboard, f"explicit-profile:{keyboard}"
+    return keyboard, keyboard, f"explicit:{keyboard}"
+
+
+def _resolve_auto_drive_target(
+    detected: list[RunningIDE],
+    target: RunningIDE | None,
+    *,
+    project: Path | None,
+    profile_check: Callable[[str, Path | None], bool],
+) -> tuple[str, str, str]:
+    terminal = detect_terminal_host_ide_id()
+    running_ids = {ide.id for ide in detected}
+    if terminal and terminal in running_ids:
+        suffix = "profile" if profile_check(terminal, project) else "no-profile"
+        return terminal, terminal, f"auto:terminal-{suffix}"
+
+    for ide_id in _auto_profile_candidate_ids(detected):
+        if not profile_check(ide_id, project):
+            continue
+        focused = detect_focused_ide_id()
+        if ide_id == focused:
+            reason = "auto:focused-profile"
+        elif target is not None and ide_id == target.id:
+            reason = "auto:running-profile"
+        else:
+            reason = "auto:profile"
+        return ide_id, ide_id, reason
+
+    keyboard = target.id if target is not None else "default"
+    focused = detect_focused_ide_id()
+    if focused and focused != keyboard:
+        return keyboard, keyboard, f"auto:focused-no-profile:{focused}"
+    return keyboard, keyboard, "auto:no-profile"
+
+
 def resolve_drive_target(
     ide_arg: str,
     os_profile: str | None,
@@ -460,38 +524,9 @@ def resolve_drive_target(
         return keyboard, stripped_profile, f"os-profile:{stripped_profile}"
 
     if not is_auto:
-        keyboard = prefer or "default"
-        if target is None and prefer:
-            return keyboard, keyboard, f"explicit-missing:{keyboard}"
-        keyboard = target.id if target is not None else keyboard
-        if profile_check(keyboard, project):
-            return keyboard, keyboard, f"explicit-profile:{keyboard}"
-        return keyboard, keyboard, f"explicit:{keyboard}"
+        return _resolve_explicit_drive_target(prefer or "default", target, project=project, profile_check=profile_check)
 
-    terminal = detect_terminal_host_ide_id()
-    running_ids = {ide.id for ide in detected}
-    # Integrated terminal: never inject another IDE's calibrated coordinates.
-    if terminal and terminal in running_ids:
-        if profile_check(terminal, project):
-            return terminal, terminal, "auto:terminal-profile"
-        return terminal, terminal, "auto:terminal-no-profile"
-
-    for ide_id in _auto_profile_candidate_ids(detected):
-        if profile_check(ide_id, project):
-            focused = detect_focused_ide_id()
-            if ide_id == focused:
-                reason = "auto:focused-profile"
-            elif target is not None and ide_id == target.id:
-                reason = "auto:running-profile"
-            else:
-                reason = "auto:profile"
-            return ide_id, ide_id, reason
-
-    keyboard = target.id if target is not None else "default"
-    focused = detect_focused_ide_id()
-    if focused and focused != keyboard:
-        return keyboard, keyboard, f"auto:focused-no-profile:{focused}"
-    return keyboard, keyboard, "auto:no-profile"
+    return _resolve_auto_drive_target(detected, target, project=project, profile_check=profile_check)
 
 
 __all__ = [

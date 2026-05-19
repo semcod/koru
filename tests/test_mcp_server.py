@@ -177,6 +177,12 @@ def test_regix_gate_command_uses_workdir_not_project(tmp_path: Path) -> None:
     assert "--project" not in regix_cmd
 
 
+def test_redup_gate_command_uses_supported_cli_shape(tmp_path: Path) -> None:
+    gate_commands = mcp_server._gate_commands(tmp_path)
+
+    assert gate_commands["redup"] == ["redup", "check", str(tmp_path), "--min-lines", "10"]
+
+
 def test_job_store_is_ephemeral_across_imports(tmp_path: Path) -> None:
     """Demonstrate that job store is in-memory and lost across module reloads."""
     # Create a job in the current module state

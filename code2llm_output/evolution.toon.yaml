@@ -1,0 +1,82 @@
+# code2llm/evolution | 3519 func | 105f | 2026-05-19
+
+NEXT[10] (ranked by impact):
+  [1] !! SPLIT           src/koru/autonomous.py
+      WHY: 1572L, 2 classes, max CC=50
+      EFFORT: ~4h  IMPACT: 78600
+
+  [2] !! SPLIT           src/koru/cli.py
+      WHY: 2090L, 0 classes, max CC=19
+      EFFORT: ~4h  IMPACT: 39710
+
+  [3] !! SPLIT           src/koruapi/dashboard_serve.py
+      WHY: 1296L, 1 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 18144
+
+  [4] !! SPLIT-FUNC      run_cycle  CC=89  fan=58
+      WHY: CC=89 exceeds 15
+      EFFORT: ~1h  IMPACT: 5162
+
+  [5] !! SPLIT-FUNC      _action_up  CC=50  fan=49
+      WHY: CC=50 exceeds 15
+      EFFORT: ~1h  IMPACT: 2450
+
+  [6] !! SPLIT-FUNC      run_next_planfile_task  CC=43  fan=29
+      WHY: CC=43 exceeds 15
+      EFFORT: ~1h  IMPACT: 1247
+
+  [7] !  SPLIT-FUNC      create_nl_task  CC=23  fan=22
+      WHY: CC=23 exceeds 15
+      EFFORT: ~1h  IMPACT: 506
+
+  [8] !  SPLIT-FUNC      _read_wup_health  CC=23  fan=19
+      WHY: CC=23 exceeds 15
+      EFFORT: ~1h  IMPACT: 437
+
+  [9] !  SPLIT-FUNC      run_llm_request  CC=23  fan=19
+      WHY: CC=23 exceeds 15
+      EFFORT: ~1h  IMPACT: 437
+
+  [10] !  SPLIT-FUNC      _agent_main  CC=19  fan=18
+      WHY: CC=19 exceeds 15
+      EFFORT: ~1h  IMPACT: 342
+
+
+RISKS[3]:
+  ⚠ Splitting src/koru/cli.py may break 52 import paths
+  ⚠ Splitting src/koru/autonomous.py may break 37 import paths
+  ⚠ Splitting src/koruapi/dashboard_serve.py may break 16 import paths
+
+METRICS-TARGET:
+  CC̄:          1.3 → ≤0.9
+  max-CC:      89 → ≤20
+  god-modules: 14 → 0
+  high-CC(≥15): 30 → ≤15
+  hub-types:   0 → ≤0
+
+PATTERNS (language parser shared logic):
+  _extract_declarations() in base.py — unified extraction for:
+    - TypeScript: interfaces, types, classes, functions, arrow funcs
+    - PHP: namespaces, traits, classes, functions, includes
+    - Ruby: modules, classes, methods, requires
+    - C++: classes, structs, functions, #includes
+    - C#: classes, interfaces, methods, usings
+    - Java: classes, interfaces, methods, imports
+    - Go: packages, functions, structs
+    - Rust: modules, functions, traits, use statements
+
+  Shared regex patterns per language:
+    - import: language-specific import/require/using patterns
+    - class: class/struct/trait declarations with inheritance
+    - function: function/method signatures with visibility
+    - brace_tracking: for C-family languages ({ })
+    - end_keyword_tracking: for Ruby (module/class/def...end)
+
+  Benefits:
+    - Consistent extraction logic across all languages
+    - Reduced code duplication (~70% reduction in parser LOC)
+    - Easier maintenance: fix once, apply everywhere
+    - Standardized FunctionInfo/ClassInfo models
+
+HISTORY:
+  (first run — no previous data)

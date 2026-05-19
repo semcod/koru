@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Any
 
 from koru.queue.koru_queue_argv import build_koru_queue_argv
+from koru.redup_integration import redup_check_command
 
 try:
     import psutil
@@ -375,6 +376,35 @@ def _parse_tickets_json(stdout: str) -> list[dict[str, Any]]:
     return []
 
 
+def _tickets_for_status_filter(
+    ctx: dict[str, Any],
+    status_filter: str,
+) -> list[dict[str, Any]]:
+    all_tickets = ctx.get("all_tickets") or []
+    open_tickets = ctx.get("open_tickets") or []
+    if status_filter == "all":
+        return all_tickets
+    if status_filter == "open":
+        return open_tickets
+    if status_filter == "in_progress":
+        return [t for t in all_tickets if t.get("status") == "in_progress"]
+    if status_filter == "done":
+        return [t for t in all_tickets if t.get("status") == "done"]
+    return open_tickets
+
+
+def _serialize_mcp_ticket(ticket: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": ticket.get("id", ""),
+        "title": ticket.get("name", ""),
+        "status": ticket.get("status", "open"),
+        "queue": ticket.get("queue", "default"),
+        "priority": ticket.get("priority", "normal"),
+        "files": ticket.get("files") or [],
+        "executor_kind": (ticket.get("executor") or {}).get("kind", "unknown"),
+    }
+
+
 def tool_list_tickets(arguments: dict[str, Any]) -> dict[str, Any]:
     """List open tickets from the planfile queue."""
     project = Path(arguments["project_root"]).resolve()
@@ -388,33 +418,8 @@ def tool_list_tickets(arguments: dict[str, Any]) -> dict[str, Any]:
     except Exception as exc:
         return {"tickets": [], "error": str(exc)}
 
-    all_tickets = ctx.get("all_tickets") or []
-    open_tickets = ctx.get("open_tickets") or []
-
-    if status_filter == "all":
-        tickets = all_tickets
-    elif status_filter == "open":
-        tickets = open_tickets
-    elif status_filter == "in_progress":
-        tickets = [t for t in all_tickets if t.get("status") == "in_progress"]
-    elif status_filter == "done":
-        tickets = [t for t in all_tickets if t.get("status") == "done"]
-    else:
-        tickets = open_tickets
-
-    result_tickets = []
-    for t in tickets:
-        result_tickets.append({
-            "id": t.get("id", ""),
-            "title": t.get("name", ""),
-            "status": t.get("status", "open"),
-            "queue": t.get("queue", "default"),
-            "priority": t.get("priority", "normal"),
-            "files": t.get("files") or [],
-            "executor_kind": (t.get("executor") or {}).get("kind", "unknown"),
-        })
-
-    return {"tickets": result_tickets}
+    tickets = _tickets_for_status_filter(ctx, str(status_filter))
+    return {"tickets": [_serialize_mcp_ticket(t) for t in tickets]}
 
 
 def _create_job(ticket_id: str, mode: str, project: Path | None = None) -> str:
@@ -610,7 +615,7 @@ def tool_job_status(arguments: dict[str, Any]) -> dict[str, Any]:
 def _gate_commands(project: Path) -> dict[str, list[str]]:
     return {
         "regix": ["regix", "gates", "--workdir", str(project)],
-        "redup": ["redup", str(project)],
+        "redup": redup_check_command(project),
         "vallm": ["vallm", str(project)],
         "sumr": ["sumr", str(project)],
         "testql": ["testql", "run", "--project", str(project), "--dry-run"],

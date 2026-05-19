@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 import tempfile
 import unittest
@@ -9,8 +8,6 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from koru.scan import (
-    Suggestion,
-    collect_suggestions,
     run_scan,
     scan_gitignore_drift,
     scan_missing_gates,
@@ -396,7 +393,16 @@ class TestRunScan(unittest.TestCase):
             created: list[list[str]] = []
 
             def runner(cmd, _proj) -> SimpleNamespace:
-                if cmd == ["planfile", "ticket", "list", "--source", "koru-scan", "--format", "json"]:
+                source_list_cmd = [
+                    "planfile",
+                    "ticket",
+                    "list",
+                    "--source",
+                    "koru-scan",
+                    "--format",
+                    "json",
+                ]
+                if cmd == source_list_cmd:
                     return _ok("[]")
                 if cmd == ["planfile", "ticket", "list", "--format", "json"]:
                     return _ok(json.dumps([{"name": existing, "source": {"tool": "koru-scan"}}]))
@@ -429,8 +435,16 @@ class TestRunScan(unittest.TestCase):
                     return _ok(
                         json.dumps(
                             [
-                                {"name": title, "status": "done", "source": {"tool": "koru-scan"}},
-                                {"name": "Still open", "status": "open", "source": {"tool": "koru-scan"}},
+                                {
+                                    "name": title,
+                                    "status": "done",
+                                    "source": {"tool": "koru-scan"},
+                                },
+                                {
+                                    "name": "Still open",
+                                    "status": "open",
+                                    "source": {"tool": "koru-scan"},
+                                },
                             ]
                         )
                     )
@@ -556,6 +570,17 @@ class TestScanSemcodArtifacts(unittest.TestCase):
             )
             out = scan_semcod_quality_artifacts(project)
             self.assertTrue(any(s.signal == "redup_filtered" for s in out))
+
+    def test_redup_changed_emits_when_wup_scan_has_groups(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".redup").mkdir()
+            (project / ".redup" / "wup-changed.json").write_text(
+                json.dumps({"groups": [{"id": "D1", "files": ["changed.py"]}]}),
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            self.assertTrue(any(s.signal == "redup_changed" for s in out))
 
 
 if __name__ == "__main__":

@@ -531,6 +531,53 @@ class AutopilotDaemon:
         }
         self._send(client, ack(msg.id or "", info=info).encode())
 
+    def _plugin_ack_needs_os_fallback(
+        self,
+        *,
+        plugin_ok: bool,
+        info: dict[str, Any],
+        submit_requested: bool,
+        plugin_ide: str | None,
+    ) -> bool:
+        if not plugin_ide:
+            return False
+        focus_error = "chat input is not focused/open" in str(info.get("message", "")).lower()
+        submit_failed = submit_requested and info.get("submitted") is False
+        undelivered = info.get("delivered") is False
+        return ((not plugin_ok) and focus_error) or (not plugin_ok) or submit_failed or undelivered
+
+    def _relay_os_fallback_ack(
+        self,
+        cli_client: _Client,
+        corr: str,
+        plugin_ide: str,
+        original_text: str,
+        submit_requested: bool,
+        info: dict[str, Any],
+    ) -> bool:
+        try:
+            os_res = self._try_os_injector_drive(plugin_ide, original_text, submit_requested)
+        except InjectorError as exc:
+            info["os_fallback"] = "failed"
+            info["os_fallback_error"] = str(exc)
+            return False
+        if os_res is None:
+            return False
+        relay = ack(
+            corr,
+            ok=True,
+            info={
+                "backend": os_res.get("backend", "os_injector"),
+                "ok": True,
+                "delivered": True,
+                "opened": True,
+                "submitted": bool(os_res.get("submitted", submit_requested)),
+                "os_fallback": "used",
+            },
+        )
+        self._send(cli_client, relay.encode())
+        return True
+
     def _handle_ack(self, client: _Client, msg: Message) -> None:
         # Plugin responded to a forwarded ``chat.send``. Relay to the
         # waiting CLI.
@@ -543,55 +590,15 @@ class AutopilotDaemon:
         client.awaiting_plugin = None
         info = {k: v for k, v in msg.data.items() if k != "ok"}
         plugin_ok = bool(msg.data.get("ok", True))
-        focus_error = "chat input is not focused/open" in str(info.get("message", "")).lower()
-        submit_failed = (
-            submit_requested and info.get("submitted") is False
-        )
-        undelivered = info.get("delivered") is False
-        if (not plugin_ok) and focus_error and plugin_ide:
-            try:
-                os_res = self._try_os_injector_drive(plugin_ide, original_text, submit_requested)
-            except InjectorError as exc:
-                info["os_fallback"] = "failed"
-                info["os_fallback_error"] = str(exc)
-            else:
-                if os_res is not None:
-                    relay = ack(
-                        corr,
-                        ok=True,
-                        info={
-                            "backend": os_res.get("backend", "os_injector"),
-                            "ok": True,
-                            "delivered": True,
-                            "opened": True,
-                            "submitted": bool(os_res.get("submitted", submit_requested)),
-                            "os_fallback": "used",
-                        },
-                    )
-                    self._send(cli_client, relay.encode())
-                    return
-        if ((not plugin_ok) or submit_failed or undelivered) and plugin_ide:
-            try:
-                os_res = self._try_os_injector_drive(plugin_ide, original_text, submit_requested)
-            except InjectorError as exc:
-                info["os_fallback"] = "failed"
-                info["os_fallback_error"] = str(exc)
-            else:
-                if os_res is not None:
-                    relay = ack(
-                        corr,
-                        ok=True,
-                        info={
-                            "backend": os_res.get("backend", "os_injector"),
-                            "ok": True,
-                            "delivered": True,
-                            "opened": True,
-                            "submitted": bool(os_res.get("submitted", submit_requested)),
-                            "os_fallback": "used",
-                        },
-                    )
-                    self._send(cli_client, relay.encode())
-                    return
+        if self._plugin_ack_needs_os_fallback(
+            plugin_ok=plugin_ok,
+            info=info,
+            submit_requested=submit_requested,
+            plugin_ide=plugin_ide,
+        ) and self._relay_os_fallback_ack(
+            cli_client, corr, plugin_ide, original_text, submit_requested, info
+        ):
+            return
         # IDE plugins typically send ``delivered`` without ``backend``; CLI
         # summaries (e.g. ``koru autonomous``) expect a stable backend label.
         if info.get("delivered") is True and "backend" not in info:

@@ -777,73 +777,24 @@ def _build_gc_parser() -> argparse.ArgumentParser:
 
 
 def _gc_main(argv: list[str]) -> int:
+    from .gc_cli_helpers import (
+        emit_gc_management_event,
+        gc_statuses_from_args,
+        print_gc_report,
+    )
+
     args = _build_gc_parser().parse_args(argv)
-    statuses = frozenset(s.strip() for s in args.status.split(",") if s.strip())
     result = run_gc(
         args.project.resolve(),
         apply=args.apply,
-        statuses=statuses,
+        statuses=gc_statuses_from_args(args.status),
         max_age_days=args.max_age,
         keep_last=args.keep_last,
         sprint=args.sprint,
         archive=not args.no_archive,
     )
-    if args.output_format == "json":
-        payload = {
-            "dry_run": result.dry_run,
-            "candidates": [
-                {
-                    "ticket_id": c.ticket_id,
-                    "name": c.name,
-                    "status": c.status,
-                    "age_days": c.age_days,
-                }
-                for c in result.candidates
-            ],
-            "removed": result.removed,
-            "kept": result.kept,
-            "archived_to": str(result.archived_to) if result.archived_to else None,
-            "errors": result.errors,
-        }
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        mode = "DRY RUN" if result.dry_run else "APPLIED"
-        if not result.candidates:
-            print(f"koru gc ({mode}): no stale tickets found (max-age={args.max_age}d)")
-        else:
-            print(f"koru gc ({mode}): {result.summary()}")
-            print()
-            for c in result.candidates:
-                marker = "✗" if c.ticket_id in result.removed else "·"
-                age = f"{c.age_days:.0f}d" if c.age_days != float("inf") else "??d"
-                print(
-                    f"  {marker} {c.ticket_id:<14} {c.status:<10} {age:>6}  "
-                    f"{c.name[:60]}"
-                )
-            if result.removed:
-                action = "Would remove" if result.dry_run else "Removed"
-                print(f"\n  → {action}: {len(result.removed)} ticket(s)")
-            if result.kept:
-                print(f"  → Kept: {len(result.kept)} ticket(s)")
-            if result.archived_to:
-                print(f"  → Archived to: {result.archived_to}")
-            if result.errors:
-                print(f"  → Errors: {len(result.errors)}")
-                for err in result.errors:
-                    print(f"    {err}")
-    emit_management_event(
-        tool="koru.gc",
-        action="applied" if args.apply else "previewed",
-        status="completed",
-        message=result.summary(),
-        details={
-            "project": str(args.project),
-            "removed": result.removed,
-            "kept": result.kept,
-            "max_age_days": args.max_age,
-            "keep_last": args.keep_last,
-        },
-    )
+    print_gc_report(args, result)
+    emit_gc_management_event(args, result)
     return 0
 
 
@@ -1123,73 +1074,21 @@ def _local_serve_main(argv: list[str]) -> int:
 
 
 def _agent_main(argv: list[str]) -> int:
+    from .agent_cli_helpers import (
+        print_agent_list,
+        run_agent_handoff,
+        try_agent_env_exports,
+    )
+
     args = _build_agent_parser().parse_args(argv)
     project = args.project.resolve()
-    agents = detect_agent_options(project)
-
-    lane_for_env = (args.lane_id or args.agent_id or "").strip()
-    if args.env_json or args.env_exports:
-        if not lane_for_env:
-            print(
-                "koru agent: --env-exports / --env-json require --lane or --agent <id>",
-                file=sys.stderr,
-            )
-            return 2
-        env_map = agent_lane_environment(lane_for_env)
-        if args.env_json:
-            print(json.dumps(env_map, indent=2, sort_keys=True))
-        else:
-            print(format_agent_lane_exports(env_map), end="")
-        return 0
-
+    env_code = try_agent_env_exports(args)
+    if env_code is not None:
+        return env_code
     if args.list:
-        if args.output_format == "json":
-            payload_agents = [agent.to_dict() for agent in agents]
-            available_ct = sum(1 for a in agents if a.available)
-            launchable_ct = sum(1 for a in agents if a.launchable)
-            print(
-                json.dumps(
-                    {
-                        "summary": {
-                            "total": len(agents),
-                            "available": available_ct,
-                            "launchable": launchable_ct,
-                            "ready": launchable_ct > 0,
-                        },
-                        "agents": payload_agents,
-                    },
-                    indent=2,
-                    sort_keys=True,
-                )
-            )
-        else:
-            for agent in agents:
-                marker = "✓" if agent.available else "·"
-                launch = "launchable" if agent.launchable else "manual"
-                print(f"{marker} {agent.id:<14} {launch:<10} {agent.reason}")
+        print_agent_list(args, detect_agent_options(project))
         return 0
-
-    ctx = build_context(
-        project=project,
-        ticket_id=args.ticket,
-        queue_name=args.queue_name,
-    )
-    prompt = render_markdown_handoff(ctx)
-    if not args.launch:
-        save_path = save_agent_prompt(project, prompt)
-        print(prompt)
-        print(f"\nPrompt saved: {save_path}")
-        return 0
-
-    agent = select_agent(
-        agents,
-        agent_id=args.agent_id,
-        interactive=sys.stdin.isatty(),
-    )
-    if agent is None:
-        print("koru agent: no matching agent detected. Use `koru agent --list`.")
-        return 2
-    return launch_agent(agent, project, prompt)
+    return run_agent_handoff(project, args)
 
 
 def _is_bare_invocation(args: argparse.Namespace) -> bool:
@@ -1254,31 +1153,9 @@ def _build_topology_parser() -> argparse.ArgumentParser:
 
 
 def _render_topology_text(topology: dict[str, Any]) -> str:
-    lines: list[str] = []
-    lines.append(f"koru topology: {topology['project']}")
-    status = "present" if topology["exists"] else "defaults only"
-    lines.append(f"  config: {topology['path']} ({status})")
-    lines.append("")
-    lines.append("Components:")
-    lines.append(f"  {'id':<12} {'enabled':<7} {'available':<9} {'via':<8} role")
-    for cid, comp in (topology.get("components") or {}).items():
-        en = "yes" if comp.get("enabled") else "no"
-        avail = "yes" if comp.get("available") else "no"
-        via = (comp.get("via") or "")[:8]
-        role = (comp.get("role") or "")[:60]
-        lines.append(f"  {cid:<12} {en:<7} {avail:<9} {via:<8} {role}")
-    lines.append("")
-    lines.append("Pipelines:")
-    lines.append(f"  {'id':<22} {'enabled':<7} {'trigger':<16} description")
-    for pid, pipe in (topology.get("pipelines") or {}).items():
-        en = "yes" if pipe.get("enabled") else "no"
-        trig = (pipe.get("trigger") or "")[:16]
-        desc = (pipe.get("description") or "")[:60]
-        comps = ", ".join(pipe.get("components") or [])
-        lines.append(f"  {pid:<22} {en:<7} {trig:<16} {desc}")
-        if comps:
-            lines.append(f"  {'':<22} {'':<7} {'':<16}   components: {comps}")
-    return "\n".join(lines)
+    from .topology_cli import render_topology_text
+
+    return render_topology_text(topology)
 
 
 def _topology_main(argv: list[str]) -> int:
@@ -1314,34 +1191,20 @@ def _topology_main(argv: list[str]) -> int:
         print(",".join(ids))
         return 0
 
+    from .topology_cli import TopologyMutation, apply_topology_mutations
+
     topo = load_topology(project)
-    mutated = False
-    for target_id, enabled in (
-        (args.enable, True),
-        (args.disable, False),
-    ):
-        if target_id:
-            res = set_component_enabled(topo, target_id, enabled)
-            if not res.found:
-                print(f"koru topology: unknown component {target_id!r}", file=sys.stderr)
-                return 2
-            mutated = True
-            print(
-                f"koru topology: component {res.id} {res.previous} -> {res.current}"
-            )
-    for target_id, enabled in (
-        (args.enable_pipeline, True),
-        (args.disable_pipeline, False),
-    ):
-        if target_id:
-            res = set_pipeline_enabled(topo, target_id, enabled)
-            if not res.found:
-                print(f"koru topology: unknown pipeline {target_id!r}", file=sys.stderr)
-                return 2
-            mutated = True
-            print(
-                f"koru topology: pipeline {res.id} {res.previous} -> {res.current}"
-            )
+    mutated, rc = apply_topology_mutations(
+        topo,
+        [
+            TopologyMutation(args.enable, True, "component", set_component_enabled),
+            TopologyMutation(args.disable, False, "component", set_component_enabled),
+            TopologyMutation(args.enable_pipeline, True, "pipeline", set_pipeline_enabled),
+            TopologyMutation(args.disable_pipeline, False, "pipeline", set_pipeline_enabled),
+        ],
+    )
+    if rc != 0:
+        return rc
 
     if mutated:
         path = save_topology(project, topo)
@@ -1907,163 +1770,25 @@ def _watch_main(args: argparse.Namespace) -> int:
 
 
 def _queue_run_main(args: argparse.Namespace) -> int:
-    emit_management_event(
-        tool="koru.queue",
-        action="started",
-        status="running",
-        message="loop" if args.loop else "single",
-        queue=args.queue_name,
-        details={
-            "project": str(args.project),
-            "actor": args.actor,
-            "dry_run": args.dry_run,
-            "interactive": args.interactive,
-        },
+    from .queue_cli_helpers import (
+        emit_queue_run_started,
+        open_queue_run_log,
+        run_queue_loop_mode,
+        run_queue_single_mode,
     )
-    run_log = None
-    if not args.no_log and not args.dry_run:
-        run_log = open_run_log_eagerly(args.project, prefix="queue")
-        run_log.write_header(
-            project=args.project,
-            mode="loop" if args.loop else "single",
-            actor=args.actor,
-            queue_name=args.queue_name,
-            interactive=args.interactive,
-        )
 
+    emit_queue_run_started(args)
+    run_log = open_queue_run_log(args)
+    runners = {
+        "planfile_runner": _queue_run_process,
+        "shell_runner": _queue_run_shell_command,
+        "api_runner": _queue_run_api_request,
+        "llm_runner": _queue_run_llm_request,
+        "prompt_runner": _queue_default_human_prompt,
+    }
     if args.loop:
-        def _progress(r, i):
-            ticket = r.ticket_id or "-"
-            kind = r.executor_kind or "-"
-            marker = {
-                "completed": "✓",
-                "failed": "✗",
-                "waiting_input": "⏸",
-                "idle": "•",
-                "dry_run": "?",
-                "unsupported_executor": "!",
-                "planfile_error": "!",
-            }.get(r.status, "·")
-            print(f"  [{i:>3}] {marker} {r.status:<22} {ticket:<14} ({kind})")
-            if run_log is not None:
-                run_log.write_iteration(iteration=i, result=r)
-            emit_management_event(
-                tool="koru.queue",
-                action="iteration",
-                status=r.status,
-                level="error" if r.status in {"failed", "planfile_error"} else "info",
-                message=r.message,
-                queue=args.queue_name,
-                details={
-                    "iteration": i,
-                    "ticket_id": r.ticket_id,
-                    "executor_kind": r.executor_kind,
-                    "exit_code": r.exit_code,
-                },
-            )
-
-        loop_result = run_planfile_queue_loop(
-            project=args.project,
-            actor=args.actor,
-            queue_name=args.queue_name,
-            interactive=args.interactive,
-            max_iterations=args.max_iterations,
-            progress_callback=_progress,
-            planfile_runner=_queue_run_process,
-            shell_runner=_queue_run_shell_command,
-            api_runner=_queue_run_api_request,
-            llm_runner=_queue_run_llm_request,
-            prompt_runner=_queue_default_human_prompt,
-        )
-        if run_log is not None:
-            run_log.write_footer(summary=loop_result)
-        print()
-        print(f"koru queue loop: {loop_result.summary()}")
-        if loop_result.completed:
-            print(f"  completed: {', '.join(loop_result.completed)}")
-        if loop_result.failed:
-            print(f"  failed:    {', '.join(loop_result.failed)}")
-        if loop_result.waiting:
-            print(f"  waiting:   {', '.join(loop_result.waiting)}")
-        exit_code = 0 if loop_result.last_status in {
-            "completed", "idle", "waiting_input", "dry_run"
-        } else 1
-        emit_management_event(
-            tool="koru.queue",
-            action="completed" if exit_code == 0 else "failed",
-            status=loop_result.last_status,
-            level="error" if exit_code else "info",
-            message=loop_result.summary(),
-            queue=args.queue_name,
-            details={
-                "completed": loop_result.completed,
-                "failed": loop_result.failed,
-                "waiting": loop_result.waiting,
-                "iterations": loop_result.iterations,
-            },
-        )
-        return exit_code
-
-    result = run_next_planfile_task(
-        project=args.project,
-        actor=args.actor,
-        dry_run=args.dry_run,
-        queue_name=args.queue_name,
-        interactive=args.interactive,
-        planfile_runner=_queue_run_process,
-        shell_runner=_queue_run_shell_command,
-        api_runner=_queue_run_api_request,
-        llm_runner=_queue_run_llm_request,
-        prompt_runner=_queue_default_human_prompt,
-    )
-    if run_log is not None:
-        run_log.write_iteration(iteration=1, result=result)
-        single_summary = type(
-            "SingleSummary",
-            (),
-            {
-                "iterations": 1,
-                "completed": (
-                    [result.ticket_id]
-                    if result.status == "completed" and result.ticket_id
-                    else []
-                ),
-                "failed": (
-                    [result.ticket_id]
-                    if result.status == "failed" and result.ticket_id
-                    else []
-                ),
-                "waiting": (
-                    [result.ticket_id]
-                    if result.status == "waiting_input" and result.ticket_id
-                    else []
-                ),
-                "last_status": result.status,
-            },
-        )()
-        run_log.write_footer(summary=single_summary)
-    print(
-        f"koru queue: status={result.status} "
-        f"ticket={result.ticket_id or '-'} executor={result.executor_kind or '-'}"
-    )
-    if result.message:
-        print(result.message)
-    exit_code = 0 if result.status in {"completed", "idle", "waiting_input", "dry_run"} else 1
-    emit_management_event(
-        tool="koru.queue",
-        action="completed" if exit_code == 0 else "failed",
-        status=result.status,
-        level="error" if exit_code else "info",
-        message=result.message,
-        queue=args.queue_name,
-        details={
-            "ticket_id": result.ticket_id,
-            "executor_kind": result.executor_kind,
-            "exit_code": result.exit_code,
-            "dry_run": args.dry_run,
-        },
-    )
-    return exit_code
+        return run_queue_loop_mode(args, run_log, **runners)
+    return run_queue_single_mode(args, run_log, **runners)
 
 
 def _command_loop_main(args: argparse.Namespace) -> int:

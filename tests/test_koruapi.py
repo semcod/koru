@@ -31,6 +31,36 @@ def test_unknown_integration() -> None:
         invoke_integration("no.such.integration", project=Path("."))
 
 
+def test_wired_handlers_are_catalogued() -> None:
+    from koruapi.invoke_handlers import INTEGRATION_HANDLERS
+
+    catalog_ids = {s.id for s in list_integrations()}
+    assert catalog_ids.issuperset(INTEGRATION_HANDLERS.keys())
+
+
+def test_tool_list_tickets_status_filters(monkeypatch: pytest.MonkeyPatch) -> None:
+    from koruapi.mcp_server import _serialize_mcp_ticket, _tickets_for_status_filter, tool_list_tickets
+
+    ctx = {
+        "all_tickets": [
+            {"id": "A", "name": "Open", "status": "open"},
+            {"id": "B", "name": "Done", "status": "done"},
+            {"id": "C", "name": "WIP", "status": "in_progress"},
+        ],
+        "open_tickets": [{"id": "A", "name": "Open", "status": "open"}],
+    }
+    assert [t["id"] for t in _tickets_for_status_filter(ctx, "open")] == ["A"]
+    assert len(_tickets_for_status_filter(ctx, "all")) == 3
+    assert _serialize_mcp_ticket(ctx["all_tickets"][0])["title"] == "Open"
+
+    monkeypatch.setattr(
+        "koru.context.build_context",
+        lambda **_: ctx,
+    )
+    out = tool_list_tickets({"project_root": ".", "status": "done"})
+    assert out["tickets"][0]["id"] == "B"
+
+
 def test_openapi_document_lists_invoke_path() -> None:
     from koruapi.openapi import build_openapi_document
 

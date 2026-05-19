@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 
 
@@ -375,4 +376,23 @@ def build_parser(*, default_stdio_format: str) -> argparse.ArgumentParser:
     )
 
     return parser
+
+
+def looks_like_autonomous_up_command(command: str) -> bool:
+    """Match koru autonomous/auto loops (cf. ``pkill -f 'koru.*autonomous'`` and ``koru auto``)."""
+    if re.search(r"koru.{0,120}autonomous", command):
+        return True
+    parts = command.split()
+    for idx, part in enumerate(parts):
+        if Path(part).name == "koru" and idx + 1 < len(parts) and parts[idx + 1] == "auto":
+            return True
+        if Path(part).name == "koru" and parts[idx + 1 : idx + 3] == ["autonomous", "up"]:
+            return True
+        if part == "-m" and idx + 2 < len(parts) and parts[idx + 1] == "koru.cli":
+            sub = parts[idx + 2]
+            if sub == "auto":
+                return True
+            if sub == "autonomous" and idx + 3 < len(parts) and parts[idx + 3] == "up":
+                return True
+    return False
 
