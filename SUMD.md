@@ -21,7 +21,7 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.146`
+- **version**: `0.1.147`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -41,7 +41,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.146;
+  version: 0.1.147;
 }
 
 dependencies {
@@ -1677,7 +1677,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.146
+  version: 0.1.147
   env: local
 ```
 
@@ -1752,9 +1752,9 @@ pip install -e .[dev]
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 284f 53866L | python:209,shell:62,javascript:6,typescript:6,less:1 | 2026-05-19
-# stats: 1537 func | 176 cls | 284 mod | CC̄=4.1 | critical:112 | cycles:0
-# alerts[5]: CC test_autonomy_config_from_env=16; CC looks_like_autonomous_up_command=15; CC _build_shared_rules=15; CC _recommended_next_steps=15; fan-out _build_handler=29
+# koru | 284f 53886L | python:209,shell:62,javascript:6,typescript:6,less:1 | 2026-05-19
+# stats: 1541 func | 176 cls | 284 mod | CC̄=4.1 | critical:109 | cycles:0
+# alerts[5]: CC test_autonomy_config_from_env=16; CC test_autonomy_config_defaults=15; CC test_jsonl_session_emits_versioned_envelope=15; CC do_from_planfile=14; CC select_agent=14
 # hotspots[5]: _build_handler fan=29; run_cycle fan=23; _action_up fan=22; init_project fan=21; render_markdown_handoff fan=20
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
@@ -1812,7 +1812,7 @@ M[284]:
   plugins/koru-autopilot-vscode/out/socketPath.js,100
   plugins/koru-autopilot-vscode/src/dispatch-plan.test.ts,95
   plugins/koru-autopilot-vscode/src/dispatch-plan.ts,27
-  plugins/koru-autopilot-vscode/src/extension.ts,627
+  plugins/koru-autopilot-vscode/src/extension.ts,626
   plugins/koru-autopilot-vscode/src/probe-ladder.test.ts,69
   plugins/koru-autopilot-vscode/src/probe-ladder.ts,252
   plugins/koru-autopilot-vscode/src/socketPath.ts,67
@@ -1844,8 +1844,8 @@ M[284]:
   src/koru/autonomous_cycle.py,1232
   src/koru/autonomous_diagnostics.py,255
   src/koru/autonomous_env.py,27
-  src/koru/autonomous_parser.py,395
-  src/koru/autonomous_process_guard.py,225
+  src/koru/autonomous_parser.py,399
+  src/koru/autonomous_process_guard.py,208
   src/koru/autonomous_startup.py,265
   src/koru/autonomous_wup.py,401
   src/koru/autonomy/__init__.py,26
@@ -1878,7 +1878,7 @@ M[284]:
   src/koru/cli/commands.py,1
   src/koru/cli/parsers.py,1
   src/koru/cli.py,1853
-  src/koru/context.py,1231
+  src/koru/context.py,1243
   src/koru/doctor.py,515
   src/koru/dotenv_loader.py,105
   src/koru/dsl/__init__.py,10
@@ -1889,8 +1889,8 @@ M[284]:
   src/koru/ide_client.py,145
   src/koru/ide_router.py,99
   src/koru/ide_runtime.py,45
-  src/koru/init.py,603
-  src/koru/init_host_environment.py,303
+  src/koru/init.py,612
+  src/koru/init_host_environment.py,316
   src/koru/local_service.py,212
   src/koru/loop.py,132
   src/koru/mcp_provision.py,400
@@ -2273,17 +2273,17 @@ D:
     e: apply_autonomous_env_overrides
     apply_autonomous_env_overrides(args)
   src/koru/autonomous_parser.py:
-    e: build_parser,looks_like_autonomous_up_command
+    e: build_parser,_match_koru_auto_parts,looks_like_autonomous_up_command
     build_parser()
+    _match_koru_auto_parts(parts)
     looks_like_autonomous_up_command(command)
   src/koru/autonomous_process_guard.py:
-    e: command_project,process_cwd,ancestor_pids,looks_like_autonomous_up_command,find_existing_autonomous_processes,find_existing_wup_processes,as_managed,terminate_existing_processes,confirm_replace_existing,ExistingAutonomousProcess,ExistingManagedProcess
+    e: command_project,process_cwd,ancestor_pids,find_existing_autonomous_processes,find_existing_wup_processes,as_managed,terminate_existing_processes,confirm_replace_existing,ExistingAutonomousProcess,ExistingManagedProcess
     ExistingAutonomousProcess:
     ExistingManagedProcess:
     command_project(command)
     process_cwd(pid)
     ancestor_pids(pid)
-    looks_like_autonomous_up_command(command)
     find_existing_autonomous_processes(project)
     find_existing_wup_processes(project)
     as_managed(proc)
@@ -2571,7 +2571,7 @@ D:
     _command_loop_main(args)
     main()
   src/koru/context.py:
-    e: _is_fixture_ticket,_resolve_include_fixtures,_load_project_dotenv,_planfile_command_base,_planfile_env,_fetch_all_tickets,_run_planfile,_safe_json,_git_probe,_build_ticket_args,_try_fallback_ticket_list,_process_list_payload,_process_dict_payload,_extract_error_from_stderr,_execute_ticket_query,_handle_idle_queue,_parse_ticket_response,_fetch_ticket_data,build_context,_load_sprint_data,_find_blocking_tickets,_promote_blocking_to_critical,_promote_bug_priority,_write_sprint_data,_auto_promote_blocking_tickets,_build_instructions,_build_setup_instructions,_build_shared_rules,_build_self_service,_render_header,_render_environment,_render_agent_lanes,_render_autonomous_mode,_render_ai_tool_support_2026,_render_semcod_tools,_render_setup_required,_render_active_ticket,_render_no_active_ticket,_render_gates,_render_project_pipeline,_render_policy,_render_rules,_render_self_service,_render_dashboard,_render_autonomy_loop_brief,render_markdown_handoff
+    e: _is_fixture_ticket,_resolve_include_fixtures,_load_project_dotenv,_planfile_command_base,_planfile_env,_fetch_all_tickets,_run_planfile,_safe_json,_git_probe,_build_ticket_args,_try_fallback_ticket_list,_process_list_payload,_process_dict_payload,_extract_error_from_stderr,_execute_ticket_query,_handle_idle_queue,_parse_ticket_response,_fetch_ticket_data,build_context,_load_sprint_data,_find_blocking_tickets,_promote_blocking_to_critical,_promote_bug_priority,_write_sprint_data,_auto_promote_blocking_tickets,_build_instructions,_build_setup_instructions,_build_policy_rules,_build_ticket_rules,_build_shared_rules,_build_self_service,_render_header,_render_environment,_render_agent_lanes,_render_autonomous_mode,_render_ai_tool_support_2026,_render_semcod_tools,_render_setup_required,_render_active_ticket,_render_no_active_ticket,_render_gates,_render_project_pipeline,_render_policy,_render_rules,_render_self_service,_render_dashboard,_render_autonomy_loop_brief,render_markdown_handoff
     _is_fixture_ticket(ticket)
     _resolve_include_fixtures(explicit)
     _load_project_dotenv(project)
@@ -2599,6 +2599,8 @@ D:
     _auto_promote_blocking_tickets(project;runner)
     _build_instructions(policy;ticket)
     _build_setup_instructions()
+    _build_policy_rules(policy)
+    _build_ticket_rules(ticket)
     _build_shared_rules(policy;ticket)
     _build_self_service(policy;ticket)
     _render_header(project)
@@ -2698,7 +2700,7 @@ D:
     detect_running_ides()
   src/koru/init.py:
     e: init_project,refresh_init_agent_lane,_init_auto_agent_lane,_read_persisted_agent_lane,_resolve_init_agent_lane,resolve_project_agent_lane,_write_autopilot_host_setup_script,_write_agent_lane_artifacts,_remove_agent_lane_artifacts,_write_policy_stub_if_absent,_ensure_gitignore_entry,InitReport
-    InitReport: summary(0)  # Summary of what ``init_project`` actually changed on disk.
+    InitReport: _env_bit(0),_lane_summary(0),_init_summary(0),summary(0)  # Summary of what ``init_project`` actually changed on disk.
     init_project(project)
     refresh_init_agent_lane(project)
     _init_auto_agent_lane(project)
@@ -2711,11 +2713,13 @@ D:
     _write_policy_stub_if_absent(project)
     _ensure_gitignore_entry(project)
   src/koru/init_host_environment.py:
-    e: _read_os_release,_id_group_names,_uinput_snapshot,build_host_environment_report,_recommended_next_steps,_render_session_section,_render_os_section,_render_injector_section,_render_clipboard_section,_render_uinput_section,_render_next_steps_section,_render_human_actions_section,_render_apt_suggestion_section,_render_host_environment_md,write_host_environment_bundle
+    e: _read_os_release,_id_group_names,_uinput_snapshot,build_host_environment_report,_build_backend_steps,_build_pm_steps,_recommended_next_steps,_render_session_section,_render_os_section,_render_injector_section,_render_clipboard_section,_render_uinput_section,_render_next_steps_section,_render_human_actions_section,_render_apt_suggestion_section,_render_host_environment_md,write_host_environment_bundle
     _read_os_release()
     _id_group_names()
     _uinput_snapshot()
     build_host_environment_report()
+    _build_backend_steps(session;selected;groups)
+    _build_pm_steps(pm;base)
     _recommended_next_steps(base;groups)
     _render_session_section(report)
     _render_os_section(report)
@@ -4151,13 +4155,13 @@ D:
 
 ## Call Graph
 
-*434 nodes · 500 edges · 71 modules · CC̄=4.1*
+*434 nodes · 500 edges · 71 modules · CC̄=4.0*
 
 ### Hubs (by degree)
 
 | Function | CC | in | out | total |
 |----------|----|----|-----|-------|
-| `print` *(in scripts.koru-soak-monitor)* | 0 | 281 | 0 | **281** |
+| `print` *(in scripts.koru-soak-monitor)* | 0 | 282 | 0 | **282** |
 | `_build_handler` *(in src.koruapi.dashboard_serve)* | 1 | 1 | 82 | **83** |
 | `render_markdown_handoff` *(in src.koru.context)* | 10 ⚠ | 5 | 47 | **52** |
 | `_drive_via_keyboard` *(in src.koruide.daemon.AutopilotDaemon)* | 11 ⚠ | 0 | 46 | **46** |
@@ -4168,13 +4172,13 @@ D:
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.36s
+# generated in 0.20s
 # nodes: 434 | edges: 500 | modules: 71
-# CC̄=4.1
+# CC̄=4.0
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
-    CC=0  in:281  out:0  total:281
+    CC=0  in:282  out:0  total:282
   src.koruapi.dashboard_serve._build_handler
     CC=1  in:1  out:82  total:83
   src.koru.context.render_markdown_handoff
@@ -4189,12 +4193,12 @@ HUBS[20]:
     CC=14  in:1  out:33  total:34
   src.koru.tasks.create_nl_task
     CC=12  in:6  out:28  total:34
-  src.koru.autonomy.env.env_truthy
-    CC=3  in:29  out:3  total:32
-  src.koru.events.emit_management_event
-    CC=8  in:25  out:7  total:32
   src.koru.cli._topology_main
     CC=12  in:0  out:32  total:32
+  src.koru.events.emit_management_event
+    CC=8  in:25  out:7  total:32
+  src.koru.autonomy.env.env_truthy
+    CC=3  in:29  out:3  total:32
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
   src.koru.cli._task_main

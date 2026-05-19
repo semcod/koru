@@ -209,6 +209,31 @@ class AutopilotBridge {
     debugLog("PROBE_CACHE", next);
   }
 
+  private async _tryTypeSubmit(char: string): Promise<{ ok: boolean; command?: string }> {
+    try {
+      await Promise.resolve(vscode.commands.executeCommand("type", { text: char }));
+      const cmd = `type:${char}`;
+      if (this.probeLadderEnabled()) {
+        await this.saveProbeCache({ submit: cmd });
+      }
+      return { ok: true, command: cmd };
+    } catch {
+      return { ok: false };
+    }
+  }
+
+  private async _tryFallbackCommand(cmd: string): Promise<{ ok: boolean; command?: string }> {
+    try {
+      await Promise.resolve(vscode.commands.executeCommand(cmd));
+      if (this.probeLadderEnabled()) {
+        await this.saveProbeCache({ submit: cmd });
+      }
+      return { ok: true, command: cmd };
+    } catch {
+      return { ok: false };
+    }
+  }
+
   private async submitChat(): Promise<{ ok: boolean; command?: string }> {
     const ide = this.detectIde();
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(true)));
@@ -226,42 +251,15 @@ class AutopilotBridge {
       }
       console.warn(`koru autopilot: submitChat command not available: ${cmd}`);
     }
-    const fallbacks = [
-      "workbench.action.acceptSelectedQuickOpenItem",
-      "type:\\n",
-      "type:\\r",
+    const fallbacks: Array<() => Promise<{ ok: boolean; command?: string }>> = [
+      () => this._tryFallbackCommand("workbench.action.acceptSelectedQuickOpenItem"),
+      () => this._tryTypeSubmit("\n"),
+      () => this._tryTypeSubmit("\r"),
     ];
-    for (const fb of fallbacks) {
-      if (fb === "type:\\n") {
-        try {
-          await Promise.resolve(vscode.commands.executeCommand("type", { text: "\n" }));
-          if (this.probeLadderEnabled()) {
-            await this.saveProbeCache({ submit: "type:\\n" });
-          }
-          return { ok: true, command: "type:\\n" };
-        } catch {
-          continue;
-        }
-      }
-      if (fb === "type:\\r") {
-        try {
-          await Promise.resolve(vscode.commands.executeCommand("type", { text: "\r" }));
-          if (this.probeLadderEnabled()) {
-            await this.saveProbeCache({ submit: "type:\\r" });
-          }
-          return { ok: true, command: "type:\\r" };
-        } catch {
-          continue;
-        }
-      }
-      try {
-        await Promise.resolve(vscode.commands.executeCommand(fb));
-        if (this.probeLadderEnabled()) {
-          await this.saveProbeCache({ submit: fb });
-        }
-        return { ok: true, command: fb };
-      } catch {
-        /* try next */
+    for (const attempt of fallbacks) {
+      const result = await attempt();
+      if (result.ok) {
+        return result;
       }
     }
     return { ok: false };
@@ -521,37 +519,7 @@ class AutopilotBridge {
     // can always restore it — even if focus/paste/submit throws (R8).
     const previous = await this.saveClipboard();
     try {
-      const focus = await this.focusChat();
-      if (focus.ok) {
-        // Extra settle time after verified open (R13).
-        await this.sleep(80);
-      }
-      if (!focus.ok) {
-        this.sendFocusFailureAck(env, focus);
-        return;
-      }
-      const pasted = await this.pasteText(text);
-      if (!pasted.ok) {
-        this.sendPasteFailureAck(env, focus);
-        return;
-      }
-      let submitted = false;
-      let submitCmd: string | undefined;
-      if (submit) {
-        await this.sleep(150);
-        const submitResult = await this.submitChat();
-        submitted = submitResult.ok;
-        submitCmd = submitResult.command;
-      }
-      if (submit && submitted) {
-        console.log("koru autopilot: sending message.sent");
-        this.send({ type: "message.sent", chat: "default", text: text.substring(0, 200), length: text.length });
-      }
-      if (submit && !submitted) {
-        this.sendSubmitFailureAck(env, focus, pasted);
-        return;
-      }
-      this.sendSuccessAck(env, focus, pasted, submitCmd);
+      await this._performInject(env, text, submit);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.send({ type: "ack", id: env.id, ok: false, message });
@@ -559,6 +527,37 @@ class AutopilotBridge {
       // Restore clipboard regardless of outcome.
       await this.restoreClipboard(previous);
     }
+  }
+
+  private async _performInject(env: Envelope, text: string, submit: boolean): Promise<void> {
+    const focus = await this.focusChat();
+    if (focus.ok) {
+      // Extra settle time after verified open (R13).
+      await this.sleep(80);
+    }
+    if (!focus.ok) {
+      this.sendFocusFailureAck(env, focus);
+      return;
+    }
+    const pasted = await this.pasteText(text);
+    if (!pasted.ok) {
+      this.sendPasteFailureAck(env, focus);
+      return;
+    }
+    let submitCmd: string | undefined;
+    if (submit) {
+      await this.sleep(150);
+      const submitResult = await this.submitChat();
+      if (submitResult.ok) {
+        console.log("koru autopilot: sending message.sent");
+        this.send({ type: "message.sent", chat: "default", text: text.substring(0, 200), length: text.length });
+        submitCmd = submitResult.command;
+      } else {
+        this.sendSubmitFailureAck(env, focus, pasted);
+        return;
+      }
+    }
+    this.sendSuccessAck(env, focus, pasted, submitCmd);
   }
 
   async calibrateProbe(): Promise<void> {

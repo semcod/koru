@@ -246,20 +246,24 @@ class InitReport:
     koru_project_pipeline_yaml_written: bool = False
     host_environment_written: bool = False
 
-    def summary(self) -> str:
-        env_bit = (
+    def _env_bit(self) -> str:
+        return (
             "; host-environment: .planfile/.koru/host-environment.{json,md}"
             if self.host_environment_written
             else ""
         )
-        if self.agent_lane_refresh_only:
-            if self.agent_lane_files_written and self.agent_lane:
-                return f"agent-lane: {self.agent_lane} (shell-env.sh, run-autonomous.sh){env_bit}"
-            if self.agent_lane is None:
-                return f"agent-lane: off (shell helpers removed){env_bit}"
-            if self.autopilot_host_setup_written:
-                return f"agent-lane: refresh; autopilot-host: setup-autopilot-host.sh{env_bit}"
-            return f"agent-lane: refresh{env_bit}"
+
+    def _lane_summary(self) -> str:
+        env_bit = self._env_bit()
+        if self.agent_lane_files_written and self.agent_lane:
+            return f"agent-lane: {self.agent_lane} (shell-env.sh, run-autonomous.sh){env_bit}"
+        if self.agent_lane is None:
+            return f"agent-lane: off (shell helpers removed){env_bit}"
+        if self.autopilot_host_setup_written:
+            return f"agent-lane: refresh; autopilot-host: setup-autopilot-host.sh{env_bit}"
+        return f"agent-lane: refresh{env_bit}"
+
+    def _init_summary(self) -> str:
         bits = [f"tickets: {self.sprint_imported} imported"]
         if self.policy_written:
             bits.append("policy: stub written")
@@ -276,6 +280,11 @@ class InitReport:
         if self.host_environment_written:
             bits.append("host-environment: host-environment.{json,md}")
         return ", ".join(bits)
+
+    def summary(self) -> str:
+        if self.agent_lane_refresh_only:
+            return self._lane_summary()
+        return self._init_summary()
 
 
 def init_project(

@@ -1,5 +1,5 @@
 # System Architecture Analysis
-<!-- generated in 0.01s -->
+<!-- generated in 0.00s -->
 
 ## Overview
 
@@ -7,10 +7,10 @@
 - **Primary Language**: python
 - **Languages**: python: 127, shell: 42, yaml: 15, yml: 8, typescript: 6
 - **Analysis Mode**: static
-- **Total Functions**: 1245
+- **Total Functions**: 1250
 - **Total Classes**: 90
 - **Modules**: 213
-- **Entry Points**: 429
+- **Entry Points**: 423
 
 ## Architecture by Module
 
@@ -20,12 +20,12 @@
 - **File**: `extension.ts`
 
 ### src.koru.autonomous
-- **Functions**: 47
+- **Functions**: 48
 - **Classes**: 2
 - **File**: `autonomous.py`
 
 ### src.koru.context
-- **Functions**: 46
+- **Functions**: 48
 - **File**: `context.py`
 
 ### src.koru.autopilot.cli_command
@@ -568,8 +568,8 @@ Functions exposed as public API (no underscore prefix):
 - `src.koruide.plugin_installer.resolve_extension_vsix` - 18 calls
 - `src.koru.agent_backends.load_agent_integration_config` - 18 calls
 - `src.koru.loop.run_closed_loop` - 18 calls
-- `src.koru.init_host_environment.build_host_environment_report` - 18 calls
 - `src.koru.autonomy.operator_pipeline.run_startup_operator_pipeline` - 18 calls
+- `src.koru.init_host_environment.build_host_environment_report` - 18 calls
 - `src.koru.mcp_provision.ensure_koru_mcp_not_disabled` - 17 calls
 - `src.koru.autonomy.environment.probe_ide_presence` - 17 calls
 

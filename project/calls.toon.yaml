@@ -1,11 +1,11 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.36s
+# generated in 0.20s
 # nodes: 434 | edges: 500 | modules: 71
-# CC̄=4.1
+# CC̄=4.0
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
-    CC=0  in:281  out:0  total:281
+    CC=0  in:282  out:0  total:282
   src.koruapi.dashboard_serve._build_handler
     CC=1  in:1  out:82  total:83
   src.koru.context.render_markdown_handoff
@@ -20,12 +20,12 @@ HUBS[20]:
     CC=14  in:1  out:33  total:34
   src.koru.tasks.create_nl_task
     CC=12  in:6  out:28  total:34
-  src.koru.autonomy.env.env_truthy
-    CC=3  in:29  out:3  total:32
-  src.koru.events.emit_management_event
-    CC=8  in:25  out:7  total:32
   src.koru.cli._topology_main
     CC=12  in:0  out:32  total:32
+  src.koru.events.emit_management_event
+    CC=8  in:25  out:7  total:32
+  src.koru.autonomy.env.env_truthy
+    CC=3  in:29  out:3  total:32
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
   src.koru.cli._task_main
