@@ -461,6 +461,36 @@ def test_plugin_hello_then_drive_forwards(tmp_path: Path, monkeypatch: pytest.Mo
         cli.close()
 
 
+def test_visible_typing_prefers_keyboard_even_when_plugin_connected(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_VISIBLE_TYPING", "1")
+    with _daemon(tmp_path, monkeypatch) as h:
+        plugin, plugin_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
+
+        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli.settimeout(2.0)
+        cli.connect(str(h.sock_path))
+        cli_reader = _LineReader(cli)
+        cli.sendall(
+            Message(
+                type="drive",
+                id="d-visible",
+                data={"text": "visible hi", "ide": "vscode", "submit": True},
+            ).encode()
+        )
+
+        cli_reply = cli_reader.read_message()
+        assert cli_reply.type == "ack"
+        assert cli_reply.data.get("ok") is True
+        assert cli_reply.data.get("backend") == "stub"
+        assert h.injector.calls == [{"text": "visible hi", "ide": "vscode", "submit": True}]
+        _assert_no_more_data(plugin)
+        plugin.close()
+        cli.close()
+
+
 def test_plugin_ack_with_shutdown_info_is_relayed(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

@@ -66,12 +66,15 @@ def build_prompt(
 
     # Stagnation: escalate before retrying the same prompt indefinitely.
     if stagnation_streak >= escalation_threshold and waiting_ticket_id:
+        original = last_message.strip() if last_message else ""
+        task_line = f" Original ticket prompt: {original}" if original else ""
         escalation = (
             f"Ticket {waiting_ticket_id} has been stuck in status "
             f"'{queue_status}' for {stagnation_streak} cycles. "
-            "Either resolve the blocker (commit code, mark the ticket "
-            "as done, or update its status), or add a comment "
-            "explaining what input you need so a human can help."
+            "Continue the actual implementation work for this ticket now. "
+            "If the work is done, run the relevant checks and mark the ticket "
+            "as done. If you are blocked, update the ticket with the exact "
+            f"input you need.{task_line}"
         )
         return PromptDecision(prompt=escalation, kind="escalation_prompt")
 

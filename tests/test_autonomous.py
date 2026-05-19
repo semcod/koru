@@ -1146,10 +1146,11 @@ def test_run_cycle_escalates_stuck_waiting_input_instead_of_skipping(
     )
 
     assert queue_result.last_status == "waiting_input"
-    assert state.stagnation_streak == 3
     assert autopilot_status == "ok"
     assert len(driven) == 1
     assert "Ticket PLF-1305 has been stuck" in driven[0]
+    assert "original ticket prompt" in driven[0]
+    assert state.stagnation_streak == 0
 
 
 def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(
@@ -1208,6 +1209,48 @@ def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(
     assert autopilot_status == "ok"
     assert len(fallback_calls) == 1
     assert fallback_calls[0]["submit"] is True
+
+
+def test_run_cycle_visible_typing_does_not_require_plugin(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    drive_calls: list[dict] = []
+
+    class RecordingClient:
+        def drive(self, prompt, **kwargs):
+            drive_calls.append(kwargs)
+            return {"ok": True, "backend": "stub"}
+
+    monkeypatch.setenv("KORU_AUTOPILOT_VISIBLE_TYPING", "1")
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=1 last_status=waiting_input",
+            last_status="waiting_input",
+            last_message="do work",
+            waiting=["PLF-1"],
+        ),
+    )
+
+    _scan_result, _queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
+        cycle=1,
+        project=tmp_path,
+        actor="koru-test",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=50,
+        enable_autopilot=True,
+        autopilot_ide="vscode",
+        drive_prompt="continue",
+        submit=True,
+        include_semcod_artifacts=False,
+        client=RecordingClient(),
+    )
+
+    assert autopilot_status == "ok"
+    assert drive_calls[0]["require_plugin"] is False
 
 
 @pytest.fixture(autouse=True)

@@ -103,13 +103,14 @@ def test_stagnation_at_threshold_triggers_escalation():
     """Stagnation streak >= threshold → escalation_prompt."""
     decision = _call(
         queue_status="waiting_input",
-        last_message="ignored on escalation",
+        last_message="Refactor duplicate classes",
         waiting_ticket_id="PLF-42",
         stagnation_streak=DEFAULT_ESCALATION_THRESHOLD,
     )
     assert decision.kind == "escalation_prompt"
     assert "PLF-42" in decision.prompt
     assert "stuck" in decision.prompt.lower()
+    assert "Refactor duplicate classes" in decision.prompt
 
 
 def test_escalation_includes_status_and_streak():

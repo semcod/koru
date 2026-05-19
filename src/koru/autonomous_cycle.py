@@ -104,6 +104,13 @@ def _allow_keyboard_autopilot_fallback() -> bool:
     return raw in {"1", "true", "yes", "on"}
 
 
+def _prefer_keyboard_autopilot() -> bool:
+    for key in ("KORU_AUTOPILOT_PREFER_KEYBOARD", "KORU_AUTOPILOT_VISIBLE_TYPING"):
+        if os.environ.get(key, "").strip().lower() in {"1", "true", "yes", "on"}:
+            return True
+    return False
+
+
 def _try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | None:
     """Delegate to :func:`koru.autonomous._try_os_injector_fallback` (monkeypatch-friendly)."""
     from . import autonomous as _autonomous_mod
@@ -755,7 +762,10 @@ def run_cycle(
                 decision.prompt,
                 submit=submit,
                 ide=autopilot_ide,
-                require_plugin=not _allow_keyboard_autopilot_fallback(),
+                require_plugin=(
+                    not _allow_keyboard_autopilot_fallback()
+                    and not _prefer_keyboard_autopilot()
+                ),
             )
             ok = bool(reply.get("ok", True))
             if not ok:
@@ -772,6 +782,9 @@ def run_cycle(
                 if ticket_id:
                     state.pending_ide_verify_id = ticket_id
             if ok:
+                if decision.kind == "escalation_prompt":
+                    state.stagnation_streak = 0
+                    state.previous_signature = ""
                 backend = reply.get("backend", "?")
                 if decision.kind == "ticket_prompt":
                     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)

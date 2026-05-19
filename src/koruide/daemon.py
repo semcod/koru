@@ -60,6 +60,16 @@ from koruide.socket import default_socket_path
 HandoffBuilder = Callable[[dict[str, Any]], str]
 
 
+def _env_truthy(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _prefer_keyboard_drive() -> bool:
+    return _env_truthy("KORU_AUTOPILOT_PREFER_KEYBOARD") or _env_truthy(
+        "KORU_AUTOPILOT_VISIBLE_TYPING"
+    )
+
+
 @functools.lru_cache(maxsize=1)
 def _load_context_module() -> tuple[Callable[..., dict[str, Any]], Callable[[dict[str, Any]], str]]:
     """Import ``koru.context`` exactly once (R4).
@@ -339,7 +349,7 @@ class AutopilotDaemon:
         submit = bool(msg.data.get("submit", True))
         require_plugin = bool(msg.data.get("require_plugin", False))
         plugin = self._plugin_for(ide_pref)
-        if plugin is not None:
+        if plugin is not None and not _prefer_keyboard_drive():
             self._drive_via_plugin(client, msg, plugin, text, submit)
             return
         if require_plugin:
