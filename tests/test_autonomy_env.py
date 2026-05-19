@@ -22,6 +22,9 @@ def test_auto_loop_env_defaults_cover_core_autoloop_flags() -> None:
         "SCAN_AFTER_IDLE_QUEUE",
         "SCAN_AFTER_IDLE_MIN_INTERVAL_SECONDS",
         "ENABLE_IDLE_DIAGNOSTICS",
+        "REGIX_DIAGNOSTIC_CMD",
+        "REDUP_DIAGNOSTIC_CMD",
+        "TESTQL_DIAGNOSTIC_CMD",
     ):
         assert key in d
 

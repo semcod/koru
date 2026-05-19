@@ -51,6 +51,9 @@
 #     DIAGNOSTIC_TICKET_QUEUE=default
 #     DIAGNOSTIC_TICKET_PRIORITY=high
 #     DIAG_STATE_DIR=.planfile/.koru/autoloop-diag
+#     REGIX_DIAGNOSTIC_CMD='regix compare HEAD --local --format rich'
+#     REDUP_DIAGNOSTIC_CMD='python3 -m redup scan . --min-lines 10'
+#     TESTQL_DIAGNOSTIC_CMD="testql suite --pattern '*.testql.toon.yaml' --output console --fail-fast"
 #
 #   Stagnation control (avoid hammering a stuck waiting_input):
 #     AUTOPILOT_SKIP_STATUSES=waiting_input   (comma-list of statuses for which
@@ -121,6 +124,9 @@ ENABLE_DIAGNOSTIC_TICKETS="${ENABLE_DIAGNOSTIC_TICKETS:-false}"
 DIAGNOSTIC_TICKET_QUEUE="${DIAGNOSTIC_TICKET_QUEUE:-default}"
 DIAGNOSTIC_TICKET_PRIORITY="${DIAGNOSTIC_TICKET_PRIORITY:-high}"
 DIAG_STATE_DIR="${DIAG_STATE_DIR:-.planfile/.koru/autoloop-diag}"
+REGIX_DIAGNOSTIC_CMD="${REGIX_DIAGNOSTIC_CMD:-regix compare HEAD --local --format rich}"
+REDUP_DIAGNOSTIC_CMD="${REDUP_DIAGNOSTIC_CMD:-python3 -m redup scan . --min-lines 10}"
+TESTQL_DIAGNOSTIC_CMD="${TESTQL_DIAGNOSTIC_CMD:-testql suite --pattern '*.testql.toon.yaml' --output console --fail-fast}"
 
 AUTOPILOT_SKIP_STATUSES="${AUTOPILOT_SKIP_STATUSES:-waiting_input}"
 AUTOPILOT_SKIP_DRIVE_IDLE_STREAK="${AUTOPILOT_SKIP_DRIVE_IDLE_STREAK:-0}"
@@ -368,6 +374,26 @@ run_check() {
   fi
 }
 
+run_check_shell() {
+  # run_check_shell <check_id> <guard_cmd> <summary> <shell_cmd>
+  local check_id="$1" guard="$2" summary="$3" shell_cmd="$4"
+  if ! topology_is_enabled "$check_id" true; then
+    echo "- ${check_id} disabled in topology, skipping"
+    return
+  fi
+  if ! eval "$guard" >/dev/null 2>&1; then
+    echo "- ${check_id} unavailable (${summary}), skipping"
+    return
+  fi
+  echo "+ $shell_cmd"
+  if ! bash -lc "$shell_cmd"; then
+    echo "! ${check_id} failed (continuing loop)" >&2
+    mark_diag_failure "$check_id" "$summary"
+  else
+    clear_diag_marker "$check_id"
+  fi
+}
+
 run_idle_diagnostics() {
   local profile_lc="${effective_idle_profile,,}"
   diag_failed=false
@@ -383,9 +409,13 @@ run_idle_diagnostics() {
   fi
   echo "koru:autoloop queue idle -> running semcod diagnostics (profile=${profile_lc})"
 
-  run_check regix 'command -v regix' \
-    'regix compare HEAD --local --format rich' \
-    regix compare HEAD --local --format rich
+  if [ -n "$REGIX_DIAGNOSTIC_CMD" ]; then
+    run_check_shell regix 'command -v regix' \
+      "$REGIX_DIAGNOSTIC_CMD" \
+      "$REGIX_DIAGNOSTIC_CMD"
+  else
+    echo "- REGIX_DIAGNOSTIC_CMD empty, skipping regix"
+  fi
 
   if command -v wup >/dev/null 2>&1 && [ -f wup.yaml ]; then
     run_check wup 'command -v wup' 'wup status' wup status
@@ -394,15 +424,17 @@ run_idle_diagnostics() {
   fi
 
   if [ "$profile_lc" = "full" ] || [ "$profile_lc" = "deep" ]; then
-    run_check redup 'python3 -m redup --help >/dev/null 2>&1' \
-      'python3 -m redup scan . --min-lines 10' \
-      python3 -m redup scan . --min-lines 10
+    run_check_shell redup 'python3 -m redup --help >/dev/null 2>&1' \
+      "$REDUP_DIAGNOSTIC_CMD" \
+      "$REDUP_DIAGNOSTIC_CMD"
 
     if command -v testql >/dev/null 2>&1; then
-      if find . -name '*.testql.toon.yaml' -print -quit | grep -q .; then
-        run_check testql 'command -v testql' \
-          'testql suite --pattern *.testql.toon.yaml --output console --fail-fast' \
-          testql suite --pattern '*.testql.toon.yaml' --output console --fail-fast
+      if [ -n "$TESTQL_DIAGNOSTIC_CMD" ]; then
+        run_check_shell testql 'command -v testql' \
+          "$TESTQL_DIAGNOSTIC_CMD" \
+          "$TESTQL_DIAGNOSTIC_CMD"
+      elif find . -name '*.testql.toon.yaml' -print -quit | grep -q .; then
+        echo "- TESTQL_DIAGNOSTIC_CMD empty, skipping testql"
       else
         echo "- no *.testql.toon.yaml scenarios found, skipping"
       fi
