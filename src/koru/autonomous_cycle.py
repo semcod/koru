@@ -9,6 +9,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from .autonomous_wup import WupHealthResult
 from .autonomous_wup import _read_wup_health as _read_wup_health_impl
 from .autonomy.ide_work import (
@@ -624,6 +626,40 @@ def _update_stagnation_state(
     state.previous_signature = signature
 
 
+def _waiting_ticket_has_label(
+    project: Path,
+    queue_result: QueueLoopResult,
+    label: str,
+) -> bool:
+    ticket_id = _queue_loop_waiting_ticket_label(queue_result)
+    if ticket_id == "-":
+        ticket_id = getattr(queue_result, "last_ticket_id", None) or ""
+    if not ticket_id:
+        return False
+
+    for sprint_path in (
+        project / ".planfile" / "sprints" / "current.yaml",
+        project / "planfile.yaml",
+    ):
+        if not sprint_path.is_file():
+            continue
+        try:
+            data = yaml.safe_load(sprint_path.read_text(encoding="utf-8")) or {}
+        except (OSError, yaml.YAMLError):
+            continue
+        tickets = data.get("tickets")
+        if tickets is None and isinstance(data.get("sprint"), dict):
+            tickets = data["sprint"].get("tickets")
+        if not isinstance(tickets, dict):
+            continue
+        ticket = tickets.get(ticket_id)
+        if not isinstance(ticket, dict):
+            continue
+        labels = ticket.get("labels") or []
+        return label in {str(item) for item in labels}
+    return False
+
+
 def _handle_diagnostics(
     project: Path,
     state: AutoloopState,
@@ -738,6 +774,12 @@ def _check_autopilot_skip_conditions(
             queue_result.last_status, autopilot_skip_statuses,
         )
     ):
+        if _waiting_ticket_has_label(project, queue_result, "llm-ready"):
+            _hp(
+                "- autopilot not skipped "
+                f"(waiting ticket is llm-ready, streak={state.stagnation_streak})",
+            )
+            return False, ""
         _hp(
             "- autopilot skipped "
             f"(stuck_{queue_result.last_status}_streak_{state.stagnation_streak})",

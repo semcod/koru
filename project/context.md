@@ -7,7 +7,7 @@
 - **Primary Language**: python
 - **Languages**: python: 126, shell: 42, yaml: 15, yml: 8, typescript: 6
 - **Analysis Mode**: static
-- **Total Functions**: 1236
+- **Total Functions**: 1237
 - **Total Classes**: 90
 - **Modules**: 212
 - **Entry Points**: 423
@@ -33,7 +33,7 @@
 - **File**: `cli_command.py`
 
 ### src.koru.autonomous_cycle
-- **Functions**: 36
+- **Functions**: 37
 - **Classes**: 2
 - **File**: `autonomous_cycle.py`
 

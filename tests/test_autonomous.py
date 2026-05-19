@@ -1153,6 +1153,66 @@ def test_run_cycle_escalates_stuck_waiting_input_instead_of_skipping(
     assert state.stagnation_streak == 0
 
 
+def test_run_cycle_drives_llm_ready_waiting_ticket_without_stagnation_skip(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    """llm-ready tickets should be driven by IDE autopilot even when human queue waits."""
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    PLF-1321:
+      labels: [llm-ready, refactor]
+""",
+        encoding="utf-8",
+    )
+    driven: list[str] = []
+
+    class RecordingClient:
+        def drive(self, prompt: str, **_kwargs):
+            driven.append(prompt)
+            return {"ok": True, "backend": "plugin"}
+
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=1 last_status=waiting_input",
+            last_status="waiting_input",
+            last_message="remove duplicated classes",
+            waiting=["PLF-1321"],
+        ),
+    )
+    state = autonomous_mod.AutoloopState(
+        previous_signature="waiting_input:PLF-1321",
+        stagnation_streak=0,
+    )
+
+    _scan_result, queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
+        cycle=2,
+        project=tmp_path,
+        actor="koru-test",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=50,
+        enable_autopilot=True,
+        autopilot_ide="vscode",
+        drive_prompt="ignored when blocked",
+        submit=True,
+        include_semcod_artifacts=False,
+        client=RecordingClient(),
+        state=state,
+    )
+
+    assert queue_result.last_status == "waiting_input"
+    assert state.stagnation_streak == 1
+    assert autopilot_status == "ok"
+    assert driven == ["remove duplicated classes"]
+
+
 def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(
     tmp_path,
     monkeypatch,

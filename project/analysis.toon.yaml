@@ -1,6 +1,6 @@
-# code2llm | 213f 36632L | python:126,shell:42,yaml:15,yml:8,typescript:6,kotlin:6,json:3,toml:1,txt:1,properties:1,xml:1 | 2026-05-19
-# generated in 0.07s
-# CC̄=4.1 | critical:9/1236 | dups:0 | cycles:0
+# code2llm | 213f 36683L | python:126,shell:42,yaml:15,yml:8,typescript:6,kotlin:6,json:3,toml:1,txt:1,properties:1,xml:1 | 2026-05-19
+# generated in 0.06s
+# CC̄=4.1 | critical:9/1237 | dups:0 | cycles:0
 
 HEALTH[9]:
   🟡 CC    _action_up CC=17 (limit:15)
@@ -39,12 +39,12 @@ LAYERS:
   │ !! cli_command               1329L  0C   45m  CC=14     ←0
   │ !! dashboard_serve           1296L  1C   16m  CC=14     ←1
   │ !! context                   1226L  0C   46m  CC=15     ←7
-  │ !! autonomous_cycle          1169L  2C   36m  CC=12     ←0
+  │ !! autonomous_cycle          1211L  2C   37m  CC=14     ←0
   │ !! mcp_server                1028L  0C   34m  CC=14     ←2
   │ !! scan                       918L  2C   24m  CC=13     ←3
   │ !! daemon                     715L  2C   31m  CC=14     ←0
   │ !! init                       610L  1C   12m  CC=15     ←2
-  │ !! operator_pipeline          575L  2C   21m  CC=13     ←1
+  │ !! operator_pipeline          584L  2C   21m  CC=13     ←1
   │ !! ide                        543L  1C   29m  CC=13     ←7
   │ !! doctor                     513L  2C   21m  CC=11     ←2
   │ bootstrap                  446L  2C   19m  CC=10     ←2
