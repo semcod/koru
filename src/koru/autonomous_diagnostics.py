@@ -8,7 +8,7 @@ from typing import Any
 
 from .autonomous_wup import WupHealthResult
 from .autonomous_wup import _read_wup_health as _read_wup_health_impl
-from .redup_integration import redup_changed_scan_command, redup_scan_command
+from .redup_integration import redup_changed_scan_runner_command, redup_scan_command
 from .tasks import create_nl_task
 
 IdleCheck = tuple[str, str, list[str]]
@@ -32,11 +32,11 @@ def build_idle_checks(project: Path, profile: str) -> list[IdleCheck]:
         return checks
     if shutil.which("redup"):
         if (project / "wup.yaml").is_file():
-            command = redup_changed_scan_command()
+            command = redup_changed_scan_runner_command()
             checks.append(
                 (
                     "redup",
-                    "redup scan . --changed-only --incremental --format json "
+                    "python3 -m koru.redup_integration changed-scan "
                     "--output .redup/wup-changed.json",
                     command,
                 )

@@ -1,12 +1,12 @@
-# redup/duplication | 32 groups | 125f 28184L | 2026-05-19
+# redup/duplication | 33 groups | 126f 28243L | 2026-05-19
 
 SUMMARY:
-  files_scanned: 125
-  total_lines:   28184
-  dup_groups:    32
-  dup_fragments: 74
-  saved_lines:   358
-  scan_ms:       6676
+  files_scanned: 126
+  total_lines:   28243
+  dup_groups:    33
+  dup_fragments: 76
+  saved_lines:   361
+  scan_ms:       3583
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/autonomous.py  dup=115L  groups=12  frags=12  (0.4%)
@@ -17,7 +17,7 @@ HOTSPOTS[7] (files with most duplication):
   src/koru/autonomous_process_guard.py  dup=36L  groups=4  frags=4  (0.1%)
   src/koruide/protocol.py  dup=24L  groups=1  frags=2  (0.1%)
 
-DUPLICATES[32] (ranked by impact):
+DUPLICATES[33] (ranked by impact):
   [b79fb4d314048ea0] ! STRU  _build_serve_parser  L=48 N=2 saved=48 sim=1.00
       src/koru/cli.py:402-449  (_build_serve_parser)
       src/koruapi/dashboard.py:17-61  (build_serve_parser)
@@ -124,8 +124,11 @@ DUPLICATES[32] (ranked by impact):
   [781cd2265323c713]   STRU  _systemd_user_dir  L=3 N=2 saved=3 sim=1.00
       src/koru/autopilot/cli_command.py:1165-1167  (_systemd_user_dir)
       src/koruide/config.py:63-65  (default_config_path)
+  [58ffcb67f5092308]   STRU  redup_scan_command  L=3 N=2 saved=3 sim=1.00
+      src/koru/redup_integration.py:14-16  (redup_scan_command)
+      src/koru/redup_integration.py:19-21  (redup_check_command)
 
-REFACTOR[32] (ranked by priority):
+REFACTOR[33] (ranked by priority):
   [1] ◐ extract_function   → src/utils/_build_serve_parser.py
       WHY: 2 occurrences of 48-line block across 2 files — saves 48 lines
       FILES: src/koru/cli.py, src/koruapi/dashboard.py
@@ -222,6 +225,9 @@ REFACTOR[32] (ranked by priority):
   [32] ○ extract_function   → src/utils/_systemd_user_dir.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: src/koru/autopilot/cli_command.py, src/koruide/config.py
+  [33] ○ extract_function   → src/koru/utils/redup_scan_command.py
+      WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
+      FILES: src/koru/redup_integration.py
 
 QUICK_WINS[22] (low risk, high savings — do first):
   [3] extract_function   saved=29L  → src/utils/_build_local_serve_parser.py
@@ -245,7 +251,7 @@ QUICK_WINS[22] (low risk, high savings — do first):
   [12] extract_function   saved=10L  → src/koruide/utils/_ydotool_enter_keycode.py
       FILES: injector.py
 
-EFFORT_ESTIMATE (total ≈ 13.3h):
+EFFORT_ESTIMATE (total ≈ 13.4h):
   hard   _build_serve_parser                 saved=48L  ~144min
   hard   _run_idle_diagnostics               saved=36L  ~108min
   medium _build_local_serve_parser           saved=29L  ~58min
@@ -256,8 +262,8 @@ EFFORT_ESTIMATE (total ≈ 13.3h):
   easy   _parse_iso_datetime                 saved=13L  ~26min
   easy   resolve_xdg_path                    saved=12L  ~24min
   easy   message_received                    saved=12L  ~24min
-  ... +22 more (~280min)
+  ... +23 more (~286min)
 
 METRICS-TARGET:
-  dup_groups:  32 → 0
-  saved_lines: 358 lines recoverable
+  dup_groups:  33 → 0
+  saved_lines: 361 lines recoverable

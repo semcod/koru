@@ -245,52 +245,17 @@ def _drain_autopilot_events(state: AutoloopState) -> list[dict[str, Any]]:
     return events
 
 
-def run_cycle(
-    *,
-    cycle: int,
-    project: Path,
-    actor: str,
-    queue_name: str | None,
-    enable_scan: bool,
-    max_iterations: int,
-    enable_autopilot: bool,
-    autopilot_ide: str,
-    drive_prompt: str,
-    submit: bool,
-    include_semcod_artifacts: bool | None,
-    client: Any,
-    state: AutoloopState | None = None,
-    idle_diagnostics: str = "off",
-    diagnostic_tickets: bool = False,
-    diagnostic_ticket_queue: str = "default",
-    diagnostic_ticket_priority: str = "high",
-    diagnostic_state_dir: Path | None = None,
-    wup_watch_enabled: bool = False,
-    wup_diagnostic_tickets: bool = True,
-    wup_ticket_queue: str = "default",
-    strict_diagnostics: bool = False,
-    autopilot_action: str = "drive",
-    autopilot_on_idle_only: bool = False,
-    autopilot_skip_on_diagnostics_fail: bool = True,
-    autopilot_skip_drive_idle_streak: int = 0,
-    autopilot_skip_statuses: str = "waiting_input",
-    scan_skip_if_clean: bool = False,
-    scan_skip_after: int = 1,
-    scan_after_idle_queue: bool = False,
-    scan_after_idle_min_interval_seconds: float = 0.0,
-    topology_integration: bool = True,
-    stdio_format: str = "human",
-    correlation_id: str = "",
-) -> tuple[ScanResult | None, QueueLoopResult, str, DiagnosticResult]:
-    state = state or AutoloopState()
-    cycle_telemetry: dict[str, Any] = {
+def _initialize_cycle_telemetry() -> dict[str, Any]:
+    return {
         "autopilot_skipped_idle_streak": False,
         "scan_after_idle_run": False,
         "scan_after_idle_applied": 0,
         "scan_after_idle_skipped_rate_limit": False,
     }
 
-    # Auto-heal: best-effort stale socket removal so daemon restart can bind.
+
+def _heal_stale_socket() -> None:
+    """Auto-heal: best-effort stale socket removal so daemon restart can bind."""
     try:
         from .autonomy.environment import probe_socket_health
         from .autonomy.heal import remove_stale_socket
@@ -304,32 +269,11 @@ def run_cycle(
     except Exception:
         pass
 
-    def _emit(event_type: str, payload: dict, command: str | None = None) -> None:
-        if stdio_format == "jsonl":
-            write_stdio_event(
-                sys.stdout,
-                event_type=event_type,
-                correlation_id=correlation_id,
-                payload=payload,
-                command=command,
-            )
 
-    def _hp(msg: str) -> None:
-        from .activity_log import activity, activity_info
-
-        if msg.startswith("+ "):
-            activity("RUN", msg[2:], fmt=stdio_format)
-        elif msg.startswith("  scan:"):
-            activity("SCAN", msg.strip(), fmt=stdio_format)
-        elif msg.startswith("  queue:"):
-            activity("QUEUE", msg.strip(), fmt=stdio_format)
-        elif msg.startswith("  autopilot:"):
-            activity("CHAT", msg.strip(), fmt=stdio_format)
-        elif stdio_format == "human":
-            activity_info(msg, fmt=stdio_format)
-        else:
-            activity_info(msg, fmt=stdio_format)
-
+def _handle_autopilot_events(
+    state: AutoloopState,
+    _hp: callable,
+) -> None:
     events = _drain_autopilot_events(state)
     if events:
         for ev in events:
@@ -340,9 +284,13 @@ def run_cycle(
             if ev.get("type") == "message.sent":
                 state.last_message_sent_ts = ev.get("ts", time.time())
 
-    scan_result: ScanResult | None = None
-    _emit("CycleStarted", {"cycle": cycle, "project": str(project.resolve())})
 
+def _handle_queue_hygiene(
+    project: Path,
+    cycle: int,
+    _hp: callable,
+    _emit: callable,
+) -> None:
     stale_minutes = resolve_in_progress_stale_minutes(project)
     if stale_minutes is not None:
         released_stale = release_stale_in_progress_tickets(
@@ -358,6 +306,14 @@ def run_cycle(
                 {"cycle": cycle, "count": released_stale, "stale_minutes": stale_minutes},
             )
 
+
+def _handle_post_run_verify_ide(
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    _hp: callable,
+    _emit: callable,
+) -> Any:
     verify_config = load_post_run_verify_config(project)
     ide_verify_outcomes = verify_after_ide_work(
         project,
@@ -382,7 +338,22 @@ def run_cycle(
             },
             command="; ".join(verify_config.commands) if verify_config else None,
         )
+    return verify_config
 
+
+def _handle_scan_phase(
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    enable_scan: bool,
+    include_semcod_artifacts: bool | None,
+    scan_skip_if_clean: bool,
+    scan_skip_after: int,
+    topology_integration: bool,
+    _hp: callable,
+    _emit: callable,
+) -> ScanResult | None:
+    scan_result: ScanResult | None = None
     if enable_scan:
         if not _is_topology_enabled(
             project, "scan:on-change", fallback=True, enabled=topology_integration
@@ -437,7 +408,21 @@ def run_cycle(
                     state.scan_clean_streak + 1 if not scan_result.suggestions else 0
                 )
                 state.scan_last_head = head_now
+    return scan_result
 
+
+def _handle_queue_loop_phase(
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    actor: str,
+    queue_name: str | None,
+    max_iterations: int,
+    topology_integration: bool,
+    verify_config: Any,
+    _hp: callable,
+    _emit: callable,
+) -> tuple[QueueLoopResult, Any]:
     if not _is_topology_enabled(
         project, "autoloop:queue", fallback=True, enabled=topology_integration
     ):
@@ -511,7 +496,23 @@ def run_cycle(
                     },
                     command="; ".join(verify_config.commands),
                 )
+    return queue_result, verify_config
 
+
+def _handle_scan_after_idle(
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    queue_result: QueueLoopResult,
+    scan_after_idle_queue: bool,
+    include_semcod_artifacts: bool | None,
+    scan_after_idle_min_interval_seconds: float,
+    topology_integration: bool,
+    cycle_telemetry: dict[str, Any],
+    _hp: callable,
+    _emit: callable,
+) -> ScanResult | None:
+    scan_result: ScanResult | None = None
     if (
         scan_after_idle_queue
         and queue_result.last_status == "idle"
@@ -570,7 +571,13 @@ def run_cycle(
                 },
                 command=scan_cmd,
             )
+    return scan_result
 
+
+def _update_stagnation_state(
+    state: AutoloopState,
+    queue_result: QueueLoopResult,
+) -> None:
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
     signature = f"{queue_result.last_status}:{waiting_ticket}"
     if state.previous_signature and state.previous_signature == signature:
@@ -579,10 +586,28 @@ def run_cycle(
         state.stagnation_streak = 0
     state.previous_signature = signature
 
+
+def _handle_diagnostics(
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    queue_result: QueueLoopResult,
+    idle_diagnostics: str,
+    diagnostic_tickets: bool,
+    diagnostic_ticket_queue: str,
+    diagnostic_ticket_priority: str,
+    diagnostic_state_dir: Path | None,
+    wup_watch_enabled: bool,
+    wup_diagnostic_tickets: bool,
+    wup_ticket_queue: str,
+    topology_integration: bool,
+    _hp: callable,
+    _emit: callable,
+) -> tuple[DiagnosticResult, WupHealthResult]:
     diag_result = DiagnosticResult(status="skipped", failed=[])
     if queue_result.last_status == "idle" and idle_diagnostics not in {"off", "none"}:
         diag_result = _run_idle_diagnostics(
-            stdio_format=stdio_format,
+            stdio_format="human",
             project=project,
             profile=idle_diagnostics,
             cycle=cycle,
@@ -626,15 +651,30 @@ def run_cycle(
         "DiagnosticsCompleted",
         {"cycle": cycle, "status": diag_result.status, "failed": list(diag_result.failed)},
     )
+    return diag_result, wup_health
 
-    if strict_diagnostics and diag_result.status == "failed":
-        _emit("AutonomousStopped", {"reason": "strict_diagnostics_failure", "cycle": cycle})
-        _stdio_info(
-            "koru autonomous: strict diagnostics enabled -> stopping on diagnostics failure",
-            fmt=stdio_format,
-        )
-        raise SystemExit(2)
 
+def _handle_autopilot_phase(
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    queue_result: QueueLoopResult,
+    enable_autopilot: bool,
+    client: Any,
+    autopilot_ide: str,
+    drive_prompt: str,
+    submit: bool,
+    autopilot_action: str,
+    autopilot_on_idle_only: bool,
+    autopilot_skip_on_diagnostics_fail: bool,
+    autopilot_skip_drive_idle_streak: int,
+    autopilot_skip_statuses: str,
+    diag_result: DiagnosticResult,
+    topology_integration: bool,
+    cycle_telemetry: dict[str, Any],
+    _hp: callable,
+    _emit: callable,
+) -> tuple[str, str | None, str | None]:
     autopilot_status = "skipped"
     autopilot_backend: str | None = None
     autopilot_drive_kind: str | None = None
@@ -676,6 +716,7 @@ def run_cycle(
             )
             autopilot_status = f"skipped(stuck_{queue_result.last_status})"
         else:
+            waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
             effective_drive_prompt = drive_prompt
             idle_prompt_kind: str | None = None
             if queue_result.last_status == "idle":
@@ -742,7 +783,27 @@ def run_cycle(
                     "  autopilot: failed "
                     f"({reply.get('message', 'unknown error')}, kind={decision.kind})"
                 )
+    return autopilot_status, autopilot_backend, autopilot_drive_kind
 
+
+def _emit_cycle_completion_events(
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    queue_result: QueueLoopResult,
+    diag_result: DiagnosticResult,
+    wup_health: WupHealthResult,
+    autopilot_status: str,
+    autopilot_ide: str,
+    autopilot_backend: str | None,
+    autopilot_drive_kind: str | None,
+    cycle_telemetry: dict[str, Any],
+    scan_after_idle_queue: bool,
+    scan_after_idle_min_interval_seconds: float,
+    autopilot_skip_drive_idle_streak: int,
+    _hp: callable,
+    _emit: callable,
+) -> None:
     _emit(
         "AutopilotDecision",
         {
@@ -791,6 +852,192 @@ def run_cycle(
             "scan_after_idle_min_interval_seconds": scan_after_idle_min_interval_seconds,
             "autopilot_skip_drive_idle_streak": autopilot_skip_drive_idle_streak,
         },
+    )
+
+
+def run_cycle(
+    *,
+    cycle: int,
+    project: Path,
+    actor: str,
+    queue_name: str | None,
+    enable_scan: bool,
+    max_iterations: int,
+    enable_autopilot: bool,
+    autopilot_ide: str,
+    drive_prompt: str,
+    submit: bool,
+    include_semcod_artifacts: bool | None,
+    client: Any,
+    state: AutoloopState | None = None,
+    idle_diagnostics: str = "off",
+    diagnostic_tickets: bool = False,
+    diagnostic_ticket_queue: str = "default",
+    diagnostic_ticket_priority: str = "high",
+    diagnostic_state_dir: Path | None = None,
+    wup_watch_enabled: bool = False,
+    wup_diagnostic_tickets: bool = True,
+    wup_ticket_queue: str = "default",
+    strict_diagnostics: bool = False,
+    autopilot_action: str = "drive",
+    autopilot_on_idle_only: bool = False,
+    autopilot_skip_on_diagnostics_fail: bool = True,
+    autopilot_skip_drive_idle_streak: int = 0,
+    autopilot_skip_statuses: str = "waiting_input",
+    scan_skip_if_clean: bool = False,
+    scan_skip_after: int = 1,
+    scan_after_idle_queue: bool = False,
+    scan_after_idle_min_interval_seconds: float = 0.0,
+    topology_integration: bool = True,
+    stdio_format: str = "human",
+    correlation_id: str = "",
+) -> tuple[ScanResult | None, QueueLoopResult, str, DiagnosticResult]:
+    state = state or AutoloopState()
+    cycle_telemetry = _initialize_cycle_telemetry()
+    _heal_stale_socket()
+
+    def _emit(event_type: str, payload: dict, command: str | None = None) -> None:
+        if stdio_format == "jsonl":
+            write_stdio_event(
+                sys.stdout,
+                event_type=event_type,
+                correlation_id=correlation_id,
+                payload=payload,
+                command=command,
+            )
+
+    def _hp(msg: str) -> None:
+        from .activity_log import activity, activity_info
+
+        if msg.startswith("+ "):
+            activity("RUN", msg[2:], fmt=stdio_format)
+        elif msg.startswith("  scan:"):
+            activity("SCAN", msg.strip(), fmt=stdio_format)
+        elif msg.startswith("  queue:"):
+            activity("QUEUE", msg.strip(), fmt=stdio_format)
+        elif msg.startswith("  autopilot:"):
+            activity("CHAT", msg.strip(), fmt=stdio_format)
+        elif stdio_format == "human":
+            activity_info(msg, fmt=stdio_format)
+        else:
+            activity_info(msg, fmt=stdio_format)
+
+    _handle_autopilot_events(state, _hp)
+    scan_result: ScanResult | None = None
+    _emit("CycleStarted", {"cycle": cycle, "project": str(project.resolve())})
+
+    _handle_queue_hygiene(project, cycle, _hp, _emit)
+    verify_config = _handle_post_run_verify_ide(project, state, cycle, _hp, _emit)
+
+    scan_result = _handle_scan_phase(
+        project,
+        state,
+        cycle,
+        enable_scan,
+        include_semcod_artifacts,
+        scan_skip_if_clean,
+        scan_skip_after,
+        topology_integration,
+        _hp,
+        _emit,
+    )
+
+    queue_result, verify_config = _handle_queue_loop_phase(
+        project,
+        state,
+        cycle,
+        actor,
+        queue_name,
+        max_iterations,
+        topology_integration,
+        verify_config,
+        _hp,
+        _emit,
+    )
+
+    idle_scan_result = _handle_scan_after_idle(
+        project,
+        state,
+        cycle,
+        queue_result,
+        scan_after_idle_queue,
+        include_semcod_artifacts,
+        scan_after_idle_min_interval_seconds,
+        topology_integration,
+        cycle_telemetry,
+        _hp,
+        _emit,
+    )
+    if idle_scan_result is not None:
+        scan_result = idle_scan_result
+
+    _update_stagnation_state(state, queue_result)
+
+    diag_result, wup_health = _handle_diagnostics(
+        project,
+        state,
+        cycle,
+        queue_result,
+        idle_diagnostics,
+        diagnostic_tickets,
+        diagnostic_ticket_queue,
+        diagnostic_ticket_priority,
+        diagnostic_state_dir,
+        wup_watch_enabled,
+        wup_diagnostic_tickets,
+        wup_ticket_queue,
+        topology_integration,
+        _hp,
+        _emit,
+    )
+
+    if strict_diagnostics and diag_result.status == "failed":
+        _emit("AutonomousStopped", {"reason": "strict_diagnostics_failure", "cycle": cycle})
+        _stdio_info(
+            "koru autonomous: strict diagnostics enabled -> stopping on diagnostics failure",
+            fmt=stdio_format,
+        )
+        raise SystemExit(2)
+
+    autopilot_status, autopilot_backend, autopilot_drive_kind = _handle_autopilot_phase(
+        project,
+        state,
+        cycle,
+        queue_result,
+        enable_autopilot,
+        client,
+        autopilot_ide,
+        drive_prompt,
+        submit,
+        autopilot_action,
+        autopilot_on_idle_only,
+        autopilot_skip_on_diagnostics_fail,
+        autopilot_skip_drive_idle_streak,
+        autopilot_skip_statuses,
+        diag_result,
+        topology_integration,
+        cycle_telemetry,
+        _hp,
+        _emit,
+    )
+
+    _emit_cycle_completion_events(
+        project,
+        state,
+        cycle,
+        queue_result,
+        diag_result,
+        wup_health,
+        autopilot_status,
+        autopilot_ide,
+        autopilot_backend,
+        autopilot_drive_kind,
+        cycle_telemetry,
+        scan_after_idle_queue,
+        scan_after_idle_min_interval_seconds,
+        autopilot_skip_drive_idle_streak,
+        _hp,
+        _emit,
     )
 
     return scan_result, queue_result, autopilot_status, diag_result

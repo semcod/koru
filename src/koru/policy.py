@@ -191,6 +191,54 @@ def load_policy(project: Path) -> Policy:
     )
 
 
+def _check_git_commit_policy(policy: Policy, command: str, violations: list[str]) -> None:
+    """Check git commit policy violations."""
+    if not policy.allow_commit and "git commit" in command:
+        violations.append("policy.allow_commit=false: 'git commit' is forbidden")
+
+
+def _check_git_push_policy(policy: Policy, command: str, violations: list[str]) -> None:
+    """Check git push policy violations."""
+    if not policy.allow_push and "git push" in command:
+        violations.append("policy.allow_push=false: 'git push' is forbidden")
+
+
+def _check_git_branch_create_policy(policy: Policy, command: str, violations: list[str]) -> None:
+    """Check git branch creation policy violations."""
+    if not policy.allow_branch_create and (
+        "git branch " in f" {command} "
+        or "git checkout -b" in command
+        or "git switch -c" in command
+    ):
+        violations.append("policy.allow_branch_create=false: creating branches is forbidden")
+
+
+def _check_git_branch_switch_policy(policy: Policy, command: str, violations: list[str]) -> None:
+    """Check git branch switching policy violations."""
+    if (
+        not policy.allow_branch_switch
+        and ("git checkout " in command and "-b" not in command)
+        or ("git switch " in command and "-c" not in command)
+    ):
+        violations.append("policy.allow_branch_switch=false: switching branches is forbidden")
+
+
+def _check_git_tag_policy(policy: Policy, command: str, violations: list[str]) -> None:
+    """Check git tag policy violations."""
+    if not policy.allow_tag and "git tag" in command:
+        violations.append("policy.allow_tag=false: tagging is forbidden")
+
+
+def _check_destructive_shell_policy(policy: Policy, command: str, violations: list[str]) -> None:
+    """Check destructive shell pattern violations."""
+    if not policy.allow_destructive_shell:
+        for pattern in policy.forbidden_shell_patterns:
+            if pattern and pattern in command:
+                violations.append(
+                    f"policy.allow_destructive_shell=false: forbidden pattern '{pattern}'"
+                )
+
+
 def policy_violations(policy: Policy, command: str) -> list[str]:
     """Return a list of policy violations for a candidate shell command.
 
@@ -204,31 +252,11 @@ def policy_violations(policy: Policy, command: str) -> list[str]:
         return []
     violations: list[str] = []
 
-    if not policy.allow_commit and "git commit" in command:
-        violations.append("policy.allow_commit=false: 'git commit' is forbidden")
-    if not policy.allow_push and "git push" in command:
-        violations.append("policy.allow_push=false: 'git push' is forbidden")
-    if not policy.allow_branch_create and (
-        "git branch " in f" {command} "
-        or "git checkout -b" in command
-        or "git switch -c" in command
-    ):
-        violations.append("policy.allow_branch_create=false: creating branches is forbidden")
-    if (
-        not policy.allow_branch_switch
-        and ("git checkout " in command and "-b" not in command)
-        or ("git switch " in command and "-c" not in command)
-    ):
-        # Light heuristic: 'git checkout <ref>' or 'git switch <branch>'.
-        violations.append("policy.allow_branch_switch=false: switching branches is forbidden")
-    if not policy.allow_tag and "git tag" in command:
-        violations.append("policy.allow_tag=false: tagging is forbidden")
-
-    if not policy.allow_destructive_shell:
-        for pattern in policy.forbidden_shell_patterns:
-            if pattern and pattern in command:
-                violations.append(
-                    f"policy.allow_destructive_shell=false: forbidden pattern '{pattern}'"
-                )
+    _check_git_commit_policy(policy, command, violations)
+    _check_git_push_policy(policy, command, violations)
+    _check_git_branch_create_policy(policy, command, violations)
+    _check_git_branch_switch_policy(policy, command, violations)
+    _check_git_tag_policy(policy, command, violations)
+    _check_destructive_shell_policy(policy, command, violations)
 
     return violations

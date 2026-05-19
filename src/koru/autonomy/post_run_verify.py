@@ -46,6 +46,57 @@ def _truthy_env(name: str) -> bool | None:
     return raw in {"1", "true", "yes", "on"}
 
 
+def _extract_post_run_verify_block(raw: dict[str, Any]) -> dict[str, Any]:
+    """Extract and validate the post_run_verify block from config."""
+    queue = raw.get("queue")
+    if not isinstance(queue, dict):
+        return {}
+    block = queue.get("post_run_verify")
+    if not isinstance(block, dict):
+        return {}
+    return block
+
+
+def _parse_verify_commands(block: dict[str, Any]) -> list[str]:
+    """Parse commands from the post_run_verify block."""
+    commands_raw = block.get("commands")
+    commands: list[str] = []
+    if isinstance(commands_raw, list):
+        commands = [str(c).strip() for c in commands_raw if c]
+    elif isinstance(commands_raw, str) and commands_raw.strip():
+        commands = [commands_raw.strip()]
+    return commands
+
+
+def _parse_verify_on_failure(block: dict[str, Any]) -> str:
+    """Parse on_failure setting from the block."""
+    on_failure = str(block.get("on_failure") or "reopen").strip().lower()
+    if on_failure not in {"reopen", "block"}:
+        on_failure = "reopen"
+    return on_failure
+
+
+def _parse_verify_max_output(block: dict[str, Any]) -> int:
+    """Parse max_output_chars setting from the block."""
+    max_out = block.get("max_output_chars", 800)
+    try:
+        return max(200, int(max_out))
+    except (TypeError, ValueError):
+        return 800
+
+
+def _parse_verify_ide_settings(block: dict[str, Any]) -> tuple[bool, float]:
+    """Parse after_ide_drive and ide_done_window_minutes settings."""
+    after_ide = bool(block.get("after_ide_drive", True))
+    try:
+        ide_window = float(block.get("ide_done_window_minutes", 30))
+    except (TypeError, ValueError):
+        ide_window = 30.0
+    if ide_window <= 0:
+        ide_window = 30.0
+    return after_ide, ide_window
+
+
 def load_post_run_verify_config(project: Path) -> PostRunVerifyConfig | None:
     """Parse ``queue.post_run_verify`` from ``koru.yaml``."""
     env_override = _truthy_env("KORU_POST_RUN_VERIFY")
@@ -55,42 +106,16 @@ def load_post_run_verify_config(project: Path) -> PostRunVerifyConfig | None:
             return None
         return PostRunVerifyConfig(enabled=bool(env_override)) if env_override else None
 
-    queue = raw.get("queue")
-    if not isinstance(queue, dict):
-        block: dict[str, Any] = {}
-    else:
-        block = queue.get("post_run_verify")
-        if not isinstance(block, dict):
-            block = {}
+    block = _extract_post_run_verify_block(raw)
 
     enabled = bool(block.get("enabled", False))
     if env_override is not None:
         enabled = env_override
 
-    commands_raw = block.get("commands")
-    commands: list[str] = []
-    if isinstance(commands_raw, list):
-        commands = [str(c).strip() for c in commands_raw if c]
-    elif isinstance(commands_raw, str) and commands_raw.strip():
-        commands = [commands_raw.strip()]
-
-    on_failure = str(block.get("on_failure") or "reopen").strip().lower()
-    if on_failure not in {"reopen", "block"}:
-        on_failure = "reopen"
-
-    max_out = block.get("max_output_chars", 800)
-    try:
-        max_output_chars = max(200, int(max_out))
-    except (TypeError, ValueError):
-        max_output_chars = 800
-
-    after_ide = bool(block.get("after_ide_drive", True))
-    try:
-        ide_window = float(block.get("ide_done_window_minutes", 30))
-    except (TypeError, ValueError):
-        ide_window = 30.0
-    if ide_window <= 0:
-        ide_window = 30.0
+    commands = _parse_verify_commands(block)
+    on_failure = _parse_verify_on_failure(block)
+    max_output_chars = _parse_verify_max_output(block)
+    after_ide, ide_window = _parse_verify_ide_settings(block)
 
     if not enabled and not commands:
         return None

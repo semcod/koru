@@ -298,6 +298,87 @@ def _extract_error_from_stderr(stderr: str) -> str:
     return err_lines[0] if err_lines else raw_err.splitlines()[0]
 
 
+def _execute_ticket_query(
+    project: Path,
+    ticket_id: str | None,
+    queue_name: str | None,
+    planfile_runner: Callable | None,
+) -> subprocess.CompletedProcess:
+    """Execute ticket query with fallback for older planfile versions."""
+    ticket_args = _build_ticket_args(ticket_id, queue_name)
+    ticket_proc = _run_planfile(project, ticket_args, runner=planfile_runner)
+
+    # Fallback: if `ticket next` is not available (older planfile),
+    # try `ticket list` and pick the first open ticket.
+    if ticket_proc.returncode != 0 and not ticket_id and "Usage:" in (ticket_proc.stderr or ""):
+        ticket_proc = _try_fallback_ticket_list(project, planfile_runner)
+
+    return ticket_proc
+
+
+def _handle_idle_queue(
+    project: Path,
+    planfile_runner: Callable | None,
+    include_fixtures: bool | None,
+) -> list[dict[str, Any]]:
+    """Handle idle queue case by fetching all historical tickets."""
+    return _fetch_all_tickets(
+        project,
+        runner=planfile_runner,
+        include_fixtures=_resolve_include_fixtures(include_fixtures),
+    )
+
+
+def _parse_ticket_response(
+    ticket_proc: subprocess.CompletedProcess,
+    ticket_id: str | None,
+    include_fixtures: bool | None,
+    project: Path,
+    planfile_runner: Callable | None,
+) -> tuple[dict[str, Any] | None, str | None, list[dict[str, Any]], list[dict[str, Any]]]:
+    """Parse ticket response from planfile."""
+    ticket_data: dict[str, Any] | None = None
+    ticket_error: str | None = None
+    open_tickets: list[dict[str, Any]] = []
+    all_tickets: list[dict[str, Any]] = []
+
+    ticket_data = _safe_json(ticket_proc.stdout)
+    if ticket_data is None:
+        stripped = (ticket_proc.stdout or "").strip()
+        json_null_idle = False
+        if stripped:
+            try:
+                json_null_idle = json.loads(stripped) is None
+            except (TypeError, ValueError):
+                pass
+        if (
+            "No runnable ticket" in stripped
+            or not stripped
+            or json_null_idle
+        ):
+            ticket_data = None
+            ticket_error = "queue is idle"
+            all_tickets = _handle_idle_queue(project, planfile_runner, include_fixtures)
+        else:
+            ticket_error = "planfile output was not JSON"
+    elif isinstance(ticket_data, list):
+        ticket_data, open_tickets, all_tickets, ticket_error = _process_list_payload(
+            ticket_data, include_fixtures
+        )
+    elif isinstance(ticket_data, dict):
+        ticket_data, open_tickets, ticket_error = _process_dict_payload(
+            ticket_data, ticket_id, include_fixtures
+        )
+        if ticket_data is not None:
+            all_tickets = _fetch_all_tickets(
+                project,
+                runner=planfile_runner,
+                include_fixtures=_resolve_include_fixtures(include_fixtures),
+            )
+
+    return ticket_data, ticket_error, open_tickets, all_tickets
+
+
 def _fetch_ticket_data(
     project: Path,
     ticket_id: str | None,
@@ -311,72 +392,18 @@ def _fetch_ticket_data(
     Returns:
         Tuple of (ticket_data, ticket_error, open_tickets, all_tickets)
     """
-    ticket_data: dict[str, Any] | None = None
-    ticket_error: str | None = None
-    open_tickets: list[dict[str, Any]] = []
-    all_tickets: list[dict[str, Any]] = []
-
     if not planfile_present:
-        ticket_error = "project not initialised"
-        return ticket_data, ticket_error, open_tickets, all_tickets
+        return None, "project not initialised", [], []
 
-    ticket_args = _build_ticket_args(ticket_id, queue_name)
-    ticket_proc = _run_planfile(project, ticket_args, runner=planfile_runner)
-
-    # Fallback: if `ticket next` is not available (older planfile),
-    # try `ticket list` and pick the first open ticket.
-    if ticket_proc.returncode != 0 and not ticket_id and "Usage:" in (ticket_proc.stderr or ""):
-        ticket_proc = _try_fallback_ticket_list(project, planfile_runner)
+    ticket_proc = _execute_ticket_query(project, ticket_id, queue_name, planfile_runner)
 
     if ticket_proc.returncode == 0:
-        ticket_data = _safe_json(ticket_proc.stdout)
-        if ticket_data is None:
-            stripped = (ticket_proc.stdout or "").strip()
-            json_null_idle = False
-            if stripped:
-                try:
-                    json_null_idle = json.loads(stripped) is None
-                except (TypeError, ValueError):
-                    pass
-            if (
-                "No runnable ticket" in stripped
-                or not stripped
-                or json_null_idle
-            ):
-                ticket_data = None
-                ticket_error = "queue is idle"
-                # Even when the active slot is empty, the user
-                # still wants to see the historical timeline in
-                # the dashboard — never let them face a blank
-                # screen when 6 done tickets sit on disk.
-                all_tickets = _fetch_all_tickets(
-                    project,
-                    runner=planfile_runner,
-                    include_fixtures=_resolve_include_fixtures(include_fixtures),
-                )
-            else:
-                ticket_error = "planfile output was not JSON"
-        elif isinstance(ticket_data, list):
-            ticket_data, open_tickets, all_tickets, ticket_error = _process_list_payload(
-                ticket_data, include_fixtures
-            )
-        elif isinstance(ticket_data, dict):
-            ticket_data, open_tickets, ticket_error = _process_dict_payload(
-                ticket_data, ticket_id, include_fixtures
-            )
-            if ticket_data is not None:
-                # `ticket next` returns only the active ticket — fetch
-                # the full list separately so the dashboard can show
-                # historical (done/in_progress) tickets too.
-                all_tickets = _fetch_all_tickets(
-                    project,
-                    runner=planfile_runner,
-                    include_fixtures=_resolve_include_fixtures(include_fixtures),
-                )
+        return _parse_ticket_response(
+            ticket_proc, ticket_id, include_fixtures, project, planfile_runner
+        )
     else:
         ticket_error = _extract_error_from_stderr(ticket_proc.stderr or "planfile error")
-
-    return ticket_data, ticket_error, open_tickets, all_tickets
+        return None, ticket_error, [], []
 
 
 def build_context(

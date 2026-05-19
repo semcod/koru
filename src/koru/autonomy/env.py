@@ -90,12 +90,11 @@ def _env_get(name: str, default: str | None, environ: Mapping[str, str] | None) 
     return str(raw).strip()
 
 
-def apply_autoloop_env_to_args(
+def _apply_ticket_and_diagnostics_env(
     args: argparse.Namespace,
-    *,
-    environ: Mapping[str, str] | None = None,
+    environ: Mapping[str, str] | None,
 ) -> None:
-    """Mutate ``args`` with environment defaults (shell-autoloop parity)."""
+    """Apply ticket sources and diagnostics environment overrides."""
     args.ticket_sources = _env_ticket_sources(args.ticket_sources, environ)
     args.idle_diagnostics = _env_get(
         "IDLE_DIAGNOSTICS_PROFILE",
@@ -113,6 +112,13 @@ def apply_autoloop_env_to_args(
     ) or args.diagnostic_ticket_priority
     args.diagnostic_state_dir = _env_get("DIAG_STATE_DIR", args.diagnostic_state_dir, environ) or args.diagnostic_state_dir
     args.strict_diagnostics = env_truthy("STRICT_DIAGNOSTICS", args.strict_diagnostics, environ=environ)
+
+
+def _apply_autopilot_env(
+    args: argparse.Namespace,
+    environ: Mapping[str, str] | None,
+) -> None:
+    """Apply autopilot environment overrides."""
     ap_action = _env_get("AUTOPILOT_ACTION", args.autopilot_action, environ)
     args.autopilot_action = str(ap_action).lower() if ap_action else args.autopilot_action
     if args.autopilot_action not in {"drive", "handoff", "off"}:
@@ -135,6 +141,13 @@ def apply_autoloop_env_to_args(
     args.backoff_on_stagnation = env_truthy(
         "BACKOFF_ON_STAGNATION", args.backoff_on_stagnation, environ=environ
     )
+
+
+def _apply_scan_env(
+    args: argparse.Namespace,
+    environ: Mapping[str, str] | None,
+) -> None:
+    """Apply scan environment overrides."""
     args.scan_skip_if_clean = env_truthy("SCAN_SKIP_IF_CLEAN", args.scan_skip_if_clean, environ=environ)
     args.scan_after_idle_queue = env_truthy(
         "SCAN_AFTER_IDLE_QUEUE", args.scan_after_idle_queue, environ=environ
@@ -146,6 +159,13 @@ def apply_autoloop_env_to_args(
         except ValueError:
             pass
     args.topology_integration = env_truthy("TOPOLOGY_INTEGRATION", args.topology_integration, environ=environ)
+
+
+def _apply_wup_env(
+    args: argparse.Namespace,
+    environ: Mapping[str, str] | None,
+) -> None:
+    """Apply WUP environment overrides."""
     _emap = os.environ if environ is None else environ
     env_wup_watch = _emap.get("WUP_WATCH")
     if env_wup_watch is not None:
@@ -164,6 +184,13 @@ def apply_autoloop_env_to_args(
         "WUP_DIAGNOSTIC_TICKETS", args.wup_diagnostic_tickets, environ=environ
     )
     args.wup_ticket_queue = _env_get("WUP_TICKET_QUEUE", args.wup_ticket_queue, environ) or args.wup_ticket_queue
+
+
+def _apply_operator_env(
+    args: argparse.Namespace,
+    environ: Mapping[str, str] | None,
+) -> None:
+    """Apply operator environment overrides."""
     if hasattr(args, "operator_pipeline"):
         args.operator_pipeline = env_truthy(
             "KORU_OPERATOR_PIPELINE", args.operator_pipeline, environ=environ
@@ -182,6 +209,19 @@ def apply_autoloop_env_to_args(
             _env_get("OPERATOR_TICKET_PRIORITY", args.operator_ticket_priority, environ)
             or args.operator_ticket_priority
         )
+
+
+def apply_autoloop_env_to_args(
+    args: argparse.Namespace,
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> None:
+    """Mutate ``args`` with environment defaults (shell-autoloop parity)."""
+    _apply_ticket_and_diagnostics_env(args, environ)
+    _apply_autopilot_env(args, environ)
+    _apply_scan_env(args, environ)
+    _apply_wup_env(args, environ)
+    _apply_operator_env(args, environ)
 
 
 def autonomous_environ_doctor_probe(project: Path) -> tuple[str, str]:

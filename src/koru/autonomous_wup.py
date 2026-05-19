@@ -193,6 +193,70 @@ def _stop_process(
     _wup_stdio_info(f"koru autonomous: stopped {label}", fmt=stdio_format)
 
 
+def _load_wup_health(health_path: Path) -> dict[str, dict]:
+    """Load WUP health data from JSON file."""
+    health: dict[str, dict] = {}
+    if health_path.is_file():
+        try:
+            payload = json.loads(health_path.read_text(encoding="utf-8"))
+            if isinstance(payload, dict):
+                health = {str(k): v for k, v in payload.items() if isinstance(v, dict)}
+        except (OSError, json.JSONDecodeError):
+            health = {}
+    return health
+
+
+def _identify_failing_services(health: dict[str, dict]) -> list[str]:
+    """Identify services with failing status."""
+    return [
+        service
+        for service, data in sorted(health.items())
+        if str(data.get("status", "")).lower() in {"down", "failed", "failure", "error"}
+    ]
+
+
+def _create_wup_diagnostic_tickets(
+    health: dict[str, dict],
+    failing: list[str],
+    project: Path,
+    ticket_queue: str,
+    state_dir: Path,
+    create_diagnostic_ticket: Callable[..., None],
+) -> None:
+    """Create diagnostic tickets for failing WUP services."""
+    for service, data in sorted(health.items()):
+        check_id = f"wup-{service}"
+        if service in failing:
+            stage = str(data.get("stage") or "wup")
+            message = str(data.get("message") or "WUP reported failing service")
+            track_file = str(data.get("track_file") or "")
+            create_diagnostic_ticket(
+                project=project,
+                check_id=check_id,
+                summary=f"WUP service={service} stage={stage} message={message} track={track_file}",
+                cycle=0,
+                queue_status="wup_failure",
+                queue_name=ticket_queue,
+                priority="high",
+                state_dir=state_dir,
+            )
+        else:
+            (state_dir / f"{check_id}.failed").unlink(missing_ok=True)
+
+
+def _count_wup_events(events_path: Path, previous_count: int) -> tuple[int, int]:
+    """Count WUP events and return (total_count, new_events)."""
+    event_count = 0
+    if events_path.is_file():
+        try:
+            with events_path.open("r", encoding="utf-8") as handle:
+                event_count = sum(1 for line in handle if line.strip())
+        except OSError:
+            event_count = previous_count
+    new_events = max(0, event_count - previous_count)
+    return event_count, new_events
+
+
 def _read_wup_health(
     *,
     project: Path,
@@ -204,50 +268,19 @@ def _read_wup_health(
 ) -> WupHealthResult:
     health_path = project / ".wup" / "service-health.json"
     events_path = project / ".wup" / "service-health-events.jsonl"
-    health: dict[str, dict] = {}
-    if health_path.is_file():
-        try:
-            payload = json.loads(health_path.read_text(encoding="utf-8"))
-            if isinstance(payload, dict):
-                health = {str(k): v for k, v in payload.items() if isinstance(v, dict)}
-        except (OSError, json.JSONDecodeError):
-            health = {}
-    failing = [
-        service
-        for service, data in sorted(health.items())
-        if str(data.get("status", "")).lower() in {"down", "failed", "failure", "error"}
-    ]
+    
+    health = _load_wup_health(health_path)
+    failing = _identify_failing_services(health)
+    
     if diagnostic_tickets:
         if failing and create_diagnostic_ticket is None:
             raise TypeError("create_diagnostic_ticket is required when diagnostic_tickets is True")
-        for service, data in sorted(health.items()):
-            check_id = f"wup-{service}"
-            if service in failing:
-                if create_diagnostic_ticket is None:
-                    continue
-                stage = str(data.get("stage") or "wup")
-                message = str(data.get("message") or "WUP reported failing service")
-                track_file = str(data.get("track_file") or "")
-                create_diagnostic_ticket(
-                    project=project,
-                    check_id=check_id,
-                    summary=f"WUP service={service} stage={stage} message={message} track={track_file}",
-                    cycle=0,
-                    queue_status="wup_failure",
-                    queue_name=ticket_queue,
-                    priority="high",
-                    state_dir=state_dir,
-                )
-            else:
-                (state_dir / f"{check_id}.failed").unlink(missing_ok=True)
-    event_count = 0
-    if events_path.is_file():
-        try:
-            with events_path.open("r", encoding="utf-8") as handle:
-                event_count = sum(1 for line in handle if line.strip())
-        except OSError:
-            event_count = state.wup_seen_events
-    new_events = max(0, event_count - state.wup_seen_events)
+        if create_diagnostic_ticket is not None:
+            _create_wup_diagnostic_tickets(
+                health, failing, project, ticket_queue, state_dir, create_diagnostic_ticket
+            )
+    
+    event_count, new_events = _count_wup_events(events_path, state.wup_seen_events)
     state.wup_seen_events = max(state.wup_seen_events, event_count)
     status = "failed" if failing else ("changed" if new_events else "ok")
     return WupHealthResult(status=status, failing_services=failing, new_events=new_events)

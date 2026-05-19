@@ -71,45 +71,76 @@ def _first_token(command: str) -> str:
     return parts[0] if parts else command
 
 
+def _extract_detect_config(item: dict[str, Any]) -> dict[str, list[str]]:
+    """Extract detection configuration from a registry item."""
+    detect = item.get("detect") if isinstance(item.get("detect"), dict) else {}
+    return {
+        "commands": [c for c in (detect.get("commands") or []) if isinstance(c, str)],
+        "markers": [m for m in (detect.get("markers") or []) if isinstance(m, str)],
+        "env_vars": [e for e in (detect.get("env") or []) if isinstance(e, str)],
+    }
+
+
+def _check_commands_exist(commands: list[str]) -> list[str]:
+    """Check which commands are available in PATH."""
+    found: list[str] = []
+    for cmd in commands:
+        token = _first_token(cmd)
+        if shutil.which(token):
+            found.append(cmd)
+    return found
+
+
+def _check_markers_exist(project: Path, markers: list[str]) -> list[str]:
+    """Check which marker files/dirs exist in the project."""
+    return [m for m in markers if (project / m).exists()]
+
+
+def _check_env_vars_exist(env_vars: list[str]) -> list[str]:
+    """Check which environment variables are set."""
+    return [e for e in env_vars if os.getenv(e)]
+
+
+def _build_detection_result(
+    item: dict[str, Any],
+    available: bool,
+    found_commands: list[str],
+    found_markers: list[str],
+    found_env: list[str],
+) -> dict[str, Any]:
+    """Build the detection result dictionary for a single tool."""
+    return {
+        "id": item.get("id"),
+        "name": item.get("name") or item.get("id"),
+        "category": item.get("category") or "unknown",
+        "lane": item.get("lane") or "manual",
+        "stability": item.get("stability") or "unknown",
+        "available": available,
+        "detected_via": {
+            "commands": found_commands,
+            "markers": found_markers,
+            "env": found_env,
+        },
+        "invoke": item.get("invoke") or "",
+        "notes": item.get("notes") or "",
+    }
+
+
 def detect_tools(project: Path, registry: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Detect available tools from registry definitions."""
     project = project.resolve()
     out: list[dict[str, Any]] = []
 
     for item in registry:
-        detect = item.get("detect") if isinstance(item.get("detect"), dict) else {}
-
-        commands = [c for c in (detect.get("commands") or []) if isinstance(c, str)]
-        markers = [m for m in (detect.get("markers") or []) if isinstance(m, str)]
-        env_vars = [e for e in (detect.get("env") or []) if isinstance(e, str)]
-
-        found_commands: list[str] = []
-        for cmd in commands:
-            token = _first_token(cmd)
-            if shutil.which(token):
-                found_commands.append(cmd)
-
-        found_markers = [m for m in markers if (project / m).exists()]
-        found_env = [e for e in env_vars if os.getenv(e)]
+        config = _extract_detect_config(item)
+        found_commands = _check_commands_exist(config["commands"])
+        found_markers = _check_markers_exist(project, config["markers"])
+        found_env = _check_env_vars_exist(config["env_vars"])
 
         available = bool(found_commands or found_markers or found_env)
 
         out.append(
-            {
-                "id": item.get("id"),
-                "name": item.get("name") or item.get("id"),
-                "category": item.get("category") or "unknown",
-                "lane": item.get("lane") or "manual",
-                "stability": item.get("stability") or "unknown",
-                "available": available,
-                "detected_via": {
-                    "commands": found_commands,
-                    "markers": found_markers,
-                    "env": found_env,
-                },
-                "invoke": item.get("invoke") or "",
-                "notes": item.get("notes") or "",
-            }
+            _build_detection_result(item, available, found_commands, found_markers, found_env)
         )
 
     return out

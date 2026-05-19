@@ -1,8 +1,27 @@
 flowchart TD
-%% generated in 0.05s
+%% generated in 0.06s
 
     %% Entry points (blue)
     classDef entry fill:#4dabf7,stroke:#1971c2,color:#fff
+
+    subgraph CLI
+        koru__cli___env_truthy["_env_truthy"]
+        koru__cli___command_value["_command_value"]
+        koru__cli___build_parser["_build_parser"]
+        koru__cli___build_tools_parser["_build_tools_parser"]
+        koru__cli___tools_main["_tools_main"]
+        koru__cli___build_task_parser["_build_task_parser"]
+        koru__cli___build_serve_parser["_build_serve_parser"]
+        koru__cli___build_local_serve_parser["_build_local_serve_parser"]
+        koru__cli___build_scan_parser["_build_scan_parser"]
+        koru__cli___render_scan_text["_render_scan_text"]
+        koru__cli___render_scan_markdown["_render_scan_markdown"]
+        koru__cli___scan_main["_scan_main"]
+        koru__cli___build_gate_parser["_build_gate_parser"]
+        koru__cli___gate_main["_gate_main"]
+        koru__cli___build_gc_parser["_build_gc_parser"]
+        ...["+47 more"]
+    end
 
     subgraph Core
         services__healing_webhook__app__heal_rebuild_restore["heal_rebuild_restore"]
@@ -20,7 +39,7 @@ flowchart TD
         src__korudsl__cli___read_input["_read_input"]
         src__korudsl__cli__main["main"]
         src__korudsl__library___handle_set["_handle_set"]
-        ...["+474 more"]
+        ...["+413 more"]
     end
 
     subgraph Exporters

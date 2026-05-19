@@ -1,8 +1,8 @@
-# koru | 1111 func | 118f | 35441L | python | 2026-05-19
+# koru | 1120 func | 119f | 37498L | python | 2026-05-19
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.4  critical=121 (limit:10)  dup=3  cycles=0
+  CC̄=4.4  critical=118 (limit:10)  dup=3  cycles=0
 
 ALERTS[20]:
   !!! cc_exceeded      run_cycle = 89 (limit:15)
@@ -16,23 +16,23 @@ ALERTS[20]:
   !!! cc_exceeded      detect_tools = 26 (limit:15)
   !!! high_fan_out     do_from_todo = 24 (limit:10)
 
-MODULES[211] (top by size):
+MODULES[213] (top by size):
+  M[src/koru/cli.py] 1868L C:0 F:52 CC↑14 D:0 (python)
   M[src/koru/autonomous.py] 1572L C:2 F:37 CC↑50 D:1 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
   M[src/koruapi/dashboard_serve.py] 1296L C:1 F:16 CC↑14 D:1 (python)
   M[src/koru/autopilot/cli_command.py] 1282L C:0 F:37 CC↑15 D:0 (python)
   M[src/koru/context.py] 1199L C:0 F:43 CC↑18 D:7 (python)
-  M[src/koruapi/mcp_server.py] 1027L C:0 F:34 CC↑14 D:2 (python)
-  M[Taskfile.yml] 893L C:0 F:0 CC↑0 D:0 (yml)
-  M[src/koru/scan.py] 864L C:2 F:18 CC↑15 D:3 (python)
+  M[src/koruapi/mcp_server.py] 1028L C:0 F:34 CC↑14 D:2 (python)
+  M[Taskfile.yml] 901L C:0 F:0 CC↑0 D:0 (yml)
+  M[src/koru/scan.py] 892L C:2 F:19 CC↑15 D:3 (python)
   M[src/koru/autonomous_cycle.py] 799L C:2 F:16 CC↑89 D:0 (python)
   M[src/koruide/daemon.py] 715L C:2 F:31 CC↑14 D:0 (python)
   M[services/healing-webhook/app.py] 702L C:0 F:27 CC↑11 D:0 (python)
   M[src/koru/init.py] 610L C:1 F:12 CC↑15 D:2 (python)
   M[plugins/koru-autopilot-vscode/src/extension.ts] 590L C:2 F:63 CC↑18 D:5 (typescript)
   M[scripts/koru-autoloop.sh] 576L C:0 F:14 CC↑0 D:0 (shell)
-  M[src/koruide/ide.py] 543L C:1 F:29 CC↑13 D:7 (python)
-  LANGS: python:126/shell:41/yaml:15/yml:8/typescript:6/kotlin:6/json:3/other:2/properties:1/xml:1/toml:1/txt:1
+  LANGS: python:127/shell:42/yaml:15/yml:8/typescript:6/kotlin:6/json:3/other:2/properties:1/xml:1/toml:1/txt:1
 
 HOTSPOTS[10]:
   ★ run_cycle fan=58  // Orchestrates 58 calls
@@ -51,4 +51,4 @@ REFACTOR[15]:
   [5] H/L Split run_next_planfile_task (CC=43)
 
 EVOLUTION:
-  2026-05-19 CC̄=4.4 crit=121 35441L // Automated analysis
+  2026-05-19 CC̄=4.4 crit=118 37498L // Automated analysis

@@ -1207,15 +1207,15 @@ def _run_cycle(
     )
 
 
-def _action_up(args: argparse.Namespace) -> int:
+def _setup_autonomous_session(
+    args: argparse.Namespace,
+) -> tuple[str, Path, int]:
+    """Initialize autonomous session and return correlation_id, project path, and guard_rc."""
     _env_apply_autoloop_defaults(args)
-    previous_stdio_format_env = os.environ.get("KORU_STDIO_FORMAT")
     correlation_id = str(uuid.uuid4())
     project = args.project.resolve()
     project.mkdir(parents=True, exist_ok=True)
     guard_rc = _guard_existing_autonomous_processes(args, project)
-    if guard_rc:
-        return guard_rc
     os.environ["KORU_STDIO_FORMAT"] = args.emit_events
     if args.emit_events == "jsonl":
         write_stdio_event(
@@ -1231,17 +1231,14 @@ def _action_up(args: argparse.Namespace) -> int:
             },
         )
     _ensure_init(project, force=args.force_init, stdio_format=args.emit_events)
+    return correlation_id, project, guard_rc
 
-    lane = _apply_agent_lane_environ(project, args.agent_lane)
-    startup_probe = build_startup_probe(
-        project,
-        agent_lane_cli=args.agent_lane,
-        autopilot_ide_cli=args.autopilot_ide,
-        resolve_project_lane=resolve_project_agent_lane,
-    )
-    for line in format_startup_banner(startup_probe):
-        _stdio_info(line, fmt=args.emit_events)
 
+def _setup_autopilot_daemon(
+    args: argparse.Namespace,
+    project: Path,
+) -> tuple[IDEControlClient | None, AutopilotDaemon | None, threading.Thread | None, Path | None]:
+    """Setup autopilot daemon if enabled."""
     client: IDEControlClient | None = None
     daemon: AutopilotDaemon | None = None
     thread: threading.Thread | None = None
@@ -1253,15 +1250,17 @@ def _action_up(args: argparse.Namespace) -> int:
             socket_path=socket_path,
             stdio_format=args.emit_events,
         )
+    return client, daemon, thread, socket_path
 
-    # Avoid reconnect noise in tests / misconfigured hosts where no socket ever
-    # existed; still recover when the socket disappears after a healthy boot.
-    autopilot_socket_observed_at_boot = (
-        bool(socket_path and socket_path.exists()) if args.enable_autopilot else False
-    )
 
+def _configure_loop_state(
+    args: argparse.Namespace,
+    project: Path,
+) -> tuple[bool, str | None, str, AutoloopState, Path, int]:
+    """Configure queue flags, autopilot IDE, and loop state."""
     enable_scan, use_all_queues = _effective_flags(args.ticket_sources)
     queue_name = None if use_all_queues else args.queue_name
+    lane = _apply_agent_lane_environ(project, args.agent_lane)
     autopilot_ide, _autopilot_ide_source = resolve_autopilot_ide_for_autonomous(
         args.autopilot_ide, lane, resolve_ide_route_fn=resolve_ide_route
     )
@@ -1272,6 +1271,232 @@ def _action_up(args: argparse.Namespace) -> int:
         state=loop_state,
         stdio_format=args.emit_events,
     )
+    return enable_scan, queue_name, autopilot_ide, loop_state, checkpoint_path, restored_cycle
+
+
+def _run_mcp_provision(project: Path, stdio_format: str) -> bool:
+    """Run MCP workspace provision and return True if it ran."""
+    mcp_provision_ran = False
+    try:
+        from .mcp_provision import ensure_koru_mcp_not_disabled
+
+        for row in ensure_koru_mcp_not_disabled(project):
+            mcp_provision_ran = True
+            _stdio_info(
+                f"koru autonomous: {row['action']} → {row['path']}",
+                fmt=stdio_format,
+            )
+    except (OSError, TypeError, ValueError) as exc:
+        _stdio_info(
+            f"koru autonomous: mcp workspace refresh skipped ({exc})",
+            fmt=stdio_format,
+        )
+    return mcp_provision_ran
+
+
+def _setup_autopilot_plugin(
+    args: argparse.Namespace,
+    autopilot_ide: str,
+    socket_path: Path | None,
+    client: IDEControlClient | None,
+) -> bool | None:
+    """Install and wait for autopilot plugin if enabled."""
+    plugin_connected: bool | None = None
+    if args.enable_autopilot and socket_path is not None:
+        plugin_result = install_plugin_for_ide(ide=autopilot_ide, socket_path=socket_path)
+        _stdio_info(format_plugin_install_result(plugin_result), fmt=args.emit_events)
+        if client is not None and not _allow_keyboard_autopilot_fallback():
+            plugin_ready = _wait_for_autopilot_plugin(
+                client,
+                autopilot_ide,
+                timeout_seconds=max(0.0, args.autopilot_plugin_wait_seconds),
+            )
+            plugin_connected = plugin_ready
+            if plugin_ready:
+                _stdio_info(
+                    f"koru autonomous: autopilot plugin connected ide={autopilot_ide}",
+                    fmt=args.emit_events,
+                )
+            else:
+                _stdio_info(
+                    "koru autonomous: no connected autopilot plugin "
+                    f"for ide={autopilot_ide} after "
+                    f"{max(0.0, args.autopilot_plugin_wait_seconds):.1f}s; continuing",
+                    fmt=args.emit_events,
+                )
+    return plugin_connected
+
+
+def _run_operator_pipeline(
+    args: argparse.Namespace,
+    project: Path,
+    startup_probe: Any,
+    plugin_connected: bool | None,
+    mcp_provision_ran: bool,
+    correlation_id: str,
+) -> None:
+    """Run operator pipeline if enabled."""
+    for hint in format_post_startup_operator_hints(
+        startup_probe, plugin_connected=plugin_connected
+    ):
+        _stdio_info(hint, fmt=args.emit_events)
+
+    if args.operator_pipeline:
+        run_startup_operator_pipeline(
+            project=project,
+            probe=startup_probe,
+            plugin_connected=plugin_connected,
+            stdio_format=args.emit_events,
+            create_tickets=args.operator_tickets,
+            ticket_queue=args.operator_ticket_queue,
+            ticket_priority=args.operator_ticket_priority,
+            mcp_already_bootstrapped=mcp_provision_ran,
+            correlation_id=correlation_id,
+        )
+
+
+def _unblock_queue_if_needed(project: Path, stdio_format: str) -> None:
+    """Release in-progress tickets if KORU_QUEUE_UNBLOCK is set."""
+    if os.environ.get("KORU_QUEUE_UNBLOCK", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    ):
+        released = release_in_progress_tickets(project, runner=_run_process)
+        if released:
+            _stdio_info(
+                f"koru autonomous: queue unblock — reopened {released} in_progress ticket(s)",
+                fmt=stdio_format,
+            )
+
+
+def _restart_daemon_if_needed(
+    args: argparse.Namespace,
+    client: IDEControlClient | None,
+    socket_path: Path | None,
+    daemon: AutopilotDaemon | None,
+    thread: threading.Thread | None,
+    autopilot_socket_observed_at_boot: bool,
+    project: Path,
+) -> tuple[IDEControlClient | None, AutopilotDaemon | None, threading.Thread | None]:
+    """Restart daemon if socket is missing."""
+    if (
+        args.enable_autopilot
+        and client is not None
+        and socket_path is not None
+        and not socket_path.exists()
+        and (autopilot_socket_observed_at_boot or daemon is not None or thread is not None)
+    ):
+        _stdio_info(
+            f"koru autonomous: autopilot socket missing at {socket_path}; "
+            "restarting or taking over daemon…",
+            fmt=args.emit_events,
+        )
+        if daemon is not None:
+            try:
+                daemon.stop()
+            except OSError:
+                pass
+        if thread is not None:
+            thread.join(timeout=2.0)
+        client, daemon, thread = _start_or_reuse_daemon(
+            project=project,
+            socket_path=socket_path,
+            stdio_format=args.emit_events,
+        )
+    return client, daemon, thread
+
+
+def _handle_cycle_exit_conditions(
+    args: argparse.Namespace,
+    queue_result: Any,
+    cycle: int,
+    correlation_id: str,
+) -> bool:
+    """Check if we should exit the cycle loop. Returns True if should exit."""
+    if (
+        args.stop_on_waiting_input
+        and queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES
+    ):
+        if args.emit_events == "jsonl":
+            write_stdio_event(
+                sys.stdout,
+                event_type="AutonomousStopped",
+                correlation_id=correlation_id,
+                payload={"reason": "waiting_input", "cycle": cycle},
+            )
+        _stdio_info(
+            "koru autonomous: queue is waiting_input; stopping until "
+            "human/manual ticket recovery marks it ready or done",
+            fmt=args.emit_events,
+        )
+        return True
+
+    if args.max_cycles > 0 and cycle >= args.max_cycles:
+        if args.emit_events == "jsonl":
+            write_stdio_event(
+                sys.stdout,
+                event_type="AutonomousStopped",
+                correlation_id=correlation_id,
+                payload={
+                    "reason": "max_cycles",
+                    "cycle": cycle,
+                    "max_cycles": args.max_cycles,
+                },
+            )
+        _stdio_info(
+            f"koru autonomous: reached max-cycles={args.max_cycles}; stopping",
+            fmt=args.emit_events,
+        )
+        return True
+    return False
+
+
+def _cleanup_autonomous_session(
+    previous_stdio_format_env: str | None,
+    previous_sigterm: Any,
+    daemon: AutopilotDaemon | None,
+    thread: threading.Thread | None,
+    wup_process: Any,
+    stdio_format: str,
+) -> None:
+    """Clean up autonomous session resources."""
+    if previous_stdio_format_env is None:
+        os.environ.pop("KORU_STDIO_FORMAT", None)
+    else:
+        os.environ["KORU_STDIO_FORMAT"] = previous_stdio_format_env
+    signal.signal(signal.SIGTERM, previous_sigterm)
+    if daemon is not None:
+        daemon.stop()
+    if thread is not None:
+        thread.join(timeout=2.0)
+    _stop_process(wup_process, "WUP watcher", stdio_format=stdio_format)
+
+
+def _action_up(args: argparse.Namespace) -> int:
+    previous_stdio_format_env = os.environ.get("KORU_STDIO_FORMAT")
+    correlation_id, project, guard_rc = _setup_autonomous_session(args)
+    if guard_rc:
+        return guard_rc
+
+    lane = _apply_agent_lane_environ(project, args.agent_lane)
+    startup_probe = build_startup_probe(
+        project,
+        agent_lane_cli=args.agent_lane,
+        autopilot_ide_cli=args.autopilot_ide,
+        resolve_project_lane=resolve_project_agent_lane,
+    )
+    for line in format_startup_banner(startup_probe):
+        _stdio_info(line, fmt=args.emit_events)
+
+    client, daemon, thread, socket_path = _setup_autopilot_daemon(args, project)
+    autopilot_socket_observed_at_boot = (
+        bool(socket_path and socket_path.exists()) if args.enable_autopilot else False
+    )
+
+    enable_scan, queue_name, autopilot_ide, loop_state, checkpoint_path, restored_cycle = _configure_loop_state(args, project)
+
     diagnostic_state_dir = (project / args.diagnostic_state_dir).resolve()
     wup_config = _build_wup_watch_config(args, project)
     wup_process = _start_wup_watch(
@@ -1293,107 +1518,20 @@ def _action_up(args: argparse.Namespace) -> int:
         raise KeyboardInterrupt()
 
     previous_sigterm = signal.signal(signal.SIGTERM, _sigterm_to_interrupt)
-    mcp_provision_ran = False
     try:
-        try:
-            from .mcp_provision import ensure_koru_mcp_not_disabled
-
-            for row in ensure_koru_mcp_not_disabled(project):
-                mcp_provision_ran = True
-                _stdio_info(
-                    f"koru autonomous: {row['action']} → {row['path']}",
-                    fmt=args.emit_events,
-                )
-        except (OSError, TypeError, ValueError) as exc:
-            _stdio_info(
-                f"koru autonomous: mcp workspace refresh skipped ({exc})",
-                fmt=args.emit_events,
-            )
-
-        plugin_connected: bool | None = None
-        if args.enable_autopilot and socket_path is not None:
-            plugin_result = install_plugin_for_ide(ide=autopilot_ide, socket_path=socket_path)
-            _stdio_info(format_plugin_install_result(plugin_result), fmt=args.emit_events)
-            if client is not None and not _allow_keyboard_autopilot_fallback():
-                plugin_ready = _wait_for_autopilot_plugin(
-                    client,
-                    autopilot_ide,
-                    timeout_seconds=max(0.0, args.autopilot_plugin_wait_seconds),
-                )
-                plugin_connected = plugin_ready
-                if plugin_ready:
-                    _stdio_info(
-                        f"koru autonomous: autopilot plugin connected ide={autopilot_ide}",
-                        fmt=args.emit_events,
-                    )
-                else:
-                    _stdio_info(
-                        "koru autonomous: no connected autopilot plugin "
-                        f"for ide={autopilot_ide} after "
-                        f"{max(0.0, args.autopilot_plugin_wait_seconds):.1f}s; continuing",
-                        fmt=args.emit_events,
-                    )
-
-        for hint in format_post_startup_operator_hints(
-            startup_probe, plugin_connected=plugin_connected
-        ):
-            _stdio_info(hint, fmt=args.emit_events)
-
-        if args.operator_pipeline:
-            run_startup_operator_pipeline(
-                project=project,
-                probe=startup_probe,
-                plugin_connected=plugin_connected,
-                stdio_format=args.emit_events,
-                create_tickets=args.operator_tickets,
-                ticket_queue=args.operator_ticket_queue,
-                ticket_priority=args.operator_ticket_priority,
-                mcp_already_bootstrapped=mcp_provision_ran,
-                correlation_id=correlation_id,
-            )
-
-        if os.environ.get("KORU_QUEUE_UNBLOCK", "").strip().lower() in (
-            "1",
-            "true",
-            "yes",
-            "on",
-        ):
-            released = release_in_progress_tickets(project, runner=_run_process)
-            if released:
-                _stdio_info(
-                    f"koru autonomous: queue unblock — reopened {released} in_progress ticket(s)",
-                    fmt=args.emit_events,
-                )
+        mcp_provision_ran = _run_mcp_provision(project, args.emit_events)
+        plugin_connected = _setup_autopilot_plugin(args, autopilot_ide, socket_path, client)
+        _run_operator_pipeline(args, project, startup_probe, plugin_connected, mcp_provision_ran, correlation_id)
+        _unblock_queue_if_needed(project, args.emit_events)
 
         cycle = restored_cycle or 0
         while True:
             cycle += 1
             if args.emit_events == "human":
                 print(f"\n=== koru autonomous cycle #{cycle} ===")
-            if (
-                args.enable_autopilot
-                and client is not None
-                and socket_path is not None
-                and not socket_path.exists()
-                and (autopilot_socket_observed_at_boot or daemon is not None or thread is not None)
-            ):
-                _stdio_info(
-                    f"koru autonomous: autopilot socket missing at {socket_path}; "
-                    "restarting or taking over daemon…",
-                    fmt=args.emit_events,
-                )
-                if daemon is not None:
-                    try:
-                        daemon.stop()
-                    except OSError:
-                        pass
-                if thread is not None:
-                    thread.join(timeout=2.0)
-                client, daemon, thread = _start_or_reuse_daemon(
-                    project=project,
-                    socket_path=socket_path,
-                    stdio_format=args.emit_events,
-                )
+            client, daemon, thread = _restart_daemon_if_needed(
+                args, client, socket_path, daemon, thread, autopilot_socket_observed_at_boot, project
+            )
             _scan_result, queue_result, _autopilot_status, diag_result = _run_cycle(
                 cycle=cycle,
                 project=project,
@@ -1438,40 +1576,7 @@ def _action_up(args: argparse.Namespace) -> int:
                 waiting_ticket=_queue_loop_waiting_ticket_label(queue_result),
             )
 
-            if (
-                args.stop_on_waiting_input
-                and queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES
-            ):
-                if args.emit_events == "jsonl":
-                    write_stdio_event(
-                        sys.stdout,
-                        event_type="AutonomousStopped",
-                        correlation_id=correlation_id,
-                        payload={"reason": "waiting_input", "cycle": cycle},
-                    )
-                _stdio_info(
-                    "koru autonomous: queue is waiting_input; stopping until "
-                    "human/manual ticket recovery marks it ready or done",
-                    fmt=args.emit_events,
-                )
-                return 0
-
-            if args.max_cycles > 0 and cycle >= args.max_cycles:
-                if args.emit_events == "jsonl":
-                    write_stdio_event(
-                        sys.stdout,
-                        event_type="AutonomousStopped",
-                        correlation_id=correlation_id,
-                        payload={
-                            "reason": "max_cycles",
-                            "cycle": cycle,
-                            "max_cycles": args.max_cycles,
-                        },
-                    )
-                _stdio_info(
-                    f"koru autonomous: reached max-cycles={args.max_cycles}; stopping",
-                    fmt=args.emit_events,
-                )
+            if _handle_cycle_exit_conditions(args, queue_result, cycle, correlation_id):
                 return 0
 
             effective_sleep = _compute_backoff_sleep(
@@ -1480,8 +1585,6 @@ def _action_up(args: argparse.Namespace) -> int:
                 args.max_sleep_seconds,
                 args.backoff_on_stagnation,
             )
-            # If a prompt was just delivered to the IDE and queue is idle,
-            # check sooner so we can react when the LLM finishes.
             if (
                 queue_result.last_status == "idle"
                 and loop_state.last_message_sent_ts > 0
@@ -1517,16 +1620,7 @@ def _action_up(args: argparse.Namespace) -> int:
             _stdio_info("\nkoru autonomous: interrupted (Ctrl+C)", fmt=args.emit_events)
         return 0
     finally:
-        if previous_stdio_format_env is None:
-            os.environ.pop("KORU_STDIO_FORMAT", None)
-        else:
-            os.environ["KORU_STDIO_FORMAT"] = previous_stdio_format_env
-        signal.signal(signal.SIGTERM, previous_sigterm)
-        if daemon is not None:
-            daemon.stop()
-        if thread is not None:
-            thread.join(timeout=2.0)
-        _stop_process(wup_process, "WUP watcher", stdio_format=args.emit_events)
+        _cleanup_autonomous_session(previous_stdio_format_env, previous_sigterm, daemon, thread, wup_process, args.emit_events)
 
 
 def autonomous_main(argv: list[str], *, invoked_as_auto: bool = False) -> int:

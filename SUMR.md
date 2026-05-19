@@ -16,7 +16,7 @@ SUMD - Structured Unified Markdown Descriptor for AI-aware project refactorizati
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.131`
+- **version**: `0.1.132`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -36,7 +36,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.131;
+  version: 0.1.132;
 }
 
 dependencies {
@@ -259,6 +259,11 @@ else
   fi
   redup scan . --min-lines 10
 fi;
+}
+
+workflow[name="quality:redup:changed"] {
+  trigger: manual;
+  step-1: run cmd=bash -lc 'set -euo pipefail; BASE_REF="${BASE_REF:-HEAD}"; OUT="${OUT:-.redup/wup-changed.json}"; if python3 -m koru.cli topology --project . --is-enabled gate:redup >/dev/null 2>&1; then python3 -m koru.redup_integration changed-scan --base-ref "$BASE_REF" --output "$OUT" --min-lines 10; else rc=$?; if [ "$rc" -eq 1 ]; then echo "quality:redup:changed skipped (gate:redup disabled in topology)"; exit 0; fi; python3 -m koru.redup_integration changed-scan --base-ref "$BASE_REF" --output "$OUT" --min-lines 10; fi';
 }
 
 workflow[name="quality:redup:check"] {
@@ -1065,6 +1070,14 @@ tasks:
       - sh: which redup
         msg: "redup not installed. Run: task install:tools"
 
+  quality:redup:changed:
+    desc: 'Run incremental redup scan over files changed since BASE_REF (default: HEAD)'
+    cmds:
+      - bash -lc 'set -euo pipefail; BASE_REF="${BASE_REF:-HEAD}"; OUT="${OUT:-.redup/wup-changed.json}"; if python3 -m koru.cli topology --project . --is-enabled gate:redup >/dev/null 2>&1; then python3 -m koru.redup_integration changed-scan --base-ref "$BASE_REF" --output "$OUT" --min-lines 10; else rc=$?; if [ "$rc" -eq 1 ]; then echo "quality:redup:changed skipped (gate:redup disabled in topology)"; exit 0; fi; python3 -m koru.redup_integration changed-scan --base-ref "$BASE_REF" --output "$OUT" --min-lines 10; fi'
+    preconditions:
+      - sh: which redup
+        msg: "redup not installed. Run: task install:tools"
+
   quality:redup:check:
     desc: Run redup with budget check (uses scripts/redup-check.sh)
     cmds:
@@ -1625,68 +1638,68 @@ pfix>=0.1.60
 
 ## Call Graph
 
-*408 nodes · 500 edges · 67 modules · CC̄=4.7*
+*446 nodes · 500 edges · 71 modules · CC̄=4.4*
 
 ### Hubs (by degree)
 
 | Function | CC | in | out | total |
 |----------|----|----|-----|-------|
-| `print` *(in scripts.koru-soak-monitor)* | 0 | 283 | 0 | **283** |
-| `_build_handler` *(in src.koruapi.dashboard_serve)* | 1 | 1 | 105 | **106** |
+| `print` *(in scripts.koru-soak-monitor)* | 0 | 282 | 0 | **282** |
+| `run_cycle` *(in src.koru.autonomous_cycle)* | 89 ⚠ | 0 | 168 | **168** |
+| `_build_handler` *(in src.koruapi.dashboard_serve)* | 1 | 1 | 82 | **83** |
 | `_action_up` *(in src.koru.autonomous)* | 50 ⚠ | 1 | 77 | **78** |
-| `invoke_integration` *(in src.koruapi.invoke)* | 35 ⚠ | 2 | 70 | **72** |
 | `_build_parser` *(in src.koru.autonomous)* | 1 | 1 | 64 | **65** |
-| `detect_agent_options` *(in src.koru.agents)* | 16 ⚠ | 2 | 61 | **63** |
-| `run_next_planfile_task` *(in src.koru.queue.runner)* | 43 ⚠ | 2 | 57 | **59** |
+| `detect_agent_options` *(in src.koru.agents)* | 16 ⚠ | 3 | 61 | **64** |
 | `create_nl_task` *(in src.koru.tasks)* | 23 ⚠ | 6 | 47 | **53** |
+| `render_markdown_handoff` *(in src.koru.context)* | 10 ⚠ | 5 | 47 | **52** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.19s
-# nodes: 408 | edges: 500 | modules: 67
-# CC̄=4.7
+# generated in 0.35s
+# nodes: 446 | edges: 500 | modules: 71
+# CC̄=4.4
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
-    CC=0  in:283  out:0  total:283
+    CC=0  in:282  out:0  total:282
+  src.koru.autonomous_cycle.run_cycle
+    CC=89  in:0  out:168  total:168
   src.koruapi.dashboard_serve._build_handler
-    CC=1  in:1  out:105  total:106
+    CC=1  in:1  out:82  total:83
   src.koru.autonomous._action_up
     CC=50  in:1  out:77  total:78
-  src.koruapi.invoke.invoke_integration
-    CC=35  in:2  out:70  total:72
   src.koru.autonomous._build_parser
     CC=1  in:1  out:64  total:65
   src.koru.agents.detect_agent_options
-    CC=16  in:2  out:61  total:63
-  src.koru.queue.runner.run_next_planfile_task
-    CC=43  in:2  out:57  total:59
+    CC=16  in:3  out:61  total:64
   src.koru.tasks.create_nl_task
     CC=23  in:6  out:47  total:53
   src.koru.context.render_markdown_handoff
     CC=10  in:5  out:47  total:52
   src.koruide.daemon.AutopilotDaemon._drive_via_keyboard
     CC=11  in:0  out:46  total:46
-  src.koru.local_service._build_handler
-    CC=1  in:1  out:39  total:40
+  src.koru.policy.load_policy
+    CC=9  in:2  out:43  total:45
   src.koru.activity_log.activity
     CC=4  in:32  out:7  total:39
-  src.koruide.host_setup._print_text_report
-    CC=15  in:1  out:38  total:39
-  src.koru.cli._build_parser
-    CC=1  in:3  out:34  total:37
-  src.koru.watch.format_queue_event
-    CC=19  in:1  out:35  total:36
-  src.koru.autonomous._stdio_info
-    CC=1  in:35  out:1  total:36
   src.koruapi.mcp_server.tool_run_ticket
     CC=14  in:1  out:33  total:34
+  src.koru.autonomous._stdio_info
+    CC=1  in:31  out:1  total:32
   src.koru.events.emit_management_event
-    CC=8  in:26  out:7  total:33
-  src.koruide.plugin_installer.install_plugin_for_ide
-    CC=28  in:1  out:32  total:33
-  src.koru.cli._topology_main
-    CC=17  in:0  out:33  total:33
+    CC=8  in:25  out:7  total:32
+  src.koru.autonomy.post_run_verify.load_post_run_verify_config
+    CC=19  in:1  out:31  total:32
+  src.koru.autonomy.env.env_truthy
+    CC=3  in:29  out:3  total:32
+  src.koru.local_service._build_handler
+    CC=1  in:1  out:30  total:31
+  services.healing-webhook.ticket_builder.build_ticket_payload
+    CC=11  in:1  out:25  total:26
+  src.koru.tools.detect_tools
+    CC=26  in:1  out:25  total:26
+  src.koruide.ide.detect_running_ides
+    CC=13  in:16  out:10  total:26
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -1714,14 +1727,17 @@ MODULES:
   src.koru.activity_log  [2 funcs]
     activity  CC=4  out:7
     activity_info  CC=5  out:11
-  src.koru.agent_backends  [7 funcs]
+  src.koru.agent_backends  [6 funcs]
     _parse_lane  CC=8  out:14
     get_agent_backend_profile  CC=3  out:1
-    iter_agent_backend_profiles  CC=1  out:0
     list_agent_backend_ids  CC=2  out:1
     load_agent_integration_config  CC=11  out:18
     normalize_agent_backend_id  CC=4  out:3
     validate_agent_integration_config  CC=5  out:4
+  src.koru.agent_cli_helpers  [3 funcs]
+    print_agent_list  CC=10  out:7
+    run_agent_handoff  CC=3  out:10
+    try_agent_env_exports  CC=7  out:7
   src.koru.agents  [7 funcs]
     agent_lane_environment  CC=1  out:3
     detect_agent_options  CC=16  out:61
@@ -1730,7 +1746,7 @@ MODULES:
     normalize_agent_lane_id  CC=6  out:8
     save_agent_prompt  CC=1  out:3
     select_agent  CC=14  out:8
-  src.koru.autonomous  [27 funcs]
+  src.koru.autonomous  [28 funcs]
     _action_up  CC=50  out:77
     _ancestor_pids  CC=7  out:8
     _apply_agent_lane_environ  CC=3  out:3
@@ -1741,8 +1757,18 @@ MODULES:
     _create_diagnostic_ticket  CC=2  out:8
     _daemon_activity_log  CC=2  out:3
     _ensure_init  CC=4  out:3
-  src.koru.autonomous_diagnostics  [1 funcs]
-    create_diagnostic_ticket  CC=2  out:6
+  src.koru.autonomous_cycle  [9 funcs]
+    _autopilot_event_path  CC=1  out:2
+    _create_diagnostic_ticket  CC=2  out:6
+    _drain_autopilot_events  CC=6  out:8
+    _is_topology_enabled  CC=4  out:2
+    _queue_loop_waiting_ticket_label  CC=3  out:1
+    _run_command_check  CC=2  out:4
+    _run_idle_diagnostics  CC=1  out:3
+    _stdio_info  CC=1  out:1
+    run_cycle  CC=89  out:168
+  src.koru.autonomous_parser  [1 funcs]
+    looks_like_autonomous_up_command  CC=15  out:8
   src.koru.autonomous_startup  [6 funcs]
     _terminal_agent_lane_from_env  CC=5  out:4
     build_startup_probe  CC=8  out:21
@@ -1752,6 +1778,11 @@ MODULES:
     resolve_autopilot_ide_for_autonomous  CC=4  out:4
   src.koru.autonomy.env  [1 funcs]
     env_truthy  CC=3  out:3
+  src.koru.autonomy.ide_work  [1 funcs]
+    resolve_in_progress_stale_minutes  CC=10  out:9
+  src.koru.autonomy.post_run_verify  [2 funcs]
+    load_post_run_verify_config  CC=19  out:31
+    verify_after_ide_work  CC=13  out:7
   src.koru.autopilot.audit  [4 funcs]
     __init__  CC=5  out:11
     record  CC=7  out:6
@@ -1767,22 +1798,20 @@ MODULES:
     load_flat_pipeline  CC=9  out:12
     materialize_to_planfile  CC=6  out:16
     validate_flat_pipeline  CC=3  out:9
-  src.koru.cli  [39 funcs]
-    _agent_backends_main  CC=8  out:23
-    _agent_main  CC=19  out:27
-    _auto_main  CC=4  out:4
-    _bootstrap_main  CC=5  out:18
-    _build_gate_parser  CC=1  out:11
-    _build_gc_parser  CC=1  out:14
-    _build_parser  CC=1  out:34
-    _build_queue_parser  CC=1  out:11
-    _build_runtime_context_parser  CC=1  out:4
-    _build_scan_parser  CC=1  out:9
-  src.koru.context  [2 funcs]
-    build_context  CC=6  out:16
-    render_markdown_handoff  CC=10  out:47
-  src.koru.doctor  [12 funcs]
+  src.koru.context  [20 funcs]
+    _auto_promote_blocking_tickets  CC=4  out:5
+    _build_instructions  CC=2  out:4
+    _build_self_service  CC=5  out:2
+    _build_ticket_args  CC=3  out:1
+    _extract_error_from_stderr  CC=7  out:4
+    _fetch_all_tickets  CC=9  out:5
+    _fetch_ticket_data  CC=18  out:15
+    _is_fixture_ticket  CC=4  out:6
+    _load_project_dotenv  CC=3  out:2
+    _load_sprint_data  CC=6  out:4
+  src.koru.doctor  [13 funcs]
     _check_agent_backends_registry  CC=1  out:3
+    _check_ci_command  CC=5  out:6
     _check_koru_project_pipeline  CC=7  out:9
     _check_planfile_cli_version  CC=9  out:9
     _check_planfile_config  CC=4  out:7
@@ -1791,14 +1820,27 @@ MODULES:
     _check_policy_yaml  CC=11  out:13
     _check_pytest_collect  CC=8  out:6
     _check_runtime_dir  CC=6  out:6
-    _planfile_version_argv  CC=3  out:4
   src.koru.events  [1 funcs]
     emit_management_event  CC=8  out:7
   src.koru.gate  [2 funcs]
     _resolve_actor  CC=4  out:1
     authorize_gate  CC=9  out:16
-  src.koru.gc  [1 funcs]
-    run_gc  CC=11  out:9
+  src.koru.gc  [11 funcs]
+    _apply_keep_last  CC=7  out:8
+    _archive_tickets  CC=2  out:6
+    _archive_tickets_before_delete  CC=5  out:3
+    _delete_tickets  CC=6  out:6
+    _load_tickets_from_sprint  CC=7  out:7
+    _now_utc  CC=1  out:1
+    _parse_ts  CC=3  out:2
+    _planfile_env  CC=1  out:0
+    _run_planfile  CC=6  out:9
+    collect_gc_candidates  CC=9  out:21
+  src.koru.gc_cli_helpers  [4 funcs]
+    emit_gc_management_event  CC=2  out:3
+    gc_result_to_json  CC=3  out:1
+    print_gc_report  CC=2  out:4
+    print_gc_text_report  CC=12  out:14
   src.koru.ide_client  [5 funcs]
     drive  CC=1  out:8
     adapt_legacy_autopilot_client  CC=1  out:1
@@ -1808,6 +1850,9 @@ MODULES:
   src.koru.ide_router  [2 funcs]
     is_headless_environment  CC=8  out:6
     resolve_ide_route  CC=8  out:9
+  src.koru.ide_runtime  [2 funcs]
+    build_host_setup_report  CC=1  out:1
+    detect_running_ides  CC=5  out:12
   src.koru.init  [11 funcs]
     _ensure_gitignore_entry  CC=8  out:12
     _init_auto_agent_lane  CC=6  out:7
@@ -1821,18 +1866,18 @@ MODULES:
     refresh_init_agent_lane  CC=4  out:11
   src.koru.init_host_environment  [1 funcs]
     write_host_environment_bundle  CC=2  out:12
-  src.koru.local_service  [7 funcs]
-    _build_handler  CC=1  out:39
+  src.koru.local_service  [8 funcs]
+    _build_handler  CC=1  out:30
     _env_int  CC=3  out:3
     _koru_version  CC=2  out:1
+    _read_bounded_json_object  CC=7  out:6
     build_local_service_server  CC=1  out:4
     default_local_service_config  CC=2  out:7
     run_local_service  CC=3  out:11
     start_local_service_background  CC=1  out:4
-  src.koru.loop  [3 funcs]
+  src.koru.loop  [2 funcs]
     _search_root_for_include  CC=6  out:6
     discover_repositories  CC=5  out:11
-    run_closed_loop  CC=12  out:18
   src.koru.mcp_provision  [21 funcs]
     _apply_target  CC=4  out:5
     _cursor_project_config  CC=1  out:0
@@ -1844,32 +1889,32 @@ MODULES:
     _render_results  CC=5  out:8
     _resolve_targets  CC=4  out:4
     _resolved_koru_command  CC=2  out:1
-  src.koru.policy  [1 funcs]
+  src.koru.policy  [2 funcs]
+    load_policy  CC=9  out:43
     policy_path  CC=1  out:1
-  src.koru.project_pipeline  [2 funcs]
+  src.koru.project_pipeline  [3 funcs]
+    build_project_pipeline_brief  CC=9  out:14
     project_pipeline_path  CC=1  out:1
     write_koru_project_pipeline_if_absent  CC=2  out:5
-  src.koru.queue.koru_queue_argv  [1 funcs]
-    build_koru_queue_argv  CC=5  out:7
   src.koru.queue.loop  [1 funcs]
     run_planfile_queue_loop  CC=12  out:8
-  src.koru.queue.runner  [1 funcs]
-    run_next_planfile_task  CC=43  out:57
+  src.koru.queue.runners  [1 funcs]
+    run_process  CC=1  out:2
   src.koru.queue.ticket  [1 funcs]
     planfile_command  CC=3  out:4
-  src.koru.queue_clean  [8 funcs]
+  src.koru.queue_clean  [11 funcs]
     _build_close_note  CC=1  out:4
+    _candidate_from_ticket  CC=6  out:9
+    _cleanable_statuses  CC=2  out:1
     _close_ticket  CC=5  out:6
     _list_tickets  CC=11  out:11
     _matched_rules  CC=14  out:16
+    _maybe_skip_active_ticket  CC=3  out:3
     _parse_age_days  CC=8  out:10
     _planfile_base  CC=4  out:3
     clean_queue  CC=5  out:7
-    find_candidates  CC=15  out:19
-  src.koru.refactor_planfile_handoff  [1 funcs]
-    render_planfile_refactor_handoff  CC=6  out:6
   src.koru.run_log  [1 funcs]
-    open_run_log_eagerly  CC=1  out:2
+    _emit  CC=3  out:5
   src.koru.runtime  [4 funcs]
     ensure_runs_dir  CC=2  out:5
     planfile_dir  CC=1  out:1
@@ -1879,25 +1924,28 @@ MODULES:
     run_scan  CC=10  out:15
   src.koru.tasks  [1 funcs]
     create_nl_task  CC=23  out:47
-  src.koru.tools  [8 funcs]
+  src.koru.tools  [7 funcs]
     _first_token  CC=2  out:1
     build_tool_task_scaffold  CC=16  out:21
     default_registry_path  CC=1  out:2
     detect_tools  CC=26  out:25
-    find_tool_entry  CC=4  out:6
     infer_adapter_kind  CC=5  out:4
     load_tool_registry  CC=11  out:13
     resolve_registry_path  CC=4  out:7
-  src.koru.topology  [4 funcs]
-    enabled_components_for_pipeline  CC=9  out:11
+  src.koru.topology  [5 funcs]
     is_component_enabled  CC=3  out:6
     is_pipeline_enabled  CC=3  out:6
     load_topology  CC=1  out:9
+    save_topology  CC=1  out:6
+    set_component_enabled  CC=1  out:1
   src.koru.utils.subprocess_runner  [2 funcs]
     get_python_cmd  CC=3  out:3
     resolve_planfile_subpath  CC=1  out:3
-  src.koru.watch  [2 funcs]
-    format_queue_event  CC=19  out:35
+  src.koru.watch  [5 funcs]
+    _format_connected_event  CC=1  out:0
+    _format_management_event  CC=9  out:16
+    _format_ticket_event  CC=9  out:20
+    format_queue_event  CC=5  out:6
     watch_planfile_events  CC=7  out:7
   src.koru.wup_testql_compat  [4 funcs]
     _normalize_args  CC=6  out:14
@@ -1911,58 +1959,69 @@ MODULES:
     _env_truthy  CC=1  out:3
     build_serve_parser  CC=1  out:10
     dashboard_main  CC=5  out:9
-  src.koruapi.dashboard_serve  [15 funcs]
+  src.koruapi.dashboard_serve  [16 funcs]
     _address_in_use  CC=4  out:4
-    _build_handler  CC=1  out:105
+    _build_handler  CC=1  out:82
     _bulk_waiting_input_action  CC=13  out:14
     _cmdline_suggests_koru_serve  CC=3  out:3
     _cmdline_suggests_koru_serve_from_bytes  CC=3  out:7
     _list_tickets  CC=9  out:6
     _listener_pids_for_tcp_port  CC=7  out:7
     _try_stop_prior_koru_serve_listener  CC=12  out:13
+    apply_topology_post_update  CC=14  out:22
     bind_serve_server  CC=11  out:10
-    build_server  CC=1  out:2
   src.koruapi.integrations  [2 funcs]
     get_integration  CC=1  out:1
     list_integrations  CC=4  out:2
   src.koruapi.invoke  [1 funcs]
-    invoke_integration  CC=35  out:70
+    invoke_integration  CC=4  out:6
+  src.koruapi.invoke_handlers  [15 funcs]
+    _handle_autopilot_drive  CC=5  out:17
+    _handle_autopilot_status  CC=2  out:3
+    _handle_context_build  CC=1  out:3
+    _handle_doctor_run  CC=1  out:2
+    _handle_dsl_roundtrip  CC=3  out:6
+    _handle_dsl_to_dsl  CC=2  out:3
+    _handle_dsl_to_library  CC=3  out:4
+    _handle_gate_regix  CC=3  out:5
+    _handle_mcp_list_tickets  CC=1  out:2
+    _handle_mcp_quality_gates  CC=1  out:2
   src.koruapi.local  [2 funcs]
     build_local_parser  CC=1  out:4
     local_main  CC=6  out:9
   src.koruapi.mcp  [1 funcs]
     mcp_main  CC=2  out:2
-  src.koruapi.mcp_server  [25 funcs]
-    _create_job  CC=1  out:4
-    _detect_enabled_gates  CC=5  out:6
-    _find_ticket  CC=3  out:1
-    _gate_commands  CC=1  out:6
-    _get_job_store_path  CC=2  out:1
-    _get_process_memory_mb  CC=3  out:2
-    _get_python_cmd  CC=1  out:1
-    _jsonrpc_error  CC=2  out:0
-    _jsonrpc_response  CC=1  out:0
-    _load_jobs  CC=3  out:4
+  src.koruapi.mcp_server  [4 funcs]
+    mcp_serve_main  CC=2  out:10
+    tool_list_tickets  CC=3  out:9
+    tool_run_quality_gates  CC=6  out:13
+    tool_run_ticket  CC=14  out:33
   src.koruapi.openapi  [1 funcs]
     build_openapi_document  CC=2  out:1
-  src.koruapi.server  [5 funcs]
+  src.koruapi.server  [8 funcs]
     do_GET  CC=5  out:12
-    do_POST  CC=16  out:33
+    do_POST  CC=2  out:4
     log_message  CC=1  out:2
+    _handle_invoke_post  CC=5  out:13
     _json_response  CC=1  out:9
+    _parse_invoke_request  CC=9  out:16
+    _read_json_body  CC=5  out:7
     serve  CC=2  out:8
   src.korudsl.cli  [3 funcs]
     _build_parser  CC=1  out:11
     _read_input  CC=2  out:2
     main  CC=11  out:18
-  src.korudsl.library  [7 funcs]
+  src.korudsl.library  [11 funcs]
     _apply_prefixed_line  CC=4  out:3
+    _emit_functions  CC=4  out:8
+    _emit_goal  CC=9  out:12
+    _emit_goals  CC=3  out:4
+    _emit_objective  CC=5  out:5
     _handle_func  CC=3  out:1
     _start_goal  CC=2  out:2
     convert_goals_json_to_library  CC=9  out:7
     ensure_library_structure  CC=2  out:4
-    library_to_dsl  CC=17  out:26
-    normalize_dsl_to_library  CC=7  out:9
+    library_to_dsl  CC=4  out:6
   src.korudsl.transform  [3 funcs]
     dsl_roundtrip_report  CC=1  out:7
     library_from_any  CC=12  out:15
@@ -1975,35 +2034,39 @@ MODULES:
     cached_config  CC=1  out:2
     default_config_path  CC=1  out:1
     load_config  CC=4  out:10
-  src.koruide.daemon  [15 funcs]
+  src.koruide.daemon  [16 funcs]
     __init__  CC=7  out:8
     _accept  CC=6  out:12
     _dispatch  CC=3  out:9
     _drive_via_keyboard  CC=11  out:46
     _drive_via_plugin  CC=2  out:10
-    _handle_ack  CC=21  out:28
+    _handle_ack  CC=9  out:9
     _handle_hello  CC=5  out:12
     _handle_ping  CC=2  out:3
     _handle_shutdown  CC=2  out:6
     _handle_status  CC=6  out:11
-  src.koruide.host_setup  [6 funcs]
+  src.koruide.host_setup  [12 funcs]
     _human_followups  CC=14  out:10
     _package_manager_hint  CC=5  out:4
-    _print_text_report  CC=15  out:38
+    _print_setup_host_apt_section  CC=2  out:6
+    _print_setup_host_backends  CC=3  out:6
+    _print_setup_host_header  CC=2  out:4
+    _print_setup_host_human_followups  CC=3  out:4
+    _print_setup_host_ides  CC=4  out:8
+    _print_setup_host_install_details  CC=6  out:10
+    _print_text_report  CC=2  out:1
     _try_apt_install  CC=5  out:11
-    build_setup_host_report  CC=7  out:11
-    run_host_setup  CC=6  out:8
-  src.koruide.ide  [18 funcs]
+  src.koruide.ide  [25 funcs]
     _active_window_pid_x11  CC=7  out:6
     _auto_profile_candidate_ids  CC=3  out:10
-    _candidate_score  CC=17  out:7
+    _candidate_score  CC=1  out:3
     _ide_id_from_process  CC=5  out:4
     _iter_proc_pids  CC=4  out:6
     _matches  CC=7  out:5
     _read_cmdline  CC=2  out:5
     _read_comm  CC=2  out:3
     _read_exe  CC=2  out:1
-    _vscode_family_env_present  CC=3  out:3
+    _resolve_auto_drive_target  CC=13  out:6
   src.koruide.injector  [9 funcs]
     _candidate_backends  CC=5  out:10
     _type_with_backend  CC=14  out:21
@@ -2025,18 +2088,19 @@ MODULES:
     _xdotool  CC=1  out:1
     capture_from_xdotool  CC=1  out:1
     capture_mouse_xy  CC=6  out:10
-  src.koruide.plugin_installer  [10 funcs]
+  src.koruide.plugin_installer  [14 funcs]
     _configure_socket_path  CC=8  out:12
+    _env_reassert_extension_install  CC=1  out:3
     _extension_is_installed  CC=4  out:5
     _ide_from_terminal_env  CC=1  out:1
+    _install_extension_vsix  CC=10  out:14
+    _reassert_extension_extra  CC=9  out:5
     _resolve_ide_command  CC=7  out:4
+    _result_already_installed  CC=2  out:3
     _settings_path_for_ide  CC=3  out:6
     _terminal_vscode_flavor  CC=5  out:4
-    _valid_ide  CC=3  out:2
-    install_plugin_for_ide  CC=28  out:32
-    resolve_extension_vsix  CC=8  out:18
-    resolve_target_ide  CC=10  out:6
-  src.koruide.protocol  [5 funcs]
+  src.koruide.protocol  [6 funcs]
+    to_dict  CC=4  out:1
     _filter_extras  CC=6  out:4
     ack  CC=2  out:2
     chat_send  CC=1  out:1
@@ -2096,9 +2160,9 @@ EDGES:
   src.korudsl.library.normalize_dsl_to_library → src.korudsl.library._apply_prefixed_line
   src.korudsl.library.normalize_dsl_to_library → src.korudsl.library._start_goal
   src.korudsl.library.convert_goals_json_to_library → src.korudsl.library.ensure_library_structure
+  src.korudsl.library._emit_goal → src.korudsl.library._emit_objective
+  src.korudsl.library._emit_goals → src.korudsl.library._emit_goal
   src.korudsl.library.library_to_dsl → src.korudsl.library.ensure_library_structure
-  src.koruapi.mcp.mcp_main → src.koru.activity_log.activity
-  src.koruapi.mcp.mcp_main → src.koruapi.mcp_server.mcp_serve_main
 ```
 
 ## Test Contracts
@@ -2121,51 +2185,51 @@ EDGES:
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.19s
-# nodes: 408 | edges: 500 | modules: 67
-# CC̄=4.7
+# generated in 0.35s
+# nodes: 446 | edges: 500 | modules: 71
+# CC̄=4.4
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
-    CC=0  in:283  out:0  total:283
+    CC=0  in:282  out:0  total:282
+  src.koru.autonomous_cycle.run_cycle
+    CC=89  in:0  out:168  total:168
   src.koruapi.dashboard_serve._build_handler
-    CC=1  in:1  out:105  total:106
+    CC=1  in:1  out:82  total:83
   src.koru.autonomous._action_up
     CC=50  in:1  out:77  total:78
-  src.koruapi.invoke.invoke_integration
-    CC=35  in:2  out:70  total:72
   src.koru.autonomous._build_parser
     CC=1  in:1  out:64  total:65
   src.koru.agents.detect_agent_options
-    CC=16  in:2  out:61  total:63
-  src.koru.queue.runner.run_next_planfile_task
-    CC=43  in:2  out:57  total:59
+    CC=16  in:3  out:61  total:64
   src.koru.tasks.create_nl_task
     CC=23  in:6  out:47  total:53
   src.koru.context.render_markdown_handoff
     CC=10  in:5  out:47  total:52
   src.koruide.daemon.AutopilotDaemon._drive_via_keyboard
     CC=11  in:0  out:46  total:46
-  src.koru.local_service._build_handler
-    CC=1  in:1  out:39  total:40
+  src.koru.policy.load_policy
+    CC=9  in:2  out:43  total:45
   src.koru.activity_log.activity
     CC=4  in:32  out:7  total:39
-  src.koruide.host_setup._print_text_report
-    CC=15  in:1  out:38  total:39
-  src.koru.cli._build_parser
-    CC=1  in:3  out:34  total:37
-  src.koru.watch.format_queue_event
-    CC=19  in:1  out:35  total:36
-  src.koru.autonomous._stdio_info
-    CC=1  in:35  out:1  total:36
   src.koruapi.mcp_server.tool_run_ticket
     CC=14  in:1  out:33  total:34
+  src.koru.autonomous._stdio_info
+    CC=1  in:31  out:1  total:32
   src.koru.events.emit_management_event
-    CC=8  in:26  out:7  total:33
-  src.koruide.plugin_installer.install_plugin_for_ide
-    CC=28  in:1  out:32  total:33
-  src.koru.cli._topology_main
-    CC=17  in:0  out:33  total:33
+    CC=8  in:25  out:7  total:32
+  src.koru.autonomy.post_run_verify.load_post_run_verify_config
+    CC=19  in:1  out:31  total:32
+  src.koru.autonomy.env.env_truthy
+    CC=3  in:29  out:3  total:32
+  src.koru.local_service._build_handler
+    CC=1  in:1  out:30  total:31
+  services.healing-webhook.ticket_builder.build_ticket_payload
+    CC=11  in:1  out:25  total:26
+  src.koru.tools.detect_tools
+    CC=26  in:1  out:25  total:26
+  src.koruide.ide.detect_running_ides
+    CC=13  in:16  out:10  total:26
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -2193,14 +2257,17 @@ MODULES:
   src.koru.activity_log  [2 funcs]
     activity  CC=4  out:7
     activity_info  CC=5  out:11
-  src.koru.agent_backends  [7 funcs]
+  src.koru.agent_backends  [6 funcs]
     _parse_lane  CC=8  out:14
     get_agent_backend_profile  CC=3  out:1
-    iter_agent_backend_profiles  CC=1  out:0
     list_agent_backend_ids  CC=2  out:1
     load_agent_integration_config  CC=11  out:18
     normalize_agent_backend_id  CC=4  out:3
     validate_agent_integration_config  CC=5  out:4
+  src.koru.agent_cli_helpers  [3 funcs]
+    print_agent_list  CC=10  out:7
+    run_agent_handoff  CC=3  out:10
+    try_agent_env_exports  CC=7  out:7
   src.koru.agents  [7 funcs]
     agent_lane_environment  CC=1  out:3
     detect_agent_options  CC=16  out:61
@@ -2209,7 +2276,7 @@ MODULES:
     normalize_agent_lane_id  CC=6  out:8
     save_agent_prompt  CC=1  out:3
     select_agent  CC=14  out:8
-  src.koru.autonomous  [27 funcs]
+  src.koru.autonomous  [28 funcs]
     _action_up  CC=50  out:77
     _ancestor_pids  CC=7  out:8
     _apply_agent_lane_environ  CC=3  out:3
@@ -2220,8 +2287,18 @@ MODULES:
     _create_diagnostic_ticket  CC=2  out:8
     _daemon_activity_log  CC=2  out:3
     _ensure_init  CC=4  out:3
-  src.koru.autonomous_diagnostics  [1 funcs]
-    create_diagnostic_ticket  CC=2  out:6
+  src.koru.autonomous_cycle  [9 funcs]
+    _autopilot_event_path  CC=1  out:2
+    _create_diagnostic_ticket  CC=2  out:6
+    _drain_autopilot_events  CC=6  out:8
+    _is_topology_enabled  CC=4  out:2
+    _queue_loop_waiting_ticket_label  CC=3  out:1
+    _run_command_check  CC=2  out:4
+    _run_idle_diagnostics  CC=1  out:3
+    _stdio_info  CC=1  out:1
+    run_cycle  CC=89  out:168
+  src.koru.autonomous_parser  [1 funcs]
+    looks_like_autonomous_up_command  CC=15  out:8
   src.koru.autonomous_startup  [6 funcs]
     _terminal_agent_lane_from_env  CC=5  out:4
     build_startup_probe  CC=8  out:21
@@ -2231,6 +2308,11 @@ MODULES:
     resolve_autopilot_ide_for_autonomous  CC=4  out:4
   src.koru.autonomy.env  [1 funcs]
     env_truthy  CC=3  out:3
+  src.koru.autonomy.ide_work  [1 funcs]
+    resolve_in_progress_stale_minutes  CC=10  out:9
+  src.koru.autonomy.post_run_verify  [2 funcs]
+    load_post_run_verify_config  CC=19  out:31
+    verify_after_ide_work  CC=13  out:7
   src.koru.autopilot.audit  [4 funcs]
     __init__  CC=5  out:11
     record  CC=7  out:6
@@ -2246,22 +2328,20 @@ MODULES:
     load_flat_pipeline  CC=9  out:12
     materialize_to_planfile  CC=6  out:16
     validate_flat_pipeline  CC=3  out:9
-  src.koru.cli  [39 funcs]
-    _agent_backends_main  CC=8  out:23
-    _agent_main  CC=19  out:27
-    _auto_main  CC=4  out:4
-    _bootstrap_main  CC=5  out:18
-    _build_gate_parser  CC=1  out:11
-    _build_gc_parser  CC=1  out:14
-    _build_parser  CC=1  out:34
-    _build_queue_parser  CC=1  out:11
-    _build_runtime_context_parser  CC=1  out:4
-    _build_scan_parser  CC=1  out:9
-  src.koru.context  [2 funcs]
-    build_context  CC=6  out:16
-    render_markdown_handoff  CC=10  out:47
-  src.koru.doctor  [12 funcs]
+  src.koru.context  [20 funcs]
+    _auto_promote_blocking_tickets  CC=4  out:5
+    _build_instructions  CC=2  out:4
+    _build_self_service  CC=5  out:2
+    _build_ticket_args  CC=3  out:1
+    _extract_error_from_stderr  CC=7  out:4
+    _fetch_all_tickets  CC=9  out:5
+    _fetch_ticket_data  CC=18  out:15
+    _is_fixture_ticket  CC=4  out:6
+    _load_project_dotenv  CC=3  out:2
+    _load_sprint_data  CC=6  out:4
+  src.koru.doctor  [13 funcs]
     _check_agent_backends_registry  CC=1  out:3
+    _check_ci_command  CC=5  out:6
     _check_koru_project_pipeline  CC=7  out:9
     _check_planfile_cli_version  CC=9  out:9
     _check_planfile_config  CC=4  out:7
@@ -2270,14 +2350,27 @@ MODULES:
     _check_policy_yaml  CC=11  out:13
     _check_pytest_collect  CC=8  out:6
     _check_runtime_dir  CC=6  out:6
-    _planfile_version_argv  CC=3  out:4
   src.koru.events  [1 funcs]
     emit_management_event  CC=8  out:7
   src.koru.gate  [2 funcs]
     _resolve_actor  CC=4  out:1
     authorize_gate  CC=9  out:16
-  src.koru.gc  [1 funcs]
-    run_gc  CC=11  out:9
+  src.koru.gc  [11 funcs]
+    _apply_keep_last  CC=7  out:8
+    _archive_tickets  CC=2  out:6
+    _archive_tickets_before_delete  CC=5  out:3
+    _delete_tickets  CC=6  out:6
+    _load_tickets_from_sprint  CC=7  out:7
+    _now_utc  CC=1  out:1
+    _parse_ts  CC=3  out:2
+    _planfile_env  CC=1  out:0
+    _run_planfile  CC=6  out:9
+    collect_gc_candidates  CC=9  out:21
+  src.koru.gc_cli_helpers  [4 funcs]
+    emit_gc_management_event  CC=2  out:3
+    gc_result_to_json  CC=3  out:1
+    print_gc_report  CC=2  out:4
+    print_gc_text_report  CC=12  out:14
   src.koru.ide_client  [5 funcs]
     drive  CC=1  out:8
     adapt_legacy_autopilot_client  CC=1  out:1
@@ -2287,6 +2380,9 @@ MODULES:
   src.koru.ide_router  [2 funcs]
     is_headless_environment  CC=8  out:6
     resolve_ide_route  CC=8  out:9
+  src.koru.ide_runtime  [2 funcs]
+    build_host_setup_report  CC=1  out:1
+    detect_running_ides  CC=5  out:12
   src.koru.init  [11 funcs]
     _ensure_gitignore_entry  CC=8  out:12
     _init_auto_agent_lane  CC=6  out:7
@@ -2300,18 +2396,18 @@ MODULES:
     refresh_init_agent_lane  CC=4  out:11
   src.koru.init_host_environment  [1 funcs]
     write_host_environment_bundle  CC=2  out:12
-  src.koru.local_service  [7 funcs]
-    _build_handler  CC=1  out:39
+  src.koru.local_service  [8 funcs]
+    _build_handler  CC=1  out:30
     _env_int  CC=3  out:3
     _koru_version  CC=2  out:1
+    _read_bounded_json_object  CC=7  out:6
     build_local_service_server  CC=1  out:4
     default_local_service_config  CC=2  out:7
     run_local_service  CC=3  out:11
     start_local_service_background  CC=1  out:4
-  src.koru.loop  [3 funcs]
+  src.koru.loop  [2 funcs]
     _search_root_for_include  CC=6  out:6
     discover_repositories  CC=5  out:11
-    run_closed_loop  CC=12  out:18
   src.koru.mcp_provision  [21 funcs]
     _apply_target  CC=4  out:5
     _cursor_project_config  CC=1  out:0
@@ -2323,32 +2419,32 @@ MODULES:
     _render_results  CC=5  out:8
     _resolve_targets  CC=4  out:4
     _resolved_koru_command  CC=2  out:1
-  src.koru.policy  [1 funcs]
+  src.koru.policy  [2 funcs]
+    load_policy  CC=9  out:43
     policy_path  CC=1  out:1
-  src.koru.project_pipeline  [2 funcs]
+  src.koru.project_pipeline  [3 funcs]
+    build_project_pipeline_brief  CC=9  out:14
     project_pipeline_path  CC=1  out:1
     write_koru_project_pipeline_if_absent  CC=2  out:5
-  src.koru.queue.koru_queue_argv  [1 funcs]
-    build_koru_queue_argv  CC=5  out:7
   src.koru.queue.loop  [1 funcs]
     run_planfile_queue_loop  CC=12  out:8
-  src.koru.queue.runner  [1 funcs]
-    run_next_planfile_task  CC=43  out:57
+  src.koru.queue.runners  [1 funcs]
+    run_process  CC=1  out:2
   src.koru.queue.ticket  [1 funcs]
     planfile_command  CC=3  out:4
-  src.koru.queue_clean  [8 funcs]
+  src.koru.queue_clean  [11 funcs]
     _build_close_note  CC=1  out:4
+    _candidate_from_ticket  CC=6  out:9
+    _cleanable_statuses  CC=2  out:1
     _close_ticket  CC=5  out:6
     _list_tickets  CC=11  out:11
     _matched_rules  CC=14  out:16
+    _maybe_skip_active_ticket  CC=3  out:3
     _parse_age_days  CC=8  out:10
     _planfile_base  CC=4  out:3
     clean_queue  CC=5  out:7
-    find_candidates  CC=15  out:19
-  src.koru.refactor_planfile_handoff  [1 funcs]
-    render_planfile_refactor_handoff  CC=6  out:6
   src.koru.run_log  [1 funcs]
-    open_run_log_eagerly  CC=1  out:2
+    _emit  CC=3  out:5
   src.koru.runtime  [4 funcs]
     ensure_runs_dir  CC=2  out:5
     planfile_dir  CC=1  out:1
@@ -2358,25 +2454,28 @@ MODULES:
     run_scan  CC=10  out:15
   src.koru.tasks  [1 funcs]
     create_nl_task  CC=23  out:47
-  src.koru.tools  [8 funcs]
+  src.koru.tools  [7 funcs]
     _first_token  CC=2  out:1
     build_tool_task_scaffold  CC=16  out:21
     default_registry_path  CC=1  out:2
     detect_tools  CC=26  out:25
-    find_tool_entry  CC=4  out:6
     infer_adapter_kind  CC=5  out:4
     load_tool_registry  CC=11  out:13
     resolve_registry_path  CC=4  out:7
-  src.koru.topology  [4 funcs]
-    enabled_components_for_pipeline  CC=9  out:11
+  src.koru.topology  [5 funcs]
     is_component_enabled  CC=3  out:6
     is_pipeline_enabled  CC=3  out:6
     load_topology  CC=1  out:9
+    save_topology  CC=1  out:6
+    set_component_enabled  CC=1  out:1
   src.koru.utils.subprocess_runner  [2 funcs]
     get_python_cmd  CC=3  out:3
     resolve_planfile_subpath  CC=1  out:3
-  src.koru.watch  [2 funcs]
-    format_queue_event  CC=19  out:35
+  src.koru.watch  [5 funcs]
+    _format_connected_event  CC=1  out:0
+    _format_management_event  CC=9  out:16
+    _format_ticket_event  CC=9  out:20
+    format_queue_event  CC=5  out:6
     watch_planfile_events  CC=7  out:7
   src.koru.wup_testql_compat  [4 funcs]
     _normalize_args  CC=6  out:14
@@ -2390,58 +2489,69 @@ MODULES:
     _env_truthy  CC=1  out:3
     build_serve_parser  CC=1  out:10
     dashboard_main  CC=5  out:9
-  src.koruapi.dashboard_serve  [15 funcs]
+  src.koruapi.dashboard_serve  [16 funcs]
     _address_in_use  CC=4  out:4
-    _build_handler  CC=1  out:105
+    _build_handler  CC=1  out:82
     _bulk_waiting_input_action  CC=13  out:14
     _cmdline_suggests_koru_serve  CC=3  out:3
     _cmdline_suggests_koru_serve_from_bytes  CC=3  out:7
     _list_tickets  CC=9  out:6
     _listener_pids_for_tcp_port  CC=7  out:7
     _try_stop_prior_koru_serve_listener  CC=12  out:13
+    apply_topology_post_update  CC=14  out:22
     bind_serve_server  CC=11  out:10
-    build_server  CC=1  out:2
   src.koruapi.integrations  [2 funcs]
     get_integration  CC=1  out:1
     list_integrations  CC=4  out:2
   src.koruapi.invoke  [1 funcs]
-    invoke_integration  CC=35  out:70
+    invoke_integration  CC=4  out:6
+  src.koruapi.invoke_handlers  [15 funcs]
+    _handle_autopilot_drive  CC=5  out:17
+    _handle_autopilot_status  CC=2  out:3
+    _handle_context_build  CC=1  out:3
+    _handle_doctor_run  CC=1  out:2
+    _handle_dsl_roundtrip  CC=3  out:6
+    _handle_dsl_to_dsl  CC=2  out:3
+    _handle_dsl_to_library  CC=3  out:4
+    _handle_gate_regix  CC=3  out:5
+    _handle_mcp_list_tickets  CC=1  out:2
+    _handle_mcp_quality_gates  CC=1  out:2
   src.koruapi.local  [2 funcs]
     build_local_parser  CC=1  out:4
     local_main  CC=6  out:9
   src.koruapi.mcp  [1 funcs]
     mcp_main  CC=2  out:2
-  src.koruapi.mcp_server  [25 funcs]
-    _create_job  CC=1  out:4
-    _detect_enabled_gates  CC=5  out:6
-    _find_ticket  CC=3  out:1
-    _gate_commands  CC=1  out:6
-    _get_job_store_path  CC=2  out:1
-    _get_process_memory_mb  CC=3  out:2
-    _get_python_cmd  CC=1  out:1
-    _jsonrpc_error  CC=2  out:0
-    _jsonrpc_response  CC=1  out:0
-    _load_jobs  CC=3  out:4
+  src.koruapi.mcp_server  [4 funcs]
+    mcp_serve_main  CC=2  out:10
+    tool_list_tickets  CC=3  out:9
+    tool_run_quality_gates  CC=6  out:13
+    tool_run_ticket  CC=14  out:33
   src.koruapi.openapi  [1 funcs]
     build_openapi_document  CC=2  out:1
-  src.koruapi.server  [5 funcs]
+  src.koruapi.server  [8 funcs]
     do_GET  CC=5  out:12
-    do_POST  CC=16  out:33
+    do_POST  CC=2  out:4
     log_message  CC=1  out:2
+    _handle_invoke_post  CC=5  out:13
     _json_response  CC=1  out:9
+    _parse_invoke_request  CC=9  out:16
+    _read_json_body  CC=5  out:7
     serve  CC=2  out:8
   src.korudsl.cli  [3 funcs]
     _build_parser  CC=1  out:11
     _read_input  CC=2  out:2
     main  CC=11  out:18
-  src.korudsl.library  [7 funcs]
+  src.korudsl.library  [11 funcs]
     _apply_prefixed_line  CC=4  out:3
+    _emit_functions  CC=4  out:8
+    _emit_goal  CC=9  out:12
+    _emit_goals  CC=3  out:4
+    _emit_objective  CC=5  out:5
     _handle_func  CC=3  out:1
     _start_goal  CC=2  out:2
     convert_goals_json_to_library  CC=9  out:7
     ensure_library_structure  CC=2  out:4
-    library_to_dsl  CC=17  out:26
-    normalize_dsl_to_library  CC=7  out:9
+    library_to_dsl  CC=4  out:6
   src.korudsl.transform  [3 funcs]
     dsl_roundtrip_report  CC=1  out:7
     library_from_any  CC=12  out:15
@@ -2454,35 +2564,39 @@ MODULES:
     cached_config  CC=1  out:2
     default_config_path  CC=1  out:1
     load_config  CC=4  out:10
-  src.koruide.daemon  [15 funcs]
+  src.koruide.daemon  [16 funcs]
     __init__  CC=7  out:8
     _accept  CC=6  out:12
     _dispatch  CC=3  out:9
     _drive_via_keyboard  CC=11  out:46
     _drive_via_plugin  CC=2  out:10
-    _handle_ack  CC=21  out:28
+    _handle_ack  CC=9  out:9
     _handle_hello  CC=5  out:12
     _handle_ping  CC=2  out:3
     _handle_shutdown  CC=2  out:6
     _handle_status  CC=6  out:11
-  src.koruide.host_setup  [6 funcs]
+  src.koruide.host_setup  [12 funcs]
     _human_followups  CC=14  out:10
     _package_manager_hint  CC=5  out:4
-    _print_text_report  CC=15  out:38
+    _print_setup_host_apt_section  CC=2  out:6
+    _print_setup_host_backends  CC=3  out:6
+    _print_setup_host_header  CC=2  out:4
+    _print_setup_host_human_followups  CC=3  out:4
+    _print_setup_host_ides  CC=4  out:8
+    _print_setup_host_install_details  CC=6  out:10
+    _print_text_report  CC=2  out:1
     _try_apt_install  CC=5  out:11
-    build_setup_host_report  CC=7  out:11
-    run_host_setup  CC=6  out:8
-  src.koruide.ide  [18 funcs]
+  src.koruide.ide  [25 funcs]
     _active_window_pid_x11  CC=7  out:6
     _auto_profile_candidate_ids  CC=3  out:10
-    _candidate_score  CC=17  out:7
+    _candidate_score  CC=1  out:3
     _ide_id_from_process  CC=5  out:4
     _iter_proc_pids  CC=4  out:6
     _matches  CC=7  out:5
     _read_cmdline  CC=2  out:5
     _read_comm  CC=2  out:3
     _read_exe  CC=2  out:1
-    _vscode_family_env_present  CC=3  out:3
+    _resolve_auto_drive_target  CC=13  out:6
   src.koruide.injector  [9 funcs]
     _candidate_backends  CC=5  out:10
     _type_with_backend  CC=14  out:21
@@ -2504,18 +2618,19 @@ MODULES:
     _xdotool  CC=1  out:1
     capture_from_xdotool  CC=1  out:1
     capture_mouse_xy  CC=6  out:10
-  src.koruide.plugin_installer  [10 funcs]
+  src.koruide.plugin_installer  [14 funcs]
     _configure_socket_path  CC=8  out:12
+    _env_reassert_extension_install  CC=1  out:3
     _extension_is_installed  CC=4  out:5
     _ide_from_terminal_env  CC=1  out:1
+    _install_extension_vsix  CC=10  out:14
+    _reassert_extension_extra  CC=9  out:5
     _resolve_ide_command  CC=7  out:4
+    _result_already_installed  CC=2  out:3
     _settings_path_for_ide  CC=3  out:6
     _terminal_vscode_flavor  CC=5  out:4
-    _valid_ide  CC=3  out:2
-    install_plugin_for_ide  CC=28  out:32
-    resolve_extension_vsix  CC=8  out:18
-    resolve_target_ide  CC=10  out:6
-  src.koruide.protocol  [5 funcs]
+  src.koruide.protocol  [6 funcs]
+    to_dict  CC=4  out:1
     _filter_extras  CC=6  out:4
     ack  CC=2  out:2
     chat_send  CC=1  out:1
@@ -2575,44 +2690,44 @@ EDGES:
   src.korudsl.library.normalize_dsl_to_library → src.korudsl.library._apply_prefixed_line
   src.korudsl.library.normalize_dsl_to_library → src.korudsl.library._start_goal
   src.korudsl.library.convert_goals_json_to_library → src.korudsl.library.ensure_library_structure
+  src.korudsl.library._emit_goal → src.korudsl.library._emit_objective
+  src.korudsl.library._emit_goals → src.korudsl.library._emit_goal
   src.korudsl.library.library_to_dsl → src.korudsl.library.ensure_library_structure
-  src.koruapi.mcp.mcp_main → src.koru.activity_log.activity
-  src.koruapi.mcp.mcp_main → src.koruapi.mcp_server.mcp_serve_main
 ```
 
 ### Code Analysis (`project/analysis.toon.yaml`)
 
 ```toon markpact:analysis path=project/analysis.toon.yaml
-# code2llm | 206f 34791L | python:120,shell:41,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:1,properties:1,xml:1,toml:1 | 2026-05-19
-# generated in 0.06s
-# CC̄=4.7 | critical:48/1037 | dups:0 | cycles:0
+# code2llm | 213f 37498L | python:127,shell:42,yaml:15,yml:8,typescript:6,kotlin:6,json:3,toml:1,txt:1,properties:1,xml:1 | 2026-05-19
+# generated in 0.07s
+# CC̄=4.4 | critical:28/1120 | dups:0 | cycles:0
 
 HEALTH[20]:
-  🟡 CC    library_to_dsl CC=17 (limit:15)
-  🟡 CC    invoke_integration CC=35 (limit:15)
-  🟡 CC    do_POST CC=16 (limit:15)
-  🟡 CC    tool_list_tickets CC=15 (limit:15)
-  🟡 CC    _print_text_report CC=15 (limit:15)
-  🟡 CC    _handle_ack CC=21 (limit:15)
-  🟡 CC    _candidate_score CC=17 (limit:15)
-  🟡 CC    detect_terminal_host_ide_id CC=21 (limit:15)
-  🟡 CC    resolve_drive_target CC=27 (limit:15)
-  🟡 CC    install_plugin_for_ide CC=28 (limit:15)
-  🟡 CC    run_idle_diagnostics CC=17 (limit:15)
-  🟡 CC    format_queue_event CC=19 (limit:15)
-  🟡 CC    _gc_main CC=18 (limit:15)
-  🟡 CC    _agent_main CC=19 (limit:15)
-  🟡 CC    _render_topology_text CC=15 (limit:15)
-  🟡 CC    _topology_main CC=17 (limit:15)
-  🟡 CC    _queue_run_main CC=26 (limit:15)
-  🟡 CC    find_candidates CC=15 (limit:15)
-  🟡 CC    _looks_like_autonomous_up_command CC=15 (limit:15)
-  🟡 CC    _run_idle_diagnostics CC=17 (limit:15)
+  🟡 CC    _action_up CC=50 (limit:15)
+  🟡 CC    detect_tools CC=26 (limit:15)
+  🟡 CC    build_tool_task_scaffold CC=16 (limit:15)
+  🟡 CC    summary CC=15 (limit:15)
+  🟡 CC    run_cycle CC=89 (limit:15)
+  🟡 CC    looks_like_autonomous_up_command CC=15 (limit:15)
+  🟡 CC    _fetch_ticket_data CC=18 (limit:15)
+  🟡 CC    _build_shared_rules CC=15 (limit:15)
+  🟡 CC    policy_violations CC=22 (limit:15)
+  🟡 CC    looks_like_autonomous_up_command CC=15 (limit:15)
+  🟡 CC    detect_agent_options CC=16 (limit:15)
+  🟡 CC    create_nl_task CC=23 (limit:15)
+  🟡 CC    _recommended_next_steps CC=15 (limit:15)
+  🟡 CC    _render_host_environment_md CC=15 (limit:15)
+  🟡 CC    _read_wup_health CC=23 (limit:15)
+  🟡 CC    run_startup_operator_pipeline CC=15 (limit:15)
+  🟡 CC    load_post_run_verify_config CC=19 (limit:15)
+  🟡 CC    apply_autoloop_env_to_args CC=31 (limit:15)
+  🟡 CC    probe_environment CC=15 (limit:15)
+  🟡 CC    run_llm_request CC=23 (limit:15)
 
 REFACTOR[1]:
   1. split 20 high-CC methods  (CC>15)
 
-PIPELINES[300]:
+PIPELINES[329]:
   [1] Src [heal_rebuild_restore]: heal_rebuild_restore → _run_docker
       PURITY: 100% pure
   [2] Src [heal_annotate]: heal_annotate → _record_action
@@ -2625,57 +2740,65 @@ PIPELINES[300]:
       PURITY: 100% pure
 
 LAYERS:
-  src/                            CC̄=5.1    ←in:0  →out:0
-  │ !! autonomous                1646L  2C   37m  CC=50     ←1
-  │ !! dashboard_serve           1301L  1C   15m  CC=13     ←1
+  services/                       CC̄=4.9    ←in:0  →out:0
+  │ !! app                        702L  0C   27m  CC=11     ←0
+  │ ticket_builder             223L  0C    7m  CC=11     ←1
+  │ Dockerfile                  36L  0C    0m  CC=0.0    ←0
+  │
+  src/                            CC̄=4.7    ←in:0  →out:0
+  │ !! cli                       1868L  0C   52m  CC=14     ←0
+  │ !! autonomous                1572L  2C   37m  CC=50     ←1
+  │ !! dashboard_serve           1296L  1C   16m  CC=14     ←1
   │ !! cli_command               1282L  0C   37m  CC=15     ←0
-  │ !! context                   1199L  0C   43m  CC=18     ←6
-  │ !! mcp_server                1023L  0C   32m  CC=15     ←2
-  │ !! scan                       864L  2C   18m  CC=15     ←3
-  │ !! autonomous_cycle           860L  2C   16m  CC=89     ←0
-  │ !! daemon                     708L  2C   29m  CC=21     ←0
+  │ !! context                   1199L  0C   43m  CC=18     ←7
+  │ !! mcp_server                1028L  0C   34m  CC=14     ←2
+  │ !! scan                       892L  2C   19m  CC=15     ←3
+  │ !! autonomous_cycle           799L  2C   16m  CC=89     ←0
+  │ !! daemon                     715L  2C   31m  CC=14     ←0
   │ !! init                       610L  1C   12m  CC=15     ←2
+  │ !! ide                        543L  1C   29m  CC=13     ←7
   │ !! operator_pipeline          531L  2C   18m  CC=15     ←1
   │ !! doctor                     513L  2C   21m  CC=11     ←2
-  │ !! ide                        508L  1C   22m  CC=27     ←7
   │ bootstrap                  446L  2C   19m  CC=10     ←2
   │ topology                   415L  1C   15m  CC=12     ←7
+  │ plugin_installer           411L  1C   17m  CC=10     ←1
   │ injector                   403L  4C   20m  CC=14     ←0
+  │ !! autonomous_parser          398L  0C    2m  CC=15     ←1
   │ mcp_provision              397L  0C   21m  CC=10     ←3
   │ os_injector                392L  2C   24m  CC=14     ←2
-  │ autonomous_parser          378L  0C    1m  CC=1      ←0
+  │ queue_clean                392L  2C   13m  CC=14     ←1
   │ gc                         371L  2C   12m  CC=11     ←1
-  │ !! agents                     370L  1C   13m  CC=16     ←3
-  │ !! plugin_installer           363L  1C   14m  CC=28     ←1
+  │ !! agents                     370L  1C   13m  CC=16     ←4
   │ !! post_run_verify            354L  2C   11m  CC=19     ←1
-  │ !! queue_clean                350L  2C   10m  CC=15     ←1
   │ !! runner                     300L  0C    2m  CC=43     ←2
   │ ide_work                   296L  0C   11m  CC=12     ←2
   │ !! init_host_environment      260L  0C    7m  CC=15     ←1
   │ autonomous_startup         256L  1C    8m  CC=11     ←1
   │ !! autonomous_wup             253L  3C   10m  CC=23     ←1
   │ !! tools                      251L  0C    9m  CC=26     ←1
+  │ autonomous_diagnostics     250L  0C    7m  CC=11     ←1
   │ !! policy                     234L  1C    4m  CC=22     ←2
   │ protocol                   231L  2C   14m  CC=12     ←3
+  │ host_setup                 226L  0C   12m  CC=14     ←3
   │ !! environment                224L  3C    3m  CC=15     ←1
   │ !! autonomous_process_guard   219L  2C    9m  CC=15     ←0
+  │ queue_cli_helpers          218L  0C   10m  CC=7      ←1
   │ agent_backends             214L  3C    7m  CC=11     ←2
+  │ local_service              211L  2C   11m  CC=7      ←1
   │ !! env                        210L  0C    6m  CC=31     ←3
   │ !! runners                    208L  0C    5m  CC=23     ←1
-  │ !! host_setup                 207L  0C    6m  CC=15     ←3
-  │ local_service              203L  2C   10m  CC=3      ←1
+  │ library                    207L  0C   19m  CC=9      ←1
   │ gate                       202L  1C    5m  CC=12     ←1
   │ integrations               198L  1C    2m  CC=4      ←4
-  │ !! library                    192L  0C   16m  CC=17     ←1
-  │ !! autonomous_diagnostics     188L  0C    5m  CC=17     ←1
+  │ invoke_handlers            188L  1C   15m  CC=5      ←0
   │ agent_backend_runtime      180L  5C    6m  CC=9      ←0
-  │ !! invoke                     178L  1C    1m  CC=35     ←2
   │ !! tasks                      176L  1C    5m  CC=23     ←6
+  │ server                     171L  1C    8m  CC=9      ←1
   │ openapi                    155L  0C    1m  CC=2      ←1
   │ project_pipeline           150L  0C    5m  CC=9      ←5
   │ ide_client                 145L  2C   12m  CC=3      ←2
-  │ !! server                     144L  1C    5m  CC=16     ←1
   │ semcod_tools               143L  1C    4m  CC=7      ←3
+  │ redup_integration          139L  0C    8m  CC=2      ←2
   │ ticket                     138L  0C    6m  CC=10     ←5
   │ loop                       131L  3C    4m  CC=12     ←1
   │ cli                        128L  0C    3m  CC=11     ←0
@@ -2689,13 +2812,16 @@ LAYERS:
   │ dotenv_loader              104L  0C    3m  CC=7      ←0
   │ prompts                    101L  1C    1m  CC=10     ←1
   │ ide_router                  98L  1C    2m  CC=8      ←4
+  │ watch                       93L  0C    6m  CC=9      ←1
   │ dashboard                   91L  0C    3m  CC=5      ←2
-  │ events                      90L  0C    2m  CC=8      ←3
+  │ events                      90L  0C    2m  CC=8      ←5
+  │ agent_cli_helpers           88L  0C    3m  CC=10     ←1
   │ types                       88L  5C    1m  CC=2      ←0
   │ locking                     87L  0C    4m  CC=4      ←1
+  │ gc_cli_helpers              83L  0C    5m  CC=12     ←1
   │ cli                         81L  0C    3m  CC=11     ←0
-  │ !! watch                       81L  0C    3m  CC=19     ←1
   │ telemetry_snapshot          79L  0C    3m  CC=5      ←2
+  │ topology_cli                73L  1C    4m  CC=8      ←1
   │ shell_evidence              72L  0C    2m  CC=7      ←1
   │ transform                   70L  0C    4m  CC=12     ←2
   │ __init__                    69L  0C    0m  CC=0.0    ←0
@@ -2715,6 +2841,7 @@ LAYERS:
   │ __init__                    38L  0C    0m  CC=0.0    ←0
   │ local                       37L  0C    2m  CC=6      ←2
   │ planfile_queue              37L  0C    0m  CC=0.0    ←0
+  │ invoke                      31L  0C    1m  CC=4      ←2
   │ human                       31L  0C    1m  CC=5      ←0
   │ autonomous_env              26L  0C    1m  CC=1      ←0
   │ __init__                    25L  0C    0m  CC=0.0    ←0
@@ -2740,13 +2867,7 @@ LAYERS:
   │ __main__                     8L  0C    0m  CC=0.0    ←0
   │ __init__                     5L  0C    0m  CC=0.0    ←0
   │ __init__                     5L  0C    0m  CC=0.0    ←0
-  │ !! cli                          0L  0C   52m  CC=26     ←0
   │ commands                     0L  0C    0m  CC=0.0    ←0
-  │
-  services/                       CC̄=4.9    ←in:0  →out:0
-  │ !! app                        702L  0C   27m  CC=11     ←0
-  │ ticket_builder             223L  0C    7m  CC=11     ←1
-  │ Dockerfile                  36L  0C    0m  CC=0.0    ←0
   │
   plugins/                        CC̄=3.1    ←in:0  →out:0
   │ !! extension.ts               590L  2C   63m  CC=18     ←5
@@ -2766,12 +2887,12 @@ LAYERS:
   │ settings.gradle.kts          8L  0C    2m  CC=0.0    ←0
   │ gradle.properties            6L  0C    0m  CC=0.0    ←0
   │
-  scripts/                        CC̄=1.8    ←in:268  →out:0
+  scripts/                        CC̄=1.8    ←in:267  →out:0
   │ !! koru-autoloop.sh           576L  0C   14m  CC=0.0    ←0
   │ koru-gate-capture          314L  0C   14m  CC=9      ←0
   │ !! planfile-sync-todo         234L  0C    9m  CC=19     ←0
   │ autopilot-ide-autodetect-smoke.sh   182L  1C    4m  CC=0.0    ←0
-  │ koru-soak-monitor.sh       129L  0C    6m  CC=0.0    ←26
+  │ koru-soak-monitor.sh       129L  0C    6m  CC=0.0    ←31
   │ koru-queue-diagnose.sh     124L  0C    0m  CC=0.0    ←0
   │ koru-soak-stop.sh          123L  0C    5m  CC=0.0    ←0
   │ koru-soak-status.sh        100L  0C    6m  CC=0.0    ←0
@@ -2783,7 +2904,7 @@ LAYERS:
   │
   ./                              CC̄=0.0    ←in:0  →out:0
   │ !! planfile.yaml             1319L  0C    0m  CC=0.0    ←0
-  │ !! Taskfile.yml               893L  0C    0m  CC=0.0    ←0
+  │ !! Taskfile.yml               901L  0C    0m  CC=0.0    ←0
   │ !! goal.yaml                  511L  0C    0m  CC=0.0    ←0
   │ pipeline.yaml              142L  0C    0m  CC=0.0    ←0
   │ pyproject.toml              95L  0C    0m  CC=0.0    ←0
@@ -2795,6 +2916,7 @@ LAYERS:
   │ project.sh                  54L  0C    0m  CC=0.0    ←0
   │ regix.yaml                  43L  0C    0m  CC=0.0    ←0
   │ todo.txt                     3L  0C    0m  CC=0.0    ←0
+  │ tree.sh                      1L  0C    0m  CC=0.0    ←0
   │
   schemas/                        CC̄=0.0    ←in:0  →out:0
   │ koru-stdio-event.schema.json    16L  0C    0m  CC=0.0    ←0
@@ -2854,27 +2976,28 @@ LAYERS:
   │ realtime-health.testql.toon.yaml    11L  0C    0m  CC=0.0    ←0
   │
   ── zero ──
-     src/koru/cli.py                           0L
      src/koru/cli/commands.py                  0L
 
 COUPLING:
-                                                      src.koru                        scripts                    src.koruapi                    src.koruide  plugins.koru-autopilot-vscode                    src.korudsl       services.healing-webhook
-                       src.koru                             ──                            222                              5                             33                              5                                                                hub
-                        scripts                           ←222                             ──                            ←20                            ←26                                                                                               hub
-                    src.koruapi                             41                             20                             ──                                                                                            4                                 hub
-                    src.koruide                              3                             26                                                            ──                                                                                               hub
-  plugins.koru-autopilot-vscode                             ←5                                                                                                                          ──                                                            ←1  hub
-                    src.korudsl                                                                                           ←4                                                                                           ──                               
-       services.healing-webhook                                                                                                                                                          1                                                            ──
+                                                      src.koru                        scripts                           koru                    src.koruapi                    src.koruide  plugins.koru-autopilot-vscode                    src.korudsl       services.healing-webhook
+                       src.koru                             ──                            141                            ←65                              2                             33                              5                                                                hub
+                        scripts                           ←141                             ──                            ←80                            ←20                            ←26                                                                                               hub
+                           koru                             65                             80                             ──                              3                                                                                                                              !! fan-out
+                    src.koruapi                             42                             20                             ←3                             ──                                                                                            4                                 hub
+                    src.koruide                              3                             26                                                                                           ──                                                                                               hub
+  plugins.koru-autopilot-vscode                             ←5                                                                                                                                                         ──                                                            ←1  hub
+                    src.korudsl                                                                                                                          ←4                                                                                           ──                               
+       services.healing-webhook                                                                                                                                                                                         1                                                            ──
   CYCLES: none
-  HUB: src.koruide/ (fan-in=33)
-  HUB: scripts/ (fan-in=268)
   HUB: plugins.koru-autopilot-vscode/ (fan-in=6)
+  HUB: src.koru/ (fan-in=110)
+  HUB: src.koruide/ (fan-in=33)
+  HUB: scripts/ (fan-in=267)
   HUB: src.koruapi/ (fan-in=5)
-  HUB: src.koru/ (fan-in=44)
+  SMELL: koru/ fan-out=148 → split needed
+  SMELL: src.koru/ fan-out=181 → split needed
   SMELL: src.koruide/ fan-out=29 → split needed
-  SMELL: src.koruapi/ fan-out=65 → split needed
-  SMELL: src.koru/ fan-out=265 → split needed
+  SMELL: src.koruapi/ fan-out=66 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon
@@ -2884,44 +3007,47 @@ EXTERNAL:
 ### Duplication (`project/duplication.toon.yaml`)
 
 ```toon markpact:analysis path=project/duplication.toon.yaml
-# redup/duplication | 30 groups | 120f 27688L | 2026-05-19
+# redup/duplication | 33 groups | 126f 28243L | 2026-05-19
 
 SUMMARY:
-  files_scanned: 120
-  total_lines:   27688
-  dup_groups:    30
-  dup_fragments: 69
-  saved_lines:   394
-  scan_ms:       3220
+  files_scanned: 126
+  total_lines:   28243
+  dup_groups:    33
+  dup_fragments: 76
+  saved_lines:   361
+  scan_ms:       3583
 
 HOTSPOTS[7] (files with most duplication):
-  src/koru/autonomous.py  dup=176L  groups=12  frags=12  (0.6%)
-  src/koru/autonomous_cycle.py  dup=154L  groups=9  frags=9  (0.6%)
+  src/koru/autonomous.py  dup=115L  groups=12  frags=12  (0.4%)
   src/koru/cli.py  dup=101L  groups=3  frags=8  (0.4%)
+  src/koru/autonomous_cycle.py  dup=93L  groups=9  frags=9  (0.3%)
   src/koruapi/dashboard.py  dup=45L  groups=1  frags=1  (0.2%)
   src/koru/mcp_provision.py  dup=39L  groups=2  frags=5  (0.1%)
+  src/koru/autonomous_process_guard.py  dup=36L  groups=4  frags=4  (0.1%)
   src/koruide/protocol.py  dup=24L  groups=1  frags=2  (0.1%)
-  src/korudsl/library.py  dup=22L  groups=2  frags=6  (0.1%)
 
-DUPLICATES[30] (ranked by impact):
-  [b9219889c3cb4859] ! EXAC  _run_idle_diagnostics  L=97 N=2 saved=97 sim=1.00
-      src/koru/autonomous.py:1091-1187  (_run_idle_diagnostics)
-      src/koru/autonomous_cycle.py:187-283  (_run_idle_diagnostics)
+DUPLICATES[33] (ranked by impact):
   [b79fb4d314048ea0] ! STRU  _build_serve_parser  L=48 N=2 saved=48 sim=1.00
       src/koru/cli.py:402-449  (_build_serve_parser)
       src/koruapi/dashboard.py:17-61  (build_serve_parser)
+  [e6df54c38573f3c8] ! EXAC  _run_idle_diagnostics  L=36 N=2 saved=36 sim=1.00
+      src/koru/autonomous.py:1078-1113  (_run_idle_diagnostics)
+      src/koru/autonomous_cycle.py:187-222  (_run_idle_diagnostics)
   [cfa0e91c669b55c5]   STRU  _build_local_serve_parser  L=29 N=2 saved=29 sim=1.00
       src/koru/cli.py:452-480  (_build_local_serve_parser)
       src/koruapi/local.py:12-20  (build_local_parser)
   [077cfa61a2943c36]   STRU  _serve_main  L=4 N=6 saved=20 sim=1.00
-      src/koru/cli.py:1113-1116  (_serve_main)
-      src/koru/cli.py:1119-1122  (_local_serve_main)
-      src/koru/cli.py:1441-1444  (_mcp_serve_main)
-      src/koru/cli.py:1506-1509  (_init_ide_main)
-      src/koru/cli.py:1568-1571  (_dsl_main)
-      src/koru/cli.py:1574-1577  (_api_main)
+      src/koru/cli.py:1064-1067  (_serve_main)
+      src/koru/cli.py:1070-1073  (_local_serve_main)
+      src/koru/cli.py:1304-1307  (_mcp_serve_main)
+      src/koru/cli.py:1369-1372  (_init_ide_main)
+      src/koru/cli.py:1431-1434  (_dsl_main)
+      src/koru/cli.py:1437-1440  (_api_main)
+  [352ac6eadc7ba17e]   EXAC  looks_like_autonomous_up_command  L=17 N=2 saved=17 sim=1.00
+      src/koru/autonomous_parser.py:381-397  (looks_like_autonomous_up_command)
+      src/koru/autonomous_process_guard.py:69-84  (looks_like_autonomous_up_command)
   [13996a2247a97ed8]   EXAC  _read_wup_health  L=16 N=2 saved=16 sim=1.00
-      src/koru/autonomous.py:1073-1088  (_read_wup_health)
+      src/koru/autonomous.py:1060-1075  (_read_wup_health)
       src/koru/autonomous_cycle.py:169-184  (_read_wup_health)
   [400f9f906a729d1a]   STRU  provision_cursor  L=15 N=2 saved=15 sim=1.00
       src/koru/mcp_provision.py:194-208  (provision_cursor)
@@ -2937,29 +3063,33 @@ DUPLICATES[30] (ranked by impact):
       src/koruide/protocol.py:198-209  (status_error)
   [db3e3e3ad621b70e]   STRU  load_koru_project_pipeline  L=10 N=2 saved=10 sim=1.00
       src/koru/project_pipeline.py:111-120  (load_koru_project_pipeline)
-      src/koruapi/dashboard_serve.py:237-246  (read_serve_endpoint)
+      src/koruapi/dashboard_serve.py:291-300  (read_serve_endpoint)
   [c66988d54f59cb9c]   STRU  _ydotool_enter_keycode  L=10 N=2 saved=10 sim=1.00
       src/koruide/injector.py:59-68  (_ydotool_enter_keycode)
       src/koruide/injector.py:81-86  (_ydotool_ctrl_keycode)
   [30376722d90c4f75]   EXAC  _is_topology_enabled  L=9 N=2 saved=9 sim=1.00
-      src/koru/autonomous.py:910-918  (_is_topology_enabled)
+      src/koru/autonomous.py:897-905  (_is_topology_enabled)
       src/koru/autonomous_cycle.py:74-82  (_is_topology_enabled)
   [0a213b0b7ddbf9fc]   EXAC  _current_head  L=9 N=2 saved=9 sim=1.00
-      src/koru/autonomous.py:921-929  (_current_head)
+      src/koru/autonomous.py:908-916  (_current_head)
       src/koru/autonomous_cycle.py:85-93  (_current_head)
   [66e72bbc9f334365]   EXAC  _run_command_check  L=9 N=2 saved=9 sim=1.00
-      src/koru/autonomous.py:1021-1029  (_run_command_check)
+      src/koru/autonomous.py:1008-1016  (_run_command_check)
       src/koru/autonomous_cycle.py:121-129  (_run_command_check)
   [823aa4659db9c93d]   STRU  _handle_wait  L=3 N=4 saved=9 sim=1.00
       src/korudsl/library.py:38-40  (_handle_wait)
       src/korudsl/library.py:43-45  (_handle_get)
       src/korudsl/library.py:48-50  (_handle_save)
       src/korudsl/library.py:53-55  (_handle_if)
+  [40a7bc5fef2589e9]   STRU  _handle_mcp_list_tickets  L=4 N=3 saved=8 sim=1.00
+      src/koruapi/invoke_handlers.py:154-157  (_handle_mcp_list_tickets)
+      src/koruapi/invoke_handlers.py:160-163  (_handle_mcp_run_ticket)
+      src/koruapi/invoke_handlers.py:166-169  (_handle_mcp_quality_gates)
   [abf90bbbadf601ec]   STRU  _as_managed  L=7 N=2 saved=7 sim=1.00
-      src/koru/autonomous.py:342-348  (_as_managed)
+      src/koru/autonomous.py:329-335  (_as_managed)
       src/koru/autonomous_process_guard.py:169-175  (as_managed)
   [8e12ae22db3cad29]   STRU  _confirm_replace_existing  L=7 N=2 saved=7 sim=1.00
-      src/koru/autonomous.py:393-399  (_confirm_replace_existing)
+      src/koru/autonomous.py:380-386  (_confirm_replace_existing)
       src/koru/autonomous_process_guard.py:213-219  (confirm_replace_existing)
   [2d7b9210c1b65241]   STRU  activity_enabled  L=3 N=3 saved=6 sim=1.00
       src/koru/activity_log.py:12-14  (activity_enabled)
@@ -2983,16 +3113,16 @@ DUPLICATES[30] (ranked by impact):
       src/koru/autonomous.py:122-126  (_stdio_info)
       src/koru/autonomous_cycle.py:40-43  (_stdio_info)
   [a0375ffb77746a3f]   EXAC  _open_later  L=5 N=2 saved=5 sim=1.00
-      src/koruapi/dashboard_serve.py:1235-1239  (_open_later)
-      src/koruapi/dashboard_serve.py:1286-1290  (_open_later)
+      src/koruapi/dashboard_serve.py:1230-1234  (_open_later)
+      src/koruapi/dashboard_serve.py:1281-1285  (_open_later)
   [c4200e7110d9ebe1]   STRU  _handle_error  L=5 N=2 saved=5 sim=1.00
       src/korudsl/library.py:58-62  (_handle_error)
       src/korudsl/library.py:65-69  (_handle_correct)
   [774459a6d92b5dbd]   EXAC  _queue_loop_waiting_ticket_label  L=4 N=2 saved=4 sim=1.00
-      src/koru/autonomous.py:904-907  (_queue_loop_waiting_ticket_label)
+      src/koru/autonomous.py:891-894  (_queue_loop_waiting_ticket_label)
       src/koru/autonomous_cycle.py:69-71  (_queue_loop_waiting_ticket_label)
   [a7174a018322bcf8]   EXAC  _status_in_skip_list  L=4 N=2 saved=4 sim=1.00
-      src/koru/autonomous.py:1015-1018  (_status_in_skip_list)
+      src/koru/autonomous.py:1002-1005  (_status_in_skip_list)
       src/koru/autonomous_cycle.py:96-99  (_status_in_skip_list)
   [fdccb72b1fbbe81c]   EXAC  _allow_keyboard_autopilot_fallback  L=3 N=2 saved=3 sim=1.00
       src/koru/autonomous.py:138-140  (_allow_keyboard_autopilot_fallback)
@@ -3003,153 +3133,165 @@ DUPLICATES[30] (ranked by impact):
   [781cd2265323c713]   STRU  _systemd_user_dir  L=3 N=2 saved=3 sim=1.00
       src/koru/autopilot/cli_command.py:1165-1167  (_systemd_user_dir)
       src/koruide/config.py:63-65  (default_config_path)
+  [58ffcb67f5092308]   STRU  redup_scan_command  L=3 N=2 saved=3 sim=1.00
+      src/koru/redup_integration.py:14-16  (redup_scan_command)
+      src/koru/redup_integration.py:19-21  (redup_check_command)
 
-REFACTOR[30] (ranked by priority):
-  [1] ◐ extract_module     → src/koru/utils/_run_idle_diagnostics.py
-      WHY: 2 occurrences of 97-line block across 2 files — saves 97 lines
-      FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [2] ◐ extract_function   → src/utils/_build_serve_parser.py
+REFACTOR[33] (ranked by priority):
+  [1] ◐ extract_function   → src/utils/_build_serve_parser.py
       WHY: 2 occurrences of 48-line block across 2 files — saves 48 lines
       FILES: src/koru/cli.py, src/koruapi/dashboard.py
+  [2] ◐ extract_function   → src/koru/utils/_run_idle_diagnostics.py
+      WHY: 2 occurrences of 36-line block across 2 files — saves 36 lines
+      FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
   [3] ○ extract_function   → src/utils/_build_local_serve_parser.py
       WHY: 2 occurrences of 29-line block across 2 files — saves 29 lines
       FILES: src/koru/cli.py, src/koruapi/local.py
   [4] ○ extract_function   → src/koru/utils/_serve_main.py
       WHY: 6 occurrences of 4-line block across 1 files — saves 20 lines
       FILES: src/koru/cli.py
-  [5] ○ extract_function   → src/koru/utils/_read_wup_health.py
+  [5] ○ extract_function   → src/koru/utils/looks_like_autonomous_up_command.py
+      WHY: 2 occurrences of 17-line block across 2 files — saves 17 lines
+      FILES: src/koru/autonomous_parser.py, src/koru/autonomous_process_guard.py
+  [6] ○ extract_function   → src/koru/utils/_read_wup_health.py
       WHY: 2 occurrences of 16-line block across 2 files — saves 16 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [6] ○ extract_function   → src/koru/utils/provision_cursor.py
+  [7] ○ extract_function   → src/koru/utils/provision_cursor.py
       WHY: 2 occurrences of 15-line block across 1 files — saves 15 lines
       FILES: src/koru/mcp_provision.py
-  [7] ○ extract_function   → src/koru/autonomy/utils/_parse_iso_datetime.py
+  [8] ○ extract_function   → src/koru/autonomy/utils/_parse_iso_datetime.py
       WHY: 2 occurrences of 13-line block across 2 files — saves 13 lines
       FILES: src/koru/autonomy/ide_work.py, src/koru/autonomy/post_run_verify.py
-  [8] ○ extract_function   → src/utils/resolve_xdg_path.py
+  [9] ○ extract_function   → src/utils/resolve_xdg_path.py
       WHY: 2 occurrences of 12-line block across 2 files — saves 12 lines
       FILES: src/koru/autopilot/utils/client_helpers.py, src/koruide/utils.py
-  [9] ○ extract_function   → src/koruide/utils/message_received.py
+  [10] ○ extract_function   → src/koruide/utils/message_received.py
       WHY: 2 occurrences of 12-line block across 1 files — saves 12 lines
       FILES: src/koruide/protocol.py
-  [10] ○ extract_function   → src/utils/load_koru_project_pipeline.py
+  [11] ○ extract_function   → src/utils/load_koru_project_pipeline.py
       WHY: 2 occurrences of 10-line block across 2 files — saves 10 lines
       FILES: src/koru/project_pipeline.py, src/koruapi/dashboard_serve.py
-  [11] ○ extract_function   → src/koruide/utils/_ydotool_enter_keycode.py
+  [12] ○ extract_function   → src/koruide/utils/_ydotool_enter_keycode.py
       WHY: 2 occurrences of 10-line block across 1 files — saves 10 lines
       FILES: src/koruide/injector.py
-  [12] ○ extract_function   → src/koru/utils/_is_topology_enabled.py
+  [13] ○ extract_function   → src/koru/utils/_is_topology_enabled.py
       WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [13] ○ extract_function   → src/koru/utils/_current_head.py
+  [14] ○ extract_function   → src/koru/utils/_current_head.py
       WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [14] ○ extract_function   → src/koru/utils/_run_command_check.py
+  [15] ○ extract_function   → src/koru/utils/_run_command_check.py
       WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [15] ○ extract_function   → src/korudsl/utils/_handle_wait.py
+  [16] ○ extract_function   → src/korudsl/utils/_handle_wait.py
       WHY: 4 occurrences of 3-line block across 1 files — saves 9 lines
       FILES: src/korudsl/library.py
-  [16] ○ extract_function   → src/koru/utils/_as_managed.py
+  [17] ○ extract_function   → src/koruapi/utils/_handle_mcp_list_tickets.py
+      WHY: 3 occurrences of 4-line block across 1 files — saves 8 lines
+      FILES: src/koruapi/invoke_handlers.py
+  [18] ○ extract_function   → src/koru/utils/_as_managed.py
       WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_process_guard.py
-  [17] ○ extract_function   → src/koru/utils/_confirm_replace_existing.py
+  [19] ○ extract_function   → src/koru/utils/_confirm_replace_existing.py
       WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_process_guard.py
-  [18] ○ extract_function   → src/utils/activity_enabled.py
+  [20] ○ extract_function   → src/utils/activity_enabled.py
       WHY: 3 occurrences of 3-line block across 3 files — saves 6 lines
       FILES: src/koru/activity_log.py, src/koru/autonomy/operator_pipeline.py, src/koruide/plugin_installer.py
-  [19] ○ extract_function   → src/koru/utils/_process_cwd.py
+  [21] ○ extract_function   → src/koru/utils/_process_cwd.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_process_guard.py
-  [20] ○ extract_function   → src/koru/utils/_cursor_project_config.py
+  [22] ○ extract_function   → src/koru/utils/_cursor_project_config.py
       WHY: 3 occurrences of 3-line block across 1 files — saves 6 lines
       FILES: src/koru/mcp_provision.py
-  [21] ○ extract_function   → src/koru/utils/set_component_enabled.py
+  [23] ○ extract_function   → src/koru/utils/set_component_enabled.py
       WHY: 2 occurrences of 6-line block across 1 files — saves 6 lines
       FILES: src/koru/topology.py
-  [22] ○ extract_function   → src/koruide/utils/os_injector_env_disabled.py
+  [24] ○ extract_function   → src/koruide/utils/os_injector_env_disabled.py
       WHY: 3 occurrences of 3-line block across 1 files — saves 6 lines
       FILES: src/koruide/os_injector.py
-  [23] ○ extract_function   → src/koru/utils/_stdio_info.py
+  [25] ○ extract_function   → src/koru/utils/_stdio_info.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [24] ○ extract_function   → src/koruapi/utils/_open_later.py
+  [26] ○ extract_function   → src/koruapi/utils/_open_later.py
       WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
       FILES: src/koruapi/dashboard_serve.py
-  [25] ○ extract_function   → src/korudsl/utils/_handle_error.py
+  [27] ○ extract_function   → src/korudsl/utils/_handle_error.py
       WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
       FILES: src/korudsl/library.py
-  [26] ○ extract_function   → src/koru/utils/_queue_loop_waiting_ticket_label.py
+  [28] ○ extract_function   → src/koru/utils/_queue_loop_waiting_ticket_label.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [27] ○ extract_function   → src/koru/utils/_status_in_skip_list.py
+  [29] ○ extract_function   → src/koru/utils/_status_in_skip_list.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [28] ○ extract_function   → src/koru/utils/_allow_keyboard_autopilot_fallback.py
+  [30] ○ extract_function   → src/koru/utils/_allow_keyboard_autopilot_fallback.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [29] ○ extract_function   → src/koru/autopilot/utils/_action_status.py
+  [31] ○ extract_function   → src/koru/autopilot/utils/_action_status.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: src/koru/autopilot/cli_command.py
-  [30] ○ extract_function   → src/utils/_systemd_user_dir.py
+  [32] ○ extract_function   → src/utils/_systemd_user_dir.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: src/koru/autopilot/cli_command.py, src/koruide/config.py
+  [33] ○ extract_function   → src/koru/utils/redup_scan_command.py
+      WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
+      FILES: src/koru/redup_integration.py
 
-QUICK_WINS[20] (low risk, high savings — do first):
+QUICK_WINS[22] (low risk, high savings — do first):
   [3] extract_function   saved=29L  → src/utils/_build_local_serve_parser.py
       FILES: cli.py, local.py
   [4] extract_function   saved=20L  → src/koru/utils/_serve_main.py
       FILES: cli.py
-  [5] extract_function   saved=16L  → src/koru/utils/_read_wup_health.py
+  [5] extract_function   saved=17L  → src/koru/utils/looks_like_autonomous_up_command.py
+      FILES: autonomous_parser.py, autonomous_process_guard.py
+  [6] extract_function   saved=16L  → src/koru/utils/_read_wup_health.py
       FILES: autonomous.py, autonomous_cycle.py
-  [6] extract_function   saved=15L  → src/koru/utils/provision_cursor.py
+  [7] extract_function   saved=15L  → src/koru/utils/provision_cursor.py
       FILES: mcp_provision.py
-  [7] extract_function   saved=13L  → src/koru/autonomy/utils/_parse_iso_datetime.py
+  [8] extract_function   saved=13L  → src/koru/autonomy/utils/_parse_iso_datetime.py
       FILES: ide_work.py, post_run_verify.py
-  [8] extract_function   saved=12L  → src/utils/resolve_xdg_path.py
+  [9] extract_function   saved=12L  → src/utils/resolve_xdg_path.py
       FILES: client_helpers.py, utils.py
-  [9] extract_function   saved=12L  → src/koruide/utils/message_received.py
+  [10] extract_function   saved=12L  → src/koruide/utils/message_received.py
       FILES: protocol.py
-  [10] extract_function   saved=10L  → src/utils/load_koru_project_pipeline.py
+  [11] extract_function   saved=10L  → src/utils/load_koru_project_pipeline.py
       FILES: project_pipeline.py, dashboard_serve.py
-  [11] extract_function   saved=10L  → src/koruide/utils/_ydotool_enter_keycode.py
+  [12] extract_function   saved=10L  → src/koruide/utils/_ydotool_enter_keycode.py
       FILES: injector.py
-  [12] extract_function   saved=9L  → src/koru/utils/_is_topology_enabled.py
-      FILES: autonomous.py, autonomous_cycle.py
 
-EFFORT_ESTIMATE (total ≈ 15.6h):
-  hard   _run_idle_diagnostics               saved=97L  ~291min
+EFFORT_ESTIMATE (total ≈ 13.4h):
   hard   _build_serve_parser                 saved=48L  ~144min
+  hard   _run_idle_diagnostics               saved=36L  ~108min
   medium _build_local_serve_parser           saved=29L  ~58min
   medium _serve_main                         saved=20L  ~40min
+  medium looks_like_autonomous_up_command    saved=17L  ~34min
   medium _read_wup_health                    saved=16L  ~32min
   medium provision_cursor                    saved=15L  ~30min
   easy   _parse_iso_datetime                 saved=13L  ~26min
   easy   resolve_xdg_path                    saved=12L  ~24min
   easy   message_received                    saved=12L  ~24min
-  easy   load_koru_project_pipeline          saved=10L  ~20min
-  ... +20 more (~244min)
+  ... +23 more (~286min)
 
 METRICS-TARGET:
-  dup_groups:  30 → 0
-  saved_lines: 394 lines recoverable
+  dup_groups:  33 → 0
+  saved_lines: 361 lines recoverable
 ```
 
 ### Evolution / Churn (`project/evolution.toon.yaml`)
 
 ```toon markpact:analysis path=project/evolution.toon.yaml
-# code2llm/evolution | 972 func | 101f | 2026-05-19
-# generated in 0.00s
+# code2llm/evolution | 1055 func | 107f | 2026-05-19
+# generated in 0.01s
 
 NEXT[10] (ranked by impact):
-  [1] !! SPLIT           src/koru/autonomous.py
-      WHY: 1646L, 2 classes, max CC=50
-      EFFORT: ~4h  IMPACT: 82300
+  [1] !! SPLIT           src/koru/context.py
+      WHY: 1199L, 0 classes, max CC=18
+      EFFORT: ~4h  IMPACT: 21582
 
-  [2] !! SPLIT           src/koruapi/dashboard_serve.py
-      WHY: 1301L, 1 classes, max CC=13
-      EFFORT: ~4h  IMPACT: 16913
+  [2] !! SPLIT           src/koru/autopilot/cli_command.py
+      WHY: 1282L, 0 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 19230
 
   [3] !! SPLIT-FUNC      run_cycle  CC=89  fan=58
       WHY: CC=89 exceeds 15
@@ -3163,37 +3305,37 @@ NEXT[10] (ranked by impact):
       WHY: CC=43 exceeds 15
       EFFORT: ~1h  IMPACT: 1247
 
-  [6] !! SPLIT-FUNC      invoke_integration  CC=35  fan=35
-      WHY: CC=35 exceeds 15
-      EFFORT: ~1h  IMPACT: 1225
-
-  [7] !  SPLIT-FUNC      create_nl_task  CC=23  fan=22
+  [6] !  SPLIT-FUNC      create_nl_task  CC=23  fan=22
       WHY: CC=23 exceeds 15
       EFFORT: ~1h  IMPACT: 506
 
-  [8] !  SPLIT-FUNC      _read_wup_health  CC=23  fan=19
+  [7] !  SPLIT-FUNC      _read_wup_health  CC=23  fan=19
       WHY: CC=23 exceeds 15
       EFFORT: ~1h  IMPACT: 437
 
-  [9] !  SPLIT-FUNC      run_llm_request  CC=23  fan=19
+  [8] !  SPLIT-FUNC      run_llm_request  CC=23  fan=19
       WHY: CC=23 exceeds 15
       EFFORT: ~1h  IMPACT: 437
 
-  [10] !  SPLIT-FUNC      _agent_main  CC=19  fan=18
-      WHY: CC=19 exceeds 15
-      EFFORT: ~1h  IMPACT: 342
+  [9] !! SPLIT-FUNC      apply_autoloop_env_to_args  CC=31  fan=11
+      WHY: CC=31 exceeds 15
+      EFFORT: ~1h  IMPACT: 341
+
+  [10] !  SPLIT-FUNC      _action_session_start  CC=15  fan=21
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 315
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/autonomous.py may break 37 import paths
   ⚠ Splitting planfile.yaml may break 0 import paths
-  ⚠ Splitting src/koruapi/dashboard_serve.py may break 15 import paths
+  ⚠ Splitting src/koru/autopilot/cli_command.py may break 37 import paths
+  ⚠ Splitting src/koru/context.py may break 43 import paths
 
 METRICS-TARGET:
-  CC̄:          4.8 → ≤3.4
+  CC̄:          4.5 → ≤3.1
   max-CC:      89 → ≤20
-  god-modules: 17 → 0
-  high-CC(≥15): 47 → ≤23
+  god-modules: 12 → 0
+  high-CC(≥15): 27 → ≤13
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -3221,7 +3363,7 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.8 → now CC̄=4.8
+  prev CC̄=4.8 → now CC̄=4.5
 ```
 
 ## Intent
