@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from koru.autonomous_diagnostics import build_idle_checks, run_idle_diagnostics
@@ -36,7 +37,12 @@ def test_build_idle_checks_full_uses_changed_redup_when_wup_configured(
     checks = build_idle_checks(tmp_path, "full")
     redup_check = next(check for check in checks if check[0] == "redup")
 
-    assert redup_check[2][:4] == ["python3", "-m", "koru.redup_integration", "changed-scan"]
+    assert redup_check[2][:4] == [
+        sys.executable,
+        "-m",
+        "koru.redup_integration",
+        "changed-scan",
+    ]
     assert ".redup/wup-changed.json" in redup_check[2]
 
 

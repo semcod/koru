@@ -63,7 +63,7 @@ def redup_changed_scan_runner_command(
 ) -> list[str]:
     """Build the Koru wrapper command for version-tolerant changed scans."""
     return [
-        "python3",
+        sys.executable,
         "-m",
         "koru.redup_integration",
         "changed-scan",

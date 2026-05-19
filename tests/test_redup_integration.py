@@ -6,6 +6,19 @@ from pathlib import Path
 from koru import redup_integration
 
 
+def test_changed_scan_command_uses_current_python_module():
+    command = redup_integration.redup_changed_scan_command()
+
+    assert command[:4] == [sys.executable, "-m", "redup", "scan"]
+    assert "--changed-only" in command
+
+
+def test_changed_scan_runner_uses_current_python():
+    command = redup_integration.redup_changed_scan_runner_command()
+
+    assert command[:4] == [sys.executable, "-m", "koru.redup_integration", "changed-scan"]
+
+
 def test_run_changed_scan_skips_full_fallback_by_default(monkeypatch, tmp_path: Path):
     output = tmp_path / "wup-changed.json"
     calls: list[list[str]] = []
