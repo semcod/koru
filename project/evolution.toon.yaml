@@ -1,58 +1,58 @@
-# code2llm/evolution | 836 func | 86f | 2026-05-18
+# code2llm/evolution | 972 func | 101f | 2026-05-19
 # generated in 0.00s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous.py
-      WHY: 1534L, 2 classes, max CC=47
-      EFFORT: ~4h  IMPACT: 72098
+      WHY: 1646L, 2 classes, max CC=50
+      EFFORT: ~4h  IMPACT: 82300
 
-  [2] !! SPLIT           src/koru/serve.py
-      WHY: 1301L, 1 classes, max CC=13
-      EFFORT: ~4h  IMPACT: 16913
+  [2] !! SPLIT           src/koru/cli.py
+      WHY: 2143L, 0 classes, max CC=26
+      EFFORT: ~4h  IMPACT: 55718
 
-  [3] !! SPLIT-FUNC      run_cycle  CC=86  fan=53
-      WHY: CC=86 exceeds 15
-      EFFORT: ~1h  IMPACT: 4558
+  [3] !! SPLIT-FUNC      run_cycle  CC=89  fan=58
+      WHY: CC=89 exceeds 15
+      EFFORT: ~1h  IMPACT: 5162
 
-  [4] !! SPLIT-FUNC      _action_up  CC=47  fan=46
-      WHY: CC=47 exceeds 15
-      EFFORT: ~1h  IMPACT: 2162
+  [4] !! SPLIT-FUNC      _action_up  CC=50  fan=49
+      WHY: CC=50 exceeds 15
+      EFFORT: ~1h  IMPACT: 2450
 
-  [5] !! SPLIT-FUNC      run_next_planfile_task  CC=37  fan=26
-      WHY: CC=37 exceeds 15
-      EFFORT: ~1h  IMPACT: 962
+  [5] !! SPLIT-FUNC      run_next_planfile_task  CC=43  fan=29
+      WHY: CC=43 exceeds 15
+      EFFORT: ~1h  IMPACT: 1247
 
-  [6] !  SPLIT-FUNC      _read_wup_health  CC=23  fan=19
+  [6] !! SPLIT-FUNC      invoke_integration  CC=35  fan=35
+      WHY: CC=35 exceeds 15
+      EFFORT: ~1h  IMPACT: 1225
+
+  [7] !  SPLIT-FUNC      create_nl_task  CC=23  fan=22
+      WHY: CC=23 exceeds 15
+      EFFORT: ~1h  IMPACT: 506
+
+  [8] !  SPLIT-FUNC      _read_wup_health  CC=23  fan=19
       WHY: CC=23 exceeds 15
       EFFORT: ~1h  IMPACT: 437
 
-  [7] !  SPLIT-FUNC      run_llm_request  CC=23  fan=19
+  [9] !  SPLIT-FUNC      run_llm_request  CC=23  fan=19
       WHY: CC=23 exceeds 15
       EFFORT: ~1h  IMPACT: 437
 
-  [8] !  SPLIT-FUNC      _agent_main  CC=19  fan=18
+  [10] !  SPLIT-FUNC      _agent_main  CC=19  fan=18
       WHY: CC=19 exceeds 15
       EFFORT: ~1h  IMPACT: 342
 
-  [9] !! SPLIT-FUNC      _queue_run_main  CC=26  fan=13
-      WHY: CC=26 exceeds 15
-      EFFORT: ~1h  IMPACT: 338
-
-  [10] !  SPLIT-FUNC      create_nl_task  CC=16  fan=21
-      WHY: CC=16 exceeds 15
-      EFFORT: ~1h  IMPACT: 336
-
 
 RISKS[3]:
-  ⚠ Splitting src/koru/autonomous.py may break 35 import paths
+  ⚠ Splitting src/koru/cli.py may break 52 import paths
+  ⚠ Splitting src/koru/autonomous.py may break 37 import paths
   ⚠ Splitting planfile.yaml may break 0 import paths
-  ⚠ Splitting src/koru/serve.py may break 15 import paths
 
 METRICS-TARGET:
-  CC̄:          4.9 → ≤3.4
-  max-CC:      86 → ≤20
-  god-modules: 15 → 0
-  high-CC(≥15): 38 → ≤19
+  CC̄:          4.8 → ≤3.4
+  max-CC:      89 → ≤20
+  god-modules: 18 → 0
+  high-CC(≥15): 47 → ≤23
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.9 → now CC̄=4.9
+  prev CC̄=4.9 → now CC̄=4.8

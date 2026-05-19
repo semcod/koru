@@ -11,6 +11,7 @@ import json
 import os
 import subprocess
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -21,6 +22,8 @@ from koru.tasks import CreatedTask, create_nl_task
 
 StepStatus = Literal["ok", "pending", "skipped"]
 StepActor = Literal["human", "koru", "taskfile"]
+
+_STARTED_PLANFILE_API: tuple[Any, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -123,15 +126,78 @@ def _mcp_koru_configured(project: Path) -> tuple[bool, str]:
     )
 
 
-def _planfile_api_ok(project: Path) -> tuple[bool, str]:
-    url = (os.environ.get("KORU_PLANFILE_HEALTH_URL") or "http://127.0.0.1:8765/health").strip()
+def _candidate_planfile_health_urls(project: Path) -> list[str]:
+    configured = (os.environ.get("KORU_PLANFILE_HEALTH_URL") or "").strip()
+    if configured:
+        return [configured]
+
+    candidates: list[str] = []
     try:
-        with urllib.request.urlopen(url, timeout=1.5) as resp:
-            if 200 <= resp.status < 300:
-                return True, f"planfile API OK ({url})"
-    except (urllib.error.URLError, TimeoutError, OSError) as exc:
-        return False, f"planfile API niedostępny ({url}): {exc}"
-    return False, f"planfile API nie odpowiada ({url})"
+        from koruapi.dashboard_serve import read_serve_endpoint
+
+        endpoint = read_serve_endpoint(project)
+    except Exception:
+        endpoint = None
+    if isinstance(endpoint, dict):
+        base = str(endpoint.get("http_base") or "").strip()
+        if base:
+            candidates.append(urllib.parse.urljoin(base.rstrip("/") + "/", "health"))
+    candidates.append("http://127.0.0.1:8765/health")
+    return list(dict.fromkeys(candidates))
+
+
+def _planfile_api_ok(project: Path) -> tuple[bool, str]:
+    failures: list[str] = []
+    for url in _candidate_planfile_health_urls(project):
+        try:
+            with urllib.request.urlopen(url, timeout=1.5) as resp:
+                if 200 <= resp.status < 300:
+                    return True, f"planfile API OK ({url})"
+                failures.append(f"{url}: HTTP {resp.status}")
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            failures.append(f"{url}: {exc}")
+    detail = failures[-1] if failures else "brak URL health"
+    return False, f"planfile API niedostępny ({detail})"
+
+
+def _operator_autostart_server_enabled() -> bool:
+    raw = os.environ.get("KORU_OPERATOR_AUTOSTART_SERVER", "1").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
+def _try_start_planfile_api(project: Path, *, stdio_format: str) -> None:
+    global _STARTED_PLANFILE_API
+
+    if _STARTED_PLANFILE_API is not None:
+        return
+    if not _operator_autostart_server_enabled():
+        return
+    if os.environ.get("KORU_PLANFILE_HEALTH_URL"):
+        return
+
+    from koru.activity_log import activity
+
+    try:
+        from koruapi.dashboard_serve import ServeConfig, start_serve_background
+
+        server, thread = start_serve_background(
+            ServeConfig(
+                project=project,
+                host="127.0.0.1",
+                port=8765,
+                open_browser=False,
+                auto_port=True,
+            ),
+            log=lambda msg: activity("HTTP", msg, fmt=stdio_format),
+        )
+    except Exception as exc:
+        activity(
+            "HTTP",
+            f"operator planfile_api: nie udało się uruchomić dashboard/API: {exc}",
+            fmt=stdio_format,
+        )
+        return
+    _STARTED_PLANFILE_API = (server, thread)
 
 
 def _os_profile_ok(ide: str, project: Path) -> tuple[bool, str]:
@@ -367,6 +433,9 @@ def run_startup_operator_pipeline(
 ) -> OperatorPipelineResult:
     """Print operator steps and optionally create planfile tickets."""
     out = sys_stdout_for_format(stdio_format)
+    api_ok, _api_detail = _planfile_api_ok(project)
+    if not api_ok:
+        _try_start_planfile_api(project, stdio_format=stdio_format)
     steps = build_operator_steps(
         project=project,
         probe=probe,

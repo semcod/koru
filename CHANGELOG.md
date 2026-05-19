@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10] - 2026-05-19
+
+### Fixed
+- Fix relative-imports issues (ticket-f7325658)
+- Fix string-concat issues (ticket-706f74be)
+
 ## [0.1.10] - 2026-05-17
 
 ### Fixed
@@ -1360,6 +1366,32 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
   `deploy:{plan,dry,local,device,diagnose,resume,drift}`.
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
+
+## [0.1.131] - 2026-05-19
+
+### Docs
+- Update CHANGELOG.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_operator_pipeline.py
+
+### Other
+- Update app.doql.less
+- Update planfile.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- ... and 9 more files
 
 ## [0.1.130] - 2026-05-19
 

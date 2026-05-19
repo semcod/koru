@@ -82,6 +82,46 @@ def test_run_startup_operator_pipeline_creates_tickets(
     assert any(s.step_id == "autopilot_plugin" and s.ticket_id for s in result.steps)
 
 
+def test_run_startup_operator_pipeline_autostarts_planfile_api_when_missing(
+    tmp_path: Path, probe: AutonomousStartupProbe, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checks = iter([(False, "missing"), (True, "started")])
+    started: list[Path] = []
+    monkeypatch.setattr(op, "_planfile_api_ok", lambda _p: next(checks))
+    monkeypatch.setattr(
+        op,
+        "_try_start_planfile_api",
+        lambda project, **_kwargs: started.append(project),
+    )
+    monkeypatch.setattr(op, "_host_injectors_ok", lambda: (True, "ok"))
+    monkeypatch.setattr(op, "_os_profile_ok", lambda _i, _p: (True, "ok"))
+
+    result = op.run_startup_operator_pipeline(
+        project=tmp_path,
+        probe=probe,
+        plugin_connected=True,
+        create_tickets=False,
+    )
+
+    assert started == [tmp_path]
+    api_step = next(s for s in result.steps if s.step_id == "planfile_api")
+    assert api_step.status == "ok"
+
+
+def test_candidate_planfile_health_urls_use_serve_endpoint(tmp_path: Path) -> None:
+    endpoint = tmp_path / ".planfile" / ".koru" / "serve-endpoint.json"
+    endpoint.parent.mkdir(parents=True)
+    endpoint.write_text(
+        json.dumps({"http_base": "http://127.0.0.1:8766"}),
+        encoding="utf-8",
+    )
+
+    assert op._candidate_planfile_health_urls(tmp_path) == [
+        "http://127.0.0.1:8766/health",
+        "http://127.0.0.1:8765/health",
+    ]
+
+
 def test_run_startup_operator_pipeline_dedup_markers(
     tmp_path: Path, probe: AutonomousStartupProbe, monkeypatch: pytest.MonkeyPatch
 ) -> None:

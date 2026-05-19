@@ -862,19 +862,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-6f83ea0c
-    name: Fix relative-imports issues
-    description: Resolve 2 relative-imports issues in src/koru/serve.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/serve.py
-    rule_id: relative-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-e177bc99
     name: Fix unused-imports issues
     description: Resolve 2 unused-imports issues in src/koru/serve.py
@@ -885,19 +872,6 @@ sprints:
     - src/koru/serve.py
     rule_id: unused-imports
     count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-690814b1
-    name: Fix magic-numbers issues
-    description: Resolve 7 magic-numbers issues in src/koru/serve.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - src/koru/serve.py
-    rule_id: magic-numbers
-    count: 7
     model_hints:
       planning: balanced
       implementation: balanced
@@ -1314,6 +1288,32 @@ sprints:
     - src/koru/agent_backends.py
     rule_id: unused-imports
     count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-f7325658
+    name: Fix relative-imports issues
+    description: Resolve 2 relative-imports issues in src/koru/activity_log.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/activity_log.py
+    rule_id: relative-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-706f74be
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in src/koru/activity_log.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/activity_log.py
+    rule_id: string-concat
+    count: 1
     model_hints:
       planning: balanced
       implementation: balanced

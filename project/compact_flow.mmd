@@ -1,17 +1,25 @@
 flowchart TD
-%% generated in 0.02s
-    plugins__koru_autopilot_vscode["plugins.koru-autopilot-vscode<br/>71 funcs"]
+%% generated in 0.03s
+    plugins__koru_autopilot_vscode["plugins.koru-autopilot-vscode<br/>123 funcs"]
     scripts___koru_autodiag_filter_tickets["scripts._koru_autodiag_filter_tickets<br/>1 funcs"]
     scripts__koru_gate_capture["scripts.koru-gate-capture<br/>14 funcs"]
-    scripts__planfile_export_prompt["scripts.planfile-export-prompt<br/>2 funcs"]
+    scripts__koru_soak_monitor["scripts.koru-soak-monitor<br/>6 funcs"]
     scripts__planfile_sync_todo["scripts.planfile-sync-todo<br/>9 funcs"]
-    src__koru["src.koru<br/>598 funcs"]
-    src__koruide["src.koruide<br/>122 funcs"]
-    src__koru ==>|230| scripts__planfile_export_prompt
-    src__koruide ==>|26| scripts__planfile_export_prompt
-    src__koru ==>|15| src__koruide
-    src__koruide ==>|10| src__koru
-    scripts__planfile_sync_todo ==>|9| scripts__planfile_export_prompt
-    scripts__koru_gate_capture ==>|5| scripts__planfile_export_prompt
-    src__koru -->|1| plugins__koru_autopilot_vscode
-    scripts___koru_autodiag_filter_tickets -->|1| scripts__planfile_export_prompt
+    services__healing_webhook["services.healing-webhook<br/>34 funcs"]
+    src__koru["src.koru<br/>570 funcs"]
+    src__koruapi["src.koruapi<br/>65 funcs"]
+    src__korudsl["src.korudsl<br/>23 funcs"]
+    src__koruide["src.koruide<br/>146 funcs"]
+    src__koru ==>|222| scripts__koru_soak_monitor
+    src__koruapi ==>|41| src__koru
+    src__koruide ==>|26| scripts__koru_soak_monitor
+    src__koru ==>|24| src__koruide
+    src__koruapi ==>|20| scripts__koru_soak_monitor
+    scripts__planfile_sync_todo ==>|9| scripts__koru_soak_monitor
+    src__koruide ==>|8| src__koru
+    src__koru ==>|5| plugins__koru_autopilot_vscode
+    scripts__koru_gate_capture ==>|5| scripts__koru_soak_monitor
+    src__koru ==>|5| src__koruapi
+    src__koruapi ==>|4| src__korudsl
+    services__healing_webhook -->|1| plugins__koru_autopilot_vscode
+    scripts___koru_autodiag_filter_tickets -->|1| scripts__koru_soak_monitor
