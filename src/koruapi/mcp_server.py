@@ -227,8 +227,7 @@ TOOLS: list[dict[str, Any]] = [
                     "enum": ["kill", "warn", "continue"],
                     "default": "kill",
                     "description": (
-                        "Action when OOM is detected: kill subprocess, warn only, "
-                        "or continue."
+                        "Action when OOM is detected: kill subprocess, warn only, or continue."
                     ),
                 },
             },
@@ -293,8 +292,7 @@ TOOLS: list[dict[str, Any]] = [
                     "enum": ["kill", "warn", "continue"],
                     "default": "kill",
                     "description": (
-                        "Action when OOM is detected: kill subprocess, warn only, "
-                        "or continue."
+                        "Action when OOM is detected: kill subprocess, warn only, or continue."
                     ),
                 },
             },
@@ -443,7 +441,9 @@ def _update_job(job_id: str, project: Path | None = None, **fields: Any) -> None
 
 
 def _collect_process_logs(
-    result: subprocess.CompletedProcess[str], *, limit: int = 20,
+    result: subprocess.CompletedProcess[str],
+    *,
+    limit: int = 20,
 ) -> list[str]:
     logs: list[str] = []
     if result.stdout:
@@ -491,10 +491,14 @@ def tool_run_ticket(arguments: dict[str, Any]) -> dict[str, Any]:
         oom_logs: list[str] = []
 
         if oom_threshold > 0 and _PSUTIL_AVAILABLE:
+
             def _oom_monitor():
                 nonlocal oom_killed, oom_logs
                 oom_killed, oom_logs = _monitor_subprocess_oom(
-                    proc, oom_threshold, oom_interval, oom_action,
+                    proc,
+                    oom_threshold,
+                    oom_interval,
+                    oom_action,
                 )
 
             monitor_thread = threading.Thread(target=_oom_monitor, daemon=True)
@@ -675,10 +679,14 @@ def _run_single_gate(
         oom_logs: list[str] = []
 
         if oom_threshold_mb > 0 and _PSUTIL_AVAILABLE:
+
             def _oom_monitor():
                 nonlocal oom_killed, oom_logs
                 oom_killed, oom_logs = _monitor_subprocess_oom(
-                    proc, oom_threshold_mb, oom_interval_seconds, oom_action,
+                    proc,
+                    oom_threshold_mb,
+                    oom_interval_seconds,
+                    oom_action,
                 )
 
             monitor_thread = threading.Thread(target=_oom_monitor, daemon=True)
@@ -738,12 +746,14 @@ def tool_run_quality_gates(arguments: dict[str, Any]) -> dict[str, Any]:
     for gate_name in gates:
         cmd = gate_commands.get(gate_name)
         if cmd is None:
-            results.append({
-                "gate": gate_name,
-                "status": "skipped",
-                "issues": [],
-                "message": f"Unknown gate: {gate_name}",
-            })
+            results.append(
+                {
+                    "gate": gate_name,
+                    "status": "skipped",
+                    "issues": [],
+                    "message": f"Unknown gate: {gate_name}",
+                }
+            )
             continue
 
         status, payload = _run_single_gate(
@@ -930,10 +940,12 @@ _METHOD_HANDLERS: dict[str, Any] = {
 }
 
 # Notifications we silently acknowledge (no response required)
-_NOTIFICATION_METHODS = frozenset({
-    "notifications/initialized",
-    "notifications/cancelled",
-})
+_NOTIFICATION_METHODS = frozenset(
+    {
+        "notifications/initialized",
+        "notifications/cancelled",
+    }
+)
 
 
 def handle_message(msg: dict[str, Any]) -> dict[str, Any] | None:

@@ -4,6 +4,7 @@ The policy is the security floor: defaults must always be the most
 restrictive option, malformed YAML must NEVER loosen them, and a
 ``policy_violations`` check must reliably flag obvious offences.
 """
+
 from __future__ import annotations
 
 import tempfile
@@ -81,11 +82,14 @@ class TestLoad(unittest.TestCase):
         """YAML that passes 'true' as a string must NOT loosen the policy."""
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_policy(project, """\
+            _write_policy(
+                project,
+                """\
                 llm:
                   allow_commit: "true"
                   allow_push: "yes"
-            """)
+            """,
+            )
             policy = load_policy(project)
             self.assertFalse(policy.allow_commit)
             self.assertFalse(policy.allow_push)
@@ -93,7 +97,9 @@ class TestLoad(unittest.TestCase):
     def test_explicit_loosening_is_honoured(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_policy(project, """\
+            _write_policy(
+                project,
+                """\
                 llm:
                   allow_commit: true
                   allow_branch_create: true
@@ -102,7 +108,8 @@ class TestLoad(unittest.TestCase):
                   timeout_seconds: 60
                 notes:
                   - "Always run black before signaling done."
-            """)
+            """,
+            )
             policy = load_policy(project)
             self.assertTrue(policy.allow_commit)
             self.assertTrue(policy.allow_branch_create)
@@ -114,21 +121,27 @@ class TestLoad(unittest.TestCase):
     def test_zero_or_negative_timeout_falls_back_to_default(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_policy(project, """\
+            _write_policy(
+                project,
+                """\
                 ci:
                   timeout_seconds: -5
-            """)
+            """,
+            )
             self.assertEqual(load_policy(project).ci_timeout_seconds, 300)
 
     def test_unknown_keys_are_ignored(self) -> None:
         """Forward-compat: unknown keys do not error."""
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_policy(project, """\
+            _write_policy(
+                project,
+                """\
                 llm:
                   allow_commit: false
                   unknown_future_key: 42
-            """)
+            """,
+            )
             policy = load_policy(project)
             self.assertFalse(policy.allow_commit)
 
@@ -172,9 +185,7 @@ class TestViolations(unittest.TestCase):
 
     def test_path_helper_resolves(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            expected = (
-                Path(tmp).resolve() / ".planfile" / ".koru" / "policy.yaml"
-            )
+            expected = Path(tmp).resolve() / ".planfile" / ".koru" / "policy.yaml"
             self.assertEqual(policy_path(Path(tmp)), expected)
 
 

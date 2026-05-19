@@ -31,7 +31,9 @@ class RepairResult:
 
 
 def remove_stale_socket(
-    socket: SocketHealth, *, dry_run: bool = False,
+    socket: SocketHealth,
+    *,
+    dry_run: bool = False,
 ) -> RepairResult:
     """Delete a socket file that exists but has no listener.
 
@@ -42,7 +44,10 @@ def remove_stale_socket(
         return RepairResult(
             action="remove_stale_socket",
             status="skipped",
-            detail=f"socket {socket.path} is not stale (exists={socket.exists}, listening={socket.listening})",
+            detail=(
+                f"socket {socket.path} is not stale"
+                f" (exists={socket.exists}, listening={socket.listening})"
+            ),
         )
     if dry_run:
         return RepairResult(
@@ -72,7 +77,9 @@ def remove_stale_socket(
 
 
 def heal_environment(
-    report: EnvironmentReport, *, dry_run: bool = False,
+    report: EnvironmentReport,
+    *,
+    dry_run: bool = False,
 ) -> list[RepairResult]:
     """Apply every safe automatic repair indicated by ``report``.
 

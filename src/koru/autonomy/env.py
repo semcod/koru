@@ -11,12 +11,12 @@ before env overrides are applied.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
 import sys
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Final
-import contextlib
 
 _VALID_TICKET_SOURCES: Final[frozenset[str]] = frozenset({"queue", "scan", "all"})
 
@@ -98,22 +98,43 @@ def _apply_ticket_and_diagnostics_env(
 ) -> None:
     """Apply ticket sources and diagnostics environment overrides."""
     args.ticket_sources = _env_ticket_sources(args.ticket_sources, environ)
-    args.idle_diagnostics = _env_get(
-        "IDLE_DIAGNOSTICS_PROFILE",
-        "full" if env_truthy("ENABLE_IDLE_DIAGNOSTICS", False, environ=environ) else args.idle_diagnostics,
-        environ,
-    ) or args.idle_diagnostics
-    args.diagnostic_tickets = env_truthy(
-        "ENABLE_DIAGNOSTIC_TICKETS", args.diagnostic_tickets, environ=environ,
+    args.idle_diagnostics = (
+        _env_get(
+            "IDLE_DIAGNOSTICS_PROFILE",
+            "full"
+            if env_truthy("ENABLE_IDLE_DIAGNOSTICS", False, environ=environ)
+            else args.idle_diagnostics,
+            environ,
+        )
+        or args.idle_diagnostics
     )
-    args.diagnostic_ticket_queue = _env_get(
-        "DIAGNOSTIC_TICKET_QUEUE", args.diagnostic_ticket_queue, environ,
-    ) or args.diagnostic_ticket_queue
-    args.diagnostic_ticket_priority = _env_get(
-        "DIAGNOSTIC_TICKET_PRIORITY", args.diagnostic_ticket_priority, environ,
-    ) or args.diagnostic_ticket_priority
-    args.diagnostic_state_dir = _env_get("DIAG_STATE_DIR", args.diagnostic_state_dir, environ) or args.diagnostic_state_dir
-    args.strict_diagnostics = env_truthy("STRICT_DIAGNOSTICS", args.strict_diagnostics, environ=environ)
+    args.diagnostic_tickets = env_truthy(
+        "ENABLE_DIAGNOSTIC_TICKETS",
+        args.diagnostic_tickets,
+        environ=environ,
+    )
+    args.diagnostic_ticket_queue = (
+        _env_get(
+            "DIAGNOSTIC_TICKET_QUEUE",
+            args.diagnostic_ticket_queue,
+            environ,
+        )
+        or args.diagnostic_ticket_queue
+    )
+    args.diagnostic_ticket_priority = (
+        _env_get(
+            "DIAGNOSTIC_TICKET_PRIORITY",
+            args.diagnostic_ticket_priority,
+            environ,
+        )
+        or args.diagnostic_ticket_priority
+    )
+    args.diagnostic_state_dir = (
+        _env_get("DIAG_STATE_DIR", args.diagnostic_state_dir, environ) or args.diagnostic_state_dir
+    )
+    args.strict_diagnostics = env_truthy(
+        "STRICT_DIAGNOSTICS", args.strict_diagnostics, environ=environ
+    )
 
 
 def _apply_autopilot_env(
@@ -126,20 +147,31 @@ def _apply_autopilot_env(
     if args.autopilot_action not in {"drive", "handoff", "off"}:
         args.autopilot_action = "drive"
     args.autopilot_on_idle_only = env_truthy(
-        "AUTOPILOT_ON_IDLE_ONLY", args.autopilot_on_idle_only, environ=environ,
+        "AUTOPILOT_ON_IDLE_ONLY",
+        args.autopilot_on_idle_only,
+        environ=environ,
     )
     args.autopilot_skip_on_diagnostics_fail = env_truthy(
-        "AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL", args.autopilot_skip_on_diagnostics_fail, environ=environ,
+        "AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL",
+        args.autopilot_skip_on_diagnostics_fail,
+        environ=environ,
     )
-    args.autopilot_skip_statuses = _env_get(
-        "AUTOPILOT_SKIP_STATUSES", args.autopilot_skip_statuses, environ,
-    ) or args.autopilot_skip_statuses
+    args.autopilot_skip_statuses = (
+        _env_get(
+            "AUTOPILOT_SKIP_STATUSES",
+            args.autopilot_skip_statuses,
+            environ,
+        )
+        or args.autopilot_skip_statuses
+    )
     _idle_streak_raw = _env_get("AUTOPILOT_SKIP_DRIVE_IDLE_STREAK", None, environ)
     if _idle_streak_raw is not None and str(_idle_streak_raw).strip():
         with contextlib.suppress(ValueError):
             args.autopilot_skip_drive_idle_streak = max(0, int(str(_idle_streak_raw).strip()))
     args.backoff_on_stagnation = env_truthy(
-        "BACKOFF_ON_STAGNATION", args.backoff_on_stagnation, environ=environ,
+        "BACKOFF_ON_STAGNATION",
+        args.backoff_on_stagnation,
+        environ=environ,
     )
 
 
@@ -148,15 +180,21 @@ def _apply_scan_env(
     environ: Mapping[str, str] | None,
 ) -> None:
     """Apply scan environment overrides."""
-    args.scan_skip_if_clean = env_truthy("SCAN_SKIP_IF_CLEAN", args.scan_skip_if_clean, environ=environ)
+    args.scan_skip_if_clean = env_truthy(
+        "SCAN_SKIP_IF_CLEAN", args.scan_skip_if_clean, environ=environ
+    )
     args.scan_after_idle_queue = env_truthy(
-        "SCAN_AFTER_IDLE_QUEUE", args.scan_after_idle_queue, environ=environ,
+        "SCAN_AFTER_IDLE_QUEUE",
+        args.scan_after_idle_queue,
+        environ=environ,
     )
     _idle_min_raw = _env_get("SCAN_AFTER_IDLE_MIN_INTERVAL_SECONDS", None, environ)
     if _idle_min_raw is not None and str(_idle_min_raw).strip():
         with contextlib.suppress(ValueError):
             args.scan_after_idle_min_interval = max(0.0, float(str(_idle_min_raw).strip()))
-    args.topology_integration = env_truthy("TOPOLOGY_INTEGRATION", args.topology_integration, environ=environ)
+    args.topology_integration = env_truthy(
+        "TOPOLOGY_INTEGRATION", args.topology_integration, environ=environ
+    )
 
 
 def _apply_wup_env(
@@ -175,13 +213,23 @@ def _apply_wup_env(
     if args.wup_mode not in {"default", "testql"}:
         args.wup_mode = "testql"
     args.wup_deps = _env_get("WUP_DEPS", args.wup_deps, environ) or args.wup_deps
-    args.wup_scenarios_dir = _env_get("WUP_SCENARIOS_DIR", args.wup_scenarios_dir, environ) or args.wup_scenarios_dir
-    args.wup_testql_bin = _env_get("WUP_TESTQL_BIN", args.wup_testql_bin, environ) or args.wup_testql_bin
-    args.wup_track_dir = _env_get("WUP_TRACK_DIR", args.wup_track_dir, environ) or args.wup_track_dir
-    args.wup_diagnostic_tickets = env_truthy(
-        "WUP_DIAGNOSTIC_TICKETS", args.wup_diagnostic_tickets, environ=environ,
+    args.wup_scenarios_dir = (
+        _env_get("WUP_SCENARIOS_DIR", args.wup_scenarios_dir, environ) or args.wup_scenarios_dir
     )
-    args.wup_ticket_queue = _env_get("WUP_TICKET_QUEUE", args.wup_ticket_queue, environ) or args.wup_ticket_queue
+    args.wup_testql_bin = (
+        _env_get("WUP_TESTQL_BIN", args.wup_testql_bin, environ) or args.wup_testql_bin
+    )
+    args.wup_track_dir = (
+        _env_get("WUP_TRACK_DIR", args.wup_track_dir, environ) or args.wup_track_dir
+    )
+    args.wup_diagnostic_tickets = env_truthy(
+        "WUP_DIAGNOSTIC_TICKETS",
+        args.wup_diagnostic_tickets,
+        environ=environ,
+    )
+    args.wup_ticket_queue = (
+        _env_get("WUP_TICKET_QUEUE", args.wup_ticket_queue, environ) or args.wup_ticket_queue
+    )
 
 
 def _apply_operator_env(
@@ -191,11 +239,15 @@ def _apply_operator_env(
     """Apply operator environment overrides."""
     if hasattr(args, "operator_pipeline"):
         args.operator_pipeline = env_truthy(
-            "KORU_OPERATOR_PIPELINE", args.operator_pipeline, environ=environ,
+            "KORU_OPERATOR_PIPELINE",
+            args.operator_pipeline,
+            environ=environ,
         )
     if hasattr(args, "operator_tickets"):
         args.operator_tickets = env_truthy(
-            "KORU_OPERATOR_TICKETS", args.operator_tickets, environ=environ,
+            "KORU_OPERATOR_TICKETS",
+            args.operator_tickets,
+            environ=environ,
         )
     if hasattr(args, "operator_ticket_queue"):
         args.operator_ticket_queue = (

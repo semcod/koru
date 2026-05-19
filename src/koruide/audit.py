@@ -31,6 +31,7 @@ unknown keys gracefully.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -38,7 +39,6 @@ import time
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any
-import contextlib
 
 LOG_NAME = "koru.autopilot.audit"
 MAX_BYTES = 10 * 1024 * 1024  # 10 MiB

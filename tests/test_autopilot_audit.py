@@ -67,7 +67,8 @@ def test_directory_is_owner_only(tmp_path: Path) -> None:
 
 
 def test_default_log_path_uses_xdg_state(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path))
     assert default_log_path() == tmp_path / "koru" / "autopilot.log"
@@ -102,7 +103,9 @@ def test_rotation_caps_file_size(tmp_path: Path) -> None:
 
 
 def test_unwritable_directory_disables_silently(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A failing ``mkdir`` must NOT crash — it disables audit and prints once."""
     target = tmp_path / "deep" / "audit.log"

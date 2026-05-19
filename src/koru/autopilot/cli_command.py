@@ -94,7 +94,9 @@ def _action_calibrate(args: argparse.Namespace) -> int:
         return 1
 
 
-def _capture_ide_profile(ide: str, delay: float, args: argparse.Namespace, captured: dict[tuple[int, int], list[str]]) -> dict[str, object]:
+def _capture_ide_profile(
+    ide: str, delay: float, args: argparse.Namespace, captured: dict[tuple[int, int], list[str]]
+) -> dict[str, object]:
     """Capture profile for a single IDE and return result row."""
     from . import os_injector as oi
 
@@ -131,7 +133,9 @@ def _capture_ide_profile(ide: str, delay: float, args: argparse.Namespace, captu
         return {"ok": False, "ide": ide, "error": str(exc)}
 
 
-def _detect_duplicate_coordinates(captured: dict[tuple[int, int], list[str]]) -> list[dict[str, object]]:
+def _detect_duplicate_coordinates(
+    captured: dict[tuple[int, int], list[str]],
+) -> list[dict[str, object]]:
     """Detect and return list of duplicate coordinate warnings."""
     dups: list[dict[str, object]] = []
     for pair, id_list in captured.items():
@@ -312,9 +316,7 @@ def _build_parser() -> argparse.ArgumentParser:
         type=float,
         default=0.0,
         metavar="SECONDS",
-        help=(
-            "With --direct, wait before injection so you can focus the target IDE window."
-        ),
+        help=("With --direct, wait before injection so you can focus the target IDE window."),
     )
 
     calibrate = sub.add_parser(
@@ -515,8 +517,7 @@ def _build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help=(
-            "Override destination (default: "
-            "$XDG_CONFIG_HOME/systemd/user/koru-autopilot.service)."
+            "Override destination (default: $XDG_CONFIG_HOME/systemd/user/koru-autopilot.service)."
         ),
     )
     install_unit.add_argument(
@@ -630,7 +631,9 @@ def _print_drive_delay_message(delay_seconds: float) -> None:
     time.sleep(delay_seconds)
 
 
-def _handle_os_injector_fallback(args: argparse.Namespace, profile_id: str, injector: Injector) -> tuple[int, dict[str, Any] | None]:
+def _handle_os_injector_fallback(
+    args: argparse.Namespace, profile_id: str, injector: Injector
+) -> tuple[int, dict[str, Any] | None]:
     """Handle fallback when OS injector is unavailable."""
     if args.os_profile:
         print(
@@ -703,8 +706,7 @@ def _run_direct_drive(
             )
             return 1, None
         print(
-            "koru autopilot drive: os-injector failed; falling back to keyboard injector: "
-            f"{exc}",
+            f"koru autopilot drive: os-injector failed; falling back to keyboard injector: {exc}",
             file=sys.stderr,
         )
         try:
@@ -792,7 +794,10 @@ def _action_status(args: argparse.Namespace) -> int:
 def _action_shutdown(args: argparse.Namespace) -> int:
     client = _client(args)
     return call_daemon_method(
-        client, "shutdown", "koru autopilot shutdown", not_running_return_code=0,
+        client,
+        "shutdown",
+        "koru autopilot shutdown",
+        not_running_return_code=0,
     )
 
 

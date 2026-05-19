@@ -301,8 +301,7 @@ def inject_with_profile(
 
         activity(
             "CHAT",
-            f"os_injector/{profile.tool_id}: focus=({x},{y}) method={input_method} "
-            f"submit={submit}",
+            f"os_injector/{profile.tool_id}: focus=({x},{y}) method={input_method} submit={submit}",
             preview=text,
         )
     except Exception:

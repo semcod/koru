@@ -180,7 +180,11 @@ def _daemon(
 
 
 def _connect_plugin(
-    sock_path: Path, *, ide: str = "vscode", version: str = "0.1.0", pid: int = 1,
+    sock_path: Path,
+    *,
+    ide: str = "vscode",
+    version: str = "0.1.0",
+    pid: int = 1,
 ) -> tuple[socket.socket, _LineReader]:
     """Open a plugin connection, send ``hello``, consume the ack."""
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -257,7 +261,8 @@ def test_drive_reports_injector_failure(tmp_path: Path, monkeypatch: pytest.Monk
 
 
 def test_drive_uses_os_injector_when_profile_available(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from koruide import os_injector as koruide_oi
 
@@ -273,7 +278,10 @@ def test_drive_uses_os_injector_when_profile_available(
     repo = tmp_path / "repo"
     repo.mkdir()
     fake = RunningIDE(id="cursor", label="Cursor", pid=1, exe="/opt/Cursor")
-    running = lambda **_: [fake]
+
+    def running(**_):
+        return [fake]
+
     monkeypatch.setattr(ide_mod, "detect_running_ides", running)
     monkeypatch.setattr(ide_mod, "detect_running_ides_cached", running)
     monkeypatch.setattr(koruide_daemon_mod, "detect_running_ides", running)
@@ -318,7 +326,8 @@ def test_drive_uses_os_injector_when_profile_available(
 
 
 def test_drive_os_injector_skipped_when_env_disabled(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from koru.autopilot import os_injector as oi_mod
 
@@ -326,7 +335,9 @@ def test_drive_os_injector_skipped_when_env_disabled(
     fake = RunningIDE(id="cursor", label="Cursor", pid=1, exe="/opt/Cursor")
     monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [fake])
     monkeypatch.setattr(koruide_daemon_mod, "detect_running_ides", lambda **_: [fake])
-    monkeypatch.setattr(oi_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None)
+    monkeypatch.setattr(
+        oi_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None
+    )
 
     tried = {"n": 0}
 
@@ -343,7 +354,8 @@ def test_drive_os_injector_skipped_when_env_disabled(
 
 
 def test_drive_os_injector_forced_without_profile_falls_back_to_keyboard(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from koru.autopilot import os_injector as oi_mod
 
@@ -351,7 +363,9 @@ def test_drive_os_injector_forced_without_profile_falls_back_to_keyboard(
     fake = RunningIDE(id="cursor", label="Cursor", pid=1, exe="/opt/Cursor")
     monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [fake])
     monkeypatch.setattr(koruide_daemon_mod, "detect_running_ides", lambda **_: [fake])
-    monkeypatch.setattr(oi_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None)
+    monkeypatch.setattr(
+        oi_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None
+    )
     monkeypatch.setattr(oi_mod, "try_load_profile", lambda *a, **k: None)
 
     with _daemon(tmp_path, monkeypatch, patch_ides=False) as h:
@@ -437,7 +451,8 @@ def test_plugin_hello_then_drive_forwards(tmp_path: Path, monkeypatch: pytest.Mo
         cli_reader = _LineReader(cli)
         cli.sendall(
             Message(
-                type="drive", id="d1",
+                type="drive",
+                id="d1",
                 data={"text": "hi", "ide": "vscode", "submit": True},
             ).encode(),
         )
@@ -610,7 +625,8 @@ def test_default_handoff_builds_brief_for_uninitialised_project(tmp_path: Path) 
 
 
 def test_session_ended_triggers_handoff_chat_send(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     captured: list[dict] = []
 
@@ -622,7 +638,8 @@ def test_session_ended_triggers_handoff_chat_send(
         plugin, reader = _connect_plugin(h.sock_path, ide="windsurf", pid=42)
         plugin.sendall(
             Message(
-                type="session.ended", id="ev1",
+                type="session.ended",
+                id="ev1",
                 data={"chat": "cascade", "reason": "user-stop"},
             ).encode(),
         )
@@ -652,14 +669,14 @@ def test_session_ended_triggers_handoff_chat_send(
 
 
 def test_session_ended_no_handoff_when_disabled(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """``handoff=None`` (default) → just ack, no follow-up chat.send."""
     with _daemon(tmp_path, monkeypatch) as h:
         plugin, reader = _connect_plugin(h.sock_path, ide="vscode")
         plugin.sendall(
-            Message(type="session.ended", id="ev1",
-                    data={"chat": "x", "reason": ""}).encode(),
+            Message(type="session.ended", id="ev1", data={"chat": "x", "reason": ""}).encode(),
         )
         msg = reader.read_message()
         assert msg.type == "ack"
@@ -670,7 +687,8 @@ def test_session_ended_no_handoff_when_disabled(
 
 
 def test_session_ended_skipped_during_cooldown(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A session.ended right after a drive must be ignored by the handoff."""
     calls: list[dict] = []
@@ -680,7 +698,10 @@ def test_session_ended_skipped_during_cooldown(
         return "should not be typed"
 
     with _daemon(
-        tmp_path, monkeypatch, handoff=fake_handoff, handoff_cooldown=10.0,
+        tmp_path,
+        monkeypatch,
+        handoff=fake_handoff,
+        handoff_cooldown=10.0,
     ) as h:
         plugin, reader = _connect_plugin(h.sock_path, ide="windsurf")
 
@@ -699,7 +720,8 @@ def test_session_ended_skipped_during_cooldown(
 
 
 def test_session_started_event_just_acks(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Even with handoff enabled, session.started must NOT trigger a brief."""
     with _daemon(tmp_path, monkeypatch, handoff=lambda _e: "must not appear") as h:

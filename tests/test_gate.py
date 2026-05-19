@@ -4,6 +4,7 @@ Verifies that gate authorizations are stored as structured, parseable
 notes — not free-text — so downstream audit tooling can reason about
 which gates were waived by whom and why.
 """
+
 from __future__ import annotations
 
 import json
@@ -61,7 +62,7 @@ def test_authorize_gate_records_structured_note(tmp_path):
     note_index = cmd.index("--note")
     note = cmd[note_index + 1]
     assert note.startswith(f"{GATE_AUTH_TAG} ")
-    payload = json.loads(note[len(GATE_AUTH_TAG) + 1:])
+    payload = json.loads(note[len(GATE_AUTH_TAG) + 1 :])
     assert payload["kind"] == "gate_authorization"
     assert payload["mode"] == "advisory"
     assert payload["skipped"] == ["task test", "task quality:gate"]
@@ -126,8 +127,8 @@ def test_parse_authorizations_round_trip():
 def test_parse_authorizations_ignores_malformed_or_unrelated_notes():
     notes = [
         f"{GATE_AUTH_TAG} not-json-at-all",
-        f"{GATE_AUTH_TAG} {{\"kind\": \"something_else\"}}",  # wrong kind
-        f"{GATE_AUTH_TAG} {{\"kind\": \"gate_authorization\", \"mode\": \"bogus\"}}",  # invalid mode
+        f'{GATE_AUTH_TAG} {{"kind": "something_else"}}',  # wrong kind
+        f'{GATE_AUTH_TAG} {{"kind": "gate_authorization", "mode": "bogus"}}',  # invalid mode
         "[normal note]",
         None,  # non-string entries must not crash
         42,

@@ -33,20 +33,24 @@ class TestAgentDetection(unittest.TestCase):
 
     def test_detects_openrouter_lane_from_env(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            with patch("shutil.which", return_value=None), patch.dict(
-                os.environ, {"OPENROUTER_API_KEY": "test"}, clear=True,
+            with (
+                patch("shutil.which", return_value=None),
+                patch.dict(
+                    os.environ,
+                    {"OPENROUTER_API_KEY": "test"},
+                    clear=True,
+                ),
             ):
                 env = detect_agent_environment(Path(tmp))
 
-            openrouter = next(
-                agent for agent in env["llm_agents"] if agent["id"] == "openrouter"
-            )
+            openrouter = next(agent for agent in env["llm_agents"] if agent["id"] == "openrouter")
             self.assertTrue(openrouter["available"])
             self.assertFalse(openrouter["launchable"])
             self.assertEqual(openrouter["autopilot_backend"], "headless")
 
     def test_select_agent_prefers_launchable_when_noninteractive(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+
             def fake_which(command: str) -> str | None:
                 return f"/usr/bin/{command}" if command == "claude" else None
 
@@ -59,6 +63,7 @@ class TestAgentDetection(unittest.TestCase):
 
     def test_detects_gemini_cli_when_available(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+
             def fake_which(command: str) -> str | None:
                 return "/usr/bin/gemini" if command == "gemini" else None
 
@@ -72,6 +77,7 @@ class TestAgentDetection(unittest.TestCase):
 
     def test_select_agent_can_pick_gemini_when_only_launchable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+
             def fake_which(command: str) -> str | None:
                 return "/usr/bin/gemini" if command == "gemini" else None
 
@@ -84,6 +90,7 @@ class TestAgentDetection(unittest.TestCase):
 
     def test_detects_cline_when_available(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+
             def fake_which(command: str) -> str | None:
                 return "/usr/bin/cline" if command == "cline" else None
 
@@ -97,6 +104,7 @@ class TestAgentDetection(unittest.TestCase):
 
     def test_select_agent_can_pick_cline_when_only_launchable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+
             def fake_which(command: str) -> str | None:
                 return "/usr/bin/cline" if command == "cline" else None
 
@@ -125,6 +133,7 @@ class TestAgentDetection(unittest.TestCase):
 
     def test_detects_qwen_code_when_available(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+
             def fake_which(command: str) -> str | None:
                 return "/usr/bin/qwen-code" if command == "qwen-code" else None
 
@@ -138,6 +147,7 @@ class TestAgentDetection(unittest.TestCase):
 
     def test_select_agent_can_pick_qwen_when_only_launchable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+
             def fake_which(command: str) -> str | None:
                 return "/usr/bin/qwen" if command == "qwen" else None
 
@@ -150,6 +160,7 @@ class TestAgentDetection(unittest.TestCase):
 
     def test_detects_opencode_when_available(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+
             def fake_which(command: str) -> str | None:
                 return "/usr/bin/opencode" if command == "opencode" else None
 
@@ -163,6 +174,7 @@ class TestAgentDetection(unittest.TestCase):
 
     def test_select_agent_can_pick_opencode_when_only_launchable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+
             def fake_which(command: str) -> str | None:
                 return "/usr/bin/opencode" if command == "opencode" else None
 

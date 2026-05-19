@@ -11,7 +11,7 @@ from koru.autonomy import AutonomyConfig
 def test_autonomy_config_defaults():
     """Test that AutonomyConfig has sensible defaults."""
     config = AutonomyConfig()
-    
+
     assert config.actor == "koru-shell"
     assert config.queue_name == ""
     assert config.use_all_queues is False
@@ -48,10 +48,10 @@ def test_autonomy_config_from_env():
             "IDLE_DIAGNOSTICS_PROFILE": "full",
             "STRICT_DIAGNOSTICS": "true",
         }
-        
+
         with patch.dict(os.environ, env_vars, clear=True):
             config = AutonomyConfig.from_env()
-            
+
             assert config.project == Path(tmpdir)
             assert config.actor == "test-actor"
             assert config.queue_name == "test-queue"
@@ -73,7 +73,7 @@ def test_autonomy_config_from_env_defaults():
     """Test that from_env uses defaults when vars are missing."""
     with patch.dict(os.environ, {}, clear=True):
         config = AutonomyConfig.from_env()
-        
+
         # Should match class defaults
         assert config.actor == "koru-shell"
         assert config.max_iterations == 50
@@ -118,7 +118,7 @@ def test_autonomy_config_stagnation_control_fields():
         scan_skip_if_clean=True,
         scan_skip_after=3,
     )
-    
+
     assert config.autopilot_skip_statuses == "waiting_input,blocked"
     assert config.autopilot_skip_drive_idle_streak == 2
     assert config.backoff_on_stagnation is True

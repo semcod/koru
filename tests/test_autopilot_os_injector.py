@@ -151,7 +151,8 @@ def test_inject_with_profile_paste_timeout_is_reported(
 
 
 def test_try_load_profile_prefers_project_over_cwd(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     proj_cfg = tmp_path / ".koru" / "ide-os-injector.json"
     proj_cfg.parent.mkdir(parents=True)
@@ -180,7 +181,8 @@ def test_iter_config_paths_dedupes_project_and_cwd(tmp_path: Path) -> None:
 
 
 def test_try_drive_with_profile_uses_saved_profile_on_wayland(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Regression: calibrated coordinates must work on Wayland without KORU_OS_INJECTOR=1."""
     import koru.autopilot.os_injector as oi
@@ -195,13 +197,16 @@ def test_try_drive_with_profile_uses_saved_profile_on_wayland(
         encoding="utf-8",
     )
     monkeypatch.chdir(tmp_path)
-    out = try_drive_with_profile(tool_id="cursor", text="x", submit=False, project=None, cli_dry_run=True)
+    out = try_drive_with_profile(
+        tool_id="cursor", text="x", submit=False, project=None, cli_dry_run=True
+    )
     assert out is not None
     assert out["backend"] == "os_injector"
 
 
 def test_try_drive_with_profile_forced_works_on_wayland(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     import koru.autopilot.os_injector as oi
 
@@ -212,7 +217,9 @@ def test_try_drive_with_profile_forced_works_on_wayland(
     cfg.parent.mkdir(parents=True)
     cfg.write_text(json.dumps({"cursor": {"chat_x": 2, "chat_y": 3}}), encoding="utf-8")
     monkeypatch.chdir(tmp_path)
-    out = try_drive_with_profile(tool_id="cursor", text="x", submit=False, project=None, cli_dry_run=True)
+    out = try_drive_with_profile(
+        tool_id="cursor", text="x", submit=False, project=None, cli_dry_run=True
+    )
     assert out is not None
     assert out["backend"] == "os_injector"
 
@@ -233,7 +240,9 @@ def test_try_drive_with_profile_skips_when_env_disabled(monkeypatch: pytest.Monk
     )
 
 
-def test_try_drive_with_profile_uses_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_try_drive_with_profile_uses_config(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     import koru.autopilot.os_injector as oi
 
     monkeypatch.setenv("XDG_SESSION_TYPE", "x11")

@@ -50,14 +50,14 @@ def test_decode_rejects_malformed_json() -> None:
 
 
 def test_decode_rejects_oversized_line() -> None:
-    huge = b"{\"type\":\"ping\",\"x\":\"" + b"a" * (MAX_LINE_BYTES + 16) + b"\"}\n"
+    huge = b'{"type":"ping","x":"' + b"a" * (MAX_LINE_BYTES + 16) + b'"}\n'
     with pytest.raises(ProtocolError, match="line too large"):
         decode(huge)
 
 
 def test_decode_rejects_non_object_top_level() -> None:
     with pytest.raises(ProtocolError, match="top-level"):
-        decode(b'[1,2,3]\n')
+        decode(b"[1,2,3]\n")
 
 
 def test_decode_requires_type_field() -> None:

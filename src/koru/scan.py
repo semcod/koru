@@ -877,7 +877,8 @@ def run_scan(
     project = project.resolve()
     if include_semcod_artifacts is None:
         include_semcod_artifacts = os.environ.get(
-            "KORU_SCAN_SEMCOD_ARTIFACTS", "",
+            "KORU_SCAN_SEMCOD_ARTIFACTS",
+            "",
         ).strip().lower() in ("1", "true", "yes", "on")
     suggestions = collect_suggestions(
         project,

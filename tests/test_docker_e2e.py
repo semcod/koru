@@ -27,6 +27,7 @@ class TestDockerE2E:
     def docker_image(self):
         """Build Docker image for testing."""
         import hashlib
+
         src_dir = Path(__file__).parent.parent / "src"
         hasher = hashlib.md5()
         for f in sorted(src_dir.rglob("*.py")):
@@ -34,9 +35,13 @@ class TestDockerE2E:
         src_hash = hasher.hexdigest()[:12]
         result = subprocess.run(
             [
-                "docker", "build",
-                "--build-arg", f"CACHE_BUST={src_hash}",
-                "-t", "koru:test", ".",
+                "docker",
+                "build",
+                "--build-arg",
+                f"CACHE_BUST={src_hash}",
+                "-t",
+                "koru:test",
+                ".",
             ],
             cwd=Path(__file__).parent.parent,
             capture_output=True,
@@ -50,20 +55,20 @@ class TestDockerE2E:
         """Create a test project with planfile structure."""
         project = tmp_path / "test-project"
         project.mkdir()
-        
+
         # Initialize project using koru init (use venv bin or python -m)
         koru_exe = Path(sys.executable).parent / "koru"
         cmd = [str(koru_exe), "--init", "--project", str(project)]
         if not koru_exe.exists():
             cmd = [sys.executable, "-m", "koru", "--init", "--project", str(project)]
-        
+
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
         )
         assert result.returncode == 0
-        
+
         return project
 
     def test_docker_image_builds_successfully(self, docker_image):
@@ -96,10 +101,12 @@ class TestDockerE2E:
                     "docker",
                     "run",
                     "--rm",
-                    "-v", f"{tmp_dir}:/workspace",
+                    "-v",
+                    f"{tmp_dir}:/workspace",
                     docker_image,
                     "--doctor",
-                    "--project", "/workspace",
+                    "--project",
+                    "/workspace",
                 ],
                 capture_output=True,
                 text=True,
@@ -116,16 +123,18 @@ class TestDockerE2E:
                     "docker",
                     "run",
                     "--rm",
-                    "-v", f"{tmp_dir}:/workspace",
+                    "-v",
+                    f"{tmp_dir}:/workspace",
                     docker_image,
                     "--init",
-                    "--project", "/workspace",
+                    "--project",
+                    "/workspace",
                 ],
                 capture_output=True,
                 text=True,
             )
             assert result.returncode == 0
-            
+
             # Check that planfile was created
             planfile_dir = Path(tmp_dir) / ".planfile"
             assert planfile_dir.exists()
@@ -138,29 +147,32 @@ class TestDockerE2E:
                 "docker",
                 "run",
                 "--rm",
-                "-v", f"{test_project}:/workspace",
+                "-v",
+                f"{test_project}:/workspace",
                 docker_image,
                 "task",
                 "Test high priority task",
-                "--priority", "high",
-                "--project", "/workspace",
+                "--priority",
+                "high",
+                "--project",
+                "/workspace",
             ],
             capture_output=True,
             text=True,
         )
         assert result.returncode == 0
         assert "created " in result.stdout and "-00" in result.stdout
-        
+
         # Verify ticket was created with correct priority
         sprint_file = test_project / ".planfile" / "sprints" / "current.yaml"
         assert sprint_file.exists()
-        
+
         with open(sprint_file) as f:
             sprint_data = yaml.safe_load(f)
-        
+
         tickets = sprint_data.get("sprint", {}).get("tickets", [])
         assert len(tickets) > 0
-        
+
         # Find our ticket (handle both list of dicts and list of IDs)
         our_ticket = None
         for ticket in tickets:
@@ -173,8 +185,10 @@ class TestDockerE2E:
                     # Ticket was created but we can't verify priority from YAML structure
                     our_ticket = {"name": "Test high priority task", "priority": "high"}
                     break
-        
-        assert our_ticket is not None, f"Ticket not found. Tickets: {tickets}, stdout: {result.stdout}"
+
+        assert our_ticket is not None, (
+            f"Ticket not found. Tickets: {tickets}, stdout: {result.stdout}"
+        )
         if isinstance(our_ticket, dict):
             assert our_ticket.get("priority") == "high"
 
@@ -186,43 +200,50 @@ class TestDockerE2E:
                 "docker",
                 "run",
                 "--rm",
-                "-v", f"{test_project}:/workspace",
+                "-v",
+                f"{test_project}:/workspace",
                 docker_image,
                 "task",
                 "Test autonomous task",
-                "--priority", "normal",
-                "--project", "/workspace",
+                "--priority",
+                "normal",
+                "--project",
+                "/workspace",
             ],
             capture_output=True,
             text=True,
         )
-        
+
         # Run autonomous mode for one cycle
         result = subprocess.run(
             [
                 "docker",
                 "run",
                 "--rm",
-                "-v", f"{test_project}:/workspace",
+                "-v",
+                f"{test_project}:/workspace",
                 docker_image,
                 "autonomous",
                 "up",
-                "--project", "/workspace",
-                "--max-cycles", "1",
-                "--sleep-seconds", "0",
+                "--project",
+                "/workspace",
+                "--max-cycles",
+                "1",
+                "--sleep-seconds",
+                "0",
                 "--no-autopilot",
             ],
             capture_output=True,
             text=True,
         )
-        
+
         assert result.returncode == 0
         assert "autonomous cycle #1" in result.stdout
         assert "queue=" in result.stdout
 
     def test_priority_ordering_in_docker(self, docker_image, test_project):
         """Test that priority ordering works correctly in Docker."""
-        
+
         # Create tasks with different priorities
         tasks = [
             ("Normal task 1", "normal"),
@@ -230,41 +251,46 @@ class TestDockerE2E:
             ("High priority task", "high"),
             ("Normal task 2", "normal"),
         ]
-        
+
         for task_desc, priority in tasks:
             result = subprocess.run(
                 [
                     "docker",
                     "run",
                     "--rm",
-                    "-v", f"{test_project}:/workspace",
+                    "-v",
+                    f"{test_project}:/workspace",
                     docker_image,
                     "task",
                     task_desc,
-                    "--priority", priority,
-                    "--project", "/workspace",
+                    "--priority",
+                    priority,
+                    "--project",
+                    "/workspace",
                 ],
                 capture_output=True,
                 text=True,
             )
             assert result.returncode == 0
-        
+
         # Check queue dry run to see which ticket is first
         result = subprocess.run(
             [
                 "docker",
                 "run",
                 "--rm",
-                "-v", f"{test_project}:/workspace",
+                "-v",
+                f"{test_project}:/workspace",
                 docker_image,
                 "--queue",
-                "--project", "/workspace",
+                "--project",
+                "/workspace",
                 "--dry-run",
             ],
             capture_output=True,
             text=True,
         )
-        
+
         assert result.returncode == 0
         # Critical task should be processed first
         assert "Critical task" in result.stdout
@@ -283,7 +309,7 @@ class TestDockerE2E:
             capture_output=True,
             text=True,
         )
-        
+
         assert result.returncode == 0
         # Should show tool registry and summary even in minimal container
         assert "registry:" in result.stdout
@@ -302,14 +328,15 @@ class TestDockerE2E:
                 docker_image,
                 "agent",
                 "--list",
-                "--format", "json",
+                "--format",
+                "json",
             ],
             capture_output=True,
             text=True,
         )
-        
+
         assert result.returncode == 0
-        
+
         # Parse JSON output
         try:
             agents_data = json.loads(result.stdout)
@@ -322,7 +349,7 @@ class TestDockerE2E:
     def test_full_workflow_in_docker(self, docker_image, test_project):
         """Test complete workflow: init -> task -> autonomous -> completion."""
         import yaml
-        
+
         # 1. Create multiple tasks with different priorities
         tasks = [
             ("Low priority cleanup", "low"),
@@ -330,7 +357,7 @@ class TestDockerE2E:
             ("Normal feature", "normal"),
             ("High priority refactor", "high"),
         ]
-        
+
         created_tickets = []
         for task_desc, priority in tasks:
             result = subprocess.run(
@@ -338,57 +365,64 @@ class TestDockerE2E:
                     "docker",
                     "run",
                     "--rm",
-                    "-v", f"{test_project}:/workspace",
+                    "-v",
+                    f"{test_project}:/workspace",
                     docker_image,
                     "task",
                     task_desc,
-                    "--priority", priority,
-                    "--project", "/workspace",
+                    "--priority",
+                    priority,
+                    "--project",
+                    "/workspace",
                 ],
                 capture_output=True,
                 text=True,
             )
             assert result.returncode == 0
-            
+
             # Extract ticket ID
-            for line in result.stdout.split('\n'):
-                if 'PLF-' in line:
-                    ticket_id = line.split('PLF-')[1].split()[0]
+            for line in result.stdout.split("\n"):
+                if "PLF-" in line:
+                    ticket_id = line.split("PLF-")[1].split()[0]
                     created_tickets.append(f"PLF-{ticket_id}")
-        
+
         # 2. Run autonomous mode with interactive input
         input_data = "\n".join(["Task completed"] * len(tasks)) + "\n"
-        
+
         result = subprocess.run(
             [
                 "docker",
                 "run",
                 "--rm",
                 "-i",
-                "-v", f"{test_project}:/workspace",
+                "-v",
+                f"{test_project}:/workspace",
                 docker_image,
                 "autonomous",
                 "up",
-                "--project", "/workspace",
-                "--max-cycles", "1",
-                "--sleep-seconds", "0",
+                "--project",
+                "/workspace",
+                "--max-cycles",
+                "1",
+                "--sleep-seconds",
+                "0",
                 "--no-autopilot",
             ],
             input=input_data,
             capture_output=True,
             text=True,
         )
-        
+
         assert result.returncode == 0
         assert "autonomous cycle #1" in result.stdout
-        
+
         # 3. Verify all tickets were processed in priority order
         sprint_file = test_project / ".planfile" / "sprints" / "current.yaml"
         with open(sprint_file) as f:
             sprint_data = yaml.safe_load(f)
-        
+
         tickets = sprint_data.get("sprint", {}).get("tickets", [])
-        
+
         # Check that critical ticket was processed first (handle string tickets)
         critical_ticket = next(
             (t for t in tickets if isinstance(t, dict) and "Critical bug fix" in t.get("name", "")),
@@ -397,27 +431,27 @@ class TestDockerE2E:
         if critical_ticket is None:
             # If tickets are strings, verify from stdout instead
             assert "Critical" in result.stdout or len(tickets) > 0, "Critical ticket not found"
-        
+
         # Verify execution order in logs or status
         processed_order = []
-        for line in result.stdout.split('\n'):
-            if 'PLF-' in line and ('completed' in line or 'status=' in line):
+        for line in result.stdout.split("\n"):
+            if "PLF-" in line and ("completed" in line or "status=" in line):
                 for ticket_id in created_tickets:
                     if ticket_id in line:
                         processed_order.append(ticket_id)
-        
+
         # Critical ticket should appear early in processing
         # Handle both dict tickets and string tickets
         def is_critical_ticket(t, tid):
             if isinstance(t, dict):
                 return t.get("id") == tid and "Critical" in t.get("name", "")
             return str(t) == tid and "Critical" in str(t)
-        
+
         critical_ticket_id = next(
             (tid for tid in created_tickets if any(is_critical_ticket(t, tid) for t in tickets)),
             None,
         )
-        
+
         if critical_ticket_id and processed_order:
             assert critical_ticket_id in processed_order
 
@@ -446,21 +480,23 @@ class TestDockerComposeIntegration:
         )
         if "--profile" not in result.stdout:
             pytest.skip("Docker Compose doesn't support --profile flag")
-        
+
         result = subprocess.run(
             ["docker", "compose", "--profile", "test", "up", "-d"],
             cwd=Path(__file__).parent.parent,
             capture_output=True,
             text=True,
         )
-        if result.returncode != 0 and ("pull access denied" in result.stderr or "not found" in result.stderr):
+        if result.returncode != 0 and (
+            "pull access denied" in result.stderr or "not found" in result.stderr
+        ):
             pytest.skip(f"Required images not available: {result.stderr}")
         assert result.returncode == 0
-        
+
         try:
             # Wait for container to be ready
             time.sleep(5)
-            
+
             # Check if container is running (use docker compose, not docker-compose)
             result = subprocess.run(
                 ["docker", "compose", "ps", "--profile", "test"],
@@ -472,7 +508,7 @@ class TestDockerComposeIntegration:
                 pytest.skip("Docker Compose ps doesn't support --profile flag")
             assert result.returncode == 0
             assert "koru-test" in result.stdout
-            
+
             # Test basic functionality
             result = subprocess.run(
                 ["docker", "exec", "koru-test", "koru", "--help"],
@@ -480,7 +516,7 @@ class TestDockerComposeIntegration:
                 text=True,
             )
             assert result.returncode == 0
-            
+
         finally:
             # Clean up
             subprocess.run(
@@ -500,21 +536,23 @@ class TestDockerComposeIntegration:
         )
         if "--profile" not in result.stdout:
             pytest.skip("Docker Compose doesn't support --profile flag")
-        
+
         result = subprocess.run(
             ["docker", "compose", "--profile", "deps", "up", "-d"],
             cwd=Path(__file__).parent.parent,
             capture_output=True,
             text=True,
         )
-        if result.returncode != 0 and ("pull access denied" in result.stderr or "not found" in result.stderr):
+        if result.returncode != 0 and (
+            "pull access denied" in result.stderr or "not found" in result.stderr
+        ):
             pytest.skip(f"Required images not available: {result.stderr}")
         assert result.returncode == 0
-        
+
         try:
             # Wait for services to be ready
             time.sleep(10)
-            
+
             # Check if all dependency containers are running
             result = subprocess.run(
                 ["docker", "compose", "ps", "--profile", "deps"],
@@ -525,7 +563,7 @@ class TestDockerComposeIntegration:
             assert result.returncode == 0
             assert "planfile-test" in result.stdout
             assert "healing-webhook-test" in result.stdout
-            
+
             # Test healing-webhook health
             result = subprocess.run(
                 ["curl", "-f", "http://localhost:8810/health"],
@@ -533,7 +571,7 @@ class TestDockerComposeIntegration:
                 text=True,
             )
             # May fail if webhook is not fully ready, that's okay
-            
+
         finally:
             # Clean up
             subprocess.run(

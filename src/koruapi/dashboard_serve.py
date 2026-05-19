@@ -157,11 +157,15 @@ def _bulk_waiting_input_action(
                 runner=run_process,
             )
             if claim.returncode != 0:
-                applied.append({"id": tid, "ok": False, "step": "claim", "stderr": claim.stderr[-500:]})
+                applied.append(
+                    {"id": tid, "ok": False, "step": "claim", "stderr": claim.stderr[-500:]}
+                )
                 continue
             start = planfile_command(project, ["ticket", "start", tid], runner=run_process)
             if start.returncode != 0:
-                applied.append({"id": tid, "ok": False, "step": "start", "stderr": start.stderr[-500:]})
+                applied.append(
+                    {"id": tid, "ok": False, "step": "start", "stderr": start.stderr[-500:]}
+                )
                 continue
             done = planfile_command(project, ["ticket", "done", tid], runner=run_process)
             applied.append(

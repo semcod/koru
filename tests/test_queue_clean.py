@@ -10,10 +10,11 @@ The cleaner has three responsibilities that all need pinning down:
 3. **Audit** — every closure carries a structured KORU-QUEUE-CLEAN
    note so future investigations can answer "who killed PLF-XXX?".
 """
+
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta, timezone, UTC
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
@@ -43,12 +44,14 @@ def _fail(stderr: str = "boom", code: int = 1) -> SimpleNamespace:
 def test_label_match_picks_only_fixture_labelled_tickets():
     tickets = [
         {"id": "PLF-1", "name": "Real work", "status": "open", "labels": ["bug"]},
-        {"id": "PLF-2", "name": "Test fixture", "status": "open",
-         "labels": ["test-only", "dryrun"]},
-        {"id": "PLF-3", "name": "Synthetic alert", "status": "open",
-         "labels": ["synthetic"]},
-        {"id": "PLF-4", "name": "Already done", "status": "done",
-         "labels": ["test-only"]},
+        {
+            "id": "PLF-2",
+            "name": "Test fixture",
+            "status": "open",
+            "labels": ["test-only", "dryrun"],
+        },
+        {"id": "PLF-3", "name": "Synthetic alert", "status": "open", "labels": ["synthetic"]},
+        {"id": "PLF-4", "name": "Already done", "status": "done", "labels": ["test-only"]},
     ]
     candidates, skipped = find_candidates(tickets)
     ids = sorted(c.ticket_id for c in candidates)
@@ -73,10 +76,8 @@ def test_name_heuristic_only_runs_when_explicit():
 def test_name_heuristic_does_not_match_real_tickets_with_test_word():
     """Real bug tickets often contain 'test' as a word — must NOT match."""
     tickets = [
-        {"id": "PLF-10", "name": "Fix flaky integration test", "status": "open",
-         "labels": ["bug"]},
-        {"id": "PLF-11", "name": "Improve test coverage", "status": "open",
-         "labels": ["chore"]},
+        {"id": "PLF-10", "name": "Fix flaky integration test", "status": "open", "labels": ["bug"]},
+        {"id": "PLF-11", "name": "Improve test coverage", "status": "open", "labels": ["chore"]},
     ]
     candidates, _ = find_candidates(tickets, include_names=True)
     assert candidates == []
@@ -85,12 +86,19 @@ def test_name_heuristic_does_not_match_real_tickets_with_test_word():
 def test_active_tickets_skipped_by_default_but_surfaced():
     """in_progress + waiting_input tickets must be surfaced explicitly."""
     tickets = [
-        {"id": "PLF-1", "name": "Test fixture in flight", "status": "in_progress",
-         "labels": ["test-only"]},
-        {"id": "PLF-2", "name": "Test fixture pending input",
-         "status": "waiting_input", "labels": ["dryrun"]},
-        {"id": "PLF-3", "name": "Test fixture parked", "status": "open",
-         "labels": ["test-only"]},
+        {
+            "id": "PLF-1",
+            "name": "Test fixture in flight",
+            "status": "in_progress",
+            "labels": ["test-only"],
+        },
+        {
+            "id": "PLF-2",
+            "name": "Test fixture pending input",
+            "status": "waiting_input",
+            "labels": ["dryrun"],
+        },
+        {"id": "PLF-3", "name": "Test fixture parked", "status": "open", "labels": ["test-only"]},
     ]
     candidates, skipped = find_candidates(tickets)
     assert [c.ticket_id for c in candidates] == ["PLF-3"]
@@ -99,10 +107,13 @@ def test_active_tickets_skipped_by_default_but_surfaced():
 
 def test_include_active_promotes_skipped_back_to_candidates():
     tickets = [
-        {"id": "PLF-1", "name": "Test fixture in flight", "status": "in_progress",
-         "labels": ["test-only"]},
-        {"id": "PLF-2", "name": "Test fixture parked", "status": "open",
-         "labels": ["test-only"]},
+        {
+            "id": "PLF-1",
+            "name": "Test fixture in flight",
+            "status": "in_progress",
+            "labels": ["test-only"],
+        },
+        {"id": "PLF-2", "name": "Test fixture parked", "status": "open", "labels": ["test-only"]},
     ]
     candidates, skipped = find_candidates(tickets, include_active=True)
     assert sorted(c.ticket_id for c in candidates) == ["PLF-1", "PLF-2"]
@@ -117,14 +128,29 @@ def test_max_age_modifies_but_never_alone():
     old_fixture = (now - timedelta(days=14)).isoformat()
     tickets = [
         # old, but no fixture rule fires → must NOT be a candidate.
-        {"id": "PLF-1", "name": "Old real bug", "status": "open",
-         "labels": ["bug"], "created_at": old_unrelated},
+        {
+            "id": "PLF-1",
+            "name": "Old real bug",
+            "status": "open",
+            "labels": ["bug"],
+            "created_at": old_unrelated,
+        },
         # fixture but young → match if max_age=None, miss if max_age=10.
-        {"id": "PLF-2", "name": "Young fixture", "status": "open",
-         "labels": ["test-only"], "created_at": young_fixture},
+        {
+            "id": "PLF-2",
+            "name": "Young fixture",
+            "status": "open",
+            "labels": ["test-only"],
+            "created_at": young_fixture,
+        },
         # fixture and old → matches both ways.
-        {"id": "PLF-3", "name": "Old fixture", "status": "open",
-         "labels": ["test-only"], "created_at": old_fixture},
+        {
+            "id": "PLF-3",
+            "name": "Old fixture",
+            "status": "open",
+            "labels": ["test-only"],
+            "created_at": old_fixture,
+        },
     ]
     no_age, _ = find_candidates(tickets, now=now)
     assert sorted(c.ticket_id for c in no_age) == ["PLF-2", "PLF-3"]
@@ -142,12 +168,21 @@ def test_max_age_modifies_but_never_alone():
 def test_age_calculation_handles_z_suffix_and_naive_dates():
     now = datetime(2026, 5, 11, 12, 0, tzinfo=UTC)
     tickets = [
-        {"id": "PLF-Z", "name": "Test", "status": "open",
-         "labels": ["test-only"], "created_at": "2026-05-01T12:00:00Z"},
-        {"id": "PLF-N", "name": "Test", "status": "open",
-         "labels": ["test-only"], "created_at": "2026-05-09T12:00:00"},  # naive
-        {"id": "PLF-X", "name": "Test", "status": "open",
-         "labels": ["test-only"]},  # no created_at
+        {
+            "id": "PLF-Z",
+            "name": "Test",
+            "status": "open",
+            "labels": ["test-only"],
+            "created_at": "2026-05-01T12:00:00Z",
+        },
+        {
+            "id": "PLF-N",
+            "name": "Test",
+            "status": "open",
+            "labels": ["test-only"],
+            "created_at": "2026-05-09T12:00:00",
+        },  # naive
+        {"id": "PLF-X", "name": "Test", "status": "open", "labels": ["test-only"]},  # no created_at
     ]
     candidates, _ = find_candidates(tickets, now=now)
     by_id = {c.ticket_id: c.age_days for c in candidates}
@@ -169,8 +204,7 @@ def test_clean_queue_dry_run_lists_but_does_not_close(tmp_path):
     """Dry run must enumerate candidates but never call ticket complete."""
     tickets = [
         {"id": "PLF-1", "name": "Real bug", "status": "open", "labels": ["bug"]},
-        {"id": "PLF-2", "name": "Test foo", "status": "open",
-         "labels": ["test-only"]},
+        {"id": "PLF-2", "name": "Test foo", "status": "open", "labels": ["test-only"]},
     ]
     calls: list[list[str]] = []
 
@@ -193,10 +227,8 @@ def test_clean_queue_dry_run_lists_but_does_not_close(tmp_path):
 
 def test_clean_queue_apply_closes_each_candidate_with_audit_note(tmp_path):
     tickets = [
-        {"id": "PLF-1", "name": "Test foo", "status": "open",
-         "labels": ["test-only"]},
-        {"id": "PLF-2", "name": "Test bar", "status": "ready",
-         "labels": ["synthetic"]},
+        {"id": "PLF-1", "name": "Test foo", "status": "open", "labels": ["test-only"]},
+        {"id": "PLF-2", "name": "Test bar", "status": "ready", "labels": ["synthetic"]},
     ]
     captured_completes: list[dict] = []
 
@@ -216,7 +248,7 @@ def test_clean_queue_apply_closes_each_candidate_with_audit_note(tmp_path):
     assert len(captured_completes) == 2
     for entry in captured_completes:
         assert entry["note"].startswith(QUEUE_CLEAN_TAG + " ")
-        payload = json.loads(entry["note"][len(QUEUE_CLEAN_TAG) + 1:])
+        payload = json.loads(entry["note"][len(QUEUE_CLEAN_TAG) + 1 :])
         assert payload["kind"] == "queue_cleanup"
         assert payload["rules"]
         assert payload["reason"]

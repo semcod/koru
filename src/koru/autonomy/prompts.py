@@ -14,11 +14,11 @@ from dataclasses import dataclass
 from typing import Literal
 
 DriveKind = Literal[
-    "drive_prompt",          # default outer prompt (idle / progressing)
-    "ticket_prompt",         # waiting_input with concrete message from ticket
-    "fallback_prompt",       # waiting_input with empty message — generic continue
-    "escalation_prompt",     # repeated stagnation — ask LLM to unblock or report
-    "handoff",               # explicit handoff action
+    "drive_prompt",  # default outer prompt (idle / progressing)
+    "ticket_prompt",  # waiting_input with concrete message from ticket
+    "fallback_prompt",  # waiting_input with empty message — generic continue
+    "escalation_prompt",  # repeated stagnation — ask LLM to unblock or report
+    "handoff",  # explicit handoff action
 ]
 
 
@@ -47,7 +47,7 @@ def build_prompt(
     escalation_threshold: int = DEFAULT_ESCALATION_THRESHOLD,
 ) -> PromptDecision:
     """Decide which prompt to send to the IDE LLM this cycle.
-    
+
     Args:
         queue_status: Last status from QueueLoopResult (e.g. "idle", "waiting_input").
         last_message: Last message attached to the waiting ticket (may be empty).
@@ -56,7 +56,7 @@ def build_prompt(
         autopilot_action: "drive" | "handoff" | "off".
         stagnation_streak: Consecutive cycles seeing the same (status, ticket_id).
         escalation_threshold: After this many repeats, escalate.
-    
+
     Returns:
         PromptDecision with the prompt to send and a `kind` for telemetry.
     """

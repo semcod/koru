@@ -122,7 +122,9 @@ def test_probe_environment_flags_stale_socket(tmp_path: Path) -> None:
     stale = tmp_path / "stale.sock"
     stale.write_bytes(b"")
     report = probe_environment(
-        tmp_path, autopilot_socket=stale, environ={"PATH": ""},
+        tmp_path,
+        autopilot_socket=stale,
+        environ={"PATH": ""},
     )
     assert report.autopilot_socket is not None
     assert report.autopilot_socket.stale is True
@@ -185,7 +187,9 @@ def test_heal_environment_repairs_stale_socket(tmp_path: Path) -> None:
     stale = tmp_path / "stale.sock"
     stale.write_bytes(b"")
     report = probe_environment(
-        tmp_path, autopilot_socket=stale, environ={"PATH": ""},
+        tmp_path,
+        autopilot_socket=stale,
+        environ={"PATH": ""},
     )
     results = heal_environment(report)
     assert len(results) == 1

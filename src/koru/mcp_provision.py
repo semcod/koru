@@ -31,6 +31,7 @@ from .ide_runtime import detect_running_ides
 # IDE config locations
 # ---------------------------------------------------------------------------
 
+
 def _windsurf_global_config() -> Path:
     """Return the Windsurf global MCP config path."""
     return Path.home() / ".codeium" / "windsurf" / "mcp_config.json"
@@ -54,6 +55,7 @@ def _windsurf_project_config(project: Path) -> Path:
 # ---------------------------------------------------------------------------
 # Koru MCP server entry
 # ---------------------------------------------------------------------------
+
 
 def _resolved_koru_command() -> str:
     """Return an absolute ``koru`` path when on PATH.
@@ -111,6 +113,7 @@ def _maybe_upgrade_koru_command(servers: dict[str, Any]) -> bool:
 # IDE detection
 # ---------------------------------------------------------------------------
 
+
 def detect_ides() -> list[str]:
     """Return list of IDE ids detected on this system."""
     detected: list[str] = []
@@ -141,6 +144,7 @@ def detect_ides() -> list[str]:
 # Config read/write helpers
 # ---------------------------------------------------------------------------
 
+
 def _read_json(path: Path) -> dict[str, Any]:
     """Read a JSON file, returning {} if missing or invalid."""
     if not path.is_file():
@@ -166,6 +170,7 @@ def _write_json(path: Path, data: dict[str, Any], *, dry_run: bool = False) -> s
 # ---------------------------------------------------------------------------
 # Provision / remove
 # ---------------------------------------------------------------------------
+
 
 def provision_windsurf(project: Path, *, dry_run: bool = False) -> dict[str, Any]:
     """Add koru MCP server to Windsurf config."""
@@ -339,6 +344,7 @@ def _render_results(results: list[dict[str, Any]], output_format: str) -> None:
 # ---------------------------------------------------------------------------
 # CLI entry point
 # ---------------------------------------------------------------------------
+
 
 def init_ide_main(argv: list[str]) -> int:
     """Entry point for ``koru init-ide``."""

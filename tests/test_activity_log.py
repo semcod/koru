@@ -16,7 +16,9 @@ def test_activity_flushes_with_timestamp(capsys: pytest.CaptureFixture[str]) -> 
     assert out.strip().startswith("[")
 
 
-def test_activity_disabled(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+def test_activity_disabled(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     monkeypatch.setenv("KORU_ACTIVITY_LOG", "0")
     al.activity("CHAT", "hidden")
     assert capsys.readouterr().out == ""

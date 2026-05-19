@@ -5,6 +5,7 @@ endpoints with ``urllib.request``, and assert the shape of responses.
 The handler is bound to a tempdir project so ``build_context`` runs
 without touching the real workspace.
 """
+
 from __future__ import annotations
 
 import errno
@@ -40,7 +41,8 @@ def _minimal_planfile_project() -> tuple[tempfile.TemporaryDirectory, Path]:
     (project / ".planfile" / "sprints").mkdir(parents=True)
     (project / ".planfile" / "config.yaml").write_text("project: test\n", encoding="utf-8")
     (project / ".planfile" / "sprints" / "current.yaml").write_text(
-        "sprint:\n  id: current\n  tickets: {}\n", encoding="utf-8",
+        "sprint:\n  id: current\n  tickets: {}\n",
+        encoding="utf-8",
     )
     return tmp, project
 
@@ -101,10 +103,12 @@ class TestServe(unittest.TestCase):
         # Minimal markers so build_context returns a non-error brief.
         (self.project / ".planfile" / "sprints").mkdir(parents=True)
         (self.project / ".planfile" / "config.yaml").write_text(
-            "project: test\n", encoding="utf-8",
+            "project: test\n",
+            encoding="utf-8",
         )
         (self.project / ".planfile" / "sprints" / "current.yaml").write_text(
-            "sprint:\n  id: current\n  tickets: {}\n", encoding="utf-8",
+            "sprint:\n  id: current\n  tickets: {}\n",
+            encoding="utf-8",
         )
         self.port = _free_port()
         self.server = _start(self.project, self.port)
@@ -323,10 +327,13 @@ class TestServeReplacePrior(unittest.TestCase):
 
             from koru import serve as serve_mod
 
-            with mock.patch.object(serve_mod, "build_server", side_effect=fake_build), mock.patch.object(
-                serve_mod,
-                "_try_stop_prior_koru_serve_listener",
-                return_value=True,
+            with (
+                mock.patch.object(serve_mod, "build_server", side_effect=fake_build),
+                mock.patch.object(
+                    serve_mod,
+                    "_try_stop_prior_koru_serve_listener",
+                    return_value=True,
+                ),
             ):
                 srv, actual, req = serve_mod.bind_serve_server(cfg)
             self.assertEqual(built["n"], 2)

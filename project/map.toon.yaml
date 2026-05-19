@@ -1,6 +1,6 @@
-# koru | 213f 36805L | yaml:15,yml:8,shell:42,txt:1,json:3,python:127,typescript:6,kotlin:6,properties:1,xml:1,toml:1 | 2026-05-19
-# generated in 0.02s
-# stats: 1237 func | 0 cls | 213 mod | CC̄=4.1 | critical:9 | cycles:0
+# koru | 213f 38941L | yaml:15,yml:8,shell:42,txt:1,json:3,python:127,typescript:6,kotlin:6,properties:1,xml:1,toml:1 | 2026-05-19
+# generated in 0.03s
+# stats: 1240 func | 0 cls | 213 mod | CC̄=4.1 | critical:10 | cycles:0
 # alerts[5]: fan-out _build_handler=34; fan-out _action_up=31; fan-out do_from_todo=24; fan-out init_project=23; fan-out run_cycle=23
 # hotspots[5]: _build_handler fan=34; _action_up fan=31; do_from_todo fan=24; run_cycle fan=23; init_project fan=23
 # evolution: CC̄ 4.2→4.1 (improved -0.1)
@@ -97,29 +97,29 @@ M[213]:
   src/koru/agent_backend_runtime.py,181
   src/koru/agent_backends.py,214
   src/koru/agent_cli_helpers.py,88
-  src/koru/agents.py,317
+  src/koru/agents.py,322
   src/koru/api/__init__.py,9
-  src/koru/autonomous.py,1662
-  src/koru/autonomous_cycle.py,1211
-  src/koru/autonomous_diagnostics.py,250
+  src/koru/autonomous.py,1696
+  src/koru/autonomous_cycle.py,1231
+  src/koru/autonomous_diagnostics.py,254
   src/koru/autonomous_env.py,26
-  src/koru/autonomous_parser.py,398
-  src/koru/autonomous_process_guard.py,219
-  src/koru/autonomous_startup.py,256
-  src/koru/autonomous_wup.py,286
+  src/koru/autonomous_parser.py,394
+  src/koru/autonomous_process_guard.py,224
+  src/koru/autonomous_startup.py,264
+  src/koru/autonomous_wup.py,384
   src/koru/autonomy/__init__.py,25
-  src/koru/autonomy/config.py,121
-  src/koru/autonomy/env.py,248
+  src/koru/autonomy/config.py,122
+  src/koru/autonomy/env.py,300
   src/koru/autonomy/environment.py,246
-  src/koru/autonomy/heal.py,110
-  src/koru/autonomy/ide_work.py,296
-  src/koru/autonomy/operator_pipeline.py,583
-  src/koru/autonomy/post_run_verify.py,379
+  src/koru/autonomy/heal.py,117
+  src/koru/autonomy/ide_work.py,302
+  src/koru/autonomy/operator_pipeline.py,581
+  src/koru/autonomy/post_run_verify.py,382
   src/koru/autonomy/prompts.py,101
   src/koru/autonomy/telemetry_snapshot.py,79
   src/koru/autopilot/__init__.py,18
   src/koru/autopilot/audit.py,9
-  src/koru/autopilot/cli_command.py,1326
+  src/koru/autopilot/cli_command.py,1331
   src/koru/autopilot/client.py,10
   src/koru/autopilot/config.py,9
   src/koru/autopilot/daemon.py,16
@@ -131,29 +131,29 @@ M[213]:
   src/koru/autopilot/protocol.py,48
   src/koru/autopilot/utils/__init__.py,5
   src/koru/autopilot/utils/client_helpers.py,57
-  src/koru/bootstrap.py,446
-  src/koru/cli/__init__.py,55
+  src/koru/bootstrap.py,452
+  src/koru/cli.py,1852
   src/koru/cli/__main__.py,8
   src/koru/cli/commands.py,0
-  src/koru/context.py,1223
-  src/koru/doctor.py,512
+  src/koru/context.py,1230
+  src/koru/doctor.py,514
   src/koru/dotenv_loader.py,104
   src/koru/dsl/__init__.py,9
   src/koru/events.py,90
   src/koru/gate.py,202
   src/koru/gc.py,371
-  src/koru/gc_cli_helpers.py,83
-  src/koru/ide_client.py,145
+  src/koru/gc_cli_helpers.py,82
+  src/koru/ide_client.py,144
   src/koru/ide_router.py,98
   src/koru/ide_runtime.py,44
-  src/koru/init.py,607
-  src/koru/init_host_environment.py,295
+  src/koru/init.py,602
+  src/koru/init_host_environment.py,302
   src/koru/local_service.py,211
   src/koru/loop.py,131
-  src/koru/mcp_provision.py,393
+  src/koru/mcp_provision.py,399
   src/koru/mcp_server.py,9
   src/koru/planfile_queue.py,37
-  src/koru/policy.py,262
+  src/koru/policy.py,263
   src/koru/project_pipeline.py,150
   src/koru/queue/__init__.py,38
   src/koru/queue/human.py,31
@@ -161,41 +161,41 @@ M[213]:
   src/koru/queue/locking.py,87
   src/koru/queue/loop.py,109
   src/koru/queue/planfile_ticket_note.py,56
-  src/koru/queue/runner.py,385
-  src/koru/queue/runners.py,249
+  src/koru/queue/runner.py,394
+  src/koru/queue/runners.py,251
   src/koru/queue/shell_evidence.py,72
   src/koru/queue/ticket.py,138
   src/koru/queue/types.py,88
   src/koru/queue_clean.py,392
-  src/koru/queue_cli_helpers.py,218
+  src/koru/queue_cli_helpers.py,220
   src/koru/redup_integration.py,139
-  src/koru/refactor_planfile_handoff.py,42
+  src/koru/refactor_planfile_handoff.py,46
   src/koru/run_log.py,124
   src/koru/runtime.py,105
-  src/koru/scan.py,918
-  src/koru/semcod_tools.py,143
+  src/koru/scan.py,919
+  src/koru/semcod_tools.py,148
   src/koru/serve.py,9
   src/koru/stdio_events.py,49
-  src/koru/tasks.py,217
+  src/koru/tasks.py,228
   src/koru/tools.py,318
   src/koru/topology.py,415
-  src/koru/topology_cli.py,74
+  src/koru/topology_cli.py,75
   src/koru/utils/__init__.py,5
   src/koru/utils/subprocess_runner.py,40
   src/koru/watch.py,93
   src/koru/wup_testql_compat.py,64
   src/koruapi/__init__.py,25
   src/koruapi/cli.py,128
-  src/koruapi/dashboard.py,91
-  src/koruapi/dashboard_serve.py,1293
+  src/koruapi/dashboard.py,90
+  src/koruapi/dashboard_serve.py,1297
   src/koruapi/integrations.py,198
   src/koruapi/invoke.py,31
-  src/koruapi/invoke_handlers.py,189
+  src/koruapi/invoke_handlers.py,199
   src/koruapi/local.py,36
   src/koruapi/mcp.py,15
-  src/koruapi/mcp_server.py,1028
+  src/koruapi/mcp_server.py,1040
   src/koruapi/openapi.py,155
-  src/koruapi/server.py,171
+  src/koruapi/server.py,175
   src/korudsl/__init__.py,25
   src/korudsl/cli.py,81
   src/korudsl/library.py,207
@@ -204,11 +204,11 @@ M[213]:
   src/koruide/audit.py,154
   src/koruide/client.py,128
   src/koruide/config.py,119
-  src/koruide/daemon.py,706
+  src/koruide/daemon.py,714
   src/koruide/host_setup.py,226
-  src/koruide/ide.py,543
+  src/koruide/ide.py,547
   src/koruide/injector.py,403
-  src/koruide/os_injector.py,392
+  src/koruide/os_injector.py,391
   src/koruide/plugin_installer.py,411
   src/koruide/protocol.py,231
   src/koruide/socket.py,44
@@ -231,6 +231,28 @@ D:
     do_from_todo(heading;check)
     _llm_stub(item;heading;source_name)
     main()
+  src/koru/autonomous_wup.py:
+    e: WupWatchConfig,WupHealthResult,_WupEventState,_wup_stdio_info,_wup_topology_gate,_build_wup_watch_config,_resolve_wup_testql_bin,_wup_cpu_throttle_arg,_wup_watch_command,_wup_autodetect,_wup_config_path,_profiled_compose_services,_ensure_wup_profiled_compose_services,_start_wup_watch,_stop_process,_load_wup_health,_identify_failing_services,_create_wup_diagnostic_tickets,_count_wup_events,_read_wup_health
+    WupWatchConfig:
+    WupHealthResult:
+    _WupEventState(Protocol):
+    _wup_stdio_info(msg)
+    _wup_topology_gate(project;key)
+    _build_wup_watch_config(args;project)
+    _resolve_wup_testql_bin(config)
+    _wup_cpu_throttle_arg(value)
+    _wup_watch_command(config)
+    _wup_autodetect(config)
+    _wup_config_path(config)
+    _profiled_compose_services(config)
+    _ensure_wup_profiled_compose_services(config)
+    _start_wup_watch(config)
+    _stop_process(process;label)
+    _load_wup_health(health_path)
+    _identify_failing_services(health)
+    _create_wup_diagnostic_tickets(health;failing;project;ticket_queue;state_dir;create_diagnostic_ticket)
+    _count_wup_events(events_path;previous_count)
+    _read_wup_health()
   src/koru/autonomous.py:
     e: ExistingAutonomousProcess,ExistingManagedProcess,_try_os_injector_fallback,_stdio_info,_daemon_activity_log,_allow_keyboard_autopilot_fallback,_resolve_autopilot_ide,_apply_agent_lane_environ,_command_project,_process_cwd,_ancestor_pids,_looks_like_autonomous_up_command,_find_existing_autonomous_processes,stop_prior_autonomous_for_auto_start,_find_existing_wup_processes,_as_managed,_terminate_existing_processes,_confirm_replace_existing,_guard_existing_autonomous_processes,_build_parser,_ensure_init,_start_or_reuse_daemon,_status_has_autopilot_plugin,_wait_for_autopilot_plugin,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_compute_backoff_sleep,_load_loop_checkpoint,_save_loop_checkpoint,_status_in_skip_list,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_run_cycle,_setup_autonomous_session,_setup_autopilot_daemon,_configure_loop_state,_run_mcp_provision,_setup_autopilot_plugin,_run_operator_pipeline,_unblock_queue_if_needed,_restart_daemon_if_needed,_handle_cycle_exit_conditions,_cleanup_autonomous_session,_action_up,autonomous_main
     ExistingAutonomousProcess:
@@ -282,23 +304,6 @@ D:
     _cleanup_autonomous_session(previous_stdio_format_env;previous_sigterm;daemon;thread;wup_process;stdio_format)
     _action_up(args)
     autonomous_main(argv)
-  src/koru/autonomous_parser.py:
-    e: build_parser,looks_like_autonomous_up_command
-    build_parser()
-    looks_like_autonomous_up_command(command)
-  src/koru/autonomous_process_guard.py:
-    e: ExistingAutonomousProcess,ExistingManagedProcess,command_project,process_cwd,ancestor_pids,looks_like_autonomous_up_command,find_existing_autonomous_processes,find_existing_wup_processes,as_managed,terminate_existing_processes,confirm_replace_existing
-    ExistingAutonomousProcess:
-    ExistingManagedProcess:
-    command_project(command)
-    process_cwd(pid)
-    ancestor_pids(pid)
-    looks_like_autonomous_up_command(command)
-    find_existing_autonomous_processes(project)
-    find_existing_wup_processes(project)
-    as_managed(proc)
-    terminate_existing_processes(processes)
-    confirm_replace_existing(processes)
   plugins/koru-autopilot-vscode/src/extension.ts:
     i: ./dispatch-plan,./socketPath,fs,net,vscode
     e: Envelope,AutopilotBridge,debugLog,suffix
@@ -306,20 +311,10 @@ D:
     AutopilotBridge: socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),scheduleRetry(-1),delay(-1),cfg(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),editorSnapshot(-1),getProbeCache(-1),raw(-1),next(-1),debugLog(-1),submitChat(-1),ide(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),focusChat(-1),cfg(-1),primary(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),orderWithCache(-1),before(-1),after(-1),debugLog(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),directCommands(-1),orderWithCache(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),detectIde(-1),app(-1),send(-1),line(-1),debugLog(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),plan(-1),saveClipboard(-1),restoreClipboard(-1),sendFocusFailureAck(-1),sendPasteFailureAck(-1),injectChat(-1),text(-1),submit(-1),previous(-1),focus(-1),pasted(-1),submitted(-1),submitResult(-1),message(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),sendManualChat(-1),activate(-1),bridge(-1),text(-1),cfg(-1),cfg(-1),deactivate(-1)
     debugLog()
     suffix()
-  src/koru/init.py:
-    e: InitReport,init_project,refresh_init_agent_lane,_init_auto_agent_lane,_read_persisted_agent_lane,_resolve_init_agent_lane,resolve_project_agent_lane,_write_autopilot_host_setup_script,_write_agent_lane_artifacts,_remove_agent_lane_artifacts,_write_policy_stub_if_absent,_ensure_gitignore_entry
-    InitReport: summary(0)  # Summary of what ``init_project`` actually changed on disk...
-    init_project(project)
-    refresh_init_agent_lane(project)
-    _init_auto_agent_lane(project)
-    _read_persisted_agent_lane(project)
-    _resolve_init_agent_lane(project;agent_lane)
-    resolve_project_agent_lane(project;agent_lane)
-    _write_autopilot_host_setup_script(project)
-    _write_agent_lane_artifacts(project;lane)
-    _remove_agent_lane_artifacts(rt)
-    _write_policy_stub_if_absent(project)
-    _ensure_gitignore_entry(project)
+  src/koru/autonomous_parser.py:
+    e: build_parser,looks_like_autonomous_up_command
+    build_parser()
+    looks_like_autonomous_up_command(command)
   src/koru/context.py:
     e: _is_fixture_ticket,_resolve_include_fixtures,_load_project_dotenv,_planfile_command_base,_planfile_env,_fetch_all_tickets,_run_planfile,_safe_json,_git_probe,_build_ticket_args,_try_fallback_ticket_list,_process_list_payload,_process_dict_payload,_extract_error_from_stderr,_execute_ticket_query,_handle_idle_queue,_parse_ticket_response,_fetch_ticket_data,build_context,_load_sprint_data,_find_blocking_tickets,_promote_blocking_to_critical,_promote_bug_priority,_write_sprint_data,_auto_promote_blocking_tickets,_build_instructions,_build_setup_instructions,_build_shared_rules,_build_self_service,_render_header,_render_environment,_render_agent_lanes,_render_autonomous_mode,_render_ai_tool_support_2026,_render_semcod_tools,_render_setup_required,_render_active_ticket,_render_no_active_ticket,_render_gates,_render_project_pipeline,_render_policy,_render_rules,_render_self_service,_render_dashboard,_render_autonomy_loop_brief,render_markdown_handoff
     _is_fixture_ticket(ticket)
@@ -385,6 +380,161 @@ D:
     _render_apt_suggestion_section(report)
     _render_host_environment_md(report)
     write_host_environment_bundle(project)
+  src/koru/init.py:
+    e: InitReport,init_project,refresh_init_agent_lane,_init_auto_agent_lane,_read_persisted_agent_lane,_resolve_init_agent_lane,resolve_project_agent_lane,_write_autopilot_host_setup_script,_write_agent_lane_artifacts,_remove_agent_lane_artifacts,_write_policy_stub_if_absent,_ensure_gitignore_entry
+    InitReport: summary(0)  # Summary of what ``init_project`` actually changed on disk...
+    init_project(project)
+    refresh_init_agent_lane(project)
+    _init_auto_agent_lane(project)
+    _read_persisted_agent_lane(project)
+    _resolve_init_agent_lane(project;agent_lane)
+    resolve_project_agent_lane(project;agent_lane)
+    _write_autopilot_host_setup_script(project)
+    _write_agent_lane_artifacts(project;lane)
+    _remove_agent_lane_artifacts(rt)
+    _write_policy_stub_if_absent(project)
+    _ensure_gitignore_entry(project)
+  src/koru/autonomous_process_guard.py:
+    e: ExistingAutonomousProcess,ExistingManagedProcess,command_project,process_cwd,ancestor_pids,looks_like_autonomous_up_command,find_existing_autonomous_processes,find_existing_wup_processes,as_managed,terminate_existing_processes,confirm_replace_existing
+    ExistingAutonomousProcess:
+    ExistingManagedProcess:
+    command_project(command)
+    process_cwd(pid)
+    ancestor_pids(pid)
+    looks_like_autonomous_up_command(command)
+    find_existing_autonomous_processes(project)
+    find_existing_wup_processes(project)
+    as_managed(proc)
+    terminate_existing_processes(processes)
+    confirm_replace_existing(processes)
+  src/koruide/host_setup.py:
+    e: _package_manager_hint,_human_followups,build_setup_host_report,_try_apt_install,run_host_setup,_print_setup_host_header,_print_setup_host_backends,_print_setup_host_ides,_print_setup_host_apt_section,_print_setup_host_human_followups,_print_setup_host_install_details,_print_text_report
+    _package_manager_hint()
+    _human_followups(injector;selected)
+    build_setup_host_report()
+    _try_apt_install(packages)
+    run_host_setup()
+    _print_setup_host_header(report)
+    _print_setup_host_backends(report)
+    _print_setup_host_ides(report)
+    _print_setup_host_apt_section(report)
+    _print_setup_host_human_followups(report)
+    _print_setup_host_install_details(report)
+    _print_text_report(report)
+  src/koruide/injector.py:
+    e: BackendStatus,InjectionResult,InjectorError,Injector,_submit_key_for,_which,_session_type,_forced_injector_backend,_ydotool_enter_keycode,_ydotool_submit_mode,_ydotool_ctrl_keycode,_extra_enter_count,_default_runner
+    BackendStatus: to_dict(0)  # Result of probing a single backend...
+    InjectionResult: to_dict(0)
+    InjectorError(RuntimeError):  # No usable backend, or the backend call failed...
+    Injector: probe(0),_candidate_backends(0),select_backend(0),_type_with_backend(3),type_text(1),submit_only(0),_probe_one(1),_call(1),_press_wtype(1)  # Pick the best available backend and type text through it.
+
+P...
+    _submit_key_for(ide)
+    _which(name)
+    _session_type()
+    _forced_injector_backend()
+    _ydotool_enter_keycode()
+    _ydotool_submit_mode()
+    _ydotool_ctrl_keycode()
+    _extra_enter_count()
+    _default_runner(cmd;stdin)
+  src/koru/queue_clean.py:
+    e: CleanupCandidate,CleanupReport,_planfile_base,_parse_age_days,_matched_rules,_cleanable_statuses,_maybe_skip_active_ticket,_candidate_from_ticket,find_candidates,_build_close_note,_list_tickets,_close_ticket,clean_queue
+    CleanupCandidate: explanation(0)  # A planfile ticket selected for cleanup, with the reasons why...
+    CleanupReport: to_dict(0)  # Outcome of a (dry-run or applied) sweep...
+    _planfile_base()
+    _parse_age_days(ticket)
+    _matched_rules(ticket)
+    _cleanable_statuses()
+    _maybe_skip_active_ticket(ticket;ticket_id;status)
+    _candidate_from_ticket(ticket;ticket_id;status)
+    find_candidates(tickets)
+    _build_close_note(candidate;reason)
+    _list_tickets(project;runner)
+    _close_ticket(project;candidate;reason;runner)
+    clean_queue(project)
+  src/koru/cli.py:
+    e: _env_truthy,_command_value,_build_parser,_build_tools_parser,_tools_main,_build_task_parser,_build_serve_parser,_build_local_serve_parser,_build_scan_parser,_render_scan_text,_render_scan_markdown,_scan_main,_build_gate_parser,_gate_main,_build_gc_parser,_gc_main,_build_queue_parser,_render_clean_report_text,_queue_main,_build_agent_parser,_task_main,_serve_main,_local_serve_main,_agent_main,_is_bare_invocation,_build_topology_parser,_render_topology_text,_topology_main,_build_runtime_context_parser,_render_runtime_context_text,_runtime_context_main,_init_ci_main,_mcp_serve_main,_agent_backends_main,_init_ide_main,_refactor_planfile_handoff_main,ide_router_main,_dsl_main,_api_main,_peek_project_from_argv,_auto_main,_doctor_main,_doctor_fix_payload,_render_doctor_with_fix,_init_main,_init_agent_lane_main,_context_main,_bootstrap_main,_watch_main,_queue_run_main,_command_loop_main,main
+    _env_truthy(name)
+    _command_value(value)
+    _build_parser()
+    _build_tools_parser()
+    _tools_main(argv)
+    _build_task_parser()
+    _build_serve_parser()
+    _build_local_serve_parser()
+    _build_scan_parser()
+    _render_scan_text(result)
+    _render_scan_markdown(result)
+    _scan_main(argv)
+    _build_gate_parser()
+    _gate_main(argv)
+    _build_gc_parser()
+    _gc_main(argv)
+    _build_queue_parser()
+    _render_clean_report_text(report)
+    _queue_main(argv)
+    _build_agent_parser()
+    _task_main(argv)
+    _serve_main(argv)
+    _local_serve_main(argv)
+    _agent_main(argv)
+    _is_bare_invocation(args)
+    _build_topology_parser()
+    _render_topology_text(topology)
+    _topology_main(argv)
+    _build_runtime_context_parser()
+    _render_runtime_context_text(context)
+    _runtime_context_main(argv)
+    _init_ci_main(_argv)
+    _mcp_serve_main(argv)
+    _agent_backends_main(argv)
+    _init_ide_main(argv)
+    _refactor_planfile_handoff_main(argv)
+    ide_router_main(argv)
+    _dsl_main(argv)
+    _api_main(argv)
+    _peek_project_from_argv(argv)
+    _auto_main(argv)
+    _doctor_main(args;raw_args)
+    _doctor_fix_payload(report)
+    _render_doctor_with_fix(report;fix_payload)
+    _init_main(args)
+    _init_agent_lane_main(args)
+    _context_main(args)
+    _bootstrap_main(args)
+    _watch_main(args)
+    _queue_run_main(args)
+    _command_loop_main(args)
+    main()
+  src/koruide/os_injector.py:
+    e: OsInjectorError,OsInjectorProfile,default_config_path,iter_config_paths,os_injector_env_disabled,os_injector_env_forced,dry_run_from_env,focus_mode_from_env,input_mode_from_env,_is_wayland_session,_cmd_timeout_seconds,_post_focus_delay_seconds,try_load_profile,_read_json,load_profile,save_profile,profile_from_mouse,capture_mouse_xy,capture_from_xdotool,_run_cmd,_xdotool,_tool_pid,_clipboard_backend,_set_clipboard,inject_with_profile,try_drive_with_profile
+    OsInjectorError(RuntimeError):  # Raised when profile config or xdotool operations fail...
+    OsInjectorProfile:  # Chat anchor: pixel position under the cursor at calibration ...
+    default_config_path()
+    iter_config_paths()
+    os_injector_env_disabled()
+    os_injector_env_forced()
+    dry_run_from_env()
+    focus_mode_from_env()
+    input_mode_from_env()
+    _is_wayland_session()
+    _cmd_timeout_seconds()
+    _post_focus_delay_seconds()
+    try_load_profile(tool_id)
+    _read_json(path)
+    load_profile(tool_id)
+    save_profile(profile)
+    profile_from_mouse(tool_id)
+    capture_mouse_xy()
+    capture_from_xdotool()
+    _run_cmd(cmd)
+    _xdotool(argv_tail)
+    _tool_pid(tool_id)
+    _clipboard_backend()
+    _set_clipboard(text)
+    inject_with_profile()
+    try_drive_with_profile()
   src/koruapi/mcp_server.py:
     e: _get_job_store_path,_load_jobs,_save_jobs,_get_process_memory_mb,_monitor_subprocess_oom,_get_python_cmd,_run_planfile_cli,_parse_tickets_json,_tickets_for_status_filter,_serialize_mcp_ticket,tool_list_tickets,_create_job,_update_job,_collect_process_logs,tool_run_ticket,tool_job_status,_gate_commands,_detect_enabled_gates,_resolve_gates,_run_single_gate,tool_run_quality_gates,_find_ticket,_build_edit_context,tool_propose_edits,_jsonrpc_response,_jsonrpc_error,_handle_initialize,_handle_tools_list,_handle_tools_call,handle_message,run_stdio,_write,_log,mcp_serve_main
     _get_job_store_path(project)
@@ -421,80 +571,6 @@ D:
     _write(payload)
     _log(msg)
     mcp_serve_main(argv)
-  src/koruide/host_setup.py:
-    e: _package_manager_hint,_human_followups,build_setup_host_report,_try_apt_install,run_host_setup,_print_setup_host_header,_print_setup_host_backends,_print_setup_host_ides,_print_setup_host_apt_section,_print_setup_host_human_followups,_print_setup_host_install_details,_print_text_report
-    _package_manager_hint()
-    _human_followups(injector;selected)
-    build_setup_host_report()
-    _try_apt_install(packages)
-    run_host_setup()
-    _print_setup_host_header(report)
-    _print_setup_host_backends(report)
-    _print_setup_host_ides(report)
-    _print_setup_host_apt_section(report)
-    _print_setup_host_human_followups(report)
-    _print_setup_host_install_details(report)
-    _print_text_report(report)
-  src/koruide/injector.py:
-    e: BackendStatus,InjectionResult,InjectorError,Injector,_submit_key_for,_which,_session_type,_forced_injector_backend,_ydotool_enter_keycode,_ydotool_submit_mode,_ydotool_ctrl_keycode,_extra_enter_count,_default_runner
-    BackendStatus: to_dict(0)  # Result of probing a single backend...
-    InjectionResult: to_dict(0)
-    InjectorError(RuntimeError):  # No usable backend, or the backend call failed...
-    Injector: probe(0),_candidate_backends(0),select_backend(0),_type_with_backend(3),type_text(1),submit_only(0),_probe_one(1),_call(1),_press_wtype(1)  # Pick the best available backend and type text through it.
-
-P...
-    _submit_key_for(ide)
-    _which(name)
-    _session_type()
-    _forced_injector_backend()
-    _ydotool_enter_keycode()
-    _ydotool_submit_mode()
-    _ydotool_ctrl_keycode()
-    _extra_enter_count()
-    _default_runner(cmd;stdin)
-  src/koruide/os_injector.py:
-    e: OsInjectorError,OsInjectorProfile,default_config_path,iter_config_paths,os_injector_env_disabled,os_injector_env_forced,dry_run_from_env,focus_mode_from_env,input_mode_from_env,_is_wayland_session,_cmd_timeout_seconds,_post_focus_delay_seconds,try_load_profile,_read_json,load_profile,save_profile,profile_from_mouse,capture_mouse_xy,capture_from_xdotool,_run_cmd,_xdotool,_tool_pid,_clipboard_backend,_set_clipboard,inject_with_profile,try_drive_with_profile
-    OsInjectorError(RuntimeError):  # Raised when profile config or xdotool operations fail...
-    OsInjectorProfile:  # Chat anchor: pixel position under the cursor at calibration ...
-    default_config_path()
-    iter_config_paths()
-    os_injector_env_disabled()
-    os_injector_env_forced()
-    dry_run_from_env()
-    focus_mode_from_env()
-    input_mode_from_env()
-    _is_wayland_session()
-    _cmd_timeout_seconds()
-    _post_focus_delay_seconds()
-    try_load_profile(tool_id)
-    _read_json(path)
-    load_profile(tool_id)
-    save_profile(profile)
-    profile_from_mouse(tool_id)
-    capture_mouse_xy()
-    capture_from_xdotool()
-    _run_cmd(cmd)
-    _xdotool(argv_tail)
-    _tool_pid(tool_id)
-    _clipboard_backend()
-    _set_clipboard(text)
-    inject_with_profile()
-    try_drive_with_profile()
-  src/koru/queue_clean.py:
-    e: CleanupCandidate,CleanupReport,_planfile_base,_parse_age_days,_matched_rules,_cleanable_statuses,_maybe_skip_active_ticket,_candidate_from_ticket,find_candidates,_build_close_note,_list_tickets,_close_ticket,clean_queue
-    CleanupCandidate: explanation(0)  # A planfile ticket selected for cleanup, with the reasons why...
-    CleanupReport: to_dict(0)  # Outcome of a (dry-run or applied) sweep...
-    _planfile_base()
-    _parse_age_days(ticket)
-    _matched_rules(ticket)
-    _cleanable_statuses()
-    _maybe_skip_active_ticket(ticket;ticket_id;status)
-    _candidate_from_ticket(ticket;ticket_id;status)
-    find_candidates(tickets)
-    _build_close_note(candidate;reason)
-    _list_tickets(project;runner)
-    _close_ticket(project;candidate;reason;runner)
-    clean_queue(project)
   src/koru/autonomous_cycle.py:
     e: DiagnosticResult,AutoloopState,_stdio_info,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_status_in_skip_list,_allow_keyboard_autopilot_fallback,_prefer_keyboard_autopilot,_try_os_injector_fallback,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_autopilot_event_path,_drain_autopilot_events,_initialize_cycle_telemetry,_heal_stale_socket,_handle_autopilot_events,_handle_queue_hygiene,_handle_post_run_verify_ide,_handle_scan_phase,_build_queue_command,_run_queue_loop,_emit_queue_iteration_event,_handle_post_run_verify,_handle_queue_loop_phase,_handle_scan_after_idle,_update_stagnation_state,_waiting_ticket_has_label,_handle_diagnostics,_check_autopilot_skip_conditions,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result,_handle_autopilot_phase,_emit_cycle_completion_events,run_cycle
     DiagnosticResult:
@@ -553,26 +629,31 @@ P...
     agent_lane_environment(agent_id)
     format_agent_lane_exports(env)
     launch_agent(agent;project;prompt)
-  src/koru/autonomy/post_run_verify.py:
-    e: _HasIdeVerifyState,PostRunVerifyConfig,_truthy_env,_extract_post_run_verify_block,_parse_verify_commands,_parse_verify_on_failure,_parse_verify_max_output,_parse_verify_ide_settings,load_post_run_verify_config,_parse_iso_datetime,fetch_ticket_status,fetch_recently_done_ticket_ids,_record_verify_outcomes,verify_after_ide_work,run_verify_commands,_truncate,apply_verify_failure,verify_completed_tickets
-    _HasIdeVerifyState(Protocol):
-    PostRunVerifyConfig:
-    _truthy_env(name)
-    _extract_post_run_verify_block(raw)
-    _parse_verify_commands(block)
-    _parse_verify_on_failure(block)
-    _parse_verify_max_output(block)
-    _parse_verify_ide_settings(block)
-    load_post_run_verify_config(project)
-    _parse_iso_datetime(value)
-    fetch_ticket_status(project;ticket_id)
-    fetch_recently_done_ticket_ids(project)
-    _record_verify_outcomes(state;outcomes)
-    verify_after_ide_work(project;state)
-    run_verify_commands(project;commands)
-    _truncate(text;limit)
-    apply_verify_failure(project;ticket_id)
-    verify_completed_tickets(project;ticket_ids)
+  src/koruide/daemon.py:
+    e: _Client,AutopilotDaemon,_env_truthy,_prefer_keyboard_drive,_load_context_module,_default_handoff,_peer_uid
+    _Client:  # In-memory state for one connected socket...
+    AutopilotDaemon: __init__(0),start(0),serve_forever(0),stop(0),_shutdown(0),_accept(0),_on_readable(1),_dispatch(2),_send(2),_drop(1),_plugin_for(1),_handle_drive(2),_drive_via_plugin(5),_try_os_injector_drive(3),_drive_via_keyboard(5),_handle_hello(2),_handle_status(2),_plugin_ack_needs_os_fallback(0),_relay_os_fallback_ack(6),_handle_ack(2),_event_path(0),_append_event(2),_handle_plugin_event(2),_handle_shutdown(2),_handle_ping(2),_build_handler_table(0)  # Selector-based unix-socket broker.
+
+Parameters
+----------
+so...
+    _env_truthy(name)
+    _prefer_keyboard_drive()
+    _load_context_module()
+    _default_handoff(project)
+    _peer_uid(sock)
+  src/koru/queue/runner.py:
+    e: _source_tool,_resolve_executor_kind,_handle_human_ticket,_resolve_ticket_action,_handle_dry_run,_claim_and_start,_execute_action,_append_shell_evidence,_finalize_ticket,run_next_planfile_task
+    _source_tool(ticket)
+    _resolve_executor_kind(ticket;interactive;dry_run)
+    _handle_human_ticket(ticket;ticket_id;interactive;dry_run;project;actor;planfile_runner;prompt_runner)
+    _resolve_ticket_action(ticket;executor_kind)
+    _handle_dry_run(ticket_id;executor_kind;action)
+    _claim_and_start(project;ticket_id;actor;planfile_runner)
+    _execute_action(executor_kind;action;project;ticket_id;api_runner;llm_runner;shell_runner)
+    _append_shell_evidence(project;ticket_id;result;planfile_runner)
+    _finalize_ticket(project;ticket_id;executor_kind;result;action_label;planfile_runner)
+    run_next_planfile_task()
   src/koruapi/dashboard_serve.py:
     e: ServeConfig,_list_tickets,apply_topology_post_update,_bulk_waiting_input_action,_address_in_use,_listener_pids_for_tcp_port,_cmdline_suggests_koru_serve_from_bytes,_cmdline_suggests_koru_serve,_try_stop_prior_koru_serve_listener,serve_endpoint_path,read_serve_endpoint,_build_handler,build_server,write_serve_endpoint_file,bind_serve_server,serve,start_serve_background
     ServeConfig:
@@ -592,19 +673,6 @@ P...
     bind_serve_server(config)
     serve(config)
     start_serve_background(config)
-  src/koruide/daemon.py:
-    e: _Client,AutopilotDaemon,_env_truthy,_prefer_keyboard_drive,_load_context_module,_default_handoff,_peer_uid
-    _Client:  # In-memory state for one connected socket...
-    AutopilotDaemon: __init__(0),start(0),serve_forever(0),stop(0),_shutdown(0),_accept(0),_on_readable(1),_dispatch(2),_send(2),_drop(1),_plugin_for(1),_handle_drive(2),_drive_via_plugin(5),_try_os_injector_drive(3),_drive_via_keyboard(5),_handle_hello(2),_handle_status(2),_plugin_ack_needs_os_fallback(0),_relay_os_fallback_ack(6),_handle_ack(2),_event_path(0),_append_event(2),_handle_plugin_event(2),_handle_shutdown(2),_handle_ping(2),_build_handler_table(0)  # Selector-based unix-socket broker.
-
-Parameters
-----------
-so...
-    _env_truthy(name)
-    _prefer_keyboard_drive()
-    _load_context_module()
-    _default_handoff(project)
-    _peer_uid(sock)
   src/koru/autonomy/environment.py:
     e: IDEPresence,SocketHealth,EnvironmentReport,probe_ide_presence,probe_socket_health,_check_socket_health,_build_fixable_issues,_build_notes,probe_environment
     IDEPresence:  # Per-IDE detection result...
@@ -618,18 +686,6 @@ Designed to ...
     _build_fixable_issues(socket_health;ides)
     _build_notes(headless;ides)
     probe_environment(project)
-  src/koru/queue/runner.py:
-    e: _source_tool,_resolve_executor_kind,_handle_human_ticket,_resolve_ticket_action,_handle_dry_run,_claim_and_start,_execute_action,_append_shell_evidence,_finalize_ticket,run_next_planfile_task
-    _source_tool(ticket)
-    _resolve_executor_kind(ticket;interactive;dry_run)
-    _handle_human_ticket(ticket;ticket_id;interactive;dry_run;project;actor;planfile_runner;prompt_runner)
-    _resolve_ticket_action(ticket;executor_kind)
-    _handle_dry_run(ticket_id;executor_kind;action)
-    _claim_and_start(project;ticket_id;actor;planfile_runner)
-    _execute_action(executor_kind;action;project;ticket_id;api_runner;llm_runner;shell_runner)
-    _append_shell_evidence(project;ticket_id;result;planfile_runner)
-    _finalize_ticket(project;ticket_id;executor_kind;result;action_label;planfile_runner)
-    run_next_planfile_task()
   src/koru/autopilot/cli_command.py:
     e: _resolve_session_ides,_action_calibrate,_capture_ide_profile,_detect_duplicate_coordinates,_action_session_start,_build_parser,_client,_action_daemon,_auto_direct_fallback_enabled,_should_fallback_to_direct,_print_drive_delay_message,_handle_os_injector_fallback,_run_direct_drive,_action_drive,_action_status,_action_shutdown,_action_ide_list,_doctor_fix_payload,_render_doctor_session_info,_render_doctor_backends,_render_doctor_ides,_render_doctor_fix_steps,_render_doctor_text,_render_doctor_json,_action_doctor,_action_setup_host,_plugin_repo_dir,_resolve_plugin_vsix_path,_ide_from_terminal_env,_resolve_plugin_target_ide,_resolve_plugin_editor_bin,_render_install_plugin_dry_run,_render_install_plugin_result,_action_install_plugin,_build_brief,_action_handoff,_format_tail_entry,_render_tail_json,_render_tail_text,_action_tail,_systemd_user_dir,_resolve_koru_bin,_render_unit,_action_install_unit,autopilot_main
     _resolve_session_ides(raw)
@@ -677,6 +733,26 @@ Designed to ...
     _render_unit(koru_bin)
     _action_install_unit(args)
     autopilot_main(argv)
+  src/koru/autonomy/post_run_verify.py:
+    e: _HasIdeVerifyState,PostRunVerifyConfig,_truthy_env,_extract_post_run_verify_block,_parse_verify_commands,_parse_verify_on_failure,_parse_verify_max_output,_parse_verify_ide_settings,load_post_run_verify_config,_parse_iso_datetime,fetch_ticket_status,fetch_recently_done_ticket_ids,_record_verify_outcomes,verify_after_ide_work,run_verify_commands,_truncate,apply_verify_failure,verify_completed_tickets
+    _HasIdeVerifyState(Protocol):
+    PostRunVerifyConfig:
+    _truthy_env(name)
+    _extract_post_run_verify_block(raw)
+    _parse_verify_commands(block)
+    _parse_verify_on_failure(block)
+    _parse_verify_max_output(block)
+    _parse_verify_ide_settings(block)
+    load_post_run_verify_config(project)
+    _parse_iso_datetime(value)
+    fetch_ticket_status(project;ticket_id)
+    fetch_recently_done_ticket_ids(project)
+    _record_verify_outcomes(state;outcomes)
+    verify_after_ide_work(project;state)
+    run_verify_commands(project;commands)
+    _truncate(text;limit)
+    apply_verify_failure(project;ticket_id)
+    verify_completed_tickets(project;ticket_ids)
   src/koruide/ide.py:
     e: RunningIDE,_iter_proc_pids,_read_comm,_read_cmdline,_read_exe,_matches,_score_comm_name,_score_exe_path,_score_cmdline_flags,_candidate_score,detect_running_ides,_active_window_pid_x11,_ide_id_from_process,detect_focused_ide_id,_vscode_family_env_present,_vscode_family_flavor_from_env,_terminal_ide_from_env,_terminal_ide_from_parent_chain,detect_terminal_host_ide_id,focused_ide,pick_target,is_linux,detect_running_ides_cached,clear_detect_cache,_has_os_injector_profile,_auto_profile_candidate_ids,_resolve_explicit_drive_target,_resolve_auto_drive_target,resolve_drive_target
     RunningIDE: to_dict(0)  # A single IDE process discovered on the system...
@@ -781,13 +857,6 @@ Designed to ...
     message_sent()
     message_received()
     status_error()
-  src/koru/gc_cli_helpers.py:
-    e: gc_statuses_from_args,gc_result_to_json,print_gc_text_report,emit_gc_management_event,print_gc_report
-    gc_statuses_from_args(status_csv)
-    gc_result_to_json(result)
-    print_gc_text_report(result)
-    emit_gc_management_event(args;result)
-    print_gc_report(args;result)
   src/koru/gate.py:
     e: GateAuthorization,parse_authorizations,_resolve_actor,_planfile_base,authorize_gate
     GateAuthorization: to_note(0)  # Parsed gate-authorization record extracted from a ticket not...
@@ -804,25 +873,6 @@ Designed to ...
     discover_repositories(workspace;include_pattern)
     _default_runner(command;repository)
     run_closed_loop()
-  src/koru/tasks.py:
-    e: CreatedTask,_generate_ticket_id,_build_ticket_labels,_build_ticket_source,_build_ticket_inputs,_build_ticket_dict,create_nl_task,_title_from_text,_read_config,_read_sprint,_write_yaml
-    CreatedTask:
-    _generate_ticket_id(config_path;project_name)
-    _build_ticket_labels(scaffold)
-    _build_ticket_source(scaffold;text;now)
-    _build_ticket_inputs(scaffold;text)
-    _build_ticket_dict(ticket_id;name;text;priority;sprint;queue_name;labels;source;inputs;executor_kind;executor_mode;files;now)
-    create_nl_task(project;text)
-    _title_from_text(text)
-    _read_config(path)
-    _read_sprint(path)
-    _write_yaml(path;data)
-  src/koru/queue/loop.py:
-    e: run_planfile_queue_loop
-    run_planfile_queue_loop()
-  scripts/_koru_autodiag_filter_tickets.py:
-    e: main
-    main()
   src/koru/topology.py:
     e: ToggleResult,topology_path,_read_yaml,_merge_components,_merge_pipelines,load_topology,_strip_to_persisted,save_topology,_toggle,set_component_enabled,set_pipeline_enabled,is_component_enabled,is_pipeline_enabled,enabled_components_for_pipeline,default_component_ids,default_pipeline_ids
     ToggleResult:  # Outcome of a single enable/disable mutation...
@@ -841,19 +891,19 @@ Designed to ...
     enabled_components_for_pipeline(project;pipeline_id)
     default_component_ids()
     default_pipeline_ids()
-  src/koru/autonomy/ide_work.py:
-    e: extract_ticket_id_from_text,_parse_open_tickets,fetch_next_open_ticket,build_ide_work_prompt,resolve_idle_drive_prompt,_parse_iso_datetime,_ticket_in_progress_started_at,_list_in_progress_tickets,release_stale_in_progress_tickets,resolve_in_progress_stale_minutes,release_in_progress_tickets
-    extract_ticket_id_from_text(text)
-    _parse_open_tickets(stdout)
-    fetch_next_open_ticket(project)
-    build_ide_work_prompt(ticket)
-    resolve_idle_drive_prompt(project)
-    _parse_iso_datetime(value)
-    _ticket_in_progress_started_at(ticket)
-    _list_in_progress_tickets(project)
-    release_stale_in_progress_tickets(project)
-    resolve_in_progress_stale_minutes(project)
-    release_in_progress_tickets(project)
+  src/koru/queue/loop.py:
+    e: run_planfile_queue_loop
+    run_planfile_queue_loop()
+  scripts/_koru_autodiag_filter_tickets.py:
+    e: main
+    main()
+  src/koru/gc_cli_helpers.py:
+    e: gc_statuses_from_args,gc_result_to_json,print_gc_text_report,emit_gc_management_event,print_gc_report
+    gc_statuses_from_args(status_csv)
+    gc_result_to_json(result)
+    print_gc_text_report(result)
+    emit_gc_management_event(args;result)
+    print_gc_report(args;result)
   src/koru/autonomy/env.py:
     e: env_truthy,effective_ticket_source_flags,_env_ticket_sources,_env_get,_apply_ticket_and_diagnostics_env,_apply_autopilot_env,_apply_scan_env,_apply_wup_env,_apply_operator_env,apply_autoloop_env_to_args,autonomous_environ_doctor_probe
     env_truthy(name;default)
@@ -867,6 +917,32 @@ Designed to ...
     _apply_operator_env(args;environ)
     apply_autoloop_env_to_args(args)
     autonomous_environ_doctor_probe(project)
+  src/koru/tasks.py:
+    e: CreatedTask,_generate_ticket_id,_build_ticket_labels,_build_ticket_source,_build_ticket_inputs,_build_ticket_dict,create_nl_task,_title_from_text,_read_config,_read_sprint,_write_yaml
+    CreatedTask:
+    _generate_ticket_id(config_path;project_name)
+    _build_ticket_labels(scaffold)
+    _build_ticket_source(scaffold;text;now)
+    _build_ticket_inputs(scaffold;text)
+    _build_ticket_dict(ticket_id;name;text;priority;sprint;queue_name;labels;source;inputs;executor_kind;executor_mode;files;now)
+    create_nl_task(project;text)
+    _title_from_text(text)
+    _read_config(path)
+    _read_sprint(path)
+    _write_yaml(path;data)
+  src/koru/autonomy/ide_work.py:
+    e: extract_ticket_id_from_text,_parse_open_tickets,fetch_next_open_ticket,build_ide_work_prompt,resolve_idle_drive_prompt,_parse_iso_datetime,_ticket_in_progress_started_at,_list_in_progress_tickets,release_stale_in_progress_tickets,resolve_in_progress_stale_minutes,release_in_progress_tickets
+    extract_ticket_id_from_text(text)
+    _parse_open_tickets(stdout)
+    fetch_next_open_ticket(project)
+    build_ide_work_prompt(ticket)
+    resolve_idle_drive_prompt(project)
+    _parse_iso_datetime(value)
+    _ticket_in_progress_started_at(ticket)
+    _list_in_progress_tickets(project)
+    release_stale_in_progress_tickets(project)
+    resolve_in_progress_stale_minutes(project)
+    release_in_progress_tickets(project)
   services/healing-webhook/app.py:
     e: _rate_limit_ok,_record_action,_enrich_ticket_with_vallm,_build_planfile_command,_extract_ticket_id_from_stdout,_execute_planfile_create,create_planfile_ticket,_run_docker,heal_redsl_gate,heal_redsl_improve,heal_rebuild_restore,heal_annotate,_run_vallm_check,_run_vallm_validate,_resolve_affected_files,heal_vallm_validate,_parse_redup_summary,_update_redup_metrics,_run_redup_check,heal_redup_check,_resolve_strategy,healthz,metrics,get_history,alertmanager_webhook,probe_failure,get_tickets
     _rate_limit_ok()
@@ -927,26 +1003,6 @@ Designed to ...
     _parse_lane(raw)
     load_agent_integration_config(project)
     validate_agent_integration_config(config)
-  src/koru/autonomous_diagnostics.py:
-    e: build_idle_checks,run_idle_check_loop,create_diagnostic_ticket,clear_diagnostic_marker,run_command_check,read_wup_health,run_idle_diagnostics
-    build_idle_checks(project;profile)
-    run_idle_check_loop()
-    create_diagnostic_ticket()
-    clear_diagnostic_marker(state_dir;check_id)
-    run_command_check()
-    read_wup_health()
-    run_idle_diagnostics()
-  src/koru/autonomous_startup.py:
-    e: AutonomousStartupProbe,koru_distribution_version,_session_label,_terminal_agent_lane_from_env,resolve_agent_lane_id,resolve_autopilot_ide_for_autonomous,build_startup_probe,format_startup_banner,format_post_startup_operator_hints
-    AutonomousStartupProbe:
-    koru_distribution_version()
-    _session_label()
-    _terminal_agent_lane_from_env()
-    resolve_agent_lane_id(project;agent_lane_cli)
-    resolve_autopilot_ide_for_autonomous(autopilot_ide_cli;lane)
-    build_startup_probe(project)
-    format_startup_banner(probe)
-    format_post_startup_operator_hints(probe)
   src/koru/tools.py:
     e: default_registry_path,resolve_registry_path,load_tool_registry,_first_token,_extract_detect_config,_check_commands_exist,_check_markers_exist,_check_env_vars_exist,_build_detection_result,detect_tools,find_tool_entry,infer_adapter_kind,_extract_tool_metadata,_validate_adapter_kind,_build_scaffold_prompt_lines,_build_scaffold_labels,_build_scaffold_inputs,build_tool_task_scaffold,render_tools_detect_text
     default_registry_path()
@@ -983,6 +1039,15 @@ Designed to ...
     _archive_tickets_before_delete(to_remove;project;sprint)
     _delete_tickets(to_remove;project;planfile_runner)
     run_gc(project)
+  src/koru/autonomous_diagnostics.py:
+    e: build_idle_checks,run_idle_check_loop,create_diagnostic_ticket,clear_diagnostic_marker,run_command_check,read_wup_health,run_idle_diagnostics
+    build_idle_checks(project;profile)
+    run_idle_check_loop()
+    create_diagnostic_ticket()
+    clear_diagnostic_marker(state_dir;check_id)
+    run_command_check()
+    read_wup_health()
+    run_idle_diagnostics()
   src/koru/doctor.py:
     e: Check,DoctorReport,run_diagnostics,_check_agent_backends_registry,_check_git_repo,_check_planfile_binary,_planfile_version_argv,_check_koru_package_version,_check_planfile_cli_version,_check_planfile_config,_check_planfile_sprints,_check_planfile_sprints_yaml,_check_runtime_dir,_check_koru_project_pipeline,_check_policy_yaml,_check_gitignore,_resolve_pytest_collect_timeout,_check_pytest_collect,_check_ci_command,render_text
     Check: to_dict(0)  # A single diagnostic outcome...
@@ -1005,6 +1070,17 @@ Designed to ...
     _check_pytest_collect(project)
     _check_ci_command(project)
     render_text(report)
+  src/koru/autonomous_startup.py:
+    e: AutonomousStartupProbe,koru_distribution_version,_session_label,_terminal_agent_lane_from_env,resolve_agent_lane_id,resolve_autopilot_ide_for_autonomous,build_startup_probe,format_startup_banner,format_post_startup_operator_hints
+    AutonomousStartupProbe:
+    koru_distribution_version()
+    _session_label()
+    _terminal_agent_lane_from_env()
+    resolve_agent_lane_id(project;agent_lane_cli)
+    resolve_autopilot_ide_for_autonomous(autopilot_ide_cli;lane)
+    build_startup_probe(project)
+    format_startup_banner(probe)
+    format_post_startup_operator_hints(probe)
   src/koruide/plugin_installer.py:
     e: PluginInstallResult,_valid_ide,_ide_from_terminal_env,_terminal_vscode_flavor,resolve_target_ide,resolve_extension_vsix,_resolve_ide_command,_settings_path_for_ide,_configure_socket_path,_run,_env_reassert_extension_install,_extension_is_installed,_reassert_extension_extra,_result_already_installed,_install_extension_vsix,install_plugin_for_ide,format_plugin_install_result
     PluginInstallResult: to_dict(0)
@@ -1024,36 +1100,11 @@ Designed to ...
     _install_extension_vsix(target;command;vsix)
     install_plugin_for_ide()
     format_plugin_install_result(result)
-  src/koru/bootstrap.py:
-    e: ValidationError,ImportReport,load_flat_pipeline,_validate_id,_validate_name,_validate_status,_validate_priority,_validate_executor,_validate_execution_state,_validate_blocked_by,_validate_task,_validate_cross_task_dependencies,validate_flat_pipeline,_detect_cycle,materialize_to_planfile,_normalise_task,_next_id_after,import_flat_pipeline,_infer_prefix
-    ValidationError: __str__(0)
-    ImportReport: summary(0)
-    load_flat_pipeline(path)
-    _validate_id(task;seen_ids)
-    _validate_name(task)
-    _validate_status(task)
-    _validate_priority(task)
-    _validate_executor(task)
-    _validate_execution_state(task)
-    _validate_blocked_by(task)
-    _validate_task(task;seen_ids)
-    _validate_cross_task_dependencies(tasks)
-    validate_flat_pipeline(tasks)
-    _detect_cycle(tasks)
-    materialize_to_planfile(flat_tasks;project_dir)
-    _normalise_task(task)
-    _next_id_after(tasks;prefix)
-    import_flat_pipeline(flat_path;project_dir)
-    _infer_prefix(tasks)
   src/koru/agent_cli_helpers.py:
     e: try_agent_env_exports,print_agent_list,run_agent_handoff
     try_agent_env_exports(args)
     print_agent_list(args;agents)
     run_agent_handoff(project;args)
-  src/koru/autonomy/prompts.py:
-    e: PromptDecision,build_prompt
-    PromptDecision:  # Result of building a prompt for autopilot.send_chat...
-    build_prompt()
   src/koru/queue/ticket.py:
     e: parse_next_ticket,ticket_command,ticket_llm_request,ticket_api_request,planfile_command,result_json
     parse_next_ticket(stdout)
@@ -1085,6 +1136,31 @@ Designed to ...
     _apply_target(ide;project)
     _render_results(results;output_format)
     init_ide_main(argv)
+  src/koru/bootstrap.py:
+    e: ValidationError,ImportReport,load_flat_pipeline,_validate_id,_validate_name,_validate_status,_validate_priority,_validate_executor,_validate_execution_state,_validate_blocked_by,_validate_task,_validate_cross_task_dependencies,validate_flat_pipeline,_detect_cycle,materialize_to_planfile,_normalise_task,_next_id_after,import_flat_pipeline,_infer_prefix
+    ValidationError: __str__(0)
+    ImportReport: summary(0)
+    load_flat_pipeline(path)
+    _validate_id(task;seen_ids)
+    _validate_name(task)
+    _validate_status(task)
+    _validate_priority(task)
+    _validate_executor(task)
+    _validate_execution_state(task)
+    _validate_blocked_by(task)
+    _validate_task(task;seen_ids)
+    _validate_cross_task_dependencies(tasks)
+    validate_flat_pipeline(tasks)
+    _detect_cycle(tasks)
+    materialize_to_planfile(flat_tasks;project_dir)
+    _normalise_task(task)
+    _next_id_after(tasks;prefix)
+    import_flat_pipeline(flat_path;project_dir)
+    _infer_prefix(tasks)
+  src/koru/autonomy/prompts.py:
+    e: PromptDecision,build_prompt
+    PromptDecision:  # Result of building a prompt for autopilot.send_chat...
+    build_prompt()
   src/korudsl/library.py:
     e: ensure_library_structure,_start_goal,_handle_func,_handle_set,_handle_wait,_handle_get,_handle_save,_handle_if,_handle_error,_handle_correct,_apply_prefixed_line,normalize_dsl_to_library,convert_goals_json_to_library,_emit_step,_emit_objective,_emit_functions,_emit_goal,_emit_goals,library_to_dsl
     ensure_library_structure(library)
@@ -1106,14 +1182,6 @@ Designed to ...
     _emit_goal(goal)
     _emit_goals(lib)
     library_to_dsl(library)
-  src/koruapi/server.py:
-    e: KoruAPIHandler,_json_response,_read_json_body,_parse_invoke_request,_handle_invoke_post,serve
-    KoruAPIHandler(BaseHTTPRequestHandler): log_message(1),do_GET(0),do_POST(0)
-    _json_response(handler;status;payload)
-    _read_json_body(handler)
-    _parse_invoke_request(body;default_project)
-    _handle_invoke_post(handler)
-    serve()
   src/koru/watch.py:
     e: _format_connected_event,_format_management_event,_format_ticket_event,format_queue_event,_default_connect,watch_planfile_events
     _format_connected_event(event)
@@ -1122,18 +1190,6 @@ Designed to ...
     format_queue_event(event)
     _default_connect(ws_url)
     watch_planfile_events(ws_url)
-  src/koru/policy.py:
-    e: Policy,policy_path,load_policy,_check_git_commit_policy,_check_git_push_policy,_check_git_branch_create_policy,_check_git_branch_switch_policy,_check_git_tag_policy,_check_destructive_shell_policy,policy_violations
-    Policy: to_dict(0)  # Resolved policy for an LLM agent operating on a koru project...
-    policy_path(project)
-    load_policy(project)
-    _check_git_commit_policy(policy;command;violations)
-    _check_git_push_policy(policy;command;violations)
-    _check_git_branch_create_policy(policy;command;violations)
-    _check_git_branch_switch_policy(policy;command;violations)
-    _check_git_tag_policy(policy;command;violations)
-    _check_destructive_shell_policy(policy;command;violations)
-    policy_violations(policy;command)
   src/koru/project_pipeline.py:
     e: project_pipeline_path,default_koru_project_pipeline_text,write_koru_project_pipeline_if_absent,load_koru_project_pipeline,build_project_pipeline_brief
     project_pipeline_path(project)
@@ -1141,25 +1197,6 @@ Designed to ...
     write_koru_project_pipeline_if_absent(project)
     load_koru_project_pipeline(project)
     build_project_pipeline_brief(project)
-  src/koru/autonomous_wup.py:
-    e: WupWatchConfig,WupHealthResult,_WupEventState,_wup_stdio_info,_wup_topology_gate,_build_wup_watch_config,_resolve_wup_testql_bin,_wup_cpu_throttle_arg,_wup_watch_command,_wup_autodetect,_start_wup_watch,_stop_process,_load_wup_health,_identify_failing_services,_create_wup_diagnostic_tickets,_count_wup_events,_read_wup_health
-    WupWatchConfig:
-    WupHealthResult:
-    _WupEventState(Protocol):
-    _wup_stdio_info(msg)
-    _wup_topology_gate(project;key)
-    _build_wup_watch_config(args;project)
-    _resolve_wup_testql_bin(config)
-    _wup_cpu_throttle_arg(value)
-    _wup_watch_command(config)
-    _wup_autodetect(config)
-    _start_wup_watch(config)
-    _stop_process(process;label)
-    _load_wup_health(health_path)
-    _identify_failing_services(health)
-    _create_wup_diagnostic_tickets(health;failing;project;ticket_queue;state_dir;create_diagnostic_ticket)
-    _count_wup_events(events_path;previous_count)
-    _read_wup_health()
   src/koru/agent_backend_runtime.py:
     e: AgentBackend,PluginSocketBackend,McpToolBackend,NoopBackend,OsInjectorBackend,build_agent_backend
     AgentBackend(Protocol): send_chat(2)  # Push a prompt toward the agent UI (chat / drive session) for...
@@ -1170,19 +1207,6 @@ No soc...
     NoopBackend: send_chat(2)  # Explicit no-op backend for headless / smoke / CI runs...
     OsInjectorBackend: send_chat(2)  # Coordinate-based fallback backend (X11 + xdotool)...
     build_agent_backend()
-  src/koru/queue/runners.py:
-    e: _planfile_env,run_process,run_shell_command,run_api_request,_resolve_llm_endpoint_and_key,_build_llm_messages,_build_llm_request_body,_build_llm_headers,_parse_llm_response,_handle_llm_error,run_llm_request
-    _planfile_env()
-    run_process(command;project)
-    run_shell_command(command;project)
-    run_api_request(request;_project)
-    _resolve_llm_endpoint_and_key(request)
-    _build_llm_messages(request)
-    _build_llm_request_body(request;model;messages)
-    _build_llm_headers(endpoint;api_key)
-    _parse_llm_response(response;model)
-    _handle_llm_error(exc;model)
-    run_llm_request(request;_project)
   plugins/koru-autopilot-vscode/src/probe-ladder.ts:
     e: EditorSnapshot,ProbeCacheEntry,ProbeAttemptResult,PROBE_CACHE_VERSION,captureEditorSnapshot,scheme,isFileLike,chatFocusHeuristic,verifyFocusAfterOpen,pasteLandedInEditor,trimmed,wasInBefore,isInAfter,orderWithCache,rest,mergeUnique,seen,buildFocusOpenCommands,defaults,buildFocusInputCommands,buildPasteDirectCommands,buildSubmitCommands,filterRegistered,loadProbeCache,entry,makeProbeCache,mergeProbeCache
     EditorSnapshot:
@@ -1249,6 +1273,39 @@ No soc...
     _create_ticket()
     _handle_existing_finding()
     main()
+  src/koru/policy.py:
+    e: Policy,policy_path,load_policy,_check_git_commit_policy,_check_git_push_policy,_check_git_branch_create_policy,_check_git_branch_switch_policy,_check_git_tag_policy,_check_destructive_shell_policy,policy_violations
+    Policy: to_dict(0)  # Resolved policy for an LLM agent operating on a koru project...
+    policy_path(project)
+    load_policy(project)
+    _check_git_commit_policy(policy;command;violations)
+    _check_git_push_policy(policy;command;violations)
+    _check_git_branch_create_policy(policy;command;violations)
+    _check_git_branch_switch_policy(policy;command;violations)
+    _check_git_tag_policy(policy;command;violations)
+    _check_destructive_shell_policy(policy;command;violations)
+    policy_violations(policy;command)
+  src/koruapi/server.py:
+    e: KoruAPIHandler,_json_response,_read_json_body,_parse_invoke_request,_handle_invoke_post,serve
+    KoruAPIHandler(BaseHTTPRequestHandler): log_message(1),do_GET(0),do_POST(0)
+    _json_response(handler;status;payload)
+    _read_json_body(handler)
+    _parse_invoke_request(body;default_project)
+    _handle_invoke_post(handler)
+    serve()
+  src/koru/queue/runners.py:
+    e: _planfile_env,run_process,run_shell_command,run_api_request,_resolve_llm_endpoint_and_key,_build_llm_messages,_build_llm_request_body,_build_llm_headers,_parse_llm_response,_handle_llm_error,run_llm_request
+    _planfile_env()
+    run_process(command;project)
+    run_shell_command(command;project)
+    run_api_request(request;_project)
+    _resolve_llm_endpoint_and_key(request)
+    _build_llm_messages(request)
+    _build_llm_request_body(request;model;messages)
+    _build_llm_headers(endpoint;api_key)
+    _parse_llm_response(response;model)
+    _handle_llm_error(exc;model)
+    run_llm_request(request;_project)
   src/koru/ide_router.py:
     e: IDERoute,is_headless_environment,resolve_ide_route
     IDERoute:  # Resolved routing decision for one Koru process...
@@ -1289,6 +1346,19 @@ No soc...
     build_local_service_server(config)
     run_local_service(config)
     start_local_service_background(config)
+  src/koru/dotenv_loader.py:
+    e: _parse_value,parse_dotenv,load_dotenv
+    _parse_value(raw)
+    parse_dotenv(text)
+    load_dotenv(project)
+  src/koru/queue/shell_evidence.py:
+    e: _tail_stream,format_shell_run_note
+    _tail_stream(text;limit)
+    format_shell_run_note()
+  plugins/koru-autopilot-vscode/src/dispatch-plan.ts:
+    e: EnvelopeLike,planDispatch
+    EnvelopeLike:
+    planDispatch()
   src/koru/queue_cli_helpers.py:
     e: queue_status_marker,queue_loop_exit_code,single_task_ticket_lists,emit_queue_run_started,open_queue_run_log,_queue_progress_callback,_emit_queue_completed,run_queue_loop_mode,_single_task_summary,run_queue_single_mode
     queue_status_marker(status)
@@ -1307,30 +1377,17 @@ No soc...
     _read_pyproject(project)
     _config_present(pyproject;tool_id)
     detect_semcod_tools(project)
-  src/koru/dotenv_loader.py:
-    e: _parse_value,parse_dotenv,load_dotenv
-    _parse_value(raw)
-    parse_dotenv(text)
-    load_dotenv(project)
-  src/koru/queue/shell_evidence.py:
-    e: _tail_stream,format_shell_run_note
-    _tail_stream(text;limit)
-    format_shell_run_note()
-  plugins/koru-autopilot-vscode/src/dispatch-plan.ts:
-    e: EnvelopeLike,planDispatch
-    EnvelopeLike:
-    planDispatch()
   src/koruapi/local.py:
     e: build_local_parser,local_main
     build_local_parser()
     local_main(argv)
-  src/koru/refactor_planfile_handoff.py:
-    e: render_planfile_refactor_handoff
-    render_planfile_refactor_handoff(project)
   src/koruide/socket.py:
     e: _autopilot_socket_basename,default_socket_path
     _autopilot_socket_basename()
     default_socket_path()
+  src/koru/refactor_planfile_handoff.py:
+    e: render_planfile_refactor_handoff
+    render_planfile_refactor_handoff(project)
   src/koruide/audit.py:
     e: _JSONFormatter,AuditLog,default_log_path,_isoformat_utc
     _JSONFormatter(logging.Formatter): format(1)  # Emit ``record.msg`` verbatim — we hand it in pre-serialised...
@@ -1339,6 +1396,33 @@ No soc...
 Construct once ...
     default_log_path()
     _isoformat_utc(ts)
+  src/koru/ide_runtime.py:
+    e: build_host_setup_report,detect_running_ides
+    build_host_setup_report()
+    detect_running_ides()
+  src/koru/activity_log.py:
+    e: activity_enabled,preview_text,_out_stream,activity,activity_info
+    activity_enabled()
+    preview_text(text)
+    _out_stream(fmt)
+    activity(category;message)
+    activity_info(msg)
+  src/koru/queue/koru_queue_argv.py:
+    e: build_koru_queue_argv
+    build_koru_queue_argv(project)
+  src/koru/queue/human.py:
+    e: default_human_prompt
+    default_human_prompt(prompt;ticket_id)
+  src/koru/queue/planfile_ticket_note.py:
+    e: _stderr_unknown_option,append_shell_evidence_note
+    _stderr_unknown_option(stderr;flag)
+    append_shell_evidence_note(project;ticket_id;note)
+  src/koru/wup_testql_compat.py:
+    e: _normalize_timeout,_normalize_args,_real_testql,main
+    _normalize_timeout(value)
+    _normalize_args(args)
+    _real_testql()
+    main(argv)
   src/koruapi/dashboard.py:
     e: _env_truthy,build_serve_parser,dashboard_main
     _env_truthy(name)
@@ -1362,44 +1446,17 @@ Construct once ...
     _handle_mcp_list_tickets(project;_method;payload)
     _handle_mcp_run_ticket(project;_method;payload)
     _handle_mcp_quality_gates(project;_method;payload)
-  src/koru/ide_runtime.py:
-    e: build_host_setup_report,detect_running_ides
-    build_host_setup_report()
-    detect_running_ides()
-  src/koru/activity_log.py:
-    e: activity_enabled,preview_text,_out_stream,activity,activity_info
-    activity_enabled()
-    preview_text(text)
-    _out_stream(fmt)
-    activity(category;message)
-    activity_info(msg)
+  src/koru/autonomy/telemetry_snapshot.py:
+    e: autonomy_telemetry_path,write_autonomy_cycle_telemetry,build_autonomy_loop_brief
+    autonomy_telemetry_path(project)
+    write_autonomy_cycle_telemetry(project)
+    build_autonomy_loop_brief(project)
   src/koru/autonomy/heal.py:
     e: RepairResult,remove_stale_socket,heal_environment,summarise
     RepairResult:  # Outcome of one self-heal action...
     remove_stale_socket(socket)
     heal_environment(report)
     summarise(results)
-  src/koru/queue/koru_queue_argv.py:
-    e: build_koru_queue_argv
-    build_koru_queue_argv(project)
-  src/koru/queue/human.py:
-    e: default_human_prompt
-    default_human_prompt(prompt;ticket_id)
-  src/koru/queue/planfile_ticket_note.py:
-    e: _stderr_unknown_option,append_shell_evidence_note
-    _stderr_unknown_option(stderr;flag)
-    append_shell_evidence_note(project;ticket_id;note)
-  src/koru/wup_testql_compat.py:
-    e: _normalize_timeout,_normalize_args,_real_testql,main
-    _normalize_timeout(value)
-    _normalize_args(args)
-    _real_testql()
-    main(argv)
-  src/koru/autonomy/telemetry_snapshot.py:
-    e: autonomy_telemetry_path,write_autonomy_cycle_telemetry,build_autonomy_loop_brief
-    autonomy_telemetry_path(project)
-    write_autonomy_cycle_telemetry(project)
-    build_autonomy_loop_brief(project)
   src/koruapi/invoke.py:
     e: invoke_integration
     invoke_integration(integration_id)
@@ -1408,10 +1465,6 @@ Construct once ...
     IntegrationSpec:  # One invokable integration exposed via :mod:`koruapi`...
     list_integrations()
     get_integration(integration_id)
-  src/koru/cli/__init__.py:
-    e: _load_legacy_cli_module,__getattr__
-    _load_legacy_cli_module()
-    __getattr__(name)
   src/koru/run_log.py:
     e: RunLogWriter,open_run_log,open_run_log_eagerly,_iso
     RunLogWriter: _emit(1),write_header(0),write_iteration(0),write_footer(0)  # Append-only JSONL writer with best-effort durability.
@@ -1420,10 +1473,6 @@ The c...
     open_run_log(project)
     open_run_log_eagerly(project)
     _iso(epoch)
-  src/koru/autonomy/config.py:
-    e: AutonomyConfig
-    AutonomyConfig: from_env(0)  # Configuration for autonomous loop (unified shell + Python).
-...
   src/koru/queue/locking.py:
     e: queue_lock_wanted,queue_runner_lock,claim_lease_seconds_str,ticket_claim_or_error
     queue_lock_wanted()
@@ -1454,14 +1503,10 @@ The c...
     candidates()
     testSocketCandidatesPreferOverrideThenDefaults()
     candidates()
-  src/koru/ide_client.py:
-    e: IDEControlClient,LegacyAutopilotClientAdapter,adapt_legacy_autopilot_client,build_legacy_ide_client,build_koruide_client,build_ide_client
-    IDEControlClient(Protocol): is_running(0),drive(1),status(0),shutdown(0)  # Minimal interface `koru` runtime code expects from an IDE cl...
-    LegacyAutopilotClientAdapter: is_running(0),drive(1),status(0),shutdown(0)  # Expose legacy :class:`AutopilotClient` through :class:`IDECo...
-    adapt_legacy_autopilot_client(client)
-    build_legacy_ide_client()
-    build_koruide_client()
-    build_ide_client()
+  src/koru/autonomy/config.py:
+    e: AutonomyConfig
+    AutonomyConfig: from_env(0)  # Configuration for autonomous loop (unified shell + Python).
+...
   src/koru/stdio_events.py:
     e: iso_ts,write_stdio_event,default_stdio_format_from_env
     iso_ts()
@@ -1472,6 +1517,14 @@ The c...
     default_subprocess_runner(cmd;cwd)
     resolve_planfile_subpath(project)
     get_python_cmd(project)
+  src/koru/ide_client.py:
+    e: IDEControlClient,LegacyAutopilotClientAdapter,adapt_legacy_autopilot_client,build_legacy_ide_client,build_koruide_client,build_ide_client
+    IDEControlClient(Protocol): is_running(0),drive(1),status(0),shutdown(0)  # Minimal interface `koru` runtime code expects from an IDE cl...
+    LegacyAutopilotClientAdapter: is_running(0),drive(1),status(0),shutdown(0)  # Expose legacy :class:`AutopilotClient` through :class:`IDECo...
+    adapt_legacy_autopilot_client(client)
+    build_legacy_ide_client()
+    build_koruide_client()
+    build_ide_client()
   src/koruapi/mcp.py:
     e: mcp_main
     mcp_main(argv)

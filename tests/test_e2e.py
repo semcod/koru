@@ -15,7 +15,7 @@ import subprocess
 import tempfile
 import textwrap
 import unittest
-from datetime import datetime, timedelta, timezone, UTC
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest import mock
 
@@ -32,6 +32,7 @@ _HAS_PLANFILE = shutil.which("planfile") is not None
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _tmp_git_project(prefix: str = "koru-e2e-") -> Path:
     """Create a temp directory and ``git init`` it."""
@@ -68,7 +69,8 @@ def _write_sprint(project: Path, tickets: dict, sprint: str = "current") -> None
         },
     }
     (sprint_dir / f"{sprint}.yaml").write_text(
-        yaml.safe_dump(data, sort_keys=False), encoding="utf-8",
+        yaml.safe_dump(data, sort_keys=False),
+        encoding="utf-8",
     )
 
 
@@ -77,11 +79,14 @@ def _write_config(project: Path, prefix: str = "E2E", next_id: int = 1) -> None:
     cfg_dir = project / ".planfile"
     cfg_dir.mkdir(parents=True, exist_ok=True)
     (cfg_dir / "config.yaml").write_text(
-        yaml.safe_dump({
-            "project": "e2e-test",
-            "prefix": prefix,
-            "next_id": next_id,
-        }, sort_keys=False),
+        yaml.safe_dump(
+            {
+                "project": "e2e-test",
+                "prefix": prefix,
+                "next_id": next_id,
+            },
+            sort_keys=False,
+        ),
         encoding="utf-8",
     )
 
@@ -115,7 +120,7 @@ def _extract_json(text: str) -> dict:
     parses from there.
     """
     for i, ch in enumerate(text):
-        if ch in ('{', '['):
+        if ch in ("{", "["):
             return json.loads(text[i:])
     raise ValueError(f"no JSON found in: {text[:200]}")
 
@@ -123,6 +128,7 @@ def _extract_json(text: str) -> dict:
 # ===========================================================================
 # E2E: Init → Doctor → Context → Task
 # ===========================================================================
+
 
 class TestE2EInitDoctorContext(unittest.TestCase):
     """Full lifecycle: init → doctor → bare koru → context JSON."""
@@ -151,7 +157,11 @@ class TestE2EInitDoctorContext(unittest.TestCase):
     def test_init_then_context_json_has_policy(self) -> None:
         _init_project(self.project)
         code, out, _ = _run_main(
-            "--context", "--project", str(self.project), "--format", "json",
+            "--context",
+            "--project",
+            str(self.project),
+            "--format",
+            "json",
         )
         self.assertEqual(code, 0)
         data = _extract_json(out)
@@ -161,7 +171,11 @@ class TestE2EInitDoctorContext(unittest.TestCase):
     def test_init_then_context_markdown_has_ticket(self) -> None:
         _init_project(self.project)
         code, out, _ = _run_main(
-            "--context", "--project", str(self.project), "--format", "markdown",
+            "--context",
+            "--project",
+            str(self.project),
+            "--format",
+            "markdown",
         )
         self.assertEqual(code, 0)
         # The starter scaffold includes STARTER-001
@@ -170,7 +184,11 @@ class TestE2EInitDoctorContext(unittest.TestCase):
     def test_doctor_json_format(self) -> None:
         _init_project(self.project)
         code, out, _ = _run_main(
-            "--doctor", "--project", str(self.project), "--format", "json",
+            "--doctor",
+            "--project",
+            str(self.project),
+            "--format",
+            "json",
         )
         self.assertEqual(code, 0)
         data = json.loads(out)
@@ -193,6 +211,7 @@ class TestE2EInitDoctorContext(unittest.TestCase):
 # E2E: Task creation
 # ===========================================================================
 
+
 class TestE2ETask(unittest.TestCase):
     """koru task "..." creates a ticket in the sprint YAML."""
 
@@ -205,8 +224,10 @@ class TestE2ETask(unittest.TestCase):
 
     def test_task_creates_ticket(self) -> None:
         code, out, _ = _run_main(
-            "task", "Fix the login form validation",
-            "--project", str(self.project),
+            "task",
+            "Fix the login form validation",
+            "--project",
+            str(self.project),
         )
         self.assertEqual(code, 0, f"task failed: {out}")
         self.assertIn("✓ created", out)
@@ -226,8 +247,9 @@ class TestE2ETask(unittest.TestCase):
         )
         tickets = sprint["sprint"]["tickets"]
         # Should have at least the starter + 2 new tasks
-        nl_tickets = [t for t in tickets.values()
-                      if t.get("source", {}).get("tool") == "koru-cli-nl"]
+        nl_tickets = [
+            t for t in tickets.values() if t.get("source", {}).get("tool") == "koru-cli-nl"
+        ]
         self.assertEqual(len(nl_tickets), 2)
 
     def test_task_empty_text_fails(self) -> None:
@@ -236,9 +258,12 @@ class TestE2ETask(unittest.TestCase):
 
     def test_task_with_priority(self) -> None:
         code, out, _ = _run_main(
-            "task", "Urgent bug fix",
-            "--project", str(self.project),
-            "--priority", "critical",
+            "task",
+            "Urgent bug fix",
+            "--project",
+            str(self.project),
+            "--priority",
+            "critical",
         )
         self.assertEqual(code, 0)
         sprint = yaml.safe_load(
@@ -251,9 +276,12 @@ class TestE2ETask(unittest.TestCase):
 
     def test_task_with_tool_scaffold(self) -> None:
         code, out, _ = _run_main(
-            "task", "Prepare Gemini adapter",
-            "--project", str(self.project),
-            "--tool", "gemini-cli",
+            "task",
+            "Prepare Gemini adapter",
+            "--project",
+            str(self.project),
+            "--tool",
+            "gemini-cli",
         )
         self.assertEqual(code, 0, out)
         self.assertIn("tool:  gemini-cli", out)
@@ -262,7 +290,8 @@ class TestE2ETask(unittest.TestCase):
         )
         tickets = sprint["sprint"]["tickets"]
         matches = [
-            t for t in tickets.values()
+            t
+            for t in tickets.values()
             if t.get("source", {}).get("tool") == "koru-cli-tool-adapter"
             and t.get("source", {}).get("context", {}).get("tool_id") == "gemini-cli"
         ]
@@ -273,9 +302,12 @@ class TestE2ETask(unittest.TestCase):
 
     def test_task_with_plugin_bridge_scaffold(self) -> None:
         code, out, _ = _run_main(
-            "task", "Prepare Copilot plugin bridge",
-            "--project", str(self.project),
-            "--tool", "github-copilot",
+            "task",
+            "Prepare Copilot plugin bridge",
+            "--project",
+            str(self.project),
+            "--tool",
+            "github-copilot",
         )
         self.assertEqual(code, 0, out)
         sprint = yaml.safe_load(
@@ -283,7 +315,8 @@ class TestE2ETask(unittest.TestCase):
         )
         tickets = sprint["sprint"]["tickets"]
         matches = [
-            t for t in tickets.values()
+            t
+            for t in tickets.values()
             if t.get("source", {}).get("tool") == "koru-cli-plugin-bridge"
             and t.get("source", {}).get("context", {}).get("tool_id") == "github-copilot"
         ]
@@ -297,30 +330,34 @@ class TestE2ETask(unittest.TestCase):
 # E2E: GC lifecycle
 # ===========================================================================
 
+
 class TestE2EGc(unittest.TestCase):
     """koru gc: dry-run, apply, archive, keep-last."""
 
     def setUp(self) -> None:
         self.project = _tmp_git_project("koru-e2e-gc-")
         _write_config(self.project, prefix="GC")
-        _write_sprint(self.project, {
-            "GC-001": _done_ticket("Old finished task 1", days_ago=60),
-            "GC-002": _done_ticket("Old finished task 2", days_ago=45),
-            "GC-003": _done_ticket("Recent done task", days_ago=5),
-            "GC-004": {
-                "name": "Open task (active)",
-                "status": "open",
-                "execution": {"state": "ready"},
-            },
-            "GC-005": {
-                "name": "Failed old task",
-                "status": "failed",
-                "execution": {
-                    "state": "failed",
-                    "finished_at": _ts(90),
+        _write_sprint(
+            self.project,
+            {
+                "GC-001": _done_ticket("Old finished task 1", days_ago=60),
+                "GC-002": _done_ticket("Old finished task 2", days_ago=45),
+                "GC-003": _done_ticket("Recent done task", days_ago=5),
+                "GC-004": {
+                    "name": "Open task (active)",
+                    "status": "open",
+                    "execution": {"state": "ready"},
+                },
+                "GC-005": {
+                    "name": "Failed old task",
+                    "status": "failed",
+                    "execution": {
+                        "state": "failed",
+                        "finished_at": _ts(90),
+                    },
                 },
             },
-        })
+        )
 
     def tearDown(self) -> None:
         shutil.rmtree(self.project, ignore_errors=True)
@@ -336,8 +373,13 @@ class TestE2EGc(unittest.TestCase):
 
     def test_gc_dry_run_json(self) -> None:
         code, out, _ = _run_main(
-            "gc", "--project", str(self.project),
-            "--max-age", "30", "--format", "json",
+            "gc",
+            "--project",
+            str(self.project),
+            "--max-age",
+            "30",
+            "--format",
+            "json",
         )
         self.assertEqual(code, 0)
         data = json.loads(out)
@@ -349,9 +391,15 @@ class TestE2EGc(unittest.TestCase):
 
     def test_gc_keep_last_protects_newest(self) -> None:
         code, out, _ = _run_main(
-            "gc", "--project", str(self.project),
-            "--max-age", "30", "--keep-last", "1",
-            "--format", "json",
+            "gc",
+            "--project",
+            str(self.project),
+            "--max-age",
+            "30",
+            "--keep-last",
+            "1",
+            "--format",
+            "json",
         )
         data = json.loads(out)
         self.assertIn("GC-002", data["kept"])  # newest of old done tickets
@@ -359,9 +407,15 @@ class TestE2EGc(unittest.TestCase):
 
     def test_gc_custom_statuses(self) -> None:
         code, out, _ = _run_main(
-            "gc", "--project", str(self.project),
-            "--max-age", "30", "--status", "failed",
-            "--format", "json",
+            "gc",
+            "--project",
+            str(self.project),
+            "--max-age",
+            "30",
+            "--status",
+            "failed",
+            "--format",
+            "json",
         )
         data = json.loads(out)
         removed = data["removed"]
@@ -370,7 +424,11 @@ class TestE2EGc(unittest.TestCase):
 
     def test_gc_no_stale_tickets_message(self) -> None:
         code, out, _ = _run_main(
-            "gc", "--project", str(self.project), "--max-age", "999",
+            "gc",
+            "--project",
+            str(self.project),
+            "--max-age",
+            "999",
         )
         self.assertEqual(code, 0)
         self.assertIn("no stale tickets", out)
@@ -381,8 +439,13 @@ class TestE2EGc(unittest.TestCase):
 
         with mock.patch("koru.gc._run_planfile", return_value=fake_result):
             code, out, _ = _run_main(
-                "gc", "--project", str(self.project),
-                "--max-age", "30", "--apply", "--no-archive",
+                "gc",
+                "--project",
+                str(self.project),
+                "--max-age",
+                "30",
+                "--apply",
+                "--no-archive",
             )
         self.assertEqual(code, 0)
         self.assertIn("APPLIED", out)
@@ -391,6 +454,7 @@ class TestE2EGc(unittest.TestCase):
 # ===========================================================================
 # E2E: Scan
 # ===========================================================================
+
 
 class TestE2EScan(unittest.TestCase):
     """koru scan detects project issues and suggests tickets."""
@@ -417,7 +481,10 @@ class TestE2EScan(unittest.TestCase):
             self._marker_fixture(*markers),
         )
         code, out, _ = _run_main(
-            "scan", "--project", str(self.project), "--skip-pytest",
+            "scan",
+            "--project",
+            str(self.project),
+            "--skip-pytest",
         )
         self.assertEqual(code, 0)
         self.assertIn("messy.py", out)
@@ -427,8 +494,12 @@ class TestE2EScan(unittest.TestCase):
             self._marker_fixture("TO" + "DO", "FIX" + "ME", "X" * 3),
         )
         code, out, _ = _run_main(
-            "scan", "--project", str(self.project),
-            "--skip-pytest", "--format", "json",
+            "scan",
+            "--project",
+            str(self.project),
+            "--skip-pytest",
+            "--format",
+            "json",
         )
         self.assertEqual(code, 0)
         data = json.loads(out)
@@ -440,8 +511,14 @@ class TestE2EScan(unittest.TestCase):
                 self._marker_fixture("TO" + "DO", "FIX" + "ME", "X" * 3),
             )
         code, out, _ = _run_main(
-            "scan", "--project", str(self.project),
-            "--skip-pytest", "--limit", "2", "--format", "json",
+            "scan",
+            "--project",
+            str(self.project),
+            "--skip-pytest",
+            "--limit",
+            "2",
+            "--format",
+            "json",
         )
         data = json.loads(out)
         self.assertLessEqual(len(data["suggestions"]), 2)
@@ -450,15 +527,18 @@ class TestE2EScan(unittest.TestCase):
         """A well-set-up project should have few or no suggestions."""
         (self.project / ".gitignore").write_text(".planfile/.koru/\n")
         code, out, _ = _run_main(
-            "scan", "--project", str(self.project),
-            "--skip-pytest", "--format", "json",
+            "scan",
+            "--project",
+            str(self.project),
+            "--skip-pytest",
+            "--format",
+            "json",
         )
         self.assertEqual(code, 0)
         data = json.loads(out)
         # Gitignore drift should not fire since it's present
         gitignore_suggestions = [
-            s for s in data["suggestions"]
-            if s.get("signal") == "gitignore_drift"
+            s for s in data["suggestions"] if s.get("signal") == "gitignore_drift"
         ]
         self.assertEqual(gitignore_suggestions, [])
 
@@ -467,6 +547,7 @@ class TestE2EScan(unittest.TestCase):
 # E2E: Queue loop with shell ticket
 # ===========================================================================
 
+
 @unittest.skipUnless(_HAS_PLANFILE, "planfile binary not in PATH")
 class TestE2EQueueLoop(unittest.TestCase):
     """koru --queue processes shell tickets end-to-end."""
@@ -474,27 +555,30 @@ class TestE2EQueueLoop(unittest.TestCase):
     def setUp(self) -> None:
         self.project = _tmp_git_project("koru-e2e-loop-")
         _write_config(self.project, prefix="LOOP")
-        _write_sprint(self.project, {
-            "LOOP-001": {
-                "id": "LOOP-001",
-                "name": "Echo smoke test",
-                "status": "open",
-                "priority": "high",
-                "sprint": "current",
-                "labels": ["koru-task"],
-                "executor": {
-                    "kind": "shell",
-                    "mode": "automatic",
-                    "handler": "echo LOOP_PASS",
-                },
-                "execution": {
-                    "queue": "default",
-                    "state": "ready",
-                    "attempt": 0,
-                    "max_attempts": 1,
+        _write_sprint(
+            self.project,
+            {
+                "LOOP-001": {
+                    "id": "LOOP-001",
+                    "name": "Echo smoke test",
+                    "status": "open",
+                    "priority": "high",
+                    "sprint": "current",
+                    "labels": ["koru-task"],
+                    "executor": {
+                        "kind": "shell",
+                        "mode": "automatic",
+                        "handler": "echo LOOP_PASS",
+                    },
+                    "execution": {
+                        "queue": "default",
+                        "state": "ready",
+                        "attempt": 0,
+                        "max_attempts": 1,
+                    },
                 },
             },
-        })
+        )
 
     def tearDown(self) -> None:
         shutil.rmtree(self.project, ignore_errors=True)
@@ -503,7 +587,10 @@ class TestE2EQueueLoop(unittest.TestCase):
         # Verifies queue finds the ticket and reports it in dry-run mode.
         # Executor kind depends on planfile JSON output (may vary).
         code, out, _ = _run_main(
-            "--queue", "--project", str(self.project), "--dry-run",
+            "--queue",
+            "--project",
+            str(self.project),
+            "--dry-run",
         )
         self.assertEqual(code, 0, f"dry-run failed: {out}")
         self.assertIn("LOOP-001", out)
@@ -512,7 +599,11 @@ class TestE2EQueueLoop(unittest.TestCase):
         # Verifies queue finds and processes a ticket.
         # The specific status depends on whether planfile returns executor info.
         code, out, _ = _run_main(
-            "--queue", "--project", str(self.project), "--actor", "e2e-test",
+            "--queue",
+            "--project",
+            str(self.project),
+            "--actor",
+            "e2e-test",
         )
         self.assertEqual(code, 0, f"queue failed: {out}")
         self.assertIn("LOOP-001", out)
@@ -523,11 +614,16 @@ class TestE2EQueueLoop(unittest.TestCase):
         )
 
     def test_queue_idle_when_no_runnable_tickets(self) -> None:
-        _write_sprint(self.project, {
-            "LOOP-099": _done_ticket("Already done", days_ago=1),
-        })
+        _write_sprint(
+            self.project,
+            {
+                "LOOP-099": _done_ticket("Already done", days_ago=1),
+            },
+        )
         code, out, _ = _run_main(
-            "--queue", "--project", str(self.project),
+            "--queue",
+            "--project",
+            str(self.project),
         )
         self.assertEqual(code, 0)
         self.assertIn("idle", out)
@@ -537,6 +633,7 @@ class TestE2EQueueLoop(unittest.TestCase):
 # E2E: Queue loop mode (--loop)
 # ===========================================================================
 
+
 @unittest.skipUnless(_HAS_PLANFILE, "planfile binary not in PATH")
 class TestE2EQueueLoopMode(unittest.TestCase):
     """koru --queue --loop drains multiple tickets."""
@@ -544,46 +641,49 @@ class TestE2EQueueLoopMode(unittest.TestCase):
     def setUp(self) -> None:
         self.project = _tmp_git_project("koru-e2e-lmode-")
         _write_config(self.project, prefix="LM", next_id=3)
-        _write_sprint(self.project, {
-            "LM-001": {
-                "id": "LM-001",
-                "name": "Step 1",
-                "status": "open",
-                "priority": "high",
-                "sprint": "current",
-                "labels": [],
-                "executor": {
-                    "kind": "shell",
-                    "mode": "automatic",
-                    "handler": "echo STEP1",
+        _write_sprint(
+            self.project,
+            {
+                "LM-001": {
+                    "id": "LM-001",
+                    "name": "Step 1",
+                    "status": "open",
+                    "priority": "high",
+                    "sprint": "current",
+                    "labels": [],
+                    "executor": {
+                        "kind": "shell",
+                        "mode": "automatic",
+                        "handler": "echo STEP1",
+                    },
+                    "execution": {
+                        "queue": "default",
+                        "state": "ready",
+                        "attempt": 0,
+                        "max_attempts": 1,
+                    },
                 },
-                "execution": {
-                    "queue": "default",
-                    "state": "ready",
-                    "attempt": 0,
-                    "max_attempts": 1,
+                "LM-002": {
+                    "id": "LM-002",
+                    "name": "Step 2",
+                    "status": "open",
+                    "priority": "normal",
+                    "sprint": "current",
+                    "labels": [],
+                    "executor": {
+                        "kind": "shell",
+                        "mode": "automatic",
+                        "handler": "echo STEP2",
+                    },
+                    "execution": {
+                        "queue": "default",
+                        "state": "ready",
+                        "attempt": 0,
+                        "max_attempts": 1,
+                    },
                 },
             },
-            "LM-002": {
-                "id": "LM-002",
-                "name": "Step 2",
-                "status": "open",
-                "priority": "normal",
-                "sprint": "current",
-                "labels": [],
-                "executor": {
-                    "kind": "shell",
-                    "mode": "automatic",
-                    "handler": "echo STEP2",
-                },
-                "execution": {
-                    "queue": "default",
-                    "state": "ready",
-                    "attempt": 0,
-                    "max_attempts": 1,
-                },
-            },
-        })
+        )
 
     def tearDown(self) -> None:
         shutil.rmtree(self.project, ignore_errors=True)
@@ -593,8 +693,14 @@ class TestE2EQueueLoopMode(unittest.TestCase):
         # The loop may stop at first human-like ticket or process all shell
         # tickets depending on planfile JSON output.
         code, out, _ = _run_main(
-            "--queue", "--loop", "--max-iterations", "10",
-            "--project", str(self.project), "--actor", "e2e-loop",
+            "--queue",
+            "--loop",
+            "--max-iterations",
+            "10",
+            "--project",
+            str(self.project),
+            "--actor",
+            "e2e-loop",
         )
         self.assertEqual(code, 0, f"loop failed: {out}")
         # At least first ticket should be found
@@ -602,8 +708,14 @@ class TestE2EQueueLoopMode(unittest.TestCase):
 
     def test_loop_reports_completed_count(self) -> None:
         code, out, _ = _run_main(
-            "--queue", "--loop", "--max-iterations", "10",
-            "--project", str(self.project), "--actor", "e2e-loop",
+            "--queue",
+            "--loop",
+            "--max-iterations",
+            "10",
+            "--project",
+            str(self.project),
+            "--actor",
+            "e2e-loop",
         )
         self.assertIn("completed", out.lower())
 
@@ -612,6 +724,7 @@ class TestE2EQueueLoopMode(unittest.TestCase):
 # E2E: Bootstrap import
 # ===========================================================================
 
+
 class TestE2EBootstrap(unittest.TestCase):
     """koru --bootstrap imports a flat pipeline YAML."""
 
@@ -619,7 +732,8 @@ class TestE2EBootstrap(unittest.TestCase):
         self.project = _tmp_git_project("koru-e2e-bs-")
         # Create a minimal flat pipeline (flat format uses 'tasks:' key)
         self.pipeline = self.project / "pipeline.yaml"
-        self.pipeline.write_text(textwrap.dedent("""\
+        self.pipeline.write_text(
+            textwrap.dedent("""\
             project: e2e-bootstrap
             version: "1.0"
             prefix: BS
@@ -634,7 +748,8 @@ class TestE2EBootstrap(unittest.TestCase):
                 priority: normal
                 executor: {kind: shell, mode: automatic, handler: "date"}
                 execution: {queue: default, state: ready}
-        """))
+        """)
+        )
 
     def tearDown(self) -> None:
         shutil.rmtree(self.project, ignore_errors=True)
@@ -642,9 +757,12 @@ class TestE2EBootstrap(unittest.TestCase):
     def test_bootstrap_creates_planfile_structure(self) -> None:
         code, out, _ = _run_main(
             "--bootstrap",
-            "--from", str(self.pipeline),
-            "--project", str(self.project),
-            "--sprint", "current",
+            "--from",
+            str(self.pipeline),
+            "--project",
+            str(self.project),
+            "--sprint",
+            "current",
         )
         self.assertEqual(code, 0, f"bootstrap failed: {out}")
         self.assertIn("imported", out)
@@ -654,9 +772,12 @@ class TestE2EBootstrap(unittest.TestCase):
     def test_bootstrap_ticket_count(self) -> None:
         _run_main(
             "--bootstrap",
-            "--from", str(self.pipeline),
-            "--project", str(self.project),
-            "--sprint", "current",
+            "--from",
+            str(self.pipeline),
+            "--project",
+            str(self.project),
+            "--sprint",
+            "current",
         )
         sprint = yaml.safe_load(
             (self.project / ".planfile/sprints/current.yaml").read_text(),
@@ -667,13 +788,17 @@ class TestE2EBootstrap(unittest.TestCase):
     def test_bootstrap_rejects_without_force(self) -> None:
         _run_main(
             "--bootstrap",
-            "--from", str(self.pipeline),
-            "--project", str(self.project),
+            "--from",
+            str(self.pipeline),
+            "--project",
+            str(self.project),
         )
         code, out, err = _run_main(
             "--bootstrap",
-            "--from", str(self.pipeline),
-            "--project", str(self.project),
+            "--from",
+            str(self.pipeline),
+            "--project",
+            str(self.project),
         )
         self.assertEqual(code, 1)
         self.assertIn("already exists", out + err)
@@ -681,13 +806,17 @@ class TestE2EBootstrap(unittest.TestCase):
     def test_bootstrap_force_overwrites(self) -> None:
         _run_main(
             "--bootstrap",
-            "--from", str(self.pipeline),
-            "--project", str(self.project),
+            "--from",
+            str(self.pipeline),
+            "--project",
+            str(self.project),
         )
         code, out, _ = _run_main(
             "--bootstrap",
-            "--from", str(self.pipeline),
-            "--project", str(self.project),
+            "--from",
+            str(self.pipeline),
+            "--project",
+            str(self.project),
             "--force",
         )
         self.assertEqual(code, 0)
@@ -698,36 +827,45 @@ class TestE2EBootstrap(unittest.TestCase):
 # E2E: Gate authorization
 # ===========================================================================
 
+
 class TestE2EGate(unittest.TestCase):
     """koru gate authorize writes a structured note."""
 
     def setUp(self) -> None:
         self.project = _tmp_git_project("koru-e2e-gate-")
         _write_config(self.project, prefix="GT")
-        _write_sprint(self.project, {
-            "GT-001": {
-                "id": "GT-001",
-                "name": "Gate target ticket",
-                "status": "in_progress",
-                "priority": "high",
-                "sprint": "current",
-                "execution": {
-                    "queue": "default",
-                    "state": "running",
+        _write_sprint(
+            self.project,
+            {
+                "GT-001": {
+                    "id": "GT-001",
+                    "name": "Gate target ticket",
+                    "status": "in_progress",
+                    "priority": "high",
+                    "sprint": "current",
+                    "execution": {
+                        "queue": "default",
+                        "state": "running",
+                    },
+                    "outputs": {"notes": [], "artifacts": []},
                 },
-                "outputs": {"notes": [], "artifacts": []},
             },
-        })
+        )
 
     def tearDown(self) -> None:
         shutil.rmtree(self.project, ignore_errors=True)
 
     def test_gate_authorize_dry_run(self) -> None:
         code, out, _ = _run_main(
-            "gate", "authorize", "GT-001",
-            "--mode", "advisory",
-            "--reason", "targeted pytest passed",
-            "--project", str(self.project),
+            "gate",
+            "authorize",
+            "GT-001",
+            "--mode",
+            "advisory",
+            "--reason",
+            "targeted pytest passed",
+            "--project",
+            str(self.project),
         )
         # Gate may fail if planfile binary is not available, but the CLI
         # should at least parse args and attempt the operation
@@ -735,11 +873,17 @@ class TestE2EGate(unittest.TestCase):
 
     def test_gate_authorize_json_format(self) -> None:
         code, out, _ = _run_main(
-            "gate", "authorize", "GT-001",
-            "--mode", "advisory",
-            "--reason", "CI subset passed",
-            "--project", str(self.project),
-            "--format", "json",
+            "gate",
+            "authorize",
+            "GT-001",
+            "--mode",
+            "advisory",
+            "--reason",
+            "CI subset passed",
+            "--project",
+            str(self.project),
+            "--format",
+            "json",
         )
         self.assertIsInstance(code, int)
         # If successful, output should be valid JSON
@@ -751,6 +895,7 @@ class TestE2EGate(unittest.TestCase):
 # ===========================================================================
 # E2E: Full lifecycle — init → task → queue → gc
 # ===========================================================================
+
 
 class TestE2EFullLifecycle(unittest.TestCase):
     """Simulate a complete project lifecycle through the CLI."""
@@ -772,14 +917,20 @@ class TestE2EFullLifecycle(unittest.TestCase):
 
         # 3. Create a task
         code, out, _ = _run_main(
-            "task", "Add unit tests for auth module",
-            "--project", str(self.project),
+            "task",
+            "Add unit tests for auth module",
+            "--project",
+            str(self.project),
         )
         self.assertEqual(code, 0, f"task: {out}")
 
         # 4. Context shows the task
         code, out, _ = _run_main(
-            "--context", "--project", str(self.project), "--format", "json",
+            "--context",
+            "--project",
+            str(self.project),
+            "--format",
+            "json",
         )
         self.assertEqual(code, 0)
         ctx = _extract_json(out)
@@ -787,14 +938,22 @@ class TestE2EFullLifecycle(unittest.TestCase):
 
         # 5. Scan the project
         code, out, _ = _run_main(
-            "scan", "--project", str(self.project),
-            "--skip-pytest", "--format", "json",
+            "scan",
+            "--project",
+            str(self.project),
+            "--skip-pytest",
+            "--format",
+            "json",
         )
         self.assertEqual(code, 0)
 
         # 6. GC with nothing stale yet
         code, out, _ = _run_main(
-            "gc", "--project", str(self.project), "--max-age", "30",
+            "gc",
+            "--project",
+            str(self.project),
+            "--max-age",
+            "30",
         )
         self.assertEqual(code, 0)
         self.assertIn("no stale tickets", out)
@@ -804,13 +963,15 @@ class TestE2EFullLifecycle(unittest.TestCase):
 # E2E: Init with custom pipeline
 # ===========================================================================
 
+
 class TestE2EInitFromPipeline(unittest.TestCase):
     """koru --init --from <yaml> imports a custom pipeline."""
 
     def setUp(self) -> None:
         self.project = _tmp_git_project("koru-e2e-initfrom-")
         self.pipeline = self.project / "custom.yaml"
-        self.pipeline.write_text(textwrap.dedent("""\
+        self.pipeline.write_text(
+            textwrap.dedent("""\
             project: custom-pipeline
             prefix: CUST
             tasks:
@@ -819,15 +980,19 @@ class TestE2EInitFromPipeline(unittest.TestCase):
                 priority: high
                 executor: {kind: shell, mode: automatic, handler: "echo lint"}
                 execution: {queue: default, state: ready}
-        """))
+        """)
+        )
 
     def tearDown(self) -> None:
         shutil.rmtree(self.project, ignore_errors=True)
 
     def test_init_from_custom_pipeline(self) -> None:
         code, out, err = _run_main(
-            "--init", "--project", str(self.project),
-            "--from", str(self.pipeline),
+            "--init",
+            "--project",
+            str(self.project),
+            "--from",
+            str(self.pipeline),
         )
         self.assertEqual(code, 0, f"init --from failed: {out}{err}")
         sprint = yaml.safe_load(
@@ -844,6 +1009,7 @@ class TestE2EInitFromPipeline(unittest.TestCase):
 # E2E: Queue with human ticket → waiting_input
 # ===========================================================================
 
+
 @unittest.skipUnless(_HAS_PLANFILE, "planfile binary not in PATH")
 class TestE2EHumanTicket(unittest.TestCase):
     """koru --queue on a human ticket returns waiting_input."""
@@ -851,37 +1017,44 @@ class TestE2EHumanTicket(unittest.TestCase):
     def setUp(self) -> None:
         self.project = _tmp_git_project("koru-e2e-human-")
         _write_config(self.project, prefix="HUM")
-        _write_sprint(self.project, {
-            "HUM-001": {
-                "id": "HUM-001",
-                "name": "Provide API key",
-                "status": "open",
-                "priority": "high",
-                "sprint": "current",
-                "executor": {
-                    "kind": "human",
-                    "mode": "interactive",
-                    "handler": "password",
-                },
-                "execution": {
-                    "queue": "default",
-                    "state": "ready",
-                    "attempt": 0,
-                    "max_attempts": 1,
-                },
-                "inputs": {
-                    "prompt": "Enter the API key",
-                    "env_keys": ["API_KEY"],
+        _write_sprint(
+            self.project,
+            {
+                "HUM-001": {
+                    "id": "HUM-001",
+                    "name": "Provide API key",
+                    "status": "open",
+                    "priority": "high",
+                    "sprint": "current",
+                    "executor": {
+                        "kind": "human",
+                        "mode": "interactive",
+                        "handler": "password",
+                    },
+                    "execution": {
+                        "queue": "default",
+                        "state": "ready",
+                        "attempt": 0,
+                        "max_attempts": 1,
+                    },
+                    "inputs": {
+                        "prompt": "Enter the API key",
+                        "env_keys": ["API_KEY"],
+                    },
                 },
             },
-        })
+        )
 
     def tearDown(self) -> None:
         shutil.rmtree(self.project, ignore_errors=True)
 
     def test_human_ticket_returns_waiting_input(self) -> None:
         code, out, _ = _run_main(
-            "--queue", "--project", str(self.project), "--actor", "e2e-human",
+            "--queue",
+            "--project",
+            str(self.project),
+            "--actor",
+            "e2e-human",
         )
         self.assertEqual(code, 0, f"human queue: {out}")
         self.assertIn("waiting_input", out)
@@ -892,34 +1065,38 @@ class TestE2EHumanTicket(unittest.TestCase):
 # E2E: Context filtering (include-fixtures)
 # ===========================================================================
 
+
 class TestE2EContextFixtureFiltering(unittest.TestCase):
     """--include-fixtures / --no-include-fixtures controls ticket filtering."""
 
     def setUp(self) -> None:
         self.project = _tmp_git_project("koru-e2e-fix-")
         _write_config(self.project, prefix="FIX")
-        _write_sprint(self.project, {
-            "FIX-001": {
-                "id": "FIX-001",
-                "name": "Real ticket",
-                "status": "open",
-                "priority": "high",
-                "sprint": "current",
-                "labels": ["koru-task"],
-                "executor": {"kind": "shell", "mode": "automatic"},
-                "execution": {"queue": "default", "state": "ready"},
+        _write_sprint(
+            self.project,
+            {
+                "FIX-001": {
+                    "id": "FIX-001",
+                    "name": "Real ticket",
+                    "status": "open",
+                    "priority": "high",
+                    "sprint": "current",
+                    "labels": ["koru-task"],
+                    "executor": {"kind": "shell", "mode": "automatic"},
+                    "execution": {"queue": "default", "state": "ready"},
+                },
+                "FIX-002": {
+                    "id": "FIX-002",
+                    "name": "Test fixture ticket",
+                    "status": "open",
+                    "priority": "normal",
+                    "sprint": "current",
+                    "labels": ["test-only", "synthetic"],
+                    "executor": {"kind": "shell", "mode": "automatic"},
+                    "execution": {"queue": "default", "state": "ready"},
+                },
             },
-            "FIX-002": {
-                "id": "FIX-002",
-                "name": "Test fixture ticket",
-                "status": "open",
-                "priority": "normal",
-                "sprint": "current",
-                "labels": ["test-only", "synthetic"],
-                "executor": {"kind": "shell", "mode": "automatic"},
-                "execution": {"queue": "default", "state": "ready"},
-            },
-        })
+        )
         # Write a minimal policy so context works
         koru_dir = self.project / ".planfile" / ".koru"
         koru_dir.mkdir(parents=True, exist_ok=True)
@@ -930,8 +1107,12 @@ class TestE2EContextFixtureFiltering(unittest.TestCase):
 
     def test_context_without_fixtures_skips_synthetic(self) -> None:
         code, out, _ = _run_main(
-            "--context", "--project", str(self.project),
-            "--format", "json", "--no-include-fixtures",
+            "--context",
+            "--project",
+            str(self.project),
+            "--format",
+            "json",
+            "--no-include-fixtures",
         )
         self.assertEqual(code, 0)
         data = json.loads(out)
@@ -942,8 +1123,12 @@ class TestE2EContextFixtureFiltering(unittest.TestCase):
 
     def test_context_with_fixtures_includes_all(self) -> None:
         code, out, _ = _run_main(
-            "--context", "--project", str(self.project),
-            "--format", "json", "--include-fixtures",
+            "--context",
+            "--project",
+            str(self.project),
+            "--format",
+            "json",
+            "--include-fixtures",
         )
         self.assertEqual(code, 0)
 

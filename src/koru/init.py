@@ -48,6 +48,7 @@ force ``local`` so CI jobs do not pick a lane from committed IDE folders.
 
 from __future__ import annotations
 
+import contextlib
 import os
 import re
 import stat
@@ -65,7 +66,6 @@ from .bootstrap import import_flat_pipeline
 from .init_host_environment import write_host_environment_bundle
 from .project_pipeline import write_koru_project_pipeline_if_absent
 from .runtime import planfile_dir, runtime_dir
-import contextlib
 
 POLICY_STUB = """\
 # .planfile/.koru/policy.yaml
@@ -254,16 +254,11 @@ class InitReport:
         )
         if self.agent_lane_refresh_only:
             if self.agent_lane_files_written and self.agent_lane:
-                return (
-                    f"agent-lane: {self.agent_lane} (shell-env.sh, run-autonomous.sh){env_bit}"
-                )
+                return f"agent-lane: {self.agent_lane} (shell-env.sh, run-autonomous.sh){env_bit}"
             if self.agent_lane is None:
                 return f"agent-lane: off (shell helpers removed){env_bit}"
             if self.autopilot_host_setup_written:
-                return (
-                    "agent-lane: refresh; autopilot-host: setup-autopilot-host.sh"
-                    f"{env_bit}"
-                )
+                return f"agent-lane: refresh; autopilot-host: setup-autopilot-host.sh{env_bit}"
             return f"agent-lane: refresh{env_bit}"
         bits = [f"tickets: {self.sprint_imported} imported"]
         if self.policy_written:

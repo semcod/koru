@@ -120,7 +120,11 @@ def _try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | 
 
 
 def _run_command_check(
-    project: Path, check_id: str, command: list[str], *, stdio_format: str = "human",
+    project: Path,
+    check_id: str,
+    command: list[str],
+    *,
+    stdio_format: str = "human",
 ) -> bool:
     _stdio_info("+ " + " ".join(command), fmt=stdio_format)
     result = subprocess.run(command, cwd=project, check=False)
@@ -146,7 +150,8 @@ def _create_diagnostic_ticket(
     marker = state_dir / f"{check_id}.failed"
     if marker.exists():
         _stdio_info(
-            f"- diagnostic ticket marker exists for {check_id}, skipping create", fmt=stdio_format,
+            f"- diagnostic ticket marker exists for {check_id}, skipping create",
+            fmt=stdio_format,
         )
         return
     title = f"[AUTO-DIAG] {check_id} needs attention"
@@ -295,7 +300,9 @@ def _handle_queue_hygiene(
     stale_minutes = resolve_in_progress_stale_minutes(project)
     if stale_minutes is not None:
         released_stale = release_stale_in_progress_tickets(
-            project, stale_minutes=stale_minutes, runner=_run_process,
+            project,
+            stale_minutes=stale_minutes,
+            runner=_run_process,
         )
         if released_stale:
             _hp(
@@ -326,8 +333,7 @@ def _handle_post_run_verify_ide(
     if ide_verify_outcomes:
         failed_ide = [o for o in ide_verify_outcomes if not o.get("ok")]
         _hp(
-            f"  post_run_verify (IDE): tickets={len(ide_verify_outcomes)} "
-            f"failed={len(failed_ide)}",
+            f"  post_run_verify (IDE): tickets={len(ide_verify_outcomes)} failed={len(failed_ide)}",
         )
         _emit(
             "PostRunVerifyIdeCompleted",
@@ -357,7 +363,10 @@ def _handle_scan_phase(
     scan_result: ScanResult | None = None
     if enable_scan:
         if not _is_topology_enabled(
-            project, "scan:on-change", fallback=True, enabled=topology_integration,
+            project,
+            "scan:on-change",
+            fallback=True,
+            enabled=topology_integration,
         ):
             _hp("- koru scan --apply skipped (scan:on-change disabled in topology)")
             _emit("ScanSkipped", {"cycle": cycle, "reason": "topology:scan:on-change_disabled"})
@@ -388,7 +397,9 @@ def _handle_scan_phase(
                 )
                 _hp("+ " + scan_cmd)
                 scan_result = run_scan(
-                    project=project, apply=True, include_semcod_artifacts=include_semcod_artifacts,
+                    project=project,
+                    apply=True,
+                    include_semcod_artifacts=include_semcod_artifacts,
                 )
                 _hp(
                     f"  scan: suggestions={len(scan_result.suggestions)} "
@@ -496,8 +507,7 @@ def _handle_post_run_verify(
                     state.post_verify_seen.add(tid)
         if verify_outcomes:
             _hp(
-                f"  post_run_verify (queue): tickets={len(completed_ids)} "
-                f"failed={len(failed)}",
+                f"  post_run_verify (queue): tickets={len(completed_ids)} failed={len(failed)}",
             )
             _emit(
                 "PostRunVerifyCompleted",
@@ -524,7 +534,10 @@ def _handle_queue_loop_phase(
     _emit: callable,
 ) -> tuple[QueueLoopResult, Any]:
     if not _is_topology_enabled(
-        project, "autoloop:queue", fallback=True, enabled=topology_integration,
+        project,
+        "autoloop:queue",
+        fallback=True,
+        enabled=topology_integration,
     ):
         _hp("- autoloop queue phase skipped (autoloop:queue disabled in topology)")
         queue_result = QueueLoopResult(0, [], [], [], "disabled", "")
@@ -556,7 +569,10 @@ def _handle_scan_after_idle(
         scan_after_idle_queue
         and queue_result.last_status == "idle"
         and _is_topology_enabled(
-            project, "scan:on-change", fallback=True, enabled=topology_integration,
+            project,
+            "scan:on-change",
+            fallback=True,
+            enabled=topology_integration,
         )
     ):
         now = time.time()
@@ -586,7 +602,9 @@ def _handle_scan_after_idle(
             )
             _hp("+ " + scan_cmd + " (queue idle → intake scan)")
             idle_scan = run_scan(
-                project=project, apply=True, include_semcod_artifacts=include_semcod_artifacts,
+                project=project,
+                apply=True,
+                include_semcod_artifacts=include_semcod_artifacts,
             )
             scan_result = idle_scan
             state.last_scan_after_idle_ts = now
@@ -743,7 +761,10 @@ def _check_autopilot_skip_conditions(
 ) -> tuple[bool, str]:
     """Check if autopilot should be skipped and return (should_skip, skip_reason)."""
     if not _is_topology_enabled(
-        project, "autopilot:drive", fallback=True, enabled=topology_integration,
+        project,
+        "autopilot:drive",
+        fallback=True,
+        enabled=topology_integration,
     ):
         _hp("- autopilot skipped (autopilot:drive disabled in topology)")
         return True, "skipped(topology)"
@@ -768,11 +789,9 @@ def _check_autopilot_skip_conditions(
         state.telemetry_autopilot_idle_streak_skips += 1
         cycle_telemetry["autopilot_skipped_idle_streak"] = True
         return True, "skipped(idle_streak)"
-    elif (
-        0 < state.stagnation_streak < DEFAULT_ESCALATION_THRESHOLD
-        and _status_in_skip_list(
-            queue_result.last_status, autopilot_skip_statuses,
-        )
+    elif 0 < state.stagnation_streak < DEFAULT_ESCALATION_THRESHOLD and _status_in_skip_list(
+        queue_result.last_status,
+        autopilot_skip_statuses,
     ):
         if _waiting_ticket_has_label(project, queue_result, "llm-ready"):
             _hp(
@@ -826,8 +845,7 @@ def _execute_autopilot_drive(
         submit=submit,
         ide=autopilot_ide,
         require_plugin=(
-            not _allow_keyboard_autopilot_fallback()
-            and not _prefer_keyboard_autopilot()
+            not _allow_keyboard_autopilot_fallback() and not _prefer_keyboard_autopilot()
         ),
     )
     ok = bool(reply.get("ok", True))
@@ -876,13 +894,11 @@ def _log_autopilot_result(
             )
         else:
             _hp(
-                f"  autopilot: ok (ide={autopilot_ide}, "
-                f"backend={backend}, kind={decision_kind})",
+                f"  autopilot: ok (ide={autopilot_ide}, backend={backend}, kind={decision_kind})",
             )
     else:
         _hp(
-            "  autopilot: failed "
-            f"({reply.get('message', 'unknown error')}, kind={decision_kind})",
+            f"  autopilot: failed ({reply.get('message', 'unknown error')}, kind={decision_kind})",
         )
 
 
@@ -945,7 +961,9 @@ def _handle_autopilot_phase(
             autopilot_backend = (
                 str(reply.get("backend")) if reply.get("backend") is not None else None
             )
-            _update_autopilot_state(state, ok, decision_kind, autopilot_drive_kind, reply.get("prompt", ""))
+            _update_autopilot_state(
+                state, ok, decision_kind, autopilot_drive_kind, reply.get("prompt", "")
+            )
             _log_autopilot_result(ok, queue_result, autopilot_ide, decision_kind, reply, _hp)
 
     return autopilot_status, autopilot_backend, autopilot_drive_kind
@@ -997,7 +1015,9 @@ def _emit_cycle_completion_events(
                 "cumulative": {
                     "autopilot_idle_streak_skips": state.telemetry_autopilot_idle_streak_skips,
                     "scan_after_idle_runs": state.telemetry_scan_after_idle_runs,
-                    "scan_after_idle_tickets_applied": state.telemetry_scan_after_idle_tickets_applied,
+                    "scan_after_idle_tickets_applied": (
+                        state.telemetry_scan_after_idle_tickets_applied
+                    ),
                 },
             },
         },

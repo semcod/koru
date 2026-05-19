@@ -6,6 +6,7 @@ The ``.koru/`` subtree is the koru-owned sandbox for runtime artefacts
 (``runtime_dir``, ``runs_dir``, ``planfile_dir``) MUST NOT touch disk;
 only ``ensure_runs_dir`` is allowed to create directories.
 """
+
 from __future__ import annotations
 
 import os
@@ -75,6 +76,7 @@ class TestRunIdGenerator(unittest.TestCase):
     def test_run_ids_sort_chronologically(self) -> None:
         """Lexicographic sort of run ids must match creation order."""
         import time as _t
+
         a = new_run_id()
         _t.sleep(1.05)  # bump timestamp to next second
         b = new_run_id()

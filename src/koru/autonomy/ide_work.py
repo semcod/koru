@@ -99,13 +99,19 @@ def build_ide_work_prompt(
                 "Use koru MCP tools when available:",
                 "- koru_list_tickets (project_root = this workspace)",
                 f"- koru_run_ticket(ticket_id={ticket_id!r}, mode=apply)",
-                "Implement the change, run local regression gates, then mark the ticket done in planfile.",
+                (
+                    "Implement the change, run local regression gates, "
+                    "then mark the ticket done in planfile."
+                ),
             ],
         )
     else:
         lines.append("")
         lines.append(
-            "Implement the change, run tests/regression gates, then mark the ticket done in planfile.",
+            (
+                "Implement the change, run tests/regression gates, "
+                "then mark the ticket done in planfile."
+            ),
         )
     prompt = "\n".join(lines).strip()
     return prompt if prompt else fallback

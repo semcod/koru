@@ -157,5 +157,5 @@ def test_drive_action_with_running_status():
 def test_decision_is_frozen():
     """PromptDecision is immutable (frozen dataclass)."""
     decision = _call()
-    with pytest.raises(Exception):
+    with pytest.raises(AttributeError):
         decision.prompt = "modified"  # type: ignore

@@ -62,7 +62,9 @@ def _handle_queue_loop(project: Path, method: str, payload: dict[str, Any]) -> d
     return {"ok": True, "summary": loop_result.summary(), "last_status": loop_result.last_status}
 
 
-def _handle_autopilot_status(_project: Path, _method: str, _payload: dict[str, Any]) -> dict[str, Any]:
+def _handle_autopilot_status(
+    _project: Path, _method: str, _payload: dict[str, Any]
+) -> dict[str, Any]:
     from koru.ide_client import build_ide_client
 
     client = build_ide_client()
@@ -72,7 +74,9 @@ def _handle_autopilot_status(_project: Path, _method: str, _payload: dict[str, A
     return {"ok": True, "running": True, "status": status}
 
 
-def _handle_autopilot_drive(_project: Path, _method: str, payload: dict[str, Any]) -> dict[str, Any]:
+def _handle_autopilot_drive(
+    _project: Path, _method: str, payload: dict[str, Any]
+) -> dict[str, Any]:
     from koru.ide_client import build_ide_client
 
     text = str(payload.get("text") or payload.get("prompt") or "")
@@ -133,7 +137,9 @@ def _handle_gate_regix(project: Path, _method: str, payload: dict[str, Any]) -> 
     }
 
 
-def _handle_planfile_tickets(project: Path, _method: str, payload: dict[str, Any]) -> dict[str, Any]:
+def _handle_planfile_tickets(
+    project: Path, _method: str, payload: dict[str, Any]
+) -> dict[str, Any]:
     from koru.queue.runners import run_process
     from koru.queue.ticket import planfile_command
 
@@ -152,7 +158,9 @@ def _handle_planfile_tickets(project: Path, _method: str, payload: dict[str, Any
     return {"ok": True, "tickets": tickets}
 
 
-def _handle_mcp_list_tickets(project: Path, _method: str, payload: dict[str, Any]) -> dict[str, Any]:
+def _handle_mcp_list_tickets(
+    project: Path, _method: str, payload: dict[str, Any]
+) -> dict[str, Any]:
     from koruapi.mcp_server import tool_list_tickets
 
     return tool_list_tickets({"project": str(project), **payload})
@@ -164,7 +172,9 @@ def _handle_mcp_run_ticket(project: Path, _method: str, payload: dict[str, Any])
     return tool_run_ticket({"project": str(project), **payload})
 
 
-def _handle_mcp_quality_gates(project: Path, _method: str, payload: dict[str, Any]) -> dict[str, Any]:
+def _handle_mcp_quality_gates(
+    project: Path, _method: str, payload: dict[str, Any]
+) -> dict[str, Any]:
     from koruapi.mcp_server import tool_run_quality_gates
 
     return tool_run_quality_gates({"project": str(project), **payload})

@@ -53,7 +53,8 @@ def _render_pipeline_rows(topology: dict[str, Any]) -> list[str]:
 
 
 def apply_topology_mutations(
-    topo: dict[str, Any], mutations: list[TopologyMutation],
+    topo: dict[str, Any],
+    mutations: list[TopologyMutation],
 ) -> tuple[bool, int]:
     """Apply enable/disable mutations. Returns (mutated, exit_code)."""
     mutated = False

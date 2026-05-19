@@ -29,7 +29,8 @@ def normalize_agent_lane_id(raw: str) -> str:
 
 
 def autopilot_backend_for_agent_id(agent_id: str) -> str:
-    """Autopilot transport for a lane (``KORU_AUTOPILOT_BACKEND`` / ``AgentOption.autopilot_backend``)."""
+    """Autopilot transport for a lane (``KORU_AUTOPILOT_BACKEND`` /
+    ``AgentOption.autopilot_backend``)."""
     norm = normalize_agent_lane_id(agent_id)
     if norm in {"openrouter", "antigravity"}:
         return "headless"
@@ -104,12 +105,16 @@ def _build_cli_agent_option(
     project_hint = _marker(project, marker_name) if marker_name else None
     available = bool(cmd or project_hint)
     launchable = bool(cmd)
-    
+
     if marker_name and project_hint:
-        reason = f"{label} CLI detected." if cmd else f"{label} project config detected; open the prompt in {label} manually."
+        reason = (
+            f"{label} CLI detected."
+            if cmd
+            else f"{label} project config detected; open the prompt in {label} manually."
+        )
     else:
         reason = f"{label} CLI detected in PATH." if cmd else f"{label} CLI is not in PATH."
-    
+
     return AgentOption(
         id=agent_id,
         label=label,
@@ -126,7 +131,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
     """Return known LLM/IDE lanes ordered by koru preference."""
     project = project.resolve()
     commands = _detect_agent_commands()
-    
+
     openrouter_ready = bool(os.getenv("OPENROUTER_API_KEY"))
     antigravity_home = Path.home() / ".gemini" / "antigravity"
     antigravity_ready = bool(os.getenv("ANTIGRAVITY_AGENT")) or antigravity_home.exists()

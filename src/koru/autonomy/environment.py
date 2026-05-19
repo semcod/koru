@@ -14,6 +14,7 @@ The probes here are read-only. Auto-repair primitives in
 
 from __future__ import annotations
 
+import contextlib
 import os
 import shutil
 import socket as _socket
@@ -22,7 +23,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from ..ide_router import is_headless_environment
-import contextlib
 
 KNOWN_IDES = ("cursor", "windsurf", "vscode", "code", "code-oss", "vscodium", "zed")
 

@@ -42,7 +42,8 @@ class TestScanPytestCollect(unittest.TestCase):
             project = Path(tmp)
             (project / "pyproject.toml").write_text("[project]\nname='x'\n")
             result = scan_pytest_collect(
-                project, runner=lambda _c, _p: _ok("4 tests collected"),
+                project,
+                runner=lambda _c, _p: _ok("4 tests collected"),
             )
             self.assertEqual(result, [])
 
@@ -55,7 +56,8 @@ class TestScanPytestCollect(unittest.TestCase):
                 "ERROR tests/test_bar.py::TestBar - ModuleNotFoundError: bar\n"
             )
             result = scan_pytest_collect(
-                project, runner=lambda _c, _p: _ok(output, returncode=2),
+                project,
+                runner=lambda _c, _p: _ok(output, returncode=2),
             )
             self.assertEqual(len(result), 2)
             self.assertEqual(result[0].signal, "pytest_collect")
@@ -68,12 +70,10 @@ class TestScanPytestCollect(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             (project / "pyproject.toml").write_text("[project]\nname='x'\n")
-            output = (
-                "E   ModuleNotFoundError: No module named 'goal'\n"
-                "--- collection errors ---\n"
-            )
+            output = "E   ModuleNotFoundError: No module named 'goal'\n--- collection errors ---\n"
             result = scan_pytest_collect(
-                project, runner=lambda _c, _p: _ok(output, returncode=2),
+                project,
+                runner=lambda _c, _p: _ok(output, returncode=2),
             )
             self.assertEqual(len(result), 1)
             self.assertEqual(result[0].signal, "pytest_collect")
@@ -97,7 +97,9 @@ class TestScanPytestCollect(unittest.TestCase):
                 raise subprocess.TimeoutExpired(cmd="pytest", timeout=30)
 
             result = scan_pytest_collect(
-                project, runner=boom, timeout_seconds=30.0,
+                project,
+                runner=boom,
+                timeout_seconds=30.0,
             )
             self.assertEqual(len(result), 1)
             ticket = result[0]
@@ -120,7 +122,9 @@ class TestScanPytestCollect(unittest.TestCase):
                 raise subprocess.TimeoutExpired(cmd="pytest", timeout=5)
 
             result = scan_pytest_collect(
-                project, runner=boom, timeout_seconds=5.0,
+                project,
+                runner=boom,
+                timeout_seconds=5.0,
             )
             self.assertEqual(len(result), 1)
             self.assertIn("5s", result[0].description)
@@ -228,8 +232,7 @@ class TestScanMissingTools(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             (project / "pyproject.toml").write_text(
-                "[project]\nname='x'\n"
-                "dependencies = ['requests>=2.0', 'urllib3']\n",
+                "[project]\nname='x'\ndependencies = ['requests>=2.0', 'urllib3']\n",
             )
             # Neither requests nor urllib3 are in the semcod tool registry.
             self.assertEqual(scan_missing_tools(project), [])
@@ -330,10 +333,12 @@ class TestRunScan(unittest.TestCase):
             (project / ".gitignore").write_text("# nothing\n")
             (project / ".planfile" / "sprints").mkdir(parents=True)
             (project / ".planfile" / "config.yaml").write_text(
-                "prefix: PLF\nnext_id: 1\n", encoding="utf-8",
+                "prefix: PLF\nnext_id: 1\n",
+                encoding="utf-8",
             )
             (project / ".planfile" / "sprints" / "current.yaml").write_text(
-                "sprint:\n  name: current\n  tickets: {}\n", encoding="utf-8",
+                "sprint:\n  name: current\n  tickets: {}\n",
+                encoding="utf-8",
             )
 
             result = run_scan(
@@ -357,10 +362,12 @@ class TestRunScan(unittest.TestCase):
             (project / ".gitignore").write_text("# nothing\n")
             (project / ".planfile" / "sprints").mkdir(parents=True)
             (project / ".planfile" / "config.yaml").write_text(
-                "prefix: PLF\nnext_id: 1\n", encoding="utf-8",
+                "prefix: PLF\nnext_id: 1\n",
+                encoding="utf-8",
             )
             (project / ".planfile" / "sprints" / "current.yaml").write_text(
-                "sprint:\n  name: current\n  tickets: {}\n", encoding="utf-8",
+                "sprint:\n  name: current\n  tickets: {}\n",
+                encoding="utf-8",
             )
 
             first = run_scan(
@@ -476,7 +483,8 @@ class TestRunScan(unittest.TestCase):
             priorities = [s.priority for s in result.suggestions]
             ranks = {"critical": 0, "high": 1, "normal": 2, "low": 3}
             self.assertEqual(
-                priorities, sorted(priorities, key=lambda p: ranks.get(p, 99)),
+                priorities,
+                sorted(priorities, key=lambda p: ranks.get(p, 99)),
             )
 
 

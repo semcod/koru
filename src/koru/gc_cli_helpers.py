@@ -44,8 +44,7 @@ def print_gc_text_report(result: GcResult, *, max_age_days: float) -> None:
         marker = "✗" if c.ticket_id in result.removed else "·"
         age = f"{c.age_days:.0f}d" if c.age_days != float("inf") else "??d"
         print(
-            f"  {marker} {c.ticket_id:<14} {c.status:<10} {age:>6}  "
-            f"{c.name[:60]}",
+            f"  {marker} {c.ticket_id:<14} {c.status:<10} {age:>6}  {c.name[:60]}",
         )
     if result.removed:
         action = "Would remove" if result.dry_run else "Removed"

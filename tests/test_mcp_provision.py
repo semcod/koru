@@ -49,7 +49,9 @@ def test_provision_upgrades_bare_koru_command_to_absolute(tmp_path: Path, monkey
     fake_koru.write_text("#!/bin/sh\necho\n", encoding="utf-8")
     fake_koru.chmod(0o755)
 
-    monkeypatch.setattr(mcp_provision.shutil, "which", lambda _cmd: str(fake_koru) if _cmd == "koru" else None)
+    monkeypatch.setattr(
+        mcp_provision.shutil, "which", lambda _cmd: str(fake_koru) if _cmd == "koru" else None
+    )
 
     cfg_path.write_text(
         json.dumps({"mcpServers": {"koru": {"command": "koru", "args": ["mcp-serve"]}}}),
@@ -108,14 +110,17 @@ def test_init_ide_main_json_output_for_cursor_dry_run(capsys, tmp_path: Path) ->
 
 
 def test_ensure_koru_mcp_not_disabled_clears_disabled_and_keeps_command(
-    tmp_path: Path, monkeypatch,
+    tmp_path: Path,
+    monkeypatch,
 ) -> None:
     cfg = tmp_path / ".cursor" / "mcp.json"
     cfg.parent.mkdir(parents=True, exist_ok=True)
     fake_koru = tmp_path / "bin-koru"
     fake_koru.write_text("#!/bin/sh\necho\n", encoding="utf-8")
     fake_koru.chmod(0o755)
-    monkeypatch.setattr(mcp_provision.shutil, "which", lambda _c: str(fake_koru) if _c == "koru" else None)
+    monkeypatch.setattr(
+        mcp_provision.shutil, "which", lambda _c: str(fake_koru) if _c == "koru" else None
+    )
 
     cfg.write_text(
         json.dumps(
@@ -143,14 +148,17 @@ def test_ensure_koru_mcp_not_disabled_clears_disabled_and_keeps_command(
 
 
 def test_ensure_koru_mcp_not_disabled_includes_global_windsurf(
-    tmp_path: Path, monkeypatch,
+    tmp_path: Path,
+    monkeypatch,
 ) -> None:
     gpath = tmp_path / "windsurf-global-mcp.json"
     monkeypatch.setattr(mcp_provision, "_windsurf_global_config", lambda: gpath)
     fake_koru = tmp_path / "bin-koru"
     fake_koru.write_text("#!/bin/sh\necho\n", encoding="utf-8")
     fake_koru.chmod(0o755)
-    monkeypatch.setattr(mcp_provision.shutil, "which", lambda _c: str(fake_koru) if _c == "koru" else None)
+    monkeypatch.setattr(
+        mcp_provision.shutil, "which", lambda _c: str(fake_koru) if _c == "koru" else None
+    )
 
     gpath.write_text(
         json.dumps(

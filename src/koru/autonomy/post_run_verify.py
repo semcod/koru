@@ -274,7 +274,9 @@ def run_verify_commands(
         result = runner(cmd, project)
         last_code = int(getattr(result, "returncode", 1))
         if last_code != 0:
-            detail = (getattr(result, "stderr", None) or getattr(result, "stdout", None) or "").strip()
+            detail = (
+                getattr(result, "stderr", None) or getattr(result, "stdout", None) or ""
+            ).strip()
             if not detail:
                 detail = f"exit {last_code}"
             return False, detail, last_code
@@ -337,12 +339,13 @@ def verify_completed_tickets(
         return []
 
     ok, detail, exit_code = run_verify_commands(
-        project, config.commands, shell_runner=shell_runner,
+        project,
+        config.commands,
+        shell_runner=shell_runner,
     )
     if ok:
         return [
-            {"ticket_id": ticket_id, "ok": True, "action": "verified"}
-            for ticket_id in ticket_ids
+            {"ticket_id": ticket_id, "ok": True, "action": "verified"} for ticket_id in ticket_ids
         ]
 
     outcomes: list[dict[str, Any]] = []

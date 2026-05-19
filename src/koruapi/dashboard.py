@@ -76,8 +76,7 @@ def dashboard_main(argv: list[str] | None = None) -> int:
     )
     activity(
         "HTTP",
-        f"dashboard start project={config.project} "
-        f"http://{config.host}:{config.port}/",
+        f"dashboard start project={config.project} http://{config.host}:{config.port}/",
     )
     exit_code = serve(config)
     emit_management_event(

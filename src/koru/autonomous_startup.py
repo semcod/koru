@@ -126,10 +126,14 @@ def build_startup_probe(
     resolve_ide_route_fn=resolve_ide_route,
 ) -> AutonomousStartupProbe:
     lane, lane_source = resolve_agent_lane_id(
-        project, agent_lane_cli, resolve_project_lane=resolve_project_lane,
+        project,
+        agent_lane_cli,
+        resolve_project_lane=resolve_project_lane,
     )
     autopilot_ide, ide_source = resolve_autopilot_ide_for_autonomous(
-        autopilot_ide_cli, lane, resolve_ide_route_fn=resolve_ide_route_fn,
+        autopilot_ide_cli,
+        lane,
+        resolve_ide_route_fn=resolve_ide_route_fn,
     )
     running = detect_running_ides()
     running_labels = tuple(f"{ide.label} (pid={ide.pid})" for ide in running)
@@ -204,7 +208,8 @@ def format_post_startup_operator_hints(
     ]
     if plugin_connected is True:
         lines.append(
-            f"koru autonomous: [ok] plugin połączony (ide={ide}) — prompty idą do czatu, nie ydotool",
+            f"koru autonomous: [ok] plugin połączony (ide={ide}) — "
+            "prompty idą do czatu, nie ydotool",
         )
     elif plugin_connected is False:
         lines.append(
@@ -233,13 +238,16 @@ def format_post_startup_operator_hints(
             "koru autonomous: 2) MCP: włącz serwer „koru” (po Reload po task koru:mcp:bootstrap)",
             "koru autonomous: 3) Autopilot: Command Palette → „koru: Connect autopilot daemon” "
             "(pasek: koru: on)",
-            f"koru autonomous: 4) Socket wtyczki = {sock} ({settings_hint}: koruAutopilot.socketPath)",
+            f"koru autonomous: 4) Socket wtyczki = {sock} "
+            f"({settings_hint}: koruAutopilot.socketPath)",
             f"koru autonomous: 5) Ten sam socket w shellu: export KORU_AUTOPILOT_INSTANCE={ide}",
-            f"koru autonomous: 6) Test: koru autopilot status  → plugins niepuste; potem "
-            f"koru autopilot drive --ide {ide} --require-plugin 'probe test'",
-            "koru autonomous: 7) (opcjonalnie) Command Palette → „koru: Calibrate chat probe ladder”",
+            f"koru autonomous: 6) Test: koru autopilot status → plugins "
+            f"niepuste; potem koru autopilot drive --ide {ide} --require-plugin 'probe test'",
+            "koru autonomous: 7) (opcjonalnie) Command Palette → "
+            "„koru: Calibrate chat probe ladder”",
             "koru autonomous: 8) Dashboard: task koru:server → http://localhost:8765/",
-            "koru autonomous: --- docs: <project>/docs/autonomy-ide-cursor.md (sekcja „Po starcie”) ---",
+            "koru autonomous: --- docs: <project>/docs/autonomy-ide-cursor.md "
+            "(sekcja „Po starcie”) ---",
         ],
     )
     return lines

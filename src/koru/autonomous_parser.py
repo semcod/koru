@@ -147,10 +147,7 @@ def build_parser(*, default_stdio_format: str) -> argparse.ArgumentParser:
         "--stop-on-waiting-input",
         dest="stop_on_waiting_input",
         action="store_true",
-        help=(
-            "Stop the outer loop when the queue reports waiting_input "
-            "(legacy behavior)."
-        ),
+        help=("Stop the outer loop when the queue reports waiting_input (legacy behavior)."),
     )
     up.add_argument(
         "--force-init",
@@ -395,4 +392,3 @@ def looks_like_autonomous_up_command(command: str) -> bool:
             if sub == "autonomous" and idx + 3 < len(parts) and parts[idx + 3] == "up":
                 return True
     return False
-

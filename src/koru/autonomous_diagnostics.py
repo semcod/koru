@@ -138,7 +138,8 @@ def create_diagnostic_ticket(
     marker = state_dir / f"{check_id}.failed"
     if marker.exists():
         stdio_info(
-            f"- diagnostic ticket marker exists for {check_id}, skipping create", fmt=stdio_format,
+            f"- diagnostic ticket marker exists for {check_id}, skipping create",
+            fmt=stdio_format,
         )
         return
     title = f"[AUTO-DIAG] {check_id} needs attention"
@@ -221,7 +222,10 @@ def run_idle_diagnostics(
         )
         return make_result("off", [])
     if not is_topology_enabled(
-        project, "idle-diagnostics", fallback=True, enabled=topology_integration,
+        project,
+        "idle-diagnostics",
+        fallback=True,
+        enabled=topology_integration,
     ):
         stdio_info("koru autonomous: idle diagnostics disabled in topology", fmt=stdio_format)
         return make_result("disabled(topology)", [])

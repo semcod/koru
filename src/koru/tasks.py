@@ -155,8 +155,19 @@ def create_nl_task(
     files = [str(v) for v in (scaffold.get("files") or []) if str(v).strip()]
 
     tickets[ticket_id] = _build_ticket_dict(
-        ticket_id, name, text, priority, sprint, queue_name, labels, source, inputs,
-        executor_kind, executor_mode, files, now,
+        ticket_id,
+        name,
+        text,
+        priority,
+        sprint,
+        queue_name,
+        labels,
+        source,
+        inputs,
+        executor_kind,
+        executor_mode,
+        files,
+        now,
     )
     _write_yaml(sprint_path, sprint_data)
     try:

@@ -24,7 +24,8 @@ def test_build_idle_checks_full_includes_redup_when_available(tmp_path: Path, mo
 
 
 def test_build_idle_checks_full_uses_changed_redup_when_wup_configured(
-    tmp_path: Path, monkeypatch,
+    tmp_path: Path,
+    monkeypatch,
 ) -> None:
     (tmp_path / "wup.yaml").write_text("project:\n  name: test\n", encoding="utf-8")
     monkeypatch.setattr(

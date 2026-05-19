@@ -24,6 +24,7 @@ don't need throughput; we need predictability and a tiny footprint.
 
 from __future__ import annotations
 
+import contextlib
 import errno
 import functools
 import json
@@ -53,7 +54,6 @@ from koruide.protocol import (
     error,
 )
 from koruide.socket import default_socket_path
-import contextlib
 
 # Type alias: a HandoffBuilder takes the ended-session metadata and
 # returns the text to type back into the chat (typically the koru
@@ -392,7 +392,9 @@ class AutopilotDaemon:
             ok=True,
         )
 
-    def _try_os_injector_drive(self, target_id: str, text: str, submit: bool) -> dict[str, Any] | None:
+    def _try_os_injector_drive(
+        self, target_id: str, text: str, submit: bool
+    ) -> dict[str, Any] | None:
         """Run :mod:`os_injector` when configured; ``None`` means use keyboard."""
         from koruide import os_injector as oi
 
@@ -447,7 +449,8 @@ class AutopilotDaemon:
                     info["ide"] = target.to_dict()
                 self._send(client, ack(msg.id or "", info=info).encode())
                 self.log(
-                    f"drive → {target_id} via {info['backend']} ({len(text)} chars, submit={submit})",
+                    f"drive → {target_id} via {info['backend']}"
+                    f" ({len(text)} chars, submit={submit})",
                 )
                 self.audit.record(
                     "drive",
@@ -587,7 +590,12 @@ class AutopilotDaemon:
             submit_requested=submit_requested,
             plugin_ide=plugin_ide,
         ) and self._relay_os_fallback_ack(
-            cli_client, corr, plugin_ide, original_text, submit_requested, info,
+            cli_client,
+            corr,
+            plugin_ide,
+            original_text,
+            submit_requested,
+            info,
         ):
             return
         # IDE plugins typically send ``delivered`` without ``backend``; CLI

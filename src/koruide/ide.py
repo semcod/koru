@@ -507,9 +507,9 @@ def resolve_drive_target(
 ) -> tuple[str, str, str]:
     """Resolve ``(keyboard_ide, profile_tool_id, selection_reason)`` for ``drive``.
 
-  When ``ide_arg`` is ``auto`` (default), pick the first running/focused IDE that
-  has a saved OS-injector profile (``ide-os-injector.json``). Otherwise use
-  :func:`pick_target` for keyboard fallback only.
+    When ``ide_arg`` is ``auto`` (default), pick the first running/focused IDE that
+    has a saved OS-injector profile (``ide-os-injector.json``). Otherwise use
+    :func:`pick_target` for keyboard fallback only.
     """
     profile_check = has_profile or _has_os_injector_profile
     stripped_profile = (os_profile or "").strip()
@@ -524,9 +524,13 @@ def resolve_drive_target(
         return keyboard, stripped_profile, f"os-profile:{stripped_profile}"
 
     if not is_auto:
-        return _resolve_explicit_drive_target(prefer or "default", target, project=project, profile_check=profile_check)
+        return _resolve_explicit_drive_target(
+            prefer or "default", target, project=project, profile_check=profile_check
+        )
 
-    return _resolve_auto_drive_target(detected, target, project=project, profile_check=profile_check)
+    return _resolve_auto_drive_target(
+        detected, target, project=project, profile_check=profile_check
+    )
 
 
 __all__ = [

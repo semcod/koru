@@ -82,7 +82,9 @@ def test_install_plugin_configures_socket_path(
 
     def fake_runner(cmd, **_kwargs):
         if cmd[1] == "--list-extensions":
-            return subprocess.CompletedProcess(cmd, 0, stdout=plugin_installer.EXTENSION_ID, stderr="")
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout=plugin_installer.EXTENSION_ID, stderr=""
+            )
         if cmd[1] == "--install-extension" and cmd[2] == str(vsix) and cmd[3] == "--force":
             return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
         raise AssertionError(f"unexpected cmd {cmd}")
@@ -126,7 +128,9 @@ def test_install_plugin_targets_vscodium_from_integrated_terminal(
     def fake_runner(cmd, **_kwargs):
         assert cmd[0] == "/usr/bin/codium"
         if cmd[1] == "--list-extensions":
-            return subprocess.CompletedProcess(cmd, 0, stdout=plugin_installer.EXTENSION_ID, stderr="")
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout=plugin_installer.EXTENSION_ID, stderr=""
+            )
         if cmd[1] == "--install-extension":
             return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
         raise AssertionError(f"unexpected cmd {cmd}")

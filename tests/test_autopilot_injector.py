@@ -12,7 +12,7 @@ from koru.autopilot.injector import Injector, InjectorError
 def _fake_runner(commands: list[list[str]], *, fail_on: list[str] | None = None):
     fail_on = fail_on or []
 
-    def run(cmd: list[str], stdin: str | None) -> "subprocess.CompletedProcess[bytes]":
+    def run(cmd: list[str], stdin: str | None) -> subprocess.CompletedProcess[bytes]:
         commands.append(cmd)
         rc = 1 if cmd[0] in fail_on else 0
         return subprocess.CompletedProcess(args=cmd, returncode=rc, stdout=b"", stderr=b"")
@@ -23,6 +23,7 @@ def _fake_runner(commands: list[list[str]], *, fail_on: list[str] | None = None)
 def _which_factory(present: set[str]):
     def which(name: str) -> str | None:
         return f"/usr/bin/{name}" if name in present else None
+
     return which
 
 
@@ -236,11 +237,14 @@ def test_wtype_rejects_multi_modifier_submit_key(monkeypatch: pytest.MonkeyPatch
 def test_type_text_wayland_falls_back_when_wtype_fails() -> None:
     calls: list[list[str]] = []
 
-    def run(cmd: list[str], stdin: str | None) -> "subprocess.CompletedProcess[bytes]":
+    def run(cmd: list[str], stdin: str | None) -> subprocess.CompletedProcess[bytes]:
         calls.append(cmd)
         if cmd[0] == "wtype":
             return subprocess.CompletedProcess(
-                args=cmd, returncode=1, stdout=b"", stderr=b"wtype failed",
+                args=cmd,
+                returncode=1,
+                stdout=b"",
+                stderr=b"wtype failed",
             )
         return subprocess.CompletedProcess(args=cmd, returncode=0, stdout=b"", stderr=b"")
 

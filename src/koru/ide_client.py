@@ -19,8 +19,7 @@ if TYPE_CHECKING:
 class IDEControlClient(Protocol):
     """Minimal interface `koru` runtime code expects from an IDE client."""
 
-    def is_running(self) -> bool:
-        ...
+    def is_running(self) -> bool: ...
 
     def drive(
         self,
@@ -29,14 +28,11 @@ class IDEControlClient(Protocol):
         submit: bool = True,
         ide: str = "auto",
         require_plugin: bool = False,
-    ) -> dict[str, Any]:
-        ...
+    ) -> dict[str, Any]: ...
 
-    def status(self) -> dict[str, Any]:
-        ...
+    def status(self) -> dict[str, Any]: ...
 
-    def shutdown(self) -> dict[str, Any]:
-        ...
+    def shutdown(self) -> dict[str, Any]: ...
 
 
 @dataclass
@@ -65,7 +61,10 @@ class LegacyAutopilotClientAdapter:
             preview=text,
         )
         reply = self.client.drive(
-            text, submit=submit, ide=ide, require_plugin=require_plugin,
+            text,
+            submit=submit,
+            ide=ide,
+            require_plugin=require_plugin,
         )
         backend = reply.get("backend", "?")
         ok = bool(reply.get("ok", True))

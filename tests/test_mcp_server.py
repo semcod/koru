@@ -61,6 +61,7 @@ def test_run_ticket_invokes_queue_mode_without_ticket_flag(monkeypatch, tmp_path
 
     def _fake_popen(cmd, **kwargs):
         called["cmd"] = list(cmd)
+
         # Return a mock Popen object with communicate() returning success
         class MockPopen:
             def communicate(self, timeout=None):

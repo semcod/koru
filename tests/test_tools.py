@@ -64,7 +64,11 @@ def test_detect_tools_marks_available_via_marker(tmp_path: Path) -> None:
             "name": "Windsurf",
             "category": "ide",
             "lane": "native",
-            "detect": {"commands": ["not-a-real-command-koru"], "markers": [".windsurf/rules.md"], "env": []},
+            "detect": {
+                "commands": ["not-a-real-command-koru"],
+                "markers": [".windsurf/rules.md"],
+                "env": [],
+            },
         },
     ]
 

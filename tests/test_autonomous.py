@@ -450,7 +450,8 @@ def test_guard_existing_autonomous_replace_existing_terminates(tmp_path, monkeyp
 
 
 def test_guard_existing_autonomous_replace_existing_terminates_stale_wup(
-    tmp_path, monkeypatch,
+    tmp_path,
+    monkeypatch,
 ) -> None:
     wup = [
         autonomous_mod.ExistingManagedProcess(
@@ -481,7 +482,8 @@ def test_guard_existing_autonomous_replace_existing_terminates_stale_wup(
 
 
 def test_guard_existing_autonomous_interactive_decline_blocks_duplicate(
-    tmp_path, monkeypatch,
+    tmp_path,
+    monkeypatch,
 ) -> None:
     monkeypatch.setattr(
         autonomous_mod,
@@ -1246,8 +1248,10 @@ def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(
     monkeypatch.setattr(
         autonomous_mod,
         "inject_with_profile",
-        lambda **kwargs: fallback_calls.append(kwargs)
-        or {"ok": True, "backend": "os_injector", "submitted": kwargs["submit"]},
+        lambda **kwargs: (
+            fallback_calls.append(kwargs)
+            or {"ok": True, "backend": "os_injector", "submitted": kwargs["submit"]}
+        ),
     )
 
     _scan_result, queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
@@ -1403,7 +1407,9 @@ def test_up_stops_on_waiting_input_when_flag_set(
         lambda **_kwargs: SimpleNamespace(status="skipped", ide="auto", message="ok", command=None),
     )
     monkeypatch.setattr(
-        autonomous_mod, "format_plugin_install_result", lambda result: result.status,
+        autonomous_mod,
+        "format_plugin_install_result",
+        lambda result: result.status,
     )
     monkeypatch.setattr(
         autonomous_mod,
@@ -1573,7 +1579,9 @@ def test_run_idle_diagnostics_creates_deduped_ticket(tmp_path, monkeypatch) -> N
     import koru.autonomous_diagnostics as _diag_mod
 
     monkeypatch.setattr(
-        _diag_mod.shutil, "which", lambda name: "/bin/false" if name == "regix" else None,
+        _diag_mod.shutil,
+        "which",
+        lambda name: "/bin/false" if name == "regix" else None,
     )
     monkeypatch.setattr(autonomous_mod, "_run_command_check", lambda *_args, **_kwargs: False)
     monkeypatch.setattr(autonomous_mod, "_is_topology_enabled", lambda *_args, **_kwargs: True)
@@ -1598,7 +1606,7 @@ def test_wup_watch_command_uses_testql_mode(tmp_path) -> None:
     scripts = tmp_path / "scripts"
     scripts.mkdir()
     wrapper = scripts / "koru-wup-testql"
-    wrapper.write_text("#!/bin/sh\nexec testql \"$@\"\n", encoding="utf-8")
+    wrapper.write_text('#!/bin/sh\nexec testql "$@"\n', encoding="utf-8")
     config = autonomous_wup_mod.WupWatchConfig(
         enabled=True,
         mode="testql",
@@ -1660,6 +1668,64 @@ def test_wup_watch_command_normalizes_percent_cpu_throttle(tmp_path) -> None:
     assert command[command.index("--cpu-throttle") + 1] == "0.7"
 
 
+def test_wup_profiled_compose_services_start_before_watch(tmp_path, monkeypatch) -> None:
+    (tmp_path / "wup.yaml").write_text(
+        """
+monitoring:
+  wup_services:
+    firmware:
+      docker:
+        - compose_service: firmware
+          compose_file: docker-compose.yml
+          profiles:
+            - simulator
+        - compose_service: backend
+          compose_file: docker-compose.yml
+          profiles: []
+""",
+        encoding="utf-8",
+    )
+    config = autonomous_wup_mod.WupWatchConfig(
+        enabled=True,
+        mode="testql",
+        project=tmp_path,
+        deps_file="deps.json",
+        scenarios_dir="testql-scenarios",
+        testql_bin="testql",
+        track_dir=".wup/tracks",
+        debounce=2,
+        cooldown=300,
+        cpu_throttle=0.8,
+        quick_limit=3,
+        config=None,
+    )
+    calls: list[list[str]] = []
+
+    monkeypatch.setattr(autonomous_wup_mod.shutil, "which", lambda name: f"/usr/bin/{name}")
+
+    def fake_run(command, **kwargs):
+        calls.append(command)
+        assert kwargs["cwd"] == tmp_path
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(autonomous_wup_mod.subprocess, "run", fake_run)
+    autonomous_wup_mod._ensure_wup_profiled_compose_services(config)
+
+    assert calls == [
+        [
+            "docker",
+            "compose",
+            "-f",
+            "docker-compose.yml",
+            "--profile",
+            "simulator",
+            "up",
+            "-d",
+            "firmware",
+        ],
+    ]
+
+
 def test_wup_topology_gate_uses_pipeline_for_gate_wup(tmp_path, monkeypatch) -> None:
     calls: list[str] = []
 
@@ -1675,7 +1741,10 @@ def test_wup_topology_gate_uses_pipeline_for_gate_wup(tmp_path, monkeypatch) -> 
     )
 
     assert autonomous_wup_mod._wup_topology_gate(
-        tmp_path, "gate:wup", fallback=False, enabled=True,
+        tmp_path,
+        "gate:wup",
+        fallback=False,
+        enabled=True,
     )
     assert calls == ["gate:wup"]
 

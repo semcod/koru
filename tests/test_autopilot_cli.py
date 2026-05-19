@@ -159,6 +159,7 @@ def test_drive_dry_run_direct(
     from koru.autopilot import os_injector as oi
 
     monkeypatch.setattr(oi, "try_drive_with_profile", lambda **_k: None)
+
     # Force the injector to find xdotool so dry-run can pick a backend.
     class _FakeInjector:
         session = "x11"
@@ -168,8 +169,11 @@ def test_drive_dry_run_direct(
 
         def type_text(self, text, *, ide="default", submit=True, dry_run=False):
             from koru.autopilot.injector import InjectionResult
+
             return InjectionResult(
-                backend="xdotool", submitted=submit, dry_run=dry_run,
+                backend="xdotool",
+                submitted=submit,
+                dry_run=dry_run,
                 output=f"[dry-run] {len(text)} chars",
             )
 
@@ -526,6 +530,7 @@ def test_doctor_json_output(
 
         def probe(self):
             from koru.autopilot.injector import BackendStatus
+
             return [BackendStatus(name="xdotool", available=True, reason="/usr/bin/xdotool")]
 
         def select_backend(self) -> str:
@@ -552,6 +557,7 @@ def test_doctor_fix_text_output(
 
         def probe(self):
             from koru.autopilot.injector import BackendStatus
+
             return [BackendStatus(name="ydotool", available=True, reason="/usr/bin/ydotool")]
 
         def select_backend(self) -> str:
@@ -588,6 +594,7 @@ def test_doctor_fix_json_output(
 
         def probe(self):
             from koru.autopilot.injector import BackendStatus
+
             return [BackendStatus(name="ydotool", available=True, reason="/usr/bin/ydotool")]
 
         def select_backend(self) -> str:
@@ -714,9 +721,14 @@ def test_handoff_dry_run_prints_brief_and_skips_daemon(
 ) -> None:
     """``handoff --dry-run`` must print the brief and never touch the socket."""
     monkeypatch.setattr(cli_command, "_build_brief", lambda _p: "# fake brief\n\nhi")
-    rc = autopilot_main([
-        "handoff", "--dry-run", "--project", str(tmp_path),
-    ])
+    rc = autopilot_main(
+        [
+            "handoff",
+            "--dry-run",
+            "--project",
+            str(tmp_path),
+        ]
+    )
     assert rc == 0
     out = capsys.readouterr().out
     assert "# fake brief" in out
@@ -729,9 +741,15 @@ def test_handoff_requires_running_daemon(
 ) -> None:
     monkeypatch.setattr(cli_command, "_build_brief", lambda _p: "# brief")
     socket = tmp_path / "missing.sock"
-    rc = autopilot_main([
-        "--socket", str(socket), "handoff", "--project", str(tmp_path),
-    ])
+    rc = autopilot_main(
+        [
+            "--socket",
+            str(socket),
+            "handoff",
+            "--project",
+            str(tmp_path),
+        ]
+    )
     assert rc == 2
     assert "daemon not running" in capsys.readouterr().err
 
@@ -785,14 +803,25 @@ def _write_audit_log(path: Path, entries: list[dict]) -> None:
 
 
 def test_tail_text_format_renders_entries(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     log = tmp_path / "audit.log"
-    _write_audit_log(log, [
-        {"ts": "2026-05-11T18:30:01.000Z", "event": "daemon_started", "socket": "/tmp/x"},
-        {"ts": "2026-05-11T18:30:05.000Z", "event": "drive",
-         "ide": "windsurf", "backend": "plugin", "chars": 29, "submit": True, "ok": True},
-    ])
+    _write_audit_log(
+        log,
+        [
+            {"ts": "2026-05-11T18:30:01.000Z", "event": "daemon_started", "socket": "/tmp/x"},
+            {
+                "ts": "2026-05-11T18:30:05.000Z",
+                "event": "drive",
+                "ide": "windsurf",
+                "backend": "plugin",
+                "chars": 29,
+                "submit": True,
+                "ok": True,
+            },
+        ],
+    )
     rc = autopilot_main(["tail", "--log", str(log)])
     assert rc == 0
     out = capsys.readouterr().out
@@ -804,13 +833,17 @@ def test_tail_text_format_renders_entries(
 
 
 def test_tail_json_format_returns_array(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     log = tmp_path / "audit.log"
-    _write_audit_log(log, [
-        {"ts": "t1", "event": "drive", "ide": "windsurf"},
-        {"ts": "t2", "event": "drive", "ide": "vscode"},
-    ])
+    _write_audit_log(
+        log,
+        [
+            {"ts": "t1", "event": "drive", "ide": "windsurf"},
+            {"ts": "t2", "event": "drive", "ide": "vscode"},
+        ],
+    )
     rc = autopilot_main(["tail", "--log", str(log), "--format", "json"])
     assert rc == 0
     data = json.loads(capsys.readouterr().out)
@@ -819,9 +852,9 @@ def test_tail_json_format_returns_array(
 
 def test_tail_n_limits_output(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     log = tmp_path / "audit.log"
-    _write_audit_log(log, [
-        {"ts": f"t{i}", "event": "drive", "ide": "x", "chars": i} for i in range(10)
-    ])
+    _write_audit_log(
+        log, [{"ts": f"t{i}", "event": "drive", "ide": "x", "chars": i} for i in range(10)]
+    )
     rc = autopilot_main(["tail", "--log", str(log), "-n", "3"])
     assert rc == 0
     lines = capsys.readouterr().out.strip().splitlines()
@@ -832,7 +865,8 @@ def test_tail_n_limits_output(tmp_path: Path, capsys: pytest.CaptureFixture[str]
 
 
 def test_tail_missing_log_errors_cleanly(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     rc = autopilot_main(["tail", "--log", str(tmp_path / "nope.log")])
     assert rc == 1
@@ -840,7 +874,8 @@ def test_tail_missing_log_errors_cleanly(
 
 
 def test_tail_skips_malformed_lines(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     log = tmp_path / "audit.log"
     log.write_text(

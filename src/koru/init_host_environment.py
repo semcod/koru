@@ -124,7 +124,7 @@ def _recommended_next_steps(base: dict[str, Any], groups: list[str]) -> list[str
         if shutil.which("ydotool") and "input" not in groups:
             steps.append(
                 "ydotool is on PATH but this login session is not in the `input` group — "
-                "run `sudo usermod -aG input \"$USER\"` then log out and back in.",
+                'run `sudo usermod -aG input "$USER"` then log out and back in.',
             )
     elif session == "x11":
         steps.append(
@@ -242,7 +242,14 @@ def _render_human_actions_section(report: dict[str, Any]) -> list[str]:
 def _render_apt_suggestion_section(report: dict[str, Any]) -> list[str]:
     """Render apt suggestion section of host environment report."""
     if report.get("automated_apt_suggestion"):
-        return ["## Suggested apt (when packages missing)", "", "```bash", report["automated_apt_suggestion"], "```", ""]
+        return [
+            "## Suggested apt (when packages missing)",
+            "",
+            "```bash",
+            report["automated_apt_suggestion"],
+            "```",
+            "",
+        ]
     return []
 
 

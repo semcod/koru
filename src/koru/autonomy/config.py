@@ -98,7 +98,8 @@ class AutonomyConfig:
             autopilot_submit=env_truthy("AUTOPILOT_SUBMIT", True),
             autopilot_on_idle_only=env_truthy("AUTOPILOT_ON_IDLE_ONLY", False),
             autopilot_skip_on_diagnostics_fail=env_truthy(
-                "AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL", True,
+                "AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL",
+                True,
             ),
             drive_prompt=os.getenv("DRIVE_PROMPT", "continue with the next ticket"),
             enable_idle_diagnostics=env_truthy("ENABLE_IDLE_DIAGNOSTICS", False),

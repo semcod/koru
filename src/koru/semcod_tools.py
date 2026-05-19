@@ -78,7 +78,12 @@ _TOOLS: tuple[tuple[str, str, str, str | None], ...] = (
     ("costs", "AI cost tracking + badge", "costs analyze", "costs"),
     ("op3", "multi-layer infra observation", "op3 observe / op3 report", "op3"),
     ("toonic", "TOON format conversion", "toonic convert", "toonic"),
-    ("protogate", "bounded legacy migration gates", "protogate plan / protogate check", "protogate"),
+    (
+        "protogate",
+        "bounded legacy migration gates",
+        "protogate plan / protogate check",
+        "protogate",
+    ),
     ("rebuild", "git history walker / quality replay", "rebuild walk / rebuild serve", "rebuild"),
     ("mdflow", "markdown dependency analyzer", "mdflow graph / mdflow check", "mdflow"),
     ("metrun", "execution intelligence and bottlenecks", "metrun run / metrun report", "metrun"),

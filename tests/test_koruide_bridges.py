@@ -36,7 +36,10 @@ def test_koruide_os_injector_bridge_exports_legacy_symbols() -> None:
     assert koruide_os_injector_mod.OsInjectorError is legacy_os_injector_mod.OsInjectorError
     assert koruide_os_injector_mod.load_profile is legacy_os_injector_mod.load_profile
     assert koruide_os_injector_mod.inject_with_profile is legacy_os_injector_mod.inject_with_profile
-    assert koruide_os_injector_mod.try_drive_with_profile is legacy_os_injector_mod.try_drive_with_profile
+    assert (
+        koruide_os_injector_mod.try_drive_with_profile
+        is legacy_os_injector_mod.try_drive_with_profile
+    )
 
 
 def test_autopilot_daemon_shim_points_to_koruide_implementation() -> None:
@@ -50,13 +53,22 @@ def test_autopilot_audit_shim_points_to_koruide_implementation() -> None:
 
 
 def test_autopilot_host_setup_shim_points_to_koruide_implementation() -> None:
-    assert legacy_host_setup_mod.build_setup_host_report is koruide_host_setup_mod.build_setup_host_report
+    assert (
+        legacy_host_setup_mod.build_setup_host_report
+        is koruide_host_setup_mod.build_setup_host_report
+    )
     assert legacy_host_setup_mod.run_host_setup is koruide_host_setup_mod.run_host_setup
 
 
 def test_autopilot_plugin_installer_shim_points_to_koruide_implementation() -> None:
-    assert legacy_plugin_installer_mod.install_plugin_for_ide is koruide_plugin_installer_mod.install_plugin_for_ide
-    assert legacy_plugin_installer_mod.PluginInstallResult is koruide_plugin_installer_mod.PluginInstallResult
+    assert (
+        legacy_plugin_installer_mod.install_plugin_for_ide
+        is koruide_plugin_installer_mod.install_plugin_for_ide
+    )
+    assert (
+        legacy_plugin_installer_mod.PluginInstallResult
+        is koruide_plugin_installer_mod.PluginInstallResult
+    )
 
 
 def test_autopilot_config_shim_points_to_koruide_implementation() -> None:

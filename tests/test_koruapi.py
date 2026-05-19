@@ -71,6 +71,9 @@ def test_openapi_document_lists_invoke_path() -> None:
     doc = build_openapi_document()
     assert doc["openapi"].startswith("3.")
     assert "/api/v1/invoke" in doc["paths"]
-    assert "dsl.roundtrip" in doc["paths"]["/api/v1/invoke"]["post"]["requestBody"]["content"][
-        "application/json"
-    ]["schema"]["properties"]["integration_id"]["enum"]
+    assert (
+        "dsl.roundtrip"
+        in doc["paths"]["/api/v1/invoke"]["post"]["requestBody"]["content"]["application/json"][
+            "schema"
+        ]["properties"]["integration_id"]["enum"]
+    )

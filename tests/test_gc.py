@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
-from datetime import datetime, timedelta, timezone, UTC
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import yaml
@@ -30,7 +30,8 @@ def _write_sprint(project: Path, tickets: dict, sprint: str = "current") -> None
         },
     }
     (sprint_dir / f"{sprint}.yaml").write_text(
-        yaml.safe_dump(data, sort_keys=False), encoding="utf-8",
+        yaml.safe_dump(data, sort_keys=False),
+        encoding="utf-8",
     )
 
 
@@ -60,11 +61,14 @@ class TestCollectGcCandidates(unittest.TestCase):
     def test_finds_old_done_tickets(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_sprint(project, {
-                "T-001": _ticket("Old task", days_ago=60),
-                "T-002": _ticket("Recent task", days_ago=1),
-                "T-003": _ticket("Open task", status="open", exec_state="ready", days_ago=90),
-            })
+            _write_sprint(
+                project,
+                {
+                    "T-001": _ticket("Old task", days_ago=60),
+                    "T-002": _ticket("Recent task", days_ago=1),
+                    "T-003": _ticket("Open task", status="open", exec_state="ready", days_ago=90),
+                },
+            )
             candidates = collect_gc_candidates(project, max_age_days=30)
             ids = [c.ticket_id for c in candidates]
             self.assertIn("T-001", ids)
@@ -74,10 +78,17 @@ class TestCollectGcCandidates(unittest.TestCase):
     def test_includes_failed_and_blocked(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_sprint(project, {
-                "T-010": _ticket("Failed old", status="failed", exec_state="failed", days_ago=45),
-                "T-011": _ticket("Blocked old", status="blocked", exec_state="pending", days_ago=45),
-            })
+            _write_sprint(
+                project,
+                {
+                    "T-010": _ticket(
+                        "Failed old", status="failed", exec_state="failed", days_ago=45
+                    ),
+                    "T-011": _ticket(
+                        "Blocked old", status="blocked", exec_state="pending", days_ago=45
+                    ),
+                },
+            )
             candidates = collect_gc_candidates(project, max_age_days=30)
             ids = [c.ticket_id for c in candidates]
             self.assertIn("T-010", ids)
@@ -86,22 +97,28 @@ class TestCollectGcCandidates(unittest.TestCase):
     def test_no_candidates_when_all_recent(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_sprint(project, {
-                "T-020": _ticket("Fresh done", days_ago=2),
-            })
+            _write_sprint(
+                project,
+                {
+                    "T-020": _ticket("Fresh done", days_ago=2),
+                },
+            )
             candidates = collect_gc_candidates(project, max_age_days=30)
             self.assertEqual(candidates, [])
 
     def test_missing_timestamp_treated_as_old(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_sprint(project, {
-                "T-030": {
-                    "name": "No timestamp",
-                    "status": "done",
-                    "execution": {"state": "done"},
+            _write_sprint(
+                project,
+                {
+                    "T-030": {
+                        "name": "No timestamp",
+                        "status": "done",
+                        "execution": {"state": "done"},
+                    },
                 },
-            })
+            )
             candidates = collect_gc_candidates(project, max_age_days=30)
             self.assertEqual(len(candidates), 1)
             self.assertEqual(candidates[0].age_days, float("inf"))
@@ -116,13 +133,18 @@ class TestCollectGcCandidates(unittest.TestCase):
     def test_custom_statuses(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_sprint(project, {
-                "T-040": _ticket("Done old", status="done", days_ago=60),
-                "T-041": _ticket("Failed old", status="failed", days_ago=60),
-            })
+            _write_sprint(
+                project,
+                {
+                    "T-040": _ticket("Done old", status="done", days_ago=60),
+                    "T-041": _ticket("Failed old", status="failed", days_ago=60),
+                },
+            )
             # Only clean "failed"
             candidates = collect_gc_candidates(
-                project, statuses=frozenset({"failed"}), max_age_days=30,
+                project,
+                statuses=frozenset({"failed"}),
+                max_age_days=30,
             )
             ids = [c.ticket_id for c in candidates]
             self.assertNotIn("T-040", ids)
@@ -133,10 +155,13 @@ class TestRunGc(unittest.TestCase):
     def test_dry_run_does_not_delete(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_sprint(project, {
-                "T-100": _ticket("Old done", days_ago=60),
-                "T-101": _ticket("Recent done", days_ago=5),
-            })
+            _write_sprint(
+                project,
+                {
+                    "T-100": _ticket("Old done", days_ago=60),
+                    "T-101": _ticket("Recent done", days_ago=5),
+                },
+            )
             result = run_gc(project, apply=False, max_age_days=30)
             self.assertTrue(result.dry_run)
             self.assertEqual(result.removed, ["T-100"])
@@ -150,11 +175,14 @@ class TestRunGc(unittest.TestCase):
     def test_keep_last_protects_recent(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_sprint(project, {
-                "T-200": _ticket("Oldest", days_ago=90),
-                "T-201": _ticket("Middle", days_ago=60),
-                "T-202": _ticket("Newest old", days_ago=35),
-            })
+            _write_sprint(
+                project,
+                {
+                    "T-200": _ticket("Oldest", days_ago=90),
+                    "T-201": _ticket("Middle", days_ago=60),
+                    "T-202": _ticket("Newest old", days_ago=35),
+                },
+            )
             result = run_gc(project, apply=False, max_age_days=30, keep_last=1)
             self.assertIn("T-200", result.removed)
             self.assertIn("T-201", result.removed)
@@ -164,9 +192,12 @@ class TestRunGc(unittest.TestCase):
     def test_keep_last_larger_than_candidates_keeps_all(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_sprint(project, {
-                "T-300": _ticket("Only old", days_ago=60),
-            })
+            _write_sprint(
+                project,
+                {
+                    "T-300": _ticket("Only old", days_ago=60),
+                },
+            )
             result = run_gc(project, apply=False, max_age_days=30, keep_last=5)
             self.assertEqual(result.removed, [])
             self.assertEqual(result.kept, ["T-300"])
@@ -174,9 +205,12 @@ class TestRunGc(unittest.TestCase):
     def test_apply_calls_planfile_delete(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_sprint(project, {
-                "T-400": _ticket("Old done", days_ago=60),
-            })
+            _write_sprint(
+                project,
+                {
+                    "T-400": _ticket("Old done", days_ago=60),
+                },
+            )
             delete_calls: list[list[str]] = []
 
             def fake_runner(command: list[str], _project: Path):
@@ -197,9 +231,12 @@ class TestRunGc(unittest.TestCase):
     def test_apply_creates_archive(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_sprint(project, {
-                "T-500": _ticket("Archived ticket", days_ago=60),
-            })
+            _write_sprint(
+                project,
+                {
+                    "T-500": _ticket("Archived ticket", days_ago=60),
+                },
+            )
 
             def fake_runner(command: list[str], _project: Path):
                 return type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
@@ -221,9 +258,12 @@ class TestRunGc(unittest.TestCase):
     def test_no_archive_flag(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_sprint(project, {
-                "T-600": _ticket("No archive", days_ago=60),
-            })
+            _write_sprint(
+                project,
+                {
+                    "T-600": _ticket("No archive", days_ago=60),
+                },
+            )
 
             def fake_runner(command: list[str], _project: Path):
                 return type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
@@ -240,9 +280,12 @@ class TestRunGc(unittest.TestCase):
     def test_no_candidates_returns_empty_result(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_sprint(project, {
-                "T-700": _ticket("Recent", days_ago=5),
-            })
+            _write_sprint(
+                project,
+                {
+                    "T-700": _ticket("Recent", days_ago=5),
+                },
+            )
             result = run_gc(project, apply=False, max_age_days=30)
             self.assertEqual(result.candidates, [])
             self.assertEqual(result.removed, [])
@@ -250,12 +293,17 @@ class TestRunGc(unittest.TestCase):
     def test_delete_failure_records_error(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            _write_sprint(project, {
-                "T-800": _ticket("Fail to delete", days_ago=60),
-            })
+            _write_sprint(
+                project,
+                {
+                    "T-800": _ticket("Fail to delete", days_ago=60),
+                },
+            )
 
             def failing_runner(command: list[str], _project: Path):
-                return type("R", (), {"returncode": 1, "stdout": "", "stderr": "permission denied"})()
+                return type(
+                    "R", (), {"returncode": 1, "stdout": "", "stderr": "permission denied"}
+                )()
 
             result = run_gc(
                 project,

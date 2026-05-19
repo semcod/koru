@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import contextlib
 import os
 import re
 import shutil
 import sys
 from pathlib import Path
-import contextlib
 
 _TIMEOUT_PATTERN = re.compile(r"^(?P<value>\d+(?:\.\d+)?)(?P<unit>ms|s)?$")
 

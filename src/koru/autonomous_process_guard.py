@@ -85,7 +85,9 @@ def looks_like_autonomous_up_command(command: str) -> bool:
 
 
 def find_existing_autonomous_processes(
-    project: Path, *, any_project: bool = False,
+    project: Path,
+    *,
+    any_project: bool = False,
 ) -> list[ExistingAutonomousProcess]:
     try:
         result = subprocess.run(
@@ -176,7 +178,10 @@ def as_managed(proc: ExistingAutonomousProcess) -> ExistingManagedProcess:
 
 
 def terminate_existing_processes(
-    processes: list[ExistingManagedProcess], *, stdio_format: str, stdio_info: Callable[[str], None],
+    processes: list[ExistingManagedProcess],
+    *,
+    stdio_format: str,
+    stdio_info: Callable[[str], None],
 ) -> None:
     for proc in processes:
         stdio_info(f"koru autonomous: stopping existing {proc.kind} pid={proc.pid}")

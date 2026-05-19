@@ -97,7 +97,9 @@ def _queue_progress_callback(
     return _progress
 
 
-def _emit_queue_completed(args: Namespace, *, exit_code: int, status: str, message: str, details: dict) -> None:
+def _emit_queue_completed(
+    args: Namespace, *, exit_code: int, status: str, message: str, details: dict
+) -> None:
     emit_management_event(
         tool="koru.queue",
         action="completed" if exit_code == 0 else "failed",

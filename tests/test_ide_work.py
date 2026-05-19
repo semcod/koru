@@ -61,7 +61,9 @@ class TestIdeWork(unittest.TestCase):
                 )
 
             prompt, kind = resolve_idle_drive_prompt(
-                project, drive_prompt="continue", runner=runner,
+                project,
+                drive_prompt="continue",
+                runner=runner,
             )
             self.assertEqual(kind, "idle_ticket_prompt")
             self.assertIn("PLF-99", prompt)
@@ -75,7 +77,9 @@ class TestIdeWork(unittest.TestCase):
                 return _ok("[]")
 
             prompt, kind = resolve_idle_drive_prompt(
-                project, drive_prompt="continue with the next ticket", runner=runner,
+                project,
+                drive_prompt="continue with the next ticket",
+                runner=runner,
             )
             self.assertEqual(kind, "drive_prompt")
             self.assertEqual(prompt, "continue with the next ticket")
@@ -103,13 +107,14 @@ class TestIdeWork(unittest.TestCase):
                 return _ok()
 
             count = release_stale_in_progress_tickets(
-                project, stale_minutes=60, runner=runner,
+                project,
+                stale_minutes=60,
+                runner=runner,
             )
             self.assertEqual(count, 1)
             self.assertTrue(
                 any(
-                    c[:4] == ["planfile", "ticket", "update", "PLF-7"]
-                    and "open" in c
+                    c[:4] == ["planfile", "ticket", "update", "PLF-7"] and "open" in c
                     for c in updates
                 ),
             )

@@ -179,7 +179,9 @@ def _parse_llm_response(
     )
 
 
-def _handle_llm_error(exc: urllib.error.HTTPError | urllib.error.URLError, model: str) -> LlmRunResult:
+def _handle_llm_error(
+    exc: urllib.error.HTTPError | urllib.error.URLError, model: str
+) -> LlmRunResult:
     """Handle LLM API errors."""
     if isinstance(exc, urllib.error.HTTPError):
         text = exc.read().decode("utf-8", errors="replace")

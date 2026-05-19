@@ -34,7 +34,9 @@ def probe(tmp_path: Path) -> AutonomousStartupProbe:
     )
 
 
-def test_build_operator_steps_mcp_pending_without_config(tmp_path: Path, probe: AutonomousStartupProbe) -> None:
+def test_build_operator_steps_mcp_pending_without_config(
+    tmp_path: Path, probe: AutonomousStartupProbe
+) -> None:
     steps = op.build_operator_steps(
         project=tmp_path,
         probe=probe,
@@ -46,7 +48,8 @@ def test_build_operator_steps_mcp_pending_without_config(tmp_path: Path, probe: 
 
 
 def test_build_operator_steps_mcp_ok_when_configured(
-    tmp_path: Path, probe: AutonomousStartupProbe,
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
 ) -> None:
     (tmp_path / ".cursor").mkdir()
     (tmp_path / ".cursor" / "mcp.json").write_text(
@@ -59,14 +62,18 @@ def test_build_operator_steps_mcp_ok_when_configured(
 
 
 def test_run_startup_operator_pipeline_creates_tickets(
-    tmp_path: Path, probe: AutonomousStartupProbe, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     (tmp_path / ".planfile" / "sprints").mkdir(parents=True)
     (tmp_path / ".planfile" / "config.yaml").write_text(
-        "prefix: PLF\nnext_id: 1\n", encoding="utf-8",
+        "prefix: PLF\nnext_id: 1\n",
+        encoding="utf-8",
     )
     (tmp_path / ".planfile" / "sprints" / "current.yaml").write_text(
-        "sprint:\n  name: current\n  tickets: {}\n", encoding="utf-8",
+        "sprint:\n  name: current\n  tickets: {}\n",
+        encoding="utf-8",
     )
     monkeypatch.setattr(op, "_planfile_api_ok", lambda _p: (True, "ok"))
     monkeypatch.setattr(op, "_host_injectors_ok", lambda: (True, "ok"))
@@ -83,7 +90,9 @@ def test_run_startup_operator_pipeline_creates_tickets(
 
 
 def test_run_startup_operator_pipeline_autostarts_planfile_api_when_missing(
-    tmp_path: Path, probe: AutonomousStartupProbe, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     checks = iter([(False, "missing"), (True, "started")])
     started: list[Path] = []
@@ -123,14 +132,18 @@ def test_candidate_planfile_health_urls_use_serve_endpoint(tmp_path: Path) -> No
 
 
 def test_run_startup_operator_pipeline_dedup_markers(
-    tmp_path: Path, probe: AutonomousStartupProbe, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     (tmp_path / ".planfile" / "sprints").mkdir(parents=True)
     (tmp_path / ".planfile" / "config.yaml").write_text(
-        "prefix: PLF\nnext_id: 1\n", encoding="utf-8",
+        "prefix: PLF\nnext_id: 1\n",
+        encoding="utf-8",
     )
     (tmp_path / ".planfile" / "sprints" / "current.yaml").write_text(
-        "sprint:\n  name: current\n  tickets: {}\n", encoding="utf-8",
+        "sprint:\n  name: current\n  tickets: {}\n",
+        encoding="utf-8",
     )
     monkeypatch.setattr(op, "_planfile_api_ok", lambda _p: (True, "ok"))
     monkeypatch.setattr(op, "_host_injectors_ok", lambda: (True, "ok"))
@@ -153,7 +166,9 @@ def test_run_startup_operator_pipeline_dedup_markers(
 
 
 def test_run_startup_operator_pipeline_closes_resolved_marker_ticket(
-    tmp_path: Path, probe: AutonomousStartupProbe, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     (tmp_path / ".cursor").mkdir()
     (tmp_path / ".cursor" / "mcp.json").write_text(
@@ -191,7 +206,9 @@ def test_run_startup_operator_pipeline_closes_resolved_marker_ticket(
 
 
 def test_run_startup_operator_pipeline_keeps_marker_when_close_times_out(
-    tmp_path: Path, probe: AutonomousStartupProbe, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     (tmp_path / ".cursor").mkdir()
     (tmp_path / ".cursor" / "mcp.json").write_text(

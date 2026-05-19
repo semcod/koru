@@ -8,6 +8,7 @@ Contract:
 - Re-running on an initialised project errors unless ``force=True``.
 - ``--from <yaml>`` honours an externally-provided pipeline.
 """
+
 from __future__ import annotations
 
 import os
@@ -111,7 +112,8 @@ class TestStarterInit(unittest.TestCase):
             policy_file.write_text("USER EDIT — keep me", encoding="utf-8")
             init_project(project, force=True)
             self.assertEqual(
-                policy_file.read_text(encoding="utf-8"), "USER EDIT — keep me",
+                policy_file.read_text(encoding="utf-8"),
+                "USER EDIT — keep me",
             )
 
     def test_no_starter_yaml_left_behind(self) -> None:
@@ -184,7 +186,8 @@ class TestFromExternalPipeline(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             pipeline = project.parent / "pipeline.yaml"
-            pipeline.write_text(textwrap.dedent("""\
+            pipeline.write_text(
+                textwrap.dedent("""\
                 schema: '1.1'
                 project: ext
                 tasks:
@@ -197,7 +200,9 @@ class TestFromExternalPipeline(unittest.TestCase):
                       queue: default
                       state: ready
                     priority: high
-            """), encoding="utf-8")
+            """),
+                encoding="utf-8",
+            )
             report = init_project(project, from_file=pipeline)
             self.assertFalse(report.used_starter_pipeline)
             self.assertEqual(report.sprint_imported, 1)

@@ -1,4 +1,5 @@
 """Unit tests for the flat-pipeline bootstrap loader/validator/materialiser."""
+
 from __future__ import annotations
 
 import tempfile
@@ -224,7 +225,8 @@ class TestMaterializeToPlanfile(unittest.TestCase):
             )
             self.assertEqual(sprint["sprint"]["tickets"]["T-1"]["execution"]["state"], "ready")
             self.assertEqual(
-                sprint["sprint"]["tickets"]["T-2"]["execution"]["state"], "pending",
+                sprint["sprint"]["tickets"]["T-2"]["execution"]["state"],
+                "pending",
             )
 
     def test_overwrite_protection(self) -> None:

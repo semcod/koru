@@ -4,6 +4,7 @@ The brief is the LLM's only source of truth for what is allowed —
 its schema and content must be deterministic and contain the
 mandatory rules verbatim.
 """
+
 from __future__ import annotations
 
 import json
@@ -38,7 +39,8 @@ def _init_planfile(project: Path) -> None:
     (pf / "sprints").mkdir(parents=True, exist_ok=True)
     (pf / "config.yaml").write_text("project: test\n", encoding="utf-8")
     (pf / "sprints" / "current.yaml").write_text(
-        "sprint:\n  id: current\n  tickets: {}\n", encoding="utf-8",
+        "sprint:\n  id: current\n  tickets: {}\n",
+        encoding="utf-8",
     )
 
 
@@ -78,7 +80,8 @@ class TestBuildContext(unittest.TestCase):
             koru_dir.mkdir(parents=True, exist_ok=True)
             snap = {"cycle": 2, "knobs": {"scan_after_idle_queue": True}}
             (koru_dir / "autonomy-telemetry.json").write_text(
-                json.dumps(snap), encoding="utf-8",
+                json.dumps(snap),
+                encoding="utf-8",
             )
 
             def planfile_runner(_c, _p):
@@ -96,6 +99,7 @@ class TestBuildContext(unittest.TestCase):
     def test_brief_when_queue_idle(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             _init_planfile(Path(tmp))
+
             def planfile_runner(_c, _p):
                 return _ok("No runnable ticket found.\n")
 
@@ -144,6 +148,7 @@ class TestBuildContext(unittest.TestCase):
     def test_brief_when_planfile_errors(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             _init_planfile(Path(tmp))
+
             def planfile_runner(_c, _p):
                 return _fail("planfile config not found")
 
@@ -188,9 +193,11 @@ class TestBuildContext(unittest.TestCase):
             _init_planfile(Path(tmp))
             ctx = build_context(
                 project=Path(tmp),
-                planfile_runner=lambda _c, _p: _ok(json.dumps(
-                    {"id": "X", "executor": {"kind": "shell"}},
-                )),
+                planfile_runner=lambda _c, _p: _ok(
+                    json.dumps(
+                        {"id": "X", "executor": {"kind": "shell"}},
+                    )
+                ),
                 git_probe=_no_git,
             )
             joined = " ".join(ctx["instructions"]).lower()
@@ -203,9 +210,11 @@ class TestBuildContext(unittest.TestCase):
             ctx = build_context(
                 project=Path(tmp),
                 policy=Policy(ci_command="pytest -q"),
-                planfile_runner=lambda _c, _p: _ok(json.dumps(
-                    {"id": "X", "executor": {"kind": "shell"}},
-                )),
+                planfile_runner=lambda _c, _p: _ok(
+                    json.dumps(
+                        {"id": "X", "executor": {"kind": "shell"}},
+                    )
+                ),
                 git_probe=_no_git,
             )
             joined = " ".join(ctx["instructions"])
@@ -216,9 +225,11 @@ class TestBuildContext(unittest.TestCase):
             _init_planfile(Path(tmp))
             ctx = build_context(
                 project=Path(tmp),
-                planfile_runner=lambda _c, _p: _ok(json.dumps(
-                    {"id": "PLF-100", "executor": {"kind": "shell"}},
-                )),
+                planfile_runner=lambda _c, _p: _ok(
+                    json.dumps(
+                        {"id": "PLF-100", "executor": {"kind": "shell"}},
+                    )
+                ),
                 git_probe=_no_git,
             )
             ss = ctx["self_service"]
@@ -236,9 +247,11 @@ class TestBuildContext(unittest.TestCase):
             _init_planfile(Path(tmp))
             ctx = build_context(
                 project=Path(tmp),
-                planfile_runner=lambda _c, _p: _ok(json.dumps(
-                    {"id": "X", "executor": {"kind": "shell"}},
-                )),
+                planfile_runner=lambda _c, _p: _ok(
+                    json.dumps(
+                        {"id": "X", "executor": {"kind": "shell"}},
+                    )
+                ),
                 git_probe=_no_git,
             )
             # Round-trip — must not raise.
@@ -250,11 +263,15 @@ class TestBuildContext(unittest.TestCase):
             _init_planfile(Path(tmp))
             ctx = build_context(
                 project=Path(tmp),
-                planfile_runner=lambda _c, _p: _ok(json.dumps({
-                    "id": "X",
-                    "executor": {"kind": "shell"},
-                    "files": ["src/a.py", "src/b.py"],
-                })),
+                planfile_runner=lambda _c, _p: _ok(
+                    json.dumps(
+                        {
+                            "id": "X",
+                            "executor": {"kind": "shell"},
+                            "files": ["src/a.py", "src/b.py"],
+                        }
+                    )
+                ),
                 git_probe=_no_git,
             )
             joined = " ".join(ctx["instructions"])
@@ -270,10 +287,8 @@ class TestBuildContext(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             _init_planfile(Path(tmp))
             queue = [
-                {"id": "PLF-086", "status": "open",
-                 "labels": ["test-only", "dryrun"]},
-                {"id": "PLF-090", "status": "open",
-                 "labels": ["synthetic", "auto-close"]},
+                {"id": "PLF-086", "status": "open", "labels": ["test-only", "dryrun"]},
+                {"id": "PLF-090", "status": "open", "labels": ["synthetic", "auto-close"]},
             ]
             ctx = build_context(
                 project=Path(tmp),
@@ -288,10 +303,8 @@ class TestBuildContext(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             _init_planfile(Path(tmp))
             queue = [
-                {"id": "PLF-086", "status": "open",
-                 "labels": ["test-only", "dryrun"]},
-                {"id": "PLF-093", "status": "open",
-                 "labels": ["bug", "ci"]},
+                {"id": "PLF-086", "status": "open", "labels": ["test-only", "dryrun"]},
+                {"id": "PLF-093", "status": "open", "labels": ["bug", "ci"]},
             ]
             ctx = build_context(
                 project=Path(tmp),
@@ -306,8 +319,7 @@ class TestBuildContext(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             _init_planfile(Path(tmp))
             queue = [
-                {"id": "PLF-086", "status": "open",
-                 "labels": ["test-only", "dryrun"]},
+                {"id": "PLF-086", "status": "open", "labels": ["test-only", "dryrun"]},
             ]
             ctx = build_context(
                 project=Path(tmp),
@@ -324,8 +336,7 @@ class TestBuildContext(unittest.TestCase):
         suppress it from the active slot."""
         with tempfile.TemporaryDirectory() as tmp:
             _init_planfile(Path(tmp))
-            fixture = {"id": "PLF-090", "status": "open",
-                       "labels": ["synthetic", "auto-close"]}
+            fixture = {"id": "PLF-090", "status": "open", "labels": ["synthetic", "auto-close"]}
             ctx = build_context(
                 project=Path(tmp),
                 planfile_runner=lambda _c, _p: _ok(json.dumps(fixture)),
@@ -339,8 +350,7 @@ class TestBuildContext(unittest.TestCase):
         fixture rendering itself), they must always get it."""
         with tempfile.TemporaryDirectory() as tmp:
             _init_planfile(Path(tmp))
-            fixture = {"id": "PLF-090", "status": "open",
-                       "labels": ["synthetic"]}
+            fixture = {"id": "PLF-090", "status": "open", "labels": ["synthetic"]}
             ctx = build_context(
                 project=Path(tmp),
                 ticket_id="PLF-090",
@@ -362,6 +372,7 @@ class TestBuildContext(unittest.TestCase):
             ]
 
             captured_commands = []
+
             def planfile_runner(command, _project):
                 captured_commands.append(command)
                 if "show" in command:
@@ -379,7 +390,7 @@ class TestBuildContext(unittest.TestCase):
 
             self.assertEqual(len(ctx["all_tickets"]), 2)
             self.assertEqual([t["id"] for t in ctx["all_tickets"]], ["PLF-101", "PLF-102"])
-            
+
             # Verify that both 'show' and 'list' were called
             self.assertTrue(any("show" in cmd for cmd in captured_commands))
             self.assertTrue(any("list" in cmd for cmd in captured_commands))
@@ -391,14 +402,18 @@ class TestMarkdownHandoff(unittest.TestCase):
             _init_planfile(Path(tmp))
             ctx = build_context(
                 project=Path(tmp),
-                planfile_runner=lambda _c, _p: _ok(json.dumps({
-                    "id": "PLF-200",
-                    "name": "Refactor X",
-                    "status": "open",
-                    "executor": {"kind": "shell"},
-                    "files": ["a.py"],
-                    "inputs": {"prompt": "Move helpers to utils"},
-                })),
+                planfile_runner=lambda _c, _p: _ok(
+                    json.dumps(
+                        {
+                            "id": "PLF-200",
+                            "name": "Refactor X",
+                            "status": "open",
+                            "executor": {"kind": "shell"},
+                            "files": ["a.py"],
+                            "inputs": {"prompt": "Move helpers to utils"},
+                        }
+                    )
+                ),
                 git_probe=_no_git,
             )
             md = render_markdown_handoff(ctx)
@@ -412,9 +427,14 @@ class TestMarkdownHandoff(unittest.TestCase):
             _init_planfile(Path(tmp))
             ctx = build_context(
                 project=Path(tmp),
-                planfile_runner=lambda _c, _p: _ok(json.dumps({
-                    "id": "X", "executor": {"kind": "shell"},
-                })),
+                planfile_runner=lambda _c, _p: _ok(
+                    json.dumps(
+                        {
+                            "id": "X",
+                            "executor": {"kind": "shell"},
+                        }
+                    )
+                ),
                 git_probe=_no_git,
             )
             md = render_markdown_handoff(ctx)
@@ -449,8 +469,8 @@ class TestProjectPipelineInHandoff(unittest.TestCase):
             _init_planfile(project)
             (project / "koru.yaml").write_text(
                 'schema: "1.0"\nwhen:\n  qa:\n'
-                '    description: Run gates\n'
-                '    commands:\n      - task quality:regix:local\n',
+                "    description: Run gates\n"
+                "    commands:\n      - task quality:regix:local\n",
                 encoding="utf-8",
             )
 

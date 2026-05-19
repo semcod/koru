@@ -9,7 +9,9 @@ def test_render_topology_text_includes_components_and_pipelines():
             "project": "/tmp/p",
             "exists": True,
             "path": "/tmp/p/.planfile/topology.yaml",
-            "components": {"scan": {"enabled": True, "available": True, "via": "default", "role": "r"}},
+            "components": {
+                "scan": {"enabled": True, "available": True, "via": "default", "role": "r"}
+            },
             "pipelines": {
                 "autoloop:queue": {
                     "enabled": False,

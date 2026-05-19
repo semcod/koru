@@ -9,9 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_quality_regix_uses_current_regix_gates_command() -> None:
     taskfile = (ROOT / "Taskfile.yml").read_text(encoding="utf-8")
-    workflow_template = (
-        ROOT / "templates/github-workflows/code-quality.yml.template"
-    ).read_text(encoding="utf-8")
+    workflow_template = (ROOT / "templates/github-workflows/code-quality.yml.template").read_text(
+        encoding="utf-8"
+    )
 
     assert "regix gates" in taskfile
     assert "regix gate\n" not in taskfile

@@ -38,20 +38,19 @@ def test_load_config_returns_defaults_when_file_missing(tmp_path: Path) -> None:
 def test_load_config_user_keys_override_defaults(tmp_path: Path) -> None:
     path = tmp_path / "autopilot.toml"
     path.write_text(
-        '[submit_keys]\n'
-        'windsurf = "ctrl+Return"\n'
-        'fleet    = "alt+Return"\n',
+        '[submit_keys]\nwindsurf = "ctrl+Return"\nfleet    = "alt+Return"\n',
         encoding="utf-8",
     )
     cfg = load_config(path)
     assert cfg.source == path
-    assert cfg.submit_keys["windsurf"] == "ctrl+Return"   # overridden
+    assert cfg.submit_keys["windsurf"] == "ctrl+Return"  # overridden
     assert cfg.submit_keys["jetbrains"] == "ctrl+Return"  # default preserved
-    assert cfg.submit_keys["fleet"] == "alt+Return"       # new IDE accepted
+    assert cfg.submit_keys["fleet"] == "alt+Return"  # new IDE accepted
 
 
 def test_load_config_malformed_toml_falls_back_to_defaults(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     path = tmp_path / "bad.toml"
     path.write_text("this = is not = toml", encoding="utf-8")
@@ -68,11 +67,7 @@ def test_load_config_skips_non_string_entries(tmp_path: Path) -> None:
     """``submit_keys`` entries with non-string values must be ignored."""
     path = tmp_path / "autopilot.toml"
     path.write_text(
-        '[submit_keys]\n'
-        'good = "Return"\n'
-        'bad_int = 42\n'
-        'bad_arr = ["a", "b"]\n'
-        'empty   = ""\n',
+        '[submit_keys]\ngood = "Return"\nbad_int = 42\nbad_arr = ["a", "b"]\nempty   = ""\n',
         encoding="utf-8",
     )
     cfg = load_config(path)
@@ -86,10 +81,7 @@ def test_load_config_ignores_unrelated_sections(tmp_path: Path) -> None:
     """Sections other than [submit_keys] don't disturb anything."""
     path = tmp_path / "autopilot.toml"
     path.write_text(
-        '[future_section]\n'
-        'enabled = true\n'
-        '[submit_keys]\n'
-        'windsurf = "Return"\n',
+        '[future_section]\nenabled = true\n[submit_keys]\nwindsurf = "Return"\n',
         encoding="utf-8",
     )
     cfg = load_config(path)
@@ -120,7 +112,8 @@ def test_submit_key_for_falls_back_when_no_default_key() -> None:
 
 
 def test_default_config_path_uses_xdg_when_set(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
     assert default_config_path() == tmp_path / "koru" / "autopilot.toml"

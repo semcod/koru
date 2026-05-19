@@ -145,13 +145,17 @@ def _validate_executor(task: dict[str, Any]) -> list[ValidationError]:
     kind = executor.get("kind")
     if kind not in VALID_EXECUTOR_KINDS:
         errors.append(
-            ValidationError(tid, "executor.kind", f"{kind!r} not in {sorted(VALID_EXECUTOR_KINDS)}"),
+            ValidationError(
+                tid, "executor.kind", f"{kind!r} not in {sorted(VALID_EXECUTOR_KINDS)}"
+            ),
         )
 
     mode = executor.get("mode", "automatic")
     if mode not in VALID_EXECUTOR_MODES:
         errors.append(
-            ValidationError(tid, "executor.mode", f"{mode!r} not in {sorted(VALID_EXECUTOR_MODES)}"),
+            ValidationError(
+                tid, "executor.mode", f"{mode!r} not in {sorted(VALID_EXECUTOR_MODES)}"
+            ),
         )
 
     return errors
@@ -165,7 +169,9 @@ def _validate_execution_state(task: dict[str, Any]) -> list[ValidationError]:
     if state not in VALID_EXECUTION_STATES:
         return [
             ValidationError(
-                tid, "execution.state", f"{state!r} not in {sorted(VALID_EXECUTION_STATES)}",
+                tid,
+                "execution.state",
+                f"{state!r} not in {sorted(VALID_EXECUTION_STATES)}",
             ),
         ]
     return []

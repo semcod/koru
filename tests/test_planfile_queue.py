@@ -163,7 +163,8 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(result.exit_code, 2)
             # Failed shell ticket → planfile ticket block --reason "FAIL: ...".
             block_call = next(
-                _ticket_args(call) for call in planfile_calls
+                _ticket_args(call)
+                for call in planfile_calls
                 if _ticket_args(call)[:3] == ["ticket", "block", "PLF-003"]
             )
             self.assertEqual(block_call[3], "--reason")
@@ -263,7 +264,8 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(result.status, "failed")
             self.assertEqual(result.stderr, "HTTP 500")
             block_call = next(
-                _ticket_args(call) for call in planfile_calls
+                _ticket_args(call)
+                for call in planfile_calls
                 if _ticket_args(call)[:3] == ["ticket", "block", "PLF-005"]
             )
             self.assertEqual(block_call[3], "--reason")
@@ -367,10 +369,7 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(result.ticket_id, "PLF-030")
             # Missing script in non-interactive mode → no-op fallback "true".
             self.assertTrue(
-                any(
-                    _ticket_args(call)[:3] == ["ticket", "done", "PLF-030"]
-                    for call in calls
-                ),
+                any(_ticket_args(call)[:3] == ["ticket", "done", "PLF-030"] for call in calls),
             )
 
     def test_scan_ticket_without_executor_waits_for_ide_prompt(self) -> None:
@@ -657,9 +656,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
             self.assertEqual(result.status, "failed")
             self.assertEqual(result.executor_kind, "llm")
             tail = [_ticket_args(c) for c in calls]
-            block_call = next(
-                args for args in tail if args[:3] == ["ticket", "block", "LLM-001"]
-            )
+            block_call = next(args for args in tail if args[:3] == ["ticket", "block", "LLM-001"])
             self.assertEqual(block_call[3], "--reason")
             self.assertIn("FAIL", block_call[4])
             self.assertIn("HTTP 401", block_call[4])
@@ -718,8 +715,12 @@ class TestPlanfileQueueLlm(unittest.TestCase):
                 nonlocal llm_calls
                 llm_calls += 1
                 return SimpleNamespace(
-                    returncode=0, stdout="x", stderr="",
-                    status_code=200, model="x", usage={},
+                    returncode=0,
+                    stdout="x",
+                    stderr="",
+                    status_code=200,
+                    model="x",
+                    usage={},
                 )
 
             result = run_next_planfile_task(
@@ -931,8 +932,11 @@ class TestPlanfileQueueLoop(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)
             tickets = [
-                {"id": f"L-{n}", "name": f"task {n}",
-                 "executor": {"kind": "shell", "handler": "echo " + str(n)}}
+                {
+                    "id": f"L-{n}",
+                    "name": f"task {n}",
+                    "executor": {"kind": "shell", "handler": "echo " + str(n)},
+                }
                 for n in range(10)
             ]
             planfile_runner, _ = self._make_runner(tickets)
@@ -971,10 +975,18 @@ class TestPlanfileQueueLoop(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)
             sequence = [
-                {"id": "L-30", "name": "first human",
-                 "executor": {"kind": "human"}, "inputs": {"prompt": "decide A?"}},
-                {"id": "L-31", "name": "second human",
-                 "executor": {"kind": "human"}, "inputs": {"prompt": "decide B?"}},
+                {
+                    "id": "L-30",
+                    "name": "first human",
+                    "executor": {"kind": "human"},
+                    "inputs": {"prompt": "decide A?"},
+                },
+                {
+                    "id": "L-31",
+                    "name": "second human",
+                    "executor": {"kind": "human"},
+                    "inputs": {"prompt": "decide B?"},
+                },
                 None,
             ]
             planfile_runner, _ = self._make_runner(sequence)

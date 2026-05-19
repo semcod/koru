@@ -17,8 +17,7 @@ from koru.cli import _SUBCOMMANDS, _build_parser, _is_bare_invocation, main
 def _tmp_git_project(prefix: str = "koru-cli-test-") -> Path:
     td = tempfile.mkdtemp(prefix=prefix)
     p = Path(td)
-    subprocess.run(["git", "init", "-q", str(p)], check=True,
-                   capture_output=True)
+    subprocess.run(["git", "init", "-q", str(p)], check=True, capture_output=True)
     return p
 
 
@@ -102,7 +101,11 @@ class TestDoctorDispatch(unittest.TestCase):
 
     def test_doctor_json(self) -> None:
         code, output = _run_main(
-            "--doctor", "--project", str(self.project), "--format", "json",
+            "--doctor",
+            "--project",
+            str(self.project),
+            "--format",
+            "json",
         )
         data = json.loads(output)
         self.assertIn("checks", data)
@@ -117,7 +120,12 @@ class TestDoctorDispatch(unittest.TestCase):
 
     def test_doctor_fix_json(self) -> None:
         code, output = _run_main(
-            "--doctor", "--fix", "--project", str(self.project), "--format", "json",
+            "--doctor",
+            "--fix",
+            "--project",
+            str(self.project),
+            "--format",
+            "json",
         )
         data = json.loads(output)
         self.assertIn("fix", data)
@@ -180,7 +188,9 @@ class TestInitAgentLaneDispatch(unittest.TestCase):
 
     def test_fails_without_planfile(self) -> None:
         code, output = _run_main(
-            "--init-agent-lane", "--project", str(self.project),
+            "--init-agent-lane",
+            "--project",
+            str(self.project),
         )
         self.assertEqual(code, 2)
         self.assertIn("not found", output)
@@ -189,7 +199,9 @@ class TestInitAgentLaneDispatch(unittest.TestCase):
         code, _ = _run_main("--init", "--project", str(self.project))
         self.assertEqual(code, 0)
         code, output = _run_main(
-            "--init-agent-lane", "--project", str(self.project),
+            "--init-agent-lane",
+            "--project",
+            str(self.project),
         )
         self.assertEqual(code, 0, output)
         runner = self.project / ".planfile" / ".koru" / "run-autonomous.sh"
@@ -207,7 +219,9 @@ class TestContextDispatch(unittest.TestCase):
 
     def test_context_json_default(self) -> None:
         code, output = _run_main(
-            "--context", "--project", str(self.project),
+            "--context",
+            "--project",
+            str(self.project),
         )
         data = json.loads(output)
         self.assertIn("policy", data)
@@ -215,7 +229,11 @@ class TestContextDispatch(unittest.TestCase):
 
     def test_context_markdown(self) -> None:
         code, output = _run_main(
-            "--context", "--project", str(self.project), "--format", "markdown",
+            "--context",
+            "--project",
+            str(self.project),
+            "--format",
+            "markdown",
         )
         self.assertIn("# koru handoff", output)
         self.assertEqual(code, 0)
@@ -408,9 +426,7 @@ class TestSubcommandDispatch(unittest.TestCase):
         fake_report.summary.return_value = {}
         # Keep this routing test focused and fast: --doctor is an accepted
         # top-level flag, but the diagnostic implementation is tested elsewhere.
-        sentinels = {
-            name: mock.Mock(side_effect=AssertionError) for name in self.EXPECTED_KEYS
-        }
+        sentinels = {name: mock.Mock(side_effect=AssertionError) for name in self.EXPECTED_KEYS}
         with mock.patch.dict(_SUBCOMMANDS, sentinels):
             with mock.patch("koru.cli.run_diagnostics", return_value=fake_report):
                 with mock.patch("koru.cli.render_doctor_text", return_value="doctor"):
@@ -423,8 +439,7 @@ class TestSubcommandDispatch(unittest.TestCase):
     def test_empty_argv_does_not_call_any_handler(self) -> None:
         project = _tmp_git_project("koru-cli-empty-")
         try:
-            sentinels = {name: mock.Mock(side_effect=AssertionError)
-                         for name in self.EXPECTED_KEYS}
+            sentinels = {name: mock.Mock(side_effect=AssertionError) for name in self.EXPECTED_KEYS}
             with mock.patch.dict(_SUBCOMMANDS, sentinels):
                 _run_main("--project", str(project))
         finally:

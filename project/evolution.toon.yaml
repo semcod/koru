@@ -1,42 +1,46 @@
-# code2llm/evolution | 1172 func | 107f | 2026-05-19
-# generated in 0.00s
+# code2llm/evolution | 1175 func | 107f | 2026-05-19
+# generated in 0.01s
 
-NEXT[6] (ranked by impact):
+NEXT[7] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous.py
-      WHY: 1662L, 2 classes, max CC=17
-      EFFORT: ~4h  IMPACT: 28254
+      WHY: 1696L, 2 classes, max CC=17
+      EFFORT: ~4h  IMPACT: 28832
 
-  [2] !! SPLIT           src/koru/autopilot/cli_command.py
-      WHY: 1326L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 18564
+  [2] !! SPLIT           src/koru/cli.py
+      WHY: 1852L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 25928
 
-  [3] !  SPLIT-FUNC      _action_up  CC=17  fan=31
+  [3] !! SPLIT           src/koru/autopilot/cli_command.py
+      WHY: 1331L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 18634
+
+  [4] !  SPLIT-FUNC      _action_up  CC=17  fan=31
       WHY: CC=17 exceeds 15
       EFFORT: ~1h  IMPACT: 527
 
-  [4] !  SPLIT-FUNC      AutopilotBridge.injectChat  CC=15  fan=16
+  [5] !  SPLIT-FUNC      _profiled_compose_services  CC=18  fan=15
+      WHY: CC=18 exceeds 15
+      EFFORT: ~1h  IMPACT: 270
+
+  [6] !  SPLIT-FUNC      AutopilotBridge.injectChat  CC=15  fan=16
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 240
 
-  [5] !  SPLIT-FUNC      AutopilotBridge.submitChat  CC=15  fan=13
+  [7] !  SPLIT-FUNC      AutopilotBridge.submitChat  CC=15  fan=13
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 195
 
-  [6] !! SPLIT           planfile.yaml
-      WHY: 1319L, 0 classes, max CC=0
-      EFFORT: ~4h  IMPACT: 0
-
 
 RISKS[3]:
+  ⚠ Splitting src/koru/cli.py may break 52 import paths
   ⚠ Splitting src/koru/autonomous.py may break 47 import paths
   ⚠ Splitting src/koru/autopilot/cli_command.py may break 45 import paths
-  ⚠ Splitting planfile.yaml may break 0 import paths
 
 METRICS-TARGET:
   CC̄:          4.2 → ≤2.9
-  max-CC:      17 → ≤8
-  god-modules: 17 → 0
-  high-CC(≥15): 8 → ≤4
+  max-CC:      18 → ≤9
+  god-modules: 18 → 0
+  high-CC(≥15): 9 → ≤4
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

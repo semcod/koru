@@ -15,6 +15,7 @@ started here).
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import signal
@@ -95,7 +96,6 @@ from .scan import ScanResult, run_scan
 from .stdio_events import default_stdio_format_from_env, write_stdio_event
 from .tasks import create_nl_task
 from .topology import is_component_enabled, is_pipeline_enabled
-import contextlib
 
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
@@ -161,7 +161,9 @@ def _resolve_autopilot_ide(cli_value: str) -> str:
 def _apply_agent_lane_environ(project: Path, agent_lane: str) -> str | None:
     """Set lane exports in ``os.environ``; returns lane id or ``None`` if skipped."""
     lane, _source = _resolve_agent_lane_id(
-        project, agent_lane, resolve_project_lane=resolve_project_agent_lane,
+        project,
+        agent_lane,
+        resolve_project_lane=resolve_project_agent_lane,
     )
     if lane is None:
         return None
@@ -220,7 +222,9 @@ def _looks_like_autonomous_up_command(command: str) -> bool:
 
 
 def _find_existing_autonomous_processes(
-    project: Path, *, any_project: bool = False,
+    project: Path,
+    *,
+    any_project: bool = False,
 ) -> list[ExistingAutonomousProcess]:
     """Return running koru autonomous/auto processes except this PID tree."""
     try:
@@ -270,7 +274,10 @@ def stop_prior_autonomous_for_auto_start(
     """Stop koru autonomous/auto loops (any project) and WUP watch for ``project``."""
     project = project.resolve()
     existing = [
-        *(_as_managed(proc) for proc in _find_existing_autonomous_processes(project, any_project=True)),
+        *(
+            _as_managed(proc)
+            for proc in _find_existing_autonomous_processes(project, any_project=True)
+        ),
         *_find_existing_wup_processes(project),
     ]
     if not existing:
@@ -334,7 +341,9 @@ def _as_managed(proc: ExistingAutonomousProcess) -> ExistingManagedProcess:
 
 
 def _terminate_existing_processes(
-    processes: list[ExistingManagedProcess], *, stdio_format: str,
+    processes: list[ExistingManagedProcess],
+    *,
+    stdio_format: str,
 ) -> None:
     for proc in processes:
         _stdio_info(
@@ -396,7 +405,10 @@ def _guard_existing_autonomous_processes(args: argparse.Namespace, project: Path
     if args.replace_existing:
         if getattr(args, "replace_existing_global", False):
             existing = [
-                *(_as_managed(proc) for proc in _find_existing_autonomous_processes(project, any_project=True)),
+                *(
+                    _as_managed(proc)
+                    for proc in _find_existing_autonomous_processes(project, any_project=True)
+                ),
                 *_find_existing_wup_processes(project),
             ]
         _terminate_existing_processes(existing, stdio_format=args.emit_events)
@@ -554,10 +566,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--stop-on-waiting-input",
         dest="stop_on_waiting_input",
         action="store_true",
-        help=(
-            "Stop the outer loop when the queue reports waiting_input "
-            "(legacy behavior)."
-        ),
+        help=("Stop the outer loop when the queue reports waiting_input (legacy behavior)."),
     )
     up.add_argument(
         "--force-init",
@@ -821,7 +830,8 @@ def _ensure_init(project: Path, *, force: bool, stdio_format: str = "human") -> 
         return
     report = init_project(project, force=force)
     _stdio_info(
-        f"koru autonomous: init {'re-' if force else ''}done at {report.project}", fmt=stdio_format,
+        f"koru autonomous: init {'re-' if force else ''}done at {report.project}",
+        fmt=stdio_format,
     )
 
 
@@ -987,7 +997,9 @@ def _save_loop_checkpoint(
             "last_message_sent_ts": state.last_message_sent_ts,
             "telemetry_autopilot_idle_streak_skips": state.telemetry_autopilot_idle_streak_skips,
             "telemetry_scan_after_idle_runs": state.telemetry_scan_after_idle_runs,
-            "telemetry_scan_after_idle_tickets_applied": state.telemetry_scan_after_idle_tickets_applied,
+            "telemetry_scan_after_idle_tickets_applied": (
+                state.telemetry_scan_after_idle_tickets_applied
+            ),
             "last_scan_after_idle_ts": state.last_scan_after_idle_ts,
         },
     }
@@ -1004,7 +1016,11 @@ def _status_in_skip_list(status: str, skip_statuses: str) -> bool:
 
 
 def _run_command_check(
-    project: Path, check_id: str, command: list[str], *, stdio_format: str = "human",
+    project: Path,
+    check_id: str,
+    command: list[str],
+    *,
+    stdio_format: str = "human",
 ) -> bool:
     _stdio_info("+ " + " ".join(command), fmt=stdio_format)
     result = subprocess.run(command, cwd=project, check=False)
@@ -1030,7 +1046,8 @@ def _create_diagnostic_ticket(
     marker = state_dir / f"{check_id}.failed"
     if marker.exists():
         _stdio_info(
-            f"- diagnostic ticket marker exists for {check_id}, skipping create", fmt=stdio_format,
+            f"- diagnostic ticket marker exists for {check_id}, skipping create",
+            fmt=stdio_format,
         )
         return
     title = f"[AUTO-DIAG] {check_id} needs attention"
@@ -1260,7 +1277,9 @@ def _configure_loop_state(
     queue_name = None if use_all_queues else args.queue_name
     lane = _apply_agent_lane_environ(project, args.agent_lane)
     autopilot_ide, _autopilot_ide_source = resolve_autopilot_ide_for_autonomous(
-        args.autopilot_ide, lane, resolve_ide_route_fn=resolve_ide_route,
+        args.autopilot_ide,
+        lane,
+        resolve_ide_route_fn=resolve_ide_route,
     )
     loop_state = AutoloopState()
     checkpoint_path = (project / ".planfile/.koru/autonomous-state.json").resolve()
@@ -1335,7 +1354,8 @@ def _run_operator_pipeline(
 ) -> None:
     """Run operator pipeline if enabled."""
     for hint in format_post_startup_operator_hints(
-        startup_probe, plugin_connected=plugin_connected,
+        startup_probe,
+        plugin_connected=plugin_connected,
     ):
         _stdio_info(hint, fmt=args.emit_events)
 
@@ -1411,10 +1431,7 @@ def _handle_cycle_exit_conditions(
     correlation_id: str,
 ) -> bool:
     """Check if we should exit the cycle loop. Returns True if should exit."""
-    if (
-        args.stop_on_waiting_input
-        and queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES
-    ):
+    if args.stop_on_waiting_input and queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES:
         if args.emit_events == "jsonl":
             write_stdio_event(
                 sys.stdout,
@@ -1491,7 +1508,9 @@ def _action_up(args: argparse.Namespace) -> int:
         bool(socket_path and socket_path.exists()) if args.enable_autopilot else False
     )
 
-    enable_scan, queue_name, autopilot_ide, loop_state, checkpoint_path, restored_cycle = _configure_loop_state(args, project)
+    enable_scan, queue_name, autopilot_ide, loop_state, checkpoint_path, restored_cycle = (
+        _configure_loop_state(args, project)
+    )
 
     diagnostic_state_dir = (project / args.diagnostic_state_dir).resolve()
     wup_config = _build_wup_watch_config(args, project)
@@ -1517,7 +1536,9 @@ def _action_up(args: argparse.Namespace) -> int:
     try:
         mcp_provision_ran = _run_mcp_provision(project, args.emit_events)
         plugin_connected = _setup_autopilot_plugin(args, autopilot_ide, socket_path, client)
-        _run_operator_pipeline(args, project, startup_probe, plugin_connected, mcp_provision_ran, correlation_id)
+        _run_operator_pipeline(
+            args, project, startup_probe, plugin_connected, mcp_provision_ran, correlation_id
+        )
         _unblock_queue_if_needed(project, args.emit_events)
 
         cycle = restored_cycle or 0
@@ -1526,7 +1547,13 @@ def _action_up(args: argparse.Namespace) -> int:
             if args.emit_events == "human":
                 print(f"\n=== koru autonomous cycle #{cycle} ===")
             client, daemon, thread = _restart_daemon_if_needed(
-                args, client, socket_path, daemon, thread, autopilot_socket_observed_at_boot, project,
+                args,
+                client,
+                socket_path,
+                daemon,
+                thread,
+                autopilot_socket_observed_at_boot,
+                project,
             )
             _scan_result, queue_result, _autopilot_status, diag_result = _run_cycle(
                 cycle=cycle,
@@ -1616,7 +1643,14 @@ def _action_up(args: argparse.Namespace) -> int:
             _stdio_info("\nkoru autonomous: interrupted (Ctrl+C)", fmt=args.emit_events)
         return 0
     finally:
-        _cleanup_autonomous_session(previous_stdio_format_env, previous_sigterm, daemon, thread, wup_process, args.emit_events)
+        _cleanup_autonomous_session(
+            previous_stdio_format_env,
+            previous_sigterm,
+            daemon,
+            thread,
+            wup_process,
+            args.emit_events,
+        )
 
 
 def autonomous_main(argv: list[str], *, invoked_as_auto: bool = False) -> int:

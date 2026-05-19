@@ -81,7 +81,10 @@ def _handle_human_ticket(
             message=prompt,
         )
     claimed = ticket_claim_or_error(
-        project, ticket_id, actor, planfile_runner=planfile_runner,
+        project,
+        ticket_id,
+        actor,
+        planfile_runner=planfile_runner,
     )
     if claimed:
         return claimed
@@ -109,9 +112,13 @@ def _resolve_ticket_action(
 ) -> tuple[Any, str] | None:
     """Return (action, missing_prompt) or None for unsupported executor."""
     if executor_kind == "api":
-        return ticket_api_request(ticket), "API ticket is missing inputs.api_endpoint or executor.handler"
+        return ticket_api_request(
+            ticket
+        ), "API ticket is missing inputs.api_endpoint or executor.handler"
     if executor_kind == "llm":
-        return ticket_llm_request(ticket), "LLM ticket is missing inputs.prompt (or description / name)"
+        return ticket_llm_request(
+            ticket
+        ), "LLM ticket is missing inputs.prompt (or description / name)"
     if executor_kind == "shell":
         return ticket_command(ticket), "Shell ticket is missing inputs.script or executor.handler"
     return None
@@ -166,6 +173,7 @@ def _execute_action(
     else:
         try:
             from koru.activity_log import activity
+
             activity("QUEUE", f"shell {ticket_id}: {action}")
         except Exception:
             pass
@@ -309,6 +317,7 @@ def run_next_planfile_task(
         ticket_name = str(ticket.get("name") or ticket_id)
         try:
             from koru.activity_log import activity
+
             activity(
                 "QUEUE",
                 f"start {ticket_id} ({ticket_name}) executor="

@@ -20,6 +20,7 @@ log writes, ticket lifecycle calls) live elsewhere.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import shlex
@@ -36,7 +37,6 @@ from .dotenv_loader import load_dotenv as _load_dotenv_impl
 from .policy import Policy, load_policy
 from .project_pipeline import build_project_pipeline_brief
 from .runtime import planfile_dir
-import contextlib
 
 # Cache so we only load `.env` once per project per process (multiple
 # `build_context` calls — e.g. dashboard auto-refresh — would otherwise
@@ -348,11 +348,7 @@ def _parse_ticket_response(
         if stripped:
             with contextlib.suppress(TypeError, ValueError):
                 json_null_idle = json.loads(stripped) is None
-        if (
-            "No runnable ticket" in stripped
-            or not stripped
-            or json_null_idle
-        ):
+        if "No runnable ticket" in stripped or not stripped or json_null_idle:
             ticket_data = None
             ticket_error = "queue is idle"
             all_tickets = _handle_idle_queue(project, planfile_runner, include_fixtures)
@@ -360,11 +356,14 @@ def _parse_ticket_response(
             ticket_error = "planfile output was not JSON"
     elif isinstance(ticket_data, list):
         ticket_data, open_tickets, all_tickets, ticket_error = _process_list_payload(
-            ticket_data, include_fixtures,
+            ticket_data,
+            include_fixtures,
         )
     elif isinstance(ticket_data, dict):
         ticket_data, open_tickets, ticket_error = _process_dict_payload(
-            ticket_data, ticket_id, include_fixtures,
+            ticket_data,
+            ticket_id,
+            include_fixtures,
         )
         if ticket_data is not None:
             all_tickets = _fetch_all_tickets(
@@ -396,7 +395,11 @@ def _fetch_ticket_data(
 
     if ticket_proc.returncode == 0:
         return _parse_ticket_response(
-            ticket_proc, ticket_id, include_fixtures, project, planfile_runner,
+            ticket_proc,
+            ticket_id,
+            include_fixtures,
+            project,
+            planfile_runner,
         )
     else:
         ticket_error = _extract_error_from_stderr(ticket_proc.stderr or "planfile error")
@@ -549,7 +552,8 @@ def _promote_blocking_to_critical(
                 tickets[blocking_id]["priority"] = "critical"
                 promoted = True
                 print(
-                    f"🔥 Auto-promoted {blocking_id} from {current_priority} to critical (blocking)",
+                    f"🔥 Auto-promoted {blocking_id} from {current_priority} to critical"
+                    " (blocking)",
                 )
     return promoted
 
@@ -675,7 +679,10 @@ def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[s
         rules.append("DO NOT create git tags.")
     if not policy.allow_destructive_shell:
         rules.append(
-            "DO NOT run destructive shell commands (rm -rf /, dd, mkfs, shutdown, force-pushes, …).",
+            (
+                "DO NOT run destructive shell commands"
+                " (rm -rf /, dd, mkfs, shutdown, force-pushes, …)."
+            ),
         )
     if policy.require_ci_pass_before_complete:
         if policy.ci_command:

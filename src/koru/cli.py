@@ -254,7 +254,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--ticket",
         default=None,
         help="Target a specific ticket id (e.g. PLF-074) for --context. "
-             "Default is the next runnable ticket from the queue.",
+        "Default is the next runnable ticket from the queue.",
     )
     parser.add_argument(
         "--format",
@@ -286,7 +286,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--no-log",
         action="store_true",
         help="Disable the per-run JSONL log under .planfile/.koru/runs/. "
-             "Has no effect outside --queue mode.",
+        "Has no effect outside --queue mode.",
     )
     return parser
 
@@ -522,7 +522,8 @@ def _render_scan_text(result: ScanResult) -> str:
     lines: list[str] = [f"koru scan: {len(result.suggestions)} suggestion(s)"]
     for s in result.suggestions:
         marker = {"critical": "!!", "high": "!", "normal": "·", "low": " "}.get(
-            s.priority, "·",
+            s.priority,
+            "·",
         )
         lines.append(f"  [{marker}] {s.priority:<8} {s.signal:<15} {s.title}")
     if result.applied:
@@ -599,8 +600,7 @@ def _build_gate_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="koru gate",
         description=(
-            "Manage CI/quality gate authorizations on planfile tickets. "
-            "Subcommands: authorize."
+            "Manage CI/quality gate authorizations on planfile tickets. Subcommands: authorize."
         ),
     )
     sub = parser.add_subparsers(dest="subcommand", required=True)
@@ -737,8 +737,7 @@ def _build_gc_parser() -> argparse.ArgumentParser:
         "--status",
         default=",".join(sorted(GC_STATUSES)),
         help=(
-            "Comma-separated ticket statuses to clean "
-            f"(default: {','.join(sorted(GC_STATUSES))})."
+            f"Comma-separated ticket statuses to clean (default: {','.join(sorted(GC_STATUSES))})."
         ),
     )
     parser.add_argument(
@@ -786,10 +785,7 @@ def _gc_main(argv: list[str]) -> int:
 def _build_queue_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="koru queue",
-        description=(
-            "Manage the planfile queue. Subcommands: clean (sweep stale "
-            "test fixtures)."
-        ),
+        description=("Manage the planfile queue. Subcommands: clean (sweep stale test fixtures)."),
     )
     sub = parser.add_subparsers(dest="subcommand", required=True)
 
@@ -1116,10 +1112,14 @@ def _build_topology_parser() -> argparse.ArgumentParser:
     parser.add_argument("--enable", metavar="ID", help="Enable component ID and persist.")
     parser.add_argument("--disable", metavar="ID", help="Disable component ID and persist.")
     parser.add_argument(
-        "--enable-pipeline", metavar="ID", help="Enable pipeline ID and persist.",
+        "--enable-pipeline",
+        metavar="ID",
+        help="Enable pipeline ID and persist.",
     )
     parser.add_argument(
-        "--disable-pipeline", metavar="ID", help="Disable pipeline ID and persist.",
+        "--disable-pipeline",
+        metavar="ID",
+        help="Disable pipeline ID and persist.",
     )
     parser.add_argument(
         "--is-enabled",
@@ -1172,6 +1172,7 @@ def _topology_main(argv: list[str]) -> int:
 
     if args.enabled_components_for:
         from .topology import enabled_components_for_pipeline
+
         ids = enabled_components_for_pipeline(project, args.enabled_components_for)
         print(",".join(ids))
         return 0
@@ -1488,9 +1489,7 @@ def _doctor_main(args: argparse.Namespace, raw_args: list[str]) -> int:
         action="completed",
         status="failed" if report.has_failures else "completed",
         level="error" if report.has_failures else "info",
-        message=", ".join(
-            f"{k}={v}" for k, v in report.summary().items() if v
-        ),
+        message=", ".join(f"{k}={v}" for k, v in report.summary().items() if v),
         queue=args.queue_name,
         details={"project": str(args.project)},
     )

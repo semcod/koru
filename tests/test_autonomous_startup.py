@@ -21,7 +21,9 @@ def test_resolve_agent_lane_prefers_running_vscode_over_cursor_marker(tmp_path: 
         patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value=None),
     ):
         lane, source = startup.resolve_agent_lane_id(
-            tmp_path, "auto", resolve_project_lane=lambda _p, _a: "cursor",
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, _a: "cursor",
         )
     assert lane == "vscode"
     assert source.startswith("running:")
@@ -31,7 +33,9 @@ def test_resolve_autopilot_ide_for_autonomous_returns_string_lane() -> None:
     from koru.ide_router import resolve_ide_route
 
     ide, source = startup.resolve_autopilot_ide_for_autonomous(
-        "auto", "vscode", resolve_ide_route_fn=resolve_ide_route,
+        "auto",
+        "vscode",
+        resolve_ide_route_fn=resolve_ide_route,
     )
     assert isinstance(ide, str)
     assert ide == "vscode"
@@ -67,7 +71,9 @@ def test_format_startup_banner_includes_version(tmp_path: Path) -> None:
     assert "autopilot socket" in text
 
 
-def test_apply_agent_lane_environ_uses_running_ide(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_apply_agent_lane_environ_uses_running_ide(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
     monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
     for key in (

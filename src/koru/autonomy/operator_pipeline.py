@@ -7,6 +7,7 @@ prints numbered real-time status, and creates planfile tickets on the
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import subprocess
@@ -19,7 +20,6 @@ from typing import Any, Literal, TextIO
 
 from koru.autonomous_startup import AutonomousStartupProbe
 from koru.tasks import CreatedTask, create_nl_task
-import contextlib
 
 StepStatus = Literal["ok", "pending", "skipped"]
 StepActor = Literal["human", "koru", "taskfile"]
@@ -345,9 +345,7 @@ def _emit_step(
 
     mark = {"ok": "✓", "pending": "→", "skipped": "·"}[step.status]
     actor = {"human": "TY", "koru": "KORU", "taskfile": "TASK"}[step.actor]
-    line = (
-        f"koru autonomous: [{index}/{total}] {mark} {step.title} [{actor}] — {step.detail}"
-    )
+    line = f"koru autonomous: [{index}/{total}] {mark} {step.title} [{actor}] — {step.detail}"
     activity(
         "OPERATOR",
         f"[{index}/{total}] {mark} {step.title} [{actor}] — {step.detail}",

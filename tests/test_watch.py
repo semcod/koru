@@ -59,8 +59,7 @@ class TestWatch(unittest.TestCase):
 
         self.assertEqual(
             line,
-            "management.event | koru.queue | completed | dry_run | "
-            "queue=c2004-runtime | PLF-074",
+            "management.event | koru.queue | completed | dry_run | queue=c2004-runtime | PLF-074",
         )
 
     def test_watch_planfile_events_prints_compact_lines(self) -> None:

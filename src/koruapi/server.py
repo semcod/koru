@@ -35,7 +35,9 @@ def _read_json_body(handler: BaseHTTPRequestHandler) -> dict[str, Any]:
     return body
 
 
-def _parse_invoke_request(body: dict[str, Any], default_project: Path) -> tuple[str, str, Path, dict[str, Any]]:
+def _parse_invoke_request(
+    body: dict[str, Any], default_project: Path
+) -> tuple[str, str, Path, dict[str, Any]]:
     integration_id = str(body.get("integration_id") or body.get("id") or "")
     method = str(body.get("method") or "run")
     project_raw = body.get("project") or str(default_project)
@@ -107,7 +109,9 @@ class KoruAPIHandler(BaseHTTPRequestHandler):
             _json_response(self, 200, {"ok": True, "service": "koruapi"})
             return
         if parsed.path in ("/api/v1/openapi.json", "/docs/openapi.json"):
-            spec = build_openapi_document(host=self.server.server_address[0], port=self.server.server_address[1])
+            spec = build_openapi_document(
+                host=self.server.server_address[0], port=self.server.server_address[1]
+            )
             _json_response(self, 200, spec)
             return
         if parsed.path == "/api/v1/integrations":
@@ -164,7 +168,7 @@ def serve(
     print(f"koruapi: listening on http://{host}:{port}/ (project={project})")
     print("koruapi: GET  /api/v1/openapi.json")
     print("koruapi: GET  /api/v1/integrations")
-    print("koruapi: POST /api/v1/invoke  {\"integration_id\":\"scan.apply\",\"project\":\".\"}")
+    print('koruapi: POST /api/v1/invoke  {"integration_id":"scan.apply","project":"."}')
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

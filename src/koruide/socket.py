@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import contextlib
 import os
 from pathlib import Path
-import contextlib
 
 
 def _autopilot_socket_basename() -> str:

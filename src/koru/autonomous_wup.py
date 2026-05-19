@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -11,6 +12,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
+
+import yaml
 
 from .topology import is_component_enabled, is_pipeline_enabled
 
@@ -139,8 +142,88 @@ def _wup_autodetect(config: WupWatchConfig) -> bool:
     )
 
 
+def _wup_config_path(config: WupWatchConfig) -> Path:
+    return config.config if config.config is not None else config.project / "wup.yaml"
+
+
+def _profiled_compose_services(config: WupWatchConfig) -> list[tuple[str, tuple[str, ...], str]]:
+    """Return compose services that require opt-in profiles from the WUP manifest."""
+    path = _wup_config_path(config)
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        return []
+    if not isinstance(raw, dict):
+        return []
+    services = raw.get("monitoring", {}).get("wup_services", {})
+    if not isinstance(services, dict):
+        return []
+
+    needed: list[tuple[str, tuple[str, ...], str]] = []
+    seen: set[tuple[str, tuple[str, ...], str]] = set()
+    for service in services.values():
+        if not isinstance(service, dict):
+            continue
+        for docker in service.get("docker", []) or []:
+            if not isinstance(docker, dict):
+                continue
+            compose_service = str(docker.get("compose_service") or "").strip()
+            compose_file = str(docker.get("compose_file") or "docker-compose.yml").strip()
+            profiles = tuple(str(p).strip() for p in docker.get("profiles", []) or [] if str(p).strip())
+            if not compose_service or not compose_file or not profiles:
+                continue
+            item = (compose_file, profiles, compose_service)
+            if item not in seen:
+                seen.add(item)
+                needed.append(item)
+    return needed
+
+
+def _ensure_wup_profiled_compose_services(
+    config: WupWatchConfig,
+    *,
+    stdio_format: str = "human",
+) -> None:
+    """Start profiled compose services that WUP live probes depend on."""
+    if os.environ.get("KORU_WUP_COMPOSE_PROFILES", "1").strip().lower() in {"0", "false", "no", "off"}:
+        return
+    if shutil.which("docker") is None:
+        return
+    for compose_file, profiles, compose_service in _profiled_compose_services(config):
+        command = ["docker", "compose", "-f", compose_file]
+        for profile in profiles:
+            command.extend(["--profile", profile])
+        command.extend(["up", "-d", compose_service])
+        _wup_stdio_info("+ " + " ".join(command), fmt=stdio_format)
+        try:
+            result = subprocess.run(
+                command,
+                cwd=config.project,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=90,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            _wup_stdio_info(
+                f"koru autonomous: WUP compose preflight failed for {compose_service}: {exc}",
+                fmt=stdio_format,
+            )
+            continue
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout or "").strip().splitlines()
+            suffix = f": {detail[-1]}" if detail else ""
+            _wup_stdio_info(
+                f"koru autonomous: WUP compose preflight failed for {compose_service}{suffix}",
+                fmt=stdio_format,
+            )
+
+
 def _start_wup_watch(
-    config: WupWatchConfig, *, topology_integration: bool, stdio_format: str = "human",
+    config: WupWatchConfig,
+    *,
+    topology_integration: bool,
+    stdio_format: str = "human",
 ) -> subprocess.Popen | None:
     auto = config.enabled is None
     if config.enabled is False:
@@ -151,24 +234,31 @@ def _start_wup_watch(
         if not wup_available or not wup_yaml_present:
             return None
         _wup_stdio_info(
-            "koru autonomous: WUP auto-detected (wup.yaml + wup binary present)", fmt=stdio_format,
+            "koru autonomous: WUP auto-detected (wup.yaml + wup binary present)",
+            fmt=stdio_format,
         )
     else:
         if not wup_available:
             _wup_stdio_info(
-                "koru autonomous: WUP watch requested but `wup` is not in PATH", fmt=stdio_format,
+                "koru autonomous: WUP watch requested but `wup` is not in PATH",
+                fmt=stdio_format,
             )
             return None
         if not wup_yaml_present:
             _wup_stdio_info(
-                "koru autonomous: WUP watch requested but no wup.yaml found", fmt=stdio_format,
+                "koru autonomous: WUP watch requested but no wup.yaml found",
+                fmt=stdio_format,
             )
             return None
     if not _wup_topology_gate(
-        config.project, "gate:wup", fallback=True, enabled=topology_integration,
+        config.project,
+        "gate:wup",
+        fallback=True,
+        enabled=topology_integration,
     ):
         _wup_stdio_info("koru autonomous: WUP watch disabled in topology", fmt=stdio_format)
         return None
+    _ensure_wup_profiled_compose_services(config, stdio_format=stdio_format)
     command = _wup_watch_command(config)
     _wup_stdio_info("+ " + " ".join(command), fmt=stdio_format)
     process = subprocess.Popen(command, cwd=config.project)
@@ -180,7 +270,10 @@ def _start_wup_watch(
 
 
 def _stop_process(
-    process: subprocess.Popen | None, label: str, *, stdio_format: str = "human",
+    process: subprocess.Popen | None,
+    label: str,
+    *,
+    stdio_format: str = "human",
 ) -> None:
     if process is None or process.poll() is not None:
         return
@@ -268,18 +361,23 @@ def _read_wup_health(
 ) -> WupHealthResult:
     health_path = project / ".wup" / "service-health.json"
     events_path = project / ".wup" / "service-health-events.jsonl"
-    
+
     health = _load_wup_health(health_path)
     failing = _identify_failing_services(health)
-    
+
     if diagnostic_tickets:
         if failing and create_diagnostic_ticket is None:
             raise TypeError("create_diagnostic_ticket is required when diagnostic_tickets is True")
         if create_diagnostic_ticket is not None:
             _create_wup_diagnostic_tickets(
-                health, failing, project, ticket_queue, state_dir, create_diagnostic_ticket,
+                health,
+                failing,
+                project,
+                ticket_queue,
+                state_dir,
+                create_diagnostic_ticket,
             )
-    
+
     event_count, new_events = _count_wup_events(events_path, state.wup_seen_events)
     state.wup_seen_events = max(state.wup_seen_events, event_count)
     status = "failed" if failing else ("changed" if new_events else "ok")
