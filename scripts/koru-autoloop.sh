@@ -394,6 +394,13 @@ run_check_shell() {
   fi
 }
 
+cmd_is_disabled() {
+  case "${1,,}" in
+    ""|off|none|disabled|skip) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 run_idle_diagnostics() {
   local profile_lc="${effective_idle_profile,,}"
   diag_failed=false
@@ -409,12 +416,12 @@ run_idle_diagnostics() {
   fi
   echo "koru:autoloop queue idle -> running semcod diagnostics (profile=${profile_lc})"
 
-  if [ -n "$REGIX_DIAGNOSTIC_CMD" ]; then
+  if ! cmd_is_disabled "$REGIX_DIAGNOSTIC_CMD"; then
     run_check_shell regix 'command -v regix' \
       "$REGIX_DIAGNOSTIC_CMD" \
       "$REGIX_DIAGNOSTIC_CMD"
   else
-    echo "- REGIX_DIAGNOSTIC_CMD empty, skipping regix"
+    echo "- REGIX_DIAGNOSTIC_CMD disabled, skipping regix"
   fi
 
   if command -v wup >/dev/null 2>&1 && [ -f wup.yaml ]; then
@@ -424,17 +431,21 @@ run_idle_diagnostics() {
   fi
 
   if [ "$profile_lc" = "full" ] || [ "$profile_lc" = "deep" ]; then
-    run_check_shell redup 'python3 -m redup --help >/dev/null 2>&1' \
-      "$REDUP_DIAGNOSTIC_CMD" \
-      "$REDUP_DIAGNOSTIC_CMD"
+    if ! cmd_is_disabled "$REDUP_DIAGNOSTIC_CMD"; then
+      run_check_shell redup 'python3 -m redup --help >/dev/null 2>&1' \
+        "$REDUP_DIAGNOSTIC_CMD" \
+        "$REDUP_DIAGNOSTIC_CMD"
+    else
+      echo "- REDUP_DIAGNOSTIC_CMD disabled, skipping redup"
+    fi
 
     if command -v testql >/dev/null 2>&1; then
-      if [ -n "$TESTQL_DIAGNOSTIC_CMD" ]; then
+      if ! cmd_is_disabled "$TESTQL_DIAGNOSTIC_CMD"; then
         run_check_shell testql 'command -v testql' \
           "$TESTQL_DIAGNOSTIC_CMD" \
           "$TESTQL_DIAGNOSTIC_CMD"
       elif find . -name '*.testql.toon.yaml' -print -quit | grep -q .; then
-        echo "- TESTQL_DIAGNOSTIC_CMD empty, skipping testql"
+        echo "- TESTQL_DIAGNOSTIC_CMD disabled, skipping testql"
       else
         echo "- no *.testql.toon.yaml scenarios found, skipping"
       fi
