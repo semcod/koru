@@ -16,6 +16,7 @@ def test_auto_loop_env_defaults_cover_core_autoloop_flags() -> None:
         "ENABLE_SCAN",
         "TICKET_SOURCES",
         "ENABLE_AUTOPILOT_DRIVE",
+        "AUTOPILOT_ENSURE_DAEMON",
         "TOPOLOGY_INTEGRATION",
         "AUTOPILOT_SKIP_DRIVE_IDLE_STREAK",
         "SCAN_AFTER_IDLE_QUEUE",

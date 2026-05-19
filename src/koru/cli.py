@@ -16,6 +16,7 @@ from .agents import (
     detect_agent_options,
 )
 from .autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
+from .autoloop_cli import autoloop_main
 from .autopilot.cli_command import autopilot_main
 from .bootstrap import import_flat_pipeline
 from .context import build_context, render_markdown_handoff
@@ -1465,6 +1466,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "mcp-serve": _mcp_serve_main,
     "ide-router": ide_router_main,
     "autopilot": autopilot_main,
+    "autoloop": autoloop_main,
     "autonomous": autonomous_main,
     "auto": lambda argv: _auto_main(argv),
     "dsl": _dsl_main,

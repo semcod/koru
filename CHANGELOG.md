@@ -1367,6 +1367,21 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
 
+## [0.1.153] - 2026-05-19
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_autoloop_cli.py
+- Update tests/test_autonomy_env.py
+- Update tests/test_cli.py
+
+### Other
+- Update scripts/koru-autoloop.sh
+- Update src/koru/scripts/koru-autoloop.sh
+- Update uv.lock
+
 ## [0.1.152] - 2026-05-19
 
 ### Docs

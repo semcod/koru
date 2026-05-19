@@ -402,6 +402,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "tools",
             "mcp-serve",
             "autopilot",
+            "autoloop",
             "autonomous",
             "auto",
             "dsl",
