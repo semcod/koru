@@ -1,4 +1,4 @@
-# koru | 1236 func | 119f | 38507L | python | 2026-05-19
+# koru | 1236 func | 119f | 36632L | python | 2026-05-19
 # generated in 0.00s
 
 HEALTH:
@@ -17,13 +17,12 @@ ALERTS[20]:
   !!  high_fan_out     AutopilotBridge.focusChat = 19 (limit:10)
 
 MODULES[213] (top by size):
-  M[src/koru/cli.py] 1868L C:0 F:52 CC↑14 D:0 (python)
-  M[src/koru/autonomous.py] 1666L C:2 F:47 CC↑17 D:1 (python)
+  M[src/koru/autonomous.py] 1663L C:2 F:47 CC↑17 D:1 (python)
   M[src/koru/autopilot/cli_command.py] 1329L C:0 F:45 CC↑14 D:0 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
   M[src/koruapi/dashboard_serve.py] 1296L C:1 F:16 CC↑14 D:1 (python)
   M[src/koru/context.py] 1226L C:0 F:46 CC↑15 D:7 (python)
-  M[src/koru/autonomous_cycle.py] 1170L C:2 F:36 CC↑12 D:0 (python)
+  M[src/koru/autonomous_cycle.py] 1169L C:2 F:36 CC↑12 D:0 (python)
   M[src/koruapi/mcp_server.py] 1028L C:0 F:34 CC↑14 D:2 (python)
   M[src/koru/scan.py] 918L C:2 F:24 CC↑13 D:3 (python)
   M[Taskfile.yml] 901L C:0 F:0 CC↑0 D:0 (yml)
@@ -32,6 +31,7 @@ MODULES[213] (top by size):
   M[plugins/koru-autopilot-vscode/src/extension.ts] 626L C:2 F:68 CC↑15 D:5 (typescript)
   M[src/koru/init.py] 610L C:1 F:12 CC↑15 D:2 (python)
   M[scripts/koru-autoloop.sh] 576L C:0 F:14 CC↑0 D:0 (shell)
+  M[src/koru/autonomy/operator_pipeline.py] 575L C:2 F:21 CC↑13 D:1 (python)
   LANGS: python:127/shell:42/yaml:15/yml:8/typescript:6/kotlin:6/json:3/other:2/properties:1/xml:1/toml:1/txt:1
 
 HOTSPOTS[10]:
@@ -45,11 +45,11 @@ Steps:
     1. Refu
 
 REFACTOR[15]:
-  [1] H/H Split god module src/koru/autonomous.py (1666L, 2 classes)
+  [1] H/H Split god module src/koru/autonomous.py (1663L, 2 classes)
   [2] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (626L, 2 classes)
   [3] H/H Split god module src/koru/context.py (1226L, 0 classes)
   [4] H/H Split god module src/koru/init.py (610L, 1 classes)
   [5] H/H Split god module src/koru/autopilot/cli_command.py (1329L, 0 classes)
 
 EVOLUTION:
-  2026-05-19 CC̄=4.1 crit=111 38507L // Automated analysis
+  2026-05-19 CC̄=4.1 crit=111 36632L // Automated analysis

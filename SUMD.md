@@ -21,7 +21,7 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.137`
+- **version**: `0.1.139`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -41,7 +41,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.137;
+  version: 0.1.139;
 }
 
 dependencies {
@@ -1677,7 +1677,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.137
+  version: 0.1.139
   env: local
 ```
 
@@ -1752,7 +1752,7 @@ pip install -e .[dev]
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 284f 52704L | python:209,shell:62,javascript:6,typescript:6,less:1 | 2026-05-19
+# koru | 284f 52664L | python:209,shell:62,javascript:6,typescript:6,less:1 | 2026-05-19
 # stats: 1523 func | 176 cls | 284 mod | CC̄=4.1 | critical:109 | cycles:0
 # alerts[5]: CC do_from_todo=19; CC _action_up=17; CC test_autonomy_config_from_env=16; CC looks_like_autonomous_up_command=15; fan-out _action_up=31
 # hotspots[5]: _action_up fan=31; _build_handler fan=29; do_from_todo fan=23; run_cycle fan=23; render_markdown_handoff fan=20
@@ -1835,13 +1835,13 @@ M[284]:
   src/koru/__init__.py,70
   src/koru/__main__.py,9
   src/koru/activity_log.py,69
-  src/koru/agent_backend_runtime.py,181
+  src/koru/agent_backend_runtime.py,182
   src/koru/agent_backends.py,215
   src/koru/agent_cli_helpers.py,89
   src/koru/agents.py,318
   src/koru/api/__init__.py,10
-  src/koru/autonomous.py,1667
-  src/koru/autonomous_cycle.py,1171
+  src/koru/autonomous.py,1664
+  src/koru/autonomous_cycle.py,1170
   src/koru/autonomous_diagnostics.py,251
   src/koru/autonomous_env.py,27
   src/koru/autonomous_parser.py,399
@@ -1850,9 +1850,9 @@ M[284]:
   src/koru/autonomous_wup.py,287
   src/koru/autonomy/__init__.py,26
   src/koru/autonomy/config.py,122
-  src/koru/autonomy/env.py,251
+  src/koru/autonomy/env.py,252
   src/koru/autonomy/environment.py,248
-  src/koru/autonomy/heal.py,113
+  src/koru/autonomy/heal.py,111
   src/koru/autonomy/ide_work.py,297
   src/koru/autonomy/operator_pipeline.py,576
   src/koru/autonomy/post_run_verify.py,380
@@ -1861,7 +1861,7 @@ M[284]:
   src/koru/autopilot/__init__.py,19
   src/koru/autopilot/audit.py,10
   src/koru/autopilot/cli_command.py,1330
-  src/koru/autopilot/client.py,12
+  src/koru/autopilot/client.py,11
   src/koru/autopilot/config.py,10
   src/koru/autopilot/daemon.py,17
   src/koru/autopilot/host_setup.py,10
@@ -1869,7 +1869,7 @@ M[284]:
   src/koru/autopilot/injector.py,10
   src/koru/autopilot/os_injector.py,10
   src/koru/autopilot/plugin_installer.py,10
-  src/koru/autopilot/protocol.py,50
+  src/koru/autopilot/protocol.py,49
   src/koru/autopilot/utils/__init__.py,6
   src/koru/autopilot/utils/client_helpers.py,58
   src/koru/bootstrap.py,447
@@ -1877,7 +1877,7 @@ M[284]:
   src/koru/cli/__main__.py,9
   src/koru/cli/commands.py,1
   src/koru/cli/parsers.py,1
-  src/koru/cli.py,1869
+  src/koru/cli.py,1854
   src/koru/context.py,1227
   src/koru/doctor.py,514
   src/koru/dotenv_loader.py,105
@@ -1893,7 +1893,7 @@ M[284]:
   src/koru/init_host_environment.py,296
   src/koru/local_service.py,212
   src/koru/loop.py,132
-  src/koru/mcp_provision.py,398
+  src/koru/mcp_provision.py,397
   src/koru/mcp_server.py,10
   src/koru/planfile_queue.py,38
   src/koru/policy.py,263
@@ -1922,7 +1922,7 @@ M[284]:
   src/koru/tasks.py,218
   src/koru/tools.py,319
   src/koru/topology.py,416
-  src/koru/topology_cli.py,74
+  src/koru/topology_cli.py,75
   src/koru/utils/__init__.py,6
   src/koru/utils/subprocess_runner.py,41
   src/koru/watch.py,94
@@ -1933,8 +1933,8 @@ M[284]:
   src/koruapi/dashboard_serve.py,1297
   src/koruapi/integrations.py,199
   src/koruapi/invoke.py,32
-  src/koruapi/invoke_handlers.py,189
-  src/koruapi/local.py,38
+  src/koruapi/invoke_handlers.py,190
+  src/koruapi/local.py,37
   src/koruapi/mcp.py,16
   src/koruapi/mcp_server.py,1029
   src/koruapi/openapi.py,156
@@ -1946,7 +1946,7 @@ M[284]:
   src/koruide/__init__.py,68
   src/koruide/audit.py,158
   src/koruide/client.py,129
-  src/koruide/config.py,121
+  src/koruide/config.py,120
   src/koruide/daemon.py,716
   src/koruide/host_setup.py,227
   src/koruide/ide.py,544
@@ -1962,13 +1962,13 @@ M[284]:
   tests/e2e/bootstrap.sh,94
   tests/e2e/init.sh,29
   tests/e2e/smoke.sh,112
-  tests/test_activity_log.py,26
+  tests/test_activity_log.py,23
   tests/test_agent_backend_runtime.py,156
   tests/test_agent_backends.py,88
   tests/test_agent_backends_cli.py,34
   tests/test_agent_cli.py,101
   tests/test_agents.py,196
-  tests/test_autonomous.py,1685
+  tests/test_autonomous.py,1687
   tests/test_autonomous_diagnostics.py,64
   tests/test_autonomous_parser_detection.py,16
   tests/test_autonomous_process_detection.py,37
@@ -1976,17 +1976,17 @@ M[284]:
   tests/test_autonomous_startup.py,91
   tests/test_autonomy_config.py,141
   tests/test_autonomy_env.py,79
-  tests/test_autonomy_environment.py,220
+  tests/test_autonomy_environment.py,215
   tests/test_autonomy_prompts.py,162
-  tests/test_autopilot_audit.py,124
-  tests/test_autopilot_cli.py,922
+  tests/test_autopilot_audit.py,122
+  tests/test_autopilot_cli.py,921
   tests/test_autopilot_client_drive_errors.py,16
-  tests/test_autopilot_config.py,156
+  tests/test_autopilot_config.py,155
   tests/test_autopilot_daemon.py,736
   tests/test_autopilot_host_setup.py,124
   tests/test_autopilot_ide.py,337
   tests/test_autopilot_injector.py,275
-  tests/test_autopilot_jetbrains_scaffold.py,46
+  tests/test_autopilot_jetbrains_scaffold.py,45
   tests/test_autopilot_os_injector.py,308
   tests/test_autopilot_plugin_installer.py,167
   tests/test_autopilot_protocol.py,154
@@ -1995,24 +1995,24 @@ M[284]:
   tests/test_cli.py,432
   tests/test_context.py,548
   tests/test_dashboard_topology_post.py,36
-  tests/test_docker_e2e.py,550
+  tests/test_docker_e2e.py,544
   tests/test_docs_ide_control_surfaces.py,55
   tests/test_doctor.py,455
   tests/test_dotenv_loader.py,117
-  tests/test_e2e.py,955
+  tests/test_e2e.py,953
   tests/test_events.py,67
-  tests/test_gate.py,167
-  tests/test_gc.py,277
-  tests/test_gc_cli_helpers.py,31
+  tests/test_gate.py,166
+  tests/test_gc.py,275
+  tests/test_gc_cli_helpers.py,29
   tests/test_ide_client.py,115
   tests/test_ide_client_contract.py,106
   tests/test_ide_router.py,257
   tests/test_ide_runtime.py,39
   tests/test_ide_work.py,135
   tests/test_init.py,332
-  tests/test_koru_gate_capture.py,35
+  tests/test_koru_gate_capture.py,34
   tests/test_koru_queue_argv.py,24
-  tests/test_koruapi.py,73
+  tests/test_koruapi.py,77
   tests/test_koruapi_transports.py,21
   tests/test_korudsl.py,31
   tests/test_koruide_bridges.py,66
@@ -2028,7 +2028,7 @@ M[284]:
   tests/test_queue_clean.py,309
   tests/test_queue_cli_helpers.py,38
   tests/test_refactor_planfile_handoff.py,21
-  tests/test_regix_taskfile.py,23
+  tests/test_regix_taskfile.py,22
   tests/test_run_log.py,139
   tests/test_runtime.py,131
   tests/test_scan.py,588
@@ -2037,11 +2037,11 @@ M[284]:
   tests/test_shell_evidence.py,51
   tests/test_stdio_autonomous_jsonl.py,99
   tests/test_tasks.py,77
-  tests/test_tools.py,110
+  tests/test_tools.py,115
   tests/test_topology.py,55
   tests/test_topology_cli.py,26
   tests/test_watch.py,102
-  tests/test_wup_taskfile.py,38
+  tests/test_wup_taskfile.py,37
   tree.sh,2
 D:
   scripts/_koru_autodiag_filter_tickets.py:
@@ -4148,13 +4148,13 @@ D:
 | `render_markdown_handoff` *(in src.koru.context)* | 10 ⚠ | 5 | 47 | **52** |
 | `_drive_via_keyboard` *(in src.koruide.daemon.AutopilotDaemon)* | 11 ⚠ | 0 | 46 | **46** |
 | `activity` *(in src.koru.activity_log)* | 4 | 32 | 7 | **39** |
-| `_build_parser` *(in koru.cli)* | 1 | 3 | 34 | **37** |
+| `_build_parser` *(in src.koru.cli)* | 1 | 3 | 34 | **37** |
 | `tool_run_ticket` *(in src.koruapi.mcp_server)* | 14 ⚠ | 1 | 33 | **34** |
 | `create_nl_task` *(in src.koru.tasks)* | 12 ⚠ | 6 | 28 | **34** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.19s
+# generated in 0.21s
 # nodes: 432 | edges: 500 | modules: 70
 # CC̄=4.1
 
@@ -4169,54 +4169,38 @@ HUBS[20]:
     CC=11  in:0  out:46  total:46
   src.koru.activity_log.activity
     CC=4  in:32  out:7  total:39
-  koru.cli._build_parser
+  src.koru.cli._build_parser
     CC=1  in:3  out:34  total:37
   src.koruapi.mcp_server.tool_run_ticket
     CC=14  in:1  out:33  total:34
   src.koru.tasks.create_nl_task
     CC=12  in:6  out:28  total:34
-  src.koru.events.emit_management_event
-    CC=8  in:25  out:7  total:32
   src.koru.autonomous._stdio_info
     CC=1  in:31  out:1  total:32
-  koru.cli._topology_main
+  src.koru.cli._topology_main
     CC=12  in:0  out:32  total:32
+  src.koru.events.emit_management_event
+    CC=8  in:25  out:7  total:32
   src.koru.autonomy.env.env_truthy
     CC=3  in:29  out:3  total:32
-  koru.cli._render_clean_report_text
+  src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
-  koru.cli._task_main
+  src.koru.cli._task_main
     CC=11  in:0  out:27  total:27
+  services.healing-webhook.ticket_builder.build_ticket_payload
+    CC=11  in:1  out:25  total:26
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
   src.koruide.ide.detect_running_ides
     CC=13  in:16  out:10  total:26
-  services.healing-webhook.ticket_builder.build_ticket_payload
-    CC=11  in:1  out:25  total:26
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
   src.koru.agents.detect_agent_options
     CC=4  in:3  out:21  total:24
-  koru.cli._render_runtime_context_text
-    CC=14  in:1  out:23  total:24
+  src.koru.init.init_project
+    CC=8  in:2  out:22  total:24
 
 MODULES:
-  koru.cli  [41 funcs]
-    _agent_backends_main  CC=8  out:23
-    _agent_main  CC=3  out:7
-    _auto_main  CC=4  out:4
-    _bootstrap_main  CC=5  out:18
-    _build_agent_parser  CC=1  out:12
-    _build_gate_parser  CC=1  out:11
-    _build_gc_parser  CC=1  out:14
-    _build_parser  CC=1  out:34
-    _build_queue_parser  CC=1  out:11
-    _build_runtime_context_parser  CC=1  out:4
-  koru.queue_cli_helpers  [4 funcs]
-    emit_queue_run_started  CC=2  out:2
-    open_queue_run_log  CC=4  out:2
-    run_queue_loop_mode  CC=5  out:15
-    run_queue_single_mode  CC=6  out:8
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
     connect  CC=2  out:7
     next  CC=2  out:1
@@ -4291,6 +4275,17 @@ MODULES:
     load_flat_pipeline  CC=9  out:12
     materialize_to_planfile  CC=6  out:16
     validate_flat_pipeline  CC=3  out:9
+  src.koru.cli  [41 funcs]
+    _agent_backends_main  CC=8  out:23
+    _agent_main  CC=3  out:7
+    _auto_main  CC=4  out:4
+    _bootstrap_main  CC=5  out:18
+    _build_agent_parser  CC=1  out:12
+    _build_gate_parser  CC=1  out:11
+    _build_gc_parser  CC=1  out:14
+    _build_parser  CC=1  out:34
+    _build_queue_parser  CC=1  out:11
+    _build_runtime_context_parser  CC=1  out:4
   src.koru.context  [2 funcs]
     build_context  CC=6  out:16
     render_markdown_handoff  CC=10  out:47
@@ -4354,6 +4349,11 @@ MODULES:
     _parse_age_days  CC=8  out:10
     _planfile_base  CC=4  out:3
     clean_queue  CC=5  out:7
+  src.koru.queue_cli_helpers  [4 funcs]
+    emit_queue_run_started  CC=2  out:2
+    open_queue_run_log  CC=4  out:2
+    run_queue_loop_mode  CC=5  out:15
+    run_queue_single_mode  CC=6  out:8
   src.koru.redup_integration  [1 funcs]
     redup_check_command  CC=1  out:2
   src.koru.refactor_planfile_handoff  [1 funcs]
