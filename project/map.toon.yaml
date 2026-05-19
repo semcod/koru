@@ -1,7 +1,7 @@
-# koru | 284f 52179L | python:209,shell:62,javascript:6,typescript:6,less:1 | 2026-05-19
-# stats: 1453 func | 176 cls | 284 mod | CC̄=4.2 | critical:119 | cycles:0
-# alerts[5]: CC run_next_planfile_task=43; CC _handle_autopilot_phase=29; CC run_llm_request=23; CC policy_violations=22; CC do_from_todo=19
-# hotspots[5]: _action_up fan=31; _build_handler fan=29; run_next_planfile_task fan=25; do_from_todo fan=23; run_cycle fan=23
+# koru | 284f 52384L | python:209,shell:62,javascript:6,typescript:6,less:1 | 2026-05-19
+# stats: 1481 func | 176 cls | 284 mod | CC̄=4.2 | critical:116 | cycles:0
+# alerts[5]: CC _handle_autopilot_phase=29; CC do_from_todo=19; CC _handle_queue_loop_phase=19; CC _action_up=17; CC detect_agent_options=16
+# hotspots[5]: _action_up fan=31; _build_handler fan=29; do_from_todo fan=23; run_cycle fan=23; render_markdown_handoff fan=20
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
 M[284]:
@@ -101,7 +101,7 @@ M[284]:
   src/koru/autonomy/heal.py,113
   src/koru/autonomy/ide_work.py,297
   src/koru/autonomy/operator_pipeline.py,532
-  src/koru/autonomy/post_run_verify.py,355
+  src/koru/autonomy/post_run_verify.py,380
   src/koru/autonomy/prompts.py,102
   src/koru/autonomy/telemetry_snapshot.py,80
   src/koru/autopilot/__init__.py,19
@@ -124,7 +124,7 @@ M[284]:
   src/koru/cli/commands.py,1
   src/koru/cli/parsers.py,1
   src/koru/cli.py,1869
-  src/koru/context.py,1200
+  src/koru/context.py,1227
   src/koru/doctor.py,514
   src/koru/dotenv_loader.py,105
   src/koru/dsl/__init__.py,10
@@ -142,7 +142,7 @@ M[284]:
   src/koru/mcp_provision.py,398
   src/koru/mcp_server.py,10
   src/koru/planfile_queue.py,38
-  src/koru/policy.py,235
+  src/koru/policy.py,263
   src/koru/project_pipeline.py,151
   src/koru/queue/__init__.py,39
   src/koru/queue/human.py,32
@@ -150,8 +150,8 @@ M[284]:
   src/koru/queue/locking.py,88
   src/koru/queue/loop.py,110
   src/koru/queue/planfile_ticket_note.py,57
-  src/koru/queue/runner.py,301
-  src/koru/queue/runners.py,209
+  src/koru/queue/runner.py,385
+  src/koru/queue/runners.py,250
   src/koru/queue/shell_evidence.py,73
   src/koru/queue/ticket.py,139
   src/koru/queue/types.py,89
@@ -617,10 +617,15 @@ D:
     run_startup_operator_pipeline()
     sys_stdout_for_format(fmt)
   src/koru/autonomy/post_run_verify.py:
-    e: _truthy_env,load_post_run_verify_config,_parse_iso_datetime,fetch_ticket_status,fetch_recently_done_ticket_ids,_record_verify_outcomes,verify_after_ide_work,run_verify_commands,_truncate,apply_verify_failure,verify_completed_tickets,_HasIdeVerifyState,PostRunVerifyConfig
+    e: _truthy_env,_extract_post_run_verify_block,_parse_verify_commands,_parse_verify_on_failure,_parse_verify_max_output,_parse_verify_ide_settings,load_post_run_verify_config,_parse_iso_datetime,fetch_ticket_status,fetch_recently_done_ticket_ids,_record_verify_outcomes,verify_after_ide_work,run_verify_commands,_truncate,apply_verify_failure,verify_completed_tickets,_HasIdeVerifyState,PostRunVerifyConfig
     _HasIdeVerifyState:
     PostRunVerifyConfig:
     _truthy_env(name)
+    _extract_post_run_verify_block(raw)
+    _parse_verify_commands(block)
+    _parse_verify_on_failure(block)
+    _parse_verify_max_output(block)
+    _parse_verify_ide_settings(block)
     load_post_run_verify_config(project)
     _parse_iso_datetime(value)
     fetch_ticket_status(project;ticket_id)
@@ -778,7 +783,7 @@ D:
     _command_loop_main(args)
     main()
   src/koru/context.py:
-    e: _is_fixture_ticket,_resolve_include_fixtures,_load_project_dotenv,_planfile_command_base,_planfile_env,_fetch_all_tickets,_run_planfile,_safe_json,_git_probe,_build_ticket_args,_try_fallback_ticket_list,_process_list_payload,_process_dict_payload,_extract_error_from_stderr,_fetch_ticket_data,build_context,_load_sprint_data,_find_blocking_tickets,_promote_blocking_to_critical,_promote_bug_priority,_write_sprint_data,_auto_promote_blocking_tickets,_build_instructions,_build_setup_instructions,_build_shared_rules,_build_self_service,_render_header,_render_environment,_render_agent_lanes,_render_autonomous_mode,_render_ai_tool_support_2026,_render_semcod_tools,_render_setup_required,_render_active_ticket,_render_no_active_ticket,_render_gates,_render_project_pipeline,_render_policy,_render_rules,_render_self_service,_render_dashboard,_render_autonomy_loop_brief,render_markdown_handoff
+    e: _is_fixture_ticket,_resolve_include_fixtures,_load_project_dotenv,_planfile_command_base,_planfile_env,_fetch_all_tickets,_run_planfile,_safe_json,_git_probe,_build_ticket_args,_try_fallback_ticket_list,_process_list_payload,_process_dict_payload,_extract_error_from_stderr,_execute_ticket_query,_handle_idle_queue,_parse_ticket_response,_fetch_ticket_data,build_context,_load_sprint_data,_find_blocking_tickets,_promote_blocking_to_critical,_promote_bug_priority,_write_sprint_data,_auto_promote_blocking_tickets,_build_instructions,_build_setup_instructions,_build_shared_rules,_build_self_service,_render_header,_render_environment,_render_agent_lanes,_render_autonomous_mode,_render_ai_tool_support_2026,_render_semcod_tools,_render_setup_required,_render_active_ticket,_render_no_active_ticket,_render_gates,_render_project_pipeline,_render_policy,_render_rules,_render_self_service,_render_dashboard,_render_autonomy_loop_brief,render_markdown_handoff
     _is_fixture_ticket(ticket)
     _resolve_include_fixtures(explicit)
     _load_project_dotenv(project)
@@ -793,6 +798,9 @@ D:
     _process_list_payload(ticket_data;include_fixtures)
     _process_dict_payload(ticket_data;ticket_id;include_fixtures)
     _extract_error_from_stderr(stderr)
+    _execute_ticket_query(project;ticket_id;queue_name;planfile_runner)
+    _handle_idle_queue(project;planfile_runner;include_fixtures)
+    _parse_ticket_response(ticket_proc;ticket_id;include_fixtures;project;planfile_runner)
     _fetch_ticket_data(project;ticket_id;queue_name;planfile_present;planfile_runner;include_fixtures)
     build_context()
     _load_sprint_data(project)
@@ -970,10 +978,16 @@ D:
   src/koru/mcp_server.py:
   src/koru/planfile_queue.py:
   src/koru/policy.py:
-    e: policy_path,load_policy,policy_violations,Policy
+    e: policy_path,load_policy,_check_git_commit_policy,_check_git_push_policy,_check_git_branch_create_policy,_check_git_branch_switch_policy,_check_git_tag_policy,_check_destructive_shell_policy,policy_violations,Policy
     Policy: to_dict(0)  # Resolved policy for an LLM agent operating on a koru project
     policy_path(project)
     load_policy(project)
+    _check_git_commit_policy(policy;command;violations)
+    _check_git_push_policy(policy;command;violations)
+    _check_git_branch_create_policy(policy;command;violations)
+    _check_git_branch_switch_policy(policy;command;violations)
+    _check_git_tag_policy(policy;command;violations)
+    _check_destructive_shell_policy(policy;command;violations)
     policy_violations(policy;command)
   src/koru/project_pipeline.py:
     e: project_pipeline_path,default_koru_project_pipeline_text,write_koru_project_pipeline_if_absent,load_koru_project_pipeline,build_project_pipeline_brief
@@ -1003,15 +1017,29 @@ D:
     _stderr_unknown_option(stderr;flag)
     append_shell_evidence_note(project;ticket_id;note)
   src/koru/queue/runner.py:
-    e: _source_tool,run_next_planfile_task
+    e: _source_tool,_resolve_executor_kind,_handle_human_ticket,_resolve_ticket_action,_handle_dry_run,_claim_and_start,_execute_action,_append_shell_evidence,_finalize_ticket,run_next_planfile_task
     _source_tool(ticket)
+    _resolve_executor_kind(ticket;interactive;dry_run)
+    _handle_human_ticket(ticket;ticket_id;interactive;dry_run;project;actor;planfile_runner;prompt_runner)
+    _resolve_ticket_action(ticket;executor_kind)
+    _handle_dry_run(ticket_id;executor_kind;action)
+    _claim_and_start(project;ticket_id;actor;planfile_runner)
+    _execute_action(executor_kind;action;project;ticket_id;api_runner;llm_runner;shell_runner)
+    _append_shell_evidence(project;ticket_id;result;planfile_runner)
+    _finalize_ticket(project;ticket_id;executor_kind;result;action_label;planfile_runner)
     run_next_planfile_task()
   src/koru/queue/runners.py:
-    e: _planfile_env,run_process,run_shell_command,run_api_request,run_llm_request
+    e: _planfile_env,run_process,run_shell_command,run_api_request,_resolve_llm_endpoint_and_key,_build_llm_messages,_build_llm_request_body,_build_llm_headers,_parse_llm_response,_handle_llm_error,run_llm_request
     _planfile_env()
     run_process(command;project)
     run_shell_command(command;project)
     run_api_request(request;_project)
+    _resolve_llm_endpoint_and_key(request)
+    _build_llm_messages(request)
+    _build_llm_request_body(request;model;messages)
+    _build_llm_headers(endpoint;api_key)
+    _parse_llm_response(response;model)
+    _handle_llm_error(exc;model)
     run_llm_request(request;_project)
   src/koru/queue/shell_evidence.py:
     e: _tail_stream,format_shell_run_note

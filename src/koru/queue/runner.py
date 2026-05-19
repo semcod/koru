@@ -38,6 +38,223 @@ def _source_tool(ticket: dict) -> str:
     return str(source or "")
 
 
+def _resolve_executor_kind(ticket: dict, interactive: bool, dry_run: bool) -> str:
+    """Determine executor kind from ticket metadata."""
+    executor = ticket.get("executor") or {}
+    raw_kind = executor.get("kind")
+    if raw_kind is None and _source_tool(ticket) == "koru-scan":
+        return "human"
+    if raw_kind is None and not interactive and not dry_run:
+        return "shell"
+    return str(raw_kind or "human")
+
+
+def _handle_human_ticket(
+    ticket: dict,
+    ticket_id: str,
+    interactive: bool,
+    dry_run: bool,
+    project: Path,
+    actor: str,
+    planfile_runner: Callable[[list[str], Path], CommandResult],
+    prompt_runner: Callable[[str, str], str | None],
+) -> QueueRunResult:
+    """Handle human executor ticket."""
+    inputs = ticket.get("inputs") or {}
+    prompt = str(
+        inputs.get("prompt") or ticket.get("description") or ticket.get("name") or ticket_id
+    )
+    if not interactive or dry_run:
+        return QueueRunResult(
+            status="waiting_input",
+            ticket_id=ticket_id,
+            executor_kind="human",
+            message=prompt,
+        )
+    answer = prompt_runner(prompt, ticket_id)
+    if not answer:
+        return QueueRunResult(
+            status="waiting_input",
+            ticket_id=ticket_id,
+            executor_kind="human",
+            message=prompt,
+        )
+    claimed = ticket_claim_or_error(
+        project, ticket_id, actor, planfile_runner=planfile_runner
+    )
+    if claimed:
+        return claimed
+    planfile_command(
+        project,
+        ["ticket", "start", ticket_id],
+        runner=planfile_runner,
+    )
+    planfile_command(
+        project,
+        ["ticket", "done", ticket_id],
+        runner=planfile_runner,
+    )
+    return QueueRunResult(
+        status="completed",
+        ticket_id=ticket_id,
+        executor_kind="human",
+        message=answer,
+    )
+
+
+def _resolve_ticket_action(
+    ticket: dict,
+    executor_kind: str,
+) -> tuple[Any, str] | None:
+    """Return (action, missing_prompt) or None for unsupported executor."""
+    if executor_kind == "api":
+        return ticket_api_request(ticket), "API ticket is missing inputs.api_endpoint or executor.handler"
+    if executor_kind == "llm":
+        return ticket_llm_request(ticket), "LLM ticket is missing inputs.prompt (or description / name)"
+    if executor_kind == "shell":
+        return ticket_command(ticket), "Shell ticket is missing inputs.script or executor.handler"
+    return None
+
+
+def _handle_dry_run(
+    ticket_id: str,
+    executor_kind: str,
+    action: Any,
+) -> QueueRunResult:
+    message = json.dumps(action) if isinstance(action, dict) else str(action)
+    return QueueRunResult(
+        status="dry_run",
+        ticket_id=ticket_id,
+        executor_kind=executor_kind,
+        message=message,
+    )
+
+
+def _claim_and_start(
+    project: Path,
+    ticket_id: str,
+    actor: str,
+    planfile_runner: Callable[[list[str], Path], CommandResult],
+) -> QueueRunResult | None:
+    claimed = ticket_claim_or_error(project, ticket_id, actor, planfile_runner=planfile_runner)
+    if claimed:
+        return claimed
+    planfile_command(
+        project,
+        ["ticket", "start", ticket_id],
+        runner=planfile_runner,
+    )
+    return None
+
+
+def _execute_action(
+    executor_kind: str,
+    action: Any,
+    project: Path,
+    ticket_id: str,
+    api_runner: Callable[[dict[str, Any], Path], CommandResult],
+    llm_runner: Callable[[dict[str, Any], Path], CommandResult],
+    shell_runner: Callable[[str, Path], CommandResult],
+) -> tuple[CommandResult, str]:
+    if executor_kind == "api":
+        result = api_runner(action, project)
+        action_label = f"{action['method']} {action['endpoint']}"
+    elif executor_kind == "llm":
+        result = llm_runner(action, project)
+        action_label = f"llm {action.get('model') or _DEFAULT_LLM_MODEL}"
+    else:
+        try:
+            from koru.activity_log import activity
+            activity("QUEUE", f"shell {ticket_id}: {action}")
+        except Exception:
+            pass
+        result = shell_runner(str(action), project)
+        action_label = str(action)
+    return result, action_label
+
+
+def _append_shell_evidence(
+    project: Path,
+    ticket_id: str,
+    result: CommandResult,
+    planfile_runner: Callable[[list[str], Path], CommandResult],
+) -> None:
+    run_id = uuid.uuid4().hex[:16]
+    note = format_shell_run_note(
+        run_id=run_id,
+        exit_code=result.returncode,
+        stdout=result.stdout,
+        stderr=result.stderr,
+    )
+    up, evidence_kind = append_shell_evidence_note(
+        project,
+        ticket_id,
+        note,
+        run_id=run_id,
+        planfile_runner=planfile_runner,
+    )
+    if up.returncode == 0:
+        if evidence_kind == "artifact":
+            _logger.info(
+                "koru.queue.shell_evidence_appended_artifact ticket_id=%s run_id=%s path=%s",
+                ticket_id,
+                run_id,
+                (up.stdout or "").strip(),
+            )
+        else:
+            _logger.info(
+                "koru.queue.shell_evidence_appended ticket_id=%s run_id=%s",
+                ticket_id,
+                run_id,
+            )
+    else:
+        _logger.warning(
+            "koru.queue.shell_evidence_note_failed ticket_id=%s run_id=%s "
+            "planfile_exit=%s planfile_stderr=%s",
+            ticket_id,
+            run_id,
+            up.returncode,
+            (up.stderr or "")[:500],
+        )
+
+
+def _finalize_ticket(
+    project: Path,
+    ticket_id: str,
+    executor_kind: str,
+    result: CommandResult,
+    action_label: str,
+    planfile_runner: Callable[[list[str], Path], CommandResult],
+) -> QueueRunResult:
+    if result.returncode == 0:
+        if executor_kind == "shell":
+            _append_shell_evidence(project, ticket_id, result, planfile_runner)
+        planfile_command(
+            project,
+            ["ticket", "done", ticket_id],
+            runner=planfile_runner,
+        )
+        status = "completed"
+    else:
+        reason = result.stderr[-500:].strip() or f"Command exited with {result.returncode}"
+        planfile_command(
+            project,
+            ["ticket", "block", ticket_id, "--reason", f"FAIL: {reason}"],
+            runner=planfile_runner,
+        )
+        status = "failed"
+
+    return QueueRunResult(
+        status=status,
+        ticket_id=ticket_id,
+        executor_kind=executor_kind,
+        message=action_label,
+        exit_code=result.returncode,
+        stdout=result.stdout,
+        stderr=result.stderr,
+    )
+
+
 def run_next_planfile_task(
     *,
     project: Path,
@@ -68,10 +285,6 @@ def run_next_planfile_task(
     project = project.resolve()
 
     with queue_runner_lock(project):
-        # planfile has no `ticket next` and no `--queue` filter on `list`.
-        # `--status open` selects runnable tickets; koru filters by
-        # ``queue_name`` in-process below (best-effort: planfile tickets
-        # may carry an ``execution.queue`` field).
         next_args = ["ticket", "list", "--status", "open", "--format", "json"]
         next_result = planfile_command(
             project,
@@ -95,7 +308,6 @@ def run_next_planfile_task(
         ticket_name = str(ticket.get("name") or ticket_id)
         try:
             from koru.activity_log import activity
-
             activity(
                 "QUEUE",
                 f"start {ticket_id} ({ticket_name}) executor="
@@ -103,61 +315,23 @@ def run_next_planfile_task(
             )
         except Exception:
             pass
-        executor = ticket.get("executor") or {}
-        raw_kind = executor.get("kind")
-        executor_kind = str(raw_kind or "human")
-        # In non-interactive mode, legacy tickets created before --executor-kind
-        # existed should not block the queue. Default them to shell so they can
-        # be auto-completed with a no-op script. Explicit human tickets are
-        # preserved and still return waiting_input as before.
-        if raw_kind is None and _source_tool(ticket) == "koru-scan":
-            executor_kind = "human"
-        elif raw_kind is None and not interactive and not dry_run:
-            executor_kind = "shell"
+
+        executor_kind = _resolve_executor_kind(ticket, interactive, dry_run)
 
         if executor_kind == "human":
-            inputs = ticket.get("inputs") or {}
-            prompt = str(
-                inputs.get("prompt") or ticket.get("description") or ticket.get("name") or ticket_id
-            )
-            if not interactive or dry_run:
-                return QueueRunResult(
-                    status="waiting_input",
-                    ticket_id=ticket_id,
-                    executor_kind=executor_kind,
-                    message=prompt,
-                )
-            answer = prompt_runner(prompt, ticket_id)
-            if not answer:
-                return QueueRunResult(
-                    status="waiting_input",
-                    ticket_id=ticket_id,
-                    executor_kind=executor_kind,
-                    message=prompt,
-                )
-            claimed = ticket_claim_or_error(
-                project, ticket_id, actor, planfile_runner=planfile_runner
-            )
-            if claimed:
-                return claimed
-            planfile_command(
+            return _handle_human_ticket(
+                ticket,
+                ticket_id,
+                interactive,
+                dry_run,
                 project,
-                ["ticket", "start", ticket_id],
-                runner=planfile_runner,
-            )
-            planfile_command(
-                project,
-                ["ticket", "done", ticket_id],
-                runner=planfile_runner,
-            )
-            return QueueRunResult(
-                status="completed",
-                ticket_id=ticket_id,
-                executor_kind=executor_kind,
-                message=answer,
+                actor,
+                planfile_runner,
+                prompt_runner,
             )
 
-        if executor_kind not in {"api", "shell", "llm"}:
+        action_info = _resolve_ticket_action(ticket, executor_kind)
+        if action_info is None:
             return QueueRunResult(
                 status="unsupported_executor",
                 ticket_id=ticket_id,
@@ -165,24 +339,12 @@ def run_next_planfile_task(
                 message=f"Executor kind '{executor_kind}' is not implemented yet",
             )
 
-        if executor_kind == "api":
-            action = ticket_api_request(ticket)
-            missing_prompt = "API ticket is missing inputs.api_endpoint or executor.handler"
-        elif executor_kind == "llm":
-            action = ticket_llm_request(ticket)
-            missing_prompt = "LLM ticket is missing inputs.prompt (or description / name)"
-        else:
-            action = ticket_command(ticket)
-            missing_prompt = "Shell ticket is missing inputs.script or executor.handler"
+        action, missing_prompt = action_info
 
         if not action:
-            # Fallback no-op for legacy tickets auto-converted to shell above,
-            # or any shell ticket missing a script. Prevents queue blocking.
             if executor_kind == "shell" and not interactive and not dry_run:
                 action = "true"
             else:
-                # `block --reason` is the planfile equivalent of the older
-                # `input --prompt` surface koru used to call.
                 planfile_command(
                     project,
                     ["ticket", "block", ticket_id, "--reason", missing_prompt],
@@ -196,105 +358,27 @@ def run_next_planfile_task(
                 )
 
         if dry_run:
-            message = json.dumps(action) if isinstance(action, dict) else action
-            return QueueRunResult(
-                status="dry_run",
-                ticket_id=ticket_id,
-                executor_kind=executor_kind,
-                message=message,
-            )
+            return _handle_dry_run(ticket_id, executor_kind, action)
 
-        claimed = ticket_claim_or_error(project, ticket_id, actor, planfile_runner=planfile_runner)
+        claimed = _claim_and_start(project, ticket_id, actor, planfile_runner)
         if claimed:
             return claimed
-        planfile_command(
+
+        result, action_label = _execute_action(
+            executor_kind,
+            action,
             project,
-            ["ticket", "start", ticket_id],
-            runner=planfile_runner,
+            ticket_id,
+            api_runner,
+            llm_runner,
+            shell_runner,
         )
 
-        if executor_kind == "api":
-            result = api_runner(action, project)
-            action_label = f"{action['method']} {action['endpoint']}"
-        elif executor_kind == "llm":
-            result = llm_runner(action, project)
-            action_label = f"llm {action.get('model') or _DEFAULT_LLM_MODEL}"
-        else:
-            try:
-                from koru.activity_log import activity
-
-                activity("QUEUE", f"shell {ticket_id}: {action}")
-            except Exception:
-                pass
-            result = shell_runner(str(action), project)
-            action_label = str(action)
-
-        if result.returncode == 0:
-            # Shell stdout/stderr: append via `ticket update --note` / `-n`
-            # when the installed planfile supports it; else a run artifact under
-            # `.planfile/.koru/runs/`. Full streams remain in QueueRunResult.
-            if executor_kind == "shell":
-                run_id = uuid.uuid4().hex[:16]
-                note = format_shell_run_note(
-                    run_id=run_id,
-                    exit_code=result.returncode,
-                    stdout=result.stdout,
-                    stderr=result.stderr,
-                )
-                up, evidence_kind = append_shell_evidence_note(
-                    project,
-                    ticket_id,
-                    note,
-                    run_id=run_id,
-                    planfile_runner=planfile_runner,
-                )
-                if up.returncode == 0:
-                    if evidence_kind == "artifact":
-                        _logger.info(
-                            "koru.queue.shell_evidence_appended_artifact ticket_id=%s "
-                            "run_id=%s path=%s",
-                            ticket_id,
-                            run_id,
-                            (up.stdout or "").strip(),
-                        )
-                    else:
-                        _logger.info(
-                            "koru.queue.shell_evidence_appended ticket_id=%s run_id=%s",
-                            ticket_id,
-                            run_id,
-                        )
-                else:
-                    _logger.warning(
-                        "koru.queue.shell_evidence_note_failed ticket_id=%s run_id=%s "
-                        "planfile_exit=%s planfile_stderr=%s",
-                        ticket_id,
-                        run_id,
-                        up.returncode,
-                        (up.stderr or "")[:500],
-                    )
-            planfile_command(
-                project,
-                ["ticket", "done", ticket_id],
-                runner=planfile_runner,
-            )
-            status = "completed"
-        else:
-            # Use `block --reason` for failures (planfile has no `fail`
-            # verb). The full stderr stays in QueueRunResult / run log.
-            reason = result.stderr[-500:].strip() or f"Command exited with {result.returncode}"
-            planfile_command(
-                project,
-                ["ticket", "block", ticket_id, "--reason", f"FAIL: {reason}"],
-                runner=planfile_runner,
-            )
-            status = "failed"
-
-        return QueueRunResult(
-            status=status,
-            ticket_id=ticket_id,
-            executor_kind=executor_kind,
-            message=action_label,
-            exit_code=result.returncode,
-            stdout=result.stdout,
-            stderr=result.stderr,
+        return _finalize_ticket(
+            project,
+            ticket_id,
+            executor_kind,
+            result,
+            action_label,
+            planfile_runner,
         )

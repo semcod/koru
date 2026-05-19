@@ -1,58 +1,58 @@
-# code2llm/evolution | 1055 func | 107f | 2026-05-19
-# generated in 0.01s
+# code2llm/evolution | 1116 func | 107f | 2026-05-19
+# generated in 0.00s
 
 NEXT[10] (ranked by impact):
-  [1] !! SPLIT           src/koru/context.py
-      WHY: 1199L, 0 classes, max CC=18
-      EFFORT: ~4h  IMPACT: 21582
+  [1] !! SPLIT           src/koru/autonomous.py
+      WHY: 1666L, 2 classes, max CC=17
+      EFFORT: ~4h  IMPACT: 28322
 
   [2] !! SPLIT           src/koru/autopilot/cli_command.py
       WHY: 1282L, 0 classes, max CC=15
       EFFORT: ~4h  IMPACT: 19230
 
-  [3] !! SPLIT-FUNC      run_cycle  CC=89  fan=58
-      WHY: CC=89 exceeds 15
-      EFFORT: ~1h  IMPACT: 5162
-
-  [4] !! SPLIT-FUNC      _action_up  CC=50  fan=49
-      WHY: CC=50 exceeds 15
-      EFFORT: ~1h  IMPACT: 2450
-
-  [5] !! SPLIT-FUNC      run_next_planfile_task  CC=43  fan=29
+  [3] !! SPLIT-FUNC      run_next_planfile_task  CC=43  fan=29
       WHY: CC=43 exceeds 15
       EFFORT: ~1h  IMPACT: 1247
 
-  [6] !  SPLIT-FUNC      create_nl_task  CC=23  fan=22
-      WHY: CC=23 exceeds 15
-      EFFORT: ~1h  IMPACT: 506
+  [4] !  SPLIT-FUNC      _action_up  CC=17  fan=31
+      WHY: CC=17 exceeds 15
+      EFFORT: ~1h  IMPACT: 527
 
-  [7] !  SPLIT-FUNC      _read_wup_health  CC=23  fan=19
-      WHY: CC=23 exceeds 15
-      EFFORT: ~1h  IMPACT: 437
+  [5] !! SPLIT-FUNC      _handle_autopilot_phase  CC=29  fan=15
+      WHY: CC=29 exceeds 15
+      EFFORT: ~1h  IMPACT: 435
 
-  [8] !  SPLIT-FUNC      run_llm_request  CC=23  fan=19
-      WHY: CC=23 exceeds 15
-      EFFORT: ~1h  IMPACT: 437
+  [6] !  SPLIT-FUNC      _handle_queue_loop_phase  CC=19  fan=19
+      WHY: CC=19 exceeds 15
+      EFFORT: ~1h  IMPACT: 361
 
-  [9] !! SPLIT-FUNC      apply_autoloop_env_to_args  CC=31  fan=11
-      WHY: CC=31 exceeds 15
-      EFFORT: ~1h  IMPACT: 341
-
-  [10] !  SPLIT-FUNC      _action_session_start  CC=15  fan=21
+  [7] !  SPLIT-FUNC      _action_session_start  CC=15  fan=21
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 315
 
+  [8] !  SPLIT-FUNC      _scan_code2llm_analysis  CC=15  fan=20
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 300
+
+  [9] !  SPLIT-FUNC      run_startup_operator_pipeline  CC=15  fan=19
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 285
+
+  [10] !  SPLIT-FUNC      AutopilotBridge.injectChat  CC=18  fan=14
+      WHY: CC=18 exceeds 15
+      EFFORT: ~1h  IMPACT: 252
+
 
 RISKS[3]:
+  ⚠ Splitting src/koru/autonomous.py may break 47 import paths
   ⚠ Splitting planfile.yaml may break 0 import paths
   ⚠ Splitting src/koru/autopilot/cli_command.py may break 37 import paths
-  ⚠ Splitting src/koru/context.py may break 43 import paths
 
 METRICS-TARGET:
-  CC̄:          4.5 → ≤3.1
-  max-CC:      89 → ≤20
-  god-modules: 12 → 0
-  high-CC(≥15): 27 → ≤13
+  CC̄:          4.3 → ≤3.0
+  max-CC:      43 → ≤20
+  god-modules: 14 → 0
+  high-CC(≥15): 20 → ≤10
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.8 → now CC̄=4.5
+  prev CC̄=4.5 → now CC̄=4.3
