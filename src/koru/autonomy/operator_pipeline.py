@@ -19,6 +19,7 @@ from typing import Any, Literal, TextIO
 
 from koru.autonomous_startup import AutonomousStartupProbe
 from koru.tasks import CreatedTask, create_nl_task
+import contextlib
 
 StepStatus = Literal["ok", "pending", "skipped"]
 StepActor = Literal["human", "koru", "taskfile"]
@@ -65,10 +66,8 @@ def _write_marker(state_dir: Path, step_id: str, ticket_id: str) -> None:
 
 
 def _clear_marker(state_dir: Path, step_id: str) -> None:
-    try:
+    with contextlib.suppress(FileNotFoundError):
         _marker_path(state_dir, step_id).unlink()
-    except FileNotFoundError:
-        pass
 
 
 def _close_resolved_step_ticket(

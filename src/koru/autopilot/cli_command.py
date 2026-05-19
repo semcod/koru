@@ -728,10 +728,7 @@ def _run_direct_drive(
 
 
 def _action_drive(args: argparse.Namespace) -> int:
-    if args.prompt is not None:
-        text = str(args.prompt).strip()
-    else:
-        text = " ".join(args.text).strip()
+    text = str(args.prompt).strip() if args.prompt is not None else " ".join(args.text).strip()
     if not text:
         print(
             "koru autopilot drive: missing text — pass words after `drive`, "

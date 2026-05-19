@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import contextlib
 
 
 def _autopilot_socket_basename() -> str:
@@ -31,10 +32,8 @@ def default_socket_path() -> Path:
     runtime = os.environ.get("XDG_RUNTIME_DIR")
     if runtime:
         path = Path(runtime) / name
-        try:
+        with contextlib.suppress(OSError):
             path.parent.mkdir(parents=True, exist_ok=True)
-        except OSError:
-            pass
         return path
     if name == "koru-autopilot.sock":
         return Path(f"/tmp/koru-autopilot-{os.getuid()}.sock")

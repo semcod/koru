@@ -21,7 +21,7 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.142`
+- **version**: `0.1.143`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -41,7 +41,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.142;
+  version: 0.1.143;
 }
 
 dependencies {
@@ -1677,7 +1677,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.142
+  version: 0.1.143
   env: local
 ```
 
@@ -1752,10 +1752,10 @@ pip install -e .[dev]
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 284f 52810L | python:209,shell:62,javascript:6,typescript:6,less:1 | 2026-05-19
+# koru | 284f 52780L | python:209,shell:62,javascript:6,typescript:6,less:1 | 2026-05-19
 # stats: 1526 func | 176 cls | 284 mod | CC̄=4.1 | critical:110 | cycles:0
 # alerts[5]: CC do_from_todo=19; CC _action_up=17; CC test_autonomy_config_from_env=16; CC looks_like_autonomous_up_command=15; fan-out _action_up=31
-# hotspots[5]: _action_up fan=31; _build_handler fan=29; do_from_todo fan=23; run_cycle fan=23; render_markdown_handoff fan=20
+# hotspots[5]: _action_up fan=31; _build_handler fan=29; do_from_todo fan=23; run_cycle fan=23; init_project fan=21
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
 M[284]:
@@ -1840,7 +1840,7 @@ M[284]:
   src/koru/agent_cli_helpers.py,89
   src/koru/agents.py,318
   src/koru/api/__init__.py,10
-  src/koru/autonomous.py,1664
+  src/koru/autonomous.py,1663
   src/koru/autonomous_cycle.py,1212
   src/koru/autonomous_diagnostics.py,251
   src/koru/autonomous_env.py,27
@@ -1850,17 +1850,17 @@ M[284]:
   src/koru/autonomous_wup.py,287
   src/koru/autonomy/__init__.py,26
   src/koru/autonomy/config.py,122
-  src/koru/autonomy/env.py,252
-  src/koru/autonomy/environment.py,248
+  src/koru/autonomy/env.py,249
+  src/koru/autonomy/environment.py,247
   src/koru/autonomy/heal.py,111
   src/koru/autonomy/ide_work.py,297
-  src/koru/autonomy/operator_pipeline.py,585
+  src/koru/autonomy/operator_pipeline.py,584
   src/koru/autonomy/post_run_verify.py,380
   src/koru/autonomy/prompts.py,102
   src/koru/autonomy/telemetry_snapshot.py,80
   src/koru/autopilot/__init__.py,19
   src/koru/autopilot/audit.py,10
-  src/koru/autopilot/cli_command.py,1330
+  src/koru/autopilot/cli_command.py,1327
   src/koru/autopilot/client.py,11
   src/koru/autopilot/config.py,10
   src/koru/autopilot/daemon.py,17
@@ -1878,7 +1878,7 @@ M[284]:
   src/koru/cli/commands.py,1
   src/koru/cli/parsers.py,1
   src/koru/cli.py,1854
-  src/koru/context.py,1227
+  src/koru/context.py,1226
   src/koru/doctor.py,514
   src/koru/dotenv_loader.py,105
   src/koru/dsl/__init__.py,10
@@ -1889,11 +1889,11 @@ M[284]:
   src/koru/ide_client.py,146
   src/koru/ide_router.py,99
   src/koru/ide_runtime.py,45
-  src/koru/init.py,611
+  src/koru/init.py,608
   src/koru/init_host_environment.py,296
   src/koru/local_service.py,212
   src/koru/loop.py,132
-  src/koru/mcp_provision.py,397
+  src/koru/mcp_provision.py,394
   src/koru/mcp_server.py,10
   src/koru/planfile_queue.py,38
   src/koru/policy.py,263
@@ -1926,7 +1926,7 @@ M[284]:
   src/koru/utils/__init__.py,6
   src/koru/utils/subprocess_runner.py,41
   src/koru/watch.py,94
-  src/koru/wup_testql_compat.py,66
+  src/koru/wup_testql_compat.py,65
   src/koruapi/__init__.py,26
   src/koruapi/cli.py,129
   src/koruapi/dashboard.py,92
@@ -1944,17 +1944,17 @@ M[284]:
   src/korudsl/library.py,208
   src/korudsl/transform.py,71
   src/koruide/__init__.py,68
-  src/koruide/audit.py,158
+  src/koruide/audit.py,155
   src/koruide/client.py,129
   src/koruide/config.py,120
-  src/koruide/daemon.py,716
+  src/koruide/daemon.py,707
   src/koruide/host_setup.py,227
   src/koruide/ide.py,544
   src/koruide/injector.py,404
   src/koruide/os_injector.py,393
   src/koruide/plugin_installer.py,412
   src/koruide/protocol.py,232
-  src/koruide/socket.py,46
+  src/koruide/socket.py,45
   src/koruide/utils.py,22
   test-data/.planfile/.koru/run-autonomous.sh,7
   test-data/.planfile/.koru/setup-autopilot-host.sh,14
@@ -4157,7 +4157,7 @@ D:
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.19s
+# generated in 0.24s
 # nodes: 432 | edges: 500 | modules: 70
 # CC̄=4.1
 
@@ -4178,30 +4178,30 @@ HUBS[20]:
     CC=14  in:1  out:33  total:34
   src.koru.tasks.create_nl_task
     CC=12  in:6  out:28  total:34
-  src.koru.events.emit_management_event
-    CC=8  in:25  out:7  total:32
   src.koru.cli._topology_main
     CC=12  in:0  out:32  total:32
   src.koru.autonomous._stdio_info
     CC=1  in:31  out:1  total:32
+  src.koru.events.emit_management_event
+    CC=8  in:25  out:7  total:32
   src.koru.autonomy.env.env_truthy
     CC=3  in:29  out:3  total:32
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
   src.koru.cli._task_main
     CC=11  in:0  out:27  total:27
-  services.healing-webhook.app._resolve_affected_files
-    CC=11  in:2  out:24  total:26
   src.koruide.ide.detect_running_ides
     CC=13  in:16  out:10  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
+  services.healing-webhook.app._resolve_affected_files
+    CC=11  in:2  out:24  total:26
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
-  src.koru.cli._render_runtime_context_text
-    CC=14  in:1  out:23  total:24
   src.koru.init.init_project
     CC=8  in:2  out:22  total:24
+  src.koru.agents.detect_agent_options
+    CC=4  in:3  out:21  total:24
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]

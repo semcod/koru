@@ -38,6 +38,7 @@ import time
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any
+import contextlib
 
 LOG_NAME = "koru.autopilot.audit"
 MAX_BYTES = 10 * 1024 * 1024  # 10 MiB
@@ -93,10 +94,8 @@ class AuditLog:
         try:
             self.path.parent.mkdir(parents=True, exist_ok=True)
             # Best-effort permission lockdown on the directory.
-            try:
+            with contextlib.suppress(OSError):
                 os.chmod(self.path.parent, 0o700)
-            except OSError:
-                pass
         except OSError as exc:
             # Fail open: log to stderr once and disable, so a missing
             # XDG_STATE_HOME doesn't crash the daemon.
@@ -131,10 +130,8 @@ class AuditLog:
         line = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
         self._logger.info(line)
         if self._needs_chmod and self.path.exists():
-            try:
+            with contextlib.suppress(OSError):
                 os.chmod(self.path, 0o600)
-            except OSError:
-                pass
             self._needs_chmod = False
 
     def close(self) -> None:

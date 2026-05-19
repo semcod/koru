@@ -7,6 +7,7 @@ import logging
 import uuid
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from .human import default_human_prompt
 from .locking import queue_runner_lock, ticket_claim_or_error

@@ -1,4 +1,4 @@
-# koru | 1237 func | 119f | 36683L | python | 2026-05-19
+# koru | 1237 func | 119f | 36805L | python | 2026-05-19
 # generated in 0.00s
 
 HEALTH:
@@ -9,47 +9,47 @@ ALERTS[20]:
   !!! high_fan_out     _action_up = 31 (limit:10)
   !!! high_fan_out     do_from_todo = 24 (limit:10)
   !!! high_fan_out     run_cycle = 23 (limit:10)
-  !!! high_fan_out     init_project = 22 (limit:10)
+  !!! high_fan_out     init_project = 23 (limit:10)
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
   !!! high_fan_out     _build_handler = 20 (limit:10)
   !!! high_fan_out     create_nl_task = 20 (limit:10)
-  !!  high_fan_out     AutopilotDaemon._drive_via_keyboard = 19 (limit:10)
   !!  high_fan_out     AutopilotBridge.focusChat = 19 (limit:10)
+  !!  high_fan_out     AutopilotDaemon._drive_via_keyboard = 19 (limit:10)
 
-MODULES[213] (top by size):
-  M[src/koru/autonomous.py] 1663L C:2 F:47 CC↑17 D:1 (python)
-  M[src/koru/autopilot/cli_command.py] 1329L C:0 F:45 CC↑14 D:0 (python)
+MODULES[214] (top by size):
+  M[src/koru/autonomous.py] 1662L C:2 F:47 CC↑17 D:1 (python)
+  M[src/koru/autopilot/cli_command.py] 1326L C:0 F:45 CC↑14 D:0 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
-  M[src/koruapi/dashboard_serve.py] 1296L C:1 F:16 CC↑14 D:1 (python)
-  M[src/koru/context.py] 1226L C:0 F:46 CC↑15 D:7 (python)
+  M[src/koruapi/dashboard_serve.py] 1293L C:1 F:16 CC↑14 D:1 (python)
+  M[src/koru/context.py] 1223L C:0 F:46 CC↑15 D:7 (python)
   M[src/koru/autonomous_cycle.py] 1211L C:2 F:37 CC↑14 D:0 (python)
   M[src/koruapi/mcp_server.py] 1028L C:0 F:34 CC↑14 D:2 (python)
   M[src/koru/scan.py] 918L C:2 F:24 CC↑13 D:3 (python)
   M[Taskfile.yml] 901L C:0 F:0 CC↑0 D:0 (yml)
-  M[src/koruide/daemon.py] 715L C:2 F:31 CC↑14 D:0 (python)
+  M[src/koruide/daemon.py] 706L C:2 F:31 CC↑14 D:0 (python)
   M[services/healing-webhook/app.py] 702L C:0 F:27 CC↑11 D:0 (python)
   M[plugins/koru-autopilot-vscode/src/extension.ts] 626L C:2 F:68 CC↑15 D:5 (typescript)
-  M[src/koru/init.py] 610L C:1 F:12 CC↑15 D:2 (python)
-  M[src/koru/autonomy/operator_pipeline.py] 584L C:2 F:21 CC↑13 D:1 (python)
+  M[src/koru/init.py] 607L C:1 F:12 CC↑15 D:2 (python)
+  M[src/koru/autonomy/operator_pipeline.py] 583L C:2 F:21 CC↑13 D:1 (python)
   M[scripts/koru-autoloop.sh] 576L C:0 F:14 CC↑0 D:0 (shell)
-  LANGS: python:127/shell:42/yaml:15/yml:8/typescript:6/kotlin:6/json:3/other:2/properties:1/xml:1/toml:1/txt:1
+  LANGS: python:128/shell:42/yaml:15/yml:8/typescript:6/kotlin:6/json:3/other:2/properties:1/xml:1/toml:1/txt:1
 
 HOTSPOTS[10]:
   ★ _build_handler fan=34  // Create a request handler closure bound to ``config``.
   ★ _action_up fan=31  // Orchestrates 31 calls
   ★ do_from_todo fan=24  // Orchestrates 24 calls
   ★ run_cycle fan=23  // Orchestrates 23 calls
-  ★ init_project fan=22  // Initialise (or re-initialise with ``force``) a koru project.
+  ★ init_project fan=23  // Initialise (or re-initialise with ``force``) a koru project.
 
 Steps:
     1. Refu
 
 REFACTOR[15]:
-  [1] H/H Split god module src/koru/autonomous.py (1663L, 2 classes)
+  [1] H/H Split god module src/koru/autonomous.py (1662L, 2 classes)
   [2] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (626L, 2 classes)
-  [3] H/H Split god module src/koru/context.py (1226L, 0 classes)
-  [4] H/H Split god module src/koru/init.py (610L, 1 classes)
+  [3] H/H Split god module src/koru/context.py (1223L, 0 classes)
+  [4] H/H Split god module src/koru/init.py (607L, 1 classes)
   [5] H/H Split god module src/koru/autonomous_cycle.py (1211L, 2 classes)
 
 EVOLUTION:
-  2026-05-19 CC̄=4.1 crit=112 36683L // Automated analysis
+  2026-05-19 CC̄=4.1 crit=112 36805L // Automated analysis

@@ -53,6 +53,7 @@ from koruide.protocol import (
     error,
 )
 from koruide.socket import default_socket_path
+import contextlib
 
 # Type alias: a HandoffBuilder takes the ended-session metadata and
 # returns the text to type back into the chat (typically the koru
@@ -229,19 +230,13 @@ class AutopilotDaemon:
         for client in list(self._clients.values()):
             self._drop(client)
         if self._server is not None:
-            try:
+            with contextlib.suppress(KeyError):
                 self._sel.unregister(self._server)
-            except KeyError:
-                pass
-            try:
+            with contextlib.suppress(OSError):
                 self._server.close()
-            except OSError:
-                pass
             self._server = None
-        try:
+        with contextlib.suppress(OSError):
             self.socket_path.unlink()
-        except OSError:
-            pass
         self.log("koru autopilot daemon: stopped")
         self.audit.record("daemon_stopped")
         self.audit.close()
@@ -320,14 +315,10 @@ class AutopilotDaemon:
         fd = client.sock.fileno()
         if fd in self._clients:
             del self._clients[fd]
-        try:
+        with contextlib.suppress(KeyError, ValueError):
             self._sel.unregister(client.sock)
-        except (KeyError, ValueError):
-            pass
-        try:
+        with contextlib.suppress(OSError):
             client.sock.close()
-        except OSError:
-            pass
 
     # ----- helpers used by handlers --------------------------------------
 

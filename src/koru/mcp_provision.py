@@ -171,10 +171,7 @@ def provision_windsurf(project: Path, *, dry_run: bool = False) -> dict[str, Any
     """Add koru MCP server to Windsurf config."""
     # Prefer per-project config if .windsurf/ exists; else global
     project_cfg = _windsurf_project_config(project)
-    if project_cfg.parent.exists():
-        config_path = project_cfg
-    else:
-        config_path = _windsurf_global_config()
+    config_path = project_cfg if project_cfg.parent.exists() else _windsurf_global_config()
 
     config = _read_json(config_path)
     servers = config.setdefault("mcpServers", {})

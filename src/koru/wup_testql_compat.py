@@ -7,6 +7,7 @@ import re
 import shutil
 import sys
 from pathlib import Path
+import contextlib
 
 _TIMEOUT_PATTERN = re.compile(r"^(?P<value>\d+(?:\.\d+)?)(?P<unit>ms|s)?$")
 
@@ -33,10 +34,8 @@ def _normalize_args(args: list[str]) -> list[str]:
             continue
         if arg == "--timeout":
             normalized.append(arg)
-            try:
+            with contextlib.suppress(StopIteration):
                 normalized.append(_normalize_timeout(next(iterator)))
-            except StopIteration:
-                pass
             continue
         normalized.append(arg)
     return normalized

@@ -1048,13 +1048,12 @@ class TestAppendShellEvidenceNote(unittest.TestCase):
             def planfile_runner(command: list[str], _p: Path) -> SimpleNamespace:
                 calls.append(command)
                 ta = _ticket_args(command)
-                if len(ta) >= 5 and ta[:3] == ["ticket", "update", "PLF-X"]:
-                    if ta[3] == "--note":
-                        return SimpleNamespace(
-                            returncode=2,
-                            stdout="",
-                            stderr="No such option: --note",
-                        )
+                if len(ta) >= 5 and ta[:3] == ["ticket", "update", "PLF-X"] and ta[3] == "--note":
+                    return SimpleNamespace(
+                        returncode=2,
+                        stdout="",
+                        stderr="No such option: --note",
+                    )
                 return _ok()
 
             res, kind = append_shell_evidence_note(

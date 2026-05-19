@@ -95,6 +95,7 @@ from .scan import ScanResult, run_scan
 from .stdio_events import default_stdio_format_from_env, write_stdio_event
 from .tasks import create_nl_task
 from .topology import is_component_enabled, is_pipeline_enabled
+import contextlib
 
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
@@ -1391,10 +1392,8 @@ def _restart_daemon_if_needed(
             fmt=args.emit_events,
         )
         if daemon is not None:
-            try:
+            with contextlib.suppress(OSError):
                 daemon.stop()
-            except OSError:
-                pass
         if thread is not None:
             thread.join(timeout=2.0)
         client, daemon, thread = _start_or_reuse_daemon(
@@ -1477,7 +1476,7 @@ def _action_up(args: argparse.Namespace) -> int:
     if guard_rc:
         return guard_rc
 
-    lane = _apply_agent_lane_environ(project, args.agent_lane)
+    _apply_agent_lane_environ(project, args.agent_lane)
     startup_probe = build_startup_probe(
         project,
         agent_lane_cli=args.agent_lane,

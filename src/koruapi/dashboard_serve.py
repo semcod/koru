@@ -29,6 +29,7 @@ Bound to ``127.0.0.1`` by default — never exposed to the network unless
 
 from __future__ import annotations
 
+import contextlib
 import errno
 import json
 import os
@@ -1228,10 +1229,8 @@ def serve(config: ServeConfig) -> int:
         # Open browser after server is listening, on a background thread,
         # so the open() call doesn't race with serve_forever().
         def _open_later() -> None:
-            try:
+            with contextlib.suppress(Exception):  # pragma: no cover — best-effort
                 webbrowser.open(url, new=2)
-            except Exception:  # pragma: no cover — best-effort
-                pass
 
         threading.Timer(0.3, _open_later).start()
 
@@ -1279,10 +1278,8 @@ def start_serve_background(
     if config.open_browser:
 
         def _open_later() -> None:
-            try:
+            with contextlib.suppress(Exception):  # pragma: no cover — best-effort
                 webbrowser.open(url, new=2)
-            except Exception:  # pragma: no cover — best-effort
-                pass
 
         threading.Timer(0.3, _open_later).start()
 

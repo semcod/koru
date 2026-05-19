@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from ..ide_router import is_headless_environment
+import contextlib
 
 KNOWN_IDES = ("cursor", "windsurf", "vscode", "code", "code-oss", "vscodium", "zed")
 
@@ -160,10 +161,8 @@ def probe_socket_health(path: Path, *, connect_timeout: float = 0.5) -> SocketHe
         # Not a socket / permission denied / other → treat as stale-ish
         return SocketHealth(path=path, exists=True, listening=False, stale=True)
     finally:
-        try:
+        with contextlib.suppress(OSError):
             sock.close()
-        except OSError:
-            pass
 
 
 def _check_socket_health(autopilot_socket: Path | None) -> SocketHealth | None:

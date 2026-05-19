@@ -364,8 +364,7 @@ def _check_policy_yaml(project: Path) -> tuple[str, str]:
     # load_policy rejects silently — flag them so the operator sees it.
     if isinstance(llm, dict):
         for key, value in llm.items():
-            if key.startswith("allow_") or key.startswith("require_"):
-                if not isinstance(value, bool):
+            if (key.startswith("allow_") or key.startswith("require_")) and not isinstance(value, bool):
                     return WARN, (
                         f"llm.{key} is {type(value).__name__} (must be bool); "
                         "koru is using the strict default for this gate"

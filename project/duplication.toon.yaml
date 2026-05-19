@@ -6,7 +6,7 @@ SUMMARY:
   dup_groups:    34
   dup_fragments: 79
   saved_lines:   369
-  scan_ms:       4083
+  scan_ms:       3612
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/autonomous.py  dup=115L  groups=12  frags=12  (0.4%)

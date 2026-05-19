@@ -36,6 +36,7 @@ from .dotenv_loader import load_dotenv as _load_dotenv_impl
 from .policy import Policy, load_policy
 from .project_pipeline import build_project_pipeline_brief
 from .runtime import planfile_dir
+import contextlib
 
 # Cache so we only load `.env` once per project per process (multiple
 # `build_context` calls — e.g. dashboard auto-refresh — would otherwise
@@ -91,10 +92,8 @@ def _resolve_include_fixtures(explicit: bool | None) -> bool:
 def _load_project_dotenv(project: Path) -> None:
     if project in _DOTENV_LOADED:
         return
-    try:
+    with contextlib.suppress(Exception):  # pragma: no cover — never break the brief over .env
         _load_dotenv_impl(project)
-    except Exception:  # pragma: no cover — never break the brief over .env
-        pass
     _DOTENV_LOADED.add(project)
 
 
@@ -347,10 +346,8 @@ def _parse_ticket_response(
         stripped = (ticket_proc.stdout or "").strip()
         json_null_idle = False
         if stripped:
-            try:
+            with contextlib.suppress(TypeError, ValueError):
                 json_null_idle = json.loads(stripped) is None
-            except (TypeError, ValueError):
-                pass
         if (
             "No runnable ticket" in stripped
             or not stripped

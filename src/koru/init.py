@@ -65,6 +65,7 @@ from .bootstrap import import_flat_pipeline
 from .init_host_environment import write_host_environment_bundle
 from .project_pipeline import write_koru_project_pipeline_if_absent
 from .runtime import planfile_dir, runtime_dir
+import contextlib
 
 POLICY_STUB = """\
 # .planfile/.koru/policy.yaml
@@ -335,10 +336,8 @@ def init_project(
         )
     finally:
         if used_starter:
-            try:
+            with contextlib.suppress(OSError):
                 (pf_dir / "_starter.planfile.yaml").unlink()
-            except OSError:
-                pass
 
     policy_written = _write_policy_stub_if_absent(project)
     gitignore_updated = _ensure_gitignore_entry(project)
@@ -567,10 +566,8 @@ def _remove_agent_lane_artifacts(rt: Path) -> None:
     for name in ("shell-env.sh", "run-autonomous.sh"):
         p = rt / name
         if p.is_file():
-            try:
+            with contextlib.suppress(OSError):
                 p.unlink()
-            except OSError:
-                pass
 
 
 def _write_policy_stub_if_absent(project: Path) -> bool:

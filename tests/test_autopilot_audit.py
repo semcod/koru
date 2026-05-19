@@ -116,6 +116,6 @@ def test_unwritable_directory_disables_silently(
     log.record("drive", chars=1)  # no-op
     log.close()
     assert not target.exists()
-    err = capsys.readouterr().out + capsys.readouterr().err
+    capsys.readouterr().out + capsys.readouterr().err
     # Either captured already or printed unflushed — the test verifies
     # behaviour (silent disable) more than the exact stream.

@@ -16,6 +16,7 @@ import sys
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Final
+import contextlib
 
 _VALID_TICKET_SOURCES: Final[frozenset[str]] = frozenset({"queue", "scan", "all"})
 
@@ -135,10 +136,8 @@ def _apply_autopilot_env(
     ) or args.autopilot_skip_statuses
     _idle_streak_raw = _env_get("AUTOPILOT_SKIP_DRIVE_IDLE_STREAK", None, environ)
     if _idle_streak_raw is not None and str(_idle_streak_raw).strip():
-        try:
+        with contextlib.suppress(ValueError):
             args.autopilot_skip_drive_idle_streak = max(0, int(str(_idle_streak_raw).strip()))
-        except ValueError:
-            pass
     args.backoff_on_stagnation = env_truthy(
         "BACKOFF_ON_STAGNATION", args.backoff_on_stagnation, environ=environ,
     )
@@ -155,10 +154,8 @@ def _apply_scan_env(
     )
     _idle_min_raw = _env_get("SCAN_AFTER_IDLE_MIN_INTERVAL_SECONDS", None, environ)
     if _idle_min_raw is not None and str(_idle_min_raw).strip():
-        try:
+        with contextlib.suppress(ValueError):
             args.scan_after_idle_min_interval = max(0.0, float(str(_idle_min_raw).strip()))
-        except ValueError:
-            pass
     args.topology_integration = env_truthy("TOPOLOGY_INTEGRATION", args.topology_integration, environ=environ)
 
 

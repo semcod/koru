@@ -77,7 +77,7 @@ def build_host_environment_report() -> dict[str, Any]:
     base = build_host_setup_report()
     os_release = _read_os_release()
     groups = _id_group_names()
-    session = (base.get("session") or "").lower()
+    (base.get("session") or "").lower()
     extras: dict[str, Any] = {
         "koru_platform": sys.platform,
         "os_release_id": os_release.get("ID", ""),

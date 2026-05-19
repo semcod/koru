@@ -184,7 +184,7 @@ def _merge_components(saved: dict[str, Any], detected: list[Any]) -> dict[str, d
     # Include any extra ids saved by the user.
     saved_components = saved.get("components") or {}
     if isinstance(saved_components, dict):
-        for extra_id in saved_components.keys():
+        for extra_id in saved_components:
             if extra_id not in ids:
                 ids.append(extra_id)
     for cid in ids:
@@ -216,7 +216,7 @@ def _merge_pipelines(saved: dict[str, Any]) -> dict[str, dict[str, Any]]:
     if not isinstance(saved_pipelines, dict):
         saved_pipelines = {}
     ids = list(_DEFAULT_PIPELINES.keys())
-    for extra_id in saved_pipelines.keys():
+    for extra_id in saved_pipelines:
         if extra_id not in ids:
             ids.append(extra_id)
     for pid in ids:
