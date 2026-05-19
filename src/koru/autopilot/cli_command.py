@@ -94,9 +94,53 @@ def _action_calibrate(args: argparse.Namespace) -> int:
         return 1
 
 
-def _action_session_start(args: argparse.Namespace) -> int:
+def _capture_ide_profile(ide: str, delay: float, args: argparse.Namespace, captured: dict[tuple[int, int], list[str]]) -> dict[str, object]:
+    """Capture profile for a single IDE and return result row."""
     from . import os_injector as oi
 
+    print(f"[{ide}] Place mouse over IDE chat input; capturing in {delay:.1f}s...")
+    time.sleep(delay)
+    try:
+        x, y = oi.capture_mouse_xy()
+        profile = oi.profile_from_mouse(ide, x=x, y=y)
+        config_path = oi.save_profile(profile, config_path=args.config)
+        pair = (x, y)
+        captured.setdefault(pair, []).append(ide)
+        row: dict[str, object] = {
+            "ok": True,
+            "ide": ide,
+            "backend": "os_injector",
+            "chat_x": x,
+            "chat_y": y,
+            "window_id": 0,
+            "config": str(config_path),
+        }
+        if args.prompt:
+            try:
+                row["smoke"] = oi.inject_with_profile(
+                    profile=profile,
+                    text=str(args.prompt),
+                    submit=True,
+                    dry_run=False,
+                )
+            except oi.OsInjectorError as smoke_exc:
+                row["smoke"] = {"ok": False, "error": str(smoke_exc)}
+                row["warning"] = "profile_saved_but_smoke_failed"
+        return row
+    except oi.OsInjectorError as exc:
+        return {"ok": False, "ide": ide, "error": str(exc)}
+
+
+def _detect_duplicate_coordinates(captured: dict[tuple[int, int], list[str]]) -> list[dict[str, object]]:
+    """Detect and return list of duplicate coordinate warnings."""
+    dups: list[dict[str, object]] = []
+    for pair, id_list in captured.items():
+        if len(id_list) > 1:
+            dups.append({"chat_x": pair[0], "chat_y": pair[1], "ides": sorted(id_list)})
+    return dups
+
+
+def _action_session_start(args: argparse.Namespace) -> int:
     ides = _resolve_session_ides(args.ides)
     if not ides:
         print(
@@ -112,38 +156,10 @@ def _action_session_start(args: argparse.Namespace) -> int:
     captured: dict[tuple[int, int], list[str]] = {}
 
     for ide in ides:
-        print(f"[{ide}] Place mouse over IDE chat input; capturing in {delay:.1f}s...")
-        time.sleep(delay)
-        try:
-            x, y = oi.capture_mouse_xy()
-            profile = oi.profile_from_mouse(ide, x=x, y=y)
-            config_path = oi.save_profile(profile, config_path=args.config)
-            pair = (x, y)
-            captured.setdefault(pair, []).append(ide)
-            row: dict[str, object] = {
-                "ok": True,
-                "ide": ide,
-                "backend": "os_injector",
-                "chat_x": x,
-                "chat_y": y,
-                "window_id": 0,
-                "config": str(config_path),
-            }
-            if args.prompt:
-                try:
-                    row["smoke"] = oi.inject_with_profile(
-                        profile=profile,
-                        text=str(args.prompt),
-                        submit=True,
-                        dry_run=False,
-                    )
-                except oi.OsInjectorError as smoke_exc:
-                    row["smoke"] = {"ok": False, "error": str(smoke_exc)}
-                    row["warning"] = "profile_saved_but_smoke_failed"
-            targets.append(row)
-        except oi.OsInjectorError as exc:
+        row = _capture_ide_profile(ide, delay, args, captured)
+        if row.get("ok") is not True:
             ok = False
-            targets.append({"ok": False, "ide": ide, "error": str(exc)})
+        targets.append(row)
 
     for row in targets:
         if row.get("ok") is not True:
@@ -155,10 +171,7 @@ def _action_session_start(args: argparse.Namespace) -> int:
             row["warning"] = "shared_coordinates_with_other_ides"
 
     payload: dict[str, object] = {"ok": ok, "targets": targets}
-    dups: list[dict[str, object]] = []
-    for pair, id_list in captured.items():
-        if len(id_list) > 1:
-            dups.append({"chat_x": pair[0], "chat_y": pair[1], "ides": sorted(id_list)})
+    dups = _detect_duplicate_coordinates(captured)
     if dups:
         payload["warnings"] = {
             "duplicate_coordinates": dups,
@@ -607,6 +620,36 @@ def _should_fallback_to_direct(args: argparse.Namespace, reply: dict[str, Any]) 
     return bool(reply.get("opened") is False and reply.get("submitted") is False)
 
 
+def _print_drive_delay_message(delay_seconds: float) -> None:
+    """Print delay message before direct injection."""
+    print(
+        f"koru autopilot drive: waiting {delay_seconds:.1f}s "
+        "before direct injection (focus the target IDE now)...",
+        file=sys.stderr,
+    )
+    time.sleep(delay_seconds)
+
+
+def _handle_os_injector_fallback(args: argparse.Namespace, profile_id: str, injector: Injector) -> tuple[int, dict[str, Any] | None]:
+    """Handle fallback when OS injector is unavailable."""
+    if args.os_profile:
+        print(
+            "koru autopilot drive: requested --os-profile but os-injector path is unavailable. "
+            "Run `koru autopilot calibrate --ide <id>` first, or install xdotool.",
+            file=sys.stderr,
+        )
+        return 2, None
+    if injector.session == "wayland":
+        print(
+            "koru autopilot drive: no OS-injector profile for "
+            f"{profile_id!r}; using ydotool/wtype (keystrokes go only to the "
+            "currently focused window — click the IDE chat first, or run "
+            "`koru autopilot calibrate --ide auto`).",
+            file=sys.stderr,
+        )
+    return None, None
+
+
 def _run_direct_drive(
     args: argparse.Namespace,
     text: str,
@@ -630,12 +673,7 @@ def _run_direct_drive(
 
     try:
         if float(args.delay_seconds) > 0:
-            print(
-                f"koru autopilot drive: waiting {args.delay_seconds:.1f}s "
-                "before direct injection (focus the target IDE now)...",
-                file=sys.stderr,
-            )
-            time.sleep(float(args.delay_seconds))
+            _print_drive_delay_message(float(args.delay_seconds))
         os_res = oi.try_drive_with_profile(
             tool_id=profile_id,
             text=text,
@@ -647,21 +685,9 @@ def _run_direct_drive(
             if emit_payload:
                 print(json.dumps(os_res, indent=2, sort_keys=True))
             return 0, os_res
-        if args.os_profile:
-            print(
-                "koru autopilot drive: requested --os-profile but os-injector path is unavailable. "
-                "Run `koru autopilot calibrate --ide <id>` first, or install xdotool.",
-                file=sys.stderr,
-            )
-            return 2, None
-        if injector.session == "wayland":
-            print(
-                "koru autopilot drive: no OS-injector profile for "
-                f"{profile_id!r}; using ydotool/wtype (keystrokes go only to the "
-                "currently focused window — click the IDE chat first, or run "
-                "`koru autopilot calibrate --ide auto`).",
-                file=sys.stderr,
-            )
+        fallback_rc, _ = _handle_os_injector_fallback(args, profile_id, injector)
+        if fallback_rc is not None:
+            return fallback_rc, None
         result = injector.type_text(
             text,
             ide=target_id,
@@ -802,6 +828,47 @@ def _doctor_fix_payload() -> dict[str, object]:
     }
 
 
+def _render_doctor_session_info(injector: Injector, selected: str | None) -> None:
+    """Render session and selected backend info."""
+    print(f"session: {injector.session or 'unknown'}")
+    print(f"selected backend: {selected or '(none — install xdotool/wtype/ydotool)'}")
+
+
+def _render_doctor_backends(statuses: list) -> None:
+    """Render backend status list."""
+    print("backends:")
+    for s in statuses:
+        mark = "✓" if s.available else "✗"
+        print(f"  {mark} {s.name:<10} {s.reason}")
+
+
+def _render_doctor_ides() -> None:
+    """Render running IDEs with focus indicator."""
+    ides = detect_running_ides()
+    focused = detect_focused_ide_id()
+    print(f"running IDEs ({len(ides)}):")
+    for ide in ides:
+        marker = " [focused]" if focused is not None and ide.id == focused else ""
+        print(f"  · {ide.label} (pid={ide.pid}){marker}")
+
+
+def _render_doctor_fix_steps(fix_payload: dict[str, object] | None) -> None:
+    """Render guided fix steps from payload."""
+    if fix_payload is None:
+        return
+    print("\nnext steps (guided fix):")
+    for cmd in fix_payload.get("commands", []):
+        print(f"  - {cmd}")
+    apt_hint = fix_payload.get("automated_apt_suggestion")
+    if isinstance(apt_hint, str) and apt_hint:
+        print(f"  - apt suggestion: {apt_hint}")
+    human_actions = fix_payload.get("human_actions_required")
+    if isinstance(human_actions, list) and human_actions:
+        print("human actions still required:")
+        for line in human_actions:
+            print(f"  - {line}")
+
+
 def _render_doctor_text(
     injector: Injector,
     statuses: list,
@@ -809,30 +876,10 @@ def _render_doctor_text(
     fix_payload: dict[str, object] | None,
 ) -> None:
     """Render doctor output in text format."""
-    print(f"session: {injector.session or 'unknown'}")
-    print(f"selected backend: {selected or '(none — install xdotool/wtype/ydotool)'}")
-    print("backends:")
-    for s in statuses:
-        mark = "✓" if s.available else "✗"
-        print(f"  {mark} {s.name:<10} {s.reason}")
-    ides = detect_running_ides()
-    focused = detect_focused_ide_id()
-    print(f"running IDEs ({len(ides)}):")
-    for ide in ides:
-        marker = " [focused]" if focused is not None and ide.id == focused else ""
-        print(f"  · {ide.label} (pid={ide.pid}){marker}")
-    if fix_payload is not None:
-        print("\nnext steps (guided fix):")
-        for cmd in fix_payload.get("commands", []):
-            print(f"  - {cmd}")
-        apt_hint = fix_payload.get("automated_apt_suggestion")
-        if isinstance(apt_hint, str) and apt_hint:
-            print(f"  - apt suggestion: {apt_hint}")
-        human_actions = fix_payload.get("human_actions_required")
-        if isinstance(human_actions, list) and human_actions:
-            print("human actions still required:")
-            for line in human_actions:
-                print(f"  - {line}")
+    _render_doctor_session_info(injector, selected)
+    _render_doctor_backends(statuses)
+    _render_doctor_ides()
+    _render_doctor_fix_steps(fix_payload)
 
 
 def _render_doctor_json(

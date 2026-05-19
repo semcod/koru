@@ -39,6 +39,7 @@ def fake_proc(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setattr(ide_mod, "_read_comm", fake_read_comm)
     monkeypatch.setattr(ide_mod, "_read_cmdline", fake_read_cmdline)
     monkeypatch.setattr(ide_mod, "_active_window_pid_x11", lambda: None)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
     return tmp_path
 
 
@@ -164,7 +165,8 @@ def test_focused_ide_returns_matching_instance(fake_proc: Path) -> None:
     assert focused.id == "jetbrains"
 
 
-def test_pick_target_prefers_focused_when_no_explicit_prefer(fake_proc: Path) -> None:
+def test_pick_target_prefers_focused_when_no_explicit_prefer(fake_proc: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
     detected = ide_mod.detect_running_ides(_pids=[1234, 5678])
     chosen = ide_mod.pick_target(detected, focused_id="jetbrains")
     assert chosen is not None

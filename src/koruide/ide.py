@@ -374,14 +374,14 @@ def pick_target(
         for ide in detected:
             if ide.id == env_prefer:
                 return ide
+    focused = focused_ide(detected, focused_id=focused_id)
+    if focused is not None:
+        return focused
     terminal = detect_terminal_host_ide_id()
     if terminal is not None:
         for ide in detected:
             if ide.id == terminal:
                 return ide
-    focused = focused_ide(detected, focused_id=focused_id)
-    if focused is not None:
-        return focused
     return detected[0] if detected else None
 
 

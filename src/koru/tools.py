@@ -168,39 +168,45 @@ def infer_adapter_kind(tool: dict[str, Any]) -> str:
     return "shell"
 
 
-def build_tool_task_scaffold(
-    tool: dict[str, Any],
-    *,
-    adapter_kind: str | None = None,
-) -> dict[str, Any]:
-    """Build task scaffold payload for ``create_nl_task(..., scaffold=...)``."""
-    tool_id = str(tool.get("id") or "unknown")
-    lane = str(tool.get("lane") or "manual")
-    category = str(tool.get("category") or "unknown")
-    stability = str(tool.get("stability") or "unknown")
-    invoke = str(tool.get("invoke") or "")
-    notes = str(tool.get("notes") or "")
+def _extract_tool_metadata(tool: dict[str, Any]) -> dict[str, str]:
+    """Extract and normalize tool metadata."""
+    return {
+        "tool_id": str(tool.get("id") or "unknown"),
+        "lane": str(tool.get("lane") or "manual"),
+        "category": str(tool.get("category") or "unknown"),
+        "stability": str(tool.get("stability") or "unknown"),
+        "invoke": str(tool.get("invoke") or ""),
+        "notes": str(tool.get("notes") or ""),
+    }
 
+
+def _validate_adapter_kind(tool: dict[str, Any], adapter_kind: str | None) -> str:
+    """Validate and determine adapter kind."""
     kind = adapter_kind or infer_adapter_kind(tool)
     if kind not in {"human", "shell", "api", "llm"}:
         raise ValueError(f"unsupported adapter kind: {kind}")
+    return kind
 
-    plugin_bridge = category == "plugin"
-    source_tool = "koru-cli-plugin-bridge" if plugin_bridge else "koru-cli-tool-adapter"
+
+def _build_scaffold_prompt_lines(
+    metadata: dict[str, str],
+    plugin_bridge: bool,
+    kind: str,
+) -> list[str]:
+    """Build prompt lines for the scaffold."""
     scaffold_title = "PLUGIN BRIDGE SCAFFOLD" if plugin_bridge else "TOOL ADAPTER SCAFFOLD"
-
     prompt_lines = [
         f"[{scaffold_title}]",
-        f"- tool_id: {tool_id}",
-        f"- lane: {lane}",
-        f"- category: {category}",
-        f"- stability: {stability}",
+        f"- tool_id: {metadata['tool_id']}",
+        f"- lane: {metadata['lane']}",
+        f"- category: {metadata['category']}",
+        f"- stability: {metadata['stability']}",
         f"- suggested_executor_kind: {kind}",
     ]
-    if invoke:
-        prompt_lines.append(f"- invoke_hint: {invoke}")
-    if notes:
-        prompt_lines.append(f"- notes: {notes}")
+    if metadata["invoke"]:
+        prompt_lines.append(f"- invoke_hint: {metadata['invoke']}")
+    if metadata["notes"]:
+        prompt_lines.append(f"- notes: {metadata['notes']}")
 
     if plugin_bridge:
         prompt_lines.extend(
@@ -215,18 +221,30 @@ def build_tool_task_scaffold(
             "- required_next_step: convert this scaffold into concrete "
             "executor inputs before queue run"
         )
+    return prompt_lines
 
-    labels = ["adapter-scaffold", f"tool-{tool_id}", f"lane-{lane}"]
+
+def _build_scaffold_labels(metadata: dict[str, str], plugin_bridge: bool) -> list[str]:
+    """Build labels for the scaffold."""
+    labels = ["adapter-scaffold", f"tool-{metadata['tool_id']}", f"lane-{metadata['lane']}"]
     if plugin_bridge:
         labels.append("plugin-bridge-scaffold")
+    return labels
 
+
+def _build_scaffold_inputs(
+    metadata: dict[str, str],
+    plugin_bridge: bool,
+    kind: str,
+) -> dict[str, Any]:
+    """Build inputs dict for the scaffold."""
     inputs = {
-        "tool_id": tool_id,
-        "tool_lane": lane,
-        "tool_category": category,
-        "tool_stability": stability,
+        "tool_id": metadata["tool_id"],
+        "tool_lane": metadata["lane"],
+        "tool_category": metadata["category"],
+        "tool_stability": metadata["stability"],
         "adapter_executor_hint": kind,
-        "tool_invoke_hint": invoke,
+        "tool_invoke_hint": metadata["invoke"],
     }
     if plugin_bridge:
         inputs.update(
@@ -236,16 +254,34 @@ def build_tool_task_scaffold(
                 "plugin_bridge_mode": "read-only-first",
             }
         )
+    return inputs
+
+
+def build_tool_task_scaffold(
+    tool: dict[str, Any],
+    *,
+    adapter_kind: str | None = None,
+) -> dict[str, Any]:
+    """Build task scaffold payload for ``create_nl_task(..., scaffold=...)``."""
+    metadata = _extract_tool_metadata(tool)
+    kind = _validate_adapter_kind(tool, adapter_kind)
+
+    plugin_bridge = metadata["category"] == "plugin"
+    source_tool = "koru-cli-plugin-bridge" if plugin_bridge else "koru-cli-tool-adapter"
+
+    prompt_lines = _build_scaffold_prompt_lines(metadata, plugin_bridge, kind)
+    labels = _build_scaffold_labels(metadata, plugin_bridge)
+    inputs = _build_scaffold_inputs(metadata, plugin_bridge, kind)
 
     return {
         "source_tool": source_tool,
         "source_context": {
-            "tool_id": tool_id,
-            "tool_lane": lane,
-            "tool_category": category,
-            "tool_stability": stability,
+            "tool_id": metadata["tool_id"],
+            "tool_lane": metadata["lane"],
+            "tool_category": metadata["category"],
+            "tool_stability": metadata["stability"],
             "adapter_kind": kind,
-            "invoke_hint": invoke,
+            "invoke_hint": metadata["invoke"],
             "plugin_bridge": plugin_bridge,
         },
         "labels": labels,

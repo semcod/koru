@@ -78,18 +78,55 @@ def _marker(project: Path, *parts: str) -> bool:
     return (project.joinpath(*parts)).exists()
 
 
+def _detect_agent_commands() -> dict[str, str | None]:
+    """Detect all available agent CLI commands."""
+    return {
+        "windsurf": _which("windsurf"),
+        "cursor": _which("cursor"),
+        "claude": _which("claude"),
+        "aider": _which("aider"),
+        "codex": _which("codex"),
+        "gemini": _which("gemini"),
+        "cline": _which("cline"),
+        "qwen": _which("qwen-code") or _which("qwen"),
+        "opencode": _which("opencode"),
+    }
+
+
+def _build_cli_agent_option(
+    agent_id: str,
+    label: str,
+    cmd: str | None,
+    project: Path,
+    marker_name: str | None = None,
+) -> AgentOption:
+    """Build AgentOption for CLI-based agents."""
+    project_hint = _marker(project, marker_name) if marker_name else None
+    available = bool(cmd or project_hint)
+    launchable = bool(cmd)
+    
+    if marker_name and project_hint:
+        reason = f"{label} CLI detected." if cmd else f"{label} project config detected; open the prompt in {label} manually."
+    else:
+        reason = f"{label} CLI detected in PATH." if cmd else f"{label} CLI is not in PATH."
+    
+    return AgentOption(
+        id=agent_id,
+        label=label,
+        available=available,
+        launchable=launchable,
+        command=cmd,
+        project_hint=project_hint,
+        autopilot_backend=autopilot_backend_for_agent_id(agent_id),
+        reason=reason,
+    )
+
+
 def detect_agent_options(project: Path) -> list[AgentOption]:
     """Return known LLM/IDE lanes ordered by koru preference."""
     project = project.resolve()
-    windsurf_cmd = _which("windsurf")
-    cursor_cmd = _which("cursor")
-    claude_cmd = _which("claude")
-    aider_cmd = _which("aider")
-    codex_cmd = _which("codex")
-    gemini_cmd = _which("gemini")
-    cline_cmd = _which("cline")
-    qwen_cmd = _which("qwen-code") or _which("qwen")
-    opencode_cmd = _which("opencode")
+    commands = _detect_agent_commands()
+    
     openrouter_ready = bool(os.getenv("OPENROUTER_API_KEY"))
     antigravity_home = Path.home() / ".gemini" / "antigravity"
     antigravity_ready = bool(os.getenv("ANTIGRAVITY_AGENT")) or antigravity_home.exists()
@@ -108,105 +145,15 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
                 else "Antigravity environment not found."
             ),
         ),
-        AgentOption(
-            id="claude-code",
-            label="Claude Code",
-            available=bool(claude_cmd),
-            launchable=bool(claude_cmd),
-            command=claude_cmd,
-            autopilot_backend=autopilot_backend_for_agent_id("claude-code"),
-            reason=(
-                "Claude Code CLI detected in PATH."
-                if claude_cmd
-                else "Install Claude Code CLI to launch it from koru."
-            ),
-        ),
-        AgentOption(
-            id="codex",
-            label="Codex CLI",
-            available=bool(codex_cmd),
-            launchable=bool(codex_cmd),
-            command=codex_cmd,
-            autopilot_backend=autopilot_backend_for_agent_id("codex"),
-            reason="Codex CLI detected in PATH." if codex_cmd else "Codex CLI is not in PATH.",
-        ),
-        AgentOption(
-            id="gemini-cli",
-            label="Gemini CLI",
-            available=bool(gemini_cmd),
-            launchable=bool(gemini_cmd),
-            command=gemini_cmd,
-            autopilot_backend=autopilot_backend_for_agent_id("gemini-cli"),
-            reason=("Gemini CLI detected in PATH." if gemini_cmd else "Gemini CLI is not in PATH."),
-        ),
-        AgentOption(
-            id="cline",
-            label="Cline",
-            available=bool(cline_cmd),
-            launchable=bool(cline_cmd),
-            command=cline_cmd,
-            autopilot_backend=autopilot_backend_for_agent_id("cline"),
-            reason="Cline CLI detected in PATH." if cline_cmd else "Cline CLI is not in PATH.",
-        ),
-        AgentOption(
-            id="qwen-code",
-            label="Qwen Code",
-            available=bool(qwen_cmd),
-            launchable=bool(qwen_cmd),
-            command=qwen_cmd,
-            autopilot_backend=autopilot_backend_for_agent_id("qwen-code"),
-            reason=(
-                "Qwen Code CLI detected in PATH." if qwen_cmd else "Qwen Code CLI is not in PATH."
-            ),
-        ),
-        AgentOption(
-            id="opencode",
-            label="OpenCode",
-            available=bool(opencode_cmd),
-            launchable=bool(opencode_cmd),
-            command=opencode_cmd,
-            autopilot_backend=autopilot_backend_for_agent_id("opencode"),
-            reason=(
-                "OpenCode CLI detected in PATH." if opencode_cmd else "OpenCode CLI is not in PATH."
-            ),
-        ),
-        AgentOption(
-            id="cursor",
-            label="Cursor",
-            available=bool(cursor_cmd or _marker(project, ".cursor")),
-            launchable=bool(cursor_cmd),
-            command=cursor_cmd,
-            project_hint=_marker(project, ".cursor"),
-            autopilot_backend=autopilot_backend_for_agent_id("cursor"),
-            reason=(
-                "Cursor CLI detected."
-                if cursor_cmd
-                else "Cursor project config detected; open the prompt in Cursor manually."
-            ),
-        ),
-        AgentOption(
-            id="windsurf",
-            label="Windsurf",
-            available=bool(windsurf_cmd or _marker(project, ".windsurf")),
-            launchable=bool(windsurf_cmd),
-            command=windsurf_cmd,
-            project_hint=_marker(project, ".windsurf"),
-            autopilot_backend=autopilot_backend_for_agent_id("windsurf"),
-            reason=(
-                "Windsurf CLI detected."
-                if windsurf_cmd
-                else "Windsurf project rules detected; paste the prompt into Windsurf."
-            ),
-        ),
-        AgentOption(
-            id="aider",
-            label="aider",
-            available=bool(aider_cmd),
-            launchable=bool(aider_cmd),
-            command=aider_cmd,
-            autopilot_backend=autopilot_backend_for_agent_id("aider"),
-            reason="aider detected in PATH." if aider_cmd else "aider is not in PATH.",
-        ),
+        _build_cli_agent_option("claude-code", "Claude Code", commands["claude"], project),
+        _build_cli_agent_option("codex", "Codex CLI", commands["codex"], project),
+        _build_cli_agent_option("gemini-cli", "Gemini CLI", commands["gemini"], project),
+        _build_cli_agent_option("cline", "Cline", commands["cline"], project),
+        _build_cli_agent_option("qwen-code", "Qwen Code", commands["qwen"], project),
+        _build_cli_agent_option("opencode", "OpenCode", commands["opencode"], project),
+        _build_cli_agent_option("cursor", "Cursor", commands["cursor"], project, ".cursor"),
+        _build_cli_agent_option("windsurf", "Windsurf", commands["windsurf"], project, ".windsurf"),
+        _build_cli_agent_option("aider", "aider", commands["aider"], project),
         AgentOption(
             id="openrouter",
             label="OpenRouter automation lane",

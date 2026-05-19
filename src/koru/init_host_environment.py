@@ -155,13 +155,9 @@ def _recommended_next_steps(base: dict[str, Any], groups: list[str]) -> list[str
     return steps
 
 
-def _render_host_environment_md(report: dict[str, Any]) -> str:
-    lines = [
-        "# Host environment (koru --init)",
-        "",
-        "Auto-generated snapshot of this machine for **koru autopilot** fallbacks.",
-        "Re-run `koru --init --force …` or `koru --init-agent-lane …` to refresh.",
-        "",
+def _render_session_section(report: dict[str, Any]) -> list[str]:
+    """Render session section of host environment report."""
+    return [
         "## Session",
         "",
         f"- **platform:** `{report.get('koru_platform', '')}`",
@@ -171,62 +167,101 @@ def _render_host_environment_md(report: dict[str, Any]) -> str:
         f"- **WAYLAND_DISPLAY set:** {report.get('wayland_display')}",
         "",
     ]
+
+
+def _render_os_section(report: dict[str, Any]) -> list[str]:
+    """Render OS section of host environment report."""
     pretty = report.get("os_release_pretty") or report.get("os_release_id")
     if pretty:
-        lines.extend(["## OS", "", f"- {pretty}", ""])
+        return ["## OS", "", f"- {pretty}", ""]
+    return []
 
-    lines.extend(
-        [
-            "## Injector probe (same data as `koru autopilot doctor`)",
-            "",
-            f"- **selected_backend:** `{report.get('selected_backend') or '—'}`",
-            "",
-        ]
-    )
+
+def _render_injector_section(report: dict[str, Any]) -> list[str]:
+    """Render injector probe section of host environment report."""
+    lines = [
+        "## Injector probe (same data as `koru autopilot doctor`)",
+        "",
+        f"- **selected_backend:** `{report.get('selected_backend') or '—'}`",
+        "",
+    ]
     for b in report.get("backends") or []:
         mark = "✓" if b.get("available") else "✗"
         lines.append(f"- {mark} **{b.get('name')}** — {b.get('reason', '')}")
     lines.append("")
+    return lines
 
+
+def _render_clipboard_section(report: dict[str, Any]) -> list[str]:
+    """Render clipboard section of host environment report."""
     clip = report.get("clipboard") or {}
-    lines.extend(
-        [
-            "## Clipboard (OS injector paste path)",
-            "",
-            f"- xclip: {clip.get('xclip')}",
-            f"- xsel: {clip.get('xsel')}",
-            "",
-        ]
-    )
+    return [
+        "## Clipboard (OS injector paste path)",
+        "",
+        f"- xclip: {clip.get('xclip')}",
+        f"- xsel: {clip.get('xsel')}",
+        "",
+    ]
 
+
+def _render_uinput_section(report: dict[str, Any]) -> list[str]:
+    """Render /dev/uinput section of host environment report."""
     ui = report.get("uinput") or {}
     if ui.get("present"):
-        lines.extend(
-            [
-                "## /dev/uinput",
-                "",
-                f"- mode: `{ui.get('mode', '')}` group: `{ui.get('group', '')}`",
-                f"- user in `input` group (this session): **{report.get('user_in_input_group')}**",
-                "",
-            ]
-        )
+        return [
+            "## /dev/uinput",
+            "",
+            f"- mode: `{ui.get('mode', '')}` group: `{ui.get('group', '')}`",
+            f"- user in `input` group (this session): **{report.get('user_in_input_group')}**",
+            "",
+        ]
     else:
-        lines.extend(["## /dev/uinput", "", "- device not present (non-Linux or minimal rootfs)", ""])
+        return ["## /dev/uinput", "", "- device not present (non-Linux or minimal rootfs)", ""]
 
-    lines.extend(["## Recommended next steps", ""])
+
+def _render_next_steps_section(report: dict[str, Any]) -> list[str]:
+    """Render recommended next steps section of host environment report."""
+    lines = ["## Recommended next steps", ""]
     for step in report.get("recommended_next_steps") or []:
         lines.append(f"1. {step}")
     lines.append("")
+    return lines
 
+
+def _render_human_actions_section(report: dict[str, Any]) -> list[str]:
+    """Render human follow-ups section of host environment report."""
     if report.get("human_actions_required"):
-        lines.extend(["## Human follow-ups (from setup-host)", ""])
+        lines = ["## Human follow-ups (from setup-host)", ""]
         for h in report["human_actions_required"]:
             lines.append(f"- {h}")
         lines.append("")
+        return lines
+    return []
 
+
+def _render_apt_suggestion_section(report: dict[str, Any]) -> list[str]:
+    """Render apt suggestion section of host environment report."""
     if report.get("automated_apt_suggestion"):
-        lines.extend(["## Suggested apt (when packages missing)", "", "```bash", report["automated_apt_suggestion"], "```", ""])
+        return ["## Suggested apt (when packages missing)", "", "```bash", report["automated_apt_suggestion"], "```", ""]
+    return []
 
+
+def _render_host_environment_md(report: dict[str, Any]) -> str:
+    lines = [
+        "# Host environment (koru --init)",
+        "",
+        "Auto-generated snapshot of this machine for **koru autopilot** fallbacks.",
+        "Re-run `koru --init --force …` or `koru --init-agent-lane …` to refresh.",
+        "",
+    ]
+    lines.extend(_render_session_section(report))
+    lines.extend(_render_os_section(report))
+    lines.extend(_render_injector_section(report))
+    lines.extend(_render_clipboard_section(report))
+    lines.extend(_render_uinput_section(report))
+    lines.extend(_render_next_steps_section(report))
+    lines.extend(_render_human_actions_section(report))
+    lines.extend(_render_apt_suggestion_section(report))
     return "\n".join(lines)
 
 

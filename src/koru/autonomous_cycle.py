@@ -411,6 +411,105 @@ def _handle_scan_phase(
     return scan_result
 
 
+def _build_queue_command(max_iterations: int, queue_name: str | None) -> str:
+    """Build the queue loop command string."""
+    base = f"koru --queue --loop --max-iterations {max_iterations}"
+    return base + (" --all-queues" if queue_name is None else f" --queue-name {queue_name}")
+
+
+def _run_queue_loop(
+    project: Path,
+    actor: str,
+    queue_name: str | None,
+    max_iterations: int,
+) -> QueueLoopResult:
+    """Execute the planfile queue loop."""
+    return run_planfile_queue_loop(
+        project=project,
+        actor=actor,
+        queue_name=queue_name,
+        max_iterations=max_iterations,
+        planfile_runner=_run_process,
+        shell_runner=_run_shell_command,
+        api_runner=_run_api_request,
+        llm_runner=_run_llm_request,
+        prompt_runner=_default_human_prompt,
+    )
+
+
+def _emit_queue_iteration_event(
+    queue_result: QueueLoopResult,
+    cycle: int,
+    queue_name: str | None,
+    actor: str,
+    qcmd: str,
+    _emit: callable,
+) -> None:
+    """Emit queue iteration event."""
+    qname = "__all__" if queue_name is None else queue_name
+    _sum_fn = getattr(queue_result, "summary", None)
+    _queue_summary = _sum_fn() if callable(_sum_fn) else str(_sum_fn or "")
+    _emit(
+        "QueueIteration",
+        {
+            "cycle": cycle,
+            "queue_name": qname,
+            "actor": actor,
+            "iterations": int(getattr(queue_result, "iterations", 0)),
+            "completed": list(getattr(queue_result, "completed", []) or []),
+            "failed": list(getattr(queue_result, "failed", []) or []),
+            "waiting": list(getattr(queue_result, "waiting", []) or []),
+            "last_status": str(getattr(queue_result, "last_status", "")),
+            "last_message": str(getattr(queue_result, "last_message", "")),
+            "last_ticket_id": getattr(queue_result, "last_ticket_id", None),
+            "summary": _queue_summary,
+        },
+        command=qcmd,
+    )
+
+
+def _handle_post_run_verify(
+    project: Path,
+    state: AutoloopState,
+    cycle: int,
+    queue_result: QueueLoopResult,
+    verify_config: Any,
+    _hp: callable,
+    _emit: callable,
+) -> None:
+    """Handle post-run verification for completed tickets."""
+    completed_ids = list(getattr(queue_result, "completed", []) or [])
+    if completed_ids and verify_config is not None:
+        verify_outcomes = verify_completed_tickets(
+            project,
+            completed_ids,
+            config=verify_config,
+            planfile_runner=_run_process,
+            shell_runner=_run_shell_command,
+        )
+        failed = [o for o in verify_outcomes if not o.get("ok")]
+        for outcome in verify_outcomes:
+            if outcome.get("ok"):
+                tid = str(outcome.get("ticket_id") or "").strip()
+                if tid:
+                    state.post_verify_seen.add(tid)
+        if verify_outcomes:
+            _hp(
+                f"  post_run_verify (queue): tickets={len(completed_ids)} "
+                f"failed={len(failed)}"
+            )
+            _emit(
+                "PostRunVerifyCompleted",
+                {
+                    "cycle": cycle,
+                    "ticket_count": len(completed_ids),
+                    "failed_count": len(failed),
+                    "outcomes": verify_outcomes,
+                },
+                command="; ".join(verify_config.commands),
+            )
+
+
 def _handle_queue_loop_phase(
     project: Path,
     state: AutoloopState,
@@ -429,73 +528,12 @@ def _handle_queue_loop_phase(
         _hp("- autoloop queue phase skipped (autoloop:queue disabled in topology)")
         queue_result = QueueLoopResult(0, [], [], [], "disabled", "")
     else:
-        qcmd = f"koru --queue --loop --max-iterations {max_iterations}" + (
-            " --all-queues" if queue_name is None else f" --queue-name {queue_name}"
-        )
+        qcmd = _build_queue_command(max_iterations, queue_name)
         _hp("+ " + qcmd)
-        queue_result = run_planfile_queue_loop(
-            project=project,
-            actor=actor,
-            queue_name=queue_name,
-            max_iterations=max_iterations,
-            planfile_runner=_run_process,
-            shell_runner=_run_shell_command,
-            api_runner=_run_api_request,
-            llm_runner=_run_llm_request,
-            prompt_runner=_default_human_prompt,
-        )
+        queue_result = _run_queue_loop(project, actor, queue_name, max_iterations)
         _hp(f"  queue: {queue_result.summary()}")
-        qname = "__all__" if queue_name is None else queue_name
-        _sum_fn = getattr(queue_result, "summary", None)
-        _queue_summary = _sum_fn() if callable(_sum_fn) else str(_sum_fn or "")
-        _emit(
-            "QueueIteration",
-            {
-                "cycle": cycle,
-                "queue_name": qname,
-                "actor": actor,
-                "iterations": int(getattr(queue_result, "iterations", 0)),
-                "completed": list(getattr(queue_result, "completed", []) or []),
-                "failed": list(getattr(queue_result, "failed", []) or []),
-                "waiting": list(getattr(queue_result, "waiting", []) or []),
-                "last_status": str(getattr(queue_result, "last_status", "")),
-                "last_message": str(getattr(queue_result, "last_message", "")),
-                "last_ticket_id": getattr(queue_result, "last_ticket_id", None),
-                "summary": _queue_summary,
-            },
-            command=qcmd,
-        )
-
-        completed_ids = list(getattr(queue_result, "completed", []) or [])
-        if completed_ids and verify_config is not None:
-            verify_outcomes = verify_completed_tickets(
-                project,
-                completed_ids,
-                config=verify_config,
-                planfile_runner=_run_process,
-                shell_runner=_run_shell_command,
-            )
-            failed = [o for o in verify_outcomes if not o.get("ok")]
-            for outcome in verify_outcomes:
-                if outcome.get("ok"):
-                    tid = str(outcome.get("ticket_id") or "").strip()
-                    if tid:
-                        state.post_verify_seen.add(tid)
-            if verify_outcomes:
-                _hp(
-                    f"  post_run_verify (queue): tickets={len(completed_ids)} "
-                    f"failed={len(failed)}"
-                )
-                _emit(
-                    "PostRunVerifyCompleted",
-                    {
-                        "cycle": cycle,
-                        "ticket_count": len(completed_ids),
-                        "failed_count": len(failed),
-                        "outcomes": verify_outcomes,
-                    },
-                    command="; ".join(verify_config.commands),
-                )
+        _emit_queue_iteration_event(queue_result, cycle, queue_name, actor, qcmd, _emit)
+        _handle_post_run_verify(project, state, cycle, queue_result, verify_config, _hp, _emit)
     return queue_result, verify_config
 
 
@@ -654,6 +692,159 @@ def _handle_diagnostics(
     return diag_result, wup_health
 
 
+def _check_autopilot_skip_conditions(
+    project: Path,
+    queue_result: QueueLoopResult,
+    state: AutoloopState,
+    autopilot_action: str,
+    autopilot_on_idle_only: bool,
+    autopilot_skip_on_diagnostics_fail: bool,
+    autopilot_skip_drive_idle_streak: int,
+    autopilot_skip_statuses: str,
+    diag_result: DiagnosticResult,
+    topology_integration: bool,
+    cycle_telemetry: dict[str, Any],
+    _hp: callable,
+) -> tuple[bool, str]:
+    """Check if autopilot should be skipped and return (should_skip, skip_reason)."""
+    if not _is_topology_enabled(
+        project, "autopilot:drive", fallback=True, enabled=topology_integration
+    ):
+        _hp("- autopilot skipped (autopilot:drive disabled in topology)")
+        return True, "skipped(topology)"
+    elif autopilot_action == "off":
+        _hp("- autopilot action set to off, skipping")
+        return True, "skipped(action_off)"
+    elif autopilot_on_idle_only and queue_result.last_status != "idle":
+        _hp("- autopilot skipped (idle_only)")
+        return True, "skipped(idle_only)"
+    elif autopilot_skip_on_diagnostics_fail and diag_result.status == "failed":
+        _hp("- autopilot skipped (diagnostics_fail)")
+        return True, "skipped(diagnostics_fail)"
+    elif (
+        autopilot_skip_drive_idle_streak > 0
+        and queue_result.last_status == "idle"
+        and state.stagnation_streak >= autopilot_skip_drive_idle_streak
+    ):
+        _hp(
+            "- autopilot skipped "
+            f"(idle_streak_{state.stagnation_streak}>={autopilot_skip_drive_idle_streak})"
+        )
+        state.telemetry_autopilot_idle_streak_skips += 1
+        cycle_telemetry["autopilot_skipped_idle_streak"] = True
+        return True, "skipped(idle_streak)"
+    elif (
+        0 < state.stagnation_streak < DEFAULT_ESCALATION_THRESHOLD
+        and _status_in_skip_list(
+            queue_result.last_status, autopilot_skip_statuses
+        )
+    ):
+        _hp(
+            "- autopilot skipped "
+            f"(stuck_{queue_result.last_status}_streak_{state.stagnation_streak})"
+        )
+        return True, f"skipped(stuck_{queue_result.last_status})"
+    return False, ""
+
+
+def _execute_autopilot_drive(
+    project: Path,
+    state: AutoloopState,
+    queue_result: QueueLoopResult,
+    client: Any,
+    autopilot_ide: str,
+    drive_prompt: str,
+    submit: bool,
+    autopilot_action: str,
+    _hp: callable,
+) -> tuple[dict[str, Any], bool, str, str | None]:
+    """Execute autopilot drive and return (reply, ok, decision_kind, idle_prompt_kind)."""
+    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
+    effective_drive_prompt = drive_prompt
+    idle_prompt_kind: str | None = None
+    if queue_result.last_status == "idle":
+        effective_drive_prompt, idle_prompt_kind = resolve_idle_drive_prompt(
+            project,
+            drive_prompt=drive_prompt,
+            runner=_run_process,
+        )
+    decision = build_prompt(
+        queue_status=queue_result.last_status,
+        last_message=getattr(queue_result, "last_message", "") or "",
+        waiting_ticket_id=(
+            waiting_ticket
+            if waiting_ticket != "-"
+            else getattr(queue_result, "last_ticket_id", None)
+        ),
+        drive_prompt=effective_drive_prompt,
+        autopilot_action=autopilot_action,
+        stagnation_streak=state.stagnation_streak,
+    )
+    reply = client.drive(
+        decision.prompt,
+        submit=submit,
+        ide=autopilot_ide,
+        require_plugin=(
+            not _allow_keyboard_autopilot_fallback()
+            and not _prefer_keyboard_autopilot()
+        ),
+    )
+    ok = bool(reply.get("ok", True))
+    if not ok:
+        fallback = _try_os_injector_fallback(decision.prompt, submit=submit)
+        if fallback is not None:
+            reply = fallback
+            ok = bool(reply.get("ok", True))
+    return reply, ok, decision.kind, idle_prompt_kind
+
+
+def _update_autopilot_state(
+    state: AutoloopState,
+    ok: bool,
+    decision_kind: str,
+    autopilot_drive_kind: str,
+    decision_prompt: str,
+) -> None:
+    """Update autoloop state based on autopilot result."""
+    if ok and autopilot_drive_kind == "idle_ticket_prompt":
+        ticket_id = extract_ticket_id_from_text(decision_prompt)
+        if ticket_id:
+            state.pending_ide_verify_id = ticket_id
+    if ok and decision_kind == "escalation_prompt":
+        state.stagnation_streak = 0
+        state.previous_signature = ""
+
+
+def _log_autopilot_result(
+    ok: bool,
+    queue_result: QueueLoopResult,
+    autopilot_ide: str,
+    decision_kind: str,
+    reply: dict[str, Any],
+    _hp: callable,
+) -> None:
+    """Log autopilot result."""
+    if ok:
+        backend = reply.get("backend", "?")
+        if decision_kind == "ticket_prompt":
+            waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
+            _hp(
+                "  autopilot: ok (ticket="
+                f"{waiting_ticket}, ide={autopilot_ide}, "
+                f"backend={backend}, kind={decision_kind})"
+            )
+        else:
+            _hp(
+                f"  autopilot: ok (ide={autopilot_ide}, "
+                f"backend={backend}, kind={decision_kind})"
+            )
+    else:
+        _hp(
+            "  autopilot: failed "
+            f"({reply.get('message', 'unknown error')}, kind={decision_kind})"
+        )
+
+
 def _handle_autopilot_phase(
     project: Path,
     state: AutoloopState,
@@ -678,111 +869,44 @@ def _handle_autopilot_phase(
     autopilot_status = "skipped"
     autopilot_backend: str | None = None
     autopilot_drive_kind: str | None = None
+
     if enable_autopilot and client is not None:
-        if not _is_topology_enabled(
-            project, "autopilot:drive", fallback=True, enabled=topology_integration
-        ):
-            _hp("- autopilot skipped (autopilot:drive disabled in topology)")
-            autopilot_status = "skipped(topology)"
-        elif autopilot_action == "off":
-            _hp("- autopilot action set to off, skipping")
-        elif autopilot_on_idle_only and queue_result.last_status != "idle":
-            _hp("- autopilot skipped (idle_only)")
-            autopilot_status = "skipped(idle_only)"
-        elif autopilot_skip_on_diagnostics_fail and diag_result.status == "failed":
-            _hp("- autopilot skipped (diagnostics_fail)")
-            autopilot_status = "skipped(diagnostics_fail)"
-        elif (
-            autopilot_skip_drive_idle_streak > 0
-            and queue_result.last_status == "idle"
-            and state.stagnation_streak >= autopilot_skip_drive_idle_streak
-        ):
-            _hp(
-                "- autopilot skipped "
-                f"(idle_streak_{state.stagnation_streak}>={autopilot_skip_drive_idle_streak})"
-            )
-            autopilot_status = "skipped(idle_streak)"
-            state.telemetry_autopilot_idle_streak_skips += 1
-            cycle_telemetry["autopilot_skipped_idle_streak"] = True
-        elif (
-            0 < state.stagnation_streak < DEFAULT_ESCALATION_THRESHOLD
-            and _status_in_skip_list(
-            queue_result.last_status, autopilot_skip_statuses
-            )
-        ):
-            _hp(
-                "- autopilot skipped "
-                f"(stuck_{queue_result.last_status}_streak_{state.stagnation_streak})"
-            )
-            autopilot_status = f"skipped(stuck_{queue_result.last_status})"
+        should_skip, skip_reason = _check_autopilot_skip_conditions(
+            project,
+            queue_result,
+            state,
+            autopilot_action,
+            autopilot_on_idle_only,
+            autopilot_skip_on_diagnostics_fail,
+            autopilot_skip_drive_idle_streak,
+            autopilot_skip_statuses,
+            diag_result,
+            topology_integration,
+            cycle_telemetry,
+            _hp,
+        )
+        if should_skip:
+            autopilot_status = skip_reason
         else:
-            waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
-            effective_drive_prompt = drive_prompt
-            idle_prompt_kind: str | None = None
-            if queue_result.last_status == "idle":
-                effective_drive_prompt, idle_prompt_kind = resolve_idle_drive_prompt(
-                    project,
-                    drive_prompt=drive_prompt,
-                    runner=_run_process,
-                )
-            decision = build_prompt(
-                queue_status=queue_result.last_status,
-                last_message=getattr(queue_result, "last_message", "") or "",
-                waiting_ticket_id=(
-                    waiting_ticket
-                    if waiting_ticket != "-"
-                    else getattr(queue_result, "last_ticket_id", None)
-                ),
-                drive_prompt=effective_drive_prompt,
-                autopilot_action=autopilot_action,
-                stagnation_streak=state.stagnation_streak,
+            reply, ok, decision_kind, idle_prompt_kind = _execute_autopilot_drive(
+                project,
+                state,
+                queue_result,
+                client,
+                autopilot_ide,
+                drive_prompt,
+                submit,
+                autopilot_action,
+                _hp,
             )
-            autopilot_drive_kind = idle_prompt_kind or decision.kind
-            reply = client.drive(
-                decision.prompt,
-                submit=submit,
-                ide=autopilot_ide,
-                require_plugin=(
-                    not _allow_keyboard_autopilot_fallback()
-                    and not _prefer_keyboard_autopilot()
-                ),
-            )
-            ok = bool(reply.get("ok", True))
-            if not ok:
-                fallback = _try_os_injector_fallback(decision.prompt, submit=submit)
-                if fallback is not None:
-                    reply = fallback
-                    ok = bool(reply.get("ok", True))
+            autopilot_drive_kind = idle_prompt_kind or decision_kind
             autopilot_status = "ok" if ok else "failed"
             autopilot_backend = (
                 str(reply.get("backend")) if reply.get("backend") is not None else None
             )
-            if ok and autopilot_drive_kind == "idle_ticket_prompt":
-                ticket_id = extract_ticket_id_from_text(decision.prompt)
-                if ticket_id:
-                    state.pending_ide_verify_id = ticket_id
-            if ok:
-                if decision.kind == "escalation_prompt":
-                    state.stagnation_streak = 0
-                    state.previous_signature = ""
-                backend = reply.get("backend", "?")
-                if decision.kind == "ticket_prompt":
-                    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
-                    _hp(
-                        "  autopilot: ok (ticket="
-                        f"{waiting_ticket}, ide={autopilot_ide}, "
-                        f"backend={backend}, kind={decision.kind})"
-                    )
-                else:
-                    _hp(
-                        f"  autopilot: ok (ide={autopilot_ide}, "
-                        f"backend={backend}, kind={decision.kind})"
-                    )
-            else:
-                _hp(
-                    "  autopilot: failed "
-                    f"({reply.get('message', 'unknown error')}, kind={decision.kind})"
-                )
+            _update_autopilot_state(state, ok, decision_kind, autopilot_drive_kind, reply.get("prompt", ""))
+            _log_autopilot_result(ok, queue_result, autopilot_ide, decision_kind, reply, _hp)
+
     return autopilot_status, autopilot_backend, autopilot_drive_kind
 
 

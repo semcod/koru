@@ -419,6 +419,88 @@ def _create_step_ticket(
     return created
 
 
+def _ensure_planfile_api(project: Path, stdio_format: str) -> None:
+    """Ensure planfile API is running."""
+    api_ok, _api_detail = _planfile_api_ok(project)
+    if not api_ok:
+        _try_start_planfile_api(project, stdio_format=stdio_format)
+
+
+def _process_operator_step(
+    project: Path,
+    step: OperatorStep,
+    index: int,
+    total: int,
+    state_dir: Path,
+    create_tickets: bool,
+    ticket_queue: str,
+    ticket_priority: str,
+    stdio_format: str,
+    result: OperatorPipelineResult,
+) -> OperatorStep:
+    """Process a single operator step and return updated step with ticket_id."""
+    ticket_id: str | None = _read_marker(state_dir, step.step_id)
+    if create_tickets and step.status == "ok" and ticket_id is not None:
+        closed = _close_resolved_step_ticket(
+            project,
+            step_id=step.step_id,
+            ticket_id=ticket_id,
+            state_dir=state_dir,
+            stdio_format=stdio_format,
+        )
+        if closed:
+            ticket_id = None
+    if create_tickets and step.status == "pending" and ticket_id is None:
+        created = _create_step_ticket(
+            project,
+            step,
+            queue_name=ticket_queue,
+            priority=ticket_priority,
+            state_dir=state_dir,
+            stdio_format=stdio_format,
+        )
+        if created is not None:
+            ticket_id = created.ticket_id
+            result.tickets_created.append(ticket_id)
+    return OperatorStep(
+        step_id=step.step_id,
+        title=step.title,
+        actor=step.actor,
+        status=step.status,
+        detail=step.detail,
+        task_command=step.task_command,
+        ticket_id=ticket_id,
+    )
+
+
+def _emit_operator_step_event(
+    out: TextIO,
+    index: int,
+    total: int,
+    step: OperatorStep,
+    stdio_format: str,
+    correlation_id: str | None,
+) -> None:
+    """Emit operator step event if JSONL format is used."""
+    if stdio_format == "jsonl" and correlation_id:
+        from koru.stdio_events import write_stdio_event
+
+        write_stdio_event(
+            out,
+            event_type="OperatorStep",
+            correlation_id=correlation_id,
+            payload={
+                "index": index,
+                "total": total,
+                "step_id": step.step_id,
+                "status": step.status,
+                "actor": step.actor,
+                "ticket_id": step.ticket_id,
+                "task_command": step.task_command,
+            },
+        )
+
+
 def run_startup_operator_pipeline(
     *,
     project: Path,
@@ -433,9 +515,7 @@ def run_startup_operator_pipeline(
 ) -> OperatorPipelineResult:
     """Print operator steps and optionally create planfile tickets."""
     out = sys_stdout_for_format(stdio_format)
-    api_ok, _api_detail = _planfile_api_ok(project)
-    if not api_ok:
-        _try_start_planfile_api(project, stdio_format=stdio_format)
+    _ensure_planfile_api(project, stdio_format)
     steps = build_operator_steps(
         project=project,
         probe=probe,
@@ -454,57 +534,21 @@ def run_startup_operator_pipeline(
 
     state_dir = _operator_state_dir(project)
     for i, step in enumerate(steps, start=1):
-        ticket_id: str | None = _read_marker(state_dir, step.step_id)
-        if create_tickets and step.status == "ok" and ticket_id is not None:
-            closed = _close_resolved_step_ticket(
-                project,
-                step_id=step.step_id,
-                ticket_id=ticket_id,
-                state_dir=state_dir,
-                stdio_format=stdio_format,
-            )
-            if closed:
-                ticket_id = None
-        if create_tickets and step.status == "pending" and ticket_id is None:
-            created = _create_step_ticket(
-                project,
-                step,
-                queue_name=ticket_queue,
-                priority=ticket_priority,
-                state_dir=state_dir,
-                stdio_format=stdio_format,
-            )
-            if created is not None:
-                ticket_id = created.ticket_id
-                result.tickets_created.append(ticket_id)
-        step = OperatorStep(
-            step_id=step.step_id,
-            title=step.title,
-            actor=step.actor,
-            status=step.status,
-            detail=step.detail,
-            task_command=step.task_command,
-            ticket_id=ticket_id,
+        step = _process_operator_step(
+            project,
+            step,
+            i,
+            total,
+            state_dir,
+            create_tickets,
+            ticket_queue,
+            ticket_priority,
+            stdio_format,
+            result,
         )
         result.steps.append(step)
         _emit_step(out, index=i, total=total, step=step, fmt=stdio_format)
-        if stdio_format == "jsonl" and correlation_id:
-            from koru.stdio_events import write_stdio_event
-
-            write_stdio_event(
-                out,
-                event_type="OperatorStep",
-                correlation_id=correlation_id,
-                payload={
-                    "index": i,
-                    "total": total,
-                    "step_id": step.step_id,
-                    "status": step.status,
-                    "actor": step.actor,
-                    "ticket_id": ticket_id,
-                    "task_command": step.task_command,
-                },
-            )
+        _emit_operator_step_event(out, i, total, step, stdio_format, correlation_id)
 
     pending = sum(1 for s in result.steps if s.status == "pending")
     out.write(

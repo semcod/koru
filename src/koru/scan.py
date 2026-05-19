@@ -487,7 +487,8 @@ _TOON_DUP_RE = re.compile(
 _TOON_REFACTOR_ITEM_RE = re.compile(r"^\s*(?P<num>\d+)\.\s+(?P<desc>.+?)\s*\((?P<note>[^)]+)\)\s*$")
 
 
-def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
+def _find_analysis_file(project: Path) -> tuple[Path | None, str]:
+    """Find the code2llm analysis file and return (path, relative_path)."""
     candidates = (
         project / "project" / "analysis.toon.yaml",
         project / "project" / "analysis.toon",
@@ -495,16 +496,13 @@ def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
     )
     path = next((p for p in candidates if p.is_file()), None)
     if path is None:
-        return []
-    try:
-        text = path.read_text(encoding="utf-8", errors="ignore")
-    except OSError:
-        return []
-    rel = str(path.relative_to(project))
+        return None, ""
+    return path, str(path.relative_to(project))
 
+
+def _parse_dup_suggestions(text: str, rel: str) -> list[Suggestion]:
+    """Parse duplication suggestions from analysis text."""
     suggestions: list[Suggestion] = []
-
-    # --- HEALTH: DUP ---
     dup_match = _TOON_DUP_RE.search(text)
     if dup_match:
         count = int(dup_match.group("count"))
@@ -521,8 +519,12 @@ def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
                 files=(rel,),
             )
         )
+    return suggestions
 
-    # --- HEALTH: GOD modules ---
+
+def _parse_god_module_suggestions(text: str, rel: str) -> list[Suggestion]:
+    """Parse god module suggestions from analysis text."""
+    suggestions: list[Suggestion] = []
     for m in _TOON_GOD_RE.finditer(text):
         file_path = m.group("path").strip()
         loc = m.group("loc")
@@ -542,8 +544,12 @@ def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
                 files=(file_path, rel),
             )
         )
+    return suggestions
 
-    # --- HEALTH: high-CC methods ---
+
+def _parse_high_cc_suggestions(text: str, rel: str) -> list[Suggestion]:
+    """Parse high-CC method suggestions from analysis text."""
+    suggestions: list[Suggestion] = []
     cc_seen: set[str] = set()
     for m in _TOON_CC_RE.finditer(text):
         func = m.group("func").strip()
@@ -565,8 +571,12 @@ def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
                 files=(rel,),
             )
         )
+    return suggestions
 
-    # --- REFACTOR plan items ---
+
+def _parse_refactor_suggestions(text: str, rel: str) -> list[Suggestion]:
+    """Parse refactor item suggestions from analysis text."""
+    suggestions: list[Suggestion] = []
     in_refactor = False
     for line in text.splitlines():
         if line.startswith("REFACTOR"):
@@ -594,7 +604,23 @@ def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
                 files=(rel,),
             )
         )
+    return suggestions
 
+
+def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
+    path, rel = _find_analysis_file(project)
+    if path is None:
+        return []
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return []
+
+    suggestions: list[Suggestion] = []
+    suggestions.extend(_parse_dup_suggestions(text, rel))
+    suggestions.extend(_parse_god_module_suggestions(text, rel))
+    suggestions.extend(_parse_high_cc_suggestions(text, rel))
+    suggestions.extend(_parse_refactor_suggestions(text, rel))
     return suggestions
 
 

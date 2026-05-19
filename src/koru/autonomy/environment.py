@@ -166,6 +166,47 @@ def probe_socket_health(path: Path, *, connect_timeout: float = 0.5) -> SocketHe
             pass
 
 
+def _check_socket_health(autopilot_socket: Path | None) -> SocketHealth | None:
+    """Check autopilot socket health if socket path is provided."""
+    if autopilot_socket is not None:
+        return probe_socket_health(autopilot_socket)
+    return None
+
+
+def _build_fixable_issues(
+    socket_health: SocketHealth | None,
+    ides: list[IDEPresence],
+) -> list[str]:
+    """Build list of fixable environment issues."""
+    fixable: list[str] = []
+    if socket_health and socket_health.stale:
+        fixable.append(
+            f"stale autopilot socket at {socket_health.path}: remove + restart daemon"
+        )
+    installed = [p.ide for p in ides if p.installed]
+    mcp_on = [p.ide for p in ides if p.mcp_has_koru]
+    if installed and not mcp_on:
+        fixable.append(
+            f"IDE(s) installed ({', '.join(installed)}) but Koru MCP is not configured: "
+            "run `koru init-ide` / `task koru:mcp:bootstrap`"
+        )
+    return fixable
+
+
+def _build_notes(
+    headless: bool,
+    ides: list[IDEPresence],
+) -> list[str]:
+    """Build list of environment notes."""
+    notes: list[str] = []
+    installed = [p.ide for p in ides if p.installed]
+    if headless:
+        notes.append("headless environment: prefer queue/CLI; autopilot drive is disabled")
+    elif not installed:
+        notes.append("no known IDE binary on PATH; install cursor/windsurf/vscode or run headless")
+    return notes
+
+
 def probe_environment(
     project: Path,
     *,
@@ -177,30 +218,12 @@ def probe_environment(
     headless = is_headless_environment(env)
     ides = probe_ide_presence(project, environ=env)
 
-    socket_health: SocketHealth | None = None
-    if autopilot_socket is not None:
-        socket_health = probe_socket_health(autopilot_socket)
-
+    socket_health = _check_socket_health(autopilot_socket)
     can_plugin = bool(socket_health and socket_health.listening)
     can_mcp = any(p.mcp_has_koru for p in ides)
 
-    fixable: list[str] = []
-    notes: list[str] = []
-    if socket_health and socket_health.stale:
-        fixable.append(
-            f"stale autopilot socket at {socket_health.path}: remove + restart daemon"
-        )
-    installed = [p.ide for p in ides if p.installed]
-    mcp_on = [p.ide for p in ides if p.mcp_has_koru]
-    if headless:
-        notes.append("headless environment: prefer queue/CLI; autopilot drive is disabled")
-    elif not installed:
-        notes.append("no known IDE binary on PATH; install cursor/windsurf/vscode or run headless")
-    if installed and not mcp_on:
-        fixable.append(
-            f"IDE(s) installed ({', '.join(installed)}) but Koru MCP is not configured: "
-            "run `koru init-ide` / `task koru:mcp:bootstrap`"
-        )
+    fixable = _build_fixable_issues(socket_health, ides)
+    notes = _build_notes(headless, ides)
 
     return EnvironmentReport(
         headless=headless,
