@@ -8,19 +8,14 @@ These tests run Koru in Docker containers to verify:
 """
 
 import json
-import os
 import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 import yaml
-
-from koru.bootstrap import import_flat_pipeline
-from koru.tasks import create_nl_task
 
 pytestmark = pytest.mark.slow
 
@@ -227,7 +222,6 @@ class TestDockerE2E:
 
     def test_priority_ordering_in_docker(self, docker_image, test_project):
         """Test that priority ordering works correctly in Docker."""
-        import yaml
         
         # Create tasks with different priorities
         tasks = [
@@ -398,7 +392,7 @@ class TestDockerE2E:
         # Check that critical ticket was processed first (handle string tickets)
         critical_ticket = next(
             (t for t in tickets if isinstance(t, dict) and "Critical bug fix" in t.get("name", "")),
-            None
+            None,
         )
         if critical_ticket is None:
             # If tickets are strings, verify from stdout instead
@@ -421,7 +415,7 @@ class TestDockerE2E:
         
         critical_ticket_id = next(
             (tid for tid in created_tickets if any(is_critical_ticket(t, tid) for t in tickets)),
-            None
+            None,
         )
         
         if critical_ticket_id and processed_order:

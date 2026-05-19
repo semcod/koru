@@ -187,7 +187,6 @@ def test_drive_direct_prefers_os_injector_profile(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from koru.autopilot import os_injector as oi_mod
-    from koru.autopilot.ide import RunningIDE
 
     class _Inj:
         session = "x11"
@@ -236,7 +235,7 @@ def test_drive_direct_honors_os_profile_override(
     monkeypatch.setattr(cli_command, "Injector", lambda: _Inj())
     monkeypatch.setattr(oi_mod, "try_drive_with_profile", _fake_try)
     rc = autopilot_main(
-        ["drive", "--direct", "--os-profile", "windsurf", "--prompt", "go"]
+        ["drive", "--direct", "--os-profile", "windsurf", "--prompt", "go"],
     )
     assert rc == 0
     assert seen["tool_id"] == "windsurf"
@@ -265,7 +264,7 @@ def test_drive_direct_os_profile_requires_os_injector_when_not_available(
     monkeypatch.setattr(cli_command, "Injector", lambda: _Inj())
     monkeypatch.setattr(oi_mod, "try_drive_with_profile", lambda **_k: None)
     rc = autopilot_main(
-        ["drive", "--direct", "--os-profile", "windsurf", "--prompt", "go"]
+        ["drive", "--direct", "--os-profile", "windsurf", "--prompt", "go"],
     )
     assert rc == 2
     err = capsys.readouterr().err
@@ -292,7 +291,7 @@ def test_drive_direct_os_profile_os_injector_error_no_fallback(
         lambda **_k: (_ for _ in ()).throw(OsInjectorError("xdotool timed out")),
     )
     rc = autopilot_main(
-        ["drive", "--direct", "--os-profile", "windsurf", "--prompt", "go"]
+        ["drive", "--direct", "--os-profile", "windsurf", "--prompt", "go"],
     )
     assert rc == 1
     err = capsys.readouterr().err
@@ -304,8 +303,8 @@ def test_drive_direct_falls_back_when_os_injector_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from koru.autopilot import os_injector as oi_mod
-    from koru.autopilot.os_injector import OsInjectorError
     from koru.autopilot.injector import InjectionResult
+    from koru.autopilot.os_injector import OsInjectorError
 
     class _Inj:
         session = "wayland"
@@ -354,7 +353,7 @@ def test_calibrate_auto_ide_resolves_from_running_processes(
             "0",
             "--config",
             str(tmp_path / "auto.json"),
-        ]
+        ],
     )
     assert rc == 0
     out = capsys.readouterr().out
@@ -381,7 +380,7 @@ def test_calibrate_writes_profile_from_mouse(
             "0",
             "--config",
             str(tmp_path / "profiles.json"),
-        ]
+        ],
     )
     assert rc == 0
     out = capsys.readouterr().out
@@ -411,7 +410,7 @@ def test_session_start_explicit_ides(
             "0",
             "--config",
             str(tmp_path / "session.json"),
-        ]
+        ],
     )
     assert rc == 0
     out = capsys.readouterr().out
@@ -446,7 +445,7 @@ def test_session_start_keeps_profile_when_smoke_fails(
             str(tmp_path / "session.json"),
             "--prompt",
             "smoke",
-        ]
+        ],
     )
     assert rc == 0
     out = capsys.readouterr().out
@@ -474,7 +473,7 @@ def test_session_start_warns_on_duplicate_coordinates(
             "0",
             "--config",
             str(tmp_path / "session.json"),
-        ]
+        ],
     )
     assert rc == 0
     out = capsys.readouterr().out

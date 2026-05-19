@@ -17,33 +17,40 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
-import shutil
 import signal
 import subprocess
 import sys
 import threading
 import time
 import uuid
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
+from koruide.daemon import AutopilotDaemon
+from koruide.os_injector import OsInjectorError, inject_with_profile, load_profile
+
+from . import autonomous_cycle as _autonomous_cycle_module
 from .agents import agent_lane_environment
-from .ide_router import resolve_ide_route
-from .autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
-from .autonomy.ide_work import release_in_progress_tickets, resolve_idle_drive_prompt
-from .autonomy.prompts import build_prompt
+from .autonomous_cycle import (
+    AutoloopState,
+    DiagnosticResult,
+)
 from .autonomous_env import (
     apply_autonomous_env_overrides as _env_apply_autoloop_defaults,
 )
 from .autonomous_env import (
     effective_ticket_source_flags as _effective_flags,
 )
-from . import autonomous_cycle as _autonomous_cycle_module
-from .autonomous_cycle import (
-    AutoloopState,
-    DiagnosticResult,
+from .autonomous_startup import (
+    build_startup_probe,
+    format_post_startup_operator_hints,
+    format_startup_banner,
+    resolve_autopilot_ide_for_autonomous,
+)
+from .autonomous_startup import (
+    resolve_agent_lane_id as _resolve_agent_lane_id,
 )
 from .autonomous_wup import (
     WupHealthResult,
@@ -56,22 +63,14 @@ from .autonomous_wup import (
 from .autonomous_wup import (
     _read_wup_health as _read_wup_health_impl,
 )
-from .autonomous_startup import (
-    build_startup_probe,
-    format_post_startup_operator_hints,
-    format_startup_banner,
-    resolve_autopilot_ide_for_autonomous,
-)
+from .autonomy.ide_work import release_in_progress_tickets, resolve_idle_drive_prompt
 from .autonomy.operator_pipeline import run_startup_operator_pipeline
-from .autonomous_startup import (
-    resolve_agent_lane_id as _resolve_agent_lane_id,
-)
-from .autonomous_startup import (
-    _terminal_agent_lane_from_env,
-)
+from .autonomy.prompts import build_prompt
+from .autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
 from .autopilot import default_socket_path
 from .autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide
 from .ide_client import IDEControlClient, build_ide_client
+from .ide_router import resolve_ide_route
 from .init import init_project, resolve_project_agent_lane
 from .queue import (
     QueueLoopResult,
@@ -96,8 +95,6 @@ from .scan import ScanResult, run_scan
 from .stdio_events import default_stdio_format_from_env, write_stdio_event
 from .tasks import create_nl_task
 from .topology import is_component_enabled, is_pipeline_enabled
-from koruide.daemon import AutopilotDaemon
-from koruide.os_injector import OsInjectorError, inject_with_profile, load_profile
 
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
@@ -163,7 +160,7 @@ def _resolve_autopilot_ide(cli_value: str) -> str:
 def _apply_agent_lane_environ(project: Path, agent_lane: str) -> str | None:
     """Set lane exports in ``os.environ``; returns lane id or ``None`` if skipped."""
     lane, _source = _resolve_agent_lane_id(
-        project, agent_lane, resolve_project_lane=resolve_project_agent_lane
+        project, agent_lane, resolve_project_lane=resolve_project_agent_lane,
     )
     if lane is None:
         return None
@@ -222,7 +219,7 @@ def _looks_like_autonomous_up_command(command: str) -> bool:
 
 
 def _find_existing_autonomous_processes(
-    project: Path, *, any_project: bool = False
+    project: Path, *, any_project: bool = False,
 ) -> list[ExistingAutonomousProcess]:
     """Return running koru autonomous/auto processes except this PID tree."""
     try:
@@ -321,7 +318,7 @@ def _find_existing_wup_processes(project: Path) -> list[ExistingManagedProcess]:
         cwd = _process_cwd(pid)
         if cwd == project or str(project) in command:
             matches.append(
-                ExistingManagedProcess(pid=pid, kind="wup-watch", command=command, cwd=cwd)
+                ExistingManagedProcess(pid=pid, kind="wup-watch", command=command, cwd=cwd),
             )
     return matches
 
@@ -336,7 +333,7 @@ def _as_managed(proc: ExistingAutonomousProcess) -> ExistingManagedProcess:
 
 
 def _terminate_existing_processes(
-    processes: list[ExistingManagedProcess], *, stdio_format: str
+    processes: list[ExistingManagedProcess], *, stdio_format: str,
 ) -> None:
     for proc in processes:
         _stdio_info(
@@ -823,7 +820,7 @@ def _ensure_init(project: Path, *, force: bool, stdio_format: str = "human") -> 
         return
     report = init_project(project, force=force)
     _stdio_info(
-        f"koru autonomous: init {'re-' if force else ''}done at {report.project}", fmt=stdio_format
+        f"koru autonomous: init {'re-' if force else ''}done at {report.project}", fmt=stdio_format,
     )
 
 
@@ -1006,7 +1003,7 @@ def _status_in_skip_list(status: str, skip_statuses: str) -> bool:
 
 
 def _run_command_check(
-    project: Path, check_id: str, command: list[str], *, stdio_format: str = "human"
+    project: Path, check_id: str, command: list[str], *, stdio_format: str = "human",
 ) -> bool:
     _stdio_info("+ " + " ".join(command), fmt=stdio_format)
     result = subprocess.run(command, cwd=project, check=False)
@@ -1032,7 +1029,7 @@ def _create_diagnostic_ticket(
     marker = state_dir / f"{check_id}.failed"
     if marker.exists():
         _stdio_info(
-            f"- diagnostic ticket marker exists for {check_id}, skipping create", fmt=stdio_format
+            f"- diagnostic ticket marker exists for {check_id}, skipping create", fmt=stdio_format,
         )
         return
     title = f"[AUTO-DIAG] {check_id} needs attention"
@@ -1262,7 +1259,7 @@ def _configure_loop_state(
     queue_name = None if use_all_queues else args.queue_name
     lane = _apply_agent_lane_environ(project, args.agent_lane)
     autopilot_ide, _autopilot_ide_source = resolve_autopilot_ide_for_autonomous(
-        args.autopilot_ide, lane, resolve_ide_route_fn=resolve_ide_route
+        args.autopilot_ide, lane, resolve_ide_route_fn=resolve_ide_route,
     )
     loop_state = AutoloopState()
     checkpoint_path = (project / ".planfile/.koru/autonomous-state.json").resolve()
@@ -1337,7 +1334,7 @@ def _run_operator_pipeline(
 ) -> None:
     """Run operator pipeline if enabled."""
     for hint in format_post_startup_operator_hints(
-        startup_probe, plugin_connected=plugin_connected
+        startup_probe, plugin_connected=plugin_connected,
     ):
         _stdio_info(hint, fmt=args.emit_events)
 
@@ -1530,7 +1527,7 @@ def _action_up(args: argparse.Namespace) -> int:
             if args.emit_events == "human":
                 print(f"\n=== koru autonomous cycle #{cycle} ===")
             client, daemon, thread = _restart_daemon_if_needed(
-                args, client, socket_path, daemon, thread, autopilot_socket_observed_at_boot, project
+                args, client, socket_path, daemon, thread, autopilot_socket_observed_at_boot, project,
             )
             _scan_result, queue_result, _autopilot_status, diag_result = _run_cycle(
                 cycle=cycle,

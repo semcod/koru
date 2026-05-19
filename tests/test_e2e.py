@@ -10,10 +10,8 @@ from __future__ import annotations
 
 import io
 import json
-import os
 import shutil
 import subprocess
-import sys
 import tempfile
 import textwrap
 import unittest
@@ -67,10 +65,10 @@ def _write_sprint(project: Path, tickets: dict, sprint: str = "current") -> None
             "name": "test",
             "status": "active",
             "tickets": tickets,
-        }
+        },
     }
     (sprint_dir / f"{sprint}.yaml").write_text(
-        yaml.safe_dump(data, sort_keys=False), encoding="utf-8"
+        yaml.safe_dump(data, sort_keys=False), encoding="utf-8",
     )
 
 
@@ -153,7 +151,7 @@ class TestE2EInitDoctorContext(unittest.TestCase):
     def test_init_then_context_json_has_policy(self) -> None:
         _init_project(self.project)
         code, out, _ = _run_main(
-            "--context", "--project", str(self.project), "--format", "json"
+            "--context", "--project", str(self.project), "--format", "json",
         )
         self.assertEqual(code, 0)
         data = _extract_json(out)
@@ -163,7 +161,7 @@ class TestE2EInitDoctorContext(unittest.TestCase):
     def test_init_then_context_markdown_has_ticket(self) -> None:
         _init_project(self.project)
         code, out, _ = _run_main(
-            "--context", "--project", str(self.project), "--format", "markdown"
+            "--context", "--project", str(self.project), "--format", "markdown",
         )
         self.assertEqual(code, 0)
         # The starter scaffold includes STARTER-001
@@ -172,7 +170,7 @@ class TestE2EInitDoctorContext(unittest.TestCase):
     def test_doctor_json_format(self) -> None:
         _init_project(self.project)
         code, out, _ = _run_main(
-            "--doctor", "--project", str(self.project), "--format", "json"
+            "--doctor", "--project", str(self.project), "--format", "json",
         )
         self.assertEqual(code, 0)
         data = json.loads(out)
@@ -214,7 +212,7 @@ class TestE2ETask(unittest.TestCase):
         self.assertIn("✓ created", out)
         # Verify it appears in sprint YAML
         sprint = yaml.safe_load(
-            (self.project / ".planfile/sprints/current.yaml").read_text()
+            (self.project / ".planfile/sprints/current.yaml").read_text(),
         )
         tickets = sprint["sprint"]["tickets"]
         found = any("login" in t.get("name", "").lower() for t in tickets.values())
@@ -224,7 +222,7 @@ class TestE2ETask(unittest.TestCase):
         _run_main("task", "First task", "--project", str(self.project))
         _run_main("task", "Second task", "--project", str(self.project))
         sprint = yaml.safe_load(
-            (self.project / ".planfile/sprints/current.yaml").read_text()
+            (self.project / ".planfile/sprints/current.yaml").read_text(),
         )
         tickets = sprint["sprint"]["tickets"]
         # Should have at least the starter + 2 new tasks
@@ -244,7 +242,7 @@ class TestE2ETask(unittest.TestCase):
         )
         self.assertEqual(code, 0)
         sprint = yaml.safe_load(
-            (self.project / ".planfile/sprints/current.yaml").read_text()
+            (self.project / ".planfile/sprints/current.yaml").read_text(),
         )
         tickets = sprint["sprint"]["tickets"]
         urgent = [t for t in tickets.values() if "Urgent" in t.get("name", "")]
@@ -260,7 +258,7 @@ class TestE2ETask(unittest.TestCase):
         self.assertEqual(code, 0, out)
         self.assertIn("tool:  gemini-cli", out)
         sprint = yaml.safe_load(
-            (self.project / ".planfile/sprints/current.yaml").read_text()
+            (self.project / ".planfile/sprints/current.yaml").read_text(),
         )
         tickets = sprint["sprint"]["tickets"]
         matches = [
@@ -281,7 +279,7 @@ class TestE2ETask(unittest.TestCase):
         )
         self.assertEqual(code, 0, out)
         sprint = yaml.safe_load(
-            (self.project / ".planfile/sprints/current.yaml").read_text()
+            (self.project / ".planfile/sprints/current.yaml").read_text(),
         )
         tickets = sprint["sprint"]["tickets"]
         matches = [
@@ -416,7 +414,7 @@ class TestE2EScan(unittest.TestCase):
             "HA" + "CK",
         )
         (self.project / "messy.py").write_text(
-            self._marker_fixture(*markers)
+            self._marker_fixture(*markers),
         )
         code, out, _ = _run_main(
             "scan", "--project", str(self.project), "--skip-pytest",
@@ -426,7 +424,7 @@ class TestE2EScan(unittest.TestCase):
 
     def test_scan_json_format(self) -> None:
         (self.project / "todos.py").write_text(
-            self._marker_fixture("TO" + "DO", "FIX" + "ME", "X" * 3)
+            self._marker_fixture("TO" + "DO", "FIX" + "ME", "X" * 3),
         )
         code, out, _ = _run_main(
             "scan", "--project", str(self.project),
@@ -439,7 +437,7 @@ class TestE2EScan(unittest.TestCase):
     def test_scan_with_limit(self) -> None:
         for i in range(5):
             (self.project / f"file{i}.py").write_text(
-                self._marker_fixture("TO" + "DO", "FIX" + "ME", "X" * 3)
+                self._marker_fixture("TO" + "DO", "FIX" + "ME", "X" * 3),
             )
         code, out, _ = _run_main(
             "scan", "--project", str(self.project),
@@ -521,7 +519,7 @@ class TestE2EQueueLoop(unittest.TestCase):
         # Status may be completed (if shell executor detected) or waiting_input
         self.assertTrue(
             "completed" in out or "waiting_input" in out,
-            f"Expected completed or waiting_input in: {out}"
+            f"Expected completed or waiting_input in: {out}",
         )
 
     def test_queue_idle_when_no_runnable_tickets(self) -> None:
@@ -661,7 +659,7 @@ class TestE2EBootstrap(unittest.TestCase):
             "--sprint", "current",
         )
         sprint = yaml.safe_load(
-            (self.project / ".planfile/sprints/current.yaml").read_text()
+            (self.project / ".planfile/sprints/current.yaml").read_text(),
         )
         tickets = sprint["sprint"]["tickets"]
         self.assertEqual(len(tickets), 2)
@@ -833,7 +831,7 @@ class TestE2EInitFromPipeline(unittest.TestCase):
         )
         self.assertEqual(code, 0, f"init --from failed: {out}{err}")
         sprint = yaml.safe_load(
-            (self.project / ".planfile/sprints/current.yaml").read_text()
+            (self.project / ".planfile/sprints/current.yaml").read_text(),
         )
         tickets = sprint["sprint"]["tickets"]
         self.assertTrue(

@@ -13,12 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from .agents import (
-    agent_lane_environment,
     detect_agent_options,
-    format_agent_lane_exports,
-    launch_agent,
-    save_agent_prompt,
-    select_agent,
 )
 from .autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
 from .autopilot.cli_command import autopilot_main
@@ -31,11 +26,6 @@ from .gate import VALID_MODES as GATE_VALID_MODES
 from .gate import authorize_gate
 from .gc import DEFAULT_KEEP_LAST, DEFAULT_MAX_AGE_DAYS, GC_STATUSES, run_gc
 from .init import init_project, refresh_init_agent_lane
-from .local_service import (
-    LocalServiceConfig,
-    default_local_service_config,
-    run_local_service,
-)
 from .loop import discover_repositories, run_closed_loop
 from .queue import (
     default_human_prompt as _queue_default_human_prompt,
@@ -47,19 +37,14 @@ from .queue import (
     run_llm_request as _queue_run_llm_request,
 )
 from .queue import (
-    run_next_planfile_task,
-    run_planfile_queue_loop,
-)
-from .queue import (
     run_process as _queue_run_process,
 )
 from .queue import (
     run_shell_command as _queue_run_shell_command,
 )
 from .queue_clean import CleanupReport, clean_queue
-from .run_log import open_run_log_eagerly
 from .scan import ScanResult, run_scan
-from .serve import DEFAULT_HOST, DEFAULT_PORT, ServeConfig, serve
+from .serve import DEFAULT_HOST, DEFAULT_PORT
 from .tasks import create_nl_task
 from .tools import (
     build_tool_task_scaffold,
@@ -84,7 +69,7 @@ def _command_value(value: str) -> str:
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Run closed-loop automation on semcod repositories."
+        description="Run closed-loop automation on semcod repositories.",
     )
     parser.add_argument("--workspace", type=Path, default=Path.cwd(), help="Workspace root.")
     parser.add_argument(
@@ -537,7 +522,7 @@ def _render_scan_text(result: ScanResult) -> str:
     lines: list[str] = [f"koru scan: {len(result.suggestions)} suggestion(s)"]
     for s in result.suggestions:
         marker = {"critical": "!!", "high": "!", "normal": "·", "low": " "}.get(
-            s.priority, "·"
+            s.priority, "·",
         )
         lines.append(f"  [{marker}] {s.priority:<8} {s.signal:<15} {s.title}")
     if result.applied:
@@ -696,7 +681,7 @@ def _gate_main(argv: list[str]) -> int:
 
     print(
         f"koru gate: ✓ {auth.mode} waiver recorded on {auth.ticket} "
-        f"by {auth.authorized_by} at {auth.authorized_at}"
+        f"by {auth.authorized_by} at {auth.authorized_at}",
     )
     if auth.skipped:
         print(f"  skipped: {', '.join(auth.skipped)}")
@@ -880,7 +865,7 @@ def _render_clean_report_text(report: CleanupReport) -> str:
             lines.append("")
             lines.append(
                 f"Active tickets matching cleanup rules but skipped "
-                f"(use --include-active to override): {', '.join(report.skipped_active)}"
+                f"(use --include-active to override): {', '.join(report.skipped_active)}",
             )
         return "\n".join(lines)
     lines.append(f"Candidates ({len(report.candidates)}):")
@@ -907,7 +892,7 @@ def _render_clean_report_text(report: CleanupReport) -> str:
         lines.append("")
         lines.append(
             f"⚠ Active tickets matching cleanup rules (skipped, use "
-            f"--include-active to override): {', '.join(report.skipped_active)}"
+            f"--include-active to override): {', '.join(report.skipped_active)}",
         )
     return "\n".join(lines)
 
@@ -1012,7 +997,7 @@ def _task_main(argv: list[str]) -> int:
         if not registry:
             print(
                 "koru task: tool registry is empty or missing. "
-                "Use --tool-registry PATH or ensure docs/ai-tool-registry-2026.yaml exists."
+                "Use --tool-registry PATH or ensure docs/ai-tool-registry-2026.yaml exists.",
             )
             return 2
         tool = find_tool_entry(registry, args.tool_id)
@@ -1296,7 +1281,7 @@ def _init_ci_main(_argv: list[str]) -> int:
         "    examples/ci/gitlab-ci.example.yml\n"
         "    https://github.com/semcod/koru/blob/main/examples/ci/gitlab-ci.example.yml\n"
         "  GitLab — how to adapt:\n"
-        "    https://github.com/semcod/koru/blob/main/docs/ci-gitlab.md"
+        "    https://github.com/semcod/koru/blob/main/docs/ci-gitlab.md",
     )
     return 0
 
@@ -1347,7 +1332,7 @@ def _agent_backends_main(argv: list[str]) -> int:
                     [asdict(p) for p in iter_agent_backend_profiles()],
                     indent=2,
                     sort_keys=True,
-                )
+                ),
             )
         return 0
 
@@ -1585,22 +1570,22 @@ def _init_main(args: argparse.Namespace) -> int:
         next_parts.append(
             "run `koru autonomous up --project . --agent-lane auto` "
             "(sets lane env; optional: source `.planfile/.koru/shell-env.sh` "
-            "for other terminals)"
+            "for other terminals)",
         )
     if report.autopilot_host_setup_written:
         next_parts.append(
             "run `./.planfile/.koru/setup-autopilot-host.sh` "
-            "(or `koru autopilot setup-host`) to check injectors / apt vs human steps"
+            "(or `koru autopilot setup-host`) to check injectors / apt vs human steps",
         )
     if report.host_environment_written:
         next_parts.append(
-            "read `.planfile/.koru/host-environment.md` for this machine's autopilot checklist"
+            "read `.planfile/.koru/host-environment.md` for this machine's autopilot checklist",
         )
     next_parts.extend(
         [
             "run `koru` for the LLM brief",
             "`koru --queue --loop` to drain the starter sprint",
-        ]
+        ],
     )
     print("Next: " + "; ".join(next_parts) + ".")
     emit_management_event(
@@ -1641,13 +1626,13 @@ def _init_agent_lane_main(args: argparse.Namespace) -> int:
         next_parts.append(
             "run `koru autonomous up --project . --agent-lane auto` "
             "(sets lane env; optional: source `.planfile/.koru/shell-env.sh` "
-            "for other terminals)"
+            "for other terminals)",
         )
     elif report.agent_lane is None:
         next_parts.append("shell helpers removed (use --agent-lane auto to restore)")
     if report.autopilot_host_setup_written:
         next_parts.append(
-            "`./.planfile/.koru/setup-autopilot-host.sh` or `koru autopilot setup-host`"
+            "`./.planfile/.koru/setup-autopilot-host.sh` or `koru autopilot setup-host`",
         )
     if report.host_environment_written:
         next_parts.append("read `.planfile/.koru/host-environment.md` for this machine")
@@ -1811,7 +1796,7 @@ def _command_loop_main(args: argparse.Namespace) -> int:
     print(
         f"koru: repos={len(report.succeeded) + len(report.failed)} "
         f"succeeded={len(report.succeeded)} failed={len(report.failed)} "
-        f"rounds={report.rounds_executed}"
+        f"rounds={report.rounds_executed}",
     )
     for repository in report.failed:
         print(f"FAILED: {repository}")

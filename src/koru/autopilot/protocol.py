@@ -26,7 +26,6 @@ from koruide.protocol import (
     status_error,
 )
 
-
 __all__ = [
     "MAX_LINE_BYTES",
     "PLUGIN_TO_DAEMON",

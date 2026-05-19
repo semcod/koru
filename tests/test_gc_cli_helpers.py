@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from types import SimpleNamespace
-
 from koru.gc import GcCandidate, GcResult
 from koru.gc_cli_helpers import gc_result_to_json, gc_statuses_from_args, print_gc_text_report
 

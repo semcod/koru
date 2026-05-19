@@ -31,11 +31,11 @@ from pathlib import Path
 from typing import Any
 
 from .agents import detect_agent_environment
+from .autonomy.telemetry_snapshot import build_autonomy_loop_brief
 from .dotenv_loader import load_dotenv as _load_dotenv_impl
 from .policy import Policy, load_policy
 from .project_pipeline import build_project_pipeline_brief
 from .runtime import planfile_dir
-from .autonomy.telemetry_snapshot import build_autonomy_loop_brief
 
 # Cache so we only load `.env` once per project per process (multiple
 # `build_context` calls — e.g. dashboard auto-refresh — would otherwise
@@ -62,7 +62,7 @@ FIXTURE_LABELS: frozenset[str] = frozenset(
         "dry-run",
         "synthetic",
         "auto-close",
-    }
+    },
 )
 
 
@@ -363,11 +363,11 @@ def _parse_ticket_response(
             ticket_error = "planfile output was not JSON"
     elif isinstance(ticket_data, list):
         ticket_data, open_tickets, all_tickets, ticket_error = _process_list_payload(
-            ticket_data, include_fixtures
+            ticket_data, include_fixtures,
         )
     elif isinstance(ticket_data, dict):
         ticket_data, open_tickets, ticket_error = _process_dict_payload(
-            ticket_data, ticket_id, include_fixtures
+            ticket_data, ticket_id, include_fixtures,
         )
         if ticket_data is not None:
             all_tickets = _fetch_all_tickets(
@@ -399,7 +399,7 @@ def _fetch_ticket_data(
 
     if ticket_proc.returncode == 0:
         return _parse_ticket_response(
-            ticket_proc, ticket_id, include_fixtures, project, planfile_runner
+            ticket_proc, ticket_id, include_fixtures, project, planfile_runner,
         )
     else:
         ticket_error = _extract_error_from_stderr(ticket_proc.stderr or "planfile error")
@@ -552,7 +552,7 @@ def _promote_blocking_to_critical(
                 tickets[blocking_id]["priority"] = "critical"
                 promoted = True
                 print(
-                    f"🔥 Auto-promoted {blocking_id} from {current_priority} to critical (blocking)"
+                    f"🔥 Auto-promoted {blocking_id} from {current_priority} to critical (blocking)",
                 )
     return promoted
 
@@ -579,7 +579,7 @@ def _promote_bug_priority(tickets: dict[str, Any]) -> bool:
                     promoted = True
                     print(
                         f"🐛 Auto-promoted bug {ticket_id} from {current_priority} "
-                        f"to {new_priority}"
+                        f"to {new_priority}",
                     )
     return promoted
 
@@ -678,25 +678,25 @@ def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[s
         rules.append("DO NOT create git tags.")
     if not policy.allow_destructive_shell:
         rules.append(
-            "DO NOT run destructive shell commands (rm -rf /, dd, mkfs, shutdown, force-pushes, …)."
+            "DO NOT run destructive shell commands (rm -rf /, dd, mkfs, shutdown, force-pushes, …).",
         )
     if policy.require_ci_pass_before_complete:
         if policy.ci_command:
             rules.append(
                 f"Before completing a ticket, run `{policy.ci_command}` "
-                "and verify exit code 0. Only then call `planfile ticket done <id>`."
+                "and verify exit code 0. Only then call `planfile ticket done <id>`.",
             )
         else:
             rules.append(
                 "Before completing a ticket, ask the human operator to "
-                "run the project's CI gate. Do not self-certify."
+                "run the project's CI gate. Do not self-certify.",
             )
     if ticket and isinstance(ticket.get("files"), list) and ticket["files"]:
         scope = ", ".join(str(f) for f in ticket["files"][:10])
         rules.append(
             f"Limit edits to the ticket's declared files: {scope}. "
             "Touching anything else requires blocking the ticket first "
-            '(`planfile ticket block <id> --reason "out-of-scope edit needed"`).'
+            '(`planfile ticket block <id> --reason "out-of-scope edit needed"`).',
         )
     if ticket is None:
         rules.extend(
@@ -707,7 +707,7 @@ def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[s
                     "After scan, run `planfile ticket next --format json`, "
                     "then `planfile ticket start <id>` and begin implementation."
                 ),
-            ]
+            ],
         )
     # Auto-repair instructions for critical blocking tickets
     if ticket and ticket.get("priority") == "critical":
@@ -718,12 +718,12 @@ def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[s
                 "Do NOT ask for human input unless absolutely necessary.",
                 "Use all available tools and knowledge to resolve the blocking issue.",
                 "After fixing, immediately call `planfile ticket done <id>` to continue.",
-            ]
+            ],
         )
     else:
         rules.append(
             "If you are blocked or need a human decision, call "
-            '`planfile ticket block <id> --reason "<question>"` and stop.'
+            '`planfile ticket block <id> --reason "<question>"` and stop.',
         )
     rules.extend(policy.notes)
     return rules
@@ -803,7 +803,7 @@ def _render_environment(env: dict[str, Any], project: str) -> list[str]:
     enabled_markers = [key for key, value in markers.items() if value]
     lines.append(
         "- **markers**: "
-        + (", ".join(f"`{marker}`" for marker in enabled_markers) if enabled_markers else "`none`")
+        + (", ".join(f"`{marker}`" for marker in enabled_markers) if enabled_markers else "`none`"),
     )
     if recommended:
         lines.append(f"- **recommended agent**: `{recommended.get('label')}`")
@@ -820,17 +820,17 @@ def _render_agent_lanes(agents: list[dict[str, Any]]) -> list[str]:
         for agent in agents:
             lines.append(
                 f"| `{agent.get('id')}` | `{agent.get('available')}` | "
-                f"`{agent.get('launchable')}` | {agent.get('reason', '')} |"
+                f"`{agent.get('launchable')}` | {agent.get('reason', '')} |",
             )
     else:
         lines.append(
-            "No known LLM/IDE lanes detected. Paste this handoff into your preferred agent."
+            "No known LLM/IDE lanes detected. Paste this handoff into your preferred agent.",
         )
     lines.append("")
     lines.append(
         "Coverage note: koru only orchestrates lanes shown above (plus planfile/scan/queue). "
         "Other AI tools can still be used manually, but are not auto-driven by koru unless "
-        "wrapped as shell/api/llm tickets."
+        "wrapped as shell/api/llm tickets.",
     )
     lines.append("")
     return lines
@@ -853,7 +853,7 @@ def _render_autonomous_mode(*, planfile_initialised: bool) -> list[str]:
                 "",
                 "This bootstraps `.planfile/` first, then runs one safe queue cycle.",
                 "",
-            ]
+            ],
         )
         return lines
 
@@ -881,7 +881,7 @@ def _render_autonomous_mode(*, planfile_initialised: bool) -> list[str]:
             "- Use a **unique** `--actor` / `ACTOR` per automated lane so `ticket claim`",
             "  ownership is visible in planfile.",
             "",
-        ]
+        ],
     )
     return lines
 
@@ -927,7 +927,7 @@ def _render_semcod_tools(semcod_tools: list[dict[str, Any]]) -> list[str]:
             cfg = " (configured)" if tool.get("config_present") else ""
             lines.append(
                 f"| `{tool.get('id')}` | `{tool.get('via')}`{cfg} | "
-                f"{tool.get('role', '')} | `{tool.get('command_hint', '')}` |"
+                f"{tool.get('role', '')} | `{tool.get('command_hint', '')}` |",
             )
     else:
         lines.append("_No semcod tools detected on this machine._")
@@ -936,7 +936,7 @@ def _render_semcod_tools(semcod_tools: list[dict[str, Any]]) -> list[str]:
         missing_ids = ", ".join(f"`{t.get('id')}`" for t in missing)
         lines.append(
             f"_Not installed: {missing_ids}. Install with `pip install <name>` "
-            "or skip — koru will not invoke them automatically._"
+            "or skip — koru will not invoke them automatically._",
         )
     lines.append("")
     return lines
@@ -1039,7 +1039,7 @@ def _render_gates(markers: dict[str, Any]) -> list[str]:
         lines.append(
             f"_Not yet configured: {', '.join(f'`{m}`' for m in missing)}. "
             "Bootstrap any of them with `task template:install:wup` "
-            "(in koru) or follow `workflows/on-change-gates.md`._"
+            "(in koru) or follow `workflows/on-change-gates.md`._",
         )
         lines.append("")
     return lines
@@ -1123,7 +1123,7 @@ def _render_self_service(self_service: dict[str, Any]) -> list[str]:
     lines.append(
         "- **scan_repo**: `koru scan` (dry-run) / `koru scan --apply` "
         "(create tickets from pytest collect errors, TODO/FIXME, missing "
-        "gates and semcod tools)"
+        "gates and semcod tools)",
     )
     lines.append("")
     return lines
@@ -1164,7 +1164,7 @@ def _render_autonomy_loop_brief(ctx: dict[str, Any]) -> list[str]:
     else:
         lines.append(
             "_No autonomy telemetry file yet — it appears after at least one "
-            "`koru autonomous up` cycle._"
+            "`koru autonomous up` cycle._",
         )
         lines.append("")
     hints = block.get("environment_hints") or {}

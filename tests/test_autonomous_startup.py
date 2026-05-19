@@ -7,8 +7,8 @@ from unittest.mock import patch
 import pytest
 
 from koru import autonomous_startup as startup
-from koru.autopilot.ide import RunningIDE
 from koru.autonomous import _apply_agent_lane_environ
+from koru.autopilot.ide import RunningIDE
 
 
 def test_resolve_agent_lane_prefers_running_vscode_over_cursor_marker(tmp_path: Path) -> None:
@@ -21,7 +21,7 @@ def test_resolve_agent_lane_prefers_running_vscode_over_cursor_marker(tmp_path: 
         patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value=None),
     ):
         lane, source = startup.resolve_agent_lane_id(
-            tmp_path, "auto", resolve_project_lane=lambda _p, _a: "cursor"
+            tmp_path, "auto", resolve_project_lane=lambda _p, _a: "cursor",
         )
     assert lane == "vscode"
     assert source.startswith("running:")
@@ -31,7 +31,7 @@ def test_resolve_autopilot_ide_for_autonomous_returns_string_lane() -> None:
     from koru.ide_router import resolve_ide_route
 
     ide, source = startup.resolve_autopilot_ide_for_autonomous(
-        "auto", "vscode", resolve_ide_route_fn=resolve_ide_route
+        "auto", "vscode", resolve_ide_route_fn=resolve_ide_route,
     )
     assert isinstance(ide, str)
     assert ide == "vscode"
@@ -46,7 +46,7 @@ def test_format_post_startup_operator_hints_mentions_socket(tmp_path: Path) -> N
         resolve_project_lane=lambda _p, _a: "cursor",
     )
     text = "\n".join(
-        startup.format_post_startup_operator_hints(probe, plugin_connected=False)
+        startup.format_post_startup_operator_hints(probe, plugin_connected=False),
     )
     assert probe.socket_path in text
     assert "koru autopilot status" in text

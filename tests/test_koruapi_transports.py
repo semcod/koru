@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from koruapi.dashboard import build_serve_parser, dashboard_main
+from koruapi.dashboard import build_serve_parser
 from koruapi.integrations import list_integrations
 from koruapi.mcp import mcp_main
 

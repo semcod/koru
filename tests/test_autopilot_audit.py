@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import json
-import os
 import stat
 from pathlib import Path
 
 import pytest
 
-from koru.autopilot import audit as audit_mod
 from koru.autopilot.audit import AuditLog, default_log_path
 
 

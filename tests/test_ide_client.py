@@ -5,8 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from koru.autopilot import client as autopilot_client_mod
 from koru import ide_client as ide_client_mod
+from koru.autopilot import client as autopilot_client_mod
 from koru.ide_client import (
     LegacyAutopilotClientAdapter,
     build_ide_client,

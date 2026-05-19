@@ -20,9 +20,10 @@ from __future__ import annotations
 import socket
 import threading
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 import pytest
 
@@ -34,7 +35,6 @@ from koru.autopilot.injector import InjectionResult, InjectorError
 from koru.autopilot.os_injector import OsInjectorProfile
 from koru.autopilot.protocol import Message, decode, hello
 from koruide import daemon as koruide_daemon_mod
-
 
 # ---------------------------------------------------------------------------
 # Shared test plumbing
@@ -439,14 +439,14 @@ def test_plugin_hello_then_drive_forwards(tmp_path: Path, monkeypatch: pytest.Mo
             Message(
                 type="drive", id="d1",
                 data={"text": "hi", "ide": "vscode", "submit": True},
-            ).encode()
+            ).encode(),
         )
 
         forwarded = plugin_reader.read_message()
         assert forwarded.type == "chat.send"
         assert forwarded.data["text"] == "hi"
         plugin.sendall(
-            Message(type="ack", id=forwarded.id, data={"ok": True, "delivered": True}).encode()
+            Message(type="ack", id=forwarded.id, data={"ok": True, "delivered": True}).encode(),
         )
 
         cli_reply = cli_reader.read_message()
@@ -478,7 +478,7 @@ def test_visible_typing_prefers_keyboard_even_when_plugin_connected(
                 type="drive",
                 id="d-visible",
                 data={"text": "visible hi", "ide": "vscode", "submit": True},
-            ).encode()
+            ).encode(),
         )
 
         cli_reply = cli_reader.read_message()
@@ -508,7 +508,7 @@ def test_plugin_ack_with_shutdown_info_is_relayed(
                 type="drive",
                 id="d-shutdown",
                 data={"text": "hi", "ide": "vscode", "submit": True},
-            ).encode()
+            ).encode(),
         )
 
         forwarded = plugin_reader.read_message()
@@ -518,7 +518,7 @@ def test_plugin_ack_with_shutdown_info_is_relayed(
                 type="ack",
                 id=forwarded.id,
                 data={"ok": True, "delivered": True, "shutdown": True},
-            ).encode()
+            ).encode(),
         )
 
         cli_reply = cli_reader.read_message()
@@ -559,7 +559,7 @@ def test_plugin_ack_submit_failure_uses_os_fallback(
                 type="drive",
                 id="d-submit-fail",
                 data={"text": "continue", "ide": "vscode", "submit": True},
-            ).encode()
+            ).encode(),
         )
 
         forwarded = plugin_reader.read_message()
@@ -574,7 +574,7 @@ def test_plugin_ack_submit_failure_uses_os_fallback(
                     "submitted": False,
                     "message": "chat opened and text injected, but submit command failed",
                 },
-            ).encode()
+            ).encode(),
         )
 
         cli_reply = cli_reader.read_message()
@@ -624,7 +624,7 @@ def test_session_ended_triggers_handoff_chat_send(
             Message(
                 type="session.ended", id="ev1",
                 data={"chat": "cascade", "reason": "user-stop"},
-            ).encode()
+            ).encode(),
         )
 
         # The daemon emits two frames in response: (1) the chat.send
@@ -659,7 +659,7 @@ def test_session_ended_no_handoff_when_disabled(
         plugin, reader = _connect_plugin(h.sock_path, ide="vscode")
         plugin.sendall(
             Message(type="session.ended", id="ev1",
-                    data={"chat": "x", "reason": ""}).encode()
+                    data={"chat": "x", "reason": ""}).encode(),
         )
         msg = reader.read_message()
         assert msg.type == "ack"
@@ -688,7 +688,7 @@ def test_session_ended_skipped_during_cooldown(
         h.daemon._last_chat_send_at = time.monotonic()
 
         plugin.sendall(
-            Message(type="session.ended", id="ev1", data={"chat": "x"}).encode()
+            Message(type="session.ended", id="ev1", data={"chat": "x"}).encode(),
         )
         msg = reader.read_message()
         assert msg.type == "ack"
@@ -705,7 +705,7 @@ def test_session_started_event_just_acks(
     with _daemon(tmp_path, monkeypatch, handoff=lambda _e: "must not appear") as h:
         plugin, reader = _connect_plugin(h.sock_path, ide="vscode")
         plugin.sendall(
-            Message(type="session.started", id="ev1", data={"chat": "x"}).encode()
+            Message(type="session.started", id="ev1", data={"chat": "x"}).encode(),
         )
         msg = reader.read_message()
         assert msg.type == "ack"

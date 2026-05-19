@@ -5,13 +5,9 @@ from __future__ import annotations
 import json
 import socket as _socket
 from pathlib import Path
-from unittest.mock import patch
-
-import pytest
 
 from koru.autonomy.environment import (
     KNOWN_IDES,
-    IDEPresence,
     SocketHealth,
     probe_environment,
     probe_ide_presence,
@@ -22,7 +18,6 @@ from koru.autonomy.heal import (
     remove_stale_socket,
     summarise,
 )
-
 
 # --- probe_socket_health ----------------------------------------------------
 
@@ -92,7 +87,7 @@ def test_probe_ide_presence_detects_koru_in_cursor_mcp(tmp_path: Path) -> None:
     cfg_dir = tmp_path / ".cursor"
     cfg_dir.mkdir()
     (cfg_dir / "mcp.json").write_text(
-        json.dumps({"mcpServers": {"koru": {"command": "koru"}}})
+        json.dumps({"mcpServers": {"koru": {"command": "koru"}}}),
     )
 
     presences = probe_ide_presence(tmp_path)
@@ -105,7 +100,7 @@ def test_probe_ide_presence_ignores_disabled_koru(tmp_path: Path) -> None:
     cfg_dir = tmp_path / ".cursor"
     cfg_dir.mkdir()
     (cfg_dir / "mcp.json").write_text(
-        json.dumps({"mcpServers": {"koru": {"command": "koru", "disabled": True}}})
+        json.dumps({"mcpServers": {"koru": {"command": "koru", "disabled": True}}}),
     )
 
     presences = probe_ide_presence(tmp_path)
@@ -127,7 +122,7 @@ def test_probe_environment_flags_stale_socket(tmp_path: Path) -> None:
     stale = tmp_path / "stale.sock"
     stale.write_bytes(b"")
     report = probe_environment(
-        tmp_path, autopilot_socket=stale, environ={"PATH": ""}
+        tmp_path, autopilot_socket=stale, environ={"PATH": ""},
     )
     assert report.autopilot_socket is not None
     assert report.autopilot_socket.stale is True
@@ -190,7 +185,7 @@ def test_heal_environment_repairs_stale_socket(tmp_path: Path) -> None:
     stale = tmp_path / "stale.sock"
     stale.write_bytes(b"")
     report = probe_environment(
-        tmp_path, autopilot_socket=stale, environ={"PATH": ""}
+        tmp_path, autopilot_socket=stale, environ={"PATH": ""},
     )
     results = heal_environment(report)
     assert len(results) == 1

@@ -5,7 +5,12 @@ from __future__ import annotations
 import textwrap
 from pathlib import Path
 
-from koru.tools import build_tool_task_scaffold, detect_tools, infer_adapter_kind, load_tool_registry
+from koru.tools import (
+    build_tool_task_scaffold,
+    detect_tools,
+    infer_adapter_kind,
+    load_tool_registry,
+)
 
 
 def test_load_registry_from_explicit_path(tmp_path: Path) -> None:
@@ -20,7 +25,7 @@ def test_load_registry_from_explicit_path(tmp_path: Path) -> None:
                 lane: adapter
                 detect:
                   commands: ["python3"]
-            """
+            """,
         ),
         encoding="utf-8",
     )
@@ -39,7 +44,7 @@ def test_detect_tools_marks_available_via_command(tmp_path: Path) -> None:
             "category": "cli_agent",
             "lane": "adapter",
             "detect": {"commands": ["python3"], "markers": [], "env": []},
-        }
+        },
     ]
 
     out = detect_tools(tmp_path, registry)
@@ -60,7 +65,7 @@ def test_detect_tools_marks_available_via_marker(tmp_path: Path) -> None:
             "category": "ide",
             "lane": "native",
             "detect": {"commands": ["not-a-real-command-koru"], "markers": [".windsurf/rules.md"], "env": []},
-        }
+        },
     ]
 
     out = detect_tools(tmp_path, registry)
@@ -83,7 +88,7 @@ def test_build_tool_task_scaffold_contains_expected_fields() -> None:
             "stability": "beta",
             "invoke": "planfile shell ticket",
             "notes": "Adapter lane pending native integration.",
-        }
+        },
     )
     assert scaffold["source_tool"] == "koru-cli-tool-adapter"
     assert "tool-gemini-cli" in scaffold["labels"]
@@ -100,7 +105,7 @@ def test_build_tool_task_scaffold_plugin_bridge_shape() -> None:
             "stability": "stable",
             "invoke": "manual plugin workflow",
             "notes": "No stable external control surface in koru.",
-        }
+        },
     )
     assert scaffold["source_tool"] == "koru-cli-plugin-bridge"
     assert "plugin-bridge-scaffold" in scaffold["labels"]

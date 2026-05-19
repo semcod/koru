@@ -14,11 +14,9 @@ Design rules:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Literal
 
 from .environment import EnvironmentReport, SocketHealth
-
 
 RepairStatus = Literal["fixed", "skipped", "failed", "dry_run"]
 
@@ -33,7 +31,7 @@ class RepairResult:
 
 
 def remove_stale_socket(
-    socket: SocketHealth, *, dry_run: bool = False
+    socket: SocketHealth, *, dry_run: bool = False,
 ) -> RepairResult:
     """Delete a socket file that exists but has no listener.
 
@@ -74,7 +72,7 @@ def remove_stale_socket(
 
 
 def heal_environment(
-    report: EnvironmentReport, *, dry_run: bool = False
+    report: EnvironmentReport, *, dry_run: bool = False,
 ) -> list[RepairResult]:
     """Apply every safe automatic repair indicated by ``report``.
 

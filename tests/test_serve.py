@@ -25,12 +25,12 @@ from unittest import mock
 from koru.serve import (
     ServeConfig,
     _bulk_waiting_input_action,
+    _cmdline_suggests_koru_serve_from_bytes,
     bind_serve_server,
     build_server,
     read_serve_endpoint,
     start_serve_background,
     write_serve_endpoint_file,
-    _cmdline_suggests_koru_serve_from_bytes,
 )
 
 
@@ -40,7 +40,7 @@ def _minimal_planfile_project() -> tuple[tempfile.TemporaryDirectory, Path]:
     (project / ".planfile" / "sprints").mkdir(parents=True)
     (project / ".planfile" / "config.yaml").write_text("project: test\n", encoding="utf-8")
     (project / ".planfile" / "sprints" / "current.yaml").write_text(
-        "sprint:\n  id: current\n  tickets: {}\n", encoding="utf-8"
+        "sprint:\n  id: current\n  tickets: {}\n", encoding="utf-8",
     )
     return tmp, project
 
@@ -101,10 +101,10 @@ class TestServe(unittest.TestCase):
         # Minimal markers so build_context returns a non-error brief.
         (self.project / ".planfile" / "sprints").mkdir(parents=True)
         (self.project / ".planfile" / "config.yaml").write_text(
-            "project: test\n", encoding="utf-8"
+            "project: test\n", encoding="utf-8",
         )
         (self.project / ".planfile" / "sprints" / "current.yaml").write_text(
-            "sprint:\n  id: current\n  tickets: {}\n", encoding="utf-8"
+            "sprint:\n  id: current\n  tickets: {}\n", encoding="utf-8",
         )
         self.port = _free_port()
         self.server = _start(self.project, self.port)
@@ -256,7 +256,7 @@ class TestServeAutoPort(unittest.TestCase):
 
 def test_cmdline_suggests_koru_serve_from_bytes() -> None:
     assert _cmdline_suggests_koru_serve_from_bytes(
-        b"/usr/bin/python\x00-m\x00koru.cli\x00serve\x00"
+        b"/usr/bin/python\x00-m\x00koru.cli\x00serve\x00",
     )
     assert _cmdline_suggests_koru_serve_from_bytes(b"/opt/koru\x00serve\x00")
     assert not _cmdline_suggests_koru_serve_from_bytes(b"/usr/bin/koru\x00mcp-serve\x00")

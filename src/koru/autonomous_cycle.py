@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 import sys
 import time
@@ -12,7 +11,6 @@ from typing import Any
 
 from .autonomous_wup import WupHealthResult
 from .autonomous_wup import _read_wup_health as _read_wup_health_impl
-from .autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
 from .autonomy.ide_work import (
     extract_ticket_id_from_text,
     release_stale_in_progress_tickets,
@@ -25,6 +23,7 @@ from .autonomy.post_run_verify import (
     verify_completed_tickets,
 )
 from .autonomy.prompts import DEFAULT_ESCALATION_THRESHOLD, build_prompt
+from .autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
 from .queue import QueueLoopResult, run_planfile_queue_loop
 from .queue import default_human_prompt as _default_human_prompt
 from .queue import run_api_request as _run_api_request
@@ -119,7 +118,7 @@ def _try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | 
 
 
 def _run_command_check(
-    project: Path, check_id: str, command: list[str], *, stdio_format: str = "human"
+    project: Path, check_id: str, command: list[str], *, stdio_format: str = "human",
 ) -> bool:
     _stdio_info("+ " + " ".join(command), fmt=stdio_format)
     result = subprocess.run(command, cwd=project, check=False)
@@ -145,7 +144,7 @@ def _create_diagnostic_ticket(
     marker = state_dir / f"{check_id}.failed"
     if marker.exists():
         _stdio_info(
-            f"- diagnostic ticket marker exists for {check_id}, skipping create", fmt=stdio_format
+            f"- diagnostic ticket marker exists for {check_id}, skipping create", fmt=stdio_format,
         )
         return
     title = f"[AUTO-DIAG] {check_id} needs attention"
@@ -294,12 +293,12 @@ def _handle_queue_hygiene(
     stale_minutes = resolve_in_progress_stale_minutes(project)
     if stale_minutes is not None:
         released_stale = release_stale_in_progress_tickets(
-            project, stale_minutes=stale_minutes, runner=_run_process
+            project, stale_minutes=stale_minutes, runner=_run_process,
         )
         if released_stale:
             _hp(
                 f"  queue hygiene: reopened {released_stale} stale in_progress "
-                f"(>{stale_minutes:.0f}m)"
+                f"(>{stale_minutes:.0f}m)",
             )
             _emit(
                 "QueueStaleReleased",
@@ -326,7 +325,7 @@ def _handle_post_run_verify_ide(
         failed_ide = [o for o in ide_verify_outcomes if not o.get("ok")]
         _hp(
             f"  post_run_verify (IDE): tickets={len(ide_verify_outcomes)} "
-            f"failed={len(failed_ide)}"
+            f"failed={len(failed_ide)}",
         )
         _emit(
             "PostRunVerifyIdeCompleted",
@@ -356,7 +355,7 @@ def _handle_scan_phase(
     scan_result: ScanResult | None = None
     if enable_scan:
         if not _is_topology_enabled(
-            project, "scan:on-change", fallback=True, enabled=topology_integration
+            project, "scan:on-change", fallback=True, enabled=topology_integration,
         ):
             _hp("- koru scan --apply skipped (scan:on-change disabled in topology)")
             _emit("ScanSkipped", {"cycle": cycle, "reason": "topology:scan:on-change_disabled"})
@@ -370,7 +369,7 @@ def _handle_scan_phase(
             ):
                 _hp(
                     "- koru scan --apply skipped "
-                    f"(clean_streak={state.scan_clean_streak}, HEAD unchanged)"
+                    f"(clean_streak={state.scan_clean_streak}, HEAD unchanged)",
                 )
                 _emit(
                     "ScanSkipped",
@@ -387,11 +386,11 @@ def _handle_scan_phase(
                 )
                 _hp("+ " + scan_cmd)
                 scan_result = run_scan(
-                    project=project, apply=True, include_semcod_artifacts=include_semcod_artifacts
+                    project=project, apply=True, include_semcod_artifacts=include_semcod_artifacts,
                 )
                 _hp(
                     f"  scan: suggestions={len(scan_result.suggestions)} "
-                    f"applied={len(scan_result.applied)} skipped={len(scan_result.skipped)}"
+                    f"applied={len(scan_result.applied)} skipped={len(scan_result.skipped)}",
                 )
                 _emit(
                     "ScanCompleted",
@@ -496,7 +495,7 @@ def _handle_post_run_verify(
         if verify_outcomes:
             _hp(
                 f"  post_run_verify (queue): tickets={len(completed_ids)} "
-                f"failed={len(failed)}"
+                f"failed={len(failed)}",
             )
             _emit(
                 "PostRunVerifyCompleted",
@@ -523,7 +522,7 @@ def _handle_queue_loop_phase(
     _emit: callable,
 ) -> tuple[QueueLoopResult, Any]:
     if not _is_topology_enabled(
-        project, "autoloop:queue", fallback=True, enabled=topology_integration
+        project, "autoloop:queue", fallback=True, enabled=topology_integration,
     ):
         _hp("- autoloop queue phase skipped (autoloop:queue disabled in topology)")
         queue_result = QueueLoopResult(0, [], [], [], "disabled", "")
@@ -555,7 +554,7 @@ def _handle_scan_after_idle(
         scan_after_idle_queue
         and queue_result.last_status == "idle"
         and _is_topology_enabled(
-            project, "scan:on-change", fallback=True, enabled=topology_integration
+            project, "scan:on-change", fallback=True, enabled=topology_integration,
         )
     ):
         now = time.time()
@@ -568,7 +567,7 @@ def _handle_scan_after_idle(
             wait = scan_after_idle_min_interval_seconds - (now - state.last_scan_after_idle_ts)
             _hp(
                 f"- koru scan after idle skipped (min-interval "
-                f"{scan_after_idle_min_interval_seconds}s, ~{wait:.0f}s remaining)"
+                f"{scan_after_idle_min_interval_seconds}s, ~{wait:.0f}s remaining)",
             )
             _emit(
                 "ScanSkipped",
@@ -585,7 +584,7 @@ def _handle_scan_after_idle(
             )
             _hp("+ " + scan_cmd + " (queue idle → intake scan)")
             idle_scan = run_scan(
-                project=project, apply=True, include_semcod_artifacts=include_semcod_artifacts
+                project=project, apply=True, include_semcod_artifacts=include_semcod_artifacts,
             )
             scan_result = idle_scan
             state.last_scan_after_idle_ts = now
@@ -595,7 +594,7 @@ def _handle_scan_after_idle(
             cycle_telemetry["scan_after_idle_applied"] = len(idle_scan.applied)
             _hp(
                 f"  scan: suggestions={len(idle_scan.suggestions)} "
-                f"applied={len(idle_scan.applied)} skipped={len(idle_scan.skipped)}"
+                f"applied={len(idle_scan.applied)} skipped={len(idle_scan.skipped)}",
             )
             _emit(
                 "ScanCompleted",
@@ -670,7 +669,7 @@ def _handle_diagnostics(
             _hp(
                 f"koru autonomous: WUP health={wup_health.status} "
                 f"failing={','.join(wup_health.failing_services) or '-'} "
-                f"new_events={wup_health.new_events}"
+                f"new_events={wup_health.new_events}",
             )
             if diag_result.status in {"skipped", "off", "ok"} and wup_health.status == "failed":
                 diag_result = DiagnosticResult(status="failed", failed=["wup"])
@@ -708,7 +707,7 @@ def _check_autopilot_skip_conditions(
 ) -> tuple[bool, str]:
     """Check if autopilot should be skipped and return (should_skip, skip_reason)."""
     if not _is_topology_enabled(
-        project, "autopilot:drive", fallback=True, enabled=topology_integration
+        project, "autopilot:drive", fallback=True, enabled=topology_integration,
     ):
         _hp("- autopilot skipped (autopilot:drive disabled in topology)")
         return True, "skipped(topology)"
@@ -728,7 +727,7 @@ def _check_autopilot_skip_conditions(
     ):
         _hp(
             "- autopilot skipped "
-            f"(idle_streak_{state.stagnation_streak}>={autopilot_skip_drive_idle_streak})"
+            f"(idle_streak_{state.stagnation_streak}>={autopilot_skip_drive_idle_streak})",
         )
         state.telemetry_autopilot_idle_streak_skips += 1
         cycle_telemetry["autopilot_skipped_idle_streak"] = True
@@ -736,12 +735,12 @@ def _check_autopilot_skip_conditions(
     elif (
         0 < state.stagnation_streak < DEFAULT_ESCALATION_THRESHOLD
         and _status_in_skip_list(
-            queue_result.last_status, autopilot_skip_statuses
+            queue_result.last_status, autopilot_skip_statuses,
         )
     ):
         _hp(
             "- autopilot skipped "
-            f"(stuck_{queue_result.last_status}_streak_{state.stagnation_streak})"
+            f"(stuck_{queue_result.last_status}_streak_{state.stagnation_streak})",
         )
         return True, f"skipped(stuck_{queue_result.last_status})"
     return False, ""
@@ -831,17 +830,17 @@ def _log_autopilot_result(
             _hp(
                 "  autopilot: ok (ticket="
                 f"{waiting_ticket}, ide={autopilot_ide}, "
-                f"backend={backend}, kind={decision_kind})"
+                f"backend={backend}, kind={decision_kind})",
             )
         else:
             _hp(
                 f"  autopilot: ok (ide={autopilot_ide}, "
-                f"backend={backend}, kind={decision_kind})"
+                f"backend={backend}, kind={decision_kind})",
             )
     else:
         _hp(
             "  autopilot: failed "
-            f"({reply.get('message', 'unknown error')}, kind={decision_kind})"
+            f"({reply.get('message', 'unknown error')}, kind={decision_kind})",
         )
 
 
@@ -941,7 +940,7 @@ def _emit_cycle_completion_events(
     )
     _hp(
         f"koru autonomous: cycle={cycle} queue={queue_result.last_status} "
-        f"diagnostics={diag_result.status} wup={wup_health.status} autopilot={autopilot_status}"
+        f"diagnostics={diag_result.status} wup={wup_health.status} autopilot={autopilot_status}",
     )
     _emit(
         "CycleCompleted",

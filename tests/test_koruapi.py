@@ -39,7 +39,11 @@ def test_wired_handlers_are_catalogued() -> None:
 
 
 def test_tool_list_tickets_status_filters(monkeypatch: pytest.MonkeyPatch) -> None:
-    from koruapi.mcp_server import _serialize_mcp_ticket, _tickets_for_status_filter, tool_list_tickets
+    from koruapi.mcp_server import (
+        _serialize_mcp_ticket,
+        _tickets_for_status_filter,
+        tool_list_tickets,
+    )
 
     ctx = {
         "all_tickets": [

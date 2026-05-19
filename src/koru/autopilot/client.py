@@ -7,5 +7,4 @@ from __future__ import annotations
 
 from koruide.client import AutopilotClient
 
-
 __all__ = ["AutopilotClient"]

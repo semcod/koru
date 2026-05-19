@@ -7,8 +7,8 @@ legacy autopilot socket client.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
@@ -65,7 +65,7 @@ class LegacyAutopilotClientAdapter:
             preview=text,
         )
         reply = self.client.drive(
-            text, submit=submit, ide=ide, require_plugin=require_plugin
+            text, submit=submit, ide=ide, require_plugin=require_plugin,
         )
         backend = reply.get("backend", "?")
         ok = bool(reply.get("ok", True))
@@ -98,7 +98,7 @@ def build_legacy_ide_client(
     from .autopilot.client import AutopilotClient
 
     return adapt_legacy_autopilot_client(
-        AutopilotClient(socket_path=socket_path, timeout=timeout)
+        AutopilotClient(socket_path=socket_path, timeout=timeout),
     )
 
 

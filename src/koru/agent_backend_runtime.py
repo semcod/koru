@@ -17,13 +17,14 @@ Lane → backend resolution lives in :func:`build_agent_backend`.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
-from .ide_client import IDEControlClient
 from koruide.os_injector import OsInjectorError, inject_with_profile, load_profile
+
+from .ide_client import IDEControlClient
 
 
 class AgentBackend(Protocol):

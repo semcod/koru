@@ -297,7 +297,7 @@ def inject_with_profile(
 
     x, y = profile.chat_x, profile.chat_y
     try:
-        from koru.activity_log import activity, preview_text
+        from koru.activity_log import activity
 
         activity(
             "CHAT",

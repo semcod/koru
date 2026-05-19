@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -52,7 +53,7 @@ def _render_pipeline_rows(topology: dict[str, Any]) -> list[str]:
 
 
 def apply_topology_mutations(
-    topo: dict[str, Any], mutations: list[TopologyMutation]
+    topo: dict[str, Any], mutations: list[TopologyMutation],
 ) -> tuple[bool, int]:
     """Apply enable/disable mutations. Returns (mutated, exit_code)."""
     mutated = False
@@ -68,6 +69,6 @@ def apply_topology_mutations(
             return mutated, 2
         mutated = True
         print(
-            f"koru topology: {mutation.kind} {res.id} {res.previous} -> {res.current}"
+            f"koru topology: {mutation.kind} {res.id} {res.previous} -> {res.current}",
         )
     return mutated, 0

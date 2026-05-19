@@ -17,12 +17,11 @@ from __future__ import annotations
 import os
 import shutil
 import socket as _socket
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Mapping
 
 from ..ide_router import is_headless_environment
-
 
 KNOWN_IDES = ("cursor", "windsurf", "vscode", "code", "code-oss", "vscodium", "zed")
 
@@ -89,13 +88,14 @@ def probe_ide_presence(
     Returns one entry per known IDE so a caller can also see *negatives*.
     """
     env = os.environ if environ is None else environ
+    import json
+
     from ..mcp_provision import (
         _cursor_project_config,
         _vscode_project_config,
-        _windsurf_project_config,
         _windsurf_global_config,
+        _windsurf_project_config,
     )
-    import json
 
     mcp_paths = {
         "cursor": _cursor_project_config(project),
@@ -133,7 +133,7 @@ def probe_ide_presence(
                 binary_path=binary,
                 mcp_config_path=chosen_path,
                 mcp_has_koru=mcp_has_koru,
-            )
+            ),
         )
     return out
 
@@ -181,14 +181,14 @@ def _build_fixable_issues(
     fixable: list[str] = []
     if socket_health and socket_health.stale:
         fixable.append(
-            f"stale autopilot socket at {socket_health.path}: remove + restart daemon"
+            f"stale autopilot socket at {socket_health.path}: remove + restart daemon",
         )
     installed = [p.ide for p in ides if p.installed]
     mcp_on = [p.ide for p in ides if p.mcp_has_koru]
     if installed and not mcp_on:
         fixable.append(
             f"IDE(s) installed ({', '.join(installed)}) but Koru MCP is not configured: "
-            "run `koru init-ide` / `task koru:mcp:bootstrap`"
+            "run `koru init-ide` / `task koru:mcp:bootstrap`",
         )
     return fixable
 

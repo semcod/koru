@@ -11,8 +11,6 @@ from pathlib import Path
 import yaml
 
 from koru.gc import (
-    DEFAULT_MAX_AGE_DAYS,
-    GC_STATUSES,
     GcResult,
     collect_gc_candidates,
     run_gc,
@@ -29,10 +27,10 @@ def _write_sprint(project: Path, tickets: dict, sprint: str = "current") -> None
             "name": "test",
             "status": "active",
             "tickets": tickets,
-        }
+        },
     }
     (sprint_dir / f"{sprint}.yaml").write_text(
-        yaml.safe_dump(data, sort_keys=False), encoding="utf-8"
+        yaml.safe_dump(data, sort_keys=False), encoding="utf-8",
     )
 
 
@@ -145,7 +143,7 @@ class TestRunGc(unittest.TestCase):
             self.assertEqual(result.kept, [])
             # Sprint file untouched
             data = yaml.safe_load(
-                (project / ".planfile/sprints/current.yaml").read_text()
+                (project / ".planfile/sprints/current.yaml").read_text(),
             )
             self.assertIn("T-100", data["sprint"]["tickets"])
 

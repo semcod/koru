@@ -260,7 +260,7 @@ def test_ticket_sources_env_overrides_cli_queue_to_scan(tmp_path, monkeypatch) -
             "--ticket-sources",
             "queue",
             "--no-autopilot",
-        ]
+        ],
     )
     assert rc == 0
     assert len(scan_calls) == 1
@@ -303,7 +303,7 @@ def test_ticket_sources_env_invalid_keeps_cli_queue(tmp_path, monkeypatch, capsy
             "--ticket-sources",
             "queue",
             "--no-autopilot",
-        ]
+        ],
     )
     assert rc == 0
     assert scan_calls == []
@@ -333,13 +333,13 @@ def test_autonomous_environ_doctor_probe_pass_summary(tmp_path, monkeypatch) -> 
 
 def test_looks_like_autonomous_matches_koru_cli_auto() -> None:
     assert autonomous_mod._looks_like_autonomous_up_command(
-        "python3 -m koru.cli auto --project /tmp/x"
+        "python3 -m koru.cli auto --project /tmp/x",
     )
 
 
 def test_looks_like_autonomous_matches_koru_autonomous_regex() -> None:
     assert autonomous_mod._looks_like_autonomous_up_command(
-        "python3 -m koru.cli autonomous up --project /tmp"
+        "python3 -m koru.cli autonomous up --project /tmp",
     )
 
 
@@ -377,7 +377,7 @@ def test_stop_prior_autonomous_for_auto_start_terminates(tmp_path, monkeypatch) 
             pid=99,
             command="python3 -m koru.cli auto --project " + str(tmp_path),
             cwd=tmp_path,
-        )
+        ),
     ]
     stopped: list[int] = []
     monkeypatch.setattr(
@@ -404,7 +404,7 @@ def test_guard_existing_autonomous_noninteractive_blocks_duplicate(tmp_path, mon
                 pid=123,
                 command="koru autonomous up --project " + str(tmp_path),
                 cwd=tmp_path,
-            )
+            ),
         ],
     )
     args = SimpleNamespace(
@@ -424,7 +424,7 @@ def test_guard_existing_autonomous_replace_existing_terminates(tmp_path, monkeyp
             pid=123,
             command="koru autonomous up --project " + str(tmp_path),
             cwd=tmp_path,
-        )
+        ),
     ]
     stopped: list[int] = []
     monkeypatch.setattr(
@@ -450,7 +450,7 @@ def test_guard_existing_autonomous_replace_existing_terminates(tmp_path, monkeyp
 
 
 def test_guard_existing_autonomous_replace_existing_terminates_stale_wup(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch,
 ) -> None:
     wup = [
         autonomous_mod.ExistingManagedProcess(
@@ -458,7 +458,7 @@ def test_guard_existing_autonomous_replace_existing_terminates_stale_wup(
             kind="wup-watch",
             command="wup watch " + str(tmp_path),
             cwd=tmp_path,
-        )
+        ),
     ]
     stopped: list[int] = []
     monkeypatch.setattr(autonomous_mod, "_find_existing_autonomous_processes", lambda project: [])
@@ -481,7 +481,7 @@ def test_guard_existing_autonomous_replace_existing_terminates_stale_wup(
 
 
 def test_guard_existing_autonomous_interactive_decline_blocks_duplicate(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch,
 ) -> None:
     monkeypatch.setattr(
         autonomous_mod,
@@ -491,7 +491,7 @@ def test_guard_existing_autonomous_interactive_decline_blocks_duplicate(
                 pid=123,
                 command="koru autonomous up --project " + str(tmp_path),
                 cwd=tmp_path,
-            )
+            ),
         ],
     )
     monkeypatch.setattr(autonomous_mod.sys.stdin, "isatty", lambda: True)
@@ -554,7 +554,7 @@ def test_autonomous_jsonl_keyboard_interrupt_emits_reason(tmp_path, monkeypatch)
                 "jsonl",
                 "--no-autopilot",
                 "--no-wup-watch",
-            ]
+            ],
         )
     assert rc == 0
     events = [json.loads(line) for line in buf.getvalue().splitlines() if line.strip()]
@@ -758,7 +758,7 @@ def test_autonomous_main_prepends_up_for_flags(tmp_path, monkeypatch) -> None:
             "--ticket-sources",
             "queue",
             "--no-autopilot",
-        ]
+        ],
     )
     assert rc == 0
 
@@ -798,7 +798,7 @@ def test_up_single_cycle_queue_only_no_autopilot(
             "--ticket-sources",
             "queue",
             "--no-autopilot",
-        ]
+        ],
     )
 
     assert rc == 0
@@ -844,7 +844,7 @@ def test_safe_up_uses_queue_diagnostics_without_autopilot(
             "0",
             "--agent-lane",
             "none",
-        ]
+        ],
     )
 
     assert rc == 0
@@ -892,7 +892,7 @@ def test_up_single_cycle_all_sources_runs_scan(
             "--ticket-sources",
             "all",
             "--no-autopilot",
-        ]
+        ],
     )
 
     assert rc == 0
@@ -960,7 +960,7 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
             "none",
             "--autopilot-ide",
             "cursor",
-        ]
+        ],
     )
 
     assert rc == 0
@@ -1301,7 +1301,7 @@ def test_up_keeps_running_on_waiting_input_by_default(
             "--no-autopilot",
             "--agent-lane",
             "none",
-        ]
+        ],
     )
 
     assert rc == 0
@@ -1343,7 +1343,7 @@ def test_up_stops_on_waiting_input_when_flag_set(
         lambda **_kwargs: SimpleNamespace(status="skipped", ide="auto", message="ok", command=None),
     )
     monkeypatch.setattr(
-        autonomous_mod, "format_plugin_install_result", lambda result: result.status
+        autonomous_mod, "format_plugin_install_result", lambda result: result.status,
     )
     monkeypatch.setattr(
         autonomous_mod,
@@ -1366,7 +1366,7 @@ def test_up_stops_on_waiting_input_when_flag_set(
             "queue",
             "--agent-lane",
             "none",
-        ]
+        ],
     )
 
     assert rc == 0
@@ -1440,7 +1440,7 @@ def test_up_restarts_autopilot_when_socket_disappears_between_cycles(
             "queue",
             "--agent-lane",
             "none",
-        ]
+        ],
     )
     assert rc == 0
     assert len(daemon_starts) == 2
@@ -1510,8 +1510,10 @@ def test_run_idle_diagnostics_profile_off_message(tmp_path, capsys) -> None:
 
 
 def test_run_idle_diagnostics_creates_deduped_ticket(tmp_path, monkeypatch) -> None:
+    import koru.autonomous_diagnostics as _diag_mod
+
     monkeypatch.setattr(
-        autonomous_mod.shutil, "which", lambda name: "/bin/false" if name == "regix" else None
+        _diag_mod.shutil, "which", lambda name: "/bin/false" if name == "regix" else None,
     )
     monkeypatch.setattr(autonomous_mod, "_run_command_check", lambda *_args, **_kwargs: False)
     monkeypatch.setattr(autonomous_mod, "_is_topology_enabled", lambda *_args, **_kwargs: True)
@@ -1613,7 +1615,7 @@ def test_wup_topology_gate_uses_pipeline_for_gate_wup(tmp_path, monkeypatch) -> 
     )
 
     assert autonomous_wup_mod._wup_topology_gate(
-        tmp_path, "gate:wup", fallback=False, enabled=True
+        tmp_path, "gate:wup", fallback=False, enabled=True,
     )
     assert calls == ["gate:wup"]
 
@@ -1629,8 +1631,8 @@ def test_read_wup_health_creates_high_priority_planfile_ticket(tmp_path) -> None
                     "stage": "quick",
                     "message": "TestQL scenario failed",
                     "track_file": ".wup/tracks/api.json",
-                }
-            }
+                },
+            },
         ),
         encoding="utf-8",
     )
@@ -1667,7 +1669,7 @@ def test_read_wup_health_ignores_degraded_fleet_and_clears_marker(tmp_path) -> N
                     "stage": "health_scenario",
                     "message": "66/74 passed, 8 failed",
                 },
-            }
+            },
         ),
         encoding="utf-8",
     )

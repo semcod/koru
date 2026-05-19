@@ -17,14 +17,14 @@ import time
 from pathlib import Path
 from typing import Any
 
-from . import default_socket_path
 from koruide.audit import AuditLog, default_log_path
+
+from . import default_socket_path
 from .client import AutopilotClient
 from .daemon import AutopilotDaemon
 from .ide import (
     detect_focused_ide_id,
     detect_running_ides,
-    pick_target,
     resolve_drive_target,
 )
 from .injector import Injector, InjectorError
@@ -795,7 +795,7 @@ def _action_status(args: argparse.Namespace) -> int:
 def _action_shutdown(args: argparse.Namespace) -> int:
     client = _client(args)
     return call_daemon_method(
-        client, "shutdown", "koru autopilot shutdown", not_running_return_code=0
+        client, "shutdown", "koru autopilot shutdown", not_running_return_code=0,
     )
 
 
@@ -950,7 +950,7 @@ def _resolve_plugin_vsix_path(vsix: Path | None) -> Path:
     if not matches:
         raise RuntimeError(
             "no packaged .vsix found under plugins/koru-autopilot-vscode; "
-            "build one with: `cd plugins/koru-autopilot-vscode && npm install && npm run package`"
+            "build one with: `cd plugins/koru-autopilot-vscode && npm install && npm run package`",
         )
     return matches[0]
 
@@ -982,12 +982,12 @@ def _resolve_plugin_target_ide(raw_ide: str) -> str:
         return detected[0].id
     if not detected:
         raise RuntimeError(
-            "could not detect running editor for plugin install; pass --ide windsurf|vscode|cursor"
+            "could not detect running editor for plugin install; pass --ide windsurf|vscode|cursor",
         )
     ids = ", ".join(ide.id for ide in detected)
     raise RuntimeError(
         "multiple supported IDEs detected with no clear active one "
-        f"({ids}); pass --ide windsurf|vscode|cursor"
+        f"({ids}); pass --ide windsurf|vscode|cursor",
     )
 
 

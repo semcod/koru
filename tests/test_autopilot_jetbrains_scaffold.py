@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 PLUGIN = ROOT / "plugins" / "koru-autopilot-jetbrains"
 
@@ -28,7 +27,7 @@ def test_jetbrains_plugin_scaffold_files_exist() -> None:
 
 def test_jetbrains_plugin_metadata_wires_service_and_action() -> None:
     plugin_xml = (PLUGIN / "src/main/resources/META-INF/plugin.xml").read_text(
-        encoding="utf-8"
+        encoding="utf-8",
     )
     build_file = (PLUGIN / "build.gradle.kts").read_text(encoding="utf-8")
 

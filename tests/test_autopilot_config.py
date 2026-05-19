@@ -25,7 +25,6 @@ from koru.autopilot.config import (
     load_config,
 )
 
-
 # ---- load_config -----------------------------------------------------------
 
 

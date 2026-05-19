@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
 
 from koru.local_service import LocalServiceConfig, default_local_service_config, run_local_service
 

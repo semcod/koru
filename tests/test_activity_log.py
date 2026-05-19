@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import io
-import sys
-
 import pytest
 
 from koru import activity_log as al
