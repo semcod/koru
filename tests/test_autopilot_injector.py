@@ -42,6 +42,14 @@ def test_select_backend_wayland_falls_back_to_ydotool() -> None:
     assert inj.select_backend() == "ydotool"
 
 
+def test_select_backend_unknown_session_without_display_prefers_wayland_tools(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("DISPLAY", raising=False)
+    inj = Injector(session="", which=_which_factory({"xdotool", "wtype", "ydotool"}))
+    assert inj.select_backend() == "wtype"
+
+
 def test_select_backend_no_tools_returns_none() -> None:
     inj = Injector(session="x11", which=_which_factory(set()))
     assert inj.select_backend() is None

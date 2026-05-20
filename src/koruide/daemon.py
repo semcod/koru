@@ -430,42 +430,46 @@ class AutopilotDaemon:
         target = pick_target(detect_running_ides(), prefer=ide_pref)
         try:
             os_res = self._try_os_injector_drive(profile_id, text, submit)
-            if os_res is not None:
-                self.log(
-                    f"drive → os_injector/{profile_id}: klik ({os_res.get('chat_x')}, "
-                    f"{os_res.get('chat_y')}) + {os_res.get('input_method', 'type')} "
-                    f"«{preview}»",
-                )
-                info: dict[str, Any] = {
-                    "backend": str(os_res.get("backend", "os_injector")),
-                    "submitted": bool(os_res.get("submitted", submit)),
-                }
-                if os_res.get("dry_run"):
-                    info["dry_run"] = True
-                tid = os_res.get("tool_id")
-                if isinstance(tid, str):
-                    info["tool_id"] = tid
-                if target is not None:
-                    info["ide"] = target.to_dict()
-                self._send(client, ack(msg.id or "", info=info).encode())
-                self.log(
-                    f"drive → {target_id} via {info['backend']}"
-                    f" ({len(text)} chars, submit={submit})",
-                )
-                self.audit.record(
-                    "drive",
-                    ide=target_id,
-                    backend=str(info["backend"]),
-                    chars=len(text),
-                    submit=submit,
-                    ok=True,
-                )
-                return
-
+        except InjectorError as exc:
+            os_res = None
+            self.log(f"drive → os_injector/{profile_id} failed; trying keyboard fallback: {exc}")
+        if os_res is not None:
             self.log(
-                f"drive → keyboard/{target_id}: {self.injector.select_backend()} "
-                f"({len(text)} zn) «{preview}»",
+                f"drive → os_injector/{profile_id}: klik ({os_res.get('chat_x')}, "
+                f"{os_res.get('chat_y')}) + {os_res.get('input_method', 'type')} "
+                f"«{preview}»",
             )
+            info: dict[str, Any] = {
+                "backend": str(os_res.get("backend", "os_injector")),
+                "submitted": bool(os_res.get("submitted", submit)),
+            }
+            if os_res.get("dry_run"):
+                info["dry_run"] = True
+            tid = os_res.get("tool_id")
+            if isinstance(tid, str):
+                info["tool_id"] = tid
+            if target is not None:
+                info["ide"] = target.to_dict()
+            self._send(client, ack(msg.id or "", info=info).encode())
+            self.log(
+                f"drive → {target_id} via {info['backend']}"
+                f" ({len(text)} chars, submit={submit})",
+            )
+            self.audit.record(
+                "drive",
+                ide=target_id,
+                backend=str(info["backend"]),
+                chars=len(text),
+                submit=submit,
+                ok=True,
+            )
+            return
+
+        self.log(
+            f"drive → keyboard/{target_id}: {self.injector.select_backend()} "
+            f"({len(text)} zn) «{preview}»",
+        )
+        try:
             result = self.injector.type_text(text, ide=target_id, submit=submit)
         except InjectorError as exc:
             self._send(client, error(msg.id, str(exc)).encode())

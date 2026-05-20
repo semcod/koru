@@ -335,6 +335,7 @@ def test_drive_os_injector_skipped_when_env_disabled(
     fake = RunningIDE(id="cursor", label="Cursor", pid=1, exe="/opt/Cursor")
     monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [fake])
     monkeypatch.setattr(koruide_daemon_mod, "detect_running_ides", lambda **_: [fake])
+    monkeypatch.setattr(ide_mod, "detect_terminal_host_ide_id", lambda **_k: None)
     monkeypatch.setattr(
         oi_mod.shutil, "which", lambda name: "/bin/xdotool" if name == "xdotool" else None
     )
@@ -372,6 +373,29 @@ def test_drive_os_injector_forced_without_profile_falls_back_to_keyboard(
         reply = h.client().drive("y", ide="auto")
     assert reply["backend"] == "stub"
     assert h.injector.calls == [{"text": "y", "ide": "cursor", "submit": True}]
+
+
+def test_drive_os_injector_failure_falls_back_to_keyboard(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake = RunningIDE(id="cursor", label="Cursor", pid=1, exe="/opt/Cursor")
+    monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [fake])
+    monkeypatch.setattr(koruide_daemon_mod, "detect_running_ides", lambda **_: [fake])
+    monkeypatch.setattr(ide_mod, "detect_terminal_host_ide_id", lambda **_k: None)
+
+    with _daemon(tmp_path, monkeypatch, patch_ides=False) as h:
+        monkeypatch.setattr(
+            h.daemon,
+            "_try_os_injector_drive",
+            lambda *_args, **_kwargs: (_ for _ in ()).throw(
+                InjectorError("xdotool failed: no DISPLAY"),
+            ),
+        )
+        reply = h.client().drive("z", ide="auto")
+
+    assert reply["backend"] == "stub"
+    assert h.injector.calls == [{"text": "z", "ide": "cursor", "submit": True}]
 
 
 def test_drive_empty_text_returns_error(running_daemon) -> None:

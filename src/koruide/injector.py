@@ -198,6 +198,9 @@ class Injector:
         elif self.session == "wayland":
             add("wtype")
             add("ydotool")
+        elif not os.environ.get("DISPLAY"):
+            add("wtype")
+            add("ydotool")
         # Same fallbacks as legacy ``select_backend`` (cross-session last resort).
         add("xdotool")
         add("wtype")
