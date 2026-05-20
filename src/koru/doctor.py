@@ -46,7 +46,6 @@ warnings alone ⇒ ``0`` (warnings are advisory, not blocking).
 The module is intentionally side-effect-free (no writes, no network).
 """
 
-from __future__ import annotations
 
 import os
 import re
@@ -58,11 +57,11 @@ from pathlib import Path
 
 import yaml
 
-from .autonomous_env import autonomous_environ_doctor_probe
-from .policy import policy_path
-from .project_pipeline import KORU_PROJECT_PIPELINE_FILENAME, project_pipeline_path
-from .runtime import planfile_dir, runtime_dir
-from .utils.subprocess_runner import get_python_cmd
+from koru.autonomous_env import autonomous_environ_doctor_probe
+from koru.policy import policy_path
+from koru.project_pipeline import KORU_PROJECT_PIPELINE_FILENAME, project_pipeline_path
+from koru.runtime import planfile_dir, runtime_dir
+from koru.utils.subprocess_runner import get_python_cmd
 
 # Default timeout for the pytest-collect probe. Doctor is meant to be
 # *interactive and fast*; we deliberately keep this tighter than
@@ -177,7 +176,7 @@ def run_diagnostics(project: Path) -> DoctorReport:
 
 def _check_agent_backends_registry(_project: Path) -> tuple[str, str]:
     del _project
-    from .agent_backends import list_agent_backend_ids
+    from koru.agent_backends import list_agent_backend_ids
 
     ids = list_agent_backend_ids()
     return PASS, f"{len(ids)} profiles: {', '.join(ids)}"
@@ -463,7 +462,7 @@ def _check_pytest_collect(project: Path) -> tuple[str, str]:
 
 
 def _check_ci_command(project: Path) -> tuple[str, str]:
-    from .policy import load_policy
+    from koru.policy import load_policy
 
     policy = load_policy(project)
     if not policy.ci_command.strip():

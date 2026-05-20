@@ -1,12 +1,12 @@
-# redup/duplication | 33 groups | 126f 29541L | 2026-05-19
+# redup/duplication | 33 groups | 128f 29825L | 2026-05-20
 
 SUMMARY:
-  files_scanned: 126
-  total_lines:   29541
+  files_scanned: 128
+  total_lines:   29825
   dup_groups:    33
   dup_fragments: 77
   saved_lines:   358
-  scan_ms:       2890
+  scan_ms:       4287
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/autonomous.py  dup=119L  groups=12  frags=12  (0.4%)
@@ -19,21 +19,21 @@ HOTSPOTS[7] (files with most duplication):
 
 DUPLICATES[33] (ranked by impact):
   [b79fb4d314048ea0] ! STRU  _build_serve_parser  L=48 N=2 saved=48 sim=1.00
-      src/koru/cli.py:387-434  (_build_serve_parser)
+      src/koru/cli.py:389-436  (_build_serve_parser)
       src/koruapi/dashboard.py:17-61  (build_serve_parser)
   [e6df54c38573f3c8] ! EXAC  _run_idle_diagnostics  L=36 N=2 saved=36 sim=1.00
       src/koru/autonomous.py:1093-1128  (_run_idle_diagnostics)
       src/koru/autonomous_cycle.py:193-228  (_run_idle_diagnostics)
   [cfa0e91c669b55c5]   STRU  _build_local_serve_parser  L=29 N=2 saved=29 sim=1.00
-      src/koru/cli.py:437-465  (_build_local_serve_parser)
+      src/koru/cli.py:439-467  (_build_local_serve_parser)
       src/koruapi/local.py:11-19  (build_local_parser)
   [077cfa61a2943c36]   STRU  _serve_main  L=4 N=6 saved=20 sim=1.00
-      src/koru/cli.py:1045-1048  (_serve_main)
-      src/koru/cli.py:1051-1054  (_local_serve_main)
-      src/koru/cli.py:1290-1293  (_mcp_serve_main)
-      src/koru/cli.py:1355-1358  (_init_ide_main)
-      src/koru/cli.py:1417-1420  (_dsl_main)
-      src/koru/cli.py:1423-1426  (_api_main)
+      src/koru/cli.py:1047-1050  (_serve_main)
+      src/koru/cli.py:1053-1056  (_local_serve_main)
+      src/koru/cli.py:1292-1295  (_mcp_serve_main)
+      src/koru/cli.py:1357-1360  (_init_ide_main)
+      src/koru/cli.py:1419-1422  (_dsl_main)
+      src/koru/cli.py:1425-1428  (_api_main)
   [13996a2247a97ed8]   EXAC  _read_wup_health  L=16 N=2 saved=16 sim=1.00
       src/koru/autonomous.py:1075-1090  (_read_wup_health)
       src/koru/autonomous_cycle.py:175-190  (_read_wup_health)
@@ -125,9 +125,9 @@ DUPLICATES[33] (ranked by impact):
   [781cd2265323c713]   STRU  _systemd_user_dir  L=3 N=2 saved=3 sim=1.00
       src/koru/autopilot/cli_command.py:1214-1216  (_systemd_user_dir)
       src/koruide/config.py:62-64  (default_config_path)
-  [58ffcb67f5092308]   STRU  redup_scan_command  L=3 N=2 saved=3 sim=1.00
-      src/koru/redup_integration.py:14-16  (redup_scan_command)
-      src/koru/redup_integration.py:19-21  (redup_check_command)
+  [60d745664334ec54]   STRU  redup_scan_command  L=3 N=2 saved=3 sim=1.00
+      src/koru/redup_integration.py:22-24  (redup_scan_command)
+      src/koru/redup_integration.py:27-29  (redup_check_command)
 
 REFACTOR[33] (ranked by priority):
   [1] ◐ extract_function   → src/utils/_build_serve_parser.py

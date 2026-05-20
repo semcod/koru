@@ -14,9 +14,8 @@ split into focused modules:
 For new code, import directly from koru.queue instead.
 """
 
-from __future__ import annotations
 
-from .queue import (
+from koru.queue import (
     ApiRunResult,
     CommandResult,
     LlmRunResult,

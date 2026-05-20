@@ -52,3 +52,24 @@ def test_readme_links_ide_control_surfaces() -> None:
     root = Path(__file__).resolve().parent.parent
     text = (root / "README.md").read_text(encoding="utf-8")
     assert "docs/ide-control-surfaces.md" in text
+
+
+def test_ide_protocol_doc_exists_with_key_protocol_terms() -> None:
+    root = Path(__file__).resolve().parent.parent
+    text = (root / "docs" / "IDE_PROTOCOL.md").read_text(encoding="utf-8")
+    assert "Control Plane" in text
+    assert "NDJSON" in text
+    assert "chat.send" in text
+    assert "session.ended" in text
+
+
+def test_readme_links_formal_ide_protocol() -> None:
+    root = Path(__file__).resolve().parent.parent
+    text = (root / "README.md").read_text(encoding="utf-8")
+    assert "docs/IDE_PROTOCOL.md" in text
+
+
+def test_docs_index_links_formal_ide_protocol() -> None:
+    root = Path(__file__).resolve().parent.parent
+    text = (root / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "IDE_PROTOCOL.md" in text

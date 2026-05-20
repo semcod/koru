@@ -1,6 +1,5 @@
 """CLI helpers for ``koru agent``."""
 
-from __future__ import annotations
 
 import json
 import sys
@@ -8,7 +7,7 @@ from argparse import Namespace
 from pathlib import Path
 from typing import Any
 
-from .agents import (
+from koru.agents import (
     agent_lane_environment,
     detect_agent_options,
     format_agent_lane_exports,
@@ -16,7 +15,7 @@ from .agents import (
     save_agent_prompt,
     select_agent,
 )
-from .context import build_context, render_markdown_handoff
+from koru.context import build_context, render_markdown_handoff
 
 
 def try_agent_env_exports(args: Namespace) -> int | None:

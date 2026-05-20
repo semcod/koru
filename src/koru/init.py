@@ -46,7 +46,6 @@ lane markers are read in a fixed order (``.cursor``, ``.windsurf``, ``.vscode``,
 force ``local`` so CI jobs do not pick a lane from committed IDE folders.
 """
 
-from __future__ import annotations
 
 import contextlib
 import os
@@ -57,15 +56,15 @@ from pathlib import Path
 
 import yaml
 
-from .agents import (
+from koru.agents import (
     agent_lane_environment,
     format_agent_lane_exports,
     normalize_agent_lane_id,
 )
-from .bootstrap import import_flat_pipeline
-from .init_host_environment import write_host_environment_bundle
-from .project_pipeline import write_koru_project_pipeline_if_absent
-from .runtime import planfile_dir, runtime_dir
+from koru.bootstrap import import_flat_pipeline
+from koru.init_host_environment import write_host_environment_bundle
+from koru.project_pipeline import write_koru_project_pipeline_if_absent
+from koru.runtime import planfile_dir, runtime_dir
 
 POLICY_STUB = """\
 # .planfile/.koru/policy.yaml

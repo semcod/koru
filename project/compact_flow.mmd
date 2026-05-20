@@ -1,16 +1,16 @@
 flowchart TD
-%% generated in 0.03s
+%% generated in 0.06s
     plugins__koru_autopilot_vscode["plugins.koru-autopilot-vscode<br/>130 funcs"]
     scripts___koru_autodiag_filter_tickets["scripts._koru_autodiag_filter_tickets<br/>1 funcs"]
     scripts__koru_gate_capture["scripts.koru-gate-capture<br/>14 funcs"]
     scripts__koru_soak_monitor["scripts.koru-soak-monitor<br/>6 funcs"]
     scripts__planfile_sync_todo["scripts.planfile-sync-todo<br/>12 funcs"]
     services__healing_webhook["services.healing-webhook<br/>34 funcs"]
-    src__koru["src.koru<br/>730 funcs"]
+    src__koru["src.koru<br/>761 funcs"]
     src__koruapi["src.koruapi<br/>86 funcs"]
     src__korudsl["src.korudsl<br/>26 funcs"]
     src__koruide["src.koruide<br/>170 funcs"]
-    src__koru ==>|220| scripts__koru_soak_monitor
+    src__koru ==>|224| scripts__koru_soak_monitor
     src__koruapi ==>|42| src__koru
     src__koru ==>|35| src__koruide
     src__koruide ==>|27| scripts__koru_soak_monitor

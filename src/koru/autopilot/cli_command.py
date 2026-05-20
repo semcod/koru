@@ -5,7 +5,6 @@ public entrypoint is :func:`autopilot_main` which mirrors the
 ``_task_main`` / ``_scan_main`` style used elsewhere.
 """
 
-from __future__ import annotations
 
 import argparse
 import json
@@ -19,16 +18,16 @@ from typing import Any
 
 from koruide.audit import AuditLog, default_log_path
 
-from . import default_socket_path
-from .client import AutopilotClient
-from .daemon import AutopilotDaemon
-from .ide import (
+from koru.autopilot import default_socket_path
+from koru.autopilot.client import AutopilotClient
+from koru.autopilot.daemon import AutopilotDaemon
+from koru.autopilot.ide import (
     detect_focused_ide_id,
     detect_running_ides,
     resolve_drive_target,
 )
-from .injector import Injector, InjectorError
-from .utils.client_helpers import call_daemon_method, resolve_xdg_path
+from koru.autopilot.injector import Injector, InjectorError
+from koru.autopilot.utils.client_helpers import call_daemon_method, resolve_xdg_path
 
 
 def _resolve_session_ides(raw: str) -> list[str]:
@@ -47,7 +46,7 @@ def _resolve_session_ides(raw: str) -> list[str]:
 
 
 def _action_calibrate(args: argparse.Namespace) -> int:
-    from . import os_injector as oi
+    from koru.autopilot import os_injector as oi
 
     raw = str(args.ide).strip()
     if raw.lower() in ("", "auto"):
@@ -98,7 +97,7 @@ def _capture_ide_profile(
     ide: str, delay: float, args: argparse.Namespace, captured: dict[tuple[int, int], list[str]]
 ) -> dict[str, object]:
     """Capture profile for a single IDE and return result row."""
-    from . import os_injector as oi
+    from koru.autopilot import os_injector as oi
 
     print(f"[{ide}] Place mouse over IDE chat input; capturing in {delay:.1f}s...")
     time.sleep(delay)
@@ -659,7 +658,7 @@ def _run_direct_drive(
     *,
     emit_payload: bool = True,
 ) -> tuple[int, dict[str, Any] | None]:
-    from . import os_injector as oi
+    from koru.autopilot import os_injector as oi
 
     injector = Injector()
     target_id, profile_id, selection = resolve_drive_target(
@@ -815,7 +814,7 @@ def _action_ide_list(_args: argparse.Namespace) -> int:
 
 def _doctor_fix_payload() -> dict[str, object]:
     """Guided remediation payload reused by text and json outputs."""
-    from .host_setup import build_setup_host_report
+    from koru.autopilot.host_setup import build_setup_host_report
 
     report = build_setup_host_report()
     return {
@@ -917,7 +916,7 @@ def _action_doctor(args: argparse.Namespace) -> int:
 
 
 def _action_setup_host(args: argparse.Namespace) -> int:
-    from .host_setup import run_host_setup
+    from koru.autopilot.host_setup import run_host_setup
 
     return run_host_setup(
         output_format=args.output_format,
@@ -1099,7 +1098,7 @@ def _build_brief(project: Path) -> str:
     Imported lazily so ``autopilot doctor`` / ``ide-list`` don't drag
     in the heavy ``context`` stack on every CLI invocation.
     """
-    from ..context import build_context, render_markdown_handoff
+    from koru.context import build_context, render_markdown_handoff
 
     ctx = build_context(project=project)
     return render_markdown_handoff(ctx)

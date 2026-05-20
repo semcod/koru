@@ -1,12 +1,11 @@
 """Real-time, human-visible activity log for koru orchestration."""
 
-from __future__ import annotations
 
 import os
 import sys
 from typing import TextIO
 
-from .stdio_events import default_stdio_format_from_env
+from koru.stdio_events import default_stdio_format_from_env
 
 
 def activity_enabled() -> bool:

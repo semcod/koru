@@ -12,7 +12,6 @@ crashes the queue runner — IO errors are swallowed after a single
 remains the source of truth.
 """
 
-from __future__ import annotations
 
 import json
 import os
@@ -22,7 +21,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .runtime import ensure_runs_dir, new_run_id, runs_dir
+from koru.runtime import ensure_runs_dir, new_run_id, runs_dir
 
 
 @dataclass

@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.156] - 2026-05-20
+
+### Changed
+- Keep the base runtime dependency set intentionally small and move optional
+  lanes into extras: `api`, `agent`, `obs`, `queue`, `quality`, `watch`, and
+  the aggregate `all`.
+- Refresh `uv.lock` so package metadata for `koru` exposes the same extras as
+  `pyproject.toml`.
+
+### Added
+- Document installation extras in the README.
+- Add pyproject metadata tests that guard the lightweight runtime dependency
+  set, `koru[all]` aggregation, and README coverage for each extra.
+- Cross-link the formal IDE control-plane protocol specification from the
+  README and documentation index, with documentation tests guarding those
+  links.
+
 ## [0.1.10] - 2026-05-19
 
 ### Fixed
@@ -1366,6 +1383,33 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
   `deploy:{plan,dry,local,device,diagnose,resume,drift}`.
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
+
+## [0.1.157] - 2026-05-20
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update docs/IDE_PROTOCOL.md
+- Update docs/README.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_docs_ide_control_surfaces.py
+- Update tests/test_pyproject_metadata.py
+
+### Other
+- Update prefact.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- ... and 9 more files
 
 ## [0.1.156] - 2026-05-19
 
@@ -3079,4 +3123,3 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 - Update .idea/pyProjectModel.xml
 - Update .idea/vcs.xml
 - Update uv.lock
-

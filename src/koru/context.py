@@ -18,7 +18,6 @@ This module never mutates state: pure read + format. Side effects (run
 log writes, ticket lifecycle calls) live elsewhere.
 """
 
-from __future__ import annotations
 
 import contextlib
 import json
@@ -31,12 +30,12 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
-from .agents import detect_agent_environment
-from .autonomy.telemetry_snapshot import build_autonomy_loop_brief
-from .dotenv_loader import load_dotenv as _load_dotenv_impl
-from .policy import Policy, load_policy
-from .project_pipeline import build_project_pipeline_brief
-from .runtime import planfile_dir
+from koru.agents import detect_agent_environment
+from koru.autonomy.telemetry_snapshot import build_autonomy_loop_brief
+from koru.dotenv_loader import load_dotenv as _load_dotenv_impl
+from koru.policy import Policy, load_policy
+from koru.project_pipeline import build_project_pipeline_brief
+from koru.runtime import planfile_dir
 
 # Cache so we only load `.env` once per project per process (multiple
 # `build_context` calls — e.g. dashboard auto-refresh — would otherwise
@@ -499,7 +498,7 @@ def build_context(
 
 def _load_sprint_data(project: Path) -> dict[str, Any] | None:
     """Load sprint data from current.yaml file."""
-    from .runtime import planfile_dir
+    from koru.runtime import planfile_dir
 
     pf = planfile_dir(project)
     sprint_file = pf / "sprints" / "current.yaml"
@@ -587,7 +586,7 @@ def _promote_bug_priority(tickets: dict[str, Any]) -> bool:
 
 def _write_sprint_data(project: Path, sprint_data: dict[str, Any]) -> None:
     """Write sprint data back to current.yaml file."""
-    from .runtime import planfile_dir
+    from koru.runtime import planfile_dir
 
     pf = planfile_dir(project)
     sprint_file = pf / "sprints" / "current.yaml"

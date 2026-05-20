@@ -1,16 +1,16 @@
 # System Architecture Analysis
-<!-- generated in 0.00s -->
+<!-- generated in 0.01s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 127, shell: 42, yaml: 15, yml: 8, typescript: 6
+- **Languages**: python: 129, shell: 43, yaml: 15, yml: 8, typescript: 6
 - **Analysis Mode**: static
-- **Total Functions**: 1255
-- **Total Classes**: 90
-- **Modules**: 213
-- **Entry Points**: 425
+- **Total Functions**: 1289
+- **Total Classes**: 91
+- **Modules**: 216
+- **Entry Points**: 448
 
 ## Architecture by Module
 
@@ -18,6 +18,10 @@
 - **Functions**: 110
 - **Classes**: 2
 - **File**: `extension.ts`
+
+### src.koru.cli
+- **Functions**: 52
+- **File**: `cli.py`
 
 ### src.koru.autonomous
 - **Functions**: 48
@@ -101,11 +105,6 @@
 ### src.koru.tools
 - **Functions**: 19
 - **File**: `tools.py`
-
-### src.koru.autonomous_wup
-- **Functions**: 19
-- **Classes**: 3
-- **File**: `autonomous_wup.py`
 
 ## Key Entry Points
 
@@ -200,9 +199,6 @@ Returns the process exit code (0 on clean shutdown).
 > Load ``ide_integration`` from ``<project>/koru.yaml`` if present.
 - **Calls**: data.get, block.get, block.get, raw_lanes.items, AgentIntegrationConfig, path.is_file, isinstance, isinstance
 
-### src.koru.cli._tools_main
-- **Calls**: None.parse_args, src.koru.tools.load_tool_registry, src.koru.tools.detect_tools, src.koru.events.emit_management_event, scripts.koru-soak-monitor.print, args.project.resolve, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print
-
 ### src.koru.autopilot.cli_command._action_calibrate
 - **Calls**: None.strip, max, scripts.koru-soak-monitor.print, time.sleep, raw.lower, src.koruide.ide.resolve_drive_target, float, oi.capture_mouse_xy
 
@@ -214,15 +210,17 @@ Returns the process exit code (0 on clean shutdown).
 > P2.6: install the systemd --user service unit.
 - **Calls**: src.koru.autopilot.cli_command._resolve_koru_bin, src.koru.autopilot.cli_command._render_unit, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print
 
+### src.koru.dev_sync.dev_main
+- **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, sync.add_argument, sync.add_argument, sync.add_argument, sync.add_argument, parser.parse_args
+
+### src.koru.cli._tools_main
+- **Calls**: None.parse_args, src.koru.tools.load_tool_registry, src.koru.tools.detect_tools, src.koru.events.emit_management_event, scripts.koru-soak-monitor.print, args.project.resolve, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print
+
 ### src.koruapi.invoke_handlers._handle_autopilot_drive
 - **Calls**: str, src.koru.ide_client.build_ide_client, client.drive, text.strip, InvokeError, client.is_running, InvokeError, bool
 
 ### src.koru.doctor._check_planfile_sprints
 - **Calls**: sorted, src.koru.runtime.planfile_dir, sprints.is_dir, sprints.glob, data.get, isinstance, yaml.safe_load, isinstance
-
-### services.healing-webhook.app._run_vallm_validate
-> Full pipeline including LLM-as-judge (tier 2). Slower; uses LLM API key.
-- **Calls**: cmd.extend, subprocess.run, None.set, None.inc, _json.loads, float, None.inc, None.inc
 
 ## Process Flows
 
@@ -559,9 +557,9 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.agents.detect_agent_options` - 21 calls
 - `src.koruapi.cli.main` - 20 calls
 - `src.koruide.os_injector.inject_with_profile` - 20 calls
-- `src.koru.autonomous_diagnostics.build_idle_checks` - 20 calls
 - `src.koru.tools.render_tools_detect_text` - 20 calls
 - `scripts.planfile-sync-todo.do_from_planfile` - 20 calls
+- `src.koru.autonomous_diagnostics.build_idle_checks` - 20 calls
 - `services.healing-webhook.app.alertmanager_webhook` - 19 calls
 - `src.koruapi.dashboard_serve.serve` - 19 calls
 - `plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.focusChat` - 19 calls
@@ -571,8 +569,8 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.loop.run_closed_loop` - 18 calls
 - `src.koru.init_host_environment.build_host_environment_report` - 18 calls
 - `src.koru.autonomy.operator_pipeline.run_startup_operator_pipeline` - 18 calls
+- `src.koru.dev_sync.dev_main` - 18 calls
 - `src.koru.mcp_provision.ensure_koru_mcp_not_disabled` - 17 calls
-- `src.koru.autonomy.environment.probe_ide_presence` - 17 calls
 
 ## System Interactions
 

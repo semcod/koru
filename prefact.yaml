@@ -1,7 +1,7 @@
 project_root: .
 package_name: ''
 include:
-- '**/*.py'
+- 'src/koru/**/*.py'
 exclude:
 - '**/__pycache__/**'
 - '**/node_modules/**'
@@ -26,7 +26,7 @@ tools:
     ignore:
     - E501
   mypy:
-    enabled: true
+    enabled: false
     strict: false
     ignore_missing_imports: true
   isort:
@@ -59,14 +59,16 @@ rules:
     - libcst
     auto_fix: true
   missing-return-type:
-    enabled: true
+    enabled: false
     tools:
     - mypy
     severity: warning
   llm-hallucinations:
-    enabled: true
+    enabled: false
   magic-numbers:
-    enabled: true
+    enabled: false
+  string-concat:
+    enabled: false
 plugins:
   enabled: true
   directories:

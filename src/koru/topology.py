@@ -18,7 +18,6 @@ Public API
 - :func:`enabled_components_for_pipeline` — list of enabled component ids in a pipeline.
 """
 
-from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -26,7 +25,7 @@ from typing import Any
 
 import yaml
 
-from .semcod_tools import detect_semcod_tools
+from koru.semcod_tools import detect_semcod_tools
 
 SCHEMA_VERSION = "1"
 TOPOLOGY_FILENAME = "topology.yaml"

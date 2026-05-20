@@ -1,6 +1,5 @@
 """Natural-language task intake for koru."""
 
-from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -171,7 +170,7 @@ def create_nl_task(
     )
     _write_yaml(sprint_path, sprint_data)
     try:
-        from .activity_log import activity
+        from koru.activity_log import activity
 
         activity(
             "TICKET",

@@ -3,11 +3,10 @@
 Re-exports :mod:`koru.autonomy.env` so existing imports keep working.
 """
 
-from __future__ import annotations
 
 import argparse
 
-from .autonomy.env import (
+from koru.autonomy.env import (
     apply_autoloop_env_to_args,
     autonomous_environ_doctor_probe,
     effective_ticket_source_flags,

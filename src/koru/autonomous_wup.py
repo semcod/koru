@@ -1,6 +1,5 @@
 """WUP ``wup watch`` subprocess and health helpers for ``koru autonomous``."""
 
-from __future__ import annotations
 
 import argparse
 import json
@@ -15,7 +14,7 @@ from typing import Protocol
 
 import yaml
 
-from .topology import is_component_enabled, is_pipeline_enabled
+from koru.topology import is_component_enabled, is_pipeline_enabled
 
 
 def _wup_stdio_info(msg: str, *, fmt: str) -> None:

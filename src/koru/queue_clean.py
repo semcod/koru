@@ -32,7 +32,6 @@ A ticket is a cleanup candidate when **any** of the following holds:
   that many days (combined with the above — never a sole criterion).
 """
 
-from __future__ import annotations
 
 import json
 import os
@@ -46,7 +45,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from .context import FIXTURE_LABELS
+from koru.context import FIXTURE_LABELS
 
 QUEUE_CLEAN_TAG = "KORU-QUEUE-CLEAN"
 """Marker prefix written to ``outputs.notes`` on every cleaned ticket."""

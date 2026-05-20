@@ -1,6 +1,6 @@
 """Koru loop automation package."""
 
-from .bootstrap import (
+from koru.bootstrap import (
     ImportReport,
     ValidationError,
     import_flat_pipeline,
@@ -8,20 +8,20 @@ from .bootstrap import (
     materialize_to_planfile,
     validate_flat_pipeline,
 )
-from .context import build_context, render_markdown_handoff
-from .doctor import Check, DoctorReport, run_diagnostics
-from .init import InitReport, init_project, refresh_init_agent_lane, resolve_project_agent_lane
-from .loop import LoopReport, RunRecord, discover_repositories, run_closed_loop
-from .planfile_queue import (
+from koru.context import build_context, render_markdown_handoff
+from koru.doctor import Check, DoctorReport, run_diagnostics
+from koru.init import InitReport, init_project, refresh_init_agent_lane, resolve_project_agent_lane
+from koru.loop import LoopReport, RunRecord, discover_repositories, run_closed_loop
+from koru.planfile_queue import (
     LlmRunResult,
     QueueLoopResult,
     QueueRunResult,
     run_next_planfile_task,
     run_planfile_queue_loop,
 )
-from .policy import Policy, load_policy, policy_path, policy_violations
-from .run_log import RunLogWriter, open_run_log, open_run_log_eagerly
-from .runtime import (
+from koru.policy import Policy, load_policy, policy_path, policy_violations
+from koru.run_log import RunLogWriter, open_run_log, open_run_log_eagerly
+from koru.runtime import (
     ensure_runs_dir,
     new_run_id,
     planfile_dir,

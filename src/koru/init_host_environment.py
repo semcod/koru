@@ -5,7 +5,6 @@ documents what that workstation needs for autopilot (plugin vs keyboard
 injectors, Wayland vs X11, clipboard helpers, ``/dev/uinput``).
 """
 
-from __future__ import annotations
 
 import grp
 import json
@@ -17,8 +16,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from .ide_runtime import build_host_setup_report
-from .runtime import runtime_dir
+from koru.ide_runtime import build_host_setup_report
+from koru.runtime import runtime_dir
 
 
 def _read_os_release() -> dict[str, str]:

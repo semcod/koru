@@ -4,13 +4,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.156-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$11.88-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-68.3h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.157-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$11.87-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-68.4h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $11.8754 (215 commits)
-- 👤 **Human dev:** ~$6832 (68.3h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $11.8697 (216 commits)
+- 👤 **Human dev:** ~$6835 (68.4h @ $100/h, 30min dedup)
 
-Generated on 2026-05-19 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
+Generated on 2026-05-20 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
 ---
 
@@ -77,6 +77,26 @@ koru serve --project . --auto-port --no-open
 
 Use explicit `up` for compatibility (`koru autonomous up --project .`),
 especially when switching between local source checkouts and older PyPI builds.
+
+### Installation extras
+
+The base package stays intentionally small (`pyyaml` plus stdlib-based CLI/API).
+Install only the lanes you are working on:
+
+```bash
+pip install "koru[watch]"    # WebSocket queue watcher
+pip install "koru[dev]"      # tests, lint, typing, local quality tooling
+pip install "koru[api]"      # FastAPI healing webhook service
+pip install "koru[agent]"    # LLM / structured-output integrations
+pip install "koru[obs]"      # tracing, Sentry, structured logging
+pip install "koru[queue]"    # optional Redis/scheduler queue adapters
+pip install "koru[quality]"  # deeper refactor quality gates
+pip install "koru[all]"      # local workstation with every optional lane
+```
+
+`koru autopilot` and the IDE control-plane socket protocol are part of the
+base package; see [`docs/IDE_PROTOCOL.md`](docs/IDE_PROTOCOL.md) for the
+formal plugin/daemon wire contract.
 
 ### Structured stdio (NDJSON / JSON Lines)
 
@@ -284,6 +304,7 @@ Two injection paths, picked automatically:
 - **Start here:** [`docs/autopilot-quickstart.md`](docs/autopilot-quickstart.md) —
   30-second setup, full checklist, common pitfalls, security model.
 - **Architecture & wire protocol:** [`docs/autopilot-design.md`](docs/autopilot-design.md).
+- **Formal IDE protocol v1:** [`docs/IDE_PROTOCOL.md`](docs/IDE_PROTOCOL.md).
 - **What is shipped vs. planned:** [`docs/autopilot-roadmap.md`](docs/autopilot-roadmap.md).
 
 ## Windsurf autonomous mode (hours, unattended)

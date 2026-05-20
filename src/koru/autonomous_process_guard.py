@@ -1,4 +1,3 @@
-from __future__ import annotations
 
 import os
 import signal
@@ -8,7 +7,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from .autonomous_parser import looks_like_autonomous_up_command
+from koru.autonomous_parser import looks_like_autonomous_up_command
 
 
 @dataclass(frozen=True)

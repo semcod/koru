@@ -81,8 +81,10 @@ def autoloop_main(argv: list[str] | None = None) -> int:
     if args.project is not None:
         env["PROJECT"] = str(args.project)
 
-    return subprocess.call(["bash", str(script)], env=env)
+    try:
+        return subprocess.call(["bash", str(script)], env=env)
+    except KeyboardInterrupt:
+        return 130
 
 
 __all__ = ["autoloop_main"]
-

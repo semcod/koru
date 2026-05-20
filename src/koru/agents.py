@@ -1,6 +1,5 @@
 """Detect and launch LLM/IDE agents available for a koru project."""
 
-from __future__ import annotations
 
 import os
 import platform
@@ -11,8 +10,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .runtime import runtime_dir
-from .semcod_tools import detect_semcod_tools
+from koru.runtime import runtime_dir
+from koru.semcod_tools import detect_semcod_tools
 
 
 def normalize_agent_lane_id(raw: str) -> str:

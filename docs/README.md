@@ -33,6 +33,7 @@ For LLM agents starting a session in a koru-driven repository:
 7. **[`autopilot-quickstart.md`](./autopilot-quickstart.md)** — how to
    drive your IDE's LLM chat from a terminal (`koru autopilot`).
    Companion design doc: [`autopilot-design.md`](./autopilot-design.md);
+   formal control-plane protocol: [`IDE_PROTOCOL.md`](./IDE_PROTOCOL.md);
    open items in [`autopilot-roadmap.md`](./autopilot-roadmap.md).
 8. **[`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md)** (PL) — autonomia
    koru vs Cursor IDE: luka funkcjonalna i checklista wdrożeniowa.

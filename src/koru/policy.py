@@ -20,7 +20,6 @@ The policy is also embedded verbatim in every ``koru --context`` brief
 so the LLM has zero ambiguity about what is allowed.
 """
 
-from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -119,7 +118,7 @@ class Policy:
 
 def policy_path(project: Path) -> Path:
     """Return the policy YAML location: ``<project>/.planfile/.koru/policy.yaml``."""
-    from .utils.subprocess_runner import resolve_planfile_subpath
+    from koru.utils.subprocess_runner import resolve_planfile_subpath
 
     return resolve_planfile_subpath(project, ".koru", POLICY_FILENAME)
 

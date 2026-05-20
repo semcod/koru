@@ -1,6 +1,5 @@
 """Command-line entrypoint for koru."""
 
-from __future__ import annotations
 
 import argparse
 import asyncio
@@ -12,50 +11,50 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from .agents import (
+from koru.agents import (
     detect_agent_options,
 )
-from .autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
-from .autoloop_cli import autoloop_main
-from .autopilot.cli_command import autopilot_main
-from .bootstrap import import_flat_pipeline
-from .context import build_context, render_markdown_handoff
-from .dev_sync import dev_main
-from .doctor import render_text as render_doctor_text
-from .doctor import run_diagnostics
-from .events import emit_management_event
-from .gate import VALID_MODES as GATE_VALID_MODES
-from .gate import authorize_gate
-from .gc import DEFAULT_KEEP_LAST, DEFAULT_MAX_AGE_DAYS, GC_STATUSES, run_gc
-from .init import init_project, refresh_init_agent_lane
-from .loop import discover_repositories, run_closed_loop
-from .queue import (
+from koru.autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
+from koru.autoloop_cli import autoloop_main
+from koru.autopilot.cli_command import autopilot_main
+from koru.bootstrap import import_flat_pipeline
+from koru.context import build_context, render_markdown_handoff
+from koru.dev_sync import dev_main
+from koru.doctor import render_text as render_doctor_text
+from koru.doctor import run_diagnostics
+from koru.events import emit_management_event
+from koru.gate import VALID_MODES as GATE_VALID_MODES
+from koru.gate import authorize_gate
+from koru.gc import DEFAULT_KEEP_LAST, DEFAULT_MAX_AGE_DAYS, GC_STATUSES, run_gc
+from koru.init import init_project, refresh_init_agent_lane
+from koru.loop import discover_repositories, run_closed_loop
+from koru.queue import (
     default_human_prompt as _queue_default_human_prompt,
 )
-from .queue import (
+from koru.queue import (
     run_api_request as _queue_run_api_request,
 )
-from .queue import (
+from koru.queue import (
     run_llm_request as _queue_run_llm_request,
 )
-from .queue import (
+from koru.queue import (
     run_process as _queue_run_process,
 )
-from .queue import (
+from koru.queue import (
     run_shell_command as _queue_run_shell_command,
 )
-from .queue_clean import CleanupReport, clean_queue
-from .scan import ScanResult, run_scan
-from .serve import DEFAULT_HOST, DEFAULT_PORT
-from .tasks import create_nl_task
-from .tools import (
+from koru.queue_clean import CleanupReport, clean_queue
+from koru.scan import ScanResult, run_scan
+from koru.serve import DEFAULT_HOST, DEFAULT_PORT
+from koru.tasks import create_nl_task
+from koru.tools import (
     build_tool_task_scaffold,
     detect_tools,
     find_tool_entry,
     load_tool_registry,
     render_tools_detect_text,
 )
-from .watch import watch_planfile_events
+from koru.watch import watch_planfile_events
 
 
 def _env_truthy(name: str) -> bool:
@@ -763,7 +762,7 @@ def _build_gc_parser() -> argparse.ArgumentParser:
 
 
 def _gc_main(argv: list[str]) -> int:
-    from .gc_cli_helpers import (
+    from koru.gc_cli_helpers import (
         emit_gc_management_event,
         gc_statuses_from_args,
         print_gc_report,
@@ -1057,7 +1056,7 @@ def _local_serve_main(argv: list[str]) -> int:
 
 
 def _agent_main(argv: list[str]) -> int:
-    from .agent_cli_helpers import (
+    from koru.agent_cli_helpers import (
         print_agent_list,
         run_agent_handoff,
         try_agent_env_exports,
@@ -1140,13 +1139,13 @@ def _build_topology_parser() -> argparse.ArgumentParser:
 
 
 def _render_topology_text(topology: dict[str, Any]) -> str:
-    from .topology_cli import render_topology_text
+    from koru.topology_cli import render_topology_text
 
     return render_topology_text(topology)
 
 
 def _topology_main(argv: list[str]) -> int:
-    from .topology import (
+    from koru.topology import (
         load_topology,
         save_topology,
         set_component_enabled,
@@ -1173,13 +1172,13 @@ def _topology_main(argv: list[str]) -> int:
         return 0 if enabled else 1
 
     if args.enabled_components_for:
-        from .topology import enabled_components_for_pipeline
+        from koru.topology import enabled_components_for_pipeline
 
         ids = enabled_components_for_pipeline(project, args.enabled_components_for)
         print(",".join(ids))
         return 0
 
-    from .topology_cli import TopologyMutation, apply_topology_mutations
+    from koru.topology_cli import TopologyMutation, apply_topology_mutations
 
     topo = load_topology(project)
     mutated, rc = apply_topology_mutations(
@@ -1299,7 +1298,7 @@ def _agent_backends_main(argv: list[str]) -> int:
     """List or describe IDE agent backend profiles (``agent_backends``)."""
     from dataclasses import asdict
 
-    from .agent_backends import get_agent_backend_profile, iter_agent_backend_profiles
+    from koru.agent_backends import get_agent_backend_profile, iter_agent_backend_profiles
 
     parser = argparse.ArgumentParser(prog="koru agent-backends")
     parser.add_argument(
@@ -1355,7 +1354,7 @@ def _agent_backends_main(argv: list[str]) -> int:
 
 
 def _init_ide_main(argv: list[str]) -> int:
-    from .mcp_provision import init_ide_main
+    from koru.mcp_provision import init_ide_main
 
     return init_ide_main(argv)
 
@@ -1364,7 +1363,7 @@ def _refactor_planfile_handoff_main(argv: list[str]) -> int:
     """CLI: ``koru refactor-planfile-handoff`` — markdown for IDE chat (planfile tickets)."""
     import argparse
 
-    from .refactor_planfile_handoff import render_planfile_refactor_handoff
+    from koru.refactor_planfile_handoff import render_planfile_refactor_handoff
 
     p = argparse.ArgumentParser(
         prog="koru refactor-planfile-handoff",
@@ -1384,7 +1383,7 @@ def ide_router_main(argv: list[str]) -> int:
     import argparse
     import json
 
-    from .ide_router import resolve_ide_route
+    from koru.ide_router import resolve_ide_route
 
     p = argparse.ArgumentParser(prog="koru ide-router")
     p.add_argument(
@@ -1760,7 +1759,7 @@ def _watch_main(args: argparse.Namespace) -> int:
 
 
 def _queue_run_main(args: argparse.Namespace) -> int:
-    from .queue_cli_helpers import (
+    from koru.queue_cli_helpers import (
         emit_queue_run_started,
         open_queue_run_log,
         run_queue_loop_mode,
