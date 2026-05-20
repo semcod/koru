@@ -2,6 +2,8 @@
 
 Niniejsza specyfikacja definiuje oficjalny protokół komunikacyjny (`v1`) pomiędzy lokalnym daemonem orkiestracji `koru` a wtyczkami klienckimi IDE (Cursor, Windsurf, VS Code, JetBrains). Protokół ten stanowi **warstwę sterowania (Control Plane)** nad istniejącym środowiskiem programistycznym użytkownika, umożliwiając automatyczne przesyłanie zadań, orkiestrację sesji chat, wykonywanie weryfikacji po-zadaniowej (post-run verify) oraz bezpieczne zarządzanie cyklem życia kodu.
 
+Techniczny kontrakt wire protocol jest utrzymywany równolegle w `docs/specs/kide-002-koruide-api-v1.md`, a aktualna implementacja dekodera i helperów znajduje się w `src/koruide/protocol.py`.
+
 ---
 
 ## 1. Architektura i Koncepcja Integracji
@@ -69,7 +71,7 @@ flowchart TB
 
 ## 2. Warstwa Transportowa i Ramkowanie
 
-* **Protokół fizyczny**: Lokalny Unix Domain Socket (L.U.D.S).
+* **Protokół fizyczny**: Lokalny Unix domain socket (UDS).
 * **Ścieżka gniazda**:
   - Podstawowa: `$XDG_RUNTIME_DIR/koru-autopilot.sock` (zazwyczaj `/run/user/$UID/koru-autopilot.sock`)
   - Awaryjna (fallback): `/tmp/koru-autopilot-$UID.sock`
@@ -87,10 +89,10 @@ Każda ramka NDJSON posiada następującą strukturę bazową:
 ```json
 {
   "type": "NAZWA_TYPU",
-  "id": "OPCJONALNE_ID_KORELACJI",
-  ... PROPOLS_DEPENDING_ON_TYPE
+  "id": "OPCJONALNE_ID_KORELACJI"
 }
 ```
+Pozostałe pola są spłaszczonym payloadem zależnym od wartości `type`.
 
 ### 3.1. Plugin → Daemon (Komunikaty Wtyczki)
 
@@ -258,7 +260,7 @@ Potwierdzenie pomyślnego wykonania operacji lub odebrania eventu. Zawsze niesie
   "winning_submit": "type:\n"
 }
 ```
-* **Pola dodatkowe w sekcji `info` (spłaszczone)**:
+* **Pola dodatkowe (spłaszczone z `info` po stronie helpera)**:
   - `ok` (boolean): Flaga powodzenia.
   - `delivered` (boolean): Czy tekst trafił do edytora chatu.
   - `opened` (boolean): Czy panel chatu został otwarty/skupiony.
@@ -278,9 +280,9 @@ Zgłoszenie błędu przetwarzania ramki lub awarii wykonania polecenia.
 
 ---
 
-## 4. Negocjacja Zdolności (Capabilities)
+## 4. Negocjacja Zdolności (Capabilities, poza ścisłym `v1`)
 
-Różne wersje IDE i wbudowane w nie chaty posiadają odmienne interfejsy programistyczne (API). Podczas wymiany komunikatów `hello` i `status`, daemon rejestruje aktualną macierz możliwości danego adaptera:
+Różne wersje IDE i wbudowane w nie chaty posiadają odmienne interfejsy programistyczne (API). Ścisły kontrakt `v1` dopuszcza w `hello` tylko pola `ide`, `version` i `pid`, a decoder ignoruje pola spoza allowlisty. Capabilities pozostają więc opisowym modelem adaptera/future extension, a nie dodatkowym payloadem ramki `hello`.
 
 ```json
 {
@@ -328,7 +330,7 @@ stateDiagram-v2
 2. **Connected & Idle**: Wtyczka pomyślnie przeszła uścisk dłoni. Daemon czeka na zadania z kolejki Planfile.
 3. **Driving**: Autopilot wysyła pakiet `chat.send` z briefem do IDE. Zapisywana jest sygnatura czasowa `_last_chat_send_at`.
 4. **WaitingResponse**: Daemon czeka na ukończenie pracy przez LLM w IDE. 
-5. **PostrunVerify**: Odebranie zdarzenia `session.ended` z wtyczki powoduje natychmiastowe uruchomienie cyklu `postrun_verify`.
+5. **PostrunVerify**: Odebranie zdarzenia `session.ended` z wtyczki powoduje natychmiastowe uruchomienie cyklu `post_run_verify`.
    * **UWAGA (Cooldown Safeguard)**: Aby zapobiec pętlom nieskończonym, wdrożono czas cooldown (`handoff_cooldown`, domyślnie `2.0s`). Jeśli zdarzenie `session.ended` nadejdzie zbyt szybko po wstrzyknięciu (np. natychmiastowy fail chatu), daemon zignoruje je i przejdzie w stan `cooldown` zamiast wstrzykiwać brief ponownie.
 6. **Self-Healing / Diagnostics**: Jeśli weryfikacja post-run wykaże błędy (np. złamane asercje w `pytest` lub błędy `ruff`), daemon generuje nowy prompt diagnostyczny i wysyła go z powrotem do chatu w IDE, dając asystentowi szansę na automatyczne poprawienie kodu.
 

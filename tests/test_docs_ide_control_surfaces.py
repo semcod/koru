@@ -61,6 +61,15 @@ def test_ide_protocol_doc_exists_with_key_protocol_terms() -> None:
     assert "NDJSON" in text
     assert "chat.send" in text
     assert "session.ended" in text
+    assert "docs/specs/kide-002-koruide-api-v1.md" in text
+    assert "src/koruide/protocol.py" in text
+
+
+def test_ide_protocol_doc_has_no_stale_payload_placeholder() -> None:
+    root = Path(__file__).resolve().parent.parent
+    text = (root / "docs" / "IDE_PROTOCOL.md").read_text(encoding="utf-8")
+    assert "PROPOLS_DEPENDING_ON_TYPE" not in text
+    assert "postrun_verify" not in text
 
 
 def test_readme_links_formal_ide_protocol() -> None:

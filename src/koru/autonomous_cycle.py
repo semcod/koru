@@ -1,4 +1,3 @@
-from __future__ import annotations
 
 import json
 import os
@@ -11,35 +10,35 @@ from typing import Any
 
 import yaml
 
-from .autonomous_wup import WupHealthResult
-from .autonomous_wup import _read_wup_health as _read_wup_health_impl
-from .autonomy.ide_work import (
+from koru.autonomous_wup import WupHealthResult
+from koru.autonomous_wup import _read_wup_health as _read_wup_health_impl
+from koru.autonomy.ide_work import (
     extract_ticket_id_from_text,
     release_stale_in_progress_tickets,
     resolve_idle_drive_prompt,
     resolve_in_progress_stale_minutes,
 )
-from .autonomy.post_run_verify import (
+from koru.autonomy.post_run_verify import (
     load_post_run_verify_config,
     verify_after_ide_work,
     verify_completed_tickets,
 )
-from .autonomy.prompts import DEFAULT_ESCALATION_THRESHOLD, build_prompt
-from .autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
-from .queue import QueueLoopResult, run_planfile_queue_loop
-from .queue import default_human_prompt as _default_human_prompt
-from .queue import run_api_request as _run_api_request
-from .queue import run_llm_request as _run_llm_request
-from .queue import run_process as _run_process
-from .queue import run_shell_command as _run_shell_command
-from .scan import ScanResult, run_scan
-from .stdio_events import write_stdio_event
-from .tasks import create_nl_task
-from .topology import is_component_enabled, is_pipeline_enabled
+from koru.autonomy.prompts import DEFAULT_ESCALATION_THRESHOLD, build_prompt
+from koru.autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
+from koru.queue import QueueLoopResult, run_planfile_queue_loop
+from koru.queue import default_human_prompt as _default_human_prompt
+from koru.queue import run_api_request as _run_api_request
+from koru.queue import run_llm_request as _run_llm_request
+from koru.queue import run_process as _run_process
+from koru.queue import run_shell_command as _run_shell_command
+from koru.scan import ScanResult, run_scan
+from koru.stdio_events import write_stdio_event
+from koru.tasks import create_nl_task
+from koru.topology import is_component_enabled, is_pipeline_enabled
 
 
 def _stdio_info(msg: str, *, fmt: str) -> None:
-    from .activity_log import activity_info
+    from koru.activity_log import activity_info
 
     activity_info(msg, fmt=fmt)
 
@@ -114,7 +113,7 @@ def _prefer_keyboard_autopilot() -> bool:
 
 def _try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | None:
     """Delegate to :func:`koru.autonomous._try_os_injector_fallback` (monkeypatch-friendly)."""
-    from . import autonomous as _autonomous_mod
+    from koru import autonomous as _autonomous_mod
 
     return _autonomous_mod._try_os_injector_fallback(prompt, submit=submit)
 
@@ -203,7 +202,7 @@ def _run_idle_diagnostics(
     diagnostic_state_dir: Path,
     topology_integration: bool,
 ) -> DiagnosticResult:
-    from . import autonomous_diagnostics as diag
+    from koru import autonomous_diagnostics as diag
 
     def create_ticket(**kwargs: Any) -> None:
         _create_diagnostic_ticket(stdio_format=stdio_format, **kwargs)
@@ -263,9 +262,9 @@ def _initialize_cycle_telemetry() -> dict[str, Any]:
 def _heal_stale_socket() -> None:
     """Auto-heal: best-effort stale socket removal so daemon restart can bind."""
     try:
-        from .autonomy.environment import probe_socket_health
-        from .autonomy.heal import remove_stale_socket
-        from .autopilot import default_socket_path
+        from koru.autonomy.environment import probe_socket_health
+        from koru.autonomy.heal import remove_stale_socket
+        from koru.autopilot import default_socket_path
 
         sock = probe_socket_health(default_socket_path())
         if sock.stale:
@@ -1092,7 +1091,7 @@ def run_cycle(
             )
 
     def _hp(msg: str) -> None:
-        from .activity_log import activity, activity_info
+        from koru.activity_log import activity, activity_info
 
         if msg.startswith("+ "):
             activity("RUN", msg[2:], fmt=stdio_format)

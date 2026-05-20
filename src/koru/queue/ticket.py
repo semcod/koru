@@ -1,6 +1,5 @@
 """Ticket parsing and command building for the planfile queue."""
 
-from __future__ import annotations
 
 import json
 import os
@@ -11,7 +10,7 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
-from .types import CommandResult
+from koru.queue.types import CommandResult
 
 
 def parse_next_ticket(stdout: str) -> dict | None:

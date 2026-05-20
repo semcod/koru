@@ -1,6 +1,5 @@
 """Startup IDE / environment probe for ``koru autonomous up``."""
 
-from __future__ import annotations
 
 import importlib.metadata
 import os
@@ -8,13 +7,13 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from .autopilot import default_socket_path
-from .autopilot.ide import (
+from koru.autopilot import default_socket_path
+from koru.autopilot.ide import (
     detect_running_ides,
     detect_terminal_host_ide_id,
     pick_target,
 )
-from .ide_router import is_headless_environment, resolve_ide_route
+from koru.ide_router import is_headless_environment, resolve_ide_route
 
 _PLUGIN_IDE_LANES = frozenset({"windsurf", "vscode", "cursor", "jetbrains", "zed"})
 _AUTOPILOT_PLUGIN_LANES = ("cursor", "windsurf", "vscode")

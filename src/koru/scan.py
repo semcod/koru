@@ -27,7 +27,6 @@ dataclasses); pass ``apply=True`` to ``run_scan`` to persist them as
 planfile tickets through ``planfile ticket create``.
 """
 
-from __future__ import annotations
 
 import fnmatch
 import json
@@ -42,9 +41,9 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
-from .semcod_tools import detect_semcod_tools
-from .tasks import create_nl_task
-from .utils.subprocess_runner import default_subprocess_runner, get_python_cmd
+from koru.semcod_tools import detect_semcod_tools
+from koru.tasks import create_nl_task
+from koru.utils.subprocess_runner import default_subprocess_runner, get_python_cmd
 
 # ---------------------------------------------------------------------------
 # Public dataclass
@@ -905,7 +904,7 @@ def run_scan(
         if ok:
             applied.append(s.title)
             try:
-                from .activity_log import activity
+                from koru.activity_log import activity
 
                 activity(
                     "SCAN",

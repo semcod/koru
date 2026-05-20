@@ -1,14 +1,13 @@
 """CLI helpers for ``koru queue``."""
 
-from __future__ import annotations
 
 from argparse import Namespace
 from collections.abc import Callable
 from typing import Any
 
-from .events import emit_management_event
-from .queue import QueueLoopResult, QueueRunResult, run_next_planfile_task, run_planfile_queue_loop
-from .run_log import open_run_log_eagerly
+from koru.events import emit_management_event
+from koru.queue import QueueLoopResult, QueueRunResult, run_next_planfile_task, run_planfile_queue_loop
+from koru.run_log import open_run_log_eagerly
 
 QUEUE_STATUS_MARKERS: dict[str, str] = {
     "completed": "✓",

@@ -8,7 +8,6 @@ It does **not** start MCP or the autopilot daemon; callers (``koru autonomous``,
 shell scripts, operators) still enable those explicitly.
 """
 
-from __future__ import annotations
 
 import os
 import sys
@@ -16,7 +15,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal
 
-from .autonomy.env import env_truthy
+from koru.autonomy.env import env_truthy
 
 _VALID_AUTOPILOT_IDE = frozenset({"auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"})
 

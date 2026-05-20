@@ -6,7 +6,6 @@ pytest, regix) re-validate the repo. On failure the ticket is reopened or
 blocked so IDE/MCP work can continue.
 """
 
-from __future__ import annotations
 
 import json
 import os
@@ -17,8 +16,8 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Protocol
 
-from ..project_pipeline import load_koru_project_pipeline
-from ..queue.runners import run_shell_command
+from koru.project_pipeline import load_koru_project_pipeline
+from koru.queue.runners import run_shell_command
 
 ShellRunner = Callable[[str, Path], subprocess.CompletedProcess[str]]
 PlanfileRunner = Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]]

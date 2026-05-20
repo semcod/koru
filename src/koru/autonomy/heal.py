@@ -11,12 +11,11 @@ Design rules:
   - repairs are pure functions of inputs; no hidden state
 """
 
-from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Literal
 
-from .environment import EnvironmentReport, SocketHealth
+from koru.autonomy.environment import EnvironmentReport, SocketHealth
 
 RepairStatus = Literal["fixed", "skipped", "failed", "dry_run"]
 

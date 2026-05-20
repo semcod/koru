@@ -27,7 +27,6 @@ cleaned up via ``trap``. Everything else stays under
 inspect, gitignore, or back up koru's state.
 """
 
-from __future__ import annotations
 
 import os
 import time
@@ -42,7 +41,7 @@ KORU_SUBDIR = ".koru"
 
 def planfile_dir(project: Path) -> Path:
     """Return ``<project>/.planfile``. Does not create it."""
-    from .utils.subprocess_runner import resolve_planfile_subpath
+    from koru.utils.subprocess_runner import resolve_planfile_subpath
 
     return resolve_planfile_subpath(project)
 

@@ -1,16 +1,14 @@
 """Process execution runners for different executor types."""
 
-from __future__ import annotations
 
 import json
 import os
 import subprocess
 import urllib.error
-import urllib.request
 from pathlib import Path
 from typing import Any
 
-from .types import ApiRunResult, LlmRunResult
+from koru.queue.types import ApiRunResult, LlmRunResult
 
 
 def _planfile_env() -> dict[str, str]:

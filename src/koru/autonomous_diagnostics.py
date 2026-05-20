@@ -1,4 +1,3 @@
-from __future__ import annotations
 
 import shutil
 import subprocess
@@ -7,10 +6,10 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
-from .autonomous_wup import WupHealthResult
-from .autonomous_wup import _read_wup_health as _read_wup_health_impl
-from .redup_integration import redup_changed_scan_runner_command, redup_scan_command
-from .tasks import create_nl_task
+from koru.autonomous_wup import WupHealthResult
+from koru.autonomous_wup import _read_wup_health as _read_wup_health_impl
+from koru.redup_integration import redup_changed_scan_runner_command, redup_scan_command
+from koru.tasks import create_nl_task
 
 IdleCheck = tuple[str, str, list[str]]
 

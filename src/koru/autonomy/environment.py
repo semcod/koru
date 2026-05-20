@@ -12,7 +12,6 @@ The probes here are read-only. Auto-repair primitives in
 :mod:`koru.autonomy.heal` consume these probes and apply fixes.
 """
 
-from __future__ import annotations
 
 import contextlib
 import os
@@ -22,7 +21,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from ..ide_router import is_headless_environment
+from koru.ide_router import is_headless_environment
 
 KNOWN_IDES = ("cursor", "windsurf", "vscode", "code", "code-oss", "vscodium", "zed")
 
@@ -91,7 +90,7 @@ def probe_ide_presence(
     env = os.environ if environ is None else environ
     import json
 
-    from ..mcp_provision import (
+    from koru.mcp_provision import (
         _cursor_project_config,
         _vscode_project_config,
         _windsurf_global_config,

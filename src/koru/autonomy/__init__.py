@@ -4,10 +4,9 @@ See :mod:`koru.autonomy.env` for environment variable names and defaults
 that mirror ``scripts/koru-autoloop.sh``.
 """
 
-from __future__ import annotations
 
-from .config import AutonomyConfig
-from .env import (
+from koru.autonomy.config import AutonomyConfig
+from koru.autonomy.env import (
     AUTOLOOP_ENV_DEFAULTS,
     apply_autoloop_env_to_args,
     autonomous_environ_doctor_probe,

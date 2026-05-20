@@ -704,6 +704,16 @@ def test_status_when_no_daemon(capsys: pytest.CaptureFixture[str], tmp_path: Pat
     assert "NOT running" in capsys.readouterr().out
 
 
+def test_status_accepts_legacy_json_flag(
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    socket = tmp_path / "missing.sock"
+    rc = autopilot_main(["--socket", str(socket), "status", "--json"])
+    assert rc == 1
+    assert "NOT running" in capsys.readouterr().out
+
+
 def test_shutdown_when_no_daemon(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
     socket = tmp_path / "missing.sock"
     rc = autopilot_main(["--socket", str(socket), "shutdown"])

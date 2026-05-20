@@ -1,6 +1,5 @@
 """Main queue runner logic for executing planfile tickets."""
 
-from __future__ import annotations
 
 import json
 import logging
@@ -9,25 +8,25 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from .human import default_human_prompt
-from .locking import queue_runner_lock, ticket_claim_or_error
-from .planfile_ticket_note import append_shell_evidence_note
-from .runners import (
+from koru.queue.human import default_human_prompt
+from koru.queue.locking import queue_runner_lock, ticket_claim_or_error
+from koru.queue.planfile_ticket_note import append_shell_evidence_note
+from koru.queue.runners import (
     _DEFAULT_LLM_MODEL,
     run_api_request,
     run_llm_request,
     run_process,
     run_shell_command,
 )
-from .shell_evidence import format_shell_run_note
-from .ticket import (
+from koru.queue.shell_evidence import format_shell_run_note
+from koru.queue.ticket import (
     parse_next_ticket,
     planfile_command,
     ticket_api_request,
     ticket_command,
     ticket_llm_request,
 )
-from .types import CommandResult, QueueRunResult
+from koru.queue.types import CommandResult, QueueRunResult
 
 _logger = logging.getLogger(__name__)
 

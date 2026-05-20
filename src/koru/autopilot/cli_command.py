@@ -16,8 +16,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-from koruide.audit import AuditLog, default_log_path
-
 from koru.autopilot import default_socket_path
 from koru.autopilot.client import AutopilotClient
 from koru.autopilot.daemon import AutopilotDaemon
@@ -28,6 +26,7 @@ from koru.autopilot.ide import (
 )
 from koru.autopilot.injector import Injector, InjectorError
 from koru.autopilot.utils.client_helpers import call_daemon_method, resolve_xdg_path
+from koruide.audit import AuditLog, default_log_path
 
 
 def _resolve_session_ides(raw: str) -> list[str]:
@@ -385,7 +384,12 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Optional smoke prompt after each profile is saved.",
     )
 
-    sub.add_parser("status", help="Print daemon health + connected plugins.")
+    status = sub.add_parser("status", help="Print daemon health + connected plugins.")
+    status.add_argument(
+        "--json",
+        action="store_true",
+        help=argparse.SUPPRESS,
+    )
     sub.add_parser("shutdown", help="Ask a running daemon to stop.")
 
     sub.add_parser("ide-list", help="List currently running IDEs (process scan).")

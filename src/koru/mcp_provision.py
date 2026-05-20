@@ -17,7 +17,6 @@ Usage::
     koru init-ide --remove               # remove koru entries from configs
 """
 
-from __future__ import annotations
 
 import argparse
 import json
@@ -25,7 +24,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from .ide_runtime import detect_running_ides
+from koru.ide_runtime import detect_running_ides
 
 # ---------------------------------------------------------------------------
 # IDE config locations

@@ -1,13 +1,12 @@
 """Locking and coordination utilities for the planfile queue."""
 
-from __future__ import annotations
 
 import contextlib
 import os
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
-from .types import CommandResult, QueueRunResult
+from koru.queue.types import CommandResult, QueueRunResult
 
 
 def queue_lock_wanted() -> bool:
@@ -60,7 +59,7 @@ def ticket_claim_or_error(
     planfile_runner: Callable[[Sequence[str], Path], CommandResult],
 ) -> QueueRunResult | None:
     """Run ``planfile ticket claim``; return ``QueueRunResult`` on CLI failure."""
-    from .ticket import planfile_command
+    from koru.queue.ticket import planfile_command
 
     claim = planfile_command(
         project,

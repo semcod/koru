@@ -12,7 +12,6 @@ autopilot. ``--no-serve`` is a compatibility no-op (``koru serve`` is not
 started here).
 """
 
-from __future__ import annotations
 
 import argparse
 import contextlib
@@ -32,28 +31,28 @@ from typing import Any
 from koruide.daemon import AutopilotDaemon
 from koruide.os_injector import OsInjectorError, inject_with_profile, load_profile
 
-from . import autonomous_cycle as _autonomous_cycle_module
-from .agents import agent_lane_environment
-from .autonomous_cycle import (
+from koru import autonomous_cycle as _autonomous_cycle_module
+from koru.agents import agent_lane_environment
+from koru.autonomous_cycle import (
     AutoloopState,
     DiagnosticResult,
 )
-from .autonomous_env import (
+from koru.autonomous_env import (
     apply_autonomous_env_overrides as _env_apply_autoloop_defaults,
 )
-from .autonomous_env import (
+from koru.autonomous_env import (
     effective_ticket_source_flags as _effective_flags,
 )
-from .autonomous_startup import (
+from koru.autonomous_startup import (
     build_startup_probe,
     format_post_startup_operator_hints,
     format_startup_banner,
     resolve_autopilot_ide_for_autonomous,
 )
-from .autonomous_startup import (
+from koru.autonomous_startup import (
     resolve_agent_lane_id as _resolve_agent_lane_id,
 )
-from .autonomous_wup import (
+from koru.autonomous_wup import (
     WupHealthResult,
     WupWatchConfig,  # noqa: F401
     _build_wup_watch_config,
@@ -61,41 +60,41 @@ from .autonomous_wup import (
     _stop_process,
     _wup_watch_command,  # noqa: F401
 )
-from .autonomous_wup import (
+from koru.autonomous_wup import (
     _read_wup_health as _read_wup_health_impl,
 )
-from .autonomy.ide_work import release_in_progress_tickets, resolve_idle_drive_prompt
-from .autonomy.operator_pipeline import run_startup_operator_pipeline
-from .autonomy.prompts import build_prompt
-from .autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
-from .autopilot import default_socket_path
-from .autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide
-from .ide_client import IDEControlClient, build_ide_client
-from .ide_router import resolve_ide_route
-from .init import init_project, resolve_project_agent_lane
-from .queue import (
+from koru.autonomy.ide_work import release_in_progress_tickets, resolve_idle_drive_prompt
+from koru.autonomy.operator_pipeline import run_startup_operator_pipeline
+from koru.autonomy.prompts import build_prompt
+from koru.autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
+from koru.autopilot import default_socket_path
+from koru.autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide
+from koru.ide_client import IDEControlClient, build_ide_client
+from koru.ide_router import resolve_ide_route
+from koru.init import init_project, resolve_project_agent_lane
+from koru.queue import (
     QueueLoopResult,
     run_planfile_queue_loop,
 )
-from .queue import (
+from koru.queue import (
     default_human_prompt as _default_human_prompt,
 )
-from .queue import (
+from koru.queue import (
     run_api_request as _run_api_request,
 )
-from .queue import (
+from koru.queue import (
     run_llm_request as _run_llm_request,
 )
-from .queue import (
+from koru.queue import (
     run_process as _run_process,
 )
-from .queue import (
+from koru.queue import (
     run_shell_command as _run_shell_command,
 )
-from .scan import ScanResult, run_scan
-from .stdio_events import default_stdio_format_from_env, write_stdio_event
-from .tasks import create_nl_task
-from .topology import is_component_enabled, is_pipeline_enabled
+from koru.scan import ScanResult, run_scan
+from koru.stdio_events import default_stdio_format_from_env, write_stdio_event
+from koru.tasks import create_nl_task
+from koru.topology import is_component_enabled, is_pipeline_enabled
 
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
@@ -119,13 +118,13 @@ def _try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | 
 
 def _stdio_info(msg: str, *, fmt: str) -> None:
     """Human-oriented status; jsonl mode routes to stderr so stdout stays NDJSON-only."""
-    from .activity_log import activity_info
+    from koru.activity_log import activity_info
 
     activity_info(msg, fmt=fmt)
 
 
 def _daemon_activity_log(msg: str, *, fmt: str) -> None:
-    from .activity_log import activity
+    from koru.activity_log import activity
 
     if msg.startswith("drive"):
         activity("DAEMON", msg, fmt=fmt)
@@ -216,7 +215,7 @@ def _ancestor_pids(pid: int) -> set[int]:
 
 
 def _looks_like_autonomous_up_command(command: str) -> bool:
-    from .autonomous_parser import looks_like_autonomous_up_command
+    from koru.autonomous_parser import looks_like_autonomous_up_command
 
     return looks_like_autonomous_up_command(command)
 
@@ -1056,7 +1055,7 @@ def _create_diagnostic_ticket(
         f"Check: {summary}. Investigate and fix regression, stale quality artifact, "
         "or broken diagnostic gate."
     )
-    from .activity_log import activity
+    from koru.activity_log import activity
 
     activity("TICKET", f"[AUTO-DIAG] tworzę ticket dla {check_id}", preview=prompt)
     created = create_nl_task(project, prompt, queue_name=queue_name, priority=priority)
@@ -1103,7 +1102,7 @@ def _run_idle_diagnostics(
     diagnostic_state_dir: Path,
     topology_integration: bool,
 ) -> DiagnosticResult:
-    from . import autonomous_diagnostics as diag
+    from koru import autonomous_diagnostics as diag
 
     def create_ticket(**kwargs: Any) -> None:
         _create_diagnostic_ticket(stdio_format=stdio_format, **kwargs)
@@ -1295,7 +1294,7 @@ def _run_mcp_provision(project: Path, stdio_format: str) -> bool:
     """Run MCP workspace provision and return True if it ran."""
     mcp_provision_ran = False
     try:
-        from .mcp_provision import ensure_koru_mcp_not_disabled
+        from koru.mcp_provision import ensure_koru_mcp_not_disabled
 
         for row in ensure_koru_mcp_not_disabled(project):
             mcp_provision_ran = True

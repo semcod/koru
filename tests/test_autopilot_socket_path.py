@@ -27,3 +27,9 @@ def test_default_basename_legacy_when_no_instance(monkeypatch: pytest.MonkeyPatc
     monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
     monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
     assert _autopilot_socket_basename() == "koru-autopilot.sock"
+
+
+def test_auto_instance_uses_default_basename(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "auto")
+    assert _autopilot_socket_basename() == "koru-autopilot.sock"

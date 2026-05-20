@@ -5,6 +5,7 @@ This module is the anti-corruption boundary between orchestration code
 legacy autopilot socket client.
 """
 
+
 from __future__ import annotations
 
 import os
@@ -13,7 +14,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:
-    from .autopilot.client import AutopilotClient
+    from koru.autopilot.client import AutopilotClient
 
 
 class IDEControlClient(Protocol):
@@ -52,7 +53,7 @@ class LegacyAutopilotClientAdapter:
         ide: str = "auto",
         require_plugin: bool = False,
     ) -> dict[str, Any]:
-        from .activity_log import activity
+        from koru.activity_log import activity
 
         activity(
             "CHAT",
@@ -94,7 +95,7 @@ def build_legacy_ide_client(
 ) -> IDEControlClient:
     """Construct :class:`IDEControlClient` backed by legacy autopilot socket client."""
 
-    from .autopilot.client import AutopilotClient
+    from koru.autopilot.client import AutopilotClient
 
     return adapt_legacy_autopilot_client(
         AutopilotClient(socket_path=socket_path, timeout=timeout),

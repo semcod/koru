@@ -1,6 +1,5 @@
 """IDE-oriented work prompts for autonomous autopilot when the queue is idle."""
 
-from __future__ import annotations
 
 import json
 import os
@@ -11,7 +10,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from ..project_pipeline import load_koru_project_pipeline
+from koru.project_pipeline import load_koru_project_pipeline
 
 _PRIORITY_RANK = {"critical": 0, "high": 1, "normal": 2, "low": 3}
 _TICKET_ID_RE = re.compile(r"\b(PLF-\d+)\b", re.IGNORECASE)

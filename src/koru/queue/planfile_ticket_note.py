@@ -1,13 +1,12 @@
 """Best-effort shell evidence: planfile ``ticket update`` note flags + artifact fallback."""
 
-from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
 
-from .ticket import planfile_command
-from .types import CommandResult
+from koru.queue.ticket import planfile_command
+from koru.queue.types import CommandResult
 
 
 def _stderr_unknown_option(stderr: str, flag: str) -> bool:

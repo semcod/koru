@@ -10,7 +10,7 @@ from pathlib import Path
 def _autopilot_socket_basename() -> str:
     """File name (with ``.sock``) under ``$XDG_RUNTIME_DIR`` or ``/tmp``."""
     instance = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip()
-    if not instance:
+    if not instance or instance.lower() == "auto":
         return "koru-autopilot.sock"
     slug_chars: list[str] = []
     for ch in instance[:64]:

@@ -5,13 +5,14 @@ mapping 1:1 between shell environment variables (koru-autoloop.sh) and
 Python CLI arguments (koru autonomous up).
 """
 
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-from .env import env_truthy
+from koru.autonomy.env import env_truthy
 
 
 @dataclass(frozen=True)

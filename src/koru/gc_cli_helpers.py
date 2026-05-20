@@ -1,13 +1,12 @@
 """CLI helpers for ``koru gc``."""
 
-from __future__ import annotations
 
 import json
 from argparse import Namespace
 from typing import Any
 
-from .events import emit_management_event
-from .gc import GcResult
+from koru.events import emit_management_event
+from koru.gc import GcResult
 
 
 def gc_statuses_from_args(status_csv: str) -> frozenset[str]:

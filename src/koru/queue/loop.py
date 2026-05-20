@@ -1,12 +1,11 @@
 """Loop driver for draining the planfile queue."""
 
-from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
 
-from .runner import run_next_planfile_task
-from .types import CommandResult, QueueLoopResult, QueueRunResult
+from koru.queue.runner import run_next_planfile_task
+from koru.queue.types import CommandResult, QueueLoopResult, QueueRunResult
 
 # Statuses that should NOT terminate the loop (a transient outcome for the
 # current ticket, but we can still try the next one).
