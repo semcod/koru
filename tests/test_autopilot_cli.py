@@ -697,6 +697,26 @@ def test_install_plugin_exec_success_json_payload(
     assert payload["command"][-1] == "--force"
 
 
+def test_install_plugin_pycharm_alias_maps_to_jetbrains(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    rc = autopilot_main(["install-plugin", "--ide", "pycharm", "--dry-run"])
+    assert rc == 1
+    err = capsys.readouterr().err
+    assert "jetbrains plugin install is not supported" in err
+
+
+def test_install_plugin_auto_detects_pycharm_hosted_as_jetbrains(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("PYCHARM_HOSTED", "1")
+    rc = autopilot_main(["install-plugin", "--dry-run"])
+    assert rc == 1
+    err = capsys.readouterr().err
+    assert "jetbrains plugin install is not supported" in err
+
+
 def test_status_when_no_daemon(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
     socket = tmp_path / "missing.sock"
     rc = autopilot_main(["--socket", str(socket), "status"])

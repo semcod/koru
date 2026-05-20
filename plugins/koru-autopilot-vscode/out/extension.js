@@ -214,6 +214,31 @@ class AutopilotBridge {
         await this.context.globalState.update("probeCache", next);
         debugLog("PROBE_CACHE", next);
     }
+    async _tryTypeSubmit(char) {
+        try {
+            await Promise.resolve(vscode.commands.executeCommand("type", { text: char }));
+            const cmd = `type:${char}`;
+            if (this.probeLadderEnabled()) {
+                await this.saveProbeCache({ submit: cmd });
+            }
+            return { ok: true, command: cmd };
+        }
+        catch {
+            return { ok: false };
+        }
+    }
+    async _tryFallbackCommand(cmd) {
+        try {
+            await Promise.resolve(vscode.commands.executeCommand(cmd));
+            if (this.probeLadderEnabled()) {
+                await this.saveProbeCache({ submit: cmd });
+            }
+            return { ok: true, command: cmd };
+        }
+        catch {
+            return { ok: false };
+        }
+    }
     async submitChat() {
         const ide = this.detectIde();
         const existing = new Set(await Promise.resolve(vscode.commands.getCommands(true)));
@@ -229,44 +254,14 @@ class AutopilotBridge {
             console.warn(`koru autopilot: submitChat command not available: ${cmd}`);
         }
         const fallbacks = [
-            "workbench.action.acceptSelectedQuickOpenItem",
-            "type:\\n",
-            "type:\\r",
+            () => this._tryFallbackCommand("workbench.action.acceptSelectedQuickOpenItem"),
+            () => this._tryTypeSubmit("\n"),
+            () => this._tryTypeSubmit("\r"),
         ];
-        for (const fb of fallbacks) {
-            if (fb === "type:\\n") {
-                try {
-                    await Promise.resolve(vscode.commands.executeCommand("type", { text: "\n" }));
-                    if (this.probeLadderEnabled()) {
-                        await this.saveProbeCache({ submit: "type:\\n" });
-                    }
-                    return { ok: true, command: "type:\\n" };
-                }
-                catch {
-                    continue;
-                }
-            }
-            if (fb === "type:\\r") {
-                try {
-                    await Promise.resolve(vscode.commands.executeCommand("type", { text: "\r" }));
-                    if (this.probeLadderEnabled()) {
-                        await this.saveProbeCache({ submit: "type:\\r" });
-                    }
-                    return { ok: true, command: "type:\\r" };
-                }
-                catch {
-                    continue;
-                }
-            }
-            try {
-                await Promise.resolve(vscode.commands.executeCommand(fb));
-                if (this.probeLadderEnabled()) {
-                    await this.saveProbeCache({ submit: fb });
-                }
-                return { ok: true, command: fb };
-            }
-            catch {
-                /* try next */
+        for (const attempt of fallbacks) {
+            const result = await attempt();
+            if (result.ok) {
+                return result;
             }
         }
         return { ok: false };
@@ -328,6 +323,22 @@ class AutopilotBridge {
         const inputFocused = await this.focusChatInput();
         if (!inputFocused.ok) {
             debugLog("PROBE_PASTE_NO_INPUT_FOCUS");
+        }
+        try {
+            await vscode.env.clipboard.writeText(text);
+            await vscode.commands.executeCommand("editor.action.clipboardPasteAction");
+            await this.sleep(this.probePasteDelayMs());
+            const after = this.editorSnapshot();
+            if (useProbe && (0, probe_ladder_1.pasteLandedInEditor)(before, after, text)) {
+                return { ok: false };
+            }
+            if (useProbe) {
+                await this.saveProbeCache({ paste: "editor.action.clipboardPasteAction" });
+            }
+            return { ok: true, command: "editor.action.clipboardPasteAction" };
+        }
+        catch {
+            /* clipboard paste failed — fallback to type */
         }
         try {
             await Promise.resolve(vscode.commands.executeCommand("type", { text }));
@@ -422,6 +433,74 @@ class AutopilotBridge {
                 return;
         }
     }
+    async saveClipboard() {
+        try {
+            return await vscode.env.clipboard.readText();
+        }
+        catch {
+            return null;
+        }
+    }
+    async restoreClipboard(previous) {
+        if (previous !== null) {
+            try {
+                await vscode.env.clipboard.writeText(previous);
+            }
+            catch {
+                /* ignore */
+            }
+        }
+    }
+    sendFocusFailureAck(env, focus) {
+        this.send({
+            type: "ack",
+            id: env.id,
+            ok: false,
+            opened: false,
+            submitted: false,
+            probe_ladder: this.probeLadderEnabled(),
+            message: "chat input is not focused/open (no supported focus command in this IDE build). Open chat input manually, then retry.",
+        });
+    }
+    sendPasteFailureAck(env, focus) {
+        this.send({
+            type: "ack",
+            id: env.id,
+            ok: false,
+            opened: true,
+            probe_ladder: this.probeLadderEnabled(),
+            winning_focus_open: focus.command,
+            message: "chat opened but paste command failed (probe rejected editor contamination)",
+        });
+    }
+    sendSubmitFailureAck(env, focus, pasted) {
+        this.send({
+            type: "ack",
+            id: env.id,
+            ok: false,
+            delivered: false,
+            opened: true,
+            submitted: false,
+            probe_ladder: this.probeLadderEnabled(),
+            winning_focus_open: focus.command,
+            winning_paste: pasted.command,
+            message: "chat opened and text injected, but submit command failed",
+        });
+    }
+    sendSuccessAck(env, focus, pasted, submitCmd) {
+        this.send({
+            type: "ack",
+            id: env.id,
+            ok: true,
+            delivered: true,
+            opened: true,
+            submitted: true,
+            probe_ladder: this.probeLadderEnabled(),
+            winning_focus_open: focus.command,
+            winning_paste: pasted.command,
+            winning_submit: submitCmd,
+        });
+    }
     async injectChat(env) {
         const text = typeof env.text === "string" ? env.text : "";
         const submit = env.submit !== false;
@@ -431,83 +510,9 @@ class AutopilotBridge {
         }
         // Snapshot the user's clipboard BEFORE we do anything else so we
         // can always restore it — even if focus/paste/submit throws (R8).
-        let previous = null;
+        const previous = await this.saveClipboard();
         try {
-            previous = await vscode.env.clipboard.readText();
-        }
-        catch {
-            previous = null;
-        }
-        try {
-            const focus = await this.focusChat();
-            if (focus.ok) {
-                // Extra settle time after verified open (R13).
-                await this.sleep(80);
-            }
-            if (!focus.ok) {
-                this.send({
-                    type: "ack",
-                    id: env.id,
-                    ok: false,
-                    opened: false,
-                    submitted: false,
-                    probe_ladder: this.probeLadderEnabled(),
-                    message: "chat input is not focused/open (no supported focus command in this IDE build). Open chat input manually, then retry.",
-                });
-                return;
-            }
-            const pasted = await this.pasteText(text);
-            if (!pasted.ok) {
-                this.send({
-                    type: "ack",
-                    id: env.id,
-                    ok: false,
-                    opened: true,
-                    probe_ladder: this.probeLadderEnabled(),
-                    winning_focus_open: focus.command,
-                    message: "chat opened but paste command failed (probe rejected editor contamination)",
-                });
-                return;
-            }
-            let submitted = false;
-            let submitCmd;
-            if (submit) {
-                await this.sleep(150);
-                const submitResult = await this.submitChat();
-                submitted = submitResult.ok;
-                submitCmd = submitResult.command;
-            }
-            if (submit && submitted) {
-                console.log("koru autopilot: sending message.sent");
-                this.send({ type: "message.sent", chat: "default", text: text.substring(0, 200), length: text.length });
-            }
-            if (submit && !submitted) {
-                this.send({
-                    type: "ack",
-                    id: env.id,
-                    ok: false,
-                    delivered: false,
-                    opened: true,
-                    submitted,
-                    probe_ladder: this.probeLadderEnabled(),
-                    winning_focus_open: focus.command,
-                    winning_paste: pasted.command,
-                    message: "chat opened and text injected, but submit command failed",
-                });
-                return;
-            }
-            this.send({
-                type: "ack",
-                id: env.id,
-                ok: true,
-                delivered: true,
-                opened: true,
-                submitted,
-                probe_ladder: this.probeLadderEnabled(),
-                winning_focus_open: focus.command,
-                winning_paste: pasted.command,
-                winning_submit: submitCmd,
-            });
+            await this._performInject(env, text, submit);
         }
         catch (err) {
             const message = err instanceof Error ? err.message : String(err);
@@ -515,13 +520,39 @@ class AutopilotBridge {
         }
         finally {
             // Restore clipboard regardless of outcome.
-            if (previous !== null) {
-                try {
-                    await vscode.env.clipboard.writeText(previous);
-                }
-                catch { /* ignore */ }
+            await this.restoreClipboard(previous);
+        }
+    }
+    async _performInject(env, text, submit) {
+        const focus = await this.focusChat();
+        if (focus.ok) {
+            // Extra settle time after verified open (R13).
+            await this.sleep(80);
+        }
+        if (!focus.ok) {
+            this.sendFocusFailureAck(env, focus);
+            return;
+        }
+        const pasted = await this.pasteText(text);
+        if (!pasted.ok) {
+            this.sendPasteFailureAck(env, focus);
+            return;
+        }
+        let submitCmd;
+        if (submit) {
+            await this.sleep(150);
+            const submitResult = await this.submitChat();
+            if (submitResult.ok) {
+                console.log("koru autopilot: sending message.sent");
+                this.send({ type: "message.sent", chat: "default", text: text.substring(0, 200), length: text.length });
+                submitCmd = submitResult.command;
+            }
+            else {
+                this.sendSubmitFailureAck(env, focus, pasted);
+                return;
             }
         }
+        this.sendSuccessAck(env, focus, pasted, submitCmd);
     }
     async calibrateProbe() {
         const token = `__koru_probe_${Math.random().toString(36).slice(2, 10)}__`;

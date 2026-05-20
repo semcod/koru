@@ -128,7 +128,7 @@ class _Client:
     # Pending CLI ack: when a CLI sends ``drive`` and we forward to a
     # plugin, we remember the CLI socket so we can reply after the
     # plugin acks.
-    awaiting_plugin: tuple[_Client, str, bool, str | None, str] | None = None
+    awaiting_plugin: tuple[_Client, str, bool, str | None, str, bool] | None = None
 
 
 class AutopilotDaemon:
@@ -341,7 +341,7 @@ class AutopilotDaemon:
         require_plugin = bool(msg.data.get("require_plugin", False))
         plugin = self._plugin_for(ide_pref)
         if plugin is not None and not _prefer_keyboard_drive():
-            self._drive_via_plugin(client, msg, plugin, text, submit)
+            self._drive_via_plugin(client, msg, plugin, text, submit, require_plugin)
             return
         if require_plugin:
             label = ide_pref or "auto"
@@ -372,10 +372,11 @@ class AutopilotDaemon:
         plugin: _Client,
         text: str,
         submit: bool,
+        require_plugin: bool,
     ) -> None:
         """Forward a drive request to a connected plugin for that IDE."""
         corr = msg.id or f"drive-{time.monotonic_ns():x}"
-        plugin.awaiting_plugin = (client, corr, submit, plugin.ide, text)
+        plugin.awaiting_plugin = (client, corr, submit, plugin.ide, text, require_plugin)
         self._send(plugin, chat_send(text, submit=submit, id=corr).encode())
         self._last_chat_send_at = time.monotonic()
         preview = text.replace("\n", " ")[:100]
@@ -536,7 +537,10 @@ class AutopilotDaemon:
         info: dict[str, Any],
         submit_requested: bool,
         plugin_ide: str | None,
+        require_plugin: bool,
     ) -> bool:
+        if require_plugin:
+            return False
         if not plugin_ide:
             return False
         focus_error = "chat input is not focused/open" in str(info.get("message", "")).lower()
@@ -582,7 +586,7 @@ class AutopilotDaemon:
         pending = client.awaiting_plugin
         if pending is None:
             return
-        cli_client, corr, submit_requested, plugin_ide, original_text = pending
+        cli_client, corr, submit_requested, plugin_ide, original_text, require_plugin = pending
         if msg.id != corr:
             return
         client.awaiting_plugin = None
@@ -593,6 +597,7 @@ class AutopilotDaemon:
             info=info,
             submit_requested=submit_requested,
             plugin_ide=plugin_ide,
+            require_plugin=require_plugin,
         ) and self._relay_os_fallback_ack(
             cli_client,
             corr,

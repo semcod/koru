@@ -42,6 +42,24 @@ def test_resolve_autopilot_ide_for_autonomous_returns_string_lane() -> None:
     assert source == "lane"
 
 
+def test_resolve_agent_lane_respects_terminal_jetbrains_hint(tmp_path: Path) -> None:
+    running = [
+        RunningIDE(id="cursor", label="Cursor", pid=10, exe="/usr/bin/cursor"),
+        RunningIDE(id="jetbrains", label="JetBrains IDE", pid=11, exe="/usr/bin/pycharm"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value="jetbrains"),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+    assert lane == "jetbrains"
+    assert source == "terminal"
+
+
 def test_format_post_startup_operator_hints_mentions_socket(tmp_path: Path) -> None:
     probe = startup.build_startup_probe(
         tmp_path,

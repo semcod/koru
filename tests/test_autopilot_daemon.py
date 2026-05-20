@@ -628,6 +628,59 @@ def test_plugin_ack_submit_failure_uses_os_fallback(
         cli.close()
 
 
+def test_plugin_ack_failure_skips_os_fallback_if_require_plugin(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """When require_plugin=True, daemon should skip os-injector fallback even on plugin fail."""
+    with _daemon(tmp_path, monkeypatch) as h:
+        plugin, plugin_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
+
+        def fake_os_fallback(_ide: str, _text: str, submit: bool):
+            return {
+                "ok": True,
+                "backend": "os_injector",
+                "submitted": submit,
+            }
+
+        monkeypatch.setattr(h.daemon, "_try_os_injector_drive", fake_os_fallback)
+
+        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli.settimeout(2.0)
+        cli.connect(str(h.sock_path))
+        cli_reader = _LineReader(cli)
+        cli.sendall(
+            Message(
+                type="drive",
+                id="d-require-plugin",
+                data={"text": "continue", "ide": "vscode", "submit": True, "require_plugin": True},
+            ).encode(),
+        )
+
+        forwarded = plugin_reader.read_message()
+        assert forwarded.type == "chat.send"
+        plugin.sendall(
+            Message(
+                type="ack",
+                id=forwarded.id,
+                data={
+                    "ok": False,
+                    "delivered": False,
+                    "submitted": False,
+                    "message": "some plugin error",
+                },
+            ).encode(),
+        )
+
+        cli_reply = cli_reader.read_message()
+        assert cli_reply.type == "ack"
+        assert cli_reply.data.get("ok") is False
+        assert cli_reply.data.get("os_fallback") is None
+
+        plugin.close()
+        cli.close()
+
+
 # ---------------------------------------------------------------------------
 # Auto-handoff
 # ---------------------------------------------------------------------------

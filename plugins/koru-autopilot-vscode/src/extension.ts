@@ -332,6 +332,22 @@ class AutopilotBridge {
       debugLog("PROBE_PASTE_NO_INPUT_FOCUS");
     }
     try {
+      await vscode.env.clipboard.writeText(text);
+      await vscode.commands.executeCommand("editor.action.clipboardPasteAction");
+      await this.sleep(this.probePasteDelayMs());
+      const after = this.editorSnapshot();
+      if (useProbe && pasteLandedInEditor(before, after, text)) {
+        return { ok: false };
+      }
+      if (useProbe) {
+        await this.saveProbeCache({ paste: "editor.action.clipboardPasteAction" });
+      }
+      return { ok: true, command: "editor.action.clipboardPasteAction" };
+    } catch {
+      /* clipboard paste failed — fallback to type */
+    }
+
+    try {
       await Promise.resolve(vscode.commands.executeCommand("type", { text }));
       await this.sleep(this.probePasteDelayMs());
       const after = this.editorSnapshot();

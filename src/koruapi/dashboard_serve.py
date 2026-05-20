@@ -420,6 +420,31 @@ _DASHBOARD_HTML = """<!doctype html>
 <main id="root">
   <div class="panel full"><span class="muted">Loading brief…</span></div>
 </main>
+<section class="panel full" id="create-ticket-panel">
+  <h2>Create ticket</h2>
+  <form id="create-ticket-form" autocomplete="off">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <input id="ct-title" placeholder="Ticket title (optional — auto-generated from description)" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--fg);font-size:13px" />
+      <textarea id="ct-description" rows="3" placeholder="Description / prompt (required)" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--fg);font-size:13px;resize:vertical;font-family:inherit"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="ct-priority" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--fg);font-size:13px">
+          <option value="normal">normal</option>
+          <option value="high">high</option>
+          <option value="critical">critical</option>
+          <option value="low">low</option>
+        </select>
+        <select id="ct-executor" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--fg);font-size:13px">
+          <option value="human">human (LLM IDE)</option>
+          <option value="shell">shell</option>
+          <option value="api">api</option>
+        </select>
+        <input id="ct-queue" value="default" placeholder="Queue" style="width:100px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--fg);font-size:13px" />
+        <button type="submit" style="padding:6px 16px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-size:13px;cursor:pointer;font-weight:600">Create</button>
+      </div>
+    </div>
+    <div id="ct-status" class="muted" style="margin-top:6px;min-height:1.2em"></div>
+  </form>
+</section>
 <footer>
   Local-only · <code>127.0.0.1</code> · auto-refresh 5 s ·
   <a href="/api/context">JSON</a> · <a href="/api/handoff">Markdown</a>
@@ -929,6 +954,43 @@ async function refresh() {
 
 refresh();
 setInterval(refresh, 5000);
+
+// --- Create Ticket form ---
+document.getElementById("create-ticket-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const status = $("ct-status");
+  const description = $("ct-description").value.trim();
+  if (!description) {
+    if (status) { status.textContent = "description is required"; status.className = "muted err"; }
+    return;
+  }
+  const title = $("ct-title").value.trim();
+  const priority = $("ct-priority").value;
+  const executor = $("ct-executor").value;
+  const queue = $("ct-queue").value.trim() || "default";
+  if (status) { status.textContent = "creating…"; status.className = "muted"; }
+  try {
+    const res = await fetch("/api/tickets/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, description, priority, executor_kind: executor, queue_name: queue }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
+    if (status) {
+      status.textContent = `✓ created ${data.ticket_id} — ${data.name}`;
+      status.className = "muted ok";
+    }
+    $("ct-title").value = "";
+    $("ct-description").value = "";
+    setTimeout(refresh, 300);
+  } catch (e) {
+    if (status) {
+      status.textContent = "create failed: " + e.message;
+      status.className = "muted err";
+    }
+  }
+});
 </script>
 </body>
 </html>
@@ -1116,6 +1178,46 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
                     self._send_json(result, status=400)
                     return
                 self._send_json(result)
+                return
+            if path == "/api/tickets/create":
+                description = str(body.get("description") or "").strip()
+                if not description:
+                    self._send_json({"error": "description is required"}, status=400)
+                    return
+                title = str(body.get("title") or "").strip() or None
+                priority = str(body.get("priority") or "normal").strip()
+                executor_kind = str(body.get("executor_kind") or "human").strip()
+                queue_name = str(body.get("queue_name") or "default").strip()
+                try:
+                    from koru.tasks import create_nl_task
+
+                    scaffold: dict[str, Any] = {
+                        "executor_kind": executor_kind,
+                        "executor_mode": "interactive",
+                        "labels": ["koru", "dashboard", "llm-ready"],
+                        "source_tool": "koru-dashboard",
+                    }
+                    if title:
+                        scaffold["title"] = title
+                    created = create_nl_task(
+                        config.project,
+                        description,
+                        queue_name=queue_name,
+                        priority=priority,
+                        scaffold=scaffold,
+                    )
+                    self._send_json({
+                        "ok": True,
+                        "ticket_id": created.ticket_id,
+                        "name": created.name,
+                        "sprint": created.sprint,
+                        "path": str(created.path),
+                    })
+                except Exception as exc:
+                    self._send_json(
+                        {"error": str(exc), "type": type(exc).__name__},
+                        status=500,
+                    )
                 return
             self._send(404, b"not found")
 

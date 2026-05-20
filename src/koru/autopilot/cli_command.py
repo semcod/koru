@@ -445,7 +445,7 @@ def _build_parser() -> argparse.ArgumentParser:
     install_plugin.add_argument(
         "--ide",
         default="auto",
-        choices=("auto", "windsurf", "vscode", "cursor"),
+        choices=("auto", "windsurf", "vscode", "cursor", "jetbrains", "pycharm"),
         help="Target editor CLI (default: auto-detect current IDE).",
     )
     install_plugin.add_argument(
@@ -935,6 +935,12 @@ _PLUGIN_IDE_CLI: dict[str, tuple[str, ...]] = {
     "vscode": ("code", "code-insiders", "code-oss", "vscodium", "codium"),
 }
 
+_PLUGIN_INSTALL_IDE_ALIASES: dict[str, str] = {
+    "pycharm": "jetbrains",
+}
+
+_PLUGIN_INSTALL_IDES = frozenset({"windsurf", "vscode", "cursor", "jetbrains"})
+
 
 def _plugin_repo_dir() -> Path:
     return Path(__file__).resolve().parents[3] / "plugins" / "koru-autopilot-vscode"
@@ -968,35 +974,49 @@ def _ide_from_terminal_env() -> str | None:
         return "cursor"
     if term_program == "windsurf":
         return "windsurf"
+    if term_program in ("pycharm", "jetbrains", "intellij", "idea"):
+        return "jetbrains"
+    if os.environ.get("PYCHARM_HOSTED"):
+        return "jetbrains"
     if os.environ.get("VSCODE_PID"):
         return "vscode"
     return None
 
 
 def _resolve_plugin_target_ide(raw_ide: str) -> str:
-    if raw_ide != "auto":
-        return raw_ide
+    requested = _PLUGIN_INSTALL_IDE_ALIASES.get(raw_ide, raw_ide)
+    if requested != "auto":
+        return requested
     env_guess = _ide_from_terminal_env()
-    if env_guess is not None:
+    if env_guess in _PLUGIN_INSTALL_IDES:
         return env_guess
     focused = detect_focused_ide_id()
-    if focused in _PLUGIN_IDE_CLI:
+    if focused in _PLUGIN_INSTALL_IDES:
         return str(focused)
-    detected = [ide for ide in detect_running_ides() if ide.id in _PLUGIN_IDE_CLI]
+    detected = [ide for ide in detect_running_ides() if ide.id in _PLUGIN_INSTALL_IDES]
     if len(detected) == 1:
         return detected[0].id
     if not detected:
         raise RuntimeError(
-            "could not detect running editor for plugin install; pass --ide windsurf|vscode|cursor",
+            "could not detect running editor for plugin install; pass --ide "
+            "windsurf|vscode|cursor|jetbrains|pycharm",
         )
     ids = ", ".join(ide.id for ide in detected)
     raise RuntimeError(
         "multiple supported IDEs detected with no clear active one "
-        f"({ids}); pass --ide windsurf|vscode|cursor",
+        f"({ids}); pass --ide windsurf|vscode|cursor|jetbrains|pycharm",
     )
 
 
 def _resolve_plugin_editor_bin(ide: str) -> str:
+    if ide == "jetbrains":
+        raise RuntimeError(
+            "jetbrains plugin install is not supported via `koru autopilot install-plugin`; "
+            "build/install the IntelliJ plugin from `plugins/koru-autopilot-jetbrains` "
+            "(see README.md)"
+        )
+    if ide not in _PLUGIN_IDE_CLI:
+        raise RuntimeError(f"unsupported editor for plugin install: {ide}")
     for candidate in _PLUGIN_IDE_CLI[ide]:
         resolved = shutil.which(candidate)
         if resolved:

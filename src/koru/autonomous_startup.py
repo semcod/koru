@@ -59,7 +59,7 @@ def resolve_agent_lane_id(
         return lane, f"cli:{raw}"
 
     terminal = _terminal_agent_lane_from_env()
-    if terminal in _AUTOPILOT_PLUGIN_LANES:
+    if terminal in _PLUGIN_IDE_LANES:
         lane = resolve_project_lane(project, terminal)
         return lane, "terminal"
     if terminal:

@@ -173,7 +173,12 @@ def _operator_autostart_server_enabled() -> bool:
     return raw not in {"0", "false", "no", "off"}
 
 
-def _try_start_planfile_api(project: Path, *, stdio_format: str) -> None:
+def _try_start_planfile_api(
+    project: Path,
+    *,
+    stdio_format: str,
+    correlation_id: str | None,
+) -> None:
     global _STARTED_PLANFILE_API
 
     if _STARTED_PLANFILE_API is not None:
@@ -193,7 +198,7 @@ def _try_start_planfile_api(project: Path, *, stdio_format: str) -> None:
                 project=project,
                 host="127.0.0.1",
                 port=8765,
-                open_browser=False,
+                open_browser=True,
                 auto_port=True,
             ),
             log=lambda msg: activity("HTTP", msg, fmt=stdio_format),
@@ -206,6 +211,32 @@ def _try_start_planfile_api(project: Path, *, stdio_format: str) -> None:
         )
         return
     _STARTED_PLANFILE_API = (server, thread)
+
+    # Emit structured DSL event with dashboard URL
+    actual_port = server.server_address[1]
+    dashboard_url = f"http://127.0.0.1:{actual_port}/"
+    activity(
+        "DASHBOARD",
+        f"dashboard otwarty w przeglądarce: {dashboard_url}",
+        fmt=stdio_format,
+    )
+    if stdio_format == "jsonl" and correlation_id:
+        import sys
+
+        from koru.stdio_events import write_stdio_event
+
+        write_stdio_event(
+            sys.stdout,
+            event_type="DashboardStarted",
+            correlation_id=correlation_id,
+            payload={
+                "url": dashboard_url,
+                "host": "127.0.0.1",
+                "port": actual_port,
+                "project": str(project),
+                "open_browser": True,
+            },
+        )
 
 
 def _os_profile_ok(ide: str, project: Path) -> tuple[bool, str]:
@@ -425,11 +456,19 @@ def _create_step_ticket(
     return created
 
 
-def _ensure_planfile_api(project: Path, stdio_format: str) -> None:
+def _ensure_planfile_api(
+    project: Path,
+    stdio_format: str,
+    correlation_id: str | None,
+) -> None:
     """Ensure planfile API is running."""
     api_ok, _api_detail = _planfile_api_ok(project)
     if not api_ok:
-        _try_start_planfile_api(project, stdio_format=stdio_format)
+        _try_start_planfile_api(
+            project,
+            stdio_format=stdio_format,
+            correlation_id=correlation_id,
+        )
 
 
 def _process_operator_step(
@@ -521,7 +560,7 @@ def run_startup_operator_pipeline(
 ) -> OperatorPipelineResult:
     """Print operator steps and optionally create planfile tickets."""
     out = sys_stdout_for_format(stdio_format)
-    _ensure_planfile_api(project, stdio_format)
+    _ensure_planfile_api(project, stdio_format, correlation_id)
     steps = build_operator_steps(
         project=project,
         probe=probe,

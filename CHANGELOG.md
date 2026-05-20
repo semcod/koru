@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   README and documentation index, with documentation tests guarding those
   links.
 
+### Docs
+- Synchronize `docs/IDE_PROTOCOL.md` and
+  `docs/specs/kide-002-koruide-api-v1.md` with current implementation state:
+  keep `v1` wire contract normative, mark plugin lifecycle/reply-capture paths
+  as capability-dependent, and clarify that `post_run_verify` is executed by
+  the autonomous loop.
+
 ## [0.1.10] - 2026-05-19
 
 ### Fixed
@@ -1383,6 +1390,28 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
   `deploy:{plan,dry,local,device,diagnose,resume,drift}`.
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
+
+## [0.1.160] - 2026-05-20
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update docs/IDE_PROTOCOL.md
+- Update docs/specs/kide-002-koruide-api-v1.md
+
+### Test
+- Update tests/test_autonomous_startup.py
+- Update tests/test_autopilot_cli.py
+- Update tests/test_autopilot_daemon.py
+
+### Other
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update plugins/koru-autopilot-vscode/out/extension.js
+- Update plugins/koru-autopilot-vscode/out/extension.js.map
+- Update plugins/koru-autopilot-vscode/package-lock.json
+- Update plugins/koru-autopilot-vscode/src/extension.ts
+- Update uv.lock
 
 ## [0.1.159] - 2026-05-20
 

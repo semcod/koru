@@ -3,7 +3,8 @@
 - Status: Draft
 - Date: 2026-05-16
 - Related TODO: `KIDE-002`
-- Source of truth (current impl): `src/koru/autopilot/protocol.py`, `src/koru/autopilot/daemon.py`
+- Source of truth (current impl): `src/koruide/protocol.py`, `src/koruide/daemon.py`
+- Legacy compatibility path: `src/koru/autopilot/{protocol,daemon}.py` (shim)
 
 ## 1. Zakres
 
@@ -14,6 +15,10 @@ Ten dokument formalizuje aktualny kontrakt wire protocol (`v1`) używany przez:
 - daemon ↔ plugin IDE.
 
 `API v1` jest line-based, bez jawnego pola `version`.
+
+Spec jest **normatywnym kontraktem wire** (co parser i daemon akceptują/wysyłają),
+nie gwarancją, że każdy plugin IDE emituje wszystkie zdarzenia lifecycle w każdej
+wersji API IDE.
 
 ## 2. Transport
 
@@ -51,6 +56,11 @@ Ten dokument formalizuje aktualny kontrakt wire protocol (`v1`) używany przez:
 - Dla `ack`/`error` dozwolone są dowolne pola informacyjne (poza `type`, `id`).
 
 ## 4. Typy wiadomości (pełna lista)
+
+Uwaga: lista poniżej opisuje pełny kontrakt `v1` obsługiwany przez decoder/daemon.
+Faktyczna emisja eventów plugin -> daemon (szczególnie `session.started`,
+`session.ended`, `message.received`) może zależeć od możliwości konkretnego pluginu
+i API host IDE.
 
 ### 4.1 Plugin -> daemon
 
@@ -117,6 +127,9 @@ kanoniczne kody mapowane z treści błędów.
 | `backend_injector_error` | injection path | treść wyjątku `InjectorError` |
 
 ## 7. Przykłady request/response (per typ)
+
+Uwaga: przykłady `session.*` i `message.received` są poprawne względem kontraktu
+`v1`, ale w praktyce mogą być opcjonalne po stronie pluginów zależnie od API IDE.
 
 ### 7.1 `hello`
 
@@ -258,12 +271,22 @@ Generic error envelope:
 {"type":"error","id":"req-1","ok":false,"message":"unknown message type: 'foo'"}
 ```
 
-## 8. Kompatybilność
+## 8. Notatki implementacyjne (nienormatywne)
+
+- Daemon `koruide` obsługuje wszystkie typy z `ALL_TYPES` i walidację pól zgodną
+  z `v1`.
+- W obecnym bridge VS Code/Cursor/Windsurf `chat.send` i `message.sent` są
+  główną ścieżką operacyjną; pełne lifecycle events i przechwyt treści odpowiedzi
+  LLM pozostają ograniczone przez API IDE.
+- JetBrains plugin jest w fazie scaffold: socket + `hello`, bez pełnej ścieżki
+  `chat.send`/lifecycle.
+
+## 9. Kompatybilność
 
 - `API v1` jest wymagane i utrzymywane podczas migracji do `v2`.
 - Nowe implementacje (`koruide`) MUSZĄ obsługiwać `v1` do czasu zakończenia rollout (`KIDE-022..024`).
 
-## 9. Kryteria akceptacji (`KIDE-002`)
+## 10. Kryteria akceptacji (`KIDE-002`)
 
 - Pełna lista typów wiadomości jest opisana.
 - Pola per typ i wymagania semantyczne są jawne.

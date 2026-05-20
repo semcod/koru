@@ -4,10 +4,10 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.159-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$11.76-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-69.4h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.160-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$11.55-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-69.4h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $11.7558 (218 commits)
+- 🤖 **LLM usage:** $11.5548 (219 commits)
 - 👤 **Human dev:** ~$6935 (69.4h @ $100/h, 30min dedup)
 
 Generated on 2026-05-20 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
@@ -304,7 +304,8 @@ Two injection paths, picked automatically:
 - **Start here:** [`docs/autopilot-quickstart.md`](docs/autopilot-quickstart.md) —
   30-second setup, full checklist, common pitfalls, security model.
 - **Architecture & wire protocol:** [`docs/autopilot-design.md`](docs/autopilot-design.md).
-- **Formal IDE protocol v1:** [`docs/IDE_PROTOCOL.md`](docs/IDE_PROTOCOL.md).
+- **Formal IDE protocol (normative + operational):** [`docs/IDE_PROTOCOL.md`](docs/IDE_PROTOCOL.md).
+- **Normative wire contract `v1` (API table/spec):** [`docs/specs/kide-002-koruide-api-v1.md`](docs/specs/kide-002-koruide-api-v1.md).
 - **What is shipped vs. planned:** [`docs/autopilot-roadmap.md`](docs/autopilot-roadmap.md).
 
 ## Windsurf autonomous mode (hours, unattended)
