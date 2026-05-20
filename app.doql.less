@@ -2,12 +2,12 @@
 
 app {
   name: koru;
-  version: 0.1.149;
+  version: 0.1.160;
 }
 
 dependencies {
-  runtime: pyyaml>=6.0;
-  dev: "pytest>=8.0, pytest-xdist>=3.0, ruff>=0.11, goal>=2.1.0, costs>=0.1.20, pfix>=0.1.60";
+  runtime: "pyyaml>=6.0,<7.0";
+  dev: "pytest>=8.0,<9.0, pytest-cov>=5.0,<7.0, pytest-rerunfailures>=14.0,<17.0, pytest-timeout>=2.3,<3.0, pytest-xdist>=3.0,<4.0, ruff>=0.11,<0.14, mypy>=1.11,<2.0, pyright>=1.1.390,<2.0, hypothesis>=6.112,<7.0, pre-commit>=3.8,<5.0, types-PyYAML>=6.0,<7.0, goal>=2.1.0, costs>=0.1.20, pfix>=0.1.60";
 }
 
 interface[type="api"] {
@@ -44,7 +44,7 @@ workflow[name="install:dev"] {
 
 workflow[name="install:tools"] {
   trigger: manual;
-  step-1: run cmd=pip install planfile wup testql regix redup vallm prefact pfix sumd sumr code2llm redsl llx doql redeploy goal costs op3 toonic protogate rebuild mdflow metrun;
+  step-1: run cmd=pip install planfile wup testql regix "redup>=0.4.28" vallm prefact pfix sumd sumr code2llm redsl llx doql redeploy goal costs op3 toonic protogate rebuild mdflow metrun;
   step-2: run cmd=echo "✓ semcod toolchain installed. Optional interactive agent: pip install aider-chat";
 }
 
@@ -216,20 +216,20 @@ workflow[name="quality:redup"] {
   trigger: manual;
   step-1: run cmd=set -euo pipefail
 if python3 -m koru.cli topology --project . --is-enabled gate:redup >/dev/null 2>&1; then
-  redup scan . --min-lines 10
+  python3 -m redup scan . --min-lines 10
 else
   rc=$?
   if [ "$rc" -eq 1 ]; then
     echo "quality:redup skipped (gate:redup disabled in topology)"
     exit 0
   fi
-  redup scan . --min-lines 10
+  python3 -m redup scan . --min-lines 10
 fi;
 }
 
 workflow[name="quality:redup:changed"] {
   trigger: manual;
-  step-1: run cmd=bash -lc 'set -euo pipefail; BASE_REF="${BASE_REF:-HEAD}"; OUT="${OUT:-.redup/wup-changed.json}"; if python3 -m koru.cli topology --project . --is-enabled gate:redup >/dev/null 2>&1; then python3 -m koru.redup_integration changed-scan --base-ref "$BASE_REF" --output "$OUT" --min-lines 10; else rc=$?; if [ "$rc" -eq 1 ]; then echo "quality:redup:changed skipped (gate:redup disabled in topology)"; exit 0; fi; python3 -m koru.redup_integration changed-scan --base-ref "$BASE_REF" --output "$OUT" --min-lines 10; fi';
+  step-1: run cmd=bash -lc 'set -euo pipefail; BASE_REF="${BASE_REF:-{{.BASE_REF | default "HEAD"}}}"; OUT="${OUT:-{{.OUT | default ".redup/wup-changed.json"}}}"; if python3 -m koru.cli topology --project . --is-enabled gate:redup >/dev/null 2>&1; then python3 -m koru.redup_integration changed-scan --base-ref "$BASE_REF" --output "$OUT" --min-lines 10; else rc=$?; if [ "$rc" -eq 1 ]; then echo "quality:redup:changed skipped (gate:redup disabled in topology)"; exit 0; fi; python3 -m koru.redup_integration changed-scan --base-ref "$BASE_REF" --output "$OUT" --min-lines 10; fi';
 }
 
 workflow[name="quality:redup:check"] {

@@ -1,30 +1,34 @@
-# code2llm/evolution | 1201 func | 109f | 2026-05-20
+# code2llm/evolution | 1206 func | 109f | 2026-05-20
 # generated in 0.01s
 
-NEXT[3] (ranked by impact):
+NEXT[4] (ranked by impact):
   [1] !! SPLIT           src/koru/cli.py
-      WHY: 1858L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 26012
+      WHY: 1857L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 25998
 
-  [2] !! SPLIT           src/koru/autonomous.py
-      WHY: 1737L, 2 classes, max CC=12
-      EFFORT: ~4h  IMPACT: 20844
+  [2] !! SPLIT           src/koru/autopilot/cli_command.py
+      WHY: 1534L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 21476
 
-  [3] !! SPLIT           src/koru/autopilot/cli_command.py
-      WHY: 1331L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 18634
+  [3] !! SPLIT           src/koru/autonomous.py
+      WHY: 1736L, 2 classes, max CC=12
+      EFFORT: ~4h  IMPACT: 20832
+
+  [4] !  SPLIT-FUNC      AutopilotBridge.pasteText  CC=18  fan=18
+      WHY: CC=18 exceeds 15
+      EFFORT: ~1h  IMPACT: 324
 
 
 RISKS[3]:
   ⚠ Splitting src/koru/cli.py may break 52 import paths
   ⚠ Splitting src/koru/autonomous.py may break 48 import paths
-  ⚠ Splitting src/koru/autopilot/cli_command.py may break 45 import paths
+  ⚠ Splitting src/koru/autopilot/cli_command.py may break 50 import paths
 
 METRICS-TARGET:
-  CC̄:          4.1 → ≤2.9
-  max-CC:      14 → ≤7
+  CC̄:          4.2 → ≤2.9
+  max-CC:      18 → ≤9
   god-modules: 18 → 0
-  high-CC(≥15): 0 → ≤0
+  high-CC(≥15): 1 → ≤0
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -52,4 +56,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.2 → now CC̄=4.1
+  prev CC̄=4.1 → now CC̄=4.2

@@ -475,6 +475,45 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Output format (default: text).",
     )
 
+    install_plugin_jetbrains = sub.add_parser(
+        "install-plugin-jetbrains",
+        help=(
+            "Build the JetBrains plugin package (ZIP) and print installation hint "
+            "for PyCharm/IntelliJ."
+        ),
+    )
+    install_plugin_jetbrains.add_argument(
+        "--plugin-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Path to plugins/koru-autopilot-jetbrains directory "
+            "(default: repository copy)."
+        ),
+    )
+    install_plugin_jetbrains.add_argument(
+        "--gradle-bin",
+        default="gradle",
+        help="Gradle executable to use (default: gradle).",
+    )
+    install_plugin_jetbrains.add_argument(
+        "--gradle-task",
+        default="buildPlugin",
+        help="Gradle task used to build plugin package (default: buildPlugin).",
+    )
+    install_plugin_jetbrains.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the resolved Gradle command without executing it.",
+    )
+    install_plugin_jetbrains.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format (default: text).",
+    )
+
     handoff = sub.add_parser(
         "handoff",
         help="Build the koru brief for --project and type it into the IDE chat.",
@@ -946,6 +985,10 @@ def _plugin_repo_dir() -> Path:
     return Path(__file__).resolve().parents[3] / "plugins" / "koru-autopilot-vscode"
 
 
+def _jetbrains_plugin_repo_dir() -> Path:
+    return Path(__file__).resolve().parents[3] / "plugins" / "koru-autopilot-jetbrains"
+
+
 def _resolve_plugin_vsix_path(vsix: Path | None) -> Path:
     if vsix is not None:
         candidate = vsix.expanduser().resolve()
@@ -962,6 +1005,43 @@ def _resolve_plugin_vsix_path(vsix: Path | None) -> Path:
         raise RuntimeError(
             "no packaged .vsix found under plugins/koru-autopilot-vscode; "
             "build one with: `cd plugins/koru-autopilot-vscode && npm install && npm run package`",
+        )
+    return matches[0]
+
+
+def _resolve_jetbrains_plugin_dir(raw_dir: Path | None) -> Path:
+    plugin_dir = (raw_dir or _jetbrains_plugin_repo_dir()).expanduser().resolve()
+    if not plugin_dir.is_dir():
+        raise RuntimeError(f"jetbrains plugin dir not found: {plugin_dir}")
+    if not (plugin_dir / "build.gradle.kts").is_file():
+        raise RuntimeError(f"missing build.gradle.kts in jetbrains plugin dir: {plugin_dir}")
+    return plugin_dir
+
+
+def _resolve_gradle_bin(raw: str) -> str:
+    candidate = (raw or "gradle").strip()
+    if not candidate:
+        candidate = "gradle"
+    candidate_path = Path(candidate).expanduser()
+    if candidate_path.is_file() and os.access(candidate_path, os.X_OK):
+        return str(candidate_path.resolve())
+    resolved = shutil.which(candidate)
+    if resolved:
+        return resolved
+    raise RuntimeError(f"could not find Gradle executable in PATH: {candidate}")
+
+
+def _resolve_jetbrains_plugin_artifact(plugin_dir: Path) -> Path:
+    dist_dir = plugin_dir / "build" / "distributions"
+    matches = sorted(
+        dist_dir.glob("*.zip"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    if not matches:
+        raise RuntimeError(
+            "no JetBrains plugin ZIP found under build/distributions; "
+            "run `gradle buildPlugin` in plugins/koru-autopilot-jetbrains"
         )
     return matches[0]
 
@@ -1114,6 +1194,105 @@ def _action_install_plugin(args: argparse.Namespace) -> int:
         args.output_format,
     )
     return 0 if ok else 1
+
+
+def _action_install_plugin_jetbrains(args: argparse.Namespace) -> int:
+    try:
+        plugin_dir = _resolve_jetbrains_plugin_dir(args.plugin_dir)
+        gradle_bin = _resolve_gradle_bin(args.gradle_bin)
+    except RuntimeError as exc:
+        print(f"koru autopilot install-plugin-jetbrains: {exc}", file=sys.stderr)
+        return 1
+
+    cmd = [gradle_bin, args.gradle_task]
+    if args.dry_run:
+        payload = {
+            "ok": True,
+            "dry_run": True,
+            "plugin_dir": str(plugin_dir),
+            "command": cmd,
+        }
+        if args.output_format == "json":
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print("koru autopilot install-plugin-jetbrains: dry-run")
+            print(f"  cwd: {plugin_dir}")
+            print("  " + " ".join(cmd))
+        return 0
+
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=str(plugin_dir),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError as exc:
+        print(f"koru autopilot install-plugin-jetbrains: {exc}", file=sys.stderr)
+        return 1
+
+    stdout = proc.stdout.strip()
+    stderr = proc.stderr.strip()
+    if proc.returncode != 0:
+        if args.output_format == "json":
+            print(
+                json.dumps(
+                    {
+                        "ok": False,
+                        "plugin_dir": str(plugin_dir),
+                        "command": cmd,
+                        "returncode": proc.returncode,
+                        "stdout": stdout,
+                        "stderr": stderr,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        else:
+            print("koru autopilot install-plugin-jetbrains: build failed", file=sys.stderr)
+            if stdout:
+                print(stdout)
+            if stderr:
+                print(stderr, file=sys.stderr)
+        return 1
+
+    try:
+        artifact = _resolve_jetbrains_plugin_artifact(plugin_dir)
+    except RuntimeError as exc:
+        print(f"koru autopilot install-plugin-jetbrains: {exc}", file=sys.stderr)
+        return 1
+
+    hint = (
+        "Install in PyCharm/IntelliJ: Settings -> Plugins -> gear icon -> "
+        "Install Plugin from Disk..."
+    )
+    if args.output_format == "json":
+        print(
+            json.dumps(
+                {
+                    "ok": True,
+                    "plugin_dir": str(plugin_dir),
+                    "command": cmd,
+                    "artifact": str(artifact),
+                    "manual_install_hint": hint,
+                    "stdout": stdout,
+                    "stderr": stderr,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+    else:
+        print("koru autopilot install-plugin-jetbrains: built plugin package")
+        print(f"  artifact: {artifact}")
+        print(f"  {hint}")
+        if stdout:
+            print(stdout)
+        if stderr:
+            print(stderr, file=sys.stderr)
+    return 0
 
 
 def _build_brief(project: Path) -> str:
@@ -1339,6 +1518,7 @@ _ACTIONS = {
     "doctor": _action_doctor,
     "setup-host": _action_setup_host,
     "install-plugin": _action_install_plugin,
+    "install-plugin-jetbrains": _action_install_plugin_jetbrains,
     "handoff": _action_handoff,
     "tail": _action_tail,
     "install-unit": _action_install_unit,

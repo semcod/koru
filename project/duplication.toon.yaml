@@ -1,51 +1,51 @@
-# redup/duplication | 33 groups | 128f 29825L | 2026-05-20
+# redup/duplication | 33 groups | 128f 30143L | 2026-05-20
 
 SUMMARY:
   files_scanned: 128
-  total_lines:   29825
+  total_lines:   30143
   dup_groups:    33
   dup_fragments: 77
   saved_lines:   358
-  scan_ms:       4287
+  scan_ms:       3807
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/autonomous.py  dup=119L  groups=12  frags=12  (0.4%)
   src/koru/cli.py  dup=101L  groups=3  frags=8  (0.3%)
   src/koru/autonomous_cycle.py  dup=97L  groups=9  frags=9  (0.3%)
-  src/koruapi/dashboard.py  dup=45L  groups=1  frags=1  (0.2%)
+  src/koruapi/dashboard.py  dup=45L  groups=1  frags=1  (0.1%)
   src/koru/mcp_provision.py  dup=39L  groups=2  frags=5  (0.1%)
   src/koruide/protocol.py  dup=24L  groups=1  frags=2  (0.1%)
   src/korudsl/library.py  dup=22L  groups=2  frags=6  (0.1%)
 
 DUPLICATES[33] (ranked by impact):
   [b79fb4d314048ea0] ! STRU  _build_serve_parser  L=48 N=2 saved=48 sim=1.00
-      src/koru/cli.py:389-436  (_build_serve_parser)
+      src/koru/cli.py:388-435  (_build_serve_parser)
       src/koruapi/dashboard.py:17-61  (build_serve_parser)
-  [e6df54c38573f3c8] ! EXAC  _run_idle_diagnostics  L=36 N=2 saved=36 sim=1.00
-      src/koru/autonomous.py:1093-1128  (_run_idle_diagnostics)
-      src/koru/autonomous_cycle.py:193-228  (_run_idle_diagnostics)
+  [2ae726bfafded9cc] ! EXAC  _run_idle_diagnostics  L=36 N=2 saved=36 sim=1.00
+      src/koru/autonomous.py:1092-1127  (_run_idle_diagnostics)
+      src/koru/autonomous_cycle.py:192-227  (_run_idle_diagnostics)
   [cfa0e91c669b55c5]   STRU  _build_local_serve_parser  L=29 N=2 saved=29 sim=1.00
-      src/koru/cli.py:439-467  (_build_local_serve_parser)
+      src/koru/cli.py:438-466  (_build_local_serve_parser)
       src/koruapi/local.py:11-19  (build_local_parser)
   [077cfa61a2943c36]   STRU  _serve_main  L=4 N=6 saved=20 sim=1.00
-      src/koru/cli.py:1047-1050  (_serve_main)
-      src/koru/cli.py:1053-1056  (_local_serve_main)
-      src/koru/cli.py:1292-1295  (_mcp_serve_main)
-      src/koru/cli.py:1357-1360  (_init_ide_main)
-      src/koru/cli.py:1419-1422  (_dsl_main)
-      src/koru/cli.py:1425-1428  (_api_main)
+      src/koru/cli.py:1046-1049  (_serve_main)
+      src/koru/cli.py:1052-1055  (_local_serve_main)
+      src/koru/cli.py:1291-1294  (_mcp_serve_main)
+      src/koru/cli.py:1356-1359  (_init_ide_main)
+      src/koru/cli.py:1418-1421  (_dsl_main)
+      src/koru/cli.py:1424-1427  (_api_main)
   [13996a2247a97ed8]   EXAC  _read_wup_health  L=16 N=2 saved=16 sim=1.00
-      src/koru/autonomous.py:1075-1090  (_read_wup_health)
-      src/koru/autonomous_cycle.py:175-190  (_read_wup_health)
+      src/koru/autonomous.py:1074-1089  (_read_wup_health)
+      src/koru/autonomous_cycle.py:174-189  (_read_wup_health)
   [400f9f906a729d1a]   STRU  provision_cursor  L=15 N=2 saved=15 sim=1.00
-      src/koru/mcp_provision.py:195-209  (provision_cursor)
-      src/koru/mcp_provision.py:212-226  (provision_vscode)
+      src/koru/mcp_provision.py:194-208  (provision_cursor)
+      src/koru/mcp_provision.py:211-225  (provision_vscode)
   [b060ed239d7cc6c9]   EXAC  _run_command_check  L=13 N=2 saved=13 sim=1.00
-      src/koru/autonomous.py:1018-1030  (_run_command_check)
-      src/koru/autonomous_cycle.py:122-134  (_run_command_check)
+      src/koru/autonomous.py:1017-1029  (_run_command_check)
+      src/koru/autonomous_cycle.py:121-133  (_run_command_check)
   [d69cbedeb6dc8f2f]   EXAC  _parse_iso_datetime  L=13 N=2 saved=13 sim=1.00
-      src/koru/autonomy/ide_work.py:141-153  (_parse_iso_datetime)
-      src/koru/autonomy/post_run_verify.py:132-144  (_parse_iso_datetime)
+      src/koru/autonomy/ide_work.py:140-152  (_parse_iso_datetime)
+      src/koru/autonomy/post_run_verify.py:131-143  (_parse_iso_datetime)
   [07394d97ab843be1]   STRU  resolve_xdg_path  L=12 N=2 saved=12 sim=1.00
       src/koru/autopilot/utils/client_helpers.py:46-57  (resolve_xdg_path)
       src/koruide/utils.py:9-21  (resolve_xdg_path)
@@ -63,67 +63,67 @@ DUPLICATES[33] (ranked by impact):
       src/koruide/injector.py:59-68  (_ydotool_enter_keycode)
       src/koruide/injector.py:81-86  (_ydotool_ctrl_keycode)
   [30376722d90c4f75]   EXAC  _is_topology_enabled  L=9 N=2 saved=9 sim=1.00
-      src/koru/autonomous.py:905-913  (_is_topology_enabled)
-      src/koru/autonomous_cycle.py:75-83  (_is_topology_enabled)
+      src/koru/autonomous.py:904-912  (_is_topology_enabled)
+      src/koru/autonomous_cycle.py:74-82  (_is_topology_enabled)
   [0a213b0b7ddbf9fc]   EXAC  _current_head  L=9 N=2 saved=9 sim=1.00
-      src/koru/autonomous.py:916-924  (_current_head)
-      src/koru/autonomous_cycle.py:86-94  (_current_head)
+      src/koru/autonomous.py:915-923  (_current_head)
+      src/koru/autonomous_cycle.py:85-93  (_current_head)
   [823aa4659db9c93d]   STRU  _handle_wait  L=3 N=4 saved=9 sim=1.00
       src/korudsl/library.py:38-40  (_handle_wait)
       src/korudsl/library.py:43-45  (_handle_get)
       src/korudsl/library.py:48-50  (_handle_save)
       src/korudsl/library.py:53-55  (_handle_if)
   [940e90e95c5d69b3]   STRU  _check_git_commit_policy  L=4 N=3 saved=8 sim=1.00
-      src/koru/policy.py:195-198  (_check_git_commit_policy)
-      src/koru/policy.py:201-204  (_check_git_push_policy)
-      src/koru/policy.py:227-230  (_check_git_tag_policy)
+      src/koru/policy.py:194-197  (_check_git_commit_policy)
+      src/koru/policy.py:200-203  (_check_git_push_policy)
+      src/koru/policy.py:226-229  (_check_git_tag_policy)
   [abf90bbbadf601ec]   STRU  _as_managed  L=7 N=2 saved=7 sim=1.00
-      src/koru/autonomous.py:334-340  (_as_managed)
-      src/koru/autonomous_process_guard.py:154-160  (as_managed)
+      src/koru/autonomous.py:333-339  (_as_managed)
+      src/koru/autonomous_process_guard.py:153-159  (as_managed)
   [8e12ae22db3cad29]   STRU  _confirm_replace_existing  L=7 N=2 saved=7 sim=1.00
-      src/koru/autonomous.py:387-393  (_confirm_replace_existing)
-      src/koru/autonomous_process_guard.py:201-207  (confirm_replace_existing)
+      src/koru/autonomous.py:386-392  (_confirm_replace_existing)
+      src/koru/autonomous_process_guard.py:200-206  (confirm_replace_existing)
   [2d7b9210c1b65241]   STRU  activity_enabled  L=3 N=3 saved=6 sim=1.00
-      src/koru/activity_log.py:12-14  (activity_enabled)
+      src/koru/activity_log.py:11-13  (activity_enabled)
       src/koru/autonomy/operator_pipeline.py:171-173  (_operator_autostart_server_enabled)
       src/koruide/plugin_installer.py:213-215  (_env_reassert_extension_install)
   [9b7967c4c573e5f1]   STRU  _process_cwd  L=6 N=2 saved=6 sim=1.00
-      src/koru/autonomous.py:186-191  (_process_cwd)
-      src/koru/autonomous_process_guard.py:39-44  (process_cwd)
+      src/koru/autonomous.py:185-190  (_process_cwd)
+      src/koru/autonomous_process_guard.py:38-43  (process_cwd)
   [d3fe48eeadbdaf2c]   STRU  _cursor_project_config  L=3 N=3 saved=6 sim=1.00
-      src/koru/mcp_provision.py:40-42  (_cursor_project_config)
-      src/koru/mcp_provision.py:45-47  (_vscode_project_config)
-      src/koru/mcp_provision.py:50-52  (_windsurf_project_config)
+      src/koru/mcp_provision.py:39-41  (_cursor_project_config)
+      src/koru/mcp_provision.py:44-46  (_vscode_project_config)
+      src/koru/mcp_provision.py:49-51  (_windsurf_project_config)
   [c7374d52504d8e71]   STRU  set_component_enabled  L=6 N=2 saved=6 sim=1.00
-      src/koru/topology.py:354-359  (set_component_enabled)
-      src/koru/topology.py:362-367  (set_pipeline_enabled)
+      src/koru/topology.py:353-358  (set_component_enabled)
+      src/koru/topology.py:361-366  (set_pipeline_enabled)
   [cede1a8630b48984]   STRU  os_injector_env_disabled  L=3 N=3 saved=6 sim=1.00
       src/koruide/os_injector.py:61-63  (os_injector_env_disabled)
       src/koruide/os_injector.py:66-68  (os_injector_env_forced)
       src/koruide/os_injector.py:71-73  (dry_run_from_env)
-  [825007d92835d4b3]   EXAC  _stdio_info  L=5 N=2 saved=5 sim=1.00
-      src/koru/autonomous.py:120-124  (_stdio_info)
-      src/koru/autonomous_cycle.py:41-44  (_stdio_info)
+  [d8b6166dd12467a7]   EXAC  _stdio_info  L=5 N=2 saved=5 sim=1.00
+      src/koru/autonomous.py:119-123  (_stdio_info)
+      src/koru/autonomous_cycle.py:40-43  (_stdio_info)
   [c4200e7110d9ebe1]   STRU  _handle_error  L=5 N=2 saved=5 sim=1.00
       src/korudsl/library.py:58-62  (_handle_error)
       src/korudsl/library.py:65-69  (_handle_correct)
   [774459a6d92b5dbd]   EXAC  _queue_loop_waiting_ticket_label  L=4 N=2 saved=4 sim=1.00
-      src/koru/autonomous.py:899-902  (_queue_loop_waiting_ticket_label)
-      src/koru/autonomous_cycle.py:70-72  (_queue_loop_waiting_ticket_label)
+      src/koru/autonomous.py:898-901  (_queue_loop_waiting_ticket_label)
+      src/koru/autonomous_cycle.py:69-71  (_queue_loop_waiting_ticket_label)
   [a7174a018322bcf8]   EXAC  _status_in_skip_list  L=4 N=2 saved=4 sim=1.00
-      src/koru/autonomous.py:1012-1015  (_status_in_skip_list)
-      src/koru/autonomous_cycle.py:97-100  (_status_in_skip_list)
+      src/koru/autonomous.py:1011-1014  (_status_in_skip_list)
+      src/koru/autonomous_cycle.py:96-99  (_status_in_skip_list)
   [fdccb72b1fbbe81c]   EXAC  _allow_keyboard_autopilot_fallback  L=3 N=2 saved=3 sim=1.00
-      src/koru/autonomous.py:136-138  (_allow_keyboard_autopilot_fallback)
-      src/koru/autonomous_cycle.py:103-105  (_allow_keyboard_autopilot_fallback)
+      src/koru/autonomous.py:135-137  (_allow_keyboard_autopilot_fallback)
+      src/koru/autonomous_cycle.py:102-104  (_allow_keyboard_autopilot_fallback)
   [0f8d5f341099fa34]   EXAC  _open_later  L=3 N=2 saved=3 sim=1.00
-      src/koruapi/dashboard_serve.py:1235-1237  (_open_later)
-      src/koruapi/dashboard_serve.py:1284-1286  (_open_later)
+      src/koruapi/dashboard_serve.py:1337-1339  (_open_later)
+      src/koruapi/dashboard_serve.py:1386-1388  (_open_later)
   [be027ff698a2786c]   STRU  _action_status  L=3 N=2 saved=3 sim=1.00
-      src/koru/autopilot/cli_command.py:789-791  (_action_status)
-      src/koru/autopilot/cli_command.py:794-801  (_action_shutdown)
+      src/koru/autopilot/cli_command.py:831-833  (_action_status)
+      src/koru/autopilot/cli_command.py:836-843  (_action_shutdown)
   [781cd2265323c713]   STRU  _systemd_user_dir  L=3 N=2 saved=3 sim=1.00
-      src/koru/autopilot/cli_command.py:1214-1216  (_systemd_user_dir)
+      src/koru/autopilot/cli_command.py:1416-1418  (_systemd_user_dir)
       src/koruide/config.py:62-64  (default_config_path)
   [60d745664334ec54]   STRU  redup_scan_command  L=3 N=2 saved=3 sim=1.00
       src/koru/redup_integration.py:22-24  (redup_scan_command)

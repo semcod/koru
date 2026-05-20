@@ -5,6 +5,68 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10] - 2026-05-20
+
+### Fixed
+- Fix wildcard-imports issues (ticket-7590895b)
+- Fix unused-imports issues (ticket-0a61d6be)
+- Fix unused-imports issues (ticket-9e01d7c7)
+- Fix string-concat issues (ticket-b5e9485d)
+- Fix string-concat issues (ticket-358e3d99)
+- Fix string-concat issues (ticket-e9489236)
+- Fix string-concat issues (ticket-5d4bc4ce)
+- Fix unused-imports issues (ticket-45a43753)
+- Fix string-concat issues (ticket-48b58582)
+- Fix string-concat issues (ticket-e3fb4dfc)
+- Fix unused-imports issues (ticket-f0d4bfb2)
+- Fix string-concat issues (ticket-b3d48613)
+- Fix string-concat issues (ticket-d657eabc)
+- Fix unused-imports issues (ticket-f5b7db64)
+- Fix string-concat issues (ticket-742be79f)
+- Fix duplicate-imports issues (ticket-385fa7ca)
+- Fix string-concat issues (ticket-b2ab541b)
+- Fix unused-imports issues (ticket-8c527fde)
+- Fix string-concat issues (ticket-e0b2d29b)
+- Fix unused-imports issues (ticket-8032453c)
+- Fix string-concat issues (ticket-48d5f9c0)
+- Fix unused-imports issues (ticket-4b62c609)
+- Fix llm-generated-code issues (ticket-0355e9e1)
+- Fix unused-imports issues (ticket-75d68704)
+- Fix unused-imports issues (ticket-025da852)
+- Fix unused-imports issues (ticket-577b930b)
+- Fix llm-generated-code issues (ticket-aa321302)
+- Fix ai-boilerplate issues (ticket-1fbcf810)
+- Fix unused-imports issues (ticket-c7c3d857)
+- Fix llm-generated-code issues (ticket-65f0dfb8)
+- Fix unused-imports issues (ticket-145676c9)
+- Fix wildcard-imports issues (ticket-6b64b45b)
+- Fix unused-imports issues (ticket-72b5fd2b)
+- Fix unused-imports issues (ticket-e5adde4b)
+- Fix unused-imports issues (ticket-d940493a)
+- Fix string-concat issues (ticket-c919e166)
+- Fix string-concat issues (ticket-0a1f98bb)
+- Fix unused-imports issues (ticket-e2cd6a64)
+- Fix unused-imports issues (ticket-672a7b01)
+- Fix string-concat issues (ticket-7dfdde8d)
+- Fix unused-imports issues (ticket-304ec8df)
+- Fix unused-imports issues (ticket-92901632)
+- Fix string-concat issues (ticket-b3256774)
+- Fix smart-return-type issues (ticket-d2370920)
+- Fix string-concat issues (ticket-daabb08a)
+- Fix unused-imports issues (ticket-a484e8f1)
+- Fix unused-imports issues (ticket-33228f4b)
+- Fix unused-imports issues (ticket-b7f41e1c)
+- Fix ai-boilerplate issues (ticket-efe78ad6)
+- Fix unused-imports issues (ticket-2d5133c1)
+- Fix string-concat issues (ticket-4b9139d2)
+- Fix unused-imports issues (ticket-ea1e7cbc)
+- Fix unused-imports issues (ticket-ef4a8613)
+- Fix unused-imports issues (ticket-9f7812b0)
+- Fix llm-generated-code issues (ticket-9525d2d9)
+- Fix string-concat issues (ticket-1bd8c441)
+- Fix unused-imports issues (ticket-f504f243)
+- Fix ai-boilerplate issues (ticket-e11aa041)
+
 ## [0.1.156] - 2026-05-20
 
 ### Changed
@@ -1390,6 +1452,33 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
   `deploy:{plan,dry,local,device,diagnose,resume,drift}`.
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
+
+## [0.1.161] - 2026-05-20
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_autopilot_cli.py
+
+### Other
+- Update app.doql.less
+- Update planfile.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- ... and 9 more files
 
 ## [0.1.160] - 2026-05-20
 

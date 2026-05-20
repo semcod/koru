@@ -706,6 +706,56 @@ def test_install_plugin_pycharm_alias_maps_to_jetbrains(
     assert "jetbrains plugin install is not supported" in err
 
 
+def test_install_plugin_jetbrains_dry_run_json(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    plugin_dir = tmp_path / "koru-autopilot-jetbrains"
+    plugin_dir.mkdir()
+    monkeypatch.setattr(cli_command, "_resolve_jetbrains_plugin_dir", lambda _p: plugin_dir)
+    monkeypatch.setattr(cli_command, "_resolve_gradle_bin", lambda _p: "/usr/bin/gradle")
+
+    rc = autopilot_main(["install-plugin-jetbrains", "--dry-run", "--format", "json"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+    assert payload["dry_run"] is True
+    assert payload["plugin_dir"] == str(plugin_dir)
+    assert payload["command"] == ["/usr/bin/gradle", "buildPlugin"]
+
+
+def test_install_plugin_jetbrains_success_json_payload(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    plugin_dir = tmp_path / "koru-autopilot-jetbrains"
+    plugin_dir.mkdir()
+    artifact = plugin_dir / "build" / "distributions" / "koru-autopilot.zip"
+    artifact.parent.mkdir(parents=True)
+    artifact.write_text("fake", encoding="utf-8")
+
+    monkeypatch.setattr(cli_command, "_resolve_jetbrains_plugin_dir", lambda _p: plugin_dir)
+    monkeypatch.setattr(cli_command, "_resolve_gradle_bin", lambda _p: "/usr/bin/gradle")
+    monkeypatch.setattr(cli_command, "_resolve_jetbrains_plugin_artifact", lambda _p: artifact)
+
+    def _fake_run(cmd, cwd, capture_output, text, check):
+        assert cmd == ["/usr/bin/gradle", "buildPlugin"]
+        assert cwd == str(plugin_dir)
+        return cli_command.subprocess.CompletedProcess(cmd, 0, stdout="built", stderr="")
+
+    monkeypatch.setattr(cli_command.subprocess, "run", _fake_run)
+
+    rc = autopilot_main(["install-plugin-jetbrains", "--format", "json"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+    assert payload["plugin_dir"] == str(plugin_dir)
+    assert payload["artifact"] == str(artifact)
+    assert payload["command"] == ["/usr/bin/gradle", "buildPlugin"]
+
+
 def test_install_plugin_auto_detects_pycharm_hosted_as_jetbrains(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
