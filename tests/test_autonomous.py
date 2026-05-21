@@ -927,7 +927,7 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
 
     class FakeClient:
         def status(self):
-            return {"plugins": [{"ide": "cursor"}]}
+            return {"plugins": [{"ide": "cursor", "version": "0.1.14"}]}
 
         def drive(self, *_args, **_kwargs):
             return {"ok": True, "backend": "plugin"}
@@ -967,6 +967,7 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
 
     assert rc == 0
     assert install_calls == ["cursor:koru-autopilot.sock"]
+    assert "KORU_STRICT_PLUGIN_VERSION" not in os.environ
 
 
 def test_setup_autopilot_plugin_unsupported_skips_wait(tmp_path, monkeypatch) -> None:
@@ -1003,7 +1004,10 @@ def test_setup_autopilot_plugin_unsupported_skips_wait(tmp_path, monkeypatch) ->
     assert connected is False
 
 
-def test_status_has_autopilot_plugin_matches_specific_ide() -> None:
+def test_status_has_autopilot_plugin_matches_specific_ide(monkeypatch) -> None:
+    monkeypatch.delenv("KORU_STRICT_PLUGIN_VERSION", raising=False)
+    monkeypatch.delenv("KORU_PLUGIN_VERSION_POLICY", raising=False)
+
     assert autonomous_mod._status_has_autopilot_plugin(
         {"plugins": [{"ide": "vscode"}, {"ide": "windsurf"}]},
         "vscode",
@@ -1014,8 +1018,64 @@ def test_status_has_autopilot_plugin_matches_specific_ide() -> None:
     )
 
 
+def test_status_has_autopilot_plugin_rejects_stale_plugin_when_strict(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
+    monkeypatch.setattr(
+        autonomous_mod.DriveOrchestrator,
+        "expected_plugin_version",
+        lambda: "0.1.14",
+    )
+
+    assert not autonomous_mod._status_has_autopilot_plugin(
+        {"plugins": [{"ide": "vscode", "version": "0.1.13"}]},
+        "vscode",
+    )
+    assert not autonomous_mod._status_has_autopilot_plugin(
+        {"plugins": [{"ide": "vscode"}]},
+        "vscode",
+    )
+    assert autonomous_mod._status_has_autopilot_plugin(
+        {"plugins": [{"ide": "vscode", "version": "0.1.14"}]},
+        "vscode",
+    )
+
+
+def test_autonomous_defaults_to_strict_plugin_version(monkeypatch) -> None:
+    args = SimpleNamespace(enable_autopilot=True, emit_events="human")
+    messages: list[str] = []
+    monkeypatch.delenv("KORU_STRICT_PLUGIN_VERSION", raising=False)
+    monkeypatch.delenv("KORU_PLUGIN_VERSION_POLICY", raising=False)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_stdio_info",
+        lambda message, **_kwargs: messages.append(message),
+    )
+
+    autonomous_mod._enable_autonomous_strict_plugin_version(args)
+
+    assert os.environ["KORU_STRICT_PLUGIN_VERSION"] == "1"
+    assert any("strict plugin version policy enabled" in message for message in messages)
+    os.environ.pop("KORU_STRICT_PLUGIN_VERSION", None)
+
+
+def test_autonomous_respects_explicit_plugin_version_policy(monkeypatch) -> None:
+    args = SimpleNamespace(enable_autopilot=True, emit_events="human")
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "0")
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_stdio_info",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("no log")),
+    )
+
+    autonomous_mod._enable_autonomous_strict_plugin_version(args)
+
+    assert os.environ["KORU_STRICT_PLUGIN_VERSION"] == "0"
+
+
 def test_wait_for_autopilot_plugin_polls_until_connected(monkeypatch) -> None:
     sleeps: list[float] = []
+    monkeypatch.delenv("KORU_STRICT_PLUGIN_VERSION", raising=False)
+    monkeypatch.delenv("KORU_PLUGIN_VERSION_POLICY", raising=False)
 
     class FakeClient:
         def __init__(self) -> None:
@@ -1038,6 +1098,103 @@ def test_wait_for_autopilot_plugin_polls_until_connected(monkeypatch) -> None:
         interval_seconds=0.25,
     )
     assert sleeps == [0.25]
+
+
+def test_start_or_reuse_daemon_reuses_current_version(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(autonomous_mod, "_current_koru_version", lambda: "1.2.3")
+
+    class FakeClient:
+        def is_running(self):
+            return True
+
+        def status(self):
+            return {"daemon_version": "1.2.3"}
+
+    starts: list[str] = []
+    monkeypatch.setattr(autonomous_mod, "build_ide_client", lambda **_kwargs: FakeClient())
+    monkeypatch.setattr(
+        autonomous_mod,
+        "AutopilotDaemon",
+        lambda **_kwargs: (_ for _ in ()).throw(AssertionError("must reuse daemon")),
+    )
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_stdio_info",
+        lambda message, **_kwargs: starts.append(message),
+    )
+
+    client, daemon, thread = autonomous_mod._start_or_reuse_daemon(
+        project=tmp_path,
+        socket_path=tmp_path / "koru.sock",
+    )
+
+    assert isinstance(client, FakeClient)
+    assert daemon is None
+    assert thread is None
+    assert any("reusing autopilot daemon" in line for line in starts)
+
+
+def test_start_or_reuse_daemon_restarts_daemon_without_version(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(autonomous_mod, "_current_koru_version", lambda: "1.2.3")
+
+    class FakeClient:
+        shutdowns = 0
+
+        def __init__(self) -> None:
+            self.status_calls = 0
+
+        def is_running(self):
+            return FakeClient.shutdowns == 0
+
+        def status(self):
+            return {"plugins": []}
+
+        def shutdown(self):
+            FakeClient.shutdowns += 1
+            return {"ok": True}
+
+    class FakeDaemon:
+        def __init__(self, **_kwargs) -> None:
+            self.started = False
+
+        def start(self):
+            self.started = True
+
+        def serve_forever(self):
+            return None
+
+    class FakeThread:
+        def __init__(self, target, daemon) -> None:
+            self.target = target
+            self.daemon = daemon
+            self.started = False
+
+        def start(self):
+            self.started = True
+
+    messages: list[str] = []
+    monkeypatch.setattr(autonomous_mod, "build_ide_client", lambda **_kwargs: FakeClient())
+    monkeypatch.setattr(autonomous_mod, "AutopilotDaemon", FakeDaemon)
+    monkeypatch.setattr(autonomous_mod.threading, "Thread", FakeThread)
+    monkeypatch.setattr(autonomous_mod.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_stdio_info",
+        lambda message, **_kwargs: messages.append(message),
+    )
+
+    client, daemon, thread = autonomous_mod._start_or_reuse_daemon(
+        project=tmp_path,
+        socket_path=tmp_path / "koru.sock",
+    )
+
+    assert isinstance(client, FakeClient)
+    assert isinstance(daemon, FakeDaemon)
+    assert daemon.started is True
+    assert isinstance(thread, FakeThread)
+    assert thread.started is True
+    assert FakeClient.shutdowns == 1
+    assert any("restarting stale autopilot daemon" in line for line in messages)
 
 
 def test_run_cycle_sends_fallback_prompt_when_waiting_input_empty_message(
@@ -1821,8 +1978,16 @@ def test_start_wup_watch_passes_playwright_env(tmp_path, monkeypatch) -> None:
     class DummyProcess:
         pid = 123
 
-    monkeypatch.setattr(autonomous_wup_mod.shutil, "which", lambda name: "/usr/bin/wup" if name == "wup" else None)
-    monkeypatch.setattr(autonomous_wup_mod, "_ensure_wup_profiled_compose_services", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        autonomous_wup_mod.shutil,
+        "which",
+        lambda name: "/usr/bin/wup" if name == "wup" else None,
+    )
+    monkeypatch.setattr(
+        autonomous_wup_mod,
+        "_ensure_wup_profiled_compose_services",
+        lambda *args, **kwargs: None,
+    )
 
     def fake_popen(command, cwd=None, env=None):
         popen_calls.append({"command": command, "cwd": cwd, "env": env})

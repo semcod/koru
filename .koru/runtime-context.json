@@ -1,0 +1,13 @@
+{
+  "enabled": {
+    "systems": true,
+    "libraries": true,
+    "algorithms": true,
+    "apis": true,
+    "applications": true,
+    "pipelines": true,
+    "topology": true
+  },
+  "overrides": {},
+  "updated_at": "2026-05-21T11:10:23.579240+00:00"
+}

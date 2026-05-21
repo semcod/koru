@@ -126,11 +126,13 @@ class DriveOrchestrator:
         expected = expected_version or DriveOrchestrator.expected_plugin_version()
         strict = DriveOrchestrator.strict_plugin_version_required()
         mismatch = bool(connected_version and expected and connected_version != expected)
+        missing_connected = bool(strict and expected and connected_version is None)
         unknown_expected = bool(strict and connected_version and not expected)
         info: dict[str, Any] = {
             "plugin_version": connected_version,
             "expected_plugin_version": expected,
             "plugin_version_mismatch": mismatch,
+            "plugin_version_missing": missing_connected,
             "plugin_version_expected_missing": unknown_expected,
             "plugin_version_policy": (
                 "strict" if strict else "warn"
@@ -144,6 +146,7 @@ class DriveOrchestrator:
     def should_block_plugin_version(info: dict[str, Any]) -> bool:
         return bool(
             info.get("plugin_version_mismatch")
+            or info.get("plugin_version_missing")
             or info.get("plugin_version_expected_missing"),
         ) and DriveOrchestrator.strict_plugin_version_required()
 

@@ -1471,6 +1471,27 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
 
+## [0.1.173] - 2026-05-21
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_autonomous.py
+- Update tests/test_autopilot_daemon.py
+- Update tests/test_scan.py
+
+### Other
+- Update .koru/runtime-context.json
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update plugins/koru-autopilot-vscode/out/extension.js
+- Update plugins/koru-autopilot-vscode/out/extension.js.map
+- Update plugins/koru-autopilot-vscode/package-lock.json
+- Update plugins/koru-autopilot-vscode/package.json
+- Update plugins/koru-autopilot-vscode/src/extension.ts
+- Update uv.lock
+
 ## [0.1.172] - 2026-05-21
 
 ### Docs

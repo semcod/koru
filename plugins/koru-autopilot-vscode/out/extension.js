@@ -285,6 +285,17 @@ class AutopilotBridge {
         const existing = new Set(await Promise.resolve(vscode.commands.getCommands(true)));
         const cache = this.getProbeCache();
         const before = this.editorSnapshot();
+        const direct = await this.tryDirectPasteCommands(text, ide, existing, cache, before, useProbe);
+        if (direct) {
+            return direct;
+        }
+        const clipboard = await this.tryClipboardPaste(text, before, useProbe);
+        if (clipboard.handled) {
+            return clipboard.result;
+        }
+        return this.tryTypePaste(text, before, useProbe);
+    }
+    async tryDirectPasteCommands(text, ide, existing, cache, before, useProbe) {
         const directCommands = (0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildPasteDirectCommands)(ide), cache?.paste), existing);
         for (const cmd of directCommands) {
             try {
@@ -307,6 +318,9 @@ class AutopilotBridge {
                 /* command doesn't exist — try next */
             }
         }
+        return undefined;
+    }
+    async tryClipboardPaste(text, before, useProbe) {
         const inputFocused = await this.focusChatInput();
         if (!inputFocused.ok) {
             debugLog("PROBE_PASTE_NO_INPUT_FOCUS");
@@ -317,16 +331,19 @@ class AutopilotBridge {
             await this.sleep(this.probePasteDelayMs());
             const after = this.editorSnapshot();
             if (useProbe && (0, probe_ladder_1.pasteLandedInEditor)(before, after, text)) {
-                return { ok: false };
+                return { handled: true, result: { ok: false } };
             }
             if (useProbe) {
                 await this.saveProbeCache({ paste: "editor.action.clipboardPasteAction" });
             }
-            return { ok: true, command: "editor.action.clipboardPasteAction" };
+            return { handled: true, result: { ok: true, command: "editor.action.clipboardPasteAction" } };
         }
         catch {
             /* clipboard paste failed — fallback to type */
         }
+        return { handled: false, result: { ok: false } };
+    }
+    async tryTypePaste(text, before, useProbe) {
         try {
             await Promise.resolve(vscode.commands.executeCommand("type", { text }));
             await this.sleep(this.probePasteDelayMs());
@@ -579,7 +596,7 @@ function activate(context) {
         const text = await vscode.window.showInputBox({ prompt: "Send to chat:" });
         if (text)
             await bridge.sendManualChat(text);
-    }), vscode.commands.registerCommand("koruAutopilot.calibrateProbe", () => bridge.calibrateProbe()), vscode.workspace.onDidChangeConfiguration((event) => {
+    }), vscode.commands.registerCommand("koruAutopilot.calibrateProbe", () => bridge.calibrateProbe()), vscode.commands.registerCommand("koruAutopilot.calibrate", () => bridge.calibrateProbe()), vscode.commands.registerCommand("koruAutopilot.calibrateCompact", () => bridge.calibrateProbe()), vscode.workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration("koruAutopilot.socketPath") ||
             event.affectsConfiguration("koruAutopilot.autoConnect")) {
             const cfg = vscode.workspace.getConfiguration("koruAutopilot");

@@ -2424,3 +2424,92 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-05-21T09:24:23.090081+00:00'
+    STARTER-039:
+      id: STARTER-039
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+        Wykonaj w I...'
+      status: open
+      priority: high
+      sprint: current
+      source:
+        tool: koru-operator-pipeline
+        timestamp: '2026-05-21T11:12:49.306584+00:00'
+        context:
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+          step_id: autopilot_plugin
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      blocked_by: []
+      blocks: []
+      files: []
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: operator
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-21T11:12:49.306584+00:00'
+        action: created
+        source: koru task
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+      created_at: '2026-05-21T11:12:49.306584+00:00'
+      updated_at: '2026-05-21T11:12:49.306584+00:00'

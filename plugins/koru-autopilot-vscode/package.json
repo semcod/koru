@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscode",
   "displayName": "koru autopilot",
   "description": "Bridge between VS Code / Windsurf / Cursor and the koru autopilot daemon.",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -33,6 +33,8 @@
     "onCommand:koruAutopilot.connect",
     "onCommand:koruAutopilot.sendChat",
     "onCommand:koruAutopilot.calibrateProbe",
+    "onCommand:koruAutopilot.calibrate",
+    "onCommand:koruAutopilot.calibrateCompact",
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
@@ -49,6 +51,14 @@
       {
         "command": "koruAutopilot.calibrateProbe",
         "title": "koru: Calibrate chat probe ladder"
+      },
+      {
+        "command": "koruAutopilot.calibrate",
+        "title": "koru: Calibrate"
+      },
+      {
+        "command": "koruAutopilot.calibrateCompact",
+        "title": "koru:calibrate"
       }
     ],
     "configuration": {

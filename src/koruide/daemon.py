@@ -37,6 +37,7 @@ import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
@@ -56,6 +57,14 @@ from koruide.protocol import (
     error,
 )
 from koruide.socket import default_socket_path
+
+
+def _daemon_package_version() -> str | None:
+    try:
+        return version("koru")
+    except PackageNotFoundError:
+        return None
+
 
 # Type alias: a HandoffBuilder takes the ended-session metadata and
 # returns the text to type back into the chat (typically the koru
@@ -528,23 +537,48 @@ class AutopilotDaemon:
         if not isinstance(ide, str) or not ide:
             self._send(client, error(msg.id, "hello requires 'ide'").encode())
             return
+        version = msg.data.get("version")
+        plugin_version = version if isinstance(version, str) else None
+        version_info = DriveOrchestrator.plugin_version_info(
+            plugin_ide=ide,
+            connected_version=plugin_version,
+        )
+        if DriveOrchestrator.should_block_plugin_version(version_info):
+            message = DriveOrchestrator.plugin_version_block_message(version_info)
+            self._send(client, error(msg.id, message).encode())
+            self.log(f"rejecting plugin connection: ide={ide} {message}")
+            self.audit.record(
+                "plugin_rejected",
+                ide=ide,
+                version=plugin_version,
+                expected_plugin_version=version_info.get("expected_plugin_version"),
+                error=message,
+            )
+            self._drop(client)
+            return
         client.role = "plugin"
         client.ide = ide
+        client.version = plugin_version
         self._plugin_router.drop_stale_plugins(client, ide)
-        version = msg.data.get("version")
-        client.version = version if isinstance(version, str) else None
         self.log(f"plugin connected: ide={ide} version={version!r}")
         self._send(client, ack(msg.id or "", info={"role": "plugin"}).encode())
         self.audit.record(
             "plugin_connected",
             ide=ide,
-            version=version if isinstance(version, str) else None,
+            version=plugin_version,
         )
 
     def _handle_status(self, client: _Client, msg: Message) -> None:
         plugins = [row.to_dict() for row in self._plugin_router.status_rows()]
+        daemon_version = _daemon_package_version()
         info = {
             "socket": str(self.socket_path),
+            "daemon_pid": os.getpid(),
+            "daemon_version": daemon_version,
+            "daemon": {
+                "pid": os.getpid(),
+                "version": daemon_version,
+            },
             "plugins": plugins,
             "backends": [b.to_dict() for b in self.injector.probe()],
             "selected_backend": self.injector.select_backend(),

@@ -510,7 +510,6 @@ def test_drive_strict_plugin_version_blocks_stale_plugin(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
     monkeypatch.setattr(
         DriveOrchestrator,
         "expected_plugin_version",
@@ -524,6 +523,7 @@ def test_drive_strict_plugin_version_blocks_stale_plugin(
             version="0.1.11",
             pid=42,
         )
+        monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
 
         cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         cli.settimeout(2.0)
@@ -544,6 +544,66 @@ def test_drive_strict_plugin_version_blocks_stale_plugin(
 
         assert h.injector.calls == []
         plugin.close()
+        cli.close()
+
+
+def test_strict_plugin_hello_rejects_stale_without_evicting_current(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
+    monkeypatch.setattr(
+        DriveOrchestrator,
+        "expected_plugin_version",
+        lambda: "0.1.13",
+    )
+
+    with _daemon(tmp_path, monkeypatch) as h:
+        current_plugin, current_reader = _connect_plugin(
+            h.sock_path,
+            ide="vscode",
+            version="0.1.13",
+            pid=42,
+        )
+
+        stale_plugin = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        stale_plugin.settimeout(2.0)
+        stale_plugin.connect(str(h.sock_path))
+        stale_reader = _LineReader(stale_plugin)
+        stale_plugin.sendall(
+            hello(ide="vscode", version="0.1.11", pid=41, id="hello-stale").encode(),
+        )
+
+        stale_reply = stale_reader.read_message()
+        assert stale_reply.type == "error"
+        assert "plugin version mismatch" in stale_reply.data.get("message", "")
+
+        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli.settimeout(2.0)
+        cli.connect(str(h.sock_path))
+        cli_reader = _LineReader(cli)
+        cli.sendall(
+            Message(
+                type="drive",
+                id="d-current-plugin",
+                data={"text": "hi", "ide": "vscode", "submit": True},
+            ).encode(),
+        )
+
+        forwarded = current_reader.read_message()
+        assert forwarded.type == "chat.send"
+        assert forwarded.data["text"] == "hi"
+        current_plugin.sendall(
+            Message(type="ack", id=forwarded.id, data={"ok": True, "delivered": True}).encode(),
+        )
+
+        cli_reply = cli_reader.read_message()
+        assert cli_reply.type == "ack"
+        assert cli_reply.data.get("ok") is True
+        assert cli_reply.data.get("backend") == "plugin"
+
+        current_plugin.close()
+        stale_plugin.close()
         cli.close()
 
 

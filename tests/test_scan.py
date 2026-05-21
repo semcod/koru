@@ -1,13 +1,19 @@
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest import mock
 
+from koru import cli_scan
 from koru.scan import (
+    ScanResult,
+    Suggestion,
     run_scan,
     scan_gitignore_drift,
     scan_missing_gates,
@@ -30,6 +36,39 @@ _MARK_A = "TO" + "DO"
 _MARK_B = "FIX" + "ME"
 _MARK_C = "X" * 3
 _MARK_D = "HA" + "CK"
+
+
+class TestScanCLI(unittest.TestCase):
+    def test_json_output_uses_scan_result_dict_and_semcod_flag(self) -> None:
+        result = ScanResult(
+            suggestions=[
+                Suggestion(
+                    signal="semcod",
+                    title="Read semcod exports",
+                    description="ok",
+                ),
+            ],
+        )
+
+        with mock.patch("koru.cli_scan.run_scan", return_value=result) as run:
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc = cli_scan.scan_main(
+                    [
+                        "--project",
+                        "/tmp/project",
+                        "--skip-pytest",
+                        "--semcod-artifacts",
+                        "--format",
+                        "json",
+                    ],
+                )
+
+        self.assertEqual(rc, 0)
+        run.assert_called_once()
+        self.assertTrue(run.call_args.kwargs["include_semcod_artifacts"])
+        payload = json.loads(buf.getvalue())
+        self.assertEqual(payload["suggestions"][0]["signal"], "semcod")
 
 
 class TestScanPytestCollect(unittest.TestCase):

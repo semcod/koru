@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 from koru.scan import ScanResult, run_scan
@@ -115,11 +116,11 @@ def scan_main(argv: list[str]) -> int:
         apply=args.apply,
         limit=args.limit,
         skip_pytest=args.skip_pytest,
-        semcod_artifacts=args.semcod_artifacts,
+        include_semcod_artifacts=args.semcod_artifacts,
         source=args.source,
     )
     if args.output_format == "json":
-        print(result.to_json())
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
         return 0
     if args.output_format == "markdown":
         print(render_scan_markdown(result))

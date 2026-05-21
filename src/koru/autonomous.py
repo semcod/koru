@@ -25,11 +25,9 @@ import time
 import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
-
-from koruide.daemon import AutopilotDaemon
-from koruide.os_injector import OsInjectorError, inject_with_profile, load_profile
 
 from koru import autonomous_cycle as _autonomous_cycle_module
 from koru.agents import agent_lane_environment
@@ -95,6 +93,9 @@ from koru.scan import ScanResult, run_scan
 from koru.stdio_events import default_stdio_format_from_env, write_stdio_event
 from koru.tasks import create_nl_task
 from koru.topology import is_component_enabled, is_pipeline_enabled
+from koruide.daemon import AutopilotDaemon
+from koruide.drive_orchestrator import DriveOrchestrator
+from koruide.os_injector import OsInjectorError, inject_with_profile, load_profile
 
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
@@ -834,6 +835,62 @@ def _ensure_init(project: Path, *, force: bool, stdio_format: str = "human") -> 
     )
 
 
+def _current_koru_version() -> str | None:
+    try:
+        return version("koru")
+    except PackageNotFoundError:
+        return None
+
+
+def _daemon_status_version(status: Mapping[str, Any] | None) -> str | None:
+    if not status:
+        return None
+    raw = status.get("daemon_version")
+    if isinstance(raw, str) and raw:
+        return raw
+    daemon = status.get("daemon")
+    if isinstance(daemon, Mapping):
+        raw = daemon.get("version")
+        if isinstance(raw, str) and raw:
+            return raw
+    return None
+
+
+def _daemon_status_compatible(status: Mapping[str, Any] | None) -> tuple[bool, str]:
+    expected = _current_koru_version()
+    actual = _daemon_status_version(status)
+    if expected is None:
+        return True, "current koru package version unknown"
+    if actual is None:
+        return False, f"daemon did not report version; expected {expected}"
+    if actual != expected:
+        return False, f"daemon version {actual} != current koru {expected}"
+    return True, f"daemon version {actual}"
+
+
+def _stop_reused_daemon(
+    client: IDEControlClient,
+    socket_path: Path,
+    *,
+    stdio_format: str,
+    timeout_seconds: float = 2.0,
+) -> bool:
+    try:
+        client.shutdown()
+    except (OSError, RuntimeError, TimeoutError) as exc:
+        _stdio_info(
+            f"koru autonomous: stale autopilot daemon shutdown failed ({exc})",
+            fmt=stdio_format,
+        )
+    deadline = time.monotonic() + timeout_seconds
+    probe = build_ide_client(socket_path=socket_path, timeout=0.2)
+    while time.monotonic() < deadline:
+        if not probe.is_running():
+            return True
+        time.sleep(0.1)
+    return not probe.is_running()
+
+
 def _start_or_reuse_daemon(
     *,
     project: Path,
@@ -843,8 +900,31 @@ def _start_or_reuse_daemon(
     socket_path.parent.mkdir(parents=True, exist_ok=True)
     probe = build_ide_client(socket_path=socket_path, timeout=0.5)
     if probe.is_running():
-        _stdio_info(f"koru autonomous: reusing autopilot daemon on {socket_path}", fmt=stdio_format)
-        return build_ide_client(socket_path=socket_path), None, None
+        status: Mapping[str, Any] | None = None
+        try:
+            status = probe.status()
+        except (OSError, RuntimeError, TimeoutError) as exc:
+            _stdio_info(
+                f"koru autonomous: autopilot daemon status failed ({exc}); restarting",
+                fmt=stdio_format,
+            )
+        compatible, reason = _daemon_status_compatible(status)
+        if compatible:
+            _stdio_info(
+                f"koru autonomous: reusing autopilot daemon on {socket_path} ({reason})",
+                fmt=stdio_format,
+            )
+            return build_ide_client(socket_path=socket_path), None, None
+        _stdio_info(
+            f"koru autonomous: restarting stale autopilot daemon on {socket_path} ({reason})",
+            fmt=stdio_format,
+        )
+        if not _stop_reused_daemon(probe, socket_path, stdio_format=stdio_format):
+            _stdio_info(
+                "koru autonomous: stale autopilot daemon did not stop; reusing existing socket",
+                fmt=stdio_format,
+            )
+            return build_ide_client(socket_path=socket_path), None, None
 
     daemon = AutopilotDaemon(
         socket_path=socket_path,
@@ -868,6 +948,13 @@ def _status_has_autopilot_plugin(status: Mapping[str, Any], ide: str) -> bool:
             continue
         plugin_ide = plugin.get("ide")
         if plugin_ide == ide or ide == "auto":
+            version = plugin.get("version")
+            version_info = DriveOrchestrator.plugin_version_info(
+                plugin_ide=str(plugin_ide) if plugin_ide else None,
+                connected_version=version if isinstance(version, str) else None,
+            )
+            if DriveOrchestrator.should_block_plugin_version(version_info):
+                continue
             return True
     return False
 
@@ -1267,6 +1354,21 @@ def _setup_autopilot_daemon(
     return client, daemon, thread, socket_path
 
 
+def _enable_autonomous_strict_plugin_version(args: argparse.Namespace) -> None:
+    """Default autonomous runs to fail-closed on live plugin version drift."""
+    if not args.enable_autopilot:
+        return
+    if os.environ.get("KORU_STRICT_PLUGIN_VERSION") is not None:
+        return
+    if os.environ.get("KORU_PLUGIN_VERSION_POLICY") is not None:
+        return
+    os.environ["KORU_STRICT_PLUGIN_VERSION"] = "1"
+    _stdio_info(
+        "koru autonomous: strict plugin version policy enabled by default",
+        fmt=args.emit_events,
+    )
+
+
 def _configure_loop_state(
     args: argparse.Namespace,
     project: Path,
@@ -1597,6 +1699,8 @@ def _run_autonomous_cycle(
 
 def _action_up(args: argparse.Namespace) -> int:
     previous_stdio_format_env = os.environ.get("KORU_STDIO_FORMAT")
+    previous_strict_plugin_env = os.environ.get("KORU_STRICT_PLUGIN_VERSION")
+    had_strict_plugin_env = "KORU_STRICT_PLUGIN_VERSION" in os.environ
     correlation_id, project, guard_rc = _setup_autonomous_session(args)
     if guard_rc:
         return guard_rc
@@ -1611,6 +1715,7 @@ def _action_up(args: argparse.Namespace) -> int:
     for line in format_startup_banner(startup_probe):
         _stdio_info(line, fmt=args.emit_events)
 
+    _enable_autonomous_strict_plugin_version(args)
     client, daemon, thread, socket_path = _setup_autopilot_daemon(args, project)
     autopilot_socket_observed_at_boot = (
         bool(socket_path and socket_path.exists()) if args.enable_autopilot else False
@@ -1692,6 +1797,10 @@ def _action_up(args: argparse.Namespace) -> int:
             _stdio_info("\nkoru autonomous: interrupted (Ctrl+C)", fmt=args.emit_events)
         return 0
     finally:
+        if had_strict_plugin_env:
+            os.environ["KORU_STRICT_PLUGIN_VERSION"] = previous_strict_plugin_env or ""
+        else:
+            os.environ.pop("KORU_STRICT_PLUGIN_VERSION", None)
         _cleanup_autonomous_session(
             previous_stdio_format_env,
             previous_sigterm,
@@ -1700,6 +1809,41 @@ def _action_up(args: argparse.Namespace) -> int:
             wup_process,
             args.emit_events,
         )
+
+
+AUTO_UP_DEFAULT_ARGS: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = (
+    (("--ticket-sources",), ("--ticket-sources", "queue")),
+    (("--max-cycles",), ("--max-cycles", "1")),
+    (("--max-iterations",), ("--max-iterations", "1")),
+    (("--sleep-seconds",), ("--sleep-seconds", "0")),
+    (("--stop-on-waiting-input", "--keep-waiting-input"), ("--stop-on-waiting-input",)),
+    (("--semcod-artifacts", "--no-semcod-artifacts"), ("--no-semcod-artifacts",)),
+    (("--wup-watch", "--no-wup-watch"), ("--no-wup-watch",)),
+    (("--idle-diagnostics",), ("--idle-diagnostics", "off")),
+    (("--operator-pipeline", "--no-operator-pipeline"), ("--no-operator-pipeline",)),
+    (("--operator-tickets", "--no-operator-tickets"), ("--no-operator-tickets",)),
+    (("--no-autopilot",), ("--no-autopilot",)),
+    (("--emit-events",), ("--emit-events", "human")),
+)
+
+
+def _argv_has_option(argv: list[str], names: tuple[str, ...]) -> bool:
+    for arg in argv:
+        if arg in names:
+            return True
+        if any(arg.startswith(f"{name}=") for name in names):
+            return True
+    return False
+
+
+def _expand_auto_up_defaults(argv: list[str]) -> list[str]:
+    expanded = list(argv)
+    provided = expanded[1:]
+    defaults: list[str] = []
+    for names, default_args in AUTO_UP_DEFAULT_ARGS:
+        if not _argv_has_option(provided, names):
+            defaults.extend(default_args)
+    return [expanded[0], *defaults, *provided]
 
 
 def autonomous_main(argv: list[str], *, invoked_as_auto: bool = False) -> int:
@@ -1723,6 +1867,8 @@ def autonomous_main(argv: list[str], *, invoked_as_auto: bool = False) -> int:
         ]
     elif argv[0] != "up" and argv[0] not in ("-h", "--help"):
         argv = ["up", *argv]
+    if invoked_as_auto and argv and argv[0] == "up":
+        argv = _expand_auto_up_defaults(argv)
     args = _build_parser().parse_args(argv)
     if invoked_as_auto:
         args.replace_existing_global = True
