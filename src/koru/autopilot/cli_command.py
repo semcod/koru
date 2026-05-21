@@ -435,6 +435,40 @@ def _build_parser() -> argparse.ArgumentParser:
         help="With --install, print the apt-get command but do not run it.",
     )
 
+    manage = sub.add_parser(
+        "manage",
+        help=(
+            "Inventory and repair the autopilot installation: koru binary, daemon, "
+            "socket, IDE plugin and VSIX version."
+        ),
+    )
+    manage.add_argument(
+        "--ide",
+        default="auto",
+        choices=("auto", "windsurf", "vscode", "cursor", "jetbrains", "pycharm"),
+        help="IDE to inspect or repair (default: auto-detect).",
+    )
+    manage.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format (default: text).",
+    )
+    manage.add_argument(
+        "--fix",
+        action="store_true",
+        help=(
+            "Best-effort repair: install/reassert the current plugin and stop the daemon "
+            "so the IDE can reconnect cleanly."
+        ),
+    )
+    manage.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="With --fix, show the planned plugin install without executing it.",
+    )
+
     install_plugin = sub.add_parser(
         "install-plugin",
         help=(
@@ -966,6 +1000,25 @@ def _action_setup_host(args: argparse.Namespace) -> int:
         install=args.install,
         install_dry_run=args.install_dry_run,
     )
+
+
+def _action_manage(args: argparse.Namespace) -> int:
+    from koru.autopilot.install_manager import (
+        collect_install_manager_report,
+        format_install_manager_report,
+        repair_installation,
+    )
+
+    report = (
+        repair_installation(ide=args.ide, socket_path=args.socket, dry_run=args.dry_run)
+        if args.fix
+        else collect_install_manager_report(ide=args.ide, socket_path=args.socket)
+    )
+    if args.output_format == "json":
+        print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(format_install_manager_report(report))
+    return 0 if report.ok else 1
 
 
 _PLUGIN_IDE_CLI: dict[str, tuple[str, ...]] = {
@@ -1525,6 +1578,7 @@ _ACTIONS = {
     "ide-list": _action_ide_list,
     "doctor": _action_doctor,
     "setup-host": _action_setup_host,
+    "manage": _action_manage,
     "install-plugin": _action_install_plugin,
     "install-plugin-jetbrains": _action_install_plugin_jetbrains,
     "handoff": _action_handoff,

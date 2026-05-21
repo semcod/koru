@@ -1,0 +1,98 @@
+from __future__ import annotations
+
+from pathlib import Path
+from types import SimpleNamespace
+
+from koru.autopilot import install_manager
+
+
+def test_collect_report_flags_path_mismatch_and_plugin_version_missing(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    path_koru = tmp_path / "bin" / "koru"
+    repo_koru = tmp_path / "repo" / ".venv" / "bin" / "koru"
+    path_koru.parent.mkdir(parents=True)
+    repo_koru.parent.mkdir(parents=True)
+    path_koru.write_text("#!/bin/sh\n", encoding="utf-8")
+    repo_koru.write_text("#!/bin/sh\n", encoding="utf-8")
+
+    monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path / "repo")
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
+    monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: path_koru)
+    monkeypatch.setattr(install_manager, "_repo_koru_bin", lambda _root: repo_koru)
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.13")
+    monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr(
+        install_manager,
+        "_daemon_status",
+        lambda _socket: {
+            "running": True,
+            "plugins": [{"ide": "vscode", "fd": 6}],
+        },
+    )
+
+    report = install_manager.collect_install_manager_report(
+        ide="vscode",
+        socket_path=tmp_path / "koru.sock",
+    )
+
+    codes = {issue.code for issue in report.issues}
+    assert "koru_path_mismatch" in codes
+    assert "plugin_version_missing" in codes
+    assert report.plugin["connected"] is True
+    assert report.plugin["expected_version"] == "0.1.13"
+
+
+def test_collect_report_warns_when_daemon_not_running(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
+    monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: None)
+    monkeypatch.setattr(install_manager, "_repo_koru_bin", lambda _root: None)
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.13")
+    monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr(install_manager, "_daemon_status", lambda _socket: {"running": False})
+
+    report = install_manager.collect_install_manager_report(
+        ide="vscode",
+        socket_path=tmp_path / "koru.sock",
+    )
+
+    codes = {issue.code for issue in report.issues}
+    assert "daemon_not_running" in codes
+    assert "koru_not_in_path" in codes
+
+
+def test_repair_installation_records_plugin_action(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(
+        install_manager,
+        "collect_install_manager_report",
+        lambda ide, socket_path: install_manager.InstallManagerReport(
+            ok=True,
+            source_root=str(tmp_path),
+            package_version="1.0",
+            source_version="1.0",
+            python="/python",
+            path_koru="/bin/koru",
+            repo_koru="/repo/.venv/bin/koru",
+            socket=str(tmp_path / "koru.sock"),
+            daemon={"running": False},
+            plugin={"ide": "vscode", "connected": False, "expected_version": "0.1.13"},
+            ides=[],
+        ),
+    )
+    monkeypatch.setattr(
+        install_manager,
+        "install_plugin_for_ide",
+        lambda **_kwargs: SimpleNamespace(to_dict=lambda: {"status": "dry_run"}),
+    )
+
+    report = install_manager.repair_installation(
+        ide="vscode",
+        socket_path=tmp_path / "koru.sock",
+        dry_run=True,
+    )
+
+    assert report.actions == [{"action": "install_plugin", "result": {"status": "dry_run"}}]

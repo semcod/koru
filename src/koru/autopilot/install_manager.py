@@ -6,7 +6,6 @@ import importlib.metadata
 import json
 import os
 import shutil
-import subprocess
 import sys
 import tomllib
 from dataclasses import dataclass, field
@@ -178,7 +177,10 @@ def _issue_list(
                 "koru_path_mismatch",
                 "warning",
                 f"PATH resolves koru to {path_koru}, but repo-local koru is {repo_koru}.",
-                f"Use `{repo_koru}` or put `{repo_koru.parent}` before other koru installs in PATH.",
+                (
+                    f"Use `{repo_koru}` or put `{repo_koru.parent}` before other "
+                    "koru installs in PATH."
+                ),
             ),
         )
     if source_version and package_version and source_version != package_version:
@@ -186,8 +188,20 @@ def _issue_list(
             ManagerIssue(
                 "koru_version_mismatch",
                 "warning",
-                f"Imported package version is {package_version}, source pyproject is {source_version}.",
+                (
+                    f"Imported package version is {package_version}, "
+                    f"source pyproject is {source_version}."
+                ),
                 "Reinstall editable from the source checkout or use the matching virtualenv.",
+            ),
+        )
+    if not daemon.get("running"):
+        issues.append(
+            ManagerIssue(
+                "daemon_not_running",
+                "warning",
+                "Autopilot daemon is not running for this socket.",
+                "Start it with `koru autopilot daemon` or let `koru autonomous up` start it.",
             ),
         )
     if daemon.get("running") and plugin.get("connected") and not plugin.get("version"):
@@ -196,7 +210,10 @@ def _issue_list(
                 "plugin_version_missing",
                 "warning",
                 f"Connected {ide} plugin did not report a version.",
-                "Reload the IDE window after installing the current VSIX, then reconnect autopilot.",
+                (
+                    "Reload the IDE window after installing the current VSIX, "
+                    "then reconnect autopilot."
+                ),
             ),
         )
     if daemon.get("running") and not plugin.get("connected"):

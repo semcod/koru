@@ -93,6 +93,33 @@ def _terminal_vscode_flavor() -> str | None:
     return None
 
 
+def _repo_root() -> Path | None:
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "pyproject.toml").is_file() and (
+            parent / "plugins" / "koru-autopilot-vscode"
+        ).is_dir():
+            return parent
+    return None
+
+
+def _running_vscode_flavor() -> str | None:
+    """Return VS Code-family flavor from the actually running editor process."""
+    for ide in detect_running_ides():
+        if getattr(ide, "id", None) != "vscode":
+            continue
+        exe = str(getattr(ide, "exe", "") or "").lower()
+        if "codium" in exe or "vscodium" in exe:
+            return "vscodium"
+        if "code" in exe:
+            return "vscode"
+    return None
+
+
+def _vscode_flavor() -> str | None:
+    return _running_vscode_flavor() or _terminal_vscode_flavor()
+
+
 def resolve_target_ide(requested: str = "auto") -> str | None:
     """Resolve the IDE that should receive the plugin install."""
     explicit = _valid_ide(requested)
@@ -125,8 +152,7 @@ def resolve_extension_vsix() -> Path | None:
     if env_path:
         candidates.append(Path(env_path).expanduser())
 
-    here = Path(__file__).resolve()
-    repo_root = here.parents[3] if len(here.parents) > 3 else None
+    repo_root = _repo_root()
     if repo_root is not None:
         candidates.extend((repo_root / "plugins" / "koru-autopilot-vscode").glob("*.vsix"))
 
@@ -145,7 +171,7 @@ def resolve_extension_vsix() -> Path | None:
 
 
 def _resolve_ide_command(ide: str) -> str | None:
-    if ide == "vscode" and _terminal_vscode_flavor() == "vscodium":
+    if ide == "vscode" and _vscode_flavor() == "vscodium":
         for name in ("codium", "vscodium"):
             resolved = shutil.which(name)
             if resolved:
@@ -162,7 +188,7 @@ def _settings_path_for_ide(ide: str) -> Path | None:
     dirname = {
         "windsurf": "Windsurf",
         "cursor": "Cursor",
-        "vscode": "VSCodium" if _terminal_vscode_flavor() == "vscodium" else "Code",
+        "vscode": "VSCodium" if _vscode_flavor() == "vscodium" else "Code",
     }.get(ide)
     if dirname is None:
         return None
