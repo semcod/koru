@@ -266,18 +266,35 @@ def _compose_field(item: dict, primary: str, fallback: str) -> str:
     return str(item.get(primary) or item.get(fallback) or "").lower()
 
 
+def _compose_health_ready(health: str) -> bool:
+    return not health or health in {"healthy", "none"}
+
+
+def _compose_state_ready(state: str) -> bool:
+    return not state or state == "running"
+
+
+def _compose_status_ready(state: str, status: str) -> bool:
+    if state:
+        return True
+    return "up" in status
+
+
 def _compose_service_item_ready(item: dict) -> bool:
     state = _compose_field(item, "State", "state")
     health = _compose_field(item, "Health", "health")
     status = _compose_field(item, "Status", "status")
-    health_ok = not health or health in {"healthy", "none"}
-    state_ok = not state or state == "running"
-    status_ok = bool(state) or "up" in status
-    return health_ok and state_ok and status_ok
+    return (
+        _compose_health_ready(health)
+        and _compose_state_ready(state)
+        and _compose_status_ready(state, status)
+    )
 
 
 def _compose_service_ready(items: list[dict]) -> bool:
-    return bool(items) and all(_compose_service_item_ready(item) for item in items)
+    if not items:
+        return False
+    return all(_compose_service_item_ready(item) for item in items)
 
 
 def _wait_for_compose_service_ready(

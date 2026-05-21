@@ -18,6 +18,7 @@ import os
 import shutil
 import subprocess
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -295,13 +296,23 @@ def _injection_result(
     }
 
 
-def _focus_profile_chat(profile: OsInjectorProfile, focus: str, post_focus_delay: float) -> None:
+def _focus_profile_chat(
+    profile: OsInjectorProfile, focus: str, post_focus_delay: float, *, _log: Callable[[str], None] | None = None
+) -> None:
+    if _log:
+        _log(f"os_injector: move mouse to ({profile.chat_x}, {profile.chat_y}) focus={focus}")
     _xdotool(["mousemove", str(profile.chat_x), str(profile.chat_y)])
     if focus == "click":
+        if _log:
+            _log("os_injector: click 1")
         _xdotool(["click", "1"])
     else:
+        if _log:
+            _log("os_injector: press Return")
         _xdotool(["key", "--clearmodifiers", "Return"])
     if post_focus_delay > 0:
+        if _log:
+            _log(f"os_injector: post-focus delay {post_focus_delay:.2f}s")
         time.sleep(post_focus_delay)
 
 
@@ -312,12 +323,17 @@ def _inject_profile_text(
     submit: bool,
     use_paste: bool,
     input_method: str,
+    _log: Callable[[str], None] | None = None,
 ) -> str:
+    if _log:
+        _log(f"os_injector: injecting {len(text)} chars via {input_method}, submit={submit}")
     if _is_wayland_session():
         from koruide.injector import Injector
 
         injector = Injector()
         res = injector.type_text(text, ide=profile.tool_id, submit=submit)
+        if _log:
+            _log(f"os_injector: wayland fallback via {res.backend}")
         return res.backend
     if use_paste:
         _set_clipboard(text)
@@ -326,6 +342,8 @@ def _inject_profile_text(
     else:
         _xdotool(["type", "--delay", "5", "--clearmodifiers", "--", text])
     if submit:
+        if _log:
+            _log("os_injector: pressing Return to submit")
         _xdotool(["key", "--clearmodifiers", "Return"])
     return input_method
 
@@ -336,6 +354,7 @@ def inject_with_profile(
     text: str,
     submit: bool = True,
     dry_run: bool = False,
+    _log: Callable[[str], None] | None = None,
 ) -> dict[str, Any]:
     if not text.strip():
         raise OsInjectorError("refusing to inject empty text")
@@ -343,6 +362,13 @@ def inject_with_profile(
     focus = focus_mode_from_env()
     input_method, use_paste = _resolve_input_method()
     post_focus_delay = _post_focus_delay_seconds()
+
+    if _log:
+        _log(
+            f"inject_with_profile: tool={profile.tool_id} "
+            f"coords=({profile.chat_x},{profile.chat_y}) focus={focus} "
+            f"input_method={input_method} submit={submit} dry_run={dry_run}"
+        )
 
     if dry_run:
         return _injection_result(
@@ -365,14 +391,17 @@ def inject_with_profile(
         )
     except Exception:
         pass
-    _focus_profile_chat(profile, focus, post_focus_delay)
+    _focus_profile_chat(profile, focus, post_focus_delay, _log=_log)
     input_method = _inject_profile_text(
         profile=profile,
         text=text,
         submit=submit,
         use_paste=use_paste,
         input_method=input_method,
+        _log=_log,
     )
+    if _log:
+        _log(f"inject_with_profile: done via {input_method}")
     return _injection_result(
         profile=profile,
         submit=submit,
@@ -390,6 +419,7 @@ def try_drive_with_profile(
     submit: bool,
     project: Path | None,
     cli_dry_run: bool = False,
+    _log: Callable[[str], None] | None = None,
 ) -> dict[str, Any] | None:
     """If a profile applies, run :func:`inject_with_profile`; else return ``None``.
 
@@ -398,22 +428,36 @@ def try_drive_with_profile(
     :class:`OsInjectorError` when injection is attempted but fails.
     """
     if tool_id == "default":
+        if _log:
+            _log("try_drive_with_profile: skipped (tool_id=default)")
         return None
     if os_injector_env_disabled():
+        if _log:
+            _log("try_drive_with_profile: skipped (env disabled)")
         return None
     if shutil.which("xdotool") is None:
+        if _log:
+            _log("try_drive_with_profile: skipped (xdotool missing)")
         return None
     if _is_wayland_session() and not os_injector_env_forced():
+        if _log:
+            _log("try_drive_with_profile: skipped (wayland without force)")
         return None
 
     profile = try_load_profile(tool_id, project=project)
     if profile is None and not os_injector_env_forced():
+        if _log:
+            _log(f"try_drive_with_profile: no profile for {tool_id}")
         return None
     if profile is None:
+        if _log:
+            _log(f"try_drive_with_profile: no profile for {tool_id} (forced mode)")
         return None
 
+    if _log:
+        _log(f"try_drive_with_profile: loaded profile for {tool_id}")
     dry = cli_dry_run or dry_run_from_env()
-    return inject_with_profile(profile=profile, text=text, submit=submit, dry_run=dry)
+    return inject_with_profile(profile=profile, text=text, submit=submit, dry_run=dry, _log=_log)
 
 
 __all__ = [

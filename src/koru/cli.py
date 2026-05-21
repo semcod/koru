@@ -377,6 +377,30 @@ def _build_task_parser() -> argparse.ArgumentParser:
     parser.add_argument("--queue-name", default=None, help="Execution queue for the new ticket.")
     parser.add_argument("--priority", default="normal", help="Ticket priority.")
     parser.add_argument(
+        "--source-tool",
+        default=None,
+        help="Producer id stored in ticket source.tool (for plugin/tool intake).",
+    )
+    parser.add_argument(
+        "--source-signal",
+        default=None,
+        help="Producer signal stored in source.context.signal.",
+    )
+    parser.add_argument(
+        "--dedupe-key",
+        default=None,
+        help=(
+            "Stable issue key shared by producers; an existing ticket with the same "
+            "key is reused instead of creating a duplicate."
+        ),
+    )
+    parser.add_argument(
+        "--files",
+        action="append",
+        default=[],
+        help="File path associated with the ticket. Repeat for multiple files.",
+    )
+    parser.add_argument(
         "--tool",
         dest="tool_id",
         default=None,
@@ -894,6 +918,23 @@ def _task_main(argv: list[str]) -> int:
             if isinstance(scaffold.get("source_context"), dict):
                 scaffold["source_context"]["registry"] = str(registry_path)
 
+    if args.source_tool or args.source_signal or args.dedupe_key or args.files:
+        scaffold = dict(scaffold or {})
+        if args.source_tool:
+            scaffold["source_tool"] = args.source_tool
+        context = (
+            dict(scaffold.get("source_context"))
+            if isinstance(scaffold.get("source_context"), dict)
+            else {}
+        )
+        if args.source_signal:
+            context["signal"] = args.source_signal
+        if args.dedupe_key:
+            context["dedupe_key"] = args.dedupe_key
+        scaffold["source_context"] = context
+        if args.files:
+            scaffold["files"] = list(args.files)
+
     try:
         created = create_nl_task(
             args.project,
@@ -906,7 +947,8 @@ def _task_main(argv: list[str]) -> int:
     except ValueError as exc:
         print(f"koru task: {exc}")
         return 2
-    print(f"koru task: ✓ created {created.ticket_id} in {created.path}")
+    action = "reused" if getattr(created, "reused", False) else "created"
+    print(f"koru task: ✓ {action} {created.ticket_id} in {created.path}")
     print(f"  name:  {created.name}")
     print(f"  queue: {args.queue_name or 'default'}")
     if args.tool_id:

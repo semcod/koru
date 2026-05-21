@@ -97,7 +97,7 @@ export function pasteLandedInEditor(
 }
 
 export function orderWithCache(commands: string[], cached?: string): string[] {
-  if (!cached) {
+  if (!cached || !commands.includes(cached)) {
     return [...commands];
   }
   const rest = commands.filter((c) => c !== cached);
@@ -141,6 +141,9 @@ export function buildFocusOpenCommands(ide: string, custom: string[]): string[] 
     "cursor.composer.open",
     "workbench.panel.aichat.view.copilot.focus",
   ];
+  if (ide === "vscode") {
+    return mergeUnique(custom, []);
+  }
   const defaults = ide === "windsurf" ? windsurfDefaults : genericDefaults;
   return mergeUnique(custom, defaults);
 }

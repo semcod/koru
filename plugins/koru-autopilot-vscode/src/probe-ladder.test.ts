@@ -20,6 +20,7 @@ function testOrderWithCache(): void {
   const ordered = orderWithCache(["a", "b", "c"], "b");
   assert(ordered[0] === "b" && ordered.length === 3, "cached command should be first");
   assert(orderWithCache(["a", "b"], undefined).join() === "a,b", "no cache preserves order");
+  assert(orderWithCache(["a", "b"], "z").join() === "a,b", "stale cache must not add removed commands");
 }
 
 function testChatFocusHeuristic(): void {
@@ -37,6 +38,7 @@ function testVerifyFocusAfterOpen(): void {
   const file = { hasEditor: true, scheme: "file", isFileLike: true, text: "code" };
   const none = { hasEditor: false, scheme: "", isFileLike: false, text: "" };
   assert(verifyFocusAfterOpen(file, none), "blur from file editor counts as open");
+  assert(!verifyFocusAfterOpen(file, file, "vscode"), "vscode must not trust unchanged file-editor focus");
   assert(verifyFocusAfterOpen(file, file, "vscodium"), "vscodium chat open is trusted because snapshot can stay unchanged");
 }
 
@@ -60,6 +62,14 @@ function testMergeUnique(): void {
 function testBuildFocusOpenCursorFirst(): void {
   const cmds = buildFocusOpenCommands("cursor", []);
   assert(cmds.includes("composer.showComposer"), "cursor list should include composer");
+}
+
+function testBuildFocusOpenVscodeDoesNotAutoOpenChatByDefault(): void {
+  assert(buildFocusOpenCommands("vscode", []).length === 0, "vscode must not auto-open chat by default");
+  assert(
+    buildFocusOpenCommands("vscode", ["workbench.action.chat.focusInput"]).join() === "workbench.action.chat.focusInput",
+    "vscode should only use explicitly configured focus-open commands",
+  );
 }
 
 function testBuildFocusInputUsesChatCommands(): void {
@@ -87,6 +97,7 @@ testVerifyFocusAfterOpen();
 testPasteLandedInEditor();
 testMergeUnique();
 testBuildFocusOpenCursorFirst();
+testBuildFocusOpenVscodeDoesNotAutoOpenChatByDefault();
 testBuildFocusInputUsesChatCommands();
 testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance();
 testVscodiumSubmitStillExposesWorkbenchFallback();

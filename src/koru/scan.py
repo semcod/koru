@@ -878,7 +878,7 @@ def _create_ticket(
     """Create one ticket via ``planfile ticket create``. Returns success."""
     if runner is None:
         try:
-            create_nl_task(
+            created = create_nl_task(
                 project,
                 suggestion.description,
                 priority=suggestion.priority,
@@ -887,12 +887,15 @@ def _create_ticket(
                     "files": suggestion.files,
                     "title": suggestion.title,
                     "source_tool": source,
-                    "source_context": {"signal": suggestion.signal},
+                    "source_context": {
+                        "signal": suggestion.signal,
+                        "dedupe_key": _suggestion_dedupe_key(source, suggestion),
+                    },
                     "executor_kind": "human",
                     "executor_mode": "interactive",
                 },
             )
-            return True
+            return not getattr(created, "reused", False)
         except (OSError, ValueError):
             return False
 
@@ -918,6 +921,18 @@ def _create_ticket(
     except (FileNotFoundError, OSError):
         return False
     return result.returncode == 0
+
+
+def _suggestion_dedupe_key(source: str, suggestion: Suggestion) -> str:
+    """Return a stable producer-neutral key for repeated scan signals."""
+    files = [str(path) for path in suggestion.files if str(path).strip()]
+    if not files:
+        files = re.findall(r"(?:src|tests|scripts|plugins|services)/[A-Za-z0-9_./-]+", suggestion.title)
+    if suggestion.signal in {"code2llm_god", "code2llm_refactor"} and files:
+        return f"semcod:code2llm:refactor:{files[0]}"
+    if files:
+        return f"{source}:{suggestion.signal}:{':'.join(files[:3])}"
+    return f"{source}:{suggestion.signal}:{suggestion.title.strip().lower()}"
 
 
 def run_scan(

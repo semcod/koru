@@ -252,6 +252,49 @@ class TestE2ETask(unittest.TestCase):
         ]
         self.assertEqual(len(nl_tickets), 2)
 
+    def test_task_reuses_dedupe_key_for_plugin_intake(self) -> None:
+        key = "semcod:code2llm:refactor:src/koru/autonomous.py"
+        first_code, first_out, _ = _run_main(
+            "task",
+            "Split autonomous module",
+            "--project",
+            str(self.project),
+            "--source-tool",
+            "prefact",
+            "--source-signal",
+            "code2llm_god",
+            "--dedupe-key",
+            key,
+            "--files",
+            "src/koru/autonomous.py",
+        )
+        second_code, second_out, _ = _run_main(
+            "task",
+            "Same issue from prefact",
+            "--project",
+            str(self.project),
+            "--source-tool",
+            "prefact",
+            "--source-signal",
+            "code2llm_refactor",
+            "--dedupe-key",
+            key,
+            "--files",
+            "src/koru/autonomous.py",
+        )
+
+        self.assertEqual(first_code, 0, first_out)
+        self.assertEqual(second_code, 0, second_out)
+        self.assertIn("✓ created", first_out)
+        self.assertIn("✓ reused", second_out)
+        sprint = yaml.safe_load((self.project / ".planfile/sprints/current.yaml").read_text())
+        prefact_tickets = [
+            ticket
+            for ticket in sprint["sprint"]["tickets"].values()
+            if ticket.get("source", {}).get("tool") == "prefact"
+        ]
+        self.assertEqual(len(prefact_tickets), 1)
+
     def test_task_empty_text_fails(self) -> None:
         code, out, _ = _run_main("task", "", "--project", str(self.project))
         self.assertNotEqual(code, 0)

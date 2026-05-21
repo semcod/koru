@@ -983,6 +983,17 @@ def _reply_needs_focus_retry(reply: dict[str, Any]) -> bool:
     )
 
 
+def _reply_requires_manual_chat_focus(reply: dict[str, Any]) -> bool:
+    msg = str(reply.get("message") or "").lower()
+    if "chat input is not focused/open" not in msg:
+        return False
+    diagnostics = reply.get("diagnostics")
+    if not isinstance(diagnostics, dict):
+        return False
+    candidates = diagnostics.get("focusOpenCandidates")
+    return isinstance(candidates, list) and not candidates
+
+
 def _format_autopilot_failure_details(reply: dict[str, Any]) -> list[str]:
     lines: list[str] = []
     message = str(reply.get("message") or "").strip()
@@ -1020,6 +1031,18 @@ def _warn_autopilot_focus_retry(attempt: int, attempts: int, reply: dict[str, An
     print("\033[0m")  # reset colors
 
 
+def _warn_autopilot_manual_focus_required(reply: dict[str, Any] | None = None) -> None:
+    print("\033[1;31m")  # bold red
+    print("================================================================================")
+    print("[AUTOPILOT FOCUS REQUIRED] Please place your cursor inside the IDE chat input.")
+    print("No focus-open command is available, so Koru will not retry this drive automatically.")
+    if reply:
+        for line in _format_autopilot_failure_details(reply):
+            print(line)
+    print("================================================================================")
+    print("\033[0m")  # reset colors
+
+
 def _execute_autopilot_drive(
     project: Path,
     state: AutoloopState,
@@ -1052,6 +1075,9 @@ def _execute_autopilot_drive(
         if ok:
             break
         if _reply_missing_autopilot_plugin(reply):
+            break
+        if _reply_requires_manual_chat_focus(reply):
+            _warn_autopilot_manual_focus_required(reply)
             break
         if _reply_needs_focus_retry(reply) and attempt < attempts - 1:
             _warn_autopilot_focus_retry(attempt, attempts, reply)

@@ -1,10 +1,10 @@
-# koru | 316f 67122L | python:251,shell:52,javascript:6,typescript:6,less:1 | 2026-05-21
-# stats: 1962 func | 198 cls | 316 mod | CC̄=4.1 | critical:138 | cycles:0
+# koru | 322f 67817L | python:257,shell:52,javascript:6,typescript:6,less:1 | 2026-05-21
+# stats: 1994 func | 199 cls | 322 mod | CC̄=4.0 | critical:137 | cycles:0
 # alerts[5]: CC plugin_status_decision=20; CC test_autonomy_config_from_env=16; CC resolve_drive_target=15; CC test_auto_pipeline_profiles_escalate_when_queue_stays_idle=15; CC test_autonomy_config_defaults=15
 # hotspots[5]: _build_handler fan=31; _build_handler fan=28; run_cycle fan=23; init_project fan=21; test_repeated_stale_plugin_hello_rejections_are_log_throttled fan=21
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[316]:
+M[322]:
   app.doql.less,681
   docs/llm-tools/aider/install.sh,56
   docs/llm-tools/claude-code/install.sh,61
@@ -42,14 +42,14 @@ M[316]:
   examples/runtime/koru-serve-health/run-docker.sh,8
   plugins/koru-autopilot-vscode/out/dispatch-plan.js,19
   plugins/koru-autopilot-vscode/out/dispatch-plan.test.js,116
-  plugins/koru-autopilot-vscode/out/extension.js,979
+  plugins/koru-autopilot-vscode/out/extension.js,1015
   plugins/koru-autopilot-vscode/out/probe-ladder.js,229
-  plugins/koru-autopilot-vscode/out/probe-ladder.test.js,60
+  plugins/koru-autopilot-vscode/out/probe-ladder.test.js,61
   plugins/koru-autopilot-vscode/out/socketPath.js,94
   plugins/koru-autopilot-vscode/src/dispatch-plan.test.ts,119
   plugins/koru-autopilot-vscode/src/dispatch-plan.ts,27
-  plugins/koru-autopilot-vscode/src/extension.ts,1070
-  plugins/koru-autopilot-vscode/src/probe-ladder.test.ts,94
+  plugins/koru-autopilot-vscode/src/extension.ts,1116
+  plugins/koru-autopilot-vscode/src/probe-ladder.test.ts,95
   plugins/koru-autopilot-vscode/src/probe-ladder.ts,270
   plugins/koru-autopilot-vscode/src/socketPath.ts,62
   project.sh,54
@@ -79,18 +79,23 @@ M[316]:
   src/koru/agents.py,323
   src/koru/api/__init__.py,10
   src/koru/autoloop_cli.py,91
-  src/koru/autonomous.py,1838
+  src/koru/autonomous.py,1601
   src/koru/autonomous_auto_pipeline.py,256
   src/koru/autonomous_checkpoint.py,138
+  src/koru/autonomous_cli_config.py,75
   src/koru/autonomous_cycle.py,1467
+  src/koru/autonomous_cycle_config.py,164
+  src/koru/autonomous_cycle_gate.py,159
   src/koru/autonomous_daemon.py,278
   src/koru/autonomous_diagnostics.py,263
   src/koru/autonomous_env.py,26
+  src/koru/autonomous_operator.py,145
   src/koru/autonomous_parser.py,399
   src/koru/autonomous_plugin.py,131
   src/koru/autonomous_process_guard.py,207
   src/koru/autonomous_processes.py,315
-  src/koru/autonomous_startup.py,546
+  src/koru/autonomous_runtime.py,253
+  src/koru/autonomous_startup.py,506
   src/koru/autonomous_wup.py,541
   src/koru/autonomy/__init__.py,25
   src/koru/autonomy/config.py,124
@@ -213,10 +218,10 @@ M[316]:
   src/korudsl/transform.py,71
   src/koruide/__init__.py,68
   src/koruide/audit.py,155
-  src/koruide/client.py,129
+  src/koruide/client.py,161
   src/koruide/config.py,122
-  src/koruide/daemon.py,1045
-  src/koruide/drive_orchestrator.py,237
+  src/koruide/daemon.py,1047
+  src/koruide/drive_orchestrator.py,246
   src/koruide/host_setup.py,227
   src/koruide/ide.py,704
   src/koruide/injector.py,459
@@ -237,10 +242,11 @@ M[316]:
   tests/test_agent_cli.py,108
   tests/test_agents.py,208
   tests/test_autoloop_cli.py,52
-  tests/test_autonomous.py,2704
+  tests/test_autonomous.py,2693
   tests/test_autonomous_diagnostics.py,71
   tests/test_autonomous_parser_detection.py,16
   tests/test_autonomous_process_detection.py,37
+  tests/test_autonomous_runtime.py,40
   tests/test_autonomous_scenarios.py,305
   tests/test_autonomous_startup.py,332
   tests/test_autonomy_config.py,141
@@ -266,12 +272,12 @@ M[316]:
   tests/test_dashboard_topology_post.py,36
   tests/test_dev_sync.py,43
   tests/test_docker_e2e.py,582
-  tests/test_docker_ide_matrix.py,159
+  tests/test_docker_ide_matrix.py,161
   tests/test_docker_ide_matrix_config.py,120
   tests/test_docs_ide_control_surfaces.py,85
   tests/test_doctor.py,512
   tests/test_dotenv_loader.py,117
-  tests/test_drive_orchestrator.py,157
+  tests/test_drive_orchestrator.py,175
   tests/test_e2e.py,1138
   tests/test_events.py,67
   tests/test_gate.py,167
@@ -533,6 +539,12 @@ D:
     load_loop_checkpoint(path)
     save_loop_checkpoint(path)
     status_in_skip_list(status;skip_statuses)
+  src/koru/autonomous_cli_config.py:
+    e: normalize_autonomous_argv,configure_auto_mode_args,apply_auto_pipeline_flags,apply_replace_existing_flags
+    normalize_autonomous_argv(argv)
+    configure_auto_mode_args(argv;invoked_as_auto)
+    apply_auto_pipeline_flags(args;invoked_as_auto)
+    apply_replace_existing_flags(args;invoked_as_auto)
   src/koru/autonomous_cycle.py:
     e: _stdio_info,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_status_in_skip_list,_allow_keyboard_autopilot_fallback,_prefer_keyboard_autopilot,_plugin_required_for_ide,_allow_cross_ide_autopilot,_autopilot_terminal_conflict_reason,_client_plugin_rows,_wanted_plugin_ide,_plugin_row_matches_ide,_plugin_row_version_block_reason,_missing_plugin_label,_client_has_usable_plugin,_try_os_injector_fallback,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_autopilot_event_path,_drain_autopilot_events,_initialize_cycle_telemetry,_heal_stale_socket,_handle_autopilot_events,_handle_queue_hygiene,_handle_post_run_verify_ide,_handle_scan_phase,_build_queue_command,_run_queue_loop,_emit_queue_iteration_event,_handle_post_run_verify,_handle_queue_loop_phase,_handle_scan_after_idle,_update_stagnation_state,_waiting_ticket_has_label,_handle_diagnostics,_check_autopilot_skip_conditions,_resolve_autopilot_drive_decision,_drive_autopilot_once,_reply_missing_autopilot_plugin,_reply_needs_focus_retry,_format_autopilot_failure_details,_warn_autopilot_focus_retry,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result,_handle_autopilot_phase,_emit_cycle_completion_events,run_cycle,DiagnosticResult,AutoloopState
     DiagnosticResult:
@@ -589,6 +601,22 @@ D:
     _handle_autopilot_phase(project;state;cycle;queue_result;enable_autopilot;client;autopilot_ide;drive_prompt;submit;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp;_emit)
     _emit_cycle_completion_events(project;state;cycle;queue_result;diag_result;wup_health;autopilot_status;autopilot_ide;autopilot_backend;autopilot_drive_kind;cycle_telemetry;scan_after_idle_queue;scan_after_idle_min_interval_seconds;autopilot_skip_drive_idle_streak;_hp;_emit)
     run_cycle()
+  src/koru/autonomous_cycle_config.py:
+    e: select_and_log_cycle_profile,resolve_effective_cycle_flags,build_cycle_run_kwargs,compute_cycle_sleep
+    select_and_log_cycle_profile(args;auto_pipeline_state)
+    resolve_effective_cycle_flags(args;profile)
+    build_cycle_run_kwargs(args;profile)
+    compute_cycle_sleep(args;loop_state;queue_result)
+  src/koru/autonomous_cycle_gate.py:
+    e: try_os_injector_fallback,try_os_injector_fallback_with_deps,allow_keyboard_autopilot_fallback,effective_cycle_autopilot_enabled,scan_while_waiting_input_enabled,effective_cycle_scan_enabled,resolve_autopilot_ide,apply_agent_lane_environ
+    try_os_injector_fallback(prompt)
+    try_os_injector_fallback_with_deps(prompt)
+    allow_keyboard_autopilot_fallback()
+    effective_cycle_autopilot_enabled(enabled)
+    scan_while_waiting_input_enabled()
+    effective_cycle_scan_enabled(enabled)
+    resolve_autopilot_ide(cli_value)
+    apply_agent_lane_environ(project;agent_lane)
   src/koru/autonomous_daemon.py:
     e: _stdio_info,_current_koru_version,_daemon_status_version,daemon_status_compatible,daemon_status_log_summary,_stop_reused_daemon,start_or_reuse_daemon,_stop_process,restart_daemon_if_needed,cleanup_autonomous_session
     _stdio_info(msg)
@@ -614,6 +642,12 @@ D:
   src/koru/autonomous_env.py:
     e: apply_autonomous_env_overrides
     apply_autonomous_env_overrides(args)
+  src/koru/autonomous_operator.py:
+    e: run_mcp_provision,setup_autopilot_plugin,run_operator_pipeline,unblock_queue_if_needed
+    run_mcp_provision(project;stdio_format)
+    setup_autopilot_plugin(args;autopilot_ide;socket_path;client)
+    run_operator_pipeline(args;project;startup_probe;plugin_connected;mcp_provision_ran;correlation_id)
+    unblock_queue_if_needed(project;stdio_format)
   src/koru/autonomous_parser.py:
     e: build_parser,_match_koru_auto_parts,looks_like_autonomous_up_command
     build_parser()
@@ -653,22 +687,34 @@ D:
     _confirm_replace_existing(processes)
     stop_prior_autonomous_for_auto_start(project)
     guard_existing_autonomous_processes(args;project)
+  src/koru/autonomous_runtime.py:
+    e: setup_autonomous_session,_path_is_relative_to,project_venv_warning_lines,setup_autopilot_daemon,cleanup_autonomous_session,setup_autonomous_env_vars,restore_autonomous_env_vars,build_and_log_startup_probe,install_sigterm_interrupt_handler,handle_autonomous_interrupt,StopSignalState
+    StopSignalState:
+    setup_autonomous_session(args)
+    _path_is_relative_to(path;parent)
+    project_venv_warning_lines(project)
+    setup_autopilot_daemon(args;project)
+    cleanup_autonomous_session(previous_stdio_format_env;previous_sigterm;daemon;thread;wup_process;stdio_format)
+    setup_autonomous_env_vars()
+    restore_autonomous_env_vars(snapshot)
+    build_and_log_startup_probe(args;project)
+    install_sigterm_interrupt_handler(args;stop_state)
+    handle_autonomous_interrupt(args)
   src/koru/autonomous_startup.py:
-    e: supports_autopilot_plugin_ide,koru_distribution_version,_session_label,_terminal_agent_lane_from_env,_explicit_agent_lane_from_env,_target_lane_over_terminal,_resolve_lane_from_cli,_resolve_lane_with_explicit,_resolve_lane_from_running_ide_fallback,resolve_agent_lane_id,_resolve_lane_from_explicit,_resolve_lane_from_vscode_terminal,_resolve_lane_from_terminal,resolve_agent_lane,resolve_autopilot_ide_for_autonomous,_normalized_cli_value,_autopilot_socket_path_for_probe,_should_probe_per_ide_socket,_running_ide_labels,_term_program_label,_xdg_runtime_dir_label,build_startup_probe,format_startup_banner,_get_settings_hint,_format_plugin_status_line,_format_ide_mismatch_warnings,_format_plugin_setup_steps,_format_keyboard_setup_steps,format_post_startup_operator_hints,AutonomousStartupProbe
+    e: supports_autopilot_plugin_ide,koru_distribution_version,_session_label,_terminal_agent_lane_from_env,_explicit_agent_lane_from_env,_resolve_lane_from_cli,_resolve_lane_from_explicit,_resolve_lane_from_vscode_terminal,_resolve_lane_from_terminal,_resolve_lane_from_running,_project_lane,resolve_agent_lane_id,resolve_agent_lane,resolve_autopilot_ide_for_autonomous,_normalized_cli_value,_autopilot_socket_path_for_probe,_should_probe_per_ide_socket,_running_ide_labels,_term_program_label,_xdg_runtime_dir_label,build_startup_probe,format_startup_banner,_get_settings_hint,_format_plugin_status_line,_format_ide_mismatch_warnings,_format_plugin_setup_steps,_format_keyboard_setup_steps,format_post_startup_operator_hints,AutonomousStartupProbe
     AutonomousStartupProbe:
     supports_autopilot_plugin_ide(ide)
     koru_distribution_version()
     _session_label()
     _terminal_agent_lane_from_env()
     _explicit_agent_lane_from_env()
-    _target_lane_over_terminal(terminal)
-    _resolve_lane_from_cli(project;raw;resolve_project_lane)
-    _resolve_lane_with_explicit(project;terminal;explicit;explicit_source;resolve_project_lane)
-    _resolve_lane_from_running_ide_fallback(project;terminal;resolve_project_lane)
-    resolve_agent_lane_id(project;agent_lane_cli)
+    _resolve_lane_from_cli(raw)
     _resolve_lane_from_explicit(explicit;explicit_source;terminal)
     _resolve_lane_from_vscode_terminal(running;terminal)
     _resolve_lane_from_terminal(terminal;running)
+    _resolve_lane_from_running(running)
+    _project_lane(project;lane;resolve_project_lane)
+    resolve_agent_lane_id(project;agent_lane_cli)
     resolve_agent_lane()
     resolve_autopilot_ide_for_autonomous(autopilot_ide_cli;lane)
     _normalized_cli_value(raw)
@@ -2109,6 +2155,10 @@ D:
   tests/test_autonomous_process_detection.py:
     e: test_find_existing_autonomous_does_not_skip_sibling_from_same_shell
     test_find_existing_autonomous_does_not_skip_sibling_from_same_shell(tmp_path;monkeypatch)
+  tests/test_autonomous_runtime.py:
+    e: test_project_venv_warning_when_running_from_other_venv,test_project_venv_warning_skips_local_venv
+    test_project_venv_warning_when_running_from_other_venv(tmp_path;monkeypatch)
+    test_project_venv_warning_skips_local_venv(tmp_path;monkeypatch)
   tests/test_autonomous_scenarios.py:
     e: test_autonomous_main_safe_up_expands_args,test_autonomous_cycle_smoke_scenario,test_autonomous_cycle_autopilot_skipped_when_no_client,test_run_cycle_auto_heals_stale_socket,test_autonomous_cycle_skips_autopilot_after_repeated_idle_when_threshold_set
     test_autonomous_main_safe_up_expands_args()
@@ -2540,13 +2590,14 @@ D:
     TestParseDotenv: test_simple_pairs(0),test_export_prefix_supported(0),test_double_quoted_with_escapes(0),test_single_quoted_literal(0),test_inline_comments_stripped(0),test_skips_blank_and_comment_lines(0),test_invalid_lines_silently_skipped(0),test_openrouter_realworld_line(0)
     TestLoadDotenv: setUp(0),tearDown(0),test_no_dotenv_returns_empty(0),test_loads_keys_into_environ(0),test_does_not_override_existing_env(0),test_override_flag_replaces_existing(0),test_env_local_overrides_env(0),test_openrouter_key_propagated(0)
   tests/test_drive_orchestrator.py:
-    e: test_plugin_required_message_mentions_ide_and_connect_command,test_should_try_os_fallback_false_when_plugin_required,test_should_try_os_fallback_true_for_submit_failure,test_build_message_sent_info_keeps_chat_and_backend,test_annotate_plugin_ack_marks_strict_when_winning_commands_exist,test_annotate_plugin_ack_marks_plugin_ack_without_winning_commands,test_plugin_version_info_marks_mismatch,test_plugin_version_policy_can_block,test_compatible_protocol_allows_version_drift_under_strict_policy,test_incompatible_protocol_blocks_even_without_version_drift,test_missing_protocol_blocks_developer_plugin,test_bundled_expected_plugin_version_matches_vscode_package_json,test_strict_plugin_version_blocks_when_expected_version_missing
+    e: test_plugin_required_message_mentions_ide_and_connect_command,test_should_try_os_fallback_false_when_plugin_required,test_should_try_os_fallback_true_for_submit_failure,test_build_message_sent_info_keeps_chat_and_backend,test_annotate_plugin_ack_marks_strict_when_winning_commands_exist,test_annotate_plugin_ack_marks_plugin_ack_without_winning_commands,test_plugin_ack_summary_includes_submit_failure_details,test_plugin_version_info_marks_mismatch,test_plugin_version_policy_can_block,test_compatible_protocol_allows_version_drift_under_strict_policy,test_incompatible_protocol_blocks_even_without_version_drift,test_missing_protocol_blocks_developer_plugin,test_bundled_expected_plugin_version_matches_vscode_package_json,test_strict_plugin_version_blocks_when_expected_version_missing
     test_plugin_required_message_mentions_ide_and_connect_command()
     test_should_try_os_fallback_false_when_plugin_required()
     test_should_try_os_fallback_true_for_submit_failure()
     test_build_message_sent_info_keeps_chat_and_backend()
     test_annotate_plugin_ack_marks_strict_when_winning_commands_exist()
     test_annotate_plugin_ack_marks_plugin_ack_without_winning_commands()
+    test_plugin_ack_summary_includes_submit_failure_details()
     test_plugin_version_info_marks_mismatch(monkeypatch)
     test_plugin_version_policy_can_block(monkeypatch)
     test_compatible_protocol_allows_version_drift_under_strict_policy(monkeypatch)

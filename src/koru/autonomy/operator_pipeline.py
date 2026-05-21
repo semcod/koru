@@ -359,6 +359,32 @@ def _host_injectors_ok() -> tuple[bool, str]:
     return False, "; ".join(parts) if parts else "host setup wymaga uwagi"
 
 
+def _build_os_calibration_step(ide: str, project: Path) -> OperatorStep:
+    """Return OS injector calibration status for IDEs that need keyboard fallback."""
+    if supports_autopilot_plugin_ide(ide):
+        return OperatorStep(
+            step_id="os_calibrate",
+            title=f"Kalibracja czatu OS injectora ({ide})",
+            actor="human",
+            status="skipped",
+            detail=(
+                f"niewymagana dla ide={ide}; autopilot używa wtyczki/socketu, "
+                "a OS injector jest tylko fallbackiem"
+            ),
+            task_command=None,
+        )
+
+    prof_ok, prof_detail = _os_profile_ok(ide, project)
+    return OperatorStep(
+        step_id="os_calibrate",
+        title=f"Kalibracja czatu OS injectora ({ide})",
+        actor="human",
+        status="ok" if prof_ok else "pending",
+        detail=prof_detail,
+        task_command=None if prof_ok else f"task koru:ide-os:calibrate IDE={ide}",
+    )
+
+
 def build_operator_steps(
     *,
     project: Path,
@@ -436,17 +462,7 @@ def build_operator_steps(
         ),
     )
 
-    prof_ok, prof_detail = _os_profile_ok(ide, project)
-    steps.append(
-        OperatorStep(
-            step_id="os_calibrate",
-            title=f"Kalibracja czatu OS injectora ({ide})",
-            actor="human",
-            status="ok" if prof_ok else "pending",
-            detail=prof_detail,
-            task_command=None if prof_ok else f"task koru:ide-os:calibrate IDE={ide}",
-        ),
-    )
+    steps.append(_build_os_calibration_step(ide, project))
 
     steps.append(
         OperatorStep(

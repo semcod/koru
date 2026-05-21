@@ -14,6 +14,7 @@ from koru import cli_scan
 from koru.scan import (
     ScanResult,
     Suggestion,
+    _suggestion_dedupe_key,
     run_scan,
     scan_gitignore_drift,
     scan_missing_gates,
@@ -69,6 +70,25 @@ class TestScanCLI(unittest.TestCase):
         self.assertTrue(run.call_args.kwargs["include_semcod_artifacts"])
         payload = json.loads(buf.getvalue())
         self.assertEqual(payload["suggestions"][0]["signal"], "semcod")
+
+    def test_code2llm_god_and_refactor_share_file_dedupe_key(self) -> None:
+        god = Suggestion(
+            signal="code2llm_god",
+            title="Split god module: src/koru/autonomous.py",
+            description="god",
+            files=("src/koru/autonomous.py",),
+        )
+        refactor = Suggestion(
+            signal="code2llm_refactor",
+            title="code2llm refactor: split src/koru/autonomous.py",
+            description="refactor",
+            files=("src/koru/autonomous.py",),
+        )
+
+        self.assertEqual(
+            _suggestion_dedupe_key("koru-scan", god),
+            _suggestion_dedupe_key("prefact", refactor),
+        )
 
 
 class TestScanPytestCollect(unittest.TestCase):

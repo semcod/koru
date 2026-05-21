@@ -71,6 +71,24 @@ def test_annotate_plugin_ack_marks_plugin_ack_without_winning_commands() -> None
     assert info["verification"] == "plugin_ack"
 
 
+def test_plugin_ack_summary_includes_submit_failure_details() -> None:
+    summary = DriveOrchestrator.plugin_ack_summary(
+        {
+            "verification": "submit_unverified",
+            "attempted_submit": "vscodium-submit-unavailable",
+            "submit_failure_reason": "missing submit click coordinates",
+            "submit_attempts": [
+                "submit click skipped: missing submitClickX/submitClickY",
+                "xdotool key Return => failed",
+            ],
+        }
+    )
+
+    assert "attempted_submit=vscodium-submit-unavailable" in summary
+    assert "submit_failure_reason=missing submit click coordinates" in summary
+    assert "submit_attempts=submit click skipped" in summary
+
+
 def test_plugin_version_info_marks_mismatch(monkeypatch) -> None:
     monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda: "0.1.13")
 

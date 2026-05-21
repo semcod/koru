@@ -470,6 +470,7 @@ class AutopilotDaemon:
                 submit=submit,
                 project=self.project,
                 cli_dry_run=False,
+                _log=self.log,
             )
             if result:
                 self.log(f"try_os_injector_drive: SUCCESS backend={result.get('backend')}, chat_coords=({result.get('chat_x')}, {result.get('chat_y')}), input_method={result.get('input_method')}")
@@ -493,6 +494,7 @@ class AutopilotDaemon:
             ide_arg,
             None,
             project=self.project,
+            _log=self.log,
         )
         self.log(f"drive_via_keyboard: resolved target_id={target_id}, profile_id={profile_id}, selection={selection}")
         if ide_arg == "auto":

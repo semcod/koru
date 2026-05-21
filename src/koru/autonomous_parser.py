@@ -112,6 +112,12 @@ def build_parser(*, default_stdio_format: str) -> argparse.ArgumentParser:
         help="IDE target for autopilot drive (default: auto).",
     )
     up.add_argument(
+        "--autopilot-plugin-wait-seconds",
+        type=float,
+        default=5.0,
+        help="Wait this many seconds for the IDE autopilot plugin before the first drive.",
+    )
+    up.add_argument(
         "--drive-prompt",
         default="continue with the next ticket",
         help="Prompt sent in each autopilot drive step.",
@@ -364,12 +370,39 @@ def build_parser(*, default_stdio_format: str) -> argparse.ArgumentParser:
             "jsonl: structured events on stdout; incidental status on stderr."
         ),
     )
+    up.add_argument(
+        "--operator-pipeline",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "After startup, print numbered operator steps and create planfile "
+            "tickets on --operator-ticket-queue (human + task koru:* shell steps)."
+        ),
+    )
+    up.add_argument(
+        "--operator-tickets",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Create [OPERATOR] planfile tickets for pending pipeline steps.",
+    )
+    up.add_argument(
+        "--operator-ticket-queue",
+        default="operator",
+        help="Planfile queue for operator-pipeline tickets (default: operator).",
+    )
+    up.add_argument(
+        "--operator-ticket-priority",
+        default="high",
+        help="Priority for operator-pipeline tickets.",
+    )
     up.set_defaults(
         submit=True,
         enable_autopilot=True,
         enable_serve=True,
         stop_on_waiting_input=False,
         semcod_artifacts=True,
+        operator_pipeline=True,
+        operator_tickets=True,
     )
 
     return parser

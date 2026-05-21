@@ -1,18 +1,18 @@
-# code2llm/evolution | 1537 func | 138f | 2026-05-21
-# generated in 0.00s
+# code2llm/evolution | 1571 func | 143f | 2026-05-21
+# generated in 0.01s
 
 NEXT[4] (ranked by impact):
-  [1] !! SPLIT           src/koru/autonomous.py
-      WHY: 1837L, 1 classes, max CC=13
-      EFFORT: ~4h  IMPACT: 23881
-
-  [2] !! SPLIT           src/koru/autonomous_cycle.py
+  [1] !! SPLIT           src/koru/autonomous_cycle.py
       WHY: 1466L, 2 classes, max CC=14
       EFFORT: ~4h  IMPACT: 20524
 
-  [3] !! SPLIT           src/koruapi/dashboard_serve.py
+  [2] !! SPLIT           src/koruapi/dashboard_serve.py
       WHY: 1400L, 1 classes, max CC=13
       EFFORT: ~4h  IMPACT: 18200
+
+  [3] !! SPLIT           src/koru/autonomous.py
+      WHY: 1587L, 1 classes, max CC=10
+      EFFORT: ~4h  IMPACT: 15870
 
   [4] !  SPLIT-FUNC      plugin_status_decision  CC=20  fan=12
       WHY: CC=20 exceeds 15
@@ -56,4 +56,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.2 → now CC̄=4.1
+  prev CC̄=4.1 → now CC̄=4.1

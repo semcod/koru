@@ -98,6 +98,37 @@ def test_build_operator_steps_plugin_probe_uses_resolved_ide(
     assert plugin.task_command == "task koru:operator:plugin-probe IDE=cursor"
 
 
+def test_build_operator_steps_skips_os_calibration_for_plugin_ide(
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    vscodium_probe = replace(
+        probe,
+        resolved_lane="vscodium",
+        resolved_autopilot_ide="vscodium",
+        terminal_lane="vscodium",
+    )
+    profile_checks: list[str] = []
+    monkeypatch.setattr(
+        op,
+        "_os_profile_ok",
+        lambda ide, _project: profile_checks.append(ide) or (False, "missing"),
+    )
+
+    steps = op.build_operator_steps(
+        project=tmp_path,
+        probe=vscodium_probe,
+        plugin_connected=True,
+    )
+    os_step = next(s for s in steps if s.step_id == "os_calibrate")
+
+    assert os_step.status == "skipped"
+    assert os_step.task_command is None
+    assert "wtyczki/socketu" in os_step.detail
+    assert profile_checks == []
+
+
 def test_run_startup_operator_pipeline_creates_tickets(
     tmp_path: Path,
     probe: AutonomousStartupProbe,

@@ -74,3 +74,34 @@ class TestNaturalLanguageTask(unittest.TestCase):
             self.assertEqual(ticket["executor"]["mode"], "automatic")
             self.assertIn("[TOOL ADAPTER SCAFFOLD]", ticket["inputs"]["prompt"])
             self.assertEqual(ticket["inputs"]["tool_id"], "gemini-cli")
+
+    def test_reuses_existing_ticket_with_same_dedupe_key(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            first = create_nl_task(
+                project,
+                "Split autonomous module",
+                scaffold={
+                    "source_tool": "prefact",
+                    "source_context": {"dedupe_key": "semcod:code2llm:refactor:src/koru/autonomous.py"},
+                    "title": "Split god module: src/koru/autonomous.py",
+                },
+            )
+            data = yaml.safe_load(first.path.read_text(encoding="utf-8"))
+            data["sprint"]["tickets"][first.ticket_id]["status"] = "done"
+            first.path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+
+            second = create_nl_task(
+                project,
+                "Same issue reported by another plugin",
+                scaffold={
+                    "source_tool": "prefact",
+                    "source_context": {"dedupe_key": "semcod:code2llm:refactor:src/koru/autonomous.py"},
+                    "title": "Split god module: src/koru/autonomous.py",
+                },
+            )
+
+            self.assertTrue(second.reused)
+            self.assertEqual(second.ticket_id, first.ticket_id)
+            config = yaml.safe_load((project / ".planfile" / "config.yaml").read_text())
+            self.assertEqual(config["next_id"], 2)

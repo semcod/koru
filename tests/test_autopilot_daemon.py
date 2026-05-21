@@ -316,7 +316,7 @@ def test_drive_uses_os_injector_when_profile_available(
 
     calls: list[dict[str, Any]] = []
 
-    def fake_inject(*, profile, text, submit, dry_run):
+    def fake_inject(*, profile, text, submit, dry_run, _log=None):
         calls.append({"text": text, "submit": submit, "dry_run": dry_run})
         return {
             "ok": True,

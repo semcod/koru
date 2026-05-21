@@ -218,10 +218,19 @@ class DriveOrchestrator:
         verification = info.get("verification")
         if verification:
             parts.append(f"verification={verification}")
-        for key in ("winning_focus_open", "winning_paste", "winning_submit"):
+        for key in (
+            "winning_focus_open",
+            "winning_paste",
+            "winning_submit",
+            "attempted_submit",
+            "submit_failure_reason",
+        ):
             value = info.get(key)
             if value:
                 parts.append(f"{key}={value}")
+        attempts = info.get("submit_attempts")
+        if isinstance(attempts, list) and attempts:
+            parts.append("submit_attempts=" + " | ".join(str(item) for item in attempts))
         if info.get("plugin_version_mismatch"):
             parts.append(
                 "plugin_version="

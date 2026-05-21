@@ -81,6 +81,11 @@ class KoruIDEClient:
         ide: str = "auto",
         require_plugin: bool = False,
     ) -> dict[str, Any]:
+        if self._log:
+            self._log(
+                f"client: drive ide={ide} chars={len(text)} "
+                f"submit={submit} require_plugin={require_plugin}"
+            )
         if self._client is not None:
             return self._client.drive(
                 text,
@@ -98,14 +103,21 @@ class KoruIDEClient:
                     id="cli-drive",
                 ),
             )
-            return reply.to_dict()
+            data = reply.to_dict()
+            if self._log:
+                self._log(f"client: drive reply ok={data.get('ok')} backend={data.get('backend')}")
+            return data
         except FileNotFoundError as exc:
+            if self._log:
+                self._log(f"client: drive socket missing: {exc}")
             return {
                 "ok": False,
                 "message": f"autopilot socket missing: {self.socket_path} ({exc})",
                 "backend": None,
             }
         except (ConnectionError, OSError) as exc:
+            if self._log:
+                self._log(f"client: drive daemon unreachable: {exc}")
             return {
                 "ok": False,
                 "message": f"autopilot daemon unreachable: {exc}",
@@ -113,16 +125,26 @@ class KoruIDEClient:
             }
 
     def status(self) -> dict[str, Any]:
+        if self._log:
+            self._log("client: status request")
         if self._client is not None:
             return self._client.status()
         reply = self.request(Message(type="status", id="cli-status"))
-        return reply.to_dict()
+        data = reply.to_dict()
+        if self._log:
+            self._log(f"client: status reply plugins={len(data.get('plugins', []))}")
+        return data
 
     def shutdown(self) -> dict[str, Any]:
+        if self._log:
+            self._log("client: shutdown request")
         if self._client is not None:
             return self._client.shutdown()
         reply = self.request(Message(type="shutdown", id="cli-shutdown"))
-        return reply.to_dict()
+        data = reply.to_dict()
+        if self._log:
+            self._log(f"client: shutdown reply stopping={data.get('stopping')}")
+        return data
 
 
 # Compatibility alias for cross-package transitions.

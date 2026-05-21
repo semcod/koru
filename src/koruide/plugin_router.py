@@ -53,7 +53,9 @@ class PluginRouter:
             if client.role != "plugin":
                 continue
             if ide in (None, "auto") or client.ide == ide:
+                self._log(f"plugin_for: matched ide={client.ide} fd={client.sock.fileno()}")
                 return client
+        self._log(f"plugin_for: no plugin for ide={ide or 'auto'}")
         return None
 
     def drop_stale_plugins(self, current: PluginClient, ide: str) -> int:

@@ -1,6 +1,7 @@
 """Natural-language task intake for koru."""
 
 
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -15,6 +16,7 @@ class CreatedTask:
     sprint: str
     path: Path
     name: str
+    reused: bool = False
 
 
 def _generate_ticket_id(config_path: Path, project_name: str) -> tuple[str, dict]:
@@ -47,6 +49,72 @@ def _build_ticket_source(scaffold: dict[str, Any], text: str, now: str) -> dict[
         ),
     }
     return {"tool": source_tool, "timestamp": now, "context": source_context}
+
+
+def _normalize_dedupe_part(value: object) -> str:
+    return re.sub(r"[^a-z0-9._/-]+", "-", str(value).strip().lower()).strip("-")
+
+
+def _dedupe_key_from_scaffold(scaffold: dict[str, Any], name: str) -> str | None:
+    source_context = (
+        scaffold.get("source_context")
+        if isinstance(scaffold.get("source_context"), dict)
+        else {}
+    )
+    explicit = source_context.get("dedupe_key") if isinstance(source_context, dict) else None
+    if isinstance(explicit, str) and explicit.strip():
+        return explicit.strip()
+
+    source_tool = str(scaffold.get("source_tool") or "koru-cli-nl")
+    signal = source_context.get("signal") if isinstance(source_context, dict) else None
+    files = [str(v) for v in (scaffold.get("files") or []) if str(v).strip()]
+    if source_tool == "koru-cli-nl" and not signal and not files:
+        return None
+    parts = [source_tool]
+    if signal:
+        parts.append(str(signal))
+    parts.extend(files[:3])
+    if not files:
+        parts.append(name)
+    return ":".join(_normalize_dedupe_part(part) for part in parts if str(part).strip())
+
+
+def _status_allows_dedupe_reuse(status: object) -> bool:
+    return str(status or "").strip().lower() not in {"canceled", "cancelled", "closed"}
+
+
+def _find_existing_task_by_dedupe_key(
+    tickets: object,
+    *,
+    dedupe_key: str,
+    sprint: str,
+    path: Path,
+) -> CreatedTask | None:
+    if isinstance(tickets, dict):
+        entries = tickets.items()
+    elif isinstance(tickets, list):
+        entries = (
+            (str(entry.get("id") or ""), entry)
+            for entry in tickets
+            if isinstance(entry, dict)
+        )
+    else:
+        return None
+    for ticket_id, ticket in entries:
+        if not isinstance(ticket, dict) or not _status_allows_dedupe_reuse(ticket.get("status")):
+            continue
+        source = ticket.get("source")
+        context = source.get("context") if isinstance(source, dict) else None
+        if not isinstance(context, dict) or context.get("dedupe_key") != dedupe_key:
+            continue
+        return CreatedTask(
+            ticket_id=str(ticket.get("id") or ticket_id),
+            sprint=sprint,
+            path=path,
+            name=str(ticket.get("name") or ticket.get("title") or ticket_id),
+            reused=True,
+        )
+    return None
 
 
 def _build_ticket_inputs(scaffold: dict[str, Any], text: str) -> dict[str, Any]:
@@ -136,14 +204,31 @@ def create_nl_task(
     sprint_path = sprints_dir / f"{sprint}.yaml"
 
     sprints_dir.mkdir(parents=True, exist_ok=True)
-    ticket_id, _config = _generate_ticket_id(config_path, project.name)
-
     sprint_data = _read_sprint(sprint_path, sprint=sprint)
     tickets = sprint_data["sprint"].setdefault("tickets", {})
     now = datetime.now(UTC).isoformat()
     scaffold = scaffold or {}
     scaffold_title = str(scaffold.get("title") or "").strip()
     name = scaffold_title or _title_from_text(text)
+    dedupe_key = _dedupe_key_from_scaffold(scaffold, name)
+    if dedupe_key:
+        existing = _find_existing_task_by_dedupe_key(
+            tickets,
+            dedupe_key=dedupe_key,
+            sprint=sprint,
+            path=sprint_path,
+        )
+        if existing is not None:
+            return existing
+        source_context = (
+            dict(scaffold.get("source_context"))
+            if isinstance(scaffold.get("source_context"), dict)
+            else {}
+        )
+        source_context["dedupe_key"] = dedupe_key
+        scaffold = {**scaffold, "source_context": source_context}
+
+    ticket_id, _config = _generate_ticket_id(config_path, project.name)
 
     labels = _build_ticket_labels(scaffold)
     source = _build_ticket_source(scaffold, text, now)

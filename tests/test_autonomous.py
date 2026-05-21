@@ -1725,23 +1725,12 @@ def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(
             waiting=[],
         ),
     )
-    monkeypatch.setattr(
-        autonomous_mod,
-        "load_profile",
-        lambda *_args, **_kwargs: SimpleNamespace(
-            tool_id="windsurf",
-            window_id=1,
-            chat_x=100,
-            chat_y=200,
-        ),
-    )
     fallback_calls: list[dict] = []
     monkeypatch.setattr(
-        autonomous_mod,
-        "inject_with_profile",
-        lambda **kwargs: (
-            fallback_calls.append(kwargs)
-            or {"ok": True, "backend": "os_injector", "submitted": kwargs["submit"]}
+        "koru.autonomous_cycle_gate.try_os_injector_fallback_with_deps",
+        lambda prompt, *, submit, load_profile_fn, inject_with_profile_fn, os_injector_error: (
+            fallback_calls.append({"prompt": prompt, "submit": submit})
+            or {"ok": True, "backend": "os_injector", "submitted": submit}
         ),
     )
 
@@ -1944,6 +1933,69 @@ def test_run_cycle_does_not_retry_missing_plugin_as_focus_error(
     assert calls == [1]
     assert autopilot_status == "failed"
     assert "[AUTOPILOT FOCUS ERROR]" not in capsys.readouterr().out
+
+
+def test_run_cycle_does_not_retry_when_plugin_requires_manual_focus(
+    tmp_path,
+    monkeypatch,
+    capsys,
+) -> None:
+    import time
+
+    calls: list[int] = []
+    sleeps: list[int] = []
+
+    class ManualFocusClient:
+        def drive(self, *_args, **_kwargs):
+            calls.append(1)
+            return {
+                "ok": False,
+                "message": "chat input is not focused/open; focus_open_candidates=(none)",
+                "verification": "plugin_error",
+                "diagnostics": {
+                    "ide": "vscode",
+                    "appName": "Visual Studio Code",
+                    "logPath": "/tmp/koru-plugin-debug.log",
+                    "probeLadder": True,
+                    "cacheFocusOpen": "workbench.panel.chat",
+                    "focusOpenCandidates": [],
+                },
+            }
+
+    monkeypatch.setattr(time, "sleep", lambda seconds: sleeps.append(seconds))
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=0 last_status=idle",
+            last_status="idle",
+            last_message="",
+            waiting=[],
+        ),
+    )
+
+    _scan_result, _queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
+        cycle=1,
+        project=tmp_path,
+        actor="koru-test",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=50,
+        enable_autopilot=True,
+        autopilot_ide="vscode",
+        drive_prompt="continue with the next ticket",
+        submit=True,
+        include_semcod_artifacts=False,
+        client=ManualFocusClient(),
+    )
+
+    assert calls == [1]
+    assert sleeps == []
+    assert autopilot_status == "failed"
+    captured = capsys.readouterr().out
+    assert "[AUTOPILOT FOCUS REQUIRED]" in captured
+    assert "Retrying in 5 seconds" not in captured
+    assert "focusOpenCandidates: (none)" in captured
 
 
 def test_run_cycle_skips_drive_when_required_plugin_missing(
@@ -2612,6 +2664,25 @@ def test_wup_compose_ps_accepts_json_lines() -> None:
     )
 
     assert autonomous_wup_mod._compose_service_ready(items)
+
+
+def test_wup_compose_service_ready_rejects_unhealthy_or_stopped() -> None:
+    assert not autonomous_wup_mod._compose_service_ready([])
+    assert not autonomous_wup_mod._compose_service_ready(
+        [{"State": "running", "Health": "unhealthy", "Status": "Up 2 seconds"}],
+    )
+    assert not autonomous_wup_mod._compose_service_ready(
+        [{"State": "exited", "Health": "healthy", "Status": "Exited"}],
+    )
+
+
+def test_wup_compose_service_ready_accepts_status_when_state_missing() -> None:
+    assert autonomous_wup_mod._compose_service_ready(
+        [{"Health": "", "Status": "Up 2 seconds"}],
+    )
+    assert not autonomous_wup_mod._compose_service_ready(
+        [{"Health": "", "Status": "Created"}],
+    )
 
 
 def test_wup_topology_gate_uses_pipeline_for_gate_wup(tmp_path, monkeypatch) -> None:

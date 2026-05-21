@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscode",
   "displayName": "koru autopilot",
   "description": "Bridge between VS Code / Windsurf / Cursor and the koru autopilot daemon.",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -117,6 +117,11 @@
           "default": 0,
           "minimum": 0,
           "description": "Optional absolute screen Y coordinate for clicking the chat Send button after paste. Use command `koru: Capture submit button position`."
+        },
+        "koruAutopilot.trustUnverifiedHostSubmit": {
+          "type": "boolean",
+          "default": true,
+          "description": "For VSCodium on Linux, treat a successful host Return/Ctrl+Return submit key as accepted when VS Code APIs cannot verify chat submission."
         }
       }
     }

@@ -2758,10 +2758,10 @@ sprint:
         with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
         into strategy pattern.'
       execution:
-        attempt: 0
+        attempt: 1
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -2816,10 +2816,10 @@ sprint:
         CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
         strategy pattern.'
       execution:
-        attempt: 0
+        attempt: 1
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -2874,10 +2874,10 @@ sprint:
         (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
         pattern.'
       execution:
-        attempt: 0
+        attempt: 1
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -2930,10 +2930,10 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `pasteText` with CC=18 (limit=15).
         Extract sub-functions, simplify conditionals, or split into strategy pattern.'
       execution:
-        attempt: 0
+        attempt: 1
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -3666,10 +3666,10 @@ sprint:
       description: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
         Extract sub-functions, simplify conditionals, or split into strategy pattern.'
       execution:
-        attempt: 0
+        attempt: 1
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -4594,16 +4594,18 @@ sprint:
         artifacts: []
         notes:
         - Split autonomous loop checkpoint/backoff helpers into `src/koru/autonomous_checkpoint.py`;
-          `src/koru/autonomous.py` now imports compatibility aliases for existing call sites/tests.
+          `src/koru/autonomous.py` now imports compatibility aliases for existing
+          call sites/tests.
         - Moved autonomous idle/WUP diagnostic runtime details into `src/koru/autonomous_diagnostics.py`;
-          `src/koru/autonomous.py` keeps thin compatibility wrappers for monkeypatch points.
+          `src/koru/autonomous.py` keeps thin compatibility wrappers for monkeypatch
+          points.
         - 'Validation: 155 passed, 1 skipped for autonomous/startup/docker-matrix/drive-orchestrator
           focused suite.'
         - 'Validation: 152 passed, 1 skipped for autonomous/startup/diagnostics/docker-matrix/drive-orchestrator
           focused suite after second split.'
         - Split autopilot plugin status/wait helpers into `src/koru/autonomous_plugin.py`;
-          `src/koru/autonomous.py` keeps thin compatibility wrappers for existing tests
-          and monkeypatch points.
+          `src/koru/autonomous.py` keeps thin compatibility wrappers for existing
+          tests and monkeypatch points.
         - 'Validation: 152 passed, 1 skipped for autonomous/startup/diagnostics/docker-matrix/drive-orchestrator
           focused suite after plugin-status split.'
       priority: high
@@ -5499,6 +5501,7 @@ sprint:
         mode: interactive
       files:
       - src/koru/autonomous.py
+      - src/koru/autonomous_runtime.py
       - project/analysis.toon.yaml
       history:
       - action: created
@@ -6438,6 +6441,7 @@ sprint:
         mode: interactive
       files:
       - src/koru/autonomous.py
+      - src/koru/autonomous_operator.py
       - project/analysis.toon.yaml
       history:
       - action: created
@@ -6446,6 +6450,18 @@ sprint:
           by responsibility.'
         source: koru task
         timestamp: '2026-05-21T14:32:04.107434+00:00'
+      - action: update
+        changes:
+        - execution
+        - files
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: codex
+        status: done
+        timestamp: '2026-05-21T17:55:21.906757+00:00'
       id: STARTER-100
       inputs:
         api_headers: {}
@@ -6466,7 +6482,12 @@ sprint:
       name: 'Split god module: src/koru/autonomous.py'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - Moved MCP provision, autopilot plugin setup/wait, operator pipeline hints,
+          and queue-unblock pre-checks into `src/koru/autonomous_operator.py`; `src/koru/autonomous.py`
+          keeps compatibility wrappers for tests and call sites.
+        - 'Validation: 153 passed, 1 skipped for autonomous/startup/diagnostics/docker-matrix/drive-orchestrator
+          focused suite after operator pre-check split.'
       priority: high
       source:
         context:
@@ -6477,9 +6498,9 @@ sprint:
         timestamp: '2026-05-21T14:32:04.107434+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T14:32:04.107434+00:00'
+      updated_at: '2026-05-21T17:55:21.906757+00:00'
     STARTER-101:
       blocked_by: []
       blocks: []
@@ -7360,6 +7381,7 @@ sprint:
         mode: interactive
       files:
       - src/koru/autonomous.py
+      - src/koru/autonomous_cycle_config.py
       - project/analysis.toon.yaml
       history:
       - action: created
@@ -7368,6 +7390,18 @@ sprint:
           by responsibility.'
         source: koru task
         timestamp: '2026-05-21T14:40:18.018519+00:00'
+      - action: update
+        changes:
+        - execution
+        - files
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: codex
+        status: done
+        timestamp: '2026-05-21T17:58:05.202330+00:00'
       id: STARTER-116
       inputs:
         api_headers: {}
@@ -7388,7 +7422,11 @@ sprint:
       name: 'Split god module: src/koru/autonomous.py'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - Moved cycle profile selection, effective scan/autopilot flag resolution,
+          cycle kwargs construction, and sleep calculation into `src/koru/autonomous_cycle_config.py`.
+        - 'Validation: 153 passed, 1 skipped for autonomous/startup/diagnostics/docker-matrix/drive-orchestrator
+          focused suite after cycle config split.'
       priority: high
       source:
         context:
@@ -7399,9 +7437,9 @@ sprint:
         timestamp: '2026-05-21T14:40:18.018519+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T14:40:18.018519+00:00'
+      updated_at: '2026-05-21T17:58:05.202330+00:00'
     STARTER-117:
       blocked_by: []
       blocks: []
@@ -8416,6 +8454,7 @@ sprint:
         mode: interactive
       files:
       - src/koru/autonomous.py
+      - src/koru/autonomous_runtime.py
       - project/analysis.toon.yaml
       history:
       - action: created
@@ -8424,6 +8463,18 @@ sprint:
           by responsibility.'
         source: koru task
         timestamp: '2026-05-21T15:16:23.318003+00:00'
+      - action: update
+        changes:
+        - execution
+        - files
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: codex
+        status: done
+        timestamp: '2026-05-21T18:00:22.416267+00:00'
       id: STARTER-134
       inputs:
         api_headers: {}
@@ -8444,7 +8495,11 @@ sprint:
       name: 'Split god module: src/koru/autonomous.py'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - Moved autonomous env snapshot/restore, startup probe logging, SIGTERM handler
+          installation, and interrupt handling into `src/koru/autonomous_runtime.py`.
+        - 'Validation: 156 passed, 1 skipped for autonomous/jsonl/startup/diagnostics/docker-matrix/drive-orchestrator
+          focused suite after runtime signal/env split.'
       priority: high
       source:
         context:
@@ -8455,9 +8510,9 @@ sprint:
         timestamp: '2026-05-21T15:16:23.318003+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T15:16:23.318003+00:00'
+      updated_at: '2026-05-21T18:00:22.416267+00:00'
     STARTER-135:
       blocked_by: []
       blocks: []
@@ -9106,6 +9161,7 @@ sprint:
         mode: interactive
       files:
       - src/koru/autonomous.py
+      - src/koru/autonomous_cli_config.py
       - project/analysis.toon.yaml
       history:
       - action: created
@@ -9114,6 +9170,18 @@ sprint:
           by responsibility.'
         source: koru task
         timestamp: '2026-05-21T15:18:05.568614+00:00'
+      - action: update
+        changes:
+        - execution
+        - files
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: codex
+        status: done
+        timestamp: '2026-05-21T18:02:34.761078+00:00'
       id: STARTER-146
       inputs:
         api_headers: {}
@@ -9134,7 +9202,11 @@ sprint:
       name: 'Split god module: src/koru/autonomous.py'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - Moved autonomous argv normalization, `koru auto` default expansion, auto-pipeline
+          flag setup, and replace-existing flag setup into `src/koru/autonomous_cli_config.py`.
+        - 'Validation: 156 passed, 1 skipped for autonomous/jsonl/startup/diagnostics/docker-matrix/drive-orchestrator
+          focused suite after CLI config split.'
       priority: high
       source:
         context:
@@ -9145,9 +9217,9 @@ sprint:
         timestamp: '2026-05-21T15:18:05.568614+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T15:18:05.568614+00:00'
+      updated_at: '2026-05-21T18:02:34.761078+00:00'
     STARTER-147:
       blocked_by: []
       blocks: []
@@ -9788,9 +9860,10 @@ sprint:
         by responsibility.'
       execution:
         attempt: 0
+        finished_at: '2026-05-21T18:14:05.855054Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -9804,6 +9877,17 @@ sprint:
           by responsibility.'
         source: koru task
         timestamp: '2026-05-21T15:20:34.032603+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T18:14:07.388283+00:00'
       id: STARTER-158
       inputs:
         api_headers: {}
@@ -9823,8 +9907,16 @@ sprint:
       - scan
       name: 'Split god module: src/koru/autonomous.py'
       outputs:
-        artifacts: []
-        notes: []
+        artifacts:
+        - src/koru/autonomous_cycle_gate.py
+        - src/koru/autonomous.py
+        notes:
+        - 'Split autonomous cycle gating/lane-selection responsibilities into src/koru/autonomous_cycle_gate.py.
+          Kept compatibility wrappers in src/koru/autonomous.py for existing monkeypatch-based
+          tests. Validation: pytest tests/test_autonomous.py tests/test_stdio_autonomous_jsonl.py
+          tests/test_autonomous_startup.py tests/test_autonomous_diagnostics.py tests/test_autonomous_runtime.py
+          tests/test_docker_ide_matrix.py tests/test_drive_orchestrator.py -q => 158
+          passed, 1 skipped.'
       priority: high
       source:
         context:
@@ -9835,9 +9927,9 @@ sprint:
         timestamp: '2026-05-21T15:20:34.032603+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T15:20:34.032603+00:00'
+      updated_at: '2026-05-21T18:14:07.388204+00:00'
     STARTER-159:
       blocked_by: []
       blocks: []
@@ -10135,9 +10227,10 @@ sprint:
         by responsibility.'
       execution:
         attempt: 0
+        finished_at: '2026-05-21T18:17:03.540438Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -10151,6 +10244,17 @@ sprint:
           by responsibility.'
         source: koru task
         timestamp: '2026-05-21T15:29:03.085026+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T18:17:04.238626+00:00'
       id: STARTER-164
       inputs:
         api_headers: {}
@@ -10170,8 +10274,18 @@ sprint:
       - scan
       name: 'Split god module: src/koru/autonomous.py'
       outputs:
-        artifacts: []
-        notes: []
+        artifacts:
+        - src/koru/autonomous.py
+        - src/koru/autonomous_parser.py
+        notes:
+        - 'Split the autonomous CLI parser responsibility out of src/koru/autonomous.py
+          by delegating _build_parser() to src/koru/autonomous_parser.py. Added missing
+          parser coverage for --autopilot-plugin-wait-seconds and operator pipeline
+          flags so the delegated parser preserves current autonomous up behavior.
+          Validation: pytest tests/test_autonomous.py tests/test_stdio_autonomous_jsonl.py
+          tests/test_autonomous_startup.py tests/test_autonomous_diagnostics.py tests/test_autonomous_runtime.py
+          tests/test_docker_ide_matrix.py tests/test_drive_orchestrator.py -q => 158
+          passed, 1 skipped.'
       priority: high
       source:
         context:
@@ -10182,9 +10296,9 @@ sprint:
         timestamp: '2026-05-21T15:29:03.085026+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T15:29:03.085026+00:00'
+      updated_at: '2026-05-21T18:17:04.238587+00:00'
     STARTER-165:
       blocked_by: []
       blocks: []
@@ -10498,6 +10612,18 @@ sprint:
           by responsibility.'
         source: koru task
         timestamp: '2026-05-21T15:30:15.537535+00:00'
+      - action: update
+        changes:
+        - execution
+        - files
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: codex
+        status: done
+        timestamp: '2026-05-21T17:48:07.927711+00:00'
       id: STARTER-170
       inputs:
         api_headers: {}
@@ -10518,7 +10644,12 @@ sprint:
       name: 'Split god module: src/koru/autonomous.py'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - Moved autonomous session setup, autopilot daemon boot routing, and session
+          cleanup into `src/koru/autonomous_runtime.py`; `src/koru/autonomous.py`
+          now delegates through compatibility wrappers.
+        - 'Validation: 152 passed, 1 skipped for autonomous/startup/diagnostics/docker-matrix/drive-orchestrator
+          focused suite after runtime setup split.'
       priority: high
       source:
         context:
@@ -10529,9 +10660,9 @@ sprint:
         timestamp: '2026-05-21T15:30:15.537535+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T15:30:15.537535+00:00'
+      updated_at: '2026-05-21T17:48:07.927711+00:00'
     STARTER-171:
       blocked_by: []
       blocks: []
@@ -11030,9 +11161,10 @@ sprint:
         Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`'
       execution:
         attempt: 0
+        finished_at: '2026-05-21T18:42:00.887334Z'
         max_attempts: 1
         queue: operator
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -11052,6 +11184,21 @@ sprint:
           Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`'
         source: koru task
         timestamp: '2026-05-21T16:41:25.618498+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T18:39:05.325696+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-21T18:42:01.427245+00:00'
       id: STARTER-178
       inputs:
         api_headers: {}
@@ -11102,9 +11249,9 @@ sprint:
         timestamp: '2026-05-21T16:41:25.618498+00:00'
         tool: koru-operator-pipeline
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T16:41:25.618498+00:00'
+      updated_at: '2026-05-21T18:42:01.427213+00:00'
     STARTER-179:
       blocked_by: []
       blocks: []

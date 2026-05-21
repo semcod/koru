@@ -144,6 +144,8 @@ def test_vscodium_plugin_supports_configured_submit_click() -> None:
     assert "SUBMIT_CLICK" in source
     assert "xdotool click@" in source
     assert "ydotool click@" in source
+    assert "trustUnverifiedHostSubmit" in package
+    assert "trustUnverifiedHostSubmit" in source
 
 
 def test_matrix_fake_extension_version_matches_bundled_plugin() -> None:
