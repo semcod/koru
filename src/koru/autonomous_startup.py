@@ -84,12 +84,18 @@ def resolve_autopilot_ide_for_autonomous(
     lane: str | None,
     *,
     resolve_ide_route_fn,
+    detect_running_ides_fn=detect_running_ides,
 ) -> tuple[str, str]:
     """Return ``(autopilot_ide, source_label)`` aligned with the resolved lane."""
     raw = (autopilot_ide_cli or "auto").strip().lower()
     if raw != "auto":
         route = resolve_ide_route_fn(cli_autopilot_ide=raw)
         return route.autopilot_ide, f"cli:{raw}"
+    if lane == "jetbrains":
+        running = detect_running_ides_fn()
+        for fallback_ide in _AUTOPILOT_PLUGIN_LANES:
+            if any(ide.id == fallback_ide for ide in running):
+                return fallback_ide, f"lane:jetbrains-fallback:{fallback_ide}"
     if lane in _PLUGIN_IDE_LANES:
         return lane, "lane"
     route = resolve_ide_route_fn(cli_autopilot_ide="auto")

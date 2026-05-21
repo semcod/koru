@@ -1199,13 +1199,13 @@ def _action_install_plugin(args: argparse.Namespace) -> int:
 def _action_install_plugin_jetbrains(args: argparse.Namespace) -> int:
     try:
         plugin_dir = _resolve_jetbrains_plugin_dir(args.plugin_dir)
-        gradle_bin = _resolve_gradle_bin(args.gradle_bin)
     except RuntimeError as exc:
         print(f"koru autopilot install-plugin-jetbrains: {exc}", file=sys.stderr)
         return 1
 
-    cmd = [gradle_bin, args.gradle_task]
     if args.dry_run:
+        requested_gradle = (args.gradle_bin or "gradle").strip() or "gradle"
+        cmd = [requested_gradle, args.gradle_task]
         payload = {
             "ok": True,
             "dry_run": True,
@@ -1219,6 +1219,14 @@ def _action_install_plugin_jetbrains(args: argparse.Namespace) -> int:
             print(f"  cwd: {plugin_dir}")
             print("  " + " ".join(cmd))
         return 0
+
+    try:
+        gradle_bin = _resolve_gradle_bin(args.gradle_bin)
+    except RuntimeError as exc:
+        print(f"koru autopilot install-plugin-jetbrains: {exc}", file=sys.stderr)
+        return 1
+
+    cmd = [gradle_bin, args.gradle_task]
 
     try:
         proc = subprocess.run(

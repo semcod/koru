@@ -1728,6 +1728,12 @@ monitoring:
     def fake_run(command, **kwargs):
         calls.append(command)
         assert kwargs["cwd"] == tmp_path
+        if "ps" in command:
+            return SimpleNamespace(
+                returncode=0,
+                stdout=json.dumps([{"State": "running", "Health": "healthy"}]),
+                stderr="",
+            )
         return SimpleNamespace(returncode=0, stdout="", stderr="")
 
     monkeypatch.setattr(autonomous_wup_mod.subprocess, "run", fake_run)
@@ -1745,7 +1751,28 @@ monitoring:
             "-d",
             "firmware",
         ],
+        [
+            "docker",
+            "compose",
+            "-f",
+            "docker-compose.yml",
+            "--profile",
+            "simulator",
+            "ps",
+            "--format",
+            "json",
+            "firmware",
+        ],
     ]
+
+
+def test_wup_compose_ps_accepts_json_lines() -> None:
+    items = autonomous_wup_mod._parse_compose_ps_json(
+        '{"State":"running","Health":"healthy"}\n'
+        '{"State":"running","Health":"healthy"}\n',
+    )
+
+    assert autonomous_wup_mod._compose_service_ready(items)
 
 
 def test_wup_topology_gate_uses_pipeline_for_gate_wup(tmp_path, monkeypatch) -> None:

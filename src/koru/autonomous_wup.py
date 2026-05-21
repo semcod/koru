@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -193,6 +194,103 @@ def _profiled_compose_services(config: WupWatchConfig) -> list[tuple[str, tuple[
     return needed
 
 
+def _compose_ps_command(
+    compose_file: str,
+    profiles: tuple[str, ...],
+    compose_service: str,
+) -> list[str]:
+    command = ["docker", "compose", "-f", compose_file]
+    for profile in profiles:
+        command.extend(["--profile", profile])
+    command.extend(["ps", "--format", "json", compose_service])
+    return command
+
+
+def _parse_compose_ps_json(raw: str) -> list[dict]:
+    raw = raw.strip()
+    if not raw:
+        return []
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        items: list[dict] = []
+        for line in raw.splitlines():
+            try:
+                item = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(item, dict):
+                items.append(item)
+        return items
+    if isinstance(payload, list):
+        return [item for item in payload if isinstance(item, dict)]
+    if isinstance(payload, dict):
+        return [payload]
+    return []
+
+
+def _compose_service_ready(items: list[dict]) -> bool:
+    if not items:
+        return False
+    for item in items:
+        state = str(item.get("State") or item.get("state") or "").lower()
+        health = str(item.get("Health") or item.get("health") or "").lower()
+        status = str(item.get("Status") or item.get("status") or "").lower()
+        if health and health not in {"healthy", "none"}:
+            return False
+        if state and state not in {"running"}:
+            return False
+        if not state and "up" not in status:
+            return False
+    return True
+
+
+def _wait_for_compose_service_ready(
+    config: WupWatchConfig,
+    compose_file: str,
+    profiles: tuple[str, ...],
+    compose_service: str,
+    *,
+    stdio_format: str = "human",
+) -> None:
+    timeout = float(os.environ.get("KORU_WUP_COMPOSE_HEALTH_TIMEOUT", "30") or "30")
+    if timeout <= 0:
+        return
+    command = _compose_ps_command(compose_file, profiles, compose_service)
+    deadline = time.monotonic() + timeout
+    last_status = ""
+    while True:
+        try:
+            result = subprocess.run(
+                command,
+                cwd=config.project,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            last_status = str(exc)
+        else:
+            items = _parse_compose_ps_json(result.stdout)
+            if result.returncode == 0 and _compose_service_ready(items):
+                _wup_stdio_info(
+                    f"koru autonomous: WUP compose service ready: {compose_service}",
+                    fmt=stdio_format,
+                )
+                return
+            last_status = (result.stderr or result.stdout or "").strip().splitlines()[-1:]
+            last_status = last_status[0] if last_status else f"rc={result.returncode}"
+        if time.monotonic() >= deadline:
+            _wup_stdio_info(
+                "koru autonomous: WUP compose readiness timed out for "
+                f"{compose_service}: {last_status}",
+                fmt=stdio_format,
+            )
+            return
+        time.sleep(1)
+
+
 def _ensure_wup_profiled_compose_services(
     config: WupWatchConfig,
     *,
@@ -232,6 +330,14 @@ def _ensure_wup_profiled_compose_services(
                 f"koru autonomous: WUP compose preflight failed for {compose_service}{suffix}",
                 fmt=stdio_format,
             )
+            continue
+        _wait_for_compose_service_ready(
+            config,
+            compose_file,
+            profiles,
+            compose_service,
+            stdio_format=stdio_format,
+        )
 
 
 def _start_wup_watch(

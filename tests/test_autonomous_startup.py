@@ -60,6 +60,35 @@ def test_resolve_agent_lane_respects_terminal_jetbrains_hint(tmp_path: Path) -> 
     assert source == "terminal"
 
 
+def test_resolve_autopilot_ide_falls_back_from_jetbrains_lane_when_plugin_ide_running() -> None:
+    running = [
+        RunningIDE(id="cursor", label="Cursor", pid=10, exe="/usr/bin/cursor"),
+        RunningIDE(id="jetbrains", label="JetBrains IDE", pid=11, exe="/usr/bin/pycharm"),
+    ]
+    ide, source = startup.resolve_autopilot_ide_for_autonomous(
+        "auto",
+        "jetbrains",
+        resolve_ide_route_fn=lambda **_k: None,
+        detect_running_ides_fn=lambda: running,
+    )
+    assert ide == "cursor"
+    assert source == "lane:jetbrains-fallback:cursor"
+
+
+def test_resolve_autopilot_ide_keeps_jetbrains_when_no_plugin_ide_running() -> None:
+    running = [
+        RunningIDE(id="jetbrains", label="JetBrains IDE", pid=11, exe="/usr/bin/pycharm"),
+    ]
+    ide, source = startup.resolve_autopilot_ide_for_autonomous(
+        "auto",
+        "jetbrains",
+        resolve_ide_route_fn=lambda **_k: None,
+        detect_running_ides_fn=lambda: running,
+    )
+    assert ide == "jetbrains"
+    assert source == "lane"
+
+
 def test_format_post_startup_operator_hints_mentions_socket(tmp_path: Path) -> None:
     probe = startup.build_startup_probe(
         tmp_path,

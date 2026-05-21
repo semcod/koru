@@ -714,15 +714,28 @@ def test_install_plugin_jetbrains_dry_run_json(
     plugin_dir = tmp_path / "koru-autopilot-jetbrains"
     plugin_dir.mkdir()
     monkeypatch.setattr(cli_command, "_resolve_jetbrains_plugin_dir", lambda _p: plugin_dir)
-    monkeypatch.setattr(cli_command, "_resolve_gradle_bin", lambda _p: "/usr/bin/gradle")
+    monkeypatch.setattr(
+        cli_command,
+        "_resolve_gradle_bin",
+        lambda _p: (_ for _ in ()).throw(AssertionError("dry-run must not resolve gradle binary")),
+    )
 
-    rc = autopilot_main(["install-plugin-jetbrains", "--dry-run", "--format", "json"])
+    rc = autopilot_main(
+        [
+            "install-plugin-jetbrains",
+            "--dry-run",
+            "--format",
+            "json",
+            "--gradle-bin",
+            "/path/to/gradle",
+        ]
+    )
     assert rc == 0
     payload = json.loads(capsys.readouterr().out)
     assert payload["ok"] is True
     assert payload["dry_run"] is True
     assert payload["plugin_dir"] == str(plugin_dir)
-    assert payload["command"] == ["/usr/bin/gradle", "buildPlugin"]
+    assert payload["command"] == ["/path/to/gradle", "buildPlugin"]
 
 
 def test_install_plugin_jetbrains_success_json_payload(

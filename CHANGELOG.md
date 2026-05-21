@@ -1453,6 +1453,21 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
 
+## [0.1.162] - 2026-05-21
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_autonomous.py
+- Update tests/test_autonomous_startup.py
+- Update tests/test_autopilot_cli.py
+
+### Other
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update uv.lock
+
 ## [0.1.161] - 2026-05-20
 
 ### Docs
