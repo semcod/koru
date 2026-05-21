@@ -278,6 +278,17 @@ def _terminal_ide_from_env() -> str | None:
     chrome = os.environ.get("CHROME_DESKTOP", "").strip().lower()
     if chrome == "cursor.desktop" or os.environ.get("CURSOR_AGENT") or os.environ.get("CURSOR_CLI"):
         return "cursor"
+
+    # Prioritize Windsurf detection via specific env markers before generic vscode/TERM_PROGRAM
+    term_program_version = os.environ.get("TERM_PROGRAM_VERSION", "").strip().lower()
+    if (
+        "windsurf" in term_program_version
+        or os.environ.get("WINDSURF_CASCADE_TERMINAL")
+        or chrome == "windsurf.desktop"
+        or "windsurf" in os.environ.get("GIO_LAUNCHED_DESKTOP_FILE", "").lower()
+    ):
+        return "windsurf"
+
     term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
     if term_program in _IDE_SIGNATURES:
         return term_program

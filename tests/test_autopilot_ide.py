@@ -243,6 +243,9 @@ def test_detect_terminal_host_ide_id_vscode_nls_without_pid(
         "VSCODE_IPC_HOOK",
         "WINDSURF_VERSION",
         "WINDSURF_CSRF_TOKEN",
+        "TERM_PROGRAM_VERSION",
+        "WINDSURF_CASCADE_TERMINAL",
+        "GIO_LAUNCHED_DESKTOP_FILE",
     ):
         monkeypatch.delenv(key, raising=False)
     monkeypatch.setenv("VSCODE_NLS_CONFIG", "{}")

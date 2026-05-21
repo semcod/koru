@@ -78,6 +78,7 @@ def test_inject_with_profile_paste_path_uses_clipboard_then_ctrl_v(
     monkeypatch.setattr(subprocess, "run", _run)
     monkeypatch.setattr(oi.time, "sleep", lambda _s: None)
     monkeypatch.setattr(oi.shutil, "which", lambda n: f"/bin/{n}")
+    monkeypatch.setattr(oi, "_is_wayland_session", lambda: False)
     monkeypatch.setenv("KORU_OS_INJECTOR_INPUT", "paste")
     out = inject_with_profile(
         profile=OsInjectorProfile(tool_id="cursor", chat_x=20, chat_y=30),
@@ -109,6 +110,7 @@ def test_inject_with_profile_type_fallback_when_no_clip_tools(
     monkeypatch.setattr(subprocess, "run", _run)
     monkeypatch.setattr(oi.time, "sleep", lambda _s: None)
     monkeypatch.setattr(oi.shutil, "which", lambda n: "/xdotool" if n == "xdotool" else None)
+    monkeypatch.setattr(oi, "_is_wayland_session", lambda: False)
     monkeypatch.setenv("KORU_OS_INJECTOR_INPUT", "type")
     out = inject_with_profile(
         profile=OsInjectorProfile(tool_id="cursor", chat_x=5, chat_y=6),
@@ -140,6 +142,7 @@ def test_inject_with_profile_paste_timeout_is_reported(
     monkeypatch.setattr(subprocess, "run", _run)
     monkeypatch.setattr(oi.time, "sleep", lambda _s: None)
     monkeypatch.setattr(oi.shutil, "which", lambda n: f"/bin/{n}")
+    monkeypatch.setattr(oi, "_is_wayland_session", lambda: False)
     monkeypatch.setenv("KORU_OS_INJECTOR_INPUT", "paste")
     with pytest.raises(OsInjectorError, match="xclip timed out"):
         inject_with_profile(
@@ -180,11 +183,10 @@ def test_iter_config_paths_dedupes_project_and_cwd(tmp_path: Path) -> None:
     assert len(paths) == len({str(p.resolve()) for p in paths})
 
 
-def test_try_drive_with_profile_uses_saved_profile_on_wayland(
+def test_try_drive_with_profile_skips_saved_profile_on_wayland_unless_forced(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Regression: calibrated coordinates must work on Wayland without KORU_OS_INJECTOR=1."""
     import koru.autopilot.os_injector as oi
 
     monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
@@ -198,10 +200,9 @@ def test_try_drive_with_profile_uses_saved_profile_on_wayland(
     )
     monkeypatch.chdir(tmp_path)
     out = try_drive_with_profile(
-        tool_id="cursor", text="x", submit=False, project=None, cli_dry_run=True
+        tool_id="cursor", text="x", submit=False, project=None, cli_dry_run=False
     )
-    assert out is not None
-    assert out["backend"] == "os_injector"
+    assert out is None
 
 
 def test_try_drive_with_profile_forced_works_on_wayland(

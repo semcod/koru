@@ -4,6 +4,7 @@
 import json
 import os
 import shlex
+import shutil
 import sys
 from collections.abc import Callable, Sequence
 from importlib.util import find_spec
@@ -105,6 +106,13 @@ def ticket_api_request(ticket: dict) -> dict[str, Any] | None:
     }
 
 
+def _has_planfile_cli_module() -> bool:
+    try:
+        return find_spec("planfile.cli") is not None
+    except ModuleNotFoundError:
+        return False
+
+
 def planfile_command(
     project: Path,
     args: Sequence[str],
@@ -114,8 +122,10 @@ def planfile_command(
     configured = os.getenv("KORU_PLANFILE_CMD")
     if configured:
         base_command = shlex.split(configured)
-    elif find_spec("planfile") is not None:
+    elif _has_planfile_cli_module():
         base_command = [sys.executable, "-m", "planfile.cli"]
+    elif shutil.which("planfile"):
+        base_command = ["planfile"]
     else:
         base_command = ["planfile"]
     return runner([*base_command, *args], project)

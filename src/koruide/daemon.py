@@ -675,6 +675,12 @@ class AutopilotDaemon:
         if pending is None:
             return False
         cli_client, corr, submit_requested, plugin_ide, _original_text, _require_plugin = pending
+        if DriveOrchestrator.strict_plugin_ack_required():
+            self.log(
+                "drive → plugin event observed before strict ack; "
+                "waiting for full plugin ack"
+            )
+            return False
         client.awaiting_plugin = None
         info = DriveOrchestrator.build_message_sent_info(
             submit_requested=submit_requested,

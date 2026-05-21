@@ -32,7 +32,6 @@ from typing import Any
 
 from koru.agents import detect_agent_environment
 from koru.autonomy.telemetry_snapshot import build_autonomy_loop_brief
-from koru.context_render import render_markdown_handoff
 from koru.dotenv_loader import load_dotenv as _load_dotenv_impl
 from koru.policy import Policy, load_policy
 from koru.project_pipeline import build_project_pipeline_brief
@@ -1001,10 +1000,22 @@ def _render_active_ticket(ticket: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _compact_ticket_error(ticket_error: str) -> str:
+    text = " ".join(str(ticket_error or "").split())
+    if not text:
+        return "no ticket"
+    if "Traceback" in text:
+        return "planfile error (traceback hidden; run `planfile ticket next --format json`)"
+    if len(text) > 160:
+        return text[:157].rstrip() + "..."
+    return text
+
+
 def _render_no_active_ticket(ticket_error: str) -> list[str]:
     """Render the no active ticket section."""
+    compact_error = _compact_ticket_error(ticket_error)
     return [
-        f"## No active ticket — {ticket_error}",
+        f"## No active ticket — {compact_error}",
         "",
         "### Immediate action (autopilot)",
         "",

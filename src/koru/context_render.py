@@ -218,10 +218,22 @@ def render_active_ticket(ticket: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _compact_ticket_error(ticket_error: str) -> str:
+    text = " ".join(str(ticket_error or "").split())
+    if not text:
+        return "no ticket"
+    if "Traceback" in text:
+        return "planfile error (traceback hidden; run `planfile ticket next --format json`)"
+    if len(text) > 160:
+        return text[:157].rstrip() + "..."
+    return text
+
+
 def render_no_active_ticket(ticket_error: str) -> list[str]:
     """Render the no active ticket section."""
+    compact_error = _compact_ticket_error(ticket_error)
     return [
-        f"## No active ticket — {ticket_error}",
+        f"## No active ticket — {compact_error}",
         "",
         "### Immediate action (autopilot)",
         "",

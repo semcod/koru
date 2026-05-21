@@ -58,7 +58,10 @@ export function chatFocusHeuristic(snapshot: EditorSnapshot): boolean {
   return true;
 }
 
-export function verifyFocusAfterOpen(before: EditorSnapshot, after: EditorSnapshot): boolean {
+export function verifyFocusAfterOpen(before: EditorSnapshot, after: EditorSnapshot, ide?: string): boolean {
+  if (ide === "windsurf") {
+    return true;
+  }
   if (chatFocusHeuristic(after)) {
     return true;
   }

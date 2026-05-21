@@ -1355,19 +1355,36 @@ def _setup_autopilot_daemon(
     return client, daemon, thread, socket_path
 
 
-def _enable_autonomous_strict_plugin_version(args: argparse.Namespace) -> None:
-    """Default autonomous runs to fail-closed on live plugin version drift."""
+def _enable_autonomous_strict_plugin_policy(args: argparse.Namespace) -> None:
+    """Default autonomous runs to fail-closed on plugin drift and weak ACKs."""
     if not args.enable_autopilot:
         return
     if os.environ.get("KORU_STRICT_PLUGIN_VERSION") is not None:
-        return
-    if os.environ.get("KORU_PLUGIN_VERSION_POLICY") is not None:
-        return
-    os.environ["KORU_STRICT_PLUGIN_VERSION"] = "1"
-    _stdio_info(
-        "koru autonomous: strict plugin version policy enabled by default",
-        fmt=args.emit_events,
-    )
+        version_set = False
+    elif os.environ.get("KORU_PLUGIN_VERSION_POLICY") is not None:
+        version_set = False
+    else:
+        os.environ["KORU_STRICT_PLUGIN_VERSION"] = "1"
+        version_set = True
+
+    if os.environ.get("KORU_STRICT_PLUGIN_ACK") is not None:
+        ack_set = False
+    else:
+        os.environ["KORU_STRICT_PLUGIN_ACK"] = "1"
+        ack_set = True
+
+    if version_set or ack_set:
+        details = []
+        if version_set:
+            details.append("version")
+        if ack_set:
+            details.append("ack")
+        _stdio_info(
+            "koru autonomous: strict plugin "
+            + "/".join(details)
+            + " policy enabled by default",
+            fmt=args.emit_events,
+        )
 
 
 def _configure_loop_state(
@@ -1737,6 +1754,8 @@ def _action_up(args: argparse.Namespace) -> int:
     previous_stdio_format_env = os.environ.get("KORU_STDIO_FORMAT")
     previous_strict_plugin_env = os.environ.get("KORU_STRICT_PLUGIN_VERSION")
     had_strict_plugin_env = "KORU_STRICT_PLUGIN_VERSION" in os.environ
+    previous_strict_ack_env = os.environ.get("KORU_STRICT_PLUGIN_ACK")
+    had_strict_ack_env = "KORU_STRICT_PLUGIN_ACK" in os.environ
     correlation_id, project, guard_rc = _setup_autonomous_session(args)
     if guard_rc:
         return guard_rc
@@ -1751,7 +1770,7 @@ def _action_up(args: argparse.Namespace) -> int:
     for line in format_startup_banner(startup_probe):
         _stdio_info(line, fmt=args.emit_events)
 
-    _enable_autonomous_strict_plugin_version(args)
+    _enable_autonomous_strict_plugin_policy(args)
     client, daemon, thread, socket_path = _setup_autopilot_daemon(args, project)
     autopilot_socket_observed_at_boot = (
         bool(socket_path and socket_path.exists()) if args.enable_autopilot else False
@@ -1841,6 +1860,10 @@ def _action_up(args: argparse.Namespace) -> int:
             os.environ["KORU_STRICT_PLUGIN_VERSION"] = previous_strict_plugin_env or ""
         else:
             os.environ.pop("KORU_STRICT_PLUGIN_VERSION", None)
+        if had_strict_ack_env:
+            os.environ["KORU_STRICT_PLUGIN_ACK"] = previous_strict_ack_env or ""
+        else:
+            os.environ.pop("KORU_STRICT_PLUGIN_ACK", None)
         _cleanup_autonomous_session(
             previous_stdio_format_env,
             previous_sigterm,
@@ -1851,20 +1874,7 @@ def _action_up(args: argparse.Namespace) -> int:
         )
 
 
-AUTO_UP_DEFAULT_ARGS: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = (
-    (("--ticket-sources",), ("--ticket-sources", "queue")),
-    (("--max-cycles",), ("--max-cycles", "1")),
-    (("--max-iterations",), ("--max-iterations", "1")),
-    (("--sleep-seconds",), ("--sleep-seconds", "0")),
-    (("--stop-on-waiting-input", "--keep-waiting-input"), ("--stop-on-waiting-input",)),
-    (("--semcod-artifacts", "--no-semcod-artifacts"), ("--no-semcod-artifacts",)),
-    (("--wup-watch", "--no-wup-watch"), ("--no-wup-watch",)),
-    (("--idle-diagnostics",), ("--idle-diagnostics", "off")),
-    (("--operator-pipeline", "--no-operator-pipeline"), ("--no-operator-pipeline",)),
-    (("--operator-tickets", "--no-operator-tickets"), ("--no-operator-tickets",)),
-    (("--no-autopilot",), ("--no-autopilot",)),
-    (("--emit-events",), ("--emit-events", "human")),
-)
+AUTO_UP_DEFAULT_ARGS: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = ()
 
 
 @dataclass
@@ -2113,7 +2123,12 @@ def autonomous_main(argv: list[str], *, invoked_as_auto: bool = False) -> int:
         auto_user_options = _collect_argv_options(argv[1:])
         argv = _expand_auto_up_defaults(argv)
     args = _build_parser().parse_args(argv)
-    args._auto_pipeline_enabled = invoked_as_auto and args.action == "up"
+    args._auto_pipeline_enabled = (
+        invoked_as_auto
+        and args.action == "up"
+        and os.environ.get("KORU_AUTO_PIPELINE", "").strip().lower()
+        in {"1", "true", "yes", "on"}
+    )
     args._auto_user_options = auto_user_options
     if invoked_as_auto:
         args.replace_existing_global = True

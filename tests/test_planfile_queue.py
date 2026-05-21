@@ -6,8 +6,10 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from koru.queue import run_next_planfile_task
+from koru.queue.ticket import planfile_command
 
 
 def _ok(stdout: str = "") -> SimpleNamespace:
@@ -17,6 +19,50 @@ def _ok(stdout: str = "") -> SimpleNamespace:
 def _ticket_args(command: list[str]) -> list[str]:
     ticket_index = command.index("ticket")
     return command[ticket_index:]
+
+
+class TestPlanfileCommand(unittest.TestCase):
+    def test_falls_back_to_path_cli_when_module_cli_missing(self) -> None:
+        calls: list[list[str]] = []
+
+        def runner(command, _project):
+            calls.append(list(command))
+            return _ok()
+
+        def fake_find_spec(name: str):
+            if name == "planfile.cli":
+                return None
+            if name == "planfile":
+                return object()
+            return None
+
+        with patch("koru.queue.ticket.find_spec", side_effect=fake_find_spec), patch(
+            "koru.queue.ticket.shutil.which",
+            return_value="/usr/bin/planfile",
+        ):
+            planfile_command(Path("/tmp"), ["ticket", "list"], runner=runner)
+
+        self.assertEqual(calls[0], ["planfile", "ticket", "list"])
+
+    def test_module_cli_probe_treats_missing_parent_as_missing(self) -> None:
+        calls: list[list[str]] = []
+
+        def runner(command, _project):
+            calls.append(list(command))
+            return _ok()
+
+        def fake_find_spec(name: str):
+            if name == "planfile.cli":
+                raise ModuleNotFoundError("No module named 'planfile'")
+            return None
+
+        with patch("koru.queue.ticket.find_spec", side_effect=fake_find_spec), patch(
+            "koru.queue.ticket.shutil.which",
+            return_value="/usr/bin/planfile",
+        ):
+            planfile_command(Path("/tmp"), ["ticket", "list"], runner=runner)
+
+        self.assertEqual(calls[0], ["planfile", "ticket", "list"])
 
 
 class TestPlanfileQueue(unittest.TestCase):

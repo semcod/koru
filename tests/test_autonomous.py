@@ -371,25 +371,33 @@ def test_auto_main_argv_injects_replace_existing(tmp_path: Path) -> None:
     assert "--replace-existing" in calls[0]
 
 
-def test_auto_invocation_uses_safe_adaptive_defaults(tmp_path: Path) -> None:
+def test_auto_invocation_uses_full_autonomous_defaults(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.delenv("KORU_AUTO_PIPELINE", raising=False)
+    with patch.object(autonomous_mod, "_action_up", return_value=0) as action_up:
+        rc = autonomous_mod.autonomous_main(["--project", str(tmp_path)], invoked_as_auto=True)
+
+    assert rc == 0
+    args = action_up.call_args.args[0]
+    assert args._auto_pipeline_enabled is False
+    assert args.ticket_sources == "all"
+    assert args.max_cycles == 0
+    assert args.max_iterations == 50
+    assert args.stop_on_waiting_input is False
+    assert args.semcod_artifacts is True
+    assert args.operator_pipeline is True
+    assert args.operator_tickets is True
+    assert args.enable_autopilot is True
+    assert args.autopilot_action == "drive"
+
+
+def test_auto_invocation_can_enable_adaptive_pipeline(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("KORU_AUTO_PIPELINE", "1")
     with patch.object(autonomous_mod, "_action_up", return_value=0) as action_up:
         rc = autonomous_mod.autonomous_main(["--project", str(tmp_path)], invoked_as_auto=True)
 
     assert rc == 0
     args = action_up.call_args.args[0]
     assert args._auto_pipeline_enabled is True
-    assert args.ticket_sources == "queue"
-    assert args.max_cycles == 1
-    assert args.max_iterations == 1
-    assert args.sleep_seconds == 0
-    assert args.stop_on_waiting_input is True
-    assert args.semcod_artifacts is False
-    assert args.wup_watch is False
-    assert args.idle_diagnostics == "off"
-    assert args.operator_pipeline is False
-    assert args.operator_tickets is False
-    assert args.enable_autopilot is False
-    assert args.emit_events == "human"
 
 
 def test_auto_pipeline_profiles_escalate_when_queue_stays_idle() -> None:
@@ -751,6 +759,9 @@ def _isolate_integrated_terminal_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "VSCODE_IPC_HOOK",
         "VSCODE_CODE_CACHE_PATH",
         "VSCODE_CWD",
+        "TERM_PROGRAM_VERSION",
+        "WINDSURF_CASCADE_TERMINAL",
+        "GIO_LAUNCHED_DESKTOP_FILE",
     ):
         monkeypatch.delenv(key, raising=False)
 
@@ -1118,36 +1129,43 @@ def test_status_has_autopilot_plugin_rejects_stale_plugin_when_strict(monkeypatc
     )
 
 
-def test_autonomous_defaults_to_strict_plugin_version(monkeypatch) -> None:
+def test_autonomous_defaults_to_strict_plugin_policy(monkeypatch) -> None:
     args = SimpleNamespace(enable_autopilot=True, emit_events="human")
     messages: list[str] = []
     monkeypatch.delenv("KORU_STRICT_PLUGIN_VERSION", raising=False)
     monkeypatch.delenv("KORU_PLUGIN_VERSION_POLICY", raising=False)
+    monkeypatch.delenv("KORU_STRICT_PLUGIN_ACK", raising=False)
     monkeypatch.setattr(
         autonomous_mod,
         "_stdio_info",
         lambda message, **_kwargs: messages.append(message),
     )
 
-    autonomous_mod._enable_autonomous_strict_plugin_version(args)
+    autonomous_mod._enable_autonomous_strict_plugin_policy(args)
 
     assert os.environ["KORU_STRICT_PLUGIN_VERSION"] == "1"
-    assert any("strict plugin version policy enabled" in message for message in messages)
+    assert os.environ["KORU_STRICT_PLUGIN_ACK"] == "1"
+    assert any("strict plugin version/ack policy enabled" in message for message in messages)
     os.environ.pop("KORU_STRICT_PLUGIN_VERSION", None)
+    os.environ.pop("KORU_STRICT_PLUGIN_ACK", None)
 
 
 def test_autonomous_respects_explicit_plugin_version_policy(monkeypatch) -> None:
     args = SimpleNamespace(enable_autopilot=True, emit_events="human")
+    messages: list[str] = []
     monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "0")
     monkeypatch.setattr(
         autonomous_mod,
         "_stdio_info",
-        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("no log")),
+        lambda message, **_kwargs: messages.append(message),
     )
 
-    autonomous_mod._enable_autonomous_strict_plugin_version(args)
+    autonomous_mod._enable_autonomous_strict_plugin_policy(args)
 
     assert os.environ["KORU_STRICT_PLUGIN_VERSION"] == "0"
+    assert os.environ["KORU_STRICT_PLUGIN_ACK"] == "1"
+    assert messages == ["koru autonomous: strict plugin ack policy enabled by default"]
+    os.environ.pop("KORU_STRICT_PLUGIN_ACK", None)
 
 
 def test_wait_for_autopilot_plugin_polls_until_connected(monkeypatch) -> None:
@@ -1492,6 +1510,7 @@ def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(
         def drive(self, *_args, **_kwargs):
             return {"ok": False, "backend": "plugin", "message": "submit failed"}
 
+    monkeypatch.setenv("KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK", "1")
     monkeypatch.setenv("KORU_OS_INJECTOR_PROFILE", "windsurf")
     monkeypatch.setattr(
         autonomous_mod,
@@ -1542,6 +1561,220 @@ def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(
     assert autopilot_status == "ok"
     assert len(fallback_calls) == 1
     assert fallback_calls[0]["submit"] is True
+
+
+def test_run_cycle_plugin_required_failure_skips_os_injector_fallback(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    import time
+
+    drive_calls: list[dict] = []
+    fallback_calls: list[dict] = []
+
+    class FailingClient:
+        def drive(self, *_args, **kwargs):
+            drive_calls.append(kwargs)
+            return {"ok": False, "backend": "plugin", "message": "no connected plugin"}
+
+    monkeypatch.delenv("KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_PREFER_KEYBOARD", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_VISIBLE_TYPING", raising=False)
+    monkeypatch.setenv("KORU_OS_INJECTOR_PROFILE", "windsurf")
+    monkeypatch.setattr(time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_try_os_injector_fallback",
+        lambda *args, **kwargs: (
+            fallback_calls.append({"args": args, "kwargs": kwargs})
+            or {"ok": True, "backend": "os_injector"}
+        ),
+    )
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=0 last_status=idle",
+            last_status="idle",
+            last_message="",
+            waiting=[],
+        ),
+    )
+
+    _scan_result, queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
+        cycle=1,
+        project=tmp_path,
+        actor="koru-test",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=50,
+        enable_autopilot=True,
+        autopilot_ide="windsurf",
+        drive_prompt="continue with the next ticket",
+        submit=True,
+        include_semcod_artifacts=False,
+        client=FailingClient(),
+    )
+
+    assert queue_result.last_status == "idle"
+    assert autopilot_status == "failed"
+    assert drive_calls
+    assert all(call["require_plugin"] is True for call in drive_calls)
+    assert fallback_calls == []
+
+
+def test_run_cycle_autopilot_focus_error_retry_loop_retries_and_warns(
+    tmp_path,
+    monkeypatch,
+    capsys,
+) -> None:
+    import time
+    calls = []
+
+    class FocusErrorClient:
+        def drive(self, *_args, **_kwargs):
+            calls.append(None)
+            # Fail with focus/verification error
+            return {
+                "ok": False,
+                "message": "chat input is not focused",
+                "verification": "plugin_error",
+            }
+
+    # Mock time.sleep to make the test instant
+    monkeypatch.setattr(time, "sleep", lambda x: None)
+
+    # Disable OS injector fallback by returning None
+    monkeypatch.setattr(autonomous_mod, "_try_os_injector_fallback", lambda *a, **k: None)
+
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=0 last_status=idle",
+            last_status="idle",
+            last_message="",
+            waiting=[],
+        ),
+    )
+
+    _scan_result, queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
+        cycle=1,
+        project=tmp_path,
+        actor="koru-test",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=50,
+        enable_autopilot=True,
+        autopilot_ide="windsurf",
+        drive_prompt="continue with the next ticket",
+        submit=True,
+        include_semcod_artifacts=False,
+        client=FocusErrorClient(),
+    )
+
+    # Assert that client.drive was called 5 times (due to retry loop)
+    assert len(calls) == 5
+    assert autopilot_status == "failed"
+
+    # Assert that warning message was printed in red
+    captured = capsys.readouterr().out
+    assert "[AUTOPILOT FOCUS ERROR]" in captured
+
+
+def test_run_cycle_does_not_retry_missing_plugin_as_focus_error(
+    tmp_path,
+    monkeypatch,
+    capsys,
+) -> None:
+    import time
+
+    calls: list[int] = []
+
+    class MissingPluginClient:
+        def drive(self, *_args, **_kwargs):
+            calls.append(1)
+            return {
+                "ok": False,
+                "message": "no connected autopilot plugin for ide=vscode",
+            }
+
+    monkeypatch.setattr(time, "sleep", lambda _x: None)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=0 last_status=idle",
+            last_status="idle",
+            last_message="",
+            waiting=[],
+        ),
+    )
+
+    _scan_result, _queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
+        cycle=1,
+        project=tmp_path,
+        actor="koru-test",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=50,
+        enable_autopilot=True,
+        autopilot_ide="vscode",
+        drive_prompt="continue with the next ticket",
+        submit=True,
+        include_semcod_artifacts=False,
+        client=MissingPluginClient(),
+    )
+
+    assert calls == [1]
+    assert autopilot_status == "failed"
+    assert "[AUTOPILOT FOCUS ERROR]" not in capsys.readouterr().out
+
+
+def test_run_cycle_skips_drive_when_required_plugin_missing(
+    tmp_path,
+    monkeypatch,
+    capsys,
+) -> None:
+    drive_calls: list[int] = []
+
+    class MissingPluginClient:
+        def status(self):
+            return {"plugins": []}
+
+        def drive(self, *_args, **_kwargs):
+            drive_calls.append(1)
+            return {"ok": True}
+
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=1 last_status=waiting_input",
+            last_status="waiting_input",
+            last_message="do work",
+            waiting=["PLF-1"],
+        ),
+    )
+
+    _scan_result, _queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
+        cycle=1,
+        project=tmp_path,
+        actor="koru-test",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=50,
+        enable_autopilot=True,
+        autopilot_ide="vscode",
+        drive_prompt="continue with the next ticket",
+        submit=True,
+        include_semcod_artifacts=False,
+        client=MissingPluginClient(),
+    )
+
+    assert autopilot_status == "skipped(plugin_missing)"
+    assert drive_calls == []
+    assert "plugin_missing" in capsys.readouterr().out
 
 
 def test_run_cycle_visible_typing_does_not_require_plugin(

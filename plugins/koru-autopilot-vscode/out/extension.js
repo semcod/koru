@@ -269,7 +269,7 @@ class AutopilotBridge {
             }
             await this.sleep(this.probeFocusDelayMs());
             const after = this.editorSnapshot();
-            if (!useProbe || (0, probe_ladder_1.verifyFocusAfterOpen)(before, after)) {
+            if (!useProbe || (0, probe_ladder_1.verifyFocusAfterOpen)(before, after, ide)) {
                 if (useProbe) {
                     await this.saveProbeCache({ focusOpen: cmd });
                 }
@@ -547,8 +547,6 @@ class AutopilotBridge {
             await this.sleep(150);
             const submitResult = await this.submitChat();
             if (submitResult.ok) {
-                console.log("koru autopilot: sending message.sent");
-                this.send({ type: "message.sent", chat: "default", text: text.substring(0, 200), length: text.length });
                 submitCmd = submitResult.command;
             }
             else {
@@ -557,6 +555,10 @@ class AutopilotBridge {
             }
         }
         this.sendSuccessAck(env, focus, pasted, submitCmd);
+        if (submit) {
+            console.log("koru autopilot: sending message.sent");
+            this.send({ type: "message.sent", chat: "default", text: text.substring(0, 200), length: text.length });
+        }
     }
     async calibrateProbe() {
         const token = `__koru_probe_${Math.random().toString(36).slice(2, 10)}__`;

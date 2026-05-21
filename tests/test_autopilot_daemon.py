@@ -686,6 +686,64 @@ def test_message_sent_event_completes_pending_drive_without_plugin_ack(
         cli.close()
 
 
+def test_message_sent_event_does_not_complete_strict_ack_drive(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Strict ACK mode waits for the full chat.send ack, not the telemetry event."""
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_ACK", "1")
+    with _daemon(tmp_path, monkeypatch) as h:
+        plugin, plugin_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
+
+        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli.settimeout(2.0)
+        cli.connect(str(h.sock_path))
+        cli_reader = _LineReader(cli)
+        cli.sendall(
+            Message(
+                type="drive",
+                id="d-message-sent-strict",
+                data={"text": "hi", "ide": "vscode", "submit": True},
+            ).encode(),
+        )
+
+        forwarded = plugin_reader.read_message()
+        assert forwarded.type == "chat.send"
+        plugin.sendall(
+            Message(
+                type="message.sent",
+                data={"chat": "default", "text": "hi", "length": 2},
+            ).encode(),
+        )
+        cli.settimeout(0.2)
+        with pytest.raises(TimeoutError):
+            cli_reader.read_message()
+        cli.settimeout(2.0)
+
+        plugin.sendall(
+            Message(
+                type="ack",
+                id="d-message-sent-strict",
+                data={
+                    "ok": True,
+                    "delivered": True,
+                    "opened": True,
+                    "submitted": True,
+                    "winning_focus_open": "workbench.action.chat.open",
+                    "winning_paste": "editor.action.clipboardPasteAction",
+                    "winning_submit": "workbench.action.chat.submit",
+                },
+            ).encode(),
+        )
+        cli_reply = cli_reader.read_message()
+        assert cli_reply.type == "ack"
+        assert cli_reply.data.get("ok") is True
+        assert cli_reply.data.get("verification") == "strict"
+
+        plugin.close()
+        cli.close()
+
+
 def test_newer_plugin_connection_replaces_stale_same_ide_client(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

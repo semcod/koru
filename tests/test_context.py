@@ -114,6 +114,24 @@ class TestBuildContext(unittest.TestCase):
             self.assertIn("DO NOT ask the human what to work on", joined)
             self.assertIn("koru scan --apply", joined)
 
+    def test_no_active_ticket_brief_compacts_traceback_error(self) -> None:
+        ctx = {
+            "project": "/tmp/project",
+            "ticket": None,
+            "ticket_error": "╭" * 400 + " Traceback most recent call last boom",
+            "policy": {},
+            "environment": {
+                "planfile_initialised": True,
+                "project": {"markers": {}},
+            },
+            "instructions": [],
+        }
+
+        brief = render_markdown_handoff(ctx)
+
+        self.assertIn("## No active ticket — planfile error", brief)
+        self.assertNotIn("╭" * 20, brief)
+
     def test_brief_when_queue_idle_ticket_next_json_null(self) -> None:
         """planfile ``ticket next --format json`` returns JSON ``null`` when idle."""
         sample = [

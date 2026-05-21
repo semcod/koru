@@ -2,6 +2,7 @@
 
 This backend is intentionally best-effort and X11/xdotool-focused.
 Use it only as a fallback when plugin/MCP paths are unavailable.
+Native Wayland sessions are skipped unless ``KORU_OS_INJECTOR=1`` is set.
 
 Injection uses **only** stored mouse coordinates (``chat_x`` / ``chat_y``):
 move the pointer there, focus the field (left click or Return), wait briefly
@@ -315,15 +316,21 @@ def inject_with_profile(
     if post_focus_delay > 0:
         time.sleep(post_focus_delay)
 
-    if use_paste:
-        _clip_tool = _set_clipboard(text)
-        _xdotool(["sleep", "0.08"])
-        _xdotool(["key", "--clearmodifiers", "ctrl+v"])
+    if _is_wayland_session():
+        from koruide.injector import Injector
+        injector = Injector()
+        res = injector.type_text(text, ide=profile.tool_id, submit=submit)
+        input_method = res.backend
     else:
-        _xdotool(["type", "--delay", "5", "--clearmodifiers", "--", text])
+        if use_paste:
+            _clip_tool = _set_clipboard(text)
+            _xdotool(["sleep", "0.08"])
+            _xdotool(["key", "--clearmodifiers", "ctrl+v"])
+        else:
+            _xdotool(["type", "--delay", "5", "--clearmodifiers", "--", text])
 
-    if submit:
-        _xdotool(["key", "--clearmodifiers", "Return"])
+        if submit:
+            _xdotool(["key", "--clearmodifiers", "Return"])
 
     return {
         "ok": True,
@@ -358,6 +365,8 @@ def try_drive_with_profile(
     if os_injector_env_disabled():
         return None
     if shutil.which("xdotool") is None:
+        return None
+    if _is_wayland_session() and not os_injector_env_forced():
         return None
 
     profile = try_load_profile(tool_id, project=project)
