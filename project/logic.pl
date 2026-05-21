@@ -131,7 +131,7 @@ project_file('src/koru/cli/__init__.py', 56, 'python').
 project_file('src/koru/cli/__main__.py', 8, 'python').
 project_file('src/koru/cli/commands.py', 1, 'python').
 project_file('src/koru/cli/parsers.py', 1, 'python').
-project_file('src/koru/cli.py', 1786, 'python').
+project_file('src/koru/cli.py', 1824, 'python').
 project_file('src/koru/cli_doctor.py', 87, 'python').
 project_file('src/koru/cli_gate.py', 117, 'python').
 project_file('src/koru/cli_gc.py', 88, 'python').
@@ -187,7 +187,7 @@ project_file('src/koru/scripts/koru-autoloop.sh', 677, 'shell').
 project_file('src/koru/semcod_tools.py', 149, 'python').
 project_file('src/koru/serve.py', 10, 'python').
 project_file('src/koru/stdio_events.py', 50, 'python').
-project_file('src/koru/tasks.py', 313, 'python').
+project_file('src/koru/tasks.py', 339, 'python').
 project_file('src/koru/tools.py', 319, 'python').
 project_file('src/koru/topology.py', 415, 'python').
 project_file('src/koru/topology_cli.py', 76, 'python').
@@ -220,11 +220,11 @@ project_file('src/koruide/config.py', 122, 'python').
 project_file('src/koruide/daemon.py', 1082, 'python').
 project_file('src/koruide/drive_orchestrator.py', 246, 'python').
 project_file('src/koruide/host_setup.py', 227, 'python').
-project_file('src/koruide/ide.py', 715, 'python').
+project_file('src/koruide/ide.py', 728, 'python').
 project_file('src/koruide/injector.py', 377, 'python').
 project_file('src/koruide/injector_backends.py', 208, 'python').
 project_file('src/koruide/injector_errors.py', 11, 'python').
-project_file('src/koruide/os_injector.py', 482, 'python').
+project_file('src/koruide/os_injector.py', 484, 'python').
 project_file('src/koruide/plugin_installer.py', 495, 'python').
 project_file('src/koruide/plugin_router.py', 87, 'python').
 project_file('src/koruide/plugin_version.py', 9, 'python').
@@ -913,7 +913,10 @@ python_function('src/koru/cli.py', '_build_queue_parser', 0, 1, 5).
 python_function('src/koru/cli.py', '_render_clean_report_text', 1, 12, 3).
 python_function('src/koru/cli.py', '_queue_main', 1, 9, 9).
 python_function('src/koru/cli.py', '_build_agent_parser', 0, 1, 3).
-python_function('src/koru/cli.py', '_task_main', 1, 22, 17).
+python_function('src/koru/cli.py', '_load_tool_scaffold', 3, 7, 10).
+python_function('src/koru/cli.py', '_merge_cli_scaffold', 1, 11, 4).
+python_function('src/koru/cli.py', '_print_task_result', 2, 4, 4).
+python_function('src/koru/cli.py', '_task_main', 1, 4, 8).
 python_function('src/koru/cli.py', '_serve_main', 1, 1, 1).
 python_function('src/koru/cli.py', '_local_serve_main', 1, 1, 1).
 python_function('src/koru/cli.py', '_agent_main', 1, 3, 7).
@@ -1300,12 +1303,18 @@ python_function('src/koru/tasks.py', '_generate_ticket_id', 2, 3, 5).
 python_function('src/koru/tasks.py', '_build_ticket_labels', 1, 4, 6).
 python_function('src/koru/tasks.py', '_build_ticket_source', 3, 3, 3).
 python_function('src/koru/tasks.py', '_normalize_dedupe_part', 1, 1, 4).
-python_function('src/koru/tasks.py', '_dedupe_key_from_scaffold', 2, 17, 8).
+python_function('src/koru/tasks.py', '_source_context', 1, 2, 2).
+python_function('src/koru/tasks.py', '_explicit_dedupe_key', 1, 3, 4).
+python_function('src/koru/tasks.py', '_build_implicit_dedupe_key', 2, 12, 8).
+python_function('src/koru/tasks.py', '_dedupe_key_from_scaffold', 2, 2, 2).
 python_function('src/koru/tasks.py', '_status_allows_dedupe_reuse', 1, 2, 3).
-python_function('src/koru/tasks.py', '_find_existing_task_by_dedupe_key', 1, 15, 6).
+python_function('src/koru/tasks.py', '_iter_ticket_entries', 1, 6, 5).
+python_function('src/koru/tasks.py', '_ticket_dedupe_key', 1, 3, 2).
+python_function('src/koru/tasks.py', '_find_existing_task_by_dedupe_key', 1, 8, 7).
 python_function('src/koru/tasks.py', '_build_ticket_inputs', 2, 4, 4).
 python_function('src/koru/tasks.py', '_build_ticket_dict', 13, 2, 0).
-python_function('src/koru/tasks.py', 'create_nl_task', 2, 15, 23).
+python_function('src/koru/tasks.py', '_maybe_reuse_existing_task', 5, 4, 5).
+python_function('src/koru/tasks.py', 'create_nl_task', 2, 13, 20).
 python_function('src/koru/tasks.py', '_title_from_text', 1, 2, 3).
 python_function('src/koru/tasks.py', '_read_config', 1, 4, 5).
 python_function('src/koru/tasks.py', '_read_sprint', 1, 4, 6).
@@ -1530,7 +1539,8 @@ python_function('src/koruide/ide.py', '_windsurf_primary_terminal_env_hint', 1, 
 python_function('src/koruide/ide.py', '_vscode_family_terminal_hint', 1, 3, 2).
 python_function('src/koruide/ide.py', '_known_terminal_ide_hint', 2, 3, 0).
 python_function('src/koruide/ide.py', '_legacy_windsurf_terminal_env_hint', 1, 3, 2).
-python_function('src/koruide/ide.py', '_terminal_ide_from_env', 0, 7, 11).
+python_function('src/koruide/ide.py', '_terminal_ide_env_candidates', 4, 5, 7).
+python_function('src/koruide/ide.py', '_terminal_ide_from_env', 0, 3, 6).
 python_function('src/koruide/ide.py', '_terminal_ide_from_parent_chain', 1, 11, 9).
 python_function('src/koruide/ide.py', 'detect_terminal_host_ide_id', 0, 6, 4).
 python_function('src/koruide/ide.py', 'focused_ide', 1, 6, 1).
@@ -1588,7 +1598,8 @@ python_function('src/koruide/os_injector.py', '_injection_result', 0, 1, 0).
 python_function('src/koruide/os_injector.py', '_focus_profile_chat', 3, 7, 4).
 python_function('src/koruide/os_injector.py', '_inject_profile_text', 0, 7, 7).
 python_function('src/koruide/os_injector.py', 'inject_with_profile', 0, 6, 10).
-python_function('src/koruide/os_injector.py', 'try_drive_with_profile', 0, 17, 8).
+python_function('src/koruide/os_injector.py', '_os_injector_skip_reason', 1, 6, 4).
+python_function('src/koruide/os_injector.py', 'try_drive_with_profile', 0, 9, 6).
 python_function('src/koruide/plugin_installer.py', '_valid_ide', 1, 2, 2).
 python_function('src/koruide/plugin_installer.py', '_ide_from_terminal_env', 0, 1, 1).
 python_function('src/koruide/plugin_installer.py', '_terminal_vscode_flavor', 0, 5, 3).

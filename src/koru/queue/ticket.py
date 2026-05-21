@@ -113,6 +113,21 @@ def _has_planfile_cli_module() -> bool:
         return False
 
 
+def _local_planfile_executable(project: Path) -> Path | None:
+    """Return a nearby Planfile CLI before falling back to an unrelated active venv."""
+    project = project.resolve()
+    candidates = (
+        project.parent / "planfile" / ".venv" / "bin" / "planfile",
+        project.parent / "planfile" / "venv" / "bin" / "planfile",
+        project / ".venv" / "bin" / "planfile",
+        project / "venv" / "bin" / "planfile",
+    )
+    for candidate in candidates:
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return candidate
+    return None
+
+
 def planfile_command(
     project: Path,
     args: Sequence[str],
@@ -124,6 +139,8 @@ def planfile_command(
         base_command = shlex.split(configured)
     elif _has_planfile_cli_module():
         base_command = [sys.executable, "-m", "planfile.cli"]
+    elif local_planfile := _local_planfile_executable(project):
+        base_command = [str(local_planfile)]
     elif shutil.which("planfile"):
         base_command = ["planfile"]
     else:
