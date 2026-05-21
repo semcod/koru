@@ -1,12 +1,12 @@
-# redup/duplication | 69 groups | 165f 37568L | 2026-05-21
+# redup/duplication | 69 groups | 165f 37647L | 2026-05-21
 
 SUMMARY:
   files_scanned: 165
-  total_lines:   37568
+  total_lines:   37647
   dup_groups:    69
   dup_fragments: 156
   saved_lines:   1274
-  scan_ms:       3325
+  scan_ms:       6236
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/cli.py  dup=593L  groups=17  frags=22  (1.6%)
@@ -25,7 +25,7 @@ DUPLICATES[69] (ranked by impact):
       src/koru/cli.py:510-569  (_build_gate_parser)
       src/koru/cli_gate.py:14-73  (build_gate_parser)
   [0d39d3bbb8dcac9b] ! STRU  _init_main  L=60 N=2 saved=60 sim=1.00
-      src/koru/cli.py:1481-1540  (_init_main)
+      src/koru/cli.py:1519-1578  (_init_main)
       src/koru/cli_init.py:12-71  (init_main)
   [6d776d8dd7b41fcc] ! STRU  _build_gc_parser  L=55 N=2 saved=55 sim=1.00
       src/koru/cli.py:617-671  (_build_gc_parser)
@@ -34,7 +34,7 @@ DUPLICATES[69] (ranked by impact):
       src/koru/cli.py:429-476  (_build_serve_parser)
       src/koruapi/dashboard.py:17-61  (build_serve_parser)
   [a00ed7924eb83b0e] ! STRU  _build_topology_parser  L=44 N=2 saved=44 sim=1.00
-      src/koru/cli.py:1023-1066  (_build_topology_parser)
+      src/koru/cli.py:1061-1104  (_build_topology_parser)
       src/koru/cli_topology.py:20-63  (build_topology_parser)
   [0533d81be7d5abf8] ! STRU  render_markdown_handoff  L=44 N=2 saved=44 sim=1.00
       src/koru/context.py:1210-1253  (render_markdown_handoff)
@@ -52,10 +52,10 @@ DUPLICATES[69] (ranked by impact):
       src/koru/autonomous.py:691-723  (_restart_daemon_if_needed)
       src/koru/autonomous_daemon.py:212-244  (restart_daemon_if_needed)
   [fc481e24a737b1a0] ! STRU  _doctor_fix_payload  L=32 N=2 saved=32 sim=1.00
-      src/koru/cli.py:1432-1463  (_doctor_fix_payload)
+      src/koru/cli.py:1470-1501  (_doctor_fix_payload)
       src/koru/cli_doctor.py:15-46  (doctor_fix_payload)
   [ae5a1dde1774d5ed]   STRU  _watch_main  L=30 N=2 saved=30 sim=1.00
-      src/koru/cli.py:1657-1686  (_watch_main)
+      src/koru/cli.py:1695-1724  (_watch_main)
       src/koru/cli_watch.py:12-41  (watch_main)
   [babc6b538274c771]   STRU  _render_semcod_tools  L=30 N=2 saved=30 sim=1.00
       src/koru/context.py:928-957  (_render_semcod_tools)
@@ -74,7 +74,7 @@ DUPLICATES[69] (ranked by impact):
       src/koru/context.py:1180-1207  (_render_autonomy_loop_brief)
       src/koru/context_render.py:398-425  (render_autonomy_loop_brief)
   [a86bcd31e8633380]   STRU  _doctor_main  L=23 N=2 saved=23 sim=1.00
-      src/koru/cli.py:1407-1429  (_doctor_main)
+      src/koru/cli.py:1445-1467  (_doctor_main)
       src/koru/cli_doctor.py:64-86  (doctor_main)
   [20b29cce2972cd44]   STRU  _render_agent_lanes  L=23 N=2 saved=23 sim=1.00
       src/koru/context.py:829-851  (_render_agent_lanes)
@@ -101,12 +101,12 @@ DUPLICATES[69] (ranked by impact):
       src/koru/cli.py:674-693  (_gc_main)
       src/koru/cli_gc.py:68-87  (gc_main)
   [077cfa61a2943c36]   STRU  _serve_main  L=4 N=6 saved=20 sim=1.00
-      src/koru/cli.py:974-977  (_serve_main)
-      src/koru/cli.py:980-983  (_local_serve_main)
-      src/koru/cli.py:1219-1222  (_mcp_serve_main)
-      src/koru/cli.py:1284-1287  (_init_ide_main)
-      src/koru/cli.py:1346-1349  (_dsl_main)
-      src/koru/cli.py:1352-1355  (_api_main)
+      src/koru/cli.py:1012-1015  (_serve_main)
+      src/koru/cli.py:1018-1021  (_local_serve_main)
+      src/koru/cli.py:1257-1260  (_mcp_serve_main)
+      src/koru/cli.py:1322-1325  (_init_ide_main)
+      src/koru/cli.py:1384-1387  (_dsl_main)
+      src/koru/cli.py:1390-1393  (_api_main)
   [f7eea25d8bf479d9]   STRU  _render_dashboard  L=19 N=2 saved=19 sim=1.00
       src/koru/context.py:1159-1177  (_render_dashboard)
       src/koru/context_render.py:377-395  (render_dashboard)
@@ -127,7 +127,7 @@ DUPLICATES[69] (ranked by impact):
       src/koru/autonomy/ide_work.py:140-152  (_parse_iso_datetime)
       src/koru/autonomy/post_run_verify.py:131-143  (_parse_iso_datetime)
   [f9e9bcde8bbe99b1]   STRU  _render_doctor_with_fix  L=13 N=2 saved=13 sim=1.00
-      src/koru/cli.py:1466-1478  (_render_doctor_with_fix)
+      src/koru/cli.py:1504-1516  (_render_doctor_with_fix)
       src/koru/cli_doctor.py:49-61  (render_doctor_with_fix)
   [07394d97ab843be1]   STRU  resolve_xdg_path  L=12 N=2 saved=12 sim=1.00
       src/koru/autopilot/utils/client_helpers.py:46-57  (resolve_xdg_path)
@@ -220,7 +220,7 @@ DUPLICATES[69] (ranked by impact):
       src/koru/autonomous_checkpoint.py:124-127  (status_in_skip_list)
       src/koru/autonomous_cycle.py:102-105  (_status_in_skip_list)
   [002e12cc94a8aa7f]   STRU  _render_topology_text  L=4 N=2 saved=4 sim=1.00
-      src/koru/cli.py:1069-1072  (_render_topology_text)
+      src/koru/cli.py:1107-1110  (_render_topology_text)
       src/koru/cli_topology.py:66-69  (render_topology_text)
   [93c2d285f0f82504]   EXAC  __init__  L=3 N=2 saved=3 sim=1.00
       src/koru/local_manager_state.py:57-59  (__init__)

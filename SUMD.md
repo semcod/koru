@@ -21,7 +21,7 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.188`
+- **version**: `0.1.189`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -41,7 +41,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.188;
+  version: 0.1.189;
 }
 
 dependencies {
@@ -1693,7 +1693,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.188
+  version: 0.1.189
   env: local
 ```
 
@@ -1776,7 +1776,7 @@ pip install -e .[dev]
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 324f 68159L | python:259,shell:52,javascript:6,typescript:6,less:1 | 2026-05-21
+# koru | 324f 68198L | python:259,shell:52,javascript:6,typescript:6,less:1 | 2026-05-21
 # stats: 2029 func | 200 cls | 324 mod | CC̄=4.0 | critical:138 | cycles:0
 # alerts[5]: CC _task_main=22; CC _dedupe_key_from_scaffold=17; CC try_drive_with_profile=17; CC test_autonomy_config_from_env=16; CC _find_existing_task_by_dedupe_key=15
 # hotspots[5]: _build_handler fan=31; _build_handler fan=28; run_cycle fan=23; create_nl_task fan=23; init_project fan=21
@@ -2002,7 +2002,7 @@ M[324]:
   src/koruide/drive_orchestrator.py,246
   src/koruide/host_setup.py,227
   src/koruide/ide.py,715
-  src/koruide/injector.py,338
+  src/koruide/injector.py,377
   src/koruide/injector_backends.py,208
   src/koruide/injector_errors.py,11
   src/koruide/os_injector.py,482
@@ -3703,7 +3703,7 @@ D:
     e: _submit_key_for,_which,_session_type,_forced_injector_backend,_default_runner,BackendStatus,InjectionResult,Injector
     BackendStatus: to_dict(0)  # Result of probing a single backend.
     InjectionResult: to_dict(0)
-    Injector: probe(0),_candidate_backends(0),select_backend(0),_type_with_backend(3),type_text(1),submit_only(0),_probe_one(1),_call(1)  # Pick the best available backend and type text through it.
+    Injector: probe(0),_candidate_backends(0),select_backend(0),_type_with_backend(3),_type_text_backends(0),_log_type_text_request(3),_dry_run_type_text_result(0),_try_type_text_backends(4),_all_type_backends_failed(1),type_text(1),submit_only(0),_probe_one(1),_call(1)  # Pick the best available backend and type text through it.
     _submit_key_for(ide)
     _which(name)
     _session_type()
@@ -4832,7 +4832,7 @@ D:
 
 ```prolog markpact:analysis path=project/logic.pl
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.188', 'python').
+project_metadata('koru', '0.1.189', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 681, 'less').
@@ -5054,7 +5054,7 @@ project_file('src/koruide/daemon.py', 1082, 'python').
 project_file('src/koruide/drive_orchestrator.py', 246, 'python').
 project_file('src/koruide/host_setup.py', 227, 'python').
 project_file('src/koruide/ide.py', 715, 'python').
-project_file('src/koruide/injector.py', 338, 'python').
+project_file('src/koruide/injector.py', 377, 'python').
 project_file('src/koruide/injector_backends.py', 208, 'python').
 project_file('src/koruide/injector_errors.py', 11, 'python').
 project_file('src/koruide/os_injector.py', 482, 'python').
@@ -7426,7 +7426,12 @@ python_method('Injector', 'probe', 0, 1, 1).
 python_method('Injector', '_candidate_backends', 0, 11, 6).
 python_method('Injector', 'select_backend', 0, 2, 1).
 python_method('Injector', '_type_with_backend', 3, 1, 1).
-python_method('Injector', 'type_text', 1, 18, 10).
+python_method('Injector', '_type_text_backends', 0, 3, 3).
+python_method('Injector', '_log_type_text_request', 3, 3, 3).
+python_method('Injector', '_dry_run_type_text_result', 0, 3, 3).
+python_method('Injector', '_try_type_text_backends', 4, 6, 6).
+python_method('Injector', '_all_type_backends_failed', 1, 2, 3).
+python_method('Injector', 'type_text', 1, 6, 8).
 python_method('Injector', 'submit_only', 0, 9, 8).
 python_method('Injector', '_probe_one', 1, 5, 2).
 python_method('Injector', '_call', 1, 10, 7).
@@ -8354,7 +8359,7 @@ sumd_deploy_compose_file('docker-compose.yml').
 
 ## Call Graph
 
-*439 nodes · 500 edges · 73 modules · CC̄=4.0*
+*437 nodes · 500 edges · 73 modules · CC̄=4.0*
 
 ### Hubs (by degree)
 
@@ -8371,8 +8376,8 @@ sumd_deploy_compose_file('docker-compose.yml').
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.22s
-# nodes: 439 | edges: 500 | modules: 73
+# generated in 0.59s
+# nodes: 437 | edges: 500 | modules: 73
 # CC̄=4.0
 
 HUBS[20]:
@@ -8394,10 +8399,10 @@ HUBS[20]:
     CC=15  in:6  out:34  total:40
   src.koru.events.emit_management_event
     CC=8  in:32  out:7  total:39
-  src.koruapi.mcp_server.tool_run_ticket
-    CC=14  in:1  out:33  total:34
   src.koru.cli._task_main
     CC=22  in:0  out:34  total:34
+  src.koruapi.mcp_server.tool_run_ticket
+    CC=14  in:1  out:33  total:34
   src.koru.cli._topology_main
     CC=12  in:0  out:32  total:32
   src.koru.autonomy.env.env_truthy
@@ -8408,14 +8413,14 @@ HUBS[20]:
     CC=2  in:24  out:4  total:28
   src.koruide.ide.detect_running_ides
     CC=13  in:17  out:10  total:27
-  services.healing-webhook.ticket_builder.build_ticket_payload
-    CC=11  in:1  out:25  total:26
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
+  services.healing-webhook.ticket_builder.build_ticket_payload
+    CC=11  in:1  out:25  total:26
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
-  src.koruide.injector.Injector.type_text
-    CC=18  in:0  out:25  total:25
+  src.koru.agents.detect_agent_options
+    CC=4  in:3  out:21  total:24
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -8490,6 +8495,8 @@ MODULES:
     _terminate_existing_processes  CC=10  out:10
   src.koru.autonomy.env  [1 funcs]
     env_truthy  CC=3  out:3
+  src.koru.autopilot.doctor_cli  [1 funcs]
+    render_doctor_text  CC=1  out:4
   src.koru.bootstrap  [9 funcs]
     _detect_cycle  CC=10  out:13
     _validate_cross_task_dependencies  CC=10  out:13
@@ -8500,7 +8507,7 @@ MODULES:
     load_flat_pipeline  CC=9  out:12
     materialize_to_planfile  CC=6  out:16
     validate_flat_pipeline  CC=3  out:9
-  src.koru.cli  [27 funcs]
+  src.koru.cli  [30 funcs]
     _agent_backends_main  CC=8  out:23
     _agent_main  CC=3  out:7
     _auto_main  CC=6  out:6
@@ -8510,7 +8517,7 @@ MODULES:
     _build_queue_parser  CC=1  out:11
     _build_runtime_context_parser  CC=1  out:4
     _build_tools_parser  CC=1  out:7
-    _gate_main  CC=5  out:12
+    _doctor_fix_payload  CC=5  out:4
   src.koru.context  [2 funcs]
     build_context  CC=6  out:16
     render_markdown_handoff  CC=10  out:47
@@ -8737,13 +8744,6 @@ MODULES:
     _legacy_windsurf_terminal_env_hint  CC=3  out:4
     _log_drive_target_result  CC=2  out:1
     _matches  CC=7  out:5
-  src.koruide.injector  [6 funcs]
-    _candidate_backends  CC=11  out:18
-    _type_with_backend  CC=1  out:1
-    submit_only  CC=9  out:13
-    type_text  CC=18  out:25
-    _forced_injector_backend  CC=2  out:3
-    _submit_key_for  CC=1  out:2
   src.koruide.injector_backends  [11 funcs]
     _log  CC=2  out:1
     _ydotool_submit_command  CC=3  out:0

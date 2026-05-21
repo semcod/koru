@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 0.13s
+%% generated in 0.05s
     plugins__koru_autopilot_vscode["plugins.koru-autopilot-vscode<br/>170 funcs"]
     scripts___koru_autodiag_filter_tickets["scripts._koru_autodiag_filter_tickets<br/>1 funcs"]
     scripts__koru_gate_capture["scripts.koru-gate-capture<br/>14 funcs"]
@@ -7,24 +7,24 @@ flowchart TD
     scripts__planfile_export_prompt["scripts.planfile-export-prompt<br/>2 funcs"]
     scripts__planfile_sync_todo["scripts.planfile-sync-todo<br/>12 funcs"]
     services__healing_webhook["services.healing-webhook<br/>34 funcs"]
-    src__koru["src.koru<br/>1053 funcs"]
+    src__koru["src.koru<br/>1062 funcs"]
     src__koruapi["src.koruapi<br/>92 funcs"]
     src__korudsl["src.korudsl<br/>26 funcs"]
-    src__koruide["src.koruide<br/>237 funcs"]
+    src__koruide["src.koruide<br/>239 funcs"]
     src__koru ==>|296| scripts__koru_soak_monitor
-    src__koru ==>|71| src__koruide
-    src__koruapi ==>|42| src__koru
+    src__koru ==>|63| src__koruide
+    src__koruapi ==>|43| src__koru
     src__koruide ==>|27| scripts__koru_soak_monitor
     src__koruapi ==>|20| scripts__koru_soak_monitor
-    src__koruide ==>|20| src__koruapi
+    src__koruide ==>|17| src__koruapi
+    src__koruide ==>|9| src__koru
     scripts__planfile_sync_todo ==>|9| scripts__koru_soak_monitor
     src__koru ==>|8| plugins__koru_autopilot_vscode
     src__koru ==>|5| src__koruapi
     scripts__koru_gate_capture ==>|5| scripts__koru_soak_monitor
     src__koruapi ==>|4| src__korudsl
-    src__koruide -->|3| src__koru
     services__healing_webhook -->|1| plugins__koru_autopilot_vscode
     src__koruapi -->|1| plugins__koru_autopilot_vscode
-    src__koruapi -->|1| src__koruide
     src__koru -->|1| scripts__planfile_export_prompt
     scripts___koru_autodiag_filter_tickets -->|1| scripts__koru_soak_monitor
+    src__koruide -->|1| plugins__koru_autopilot_vscode

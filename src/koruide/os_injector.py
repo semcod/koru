@@ -412,6 +412,19 @@ def inject_with_profile(
     )
 
 
+def _os_injector_skip_reason(tool_id: str) -> str | None:
+    """Return a human-readable skip reason, or ``None`` if ready to proceed."""
+    if tool_id == "default":
+        return "tool_id=default"
+    if os_injector_env_disabled():
+        return "env disabled"
+    if shutil.which("xdotool") is None:
+        return "xdotool missing"
+    if _is_wayland_session() and not os_injector_env_forced():
+        return "wayland without force"
+    return None
+
+
 def try_drive_with_profile(
     *,
     tool_id: str,
@@ -427,31 +440,20 @@ def try_drive_with_profile(
     Requires ``xdotool`` on ``PATH`` (X11 or XWayland). Raises
     :class:`OsInjectorError` when injection is attempted but fails.
     """
-    if tool_id == "default":
+    skip_reason = _os_injector_skip_reason(tool_id)
+    if skip_reason:
         if _log:
-            _log("try_drive_with_profile: skipped (tool_id=default)")
-        return None
-    if os_injector_env_disabled():
-        if _log:
-            _log("try_drive_with_profile: skipped (env disabled)")
-        return None
-    if shutil.which("xdotool") is None:
-        if _log:
-            _log("try_drive_with_profile: skipped (xdotool missing)")
-        return None
-    if _is_wayland_session() and not os_injector_env_forced():
-        if _log:
-            _log("try_drive_with_profile: skipped (wayland without force)")
+            _log(f"try_drive_with_profile: skipped ({skip_reason})")
         return None
 
     profile = try_load_profile(tool_id, project=project)
-    if profile is None and not os_injector_env_forced():
-        if _log:
-            _log(f"try_drive_with_profile: no profile for {tool_id}")
-        return None
     if profile is None:
-        if _log:
-            _log(f"try_drive_with_profile: no profile for {tool_id} (forced mode)")
+        if os_injector_env_forced():
+            if _log:
+                _log(f"try_drive_with_profile: no profile for {tool_id} (forced mode)")
+        else:
+            if _log:
+                _log(f"try_drive_with_profile: no profile for {tool_id}")
         return None
 
     if _log:

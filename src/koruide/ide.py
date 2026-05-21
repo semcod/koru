@@ -399,27 +399,40 @@ def _legacy_windsurf_terminal_env_hint(chrome: str) -> bool:
     )
 
 
+def _terminal_ide_env_candidates(
+    chrome: str,
+    chrome_ide: str | None,
+    term_program: str,
+    term_ide: str | None,
+) -> tuple[str | None, ...]:
+    return (
+        "cursor" if _cursor_terminal_env_hint(chrome_ide) else None,
+        "windsurf" if _windsurf_primary_terminal_env_hint(chrome_ide) else None,
+        _vscode_family_terminal_hint(term_program),
+        _known_terminal_ide_hint(term_ide, chrome_ide),
+        _vscode_family_flavor_from_env() if _vscode_family_env_present() else None,
+        "windsurf" if _legacy_windsurf_terminal_env_hint(chrome) else None,
+    )
+
+
 def _terminal_ide_from_env() -> str | None:
     chrome = os.environ.get("CHROME_DESKTOP", "").strip().lower()
     chrome_ide = normalize_ide_id(chrome)
-    if _cursor_terminal_env_hint(chrome_ide):
-        return "cursor"
-
-    # Prioritize Windsurf detection via specific env markers before generic vscode/TERM_PROGRAM
-    if _windsurf_primary_terminal_env_hint(chrome_ide):
-        return "windsurf"
-
     term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
     term_ide = normalize_ide_id(term_program)
-    if vscode_family := _vscode_family_terminal_hint(term_program):
-        return vscode_family
-    if known_ide := _known_terminal_ide_hint(term_ide, chrome_ide):
-        return known_ide
-    if _vscode_family_env_present():
-        return _vscode_family_flavor_from_env()
-    if _legacy_windsurf_terminal_env_hint(chrome):
-        return "windsurf"
-    return None
+    return next(
+        (
+            candidate
+            for candidate in _terminal_ide_env_candidates(
+                chrome,
+                chrome_ide,
+                term_program,
+                term_ide,
+            )
+            if candidate
+        ),
+        None,
+    )
 
 
 def _terminal_ide_from_parent_chain(start_pid: int) -> str | None:

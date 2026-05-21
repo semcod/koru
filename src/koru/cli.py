@@ -896,57 +896,61 @@ def _build_agent_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _task_main(argv: list[str]) -> int:
-    args = _build_task_parser().parse_args(argv)
-    scaffold: dict[str, Any] | None = None
-    if args.tool_id:
-        registry, registry_path = load_tool_registry(args.tool_registry)
-        if not registry:
-            print(
-                "koru task: tool registry is empty or missing. "
-                "Use --tool-registry PATH or ensure docs/ai-tool-registry-2026.yaml exists.",
-            )
-            return 2
-        tool = find_tool_entry(registry, args.tool_id)
-        if tool is None:
-            known = ", ".join(sorted(str(t.get("id")) for t in registry if t.get("id")))
-            print(f"koru task: unknown --tool '{args.tool_id}'. Known ids: {known}")
-            return 2
-        scaffold = build_tool_task_scaffold(tool, adapter_kind=args.tool_kind)
-        if registry_path is not None:
-            scaffold.setdefault("source_context", {})
-            if isinstance(scaffold.get("source_context"), dict):
-                scaffold["source_context"]["registry"] = str(registry_path)
-
-    if args.source_tool or args.source_signal or args.dedupe_key or args.files:
-        scaffold = dict(scaffold or {})
-        if args.source_tool:
-            scaffold["source_tool"] = args.source_tool
-        context = (
-            dict(scaffold.get("source_context"))
-            if isinstance(scaffold.get("source_context"), dict)
-            else {}
+def _load_tool_scaffold(
+    tool_id: str,
+    tool_registry: str | None,
+    tool_kind: str | None,
+) -> tuple[dict[str, Any] | None, Path | None, int | None]:
+    """Load scaffold from tool registry. Returns (scaffold, registry_path, error_code)."""
+    registry, registry_path = load_tool_registry(tool_registry)
+    if not registry:
+        print(
+            "koru task: tool registry is empty or missing. "
+            "Use --tool-registry PATH or ensure docs/ai-tool-registry-2026.yaml exists.",
         )
-        if args.source_signal:
-            context["signal"] = args.source_signal
-        if args.dedupe_key:
-            context["dedupe_key"] = args.dedupe_key
-        scaffold["source_context"] = context
-        if args.files:
-            scaffold["files"] = list(args.files)
+        return None, None, 2
+    tool = find_tool_entry(registry, tool_id)
+    if tool is None:
+        known = ", ".join(sorted(str(t.get("id")) for t in registry if t.get("id")))
+        print(f"koru task: unknown --tool '{tool_id}'. Known ids: {known}")
+        return None, None, 2
+    scaffold = build_tool_task_scaffold(tool, adapter_kind=tool_kind)
+    if registry_path is not None:
+        scaffold.setdefault("source_context", {})
+        if isinstance(scaffold.get("source_context"), dict):
+            scaffold["source_context"]["registry"] = str(registry_path)
+    return scaffold, registry_path, None
 
-    try:
-        created = create_nl_task(
-            args.project,
-            " ".join(args.text),
-            sprint=args.sprint,
-            queue_name=args.queue_name,
-            priority=args.priority,
-            scaffold=scaffold,
-        )
-    except ValueError as exc:
-        print(f"koru task: {exc}")
-        return 2
+
+def _merge_cli_scaffold(
+    scaffold: dict[str, Any] | None,
+    *,
+    source_tool: str | None,
+    source_signal: str | None,
+    dedupe_key: str | None,
+    files: list[str] | None,
+) -> dict[str, Any] | None:
+    if not (source_tool or source_signal or dedupe_key or files):
+        return scaffold
+    scaffold = dict(scaffold or {})
+    if source_tool:
+        scaffold["source_tool"] = source_tool
+    context = (
+        dict(scaffold.get("source_context"))
+        if isinstance(scaffold.get("source_context"), dict)
+        else {}
+    )
+    if source_signal:
+        context["signal"] = source_signal
+    if dedupe_key:
+        context["dedupe_key"] = dedupe_key
+    scaffold["source_context"] = context
+    if files:
+        scaffold["files"] = list(files)
+    return scaffold
+
+
+def _print_task_result(created: object, args: Any) -> None:
     action = "reused" if getattr(created, "reused", False) else "created"
     print(f"koru task: ✓ {action} {created.ticket_id} in {created.path}")
     print(f"  name:  {created.name}")
@@ -968,6 +972,40 @@ def _task_main(argv: list[str]) -> int:
             "priority": args.priority,
         },
     )
+
+
+def _task_main(argv: list[str]) -> int:
+    args = _build_task_parser().parse_args(argv)
+    scaffold: dict[str, Any] | None = None
+
+    if args.tool_id:
+        scaffold, _registry_path, error_code = _load_tool_scaffold(
+            args.tool_id, args.tool_registry, args.tool_kind,
+        )
+        if error_code is not None:
+            return error_code
+
+    scaffold = _merge_cli_scaffold(
+        scaffold,
+        source_tool=args.source_tool,
+        source_signal=args.source_signal,
+        dedupe_key=args.dedupe_key,
+        files=args.files,
+    )
+
+    try:
+        created = create_nl_task(
+            args.project,
+            " ".join(args.text),
+            sprint=args.sprint,
+            queue_name=args.queue_name,
+            priority=args.priority,
+            scaffold=scaffold,
+        )
+    except ValueError as exc:
+        print(f"koru task: {exc}")
+        return 2
+    _print_task_result(created, args)
     return 0
 
 

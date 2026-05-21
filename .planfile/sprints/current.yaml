@@ -4064,9 +4064,10 @@ sprint:
         pattern.'
       execution:
         attempt: 0
+        finished_at: '2026-05-21T19:42:14.610912Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -4079,6 +4080,17 @@ sprint:
           strategy pattern.'
         source: koru task
         timestamp: '2026-05-21T14:24:12.092957+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T19:42:15.172544+00:00'
       id: STARTER-058
       inputs:
         api_headers: {}
@@ -4098,8 +4110,12 @@ sprint:
       - scan
       name: 'Reduce cyclomatic complexity: _performInject (CC=17, limit=15)'
       outputs:
-        artifacts: []
-        notes: []
+        artifacts:
+        - plugins/koru-autopilot-vscode/src/extension.ts
+        notes:
+        - _performInject is now a focused chat injection orchestrator; submit handling
+          is extracted to submitAfterPaste and current project/analysis.toon.yaml
+          no longer flags _performInject. Verified plugin compile/tests with npm test.
       priority: normal
       source:
         context:
@@ -4110,9 +4126,9 @@ sprint:
         timestamp: '2026-05-21T14:24:12.092957+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T14:24:12.092957+00:00'
+      updated_at: '2026-05-21T19:42:15.172508+00:00'
     STARTER-059:
       blocked_by: []
       blocks: []
@@ -4122,9 +4138,10 @@ sprint:
         strategy pattern.'
       execution:
         attempt: 0
+        finished_at: '2026-05-21T19:43:24.346176Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -4137,6 +4154,17 @@ sprint:
           into strategy pattern.'
         source: koru task
         timestamp: '2026-05-21T14:24:12.519173+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T19:43:24.873521+00:00'
       id: STARTER-059
       inputs:
         api_headers: {}
@@ -4156,8 +4184,16 @@ sprint:
       - scan
       name: 'Reduce cyclomatic complexity: _run_autonomous_cycle (CC=21, limit=15)'
       outputs:
-        artifacts: []
-        notes: []
+        artifacts:
+        - src/koru/autonomous.py
+        - src/koru/autonomous_cycle_config.py
+        - src/koru/autonomous_cycle_gate.py
+        notes:
+        - '_run_autonomous_cycle is now a focused cycle orchestrator over extracted
+          helpers for daemon restart, profile selection, effective flags, cycle kwargs,
+          checkpointing, exit handling, and sleep computation. Current analysis no
+          longer flags it. Verified tests/test_autonomous.py and tests/test_autonomous_startup.py:
+          108 passed.'
       priority: normal
       source:
         context:
@@ -4168,9 +4204,9 @@ sprint:
         timestamp: '2026-05-21T14:24:12.519173+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T14:24:12.519173+00:00'
+      updated_at: '2026-05-21T19:43:24.873485+00:00'
     STARTER-060:
       blocked_by: []
       blocks: []
@@ -4180,9 +4216,10 @@ sprint:
         pattern.'
       execution:
         attempt: 0
+        finished_at: '2026-05-21T19:44:34.489012Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -4195,6 +4232,17 @@ sprint:
           strategy pattern.'
         source: koru task
         timestamp: '2026-05-21T14:24:13.070061+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T19:44:35.016428+00:00'
       id: STARTER-060
       inputs:
         api_headers: {}
@@ -4214,8 +4262,12 @@ sprint:
       - scan
       name: 'Reduce cyclomatic complexity: _score_exe_path (CC=16, limit=15)'
       outputs:
-        artifacts: []
-        notes: []
+        artifacts:
+        - src/koruide/ide.py
+        notes:
+        - '_score_exe_path is split into _score_windsurf_exe_path and _score_primary_exe_path;
+          current project/analysis.toon.yaml no longer flags it. Verified IDE detection/scoring
+          tests with tests/test_autopilot_ide.py: 33 passed.'
       priority: normal
       source:
         context:
@@ -4226,9 +4278,9 @@ sprint:
         timestamp: '2026-05-21T14:24:13.070061+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T14:24:13.070061+00:00'
+      updated_at: '2026-05-21T19:44:35.016379+00:00'
     STARTER-061:
       blocked_by: []
       blocks: []
@@ -4238,9 +4290,10 @@ sprint:
         into strategy pattern.'
       execution:
         attempt: 0
+        finished_at: '2026-05-21T19:46:38.896210Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -4253,6 +4306,17 @@ sprint:
           into strategy pattern.'
         source: koru task
         timestamp: '2026-05-21T14:24:13.424973+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T19:46:39.575556+00:00'
       id: STARTER-061
       inputs:
         api_headers: {}
@@ -4272,8 +4336,12 @@ sprint:
       - scan
       name: 'Reduce cyclomatic complexity: _terminal_ide_from_env (CC=16, limit=15)'
       outputs:
-        artifacts: []
-        notes: []
+        artifacts:
+        - src/koruide/ide.py
+        notes:
+        - 'Refactored _terminal_ide_from_env into ordered _terminal_ide_env_candidates
+          plus existing named environment predicates. Current project/analysis.toon.yaml
+          no longer flags it. Verified tests/test_autopilot_ide.py: 33 passed.'
       priority: normal
       source:
         context:
@@ -4284,9 +4352,9 @@ sprint:
         timestamp: '2026-05-21T14:24:13.424973+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T14:24:13.424973+00:00'
+      updated_at: '2026-05-21T19:46:39.575520+00:00'
     STARTER-062:
       blocked_by: []
       blocks: []
@@ -4296,9 +4364,10 @@ sprint:
         pattern.'
       execution:
         attempt: 0
+        finished_at: '2026-05-21T19:48:15.663739Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -4311,6 +4380,17 @@ sprint:
           strategy pattern.'
         source: koru task
         timestamp: '2026-05-21T14:24:13.788966+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T19:48:16.586046+00:00'
       id: STARTER-062
       inputs:
         api_headers: {}
@@ -4329,8 +4409,13 @@ sprint:
       - scan
       name: 'Reduce cyclomatic complexity: action_daemon (CC=15, limit=15)'
       outputs:
-        artifacts: []
-        notes: []
+        artifacts:
+        - src/koru/autopilot/daemon_cli.py
+        notes:
+        - 'action_daemon is split into daemon lifecycle helpers: _daemon_already_running,
+          _start_local_manager, _record_daemon_start_failure, and _stop_heartbeat.
+          Current project/analysis.toon.yaml no longer flags it. Verified tests/test_autopilot_cli.py:
+          47 passed.'
       priority: normal
       source:
         context:
@@ -4341,9 +4426,9 @@ sprint:
         timestamp: '2026-05-21T14:24:13.788966+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T14:24:13.788966+00:00'
+      updated_at: '2026-05-21T19:48:16.585998+00:00'
     STARTER-063:
       blocked_by: []
       blocks: []

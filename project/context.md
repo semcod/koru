@@ -1,5 +1,5 @@
 # System Architecture Analysis
-<!-- generated in 0.02s -->
+<!-- generated in 0.01s -->
 
 ## Overview
 
@@ -7,10 +7,10 @@
 - **Primary Language**: python
 - **Languages**: python: 166, shell: 44, yaml: 15, yml: 8, typescript: 6
 - **Analysis Mode**: static
-- **Total Functions**: 1680
+- **Total Functions**: 1691
 - **Total Classes**: 108
 - **Modules**: 255
-- **Entry Points**: 608
+- **Entry Points**: 607
 
 ## Architecture by Module
 
@@ -29,6 +29,10 @@
 - **Classes**: 2
 - **File**: `autonomous_cycle.py`
 
+### src.koru.cli
+- **Functions**: 52
+- **File**: `cli.py`
+
 ### src.koru.context
 - **Functions**: 49
 - **File**: `context.py`
@@ -39,7 +43,7 @@
 - **File**: `daemon.py`
 
 ### src.koruide.ide
-- **Functions**: 43
+- **Functions**: 44
 - **Classes**: 1
 - **File**: `ide.py`
 
@@ -63,7 +67,7 @@
 - **File**: `install_manager.py`
 
 ### src.koruide.os_injector
-- **Functions**: 28
+- **Functions**: 29
 - **Classes**: 2
 - **File**: `os_injector.py`
 
@@ -104,10 +108,6 @@
 - **Functions**: 22
 - **File**: `cli_command.py`
 
-### plugins.koru-autopilot-vscode.src.dispatch-plan.test
-- **Functions**: 22
-- **File**: `dispatch-plan.test.ts`
-
 ## Key Entry Points
 
 Main execution flows into the system:
@@ -136,16 +136,13 @@ the LLM with the policy
 ### src.koru.local_manager_state.WorkerRegistry.register
 - **Calls**: src.koru.local_manager_state.utc_now, str, str, self._workers.get, self._reconcile_locked, self._reply_locked, payload.get, src.koru.local_manager_state.koru_version
 
-### src.koru.cli._task_main
-- **Calls**: None.parse_args, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, src.koru.events.emit_management_event, src.koru.tools.load_tool_registry, src.koru.tools.find_tool_entry
-
 ### src.koru.autonomous_cycle.run_cycle
 - **Calls**: src.koru.autonomous_cycle._initialize_cycle_telemetry, src.koru.autonomous_cycle._heal_stale_socket, src.koru.autonomous_cycle._handle_autopilot_events, src.koru.run_log.RunLogWriter._emit, src.koru.autonomous_cycle._handle_queue_hygiene, src.koru.autonomous_cycle._handle_post_run_verify_ide, src.koru.autonomous_cycle._handle_scan_phase, src.koru.autonomous_cycle._handle_queue_loop_phase
 
-### src.koru.cli._topology_main
+### src.koru.cli_topology.topology_main
 - **Calls**: None.parse_args, args.project.resolve, src.koru.topology.load_topology, src.koru.topology_cli.apply_topology_mutations, src.koru.topology.load_topology, None.get, None.get, isinstance
 
-### src.koru.cli_topology.topology_main
+### src.koru.cli._topology_main
 - **Calls**: None.parse_args, args.project.resolve, src.koru.topology.load_topology, src.koru.topology_cli.apply_topology_mutations, src.koru.topology.load_topology, None.get, None.get, isinstance
 
 ### src.koruide.daemon.AutopilotDaemon._drive_via_plugin
@@ -223,6 +220,12 @@ Returns the process exit code (0 on clean shutdown).
 ### src.korudsl.cli.main
 - **Calls**: None.parse_args, src.korudsl.cli._read_input, src.korudsl.transform.library_from_any, src.korudsl.cli._read_input, src.korudsl.transform.library_from_any, src.korudsl.transform.library_to_any, src.korudsl.cli._read_input, src.korudsl.transform.dsl_roundtrip_report
 
+### src.koruide.injector.Injector._candidate_backends
+> Ordered injectors to try (session-aware), deduplicated.
+
+If ``KORU_INJECTOR_BACKEND`` is set, only that tool is attempted.
+- **Calls**: src.koruide.injector._forced_injector_backend, add, add, add, self.which, self.log, add, self.log
+
 ### src.koru.agent_backends.load_agent_integration_config
 > Load ``ide_integration`` from ``<project>/koru.yaml`` if present.
 - **Calls**: data.get, block.get, block.get, raw_lanes.items, AgentIntegrationConfig, path.is_file, isinstance, isinstance
@@ -271,14 +274,7 @@ register [src.koru.local_manager_state.WorkerRegistry]
   └─ →> utc_now
 ```
 
-### Flow 7: _task_main
-```
-_task_main [src.koru.cli]
-  └─ →> print
-  └─ →> print
-```
-
-### Flow 8: run_cycle
+### Flow 7: run_cycle
 ```
 run_cycle [src.koru.autonomous_cycle]
   └─> _initialize_cycle_telemetry
@@ -287,6 +283,22 @@ run_cycle [src.koru.autonomous_cycle]
       └─ →> default_socket_path
           └─> _autopilot_socket_basename
   └─ →> _emit
+      └─ →> print
+```
+
+### Flow 8: topology_main
+```
+topology_main [src.koru.cli_topology]
+  └─ →> load_topology
+      └─> topology_path
+      └─> _read_yaml
+      └─ →> detect_semcod_tools
+  └─ →> load_topology
+      └─> topology_path
+      └─> _read_yaml
+      └─ →> detect_semcod_tools
+  └─ →> apply_topology_mutations
+      └─ →> print
       └─ →> print
 ```
 
@@ -306,20 +318,9 @@ _topology_main [src.koru.cli]
       └─ →> print
 ```
 
-### Flow 10: topology_main
+### Flow 10: _drive_via_plugin
 ```
-topology_main [src.koru.cli_topology]
-  └─ →> load_topology
-      └─> topology_path
-      └─> _read_yaml
-      └─ →> detect_semcod_tools
-  └─ →> load_topology
-      └─> topology_path
-      └─> _read_yaml
-      └─ →> detect_semcod_tools
-  └─ →> apply_topology_mutations
-      └─ →> print
-      └─ →> print
+_drive_via_plugin [src.koruide.daemon.AutopilotDaemon]
 ```
 
 ## Key Classes
@@ -517,10 +518,6 @@ Returns (should_kill, logs) tuple.
 ### src.koruide.protocol.decode
 - **Output to**: isinstance, text.strip, obj.get, obj.get, src.koruide.protocol._filter_extras
 
-### src.koruide.ide._ide_id_from_process
-> Map a single process to a known IDE id, if any.
-- **Output to**: src.koruide.ide._read_comm, src.koruide.ide._read_cmdline, _IDE_SIGNATURES.items, src.koruide.ide._matches
-
 ### src.koruide.audit._JSONFormatter.format
 - **Output to**: record.getMessage
 
@@ -529,6 +526,10 @@ Returns (should_kill, logs) tuple.
 
 ### src.koruide.plugin_installer._parse_extension_version
 - **Output to**: output.splitlines, line.strip, None.startswith, EXTENSION_ID.lower, item.lower
+
+### src.koruide.plugin_installer.format_plugin_install_result
+> Human-friendly single-line status for autonomous startup.
+- **Output to**: None.join
 
 ## Behavioral Patterns
 
@@ -562,12 +563,12 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.context_render.render_markdown_handoff` - 47 calls
 - `src.koru.policy.load_policy` - 43 calls
 - `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
-- `src.koru.tasks.create_nl_task` - 34 calls
 - `src.koruapi.mcp_server.tool_run_ticket` - 33 calls
 - `src.koru.autonomous_cycle.run_cycle` - 33 calls
 - `src.koru.cli_topology.topology_main` - 32 calls
 - `src.koru.queue.runners.run_api_request` - 30 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
+- `src.koru.tasks.create_nl_task` - 29 calls
 - `src.koru.cli_queue.render_clean_report_text` - 28 calls
 - `src.koru.autonomous_daemon.start_or_reuse_daemon` - 26 calls
 - `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
@@ -626,13 +627,13 @@ graph TD
     register --> str
     register --> get
     register --> _reconcile_locked
-    _task_main --> parse_args
-    _task_main --> print
     run_cycle --> _initialize_cycle_te
     run_cycle --> _heal_stale_socket
     run_cycle --> _handle_autopilot_ev
     run_cycle --> _emit
     run_cycle --> _handle_queue_hygien
+    topology_main --> parse_args
+    topology_main --> resolve
 ```
 
 ## Reverse Engineering Guidelines

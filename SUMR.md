@@ -16,7 +16,7 @@ SUMD - Structured Unified Markdown Descriptor for AI-aware project refactorizati
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.188`
+- **version**: `0.1.190`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -36,7 +36,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.188;
+  version: 0.1.190;
 }
 
 dependencies {
@@ -1662,7 +1662,7 @@ pfix>=0.1.60
 
 ## Call Graph
 
-*439 nodes · 500 edges · 73 modules · CC̄=4.0*
+*437 nodes · 500 edges · 73 modules · CC̄=4.0*
 
 ### Hubs (by degree)
 
@@ -1679,8 +1679,8 @@ pfix>=0.1.60
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.22s
-# nodes: 439 | edges: 500 | modules: 73
+# generated in 0.59s
+# nodes: 437 | edges: 500 | modules: 73
 # CC̄=4.0
 
 HUBS[20]:
@@ -1702,10 +1702,10 @@ HUBS[20]:
     CC=15  in:6  out:34  total:40
   src.koru.events.emit_management_event
     CC=8  in:32  out:7  total:39
-  src.koruapi.mcp_server.tool_run_ticket
-    CC=14  in:1  out:33  total:34
   src.koru.cli._task_main
     CC=22  in:0  out:34  total:34
+  src.koruapi.mcp_server.tool_run_ticket
+    CC=14  in:1  out:33  total:34
   src.koru.cli._topology_main
     CC=12  in:0  out:32  total:32
   src.koru.autonomy.env.env_truthy
@@ -1716,14 +1716,14 @@ HUBS[20]:
     CC=2  in:24  out:4  total:28
   src.koruide.ide.detect_running_ides
     CC=13  in:17  out:10  total:27
-  services.healing-webhook.ticket_builder.build_ticket_payload
-    CC=11  in:1  out:25  total:26
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
+  services.healing-webhook.ticket_builder.build_ticket_payload
+    CC=11  in:1  out:25  total:26
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
-  src.koruide.injector.Injector.type_text
-    CC=18  in:0  out:25  total:25
+  src.koru.agents.detect_agent_options
+    CC=4  in:3  out:21  total:24
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -1798,6 +1798,8 @@ MODULES:
     _terminate_existing_processes  CC=10  out:10
   src.koru.autonomy.env  [1 funcs]
     env_truthy  CC=3  out:3
+  src.koru.autopilot.doctor_cli  [1 funcs]
+    render_doctor_text  CC=1  out:4
   src.koru.bootstrap  [9 funcs]
     _detect_cycle  CC=10  out:13
     _validate_cross_task_dependencies  CC=10  out:13
@@ -1808,7 +1810,7 @@ MODULES:
     load_flat_pipeline  CC=9  out:12
     materialize_to_planfile  CC=6  out:16
     validate_flat_pipeline  CC=3  out:9
-  src.koru.cli  [27 funcs]
+  src.koru.cli  [30 funcs]
     _agent_backends_main  CC=8  out:23
     _agent_main  CC=3  out:7
     _auto_main  CC=6  out:6
@@ -1818,7 +1820,7 @@ MODULES:
     _build_queue_parser  CC=1  out:11
     _build_runtime_context_parser  CC=1  out:4
     _build_tools_parser  CC=1  out:7
-    _gate_main  CC=5  out:12
+    _doctor_fix_payload  CC=5  out:4
   src.koru.context  [2 funcs]
     build_context  CC=6  out:16
     render_markdown_handoff  CC=10  out:47
@@ -2045,13 +2047,6 @@ MODULES:
     _legacy_windsurf_terminal_env_hint  CC=3  out:4
     _log_drive_target_result  CC=2  out:1
     _matches  CC=7  out:5
-  src.koruide.injector  [6 funcs]
-    _candidate_backends  CC=11  out:18
-    _type_with_backend  CC=1  out:1
-    submit_only  CC=9  out:13
-    type_text  CC=18  out:25
-    _forced_injector_backend  CC=2  out:3
-    _submit_key_for  CC=1  out:2
   src.koruide.injector_backends  [11 funcs]
     _log  CC=2  out:1
     _ydotool_submit_command  CC=3  out:0
@@ -2170,8 +2165,8 @@ EDGES:
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.22s
-# nodes: 439 | edges: 500 | modules: 73
+# generated in 0.59s
+# nodes: 437 | edges: 500 | modules: 73
 # CC̄=4.0
 
 HUBS[20]:
@@ -2193,10 +2188,10 @@ HUBS[20]:
     CC=15  in:6  out:34  total:40
   src.koru.events.emit_management_event
     CC=8  in:32  out:7  total:39
-  src.koruapi.mcp_server.tool_run_ticket
-    CC=14  in:1  out:33  total:34
   src.koru.cli._task_main
     CC=22  in:0  out:34  total:34
+  src.koruapi.mcp_server.tool_run_ticket
+    CC=14  in:1  out:33  total:34
   src.koru.cli._topology_main
     CC=12  in:0  out:32  total:32
   src.koru.autonomy.env.env_truthy
@@ -2207,14 +2202,14 @@ HUBS[20]:
     CC=2  in:24  out:4  total:28
   src.koruide.ide.detect_running_ides
     CC=13  in:17  out:10  total:27
-  services.healing-webhook.ticket_builder.build_ticket_payload
-    CC=11  in:1  out:25  total:26
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
+  services.healing-webhook.ticket_builder.build_ticket_payload
+    CC=11  in:1  out:25  total:26
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
-  src.koruide.injector.Injector.type_text
-    CC=18  in:0  out:25  total:25
+  src.koru.agents.detect_agent_options
+    CC=4  in:3  out:21  total:24
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -2289,6 +2284,8 @@ MODULES:
     _terminate_existing_processes  CC=10  out:10
   src.koru.autonomy.env  [1 funcs]
     env_truthy  CC=3  out:3
+  src.koru.autopilot.doctor_cli  [1 funcs]
+    render_doctor_text  CC=1  out:4
   src.koru.bootstrap  [9 funcs]
     _detect_cycle  CC=10  out:13
     _validate_cross_task_dependencies  CC=10  out:13
@@ -2299,7 +2296,7 @@ MODULES:
     load_flat_pipeline  CC=9  out:12
     materialize_to_planfile  CC=6  out:16
     validate_flat_pipeline  CC=3  out:9
-  src.koru.cli  [27 funcs]
+  src.koru.cli  [30 funcs]
     _agent_backends_main  CC=8  out:23
     _agent_main  CC=3  out:7
     _auto_main  CC=6  out:6
@@ -2309,7 +2306,7 @@ MODULES:
     _build_queue_parser  CC=1  out:11
     _build_runtime_context_parser  CC=1  out:4
     _build_tools_parser  CC=1  out:7
-    _gate_main  CC=5  out:12
+    _doctor_fix_payload  CC=5  out:4
   src.koru.context  [2 funcs]
     build_context  CC=6  out:16
     render_markdown_handoff  CC=10  out:47
@@ -2536,13 +2533,6 @@ MODULES:
     _legacy_windsurf_terminal_env_hint  CC=3  out:4
     _log_drive_target_result  CC=2  out:1
     _matches  CC=7  out:5
-  src.koruide.injector  [6 funcs]
-    _candidate_backends  CC=11  out:18
-    _type_with_backend  CC=1  out:1
-    submit_only  CC=9  out:13
-    type_text  CC=18  out:25
-    _forced_injector_backend  CC=2  out:3
-    _submit_key_for  CC=1  out:2
   src.koruide.injector_backends  [11 funcs]
     _log  CC=2  out:1
     _ydotool_submit_command  CC=3  out:0
@@ -2644,12 +2634,11 @@ EDGES:
 ### Code Analysis (`project/analysis.toon.yaml`)
 
 ```toon markpact:analysis path=project/analysis.toon.yaml
-# code2llm | 256f 46275L | python:166,shell:44,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:2,toml:1,properties:1,xml:1 | 2026-05-21
-# generated in 0.10s
-# CC̄=4.0 | critical:6/1675 | dups:0 | cycles:0
+# code2llm | 256f 46314L | python:166,shell:44,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:2,properties:1,xml:1,toml:1 | 2026-05-21
+# generated in 0.15s
+# CC̄=4.0 | critical:5/1680 | dups:0 | cycles:0
 
-HEALTH[6]:
-  🟡 CC    type_text CC=18 (limit:15)
+HEALTH[5]:
   🟡 CC    try_drive_with_profile CC=17 (limit:15)
   🟡 CC    _task_main CC=22 (limit:15)
   🟡 CC    _dedupe_key_from_scaffold CC=17 (limit:15)
@@ -2657,9 +2646,9 @@ HEALTH[6]:
   🟡 CC    create_nl_task CC=15 (limit:15)
 
 REFACTOR[1]:
-  1. split 6 high-CC methods  (CC>15)
+  1. split 5 high-CC methods  (CC>15)
 
-PIPELINES[490]:
+PIPELINES[495]:
   [1] Src [heal_rebuild_restore]: heal_rebuild_restore → _run_docker
       PURITY: 100% pure
   [2] Src [heal_annotate]: heal_annotate → _record_action
@@ -2705,8 +2694,8 @@ LAYERS:
   │ runner                     393L  0C   10m  CC=14     ←2
   │ queue_clean                391L  2C   13m  CC=14     ←2
   │ post_run_verify            381L  2C   16m  CC=14     ←1
+  │ injector                   376L  3C   20m  CC=11     ←0
   │ gc                         371L  2C   12m  CC=11     ←2
-  │ !! injector                   337L  3C   15m  CC=18     ←0
   │ agents                     322L  1C   15m  CC=14     ←4
   │ tools                      318L  0C   19m  CC=11     ←1
   │ autonomous_processes       314L  2C   12m  CC=11     ←1
@@ -2965,10 +2954,10 @@ COUPLING:
        services.healing-webhook                                                                                                                                                          1                                                            ──
   CYCLES: none
   HUB: src.koruide/ (fan-in=72)
-  HUB: scripts/ (fan-in=344)
-  HUB: plugins.koru-autopilot-vscode/ (fan-in=10)
   HUB: src.koru/ (fan-in=45)
+  HUB: scripts/ (fan-in=344)
   HUB: src.koruapi/ (fan-in=25)
+  HUB: plugins.koru-autopilot-vscode/ (fan-in=10)
   SMELL: src.koruide/ fan-out=50 → split needed
   SMELL: src.koru/ fan-out=381 → split needed
   SMELL: src.koruapi/ fan-out=68 → split needed
@@ -2981,15 +2970,15 @@ EXTERNAL:
 ### Duplication (`project/duplication.toon.yaml`)
 
 ```toon markpact:analysis path=project/duplication.toon.yaml
-# redup/duplication | 69 groups | 165f 37529L | 2026-05-21
+# redup/duplication | 69 groups | 165f 37568L | 2026-05-21
 
 SUMMARY:
   files_scanned: 165
-  total_lines:   37529
+  total_lines:   37568
   dup_groups:    69
   dup_fragments: 156
   saved_lines:   1274
-  scan_ms:       4262
+  scan_ms:       3325
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/cli.py  dup=593L  groups=17  frags=22  (1.6%)
@@ -3479,10 +3468,10 @@ METRICS-TARGET:
 ### Evolution / Churn (`project/evolution.toon.yaml`)
 
 ```toon markpact:analysis path=project/evolution.toon.yaml
-# code2llm/evolution | 1601 func | 144f | 2026-05-21
-# generated in 0.01s
+# code2llm/evolution | 1606 func | 144f | 2026-05-21
+# generated in 0.02s
 
-NEXT[7] (ranked by impact):
+NEXT[6] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous_cycle.py
       WHY: 1502L, 2 classes, max CC=14
       EFFORT: ~4h  IMPACT: 21028
@@ -3503,11 +3492,7 @@ NEXT[7] (ranked by impact):
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 360
 
-  [6] !  SPLIT-FUNC      Injector.type_text  CC=18  fan=10
-      WHY: CC=18 exceeds 15
-      EFFORT: ~1h  IMPACT: 180
-
-  [7] !  SPLIT-FUNC      _dedupe_key_from_scaffold  CC=17  fan=10
+  [6] !  SPLIT-FUNC      _dedupe_key_from_scaffold  CC=17  fan=10
       WHY: CC=17 exceeds 15
       EFFORT: ~1h  IMPACT: 170
 
@@ -3521,7 +3506,7 @@ METRICS-TARGET:
   CC̄:          4.1 → ≤2.9
   max-CC:      22 → ≤11
   god-modules: 19 → 0
-  high-CC(≥15): 6 → ≤3
+  high-CC(≥15): 5 → ≤2
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
