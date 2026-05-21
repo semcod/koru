@@ -1404,7 +1404,7 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.179"
+version = "0.1.180"
 source = { editable = "." }
 dependencies = [
     { name = "pyyaml" },

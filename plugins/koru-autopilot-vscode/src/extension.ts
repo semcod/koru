@@ -9,6 +9,7 @@
 
 import * as fs from "fs";
 import * as net from "net";
+import { spawn } from "child_process";
 import * as vscode from "vscode";
 import { planDispatch } from "./dispatch-plan";
 import {
@@ -34,7 +35,10 @@ interface Envelope {
 }
 
 type CommandOutcome = { ok: boolean; command?: string };
+type FocusOutcome = CommandOutcome & { diagnostics?: Record<string, unknown> };
 type PasteAttempt = { handled: boolean; result: CommandOutcome };
+type SubmitOutcome = CommandOutcome & { unverified?: boolean };
+type HostCommandResult = { ok: boolean; stdout: string };
 
 let activeBridge: AutopilotBridge | null = null;
 
@@ -234,6 +238,9 @@ class AutopilotBridge {
         cache.submit = undefined;
       }
     }
+    if (cache && this.detectIde() === "vscodium" && cache.submit === "workbench.action.chat.submit") {
+      cache.submit = undefined;
+    }
     return cache;
   }
 
@@ -263,14 +270,129 @@ class AutopilotBridge {
     }
   }
 
-  private async submitChat(): Promise<{ ok: boolean; command?: string }> {
+  private async _tryHostKeySubmit(): Promise<{ ok: boolean; command?: string }> {
+    if (process.platform !== "linux") {
+      return { ok: false };
+    }
+    const attempts: string[][] = [
+      ["-k", "Return"],
+      ["-M", "ctrl", "-k", "Return", "-m", "ctrl"],
+    ];
+    for (const args of attempts) {
+      const ok = await new Promise<boolean>((resolve) => {
+        const child = spawn("wtype", args, { stdio: "ignore" });
+        child.on("error", () => resolve(false));
+        child.on("close", (code) => resolve(code === 0));
+      });
+      debugLog("SUBMIT_HOST_KEY", { command: `wtype ${args.join(" ")}`, ok });
+      if (ok) {
+        return { ok: true, command: `wtype ${args.join(" ")}` };
+      }
+      await this.sleep(100);
+    }
+    return { ok: false };
+  }
+
+  private async runHostCommand(command: string, args: string[], input?: string): Promise<HostCommandResult> {
+    if (process.platform !== "linux") {
+      return { ok: false, stdout: "" };
+    }
+    return new Promise<HostCommandResult>((resolve) => {
+      const child = spawn(command, args, { stdio: ["pipe", "pipe", "ignore"] });
+      const chunks: Buffer[] = [];
+      child.stdout.on("data", (chunk: Buffer) => chunks.push(chunk));
+      child.on("error", () => resolve({ ok: false, stdout: "" }));
+      child.on("close", (code) => {
+        resolve({ ok: code === 0, stdout: Buffer.concat(chunks).toString("utf8") });
+      });
+      if (input !== undefined) {
+        child.stdin.end(input);
+      } else {
+        child.stdin.end();
+      }
+    });
+  }
+
+  private async saveHostClipboard(): Promise<string | null> {
+    if (this.detectIde() !== "vscodium") {
+      return null;
+    }
+    for (const [cmd, args] of [
+      ["wl-paste", ["--no-newline"]],
+      ["xclip", ["-selection", "clipboard", "-out"]],
+      ["xsel", ["--clipboard", "--output"]],
+    ] as Array<[string, string[]]>) {
+      const res = await this.runHostCommand(cmd, args);
+      if (res.ok) {
+        debugLog("HOST_CLIPBOARD_READ", { cmd });
+        return res.stdout;
+      }
+    }
+    return null;
+  }
+
+  private async writeHostClipboard(text: string): Promise<string | null> {
+    for (const [cmd, args] of [
+      ["wl-copy", []],
+      ["xclip", ["-selection", "clipboard"]],
+      ["xsel", ["--clipboard", "--input"]],
+    ] as Array<[string, string[]]>) {
+      const res = await this.runHostCommand(cmd, args, text);
+      if (res.ok) {
+        debugLog("HOST_CLIPBOARD_WRITE", { cmd, length: text.length });
+        return cmd;
+      }
+    }
+    return null;
+  }
+
+  private async restoreHostClipboard(previous: string | null): Promise<void> {
+    if (previous === null || this.detectIde() !== "vscodium") {
+      return;
+    }
+    await this.writeHostClipboard(previous);
+    debugLog("HOST_CLIPBOARD_RESTORE", { length: previous.length });
+  }
+
+  private async clearChatInput(): Promise<void> {
+    if (this.detectIde() !== "vscodium" || process.platform !== "linux") {
+      return;
+    }
+    const sequences: string[][] = [
+      ["-M", "ctrl", "-k", "a", "-m", "ctrl"],
+      ["-k", "BackSpace"],
+    ];
+    for (const args of sequences) {
+      await new Promise<void>((resolve) => {
+        const child = spawn("wtype", args, { stdio: "ignore" });
+        child.on("error", () => resolve());
+        child.on("close", () => resolve());
+      });
+      debugLog("CLEAR_INPUT_HOST_KEY", { command: `wtype ${args.join(" ")}` });
+      await this.sleep(80);
+    }
+  }
+
+  private async submitChat(): Promise<SubmitOutcome> {
     const ide = this.detectIde();
+    if (ide === "vscodium") {
+      const hostKey = await this._tryHostKeySubmit();
+      if (hostKey.ok) {
+        return { ...hostKey, unverified: true };
+      }
+      return {
+        ok: false,
+        command: "vscodium-submit-unavailable",
+        unverified: true,
+      };
+    }
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     const cache = this.getProbeCache();
     const candidates = filterRegistered(
       orderWithCache(buildSubmitCommands(ide), cache?.submit),
       existing
     );
+    debugLog("SUBMIT_CANDIDATES", { ide, candidates });
     for (const cmd of candidates) {
       if (await this.runCommand(cmd)) {
         if (this.probeLadderEnabled()) {
@@ -293,7 +415,7 @@ class AutopilotBridge {
     return { ok: false };
   }
 
-  private async focusChat(): Promise<{ ok: boolean; command?: string }> {
+  private async focusChat(): Promise<FocusOutcome> {
     const cfg = vscode.workspace.getConfiguration("koruAutopilot");
     const primary = (cfg.get<string[]>("chatOpenCommands") || []).filter(Boolean);
     const ide = this.detectIde();
@@ -304,10 +426,13 @@ class AutopilotBridge {
       orderWithCache(buildFocusOpenCommands(ide, primary), cache?.focusOpen),
       existing
     );
+    debugLog("FOCUS_OPEN_CANDIDATES", { ide, commands });
     const before = this.editorSnapshot();
+    const rejected: Array<Record<string, unknown>> = [];
     for (const cmd of commands) {
       if (!(await this.runCommand(cmd))) {
         console.warn(`koru autopilot: focusChat command not available: ${cmd}`);
+        rejected.push({ cmd, reason: "executeCommand returned false" });
         continue;
       }
       await this.sleep(this.probeFocusDelayMs());
@@ -319,8 +444,22 @@ class AutopilotBridge {
         return { ok: true, command: cmd };
       }
       debugLog("PROBE_FOCUS_REJECT", { cmd, before, after });
+      rejected.push({ cmd, reason: "probe rejected focus snapshot", before, after });
     }
-    return { ok: false };
+    return {
+      ok: false,
+      diagnostics: {
+        ide,
+        appName: vscode.env.appName,
+        logPath: "/tmp/koru-plugin-debug.log",
+        probeLadder: useProbe,
+        configuredChatOpenCommands: primary,
+        focusOpenCandidates: commands,
+        cacheFocusOpen: cache?.focusOpen,
+        before,
+        rejected,
+      },
+    };
   }
 
   private async pasteText(text: string): Promise<CommandOutcome> {
@@ -329,6 +468,13 @@ class AutopilotBridge {
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     const cache = this.getProbeCache();
     const before = this.editorSnapshot();
+
+    if (ide === "vscodium") {
+      const hostPaste = await this.tryHostClipboardPaste(text, before, useProbe);
+      if (hostPaste.handled) {
+        return hostPaste.result;
+      }
+    }
 
     const direct = await this.tryDirectPasteCommands(text, ide, existing, cache, before, useProbe);
     if (direct) {
@@ -384,6 +530,37 @@ class AutopilotBridge {
     return undefined;
   }
 
+  private async tryHostClipboardPaste(
+    text: string,
+    before: ReturnType<typeof captureEditorSnapshot>,
+    useProbe: boolean
+  ): Promise<PasteAttempt> {
+    const inputFocused = await this.focusChatInput();
+    if (!inputFocused.ok) {
+      debugLog("HOST_PASTE_NO_INPUT_FOCUS");
+    }
+    await this.clearChatInput();
+    const clip = await this.writeHostClipboard(text);
+    if (!clip) {
+      debugLog("HOST_PASTE_NO_CLIPBOARD_TOOL");
+      return { handled: false, result: { ok: false } };
+    }
+    const paste = await this.runHostCommand("wtype", ["-M", "ctrl", "-k", "v", "-m", "ctrl"]);
+    debugLog("HOST_PASTE_KEY", { ok: paste.ok, clipboard: clip });
+    if (!paste.ok) {
+      return { handled: true, result: { ok: false } };
+    }
+    await this.sleep(Math.max(this.probePasteDelayMs(), 350));
+    const after = this.editorSnapshot();
+    if (useProbe && pasteLandedInEditor(before, after, text)) {
+      return { handled: true, result: { ok: false } };
+    }
+    if (useProbe) {
+      await this.saveProbeCache({ paste: `host-clipboard:${clip}+wtype-ctrl-v` });
+    }
+    return { handled: true, result: { ok: true, command: `host-clipboard:${clip}+wtype-ctrl-v` } };
+  }
+
   private async tryClipboardPaste(
     text: string,
     before: ReturnType<typeof captureEditorSnapshot>,
@@ -394,6 +571,7 @@ class AutopilotBridge {
       debugLog("PROBE_PASTE_NO_INPUT_FOCUS");
     }
     try {
+      await this.clearChatInput();
       await vscode.env.clipboard.writeText(text);
       await vscode.commands.executeCommand("editor.action.clipboardPasteAction");
       await this.sleep(this.probePasteDelayMs());
@@ -418,6 +596,7 @@ class AutopilotBridge {
     useProbe: boolean
   ): Promise<CommandOutcome> {
     try {
+      await this.clearChatInput();
       await Promise.resolve(vscode.commands.executeCommand("type", { text }));
       await this.sleep(this.probePasteDelayMs());
       const after = this.editorSnapshot();
@@ -441,6 +620,7 @@ class AutopilotBridge {
       orderWithCache(buildFocusInputCommands(ide), cache?.focusInput),
       existing
     );
+    debugLog("FOCUS_INPUT_CANDIDATES", { ide, candidates });
     for (const cmd of candidates) {
       if (await this.runCommand(cmd)) {
         if (this.probeLadderEnabled()) {
@@ -541,7 +721,11 @@ class AutopilotBridge {
     }
   }
 
-  private sendFocusFailureAck(env: Envelope, focus: { ok: boolean; command?: string }): void {
+  private sendFocusFailureAck(env: Envelope, focus: FocusOutcome): void {
+    const details = focus.diagnostics || {};
+    const candidates = Array.isArray(details.focusOpenCandidates)
+      ? details.focusOpenCandidates.join(", ")
+      : "";
     this.send({
       type: "ack",
       id: env.id,
@@ -549,8 +733,12 @@ class AutopilotBridge {
       opened: false,
       submitted: false,
       probe_ladder: this.probeLadderEnabled(),
+      diagnostics: details,
       message:
-        "chat input is not focused/open (no supported focus command in this IDE build). Open chat input manually, then retry.",
+        "chat input is not focused/open; "
+        + `ide=${details.ide || this.detectIde()} app=${details.appName || vscode.env.appName}; `
+        + `focus_open_candidates=${candidates || "(none)"}; `
+        + "log=/tmp/koru-plugin-debug.log. Open chat input manually, then retry.",
     });
   }
 
@@ -569,19 +757,24 @@ class AutopilotBridge {
   private sendSubmitFailureAck(
     env: Envelope,
     focus: { ok: boolean; command?: string },
-    pasted: { ok: boolean; command?: string }
+    pasted: { ok: boolean; command?: string },
+    attemptedSubmit?: string
   ): void {
     this.send({
       type: "ack",
       id: env.id,
       ok: false,
-      delivered: false,
+      delivered: true,
       opened: true,
       submitted: false,
       probe_ladder: this.probeLadderEnabled(),
       winning_focus_open: focus.command,
       winning_paste: pasted.command,
-      message: "chat opened and text injected, but submit command failed",
+      attempted_submit: attemptedSubmit,
+      verification: "submit_unverified",
+      message:
+        "chat opened and text injected, but submit could not be verified; "
+        + "manual Send may be required. Input was cleared before paste to avoid prompt concatenation.",
     });
   }
 
@@ -620,6 +813,7 @@ class AutopilotBridge {
     // Snapshot the user's clipboard BEFORE we do anything else so we
     // can always restore it — even if focus/paste/submit throws (R8).
     const previous = await this.saveClipboard();
+    const previousHost = await this.saveHostClipboard();
     try {
       await this._performInject(env, text, submit);
     } catch (err) {
@@ -627,6 +821,10 @@ class AutopilotBridge {
       this.send({ type: "ack", id: env.id, ok: false, message });
     } finally {
       // Restore clipboard regardless of outcome.
+      if (this.detectIde() === "vscodium") {
+        await this.sleep(400);
+      }
+      await this.restoreHostClipboard(previousHost);
       await this.restoreClipboard(previous);
     }
   }
@@ -680,7 +878,12 @@ class AutopilotBridge {
       return undefined;
     }
     await this.sleep(150);
+    await this.focusChatInput();
     const submitResult = await this.submitChat();
+    if (submitResult.unverified) {
+      this.sendSubmitFailureAck(env, focus, pasted, submitResult.command);
+      return null;
+    }
     if (submitResult.ok) {
       return submitResult.command;
     }

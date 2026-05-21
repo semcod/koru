@@ -122,6 +122,7 @@ from koru.tasks import create_nl_task
 from koru.topology import is_component_enabled, is_pipeline_enabled
 from koruide.daemon import AutopilotDaemon
 from koruide.drive_orchestrator import DriveOrchestrator
+from koruide.ide import normalize_ide_id, supported_autopilot_ide_ids
 from koruide.os_injector import OsInjectorError, inject_with_profile, load_profile
 
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
@@ -228,11 +229,21 @@ def _resolve_autopilot_ide(cli_value: str) -> str:
 
 def _apply_agent_lane_environ(project: Path, agent_lane: str) -> str | None:
     """Set lane exports in ``os.environ``; returns lane id or ``None`` if skipped."""
-    lane, _source = _resolve_agent_lane_id(
-        project,
-        agent_lane,
-        resolve_project_lane=resolve_project_agent_lane,
-    )
+    raw_agent_lane = (agent_lane or "auto").strip().lower()
+    explicit_instance = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_INSTANCE"))
+    if (
+        raw_agent_lane == "auto"
+        and explicit_instance
+        and explicit_instance != "auto"
+        and explicit_instance in supported_autopilot_ide_ids()
+    ):
+        lane = explicit_instance
+    else:
+        lane, _source = _resolve_agent_lane_id(
+            project,
+            agent_lane,
+            resolve_project_lane=resolve_project_agent_lane,
+        )
     if lane is None:
         return None
     for key, val in agent_lane_environment(lane).items():

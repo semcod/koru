@@ -57,10 +57,5 @@ export function socketCandidatesFromEnv(ideId: string, override?: string): strin
   if (!ov) {
     return defaultSocketCandidates(ideId);
   }
-  const resolved = path.resolve(ov);
-  const out = [resolved];
-  for (const p of defaultSocketCandidates(ideId)) {
-    if (!out.includes(p)) out.push(p);
-  }
-  return out;
+  return [path.resolve(ov)];
 }

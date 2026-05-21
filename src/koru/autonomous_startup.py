@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from koru.autopilot import default_socket_path
-from koru.autopilot.ide import (
+from koruide.ide import (
     detect_running_ides,
     detect_terminal_host_ide_id,
     normalize_ide_id,
@@ -59,6 +59,18 @@ def _explicit_agent_lane_from_env() -> tuple[str | None, str]:
     return None, ""
 
 
+def _target_lane_over_terminal(terminal: str | None) -> tuple[str | None, str]:
+    if terminal != "vscode":
+        return None, ""
+    running = detect_running_ides()
+    if not running:
+        return None, ""
+    picked = pick_target(running)
+    if picked is None or picked.id == terminal or picked.id not in _PLUGIN_IDE_LANES:
+        return None, ""
+    return picked.id, f"target:over-terminal:{terminal}"
+
+
 def resolve_agent_lane_id(
     project: Path,
     agent_lane_cli: str,
@@ -76,11 +88,16 @@ def resolve_agent_lane_id(
     terminal = _terminal_agent_lane_from_env()
     explicit, explicit_source = _explicit_agent_lane_from_env()
     if explicit:
-        if terminal in _PLUGIN_IDE_LANES and terminal != explicit:
+        if terminal in _PLUGIN_IDE_LANES and terminal != explicit and terminal != "vscode":
             lane = resolve_project_lane(project, terminal)
             return lane, f"terminal:over-{explicit_source}"
         lane = resolve_project_lane(project, explicit)
         return lane, explicit_source
+
+    target, target_source = _target_lane_over_terminal(terminal)
+    if target:
+        lane = resolve_project_lane(project, target)
+        return lane, target_source
 
     if terminal in _PLUGIN_IDE_LANES:
         lane = resolve_project_lane(project, terminal)
@@ -114,7 +131,7 @@ def resolve_autopilot_ide_for_autonomous(
     if raw != "auto":
         route = resolve_ide_route_fn(cli_autopilot_ide=raw)
         return route.autopilot_ide, f"cli:{raw}"
-    if lane in _PLUGIN_IDE_LANES:
+    if lane and lane in _PLUGIN_IDE_LANES:
         return lane, "lane"
     route = resolve_ide_route_fn(cli_autopilot_ide="auto")
     return route.autopilot_ide, "router:auto"
@@ -260,6 +277,8 @@ def format_post_startup_operator_hints(
         if ide == "cursor"
         else "~/.config/Code/User/settings.json"
         if ide == "vscode"
+        else "~/.config/VSCodium/User/settings.json"
+        if ide == "vscodium"
         else "IDE user settings (koruAutopilot.*)"
     )
     lines: list[str] = [
@@ -296,6 +315,18 @@ def format_post_startup_operator_hints(
         lines.append(
             "koru autonomous: [!] TERM_PROGRAM=vscode w terminalu Cursora — "
             "jawnie ustaw --agent-lane cursor jeśli auto myli VS Code",
+        )
+    running_labels = " ".join(probe.running_ides).lower()
+    if ide == "vscode" and "vscodium" in running_labels:
+        lines.append(
+            "koru autonomous: [!] wybrano ide=vscode, ale działa też VSCodium — "
+            "to osobne lane/sockety; jeśli pracujesz w VSCodium, uruchom z "
+            "--agent-lane vscodium --autopilot-ide vscodium",
+        )
+    if probe.terminal_lane == "vscodium" and ide == "vscode":
+        lines.append(
+            "koru autonomous: [!] terminal wygląda na VSCodium, ale autopilot wybrał vscode — "
+            "ustaw KORU_AUTOPILOT_INSTANCE=vscodium albo użyj --autopilot-ide vscodium",
         )
 
     if plugin_supported:

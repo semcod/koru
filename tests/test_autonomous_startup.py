@@ -90,6 +90,29 @@ def test_resolve_agent_lane_terminal_hint_overrides_conflicting_env_instance(
     assert source == "terminal:over-env:KORU_AUTOPILOT_INSTANCE"
 
 
+def test_resolve_agent_lane_prefers_vscodium_target_over_generic_vscode_terminal(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    running = [
+        RunningIDE(id="vscode", label="VS Code", pid=10, exe="/usr/bin/code"),
+        RunningIDE(id="vscodium", label="VSCodium", pid=11, exe="/usr/bin/codium"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup.pick_target", return_value=running[1]),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value="vscode"),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+    assert lane == "vscodium"
+    assert source == "target:over-terminal:vscode"
+
+
 def test_resolve_agent_lane_env_instance_used_without_terminal_hint(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -109,6 +132,28 @@ def test_resolve_agent_lane_env_instance_used_without_terminal_hint(
             resolve_project_lane=lambda _p, lane_id: lane_id,
         )
     assert lane == "vscode"
+    assert source == "env:KORU_AUTOPILOT_INSTANCE"
+
+
+def test_resolve_agent_lane_explicit_vscodium_beats_generic_vscode_terminal(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscodium")
+    running = [
+        RunningIDE(id="vscode", label="VS Code", pid=10, exe="/usr/bin/code"),
+        RunningIDE(id="vscodium", label="VSCodium", pid=11, exe="/usr/bin/codium"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value="vscode"),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+    assert lane == "vscodium"
     assert source == "env:KORU_AUTOPILOT_INSTANCE"
 
 
@@ -168,6 +213,37 @@ def test_format_post_startup_operator_hints_mentions_socket(tmp_path: Path) -> N
     assert "require-plugin" in text
     assert "[!] brak zgodnego pluginu" in text
     assert "drive jest wstrzymany" in text
+
+
+def test_format_post_startup_operator_hints_warns_when_vscode_selected_with_vscodium_running(
+    tmp_path: Path,
+) -> None:
+    probe = startup.AutonomousStartupProbe(
+        koru_version="0.0-test",
+        python_version="3.12",
+        project=tmp_path,
+        agent_lane_cli="auto",
+        autopilot_ide_cli="auto",
+        resolved_lane="vscode",
+        lane_source="terminal",
+        resolved_autopilot_ide="vscode",
+        autopilot_ide_source="lane",
+        running_ides=("VS Code (pid=1)", "VSCodium (pid=2)"),
+        terminal_lane="vscode",
+        socket_path="/run/user/1000/koru-autopilot-vscode.sock",
+        session="wayland",
+        term_program="vscode",
+        headless=False,
+        xdg_runtime_dir="/run/user/1000",
+    )
+
+    text = "\n".join(
+        startup.format_post_startup_operator_hints(probe, plugin_connected=True),
+    )
+
+    assert "wybrano ide=vscode, ale działa też VSCodium" in text
+    assert "--agent-lane vscodium --autopilot-ide vscodium" in text
+    assert "~/.config/Code/User/settings.json" in text
 
 
 def test_format_post_startup_operator_hints_for_jetbrains_skips_plugin_steps() -> None:

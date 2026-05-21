@@ -1,4 +1,5 @@
 import {
+  buildFocusInputCommands,
   buildFocusOpenCommands,
   buildSubmitCommands,
   captureEditorSnapshot,
@@ -36,6 +37,7 @@ function testVerifyFocusAfterOpen(): void {
   const file = { hasEditor: true, scheme: "file", isFileLike: true, text: "code" };
   const none = { hasEditor: false, scheme: "", isFileLike: false, text: "" };
   assert(verifyFocusAfterOpen(file, none), "blur from file editor counts as open");
+  assert(verifyFocusAfterOpen(file, file, "vscodium"), "vscodium chat open is trusted because snapshot can stay unchanged");
 }
 
 function testPasteLandedInEditor(): void {
@@ -60,6 +62,12 @@ function testBuildFocusOpenCursorFirst(): void {
   assert(cmds.includes("composer.showComposer"), "cursor list should include composer");
 }
 
+function testBuildFocusInputUsesChatCommands(): void {
+  const cmds = buildFocusInputCommands("vscodium");
+  assert(cmds[0] === "workbench.action.chat.focusInput", "chat input focus should be the first generic input command");
+  assert(cmds.includes("chat.action.focus"), "chat action focus should be available as a fallback");
+}
+
 function testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance(): void {
   const cmds = buildSubmitCommands("vscode");
   assert(
@@ -68,11 +76,18 @@ function testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance(): void {
   );
 }
 
+function testVscodiumSubmitStillExposesWorkbenchFallback(): void {
+  const cmds = buildSubmitCommands("vscodium");
+  assert(cmds.includes("workbench.action.chat.submit"), "vscodium keeps workbench submit as fallback");
+}
+
 testOrderWithCache();
 testChatFocusHeuristic();
 testVerifyFocusAfterOpen();
 testPasteLandedInEditor();
 testMergeUnique();
 testBuildFocusOpenCursorFirst();
+testBuildFocusInputUsesChatCommands();
 testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance();
+testVscodiumSubmitStillExposesWorkbenchFallback();
 console.log("probe-ladder tests: ok");

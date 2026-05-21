@@ -20,6 +20,16 @@ from koru.queue.types import QueueLoopResult
 from koru.scan import ScanResult
 
 
+@pytest.fixture(autouse=True)
+def _isolate_terminal_ide(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.setattr(
+        autonomous_cycle_mod,
+        "detect_terminal_host_ide_id",
+        lambda: None,
+    )
+
+
 def test_effective_flags_matrix() -> None:
     assert autonomous_env_mod.effective_ticket_source_flags("queue") == (False, False)
     assert autonomous_env_mod.effective_ticket_source_flags("scan") == (True, False)
@@ -513,6 +523,23 @@ def test_autopilot_terminal_conflict_can_be_explicitly_allowed(monkeypatch) -> N
     assert autonomous_cycle_mod._autopilot_terminal_conflict_reason("vscode") is None
 
 
+def test_autopilot_terminal_conflict_allows_connected_target_plugin(monkeypatch) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_ALLOW_CROSS_IDE", raising=False)
+    monkeypatch.setattr(
+        autonomous_cycle_mod,
+        "detect_terminal_host_ide_id",
+        lambda: "vscode",
+    )
+
+    assert (
+        autonomous_cycle_mod._autopilot_terminal_conflict_reason(
+            "vscodium",
+            plugin_connected=True,
+        )
+        is None
+    )
+
+
 def test_effective_cycle_autopilot_allows_non_plugin_required_ide() -> None:
     enabled = autonomous_mod._effective_cycle_autopilot_enabled(
         True,
@@ -921,6 +948,26 @@ def test_apply_agent_lane_environ_auto_prefers_vscodium_terminal(tmp_path, monke
     (tmp_path / ".vscode").mkdir()
     with patch("koru.autonomous_startup.detect_running_ides", return_value=[]):
         lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "auto")
+    assert lane == "vscodium"
+    assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "vscodium"
+    assert os.environ["KORU_AUTOPILOT_IDE"] == "vscodium"
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+
+
+def test_apply_agent_lane_environ_auto_preserves_explicit_vscodium_over_vscode_terminal(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    _isolate_integrated_terminal_env(monkeypatch)
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscodium")
+    monkeypatch.setenv("TERM_PROGRAM", "vscode")
+    monkeypatch.setenv("VSCODE_NLS_CONFIG", "{}")
+    (tmp_path / ".vscode").mkdir()
+
+    with patch("koru.autonomous_startup.detect_running_ides", return_value=[]):
+        lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "auto")
+
     assert lane == "vscodium"
     assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "vscodium"
     assert os.environ["KORU_AUTOPILOT_IDE"] == "vscodium"
@@ -1795,6 +1842,13 @@ def test_run_cycle_autopilot_focus_error_retry_loop_retries_and_warns(
                 "ok": False,
                 "message": "chat input is not focused",
                 "verification": "plugin_error",
+                "diagnostics": {
+                    "ide": "vscodium",
+                    "appName": "VSCodium",
+                    "logPath": "/tmp/koru-plugin-debug.log",
+                    "focusOpenCandidates": ["workbench.action.chat.open"],
+                    "rejected": [{"cmd": "workbench.action.chat.open", "reason": "probe rejected focus snapshot"}],
+                },
             }
 
     # Mock time.sleep to make the test instant
@@ -1836,6 +1890,11 @@ def test_run_cycle_autopilot_focus_error_retry_loop_retries_and_warns(
     # Assert that warning message was printed in red
     captured = capsys.readouterr().out
     assert "[AUTOPILOT FOCUS ERROR]" in captured
+    assert "Plugin message: chat input is not focused" in captured
+    assert "ide: vscodium" in captured
+    assert "logPath: /tmp/koru-plugin-debug.log" in captured
+    assert "focusOpenCandidates: workbench.action.chat.open" in captured
+    assert "lastRejected:" in captured
 
 
 def test_run_cycle_does_not_retry_missing_plugin_as_focus_error(

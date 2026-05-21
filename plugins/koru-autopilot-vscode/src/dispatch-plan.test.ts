@@ -101,16 +101,12 @@ function testSocketCandidatesSeparateVscodeAndVscodium(): void {
   }
 }
 
-function testSocketCandidatesPreferOverrideThenDefaults(): void {
+function testSocketCandidatesOverrideIsStrict(): void {
   const candidates = socketCandidatesFromEnv("cursor", "/run/user/1000/koru-autopilot-cursor.sock");
-  assert(candidates.length >= 2, "override should be tried first, then default lane candidates");
+  assert(candidates.length === 1, "override should be the only candidate");
   assert(
     candidates[0] === "/run/user/1000/koru-autopilot-cursor.sock",
     "explicit override path should be first",
-  );
-  assert(
-    candidates.includes("/run/user/1000/koru-autopilot.sock"),
-    "singleton socket should remain a fallback when override is set",
   );
 }
 
@@ -119,4 +115,4 @@ testUnknownTypePlan();
 testSocketCandidatesPreferIdeInstanceBeforeSingleton();
 testSocketCandidatesDoNotCrossIdeFallback();
 testSocketCandidatesSeparateVscodeAndVscodium();
-testSocketCandidatesPreferOverrideThenDefaults();
+testSocketCandidatesOverrideIsStrict();

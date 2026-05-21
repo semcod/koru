@@ -62,6 +62,12 @@ export function verifyFocusAfterOpen(before: EditorSnapshot, after: EditorSnapsh
   if (ide === "windsurf") {
     return true;
   }
+  if (ide === "vscodium") {
+    // VSCodium chat opens as a workbench/webview surface that often leaves
+    // activeTextEditor unchanged, so the editor snapshot is not a reliable
+    // proof of focus. Paste verification still catches file-editor leakage.
+    return true;
+  }
   if (chatFocusHeuristic(after)) {
     return true;
   }
@@ -131,6 +137,10 @@ export function buildFocusOpenCommands(ide: string, custom: string[]): string[] 
   const genericDefaults = [
     "composer.showComposer",
     "workbench.action.chat.open",
+    "workbench.action.chat.openagent",
+    "workbench.action.chat.openask",
+    "workbench.panel.chat",
+    "workbench.panel.chat.view.copilot.focus",
     "aichat.newchataction",
     "cursor.composer.open",
     "workbench.panel.aichat.view.copilot.focus",
@@ -149,6 +159,9 @@ export function buildFocusInputCommands(ide: string): string[] {
     "windsurf.action.focusCascadeInput",
   ];
   const generic = [
+    "workbench.action.chat.focusInput",
+    "chat.action.focus",
+    "workbench.chat.action.focusLastFocused",
     "workbench.action.focusAuxiliaryBar",
     "workbench.action.focusPanel",
     "workbench.action.focusSideBar",

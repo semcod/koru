@@ -5,27 +5,27 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 156, shell: 44, yaml: 15, yml: 8, typescript: 6
+- **Languages**: python: 157, shell: 44, yaml: 15, yml: 8, typescript: 6
 - **Analysis Mode**: static
-- **Total Functions**: 1547
-- **Total Classes**: 108
-- **Modules**: 245
-- **Entry Points**: 524
+- **Total Functions**: 1569
+- **Total Classes**: 106
+- **Modules**: 246
+- **Entry Points**: 536
 
 ## Architecture by Module
 
 ### plugins.koru-autopilot-vscode.src.extension
-- **Functions**: 117
+- **Functions**: 152
 - **Classes**: 2
 - **File**: `extension.ts`
 
 ### src.koru.autonomous
-- **Functions**: 76
-- **Classes**: 5
+- **Functions**: 59
+- **Classes**: 1
 - **File**: `autonomous.py`
 
 ### src.koru.autonomous_cycle
-- **Functions**: 49
+- **Functions**: 52
 - **Classes**: 2
 - **File**: `autonomous_cycle.py`
 
@@ -52,6 +52,11 @@
 - **Classes**: 2
 - **File**: `operator_pipeline.py`
 
+### src.koru.autopilot.install_manager
+- **Functions**: 30
+- **Classes**: 2
+- **File**: `install_manager.py`
+
 ### src.koruide.os_injector
 - **Functions**: 28
 - **Classes**: 2
@@ -61,15 +66,15 @@
 - **Functions**: 27
 - **File**: `app.py`
 
-### src.koru.autopilot.install_manager
-- **Functions**: 27
-- **Classes**: 2
-- **File**: `install_manager.py`
-
 ### src.koru.autonomous_wup
 - **Functions**: 27
 - **Classes**: 3
 - **File**: `autonomous_wup.py`
+
+### src.koru.scan
+- **Functions**: 26
+- **Classes**: 2
+- **File**: `scan.py`
 
 ### src.koruide.plugin_installer
 - **Functions**: 24
@@ -79,11 +84,6 @@
 ### src.koru.mcp_provision
 - **Functions**: 24
 - **File**: `mcp_provision.py`
-
-### src.koru.scan
-- **Functions**: 24
-- **Classes**: 2
-- **File**: `scan.py`
 
 ### plugins.koru-autopilot-vscode.src.probe-ladder
 - **Functions**: 24
@@ -133,6 +133,9 @@ the LLM with the policy
 ### src.koru.local_manager_state.WorkerRegistry.register
 - **Calls**: src.koru.local_manager_state.utc_now, str, str, self._workers.get, self._reconcile_locked, self._reply_locked, payload.get, src.koru.local_manager_state.koru_version
 
+### src.koruide.daemon.AutopilotDaemon._handle_hello
+- **Calls**: msg.data.get, msg.data.get, msg.data.get, msg.data.get, DriveOrchestrator.plugin_version_info, DriveOrchestrator.should_block_plugin_version, self._plugin_router.drop_stale_plugins, msg.data.get
+
 ### src.koruide.daemon.AutopilotDaemon._handle_plugin_event
 - **Calls**: self.log, self._append_event, self.audit.record, None.encode, self._send, time.monotonic, len, self._send
 
@@ -162,9 +165,6 @@ the LLM with the policy
 
 ### src.koru.cli._task_main
 - **Calls**: None.parse_args, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, src.koru.events.emit_management_event, src.koru.tools.load_tool_registry, src.koru.tools.find_tool_entry
-
-### src.koruide.daemon.AutopilotDaemon._handle_hello
-- **Calls**: msg.data.get, msg.data.get, DriveOrchestrator.plugin_version_info, DriveOrchestrator.should_block_plugin_version, self._plugin_router.drop_stale_plugins, msg.data.get, self.log, self._send
 
 ### src.koruide.daemon.AutopilotDaemon._handle_drive
 - **Calls**: msg.data.get, bool, bool, self._plugin_for, self._drive_via_keyboard, self._send, isinstance, msg.data.get
@@ -263,12 +263,17 @@ register [src.koru.local_manager_state.WorkerRegistry]
   └─ →> utc_now
 ```
 
-### Flow 6: _handle_plugin_event
+### Flow 6: _handle_hello
+```
+_handle_hello [src.koruide.daemon.AutopilotDaemon]
+```
+
+### Flow 7: _handle_plugin_event
 ```
 _handle_plugin_event [src.koruide.daemon.AutopilotDaemon]
 ```
 
-### Flow 7: run_cycle
+### Flow 8: run_cycle
 ```
 run_cycle [src.koru.autonomous_cycle]
   └─> _initialize_cycle_telemetry
@@ -280,7 +285,7 @@ run_cycle [src.koru.autonomous_cycle]
       └─ →> print
 ```
 
-### Flow 8: _topology_main
+### Flow 9: _topology_main
 ```
 _topology_main [src.koru.cli]
   └─ →> load_topology
@@ -296,7 +301,7 @@ _topology_main [src.koru.cli]
       └─ →> print
 ```
 
-### Flow 9: topology_main
+### Flow 10: topology_main
 ```
 topology_main [src.koru.cli_topology]
   └─ →> load_topology
@@ -312,15 +317,10 @@ topology_main [src.koru.cli_topology]
       └─ →> print
 ```
 
-### Flow 10: run_api_request
-```
-run_api_request [src.koru.queue.runners]
-```
-
 ## Key Classes
 
 ### plugins.koru-autopilot-vscode.src.extension.AutopilotBridge
-- **Methods**: 115
+- **Methods**: 150
 - **Key Methods**: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.tryConnectNext, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.p, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.debugLog, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.sock
 
 ### src.koruide.daemon.AutopilotDaemon
@@ -565,8 +565,8 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.cli_queue.render_clean_report_text` - 28 calls
 - `src.koru.tasks.create_nl_task` - 28 calls
 - `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
-- `src.koru.scan.scan_pytest_collect` - 24 calls
 - `src.koru.autopilot.install_manager.collect_install_manager_report` - 24 calls
+- `src.koru.scan.scan_pytest_collect` - 24 calls
 - `src.koru.init.init_project` - 23 calls
 - `src.koru.autonomy.ide_work.build_ide_work_prompt` - 23 calls
 - `src.koruapi.topology_post.apply_topology_post_update` - 22 calls
@@ -586,11 +586,11 @@ Functions exposed as public API (no underscore prefix):
 - `src.koruapi.cli.main` - 20 calls
 - `src.koru.autonomous_diagnostics.build_idle_checks` - 20 calls
 - `src.koru.tools.render_tools_detect_text` - 20 calls
+- `src.koru.autonomous_daemon.start_or_reuse_daemon` - 20 calls
 - `src.koru.context_render.render_autonomy_loop_brief` - 20 calls
 - `src.koru.local_manager_state.ActionQueue.claim` - 20 calls
 - `src.koru.local_manager_state.WorkerRegistry.heartbeat` - 20 calls
 - `scripts.planfile-sync-todo.do_from_planfile` - 20 calls
-- `src.koru.autonomous_daemon.start_or_reuse_daemon` - 20 calls
 
 ## System Interactions
 
@@ -618,6 +618,8 @@ graph TD
     register --> str
     register --> get
     register --> _reconcile_locked
+    _handle_hello --> get
+    _handle_hello --> plugin_version_info
     _handle_plugin_event --> log
     _handle_plugin_event --> _append_event
     _handle_plugin_event --> record
@@ -626,8 +628,6 @@ graph TD
     run_cycle --> _initialize_cycle_te
     run_cycle --> _heal_stale_socket
     run_cycle --> _handle_autopilot_ev
-    run_cycle --> _emit
-    run_cycle --> _handle_queue_hygien
 ```
 
 ## Reverse Engineering Guidelines

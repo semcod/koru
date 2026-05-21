@@ -133,7 +133,13 @@ def _allow_cross_ide_autopilot() -> bool:
     }
 
 
-def _autopilot_terminal_conflict_reason(autopilot_ide: str) -> str | None:
+def _autopilot_terminal_conflict_reason(
+    autopilot_ide: str,
+    *,
+    plugin_connected: bool = False,
+) -> str | None:
+    if plugin_connected:
+        return None
     if _allow_cross_ide_autopilot():
         return None
     wanted = normalize_ide_id(autopilot_ide)
@@ -977,11 +983,38 @@ def _reply_needs_focus_retry(reply: dict[str, Any]) -> bool:
     )
 
 
-def _warn_autopilot_focus_retry(attempt: int, attempts: int) -> None:
+def _format_autopilot_failure_details(reply: dict[str, Any]) -> list[str]:
+    lines: list[str] = []
+    message = str(reply.get("message") or "").strip()
+    if message:
+        lines.append(f"Plugin message: {message}")
+    diagnostics = reply.get("diagnostics")
+    if isinstance(diagnostics, dict):
+        for key in ("ide", "appName", "logPath", "probeLadder", "cacheFocusOpen"):
+            if key in diagnostics:
+                lines.append(f"{key}: {diagnostics[key]}")
+        candidates = diagnostics.get("focusOpenCandidates")
+        if isinstance(candidates, list):
+            preview = ", ".join(str(item) for item in candidates[:8])
+            if len(candidates) > 8:
+                preview += f", ... (+{len(candidates) - 8})"
+            lines.append(f"focusOpenCandidates: {preview or '(none)'}")
+        rejected = diagnostics.get("rejected")
+        if isinstance(rejected, list) and rejected:
+            lines.append(f"lastRejected: {rejected[-1]}")
+    elif reply.get("details"):
+        lines.append(f"Details: {reply['details']}")
+    return lines
+
+
+def _warn_autopilot_focus_retry(attempt: int, attempts: int, reply: dict[str, Any] | None = None) -> None:
     print("\033[1;31m")  # bold red
     print("================================================================================")
     print("[AUTOPILOT FOCUS ERROR] Please place your cursor inside the IDE chat input!")
     print("Make sure the cursor is blinking inside the chat input field.")
+    if reply:
+        for line in _format_autopilot_failure_details(reply):
+            print(line)
     print(f"Retrying in 5 seconds... (Attempt {attempt + 1}/{attempts})")
     print("================================================================================")
     print("\033[0m")  # reset colors
@@ -1021,7 +1054,7 @@ def _execute_autopilot_drive(
         if _reply_missing_autopilot_plugin(reply):
             break
         if _reply_needs_focus_retry(reply) and attempt < attempts - 1:
-            _warn_autopilot_focus_retry(attempt, attempts)
+            _warn_autopilot_focus_retry(attempt, attempts, reply)
             time.sleep(5)
         else:
             break
@@ -1115,16 +1148,21 @@ def _handle_autopilot_phase(
     autopilot_drive_kind: str | None = None
 
     if enable_autopilot and client is not None:
-        if conflict_reason := _autopilot_terminal_conflict_reason(autopilot_ide):
-            _hp(f"- autopilot skipped (ide_mismatch: {conflict_reason})")
-            cycle_telemetry["autopilot_skipped_ide_mismatch"] = True
-            return "skipped(ide_mismatch)", None, None
+        plugin_ok = True
+        plugin_reason = ""
         if _plugin_required_for_ide(autopilot_ide):
             plugin_ok, plugin_reason = _client_has_usable_plugin(client, autopilot_ide)
             if not plugin_ok:
                 _hp(f"- autopilot skipped (plugin_missing: {plugin_reason})")
                 cycle_telemetry["autopilot_skipped_plugin_missing"] = True
                 return "skipped(plugin_missing)", None, None
+        if conflict_reason := _autopilot_terminal_conflict_reason(
+            autopilot_ide,
+            plugin_connected=plugin_ok and _plugin_required_for_ide(autopilot_ide),
+        ):
+            _hp(f"- autopilot skipped (ide_mismatch: {conflict_reason})")
+            cycle_telemetry["autopilot_skipped_ide_mismatch"] = True
+            return "skipped(ide_mismatch)", None, None
         should_skip, skip_reason = _check_autopilot_skip_conditions(
             project,
             queue_result,

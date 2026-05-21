@@ -41,6 +41,8 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from koru.semcod_tools import detect_semcod_tools
 from koru.tasks import create_nl_task
 from koru.utils.subprocess_runner import default_subprocess_runner, get_python_cmd
@@ -762,6 +764,48 @@ _SCAN_DEDUP_SKIP_STATUSES: frozenset[str] = frozenset(
 )
 
 
+def _add_existing_scan_title_keys(titles: set[str], entry: object, *, source: str) -> None:
+    if not isinstance(entry, dict):
+        return
+    entry_source = entry.get("source")
+    if isinstance(entry_source, dict):
+        if entry_source.get("tool") != source:
+            return
+    elif entry_source != source:
+        return
+    status = str(entry.get("status") or "").lower()
+    if status in _SCAN_DEDUP_SKIP_STATUSES:
+        return
+    entry_context = entry_source.get("context") if isinstance(entry_source, dict) else None
+    if isinstance(entry_context, dict):
+        signal = entry_context.get("signal")
+        if isinstance(signal, str) and signal:
+            titles.add(f"signal:{signal}")
+    name = entry.get("name") or entry.get("title")
+    if isinstance(name, str):
+        titles.add(name)
+
+
+def _existing_scan_titles_from_sprint(project: Path, *, source: str) -> set[str]:
+    sprint_path = project / ".planfile" / "sprints" / "current.yaml"
+    try:
+        data = yaml.safe_load(sprint_path.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError):
+        return set()
+    sprint = data.get("sprint") if isinstance(data, dict) else None
+    tickets = sprint.get("tickets") if isinstance(sprint, dict) else None
+    if isinstance(tickets, dict):
+        entries = tickets.values()
+    elif isinstance(tickets, list):
+        entries = tickets
+    else:
+        return set()
+    titles: set[str] = set()
+    for entry in entries:
+        _add_existing_scan_title_keys(titles, entry, source=source)
+    return titles
+
+
 def _existing_scan_titles(
     project: Path,
     *,
@@ -774,6 +818,11 @@ def _existing_scan_titles(
     should not pile up identical open tickets. Closed tickets (``done``,
     ``canceled``) are ignored so a regressing signal can open a fresh ticket.
     """
+    if runner is None:
+        titles = _existing_scan_titles_from_sprint(project, source=source)
+        if titles:
+            return titles
+
     use_runner = runner or default_subprocess_runner
 
     def _load_titles(cmd: list[str], *, filter_source: bool = False) -> set[str]:
@@ -791,26 +840,21 @@ def _existing_scan_titles(
             return set()
         titles: set[str] = set()
         for entry in payload:
-            if not isinstance(entry, dict):
-                continue
             if filter_source:
-                entry_source = entry.get("source")
-                if isinstance(entry_source, dict):
-                    if entry_source.get("tool") != source:
-                        continue
-                elif entry_source != source:
-                    continue
-            status = str(entry.get("status") or "").lower()
-            if status in _SCAN_DEDUP_SKIP_STATUSES:
+                _add_existing_scan_title_keys(titles, entry, source=source)
                 continue
-            entry_context = entry.get("source", {}).get("context")
-            if isinstance(entry_context, dict):
-                signal = entry_context.get("signal")
-                if isinstance(signal, str) and signal:
-                    titles.add(f"signal:{signal}")
-            name = entry.get("name") or entry.get("title")
-            if isinstance(name, str):
-                titles.add(name)
+            if isinstance(entry, dict):
+                status = str(entry.get("status") or "").lower()
+                if status in _SCAN_DEDUP_SKIP_STATUSES:
+                    continue
+                entry_context = entry.get("source", {}).get("context")
+                if isinstance(entry_context, dict):
+                    signal = entry_context.get("signal")
+                    if isinstance(signal, str) and signal:
+                        titles.add(f"signal:{signal}")
+                name = entry.get("name") or entry.get("title")
+                if isinstance(name, str):
+                    titles.add(name)
         return titles
 
     titles = _load_titles(
