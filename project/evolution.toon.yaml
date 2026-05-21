@@ -1,42 +1,42 @@
-# code2llm/evolution | 1293 func | 115f | 2026-05-21
+# code2llm/evolution | 1321 func | 120f | 2026-05-21
 # generated in 0.01s
 
 NEXT[6] (ranked by impact):
-  [1] !! SPLIT           src/koru/autopilot/cli_command.py
-      WHY: 1596L, 0 classes, max CC=16
-      EFFORT: ~4h  IMPACT: 25536
-
-  [2] !! SPLIT           src/koru/autonomous.py
+  [1] !! SPLIT           src/koru/autonomous.py
       WHY: 1745L, 2 classes, max CC=12
       EFFORT: ~4h  IMPACT: 20940
 
-  [3] !! SPLIT           src/koruapi/dashboard_serve.py
+  [2] !! SPLIT           src/koruapi/dashboard_serve.py
       WHY: 1400L, 1 classes, max CC=13
       EFFORT: ~4h  IMPACT: 18200
 
-  [4] !  SPLIT-FUNC      AutopilotBridge.pasteText  CC=18  fan=18
+  [3] !  SPLIT-FUNC      AutopilotBridge.pasteText  CC=18  fan=18
       WHY: CC=18 exceeds 15
       EFFORT: ~1h  IMPACT: 324
+
+  [4] !  SPLIT-FUNC      _action_daemon  CC=15  fan=19
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 285
 
   [5] !  SPLIT-FUNC      AutopilotDaemon._handle_plugin_event  CC=15  fan=14
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 210
 
-  [6] !  SPLIT-FUNC      _action_install_plugin_jetbrains  CC=16  fan=11
-      WHY: CC=16 exceeds 15
-      EFFORT: ~1h  IMPACT: 176
+  [6] !! SPLIT           planfile.yaml
+      WHY: 1306L, 0 classes, max CC=0
+      EFFORT: ~4h  IMPACT: 0
 
 
 RISKS[3]:
   ⚠ Splitting src/koru/autonomous.py may break 48 import paths
-  ⚠ Splitting src/koru/autopilot/cli_command.py may break 51 import paths
   ⚠ Splitting src/koruapi/dashboard_serve.py may break 15 import paths
+  ⚠ Splitting planfile.yaml may break 0 import paths
 
 METRICS-TARGET:
   CC̄:          4.2 → ≤2.9
-  max-CC:      27 → ≤13
+  max-CC:      18 → ≤9
   god-modules: 19 → 0
-  high-CC(≥15): 5 → ≤2
+  high-CC(≥15): 4 → ≤2
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

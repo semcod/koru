@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 135, shell: 42, yaml: 15, yml: 8, typescript: 6
+- **Languages**: python: 140, shell: 42, yaml: 15, yml: 8, typescript: 6
 - **Analysis Mode**: static
-- **Total Functions**: 1364
+- **Total Functions**: 1392
 - **Total Classes**: 102
-- **Modules**: 221
-- **Entry Points**: 475
+- **Modules**: 226
+- **Entry Points**: 489
 
 ## Architecture by Module
 
@@ -18,10 +18,6 @@
 - **Functions**: 110
 - **Classes**: 2
 - **File**: `extension.ts`
-
-### src.koru.autopilot.cli_command
-- **Functions**: 51
-- **File**: `cli_command.py`
 
 ### src.koru.autonomous
 - **Functions**: 48
@@ -37,6 +33,10 @@
 - **Classes**: 2
 - **File**: `autonomous_cycle.py`
 
+### src.koru.autopilot.cli_command
+- **Functions**: 36
+- **File**: `cli_command.py`
+
 ### src.koruapi.mcp_server
 - **Functions**: 34
 - **File**: `mcp_server.py`
@@ -51,11 +51,6 @@
 - **Classes**: 1
 - **File**: `ide.py`
 
-### src.koru.local_service
-- **Functions**: 28
-- **Classes**: 5
-- **File**: `local_service.py`
-
 ### services.healing-webhook.app
 - **Functions**: 27
 - **File**: `app.py`
@@ -64,6 +59,11 @@
 - **Functions**: 25
 - **Classes**: 3
 - **File**: `autonomous_wup.py`
+
+### src.koru.autopilot.install_manager
+- **Functions**: 25
+- **Classes**: 2
+- **File**: `install_manager.py`
 
 ### src.koruide.os_injector
 - **Functions**: 24
@@ -80,6 +80,11 @@
 - **Classes**: 3
 - **File**: `probe-ladder.ts`
 
+### src.koru.doctor
+- **Functions**: 23
+- **Classes**: 2
+- **File**: `doctor.py`
+
 ### src.koruide.plugin_installer
 - **Functions**: 22
 - **Classes**: 1
@@ -89,24 +94,20 @@
 - **Functions**: 21
 - **File**: `mcp_provision.py`
 
-### src.koru.doctor
-- **Functions**: 21
-- **Classes**: 2
-- **File**: `doctor.py`
-
 ### src.koru.autonomy.operator_pipeline
 - **Functions**: 21
 - **Classes**: 2
 - **File**: `operator_pipeline.py`
 
+### src.koru.local_manager_state
+- **Functions**: 21
+- **Classes**: 4
+- **File**: `local_manager_state.py`
+
 ### src.koruide.injector
 - **Functions**: 20
 - **Classes**: 4
 - **File**: `injector.py`
-
-### src.korudsl.library
-- **Functions**: 19
-- **File**: `library.py`
 
 ## Key Entry Points
 
@@ -123,14 +124,11 @@ Main execution flows into the system:
 > Fallback: OS injector profile (X11) or :class:`Injector` keyboard sim.
 - **Calls**: src.koruide.ide.resolve_drive_target, src.koruide.ide.pick_target, self.log, self._send, self.log, self.audit.record, self.log, text.replace
 
-### src.koru.local_service._WorkerRegistry.register
-- **Calls**: src.koru.local_service._utc_now, str, str, self._workers.get, self._reconcile_locked, self._reply_locked, payload.get, src.koru.local_service._koru_version
+### src.koru.local_manager_state.WorkerRegistry.register
+- **Calls**: src.koru.local_manager_state.utc_now, str, str, self._workers.get, self._reconcile_locked, self._reply_locked, payload.get, src.koru.local_manager_state.koru_version
 
 ### src.koruide.daemon.AutopilotDaemon._handle_plugin_event
 - **Calls**: self.log, self._append_event, self.audit.record, None.encode, self._send, time.monotonic, len, self._send
-
-### src.koru.autopilot.cli_command._action_install_plugin_jetbrains
-- **Calls**: proc.stdout.strip, proc.stderr.strip, src.koru.autopilot.cli_command._resolve_jetbrains_plugin_dir, src.koru.autopilot.cli_command._resolve_gradle_bin, subprocess.run, src.koru.autopilot.cli_command._resolve_jetbrains_plugin_artifact, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print
 
 ### src.koru.autonomous_cycle.run_cycle
 - **Calls**: src.koru.autonomous_cycle._initialize_cycle_telemetry, src.koru.autonomous_cycle._heal_stale_socket, src.koru.autonomous_cycle._handle_autopilot_events, src.koru.run_log.RunLogWriter._emit, src.koru.autonomous_cycle._handle_queue_hygiene, src.koru.autonomous_cycle._handle_post_run_verify_ide, src.koru.autonomous_cycle._handle_scan_phase, src.koru.autonomous_cycle._handle_queue_loop_phase
@@ -145,6 +143,9 @@ Main execution flows into the system:
 ### src.koru.autonomy.env.autonomous_environ_doctor_probe
 > Return ``(status, detail)`` for ``koru --doctor``; process-global, no I/O.
 - **Calls**: os.environ.get, src.koru.autonomy.env.env_truthy, os.environ.get, os.environ.get, src.koru.autonomy.env.env_truthy, None.strip, None.lower, None.strip
+
+### src.koru.autopilot.cli_command._action_daemon
+- **Calls**: src.koru.autopilot.cli_command._autopilot_local_manager_session, AuditLog, AutopilotDaemon, src.koru.autopilot.cli_command._start_autopilot_manager_heartbeat, src.koruide.socket.default_socket_path, AutopilotClient, probe.is_running, args.project.resolve
 
 ### src.koruide.daemon.AutopilotDaemon._drive_via_plugin
 > Forward a drive request to a connected plugin for that IDE.
@@ -188,14 +189,17 @@ syntact
 > Human-readable rendering — fixed-width status column.
 - **Calls**: lines.append, lines.append, max, report.summary, sum, counts.get, counts.get, counts.get
 
+### src.koru.autopilot.install_plugin_cli.action_install_plugin_jetbrains
+- **Calls**: proc.stdout.strip, proc.stderr.strip, src.koru.autopilot.install_plugin_cli._render_jetbrains_success, resolve_plugin_dir, resolve_gradle, subprocess.run, src.koru.autopilot.install_plugin_cli._render_jetbrains_failure, resolve_artifact
+
 ### src.koruapi.cli.main
 - **Calls**: src.koruapi.cli._build_parser, parser.parse_known_args, args.project.resolve, sys.stdout.write, src.koru.activity_log.activity, src.koru.activity_log.activity, sys.stdout.write, api_serve
 
-### src.koru.local_service._ActionQueue.claim
-- **Calls**: src.koru.local_service._utc_now, max, None.replace, set, set, min, src.koru.local_service._normalize_capabilities, int
+### src.koru.local_manager_state.ActionQueue.claim
+- **Calls**: src.koru.local_manager_state.utc_now, max, None.replace, set, set, min, src.koru.local_manager_state.normalize_capabilities, int
 
-### src.koru.local_service._WorkerRegistry.heartbeat
-- **Calls**: str, self.register, self._workers.get, dict, self.register, isinstance, src.koru.local_service._utc_now, self._reconcile_locked
+### src.koru.local_manager_state.WorkerRegistry.heartbeat
+- **Calls**: str, self.register, self._workers.get, dict, self.register, isinstance, src.koru.local_manager_state.utc_now, self._reconcile_locked
 
 ### services.healing-webhook.app.alertmanager_webhook
 > Accept the Alertmanager webhook payload (v4).
@@ -219,9 +223,6 @@ Returns the process exit code (0 on clean shutdown).
 
 ### src.koru.dev_sync.dev_main
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, sync.add_argument, sync.add_argument, sync.add_argument, sync.add_argument, parser.parse_args
-
-### src.koru.cli._tools_main
-- **Calls**: None.parse_args, src.koru.tools.load_tool_registry, src.koru.tools.detect_tools, src.koru.events.emit_management_event, scripts.koru-soak-monitor.print, args.project.resolve, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print
 
 ## Process Flows
 
@@ -252,8 +253,8 @@ _drive_via_keyboard [src.koruide.daemon.AutopilotDaemon]
 
 ### Flow 4: register
 ```
-register [src.koru.local_service._WorkerRegistry]
-  └─ →> _utc_now
+register [src.koru.local_manager_state.WorkerRegistry]
+  └─ →> utc_now
 ```
 
 ### Flow 5: _handle_plugin_event
@@ -261,14 +262,7 @@ register [src.koru.local_service._WorkerRegistry]
 _handle_plugin_event [src.koruide.daemon.AutopilotDaemon]
 ```
 
-### Flow 6: _action_install_plugin_jetbrains
-```
-_action_install_plugin_jetbrains [src.koru.autopilot.cli_command]
-  └─> _resolve_jetbrains_plugin_dir
-  └─> _resolve_gradle_bin
-```
-
-### Flow 7: run_cycle
+### Flow 6: run_cycle
 ```
 run_cycle [src.koru.autonomous_cycle]
   └─> _initialize_cycle_telemetry
@@ -280,7 +274,7 @@ run_cycle [src.koru.autonomous_cycle]
       └─ →> print
 ```
 
-### Flow 8: _topology_main
+### Flow 7: _topology_main
 ```
 _topology_main [src.koru.cli]
   └─ →> load_topology
@@ -296,16 +290,25 @@ _topology_main [src.koru.cli]
       └─ →> print
 ```
 
-### Flow 9: run_api_request
+### Flow 8: run_api_request
 ```
 run_api_request [src.koru.queue.runners]
 ```
 
-### Flow 10: autonomous_environ_doctor_probe
+### Flow 9: autonomous_environ_doctor_probe
 ```
 autonomous_environ_doctor_probe [src.koru.autonomy.env]
   └─> env_truthy
   └─> env_truthy
+```
+
+### Flow 10: _action_daemon
+```
+_action_daemon [src.koru.autopilot.cli_command]
+  └─> _autopilot_local_manager_session
+  └─> _start_autopilot_manager_heartbeat
+  └─ →> default_socket_path
+      └─> _autopilot_socket_basename
 ```
 
 ## Key Classes
@@ -349,20 +352,20 @@ session:
 - **Methods**: 7
 - **Key Methods**: src.koru.local_manager_client.LocalManagerClient.from_env, src.koru.local_manager_client.LocalManagerClient.enabled, src.koru.local_manager_client.LocalManagerClient.post, src.koru.local_manager_client.LocalManagerClient.register_worker, src.koru.local_manager_client.LocalManagerClient.heartbeat_worker, src.koru.local_manager_client.LocalManagerClient.claim_action, src.koru.local_manager_client.LocalManagerClient.complete_action
 
-### src.koru.local_service._WorkerRegistry
+### src.koru.local_manager_state.WorkerRegistry
 > Registry and lifecycle policy for versioned koru workers.
 - **Methods**: 6
-- **Key Methods**: src.koru.local_service._WorkerRegistry.__init__, src.koru.local_service._WorkerRegistry.register, src.koru.local_service._WorkerRegistry.heartbeat, src.koru.local_service._WorkerRegistry._reconcile_locked, src.koru.local_service._WorkerRegistry._reply_locked, src.koru.local_service._WorkerRegistry.snapshot
-
-### src.koru.local_service._ActionQueue
-> Single in-process queue for local koru actions with simple leases.
-- **Methods**: 5
-- **Key Methods**: src.koru.local_service._ActionQueue.__init__, src.koru.local_service._ActionQueue.enqueue, src.koru.local_service._ActionQueue.claim, src.koru.local_service._ActionQueue.complete, src.koru.local_service._ActionQueue.snapshot
+- **Key Methods**: src.koru.local_manager_state.WorkerRegistry.__init__, src.koru.local_manager_state.WorkerRegistry.register, src.koru.local_manager_state.WorkerRegistry.heartbeat, src.koru.local_manager_state.WorkerRegistry._reconcile_locked, src.koru.local_manager_state.WorkerRegistry._reply_locked, src.koru.local_manager_state.WorkerRegistry.snapshot
 
 ### src.koru.local_manager_client.LocalManagerSession
 > Small lifecycle session for one CLI worker invocation.
 - **Methods**: 5
 - **Key Methods**: src.koru.local_manager_client.LocalManagerSession.enabled, src.koru.local_manager_client.LocalManagerSession.start, src.koru.local_manager_client.LocalManagerSession.heartbeat, src.koru.local_manager_client.LocalManagerSession.should_stop, src.koru.local_manager_client.LocalManagerSession.complete
+
+### src.koru.local_manager_state.ActionQueue
+> Single in-process queue for local koru actions with simple leases.
+- **Methods**: 5
+- **Key Methods**: src.koru.local_manager_state.ActionQueue.__init__, src.koru.local_manager_state.ActionQueue.enqueue, src.koru.local_manager_state.ActionQueue.claim, src.koru.local_manager_state.ActionQueue.complete, src.koru.local_manager_state.ActionQueue.snapshot
 
 ### src.koruide.plugin_router.PluginRouter
 > Select, enumerate and deduplicate connected plugin sessions.
@@ -385,17 +388,17 @@ session:
 - **Methods**: 4
 - **Key Methods**: src.koru.init.InitReport._env_bit, src.koru.init.InitReport._lane_summary, src.koru.init.InitReport._init_summary, src.koru.init.InitReport.summary
 
-### src.koru.doctor.DoctorReport
-> Aggregate result of ``run_diagnostics``.
-- **Methods**: 4
-- **Key Methods**: src.koru.doctor.DoctorReport.has_failures, src.koru.doctor.DoctorReport.has_warnings, src.koru.doctor.DoctorReport.summary, src.koru.doctor.DoctorReport.to_dict
-
 ### src.koru.run_log.RunLogWriter
 > Append-only JSONL writer with best-effort durability.
 
 The constructor does not open the file — that
 - **Methods**: 4
 - **Key Methods**: src.koru.run_log.RunLogWriter._emit, src.koru.run_log.RunLogWriter.write_header, src.koru.run_log.RunLogWriter.write_iteration, src.koru.run_log.RunLogWriter.write_footer
+
+### src.koru.doctor.DoctorReport
+> Aggregate result of ``run_diagnostics``.
+- **Methods**: 4
+- **Key Methods**: src.koru.doctor.DoctorReport.has_failures, src.koru.doctor.DoctorReport.has_warnings, src.koru.doctor.DoctorReport.summary, src.koru.doctor.DoctorReport.to_dict
 
 ### src.koruapi.server.KoruAPIHandler
 - **Methods**: 3
@@ -409,10 +412,10 @@ Construct once at daemon start; call :meth:`record` for
 - **Methods**: 3
 - **Key Methods**: src.koruide.audit.AuditLog.__init__, src.koruide.audit.AuditLog.record, src.koruide.audit.AuditLog.close
 
-### src.koru.local_service._EventBuffer
+### src.koru.local_manager_state.EventBuffer
 > Thread-safe ring of recent event records (oldest dropped at maxlen).
 - **Methods**: 3
-- **Key Methods**: src.koru.local_service._EventBuffer.__init__, src.koru.local_service._EventBuffer.append, src.koru.local_service._EventBuffer.snapshot
+- **Key Methods**: src.koru.local_manager_state.EventBuffer.__init__, src.koru.local_manager_state.EventBuffer.append, src.koru.local_manager_state.EventBuffer.snapshot
 
 ### src.koruide.protocol.Message
 - **Methods**: 2
@@ -523,6 +526,21 @@ Returns (should_kill, logs) tuple.
 - **Confidence**: 0.70
 - **Functions**: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg
 
+### state_machine_EventBuffer
+- **Type**: state_machine
+- **Confidence**: 0.70
+- **Functions**: src.koru.local_manager_state.EventBuffer.__init__, src.koru.local_manager_state.EventBuffer.append, src.koru.local_manager_state.EventBuffer.snapshot
+
+### state_machine_ActionQueue
+- **Type**: state_machine
+- **Confidence**: 0.70
+- **Functions**: src.koru.local_manager_state.ActionQueue.__init__, src.koru.local_manager_state.ActionQueue.enqueue, src.koru.local_manager_state.ActionQueue.claim, src.koru.local_manager_state.ActionQueue.complete, src.koru.local_manager_state.ActionQueue.snapshot
+
+### state_machine_WorkerRegistry
+- **Type**: state_machine
+- **Confidence**: 0.70
+- **Functions**: src.koru.local_manager_state.WorkerRegistry.__init__, src.koru.local_manager_state.WorkerRegistry.register, src.koru.local_manager_state.WorkerRegistry.heartbeat, src.koru.local_manager_state.WorkerRegistry._reconcile_locked, src.koru.local_manager_state.WorkerRegistry._reply_locked
+
 ## Public API Surface
 
 Functions exposed as public API (no underscore prefix):
@@ -531,7 +549,7 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 50 calls
 - `src.koru.context.render_markdown_handoff` - 47 calls
 - `src.koru.policy.load_policy` - 43 calls
-- `src.koru.local_service._WorkerRegistry.register` - 37 calls
+- `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
 - `src.koruapi.mcp_server.tool_run_ticket` - 33 calls
 - `src.koru.autonomous_cycle.run_cycle` - 33 calls
 - `src.koru.queue.runners.run_api_request` - 30 calls
@@ -550,23 +568,23 @@ Functions exposed as public API (no underscore prefix):
 - `services.healing-webhook.app.probe_failure` - 21 calls
 - `src.koruide.protocol.decode` - 21 calls
 - `src.koru.autonomous_startup.build_startup_probe` - 21 calls
-- `src.koru.doctor.render_text` - 21 calls
 - `src.koru.gc.collect_gc_candidates` - 21 calls
 - `src.koru.agents.detect_agent_options` - 21 calls
+- `src.koru.doctor.render_text` - 21 calls
+- `src.koru.autopilot.install_plugin_cli.action_install_plugin_jetbrains` - 21 calls
 - `src.koruapi.cli.main` - 20 calls
 - `src.koruide.os_injector.inject_with_profile` - 20 calls
 - `src.koru.autonomous_diagnostics.build_idle_checks` - 20 calls
 - `src.koru.tools.render_tools_detect_text` - 20 calls
 - `scripts.planfile-sync-todo.do_from_planfile` - 20 calls
-- `src.koru.local_service._ActionQueue.claim` - 20 calls
-- `src.koru.local_service._WorkerRegistry.heartbeat` - 20 calls
+- `src.koru.local_manager_state.ActionQueue.claim` - 20 calls
+- `src.koru.local_manager_state.WorkerRegistry.heartbeat` - 20 calls
 - `services.healing-webhook.app.alertmanager_webhook` - 19 calls
 - `src.koruapi.dashboard_serve.serve` - 19 calls
+- `src.koru.queue_cli_helpers.run_queue_loop_mode` - 19 calls
 - `src.koru.autopilot.install_manager.format_install_manager_report` - 19 calls
 - `plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.focusChat` - 19 calls
 - `src.korudsl.cli.main` - 18 calls
-- `src.koru.agent_backends.load_agent_integration_config` - 18 calls
-- `src.koru.dev_sync.dev_main` - 18 calls
 
 ## System Interactions
 
@@ -587,7 +605,7 @@ graph TD
     _drive_via_keyboard --> pick_target
     _drive_via_keyboard --> log
     _drive_via_keyboard --> _send
-    register --> _utc_now
+    register --> utc_now
     register --> str
     register --> get
     register --> _reconcile_locked
@@ -596,14 +614,14 @@ graph TD
     _handle_plugin_event --> record
     _handle_plugin_event --> encode
     _handle_plugin_event --> _send
-    _action_install_plug --> strip
-    _action_install_plug --> _resolve_jetbrains_p
-    _action_install_plug --> _resolve_gradle_bin
-    _action_install_plug --> run
     run_cycle --> _initialize_cycle_te
     run_cycle --> _heal_stale_socket
     run_cycle --> _handle_autopilot_ev
     run_cycle --> _emit
+    run_cycle --> _handle_queue_hygien
+    _topology_main --> parse_args
+    _topology_main --> resolve
+    _topology_main --> load_topology
 ```
 
 ## Reverse Engineering Guidelines

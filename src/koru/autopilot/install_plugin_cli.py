@@ -1,0 +1,395 @@
+"""CLI actions for autopilot plugin installation commands."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
+from collections.abc import Callable
+from pathlib import Path
+
+from koru.autopilot.ide import detect_focused_ide_id, detect_running_ides
+
+PLUGIN_IDE_CLI: dict[str, tuple[str, ...]] = {
+    "windsurf": ("windsurf",),
+    "cursor": ("cursor",),
+    "vscode": ("code", "code-insiders", "code-oss", "vscodium", "codium"),
+}
+
+PLUGIN_INSTALL_IDE_ALIASES: dict[str, str] = {
+    "pycharm": "jetbrains",
+}
+
+PLUGIN_INSTALL_IDES = frozenset({"windsurf", "vscode", "cursor", "jetbrains"})
+
+
+def plugin_repo_dir() -> Path:
+    return Path(__file__).resolve().parents[3] / "plugins" / "koru-autopilot-vscode"
+
+
+def jetbrains_plugin_repo_dir() -> Path:
+    return Path(__file__).resolve().parents[3] / "plugins" / "koru-autopilot-jetbrains"
+
+
+def resolve_plugin_vsix_path(vsix: Path | None) -> Path:
+    if vsix is not None:
+        candidate = vsix.expanduser().resolve()
+        if not candidate.is_file():
+            raise RuntimeError(f"vsix not found: {candidate}")
+        return candidate
+    plugin_dir = plugin_repo_dir()
+    matches = sorted(
+        plugin_dir.glob("koru-autopilot-*.vsix"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    if not matches:
+        raise RuntimeError(
+            "no packaged .vsix found under plugins/koru-autopilot-vscode; "
+            "build one with: `cd plugins/koru-autopilot-vscode && npm install && npm run package`",
+        )
+    return matches[0]
+
+
+def resolve_jetbrains_plugin_dir(raw_dir: Path | None) -> Path:
+    plugin_dir = (raw_dir or jetbrains_plugin_repo_dir()).expanduser().resolve()
+    if not plugin_dir.is_dir():
+        raise RuntimeError(f"jetbrains plugin dir not found: {plugin_dir}")
+    if not (plugin_dir / "build.gradle.kts").is_file():
+        raise RuntimeError(f"missing build.gradle.kts in jetbrains plugin dir: {plugin_dir}")
+    return plugin_dir
+
+
+def resolve_gradle_bin(raw: str) -> str:
+    candidate = (raw or "gradle").strip()
+    if not candidate:
+        candidate = "gradle"
+    candidate_path = Path(candidate).expanduser()
+    if candidate_path.is_file() and os.access(candidate_path, os.X_OK):
+        return str(candidate_path.resolve())
+    resolved = shutil.which(candidate)
+    if resolved:
+        return resolved
+    raise RuntimeError(f"could not find Gradle executable in PATH: {candidate}")
+
+
+def resolve_jetbrains_plugin_artifact(plugin_dir: Path) -> Path:
+    dist_dir = plugin_dir / "build" / "distributions"
+    matches = sorted(
+        dist_dir.glob("*.zip"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    if not matches:
+        raise RuntimeError(
+            "no JetBrains plugin ZIP found under build/distributions; "
+            "run `gradle buildPlugin` in plugins/koru-autopilot-jetbrains"
+        )
+    return matches[0]
+
+
+def ide_from_terminal_env() -> str | None:
+    if os.environ.get("PYCHARM_HOSTED"):
+        return "jetbrains"
+    term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
+    if term_program in ("vscode", "code"):
+        return "vscode"
+    if term_program == "cursor":
+        return "cursor"
+    if term_program == "windsurf":
+        return "windsurf"
+    if term_program in ("pycharm", "jetbrains", "intellij", "idea"):
+        return "jetbrains"
+    if os.environ.get("VSCODE_PID"):
+        return "vscode"
+    return None
+
+
+def resolve_plugin_target_ide(raw_ide: str) -> str:
+    requested = PLUGIN_INSTALL_IDE_ALIASES.get(raw_ide, raw_ide)
+    if requested != "auto":
+        return requested
+    env_guess = ide_from_terminal_env()
+    if env_guess in PLUGIN_INSTALL_IDES:
+        return env_guess
+    focused = detect_focused_ide_id()
+    if focused in PLUGIN_INSTALL_IDES:
+        return str(focused)
+    detected = [ide for ide in detect_running_ides() if ide.id in PLUGIN_INSTALL_IDES]
+    if len(detected) == 1:
+        return detected[0].id
+    if not detected:
+        raise RuntimeError(
+            "could not detect running editor for plugin install; pass --ide "
+            "windsurf|vscode|cursor|jetbrains|pycharm",
+        )
+    ids = ", ".join(ide.id for ide in detected)
+    raise RuntimeError(
+        "multiple supported IDEs detected with no clear active one "
+        f"({ids}); pass --ide windsurf|vscode|cursor|jetbrains|pycharm",
+    )
+
+
+def resolve_plugin_editor_bin(ide: str) -> str:
+    if ide == "jetbrains":
+        raise RuntimeError(
+            "jetbrains plugin install is not supported via `koru autopilot install-plugin`; "
+            "build/install the IntelliJ plugin from `plugins/koru-autopilot-jetbrains` "
+            "(see README.md)"
+        )
+    if ide not in PLUGIN_IDE_CLI:
+        raise RuntimeError(f"unsupported editor for plugin install: {ide}")
+    for candidate in PLUGIN_IDE_CLI[ide]:
+        resolved = shutil.which(candidate)
+        if resolved:
+            return resolved
+    choices = "|".join(PLUGIN_IDE_CLI[ide])
+    raise RuntimeError(f"could not find editor CLI in PATH for {ide} (tried: {choices})")
+
+
+def render_install_plugin_dry_run(
+    ide: str,
+    editor_bin: str,
+    vsix_path: Path,
+    cmd: list[str],
+    output_format: str,
+) -> None:
+    payload = {
+        "ide": ide,
+        "editor": editor_bin,
+        "vsix": str(vsix_path),
+        "command": cmd,
+        "dry_run": True,
+        "ok": True,
+    }
+    if output_format == "json":
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print("koru autopilot install-plugin: dry-run")
+        print("  " + " ".join(cmd))
+
+
+def render_install_plugin_result(
+    ide: str,
+    editor_bin: str,
+    cmd: list[str],
+    ok: bool,
+    stdout: str,
+    stderr: str,
+    output_format: str,
+) -> None:
+    payload = {
+        "ide": ide,
+        "editor": editor_bin,
+        "command": cmd,
+        "ok": ok,
+        "returncode": 0 if ok else 1,
+        "stdout": stdout,
+        "stderr": stderr,
+    }
+    if output_format == "json":
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        if ok:
+            print(f"koru autopilot install-plugin: installed for {ide} via {editor_bin}")
+        else:
+            print(f"koru autopilot install-plugin: install failed for {ide}", file=sys.stderr)
+        if stdout:
+            print(stdout)
+        if stderr:
+            print(stderr, file=sys.stderr)
+
+
+def action_install_plugin(
+    args: argparse.Namespace,
+    *,
+    resolve_target_ide: Callable[[str], str] = resolve_plugin_target_ide,
+    resolve_editor_bin: Callable[[str], str] = resolve_plugin_editor_bin,
+    resolve_vsix_path: Callable[[Path | None], Path] = resolve_plugin_vsix_path,
+) -> int:
+    try:
+        ide = resolve_target_ide(args.ide)
+        editor_bin = resolve_editor_bin(ide)
+        vsix_path = resolve_vsix_path(args.vsix)
+    except RuntimeError as exc:
+        print(f"koru autopilot install-plugin: {exc}", file=sys.stderr)
+        return 1
+
+    cmd = [editor_bin, "--install-extension", str(vsix_path)]
+    if args.force:
+        cmd.append("--force")
+
+    if args.dry_run:
+        render_install_plugin_dry_run(ide, editor_bin, vsix_path, cmd, args.output_format)
+        return 0
+
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    except OSError as exc:
+        print(f"koru autopilot install-plugin: {exc}", file=sys.stderr)
+        return 1
+
+    ok = proc.returncode == 0
+    render_install_plugin_result(
+        ide,
+        editor_bin,
+        cmd,
+        ok,
+        proc.stdout.strip(),
+        proc.stderr.strip(),
+        args.output_format,
+    )
+    return 0 if ok else 1
+
+
+def _render_jetbrains_failure(
+    *,
+    plugin_dir: Path,
+    cmd: list[str],
+    returncode: int,
+    stdout: str,
+    stderr: str,
+    output_format: str,
+) -> None:
+    if output_format == "json":
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "plugin_dir": str(plugin_dir),
+                    "command": cmd,
+                    "returncode": returncode,
+                    "stdout": stdout,
+                    "stderr": stderr,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    print("koru autopilot install-plugin-jetbrains: build failed", file=sys.stderr)
+    if stdout:
+        print(stdout)
+    if stderr:
+        print(stderr, file=sys.stderr)
+
+
+def _render_jetbrains_success(
+    *,
+    plugin_dir: Path,
+    cmd: list[str],
+    artifact: Path,
+    stdout: str,
+    stderr: str,
+    output_format: str,
+) -> None:
+    hint = (
+        "Install in PyCharm/IntelliJ: Settings -> Plugins -> gear icon -> "
+        "Install Plugin from Disk..."
+    )
+    if output_format == "json":
+        print(
+            json.dumps(
+                {
+                    "ok": True,
+                    "plugin_dir": str(plugin_dir),
+                    "command": cmd,
+                    "artifact": str(artifact),
+                    "manual_install_hint": hint,
+                    "stdout": stdout,
+                    "stderr": stderr,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    print("koru autopilot install-plugin-jetbrains: built plugin package")
+    print(f"  artifact: {artifact}")
+    print(f"  {hint}")
+    if stdout:
+        print(stdout)
+    if stderr:
+        print(stderr, file=sys.stderr)
+
+
+def action_install_plugin_jetbrains(
+    args: argparse.Namespace,
+    *,
+    resolve_plugin_dir: Callable[[Path | None], Path] = resolve_jetbrains_plugin_dir,
+    resolve_gradle: Callable[[str], str] = resolve_gradle_bin,
+    resolve_artifact: Callable[[Path], Path] = resolve_jetbrains_plugin_artifact,
+) -> int:
+    try:
+        plugin_dir = resolve_plugin_dir(args.plugin_dir)
+    except RuntimeError as exc:
+        print(f"koru autopilot install-plugin-jetbrains: {exc}", file=sys.stderr)
+        return 1
+
+    if args.dry_run:
+        requested_gradle = (args.gradle_bin or "gradle").strip() or "gradle"
+        cmd = [requested_gradle, args.gradle_task]
+        payload = {
+            "ok": True,
+            "dry_run": True,
+            "plugin_dir": str(plugin_dir),
+            "command": cmd,
+        }
+        if args.output_format == "json":
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print("koru autopilot install-plugin-jetbrains: dry-run")
+            print(f"  cwd: {plugin_dir}")
+            print("  " + " ".join(cmd))
+        return 0
+
+    try:
+        gradle_bin = resolve_gradle(args.gradle_bin)
+    except RuntimeError as exc:
+        print(f"koru autopilot install-plugin-jetbrains: {exc}", file=sys.stderr)
+        return 1
+
+    cmd = [gradle_bin, args.gradle_task]
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=str(plugin_dir),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError as exc:
+        print(f"koru autopilot install-plugin-jetbrains: {exc}", file=sys.stderr)
+        return 1
+
+    stdout = proc.stdout.strip()
+    stderr = proc.stderr.strip()
+    if proc.returncode != 0:
+        _render_jetbrains_failure(
+            plugin_dir=plugin_dir,
+            cmd=cmd,
+            returncode=proc.returncode,
+            stdout=stdout,
+            stderr=stderr,
+            output_format=args.output_format,
+        )
+        return 1
+
+    try:
+        artifact = resolve_artifact(plugin_dir)
+    except RuntimeError as exc:
+        print(f"koru autopilot install-plugin-jetbrains: {exc}", file=sys.stderr)
+        return 1
+
+    _render_jetbrains_success(
+        plugin_dir=plugin_dir,
+        cmd=cmd,
+        artifact=artifact,
+        stdout=stdout,
+        stderr=stderr,
+        output_format=args.output_format,
+    )
+    return 0

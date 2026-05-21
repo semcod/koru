@@ -9,15 +9,14 @@ public entrypoint is :func:`autopilot_main` which mirrors the
 import argparse
 import json
 import os
-import shutil
-import subprocess
+import shutil  # noqa: F401 - compatibility hook for existing CLI tests.
+import subprocess  # noqa: F401 - compatibility hook for existing CLI tests.
 import sys
-import threading
 import time
 from pathlib import Path
 from typing import Any
 
-from koru.autopilot import default_socket_path
+from koru.autopilot import default_socket_path, install_plugin_cli, systemd_cli, tail_cli
 from koru.autopilot.client import AutopilotClient
 from koru.autopilot.daemon import AutopilotDaemon
 from koru.autopilot.ide import (
@@ -26,13 +25,13 @@ from koru.autopilot.ide import (
     resolve_drive_target,
 )
 from koru.autopilot.injector import Injector, InjectorError
-from koru.autopilot.utils.client_helpers import call_daemon_method, resolve_xdg_path
-from koru.local_manager_client import (
-    LocalManagerClient,
-    LocalManagerSession,
+from koru.autopilot.local_manager import (
+    autopilot_local_manager_session,
     lifecycle_decision_action,
+    start_autopilot_manager_heartbeat,
 )
-from koruide.audit import AuditLog, default_log_path
+from koru.autopilot.utils.client_helpers import call_daemon_method
+from koruide.audit import AuditLog
 
 
 def _resolve_session_ides(raw: str) -> list[str]:
@@ -629,7 +628,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--log",
         type=Path,
         default=None,
-        help=f"Log file path (default: {default_log_path()}).",
+        help=f"Log file path (default: {tail_cli.default_log_path()}).",
     )
     tail.add_argument(
         "--format",
@@ -645,54 +644,6 @@ def _client(args: argparse.Namespace) -> AutopilotClient:
     return AutopilotClient(socket_path=args.socket)
 
 
-def _autopilot_local_manager_session(
-    args: argparse.Namespace,
-    *,
-    socket_path: Path,
-    project: Path | None,
-) -> LocalManagerSession | None:
-    client = LocalManagerClient.from_env()
-    if not client.enabled:
-        return None
-    return LocalManagerSession(
-        client=client,
-        worker_id=f"koru.autopilot:{os.getpid()}:{socket_path}",
-        worker_kind="koru.autopilot.daemon",
-        capabilities=["koru.autopilot", "autopilot.daemon", "ide.rpc"],
-        action_types=["koru.autopilot", "koru.autopilot.daemon"],
-    )
-
-
-def _start_autopilot_manager_heartbeat(
-    manager: LocalManagerSession | None,
-    daemon: AutopilotDaemon,
-    *,
-    socket_path: Path,
-    project: Path | None,
-) -> tuple[threading.Event, threading.Thread] | None:
-    if manager is None:
-        return None
-    stop = threading.Event()
-
-    def _run() -> None:
-        while not stop.wait(10.0):
-            manager.heartbeat(
-                metadata={
-                    "socket": str(socket_path),
-                    "project": str(project) if project is not None else None,
-                },
-            )
-            if manager.should_stop():
-                action = lifecycle_decision_action(manager.last_reply)
-                print(f"koru autopilot daemon: local manager decision={action}; stopping")
-                daemon.stop()
-                return
-
-    thread = threading.Thread(target=_run, name="koru-autopilot-local-manager", daemon=True)
-    thread.start()
-    return stop, thread
-
-
 # ----- action handlers ------------------------------------------------------
 
 
@@ -704,7 +655,7 @@ def _action_daemon(args: argparse.Namespace) -> int:
             print(f"koru autopilot: daemon already running on {socket_path}")
             return 0
     project = args.project.resolve() if args.handoff else None
-    manager = _autopilot_local_manager_session(args, socket_path=socket_path, project=project)
+    manager = autopilot_local_manager_session(socket_path=socket_path)
     if manager is not None:
         manager.start(
             project=project,
@@ -734,7 +685,7 @@ def _action_daemon(args: argparse.Namespace) -> int:
             )
         print(f"koru autopilot daemon: {exc}", file=sys.stderr)
         return 1
-    heartbeat = _start_autopilot_manager_heartbeat(
+    heartbeat = start_autopilot_manager_heartbeat(
         manager,
         daemon,
         socket_path=socket_path,
@@ -1103,339 +1054,33 @@ def _action_manage(args: argparse.Namespace) -> int:
     return 0 if report.ok else 1
 
 
-_PLUGIN_IDE_CLI: dict[str, tuple[str, ...]] = {
-    "windsurf": ("windsurf",),
-    "cursor": ("cursor",),
-    "vscode": ("code", "code-insiders", "code-oss", "vscodium", "codium"),
-}
-
-_PLUGIN_INSTALL_IDE_ALIASES: dict[str, str] = {
-    "pycharm": "jetbrains",
-}
-
-_PLUGIN_INSTALL_IDES = frozenset({"windsurf", "vscode", "cursor", "jetbrains"})
-
-
-def _plugin_repo_dir() -> Path:
-    return Path(__file__).resolve().parents[3] / "plugins" / "koru-autopilot-vscode"
-
-
-def _jetbrains_plugin_repo_dir() -> Path:
-    return Path(__file__).resolve().parents[3] / "plugins" / "koru-autopilot-jetbrains"
-
-
-def _resolve_plugin_vsix_path(vsix: Path | None) -> Path:
-    if vsix is not None:
-        candidate = vsix.expanduser().resolve()
-        if not candidate.is_file():
-            raise RuntimeError(f"vsix not found: {candidate}")
-        return candidate
-    plugin_dir = _plugin_repo_dir()
-    matches = sorted(
-        plugin_dir.glob("koru-autopilot-*.vsix"),
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
-    if not matches:
-        raise RuntimeError(
-            "no packaged .vsix found under plugins/koru-autopilot-vscode; "
-            "build one with: `cd plugins/koru-autopilot-vscode && npm install && npm run package`",
-        )
-    return matches[0]
-
-
-def _resolve_jetbrains_plugin_dir(raw_dir: Path | None) -> Path:
-    plugin_dir = (raw_dir or _jetbrains_plugin_repo_dir()).expanduser().resolve()
-    if not plugin_dir.is_dir():
-        raise RuntimeError(f"jetbrains plugin dir not found: {plugin_dir}")
-    if not (plugin_dir / "build.gradle.kts").is_file():
-        raise RuntimeError(f"missing build.gradle.kts in jetbrains plugin dir: {plugin_dir}")
-    return plugin_dir
-
-
-def _resolve_gradle_bin(raw: str) -> str:
-    candidate = (raw or "gradle").strip()
-    if not candidate:
-        candidate = "gradle"
-    candidate_path = Path(candidate).expanduser()
-    if candidate_path.is_file() and os.access(candidate_path, os.X_OK):
-        return str(candidate_path.resolve())
-    resolved = shutil.which(candidate)
-    if resolved:
-        return resolved
-    raise RuntimeError(f"could not find Gradle executable in PATH: {candidate}")
-
-
-def _resolve_jetbrains_plugin_artifact(plugin_dir: Path) -> Path:
-    dist_dir = plugin_dir / "build" / "distributions"
-    matches = sorted(
-        dist_dir.glob("*.zip"),
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
-    if not matches:
-        raise RuntimeError(
-            "no JetBrains plugin ZIP found under build/distributions; "
-            "run `gradle buildPlugin` in plugins/koru-autopilot-jetbrains"
-        )
-    return matches[0]
-
-
-def _ide_from_terminal_env() -> str | None:
-    if os.environ.get("PYCHARM_HOSTED"):
-        return "jetbrains"
-    term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
-    if term_program in ("vscode", "code"):
-        return "vscode"
-    if term_program == "cursor":
-        return "cursor"
-    if term_program == "windsurf":
-        return "windsurf"
-    if term_program in ("pycharm", "jetbrains", "intellij", "idea"):
-        return "jetbrains"
-    if os.environ.get("VSCODE_PID"):
-        return "vscode"
-    return None
-
-
-def _resolve_plugin_target_ide(raw_ide: str) -> str:
-    requested = _PLUGIN_INSTALL_IDE_ALIASES.get(raw_ide, raw_ide)
-    if requested != "auto":
-        return requested
-    env_guess = _ide_from_terminal_env()
-    if env_guess in _PLUGIN_INSTALL_IDES:
-        return env_guess
-    focused = detect_focused_ide_id()
-    if focused in _PLUGIN_INSTALL_IDES:
-        return str(focused)
-    detected = [ide for ide in detect_running_ides() if ide.id in _PLUGIN_INSTALL_IDES]
-    if len(detected) == 1:
-        return detected[0].id
-    if not detected:
-        raise RuntimeError(
-            "could not detect running editor for plugin install; pass --ide "
-            "windsurf|vscode|cursor|jetbrains|pycharm",
-        )
-    ids = ", ".join(ide.id for ide in detected)
-    raise RuntimeError(
-        "multiple supported IDEs detected with no clear active one "
-        f"({ids}); pass --ide windsurf|vscode|cursor|jetbrains|pycharm",
-    )
-
-
-def _resolve_plugin_editor_bin(ide: str) -> str:
-    if ide == "jetbrains":
-        raise RuntimeError(
-            "jetbrains plugin install is not supported via `koru autopilot install-plugin`; "
-            "build/install the IntelliJ plugin from `plugins/koru-autopilot-jetbrains` "
-            "(see README.md)"
-        )
-    if ide not in _PLUGIN_IDE_CLI:
-        raise RuntimeError(f"unsupported editor for plugin install: {ide}")
-    for candidate in _PLUGIN_IDE_CLI[ide]:
-        resolved = shutil.which(candidate)
-        if resolved:
-            return resolved
-    choices = "|".join(_PLUGIN_IDE_CLI[ide])
-    raise RuntimeError(f"could not find editor CLI in PATH for {ide} (tried: {choices})")
-
-
-def _render_install_plugin_dry_run(
-    ide: str,
-    editor_bin: str,
-    vsix_path: Path,
-    cmd: list[str],
-    output_format: str,
-) -> None:
-    """Render install-plugin dry-run output."""
-    payload = {
-        "ide": ide,
-        "editor": editor_bin,
-        "vsix": str(vsix_path),
-        "command": cmd,
-        "dry_run": True,
-        "ok": True,
-    }
-    if output_format == "json":
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        print("koru autopilot install-plugin: dry-run")
-        print("  " + " ".join(cmd))
-
-
-def _render_install_plugin_result(
-    ide: str,
-    editor_bin: str,
-    cmd: list[str],
-    ok: bool,
-    stdout: str,
-    stderr: str,
-    output_format: str,
-) -> None:
-    """Render install-plugin execution result."""
-    payload = {
-        "ide": ide,
-        "editor": editor_bin,
-        "command": cmd,
-        "ok": ok,
-        "returncode": 0 if ok else 1,
-        "stdout": stdout,
-        "stderr": stderr,
-    }
-    if output_format == "json":
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        if ok:
-            print(f"koru autopilot install-plugin: installed for {ide} via {editor_bin}")
-        else:
-            print(f"koru autopilot install-plugin: install failed for {ide}", file=sys.stderr)
-        if stdout:
-            print(stdout)
-        if stderr:
-            print(stderr, file=sys.stderr)
+_plugin_repo_dir = install_plugin_cli.plugin_repo_dir
+_jetbrains_plugin_repo_dir = install_plugin_cli.jetbrains_plugin_repo_dir
+_resolve_plugin_vsix_path = install_plugin_cli.resolve_plugin_vsix_path
+_resolve_jetbrains_plugin_dir = install_plugin_cli.resolve_jetbrains_plugin_dir
+_resolve_gradle_bin = install_plugin_cli.resolve_gradle_bin
+_resolve_jetbrains_plugin_artifact = install_plugin_cli.resolve_jetbrains_plugin_artifact
+_ide_from_terminal_env = install_plugin_cli.ide_from_terminal_env
+_resolve_plugin_target_ide = install_plugin_cli.resolve_plugin_target_ide
+_resolve_plugin_editor_bin = install_plugin_cli.resolve_plugin_editor_bin
 
 
 def _action_install_plugin(args: argparse.Namespace) -> int:
-    try:
-        ide = _resolve_plugin_target_ide(args.ide)
-        editor_bin = _resolve_plugin_editor_bin(ide)
-        vsix_path = _resolve_plugin_vsix_path(args.vsix)
-    except RuntimeError as exc:
-        print(f"koru autopilot install-plugin: {exc}", file=sys.stderr)
-        return 1
-
-    cmd = [editor_bin, "--install-extension", str(vsix_path)]
-    if args.force:
-        cmd.append("--force")
-
-    if args.dry_run:
-        _render_install_plugin_dry_run(ide, editor_bin, vsix_path, cmd, args.output_format)
-        return 0
-
-    try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
-    except OSError as exc:
-        print(f"koru autopilot install-plugin: {exc}", file=sys.stderr)
-        return 1
-
-    ok = proc.returncode == 0
-    _render_install_plugin_result(
-        ide,
-        editor_bin,
-        cmd,
-        ok,
-        proc.stdout.strip(),
-        proc.stderr.strip(),
-        args.output_format,
+    return install_plugin_cli.action_install_plugin(
+        args,
+        resolve_target_ide=_resolve_plugin_target_ide,
+        resolve_editor_bin=_resolve_plugin_editor_bin,
+        resolve_vsix_path=_resolve_plugin_vsix_path,
     )
-    return 0 if ok else 1
 
 
 def _action_install_plugin_jetbrains(args: argparse.Namespace) -> int:
-    try:
-        plugin_dir = _resolve_jetbrains_plugin_dir(args.plugin_dir)
-    except RuntimeError as exc:
-        print(f"koru autopilot install-plugin-jetbrains: {exc}", file=sys.stderr)
-        return 1
-
-    if args.dry_run:
-        requested_gradle = (args.gradle_bin or "gradle").strip() or "gradle"
-        cmd = [requested_gradle, args.gradle_task]
-        payload = {
-            "ok": True,
-            "dry_run": True,
-            "plugin_dir": str(plugin_dir),
-            "command": cmd,
-        }
-        if args.output_format == "json":
-            print(json.dumps(payload, indent=2, sort_keys=True))
-        else:
-            print("koru autopilot install-plugin-jetbrains: dry-run")
-            print(f"  cwd: {plugin_dir}")
-            print("  " + " ".join(cmd))
-        return 0
-
-    try:
-        gradle_bin = _resolve_gradle_bin(args.gradle_bin)
-    except RuntimeError as exc:
-        print(f"koru autopilot install-plugin-jetbrains: {exc}", file=sys.stderr)
-        return 1
-
-    cmd = [gradle_bin, args.gradle_task]
-
-    try:
-        proc = subprocess.run(
-            cmd,
-            cwd=str(plugin_dir),
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    except OSError as exc:
-        print(f"koru autopilot install-plugin-jetbrains: {exc}", file=sys.stderr)
-        return 1
-
-    stdout = proc.stdout.strip()
-    stderr = proc.stderr.strip()
-    if proc.returncode != 0:
-        if args.output_format == "json":
-            print(
-                json.dumps(
-                    {
-                        "ok": False,
-                        "plugin_dir": str(plugin_dir),
-                        "command": cmd,
-                        "returncode": proc.returncode,
-                        "stdout": stdout,
-                        "stderr": stderr,
-                    },
-                    indent=2,
-                    sort_keys=True,
-                )
-            )
-        else:
-            print("koru autopilot install-plugin-jetbrains: build failed", file=sys.stderr)
-            if stdout:
-                print(stdout)
-            if stderr:
-                print(stderr, file=sys.stderr)
-        return 1
-
-    try:
-        artifact = _resolve_jetbrains_plugin_artifact(plugin_dir)
-    except RuntimeError as exc:
-        print(f"koru autopilot install-plugin-jetbrains: {exc}", file=sys.stderr)
-        return 1
-
-    hint = (
-        "Install in PyCharm/IntelliJ: Settings -> Plugins -> gear icon -> "
-        "Install Plugin from Disk..."
+    return install_plugin_cli.action_install_plugin_jetbrains(
+        args,
+        resolve_plugin_dir=_resolve_jetbrains_plugin_dir,
+        resolve_gradle=_resolve_gradle_bin,
+        resolve_artifact=_resolve_jetbrains_plugin_artifact,
     )
-    if args.output_format == "json":
-        print(
-            json.dumps(
-                {
-                    "ok": True,
-                    "plugin_dir": str(plugin_dir),
-                    "command": cmd,
-                    "artifact": str(artifact),
-                    "manual_install_hint": hint,
-                    "stdout": stdout,
-                    "stderr": stderr,
-                },
-                indent=2,
-                sort_keys=True,
-            )
-        )
-    else:
-        print("koru autopilot install-plugin-jetbrains: built plugin package")
-        print(f"  artifact: {artifact}")
-        print(f"  {hint}")
-        if stdout:
-            print(stdout)
-        if stderr:
-            print(stderr, file=sys.stderr)
-    return 0
 
 
 def _build_brief(project: Path) -> str:
@@ -1492,162 +1137,27 @@ def _action_handoff(args: argparse.Namespace) -> int:
     return 0 if reply.get("ok", True) else 1
 
 
-def _format_tail_entry(entry: dict) -> str:
-    """Render one audit-log line as a single text row."""
-    ts = entry.get("ts", "?")
-    event = entry.get("event", "?")
-    parts = [ts, event]
-    for key in (
-        "ide",
-        "backend",
-        "chars",
-        "submit",
-        "ok",
-        "chat",
-        "reason",
-        "version",
-        "source",
-        "socket",
-        "handoff",
-        "error",
-    ):
-        if key in entry and entry[key] is not None:
-            parts.append(f"{key}={entry[key]}")
-    return "  ".join(str(p) for p in parts)
-
-
-def _render_tail_json(tail: list[str]) -> None:
-    """Render tail output in JSON format."""
-    parsed = []
-    for line in tail:
-        try:
-            parsed.append(json.loads(line))
-        except json.JSONDecodeError:
-            continue
-    print(json.dumps(parsed, indent=2, sort_keys=True))
-
-
-def _render_tail_text(tail: list[str]) -> None:
-    """Render tail output in text format."""
-    for line in tail:
-        try:
-            entry = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        print(_format_tail_entry(entry))
+_format_tail_entry = tail_cli.format_tail_entry
+_render_tail_json = tail_cli.render_tail_json
+_render_tail_text = tail_cli.render_tail_text
 
 
 def _action_tail(args: argparse.Namespace) -> int:
-    """P2.8: dump the last ``--lines`` audit entries."""
-    log_path = args.log or default_log_path()
-    if not log_path.is_file():
-        print(f"koru autopilot tail: no log at {log_path}", file=sys.stderr)
-        return 1
-    try:
-        raw = log_path.read_text(encoding="utf-8", errors="replace").splitlines()
-    except OSError as exc:
-        print(f"koru autopilot tail: {exc}", file=sys.stderr)
-        return 1
-    tail = raw[-args.lines :] if args.lines > 0 else raw
-    if args.output_format == "json":
-        _render_tail_json(tail)
-        return 0
-    _render_tail_text(tail)
-    return 0
+    return tail_cli.action_tail(args)
 
 
-def _systemd_user_dir() -> Path:
-    """Resolve the XDG ``systemd/user`` directory."""
-    return resolve_xdg_path("systemd/user")
-
-
-def _resolve_koru_bin() -> str:
-    """Best-effort absolute path to the ``koru`` executable.
-
-    Priority:
-    1) ``koru`` on ``PATH``;
-    2) sibling of ``sys.executable`` (common for virtualenvs);
-    3) user-local default used in docs.
-    """
-    on_path = shutil.which("koru")
-    if on_path:
-        return on_path
-    sibling = Path(sys.executable).with_name("koru")
-    if sibling.is_file() and os.access(sibling, os.X_OK):
-        return str(sibling)
-    prefixed = Path(sys.prefix) / "bin" / "koru"
-    if prefixed.is_file() and os.access(prefixed, os.X_OK):
-        return str(prefixed)
-    return "%h/.local/bin/koru"
-
-
-def _render_unit(koru_bin: str) -> str:
-    """Build the systemd unit text with the resolved koru binary path.
-
-    The shipped template under ``systemd/koru-autopilot.service`` is the
-    source of truth; we read it, substitute the ExecStart line so it
-    matches the user's actual koru install, and write the result.
-    """
-    template_path = Path(__file__).resolve().parents[3] / "systemd" / "koru-autopilot.service"
-    try:
-        template = template_path.read_text(encoding="utf-8")
-    except OSError:
-        # Fallback to a minimal inline template if the file isn't shipped
-        # (e.g. in a wheel that excluded it).
-        template = (
-            "[Unit]\n"
-            "Description=koru autopilot daemon\n"
-            "After=graphical-session.target\n"
-            "PartOf=graphical-session.target\n\n"
-            "[Service]\n"
-            "Type=simple\n"
-            "ExecStart=__KORU_BIN__ autopilot daemon --idempotent --no-handoff\n"
-            "Restart=on-failure\n"
-            "RestartSec=2\n\n"
-            "[Install]\n"
-            "WantedBy=default.target\n"
-        )
-    # Replace the ExecStart line so the user gets the koru that's
-    # actually available in this environment, not a hard-coded path.
-    lines = []
-    for line in template.splitlines():
-        if line.startswith("ExecStart=") and "autopilot daemon" in line:
-            lines.append(f"ExecStart={koru_bin} autopilot daemon --idempotent --no-handoff")
-        else:
-            lines.append(line)
-    return "\n".join(lines) + "\n"
+_systemd_user_dir = systemd_cli.systemd_user_dir
+_resolve_koru_bin = systemd_cli.resolve_koru_bin
+_render_unit = systemd_cli.render_unit
 
 
 def _action_install_unit(args: argparse.Namespace) -> int:
-    """P2.6: install the systemd --user service unit."""
-    koru_bin = _resolve_koru_bin()
-    rendered = _render_unit(koru_bin)
-    if args.print_only:
-        sys.stdout.write(rendered)
-        return 0
-    dest = args.dest or _systemd_user_dir() / "koru-autopilot.service"
-    if dest.exists() and not args.force:
-        print(
-            f"koru autopilot install-unit: {dest} already exists (pass --force to overwrite).",
-            file=sys.stderr,
-        )
-        return 1
-    try:
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(rendered, encoding="utf-8")
-    except OSError as exc:
-        print(f"koru autopilot install-unit: {exc}", file=sys.stderr)
-        return 1
-    print(f"koru autopilot: installed {dest}")
-    print()
-    print("Next steps:")
-    print("  systemctl --user daemon-reload")
-    print("  systemctl --user enable --now koru-autopilot.service")
-    print("  journalctl --user -u koru-autopilot -f      # follow logs")
-    print()
-    print("To enable auto-handoff for a project, override ExecStart with:")
-    print("  systemctl --user edit koru-autopilot.service")
-    return 0
+    return systemd_cli.action_install_unit(
+        args,
+        resolve_bin=_resolve_koru_bin,
+        render=_render_unit,
+        resolve_unit_dir=_systemd_user_dir,
+    )
 
 
 _ACTIONS = {

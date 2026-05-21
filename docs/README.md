@@ -31,7 +31,8 @@ For LLM agents starting a session in a koru-driven repository:
    layered map: plugin+socket, MCP, vendor CLIs, OS injectors (no single
    universal “wake LLM” API).
 7. **[`autopilot-quickstart.md`](./autopilot-quickstart.md)** — how to
-   drive your IDE's LLM chat from a terminal (`koru autopilot`).
+   drive your IDE's LLM chat from a terminal (`koru autopilot`), including
+   plugin install repair, version drift checks, and strict runtime gates.
    Companion design doc: [`autopilot-design.md`](./autopilot-design.md);
    formal control-plane protocol: [`IDE_PROTOCOL.md`](./IDE_PROTOCOL.md);
    open items in [`autopilot-roadmap.md`](./autopilot-roadmap.md).

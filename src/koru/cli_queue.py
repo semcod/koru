@@ -1,0 +1,163 @@
+"""CLI command for managing the planfile queue."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+from koru.events import emit_management_event
+from koru.queue_clean import CleanupReport, clean_queue
+
+
+def build_queue_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru queue",
+        description=("Manage the planfile queue. Subcommands: clean (sweep stale test fixtures)."),
+    )
+    sub = parser.add_subparsers(dest="subcommand", required=True)
+
+    clean = sub.add_parser(
+        "clean",
+        help="Sweep stale fixture/test tickets out of the queue (dry-run by default).",
+        description=(
+            "Identify ``open`` / ``ready`` tickets that look like test "
+            "fixtures (labels match FIXTURE_LABELS, optionally also "
+            "names matching ^TEST:/^Test ) and complete them with a "
+            "structured KORU-QUEUE-CLEAN audit note. Default is dry-run; "
+            "pass --apply to actually close them."
+        ),
+    )
+    clean.add_argument(
+        "--apply",
+        action="store_true",
+        help="Actually close the candidates. Without this, prints what would happen.",
+    )
+    clean.add_argument(
+        "--include-names",
+        action="store_true",
+        help="Also match tickets whose name starts with 'Test ' or 'TEST:'.",
+    )
+    clean.add_argument(
+        "--include-active",
+        action="store_true",
+        help=(
+            "DANGEROUS: also consider in_progress / waiting_input tickets. "
+            "By default these are surfaced as 'skipped active' so the "
+            "operator can decide whether to interrupt them."
+        ),
+    )
+    clean.add_argument(
+        "--max-age-days",
+        type=float,
+        default=None,
+        help=(
+            "Only sweep matching tickets older than N days. Used as a "
+            "safety modifier on top of label/name match — never on its own."
+        ),
+    )
+    clean.add_argument(
+        "--reason",
+        default="swept by koru queue clean",
+        help="Free-text reason recorded in the audit note.",
+    )
+    clean.add_argument(
+        "--project",
+        type=Path,
+        default=Path.cwd(),
+        help="Project root containing .planfile/.",
+    )
+    clean.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format for the report.",
+    )
+    return parser
+
+
+def render_clean_report_text(report: CleanupReport) -> str:
+    lines: list[str] = []
+    mode = "DRY-RUN" if report.dry_run else "APPLIED"
+    header = f"koru queue clean [{mode}]"
+    lines.append(header)
+    lines.append("=" * len(header))
+    if not report.candidates:
+        lines.append("No fixture-like tickets found in the queue. Nothing to do.")
+        if report.skipped_active:
+            lines.append("")
+            lines.append(
+                f"Active tickets matching cleanup rules but skipped "
+                f"(use --include-active to override): {', '.join(report.skipped_active)}",
+            )
+        return "\n".join(lines)
+    lines.append(f"Candidates ({len(report.candidates)}):")
+    for c in report.candidates:
+        labels = ",".join(c.labels) if c.labels else "(no labels)"
+        lines.append(f"  - {c.ticket_id} [{c.status}] {c.name[:60]}")
+        lines.append(f"      labels: {labels}")
+        lines.append(f"      rules : {', '.join(c.matched_rules)}")
+        if c.age_days is not None:
+            lines.append(f"      age   : {c.age_days:.1f} days")
+    if report.dry_run:
+        lines.append("")
+        lines.append("Re-run with --apply to actually close these tickets.")
+    else:
+        if report.applied:
+            lines.append("")
+            lines.append(f"✓ Closed: {', '.join(report.applied)}")
+        if report.failed:
+            lines.append("")
+            lines.append("✗ Failed:")
+            for tid, err in report.failed:
+                lines.append(f"  - {tid}: {err}")
+    if report.skipped_active:
+        lines.append("")
+        lines.append(
+            f"⚠ Active tickets matching cleanup rules (skipped, use "
+            f"--include-active to override): {', '.join(report.skipped_active)}",
+        )
+    return "\n".join(lines)
+
+
+def queue_main(argv: list[str]) -> int:
+    args = build_queue_parser().parse_args(argv)
+    if args.subcommand != "clean":
+        print(f"koru queue: unknown subcommand {args.subcommand!r}", file=sys.stderr)
+        return 2
+    try:
+        report = clean_queue(
+            args.project,
+            include_names=args.include_names,
+            include_active=args.include_active,
+            max_age_days=args.max_age_days,
+            apply=args.apply,
+            reason=args.reason,
+        )
+    except RuntimeError as exc:
+        print(f"koru queue clean: {exc}", file=sys.stderr)
+        return 1
+
+    if args.output_format == "json":
+        print(json.dumps(report.to_dict(), indent=2, sort_keys=True, default=str))
+    else:
+        print(render_clean_report_text(report))
+
+    emit_management_event(
+        tool="koru.queue.clean",
+        action="completed" if not report.failed else "failed",
+        status="completed" if not report.failed else "failed",
+        level="error" if report.failed else "info",
+        message=(
+            f"{'dry-run' if report.dry_run else 'applied'}: "
+            f"{len(report.candidates)} candidates, "
+            f"{len(report.applied)} applied, "
+            f"{len(report.failed)} failed"
+        ),
+        details=report.to_dict(),
+    )
+    if report.failed:
+        return 1
+    return 0

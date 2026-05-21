@@ -466,5 +466,46 @@ class TestReportShape(unittest.TestCase):
             )
 
 
+class TestWupAndInotifyProbes(unittest.TestCase):
+    def test_inotify_watches_non_linux_skipped(self) -> None:
+        from koru.doctor import _check_inotify_watches
+        with patch("sys.platform", "darwin"):
+            status, detail = _check_inotify_watches(Path("."))
+            self.assertEqual(status, SKIP)
+            self.assertIn("only applicable", detail)
+
+    def test_inotify_watches_linux_low_limit_fails(self) -> None:
+        from koru.doctor import _check_inotify_watches
+        with patch("sys.platform", "linux"):
+            with patch("pathlib.Path.is_file", return_value=True):
+                with patch("pathlib.Path.read_text", return_value="16384"):
+                    status, detail = _check_inotify_watches(Path("."))
+                    self.assertEqual(status, FAIL)
+                    self.assertIn("too low", detail)
+
+    def test_inotify_watches_linux_high_limit_passes(self) -> None:
+        from koru.doctor import _check_inotify_watches
+        with patch("sys.platform", "linux"):
+            with patch("pathlib.Path.is_file", return_value=True):
+                with patch("pathlib.Path.read_text", return_value="1048576"):
+                    status, detail = _check_inotify_watches(Path("."))
+                    self.assertEqual(status, PASS)
+                    self.assertIn("sufficient", detail)
+
+    def test_wup_binary_missing_warns(self) -> None:
+        from koru.doctor import _check_wup_binary
+        with patch("shutil.which", return_value=None):
+            status, detail = _check_wup_binary(Path("."))
+            self.assertEqual(status, WARN)
+            self.assertIn("not on PATH", detail)
+
+    def test_wup_binary_present_passes(self) -> None:
+        from koru.doctor import _check_wup_binary
+        with patch("shutil.which", return_value="/usr/bin/wup"):
+            status, detail = _check_wup_binary(Path("."))
+            self.assertEqual(status, PASS)
+            self.assertIn("/usr/bin/wup", detail)
+
+
 if __name__ == "__main__":
     unittest.main()

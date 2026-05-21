@@ -148,6 +148,8 @@ def run_diagnostics(project: Path) -> DoctorReport:
         ("koru_project_pipeline", _check_koru_project_pipeline),
         ("autonomous_environ", autonomous_environ_doctor_probe),
         ("agent_backends_registry", _check_agent_backends_registry),
+        ("inotify_watches", _check_inotify_watches),
+        ("wup_binary", _check_wup_binary),
     ]
     if has_git:
         probes.append(("gitignore", _check_gitignore))
@@ -459,6 +461,36 @@ def _check_pytest_collect(project: Path) -> tuple[str, str]:
     # scan` is the place to dig into per-file errors. We just tell the
     # operator *that* it's broken and where to look.
     return WARN, ("pytest --collect-only failed — run `koru scan` for actionable per-file tickets")
+
+
+def _check_inotify_watches(project: Path) -> tuple[str, str]:
+    """Check Linux inotify watches limit (for WUP/watchdog file watching stability)."""
+    import sys
+    del project
+    if sys.platform != "linux":
+        return SKIP, "only applicable on Linux"
+
+    path = Path("/proc/sys/fs/inotify/max_user_watches")
+    if not path.is_file():
+        return SKIP, f"{path} not found"
+
+    try:
+        limit_str = path.read_text(encoding="utf-8").strip()
+        limit = int(limit_str)
+        if limit < 524288:
+            return FAIL, f"watches limit too low: {limit} (recommend >= 524288; use `sudo sysctl -w fs.inotify.max_user_watches=1048576` to fix)"
+        return PASS, f"limit is {limit} (sufficient)"
+    except Exception as exc:
+        return WARN, f"could not read limit: {exc}"
+
+
+def _check_wup_binary(_project: Path) -> tuple[str, str]:
+    """Check if the WUP regression testing watcher is available on PATH."""
+    import shutil
+    on_path = shutil.which("wup")
+    if on_path:
+        return PASS, on_path
+    return WARN, "`wup` not on PATH — WUP-driven hot-reload checks will be skipped"
 
 
 def _check_ci_command(project: Path) -> tuple[str, str]:
