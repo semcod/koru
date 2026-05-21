@@ -10041,3 +10041,583 @@ sprint:
           verify.'
       created_at: '2026-05-21T15:20:46.977743+00:00'
       updated_at: '2026-05-21T15:20:46.977743+00:00'
+    STARTER-164:
+      id: STARTER-164
+      name: 'Split god module: src/koru/autonomous.py'
+      status: open
+      priority: high
+      sprint: current
+      source:
+        tool: koru-scan
+        timestamp: '2026-05-21T15:29:03.085026+00:00'
+        context:
+          input: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+            god module (2460 lines, 5 classes, 76 methods). Split into focused submodules
+            by responsibility.'
+          signal: code2llm_god
+      description: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as
+        a god module (2460 lines, 5 classes, 76 methods). Split into focused submodules
+        by responsibility.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - god-module
+      - refactor
+      - scan
+      blocked_by: []
+      blocks: []
+      files:
+      - src/koru/autonomous.py
+      - project/analysis.toon.yaml
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+          god module (2460 lines, 5 classes, 76 methods). Split into focused submodules
+          by responsibility.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-21T15:29:03.085026+00:00'
+        action: created
+        source: koru task
+        message: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+          god module (2460 lines, 5 classes, 76 methods). Split into focused submodules
+          by responsibility.'
+      created_at: '2026-05-21T15:29:03.085026+00:00'
+      updated_at: '2026-05-21T15:29:03.085026+00:00'
+    STARTER-165:
+      id: STARTER-165
+      name: 'Reduce cyclomatic complexity: _handle_plugin_event (CC=15, limit=15)'
+      status: open
+      priority: normal
+      sprint: current
+      source:
+        tool: koru-scan
+        timestamp: '2026-05-21T15:29:04.160797+00:00'
+        context:
+          input: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+      description: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      blocked_by: []
+      blocks: []
+      files:
+      - project/analysis.toon.yaml
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-21T15:29:04.160797+00:00'
+        action: created
+        source: koru task
+        message: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      created_at: '2026-05-21T15:29:04.160797+00:00'
+      updated_at: '2026-05-21T15:29:04.160797+00:00'
+    STARTER-166:
+      id: STARTER-166
+      name: 'Reduce cyclomatic complexity: _performInject (CC=17, limit=15)'
+      status: open
+      priority: normal
+      sprint: current
+      source:
+        tool: koru-scan
+        timestamp: '2026-05-21T15:29:05.280667+00:00'
+        context:
+          input: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+      description: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      blocked_by: []
+      blocks: []
+      files:
+      - project/analysis.toon.yaml
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-21T15:29:05.280667+00:00'
+        action: created
+        source: koru task
+        message: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      created_at: '2026-05-21T15:29:05.280667+00:00'
+      updated_at: '2026-05-21T15:29:05.280667+00:00'
+    STARTER-167:
+      id: STARTER-167
+      name: 'Reduce cyclomatic complexity: autonomous_main (CC=15, limit=15)'
+      status: open
+      priority: normal
+      sprint: current
+      source:
+        tool: koru-scan
+        timestamp: '2026-05-21T15:29:07.017057+00:00'
+        context:
+          input: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+      description: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      blocked_by: []
+      blocks: []
+      files:
+      - project/analysis.toon.yaml
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-21T15:29:07.017057+00:00'
+        action: created
+        source: koru task
+        message: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      created_at: '2026-05-21T15:29:07.017057+00:00'
+      updated_at: '2026-05-21T15:29:07.017057+00:00'
+    STARTER-168:
+      id: STARTER-168
+      name: 'code2llm refactor: split 3 high-CC methods'
+      status: open
+      priority: normal
+      sprint: current
+      source:
+        tool: koru-scan
+        timestamp: '2026-05-21T15:29:08.702995+00:00'
+        context:
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split 3 high-CC
+            methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f
+            toon` to verify.'
+          signal: code2llm_refactor
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split 3 high-CC
+        methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+        to verify.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - refactor
+      - scan
+      blocked_by: []
+      blocks: []
+      files:
+      - project/analysis.toon.yaml
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split 3 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-21T15:29:08.702995+00:00'
+        action: created
+        source: koru task
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split 3 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+      created_at: '2026-05-21T15:29:08.702995+00:00'
+      updated_at: '2026-05-21T15:29:08.702995+00:00'
+    STARTER-169:
+      id: STARTER-169
+      name: 'code2llm refactor: split src/koru/autonomous.py'
+      status: open
+      priority: normal
+      sprint: current
+      source:
+        tool: koru-scan
+        timestamp: '2026-05-21T15:29:09.647054+00:00'
+        context:
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+            (god module). Execute this refactor step; re-run `code2llm ./ -f toon`
+            to verify.'
+          signal: code2llm_refactor
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+        (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+        verify.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - refactor
+      - scan
+      blocked_by: []
+      blocks: []
+      files:
+      - project/analysis.toon.yaml
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+          (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+          verify.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-21T15:29:09.647054+00:00'
+        action: created
+        source: koru task
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+          (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+          verify.'
+      created_at: '2026-05-21T15:29:09.647054+00:00'
+      updated_at: '2026-05-21T15:29:09.647054+00:00'
+    STARTER-170:
+      id: STARTER-170
+      name: 'Split god module: src/koru/autonomous.py'
+      status: open
+      priority: high
+      sprint: current
+      source:
+        tool: koru-scan
+        timestamp: '2026-05-21T15:30:15.537535+00:00'
+        context:
+          input: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+            god module (2460 lines, 5 classes, 76 methods). Split into focused submodules
+            by responsibility.'
+          signal: code2llm_god
+      description: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as
+        a god module (2460 lines, 5 classes, 76 methods). Split into focused submodules
+        by responsibility.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - god-module
+      - refactor
+      - scan
+      blocked_by: []
+      blocks: []
+      files:
+      - src/koru/autonomous.py
+      - project/analysis.toon.yaml
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+          god module (2460 lines, 5 classes, 76 methods). Split into focused submodules
+          by responsibility.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-21T15:30:15.537535+00:00'
+        action: created
+        source: koru task
+        message: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+          god module (2460 lines, 5 classes, 76 methods). Split into focused submodules
+          by responsibility.'
+      created_at: '2026-05-21T15:30:15.537535+00:00'
+      updated_at: '2026-05-21T15:30:15.537535+00:00'
+    STARTER-171:
+      id: STARTER-171
+      name: 'Reduce cyclomatic complexity: _handle_plugin_event (CC=15, limit=15)'
+      status: open
+      priority: normal
+      sprint: current
+      source:
+        tool: koru-scan
+        timestamp: '2026-05-21T15:30:16.542892+00:00'
+        context:
+          input: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+      description: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      blocked_by: []
+      blocks: []
+      files:
+      - project/analysis.toon.yaml
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-21T15:30:16.542892+00:00'
+        action: created
+        source: koru task
+        message: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      created_at: '2026-05-21T15:30:16.542892+00:00'
+      updated_at: '2026-05-21T15:30:16.542892+00:00'
+    STARTER-172:
+      id: STARTER-172
+      name: 'Reduce cyclomatic complexity: _performInject (CC=17, limit=15)'
+      status: open
+      priority: normal
+      sprint: current
+      source:
+        tool: koru-scan
+        timestamp: '2026-05-21T15:30:18.399994+00:00'
+        context:
+          input: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+      description: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      blocked_by: []
+      blocks: []
+      files:
+      - project/analysis.toon.yaml
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-21T15:30:18.399994+00:00'
+        action: created
+        source: koru task
+        message: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      created_at: '2026-05-21T15:30:18.399994+00:00'
+      updated_at: '2026-05-21T15:30:18.399994+00:00'
+    STARTER-173:
+      id: STARTER-173
+      name: 'Reduce cyclomatic complexity: autonomous_main (CC=15, limit=15)'
+      status: open
+      priority: normal
+      sprint: current
+      source:
+        tool: koru-scan
+        timestamp: '2026-05-21T15:30:19.417529+00:00'
+        context:
+          input: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+      description: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      blocked_by: []
+      blocks: []
+      files:
+      - project/analysis.toon.yaml
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-21T15:30:19.417529+00:00'
+        action: created
+        source: koru task
+        message: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      created_at: '2026-05-21T15:30:19.417529+00:00'
+      updated_at: '2026-05-21T15:30:19.417529+00:00'

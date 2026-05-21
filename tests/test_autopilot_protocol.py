@@ -79,7 +79,14 @@ def test_decode_extra_fields_land_in_data() -> None:
 
 def test_builders_produce_valid_envelopes() -> None:
     for built in [
-        hello(ide="vscode", version="0.1", pid=42, id="h"),
+        hello(
+            ide="vscode",
+            version="0.1",
+            pid=42,
+            id="h",
+            protocol_version=1,
+            capabilities=["chat.submit"],
+        ),
         chat_send("text", submit=True, id="c"),
         drive("text", submit=False, ide="windsurf", id="d"),
         ack("r1", info={"backend": "xdotool"}),
@@ -107,13 +114,20 @@ def test_error_carries_message() -> None:
 
 
 def test_decode_drops_unknown_fields_for_strict_type() -> None:
-    """``hello`` accepts {ide, version, pid}; anything else is dropped."""
+    """``hello`` accepts known handshake fields; anything else is dropped."""
     raw = (
         b'{"type":"hello","id":"h","ide":"vscode","version":"0.1","pid":1,'
+        b'"protocolVersion":1,"capabilities":["chat.submit"],'
         b'"__proto__":"evil","arbitrary":"stuff"}\n'
     )
     msg = decode(raw)
-    assert msg.data == {"ide": "vscode", "version": "0.1", "pid": 1}
+    assert msg.data == {
+        "ide": "vscode",
+        "version": "0.1",
+        "pid": 1,
+        "protocolVersion": 1,
+        "capabilities": ["chat.submit"],
+    }
     assert "__proto__" not in msg.data
     assert "arbitrary" not in msg.data
 

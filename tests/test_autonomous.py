@@ -14,6 +14,7 @@ import pytest
 from koru import autonomous as autonomous_mod
 from koru import autonomous_cycle as autonomous_cycle_mod
 from koru import autonomous_env as autonomous_env_mod
+from koru import autonomous_processes as autonomous_processes_mod
 from koru import autonomous_wup as autonomous_wup_mod
 from koru.queue.types import QueueLoopResult
 from koru.scan import ScanResult
@@ -487,6 +488,31 @@ def test_effective_cycle_autopilot_skips_required_plugin_when_missing(
     assert any("autopilot skipped this cycle" in msg for msg in messages)
 
 
+def test_autopilot_terminal_conflict_blocks_cross_vscode_family_drive(monkeypatch) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_ALLOW_CROSS_IDE", raising=False)
+    monkeypatch.setattr(
+        autonomous_cycle_mod,
+        "detect_terminal_host_ide_id",
+        lambda: "vscodium",
+    )
+
+    reason = autonomous_cycle_mod._autopilot_terminal_conflict_reason("vscode")
+
+    assert reason is not None
+    assert "terminal host is vscodium" in reason
+
+
+def test_autopilot_terminal_conflict_can_be_explicitly_allowed(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_ALLOW_CROSS_IDE", "1")
+    monkeypatch.setattr(
+        autonomous_cycle_mod,
+        "detect_terminal_host_ide_id",
+        lambda: "vscodium",
+    )
+
+    assert autonomous_cycle_mod._autopilot_terminal_conflict_reason("vscode") is None
+
+
 def test_effective_cycle_autopilot_allows_non_plugin_required_ide() -> None:
     enabled = autonomous_mod._effective_cycle_autopilot_enabled(
         True,
@@ -551,13 +577,13 @@ def test_stop_prior_autonomous_for_auto_start_terminates(tmp_path, monkeypatch) 
     ]
     stopped: list[int] = []
     monkeypatch.setattr(
-        autonomous_mod,
+        autonomous_processes_mod,
         "_find_existing_autonomous_processes",
         lambda project, any_project=False: existing if any_project else [],
     )
-    monkeypatch.setattr(autonomous_mod, "_find_existing_wup_processes", lambda project: [])
+    monkeypatch.setattr(autonomous_processes_mod, "_find_existing_wup_processes", lambda project: [])
     monkeypatch.setattr(
-        autonomous_mod,
+        autonomous_processes_mod,
         "_terminate_existing_processes",
         lambda processes, **kwargs: stopped.extend(proc.pid for proc in processes),
     )
@@ -567,7 +593,7 @@ def test_stop_prior_autonomous_for_auto_start_terminates(tmp_path, monkeypatch) 
 
 def test_guard_existing_autonomous_noninteractive_blocks_duplicate(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(
-        autonomous_mod,
+        autonomous_processes_mod,
         "_find_existing_autonomous_processes",
         lambda project: [
             autonomous_mod.ExistingAutonomousProcess(
@@ -598,12 +624,12 @@ def test_guard_existing_autonomous_replace_existing_terminates(tmp_path, monkeyp
     ]
     stopped: list[int] = []
     monkeypatch.setattr(
-        autonomous_mod,
+        autonomous_processes_mod,
         "_find_existing_autonomous_processes",
         lambda project: existing,
     )
     monkeypatch.setattr(
-        autonomous_mod,
+        autonomous_processes_mod,
         "_terminate_existing_processes",
         lambda processes, **kwargs: stopped.extend(proc.pid for proc in processes),
     )
@@ -632,10 +658,10 @@ def test_guard_existing_autonomous_replace_existing_terminates_stale_wup(
         ),
     ]
     stopped: list[int] = []
-    monkeypatch.setattr(autonomous_mod, "_find_existing_autonomous_processes", lambda project: [])
-    monkeypatch.setattr(autonomous_mod, "_find_existing_wup_processes", lambda project: wup)
+    monkeypatch.setattr(autonomous_processes_mod, "_find_existing_autonomous_processes", lambda project: [])
+    monkeypatch.setattr(autonomous_processes_mod, "_find_existing_wup_processes", lambda project: wup)
     monkeypatch.setattr(
-        autonomous_mod,
+        autonomous_processes_mod,
         "_terminate_existing_processes",
         lambda processes, **kwargs: stopped.extend(proc.pid for proc in processes),
     )
@@ -656,7 +682,7 @@ def test_guard_existing_autonomous_interactive_decline_blocks_duplicate(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(
-        autonomous_mod,
+        autonomous_processes_mod,
         "_find_existing_autonomous_processes",
         lambda project: [
             autonomous_mod.ExistingAutonomousProcess(
@@ -815,6 +841,14 @@ def test_resolve_autopilot_ide_ssh_with_display_uses_cli(monkeypatch) -> None:
 
 def test_resolve_autopilot_ide_os_environ_autopilot_ide(monkeypatch) -> None:
     monkeypatch.setenv("KORU_AUTOPILOT_IDE", "vscode")
+    monkeypatch.delenv("KORU_HEADLESS", raising=False)
+    monkeypatch.delenv("KORU_IDE_MODE", raising=False)
+    assert autonomous_mod._resolve_autopilot_ide("auto") == "vscode"
+
+
+def test_resolve_autopilot_ide_os_environ_autopilot_instance(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
     monkeypatch.delenv("KORU_HEADLESS", raising=False)
     monkeypatch.delenv("KORU_IDE_MODE", raising=False)
     assert autonomous_mod._resolve_autopilot_ide("auto") == "vscode"
@@ -1197,7 +1231,7 @@ def test_status_has_autopilot_plugin_matches_specific_ide(monkeypatch) -> None:
     monkeypatch.delenv("KORU_PLUGIN_VERSION_POLICY", raising=False)
 
     assert autonomous_mod._status_has_autopilot_plugin(
-        {"plugins": [{"ide": "vscode"}, {"ide": "windsurf"}]},
+        {"plugins": [{"ide": "vscode", "protocolVersion": 1}, {"ide": "windsurf"}]},
         "vscode",
     )
     assert not autonomous_mod._status_has_autopilot_plugin(
@@ -1223,7 +1257,30 @@ def test_status_has_autopilot_plugin_rejects_stale_plugin_when_strict(monkeypatc
         "vscode",
     )
     assert autonomous_mod._status_has_autopilot_plugin(
-        {"plugins": [{"ide": "vscode", "version": "0.1.14"}]},
+        {"plugins": [{"ide": "vscode", "version": "0.1.14", "protocolVersion": 1}]},
+        "vscode",
+    )
+
+
+def test_status_has_autopilot_plugin_accepts_stale_version_with_protocol(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
+    monkeypatch.setattr(
+        autonomous_mod.DriveOrchestrator,
+        "expected_plugin_version",
+        lambda: "0.1.15",
+    )
+
+    assert autonomous_mod._status_has_autopilot_plugin(
+        {
+            "plugins": [
+                {
+                    "ide": "vscode",
+                    "version": "0.1.14",
+                    "protocolVersion": 1,
+                    "capabilities": ["chat.submit"],
+                }
+            ]
+        },
         "vscode",
     )
 
@@ -1280,7 +1337,7 @@ def test_wait_for_autopilot_plugin_polls_until_connected(monkeypatch) -> None:
             self.calls += 1
             if self.calls == 1:
                 return {"plugins": []}
-            return {"plugins": [{"ide": "vscode"}]}
+            return {"plugins": [{"ide": "vscode", "protocolVersion": 1}]}
 
     ticks = iter([0.0, 0.1, 0.2])
     monkeypatch.setattr(autonomous_mod.time, "monotonic", lambda: next(ticks))

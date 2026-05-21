@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-from koru import autonomous as autonomous_mod
+from koru import autonomous_processes as autonomous_processes_mod
 
 
 def test_find_existing_autonomous_does_not_skip_sibling_from_same_shell(
@@ -19,11 +19,11 @@ def test_find_existing_autonomous_does_not_skip_sibling_from_same_shell(
         f"--project {project} --autopilot-ide windsurf"
     )
 
-    monkeypatch.setattr(autonomous_mod.os, "getpid", lambda: 2000)
-    monkeypatch.setattr(autonomous_mod, "_ancestor_pids", lambda _pid: {100})
-    monkeypatch.setattr(autonomous_mod, "_process_cwd", lambda _pid: Path("/home/tom"))
+    monkeypatch.setattr(autonomous_processes_mod.os, "getpid", lambda: 2000)
+    monkeypatch.setattr(autonomous_processes_mod, "_ancestor_pids", lambda _pid: {100})
+    monkeypatch.setattr(autonomous_processes_mod, "_process_cwd", lambda _pid: Path("/home/tom"))
     monkeypatch.setattr(
-        autonomous_mod.subprocess,
+        autonomous_processes_mod.subprocess,
         "run",
         lambda *args, **kwargs: SimpleNamespace(
             returncode=0,
@@ -31,6 +31,6 @@ def test_find_existing_autonomous_does_not_skip_sibling_from_same_shell(
         ),
     )
 
-    matches = autonomous_mod._find_existing_autonomous_processes(project)
+    matches = autonomous_processes_mod._find_existing_autonomous_processes(project)
 
     assert [match.pid for match in matches] == [123]

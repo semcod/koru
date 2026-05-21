@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.178', 'python').
+project_metadata('koru', '0.1.179', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 681, 'less').
@@ -76,7 +76,7 @@ project_file('src/koru/agent_cli_helpers.py', 88, 'python').
 project_file('src/koru/agents.py', 323, 'python').
 project_file('src/koru/api/__init__.py', 10, 'python').
 project_file('src/koru/autoloop_cli.py', 91, 'python').
-project_file('src/koru/autonomous.py', 2304, 'python').
+project_file('src/koru/autonomous.py', 2432, 'python').
 project_file('src/koru/autonomous_cycle.py', 1390, 'python').
 project_file('src/koru/autonomous_daemon.py', 259, 'python').
 project_file('src/koru/autonomous_diagnostics.py', 259, 'python').
@@ -103,7 +103,7 @@ project_file('src/koru/autopilot/cli_command.py', 849, 'python').
 project_file('src/koru/autopilot/client.py', 11, 'python').
 project_file('src/koru/autopilot/config.py', 10, 'python').
 project_file('src/koru/autopilot/daemon.py', 17, 'python').
-project_file('src/koru/autopilot/daemon_cli.py', 110, 'python').
+project_file('src/koru/autopilot/daemon_cli.py', 143, 'python').
 project_file('src/koru/autopilot/doctor_cli.py', 153, 'python').
 project_file('src/koru/autopilot/host_setup.py', 10, 'python').
 project_file('src/koru/autopilot/ide.py', 10, 'python').
@@ -214,7 +214,7 @@ project_file('src/koruide/drive_orchestrator.py', 201, 'python').
 project_file('src/koruide/host_setup.py', 227, 'python').
 project_file('src/koruide/ide.py', 680, 'python').
 project_file('src/koruide/injector.py', 407, 'python').
-project_file('src/koruide/os_injector.py', 401, 'python').
+project_file('src/koruide/os_injector.py', 438, 'python').
 project_file('src/koruide/plugin_installer.py', 495, 'python').
 project_file('src/koruide/plugin_router.py', 75, 'python').
 project_file('src/koruide/plugin_version.py', 9, 'python').
@@ -420,7 +420,8 @@ python_function('src/koru/autonomous.py', '_effective_cycle_autopilot_enabled', 
 python_function('src/koru/autonomous.py', '_scan_while_waiting_input_enabled', 0, 1, 3).
 python_function('src/koru/autonomous.py', '_effective_cycle_scan_enabled', 1, 6, 6).
 python_function('src/koru/autonomous.py', '_resolve_autopilot_ide', 1, 1, 1).
-python_function('src/koru/autonomous.py', '_apply_agent_lane_environ', 2, 5, 7).
+python_function('src/koru/autonomous.py', '_apply_agent_lane_environ', 2, 3, 3).
+python_function('src/koru/autonomous.py', '_command_project', 1, 5, 7).
 python_function('src/koru/autonomous.py', '_process_cwd', 1, 2, 3).
 python_function('src/koru/autonomous.py', '_ancestor_pids', 1, 7, 8).
 python_function('src/koru/autonomous.py', '_looks_like_autonomous_up_command', 1, 1, 1).
@@ -464,12 +465,19 @@ python_function('src/koru/autonomous.py', '_unblock_queue_if_needed', 2, 3, 5).
 python_function('src/koru/autonomous.py', '_restart_daemon_if_needed', 7, 10, 6).
 python_function('src/koru/autonomous.py', '_handle_cycle_exit_conditions', 4, 7, 2).
 python_function('src/koru/autonomous.py', '_cleanup_autonomous_session', 6, 4, 5).
-python_function('src/koru/autonomous.py', '_select_cycle_profile', 2, 5, 2).
-python_function('src/koru/autonomous.py', '_cycle_execution_config', 1, 2, 1).
-python_function('src/koru/autonomous.py', '_cycle_sleep_seconds', 3, 4, 3).
-python_function('src/koru/autonomous.py', '_log_cycle_summary', 0, 1, 2).
-python_function('src/koru/autonomous.py', '_run_autonomous_cycle', 0, 5, 14).
-python_function('src/koru/autonomous.py', '_action_up', 1, 17, 26).
+python_function('src/koru/autonomous.py', '_select_and_log_cycle_profile', 2, 5, 2).
+python_function('src/koru/autonomous.py', '_resolve_effective_cycle_flags', 2, 3, 2).
+python_function('src/koru/autonomous.py', '_build_cycle_run_kwargs', 2, 9, 0).
+python_function('src/koru/autonomous.py', '_compute_cycle_sleep', 3, 4, 3).
+python_function('src/koru/autonomous.py', '_run_autonomous_cycle', 0, 5, 13).
+python_function('src/koru/autonomous.py', '_setup_autonomous_env_vars', 0, 2, 1).
+python_function('src/koru/autonomous.py', '_restore_autonomous_env_vars', 1, 4, 2).
+python_function('src/koru/autonomous.py', '_setup_autonomous_resources', 2, 4, 10).
+python_function('src/koru/autonomous.py', '_run_autonomous_pre_checks', 7, 1, 4).
+python_function('src/koru/autonomous.py', '_build_and_log_startup_probe', 2, 2, 4).
+python_function('src/koru/autonomous.py', '_install_sigterm_interrupt_handler', 2, 1, 3).
+python_function('src/koru/autonomous.py', '_handle_autonomous_interrupt', 1, 4, 2).
+python_function('src/koru/autonomous.py', '_action_up', 1, 6, 11).
 python_function('src/koru/autonomous.py', '_argv_has_option', 2, 5, 2).
 python_function('src/koru/autonomous.py', '_expand_auto_up_defaults', 1, 3, 3).
 python_function('src/koru/autonomous.py', '_collect_argv_options', 1, 3, 2).
@@ -722,7 +730,11 @@ python_function('src/koru/autopilot/cli_command.py', '_action_handoff', 1, 9, 10
 python_function('src/koru/autopilot/cli_command.py', '_action_tail', 1, 1, 1).
 python_function('src/koru/autopilot/cli_command.py', '_action_install_unit', 1, 1, 1).
 python_function('src/koru/autopilot/cli_command.py', 'autopilot_main', 1, 1, 3).
-python_function('src/koru/autopilot/daemon_cli.py', 'action_daemon', 1, 15, 18).
+python_function('src/koru/autopilot/daemon_cli.py', '_daemon_already_running', 2, 3, 3).
+python_function('src/koru/autopilot/daemon_cli.py', '_start_local_manager', 0, 4, 6).
+python_function('src/koru/autopilot/daemon_cli.py', '_record_daemon_start_failure', 1, 2, 2).
+python_function('src/koru/autopilot/daemon_cli.py', '_stop_heartbeat', 1, 2, 2).
+python_function('src/koru/autopilot/daemon_cli.py', 'action_daemon', 1, 10, 14).
 python_function('src/koru/autopilot/daemon_cli.py', 'action_shutdown', 1, 1, 2).
 python_function('src/koru/autopilot/daemon_cli.py', 'action_ide_list', 1, 5, 3).
 python_function('src/koru/autopilot/doctor_cli.py', 'doctor_fix_payload', 0, 2, 2).
@@ -1478,7 +1490,11 @@ python_function('src/koruide/os_injector.py', '_xdotool', 1, 1, 1).
 python_function('src/koruide/os_injector.py', '_tool_pid', 1, 4, 2).
 python_function('src/koruide/os_injector.py', '_clipboard_backend', 0, 3, 1).
 python_function('src/koruide/os_injector.py', '_set_clipboard', 1, 3, 4).
-python_function('src/koruide/os_injector.py', 'inject_with_profile', 0, 15, 14).
+python_function('src/koruide/os_injector.py', '_resolve_input_method', 0, 7, 4).
+python_function('src/koruide/os_injector.py', '_injection_result', 0, 1, 0).
+python_function('src/koruide/os_injector.py', '_focus_profile_chat', 3, 3, 3).
+python_function('src/koruide/os_injector.py', '_inject_profile_text', 0, 4, 5).
+python_function('src/koruide/os_injector.py', 'inject_with_profile', 0, 4, 9).
 python_function('src/koruide/os_injector.py', 'try_drive_with_profile', 0, 10, 7).
 python_function('src/koruide/plugin_installer.py', '_valid_ide', 1, 2, 2).
 python_function('src/koruide/plugin_installer.py', '_ide_from_terminal_env', 0, 1, 1).
@@ -2235,7 +2251,9 @@ python_class('src/koru/agent_backends.py', 'LaneConfig').
 python_class('src/koru/agent_backends.py', 'AgentIntegrationConfig').
 python_class('src/koru/agents.py', 'AgentOption').
 python_method('AgentOption', 'to_dict', 0, 1, 0).
-python_class('src/koru/autonomous.py', 'CycleExecutionConfig').
+python_class('src/koru/autonomous.py', 'ExistingAutonomousProcess').
+python_class('src/koru/autonomous.py', 'ExistingManagedProcess').
+python_class('src/koru/autonomous.py', 'StopSignalState').
 python_class('src/koru/autonomous.py', 'AutoPipelineState').
 python_class('src/koru/autonomous.py', 'AutoPipelineProfile').
 python_class('src/koru/autonomous_cycle.py', 'DiagnosticResult').

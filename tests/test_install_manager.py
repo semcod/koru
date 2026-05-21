@@ -239,6 +239,52 @@ def test_collect_report_flags_stale_live_extension_host(
     assert report.ok is False
 
 
+def test_collect_report_flags_plugin_socket_candidate_mismatch(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    log = tmp_path / "plugin-debug.log"
+    log.write_text(
+        '2026-05-21 CONNECT_CANDIDATES {"ide":"vscode",'
+        '"override":"/run/user/1000/koru-autopilot-vscodium.sock",'
+        '"candidates":["/run/user/1000/koru-autopilot-vscodium.sock"]}\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("KORU_PLUGIN_DEBUG_LOG", str(log))
+    monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
+    monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: tmp_path / ".venv/bin/koru")
+    monkeypatch.setattr(
+        install_manager,
+        "_repo_koru_bin",
+        lambda _root: tmp_path / ".venv/bin/koru",
+    )
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.15")
+    monkeypatch.setattr(
+        install_manager,
+        "installed_extension_version_for_ide",
+        lambda _ide: "0.1.15",
+    )
+    monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr(
+        install_manager,
+        "_daemon_status",
+        lambda _socket: {"running": True, "plugins": []},
+    )
+
+    report = install_manager.collect_install_manager_report(
+        ide="vscode",
+        socket_path=Path("/run/user/1000/koru-autopilot-vscode.sock"),
+    )
+
+    issues = {issue.code: issue for issue in report.issues}
+    assert "plugin_socket_candidate_mismatch" in issues
+    assert issues["plugin_socket_candidate_mismatch"].severity == "error"
+    assert "koru-autopilot-vscodium.sock" in issues["plugin_socket_candidate_mismatch"].message
+    assert report.ok is False
+
+
 def test_collect_report_warns_for_pyenv_shim(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
     monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")

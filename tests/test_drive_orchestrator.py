@@ -92,6 +92,48 @@ def test_plugin_version_policy_can_block(monkeypatch) -> None:
     assert DriveOrchestrator.should_block_plugin_version(info)
 
 
+def test_compatible_protocol_allows_version_drift_under_strict_policy(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
+    monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda: "0.1.15")
+
+    info = DriveOrchestrator.plugin_version_info(
+        plugin_ide="vscode",
+        connected_version="0.1.14",
+        protocol_version=1,
+        capabilities=["chat.submit"],
+    )
+
+    assert info["plugin_version_mismatch"] is True
+    assert info["plugin_protocol_compatible"] is True
+    assert info["plugin_version_policy"] == "protocol"
+    assert not DriveOrchestrator.should_block_plugin_version(info)
+
+
+def test_incompatible_protocol_blocks_even_without_version_drift() -> None:
+    info = DriveOrchestrator.plugin_version_info(
+        plugin_ide="vscode",
+        connected_version="0.1.15",
+        expected_version="0.1.15",
+        protocol_version=0,
+    )
+
+    assert info["plugin_protocol_incompatible"] is True
+    assert DriveOrchestrator.should_block_plugin_version(info)
+    assert "protocol mismatch" in DriveOrchestrator.plugin_version_block_message(info)
+
+
+def test_missing_protocol_blocks_developer_plugin() -> None:
+    info = DriveOrchestrator.plugin_version_info(
+        plugin_ide="vscode",
+        connected_version="0.1.16",
+        expected_version="0.1.16",
+    )
+
+    assert info["plugin_protocol_missing"] is True
+    assert DriveOrchestrator.should_block_plugin_version(info)
+    assert "protocol missing" in DriveOrchestrator.plugin_version_block_message(info)
+
+
 def test_bundled_expected_plugin_version_matches_vscode_package_json() -> None:
     package_json = (
         Path(__file__).resolve().parents[1] / "plugins" / "koru-autopilot-vscode" / "package.json"

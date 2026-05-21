@@ -71,9 +71,16 @@ def resolve_ide_route(
             ),
         )
 
-    raw = normalize_ide_id(env.get("KORU_AUTOPILOT_IDE"))
-    if raw in _VALID_AUTOPILOT_IDE and raw != "auto":
-        ide = raw
+    env_ide = normalize_ide_id(env.get("KORU_AUTOPILOT_IDE"))
+    env_instance = normalize_ide_id(env.get("KORU_AUTOPILOT_INSTANCE"))
+    if env_ide in _VALID_AUTOPILOT_IDE and env_ide != "auto":
+        ide = env_ide
+    elif (
+        env_instance in _VALID_AUTOPILOT_IDE
+        and env_instance != "auto"
+        and normalize_ide_id(cli_autopilot_ide) in {None, "auto"}
+    ):
+        ide = env_instance
     else:
         cli = normalize_ide_id(cli_autopilot_ide)
         ide = cli if cli in _VALID_AUTOPILOT_IDE else "auto"

@@ -52,6 +52,13 @@ def _terminal_agent_lane_from_env() -> str | None:
     return None
 
 
+def _explicit_agent_lane_from_env() -> tuple[str | None, str]:
+    explicit = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_INSTANCE"))
+    if explicit and explicit != "auto":
+        return explicit, "env:KORU_AUTOPILOT_INSTANCE"
+    return None, ""
+
+
 def resolve_agent_lane_id(
     project: Path,
     agent_lane_cli: str,
@@ -67,6 +74,14 @@ def resolve_agent_lane_id(
         return lane, f"cli:{raw}"
 
     terminal = _terminal_agent_lane_from_env()
+    explicit, explicit_source = _explicit_agent_lane_from_env()
+    if explicit:
+        if terminal in _PLUGIN_IDE_LANES and terminal != explicit:
+            lane = resolve_project_lane(project, terminal)
+            return lane, f"terminal:over-{explicit_source}"
+        lane = resolve_project_lane(project, explicit)
+        return lane, explicit_source
+
     if terminal in _PLUGIN_IDE_LANES:
         lane = resolve_project_lane(project, terminal)
         return lane, "terminal"

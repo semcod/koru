@@ -148,6 +148,16 @@ def _status_has_autopilot_plugin(status: Mapping[str, Any], ide: str) -> bool:
             version_info = DriveOrchestrator.plugin_version_info(
                 plugin_ide=str(plugin_ide) if plugin_ide else None,
                 connected_version=version if isinstance(version, str) else None,
+                protocol_version=(
+                    plugin.get("protocolVersion")
+                    if isinstance(plugin.get("protocolVersion"), int)
+                    else None
+                ),
+                capabilities=(
+                    plugin.get("capabilities")
+                    if isinstance(plugin.get("capabilities"), list)
+                    else None
+                ),
             )
             if DriveOrchestrator.should_block_plugin_version(version_info):
                 continue

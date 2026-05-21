@@ -10,6 +10,8 @@ from typing import Any, Protocol
 class PluginClient(Protocol):
     role: str
     ide: str | None
+    protocol_version: int | None
+    capabilities: list[str]
     sock: Any
 
 
@@ -18,11 +20,17 @@ class PluginStatusRow:
     ide: str | None
     fd: int
     version: str | None = None
+    protocol_version: int | None = None
+    capabilities: list[str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = {"ide": self.ide, "fd": self.fd}
         if self.version:
             data["version"] = self.version
+        if self.protocol_version is not None:
+            data["protocolVersion"] = self.protocol_version
+        if self.capabilities:
+            data["capabilities"] = self.capabilities
         return data
 
 
@@ -65,6 +73,8 @@ class PluginRouter:
                 ide=client.ide,
                 fd=client.sock.fileno(),
                 version=getattr(client, "version", None),
+                protocol_version=getattr(client, "protocol_version", None),
+                capabilities=getattr(client, "capabilities", None),
             )
             for client in self._clients.values()
             if client.role == "plugin"

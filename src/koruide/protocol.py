@@ -11,6 +11,8 @@ from dataclasses import dataclass, field
 from typing import Any
 
 MAX_LINE_BYTES = 1024 * 1024  # 1 MiB
+PLUGIN_PROTOCOL_VERSION = 1
+MIN_PLUGIN_PROTOCOL_VERSION = 1
 
 PLUGIN_TO_DAEMON = frozenset(
     {
@@ -47,7 +49,9 @@ CLI_TO_DAEMON = frozenset(
 ALL_TYPES = PLUGIN_TO_DAEMON | DAEMON_TO_PLUGIN | CLI_TO_DAEMON
 
 _FIELD_SCHEMA: dict[str, frozenset[str] | None] = {
-    "hello": frozenset({"ide", "version", "pid", "matchingCommands"}),
+    "hello": frozenset(
+        {"ide", "version", "pid", "matchingCommands", "protocolVersion", "capabilities"}
+    ),
     "session.started": frozenset({"chat"}),
     "session.ended": frozenset({"chat", "reason"}),
     "message.sent": frozenset({"chat", "text", "length"}),
@@ -125,8 +129,21 @@ def decode(line: bytes | str) -> Message:
     return Message(type=msg_type, id=msg_id, data=extras)
 
 
-def hello(*, ide: str, version: str, pid: int, id: str | None = None) -> Message:
-    return Message(type="hello", id=id, data={"ide": ide, "version": version, "pid": pid})
+def hello(
+    *,
+    ide: str,
+    version: str,
+    pid: int,
+    id: str | None = None,
+    protocol_version: int | None = None,
+    capabilities: list[str] | None = None,
+) -> Message:
+    data: dict[str, Any] = {"ide": ide, "version": version, "pid": pid}
+    if protocol_version is not None:
+        data["protocolVersion"] = protocol_version
+    if capabilities is not None:
+        data["capabilities"] = capabilities
+    return Message(type="hello", id=id, data=data)
 
 
 def chat_send(text: str, *, submit: bool = True, id: str | None = None) -> Message:
@@ -211,6 +228,8 @@ def status_error(
 
 __all__ = [
     "MAX_LINE_BYTES",
+    "PLUGIN_PROTOCOL_VERSION",
+    "MIN_PLUGIN_PROTOCOL_VERSION",
     "PLUGIN_TO_DAEMON",
     "DAEMON_TO_PLUGIN",
     "CLI_TO_DAEMON",

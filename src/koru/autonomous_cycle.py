@@ -36,7 +36,11 @@ from koru.stdio_events import write_stdio_event
 from koru.tasks import create_nl_task
 from koru.topology import is_component_enabled, is_pipeline_enabled
 from koruide.drive_orchestrator import DriveOrchestrator
-from koruide.ide import normalize_ide_id, supports_vscode_extension_plugin
+from koruide.ide import (
+    detect_terminal_host_ide_id,
+    normalize_ide_id,
+    supports_vscode_extension_plugin,
+)
 
 
 def _stdio_info(msg: str, *, fmt: str) -> None:
@@ -120,6 +124,31 @@ def _plugin_required_for_ide(autopilot_ide: str) -> bool:
     return not _allow_keyboard_autopilot_fallback() and not _prefer_keyboard_autopilot()
 
 
+def _allow_cross_ide_autopilot() -> bool:
+    return os.environ.get("KORU_AUTOPILOT_ALLOW_CROSS_IDE", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _autopilot_terminal_conflict_reason(autopilot_ide: str) -> str | None:
+    if _allow_cross_ide_autopilot():
+        return None
+    wanted = normalize_ide_id(autopilot_ide)
+    terminal = normalize_ide_id(detect_terminal_host_ide_id())
+    if not wanted or wanted == "auto" or not terminal or terminal == wanted:
+        return None
+    if supports_vscode_extension_plugin(wanted) and supports_vscode_extension_plugin(terminal):
+        return (
+            f"terminal host is {terminal}, but autopilot target is {wanted}; "
+            "refusing cross-IDE plugin drive. Restart `koru auto` from the target IDE "
+            "terminal, or set KORU_AUTOPILOT_ALLOW_CROSS_IDE=1 explicitly."
+        )
+    return None
+
+
 def _client_plugin_rows(client: Any) -> tuple[list[Any] | None, str | None]:
     status_fn = getattr(client, "status", None)
     if not callable(status_fn):
@@ -149,6 +178,12 @@ def _plugin_row_version_block_reason(row: dict[str, Any], wanted: str) -> str | 
     version_info = DriveOrchestrator.plugin_version_info(
         plugin_ide=ide or wanted,
         connected_version=version if isinstance(version, str) else None,
+        protocol_version=(
+            row.get("protocolVersion") if isinstance(row.get("protocolVersion"), int) else None
+        ),
+        capabilities=(
+            row.get("capabilities") if isinstance(row.get("capabilities"), list) else None
+        ),
     )
     if DriveOrchestrator.should_block_plugin_version(version_info):
         return DriveOrchestrator.plugin_version_block_message(version_info)
@@ -1080,6 +1115,10 @@ def _handle_autopilot_phase(
     autopilot_drive_kind: str | None = None
 
     if enable_autopilot and client is not None:
+        if conflict_reason := _autopilot_terminal_conflict_reason(autopilot_ide):
+            _hp(f"- autopilot skipped (ide_mismatch: {conflict_reason})")
+            cycle_telemetry["autopilot_skipped_ide_mismatch"] = True
+            return "skipped(ide_mismatch)", None, None
         if _plugin_required_for_ide(autopilot_ide):
             plugin_ok, plugin_reason = _client_has_usable_plugin(client, autopilot_ide)
             if not plugin_ok:

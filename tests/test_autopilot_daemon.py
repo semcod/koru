@@ -186,13 +186,24 @@ def _connect_plugin(
     ide: str = "vscode",
     version: str = "0.1.0",
     pid: int = 1,
+    protocol_version: int | None = 1,
+    capabilities: list[str] | None = None,
 ) -> tuple[socket.socket, _LineReader]:
     """Open a plugin connection, send ``hello``, consume the ack."""
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.settimeout(2.0)
     sock.connect(str(sock_path))
     reader = _LineReader(sock)
-    sock.sendall(hello(ide=ide, version=version, pid=pid, id="hello").encode())
+    sock.sendall(
+        hello(
+            ide=ide,
+            version=version,
+            pid=pid,
+            id="hello",
+            protocol_version=protocol_version,
+            capabilities=capabilities,
+        ).encode()
+    )
     ack = reader.read_message()
     assert ack.type == "ack"
     assert ack.data.get("role") == "plugin"
@@ -506,24 +517,43 @@ def test_plugin_hello_then_drive_forwards(tmp_path: Path, monkeypatch: pytest.Mo
         cli.close()
 
 
-def test_drive_strict_plugin_version_blocks_stale_plugin(
+def test_plugin_hello_rejects_missing_protocol(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    with _daemon(tmp_path, monkeypatch) as h:
+        plugin = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        plugin.settimeout(2.0)
+        plugin.connect(str(h.sock_path))
+        reader = _LineReader(plugin)
+        plugin.sendall(hello(ide="vscode", version="0.1.11", pid=42, id="hello-old").encode())
+        reply = reader.read_message()
+        assert reply.type == "error"
+        assert "plugin protocol missing" in reply.data.get("message", "")
+        assert h.injector.calls == []
+        plugin.close()
+
+
+def test_strict_plugin_version_allows_stale_plugin_with_compatible_protocol(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
     monkeypatch.setattr(
         DriveOrchestrator,
         "expected_plugin_version",
-        lambda: "0.1.13",
+        lambda: "0.1.15",
     )
 
     with _daemon(tmp_path, monkeypatch) as h:
         plugin, plugin_reader = _connect_plugin(
             h.sock_path,
             ide="vscode",
-            version="0.1.11",
+            version="0.1.14",
             pid=42,
+            protocol_version=1,
+            capabilities=["chat.submit"],
         )
-        monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
 
         cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         cli.settimeout(2.0)
@@ -532,17 +562,21 @@ def test_drive_strict_plugin_version_blocks_stale_plugin(
         cli.sendall(
             Message(
                 type="drive",
-                id="d-stale-plugin",
+                id="d-compatible-protocol",
                 data={"text": "hi", "ide": "vscode", "submit": True},
             ).encode(),
         )
 
+        forwarded = plugin_reader.read_message()
+        assert forwarded.type == "chat.send"
+        plugin.sendall(
+            Message(type="ack", id=forwarded.id, data={"ok": True, "delivered": True}).encode(),
+        )
         cli_reply = cli_reader.read_message()
-        assert cli_reply.type == "error"
-        assert "plugin version mismatch" in cli_reply.data.get("message", "")
-        _assert_no_more_data(plugin)
-
-        assert h.injector.calls == []
+        assert cli_reply.type == "ack"
+        assert cli_reply.data.get("ok") is True
+        assert cli_reply.data.get("plugin_protocol_compatible") is True
+        assert cli_reply.data.get("plugin_version_policy") == "protocol"
         plugin.close()
         cli.close()
 
@@ -576,7 +610,7 @@ def test_strict_plugin_hello_rejects_stale_without_evicting_current(
 
         stale_reply = stale_reader.read_message()
         assert stale_reply.type == "error"
-        assert "plugin version mismatch" in stale_reply.data.get("message", "")
+        assert "plugin protocol missing" in stale_reply.data.get("message", "")
 
         cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         cli.settimeout(2.0)

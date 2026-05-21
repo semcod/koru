@@ -127,6 +127,15 @@ class AutopilotBridge {
                     id: "vscode-hello",
                     ide: this.detectIde(),
                     version: vscode.extensions.getExtension("semcod.koru-autopilot-vscode")?.packageJSON.version || "unknown",
+                    protocolVersion: 1,
+                    capabilities: [
+                        "ide.commands",
+                        "chat.focus",
+                        "chat.paste",
+                        "chat.submit",
+                        "chat.events",
+                        "probe.ladder",
+                    ],
                     pid: process.pid,
                     matchingCommands: matching,
                 });
@@ -550,6 +559,10 @@ class AutopilotBridge {
             winning_submit: submitCmd,
         });
     }
+    sendMessageSent(text) {
+        console.log("koru autopilot: sending message.sent");
+        this.send({ type: "message.sent", chat: "default", text: text.substring(0, 200), length: text.length });
+    }
     async injectChat(env) {
         const text = typeof env.text === "string" ? env.text : "";
         const submit = env.submit !== false;
@@ -572,41 +585,62 @@ class AutopilotBridge {
             await this.restoreClipboard(previous);
         }
     }
+    async tryWindsurfSendTextFastPath(env, text, submit) {
+        if (this.detectIde() !== "windsurf") {
+            return false;
+        }
+        let existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+        if (!existing.has("windsurf.sendTextToChat")) {
+            try {
+                let openCmd = "windsurf.openCascade";
+                if (existing.has("workbench.view.windsurfAgentSidebarContainer")) {
+                    openCmd = "workbench.view.windsurfAgentSidebarContainer";
+                }
+                else if (existing.has("windsurf.cascadePanel.open")) {
+                    openCmd = "windsurf.cascadePanel.open";
+                }
+                await Promise.resolve(vscode.commands.executeCommand(openCmd));
+                await this.sleep(200);
+                existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+            }
+            catch (err) {
+                console.warn("koru autopilot: failed to open Cascade early", err);
+            }
+        }
+        if (!existing.has("windsurf.sendTextToChat")) {
+            return false;
+        }
+        try {
+            await Promise.resolve(vscode.commands.executeCommand("windsurf.sendTextToChat", text));
+            this.sendSuccessAck(env, { ok: true, command: "none" }, { ok: true, command: "windsurf.sendTextToChat" }, "windsurf.sendTextToChat");
+            if (submit) {
+                this.sendMessageSent(text);
+            }
+            return true;
+        }
+        catch (err) {
+            console.warn("koru autopilot: windsurf.sendTextToChat fast path failed, trying fallback", err);
+            return false;
+        }
+    }
+    async submitAfterPaste(env, focus, pasted, submit) {
+        if (pasted.command === "windsurf.sendTextToChat") {
+            return "windsurf.sendTextToChat";
+        }
+        if (!submit) {
+            return undefined;
+        }
+        await this.sleep(150);
+        const submitResult = await this.submitChat();
+        if (submitResult.ok) {
+            return submitResult.command;
+        }
+        this.sendSubmitFailureAck(env, focus, pasted);
+        return null;
+    }
     async _performInject(env, text, submit) {
-        const ide = this.detectIde();
-        if (ide === "windsurf") {
-            let existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-            if (!existing.has("windsurf.sendTextToChat")) {
-                try {
-                    let openCmd = "windsurf.openCascade";
-                    if (existing.has("workbench.view.windsurfAgentSidebarContainer")) {
-                        openCmd = "workbench.view.windsurfAgentSidebarContainer";
-                    }
-                    else if (existing.has("windsurf.cascadePanel.open")) {
-                        openCmd = "windsurf.cascadePanel.open";
-                    }
-                    await Promise.resolve(vscode.commands.executeCommand(openCmd));
-                    await this.sleep(200);
-                    existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-                }
-                catch (err) {
-                    console.warn("koru autopilot: failed to open Cascade early", err);
-                }
-            }
-            if (existing.has("windsurf.sendTextToChat")) {
-                try {
-                    await Promise.resolve(vscode.commands.executeCommand("windsurf.sendTextToChat", text));
-                    this.sendSuccessAck(env, { ok: true, command: "none" }, { ok: true, command: "windsurf.sendTextToChat" }, "windsurf.sendTextToChat");
-                    if (submit) {
-                        console.log("koru autopilot: sending message.sent");
-                        this.send({ type: "message.sent", chat: "default", text: text.substring(0, 200), length: text.length });
-                    }
-                    return;
-                }
-                catch (err) {
-                    console.warn("koru autopilot: windsurf.sendTextToChat fast path failed, trying fallback", err);
-                }
-            }
+        if (await this.tryWindsurfSendTextFastPath(env, text, submit)) {
+            return;
         }
         const focus = await this.focusChat();
         if (focus.ok) {
@@ -622,25 +656,13 @@ class AutopilotBridge {
             this.sendPasteFailureAck(env, focus);
             return;
         }
-        let submitCmd;
-        if (submit && pasted.command !== "windsurf.sendTextToChat") {
-            await this.sleep(150);
-            const submitResult = await this.submitChat();
-            if (submitResult.ok) {
-                submitCmd = submitResult.command;
-            }
-            else {
-                this.sendSubmitFailureAck(env, focus, pasted);
-                return;
-            }
-        }
-        else if (pasted.command === "windsurf.sendTextToChat") {
-            submitCmd = "windsurf.sendTextToChat";
+        const submitCmd = await this.submitAfterPaste(env, focus, pasted, submit);
+        if (submitCmd === null) {
+            return;
         }
         this.sendSuccessAck(env, focus, pasted, submitCmd);
         if (submit) {
-            console.log("koru autopilot: sending message.sent");
-            this.send({ type: "message.sent", chat: "default", text: text.substring(0, 200), length: text.length });
+            this.sendMessageSent(text);
         }
     }
     async calibrateProbe() {

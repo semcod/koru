@@ -49,6 +49,7 @@ from koruide.injector import Injector, InjectorError
 from koruide.plugin_router import PluginRouter
 from koruide.protocol import (
     MAX_LINE_BYTES,
+    MIN_PLUGIN_PROTOCOL_VERSION,
     Message,
     ProtocolError,
     ack,
@@ -147,6 +148,8 @@ class _Client:
     role: str = "unknown"  # "plugin" | "cli" | "unknown"
     ide: str | None = None  # set when role == "plugin"
     version: str | None = None
+    protocol_version: int | None = None
+    capabilities: list[str] = field(default_factory=list)
     # Pending CLI ack: when a CLI sends ``drive`` and we forward to a
     # plugin, we remember the CLI socket so we can reply after the
     # plugin acks.
@@ -396,6 +399,8 @@ class AutopilotDaemon:
         version_info = DriveOrchestrator.plugin_version_info(
             plugin_ide=plugin.ide,
             connected_version=plugin.version,
+            protocol_version=plugin.protocol_version,
+            capabilities=plugin.capabilities,
         )
         if version_info.get("plugin_version_mismatch"):
             summary = DriveOrchestrator.plugin_ack_summary(version_info)
@@ -553,9 +558,19 @@ class AutopilotDaemon:
             return
         version = msg.data.get("version")
         plugin_version = version if isinstance(version, str) else None
+        protocol_raw = msg.data.get("protocolVersion")
+        protocol_version = protocol_raw if isinstance(protocol_raw, int) else None
+        capabilities_raw = msg.data.get("capabilities")
+        capabilities = (
+            [item for item in capabilities_raw if isinstance(item, str)]
+            if isinstance(capabilities_raw, list)
+            else []
+        )
         version_info = DriveOrchestrator.plugin_version_info(
             plugin_ide=ide,
             connected_version=plugin_version,
+            protocol_version=protocol_version,
+            capabilities=capabilities,
         )
         if DriveOrchestrator.should_block_plugin_version(version_info):
             message = DriveOrchestrator.plugin_version_block_message(version_info)
@@ -578,11 +593,18 @@ class AutopilotDaemon:
         client.role = "plugin"
         client.ide = ide
         client.version = plugin_version
+        client.protocol_version = protocol_version
+        client.capabilities = capabilities
         self._plugin_router.drop_stale_plugins(client, ide)
         matching_cmds = msg.data.get("matchingCommands")
+        command_count = len(matching_cmds) if isinstance(matching_cmds, list) else "-"
         self.log(
-            f"plugin connected: ide={ide} version={version!r} "
-            f"matching_commands={matching_cmds}",
+            "plugin hello accepted: "
+            f"ide={ide} version={plugin_version or '-'} "
+            f"expected={version_info.get('expected_plugin_version') or '-'} "
+            f"policy={version_info.get('plugin_version_policy') or 'warn'} "
+            f"protocol={protocol_version or '-'} min_protocol={MIN_PLUGIN_PROTOCOL_VERSION} "
+            f"capabilities={len(capabilities)} matching_commands={command_count}",
         )
         self._send(client, ack(msg.id or "", info={"role": "plugin"}).encode())
         self.audit.record(
@@ -623,6 +645,8 @@ class AutopilotDaemon:
             del self._plugin_rejections[:-20]
 
     def _handle_status(self, client: _Client, msg: Message) -> None:
+        if client.role == "unknown":
+            client.role = "cli"
         plugins = [row.to_dict() for row in self._plugin_router.status_rows()]
         daemon_version = _daemon_package_version()
         info = {
@@ -719,6 +743,8 @@ class AutopilotDaemon:
             DriveOrchestrator.plugin_version_info(
                 plugin_ide=plugin_ide,
                 connected_version=client.version,
+                protocol_version=client.protocol_version,
+                capabilities=client.capabilities,
             ),
         )
         self.log(
@@ -749,6 +775,8 @@ class AutopilotDaemon:
             DriveOrchestrator.plugin_version_info(
                 plugin_ide=plugin_ide,
                 connected_version=client.version,
+                protocol_version=client.protocol_version,
+                capabilities=client.capabilities,
             ),
         )
         if DriveOrchestrator.should_fail_strict_plugin_ack(
@@ -864,12 +892,20 @@ class AutopilotDaemon:
         )
 
     def _handle_shutdown(self, client: _Client, msg: Message) -> None:
+        if client.role == "unknown":
+            client.role = "cli"
         self._send(client, ack(msg.id or "shutdown", info={"stopping": True}).encode())
-        self.log("shutdown requested via socket")
+        self.log(
+            "shutdown requested via socket "
+            f"role={client.role} ide={client.ide or '-'} "
+            f"version={client.version or '-'} addr={client.addr}"
+        )
         self.audit.record("shutdown", source="socket")
         self.stop()
 
     def _handle_ping(self, client: _Client, msg: Message) -> None:
+        if client.role == "unknown":
+            client.role = "cli"
         self._send(client, ack(msg.id or "ping", info={"pong": True}).encode())
 
     def _build_handler_table(self) -> dict[str, Callable[[_Client, Message], None]]:

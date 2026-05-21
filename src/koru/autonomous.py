@@ -62,6 +62,32 @@ from koru.autonomous_wup import (
 from koru.autonomous_wup import (
     _read_wup_health as _read_wup_health_impl,
 )
+from koru.autonomous_processes import (
+    ExistingAutonomousProcess,
+    ExistingManagedProcess,
+    _as_managed,
+    _confirm_replace_existing,
+    _find_existing_autonomous_processes,
+    _find_existing_wup_processes,
+    _looks_like_autonomous_up_command,
+    _terminate_existing_processes,
+    guard_existing_autonomous_processes as _guard_existing_autonomous_processes,
+    stop_prior_autonomous_for_auto_start,
+)
+from koru.autonomous_auto_pipeline import (
+    AUTO_UP_DEFAULT_ARGS,
+    AutoPipelineState,
+    AutoPipelineProfile,
+    _argv_has_option,
+    _auto_pipeline_has_pressure,
+    _auto_pipeline_stage,
+    _auto_value,
+    _collect_argv_options,
+    _expand_auto_up_defaults,
+    _select_auto_pipeline_profile,
+    _update_auto_pipeline_state,
+    _user_option,
+)
 from koru.autonomy.ide_work import release_in_progress_tickets, resolve_idle_drive_prompt
 from koru.autonomy.operator_pipeline import run_startup_operator_pipeline
 from koru.autonomy.prompts import build_prompt
@@ -195,21 +221,6 @@ def _effective_cycle_scan_enabled(
     return True
 
 
-@dataclass(frozen=True)
-class ExistingAutonomousProcess:
-    pid: int
-    command: str
-    cwd: Path | None = None
-
-
-@dataclass(frozen=True)
-class ExistingManagedProcess:
-    pid: int
-    kind: str
-    command: str
-    cwd: Path | None = None
-
-
 def _resolve_autopilot_ide(cli_value: str) -> str:
     """Resolve autopilot ``--ide`` via :mod:`koru.ide_router` (headless + env merge)."""
     return resolve_ide_route(cli_autopilot_ide=cli_value).autopilot_ide
@@ -227,270 +238,6 @@ def _apply_agent_lane_environ(project: Path, agent_lane: str) -> str | None:
     for key, val in agent_lane_environment(lane).items():
         os.environ[key] = val
     return lane
-
-
-def _command_project(command: str) -> Path | None:
-    """Best-effort parse of ``--project`` from a process command line."""
-    parts = command.split()
-    for idx, part in enumerate(parts):
-        if part == "--project" and idx + 1 < len(parts):
-            return Path(parts[idx + 1]).expanduser().resolve()
-        if part.startswith("--project="):
-            return Path(part.split("=", 1)[1]).expanduser().resolve()
-    return None
-
-
-def _process_cwd(pid: int) -> Path | None:
-    proc_cwd = Path("/proc") / str(pid) / "cwd"
-    try:
-        return proc_cwd.resolve()
-    except OSError:
-        return None
-
-
-def _ancestor_pids(pid: int) -> set[int]:
-    """Return best-effort parent chain for ``pid`` on Linux."""
-    ancestors: set[int] = set()
-    current = pid
-    while current > 1:
-        stat_path = Path("/proc") / str(current) / "stat"
-        try:
-            stat_text = stat_path.read_text(encoding="utf-8")
-        except OSError:
-            break
-        parts = stat_text.split()
-        if len(parts) < 4:
-            break
-        try:
-            parent = int(parts[3])
-        except ValueError:
-            break
-        if parent <= 1 or parent in ancestors:
-            break
-        ancestors.add(parent)
-        current = parent
-    return ancestors
-
-
-def _looks_like_autonomous_up_command(command: str) -> bool:
-    from koru.autonomous_parser import looks_like_autonomous_up_command
-
-    return looks_like_autonomous_up_command(command)
-
-
-def _find_existing_autonomous_processes(
-    project: Path,
-    *,
-    any_project: bool = False,
-) -> list[ExistingAutonomousProcess]:
-    """Return running koru autonomous/auto processes except this PID tree."""
-    try:
-        result = subprocess.run(
-            ["ps", "-eo", "pid=,ppid=,command="],
-            check=False,
-            text=True,
-            capture_output=True,
-        )
-    except OSError:
-        return []
-    if result.returncode != 0:
-        return []
-
-    current_pid = os.getpid()
-    excluded = {current_pid, *_ancestor_pids(current_pid)}
-    project = project.resolve()
-    matches: list[ExistingAutonomousProcess] = []
-    for raw_line in result.stdout.splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-        pid_text, _, rest = line.partition(" ")
-        ppid_text, _, command = rest.strip().partition(" ")
-        try:
-            pid = int(pid_text)
-            int(ppid_text)
-        except ValueError:
-            continue
-        if pid in excluded:
-            continue
-        if not _looks_like_autonomous_up_command(command):
-            continue
-
-        cwd = _process_cwd(pid)
-        cmd_project = _command_project(command)
-        if any_project or cwd == project or cmd_project == project:
-            matches.append(ExistingAutonomousProcess(pid=pid, command=command, cwd=cwd))
-    return matches
-
-
-def stop_prior_autonomous_for_auto_start(
-    project: Path,
-    *,
-    stdio_format: str = "human",
-) -> None:
-    """Stop koru autonomous/auto loops (any project) and WUP watch for ``project``."""
-    project = project.resolve()
-    existing = [
-        *(
-            _as_managed(proc)
-            for proc in _find_existing_autonomous_processes(project, any_project=True)
-        ),
-        *_find_existing_wup_processes(project),
-    ]
-    if not existing:
-        return
-    _stdio_info(
-        f"koru auto: stopping {len(existing)} prior managed process(es) "
-        "(koru autonomous/auto, wup watch)",
-        fmt=stdio_format,
-    )
-    _terminate_existing_processes(existing, stdio_format=stdio_format)
-
-
-def _find_existing_wup_processes(project: Path) -> list[ExistingManagedProcess]:
-    """Return stale/running ``wup watch`` processes for ``project`` except this tree."""
-    try:
-        result = subprocess.run(
-            ["ps", "-eo", "pid=,ppid=,command="],
-            check=False,
-            text=True,
-            capture_output=True,
-        )
-    except OSError:
-        return []
-    if result.returncode != 0:
-        return []
-
-    current_pid = os.getpid()
-    excluded = {current_pid, *_ancestor_pids(current_pid)}
-    project = project.resolve()
-    matches: list[ExistingManagedProcess] = []
-    for raw_line in result.stdout.splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-        first, _, rest = line.partition(" ")
-        second, _, command = rest.strip().partition(" ")
-        try:
-            pid = int(first)
-            int(second)
-        except ValueError:
-            continue
-        if pid in excluded:
-            continue
-        if "wup" not in command or " watch " not in f" {command} ":
-            continue
-        cwd = _process_cwd(pid)
-        if cwd == project or str(project) in command:
-            matches.append(
-                ExistingManagedProcess(pid=pid, kind="wup-watch", command=command, cwd=cwd),
-            )
-    return matches
-
-
-def _as_managed(proc: ExistingAutonomousProcess) -> ExistingManagedProcess:
-    return ExistingManagedProcess(
-        pid=proc.pid,
-        kind="autonomous-loop",
-        command=proc.command,
-        cwd=proc.cwd,
-    )
-
-
-def _terminate_existing_processes(
-    processes: list[ExistingManagedProcess],
-    *,
-    stdio_format: str,
-) -> None:
-    for proc in processes:
-        _stdio_info(
-            f"koru autonomous: stopping existing {proc.kind} pid={proc.pid}",
-            fmt=stdio_format,
-        )
-        try:
-            os.kill(proc.pid, signal.SIGTERM)
-        except ProcessLookupError:
-            continue
-        except PermissionError:
-            _stdio_info(
-                f"koru autonomous: no permission to stop existing {proc.kind} pid={proc.pid}",
-                fmt=stdio_format,
-            )
-
-    deadline = time.monotonic() + 8
-    while time.monotonic() < deadline:
-        alive = []
-        for proc in processes:
-            try:
-                os.kill(proc.pid, 0)
-            except ProcessLookupError:
-                continue
-            alive.append(proc)
-        if not alive:
-            return
-        time.sleep(0.2)
-
-    for proc in processes:
-        try:
-            os.kill(proc.pid, signal.SIGKILL)
-            _stdio_info(
-                f"koru autonomous: force-stopped existing {proc.kind} pid={proc.pid}",
-                fmt=stdio_format,
-            )
-        except (ProcessLookupError, PermissionError):
-            pass
-
-
-def _confirm_replace_existing(processes: list[ExistingManagedProcess]) -> bool:
-    print("koru autonomous: existing managed process(es) for this project are already running:")
-    for proc in processes:
-        where = f" cwd={proc.cwd}" if proc.cwd else ""
-        print(f"  {proc.kind} pid={proc.pid}{where} :: {proc.command}")
-    answer = input("Stop existing process(es) and start this one? [y/N] ").strip().lower()
-    return answer in {"y", "yes", "t", "tak"}
-
-
-def _guard_existing_autonomous_processes(args: argparse.Namespace, project: Path) -> int:
-    if args.allow_duplicate:
-        return 0
-    existing = [
-        *(_as_managed(proc) for proc in _find_existing_autonomous_processes(project)),
-        *_find_existing_wup_processes(project),
-    ]
-    if not existing:
-        return 0
-    if args.replace_existing:
-        if getattr(args, "replace_existing_global", False):
-            existing = [
-                *(
-                    _as_managed(proc)
-                    for proc in _find_existing_autonomous_processes(project, any_project=True)
-                ),
-                *_find_existing_wup_processes(project),
-            ]
-        _terminate_existing_processes(existing, stdio_format=args.emit_events)
-        return 0
-    if args.emit_events == "human" and sys.stdin.isatty():
-        if _confirm_replace_existing(existing):
-            _terminate_existing_processes(existing, stdio_format=args.emit_events)
-            return 0
-        _stdio_info(
-            "koru autonomous: keeping existing process(es); not starting a duplicate. "
-            "Use --allow-duplicate to override.",
-            fmt=args.emit_events,
-        )
-        return 2
-    _stdio_info(
-        "koru autonomous: another managed process is already running for this project; "
-        "use --replace-existing to stop it first or --allow-duplicate to run anyway.",
-        fmt=args.emit_events,
-    )
-    for proc in existing:
-        _stdio_info(
-            f"  existing {proc.kind} pid={proc.pid}: {proc.command}",
-            fmt=args.emit_events,
-        )
-    return 2
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -925,6 +672,15 @@ def _daemon_status_compatible(status: Mapping[str, Any] | None) -> tuple[bool, s
     return True, f"daemon version {actual}"
 
 
+def _daemon_status_log_summary(status: Mapping[str, Any] | None) -> str:
+    if not status:
+        return "status=unavailable"
+    version_label = _daemon_status_version(status) or "-"
+    plugins = status.get("plugins")
+    plugin_label = _plugin_rows_log_summary(plugins if isinstance(plugins, list) else [])
+    return f"version={version_label} plugins={plugin_label}"
+
+
 def _stop_reused_daemon(
     client: IDEControlClient,
     socket_path: Path,
@@ -934,6 +690,10 @@ def _stop_reused_daemon(
 ) -> bool:
     try:
         client.shutdown()
+        _stdio_info(
+            f"koru autonomous: requested shutdown of stale autopilot daemon on {socket_path}",
+            fmt=stdio_format,
+        )
     except (OSError, RuntimeError, TimeoutError) as exc:
         _stdio_info(
             f"koru autonomous: stale autopilot daemon shutdown failed ({exc})",
@@ -956,10 +716,20 @@ def _start_or_reuse_daemon(
 ) -> tuple[IDEControlClient, AutopilotDaemon | None, threading.Thread | None]:
     socket_path.parent.mkdir(parents=True, exist_ok=True)
     probe = build_ide_client(socket_path=socket_path, timeout=0.5)
+    _stdio_info(f"koru autonomous: probing autopilot daemon on {socket_path}", fmt=stdio_format)
     if probe.is_running():
+        _stdio_info(
+            f"koru autonomous: autopilot daemon ping ok on {socket_path}; requesting status",
+            fmt=stdio_format,
+        )
         status: Mapping[str, Any] | None = None
         try:
             status = probe.status()
+            _stdio_info(
+                "koru autonomous: autopilot daemon status → "
+                + _daemon_status_log_summary(status),
+                fmt=stdio_format,
+            )
         except (OSError, RuntimeError, TimeoutError) as exc:
             _stdio_info(
                 f"koru autonomous: autopilot daemon status failed ({exc}); restarting",
@@ -982,6 +752,15 @@ def _start_or_reuse_daemon(
                 fmt=stdio_format,
             )
             return build_ide_client(socket_path=socket_path), None, None
+        _stdio_info(
+            f"koru autonomous: stale autopilot daemon stopped; starting replacement on {socket_path}",
+            fmt=stdio_format,
+        )
+    else:
+        _stdio_info(
+            f"koru autonomous: no autopilot daemon replied on {socket_path}; starting daemon",
+            fmt=stdio_format,
+        )
 
     daemon = AutopilotDaemon(
         socket_path=socket_path,
@@ -996,24 +775,68 @@ def _start_or_reuse_daemon(
     return build_ide_client(socket_path=socket_path), daemon, thread
 
 
-def _status_has_autopilot_plugin(status: Mapping[str, Any], ide: str) -> bool:
+def _plugin_rows_log_summary(rows: object) -> str:
+    if not isinstance(rows, list) or not rows:
+        return "[]"
+    parts: list[str] = []
+    for row in rows:
+        if not isinstance(row, Mapping):
+            parts.append("<invalid>")
+            continue
+        ide = str(row.get("ide") or "-")
+        version_label = str(row.get("version") or "-")
+        fd = row.get("fd")
+        fd_part = f" fd={fd}" if fd is not None else ""
+        parts.append(f"{ide}@{version_label}{fd_part}")
+    return "[" + ", ".join(parts) + "]"
+
+
+def _plugin_status_decision(status: Mapping[str, Any], ide: str) -> tuple[bool, str]:
     plugins = status.get("plugins")
     if not isinstance(plugins, list):
-        return False
+        return False, "daemon status has no plugin list"
+    if not plugins:
+        return False, "daemon status plugin list is empty"
+    wanted = (ide or "auto").strip().lower()
+    ignored: list[str] = []
     for plugin in plugins:
         if not isinstance(plugin, Mapping):
+            ignored.append("invalid plugin row")
             continue
-        plugin_ide = plugin.get("ide")
-        if plugin_ide == ide or ide == "auto":
-            version = plugin.get("version")
-            version_info = DriveOrchestrator.plugin_version_info(
-                plugin_ide=str(plugin_ide) if plugin_ide else None,
-                connected_version=version if isinstance(version, str) else None,
+        plugin_ide = str(plugin.get("ide") or "").strip().lower()
+        version = plugin.get("version")
+        version_label = version if isinstance(version, str) and version else "-"
+        row_label = f"ide={plugin_ide or '-'} version={version_label}"
+        if wanted not in {"", "auto"} and plugin_ide != wanted:
+            ignored.append(f"{row_label} ignored: wanted ide={wanted}")
+            continue
+        version_info = DriveOrchestrator.plugin_version_info(
+            plugin_ide=plugin_ide or None,
+            connected_version=version if isinstance(version, str) else None,
+            protocol_version=(
+                plugin.get("protocolVersion")
+                if isinstance(plugin.get("protocolVersion"), int)
+                else None
+            ),
+            capabilities=(
+                plugin.get("capabilities")
+                if isinstance(plugin.get("capabilities"), list)
+                else None
+            ),
+        )
+        if DriveOrchestrator.should_block_plugin_version(version_info):
+            return False, (
+                f"{row_label} blocked: "
+                f"{DriveOrchestrator.plugin_version_block_message(version_info)}"
             )
-            if DriveOrchestrator.should_block_plugin_version(version_info):
-                continue
-            return True
-    return False
+        expected = version_info.get("expected_plugin_version") or "-"
+        policy = version_info.get("plugin_version_policy") or "warn"
+        return True, f"{row_label} accepted: expected={expected} policy={policy}"
+    return False, "; ".join(ignored) if ignored else f"no plugin row matched ide={wanted}"
+
+
+def _status_has_autopilot_plugin(status: Mapping[str, Any], ide: str) -> bool:
+    return _plugin_status_decision(status, ide)[0]
 
 
 def _wait_for_autopilot_plugin(
@@ -1022,20 +845,57 @@ def _wait_for_autopilot_plugin(
     *,
     timeout_seconds: float,
     interval_seconds: float = 0.25,
+    stdio_format: str | None = None,
 ) -> bool:
     if timeout_seconds <= 0:
+        if stdio_format is not None:
+            _stdio_info(
+                f"koru autonomous: plugin wait disabled for ide={ide} (timeout=0)",
+                fmt=stdio_format,
+            )
         return False
+    if stdio_format is not None:
+        _stdio_info(
+            f"koru autonomous: waiting for autopilot plugin ide={ide} "
+            f"timeout={timeout_seconds:.1f}s interval={interval_seconds:.2f}s",
+            fmt=stdio_format,
+        )
     deadline = time.monotonic() + timeout_seconds
+    last_reason: str | None = None
     while time.monotonic() < deadline:
         try:
-            if _status_has_autopilot_plugin(client.status(), ide):
+            ready, reason = _plugin_status_decision(client.status(), ide)
+            if stdio_format is not None and reason != last_reason:
+                _stdio_info(
+                    f"koru autonomous: plugin decision ide={ide}: {reason}",
+                    fmt=stdio_format,
+                )
+                last_reason = reason
+            if ready:
                 return True
-        except OSError:
-            pass
+        except (OSError, RuntimeError, TimeoutError) as exc:
+            reason = f"daemon status unavailable: {exc}"
+            if stdio_format is not None and reason != last_reason:
+                _stdio_info(
+                    f"koru autonomous: plugin decision ide={ide}: {reason}",
+                    fmt=stdio_format,
+                )
+                last_reason = reason
         time.sleep(interval_seconds)
     try:
-        return _status_has_autopilot_plugin(client.status(), ide)
-    except OSError:
+        ready, reason = _plugin_status_decision(client.status(), ide)
+        if stdio_format is not None and reason != last_reason:
+            _stdio_info(
+                f"koru autonomous: plugin decision ide={ide}: {reason}",
+                fmt=stdio_format,
+            )
+        return ready
+    except (OSError, RuntimeError, TimeoutError) as exc:
+        if stdio_format is not None:
+            _stdio_info(
+                f"koru autonomous: plugin decision ide={ide}: daemon status unavailable: {exc}",
+                fmt=stdio_format,
+            )
         return False
 
 
@@ -1408,13 +1268,26 @@ def _setup_autopilot_daemon(
             lane,
             resolve_ide_route_fn=resolve_ide_route,
         )
+        env_socket = (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip()
+        env_instance_before = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
+        socket_source = "cli --socket" if args.socket else "default socket"
+        if env_socket and not args.socket:
+            socket_source = "env:KORU_AUTOPILOT_SOCKET"
+        elif env_instance_before and not args.socket:
+            socket_source = f"env:KORU_AUTOPILOT_INSTANCE={env_instance_before}"
         if (
             autopilot_ide
             and "KORU_AUTOPILOT_INSTANCE" not in os.environ
             and "KORU_AUTOPILOT_SOCKET" not in os.environ
         ):
             os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
+            socket_source = f"autopilot ide={autopilot_ide} → KORU_AUTOPILOT_INSTANCE"
         socket_path = (args.socket or default_socket_path()).resolve()
+        _stdio_info(
+            "koru autonomous: autopilot socket decision: "
+            f"lane={lane} ide={autopilot_ide} source={socket_source} path={socket_path}",
+            fmt=args.emit_events,
+        )
         client, daemon, thread = _start_or_reuse_daemon(
             project=project,
             socket_path=socket_path,
@@ -1521,6 +1394,7 @@ def _setup_autopilot_plugin(
                 client,
                 autopilot_ide,
                 timeout_seconds=max(0.0, args.autopilot_plugin_wait_seconds),
+                stdio_format=args.emit_events,
             )
             plugin_connected = plugin_ready
             if plugin_ready:
@@ -1919,40 +1793,23 @@ def _run_autonomous_cycle(
     return False
 
 
-def _setup_autonomous_env_vars(
-    args: argparse.Namespace,
-) -> tuple[str | None, str | None, bool, bool, str | None, str | None]:
+def _setup_autonomous_env_vars() -> tuple[str | None, dict[str, tuple[bool, str | None]]]:
     """Setup and save environment variables for autonomous mode."""
     previous_stdio_format_env = os.environ.get("KORU_STDIO_FORMAT")
-    previous_strict_plugin_env = os.environ.get("KORU_STRICT_PLUGIN_VERSION")
-    had_strict_plugin_env = "KORU_STRICT_PLUGIN_VERSION" in os.environ
-    previous_strict_ack_env = os.environ.get("KORU_STRICT_PLUGIN_ACK")
-    had_strict_ack_env = "KORU_STRICT_PLUGIN_ACK" in os.environ
-    return (
-        previous_stdio_format_env,
-        previous_strict_plugin_env,
-        had_strict_plugin_env,
-        had_strict_ack_env,
-        previous_strict_ack_env,
-        previous_strict_plugin_env,
-    )
+    strict_env = {
+        key: (key in os.environ, os.environ.get(key))
+        for key in ("KORU_STRICT_PLUGIN_VERSION", "KORU_STRICT_PLUGIN_ACK")
+    }
+    return previous_stdio_format_env, strict_env
 
 
-def _restore_autonomous_env_vars(
-    had_strict_plugin_env: bool,
-    had_strict_ack_env: bool,
-    previous_strict_plugin_env: str | None,
-    previous_strict_ack_env: str | None,
-) -> None:
+def _restore_autonomous_env_vars(snapshot: dict[str, tuple[bool, str | None]]) -> None:
     """Restore environment variables after autonomous mode."""
-    if had_strict_plugin_env:
-        os.environ["KORU_STRICT_PLUGIN_VERSION"] = previous_strict_plugin_env or ""
-    else:
-        os.environ.pop("KORU_STRICT_PLUGIN_VERSION", None)
-    if had_strict_ack_env:
-        os.environ["KORU_STRICT_PLUGIN_ACK"] = previous_strict_ack_env or ""
-    else:
-        os.environ.pop("KORU_STRICT_PLUGIN_ACK", None)
+    for key, (was_set, value) in snapshot.items():
+        if was_set:
+            os.environ[key] = value or ""
+        else:
+            os.environ.pop(key, None)
 
 
 def _setup_autonomous_resources(
@@ -2093,14 +1950,7 @@ def _handle_autonomous_interrupt(
 
 
 def _action_up(args: argparse.Namespace) -> int:
-    (
-        previous_stdio_format_env,
-        previous_strict_plugin_env,
-        had_strict_plugin_env,
-        had_strict_ack_env,
-        previous_strict_ack_env,
-        _,
-    ) = _setup_autonomous_env_vars(args)
+    previous_stdio_format_env, strict_env = _setup_autonomous_env_vars()
     correlation_id, project, guard_rc = _setup_autonomous_session(args)
     if guard_rc:
         return guard_rc
@@ -2167,12 +2017,7 @@ def _action_up(args: argparse.Namespace) -> int:
             stopped_by_sigterm=stop_state.stopped_by_sigterm,
         )
     finally:
-        _restore_autonomous_env_vars(
-            had_strict_plugin_env,
-            had_strict_ack_env,
-            previous_strict_plugin_env,
-            previous_strict_ack_env,
-        )
+        _restore_autonomous_env_vars(strict_env)
         _cleanup_autonomous_session(
             previous_stdio_format_env,
             previous_sigterm,
@@ -2181,229 +2026,6 @@ def _action_up(args: argparse.Namespace) -> int:
             wup_process,
             args.emit_events,
         )
-
-
-AUTO_UP_DEFAULT_ARGS: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = ()
-
-
-@dataclass
-class AutoPipelineState:
-    seen_cycles: int = 0
-    idle_cycles: int = 0
-    last_queue_status: str = ""
-    last_iterations: int = 0
-    last_failed_count: int = 0
-    last_waiting_count: int = 0
-    last_diag_status: str = ""
-    last_autopilot_status: str = ""
-
-
-@dataclass(frozen=True)
-class AutoPipelineProfile:
-    name: str
-    reason: str
-    enable_scan: bool
-    max_iterations: int
-    include_semcod_artifacts: bool | None
-    idle_diagnostics: str
-    diagnostic_tickets: bool
-    scan_after_idle_queue: bool
-    scan_after_idle_min_interval: float
-    enable_autopilot: bool
-    autopilot_action: str
-
-
-def _argv_has_option(argv: list[str], names: tuple[str, ...]) -> bool:
-    for arg in argv:
-        if arg in names:
-            return True
-        if any(arg.startswith(f"{name}=") for name in names):
-            return True
-    return False
-
-
-def _expand_auto_up_defaults(argv: list[str]) -> list[str]:
-    expanded = list(argv)
-    provided = expanded[1:]
-    defaults: list[str] = []
-    for names, default_args in AUTO_UP_DEFAULT_ARGS:
-        if not _argv_has_option(provided, names):
-            defaults.extend(default_args)
-    return [expanded[0], *defaults, *provided]
-
-
-def _collect_argv_options(argv: list[str]) -> set[str]:
-    return {arg.split("=", 1)[0] for arg in argv if arg.startswith("--")}
-
-
-def _user_option(options: set[str], names: tuple[str, ...]) -> bool:
-    return any(name in options for name in names)
-
-
-def _auto_value(args: argparse.Namespace, names: tuple[str, ...], attr: str, value: Any) -> Any:
-    if _user_option(getattr(args, "_auto_user_options", set()), names):
-        return getattr(args, attr)
-    return value
-
-
-def _auto_pipeline_has_pressure(state: AutoPipelineState, max_iterations: int) -> tuple[bool, str]:
-    if state.seen_cycles == 0:
-        return True, "initial rescue pass"
-    if state.last_failed_count:
-        return True, "queue failures present"
-    if state.last_waiting_count or state.last_queue_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES:
-        return True, "queue waiting for input"
-    if state.last_diag_status == "failed":
-        return True, "diagnostics failed"
-    if state.last_autopilot_status == "failed":
-        return True, "autopilot failed"
-    if state.last_queue_status == "completed" and state.last_iterations >= max_iterations:
-        return True, "queue backlog reached max-iterations"
-    return False, ""
-
-
-def _auto_pipeline_stage(state: AutoPipelineState, max_iterations: int) -> tuple[str, str]:
-    has_pressure, reason = _auto_pipeline_has_pressure(state, max_iterations)
-    if has_pressure:
-        return "rescue", reason
-    if state.idle_cycles >= 3:
-        return "architecture", "queue stable for architecture checks"
-    if state.idle_cycles >= 2:
-        return "quality", "queue stable for quality checks"
-    if state.idle_cycles >= 1:
-        return "stabilize", "queue idle; run quick verification"
-    return "stabilize", "queue moving"
-
-
-def _select_auto_pipeline_profile(
-    args: argparse.Namespace,
-    state: AutoPipelineState,
-    *,
-    base_enable_scan: bool,
-) -> AutoPipelineProfile:
-    stage, reason = _auto_pipeline_stage(state, max(1, int(args.max_iterations)))
-    if stage == "rescue":
-        return AutoPipelineProfile(
-            name=stage,
-            reason=reason,
-            enable_scan=bool(_auto_value(args, ("--ticket-sources",), "ticket_sources", False)),
-            max_iterations=int(_auto_value(args, ("--max-iterations",), "max_iterations", 1)),
-            include_semcod_artifacts=_auto_value(
-                args,
-                ("--semcod-artifacts", "--no-semcod-artifacts"),
-                "semcod_artifacts",
-                False,
-            ),
-            idle_diagnostics=str(
-                _auto_value(args, ("--idle-diagnostics",), "idle_diagnostics", "off")
-            ),
-            diagnostic_tickets=bool(
-                _auto_value(args, ("--diagnostic-tickets",), "diagnostic_tickets", False)
-            ),
-            scan_after_idle_queue=bool(
-                _auto_value(
-                    args,
-                    ("--scan-after-idle-queue", "--no-scan-after-idle-queue"),
-                    "scan_after_idle_queue",
-                    False,
-                )
-            ),
-            scan_after_idle_min_interval=float(args.scan_after_idle_min_interval),
-            enable_autopilot=bool(
-                _auto_value(args, ("--no-autopilot",), "enable_autopilot", False)
-            ),
-            autopilot_action=str(
-                _auto_value(args, ("--autopilot-action",), "autopilot_action", "off")
-            ),
-        )
-    if stage == "stabilize":
-        return AutoPipelineProfile(
-            name=stage,
-            reason=reason,
-            enable_scan=bool(_auto_value(args, ("--ticket-sources",), "ticket_sources", False)),
-            max_iterations=int(_auto_value(args, ("--max-iterations",), "max_iterations", 1)),
-            include_semcod_artifacts=_auto_value(
-                args,
-                ("--semcod-artifacts", "--no-semcod-artifacts"),
-                "semcod_artifacts",
-                False,
-            ),
-            idle_diagnostics=str(
-                _auto_value(args, ("--idle-diagnostics",), "idle_diagnostics", "quick")
-            ),
-            diagnostic_tickets=bool(
-                _auto_value(args, ("--diagnostic-tickets",), "diagnostic_tickets", True)
-            ),
-            scan_after_idle_queue=bool(
-                _auto_value(
-                    args,
-                    ("--scan-after-idle-queue", "--no-scan-after-idle-queue"),
-                    "scan_after_idle_queue",
-                    True,
-                )
-            ),
-            scan_after_idle_min_interval=float(args.scan_after_idle_min_interval or 60.0),
-            enable_autopilot=bool(
-                _auto_value(args, ("--no-autopilot",), "enable_autopilot", False)
-            ),
-            autopilot_action=str(
-                _auto_value(args, ("--autopilot-action",), "autopilot_action", "off")
-            ),
-        )
-    return AutoPipelineProfile(
-        name=stage,
-        reason=reason,
-        enable_scan=bool(_auto_value(args, ("--ticket-sources",), "ticket_sources", True))
-        or base_enable_scan,
-        max_iterations=int(_auto_value(args, ("--max-iterations",), "max_iterations", 1)),
-        include_semcod_artifacts=_auto_value(
-            args,
-            ("--semcod-artifacts", "--no-semcod-artifacts"),
-            "semcod_artifacts",
-            True,
-        ),
-        idle_diagnostics=str(
-            _auto_value(
-                args,
-                ("--idle-diagnostics",),
-                "idle_diagnostics",
-                "deep" if stage == "architecture" else "full",
-            )
-        ),
-        diagnostic_tickets=bool(
-            _auto_value(args, ("--diagnostic-tickets",), "diagnostic_tickets", True)
-        ),
-        scan_after_idle_queue=bool(
-            _auto_value(
-                args,
-                ("--scan-after-idle-queue", "--no-scan-after-idle-queue"),
-                "scan_after_idle_queue",
-                True,
-            )
-        ),
-        scan_after_idle_min_interval=float(args.scan_after_idle_min_interval or 60.0),
-        enable_autopilot=bool(_auto_value(args, ("--no-autopilot",), "enable_autopilot", False)),
-        autopilot_action=str(_auto_value(args, ("--autopilot-action",), "autopilot_action", "off")),
-    )
-
-
-def _update_auto_pipeline_state(
-    state: AutoPipelineState,
-    queue_result: QueueLoopResult,
-    diag_result: DiagnosticResult,
-    autopilot_status: str,
-) -> None:
-    state.seen_cycles += 1
-    state.last_queue_status = queue_result.last_status
-    state.last_iterations = queue_result.iterations
-    state.last_failed_count = len(queue_result.failed)
-    state.last_waiting_count = len(queue_result.waiting)
-    state.last_diag_status = diag_result.status
-    state.last_autopilot_status = autopilot_status
-    if queue_result.last_status == "idle" and diag_result.status != "failed":
-        state.idle_cycles += 1
-    else:
-        state.idle_cycles = 0
 
 
 def autonomous_main(argv: list[str], *, invoked_as_auto: bool = False) -> int:

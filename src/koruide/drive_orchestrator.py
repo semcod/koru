@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
+from koruide.protocol import MIN_PLUGIN_PROTOCOL_VERSION
 
 
 class DriveOrchestrator:
@@ -122,28 +123,48 @@ class DriveOrchestrator:
         plugin_ide: str | None,
         connected_version: str | None,
         expected_version: str | None = None,
+        protocol_version: int | None = None,
+        capabilities: list[str] | None = None,
     ) -> dict[str, Any]:
         expected = expected_version or DriveOrchestrator.expected_plugin_version()
         strict = DriveOrchestrator.strict_plugin_version_required()
         mismatch = bool(connected_version and expected and connected_version != expected)
+        protocol_missing = protocol_version is None
+        protocol_compatible = bool(
+            protocol_version is not None and protocol_version >= MIN_PLUGIN_PROTOCOL_VERSION
+        )
+        protocol_incompatible = bool(
+            protocol_missing or protocol_version < MIN_PLUGIN_PROTOCOL_VERSION
+        )
         missing_connected = bool(strict and expected and connected_version is None)
         unknown_expected = bool(strict and connected_version and not expected)
         info: dict[str, Any] = {
             "plugin_version": connected_version,
             "expected_plugin_version": expected,
             "plugin_version_mismatch": mismatch,
+            "plugin_protocol_version": protocol_version,
+            "minimum_plugin_protocol_version": MIN_PLUGIN_PROTOCOL_VERSION,
+            "plugin_protocol_missing": protocol_missing,
+            "plugin_protocol_compatible": protocol_compatible,
+            "plugin_protocol_incompatible": protocol_incompatible,
             "plugin_version_missing": missing_connected,
             "plugin_version_expected_missing": unknown_expected,
             "plugin_version_policy": (
-                "strict" if strict else "warn"
+                "protocol" if protocol_compatible else "strict" if strict else "warn"
             ),
         }
+        if capabilities is not None:
+            info["plugin_capabilities"] = capabilities
         if plugin_ide:
             info["ide"] = plugin_ide
         return info
 
     @staticmethod
     def should_block_plugin_version(info: dict[str, Any]) -> bool:
+        if info.get("plugin_protocol_incompatible"):
+            return True
+        if info.get("plugin_protocol_compatible"):
+            return False
         return bool(
             info.get("plugin_version_mismatch")
             or info.get("plugin_version_missing")
@@ -152,6 +173,21 @@ class DriveOrchestrator:
 
     @staticmethod
     def plugin_version_block_message(info: dict[str, Any]) -> str:
+        if info.get("plugin_protocol_incompatible"):
+            if info.get("plugin_protocol_missing"):
+                return (
+                    "connected autopilot plugin protocol missing: "
+                    f"minimum={info.get('minimum_plugin_protocol_version') or '-'}; "
+                    "install the current VSIX, reload the IDE window, then run "
+                    "`koru: Connect autopilot daemon`."
+                )
+            return (
+                "connected autopilot plugin protocol mismatch: "
+                f"connected={info.get('plugin_protocol_version') or '-'} "
+                f"minimum={info.get('minimum_plugin_protocol_version') or '-'}; "
+                "install the current VSIX, reload the IDE window, then run "
+                "`koru: Connect autopilot daemon`."
+            )
         return (
             "connected autopilot plugin version mismatch: "
             f"connected={info.get('plugin_version') or '-'} "

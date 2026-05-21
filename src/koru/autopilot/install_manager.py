@@ -367,6 +367,71 @@ def _check_plugin_live_host_stale_issue(
     ]
 
 
+def _plugin_debug_log_path() -> Path:
+    return Path(os.environ.get("KORU_PLUGIN_DEBUG_LOG", "/tmp/koru-plugin-debug.log"))
+
+
+def _recent_socket_candidate_mismatch(
+    ide: str,
+    expected_socket: Path,
+) -> dict[str, Any] | None:
+    try:
+        lines = _plugin_debug_log_path().read_text(encoding="utf-8").splitlines()[-200:]
+    except OSError:
+        return None
+
+    expected = str(expected_socket)
+    for line in reversed(lines):
+        if "CONNECT_CANDIDATES" not in line:
+            continue
+        _, _, payload = line.partition("CONNECT_CANDIDATES")
+        try:
+            data = json.loads(payload.strip())
+        except json.JSONDecodeError:
+            continue
+        if data.get("ide") != ide:
+            continue
+        candidates = [str(item) for item in data.get("candidates", []) if isinstance(item, str)]
+        override = str(data.get("override") or "")
+        if expected not in candidates:
+            return {"override": override, "candidates": candidates}
+    return None
+
+
+def _check_plugin_socket_candidate_mismatch_issue(
+    daemon: dict[str, Any], plugin: dict[str, Any], ide: str, socket_path: Path
+) -> list[ManagerIssue]:
+    if not daemon.get("running") or plugin.get("connected"):
+        return []
+    installed_version = plugin.get("installed_version")
+    expected_version = plugin.get("expected_version")
+    if not installed_version or installed_version != expected_version:
+        return []
+
+    mismatch = _recent_socket_candidate_mismatch(ide, socket_path)
+    if not mismatch:
+        return []
+
+    candidates = ", ".join(mismatch["candidates"]) or "<empty>"
+    override = mismatch["override"] or "<unset>"
+    return [
+        ManagerIssue(
+            "plugin_socket_candidate_mismatch",
+            "error",
+            (
+                f"{ide} extension is installed at {installed_version}, but the live "
+                f"extension host is probing socket candidate(s) {candidates} instead "
+                f"of {socket_path} (override={override})."
+            ),
+            (
+                "Reload the IDE window with `Developer: Reload Window` or run "
+                "`Developer: Restart Extension Host`, then run "
+                "`koru: Connect autopilot daemon`."
+            ),
+        ),
+    ]
+
+
 def _check_plugin_version_mismatch_issue(
     daemon: dict[str, Any], plugin: dict[str, Any], ide: str
 ) -> list[ManagerIssue]:
@@ -420,6 +485,7 @@ def _issue_list(
     daemon: dict[str, Any],
     plugin: dict[str, Any],
     ide: str,
+    socket_path: Path,
 ) -> list[ManagerIssue]:
     issues: list[ManagerIssue] = []
     issues.extend(_check_koru_path_issues(path_koru, repo_koru))
@@ -431,6 +497,7 @@ def _issue_list(
     issues.extend(_check_plugin_version_missing_issue(daemon, plugin, ide))
     issues.extend(_check_plugin_installed_version_mismatch_issue(plugin, ide))
     issues.extend(_check_plugin_live_host_stale_issue(daemon, plugin, ide))
+    issues.extend(_check_plugin_socket_candidate_mismatch_issue(daemon, plugin, ide, socket_path))
     issues.extend(_check_plugin_installed_ok_but_not_connected_issue(daemon, plugin, ide))
     issues.extend(_check_plugin_version_mismatch_issue(daemon, plugin, ide))
     issues.extend(_check_plugin_not_connected_issue(daemon, plugin, ide))
@@ -475,6 +542,7 @@ def collect_install_manager_report(
         daemon=daemon,
         plugin=plugin,
         ide=resolved_ide,
+        socket_path=sock,
     )
     return InstallManagerReport(
         ok=not any(issue.severity == "error" for issue in issues),

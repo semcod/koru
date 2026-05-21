@@ -11,7 +11,11 @@ from koru.autonomous import _apply_agent_lane_environ
 from koru.autopilot.ide import RunningIDE
 
 
-def test_resolve_agent_lane_prefers_running_vscode_over_cursor_marker(tmp_path: Path) -> None:
+def test_resolve_agent_lane_prefers_running_vscode_over_cursor_marker(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
     (tmp_path / ".cursor").mkdir()
     running = [
         RunningIDE(id="vscode", label="VS Code", pid=42, exe="/snap/code/code"),
@@ -42,7 +46,11 @@ def test_resolve_autopilot_ide_for_autonomous_returns_string_lane() -> None:
     assert source == "lane"
 
 
-def test_resolve_agent_lane_respects_terminal_jetbrains_hint(tmp_path: Path) -> None:
+def test_resolve_agent_lane_respects_terminal_jetbrains_hint(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
     running = [
         RunningIDE(id="cursor", label="Cursor", pid=10, exe="/usr/bin/cursor"),
         RunningIDE(id="jetbrains", label="JetBrains IDE", pid=11, exe="/usr/bin/pycharm"),
@@ -58,6 +66,50 @@ def test_resolve_agent_lane_respects_terminal_jetbrains_hint(tmp_path: Path) -> 
         )
     assert lane == "jetbrains"
     assert source == "terminal"
+
+
+def test_resolve_agent_lane_terminal_hint_overrides_conflicting_env_instance(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    running = [
+        RunningIDE(id="vscode", label="VS Code", pid=10, exe="/usr/bin/code"),
+        RunningIDE(id="vscodium", label="VSCodium", pid=11, exe="/usr/bin/codium"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value="vscodium"),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+    assert lane == "vscodium"
+    assert source == "terminal:over-env:KORU_AUTOPILOT_INSTANCE"
+
+
+def test_resolve_agent_lane_env_instance_used_without_terminal_hint(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    running = [
+        RunningIDE(id="vscode", label="VS Code", pid=10, exe="/usr/bin/code"),
+        RunningIDE(id="vscodium", label="VSCodium", pid=11, exe="/usr/bin/codium"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value=None),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+    assert lane == "vscode"
+    assert source == "env:KORU_AUTOPILOT_INSTANCE"
 
 
 def test_resolve_autopilot_ide_keeps_jetbrains_lane_when_plugin_ide_running() -> None:
