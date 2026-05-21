@@ -187,7 +187,11 @@ class Injector:
         forced = _forced_injector_backend()
         if forced is not None:
             if self.which(forced):
+                if self.log:
+                    self.log(f"injector: forced backend={forced} (KORU_INJECTOR_BACKEND)")
                 return [forced]
+            if self.log:
+                self.log(f"injector: forced backend={forced} not found, no backends available")
             return []
 
         out: list[str] = []
@@ -195,7 +199,11 @@ class Injector:
         def add(name: str) -> None:
             if self.which(name) and name not in out:
                 out.append(name)
+                if self.log:
+                    self.log(f"injector: candidate backend {name} available")
 
+        if self.log:
+            self.log(f"injector: session={self.session or 'unknown'}")
         if self.session == "x11":
             add("xdotool")
         elif self.session == "wayland":
@@ -208,6 +216,8 @@ class Injector:
         add("xdotool")
         add("wtype")
         add("ydotool")
+        if self.log:
+            self.log(f"injector: candidate backends: {out}")
         return out
 
     def select_backend(self) -> str | None:
@@ -220,18 +230,30 @@ class Injector:
 
     def _type_with_xdotool(self, text: str, submit_key: str | None, extra_enters: int) -> None:
         """Type text using xdotool backend."""
+        if self.log:
+            self.log(f"injector: xdotool typing {len(text)} chars, submit={submit_key}, extra_enters={extra_enters}")
         self._call(["xdotool", "type", "--delay", "5", "--clearmodifiers", "--", text])
         if submit_key:
+            if self.log:
+                self.log(f"injector: xdotool pressing submit key {submit_key}")
             self._call(["xdotool", "key", "--clearmodifiers", submit_key])
-            for _ in range(extra_enters):
+            for i in range(extra_enters):
+                if self.log:
+                    self.log(f"injector: xdotool extra Enter #{i+1}")
                 self._call(["xdotool", "key", "--clearmodifiers", "Return"])
 
     def _type_with_wtype(self, text: str, submit_key: str | None, extra_enters: int) -> None:
         """Type text using wtype backend."""
+        if self.log:
+            self.log(f"injector: wtype typing {len(text)} chars, submit={submit_key}, extra_enters={extra_enters}")
         self._call(["wtype", "--", text])
         if submit_key:
+            if self.log:
+                self.log(f"injector: wtype pressing submit key {submit_key}")
             self._press_wtype(submit_key)
-            for _ in range(extra_enters):
+            for i in range(extra_enters):
+                if self.log:
+                    self.log(f"injector: wtype extra Enter #{i+1}")
                 self._call(["wtype", "-k", "Return"])
 
     def _type_with_ydotool(
@@ -244,11 +266,20 @@ class Injector:
         ctrl_code: int,
     ) -> None:
         """Type text using ydotool backend."""
+        if self.log:
+            self.log(
+                f"injector: ydotool typing {len(text)} chars, submit={submit_key}, "
+                f"mode={submit_mode}, enter_code={enter_code}, extra_enters={extra_enters}"
+            )
         self._call(["ydotool", "type", "--", text])
         if submit_key:
             if submit_mode == "newline":
+                if self.log:
+                    self.log("injector: ydotool submitting via newline")
                 self._call(["ydotool", "type", "--", "\n"])
             elif submit_mode == "ctrl-enter":
+                if self.log:
+                    self.log(f"injector: ydotool submitting via ctrl-enter (ctrl_code={ctrl_code}, enter_code={enter_code})")
                 self._call(
                     [
                         "ydotool",
@@ -260,8 +291,12 @@ class Injector:
                     ],
                 )
             else:
+                if self.log:
+                    self.log(f"injector: ydotool submitting via keycode {enter_code}")
                 self._call(["ydotool", "key", f"{enter_code}:1", f"{enter_code}:0"])
-            for _ in range(extra_enters):
+            for i in range(extra_enters):
+                if self.log:
+                    self.log(f"injector: ydotool extra submit #{i+1} (mode={submit_mode})")
                 if submit_mode == "newline":
                     self._call(["ydotool", "type", "--", "\n"])
                 elif submit_mode == "ctrl-enter":
@@ -316,8 +351,13 @@ class Injector:
         """
         if not text:
             raise InjectorError("refusing to inject empty text")
+        text_preview = text[:100].replace("\n", "\\n") + ("..." if len(text) > 100 else "")
+        if self.log:
+            self.log(f"injector: type_text called with {len(text)} chars, ide={ide}, submit={submit}, preview='{text_preview}'")
         backends = self._candidate_backends()
         if not backends:
+            if self.log:
+                self.log("injector: ERROR no backends available")
             raise InjectorError(
                 "no keyboard injection backend found "
                 "(install xdotool on X11 or wtype/ydotool on Wayland)",
@@ -330,6 +370,8 @@ class Injector:
                 f"submit_key={submit_key or 'none'}, ide={ide}, chars={len(text)}"
             )
         if dry_run:
+            if self.log:
+                self.log(f"injector: dry-run mode, skipping actual typing")
             return InjectionResult(
                 backend=backend0,
                 submitted=submit,
@@ -345,7 +387,7 @@ class Injector:
                 self._type_with_backend(backend, text, submit_key)
                 if self.log:
                     self.log(
-                        f"injector: typed {len(text)} chars via {backend}, "
+                        f"injector: SUCCESS typed {len(text)} chars via {backend}, "
                         f"submit={submit}"
                     )
                 return InjectionResult(backend=backend, submitted=submit)
@@ -359,6 +401,8 @@ class Injector:
             "or fix ydotool/uinput per `koru autopilot doctor` / docs/autopilot-quickstart.md. "
             "Override order with KORU_INJECTOR_BACKEND=wtype|xdotool|ydotool."
         )
+        if self.log:
+            self.log(f"injector: ERROR all backends failed: {'; '.join(errors)}{hint}")
         raise InjectorError("all keyboard injection backends failed: " + "; ".join(errors) + hint)
 
     def submit_only(
@@ -421,10 +465,17 @@ class Injector:
         return BackendStatus(name=tool, available=True, reason=path)
 
     def _call(self, cmd: list[str]) -> None:
+        if self.log:
+            cmd_preview = ' '.join(c if len(c) < 50 else f'{c[:47]}...' for c in cmd)
+            self.log(f"injector: executing: {cmd_preview}")
         result = self.runner(cmd, None)
         if result.returncode != 0:
             stderr = (result.stderr or b"").decode("utf-8", errors="replace").strip()
+            if self.log:
+                self.log(f"injector: command failed with code {result.returncode}: {stderr or '(no stderr)'}")
             raise InjectorError(f"{cmd[0]} exited {result.returncode}: {stderr or '(no stderr)'}")
+        if self.log:
+            self.log(f"injector: command succeeded: {cmd[0]}")
 
     def _press_wtype(self, combo: str) -> None:
         # Translate e.g. ``ctrl+Return`` into the wtype invocation.

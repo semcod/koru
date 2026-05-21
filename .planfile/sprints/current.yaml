@@ -2759,6 +2759,7 @@ sprint:
         into strategy pattern.'
       execution:
         attempt: 1
+        finished_at: '2026-05-21T18:46:45.438891Z'
         max_attempts: 1
         queue: default
         state: done
@@ -2774,6 +2775,14 @@ sprint:
           into strategy pattern.'
         source: koru task
         timestamp: '2026-05-21T12:09:41.010954+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T18:46:45.970570+00:00'
       id: STARTER-042
       inputs:
         api_headers: {}
@@ -2805,9 +2814,9 @@ sprint:
         timestamp: '2026-05-21T12:09:41.010954+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T12:09:41.010954+00:00'
+      updated_at: '2026-05-21T18:46:45.970534+00:00'
     STARTER-043:
       blocked_by: []
       blocks: []
@@ -2817,6 +2826,7 @@ sprint:
         strategy pattern.'
       execution:
         attempt: 1
+        finished_at: '2026-05-21T18:47:55.998674Z'
         max_attempts: 1
         queue: default
         state: done
@@ -2832,6 +2842,14 @@ sprint:
           into strategy pattern.'
         source: koru task
         timestamp: '2026-05-21T12:09:41.219210+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T18:47:57.607596+00:00'
       id: STARTER-043
       inputs:
         api_headers: {}
@@ -2863,9 +2881,9 @@ sprint:
         timestamp: '2026-05-21T12:09:41.219210+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T12:09:41.219210+00:00'
+      updated_at: '2026-05-21T18:47:57.607547+00:00'
     STARTER-044:
       blocked_by: []
       blocks: []

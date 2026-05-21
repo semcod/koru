@@ -638,6 +638,24 @@ def _resolve_auto_drive_target(
     return keyboard, keyboard, "auto:no-profile"
 
 
+def _log_drive_target_result(
+    result: tuple[str, str, str],
+    log: Callable[[str], None] | None,
+) -> tuple[str, str, str]:
+    if log:
+        log(f"resolve_drive_target: {result}")
+    return result
+
+
+def _resolve_profile_override(
+    stripped_profile: str,
+    target: RunningIDE | None,
+    prefer: str | None,
+) -> tuple[str, str, str]:
+    keyboard = target.id if target is not None else (prefer or "default")
+    return keyboard, stripped_profile, f"os-profile:{stripped_profile}"
+
+
 def resolve_drive_target(
     ide_arg: str,
     os_profile: str | None,
@@ -662,26 +680,19 @@ def resolve_drive_target(
     target = pick_target(detected, prefer=prefer)
 
     if stripped_profile:
-        keyboard = target.id if target is not None else (prefer or "default")
-        result = keyboard, stripped_profile, f"os-profile:{stripped_profile}"
-        if _log:
-            _log(f"resolve_drive_target: {result}")
-        return result
+        result = _resolve_profile_override(stripped_profile, target, prefer)
+        return _log_drive_target_result(result, _log)
 
     if not is_auto:
         result = _resolve_explicit_drive_target(
             prefer or "default", target, project=project, profile_check=profile_check
         )
-        if _log:
-            _log(f"resolve_drive_target: {result}")
-        return result
+        return _log_drive_target_result(result, _log)
 
     result = _resolve_auto_drive_target(
         detected, target, project=project, profile_check=profile_check
     )
-    if _log:
-        _log(f"resolve_drive_target: {result}")
-    return result
+    return _log_drive_target_result(result, _log)
 
 
 __all__ = [
