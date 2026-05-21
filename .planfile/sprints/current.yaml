@@ -3841,9 +3841,10 @@ sprint:
         into strategy pattern.'
       execution:
         attempt: 0
+        finished_at: '2026-05-21T19:17:39.347590Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -3856,6 +3857,17 @@ sprint:
           into strategy pattern.'
         source: koru task
         timestamp: '2026-05-21T14:24:10.827397+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T19:17:39.994274+00:00'
       id: STARTER-055
       inputs:
         api_headers: {}
@@ -3875,8 +3887,13 @@ sprint:
       - scan
       name: 'Reduce cyclomatic complexity: _compose_service_ready (CC=15, limit=15)'
       outputs:
-        artifacts: []
-        notes: []
+        artifacts:
+        - src/koru/autonomous_wup.py
+        notes:
+        - 'Refactored _compose_service_ready into small compose readiness predicates:
+          _compose_health_ready, _compose_state_ready, _compose_status_ready, and
+          _compose_service_item_ready. Verified with tests/test_autonomous.py: 93
+          passed.'
       priority: normal
       source:
         context:
@@ -3887,9 +3904,9 @@ sprint:
         timestamp: '2026-05-21T14:24:10.827397+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T14:24:10.827397+00:00'
+      updated_at: '2026-05-21T19:17:39.994232+00:00'
     STARTER-056:
       blocked_by: []
       blocks: []

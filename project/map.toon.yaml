@@ -1,8 +1,8 @@
-# koru | 255f 46275L | yaml:15,txt:2,yml:8,shell:44,json:3,python:166,typescript:6,kotlin:6,properties:1,xml:1,toml:1 | 2026-05-21
-# generated in 0.06s
+# koru | 255f 46275L | yaml:15,txt:2,yml:8,toml:1,shell:44,json:3,python:166,typescript:6,kotlin:6,properties:1,xml:1 | 2026-05-21
+# generated in 0.04s
 # stats: 1675 func | 0 cls | 255 mod | CC̄=4.0 | critical:6 | cycles:0
 # alerts[5]: fan-out _build_handler=36; fan-out _build_handler=31; fan-out create_nl_task=24; fan-out AutopilotBridge.focusChat=23; fan-out init_project=23
-# hotspots[5]: _build_handler fan=36; _build_handler fan=31; create_nl_task fan=24; init_project fan=23; AutopilotBridge.focusChat fan=23
+# hotspots[5]: _build_handler fan=36; _build_handler fan=31; create_nl_task fan=24; init_project fan=23; run_cycle fan=23
 # evolution: CC̄ 4.1→4.0 (improved -0.1)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
 M[255]:
@@ -394,6 +394,66 @@ P...
     _list_tickets(project;runner)
     _close_ticket(project;candidate;reason;runner)
     clean_queue(project)
+  src/koru/autonomous_cycle.py:
+    e: DiagnosticResult,AutoloopState,_stdio_info,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_status_in_skip_list,_allow_keyboard_autopilot_fallback,_prefer_keyboard_autopilot,_plugin_required_for_ide,_allow_cross_ide_autopilot,_autopilot_terminal_conflict_reason,_client_plugin_rows,_wanted_plugin_ide,_plugin_row_matches_ide,_plugin_row_version_block_reason,_missing_plugin_label,_matching_plugin_row,_usable_plugin_decision,_client_has_usable_plugin,_try_os_injector_fallback,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_autopilot_event_path,_drain_autopilot_events,_initialize_cycle_telemetry,_heal_stale_socket,_handle_autopilot_events,_handle_queue_hygiene,_handle_post_run_verify_ide,_handle_scan_phase,_build_queue_command,_run_queue_loop,_emit_queue_iteration_event,_handle_post_run_verify,_handle_queue_loop_phase,_handle_scan_after_idle,_update_stagnation_state,_waiting_ticket_has_label,_handle_diagnostics,_check_autopilot_skip_conditions,_resolve_autopilot_drive_decision,_drive_autopilot_once,_reply_missing_autopilot_plugin,_reply_needs_focus_retry,_reply_requires_manual_chat_focus,_format_autopilot_failure_details,_warn_autopilot_focus_retry,_warn_autopilot_manual_focus_required,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result,_handle_autopilot_phase,_emit_cycle_completion_events,run_cycle
+    DiagnosticResult:
+    AutoloopState:
+    _stdio_info(msg)
+    _queue_loop_waiting_ticket_label(queue_result)
+    _is_topology_enabled(project;key)
+    _current_head(project)
+    _status_in_skip_list(status;skip_statuses)
+    _allow_keyboard_autopilot_fallback()
+    _prefer_keyboard_autopilot()
+    _plugin_required_for_ide(autopilot_ide)
+    _allow_cross_ide_autopilot()
+    _autopilot_terminal_conflict_reason(autopilot_ide)
+    _client_plugin_rows(client)
+    _wanted_plugin_ide(autopilot_ide)
+    _plugin_row_matches_ide(row;wanted)
+    _plugin_row_version_block_reason(row;wanted)
+    _missing_plugin_label(wanted)
+    _matching_plugin_row(plugins;wanted)
+    _usable_plugin_decision(row;wanted)
+    _client_has_usable_plugin(client;autopilot_ide)
+    _try_os_injector_fallback(prompt)
+    _run_command_check(project;check_id;command)
+    _create_diagnostic_ticket()
+    _clear_diagnostic_marker(state_dir;check_id)
+    _read_wup_health()
+    _run_idle_diagnostics()
+    _autopilot_event_path()
+    _drain_autopilot_events(state)
+    _initialize_cycle_telemetry()
+    _heal_stale_socket()
+    _handle_autopilot_events(state;_hp)
+    _handle_queue_hygiene(project;cycle;_hp;_emit)
+    _handle_post_run_verify_ide(project;state;cycle;_hp;_emit)
+    _handle_scan_phase(project;state;cycle;enable_scan;include_semcod_artifacts;scan_skip_if_clean;scan_skip_after;topology_integration;_hp;_emit)
+    _build_queue_command(max_iterations;queue_name)
+    _run_queue_loop(project;actor;queue_name;max_iterations)
+    _emit_queue_iteration_event(queue_result;cycle;queue_name;actor;qcmd;_emit)
+    _handle_post_run_verify(project;state;cycle;queue_result;verify_config;_hp;_emit)
+    _handle_queue_loop_phase(project;state;cycle;actor;queue_name;max_iterations;topology_integration;verify_config;_hp;_emit)
+    _handle_scan_after_idle(project;state;cycle;queue_result;scan_after_idle_queue;include_semcod_artifacts;scan_after_idle_min_interval_seconds;topology_integration;cycle_telemetry;_hp;_emit)
+    _update_stagnation_state(state;queue_result)
+    _waiting_ticket_has_label(project;queue_result;label)
+    _handle_diagnostics(project;state;cycle;queue_result;idle_diagnostics;diagnostic_tickets;diagnostic_ticket_queue;diagnostic_ticket_priority;diagnostic_state_dir;wup_watch_enabled;wup_diagnostic_tickets;wup_ticket_queue;topology_integration;_hp;_emit)
+    _check_autopilot_skip_conditions(project;queue_result;state;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp)
+    _resolve_autopilot_drive_decision(project;state;queue_result)
+    _drive_autopilot_once(client)
+    _reply_missing_autopilot_plugin(reply)
+    _reply_needs_focus_retry(reply)
+    _reply_requires_manual_chat_focus(reply)
+    _format_autopilot_failure_details(reply)
+    _warn_autopilot_focus_retry(attempt;attempts;reply)
+    _warn_autopilot_manual_focus_required(reply)
+    _execute_autopilot_drive(project;state;queue_result;client;autopilot_ide;drive_prompt;submit;autopilot_action;_hp)
+    _update_autopilot_state(state;ok;decision_kind;autopilot_drive_kind;decision_prompt)
+    _log_autopilot_result(ok;queue_result;autopilot_ide;decision_kind;reply;_hp)
+    _handle_autopilot_phase(project;state;cycle;queue_result;enable_autopilot;client;autopilot_ide;drive_prompt;submit;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp;_emit)
+    _emit_cycle_completion_events(project;state;cycle;queue_result;diag_result;wup_health;autopilot_status;autopilot_ide;autopilot_backend;autopilot_drive_kind;cycle_telemetry;scan_after_idle_queue;scan_after_idle_min_interval_seconds;autopilot_skip_drive_idle_streak;_hp;_emit)
+    run_cycle()
   src/koru/autonomous_parser.py:
     e: build_parser,_match_koru_auto_parts,looks_like_autonomous_up_command
     build_parser()
@@ -525,66 +585,6 @@ Designed to ...
     do_from_todo(heading;check)
     _llm_stub(item;heading;source_name)
     main()
-  src/koru/autonomous_cycle.py:
-    e: DiagnosticResult,AutoloopState,_stdio_info,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_status_in_skip_list,_allow_keyboard_autopilot_fallback,_prefer_keyboard_autopilot,_plugin_required_for_ide,_allow_cross_ide_autopilot,_autopilot_terminal_conflict_reason,_client_plugin_rows,_wanted_plugin_ide,_plugin_row_matches_ide,_plugin_row_version_block_reason,_missing_plugin_label,_matching_plugin_row,_usable_plugin_decision,_client_has_usable_plugin,_try_os_injector_fallback,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_autopilot_event_path,_drain_autopilot_events,_initialize_cycle_telemetry,_heal_stale_socket,_handle_autopilot_events,_handle_queue_hygiene,_handle_post_run_verify_ide,_handle_scan_phase,_build_queue_command,_run_queue_loop,_emit_queue_iteration_event,_handle_post_run_verify,_handle_queue_loop_phase,_handle_scan_after_idle,_update_stagnation_state,_waiting_ticket_has_label,_handle_diagnostics,_check_autopilot_skip_conditions,_resolve_autopilot_drive_decision,_drive_autopilot_once,_reply_missing_autopilot_plugin,_reply_needs_focus_retry,_reply_requires_manual_chat_focus,_format_autopilot_failure_details,_warn_autopilot_focus_retry,_warn_autopilot_manual_focus_required,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result,_handle_autopilot_phase,_emit_cycle_completion_events,run_cycle
-    DiagnosticResult:
-    AutoloopState:
-    _stdio_info(msg)
-    _queue_loop_waiting_ticket_label(queue_result)
-    _is_topology_enabled(project;key)
-    _current_head(project)
-    _status_in_skip_list(status;skip_statuses)
-    _allow_keyboard_autopilot_fallback()
-    _prefer_keyboard_autopilot()
-    _plugin_required_for_ide(autopilot_ide)
-    _allow_cross_ide_autopilot()
-    _autopilot_terminal_conflict_reason(autopilot_ide)
-    _client_plugin_rows(client)
-    _wanted_plugin_ide(autopilot_ide)
-    _plugin_row_matches_ide(row;wanted)
-    _plugin_row_version_block_reason(row;wanted)
-    _missing_plugin_label(wanted)
-    _matching_plugin_row(plugins;wanted)
-    _usable_plugin_decision(row;wanted)
-    _client_has_usable_plugin(client;autopilot_ide)
-    _try_os_injector_fallback(prompt)
-    _run_command_check(project;check_id;command)
-    _create_diagnostic_ticket()
-    _clear_diagnostic_marker(state_dir;check_id)
-    _read_wup_health()
-    _run_idle_diagnostics()
-    _autopilot_event_path()
-    _drain_autopilot_events(state)
-    _initialize_cycle_telemetry()
-    _heal_stale_socket()
-    _handle_autopilot_events(state;_hp)
-    _handle_queue_hygiene(project;cycle;_hp;_emit)
-    _handle_post_run_verify_ide(project;state;cycle;_hp;_emit)
-    _handle_scan_phase(project;state;cycle;enable_scan;include_semcod_artifacts;scan_skip_if_clean;scan_skip_after;topology_integration;_hp;_emit)
-    _build_queue_command(max_iterations;queue_name)
-    _run_queue_loop(project;actor;queue_name;max_iterations)
-    _emit_queue_iteration_event(queue_result;cycle;queue_name;actor;qcmd;_emit)
-    _handle_post_run_verify(project;state;cycle;queue_result;verify_config;_hp;_emit)
-    _handle_queue_loop_phase(project;state;cycle;actor;queue_name;max_iterations;topology_integration;verify_config;_hp;_emit)
-    _handle_scan_after_idle(project;state;cycle;queue_result;scan_after_idle_queue;include_semcod_artifacts;scan_after_idle_min_interval_seconds;topology_integration;cycle_telemetry;_hp;_emit)
-    _update_stagnation_state(state;queue_result)
-    _waiting_ticket_has_label(project;queue_result;label)
-    _handle_diagnostics(project;state;cycle;queue_result;idle_diagnostics;diagnostic_tickets;diagnostic_ticket_queue;diagnostic_ticket_priority;diagnostic_state_dir;wup_watch_enabled;wup_diagnostic_tickets;wup_ticket_queue;topology_integration;_hp;_emit)
-    _check_autopilot_skip_conditions(project;queue_result;state;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp)
-    _resolve_autopilot_drive_decision(project;state;queue_result)
-    _drive_autopilot_once(client)
-    _reply_missing_autopilot_plugin(reply)
-    _reply_needs_focus_retry(reply)
-    _reply_requires_manual_chat_focus(reply)
-    _format_autopilot_failure_details(reply)
-    _warn_autopilot_focus_retry(attempt;attempts;reply)
-    _warn_autopilot_manual_focus_required(reply)
-    _execute_autopilot_drive(project;state;queue_result;client;autopilot_ide;drive_prompt;submit;autopilot_action;_hp)
-    _update_autopilot_state(state;ok;decision_kind;autopilot_drive_kind;decision_prompt)
-    _log_autopilot_result(ok;queue_result;autopilot_ide;decision_kind;reply;_hp)
-    _handle_autopilot_phase(project;state;cycle;queue_result;enable_autopilot;client;autopilot_ide;drive_prompt;submit;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp;_emit)
-    _emit_cycle_completion_events(project;state;cycle;queue_result;diag_result;wup_health;autopilot_status;autopilot_ide;autopilot_backend;autopilot_drive_kind;cycle_telemetry;scan_after_idle_queue;scan_after_idle_min_interval_seconds;autopilot_skip_drive_idle_streak;_hp;_emit)
-    run_cycle()
   src/koruapi/dashboard_serve.py:
     e: ServeConfig,_list_tickets,_bulk_waiting_input_action,_address_in_use,_listener_pids_for_tcp_port,_cmdline_suggests_koru_serve_from_bytes,_cmdline_suggests_koru_serve,_try_stop_prior_koru_serve_listener,serve_endpoint_path,read_serve_endpoint,_build_handler,build_server,write_serve_endpoint_file,bind_serve_server,serve,start_serve_background
     ServeConfig:
@@ -1790,6 +1790,19 @@ Construct once ...
     _handle_mcp_list_tickets(project;_method;payload)
     _handle_mcp_run_ticket(project;_method;payload)
     _handle_mcp_quality_gates(project;_method;payload)
+  src/koruide/injector_backends.py:
+    e: ydotool_enter_keycode,ydotool_submit_mode,ydotool_ctrl_keycode,extra_enter_count,_log,type_with_xdotool,press_wtype,type_with_wtype,_ydotool_submit_command,type_with_ydotool,type_with_backend
+    ydotool_enter_keycode()
+    ydotool_submit_mode()
+    ydotool_ctrl_keycode()
+    extra_enter_count()
+    _log(log;message)
+    type_with_xdotool(call;log;text;submit_key;extra_enters)
+    press_wtype(call;combo)
+    type_with_wtype(call;log;text;submit_key;extra_enters)
+    _ydotool_submit_command(submit_mode;enter_code;ctrl_code)
+    type_with_ydotool(call;log;text;submit_key;extra_enters;enter_code;submit_mode;ctrl_code)
+    type_with_backend(call;log;backend;text;submit_key)
   src/koru/wup_testql_compat.py:
     e: _normalize_timeout,_normalize_args,_real_testql,main
     _normalize_timeout(value)
@@ -1847,19 +1860,6 @@ Construct once ...
     e: _stderr_unknown_option,append_shell_evidence_note
     _stderr_unknown_option(stderr;flag)
     append_shell_evidence_note(project;ticket_id;note)
-  src/koruide/injector_backends.py:
-    e: ydotool_enter_keycode,ydotool_submit_mode,ydotool_ctrl_keycode,extra_enter_count,_log,type_with_xdotool,press_wtype,type_with_wtype,_ydotool_submit_command,type_with_ydotool,type_with_backend
-    ydotool_enter_keycode()
-    ydotool_submit_mode()
-    ydotool_ctrl_keycode()
-    extra_enter_count()
-    _log(log;message)
-    type_with_xdotool(call;log;text;submit_key;extra_enters)
-    press_wtype(call;combo)
-    type_with_wtype(call;log;text;submit_key;extra_enters)
-    _ydotool_submit_command(submit_mode;enter_code;ctrl_code)
-    type_with_ydotool(call;log;text;submit_key;extra_enters;enter_code;submit_mode;ctrl_code)
-    type_with_backend(call;log;backend;text;submit_key)
   src/koruapi/invoke.py:
     e: invoke_integration
     invoke_integration(integration_id)
@@ -2012,6 +2012,7 @@ The c...
   koru.yaml:
   wup.yaml:
   docker-compose.yml:
+  pyproject.toml:
   tree.sh:
   todo.txt:
   pipeline.yaml:
@@ -2064,6 +2065,9 @@ The c...
   services/healing-webhook/Dockerfile:
   src/korudsl/__init__.py:
   src/koruapi/__init__.py:
+  src/koruide/injector_errors.py:
+    e: InjectorError
+    InjectorError(RuntimeError):  # No usable backend, or the backend call failed...
   src/koruide/__init__.py:
   src/koruide/plugin_version.py:
   src/koru/serve.py:
@@ -2198,7 +2202,3 @@ The c...
   testql-scenarios/generated-from-pytests.testql.toon.yaml:
   testql-scenarios/generated-cli-tests.testql.toon.yaml:
   testql-testing/scenarios/realtime-health.testql.toon.yaml:
-  pyproject.toml:
-  src/koruide/injector_errors.py:
-    e: InjectorError
-    InjectorError(RuntimeError):  # No usable backend, or the backend call failed...

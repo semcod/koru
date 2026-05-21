@@ -1,14 +1,14 @@
-# code2llm | 256f 46275L | python:166,shell:44,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:2,properties:1,xml:1,toml:1 | 2026-05-21
-# generated in 0.12s
+# code2llm | 256f 46275L | python:166,shell:44,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:2,toml:1,properties:1,xml:1 | 2026-05-21
+# generated in 0.10s
 # CC̄=4.0 | critical:6/1675 | dups:0 | cycles:0
 
 HEALTH[6]:
+  🟡 CC    type_text CC=18 (limit:15)
   🟡 CC    try_drive_with_profile CC=17 (limit:15)
   🟡 CC    _task_main CC=22 (limit:15)
   🟡 CC    _dedupe_key_from_scaffold CC=17 (limit:15)
   🟡 CC    _find_existing_task_by_dedupe_key CC=15 (limit:15)
   🟡 CC    create_nl_task CC=15 (limit:15)
-  🟡 CC    type_text CC=18 (limit:15)
 
 REFACTOR[1]:
   1. split 6 high-CC methods  (CC>15)
@@ -318,14 +318,14 @@ COUPLING:
                     src.korudsl                                                                                                                          ←4                                                            ──                               
        services.healing-webhook                                                                                                                                                          1                                                            ──
   CYCLES: none
-  HUB: plugins.koru-autopilot-vscode/ (fan-in=10)
-  HUB: src.koruapi/ (fan-in=25)
-  HUB: scripts/ (fan-in=344)
   HUB: src.koruide/ (fan-in=72)
+  HUB: scripts/ (fan-in=344)
+  HUB: plugins.koru-autopilot-vscode/ (fan-in=10)
   HUB: src.koru/ (fan-in=45)
-  SMELL: src.koruapi/ fan-out=68 → split needed
+  HUB: src.koruapi/ (fan-in=25)
   SMELL: src.koruide/ fan-out=50 → split needed
   SMELL: src.koru/ fan-out=381 → split needed
+  SMELL: src.koruapi/ fan-out=68 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

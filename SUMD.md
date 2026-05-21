@@ -21,7 +21,7 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.187`
+- **version**: `0.1.188`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -41,7 +41,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.187;
+  version: 0.1.188;
 }
 
 dependencies {
@@ -1693,7 +1693,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.187
+  version: 0.1.188
   env: local
 ```
 
@@ -1776,13 +1776,13 @@ pip install -e .[dev]
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 323f 68113L | python:258,shell:52,javascript:6,typescript:6,less:1 | 2026-05-21
-# stats: 2020 func | 201 cls | 323 mod | CC̄=4.1 | critical:138 | cycles:0
+# koru | 324f 68159L | python:259,shell:52,javascript:6,typescript:6,less:1 | 2026-05-21
+# stats: 2029 func | 200 cls | 324 mod | CC̄=4.0 | critical:138 | cycles:0
 # alerts[5]: CC _task_main=22; CC _dedupe_key_from_scaffold=17; CC try_drive_with_profile=17; CC test_autonomy_config_from_env=16; CC _find_existing_task_by_dedupe_key=15
 # hotspots[5]: _build_handler fan=31; _build_handler fan=28; run_cycle fan=23; create_nl_task fan=23; init_project fan=21
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[323]:
+M[324]:
   app.doql.less,681
   docs/llm-tools/aider/install.sh,56
   docs/llm-tools/claude-code/install.sh,61
@@ -1861,7 +1861,7 @@ M[323]:
   src/koru/autonomous_auto_pipeline.py,256
   src/koru/autonomous_checkpoint.py,138
   src/koru/autonomous_cli_config.py,75
-  src/koru/autonomous_cycle.py,1493
+  src/koru/autonomous_cycle.py,1503
   src/koru/autonomous_cycle_config.py,164
   src/koru/autonomous_cycle_gate.py,159
   src/koru/autonomous_daemon.py,278
@@ -2002,7 +2002,8 @@ M[323]:
   src/koruide/drive_orchestrator.py,246
   src/koruide/host_setup.py,227
   src/koruide/ide.py,715
-  src/koruide/injector.py,510
+  src/koruide/injector.py,338
+  src/koruide/injector_backends.py,208
   src/koruide/injector_errors.py,11
   src/koruide/os_injector.py,482
   src/koruide/plugin_installer.py,495
@@ -2325,7 +2326,7 @@ D:
     apply_auto_pipeline_flags(args;invoked_as_auto)
     apply_replace_existing_flags(args;invoked_as_auto)
   src/koru/autonomous_cycle.py:
-    e: _stdio_info,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_status_in_skip_list,_allow_keyboard_autopilot_fallback,_prefer_keyboard_autopilot,_plugin_required_for_ide,_allow_cross_ide_autopilot,_autopilot_terminal_conflict_reason,_client_plugin_rows,_wanted_plugin_ide,_plugin_row_matches_ide,_plugin_row_version_block_reason,_missing_plugin_label,_client_has_usable_plugin,_try_os_injector_fallback,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_autopilot_event_path,_drain_autopilot_events,_initialize_cycle_telemetry,_heal_stale_socket,_handle_autopilot_events,_handle_queue_hygiene,_handle_post_run_verify_ide,_handle_scan_phase,_build_queue_command,_run_queue_loop,_emit_queue_iteration_event,_handle_post_run_verify,_handle_queue_loop_phase,_handle_scan_after_idle,_update_stagnation_state,_waiting_ticket_has_label,_handle_diagnostics,_check_autopilot_skip_conditions,_resolve_autopilot_drive_decision,_drive_autopilot_once,_reply_missing_autopilot_plugin,_reply_needs_focus_retry,_reply_requires_manual_chat_focus,_format_autopilot_failure_details,_warn_autopilot_focus_retry,_warn_autopilot_manual_focus_required,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result,_handle_autopilot_phase,_emit_cycle_completion_events,run_cycle,DiagnosticResult,AutoloopState
+    e: _stdio_info,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_status_in_skip_list,_allow_keyboard_autopilot_fallback,_prefer_keyboard_autopilot,_plugin_required_for_ide,_allow_cross_ide_autopilot,_autopilot_terminal_conflict_reason,_client_plugin_rows,_wanted_plugin_ide,_plugin_row_matches_ide,_plugin_row_version_block_reason,_missing_plugin_label,_matching_plugin_row,_usable_plugin_decision,_client_has_usable_plugin,_try_os_injector_fallback,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_autopilot_event_path,_drain_autopilot_events,_initialize_cycle_telemetry,_heal_stale_socket,_handle_autopilot_events,_handle_queue_hygiene,_handle_post_run_verify_ide,_handle_scan_phase,_build_queue_command,_run_queue_loop,_emit_queue_iteration_event,_handle_post_run_verify,_handle_queue_loop_phase,_handle_scan_after_idle,_update_stagnation_state,_waiting_ticket_has_label,_handle_diagnostics,_check_autopilot_skip_conditions,_resolve_autopilot_drive_decision,_drive_autopilot_once,_reply_missing_autopilot_plugin,_reply_needs_focus_retry,_reply_requires_manual_chat_focus,_format_autopilot_failure_details,_warn_autopilot_focus_retry,_warn_autopilot_manual_focus_required,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result,_handle_autopilot_phase,_emit_cycle_completion_events,run_cycle,DiagnosticResult,AutoloopState
     DiagnosticResult:
     AutoloopState:
     _stdio_info(msg)
@@ -2343,6 +2344,8 @@ D:
     _plugin_row_matches_ide(row;wanted)
     _plugin_row_version_block_reason(row;wanted)
     _missing_plugin_label(wanted)
+    _matching_plugin_row(plugins;wanted)
+    _usable_plugin_decision(row;wanted)
     _client_has_usable_plugin(client;autopilot_ide)
     _try_os_injector_fallback(prompt)
     _run_command_check(project;check_id;command)
@@ -3697,20 +3700,28 @@ D:
     _resolve_profile_override(stripped_profile;target;prefer)
     resolve_drive_target(ide_arg;os_profile)
   src/koruide/injector.py:
-    e: _submit_key_for,_which,_session_type,_forced_injector_backend,_ydotool_enter_keycode,_ydotool_submit_mode,_ydotool_ctrl_keycode,_extra_enter_count,_default_runner,BackendStatus,InjectionResult,InjectorError,Injector
+    e: _submit_key_for,_which,_session_type,_forced_injector_backend,_default_runner,BackendStatus,InjectionResult,Injector
     BackendStatus: to_dict(0)  # Result of probing a single backend.
     InjectionResult: to_dict(0)
-    InjectorError:  # No usable backend, or the backend call failed.
-    Injector: probe(0),_candidate_backends(0),select_backend(0),_type_with_xdotool(3),_type_with_wtype(3),_type_with_ydotool(6),_type_with_backend(3),type_text(1),submit_only(0),_probe_one(1),_call(1),_press_wtype(1)  # Pick the best available backend and type text through it.
+    Injector: probe(0),_candidate_backends(0),select_backend(0),_type_with_backend(3),type_text(1),submit_only(0),_probe_one(1),_call(1)  # Pick the best available backend and type text through it.
     _submit_key_for(ide)
     _which(name)
     _session_type()
     _forced_injector_backend()
-    _ydotool_enter_keycode()
-    _ydotool_submit_mode()
-    _ydotool_ctrl_keycode()
-    _extra_enter_count()
     _default_runner(cmd;stdin)
+  src/koruide/injector_backends.py:
+    e: ydotool_enter_keycode,ydotool_submit_mode,ydotool_ctrl_keycode,extra_enter_count,_log,type_with_xdotool,press_wtype,type_with_wtype,_ydotool_submit_command,type_with_ydotool,type_with_backend
+    ydotool_enter_keycode()
+    ydotool_submit_mode()
+    ydotool_ctrl_keycode()
+    extra_enter_count()
+    _log(log;message)
+    type_with_xdotool(call;log;text;submit_key;extra_enters)
+    press_wtype(call;combo)
+    type_with_wtype(call;log;text;submit_key;extra_enters)
+    _ydotool_submit_command(submit_mode;enter_code;ctrl_code)
+    type_with_ydotool(call;log;text;submit_key;extra_enters;enter_code;submit_mode;ctrl_code)
+    type_with_backend(call;log;backend;text;submit_key)
   src/koruide/injector_errors.py:
     e: InjectorError
     InjectorError:  # No usable backend, or the backend call failed.
@@ -4821,7 +4832,7 @@ D:
 
 ```prolog markpact:analysis path=project/logic.pl
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.187', 'python').
+project_metadata('koru', '0.1.188', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 681, 'less').
@@ -4902,7 +4913,7 @@ project_file('src/koru/autonomous.py', 1220, 'python').
 project_file('src/koru/autonomous_auto_pipeline.py', 256, 'python').
 project_file('src/koru/autonomous_checkpoint.py', 138, 'python').
 project_file('src/koru/autonomous_cli_config.py', 75, 'python').
-project_file('src/koru/autonomous_cycle.py', 1493, 'python').
+project_file('src/koru/autonomous_cycle.py', 1503, 'python').
 project_file('src/koru/autonomous_cycle_config.py', 164, 'python').
 project_file('src/koru/autonomous_cycle_gate.py', 159, 'python').
 project_file('src/koru/autonomous_daemon.py', 278, 'python').
@@ -5043,7 +5054,8 @@ project_file('src/koruide/daemon.py', 1082, 'python').
 project_file('src/koruide/drive_orchestrator.py', 246, 'python').
 project_file('src/koruide/host_setup.py', 227, 'python').
 project_file('src/koruide/ide.py', 715, 'python').
-project_file('src/koruide/injector.py', 510, 'python').
+project_file('src/koruide/injector.py', 338, 'python').
+project_file('src/koruide/injector_backends.py', 208, 'python').
 project_file('src/koruide/injector_errors.py', 11, 'python').
 project_file('src/koruide/os_injector.py', 482, 'python').
 project_file('src/koruide/plugin_installer.py', 495, 'python').
@@ -5336,7 +5348,9 @@ python_function('src/koru/autonomous_cycle.py', '_wanted_plugin_ide', 1, 2, 2).
 python_function('src/koru/autonomous_cycle.py', '_plugin_row_matches_ide', 2, 3, 4).
 python_function('src/koru/autonomous_cycle.py', '_plugin_row_version_block_reason', 2, 7, 8).
 python_function('src/koru/autonomous_cycle.py', '_missing_plugin_label', 1, 2, 0).
-python_function('src/koru/autonomous_cycle.py', '_client_has_usable_plugin', 2, 7, 6).
+python_function('src/koru/autonomous_cycle.py', '_matching_plugin_row', 2, 4, 2).
+python_function('src/koru/autonomous_cycle.py', '_usable_plugin_decision', 2, 2, 1).
+python_function('src/koru/autonomous_cycle.py', '_client_has_usable_plugin', 2, 4, 5).
 python_function('src/koru/autonomous_cycle.py', '_try_os_injector_fallback', 1, 1, 1).
 python_function('src/koru/autonomous_cycle.py', '_run_command_check', 3, 2, 3).
 python_function('src/koru/autonomous_cycle.py', '_create_diagnostic_ticket', 0, 2, 5).
@@ -6368,11 +6382,18 @@ python_function('src/koruide/injector.py', '_submit_key_for', 1, 1, 2).
 python_function('src/koruide/injector.py', '_which', 1, 1, 1).
 python_function('src/koruide/injector.py', '_session_type', 0, 4, 2).
 python_function('src/koruide/injector.py', '_forced_injector_backend', 0, 2, 3).
-python_function('src/koruide/injector.py', '_ydotool_enter_keycode', 0, 2, 3).
-python_function('src/koruide/injector.py', '_ydotool_submit_mode', 0, 3, 3).
-python_function('src/koruide/injector.py', '_ydotool_ctrl_keycode', 0, 2, 3).
-python_function('src/koruide/injector.py', '_extra_enter_count', 0, 3, 4).
 python_function('src/koruide/injector.py', '_default_runner', 2, 2, 2).
+python_function('src/koruide/injector_backends.py', 'ydotool_enter_keycode', 0, 2, 3).
+python_function('src/koruide/injector_backends.py', 'ydotool_submit_mode', 0, 3, 3).
+python_function('src/koruide/injector_backends.py', 'ydotool_ctrl_keycode', 0, 2, 3).
+python_function('src/koruide/injector_backends.py', 'extra_enter_count', 0, 3, 4).
+python_function('src/koruide/injector_backends.py', '_log', 2, 2, 1).
+python_function('src/koruide/injector_backends.py', 'type_with_xdotool', 5, 3, 4).
+python_function('src/koruide/injector_backends.py', 'press_wtype', 2, 4, 5).
+python_function('src/koruide/injector_backends.py', 'type_with_wtype', 5, 3, 5).
+python_function('src/koruide/injector_backends.py', '_ydotool_submit_command', 3, 3, 0).
+python_function('src/koruide/injector_backends.py', 'type_with_ydotool', 8, 5, 5).
+python_function('src/koruide/injector_backends.py', 'type_with_backend', 5, 5, 10).
 python_function('src/koruide/os_injector.py', 'default_config_path', 0, 1, 1).
 python_function('src/koruide/os_injector.py', 'iter_config_paths', 0, 4, 7).
 python_function('src/koruide/os_injector.py', 'os_injector_env_disabled', 0, 1, 3).
@@ -7400,20 +7421,15 @@ python_class('src/koruide/injector.py', 'BackendStatus').
 python_method('BackendStatus', 'to_dict', 0, 1, 0).
 python_class('src/koruide/injector.py', 'InjectionResult').
 python_method('InjectionResult', 'to_dict', 0, 1, 0).
-python_class('src/koruide/injector.py', 'InjectorError').
 python_class('src/koruide/injector.py', 'Injector').
 python_method('Injector', 'probe', 0, 1, 1).
 python_method('Injector', '_candidate_backends', 0, 11, 6).
 python_method('Injector', 'select_backend', 0, 2, 1).
-python_method('Injector', '_type_with_xdotool', 3, 6, 4).
-python_method('Injector', '_type_with_wtype', 3, 6, 5).
-python_method('Injector', '_type_with_ydotool', 6, 12, 4).
-python_method('Injector', '_type_with_backend', 3, 6, 10).
+python_method('Injector', '_type_with_backend', 3, 1, 1).
 python_method('Injector', 'type_text', 1, 18, 10).
 python_method('Injector', 'submit_only', 0, 9, 8).
 python_method('Injector', '_probe_one', 1, 5, 2).
 python_method('Injector', '_call', 1, 10, 7).
-python_method('Injector', '_press_wtype', 1, 4, 5).
 python_class('src/koruide/injector_errors.py', 'InjectorError').
 python_class('src/koruide/os_injector.py', 'OsInjectorError').
 python_class('src/koruide/os_injector.py', 'OsInjectorProfile').
@@ -8338,7 +8354,7 @@ sumd_deploy_compose_file('docker-compose.yml').
 
 ## Call Graph
 
-*429 nodes · 500 edges · 75 modules · CC̄=4.0*
+*433 nodes · 500 edges · 73 modules · CC̄=4.0*
 
 ### Hubs (by degree)
 
@@ -8348,15 +8364,15 @@ sumd_deploy_compose_file('docker-compose.yml').
 | `_build_handler` *(in src.koruapi.dashboard_serve)* | 1 | 1 | 105 | **106** |
 | `_select_auto_pipeline_profile` *(in src.koru.autonomous_auto_pipeline)* | 7 | 0 | 54 | **54** |
 | `render_markdown_handoff` *(in src.koru.context)* | 10 ⚠ | 5 | 47 | **52** |
+| `_drive_via_keyboard` *(in src.koruide.daemon.AutopilotDaemon)* | 13 ⚠ | 0 | 50 | **50** |
 | `normalize_ide_id` *(in src.koruide.ide)* | 6 | 31 | 11 | **42** |
 | `activity` *(in src.koru.activity_log)* | 4 | 34 | 7 | **41** |
 | `create_nl_task` *(in src.koru.tasks)* | 15 ⚠ | 6 | 34 | **40** |
-| `_build_parser` *(in src.koru.cli)* | 1 | 3 | 36 | **39** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.48s
-# nodes: 429 | edges: 500 | modules: 75
+# generated in 0.46s
+# nodes: 433 | edges: 500 | modules: 73
 # CC̄=4.0
 
 HUBS[20]:
@@ -8368,6 +8384,8 @@ HUBS[20]:
     CC=7  in:0  out:54  total:54
   src.koru.context.render_markdown_handoff
     CC=10  in:5  out:47  total:52
+  src.koruide.daemon.AutopilotDaemon._drive_via_keyboard
+    CC=13  in:0  out:50  total:50
   src.koruide.ide.normalize_ide_id
     CC=6  in:31  out:11  total:42
   src.koru.activity_log.activity
@@ -8378,28 +8396,26 @@ HUBS[20]:
     CC=1  in:3  out:36  total:39
   src.koru.events.emit_management_event
     CC=8  in:32  out:7  total:39
-  src.koruapi.mcp_server.tool_run_ticket
-    CC=14  in:1  out:33  total:34
   src.koru.cli._task_main
     CC=22  in:0  out:34  total:34
-  src.koru.cli._topology_main
-    CC=12  in:0  out:32  total:32
+  src.koruapi.mcp_server.tool_run_ticket
+    CC=14  in:1  out:33  total:34
   src.koru.autonomy.env.env_truthy
     CC=3  in:29  out:3  total:32
+  src.koru.cli._topology_main
+    CC=12  in:0  out:32  total:32
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
   src.koru.autonomous_auto_pipeline._auto_value
     CC=2  in:24  out:4  total:28
   src.koruide.ide.detect_running_ides
     CC=13  in:17  out:10  total:27
+  src.koru.init.init_project
+    CC=7  in:3  out:23  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
-  src.koru.init.init_project
-    CC=7  in:3  out:23  total:26
-  src.koru.context.build_context
-    CC=6  in:9  out:16  total:25
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -8486,7 +8502,7 @@ MODULES:
     load_flat_pipeline  CC=9  out:12
     materialize_to_planfile  CC=6  out:16
     validate_flat_pipeline  CC=3  out:9
-  src.koru.cli  [40 funcs]
+  src.koru.cli  [35 funcs]
     _agent_backends_main  CC=8  out:23
     _agent_main  CC=3  out:7
     _auto_main  CC=6  out:6
@@ -8531,9 +8547,6 @@ MODULES:
   src.koru.local_service  [2 funcs]
     default_local_service_config  CC=2  out:7
     run_local_service  CC=3  out:12
-  src.koru.loop  [2 funcs]
-    discover_repositories  CC=5  out:11
-    run_closed_loop  CC=12  out:18
   src.koru.mcp_provision  [24 funcs]
     _apply_target  CC=5  out:5
     _cursor_project_config  CC=1  out:0
@@ -8555,11 +8568,6 @@ MODULES:
     planfile_command  CC=4  out:5
   src.koru.queue_clean  [1 funcs]
     clean_queue  CC=5  out:7
-  src.koru.queue_cli_helpers  [4 funcs]
-    emit_queue_run_started  CC=2  out:2
-    open_queue_run_log  CC=4  out:2
-    run_queue_loop_mode  CC=6  out:21
-    run_queue_single_mode  CC=9  out:18
   src.koru.redup_integration  [1 funcs]
     redup_check_command  CC=1  out:3
   src.koru.refactor_planfile_handoff  [1 funcs]
@@ -8701,6 +8709,17 @@ MODULES:
     cached_config  CC=1  out:2
     default_config_path  CC=1  out:1
     load_config  CC=4  out:10
+  src.koruide.daemon  [22 funcs]
+    __init__  CC=7  out:9
+    _accept  CC=6  out:13
+    _ack_plugin_event_without_handoff  CC=3  out:4
+    _dispatch  CC=3  out:9
+    _drive_via_keyboard  CC=13  out:50
+    _execute_handoff  CC=5  out:9
+    _forward_handoff_to_plugin  CC=3  out:13
+    _handle_ack  CC=10  out:15
+    _handle_ping  CC=3  out:4
+    _handle_plugin_event  CC=5  out:7
   src.koruide.host_setup  [12 funcs]
     _human_followups  CC=14  out:10
     _package_manager_hint  CC=5  out:4
@@ -8723,17 +8742,6 @@ MODULES:
     _legacy_windsurf_terminal_env_hint  CC=3  out:4
     _log_drive_target_result  CC=2  out:1
     _matches  CC=7  out:5
-  src.koruide.injector  [10 funcs]
-    _candidate_backends  CC=11  out:18
-    _type_with_backend  CC=6  out:10
-    submit_only  CC=9  out:13
-    type_text  CC=18  out:25
-    _extra_enter_count  CC=3  out:4
-    _forced_injector_backend  CC=2  out:3
-    _submit_key_for  CC=1  out:2
-    _ydotool_ctrl_keycode  CC=2  out:3
-    _ydotool_enter_keycode  CC=2  out:3
-    _ydotool_submit_mode  CC=3  out:3
   src.koruide.os_injector  [26 funcs]
     _clipboard_backend  CC=3  out:2
     _cmd_timeout_seconds  CC=3  out:4
@@ -8756,9 +8764,12 @@ MODULES:
     _reassert_extension_extra  CC=9  out:5
     _repo_root  CC=4  out:4
     _resolve_ide_command  CC=3  out:2
-  src.koruide.protocol  [2 funcs]
+  src.koruide.protocol  [5 funcs]
     _filter_extras  CC=6  out:4
+    ack  CC=2  out:2
+    chat_send  CC=1  out:1
     decode  CC=12  out:21
+    error  CC=1  out:1
   src.koruide.socket  [2 funcs]
     _autopilot_socket_basename  CC=7  out:8
     default_socket_path  CC=4  out:15

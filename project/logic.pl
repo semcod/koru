@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.188', 'python').
+project_metadata('koru', '0.1.189', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 681, 'less').
@@ -80,7 +80,7 @@ project_file('src/koru/autonomous.py', 1220, 'python').
 project_file('src/koru/autonomous_auto_pipeline.py', 256, 'python').
 project_file('src/koru/autonomous_checkpoint.py', 138, 'python').
 project_file('src/koru/autonomous_cli_config.py', 75, 'python').
-project_file('src/koru/autonomous_cycle.py', 1493, 'python').
+project_file('src/koru/autonomous_cycle.py', 1503, 'python').
 project_file('src/koru/autonomous_cycle_config.py', 164, 'python').
 project_file('src/koru/autonomous_cycle_gate.py', 159, 'python').
 project_file('src/koru/autonomous_daemon.py', 278, 'python').
@@ -221,7 +221,8 @@ project_file('src/koruide/daemon.py', 1082, 'python').
 project_file('src/koruide/drive_orchestrator.py', 246, 'python').
 project_file('src/koruide/host_setup.py', 227, 'python').
 project_file('src/koruide/ide.py', 715, 'python').
-project_file('src/koruide/injector.py', 510, 'python').
+project_file('src/koruide/injector.py', 338, 'python').
+project_file('src/koruide/injector_backends.py', 208, 'python').
 project_file('src/koruide/injector_errors.py', 11, 'python').
 project_file('src/koruide/os_injector.py', 482, 'python').
 project_file('src/koruide/plugin_installer.py', 495, 'python').
@@ -514,7 +515,9 @@ python_function('src/koru/autonomous_cycle.py', '_wanted_plugin_ide', 1, 2, 2).
 python_function('src/koru/autonomous_cycle.py', '_plugin_row_matches_ide', 2, 3, 4).
 python_function('src/koru/autonomous_cycle.py', '_plugin_row_version_block_reason', 2, 7, 8).
 python_function('src/koru/autonomous_cycle.py', '_missing_plugin_label', 1, 2, 0).
-python_function('src/koru/autonomous_cycle.py', '_client_has_usable_plugin', 2, 7, 6).
+python_function('src/koru/autonomous_cycle.py', '_matching_plugin_row', 2, 4, 2).
+python_function('src/koru/autonomous_cycle.py', '_usable_plugin_decision', 2, 2, 1).
+python_function('src/koru/autonomous_cycle.py', '_client_has_usable_plugin', 2, 4, 5).
 python_function('src/koru/autonomous_cycle.py', '_try_os_injector_fallback', 1, 1, 1).
 python_function('src/koru/autonomous_cycle.py', '_run_command_check', 3, 2, 3).
 python_function('src/koru/autonomous_cycle.py', '_create_diagnostic_ticket', 0, 2, 5).
@@ -1546,10 +1549,6 @@ python_function('src/koruide/injector.py', '_submit_key_for', 1, 1, 2).
 python_function('src/koruide/injector.py', '_which', 1, 1, 1).
 python_function('src/koruide/injector.py', '_session_type', 0, 4, 2).
 python_function('src/koruide/injector.py', '_forced_injector_backend', 0, 2, 3).
-python_function('src/koruide/injector.py', '_ydotool_enter_keycode', 0, 2, 3).
-python_function('src/koruide/injector.py', '_ydotool_submit_mode', 0, 3, 3).
-python_function('src/koruide/injector.py', '_ydotool_ctrl_keycode', 0, 2, 3).
-python_function('src/koruide/injector.py', '_extra_enter_count', 0, 3, 4).
 python_function('src/koruide/injector.py', '_default_runner', 2, 2, 2).
 python_function('src/koruide/injector_backends.py', 'ydotool_enter_keycode', 0, 2, 3).
 python_function('src/koruide/injector_backends.py', 'ydotool_submit_mode', 0, 3, 3).
@@ -2589,20 +2588,15 @@ python_class('src/koruide/injector.py', 'BackendStatus').
 python_method('BackendStatus', 'to_dict', 0, 1, 0).
 python_class('src/koruide/injector.py', 'InjectionResult').
 python_method('InjectionResult', 'to_dict', 0, 1, 0).
-python_class('src/koruide/injector.py', 'InjectorError').
 python_class('src/koruide/injector.py', 'Injector').
 python_method('Injector', 'probe', 0, 1, 1).
 python_method('Injector', '_candidate_backends', 0, 11, 6).
 python_method('Injector', 'select_backend', 0, 2, 1).
-python_method('Injector', '_type_with_xdotool', 3, 6, 4).
-python_method('Injector', '_type_with_wtype', 3, 6, 5).
-python_method('Injector', '_type_with_ydotool', 6, 12, 4).
-python_method('Injector', '_type_with_backend', 3, 6, 10).
+python_method('Injector', '_type_with_backend', 3, 1, 1).
 python_method('Injector', 'type_text', 1, 18, 10).
 python_method('Injector', 'submit_only', 0, 9, 8).
 python_method('Injector', '_probe_one', 1, 5, 2).
 python_method('Injector', '_call', 1, 10, 7).
-python_method('Injector', '_press_wtype', 1, 4, 5).
 python_class('src/koruide/injector_errors.py', 'InjectorError').
 python_class('src/koruide/os_injector.py', 'OsInjectorError').
 python_class('src/koruide/os_injector.py', 'OsInjectorProfile').

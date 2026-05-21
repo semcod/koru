@@ -9,8 +9,8 @@ ALERTS[20]:
   !!! high_fan_out     _build_handler = 31 (limit:10)
   !!! high_fan_out     create_nl_task = 24 (limit:10)
   !!! high_fan_out     init_project = 23 (limit:10)
-  !!! high_fan_out     AutopilotBridge.focusChat = 23 (limit:10)
   !!! high_fan_out     run_cycle = 23 (limit:10)
+  !!! high_fan_out     AutopilotBridge.focusChat = 23 (limit:10)
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
   !!! high_fan_out     _build_parser = 21 (limit:10)
@@ -42,7 +42,7 @@ HOTSPOTS[10]:
 
 Steps:
     1. Refu
-  ★ AutopilotBridge.focusChat fan=23  // Orchestrates 23 calls
+  ★ run_cycle fan=23  // Orchestrates 23 calls
 
 REFACTOR[15]:
   [1] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (1127L, 2 classes)
