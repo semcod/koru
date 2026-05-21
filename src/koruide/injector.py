@@ -165,6 +165,7 @@ class Injector:
     session: str = field(default_factory=_session_type)
     which: Callable[[str], str | None] = staticmethod(_which)
     runner: Runner = field(default=_default_runner)
+    log: Callable[[str], None] | None = field(default=None)
 
     # ----- public API ----------------------------------------------------
 
@@ -298,6 +299,11 @@ class Injector:
             )
         submit_key = _submit_key_for(ide) if submit else None
         backend0 = backends[0]
+        if self.log:
+            self.log(
+                f"injector: selected backend={backend0}, "
+                f"submit_key={submit_key or 'none'}, ide={ide}, chars={len(text)}"
+            )
         if dry_run:
             return InjectionResult(
                 backend=backend0,
@@ -308,10 +314,19 @@ class Injector:
             )
         errors: list[str] = []
         for backend in backends:
+            if self.log:
+                self.log(f"injector: trying backend={backend} ...")
             try:
                 self._type_with_backend(backend, text, submit_key)
+                if self.log:
+                    self.log(
+                        f"injector: typed {len(text)} chars via {backend}, "
+                        f"submit={submit}"
+                    )
                 return InjectionResult(backend=backend, submitted=submit)
             except InjectorError as exc:
+                if self.log:
+                    self.log(f"injector: backend={backend} failed: {exc}")
                 errors.append(f"{backend}: {exc}")
         hint = (
             " Connect the koru autopilot extension for your IDE (preferred on Wayland), "

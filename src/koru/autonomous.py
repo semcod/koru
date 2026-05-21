@@ -66,9 +66,7 @@ from koru.autonomous_wup import (
     _stop_process,
     _wup_watch_command,  # noqa: F401
 )
-from koru.autonomous_wup import (
-    _read_wup_health as _read_wup_health_impl,
-)
+from koru import autonomous_diagnostics as _autonomous_diagnostics
 from koru.autonomous_processes import (
     ExistingAutonomousProcess,
     ExistingManagedProcess,
@@ -935,12 +933,13 @@ def _run_command_check(
     *,
     stdio_format: str = "human",
 ) -> bool:
-    _stdio_info("+ " + " ".join(command), fmt=stdio_format)
-    result = subprocess.run(command, cwd=project, check=False)
-    if result.returncode != 0:
-        _stdio_info(f"! {check_id} failed (continuing loop)", fmt=stdio_format)
-        return False
-    return True
+    return _autonomous_diagnostics.run_command_check(
+        stdio_info=_stdio_info,
+        project=project,
+        check_id=check_id,
+        command=command,
+        stdio_format=stdio_format,
+    )
 
 
 def _create_diagnostic_ticket(
@@ -955,34 +954,22 @@ def _create_diagnostic_ticket(
     priority: str,
     state_dir: Path,
 ) -> None:
-    state_dir.mkdir(parents=True, exist_ok=True)
-    marker = state_dir / f"{check_id}.failed"
-    if marker.exists():
-        _stdio_info(
-            f"- diagnostic ticket marker exists for {check_id}, skipping create",
-            fmt=stdio_format,
-        )
-        return
-    title = f"[AUTO-DIAG] {check_id} needs attention"
-    prompt = (
-        f"{title} in cycle {cycle}. queue_status={queue_status}. "
-        f"Check: {summary}. Investigate and fix regression, stale quality artifact, "
-        "or broken diagnostic gate."
-    )
-    from koru.activity_log import activity
-
-    activity("TICKET", f"[AUTO-DIAG] tworzę ticket dla {check_id}", preview=prompt)
-    created = create_nl_task(project, prompt, queue_name=queue_name, priority=priority)
-    marker.write_text(created.ticket_id, encoding="utf-8")
-    activity("TICKET", f"[AUTO-DIAG] {check_id} → {created.ticket_id} (queue={queue_name})")
-    _stdio_info(
-        f"+ created diagnostic ticket {created.ticket_id} for {check_id} (queue={queue_name})",
-        fmt=stdio_format,
+    return _autonomous_diagnostics.create_diagnostic_ticket(
+        stdio_info=_stdio_info,
+        stdio_format=stdio_format,
+        project=project,
+        check_id=check_id,
+        summary=summary,
+        cycle=cycle,
+        queue_status=queue_status,
+        queue_name=queue_name,
+        priority=priority,
+        state_dir=state_dir,
     )
 
 
 def _clear_diagnostic_marker(state_dir: Path, check_id: str) -> None:
-    (state_dir / f"{check_id}.failed").unlink(missing_ok=True)
+    _autonomous_diagnostics.clear_diagnostic_marker(state_dir, check_id)
 
 
 def _read_wup_health(
@@ -993,13 +980,13 @@ def _read_wup_health(
     ticket_queue: str,
     state_dir: Path,
 ) -> WupHealthResult:
-    return _read_wup_health_impl(
+    return _autonomous_diagnostics.read_wup_health(
         project=project,
         state=state,
         diagnostic_tickets=diagnostic_tickets,
         ticket_queue=ticket_queue,
         state_dir=state_dir,
-        create_diagnostic_ticket=_create_diagnostic_ticket,
+        create_ticket=_create_diagnostic_ticket,
     )
 
 
@@ -1016,12 +1003,10 @@ def _run_idle_diagnostics(
     diagnostic_state_dir: Path,
     topology_integration: bool,
 ) -> DiagnosticResult:
-    from koru import autonomous_diagnostics as diag
-
     def create_ticket(**kwargs: Any) -> None:
         _create_diagnostic_ticket(stdio_format=stdio_format, **kwargs)
 
-    return diag.run_idle_diagnostics(
+    return _autonomous_diagnostics.run_idle_diagnostics(
         stdio_info=_stdio_info,
         is_topology_enabled=_is_topology_enabled,
         run_command=_run_command_check,

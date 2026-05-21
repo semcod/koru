@@ -130,15 +130,11 @@ export function buildFocusOpenCommands(ide: string, custom: string[]): string[] 
     "cascade.focus",
     "windsurf.action.showCascade",
     "composer.showComposer",
-    "workbench.action.chat.open",
     "aichat.newchataction",
     "windsurf.openCascade",
   ];
   const genericDefaults = [
     "composer.showComposer",
-    "workbench.action.chat.open",
-    "workbench.action.chat.openagent",
-    "workbench.action.chat.openask",
     "workbench.panel.chat",
     "workbench.panel.chat.view.copilot.focus",
     "aichat.newchataction",

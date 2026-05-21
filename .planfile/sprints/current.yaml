@@ -4555,6 +4555,12 @@ sprint:
         source: codex
         status: done
         timestamp: '2026-05-21T17:20:57.071382+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: codex
+        status: done
+        timestamp: '2026-05-21T17:25:52.488008+00:00'
       id: STARTER-068
       inputs:
         api_headers: {}
@@ -4578,8 +4584,12 @@ sprint:
         notes:
         - Split autonomous loop checkpoint/backoff helpers into `src/koru/autonomous_checkpoint.py`;
           `src/koru/autonomous.py` now imports compatibility aliases for existing call sites/tests.
+        - Moved autonomous idle/WUP diagnostic runtime details into `src/koru/autonomous_diagnostics.py`;
+          `src/koru/autonomous.py` keeps thin compatibility wrappers for monkeypatch points.
         - 'Validation: 155 passed, 1 skipped for autonomous/startup/docker-matrix/drive-orchestrator
           focused suite.'
+        - 'Validation: 152 passed, 1 skipped for autonomous/startup/diagnostics/docker-matrix/drive-orchestrator
+          focused suite after second split.'
       priority: high
       source:
         context:
@@ -4592,7 +4602,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-21T17:20:57.071382+00:00'
+      updated_at: '2026-05-21T17:25:52.488008+00:00'
     STARTER-069:
       blocked_by: []
       blocks: []

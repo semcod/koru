@@ -152,8 +152,12 @@ def create_diagnostic_ticket(
         f"Check: {summary}. Investigate and fix regression, stale quality artifact, "
         "or broken diagnostic gate."
     )
+    from koru.activity_log import activity
+
+    activity("TICKET", f"[AUTO-DIAG] tworzę ticket dla {check_id}", preview=prompt)
     created = create_nl_task(project, prompt, queue_name=queue_name, priority=priority)
     marker.write_text(created.ticket_id, encoding="utf-8")
+    activity("TICKET", f"[AUTO-DIAG] {check_id} → {created.ticket_id} (queue={queue_name})")
     stdio_info(
         f"+ created diagnostic ticket {created.ticket_id} for {check_id} (queue={queue_name})",
         fmt=stdio_format,

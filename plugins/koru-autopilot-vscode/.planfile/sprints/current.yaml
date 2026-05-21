@@ -66,7 +66,7 @@ sprint:
           --- stderr ---
 
           (empty)'
-      priority: high
+      priority: critical
       sprint: current
       status: in_progress
       updated_at: '2026-05-18T09:12:55.083297+00:00'
@@ -178,3 +178,72 @@ sprint:
       status: open
       sync: {}
       updated_at: '2026-05-18T09:12:53.415071Z'
+    STARTER-006:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T17:25:17.485891+00:00'
+      description: '[OPERATOR] MCP „koru” w IDE: brak „koru” w .cursor/mcp.json /
+        .vscode/mcp.json — task koru:mcp:bootstrap, potem Reload Window
+
+
+        Shell: `task koru:mcp:bootstrap`'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: operator
+        state: ready
+      executor:
+        kind: shell
+        mode: noninteractive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] MCP „koru” w IDE: brak „koru” w .cursor/mcp.json / .vscode/mcp.json
+          — task koru:mcp:bootstrap, potem Reload Window
+
+
+          Shell: `task koru:mcp:bootstrap`'
+        source: koru task
+        timestamp: '2026-05-21T17:25:17.485891+00:00'
+      id: STARTER-006
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] MCP „koru” w IDE: brak „koru” w .cursor/mcp.json / .vscode/mcp.json
+          — task koru:mcp:bootstrap, potem Reload Window
+
+
+          Shell: `task koru:mcp:bootstrap`'
+        script: task koru:mcp:bootstrap
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:mcp_koru
+      name: '[OPERATOR] MCP „koru” w IDE: brak „koru” w .cursor/mcp.json / .vscode/mcp.json
+        — task koru:mcp:bootstrap, potem Reloa...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          detail: brak „koru” w .cursor/mcp.json / .vscode/mcp.json — task koru:mcp:bootstrap,
+            potem Reload Window
+          input: '[OPERATOR] MCP „koru” w IDE: brak „koru” w .cursor/mcp.json / .vscode/mcp.json
+            — task koru:mcp:bootstrap, potem Reload Window
+
+
+            Shell: `task koru:mcp:bootstrap`'
+          step_id: mcp_koru
+          task_command: task koru:mcp:bootstrap
+        timestamp: '2026-05-21T17:25:17.485891+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T17:25:17.485891+00:00'
