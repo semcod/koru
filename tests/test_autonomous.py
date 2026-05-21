@@ -371,6 +371,84 @@ def test_auto_main_argv_injects_replace_existing(tmp_path: Path) -> None:
     assert "--replace-existing" in calls[0]
 
 
+def test_auto_invocation_uses_safe_adaptive_defaults(tmp_path: Path) -> None:
+    with patch.object(autonomous_mod, "_action_up", return_value=0) as action_up:
+        rc = autonomous_mod.autonomous_main(["--project", str(tmp_path)], invoked_as_auto=True)
+
+    assert rc == 0
+    args = action_up.call_args.args[0]
+    assert args._auto_pipeline_enabled is True
+    assert args.ticket_sources == "queue"
+    assert args.max_cycles == 1
+    assert args.max_iterations == 1
+    assert args.sleep_seconds == 0
+    assert args.stop_on_waiting_input is True
+    assert args.semcod_artifacts is False
+    assert args.wup_watch is False
+    assert args.idle_diagnostics == "off"
+    assert args.operator_pipeline is False
+    assert args.operator_tickets is False
+    assert args.enable_autopilot is False
+    assert args.emit_events == "human"
+
+
+def test_auto_pipeline_profiles_escalate_when_queue_stays_idle() -> None:
+    args = SimpleNamespace(
+        max_iterations=1,
+        ticket_sources="queue",
+        semcod_artifacts=False,
+        idle_diagnostics="off",
+        diagnostic_tickets=False,
+        scan_after_idle_queue=False,
+        scan_after_idle_min_interval=0.0,
+        enable_autopilot=False,
+        autopilot_action="off",
+        _auto_user_options=set(),
+    )
+    state = autonomous_mod.AutoPipelineState()
+
+    first = autonomous_mod._select_auto_pipeline_profile(args, state, base_enable_scan=False)
+    assert first.name == "rescue"
+    assert first.enable_scan is False
+    assert first.idle_diagnostics == "off"
+    assert first.include_semcod_artifacts is False
+
+    idle = QueueLoopResult(1, [], [], [], "idle", "")
+    autonomous_mod._update_auto_pipeline_state(
+        state,
+        idle,
+        autonomous_mod.DiagnosticResult("skipped", []),
+        "skipped",
+    )
+    second = autonomous_mod._select_auto_pipeline_profile(args, state, base_enable_scan=False)
+    assert second.name == "stabilize"
+    assert second.idle_diagnostics == "quick"
+    assert second.scan_after_idle_queue is True
+    assert second.include_semcod_artifacts is False
+
+    autonomous_mod._update_auto_pipeline_state(
+        state,
+        idle,
+        autonomous_mod.DiagnosticResult("ok", []),
+        "skipped",
+    )
+    third = autonomous_mod._select_auto_pipeline_profile(args, state, base_enable_scan=False)
+    assert third.name == "quality"
+    assert third.enable_scan is True
+    assert third.idle_diagnostics == "full"
+    assert third.include_semcod_artifacts is True
+
+    autonomous_mod._update_auto_pipeline_state(
+        state,
+        idle,
+        autonomous_mod.DiagnosticResult("ok", []),
+        "skipped",
+    )
+    fourth = autonomous_mod._select_auto_pipeline_profile(args, state, base_enable_scan=False)
+    assert fourth.name == "architecture"
+    assert fourth.idle_diagnostics == "deep"
+
+
 def test_stop_prior_autonomous_for_auto_start_terminates(tmp_path, monkeypatch) -> None:
     existing = [
         autonomous_mod.ExistingAutonomousProcess(

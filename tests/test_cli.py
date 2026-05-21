@@ -337,6 +337,11 @@ class TestAutoMain(unittest.TestCase):
         self.assertEqual(stopped[0], Path("/tmp/proj").resolve())
         self.assertEqual(len(calls), 1)
         self.assertIn("--replace-existing", calls[0][0])
+        self.assertNotIn("--no-autopilot", calls[0][0])
+        self.assertNotIn("--stop-on-waiting-input", calls[0][0])
+        self.assertNotIn("--no-wup-watch", calls[0][0])
+        self.assertNotIn("--max-cycles", calls[0][0])
+        self.assertNotIn("--max-iterations", calls[0][0])
         self.assertTrue(calls[0][1])
 
     def test_auto_main_allow_duplicate_skips_stop_and_replace_flag(self) -> None:

@@ -607,6 +607,44 @@ def test_strict_plugin_hello_rejects_stale_without_evicting_current(
         cli.close()
 
 
+def test_repeated_stale_plugin_hello_rejections_are_log_throttled(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
+    monkeypatch.setattr(
+        DriveOrchestrator,
+        "expected_plugin_version",
+        lambda: "0.1.13",
+    )
+    logs: list[str] = []
+    ticks = iter([10.0, 12.0, 14.0, 45.0])
+    monkeypatch.setattr(koruide_daemon_mod.time, "monotonic", lambda: next(ticks))
+
+    harness = _DaemonHarness(tmp_path)
+    harness.daemon.log = logs.append
+    harness.daemon._plugin_router._log = logs.append
+    _patch_no_running_ides(monkeypatch)
+    harness.start()
+    try:
+        for _idx in range(4):
+            stale_plugin = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            stale_plugin.settimeout(2.0)
+            stale_plugin.connect(str(harness.sock_path))
+            stale_reader = _LineReader(stale_plugin)
+            stale_plugin.sendall(
+                hello(ide="vscode", version="0.1.11", pid=41, id="hello-stale").encode(),
+            )
+            assert stale_reader.read_message().type == "error"
+            stale_plugin.close()
+    finally:
+        harness.stop()
+
+    rejection_logs = [line for line in logs if line.startswith("rejecting plugin connection")]
+    assert len(rejection_logs) == 2
+    assert "suppressed 2 repeated reconnects" in rejection_logs[1]
+
+
 def test_message_sent_event_completes_pending_drive_without_plugin_ack(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

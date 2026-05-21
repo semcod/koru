@@ -12,6 +12,7 @@ autopilot. ``--no-serve`` is a compatibility no-op (``koru serve`` is not
 started here).
 """
 
+from __future__ import annotations
 
 import argparse
 import contextlib
@@ -1613,6 +1614,7 @@ def _run_autonomous_cycle(
     diagnostic_state_dir: Path,
     wup_process: subprocess.Popen | None,
     correlation_id: str,
+    auto_pipeline_state: AutoPipelineState | None = None,
 ) -> bool:
     """Run one autonomous cycle. Returns True if the loop should exit."""
     if args.emit_events == "human":
@@ -1626,22 +1628,43 @@ def _run_autonomous_cycle(
         autopilot_socket_observed_at_boot,
         project,
     )
+    profile: AutoPipelineProfile | None = None
+    if auto_pipeline_state is not None:
+        profile = _select_auto_pipeline_profile(
+            args,
+            auto_pipeline_state,
+            base_enable_scan=enable_scan,
+        )
+        _stdio_info(
+            "koru auto: "
+            f"pipeline={profile.name} reason={profile.reason}; "
+            f"scan={'on' if profile.enable_scan else 'off'} "
+            f"semcod={'on' if profile.include_semcod_artifacts else 'off'} "
+            f"diagnostics={profile.idle_diagnostics} "
+            f"max_iterations={profile.max_iterations} "
+            f"autopilot={'on' if profile.enable_autopilot else 'off'}",
+            fmt=args.emit_events,
+        )
     _scan_result, queue_result, _autopilot_status, diag_result = _run_cycle(
         cycle=cycle,
         project=project,
         actor=args.actor,
         queue_name=queue_name,
-        enable_scan=enable_scan,
-        max_iterations=args.max_iterations,
-        enable_autopilot=args.enable_autopilot,
+        enable_scan=profile.enable_scan if profile is not None else enable_scan,
+        max_iterations=profile.max_iterations if profile is not None else args.max_iterations,
+        enable_autopilot=profile.enable_autopilot if profile is not None else args.enable_autopilot,
         autopilot_ide=autopilot_ide,
         drive_prompt=args.drive_prompt,
         submit=args.submit,
-        include_semcod_artifacts=args.semcod_artifacts,
+        include_semcod_artifacts=(
+            profile.include_semcod_artifacts if profile is not None else args.semcod_artifacts
+        ),
         client=client,
         state=loop_state,
-        idle_diagnostics=args.idle_diagnostics,
-        diagnostic_tickets=args.diagnostic_tickets,
+        idle_diagnostics=profile.idle_diagnostics if profile is not None else args.idle_diagnostics,
+        diagnostic_tickets=(
+            profile.diagnostic_tickets if profile is not None else args.diagnostic_tickets
+        ),
         diagnostic_ticket_queue=args.diagnostic_ticket_queue,
         diagnostic_ticket_priority=args.diagnostic_ticket_priority,
         diagnostic_state_dir=diagnostic_state_dir,
@@ -1649,19 +1672,32 @@ def _run_autonomous_cycle(
         wup_diagnostic_tickets=args.wup_diagnostic_tickets,
         wup_ticket_queue=args.wup_ticket_queue,
         strict_diagnostics=args.strict_diagnostics,
-        autopilot_action=args.autopilot_action,
+        autopilot_action=profile.autopilot_action if profile is not None else args.autopilot_action,
         autopilot_on_idle_only=args.autopilot_on_idle_only,
         autopilot_skip_on_diagnostics_fail=args.autopilot_skip_on_diagnostics_fail,
         autopilot_skip_drive_idle_streak=args.autopilot_skip_drive_idle_streak,
         autopilot_skip_statuses=args.autopilot_skip_statuses,
         scan_skip_if_clean=args.scan_skip_if_clean,
         scan_skip_after=args.scan_skip_after,
-        scan_after_idle_queue=args.scan_after_idle_queue,
-        scan_after_idle_min_interval_seconds=args.scan_after_idle_min_interval,
+        scan_after_idle_queue=(
+            profile.scan_after_idle_queue if profile is not None else args.scan_after_idle_queue
+        ),
+        scan_after_idle_min_interval_seconds=(
+            profile.scan_after_idle_min_interval
+            if profile is not None
+            else args.scan_after_idle_min_interval
+        ),
         topology_integration=args.topology_integration,
         stdio_format=args.emit_events,
         correlation_id=correlation_id,
     )
+    if auto_pipeline_state is not None:
+        _update_auto_pipeline_state(
+            auto_pipeline_state,
+            queue_result,
+            diag_result,
+            _autopilot_status,
+        )
     _save_loop_checkpoint(
         checkpoint_path,
         cycle=cycle,
@@ -1732,6 +1768,9 @@ def _action_up(args: argparse.Namespace) -> int:
         topology_integration=args.topology_integration,
         stdio_format=args.emit_events,
     )
+    auto_pipeline_state = (
+        AutoPipelineState() if getattr(args, "_auto_pipeline_enabled", False) else None
+    )
 
     stopped_by_sigterm = False
 
@@ -1774,6 +1813,7 @@ def _action_up(args: argparse.Namespace) -> int:
                 diagnostic_state_dir=diagnostic_state_dir,
                 wup_process=wup_process,
                 correlation_id=correlation_id,
+                auto_pipeline_state=auto_pipeline_state,
             )
             if should_exit:
                 return 0
@@ -1827,6 +1867,33 @@ AUTO_UP_DEFAULT_ARGS: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = (
 )
 
 
+@dataclass
+class AutoPipelineState:
+    seen_cycles: int = 0
+    idle_cycles: int = 0
+    last_queue_status: str = ""
+    last_iterations: int = 0
+    last_failed_count: int = 0
+    last_waiting_count: int = 0
+    last_diag_status: str = ""
+    last_autopilot_status: str = ""
+
+
+@dataclass(frozen=True)
+class AutoPipelineProfile:
+    name: str
+    reason: str
+    enable_scan: bool
+    max_iterations: int
+    include_semcod_artifacts: bool | None
+    idle_diagnostics: str
+    diagnostic_tickets: bool
+    scan_after_idle_queue: bool
+    scan_after_idle_min_interval: float
+    enable_autopilot: bool
+    autopilot_action: str
+
+
 def _argv_has_option(argv: list[str], names: tuple[str, ...]) -> bool:
     for arg in argv:
         if arg in names:
@@ -1844,6 +1911,180 @@ def _expand_auto_up_defaults(argv: list[str]) -> list[str]:
         if not _argv_has_option(provided, names):
             defaults.extend(default_args)
     return [expanded[0], *defaults, *provided]
+
+
+def _collect_argv_options(argv: list[str]) -> set[str]:
+    return {arg.split("=", 1)[0] for arg in argv if arg.startswith("--")}
+
+
+def _user_option(options: set[str], names: tuple[str, ...]) -> bool:
+    return any(name in options for name in names)
+
+
+def _auto_value(args: argparse.Namespace, names: tuple[str, ...], attr: str, value: Any) -> Any:
+    if _user_option(getattr(args, "_auto_user_options", set()), names):
+        return getattr(args, attr)
+    return value
+
+
+def _auto_pipeline_has_pressure(state: AutoPipelineState, max_iterations: int) -> tuple[bool, str]:
+    if state.seen_cycles == 0:
+        return True, "initial rescue pass"
+    if state.last_failed_count:
+        return True, "queue failures present"
+    if state.last_waiting_count or state.last_queue_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES:
+        return True, "queue waiting for input"
+    if state.last_diag_status == "failed":
+        return True, "diagnostics failed"
+    if state.last_autopilot_status == "failed":
+        return True, "autopilot failed"
+    if state.last_queue_status == "completed" and state.last_iterations >= max_iterations:
+        return True, "queue backlog reached max-iterations"
+    return False, ""
+
+
+def _auto_pipeline_stage(state: AutoPipelineState, max_iterations: int) -> tuple[str, str]:
+    has_pressure, reason = _auto_pipeline_has_pressure(state, max_iterations)
+    if has_pressure:
+        return "rescue", reason
+    if state.idle_cycles >= 3:
+        return "architecture", "queue stable for architecture checks"
+    if state.idle_cycles >= 2:
+        return "quality", "queue stable for quality checks"
+    if state.idle_cycles >= 1:
+        return "stabilize", "queue idle; run quick verification"
+    return "stabilize", "queue moving"
+
+
+def _select_auto_pipeline_profile(
+    args: argparse.Namespace,
+    state: AutoPipelineState,
+    *,
+    base_enable_scan: bool,
+) -> AutoPipelineProfile:
+    stage, reason = _auto_pipeline_stage(state, max(1, int(args.max_iterations)))
+    if stage == "rescue":
+        return AutoPipelineProfile(
+            name=stage,
+            reason=reason,
+            enable_scan=bool(_auto_value(args, ("--ticket-sources",), "ticket_sources", False)),
+            max_iterations=int(_auto_value(args, ("--max-iterations",), "max_iterations", 1)),
+            include_semcod_artifacts=_auto_value(
+                args,
+                ("--semcod-artifacts", "--no-semcod-artifacts"),
+                "semcod_artifacts",
+                False,
+            ),
+            idle_diagnostics=str(
+                _auto_value(args, ("--idle-diagnostics",), "idle_diagnostics", "off")
+            ),
+            diagnostic_tickets=bool(
+                _auto_value(args, ("--diagnostic-tickets",), "diagnostic_tickets", False)
+            ),
+            scan_after_idle_queue=bool(
+                _auto_value(
+                    args,
+                    ("--scan-after-idle-queue", "--no-scan-after-idle-queue"),
+                    "scan_after_idle_queue",
+                    False,
+                )
+            ),
+            scan_after_idle_min_interval=float(args.scan_after_idle_min_interval),
+            enable_autopilot=bool(
+                _auto_value(args, ("--no-autopilot",), "enable_autopilot", False)
+            ),
+            autopilot_action=str(
+                _auto_value(args, ("--autopilot-action",), "autopilot_action", "off")
+            ),
+        )
+    if stage == "stabilize":
+        return AutoPipelineProfile(
+            name=stage,
+            reason=reason,
+            enable_scan=bool(_auto_value(args, ("--ticket-sources",), "ticket_sources", False)),
+            max_iterations=int(_auto_value(args, ("--max-iterations",), "max_iterations", 1)),
+            include_semcod_artifacts=_auto_value(
+                args,
+                ("--semcod-artifacts", "--no-semcod-artifacts"),
+                "semcod_artifacts",
+                False,
+            ),
+            idle_diagnostics=str(
+                _auto_value(args, ("--idle-diagnostics",), "idle_diagnostics", "quick")
+            ),
+            diagnostic_tickets=bool(
+                _auto_value(args, ("--diagnostic-tickets",), "diagnostic_tickets", True)
+            ),
+            scan_after_idle_queue=bool(
+                _auto_value(
+                    args,
+                    ("--scan-after-idle-queue", "--no-scan-after-idle-queue"),
+                    "scan_after_idle_queue",
+                    True,
+                )
+            ),
+            scan_after_idle_min_interval=float(args.scan_after_idle_min_interval or 60.0),
+            enable_autopilot=bool(
+                _auto_value(args, ("--no-autopilot",), "enable_autopilot", False)
+            ),
+            autopilot_action=str(
+                _auto_value(args, ("--autopilot-action",), "autopilot_action", "off")
+            ),
+        )
+    return AutoPipelineProfile(
+        name=stage,
+        reason=reason,
+        enable_scan=bool(_auto_value(args, ("--ticket-sources",), "ticket_sources", True))
+        or base_enable_scan,
+        max_iterations=int(_auto_value(args, ("--max-iterations",), "max_iterations", 1)),
+        include_semcod_artifacts=_auto_value(
+            args,
+            ("--semcod-artifacts", "--no-semcod-artifacts"),
+            "semcod_artifacts",
+            True,
+        ),
+        idle_diagnostics=str(
+            _auto_value(
+                args,
+                ("--idle-diagnostics",),
+                "idle_diagnostics",
+                "deep" if stage == "architecture" else "full",
+            )
+        ),
+        diagnostic_tickets=bool(
+            _auto_value(args, ("--diagnostic-tickets",), "diagnostic_tickets", True)
+        ),
+        scan_after_idle_queue=bool(
+            _auto_value(
+                args,
+                ("--scan-after-idle-queue", "--no-scan-after-idle-queue"),
+                "scan_after_idle_queue",
+                True,
+            )
+        ),
+        scan_after_idle_min_interval=float(args.scan_after_idle_min_interval or 60.0),
+        enable_autopilot=bool(_auto_value(args, ("--no-autopilot",), "enable_autopilot", False)),
+        autopilot_action=str(_auto_value(args, ("--autopilot-action",), "autopilot_action", "off")),
+    )
+
+
+def _update_auto_pipeline_state(
+    state: AutoPipelineState,
+    queue_result: QueueLoopResult,
+    diag_result: DiagnosticResult,
+    autopilot_status: str,
+) -> None:
+    state.seen_cycles += 1
+    state.last_queue_status = queue_result.last_status
+    state.last_iterations = queue_result.iterations
+    state.last_failed_count = len(queue_result.failed)
+    state.last_waiting_count = len(queue_result.waiting)
+    state.last_diag_status = diag_result.status
+    state.last_autopilot_status = autopilot_status
+    if queue_result.last_status == "idle" and diag_result.status != "failed":
+        state.idle_cycles += 1
+    else:
+        state.idle_cycles = 0
 
 
 def autonomous_main(argv: list[str], *, invoked_as_auto: bool = False) -> int:
@@ -1867,9 +2108,13 @@ def autonomous_main(argv: list[str], *, invoked_as_auto: bool = False) -> int:
         ]
     elif argv[0] != "up" and argv[0] not in ("-h", "--help"):
         argv = ["up", *argv]
+    auto_user_options: set[str] = set()
     if invoked_as_auto and argv and argv[0] == "up":
+        auto_user_options = _collect_argv_options(argv[1:])
         argv = _expand_auto_up_defaults(argv)
     args = _build_parser().parse_args(argv)
+    args._auto_pipeline_enabled = invoked_as_auto and args.action == "up"
+    args._auto_user_options = auto_user_options
     if invoked_as_auto:
         args.replace_existing_global = True
         if not args.allow_duplicate and not args.replace_existing:

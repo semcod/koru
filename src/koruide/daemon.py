@@ -194,6 +194,9 @@ class AutopilotDaemon:
         self._lock = threading.Lock()
         self._plugin_router = PluginRouter(self._clients, drop_client=self._drop, log=self.log)
         self._handlers = self._build_handler_table()
+        self._plugin_rejection_log_state: dict[
+            tuple[str, str | None, str | None], tuple[float, int]
+        ] = {}
 
     # ----- lifecycle -----------------------------------------------------
 
@@ -546,7 +549,12 @@ class AutopilotDaemon:
         if DriveOrchestrator.should_block_plugin_version(version_info):
             message = DriveOrchestrator.plugin_version_block_message(version_info)
             self._send(client, error(msg.id, message).encode())
-            self.log(f"rejecting plugin connection: ide={ide} {message}")
+            self._log_rejected_plugin_connection(
+                ide=ide,
+                plugin_version=plugin_version,
+                expected_plugin_version=version_info.get("expected_plugin_version"),
+                message=message,
+            )
             self.audit.record(
                 "plugin_rejected",
                 ide=ide,
@@ -567,6 +575,25 @@ class AutopilotDaemon:
             ide=ide,
             version=plugin_version,
         )
+
+    def _log_rejected_plugin_connection(
+        self,
+        *,
+        ide: str,
+        plugin_version: str | None,
+        expected_plugin_version: Any,
+        message: str,
+    ) -> None:
+        expected = expected_plugin_version if isinstance(expected_plugin_version, str) else None
+        key = (ide, plugin_version, expected)
+        now = time.monotonic()
+        last, suppressed = self._plugin_rejection_log_state.get(key, (0.0, 0))
+        if last and now - last < 30.0:
+            self._plugin_rejection_log_state[key] = (last, suppressed + 1)
+            return
+        suffix = f" (suppressed {suppressed} repeated reconnects)" if suppressed else ""
+        self.log(f"rejecting plugin connection: ide={ide} {message}{suffix}")
+        self._plugin_rejection_log_state[key] = (now, 0)
 
     def _handle_status(self, client: _Client, msg: Message) -> None:
         plugins = [row.to_dict() for row in self._plugin_router.status_rows()]
