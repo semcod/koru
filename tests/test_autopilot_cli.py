@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from koru.autopilot import cli_command, install_plugin_cli, systemd_cli
+from koru.autopilot import cli_command, doctor_cli, install_plugin_cli, systemd_cli
 from koru.autopilot.cli_command import autopilot_main
 
 
@@ -566,8 +566,8 @@ def test_doctor_fix_text_output(
     monkeypatch.setattr(cli_command, "detect_running_ides", lambda: [])
     monkeypatch.setattr(cli_command, "detect_focused_ide_id", lambda: None)
     monkeypatch.setattr(
-        cli_command,
-        "_doctor_fix_payload",
+        doctor_cli,
+        "doctor_fix_payload",
         lambda: {
             "commands": ["koru autopilot setup-host"],
             "automated_apt_suggestion": "sudo apt-get install -y wtype",
@@ -603,8 +603,8 @@ def test_doctor_fix_json_output(
     monkeypatch.setattr(cli_command, "detect_running_ides", lambda: [])
     monkeypatch.setattr(cli_command, "detect_focused_ide_id", lambda: None)
     monkeypatch.setattr(
-        cli_command,
-        "_doctor_fix_payload",
+        doctor_cli,
+        "doctor_fix_payload",
         lambda: {
             "commands": ["koru autopilot setup-host --install --dry-run"],
             "automated_apt_suggestion": None,

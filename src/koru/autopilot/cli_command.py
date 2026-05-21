@@ -5,7 +5,6 @@ public entrypoint is :func:`autopilot_main` which mirrors the
 ``_task_main`` / ``_scan_main`` style used elsewhere.
 """
 
-
 import argparse
 import json
 import os
@@ -31,10 +30,6 @@ from koru.autopilot.ide import (
 from koru.autopilot.injector import Injector, InjectorError
 from koru.autopilot.utils.client_helpers import call_daemon_method
 
-_resolve_session_ides = calibrate_cli.resolve_session_ides
-_capture_ide_profile = calibrate_cli.capture_ide_profile
-_detect_duplicate_coordinates = calibrate_cli.detect_duplicate_coordinates
-
 
 def _action_calibrate(args: argparse.Namespace) -> int:
     return calibrate_cli.action_calibrate(
@@ -47,7 +42,7 @@ def _action_calibrate(args: argparse.Namespace) -> int:
 def _action_session_start(args: argparse.Namespace) -> int:
     return calibrate_cli.action_session_start(
         args,
-        resolve_ides=_resolve_session_ides,
+        resolve_ides=calibrate_cli.resolve_session_ides,
         sleep_fn=time.sleep,
     )
 
@@ -707,20 +702,11 @@ def _action_shutdown(args: argparse.Namespace) -> int:
 _action_ide_list = daemon_cli.action_ide_list
 
 
-_doctor_fix_payload = doctor_cli.doctor_fix_payload
-_render_doctor_session_info = doctor_cli.render_doctor_session_info
-_render_doctor_backends = doctor_cli.render_doctor_backends
-_render_doctor_ides = doctor_cli.render_doctor_ides
-_render_doctor_fix_steps = doctor_cli.render_doctor_fix_steps
-_render_doctor_text = doctor_cli.render_doctor_text
-_render_doctor_json = doctor_cli.render_doctor_json
-
-
 def _action_doctor(args: argparse.Namespace) -> int:
     return doctor_cli.action_doctor(
         args,
         injector_factory=Injector,
-        fix_payload_factory=_doctor_fix_payload,
+        fix_payload_factory=doctor_cli.doctor_fix_payload,
         detect_ides=detect_running_ides,
         detect_focused=detect_focused_ide_id,
     )
