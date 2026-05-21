@@ -1,8 +1,8 @@
-# koru | 1675 func | 158f | 46275L | python | 2026-05-21
+# koru | 1680 func | 158f | 46314L | python | 2026-05-21
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.0  critical=144 (limit:10)  dup=4  cycles=0
+  CC̄=4.0  critical=143 (limit:10)  dup=4  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     _build_handler = 36 (limit:10)
@@ -52,4 +52,4 @@ REFACTOR[15]:
   [5] H/H Split god module src/koru/autopilot/install_manager.py (652L, 2 classes)
 
 EVOLUTION:
-  2026-05-21 CC̄=4.0 crit=144 46275L // Automated analysis
+  2026-05-21 CC̄=4.0 crit=143 46314L // Automated analysis

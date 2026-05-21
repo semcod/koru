@@ -1,6 +1,6 @@
-# koru | 255f 46275L | yaml:15,txt:2,yml:8,toml:1,shell:44,json:3,python:166,typescript:6,kotlin:6,properties:1,xml:1 | 2026-05-21
-# generated in 0.04s
-# stats: 1675 func | 0 cls | 255 mod | CC̄=4.0 | critical:6 | cycles:0
+# koru | 255f 46314L | yaml:15,txt:2,yml:8,shell:44,json:3,python:166,typescript:6,kotlin:6,properties:1,xml:1,toml:1 | 2026-05-21
+# generated in 0.05s
+# stats: 1680 func | 0 cls | 255 mod | CC̄=4.0 | critical:5 | cycles:0
 # alerts[5]: fan-out _build_handler=36; fan-out _build_handler=31; fan-out create_nl_task=24; fan-out AutopilotBridge.focusChat=23; fan-out init_project=23
 # hotspots[5]: _build_handler fan=36; _build_handler fan=31; create_nl_task fan=24; init_project fan=23; run_cycle fan=23
 # evolution: CC̄ 4.1→4.0 (improved -0.1)
@@ -245,7 +245,7 @@ M[255]:
   src/koruide/drive_orchestrator.py,245
   src/koruide/host_setup.py,226
   src/koruide/ide.py,714
-  src/koruide/injector.py,337
+  src/koruide/injector.py,376
   src/koruide/injector_backends.py,207
   src/koruide/injector_errors.py,10
   src/koruide/os_injector.py,481
@@ -262,18 +262,6 @@ M[255]:
   tree.sh,1
   wup.yaml,56
 D:
-  src/koruide/injector.py:
-    e: BackendStatus,InjectionResult,Injector,_submit_key_for,_which,_session_type,_forced_injector_backend,_default_runner
-    BackendStatus: to_dict(0)  # Result of probing a single backend...
-    InjectionResult: to_dict(0)
-    Injector: probe(0),_candidate_backends(0),select_backend(0),_type_with_backend(3),type_text(1),submit_only(0),_probe_one(1),_call(1)  # Pick the best available backend and type text through it.
-
-P...
-    _submit_key_for(ide)
-    _which(name)
-    _session_type()
-    _forced_injector_backend()
-    _default_runner(cmd;stdin)
   src/koruide/os_injector.py:
     e: OsInjectorError,OsInjectorProfile,default_config_path,iter_config_paths,os_injector_env_disabled,os_injector_env_forced,dry_run_from_env,focus_mode_from_env,input_mode_from_env,_is_wayland_session,_cmd_timeout_seconds,_post_focus_delay_seconds,try_load_profile,_read_json,load_profile,save_profile,profile_from_mouse,capture_mouse_xy,capture_from_xdotool,_run_cmd,_xdotool,_tool_pid,_clipboard_backend,_set_clipboard,_resolve_input_method,_injection_result,_focus_profile_chat,_inject_profile_text,inject_with_profile,try_drive_with_profile
     OsInjectorError(RuntimeError):  # Raised when profile config or xdotool operations fail...
@@ -1200,6 +1188,18 @@ so...
     as_managed(proc)
     terminate_existing_processes(processes)
     confirm_replace_existing(processes)
+  src/koruide/injector.py:
+    e: BackendStatus,InjectionResult,Injector,_submit_key_for,_which,_session_type,_forced_injector_backend,_default_runner
+    BackendStatus: to_dict(0)  # Result of probing a single backend...
+    InjectionResult: to_dict(0)
+    Injector: probe(0),_candidate_backends(0),select_backend(0),_type_with_backend(3),_type_text_backends(0),_log_type_text_request(3),_dry_run_type_text_result(0),_try_type_text_backends(4),_all_type_backends_failed(1),type_text(1),submit_only(0),_probe_one(1),_call(1)  # Pick the best available backend and type text through it.
+
+P...
+    _submit_key_for(ide)
+    _which(name)
+    _session_type()
+    _forced_injector_backend()
+    _default_runner(cmd;stdin)
   src/koru/ide_router.py:
     e: IDERoute,is_headless_environment,resolve_ide_route
     IDERoute:  # Resolved routing decision for one Koru process...
@@ -2012,7 +2012,6 @@ The c...
   koru.yaml:
   wup.yaml:
   docker-compose.yml:
-  pyproject.toml:
   tree.sh:
   todo.txt:
   pipeline.yaml:
@@ -2202,3 +2201,4 @@ The c...
   testql-scenarios/generated-from-pytests.testql.toon.yaml:
   testql-scenarios/generated-cli-tests.testql.toon.yaml:
   testql-testing/scenarios/realtime-health.testql.toon.yaml:
+  pyproject.toml:

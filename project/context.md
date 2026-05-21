@@ -1,5 +1,5 @@
 # System Architecture Analysis
-<!-- generated in 0.01s -->
+<!-- generated in 0.02s -->
 
 ## Overview
 
@@ -7,10 +7,10 @@
 - **Primary Language**: python
 - **Languages**: python: 166, shell: 44, yaml: 15, yml: 8, typescript: 6
 - **Analysis Mode**: static
-- **Total Functions**: 1675
+- **Total Functions**: 1680
 - **Total Classes**: 108
 - **Modules**: 255
-- **Entry Points**: 603
+- **Entry Points**: 608
 
 ## Architecture by Module
 
@@ -166,12 +166,6 @@ the LLM with the policy
 ### src.koru.autopilot.cli_command._action_drive
 - **Calls**: src.koru.autopilot.cli_command._client, src.koru.autopilot.cli_command._should_fallback_to_direct, scripts.koru-soak-monitor.print, None.strip, None.strip, scripts.koru-soak-monitor.print, src.koru.autopilot.cli_command._run_direct_drive, client.is_running
 
-### src.koruide.injector.Injector.type_text
-> Type ``text`` and optionally press the IDE's submit key.
-
-Raises :class:`InjectorError` when no backend is available.
-- **Calls**: self._candidate_backends, InjectorError, InjectorError, None.replace, self.log, InjectorError, src.koruide.injector._submit_key_for, self.log
-
 ### src.koru.cli._agent_backends_main
 > List or describe IDE agent backend profiles (``agent_backends``).
 - **Calls**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.parse_args, src.koru.agent_backends.iter_agent_backend_profiles, src.koru.agent_backends.get_agent_backend_profile, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print
@@ -228,6 +222,10 @@ Returns the process exit code (0 on clean shutdown).
 
 ### src.korudsl.cli.main
 - **Calls**: None.parse_args, src.korudsl.cli._read_input, src.korudsl.transform.library_from_any, src.korudsl.cli._read_input, src.korudsl.transform.library_from_any, src.korudsl.transform.library_to_any, src.korudsl.cli._read_input, src.korudsl.transform.dsl_roundtrip_report
+
+### src.koru.agent_backends.load_agent_integration_config
+> Load ``ide_integration`` from ``<project>/koru.yaml`` if present.
+- **Calls**: data.get, block.get, block.get, raw_lanes.items, AgentIntegrationConfig, path.is_file, isinstance, isinstance
 
 ## Process Flows
 
@@ -340,11 +338,6 @@ socket_path:
 - **Methods**: 38
 - **Key Methods**: src.koruide.daemon.AutopilotDaemon.__init__, src.koruide.daemon.AutopilotDaemon.start, src.koruide.daemon.AutopilotDaemon.serve_forever, src.koruide.daemon.AutopilotDaemon.stop, src.koruide.daemon.AutopilotDaemon._shutdown, src.koruide.daemon.AutopilotDaemon._accept, src.koruide.daemon.AutopilotDaemon._on_readable, src.koruide.daemon.AutopilotDaemon._dispatch, src.koruide.daemon.AutopilotDaemon._send, src.koruide.daemon.AutopilotDaemon._drop
 
-### src.koruide.drive_orchestrator.DriveOrchestrator
-> Pure helpers used by the autopilot daemon.
-- **Methods**: 12
-- **Key Methods**: src.koruide.drive_orchestrator.DriveOrchestrator.plugin_required_message, src.koruide.drive_orchestrator.DriveOrchestrator.should_try_os_fallback, src.koruide.drive_orchestrator.DriveOrchestrator.build_message_sent_info, src.koruide.drive_orchestrator.DriveOrchestrator.annotate_plugin_ack, src.koruide.drive_orchestrator.DriveOrchestrator.strict_plugin_ack_required, src.koruide.drive_orchestrator.DriveOrchestrator.expected_plugin_version, src.koruide.drive_orchestrator.DriveOrchestrator.strict_plugin_version_required, src.koruide.drive_orchestrator.DriveOrchestrator.plugin_version_info, src.koruide.drive_orchestrator.DriveOrchestrator.should_block_plugin_version, src.koruide.drive_orchestrator.DriveOrchestrator.plugin_version_block_message
-
 ### src.koruide.injector.Injector
 > Pick the best available backend and type text through it.
 
@@ -352,8 +345,13 @@ Parameters
 ----------
 session:
     Overri
-- **Methods**: 8
-- **Key Methods**: src.koruide.injector.Injector.probe, src.koruide.injector.Injector._candidate_backends, src.koruide.injector.Injector.select_backend, src.koruide.injector.Injector._type_with_backend, src.koruide.injector.Injector.type_text, src.koruide.injector.Injector.submit_only, src.koruide.injector.Injector._probe_one, src.koruide.injector.Injector._call
+- **Methods**: 13
+- **Key Methods**: src.koruide.injector.Injector.probe, src.koruide.injector.Injector._candidate_backends, src.koruide.injector.Injector.select_backend, src.koruide.injector.Injector._type_with_backend, src.koruide.injector.Injector._type_text_backends, src.koruide.injector.Injector._log_type_text_request, src.koruide.injector.Injector._dry_run_type_text_result, src.koruide.injector.Injector._try_type_text_backends, src.koruide.injector.Injector._all_type_backends_failed, src.koruide.injector.Injector.type_text
+
+### src.koruide.drive_orchestrator.DriveOrchestrator
+> Pure helpers used by the autopilot daemon.
+- **Methods**: 12
+- **Key Methods**: src.koruide.drive_orchestrator.DriveOrchestrator.plugin_required_message, src.koruide.drive_orchestrator.DriveOrchestrator.should_try_os_fallback, src.koruide.drive_orchestrator.DriveOrchestrator.build_message_sent_info, src.koruide.drive_orchestrator.DriveOrchestrator.annotate_plugin_ack, src.koruide.drive_orchestrator.DriveOrchestrator.strict_plugin_ack_required, src.koruide.drive_orchestrator.DriveOrchestrator.expected_plugin_version, src.koruide.drive_orchestrator.DriveOrchestrator.strict_plugin_version_required, src.koruide.drive_orchestrator.DriveOrchestrator.plugin_version_info, src.koruide.drive_orchestrator.DriveOrchestrator.should_block_plugin_version, src.koruide.drive_orchestrator.DriveOrchestrator.plugin_version_block_message
 
 ### src.koruide.client.KoruIDEClient
 > Connect, send one message, read one reply, disconnect.
@@ -573,7 +571,6 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.cli_queue.render_clean_report_text` - 28 calls
 - `src.koru.autonomous_daemon.start_or_reuse_daemon` - 26 calls
 - `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
-- `src.koruide.injector.Injector.type_text` - 25 calls
 - `src.koru.scan.scan_pytest_collect` - 24 calls
 - `src.koru.autopilot.install_manager.collect_install_manager_report` - 24 calls
 - `src.koru.init.init_project` - 23 calls
@@ -598,6 +595,7 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.tools.render_tools_detect_text` - 20 calls
 - `src.koru.context_render.render_autonomy_loop_brief` - 20 calls
 - `src.koru.local_manager_state.ActionQueue.claim` - 20 calls
+- `src.koru.local_manager_state.WorkerRegistry.heartbeat` - 20 calls
 
 ## System Interactions
 

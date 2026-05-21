@@ -189,6 +189,81 @@ class Injector:
         ) -> None:
         type_with_backend(self._call, self.log, backend, text, submit_key)
 
+    def _type_text_backends(self) -> list[str]:
+        backends = self._candidate_backends()
+        if backends:
+            return backends
+        if self.log:
+            self.log("injector: ERROR no backends available")
+        raise InjectorError(
+            "no keyboard injection backend found "
+            "(install xdotool on X11 or wtype/ydotool on Wayland)",
+        )
+
+    def _log_type_text_request(self, text: str, ide: str, submit: bool) -> None:
+        if not self.log:
+            return
+        text_preview = text[:100].replace("\n", "\\n") + ("..." if len(text) > 100 else "")
+        self.log(
+            f"injector: type_text called with {len(text)} chars, "
+            f"ide={ide}, submit={submit}, preview='{text_preview}'"
+        )
+
+    def _dry_run_type_text_result(
+        self,
+        *,
+        backend: str,
+        text: str,
+        submit: bool,
+        submit_key: str | None,
+    ) -> InjectionResult:
+        if self.log:
+            self.log("injector: dry-run mode, skipping actual typing")
+        return InjectionResult(
+            backend=backend,
+            submitted=submit,
+            dry_run=True,
+            output=f"[dry-run] would type {len(text)} chars via {backend}"
+            + (f" then press {submit_key}" if submit_key else ""),
+        )
+
+    def _try_type_text_backends(
+        self,
+        backends: list[str],
+        text: str,
+        submit: bool,
+        submit_key: str | None,
+    ) -> InjectionResult:
+        errors: list[str] = []
+        for backend in backends:
+            if self.log:
+                self.log(f"injector: trying backend={backend} ...")
+            try:
+                self._type_with_backend(backend, text, submit_key)
+            except InjectorError as exc:
+                if self.log:
+                    self.log(f"injector: backend={backend} failed: {exc}")
+                errors.append(f"{backend}: {exc}")
+                continue
+            if self.log:
+                self.log(
+                    f"injector: SUCCESS typed {len(text)} chars via {backend}, "
+                    f"submit={submit}"
+                )
+            return InjectionResult(backend=backend, submitted=submit)
+        raise self._all_type_backends_failed(errors)
+
+    def _all_type_backends_failed(self, errors: list[str]) -> InjectorError:
+        hint = (
+            " Connect the koru autopilot extension for your IDE (preferred on Wayland), "
+            "or install a working tool: `apt install wtype` (Sway/Hyprland), "
+            "or fix ydotool/uinput per `koru autopilot doctor` / docs/autopilot-quickstart.md. "
+            "Override order with KORU_INJECTOR_BACKEND=wtype|xdotool|ydotool."
+        )
+        if self.log:
+            self.log(f"injector: ERROR all backends failed: {'; '.join(errors)}{hint}")
+        return InjectorError("all keyboard injection backends failed: " + "; ".join(errors) + hint)
+
     def type_text(
         self,
         text: str,
@@ -203,17 +278,8 @@ class Injector:
         """
         if not text:
             raise InjectorError("refusing to inject empty text")
-        text_preview = text[:100].replace("\n", "\\n") + ("..." if len(text) > 100 else "")
-        if self.log:
-            self.log(f"injector: type_text called with {len(text)} chars, ide={ide}, submit={submit}, preview='{text_preview}'")
-        backends = self._candidate_backends()
-        if not backends:
-            if self.log:
-                self.log("injector: ERROR no backends available")
-            raise InjectorError(
-                "no keyboard injection backend found "
-                "(install xdotool on X11 or wtype/ydotool on Wayland)",
-            )
+        self._log_type_text_request(text, ide, submit)
+        backends = self._type_text_backends()
         submit_key = _submit_key_for(ide) if submit else None
         backend0 = backends[0]
         if self.log:
@@ -222,40 +288,13 @@ class Injector:
                 f"submit_key={submit_key or 'none'}, ide={ide}, chars={len(text)}"
             )
         if dry_run:
-            if self.log:
-                self.log(f"injector: dry-run mode, skipping actual typing")
-            return InjectionResult(
+            return self._dry_run_type_text_result(
                 backend=backend0,
-                submitted=submit,
-                dry_run=True,
-                output=f"[dry-run] would type {len(text)} chars via {backend0}"
-                + (f" then press {submit_key}" if submit_key else ""),
+                text=text,
+                submit=submit,
+                submit_key=submit_key,
             )
-        errors: list[str] = []
-        for backend in backends:
-            if self.log:
-                self.log(f"injector: trying backend={backend} ...")
-            try:
-                self._type_with_backend(backend, text, submit_key)
-                if self.log:
-                    self.log(
-                        f"injector: SUCCESS typed {len(text)} chars via {backend}, "
-                        f"submit={submit}"
-                    )
-                return InjectionResult(backend=backend, submitted=submit)
-            except InjectorError as exc:
-                if self.log:
-                    self.log(f"injector: backend={backend} failed: {exc}")
-                errors.append(f"{backend}: {exc}")
-        hint = (
-            " Connect the koru autopilot extension for your IDE (preferred on Wayland), "
-            "or install a working tool: `apt install wtype` (Sway/Hyprland), "
-            "or fix ydotool/uinput per `koru autopilot doctor` / docs/autopilot-quickstart.md. "
-            "Override order with KORU_INJECTOR_BACKEND=wtype|xdotool|ydotool."
-        )
-        if self.log:
-            self.log(f"injector: ERROR all backends failed: {'; '.join(errors)}{hint}")
-        raise InjectorError("all keyboard injection backends failed: " + "; ".join(errors) + hint)
+        return self._try_type_text_backends(backends, text, submit, submit_key)
 
     def submit_only(
         self,

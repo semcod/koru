@@ -8354,7 +8354,7 @@ sumd_deploy_compose_file('docker-compose.yml').
 
 ## Call Graph
 
-*433 nodes · 500 edges · 73 modules · CC̄=4.0*
+*439 nodes · 500 edges · 73 modules · CC̄=4.0*
 
 ### Hubs (by degree)
 
@@ -8371,8 +8371,8 @@ sumd_deploy_compose_file('docker-compose.yml').
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.46s
-# nodes: 433 | edges: 500 | modules: 73
+# generated in 0.22s
+# nodes: 439 | edges: 500 | modules: 73
 # CC̄=4.0
 
 HUBS[20]:
@@ -8392,30 +8392,30 @@ HUBS[20]:
     CC=4  in:34  out:7  total:41
   src.koru.tasks.create_nl_task
     CC=15  in:6  out:34  total:40
-  src.koru.cli._build_parser
-    CC=1  in:3  out:36  total:39
   src.koru.events.emit_management_event
     CC=8  in:32  out:7  total:39
-  src.koru.cli._task_main
-    CC=22  in:0  out:34  total:34
   src.koruapi.mcp_server.tool_run_ticket
     CC=14  in:1  out:33  total:34
-  src.koru.autonomy.env.env_truthy
-    CC=3  in:29  out:3  total:32
+  src.koru.cli._task_main
+    CC=22  in:0  out:34  total:34
   src.koru.cli._topology_main
     CC=12  in:0  out:32  total:32
+  src.koru.autonomy.env.env_truthy
+    CC=3  in:29  out:3  total:32
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
   src.koru.autonomous_auto_pipeline._auto_value
     CC=2  in:24  out:4  total:28
   src.koruide.ide.detect_running_ides
     CC=13  in:17  out:10  total:27
-  src.koru.init.init_project
-    CC=7  in:3  out:23  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
+  src.koru.context.build_context
+    CC=6  in:9  out:16  total:25
+  src.koruide.injector.Injector.type_text
+    CC=18  in:0  out:25  total:25
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -8490,8 +8490,6 @@ MODULES:
     _terminate_existing_processes  CC=10  out:10
   src.koru.autonomy.env  [1 funcs]
     env_truthy  CC=3  out:3
-  src.koru.autopilot.doctor_cli  [1 funcs]
-    render_doctor_text  CC=1  out:4
   src.koru.bootstrap  [9 funcs]
     _detect_cycle  CC=10  out:13
     _validate_cross_task_dependencies  CC=10  out:13
@@ -8502,17 +8500,17 @@ MODULES:
     load_flat_pipeline  CC=9  out:12
     materialize_to_planfile  CC=6  out:16
     validate_flat_pipeline  CC=3  out:9
-  src.koru.cli  [35 funcs]
+  src.koru.cli  [27 funcs]
     _agent_backends_main  CC=8  out:23
     _agent_main  CC=3  out:7
     _auto_main  CC=6  out:6
-    _bootstrap_main  CC=5  out:18
     _build_agent_parser  CC=1  out:12
     _build_gate_parser  CC=1  out:11
     _build_gc_parser  CC=1  out:14
-    _build_parser  CC=1  out:36
     _build_queue_parser  CC=1  out:11
     _build_runtime_context_parser  CC=1  out:4
+    _build_tools_parser  CC=1  out:7
+    _gate_main  CC=5  out:12
   src.koru.context  [2 funcs]
     build_context  CC=6  out:16
     render_markdown_handoff  CC=10  out:47
@@ -8541,9 +8539,6 @@ MODULES:
   src.koru.ide_router  [2 funcs]
     is_headless_environment  CC=8  out:6
     resolve_ide_route  CC=10  out:10
-  src.koru.init  [2 funcs]
-    init_project  CC=7  out:23
-    refresh_init_agent_lane  CC=4  out:11
   src.koru.local_service  [2 funcs]
     default_local_service_config  CC=2  out:7
     run_local_service  CC=3  out:12
@@ -8742,6 +8737,24 @@ MODULES:
     _legacy_windsurf_terminal_env_hint  CC=3  out:4
     _log_drive_target_result  CC=2  out:1
     _matches  CC=7  out:5
+  src.koruide.injector  [6 funcs]
+    _candidate_backends  CC=11  out:18
+    _type_with_backend  CC=1  out:1
+    submit_only  CC=9  out:13
+    type_text  CC=18  out:25
+    _forced_injector_backend  CC=2  out:3
+    _submit_key_for  CC=1  out:2
+  src.koruide.injector_backends  [11 funcs]
+    _log  CC=2  out:1
+    _ydotool_submit_command  CC=3  out:0
+    extra_enter_count  CC=3  out:4
+    press_wtype  CC=4  out:6
+    type_with_backend  CC=5  out:10
+    type_with_wtype  CC=3  out:8
+    type_with_xdotool  CC=3  out:8
+    type_with_ydotool  CC=5  out:12
+    ydotool_ctrl_keycode  CC=2  out:3
+    ydotool_enter_keycode  CC=2  out:3
   src.koruide.os_injector  [26 funcs]
     _clipboard_backend  CC=3  out:2
     _cmd_timeout_seconds  CC=3  out:4

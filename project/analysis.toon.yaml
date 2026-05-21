@@ -1,9 +1,8 @@
-# code2llm | 256f 46275L | python:166,shell:44,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:2,toml:1,properties:1,xml:1 | 2026-05-21
-# generated in 0.10s
-# CC̄=4.0 | critical:6/1675 | dups:0 | cycles:0
+# code2llm | 256f 46314L | python:166,shell:44,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:2,properties:1,xml:1,toml:1 | 2026-05-21
+# generated in 0.15s
+# CC̄=4.0 | critical:5/1680 | dups:0 | cycles:0
 
-HEALTH[6]:
-  🟡 CC    type_text CC=18 (limit:15)
+HEALTH[5]:
   🟡 CC    try_drive_with_profile CC=17 (limit:15)
   🟡 CC    _task_main CC=22 (limit:15)
   🟡 CC    _dedupe_key_from_scaffold CC=17 (limit:15)
@@ -11,9 +10,9 @@ HEALTH[6]:
   🟡 CC    create_nl_task CC=15 (limit:15)
 
 REFACTOR[1]:
-  1. split 6 high-CC methods  (CC>15)
+  1. split 5 high-CC methods  (CC>15)
 
-PIPELINES[490]:
+PIPELINES[495]:
   [1] Src [heal_rebuild_restore]: heal_rebuild_restore → _run_docker
       PURITY: 100% pure
   [2] Src [heal_annotate]: heal_annotate → _record_action
@@ -59,8 +58,8 @@ LAYERS:
   │ runner                     393L  0C   10m  CC=14     ←2
   │ queue_clean                391L  2C   13m  CC=14     ←2
   │ post_run_verify            381L  2C   16m  CC=14     ←1
+  │ injector                   376L  3C   20m  CC=11     ←0
   │ gc                         371L  2C   12m  CC=11     ←2
-  │ !! injector                   337L  3C   15m  CC=18     ←0
   │ agents                     322L  1C   15m  CC=14     ←4
   │ tools                      318L  0C   19m  CC=11     ←1
   │ autonomous_processes       314L  2C   12m  CC=11     ←1
@@ -319,10 +318,10 @@ COUPLING:
        services.healing-webhook                                                                                                                                                          1                                                            ──
   CYCLES: none
   HUB: src.koruide/ (fan-in=72)
-  HUB: scripts/ (fan-in=344)
-  HUB: plugins.koru-autopilot-vscode/ (fan-in=10)
   HUB: src.koru/ (fan-in=45)
+  HUB: scripts/ (fan-in=344)
   HUB: src.koruapi/ (fan-in=25)
+  HUB: plugins.koru-autopilot-vscode/ (fan-in=10)
   SMELL: src.koruide/ fan-out=50 → split needed
   SMELL: src.koru/ fan-out=381 → split needed
   SMELL: src.koruapi/ fan-out=68 → split needed

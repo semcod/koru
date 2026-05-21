@@ -1,6 +1,6 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.22s
-# nodes: 439 | edges: 500 | modules: 73
+# generated in 0.59s
+# nodes: 437 | edges: 500 | modules: 73
 # CC̄=4.0
 
 HUBS[20]:
@@ -22,10 +22,10 @@ HUBS[20]:
     CC=15  in:6  out:34  total:40
   src.koru.events.emit_management_event
     CC=8  in:32  out:7  total:39
-  src.koruapi.mcp_server.tool_run_ticket
-    CC=14  in:1  out:33  total:34
   src.koru.cli._task_main
     CC=22  in:0  out:34  total:34
+  src.koruapi.mcp_server.tool_run_ticket
+    CC=14  in:1  out:33  total:34
   src.koru.cli._topology_main
     CC=12  in:0  out:32  total:32
   src.koru.autonomy.env.env_truthy
@@ -36,14 +36,14 @@ HUBS[20]:
     CC=2  in:24  out:4  total:28
   src.koruide.ide.detect_running_ides
     CC=13  in:17  out:10  total:27
-  services.healing-webhook.ticket_builder.build_ticket_payload
-    CC=11  in:1  out:25  total:26
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
+  services.healing-webhook.ticket_builder.build_ticket_payload
+    CC=11  in:1  out:25  total:26
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
-  src.koruide.injector.Injector.type_text
-    CC=18  in:0  out:25  total:25
+  src.koru.agents.detect_agent_options
+    CC=4  in:3  out:21  total:24
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -118,6 +118,8 @@ MODULES:
     _terminate_existing_processes  CC=10  out:10
   src.koru.autonomy.env  [1 funcs]
     env_truthy  CC=3  out:3
+  src.koru.autopilot.doctor_cli  [1 funcs]
+    render_doctor_text  CC=1  out:4
   src.koru.bootstrap  [9 funcs]
     _detect_cycle  CC=10  out:13
     _validate_cross_task_dependencies  CC=10  out:13
@@ -128,7 +130,7 @@ MODULES:
     load_flat_pipeline  CC=9  out:12
     materialize_to_planfile  CC=6  out:16
     validate_flat_pipeline  CC=3  out:9
-  src.koru.cli  [27 funcs]
+  src.koru.cli  [30 funcs]
     _agent_backends_main  CC=8  out:23
     _agent_main  CC=3  out:7
     _auto_main  CC=6  out:6
@@ -138,7 +140,7 @@ MODULES:
     _build_queue_parser  CC=1  out:11
     _build_runtime_context_parser  CC=1  out:4
     _build_tools_parser  CC=1  out:7
-    _gate_main  CC=5  out:12
+    _doctor_fix_payload  CC=5  out:4
   src.koru.context  [2 funcs]
     build_context  CC=6  out:16
     render_markdown_handoff  CC=10  out:47
@@ -365,13 +367,6 @@ MODULES:
     _legacy_windsurf_terminal_env_hint  CC=3  out:4
     _log_drive_target_result  CC=2  out:1
     _matches  CC=7  out:5
-  src.koruide.injector  [6 funcs]
-    _candidate_backends  CC=11  out:18
-    _type_with_backend  CC=1  out:1
-    submit_only  CC=9  out:13
-    type_text  CC=18  out:25
-    _forced_injector_backend  CC=2  out:3
-    _submit_key_for  CC=1  out:2
   src.koruide.injector_backends  [11 funcs]
     _log  CC=2  out:1
     _ydotool_submit_command  CC=3  out:0
