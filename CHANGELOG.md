@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10] - 2026-05-21
+
+### Fixed
+- Fix duplicate-imports issues (ticket-85954cf4)
+- Fix unused-imports issues (ticket-02034a47)
+
+## [0.1.10] - 2026-05-21
+
+### Fixed
+- Fix unused-imports issues (ticket-550c3386)
+- Fix string-concat issues (ticket-e09efa67)
+
 ## [0.1.10] - 2026-05-20
 
 ### Fixed
@@ -1452,6 +1464,43 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
   `deploy:{plan,dry,local,device,diagnose,resume,drift}`.
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
+
+## [0.1.168] - 2026-05-21
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update docs/IDE_PROTOCOL.md
+- Update docs/autodiagnostics-auto-repair.md
+- Update docs/autonomy-ide-cursor.md
+- Update docs/autopilot-quickstart.md
+- Update docs/local-service.md
+- ... and 3 more files
+
+### Test
+- Update tests/test_autopilot_daemon.py
+- Update tests/test_autopilot_plugin_installer.py
+- Update tests/test_drive_orchestrator.py
+- Update tests/test_install_manager.py
+- Update tests/test_local_service.py
+- Update tests/test_planfile_queue.py
+- Update tests/test_queue_cli_helpers.py
+
+### Other
+- Update .planfile/sprints/current.yaml
+- Update app.doql.less
+- Update planfile.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- ... and 10 more files
 
 ## [0.1.167] - 2026-05-21
 

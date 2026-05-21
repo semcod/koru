@@ -11,7 +11,7 @@ automatically, and which commands a human operator should run.
 | Guided project repair hints | implemented, read-only | `koru --doctor --fix`, `koru --doctor --fix --format json` |
 | IDE / injector diagnostics | implemented | `koru autopilot doctor`, `koru autopilot doctor --fix` |
 | Host injector auto-install | implemented for apt-based hosts | `koru autopilot setup-host --install` |
-| IDE plugin installation | implemented for VS Code family lanes | `koru autopilot install-plugin` |
+| IDE plugin/version management | implemented for VS Code family lanes | `koru autopilot manage --ide vscode`, `koru autopilot manage --ide vscode --fix` |
 | Persistent daemon unit | implemented | `koru autopilot install-unit` + `systemctl --user enable --now koru-autopilot.service` |
 | Idle diagnostic tickets | implemented | `koru autonomous safe-up` |
 | Full IDE LLM reply capture | not implemented yet | tracked in the autopilot roadmap |
@@ -27,7 +27,9 @@ cd /path/to/project
 koru --doctor
 koru --doctor --format json
 
+export KORU_AUTOPILOT_INSTANCE=vscode
 koru autopilot status
+koru autopilot manage --ide vscode
 koru autopilot doctor --fix
 koru autopilot ide-list
 ```
@@ -53,9 +55,10 @@ koru autopilot setup-host --install --dry-run
 # Install missing apt packages such as xdotool, wtype, or ydotool.
 koru autopilot setup-host --install
 
-# Install / reassert the VS Code-family extension for Windsurf, Cursor, or VS Code.
-koru autopilot install-plugin --dry-run --format json
-koru autopilot install-plugin
+# Install / reassert the VS Code-family extension and socket setting.
+export KORU_AUTOPILOT_INSTANCE=vscode
+koru autopilot manage --ide vscode --fix --dry-run
+koru autopilot manage --ide vscode --fix
 
 # Install a user-level daemon unit.
 koru autopilot install-unit
@@ -66,15 +69,21 @@ systemctl --user enable --now koru-autopilot.service
 After that, verify the active socket and plugin path:
 
 ```bash
-koru autopilot status
-koru autopilot --socket /run/user/$UID/koru-autopilot-windsurf.sock status
-koru autopilot --socket /run/user/$UID/koru-autopilot-windsurf.sock \
-  drive --ide windsurf --prompt "KORU smoke test"
+KORU_AUTOPILOT_INSTANCE=vscode koru autopilot status
+KORU_AUTOPILOT_INSTANCE=vscode koru autopilot manage --ide vscode
+KORU_AUTOPILOT_INSTANCE=vscode koru autopilot drive \
+  --ide vscode --require-plugin --prompt "KORU smoke test"
 ```
 
 If `drive` returns `ok=true`, `backend=plugin`, and `delivered=true`, the Koru
 daemon reached the IDE plugin. `submitted=false` means the IDE/plugin did not
 confirm the final chat submit.
+
+`manage` reports `connected/version`, `installed`, and `expected`. If
+`installed=expected` but `connected=False`, installation is healthy and the IDE
+runtime handshake is missing: start the daemon, reload the IDE window, and run
+`koru: Connect autopilot daemon`. Set `KORU_STRICT_PLUGIN_VERSION=1` to block
+drive through stale live plugins.
 
 ## Autonomous diagnostic tickets
 
@@ -107,7 +116,7 @@ koru autonomous up \
   --scan-skip-if-clean \
   --no-semcod-artifacts \
   --sleep-seconds 60 \
-  --autopilot-ide windsurf
+  --autopilot-ide vscode
 ```
 
 Avoid starting a bare `koru autonomous up` in a production project unless you
@@ -131,9 +140,9 @@ task queue:autoloop:reset-diag-markers CLOSE_TICKETS=true
 2. Run `koru autopilot doctor --fix`.
 3. Repair host tools with `koru autopilot setup-host --install --dry-run`, then
    `koru autopilot setup-host --install` if the preview is acceptable.
-4. Reassert the IDE plugin with `koru autopilot install-plugin`.
+4. Reassert the IDE plugin with `koru autopilot manage --ide vscode --fix`.
 5. Start or reassert the daemon with `koru autopilot install-unit` and
    `systemctl --user enable --now koru-autopilot.service`, or run
    `koru autopilot daemon --project "$(pwd)"` in a terminal.
-6. Smoke test `koru autopilot drive`.
+6. Smoke test `koru autopilot drive --ide vscode --require-plugin`.
 7. Use `koru autonomous up` with explicit safety flags for longer sessions.

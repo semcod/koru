@@ -35,6 +35,7 @@ def run_planfile_queue_loop(
     interactive: bool = False,
     max_iterations: int = 100,
     progress_callback: Callable[[QueueRunResult, int], None] | None = None,
+    stop_callback: Callable[[QueueRunResult, int], bool] | None = None,
     planfile_runner: Callable[[list[str], Path], CommandResult],
     shell_runner: Callable[[str, Path], CommandResult],
     api_runner: Callable[[dict[str, any], Path], CommandResult],
@@ -52,6 +53,10 @@ def run_planfile_queue_loop(
     ``progress_callback`` (when provided) is invoked after each iteration
     with ``(result, iteration_number_starting_at_1)`` for live progress
     reporting.
+
+    ``stop_callback`` (when provided) is invoked after progress reporting.
+    If it returns true, the loop stops after the current iteration; this is
+    used by the local manager to implement drain-and-exit lifecycle decisions.
     """
     if max_iterations < 1:
         raise ValueError("max_iterations must be >= 1")
@@ -91,6 +96,8 @@ def run_planfile_queue_loop(
         elif result.status == "waiting_input" and result.ticket_id:
             waiting.append(result.ticket_id)
 
+        if stop_callback is not None and stop_callback(result, iterations):
+            break
         if result.status in _LOOP_TERMINAL_STATUSES:
             break
         if result.status not in _LOOP_CONTINUE_STATUSES:

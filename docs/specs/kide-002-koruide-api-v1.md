@@ -15,6 +15,7 @@ Ten dokument formalizuje aktualny kontrakt wire protocol (`v1`) używany przez:
 - daemon ↔ plugin IDE.
 
 `API v1` jest line-based, bez jawnego pola `version`.
+Wersja pluginu jest metadaną payloadu `hello`, a nie wersją envelope.
 
 Spec jest **normatywnym kontraktem wire** (co parser i daemon akceptują/wysyłają),
 nie gwarancją, że każdy plugin IDE emituje wszystkie zdarzenia lifecycle w każdej
@@ -124,6 +125,7 @@ kanoniczne kody mapowane z treści błędów.
 | `missing_text` | `drive` handler | `missing 'text'` |
 | `missing_ide` | `hello` handler | `hello requires 'ide'` |
 | `plugin_required_unavailable` | `drive` handler | `no connected autopilot plugin for ide=...` |
+| `plugin_version_mismatch` | `drive` handler | `connected autopilot plugin version mismatch: ...` |
 | `backend_injector_error` | injection path | treść wyjątku `InjectorError` |
 
 ## 7. Przykłady request/response (per typ)
@@ -150,11 +152,15 @@ Request:
 ```
 Response (success):
 ```json
-{"type":"ack","id":"cli-drive","ok":true,"backend":"plugin","submitted":true}
+{"type":"ack","id":"cli-drive","ok":true,"backend":"plugin","submitted":true,"plugin_version":"0.1.13","expected_plugin_version":"0.1.13","plugin_version_mismatch":false,"plugin_version_policy":"warn"}
 ```
 Response (error):
 ```json
 {"type":"error","id":"cli-drive","ok":false,"message":"missing 'text'"}
+```
+Response (strict stale plugin):
+```json
+{"type":"error","id":"cli-drive","ok":false,"message":"connected autopilot plugin version mismatch: connected=0.1.11 expected=0.1.13; reload the IDE window after installing the current VSIX, then run `koru: Connect autopilot daemon`."}
 ```
 
 ### 7.3 `status`
@@ -165,7 +171,7 @@ Request:
 ```
 Response:
 ```json
-{"type":"ack","id":"cli-status","ok":true,"socket":"/run/user/1000/koru-autopilot.sock","plugins":[],"backends":[],"selected_backend":null,"ides":[]}
+{"type":"ack","id":"cli-status","ok":true,"socket":"/run/user/1000/koru-autopilot-vscode.sock","plugins":[{"ide":"vscode","fd":6,"version":"0.1.13"}],"backends":[],"selected_backend":null,"ides":[]}
 ```
 
 ### 7.4 `ping`
@@ -262,7 +268,11 @@ Plugin response to `chat.send`:
 ```json
 {"type":"ack","id":"drive-123","ok":true,"delivered":true}
 ```
-Daemon relays ack to waiting CLI with tym samym `id`.
+Daemon relays ack to waiting CLI with tym samym `id`. Przy ścieżce pluginowej
+może dodać metadane driftu: `plugin_version`, `expected_plugin_version`,
+`plugin_version_mismatch` oraz `plugin_version_policy`. Przy
+`KORU_STRICT_PLUGIN_VERSION=1` mismatch zwraca `error` przed wysłaniem
+`chat.send`.
 
 ### 7.13 `error`
 

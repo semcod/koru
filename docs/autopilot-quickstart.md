@@ -12,11 +12,14 @@
 ## 30-second start
 
 ```bash
+# 0. choose the IDE instance when several editors are open
+export KORU_AUTOPILOT_INSTANCE=vscode
+
 # 1. (one-time, in any terminal) start the daemon
 koru autopilot daemon --project "$(pwd)"
 
 # 2. (from any terminal, even another tmux pane)
-koru autopilot drive 'continue with the next ticket'
+koru autopilot drive --ide vscode 'continue with the next ticket'
 ```
 
 That's it. The text appears in your IDE's chat box and is submitted
@@ -36,6 +39,8 @@ the autopilot daemon starts. Do this in the **same IDE** shown in the log
 4. Set `koruAutopilot.socketPath` to the socket from the log (or leave empty and
    `export KORU_AUTOPILOT_INSTANCE=<ide>` in the shell).
 5. Verify: `koru autopilot status` → **`plugins` must not be `[]`**.
+   Then run `koru autopilot manage --ide <ide>` and check
+   `connected/version`, `installed`, and `expected`.
 6. Test: `koru autopilot drive --ide <ide> --require-plugin 'probe test'` →
    `ok: true` with `winning_*` fields (not `backend: ydotool`).
 
@@ -43,6 +48,13 @@ If `plugins` stays empty, the daemon is fine but the extension is not connected
 (wrong socket, wrong IDE window, or Connect not run in Cursor). Use
 `--require-plugin` on drive while debugging so you never silently fall back to
 keyboard injection.
+
+If `installed=expected` but `connected=False`, the plugin is installed correctly
+and only the runtime handshake is missing: start the daemon, reload the IDE
+window, and run **`koru: Connect autopilot daemon`**. If the live `version`
+differs from `expected`, re-run `koru autopilot manage --ide <ide> --fix` and
+reload the IDE. Set `KORU_STRICT_PLUGIN_VERSION=1` when you want `drive` to
+fail fast on stale live plugins instead of accepting a best-effort `message.sent`.
 
 Monorepo guide: `maskservice/c2004/docs/autonomy-ide-cursor.md` (section *Po starcie*).
 
@@ -132,9 +144,11 @@ koru autopilot setup-host
 koru autopilot setup-host --install --dry-run
 koru autopilot setup-host --install
 
-# auto-install plugin for the current IDE terminal/focus
-koru autopilot install-plugin
-koru autopilot install-plugin --dry-run --format json
+# inspect and repair plugin/socket/version state for the target IDE
+export KORU_AUTOPILOT_INSTANCE=vscode
+koru autopilot manage --ide vscode
+koru autopilot manage --ide vscode --fix --dry-run
+koru autopilot manage --ide vscode --fix
 ```
 
 Expected output looks like:
@@ -201,11 +215,14 @@ Re-run `koru autopilot doctor` until `ydotool` is `✓`.
 ### 2. Start the daemon
 
 ```bash
+export KORU_AUTOPILOT_INSTANCE=vscode
 koru autopilot daemon --project "$(pwd)"
 ```
 
 Leave it running. The daemon binds a unix socket at
-`$XDG_RUNTIME_DIR/koru-autopilot.sock` (mode `0600`, same-UID only).
+`$XDG_RUNTIME_DIR/koru-autopilot-<instance>.sock` when
+`KORU_AUTOPILOT_INSTANCE` is set, otherwise `$XDG_RUNTIME_DIR/koru-autopilot.sock`
+(mode `0600`, same-UID only).
 It prints one line per event so you can watch what is happening:
 
 ```
@@ -242,29 +259,45 @@ automatic handoff for a specific project, override `ExecStart` via:
 systemctl --user edit koru-autopilot.service
 ```
 
-### 3. (optional) Install the VS Code / Windsurf / Cursor plugin
+### 3. Install or reassert the VS Code / Windsurf / Cursor plugin
 
 The plugin makes injection 100 % reliable (no focus-stealing race) and
 emits `session.ended` events that drive the auto-handoff.
 
-#### Fastest path — install a pre-built `.vsix`
+#### Fastest path — use `manage`
 
 ```bash
-cd plugins/koru-autopilot-vscode
-npm install            # one-time
-npm run package        # produces koru-autopilot-0.1.0.vsix (~13 KB)
-
-# install into whichever editor you use:
-windsurf --install-extension koru-autopilot-0.1.0.vsix
-code     --install-extension koru-autopilot-0.1.0.vsix
-cursor   --install-extension koru-autopilot-0.1.0.vsix
+export KORU_AUTOPILOT_INSTANCE=vscode
+koru autopilot manage --ide vscode --fix --dry-run
+koru autopilot manage --ide vscode --fix
 ```
 
 Verify:
 
 ```bash
-windsurf --list-extensions | grep koru
-# → semcod.koru-autopilot-vscode
+code --list-extensions --show-versions | grep semcod.koru-autopilot-vscode
+koru autopilot manage --ide vscode
+```
+
+`manage` reports three version layers:
+
+- `connected` / `version` — live plugin attached to the daemon,
+- `installed` — extension version from the editor CLI,
+- `expected` — bundled VSIX/package version in the koru checkout.
+
+After `--fix`, reload the IDE window and run **`koru: Connect autopilot daemon`**
+from the Command Palette.
+
+#### Developer fallback — build a `.vsix` manually
+
+```bash
+cd plugins/koru-autopilot-vscode
+npm install
+npm run package
+
+code --install-extension koru-autopilot-*.vsix --force
+windsurf --install-extension koru-autopilot-*.vsix --force
+cursor --install-extension koru-autopilot-*.vsix --force
 ```
 
 #### Alternative — run from source (no packaging)
@@ -287,13 +320,22 @@ plugin successfully connects to the daemon.
 
 ```bash
 # from a second terminal
+export KORU_AUTOPILOT_INSTANCE=vscode
 koru autopilot status
-koru autopilot drive 'hello from koru'
+koru autopilot manage --ide vscode
+koru autopilot drive --ide vscode --require-plugin 'hello from koru'
 ```
 
 `drive` should produce JSON with `"ok": true` and one of:
 - `"backend": "stub"` / `"backend": "ydotool"` etc. → keyboard-sim path was used,
 - `"delivered": true` → the plugin injected via its own API.
+
+To force exact live plugin version matching:
+
+```bash
+KORU_STRICT_PLUGIN_VERSION=1 koru autopilot drive --ide vscode --require-plugin \
+  'strict version probe'
+```
 
 ## Common pitfalls (read these before filing a bug)
 
@@ -314,7 +356,7 @@ handoff cooldown.
 Symptoms: `cannot remove stale socket … Permission denied`.
 
 ```bash
-rm "$XDG_RUNTIME_DIR/koru-autopilot.sock"      # or wherever your socket is
+rm "$XDG_RUNTIME_DIR/koru-autopilot-vscode.sock"      # or wherever your socket is
 koru autopilot daemon
 ```
 
@@ -329,7 +371,7 @@ Two causes:
    path doesn't touch focus).
 2. **Multiple IDEs running** — pass `--ide` to disambiguate:
    ```bash
-   koru autopilot drive --ide jetbrains 'rerun failing test'
+   koru autopilot drive --ide vscode --require-plugin 'rerun failing test'
    ```
    `koru autopilot ide-list` shows everything detected.
 
@@ -390,9 +432,12 @@ koru autopilot drive 'text'          # send through daemon (preferred)
 koru autopilot drive --prompt 'TAK'  # same, explicit string (shell-friendly)
 koru autopilot drive --direct 'x'    # skip daemon, inject locally
 koru autopilot drive --dry-run 'y'   # print what would happen, no keystrokes
-koru autopilot drive --ide jetbrains 'z'   # force target IDE
+koru autopilot drive --ide vscode --require-plugin 'z'   # force target IDE/plugin
 
 koru autopilot status                # daemon health + connected plugins
+koru autopilot manage --ide vscode   # binary/socket/plugin version inventory
+koru autopilot manage --ide vscode --fix --dry-run
+koru autopilot manage --ide vscode --fix
 koru autopilot ide-list              # IDEs detected on /proc
 koru autopilot doctor                # backend availability
 koru autopilot doctor --fix          # print guided next steps
@@ -401,8 +446,7 @@ koru autopilot doctor --format json  # machine-readable
 koru autopilot setup-host            # guided host readiness report
 koru autopilot setup-host --install --dry-run
 koru autopilot setup-host --install
-koru autopilot install-plugin        # auto-detect IDE and install .vsix
-koru autopilot install-plugin --ide cursor --force
+KORU_STRICT_PLUGIN_VERSION=1 koru autopilot drive --ide vscode --require-plugin 'probe'
 
 koru autopilot shutdown              # ask the daemon to stop
 

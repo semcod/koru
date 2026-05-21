@@ -3,6 +3,7 @@
 
 import argparse
 import asyncio
+import importlib.metadata
 import json
 import os
 import shlex
@@ -14,8 +15,8 @@ from typing import Any
 from koru.agents import (
     detect_agent_options,
 )
-from koru.autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
 from koru.autoloop_cli import autoloop_main
+from koru.autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
 from koru.autopilot.cli_command import autopilot_main
 from koru.bootstrap import import_flat_pipeline
 from koru.context import build_context, render_markdown_handoff
@@ -68,10 +69,18 @@ def _command_value(value: str) -> str:
     return stripped
 
 
+def _cli_version() -> str:
+    try:
+        return importlib.metadata.version("koru")
+    except importlib.metadata.PackageNotFoundError:
+        return "unknown"
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run closed-loop automation on semcod repositories.",
     )
+    parser.add_argument("--version", action="version", version=f"koru {_cli_version()}")
     parser.add_argument("--workspace", type=Path, default=Path.cwd(), help="Workspace root.")
     parser.add_argument(
         "--include",

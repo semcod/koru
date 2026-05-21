@@ -252,6 +252,37 @@ def _extension_is_installed(command: str, runner: Runner) -> bool | None:
     return EXTENSION_ID.lower() in installed
 
 
+def _parse_extension_version(output: str) -> str | None:
+    prefix = f"{EXTENSION_ID.lower()}@"
+    for line in output.splitlines():
+        item = line.strip()
+        if item.lower().startswith(prefix):
+            version = item[len(prefix) :]
+            return version or None
+    return None
+
+
+def installed_extension_version_for_ide(
+    ide: str = "auto",
+    *,
+    runner: Runner = _run,
+) -> str | None:
+    """Return installed koru extension version for a VS Code-family IDE."""
+    target = resolve_target_ide(ide) or "auto"
+    if target not in SUPPORTED_IDES:
+        return None
+    command = _resolve_ide_command(target)
+    if command is None:
+        return None
+    try:
+        proc = runner([command, "--list-extensions", "--show-versions"])
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    return _parse_extension_version(proc.stdout)
+
+
 def _reassert_extension_extra(
     command: str,
     *,
@@ -432,6 +463,7 @@ __all__ = [
     "PluginInstallResult",
     "format_plugin_install_result",
     "install_plugin_for_ide",
+    "installed_extension_version_for_ide",
     "resolve_extension_vsix",
     "resolve_target_ide",
 ]

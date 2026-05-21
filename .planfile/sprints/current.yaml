@@ -2231,7 +2231,7 @@ sprint:
         Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
       execution:
         attempt: 0
-        finished_at: '2026-05-21T07:37:37.409579Z'
+        finished_at: '2026-05-21T09:24:22.151467Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -2264,6 +2264,11 @@ sprint:
         source: planfile.store
         status: done
         timestamp: '2026-05-21T07:37:37.528703+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-21T09:24:22.266404+00:00'
       id: STARTER-037
       inputs:
         api_headers: {}
@@ -2313,7 +2318,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-21T07:37:37.528667+00:00'
+      updated_at: '2026-05-21T09:24:22.266349+00:00'
     STARTER-038:
       blocked_by: []
       blocks: []
@@ -2331,7 +2336,7 @@ sprint:
         Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`'
       execution:
         attempt: 0
-        finished_at: '2026-05-21T07:39:25.646337Z'
+        finished_at: '2026-05-21T09:24:22.957361Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -2364,6 +2369,11 @@ sprint:
         source: planfile.store
         status: done
         timestamp: '2026-05-21T07:39:25.761572+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-21T09:24:23.090162+00:00'
       id: STARTER-038
       inputs:
         api_headers: {}
@@ -2413,4 +2423,4 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-21T07:39:25.761538+00:00'
+      updated_at: '2026-05-21T09:24:23.090081+00:00'

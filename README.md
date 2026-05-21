@@ -4,11 +4,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.167-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$12.24-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-72.7h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.168-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$12.24-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-72.8h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $12.2442 (226 commits)
-- 👤 **Human dev:** ~$7271 (72.7h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $12.2439 (227 commits)
+- 👤 **Human dev:** ~$7283 (72.8h @ $100/h, 30min dedup)
 
 Generated on 2026-05-21 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -67,6 +67,10 @@ python -m venv .venv
 . .venv/bin/activate
 python -m pip install -U pip
 python -m pip install -e ".[dev]"
+
+# verify which build this shell is using
+koru --version
+which koru
 
 # smoke-run one autonomous cycle (no IDE injection)
 koru autonomous up --project . --max-cycles 1 --sleep-seconds 0 --no-autopilot
@@ -131,7 +135,9 @@ poll — not chat readback). See [docs/post-run-verify.md](docs/post-run-verify.
 |---|---|
 | `koru autonomous: ... invalid choice: '.' (choose from 'up')` | Run `koru autonomous up --project .` |
 | `koru serve: cannot bind 127.0.0.1:8765` | Run `koru serve --auto-port` or free the port via `ss -ltnp \| rg 8765` then `kill <pid>` |
-| CLI seems to ignore freshly installed version | Verify environment alignment with `which koru` and `python -m pip show koru`; prefer `.venv/bin/koru` in project-local workflows |
+| CLI seems to ignore freshly installed version | Verify with `koru --version`, `which koru`, and `python -m pip show koru`; prefer `.venv/bin/koru` in project-local workflows |
+| VS Code/Cursor/Windsurf plugin is installed but not connected | Run `KORU_AUTOPILOT_INSTANCE=vscode koru autopilot manage --ide vscode`, then start the daemon/reload the IDE/run `koru: Connect autopilot daemon` |
+| Autopilot accepts an old live plugin version | Use `KORU_STRICT_PLUGIN_VERSION=1` to block `drive` when connected plugin version differs from the expected VSIX/package version |
 | `goal -a` takes too long to fail | Keep `strategies.python.test` fail-fast (`--maxfail=1`) for quick feedback; run full suite explicitly when needed |
 | `goal -a`: `No module named 'costs'` | Install dev extras: `pip install -e ".[dev]"`, or set `[tool.costs] badge = false` in `pyproject.toml` |
 | `goal -a` unstages `.code2llm_cache/*.pkl` | Ensure `.code2llm_cache/` is in `.gitignore` (not per-file pickle lines) |
@@ -219,19 +225,28 @@ clicks. Useful when an in-IDE session ends and you want koru to
 continue the loop from a separate terminal (or tmux pane, or SSH).
 
 ```bash
-# 1) verify backends and IDE detection
+# 0) make this shell deterministic
+koru --version
+which koru
+
+# Choose one instance when several IDEs are open.
+# Common values: vscode, cursor, windsurf, jetbrains.
+export KORU_AUTOPILOT_INSTANCE=vscode
+
+# 1) verify host backends, IDE detection and install state
 koru autopilot doctor
 koru autopilot doctor --fix
 koru autopilot ide-list
+koru autopilot manage --ide vscode
 
-# guided host setup (optional apt auto-install)
+# guided host setup (optional apt auto-install for xdotool/wtype/ydotool)
 koru autopilot setup-host
 koru autopilot setup-host --install --dry-run
 koru autopilot setup-host --install
 
-# auto-install koru plugin for current IDE (auto detect windsurf/vscode/cursor)
-koru autopilot install-plugin
-koru autopilot install-plugin --dry-run --format json
+# install/reassert the VS Code-family plugin and socket setting
+koru autopilot manage --ide vscode --fix --dry-run
+koru autopilot manage --ide vscode --fix
 
 # 2) run daemon (recommended long-running setup via systemd --user)
 koru autopilot install-unit
@@ -241,29 +256,34 @@ systemctl --user enable --now koru-autopilot.service
 # fallback: run daemon in a terminal/tmux pane
 koru autopilot daemon --project "$(pwd)"
 
-# 3) from anywhere — inject into IDE chat:
-koru autopilot handoff --project "$(pwd)" --ide windsurf
-koru autopilot drive 'continue with the next ticket'
-koru autopilot drive --ide jetbrains 'rerun the failing test'
+# 3) after IDE reload: connect plugin and verify live runtime
+# Command Palette in IDE: "koru: Connect autopilot daemon"
+koru autopilot status
+koru autopilot manage --ide vscode
+
+# 4) inject into IDE chat through the daemon/plugin path
+koru autopilot handoff --project "$(pwd)" --ide vscode --require-plugin
+koru autopilot drive --ide vscode --require-plugin 'continue with the next ticket'
 koru autopilot tail -n 50
 
-# optional: coordinate fallback (X11) for global focus+click+type
-python3 -m koru.cli autopilot calibrate --ide windsurf
-koru autopilot drive --direct --os-profile windsurf --prompt 'continue with the next ticket'
-koru autopilot drive --direct --os-profile windsurf --delay-seconds 5 --prompt 'continue with the next ticket'
+# Strict runtime gate: block drive if the connected plugin version is stale.
+KORU_STRICT_PLUGIN_VERSION=1 koru autopilot drive --ide vscode --require-plugin \
+  'probe strict plugin version'
 
-# multi-IDE session bootstrap: calibrate each IDE + immediate smoke prompt to chat LLM
-python3 -m koru.cli autopilot session-start --ides auto --delay-seconds 5
+# Optional: coordinate fallback (global focus+click+type), bypassing daemon.
+koru autopilot calibrate --ide vscode
+koru autopilot drive --direct --os-profile vscode --prompt 'continue with the next ticket'
+koru autopilot drive --direct --os-profile vscode --delay-seconds 5 \
+  --prompt 'continue with the next ticket'
 
-# if PATH points to an older installed koru, run from source checkout:
-PYTHONPATH=src python3 -m koru.cli autopilot calibrate --ide windsurf --delay-seconds 8
+# Multi-IDE session bootstrap: calibrate each IDE + immediate smoke prompt.
+koru autopilot session-start --ides auto --delay-seconds 5
 
-# optional: autonomous fallback when plugin submit fails
-export KORU_OS_INJECTOR_PROFILE=windsurf
-koru autonomous up --project .
+# If PATH points to an older installed koru, run from source checkout:
+PYTHONPATH=src python -m koru.cli autopilot calibrate --ide vscode --delay-seconds 8
 
-# diagnostics:
-koru autopilot status          # is the daemon up? plugins connected?
+# Optional: autonomous loop with strict plugin-version enforcement.
+KORU_STRICT_PLUGIN_VERSION=1 koru autonomous up --project .
 
 # phase-1 tool coverage detection (registry-backed)
 koru tools detect
@@ -289,15 +309,30 @@ scripts/autopilot-ide-autodetect-smoke.sh --check-ide jetbrains --check-ide wind
 Newer autopilot functions you can use directly from CLI:
 
 - `koru autopilot handoff` — build current koru brief and inject it in one shot.
+- `koru autopilot manage` — inventory/repair the active installation: `koru` binary,
+  daemon socket, installed plugin, connected plugin and expected VSIX version.
 - `koru autopilot install-unit` — install `systemd --user` unit for persistent daemon.
 - `koru autopilot tail` — read persistent autopilot audit log (text or JSON).
+
+`koru autopilot manage` reports the plugin state as:
+
+- `connected` / `version` — the live plugin currently attached to the daemon,
+- `installed` — the extension version reported by the editor CLI,
+- `expected` — the VSIX/package version from the koru source checkout.
+
+If `installed=expected` but `connected=False`, installation is healthy and the next
+step is runtime handshake: start the daemon, reload the IDE window and run
+`koru: Connect autopilot daemon`. If `version` differs from `expected`, reload the
+IDE after `manage --fix`; set `KORU_STRICT_PLUGIN_VERSION=1` to fail fast instead
+of sending prompts through a stale live plugin.
 
 Two injection paths, picked automatically:
 
 1. **IDE plugin** — if `plugins/koru-autopilot-vscode/` is loaded in
    the editor, the daemon forwards `chat.send` to it and the
    extension pastes + submits via the editor's own API. Most reliable;
-   works on Wayland.
+   works on Wayland. Runtime version drift is reported in drive ACKs;
+   `KORU_STRICT_PLUGIN_VERSION=1` turns that warning into a fail-fast block.
 2. **Keyboard simulation** — fallback for editors without the plugin.
    Uses `xdotool` on X11, `wtype`/`ydotool` on Wayland.
 
@@ -318,16 +353,19 @@ use the built-in autoloop wrapper.
 ```bash
 # verify keyboard/plugin path
 koru autopilot doctor
+koru autopilot manage --ide windsurf
 
 # recommended persistent daemon setup
+export KORU_AUTOPILOT_INSTANCE=windsurf
 koru autopilot install-unit
 systemctl --user daemon-reload
 systemctl --user enable --now koru-autopilot.service
 ```
 
-Install and enable the VS Code/Windsurf plugin from
+Install and enable the VS Code/Windsurf/Cursor plugin from
 [`plugins/koru-autopilot-vscode/`](plugins/koru-autopilot-vscode/) for the most
-reliable injection path on Wayland.
+reliable injection path on Wayland. Use `koru autopilot manage --ide windsurf --fix`
+to install or reassert the bundled VSIX and write the socket setting.
 
 ### 2) Start autonomous loop in project root
 
@@ -341,7 +379,7 @@ After `pip install koru`, you can bootstrap + run autonomy in one command
 
 ```bash
 cd /path/to/project
-koru autonomous up
+KORU_AUTOPILOT_INSTANCE=windsurf koru autonomous up
 ```
 
 Useful variants:
@@ -351,10 +389,11 @@ Useful variants:
 koru autonomous safe-up --project .
 
 # smoke run (single cycle)
-koru autonomous up --max-cycles 1 --sleep-seconds 0
+KORU_AUTOPILOT_INSTANCE=windsurf koru autonomous up --max-cycles 1 --sleep-seconds 0
 
 # long-running 24/7 mode with explicit actor + queue
-koru autonomous up --actor koru-bot --queue-name default --sleep-seconds 30
+KORU_AUTOPILOT_INSTANCE=windsurf koru autonomous up \
+  --actor koru-bot --queue-name default --sleep-seconds 30
 
 # queue-only mode (no autopilot injection)
 koru autonomous up --no-autopilot
@@ -389,7 +428,8 @@ task queue:autoloop ENABLE_AUTOPILOT_DRIVE=false
 ### 4) Monitor while it runs
 
 ```bash
-koru autopilot status
+KORU_AUTOPILOT_INSTANCE=windsurf koru autopilot status
+KORU_AUTOPILOT_INSTANCE=windsurf koru autopilot manage --ide windsurf
 koru autopilot tail -n 200
 journalctl --user -u koru-autopilot -f
 ```
@@ -772,7 +812,7 @@ Koru ensures bugs are always fixed before features when priorities are equal:
 #### **Automatic bug promotion**
 - Bugs get **priority boost** within their category:
   - `low` → `normal`
-  - `normal` → `high` 
+  - `normal` → `high`
   - `high` → `critical`
   - `critical` stays `critical`
 - Promotion happens automatically on every `koru --context` call

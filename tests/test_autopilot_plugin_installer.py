@@ -232,3 +232,24 @@ def test_install_plugin_skips_when_extension_already_installed(monkeypatch) -> N
     )
 
     assert result.status == "already_installed"
+
+
+def test_installed_extension_version_for_ide_reads_editor_cli(monkeypatch) -> None:
+    monkeypatch.setattr(plugin_installer, "_vscode_flavor", lambda: None)
+    monkeypatch.setattr(plugin_installer.shutil, "which", lambda name: f"/usr/bin/{name}")
+
+    def fake_runner(cmd, **_kwargs):
+        assert cmd == ["/usr/bin/code", "--list-extensions", "--show-versions"]
+        return subprocess.CompletedProcess(
+            cmd,
+            0,
+            stdout="other.extension@1.2.3\nsemcod.koru-autopilot-vscode@0.1.13\n",
+            stderr="",
+        )
+
+    version = plugin_installer.installed_extension_version_for_ide(
+        ide="vscode",
+        runner=fake_runner,
+    )
+
+    assert version == "0.1.13"

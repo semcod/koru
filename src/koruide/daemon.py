@@ -370,6 +370,36 @@ class AutopilotDaemon:
     ) -> None:
         """Forward a drive request to a connected plugin for that IDE."""
         corr = msg.id or f"drive-{time.monotonic_ns():x}"
+        version_info = DriveOrchestrator.plugin_version_info(
+            plugin_ide=plugin.ide,
+            connected_version=plugin.version,
+        )
+        if version_info.get("plugin_version_mismatch"):
+            summary = DriveOrchestrator.plugin_ack_summary(version_info)
+            self.log(f"drive plugin version drift: {summary}")
+            self.audit.record(
+                "plugin_version_mismatch",
+                ide=plugin.ide,
+                plugin_version=version_info.get("plugin_version"),
+                expected_plugin_version=version_info.get("expected_plugin_version"),
+                policy=version_info.get("plugin_version_policy"),
+            )
+        if DriveOrchestrator.should_block_plugin_version(version_info):
+            message = DriveOrchestrator.plugin_version_block_message(version_info)
+            self._send(client, error(msg.id, message).encode())
+            self.log(f"drive blocked: {message}")
+            self.audit.record(
+                "drive",
+                ide=plugin.ide,
+                backend="plugin",
+                chars=len(text),
+                submit=submit,
+                ok=False,
+                error=message,
+                plugin_version=version_info.get("plugin_version"),
+                expected_plugin_version=version_info.get("expected_plugin_version"),
+            )
+            return
         plugin.awaiting_plugin = (client, corr, submit, plugin.ide, text, require_plugin)
         self._send(plugin, chat_send(text, submit=submit, id=corr).encode())
         self._last_chat_send_at = time.monotonic()
@@ -590,6 +620,12 @@ class AutopilotDaemon:
             plugin_ide=plugin_ide,
             event_data=msg.data,
         )
+        info.update(
+            DriveOrchestrator.plugin_version_info(
+                plugin_ide=plugin_ide,
+                connected_version=client.version,
+            ),
+        )
         self.log(
             "drive → plugin event completion: "
             + DriveOrchestrator.plugin_ack_summary(info)
@@ -613,6 +649,12 @@ class AutopilotDaemon:
             info=info,
             plugin_ok=plugin_ok,
             submit_requested=submit_requested,
+        )
+        info.update(
+            DriveOrchestrator.plugin_version_info(
+                plugin_ide=plugin_ide,
+                connected_version=client.version,
+            ),
         )
         if DriveOrchestrator.should_fail_strict_plugin_ack(
             info=info,

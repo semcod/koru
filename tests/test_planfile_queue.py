@@ -969,6 +969,52 @@ class TestPlanfileQueueLoop(unittest.TestCase):
             self.assertEqual(result.last_ticket_id, "L-2")
             self.assertEqual(result.ticket_id, "L-2")
 
+    def test_loop_stop_callback_drains_after_current_iteration(self) -> None:
+        from koru.queue import run_planfile_queue_loop
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            tickets = [
+                {
+                    "id": "L-40",
+                    "name": "first",
+                    "executor": {"kind": "shell", "handler": "echo first"},
+                },
+                {
+                    "id": "L-41",
+                    "name": "second",
+                    "executor": {"kind": "shell", "handler": "echo second"},
+                },
+            ]
+            planfile_runner, _ = self._make_runner(tickets)
+
+            def shell_runner(_cmd, _proj) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            def api_runner(_req, _proj) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            def llm_runner(_req, _proj) -> SimpleNamespace:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+            def prompt_runner(_p, _tid) -> str | None:
+                return None
+
+            result = run_planfile_queue_loop(
+                project=project,
+                planfile_runner=planfile_runner,
+                shell_runner=shell_runner,
+                api_runner=api_runner,
+                llm_runner=llm_runner,
+                prompt_runner=prompt_runner,
+                stop_callback=lambda _result, iteration: iteration == 1,
+            )
+
+            self.assertEqual(result.iterations, 1)
+            self.assertEqual(result.completed, ["L-40"])
+            self.assertEqual(result.last_status, "completed")
+            self.assertEqual(result.last_ticket_id, "L-40")
+
     def test_loop_with_interactive_drains_human_tickets(self) -> None:
         from koru.queue import run_planfile_queue_loop
 

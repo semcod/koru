@@ -1252,3 +1252,55 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
+  - id: ticket-550c3386
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/autopilot/install_manager.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/install_manager.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-e09efa67
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in src/koru/ide_client.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/ide_client.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-85954cf4
+    name: Fix duplicate-imports issues
+    description: Resolve 2 duplicate-imports issues in src/koru/local_manager_client.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/local_manager_client.py
+    rule_id: duplicate-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-02034a47
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in src/koru/local_manager_client.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/local_manager_client.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced

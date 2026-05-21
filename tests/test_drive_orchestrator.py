@@ -65,3 +65,24 @@ def test_annotate_plugin_ack_marks_plugin_ack_without_winning_commands() -> None
         submit_requested=True,
     )
     assert info["verification"] == "plugin_ack"
+
+
+def test_plugin_version_info_marks_mismatch(monkeypatch) -> None:
+    monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda: "0.1.13")
+
+    info = DriveOrchestrator.plugin_version_info(
+        plugin_ide="vscode",
+        connected_version="0.1.11",
+    )
+
+    assert info["plugin_version"] == "0.1.11"
+    assert info["expected_plugin_version"] == "0.1.13"
+    assert info["plugin_version_mismatch"] is True
+    assert info["plugin_version_policy"] == "warn"
+
+
+def test_plugin_version_policy_can_block(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
+    info = {"plugin_version_mismatch": True}
+
+    assert DriveOrchestrator.should_block_plugin_version(info)

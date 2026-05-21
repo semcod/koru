@@ -12,6 +12,7 @@ import os
 import shutil
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,11 @@ from koru.autopilot.ide import (
 )
 from koru.autopilot.injector import Injector, InjectorError
 from koru.autopilot.utils.client_helpers import call_daemon_method, resolve_xdg_path
+from koru.local_manager_client import (
+    LocalManagerClient,
+    LocalManagerSession,
+    lifecycle_decision_action,
+)
 from koruide.audit import AuditLog, default_log_path
 
 
@@ -639,6 +645,54 @@ def _client(args: argparse.Namespace) -> AutopilotClient:
     return AutopilotClient(socket_path=args.socket)
 
 
+def _autopilot_local_manager_session(
+    args: argparse.Namespace,
+    *,
+    socket_path: Path,
+    project: Path | None,
+) -> LocalManagerSession | None:
+    client = LocalManagerClient.from_env()
+    if not client.enabled:
+        return None
+    return LocalManagerSession(
+        client=client,
+        worker_id=f"koru.autopilot:{os.getpid()}:{socket_path}",
+        worker_kind="koru.autopilot.daemon",
+        capabilities=["koru.autopilot", "autopilot.daemon", "ide.rpc"],
+        action_types=["koru.autopilot", "koru.autopilot.daemon"],
+    )
+
+
+def _start_autopilot_manager_heartbeat(
+    manager: LocalManagerSession | None,
+    daemon: AutopilotDaemon,
+    *,
+    socket_path: Path,
+    project: Path | None,
+) -> tuple[threading.Event, threading.Thread] | None:
+    if manager is None:
+        return None
+    stop = threading.Event()
+
+    def _run() -> None:
+        while not stop.wait(10.0):
+            manager.heartbeat(
+                metadata={
+                    "socket": str(socket_path),
+                    "project": str(project) if project is not None else None,
+                },
+            )
+            if manager.should_stop():
+                action = lifecycle_decision_action(manager.last_reply)
+                print(f"koru autopilot daemon: local manager decision={action}; stopping")
+                daemon.stop()
+                return
+
+    thread = threading.Thread(target=_run, name="koru-autopilot-local-manager", daemon=True)
+    thread.start()
+    return stop, thread
+
+
 # ----- action handlers ------------------------------------------------------
 
 
@@ -650,6 +704,16 @@ def _action_daemon(args: argparse.Namespace) -> int:
             print(f"koru autopilot: daemon already running on {socket_path}")
             return 0
     project = args.project.resolve() if args.handoff else None
+    manager = _autopilot_local_manager_session(args, socket_path=socket_path, project=project)
+    if manager is not None:
+        manager.start(
+            project=project,
+            metadata={"socket": str(socket_path), "handoff": args.handoff},
+        )
+        if manager.should_stop():
+            action = lifecycle_decision_action(manager.last_reply)
+            print(f"koru autopilot daemon: local manager decision={action}; not starting")
+            return 1 if action == "quarantine" else 0
     audit = AuditLog(enabled=True)
     daemon = AutopilotDaemon(
         socket_path=socket_path,
@@ -663,8 +727,19 @@ def _action_daemon(args: argparse.Namespace) -> int:
     try:
         daemon.start()
     except (OSError, RuntimeError) as exc:
+        if manager is not None:
+            manager.heartbeat(
+                health="bad",
+                metadata={"socket": str(socket_path), "error": str(exc)},
+            )
         print(f"koru autopilot daemon: {exc}", file=sys.stderr)
         return 1
+    heartbeat = _start_autopilot_manager_heartbeat(
+        manager,
+        daemon,
+        socket_path=socket_path,
+        project=project,
+    )
     if args.handoff:
         print(f"koru autopilot daemon: handoff enabled for project={project}")
     else:
@@ -674,6 +749,13 @@ def _action_daemon(args: argparse.Namespace) -> int:
     except KeyboardInterrupt:
         print()
         print("koru autopilot daemon: interrupted")
+    finally:
+        if heartbeat is not None:
+            stop, thread = heartbeat
+            stop.set()
+            thread.join(timeout=2.0)
+        if manager is not None:
+            manager.complete(status="completed", result={"socket": str(socket_path)})
     return 0
 
 

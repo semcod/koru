@@ -35,6 +35,7 @@ from koru.autopilot.injector import InjectionResult, InjectorError
 from koru.autopilot.os_injector import OsInjectorProfile
 from koru.autopilot.protocol import Message, decode, hello
 from koruide import daemon as koruide_daemon_mod
+from koruide.drive_orchestrator import DriveOrchestrator
 
 # ---------------------------------------------------------------------------
 # Shared test plumbing
@@ -495,6 +496,47 @@ def test_plugin_hello_then_drive_forwards(tmp_path: Path, monkeypatch: pytest.Mo
         assert cli_reply.data.get("backend") == "plugin"
 
         # Injector must NOT have been invoked — plugin path took over.
+        assert h.injector.calls == []
+        plugin.close()
+        cli.close()
+
+
+def test_drive_strict_plugin_version_blocks_stale_plugin(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
+    monkeypatch.setattr(
+        DriveOrchestrator,
+        "expected_plugin_version",
+        lambda: "0.1.13",
+    )
+
+    with _daemon(tmp_path, monkeypatch) as h:
+        plugin, plugin_reader = _connect_plugin(
+            h.sock_path,
+            ide="vscode",
+            version="0.1.11",
+            pid=42,
+        )
+
+        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli.settimeout(2.0)
+        cli.connect(str(h.sock_path))
+        cli_reader = _LineReader(cli)
+        cli.sendall(
+            Message(
+                type="drive",
+                id="d-stale-plugin",
+                data={"text": "hi", "ide": "vscode", "submit": True},
+            ).encode(),
+        )
+
+        cli_reply = cli_reader.read_message()
+        assert cli_reply.type == "error"
+        assert "plugin version mismatch" in cli_reply.data.get("message", "")
+        _assert_no_more_data(plugin)
+
         assert h.injector.calls == []
         plugin.close()
         cli.close()

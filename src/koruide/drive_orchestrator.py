@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import functools
+import json
 import os
+from pathlib import Path
 from typing import Any
 
 
@@ -88,6 +91,67 @@ class DriveOrchestrator:
         return raw in {"1", "true", "yes", "on"}
 
     @staticmethod
+    @functools.lru_cache(maxsize=1)
+    def expected_plugin_version() -> str | None:
+        here = Path(__file__).resolve()
+        for parent in here.parents:
+            package_json = parent / "plugins" / "koru-autopilot-vscode" / "package.json"
+            if not package_json.is_file():
+                continue
+            try:
+                data = json.loads(package_json.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                return None
+            version = data.get("version")
+            return str(version) if version else None
+        return None
+
+    @staticmethod
+    def strict_plugin_version_required() -> bool:
+        raw = os.environ.get("KORU_STRICT_PLUGIN_VERSION", "").strip().lower()
+        if raw in {"1", "true", "yes", "on"}:
+            return True
+        policy = os.environ.get("KORU_PLUGIN_VERSION_POLICY", "").strip().lower()
+        return policy in {"strict", "fail", "fail-fast", "block"}
+
+    @staticmethod
+    def plugin_version_info(
+        *,
+        plugin_ide: str | None,
+        connected_version: str | None,
+        expected_version: str | None = None,
+    ) -> dict[str, Any]:
+        expected = expected_version or DriveOrchestrator.expected_plugin_version()
+        mismatch = bool(connected_version and expected and connected_version != expected)
+        info: dict[str, Any] = {
+            "plugin_version": connected_version,
+            "expected_plugin_version": expected,
+            "plugin_version_mismatch": mismatch,
+            "plugin_version_policy": (
+                "strict" if DriveOrchestrator.strict_plugin_version_required() else "warn"
+            ),
+        }
+        if plugin_ide:
+            info["ide"] = plugin_ide
+        return info
+
+    @staticmethod
+    def should_block_plugin_version(info: dict[str, Any]) -> bool:
+        return bool(
+            info.get("plugin_version_mismatch"),
+        ) and DriveOrchestrator.strict_plugin_version_required()
+
+    @staticmethod
+    def plugin_version_block_message(info: dict[str, Any]) -> str:
+        return (
+            "connected autopilot plugin version mismatch: "
+            f"connected={info.get('plugin_version') or '-'} "
+            f"expected={info.get('expected_plugin_version') or '-'}; "
+            "reload the IDE window after installing the current VSIX, then run "
+            "`koru: Connect autopilot daemon`."
+        )
+
+    @staticmethod
     def should_fail_strict_plugin_ack(
         *,
         info: dict[str, Any],
@@ -113,6 +177,12 @@ class DriveOrchestrator:
             value = info.get(key)
             if value:
                 parts.append(f"{key}={value}")
+        if info.get("plugin_version_mismatch"):
+            parts.append(
+                "plugin_version="
+                f"{info.get('plugin_version') or '-'}"
+                f"/expected={info.get('expected_plugin_version') or '-'}"
+            )
         if info.get("event"):
             parts.append(f"event={info['event']}")
         return " ".join(parts)

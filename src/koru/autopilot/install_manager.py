@@ -14,7 +14,10 @@ from typing import Any
 
 from koru.autopilot.client import AutopilotClient
 from koru.autopilot.ide import detect_running_ides, detect_terminal_host_ide_id
-from koru.autopilot.plugin_installer import install_plugin_for_ide
+from koru.autopilot.plugin_installer import (
+    install_plugin_for_ide,
+    installed_extension_version_for_ide,
+)
 from koruide.socket import default_socket_path
 
 
@@ -103,6 +106,10 @@ def _path_koru_bin() -> Path | None:
     return Path(resolved).resolve() if resolved else None
 
 
+def _is_pyenv_shim(path: Path | None) -> bool:
+    return bool(path and ".pyenv" in path.parts and "shims" in path.parts)
+
+
 def _expected_plugin_version(root: Path) -> str | None:
     package_json = root / "plugins" / "koru-autopilot-vscode" / "package.json"
     try:
@@ -151,15 +158,8 @@ def _plugin_for_ide(status: dict[str, Any], ide: str) -> dict[str, Any] | None:
     return None
 
 
-def _issue_list(
-    *,
-    source_version: str | None,
-    package_version: str | None,
-    path_koru: Path | None,
-    repo_koru: Path | None,
-    daemon: dict[str, Any],
-    plugin: dict[str, Any],
-    ide: str,
+def _check_koru_path_issues(
+    path_koru: Path | None, repo_koru: Path | None
 ) -> list[ManagerIssue]:
     issues: list[ManagerIssue] = []
     if path_koru is None:
@@ -183,8 +183,30 @@ def _issue_list(
                 ),
             ),
         )
+    return issues
+
+
+def _check_pyenv_shim_issue(path_koru: Path | None) -> list[ManagerIssue]:
+    if _is_pyenv_shim(path_koru):
+        return [
+            ManagerIssue(
+                "koru_pyenv_shim",
+                "warning",
+                f"PATH resolves koru through a pyenv shim ({path_koru}).",
+                (
+                    "Run `pyenv which koru` and `pyenv rehash`, or call the intended "
+                    "virtualenv binary explicitly while debugging autopilot installs."
+                ),
+            ),
+        ]
+    return []
+
+
+def _check_version_mismatch_issue(
+    source_version: str | None, package_version: str | None
+) -> list[ManagerIssue]:
     if source_version and package_version and source_version != package_version:
-        issues.append(
+        return [
             ManagerIssue(
                 "koru_version_mismatch",
                 "warning",
@@ -194,18 +216,28 @@ def _issue_list(
                 ),
                 "Reinstall editable from the source checkout or use the matching virtualenv.",
             ),
-        )
+        ]
+    return []
+
+
+def _check_daemon_issues(daemon: dict[str, Any]) -> list[ManagerIssue]:
     if not daemon.get("running"):
-        issues.append(
+        return [
             ManagerIssue(
                 "daemon_not_running",
                 "warning",
                 "Autopilot daemon is not running for this socket.",
                 "Start it with `koru autopilot daemon` or let `koru autonomous up` start it.",
             ),
-        )
-    if daemon.get("running") and plugin.get("connected") and not plugin.get("version"):
-        issues.append(
+        ]
+    return []
+
+
+def _check_plugin_version_missing_issue(
+    daemon: dict[str, Any], plugin: dict[str, Any], ide: str
+) -> list[ManagerIssue]:
+    if daemon.get("running") and plugin.get("connected") and not plugin.get("connected_version"):
+        return [
             ManagerIssue(
                 "plugin_version_missing",
                 "warning",
@@ -215,16 +247,129 @@ def _issue_list(
                     "then reconnect autopilot."
                 ),
             ),
+        ]
+    return []
+
+
+def _check_plugin_installed_version_mismatch_issue(
+    plugin: dict[str, Any], ide: str
+) -> list[ManagerIssue]:
+    installed_version = plugin.get("installed_version")
+    expected_version = plugin.get("expected_version")
+    if installed_version and expected_version and installed_version != expected_version:
+        return [
+            ManagerIssue(
+                "plugin_installed_version_mismatch",
+                "error",
+                (
+                    f"Installed {ide} extension is {installed_version}, "
+                    f"but the source VSIX/package is {expected_version}."
+                ),
+                f"Run `koru autopilot manage --ide {ide} --fix`.",
+            ),
+        ]
+    return []
+
+
+def _check_plugin_installed_ok_but_not_connected_issue(
+    daemon: dict[str, Any], plugin: dict[str, Any], ide: str
+) -> list[ManagerIssue]:
+    if plugin.get("connected"):
+        return []
+    installed_version = plugin.get("installed_version")
+    expected_version = plugin.get("expected_version")
+    installed_matches_expected = (
+        bool(installed_version) and bool(expected_version) and installed_version == expected_version
+    )
+    if not installed_matches_expected:
+        return []
+    fix = (
+        f"Start the daemon with `KORU_AUTOPILOT_INSTANCE={ide} koru autopilot daemon`, "
+        "reload the IDE window, then run `koru: Connect autopilot daemon`."
+    )
+    if not daemon.get("running"):
+        fix = (
+            "Let `koru autonomous up` start the daemon, or start it manually with "
+            f"`KORU_AUTOPILOT_INSTANCE={ide} koru autopilot daemon`; then reload the IDE "
+            "window and run `koru: Connect autopilot daemon`."
         )
+    return [
+        ManagerIssue(
+            "plugin_installed_ok_but_not_connected",
+            "info",
+            (
+                f"{ide} extension is installed at the expected version "
+                f"({installed_version}), but no live plugin is connected to this daemon."
+            ),
+            fix,
+        ),
+    ]
+
+
+def _check_plugin_version_mismatch_issue(
+    daemon: dict[str, Any], plugin: dict[str, Any], ide: str
+) -> list[ManagerIssue]:
+    connected_version = plugin.get("connected_version")
+    expected_version = plugin.get("expected_version")
+    if (
+        daemon.get("running")
+        and plugin.get("connected")
+        and connected_version
+        and expected_version
+        and connected_version != expected_version
+    ):
+        return [
+            ManagerIssue(
+                "plugin_version_mismatch",
+                "error",
+                (
+                    f"Connected {ide} plugin is {connected_version}, "
+                    f"but the source VSIX/package is {expected_version}."
+                ),
+                (
+                    f"Run `koru autopilot manage --ide {ide} --fix`, fully reload the IDE "
+                    "window, then run `koru: Connect autopilot daemon`."
+                ),
+            ),
+        ]
+    return []
+
+
+def _check_plugin_not_connected_issue(
+    daemon: dict[str, Any], plugin: dict[str, Any], ide: str
+) -> list[ManagerIssue]:
     if daemon.get("running") and not plugin.get("connected"):
-        issues.append(
+        return [
             ManagerIssue(
                 "plugin_not_connected",
                 "error",
                 f"Autopilot daemon is running, but no plugin is connected for ide={ide}.",
                 "Run the IDE command `koru: Connect autopilot daemon`.",
             ),
-        )
+        ]
+    return []
+
+
+def _issue_list(
+    *,
+    source_version: str | None,
+    package_version: str | None,
+    path_koru: Path | None,
+    repo_koru: Path | None,
+    daemon: dict[str, Any],
+    plugin: dict[str, Any],
+    ide: str,
+) -> list[ManagerIssue]:
+    issues: list[ManagerIssue] = []
+    issues.extend(_check_koru_path_issues(path_koru, repo_koru))
+    issues.extend(_check_pyenv_shim_issue(path_koru))
+    issues.extend(_check_version_mismatch_issue(source_version, package_version))
+    issues.extend(_check_daemon_issues(daemon))
+    issues.extend(_check_plugin_version_missing_issue(daemon, plugin, ide))
+    issues.extend(_check_plugin_installed_version_mismatch_issue(plugin, ide))
+    issues.extend(_check_plugin_installed_ok_but_not_connected_issue(daemon, plugin, ide))
+    issues.extend(_check_plugin_version_mismatch_issue(daemon, plugin, ide))
+    issues.extend(_check_plugin_not_connected_issue(daemon, plugin, ide))
     return issues
 
 
@@ -239,10 +384,12 @@ def collect_install_manager_report(
     daemon = _daemon_status(sock)
     connected_plugin = _plugin_for_ide(daemon, resolved_ide) if daemon.get("running") else None
     expected_plugin = _expected_plugin_version(root)
+    installed_plugin = installed_extension_version_for_ide(resolved_ide)
     plugin = {
         "ide": resolved_ide,
         "connected": connected_plugin is not None,
         "connected_version": connected_plugin.get("version") if connected_plugin else None,
+        "installed_version": installed_plugin,
         "expected_version": expected_plugin,
     }
     if connected_plugin:
@@ -298,6 +445,18 @@ def repair_installation(
         except (OSError, RuntimeError) as exc:
             shutdown = {"ok": False, "message": str(exc)}
         actions.append({"action": "shutdown_daemon_for_reload", "result": shutdown})
+    actions.append(
+        {
+            "action": "reload_ide_and_reconnect",
+            "result": {
+                "status": "manual",
+                "message": (
+                    "Reload the IDE window, then run `koru: Connect autopilot daemon` "
+                    "so the live extension matches the installed VSIX."
+                ),
+            },
+        },
+    )
     report.actions = actions
     return report
 
@@ -317,6 +476,7 @@ def format_install_manager_report(report: InstallManagerReport) -> str:
             "  plugin: "
             f"ide={data['plugin'].get('ide')} connected={data['plugin'].get('connected')} "
             f"version={data['plugin'].get('connected_version') or '-'} "
+            f"installed={data['plugin'].get('installed_version') or '-'} "
             f"expected={data['plugin'].get('expected_version') or '-'}"
         ),
     ]

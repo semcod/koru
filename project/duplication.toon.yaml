@@ -1,39 +1,39 @@
-# redup/duplication | 33 groups | 128f 30421L | 2026-05-21
+# redup/duplication | 36 groups | 134f 32147L | 2026-05-21
 
 SUMMARY:
-  files_scanned: 128
-  total_lines:   30421
-  dup_groups:    33
-  dup_fragments: 77
-  saved_lines:   358
-  scan_ms:       4776
+  files_scanned: 134
+  total_lines:   32147
+  dup_groups:    36
+  dup_fragments: 83
+  saved_lines:   371
+  scan_ms:       3966
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/autonomous.py  dup=119L  groups=12  frags=12  (0.4%)
-  src/koru/cli.py  dup=101L  groups=3  frags=8  (0.3%)
+  src/koru/cli.py  dup=106L  groups=4  frags=9  (0.3%)
   src/koru/autonomous_cycle.py  dup=97L  groups=9  frags=9  (0.3%)
   src/koruapi/dashboard.py  dup=45L  groups=1  frags=1  (0.1%)
   src/koru/mcp_provision.py  dup=39L  groups=2  frags=5  (0.1%)
   src/koruide/protocol.py  dup=24L  groups=1  frags=2  (0.1%)
   src/korudsl/library.py  dup=22L  groups=2  frags=6  (0.1%)
 
-DUPLICATES[33] (ranked by impact):
+DUPLICATES[36] (ranked by impact):
   [b79fb4d314048ea0] ! STRU  _build_serve_parser  L=48 N=2 saved=48 sim=1.00
-      src/koru/cli.py:388-435  (_build_serve_parser)
+      src/koru/cli.py:397-444  (_build_serve_parser)
       src/koruapi/dashboard.py:17-61  (build_serve_parser)
   [2ae726bfafded9cc] ! EXAC  _run_idle_diagnostics  L=36 N=2 saved=36 sim=1.00
       src/koru/autonomous.py:1092-1127  (_run_idle_diagnostics)
       src/koru/autonomous_cycle.py:200-235  (_run_idle_diagnostics)
   [cfa0e91c669b55c5]   STRU  _build_local_serve_parser  L=29 N=2 saved=29 sim=1.00
-      src/koru/cli.py:438-466  (_build_local_serve_parser)
+      src/koru/cli.py:447-475  (_build_local_serve_parser)
       src/koruapi/local.py:11-19  (build_local_parser)
   [077cfa61a2943c36]   STRU  _serve_main  L=4 N=6 saved=20 sim=1.00
-      src/koru/cli.py:1046-1049  (_serve_main)
-      src/koru/cli.py:1052-1055  (_local_serve_main)
-      src/koru/cli.py:1291-1294  (_mcp_serve_main)
-      src/koru/cli.py:1356-1359  (_init_ide_main)
-      src/koru/cli.py:1418-1421  (_dsl_main)
-      src/koru/cli.py:1424-1427  (_api_main)
+      src/koru/cli.py:1055-1058  (_serve_main)
+      src/koru/cli.py:1061-1064  (_local_serve_main)
+      src/koru/cli.py:1300-1303  (_mcp_serve_main)
+      src/koru/cli.py:1365-1368  (_init_ide_main)
+      src/koru/cli.py:1427-1430  (_dsl_main)
+      src/koru/cli.py:1433-1436  (_api_main)
   [13996a2247a97ed8]   EXAC  _read_wup_health  L=16 N=2 saved=16 sim=1.00
       src/koru/autonomous.py:1074-1089  (_read_wup_health)
       src/koru/autonomous_cycle.py:182-197  (_read_wup_health)
@@ -58,7 +58,7 @@ DUPLICATES[33] (ranked by impact):
       src/koruide/protocol.py:198-209  (status_error)
   [db3e3e3ad621b70e]   STRU  load_koru_project_pipeline  L=10 N=2 saved=10 sim=1.00
       src/koru/project_pipeline.py:111-120  (load_koru_project_pipeline)
-      src/koruapi/dashboard_serve.py:296-305  (read_serve_endpoint)
+      src/koruapi/dashboard_serve.py:240-249  (read_serve_endpoint)
   [c66988d54f59cb9c]   STRU  _ydotool_enter_keycode  L=10 N=2 saved=10 sim=1.00
       src/koruide/injector.py:59-68  (_ydotool_enter_keycode)
       src/koruide/injector.py:81-86  (_ydotool_ctrl_keycode)
@@ -86,7 +86,7 @@ DUPLICATES[33] (ranked by impact):
   [2d7b9210c1b65241]   STRU  activity_enabled  L=3 N=3 saved=6 sim=1.00
       src/koru/activity_log.py:11-13  (activity_enabled)
       src/koru/autonomy/operator_pipeline.py:171-173  (_operator_autostart_server_enabled)
-      src/koruide/plugin_installer.py:213-215  (_env_reassert_extension_install)
+      src/koruide/plugin_installer.py:239-241  (_env_reassert_extension_install)
   [9b7967c4c573e5f1]   STRU  _process_cwd  L=6 N=2 saved=6 sim=1.00
       src/koru/autonomous.py:185-190  (_process_cwd)
       src/koru/autonomous_process_guard.py:38-43  (process_cwd)
@@ -104,6 +104,12 @@ DUPLICATES[33] (ranked by impact):
   [d8b6166dd12467a7]   EXAC  _stdio_info  L=5 N=2 saved=5 sim=1.00
       src/koru/autonomous.py:119-123  (_stdio_info)
       src/koru/autonomous_cycle.py:40-43  (_stdio_info)
+  [c1924f9f20af4f46]   EXAC  _koru_version  L=5 N=2 saved=5 sim=1.00
+      src/koru/local_manager_client.py:23-27  (_koru_version)
+      src/koru/local_service.py:35-39  (_koru_version)
+  [1d7c20b439cfc40f]   STRU  koru_distribution_version  L=5 N=2 saved=5 sim=1.00
+      src/koru/autonomous_startup.py:28-32  (koru_distribution_version)
+      src/koru/cli.py:72-76  (_cli_version)
   [c4200e7110d9ebe1]   STRU  _handle_error  L=5 N=2 saved=5 sim=1.00
       src/korudsl/library.py:58-62  (_handle_error)
       src/korudsl/library.py:65-69  (_handle_correct)
@@ -116,20 +122,23 @@ DUPLICATES[33] (ranked by impact):
   [fdccb72b1fbbe81c]   EXAC  _allow_keyboard_autopilot_fallback  L=3 N=2 saved=3 sim=1.00
       src/koru/autonomous.py:135-137  (_allow_keyboard_autopilot_fallback)
       src/koru/autonomous_cycle.py:102-104  (_allow_keyboard_autopilot_fallback)
+  [93c2d285f0f82504]   EXAC  __init__  L=3 N=2 saved=3 sim=1.00
+      src/koru/local_service.py:64-66  (__init__)
+      src/koru/local_service.py:107-109  (__init__)
   [0f8d5f341099fa34]   EXAC  _open_later  L=3 N=2 saved=3 sim=1.00
-      src/koruapi/dashboard_serve.py:1365-1367  (_open_later)
-      src/koruapi/dashboard_serve.py:1414-1416  (_open_later)
+      src/koruapi/dashboard_serve.py:1338-1340  (_open_later)
+      src/koruapi/dashboard_serve.py:1387-1389  (_open_later)
   [be027ff698a2786c]   STRU  _action_status  L=3 N=2 saved=3 sim=1.00
-      src/koru/autopilot/cli_command.py:831-833  (_action_status)
-      src/koru/autopilot/cli_command.py:836-843  (_action_shutdown)
+      src/koru/autopilot/cli_command.py:865-867  (_action_status)
+      src/koru/autopilot/cli_command.py:870-877  (_action_shutdown)
   [781cd2265323c713]   STRU  _systemd_user_dir  L=3 N=2 saved=3 sim=1.00
-      src/koru/autopilot/cli_command.py:1424-1426  (_systemd_user_dir)
+      src/koru/autopilot/cli_command.py:1477-1479  (_systemd_user_dir)
       src/koruide/config.py:62-64  (default_config_path)
   [60d745664334ec54]   STRU  redup_scan_command  L=3 N=2 saved=3 sim=1.00
       src/koru/redup_integration.py:22-24  (redup_scan_command)
       src/koru/redup_integration.py:27-29  (redup_check_command)
 
-REFACTOR[33] (ranked by priority):
+REFACTOR[36] (ranked by priority):
   [1] ◐ extract_function   → src/utils/_build_serve_parser.py
       WHY: 2 occurrences of 48-line block across 2 files — saves 48 lines
       FILES: src/koru/cli.py, src/koruapi/dashboard.py
@@ -205,28 +214,37 @@ REFACTOR[33] (ranked by priority):
   [25] ○ extract_function   → src/koru/utils/_stdio_info.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [26] ○ extract_function   → src/korudsl/utils/_handle_error.py
+  [26] ○ extract_function   → src/koru/utils/_koru_version.py
+      WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
+      FILES: src/koru/local_manager_client.py, src/koru/local_service.py
+  [27] ○ extract_function   → src/koru/utils/koru_distribution_version.py
+      WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
+      FILES: src/koru/autonomous_startup.py, src/koru/cli.py
+  [28] ○ extract_function   → src/korudsl/utils/_handle_error.py
       WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
       FILES: src/korudsl/library.py
-  [27] ○ extract_function   → src/koru/utils/_queue_loop_waiting_ticket_label.py
+  [29] ○ extract_function   → src/koru/utils/_queue_loop_waiting_ticket_label.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [28] ○ extract_function   → src/koru/utils/_status_in_skip_list.py
+  [30] ○ extract_function   → src/koru/utils/_status_in_skip_list.py
       WHY: 2 occurrences of 4-line block across 2 files — saves 4 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [29] ○ extract_function   → src/koru/utils/_allow_keyboard_autopilot_fallback.py
+  [31] ○ extract_function   → src/koru/utils/_allow_keyboard_autopilot_fallback.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [30] ○ extract_function   → src/koruapi/utils/_open_later.py
+  [32] ○ extract_function   → src/koru/utils/__init__.py
+      WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
+      FILES: src/koru/local_service.py
+  [33] ○ extract_function   → src/koruapi/utils/_open_later.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: src/koruapi/dashboard_serve.py
-  [31] ○ extract_function   → src/koru/autopilot/utils/_action_status.py
+  [34] ○ extract_function   → src/koru/autopilot/utils/_action_status.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: src/koru/autopilot/cli_command.py
-  [32] ○ extract_function   → src/utils/_systemd_user_dir.py
+  [35] ○ extract_function   → src/utils/_systemd_user_dir.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: src/koru/autopilot/cli_command.py, src/koruide/config.py
-  [33] ○ extract_function   → src/koru/utils/redup_scan_command.py
+  [36] ○ extract_function   → src/koru/utils/redup_scan_command.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: src/koru/redup_integration.py
 
@@ -252,7 +270,7 @@ QUICK_WINS[22] (low risk, high savings — do first):
   [12] extract_function   saved=10L  → src/utils/load_koru_project_pipeline.py
       FILES: project_pipeline.py, dashboard_serve.py
 
-EFFORT_ESTIMATE (total ≈ 13.3h):
+EFFORT_ESTIMATE (total ≈ 13.8h):
   hard   _build_serve_parser                 saved=48L  ~144min
   hard   _run_idle_diagnostics               saved=36L  ~108min
   medium _build_local_serve_parser           saved=29L  ~58min
@@ -263,8 +281,8 @@ EFFORT_ESTIMATE (total ≈ 13.3h):
   easy   _parse_iso_datetime                 saved=13L  ~26min
   easy   resolve_xdg_path                    saved=12L  ~24min
   easy   _handle_mcp_list_tickets            saved=12L  ~24min
-  ... +23 more (~288min)
+  ... +26 more (~314min)
 
 METRICS-TARGET:
-  dup_groups:  33 → 0
-  saved_lines: 358 lines recoverable
+  dup_groups:  36 → 0
+  saved_lines: 371 lines recoverable

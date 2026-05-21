@@ -51,7 +51,7 @@ flowchart TB
     Daemon -->|1. NDJSON Socket (chat.send)| Cursor
     Daemon -->|1. NDJSON Socket (chat.send)| Windsurf
     Daemon -->|2. Fallback (Keyboard Sim)| Fallback
-    
+
     VSCode -->|Wstrzyknięcie i Submit| IDE_Chat
     Cursor -->|Wstrzyknięcie i Submit| IDE_Chat
     Windsurf -->|Wstrzyknięcie i Submit| IDE_Chat
@@ -79,12 +79,17 @@ flowchart TB
 2. **Koru Daemon (Control Plane)**: Zawiera całą logikę biznesową:
    - Kolejkowanie zadań planfile, budowanie promptów i handoffów.
    - Decyzje o wyborze drogi (plugin vs. OS injector fallback).
+   - Polityki runtime dla wersji pluginu (`connected` vs. `expected`) oraz
+     blokadę stale-plugin drive przy `KORU_STRICT_PLUGIN_VERSION=1`.
    - Obsługa timeoutów, polityk cooldown, logowania audytowego oraz maszyn stanów sesji.
    - Wywoływanie zewnętrznych narzędzi weryfikacji i jakości kodu (`pytest`, `ruff`, `redup`, `regix`, `wup`).
 
 ### Status implementacji (snapshot)
 - **Wire protocol `v1` i daemon**: wdrożone.
 - **VS Code / Cursor / Windsurf plugin**: `hello`, `chat.send` i `message.sent` działają; `session.ended` oraz `message.received` pozostają ograniczone przez API i nie są emitowane jako pełny strumień lifecycle.
+- **Instalacja i drift wersji pluginu**: `koru autopilot manage` raportuje
+  `connected/version`, `installed` i `expected`; daemon może raportować drift
+  w `ack` oraz blokować drive przez stary live plugin w trybie strict.
 - **JetBrains plugin**: aktualnie scaffold (połączenie socket + `hello`), bez pełnej obsługi `chat.send` i stabilnych hooków lifecycle.
 - **Post-run verify**: wykonywane w pętli autonomicznej `koru` (nie jako bezpośrednia akcja daemona po każdym `session.ended`).
 
@@ -95,6 +100,9 @@ flowchart TB
 * **Protokół fizyczny**: Lokalny Unix domain socket (UDS).
 * **Ścieżka gniazda**:
   - Podstawowa: `$XDG_RUNTIME_DIR/koru-autopilot.sock` (zazwyczaj `/run/user/$UID/koru-autopilot.sock`)
+  - Instancjonowana: przy `KORU_AUTOPILOT_INSTANCE=vscode` socket ma postać
+    `$XDG_RUNTIME_DIR/koru-autopilot-vscode.sock`. Zalecane, gdy jednocześnie
+    działa kilka IDE lub kilka okien tego samego IDE.
   - Awaryjna (fallback): `/tmp/koru-autopilot-$UID.sock`
 * **Formatowanie ramki (NDJSON)**: Każda wiadomość jest zakodowana jako pojedyncza linia tekstu w standardzie UTF-8 zakończona znakiem nowej linii (`\n`).
 * **Limit wielkości linii**: Maksymalnie **1 MiB** (`1024 * 1024` bajtów). Próba wysłania większej linii skutkuje natychmiastowym zamknięciem połączenia i błędem `line too large`.
@@ -151,6 +159,11 @@ Wysyłane natychmiast po połączeniu wtyczki z socketem w celu rejestracji śro
   - `ide` (string): Identyfikator środowiska (`vscode`, `cursor`, `windsurf`, `jetbrains`).
   - `version` (string): Wersja wtyczki koru-autopilot.
   - `pid` (integer): ID procesu wtyczki w systemie.
+
+`version` jest używane przez daemon wyłącznie jako metadana runtime/policy.
+Nie zmienia dekodowania ramek `v1`, ale może spowodować zablokowanie `drive`,
+gdy `KORU_STRICT_PLUGIN_VERSION=1` i wersja live pluginu różni się od wersji
+VSIX/package oczekiwanej przez bieżącą instalację koru.
 
 #### B. `session.started`
 Informuje, że asystent LLM w IDE rozpoczął generowanie odpowiedzi.
@@ -284,6 +297,13 @@ Nakaz natychmiastowego wygaszenia integracji lub odłączenia klienta.
   - `ide` (string): Wskazanie konkretnego IDE (`auto`, `cursor`, `windsurf`, `vscode`).
   - `require_plugin` (boolean): Jeśli `true`, uniemożliwi keyboard-injector fallback i wygeneruje błąd, jeśli dedykowana wtyczka nie jest połączona.
 
+**Polityka wersji pluginu:** gdy daemon używa ścieżki pluginowej, do wyniku
+`ack` może dodać `plugin_version`, `expected_plugin_version`,
+`plugin_version_mismatch` i `plugin_version_policy`. Domyślnie mismatch jest
+ostrzegawczy (`plugin_version_policy="warn"`). Przy `KORU_STRICT_PLUGIN_VERSION=1`
+lub `KORU_PLUGIN_VERSION_POLICY=strict` daemon zwraca `error` przed wysłaniem
+`chat.send` do stale pluginu.
+
 #### B. `status`
 Zapytanie o bieżący stan daemona, podłączone wtyczki, statusy procesów i dostępne backendy wstrzykiwania.
 **Status:** **REQUIRED in v1**.
@@ -293,6 +313,12 @@ Zapytanie o bieżący stan daemona, podłączone wtyczki, statusy procesów i do
   "id": "cli-status-9"
 }
 ```
+
+Odpowiedź `status` zawiera listę `plugins`; każdy wpis zawiera co najmniej
+`ide` i `fd`, a jeśli plugin zgłosił wersję w `hello`, także `version`.
+Wersje zainstalowane na dysku (`installed`) i wersja oczekiwana (`expected`)
+nie są częścią wire `status`; raportuje je komenda warstwy operacyjnej
+`koru autopilot manage`.
 
 ---
 
@@ -320,6 +346,9 @@ Uniwersalna ramka potwierdzenia odbioru/przetwarzania. Zawsze niesie pasujące `
   - `opened` (boolean): Czy panel chatu został otwarty/skupiony.
   - `submitted` (boolean): Czy prompt został wysłany.
   - `winning_focus_open`, `winning_paste`, `winning_submit`: opcjonalne pola diagnostyczne (`probe-ladder`).
+  - `verification`: poziom potwierdzenia (`strict`, `plugin_ack`, `event_only`, `plugin_error`).
+  - `plugin_version`, `expected_plugin_version`, `plugin_version_mismatch`,
+    `plugin_version_policy`: opcjonalne metadane driftu wersji live pluginu.
 
 **Normatywna semantyka `ack` (`v1`):**
 - `ok=true` **nie musi** oznaczać pełnego sukcesu submitu end-to-end.
@@ -379,6 +408,8 @@ nie element normatywnego `hello` w `v1`.
 W aktualnym stanie runtime decyzje daemona opierają się głównie na:
 * wyniku wykonania komendy i metadanych `ack`,
 * polityce fallback (`require_plugin`, dostępne backendy),
+* polityce wersji pluginu (`plugin_version_mismatch`,
+  `KORU_STRICT_PLUGIN_VERSION`, `KORU_PLUGIN_VERSION_POLICY`),
 * sygnałach pętli autonomicznej (kolejka, verify, diagnostyka),
 * opcjonalnych hintach lifecycle (`session.*`, `message.*`) gdy adapter je emituje.
 
@@ -395,6 +426,7 @@ stateDiagram-v2
     Connected --> Idle : Rejestracja OK
     Idle --> DriveRequested : drive (CLI / kolejka)
     DriveRequested --> DriveDelivered : plugin chat.send accepted
+    DriveRequested --> Degraded : strict plugin version mismatch
     DriveRequested --> DriveFallback : plugin unavailable/error + fallback
     DriveDelivered --> WaitingLifecycleHint : waiting adapter events
     DriveFallback --> WaitingLifecycleHint : prompt injected by OS path
@@ -411,7 +443,7 @@ stateDiagram-v2
 ```
 
 ### Opis przejść i logiki:
-1. **DriveRequested**: daemon próbuje ścieżkę pluginową; przy błędzie/przerwie przechodzi do fallbacku (jeśli `require_plugin=false`).
+1. **DriveRequested**: daemon próbuje ścieżkę pluginową; przy błędzie/przerwie przechodzi do fallbacku (jeśli `require_plugin=false`). Przed `chat.send` może zablokować stale plugin, gdy strict version gate jest aktywny.
 2. **DriveDelivered / DriveFallback**: prompt został przekazany odpowiednio przez plugin lub przez injector OS.
 3. **WaitingLifecycleHint**: system czeka na hinty adaptera (`session.*`, `message.*`) i równolegle na sygnały postępu kolejki.
 4. **VerifyScheduled**: `post_run_verify` jest planowane/uruchamiane przez pętlę autonomiczną, nie przez sam fakt nadejścia pojedynczego eventu pluginu.
@@ -443,8 +475,13 @@ Scenariusz: Autopilot pobiera zadanie z kolejki i wstrzykuje je do IDE przez plu
    ```
    [Plugin -> Daemon]: {"type":"message.sent","chat":"default","text":"Napisz funkcję add(a, b) w math.py","length":35}
    [Plugin -> Daemon]: {"type":"ack","id":"drv-123","ok":true,"delivered":true,"opened":true,"submitted":true}
-   [Daemon -> CLI]:    {"type":"ack","id":"drv-123","ok":true,"delivered":true,"opened":true,"submitted":true,"backend":"plugin"}
+   [Daemon -> CLI]:    {"type":"ack","id":"drv-123","ok":true,"delivered":true,"opened":true,"submitted":true,"backend":"plugin","plugin_version":"0.1.13","expected_plugin_version":"0.1.13","plugin_version_mismatch":false}
    ```
+
+   Jeśli live plugin zgłosi np. `version="0.1.11"`, a bieżąca paczka koru
+   oczekuje `0.1.13`, daemon może zwrócić `ack` z
+   `plugin_version_mismatch=true` w trybie ostrzegawczym. Przy
+   `KORU_STRICT_PLUGIN_VERSION=1` zamiast `chat.send` zwraca `error`.
 
 4. **Asystent IDE generuje kod i kończy odpowiedź (zdarzenia lifecycle opcjonalne)**:
    ```
@@ -499,6 +536,9 @@ kontraktu wire `v1`.
 
 - Dla środowisk produkcyjnych i przebiegów CI-like zalecany jest tryb
   `require_plugin=true` (bez fallbacku keyboard/clipboard).
+- Dla soak/autonomous runs, w których niedopuszczalny jest stary live plugin,
+  zalecane jest `KORU_STRICT_PLUGIN_VERSION=1`. W tym trybie drift wersji
+  blokuje `drive` przed wysłaniem `chat.send`.
 - Ścieżki `os_injector`/keyboard mają niższy poziom zaufania niż plugin bridge
   (ryzyko trafienia do niewłaściwego okna/pola wejścia).
 - Użycie fallbacku powinno być logowane audytowo wraz z informacją o backendzie.
@@ -510,6 +550,8 @@ kontraktu wire `v1`.
 ## 10. Profile operatora
 
 - **plugin-only**: `require_plugin=true`, brak fallbacku OS; najwyższa przewidywalność.
+- **plugin-only strict**: `require_plugin=true` + `KORU_STRICT_PLUGIN_VERSION=1`;
+  najwyższa przewidywalność przy wielu wersjach pluginu/IDE.
 - **plugin-preferred with fallback**: domyślny tryb roboczy desktop (`require_plugin=false`).
 - **visible typing**: preferencja backendów typujących zamiast ukrytego paste.
 - **unattended soak mode**: autoloop + diagnostyka + verify, z audit trail i kontrolą stagnacji.
@@ -518,9 +560,11 @@ kontraktu wire `v1`.
 
 ## 11. Znane Problemy Implementacyjne
 
-### 11.1. Błąd Routingu: require_plugin Ignorowany przy Błędzie Pluginu
-- **Problem**: W `koru autonomous up` z włączonym autopilotem, daemon ignoruje flagę `require_plugin=True` i automatycznie używa OS injectora, gdy plugin zwróci `ok=False`.
-- **Lokalizacja**: `src/koruide/daemon.py:_plugin_ack_needs_os_fallback` (linia 545) - logika fallback nie sprawdza flagi `require_plugin`.
-- **Symptomy**: Logi pokazują "drive → plugin/windsurf: wklejam do czatu" ale potem "os_injector/windsurf: focus=(1512,3631)" mimo `require_plugin=True`.
-- **Wpływ**: Ścieżka plugin socket jest omijana nawet gdy jest jawnie wymagana, naruszając kontrakt.
-- **Rozwiązanie**: Dodać parametr `require_plugin` do `_plugin_ack_needs_os_fallback` i pominąć OS fallback gdy `require_plugin=True`.
+### 11.1. Capture odpowiedzi LLM jest nadal zależny od IDE
+- **Problem**: `message.received` i pełny read-side odpowiedzi modelu nie są
+  stabilnie dostępne we wszystkich IDE.
+- **Wpływ**: `message.sent` potwierdza wysłanie promptu, ale nie jest dowodem,
+  że agent IDE zakończył pracę ani że kod został zmieniony.
+- **Obejście**: pętla autonomiczna używa queue state, `post_run_verify`,
+  diagnostyki i TestQL/WUP zamiast traktować pojedynczy event chatu jako pełny
+  sukces end-to-end.

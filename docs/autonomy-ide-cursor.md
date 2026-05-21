@@ -65,10 +65,10 @@
 ### Krok 3: Konfiguracja autopilota
 
 - [ ] **Diagnostyka hosta**: `koru autopilot doctor` i opcjonalnie `koru autopilot setup-host --install`
-- [ ] **Instalacja pluginu IDE**: `koru autopilot install-plugin` lub ręczne zbudowanie `.vsix` z `plugins/koru-autopilot-vscode/`
+- [ ] **Instalacja/naprawa pluginu IDE**: `KORU_AUTOPILOT_INSTANCE=vscode koru autopilot manage --ide vscode --fix`
 - [ ] **Uruchomienie daemona w terminalu**: `koru autopilot daemon --project "$(pwd)"`
-- [ ] **Weryfikacja połączenia**: `koru autopilot status`
-- [ ] **Test wstrzykiwania**: `koru autopilot drive 'test prompt'`
+- [ ] **Weryfikacja połączenia**: `KORU_AUTOPILOT_INSTANCE=vscode koru autopilot status` oraz `KORU_AUTOPILOT_INSTANCE=vscode koru autopilot manage --ide vscode`
+- [ ] **Test wstrzykiwania**: `KORU_AUTOPILOT_INSTANCE=vscode koru autopilot drive --ide vscode --require-plugin 'test prompt'`
 - [ ] **Opcjonalnie: systemd user unit**: `koru autopilot install-unit --force`, potem `systemctl --user daemon-reload && systemctl --user enable --now koru-autopilot`
 
 ### Krok 4: Konfiguracja autonomous mode
@@ -83,8 +83,8 @@
 
 - [ ] **Test diagnostyki**: `koru autonomous up --idle-diagnostics=quick --max-cycles=1`
 - [ ] **Test WUP** (jeśli skonfigurowany): Sprawdź `.wup/service-health.json`
-- [ ] **Test autopilot drive**: `koru autopilot drive 'continue with next ticket'`
-- [ ] **Test handoff**: `koru autopilot handoff`
+- [ ] **Test autopilot drive**: `KORU_AUTOPILOT_INSTANCE=vscode KORU_STRICT_PLUGIN_VERSION=1 koru autopilot drive --ide vscode --require-plugin 'continue with next ticket'`
+- [ ] **Test handoff**: `KORU_AUTOPILOT_INSTANCE=vscode koru autopilot handoff --ide vscode --require-plugin`
 - [ ] **Sprawdź logi**: `koru autopilot tail`
 
 ---
@@ -114,7 +114,7 @@
 
 - [ ] **Allowlista komend shell** z planfile — konfiguracja regex + test odrzucenia komend spoza listy dla `run_next_planfile_task`.
 - [x] **Rate-limit `drive`** — max N wiadomości/min na socket per UID z komunikatem błędu i logiem audytowym.
-- [x] **UX: podgląd kolejki** — `koru autopilot status --json` z listą oczekujących promptów i TTL (czytelne dla operatora).
+- [x] **UX: podgląd runtime autopilota** — `koru autopilot status` + `koru autopilot manage --ide vscode` pokazują socket, podłączone pluginy, wersje `connected/installed/expected` i backendi wstrzykiwania.
 - [x] **Audit log** — NDJSON log at `$XDG_STATE_HOME/koru/autopilot.log` z rotacją 10 MiB, zdarzenia: `daemon_started`, `daemon_stopped`, `plugin_connected`, `drive`, `handoff`, `shutdown`.
 
 ### Testy
