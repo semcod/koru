@@ -218,31 +218,50 @@ class Injector:
         candidates = self._candidate_backends()
         return candidates[0] if candidates else None
 
-    def _type_with_backend(
+    def _type_with_xdotool(self, text: str, submit_key: str | None, extra_enters: int) -> None:
+        """Type text using xdotool backend."""
+        self._call(["xdotool", "type", "--delay", "5", "--clearmodifiers", "--", text])
+        if submit_key:
+            self._call(["xdotool", "key", "--clearmodifiers", submit_key])
+            for _ in range(extra_enters):
+                self._call(["xdotool", "key", "--clearmodifiers", "Return"])
+
+    def _type_with_wtype(self, text: str, submit_key: str | None, extra_enters: int) -> None:
+        """Type text using wtype backend."""
+        self._call(["wtype", "--", text])
+        if submit_key:
+            self._press_wtype(submit_key)
+            for _ in range(extra_enters):
+                self._call(["wtype", "-k", "Return"])
+
+    def _type_with_ydotool(
         self,
-        backend: str,
         text: str,
         submit_key: str | None,
+        extra_enters: int,
+        enter_code: int,
+        submit_mode: str,
+        ctrl_code: int,
     ) -> None:
-        extra_enters = _extra_enter_count()
-        if backend == "xdotool":
-            self._call(["xdotool", "type", "--delay", "5", "--clearmodifiers", "--", text])
-            if submit_key:
-                self._call(["xdotool", "key", "--clearmodifiers", submit_key])
-                for _ in range(extra_enters):
-                    self._call(["xdotool", "key", "--clearmodifiers", "Return"])
-        elif backend == "wtype":
-            self._call(["wtype", "--", text])
-            if submit_key:
-                self._press_wtype(submit_key)
-                for _ in range(extra_enters):
-                    self._call(["wtype", "-k", "Return"])
-        elif backend == "ydotool":
-            enter_code = _ydotool_enter_keycode()
-            submit_mode = _ydotool_submit_mode()
-            ctrl_code = _ydotool_ctrl_keycode()
-            self._call(["ydotool", "type", "--", text])
-            if submit_key:
+        """Type text using ydotool backend."""
+        self._call(["ydotool", "type", "--", text])
+        if submit_key:
+            if submit_mode == "newline":
+                self._call(["ydotool", "type", "--", "\n"])
+            elif submit_mode == "ctrl-enter":
+                self._call(
+                    [
+                        "ydotool",
+                        "key",
+                        f"{ctrl_code}:1",
+                        f"{enter_code}:1",
+                        f"{enter_code}:0",
+                        f"{ctrl_code}:0",
+                    ],
+                )
+            else:
+                self._call(["ydotool", "key", f"{enter_code}:1", f"{enter_code}:0"])
+            for _ in range(extra_enters):
                 if submit_mode == "newline":
                     self._call(["ydotool", "type", "--", "\n"])
                 elif submit_mode == "ctrl-enter":
@@ -258,22 +277,28 @@ class Injector:
                     )
                 else:
                     self._call(["ydotool", "key", f"{enter_code}:1", f"{enter_code}:0"])
-                for _ in range(extra_enters):
-                    if submit_mode == "newline":
-                        self._call(["ydotool", "type", "--", "\n"])
-                    elif submit_mode == "ctrl-enter":
-                        self._call(
-                            [
-                                "ydotool",
-                                "key",
-                                f"{ctrl_code}:1",
-                                f"{enter_code}:1",
-                                f"{enter_code}:0",
-                                f"{ctrl_code}:0",
-                            ],
-                        )
-                    else:
-                        self._call(["ydotool", "key", f"{enter_code}:1", f"{enter_code}:0"])
+
+    def _type_with_backend(
+            self,
+            backend: str,
+            text: str,
+            submit_key: str | None,
+        ) -> None:
+        if self.log:
+            self.log(
+                f"injector: typing {len(text)} chars via {backend} "
+                f"(submit_key={submit_key or 'none'})"
+            )
+        extra_enters = _extra_enter_count()
+        if backend == "xdotool":
+            self._type_with_xdotool(text, submit_key, extra_enters)
+        elif backend == "wtype":
+            self._type_with_wtype(text, submit_key, extra_enters)
+        elif backend == "ydotool":
+            enter_code = _ydotool_enter_keycode()
+            submit_mode = _ydotool_submit_mode()
+            ctrl_code = _ydotool_ctrl_keycode()
+            self._type_with_ydotool(text, submit_key, extra_enters, enter_code, submit_mode, ctrl_code)
         else:
             raise InjectorError(f"unreachable: unknown backend {backend!r}")
 
@@ -351,6 +376,10 @@ class Injector:
             )
         submit_key = _submit_key_for(ide)
         backend0 = backends[0]
+        if self.log:
+            self.log(
+                f"injector: submit_only via {backend0}, key={submit_key}"
+            )
         if dry_run:
             return InjectionResult(
                 backend=backend0,
@@ -360,10 +389,16 @@ class Injector:
             )
         errors: list[str] = []
         for backend in backends:
+            if self.log:
+                self.log(f"injector: trying submit via {backend} ...")
             try:
                 self._type_with_backend(backend, "", submit_key)
+                if self.log:
+                    self.log(f"injector: submitted via {backend}")
                 return InjectionResult(backend=backend, submitted=True)
             except InjectorError as exc:
+                if self.log:
+                    self.log(f"injector: submit via {backend} failed: {exc}")
                 errors.append(f"{backend}: {exc}")
         raise InjectorError("all keyboard submit backends failed: " + "; ".join(errors))
 

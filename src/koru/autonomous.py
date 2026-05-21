@@ -67,6 +67,7 @@ from koru.autonomous_wup import (
     _wup_watch_command,  # noqa: F401
 )
 from koru import autonomous_diagnostics as _autonomous_diagnostics
+from koru import autonomous_plugin as _autonomous_plugin
 from koru.autonomous_processes import (
     ExistingAutonomousProcess,
     ExistingManagedProcess,
@@ -792,63 +793,12 @@ def _start_or_reuse_daemon(
 
 
 def _plugin_rows_log_summary(rows: object) -> str:
-    if not isinstance(rows, list) or not rows:
-        return "[]"
-    parts: list[str] = []
-    for row in rows:
-        if not isinstance(row, Mapping):
-            parts.append("<invalid>")
-            continue
-        ide = str(row.get("ide") or "-")
-        version_label = str(row.get("version") or "-")
-        fd = row.get("fd")
-        fd_part = f" fd={fd}" if fd is not None else ""
-        parts.append(f"{ide}@{version_label}{fd_part}")
-    return "[" + ", ".join(parts) + "]"
+    return _autonomous_plugin.plugin_rows_log_summary(rows)
 
 
 def _plugin_status_decision(status: Mapping[str, Any], ide: str) -> tuple[bool, str]:
-    plugins = status.get("plugins")
-    if not isinstance(plugins, list):
-        return False, "daemon status has no plugin list"
-    if not plugins:
-        return False, "daemon status plugin list is empty"
-    wanted = (ide or "auto").strip().lower()
-    ignored: list[str] = []
-    for plugin in plugins:
-        if not isinstance(plugin, Mapping):
-            ignored.append("invalid plugin row")
-            continue
-        plugin_ide = str(plugin.get("ide") or "").strip().lower()
-        version = plugin.get("version")
-        version_label = version if isinstance(version, str) and version else "-"
-        row_label = f"ide={plugin_ide or '-'} version={version_label}"
-        if wanted not in {"", "auto"} and plugin_ide != wanted:
-            ignored.append(f"{row_label} ignored: wanted ide={wanted}")
-            continue
-        version_info = DriveOrchestrator.plugin_version_info(
-            plugin_ide=plugin_ide or None,
-            connected_version=version if isinstance(version, str) else None,
-            protocol_version=(
-                plugin.get("protocolVersion")
-                if isinstance(plugin.get("protocolVersion"), int)
-                else None
-            ),
-            capabilities=(
-                plugin.get("capabilities")
-                if isinstance(plugin.get("capabilities"), list)
-                else None
-            ),
-        )
-        if DriveOrchestrator.should_block_plugin_version(version_info):
-            return False, (
-                f"{row_label} blocked: "
-                f"{DriveOrchestrator.plugin_version_block_message(version_info)}"
-            )
-        expected = version_info.get("expected_plugin_version") or "-"
-        policy = version_info.get("plugin_version_policy") or "warn"
-        return True, f"{row_label} accepted: expected={expected} policy={policy}"
-    return False, "; ".join(ignored) if ignored else f"no plugin row matched ide={wanted}"
+    _autonomous_plugin.DriveOrchestrator = DriveOrchestrator
+    return _autonomous_plugin.plugin_status_decision(status, ide)
 
 
 def _status_has_autopilot_plugin(status: Mapping[str, Any], ide: str) -> bool:
@@ -863,56 +813,16 @@ def _wait_for_autopilot_plugin(
     interval_seconds: float = 0.25,
     stdio_format: str | None = None,
 ) -> bool:
-    if timeout_seconds <= 0:
-        if stdio_format is not None:
-            _stdio_info(
-                f"koru autonomous: plugin wait disabled for ide={ide} (timeout=0)",
-                fmt=stdio_format,
-            )
-        return False
-    if stdio_format is not None:
-        _stdio_info(
-            f"koru autonomous: waiting for autopilot plugin ide={ide} "
-            f"timeout={timeout_seconds:.1f}s interval={interval_seconds:.2f}s",
-            fmt=stdio_format,
-        )
-    deadline = time.monotonic() + timeout_seconds
-    last_reason: str | None = None
-    while time.monotonic() < deadline:
-        try:
-            ready, reason = _plugin_status_decision(client.status(), ide)
-            if stdio_format is not None and reason != last_reason:
-                _stdio_info(
-                    f"koru autonomous: plugin decision ide={ide}: {reason}",
-                    fmt=stdio_format,
-                )
-                last_reason = reason
-            if ready:
-                return True
-        except (OSError, RuntimeError, TimeoutError) as exc:
-            reason = f"daemon status unavailable: {exc}"
-            if stdio_format is not None and reason != last_reason:
-                _stdio_info(
-                    f"koru autonomous: plugin decision ide={ide}: {reason}",
-                    fmt=stdio_format,
-                )
-                last_reason = reason
-        time.sleep(interval_seconds)
-    try:
-        ready, reason = _plugin_status_decision(client.status(), ide)
-        if stdio_format is not None and reason != last_reason:
-            _stdio_info(
-                f"koru autonomous: plugin decision ide={ide}: {reason}",
-                fmt=stdio_format,
-            )
-        return ready
-    except (OSError, RuntimeError, TimeoutError) as exc:
-        if stdio_format is not None:
-            _stdio_info(
-                f"koru autonomous: plugin decision ide={ide}: daemon status unavailable: {exc}",
-                fmt=stdio_format,
-            )
-        return False
+    return _autonomous_plugin.wait_for_autopilot_plugin(
+        client,
+        ide,
+        timeout_seconds=timeout_seconds,
+        interval_seconds=interval_seconds,
+        stdio_info=_stdio_info,
+        stdio_format=stdio_format,
+        monotonic=time.monotonic,
+        sleep=time.sleep,
+    )
 
 
 def _is_topology_enabled(project: Path, key: str, *, fallback: bool, enabled: bool) -> bool:
@@ -1923,11 +1833,12 @@ def _action_up(args: argparse.Namespace) -> int:
         )
 
 
-def autonomous_main(argv: list[str], *, invoked_as_auto: bool = False) -> int:
+def _normalize_autonomous_argv(argv: list[str]) -> list[str]:
+    """Normalize command line arguments for autonomous mode."""
     if not argv:
-        argv = ["up"]
-    elif argv[0] == "safe-up":
-        argv = [
+        return ["up"]
+    if argv[0] == "safe-up":
+        return [
             "up",
             "--ticket-sources",
             "queue",
@@ -1942,26 +1853,49 @@ def autonomous_main(argv: list[str], *, invoked_as_auto: bool = False) -> int:
             "--no-semcod-artifacts",
             *argv[1:],
         ]
-    elif argv[0] != "up" and argv[0] not in ("-h", "--help"):
-        argv = ["up", *argv]
+    if argv[0] != "up" and argv[0] not in ("-h", "--help"):
+        return ["up", *argv]
+    return argv
+
+
+def _configure_auto_mode_args(argv: list[str], args: Any, invoked_as_auto: bool) -> tuple[set[str], list[str]]:
+    """Configure arguments for auto mode and return user options and normalized argv."""
     auto_user_options: set[str] = set()
     if invoked_as_auto and argv and argv[0] == "up":
         auto_user_options = _collect_argv_options(argv[1:])
         argv = _expand_auto_up_defaults(argv)
-    args = _build_parser().parse_args(argv)
+    return auto_user_options, argv
+
+
+def _apply_auto_pipeline_flags(args: Any, invoked_as_auto: bool) -> None:
+    """Apply auto-pipeline specific flags to args."""
     args._auto_pipeline_enabled = (
         invoked_as_auto
         and args.action == "up"
         and os.environ.get("KORU_AUTO_PIPELINE", "").strip().lower()
         in {"1", "true", "yes", "on"}
     )
-    args._auto_user_options = auto_user_options
+
+
+def _apply_replace_existing_flags(args: Any, invoked_as_auto: bool) -> None:
+    """Apply replace-existing flags for auto mode."""
     if invoked_as_auto:
         args.replace_existing_global = True
         if not args.allow_duplicate and not args.replace_existing:
             args.replace_existing = True
     elif not hasattr(args, "replace_existing_global"):
         args.replace_existing_global = False
+
+
+def autonomous_main(argv: list[str], *, invoked_as_auto: bool = False) -> int:
+    argv = _normalize_autonomous_argv(argv)
+    auto_user_options, argv = _configure_auto_mode_args(argv, None, invoked_as_auto)
+    
+    args = _build_parser().parse_args(argv)
+    _apply_auto_pipeline_flags(args, invoked_as_auto)
+    args._auto_user_options = auto_user_options
+    _apply_replace_existing_flags(args, invoked_as_auto)
+    
     if args.action == "up":
         return _action_up(args)
     return 2

@@ -1,10 +1,10 @@
-# code2llm/evolution | 1496 func | 136f | 2026-05-21
+# code2llm/evolution | 1491 func | 137f | 2026-05-21
 # generated in 0.01s
 
-NEXT[6] (ranked by impact):
+NEXT[4] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous.py
-      WHY: 2093L, 1 classes, max CC=20
-      EFFORT: ~4h  IMPACT: 41860
+      WHY: 1887L, 1 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 28305
 
   [2] !! SPLIT           src/koru/autonomous_cycle.py
       WHY: 1466L, 2 classes, max CC=14
@@ -14,21 +14,13 @@ NEXT[6] (ranked by impact):
       WHY: 1400L, 1 classes, max CC=13
       EFFORT: ~4h  IMPACT: 18200
 
-  [4] !  SPLIT-FUNC      AutopilotDaemon._handle_hello  CC=15  fan=16
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 240
-
-  [5] !  SPLIT-FUNC      _plugin_status_decision  CC=20  fan=12
+  [4] !  SPLIT-FUNC      plugin_status_decision  CC=20  fan=12
       WHY: CC=20 exceeds 15
       EFFORT: ~1h  IMPACT: 240
 
-  [6] !  SPLIT-FUNC      AutopilotDaemon._handle_plugin_event  CC=15  fan=14
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 210
-
 
 RISKS[3]:
-  ⚠ Splitting src/koru/autonomous.py may break 59 import paths
+  ⚠ Splitting src/koru/autonomous.py may break 53 import paths
   ⚠ Splitting src/koru/autonomous_cycle.py may break 52 import paths
   ⚠ Splitting src/koruapi/dashboard_serve.py may break 15 import paths
 
@@ -36,7 +28,7 @@ METRICS-TARGET:
   CC̄:          4.2 → ≤2.9
   max-CC:      20 → ≤10
   god-modules: 18 → 0
-  high-CC(≥15): 7 → ≤3
+  high-CC(≥15): 2 → ≤1
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

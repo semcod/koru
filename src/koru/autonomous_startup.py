@@ -72,6 +72,53 @@ def _target_lane_over_terminal(terminal: str | None) -> tuple[str | None, str]:
     return picked.id, f"target:over-terminal:{terminal}"
 
 
+def _resolve_lane_from_cli(
+    project: Path,
+    raw: str,
+    resolve_project_lane,
+) -> tuple[str | None, str] | None:
+    """Resolve lane from CLI argument."""
+    if raw == "none":
+        return None, "cli:none"
+    if raw != "auto":
+        lane = resolve_project_lane(project, raw)
+        return lane, f"cli:{raw}"
+    return None
+
+
+def _resolve_lane_with_explicit(
+    project: Path,
+    terminal: str | None,
+    explicit: str | None,
+    explicit_source: str,
+    resolve_project_lane,
+) -> tuple[str | None, str] | None:
+    """Resolve lane when explicit instance is set."""
+    if not explicit:
+        return None
+    if terminal in _PLUGIN_IDE_LANES and terminal != explicit and terminal != "vscode":
+        lane = resolve_project_lane(project, terminal)
+        return lane, f"terminal:over-{explicit_source}"
+    lane = resolve_project_lane(project, explicit)
+    return lane, explicit_source
+
+
+def _resolve_lane_from_running_ide_fallback(
+    project: Path,
+    terminal: str | None,
+    resolve_project_lane,
+) -> tuple[str | None, str] | None:
+    """Resolve lane by checking running IDEs for plugin support."""
+    if not terminal:
+        return None
+    running = detect_running_ides()
+    for alt in _AUTOPILOT_PLUGIN_LANES:
+        if any(ide.id == alt for ide in running):
+            lane = resolve_project_lane(project, alt)
+            return lane, f"terminal:prefer-{alt}-over-{terminal}"
+    return None
+
+
 def resolve_agent_lane_id(
     project: Path,
     agent_lane_cli: str,
@@ -80,20 +127,19 @@ def resolve_agent_lane_id(
 ) -> tuple[str | None, str]:
     """Resolve ``--agent-lane``; return ``(lane_id, source_label)``."""
     raw = normalize_ide_id(agent_lane_cli) or "auto"
-    if raw == "none":
-        return None, "cli:none"
-    if raw != "auto":
-        lane = resolve_project_lane(project, raw)
-        return lane, f"cli:{raw}"
+    
+    cli_result = _resolve_lane_from_cli(project, raw, resolve_project_lane)
+    if cli_result:
+        return cli_result
 
     terminal = _terminal_agent_lane_from_env()
     explicit, explicit_source = _explicit_agent_lane_from_env()
-    if explicit:
-        if terminal in _PLUGIN_IDE_LANES and terminal != explicit and terminal != "vscode":
-            lane = resolve_project_lane(project, terminal)
-            return lane, f"terminal:over-{explicit_source}"
-        lane = resolve_project_lane(project, explicit)
-        return lane, explicit_source
+    
+    explicit_result = _resolve_lane_with_explicit(
+        project, terminal, explicit, explicit_source, resolve_project_lane
+    )
+    if explicit_result:
+        return explicit_result
 
     target, target_source = _target_lane_over_terminal(terminal)
     if target:
@@ -103,12 +149,10 @@ def resolve_agent_lane_id(
     if terminal in _PLUGIN_IDE_LANES:
         lane = resolve_project_lane(project, terminal)
         return lane, "terminal"
-    if terminal:
-        running = detect_running_ides()
-        for alt in _AUTOPILOT_PLUGIN_LANES:
-            if any(ide.id == alt for ide in running):
-                lane = resolve_project_lane(project, alt)
-                return lane, f"terminal:prefer-{alt}-over-{terminal}"
+    
+    running_fallback = _resolve_lane_from_running_ide_fallback(project, terminal, resolve_project_lane)
+    if running_fallback:
+        return running_fallback
 
     running = detect_running_ides()
     if running:
@@ -118,6 +162,47 @@ def resolve_agent_lane_id(
 
     marker = resolve_project_lane(project, "auto")
     return marker, "project-markers"
+
+
+def _resolve_lane_from_explicit(
+    explicit: str | None,
+    explicit_source: str,
+    terminal: str | None,
+) -> tuple[str | None, str] | None:
+    """Resolve lane from explicit KORU_AUTOPILOT_INSTANCE env var."""
+    if not explicit:
+        return None
+    if terminal in _PLUGIN_IDE_LANES and terminal != explicit and terminal != "vscode":
+        return terminal, f"terminal:over-{explicit_source}"
+    return explicit, explicit_source
+
+
+def _resolve_lane_from_vscode_terminal(
+    running: list[RunningIDE],
+    terminal: str | None,
+) -> tuple[str | None, str] | None:
+    """Check if VSCode terminal should be overridden by a running plugin IDE."""
+    if terminal != "vscode" or not running:
+        return None
+    picked = pick_target(running)
+    if picked is not None and picked.id != terminal and picked.id in _PLUGIN_IDE_LANES:
+        return picked.id, f"target:over-terminal:{terminal}"
+    return None
+
+
+def _resolve_lane_from_terminal(
+    terminal: str | None,
+    running: list[RunningIDE],
+) -> tuple[str | None, str] | None:
+    """Resolve lane from terminal hint with fallback to running IDEs."""
+    if terminal in _PLUGIN_IDE_LANES:
+        return terminal, "terminal"
+    if not terminal:
+        return None
+    for alt in _AUTOPILOT_PLUGIN_LANES:
+        if any(ide.id == alt for ide in running):
+            return alt, f"terminal:prefer-{alt}-over-{terminal}"
+    return None
 
 
 def resolve_agent_lane(
@@ -135,23 +220,22 @@ def resolve_agent_lane(
     terminal = normalize_ide_id(terminal_hint) if terminal_hint is not None else None
     if terminal is None:
         terminal = _terminal_agent_lane_from_env()
+    
     explicit, explicit_source = _explicit_agent_lane_from_env()
-    if explicit:
-        if terminal in _PLUGIN_IDE_LANES and terminal != explicit and terminal != "vscode":
-            return terminal, f"terminal:over-{explicit_source}"
-        return explicit, explicit_source
+    explicit_result = _resolve_lane_from_explicit(explicit, explicit_source, terminal)
+    if explicit_result:
+        return explicit_result
 
     running = list(running_ides) if running_ides is not None else detect_running_ides()
-    if terminal == "vscode" and running:
-        picked = pick_target(running)
-        if picked is not None and picked.id != terminal and picked.id in _PLUGIN_IDE_LANES:
-            return picked.id, f"target:over-terminal:{terminal}"
-    if terminal in _PLUGIN_IDE_LANES:
-        return terminal, "terminal"
-    if terminal:
-        for alt in _AUTOPILOT_PLUGIN_LANES:
-            if any(ide.id == alt for ide in running):
-                return alt, f"terminal:prefer-{alt}-over-{terminal}"
+    
+    vscode_result = _resolve_lane_from_vscode_terminal(running, terminal)
+    if vscode_result:
+        return vscode_result
+    
+    terminal_result = _resolve_lane_from_terminal(terminal, running)
+    if terminal_result:
+        return terminal_result
+    
     if running:
         picked = pick_target(running)
         if picked is not None:
@@ -304,48 +388,49 @@ def format_startup_banner(probe: AutonomousStartupProbe) -> list[str]:
     return lines
 
 
-def format_post_startup_operator_hints(
-    probe: AutonomousStartupProbe,
-    *,
-    plugin_connected: bool | None = None,
-) -> list[str]:
-    """Human checklist printed after daemon start (and optional plugin wait)."""
-    ide = probe.resolved_autopilot_ide
-    sock = probe.socket_path
-    settings_hint = (
-        "~/.config/Cursor/User/settings.json"
-        if ide == "cursor"
-        else "~/.config/Code/User/settings.json"
-        if ide == "vscode"
-        else "~/.config/VSCodium/User/settings.json"
-        if ide == "vscodium"
-        else "IDE user settings (koruAutopilot.*)"
-    )
-    lines: list[str] = [
-        "",
-        "koru autonomous: --- co zrobić teraz (operator IDE) ---",
-    ]
-    plugin_supported = supports_autopilot_plugin_ide(ide)
-    if plugin_supported and plugin_connected is True:
-        lines.append(
-            f"koru autonomous: [ok] plugin połączony (ide={ide}) — "
-            "prompty idą do czatu, nie ydotool",
-        )
-    elif plugin_supported and plugin_connected is False:
-        lines.append(
-            f"koru autonomous: [!] brak zgodnego pluginu na {sock} — "
-            "drive jest wstrzymany w trybie strict. Reload IDE, potem połącz plugin.",
-        )
-    elif not plugin_supported:
-        lines.append(
-            f"koru autonomous: [i] plugin niedostępny dla ide={ide} — "
-            "używam ścieżki keyboard/OS-injector",
-        )
-    else:
-        lines.append(
-            "koru autonomous: [?] czekam na plugin — jeśli poniżej nie ma [ok], wykonaj kroki 1–6",
-        )
+def _get_settings_hint(ide: str) -> str:
+    """Return settings file path for the given IDE."""
+    if ide == "cursor":
+        return "~/.config/Cursor/User/settings.json"
+    if ide == "vscode":
+        return "~/.config/Code/User/settings.json"
+    if ide == "vscodium":
+        return "~/.config/VSCodium/User/settings.json"
+    return "IDE user settings (koruAutopilot.*)"
 
+
+def _format_plugin_status_line(
+    ide: str,
+    plugin_supported: bool,
+    plugin_connected: bool | None,
+    sock: str,
+) -> str:
+    """Format plugin connection status line."""
+    if plugin_supported and plugin_connected is True:
+        return (
+            f"koru autonomous: [ok] plugin połączony (ide={ide}) — "
+            f"prompty idą do czatu, nie ydotool"
+        )
+    if plugin_supported and plugin_connected is False:
+        return (
+            f"koru autonomous: [!] brak zgodnego pluginu na {sock} — "
+            f"drive jest wstrzymany w trybie strict. Reload IDE, potem połącz plugin."
+        )
+    if not plugin_supported:
+        return (
+            f"koru autonomous: [i] plugin niedostępny dla ide={ide} — "
+            f"używam ścieżki keyboard/OS-injector"
+        )
+    return (
+        "koru autonomous: [?] czekam na plugin — jeśli poniżej nie ma [ok], wykonaj kroki 1–6"
+    )
+
+
+def _format_ide_mismatch_warnings(probe: AutonomousStartupProbe) -> list[str]:
+    """Format warnings about IDE/CLI mismatches."""
+    ide = probe.resolved_autopilot_ide
+    lines: list[str] = []
+    
     if ide == "cursor" and probe.autopilot_ide_cli == "vscode":
         lines.append(
             "koru autonomous: [!] CLI --autopilot-ide=vscode przy pracy w Cursorze — "
@@ -356,6 +441,7 @@ def format_post_startup_operator_hints(
             "koru autonomous: [!] TERM_PROGRAM=vscode w terminalu Cursora — "
             "jawnie ustaw --agent-lane cursor jeśli auto myli VS Code",
         )
+    
     running_labels = " ".join(probe.running_ides).lower()
     if ide == "vscode" and "vscodium" in running_labels:
         lines.append(
@@ -368,42 +454,80 @@ def format_post_startup_operator_hints(
             "koru autonomous: [!] terminal wygląda na VSCodium, ale autopilot wybrał vscode — "
             "ustaw KORU_AUTOPILOT_INSTANCE=vscodium albo użyj --autopilot-ide vscodium",
         )
+    
+    return lines
 
+
+def _format_plugin_setup_steps(
+    ide: str,
+    sock: str,
+    settings_hint: str,
+    project: Path,
+) -> list[str]:
+    """Format setup steps for plugin-based IDEs."""
+    return [
+        f"koru autonomous: 1) Otwórz {ide} z root = {project}",
+        "koru autonomous: 2) MCP: włącz serwer „koru” "
+        "(po Reload po task koru:mcp:bootstrap)",
+        "koru autonomous: 3) Autopilot: Command Palette → „koru: Connect autopilot daemon” "
+        "(pasek: koru: on)",
+        f"koru autonomous: 4) Socket wtyczki = {sock} "
+        f"({settings_hint}: koruAutopilot.socketPath)",
+        "koru autonomous: 5) Ten sam socket w shellu: export "
+        f"KORU_AUTOPILOT_INSTANCE={ide}",
+        f"koru autonomous: 6) Test: koru autopilot status → plugins "
+        f"niepuste; potem koru autopilot drive --ide {ide} --require-plugin 'probe test'",
+        "koru autonomous: 7) (opcjonalnie) Command Palette → "
+        "„koru: Calibrate chat probe ladder”",
+        "koru autonomous: 8) Dashboard: task koru:server → http://localhost:8765/",
+        "koru autonomous: --- docs: <project>/docs/autonomy-ide-cursor.md "
+        "(sekcja „Po starcie\") ---",
+    ]
+
+
+def _format_keyboard_setup_steps(
+    ide: str,
+    sock: str,
+    project: Path,
+) -> list[str]:
+    """Format setup steps for keyboard/OS-injector based IDEs."""
+    return [
+        f"koru autonomous: 1) Otwórz {ide} z root = {project}",
+        "koru autonomous: 2) MCP: włącz serwer „koru” "
+        "(po Reload po task koru:mcp:bootstrap)",
+        f"koru autonomous: 3) Socket daemona = {sock}",
+        f"koru autonomous: 4) Ustaw w shellu: export KORU_AUTOPILOT_INSTANCE={ide}",
+        f"koru autonomous: 5) Skalibruj OS injector: task koru:ide-os:calibrate IDE={ide}",
+        f"koru autonomous: 6) Test: koru autopilot drive --ide {ide} 'probe test' "
+        "(fallback keyboard/OS-injector)",
+        "koru autonomous: 7) Dashboard: task koru:server → http://localhost:8765/",
+    ]
+
+
+def format_post_startup_operator_hints(
+    probe: AutonomousStartupProbe,
+    *,
+    plugin_connected: bool | None = None,
+) -> list[str]:
+    """Human checklist printed after daemon start (and optional plugin wait)."""
+    ide = probe.resolved_autopilot_ide
+    sock = probe.socket_path
+    settings_hint = _get_settings_hint(ide)
+    
+    lines: list[str] = [
+        "",
+        "koru autonomous: --- co zrobić teraz (operator IDE) ---",
+    ]
+    
+    plugin_supported = supports_autopilot_plugin_ide(ide)
+    lines.append(_format_plugin_status_line(ide, plugin_supported, plugin_connected, sock))
+    lines.extend(_format_ide_mismatch_warnings(probe))
+    
     if plugin_supported:
-        lines.extend(
-            [
-                f"koru autonomous: 1) Otwórz {ide} z root = {probe.project}",
-                "koru autonomous: 2) MCP: włącz serwer „koru” "
-                "(po Reload po task koru:mcp:bootstrap)",
-                "koru autonomous: 3) Autopilot: Command Palette → „koru: Connect autopilot daemon” "
-                "(pasek: koru: on)",
-                f"koru autonomous: 4) Socket wtyczki = {sock} "
-                f"({settings_hint}: koruAutopilot.socketPath)",
-                "koru autonomous: 5) Ten sam socket w shellu: export "
-                f"KORU_AUTOPILOT_INSTANCE={ide}",
-                f"koru autonomous: 6) Test: koru autopilot status → plugins "
-                f"niepuste; potem koru autopilot drive --ide {ide} --require-plugin 'probe test'",
-                "koru autonomous: 7) (opcjonalnie) Command Palette → "
-                "„koru: Calibrate chat probe ladder”",
-                "koru autonomous: 8) Dashboard: task koru:server → http://localhost:8765/",
-                "koru autonomous: --- docs: <project>/docs/autonomy-ide-cursor.md "
-                "(sekcja „Po starcie”) ---",
-            ],
-        )
+        lines.extend(_format_plugin_setup_steps(ide, sock, settings_hint, probe.project))
     else:
-        lines.extend(
-            [
-                f"koru autonomous: 1) Otwórz {ide} z root = {probe.project}",
-                "koru autonomous: 2) MCP: włącz serwer „koru” "
-                "(po Reload po task koru:mcp:bootstrap)",
-                f"koru autonomous: 3) Socket daemona = {sock}",
-                f"koru autonomous: 4) Ustaw w shellu: export KORU_AUTOPILOT_INSTANCE={ide}",
-                f"koru autonomous: 5) Skalibruj OS injector: task koru:ide-os:calibrate IDE={ide}",
-                f"koru autonomous: 6) Test: koru autopilot drive --ide {ide} 'probe test' "
-                "(fallback keyboard/OS-injector)",
-                "koru autonomous: 7) Dashboard: task koru:server → http://localhost:8765/",
-            ],
-        )
+        lines.extend(_format_keyboard_setup_steps(ide, sock, probe.project))
+    
     return lines
 
 

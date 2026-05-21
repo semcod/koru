@@ -568,11 +568,9 @@ class AutopilotDaemon:
             ok=True,
         )
 
-    def _handle_hello(self, client: _Client, msg: Message) -> None:
+    def _extract_hello_metadata(self, msg: Message) -> tuple[str | None, str | None, int | None, list[str]]:
+        """Extract and validate hello message metadata."""
         ide = msg.data.get("ide")
-        if not isinstance(ide, str) or not ide:
-            self._send(client, error(msg.id, "hello requires 'ide'").encode())
-            return
         version = msg.data.get("version")
         plugin_version = version if isinstance(version, str) else None
         protocol_raw = msg.data.get("protocolVersion")
@@ -583,6 +581,18 @@ class AutopilotDaemon:
             if isinstance(capabilities_raw, list)
             else []
         )
+        return ide, plugin_version, protocol_version, capabilities
+
+    def _handle_plugin_version_check(
+        self,
+        client: _Client,
+        msg: Message,
+        ide: str,
+        plugin_version: str | None,
+        protocol_version: int | None,
+        capabilities: list[str],
+    ) -> bool:
+        """Check plugin version and return True if accepted, False if rejected."""
         version_info = DriveOrchestrator.plugin_version_info(
             plugin_ide=ide,
             connected_version=plugin_version,
@@ -606,14 +616,35 @@ class AutopilotDaemon:
                 error=message,
             )
             self._drop(client)
-            return
+            return False
+        return True
+
+    def _configure_plugin_client(
+        self,
+        client: _Client,
+        ide: str,
+        plugin_version: str | None,
+        protocol_version: int | None,
+        capabilities: list[str],
+    ) -> None:
+        """Configure client as a plugin with provided metadata."""
         client.role = "plugin"
         client.ide = ide
         client.version = plugin_version
         client.protocol_version = protocol_version
         client.capabilities = capabilities
         self._plugin_router.drop_stale_plugins(client, ide)
-        matching_cmds = msg.data.get("matchingCommands")
+
+    def _log_plugin_hello_accepted(
+        self,
+        ide: str,
+        plugin_version: str | None,
+        protocol_version: int | None,
+        capabilities: list[str],
+        version_info: dict[str, Any],
+        matching_cmds: Any,
+    ) -> None:
+        """Log successful plugin hello acceptance."""
         command_count = len(matching_cmds) if isinstance(matching_cmds, list) else "-"
         self.log(
             "plugin hello accepted: "
@@ -622,6 +653,30 @@ class AutopilotDaemon:
             f"policy={version_info.get('plugin_version_policy') or 'warn'} "
             f"protocol={protocol_version or '-'} min_protocol={MIN_PLUGIN_PROTOCOL_VERSION} "
             f"capabilities={len(capabilities)} matching_commands={command_count}",
+        )
+
+    def _handle_hello(self, client: _Client, msg: Message) -> None:
+        ide, plugin_version, protocol_version, capabilities = self._extract_hello_metadata(msg)
+        if not isinstance(ide, str) or not ide:
+            self._send(client, error(msg.id, "hello requires 'ide'").encode())
+            return
+
+        if not self._handle_plugin_version_check(
+            client, msg, ide, plugin_version, protocol_version, capabilities
+        ):
+            return
+
+        version_info = DriveOrchestrator.plugin_version_info(
+            plugin_ide=ide,
+            connected_version=plugin_version,
+            protocol_version=protocol_version,
+            capabilities=capabilities,
+        )
+
+        self._configure_plugin_client(client, ide, plugin_version, protocol_version, capabilities)
+        matching_cmds = msg.data.get("matchingCommands")
+        self._log_plugin_hello_accepted(
+            ide, plugin_version, protocol_version, capabilities, version_info, matching_cmds
         )
         self._send(client, ack(msg.id or "", info={"role": "plugin"}).encode())
         self.audit.record(
@@ -849,11 +904,11 @@ class AutopilotDaemon:
         except OSError:
             pass
 
-    def _handle_plugin_event(self, client: _Client, msg: Message) -> None:
+    def _handle_plugin_event_basic(self, client: _Client, msg: Message) -> tuple | None:
+        """Handle basic plugin event logging and acknowledgment."""
         chat = msg.data.get("chat") or "default"
         reason = msg.data.get("reason") or ""
         self.log(f"event {msg.type} ide={client.ide} chat={chat} reason={reason!r}")
-        # Persist every plugin event so autonomous can react.
         self._append_event(client, msg)
         self.audit.record(
             "plugin_event",
@@ -861,36 +916,57 @@ class AutopilotDaemon:
             ide=client.ide,
             **msg.data,
         )
-        # Always ack the event first so the plugin doesn't time out.
         ack_info: dict[str, Any] = {"event": msg.type}
         if msg.type != "session.ended" or self.handoff is None:
             self._send(client, ack(msg.id or "session-event", info=ack_info).encode())
             if msg.type == "message.sent":
                 self._relay_message_sent_ack(client, msg)
             return
-        # Cooldown: ignore session.ended right after we just typed
-        # something — otherwise we'd loop forever if the LLM finishes
-        # a turn immediately after our injection.
+        return None, ack_info, chat, reason
+
+    def _check_handoff_cooldown(self, ack_info: dict[str, Any]) -> bool:
+        """Check if handoff cooldown period has passed."""
         elapsed = time.monotonic() - self._last_chat_send_at
         if elapsed < self.handoff_cooldown:
             ack_info["handoff"] = "skipped"
             ack_info["reason"] = f"cooldown ({elapsed:.2f}s < {self.handoff_cooldown:.2f}s)"
-            self._send(client, ack(msg.id or "session-event", info=ack_info).encode())
-            return
+            return False
+        return True
+
+    def _execute_handoff(
+        self,
+        client: _Client,
+        msg: Message,
+        chat: str,
+        reason: str,
+        ack_info: dict[str, Any],
+    ) -> str | None:
+        """Execute handoff and return text if successful."""
         try:
             text = self.handoff({"chat": chat, "reason": reason, "ide": client.ide})
-        except Exception as exc:  # pragma: no cover — defensive
+        except Exception as exc:
             ack_info["handoff"] = "error"
             ack_info["reason"] = str(exc)
             self._send(client, ack(msg.id or "session-event", info=ack_info).encode())
             self.log(f"handoff failed: {exc}")
-            return
+            return None
         if not text:
             ack_info["handoff"] = "skipped"
             ack_info["reason"] = "handoff returned empty text"
             self._send(client, ack(msg.id or "session-event", info=ack_info).encode())
-            return
-        # Forward the brief as chat.send on the same plugin connection.
+            return None
+        return text
+
+    def _forward_handoff_to_plugin(
+        self,
+        client: _Client,
+        msg: Message,
+        text: str,
+        chat: str,
+        reason: str,
+        ack_info: dict[str, Any],
+    ) -> None:
+        """Forward handoff text to plugin and log."""
         corr = f"handoff-{time.monotonic_ns():x}"
         forwarded = chat_send(text, submit=True, id=corr).encode()
         self._send(client, forwarded)
@@ -907,6 +983,22 @@ class AutopilotDaemon:
             chars=len(text),
             ok=True,
         )
+
+    def _handle_plugin_event(self, client: _Client, msg: Message) -> None:
+        result = self._handle_plugin_event_basic(client, msg)
+        if result is None:
+            return
+        _, ack_info, chat, reason = result
+
+        if not self._check_handoff_cooldown(ack_info):
+            self._send(client, ack(msg.id or "session-event", info=ack_info).encode())
+            return
+
+        text = self._execute_handoff(client, msg, chat, reason, ack_info)
+        if text is None:
+            return
+
+        self._forward_handoff_to_plugin(client, msg, text, chat, reason, ack_info)
 
     def _handle_shutdown(self, client: _Client, msg: Message) -> None:
         if client.role == "unknown":

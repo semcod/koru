@@ -308,7 +308,9 @@ def _ide_id_from_process(pid: int) -> str | None:
     return None
 
 
-def detect_focused_ide_id(*, _active_pid: int | None = None) -> str | None:
+def detect_focused_ide_id(
+    *, _active_pid: int | None = None, _log: Callable[[str], None] | None = None
+) -> str | None:
     """Detect which IDE currently owns desktop focus.
 
     On X11 this maps active-window PID to one of our known IDE ids.
@@ -316,8 +318,13 @@ def detect_focused_ide_id(*, _active_pid: int | None = None) -> str | None:
     """
     pid = _active_pid if _active_pid is not None else _active_window_pid_x11()
     if pid is None:
+        if _log:
+            _log("focused_ide: no active window detected")
         return None
-    return _ide_id_from_process(pid)
+    ide = _ide_id_from_process(pid)
+    if _log:
+        _log(f"focused_ide: detected={ide or 'none'} (pid={pid})")
+    return ide
 
 
 _VSCODE_FAMILY_ENV_KEYS = (
@@ -442,7 +449,9 @@ def _terminal_ide_from_parent_chain(start_pid: int) -> str | None:
     return chain[0]
 
 
-def detect_terminal_host_ide_id(*, _start_pid: int | None = None) -> str | None:
+def detect_terminal_host_ide_id(
+    *, _start_pid: int | None = None, _log: Callable[[str], None] | None = None
+) -> str | None:
     """IDE that owns the shell running this command (integrated terminal).
 
     Uses editor-specific env vars first (works on Wayland), then walks
@@ -451,9 +460,14 @@ def detect_terminal_host_ide_id(*, _start_pid: int | None = None) -> str | None:
     """
     from_env = _terminal_ide_from_env()
     if from_env is not None:
+        if _log:
+            _log(f"terminal_host_ide: detected={from_env} (from env)")
         return from_env
     start = _start_pid if _start_pid is not None else os.getpid()
-    return _terminal_ide_from_parent_chain(start)
+    ide = _terminal_ide_from_parent_chain(start)
+    if _log:
+        _log(f"terminal_host_ide: detected={ide or 'none'} (parent chain from pid={start})")
+    return ide
 
 
 def focused_ide(
@@ -630,6 +644,7 @@ def resolve_drive_target(
     *,
     project: Path | None = None,
     has_profile: Callable[[str, Path | None], bool] | None = None,
+    _log: Callable[[str], None] | None = None,
 ) -> tuple[str, str, str]:
     """Resolve ``(keyboard_ide, profile_tool_id, selection_reason)`` for ``drive``.
 
@@ -648,16 +663,25 @@ def resolve_drive_target(
 
     if stripped_profile:
         keyboard = target.id if target is not None else (prefer or "default")
-        return keyboard, stripped_profile, f"os-profile:{stripped_profile}"
+        result = keyboard, stripped_profile, f"os-profile:{stripped_profile}"
+        if _log:
+            _log(f"resolve_drive_target: {result}")
+        return result
 
     if not is_auto:
-        return _resolve_explicit_drive_target(
+        result = _resolve_explicit_drive_target(
             prefer or "default", target, project=project, profile_check=profile_check
         )
+        if _log:
+            _log(f"resolve_drive_target: {result}")
+        return result
 
-    return _resolve_auto_drive_target(
+    result = _resolve_auto_drive_target(
         detected, target, project=project, profile_check=profile_check
     )
+    if _log:
+        _log(f"resolve_drive_target: {result}")
+    return result
 
 
 __all__ = [
