@@ -33,6 +33,23 @@ def _default_semcod_root() -> Path:
     return Path.home() / "github" / "semcod"
 
 
+def _venv_python(root: Path, package: str) -> Path | None:
+    package_root = root / package
+    for venv_name in (".venv", "venv"):
+        candidate = package_root / venv_name / "bin" / "python"
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _target_python(root: Path, *, python: Path | None, target_venv: str | None) -> Path | None:
+    if python is not None:
+        return python.expanduser()
+    if target_venv:
+        return _venv_python(root, target_venv)
+    return Path(sys.executable)
+
+
 def _run(command: Sequence[str], cwd: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         list(command),
@@ -62,8 +79,12 @@ def sync_developer_packages(
     *,
     root: Path | None = None,
     packages: Sequence[str] = DEFAULT_PACKAGES,
+    python: Path | None = None,
+    target_venv: str | None = None,
     pull: bool = False,
     allow_dirty_pull: bool = False,
+    upgrade: bool = False,
+    eager: bool = False,
     runner: Runner = _run,
 ) -> list[SyncItem]:
     """Install local semcod repositories in editable mode.
@@ -73,6 +94,10 @@ def sync_developer_packages(
     """
     base = (root or _default_semcod_root()).expanduser().resolve()
     results: list[SyncItem] = []
+    python_executable = _target_python(base, python=python, target_venv=target_venv)
+    if python_executable is None:
+        detail = f"target venv python not found: {base / str(target_venv or '')}"
+        return [SyncItem(name=name, path=base / name, status="failed", detail=detail) for name in packages]
 
     for name in packages:
         repo = base / name
@@ -86,10 +111,22 @@ def sync_developer_packages(
                 results.append(SyncItem(name=name, path=repo, status="pull-skipped", detail=detail))
                 continue
 
-        command = [sys.executable, "-m", "pip", "install", "-e", str(repo)]
+        command = [str(python_executable), "-m", "pip", "install"]
+        if upgrade:
+            command.append("--upgrade")
+        if eager:
+            command.extend(["--upgrade-strategy", "eager"])
+        command.extend(["-e", str(repo)])
         install = runner(command, repo)
         if install.returncode == 0:
-            results.append(SyncItem(name=name, path=repo, status="synced", detail="editable install"))
+            results.append(
+                SyncItem(
+                    name=name,
+                    path=repo,
+                    status="synced",
+                    detail=f"editable install via {python_executable}",
+                )
+            )
         else:
             detail = (install.stderr or install.stdout).strip() or "pip install -e failed"
             results.append(SyncItem(name=name, path=repo, status="failed", detail=detail))
@@ -107,7 +144,29 @@ def dev_main(argv: list[str] | None = None) -> int:
         default=",".join(DEFAULT_PACKAGES),
         help="Comma-separated package directories under --root.",
     )
+    sync.add_argument(
+        "--python",
+        type=Path,
+        default=None,
+        help="Python executable that receives the editable installs.",
+    )
+    sync.add_argument(
+        "--target-venv",
+        default=None,
+        help="Install into --root/<package>/.venv or venv, for example --target-venv koru.",
+    )
     sync.add_argument("--pull", action="store_true", help="Run git pull --ff-only before install.")
+    sync.add_argument(
+        "--latest",
+        action="store_true",
+        help="Shortcut for --pull --upgrade: fast-forward clean repos and upgrade editable installs.",
+    )
+    sync.add_argument("--upgrade", action="store_true", help="Pass --upgrade to pip install.")
+    sync.add_argument(
+        "--eager",
+        action="store_true",
+        help="With --upgrade, pass --upgrade-strategy eager to pip.",
+    )
     sync.add_argument(
         "--allow-dirty-pull",
         action="store_true",
@@ -122,8 +181,12 @@ def dev_main(argv: list[str] | None = None) -> int:
     results = sync_developer_packages(
         root=args.root,
         packages=packages,
-        pull=args.pull,
+        python=args.python,
+        target_venv=args.target_venv,
+        pull=args.pull or args.latest,
         allow_dirty_pull=args.allow_dirty_pull,
+        upgrade=args.upgrade or args.latest,
+        eager=args.eager,
     )
 
     failed = False

@@ -22,6 +22,28 @@ def _ticket_args(command: list[str]) -> list[str]:
 
 
 class TestPlanfileCommand(unittest.TestCase):
+    def test_prefers_local_planfile_before_importable_module_from_active_env(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            project = root / "koru"
+            local = root / "planfile" / ".venv" / "bin" / "planfile"
+            local.parent.mkdir(parents=True)
+            local.write_text("#!/bin/sh\n", encoding="utf-8")
+            local.chmod(0o755)
+            calls: list[list[str]] = []
+
+            def runner(command, _project):
+                calls.append(list(command))
+                return _ok()
+
+            with patch("koru.queue.ticket.find_spec", return_value=object()), patch(
+                "koru.queue.ticket.shutil.which",
+                return_value="/tmp/other-venv/bin/planfile",
+            ):
+                planfile_command(project, ["ticket", "list"], runner=runner)
+
+            self.assertEqual(calls[0], [str(local), "ticket", "list"])
+
     def test_prefers_local_planfile_before_path_cli_when_module_missing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)

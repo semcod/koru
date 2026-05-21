@@ -1,29 +1,29 @@
-# code2llm/evolution | 1617 func | 144f | 2026-05-21
+# code2llm/evolution | 1620 func | 144f | 2026-05-21
 # generated in 0.01s
 
 NEXT[3] (ranked by impact):
-  [1] !! SPLIT           src/koru/cli.py
-      WHY: 1823L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 25522
-
-  [2] !! SPLIT           src/koru/autonomous_cycle.py
+  [1] !! SPLIT           src/koru/autonomous_cycle.py
       WHY: 1502L, 2 classes, max CC=14
       EFFORT: ~4h  IMPACT: 21028
 
-  [3] !! SPLIT           src/koruapi/dashboard_serve.py
+  [2] !! SPLIT           src/koruapi/dashboard_serve.py
       WHY: 1400L, 1 classes, max CC=13
       EFFORT: ~4h  IMPACT: 18200
 
+  [3] !! SPLIT           src/koru/context.py
+      WHY: 1253L, 0 classes, max CC=12
+      EFFORT: ~4h  IMPACT: 15036
+
 
 RISKS[3]:
-  ⚠ Splitting src/koru/cli.py may break 52 import paths
   ⚠ Splitting src/koru/autonomous_cycle.py may break 56 import paths
   ⚠ Splitting src/koruapi/dashboard_serve.py may break 15 import paths
+  ⚠ Splitting src/koru/context.py may break 49 import paths
 
 METRICS-TARGET:
   CC̄:          4.1 → ≤2.9
   max-CC:      14 → ≤7
-  god-modules: 20 → 0
+  god-modules: 19 → 0
   high-CC(≥15): 0 → ≤0
   hub-types:   0 → ≤0
 

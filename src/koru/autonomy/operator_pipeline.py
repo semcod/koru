@@ -172,16 +172,20 @@ def _close_resolved_step_ticket(
     stdio_format: str,
 ) -> bool:
     from koru.activity_log import activity
+    from koru.queue.ticket import planfile_command
 
-    try:
-        proc = subprocess.run(
-            ["planfile", "ticket", "done", ticket_id],
-            cwd=project,
+    def runner(command: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            command,
+            cwd=cwd,
             check=False,
             capture_output=True,
             text=True,
             timeout=60,
         )
+
+    try:
+        proc = planfile_command(project, ["ticket", "done", ticket_id], runner=runner)
     except subprocess.TimeoutExpired as exc:
         activity(
             "TICKET",
@@ -630,6 +634,9 @@ def _close_finished_step_marker(
 ) -> str | None:
     if not create_tickets or step.status not in {"ok", "skipped"} or ticket_id is None:
         return ticket_id
+    if _find_ticket_by_id(project, ticket_id) is None:
+        _clear_marker(state_dir, step.step_id)
+        return None
     closed = _close_resolved_step_ticket(
         project,
         step_id=step.step_id,

@@ -13,6 +13,11 @@ from koru.autonomous_startup import AutonomousStartupProbe
 from koru.autonomy import operator_pipeline as op
 
 
+def _ticket_args(command: list[str]) -> list[str]:
+    ticket_index = command.index("ticket")
+    return command[ticket_index:]
+
+
 @pytest.fixture
 def probe(tmp_path: Path) -> AutonomousStartupProbe:
     return AutonomousStartupProbe(
@@ -350,10 +355,69 @@ sprint:
     assert plugin_step.ticket_id != "PLF-1280"
     assert plugin_step.task_command == "task koru:operator:plugin-probe IDE=vscode"
     assert marker.read_text(encoding="utf-8") == plugin_step.ticket_id
-    assert calls == [["planfile", "ticket", "done", "PLF-1280"]]
+    assert [_ticket_args(call) for call in calls] == [["ticket", "done", "PLF-1280"]]
 
 
 def test_run_startup_operator_pipeline_closes_resolved_marker_ticket(
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (tmp_path / ".cursor").mkdir()
+    (tmp_path / ".cursor" / "mcp.json").write_text(
+        json.dumps({"mcpServers": {"koru": {"command": "koru", "args": ["mcp-serve"]}}}),
+        encoding="utf-8",
+    )
+    marker_dir = tmp_path / ".planfile" / ".koru" / "operator-steps"
+    marker_dir.mkdir(parents=True)
+    marker = marker_dir / "autopilot_plugin.ticket"
+    marker.write_text("PLF-1280", encoding="utf-8")
+    (tmp_path / ".planfile" / "sprints").mkdir(parents=True)
+    (tmp_path / ".planfile" / "sprints" / "current.yaml").write_text(
+        """
+sprint:
+  name: current
+  tickets:
+    PLF-1280:
+      id: PLF-1280
+      name: "[OPERATOR] Autopilot: Connect + plugin w czacie"
+      status: waiting_input
+      labels: [koru, operator, auto-pipeline, step:autopilot_plugin]
+      execution:
+        queue: operator
+      source:
+        context:
+          step_id: autopilot_plugin
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(op, "_planfile_api_ok", lambda _p: (True, "ok"))
+    monkeypatch.setattr(op, "_host_injectors_ok", lambda: (True, "ok"))
+    monkeypatch.setattr(op, "_os_profile_ok", lambda _i, _p: (True, "ok"))
+
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, **_kwargs):
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0, stdout="done", stderr="")
+
+    monkeypatch.setattr(op.subprocess, "run", fake_run)
+
+    result = op.run_startup_operator_pipeline(
+        project=tmp_path,
+        probe=probe,
+        plugin_connected=True,
+        create_tickets=True,
+    )
+
+    assert [_ticket_args(call) for call in calls] == [["ticket", "done", "PLF-1280"]]
+    assert not marker.exists()
+    plugin_step = next(s for s in result.steps if s.step_id == "autopilot_plugin")
+    assert plugin_step.status == "ok"
+    assert plugin_step.ticket_id is None
+
+
+def test_run_startup_operator_pipeline_clears_missing_resolved_marker_ticket(
     tmp_path: Path,
     probe: AutonomousStartupProbe,
     monkeypatch: pytest.MonkeyPatch,
@@ -386,7 +450,7 @@ def test_run_startup_operator_pipeline_closes_resolved_marker_ticket(
         create_tickets=True,
     )
 
-    assert calls == [["planfile", "ticket", "done", "PLF-1280"]]
+    assert calls == []
     assert not marker.exists()
     plugin_step = next(s for s in result.steps if s.step_id == "autopilot_plugin")
     assert plugin_step.status == "ok"
@@ -407,6 +471,25 @@ def test_run_startup_operator_pipeline_keeps_marker_when_close_times_out(
     marker_dir.mkdir(parents=True)
     marker = marker_dir / "autopilot_plugin.ticket"
     marker.write_text("PLF-1280", encoding="utf-8")
+    (tmp_path / ".planfile" / "sprints").mkdir(parents=True)
+    (tmp_path / ".planfile" / "sprints" / "current.yaml").write_text(
+        """
+sprint:
+  name: current
+  tickets:
+    PLF-1280:
+      id: PLF-1280
+      name: "[OPERATOR] Autopilot: Connect + plugin w czacie"
+      status: waiting_input
+      labels: [koru, operator, auto-pipeline, step:autopilot_plugin]
+      execution:
+        queue: operator
+      source:
+        context:
+          step_id: autopilot_plugin
+""",
+        encoding="utf-8",
+    )
     monkeypatch.setattr(op, "_planfile_api_ok", lambda _p: (True, "ok"))
     monkeypatch.setattr(op, "_host_injectors_ok", lambda: (True, "ok"))
     monkeypatch.setattr(op, "_os_profile_ok", lambda _i, _p: (True, "ok"))
@@ -449,6 +532,25 @@ def test_run_startup_operator_pipeline_closes_marker_when_plugin_step_skipped(
     marker_dir.mkdir(parents=True)
     marker = marker_dir / "autopilot_plugin.ticket"
     marker.write_text("PLF-1280", encoding="utf-8")
+    (tmp_path / ".planfile" / "sprints").mkdir(parents=True)
+    (tmp_path / ".planfile" / "sprints" / "current.yaml").write_text(
+        """
+sprint:
+  name: current
+  tickets:
+    PLF-1280:
+      id: PLF-1280
+      name: "[OPERATOR] Autopilot: Connect + plugin w czacie"
+      status: waiting_input
+      labels: [koru, operator, auto-pipeline, step:autopilot_plugin]
+      execution:
+        queue: operator
+      source:
+        context:
+          step_id: autopilot_plugin
+""",
+        encoding="utf-8",
+    )
 
     monkeypatch.setattr(op, "_planfile_api_ok", lambda _p: (True, "ok"))
     monkeypatch.setattr(op, "_host_injectors_ok", lambda: (True, "ok"))
@@ -469,7 +571,7 @@ def test_run_startup_operator_pipeline_closes_marker_when_plugin_step_skipped(
         create_tickets=True,
     )
 
-    assert calls == [["planfile", "ticket", "done", "PLF-1280"]]
+    assert [_ticket_args(call) for call in calls] == [["ticket", "done", "PLF-1280"]]
     assert not marker.exists()
     plugin_step = next(s for s in result.steps if s.step_id == "autopilot_plugin")
     assert plugin_step.status == "skipped"

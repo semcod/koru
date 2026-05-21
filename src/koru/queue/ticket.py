@@ -137,10 +137,10 @@ def planfile_command(
     configured = os.getenv("KORU_PLANFILE_CMD")
     if configured:
         base_command = shlex.split(configured)
-    elif _has_planfile_cli_module():
-        base_command = [sys.executable, "-m", "planfile.cli"]
     elif local_planfile := _local_planfile_executable(project):
         base_command = [str(local_planfile)]
+    elif _has_planfile_cli_module():
+        base_command = [sys.executable, "-m", "planfile.cli"]
     elif shutil.which("planfile"):
         base_command = ["planfile"]
     else:

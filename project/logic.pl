@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.190', 'python').
+project_metadata('koru', '0.1.192', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 681, 'less').
@@ -100,7 +100,7 @@ project_file('src/koru/autonomy/env.py', 305, 'python').
 project_file('src/koru/autonomy/environment.py', 246, 'python').
 project_file('src/koru/autonomy/heal.py', 117, 'python').
 project_file('src/koru/autonomy/ide_work.py', 302, 'python').
-project_file('src/koru/autonomy/operator_pipeline.py', 856, 'python').
+project_file('src/koru/autonomy/operator_pipeline.py', 863, 'python').
 project_file('src/koru/autonomy/post_run_verify.py', 382, 'python').
 project_file('src/koru/autonomy/prompts.py', 102, 'python').
 project_file('src/koru/autonomy/telemetry_snapshot.py', 80, 'python').
@@ -142,7 +142,7 @@ project_file('src/koru/cli_topology.py', 123, 'python').
 project_file('src/koru/cli_watch.py', 42, 'python').
 project_file('src/koru/context.py', 1254, 'python').
 project_file('src/koru/context_render.py', 472, 'python').
-project_file('src/koru/dev_sync.py', 134, 'python').
+project_file('src/koru/dev_sync.py', 197, 'python').
 project_file('src/koru/doctor.py', 546, 'python').
 project_file('src/koru/dotenv_loader.py', 105, 'python').
 project_file('src/koru/dsl/__init__.py', 10, 'python').
@@ -174,7 +174,7 @@ project_file('src/koru/queue/planfile_ticket_note.py', 56, 'python').
 project_file('src/koru/queue/runner.py', 394, 'python').
 project_file('src/koru/queue/runners.py', 250, 'python').
 project_file('src/koru/queue/shell_evidence.py', 73, 'python').
-project_file('src/koru/queue/ticket.py', 148, 'python').
+project_file('src/koru/queue/ticket.py', 165, 'python').
 project_file('src/koru/queue/types.py', 89, 'python').
 project_file('src/koru/queue_clean.py', 392, 'python').
 project_file('src/koru/queue_cli_helpers.py', 291, 'python').
@@ -269,7 +269,7 @@ project_file('tests/test_bootstrap.py', 298, 'python').
 project_file('tests/test_cli.py', 465, 'python').
 project_file('tests/test_context.py', 586, 'python').
 project_file('tests/test_dashboard_topology_post.py', 36, 'python').
-project_file('tests/test_dev_sync.py', 43, 'python').
+project_file('tests/test_dev_sync.py', 106, 'python').
 project_file('tests/test_docker_e2e.py', 582, 'python').
 project_file('tests/test_docker_ide_matrix.py', 161, 'python').
 project_file('tests/test_docker_ide_matrix_config.py', 120, 'python').
@@ -300,8 +300,8 @@ project_file('tests/test_local_service.py', 265, 'python').
 project_file('tests/test_loop.py', 95, 'python').
 project_file('tests/test_mcp_provision.py', 277, 'python').
 project_file('tests/test_mcp_server.py', 245, 'python').
-project_file('tests/test_operator_pipeline.py', 477, 'python').
-project_file('tests/test_planfile_queue.py', 1222, 'python').
+project_file('tests/test_operator_pipeline.py', 579, 'python').
+project_file('tests/test_planfile_queue.py', 1271, 'python').
 project_file('tests/test_plugin_router.py', 67, 'python').
 project_file('tests/test_policy.py', 194, 'python').
 project_file('tests/test_post_run_verify.py', 156, 'python').
@@ -736,7 +736,7 @@ python_function('src/koru/autonomy/operator_pipeline.py', '_ticket_text', 1, 10,
 python_function('src/koru/autonomy/operator_pipeline.py', '_ticket_matches_current_step', 2, 11, 3).
 python_function('src/koru/autonomy/operator_pipeline.py', '_find_ticket_by_id', 2, 8, 7).
 python_function('src/koru/autonomy/operator_pipeline.py', '_find_existing_step_ticket', 1, 11, 10).
-python_function('src/koru/autonomy/operator_pipeline.py', '_close_resolved_step_ticket', 1, 5, 5).
+python_function('src/koru/autonomy/operator_pipeline.py', '_close_resolved_step_ticket', 1, 5, 6).
 python_function('src/koru/autonomy/operator_pipeline.py', '_mcp_koru_configured', 1, 7, 5).
 python_function('src/koru/autonomy/operator_pipeline.py', '_candidate_planfile_health_urls', 1, 7, 10).
 python_function('src/koru/autonomy/operator_pipeline.py', '_planfile_api_ok', 1, 5, 3).
@@ -750,7 +750,7 @@ python_function('src/koru/autonomy/operator_pipeline.py', '_emit_step', 1, 4, 3)
 python_function('src/koru/autonomy/operator_pipeline.py', '_create_step_ticket', 2, 6, 4).
 python_function('src/koru/autonomy/operator_pipeline.py', '_ensure_planfile_api', 3, 2, 2).
 python_function('src/koru/autonomy/operator_pipeline.py', '_discard_stale_pending_marker', 2, 7, 4).
-python_function('src/koru/autonomy/operator_pipeline.py', '_close_finished_step_marker', 2, 5, 1).
+python_function('src/koru/autonomy/operator_pipeline.py', '_close_finished_step_marker', 2, 6, 3).
 python_function('src/koru/autonomy/operator_pipeline.py', '_recover_matching_step_ticket', 2, 7, 4).
 python_function('src/koru/autonomy/operator_pipeline.py', '_create_pending_step_ticket', 2, 5, 2).
 python_function('src/koru/autonomy/operator_pipeline.py', '_process_operator_step', 10, 1, 6).
@@ -1036,11 +1036,13 @@ python_function('src/koru/context_render.py', 'render_dashboard', 0, 1, 0).
 python_function('src/koru/context_render.py', 'render_autonomy_loop_brief', 1, 8, 5).
 python_function('src/koru/context_render.py', 'render_markdown_handoff', 1, 10, 20).
 python_function('src/koru/dev_sync.py', '_default_semcod_root', 0, 1, 1).
+python_function('src/koru/dev_sync.py', '_venv_python', 2, 3, 1).
+python_function('src/koru/dev_sync.py', '_target_python', 1, 3, 3).
 python_function('src/koru/dev_sync.py', '_run', 2, 1, 2).
 python_function('src/koru/dev_sync.py', '_is_dirty', 2, 2, 3).
 python_function('src/koru/dev_sync.py', '_pull_repo', 2, 7, 3).
-python_function('src/koru/dev_sync.py', 'sync_developer_packages', 0, 9, 10).
-python_function('src/koru/dev_sync.py', 'dev_main', 1, 7, 14).
+python_function('src/koru/dev_sync.py', 'sync_developer_packages', 0, 14, 12).
+python_function('src/koru/dev_sync.py', 'dev_main', 1, 9, 14).
 python_function('src/koru/doctor.py', 'run_diagnostics', 1, 6, 6).
 python_function('src/koru/doctor.py', '_check_agent_backends_registry', 1, 1, 3).
 python_function('src/koru/doctor.py', '_check_git_repo', 1, 3, 2).
@@ -1225,7 +1227,8 @@ python_function('src/koru/queue/ticket.py', 'ticket_command', 1, 4, 1).
 python_function('src/koru/queue/ticket.py', 'ticket_llm_request', 1, 8, 2).
 python_function('src/koru/queue/ticket.py', 'ticket_api_request', 1, 8, 1).
 python_function('src/koru/queue/ticket.py', '_has_planfile_cli_module', 0, 2, 1).
-python_function('src/koru/queue/ticket.py', 'planfile_command', 3, 4, 5).
+python_function('src/koru/queue/ticket.py', '_local_planfile_executable', 1, 4, 3).
+python_function('src/koru/queue/ticket.py', 'planfile_command', 3, 5, 7).
 python_function('src/koru/queue/ticket.py', 'result_json', 1, 4, 2).
 python_function('src/koru/queue_clean.py', '_planfile_base', 0, 4, 3).
 python_function('src/koru/queue_clean.py', '_parse_age_days', 1, 8, 9).
@@ -2074,6 +2077,8 @@ python_function('tests/test_context.py', '_init_planfile', 1, 1, 2).
 python_function('tests/test_dashboard_topology_post.py', 'test_apply_topology_post_update_rejects_non_object_components', 0, 4, 2).
 python_function('tests/test_dashboard_topology_post.py', 'test_apply_topology_post_update_applies_component_toggle', 1, 5, 3).
 python_function('tests/test_dev_sync.py', 'test_sync_developer_packages_installs_existing_repos', 1, 3, 7).
+python_function('tests/test_dev_sync.py', 'test_sync_developer_packages_can_target_repo_venv_and_upgrade', 1, 3, 7).
+python_function('tests/test_dev_sync.py', 'test_sync_developer_packages_fails_when_target_venv_missing', 1, 4, 6).
 python_function('tests/test_dev_sync.py', 'test_sync_developer_packages_skips_dirty_pull', 1, 4, 6).
 python_function('tests/test_docker_ide_matrix.py', 'test_headless_bridge_route_honors_each_matrix_ide', 1, 4, 2).
 python_function('tests/test_docker_ide_matrix.py', 'test_autopilot_plugin_requirement_matrix', 2, 2, 3).
@@ -2276,6 +2281,7 @@ python_function('tests/test_mcp_server.py', 'test_regix_gate_command_uses_workdi
 python_function('tests/test_mcp_server.py', 'test_redup_gate_command_uses_supported_cli_shape', 1, 2, 2).
 python_function('tests/test_mcp_server.py', 'test_job_store_is_ephemeral_across_imports', 1, 5, 4).
 python_function('tests/test_mcp_server.py', 'test_job_store_persists_to_disk_and_reloads', 1, 6, 6).
+python_function('tests/test_operator_pipeline.py', '_ticket_args', 1, 1, 1).
 python_function('tests/test_operator_pipeline.py', 'probe', 1, 1, 1).
 python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_mcp_pending_without_config', 2, 5, 2).
 python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_mcp_ok_when_configured', 2, 4, 5).
@@ -2287,10 +2293,11 @@ python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pi
 python_function('tests/test_operator_pipeline.py', 'test_candidate_planfile_health_urls_use_serve_endpoint', 1, 2, 4).
 python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_dedup_markers', 3, 3, 4).
 python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_recovers_missing_marker_from_open_ticket', 3, 9, 8).
-python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_replaces_stale_ide_marker', 3, 8, 10).
-python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_closes_resolved_marker_ticket', 3, 7, 9).
+python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_replaces_stale_ide_marker', 3, 8, 11).
+python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_closes_resolved_marker_ticket', 3, 7, 10).
+python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_clears_missing_resolved_marker_ticket', 3, 7, 9).
 python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_keeps_marker_when_close_times_out', 3, 6, 9).
-python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_closes_marker_when_plugin_step_skipped', 3, 7, 10).
+python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_closes_marker_when_plugin_step_skipped', 3, 7, 11).
 python_function('tests/test_planfile_queue.py', '_ok', 1, 1, 1).
 python_function('tests/test_planfile_queue.py', '_ticket_args', 1, 1, 1).
 python_function('tests/test_plugin_router.py', 'test_plugin_for_prefers_newest_matching_client', 0, 2, 3).
@@ -3014,6 +3021,8 @@ python_method('TestKoruLoop', 'test_run_closed_loop_retries_failed_repositories'
 python_method('TestKoruLoop', 'test_run_closed_loop_single_round_when_all_succeed', 0, 1, 7).
 python_method('TestKoruLoop', 'test_command_value_rejects_blank_value', 0, 1, 2).
 python_class('tests/test_planfile_queue.py', 'TestPlanfileCommand').
+python_method('TestPlanfileCommand', 'test_prefers_local_planfile_before_importable_module_from_active_env', 0, 1, 13).
+python_method('TestPlanfileCommand', 'test_prefers_local_planfile_before_path_cli_when_module_missing', 0, 1, 13).
 python_method('TestPlanfileCommand', 'test_falls_back_to_path_cli_when_module_cli_missing', 0, 1, 8).
 python_method('TestPlanfileCommand', 'test_module_cli_probe_treats_missing_parent_as_missing', 0, 1, 8).
 python_class('tests/test_planfile_queue.py', 'TestPlanfileQueue').

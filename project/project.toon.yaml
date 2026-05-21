@@ -1,8 +1,8 @@
-# koru | 1691 func | 158f | 48123L | python | 2026-05-21
+# koru | 1694 func | 158f | 46442L | python | 2026-05-21
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.0  critical=141 (limit:10)  dup=4  cycles=0
+  CC̄=4.0  critical=142 (limit:10)  dup=4  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     _build_handler = 36 (limit:10)
@@ -12,12 +12,11 @@ ALERTS[20]:
   !!! high_fan_out     AutopilotBridge.focusChat = 23 (limit:10)
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
-  !!! high_fan_out     _build_parser = 21 (limit:10)
   !!! high_fan_out     create_nl_task = 21 (limit:10)
+  !!! high_fan_out     _build_parser = 21 (limit:10)
   !!! high_fan_out     collect_install_manager_report = 20 (limit:10)
 
 MODULES[256] (top by size):
-  M[src/koru/cli.py] 1823L C:0 F:52 CC↑14 D:0 (python)
   M[src/koru/autonomous_cycle.py] 1502L C:2 F:56 CC↑14 D:1 (python)
   M[src/koruapi/dashboard_serve.py] 1400L C:1 F:15 CC↑13 D:1 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
@@ -28,10 +27,11 @@ MODULES[256] (top by size):
   M[src/koruapi/mcp_server.py] 1040L C:0 F:34 CC↑14 D:4 (python)
   M[src/koru/scan.py] 991L C:2 F:27 CC↑13 D:3 (python)
   M[Taskfile.yml] 912L C:0 F:0 CC↑0 D:0 (yml)
-  M[src/koru/autonomy/operator_pipeline.py] 855L C:2 F:31 CC↑12 D:0 (python)
+  M[src/koru/autonomy/operator_pipeline.py] 862L C:2 F:31 CC↑12 D:0 (python)
   M[src/koru/autopilot/cli_command.py] 848L C:0 F:22 CC↑14 D:0 (python)
-  M[src/koruide/ide.py] 727L C:1 F:44 CC↑13 D:12 (python)
+  M[src/koruide/ide.py] 727L C:1 F:44 CC↑13 D:14 (python)
   M[services/healing-webhook/app.py] 702L C:0 F:27 CC↑11 D:0 (python)
+  M[src/koru/scripts/koru-autoloop.sh] 676L C:0 F:17 CC↑0 D:0 (shell)
   LANGS: python:167/shell:44/yaml:15/yml:8/typescript:6/kotlin:6/json:3/other:2/txt:2/properties:1/xml:1/toml:1
 
 HOTSPOTS[10]:
@@ -48,8 +48,8 @@ REFACTOR[15]:
   [1] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (1127L, 2 classes)
   [2] H/H Split god module src/koru/autonomous_cycle.py (1502L, 2 classes)
   [3] H/H Split god module src/koru/autopilot/cli_command.py (848L, 0 classes)
-  [4] H/H Split god module src/koru/cli.py (1823L, 0 classes)
-  [5] H/H Split god module src/koruapi/mcp_server.py (1040L, 0 classes)
+  [4] H/H Split god module src/koruapi/mcp_server.py (1040L, 0 classes)
+  [5] H/H Split god module src/koru/autopilot/install_manager.py (652L, 2 classes)
 
 EVOLUTION:
-  2026-05-21 CC̄=4.0 crit=141 48123L // Automated analysis
+  2026-05-21 CC̄=4.0 crit=142 46442L // Automated analysis

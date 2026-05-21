@@ -1,12 +1,12 @@
-# redup/duplication | 69 groups | 165f 37647L | 2026-05-21
+# redup/duplication | 69 groups | 165f 37734L | 2026-05-21
 
 SUMMARY:
   files_scanned: 165
-  total_lines:   37647
+  total_lines:   37734
   dup_groups:    69
   dup_fragments: 156
   saved_lines:   1274
-  scan_ms:       6236
+  scan_ms:       3122
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/cli.py  dup=593L  groups=17  frags=22  (1.6%)
@@ -185,7 +185,7 @@ DUPLICATES[69] (ranked by impact):
       src/koru/context_render.py:348-354  (render_rules)
   [2d7b9210c1b65241]   STRU  activity_enabled  L=3 N=3 saved=6 sim=1.00
       src/koru/activity_log.py:11-13  (activity_enabled)
-      src/koru/autonomy/operator_pipeline.py:264-266  (_operator_autostart_server_enabled)
+      src/koru/autonomy/operator_pipeline.py:268-270  (_operator_autostart_server_enabled)
       src/koruide/plugin_installer.py:263-265  (_env_reassert_extension_install)
   [5d75a9aed94653a0]   STRU  _allow_keyboard_autopilot_fallback  L=3 N=3 saved=6 sim=1.00
       src/koru/autonomous_cycle.py:108-110  (_allow_keyboard_autopilot_fallback)

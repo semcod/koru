@@ -54,3 +54,77 @@ reporting:
 resources:
   max_cpu_percent: 70
   defer_below_idle_percent: 20
+
+# BEGIN WUP MONITORING MANIFEST (auto-generated — do not edit; run: wup sync-testql --write)
+monitoring:
+  generated_at: '2026-05-21T20:20:56Z'
+  generated_by: wup sync-testql --write (or wup watch startup)
+  how_to_refresh: wup sync-testql . --write
+  probe_interval_s: 60
+  health_scenario: ''
+  base_url: (set testql.base_url or WUP_BASE_URL)
+  endpoint_discovery: true
+  scenario_dir: scenarios/tests
+  service_map_globs: []
+  docker_compose_files:
+  - docker-compose.yml
+  wup_services:
+    koru-core:
+      wup_paths:
+      - src/**
+      docker: []
+      live_probes: []
+      testql_dry_run_scenarios: []
+    koru-autopilot-vscode:
+      wup_paths:
+      - plugins/koru-autopilot-vscode/src/**
+      docker: []
+      live_probes: []
+      testql_dry_run_scenarios: []
+  docker_not_mapped_to_wup:
+  - compose_service: koru
+    container_name: koru-test
+    host_ports: []
+    profiles:
+    - test
+    compose_file: docker-compose.yml
+  - compose_service: koru-dev
+    container_name: koru-dev
+    host_ports: []
+    profiles:
+    - dev
+    compose_file: docker-compose.yml
+  - compose_service: planfile
+    container_name: planfile-test
+    host_ports: []
+    profiles:
+    - deps
+    compose_file: docker-compose.yml
+  - compose_service: regix
+    container_name: regix-test
+    host_ports: []
+    profiles:
+    - deps
+    compose_file: docker-compose.yml
+  - compose_service: testql
+    container_name: testql-test
+    host_ports: []
+    profiles:
+    - deps
+    compose_file: docker-compose.yml
+  - compose_service: healing-webhook
+    container_name: healing-webhook-test
+    host_ports:
+    - 8810:8810
+    profiles:
+    - deps
+    compose_file: docker-compose.yml
+  troubleshooting:
+    probe_failed_check:
+    - Czy kontener z sekcji docker jest uruchomiony (docker ps)?
+    - Czy host_ports mapuje na URL w live_probes (np. 8100 vs 8202)?
+    - Czy błąd dotyczy proxy frontendu (/firmware na :8100) vs bezpośredniego :8202?
+    - 'Czy endpoint jest w live_probes — jeśli nie, uruchom: wup sync-testql . --write'
+    config_vs_runtime: Pole live_probes to faktyczne żądania HTTP WUP. Jeśli endpointu
+      tu nie ma, WUP go nie sprawdza — to błąd konfiguracji, nie aplikacji.
+# END WUP MONITORING MANIFEST
