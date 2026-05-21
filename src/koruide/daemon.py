@@ -156,6 +156,13 @@ class _Client:
     awaiting_plugin: tuple[_Client, str, bool, str | None, str, bool] | None = None
 
 
+@dataclass(frozen=True)
+class _PluginEventHandoff:
+    ack_info: dict[str, Any]
+    chat: str
+    reason: str
+
+
 class AutopilotDaemon:
     """Selector-based unix-socket broker.
 
@@ -909,7 +916,24 @@ class AutopilotDaemon:
         except OSError:
             pass
 
-    def _handle_plugin_event_basic(self, client: _Client, msg: Message) -> tuple | None:
+    def _plugin_event_should_handoff(self, msg: Message) -> bool:
+        return msg.type == "session.ended" and self.handoff is not None
+
+    def _ack_plugin_event_without_handoff(
+        self,
+        client: _Client,
+        msg: Message,
+        ack_info: dict[str, Any],
+    ) -> None:
+        self._send(client, ack(msg.id or "session-event", info=ack_info).encode())
+        if msg.type == "message.sent":
+            self._relay_message_sent_ack(client, msg)
+
+    def _handle_plugin_event_basic(
+        self,
+        client: _Client,
+        msg: Message,
+    ) -> _PluginEventHandoff | None:
         """Handle basic plugin event logging and acknowledgment."""
         chat = msg.data.get("chat") or "default"
         reason = msg.data.get("reason") or ""
@@ -922,12 +946,10 @@ class AutopilotDaemon:
             **msg.data,
         )
         ack_info: dict[str, Any] = {"event": msg.type}
-        if msg.type != "session.ended" or self.handoff is None:
-            self._send(client, ack(msg.id or "session-event", info=ack_info).encode())
-            if msg.type == "message.sent":
-                self._relay_message_sent_ack(client, msg)
-            return
-        return None, ack_info, chat, reason
+        if not self._plugin_event_should_handoff(msg):
+            self._ack_plugin_event_without_handoff(client, msg, ack_info)
+            return None
+        return _PluginEventHandoff(ack_info=ack_info, chat=chat, reason=reason)
 
     def _check_handoff_cooldown(self, ack_info: dict[str, Any]) -> bool:
         """Check if handoff cooldown period has passed."""
@@ -990,20 +1012,32 @@ class AutopilotDaemon:
         )
 
     def _handle_plugin_event(self, client: _Client, msg: Message) -> None:
-        result = self._handle_plugin_event_basic(client, msg)
-        if result is None:
-            return
-        _, ack_info, chat, reason = result
-
-        if not self._check_handoff_cooldown(ack_info):
-            self._send(client, ack(msg.id or "session-event", info=ack_info).encode())
+        handoff = self._handle_plugin_event_basic(client, msg)
+        if handoff is None:
             return
 
-        text = self._execute_handoff(client, msg, chat, reason, ack_info)
+        if not self._check_handoff_cooldown(handoff.ack_info):
+            self._send(client, ack(msg.id or "session-event", info=handoff.ack_info).encode())
+            return
+
+        text = self._execute_handoff(
+            client,
+            msg,
+            handoff.chat,
+            handoff.reason,
+            handoff.ack_info,
+        )
         if text is None:
             return
 
-        self._forward_handoff_to_plugin(client, msg, text, chat, reason, ack_info)
+        self._forward_handoff_to_plugin(
+            client,
+            msg,
+            text,
+            handoff.chat,
+            handoff.reason,
+            handoff.ack_info,
+        )
 
     def _handle_shutdown(self, client: _Client, msg: Message) -> None:
         if client.role == "unknown":

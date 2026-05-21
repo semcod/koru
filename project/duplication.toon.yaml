@@ -1,12 +1,12 @@
-# redup/duplication | 69 groups | 163f 37428L | 2026-05-21
+# redup/duplication | 69 groups | 163f 37474L | 2026-05-21
 
 SUMMARY:
   files_scanned: 163
-  total_lines:   37428
+  total_lines:   37474
   dup_groups:    69
   dup_fragments: 156
   saved_lines:   1278
-  scan_ms:       3797
+  scan_ms:       7782
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/cli.py  dup=593L  groups=17  frags=22  (1.6%)
@@ -19,43 +19,43 @@ HOTSPOTS[7] (files with most duplication):
 
 DUPLICATES[69] (ranked by impact):
   [4c6cdde52a86ff56] ! STRU  _build_queue_parser  L=65 N=2 saved=65 sim=1.00
-      src/koru/cli.py:672-736  (_build_queue_parser)
+      src/koru/cli.py:696-760  (_build_queue_parser)
       src/koru/cli_queue.py:14-78  (build_queue_parser)
   [c4954d7f512ab844] ! STRU  _build_gate_parser  L=60 N=2 saved=60 sim=1.00
-      src/koru/cli.py:486-545  (_build_gate_parser)
+      src/koru/cli.py:510-569  (_build_gate_parser)
       src/koru/cli_gate.py:14-73  (build_gate_parser)
   [0d39d3bbb8dcac9b] ! STRU  _init_main  L=60 N=2 saved=60 sim=1.00
-      src/koru/cli.py:1439-1498  (_init_main)
+      src/koru/cli.py:1481-1540  (_init_main)
       src/koru/cli_init.py:12-71  (init_main)
   [6d776d8dd7b41fcc] ! STRU  _build_gc_parser  L=55 N=2 saved=55 sim=1.00
-      src/koru/cli.py:593-647  (_build_gc_parser)
+      src/koru/cli.py:617-671  (_build_gc_parser)
       src/koru/cli_gc.py:11-65  (build_gc_parser)
   [b79fb4d314048ea0] ! STRU  _build_serve_parser  L=48 N=2 saved=48 sim=1.00
-      src/koru/cli.py:405-452  (_build_serve_parser)
+      src/koru/cli.py:429-476  (_build_serve_parser)
       src/koruapi/dashboard.py:17-61  (build_serve_parser)
   [a00ed7924eb83b0e] ! STRU  _build_topology_parser  L=44 N=2 saved=44 sim=1.00
-      src/koru/cli.py:981-1024  (_build_topology_parser)
+      src/koru/cli.py:1023-1066  (_build_topology_parser)
       src/koru/cli_topology.py:20-63  (build_topology_parser)
   [0533d81be7d5abf8] ! STRU  render_markdown_handoff  L=44 N=2 saved=44 sim=1.00
       src/koru/context.py:1210-1253  (render_markdown_handoff)
       src/koru/context_render.py:428-471  (render_markdown_handoff)
   [870781f61f9ae890] ! STRU  _render_clean_report_text  L=42 N=2 saved=42 sim=1.00
-      src/koru/cli.py:739-780  (_render_clean_report_text)
+      src/koru/cli.py:763-804  (_render_clean_report_text)
       src/koru/cli_queue.py:81-122  (render_clean_report_text)
   [58dad341d84a573e] ! STRU  _render_gates  L=40 N=2 saved=40 sim=1.00
       src/koru/context.py:1033-1072  (_render_gates)
       src/koru/context_render.py:251-290  (render_gates)
   [deaa1950e797ce65] ! STRU  _queue_main  L=39 N=2 saved=39 sim=1.00
-      src/koru/cli.py:783-821  (_queue_main)
+      src/koru/cli.py:807-845  (_queue_main)
       src/koru/cli_queue.py:125-163  (queue_main)
   [59150594aa7f3aff] ! STRU  _restart_daemon_if_needed  L=33 N=2 saved=33 sim=1.00
-      src/koru/autonomous.py:1059-1091  (_restart_daemon_if_needed)
+      src/koru/autonomous.py:691-723  (_restart_daemon_if_needed)
       src/koru/autonomous_daemon.py:212-244  (restart_daemon_if_needed)
   [fc481e24a737b1a0] ! STRU  _doctor_fix_payload  L=32 N=2 saved=32 sim=1.00
-      src/koru/cli.py:1390-1421  (_doctor_fix_payload)
+      src/koru/cli.py:1432-1463  (_doctor_fix_payload)
       src/koru/cli_doctor.py:15-46  (doctor_fix_payload)
   [ae5a1dde1774d5ed]   STRU  _watch_main  L=30 N=2 saved=30 sim=1.00
-      src/koru/cli.py:1615-1644  (_watch_main)
+      src/koru/cli.py:1657-1686  (_watch_main)
       src/koru/cli_watch.py:12-41  (watch_main)
   [babc6b538274c771]   STRU  _render_semcod_tools  L=30 N=2 saved=30 sim=1.00
       src/koru/context.py:928-957  (_render_semcod_tools)
@@ -65,7 +65,7 @@ DUPLICATES[69] (ranked by impact):
       src/koru/mcp_provision.py:222-236  (provision_vscode)
       src/koru/mcp_provision.py:246-260  (provision_zed)
   [cfa0e91c669b55c5]   STRU  _build_local_serve_parser  L=29 N=2 saved=29 sim=1.00
-      src/koru/cli.py:455-483  (_build_local_serve_parser)
+      src/koru/cli.py:479-507  (_build_local_serve_parser)
       src/koruapi/local.py:11-19  (build_local_parser)
   [c085354dd89d3aee]   STRU  _render_project_pipeline  L=28 N=2 saved=28 sim=1.00
       src/koru/context.py:1075-1102  (_render_project_pipeline)
@@ -74,7 +74,7 @@ DUPLICATES[69] (ranked by impact):
       src/koru/context.py:1180-1207  (_render_autonomy_loop_brief)
       src/koru/context_render.py:398-425  (render_autonomy_loop_brief)
   [a86bcd31e8633380]   STRU  _doctor_main  L=23 N=2 saved=23 sim=1.00
-      src/koru/cli.py:1365-1387  (_doctor_main)
+      src/koru/cli.py:1407-1429  (_doctor_main)
       src/koru/cli_doctor.py:64-86  (doctor_main)
   [20b29cce2972cd44]   STRU  _render_agent_lanes  L=23 N=2 saved=23 sim=1.00
       src/koru/context.py:829-851  (_render_agent_lanes)
@@ -92,21 +92,21 @@ DUPLICATES[69] (ranked by impact):
       src/koru/context.py:980-1000  (_render_active_ticket)
       src/koru/context_render.py:198-218  (render_active_ticket)
   [d8b6166dd12467a7]   EXAC  _stdio_info  L=5 N=5 saved=20 sim=1.00
-      src/koru/autonomous.py:147-151  (_stdio_info)
+      src/koru/autonomous.py:161-165  (_stdio_info)
       src/koru/autonomous_checkpoint.py:16-19  (_stdio_info)
       src/koru/autonomous_cycle.py:46-49  (_stdio_info)
       src/koru/autonomous_daemon.py:27-31  (_stdio_info)
       src/koru/autonomous_processes.py:178-182  (_stdio_info)
   [e7b7bb1cb7f09b67]   STRU  _gc_main  L=20 N=2 saved=20 sim=1.00
-      src/koru/cli.py:650-669  (_gc_main)
+      src/koru/cli.py:674-693  (_gc_main)
       src/koru/cli_gc.py:68-87  (gc_main)
   [077cfa61a2943c36]   STRU  _serve_main  L=4 N=6 saved=20 sim=1.00
-      src/koru/cli.py:932-935  (_serve_main)
-      src/koru/cli.py:938-941  (_local_serve_main)
-      src/koru/cli.py:1177-1180  (_mcp_serve_main)
-      src/koru/cli.py:1242-1245  (_init_ide_main)
-      src/koru/cli.py:1304-1307  (_dsl_main)
-      src/koru/cli.py:1310-1313  (_api_main)
+      src/koru/cli.py:974-977  (_serve_main)
+      src/koru/cli.py:980-983  (_local_serve_main)
+      src/koru/cli.py:1219-1222  (_mcp_serve_main)
+      src/koru/cli.py:1284-1287  (_init_ide_main)
+      src/koru/cli.py:1346-1349  (_dsl_main)
+      src/koru/cli.py:1352-1355  (_api_main)
   [f7eea25d8bf479d9]   STRU  _render_dashboard  L=19 N=2 saved=19 sim=1.00
       src/koru/context.py:1159-1177  (_render_dashboard)
       src/koru/context_render.py:377-395  (render_dashboard)
@@ -127,7 +127,7 @@ DUPLICATES[69] (ranked by impact):
       src/koru/autonomy/ide_work.py:140-152  (_parse_iso_datetime)
       src/koru/autonomy/post_run_verify.py:131-143  (_parse_iso_datetime)
   [f9e9bcde8bbe99b1]   STRU  _render_doctor_with_fix  L=13 N=2 saved=13 sim=1.00
-      src/koru/cli.py:1424-1436  (_render_doctor_with_fix)
+      src/koru/cli.py:1466-1478  (_render_doctor_with_fix)
       src/koru/cli_doctor.py:49-61  (render_doctor_with_fix)
   [07394d97ab843be1]   STRU  resolve_xdg_path  L=12 N=2 saved=12 sim=1.00
       src/koru/autopilot/utils/client_helpers.py:46-57  (resolve_xdg_path)
@@ -149,7 +149,7 @@ DUPLICATES[69] (ranked by impact):
       src/koruide/injector.py:59-68  (_ydotool_enter_keycode)
       src/koruide/injector.py:81-86  (_ydotool_ctrl_keycode)
   [30376722d90c4f75]   EXAC  _is_topology_enabled  L=9 N=2 saved=9 sim=1.00
-      src/koru/autonomous.py:705-713  (_is_topology_enabled)
+      src/koru/autonomous.py:337-345  (_is_topology_enabled)
       src/koru/autonomous_cycle.py:80-88  (_is_topology_enabled)
   [f5d1a5929c2dfe0f]   EXAC  _compact_ticket_error  L=9 N=2 saved=9 sim=1.00
       src/koru/context.py:1003-1011  (_compact_ticket_error)
@@ -201,9 +201,9 @@ DUPLICATES[69] (ranked by impact):
       src/koru/topology.py:353-358  (set_component_enabled)
       src/koru/topology.py:361-366  (set_pipeline_enabled)
   [cede1a8630b48984]   STRU  os_injector_env_disabled  L=3 N=3 saved=6 sim=1.00
-      src/koruide/os_injector.py:62-64  (os_injector_env_disabled)
-      src/koruide/os_injector.py:67-69  (os_injector_env_forced)
-      src/koruide/os_injector.py:72-74  (dry_run_from_env)
+      src/koruide/os_injector.py:63-65  (os_injector_env_disabled)
+      src/koruide/os_injector.py:68-70  (os_injector_env_forced)
+      src/koruide/os_injector.py:73-75  (dry_run_from_env)
   [965bd49cbae99ad0]   STRU  _current_koru_version  L=5 N=2 saved=5 sim=1.00
       src/koru/autonomous_daemon.py:34-38  (_current_koru_version)
       src/koruide/daemon.py:63-67  (_daemon_package_version)
@@ -220,7 +220,7 @@ DUPLICATES[69] (ranked by impact):
       src/koru/autonomous_checkpoint.py:124-127  (status_in_skip_list)
       src/koru/autonomous_cycle.py:102-105  (_status_in_skip_list)
   [002e12cc94a8aa7f]   STRU  _render_topology_text  L=4 N=2 saved=4 sim=1.00
-      src/koru/cli.py:1027-1030  (_render_topology_text)
+      src/koru/cli.py:1069-1072  (_render_topology_text)
       src/koru/cli_topology.py:66-69  (render_topology_text)
   [93c2d285f0f82504]   EXAC  __init__  L=3 N=2 saved=3 sim=1.00
       src/koru/local_manager_state.py:57-59  (__init__)
@@ -232,8 +232,8 @@ DUPLICATES[69] (ranked by impact):
       src/koru/agent_backends.py:107-109  (iter_agent_backend_profiles)
       src/koruide/ide.py:89-91  (autopilot_ide_choices)
   [3e72ce8df48766bc]   STRU  _apply_auto_pipeline_flags  L=3 N=2 saved=3 sim=1.00
-      src/koru/autonomous.py:1556-1558  (_apply_auto_pipeline_flags)
-      src/koru/autonomous.py:1561-1563  (_apply_replace_existing_flags)
+      src/koru/autonomous.py:1188-1190  (_apply_auto_pipeline_flags)
+      src/koru/autonomous.py:1193-1195  (_apply_replace_existing_flags)
   [781cd2265323c713]   STRU  systemd_user_dir  L=3 N=2 saved=3 sim=1.00
       src/koru/autopilot/systemd_cli.py:15-17  (systemd_user_dir)
       src/koruide/config.py:64-66  (default_config_path)

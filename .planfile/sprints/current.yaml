@@ -2893,6 +2893,7 @@ sprint:
         pattern.'
       execution:
         attempt: 1
+        finished_at: '2026-05-21T18:51:24.782435Z'
         max_attempts: 1
         queue: default
         state: done
@@ -2908,6 +2909,14 @@ sprint:
           strategy pattern.'
         source: koru task
         timestamp: '2026-05-21T12:09:41.436135+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T18:51:25.363564+00:00'
       id: STARTER-044
       inputs:
         api_headers: {}
@@ -2938,9 +2947,9 @@ sprint:
         timestamp: '2026-05-21T12:09:41.436135+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T12:09:41.436135+00:00'
+      updated_at: '2026-05-21T18:51:25.363527+00:00'
     STARTER-045:
       blocked_by: []
       blocks: []
@@ -2949,6 +2958,7 @@ sprint:
         Extract sub-functions, simplify conditionals, or split into strategy pattern.'
       execution:
         attempt: 1
+        finished_at: '2026-05-21T18:52:18.046316Z'
         max_attempts: 1
         queue: default
         state: done
@@ -2963,6 +2973,14 @@ sprint:
           Extract sub-functions, simplify conditionals, or split into strategy pattern.'
         source: koru task
         timestamp: '2026-05-21T12:09:41.648224+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T18:52:18.599412+00:00'
       id: STARTER-045
       inputs:
         api_headers: {}
@@ -2992,9 +3010,9 @@ sprint:
         timestamp: '2026-05-21T12:09:41.648224+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T12:09:41.648224+00:00'
+      updated_at: '2026-05-21T18:52:18.599374+00:00'
     STARTER-046:
       blocked_by: []
       blocks: []
@@ -3685,6 +3703,7 @@ sprint:
         Extract sub-functions, simplify conditionals, or split into strategy pattern.'
       execution:
         attempt: 1
+        finished_at: '2026-05-21T18:53:34.777914Z'
         max_attempts: 1
         queue: default
         state: done
@@ -3699,6 +3718,14 @@ sprint:
           Extract sub-functions, simplify conditionals, or split into strategy pattern.'
         source: koru task
         timestamp: '2026-05-21T14:24:10.183646+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T18:53:36.040080+00:00'
       id: STARTER-053
       inputs:
         api_headers: {}
@@ -3728,9 +3755,9 @@ sprint:
         timestamp: '2026-05-21T14:24:10.183646+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T14:24:10.183646+00:00'
+      updated_at: '2026-05-21T18:53:36.040036+00:00'
     STARTER-054:
       blocked_by: []
       blocks: []

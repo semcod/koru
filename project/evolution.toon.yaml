@@ -1,34 +1,46 @@
-# code2llm/evolution | 1571 func | 143f | 2026-05-21
+# code2llm/evolution | 1596 func | 143f | 2026-05-21
 # generated in 0.01s
 
-NEXT[4] (ranked by impact):
+NEXT[7] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous_cycle.py
-      WHY: 1466L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 20524
+      WHY: 1492L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 20888
 
   [2] !! SPLIT           src/koruapi/dashboard_serve.py
       WHY: 1400L, 1 classes, max CC=13
       EFFORT: ~4h  IMPACT: 18200
 
-  [3] !! SPLIT           src/koru/autonomous.py
-      WHY: 1587L, 1 classes, max CC=10
-      EFFORT: ~4h  IMPACT: 15870
+  [3] !! SPLIT           src/koru/context.py
+      WHY: 1253L, 0 classes, max CC=12
+      EFFORT: ~4h  IMPACT: 15036
 
-  [4] !  SPLIT-FUNC      plugin_status_decision  CC=20  fan=12
-      WHY: CC=20 exceeds 15
-      EFFORT: ~1h  IMPACT: 240
+  [4] !  SPLIT-FUNC      _task_main  CC=22  fan=18
+      WHY: CC=22 exceeds 15
+      EFFORT: ~1h  IMPACT: 396
+
+  [5] !  SPLIT-FUNC      create_nl_task  CC=15  fan=24
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 360
+
+  [6] !  SPLIT-FUNC      Injector.type_text  CC=18  fan=10
+      WHY: CC=18 exceeds 15
+      EFFORT: ~1h  IMPACT: 180
+
+  [7] !  SPLIT-FUNC      _dedupe_key_from_scaffold  CC=17  fan=10
+      WHY: CC=17 exceeds 15
+      EFFORT: ~1h  IMPACT: 170
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/autonomous.py may break 57 import paths
-  ⚠ Splitting src/koru/autonomous_cycle.py may break 52 import paths
+  ⚠ Splitting src/koru/autonomous_cycle.py may break 54 import paths
   ⚠ Splitting src/koruapi/dashboard_serve.py may break 15 import paths
+  ⚠ Splitting src/koru/context.py may break 49 import paths
 
 METRICS-TARGET:
   CC̄:          4.1 → ≤2.9
-  max-CC:      20 → ≤10
-  god-modules: 19 → 0
-  high-CC(≥15): 2 → ≤1
+  max-CC:      22 → ≤11
+  god-modules: 20 → 0
+  high-CC(≥15): 6 → ≤3
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
