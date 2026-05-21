@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.176', 'python').
+project_metadata('koru', '0.1.177', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 681, 'less').
@@ -77,7 +77,7 @@ project_file('src/koru/agents.py', 323, 'python').
 project_file('src/koru/api/__init__.py', 10, 'python').
 project_file('src/koru/autoloop_cli.py', 91, 'python').
 project_file('src/koru/autonomous.py', 2236, 'python').
-project_file('src/koru/autonomous_cycle.py', 1321, 'python').
+project_file('src/koru/autonomous_cycle.py', 1390, 'python').
 project_file('src/koru/autonomous_diagnostics.py', 259, 'python').
 project_file('src/koru/autonomous_env.py', 26, 'python').
 project_file('src/koru/autonomous_parser.py', 399, 'python').
@@ -90,7 +90,7 @@ project_file('src/koru/autonomy/env.py', 305, 'python').
 project_file('src/koru/autonomy/environment.py', 246, 'python').
 project_file('src/koru/autonomy/heal.py', 117, 'python').
 project_file('src/koru/autonomy/ide_work.py', 302, 'python').
-project_file('src/koru/autonomy/operator_pipeline.py', 751, 'python').
+project_file('src/koru/autonomy/operator_pipeline.py', 840, 'python').
 project_file('src/koru/autonomy/post_run_verify.py', 382, 'python').
 project_file('src/koru/autonomy/prompts.py', 102, 'python').
 project_file('src/koru/autonomy/telemetry_snapshot.py', 80, 'python').
@@ -106,7 +106,7 @@ project_file('src/koru/autopilot/doctor_cli.py', 153, 'python').
 project_file('src/koru/autopilot/host_setup.py', 10, 'python').
 project_file('src/koru/autopilot/ide.py', 10, 'python').
 project_file('src/koru/autopilot/injector.py', 10, 'python').
-project_file('src/koru/autopilot/install_manager.py', 565, 'python').
+project_file('src/koru/autopilot/install_manager.py', 585, 'python').
 project_file('src/koru/autopilot/install_plugin_cli.py', 427, 'python').
 project_file('src/koru/autopilot/local_manager.py', 67, 'python').
 project_file('src/koru/autopilot/os_injector.py', 10, 'python').
@@ -210,7 +210,7 @@ project_file('src/koruide/config.py', 122, 'python').
 project_file('src/koruide/daemon.py', 897, 'python').
 project_file('src/koruide/drive_orchestrator.py', 201, 'python').
 project_file('src/koruide/host_setup.py', 227, 'python').
-project_file('src/koruide/ide.py', 654, 'python').
+project_file('src/koruide/ide.py', 680, 'python').
 project_file('src/koruide/injector.py', 407, 'python').
 project_file('src/koruide/os_injector.py', 401, 'python').
 project_file('src/koruide/plugin_installer.py', 495, 'python').
@@ -275,7 +275,7 @@ project_file('tests/test_ide_router.py', 268, 'python').
 project_file('tests/test_ide_runtime.py', 39, 'python').
 project_file('tests/test_ide_work.py', 140, 'python').
 project_file('tests/test_init.py', 337, 'python').
-project_file('tests/test_install_manager.py', 342, 'python').
+project_file('tests/test_install_manager.py', 382, 'python').
 project_file('tests/test_koru_gate_capture.py', 34, 'python').
 project_file('tests/test_koru_queue_argv.py', 24, 'python').
 project_file('tests/test_koruapi.py', 80, 'python').
@@ -483,7 +483,12 @@ python_function('src/koru/autonomous_cycle.py', '_status_in_skip_list', 2, 3, 3)
 python_function('src/koru/autonomous_cycle.py', '_allow_keyboard_autopilot_fallback', 0, 1, 3).
 python_function('src/koru/autonomous_cycle.py', '_prefer_keyboard_autopilot', 0, 3, 3).
 python_function('src/koru/autonomous_cycle.py', '_plugin_required_for_ide', 1, 5, 4).
-python_function('src/koru/autonomous_cycle.py', '_client_has_usable_plugin', 2, 15, 11).
+python_function('src/koru/autonomous_cycle.py', '_client_plugin_rows', 1, 5, 5).
+python_function('src/koru/autonomous_cycle.py', '_wanted_plugin_ide', 1, 2, 2).
+python_function('src/koru/autonomous_cycle.py', '_plugin_row_matches_ide', 2, 3, 4).
+python_function('src/koru/autonomous_cycle.py', '_plugin_row_version_block_reason', 2, 5, 8).
+python_function('src/koru/autonomous_cycle.py', '_missing_plugin_label', 1, 2, 0).
+python_function('src/koru/autonomous_cycle.py', '_client_has_usable_plugin', 2, 7, 6).
 python_function('src/koru/autonomous_cycle.py', '_try_os_injector_fallback', 1, 1, 1).
 python_function('src/koru/autonomous_cycle.py', '_run_command_check', 3, 2, 3).
 python_function('src/koru/autonomous_cycle.py', '_create_diagnostic_ticket', 0, 2, 5).
@@ -508,7 +513,12 @@ python_function('src/koru/autonomous_cycle.py', '_update_stagnation_state', 2, 3
 python_function('src/koru/autonomous_cycle.py', '_waiting_ticket_has_label', 3, 14, 8).
 python_function('src/koru/autonomous_cycle.py', '_handle_diagnostics', 15, 10, 8).
 python_function('src/koru/autonomous_cycle.py', '_check_autopilot_skip_conditions', 12, 13, 4).
-python_function('src/koru/autonomous_cycle.py', '_execute_autopilot_drive', 9, 19, 14).
+python_function('src/koru/autonomous_cycle.py', '_resolve_autopilot_drive_decision', 3, 4, 4).
+python_function('src/koru/autonomous_cycle.py', '_drive_autopilot_once', 1, 4, 4).
+python_function('src/koru/autonomous_cycle.py', '_reply_missing_autopilot_plugin', 1, 2, 3).
+python_function('src/koru/autonomous_cycle.py', '_reply_needs_focus_retry', 1, 8, 3).
+python_function('src/koru/autonomous_cycle.py', '_warn_autopilot_focus_retry', 2, 1, 1).
+python_function('src/koru/autonomous_cycle.py', '_execute_autopilot_drive', 9, 6, 8).
 python_function('src/koru/autonomous_cycle.py', '_update_autopilot_state', 5, 6, 1).
 python_function('src/koru/autonomous_cycle.py', '_log_autopilot_result', 6, 9, 3).
 python_function('src/koru/autonomous_cycle.py', '_handle_autopilot_phase', 19, 9, 9).
@@ -621,7 +631,11 @@ python_function('src/koru/autonomy/operator_pipeline.py', 'build_operator_steps'
 python_function('src/koru/autonomy/operator_pipeline.py', '_emit_step', 1, 4, 3).
 python_function('src/koru/autonomy/operator_pipeline.py', '_create_step_ticket', 2, 6, 4).
 python_function('src/koru/autonomy/operator_pipeline.py', '_ensure_planfile_api', 3, 2, 2).
-python_function('src/koru/autonomy/operator_pipeline.py', '_process_operator_step', 10, 21, 10).
+python_function('src/koru/autonomy/operator_pipeline.py', '_discard_stale_pending_marker', 2, 7, 4).
+python_function('src/koru/autonomy/operator_pipeline.py', '_close_finished_step_marker', 2, 5, 1).
+python_function('src/koru/autonomy/operator_pipeline.py', '_recover_matching_step_ticket', 2, 7, 4).
+python_function('src/koru/autonomy/operator_pipeline.py', '_create_pending_step_ticket', 2, 5, 2).
+python_function('src/koru/autonomy/operator_pipeline.py', '_process_operator_step', 10, 1, 6).
 python_function('src/koru/autonomy/operator_pipeline.py', '_emit_operator_step_event', 6, 3, 1).
 python_function('src/koru/autonomy/operator_pipeline.py', 'run_startup_operator_pipeline', 0, 4, 14).
 python_function('src/koru/autonomy/operator_pipeline.py', 'sys_stdout_for_format', 1, 2, 0).
@@ -692,6 +706,7 @@ python_function('src/koru/autopilot/install_manager.py', '_path_koru_bin', 0, 2,
 python_function('src/koru/autopilot/install_manager.py', '_is_pyenv_shim', 1, 3, 1).
 python_function('src/koru/autopilot/install_manager.py', '_expected_plugin_version', 1, 3, 4).
 python_function('src/koru/autopilot/install_manager.py', '_resolve_ide', 1, 6, 4).
+python_function('src/koru/autopilot/install_manager.py', '_manager_socket_path', 2, 8, 4).
 python_function('src/koru/autopilot/install_manager.py', '_daemon_status', 1, 3, 6).
 python_function('src/koru/autopilot/install_manager.py', '_plugin_for_ide', 2, 6, 2).
 python_function('src/koru/autopilot/install_manager.py', '_check_koru_path_issues', 2, 4, 2).
@@ -705,7 +720,7 @@ python_function('src/koru/autopilot/install_manager.py', '_check_plugin_live_hos
 python_function('src/koru/autopilot/install_manager.py', '_check_plugin_version_mismatch_issue', 3, 6, 2).
 python_function('src/koru/autopilot/install_manager.py', '_check_plugin_not_connected_issue', 3, 3, 2).
 python_function('src/koru/autopilot/install_manager.py', '_issue_list', 0, 3, 12).
-python_function('src/koru/autopilot/install_manager.py', 'collect_install_manager_report', 0, 12, 19).
+python_function('src/koru/autopilot/install_manager.py', 'collect_install_manager_report', 0, 11, 19).
 python_function('src/koru/autopilot/install_manager.py', 'repair_installation', 0, 6, 9).
 python_function('src/koru/autopilot/install_manager.py', 'format_install_manager_report', 1, 13, 6).
 python_function('src/koru/autopilot/install_plugin_cli.py', 'plugin_repo_dir', 0, 1, 2).
@@ -1378,7 +1393,12 @@ python_function('src/koruide/ide.py', '_ide_id_from_process', 1, 5, 4).
 python_function('src/koruide/ide.py', 'detect_focused_ide_id', 0, 3, 2).
 python_function('src/koruide/ide.py', '_vscode_family_env_present', 0, 3, 3).
 python_function('src/koruide/ide.py', '_vscode_family_flavor_from_env', 0, 9, 4).
-python_function('src/koruide/ide.py', '_terminal_ide_from_env', 0, 16, 6).
+python_function('src/koruide/ide.py', '_cursor_terminal_env_hint', 1, 3, 2).
+python_function('src/koruide/ide.py', '_windsurf_primary_terminal_env_hint', 1, 4, 4).
+python_function('src/koruide/ide.py', '_vscode_family_terminal_hint', 1, 3, 2).
+python_function('src/koruide/ide.py', '_known_terminal_ide_hint', 2, 3, 0).
+python_function('src/koruide/ide.py', '_legacy_windsurf_terminal_env_hint', 1, 3, 2).
+python_function('src/koruide/ide.py', '_terminal_ide_from_env', 0, 7, 11).
 python_function('src/koruide/ide.py', '_terminal_ide_from_parent_chain', 1, 11, 9).
 python_function('src/koruide/ide.py', 'detect_terminal_host_ide_id', 0, 3, 3).
 python_function('src/koruide/ide.py', 'focused_ide', 1, 6, 1).
@@ -1995,6 +2015,7 @@ python_function('tests/test_ide_work.py', '_ok', 1, 1, 1).
 python_function('tests/test_init.py', '_detach_ci_env', 0, 3, 0).
 python_function('tests/test_init.py', '_reattach_ci_env', 1, 1, 1).
 python_function('tests/test_install_manager.py', 'test_collect_report_flags_path_mismatch_and_plugin_version_missing', 2, 6, 4).
+python_function('tests/test_install_manager.py', 'test_collect_report_uses_explicit_ide_socket_when_env_is_unset', 2, 4, 7).
 python_function('tests/test_install_manager.py', 'test_collect_report_flags_connected_plugin_version_mismatch', 2, 4, 2).
 python_function('tests/test_install_manager.py', 'test_collect_report_flags_installed_plugin_version_mismatch', 2, 4, 2).
 python_function('tests/test_install_manager.py', 'test_collect_report_marks_installed_ok_but_not_connected_as_info', 2, 5, 2).
@@ -3134,10 +3155,8 @@ sumd_workflow('queue:autoloop', 'manual').
 sumd_workflow('queue:autoloop:reset-diag-markers', 'manual').
 sumd_workflow('koru:server', 'manual').
 sumd_workflow('koru:mcp:bootstrap', 'manual').
-sumd_workflow_step('koru:mcp:bootstrap', 1, 'python3 -m koru.cli init-ide --project . --ide all').
 sumd_workflow('koru:operator:plugin-probe', 'manual').
 sumd_workflow('koru:operator:setup-host', 'manual').
-sumd_workflow_step('koru:operator:setup-host', 1, 'python3 -m koru.cli autopilot setup-host').
 sumd_workflow('koru:ide-os:calibrate', 'manual').
 sumd_workflow('quality:regix', 'manual').
 sumd_quality_workflow('quality:regix', 'regix').

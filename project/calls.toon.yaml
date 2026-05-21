@@ -1,6 +1,6 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.22s
-# nodes: 432 | edges: 500 | modules: 74
+# generated in 0.36s
+# nodes: 434 | edges: 500 | modules: 74
 # CC̄=4.1
 
 HUBS[20]:
@@ -12,8 +12,6 @@ HUBS[20]:
     CC=10  in:5  out:47  total:52
   src.koruide.daemon.AutopilotDaemon._drive_via_keyboard
     CC=12  in:0  out:47  total:47
-  src.koru.autonomous._stdio_info
-    CC=1  in:40  out:1  total:41
   src.koru.activity_log.activity
     CC=4  in:34  out:7  total:41
   src.koru.events.emit_management_event
@@ -22,28 +20,30 @@ HUBS[20]:
     CC=1  in:3  out:36  total:39
   src.koru.tasks.create_nl_task
     CC=12  in:7  out:28  total:35
-  src.koruapi.mcp_server.tool_run_ticket
-    CC=14  in:1  out:33  total:34
   src.koruide.ide.normalize_ide_id
     CC=6  in:23  out:11  total:34
+  src.koruapi.mcp_server.tool_run_ticket
+    CC=14  in:1  out:33  total:34
   src.koru.cli._topology_main
     CC=12  in:0  out:32  total:32
   src.koru.autonomy.env.env_truthy
     CC=3  in:29  out:3  total:32
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
-  src.koru.cli._task_main
-    CC=11  in:0  out:27  total:27
   src.koruide.ide.detect_running_ides
     CC=13  in:17  out:10  total:27
-  src.koru.init.init_project
-    CC=7  in:3  out:23  total:26
+  src.koru.cli._task_main
+    CC=11  in:0  out:27  total:27
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
+  src.koru.init.init_project
+    CC=7  in:3  out:23  total:26
   src.koruide.os_injector.inject_with_profile
     CC=15  in:3  out:23  total:26
+  src.koru.context.build_context
+    CC=6  in:9  out:16  total:25
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -62,12 +62,14 @@ MODULES:
     _resolve_affected_files  CC=11  out:24
     _resolve_strategy  CC=3  out:1
     _run_docker  CC=1  out:3
-  services.healing-webhook.ticket_builder  [2 funcs]
+  services.healing-webhook.ticket_builder  [5 funcs]
+    _default_acceptance  CC=2  out:1
+    _format_paths  CC=2  out:1
     _infer_paths  CC=7  out:1
+    _reproduction_for  CC=5  out:5
     build_ticket_payload  CC=11  out:25
-  src.koru.activity_log  [2 funcs]
+  src.koru.activity_log  [1 funcs]
     activity  CC=4  out:7
-    activity_info  CC=5  out:11
   src.koru.agent_backends  [6 funcs]
     _parse_lane  CC=8  out:14
     get_agent_backend_profile  CC=3  out:1
@@ -81,11 +83,7 @@ MODULES:
     try_agent_env_exports  CC=7  out:7
   src.koru.agents  [1 funcs]
     detect_agent_options  CC=4  out:21
-  src.koru.autonomous  [6 funcs]
-    _daemon_activity_log  CC=2  out:3
-    _effective_cycle_autopilot_enabled  CC=7  out:6
-    _stdio_info  CC=1  out:1
-    _try_os_injector_fallback  CC=4  out:10
+  src.koru.autonomous  [2 funcs]
     autonomous_main  CC=15  out:10
     stop_prior_autonomous_for_auto_start  CC=3  out:7
   src.koru.autonomous_diagnostics  [5 funcs]
@@ -182,17 +180,16 @@ MODULES:
     run_process  CC=1  out:2
   src.koru.queue.ticket  [1 funcs]
     planfile_command  CC=4  out:5
-  src.koru.queue_clean  [11 funcs]
-    _build_close_note  CC=1  out:4
+  src.koru.queue_clean  [9 funcs]
     _candidate_from_ticket  CC=6  out:9
     _cleanable_statuses  CC=2  out:1
-    _close_ticket  CC=5  out:6
     _list_tickets  CC=11  out:11
     _matched_rules  CC=14  out:16
     _maybe_skip_active_ticket  CC=3  out:3
     _parse_age_days  CC=8  out:10
     _planfile_base  CC=4  out:3
     clean_queue  CC=5  out:7
+    find_candidates  CC=8  out:10
   src.koru.queue_cli_helpers  [4 funcs]
     emit_queue_run_started  CC=2  out:2
     open_queue_run_log  CC=4  out:2
@@ -361,17 +358,17 @@ MODULES:
     _print_setup_host_install_details  CC=6  out:10
     _print_text_report  CC=2  out:1
     _try_apt_install  CC=5  out:11
-  src.koruide.ide  [29 funcs]
+  src.koruide.ide  [35 funcs]
     _active_window_pid_x11  CC=7  out:6
     _auto_profile_candidate_ids  CC=3  out:10
     _candidate_score  CC=1  out:3
+    _cursor_terminal_env_hint  CC=3  out:3
     _ide_id_from_process  CC=5  out:4
     _iter_proc_pids  CC=4  out:6
+    _known_terminal_ide_hint  CC=3  out:0
+    _legacy_windsurf_terminal_env_hint  CC=3  out:4
     _matches  CC=7  out:5
     _read_cmdline  CC=2  out:5
-    _read_comm  CC=2  out:3
-    _read_exe  CC=2  out:1
-    _resolve_auto_drive_target  CC=13  out:6
   src.koruide.injector  [9 funcs]
     _candidate_backends  CC=6  out:13
     _type_with_backend  CC=14  out:21
@@ -443,6 +440,9 @@ EDGES:
   services.healing-webhook.app.heal_redup_check → services.healing-webhook.app._record_action
   services.healing-webhook.app.alertmanager_webhook → services.healing-webhook.app._resolve_strategy
   services.healing-webhook.app.probe_failure → services.healing-webhook.app.create_planfile_ticket
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._format_paths
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._default_acceptance
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._reproduction_for
   src.korudsl.cli.main → src.korudsl.cli._read_input
   src.korudsl.cli.main → src.korudsl.transform.library_from_any
   src.korudsl.cli.main → src.korudsl.transform.library_to_any
@@ -463,6 +463,3 @@ EDGES:
   src.korudsl.library._emit_goal → src.korudsl.library._emit_objective
   src.korudsl.library._emit_goals → src.korudsl.library._emit_goal
   src.korudsl.library.library_to_dsl → src.korudsl.library.ensure_library_structure
-  src.korudsl.library.library_to_dsl → src.korudsl.library._emit_functions
-  src.korudsl.library.library_to_dsl → src.korudsl.library._emit_goals
-  src.koruapi.runtime_insights._classify_process → src.koruapi.runtime_insights._looks_project_related

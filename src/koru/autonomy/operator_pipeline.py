@@ -576,6 +576,107 @@ def _ensure_planfile_api(
         )
 
 
+def _discard_stale_pending_marker(
+    project: Path,
+    step: OperatorStep,
+    *,
+    ticket_id: str | None,
+    state_dir: Path,
+    create_tickets: bool,
+    stdio_format: str,
+) -> str | None:
+    if not create_tickets or step.status != "pending" or ticket_id is None:
+        return ticket_id
+    ticket = _find_ticket_by_id(project, ticket_id)
+    if ticket is not None and _ticket_matches_current_step(ticket, step):
+        return ticket_id
+    if ticket is not None:
+        _close_resolved_step_ticket(
+            project,
+            step_id=step.step_id,
+            ticket_id=ticket_id,
+            state_dir=state_dir,
+            stdio_format=stdio_format,
+        )
+    else:
+        _clear_marker(state_dir, step.step_id)
+    return None
+
+
+def _close_finished_step_marker(
+    project: Path,
+    step: OperatorStep,
+    *,
+    ticket_id: str | None,
+    state_dir: Path,
+    create_tickets: bool,
+    stdio_format: str,
+) -> str | None:
+    if not create_tickets or step.status not in {"ok", "skipped"} or ticket_id is None:
+        return ticket_id
+    closed = _close_resolved_step_ticket(
+        project,
+        step_id=step.step_id,
+        ticket_id=ticket_id,
+        state_dir=state_dir,
+        stdio_format=stdio_format,
+    )
+    return None if closed else ticket_id
+
+
+def _recover_matching_step_ticket(
+    project: Path,
+    step: OperatorStep,
+    *,
+    ticket_id: str | None,
+    state_dir: Path,
+    create_tickets: bool,
+    ticket_queue: str,
+) -> str | None:
+    if not create_tickets or step.status != "pending" or ticket_id is not None:
+        return ticket_id
+    candidate_ticket_id = _find_existing_step_ticket(
+        project,
+        step_id=step.step_id,
+        queue_name=ticket_queue,
+    )
+    if candidate_ticket_id is None:
+        return None
+    ticket = _find_ticket_by_id(project, candidate_ticket_id)
+    if ticket is None or not _ticket_matches_current_step(ticket, step):
+        return None
+    _write_marker(state_dir, step.step_id, candidate_ticket_id)
+    return candidate_ticket_id
+
+
+def _create_pending_step_ticket(
+    project: Path,
+    step: OperatorStep,
+    *,
+    ticket_id: str | None,
+    state_dir: Path,
+    create_tickets: bool,
+    ticket_queue: str,
+    ticket_priority: str,
+    stdio_format: str,
+    result: OperatorPipelineResult,
+) -> str | None:
+    if not create_tickets or step.status != "pending" or ticket_id is not None:
+        return ticket_id
+    created = _create_step_ticket(
+        project,
+        step,
+        queue_name=ticket_queue,
+        priority=ticket_priority,
+        state_dir=state_dir,
+        stdio_format=stdio_format,
+    )
+    if created is None:
+        return ticket_id
+    result.tickets_created.append(created.ticket_id)
+    return created.ticket_id
+
+
 def _process_operator_step(
     project: Path,
     step: OperatorStep,
@@ -590,53 +691,41 @@ def _process_operator_step(
 ) -> OperatorStep:
     """Process a single operator step and return updated step with ticket_id."""
     ticket_id: str | None = _read_marker(state_dir, step.step_id)
-    if create_tickets and step.status == "pending" and ticket_id is not None:
-        ticket = _find_ticket_by_id(project, ticket_id)
-        if ticket is None or not _ticket_matches_current_step(ticket, step):
-            if ticket is not None:
-                _close_resolved_step_ticket(
-                    project,
-                    step_id=step.step_id,
-                    ticket_id=ticket_id,
-                    state_dir=state_dir,
-                    stdio_format=stdio_format,
-                )
-            else:
-                _clear_marker(state_dir, step.step_id)
-            ticket_id = None
-    if create_tickets and step.status in {"ok", "skipped"} and ticket_id is not None:
-        closed = _close_resolved_step_ticket(
-            project,
-            step_id=step.step_id,
-            ticket_id=ticket_id,
-            state_dir=state_dir,
-            stdio_format=stdio_format,
-        )
-        if closed:
-            ticket_id = None
-    if create_tickets and step.status == "pending" and ticket_id is None:
-        candidate_ticket_id = _find_existing_step_ticket(
-            project,
-            step_id=step.step_id,
-            queue_name=ticket_queue,
-        )
-        if candidate_ticket_id is not None:
-            ticket = _find_ticket_by_id(project, candidate_ticket_id)
-            if ticket is not None and _ticket_matches_current_step(ticket, step):
-                ticket_id = candidate_ticket_id
-                _write_marker(state_dir, step.step_id, ticket_id)
-    if create_tickets and step.status == "pending" and ticket_id is None:
-        created = _create_step_ticket(
-            project,
-            step,
-            queue_name=ticket_queue,
-            priority=ticket_priority,
-            state_dir=state_dir,
-            stdio_format=stdio_format,
-        )
-        if created is not None:
-            ticket_id = created.ticket_id
-            result.tickets_created.append(ticket_id)
+    ticket_id = _discard_stale_pending_marker(
+        project,
+        step,
+        ticket_id=ticket_id,
+        state_dir=state_dir,
+        create_tickets=create_tickets,
+        stdio_format=stdio_format,
+    )
+    ticket_id = _close_finished_step_marker(
+        project,
+        step,
+        ticket_id=ticket_id,
+        state_dir=state_dir,
+        create_tickets=create_tickets,
+        stdio_format=stdio_format,
+    )
+    ticket_id = _recover_matching_step_ticket(
+        project,
+        step,
+        ticket_id=ticket_id,
+        state_dir=state_dir,
+        create_tickets=create_tickets,
+        ticket_queue=ticket_queue,
+    )
+    ticket_id = _create_pending_step_ticket(
+        project,
+        step,
+        ticket_id=ticket_id,
+        state_dir=state_dir,
+        create_tickets=create_tickets,
+        ticket_queue=ticket_queue,
+        ticket_priority=ticket_priority,
+        stdio_format=stdio_format,
+        result=result,
+    )
     return OperatorStep(
         step_id=step.step_id,
         title=step.title,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -48,6 +49,45 @@ def test_collect_report_flags_path_mismatch_and_plugin_version_missing(
     assert "plugin_version_missing" in codes
     assert report.plugin["connected"] is True
     assert report.plugin["expected_version"] == "0.1.13"
+
+
+def test_collect_report_uses_explicit_ide_socket_when_env_is_unset(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
+    monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
+    monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: tmp_path / ".venv/bin/koru")
+    monkeypatch.setattr(
+        install_manager,
+        "_repo_koru_bin",
+        lambda _root: tmp_path / ".venv/bin/koru",
+    )
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.15")
+    monkeypatch.setattr(
+        install_manager,
+        "installed_extension_version_for_ide",
+        lambda _ide: "0.1.15",
+    )
+    monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    checked: list[Path] = []
+
+    def fake_daemon_status(socket: Path) -> dict[str, object]:
+        checked.append(socket)
+        return {"running": False}
+
+    monkeypatch.setattr(install_manager, "_daemon_status", fake_daemon_status)
+
+    report = install_manager.collect_install_manager_report(ide="vscode")
+
+    expected_socket = tmp_path / "koru-autopilot-vscode.sock"
+    assert checked == [expected_socket]
+    assert report.socket == str(expected_socket)
+    assert os.environ.get("KORU_AUTOPILOT_INSTANCE") is None
 
 
 def test_collect_report_flags_connected_plugin_version_mismatch(
@@ -316,6 +356,7 @@ def test_collect_report_for_zed_does_not_require_vsix_plugin(monkeypatch, tmp_pa
 
 
 def test_collect_report_auto_still_checks_plugin_connection(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
     monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
     monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
     monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")

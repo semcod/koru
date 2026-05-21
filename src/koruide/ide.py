@@ -356,35 +356,61 @@ def _vscode_family_flavor_from_env() -> str | None:
     return None
 
 
-def _terminal_ide_from_env() -> str | None:
-    chrome = os.environ.get("CHROME_DESKTOP", "").strip().lower()
-    chrome_ide = normalize_ide_id(chrome)
-    if chrome_ide == "cursor" or os.environ.get("CURSOR_AGENT") or os.environ.get("CURSOR_CLI"):
-        return "cursor"
+def _cursor_terminal_env_hint(chrome_ide: str | None) -> bool:
+    return chrome_ide == "cursor" or bool(
+        os.environ.get("CURSOR_AGENT") or os.environ.get("CURSOR_CLI")
+    )
 
-    # Prioritize Windsurf detection via specific env markers before generic vscode/TERM_PROGRAM
+
+def _windsurf_primary_terminal_env_hint(chrome_ide: str | None) -> bool:
     term_program_version = os.environ.get("TERM_PROGRAM_VERSION", "").strip().lower()
-    if (
+    return (
         "windsurf" in term_program_version
-        or os.environ.get("WINDSURF_CASCADE_TERMINAL")
+        or bool(os.environ.get("WINDSURF_CASCADE_TERMINAL"))
         or chrome_ide == "windsurf"
         or "windsurf" in os.environ.get("GIO_LAUNCHED_DESKTOP_FILE", "").lower()
-    ):
-        return "windsurf"
+    )
 
-    term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
-    term_ide = normalize_ide_id(term_program)
+
+def _vscode_family_terminal_hint(term_program: str) -> str | None:
     if term_program in {"vscode", "code"} and _vscode_family_env_present():
         return _vscode_family_flavor_from_env()
+    return None
+
+
+def _known_terminal_ide_hint(term_ide: str | None, chrome_ide: str | None) -> str | None:
     if term_ide in _IDE_SIGNATURES:
         return term_ide
     if chrome_ide in _IDE_SIGNATURES:
         return chrome_ide
+    return None
+
+
+def _legacy_windsurf_terminal_env_hint(chrome: str) -> bool:
+    return bool(os.environ.get("WINDSURF_VERSION")) or (
+        bool(os.environ.get("WINDSURF_CSRF_TOKEN")) and "cursor" not in chrome
+    )
+
+
+def _terminal_ide_from_env() -> str | None:
+    chrome = os.environ.get("CHROME_DESKTOP", "").strip().lower()
+    chrome_ide = normalize_ide_id(chrome)
+    if _cursor_terminal_env_hint(chrome_ide):
+        return "cursor"
+
+    # Prioritize Windsurf detection via specific env markers before generic vscode/TERM_PROGRAM
+    if _windsurf_primary_terminal_env_hint(chrome_ide):
+        return "windsurf"
+
+    term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
+    term_ide = normalize_ide_id(term_program)
+    if vscode_family := _vscode_family_terminal_hint(term_program):
+        return vscode_family
+    if known_ide := _known_terminal_ide_hint(term_ide, chrome_ide):
+        return known_ide
     if _vscode_family_env_present():
         return _vscode_family_flavor_from_env()
-    if os.environ.get("WINDSURF_VERSION") or (
-        os.environ.get("WINDSURF_CSRF_TOKEN") and "cursor" not in chrome
-    ):
+    if _legacy_windsurf_terminal_env_hint(chrome):
         return "windsurf"
     return None
 

@@ -1,4 +1,4 @@
-# code2llm/evolution | 1404 func | 133f | 2026-05-21
+# code2llm/evolution | 1424 func | 133f | 2026-05-21
 # generated in 0.01s
 
 NEXT[10] (ranked by impact):
@@ -7,8 +7,8 @@ NEXT[10] (ranked by impact):
       EFFORT: ~4h  IMPACT: 46935
 
   [2] !! SPLIT           src/koru/autonomous_cycle.py
-      WHY: 1320L, 2 classes, max CC=19
-      EFFORT: ~4h  IMPACT: 25080
+      WHY: 1389L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 19446
 
   [3] !! SPLIT           src/koruapi/dashboard_serve.py
       WHY: 1400L, 1 classes, max CC=13
@@ -30,15 +30,15 @@ NEXT[10] (ranked by impact):
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 285
 
-  [8] !  SPLIT-FUNC      _execute_autopilot_drive  CC=19  fan=14
-      WHY: CC=19 exceeds 15
-      EFFORT: ~1h  IMPACT: 266
-
-  [9] !  SPLIT-FUNC      build_startup_probe  CC=15  fan=17
+  [8] !  SPLIT-FUNC      build_startup_probe  CC=15  fan=17
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 255
 
-  [10] !  SPLIT-FUNC      AutopilotDaemon._handle_plugin_event  CC=15  fan=14
+  [9] !  SPLIT-FUNC      AutopilotDaemon._handle_plugin_event  CC=15  fan=14
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 210
+
+  [10] !  SPLIT-FUNC      inject_with_profile  CC=15  fan=14
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 210
 
@@ -46,13 +46,13 @@ NEXT[10] (ranked by impact):
 RISKS[3]:
   ⚠ Splitting src/koru/autonomous.py may break 65 import paths
   ⚠ Splitting src/koruapi/dashboard_serve.py may break 15 import paths
-  ⚠ Splitting src/koru/autonomous_cycle.py may break 39 import paths
+  ⚠ Splitting src/koru/autonomous_cycle.py may break 49 import paths
 
 METRICS-TARGET:
-  CC̄:          4.3 → ≤3.0
+  CC̄:          4.2 → ≤2.9
   max-CC:      21 → ≤10
-  god-modules: 15 → 0
-  high-CC(≥15): 13 → ≤6
+  god-modules: 18 → 0
+  high-CC(≥15): 9 → ≤4
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.2 → now CC̄=4.3
+  prev CC̄=4.2 → now CC̄=4.2

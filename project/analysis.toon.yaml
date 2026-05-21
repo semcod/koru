@@ -1,26 +1,22 @@
-# code2llm | 244f 43481L | python:154,shell:44,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:2,toml:1,properties:1,xml:1 | 2026-05-21
-# generated in 0.08s
-# CC̄=4.1 | critical:13/1477 | dups:0 | cycles:0
+# code2llm | 244f 43695L | python:154,shell:44,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:2,toml:1,properties:1,xml:1 | 2026-05-21
+# generated in 0.17s
+# CC̄=4.1 | critical:9/1497 | dups:0 | cycles:0
 
-HEALTH[14]:
+HEALTH[10]:
   🔴 GOD   src/koru/autonomous.py = 2235L, 4 classes, 65m, max CC=21
   🟡 CC    _handle_plugin_event CC=15 (limit:15)
-  🟡 CC    _terminal_ide_from_env CC=16 (limit:15)
   🟡 CC    inject_with_profile CC=15 (limit:15)
   🟡 CC    _run_autonomous_cycle CC=21 (limit:15)
   🟡 CC    _action_up CC=17 (limit:15)
   🟡 CC    autonomous_main CC=15 (limit:15)
   🟡 CC    build_startup_probe CC=15 (limit:15)
-  🟡 CC    _client_has_usable_plugin CC=15 (limit:15)
-  🟡 CC    _execute_autopilot_drive CC=19 (limit:15)
   🟡 CC    _compose_service_ready CC=15 (limit:15)
   🟡 CC    action_daemon CC=15 (limit:15)
   🟡 CC    _performInject CC=17 (limit:15)
-  🟡 CC    _process_operator_step CC=20 (limit:15)
 
 REFACTOR[2]:
   1. split src/koru/autonomous.py  (god module)
-  2. split 13 high-CC methods  (CC>15)
+  2. split 9 high-CC methods  (CC>15)
 
 PIPELINES[412]:
   [1] Src [heal_rebuild_restore]: heal_rebuild_restore → _run_docker
@@ -43,17 +39,17 @@ LAYERS:
   src/                            CC̄=4.3    ←in:0  →out:0
   │ !! autonomous                2235L  4C   65m  CC=21     ←1
   │ !! dashboard_serve           1400L  1C   15m  CC=13     ←1
-  │ !! autonomous_cycle          1320L  2C   39m  CC=19     ←0
+  │ !! autonomous_cycle          1389L  2C   49m  CC=14     ←0
   │ !! context                   1253L  0C   49m  CC=12     ←7
   │ !! mcp_server                1040L  0C   34m  CC=14     ←2
   │ !! scan                       932L  2C   24m  CC=13     ←3
   │ !! daemon                     896L  2C   35m  CC=15     ←0
   │ !! cli_command                848L  0C   22m  CC=14     ←0
-  │ !! operator_pipeline          741L  2C   26m  CC=20     ←1
+  │ !! operator_pipeline          839L  2C   30m  CC=14     ←1
+  │ !! ide                        679L  1C   41m  CC=13     ←13
   │ !! koru-autoloop.sh           676L  0C   17m  CC=0.0    ←0
-  │ !! ide                        653L  1C   36m  CC=16     ←13
   │ !! init                       610L  1C   15m  CC=12     ←3
-  │ !! install_manager            564L  2C   26m  CC=13     ←1
+  │ !! install_manager            584L  2C   27m  CC=13     ←1
   │ !! doctor                     545L  2C   23m  CC=11     ←3
   │ !! autonomous_wup             538L  3C   25m  CC=15     ←1
   │ plugin_installer           494L  1C   24m  CC=11     ←3
@@ -229,7 +225,7 @@ LAYERS:
   │
   ./                              CC̄=0.0    ←in:0  →out:0
   │ !! planfile.yaml             1319L  0C    0m  CC=0.0    ←0
-  │ !! Taskfile.yml               911L  0C    0m  CC=0.0    ←0
+  │ !! Taskfile.yml               912L  0C    0m  CC=0.0    ←0
   │ !! goal.yaml                  511L  0C    0m  CC=0.0    ←0
   │ pyproject.toml             173L  0C    0m  CC=0.0    ←0
   │ pipeline.yaml              142L  0C    0m  CC=0.0    ←0
@@ -307,7 +303,7 @@ LAYERS:
 
 COUPLING:
                                                       src.koru                        scripts                    src.koruide                    src.koruapi  plugins.koru-autopilot-vscode                    src.korudsl       services.healing-webhook
-                       src.koru                             ──                            289                             52                              5                              5                                                                hub
+                       src.koru                             ──                            289                             53                              5                              5                                                                hub
                         scripts                           ←289                             ──                            ←27                            ←20                                                                                               hub
                     src.koruide                              3                             27                             ──                             ←1                                                                                               hub
                     src.koruapi                             42                             20                              1                             ──                              1                              4                                 hub
@@ -316,13 +312,13 @@ COUPLING:
        services.healing-webhook                                                                                                                                                          1                                                            ──
   CYCLES: none
   HUB: scripts/ (fan-in=336)
-  HUB: src.koruide/ (fan-in=53)
-  HUB: src.koru/ (fan-in=45)
-  HUB: src.koruapi/ (fan-in=5)
   HUB: plugins.koru-autopilot-vscode/ (fan-in=7)
-  SMELL: src.koruide/ fan-out=30 → split needed
-  SMELL: src.koru/ fan-out=351 → split needed
+  HUB: src.koruapi/ (fan-in=5)
+  HUB: src.koruide/ (fan-in=54)
+  HUB: src.koru/ (fan-in=45)
   SMELL: src.koruapi/ fan-out=68 → split needed
+  SMELL: src.koruide/ fan-out=30 → split needed
+  SMELL: src.koru/ fan-out=352 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

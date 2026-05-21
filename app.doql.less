@@ -2,7 +2,7 @@
 
 app {
   name: koru;
-  version: 0.1.176;
+  version: 0.1.177;
 }
 
 dependencies {
@@ -159,27 +159,27 @@ bash scripts/koru-autoloop-reset-diag-markers.sh;
 
 workflow[name="koru:server"] {
   trigger: manual;
-  step-1: run cmd=python3 -m koru.cli serve --project . --host "{{.HOST}}" --port "{{.PORT}}" --auto-port --no-open;
+  step-1: run cmd={{.PYTHON}} -m koru.cli serve --project . --host "{{.HOST}}" --port "{{.PORT}}" --auto-port --no-open;
 }
 
 workflow[name="koru:mcp:bootstrap"] {
   trigger: manual;
-  step-1: run cmd=python3 -m koru.cli init-ide --project . --ide all;
+  step-1: run cmd={{.PYTHON}} -m koru.cli init-ide --project . --ide all;
 }
 
 workflow[name="koru:operator:plugin-probe"] {
   trigger: manual;
-  step-1: run cmd=python3 -m koru.cli autopilot manage --ide "{{.IDE}}";
+  step-1: run cmd={{.PYTHON}} -m koru.cli autopilot manage --ide "{{.IDE}}";
 }
 
 workflow[name="koru:operator:setup-host"] {
   trigger: manual;
-  step-1: run cmd=python3 -m koru.cli autopilot setup-host;
+  step-1: run cmd={{.PYTHON}} -m koru.cli autopilot setup-host;
 }
 
 workflow[name="koru:ide-os:calibrate"] {
   trigger: manual;
-  step-1: run cmd=python3 -m koru.cli autopilot calibrate --ide "{{.IDE}}";
+  step-1: run cmd={{.PYTHON}} -m koru.cli autopilot calibrate --ide "{{.IDE}}";
 }
 
 workflow[name="quality:regix"] {

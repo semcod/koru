@@ -8282,3 +8282,35 @@ sprint:
       status: open
       sync: {}
       updated_at: '2026-05-21T14:52:20.202173+00:00'
+    STARTER-133:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:59:21.829614Z'
+      description: 'Gate `regix` failed.
+
+
+        - Failing line: `mi: 26.24441701037158 (target: ≥ 30.0)`
+
+        - Command: `regix gates 2>&1 | tail -20`
+
+        - Next step: Lower offending complexity/quality metric or relax gate threshold
+        intentionally.
+
+        '
+      files: []
+      history: []
+      id: STARTER-133
+      labels:
+      - gates
+      - gate-regix
+      name: '[gate-finding:4baca8089af7] regix gate failure'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-21T14:59:21.828420Z'
+        tool: koru-gate
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:59:21.829618Z'

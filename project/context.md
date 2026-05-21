@@ -1,5 +1,5 @@
 # System Architecture Analysis
-<!-- generated in 0.00s -->
+<!-- generated in 0.02s -->
 
 ## Overview
 
@@ -7,7 +7,7 @@
 - **Primary Language**: python
 - **Languages**: python: 154, shell: 44, yaml: 15, yml: 8, typescript: 6
 - **Analysis Mode**: static
-- **Total Functions**: 1477
+- **Total Functions**: 1497
 - **Total Classes**: 105
 - **Modules**: 243
 - **Entry Points**: 518
@@ -29,12 +29,12 @@
 - **File**: `context.py`
 
 ### src.koru.autonomous_cycle
-- **Functions**: 39
+- **Functions**: 49
 - **Classes**: 2
 - **File**: `autonomous_cycle.py`
 
 ### src.koruide.ide
-- **Functions**: 36
+- **Functions**: 41
 - **Classes**: 1
 - **File**: `ide.py`
 
@@ -47,19 +47,19 @@
 - **Functions**: 34
 - **File**: `mcp_server.py`
 
+### src.koru.autonomy.operator_pipeline
+- **Functions**: 30
+- **Classes**: 2
+- **File**: `operator_pipeline.py`
+
 ### services.healing-webhook.app
 - **Functions**: 27
 - **File**: `app.py`
 
 ### src.koru.autopilot.install_manager
-- **Functions**: 26
+- **Functions**: 27
 - **Classes**: 2
 - **File**: `install_manager.py`
-
-### src.koru.autonomy.operator_pipeline
-- **Functions**: 26
-- **Classes**: 2
-- **File**: `operator_pipeline.py`
 
 ### src.koru.autonomous_wup
 - **Functions**: 25
@@ -452,6 +452,12 @@ Cheap pre-flight gate: block
 > Parse redup-check.sh JSON payload into summary dict.
 - **Output to**: payload.get, int, int, sorted, s.get
 
+### services.healing-webhook.ticket_builder._format_paths
+- **Output to**: None.join
+
+### services.healing-webhook.ticket_builder._format_acceptance
+- **Output to**: None.join
+
 ### src.korudsl.cli._build_parser
 - **Output to**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, to_lib.add_argument, to_lib.add_argument
 
@@ -518,13 +524,6 @@ Returns (should_kill, logs) tuple.
 
 ### src.koruide.plugin_installer._parse_extension_version
 - **Output to**: output.splitlines, line.strip, None.startswith, EXTENSION_ID.lower, item.lower
-
-### src.koruide.plugin_installer.format_plugin_install_result
-> Human-friendly single-line status for autonomous startup.
-- **Output to**: None.join
-
-### src.koru.agent_backends._parse_lane
-- **Output to**: raw.get, raw.get, raw.get, raw.get, raw.get
 
 ## Behavioral Patterns
 

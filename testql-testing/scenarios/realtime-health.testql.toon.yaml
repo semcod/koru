@@ -3,9 +3,9 @@
 # PURPOSE: Provide a default testql scenario for /koru-gate in this repository.
 
 CONFIG[2]{key, value}:
-  cli_command, python -m koru
+  cli_command, PYTHONPATH=src python3 -m koru
   timeout_ms, 10000
 
-SHELL "python -m koru --help" 10000
+SHELL "PYTHONPATH=src python3 -m koru --help" 10000
 ASSERT_EXIT_CODE 0
 ASSERT_STDOUT_CONTAINS "usage"

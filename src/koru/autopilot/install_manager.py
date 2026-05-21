@@ -139,6 +139,26 @@ def _resolve_ide(raw: str) -> str:
     return detected[0].id if detected else "auto"
 
 
+def _manager_socket_path(ide: str, socket_path: Path | None) -> Path:
+    if socket_path is not None:
+        return socket_path
+    if (
+        ide != "auto"
+        and not (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
+        and not (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip()
+    ):
+        previous_instance = os.environ.get("KORU_AUTOPILOT_INSTANCE")
+        try:
+            os.environ["KORU_AUTOPILOT_INSTANCE"] = ide
+            return default_socket_path()
+        finally:
+            if previous_instance is None:
+                os.environ.pop("KORU_AUTOPILOT_INSTANCE", None)
+            else:
+                os.environ["KORU_AUTOPILOT_INSTANCE"] = previous_instance
+    return default_socket_path()
+
+
 def _daemon_status(socket_path: Path) -> dict[str, Any]:
     client = AutopilotClient(socket_path=socket_path, timeout=1.5)
     if not client.is_running():
@@ -424,7 +444,7 @@ def collect_install_manager_report(
 ) -> InstallManagerReport:
     root = _source_root()
     resolved_ide = _resolve_ide(ide)
-    sock = socket_path or default_socket_path()
+    sock = _manager_socket_path(resolved_ide, socket_path)
     daemon = _daemon_status(sock)
     connected_plugin = _plugin_for_ide(daemon, resolved_ide) if daemon.get("running") else None
     plugin_supported = resolved_ide == "auto" or supports_vscode_extension_plugin(resolved_ide)

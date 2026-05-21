@@ -125,6 +125,45 @@ class AutonomousStartupProbe:
     xdg_runtime_dir: str
 
 
+def _normalized_cli_value(raw: str | None) -> str:
+    return (raw or "auto").strip().lower()
+
+
+def _autopilot_socket_path_for_probe(autopilot_ide: str) -> str:
+    if not _should_probe_per_ide_socket(autopilot_ide):
+        return str(default_socket_path())
+    previous_instance = os.environ.get("KORU_AUTOPILOT_INSTANCE")
+    try:
+        os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
+        return str(default_socket_path())
+    finally:
+        if previous_instance is None:
+            os.environ.pop("KORU_AUTOPILOT_INSTANCE", None)
+        else:
+            os.environ["KORU_AUTOPILOT_INSTANCE"] = previous_instance
+
+
+def _should_probe_per_ide_socket(autopilot_ide: str) -> bool:
+    return (
+        bool(autopilot_ide)
+        and autopilot_ide != "auto"
+        and not (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
+        and not (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip()
+    )
+
+
+def _running_ide_labels() -> tuple[str, ...]:
+    return tuple(f"{ide.label} (pid={ide.pid})" for ide in detect_running_ides())
+
+
+def _term_program_label() -> str:
+    return (os.environ.get("TERM_PROGRAM") or "").strip() or "-"
+
+
+def _xdg_runtime_dir_label() -> str:
+    return (os.environ.get("XDG_RUNTIME_DIR") or "").strip() or "-"
+
+
 def build_startup_probe(
     project: Path,
     *,
@@ -143,41 +182,23 @@ def build_startup_probe(
         lane,
         resolve_ide_route_fn=resolve_ide_route_fn,
     )
-    socket_path = str(default_socket_path())
-    if (
-        autopilot_ide
-        and autopilot_ide != "auto"
-        and not (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
-        and not (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip()
-    ):
-        previous_instance = os.environ.get("KORU_AUTOPILOT_INSTANCE")
-        try:
-            os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
-            socket_path = str(default_socket_path())
-        finally:
-            if previous_instance is None:
-                os.environ.pop("KORU_AUTOPILOT_INSTANCE", None)
-            else:
-                os.environ["KORU_AUTOPILOT_INSTANCE"] = previous_instance
-    running = detect_running_ides()
-    running_labels = tuple(f"{ide.label} (pid={ide.pid})" for ide in running)
     return AutonomousStartupProbe(
         koru_version=koru_distribution_version(),
         python_version=sys.version.split()[0],
         project=project.resolve(),
-        agent_lane_cli=(agent_lane_cli or "auto").strip().lower(),
-        autopilot_ide_cli=(autopilot_ide_cli or "auto").strip().lower(),
+        agent_lane_cli=_normalized_cli_value(agent_lane_cli),
+        autopilot_ide_cli=_normalized_cli_value(autopilot_ide_cli),
         resolved_lane=lane,
         lane_source=lane_source,
         resolved_autopilot_ide=autopilot_ide,
         autopilot_ide_source=ide_source,
-        running_ides=running_labels,
+        running_ides=_running_ide_labels(),
         terminal_lane=_terminal_agent_lane_from_env(),
-        socket_path=socket_path,
+        socket_path=_autopilot_socket_path_for_probe(autopilot_ide),
         session=_session_label(),
-        term_program=(os.environ.get("TERM_PROGRAM") or "").strip() or "-",
+        term_program=_term_program_label(),
         headless=is_headless_environment(),
-        xdg_runtime_dir=(os.environ.get("XDG_RUNTIME_DIR") or "").strip() or "-",
+        xdg_runtime_dir=_xdg_runtime_dir_label(),
     )
 
 

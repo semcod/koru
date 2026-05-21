@@ -15,7 +15,8 @@ version: '3'
 vars:
   KORU_VERSION:
     sh: cat VERSION 2>/dev/null || echo "0.1.1"
-  PYTHON: python3
+  PYTHON:
+    sh: if [ -x .venv/bin/python ]; then echo .venv/bin/python; else echo python3; fi
 
 tasks:
   default:
@@ -262,7 +263,7 @@ tasks:
   koru:server:
     desc: Start the local koru dashboard/API for operator checks
     cmds:
-      - python3 -m koru.cli serve --project . --host "{{.HOST}}" --port "{{.PORT}}" --auto-port --no-open
+      - '{{.PYTHON}} -m koru.cli serve --project . --host "{{.HOST}}" --port "{{.PORT}}" --auto-port --no-open'
     vars:
       HOST: '{{.HOST | default "127.0.0.1"}}'
       PORT: '{{.PORT | default "8765"}}'
@@ -271,24 +272,24 @@ tasks:
   koru:mcp:bootstrap:
     desc: Provision koru MCP config for Cursor, VS Code, and Windsurf
     cmds:
-      - python3 -m koru.cli init-ide --project . --ide all
+      - '{{.PYTHON}} -m koru.cli init-ide --project . --ide all'
 
   koru:operator:plugin-probe:
     desc: Check autopilot daemon/plugin install, live version, and socket status
     cmds:
-      - python3 -m koru.cli autopilot manage --ide "{{.IDE}}"
+      - '{{.PYTHON}} -m koru.cli autopilot manage --ide "{{.IDE}}"'
     vars:
       IDE: '{{.IDE | default "auto"}}'
 
   koru:operator:setup-host:
     desc: Probe host injector dependencies for autopilot
     cmds:
-      - python3 -m koru.cli autopilot setup-host
+      - '{{.PYTHON}} -m koru.cli autopilot setup-host'
 
   koru:ide-os:calibrate:
     desc: Calibrate OS injector chat coordinates for an IDE (IDE=vscode|vscodium|cursor|windsurf|jetbrains|zed)
     cmds:
-      - python3 -m koru.cli autopilot calibrate --ide "{{.IDE}}"
+      - '{{.PYTHON}} -m koru.cli autopilot calibrate --ide "{{.IDE}}"'
     vars:
       IDE: '{{.IDE | default "auto"}}'
     interactive: true

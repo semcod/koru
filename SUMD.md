@@ -21,7 +21,7 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.176`
+- **version**: `0.1.177`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -41,7 +41,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.176;
+  version: 0.1.177;
 }
 
 dependencies {
@@ -198,27 +198,27 @@ bash scripts/koru-autoloop-reset-diag-markers.sh;
 
 workflow[name="koru:server"] {
   trigger: manual;
-  step-1: run cmd=python3 -m koru.cli serve --project . --host "{{.HOST}}" --port "{{.PORT}}" --auto-port --no-open;
+  step-1: run cmd={{.PYTHON}} -m koru.cli serve --project . --host "{{.HOST}}" --port "{{.PORT}}" --auto-port --no-open;
 }
 
 workflow[name="koru:mcp:bootstrap"] {
   trigger: manual;
-  step-1: run cmd=python3 -m koru.cli init-ide --project . --ide all;
+  step-1: run cmd={{.PYTHON}} -m koru.cli init-ide --project . --ide all;
 }
 
 workflow[name="koru:operator:plugin-probe"] {
   trigger: manual;
-  step-1: run cmd=python3 -m koru.cli autopilot manage --ide "{{.IDE}}";
+  step-1: run cmd={{.PYTHON}} -m koru.cli autopilot manage --ide "{{.IDE}}";
 }
 
 workflow[name="koru:operator:setup-host"] {
   trigger: manual;
-  step-1: run cmd=python3 -m koru.cli autopilot setup-host;
+  step-1: run cmd={{.PYTHON}} -m koru.cli autopilot setup-host;
 }
 
 workflow[name="koru:ide-os:calibrate"] {
   trigger: manual;
-  step-1: run cmd=python3 -m koru.cli autopilot calibrate --ide "{{.IDE}}";
+  step-1: run cmd={{.PYTHON}} -m koru.cli autopilot calibrate --ide "{{.IDE}}";
 }
 
 workflow[name="quality:regix"] {
@@ -791,7 +791,8 @@ version: '3'
 vars:
   KORU_VERSION:
     sh: cat VERSION 2>/dev/null || echo "0.1.1"
-  PYTHON: python3
+  PYTHON:
+    sh: if [ -x .venv/bin/python ]; then echo .venv/bin/python; else echo python3; fi
 
 tasks:
   default:
@@ -1038,7 +1039,7 @@ tasks:
   koru:server:
     desc: Start the local koru dashboard/API for operator checks
     cmds:
-      - python3 -m koru.cli serve --project . --host "{{.HOST}}" --port "{{.PORT}}" --auto-port --no-open
+      - '{{.PYTHON}} -m koru.cli serve --project . --host "{{.HOST}}" --port "{{.PORT}}" --auto-port --no-open'
     vars:
       HOST: '{{.HOST | default "127.0.0.1"}}'
       PORT: '{{.PORT | default "8765"}}'
@@ -1047,24 +1048,24 @@ tasks:
   koru:mcp:bootstrap:
     desc: Provision koru MCP config for Cursor, VS Code, and Windsurf
     cmds:
-      - python3 -m koru.cli init-ide --project . --ide all
+      - '{{.PYTHON}} -m koru.cli init-ide --project . --ide all'
 
   koru:operator:plugin-probe:
     desc: Check autopilot daemon/plugin install, live version, and socket status
     cmds:
-      - python3 -m koru.cli autopilot manage --ide "{{.IDE}}"
+      - '{{.PYTHON}} -m koru.cli autopilot manage --ide "{{.IDE}}"'
     vars:
       IDE: '{{.IDE | default "auto"}}'
 
   koru:operator:setup-host:
     desc: Probe host injector dependencies for autopilot
     cmds:
-      - python3 -m koru.cli autopilot setup-host
+      - '{{.PYTHON}} -m koru.cli autopilot setup-host'
 
   koru:ide-os:calibrate:
     desc: Calibrate OS injector chat coordinates for an IDE (IDE=vscode|vscodium|cursor|windsurf|jetbrains|zed)
     cmds:
-      - python3 -m koru.cli autopilot calibrate --ide "{{.IDE}}"
+      - '{{.PYTHON}} -m koru.cli autopilot calibrate --ide "{{.IDE}}"'
     vars:
       IDE: '{{.IDE | default "auto"}}'
     interactive: true
@@ -1692,7 +1693,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.176
+  version: 0.1.177
   env: local
 ```
 
@@ -1775,9 +1776,9 @@ pip install -e .[dev]
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 311f 64217L | python:246,shell:52,javascript:6,typescript:6,less:1 | 2026-05-21
-# stats: 1846 func | 197 cls | 311 mod | CC̄=4.1 | critical:141 | cycles:0
-# alerts[5]: CC _run_autonomous_cycle=21; CC _process_operator_step=21; CC _execute_autopilot_drive=19; CC _action_up=17; CC _terminal_ide_from_env=16
+# koru | 311f 64461L | python:246,shell:52,javascript:6,typescript:6,less:1 | 2026-05-21
+# stats: 1867 func | 197 cls | 311 mod | CC̄=4.1 | critical:137 | cycles:0
+# alerts[5]: CC _run_autonomous_cycle=21; CC _action_up=17; CC test_autonomy_config_from_env=16; CC autonomous_main=15; CC build_startup_probe=15
 # hotspots[5]: _build_handler fan=31; _build_handler fan=28; _action_up fan=26; run_cycle fan=23; init_project fan=21
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
@@ -1857,7 +1858,7 @@ M[311]:
   src/koru/api/__init__.py,10
   src/koru/autoloop_cli.py,91
   src/koru/autonomous.py,2236
-  src/koru/autonomous_cycle.py,1321
+  src/koru/autonomous_cycle.py,1390
   src/koru/autonomous_diagnostics.py,259
   src/koru/autonomous_env.py,26
   src/koru/autonomous_parser.py,399
@@ -1870,7 +1871,7 @@ M[311]:
   src/koru/autonomy/environment.py,246
   src/koru/autonomy/heal.py,117
   src/koru/autonomy/ide_work.py,302
-  src/koru/autonomy/operator_pipeline.py,751
+  src/koru/autonomy/operator_pipeline.py,840
   src/koru/autonomy/post_run_verify.py,382
   src/koru/autonomy/prompts.py,102
   src/koru/autonomy/telemetry_snapshot.py,80
@@ -1886,7 +1887,7 @@ M[311]:
   src/koru/autopilot/host_setup.py,10
   src/koru/autopilot/ide.py,10
   src/koru/autopilot/injector.py,10
-  src/koru/autopilot/install_manager.py,565
+  src/koru/autopilot/install_manager.py,585
   src/koru/autopilot/install_plugin_cli.py,427
   src/koru/autopilot/local_manager.py,67
   src/koru/autopilot/os_injector.py,10
@@ -1990,7 +1991,7 @@ M[311]:
   src/koruide/daemon.py,897
   src/koruide/drive_orchestrator.py,201
   src/koruide/host_setup.py,227
-  src/koruide/ide.py,654
+  src/koruide/ide.py,680
   src/koruide/injector.py,407
   src/koruide/os_injector.py,401
   src/koruide/plugin_installer.py,495
@@ -2055,7 +2056,7 @@ M[311]:
   tests/test_ide_runtime.py,39
   tests/test_ide_work.py,140
   tests/test_init.py,337
-  tests/test_install_manager.py,342
+  tests/test_install_manager.py,382
   tests/test_koru_gate_capture.py,34
   tests/test_koru_queue_argv.py,24
   tests/test_koruapi.py,80
@@ -2295,7 +2296,7 @@ D:
     _update_auto_pipeline_state(state;queue_result;diag_result;autopilot_status)
     autonomous_main(argv)
   src/koru/autonomous_cycle.py:
-    e: _stdio_info,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_status_in_skip_list,_allow_keyboard_autopilot_fallback,_prefer_keyboard_autopilot,_plugin_required_for_ide,_client_has_usable_plugin,_try_os_injector_fallback,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_autopilot_event_path,_drain_autopilot_events,_initialize_cycle_telemetry,_heal_stale_socket,_handle_autopilot_events,_handle_queue_hygiene,_handle_post_run_verify_ide,_handle_scan_phase,_build_queue_command,_run_queue_loop,_emit_queue_iteration_event,_handle_post_run_verify,_handle_queue_loop_phase,_handle_scan_after_idle,_update_stagnation_state,_waiting_ticket_has_label,_handle_diagnostics,_check_autopilot_skip_conditions,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result,_handle_autopilot_phase,_emit_cycle_completion_events,run_cycle,DiagnosticResult,AutoloopState
+    e: _stdio_info,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_status_in_skip_list,_allow_keyboard_autopilot_fallback,_prefer_keyboard_autopilot,_plugin_required_for_ide,_client_plugin_rows,_wanted_plugin_ide,_plugin_row_matches_ide,_plugin_row_version_block_reason,_missing_plugin_label,_client_has_usable_plugin,_try_os_injector_fallback,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_autopilot_event_path,_drain_autopilot_events,_initialize_cycle_telemetry,_heal_stale_socket,_handle_autopilot_events,_handle_queue_hygiene,_handle_post_run_verify_ide,_handle_scan_phase,_build_queue_command,_run_queue_loop,_emit_queue_iteration_event,_handle_post_run_verify,_handle_queue_loop_phase,_handle_scan_after_idle,_update_stagnation_state,_waiting_ticket_has_label,_handle_diagnostics,_check_autopilot_skip_conditions,_resolve_autopilot_drive_decision,_drive_autopilot_once,_reply_missing_autopilot_plugin,_reply_needs_focus_retry,_warn_autopilot_focus_retry,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result,_handle_autopilot_phase,_emit_cycle_completion_events,run_cycle,DiagnosticResult,AutoloopState
     DiagnosticResult:
     AutoloopState:
     _stdio_info(msg)
@@ -2306,6 +2307,11 @@ D:
     _allow_keyboard_autopilot_fallback()
     _prefer_keyboard_autopilot()
     _plugin_required_for_ide(autopilot_ide)
+    _client_plugin_rows(client)
+    _wanted_plugin_ide(autopilot_ide)
+    _plugin_row_matches_ide(row;wanted)
+    _plugin_row_version_block_reason(row;wanted)
+    _missing_plugin_label(wanted)
     _client_has_usable_plugin(client;autopilot_ide)
     _try_os_injector_fallback(prompt)
     _run_command_check(project;check_id;command)
@@ -2331,6 +2337,11 @@ D:
     _waiting_ticket_has_label(project;queue_result;label)
     _handle_diagnostics(project;state;cycle;queue_result;idle_diagnostics;diagnostic_tickets;diagnostic_ticket_queue;diagnostic_ticket_priority;diagnostic_state_dir;wup_watch_enabled;wup_diagnostic_tickets;wup_ticket_queue;topology_integration;_hp;_emit)
     _check_autopilot_skip_conditions(project;queue_result;state;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp)
+    _resolve_autopilot_drive_decision(project;state;queue_result)
+    _drive_autopilot_once(client)
+    _reply_missing_autopilot_plugin(reply)
+    _reply_needs_focus_retry(reply)
+    _warn_autopilot_focus_retry(attempt;attempts)
     _execute_autopilot_drive(project;state;queue_result;client;autopilot_ide;drive_prompt;submit;autopilot_action;_hp)
     _update_autopilot_state(state;ok;decision_kind;autopilot_drive_kind;decision_prompt)
     _log_autopilot_result(ok;queue_result;autopilot_ide;decision_kind;reply;_hp)
@@ -2457,7 +2468,7 @@ D:
     resolve_in_progress_stale_minutes(project)
     release_in_progress_tickets(project)
   src/koru/autonomy/operator_pipeline.py:
-    e: _operator_state_dir,_marker_path,_read_marker,_write_marker,_clear_marker,_ticket_matches_step,_ticket_text,_ticket_matches_current_step,_find_ticket_by_id,_find_existing_step_ticket,_close_resolved_step_ticket,_mcp_koru_configured,_candidate_planfile_health_urls,_planfile_api_ok,_operator_autostart_server_enabled,_try_start_planfile_api,_os_profile_ok,_host_injectors_ok,build_operator_steps,_emit_step,_create_step_ticket,_ensure_planfile_api,_process_operator_step,_emit_operator_step_event,run_startup_operator_pipeline,sys_stdout_for_format,OperatorStep,OperatorPipelineResult
+    e: _operator_state_dir,_marker_path,_read_marker,_write_marker,_clear_marker,_ticket_matches_step,_ticket_text,_ticket_matches_current_step,_find_ticket_by_id,_find_existing_step_ticket,_close_resolved_step_ticket,_mcp_koru_configured,_candidate_planfile_health_urls,_planfile_api_ok,_operator_autostart_server_enabled,_try_start_planfile_api,_os_profile_ok,_host_injectors_ok,build_operator_steps,_emit_step,_create_step_ticket,_ensure_planfile_api,_discard_stale_pending_marker,_close_finished_step_marker,_recover_matching_step_ticket,_create_pending_step_ticket,_process_operator_step,_emit_operator_step_event,run_startup_operator_pipeline,sys_stdout_for_format,OperatorStep,OperatorPipelineResult
     OperatorStep:
     OperatorPipelineResult:
     _operator_state_dir(project)
@@ -2482,6 +2493,10 @@ D:
     _emit_step(stream)
     _create_step_ticket(project;step)
     _ensure_planfile_api(project;stdio_format;correlation_id)
+    _discard_stale_pending_marker(project;step)
+    _close_finished_step_marker(project;step)
+    _recover_matching_step_ticket(project;step)
+    _create_pending_step_ticket(project;step)
     _process_operator_step(project;step;index;total;state_dir;create_tickets;ticket_queue;ticket_priority;stdio_format;result)
     _emit_operator_step_event(out;index;total;step;stdio_format;correlation_id)
     run_startup_operator_pipeline()
@@ -2571,7 +2586,7 @@ D:
   src/koru/autopilot/ide.py:
   src/koru/autopilot/injector.py:
   src/koru/autopilot/install_manager.py:
-    e: _source_root,_source_version,_package_version,_repo_koru_bin,_path_koru_bin,_is_pyenv_shim,_expected_plugin_version,_resolve_ide,_daemon_status,_plugin_for_ide,_check_koru_path_issues,_check_pyenv_shim_issue,_check_version_mismatch_issue,_check_daemon_issues,_check_plugin_version_missing_issue,_check_plugin_installed_version_mismatch_issue,_check_plugin_installed_ok_but_not_connected_issue,_check_plugin_live_host_stale_issue,_check_plugin_version_mismatch_issue,_check_plugin_not_connected_issue,_issue_list,collect_install_manager_report,repair_installation,format_install_manager_report,ManagerIssue,InstallManagerReport
+    e: _source_root,_source_version,_package_version,_repo_koru_bin,_path_koru_bin,_is_pyenv_shim,_expected_plugin_version,_resolve_ide,_manager_socket_path,_daemon_status,_plugin_for_ide,_check_koru_path_issues,_check_pyenv_shim_issue,_check_version_mismatch_issue,_check_daemon_issues,_check_plugin_version_missing_issue,_check_plugin_installed_version_mismatch_issue,_check_plugin_installed_ok_but_not_connected_issue,_check_plugin_live_host_stale_issue,_check_plugin_version_mismatch_issue,_check_plugin_not_connected_issue,_issue_list,collect_install_manager_report,repair_installation,format_install_manager_report,ManagerIssue,InstallManagerReport
     ManagerIssue: to_dict(0)
     InstallManagerReport: to_dict(0)
     _source_root()
@@ -2582,6 +2597,7 @@ D:
     _is_pyenv_shim(path)
     _expected_plugin_version(root)
     _resolve_ide(raw)
+    _manager_socket_path(ide;socket_path)
     _daemon_status(socket_path)
     _plugin_for_ide(status;ide)
     _check_koru_path_issues(path_koru;repo_koru)
@@ -3484,7 +3500,7 @@ D:
     _print_setup_host_install_details(report)
     _print_text_report(report)
   src/koruide/ide.py:
-    e: normalize_ide_id,supported_autopilot_ide_ids,autopilot_ide_choices,vscode_extension_plugin_ide_ids,supports_vscode_extension_plugin,_iter_proc_pids,_read_comm,_read_cmdline,_read_exe,_matches,_score_comm_name,_score_windsurf_exe_path,_score_primary_exe_path,_score_exe_path,_score_cmdline_flags,_candidate_score,detect_running_ides,_active_window_pid_x11,_ide_id_from_process,detect_focused_ide_id,_vscode_family_env_present,_vscode_family_flavor_from_env,_terminal_ide_from_env,_terminal_ide_from_parent_chain,detect_terminal_host_ide_id,focused_ide,pick_target,is_linux,detect_running_ides_cached,clear_detect_cache,_has_os_injector_profile,_auto_profile_candidate_ids,_resolve_explicit_drive_target,_resolve_auto_drive_target,resolve_drive_target,RunningIDE
+    e: normalize_ide_id,supported_autopilot_ide_ids,autopilot_ide_choices,vscode_extension_plugin_ide_ids,supports_vscode_extension_plugin,_iter_proc_pids,_read_comm,_read_cmdline,_read_exe,_matches,_score_comm_name,_score_windsurf_exe_path,_score_primary_exe_path,_score_exe_path,_score_cmdline_flags,_candidate_score,detect_running_ides,_active_window_pid_x11,_ide_id_from_process,detect_focused_ide_id,_vscode_family_env_present,_vscode_family_flavor_from_env,_cursor_terminal_env_hint,_windsurf_primary_terminal_env_hint,_vscode_family_terminal_hint,_known_terminal_ide_hint,_legacy_windsurf_terminal_env_hint,_terminal_ide_from_env,_terminal_ide_from_parent_chain,detect_terminal_host_ide_id,focused_ide,pick_target,is_linux,detect_running_ides_cached,clear_detect_cache,_has_os_injector_profile,_auto_profile_candidate_ids,_resolve_explicit_drive_target,_resolve_auto_drive_target,resolve_drive_target,RunningIDE
     RunningIDE: to_dict(0)  # A single IDE process discovered on the system.
     normalize_ide_id(raw)
     supported_autopilot_ide_ids()
@@ -3508,6 +3524,11 @@ D:
     detect_focused_ide_id()
     _vscode_family_env_present()
     _vscode_family_flavor_from_env()
+    _cursor_terminal_env_hint(chrome_ide)
+    _windsurf_primary_terminal_env_hint(chrome_ide)
+    _vscode_family_terminal_hint(term_program)
+    _known_terminal_ide_hint(term_ide;chrome_ide)
+    _legacy_windsurf_terminal_env_hint(chrome)
     _terminal_ide_from_env()
     _terminal_ide_from_parent_chain(start_pid)
     detect_terminal_host_ide_id()
@@ -4325,8 +4346,9 @@ D:
     _detach_ci_env()
     _reattach_ci_env(backup)
   tests/test_install_manager.py:
-    e: test_collect_report_flags_path_mismatch_and_plugin_version_missing,test_collect_report_flags_connected_plugin_version_mismatch,test_collect_report_flags_installed_plugin_version_mismatch,test_collect_report_marks_installed_ok_but_not_connected_as_info,test_collect_report_flags_stale_live_extension_host,test_collect_report_warns_for_pyenv_shim,test_collect_report_warns_when_daemon_not_running,test_repair_installation_records_plugin_action,test_collect_report_for_zed_does_not_require_vsix_plugin,test_collect_report_auto_still_checks_plugin_connection
+    e: test_collect_report_flags_path_mismatch_and_plugin_version_missing,test_collect_report_uses_explicit_ide_socket_when_env_is_unset,test_collect_report_flags_connected_plugin_version_mismatch,test_collect_report_flags_installed_plugin_version_mismatch,test_collect_report_marks_installed_ok_but_not_connected_as_info,test_collect_report_flags_stale_live_extension_host,test_collect_report_warns_for_pyenv_shim,test_collect_report_warns_when_daemon_not_running,test_repair_installation_records_plugin_action,test_collect_report_for_zed_does_not_require_vsix_plugin,test_collect_report_auto_still_checks_plugin_connection
     test_collect_report_flags_path_mismatch_and_plugin_version_missing(monkeypatch;tmp_path)
+    test_collect_report_uses_explicit_ide_socket_when_env_is_unset(monkeypatch;tmp_path)
     test_collect_report_flags_connected_plugin_version_mismatch(monkeypatch;tmp_path)
     test_collect_report_flags_installed_plugin_version_mismatch(monkeypatch;tmp_path)
     test_collect_report_marks_installed_ok_but_not_connected_as_info(monkeypatch;tmp_path)
@@ -4606,7 +4628,7 @@ D:
 
 ```prolog markpact:analysis path=project/logic.pl
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.176', 'python').
+project_metadata('koru', '0.1.177', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 681, 'less').
@@ -4684,7 +4706,7 @@ project_file('src/koru/agents.py', 323, 'python').
 project_file('src/koru/api/__init__.py', 10, 'python').
 project_file('src/koru/autoloop_cli.py', 91, 'python').
 project_file('src/koru/autonomous.py', 2236, 'python').
-project_file('src/koru/autonomous_cycle.py', 1321, 'python').
+project_file('src/koru/autonomous_cycle.py', 1390, 'python').
 project_file('src/koru/autonomous_diagnostics.py', 259, 'python').
 project_file('src/koru/autonomous_env.py', 26, 'python').
 project_file('src/koru/autonomous_parser.py', 399, 'python').
@@ -4697,7 +4719,7 @@ project_file('src/koru/autonomy/env.py', 305, 'python').
 project_file('src/koru/autonomy/environment.py', 246, 'python').
 project_file('src/koru/autonomy/heal.py', 117, 'python').
 project_file('src/koru/autonomy/ide_work.py', 302, 'python').
-project_file('src/koru/autonomy/operator_pipeline.py', 751, 'python').
+project_file('src/koru/autonomy/operator_pipeline.py', 840, 'python').
 project_file('src/koru/autonomy/post_run_verify.py', 382, 'python').
 project_file('src/koru/autonomy/prompts.py', 102, 'python').
 project_file('src/koru/autonomy/telemetry_snapshot.py', 80, 'python').
@@ -4713,7 +4735,7 @@ project_file('src/koru/autopilot/doctor_cli.py', 153, 'python').
 project_file('src/koru/autopilot/host_setup.py', 10, 'python').
 project_file('src/koru/autopilot/ide.py', 10, 'python').
 project_file('src/koru/autopilot/injector.py', 10, 'python').
-project_file('src/koru/autopilot/install_manager.py', 565, 'python').
+project_file('src/koru/autopilot/install_manager.py', 585, 'python').
 project_file('src/koru/autopilot/install_plugin_cli.py', 427, 'python').
 project_file('src/koru/autopilot/local_manager.py', 67, 'python').
 project_file('src/koru/autopilot/os_injector.py', 10, 'python').
@@ -4817,7 +4839,7 @@ project_file('src/koruide/config.py', 122, 'python').
 project_file('src/koruide/daemon.py', 897, 'python').
 project_file('src/koruide/drive_orchestrator.py', 201, 'python').
 project_file('src/koruide/host_setup.py', 227, 'python').
-project_file('src/koruide/ide.py', 654, 'python').
+project_file('src/koruide/ide.py', 680, 'python').
 project_file('src/koruide/injector.py', 407, 'python').
 project_file('src/koruide/os_injector.py', 401, 'python').
 project_file('src/koruide/plugin_installer.py', 495, 'python').
@@ -4882,7 +4904,7 @@ project_file('tests/test_ide_router.py', 268, 'python').
 project_file('tests/test_ide_runtime.py', 39, 'python').
 project_file('tests/test_ide_work.py', 140, 'python').
 project_file('tests/test_init.py', 337, 'python').
-project_file('tests/test_install_manager.py', 342, 'python').
+project_file('tests/test_install_manager.py', 382, 'python').
 project_file('tests/test_koru_gate_capture.py', 34, 'python').
 project_file('tests/test_koru_queue_argv.py', 24, 'python').
 project_file('tests/test_koruapi.py', 80, 'python').
@@ -5090,7 +5112,12 @@ python_function('src/koru/autonomous_cycle.py', '_status_in_skip_list', 2, 3, 3)
 python_function('src/koru/autonomous_cycle.py', '_allow_keyboard_autopilot_fallback', 0, 1, 3).
 python_function('src/koru/autonomous_cycle.py', '_prefer_keyboard_autopilot', 0, 3, 3).
 python_function('src/koru/autonomous_cycle.py', '_plugin_required_for_ide', 1, 5, 4).
-python_function('src/koru/autonomous_cycle.py', '_client_has_usable_plugin', 2, 15, 11).
+python_function('src/koru/autonomous_cycle.py', '_client_plugin_rows', 1, 5, 5).
+python_function('src/koru/autonomous_cycle.py', '_wanted_plugin_ide', 1, 2, 2).
+python_function('src/koru/autonomous_cycle.py', '_plugin_row_matches_ide', 2, 3, 4).
+python_function('src/koru/autonomous_cycle.py', '_plugin_row_version_block_reason', 2, 5, 8).
+python_function('src/koru/autonomous_cycle.py', '_missing_plugin_label', 1, 2, 0).
+python_function('src/koru/autonomous_cycle.py', '_client_has_usable_plugin', 2, 7, 6).
 python_function('src/koru/autonomous_cycle.py', '_try_os_injector_fallback', 1, 1, 1).
 python_function('src/koru/autonomous_cycle.py', '_run_command_check', 3, 2, 3).
 python_function('src/koru/autonomous_cycle.py', '_create_diagnostic_ticket', 0, 2, 5).
@@ -5115,7 +5142,12 @@ python_function('src/koru/autonomous_cycle.py', '_update_stagnation_state', 2, 3
 python_function('src/koru/autonomous_cycle.py', '_waiting_ticket_has_label', 3, 14, 8).
 python_function('src/koru/autonomous_cycle.py', '_handle_diagnostics', 15, 10, 8).
 python_function('src/koru/autonomous_cycle.py', '_check_autopilot_skip_conditions', 12, 13, 4).
-python_function('src/koru/autonomous_cycle.py', '_execute_autopilot_drive', 9, 19, 14).
+python_function('src/koru/autonomous_cycle.py', '_resolve_autopilot_drive_decision', 3, 4, 4).
+python_function('src/koru/autonomous_cycle.py', '_drive_autopilot_once', 1, 4, 4).
+python_function('src/koru/autonomous_cycle.py', '_reply_missing_autopilot_plugin', 1, 2, 3).
+python_function('src/koru/autonomous_cycle.py', '_reply_needs_focus_retry', 1, 8, 3).
+python_function('src/koru/autonomous_cycle.py', '_warn_autopilot_focus_retry', 2, 1, 1).
+python_function('src/koru/autonomous_cycle.py', '_execute_autopilot_drive', 9, 6, 8).
 python_function('src/koru/autonomous_cycle.py', '_update_autopilot_state', 5, 6, 1).
 python_function('src/koru/autonomous_cycle.py', '_log_autopilot_result', 6, 9, 3).
 python_function('src/koru/autonomous_cycle.py', '_handle_autopilot_phase', 19, 9, 9).
@@ -5228,7 +5260,11 @@ python_function('src/koru/autonomy/operator_pipeline.py', 'build_operator_steps'
 python_function('src/koru/autonomy/operator_pipeline.py', '_emit_step', 1, 4, 3).
 python_function('src/koru/autonomy/operator_pipeline.py', '_create_step_ticket', 2, 6, 4).
 python_function('src/koru/autonomy/operator_pipeline.py', '_ensure_planfile_api', 3, 2, 2).
-python_function('src/koru/autonomy/operator_pipeline.py', '_process_operator_step', 10, 21, 10).
+python_function('src/koru/autonomy/operator_pipeline.py', '_discard_stale_pending_marker', 2, 7, 4).
+python_function('src/koru/autonomy/operator_pipeline.py', '_close_finished_step_marker', 2, 5, 1).
+python_function('src/koru/autonomy/operator_pipeline.py', '_recover_matching_step_ticket', 2, 7, 4).
+python_function('src/koru/autonomy/operator_pipeline.py', '_create_pending_step_ticket', 2, 5, 2).
+python_function('src/koru/autonomy/operator_pipeline.py', '_process_operator_step', 10, 1, 6).
 python_function('src/koru/autonomy/operator_pipeline.py', '_emit_operator_step_event', 6, 3, 1).
 python_function('src/koru/autonomy/operator_pipeline.py', 'run_startup_operator_pipeline', 0, 4, 14).
 python_function('src/koru/autonomy/operator_pipeline.py', 'sys_stdout_for_format', 1, 2, 0).
@@ -5299,6 +5335,7 @@ python_function('src/koru/autopilot/install_manager.py', '_path_koru_bin', 0, 2,
 python_function('src/koru/autopilot/install_manager.py', '_is_pyenv_shim', 1, 3, 1).
 python_function('src/koru/autopilot/install_manager.py', '_expected_plugin_version', 1, 3, 4).
 python_function('src/koru/autopilot/install_manager.py', '_resolve_ide', 1, 6, 4).
+python_function('src/koru/autopilot/install_manager.py', '_manager_socket_path', 2, 8, 4).
 python_function('src/koru/autopilot/install_manager.py', '_daemon_status', 1, 3, 6).
 python_function('src/koru/autopilot/install_manager.py', '_plugin_for_ide', 2, 6, 2).
 python_function('src/koru/autopilot/install_manager.py', '_check_koru_path_issues', 2, 4, 2).
@@ -5312,7 +5349,7 @@ python_function('src/koru/autopilot/install_manager.py', '_check_plugin_live_hos
 python_function('src/koru/autopilot/install_manager.py', '_check_plugin_version_mismatch_issue', 3, 6, 2).
 python_function('src/koru/autopilot/install_manager.py', '_check_plugin_not_connected_issue', 3, 3, 2).
 python_function('src/koru/autopilot/install_manager.py', '_issue_list', 0, 3, 12).
-python_function('src/koru/autopilot/install_manager.py', 'collect_install_manager_report', 0, 12, 19).
+python_function('src/koru/autopilot/install_manager.py', 'collect_install_manager_report', 0, 11, 19).
 python_function('src/koru/autopilot/install_manager.py', 'repair_installation', 0, 6, 9).
 python_function('src/koru/autopilot/install_manager.py', 'format_install_manager_report', 1, 13, 6).
 python_function('src/koru/autopilot/install_plugin_cli.py', 'plugin_repo_dir', 0, 1, 2).
@@ -5985,7 +6022,12 @@ python_function('src/koruide/ide.py', '_ide_id_from_process', 1, 5, 4).
 python_function('src/koruide/ide.py', 'detect_focused_ide_id', 0, 3, 2).
 python_function('src/koruide/ide.py', '_vscode_family_env_present', 0, 3, 3).
 python_function('src/koruide/ide.py', '_vscode_family_flavor_from_env', 0, 9, 4).
-python_function('src/koruide/ide.py', '_terminal_ide_from_env', 0, 16, 6).
+python_function('src/koruide/ide.py', '_cursor_terminal_env_hint', 1, 3, 2).
+python_function('src/koruide/ide.py', '_windsurf_primary_terminal_env_hint', 1, 4, 4).
+python_function('src/koruide/ide.py', '_vscode_family_terminal_hint', 1, 3, 2).
+python_function('src/koruide/ide.py', '_known_terminal_ide_hint', 2, 3, 0).
+python_function('src/koruide/ide.py', '_legacy_windsurf_terminal_env_hint', 1, 3, 2).
+python_function('src/koruide/ide.py', '_terminal_ide_from_env', 0, 7, 11).
 python_function('src/koruide/ide.py', '_terminal_ide_from_parent_chain', 1, 11, 9).
 python_function('src/koruide/ide.py', 'detect_terminal_host_ide_id', 0, 3, 3).
 python_function('src/koruide/ide.py', 'focused_ide', 1, 6, 1).
@@ -6602,6 +6644,7 @@ python_function('tests/test_ide_work.py', '_ok', 1, 1, 1).
 python_function('tests/test_init.py', '_detach_ci_env', 0, 3, 0).
 python_function('tests/test_init.py', '_reattach_ci_env', 1, 1, 1).
 python_function('tests/test_install_manager.py', 'test_collect_report_flags_path_mismatch_and_plugin_version_missing', 2, 6, 4).
+python_function('tests/test_install_manager.py', 'test_collect_report_uses_explicit_ide_socket_when_env_is_unset', 2, 4, 7).
 python_function('tests/test_install_manager.py', 'test_collect_report_flags_connected_plugin_version_mismatch', 2, 4, 2).
 python_function('tests/test_install_manager.py', 'test_collect_report_flags_installed_plugin_version_mismatch', 2, 4, 2).
 python_function('tests/test_install_manager.py', 'test_collect_report_marks_installed_ok_but_not_connected_as_info', 2, 5, 2).
@@ -7741,10 +7784,8 @@ sumd_workflow('queue:autoloop', 'manual').
 sumd_workflow('queue:autoloop:reset-diag-markers', 'manual').
 sumd_workflow('koru:server', 'manual').
 sumd_workflow('koru:mcp:bootstrap', 'manual').
-sumd_workflow_step('koru:mcp:bootstrap', 1, 'python3 -m koru.cli init-ide --project . --ide all').
 sumd_workflow('koru:operator:plugin-probe', 'manual').
 sumd_workflow('koru:operator:setup-host', 'manual').
-sumd_workflow_step('koru:operator:setup-host', 1, 'python3 -m koru.cli autopilot setup-host').
 sumd_workflow('koru:ide-os:calibrate', 'manual').
 sumd_workflow('quality:regix', 'manual').
 sumd_quality_workflow('quality:regix', 'regix').
@@ -7919,7 +7960,7 @@ sumd_deploy_compose_file('docker-compose.yml').
 
 ## Call Graph
 
-*432 nodes · 500 edges · 74 modules · CC̄=4.1*
+*440 nodes · 500 edges · 76 modules · CC̄=4.1*
 
 ### Hubs (by degree)
 
@@ -7929,15 +7970,15 @@ sumd_deploy_compose_file('docker-compose.yml').
 | `_build_handler` *(in src.koruapi.dashboard_serve)* | 1 | 1 | 105 | **106** |
 | `render_markdown_handoff` *(in src.koru.context)* | 10 ⚠ | 5 | 47 | **52** |
 | `_drive_via_keyboard` *(in src.koruide.daemon.AutopilotDaemon)* | 12 ⚠ | 0 | 47 | **47** |
-| `_stdio_info` *(in src.koru.autonomous)* | 1 | 40 | 1 | **41** |
 | `activity` *(in src.koru.activity_log)* | 4 | 34 | 7 | **41** |
-| `emit_management_event` *(in src.koru.events)* | 8 | 32 | 7 | **39** |
+| `_stdio_info` *(in src.koru.autonomous)* | 1 | 40 | 1 | **41** |
 | `_build_parser` *(in src.koru.cli)* | 1 | 3 | 36 | **39** |
+| `emit_management_event` *(in src.koru.events)* | 8 | 32 | 7 | **39** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
 # generated in 0.22s
-# nodes: 432 | edges: 500 | modules: 74
+# nodes: 440 | edges: 500 | modules: 76
 # CC̄=4.1
 
 HUBS[20]:
@@ -7949,30 +7990,30 @@ HUBS[20]:
     CC=10  in:5  out:47  total:52
   src.koruide.daemon.AutopilotDaemon._drive_via_keyboard
     CC=12  in:0  out:47  total:47
-  src.koru.autonomous._stdio_info
-    CC=1  in:40  out:1  total:41
   src.koru.activity_log.activity
     CC=4  in:34  out:7  total:41
-  src.koru.events.emit_management_event
-    CC=8  in:32  out:7  total:39
+  src.koru.autonomous._stdio_info
+    CC=1  in:40  out:1  total:41
   src.koru.cli._build_parser
     CC=1  in:3  out:36  total:39
+  src.koru.events.emit_management_event
+    CC=8  in:32  out:7  total:39
   src.koru.tasks.create_nl_task
     CC=12  in:7  out:28  total:35
-  src.koruapi.mcp_server.tool_run_ticket
-    CC=14  in:1  out:33  total:34
   src.koruide.ide.normalize_ide_id
     CC=6  in:23  out:11  total:34
-  src.koru.cli._topology_main
-    CC=12  in:0  out:32  total:32
+  src.koruapi.mcp_server.tool_run_ticket
+    CC=14  in:1  out:33  total:34
   src.koru.autonomy.env.env_truthy
     CC=3  in:29  out:3  total:32
+  src.koru.cli._topology_main
+    CC=12  in:0  out:32  total:32
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
   src.koru.cli._task_main
     CC=11  in:0  out:27  total:27
-  src.koruide.ide.detect_running_ides
-    CC=13  in:17  out:10  total:27
+  src.koru.ide_runtime.detect_running_ides
+    CC=5  in:15  out:12  total:27
   src.koru.init.init_project
     CC=7  in:3  out:23  total:26
   services.healing-webhook.app._resolve_affected_files
@@ -8016,21 +8057,28 @@ MODULES:
     print_agent_list  CC=10  out:7
     run_agent_handoff  CC=3  out:10
     try_agent_env_exports  CC=7  out:7
-  src.koru.agents  [1 funcs]
+  src.koru.agents  [2 funcs]
+    agent_lane_environment  CC=1  out:3
     detect_agent_options  CC=4  out:21
-  src.koru.autonomous  [6 funcs]
+  src.koru.autonomous  [32 funcs]
+    _ancestor_pids  CC=7  out:8
+    _apply_agent_lane_environ  CC=3  out:3
+    _as_managed  CC=1  out:1
+    _command_project  CC=5  out:11
+    _confirm_replace_existing  CC=3  out:5
+    _create_diagnostic_ticket  CC=2  out:8
+    _current_koru_version  CC=2  out:1
     _daemon_activity_log  CC=2  out:3
-    _effective_cycle_autopilot_enabled  CC=7  out:6
-    _stdio_info  CC=1  out:1
-    _try_os_injector_fallback  CC=4  out:10
-    autonomous_main  CC=15  out:10
-    stop_prior_autonomous_for_auto_start  CC=3  out:7
+    _daemon_status_compatible  CC=4  out:2
+    _daemon_status_version  CC=7  out:6
   src.koru.autonomous_diagnostics  [5 funcs]
     _has_redup_module  CC=2  out:2
     build_idle_checks  CC=11  out:20
     create_diagnostic_ticket  CC=2  out:6
     run_idle_check_loop  CC=6  out:8
     run_idle_diagnostics  CC=3  out:9
+  src.koru.autonomous_parser  [1 funcs]
+    looks_like_autonomous_up_command  CC=2  out:3
   src.koru.autonomous_process_guard  [2 funcs]
     find_existing_autonomous_processes  CC=11  out:16
     find_existing_wup_processes  CC=11  out:15
@@ -8090,6 +8138,8 @@ MODULES:
   src.koru.ide_router  [2 funcs]
     is_headless_environment  CC=8  out:6
     resolve_ide_route  CC=7  out:7
+  src.koru.ide_runtime  [1 funcs]
+    detect_running_ides  CC=5  out:12
   src.koru.init  [2 funcs]
     init_project  CC=7  out:23
     refresh_init_agent_lane  CC=4  out:11
@@ -8153,8 +8203,10 @@ MODULES:
     detect_tools  CC=4  out:8
     find_tool_entry  CC=4  out:6
     load_tool_registry  CC=11  out:13
-  src.koru.topology  [3 funcs]
+  src.koru.topology  [5 funcs]
     enabled_components_for_pipeline  CC=9  out:11
+    is_component_enabled  CC=3  out:6
+    is_pipeline_enabled  CC=3  out:6
     load_topology  CC=1  out:9
     set_component_enabled  CC=1  out:1
   src.koru.topology_cli  [2 funcs]
@@ -8298,17 +8350,13 @@ MODULES:
     _print_setup_host_install_details  CC=6  out:10
     _print_text_report  CC=2  out:1
     _try_apt_install  CC=5  out:11
-  src.koruide.ide  [29 funcs]
-    _active_window_pid_x11  CC=7  out:6
-    _auto_profile_candidate_ids  CC=3  out:10
-    _candidate_score  CC=1  out:3
-    _ide_id_from_process  CC=5  out:4
-    _iter_proc_pids  CC=4  out:6
-    _matches  CC=7  out:5
-    _read_cmdline  CC=2  out:5
-    _read_comm  CC=2  out:3
-    _read_exe  CC=2  out:1
-    _resolve_auto_drive_target  CC=13  out:6
+  src.koruide.ide  [6 funcs]
+    detect_focused_ide_id  CC=3  out:2
+    detect_terminal_host_ide_id  CC=3  out:3
+    normalize_ide_id  CC=6  out:11
+    pick_target  CC=13  out:5
+    resolve_drive_target  CC=12  out:8
+    supported_autopilot_ide_ids  CC=1  out:0
   src.koruide.injector  [9 funcs]
     _candidate_backends  CC=6  out:13
     _type_with_backend  CC=14  out:21

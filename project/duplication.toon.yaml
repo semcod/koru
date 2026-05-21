@@ -1,12 +1,12 @@
-# redup/duplication | 71 groups | 153f 35162L | 2026-05-21
+# redup/duplication | 71 groups | 153f 35396L | 2026-05-21
 
 SUMMARY:
   files_scanned: 153
-  total_lines:   35162
+  total_lines:   35396
   dup_groups:    71
   dup_fragments: 157
   saved_lines:   1296
-  scan_ms:       3636
+  scan_ms:       3225
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/cli.py  dup=593L  groups=17  frags=22  (1.7%)
@@ -50,7 +50,7 @@ DUPLICATES[71] (ranked by impact):
       src/koru/cli_queue.py:125-163  (queue_main)
   [2ae726bfafded9cc] ! EXAC  _run_idle_diagnostics  L=36 N=2 saved=36 sim=1.00
       src/koru/autonomous.py:1236-1271  (_run_idle_diagnostics)
-      src/koru/autonomous_cycle.py:232-267  (_run_idle_diagnostics)
+      src/koru/autonomous_cycle.py:257-292  (_run_idle_diagnostics)
   [fc481e24a737b1a0] ! STRU  _doctor_fix_payload  L=32 N=2 saved=32 sim=1.00
       src/koru/cli.py:1390-1421  (_doctor_fix_payload)
       src/koru/cli_doctor.py:15-46  (doctor_fix_payload)
@@ -115,14 +115,14 @@ DUPLICATES[71] (ranked by impact):
       src/koru/context_render.py:232-248  (render_no_active_ticket)
   [13996a2247a97ed8]   EXAC  _read_wup_health  L=16 N=2 saved=16 sim=1.00
       src/koru/autonomous.py:1218-1233  (_read_wup_health)
-      src/koru/autonomous_cycle.py:214-229  (_read_wup_health)
+      src/koru/autonomous_cycle.py:239-254  (_read_wup_health)
   [d86ec1c988a8a137]   STRU  _action_install_plugin  L=7 N=3 saved=14 sim=1.00
       src/koru/autopilot/cli_command.py:738-744  (_action_install_plugin)
       src/koru/autopilot/cli_command.py:747-753  (_action_install_plugin_jetbrains)
       src/koru/autopilot/cli_command.py:814-820  (_action_install_unit)
   [b060ed239d7cc6c9]   EXAC  _run_command_check  L=13 N=2 saved=13 sim=1.00
       src/koru/autonomous.py:1161-1173  (_run_command_check)
-      src/koru/autonomous_cycle.py:161-173  (_run_command_check)
+      src/koru/autonomous_cycle.py:186-198  (_run_command_check)
   [d69cbedeb6dc8f2f]   EXAC  _parse_iso_datetime  L=13 N=2 saved=13 sim=1.00
       src/koru/autonomy/ide_work.py:140-152  (_parse_iso_datetime)
       src/koru/autonomy/post_run_verify.py:131-143  (_parse_iso_datetime)

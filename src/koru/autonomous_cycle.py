@@ -120,35 +120,60 @@ def _plugin_required_for_ide(autopilot_ide: str) -> bool:
     return not _allow_keyboard_autopilot_fallback() and not _prefer_keyboard_autopilot()
 
 
-def _client_has_usable_plugin(client: Any, autopilot_ide: str) -> tuple[bool, str]:
-    """Return whether a daemon status has a live plugin usable for this IDE."""
+def _client_plugin_rows(client: Any) -> tuple[list[Any] | None, str | None]:
     status_fn = getattr(client, "status", None)
     if not callable(status_fn):
-        return True, ""
+        return None, None
     try:
         status = status_fn()
     except (OSError, TimeoutError, RuntimeError) as exc:
-        return False, f"daemon status unavailable: {exc}"
+        return [], f"daemon status unavailable: {exc}"
     plugins = status.get("plugins") if isinstance(status, dict) else None
     if not isinstance(plugins, list):
-        return False, "daemon status has no plugin list"
-    wanted = (autopilot_ide or "auto").strip().lower()
-    for row in plugins:
-        if not isinstance(row, dict):
-            continue
-        ide = str(row.get("ide") or "").strip().lower()
-        if wanted not in {"", "auto"} and ide != wanted:
-            continue
-        version = row.get("version")
-        version_info = DriveOrchestrator.plugin_version_info(
-            plugin_ide=ide or wanted,
-            connected_version=version if isinstance(version, str) else None,
-        )
-        if DriveOrchestrator.should_block_plugin_version(version_info):
-            return False, DriveOrchestrator.plugin_version_block_message(version_info)
+        return [], "daemon status has no plugin list"
+    return plugins, None
+
+
+def _wanted_plugin_ide(autopilot_ide: str) -> str:
+    return (autopilot_ide or "auto").strip().lower()
+
+
+def _plugin_row_matches_ide(row: dict[str, Any], wanted: str) -> bool:
+    ide = str(row.get("ide") or "").strip().lower()
+    return wanted in {"", "auto"} or ide == wanted
+
+
+def _plugin_row_version_block_reason(row: dict[str, Any], wanted: str) -> str | None:
+    ide = str(row.get("ide") or "").strip().lower()
+    version = row.get("version")
+    version_info = DriveOrchestrator.plugin_version_info(
+        plugin_ide=ide or wanted,
+        connected_version=version if isinstance(version, str) else None,
+    )
+    if DriveOrchestrator.should_block_plugin_version(version_info):
+        return DriveOrchestrator.plugin_version_block_message(version_info)
+    return None
+
+
+def _missing_plugin_label(wanted: str) -> str:
+    return wanted if wanted not in {"", "auto"} else "any supported IDE"
+
+
+def _client_has_usable_plugin(client: Any, autopilot_ide: str) -> tuple[bool, str]:
+    """Return whether a daemon status has a live plugin usable for this IDE."""
+    plugins, status_error = _client_plugin_rows(client)
+    if plugins is None:
         return True, ""
-    label = wanted if wanted not in {"", "auto"} else "any supported IDE"
-    return False, f"no connected autopilot plugin for {label}"
+    if status_error is not None:
+        return False, status_error
+    wanted = _wanted_plugin_ide(autopilot_ide)
+    for row in plugins:
+        if not isinstance(row, dict) or not _plugin_row_matches_ide(row, wanted):
+            continue
+        if block_reason := _plugin_row_version_block_reason(row, wanted):
+            return False, block_reason
+        return True, ""
+    return False, f"no connected autopilot plugin for {_missing_plugin_label(wanted)}"
 
 
 def _try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | None:
@@ -846,18 +871,14 @@ def _check_autopilot_skip_conditions(
     return False, ""
 
 
-def _execute_autopilot_drive(
+def _resolve_autopilot_drive_decision(
     project: Path,
     state: AutoloopState,
     queue_result: QueueLoopResult,
-    client: Any,
-    autopilot_ide: str,
+    *,
     drive_prompt: str,
-    submit: bool,
     autopilot_action: str,
-    _hp: callable,
-) -> tuple[dict[str, Any], bool, str, str | None]:
-    """Execute autopilot drive and return (reply, ok, decision_kind, idle_prompt_kind)."""
+) -> tuple[Any, str | None]:
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
     effective_drive_prompt = drive_prompt
     idle_prompt_kind: str | None = None
@@ -879,45 +900,93 @@ def _execute_autopilot_drive(
         autopilot_action=autopilot_action,
         stagnation_streak=state.stagnation_streak,
     )
+    return decision, idle_prompt_kind
+
+
+def _drive_autopilot_once(
+    client: Any,
+    *,
+    prompt: str,
+    submit: bool,
+    autopilot_ide: str,
+    require_plugin: bool,
+) -> tuple[dict[str, Any], bool]:
+    reply = client.drive(
+        prompt,
+        submit=submit,
+        ide=autopilot_ide,
+        require_plugin=require_plugin,
+    )
+    ok = bool(reply.get("ok", True))
+    if ok or require_plugin:
+        return reply, ok
+    fallback = _try_os_injector_fallback(prompt, submit=submit)
+    if fallback is None:
+        return reply, ok
+    return fallback, bool(fallback.get("ok", True))
+
+
+def _reply_missing_autopilot_plugin(reply: dict[str, Any]) -> bool:
+    return "no connected autopilot plugin" in str(reply.get("message") or "").lower()
+
+
+def _reply_needs_focus_retry(reply: dict[str, Any]) -> bool:
+    msg = str(reply.get("message") or "").lower()
+    return (
+        "focus" in msg
+        or "plugin_error" in msg
+        or "connection" in msg
+        or "verification" in msg
+        or "connected" in msg
+        or str(reply.get("verification") or "") == "plugin_error"
+    )
+
+
+def _warn_autopilot_focus_retry(attempt: int, attempts: int) -> None:
+    print("\033[1;31m")  # bold red
+    print("================================================================================")
+    print("[AUTOPILOT FOCUS ERROR] Please place your cursor inside the IDE chat input!")
+    print("Make sure the cursor is blinking inside the chat input field.")
+    print(f"Retrying in 5 seconds... (Attempt {attempt + 1}/{attempts})")
+    print("================================================================================")
+    print("\033[0m")  # reset colors
+
+
+def _execute_autopilot_drive(
+    project: Path,
+    state: AutoloopState,
+    queue_result: QueueLoopResult,
+    client: Any,
+    autopilot_ide: str,
+    drive_prompt: str,
+    submit: bool,
+    autopilot_action: str,
+    _hp: callable,
+) -> tuple[dict[str, Any], bool, str, str | None]:
+    """Execute autopilot drive and return (reply, ok, decision_kind, idle_prompt_kind)."""
+    decision, idle_prompt_kind = _resolve_autopilot_drive_decision(
+        project,
+        state,
+        queue_result,
+        drive_prompt=drive_prompt,
+        autopilot_action=autopilot_action,
+    )
     require_plugin = _plugin_required_for_ide(autopilot_ide)
     attempts = 5
     for attempt in range(attempts):
-        reply = client.drive(
-            decision.prompt,
+        reply, ok = _drive_autopilot_once(
+            client,
+            prompt=decision.prompt,
             submit=submit,
-            ide=autopilot_ide,
+            autopilot_ide=autopilot_ide,
             require_plugin=require_plugin,
         )
-        ok = bool(reply.get("ok", True))
-        if not ok and not require_plugin:
-            fallback = _try_os_injector_fallback(decision.prompt, submit=submit)
-            if fallback is not None:
-                reply = fallback
-                ok = bool(reply.get("ok", True))
-
         if ok:
             break
-
-        # Check if it's a focus or connection error where user attention is needed
-        msg = str(reply.get("message") or "")
-        if "no connected autopilot plugin" in msg.lower():
+        if _reply_missing_autopilot_plugin(reply):
             break
-        is_focus_error = (
-            "focus" in msg.lower()
-            or "plugin_error" in msg.lower()
-            or "connection" in msg.lower()
-            or "verification" in msg.lower()
-            or "connected" in msg.lower()
-            or str(reply.get("verification") or "") == "plugin_error"
-        )
-        if is_focus_error and attempt < attempts - 1:
-            print("\033[1;31m")  # bold red
-            print("================================================================================")
-            print("[AUTOPILOT FOCUS ERROR] Please place your cursor inside the IDE chat input!")
-            print("Make sure the cursor is blinking inside the chat input field.")
-            print(f"Retrying in 5 seconds... (Attempt {attempt + 1}/{attempts})")
-            print("================================================================================")
-            print("\033[0m")  # reset colors
+        if _reply_needs_focus_retry(reply) and attempt < attempts - 1:
+            _warn_autopilot_focus_retry(attempt, attempts)
             time.sleep(5)
         else:
             break
