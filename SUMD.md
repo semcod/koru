@@ -1777,7 +1777,7 @@ pip install -e .[dev]
 
 ```toon markpact:analysis path=project/map.toon.yaml
 # koru | 324f 68578L | python:259,shell:52,javascript:6,typescript:6,less:1 | 2026-05-21
-# stats: 2030 func | 200 cls | 324 mod | CC̄=4.0 | critical:137 | cycles:0
+# stats: 2047 func | 200 cls | 324 mod | CC̄=4.0 | critical:137 | cycles:0
 # alerts[5]: CC test_autonomy_config_from_env=16; CC test_auto_pipeline_profiles_escalate_when_queue_stays_idle=15; CC test_autonomy_config_defaults=15; CC test_jsonl_session_emits_versioned_envelope=15; CC do_from_planfile=14
 # hotspots[5]: _build_handler fan=31; _build_handler fan=28; run_cycle fan=23; init_project fan=21; test_repeated_stale_plugin_hello_rejections_are_log_throttled fan=21
 # evolution: baseline
@@ -4667,6 +4667,24 @@ D:
     test_job_store_is_ephemeral_across_imports(tmp_path)
     test_job_store_persists_to_disk_and_reloads(tmp_path)
   tests/test_operator_pipeline.py:
+    e: _ticket_args,probe,test_build_operator_steps_mcp_pending_without_config,test_build_operator_steps_mcp_ok_when_configured,test_build_operator_steps_skips_plugin_for_jetbrains,test_build_operator_steps_plugin_probe_uses_resolved_ide,test_build_operator_steps_skips_os_calibration_for_plugin_ide,test_run_startup_operator_pipeline_creates_tickets,test_run_startup_operator_pipeline_autostarts_planfile_api_when_missing,test_candidate_planfile_health_urls_use_serve_endpoint,test_run_startup_operator_pipeline_dedup_markers,test_run_startup_operator_pipeline_recovers_missing_marker_from_open_ticket,test_run_startup_operator_pipeline_replaces_stale_ide_marker,test_run_startup_operator_pipeline_closes_resolved_marker_ticket,test_run_startup_operator_pipeline_clears_missing_resolved_marker_ticket,test_run_startup_operator_pipeline_keeps_marker_when_close_times_out,test_run_startup_operator_pipeline_closes_marker_when_plugin_step_skipped
+    _ticket_args(command)
+    probe(tmp_path)
+    test_build_operator_steps_mcp_pending_without_config(tmp_path;probe)
+    test_build_operator_steps_mcp_ok_when_configured(tmp_path;probe)
+    test_build_operator_steps_skips_plugin_for_jetbrains(tmp_path;probe)
+    test_build_operator_steps_plugin_probe_uses_resolved_ide(tmp_path;probe)
+    test_build_operator_steps_skips_os_calibration_for_plugin_ide(tmp_path;probe;monkeypatch)
+    test_run_startup_operator_pipeline_creates_tickets(tmp_path;probe;monkeypatch)
+    test_run_startup_operator_pipeline_autostarts_planfile_api_when_missing(tmp_path;probe;monkeypatch)
+    test_candidate_planfile_health_urls_use_serve_endpoint(tmp_path)
+    test_run_startup_operator_pipeline_dedup_markers(tmp_path;probe;monkeypatch)
+    test_run_startup_operator_pipeline_recovers_missing_marker_from_open_ticket(tmp_path;probe;monkeypatch)
+    test_run_startup_operator_pipeline_replaces_stale_ide_marker(tmp_path;probe;monkeypatch)
+    test_run_startup_operator_pipeline_closes_resolved_marker_ticket(tmp_path;probe;monkeypatch)
+    test_run_startup_operator_pipeline_clears_missing_resolved_marker_ticket(tmp_path;probe;monkeypatch)
+    test_run_startup_operator_pipeline_keeps_marker_when_close_times_out(tmp_path;probe;monkeypatch)
+    test_run_startup_operator_pipeline_closes_marker_when_plugin_step_skipped(tmp_path;probe;monkeypatch)
   tests/test_planfile_queue.py:
     e: _ok,_ticket_args,TestPlanfileCommand,TestPlanfileQueue,TestPlanfileQueueLlm,TestPlanfileQueueLoop,TestAppendShellEvidenceNote
     TestPlanfileCommand: test_prefers_local_planfile_before_importable_module_from_active_env(0),test_prefers_local_planfile_before_path_cli_when_module_missing(0),test_falls_back_to_path_cli_when_module_cli_missing(0),test_module_cli_probe_treats_missing_parent_as_missing(0)
@@ -7114,6 +7132,23 @@ python_function('tests/test_mcp_server.py', 'test_regix_gate_command_uses_workdi
 python_function('tests/test_mcp_server.py', 'test_redup_gate_command_uses_supported_cli_shape', 1, 2, 2).
 python_function('tests/test_mcp_server.py', 'test_job_store_is_ephemeral_across_imports', 1, 5, 4).
 python_function('tests/test_mcp_server.py', 'test_job_store_persists_to_disk_and_reloads', 1, 6, 6).
+python_function('tests/test_operator_pipeline.py', '_ticket_args', 1, 1, 1).
+python_function('tests/test_operator_pipeline.py', 'probe', 1, 1, 1).
+python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_mcp_pending_without_config', 2, 5, 2).
+python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_mcp_ok_when_configured', 2, 4, 5).
+python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_skips_plugin_for_jetbrains', 2, 6, 3).
+python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_plugin_probe_uses_resolved_ide', 2, 5, 2).
+python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_skips_os_calibration_for_plugin_ide', 3, 8, 5).
+python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_creates_tickets', 3, 3, 5).
+python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_autostarts_planfile_api_when_missing', 3, 5, 5).
+python_function('tests/test_operator_pipeline.py', 'test_candidate_planfile_health_urls_use_serve_endpoint', 1, 2, 4).
+python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_dedup_markers', 3, 3, 4).
+python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_recovers_missing_marker_from_open_ticket', 3, 9, 8).
+python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_replaces_stale_ide_marker', 3, 8, 11).
+python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_closes_resolved_marker_ticket', 3, 7, 10).
+python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_clears_missing_resolved_marker_ticket', 3, 7, 9).
+python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_keeps_marker_when_close_times_out', 3, 6, 9).
+python_function('tests/test_operator_pipeline.py', 'test_run_startup_operator_pipeline_closes_marker_when_plugin_step_skipped', 3, 7, 11).
 python_function('tests/test_planfile_queue.py', '_ok', 1, 1, 1).
 python_function('tests/test_planfile_queue.py', '_ticket_args', 1, 1, 1).
 python_function('tests/test_plugin_router.py', 'test_plugin_for_prefers_newest_matching_client', 0, 2, 3).
@@ -8362,7 +8397,7 @@ sumd_deploy_compose_file('docker-compose.yml').
 
 ## Call Graph
 
-*435 nodes · 500 edges · 70 modules · CC̄=4.0*
+*435 nodes · 500 edges · 71 modules · CC̄=4.0*
 
 ### Hubs (by degree)
 
@@ -8379,8 +8414,8 @@ sumd_deploy_compose_file('docker-compose.yml').
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.28s
-# nodes: 435 | edges: 500 | modules: 70
+# generated in 0.20s
+# nodes: 435 | edges: 500 | modules: 71
 # CC̄=4.0
 
 HUBS[20]:
@@ -8414,16 +8449,16 @@ HUBS[20]:
     CC=2  in:24  out:4  total:28
   src.koruide.ide.detect_running_ides
     CC=13  in:17  out:10  total:27
-  services.healing-webhook.ticket_builder.build_ticket_payload
-    CC=11  in:1  out:25  total:26
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
+  services.healing-webhook.ticket_builder.build_ticket_payload
+    CC=11  in:1  out:25  total:26
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
   src.koruide.plugin_installer.resolve_extension_vsix
     CC=11  in:2  out:22  total:24
-  src.koru.cli._render_runtime_context_text
-    CC=14  in:1  out:23  total:24
+  src.koru.agents.detect_agent_options
+    CC=4  in:3  out:21  total:24
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -8451,10 +8486,9 @@ MODULES:
   src.koru.activity_log  [2 funcs]
     activity  CC=4  out:7
     activity_info  CC=5  out:11
-  src.koru.agent_backends  [6 funcs]
+  src.koru.agent_backends  [5 funcs]
     _parse_lane  CC=8  out:14
     get_agent_backend_profile  CC=3  out:1
-    iter_agent_backend_profiles  CC=1  out:0
     load_agent_integration_config  CC=11  out:18
     normalize_agent_backend_id  CC=4  out:3
     validate_agent_integration_config  CC=5  out:4
@@ -8506,8 +8540,7 @@ MODULES:
     load_flat_pipeline  CC=9  out:12
     materialize_to_planfile  CC=6  out:16
     validate_flat_pipeline  CC=3  out:9
-  src.koru.cli  [26 funcs]
-    _agent_backends_main  CC=8  out:23
+  src.koru.cli  [22 funcs]
     _agent_main  CC=3  out:7
     _build_agent_parser  CC=1  out:12
     _build_gate_parser  CC=1  out:11
@@ -8517,9 +8550,16 @@ MODULES:
     _build_task_parser  CC=1  out:14
     _build_tools_parser  CC=1  out:7
     _gate_main  CC=5  out:12
+    _gc_main  CC=1  out:7
   src.koru.context  [2 funcs]
     build_context  CC=6  out:16
     render_markdown_handoff  CC=10  out:47
+  src.koru.dev_sync  [5 funcs]
+    _is_dirty  CC=2  out:3
+    _pull_repo  CC=7  out:4
+    _target_python  CC=3  out:3
+    _venv_python  CC=3  out:1
+    sync_developer_packages  CC=14  out:23
   src.koru.doctor  [1 funcs]
     run_diagnostics  CC=6  out:11
   src.koru.events  [1 funcs]

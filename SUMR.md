@@ -1662,7 +1662,7 @@ pfix>=0.1.60
 
 ## Call Graph
 
-*435 nodes · 500 edges · 70 modules · CC̄=4.0*
+*435 nodes · 500 edges · 71 modules · CC̄=4.0*
 
 ### Hubs (by degree)
 
@@ -1679,8 +1679,8 @@ pfix>=0.1.60
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.28s
-# nodes: 435 | edges: 500 | modules: 70
+# generated in 0.20s
+# nodes: 435 | edges: 500 | modules: 71
 # CC̄=4.0
 
 HUBS[20]:
@@ -1714,16 +1714,16 @@ HUBS[20]:
     CC=2  in:24  out:4  total:28
   src.koruide.ide.detect_running_ides
     CC=13  in:17  out:10  total:27
-  services.healing-webhook.ticket_builder.build_ticket_payload
-    CC=11  in:1  out:25  total:26
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
+  services.healing-webhook.ticket_builder.build_ticket_payload
+    CC=11  in:1  out:25  total:26
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
   src.koruide.plugin_installer.resolve_extension_vsix
     CC=11  in:2  out:22  total:24
-  src.koru.cli._render_runtime_context_text
-    CC=14  in:1  out:23  total:24
+  src.koru.agents.detect_agent_options
+    CC=4  in:3  out:21  total:24
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -1751,10 +1751,9 @@ MODULES:
   src.koru.activity_log  [2 funcs]
     activity  CC=4  out:7
     activity_info  CC=5  out:11
-  src.koru.agent_backends  [6 funcs]
+  src.koru.agent_backends  [5 funcs]
     _parse_lane  CC=8  out:14
     get_agent_backend_profile  CC=3  out:1
-    iter_agent_backend_profiles  CC=1  out:0
     load_agent_integration_config  CC=11  out:18
     normalize_agent_backend_id  CC=4  out:3
     validate_agent_integration_config  CC=5  out:4
@@ -1806,8 +1805,7 @@ MODULES:
     load_flat_pipeline  CC=9  out:12
     materialize_to_planfile  CC=6  out:16
     validate_flat_pipeline  CC=3  out:9
-  src.koru.cli  [26 funcs]
-    _agent_backends_main  CC=8  out:23
+  src.koru.cli  [22 funcs]
     _agent_main  CC=3  out:7
     _build_agent_parser  CC=1  out:12
     _build_gate_parser  CC=1  out:11
@@ -1817,9 +1815,16 @@ MODULES:
     _build_task_parser  CC=1  out:14
     _build_tools_parser  CC=1  out:7
     _gate_main  CC=5  out:12
+    _gc_main  CC=1  out:7
   src.koru.context  [2 funcs]
     build_context  CC=6  out:16
     render_markdown_handoff  CC=10  out:47
+  src.koru.dev_sync  [5 funcs]
+    _is_dirty  CC=2  out:3
+    _pull_repo  CC=7  out:4
+    _target_python  CC=3  out:3
+    _venv_python  CC=3  out:1
+    sync_developer_packages  CC=14  out:23
   src.koru.doctor  [1 funcs]
     run_diagnostics  CC=6  out:11
   src.koru.events  [1 funcs]
@@ -2161,8 +2166,8 @@ EDGES:
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.28s
-# nodes: 435 | edges: 500 | modules: 70
+# generated in 0.20s
+# nodes: 435 | edges: 500 | modules: 71
 # CC̄=4.0
 
 HUBS[20]:
@@ -2196,16 +2201,16 @@ HUBS[20]:
     CC=2  in:24  out:4  total:28
   src.koruide.ide.detect_running_ides
     CC=13  in:17  out:10  total:27
-  services.healing-webhook.ticket_builder.build_ticket_payload
-    CC=11  in:1  out:25  total:26
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
+  services.healing-webhook.ticket_builder.build_ticket_payload
+    CC=11  in:1  out:25  total:26
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
   src.koruide.plugin_installer.resolve_extension_vsix
     CC=11  in:2  out:22  total:24
-  src.koru.cli._render_runtime_context_text
-    CC=14  in:1  out:23  total:24
+  src.koru.agents.detect_agent_options
+    CC=4  in:3  out:21  total:24
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -2233,10 +2238,9 @@ MODULES:
   src.koru.activity_log  [2 funcs]
     activity  CC=4  out:7
     activity_info  CC=5  out:11
-  src.koru.agent_backends  [6 funcs]
+  src.koru.agent_backends  [5 funcs]
     _parse_lane  CC=8  out:14
     get_agent_backend_profile  CC=3  out:1
-    iter_agent_backend_profiles  CC=1  out:0
     load_agent_integration_config  CC=11  out:18
     normalize_agent_backend_id  CC=4  out:3
     validate_agent_integration_config  CC=5  out:4
@@ -2288,8 +2292,7 @@ MODULES:
     load_flat_pipeline  CC=9  out:12
     materialize_to_planfile  CC=6  out:16
     validate_flat_pipeline  CC=3  out:9
-  src.koru.cli  [26 funcs]
-    _agent_backends_main  CC=8  out:23
+  src.koru.cli  [22 funcs]
     _agent_main  CC=3  out:7
     _build_agent_parser  CC=1  out:12
     _build_gate_parser  CC=1  out:11
@@ -2299,9 +2302,16 @@ MODULES:
     _build_task_parser  CC=1  out:14
     _build_tools_parser  CC=1  out:7
     _gate_main  CC=5  out:12
+    _gc_main  CC=1  out:7
   src.koru.context  [2 funcs]
     build_context  CC=6  out:16
     render_markdown_handoff  CC=10  out:47
+  src.koru.dev_sync  [5 funcs]
+    _is_dirty  CC=2  out:3
+    _pull_repo  CC=7  out:4
+    _target_python  CC=3  out:3
+    _venv_python  CC=3  out:1
+    sync_developer_packages  CC=14  out:23
   src.koru.doctor  [1 funcs]
     run_diagnostics  CC=6  out:11
   src.koru.events  [1 funcs]
@@ -2626,8 +2636,8 @@ EDGES:
 ### Code Analysis (`project/analysis.toon.yaml`)
 
 ```toon markpact:analysis path=project/analysis.toon.yaml
-# code2llm | 256f 46442L | python:166,shell:44,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:2,properties:1,xml:1,toml:1 | 2026-05-21
-# generated in 0.11s
+# code2llm | 256f 46442L | python:166,shell:44,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:2,toml:1,properties:1,xml:1 | 2026-05-21
+# generated in 0.09s
 # CC̄=4.0 | critical:0/1694 | dups:0 | cycles:0
 
 HEALTH[0]: ok
@@ -2939,14 +2949,14 @@ COUPLING:
                     src.korudsl                                                                                                                          ←4                                                            ──                               
        services.healing-webhook                                                                                                                                                          1                                                            ──
   CYCLES: none
-  HUB: plugins.koru-autopilot-vscode/ (fan-in=11)
-  HUB: src.koruapi/ (fan-in=22)
-  HUB: scripts/ (fan-in=344)
   HUB: src.koru/ (fan-in=45)
   HUB: src.koruide/ (fan-in=72)
-  SMELL: src.koruapi/ fan-out=68 → split needed
+  HUB: src.koruapi/ (fan-in=22)
+  HUB: plugins.koru-autopilot-vscode/ (fan-in=11)
+  HUB: scripts/ (fan-in=344)
   SMELL: src.koru/ fan-out=381 → split needed
   SMELL: src.koruide/ fan-out=48 → split needed
+  SMELL: src.koruapi/ fan-out=68 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon
@@ -2964,7 +2974,7 @@ SUMMARY:
   dup_groups:    69
   dup_fragments: 156
   saved_lines:   1274
-  scan_ms:       5235
+  scan_ms:       3122
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/cli.py  dup=593L  groups=17  frags=22  (1.6%)
