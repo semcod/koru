@@ -573,34 +573,10 @@ def _setup_autopilot_daemon(
 
 def _enable_autonomous_strict_plugin_policy(args: argparse.Namespace) -> None:
     """Default autonomous runs to fail-closed on plugin drift and weak ACKs."""
-    if not args.enable_autopilot:
-        return
-    if os.environ.get("KORU_STRICT_PLUGIN_VERSION") is not None:
-        version_set = False
-    elif os.environ.get("KORU_PLUGIN_VERSION_POLICY") is not None:
-        version_set = False
-    else:
-        os.environ["KORU_STRICT_PLUGIN_VERSION"] = "1"
-        version_set = True
-
-    if os.environ.get("KORU_STRICT_PLUGIN_ACK") is not None:
-        ack_set = False
-    else:
-        os.environ["KORU_STRICT_PLUGIN_ACK"] = "1"
-        ack_set = True
-
-    if version_set or ack_set:
-        details = []
-        if version_set:
-            details.append("version")
-        if ack_set:
-            details.append("ack")
-        _stdio_info(
-            "koru autonomous: strict plugin "
-            + "/".join(details)
-            + " policy enabled by default",
-            fmt=args.emit_events,
-        )
+    _autonomous_plugin.enable_autonomous_strict_plugin_policy(
+        args,
+        stdio_info=_stdio_info,
+    )
 
 
 def _configure_loop_state(

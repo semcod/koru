@@ -91,7 +91,7 @@ def _resolve_lane_from_vscode_terminal(
     """Check if VS Code terminal should be overridden by a running plugin IDE."""
     if terminal != "vscode" or not running:
         return None
-    picked = pick_target(running)
+    picked = pick_target(list(running))
     if picked is not None and picked.id != terminal and picked.id in _PLUGIN_IDE_LANES:
         return picked.id, f"target:over-terminal:{terminal}"
     return None
@@ -118,7 +118,7 @@ def _resolve_lane_from_running(
     """Resolve lane from the best detected running IDE."""
     if not running:
         return None
-    picked = pick_target(running)
+    picked = pick_target(list(running))
     if picked is None:
         return None
     return picked.id, f"running:{picked.label}"
@@ -241,6 +241,25 @@ class AutonomousStartupProbe:
     xdg_runtime_dir: str
 
 
+@dataclass(frozen=True)
+class _StartupProbeResolution:
+    lane: str | None
+    lane_source: str
+    autopilot_ide: str
+    autopilot_ide_source: str
+
+
+@dataclass(frozen=True)
+class _StartupProbeRuntimeFields:
+    running_ides: tuple[str, ...]
+    terminal_lane: str | None
+    socket_path: str
+    session: str
+    term_program: str
+    headless: bool
+    xdg_runtime_dir: str
+
+
 def _normalized_cli_value(raw: str | None) -> str:
     return (raw or "auto").strip().lower()
 
@@ -280,14 +299,14 @@ def _xdg_runtime_dir_label() -> str:
     return (os.environ.get("XDG_RUNTIME_DIR") or "").strip() or "-"
 
 
-def build_startup_probe(
+def _resolve_startup_probe_resolution(
     project: Path,
     *,
     agent_lane_cli: str,
     autopilot_ide_cli: str,
     resolve_project_lane,
-    resolve_ide_route_fn=resolve_ide_route,
-) -> AutonomousStartupProbe:
+    resolve_ide_route_fn,
+) -> _StartupProbeResolution:
     lane, lane_source = resolve_agent_lane_id(
         project,
         agent_lane_cli,
@@ -298,16 +317,16 @@ def build_startup_probe(
         lane,
         resolve_ide_route_fn=resolve_ide_route_fn,
     )
-    return AutonomousStartupProbe(
-        koru_version=koru_distribution_version(),
-        python_version=sys.version.split()[0],
-        project=project.resolve(),
-        agent_lane_cli=_normalized_cli_value(agent_lane_cli),
-        autopilot_ide_cli=_normalized_cli_value(autopilot_ide_cli),
-        resolved_lane=lane,
+    return _StartupProbeResolution(
+        lane=lane,
         lane_source=lane_source,
-        resolved_autopilot_ide=autopilot_ide,
+        autopilot_ide=autopilot_ide,
         autopilot_ide_source=ide_source,
+    )
+
+
+def _startup_probe_runtime_fields(autopilot_ide: str) -> _StartupProbeRuntimeFields:
+    return _StartupProbeRuntimeFields(
         running_ides=_running_ide_labels(),
         terminal_lane=_terminal_agent_lane_from_env(),
         socket_path=_autopilot_socket_path_for_probe(autopilot_ide),
@@ -315,6 +334,57 @@ def build_startup_probe(
         term_program=_term_program_label(),
         headless=is_headless_environment(),
         xdg_runtime_dir=_xdg_runtime_dir_label(),
+    )
+
+
+def _build_startup_probe_from_resolution(
+    project: Path,
+    *,
+    agent_lane_cli: str,
+    autopilot_ide_cli: str,
+    resolution: _StartupProbeResolution,
+) -> AutonomousStartupProbe:
+    runtime = _startup_probe_runtime_fields(resolution.autopilot_ide)
+    return AutonomousStartupProbe(
+        koru_version=koru_distribution_version(),
+        python_version=sys.version.split()[0],
+        project=project.resolve(),
+        agent_lane_cli=_normalized_cli_value(agent_lane_cli),
+        autopilot_ide_cli=_normalized_cli_value(autopilot_ide_cli),
+        resolved_lane=resolution.lane,
+        lane_source=resolution.lane_source,
+        resolved_autopilot_ide=resolution.autopilot_ide,
+        autopilot_ide_source=resolution.autopilot_ide_source,
+        running_ides=runtime.running_ides,
+        terminal_lane=runtime.terminal_lane,
+        socket_path=runtime.socket_path,
+        session=runtime.session,
+        term_program=runtime.term_program,
+        headless=runtime.headless,
+        xdg_runtime_dir=runtime.xdg_runtime_dir,
+    )
+
+
+def build_startup_probe(
+    project: Path,
+    *,
+    agent_lane_cli: str,
+    autopilot_ide_cli: str,
+    resolve_project_lane,
+    resolve_ide_route_fn=resolve_ide_route,
+) -> AutonomousStartupProbe:
+    resolution = _resolve_startup_probe_resolution(
+        project,
+        agent_lane_cli=agent_lane_cli,
+        autopilot_ide_cli=autopilot_ide_cli,
+        resolve_project_lane=resolve_project_lane,
+        resolve_ide_route_fn=resolve_ide_route_fn,
+    )
+    return _build_startup_probe_from_resolution(
+        project=project.resolve(),
+        agent_lane_cli=agent_lane_cli,
+        autopilot_ide_cli=autopilot_ide_cli,
+        resolution=resolution,
     )
 
 

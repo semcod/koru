@@ -4,10 +4,48 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable, Mapping
+import os
 from typing import Any
 
 from koru.ide_client import IDEControlClient
 from koruide.drive_orchestrator import DriveOrchestrator
+
+
+def enable_autonomous_strict_plugin_policy(
+    args: Any,
+    *,
+    environ: Mapping[str, str] | None = None,
+    set_env: Callable[[str, str], None] | None = None,
+    stdio_info: Callable[..., Any] | None = None,
+) -> None:
+    """Default autonomous runs to fail-closed on plugin drift and weak ACKs."""
+    if not args.enable_autopilot:
+        return
+    env = environ or os.environ
+    setter = set_env or os.environ.__setitem__
+    version_set = False
+    if env.get("KORU_STRICT_PLUGIN_VERSION") is None and env.get("KORU_PLUGIN_VERSION_POLICY") is None:
+        setter("KORU_STRICT_PLUGIN_VERSION", "1")
+        version_set = True
+
+    ack_set = False
+    if env.get("KORU_STRICT_PLUGIN_ACK") is None:
+        setter("KORU_STRICT_PLUGIN_ACK", "1")
+        ack_set = True
+
+    if version_set or ack_set:
+        details = []
+        if version_set:
+            details.append("version")
+        if ack_set:
+            details.append("ack")
+        if stdio_info is not None:
+            stdio_info(
+                "koru autonomous: strict plugin "
+                + "/".join(details)
+                + " policy enabled by default",
+                fmt=args.emit_events,
+            )
 
 
 def plugin_rows_log_summary(rows: object) -> str:
@@ -159,6 +197,7 @@ def wait_for_autopilot_plugin(
 
 
 __all__ = [
+    "enable_autonomous_strict_plugin_policy",
     "plugin_rows_log_summary",
     "plugin_status_decision",
     "status_has_autopilot_plugin",

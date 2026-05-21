@@ -1787,24 +1787,19 @@ def _command_loop_main(args: argparse.Namespace) -> int:
     return exit_code
 
 
-def main() -> int:
-    raw_args = sys.argv[1:]
-    if raw_args and raw_args[0] in {"auto", "autonomous"}:
-        project = _peek_project_from_argv(raw_args[1:])
-        if reexec_argv := project_venv_reexec_argv(project):
-            env = dict(os.environ)
-            env["KORU_AUTONOMOUS_REEXECED"] = "1"
-            print("koru: switching to project venv: " + " ".join(reexec_argv), file=sys.stderr)
-            os.execvpe(reexec_argv[0], reexec_argv, env)
-    if raw_args and raw_args[0] in _SUBCOMMANDS:
-        return _SUBCOMMANDS[raw_args[0]](raw_args[1:])
+def _maybe_reexec_for_project_venv(raw_args: list[str]) -> None:
+    subcommand = raw_args[0] if raw_args else ""
+    if subcommand not in {"auto", "autonomous"}:
+        return
+    project = _peek_project_from_argv(raw_args[1:])
+    if reexec_argv := project_venv_reexec_argv(project):
+        env = dict(os.environ)
+        env["KORU_AUTONOMOUS_REEXECED"] = "1"
+        print("koru: switching to project venv: " + " ".join(reexec_argv), file=sys.stderr)
+        os.execvpe(reexec_argv[0], reexec_argv, env)
 
-    args = _build_parser().parse_args(raw_args)
 
-    if _is_bare_invocation(args):
-        args.context = True
-        args.output_format = "markdown"
-
+def _dispatch_flag_action(args: argparse.Namespace, raw_args: list[str]) -> int | None:
     if args.doctor:
         return _doctor_main(args, raw_args)
     if args.init_agent_lane:
@@ -1819,6 +1814,24 @@ def main() -> int:
         return _watch_main(args)
     if args.queue:
         return _queue_run_main(args)
+    return None
+
+
+def main() -> int:
+    raw_args = sys.argv[1:]
+    _maybe_reexec_for_project_venv(raw_args)
+    subcommand = raw_args[0] if raw_args else ""
+    if subcommand in _SUBCOMMANDS:
+        return _SUBCOMMANDS[subcommand](raw_args[1:])
+
+    args = _build_parser().parse_args(raw_args)
+
+    if _is_bare_invocation(args):
+        args.context = True
+        args.output_format = "markdown"
+
+    if (rc := _dispatch_flag_action(args, raw_args)) is not None:
+        return rc
 
     if not args.command:
         parser = _build_parser()

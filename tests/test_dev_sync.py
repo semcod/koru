@@ -100,6 +100,9 @@ def test_sync_developer_packages_skips_dirty_pull(tmp_path: Path) -> None:
 
     results = sync_developer_packages(root=tmp_path, packages=("koru",), pull=True, runner=runner)
 
-    assert results[0].status == "pull-skipped"
+    assert results[0].status == "synced-stale"
     assert "dirty worktree" in results[0].detail
-    assert calls == [["git", "status", "--porcelain"]]
+    assert calls == [
+        ["git", "status", "--porcelain"],
+        [sys.executable, "-m", "pip", "install", "-e", str(repo)],
+    ]

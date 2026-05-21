@@ -57,7 +57,7 @@ resources:
 
 # BEGIN WUP MONITORING MANIFEST (auto-generated — do not edit; run: wup sync-testql --write)
 monitoring:
-  generated_at: '2026-05-21T21:09:45Z'
+  generated_at: '2026-05-21T21:19:58Z'
   generated_by: wup sync-testql --write (or wup watch startup)
   how_to_refresh: wup sync-testql . --write
   probe_interval_s: 60

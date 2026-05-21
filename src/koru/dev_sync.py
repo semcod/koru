@@ -76,6 +76,43 @@ def _pull_repo(repo: Path, runner: Runner, *, allow_dirty: bool) -> tuple[bool, 
     return True, (result.stdout or "").strip()
 
 
+def _sync_single_package(
+    name: str,
+    repo: Path,
+    *,
+    python_executable: Path,
+    pull: bool,
+    allow_dirty_pull: bool,
+    upgrade: bool,
+    eager: bool,
+    runner: Runner,
+) -> SyncItem:
+    if not (repo / "pyproject.toml").is_file():
+        return SyncItem(name=name, path=repo, status="missing", detail="no pyproject.toml")
+
+    pull_detail = ""
+    if pull:
+        pulled, detail = _pull_repo(repo, runner, allow_dirty=allow_dirty_pull)
+        if not pulled:
+            pull_detail = detail
+
+    command = [str(python_executable), "-m", "pip", "install"]
+    if upgrade:
+        command.append("--upgrade")
+    if eager:
+        command.extend(["--upgrade-strategy", "eager"])
+    command.extend(["-e", str(repo)])
+    install = runner(command, repo)
+    if install.returncode == 0:
+        detail = f"editable install via {python_executable}"
+        status = "synced-stale" if pull_detail else "synced"
+        if pull_detail:
+            detail = f"{pull_detail}; {detail}"
+        return SyncItem(name=name, path=repo, status=status, detail=detail)
+    detail = (install.stderr or install.stdout).strip() or "pip install -e failed"
+    return SyncItem(name=name, path=repo, status="failed", detail=detail)
+
+
 def sync_developer_packages(
     *,
     root: Path | None = None,
@@ -94,45 +131,24 @@ def sync_developer_packages(
     only refreshes editable installs for checkouts that already exist.
     """
     base = (root or _default_semcod_root()).expanduser().resolve()
-    results: list[SyncItem] = []
     python_executable = _target_python(base, python=python, target_venv=target_venv)
     if python_executable is None:
         detail = f"target venv python not found: {base / str(target_venv or '')}"
         return [SyncItem(name=name, path=base / name, status="failed", detail=detail) for name in packages]
 
-    for name in packages:
-        repo = base / name
-        if not (repo / "pyproject.toml").is_file():
-            results.append(SyncItem(name=name, path=repo, status="missing", detail="no pyproject.toml"))
-            continue
-
-        if pull:
-            pulled, detail = _pull_repo(repo, runner, allow_dirty=allow_dirty_pull)
-            if not pulled:
-                results.append(SyncItem(name=name, path=repo, status="pull-skipped", detail=detail))
-                continue
-
-        command = [str(python_executable), "-m", "pip", "install"]
-        if upgrade:
-            command.append("--upgrade")
-        if eager:
-            command.extend(["--upgrade-strategy", "eager"])
-        command.extend(["-e", str(repo)])
-        install = runner(command, repo)
-        if install.returncode == 0:
-            results.append(
-                SyncItem(
-                    name=name,
-                    path=repo,
-                    status="synced",
-                    detail=f"editable install via {python_executable}",
-                )
-            )
-        else:
-            detail = (install.stderr or install.stdout).strip() or "pip install -e failed"
-            results.append(SyncItem(name=name, path=repo, status="failed", detail=detail))
-
-    return results
+    return [
+        _sync_single_package(
+            name,
+            base / name,
+            python_executable=python_executable,
+            pull=pull,
+            allow_dirty_pull=allow_dirty_pull,
+            upgrade=upgrade,
+            eager=eager,
+            runner=runner,
+        )
+        for name in packages
+    ]
 
 
 def dev_main(argv: list[str] | None = None) -> int:
@@ -193,5 +209,5 @@ def dev_main(argv: list[str] | None = None) -> int:
     failed = False
     for item in results:
         print(f"{item.status:12} {item.name:12} {item.path} {item.detail}".rstrip())
-        failed = failed or item.status in {"failed", "pull-skipped"}
+        failed = failed or item.status == "failed"
     return 1 if failed else 0
