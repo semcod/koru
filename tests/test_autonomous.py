@@ -969,6 +969,40 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
     assert install_calls == ["cursor:koru-autopilot.sock"]
 
 
+def test_setup_autopilot_plugin_unsupported_skips_wait(tmp_path, monkeypatch) -> None:
+    args = SimpleNamespace(
+        enable_autopilot=True,
+        emit_events="human",
+        autopilot_plugin_wait_seconds=5.0,
+    )
+
+    monkeypatch.setattr(
+        autonomous_mod,
+        "install_plugin_for_ide",
+        lambda **_kwargs: SimpleNamespace(
+            status="unsupported",
+            ide="jetbrains",
+            message="no plugin",
+            command=None,
+        ),
+    )
+    monkeypatch.setattr(autonomous_mod, "format_plugin_install_result", lambda _r: "unsupported")
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_wait_for_autopilot_plugin",
+        lambda *_a, **_k: (_ for _ in ()).throw(AssertionError("wait should not be called")),
+    )
+
+    connected = autonomous_mod._setup_autopilot_plugin(
+        args,
+        "jetbrains",
+        tmp_path / "koru-autopilot.sock",
+        client=object(),
+    )
+
+    assert connected is False
+
+
 def test_status_has_autopilot_plugin_matches_specific_ide() -> None:
     assert autonomous_mod._status_has_autopilot_plugin(
         {"plugins": [{"ide": "vscode"}, {"ide": "windsurf"}]},
@@ -1307,6 +1341,50 @@ def test_run_cycle_visible_typing_does_not_require_plugin(
         max_iterations=50,
         enable_autopilot=True,
         autopilot_ide="vscode",
+        drive_prompt="continue",
+        submit=True,
+        include_semcod_artifacts=False,
+        client=RecordingClient(),
+    )
+
+    assert autopilot_status == "ok"
+    assert drive_calls[0]["require_plugin"] is False
+
+
+def test_run_cycle_jetbrains_does_not_require_plugin_by_default(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    drive_calls: list[dict] = []
+
+    class RecordingClient:
+        def drive(self, prompt, **kwargs):
+            drive_calls.append(kwargs)
+            return {"ok": True, "backend": "stub"}
+
+    monkeypatch.delenv("KORU_AUTOPILOT_VISIBLE_TYPING", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_PREFER_KEYBOARD", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK", raising=False)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=1 last_status=waiting_input",
+            last_status="waiting_input",
+            last_message="do work",
+            waiting=["PLF-1"],
+        ),
+    )
+
+    _scan_result, _queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
+        cycle=1,
+        project=tmp_path,
+        actor="koru-test",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=50,
+        enable_autopilot=True,
+        autopilot_ide="jetbrains",
         drive_prompt="continue",
         submit=True,
         include_semcod_artifacts=False,

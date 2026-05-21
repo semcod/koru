@@ -1321,7 +1321,14 @@ def _setup_autopilot_plugin(
     if args.enable_autopilot and socket_path is not None:
         plugin_result = install_plugin_for_ide(ide=autopilot_ide, socket_path=socket_path)
         _stdio_info(format_plugin_install_result(plugin_result), fmt=args.emit_events)
-        if client is not None and not _allow_keyboard_autopilot_fallback():
+        if plugin_result.status == "unsupported":
+            plugin_connected = False
+            _stdio_info(
+                "koru autonomous: autopilot plugin unsupported for "
+                f"ide={autopilot_ide}; using keyboard/OS-injector path",
+                fmt=args.emit_events,
+            )
+        elif client is not None and not _allow_keyboard_autopilot_fallback():
             plugin_ready = _wait_for_autopilot_plugin(
                 client,
                 autopilot_ide,

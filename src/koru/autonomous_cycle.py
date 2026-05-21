@@ -111,6 +111,14 @@ def _prefer_keyboard_autopilot() -> bool:
     return False
 
 
+def _plugin_required_for_ide(autopilot_ide: str) -> bool:
+    ide = (autopilot_ide or "").strip().lower()
+    plugin_ides = {"auto", "cursor", "windsurf", "vscode"}
+    if ide not in plugin_ides:
+        return False
+    return not _allow_keyboard_autopilot_fallback() and not _prefer_keyboard_autopilot()
+
+
 def _try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | None:
     """Delegate to :func:`koru.autonomous._try_os_injector_fallback` (monkeypatch-friendly)."""
     from koru import autonomous as _autonomous_mod
@@ -843,9 +851,7 @@ def _execute_autopilot_drive(
         decision.prompt,
         submit=submit,
         ide=autopilot_ide,
-        require_plugin=(
-            not _allow_keyboard_autopilot_fallback() and not _prefer_keyboard_autopilot()
-        ),
+        require_plugin=_plugin_required_for_ide(autopilot_ide),
     )
     ok = bool(reply.get("ok", True))
     if not ok:
