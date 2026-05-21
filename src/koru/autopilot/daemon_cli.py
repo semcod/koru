@@ -6,6 +6,7 @@ import argparse
 import sys
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from koru.autopilot import default_socket_path
 from koru.autopilot.client import AutopilotClient
@@ -20,28 +21,67 @@ from koru.autopilot.utils.client_helpers import call_daemon_method
 from koruide.audit import AuditLog
 
 
+def _daemon_already_running(args: argparse.Namespace, socket_path: Path) -> bool:
+    if not args.idempotent:
+        return False
+    probe = AutopilotClient(socket_path=socket_path, timeout=0.5)
+    if not probe.is_running():
+        return False
+    print(f"koru autopilot: daemon already running on {socket_path}")
+    return True
+
+
+def _start_local_manager(
+    *,
+    socket_path: Path,
+    project: Path | None,
+    handoff: bool,
+) -> tuple[Any | None, int | None]:
+    manager = autopilot_local_manager_session(socket_path=socket_path)
+    if manager is None:
+        return None, None
+    manager.start(project=project, metadata={"socket": str(socket_path), "handoff": handoff})
+    if not manager.should_stop():
+        return manager, None
+    action = lifecycle_decision_action(manager.last_reply)
+    print(f"koru autopilot daemon: local manager decision={action}; not starting")
+    return manager, 1 if action == "quarantine" else 0
+
+
+def _record_daemon_start_failure(
+    manager: Any | None,
+    *,
+    socket_path: Path,
+    error: Exception,
+) -> None:
+    if manager is not None:
+        manager.heartbeat(health="bad", metadata={"socket": str(socket_path), "error": str(error)})
+
+
+def _stop_heartbeat(heartbeat: Any | None) -> None:
+    if heartbeat is None:
+        return
+    stop, thread = heartbeat
+    stop.set()
+    thread.join(timeout=2.0)
+
+
 def action_daemon(
     args: argparse.Namespace,
     *,
     default_socket_fn: Callable[[], Path] = default_socket_path,
 ) -> int:
     socket_path = args.socket or default_socket_fn()
-    if args.idempotent:
-        probe = AutopilotClient(socket_path=socket_path, timeout=0.5)
-        if probe.is_running():
-            print(f"koru autopilot: daemon already running on {socket_path}")
-            return 0
+    if _daemon_already_running(args, socket_path):
+        return 0
     project = args.project.resolve() if args.handoff else None
-    manager = autopilot_local_manager_session(socket_path=socket_path)
-    if manager is not None:
-        manager.start(
-            project=project,
-            metadata={"socket": str(socket_path), "handoff": args.handoff},
-        )
-        if manager.should_stop():
-            action = lifecycle_decision_action(manager.last_reply)
-            print(f"koru autopilot daemon: local manager decision={action}; not starting")
-            return 1 if action == "quarantine" else 0
+    manager, stop_rc = _start_local_manager(
+        socket_path=socket_path,
+        project=project,
+        handoff=args.handoff,
+    )
+    if stop_rc is not None:
+        return stop_rc
     audit = AuditLog(enabled=True)
     daemon = AutopilotDaemon(
         socket_path=socket_path,
@@ -55,11 +95,7 @@ def action_daemon(
     try:
         daemon.start()
     except (OSError, RuntimeError) as exc:
-        if manager is not None:
-            manager.heartbeat(
-                health="bad",
-                metadata={"socket": str(socket_path), "error": str(exc)},
-            )
+        _record_daemon_start_failure(manager, socket_path=socket_path, error=exc)
         print(f"koru autopilot daemon: {exc}", file=sys.stderr)
         return 1
     heartbeat = start_autopilot_manager_heartbeat(
@@ -78,10 +114,7 @@ def action_daemon(
         print()
         print("koru autopilot daemon: interrupted")
     finally:
-        if heartbeat is not None:
-            stop, thread = heartbeat
-            stop.set()
-            thread.join(timeout=2.0)
+        _stop_heartbeat(heartbeat)
         if manager is not None:
             manager.complete(status="completed", result={"socket": str(socket_path)})
     return 0

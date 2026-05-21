@@ -1,11 +1,11 @@
-# koru | 243f 43695L | yaml:15,txt:2,yml:8,toml:1,shell:44,json:3,python:154,typescript:6,kotlin:6,properties:1,xml:1 | 2026-05-21
-# generated in 0.06s
-# stats: 1497 func | 0 cls | 243 mod | CC̄=4.1 | critical:9 | cycles:0
-# alerts[5]: fan-out _build_handler=36; fan-out _build_handler=31; fan-out _action_up=26; fan-out init_project=23; fan-out run_cycle=23
-# hotspots[5]: _build_handler fan=36; _build_handler fan=31; _action_up fan=26; init_project fan=23; run_cycle fan=23
+# koru | 245f 44584L | yaml:15,txt:2,yml:8,shell:44,json:3,python:156,typescript:6,kotlin:6,properties:1,xml:1,toml:1 | 2026-05-21
+# generated in 0.05s
+# stats: 1547 func | 0 cls | 245 mod | CC̄=4.1 | critical:3 | cycles:0
+# alerts[5]: fan-out _build_handler=36; fan-out _build_handler=31; fan-out init_project=23; fan-out run_cycle=23; fan-out render_markdown_handoff=22
+# hotspots[5]: _build_handler fan=36; _build_handler fan=31; init_project fan=23; run_cycle fan=23; render_markdown_handoff fan=22
 # evolution: CC̄ 4.2→4.1 (improved -0.1)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[243]:
+M[245]:
   Dockerfile,73
   Taskfile.yml,912
   docker-compose.yml,92
@@ -102,14 +102,16 @@ M[243]:
   src/koru/agents.py,322
   src/koru/api/__init__.py,9
   src/koru/autoloop_cli.py,90
-  src/koru/autonomous.py,2235
+  src/koru/autonomous.py,2460
   src/koru/autonomous_cycle.py,1389
+  src/koru/autonomous_daemon.py,258
   src/koru/autonomous_diagnostics.py,258
   src/koru/autonomous_env.py,25
   src/koru/autonomous_parser.py,398
   src/koru/autonomous_process_guard.py,206
-  src/koru/autonomous_startup.py,312
-  src/koru/autonomous_wup.py,538
+  src/koru/autonomous_processes.py,313
+  src/koru/autonomous_startup.py,333
+  src/koru/autonomous_wup.py,540
   src/koru/autonomy/__init__.py,24
   src/koru/autonomy/config.py,123
   src/koru/autonomy/env.py,304
@@ -127,7 +129,7 @@ M[243]:
   src/koru/autopilot/client.py,10
   src/koru/autopilot/config.py,9
   src/koru/autopilot/daemon.py,16
-  src/koru/autopilot/daemon_cli.py,109
+  src/koru/autopilot/daemon_cli.py,142
   src/koru/autopilot/doctor_cli.py,152
   src/koru/autopilot/host_setup.py,9
   src/koru/autopilot/ide.py,9
@@ -236,7 +238,7 @@ M[243]:
   src/koruide/host_setup.py,226
   src/koruide/ide.py,679
   src/koruide/injector.py,406
-  src/koruide/os_injector.py,400
+  src/koruide/os_injector.py,437
   src/koruide/plugin_installer.py,494
   src/koruide/plugin_router.py,74
   src/koruide/plugin_version.py,8
@@ -250,10 +252,33 @@ M[243]:
   tree.sh,1
   wup.yaml,56
 D:
+  plugins/koru-autopilot-vscode/src/extension.ts:
+    i: ./dispatch-plan,./socketPath,fs,net,vscode
+    e: Envelope,AutopilotBridge,debugLog,suffix
+    Envelope:
+    AutopilotBridge: socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),matching(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),scheduleRetry(-1),delay(-1),cfg(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),editorSnapshot(-1),getProbeCache(-1),raw(-1),cache(-1),next(-1),debugLog(-1),_tryTypeSubmit(-1),submitChat(-1),ide(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),result(-1),focusChat(-1),cfg(-1),primary(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),orderWithCache(-1),before(-1),after(-1),debugLog(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),direct(-1),clipboard(-1),directCommands(-1),orderWithCache(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),after(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),detectIde(-1),app(-1),send(-1),line(-1),debugLog(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),saveClipboard(-1),restoreClipboard(-1),sendFocusFailureAck(-1),sendPasteFailureAck(-1),injectChat(-1),text(-1),submit(-1),previous(-1),message(-1),_performInject(-1),ide(-1),existing(-1),focus(-1),pasted(-1),submitResult(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),sendManualChat(-1),activate(-1),bridge(-1),text(-1),cfg(-1),cfg(-1),deactivate(-1)
+    debugLog()
+    suffix()
+  src/koruide/daemon.py:
+    e: _Client,AutopilotDaemon,_daemon_package_version,_env_truthy,_prefer_keyboard_drive,_plugin_rejection_log_interval_seconds,_load_context_module,_default_handoff,_peer_uid
+    _Client:  # In-memory state for one connected socket...
+    AutopilotDaemon: __init__(0),start(0),serve_forever(0),stop(0),_shutdown(0),_accept(0),_on_readable(1),_dispatch(2),_send(2),_drop(1),_plugin_for(1),_handle_drive(2),_drive_via_plugin(6),_try_os_injector_drive(3),_drive_via_keyboard(5),_handle_hello(2),_log_rejected_plugin_connection(0),_handle_status(2),_plugin_ack_needs_os_fallback(0),_relay_os_fallback_ack(6),_relay_message_sent_ack(2),_handle_ack(2),_event_path(0),_append_event(2),_handle_plugin_event(2),_handle_shutdown(2),_handle_ping(2),_build_handler_table(0)  # Selector-based unix-socket broker.
+
+Parameters
+----------
+so...
+    _daemon_package_version()
+    _env_truthy(name)
+    _prefer_keyboard_drive()
+    _plugin_rejection_log_interval_seconds()
+    _load_context_module()
+    _default_handoff(project)
+    _peer_uid(sock)
   src/koru/autonomous.py:
-    e: ExistingAutonomousProcess,ExistingManagedProcess,AutoPipelineState,AutoPipelineProfile,_try_os_injector_fallback,_stdio_info,_daemon_activity_log,_allow_keyboard_autopilot_fallback,_effective_cycle_autopilot_enabled,_scan_while_waiting_input_enabled,_effective_cycle_scan_enabled,_resolve_autopilot_ide,_apply_agent_lane_environ,_command_project,_process_cwd,_ancestor_pids,_looks_like_autonomous_up_command,_find_existing_autonomous_processes,stop_prior_autonomous_for_auto_start,_find_existing_wup_processes,_as_managed,_terminate_existing_processes,_confirm_replace_existing,_guard_existing_autonomous_processes,_build_parser,_ensure_init,_current_koru_version,_daemon_status_version,_daemon_status_compatible,_stop_reused_daemon,_start_or_reuse_daemon,_status_has_autopilot_plugin,_wait_for_autopilot_plugin,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_compute_backoff_sleep,_load_loop_checkpoint,_save_loop_checkpoint,_status_in_skip_list,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_run_cycle,_setup_autonomous_session,_setup_autopilot_daemon,_enable_autonomous_strict_plugin_policy,_configure_loop_state,_run_mcp_provision,_setup_autopilot_plugin,_run_operator_pipeline,_unblock_queue_if_needed,_restart_daemon_if_needed,_handle_cycle_exit_conditions,_cleanup_autonomous_session,_run_autonomous_cycle,_action_up,_argv_has_option,_expand_auto_up_defaults,_collect_argv_options,_user_option,_auto_value,_auto_pipeline_has_pressure,_auto_pipeline_stage,_select_auto_pipeline_profile,_update_auto_pipeline_state,autonomous_main
+    e: ExistingAutonomousProcess,ExistingManagedProcess,StopSignalState,AutoPipelineState,AutoPipelineProfile,_try_os_injector_fallback,_stdio_info,_daemon_activity_log,_allow_keyboard_autopilot_fallback,_effective_cycle_autopilot_enabled,_scan_while_waiting_input_enabled,_effective_cycle_scan_enabled,_resolve_autopilot_ide,_apply_agent_lane_environ,_command_project,_process_cwd,_ancestor_pids,_looks_like_autonomous_up_command,_find_existing_autonomous_processes,stop_prior_autonomous_for_auto_start,_find_existing_wup_processes,_as_managed,_terminate_existing_processes,_confirm_replace_existing,_guard_existing_autonomous_processes,_build_parser,_ensure_init,_current_koru_version,_daemon_status_version,_daemon_status_compatible,_stop_reused_daemon,_start_or_reuse_daemon,_status_has_autopilot_plugin,_wait_for_autopilot_plugin,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_compute_backoff_sleep,_load_loop_checkpoint,_save_loop_checkpoint,_status_in_skip_list,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_run_cycle,_setup_autonomous_session,_setup_autopilot_daemon,_enable_autonomous_strict_plugin_policy,_configure_loop_state,_run_mcp_provision,_setup_autopilot_plugin,_run_operator_pipeline,_unblock_queue_if_needed,_restart_daemon_if_needed,_handle_cycle_exit_conditions,_cleanup_autonomous_session,_select_and_log_cycle_profile,_resolve_effective_cycle_flags,_build_cycle_run_kwargs,_compute_cycle_sleep,_run_autonomous_cycle,_setup_autonomous_env_vars,_restore_autonomous_env_vars,_setup_autonomous_resources,_run_autonomous_pre_checks,_build_and_log_startup_probe,_install_sigterm_interrupt_handler,_handle_autonomous_interrupt,_action_up,_argv_has_option,_expand_auto_up_defaults,_collect_argv_options,_user_option,_auto_value,_auto_pipeline_has_pressure,_auto_pipeline_stage,_select_auto_pipeline_profile,_update_auto_pipeline_state,autonomous_main
     ExistingAutonomousProcess:
     ExistingManagedProcess:
+    StopSignalState:
     AutoPipelineState:
     AutoPipelineProfile:
     _try_os_injector_fallback(prompt)
@@ -309,7 +334,18 @@ D:
     _restart_daemon_if_needed(args;client;socket_path;daemon;thread;autopilot_socket_observed_at_boot;project)
     _handle_cycle_exit_conditions(args;queue_result;cycle;correlation_id)
     _cleanup_autonomous_session(previous_stdio_format_env;previous_sigterm;daemon;thread;wup_process;stdio_format)
+    _select_and_log_cycle_profile(args;auto_pipeline_state)
+    _resolve_effective_cycle_flags(args;profile)
+    _build_cycle_run_kwargs(args;profile)
+    _compute_cycle_sleep(args;loop_state;queue_result)
     _run_autonomous_cycle()
+    _setup_autonomous_env_vars(args)
+    _restore_autonomous_env_vars(had_strict_plugin_env;had_strict_ack_env;previous_strict_plugin_env;previous_strict_ack_env)
+    _setup_autonomous_resources(args;project)
+    _run_autonomous_pre_checks(args;project;startup_probe;socket_path;autopilot_ide;client;correlation_id)
+    _build_and_log_startup_probe(args;project)
+    _install_sigterm_interrupt_handler(args;stop_state)
+    _handle_autonomous_interrupt(args)
     _action_up(args)
     _argv_has_option(argv;names)
     _expand_auto_up_defaults(argv)
@@ -321,103 +357,6 @@ D:
     _select_auto_pipeline_profile(args;state)
     _update_auto_pipeline_state(state;queue_result;diag_result;autopilot_status)
     autonomous_main(argv)
-  plugins/koru-autopilot-vscode/src/extension.ts:
-    i: ./dispatch-plan,./socketPath,fs,net,vscode
-    e: Envelope,AutopilotBridge,debugLog,suffix
-    Envelope:
-    AutopilotBridge: socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),matching(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),scheduleRetry(-1),delay(-1),cfg(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),editorSnapshot(-1),getProbeCache(-1),raw(-1),cache(-1),next(-1),debugLog(-1),_tryTypeSubmit(-1),submitChat(-1),ide(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),result(-1),focusChat(-1),cfg(-1),primary(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),orderWithCache(-1),before(-1),after(-1),debugLog(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),direct(-1),clipboard(-1),directCommands(-1),orderWithCache(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),after(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),detectIde(-1),app(-1),send(-1),line(-1),debugLog(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),saveClipboard(-1),restoreClipboard(-1),sendFocusFailureAck(-1),sendPasteFailureAck(-1),injectChat(-1),text(-1),submit(-1),previous(-1),message(-1),_performInject(-1),ide(-1),existing(-1),focus(-1),pasted(-1),submitResult(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),sendManualChat(-1),activate(-1),bridge(-1),text(-1),cfg(-1),cfg(-1),deactivate(-1)
-    debugLog()
-    suffix()
-  src/koruide/daemon.py:
-    e: _Client,AutopilotDaemon,_daemon_package_version,_env_truthy,_prefer_keyboard_drive,_plugin_rejection_log_interval_seconds,_load_context_module,_default_handoff,_peer_uid
-    _Client:  # In-memory state for one connected socket...
-    AutopilotDaemon: __init__(0),start(0),serve_forever(0),stop(0),_shutdown(0),_accept(0),_on_readable(1),_dispatch(2),_send(2),_drop(1),_plugin_for(1),_handle_drive(2),_drive_via_plugin(6),_try_os_injector_drive(3),_drive_via_keyboard(5),_handle_hello(2),_log_rejected_plugin_connection(0),_handle_status(2),_plugin_ack_needs_os_fallback(0),_relay_os_fallback_ack(6),_relay_message_sent_ack(2),_handle_ack(2),_event_path(0),_append_event(2),_handle_plugin_event(2),_handle_shutdown(2),_handle_ping(2),_build_handler_table(0)  # Selector-based unix-socket broker.
-
-Parameters
-----------
-so...
-    _daemon_package_version()
-    _env_truthy(name)
-    _prefer_keyboard_drive()
-    _plugin_rejection_log_interval_seconds()
-    _load_context_module()
-    _default_handoff(project)
-    _peer_uid(sock)
-  src/koruide/os_injector.py:
-    e: OsInjectorError,OsInjectorProfile,default_config_path,iter_config_paths,os_injector_env_disabled,os_injector_env_forced,dry_run_from_env,focus_mode_from_env,input_mode_from_env,_is_wayland_session,_cmd_timeout_seconds,_post_focus_delay_seconds,try_load_profile,_read_json,load_profile,save_profile,profile_from_mouse,capture_mouse_xy,capture_from_xdotool,_run_cmd,_xdotool,_tool_pid,_clipboard_backend,_set_clipboard,inject_with_profile,try_drive_with_profile
-    OsInjectorError(RuntimeError):  # Raised when profile config or xdotool operations fail...
-    OsInjectorProfile:  # Chat anchor: pixel position under the cursor at calibration ...
-    default_config_path()
-    iter_config_paths()
-    os_injector_env_disabled()
-    os_injector_env_forced()
-    dry_run_from_env()
-    focus_mode_from_env()
-    input_mode_from_env()
-    _is_wayland_session()
-    _cmd_timeout_seconds()
-    _post_focus_delay_seconds()
-    try_load_profile(tool_id)
-    _read_json(path)
-    load_profile(tool_id)
-    save_profile(profile)
-    profile_from_mouse(tool_id)
-    capture_mouse_xy()
-    capture_from_xdotool()
-    _run_cmd(cmd)
-    _xdotool(argv_tail)
-    _tool_pid(tool_id)
-    _clipboard_backend()
-    _set_clipboard(text)
-    inject_with_profile()
-    try_drive_with_profile()
-  src/koru/autonomous_startup.py:
-    e: AutonomousStartupProbe,supports_autopilot_plugin_ide,koru_distribution_version,_session_label,_terminal_agent_lane_from_env,resolve_agent_lane_id,resolve_autopilot_ide_for_autonomous,build_startup_probe,format_startup_banner,format_post_startup_operator_hints
-    AutonomousStartupProbe:
-    supports_autopilot_plugin_ide(ide)
-    koru_distribution_version()
-    _session_label()
-    _terminal_agent_lane_from_env()
-    resolve_agent_lane_id(project;agent_lane_cli)
-    resolve_autopilot_ide_for_autonomous(autopilot_ide_cli;lane)
-    build_startup_probe(project)
-    format_startup_banner(probe)
-    format_post_startup_operator_hints(probe)
-  src/koru/autonomous_wup.py:
-    e: WupWatchConfig,WupHealthResult,_WupEventState,_wup_stdio_info,_wup_topology_gate,_build_wup_watch_config,_resolve_wup_testql_bin,_wup_cpu_throttle_arg,_wup_watch_command,_wup_autodetect,_wup_config_path,_load_project_env,_wup_subprocess_env,_parse_wup_services,_extract_docker_items,_profiled_compose_services,_compose_ps_command,_parse_compose_ps_json,_compose_service_ready,_wait_for_compose_service_ready,_ensure_wup_profiled_compose_services,_start_wup_watch,_stop_process,_load_wup_health,_identify_failing_services,_create_wup_diagnostic_tickets,_count_wup_events,_read_wup_health
-    WupWatchConfig:
-    WupHealthResult:
-    _WupEventState(Protocol):
-    _wup_stdio_info(msg)
-    _wup_topology_gate(project;key)
-    _build_wup_watch_config(args;project)
-    _resolve_wup_testql_bin(config)
-    _wup_cpu_throttle_arg(value)
-    _wup_watch_command(config)
-    _wup_autodetect(config)
-    _wup_config_path(config)
-    _load_project_env(project)
-    _wup_subprocess_env(config)
-    _parse_wup_services(config)
-    _extract_docker_items(service)
-    _profiled_compose_services(config)
-    _compose_ps_command(compose_file;profiles;compose_service)
-    _parse_compose_ps_json(raw)
-    _compose_service_ready(items)
-    _wait_for_compose_service_ready(config;compose_file;profiles;compose_service)
-    _ensure_wup_profiled_compose_services(config)
-    _start_wup_watch(config)
-    _stop_process(process;label)
-    _load_wup_health(health_path)
-    _identify_failing_services(health)
-    _create_wup_diagnostic_tickets(health;failing;project;ticket_queue;state_dir;create_diagnostic_ticket)
-    _count_wup_events(events_path;previous_count)
-    _read_wup_health()
-  src/koru/autopilot/daemon_cli.py:
-    e: action_daemon,action_shutdown,action_ide_list
-    action_daemon(args)
-    action_shutdown(args)
-    action_ide_list(_args)
   src/koruapi/topology_post.py:
     e: apply_topology_post_update
     apply_topology_post_update(project;body)
@@ -503,6 +442,59 @@ P...
     _list_tickets(project;runner)
     _close_ticket(project;candidate;reason;runner)
     clean_queue(project)
+  src/koru/autonomous_cycle.py:
+    e: DiagnosticResult,AutoloopState,_stdio_info,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_status_in_skip_list,_allow_keyboard_autopilot_fallback,_prefer_keyboard_autopilot,_plugin_required_for_ide,_client_plugin_rows,_wanted_plugin_ide,_plugin_row_matches_ide,_plugin_row_version_block_reason,_missing_plugin_label,_client_has_usable_plugin,_try_os_injector_fallback,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_autopilot_event_path,_drain_autopilot_events,_initialize_cycle_telemetry,_heal_stale_socket,_handle_autopilot_events,_handle_queue_hygiene,_handle_post_run_verify_ide,_handle_scan_phase,_build_queue_command,_run_queue_loop,_emit_queue_iteration_event,_handle_post_run_verify,_handle_queue_loop_phase,_handle_scan_after_idle,_update_stagnation_state,_waiting_ticket_has_label,_handle_diagnostics,_check_autopilot_skip_conditions,_resolve_autopilot_drive_decision,_drive_autopilot_once,_reply_missing_autopilot_plugin,_reply_needs_focus_retry,_warn_autopilot_focus_retry,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result,_handle_autopilot_phase,_emit_cycle_completion_events,run_cycle
+    DiagnosticResult:
+    AutoloopState:
+    _stdio_info(msg)
+    _queue_loop_waiting_ticket_label(queue_result)
+    _is_topology_enabled(project;key)
+    _current_head(project)
+    _status_in_skip_list(status;skip_statuses)
+    _allow_keyboard_autopilot_fallback()
+    _prefer_keyboard_autopilot()
+    _plugin_required_for_ide(autopilot_ide)
+    _client_plugin_rows(client)
+    _wanted_plugin_ide(autopilot_ide)
+    _plugin_row_matches_ide(row;wanted)
+    _plugin_row_version_block_reason(row;wanted)
+    _missing_plugin_label(wanted)
+    _client_has_usable_plugin(client;autopilot_ide)
+    _try_os_injector_fallback(prompt)
+    _run_command_check(project;check_id;command)
+    _create_diagnostic_ticket()
+    _clear_diagnostic_marker(state_dir;check_id)
+    _read_wup_health()
+    _run_idle_diagnostics()
+    _autopilot_event_path()
+    _drain_autopilot_events(state)
+    _initialize_cycle_telemetry()
+    _heal_stale_socket()
+    _handle_autopilot_events(state;_hp)
+    _handle_queue_hygiene(project;cycle;_hp;_emit)
+    _handle_post_run_verify_ide(project;state;cycle;_hp;_emit)
+    _handle_scan_phase(project;state;cycle;enable_scan;include_semcod_artifacts;scan_skip_if_clean;scan_skip_after;topology_integration;_hp;_emit)
+    _build_queue_command(max_iterations;queue_name)
+    _run_queue_loop(project;actor;queue_name;max_iterations)
+    _emit_queue_iteration_event(queue_result;cycle;queue_name;actor;qcmd;_emit)
+    _handle_post_run_verify(project;state;cycle;queue_result;verify_config;_hp;_emit)
+    _handle_queue_loop_phase(project;state;cycle;actor;queue_name;max_iterations;topology_integration;verify_config;_hp;_emit)
+    _handle_scan_after_idle(project;state;cycle;queue_result;scan_after_idle_queue;include_semcod_artifacts;scan_after_idle_min_interval_seconds;topology_integration;cycle_telemetry;_hp;_emit)
+    _update_stagnation_state(state;queue_result)
+    _waiting_ticket_has_label(project;queue_result;label)
+    _handle_diagnostics(project;state;cycle;queue_result;idle_diagnostics;diagnostic_tickets;diagnostic_ticket_queue;diagnostic_ticket_priority;diagnostic_state_dir;wup_watch_enabled;wup_diagnostic_tickets;wup_ticket_queue;topology_integration;_hp;_emit)
+    _check_autopilot_skip_conditions(project;queue_result;state;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp)
+    _resolve_autopilot_drive_decision(project;state;queue_result)
+    _drive_autopilot_once(client)
+    _reply_missing_autopilot_plugin(reply)
+    _reply_needs_focus_retry(reply)
+    _warn_autopilot_focus_retry(attempt;attempts)
+    _execute_autopilot_drive(project;state;queue_result;client;autopilot_ide;drive_prompt;submit;autopilot_action;_hp)
+    _update_autopilot_state(state;ok;decision_kind;autopilot_drive_kind;decision_prompt)
+    _log_autopilot_result(ok;queue_result;autopilot_ide;decision_kind;reply;_hp)
+    _handle_autopilot_phase(project;state;cycle;queue_result;enable_autopilot;client;autopilot_ide;drive_prompt;submit;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp;_emit)
+    _emit_cycle_completion_events(project;state;cycle;queue_result;diag_result;wup_health;autopilot_status;autopilot_ide;autopilot_backend;autopilot_drive_kind;cycle_telemetry;scan_after_idle_queue;scan_after_idle_min_interval_seconds;autopilot_skip_drive_idle_streak;_hp;_emit)
+    run_cycle()
   src/koru/autonomous_parser.py:
     e: build_parser,_match_koru_auto_parts,looks_like_autonomous_up_command
     build_parser()
@@ -657,59 +649,6 @@ Designed to ...
     do_from_todo(heading;check)
     _llm_stub(item;heading;source_name)
     main()
-  src/koru/autonomous_cycle.py:
-    e: DiagnosticResult,AutoloopState,_stdio_info,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_status_in_skip_list,_allow_keyboard_autopilot_fallback,_prefer_keyboard_autopilot,_plugin_required_for_ide,_client_plugin_rows,_wanted_plugin_ide,_plugin_row_matches_ide,_plugin_row_version_block_reason,_missing_plugin_label,_client_has_usable_plugin,_try_os_injector_fallback,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_autopilot_event_path,_drain_autopilot_events,_initialize_cycle_telemetry,_heal_stale_socket,_handle_autopilot_events,_handle_queue_hygiene,_handle_post_run_verify_ide,_handle_scan_phase,_build_queue_command,_run_queue_loop,_emit_queue_iteration_event,_handle_post_run_verify,_handle_queue_loop_phase,_handle_scan_after_idle,_update_stagnation_state,_waiting_ticket_has_label,_handle_diagnostics,_check_autopilot_skip_conditions,_resolve_autopilot_drive_decision,_drive_autopilot_once,_reply_missing_autopilot_plugin,_reply_needs_focus_retry,_warn_autopilot_focus_retry,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result,_handle_autopilot_phase,_emit_cycle_completion_events,run_cycle
-    DiagnosticResult:
-    AutoloopState:
-    _stdio_info(msg)
-    _queue_loop_waiting_ticket_label(queue_result)
-    _is_topology_enabled(project;key)
-    _current_head(project)
-    _status_in_skip_list(status;skip_statuses)
-    _allow_keyboard_autopilot_fallback()
-    _prefer_keyboard_autopilot()
-    _plugin_required_for_ide(autopilot_ide)
-    _client_plugin_rows(client)
-    _wanted_plugin_ide(autopilot_ide)
-    _plugin_row_matches_ide(row;wanted)
-    _plugin_row_version_block_reason(row;wanted)
-    _missing_plugin_label(wanted)
-    _client_has_usable_plugin(client;autopilot_ide)
-    _try_os_injector_fallback(prompt)
-    _run_command_check(project;check_id;command)
-    _create_diagnostic_ticket()
-    _clear_diagnostic_marker(state_dir;check_id)
-    _read_wup_health()
-    _run_idle_diagnostics()
-    _autopilot_event_path()
-    _drain_autopilot_events(state)
-    _initialize_cycle_telemetry()
-    _heal_stale_socket()
-    _handle_autopilot_events(state;_hp)
-    _handle_queue_hygiene(project;cycle;_hp;_emit)
-    _handle_post_run_verify_ide(project;state;cycle;_hp;_emit)
-    _handle_scan_phase(project;state;cycle;enable_scan;include_semcod_artifacts;scan_skip_if_clean;scan_skip_after;topology_integration;_hp;_emit)
-    _build_queue_command(max_iterations;queue_name)
-    _run_queue_loop(project;actor;queue_name;max_iterations)
-    _emit_queue_iteration_event(queue_result;cycle;queue_name;actor;qcmd;_emit)
-    _handle_post_run_verify(project;state;cycle;queue_result;verify_config;_hp;_emit)
-    _handle_queue_loop_phase(project;state;cycle;actor;queue_name;max_iterations;topology_integration;verify_config;_hp;_emit)
-    _handle_scan_after_idle(project;state;cycle;queue_result;scan_after_idle_queue;include_semcod_artifacts;scan_after_idle_min_interval_seconds;topology_integration;cycle_telemetry;_hp;_emit)
-    _update_stagnation_state(state;queue_result)
-    _waiting_ticket_has_label(project;queue_result;label)
-    _handle_diagnostics(project;state;cycle;queue_result;idle_diagnostics;diagnostic_tickets;diagnostic_ticket_queue;diagnostic_ticket_priority;diagnostic_state_dir;wup_watch_enabled;wup_diagnostic_tickets;wup_ticket_queue;topology_integration;_hp;_emit)
-    _check_autopilot_skip_conditions(project;queue_result;state;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp)
-    _resolve_autopilot_drive_decision(project;state;queue_result)
-    _drive_autopilot_once(client)
-    _reply_missing_autopilot_plugin(reply)
-    _reply_needs_focus_retry(reply)
-    _warn_autopilot_focus_retry(attempt;attempts)
-    _execute_autopilot_drive(project;state;queue_result;client;autopilot_ide;drive_prompt;submit;autopilot_action;_hp)
-    _update_autopilot_state(state;ok;decision_kind;autopilot_drive_kind;decision_prompt)
-    _log_autopilot_result(ok;queue_result;autopilot_ide;decision_kind;reply;_hp)
-    _handle_autopilot_phase(project;state;cycle;queue_result;enable_autopilot;client;autopilot_ide;drive_prompt;submit;autopilot_action;autopilot_on_idle_only;autopilot_skip_on_diagnostics_fail;autopilot_skip_drive_idle_streak;autopilot_skip_statuses;diag_result;topology_integration;cycle_telemetry;_hp;_emit)
-    _emit_cycle_completion_events(project;state;cycle;queue_result;diag_result;wup_health;autopilot_status;autopilot_ide;autopilot_backend;autopilot_drive_kind;cycle_telemetry;scan_after_idle_queue;scan_after_idle_min_interval_seconds;autopilot_skip_drive_idle_streak;_hp;_emit)
-    run_cycle()
   src/koruapi/dashboard_serve.py:
     e: ServeConfig,_list_tickets,_bulk_waiting_input_action,_address_in_use,_listener_pids_for_tcp_port,_cmdline_suggests_koru_serve_from_bytes,_cmdline_suggests_koru_serve,_try_stop_prior_koru_serve_listener,serve_endpoint_path,read_serve_endpoint,_build_handler,build_server,write_serve_endpoint_file,bind_serve_server,serve,start_serve_background
     ServeConfig:
@@ -833,6 +772,24 @@ Designed to ...
     collect_install_manager_report()
     repair_installation()
     format_install_manager_report(report)
+  src/koru/autonomous_startup.py:
+    e: AutonomousStartupProbe,supports_autopilot_plugin_ide,koru_distribution_version,_session_label,_terminal_agent_lane_from_env,resolve_agent_lane_id,resolve_autopilot_ide_for_autonomous,_normalized_cli_value,_autopilot_socket_path_for_probe,_should_probe_per_ide_socket,_running_ide_labels,_term_program_label,_xdg_runtime_dir_label,build_startup_probe,format_startup_banner,format_post_startup_operator_hints
+    AutonomousStartupProbe:
+    supports_autopilot_plugin_ide(ide)
+    koru_distribution_version()
+    _session_label()
+    _terminal_agent_lane_from_env()
+    resolve_agent_lane_id(project;agent_lane_cli)
+    resolve_autopilot_ide_for_autonomous(autopilot_ide_cli;lane)
+    _normalized_cli_value(raw)
+    _autopilot_socket_path_for_probe(autopilot_ide)
+    _should_probe_per_ide_socket(autopilot_ide)
+    _running_ide_labels()
+    _term_program_label()
+    _xdg_runtime_dir_label()
+    build_startup_probe(project)
+    format_startup_banner(probe)
+    format_post_startup_operator_hints(probe)
   src/korudsl/transform.py:
     e: library_from_any,library_to_any,dsl_roundtrip_report,load_path
     library_from_any(payload)
@@ -1018,6 +975,38 @@ Designed to ...
   scripts/_koru_autodiag_filter_tickets.py:
     e: main
     main()
+  src/koru/autonomous_wup.py:
+    e: WupWatchConfig,WupHealthResult,_WupEventState,_wup_stdio_info,_wup_topology_gate,_build_wup_watch_config,_resolve_wup_testql_bin,_wup_cpu_throttle_arg,_wup_watch_command,_wup_autodetect,_wup_config_path,_load_project_env,_wup_subprocess_env,_parse_wup_services,_extract_docker_items,_profiled_compose_services,_compose_ps_command,_parse_compose_ps_json,_compose_field,_compose_service_item_ready,_compose_service_ready,_wait_for_compose_service_ready,_ensure_wup_profiled_compose_services,_start_wup_watch,_stop_process,_load_wup_health,_identify_failing_services,_create_wup_diagnostic_tickets,_count_wup_events,_read_wup_health
+    WupWatchConfig:
+    WupHealthResult:
+    _WupEventState(Protocol):
+    _wup_stdio_info(msg)
+    _wup_topology_gate(project;key)
+    _build_wup_watch_config(args;project)
+    _resolve_wup_testql_bin(config)
+    _wup_cpu_throttle_arg(value)
+    _wup_watch_command(config)
+    _wup_autodetect(config)
+    _wup_config_path(config)
+    _load_project_env(project)
+    _wup_subprocess_env(config)
+    _parse_wup_services(config)
+    _extract_docker_items(service)
+    _profiled_compose_services(config)
+    _compose_ps_command(compose_file;profiles;compose_service)
+    _parse_compose_ps_json(raw)
+    _compose_field(item;primary;fallback)
+    _compose_service_item_ready(item)
+    _compose_service_ready(items)
+    _wait_for_compose_service_ready(config;compose_file;profiles;compose_service)
+    _ensure_wup_profiled_compose_services(config)
+    _start_wup_watch(config)
+    _stop_process(process;label)
+    _load_wup_health(health_path)
+    _identify_failing_services(health)
+    _create_wup_diagnostic_tickets(health;failing;project;ticket_queue;state_dir;create_diagnostic_ticket)
+    _count_wup_events(events_path;previous_count)
+    _read_wup_health()
   services/healing-webhook/app.py:
     e: _rate_limit_ok,_record_action,_enrich_ticket_with_vallm,_build_planfile_command,_extract_ticket_id_from_stdout,_execute_planfile_create,create_planfile_ticket,_run_docker,heal_redsl_gate,heal_redsl_improve,heal_rebuild_restore,heal_annotate,_run_vallm_check,_run_vallm_validate,_resolve_affected_files,heal_vallm_validate,_parse_redup_summary,_update_redup_metrics,_run_redup_check,heal_redup_check,_resolve_strategy,healthz,metrics,get_history,alertmanager_webhook,probe_failure,get_tickets
     _rate_limit_ok()
@@ -1206,6 +1195,22 @@ Designed to ...
     as_managed(proc)
     terminate_existing_processes(processes)
     confirm_replace_existing(processes)
+  src/koru/autonomous_processes.py:
+    e: ExistingAutonomousProcess,ExistingManagedProcess,_command_project,_process_cwd,_ancestor_pids,_looks_like_autonomous_up_command,_find_existing_autonomous_processes,_find_existing_wup_processes,_as_managed,_stdio_info,_terminate_existing_processes,_confirm_replace_existing,stop_prior_autonomous_for_auto_start,guard_existing_autonomous_processes
+    ExistingAutonomousProcess:
+    ExistingManagedProcess:
+    _command_project(command)
+    _process_cwd(pid)
+    _ancestor_pids(pid)
+    _looks_like_autonomous_up_command(command)
+    _find_existing_autonomous_processes(project)
+    _find_existing_wup_processes(project)
+    _as_managed(proc)
+    _stdio_info(msg)
+    _terminate_existing_processes(processes)
+    _confirm_replace_existing(processes)
+    stop_prior_autonomous_for_auto_start(project)
+    guard_existing_autonomous_processes(args;project)
   src/koruide/drive_orchestrator.py:
     e: DriveOrchestrator
     DriveOrchestrator: plugin_required_message(0),should_try_os_fallback(-1),build_message_sent_info(-1),annotate_plugin_ack(-1),strict_plugin_ack_required(-1),expected_plugin_version(-1),strict_plugin_version_required(-1),plugin_version_info(-1),should_block_plugin_version(0),plugin_version_block_message(0),should_fail_strict_plugin_ack(-1),plugin_ack_summary(0)  # Pure helpers used by the autopilot daemon...
@@ -1293,6 +1298,60 @@ Designed to ...
     _render_jetbrains_failure()
     _render_jetbrains_success()
     action_install_plugin_jetbrains(args)
+  src/koruide/os_injector.py:
+    e: OsInjectorError,OsInjectorProfile,default_config_path,iter_config_paths,os_injector_env_disabled,os_injector_env_forced,dry_run_from_env,focus_mode_from_env,input_mode_from_env,_is_wayland_session,_cmd_timeout_seconds,_post_focus_delay_seconds,try_load_profile,_read_json,load_profile,save_profile,profile_from_mouse,capture_mouse_xy,capture_from_xdotool,_run_cmd,_xdotool,_tool_pid,_clipboard_backend,_set_clipboard,_resolve_input_method,_injection_result,_focus_profile_chat,_inject_profile_text,inject_with_profile,try_drive_with_profile
+    OsInjectorError(RuntimeError):  # Raised when profile config or xdotool operations fail...
+    OsInjectorProfile:  # Chat anchor: pixel position under the cursor at calibration ...
+    default_config_path()
+    iter_config_paths()
+    os_injector_env_disabled()
+    os_injector_env_forced()
+    dry_run_from_env()
+    focus_mode_from_env()
+    input_mode_from_env()
+    _is_wayland_session()
+    _cmd_timeout_seconds()
+    _post_focus_delay_seconds()
+    try_load_profile(tool_id)
+    _read_json(path)
+    load_profile(tool_id)
+    save_profile(profile)
+    profile_from_mouse(tool_id)
+    capture_mouse_xy()
+    capture_from_xdotool()
+    _run_cmd(cmd)
+    _xdotool(argv_tail)
+    _tool_pid(tool_id)
+    _clipboard_backend()
+    _set_clipboard(text)
+    _resolve_input_method()
+    _injection_result()
+    _focus_profile_chat(profile;focus;post_focus_delay)
+    _inject_profile_text()
+    inject_with_profile()
+    try_drive_with_profile()
+  src/koru/autonomous_daemon.py:
+    e: _stdio_info,_current_koru_version,_daemon_status_version,_daemon_status_compatible,_stop_reused_daemon,start_or_reuse_daemon,_status_has_autopilot_plugin,wait_for_autopilot_plugin,_stop_process,restart_daemon_if_needed,cleanup_autonomous_session
+    _stdio_info(msg)
+    _current_koru_version()
+    _daemon_status_version(status)
+    _daemon_status_compatible(status)
+    _stop_reused_daemon(client;socket_path)
+    start_or_reuse_daemon()
+    _status_has_autopilot_plugin(status;ide)
+    wait_for_autopilot_plugin(client;ide)
+    _stop_process(proc;kind)
+    restart_daemon_if_needed(args;client;socket_path;daemon;thread;autopilot_socket_observed_at_boot;project)
+    cleanup_autonomous_session(previous_stdio_format_env;previous_sigterm;daemon;thread;wup_process;stdio_format)
+  src/koru/autopilot/daemon_cli.py:
+    e: _daemon_already_running,_start_local_manager,_record_daemon_start_failure,_stop_heartbeat,action_daemon,action_shutdown,action_ide_list
+    _daemon_already_running(args;socket_path)
+    _start_local_manager()
+    _record_daemon_start_failure(manager)
+    _stop_heartbeat(heartbeat)
+    action_daemon(args)
+    action_shutdown(args)
+    action_ide_list(_args)
   src/korudsl/library.py:
     e: ensure_library_structure,_start_goal,_handle_func,_handle_set,_handle_wait,_handle_get,_handle_save,_handle_if,_handle_error,_handle_correct,_apply_prefixed_line,normalize_dsl_to_library,convert_goals_json_to_library,_emit_step,_emit_objective,_emit_functions,_emit_goal,_emit_goals,library_to_dsl
     ensure_library_structure(library)
@@ -1836,7 +1895,6 @@ The c...
   koru.yaml:
   wup.yaml:
   docker-compose.yml:
-  pyproject.toml:
   tree.sh:
   todo.txt:
   pipeline.yaml:
@@ -2020,3 +2078,4 @@ The c...
   testql-scenarios/generated-from-pytests.testql.toon.yaml:
   testql-scenarios/generated-cli-tests.testql.toon.yaml:
   testql-testing/scenarios/realtime-health.testql.toon.yaml:
+  pyproject.toml:

@@ -1776,13 +1776,13 @@ pip install -e .[dev]
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 311f 64461L | python:246,shell:52,javascript:6,typescript:6,less:1 | 2026-05-21
-# stats: 1867 func | 197 cls | 311 mod | CC̄=4.1 | critical:137 | cycles:0
-# alerts[5]: CC _run_autonomous_cycle=21; CC _action_up=17; CC test_autonomy_config_from_env=16; CC autonomous_main=15; CC build_startup_probe=15
+# koru | 312f 64870L | python:247,shell:52,javascript:6,typescript:6,less:1 | 2026-05-21
+# stats: 1891 func | 200 cls | 312 mod | CC̄=4.1 | critical:138 | cycles:0
+# alerts[5]: CC _action_up=17; CC test_autonomy_config_from_env=16; CC autonomous_main=15; CC action_daemon=15; CC inject_with_profile=15
 # hotspots[5]: _build_handler fan=31; _build_handler fan=28; _action_up fan=26; run_cycle fan=23; init_project fan=21
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[311]:
+M[312]:
   app.doql.less,681
   docs/llm-tools/aider/install.sh,56
   docs/llm-tools/claude-code/install.sh,61
@@ -1857,14 +1857,15 @@ M[311]:
   src/koru/agents.py,323
   src/koru/api/__init__.py,10
   src/koru/autoloop_cli.py,91
-  src/koru/autonomous.py,2236
+  src/koru/autonomous.py,2307
   src/koru/autonomous_cycle.py,1390
   src/koru/autonomous_diagnostics.py,259
   src/koru/autonomous_env.py,26
   src/koru/autonomous_parser.py,399
   src/koru/autonomous_process_guard.py,207
-  src/koru/autonomous_startup.py,313
-  src/koru/autonomous_wup.py,539
+  src/koru/autonomous_processes.py,314
+  src/koru/autonomous_startup.py,334
+  src/koru/autonomous_wup.py,541
   src/koru/autonomy/__init__.py,25
   src/koru/autonomy/config.py,124
   src/koru/autonomy/env.py,305
@@ -2056,7 +2057,7 @@ M[311]:
   tests/test_ide_runtime.py,39
   tests/test_ide_work.py,140
   tests/test_init.py,337
-  tests/test_install_manager.py,382
+  tests/test_install_manager.py,383
   tests/test_koru_gate_capture.py,34
   tests/test_koru_queue_argv.py,24
   tests/test_koruapi.py,80
@@ -2225,9 +2226,10 @@ D:
     _env_from_assignments(assignments)
     autoloop_main(argv)
   src/koru/autonomous.py:
-    e: _try_os_injector_fallback,_stdio_info,_daemon_activity_log,_allow_keyboard_autopilot_fallback,_effective_cycle_autopilot_enabled,_scan_while_waiting_input_enabled,_effective_cycle_scan_enabled,_resolve_autopilot_ide,_apply_agent_lane_environ,_command_project,_process_cwd,_ancestor_pids,_looks_like_autonomous_up_command,_find_existing_autonomous_processes,stop_prior_autonomous_for_auto_start,_find_existing_wup_processes,_as_managed,_terminate_existing_processes,_confirm_replace_existing,_guard_existing_autonomous_processes,_build_parser,_ensure_init,_current_koru_version,_daemon_status_version,_daemon_status_compatible,_stop_reused_daemon,_start_or_reuse_daemon,_status_has_autopilot_plugin,_wait_for_autopilot_plugin,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_compute_backoff_sleep,_load_loop_checkpoint,_save_loop_checkpoint,_status_in_skip_list,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_run_cycle,_setup_autonomous_session,_setup_autopilot_daemon,_enable_autonomous_strict_plugin_policy,_configure_loop_state,_run_mcp_provision,_setup_autopilot_plugin,_run_operator_pipeline,_unblock_queue_if_needed,_restart_daemon_if_needed,_handle_cycle_exit_conditions,_cleanup_autonomous_session,_run_autonomous_cycle,_action_up,_argv_has_option,_expand_auto_up_defaults,_collect_argv_options,_user_option,_auto_value,_auto_pipeline_has_pressure,_auto_pipeline_stage,_select_auto_pipeline_profile,_update_auto_pipeline_state,autonomous_main,ExistingAutonomousProcess,ExistingManagedProcess,AutoPipelineState,AutoPipelineProfile
+    e: _try_os_injector_fallback,_stdio_info,_daemon_activity_log,_allow_keyboard_autopilot_fallback,_effective_cycle_autopilot_enabled,_scan_while_waiting_input_enabled,_effective_cycle_scan_enabled,_resolve_autopilot_ide,_apply_agent_lane_environ,_command_project,_process_cwd,_ancestor_pids,_looks_like_autonomous_up_command,_find_existing_autonomous_processes,stop_prior_autonomous_for_auto_start,_find_existing_wup_processes,_as_managed,_terminate_existing_processes,_confirm_replace_existing,_guard_existing_autonomous_processes,_build_parser,_ensure_init,_current_koru_version,_daemon_status_version,_daemon_status_compatible,_stop_reused_daemon,_start_or_reuse_daemon,_status_has_autopilot_plugin,_wait_for_autopilot_plugin,_queue_loop_waiting_ticket_label,_is_topology_enabled,_current_head,_compute_backoff_sleep,_load_loop_checkpoint,_save_loop_checkpoint,_status_in_skip_list,_run_command_check,_create_diagnostic_ticket,_clear_diagnostic_marker,_read_wup_health,_run_idle_diagnostics,_run_cycle,_setup_autonomous_session,_setup_autopilot_daemon,_enable_autonomous_strict_plugin_policy,_configure_loop_state,_run_mcp_provision,_setup_autopilot_plugin,_run_operator_pipeline,_unblock_queue_if_needed,_restart_daemon_if_needed,_handle_cycle_exit_conditions,_cleanup_autonomous_session,_select_cycle_profile,_cycle_execution_config,_cycle_sleep_seconds,_log_cycle_summary,_run_autonomous_cycle,_action_up,_argv_has_option,_expand_auto_up_defaults,_collect_argv_options,_user_option,_auto_value,_auto_pipeline_has_pressure,_auto_pipeline_stage,_select_auto_pipeline_profile,_update_auto_pipeline_state,autonomous_main,ExistingAutonomousProcess,ExistingManagedProcess,CycleExecutionConfig,AutoPipelineState,AutoPipelineProfile
     ExistingAutonomousProcess:
     ExistingManagedProcess:
+    CycleExecutionConfig:
     AutoPipelineState:
     AutoPipelineProfile:
     _try_os_injector_fallback(prompt)
@@ -2283,6 +2285,10 @@ D:
     _restart_daemon_if_needed(args;client;socket_path;daemon;thread;autopilot_socket_observed_at_boot;project)
     _handle_cycle_exit_conditions(args;queue_result;cycle;correlation_id)
     _cleanup_autonomous_session(previous_stdio_format_env;previous_sigterm;daemon;thread;wup_process;stdio_format)
+    _select_cycle_profile(args;auto_pipeline_state)
+    _cycle_execution_config(args)
+    _cycle_sleep_seconds(args;loop_state;queue_result)
+    _log_cycle_summary()
     _run_autonomous_cycle()
     _action_up(args)
     _argv_has_option(argv;names)
@@ -2378,8 +2384,24 @@ D:
     as_managed(proc)
     terminate_existing_processes(processes)
     confirm_replace_existing(processes)
+  src/koru/autonomous_processes.py:
+    e: _command_project,_process_cwd,_ancestor_pids,_looks_like_autonomous_up_command,_find_existing_autonomous_processes,_find_existing_wup_processes,_as_managed,_stdio_info,_terminate_existing_processes,_confirm_replace_existing,stop_prior_autonomous_for_auto_start,guard_existing_autonomous_processes,ExistingAutonomousProcess,ExistingManagedProcess
+    ExistingAutonomousProcess:
+    ExistingManagedProcess:
+    _command_project(command)
+    _process_cwd(pid)
+    _ancestor_pids(pid)
+    _looks_like_autonomous_up_command(command)
+    _find_existing_autonomous_processes(project)
+    _find_existing_wup_processes(project)
+    _as_managed(proc)
+    _stdio_info(msg)
+    _terminate_existing_processes(processes)
+    _confirm_replace_existing(processes)
+    stop_prior_autonomous_for_auto_start(project)
+    guard_existing_autonomous_processes(args;project)
   src/koru/autonomous_startup.py:
-    e: supports_autopilot_plugin_ide,koru_distribution_version,_session_label,_terminal_agent_lane_from_env,resolve_agent_lane_id,resolve_autopilot_ide_for_autonomous,build_startup_probe,format_startup_banner,format_post_startup_operator_hints,AutonomousStartupProbe
+    e: supports_autopilot_plugin_ide,koru_distribution_version,_session_label,_terminal_agent_lane_from_env,resolve_agent_lane_id,resolve_autopilot_ide_for_autonomous,_normalized_cli_value,_autopilot_socket_path_for_probe,_should_probe_per_ide_socket,_running_ide_labels,_term_program_label,_xdg_runtime_dir_label,build_startup_probe,format_startup_banner,format_post_startup_operator_hints,AutonomousStartupProbe
     AutonomousStartupProbe:
     supports_autopilot_plugin_ide(ide)
     koru_distribution_version()
@@ -2387,11 +2409,17 @@ D:
     _terminal_agent_lane_from_env()
     resolve_agent_lane_id(project;agent_lane_cli)
     resolve_autopilot_ide_for_autonomous(autopilot_ide_cli;lane)
+    _normalized_cli_value(raw)
+    _autopilot_socket_path_for_probe(autopilot_ide)
+    _should_probe_per_ide_socket(autopilot_ide)
+    _running_ide_labels()
+    _term_program_label()
+    _xdg_runtime_dir_label()
     build_startup_probe(project)
     format_startup_banner(probe)
     format_post_startup_operator_hints(probe)
   src/koru/autonomous_wup.py:
-    e: _wup_stdio_info,_wup_topology_gate,_build_wup_watch_config,_resolve_wup_testql_bin,_wup_cpu_throttle_arg,_wup_watch_command,_wup_autodetect,_wup_config_path,_load_project_env,_wup_subprocess_env,_parse_wup_services,_extract_docker_items,_profiled_compose_services,_compose_ps_command,_parse_compose_ps_json,_compose_service_ready,_wait_for_compose_service_ready,_ensure_wup_profiled_compose_services,_start_wup_watch,_stop_process,_load_wup_health,_identify_failing_services,_create_wup_diagnostic_tickets,_count_wup_events,_read_wup_health,WupWatchConfig,WupHealthResult,_WupEventState
+    e: _wup_stdio_info,_wup_topology_gate,_build_wup_watch_config,_resolve_wup_testql_bin,_wup_cpu_throttle_arg,_wup_watch_command,_wup_autodetect,_wup_config_path,_load_project_env,_wup_subprocess_env,_parse_wup_services,_extract_docker_items,_profiled_compose_services,_compose_ps_command,_parse_compose_ps_json,_compose_field,_compose_service_item_ready,_compose_service_ready,_wait_for_compose_service_ready,_ensure_wup_profiled_compose_services,_start_wup_watch,_stop_process,_load_wup_health,_identify_failing_services,_create_wup_diagnostic_tickets,_count_wup_events,_read_wup_health,WupWatchConfig,WupHealthResult,_WupEventState
     WupWatchConfig:
     WupHealthResult:
     _WupEventState:
@@ -2410,6 +2438,8 @@ D:
     _profiled_compose_services(config)
     _compose_ps_command(compose_file;profiles;compose_service)
     _parse_compose_ps_json(raw)
+    _compose_field(item;primary;fallback)
+    _compose_service_item_ready(item)
     _compose_service_ready(items)
     _wait_for_compose_service_ready(config;compose_file;profiles;compose_service)
     _ensure_wup_profiled_compose_services(config)
@@ -4628,7 +4658,7 @@ D:
 
 ```prolog markpact:analysis path=project/logic.pl
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.177', 'python').
+project_metadata('koru', '0.1.178', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 681, 'less').
@@ -4705,14 +4735,15 @@ project_file('src/koru/agent_cli_helpers.py', 88, 'python').
 project_file('src/koru/agents.py', 323, 'python').
 project_file('src/koru/api/__init__.py', 10, 'python').
 project_file('src/koru/autoloop_cli.py', 91, 'python').
-project_file('src/koru/autonomous.py', 2236, 'python').
+project_file('src/koru/autonomous.py', 2307, 'python').
 project_file('src/koru/autonomous_cycle.py', 1390, 'python').
 project_file('src/koru/autonomous_diagnostics.py', 259, 'python').
 project_file('src/koru/autonomous_env.py', 26, 'python').
 project_file('src/koru/autonomous_parser.py', 399, 'python').
 project_file('src/koru/autonomous_process_guard.py', 207, 'python').
-project_file('src/koru/autonomous_startup.py', 313, 'python').
-project_file('src/koru/autonomous_wup.py', 539, 'python').
+project_file('src/koru/autonomous_processes.py', 314, 'python').
+project_file('src/koru/autonomous_startup.py', 334, 'python').
+project_file('src/koru/autonomous_wup.py', 541, 'python').
 project_file('src/koru/autonomy/__init__.py', 25, 'python').
 project_file('src/koru/autonomy/config.py', 124, 'python').
 project_file('src/koru/autonomy/env.py', 305, 'python').
@@ -4904,7 +4935,7 @@ project_file('tests/test_ide_router.py', 268, 'python').
 project_file('tests/test_ide_runtime.py', 39, 'python').
 project_file('tests/test_ide_work.py', 140, 'python').
 project_file('tests/test_init.py', 337, 'python').
-project_file('tests/test_install_manager.py', 382, 'python').
+project_file('tests/test_install_manager.py', 383, 'python').
 project_file('tests/test_koru_gate_capture.py', 34, 'python').
 project_file('tests/test_koru_queue_argv.py', 24, 'python').
 project_file('tests/test_koruapi.py', 80, 'python').
@@ -5092,7 +5123,11 @@ python_function('src/koru/autonomous.py', '_unblock_queue_if_needed', 2, 3, 5).
 python_function('src/koru/autonomous.py', '_restart_daemon_if_needed', 7, 10, 6).
 python_function('src/koru/autonomous.py', '_handle_cycle_exit_conditions', 4, 7, 2).
 python_function('src/koru/autonomous.py', '_cleanup_autonomous_session', 6, 4, 5).
-python_function('src/koru/autonomous.py', '_run_autonomous_cycle', 0, 21, 15).
+python_function('src/koru/autonomous.py', '_select_cycle_profile', 2, 5, 2).
+python_function('src/koru/autonomous.py', '_cycle_execution_config', 1, 2, 1).
+python_function('src/koru/autonomous.py', '_cycle_sleep_seconds', 3, 4, 3).
+python_function('src/koru/autonomous.py', '_log_cycle_summary', 0, 1, 2).
+python_function('src/koru/autonomous.py', '_run_autonomous_cycle', 0, 5, 14).
 python_function('src/koru/autonomous.py', '_action_up', 1, 17, 26).
 python_function('src/koru/autonomous.py', '_argv_has_option', 2, 5, 2).
 python_function('src/koru/autonomous.py', '_expand_auto_up_defaults', 1, 3, 3).
@@ -5173,13 +5208,31 @@ python_function('src/koru/autonomous_process_guard.py', 'find_existing_wup_proce
 python_function('src/koru/autonomous_process_guard.py', 'as_managed', 1, 1, 1).
 python_function('src/koru/autonomous_process_guard.py', 'terminate_existing_processes', 1, 10, 5).
 python_function('src/koru/autonomous_process_guard.py', 'confirm_replace_existing', 1, 3, 4).
+python_function('src/koru/autonomous_processes.py', '_command_project', 1, 5, 7).
+python_function('src/koru/autonomous_processes.py', '_process_cwd', 1, 2, 3).
+python_function('src/koru/autonomous_processes.py', '_ancestor_pids', 1, 7, 8).
+python_function('src/koru/autonomous_processes.py', '_looks_like_autonomous_up_command', 1, 1, 1).
+python_function('src/koru/autonomous_processes.py', '_find_existing_autonomous_processes', 1, 11, 13).
+python_function('src/koru/autonomous_processes.py', '_find_existing_wup_processes', 1, 11, 12).
+python_function('src/koru/autonomous_processes.py', '_as_managed', 1, 1, 1).
+python_function('src/koru/autonomous_processes.py', '_stdio_info', 1, 1, 1).
+python_function('src/koru/autonomous_processes.py', '_terminate_existing_processes', 1, 10, 5).
+python_function('src/koru/autonomous_processes.py', '_confirm_replace_existing', 1, 3, 4).
+python_function('src/koru/autonomous_processes.py', 'stop_prior_autonomous_for_auto_start', 1, 3, 7).
+python_function('src/koru/autonomous_processes.py', 'guard_existing_autonomous_processes', 2, 11, 8).
 python_function('src/koru/autonomous_startup.py', 'supports_autopilot_plugin_ide', 1, 1, 1).
 python_function('src/koru/autonomous_startup.py', 'koru_distribution_version', 0, 2, 1).
 python_function('src/koru/autonomous_startup.py', '_session_label', 0, 5, 2).
 python_function('src/koru/autonomous_startup.py', '_terminal_agent_lane_from_env', 0, 4, 3).
 python_function('src/koru/autonomous_startup.py', 'resolve_agent_lane_id', 2, 11, 6).
 python_function('src/koru/autonomous_startup.py', 'resolve_autopilot_ide_for_autonomous', 2, 4, 2).
-python_function('src/koru/autonomous_startup.py', 'build_startup_probe', 1, 15, 17).
+python_function('src/koru/autonomous_startup.py', '_normalized_cli_value', 1, 2, 2).
+python_function('src/koru/autonomous_startup.py', '_autopilot_socket_path_for_probe', 1, 3, 5).
+python_function('src/koru/autonomous_startup.py', '_should_probe_per_ide_socket', 1, 6, 3).
+python_function('src/koru/autonomous_startup.py', '_running_ide_labels', 0, 2, 2).
+python_function('src/koru/autonomous_startup.py', '_term_program_label', 0, 3, 2).
+python_function('src/koru/autonomous_startup.py', '_xdg_runtime_dir_label', 0, 3, 2).
+python_function('src/koru/autonomous_startup.py', 'build_startup_probe', 1, 1, 14).
 python_function('src/koru/autonomous_startup.py', 'format_startup_banner', 1, 5, 2).
 python_function('src/koru/autonomous_startup.py', 'format_post_startup_operator_hints', 1, 13, 3).
 python_function('src/koru/autonomous_wup.py', '_wup_stdio_info', 1, 2, 1).
@@ -5197,7 +5250,9 @@ python_function('src/koru/autonomous_wup.py', '_extract_docker_items', 1, 12, 6)
 python_function('src/koru/autonomous_wup.py', '_profiled_compose_services', 1, 6, 7).
 python_function('src/koru/autonomous_wup.py', '_compose_ps_command', 3, 2, 1).
 python_function('src/koru/autonomous_wup.py', '_parse_compose_ps_json', 1, 10, 5).
-python_function('src/koru/autonomous_wup.py', '_compose_service_ready', 1, 15, 3).
+python_function('src/koru/autonomous_wup.py', '_compose_field', 3, 3, 3).
+python_function('src/koru/autonomous_wup.py', '_compose_service_item_ready', 1, 6, 2).
+python_function('src/koru/autonomous_wup.py', '_compose_service_ready', 1, 3, 3).
 python_function('src/koru/autonomous_wup.py', '_wait_for_compose_service_ready', 4, 12, 12).
 python_function('src/koru/autonomous_wup.py', '_ensure_wup_profiled_compose_services', 1, 10, 11).
 python_function('src/koru/autonomous_wup.py', '_start_wup_watch', 1, 9, 9).
@@ -6653,7 +6708,7 @@ python_function('tests/test_install_manager.py', 'test_collect_report_warns_for_
 python_function('tests/test_install_manager.py', 'test_collect_report_warns_when_daemon_not_running', 2, 4, 2).
 python_function('tests/test_install_manager.py', 'test_repair_installation_records_plugin_action', 2, 3, 5).
 python_function('tests/test_install_manager.py', 'test_collect_report_for_zed_does_not_require_vsix_plugin', 2, 5, 4).
-python_function('tests/test_install_manager.py', 'test_collect_report_auto_still_checks_plugin_connection', 2, 4, 2).
+python_function('tests/test_install_manager.py', 'test_collect_report_auto_still_checks_plugin_connection', 2, 4, 3).
 python_function('tests/test_koru_gate_capture.py', 'test_first_meaningful_line_skips_cloud_init_noise', 0, 2, 2).
 python_function('tests/test_koru_gate_capture.py', 'test_first_meaningful_line_falls_back_to_nonempty_when_only_noise', 0, 2, 2).
 python_function('tests/test_koru_queue_argv.py', 'test_build_queue_argv_apply_minimal', 1, 6, 3).
@@ -6830,12 +6885,15 @@ python_class('src/koru/agents.py', 'AgentOption').
 python_method('AgentOption', 'to_dict', 0, 1, 0).
 python_class('src/koru/autonomous.py', 'ExistingAutonomousProcess').
 python_class('src/koru/autonomous.py', 'ExistingManagedProcess').
+python_class('src/koru/autonomous.py', 'CycleExecutionConfig').
 python_class('src/koru/autonomous.py', 'AutoPipelineState').
 python_class('src/koru/autonomous.py', 'AutoPipelineProfile').
 python_class('src/koru/autonomous_cycle.py', 'DiagnosticResult').
 python_class('src/koru/autonomous_cycle.py', 'AutoloopState').
 python_class('src/koru/autonomous_process_guard.py', 'ExistingAutonomousProcess').
 python_class('src/koru/autonomous_process_guard.py', 'ExistingManagedProcess').
+python_class('src/koru/autonomous_processes.py', 'ExistingAutonomousProcess').
+python_class('src/koru/autonomous_processes.py', 'ExistingManagedProcess').
 python_class('src/koru/autonomous_startup.py', 'AutonomousStartupProbe').
 python_class('src/koru/autonomous_wup.py', 'WupWatchConfig').
 python_class('src/koru/autonomous_wup.py', 'WupHealthResult').
@@ -7960,7 +8018,7 @@ sumd_deploy_compose_file('docker-compose.yml').
 
 ## Call Graph
 
-*440 nodes · 500 edges · 76 modules · CC̄=4.1*
+*434 nodes · 500 edges · 74 modules · CC̄=4.1*
 
 ### Hubs (by degree)
 
@@ -7971,14 +8029,14 @@ sumd_deploy_compose_file('docker-compose.yml').
 | `render_markdown_handoff` *(in src.koru.context)* | 10 ⚠ | 5 | 47 | **52** |
 | `_drive_via_keyboard` *(in src.koruide.daemon.AutopilotDaemon)* | 12 ⚠ | 0 | 47 | **47** |
 | `activity` *(in src.koru.activity_log)* | 4 | 34 | 7 | **41** |
-| `_stdio_info` *(in src.koru.autonomous)* | 1 | 40 | 1 | **41** |
-| `_build_parser` *(in src.koru.cli)* | 1 | 3 | 36 | **39** |
 | `emit_management_event` *(in src.koru.events)* | 8 | 32 | 7 | **39** |
+| `_build_parser` *(in src.koru.cli)* | 1 | 3 | 36 | **39** |
+| `create_nl_task` *(in src.koru.tasks)* | 12 ⚠ | 7 | 28 | **35** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.22s
-# nodes: 440 | edges: 500 | modules: 76
+# generated in 0.36s
+# nodes: 434 | edges: 500 | modules: 74
 # CC̄=4.1
 
 HUBS[20]:
@@ -7992,36 +8050,36 @@ HUBS[20]:
     CC=12  in:0  out:47  total:47
   src.koru.activity_log.activity
     CC=4  in:34  out:7  total:41
-  src.koru.autonomous._stdio_info
-    CC=1  in:40  out:1  total:41
-  src.koru.cli._build_parser
-    CC=1  in:3  out:36  total:39
   src.koru.events.emit_management_event
     CC=8  in:32  out:7  total:39
+  src.koru.cli._build_parser
+    CC=1  in:3  out:36  total:39
   src.koru.tasks.create_nl_task
     CC=12  in:7  out:28  total:35
   src.koruide.ide.normalize_ide_id
     CC=6  in:23  out:11  total:34
   src.koruapi.mcp_server.tool_run_ticket
     CC=14  in:1  out:33  total:34
-  src.koru.autonomy.env.env_truthy
-    CC=3  in:29  out:3  total:32
   src.koru.cli._topology_main
     CC=12  in:0  out:32  total:32
+  src.koru.autonomy.env.env_truthy
+    CC=3  in:29  out:3  total:32
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
+  src.koruide.ide.detect_running_ides
+    CC=13  in:17  out:10  total:27
   src.koru.cli._task_main
     CC=11  in:0  out:27  total:27
-  src.koru.ide_runtime.detect_running_ides
-    CC=5  in:15  out:12  total:27
-  src.koru.init.init_project
-    CC=7  in:3  out:23  total:26
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
+  src.koru.init.init_project
+    CC=7  in:3  out:23  total:26
   src.koruide.os_injector.inject_with_profile
     CC=15  in:3  out:23  total:26
+  src.koru.context.build_context
+    CC=6  in:9  out:16  total:25
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -8040,12 +8098,14 @@ MODULES:
     _resolve_affected_files  CC=11  out:24
     _resolve_strategy  CC=3  out:1
     _run_docker  CC=1  out:3
-  services.healing-webhook.ticket_builder  [2 funcs]
+  services.healing-webhook.ticket_builder  [5 funcs]
+    _default_acceptance  CC=2  out:1
+    _format_paths  CC=2  out:1
     _infer_paths  CC=7  out:1
+    _reproduction_for  CC=5  out:5
     build_ticket_payload  CC=11  out:25
-  src.koru.activity_log  [2 funcs]
+  src.koru.activity_log  [1 funcs]
     activity  CC=4  out:7
-    activity_info  CC=5  out:11
   src.koru.agent_backends  [6 funcs]
     _parse_lane  CC=8  out:14
     get_agent_backend_profile  CC=3  out:1
@@ -8057,28 +8117,17 @@ MODULES:
     print_agent_list  CC=10  out:7
     run_agent_handoff  CC=3  out:10
     try_agent_env_exports  CC=7  out:7
-  src.koru.agents  [2 funcs]
-    agent_lane_environment  CC=1  out:3
+  src.koru.agents  [1 funcs]
     detect_agent_options  CC=4  out:21
-  src.koru.autonomous  [32 funcs]
-    _ancestor_pids  CC=7  out:8
-    _apply_agent_lane_environ  CC=3  out:3
-    _as_managed  CC=1  out:1
-    _command_project  CC=5  out:11
-    _confirm_replace_existing  CC=3  out:5
-    _create_diagnostic_ticket  CC=2  out:8
-    _current_koru_version  CC=2  out:1
-    _daemon_activity_log  CC=2  out:3
-    _daemon_status_compatible  CC=4  out:2
-    _daemon_status_version  CC=7  out:6
+  src.koru.autonomous  [2 funcs]
+    autonomous_main  CC=15  out:10
+    stop_prior_autonomous_for_auto_start  CC=3  out:7
   src.koru.autonomous_diagnostics  [5 funcs]
     _has_redup_module  CC=2  out:2
     build_idle_checks  CC=11  out:20
     create_diagnostic_ticket  CC=2  out:6
     run_idle_check_loop  CC=6  out:8
     run_idle_diagnostics  CC=3  out:9
-  src.koru.autonomous_parser  [1 funcs]
-    looks_like_autonomous_up_command  CC=2  out:3
   src.koru.autonomous_process_guard  [2 funcs]
     find_existing_autonomous_processes  CC=11  out:16
     find_existing_wup_processes  CC=11  out:15
@@ -8138,8 +8187,6 @@ MODULES:
   src.koru.ide_router  [2 funcs]
     is_headless_environment  CC=8  out:6
     resolve_ide_route  CC=7  out:7
-  src.koru.ide_runtime  [1 funcs]
-    detect_running_ides  CC=5  out:12
   src.koru.init  [2 funcs]
     init_project  CC=7  out:23
     refresh_init_agent_lane  CC=4  out:11
@@ -8169,17 +8216,16 @@ MODULES:
     run_process  CC=1  out:2
   src.koru.queue.ticket  [1 funcs]
     planfile_command  CC=4  out:5
-  src.koru.queue_clean  [11 funcs]
-    _build_close_note  CC=1  out:4
+  src.koru.queue_clean  [9 funcs]
     _candidate_from_ticket  CC=6  out:9
     _cleanable_statuses  CC=2  out:1
-    _close_ticket  CC=5  out:6
     _list_tickets  CC=11  out:11
     _matched_rules  CC=14  out:16
     _maybe_skip_active_ticket  CC=3  out:3
     _parse_age_days  CC=8  out:10
     _planfile_base  CC=4  out:3
     clean_queue  CC=5  out:7
+    find_candidates  CC=8  out:10
   src.koru.queue_cli_helpers  [4 funcs]
     emit_queue_run_started  CC=2  out:2
     open_queue_run_log  CC=4  out:2
@@ -8203,10 +8249,8 @@ MODULES:
     detect_tools  CC=4  out:8
     find_tool_entry  CC=4  out:6
     load_tool_registry  CC=11  out:13
-  src.koru.topology  [5 funcs]
+  src.koru.topology  [3 funcs]
     enabled_components_for_pipeline  CC=9  out:11
-    is_component_enabled  CC=3  out:6
-    is_pipeline_enabled  CC=3  out:6
     load_topology  CC=1  out:9
     set_component_enabled  CC=1  out:1
   src.koru.topology_cli  [2 funcs]
@@ -8350,13 +8394,17 @@ MODULES:
     _print_setup_host_install_details  CC=6  out:10
     _print_text_report  CC=2  out:1
     _try_apt_install  CC=5  out:11
-  src.koruide.ide  [6 funcs]
-    detect_focused_ide_id  CC=3  out:2
-    detect_terminal_host_ide_id  CC=3  out:3
-    normalize_ide_id  CC=6  out:11
-    pick_target  CC=13  out:5
-    resolve_drive_target  CC=12  out:8
-    supported_autopilot_ide_ids  CC=1  out:0
+  src.koruide.ide  [35 funcs]
+    _active_window_pid_x11  CC=7  out:6
+    _auto_profile_candidate_ids  CC=3  out:10
+    _candidate_score  CC=1  out:3
+    _cursor_terminal_env_hint  CC=3  out:3
+    _ide_id_from_process  CC=5  out:4
+    _iter_proc_pids  CC=4  out:6
+    _known_terminal_ide_hint  CC=3  out:0
+    _legacy_windsurf_terminal_env_hint  CC=3  out:4
+    _matches  CC=7  out:5
+    _read_cmdline  CC=2  out:5
   src.koruide.injector  [9 funcs]
     _candidate_backends  CC=6  out:13
     _type_with_backend  CC=14  out:21
@@ -8428,6 +8476,9 @@ EDGES:
   services.healing-webhook.app.heal_redup_check → services.healing-webhook.app._record_action
   services.healing-webhook.app.alertmanager_webhook → services.healing-webhook.app._resolve_strategy
   services.healing-webhook.app.probe_failure → services.healing-webhook.app.create_planfile_ticket
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._format_paths
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._default_acceptance
+  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._reproduction_for
   src.korudsl.cli.main → src.korudsl.cli._read_input
   src.korudsl.cli.main → src.korudsl.transform.library_from_any
   src.korudsl.cli.main → src.korudsl.transform.library_to_any
@@ -8448,9 +8499,6 @@ EDGES:
   src.korudsl.library._emit_goal → src.korudsl.library._emit_objective
   src.korudsl.library._emit_goals → src.korudsl.library._emit_goal
   src.korudsl.library.library_to_dsl → src.korudsl.library.ensure_library_structure
-  src.korudsl.library.library_to_dsl → src.korudsl.library._emit_functions
-  src.korudsl.library.library_to_dsl → src.korudsl.library._emit_goals
-  src.koruapi.runtime_insights._classify_process → src.koruapi.runtime_insights._looks_project_related
 ```
 
 ## Test Contracts

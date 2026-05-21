@@ -1,10 +1,10 @@
-# code2llm/evolution | 1424 func | 133f | 2026-05-21
+# code2llm/evolution | 1474 func | 135f | 2026-05-21
 # generated in 0.01s
 
-NEXT[10] (ranked by impact):
+NEXT[5] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous.py
-      WHY: 2235L, 4 classes, max CC=21
-      EFFORT: ~4h  IMPACT: 46935
+      WHY: 2460L, 5 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 36900
 
   [2] !! SPLIT           src/koru/autonomous_cycle.py
       WHY: 1389L, 2 classes, max CC=14
@@ -14,45 +14,25 @@ NEXT[10] (ranked by impact):
       WHY: 1400L, 1 classes, max CC=13
       EFFORT: ~4h  IMPACT: 18200
 
-  [4] !  SPLIT-FUNC      _action_up  CC=17  fan=26
-      WHY: CC=17 exceeds 15
-      EFFORT: ~1h  IMPACT: 442
-
-  [5] !  SPLIT-FUNC      AutopilotBridge._performInject  CC=17  fan=19
+  [4] !  SPLIT-FUNC      AutopilotBridge._performInject  CC=17  fan=19
       WHY: CC=17 exceeds 15
       EFFORT: ~1h  IMPACT: 323
 
-  [6] !  SPLIT-FUNC      _run_autonomous_cycle  CC=21  fan=15
-      WHY: CC=21 exceeds 15
-      EFFORT: ~1h  IMPACT: 315
-
-  [7] !  SPLIT-FUNC      action_daemon  CC=15  fan=19
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 285
-
-  [8] !  SPLIT-FUNC      build_startup_probe  CC=15  fan=17
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 255
-
-  [9] !  SPLIT-FUNC      AutopilotDaemon._handle_plugin_event  CC=15  fan=14
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 210
-
-  [10] !  SPLIT-FUNC      inject_with_profile  CC=15  fan=14
+  [5] !  SPLIT-FUNC      AutopilotDaemon._handle_plugin_event  CC=15  fan=14
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 210
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/autonomous.py may break 65 import paths
+  ⚠ Splitting src/koru/autonomous.py may break 76 import paths
   ⚠ Splitting src/koruapi/dashboard_serve.py may break 15 import paths
   ⚠ Splitting src/koru/autonomous_cycle.py may break 49 import paths
 
 METRICS-TARGET:
   CC̄:          4.2 → ≤2.9
-  max-CC:      21 → ≤10
+  max-CC:      17 → ≤8
   god-modules: 18 → 0
-  high-CC(≥15): 9 → ≤4
+  high-CC(≥15): 3 → ≤1
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

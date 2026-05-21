@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.177', 'python').
+project_metadata('koru', '0.1.178', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 681, 'less').
@@ -76,14 +76,16 @@ project_file('src/koru/agent_cli_helpers.py', 88, 'python').
 project_file('src/koru/agents.py', 323, 'python').
 project_file('src/koru/api/__init__.py', 10, 'python').
 project_file('src/koru/autoloop_cli.py', 91, 'python').
-project_file('src/koru/autonomous.py', 2236, 'python').
+project_file('src/koru/autonomous.py', 2304, 'python').
 project_file('src/koru/autonomous_cycle.py', 1390, 'python').
+project_file('src/koru/autonomous_daemon.py', 259, 'python').
 project_file('src/koru/autonomous_diagnostics.py', 259, 'python').
 project_file('src/koru/autonomous_env.py', 26, 'python').
 project_file('src/koru/autonomous_parser.py', 399, 'python').
 project_file('src/koru/autonomous_process_guard.py', 207, 'python').
-project_file('src/koru/autonomous_startup.py', 313, 'python').
-project_file('src/koru/autonomous_wup.py', 539, 'python').
+project_file('src/koru/autonomous_processes.py', 314, 'python').
+project_file('src/koru/autonomous_startup.py', 334, 'python').
+project_file('src/koru/autonomous_wup.py', 541, 'python').
 project_file('src/koru/autonomy/__init__.py', 25, 'python').
 project_file('src/koru/autonomy/config.py', 124, 'python').
 project_file('src/koru/autonomy/env.py', 305, 'python').
@@ -275,7 +277,7 @@ project_file('tests/test_ide_router.py', 268, 'python').
 project_file('tests/test_ide_runtime.py', 39, 'python').
 project_file('tests/test_ide_work.py', 140, 'python').
 project_file('tests/test_init.py', 337, 'python').
-project_file('tests/test_install_manager.py', 382, 'python').
+project_file('tests/test_install_manager.py', 383, 'python').
 project_file('tests/test_koru_gate_capture.py', 34, 'python').
 project_file('tests/test_koru_queue_argv.py', 24, 'python').
 project_file('tests/test_koruapi.py', 80, 'python').
@@ -418,8 +420,7 @@ python_function('src/koru/autonomous.py', '_effective_cycle_autopilot_enabled', 
 python_function('src/koru/autonomous.py', '_scan_while_waiting_input_enabled', 0, 1, 3).
 python_function('src/koru/autonomous.py', '_effective_cycle_scan_enabled', 1, 6, 6).
 python_function('src/koru/autonomous.py', '_resolve_autopilot_ide', 1, 1, 1).
-python_function('src/koru/autonomous.py', '_apply_agent_lane_environ', 2, 3, 3).
-python_function('src/koru/autonomous.py', '_command_project', 1, 5, 7).
+python_function('src/koru/autonomous.py', '_apply_agent_lane_environ', 2, 5, 7).
 python_function('src/koru/autonomous.py', '_process_cwd', 1, 2, 3).
 python_function('src/koru/autonomous.py', '_ancestor_pids', 1, 7, 8).
 python_function('src/koru/autonomous.py', '_looks_like_autonomous_up_command', 1, 1, 1).
@@ -463,7 +464,11 @@ python_function('src/koru/autonomous.py', '_unblock_queue_if_needed', 2, 3, 5).
 python_function('src/koru/autonomous.py', '_restart_daemon_if_needed', 7, 10, 6).
 python_function('src/koru/autonomous.py', '_handle_cycle_exit_conditions', 4, 7, 2).
 python_function('src/koru/autonomous.py', '_cleanup_autonomous_session', 6, 4, 5).
-python_function('src/koru/autonomous.py', '_run_autonomous_cycle', 0, 21, 15).
+python_function('src/koru/autonomous.py', '_select_cycle_profile', 2, 5, 2).
+python_function('src/koru/autonomous.py', '_cycle_execution_config', 1, 2, 1).
+python_function('src/koru/autonomous.py', '_cycle_sleep_seconds', 3, 4, 3).
+python_function('src/koru/autonomous.py', '_log_cycle_summary', 0, 1, 2).
+python_function('src/koru/autonomous.py', '_run_autonomous_cycle', 0, 5, 14).
 python_function('src/koru/autonomous.py', '_action_up', 1, 17, 26).
 python_function('src/koru/autonomous.py', '_argv_has_option', 2, 5, 2).
 python_function('src/koru/autonomous.py', '_expand_auto_up_defaults', 1, 3, 3).
@@ -524,6 +529,17 @@ python_function('src/koru/autonomous_cycle.py', '_log_autopilot_result', 6, 9, 3
 python_function('src/koru/autonomous_cycle.py', '_handle_autopilot_phase', 19, 9, 9).
 python_function('src/koru/autonomous_cycle.py', '_emit_cycle_completion_events', 16, 1, 3).
 python_function('src/koru/autonomous_cycle.py', 'run_cycle', 0, 5, 23).
+python_function('src/koru/autonomous_daemon.py', '_stdio_info', 1, 1, 1).
+python_function('src/koru/autonomous_daemon.py', '_current_koru_version', 0, 2, 1).
+python_function('src/koru/autonomous_daemon.py', '_daemon_status_version', 1, 7, 2).
+python_function('src/koru/autonomous_daemon.py', '_daemon_status_compatible', 1, 4, 2).
+python_function('src/koru/autonomous_daemon.py', '_stop_reused_daemon', 2, 4, 6).
+python_function('src/koru/autonomous_daemon.py', 'start_or_reuse_daemon', 0, 5, 11).
+python_function('src/koru/autonomous_daemon.py', '_status_has_autopilot_plugin', 2, 9, 5).
+python_function('src/koru/autonomous_daemon.py', 'wait_for_autopilot_plugin', 2, 6, 4).
+python_function('src/koru/autonomous_daemon.py', '_stop_process', 2, 4, 4).
+python_function('src/koru/autonomous_daemon.py', 'restart_daemon_if_needed', 7, 10, 6).
+python_function('src/koru/autonomous_daemon.py', 'cleanup_autonomous_session', 6, 4, 5).
 python_function('src/koru/autonomous_diagnostics.py', '_has_redup_module', 0, 2, 2).
 python_function('src/koru/autonomous_diagnostics.py', 'build_idle_checks', 2, 11, 9).
 python_function('src/koru/autonomous_diagnostics.py', 'run_idle_check_loop', 0, 6, 8).
@@ -544,13 +560,31 @@ python_function('src/koru/autonomous_process_guard.py', 'find_existing_wup_proce
 python_function('src/koru/autonomous_process_guard.py', 'as_managed', 1, 1, 1).
 python_function('src/koru/autonomous_process_guard.py', 'terminate_existing_processes', 1, 10, 5).
 python_function('src/koru/autonomous_process_guard.py', 'confirm_replace_existing', 1, 3, 4).
+python_function('src/koru/autonomous_processes.py', '_command_project', 1, 5, 7).
+python_function('src/koru/autonomous_processes.py', '_process_cwd', 1, 2, 3).
+python_function('src/koru/autonomous_processes.py', '_ancestor_pids', 1, 7, 8).
+python_function('src/koru/autonomous_processes.py', '_looks_like_autonomous_up_command', 1, 1, 1).
+python_function('src/koru/autonomous_processes.py', '_find_existing_autonomous_processes', 1, 11, 13).
+python_function('src/koru/autonomous_processes.py', '_find_existing_wup_processes', 1, 11, 12).
+python_function('src/koru/autonomous_processes.py', '_as_managed', 1, 1, 1).
+python_function('src/koru/autonomous_processes.py', '_stdio_info', 1, 1, 1).
+python_function('src/koru/autonomous_processes.py', '_terminate_existing_processes', 1, 10, 5).
+python_function('src/koru/autonomous_processes.py', '_confirm_replace_existing', 1, 3, 4).
+python_function('src/koru/autonomous_processes.py', 'stop_prior_autonomous_for_auto_start', 1, 3, 7).
+python_function('src/koru/autonomous_processes.py', 'guard_existing_autonomous_processes', 2, 11, 8).
 python_function('src/koru/autonomous_startup.py', 'supports_autopilot_plugin_ide', 1, 1, 1).
 python_function('src/koru/autonomous_startup.py', 'koru_distribution_version', 0, 2, 1).
 python_function('src/koru/autonomous_startup.py', '_session_label', 0, 5, 2).
 python_function('src/koru/autonomous_startup.py', '_terminal_agent_lane_from_env', 0, 4, 3).
 python_function('src/koru/autonomous_startup.py', 'resolve_agent_lane_id', 2, 11, 6).
 python_function('src/koru/autonomous_startup.py', 'resolve_autopilot_ide_for_autonomous', 2, 4, 2).
-python_function('src/koru/autonomous_startup.py', 'build_startup_probe', 1, 15, 17).
+python_function('src/koru/autonomous_startup.py', '_normalized_cli_value', 1, 2, 2).
+python_function('src/koru/autonomous_startup.py', '_autopilot_socket_path_for_probe', 1, 3, 5).
+python_function('src/koru/autonomous_startup.py', '_should_probe_per_ide_socket', 1, 6, 3).
+python_function('src/koru/autonomous_startup.py', '_running_ide_labels', 0, 2, 2).
+python_function('src/koru/autonomous_startup.py', '_term_program_label', 0, 3, 2).
+python_function('src/koru/autonomous_startup.py', '_xdg_runtime_dir_label', 0, 3, 2).
+python_function('src/koru/autonomous_startup.py', 'build_startup_probe', 1, 1, 14).
 python_function('src/koru/autonomous_startup.py', 'format_startup_banner', 1, 5, 2).
 python_function('src/koru/autonomous_startup.py', 'format_post_startup_operator_hints', 1, 13, 3).
 python_function('src/koru/autonomous_wup.py', '_wup_stdio_info', 1, 2, 1).
@@ -568,7 +602,9 @@ python_function('src/koru/autonomous_wup.py', '_extract_docker_items', 1, 12, 6)
 python_function('src/koru/autonomous_wup.py', '_profiled_compose_services', 1, 6, 7).
 python_function('src/koru/autonomous_wup.py', '_compose_ps_command', 3, 2, 1).
 python_function('src/koru/autonomous_wup.py', '_parse_compose_ps_json', 1, 10, 5).
-python_function('src/koru/autonomous_wup.py', '_compose_service_ready', 1, 15, 3).
+python_function('src/koru/autonomous_wup.py', '_compose_field', 3, 3, 3).
+python_function('src/koru/autonomous_wup.py', '_compose_service_item_ready', 1, 6, 2).
+python_function('src/koru/autonomous_wup.py', '_compose_service_ready', 1, 3, 3).
 python_function('src/koru/autonomous_wup.py', '_wait_for_compose_service_ready', 4, 12, 12).
 python_function('src/koru/autonomous_wup.py', '_ensure_wup_profiled_compose_services', 1, 10, 11).
 python_function('src/koru/autonomous_wup.py', '_start_wup_watch', 1, 9, 9).
@@ -2024,7 +2060,7 @@ python_function('tests/test_install_manager.py', 'test_collect_report_warns_for_
 python_function('tests/test_install_manager.py', 'test_collect_report_warns_when_daemon_not_running', 2, 4, 2).
 python_function('tests/test_install_manager.py', 'test_repair_installation_records_plugin_action', 2, 3, 5).
 python_function('tests/test_install_manager.py', 'test_collect_report_for_zed_does_not_require_vsix_plugin', 2, 5, 4).
-python_function('tests/test_install_manager.py', 'test_collect_report_auto_still_checks_plugin_connection', 2, 4, 2).
+python_function('tests/test_install_manager.py', 'test_collect_report_auto_still_checks_plugin_connection', 2, 4, 3).
 python_function('tests/test_koru_gate_capture.py', 'test_first_meaningful_line_skips_cloud_init_noise', 0, 2, 2).
 python_function('tests/test_koru_gate_capture.py', 'test_first_meaningful_line_falls_back_to_nonempty_when_only_noise', 0, 2, 2).
 python_function('tests/test_koru_queue_argv.py', 'test_build_queue_argv_apply_minimal', 1, 6, 3).
@@ -2199,14 +2235,15 @@ python_class('src/koru/agent_backends.py', 'LaneConfig').
 python_class('src/koru/agent_backends.py', 'AgentIntegrationConfig').
 python_class('src/koru/agents.py', 'AgentOption').
 python_method('AgentOption', 'to_dict', 0, 1, 0).
-python_class('src/koru/autonomous.py', 'ExistingAutonomousProcess').
-python_class('src/koru/autonomous.py', 'ExistingManagedProcess').
+python_class('src/koru/autonomous.py', 'CycleExecutionConfig').
 python_class('src/koru/autonomous.py', 'AutoPipelineState').
 python_class('src/koru/autonomous.py', 'AutoPipelineProfile').
 python_class('src/koru/autonomous_cycle.py', 'DiagnosticResult').
 python_class('src/koru/autonomous_cycle.py', 'AutoloopState').
 python_class('src/koru/autonomous_process_guard.py', 'ExistingAutonomousProcess').
 python_class('src/koru/autonomous_process_guard.py', 'ExistingManagedProcess').
+python_class('src/koru/autonomous_processes.py', 'ExistingAutonomousProcess').
+python_class('src/koru/autonomous_processes.py', 'ExistingManagedProcess').
 python_class('src/koru/autonomous_startup.py', 'AutonomousStartupProbe').
 python_class('src/koru/autonomous_wup.py', 'WupWatchConfig').
 python_class('src/koru/autonomous_wup.py', 'WupHealthResult').

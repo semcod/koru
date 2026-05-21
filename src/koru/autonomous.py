@@ -1682,6 +1682,152 @@ def _cleanup_autonomous_session(
     _stop_process(wup_process, "WUP watcher", stdio_format=stdio_format)
 
 
+def _select_and_log_cycle_profile(
+    args: argparse.Namespace,
+    auto_pipeline_state: AutoPipelineState | None,
+    *,
+    enable_scan: bool,
+) -> AutoPipelineProfile | None:
+    """Select auto pipeline profile and log it if enabled."""
+    if auto_pipeline_state is None:
+        return None
+    profile = _select_auto_pipeline_profile(
+        args,
+        auto_pipeline_state,
+        base_enable_scan=enable_scan,
+    )
+    _stdio_info(
+        "koru auto: "
+        f"pipeline={profile.name} reason={profile.reason}; "
+        f"scan={'on' if profile.enable_scan else 'off'} "
+        f"semcod={'on' if profile.include_semcod_artifacts else 'off'} "
+        f"diagnostics={profile.idle_diagnostics} "
+        f"max_iterations={profile.max_iterations} "
+        f"autopilot={'on' if profile.enable_autopilot else 'off'}",
+        fmt=args.emit_events,
+    )
+    return profile
+
+
+def _resolve_effective_cycle_flags(
+    args: argparse.Namespace,
+    profile: AutoPipelineProfile | None,
+    *,
+    enable_scan: bool,
+    loop_state: object,
+    client: object,
+    autopilot_ide: str,
+) -> tuple[bool, bool]:
+    """Resolve effective scan and autopilot enable flags for the cycle."""
+    requested_enable_scan = profile.enable_scan if profile is not None else enable_scan
+    effective_enable_scan = _effective_cycle_scan_enabled(
+        requested_enable_scan,
+        state=loop_state,
+        stdio_format=args.emit_events,
+    )
+    requested_enable_autopilot = (
+        profile.enable_autopilot if profile is not None else args.enable_autopilot
+    )
+    effective_enable_autopilot = _effective_cycle_autopilot_enabled(
+        requested_enable_autopilot,
+        client=client,
+        autopilot_ide=autopilot_ide,
+        stdio_format=args.emit_events,
+    )
+    return effective_enable_scan, effective_enable_autopilot
+
+
+def _build_cycle_run_kwargs(
+    args: argparse.Namespace,
+    profile: AutoPipelineProfile | None,
+    *,
+    cycle: int,
+    project: Path,
+    queue_name: str | None,
+    enable_scan: bool,
+    autopilot_ide: str,
+    client: object,
+    loop_state: object,
+    diagnostic_state_dir: Path,
+    wup_process: subprocess.Popen | None,
+    correlation_id: str,
+) -> dict[str, Any]:
+    """Build kwargs for _run_cycle call."""
+    return {
+        "cycle": cycle,
+        "project": project,
+        "actor": args.actor,
+        "queue_name": queue_name,
+        "enable_scan": enable_scan,
+        "max_iterations": profile.max_iterations if profile is not None else args.max_iterations,
+        "enable_autopilot": (
+            profile.enable_autopilot if profile is not None else args.enable_autopilot
+        ),
+        "autopilot_ide": autopilot_ide,
+        "drive_prompt": args.drive_prompt,
+        "submit": args.submit,
+        "include_semcod_artifacts": (
+            profile.include_semcod_artifacts if profile is not None else args.semcod_artifacts
+        ),
+        "client": client,
+        "state": loop_state,
+        "idle_diagnostics": (
+            profile.idle_diagnostics if profile is not None else args.idle_diagnostics
+        ),
+        "diagnostic_tickets": (
+            profile.diagnostic_tickets if profile is not None else args.diagnostic_tickets
+        ),
+        "diagnostic_ticket_queue": args.diagnostic_ticket_queue,
+        "diagnostic_ticket_priority": args.diagnostic_ticket_priority,
+        "diagnostic_state_dir": diagnostic_state_dir,
+        "wup_watch_enabled": wup_process is not None,
+        "wup_diagnostic_tickets": args.wup_diagnostic_tickets,
+        "wup_ticket_queue": args.wup_ticket_queue,
+        "strict_diagnostics": args.strict_diagnostics,
+        "autopilot_action": (
+            profile.autopilot_action if profile is not None else args.autopilot_action
+        ),
+        "autopilot_on_idle_only": args.autopilot_on_idle_only,
+        "autopilot_skip_on_diagnostics_fail": args.autopilot_skip_on_diagnostics_fail,
+        "autopilot_skip_drive_idle_streak": args.autopilot_skip_drive_idle_streak,
+        "autopilot_skip_statuses": args.autopilot_skip_statuses,
+        "scan_skip_if_clean": args.scan_skip_if_clean,
+        "scan_skip_after": args.scan_skip_after,
+        "scan_after_idle_queue": (
+            profile.scan_after_idle_queue if profile is not None else args.scan_after_idle_queue
+        ),
+        "scan_after_idle_min_interval_seconds": (
+            profile.scan_after_idle_min_interval
+            if profile is not None
+            else args.scan_after_idle_min_interval
+        ),
+        "topology_integration": args.topology_integration,
+        "stdio_format": args.emit_events,
+        "correlation_id": correlation_id,
+    }
+
+
+def _compute_cycle_sleep(
+    args: argparse.Namespace,
+    loop_state: object,
+    queue_result: object,
+) -> float:
+    """Compute sleep duration for the cycle."""
+    effective_sleep = _compute_backoff_sleep(
+        args.sleep_seconds,
+        loop_state.stagnation_streak,
+        args.max_sleep_seconds,
+        args.backoff_on_stagnation,
+    )
+    if (
+        queue_result.last_status == "idle"
+        and loop_state.last_message_sent_ts > 0
+        and time.time() - loop_state.last_message_sent_ts < 120.0
+    ):
+        effective_sleep = min(effective_sleep, 15.0)
+    return effective_sleep
+
+
 def _run_autonomous_cycle(
     *,
     cycle: int,
@@ -1714,84 +1860,34 @@ def _run_autonomous_cycle(
         autopilot_socket_observed_at_boot,
         project,
     )
-    profile: AutoPipelineProfile | None = None
-    if auto_pipeline_state is not None:
-        profile = _select_auto_pipeline_profile(
-            args,
-            auto_pipeline_state,
-            base_enable_scan=enable_scan,
-        )
-        _stdio_info(
-            "koru auto: "
-            f"pipeline={profile.name} reason={profile.reason}; "
-            f"scan={'on' if profile.enable_scan else 'off'} "
-            f"semcod={'on' if profile.include_semcod_artifacts else 'off'} "
-            f"diagnostics={profile.idle_diagnostics} "
-            f"max_iterations={profile.max_iterations} "
-            f"autopilot={'on' if profile.enable_autopilot else 'off'}",
-            fmt=args.emit_events,
-        )
-    requested_enable_scan = profile.enable_scan if profile is not None else enable_scan
-    effective_enable_scan = _effective_cycle_scan_enabled(
-        requested_enable_scan,
-        state=loop_state,
-        stdio_format=args.emit_events,
+    profile = _select_and_log_cycle_profile(
+        args,
+        auto_pipeline_state,
+        enable_scan=enable_scan,
     )
-    requested_enable_autopilot = (
-        profile.enable_autopilot if profile is not None else args.enable_autopilot
-    )
-    effective_enable_autopilot = _effective_cycle_autopilot_enabled(
-        requested_enable_autopilot,
+    effective_enable_scan, effective_enable_autopilot = _resolve_effective_cycle_flags(
+        args,
+        profile,
+        enable_scan=enable_scan,
+        loop_state=loop_state,
         client=client,
         autopilot_ide=autopilot_ide,
-        stdio_format=args.emit_events,
     )
-    _scan_result, queue_result, _autopilot_status, diag_result = _run_cycle(
+    cycle_kwargs = _build_cycle_run_kwargs(
+        args,
+        profile,
         cycle=cycle,
         project=project,
-        actor=args.actor,
         queue_name=queue_name,
         enable_scan=effective_enable_scan,
-        max_iterations=profile.max_iterations if profile is not None else args.max_iterations,
-        enable_autopilot=effective_enable_autopilot,
         autopilot_ide=autopilot_ide,
-        drive_prompt=args.drive_prompt,
-        submit=args.submit,
-        include_semcod_artifacts=(
-            profile.include_semcod_artifacts if profile is not None else args.semcod_artifacts
-        ),
         client=client,
-        state=loop_state,
-        idle_diagnostics=profile.idle_diagnostics if profile is not None else args.idle_diagnostics,
-        diagnostic_tickets=(
-            profile.diagnostic_tickets if profile is not None else args.diagnostic_tickets
-        ),
-        diagnostic_ticket_queue=args.diagnostic_ticket_queue,
-        diagnostic_ticket_priority=args.diagnostic_ticket_priority,
+        loop_state=loop_state,
         diagnostic_state_dir=diagnostic_state_dir,
-        wup_watch_enabled=wup_process is not None,
-        wup_diagnostic_tickets=args.wup_diagnostic_tickets,
-        wup_ticket_queue=args.wup_ticket_queue,
-        strict_diagnostics=args.strict_diagnostics,
-        autopilot_action=profile.autopilot_action if profile is not None else args.autopilot_action,
-        autopilot_on_idle_only=args.autopilot_on_idle_only,
-        autopilot_skip_on_diagnostics_fail=args.autopilot_skip_on_diagnostics_fail,
-        autopilot_skip_drive_idle_streak=args.autopilot_skip_drive_idle_streak,
-        autopilot_skip_statuses=args.autopilot_skip_statuses,
-        scan_skip_if_clean=args.scan_skip_if_clean,
-        scan_skip_after=args.scan_skip_after,
-        scan_after_idle_queue=(
-            profile.scan_after_idle_queue if profile is not None else args.scan_after_idle_queue
-        ),
-        scan_after_idle_min_interval_seconds=(
-            profile.scan_after_idle_min_interval
-            if profile is not None
-            else args.scan_after_idle_min_interval
-        ),
-        topology_integration=args.topology_integration,
-        stdio_format=args.emit_events,
+        wup_process=wup_process,
         correlation_id=correlation_id,
     )
+    _scan_result, queue_result, _autopilot_status, diag_result = _run_cycle(**cycle_kwargs)
     if auto_pipeline_state is not None:
         _update_auto_pipeline_state(
             auto_pipeline_state,
@@ -1810,18 +1906,7 @@ def _run_autonomous_cycle(
     if _handle_cycle_exit_conditions(args, queue_result, cycle, correlation_id):
         return True
 
-    effective_sleep = _compute_backoff_sleep(
-        args.sleep_seconds,
-        loop_state.stagnation_streak,
-        args.max_sleep_seconds,
-        args.backoff_on_stagnation,
-    )
-    if (
-        queue_result.last_status == "idle"
-        and loop_state.last_message_sent_ts > 0
-        and time.time() - loop_state.last_message_sent_ts < 120.0
-    ):
-        effective_sleep = min(effective_sleep, 15.0)
+    effective_sleep = _compute_cycle_sleep(args, loop_state, queue_result)
     _stdio_info(
         f"koru autonomous: summary cycle={cycle} queue={queue_result.last_status} "
         f"waiting={_queue_loop_waiting_ticket_label(queue_result)} "
@@ -1834,26 +1919,61 @@ def _run_autonomous_cycle(
     return False
 
 
-def _action_up(args: argparse.Namespace) -> int:
+def _setup_autonomous_env_vars(
+    args: argparse.Namespace,
+) -> tuple[str | None, str | None, bool, bool, str | None, str | None]:
+    """Setup and save environment variables for autonomous mode."""
     previous_stdio_format_env = os.environ.get("KORU_STDIO_FORMAT")
     previous_strict_plugin_env = os.environ.get("KORU_STRICT_PLUGIN_VERSION")
     had_strict_plugin_env = "KORU_STRICT_PLUGIN_VERSION" in os.environ
     previous_strict_ack_env = os.environ.get("KORU_STRICT_PLUGIN_ACK")
     had_strict_ack_env = "KORU_STRICT_PLUGIN_ACK" in os.environ
-    correlation_id, project, guard_rc = _setup_autonomous_session(args)
-    if guard_rc:
-        return guard_rc
-
-    _apply_agent_lane_environ(project, args.agent_lane)
-    startup_probe = build_startup_probe(
-        project,
-        agent_lane_cli=args.agent_lane,
-        autopilot_ide_cli=args.autopilot_ide,
-        resolve_project_lane=resolve_project_agent_lane,
+    return (
+        previous_stdio_format_env,
+        previous_strict_plugin_env,
+        had_strict_plugin_env,
+        had_strict_ack_env,
+        previous_strict_ack_env,
+        previous_strict_plugin_env,
     )
-    for line in format_startup_banner(startup_probe):
-        _stdio_info(line, fmt=args.emit_events)
 
+
+def _restore_autonomous_env_vars(
+    had_strict_plugin_env: bool,
+    had_strict_ack_env: bool,
+    previous_strict_plugin_env: str | None,
+    previous_strict_ack_env: str | None,
+) -> None:
+    """Restore environment variables after autonomous mode."""
+    if had_strict_plugin_env:
+        os.environ["KORU_STRICT_PLUGIN_VERSION"] = previous_strict_plugin_env or ""
+    else:
+        os.environ.pop("KORU_STRICT_PLUGIN_VERSION", None)
+    if had_strict_ack_env:
+        os.environ["KORU_STRICT_PLUGIN_ACK"] = previous_strict_ack_env or ""
+    else:
+        os.environ.pop("KORU_STRICT_PLUGIN_ACK", None)
+
+
+def _setup_autonomous_resources(
+    args: argparse.Namespace,
+    project: Path,
+) -> tuple[
+    object,
+    object,
+    threading.Thread | None,
+    Path,
+    bool,
+    bool,
+    str | None,
+    object,
+    Path,
+    int | None,
+    Path,
+    subprocess.Popen | None,
+    AutoPipelineState | None,
+]:
+    """Setup all resources needed for autonomous mode."""
     _enable_autonomous_strict_plugin_policy(args)
     client, daemon, thread, socket_path = _setup_autopilot_daemon(args, project)
     autopilot_socket_observed_at_boot = (
@@ -1875,11 +1995,67 @@ def _action_up(args: argparse.Namespace) -> int:
         AutoPipelineState() if getattr(args, "_auto_pipeline_enabled", False) else None
     )
 
-    stopped_by_sigterm = False
+    return (
+        client,
+        daemon,
+        thread,
+        socket_path,
+        autopilot_socket_observed_at_boot,
+        enable_scan,
+        queue_name,
+        autopilot_ide,
+        loop_state,
+        checkpoint_path,
+        restored_cycle,
+        diagnostic_state_dir,
+        wup_process,
+        auto_pipeline_state,
+    )
 
+
+def _run_autonomous_pre_checks(
+    args: argparse.Namespace,
+    project: Path,
+    startup_probe: object,
+    socket_path: Path,
+    autopilot_ide: str,
+    client: object,
+    correlation_id: str,
+) -> tuple[bool, bool]:
+    """Run pre-checks before autonomous loop: MCP provision and plugin setup."""
+    mcp_provision_ran = _run_mcp_provision(project, args.emit_events)
+    plugin_connected = _setup_autopilot_plugin(args, autopilot_ide, socket_path, client)
+    _run_operator_pipeline(
+        args, project, startup_probe, plugin_connected, mcp_provision_ran, correlation_id
+    )
+    _unblock_queue_if_needed(project, args.emit_events)
+    return mcp_provision_ran, plugin_connected
+
+
+@dataclass
+class StopSignalState:
+    stopped_by_sigterm: bool = False
+
+
+def _build_and_log_startup_probe(args: argparse.Namespace, project: Path) -> object:
+    _apply_agent_lane_environ(project, args.agent_lane)
+    startup_probe = build_startup_probe(
+        project,
+        agent_lane_cli=args.agent_lane,
+        autopilot_ide_cli=args.autopilot_ide,
+        resolve_project_lane=resolve_project_agent_lane,
+    )
+    for line in format_startup_banner(startup_probe):
+        _stdio_info(line, fmt=args.emit_events)
+    return startup_probe
+
+
+def _install_sigterm_interrupt_handler(
+    args: argparse.Namespace,
+    stop_state: StopSignalState,
+) -> Any:
     def _sigterm_to_interrupt(_signo: int, _frame: object) -> None:
-        nonlocal stopped_by_sigterm
-        stopped_by_sigterm = True
+        stop_state.stopped_by_sigterm = True
         _stdio_info(
             "koru autonomous: SIGTERM received (typical: OOM killer, systemd stop, "
             "`kill`, cgroup memory limit, or IDE tool timeout) — cleaning up",
@@ -1887,14 +2063,78 @@ def _action_up(args: argparse.Namespace) -> int:
         )
         raise KeyboardInterrupt()
 
-    previous_sigterm = signal.signal(signal.SIGTERM, _sigterm_to_interrupt)
-    try:
-        mcp_provision_ran = _run_mcp_provision(project, args.emit_events)
-        plugin_connected = _setup_autopilot_plugin(args, autopilot_ide, socket_path, client)
-        _run_operator_pipeline(
-            args, project, startup_probe, plugin_connected, mcp_provision_ran, correlation_id
+    return signal.signal(signal.SIGTERM, _sigterm_to_interrupt)
+
+
+def _handle_autonomous_interrupt(
+    args: argparse.Namespace,
+    *,
+    correlation_id: str,
+    stopped_by_sigterm: bool,
+) -> int:
+    stop_reason = "sigterm" if stopped_by_sigterm else "keyboard_interrupt"
+    if args.emit_events == "jsonl":
+        write_stdio_event(
+            sys.stdout,
+            event_type="AutonomousStopped",
+            correlation_id=correlation_id,
+            payload={"reason": stop_reason},
         )
-        _unblock_queue_if_needed(project, args.emit_events)
+    if stopped_by_sigterm:
+        _stdio_info(
+            "\nkoru autonomous: stopped after SIGTERM (WUP watcher stopped; "
+            "if scan was heavy, try --no-semcod-artifacts or "
+            "KORU_SCAN_SEMCOD_ARTIFACTS=0)",
+            fmt=args.emit_events,
+        )
+    else:
+        _stdio_info("\nkoru autonomous: interrupted (Ctrl+C)", fmt=args.emit_events)
+    return 0
+
+
+def _action_up(args: argparse.Namespace) -> int:
+    (
+        previous_stdio_format_env,
+        previous_strict_plugin_env,
+        had_strict_plugin_env,
+        had_strict_ack_env,
+        previous_strict_ack_env,
+        _,
+    ) = _setup_autonomous_env_vars(args)
+    correlation_id, project, guard_rc = _setup_autonomous_session(args)
+    if guard_rc:
+        return guard_rc
+
+    startup_probe = _build_and_log_startup_probe(args, project)
+    (
+        client,
+        daemon,
+        thread,
+        socket_path,
+        autopilot_socket_observed_at_boot,
+        enable_scan,
+        queue_name,
+        autopilot_ide,
+        loop_state,
+        checkpoint_path,
+        restored_cycle,
+        diagnostic_state_dir,
+        wup_process,
+        auto_pipeline_state,
+    ) = _setup_autonomous_resources(args, project)
+
+    stop_state = StopSignalState()
+    previous_sigterm = _install_sigterm_interrupt_handler(args, stop_state)
+    try:
+        _run_autonomous_pre_checks(
+            args,
+            project,
+            startup_probe,
+            socket_path,
+            autopilot_ide,
+            client,
+            correlation_id,
+        )
 
         cycle = restored_cycle or 0
         while True:
@@ -1921,33 +2161,18 @@ def _action_up(args: argparse.Namespace) -> int:
             if should_exit:
                 return 0
     except KeyboardInterrupt:
-        stop_reason = "sigterm" if stopped_by_sigterm else "keyboard_interrupt"
-        if args.emit_events == "jsonl":
-            write_stdio_event(
-                sys.stdout,
-                event_type="AutonomousStopped",
-                correlation_id=correlation_id,
-                payload={"reason": stop_reason},
-            )
-        if stopped_by_sigterm:
-            _stdio_info(
-                "\nkoru autonomous: stopped after SIGTERM (WUP watcher stopped; "
-                "if scan was heavy, try --no-semcod-artifacts or "
-                "KORU_SCAN_SEMCOD_ARTIFACTS=0)",
-                fmt=args.emit_events,
-            )
-        else:
-            _stdio_info("\nkoru autonomous: interrupted (Ctrl+C)", fmt=args.emit_events)
-        return 0
+        return _handle_autonomous_interrupt(
+            args,
+            correlation_id=correlation_id,
+            stopped_by_sigterm=stop_state.stopped_by_sigterm,
+        )
     finally:
-        if had_strict_plugin_env:
-            os.environ["KORU_STRICT_PLUGIN_VERSION"] = previous_strict_plugin_env or ""
-        else:
-            os.environ.pop("KORU_STRICT_PLUGIN_VERSION", None)
-        if had_strict_ack_env:
-            os.environ["KORU_STRICT_PLUGIN_ACK"] = previous_strict_ack_env or ""
-        else:
-            os.environ.pop("KORU_STRICT_PLUGIN_ACK", None)
+        _restore_autonomous_env_vars(
+            had_strict_plugin_env,
+            had_strict_ack_env,
+            previous_strict_plugin_env,
+            previous_strict_ack_env,
+        )
         _cleanup_autonomous_session(
             previous_stdio_format_env,
             previous_sigterm,

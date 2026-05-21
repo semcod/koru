@@ -263,6 +263,73 @@ def _set_clipboard(text: str) -> str:
     raise OsInjectorError("clipboard paste needs xclip or xsel on PATH")
 
 
+def _resolve_input_method() -> tuple[str, bool]:
+    mode = input_mode_from_env()
+    clip_ok = _clipboard_backend() is not None
+    use_paste = mode == "paste" or (mode == "auto" and clip_ok and not _is_wayland_session())
+    if mode == "paste" and not clip_ok:
+        raise OsInjectorError("KORU_OS_INJECTOR_INPUT=paste requires xclip or xsel on PATH")
+    return ("paste" if use_paste else "type"), use_paste
+
+
+def _injection_result(
+    *,
+    profile: OsInjectorProfile,
+    submit: bool,
+    dry_run: bool,
+    focus: str,
+    input_method: str,
+    post_focus_delay: float,
+) -> dict[str, Any]:
+    return {
+        "ok": True,
+        "backend": "os_injector",
+        "tool_id": profile.tool_id,
+        "submitted": submit,
+        "dry_run": dry_run,
+        "chat_x": profile.chat_x,
+        "chat_y": profile.chat_y,
+        "focus": focus,
+        "input_method": input_method,
+        "post_focus_delay": post_focus_delay,
+    }
+
+
+def _focus_profile_chat(profile: OsInjectorProfile, focus: str, post_focus_delay: float) -> None:
+    _xdotool(["mousemove", str(profile.chat_x), str(profile.chat_y)])
+    if focus == "click":
+        _xdotool(["click", "1"])
+    else:
+        _xdotool(["key", "--clearmodifiers", "Return"])
+    if post_focus_delay > 0:
+        time.sleep(post_focus_delay)
+
+
+def _inject_profile_text(
+    *,
+    profile: OsInjectorProfile,
+    text: str,
+    submit: bool,
+    use_paste: bool,
+    input_method: str,
+) -> str:
+    if _is_wayland_session():
+        from koruide.injector import Injector
+
+        injector = Injector()
+        res = injector.type_text(text, ide=profile.tool_id, submit=submit)
+        return res.backend
+    if use_paste:
+        _set_clipboard(text)
+        _xdotool(["sleep", "0.08"])
+        _xdotool(["key", "--clearmodifiers", "ctrl+v"])
+    else:
+        _xdotool(["type", "--delay", "5", "--clearmodifiers", "--", text])
+    if submit:
+        _xdotool(["key", "--clearmodifiers", "Return"])
+    return input_method
+
+
 def inject_with_profile(
     *,
     profile: OsInjectorProfile,
@@ -274,27 +341,18 @@ def inject_with_profile(
         raise OsInjectorError("refusing to inject empty text")
 
     focus = focus_mode_from_env()
-    mode = input_mode_from_env()
-    clip_ok = _clipboard_backend() is not None
-    use_paste = mode == "paste" or (mode == "auto" and clip_ok and not _is_wayland_session())
-    if mode == "paste" and not clip_ok:
-        raise OsInjectorError("KORU_OS_INJECTOR_INPUT=paste requires xclip or xsel on PATH")
-    input_method: str = "paste" if use_paste else "type"
+    input_method, use_paste = _resolve_input_method()
     post_focus_delay = _post_focus_delay_seconds()
 
     if dry_run:
-        return {
-            "ok": True,
-            "backend": "os_injector",
-            "tool_id": profile.tool_id,
-            "submitted": submit,
-            "dry_run": True,
-            "chat_x": profile.chat_x,
-            "chat_y": profile.chat_y,
-            "focus": focus,
-            "input_method": input_method,
-            "post_focus_delay": post_focus_delay,
-        }
+        return _injection_result(
+            profile=profile,
+            submit=submit,
+            dry_run=True,
+            focus=focus,
+            input_method=input_method,
+            post_focus_delay=post_focus_delay,
+        )
 
     x, y = profile.chat_x, profile.chat_y
     try:
@@ -307,43 +365,22 @@ def inject_with_profile(
         )
     except Exception:
         pass
-    _xdotool(["mousemove", str(x), str(y)])
-    if focus == "click":
-        _xdotool(["click", "1"])
-    else:
-        _xdotool(["key", "--clearmodifiers", "Return"])
-
-    if post_focus_delay > 0:
-        time.sleep(post_focus_delay)
-
-    if _is_wayland_session():
-        from koruide.injector import Injector
-        injector = Injector()
-        res = injector.type_text(text, ide=profile.tool_id, submit=submit)
-        input_method = res.backend
-    else:
-        if use_paste:
-            _clip_tool = _set_clipboard(text)
-            _xdotool(["sleep", "0.08"])
-            _xdotool(["key", "--clearmodifiers", "ctrl+v"])
-        else:
-            _xdotool(["type", "--delay", "5", "--clearmodifiers", "--", text])
-
-        if submit:
-            _xdotool(["key", "--clearmodifiers", "Return"])
-
-    return {
-        "ok": True,
-        "backend": "os_injector",
-        "tool_id": profile.tool_id,
-        "submitted": submit,
-        "dry_run": False,
-        "chat_x": profile.chat_x,
-        "chat_y": profile.chat_y,
-        "focus": focus,
-        "input_method": input_method,
-        "post_focus_delay": post_focus_delay,
-    }
+    _focus_profile_chat(profile, focus, post_focus_delay)
+    input_method = _inject_profile_text(
+        profile=profile,
+        text=text,
+        submit=submit,
+        use_paste=use_paste,
+        input_method=input_method,
+    )
+    return _injection_result(
+        profile=profile,
+        submit=submit,
+        dry_run=False,
+        focus=focus,
+        input_method=input_method,
+        post_focus_delay=post_focus_delay,
+    )
 
 
 def try_drive_with_profile(

@@ -1,4 +1,4 @@
-# koru | 1497 func | 146f | 43716L | python | 2026-05-21
+# koru | 1547 func | 148f | 44584L | python | 2026-05-21
 # generated in 0.00s
 
 HEALTH:
@@ -7,7 +7,6 @@ HEALTH:
 ALERTS[20]:
   !!! high_fan_out     _build_handler = 36 (limit:10)
   !!! high_fan_out     _build_handler = 31 (limit:10)
-  !!! high_fan_out     _action_up = 26 (limit:10)
   !!! high_fan_out     init_project = 23 (limit:10)
   !!! high_fan_out     run_cycle = 23 (limit:10)
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
@@ -15,9 +14,10 @@ ALERTS[20]:
   !!! high_fan_out     _build_parser = 21 (limit:10)
   !!! high_fan_out     create_nl_task = 20 (limit:10)
   !!! high_fan_out     collect_install_manager_report = 20 (limit:10)
+  !!  high_fan_out     AutopilotDaemon._drive_via_keyboard = 19 (limit:10)
 
-MODULES[244] (top by size):
-  M[src/koru/autonomous.py] 2235L C:4 F:65 CC↑21 D:1 (python)
+MODULES[246] (top by size):
+  M[src/koru/autonomous.py] 2460L C:5 F:76 CC↑15 D:1 (python)
   M[src/koruapi/dashboard_serve.py] 1400L C:1 F:15 CC↑13 D:1 (python)
   M[src/koru/autonomous_cycle.py] 1389L C:2 F:49 CC↑14 D:0 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
@@ -32,24 +32,26 @@ MODULES[244] (top by size):
   M[services/healing-webhook/app.py] 702L C:0 F:27 CC↑11 D:0 (python)
   M[src/koruide/ide.py] 679L C:1 F:41 CC↑13 D:13 (python)
   M[src/koru/scripts/koru-autoloop.sh] 676L C:0 F:17 CC↑0 D:0 (shell)
-  LANGS: python:155/shell:44/yaml:15/yml:8/typescript:6/kotlin:6/json:3/other:2/txt:2/properties:1/xml:1/toml:1
+  LANGS: python:157/shell:44/yaml:15/yml:8/typescript:6/kotlin:6/json:3/other:2/txt:2/properties:1/xml:1/toml:1
 
 HOTSPOTS[10]:
   ★ _build_handler fan=36  // Create a request handler closure bound to ``config``.
   ★ _build_handler fan=31  // Orchestrates 31 calls
-  ★ _action_up fan=26  // Orchestrates 26 calls
   ★ init_project fan=23  // Initialise (or re-initialise with ``force``) a koru project.
 
 Steps:
     1. Refu
   ★ run_cycle fan=23  // Orchestrates 23 calls
+  ★ render_markdown_handoff fan=22  // Turn a context dict into a Markdown brief for the operator.
+
+Designed to be past
 
 REFACTOR[15]:
-  [1] H/H Split god module src/koru/autonomous.py (2235L, 4 classes)
-  [2] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (753L, 2 classes)
-  [3] H/H Split god module src/koru/autonomous_wup.py (538L, 3 classes)
-  [4] H/H Split god module src/koruide/daemon.py (896L, 2 classes)
-  [5] H/H Split god module src/koru/autonomous_cycle.py (1389L, 2 classes)
+  [1] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (753L, 2 classes)
+  [2] H/H Split god module src/koru/autonomous.py (2460L, 5 classes)
+  [3] H/H Split god module src/koruide/daemon.py (896L, 2 classes)
+  [4] H/H Split god module src/koru/autonomous_cycle.py (1389L, 2 classes)
+  [5] H/H Split god module src/koru/autonomy/operator_pipeline.py (839L, 2 classes)
 
 EVOLUTION:
-  2026-05-21 CC̄=4.1 crit=138 43716L // Automated analysis
+  2026-05-21 CC̄=4.1 crit=138 44584L // Automated analysis

@@ -262,20 +262,22 @@ def _parse_compose_ps_json(raw: str) -> list[dict]:
     return []
 
 
+def _compose_field(item: dict, primary: str, fallback: str) -> str:
+    return str(item.get(primary) or item.get(fallback) or "").lower()
+
+
+def _compose_service_item_ready(item: dict) -> bool:
+    state = _compose_field(item, "State", "state")
+    health = _compose_field(item, "Health", "health")
+    status = _compose_field(item, "Status", "status")
+    health_ok = not health or health in {"healthy", "none"}
+    state_ok = not state or state == "running"
+    status_ok = bool(state) or "up" in status
+    return health_ok and state_ok and status_ok
+
+
 def _compose_service_ready(items: list[dict]) -> bool:
-    if not items:
-        return False
-    for item in items:
-        state = str(item.get("State") or item.get("state") or "").lower()
-        health = str(item.get("Health") or item.get("health") or "").lower()
-        status = str(item.get("Status") or item.get("status") or "").lower()
-        if health and health not in {"healthy", "none"}:
-            return False
-        if state and state not in {"running"}:
-            return False
-        if not state and "up" not in status:
-            return False
-    return True
+    return bool(items) and all(_compose_service_item_ready(item) for item in items)
 
 
 def _wait_for_compose_service_ready(

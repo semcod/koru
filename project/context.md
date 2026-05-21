@@ -1,16 +1,16 @@
 # System Architecture Analysis
-<!-- generated in 0.02s -->
+<!-- generated in 0.01s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 154, shell: 44, yaml: 15, yml: 8, typescript: 6
+- **Languages**: python: 156, shell: 44, yaml: 15, yml: 8, typescript: 6
 - **Analysis Mode**: static
-- **Total Functions**: 1497
-- **Total Classes**: 105
-- **Modules**: 243
-- **Entry Points**: 518
+- **Total Functions**: 1547
+- **Total Classes**: 108
+- **Modules**: 245
+- **Entry Points**: 524
 
 ## Architecture by Module
 
@@ -20,18 +20,18 @@
 - **File**: `extension.ts`
 
 ### src.koru.autonomous
-- **Functions**: 65
-- **Classes**: 4
+- **Functions**: 76
+- **Classes**: 5
 - **File**: `autonomous.py`
-
-### src.koru.context
-- **Functions**: 49
-- **File**: `context.py`
 
 ### src.koru.autonomous_cycle
 - **Functions**: 49
 - **Classes**: 2
 - **File**: `autonomous_cycle.py`
+
+### src.koru.context
+- **Functions**: 49
+- **File**: `context.py`
 
 ### src.koruide.ide
 - **Functions**: 41
@@ -52,6 +52,11 @@
 - **Classes**: 2
 - **File**: `operator_pipeline.py`
 
+### src.koruide.os_injector
+- **Functions**: 28
+- **Classes**: 2
+- **File**: `os_injector.py`
+
 ### services.healing-webhook.app
 - **Functions**: 27
 - **File**: `app.py`
@@ -62,14 +67,9 @@
 - **File**: `install_manager.py`
 
 ### src.koru.autonomous_wup
-- **Functions**: 25
+- **Functions**: 27
 - **Classes**: 3
 - **File**: `autonomous_wup.py`
-
-### src.koruide.os_injector
-- **Functions**: 24
-- **Classes**: 2
-- **File**: `os_injector.py`
 
 ### src.koruide.plugin_installer
 - **Functions**: 24
@@ -153,9 +153,6 @@ the LLM with the policy
 > Return ``(status, detail)`` for ``koru --doctor``; process-global, no I/O.
 - **Calls**: os.environ.get, src.koru.autonomy.env.env_truthy, os.environ.get, os.environ.get, src.koru.autonomy.env.env_truthy, None.strip, None.lower, None.strip
 
-### src.koru.autopilot.daemon_cli.action_daemon
-- **Calls**: src.koru.autopilot.local_manager.autopilot_local_manager_session, AuditLog, AutopilotDaemon, src.koru.autopilot.local_manager.start_autopilot_manager_heartbeat, default_socket_fn, AutopilotClient, probe.is_running, args.project.resolve
-
 ### src.koruide.daemon.AutopilotDaemon._drive_via_plugin
 > Forward a drive request to a connected plugin for that IDE.
 - **Calls**: DriveOrchestrator.plugin_version_info, version_info.get, DriveOrchestrator.should_block_plugin_version, self._send, time.monotonic, self.log, self.audit.record, DriveOrchestrator.plugin_ack_summary
@@ -225,6 +222,9 @@ Returns the process exit code (0 on clean shutdown).
 
 ### src.koruide.daemon.AutopilotDaemon._on_readable
 - **Calls**: client.buf.extend, client.sock.recv, self._drop, len, self._send, self._drop, client.buf.partition, bytearray
+
+### src.koru.autopilot.daemon_cli.action_daemon
+- **Calls**: src.koru.autopilot.daemon_cli._daemon_already_running, src.koru.autopilot.daemon_cli._start_local_manager, AuditLog, AutopilotDaemon, src.koru.autopilot.local_manager.start_autopilot_manager_heartbeat, default_socket_fn, args.project.resolve, scripts.koru-soak-monitor.print
 
 ## Process Flows
 
@@ -561,15 +561,12 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.autonomous_cycle.run_cycle` - 33 calls
 - `src.koru.cli_topology.topology_main` - 32 calls
 - `src.koru.queue.runners.run_api_request` - 30 calls
-- `src.koru.autonomous_startup.build_startup_probe` - 29 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
-- `src.koru.autopilot.daemon_cli.action_daemon` - 29 calls
 - `src.koru.cli_queue.render_clean_report_text` - 28 calls
 - `src.koru.tasks.create_nl_task` - 28 calls
 - `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
 - `src.koru.scan.scan_pytest_collect` - 24 calls
 - `src.koru.autopilot.install_manager.collect_install_manager_report` - 24 calls
-- `src.koruide.os_injector.inject_with_profile` - 23 calls
 - `src.koru.init.init_project` - 23 calls
 - `src.koru.autonomy.ide_work.build_ide_work_prompt` - 23 calls
 - `src.koruapi.topology_post.apply_topology_post_update` - 22 calls
@@ -591,6 +588,9 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.tools.render_tools_detect_text` - 20 calls
 - `src.koru.context_render.render_autonomy_loop_brief` - 20 calls
 - `src.koru.local_manager_state.ActionQueue.claim` - 20 calls
+- `src.koru.local_manager_state.WorkerRegistry.heartbeat` - 20 calls
+- `scripts.planfile-sync-todo.do_from_planfile` - 20 calls
+- `src.koru.autonomous_daemon.start_or_reuse_daemon` - 20 calls
 
 ## System Interactions
 
