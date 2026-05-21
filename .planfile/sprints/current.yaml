@@ -1904,15 +1904,86 @@ sprint:
       sync: {}
       updated_at: '2026-05-20T19:09:00.948260+00:00'
     STARTER-033:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-20T20:09:04.377367+00:00'
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        brak pluginu na /run/user/1000/koru-autopilot-jetbrains.sock
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-21T06:54:33.238574Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          brak pluginu na /run/user/1000/koru-autopilot-jetbrains.sock
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+        source: koru task
+        timestamp: '2026-05-20T20:09:04.377367+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T06:54:33.341605+00:00'
       id: STARTER-033
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          brak pluginu na /run/user/1000/koru-autopilot-jetbrains.sock
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
       name: '[OPERATOR] Autopilot: Connect + plugin w czacie brak pluginu na /run/user/1000/koru-autopilot-jetbrains.sock
         Wykonaj ...'
-      status: open
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
-      sprint: current
       source:
-        tool: koru-operator-pipeline
-        timestamp: '2026-05-20T20:09:04.377367+00:00'
         context:
           input: '[OPERATOR] Autopilot: Connect + plugin w czacie
 
@@ -1926,82 +1997,93 @@ sprint:
 
             Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
           step_id: autopilot_plugin
-      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+        timestamp: '2026-05-20T20:09:04.377367+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-21T06:54:33.341576+00:00'
+    STARTER-034:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-20T20:09:04.565111+00:00'
+      description: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains)
 
 
-        brak pluginu na /run/user/1000/koru-autopilot-jetbrains.sock
+        brak kalibracji chatu dla jetbrains — task koru:ide-os:calibrate IDE=jetbrains
 
 
         Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
         ticket done.
 
 
-        Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+        Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-21T06:54:33.931459Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains)
+
+
+          brak kalibracji chatu dla jetbrains — task koru:ide-os:calibrate IDE=jetbrains
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`'
+        source: koru task
+        timestamp: '2026-05-20T20:09:04.565111+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T06:54:34.031912+00:00'
+      id: STARTER-034
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains)
+
+
+          brak kalibracji chatu dla jetbrains — task koru:ide-os:calibrate IDE=jetbrains
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`'
       labels:
       - koru
       - nl-task
       - llm-ready
       - operator
       - auto-pipeline
-      - step:autopilot_plugin
-      blocked_by: []
-      blocks: []
-      files: []
-      executor:
-        kind: human
-        mode: interactive
-      execution:
-        queue: operator
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
-
-
-          brak pluginu na /run/user/1000/koru-autopilot-jetbrains.sock
-
-
-          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
-          ticket done.
-
-
-          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
+      - step:os_calibrate
+      name: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains) brak kalibracji
+        chatu dla jetbrains — task koru:ide-os:calibrate...'
       outputs:
         artifacts: []
         notes: []
-      sync: {}
-      history:
-      - timestamp: '2026-05-20T20:09:04.377367+00:00'
-        action: created
-        source: koru task
-        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
-
-
-          brak pluginu na /run/user/1000/koru-autopilot-jetbrains.sock
-
-
-          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
-          ticket done.
-
-
-          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
-      created_at: '2026-05-20T20:09:04.377367+00:00'
-      updated_at: '2026-05-20T20:09:04.377367+00:00'
-    STARTER-034:
-      id: STARTER-034
-      name: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains) brak kalibracji
-        chatu dla jetbrains — task koru:ide-os:calibrate...'
-      status: open
       priority: high
-      sprint: current
       source:
-        tool: koru-operator-pipeline
-        timestamp: '2026-05-20T20:09:04.565111+00:00'
         context:
           input: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains)
 
@@ -2015,87 +2097,42 @@ sprint:
 
             Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`'
           step_id: os_calibrate
-      description: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains)
-
-
-        brak kalibracji chatu dla jetbrains — task koru:ide-os:calibrate IDE=jetbrains
-
-
-        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
-        ticket done.
-
-
-        Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - operator
-      - auto-pipeline
-      - step:os_calibrate
+        timestamp: '2026-05-20T20:09:04.565111+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-21T06:54:34.031862+00:00'
+    STARTER-035:
       blocked_by: []
       blocks: []
-      files: []
+      created_at: '2026-05-20T20:09:07.163259+00:00'
+      description: '`project/analysis.toon.yaml` reports `pasteText` with CC=18 (limit=15).
+        Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
       executor:
         kind: human
         mode: interactive
-      execution:
-        queue: operator
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains)
-
-
-          brak kalibracji chatu dla jetbrains — task koru:ide-os:calibrate IDE=jetbrains
-
-
-          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
-          ticket done.
-
-
-          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
-      outputs:
-        artifacts: []
-        notes: []
-      sync: {}
+      files:
+      - project/analysis.toon.yaml
       history:
-      - timestamp: '2026-05-20T20:09:04.565111+00:00'
-        action: created
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `pasteText` with CC=18 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
         source: koru task
-        message: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains)
-
-
-          brak kalibracji chatu dla jetbrains — task koru:ide-os:calibrate IDE=jetbrains
-
-
-          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
-          ticket done.
-
-
-          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`'
-      created_at: '2026-05-20T20:09:04.565111+00:00'
-      updated_at: '2026-05-20T20:09:04.565111+00:00'
-    STARTER-035:
-      id: STARTER-035
-      name: 'Reduce cyclomatic complexity: pasteText (CC=18, limit=15)'
-      status: open
-      priority: normal
-      sprint: current
-      source:
-        tool: koru-scan
         timestamp: '2026-05-20T20:09:07.163259+00:00'
-        context:
-          input: '`project/analysis.toon.yaml` reports `pasteText` with CC=18 (limit=15).
-            Extract sub-functions, simplify conditionals, or split into strategy pattern.'
-          signal: code2llm_cc
-      description: '`project/analysis.toon.yaml` reports `pasteText` with CC=18 (limit=15).
-        Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      id: STARTER-035
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `pasteText` with CC=18 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
       labels:
       - koru
       - nl-task
@@ -2104,54 +2141,55 @@ sprint:
       - complexity
       - refactor
       - scan
-      blocked_by: []
-      blocks: []
-      files:
-      - project/analysis.toon.yaml
-      executor:
-        kind: human
-        mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '`project/analysis.toon.yaml` reports `pasteText` with CC=18 (limit=15).
-          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
+      name: 'Reduce cyclomatic complexity: pasteText (CC=18, limit=15)'
       outputs:
         artifacts: []
         notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `pasteText` with CC=18 (limit=15).
+            Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-20T20:09:07.163259+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
       sync: {}
-      history:
-      - timestamp: '2026-05-20T20:09:07.163259+00:00'
-        action: created
-        source: koru task
-        message: '`project/analysis.toon.yaml` reports `pasteText` with CC=18 (limit=15).
-          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
-      created_at: '2026-05-20T20:09:07.163259+00:00'
       updated_at: '2026-05-20T20:09:07.163259+00:00'
     STARTER-036:
-      id: STARTER-036
-      name: 'code2llm refactor: split 1 high-CC methods'
-      status: open
-      priority: normal
-      sprint: current
-      source:
-        tool: koru-scan
-        timestamp: '2026-05-20T20:09:07.357320+00:00'
-        context:
-          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split 1 high-CC
-            methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f
-            toon` to verify.'
-          signal: code2llm_refactor
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-20T20:09:07.357320+00:00'
       description: 'REFACTOR item from `project/analysis.toon.yaml`: **split 1 high-CC
         methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
         to verify.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split 1 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+        source: koru task
+        timestamp: '2026-05-20T20:09:07.357320+00:00'
+      id: STARTER-036
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split 1 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
       labels:
       - koru
       - nl-task
@@ -2159,36 +2197,20 @@ sprint:
       - code2llm
       - refactor
       - scan
-      blocked_by: []
-      blocks: []
-      files:
-      - project/analysis.toon.yaml
-      executor:
-        kind: human
-        mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split 1 high-CC
-          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
-          to verify.'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
+      name: 'code2llm refactor: split 1 high-CC methods'
       outputs:
         artifacts: []
         notes: []
+      priority: normal
+      source:
+        context:
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split 1 high-CC
+            methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f
+            toon` to verify.'
+          signal: code2llm_refactor
+        timestamp: '2026-05-20T20:09:07.357320+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
       sync: {}
-      history:
-      - timestamp: '2026-05-20T20:09:07.357320+00:00'
-        action: created
-        source: koru task
-        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split 1 high-CC
-          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
-          to verify.'
-      created_at: '2026-05-20T20:09:07.357320+00:00'
       updated_at: '2026-05-20T20:09:07.357320+00:00'

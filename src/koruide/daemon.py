@@ -580,6 +580,34 @@ class AutopilotDaemon:
         self._send(cli_client, relay.encode())
         return True
 
+    def _relay_message_sent_ack(self, client: _Client, msg: Message) -> bool:
+        """Use ``message.sent`` event as fallback completion for pending ``drive``.
+
+        Some plugin builds can emit lifecycle event ``message.sent`` reliably
+        but miss/skip the explicit ``ack`` for the original ``chat.send``.
+        When that happens, we still want the waiting CLI request to complete
+        successfully instead of timing out.
+        """
+
+        pending = client.awaiting_plugin
+        if pending is None:
+            return False
+        cli_client, corr, submit_requested, plugin_ide, _original_text, _require_plugin = pending
+        client.awaiting_plugin = None
+        info: dict[str, Any] = {
+            "backend": "plugin",
+            "delivered": True,
+            "opened": True,
+            "submitted": submit_requested,
+            "event": "message.sent",
+        }
+        if plugin_ide:
+            info["ide"] = plugin_ide
+        if isinstance(msg.data.get("chat"), str):
+            info["chat"] = msg.data["chat"]
+        self._send(cli_client, ack(corr, ok=True, info=info).encode())
+        return True
+
     def _handle_ack(self, client: _Client, msg: Message) -> None:
         # Plugin responded to a forwarded ``chat.send``. Relay to the
         # waiting CLI.
@@ -649,6 +677,8 @@ class AutopilotDaemon:
         ack_info: dict[str, Any] = {"event": msg.type}
         if msg.type != "session.ended" or self.handoff is None:
             self._send(client, ack(msg.id or "session-event", info=ack_info).encode())
+            if msg.type == "message.sent":
+                self._relay_message_sent_ack(client, msg)
             return
         # Cooldown: ignore session.ended right after we just typed
         # something — otherwise we'd loop forever if the LLM finishes

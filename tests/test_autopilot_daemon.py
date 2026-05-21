@@ -500,6 +500,47 @@ def test_plugin_hello_then_drive_forwards(tmp_path: Path, monkeypatch: pytest.Mo
         cli.close()
 
 
+def test_message_sent_event_completes_pending_drive_without_plugin_ack(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """If plugin emits message.sent but no chat.send ack, CLI drive should still complete."""
+    with _daemon(tmp_path, monkeypatch) as h:
+        plugin, plugin_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
+
+        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli.settimeout(2.0)
+        cli.connect(str(h.sock_path))
+        cli_reader = _LineReader(cli)
+        cli.sendall(
+            Message(
+                type="drive",
+                id="d-message-sent",
+                data={"text": "hi", "ide": "vscode", "submit": True},
+            ).encode(),
+        )
+
+        forwarded = plugin_reader.read_message()
+        assert forwarded.type == "chat.send"
+        plugin.sendall(
+            Message(
+                type="message.sent",
+                data={"chat": "default", "text": "hi", "length": 2},
+            ).encode(),
+        )
+
+        cli_reply = cli_reader.read_message()
+        assert cli_reply.type == "ack"
+        assert cli_reply.data.get("ok") is True
+        assert cli_reply.data.get("backend") == "plugin"
+        assert cli_reply.data.get("event") == "message.sent"
+        assert cli_reply.data.get("delivered") is True
+
+        assert h.injector.calls == []
+        plugin.close()
+        cli.close()
+
+
 def test_visible_typing_prefers_keyboard_even_when_plugin_connected(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
