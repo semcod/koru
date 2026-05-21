@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.180', 'python').
+project_metadata('koru', '0.1.181', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 681, 'less').
@@ -39,13 +39,13 @@ project_file('examples/runtime/koru-serve-health/e2e.sh', 22, 'shell').
 project_file('examples/runtime/koru-serve-health/run-docker.sh', 8, 'shell').
 project_file('plugins/koru-autopilot-vscode/out/dispatch-plan.js', 19, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/dispatch-plan.test.js', 116, 'javascript').
-project_file('plugins/koru-autopilot-vscode/out/extension.js', 784, 'javascript').
+project_file('plugins/koru-autopilot-vscode/out/extension.js', 911, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/probe-ladder.js', 233, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/probe-ladder.test.js', 60, 'javascript').
 project_file('plugins/koru-autopilot-vscode/out/socketPath.js', 94, 'javascript').
 project_file('plugins/koru-autopilot-vscode/src/dispatch-plan.test.ts', 119, 'typescript').
 project_file('plugins/koru-autopilot-vscode/src/dispatch-plan.ts', 27, 'typescript').
-project_file('plugins/koru-autopilot-vscode/src/extension.ts', 847, 'typescript').
+project_file('plugins/koru-autopilot-vscode/src/extension.ts', 988, 'typescript').
 project_file('plugins/koru-autopilot-vscode/src/probe-ladder.test.ts', 94, 'typescript').
 project_file('plugins/koru-autopilot-vscode/src/probe-ladder.ts', 274, 'typescript').
 project_file('plugins/koru-autopilot-vscode/src/socketPath.ts', 62, 'typescript').
@@ -175,7 +175,7 @@ project_file('src/koru/redup_integration.py', 190, 'python').
 project_file('src/koru/refactor_planfile_handoff.py', 47, 'python').
 project_file('src/koru/run_log.py', 124, 'python').
 project_file('src/koru/runtime.py', 105, 'python').
-project_file('src/koru/scan.py', 933, 'python').
+project_file('src/koru/scan.py', 977, 'python').
 project_file('src/koru/scripts/koru-autoloop.sh', 677, 'shell').
 project_file('src/koru/semcod_tools.py', 149, 'python').
 project_file('src/koru/serve.py', 10, 'python').
@@ -1208,7 +1208,9 @@ python_function('src/koru/scan.py', '_scan_redup_filtered', 1, 7, 9).
 python_function('src/koru/scan.py', '_scan_redup_changed', 1, 7, 9).
 python_function('src/koru/scan.py', 'scan_semcod_quality_artifacts', 1, 1, 7).
 python_function('src/koru/scan.py', 'collect_suggestions', 1, 3, 8).
-python_function('src/koru/scan.py', '_existing_scan_titles', 1, 3, 9).
+python_function('src/koru/scan.py', '_add_existing_scan_title_keys', 2, 13, 5).
+python_function('src/koru/scan.py', '_existing_scan_titles_from_sprint', 1, 8, 7).
+python_function('src/koru/scan.py', '_existing_scan_titles', 1, 5, 11).
 python_function('src/koru/scan.py', '_create_ticket', 2, 7, 3).
 python_function('src/koru/scan.py', 'run_scan', 1, 10, 11).
 python_function('src/koru/semcod_tools.py', '_read_pyproject', 1, 3, 3).

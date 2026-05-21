@@ -31,6 +31,9 @@ COPY pyproject.toml README.md LICENSE VERSION ./
 COPY src/ ./src/
 COPY tests/ ./tests/
 COPY plugins/koru-autopilot-vscode/package*.json ./plugins/koru-autopilot-vscode/
+COPY plugins/koru-autopilot-vscode/src/ ./plugins/koru-autopilot-vscode/src/
+COPY scripts/docker-ide-matrix-entrypoint.sh ./scripts/docker-ide-matrix-entrypoint.sh
+COPY .github/workflows/native-ide-matrix.yml ./.github/workflows/native-ide-matrix.yml
 COPY scripts/docker-ide-matrix-entrypoint.sh /usr/local/bin/koru-docker-ide-matrix-entrypoint.sh
 
 RUN set -eux; \
@@ -38,6 +41,15 @@ RUN set -eux; \
     chmod +x /usr/local/bin/koru-docker-ide-matrix-entrypoint.sh; \
     for tool in wtype xdotool ydotool; do \
         printf '#!/bin/sh\nexit 0\n' > "/usr/local/bin/${tool}"; \
+        chmod +x "/usr/local/bin/${tool}"; \
+    done; \
+    for tool in wl-copy wl-paste xclip xsel; do \
+        printf '%s\n' '#!/bin/sh' \
+            'case "${0##*/}" in' \
+            '  wl-paste|xclip|xsel) printf "%s" "${KORU_FAKE_HOST_CLIPBOARD:-previous-user-clipboard}" ;;' \
+            '  *) cat >/dev/null ;;' \
+            'esac' \
+            'exit 0' > "/usr/local/bin/${tool}"; \
         chmod +x "/usr/local/bin/${tool}"; \
     done; \
     for tool in code code-insiders code-oss codium vscodium cursor windsurf zed pycharm idea; do \

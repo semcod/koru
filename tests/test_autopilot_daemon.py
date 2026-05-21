@@ -51,6 +51,8 @@ def _patch_no_running_ides(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(ide_mod, "detect_focused_ide_id", lambda **_k: None)
     monkeypatch.setattr(koruide_daemon_mod, "detect_running_ides", lambda **_: [])
     monkeypatch.setattr(oi_mod, "try_load_profile", lambda _tool_id, project=None: None)
+    # Also patch detect_terminal_host_ide_id to avoid terminal host detection
+    monkeypatch.setattr(ide_mod, "detect_terminal_host_ide_id", lambda **_k: None)
 
 
 class _StubInjector:
@@ -358,7 +360,6 @@ def test_drive_os_injector_skipped_when_env_disabled(
         tried["n"] += 1
         return OsInjectorProfile(tool_id="cursor", chat_x=0, chat_y=0)
 
-    monkeypatch.setattr(oi_mod, "try_load_profile", counted_try_load)
 
     with _daemon(tmp_path, monkeypatch, patch_ides=False) as h:
         reply = h.client().drive("x", ide="auto")

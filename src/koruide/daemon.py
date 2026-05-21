@@ -364,8 +364,14 @@ class AutopilotDaemon:
         ide_pref = raw_ide if raw_ide not in (None, "auto") else None
         submit = bool(msg.data.get("submit", True))
         require_plugin = bool(msg.data.get("require_plugin", False))
+        self.log(f"drive request: ide={raw_ide or 'auto'}, chars={len(text)}, submit={submit}, require_plugin={require_plugin}")
         plugin = self._plugin_for(ide_pref)
+        if plugin is not None:
+            self.log(f"drive: found plugin for ide={plugin.ide} (version={plugin.version}, protocol={plugin.protocol_version})")
+        else:
+            self.log(f"drive: no plugin found for ide={ide_pref}")
         if plugin is not None and not _prefer_keyboard_drive():
+            self.log(f"drive: routing via plugin (ide={plugin.ide})")
             self._drive_via_plugin(client, msg, plugin, text, submit, require_plugin)
             return
         if require_plugin:
@@ -383,6 +389,7 @@ class AutopilotDaemon:
                 error=message,
             )
             return
+        self.log(f"drive: routing via keyboard/os_injector fallback")
         self._drive_via_keyboard(client, msg, ide_pref, text, submit)
 
     def _drive_via_plugin(
@@ -395,6 +402,7 @@ class AutopilotDaemon:
         require_plugin: bool,
     ) -> None:
         """Forward a drive request to a connected plugin for that IDE."""
+        self.log(f"drive_via_plugin: ide={plugin.ide}, version={plugin.version}, protocol={plugin.protocol_version}, capabilities={plugin.capabilities}")
         corr = msg.id or f"drive-{time.monotonic_ns():x}"
         version_info = DriveOrchestrator.plugin_version_info(
             plugin_ide=plugin.ide,
@@ -402,6 +410,7 @@ class AutopilotDaemon:
             protocol_version=plugin.protocol_version,
             capabilities=plugin.capabilities,
         )
+        self.log(f"drive_via_plugin: version_info={version_info}")
         if version_info.get("plugin_version_mismatch"):
             summary = DriveOrchestrator.plugin_ack_summary(version_info)
             self.log(f"drive plugin version drift: {summary}")
@@ -449,17 +458,22 @@ class AutopilotDaemon:
         self, target_id: str, text: str, submit: bool
     ) -> dict[str, Any] | None:
         """Run :mod:`os_injector` when configured; ``None`` means use keyboard."""
+        self.log(f"try_os_injector_drive: target_id={target_id}, chars={len(text)}, submit={submit}")
         from koruide import os_injector as oi
 
         try:
-            return oi.try_drive_with_profile(
+            result = oi.try_drive_with_profile(
                 tool_id=target_id,
                 text=text,
                 submit=submit,
                 project=self.project,
                 cli_dry_run=False,
             )
+            if result:
+                self.log(f"try_os_injector_drive: SUCCESS backend={result.get('backend')}, chat_coords=({result.get('chat_x')}, {result.get('chat_y')}), input_method={result.get('input_method')}")
+            return result
         except oi.OsInjectorError as exc:
+            self.log(f"try_os_injector_drive: FAILED: {exc}")
             raise InjectorError(str(exc)) from exc
 
     def _drive_via_keyboard(
@@ -472,11 +486,13 @@ class AutopilotDaemon:
     ) -> None:
         """Fallback: OS injector profile (X11) or :class:`Injector` keyboard sim."""
         ide_arg = ide_pref if ide_pref else "auto"
+        self.log(f"drive_via_keyboard: ide_arg={ide_arg}, chars={len(text)}, submit={submit}")
         target_id, profile_id, selection = resolve_drive_target(
             ide_arg,
             None,
             project=self.project,
         )
+        self.log(f"drive_via_keyboard: resolved target_id={target_id}, profile_id={profile_id}, selection={selection}")
         if ide_arg == "auto":
             self.log(f"drive auto-selected {profile_id} ({selection})")
         preview = text.replace("\n", " ")[:100]
@@ -518,8 +534,9 @@ class AutopilotDaemon:
             )
             return
 
+        backend = self.injector.select_backend()
         self.log(
-            f"drive → keyboard/{target_id}: {self.injector.select_backend()} "
+            f"drive → keyboard/{target_id}: {backend or 'no-backend'} "
             f"({len(text)} zn) «{preview}»",
         )
         try:

@@ -34,7 +34,7 @@ interface Envelope {
   [k: string]: unknown;
 }
 
-type CommandOutcome = { ok: boolean; command?: string };
+type CommandOutcome = { ok: boolean; command?: string; reason?: string };
 type FocusOutcome = CommandOutcome & { diagnostics?: Record<string, unknown> };
 type PasteAttempt = { handled: boolean; result: CommandOutcome };
 type SubmitOutcome = CommandOutcome & { unverified?: boolean };
@@ -270,27 +270,18 @@ class AutopilotBridge {
     }
   }
 
-  private async _tryHostKeySubmit(): Promise<{ ok: boolean; command?: string }> {
+  private async _tryHostKeySubmit(): Promise<CommandOutcome> {
     if (process.platform !== "linux") {
       return { ok: false };
     }
-    const attempts: string[][] = [
-      ["-k", "Return"],
-      ["-M", "ctrl", "-k", "Return", "-m", "ctrl"],
-    ];
-    for (const args of attempts) {
-      const ok = await new Promise<boolean>((resolve) => {
-        const child = spawn("wtype", args, { stdio: "ignore" });
-        child.on("error", () => resolve(false));
-        child.on("close", (code) => resolve(code === 0));
-      });
-      debugLog("SUBMIT_HOST_KEY", { command: `wtype ${args.join(" ")}`, ok });
-      if (ok) {
-        return { ok: true, command: `wtype ${args.join(" ")}` };
-      }
-      await this.sleep(100);
-    }
-    return { ok: false };
+    return this.runHostKeyCandidates("SUBMIT_HOST_KEY", [
+      ["wtype", ["-k", "Return"]],
+      ["xdotool", ["key", "Return"]],
+      ["ydotool", ["key", "Return"]],
+      ["wtype", ["-M", "ctrl", "-k", "Return", "-m", "ctrl"]],
+      ["xdotool", ["key", "ctrl+Return"]],
+      ["ydotool", ["key", "ctrl+Return"]],
+    ]);
   }
 
   private async runHostCommand(command: string, args: string[], input?: string): Promise<HostCommandResult> {
@@ -311,6 +302,65 @@ class AutopilotBridge {
         child.stdin.end();
       }
     });
+  }
+
+  private async runHostKeyCandidates(
+    label: string,
+    candidates: Array<[string, string[]]>
+  ): Promise<CommandOutcome> {
+    for (const [command, args] of candidates) {
+      const res = await this.runHostCommand(command, args);
+      const rendered = `${command} ${args.join(" ")}`;
+      debugLog(label, { command: rendered, ok: res.ok });
+      if (res.ok) {
+        return { ok: true, command: rendered };
+      }
+      await this.sleep(80);
+    }
+    return { ok: false, reason: "host key command failed" };
+  }
+
+  private submitClickPoint(): { x: number; y: number } | null {
+    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+    const x = Math.trunc(cfg.get<number>("submitClickX", 0));
+    const y = Math.trunc(cfg.get<number>("submitClickY", 0));
+    if (x <= 0 || y <= 0) {
+      return null;
+    }
+    return { x, y };
+  }
+
+  private async _tryHostClickSubmit(): Promise<SubmitOutcome> {
+    if (process.platform !== "linux") {
+      return { ok: false };
+    }
+    const point = this.submitClickPoint();
+    if (!point) {
+      debugLog("SUBMIT_CLICK_SKIP", { reason: "missing submitClickX/submitClickY" });
+      return { ok: false, reason: "missing submit click coordinates" };
+    }
+    const x = String(point.x);
+    const y = String(point.y);
+    const attempts: Array<[string, string[]]> = [
+      ["xdotool", ["mousemove", "--sync", x, y, "click", "1"]],
+      ["ydotool", ["mousemove", x, y]],
+      ["ydotool", ["click", "1"]],
+    ];
+    const xdotoolResult = await this.runHostCommand(attempts[0][0], attempts[0][1]);
+    debugLog("SUBMIT_CLICK", { command: `${attempts[0][0]} ${attempts[0][1].join(" ")}`, ok: xdotoolResult.ok, x: point.x, y: point.y });
+    if (xdotoolResult.ok) {
+      return { ok: true, command: `xdotool click@${point.x},${point.y}` };
+    }
+    const move = await this.runHostCommand(attempts[1][0], attempts[1][1]);
+    debugLog("SUBMIT_CLICK", { command: `${attempts[1][0]} ${attempts[1][1].join(" ")}`, ok: move.ok, x: point.x, y: point.y });
+    if (move.ok) {
+      const click = await this.runHostCommand(attempts[2][0], attempts[2][1]);
+      debugLog("SUBMIT_CLICK", { command: `${attempts[2][0]} ${attempts[2][1].join(" ")}`, ok: click.ok, x: point.x, y: point.y });
+      if (click.ok) {
+        return { ok: true, command: `ydotool click@${point.x},${point.y}` };
+      }
+    }
+    return { ok: false, reason: "submit click failed" };
   }
 
   private async saveHostClipboard(): Promise<string | null> {
@@ -358,24 +408,25 @@ class AutopilotBridge {
     if (this.detectIde() !== "vscodium" || process.platform !== "linux") {
       return;
     }
-    const sequences: string[][] = [
-      ["-M", "ctrl", "-k", "a", "-m", "ctrl"],
-      ["-k", "BackSpace"],
-    ];
-    for (const args of sequences) {
-      await new Promise<void>((resolve) => {
-        const child = spawn("wtype", args, { stdio: "ignore" });
-        child.on("error", () => resolve());
-        child.on("close", () => resolve());
-      });
-      debugLog("CLEAR_INPUT_HOST_KEY", { command: `wtype ${args.join(" ")}` });
-      await this.sleep(80);
-    }
+    await this.runHostKeyCandidates("CLEAR_INPUT_SELECT_ALL", [
+      ["wtype", ["-M", "ctrl", "-k", "a", "-m", "ctrl"]],
+      ["xdotool", ["key", "ctrl+a"]],
+      ["ydotool", ["key", "ctrl+a"]],
+    ]);
+    await this.runHostKeyCandidates("CLEAR_INPUT_BACKSPACE", [
+      ["wtype", ["-k", "BackSpace"]],
+      ["xdotool", ["key", "BackSpace"]],
+      ["ydotool", ["key", "Backspace"]],
+    ]);
   }
 
   private async submitChat(): Promise<SubmitOutcome> {
     const ide = this.detectIde();
     if (ide === "vscodium") {
+      const hostClick = await this._tryHostClickSubmit();
+      if (hostClick.ok) {
+        return hostClick;
+      }
       const hostKey = await this._tryHostKeySubmit();
       if (hostKey.ok) {
         return { ...hostKey, unverified: true };
@@ -383,6 +434,7 @@ class AutopilotBridge {
       return {
         ok: false,
         command: "vscodium-submit-unavailable",
+        reason: hostClick.reason || hostKey.reason,
         unverified: true,
       };
     }
@@ -543,22 +595,25 @@ class AutopilotBridge {
     const clip = await this.writeHostClipboard(text);
     if (!clip) {
       debugLog("HOST_PASTE_NO_CLIPBOARD_TOOL");
-      return { handled: false, result: { ok: false } };
+      return { handled: false, result: { ok: false, reason: "no host clipboard tool" } };
     }
-    const paste = await this.runHostCommand("wtype", ["-M", "ctrl", "-k", "v", "-m", "ctrl"]);
-    debugLog("HOST_PASTE_KEY", { ok: paste.ok, clipboard: clip });
+    const paste = await this.runHostKeyCandidates("HOST_PASTE_KEY", [
+      ["wtype", ["-M", "ctrl", "-k", "v", "-m", "ctrl"]],
+      ["xdotool", ["key", "ctrl+v"]],
+      ["ydotool", ["key", "ctrl+v"]],
+    ]);
     if (!paste.ok) {
-      return { handled: true, result: { ok: false } };
+      return { handled: true, result: { ...paste, reason: "host clipboard paste key failed" } };
     }
     await this.sleep(Math.max(this.probePasteDelayMs(), 350));
     const after = this.editorSnapshot();
     if (useProbe && pasteLandedInEditor(before, after, text)) {
-      return { handled: true, result: { ok: false } };
+      return { handled: true, result: { ok: false, command: paste.command, reason: "paste landed in editor" } };
     }
     if (useProbe) {
-      await this.saveProbeCache({ paste: `host-clipboard:${clip}+wtype-ctrl-v` });
+      await this.saveProbeCache({ paste: `host-clipboard:${clip}+${paste.command}` });
     }
-    return { handled: true, result: { ok: true, command: `host-clipboard:${clip}+wtype-ctrl-v` } };
+    return { handled: true, result: { ok: true, command: `host-clipboard:${clip}+${paste.command}` } };
   }
 
   private async tryClipboardPaste(
@@ -742,7 +797,12 @@ class AutopilotBridge {
     });
   }
 
-  private sendPasteFailureAck(env: Envelope, focus: { ok: boolean; command?: string }): void {
+  private sendPasteFailureAck(
+    env: Envelope,
+    focus: { ok: boolean; command?: string },
+    pasted: { ok: boolean; command?: string; reason?: string }
+  ): void {
+    const reason = pasted.reason || "unknown paste failure";
     this.send({
       type: "ack",
       id: env.id,
@@ -750,7 +810,9 @@ class AutopilotBridge {
       opened: true,
       probe_ladder: this.probeLadderEnabled(),
       winning_focus_open: focus.command,
-      message: "chat opened but paste command failed (probe rejected editor contamination)",
+      attempted_paste: pasted.command,
+      paste_failure_reason: reason,
+      message: `chat opened but paste command failed (${reason})`,
     });
   }
 
@@ -907,7 +969,7 @@ class AutopilotBridge {
     }
     const pasted = await this.pasteText(text);
     if (!pasted.ok) {
-      this.sendPasteFailureAck(env, focus);
+      this.sendPasteFailureAck(env, focus, pasted);
       return;
     }
     const submitCmd = await this.submitAfterPaste(env, focus, pasted, submit);
@@ -943,6 +1005,25 @@ class AutopilotBridge {
     void vscode.window.showInformationMessage(`koru probe OK\n${lines.join("\n")}`);
   }
 
+  async captureSubmitClickPosition(): Promise<void> {
+    const res = await this.runHostCommand("xdotool", ["getmouselocation"]);
+    const match = res.stdout.match(/\bx:(\d+)\s+y:(\d+)\b/);
+    if (!res.ok || !match) {
+      void vscode.window.showWarningMessage(
+        "koru autopilot: could not capture mouse position with xdotool.",
+      );
+      debugLog("SUBMIT_CLICK_CAPTURE_FAILED", { ok: res.ok, stdout: res.stdout });
+      return;
+    }
+    const x = Number(match[1]);
+    const y = Number(match[2]);
+    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+    await cfg.update("submitClickX", x, vscode.ConfigurationTarget.Global);
+    await cfg.update("submitClickY", y, vscode.ConfigurationTarget.Global);
+    debugLog("SUBMIT_CLICK_CAPTURED", { x, y });
+    void vscode.window.showInformationMessage(`koru submit click captured: ${x}, ${y}`);
+  }
+
   async sendManualChat(text: string): Promise<void> {
     await this.injectChat({ type: "chat.send", text, submit: true });
   }
@@ -965,6 +1046,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("koruAutopilot.calibrateProbe", () => bridge.calibrateProbe()),
     vscode.commands.registerCommand("koruAutopilot.calibrate", () => bridge.calibrateProbe()),
     vscode.commands.registerCommand("koruAutopilot.calibrateCompact", () => bridge.calibrateProbe()),
+    vscode.commands.registerCommand("koruAutopilot.captureSubmitClick", () => bridge.captureSubmitClickPosition()),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (
         event.affectsConfiguration("koruAutopilot.socketPath") ||

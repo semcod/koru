@@ -36,6 +36,10 @@ def test_docker_ide_matrix_dockerfile_installs_fake_cli_surface() -> None:
         "wtype",
         "xdotool",
         "ydotool",
+        "wl-copy",
+        "wl-paste",
+        "xclip",
+        "xsel",
     ):
         assert tool in dockerfile
 

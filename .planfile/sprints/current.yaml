@@ -4527,10 +4527,10 @@ sprint:
         a god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
         by responsibility.'
       execution:
-        attempt: 0
+        attempt: 1
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -4544,6 +4544,17 @@ sprint:
           by responsibility.'
         source: koru task
         timestamp: '2026-05-21T14:25:21.695386+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: codex
+        status: done
+        timestamp: '2026-05-21T17:20:57.071382+00:00'
       id: STARTER-068
       inputs:
         api_headers: {}
@@ -4564,7 +4575,11 @@ sprint:
       name: 'Split god module: src/koru/autonomous.py'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - Split autonomous loop checkpoint/backoff helpers into `src/koru/autonomous_checkpoint.py`;
+          `src/koru/autonomous.py` now imports compatibility aliases for existing call sites/tests.
+        - 'Validation: 155 passed, 1 skipped for autonomous/startup/docker-matrix/drive-orchestrator
+          focused suite.'
       priority: high
       source:
         context:
@@ -4575,9 +4590,9 @@ sprint:
         timestamp: '2026-05-21T14:25:21.695386+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T14:25:21.695386+00:00'
+      updated_at: '2026-05-21T17:20:57.071382+00:00'
     STARTER-069:
       blocked_by: []
       blocks: []
@@ -10956,31 +10971,9 @@ sprint:
       sync: {}
       updated_at: '2026-05-21T16:41:23.435913+00:00'
     STARTER-178:
-      id: STARTER-178
-      name: '[OPERATOR] Kalibracja czatu OS injectora (vscodium) brak kalibracji chatu
-        dla vscodium — task koru:ide-os:calibrate I...'
-      status: open
-      priority: high
-      sprint: current
-      source:
-        tool: koru-operator-pipeline
-        timestamp: '2026-05-21T16:41:25.618498+00:00'
-        context:
-          input: '[OPERATOR] Kalibracja czatu OS injectora (vscodium)
-
-
-            brak kalibracji chatu dla vscodium — task koru:ide-os:calibrate IDE=vscodium
-
-
-            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
-            ticket done.
-
-
-            Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`'
-          detail: brak kalibracji chatu dla vscodium — task koru:ide-os:calibrate
-            IDE=vscodium
-          step_id: os_calibrate
-          task_command: task koru:ide-os:calibrate IDE=vscodium
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T16:41:25.618498+00:00'
       description: '[OPERATOR] Kalibracja czatu OS injectora (vscodium)
 
 
@@ -10992,48 +10985,17 @@ sprint:
 
 
         Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - operator
-      - auto-pipeline
-      - step:os_calibrate
-      blocked_by: []
-      blocks: []
-      files: []
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: operator
+        state: ready
       executor:
         kind: human
         mode: interactive
-      execution:
-        queue: operator
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '[OPERATOR] Kalibracja czatu OS injectora (vscodium)
-
-
-          brak kalibracji chatu dla vscodium — task koru:ide-os:calibrate IDE=vscodium
-
-
-          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
-          ticket done.
-
-
-          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
-      outputs:
-        artifacts: []
-        notes: []
-      sync: {}
+      files: []
       history:
-      - timestamp: '2026-05-21T16:41:25.618498+00:00'
-        action: created
-        source: koru task
+      - action: created
         message: '[OPERATOR] Kalibracja czatu OS injectora (vscodium)
 
 
@@ -11045,5 +11007,160 @@ sprint:
 
 
           Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`'
-      created_at: '2026-05-21T16:41:25.618498+00:00'
+        source: koru task
+        timestamp: '2026-05-21T16:41:25.618498+00:00'
+      id: STARTER-178
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Kalibracja czatu OS injectora (vscodium)
+
+
+          brak kalibracji chatu dla vscodium — task koru:ide-os:calibrate IDE=vscodium
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:os_calibrate
+      name: '[OPERATOR] Kalibracja czatu OS injectora (vscodium) brak kalibracji chatu
+        dla vscodium — task koru:ide-os:calibrate I...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          detail: brak kalibracji chatu dla vscodium — task koru:ide-os:calibrate
+            IDE=vscodium
+          input: '[OPERATOR] Kalibracja czatu OS injectora (vscodium)
+
+
+            brak kalibracji chatu dla vscodium — task koru:ide-os:calibrate IDE=vscodium
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`'
+          step_id: os_calibrate
+          task_command: task koru:ide-os:calibrate IDE=vscodium
+        timestamp: '2026-05-21T16:41:25.618498+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: open
+      sync: {}
       updated_at: '2026-05-21T16:41:25.618498+00:00'
+    STARTER-179:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T17:02:18.654450+00:00'
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-21T17:04:13.745381Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`'
+        source: koru task
+        timestamp: '2026-05-21T17:02:18.654450+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T17:04:14.310974+00:00'
+      id: STARTER-179
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+        Wykonaj w I...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          detail: brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`'
+          step_id: autopilot_plugin
+          task_command: task koru:operator:plugin-probe IDE=vscode
+        timestamp: '2026-05-21T17:02:18.654450+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-21T17:04:14.310942+00:00'

@@ -9,6 +9,7 @@ from pathlib import Path
 
 from koru.autopilot import default_socket_path
 from koruide.ide import (
+    RunningIDE,
     detect_running_ides,
     detect_terminal_host_ide_id,
     normalize_ide_id,
@@ -117,6 +118,45 @@ def resolve_agent_lane_id(
 
     marker = resolve_project_lane(project, "auto")
     return marker, "project-markers"
+
+
+def resolve_agent_lane(
+    *,
+    cli_lane: str = "auto",
+    running_ides: list[RunningIDE] | tuple[RunningIDE, ...] | None = None,
+    terminal_hint: str | None = None,
+) -> tuple[str | None, str]:
+    raw = normalize_ide_id(cli_lane) or "auto"
+    if raw == "none":
+        return None, "cli:none"
+    if raw != "auto":
+        return raw, f"cli:{raw}"
+
+    terminal = normalize_ide_id(terminal_hint) if terminal_hint is not None else None
+    if terminal is None:
+        terminal = _terminal_agent_lane_from_env()
+    explicit, explicit_source = _explicit_agent_lane_from_env()
+    if explicit:
+        if terminal in _PLUGIN_IDE_LANES and terminal != explicit and terminal != "vscode":
+            return terminal, f"terminal:over-{explicit_source}"
+        return explicit, explicit_source
+
+    running = list(running_ides) if running_ides is not None else detect_running_ides()
+    if terminal == "vscode" and running:
+        picked = pick_target(running)
+        if picked is not None and picked.id != terminal and picked.id in _PLUGIN_IDE_LANES:
+            return picked.id, f"target:over-terminal:{terminal}"
+    if terminal in _PLUGIN_IDE_LANES:
+        return terminal, "terminal"
+    if terminal:
+        for alt in _AUTOPILOT_PLUGIN_LANES:
+            if any(ide.id == alt for ide in running):
+                return alt, f"terminal:prefer-{alt}-over-{terminal}"
+    if running:
+        picked = pick_target(running)
+        if picked is not None:
+            return picked.id, f"running:{picked.label}"
+    return "auto", "project-markers"
 
 
 def resolve_autopilot_ide_for_autonomous(
@@ -369,10 +409,12 @@ def format_post_startup_operator_hints(
 
 __all__ = [
     "AutonomousStartupProbe",
+    "RunningIDE",
     "build_startup_probe",
     "format_post_startup_operator_hints",
     "format_startup_banner",
     "koru_distribution_version",
+    "resolve_agent_lane",
     "resolve_agent_lane_id",
     "resolve_autopilot_ide_for_autonomous",
     "supports_autopilot_plugin_ide",

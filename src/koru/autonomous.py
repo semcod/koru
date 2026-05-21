@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import argparse
 import contextlib
-import json
 import os
 import signal
 import subprocess
@@ -35,6 +34,14 @@ from koru.agents import agent_lane_environment
 from koru.autonomous_cycle import (
     AutoloopState,
     DiagnosticResult,
+)
+from koru.autonomous_checkpoint import (
+    compute_backoff_sleep as _compute_backoff_sleep,
+    current_head as _current_head,
+    load_loop_checkpoint as _load_loop_checkpoint,
+    queue_loop_waiting_ticket_label as _queue_loop_waiting_ticket_label,
+    save_loop_checkpoint as _save_loop_checkpoint,
+    status_in_skip_list as _status_in_skip_list,
 )
 from koru.autonomous_env import (
     apply_autonomous_env_overrides as _env_apply_autoloop_defaults,
@@ -910,12 +917,6 @@ def _wait_for_autopilot_plugin(
         return False
 
 
-def _queue_loop_waiting_ticket_label(queue_result: QueueLoopResult) -> str:
-    """Last ticket id in ``waiting`` (terminal queue state), or ``-`` if unknown."""
-    waiting = getattr(queue_result, "waiting", None) or []
-    return waiting[-1] if waiting else "-"
-
-
 def _is_topology_enabled(project: Path, key: str, *, fallback: bool, enabled: bool) -> bool:
     if not enabled:
         return fallback
@@ -925,108 +926,6 @@ def _is_topology_enabled(project: Path, key: str, *, fallback: bool, enabled: bo
         return is_component_enabled(project, key)
     except Exception:
         return fallback
-
-
-def _current_head(project: Path) -> str:
-    result = subprocess.run(
-        ["git", "-C", str(project), "rev-parse", "HEAD"],
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    )
-    return result.stdout.strip() if result.returncode == 0 else ""
-
-
-def _compute_backoff_sleep(base: float, streak: int, cap: float, enabled: bool) -> float:
-    if streak <= 0 or not enabled:
-        return base
-    candidate = base * (2 ** min(streak, 10))
-    if cap > 0:
-        return min(candidate, cap)
-    return candidate
-
-
-def _load_loop_checkpoint(
-    path: Path,
-    *,
-    state: AutoloopState,
-    stdio_format: str = "human",
-) -> int | None:
-    if not path.exists():
-        return None
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError, TypeError, ValueError):
-        return None
-    try:
-        cycle = int(payload.get("cycle", 0))
-    except (TypeError, ValueError):
-        cycle = 0
-    state_payload = payload.get("state")
-    if isinstance(state_payload, dict):
-        for key in (
-            "previous_signature",
-            "stagnation_streak",
-            "scan_clean_streak",
-            "scan_last_head",
-            "wup_seen_events",
-            "last_message_sent_ts",
-            "telemetry_autopilot_idle_streak_skips",
-            "telemetry_scan_after_idle_runs",
-            "telemetry_scan_after_idle_tickets_applied",
-            "last_scan_after_idle_ts",
-        ):
-            if key in state_payload:
-                setattr(state, key, state_payload[key])
-        events = state_payload.get("autopilot_events")
-        if isinstance(events, list):
-            state.autopilot_events = [ev for ev in events if isinstance(ev, dict)]
-    if cycle > 0:
-        _stdio_info(f"koru autonomous: restored checkpoint cycle={cycle}", fmt=stdio_format)
-        return cycle
-    return None
-
-
-def _save_loop_checkpoint(
-    path: Path,
-    *,
-    cycle: int,
-    state: AutoloopState,
-    queue_status: str,
-    waiting_ticket: str,
-) -> None:
-    payload = {
-        "cycle": cycle,
-        "saved_at": time.time(),
-        "queue_status": queue_status,
-        "waiting_ticket": waiting_ticket,
-        "state": {
-            "previous_signature": state.previous_signature,
-            "stagnation_streak": state.stagnation_streak,
-            "scan_clean_streak": state.scan_clean_streak,
-            "scan_last_head": state.scan_last_head,
-            "wup_seen_events": state.wup_seen_events,
-            "autopilot_events": list(state.autopilot_events)[-50:],
-            "last_message_sent_ts": state.last_message_sent_ts,
-            "telemetry_autopilot_idle_streak_skips": state.telemetry_autopilot_idle_streak_skips,
-            "telemetry_scan_after_idle_runs": state.telemetry_scan_after_idle_runs,
-            "telemetry_scan_after_idle_tickets_applied": (
-                state.telemetry_scan_after_idle_tickets_applied
-            ),
-            "last_scan_after_idle_ts": state.last_scan_after_idle_ts,
-        },
-    }
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(payload, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
-    tmp.replace(path)
-
-
-def _status_in_skip_list(status: str, skip_statuses: str) -> bool:
-    return status.lower() in {
-        item.strip().lower() for item in skip_statuses.split(",") if item.strip()
-    }
 
 
 def _run_command_check(

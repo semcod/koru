@@ -185,7 +185,9 @@ class Injector:
         """
         forced = _forced_injector_backend()
         if forced is not None:
-            return [forced] if self.which(forced) else []
+            if self.which(forced):
+                return [forced]
+            return []
 
         out: list[str] = []
 
