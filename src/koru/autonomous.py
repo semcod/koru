@@ -25,11 +25,12 @@ import time
 import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass
-from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
 from koru import autonomous_cycle as _autonomous_cycle_module
+from koru import autonomous_daemon as _autonomous_daemon
+from koru import autonomous_runtime as _autonomous_runtime
 from koru.agents import agent_lane_environment
 from koru.autonomous_cycle import (
     AutoloopState,
@@ -657,45 +658,25 @@ def _ensure_init(project: Path, *, force: bool, stdio_format: str = "human") -> 
 
 
 def _current_koru_version() -> str | None:
-    try:
-        return version("koru")
-    except PackageNotFoundError:
-        return None
+    return _autonomous_daemon._current_koru_version()
 
 
 def _daemon_status_version(status: Mapping[str, Any] | None) -> str | None:
-    if not status:
-        return None
-    raw = status.get("daemon_version")
-    if isinstance(raw, str) and raw:
-        return raw
-    daemon = status.get("daemon")
-    if isinstance(daemon, Mapping):
-        raw = daemon.get("version")
-        if isinstance(raw, str) and raw:
-            return raw
-    return None
+    return _autonomous_daemon._daemon_status_version(status)
 
 
 def _daemon_status_compatible(status: Mapping[str, Any] | None) -> tuple[bool, str]:
-    expected = _current_koru_version()
-    actual = _daemon_status_version(status)
-    if expected is None:
-        return True, "current koru package version unknown"
-    if actual is None:
-        return False, f"daemon did not report version; expected {expected}"
-    if actual != expected:
-        return False, f"daemon version {actual} != current koru {expected}"
-    return True, f"daemon version {actual}"
+    return _autonomous_daemon.daemon_status_compatible(
+        status,
+        current_version=_current_koru_version,
+    )
 
 
 def _daemon_status_log_summary(status: Mapping[str, Any] | None) -> str:
-    if not status:
-        return "status=unavailable"
-    version_label = _daemon_status_version(status) or "-"
-    plugins = status.get("plugins")
-    plugin_label = _plugin_rows_log_summary(plugins if isinstance(plugins, list) else [])
-    return f"version={version_label} plugins={plugin_label}"
+    return _autonomous_daemon.daemon_status_log_summary(
+        status,
+        plugin_rows_summary=_plugin_rows_log_summary,
+    )
 
 
 def _stop_reused_daemon(
@@ -705,24 +686,16 @@ def _stop_reused_daemon(
     stdio_format: str,
     timeout_seconds: float = 2.0,
 ) -> bool:
-    try:
-        client.shutdown()
-        _stdio_info(
-            f"koru autonomous: requested shutdown of stale autopilot daemon on {socket_path}",
-            fmt=stdio_format,
-        )
-    except (OSError, RuntimeError, TimeoutError) as exc:
-        _stdio_info(
-            f"koru autonomous: stale autopilot daemon shutdown failed ({exc})",
-            fmt=stdio_format,
-        )
-    deadline = time.monotonic() + timeout_seconds
-    probe = build_ide_client(socket_path=socket_path, timeout=0.2)
-    while time.monotonic() < deadline:
-        if not probe.is_running():
-            return True
-        time.sleep(0.1)
-    return not probe.is_running()
+    return _autonomous_daemon._stop_reused_daemon(
+        client,
+        socket_path,
+        stdio_format=stdio_format,
+        timeout_seconds=timeout_seconds,
+        stdio_info=_stdio_info,
+        build_client=build_ide_client,
+        monotonic=time.monotonic,
+        sleep=time.sleep,
+    )
 
 
 def _start_or_reuse_daemon(
@@ -731,65 +704,19 @@ def _start_or_reuse_daemon(
     socket_path: Path,
     stdio_format: str = "human",
 ) -> tuple[IDEControlClient, AutopilotDaemon | None, threading.Thread | None]:
-    socket_path.parent.mkdir(parents=True, exist_ok=True)
-    probe = build_ide_client(socket_path=socket_path, timeout=0.5)
-    _stdio_info(f"koru autonomous: probing autopilot daemon on {socket_path}", fmt=stdio_format)
-    if probe.is_running():
-        _stdio_info(
-            f"koru autonomous: autopilot daemon ping ok on {socket_path}; requesting status",
-            fmt=stdio_format,
-        )
-        status: Mapping[str, Any] | None = None
-        try:
-            status = probe.status()
-            _stdio_info(
-                "koru autonomous: autopilot daemon status → "
-                + _daemon_status_log_summary(status),
-                fmt=stdio_format,
-            )
-        except (OSError, RuntimeError, TimeoutError) as exc:
-            _stdio_info(
-                f"koru autonomous: autopilot daemon status failed ({exc}); restarting",
-                fmt=stdio_format,
-            )
-        compatible, reason = _daemon_status_compatible(status)
-        if compatible:
-            _stdio_info(
-                f"koru autonomous: reusing autopilot daemon on {socket_path} ({reason})",
-                fmt=stdio_format,
-            )
-            return build_ide_client(socket_path=socket_path), None, None
-        _stdio_info(
-            f"koru autonomous: restarting stale autopilot daemon on {socket_path} ({reason})",
-            fmt=stdio_format,
-        )
-        if not _stop_reused_daemon(probe, socket_path, stdio_format=stdio_format):
-            _stdio_info(
-                "koru autonomous: stale autopilot daemon did not stop; reusing existing socket",
-                fmt=stdio_format,
-            )
-            return build_ide_client(socket_path=socket_path), None, None
-        _stdio_info(
-            f"koru autonomous: stale autopilot daemon stopped; starting replacement on {socket_path}",
-            fmt=stdio_format,
-        )
-    else:
-        _stdio_info(
-            f"koru autonomous: no autopilot daemon replied on {socket_path}; starting daemon",
-            fmt=stdio_format,
-        )
-
-    daemon = AutopilotDaemon(
-        socket_path=socket_path,
+    return _autonomous_daemon.start_or_reuse_daemon(
         project=project,
-        log=lambda m: _stdio_info(m, fmt=stdio_format),
+        socket_path=socket_path,
+        stdio_format=stdio_format,
+        stdio_info=_stdio_info,
+        build_client=build_ide_client,
+        daemon_factory=AutopilotDaemon,
+        thread_factory=threading.Thread,
+        current_version=_current_koru_version,
+        plugin_rows_summary=_plugin_rows_log_summary,
+        monotonic=time.monotonic,
+        sleep=time.sleep,
     )
-    daemon.start()
-    thread = threading.Thread(target=daemon.serve_forever, daemon=True)
-    thread.start()
-    time.sleep(0.05)
-    _stdio_info(f"koru autonomous: started autopilot daemon on {socket_path}", fmt=stdio_format)
-    return build_ide_client(socket_path=socket_path), daemon, thread
 
 
 def _plugin_rows_log_summary(rows: object) -> str:
@@ -1034,27 +961,14 @@ def _setup_autonomous_session(
     args: argparse.Namespace,
 ) -> tuple[str, Path, int]:
     """Initialize autonomous session and return correlation_id, project path, and guard_rc."""
-    _env_apply_autoloop_defaults(args)
-    correlation_id = str(uuid.uuid4())
-    project = args.project.resolve()
-    project.mkdir(parents=True, exist_ok=True)
-    guard_rc = _guard_existing_autonomous_processes(args, project)
-    os.environ["KORU_STDIO_FORMAT"] = args.emit_events
-    if args.emit_events == "jsonl":
-        write_stdio_event(
-            sys.stdout,
-            event_type="SessionStarted",
-            correlation_id=correlation_id,
-            payload={
-                "project": str(project),
-                "ticket_sources": args.ticket_sources,
-                "max_cycles": args.max_cycles,
-                "max_iterations": args.max_iterations,
-                "sleep_seconds": args.sleep_seconds,
-            },
-        )
-    _ensure_init(project, force=args.force_init, stdio_format=args.emit_events)
-    return correlation_id, project, guard_rc
+    return _autonomous_runtime.setup_autonomous_session(
+        args,
+        apply_env_defaults=_env_apply_autoloop_defaults,
+        uuid_factory=uuid.uuid4,
+        guard_existing_processes=_guard_existing_autonomous_processes,
+        ensure_init=_ensure_init,
+        write_event=write_stdio_event,
+    )
 
 
 def _setup_autopilot_daemon(
@@ -1062,43 +976,16 @@ def _setup_autopilot_daemon(
     project: Path,
 ) -> tuple[IDEControlClient | None, AutopilotDaemon | None, threading.Thread | None, Path | None]:
     """Setup autopilot daemon if enabled."""
-    client: IDEControlClient | None = None
-    daemon: AutopilotDaemon | None = None
-    thread: threading.Thread | None = None
-    socket_path: Path | None = None
-    if args.enable_autopilot:
-        lane = _apply_agent_lane_environ(project, args.agent_lane)
-        autopilot_ide, _ = resolve_autopilot_ide_for_autonomous(
-            args.autopilot_ide,
-            lane,
-            resolve_ide_route_fn=resolve_ide_route,
-        )
-        env_socket = (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip()
-        env_instance_before = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
-        socket_source = "cli --socket" if args.socket else "default socket"
-        if env_socket and not args.socket:
-            socket_source = "env:KORU_AUTOPILOT_SOCKET"
-        elif env_instance_before and not args.socket:
-            socket_source = f"env:KORU_AUTOPILOT_INSTANCE={env_instance_before}"
-        if (
-            autopilot_ide
-            and "KORU_AUTOPILOT_INSTANCE" not in os.environ
-            and "KORU_AUTOPILOT_SOCKET" not in os.environ
-        ):
-            os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
-            socket_source = f"autopilot ide={autopilot_ide} → KORU_AUTOPILOT_INSTANCE"
-        socket_path = (args.socket or default_socket_path()).resolve()
-        _stdio_info(
-            "koru autonomous: autopilot socket decision: "
-            f"lane={lane} ide={autopilot_ide} source={socket_source} path={socket_path}",
-            fmt=args.emit_events,
-        )
-        client, daemon, thread = _start_or_reuse_daemon(
-            project=project,
-            socket_path=socket_path,
-            stdio_format=args.emit_events,
-        )
-    return client, daemon, thread, socket_path
+    return _autonomous_runtime.setup_autopilot_daemon(
+        args,
+        project,
+        apply_agent_lane_environ=_apply_agent_lane_environ,
+        resolve_autopilot_ide=resolve_autopilot_ide_for_autonomous,
+        resolve_ide_route_fn=resolve_ide_route,
+        default_socket_path=default_socket_path,
+        start_or_reuse_daemon=_start_or_reuse_daemon,
+        stdio_info=_stdio_info,
+    )
 
 
 def _enable_autonomous_strict_plugin_policy(args: argparse.Namespace) -> None:
@@ -1349,16 +1236,15 @@ def _cleanup_autonomous_session(
     stdio_format: str,
 ) -> None:
     """Clean up autonomous session resources."""
-    if previous_stdio_format_env is None:
-        os.environ.pop("KORU_STDIO_FORMAT", None)
-    else:
-        os.environ["KORU_STDIO_FORMAT"] = previous_stdio_format_env
-    signal.signal(signal.SIGTERM, previous_sigterm)
-    if daemon is not None:
-        daemon.stop()
-    if thread is not None:
-        thread.join(timeout=2.0)
-    _stop_process(wup_process, "WUP watcher", stdio_format=stdio_format)
+    _autonomous_runtime.cleanup_autonomous_session(
+        previous_stdio_format_env,
+        previous_sigterm,
+        daemon,
+        thread,
+        wup_process,
+        stdio_format,
+        stop_process=_stop_process,
+    )
 
 
 def _select_and_log_cycle_profile(

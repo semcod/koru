@@ -292,6 +292,7 @@ class AutopilotDaemon:
         client = _Client(sock=conn, addr=f"fd{conn.fileno()}")
         self._clients[conn.fileno()] = client
         self._sel.register(conn, selectors.EVENT_READ, data=client)
+        self.log(f"client connected: {client.addr}")
 
     def _on_readable(self, client: _Client) -> None:
         try:
@@ -301,6 +302,7 @@ class AutopilotDaemon:
             self._drop(client)
             return
         if not chunk:
+            self.log(f"client disconnected: {client.addr}")
             self._drop(client)
             return
         client.buf.extend(chunk)
@@ -717,6 +719,7 @@ class AutopilotDaemon:
             del self._plugin_rejections[:-20]
 
     def _handle_status(self, client: _Client, msg: Message) -> None:
+        self.log(f"status request from {client.addr} role={client.role}")
         if client.role == "unknown":
             client.role = "cli"
         plugins = [row.to_dict() for row in self._plugin_router.status_rows()]
@@ -1013,6 +1016,7 @@ class AutopilotDaemon:
         self.stop()
 
     def _handle_ping(self, client: _Client, msg: Message) -> None:
+        self.log(f"ping from {client.addr} role={client.role}")
         if client.role == "unknown":
             client.role = "cli"
         self._send(client, ack(msg.id or "ping", info={"pong": True}).encode())

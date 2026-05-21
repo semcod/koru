@@ -14,14 +14,14 @@ import subprocess
 import sys
 import threading
 import time
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
 from koru.ide_client import IDEControlClient, build_ide_client
 from koruide.daemon import AutopilotDaemon
-from koruide.drive_orchestrator import DriveOrchestrator
+from koru import autonomous_plugin
 
 
 def _stdio_info(msg: str, *, fmt: str) -> None:
@@ -52,8 +52,12 @@ def _daemon_status_version(status: Mapping[str, Any] | None) -> str | None:
     return None
 
 
-def _daemon_status_compatible(status: Mapping[str, Any] | None) -> tuple[bool, str]:
-    expected = _current_koru_version()
+def daemon_status_compatible(
+    status: Mapping[str, Any] | None,
+    *,
+    current_version: Callable[[], str | None] = _current_koru_version,
+) -> tuple[bool, str]:
+    expected = current_version()
     actual = _daemon_status_version(status)
     if expected is None:
         return True, "current koru package version unknown"
@@ -64,26 +68,47 @@ def _daemon_status_compatible(status: Mapping[str, Any] | None) -> tuple[bool, s
     return True, f"daemon version {actual}"
 
 
+def daemon_status_log_summary(
+    status: Mapping[str, Any] | None,
+    *,
+    plugin_rows_summary: Callable[[object], str] = autonomous_plugin.plugin_rows_log_summary,
+) -> str:
+    if not status:
+        return "status=unavailable"
+    version_label = _daemon_status_version(status) or "-"
+    plugins = status.get("plugins")
+    plugin_label = plugin_rows_summary(plugins if isinstance(plugins, list) else [])
+    return f"version={version_label} plugins={plugin_label}"
+
+
 def _stop_reused_daemon(
     client: IDEControlClient,
     socket_path: Path,
     *,
     stdio_format: str,
+    stdio_info: Callable[..., Any] = _stdio_info,
+    build_client: Callable[..., IDEControlClient] = build_ide_client,
+    monotonic: Callable[[], float] = time.monotonic,
+    sleep: Callable[[float], None] = time.sleep,
     timeout_seconds: float = 2.0,
 ) -> bool:
     try:
         client.shutdown()
+        stdio_info(
+            f"koru autonomous: requested shutdown of stale autopilot daemon on {socket_path}",
+            fmt=stdio_format,
+        )
     except (OSError, RuntimeError, TimeoutError) as exc:
-        _stdio_info(
+        stdio_info(
             f"koru autonomous: stale autopilot daemon shutdown failed ({exc})",
             fmt=stdio_format,
         )
-    deadline = time.monotonic() + timeout_seconds
-    probe = build_ide_client(socket_path=socket_path, timeout=0.2)
-    while time.monotonic() < deadline:
+    deadline = monotonic() + timeout_seconds
+    probe = build_client(socket_path=socket_path, timeout=0.2)
+    while monotonic() < deadline:
         if not probe.is_running():
             return True
-        time.sleep(0.1)
+        sleep(0.1)
     return not probe.is_running()
 
 
@@ -92,100 +117,82 @@ def start_or_reuse_daemon(
     project: Path,
     socket_path: Path,
     stdio_format: str = "human",
+    stdio_info: Callable[..., Any] = _stdio_info,
+    build_client: Callable[..., IDEControlClient] = build_ide_client,
+    daemon_factory: Callable[..., AutopilotDaemon] = AutopilotDaemon,
+    thread_factory: Callable[..., threading.Thread] = threading.Thread,
+    current_version: Callable[[], str | None] = _current_koru_version,
+    plugin_rows_summary: Callable[[object], str] = autonomous_plugin.plugin_rows_log_summary,
+    monotonic: Callable[[], float] = time.monotonic,
+    sleep: Callable[[float], None] = time.sleep,
 ) -> tuple[IDEControlClient, AutopilotDaemon | None, threading.Thread | None]:
     socket_path.parent.mkdir(parents=True, exist_ok=True)
-    probe = build_ide_client(socket_path=socket_path, timeout=0.5)
+    probe = build_client(socket_path=socket_path, timeout=0.5)
+    stdio_info(f"koru autonomous: probing autopilot daemon on {socket_path}", fmt=stdio_format)
     if probe.is_running():
+        stdio_info(
+            f"koru autonomous: autopilot daemon ping ok on {socket_path}; requesting status",
+            fmt=stdio_format,
+        )
         status: Mapping[str, Any] | None = None
         try:
             status = probe.status()
+            stdio_info(
+                "koru autonomous: autopilot daemon status \u2192 "
+                + daemon_status_log_summary(status, plugin_rows_summary=plugin_rows_summary),
+                fmt=stdio_format,
+            )
         except (OSError, RuntimeError, TimeoutError) as exc:
-            _stdio_info(
+            stdio_info(
                 f"koru autonomous: autopilot daemon status failed ({exc}); restarting",
                 fmt=stdio_format,
             )
-        compatible, reason = _daemon_status_compatible(status)
+        compatible, reason = daemon_status_compatible(status, current_version=current_version)
         if compatible:
-            _stdio_info(
+            stdio_info(
                 f"koru autonomous: reusing autopilot daemon on {socket_path} ({reason})",
                 fmt=stdio_format,
             )
-            return build_ide_client(socket_path=socket_path), None, None
-        _stdio_info(
+            return build_client(socket_path=socket_path), None, None
+        stdio_info(
             f"koru autonomous: restarting stale autopilot daemon on {socket_path} ({reason})",
             fmt=stdio_format,
         )
-        if not _stop_reused_daemon(probe, socket_path, stdio_format=stdio_format):
-            _stdio_info(
+        if not _stop_reused_daemon(
+            probe,
+            socket_path,
+            stdio_format=stdio_format,
+            stdio_info=stdio_info,
+            build_client=build_client,
+            monotonic=monotonic,
+            sleep=sleep,
+        ):
+            stdio_info(
                 "koru autonomous: stale autopilot daemon did not stop; reusing existing socket",
                 fmt=stdio_format,
             )
-            return build_ide_client(socket_path=socket_path), None, None
+            return build_client(socket_path=socket_path), None, None
+        stdio_info(
+            f"koru autonomous: stale autopilot daemon stopped; starting replacement on {socket_path}",
+            fmt=stdio_format,
+        )
+    else:
+        stdio_info(
+            f"koru autonomous: no autopilot daemon replied on {socket_path}; starting daemon",
+            fmt=stdio_format,
+        )
 
-    daemon = AutopilotDaemon(
+    daemon = daemon_factory(
         socket_path=socket_path,
         project=project,
-        log=lambda m: _stdio_info(m, fmt=stdio_format),
+        log=lambda m: stdio_info(m, fmt=stdio_format),
     )
     daemon.start()
-    thread = threading.Thread(target=daemon.serve_forever, daemon=True)
+    thread = thread_factory(target=daemon.serve_forever, daemon=True)
     thread.start()
-    time.sleep(0.05)
-    _stdio_info(f"koru autonomous: started autopilot daemon on {socket_path}", fmt=stdio_format)
-    return build_ide_client(socket_path=socket_path), daemon, thread
-
-
-def _status_has_autopilot_plugin(status: Mapping[str, Any], ide: str) -> bool:
-    plugins = status.get("plugins")
-    if not isinstance(plugins, list):
-        return False
-    for plugin in plugins:
-        if not isinstance(plugin, Mapping):
-            continue
-        plugin_ide = plugin.get("ide")
-        if plugin_ide == ide or ide == "auto":
-            version = plugin.get("version")
-            version_info = DriveOrchestrator.plugin_version_info(
-                plugin_ide=str(plugin_ide) if plugin_ide else None,
-                connected_version=version if isinstance(version, str) else None,
-                protocol_version=(
-                    plugin.get("protocolVersion")
-                    if isinstance(plugin.get("protocolVersion"), int)
-                    else None
-                ),
-                capabilities=(
-                    plugin.get("capabilities")
-                    if isinstance(plugin.get("capabilities"), list)
-                    else None
-                ),
-            )
-            if DriveOrchestrator.should_block_plugin_version(version_info):
-                continue
-            return True
-    return False
-
-
-def wait_for_autopilot_plugin(
-    client: IDEControlClient,
-    ide: str,
-    *,
-    timeout_seconds: float,
-    interval_seconds: float = 0.25,
-) -> bool:
-    if timeout_seconds <= 0:
-        return False
-    deadline = time.monotonic() + timeout_seconds
-    while time.monotonic() < deadline:
-        try:
-            if _status_has_autopilot_plugin(client.status(), ide):
-                return True
-        except OSError:
-            pass
-        time.sleep(interval_seconds)
-    try:
-        return _status_has_autopilot_plugin(client.status(), ide)
-    except OSError:
-        return False
+    sleep(0.05)
+    stdio_info(f"koru autonomous: started autopilot daemon on {socket_path}", fmt=stdio_format)
+    return build_client(socket_path=socket_path), daemon, thread
 
 
 def _stop_process(proc: subprocess.Popen | None, kind: str, *, stdio_format: str) -> None:
@@ -260,9 +267,11 @@ def cleanup_autonomous_session(
 
 __all__ = [
     "start_or_reuse_daemon",
-    "wait_for_autopilot_plugin",
     "restart_daemon_if_needed",
     "cleanup_autonomous_session",
-    "_daemon_status_compatible",
-    "_status_has_autopilot_plugin",
+    "daemon_status_compatible",
+    "daemon_status_log_summary",
+    "_current_koru_version",
+    "_daemon_status_version",
+    "_stop_reused_daemon",
 ]

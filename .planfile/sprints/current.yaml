@@ -78,10 +78,10 @@ sprint:
 
         '
       execution:
-        attempt: 0
+        attempt: 1
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -4539,6 +4539,7 @@ sprint:
         mode: interactive
       files:
       - src/koru/autonomous.py
+      - src/koru/autonomous_daemon.py
       - project/analysis.toon.yaml
       history:
       - action: created
@@ -5506,6 +5507,18 @@ sprint:
           by responsibility.'
         source: koru task
         timestamp: '2026-05-21T14:27:45.247019+00:00'
+      - action: update
+        changes:
+        - execution
+        - files
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: codex
+        status: done
+        timestamp: '2026-05-21T17:42:55.276494+00:00'
       id: STARTER-084
       inputs:
         api_headers: {}
@@ -5526,7 +5539,12 @@ sprint:
       name: 'Split god module: src/koru/autonomous.py'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - Moved autopilot daemon lifecycle/status reuse logic into `src/koru/autonomous_daemon.py`;
+          `src/koru/autonomous.py` now keeps compatibility wrappers that inject existing
+          monkeypatch points.
+        - 'Validation: 152 passed, 1 skipped for autonomous/startup/diagnostics/docker-matrix/drive-orchestrator
+          focused suite after daemon lifecycle split.'
       priority: high
       source:
         context:
@@ -5537,9 +5555,9 @@ sprint:
         timestamp: '2026-05-21T14:27:45.247019+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T14:27:45.247019+00:00'
+      updated_at: '2026-05-21T17:42:55.276494+00:00'
     STARTER-085:
       blocked_by: []
       blocks: []

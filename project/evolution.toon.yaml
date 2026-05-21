@@ -1,10 +1,10 @@
-# code2llm/evolution | 1491 func | 137f | 2026-05-21
-# generated in 0.01s
+# code2llm/evolution | 1537 func | 138f | 2026-05-21
+# generated in 0.00s
 
 NEXT[4] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous.py
-      WHY: 1887L, 1 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 28305
+      WHY: 1837L, 1 classes, max CC=13
+      EFFORT: ~4h  IMPACT: 23881
 
   [2] !! SPLIT           src/koru/autonomous_cycle.py
       WHY: 1466L, 2 classes, max CC=14
@@ -20,14 +20,14 @@ NEXT[4] (ranked by impact):
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/autonomous.py may break 53 import paths
+  ⚠ Splitting src/koru/autonomous.py may break 57 import paths
   ⚠ Splitting src/koru/autonomous_cycle.py may break 52 import paths
   ⚠ Splitting src/koruapi/dashboard_serve.py may break 15 import paths
 
 METRICS-TARGET:
-  CC̄:          4.2 → ≤2.9
+  CC̄:          4.1 → ≤2.9
   max-CC:      20 → ≤10
-  god-modules: 18 → 0
+  god-modules: 19 → 0
   high-CC(≥15): 2 → ≤1
   hub-types:   0 → ≤0
 
@@ -56,4 +56,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.2 → now CC̄=4.2
+  prev CC̄=4.2 → now CC̄=4.1

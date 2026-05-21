@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.183', 'python').
+project_metadata('koru', '0.1.184', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 681, 'less').
@@ -76,11 +76,11 @@ project_file('src/koru/agent_cli_helpers.py', 88, 'python').
 project_file('src/koru/agents.py', 323, 'python').
 project_file('src/koru/api/__init__.py', 10, 'python').
 project_file('src/koru/autoloop_cli.py', 91, 'python').
-project_file('src/koru/autonomous.py', 1912, 'python').
+project_file('src/koru/autonomous.py', 1838, 'python').
 project_file('src/koru/autonomous_auto_pipeline.py', 256, 'python').
 project_file('src/koru/autonomous_checkpoint.py', 138, 'python').
 project_file('src/koru/autonomous_cycle.py', 1467, 'python').
-project_file('src/koru/autonomous_daemon.py', 269, 'python').
+project_file('src/koru/autonomous_daemon.py', 278, 'python').
 project_file('src/koru/autonomous_diagnostics.py', 263, 'python').
 project_file('src/koru/autonomous_env.py', 26, 'python').
 project_file('src/koru/autonomous_parser.py', 399, 'python').
@@ -212,7 +212,7 @@ project_file('src/koruide/__init__.py', 68, 'python').
 project_file('src/koruide/audit.py', 155, 'python').
 project_file('src/koruide/client.py', 129, 'python').
 project_file('src/koruide/config.py', 122, 'python').
-project_file('src/koruide/daemon.py', 1042, 'python').
+project_file('src/koruide/daemon.py', 1045, 'python').
 project_file('src/koruide/drive_orchestrator.py', 237, 'python').
 project_file('src/koruide/host_setup.py', 227, 'python').
 project_file('src/koruide/ide.py', 704, 'python').
@@ -426,12 +426,12 @@ python_function('src/koru/autonomous.py', '_resolve_autopilot_ide', 1, 1, 1).
 python_function('src/koru/autonomous.py', '_apply_agent_lane_environ', 2, 8, 8).
 python_function('src/koru/autonomous.py', '_build_parser', 0, 1, 7).
 python_function('src/koru/autonomous.py', '_ensure_init', 1, 4, 3).
-python_function('src/koru/autonomous.py', '_current_koru_version', 0, 2, 1).
-python_function('src/koru/autonomous.py', '_daemon_status_version', 1, 7, 2).
-python_function('src/koru/autonomous.py', '_daemon_status_compatible', 1, 4, 2).
-python_function('src/koru/autonomous.py', '_daemon_status_log_summary', 1, 4, 4).
-python_function('src/koru/autonomous.py', '_stop_reused_daemon', 2, 4, 6).
-python_function('src/koru/autonomous.py', '_start_or_reuse_daemon', 0, 5, 12).
+python_function('src/koru/autonomous.py', '_current_koru_version', 0, 1, 1).
+python_function('src/koru/autonomous.py', '_daemon_status_version', 1, 1, 1).
+python_function('src/koru/autonomous.py', '_daemon_status_compatible', 1, 1, 1).
+python_function('src/koru/autonomous.py', '_daemon_status_log_summary', 1, 1, 1).
+python_function('src/koru/autonomous.py', '_stop_reused_daemon', 2, 1, 1).
+python_function('src/koru/autonomous.py', '_start_or_reuse_daemon', 0, 1, 1).
 python_function('src/koru/autonomous.py', '_plugin_rows_log_summary', 1, 1, 1).
 python_function('src/koru/autonomous.py', '_plugin_status_decision', 2, 1, 1).
 python_function('src/koru/autonomous.py', '_status_has_autopilot_plugin', 2, 1, 1).
@@ -543,11 +543,10 @@ python_function('src/koru/autonomous_cycle.py', 'run_cycle', 0, 5, 23).
 python_function('src/koru/autonomous_daemon.py', '_stdio_info', 1, 1, 1).
 python_function('src/koru/autonomous_daemon.py', '_current_koru_version', 0, 2, 1).
 python_function('src/koru/autonomous_daemon.py', '_daemon_status_version', 1, 7, 2).
-python_function('src/koru/autonomous_daemon.py', '_daemon_status_compatible', 1, 4, 2).
+python_function('src/koru/autonomous_daemon.py', 'daemon_status_compatible', 1, 4, 2).
+python_function('src/koru/autonomous_daemon.py', 'daemon_status_log_summary', 1, 4, 4).
 python_function('src/koru/autonomous_daemon.py', '_stop_reused_daemon', 2, 4, 6).
-python_function('src/koru/autonomous_daemon.py', 'start_or_reuse_daemon', 0, 5, 11).
-python_function('src/koru/autonomous_daemon.py', '_status_has_autopilot_plugin', 2, 11, 5).
-python_function('src/koru/autonomous_daemon.py', 'wait_for_autopilot_plugin', 2, 6, 4).
+python_function('src/koru/autonomous_daemon.py', 'start_or_reuse_daemon', 0, 5, 12).
 python_function('src/koru/autonomous_daemon.py', '_stop_process', 2, 4, 4).
 python_function('src/koru/autonomous_daemon.py', 'restart_daemon_if_needed', 7, 10, 6).
 python_function('src/koru/autonomous_daemon.py', 'cleanup_autonomous_session', 6, 4, 5).
@@ -2476,7 +2475,7 @@ python_method('AutopilotDaemon', '_configure_plugin_client', 5, 1, 1).
 python_method('AutopilotDaemon', '_log_plugin_hello_accepted', 6, 6, 4).
 python_method('AutopilotDaemon', '_handle_hello', 2, 5, 12).
 python_method('AutopilotDaemon', '_log_rejected_plugin_connection', 0, 6, 8).
-python_method('AutopilotDaemon', '_handle_status', 2, 6, 12).
+python_method('AutopilotDaemon', '_handle_status', 2, 6, 13).
 python_method('AutopilotDaemon', '_plugin_ack_needs_os_fallback', 0, 1, 1).
 python_method('AutopilotDaemon', '_relay_os_fallback_ack', 6, 3, 7).
 python_method('AutopilotDaemon', '_relay_message_sent_ack', 2, 3, 9).

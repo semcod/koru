@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 0.03s
+%% generated in 0.01s
     subgraph plugins__koru_autopilot_jetbrains
         plugins__koru_autopilot_jetbrains__settings__gradle__gradlePluginPortal["gradlePluginPortal"]
         plugins__koru_autopilot_jetbrains__settings__gradle__mavenCentral["mavenCentral"]
@@ -399,14 +399,14 @@ flowchart TD
         src__koruide__client__KoruIDEClient__status["status"]
         src__koruide__client__KoruIDEClient__shutdown["shutdown"]
         src__koruide__client__build_client["build_client"]
-        src__koruide__plugin_router__PluginStatusRow__to_dict["to_dict"]
-        src__koruide__plugin_router__PluginRouter____init__["__init__"]
-        src__koruide__plugin_router__PluginRouter__plugin_for["plugin_for"]
-        src__koruide__plugin_router__PluginRouter__drop_stale_plugins["drop_stale_plugins"]
-        src__koruide__plugin_router__PluginRouter__status_rows["status_rows"]
-        src__koruide__utils__resolve_xdg_path["resolve_xdg_path"]
-        src__koruide__os_injector__default_config_path["default_config_path"]
-        src__koruide__os_injector__iter_config_paths["iter_config_paths"]
+        src__koruide__injector___submit_key_for["_submit_key_for"]
+        src__koruide__injector___which["_which"]
+        src__koruide__injector___session_type["_session_type"]
+        src__koruide__injector___forced_injector_backend["_forced_injector_backend"]
+        src__koruide__injector___ydotool_enter_keycode["_ydotool_enter_keycode"]
+        src__koruide__injector___ydotool_submit_mode["_ydotool_submit_mode"]
+        src__koruide__injector___ydotool_ctrl_keycode["_ydotool_ctrl_keycode"]
+        src__koruide__injector___extra_enter_count["_extra_enter_count"]
     end
     services__healing_webhook__app___enrich_ticket_with_vallm --> services__healing_webhook__app___resolve_affected_files
     services__healing_webhook__app___enrich_ticket_with_vallm --> services__healing_webhook__app___run_vallm_check
@@ -602,6 +602,14 @@ flowchart TD
     src__koruide__host_setup___print_setup_host_install_details --> scripts__koru_soak_monitor__print
     src__koruide__client__KoruIDEClient____init__ --> src__koruide__socket__default_socket_path
     src__koruide__client__KoruIDEClient__request --> src__koruide__protocol__decode
+    src__koruide__injector___submit_key_for --> src__koruide__config__cached_config
+    src__koruide__injector__Injector___candidate_backends --> src__koruide__injector___forced_injector_backend
+    src__koruide__injector__Injector___type_with_backend --> src__koruide__injector___extra_enter_count
+    src__koruide__injector__Injector___type_with_backend --> src__koruide__injector___ydotool_enter_keycode
+    src__koruide__injector__Injector___type_with_backend --> src__koruide__injector___ydotool_submit_mode
+    src__koruide__injector__Injector___type_with_backend --> src__koruide__injector___ydotool_ctrl_keycode
+    src__koruide__injector__Injector__type_text --> src__koruide__injector___submit_key_for
+    src__koruide__injector__Injector__submit_only --> src__koruide__injector___submit_key_for
     src__koruide__os_injector__try_load_profile --> src__koruide__os_injector__iter_config_paths
     src__koruide__os_injector__try_load_profile --> src__koruide__os_injector__load_profile
     src__koruide__os_injector__load_profile --> src__koruide__os_injector___read_json
@@ -1000,16 +1008,8 @@ flowchart TD
     src__koru__autonomous_cycle___autopilot_terminal_conflict_reason --> src__koru__autonomous_cycle___allow_cross_ide_autopilot
     src__koru__autonomous_cycle___autopilot_terminal_conflict_reason --> src__koruide__ide__normalize_ide_id
     src__koru__autonomous_cycle___autopilot_terminal_conflict_reason --> src__koruide__ide__detect_terminal_host_ide_id
-    src__koru__autonomous_cycle___autopilot_terminal_conflict_reason --> src__koruide__ide__supports_vscode_extension_plugin
-    src__koru__autonomous_cycle___client_has_usable_plugin --> src__koru__autonomous_cycle___client_plugin_rows
-    src__koru__autonomous_cycle___client_has_usable_plugin --> src__koru__autonomous_cycle___wanted_plugin_ide
-    src__koru__autonomous_cycle___client_has_usable_plugin --> src__koru__autonomous_cycle___plugin_row_version_block_reason
-    src__koru__autonomous_cycle___client_has_usable_plugin --> src__koru__autonomous_cycle___plugin_row_matches_ide
-    src__koru__autonomous_cycle___client_has_usable_plugin --> src__koru__autonomous_cycle___missing_plugin_label
-    src__koru__autonomous_cycle___run_command_check --> src__koru__autonomous_cycle___stdio_info
-    src__koru__autonomous_cycle___create_diagnostic_ticket --> src__koru__tasks__create_nl_task
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class src__koru__autonomous__autonomous_main,src__koru__autonomous_plugin__plugin_status_decision highCC
+    class src__koru__autonomous_plugin__plugin_status_decision,src__koruide__ide__resolve_drive_target highCC
     class services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,services__healing_webhook__ticket_builder__build_ticket_payload,src__korudsl__cli__main,src__korudsl__transform__library_from_any,src__korudsl__library__convert_goals_json_to_library,src__korudsl__library___emit_step,src__korudsl__library___emit_goal,src__koruapi__runtime_insights___run_ps,src__koruapi__runtime_insights___active_tools,src__koruapi__cli__main,src__koruapi__server___parse_invoke_request,src__koruapi__topology_post__apply_topology_post_update,src__koruapi__dashboard_serve___list_tickets,src__koruapi__dashboard_serve___bulk_waiting_input_action,src__koruapi__dashboard_serve___try_stop_prior_koru_serve_listener,src__koruapi__dashboard_serve__bind_serve_server,src__koruapi__mcp_server___monitor_subprocess_oom,src__koruapi__mcp_server___parse_tickets_json,src__koruapi__mcp_server___tickets_for_status_filter,src__koruapi__mcp_server__tool_run_ticket,src__koruapi__mcp_server___run_single_gate,src__koruapi__mcp_server__tool_propose_edits,src__koruide__protocol__decode,src__koruide__host_setup___human_followups medCC

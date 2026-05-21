@@ -1,5 +1,5 @@
-# koru | 316f 67184L | python:251,shell:52,javascript:6,typescript:6,less:1 | 2026-05-21
-# stats: 1963 func | 198 cls | 316 mod | CC̄=4.1 | critical:139 | cycles:0
+# koru | 316f 67122L | python:251,shell:52,javascript:6,typescript:6,less:1 | 2026-05-21
+# stats: 1962 func | 198 cls | 316 mod | CC̄=4.1 | critical:138 | cycles:0
 # alerts[5]: CC plugin_status_decision=20; CC test_autonomy_config_from_env=16; CC resolve_drive_target=15; CC test_auto_pipeline_profiles_escalate_when_queue_stays_idle=15; CC test_autonomy_config_defaults=15
 # hotspots[5]: _build_handler fan=31; _build_handler fan=28; run_cycle fan=23; init_project fan=21; test_repeated_stale_plugin_hello_rejections_are_log_throttled fan=21
 # evolution: baseline
@@ -79,11 +79,11 @@ M[316]:
   src/koru/agents.py,323
   src/koru/api/__init__.py,10
   src/koru/autoloop_cli.py,91
-  src/koru/autonomous.py,1912
+  src/koru/autonomous.py,1838
   src/koru/autonomous_auto_pipeline.py,256
   src/koru/autonomous_checkpoint.py,138
   src/koru/autonomous_cycle.py,1467
-  src/koru/autonomous_daemon.py,269
+  src/koru/autonomous_daemon.py,278
   src/koru/autonomous_diagnostics.py,263
   src/koru/autonomous_env.py,26
   src/koru/autonomous_parser.py,399
@@ -215,7 +215,7 @@ M[316]:
   src/koruide/audit.py,155
   src/koruide/client.py,129
   src/koruide/config.py,122
-  src/koruide/daemon.py,1042
+  src/koruide/daemon.py,1045
   src/koruide/drive_orchestrator.py,237
   src/koruide/host_setup.py,227
   src/koruide/ide.py,704
@@ -590,15 +590,14 @@ D:
     _emit_cycle_completion_events(project;state;cycle;queue_result;diag_result;wup_health;autopilot_status;autopilot_ide;autopilot_backend;autopilot_drive_kind;cycle_telemetry;scan_after_idle_queue;scan_after_idle_min_interval_seconds;autopilot_skip_drive_idle_streak;_hp;_emit)
     run_cycle()
   src/koru/autonomous_daemon.py:
-    e: _stdio_info,_current_koru_version,_daemon_status_version,_daemon_status_compatible,_stop_reused_daemon,start_or_reuse_daemon,_status_has_autopilot_plugin,wait_for_autopilot_plugin,_stop_process,restart_daemon_if_needed,cleanup_autonomous_session
+    e: _stdio_info,_current_koru_version,_daemon_status_version,daemon_status_compatible,daemon_status_log_summary,_stop_reused_daemon,start_or_reuse_daemon,_stop_process,restart_daemon_if_needed,cleanup_autonomous_session
     _stdio_info(msg)
     _current_koru_version()
     _daemon_status_version(status)
-    _daemon_status_compatible(status)
+    daemon_status_compatible(status)
+    daemon_status_log_summary(status)
     _stop_reused_daemon(client;socket_path)
     start_or_reuse_daemon()
-    _status_has_autopilot_plugin(status;ide)
-    wait_for_autopilot_plugin(client;ide)
     _stop_process(proc;kind)
     restart_daemon_if_needed(args;client;socket_path;daemon;thread;autopilot_socket_observed_at_boot;project)
     cleanup_autonomous_session(previous_stdio_format_env;previous_sigterm;daemon;thread;wup_process;stdio_format)

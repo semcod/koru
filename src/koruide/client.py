@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import socket
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -20,10 +21,12 @@ class KoruIDEClient:
         client: Any | None = None,
         socket_path: Path | None = None,
         timeout: float = 5.0,
+        log: Callable[[str], None] | None = None,
     ) -> None:
         self._client = client
         self.socket_path = socket_path or default_socket_path()
         self.timeout = timeout
+        self._log = log
 
     def _connect(self) -> socket.socket:
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -56,12 +59,19 @@ class KoruIDEClient:
         if self._client is not None:
             return bool(self._client.is_running())
         if not self.socket_path.exists():
+            if self._log:
+                self._log(f"client: socket missing {self.socket_path}")
             return False
         try:
             reply = self.request(Message(type="ping", id="health"))
-        except (OSError, RuntimeError):
+        except (OSError, RuntimeError) as exc:
+            if self._log:
+                self._log(f"client: ping failed: {exc}")
             return False
-        return bool(reply.data.get("ok", False))
+        ok = bool(reply.data.get("ok", False))
+        if self._log:
+            self._log(f"client: ping ok={ok}")
+        return ok
 
     def drive(
         self,

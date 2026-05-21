@@ -1,14 +1,17 @@
+![koru.mp4](koru.mp4)
+
+[koru.mp4](koru.mp4)
 # koru
 
 <img src="maori-koru-bold-400w.png" width="200" alt="koru">
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.184-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$14.38-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-78.7h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.185-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$14.63-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-78.9h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $14.3771 (243 commits)
-- 👤 **Human dev:** ~$7873 (78.7h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $14.6330 (244 commits)
+- 👤 **Human dev:** ~$7891 (78.9h @ $100/h, 30min dedup)
 
 Generated on 2026-05-21 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 

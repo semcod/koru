@@ -1,7 +1,7 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.30s
-# nodes: 430 | edges: 500 | modules: 78
-# CC̄=4.1
+# generated in 0.21s
+# nodes: 434 | edges: 500 | modules: 78
+# CC̄=4.0
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
@@ -11,7 +11,7 @@ HUBS[20]:
   src.koru.autonomous_auto_pipeline._select_auto_pipeline_profile
     CC=7  in:1  out:54  total:55
   src.koru.context.render_markdown_handoff
-    CC=10  in:4  out:47  total:51
+    CC=10  in:5  out:47  total:52
   src.koruide.ide.normalize_ide_id
     CC=6  in:31  out:11  total:42
   src.koru.activity_log.activity
@@ -28,22 +28,22 @@ HUBS[20]:
     CC=12  in:0  out:32  total:32
   src.koru.autonomy.env.env_truthy
     CC=3  in:29  out:3  total:32
+  src.koru.ide_runtime.detect_running_ides
+    CC=5  in:17  out:12  total:29
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
   src.koru.autonomous_auto_pipeline._auto_value
     CC=2  in:24  out:4  total:28
-  src.koru.ide_runtime.detect_running_ides
-    CC=5  in:15  out:12  total:27
   src.koru.cli._task_main
     CC=11  in:0  out:27  total:27
+  services.healing-webhook.app._resolve_affected_files
+    CC=11  in:2  out:24  total:26
   src.koru.init.init_project
     CC=7  in:3  out:23  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
-  services.healing-webhook.app._resolve_affected_files
-    CC=11  in:2  out:24  total:26
-  src.koru.agents.detect_agent_options
-    CC=4  in:3  out:21  total:24
+  src.koru.context.build_context
+    CC=6  in:9  out:16  total:25
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -82,11 +82,10 @@ MODULES:
     print_agent_list  CC=10  out:7
     run_agent_handoff  CC=3  out:10
     try_agent_env_exports  CC=7  out:7
-  src.koru.agents  [2 funcs]
+  src.koru.agents  [1 funcs]
     detect_agent_options  CC=4  out:21
-    normalize_agent_lane_id  CC=6  out:8
   src.koru.autonomous  [1 funcs]
-    autonomous_main  CC=15  out:10
+    autonomous_main  CC=2  out:7
   src.koru.autonomous_auto_pipeline  [7 funcs]
     _argv_has_option  CC=5  out:2
     _auto_pipeline_has_pressure  CC=9  out:0
@@ -179,19 +178,13 @@ MODULES:
     resolve_ide_route  CC=10  out:10
   src.koru.ide_runtime  [1 funcs]
     detect_running_ides  CC=5  out:12
-  src.koru.init  [10 funcs]
+  src.koru.init  [6 funcs]
     _ensure_gitignore_entry  CC=8  out:12
-    _init_auto_agent_lane  CC=6  out:7
-    _read_persisted_agent_lane  CC=12  out:20
-    _remove_agent_lane_artifacts  CC=4  out:4
     _resolve_init_agent_lane  CC=4  out:4
-    _write_agent_lane_artifacts  CC=2  out:10
     _write_autopilot_host_setup_script  CC=1  out:5
     _write_policy_stub_if_absent  CC=3  out:6
     init_project  CC=7  out:23
     refresh_init_agent_lane  CC=4  out:11
-  src.koru.init_host_environment  [1 funcs]
-    write_host_environment_bundle  CC=2  out:12
   src.koru.local_service  [2 funcs]
     default_local_service_config  CC=2  out:7
     run_local_service  CC=3  out:12
@@ -396,9 +389,20 @@ MODULES:
     _try_apt_install  CC=5  out:11
   src.koruide.ide  [4 funcs]
     detect_focused_ide_id  CC=6  out:4
-    detect_terminal_host_ide_id  CC=3  out:3
+    detect_terminal_host_ide_id  CC=6  out:5
     normalize_ide_id  CC=6  out:11
     supported_autopilot_ide_ids  CC=1  out:0
+  src.koruide.injector  [10 funcs]
+    _candidate_backends  CC=6  out:13
+    _type_with_backend  CC=6  out:10
+    submit_only  CC=9  out:13
+    type_text  CC=13  out:17
+    _extra_enter_count  CC=3  out:4
+    _forced_injector_backend  CC=2  out:3
+    _submit_key_for  CC=1  out:2
+    _ydotool_ctrl_keycode  CC=2  out:3
+    _ydotool_enter_keycode  CC=2  out:3
+    _ydotool_submit_mode  CC=3  out:3
   src.koruide.os_injector  [27 funcs]
     _clipboard_backend  CC=3  out:2
     _cmd_timeout_seconds  CC=3  out:4

@@ -21,7 +21,7 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.183`
+- **version**: `0.1.184`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -41,7 +41,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.183;
+  version: 0.1.184;
 }
 
 dependencies {
@@ -1693,7 +1693,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.183
+  version: 0.1.184
   env: local
 ```
 
@@ -1776,8 +1776,8 @@ pip install -e .[dev]
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 316f 67184L | python:251,shell:52,javascript:6,typescript:6,less:1 | 2026-05-21
-# stats: 1963 func | 198 cls | 316 mod | CC̄=4.1 | critical:139 | cycles:0
+# koru | 316f 67122L | python:251,shell:52,javascript:6,typescript:6,less:1 | 2026-05-21
+# stats: 1962 func | 198 cls | 316 mod | CC̄=4.1 | critical:138 | cycles:0
 # alerts[5]: CC plugin_status_decision=20; CC test_autonomy_config_from_env=16; CC resolve_drive_target=15; CC test_auto_pipeline_profiles_escalate_when_queue_stays_idle=15; CC test_autonomy_config_defaults=15
 # hotspots[5]: _build_handler fan=31; _build_handler fan=28; run_cycle fan=23; init_project fan=21; test_repeated_stale_plugin_hello_rejections_are_log_throttled fan=21
 # evolution: baseline
@@ -1857,11 +1857,11 @@ M[316]:
   src/koru/agents.py,323
   src/koru/api/__init__.py,10
   src/koru/autoloop_cli.py,91
-  src/koru/autonomous.py,1912
+  src/koru/autonomous.py,1838
   src/koru/autonomous_auto_pipeline.py,256
   src/koru/autonomous_checkpoint.py,138
   src/koru/autonomous_cycle.py,1467
-  src/koru/autonomous_daemon.py,269
+  src/koru/autonomous_daemon.py,278
   src/koru/autonomous_diagnostics.py,263
   src/koru/autonomous_env.py,26
   src/koru/autonomous_parser.py,399
@@ -1993,7 +1993,7 @@ M[316]:
   src/koruide/audit.py,155
   src/koruide/client.py,129
   src/koruide/config.py,122
-  src/koruide/daemon.py,1042
+  src/koruide/daemon.py,1045
   src/koruide/drive_orchestrator.py,237
   src/koruide/host_setup.py,227
   src/koruide/ide.py,704
@@ -2368,15 +2368,14 @@ D:
     _emit_cycle_completion_events(project;state;cycle;queue_result;diag_result;wup_health;autopilot_status;autopilot_ide;autopilot_backend;autopilot_drive_kind;cycle_telemetry;scan_after_idle_queue;scan_after_idle_min_interval_seconds;autopilot_skip_drive_idle_streak;_hp;_emit)
     run_cycle()
   src/koru/autonomous_daemon.py:
-    e: _stdio_info,_current_koru_version,_daemon_status_version,_daemon_status_compatible,_stop_reused_daemon,start_or_reuse_daemon,_status_has_autopilot_plugin,wait_for_autopilot_plugin,_stop_process,restart_daemon_if_needed,cleanup_autonomous_session
+    e: _stdio_info,_current_koru_version,_daemon_status_version,daemon_status_compatible,daemon_status_log_summary,_stop_reused_daemon,start_or_reuse_daemon,_stop_process,restart_daemon_if_needed,cleanup_autonomous_session
     _stdio_info(msg)
     _current_koru_version()
     _daemon_status_version(status)
-    _daemon_status_compatible(status)
+    daemon_status_compatible(status)
+    daemon_status_log_summary(status)
     _stop_reused_daemon(client;socket_path)
     start_or_reuse_daemon()
-    _status_has_autopilot_plugin(status;ide)
-    wait_for_autopilot_plugin(client;ide)
     _stop_process(proc;kind)
     restart_daemon_if_needed(args;client;socket_path;daemon;thread;autopilot_socket_observed_at_boot;project)
     cleanup_autonomous_session(previous_stdio_format_env;previous_sigterm;daemon;thread;wup_process;stdio_format)
@@ -4740,7 +4739,7 @@ D:
 
 ```prolog markpact:analysis path=project/logic.pl
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.183', 'python').
+project_metadata('koru', '0.1.184', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 681, 'less').
@@ -4817,11 +4816,11 @@ project_file('src/koru/agent_cli_helpers.py', 88, 'python').
 project_file('src/koru/agents.py', 323, 'python').
 project_file('src/koru/api/__init__.py', 10, 'python').
 project_file('src/koru/autoloop_cli.py', 91, 'python').
-project_file('src/koru/autonomous.py', 1912, 'python').
+project_file('src/koru/autonomous.py', 1838, 'python').
 project_file('src/koru/autonomous_auto_pipeline.py', 256, 'python').
 project_file('src/koru/autonomous_checkpoint.py', 138, 'python').
 project_file('src/koru/autonomous_cycle.py', 1467, 'python').
-project_file('src/koru/autonomous_daemon.py', 269, 'python').
+project_file('src/koru/autonomous_daemon.py', 278, 'python').
 project_file('src/koru/autonomous_diagnostics.py', 263, 'python').
 project_file('src/koru/autonomous_env.py', 26, 'python').
 project_file('src/koru/autonomous_parser.py', 399, 'python').
@@ -4953,7 +4952,7 @@ project_file('src/koruide/__init__.py', 68, 'python').
 project_file('src/koruide/audit.py', 155, 'python').
 project_file('src/koruide/client.py', 129, 'python').
 project_file('src/koruide/config.py', 122, 'python').
-project_file('src/koruide/daemon.py', 1042, 'python').
+project_file('src/koruide/daemon.py', 1045, 'python').
 project_file('src/koruide/drive_orchestrator.py', 237, 'python').
 project_file('src/koruide/host_setup.py', 227, 'python').
 project_file('src/koruide/ide.py', 704, 'python').
@@ -5167,12 +5166,12 @@ python_function('src/koru/autonomous.py', '_resolve_autopilot_ide', 1, 1, 1).
 python_function('src/koru/autonomous.py', '_apply_agent_lane_environ', 2, 8, 8).
 python_function('src/koru/autonomous.py', '_build_parser', 0, 1, 7).
 python_function('src/koru/autonomous.py', '_ensure_init', 1, 4, 3).
-python_function('src/koru/autonomous.py', '_current_koru_version', 0, 2, 1).
-python_function('src/koru/autonomous.py', '_daemon_status_version', 1, 7, 2).
-python_function('src/koru/autonomous.py', '_daemon_status_compatible', 1, 4, 2).
-python_function('src/koru/autonomous.py', '_daemon_status_log_summary', 1, 4, 4).
-python_function('src/koru/autonomous.py', '_stop_reused_daemon', 2, 4, 6).
-python_function('src/koru/autonomous.py', '_start_or_reuse_daemon', 0, 5, 12).
+python_function('src/koru/autonomous.py', '_current_koru_version', 0, 1, 1).
+python_function('src/koru/autonomous.py', '_daemon_status_version', 1, 1, 1).
+python_function('src/koru/autonomous.py', '_daemon_status_compatible', 1, 1, 1).
+python_function('src/koru/autonomous.py', '_daemon_status_log_summary', 1, 1, 1).
+python_function('src/koru/autonomous.py', '_stop_reused_daemon', 2, 1, 1).
+python_function('src/koru/autonomous.py', '_start_or_reuse_daemon', 0, 1, 1).
 python_function('src/koru/autonomous.py', '_plugin_rows_log_summary', 1, 1, 1).
 python_function('src/koru/autonomous.py', '_plugin_status_decision', 2, 1, 1).
 python_function('src/koru/autonomous.py', '_status_has_autopilot_plugin', 2, 1, 1).
@@ -5284,11 +5283,10 @@ python_function('src/koru/autonomous_cycle.py', 'run_cycle', 0, 5, 23).
 python_function('src/koru/autonomous_daemon.py', '_stdio_info', 1, 1, 1).
 python_function('src/koru/autonomous_daemon.py', '_current_koru_version', 0, 2, 1).
 python_function('src/koru/autonomous_daemon.py', '_daemon_status_version', 1, 7, 2).
-python_function('src/koru/autonomous_daemon.py', '_daemon_status_compatible', 1, 4, 2).
+python_function('src/koru/autonomous_daemon.py', 'daemon_status_compatible', 1, 4, 2).
+python_function('src/koru/autonomous_daemon.py', 'daemon_status_log_summary', 1, 4, 4).
 python_function('src/koru/autonomous_daemon.py', '_stop_reused_daemon', 2, 4, 6).
-python_function('src/koru/autonomous_daemon.py', 'start_or_reuse_daemon', 0, 5, 11).
-python_function('src/koru/autonomous_daemon.py', '_status_has_autopilot_plugin', 2, 11, 5).
-python_function('src/koru/autonomous_daemon.py', 'wait_for_autopilot_plugin', 2, 6, 4).
+python_function('src/koru/autonomous_daemon.py', 'start_or_reuse_daemon', 0, 5, 12).
 python_function('src/koru/autonomous_daemon.py', '_stop_process', 2, 4, 4).
 python_function('src/koru/autonomous_daemon.py', 'restart_daemon_if_needed', 7, 10, 6).
 python_function('src/koru/autonomous_daemon.py', 'cleanup_autonomous_session', 6, 4, 5).
@@ -7217,7 +7215,7 @@ python_method('AutopilotDaemon', '_configure_plugin_client', 5, 1, 1).
 python_method('AutopilotDaemon', '_log_plugin_hello_accepted', 6, 6, 4).
 python_method('AutopilotDaemon', '_handle_hello', 2, 5, 12).
 python_method('AutopilotDaemon', '_log_rejected_plugin_connection', 0, 6, 8).
-python_method('AutopilotDaemon', '_handle_status', 2, 6, 12).
+python_method('AutopilotDaemon', '_handle_status', 2, 6, 13).
 python_method('AutopilotDaemon', '_plugin_ack_needs_os_fallback', 0, 1, 1).
 python_method('AutopilotDaemon', '_relay_os_fallback_ack', 6, 3, 7).
 python_method('AutopilotDaemon', '_relay_message_sent_ack', 2, 3, 9).
@@ -8185,7 +8183,7 @@ sumd_deploy_compose_file('docker-compose.yml').
 
 ## Call Graph
 
-*430 nodes · 500 edges · 78 modules · CC̄=4.1*
+*434 nodes · 500 edges · 78 modules · CC̄=4.0*
 
 ### Hubs (by degree)
 
@@ -8194,7 +8192,7 @@ sumd_deploy_compose_file('docker-compose.yml').
 | `print` *(in scripts.koru-soak-monitor)* | 0 | 351 | 0 | **351** |
 | `_build_handler` *(in src.koruapi.dashboard_serve)* | 1 | 1 | 105 | **106** |
 | `_select_auto_pipeline_profile` *(in src.koru.autonomous_auto_pipeline)* | 7 | 1 | 54 | **55** |
-| `render_markdown_handoff` *(in src.koru.context)* | 10 ⚠ | 4 | 47 | **51** |
+| `render_markdown_handoff` *(in src.koru.context)* | 10 ⚠ | 5 | 47 | **52** |
 | `normalize_ide_id` *(in src.koruide.ide)* | 6 | 31 | 11 | **42** |
 | `activity` *(in src.koru.activity_log)* | 4 | 34 | 7 | **41** |
 | `_build_parser` *(in src.koru.cli)* | 1 | 3 | 36 | **39** |
@@ -8202,9 +8200,9 @@ sumd_deploy_compose_file('docker-compose.yml').
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.30s
-# nodes: 430 | edges: 500 | modules: 78
-# CC̄=4.1
+# generated in 0.21s
+# nodes: 434 | edges: 500 | modules: 78
+# CC̄=4.0
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
@@ -8214,7 +8212,7 @@ HUBS[20]:
   src.koru.autonomous_auto_pipeline._select_auto_pipeline_profile
     CC=7  in:1  out:54  total:55
   src.koru.context.render_markdown_handoff
-    CC=10  in:4  out:47  total:51
+    CC=10  in:5  out:47  total:52
   src.koruide.ide.normalize_ide_id
     CC=6  in:31  out:11  total:42
   src.koru.activity_log.activity
@@ -8231,22 +8229,22 @@ HUBS[20]:
     CC=12  in:0  out:32  total:32
   src.koru.autonomy.env.env_truthy
     CC=3  in:29  out:3  total:32
+  src.koru.ide_runtime.detect_running_ides
+    CC=5  in:17  out:12  total:29
   src.koru.cli._render_clean_report_text
     CC=12  in:1  out:28  total:29
   src.koru.autonomous_auto_pipeline._auto_value
     CC=2  in:24  out:4  total:28
-  src.koru.ide_runtime.detect_running_ides
-    CC=5  in:15  out:12  total:27
   src.koru.cli._task_main
     CC=11  in:0  out:27  total:27
+  services.healing-webhook.app._resolve_affected_files
+    CC=11  in:2  out:24  total:26
   src.koru.init.init_project
     CC=7  in:3  out:23  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
-  services.healing-webhook.app._resolve_affected_files
-    CC=11  in:2  out:24  total:26
-  src.koru.agents.detect_agent_options
-    CC=4  in:3  out:21  total:24
+  src.koru.context.build_context
+    CC=6  in:9  out:16  total:25
 
 MODULES:
   plugins.koru-autopilot-vscode.src.extension  [2 funcs]
@@ -8285,11 +8283,10 @@ MODULES:
     print_agent_list  CC=10  out:7
     run_agent_handoff  CC=3  out:10
     try_agent_env_exports  CC=7  out:7
-  src.koru.agents  [2 funcs]
+  src.koru.agents  [1 funcs]
     detect_agent_options  CC=4  out:21
-    normalize_agent_lane_id  CC=6  out:8
   src.koru.autonomous  [1 funcs]
-    autonomous_main  CC=15  out:10
+    autonomous_main  CC=2  out:7
   src.koru.autonomous_auto_pipeline  [7 funcs]
     _argv_has_option  CC=5  out:2
     _auto_pipeline_has_pressure  CC=9  out:0
@@ -8382,19 +8379,13 @@ MODULES:
     resolve_ide_route  CC=10  out:10
   src.koru.ide_runtime  [1 funcs]
     detect_running_ides  CC=5  out:12
-  src.koru.init  [10 funcs]
+  src.koru.init  [6 funcs]
     _ensure_gitignore_entry  CC=8  out:12
-    _init_auto_agent_lane  CC=6  out:7
-    _read_persisted_agent_lane  CC=12  out:20
-    _remove_agent_lane_artifacts  CC=4  out:4
     _resolve_init_agent_lane  CC=4  out:4
-    _write_agent_lane_artifacts  CC=2  out:10
     _write_autopilot_host_setup_script  CC=1  out:5
     _write_policy_stub_if_absent  CC=3  out:6
     init_project  CC=7  out:23
     refresh_init_agent_lane  CC=4  out:11
-  src.koru.init_host_environment  [1 funcs]
-    write_host_environment_bundle  CC=2  out:12
   src.koru.local_service  [2 funcs]
     default_local_service_config  CC=2  out:7
     run_local_service  CC=3  out:12
@@ -8599,9 +8590,20 @@ MODULES:
     _try_apt_install  CC=5  out:11
   src.koruide.ide  [4 funcs]
     detect_focused_ide_id  CC=6  out:4
-    detect_terminal_host_ide_id  CC=3  out:3
+    detect_terminal_host_ide_id  CC=6  out:5
     normalize_ide_id  CC=6  out:11
     supported_autopilot_ide_ids  CC=1  out:0
+  src.koruide.injector  [10 funcs]
+    _candidate_backends  CC=6  out:13
+    _type_with_backend  CC=6  out:10
+    submit_only  CC=9  out:13
+    type_text  CC=13  out:17
+    _extra_enter_count  CC=3  out:4
+    _forced_injector_backend  CC=2  out:3
+    _submit_key_for  CC=1  out:2
+    _ydotool_ctrl_keycode  CC=2  out:3
+    _ydotool_enter_keycode  CC=2  out:3
+    _ydotool_submit_mode  CC=3  out:3
   src.koruide.os_injector  [27 funcs]
     _clipboard_backend  CC=3  out:2
     _cmd_timeout_seconds  CC=3  out:4
