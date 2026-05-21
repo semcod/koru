@@ -36,6 +36,8 @@ def test_resolve_target_ide_uses_running_supported_ide(monkeypatch) -> None:
 
 
 def test_resolve_target_ide_uses_integrated_terminal_hint(monkeypatch) -> None:
+    for key in ("TERM_PROGRAM_VERSION", "WINDSURF_CASCADE_TERMINAL", "GIO_LAUNCHED_DESKTOP_FILE"):
+        monkeypatch.delenv(key, raising=False)
     monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
     monkeypatch.setenv("TERM_PROGRAM", "cursor")
     monkeypatch.setattr(plugin_installer, "detect_focused_ide_id", lambda: "windsurf")
