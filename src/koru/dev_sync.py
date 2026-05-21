@@ -11,6 +11,7 @@ from pathlib import Path
 
 DEFAULT_PACKAGES: tuple[str, ...] = (
     "koru",
+    "nfo",
     "redup",
     "wup",
     "regix",

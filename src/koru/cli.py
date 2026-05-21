@@ -17,6 +17,7 @@ from koru.agents import (
 )
 from koru.autoloop_cli import autoloop_main
 from koru.autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
+from koru.autonomous_runtime import project_venv_reexec_argv
 from koru.autopilot.cli_command import autopilot_main
 from koru.bootstrap import import_flat_pipeline
 from koru.context import build_context, render_markdown_handoff
@@ -1788,6 +1789,13 @@ def _command_loop_main(args: argparse.Namespace) -> int:
 
 def main() -> int:
     raw_args = sys.argv[1:]
+    if raw_args and raw_args[0] in {"auto", "autonomous"}:
+        project = _peek_project_from_argv(raw_args[1:])
+        if reexec_argv := project_venv_reexec_argv(project):
+            env = dict(os.environ)
+            env["KORU_AUTONOMOUS_REEXECED"] = "1"
+            print("koru: switching to project venv: " + " ".join(reexec_argv), file=sys.stderr)
+            os.execvpe(reexec_argv[0], reexec_argv, env)
     if raw_args and raw_args[0] in _SUBCOMMANDS:
         return _SUBCOMMANDS[raw_args[0]](raw_args[1:])
 

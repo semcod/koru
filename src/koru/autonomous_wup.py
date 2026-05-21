@@ -398,11 +398,33 @@ def _start_wup_watch(
     topology_integration: bool,
     stdio_format: str = "human",
 ) -> subprocess.Popen | None:
+    from koru.activity_log import activity
+
     auto = config.enabled is None
     if config.enabled is False:
+        activity(
+            "WUP",
+            "watch disabled by cli",
+            fmt=stdio_format,
+            data={"project": str(config.project), "mode": config.mode},
+        )
         return None
     wup_available = shutil.which("wup") is not None
     wup_yaml_present = (config.project / "wup.yaml").is_file() or config.config is not None
+    activity(
+        "WUP",
+        "watch preflight",
+        fmt=stdio_format,
+        data={
+            "project": str(config.project),
+            "auto": auto,
+            "enabled": config.enabled,
+            "wup_available": wup_available,
+            "wup_yaml_present": wup_yaml_present,
+            "config": str(config.config) if config.config is not None else "",
+            "mode": config.mode,
+        },
+    )
     if auto:
         if not wup_available or not wup_yaml_present:
             return None
@@ -435,6 +457,12 @@ def _start_wup_watch(
     command = _wup_watch_command(config)
     _wup_stdio_info("+ " + " ".join(command), fmt=stdio_format)
     process = subprocess.Popen(command, cwd=config.project, env=_wup_subprocess_env(config))
+    activity(
+        "WUP",
+        "watch process started",
+        fmt=stdio_format,
+        data={"pid": process.pid, "command": command, "project": str(config.project)},
+    )
     _wup_stdio_info(
         f"koru autonomous: started WUP watcher pid={process.pid} mode={config.mode}",
         fmt=stdio_format,

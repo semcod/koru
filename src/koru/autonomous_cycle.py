@@ -1042,6 +1042,8 @@ def _warn_autopilot_focus_retry(attempt: int, attempts: int, reply: dict[str, An
 
 
 def _warn_autopilot_manual_focus_required(reply: dict[str, Any] | None = None) -> None:
+    from koru.activity_log import activity
+
     print("\033[1;31m")  # bold red
     print("================================================================================")
     print("[AUTOPILOT FOCUS REQUIRED] Please place your cursor inside the IDE chat input.")
@@ -1051,6 +1053,11 @@ def _warn_autopilot_manual_focus_required(reply: dict[str, Any] | None = None) -
             print(line)
     print("================================================================================")
     print("\033[0m")  # reset colors
+    activity(
+        "CHAT",
+        "manual focus required; no automatic retry",
+        data={"reply": reply or {}},
+    )
 
 
 def _execute_autopilot_drive(

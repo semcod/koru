@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from koru.activity_log import activity, configure_nfo_activity_log
+
 
 def setup_autonomous_session(
     args: Any,
@@ -24,6 +26,35 @@ def setup_autonomous_session(
     correlation_id = str(uuid_factory())
     project = args.project.resolve()
     project.mkdir(parents=True, exist_ok=True)
+    nfo_path = configure_nfo_activity_log(project)
+    if nfo_path is not None:
+        stdio_info(
+            f"koru autonomous: nfo structured log -> {nfo_path}",
+            fmt=args.emit_events,
+        )
+    activity(
+        "RUNTIME",
+        "autonomous session context",
+        fmt=args.emit_events,
+        data={
+            "project": str(project),
+            "argv": list(sys.argv),
+            "python": sys.executable,
+            "prefix": sys.prefix,
+            "base_prefix": getattr(sys, "base_prefix", ""),
+            "virtual_env": os.environ.get("VIRTUAL_ENV", ""),
+            "reexeced": bool(os.environ.get("KORU_AUTONOMOUS_REEXECED")),
+            "nfo_path": str(nfo_path) if nfo_path is not None else "",
+        },
+    )
+    if reexec_argv := project_venv_reexec_argv(project):
+        env = dict(os.environ)
+        env["KORU_AUTONOMOUS_REEXECED"] = "1"
+        stdio_info(
+            "koru autonomous: switching to project venv: " + " ".join(reexec_argv),
+            fmt=args.emit_events,
+        )
+        os.execvpe(reexec_argv[0], reexec_argv, env)
     for line in project_venv_warning_lines(project):
         stdio_info(line, fmt=args.emit_events)
     guard_rc = guard_existing_processes(args, project)
@@ -53,6 +84,29 @@ def _path_is_relative_to(path: Path, parent: Path) -> bool:
     return True
 
 
+def _env_disabled(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in {"0", "false", "no", "off"}
+
+
+def project_venv_reexec_argv(project: Path) -> list[str] | None:
+    """Return argv for re-execing autonomous mode inside the repo-local venv."""
+    if os.environ.get("KORU_AUTONOMOUS_REEXECED") or _env_disabled("KORU_AUTO_REEXEC"):
+        return None
+    local_venv = (project / ".venv").resolve()
+    local_koru = local_venv / "bin" / "koru"
+    if not local_koru.exists():
+        return None
+
+    executable = Path(sys.executable).expanduser()
+    if _path_is_relative_to(executable, local_venv) or _path_is_relative_to(
+        Path(sys.prefix).expanduser(),
+        local_venv,
+    ):
+        return None
+
+    return [str(local_koru), *sys.argv[1:]]
+
+
 def project_venv_warning_lines(project: Path) -> list[str]:
     """Warn when ``koru auto`` is running outside the repo-local virtualenv."""
     local_venv = (project / ".venv").resolve()
@@ -60,8 +114,11 @@ def project_venv_warning_lines(project: Path) -> list[str]:
     if not local_koru.exists():
         return []
 
-    executable = Path(sys.executable).resolve()
-    if _path_is_relative_to(executable, local_venv):
+    executable = Path(sys.executable).expanduser()
+    if _path_is_relative_to(executable, local_venv) or _path_is_relative_to(
+        Path(sys.prefix).expanduser(),
+        local_venv,
+    ):
         return []
 
     return [
@@ -115,6 +172,19 @@ def setup_autopilot_daemon(
         "koru autonomous: autopilot socket decision: "
         f"lane={lane} ide={autopilot_ide} source={socket_source} path={socket_path}",
         fmt=args.emit_events,
+    )
+    activity(
+        "AUTOPILOT",
+        "socket decision",
+        fmt=args.emit_events,
+        data={
+            "lane": lane,
+            "ide": autopilot_ide,
+            "source": socket_source,
+            "socket_path": str(socket_path),
+            "env_socket": env_socket,
+            "env_instance_before": env_instance_before,
+        },
     )
     client, daemon, thread = start_or_reuse_daemon(
         project=project,

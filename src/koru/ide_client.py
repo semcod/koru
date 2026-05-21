@@ -60,6 +60,12 @@ class LegacyAutopilotClientAdapter:
             f"drive → ide={ide} submit={submit} require_plugin={require_plugin} "
             f"({len(text)} znaków)",
             preview=text,
+            data={
+                "ide": ide,
+                "submit": submit,
+                "require_plugin": require_plugin,
+                "chars": len(text),
+            },
         )
         reply = self.client.drive(
             text,
@@ -79,6 +85,20 @@ class LegacyAutopilotClientAdapter:
             "CHAT",
             f"drive wynik: ok={ok} backend={backend} tool_id={reply.get('tool_id', '-')} "
             + " ".join(summary_bits),
+            data={
+                "ide": ide,
+                "ok": ok,
+                "backend": backend,
+                "verification": verification,
+                "tool_id": reply.get("tool_id", "-"),
+                "message": reply.get("message", ""),
+                "details": reply.get("details", ""),
+                "event": reply.get("event", ""),
+                "winning_focus_open": reply.get("winning_focus_open", ""),
+                "winning_paste": reply.get("winning_paste", ""),
+                "winning_submit": reply.get("winning_submit", ""),
+                "diagnostics": reply.get("diagnostics", {}),
+            },
         )
         return reply
 

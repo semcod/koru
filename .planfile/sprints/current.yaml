@@ -4438,9 +4438,10 @@ sprint:
         pattern.'
       execution:
         attempt: 0
+        finished_at: '2026-05-21T21:07:01.628206Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -4453,6 +4454,16 @@ sprint:
           strategy pattern.'
         source: koru task
         timestamp: '2026-05-21T14:24:14.145993+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T21:07:02.198264+00:00'
       id: STARTER-063
       inputs:
         api_headers: {}
@@ -4484,9 +4495,9 @@ sprint:
         timestamp: '2026-05-21T14:24:14.145993+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T14:24:14.145993+00:00'
+      updated_at: '2026-05-21T21:07:02.198215+00:00'
     STARTER-064:
       blocked_by: []
       blocks: []
