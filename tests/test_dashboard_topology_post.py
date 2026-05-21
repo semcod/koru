@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from unittest import mock
 
-from koruapi.dashboard_serve import apply_topology_post_update
+from koruapi.topology_post import apply_topology_post_update
 
 
 def test_apply_topology_post_update_rejects_non_object_components() -> None:
@@ -18,10 +18,10 @@ def test_apply_topology_post_update_rejects_non_object_components() -> None:
 def test_apply_topology_post_update_applies_component_toggle(tmp_path: Path) -> None:
     topo = {"components": {"scan": {"enabled": True}}, "pipelines": {}}
     with (
-        mock.patch("koruapi.dashboard_serve.load_topology", return_value=topo),
-        mock.patch("koruapi.dashboard_serve.save_topology", return_value=tmp_path / "t.yaml"),
+        mock.patch("koruapi.topology_post.load_topology", return_value=topo),
+        mock.patch("koruapi.topology_post.save_topology", return_value=tmp_path / "t.yaml"),
         mock.patch(
-            "koruapi.dashboard_serve.set_component_enabled",
+            "koruapi.topology_post.set_component_enabled",
             return_value=mock.Mock(found=True, id="scan", current=False),
         ),
     ):

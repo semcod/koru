@@ -1,64 +1,442 @@
 project: /home/tom/github/semcod/koru
 generated_from: code2llm call graph analysis
 stats:
-  total_nodes: 434
+  total_nodes: 425
   total_edges: 500
-  modules_count: 70
+  modules_count: 73
 nodes:
-  src.koru.local_service._build_handler:
-    name: _build_handler
-    module: src.koru.local_service
-    line: 103
-    cyclomatic_complexity: 1
-    calls_out: 30
-    calls_in: 1
-  src.koru.dev_sync.dev_main:
-    name: dev_main
-    module: src.koru.dev_sync
-    line: 100
-    cyclomatic_complexity: 7
-    calls_out: 18
-    calls_in: 0
-  src.koru.mcp_provision.provision_cursor:
-    name: provision_cursor
+  src.koru.mcp_provision._windsurf_project_config:
+    name: _windsurf_project_config
     module: src.koru.mcp_provision
-    line: 194
+    line: 49
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 4
+  src.koruide.plugin_installer._reassert_extension_extra:
+    name: _reassert_extension_extra
+    module: src.koruide.plugin_installer
+    line: 229
+    cyclomatic_complexity: 9
+    calls_out: 5
+    calls_in: 1
+  src.koru.autonomous._unblock_queue_if_needed:
+    name: _unblock_queue_if_needed
+    module: src.koru.autonomous
+    line: 1382
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 1
+  src.koru.cli._task_main:
+    name: _task_main
+    module: src.koru.cli
+    line: 989
+    cyclomatic_complexity: 11
+    calls_out: 27
+    calls_in: 0
+  src.koru.queue_clean._list_tickets:
+    name: _list_tickets
+    module: src.koru.queue_clean
+    line: 292
+    cyclomatic_complexity: 11
+    calls_out: 11
+    calls_in: 1
+  src.koruide.ide._terminal_ide_from_env:
+    name: _terminal_ide_from_env
+    module: src.koruide.ide
+    line: 277
+    cyclomatic_complexity: 9
+    calls_out: 12
+    calls_in: 1
+  src.koruide.ide._matches:
+    name: _matches
+    module: src.koruide.ide
+    line: 85
+    cyclomatic_complexity: 7
+    calls_out: 5
+    calls_in: 2
+  src.koru.tools.build_tool_task_scaffold:
+    name: build_tool_task_scaffold
+    module: src.koru.tools
+    line: 260
+    cyclomatic_complexity: 2
+    calls_out: 6
+    calls_in: 1
+  src.koruapi.mcp_server._resolve_gates:
+    name: _resolve_gates
+    module: src.koruapi.mcp_server
+    line: 645
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 1
+  src.koru.queue_cli_helpers.run_queue_loop_mode:
+    name: run_queue_loop_mode
+    module: src.koru.queue_cli_helpers
+    line: 113
+    cyclomatic_complexity: 5
+    calls_out: 15
+    calls_in: 1
+  src.koru.agents.detect_agent_options:
+    name: detect_agent_options
+    module: src.koru.agents
+    line: 129
+    cyclomatic_complexity: 4
+    calls_out: 21
+    calls_in: 3
+  src.koruapi.mcp_server._serialize_mcp_ticket:
+    name: _serialize_mcp_ticket
+    module: src.koruapi.mcp_server
+    line: 394
     cyclomatic_complexity: 3
     calls_out: 8
-    calls_in: 0
-  src.koruapi.local.build_local_parser:
-    name: build_local_parser
-    module: src.koruapi.local
-    line: 11
+    calls_in: 1
+  src.koruide.plugin_installer._terminal_vscode_flavor:
+    name: _terminal_vscode_flavor
+    module: src.koruide.plugin_installer
+    line: 78
+    cyclomatic_complexity: 5
+    calls_out: 4
+    calls_in: 2
+  src.koruide.os_injector._clipboard_backend:
+    name: _clipboard_backend
+    module: src.koruide.os_injector
+    line: 244
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 1
+  src.koru.refactor_planfile_handoff.render_planfile_refactor_handoff:
+    name: render_planfile_refactor_handoff
+    module: src.koru.refactor_planfile_handoff
+    line: 8
+    cyclomatic_complexity: 6
+    calls_out: 6
+    calls_in: 1
+  src.koruapi.server._json_response:
+    name: _json_response
+    module: src.koruapi.server
+    line: 20
     cyclomatic_complexity: 1
+    calls_out: 9
+    calls_in: 10
+  src.koruide.config._merge_submit_keys:
+    name: _merge_submit_keys
+    module: src.koruide.config
+    line: 67
+    cyclomatic_complexity: 7
+    calls_out: 5
+    calls_in: 1
+  src.koruide.ide._read_cmdline:
+    name: _read_cmdline
+    module: src.koruide.ide
+    line: 69
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 2
+  src.koruide.ide._vscode_family_flavor_from_env:
+    name: _vscode_family_flavor_from_env
+    module: src.koruide.ide
+    line: 254
+    cyclomatic_complexity: 7
     calls_out: 4
     calls_in: 1
-  src.koru.watch._format_management_event:
-    name: _format_management_event
-    module: src.koru.watch
-    line: 14
+  src.koru.cli._runtime_context_main:
+    name: _runtime_context_main
+    module: src.koru.cli
+    line: 1252
+    cyclomatic_complexity: 3
+    calls_out: 10
+    calls_in: 0
+  src.koru.autonomous._command_project:
+    name: _command_project
+    module: src.koru.autonomous
+    line: 174
+    cyclomatic_complexity: 5
+    calls_out: 11
+    calls_in: 1
+  src.koru.autonomous._ensure_init:
+    name: _ensure_init
+    module: src.koru.autonomous
+    line: 826
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 1
+  src.koruide.os_injector.os_injector_env_disabled:
+    name: os_injector_env_disabled
+    module: src.koruide.os_injector
+    line: 61
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 1
+  src.koru.cli._doctor_main:
+    name: _doctor_main
+    module: src.koru.cli
+    line: 1479
+    cyclomatic_complexity: 12
+    calls_out: 15
+    calls_in: 1
+  src.koru.queue.runners.run_process:
+    name: run_process
+    module: src.koru.queue.runners
+    line: 21
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  src.koruide.config.load_config:
+    name: load_config
+    module: src.koruide.config
+    line: 81
+    cyclomatic_complexity: 4
+    calls_out: 10
+    calls_in: 1
+  src.koru.autonomous_diagnostics.run_idle_diagnostics:
+    name: run_idle_diagnostics
+    module: src.koru.autonomous_diagnostics
+    line: 202
+    cyclomatic_complexity: 3
+    calls_out: 9
+    calls_in: 0
+  src.koruide.client.KoruIDEClient.__init__:
+    name: __init__
+    module: src.koruide.client
+    line: 17
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 0
+  src.koru.autonomous._confirm_replace_existing:
+    name: _confirm_replace_existing
+    module: src.koru.autonomous
+    line: 386
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 1
+  src.koru.cli._peek_project_from_argv:
+    name: _peek_project_from_argv
+    module: src.koru.cli
+    line: 1430
+    cyclomatic_complexity: 5
+    calls_out: 12
+    calls_in: 1
+  src.korudsl.library.library_to_dsl:
+    name: library_to_dsl
+    module: src.korudsl.library
+    line: 201
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 2
+  src.koru.autonomous._find_existing_autonomous_processes:
+    name: _find_existing_autonomous_processes
+    module: src.koru.autonomous
+    line: 223
+    cyclomatic_complexity: 11
+    calls_out: 16
+    calls_in: 3
+  src.koruide.host_setup._human_followups:
+    name: _human_followups
+    module: src.koruide.host_setup
+    line: 40
+    cyclomatic_complexity: 14
+    calls_out: 10
+    calls_in: 1
+  src.koru.queue_cli_helpers.run_queue_single_mode:
+    name: run_queue_single_mode
+    module: src.koru.queue_cli_helpers
+    line: 175
+    cyclomatic_complexity: 6
+    calls_out: 8
+    calls_in: 1
+  src.koru.queue_clean._maybe_skip_active_ticket:
+    name: _maybe_skip_active_ticket
+    module: src.koru.queue_clean
+    line: 182
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  src.koruide.ide.detect_terminal_host_ide_id:
+    name: detect_terminal_host_ide_id
+    module: src.koruide.ide
+    line: 320
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 5
+  src.koruide.injector._ydotool_submit_mode:
+    name: _ydotool_submit_mode
+    module: src.koruide.injector
+    line: 71
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  src.koru.cli._bootstrap_main:
+    name: _bootstrap_main
+    module: src.koru.cli
+    line: 1675
+    cyclomatic_complexity: 5
+    calls_out: 18
+    calls_in: 1
+  src.koruide.ide._vscode_family_env_present:
+    name: _vscode_family_env_present
+    module: src.koruide.ide
+    line: 250
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  src.koruide.audit.AuditLog.record:
+    name: record
+    module: src.koruide.audit
+    line: 121
+    cyclomatic_complexity: 6
+    calls_out: 7
+    calls_in: 0
+  src.koru.cli._context_main:
+    name: _context_main
+    module: src.koru.cli
+    line: 1661
+    cyclomatic_complexity: 2
+    calls_out: 6
+    calls_in: 1
+  src.koru.autonomous._save_loop_checkpoint:
+    name: _save_loop_checkpoint
+    module: src.koru.autonomous
+    line: 976
+    cyclomatic_complexity: 1
+    calls_out: 7
+    calls_in: 1
+  src.koruide.ide._resolve_explicit_drive_target:
+    name: _resolve_explicit_drive_target
+    module: src.koruide.ide
+    line: 453
+    cyclomatic_complexity: 6
+    calls_out: 1
+    calls_in: 1
+  src.koru.autonomous_startup.format_startup_banner:
+    name: format_startup_banner
+    module: src.koru.autonomous_startup
+    line: 166
+    cyclomatic_complexity: 5
+    calls_out: 8
+    calls_in: 1
+  src.koru.cli._gate_main:
+    name: _gate_main
+    module: src.koru.cli
+    line: 662
+    cyclomatic_complexity: 5
+    calls_out: 12
+    calls_in: 0
+  src.koruapi.server.KoruAPIHandler.do_GET:
+    name: do_GET
+    module: src.koruapi.server
+    line: 103
+    cyclomatic_complexity: 5
+    calls_out: 12
+    calls_in: 0
+  src.koru.autonomous._wait_for_autopilot_plugin:
+    name: _wait_for_autopilot_plugin
+    module: src.koru.autonomous
+    line: 875
+    cyclomatic_complexity: 6
+    calls_out: 7
+    calls_in: 1
+  src.koruide.os_injector._tool_pid:
+    name: _tool_pid
+    module: src.koruide.os_injector
+    line: 232
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 0
+  services.healing-webhook.app._parse_redup_summary:
+    name: _parse_redup_summary
+    module: services.healing-webhook.app
+    line: 469
     cyclomatic_complexity: 9
     calls_out: 16
     calls_in: 1
-  src.koru.topology_cli.render_topology_text:
-    name: render_topology_text
-    module: src.koru.topology_cli
-    line: 19
-    cyclomatic_complexity: 2
-    calls_out: 9
+  src.koru.autonomy.operator_pipeline.run_startup_operator_pipeline:
+    name: run_startup_operator_pipeline
+    module: src.koru.autonomy.operator_pipeline
+    line: 553
+    cyclomatic_complexity: 4
+    calls_out: 18
     calls_in: 1
-  src.koru.cli._init_main:
-    name: _init_main
-    module: src.koru.cli
-    line: 1553
+  src.koru.autonomous._handle_cycle_exit_conditions:
+    name: _handle_cycle_exit_conditions
+    module: src.koru.autonomous
+    line: 1433
     cyclomatic_complexity: 7
-    calls_out: 16
+    calls_out: 4
     calls_in: 1
-  src.koru.init_host_environment.write_host_environment_bundle:
-    name: write_host_environment_bundle
-    module: src.koru.init_host_environment
-    line: 287
+  src.koruapi.server.KoruAPIHandler.do_POST:
+    name: do_POST
+    module: src.koruapi.server
+    line: 143
     cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 0
+  src.koru.autonomous._resolve_autopilot_ide:
+    name: _resolve_autopilot_ide
+    module: src.koru.autonomous
+    line: 155
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  src.koruapi.mcp_server._jsonrpc_response:
+    name: _jsonrpc_response
+    module: src.koruapi.mcp_server
+    line: 879
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 1
+  src.koruide.injector.Injector._type_with_backend:
+    name: _type_with_backend
+    module: src.koruide.injector
+    line: 218
+    cyclomatic_complexity: 14
+    calls_out: 21
+    calls_in: 0
+  src.koruide.ide._read_exe:
+    name: _read_exe
+    module: src.koruide.ide
+    line: 78
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  src.koruide.utils.resolve_xdg_path:
+    name: resolve_xdg_path
+    module: src.koruide.utils
+    line: 9
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 2
+  src.koru.autonomous._setup_autopilot_plugin:
+    name: _setup_autopilot_plugin
+    module: src.koru.autonomous
+    line: 1313
+    cyclomatic_complexity: 7
+    calls_out: 10
+    calls_in: 1
+  src.koru.queue_clean._close_ticket:
+    name: _close_ticket
+    module: src.koru.queue_clean
+    line: 318
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 1
+  src.koruapi.mcp_server._jsonrpc_error:
+    name: _jsonrpc_error
+    module: src.koruapi.mcp_server
+    line: 883
+    cyclomatic_complexity: 2
+    calls_out: 0
+    calls_in: 3
+  services.healing-webhook.ticket_builder.build_ticket_payload:
+    name: build_ticket_payload
+    module: services.healing-webhook.ticket_builder
+    line: 162
+    cyclomatic_complexity: 11
+    calls_out: 25
+    calls_in: 1
+  src.koru.bootstrap.import_flat_pipeline:
+    name: import_flat_pipeline
+    module: src.koru.bootstrap
+    line: 411
+    cyclomatic_complexity: 9
     calls_out: 12
     calls_in: 2
   services.healing-webhook.app._resolve_affected_files:
@@ -68,188 +446,90 @@ nodes:
     cyclomatic_complexity: 11
     calls_out: 24
     calls_in: 2
-  src.koru.gc_cli_helpers.print_gc_text_report:
-    name: print_gc_text_report
-    module: src.koru.gc_cli_helpers
-    line: 35
-    cyclomatic_complexity: 12
-    calls_out: 14
-    calls_in: 1
-  src.koruapi.invoke_handlers._handle_queue_loop:
-    name: _handle_queue_loop
-    module: src.koruapi.invoke_handlers
-    line: 48
-    cyclomatic_complexity: 2
-    calls_out: 7
-    calls_in: 0
-  src.koru.redup_integration.redup_check_command:
-    name: redup_check_command
-    module: src.koru.redup_integration
-    line: 27
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 1
-  services.healing-webhook.app._enrich_ticket_with_vallm:
-    name: _enrich_ticket_with_vallm
-    module: services.healing-webhook.app
-    line: 142
-    cyclomatic_complexity: 8
-    calls_out: 16
-    calls_in: 1
-  src.koru.mcp_provision._vscode_project_config:
-    name: _vscode_project_config
-    module: src.koru.mcp_provision
-    line: 44
-    cyclomatic_complexity: 1
-    calls_out: 0
-    calls_in: 4
-  src.koruapi.mcp_server._run_single_gate:
-    name: _run_single_gate
-    module: src.koruapi.mcp_server
-    line: 658
-    cyclomatic_complexity: 12
-    calls_out: 17
-    calls_in: 1
-  src.koruapi.invoke_handlers._handle_dsl_to_dsl:
-    name: _handle_dsl_to_dsl
-    module: src.koruapi.invoke_handlers
-    line: 105
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 0
-  services.healing-webhook.app._rate_limit_ok:
-    name: _rate_limit_ok
-    module: services.healing-webhook.app
-    line: 120
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 2
-  src.koruide.ide._vscode_family_flavor_from_env:
-    name: _vscode_family_flavor_from_env
-    module: src.koruide.ide
-    line: 254
-    cyclomatic_complexity: 7
-    calls_out: 4
-    calls_in: 1
-  src.koruide.host_setup._print_setup_host_human_followups:
-    name: _print_setup_host_human_followups
-    module: src.koruide.host_setup
-    line: 193
-    cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 0
-  src.koru.autonomous_diagnostics.run_idle_diagnostics:
-    name: run_idle_diagnostics
-    module: src.koru.autonomous_diagnostics
-    line: 202
+  src.koru.bootstrap.validate_flat_pipeline:
+    name: validate_flat_pipeline
+    module: src.koru.bootstrap
+    line: 233
     cyclomatic_complexity: 3
     calls_out: 9
-    calls_in: 0
-  services.healing-webhook.app._parse_redup_summary:
-    name: _parse_redup_summary
-    module: services.healing-webhook.app
-    line: 469
-    cyclomatic_complexity: 9
-    calls_out: 16
     calls_in: 1
-  src.koruide.ide.detect_terminal_host_ide_id:
-    name: detect_terminal_host_ide_id
-    module: src.koruide.ide
-    line: 320
+  src.koru.autonomous._run_operator_pipeline:
+    name: _run_operator_pipeline
+    module: src.koru.autonomous
+    line: 1353
     cyclomatic_complexity: 3
     calls_out: 3
-    calls_in: 5
-  src.koru.mcp_provision._apply_target:
-    name: _apply_target
+    calls_in: 1
+  src.koru.mcp_provision.ensure_koru_mcp_not_disabled:
+    name: ensure_koru_mcp_not_disabled
     module: src.koru.mcp_provision
-    line: 312
-    cyclomatic_complexity: 4
-    calls_out: 5
-    calls_in: 1
-  src.koru.init.refresh_init_agent_lane:
-    name: refresh_init_agent_lane
-    module: src.koru.init
-    line: 378
-    cyclomatic_complexity: 4
-    calls_out: 11
-    calls_in: 1
-  src.koruide.ide._read_cmdline:
-    name: _read_cmdline
-    module: src.koruide.ide
-    line: 69
-    cyclomatic_complexity: 2
-    calls_out: 5
-    calls_in: 2
-  src.koruide.plugin_installer.resolve_extension_vsix:
-    name: resolve_extension_vsix
-    module: src.koruide.plugin_installer
-    line: 121
-    cyclomatic_complexity: 8
-    calls_out: 18
-    calls_in: 2
-  src.koruapi.dashboard_serve.bind_serve_server:
-    name: bind_serve_server
-    module: src.koruapi.dashboard_serve
-    line: 1249
-    cyclomatic_complexity: 11
-    calls_out: 10
-    calls_in: 2
-  src.koruide.host_setup.build_setup_host_report:
-    name: build_setup_host_report
-    module: src.koruide.host_setup
-    line: 84
-    cyclomatic_complexity: 7
-    calls_out: 11
-    calls_in: 5
-  src.koruide.ide._read_comm:
-    name: _read_comm
-    module: src.koruide.ide
-    line: 62
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 2
-  src.koru.bootstrap.load_flat_pipeline:
-    name: load_flat_pipeline
-    module: src.koru.bootstrap
-    line: 74
+    line: 240
     cyclomatic_complexity: 9
-    calls_out: 12
+    calls_out: 17
     calls_in: 1
-  src.koruapi.mcp_server._detect_enabled_gates:
-    name: _detect_enabled_gates
-    module: src.koruapi.mcp_server
-    line: 630
-    cyclomatic_complexity: 5
-    calls_out: 6
-    calls_in: 1
-  src.koruapi.mcp_server._log:
-    name: _log
-    module: src.koruapi.mcp_server
-    line: 1002
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 2
-  src.koruide.os_injector.os_injector_env_disabled:
-    name: os_injector_env_disabled
-    module: src.koruide.os_injector
-    line: 61
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 1
-  src.koru.mcp_provision._koru_mcp_entry:
-    name: _koru_mcp_entry
-    module: src.koru.mcp_provision
-    line: 71
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 2
-  src.koru.cli._gate_main:
-    name: _gate_main
-    module: src.koru.cli
-    line: 662
-    cyclomatic_complexity: 5
-    calls_out: 12
+  src.koruapi.cli.main:
+    name: main
+    module: src.koruapi.cli
+    line: 64
+    cyclomatic_complexity: 11
+    calls_out: 20
     calls_in: 0
+  src.korudsl.library._start_goal:
+    name: _start_goal
+    module: src.korudsl.library
+    line: 18
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 1
+  services.healing-webhook.app.probe_failure:
+    name: probe_failure
+    module: services.healing-webhook.app
+    line: 648
+    cyclomatic_complexity: 7
+    calls_out: 21
+    calls_in: 0
+  src.koruide.host_setup._print_setup_host_apt_section:
+    name: _print_setup_host_apt_section
+    module: src.koruide.host_setup
+    line: 183
+    cyclomatic_complexity: 2
+    calls_out: 6
+    calls_in: 0
+  src.koruapi.mcp.mcp_main:
+    name: mcp_main
+    module: src.koruapi.mcp
+    line: 10
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 2
+  src.koruide.ide._auto_profile_candidate_ids:
+    name: _auto_profile_candidate_ids
+    module: src.koruide.ide
+    line: 431
+    cyclomatic_complexity: 3
+    calls_out: 10
+    calls_in: 1
+  src.koru.autonomous_startup.build_startup_probe:
+    name: build_startup_probe
+    module: src.koru.autonomous_startup
+    line: 126
+    cyclomatic_complexity: 8
+    calls_out: 21
+    calls_in: 1
+  src.koruide.injector.Injector._candidate_backends:
+    name: _candidate_backends
+    module: src.koruide.injector
+    line: 181
+    cyclomatic_complexity: 6
+    calls_out: 13
+    calls_in: 0
+  src.koru.autonomous._status_has_autopilot_plugin:
+    name: _status_has_autopilot_plugin
+    module: src.koru.autonomous
+    line: 862
+    cyclomatic_complexity: 6
+    calls_out: 4
+    calls_in: 2
   src.koruide.os_injector.os_injector_env_forced:
     name: os_injector_env_forced
     module: src.koruide.os_injector
@@ -257,47 +537,124 @@ nodes:
     cyclomatic_complexity: 1
     calls_out: 3
     calls_in: 1
-  src.koruide.ide.pick_target:
-    name: pick_target
-    module: src.koruide.ide
-    line: 351
-    cyclomatic_complexity: 13
-    calls_out: 5
-    calls_in: 4
-  src.koruide.injector._forced_injector_backend:
-    name: _forced_injector_backend
-    module: src.koruide.injector
-    line: 51
+  src.koruide.plugin_installer._result_already_installed:
+    name: _result_already_installed
+    module: src.koruide.plugin_installer
+    line: 258
     cyclomatic_complexity: 2
     calls_out: 3
     calls_in: 1
-  src.koruapi.invoke_handlers._handle_doctor_run:
-    name: _handle_doctor_run
-    module: src.koruapi.invoke_handlers
-    line: 30
-    cyclomatic_complexity: 1
+  src.koruide.host_setup._package_manager_hint:
+    name: _package_manager_hint
+    module: src.koruide.host_setup
+    line: 28
+    cyclomatic_complexity: 5
+    calls_out: 4
+    calls_in: 1
+  src.koru.queue_cli_helpers.open_queue_run_log:
+    name: open_queue_run_log
+    module: src.koru.queue_cli_helpers
+    line: 56
+    cyclomatic_complexity: 4
     calls_out: 2
-    calls_in: 0
-  src.koruapi.mcp_server._jsonrpc_error:
-    name: _jsonrpc_error
-    module: src.koruapi.mcp_server
-    line: 883
+    calls_in: 1
+  src.koruide.plugin_installer.format_plugin_install_result:
+    name: format_plugin_install_result
+    module: src.koruide.plugin_installer
+    line: 398
     cyclomatic_complexity: 2
-    calls_out: 0
+    calls_out: 1
+    calls_in: 1
+  src.koruide.host_setup._print_setup_host_install_details:
+    name: _print_setup_host_install_details
+    module: src.koruide.host_setup
+    line: 200
+    cyclomatic_complexity: 6
+    calls_out: 10
+    calls_in: 0
+  src.koru.mcp_provision._windsurf_global_config:
+    name: _windsurf_global_config
+    module: src.koru.mcp_provision
+    line: 34
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 5
+  src.koruide.ide.resolve_drive_target:
+    name: resolve_drive_target
+    module: src.koruide.ide
+    line: 501
+    cyclomatic_complexity: 11
+    calls_out: 7
     calls_in: 3
-  src.koruapi.mcp_server._write:
-    name: _write
-    module: src.koruapi.mcp_server
-    line: 995
+  src.koru.bootstrap._validate_cross_task_dependencies:
+    name: _validate_cross_task_dependencies
+    module: src.koru.bootstrap
+    line: 216
+    cyclomatic_complexity: 10
+    calls_out: 13
+    calls_in: 1
+  src.koru.autonomous._allow_keyboard_autopilot_fallback:
+    name: _allow_keyboard_autopilot_fallback
+    module: src.koru.autonomous
+    line: 135
     cyclomatic_complexity: 1
     calls_out: 3
-    calls_in: 2
-  src.koru.agent_cli_helpers.try_agent_env_exports:
-    name: try_agent_env_exports
-    module: src.koru.agent_cli_helpers
-    line: 21
-    cyclomatic_complexity: 7
-    calls_out: 7
+    calls_in: 1
+  src.koru.runtime.ensure_runs_dir:
+    name: ensure_runs_dir
+    module: src.koru.runtime
+    line: 70
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 1
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.next:
+    name: next
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 202
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 5
+  src.koruide.audit._isoformat_utc:
+    name: _isoformat_utc
+    module: src.koruide.audit
+    line: 62
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 1
+  src.koru.mcp_provision._cursor_project_config:
+    name: _cursor_project_config
+    module: src.koru.mcp_provision
+    line: 39
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 4
+  src.koru.watch._format_connected_event:
+    name: _format_connected_event
+    module: src.koru.watch
+    line: 10
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 1
+  src.koruapi.mcp_server._run_planfile_cli:
+    name: _run_planfile_cli
+    module: src.koruapi.mcp_server
+    line: 348
+    cyclomatic_complexity: 1
+    calls_out: 5
+    calls_in: 0
+  src.koru.autonomous._run_mcp_provision:
+    name: _run_mcp_provision
+    module: src.koru.autonomous
+    line: 1293
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  src.koru.autonomous_wup._stop_process:
+    name: _stop_process
+    module: src.koru.autonomous_wup
+    line: 426
+    cyclomatic_complexity: 4
+    calls_out: 6
     calls_in: 1
   src.koruide.os_injector.dry_run_from_env:
     name: dry_run_from_env
@@ -306,46 +663,137 @@ nodes:
     cyclomatic_complexity: 1
     calls_out: 3
     calls_in: 1
-  src.koruide.injector._submit_key_for:
-    name: _submit_key_for
-    module: src.koruide.injector
-    line: 24
+  src.koruide.ide.focused_ide:
+    name: focused_ide
+    module: src.koruide.ide
+    line: 334
+    cyclomatic_complexity: 6
+    calls_out: 1
+    calls_in: 1
+  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect:
+    name: connect
+    module: plugins.koru-autopilot-vscode.src.extension
+    line: 70
+    cyclomatic_complexity: 2
+    calls_out: 7
+    calls_in: 4
+  src.koruapi.invoke_handlers._handle_autopilot_status:
+    name: _handle_autopilot_status
+    module: src.koruapi.invoke_handlers
+    line: 65
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  src.koru.autonomous_parser.looks_like_autonomous_up_command:
+    name: looks_like_autonomous_up_command
+    module: src.koru.autonomous_parser
+    line: 394
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 2
+  src.korudsl.library._apply_prefixed_line:
+    name: _apply_prefixed_line
+    module: src.korudsl.library
+    line: 84
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 1
+  src.koruapi.invoke_handlers._handle_mcp_run_ticket:
+    name: _handle_mcp_run_ticket
+    module: src.koruapi.invoke_handlers
+    line: 169
     cyclomatic_complexity: 1
     calls_out: 2
-    calls_in: 2
-  src.koru.tasks.create_nl_task:
-    name: create_nl_task
-    module: src.koru.tasks
-    line: 118
-    cyclomatic_complexity: 12
-    calls_out: 28
-    calls_in: 7
-  src.koruide.plugin_installer.install_plugin_for_ide:
-    name: install_plugin_for_ide
-    module: src.koruide.plugin_installer
-    line: 335
-    cyclomatic_complexity: 9
-    calls_out: 13
-    calls_in: 1
-  src.koruide.host_setup._print_setup_host_ides:
-    name: _print_setup_host_ides
-    module: src.koruide.host_setup
-    line: 173
-    cyclomatic_complexity: 4
-    calls_out: 8
     calls_in: 0
-  src.koru.cli._serve_main:
-    name: _serve_main
+  src.korudsl.library._handle_func:
+    name: _handle_func
+    module: src.korudsl.library
+    line: 27
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 1
+  src.koru.queue_clean._cleanable_statuses:
+    name: _cleanable_statuses
+    module: src.koru.queue_clean
+    line: 178
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  src.koru.mcp_provision.provision_windsurf:
+    name: provision_windsurf
+    module: src.koru.mcp_provision
+    line: 174
+    cyclomatic_complexity: 4
+    calls_out: 10
+    calls_in: 0
+  src.koruide.client.KoruIDEClient.request:
+    name: request
+    module: src.koruide.client
+    line: 34
+    cyclomatic_complexity: 7
+    calls_out: 15
+    calls_in: 0
+  src.koru.ide_client.build_ide_client:
+    name: build_ide_client
+    module: src.koru.ide_client
+    line: 117
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 5
+  src.koru.cli._build_runtime_context_parser:
+    name: _build_runtime_context_parser
     module: src.koru.cli
-    line: 1046
+    line: 1209
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 1
+  src.koru.autonomous._stdio_info:
+    name: _stdio_info
+    module: src.koru.autonomous
+    line: 119
     cyclomatic_complexity: 1
     calls_out: 1
-    calls_in: 0
-  services.healing-webhook.app._build_planfile_command:
-    name: _build_planfile_command
-    module: services.healing-webhook.app
-    line: 162
+    calls_in: 32
+  src.koruide.host_setup.build_setup_host_report:
+    name: build_setup_host_report
+    module: src.koruide.host_setup
+    line: 84
+    cyclomatic_complexity: 7
+    calls_out: 11
+    calls_in: 5
+  src.koru.queue.ticket.planfile_command:
+    name: planfile_command
+    module: src.koru.queue.ticket
+    line: 108
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 15
+  src.koru.mcp_provision._resolved_koru_command:
+    name: _resolved_koru_command
+    module: src.koru.mcp_provision
+    line: 59
     cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 3
+  src.koru.watch.format_queue_event:
+    name: format_queue_event
+    module: src.koru.watch
+    line: 48
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 1
+  src.koruapi.mcp_server.run_stdio:
+    name: run_stdio
+    module: src.koruapi.mcp_server
+    line: 972
+    cyclomatic_complexity: 5
+    calls_out: 8
+    calls_in: 1
+  src.koru.gate._resolve_actor:
+    name: _resolve_actor
+    module: src.koru.gate
+    line: 114
+    cyclomatic_complexity: 4
     calls_out: 1
     calls_in: 1
   services.healing-webhook.ticket_builder._reproduction_for:
@@ -355,468 +803,6 @@ nodes:
     cyclomatic_complexity: 5
     calls_out: 5
     calls_in: 1
-  src.koruide.ide._auto_profile_candidate_ids:
-    name: _auto_profile_candidate_ids
-    module: src.koruide.ide
-    line: 431
-    cyclomatic_complexity: 3
-    calls_out: 10
-    calls_in: 1
-  src.koruapi.cli._build_parser:
-    name: _build_parser
-    module: src.koruapi.cli
-    line: 20
-    cyclomatic_complexity: 2
-    calls_out: 15
-    calls_in: 1
-  src.koru.tools._build_scaffold_labels:
-    name: _build_scaffold_labels
-    module: src.koru.tools
-    line: 227
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 1
-  src.koruide.plugin_installer.resolve_target_ide:
-    name: resolve_target_ide
-    module: src.koruide.plugin_installer
-    line: 96
-    cyclomatic_complexity: 10
-    calls_out: 6
-    calls_in: 1
-  src.koruide.audit.AuditLog.record:
-    name: record
-    module: src.koruide.audit
-    line: 121
-    cyclomatic_complexity: 6
-    calls_out: 7
-    calls_in: 0
-  src.koru.queue_clean._planfile_base:
-    name: _planfile_base
-    module: src.koru.queue_clean
-    line: 112
-    cyclomatic_complexity: 4
-    calls_out: 3
-    calls_in: 2
-  src.koru.topology.load_topology:
-    name: load_topology
-    module: src.koru.topology
-    line: 243
-    cyclomatic_complexity: 1
-    calls_out: 9
-    calls_in: 11
-  src.koru.mcp_provision._windsurf_project_config:
-    name: _windsurf_project_config
-    module: src.koru.mcp_provision
-    line: 49
-    cyclomatic_complexity: 1
-    calls_out: 0
-    calls_in: 4
-  src.koru.cli._build_scan_parser:
-    name: _build_scan_parser
-    module: src.koru.cli
-    line: 469
-    cyclomatic_complexity: 1
-    calls_out: 9
-    calls_in: 1
-  src.koru.cli._queue_run_main:
-    name: _queue_run_main
-    module: src.koru.cli
-    line: 1761
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 1
-  src.koruapi.invoke_handlers._handle_scan_apply:
-    name: _handle_scan_apply
-    module: src.koruapi.invoke_handlers
-    line: 37
-    cyclomatic_complexity: 1
-    calls_out: 4
-    calls_in: 0
-  src.koruide.ide._ide_id_from_process:
-    name: _ide_id_from_process
-    module: src.koruide.ide
-    line: 217
-    cyclomatic_complexity: 5
-    calls_out: 4
-    calls_in: 2
-  src.koruide.host_setup._package_manager_hint:
-    name: _package_manager_hint
-    module: src.koruide.host_setup
-    line: 28
-    cyclomatic_complexity: 5
-    calls_out: 4
-    calls_in: 1
-  src.koru.agent_backends.iter_agent_backend_profiles:
-    name: iter_agent_backend_profiles
-    module: src.koru.agent_backends
-    line: 107
-    cyclomatic_complexity: 1
-    calls_out: 0
-    calls_in: 2
-  src.koru.mcp_provision._cursor_project_config:
-    name: _cursor_project_config
-    module: src.koru.mcp_provision
-    line: 39
-    cyclomatic_complexity: 1
-    calls_out: 0
-    calls_in: 4
-  src.koruide.ide._score_cmdline_flags:
-    name: _score_cmdline_flags
-    module: src.koruide.ide
-    line: 139
-    cyclomatic_complexity: 4
-    calls_out: 1
-    calls_in: 1
-  src.koru.ide_router.is_headless_environment:
-    name: is_headless_environment
-    module: src.koru.ide_router
-    line: 23
-    cyclomatic_complexity: 8
-    calls_out: 6
-    calls_in: 3
-  src.koruapi.dashboard_serve._listener_pids_for_tcp_port:
-    name: _listener_pids_for_tcp_port
-    module: src.koruapi.dashboard_serve
-    line: 208
-    cyclomatic_complexity: 7
-    calls_out: 7
-    calls_in: 2
-  src.koruide.plugin_installer._resolve_ide_command:
-    name: _resolve_ide_command
-    module: src.koruide.plugin_installer
-    line: 147
-    cyclomatic_complexity: 7
-    calls_out: 4
-    calls_in: 1
-  services.healing-webhook.app._execute_planfile_create:
-    name: _execute_planfile_create
-    module: services.healing-webhook.app
-    line: 193
-    cyclomatic_complexity: 8
-    calls_out: 12
-    calls_in: 1
-  src.koru.mcp_provision._read_json:
-    name: _read_json
-    module: src.koru.mcp_provision
-    line: 147
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 5
-  src.korudsl.cli._build_parser:
-    name: _build_parser
-    module: src.korudsl.cli
-    line: 13
-    cyclomatic_complexity: 1
-    calls_out: 11
-    calls_in: 1
-  src.koruapi.invoke_handlers._handle_mcp_list_tickets:
-    name: _handle_mcp_list_tickets
-    module: src.koruapi.invoke_handlers
-    line: 161
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  src.koru.mcp_provision._resolved_koru_command:
-    name: _resolved_koru_command
-    module: src.koru.mcp_provision
-    line: 59
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 3
-  src.koruapi.invoke_handlers._handle_autopilot_drive:
-    name: _handle_autopilot_drive
-    module: src.koruapi.invoke_handlers
-    line: 77
-    cyclomatic_complexity: 5
-    calls_out: 17
-    calls_in: 0
-  src.koru.autonomous.autonomous_main:
-    name: autonomous_main
-    module: src.koru.autonomous
-    line: 1705
-    cyclomatic_complexity: 10
-    calls_out: 4
-    calls_in: 2
-  src.koruapi.invoke_handlers._handle_dsl_roundtrip:
-    name: _handle_dsl_roundtrip
-    module: src.koruapi.invoke_handlers
-    line: 112
-    cyclomatic_complexity: 3
-    calls_out: 6
-    calls_in: 0
-  src.koru.cli._refactor_planfile_handoff_main:
-    name: _refactor_planfile_handoff_main
-    module: src.koru.cli
-    line: 1362
-    cyclomatic_complexity: 1
-    calls_out: 6
-    calls_in: 0
-  src.koru.topology_cli.apply_topology_mutations:
-    name: apply_topology_mutations
-    module: src.koru.topology_cli
-    line: 55
-    cyclomatic_complexity: 4
-    calls_out: 3
-    calls_in: 1
-  src.koruide.host_setup._print_setup_host_header:
-    name: _print_setup_host_header
-    module: src.koruide.host_setup
-    line: 159
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 0
-  src.koruapi.dashboard_serve.start_serve_background:
-    name: start_serve_background
-    module: src.koruapi.dashboard_serve
-    line: 1353
-    cyclomatic_complexity: 4
-    calls_out: 14
-    calls_in: 1
-  src.koruapi.invoke_handlers._handle_autopilot_status:
-    name: _handle_autopilot_status
-    module: src.koruapi.invoke_handlers
-    line: 65
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 0
-  services.healing-webhook.ticket_builder._default_acceptance:
-    name: _default_acceptance
-    module: services.healing-webhook.ticket_builder
-    line: 133
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 1
-  src.koru.wup_testql_compat._normalize_timeout:
-    name: _normalize_timeout
-    module: src.koru.wup_testql_compat
-    line: 15
-    cyclomatic_complexity: 4
-    calls_out: 7
-    calls_in: 3
-  src.koruide.os_injector.input_mode_from_env:
-    name: input_mode_from_env
-    module: src.koruide.os_injector
-    line: 88
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 1
-  services.healing-webhook.ticket_builder._infer_paths:
-    name: _infer_paths
-    module: services.healing-webhook.ticket_builder
-    line: 101
-    cyclomatic_complexity: 7
-    calls_out: 1
-    calls_in: 2
-  src.koru.queue.loop.run_planfile_queue_loop:
-    name: run_planfile_queue_loop
-    module: src.koru.queue.loop
-    line: 30
-    cyclomatic_complexity: 12
-    calls_out: 8
-    calls_in: 3
-  src.koru.dev_sync.sync_developer_packages:
-    name: sync_developer_packages
-    module: src.koru.dev_sync
-    line: 61
-    cyclomatic_complexity: 9
-    calls_out: 16
-    calls_in: 1
-  src.koruide.os_injector.iter_config_paths:
-    name: iter_config_paths
-    module: src.koruide.os_injector
-    line: 43
-    cyclomatic_complexity: 4
-    calls_out: 11
-    calls_in: 1
-  src.koru.tools.default_registry_path:
-    name: default_registry_path
-    module: src.koru.tools
-    line: 14
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 1
-  src.koruapi.mcp_server._jsonrpc_response:
-    name: _jsonrpc_response
-    module: src.koruapi.mcp_server
-    line: 879
-    cyclomatic_complexity: 1
-    calls_out: 0
-    calls_in: 1
-  src.koru.tools.detect_tools:
-    name: detect_tools
-    module: src.koru.tools
-    line: 129
-    cyclomatic_complexity: 4
-    calls_out: 8
-    calls_in: 1
-  src.koru.queue_clean.clean_queue:
-    name: clean_queue
-    module: src.koru.queue_clean
-    line: 340
-    cyclomatic_complexity: 5
-    calls_out: 7
-    calls_in: 1
-  src.koru.autonomous_diagnostics.create_diagnostic_ticket:
-    name: create_diagnostic_ticket
-    module: src.koru.autonomous_diagnostics
-    line: 128
-    cyclomatic_complexity: 2
-    calls_out: 6
-    calls_in: 1
-  src.koru.scan.run_scan:
-    name: run_scan
-    module: src.koru.scan
-    line: 865
-    cyclomatic_complexity: 10
-    calls_out: 15
-    calls_in: 4
-  src.koru.tools.load_tool_registry:
-    name: load_tool_registry
-    module: src.koru.tools
-    line: 30
-    cyclomatic_complexity: 11
-    calls_out: 13
-    calls_in: 2
-  src.koruide.os_injector.focus_mode_from_env:
-    name: focus_mode_from_env
-    module: src.koruide.os_injector
-    line: 76
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 1
-  src.koru.loop.run_closed_loop:
-    name: run_closed_loop
-    module: src.koru.loop
-    line: 86
-    cyclomatic_complexity: 12
-    calls_out: 18
-    calls_in: 1
-  src.koruide.ide._resolve_auto_drive_target:
-    name: _resolve_auto_drive_target
-    module: src.koruide.ide
-    line: 469
-    cyclomatic_complexity: 13
-    calls_out: 6
-    calls_in: 1
-  src.koruide.injector._ydotool_enter_keycode:
-    name: _ydotool_enter_keycode
-    module: src.koruide.injector
-    line: 59
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 1
-  src.koruide.protocol.decode:
-    name: decode
-    module: src.koruide.protocol
-    line: 97
-    cyclomatic_complexity: 12
-    calls_out: 21
-    calls_in: 2
-  src.koruapi.integrations.list_integrations:
-    name: list_integrations
-    module: src.koruapi.integrations
-    line: 190
-    cyclomatic_complexity: 4
-    calls_out: 2
-    calls_in: 3
-  src.koruide.plugin_installer._env_reassert_extension_install:
-    name: _env_reassert_extension_install
-    module: src.koruide.plugin_installer
-    line: 213
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 1
-  src.koru.cli._render_runtime_context_text:
-    name: _render_runtime_context_text
-    module: src.koru.cli
-    line: 1228
-    cyclomatic_complexity: 14
-    calls_out: 23
-    calls_in: 1
-  src.koru.doctor._planfile_version_argv:
-    name: _planfile_version_argv
-    module: src.koru.doctor
-    line: 208
-    cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 1
-  src.koru.cli._watch_main:
-    name: _watch_main
-    module: src.koru.cli
-    line: 1729
-    cyclomatic_complexity: 2
-    calls_out: 7
-    calls_in: 1
-  src.koru.tools._build_scaffold_prompt_lines:
-    name: _build_scaffold_prompt_lines
-    module: src.koru.tools
-    line: 191
-    cyclomatic_complexity: 5
-    calls_out: 4
-    calls_in: 1
-  services.healing-webhook.app.heal_vallm_validate:
-    name: heal_vallm_validate
-    module: services.healing-webhook.app
-    line: 424
-    cyclomatic_complexity: 9
-    calls_out: 21
-    calls_in: 0
-  src.koru.cli._render_clean_report_text:
-    name: _render_clean_report_text
-    module: src.koru.cli
-    line: 853
-    cyclomatic_complexity: 12
-    calls_out: 28
-    calls_in: 1
-  src.koruide.os_injector._cmd_timeout_seconds:
-    name: _cmd_timeout_seconds
-    module: src.koruide.os_injector
-    line: 100
-    cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 2
-  src.koru.queue_clean._maybe_skip_active_ticket:
-    name: _maybe_skip_active_ticket
-    module: src.koru.queue_clean
-    line: 182
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 1
-  src.koruapi.dashboard_serve.build_server:
-    name: build_server
-    module: src.koruapi.dashboard_serve
-    line: 1227
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 4
-  src.koru.watch.format_queue_event:
-    name: format_queue_event
-    module: src.koru.watch
-    line: 48
-    cyclomatic_complexity: 5
-    calls_out: 6
-    calls_in: 1
-  src.koru.autonomous_diagnostics._has_redup_module:
-    name: _has_redup_module
-    module: src.koru.autonomous_diagnostics
-    line: 17
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 1
-  src.koru.cli._init_ide_main:
-    name: _init_ide_main
-    module: src.koru.cli
-    line: 1356
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 0
-  src.koruapi.invoke_handlers._handle_context_build:
-    name: _handle_context_build
-    module: src.koruapi.invoke_handlers
-    line: 19
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 0
   src.koruide.os_injector._run_cmd:
     name: _run_cmd
     module: src.koruide.os_injector
@@ -824,271 +810,47 @@ nodes:
     cyclomatic_complexity: 5
     calls_out: 7
     calls_in: 3
-  src.koru.tools._first_token:
-    name: _first_token
-    module: src.koru.tools
-    line: 69
-    cyclomatic_complexity: 2
-    calls_out: 1
+  src.koru.bootstrap._detect_cycle:
+    name: _detect_cycle
+    module: src.koru.bootstrap
+    line: 249
+    cyclomatic_complexity: 10
+    calls_out: 13
     calls_in: 1
-  services.healing-webhook.app.create_planfile_ticket:
-    name: create_planfile_ticket
-    module: services.healing-webhook.app
-    line: 219
+  src.koruapi.local.build_local_parser:
+    name: build_local_parser
+    module: src.koruapi.local
+    line: 11
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 1
+  src.koru.loop._search_root_for_include:
+    name: _search_root_for_include
+    module: src.koru.loop
+    line: 44
+    cyclomatic_complexity: 6
+    calls_out: 6
+    calls_in: 1
+  src.koru.activity_log.activity_info:
+    name: activity_info
+    module: src.koru.activity_log
+    line: 48
     cyclomatic_complexity: 5
+    calls_out: 11
+    calls_in: 4
+  src.koru.autonomous._terminate_existing_processes:
+    name: _terminate_existing_processes
+    module: src.koru.autonomous
+    line: 342
+    cyclomatic_complexity: 10
     calls_out: 10
-    calls_in: 2
-  src.koru.gc.run_gc:
-    name: run_gc
-    module: src.koru.gc
-    line: 298
-    cyclomatic_complexity: 11
-    calls_out: 9
-    calls_in: 1
-  src.koruapi.server.KoruAPIHandler.do_GET:
-    name: do_GET
-    module: src.koruapi.server
-    line: 103
-    cyclomatic_complexity: 5
-    calls_out: 12
-    calls_in: 0
-  src.koru.tools.resolve_registry_path:
-    name: resolve_registry_path
-    module: src.koru.tools
-    line: 19
-    cyclomatic_complexity: 4
-    calls_out: 7
-    calls_in: 1
-  src.koru.doctor._check_runtime_dir:
-    name: _check_runtime_dir
-    module: src.koru.doctor
-    line: 310
-    cyclomatic_complexity: 6
-    calls_out: 6
-    calls_in: 0
-  src.koru.local_service._koru_version:
-    name: _koru_version
-    module: src.koru.local_service
-    line: 29
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 1
-  src.koru.topology.enabled_components_for_pipeline:
-    name: enabled_components_for_pipeline
-    module: src.koru.topology
-    line: 386
-    cyclomatic_complexity: 9
-    calls_out: 11
-    calls_in: 1
-  src.koru.cli._build_queue_parser:
-    name: _build_queue_parser
-    module: src.koru.cli
-    line: 786
-    cyclomatic_complexity: 1
-    calls_out: 11
-    calls_in: 1
-  src.koru.local_service.build_local_service_server:
-    name: build_local_service_server
-    module: src.koru.local_service
-    line: 163
-    cyclomatic_complexity: 1
-    calls_out: 4
-    calls_in: 2
-  src.koru.events.emit_management_event:
-    name: emit_management_event
-    module: src.koru.events
-    line: 13
-    cyclomatic_complexity: 8
-    calls_out: 7
-    calls_in: 25
-  src.koruide.host_setup._print_setup_host_apt_section:
-    name: _print_setup_host_apt_section
-    module: src.koruide.host_setup
-    line: 183
-    cyclomatic_complexity: 2
-    calls_out: 6
-    calls_in: 0
-  src.koru.mcp_provision.detect_ides:
-    name: detect_ides
-    module: src.koru.mcp_provision
-    line: 116
-    cyclomatic_complexity: 10
-    calls_out: 12
-    calls_in: 1
-  src.koru.bootstrap._validate_task:
-    name: _validate_task
-    module: src.koru.bootstrap
-    line: 196
-    cyclomatic_complexity: 3
-    calls_out: 15
-    calls_in: 1
-  src.koruide.os_injector.load_profile:
-    name: load_profile
-    module: src.koruide.os_injector
-    line: 150
-    cyclomatic_complexity: 5
-    calls_out: 12
     calls_in: 3
-  src.koruide.injector.Injector.type_text:
-    name: type_text
-    module: src.koruide.injector
-    line: 277
-    cyclomatic_complexity: 8
-    calls_out: 11
-    calls_in: 0
-  src.koru.queue_clean._build_close_note:
-    name: _build_close_note
-    module: src.koru.queue_clean
-    line: 282
-    cyclomatic_complexity: 1
-    calls_out: 4
-    calls_in: 1
-  services.healing-webhook.app.heal_annotate:
-    name: heal_annotate
-    module: services.healing-webhook.app
-    line: 323
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 0
-  src.koruapi.mcp_server._get_job_store_path:
-    name: _get_job_store_path
+  src.koruapi.mcp_server._get_python_cmd:
+    name: _get_python_cmd
     module: src.koruapi.mcp_server
-    line: 62
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 2
-  services.healing-webhook.app._run_vallm_check:
-    name: _run_vallm_check
-    module: services.healing-webhook.app
-    line: 337
-    cyclomatic_complexity: 10
-    calls_out: 15
-    calls_in: 2
-  src.koru.cli._init_agent_lane_main:
-    name: _init_agent_lane_main
-    module: src.koru.cli
-    line: 1615
-    cyclomatic_complexity: 8
-    calls_out: 15
-    calls_in: 1
-  src.koru.agent_cli_helpers.print_agent_list:
-    name: print_agent_list
-    module: src.koru.agent_cli_helpers
-    line: 40
-    cyclomatic_complexity: 10
-    calls_out: 7
-    calls_in: 1
-  src.koruapi.server.KoruAPIHandler.do_POST:
-    name: do_POST
-    module: src.koruapi.server
-    line: 143
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 0
-  services.healing-webhook.ticket_builder._format_paths:
-    name: _format_paths
-    module: services.healing-webhook.ticket_builder
-    line: 129
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 1
-  src.koru.mcp_provision._write_json:
-    name: _write_json
-    module: src.koru.mcp_provision
-    line: 157
-    cyclomatic_complexity: 2
-    calls_out: 5
-    calls_in: 8
-  src.koru.gc_cli_helpers.emit_gc_management_event:
-    name: emit_gc_management_event
-    module: src.koru.gc_cli_helpers
-    line: 61
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 1
-  src.koru.cli._mcp_serve_main:
-    name: _mcp_serve_main
-    module: src.koru.cli
-    line: 1291
+    line: 341
     cyclomatic_complexity: 1
     calls_out: 1
-    calls_in: 0
-  src.koru.cli._agent_backends_main:
-    name: _agent_backends_main
-    module: src.koru.cli
-    line: 1297
-    cyclomatic_complexity: 8
-    calls_out: 23
-    calls_in: 0
-  src.koru.autonomous_diagnostics.build_idle_checks:
-    name: build_idle_checks
-    module: src.koru.autonomous_diagnostics
-    line: 21
-    cyclomatic_complexity: 11
-    calls_out: 20
-    calls_in: 1
-  src.koruide.os_injector._tool_pid:
-    name: _tool_pid
-    module: src.koruide.os_injector
-    line: 232
-    cyclomatic_complexity: 4
-    calls_out: 2
-    calls_in: 0
-  src.koru.bootstrap.materialize_to_planfile:
-    name: materialize_to_planfile
-    module: src.koru.bootstrap
-    line: 296
-    cyclomatic_complexity: 6
-    calls_out: 16
-    calls_in: 1
-  src.koru.agents.format_agent_lane_exports:
-    name: format_agent_lane_exports
-    module: src.koru.agents
-    line: 293
-    cyclomatic_complexity: 2
-    calls_out: 6
-    calls_in: 2
-  src.koruide.ide._read_exe:
-    name: _read_exe
-    module: src.koruide.ide
-    line: 78
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 1
-  src.koru.mcp_provision._windsurf_global_config:
-    name: _windsurf_global_config
-    module: src.koru.mcp_provision
-    line: 34
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 5
-  src.koru.cli.ide_router_main:
-    name: ide_router_main
-    module: src.koru.cli
-    line: 1381
-    cyclomatic_complexity: 3
-    calls_out: 9
-    calls_in: 0
-  services.healing-webhook.app.heal_redsl_gate:
-    name: heal_redsl_gate
-    module: services.healing-webhook.app
-    line: 269
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 1
-  src.koruide.os_injector.default_config_path:
-    name: default_config_path
-    module: src.koruide.os_injector
-    line: 39
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 2
-  src.koru.ide_client.build_legacy_ide_client:
-    name: build_legacy_ide_client
-    module: src.koru.ide_client
-    line: 91
-    cyclomatic_complexity: 1
-    calls_out: 2
     calls_in: 1
   src.koru.mcp_provision._render_results:
     name: _render_results
@@ -1097,150 +859,150 @@ nodes:
     cyclomatic_complexity: 5
     calls_out: 8
     calls_in: 1
-  src.koru.cli._scan_main:
-    name: _scan_main
+  src.koru.cli._mcp_serve_main:
+    name: _mcp_serve_main
     module: src.koru.cli
-    line: 569
-    cyclomatic_complexity: 5
-    calls_out: 16
-    calls_in: 0
-  src.koruapi.dashboard_serve._address_in_use:
-    name: _address_in_use
-    module: src.koruapi.dashboard_serve
-    line: 198
-    cyclomatic_complexity: 4
-    calls_out: 4
-    calls_in: 1
-  src.koruapi.dashboard_serve.write_serve_endpoint_file:
-    name: write_serve_endpoint_file
-    module: src.koruapi.dashboard_serve
-    line: 1233
+    line: 1291
     cyclomatic_complexity: 1
-    calls_out: 5
-    calls_in: 2
-  src.koruide.ide.detect_running_ides:
-    name: detect_running_ides
-    module: src.koruide.ide
-    line: 162
-    cyclomatic_complexity: 13
-    calls_out: 10
-    calls_in: 16
-  src.koru.mcp_provision.init_ide_main:
-    name: init_ide_main
-    module: src.koru.mcp_provision
-    line: 348
-    cyclomatic_complexity: 2
-    calls_out: 13
-    calls_in: 1
-  src.koru.init._write_policy_stub_if_absent:
-    name: _write_policy_stub_if_absent
-    module: src.koru.init
-    line: 576
-    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 0
+  src.koru.bootstrap._validate_id:
+    name: _validate_id
+    module: src.koru.bootstrap
+    line: 95
+    cyclomatic_complexity: 4
     calls_out: 6
     calls_in: 1
-  src.koru.wup_testql_compat._real_testql:
-    name: _real_testql
-    module: src.koru.wup_testql_compat
-    line: 44
-    cyclomatic_complexity: 5
-    calls_out: 9
-    calls_in: 1
-  src.koru.cli._build_agent_parser:
-    name: _build_agent_parser
-    module: src.koru.cli
-    line: 938
-    cyclomatic_complexity: 1
-    calls_out: 12
-    calls_in: 1
-  src.korudsl.transform.library_to_any:
-    name: library_to_any
-    module: src.korudsl.transform
-    line: 44
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 2
-  src.koru.utils.subprocess_runner.get_python_cmd:
-    name: get_python_cmd
-    module: src.koru.utils.subprocess_runner
-    line: 32
+  src.koruide.host_setup._print_setup_host_human_followups:
+    name: _print_setup_host_human_followups
+    module: src.koruide.host_setup
+    line: 193
     cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 3
-  src.koruide.plugin_installer._install_extension_vsix:
-    name: _install_extension_vsix
-    module: src.koruide.plugin_installer
-    line: 281
+    calls_out: 4
+    calls_in: 0
+  src.koru.scan.run_scan:
+    name: run_scan
+    module: src.koru.scan
+    line: 879
     cyclomatic_complexity: 10
-    calls_out: 14
-    calls_in: 1
-  src.koru.cli._peek_project_from_argv:
-    name: _peek_project_from_argv
-    module: src.koru.cli
-    line: 1430
-    cyclomatic_complexity: 5
-    calls_out: 12
-    calls_in: 1
-  src.koruapi.mcp_server._load_jobs:
-    name: _load_jobs
-    module: src.koruapi.mcp_server
-    line: 70
-    cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 0
-  src.koruide.utils.resolve_xdg_path:
-    name: resolve_xdg_path
-    module: src.koruide.utils
-    line: 9
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 2
-  src.koruide.ide._matches:
-    name: _matches
-    module: src.koruide.ide
-    line: 85
-    cyclomatic_complexity: 7
-    calls_out: 5
-    calls_in: 2
-  src.koruide.socket.default_socket_path:
-    name: default_socket_path
-    module: src.koruide.socket
-    line: 25
-    cyclomatic_complexity: 4
     calls_out: 15
-    calls_in: 6
-  src.koru.queue_clean._close_ticket:
-    name: _close_ticket
-    module: src.koru.queue_clean
-    line: 318
-    cyclomatic_complexity: 5
-    calls_out: 6
-    calls_in: 1
-  src.koru.runtime.runs_dir:
-    name: runs_dir
-    module: src.koru.runtime
-    line: 54
+    calls_in: 4
+  src.koru.mcp_provision._koru_mcp_entry:
+    name: _koru_mcp_entry
+    module: src.koru.mcp_provision
+    line: 71
     cyclomatic_complexity: 1
     calls_out: 1
     calls_in: 2
-  src.koruide.plugin_installer._reassert_extension_extra:
-    name: _reassert_extension_extra
+  src.koru.cli._refactor_planfile_handoff_main:
+    name: _refactor_planfile_handoff_main
+    module: src.koru.cli
+    line: 1362
+    cyclomatic_complexity: 1
+    calls_out: 6
+    calls_in: 0
+  src.koruide.plugin_installer._resolve_ide_command:
+    name: _resolve_ide_command
     module: src.koruide.plugin_installer
-    line: 229
-    cyclomatic_complexity: 9
+    line: 147
+    cyclomatic_complexity: 7
+    calls_out: 4
+    calls_in: 1
+  src.koruide.protocol._filter_extras:
+    name: _filter_extras
+    module: src.koruide.protocol
+    line: 66
+    cyclomatic_complexity: 6
+    calls_out: 4
+    calls_in: 1
+  src.koru.bootstrap._validate_name:
+    name: _validate_name
+    module: src.koru.bootstrap
+    line: 110
+    cyclomatic_complexity: 4
     calls_out: 5
     calls_in: 1
-  src.koru.mcp_provision.remove_from_config:
-    name: remove_from_config
-    module: src.koru.mcp_provision
-    line: 228
-    cyclomatic_complexity: 3
-    calls_out: 5
+  src.koru.autonomous.autonomous_main:
+    name: autonomous_main
+    module: src.koru.autonomous
+    line: 1705
+    cyclomatic_complexity: 10
+    calls_out: 4
+    calls_in: 2
+  services.healing-webhook.ticket_builder._format_paths:
+    name: _format_paths
+    module: services.healing-webhook.ticket_builder
+    line: 129
+    cyclomatic_complexity: 2
+    calls_out: 1
     calls_in: 1
-  src.korudsl.library._start_goal:
-    name: _start_goal
-    module: src.korudsl.library
-    line: 18
+  src.koru.events.emit_management_event:
+    name: emit_management_event
+    module: src.koru.events
+    line: 13
+    cyclomatic_complexity: 8
+    calls_out: 7
+    calls_in: 25
+  src.koruapi.mcp_server.handle_message:
+    name: handle_message
+    module: src.koruapi.mcp_server
+    line: 951
+    cyclomatic_complexity: 6
+    calls_out: 9
+    calls_in: 1
+  src.koruide.injector.Injector.type_text:
+    name: type_text
+    module: src.koruide.injector
+    line: 277
+    cyclomatic_complexity: 8
+    calls_out: 11
+    calls_in: 0
+  src.koruide.os_injector.focus_mode_from_env:
+    name: focus_mode_from_env
+    module: src.koruide.os_injector
+    line: 76
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  src.koru.agent_backends.validate_agent_integration_config:
+    name: validate_agent_integration_config
+    module: src.koru.agent_backends
+    line: 187
+    cyclomatic_complexity: 5
+    calls_out: 4
+    calls_in: 0
+  src.koruide.plugin_installer._ide_from_terminal_env:
+    name: _ide_from_terminal_env
+    module: src.koruide.plugin_installer
+    line: 73
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  src.koruapi.invoke_handlers._handle_autopilot_drive:
+    name: _handle_autopilot_drive
+    module: src.koruapi.invoke_handlers
+    line: 77
+    cyclomatic_complexity: 5
+    calls_out: 17
+    calls_in: 0
+  src.koru.cli._auto_main:
+    name: _auto_main
+    module: src.koru.cli
+    line: 1439
+    cyclomatic_complexity: 6
+    calls_out: 6
+    calls_in: 0
+  src.koru.queue_clean.clean_queue:
+    name: clean_queue
+    module: src.koru.queue_clean
+    line: 340
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 1
+  services.healing-webhook.app.heal_redsl_gate:
+    name: heal_redsl_gate
+    module: services.healing-webhook.app
+    line: 269
     cyclomatic_complexity: 2
     calls_out: 2
     calls_in: 1
@@ -1251,26 +1013,12 @@ nodes:
     cyclomatic_complexity: 1
     calls_out: 2
     calls_in: 1
-  src.koru.gc_cli_helpers.gc_statuses_from_args:
-    name: gc_statuses_from_args
-    module: src.koru.gc_cli_helpers
-    line: 12
-    cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 1
-  src.koru.cli._context_main:
-    name: _context_main
-    module: src.koru.cli
-    line: 1661
-    cyclomatic_complexity: 2
-    calls_out: 6
-    calls_in: 1
-  src.koru.tools._validate_adapter_kind:
-    name: _validate_adapter_kind
-    module: src.koru.tools
-    line: 183
-    cyclomatic_complexity: 3
-    calls_out: 2
+  src.korudsl.cli._build_parser:
+    name: _build_parser
+    module: src.korudsl.cli
+    line: 13
+    cyclomatic_complexity: 1
+    calls_out: 11
     calls_in: 1
   src.koruapi.mcp_server.tool_list_tickets:
     name: tool_list_tickets
@@ -1279,82 +1027,124 @@ nodes:
     cyclomatic_complexity: 3
     calls_out: 9
     calls_in: 1
-  src.koruide.client.KoruIDEClient.__init__:
-    name: __init__
-    module: src.koruide.client
-    line: 17
-    cyclomatic_complexity: 2
+  src.koru.cli._init_ci_main:
+    name: _init_ci_main
+    module: src.koru.cli
+    line: 1272
+    cyclomatic_complexity: 1
     calls_out: 1
     calls_in: 0
-  src.koruapi.openapi.build_openapi_document:
-    name: build_openapi_document
-    module: src.koruapi.openapi
-    line: 10
-    cyclomatic_complexity: 2
-    calls_out: 1
+  src.koru.mcp_provision.detect_ides:
+    name: detect_ides
+    module: src.koru.mcp_provision
+    line: 116
+    cyclomatic_complexity: 10
+    calls_out: 12
     calls_in: 1
-  src.koruapi.dashboard._env_truthy:
-    name: _env_truthy
-    module: src.koruapi.dashboard
-    line: 13
+  src.koru.wup_testql_compat._normalize_timeout:
+    name: _normalize_timeout
+    module: src.koru.wup_testql_compat
+    line: 15
+    cyclomatic_complexity: 4
+    calls_out: 7
+    calls_in: 3
+  src.koru.utils.subprocess_runner.resolve_planfile_subpath:
+    name: resolve_planfile_subpath
+    module: src.koru.utils.subprocess_runner
+    line: 19
     cyclomatic_complexity: 1
     calls_out: 3
-    calls_in: 1
-  src.koruapi.mcp_server._run_planfile_cli:
-    name: _run_planfile_cli
-    module: src.koruapi.mcp_server
-    line: 348
-    cyclomatic_complexity: 1
-    calls_out: 5
-    calls_in: 0
-  src.koru.queue_cli_helpers.run_queue_loop_mode:
-    name: run_queue_loop_mode
-    module: src.koru.queue_cli_helpers
-    line: 113
-    cyclomatic_complexity: 5
-    calls_out: 15
-    calls_in: 1
-  src.koruapi.mcp_server._update_job:
-    name: _update_job
-    module: src.koruapi.mcp_server
-    line: 438
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 5
-  src.koru.bootstrap.import_flat_pipeline:
-    name: import_flat_pipeline
-    module: src.koru.bootstrap
-    line: 411
-    cyclomatic_complexity: 9
-    calls_out: 12
     calls_in: 2
-  src.korudsl.library._emit_objective:
-    name: _emit_objective
-    module: src.korudsl.library
-    line: 157
-    cyclomatic_complexity: 5
-    calls_out: 5
-    calls_in: 1
-  src.koru.dev_sync._pull_repo:
-    name: _pull_repo
-    module: src.koru.dev_sync
-    line: 51
-    cyclomatic_complexity: 7
-    calls_out: 4
-    calls_in: 1
-  src.koruide.ide.detect_running_ides_cached:
-    name: detect_running_ides_cached
-    module: src.koruide.ide
-    line: 401
-    cyclomatic_complexity: 4
-    calls_out: 2
-    calls_in: 0
-  src.koru.cli._build_gate_parser:
-    name: _build_gate_parser
+  src.koru.cli._watch_main:
+    name: _watch_main
     module: src.koru.cli
-    line: 600
+    line: 1729
+    cyclomatic_complexity: 2
+    calls_out: 7
+    calls_in: 1
+  src.koru.cli._build_parser:
+    name: _build_parser
+    module: src.koru.cli
+    line: 71
     cyclomatic_complexity: 1
-    calls_out: 11
+    calls_out: 34
+    calls_in: 3
+  src.koru.autonomous._try_os_injector_fallback:
+    name: _try_os_injector_fallback
+    module: src.koru.autonomous
+    line: 102
+    cyclomatic_complexity: 4
+    calls_out: 10
+    calls_in: 0
+  src.koru.gc_cli_helpers.print_gc_text_report:
+    name: print_gc_text_report
+    module: src.koru.gc_cli_helpers
+    line: 35
+    cyclomatic_complexity: 12
+    calls_out: 14
+    calls_in: 1
+  src.koru.tools.detect_tools:
+    name: detect_tools
+    module: src.koru.tools
+    line: 129
+    cyclomatic_complexity: 4
+    calls_out: 8
+    calls_in: 1
+  src.koru.cli._build_agent_parser:
+    name: _build_agent_parser
+    module: src.koru.cli
+    line: 938
+    cyclomatic_complexity: 1
+    calls_out: 12
+    calls_in: 1
+  src.koru.bootstrap.materialize_to_planfile:
+    name: materialize_to_planfile
+    module: src.koru.bootstrap
+    line: 296
+    cyclomatic_complexity: 6
+    calls_out: 16
+    calls_in: 1
+  src.koru.autonomous._run_autonomous_cycle:
+    name: _run_autonomous_cycle
+    module: src.koru.autonomous
+    line: 1496
+    cyclomatic_complexity: 7
+    calls_out: 12
+    calls_in: 1
+  src.koru.autonomous._restart_daemon_if_needed:
+    name: _restart_daemon_if_needed
+    module: src.koru.autonomous
+    line: 1398
+    cyclomatic_complexity: 10
+    calls_out: 6
+    calls_in: 1
+  src.koru.cli._serve_main:
+    name: _serve_main
+    module: src.koru.cli
+    line: 1046
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  services.healing-webhook.app.heal_redsl_improve:
+    name: heal_redsl_improve
+    module: services.healing-webhook.app
+    line: 276
+    cyclomatic_complexity: 5
+    calls_out: 8
+    calls_in: 1
+  src.koruide.host_setup._print_setup_host_backends:
+    name: _print_setup_host_backends
+    module: src.koruide.host_setup
+    line: 165
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 0
+  src.koru.topology_cli.apply_topology_mutations:
+    name: apply_topology_mutations
+    module: src.koru.topology_cli
+    line: 55
+    cyclomatic_complexity: 4
+    calls_out: 3
     calls_in: 1
   src.koruapi.mcp_server._get_process_memory_mb:
     name: _get_process_memory_mb
@@ -1363,201 +1153,26 @@ nodes:
     cyclomatic_complexity: 3
     calls_out: 2
     calls_in: 1
-  src.koru.cli._gc_main:
-    name: _gc_main
-    module: src.koru.cli
-    line: 764
-    cyclomatic_complexity: 1
+  src.koruapi.server._read_json_body:
+    name: _read_json_body
+    module: src.koruapi.server
+    line: 29
+    cyclomatic_complexity: 5
     calls_out: 7
-    calls_in: 0
-  services.healing-webhook.app.alertmanager_webhook:
-    name: alertmanager_webhook
-    module: services.healing-webhook.app
-    line: 617
-    cyclomatic_complexity: 5
-    calls_out: 19
-    calls_in: 0
-  src.koru.local_service.run_local_service:
-    name: run_local_service
-    module: src.koru.local_service
-    line: 171
-    cyclomatic_complexity: 3
-    calls_out: 11
     calls_in: 1
-  src.korudsl.library.ensure_library_structure:
-    name: ensure_library_structure
-    module: src.korudsl.library
-    line: 9
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 6
-  src.koru.gate.authorize_gate:
-    name: authorize_gate
-    module: src.koru.gate
-    line: 149
-    cyclomatic_complexity: 9
-    calls_out: 16
-    calls_in: 1
-  src.koru.ide_client.adapt_legacy_autopilot_client:
-    name: adapt_legacy_autopilot_client
-    module: src.koru.ide_client
-    line: 85
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  src.koruapi.server.serve:
-    name: serve
-    module: src.koruapi.server
-    line: 154
-    cyclomatic_complexity: 2
-    calls_out: 8
-    calls_in: 1
-  src.korudsl.cli.main:
-    name: main
-    module: src.korudsl.cli
-    line: 45
-    cyclomatic_complexity: 11
-    calls_out: 18
-    calls_in: 0
-  src.koru.agents.normalize_agent_lane_id:
-    name: normalize_agent_lane_id
-    module: src.koru.agents
-    line: 17
-    cyclomatic_complexity: 6
-    calls_out: 8
-    calls_in: 4
-  src.koruapi.dashboard_serve._bulk_waiting_input_action:
-    name: _bulk_waiting_input_action
-    module: src.koruapi.dashboard_serve
-    line: 134
-    cyclomatic_complexity: 13
-    calls_out: 14
-    calls_in: 1
-  src.koruide.plugin_installer._terminal_vscode_flavor:
-    name: _terminal_vscode_flavor
-    module: src.koruide.plugin_installer
-    line: 78
-    cyclomatic_complexity: 5
-    calls_out: 4
-    calls_in: 2
-  src.koruapi.local.local_main:
-    name: local_main
-    module: src.koruapi.local
-    line: 22
-    cyclomatic_complexity: 6
-    calls_out: 9
-    calls_in: 2
-  services.healing-webhook.app.heal_redup_check:
-    name: heal_redup_check
-    module: services.healing-webhook.app
-    line: 545
-    cyclomatic_complexity: 3
-    calls_out: 12
-    calls_in: 0
-  src.koruapi.integrations.get_integration:
-    name: get_integration
-    module: src.koruapi.integrations
-    line: 197
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  src.koru.queue_cli_helpers.run_queue_single_mode:
-    name: run_queue_single_mode
-    module: src.koru.queue_cli_helpers
-    line: 175
-    cyclomatic_complexity: 6
-    calls_out: 8
-    calls_in: 1
-  src.koruide.os_injector._set_clipboard:
-    name: _set_clipboard
-    module: src.koruide.os_injector
-    line: 252
-    cyclomatic_complexity: 3
-    calls_out: 6
-    calls_in: 1
-  src.koru.tools._check_commands_exist:
-    name: _check_commands_exist
-    module: src.koru.tools
-    line: 84
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 1
-  src.koru.tools.infer_adapter_kind:
-    name: infer_adapter_kind
-    module: src.koru.tools
-    line: 159
+  src.koru.cli._doctor_fix_payload:
+    name: _doctor_fix_payload
+    module: src.koru.cli
+    line: 1504
     cyclomatic_complexity: 5
     calls_out: 4
     calls_in: 1
-  src.koru.local_service._env_int:
-    name: _env_int
-    module: src.koru.local_service
-    line: 36
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 2
-  src.koruide.injector.Injector._candidate_backends:
-    name: _candidate_backends
-    module: src.koruide.injector
-    line: 181
-    cyclomatic_complexity: 6
-    calls_out: 13
-    calls_in: 0
-  src.koruide.ide._iter_proc_pids:
-    name: _iter_proc_pids
-    module: src.koruide.ide
-    line: 50
-    cyclomatic_complexity: 4
-    calls_out: 6
-    calls_in: 1
-  src.koruide.host_setup._human_followups:
-    name: _human_followups
-    module: src.koruide.host_setup
-    line: 40
-    cyclomatic_complexity: 14
-    calls_out: 10
-    calls_in: 1
-  src.koruide.injector._ydotool_submit_mode:
-    name: _ydotool_submit_mode
-    module: src.koruide.injector
-    line: 71
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 1
-  src.koruide.plugin_installer._extension_is_installed:
-    name: _extension_is_installed
-    module: src.koruide.plugin_installer
-    line: 218
-    cyclomatic_complexity: 4
-    calls_out: 5
-    calls_in: 1
-  src.koru.runtime.ensure_runs_dir:
-    name: ensure_runs_dir
-    module: src.koru.runtime
-    line: 70
+  src.koruapi.cli._build_parser:
+    name: _build_parser
+    module: src.koruapi.cli
+    line: 20
     cyclomatic_complexity: 2
-    calls_out: 5
-    calls_in: 1
-  src.koru.mcp_provision.provision_windsurf:
-    name: provision_windsurf
-    module: src.koru.mcp_provision
-    line: 174
-    cyclomatic_complexity: 4
-    calls_out: 10
-    calls_in: 0
-  src.koruapi.server._parse_invoke_request:
-    name: _parse_invoke_request
-    module: src.koruapi.server
-    line: 38
-    cyclomatic_complexity: 9
-    calls_out: 16
-    calls_in: 1
-  src.koru.queue_cli_helpers.open_queue_run_log:
-    name: open_queue_run_log
-    module: src.koru.queue_cli_helpers
-    line: 56
-    cyclomatic_complexity: 4
-    calls_out: 2
+    calls_out: 15
     calls_in: 1
   src.koru.autonomous.stop_prior_autonomous_for_auto_start:
     name: stop_prior_autonomous_for_auto_start
@@ -1566,138 +1181,89 @@ nodes:
     cyclomatic_complexity: 3
     calls_out: 7
     calls_in: 1
-  services.healing-webhook.ticket_builder.build_ticket_payload:
-    name: build_ticket_payload
-    module: services.healing-webhook.ticket_builder
-    line: 162
-    cyclomatic_complexity: 11
-    calls_out: 25
+  src.koruapi.server.serve:
+    name: serve
+    module: src.koruapi.server
+    line: 154
+    cyclomatic_complexity: 2
+    calls_out: 8
     calls_in: 1
-  src.koru.init._write_agent_lane_artifacts:
-    name: _write_agent_lane_artifacts
-    module: src.koru.init
-    line: 545
-    cyclomatic_complexity: 2
-    calls_out: 10
-    calls_in: 2
-  src.koru.gc_cli_helpers.print_gc_report:
-    name: print_gc_report
-    module: src.koru.gc_cli_helpers
-    line: 77
-    cyclomatic_complexity: 2
+  src.koru.tasks.create_nl_task:
+    name: create_nl_task
+    module: src.koru.tasks
+    line: 118
+    cyclomatic_complexity: 12
+    calls_out: 28
+    calls_in: 7
+  src.koruapi.invoke_handlers._handle_dsl_to_library:
+    name: _handle_dsl_to_library
+    module: src.koruapi.invoke_handlers
+    line: 97
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 0
+  src.koruapi.mcp_server._tickets_for_status_filter:
+    name: _tickets_for_status_filter
+    module: src.koruapi.mcp_server
+    line: 377
+    cyclomatic_complexity: 11
     calls_out: 4
     calls_in: 1
-  src.koruapi.dashboard_serve._try_stop_prior_koru_serve_listener:
-    name: _try_stop_prior_koru_serve_listener
-    module: src.koruapi.dashboard_serve
-    line: 252
-    cyclomatic_complexity: 12
-    calls_out: 13
-    calls_in: 1
-  src.koru.mcp_provision._koru_mcp_entry_cursor:
-    name: _koru_mcp_entry_cursor
-    module: src.koru.mcp_provision
-    line: 82
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  src.koru.watch._format_ticket_event:
-    name: _format_ticket_event
+  src.koru.watch._format_management_event:
+    name: _format_management_event
     module: src.koru.watch
-    line: 30
+    line: 14
     cyclomatic_complexity: 9
+    calls_out: 16
+    calls_in: 1
+  src.koru.autonomous_diagnostics.build_idle_checks:
+    name: build_idle_checks
+    module: src.koru.autonomous_diagnostics
+    line: 21
+    cyclomatic_complexity: 11
     calls_out: 20
     calls_in: 1
-  src.koruide.ide._resolve_explicit_drive_target:
-    name: _resolve_explicit_drive_target
-    module: src.koruide.ide
-    line: 453
-    cyclomatic_complexity: 6
-    calls_out: 1
+  src.korudsl.library._emit_functions:
+    name: _emit_functions
+    module: src.korudsl.library
+    line: 167
+    cyclomatic_complexity: 4
+    calls_out: 8
     calls_in: 1
-  src.koru.cli._auto_main:
-    name: _auto_main
-    module: src.koru.cli
-    line: 1439
-    cyclomatic_complexity: 6
-    calls_out: 6
-    calls_in: 0
-  src.koruide.ide._active_window_pid_x11:
-    name: _active_window_pid_x11
-    module: src.koruide.ide
-    line: 188
-    cyclomatic_complexity: 7
-    calls_out: 6
-    calls_in: 1
-  src.koru.init._init_auto_agent_lane:
-    name: _init_auto_agent_lane
-    module: src.koru.init
-    line: 426
-    cyclomatic_complexity: 6
-    calls_out: 7
-    calls_in: 1
-  src.koruide.os_injector._clipboard_backend:
-    name: _clipboard_backend
-    module: src.koruide.os_injector
-    line: 244
-    cyclomatic_complexity: 3
-    calls_out: 2
-    calls_in: 1
-  src.koruide.ide.resolve_drive_target:
-    name: resolve_drive_target
-    module: src.koruide.ide
-    line: 501
+  src.koru.autonomous._load_loop_checkpoint:
+    name: _load_loop_checkpoint
+    module: src.koru.autonomous
+    line: 935
     cyclomatic_complexity: 11
-    calls_out: 7
-    calls_in: 3
-  src.koru.bootstrap._detect_cycle:
-    name: _detect_cycle
-    module: src.koru.bootstrap
-    line: 249
-    cyclomatic_complexity: 10
-    calls_out: 13
+    calls_out: 12
     calls_in: 1
-  services.healing-webhook.app.probe_failure:
-    name: probe_failure
+  src.koru.redup_integration.redup_check_command:
+    name: redup_check_command
+    module: src.koru.redup_integration
+    line: 27
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 1
+  services.healing-webhook.app.create_planfile_ticket:
+    name: create_planfile_ticket
     module: services.healing-webhook.app
-    line: 648
-    cyclomatic_complexity: 7
-    calls_out: 21
-    calls_in: 0
-  src.koruapi.mcp_server._find_ticket:
-    name: _find_ticket
-    module: src.koruapi.mcp_server
-    line: 777
-    cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 1
-  src.koru.loop.discover_repositories:
-    name: discover_repositories
-    module: src.koru.loop
-    line: 60
+    line: 219
     cyclomatic_complexity: 5
-    calls_out: 11
-    calls_in: 1
-  src.koruide.audit._isoformat_utc:
-    name: _isoformat_utc
-    module: src.koruide.audit
-    line: 62
-    cyclomatic_complexity: 2
-    calls_out: 5
-    calls_in: 1
-  src.koru.tools._build_detection_result:
-    name: _build_detection_result
-    module: src.koru.tools
-    line: 104
+    calls_out: 10
+    calls_in: 2
+  src.koruide.socket._autopilot_socket_basename:
+    name: _autopilot_socket_basename
+    module: src.koruide.socket
+    line: 10
     cyclomatic_complexity: 7
     calls_out: 8
     calls_in: 1
-  src.koru.cli._doctor_main:
-    name: _doctor_main
-    module: src.koru.cli
-    line: 1479
-    cyclomatic_complexity: 12
-    calls_out: 15
+  src.koru.autonomous_diagnostics.create_diagnostic_ticket:
+    name: create_diagnostic_ticket
+    module: src.koru.autonomous_diagnostics
+    line: 128
+    cyclomatic_complexity: 2
+    calls_out: 6
     calls_in: 1
   src.koruapi.invoke_handlers._handle_topology_read:
     name: _handle_topology_read
@@ -1706,251 +1272,55 @@ nodes:
     cyclomatic_complexity: 1
     calls_out: 1
     calls_in: 0
-  src.koruapi.dashboard_serve.serve:
-    name: serve
-    module: src.koruapi.dashboard_serve
-    line: 1292
+  src.koru.autonomous_diagnostics._has_redup_module:
+    name: _has_redup_module
+    module: src.koru.autonomous_diagnostics
+    line: 17
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 1
+  src.koru.init.init_project:
+    name: init_project
+    module: src.koru.init
+    line: 289
     cyclomatic_complexity: 7
-    calls_out: 19
-    calls_in: 0
-  src.koru.autonomy.env.env_truthy:
-    name: env_truthy
-    module: src.koru.autonomy.env
-    line: 56
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 29
-  src.korudsl.library._emit_functions:
-    name: _emit_functions
-    module: src.korudsl.library
-    line: 167
-    cyclomatic_complexity: 4
-    calls_out: 8
-    calls_in: 1
-  src.koru.activity_log.activity:
-    name: activity
-    module: src.koru.activity_log
-    line: 27
-    cyclomatic_complexity: 4
-    calls_out: 7
-    calls_in: 34
-  src.koru.mcp_provision._maybe_upgrade_koru_command:
-    name: _maybe_upgrade_koru_command
-    module: src.koru.mcp_provision
-    line: 91
-    cyclomatic_complexity: 5
-    calls_out: 3
-    calls_in: 4
-  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect:
-    name: connect
-    module: plugins.koru-autopilot-vscode.src.extension
-    line: 70
-    cyclomatic_complexity: 2
-    calls_out: 7
-    calls_in: 4
-  src.koru.queue_clean.find_candidates:
-    name: find_candidates
-    module: src.koru.queue_clean
-    line: 234
-    cyclomatic_complexity: 8
-    calls_out: 10
-    calls_in: 1
-  src.koruapi.mcp_server.tool_propose_edits:
-    name: tool_propose_edits
-    module: src.koruapi.mcp_server
-    line: 809
-    cyclomatic_complexity: 14
-    calls_out: 16
-    calls_in: 0
-  src.koru.bootstrap._validate_name:
-    name: _validate_name
-    module: src.koru.bootstrap
-    line: 110
-    cyclomatic_complexity: 4
-    calls_out: 5
-    calls_in: 1
-  src.koru.ide_router.resolve_ide_route:
-    name: resolve_ide_route
-    module: src.koru.ide_router
-    line: 51
-    cyclomatic_complexity: 8
-    calls_out: 9
+    calls_out: 23
     calls_in: 2
-  src.koruide.host_setup.run_host_setup:
-    name: run_host_setup
-    module: src.koruide.host_setup
-    line: 128
-    cyclomatic_complexity: 6
-    calls_out: 8
-    calls_in: 1
-  src.koruapi.server._handle_invoke_post:
-    name: _handle_invoke_post
-    module: src.koruapi.server
-    line: 55
-    cyclomatic_complexity: 5
-    calls_out: 13
-    calls_in: 1
-  plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.next:
-    name: next
-    module: plugins.koru-autopilot-vscode.src.extension
-    line: 202
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 5
-  services.healing-webhook.app.heal_rebuild_restore:
-    name: heal_rebuild_restore
+  services.healing-webhook.app._build_planfile_command:
+    name: _build_planfile_command
     module: services.healing-webhook.app
-    line: 303
-    cyclomatic_complexity: 6
-    calls_out: 9
-    calls_in: 0
-  src.korudsl.library._apply_prefixed_line:
-    name: _apply_prefixed_line
-    module: src.korudsl.library
-    line: 84
-    cyclomatic_complexity: 4
-    calls_out: 3
-    calls_in: 1
-  src.koru.cli._task_main:
-    name: _task_main
-    module: src.koru.cli
-    line: 989
-    cyclomatic_complexity: 11
-    calls_out: 27
-    calls_in: 0
-  src.koru.agent_cli_helpers.run_agent_handoff:
-    name: run_agent_handoff
-    module: src.koru.agent_cli_helpers
-    line: 66
-    cyclomatic_complexity: 3
-    calls_out: 10
-    calls_in: 1
-  src.koruide.ide.focused_ide:
-    name: focused_ide
-    module: src.koruide.ide
-    line: 334
-    cyclomatic_complexity: 6
+    line: 162
+    cyclomatic_complexity: 2
     calls_out: 1
     calls_in: 1
-  src.koru.queue_cli_helpers.emit_queue_run_started:
-    name: emit_queue_run_started
-    module: src.koru.queue_cli_helpers
-    line: 40
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 1
-  src.koruapi.invoke_handlers._handle_mcp_run_ticket:
-    name: _handle_mcp_run_ticket
-    module: src.koruapi.invoke_handlers
-    line: 169
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  src.korudsl.library.convert_goals_json_to_library:
-    name: convert_goals_json_to_library
-    module: src.korudsl.library
-    line: 121
-    cyclomatic_complexity: 9
-    calls_out: 7
-    calls_in: 2
-  src.koruide.os_injector._post_focus_delay_seconds:
-    name: _post_focus_delay_seconds
-    module: src.koruide.os_injector
-    line: 111
-    cyclomatic_complexity: 3
-    calls_out: 5
-    calls_in: 1
-  src.koru.tools._check_markers_exist:
-    name: _check_markers_exist
-    module: src.koru.tools
-    line: 94
-    cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 1
-  src.koru.wup_testql_compat.main:
-    name: main
-    module: src.koru.wup_testql_compat
-    line: 57
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 0
-  src.koru.cli._build_tools_parser:
-    name: _build_tools_parser
-    module: src.koru.cli
-    line: 295
-    cyclomatic_complexity: 1
-    calls_out: 7
-    calls_in: 1
-  src.koru.gate._resolve_actor:
-    name: _resolve_actor
-    module: src.koru.gate
-    line: 114
-    cyclomatic_complexity: 4
-    calls_out: 1
-    calls_in: 1
-  src.koruide.plugin_installer._result_already_installed:
-    name: _result_already_installed
-    module: src.koruide.plugin_installer
-    line: 258
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 1
-  src.koru.mcp_provision._removal_paths_for_ide:
-    name: _removal_paths_for_ide
-    module: src.koru.mcp_provision
-    line: 302
-    cyclomatic_complexity: 4
-    calls_out: 4
-    calls_in: 1
-  src.koruapi.mcp_server._serialize_mcp_ticket:
-    name: _serialize_mcp_ticket
-    module: src.koruapi.mcp_server
-    line: 394
-    cyclomatic_complexity: 3
-    calls_out: 8
-    calls_in: 1
-  src.koru.queue.runners.run_process:
-    name: run_process
-    module: src.koru.queue.runners
-    line: 21
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 1
-  src.koru.agents.detect_agent_options:
-    name: detect_agent_options
-    module: src.koru.agents
-    line: 129
-    cyclomatic_complexity: 4
-    calls_out: 21
-    calls_in: 3
-  src.koru.queue_clean._parse_age_days:
-    name: _parse_age_days
-    module: src.koru.queue_clean
-    line: 127
+  services.healing-webhook.app._execute_planfile_create:
+    name: _execute_planfile_create
+    module: services.healing-webhook.app
+    line: 193
     cyclomatic_complexity: 8
-    calls_out: 10
-    calls_in: 2
-  src.koru.cli._topology_main:
-    name: _topology_main
-    module: src.koru.cli
-    line: 1147
-    cyclomatic_complexity: 12
-    calls_out: 32
-    calls_in: 0
-  src.koru.ide_client.build_ide_client:
-    name: build_ide_client
-    module: src.koru.ide_client
-    line: 117
-    cyclomatic_complexity: 3
-    calls_out: 5
-    calls_in: 5
-  src.koruide.ide._vscode_family_env_present:
-    name: _vscode_family_env_present
-    module: src.koruide.ide
-    line: 250
-    cyclomatic_complexity: 3
-    calls_out: 3
+    calls_out: 12
     calls_in: 1
+  services.healing-webhook.app._run_vallm_check:
+    name: _run_vallm_check
+    module: services.healing-webhook.app
+    line: 337
+    cyclomatic_complexity: 10
+    calls_out: 15
+    calls_in: 2
+  src.koru.gc_cli_helpers.gc_result_to_json:
+    name: gc_result_to_json
+    module: src.koru.gc_cli_helpers
+    line: 16
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 1
+  src.koruapi.mcp_server._get_job_store_path:
+    name: _get_job_store_path
+    module: src.koruapi.mcp_server
+    line: 62
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 2
   src.koru.cli._local_serve_main:
     name: _local_serve_main
     module: src.koru.cli
@@ -1958,81 +1328,116 @@ nodes:
     cyclomatic_complexity: 1
     calls_out: 1
     calls_in: 0
-  src.koru.runtime.planfile_dir:
-    name: planfile_dir
-    module: src.koru.runtime
-    line: 42
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 10
-  src.koru.tools._extract_tool_metadata:
-    name: _extract_tool_metadata
-    module: src.koru.tools
-    line: 171
-    cyclomatic_complexity: 7
-    calls_out: 12
-    calls_in: 1
-  src.koru.mcp_provision.provision_vscode:
-    name: provision_vscode
+  src.koru.mcp_provision._read_json:
+    name: _read_json
     module: src.koru.mcp_provision
-    line: 211
+    line: 147
     cyclomatic_complexity: 3
-    calls_out: 8
-    calls_in: 0
-  src.koru.doctor._check_planfile_sprints:
-    name: _check_planfile_sprints
-    module: src.koru.doctor
-    line: 263
-    cyclomatic_complexity: 10
-    calls_out: 17
-    calls_in: 0
-  services.healing-webhook.app._resolve_strategy:
-    name: _resolve_strategy
-    module: services.healing-webhook.app
-    line: 589
-    cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 1
-  src.koru.tools.find_tool_entry:
-    name: find_tool_entry
-    module: src.koru.tools
-    line: 149
+    calls_out: 3
+    calls_in: 5
+  src.koru.autonomous._compute_backoff_sleep:
+    name: _compute_backoff_sleep
+    module: src.koru.autonomous
+    line: 926
     cyclomatic_complexity: 4
-    calls_out: 6
+    calls_out: 2
     calls_in: 1
-  src.koruide.os_injector._xdotool:
-    name: _xdotool
-    module: src.koruide.os_injector
-    line: 228
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 7
-  src.korudsl.library._emit_goals:
-    name: _emit_goals
-    module: src.korudsl.library
-    line: 193
+  src.koru.autonomous._is_topology_enabled:
+    name: _is_topology_enabled
+    module: src.koru.autonomous
+    line: 904
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 0
+  src.koru.cli._is_bare_invocation:
+    name: _is_bare_invocation
+    module: src.koru.cli
+    line: 1076
+    cyclomatic_complexity: 8
+    calls_out: 0
+    calls_in: 1
+  src.koru.gc.run_gc:
+    name: run_gc
+    module: src.koru.gc
+    line: 298
+    cyclomatic_complexity: 11
+    calls_out: 9
+    calls_in: 1
+  src.koru.autonomous._setup_autopilot_daemon:
+    name: _setup_autopilot_daemon
+    module: src.koru.autonomous
+    line: 1251
     cyclomatic_complexity: 3
-    calls_out: 4
+    calls_out: 3
     calls_in: 1
-  services.healing-webhook.app._run_redup_check:
-    name: _run_redup_check
-    module: services.healing-webhook.app
-    line: 501
-    cyclomatic_complexity: 6
-    calls_out: 7
+  src.koruapi.mcp_server.mcp_serve_main:
+    name: mcp_serve_main
+    module: src.koruapi.mcp_server
+    line: 1012
+    cyclomatic_complexity: 2
+    calls_out: 10
     calls_in: 1
-  src.korudsl.library.normalize_dsl_to_library:
-    name: normalize_dsl_to_library
-    module: src.korudsl.library
+  src.koruapi.mcp_server._monitor_subprocess_oom:
+    name: _monitor_subprocess_oom
+    module: src.koruapi.mcp_server
+    line: 108
+    cyclomatic_complexity: 8
+    calls_out: 8
+    calls_in: 2
+  src.koru.utils.subprocess_runner.get_python_cmd:
+    name: get_python_cmd
+    module: src.koru.utils.subprocess_runner
+    line: 32
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 3
+  src.koru.dev_sync.dev_main:
+    name: dev_main
+    module: src.koru.dev_sync
     line: 100
     cyclomatic_complexity: 7
-    calls_out: 9
-    calls_in: 4
-  src.koruide.host_setup._print_text_report:
-    name: _print_text_report
-    module: src.koruide.host_setup
-    line: 214
+    calls_out: 18
+    calls_in: 0
+  src.koruapi.openapi.build_openapi_document:
+    name: build_openapi_document
+    module: src.koruapi.openapi
+    line: 10
     cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  src.koru.mcp_provision._apply_target:
+    name: _apply_target
+    module: src.koru.mcp_provision
+    line: 312
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 1
+  src.koru.autonomy.ide_work.release_in_progress_tickets:
+    name: release_in_progress_tickets
+    module: src.koru.autonomy.ide_work
+    line: 262
+    cyclomatic_complexity: 6
+    calls_out: 4
+    calls_in: 1
+  src.koru.cli._gc_main:
+    name: _gc_main
+    module: src.koru.cli
+    line: 764
+    cyclomatic_complexity: 1
+    calls_out: 7
+    calls_in: 0
+  src.koruapi.mcp_server._find_ticket:
+    name: _find_ticket
+    module: src.koruapi.mcp_server
+    line: 777
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 1
+  src.koru.autonomous._looks_like_autonomous_up_command:
+    name: _looks_like_autonomous_up_command
+    module: src.koru.autonomous
+    line: 217
+    cyclomatic_complexity: 1
     calls_out: 1
     calls_in: 1
   src.koruide.ide._score_exe_path:
@@ -2042,740 +1447,19 @@ nodes:
     cyclomatic_complexity: 12
     calls_out: 5
     calls_in: 1
-  src.koru.mcp_provision._resolve_targets:
-    name: _resolve_targets
-    module: src.koru.mcp_provision
-    line: 293
-    cyclomatic_complexity: 4
-    calls_out: 4
-    calls_in: 1
-  src.koruapi.server.KoruAPIHandler.log_message:
-    name: log_message
-    module: src.koruapi.server
-    line: 100
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  src.koru.doctor._check_planfile_sprints_yaml:
-    name: _check_planfile_sprints_yaml
-    module: src.koru.doctor
-    line: 292
-    cyclomatic_complexity: 6
-    calls_out: 8
-    calls_in: 0
-  src.koru.cli._is_bare_invocation:
-    name: _is_bare_invocation
+  src.koru.cli._render_clean_report_text:
+    name: _render_clean_report_text
     module: src.koru.cli
-    line: 1076
-    cyclomatic_complexity: 8
-    calls_out: 0
-    calls_in: 1
-  src.koru.agent_backends.load_agent_integration_config:
-    name: load_agent_integration_config
-    module: src.koru.agent_backends
-    line: 159
-    cyclomatic_complexity: 11
-    calls_out: 18
-    calls_in: 0
-  src.koruapi.mcp_server._gate_commands:
-    name: _gate_commands
-    module: src.koruapi.mcp_server
-    line: 619
-    cyclomatic_complexity: 1
-    calls_out: 6
-    calls_in: 1
-  src.koru.agent_backends.list_agent_backend_ids:
-    name: list_agent_backend_ids
-    module: src.koru.agent_backends
-    line: 102
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 1
-  src.koru.cli.main:
-    name: main
-    module: src.koru.cli
-    line: 1823
+    line: 853
     cyclomatic_complexity: 12
-    calls_out: 13
-    calls_in: 0
-  src.koru.cli._render_topology_text:
-    name: _render_topology_text
-    module: src.koru.cli
-    line: 1141
-    cyclomatic_complexity: 1
-    calls_out: 1
+    calls_out: 28
     calls_in: 1
-  src.koru.cli._build_parser:
-    name: _build_parser
-    module: src.koru.cli
-    line: 71
-    cyclomatic_complexity: 1
-    calls_out: 34
-    calls_in: 3
-  src.koru.runtime.runtime_dir:
-    name: runtime_dir
-    module: src.koru.runtime
-    line: 49
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 11
-  src.koruapi.mcp_server._create_job:
-    name: _create_job
-    module: src.koruapi.mcp_server
-    line: 423
-    cyclomatic_complexity: 1
-    calls_out: 4
-    calls_in: 1
-  src.koruapi.server._read_json_body:
-    name: _read_json_body
-    module: src.koruapi.server
-    line: 29
-    cyclomatic_complexity: 5
-    calls_out: 7
-    calls_in: 1
-  services.healing-webhook.app._record_action:
-    name: _record_action
-    module: services.healing-webhook.app
-    line: 127
-    cyclomatic_complexity: 1
-    calls_out: 7
-    calls_in: 11
-  src.koruide.plugin_installer._settings_path_for_ide:
-    name: _settings_path_for_ide
-    module: src.koruide.plugin_installer
-    line: 160
-    cyclomatic_complexity: 3
-    calls_out: 6
-    calls_in: 1
-  src.koru.init._remove_agent_lane_artifacts:
-    name: _remove_agent_lane_artifacts
-    module: src.koru.init
-    line: 566
-    cyclomatic_complexity: 4
-    calls_out: 4
-    calls_in: 2
-  src.koruide.host_setup._print_setup_host_install_details:
-    name: _print_setup_host_install_details
-    module: src.koruide.host_setup
-    line: 200
-    cyclomatic_complexity: 6
-    calls_out: 10
-    calls_in: 0
-  src.koru.watch._format_connected_event:
-    name: _format_connected_event
-    module: src.koru.watch
-    line: 10
-    cyclomatic_complexity: 1
-    calls_out: 0
-    calls_in: 1
-  src.koru.project_pipeline.write_koru_project_pipeline_if_absent:
-    name: write_koru_project_pipeline_if_absent
-    module: src.koru.project_pipeline
-    line: 97
-    cyclomatic_complexity: 2
-    calls_out: 5
-    calls_in: 1
-  src.koruide.os_injector._read_json:
-    name: _read_json
-    module: src.koruide.os_injector
-    line: 140
-    cyclomatic_complexity: 4
-    calls_out: 5
-    calls_in: 2
-  src.koru.tools.build_tool_task_scaffold:
-    name: build_tool_task_scaffold
-    module: src.koru.tools
-    line: 260
-    cyclomatic_complexity: 2
-    calls_out: 6
-    calls_in: 1
-  src.koruide.host_setup._print_setup_host_backends:
-    name: _print_setup_host_backends
-    module: src.koruide.host_setup
-    line: 165
-    cyclomatic_complexity: 3
-    calls_out: 6
-    calls_in: 0
-  src.koru.agents.agent_lane_environment:
-    name: agent_lane_environment
-    module: src.koru.agents
-    line: 275
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 3
-  src.koruapi.invoke_handlers._handle_mcp_quality_gates:
-    name: _handle_mcp_quality_gates
-    module: src.koruapi.invoke_handlers
-    line: 175
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  src.koruapi.server._json_response:
-    name: _json_response
-    module: src.koruapi.server
-    line: 20
-    cyclomatic_complexity: 1
-    calls_out: 9
-    calls_in: 10
-  src.koruapi.mcp.mcp_main:
-    name: mcp_main
-    module: src.koruapi.mcp
-    line: 10
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 2
-  scripts.koru-soak-monitor.print:
-    name: print
-    module: scripts.koru-soak-monitor
-    line: 43
-    cyclomatic_complexity: 0
-    calls_out: 0
-    calls_in: 304
-  src.korudsl.transform.dsl_roundtrip_report:
-    name: dsl_roundtrip_report
-    module: src.korudsl.transform
-    line: 50
-    cyclomatic_complexity: 1
-    calls_out: 7
-    calls_in: 2
-  services.healing-webhook.app.heal_redsl_improve:
-    name: heal_redsl_improve
-    module: services.healing-webhook.app
-    line: 276
-    cyclomatic_complexity: 5
-    calls_out: 8
-    calls_in: 1
-  src.koruapi.dashboard_serve._cmdline_suggests_koru_serve:
-    name: _cmdline_suggests_koru_serve
-    module: src.koruapi.dashboard_serve
-    line: 242
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 2
-  src.koru.cli._doctor_fix_payload:
-    name: _doctor_fix_payload
-    module: src.koru.cli
-    line: 1504
-    cyclomatic_complexity: 5
-    calls_out: 4
-    calls_in: 1
-  src.koru.dev_sync._is_dirty:
-    name: _is_dirty
-    module: src.koru.dev_sync
-    line: 46
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 1
-  src.koruapi.invoke_handlers._handle_gate_regix:
-    name: _handle_gate_regix
-    module: src.koruapi.invoke_handlers
-    line: 126
-    cyclomatic_complexity: 3
-    calls_out: 5
-    calls_in: 0
-  src.koruide.config._merge_submit_keys:
-    name: _merge_submit_keys
-    module: src.koruide.config
-    line: 67
-    cyclomatic_complexity: 7
-    calls_out: 5
-    calls_in: 1
-  src.koru.init._read_persisted_agent_lane:
-    name: _read_persisted_agent_lane
-    module: src.koru.init
-    line: 463
+  src.koru.autonomous._action_up:
+    name: _action_up
+    module: src.koru.autonomous
+    line: 1598
     cyclomatic_complexity: 12
-    calls_out: 20
-    calls_in: 1
-  src.koruapi.mcp_server.mcp_serve_main:
-    name: mcp_serve_main
-    module: src.koruapi.mcp_server
-    line: 1012
-    cyclomatic_complexity: 2
-    calls_out: 10
-    calls_in: 1
-  src.koruide.ide._terminal_ide_from_env:
-    name: _terminal_ide_from_env
-    module: src.koruide.ide
-    line: 277
-    cyclomatic_complexity: 9
-    calls_out: 12
-    calls_in: 1
-  src.korudsl.library._handle_func:
-    name: _handle_func
-    module: src.korudsl.library
-    line: 27
-    cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 1
-  src.koruide.injector.Injector._type_with_backend:
-    name: _type_with_backend
-    module: src.koruide.injector
-    line: 218
-    cyclomatic_complexity: 14
-    calls_out: 21
-    calls_in: 0
-  src.koru.init._ensure_gitignore_entry:
-    name: _ensure_gitignore_entry
-    module: src.koru.init
-    line: 591
-    cyclomatic_complexity: 8
-    calls_out: 12
-    calls_in: 1
-  src.koruapi.dashboard.build_serve_parser:
-    name: build_serve_parser
-    module: src.koruapi.dashboard
-    line: 17
-    cyclomatic_complexity: 1
-    calls_out: 10
-    calls_in: 1
-  src.koru.cli._tools_main:
-    name: _tools_main
-    module: src.koru.cli
-    line: 319
-    cyclomatic_complexity: 7
-    calls_out: 18
-    calls_in: 0
-  src.koru.init.init_project:
-    name: init_project
-    module: src.koru.init
-    line: 289
-    cyclomatic_complexity: 7
-    calls_out: 23
-    calls_in: 2
-  src.koru.gc_cli_helpers.gc_result_to_json:
-    name: gc_result_to_json
-    module: src.koru.gc_cli_helpers
-    line: 16
-    cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 1
-  src.koruide.injector.Injector.submit_only:
-    name: submit_only
-    module: src.koruide.injector
-    line: 322
-    cyclomatic_complexity: 5
-    calls_out: 9
-    calls_in: 0
-  src.koru.init._resolve_init_agent_lane:
-    name: _resolve_init_agent_lane
-    module: src.koru.init
-    line: 493
-    cyclomatic_complexity: 4
-    calls_out: 4
-    calls_in: 3
-  src.korudsl.library.library_to_dsl:
-    name: library_to_dsl
-    module: src.korudsl.library
-    line: 201
-    cyclomatic_complexity: 4
-    calls_out: 6
-    calls_in: 2
-  src.koru.topology.set_component_enabled:
-    name: set_component_enabled
-    module: src.koru.topology
-    line: 353
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  src.koruide.config.load_config:
-    name: load_config
-    module: src.koruide.config
-    line: 81
-    cyclomatic_complexity: 4
-    calls_out: 10
-    calls_in: 1
-  src.koru.agent_backends.validate_agent_integration_config:
-    name: validate_agent_integration_config
-    module: src.koru.agent_backends
-    line: 187
-    cyclomatic_complexity: 5
-    calls_out: 4
-    calls_in: 0
-  src.koru.tools._check_env_vars_exist:
-    name: _check_env_vars_exist
-    module: src.koru.tools
-    line: 99
-    cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 1
-  src.koruapi.dashboard.dashboard_main:
-    name: dashboard_main
-    module: src.koruapi.dashboard
-    line: 64
-    cyclomatic_complexity: 5
-    calls_out: 9
-    calls_in: 2
-  src.koruapi.mcp_server._tickets_for_status_filter:
-    name: _tickets_for_status_filter
-    module: src.koruapi.mcp_server
-    line: 377
-    cyclomatic_complexity: 11
-    calls_out: 4
-    calls_in: 1
-  src.koru.init._write_autopilot_host_setup_script:
-    name: _write_autopilot_host_setup_script
-    module: src.koru.init
-    line: 535
-    cyclomatic_complexity: 1
-    calls_out: 5
-    calls_in: 2
-  src.koru.queue_clean._list_tickets:
-    name: _list_tickets
-    module: src.koru.queue_clean
-    line: 292
-    cyclomatic_complexity: 11
-    calls_out: 11
-    calls_in: 1
-  src.koruide.os_injector.try_drive_with_profile:
-    name: try_drive_with_profile
-    module: src.koruide.os_injector
-    line: 342
-    cyclomatic_complexity: 8
-    calls_out: 6
-    calls_in: 0
-  src.koru.agent_backends._parse_lane:
-    name: _parse_lane
-    module: src.koru.agent_backends
-    line: 140
-    cyclomatic_complexity: 8
-    calls_out: 14
-    calls_in: 1
-  src.koru.agent_backends.get_agent_backend_profile:
-    name: get_agent_backend_profile
-    module: src.koru.agent_backends
-    line: 112
-    cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 2
-  src.koru.tools._build_scaffold_inputs:
-    name: _build_scaffold_inputs
-    module: src.koru.tools
-    line: 235
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 1
-  src.koru.queue.koru_queue_argv.build_koru_queue_argv:
-    name: build_koru_queue_argv
-    module: src.koru.queue.koru_queue_argv
-    line: 14
-    cyclomatic_complexity: 5
-    calls_out: 7
-    calls_in: 1
-  src.koruide.ide._terminal_ide_from_parent_chain:
-    name: _terminal_ide_from_parent_chain
-    module: src.koruide.ide
-    line: 293
-    cyclomatic_complexity: 11
-    calls_out: 9
-    calls_in: 1
-  src.korudsl.library._emit_goal:
-    name: _emit_goal
-    module: src.korudsl.library
-    line: 177
-    cyclomatic_complexity: 9
-    calls_out: 12
-    calls_in: 1
-  src.koru.queue_clean._candidate_from_ticket:
-    name: _candidate_from_ticket
-    module: src.koru.queue_clean
-    line: 205
-    cyclomatic_complexity: 6
-    calls_out: 9
-    calls_in: 1
-  src.koruapi.mcp_server._resolve_gates:
-    name: _resolve_gates
-    module: src.koruapi.mcp_server
-    line: 645
-    cyclomatic_complexity: 4
-    calls_out: 6
-    calls_in: 1
-  src.koru.context.render_markdown_handoff:
-    name: render_markdown_handoff
-    module: src.koru.context
-    line: 1198
-    cyclomatic_complexity: 10
-    calls_out: 47
-    calls_in: 5
-  src.koruide.client.KoruIDEClient.request:
-    name: request
-    module: src.koruide.client
-    line: 34
-    cyclomatic_complexity: 7
-    calls_out: 15
-    calls_in: 0
-  src.koru.doctor._check_planfile_config:
-    name: _check_planfile_config
-    module: src.koru.doctor
-    line: 250
-    cyclomatic_complexity: 4
-    calls_out: 7
-    calls_in: 0
-  src.koru.loop._search_root_for_include:
-    name: _search_root_for_include
-    module: src.koru.loop
-    line: 44
-    cyclomatic_complexity: 6
-    calls_out: 6
-    calls_in: 1
-  src.koruide.socket._autopilot_socket_basename:
-    name: _autopilot_socket_basename
-    module: src.koruide.socket
-    line: 10
-    cyclomatic_complexity: 7
-    calls_out: 8
-    calls_in: 1
-  src.koruide.os_injector.capture_from_xdotool:
-    name: capture_from_xdotool
-    module: src.koruide.os_injector
-    line: 205
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 0
-  src.koruapi.invoke.invoke_integration:
-    name: invoke_integration
-    module: src.koruapi.invoke
-    line: 12
-    cyclomatic_complexity: 4
-    calls_out: 6
-    calls_in: 2
-  src.koruide.protocol._filter_extras:
-    name: _filter_extras
-    module: src.koruide.protocol
-    line: 66
-    cyclomatic_complexity: 6
-    calls_out: 4
-    calls_in: 1
-  src.koru.cli._build_runtime_context_parser:
-    name: _build_runtime_context_parser
-    module: src.koru.cli
-    line: 1209
-    cyclomatic_complexity: 1
-    calls_out: 4
-    calls_in: 1
-  src.koruide.os_injector.try_load_profile:
-    name: try_load_profile
-    module: src.koruide.os_injector
-    line: 128
-    cyclomatic_complexity: 4
-    calls_out: 3
-    calls_in: 1
-  src.koru.queue.ticket.planfile_command:
-    name: planfile_command
-    module: src.koru.queue.ticket
-    line: 108
-    cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 15
-  src.koruide.os_injector.inject_with_profile:
-    name: inject_with_profile
-    module: src.koruide.os_injector
-    line: 265
-    cyclomatic_complexity: 14
-    calls_out: 20
-    calls_in: 3
-  src.koruapi.invoke_handlers._handle_dsl_to_library:
-    name: _handle_dsl_to_library
-    module: src.koruapi.invoke_handlers
-    line: 97
-    cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 0
-  src.koruapi.dashboard_serve._build_handler:
-    name: _build_handler
-    module: src.koruapi.dashboard_serve
-    line: 1010
-    cyclomatic_complexity: 1
-    calls_out: 104
-    calls_in: 1
-  src.koruide.plugin_installer._ide_from_terminal_env:
-    name: _ide_from_terminal_env
-    module: src.koruide.plugin_installer
-    line: 73
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  src.koruapi.mcp_server.tool_run_ticket:
-    name: tool_run_ticket
-    module: src.koruapi.mcp_server
-    line: 456
-    cyclomatic_complexity: 14
-    calls_out: 33
-    calls_in: 1
-  src.koru.queue_clean._cleanable_statuses:
-    name: _cleanable_statuses
-    module: src.koru.queue_clean
-    line: 178
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 1
-  src.koru.local_service._read_bounded_json_object:
-    name: _read_bounded_json_object
-    module: src.koru.local_service
-    line: 71
-    cyclomatic_complexity: 7
-    calls_out: 6
-    calls_in: 1
-  services.healing-webhook.app._extract_ticket_id_from_stdout:
-    name: _extract_ticket_id_from_stdout
-    module: services.healing-webhook.app
-    line: 183
-    cyclomatic_complexity: 6
-    calls_out: 4
-    calls_in: 1
-  src.koruapi.mcp_server._get_python_cmd:
-    name: _get_python_cmd
-    module: src.koruapi.mcp_server
-    line: 341
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  src.korudsl.transform.library_from_any:
-    name: library_from_any
-    module: src.korudsl.transform
-    line: 19
-    cyclomatic_complexity: 12
-    calls_out: 15
-    calls_in: 4
-  src.koru.doctor.run_diagnostics:
-    name: run_diagnostics
-    module: src.koru.doctor
-    line: 127
-    cyclomatic_complexity: 6
-    calls_out: 11
-    calls_in: 2
-  src.koruapi.dashboard_serve.read_serve_endpoint:
-    name: read_serve_endpoint
-    module: src.koruapi.dashboard_serve
-    line: 296
-    cyclomatic_complexity: 4
-    calls_out: 5
-    calls_in: 1
-  src.koruide.audit.default_log_path:
-    name: default_log_path
-    module: src.koruide.audit
-    line: 48
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 3
-  src.koruide.ide._candidate_score:
-    name: _candidate_score
-    module: src.koruide.ide
-    line: 149
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 1
-  src.koru.watch.watch_planfile_events:
-    name: watch_planfile_events
-    module: src.koru.watch
-    line: 68
-    cyclomatic_complexity: 7
-    calls_out: 7
-    calls_in: 1
-  src.koru.autonomous_diagnostics.run_idle_check_loop:
-    name: run_idle_check_loop
-    module: src.koru.autonomous_diagnostics
-    line: 85
-    cyclomatic_complexity: 6
-    calls_out: 8
-    calls_in: 1
-  src.koru.doctor._check_planfile_cli_version:
-    name: _check_planfile_cli_version
-    module: src.koru.doctor
-    line: 229
-    cyclomatic_complexity: 9
-    calls_out: 9
-    calls_in: 0
-  src.koru.local_service.default_local_service_config:
-    name: default_local_service_config
-    module: src.koru.local_service
-    line: 95
-    cyclomatic_complexity: 2
-    calls_out: 7
-    calls_in: 1
-  src.koru.topology.save_topology:
-    name: save_topology
-    module: src.koru.topology
-    line: 299
-    cyclomatic_complexity: 1
-    calls_out: 6
-    calls_in: 2
-  src.koru.bootstrap._validate_id:
-    name: _validate_id
-    module: src.koru.bootstrap
-    line: 95
-    cyclomatic_complexity: 4
-    calls_out: 6
-    calls_in: 1
-  src.koru.tools._extract_detect_config:
-    name: _extract_detect_config
-    module: src.koru.tools
-    line: 74
-    cyclomatic_complexity: 11
-    calls_out: 9
-    calls_in: 1
-  src.koru.agent_backends.normalize_agent_backend_id:
-    name: normalize_agent_backend_id
-    module: src.koru.agent_backends
-    line: 91
-    cyclomatic_complexity: 4
-    calls_out: 3
-    calls_in: 2
-  src.koruapi.mcp_server.run_stdio:
-    name: run_stdio
-    module: src.koruapi.mcp_server
-    line: 972
-    cyclomatic_complexity: 5
-    calls_out: 8
-    calls_in: 1
-  src.koru.cli._runtime_context_main:
-    name: _runtime_context_main
-    module: src.koru.cli
-    line: 1252
-    cyclomatic_complexity: 3
-    calls_out: 10
-    calls_in: 0
-  src.koru.project_pipeline.project_pipeline_path:
-    name: project_pipeline_path
-    module: src.koru.project_pipeline
-    line: 19
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 3
-  src.koru.context.build_context:
-    name: build_context
-    module: src.koru.context
-    line: 408
-    cyclomatic_complexity: 6
-    calls_out: 16
-    calls_in: 9
-  src.koruide.os_injector.capture_mouse_xy:
-    name: capture_mouse_xy
-    module: src.koruide.os_injector
-    line: 184
-    cyclomatic_complexity: 6
-    calls_out: 10
-    calls_in: 1
-  src.koru.doctor._check_agent_backends_registry:
-    name: _check_agent_backends_registry
-    module: src.koru.doctor
-    line: 177
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 0
-  src.koruide.plugin_installer._configure_socket_path:
-    name: _configure_socket_path
-    module: src.koruide.plugin_installer
-    line: 172
-    cyclomatic_complexity: 8
-    calls_out: 12
-    calls_in: 1
-  src.koruapi.mcp_server.handle_message:
-    name: handle_message
-    module: src.koruapi.mcp_server
-    line: 951
-    cyclomatic_complexity: 6
-    calls_out: 9
+    calls_out: 25
     calls_in: 1
   src.korudsl.cli._read_input:
     name: _read_input
@@ -2784,60 +1468,396 @@ nodes:
     cyclomatic_complexity: 2
     calls_out: 2
     calls_in: 3
-  src.koru.utils.subprocess_runner.resolve_planfile_subpath:
-    name: resolve_planfile_subpath
-    module: src.koru.utils.subprocess_runner
-    line: 19
+  src.koruapi.invoke_handlers._handle_queue_loop:
+    name: _handle_queue_loop
+    module: src.koruapi.invoke_handlers
+    line: 48
+    cyclomatic_complexity: 2
+    calls_out: 7
+    calls_in: 0
+  src.koru.gc_cli_helpers.print_gc_report:
+    name: print_gc_report
+    module: src.koru.gc_cli_helpers
+    line: 77
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 1
+  src.koruapi.mcp_server._update_job:
+    name: _update_job
+    module: src.koruapi.mcp_server
+    line: 438
     cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 5
+  src.koruide.injector._forced_injector_backend:
+    name: _forced_injector_backend
+    module: src.koruide.injector
+    line: 51
+    cyclomatic_complexity: 2
     calls_out: 3
-    calls_in: 2
-  src.koruapi.dashboard_serve._cmdline_suggests_koru_serve_from_bytes:
-    name: _cmdline_suggests_koru_serve_from_bytes
-    module: src.koruapi.dashboard_serve
-    line: 232
-    cyclomatic_complexity: 3
+    calls_in: 1
+  src.koru.autonomous_wup._build_wup_watch_config:
+    name: _build_wup_watch_config
+    module: src.koru.autonomous_wup
+    line: 69
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  services.healing-webhook.app._run_redup_check:
+    name: _run_redup_check
+    module: services.healing-webhook.app
+    line: 501
+    cyclomatic_complexity: 6
     calls_out: 7
     calls_in: 1
-  services.healing-webhook.app._run_docker:
-    name: _run_docker
-    module: services.healing-webhook.app
-    line: 249
+  scripts.koru-soak-monitor.print:
+    name: print
+    module: scripts.koru-soak-monitor
+    line: 43
+    cyclomatic_complexity: 0
+    calls_out: 0
+    calls_in: 304
+  src.koruapi.mcp_server._gate_commands:
+    name: _gate_commands
+    module: src.koruapi.mcp_server
+    line: 619
     cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 3
-  src.koru.cli._queue_main:
-    name: _queue_main
-    module: src.koru.cli
-    line: 897
-    cyclomatic_complexity: 9
-    calls_out: 15
-    calls_in: 0
-  src.koruapi.dashboard_serve._list_tickets:
-    name: _list_tickets
-    module: src.koruapi.dashboard_serve
-    line: 66
-    cyclomatic_complexity: 9
     calls_out: 6
     calls_in: 1
-  src.koru.cli._bootstrap_main:
-    name: _bootstrap_main
-    module: src.koru.cli
-    line: 1675
-    cyclomatic_complexity: 5
-    calls_out: 18
-    calls_in: 1
-  src.koru.doctor._check_koru_project_pipeline:
-    name: _check_koru_project_pipeline
-    module: src.koru.doctor
-    line: 324
+  src.koru.watch.watch_planfile_events:
+    name: watch_planfile_events
+    module: src.koru.watch
+    line: 68
     cyclomatic_complexity: 7
-    calls_out: 9
+    calls_out: 7
+    calls_in: 1
+  src.koru.queue_clean._planfile_base:
+    name: _planfile_base
+    module: src.koru.queue_clean
+    line: 112
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 2
+  src.koru.topology.enabled_components_for_pipeline:
+    name: enabled_components_for_pipeline
+    module: src.koru.topology
+    line: 386
+    cyclomatic_complexity: 9
+    calls_out: 11
+    calls_in: 1
+  src.koruapi.mcp_server._load_jobs:
+    name: _load_jobs
+    module: src.koruapi.mcp_server
+    line: 70
+    cyclomatic_complexity: 3
+    calls_out: 4
     calls_in: 0
-  src.koru.init.resolve_project_agent_lane:
-    name: resolve_project_agent_lane
-    module: src.koru.init
-    line: 503
+  src.koru.autonomous._apply_agent_lane_environ:
+    name: _apply_agent_lane_environ
+    module: src.koru.autonomous
+    line: 160
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 2
+  src.koruapi.mcp_server._detect_enabled_gates:
+    name: _detect_enabled_gates
+    module: src.koruapi.mcp_server
+    line: 630
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 1
+  src.koru.bootstrap._validate_task:
+    name: _validate_task
+    module: src.koru.bootstrap
+    line: 196
+    cyclomatic_complexity: 3
+    calls_out: 15
+    calls_in: 1
+  src.koruide.audit.AuditLog.__init__:
+    name: __init__
+    module: src.koruide.audit
+    line: 78
+    cyclomatic_complexity: 4
+    calls_out: 12
+    calls_in: 0
+  src.koru.queue_clean._parse_age_days:
+    name: _parse_age_days
+    module: src.koru.queue_clean
+    line: 127
+    cyclomatic_complexity: 8
+    calls_out: 10
+    calls_in: 2
+  src.koru.bootstrap.load_flat_pipeline:
+    name: load_flat_pipeline
+    module: src.koru.bootstrap
+    line: 74
+    cyclomatic_complexity: 9
+    calls_out: 12
+    calls_in: 1
+  src.koruide.ide._score_cmdline_flags:
+    name: _score_cmdline_flags
+    module: src.koruide.ide
+    line: 139
+    cyclomatic_complexity: 4
+    calls_out: 1
+    calls_in: 1
+  src.koru.autonomous_startup.resolve_autopilot_ide_for_autonomous:
+    name: resolve_autopilot_ide_for_autonomous
+    module: src.koru.autonomous_startup
+    line: 88
+    cyclomatic_complexity: 4
+    calls_out: 4
+    calls_in: 2
+  src.koruide.ide._terminal_ide_from_parent_chain:
+    name: _terminal_ide_from_parent_chain
+    module: src.koruide.ide
+    line: 293
+    cyclomatic_complexity: 11
+    calls_out: 9
+    calls_in: 1
+  services.healing-webhook.app._record_action:
+    name: _record_action
+    module: services.healing-webhook.app
+    line: 127
     cyclomatic_complexity: 1
+    calls_out: 7
+    calls_in: 11
+  src.koruide.os_injector._read_json:
+    name: _read_json
+    module: src.koruide.os_injector
+    line: 140
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 2
+  src.koru.autonomous._run_idle_diagnostics:
+    name: _run_idle_diagnostics
+    module: src.koru.autonomous
+    line: 1092
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 0
+  src.koruide.os_injector.save_profile:
+    name: save_profile
+    module: src.koruide.os_injector
+    line: 167
+    cyclomatic_complexity: 3
+    calls_out: 7
+    calls_in: 0
+  src.koru.topology.is_pipeline_enabled:
+    name: is_pipeline_enabled
+    module: src.koru.topology
+    line: 378
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 3
+  src.koru.autonomous._create_diagnostic_ticket:
+    name: _create_diagnostic_ticket
+    module: src.koru.autonomous
+    line: 1032
+    cyclomatic_complexity: 2
+    calls_out: 8
+    calls_in: 1
+  src.korudsl.library._emit_objective:
+    name: _emit_objective
+    module: src.korudsl.library
+    line: 157
+    cyclomatic_complexity: 5
+    calls_out: 5
+    calls_in: 1
+  src.koru.agent_backends.load_agent_integration_config:
+    name: load_agent_integration_config
+    module: src.koru.agent_backends
+    line: 159
+    cyclomatic_complexity: 11
+    calls_out: 18
+    calls_in: 0
+  src.koru.loop.discover_repositories:
+    name: discover_repositories
+    module: src.koru.loop
+    line: 60
+    cyclomatic_complexity: 5
+    calls_out: 11
+    calls_in: 1
+  src.koru.queue.loop.run_planfile_queue_loop:
+    name: run_planfile_queue_loop
+    module: src.koru.queue.loop
+    line: 30
+    cyclomatic_complexity: 12
+    calls_out: 8
+    calls_in: 3
+  src.korudsl.library.convert_goals_json_to_library:
+    name: convert_goals_json_to_library
+    module: src.korudsl.library
+    line: 121
+    cyclomatic_complexity: 9
+    calls_out: 7
+    calls_in: 2
+  src.koru.doctor.run_diagnostics:
+    name: run_diagnostics
+    module: src.koru.doctor
+    line: 127
+    cyclomatic_complexity: 6
+    calls_out: 11
+    calls_in: 2
+  src.koru.autonomous_startup.format_post_startup_operator_hints:
+    name: format_post_startup_operator_hints
+    module: src.koru.autonomous_startup
+    line: 196
+    cyclomatic_complexity: 13
+    calls_out: 9
+    calls_in: 1
+  src.koruide.os_injector.capture_mouse_xy:
+    name: capture_mouse_xy
+    module: src.koruide.os_injector
+    line: 184
+    cyclomatic_complexity: 6
+    calls_out: 10
+    calls_in: 1
+  src.koru.mcp_provision.remove_from_config:
+    name: remove_from_config
+    module: src.koru.mcp_provision
+    line: 228
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 1
+  src.koru.runtime.runtime_dir:
+    name: runtime_dir
+    module: src.koru.runtime
+    line: 49
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 11
+  src.koruapi.server._handle_invoke_post:
+    name: _handle_invoke_post
+    module: src.koruapi.server
+    line: 55
+    cyclomatic_complexity: 5
+    calls_out: 13
+    calls_in: 1
+  src.koru.cli._init_agent_lane_main:
+    name: _init_agent_lane_main
+    module: src.koru.cli
+    line: 1615
+    cyclomatic_complexity: 8
+    calls_out: 15
+    calls_in: 1
+  src.koruide.os_injector.input_mode_from_env:
+    name: input_mode_from_env
+    module: src.koruide.os_injector
+    line: 88
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  src.koru.mcp_provision._write_json:
+    name: _write_json
+    module: src.koru.mcp_provision
+    line: 157
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 8
+  src.koru.autonomous._queue_loop_waiting_ticket_label:
+    name: _queue_loop_waiting_ticket_label
+    module: src.koru.autonomous
+    line: 898
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 2
+  src.koruide.ide._iter_proc_pids:
+    name: _iter_proc_pids
+    module: src.koruide.ide
+    line: 50
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 1
+  services.healing-webhook.app.alertmanager_webhook:
+    name: alertmanager_webhook
+    module: services.healing-webhook.app
+    line: 617
+    cyclomatic_complexity: 5
+    calls_out: 19
+    calls_in: 0
+  src.koruapi.mcp_server.tool_run_ticket:
+    name: tool_run_ticket
+    module: src.koruapi.mcp_server
+    line: 456
+    cyclomatic_complexity: 14
+    calls_out: 33
+    calls_in: 1
+  src.koruide.ide.detect_running_ides:
+    name: detect_running_ides
+    module: src.koruide.ide
+    line: 162
+    cyclomatic_complexity: 13
+    calls_out: 10
+    calls_in: 16
+  src.koru.cli._queue_run_main:
+    name: _queue_run_main
+    module: src.koru.cli
+    line: 1761
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 1
+  src.koruide.host_setup._print_text_report:
+    name: _print_text_report
+    module: src.koruide.host_setup
+    line: 214
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  services.healing-webhook.app.heal_annotate:
+    name: heal_annotate
+    module: services.healing-webhook.app
+    line: 323
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  src.koru.wup_testql_compat.main:
+    name: main
+    module: src.koru.wup_testql_compat
+    line: 57
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 0
+  src.koru.agent_backends._parse_lane:
+    name: _parse_lane
+    module: src.koru.agent_backends
+    line: 140
+    cyclomatic_complexity: 8
+    calls_out: 14
+    calls_in: 1
+  src.koruide.injector._submit_key_for:
+    name: _submit_key_for
+    module: src.koruide.injector
+    line: 24
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 2
+  src.koruide.os_injector._set_clipboard:
+    name: _set_clipboard
+    module: src.koruide.os_injector
+    line: 252
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 1
+  services.healing-webhook.app._update_redup_metrics:
+    name: _update_redup_metrics
+    module: services.healing-webhook.app
+    line: 494
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  src.koruide.injector._extra_enter_count:
+    name: _extra_enter_count
+    module: src.koruide.injector
+    line: 89
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 1
+  src.koruide.ide.detect_running_ides_cached:
+    name: detect_running_ides_cached
+    module: src.koruide.ide
+    line: 401
+    cyclomatic_complexity: 4
     calls_out: 2
     calls_in: 0
   src.koru.cli._command_loop_main:
@@ -2847,83 +1867,55 @@ nodes:
     cyclomatic_complexity: 7
     calls_out: 17
     calls_in: 1
-  src.koru.cli._build_gc_parser:
-    name: _build_gc_parser
-    module: src.koru.cli
-    line: 707
-    cyclomatic_complexity: 1
-    calls_out: 14
-    calls_in: 1
-  src.koru.cli._init_ci_main:
-    name: _init_ci_main
-    module: src.koru.cli
-    line: 1272
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 0
-  src.koruide.host_setup._try_apt_install:
-    name: _try_apt_install
-    module: src.koruide.host_setup
-    line: 106
-    cyclomatic_complexity: 5
+  src.koru.local_service.run_local_service:
+    name: run_local_service
+    module: src.koru.local_service
+    line: 171
+    cyclomatic_complexity: 3
     calls_out: 11
     calls_in: 1
-  src.koru.ide_client.build_koruide_client:
-    name: build_koruide_client
-    module: src.koru.ide_client
-    line: 105
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  src.koruide.config.default_config_path:
-    name: default_config_path
-    module: src.koruide.config
-    line: 62
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  src.koruide.os_injector.save_profile:
-    name: save_profile
-    module: src.koruide.os_injector
-    line: 167
-    cyclomatic_complexity: 3
-    calls_out: 7
-    calls_in: 0
-  src.koru.bootstrap._validate_cross_task_dependencies:
-    name: _validate_cross_task_dependencies
-    module: src.koru.bootstrap
-    line: 216
+  src.koru.agent_cli_helpers.print_agent_list:
+    name: print_agent_list
+    module: src.koru.agent_cli_helpers
+    line: 40
     cyclomatic_complexity: 10
-    calls_out: 13
+    calls_out: 7
     calls_in: 1
-  src.koruapi.mcp_server._monitor_subprocess_oom:
-    name: _monitor_subprocess_oom
-    module: src.koruapi.mcp_server
-    line: 108
+  src.koru.ide_router.resolve_ide_route:
+    name: resolve_ide_route
+    module: src.koru.ide_router
+    line: 51
     cyclomatic_complexity: 8
-    calls_out: 8
+    calls_out: 9
     calls_in: 2
-  src.koru.local_service.start_local_service_background:
-    name: start_local_service_background
-    module: src.koru.local_service
-    line: 198
-    cyclomatic_complexity: 1
-    calls_out: 4
-    calls_in: 0
-  src.koruapi.mcp_server.tool_run_quality_gates:
-    name: tool_run_quality_gates
-    module: src.koruapi.mcp_server
-    line: 732
+  services.healing-webhook.app._extract_ticket_id_from_stdout:
+    name: _extract_ticket_id_from_stdout
+    module: services.healing-webhook.app
+    line: 183
     cyclomatic_complexity: 6
-    calls_out: 13
+    calls_out: 4
     calls_in: 1
-  src.koruide.ide.detect_focused_ide_id:
-    name: detect_focused_ide_id
-    module: src.koruide.ide
-    line: 229
-    cyclomatic_complexity: 3
+  src.koruapi.server.KoruAPIHandler.log_message:
+    name: log_message
+    module: src.koruapi.server
+    line: 100
+    cyclomatic_complexity: 1
     calls_out: 2
-    calls_in: 10
+    calls_in: 0
+  src.koruide.host_setup._print_setup_host_ides:
+    name: _print_setup_host_ides
+    module: src.koruide.host_setup
+    line: 173
+    cyclomatic_complexity: 4
+    calls_out: 8
+    calls_in: 0
+  src.koruapi.local.local_main:
+    name: local_main
+    module: src.koruapi.local
+    line: 22
+    cyclomatic_complexity: 6
+    calls_out: 9
+    calls_in: 2
   src.koruapi.invoke_handlers._handle_planfile_tickets:
     name: _handle_planfile_tickets
     module: src.koruapi.invoke_handlers
@@ -2931,68 +1923,166 @@ nodes:
     cyclomatic_complexity: 5
     calls_out: 5
     calls_in: 0
-  src.koruapi.dashboard_serve.apply_topology_post_update:
-    name: apply_topology_post_update
-    module: src.koruapi.dashboard_serve
-    line: 80
-    cyclomatic_complexity: 14
-    calls_out: 22
-    calls_in: 1
-  src.koru.ide_client.LegacyAutopilotClientAdapter.drive:
-    name: drive
-    module: src.koru.ide_client
-    line: 48
-    cyclomatic_complexity: 1
-    calls_out: 8
-    calls_in: 0
-  src.koru.bootstrap.validate_flat_pipeline:
-    name: validate_flat_pipeline
-    module: src.koru.bootstrap
-    line: 233
-    cyclomatic_complexity: 3
-    calls_out: 9
-    calls_in: 1
-  src.koruapi.mcp_server._save_jobs:
-    name: _save_jobs
-    module: src.koruapi.mcp_server
-    line: 86
-    cyclomatic_complexity: 2
-    calls_out: 4
+  src.koru.tools.load_tool_registry:
+    name: load_tool_registry
+    module: src.koru.tools
+    line: 30
+    cyclomatic_complexity: 11
+    calls_out: 13
     calls_in: 2
-  src.koru.cli._agent_main:
-    name: _agent_main
-    module: src.koru.cli
-    line: 1058
-    cyclomatic_complexity: 3
-    calls_out: 7
+  src.koruapi.invoke_handlers._handle_mcp_list_tickets:
+    name: _handle_mcp_list_tickets
+    module: src.koruapi.invoke_handlers
+    line: 161
+    cyclomatic_complexity: 1
+    calls_out: 2
     calls_in: 0
-  src.koru.refactor_planfile_handoff.render_planfile_refactor_handoff:
-    name: render_planfile_refactor_handoff
-    module: src.koru.refactor_planfile_handoff
-    line: 8
-    cyclomatic_complexity: 6
+  src.koruide.plugin_installer.resolve_target_ide:
+    name: resolve_target_ide
+    module: src.koruide.plugin_installer
+    line: 96
+    cyclomatic_complexity: 10
     calls_out: 6
     calls_in: 1
-  src.koruide.injector._extra_enter_count:
-    name: _extra_enter_count
-    module: src.koruide.injector
-    line: 89
-    cyclomatic_complexity: 3
-    calls_out: 4
+  src.koruapi.dashboard._env_truthy:
+    name: _env_truthy
+    module: src.koruapi.dashboard
+    line: 13
+    cyclomatic_complexity: 1
+    calls_out: 3
     calls_in: 1
-  src.koruapi.dashboard_serve.serve_endpoint_path:
-    name: serve_endpoint_path
-    module: src.koruapi.dashboard_serve
-    line: 291
+  src.koruide.plugin_installer._extension_is_installed:
+    name: _extension_is_installed
+    module: src.koruide.plugin_installer
+    line: 218
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 1
+  src.koru.queue_clean._candidate_from_ticket:
+    name: _candidate_from_ticket
+    module: src.koru.queue_clean
+    line: 205
+    cyclomatic_complexity: 6
+    calls_out: 9
+    calls_in: 1
+  src.koruapi.invoke_handlers._handle_dsl_roundtrip:
+    name: _handle_dsl_roundtrip
+    module: src.koruapi.invoke_handlers
+    line: 112
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 0
+  src.koruapi.mcp_server._write:
+    name: _write
+    module: src.koruapi.mcp_server
+    line: 995
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 2
+  src.koruide.plugin_installer._configure_socket_path:
+    name: _configure_socket_path
+    module: src.koruide.plugin_installer
+    line: 172
+    cyclomatic_complexity: 8
+    calls_out: 12
+    calls_in: 1
+  src.koru.topology.is_component_enabled:
+    name: is_component_enabled
+    module: src.koru.topology
+    line: 369
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 3
+  src.koru.cli._topology_main:
+    name: _topology_main
+    module: src.koru.cli
+    line: 1147
+    cyclomatic_complexity: 12
+    calls_out: 32
+    calls_in: 0
+  services.healing-webhook.app.heal_rebuild_restore:
+    name: heal_rebuild_restore
+    module: services.healing-webhook.app
+    line: 303
+    cyclomatic_complexity: 6
+    calls_out: 9
+    calls_in: 0
+  src.koruide.ide._resolve_auto_drive_target:
+    name: _resolve_auto_drive_target
+    module: src.koruide.ide
+    line: 469
+    cyclomatic_complexity: 13
+    calls_out: 6
+    calls_in: 1
+  src.koru.cli._build_gate_parser:
+    name: _build_gate_parser
+    module: src.koru.cli
+    line: 600
+    cyclomatic_complexity: 1
+    calls_out: 11
+    calls_in: 1
+  src.koru.queue_clean.find_candidates:
+    name: find_candidates
+    module: src.koru.queue_clean
+    line: 234
+    cyclomatic_complexity: 8
+    calls_out: 10
+    calls_in: 1
+  src.koruapi.integrations.get_integration:
+    name: get_integration
+    module: src.koruapi.integrations
+    line: 197
     cyclomatic_complexity: 1
     calls_out: 1
     calls_in: 1
-  services.healing-webhook.app._update_redup_metrics:
-    name: _update_redup_metrics
-    module: services.healing-webhook.app
-    line: 494
+  src.koruide.injector.Injector.submit_only:
+    name: submit_only
+    module: src.koruide.injector
+    line: 322
+    cyclomatic_complexity: 5
+    calls_out: 9
+    calls_in: 0
+  src.koru.cli._init_ide_main:
+    name: _init_ide_main
+    module: src.koru.cli
+    line: 1356
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  src.koru.autonomous._start_or_reuse_daemon:
+    name: _start_or_reuse_daemon
+    module: src.koru.autonomous
+    line: 837
     cyclomatic_complexity: 2
-    calls_out: 3
+    calls_out: 13
+    calls_in: 2
+  src.koru.cli.ide_router_main:
+    name: ide_router_main
+    module: src.koru.cli
+    line: 1381
+    cyclomatic_complexity: 3
+    calls_out: 9
+    calls_in: 0
+  src.koru.cli.main:
+    name: main
+    module: src.koru.cli
+    line: 1823
+    cyclomatic_complexity: 12
+    calls_out: 13
+    calls_in: 0
+  src.koruapi.integrations.list_integrations:
+    name: list_integrations
+    module: src.koruapi.integrations
+    line: 190
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 3
+  src.koru.watch._format_ticket_event:
+    name: _format_ticket_event
+    module: src.koru.watch
+    line: 30
+    cyclomatic_complexity: 9
+    calls_out: 20
     calls_in: 1
   src.koruide.ide._score_comm_name:
     name: _score_comm_name
@@ -3001,19 +2091,873 @@ nodes:
     cyclomatic_complexity: 2
     calls_out: 2
     calls_in: 1
-  src.koruapi.cli.main:
-    name: main
-    module: src.koruapi.cli
-    line: 64
-    cyclomatic_complexity: 11
-    calls_out: 20
+  src.koru.autonomy.env.env_truthy:
+    name: env_truthy
+    module: src.koru.autonomy.env
+    line: 56
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 29
+  src.koru.autonomous._as_managed:
+    name: _as_managed
+    module: src.koru.autonomous
+    line: 333
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 3
+  src.koruide.os_injector.capture_from_xdotool:
+    name: capture_from_xdotool
+    module: src.koruide.os_injector
+    line: 205
+    cyclomatic_complexity: 1
+    calls_out: 1
     calls_in: 0
-  src.koru.mcp_provision.ensure_koru_mcp_not_disabled:
-    name: ensure_koru_mcp_not_disabled
+  src.koru.mcp_provision.provision_vscode:
+    name: provision_vscode
     module: src.koru.mcp_provision
-    line: 240
+    line: 211
+    cyclomatic_complexity: 3
+    calls_out: 8
+    calls_in: 0
+  src.koruide.os_injector.try_load_profile:
+    name: try_load_profile
+    module: src.koruide.os_injector
+    line: 128
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 1
+  src.koru.queue.koru_queue_argv.build_koru_queue_argv:
+    name: build_koru_queue_argv
+    module: src.koru.queue.koru_queue_argv
+    line: 14
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 1
+  src.koru.autonomous_wup._start_wup_watch:
+    name: _start_wup_watch
+    module: src.koru.autonomous_wup
+    line: 376
     cyclomatic_complexity: 9
+    calls_out: 14
+    calls_in: 1
+  src.koru.cli._render_runtime_context_text:
+    name: _render_runtime_context_text
+    module: src.koru.cli
+    line: 1228
+    cyclomatic_complexity: 14
+    calls_out: 23
+    calls_in: 1
+  src.koru.wup_testql_compat._normalize_args:
+    name: _normalize_args
+    module: src.koru.wup_testql_compat
+    line: 25
+    cyclomatic_complexity: 5
+    calls_out: 15
+    calls_in: 1
+  services.healing-webhook.app._resolve_strategy:
+    name: _resolve_strategy
+    module: services.healing-webhook.app
+    line: 589
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 1
+  src.koruide.injector._ydotool_enter_keycode:
+    name: _ydotool_enter_keycode
+    module: src.koruide.injector
+    line: 59
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  src.koruide.host_setup._try_apt_install:
+    name: _try_apt_install
+    module: src.koruide.host_setup
+    line: 106
+    cyclomatic_complexity: 5
+    calls_out: 11
+    calls_in: 1
+  src.koru.context.build_context:
+    name: build_context
+    module: src.koru.context
+    line: 408
+    cyclomatic_complexity: 6
+    calls_out: 16
+    calls_in: 9
+  src.koruide.os_injector.inject_with_profile:
+    name: inject_with_profile
+    module: src.koruide.os_injector
+    line: 265
+    cyclomatic_complexity: 14
+    calls_out: 20
+    calls_in: 3
+  services.healing-webhook.app._enrich_ticket_with_vallm:
+    name: _enrich_ticket_with_vallm
+    module: services.healing-webhook.app
+    line: 142
+    cyclomatic_complexity: 8
+    calls_out: 16
+    calls_in: 1
+  src.koru.runtime.planfile_dir:
+    name: planfile_dir
+    module: src.koru.runtime
+    line: 42
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 10
+  src.koru.mcp_provision._removal_paths_for_ide:
+    name: _removal_paths_for_ide
+    module: src.koru.mcp_provision
+    line: 302
+    cyclomatic_complexity: 4
+    calls_out: 4
+    calls_in: 1
+  src.koruapi.mcp_server.tool_propose_edits:
+    name: tool_propose_edits
+    module: src.koruapi.mcp_server
+    line: 809
+    cyclomatic_complexity: 14
+    calls_out: 16
+    calls_in: 0
+  src.koruide.os_injector.default_config_path:
+    name: default_config_path
+    module: src.koruide.os_injector
+    line: 39
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 2
+  src.koruide.os_injector.load_profile:
+    name: load_profile
+    module: src.koruide.os_injector
+    line: 150
+    cyclomatic_complexity: 5
+    calls_out: 12
+    calls_in: 3
+  services.healing-webhook.app.heal_redup_check:
+    name: heal_redup_check
+    module: services.healing-webhook.app
+    line: 545
+    cyclomatic_complexity: 3
+    calls_out: 12
+    calls_in: 0
+  src.koruapi.mcp_server._run_single_gate:
+    name: _run_single_gate
+    module: src.koruapi.mcp_server
+    line: 658
+    cyclomatic_complexity: 12
     calls_out: 17
+    calls_in: 1
+  src.koru.autonomous._find_existing_wup_processes:
+    name: _find_existing_wup_processes
+    module: src.koru.autonomous
+    line: 292
+    cyclomatic_complexity: 11
+    calls_out: 15
+    calls_in: 3
+  services.healing-webhook.app._rate_limit_ok:
+    name: _rate_limit_ok
+    module: services.healing-webhook.app
+    line: 120
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 2
+  src.koruide.socket.default_socket_path:
+    name: default_socket_path
+    module: src.koruide.socket
+    line: 25
+    cyclomatic_complexity: 4
+    calls_out: 15
+    calls_in: 6
+  src.koruide.audit.default_log_path:
+    name: default_log_path
+    module: src.koruide.audit
+    line: 48
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 3
+  src.koruide.ide._ide_id_from_process:
+    name: _ide_id_from_process
+    module: src.koruide.ide
+    line: 217
+    cyclomatic_complexity: 5
+    calls_out: 4
+    calls_in: 2
+  src.koru.autonomous._run_cycle:
+    name: _run_cycle
+    module: src.koru.autonomous
+    line: 1130
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  src.koruide.ide._read_comm:
+    name: _read_comm
+    module: src.koruide.ide
+    line: 62
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 2
+  src.koru.init.refresh_init_agent_lane:
+    name: refresh_init_agent_lane
+    module: src.koru.init
+    line: 378
+    cyclomatic_complexity: 4
+    calls_out: 11
+    calls_in: 1
+  src.korudsl.library._emit_goals:
+    name: _emit_goals
+    module: src.korudsl.library
+    line: 193
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 1
+  src.koru.cli._build_scan_parser:
+    name: _build_scan_parser
+    module: src.koru.cli
+    line: 469
+    cyclomatic_complexity: 1
+    calls_out: 9
+    calls_in: 1
+  src.koruide.config.default_config_path:
+    name: default_config_path
+    module: src.koruide.config
+    line: 62
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  src.koruapi.mcp_server._save_jobs:
+    name: _save_jobs
+    module: src.koruapi.mcp_server
+    line: 86
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 2
+  src.koruide.ide._active_window_pid_x11:
+    name: _active_window_pid_x11
+    module: src.koruide.ide
+    line: 188
+    cyclomatic_complexity: 7
+    calls_out: 6
+    calls_in: 1
+  src.koruide.plugin_installer.resolve_extension_vsix:
+    name: resolve_extension_vsix
+    module: src.koruide.plugin_installer
+    line: 121
+    cyclomatic_complexity: 8
+    calls_out: 18
+    calls_in: 2
+  src.koru.cli._init_main:
+    name: _init_main
+    module: src.koru.cli
+    line: 1553
+    cyclomatic_complexity: 7
+    calls_out: 16
+    calls_in: 1
+  src.korudsl.cli.main:
+    name: main
+    module: src.korudsl.cli
+    line: 45
+    cyclomatic_complexity: 11
+    calls_out: 18
+    calls_in: 0
+  src.koru.wup_testql_compat._real_testql:
+    name: _real_testql
+    module: src.koru.wup_testql_compat
+    line: 44
+    cyclomatic_complexity: 5
+    calls_out: 9
+    calls_in: 1
+  src.koruide.plugin_installer._settings_path_for_ide:
+    name: _settings_path_for_ide
+    module: src.koruide.plugin_installer
+    line: 160
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 1
+  src.korudsl.library._emit_goal:
+    name: _emit_goal
+    module: src.korudsl.library
+    line: 177
+    cyclomatic_complexity: 9
+    calls_out: 12
+    calls_in: 1
+  src.koruide.plugin_installer._env_reassert_extension_install:
+    name: _env_reassert_extension_install
+    module: src.koruide.plugin_installer
+    line: 213
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 1
+  src.koru.activity_log.activity:
+    name: activity
+    module: src.koru.activity_log
+    line: 27
+    cyclomatic_complexity: 4
+    calls_out: 7
+    calls_in: 34
+  services.healing-webhook.app.heal_vallm_validate:
+    name: heal_vallm_validate
+    module: services.healing-webhook.app
+    line: 424
+    cyclomatic_complexity: 9
+    calls_out: 21
+    calls_in: 0
+  src.koruapi.mcp_server._log:
+    name: _log
+    module: src.koruapi.mcp_server
+    line: 1002
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 2
+  services.healing-webhook.app._run_docker:
+    name: _run_docker
+    module: services.healing-webhook.app
+    line: 249
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 3
+  src.koruide.os_injector._xdotool:
+    name: _xdotool
+    module: src.koruide.os_injector
+    line: 228
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 7
+  src.koruide.os_injector._post_focus_delay_seconds:
+    name: _post_focus_delay_seconds
+    module: src.koruide.os_injector
+    line: 111
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 1
+  src.koru.topology.load_topology:
+    name: load_topology
+    module: src.koru.topology
+    line: 243
+    cyclomatic_complexity: 1
+    calls_out: 9
+    calls_in: 11
+  src.koruapi.invoke_handlers._handle_context_build:
+    name: _handle_context_build
+    module: src.koruapi.invoke_handlers
+    line: 19
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 0
+  src.koru.context.render_markdown_handoff:
+    name: render_markdown_handoff
+    module: src.koru.context
+    line: 1198
+    cyclomatic_complexity: 10
+    calls_out: 47
+    calls_in: 5
+  src.koru.stdio_events.write_stdio_event:
+    name: write_stdio_event
+    module: src.koru.stdio_events
+    line: 17
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 7
+  src.koruide.ide.detect_focused_ide_id:
+    name: detect_focused_ide_id
+    module: src.koruide.ide
+    line: 229
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 10
+  src.koruapi.invoke.invoke_integration:
+    name: invoke_integration
+    module: src.koruapi.invoke
+    line: 12
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 2
+  src.koru.cli._build_queue_parser:
+    name: _build_queue_parser
+    module: src.koru.cli
+    line: 786
+    cyclomatic_complexity: 1
+    calls_out: 11
+    calls_in: 1
+  src.koruide.plugin_installer._install_extension_vsix:
+    name: _install_extension_vsix
+    module: src.koruide.plugin_installer
+    line: 281
+    cyclomatic_complexity: 10
+    calls_out: 14
+    calls_in: 1
+  src.koru.autonomous_diagnostics.run_idle_check_loop:
+    name: run_idle_check_loop
+    module: src.koru.autonomous_diagnostics
+    line: 85
+    cyclomatic_complexity: 6
+    calls_out: 8
+    calls_in: 1
+  src.koru.gc_cli_helpers.emit_gc_management_event:
+    name: emit_gc_management_event
+    module: src.koru.gc_cli_helpers
+    line: 61
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  src.koru.tools.find_tool_entry:
+    name: find_tool_entry
+    module: src.koru.tools
+    line: 149
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 1
+  src.koru.cli._build_tools_parser:
+    name: _build_tools_parser
+    module: src.koru.cli
+    line: 295
+    cyclomatic_complexity: 1
+    calls_out: 7
+    calls_in: 1
+  src.koru.cli._agent_backends_main:
+    name: _agent_backends_main
+    module: src.koru.cli
+    line: 1297
+    cyclomatic_complexity: 8
+    calls_out: 23
+    calls_in: 0
+  src.korudsl.transform.library_to_any:
+    name: library_to_any
+    module: src.korudsl.transform
+    line: 44
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 2
+  src.koru.mcp_provision._resolve_targets:
+    name: _resolve_targets
+    module: src.koru.mcp_provision
+    line: 293
+    cyclomatic_complexity: 4
+    calls_out: 4
+    calls_in: 1
+  src.koruapi.invoke_handlers._handle_mcp_quality_gates:
+    name: _handle_mcp_quality_gates
+    module: src.koruapi.invoke_handlers
+    line: 175
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  services.healing-webhook.ticket_builder._default_acceptance:
+    name: _default_acceptance
+    module: services.healing-webhook.ticket_builder
+    line: 133
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  src.koru.autonomous._configure_loop_state:
+    name: _configure_loop_state
+    module: src.koru.autonomous
+    line: 1270
+    cyclomatic_complexity: 2
+    calls_out: 6
+    calls_in: 1
+  src.koruide.os_injector.iter_config_paths:
+    name: iter_config_paths
+    module: src.koruide.os_injector
+    line: 43
+    cyclomatic_complexity: 4
+    calls_out: 11
+    calls_in: 1
+  src.koruide.os_injector._cmd_timeout_seconds:
+    name: _cmd_timeout_seconds
+    module: src.koruide.os_injector
+    line: 100
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 2
+  src.koru.loop.run_closed_loop:
+    name: run_closed_loop
+    module: src.koru.loop
+    line: 86
+    cyclomatic_complexity: 12
+    calls_out: 18
+    calls_in: 1
+  src.koru.autonomous._process_cwd:
+    name: _process_cwd
+    module: src.koru.autonomous
+    line: 185
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 2
+  src.koruapi.invoke_handlers._handle_doctor_run:
+    name: _handle_doctor_run
+    module: src.koruapi.invoke_handlers
+    line: 30
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  src.koru.agent_cli_helpers.run_agent_handoff:
+    name: run_agent_handoff
+    module: src.koru.agent_cli_helpers
+    line: 66
+    cyclomatic_complexity: 3
+    calls_out: 10
+    calls_in: 1
+  src.koruapi.invoke_handlers._handle_scan_apply:
+    name: _handle_scan_apply
+    module: src.koruapi.invoke_handlers
+    line: 37
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 0
+  src.koru.mcp_provision.provision_cursor:
+    name: provision_cursor
+    module: src.koru.mcp_provision
+    line: 194
+    cyclomatic_complexity: 3
+    calls_out: 8
+    calls_in: 0
+  src.koru.agent_backends.iter_agent_backend_profiles:
+    name: iter_agent_backend_profiles
+    module: src.koru.agent_backends
+    line: 107
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 2
+  src.korudsl.transform.dsl_roundtrip_report:
+    name: dsl_roundtrip_report
+    module: src.korudsl.transform
+    line: 50
+    cyclomatic_complexity: 1
+    calls_out: 7
+    calls_in: 2
+  src.koruapi.mcp_server.tool_run_quality_gates:
+    name: tool_run_quality_gates
+    module: src.koruapi.mcp_server
+    line: 732
+    cyclomatic_complexity: 6
+    calls_out: 13
+    calls_in: 1
+  src.koruide.protocol.decode:
+    name: decode
+    module: src.koruide.protocol
+    line: 97
+    cyclomatic_complexity: 12
+    calls_out: 21
+    calls_in: 2
+  src.koru.agent_cli_helpers.try_agent_env_exports:
+    name: try_agent_env_exports
+    module: src.koru.agent_cli_helpers
+    line: 21
+    cyclomatic_complexity: 7
+    calls_out: 7
+    calls_in: 1
+  src.koru.queue_clean._build_close_note:
+    name: _build_close_note
+    module: src.koru.queue_clean
+    line: 282
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 1
+  src.korudsl.transform.library_from_any:
+    name: library_from_any
+    module: src.korudsl.transform
+    line: 19
+    cyclomatic_complexity: 12
+    calls_out: 15
+    calls_in: 4
+  src.koruide.host_setup._print_setup_host_header:
+    name: _print_setup_host_header
+    module: src.koruide.host_setup
+    line: 159
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 0
+  src.koru.dev_sync.sync_developer_packages:
+    name: sync_developer_packages
+    module: src.koru.dev_sync
+    line: 61
+    cyclomatic_complexity: 9
+    calls_out: 16
+    calls_in: 1
+  src.koru.dev_sync._pull_repo:
+    name: _pull_repo
+    module: src.koru.dev_sync
+    line: 51
+    cyclomatic_complexity: 7
+    calls_out: 4
+    calls_in: 1
+  src.koru.queue_cli_helpers.emit_queue_run_started:
+    name: emit_queue_run_started
+    module: src.koru.queue_cli_helpers
+    line: 40
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 1
+  src.korudsl.library.ensure_library_structure:
+    name: ensure_library_structure
+    module: src.korudsl.library
+    line: 9
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 6
+  src.koru.mcp_provision._maybe_upgrade_koru_command:
+    name: _maybe_upgrade_koru_command
+    module: src.koru.mcp_provision
+    line: 91
+    cyclomatic_complexity: 5
+    calls_out: 3
+    calls_in: 4
+  src.koru.local_service.default_local_service_config:
+    name: default_local_service_config
+    module: src.koru.local_service
+    line: 95
+    cyclomatic_complexity: 2
+    calls_out: 7
+    calls_in: 1
+  src.koru.cli._render_topology_text:
+    name: _render_topology_text
+    module: src.koru.cli
+    line: 1141
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  src.koruapi.dashboard.build_serve_parser:
+    name: build_serve_parser
+    module: src.koruapi.dashboard
+    line: 17
+    cyclomatic_complexity: 1
+    calls_out: 10
+    calls_in: 1
+  src.koru.dev_sync._is_dirty:
+    name: _is_dirty
+    module: src.koru.dev_sync
+    line: 46
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  src.koru.cli._tools_main:
+    name: _tools_main
+    module: src.koru.cli
+    line: 319
+    cyclomatic_complexity: 7
+    calls_out: 18
+    calls_in: 0
+  src.koruide.os_injector.try_drive_with_profile:
+    name: try_drive_with_profile
+    module: src.koruide.os_injector
+    line: 342
+    cyclomatic_complexity: 8
+    calls_out: 6
+    calls_in: 0
+  src.koruide.plugin_installer._valid_ide:
+    name: _valid_ide
+    module: src.koruide.plugin_installer
+    line: 66
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 2
+  src.koru.cli._agent_main:
+    name: _agent_main
+    module: src.koru.cli
+    line: 1058
+    cyclomatic_complexity: 3
+    calls_out: 7
+    calls_in: 0
+  src.koruide.plugin_installer.install_plugin_for_ide:
+    name: install_plugin_for_ide
+    module: src.koruide.plugin_installer
+    line: 335
+    cyclomatic_complexity: 9
+    calls_out: 13
+    calls_in: 1
+  src.koru.gate.authorize_gate:
+    name: authorize_gate
+    module: src.koru.gate
+    line: 149
+    cyclomatic_complexity: 9
+    calls_out: 16
+    calls_in: 1
+  src.koruide.host_setup.run_host_setup:
+    name: run_host_setup
+    module: src.koruide.host_setup
+    line: 128
+    cyclomatic_complexity: 6
+    calls_out: 8
+    calls_in: 1
+  src.korudsl.library.normalize_dsl_to_library:
+    name: normalize_dsl_to_library
+    module: src.korudsl.library
+    line: 100
+    cyclomatic_complexity: 7
+    calls_out: 9
+    calls_in: 4
+  src.koru.cli._queue_main:
+    name: _queue_main
+    module: src.koru.cli
+    line: 897
+    cyclomatic_complexity: 9
+    calls_out: 15
+    calls_in: 0
+  src.koruapi.dashboard.dashboard_main:
+    name: dashboard_main
+    module: src.koruapi.dashboard
+    line: 64
+    cyclomatic_complexity: 5
+    calls_out: 9
+    calls_in: 2
+  src.koruapi.server._parse_invoke_request:
+    name: _parse_invoke_request
+    module: src.koruapi.server
+    line: 38
+    cyclomatic_complexity: 9
+    calls_out: 16
+    calls_in: 1
+  src.koru.autonomous._guard_existing_autonomous_processes:
+    name: _guard_existing_autonomous_processes
+    module: src.koru.autonomous
+    line: 395
+    cyclomatic_complexity: 11
+    calls_out: 14
+    calls_in: 1
+  src.koru.mcp_provision._koru_mcp_entry_cursor:
+    name: _koru_mcp_entry_cursor
+    module: src.koru.mcp_provision
+    line: 82
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  src.koru.autonomous._setup_autonomous_session:
+    name: _setup_autonomous_session
+    module: src.koru.autonomous
+    line: 1224
+    cyclomatic_complexity: 2
+    calls_out: 9
+    calls_in: 1
+  src.koru.cli._build_gc_parser:
+    name: _build_gc_parser
+    module: src.koru.cli
+    line: 707
+    cyclomatic_complexity: 1
+    calls_out: 14
+    calls_in: 1
+  src.koru.mcp_provision._vscode_project_config:
+    name: _vscode_project_config
+    module: src.koru.mcp_provision
+    line: 44
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 4
+  src.koru.mcp_provision.init_ide_main:
+    name: init_ide_main
+    module: src.koru.mcp_provision
+    line: 348
+    cyclomatic_complexity: 2
+    calls_out: 13
+    calls_in: 1
+  src.koru.agent_backends.normalize_agent_backend_id:
+    name: normalize_agent_backend_id
+    module: src.koru.agent_backends
+    line: 91
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 2
+  src.koru.autonomous._daemon_activity_log:
+    name: _daemon_activity_log
+    module: src.koru.autonomous
+    line: 126
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  services.healing-webhook.ticket_builder._infer_paths:
+    name: _infer_paths
+    module: services.healing-webhook.ticket_builder
+    line: 101
+    cyclomatic_complexity: 7
+    calls_out: 1
+    calls_in: 2
+  src.koru.autonomous._run_command_check:
+    name: _run_command_check
+    module: src.koru.autonomous
+    line: 1017
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 0
+  src.koru.topology_cli.render_topology_text:
+    name: render_topology_text
+    module: src.koru.topology_cli
+    line: 19
+    cyclomatic_complexity: 2
+    calls_out: 9
+    calls_in: 1
+  src.koruide.ide._candidate_score:
+    name: _candidate_score
+    module: src.koruide.ide
+    line: 149
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 1
+  src.koru.agents.agent_lane_environment:
+    name: agent_lane_environment
+    module: src.koru.agents
+    line: 275
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 3
+  src.koruide.ide.pick_target:
+    name: pick_target
+    module: src.koruide.ide
+    line: 351
+    cyclomatic_complexity: 13
+    calls_out: 5
+    calls_in: 4
+  src.koruapi.invoke_handlers._handle_gate_regix:
+    name: _handle_gate_regix
+    module: src.koruapi.invoke_handlers
+    line: 126
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 0
+  src.koru.cli._scan_main:
+    name: _scan_main
+    module: src.koru.cli
+    line: 569
+    cyclomatic_complexity: 5
+    calls_out: 16
+    calls_in: 0
+  src.koruapi.mcp_server._create_job:
+    name: _create_job
+    module: src.koruapi.mcp_server
+    line: 423
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 1
+  src.koru.ide_router.is_headless_environment:
+    name: is_headless_environment
+    module: src.koru.ide_router
+    line: 23
+    cyclomatic_complexity: 8
+    calls_out: 6
+    calls_in: 3
+  src.koru.gc_cli_helpers.gc_statuses_from_args:
+    name: gc_statuses_from_args
+    module: src.koru.gc_cli_helpers
+    line: 12
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 1
+  src.koruapi.invoke_handlers._handle_dsl_to_dsl:
+    name: _handle_dsl_to_dsl
+    module: src.koruapi.invoke_handlers
+    line: 105
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  src.koru.agent_backends.get_agent_backend_profile:
+    name: get_agent_backend_profile
+    module: src.koru.agent_backends
+    line: 112
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 2
+  src.koru.autonomous._cleanup_autonomous_session:
+    name: _cleanup_autonomous_session
+    module: src.koru.autonomous
+    line: 1475
+    cyclomatic_complexity: 4
+    calls_out: 5
     calls_in: 1
   src.koru.queue_clean._matched_rules:
     name: _matched_rules
@@ -3022,27 +2966,20 @@ nodes:
     cyclomatic_complexity: 14
     calls_out: 16
     calls_in: 2
-  src.koru.wup_testql_compat._normalize_args:
-    name: _normalize_args
-    module: src.koru.wup_testql_compat
-    line: 25
-    cyclomatic_complexity: 5
-    calls_out: 15
-    calls_in: 1
-  src.koruide.plugin_installer._valid_ide:
-    name: _valid_ide
-    module: src.koruide.plugin_installer
-    line: 66
-    cyclomatic_complexity: 3
-    calls_out: 2
+  src.koru.autonomous._ancestor_pids:
+    name: _ancestor_pids
+    module: src.koru.autonomous
+    line: 193
+    cyclomatic_complexity: 7
+    calls_out: 8
     calls_in: 2
-  src.koruide.audit.AuditLog.__init__:
-    name: __init__
-    module: src.koruide.audit
-    line: 78
-    cyclomatic_complexity: 4
-    calls_out: 12
-    calls_in: 0
+  src.koru.runtime.runs_dir:
+    name: runs_dir
+    module: src.koru.runtime
+    line: 54
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 2
 edges:
 - caller: services.healing-webhook.app._enrich_ticket_with_vallm
   callee: services.healing-webhook.app._resolve_affected_files
@@ -3340,72 +3277,6 @@ edges:
   call_type: resolved
 - caller: src.koruapi.openapi.build_openapi_document
   callee: src.koruapi.integrations.list_integrations
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve._list_tickets
-  callee: src.koru.queue.ticket.planfile_command
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve.apply_topology_post_update
-  callee: src.koru.topology.load_topology
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve.apply_topology_post_update
-  callee: src.koru.topology.save_topology
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve.apply_topology_post_update
-  callee: src.koru.topology.set_component_enabled
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve._bulk_waiting_input_action
-  callee: src.koruapi.dashboard_serve._list_tickets
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve._bulk_waiting_input_action
-  callee: src.koru.queue.ticket.planfile_command
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve._cmdline_suggests_koru_serve
-  callee: src.koruapi.dashboard_serve._cmdline_suggests_koru_serve_from_bytes
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve._try_stop_prior_koru_serve_listener
-  callee: src.koruapi.dashboard_serve._listener_pids_for_tcp_port
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve._try_stop_prior_koru_serve_listener
-  callee: src.koruapi.dashboard_serve._cmdline_suggests_koru_serve
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve._try_stop_prior_koru_serve_listener
-  callee: scripts.koru-soak-monitor.print
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve.read_serve_endpoint
-  callee: src.koruapi.dashboard_serve.serve_endpoint_path
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve.build_server
-  callee: src.koruapi.dashboard_serve._build_handler
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve.bind_serve_server
-  callee: src.koruapi.dashboard_serve.build_server
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve.bind_serve_server
-  callee: src.koruapi.dashboard_serve._try_stop_prior_koru_serve_listener
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve.bind_serve_server
-  callee: src.koruapi.dashboard_serve._address_in_use
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve.serve
-  callee: src.koruapi.dashboard_serve.write_serve_endpoint_file
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve.serve
-  callee: scripts.koru-soak-monitor.print
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve.serve
-  callee: src.koru.events.emit_management_event
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve.serve
-  callee: src.koruapi.dashboard_serve.bind_serve_server
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve.start_serve_background
-  callee: src.koruapi.dashboard_serve.bind_serve_server
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve.start_serve_background
-  callee: src.koruapi.dashboard_serve.write_serve_endpoint_file
-  call_type: resolved
-- caller: src.koruapi.dashboard_serve.start_serve_background
-  callee: src.koru.events.emit_management_event
   call_type: resolved
 - caller: src.koruapi.mcp_server._load_jobs
   callee: src.koruapi.mcp_server._get_job_store_path
@@ -4376,173 +4247,239 @@ edges:
 - caller: src.koru.queue_clean.clean_queue
   callee: src.koru.queue_clean._close_ticket
   call_type: resolved
-- caller: src.koru.ide_client.LegacyAutopilotClientAdapter.drive
+- caller: src.koru.autonomous._try_os_injector_fallback
+  callee: src.koruide.os_injector.load_profile
+  call_type: resolved
+- caller: src.koru.autonomous._try_os_injector_fallback
+  callee: src.koruide.os_injector.inject_with_profile
+  call_type: resolved
+- caller: src.koru.autonomous._stdio_info
+  callee: src.koru.activity_log.activity_info
+  call_type: resolved
+- caller: src.koru.autonomous._daemon_activity_log
   callee: src.koru.activity_log.activity
   call_type: resolved
-- caller: src.koru.ide_client.build_legacy_ide_client
-  callee: src.koru.ide_client.adapt_legacy_autopilot_client
+- caller: src.koru.autonomous._resolve_autopilot_ide
+  callee: src.koru.ide_router.resolve_ide_route
   call_type: resolved
-- caller: src.koru.ide_client.build_ide_client
-  callee: src.koru.ide_client.build_legacy_ide_client
-  call_type: resolved
-- caller: src.koru.ide_client.build_ide_client
-  callee: src.koru.ide_client.build_koruide_client
-  call_type: resolved
-- caller: src.koru.tools.resolve_registry_path
-  callee: src.koru.tools.default_registry_path
-  call_type: resolved
-- caller: src.koru.tools.load_tool_registry
-  callee: src.koru.tools.resolve_registry_path
-  call_type: resolved
-- caller: src.koru.tools._check_commands_exist
-  callee: src.koru.tools._first_token
-  call_type: resolved
-- caller: src.koru.tools.detect_tools
-  callee: src.koru.tools._extract_detect_config
-  call_type: resolved
-- caller: src.koru.tools.detect_tools
-  callee: src.koru.tools._check_commands_exist
-  call_type: resolved
-- caller: src.koru.tools.detect_tools
-  callee: src.koru.tools._check_markers_exist
-  call_type: resolved
-- caller: src.koru.tools.detect_tools
-  callee: src.koru.tools._check_env_vars_exist
-  call_type: resolved
-- caller: src.koru.tools.detect_tools
-  callee: src.koru.tools._build_detection_result
-  call_type: resolved
-- caller: src.koru.tools._validate_adapter_kind
-  callee: src.koru.tools.infer_adapter_kind
-  call_type: resolved
-- caller: src.koru.tools.build_tool_task_scaffold
-  callee: src.koru.tools._extract_tool_metadata
-  call_type: resolved
-- caller: src.koru.tools.build_tool_task_scaffold
-  callee: src.koru.tools._validate_adapter_kind
-  call_type: resolved
-- caller: src.koru.tools.build_tool_task_scaffold
-  callee: src.koru.tools._build_scaffold_prompt_lines
-  call_type: resolved
-- caller: src.koru.tools.build_tool_task_scaffold
-  callee: src.koru.tools._build_scaffold_labels
-  call_type: resolved
-- caller: src.koru.tools.build_tool_task_scaffold
-  callee: src.koru.tools._build_scaffold_inputs
-  call_type: resolved
-- caller: src.koru.init.init_project
-  callee: src.koru.runtime.planfile_dir
-  call_type: resolved
-- caller: src.koru.init.init_project
-  callee: src.koru.init._write_policy_stub_if_absent
-  call_type: resolved
-- caller: src.koru.init.init_project
-  callee: src.koru.init._ensure_gitignore_entry
-  call_type: resolved
-- caller: src.koru.init.init_project
-  callee: src.koru.init._resolve_init_agent_lane
-  call_type: resolved
-- caller: src.koru.init.init_project
-  callee: src.koru.init._write_autopilot_host_setup_script
-  call_type: resolved
-- caller: src.koru.init.init_project
-  callee: src.koru.project_pipeline.write_koru_project_pipeline_if_absent
-  call_type: resolved
-- caller: src.koru.init.refresh_init_agent_lane
-  callee: src.koru.init._resolve_init_agent_lane
-  call_type: resolved
-- caller: src.koru.init.refresh_init_agent_lane
-  callee: src.koru.init._write_autopilot_host_setup_script
-  call_type: resolved
-- caller: src.koru.init.refresh_init_agent_lane
-  callee: src.koru.runtime.planfile_dir
-  call_type: resolved
-- caller: src.koru.init.refresh_init_agent_lane
-  callee: src.koru.init._remove_agent_lane_artifacts
-  call_type: resolved
-- caller: src.koru.init.refresh_init_agent_lane
-  callee: src.koru.init._write_agent_lane_artifacts
-  call_type: resolved
-- caller: src.koru.init.refresh_init_agent_lane
-  callee: src.koru.init_host_environment.write_host_environment_bundle
-  call_type: resolved
-- caller: src.koru.init._init_auto_agent_lane
-  callee: src.koru.init._read_persisted_agent_lane
-  call_type: resolved
-- caller: src.koru.init._read_persisted_agent_lane
-  callee: src.koru.runtime.runtime_dir
-  call_type: resolved
-- caller: src.koru.init._read_persisted_agent_lane
-  callee: src.koru.agents.normalize_agent_lane_id
-  call_type: resolved
-- caller: src.koru.init._resolve_init_agent_lane
-  callee: src.koru.agents.normalize_agent_lane_id
-  call_type: resolved
-- caller: src.koru.init._resolve_init_agent_lane
-  callee: src.koru.init._init_auto_agent_lane
-  call_type: resolved
-- caller: src.koru.init.resolve_project_agent_lane
-  callee: src.koru.init._resolve_init_agent_lane
-  call_type: resolved
-- caller: src.koru.init._write_autopilot_host_setup_script
-  callee: src.koru.runtime.runtime_dir
-  call_type: resolved
-- caller: src.koru.init._write_agent_lane_artifacts
-  callee: src.koru.runtime.runtime_dir
-  call_type: resolved
-- caller: src.koru.init._write_agent_lane_artifacts
+- caller: src.koru.autonomous._apply_agent_lane_environ
   callee: src.koru.agents.agent_lane_environment
   call_type: resolved
-- caller: src.koru.init._write_agent_lane_artifacts
-  callee: src.koru.agents.format_agent_lane_exports
+- caller: src.koru.autonomous._looks_like_autonomous_up_command
+  callee: src.koru.autonomous_parser.looks_like_autonomous_up_command
   call_type: resolved
-- caller: src.koru.init._write_policy_stub_if_absent
-  callee: src.koru.runtime.runtime_dir
+- caller: src.koru.autonomous._find_existing_autonomous_processes
+  callee: src.koru.autonomous._process_cwd
   call_type: resolved
-- caller: src.koru.local_service.default_local_service_config
-  callee: src.koru.local_service._env_int
+- caller: src.koru.autonomous._find_existing_autonomous_processes
+  callee: src.koru.autonomous._command_project
   call_type: resolved
-- caller: src.koru.local_service._build_handler
-  callee: src.koru.local_service._read_bounded_json_object
+- caller: src.koru.autonomous._find_existing_autonomous_processes
+  callee: src.koru.autonomous._ancestor_pids
   call_type: resolved
-- caller: src.koru.local_service.build_local_service_server
-  callee: src.koru.local_service._build_handler
+- caller: src.koru.autonomous.stop_prior_autonomous_for_auto_start
+  callee: src.koru.autonomous._stdio_info
   call_type: resolved
-- caller: src.koru.local_service.build_local_service_server
-  callee: src.koru.local_service._koru_version
+- caller: src.koru.autonomous.stop_prior_autonomous_for_auto_start
+  callee: src.koru.autonomous._terminate_existing_processes
   call_type: resolved
-- caller: src.koru.local_service.run_local_service
+- caller: src.koru.autonomous.stop_prior_autonomous_for_auto_start
+  callee: src.koru.autonomous._find_existing_wup_processes
+  call_type: resolved
+- caller: src.koru.autonomous.stop_prior_autonomous_for_auto_start
+  callee: src.koru.autonomous._as_managed
+  call_type: resolved
+- caller: src.koru.autonomous.stop_prior_autonomous_for_auto_start
+  callee: src.koru.autonomous._find_existing_autonomous_processes
+  call_type: resolved
+- caller: src.koru.autonomous._find_existing_wup_processes
+  callee: src.koru.autonomous._process_cwd
+  call_type: resolved
+- caller: src.koru.autonomous._find_existing_wup_processes
+  callee: src.koru.autonomous._ancestor_pids
+  call_type: resolved
+- caller: src.koru.autonomous._terminate_existing_processes
+  callee: src.koru.autonomous._stdio_info
+  call_type: resolved
+- caller: src.koru.autonomous._confirm_replace_existing
   callee: scripts.koru-soak-monitor.print
   call_type: resolved
-- caller: src.koru.local_service.run_local_service
-  callee: src.koru.local_service.build_local_service_server
+- caller: src.koru.autonomous._guard_existing_autonomous_processes
+  callee: src.koru.autonomous._stdio_info
   call_type: resolved
-- caller: src.koru.local_service.start_local_service_background
-  callee: src.koru.local_service.build_local_service_server
+- caller: src.koru.autonomous._guard_existing_autonomous_processes
+  callee: src.koru.autonomous._terminate_existing_processes
   call_type: resolved
-- caller: src.koru.doctor._check_agent_backends_registry
-  callee: src.koru.agent_backends.list_agent_backend_ids
+- caller: src.koru.autonomous._guard_existing_autonomous_processes
+  callee: src.koru.autonomous._confirm_replace_existing
   call_type: resolved
-- caller: src.koru.doctor._check_planfile_cli_version
-  callee: src.koru.doctor._planfile_version_argv
+- caller: src.koru.autonomous._guard_existing_autonomous_processes
+  callee: src.koru.autonomous._find_existing_wup_processes
   call_type: resolved
-- caller: src.koru.doctor._check_planfile_config
-  callee: src.koru.runtime.planfile_dir
+- caller: src.koru.autonomous._guard_existing_autonomous_processes
+  callee: src.koru.autonomous._as_managed
   call_type: resolved
-- caller: src.koru.doctor._check_planfile_sprints
-  callee: src.koru.runtime.planfile_dir
+- caller: src.koru.autonomous._ensure_init
+  callee: src.koru.init.init_project
   call_type: resolved
-- caller: src.koru.doctor._check_planfile_sprints_yaml
-  callee: src.koru.runtime.planfile_dir
+- caller: src.koru.autonomous._ensure_init
+  callee: src.koru.autonomous._stdio_info
   call_type: resolved
-- caller: src.koru.doctor._check_runtime_dir
-  callee: src.koru.runtime.runtime_dir
+- caller: src.koru.autonomous._start_or_reuse_daemon
+  callee: src.koru.ide_client.build_ide_client
   call_type: resolved
-- caller: src.koru.doctor._check_koru_project_pipeline
-  callee: src.koru.project_pipeline.project_pipeline_path
+- caller: src.koru.autonomous._start_or_reuse_daemon
+  callee: src.koru.autonomous._stdio_info
   call_type: resolved
-- caller: src.koru.doctor._check_koru_project_pipeline
-  callee: src.koru.runtime.planfile_dir
+- caller: src.koru.autonomous._wait_for_autopilot_plugin
+  callee: src.koru.autonomous._status_has_autopilot_plugin
+  call_type: resolved
+- caller: src.koru.autonomous._is_topology_enabled
+  callee: src.koru.topology.is_component_enabled
+  call_type: resolved
+- caller: src.koru.autonomous._is_topology_enabled
+  callee: src.koru.topology.is_pipeline_enabled
+  call_type: resolved
+- caller: src.koru.autonomous._load_loop_checkpoint
+  callee: src.koru.autonomous._stdio_info
+  call_type: resolved
+- caller: src.koru.autonomous._run_command_check
+  callee: src.koru.autonomous._stdio_info
+  call_type: resolved
+- caller: src.koru.autonomous._create_diagnostic_ticket
+  callee: src.koru.activity_log.activity
+  call_type: resolved
+- caller: src.koru.autonomous._create_diagnostic_ticket
+  callee: src.koru.tasks.create_nl_task
+  call_type: resolved
+- caller: src.koru.autonomous._create_diagnostic_ticket
+  callee: src.koru.autonomous._stdio_info
+  call_type: resolved
+- caller: src.koru.autonomous._run_idle_diagnostics
+  callee: src.koru.autonomous._create_diagnostic_ticket
+  call_type: resolved
+- caller: src.koru.autonomous._setup_autonomous_session
+  callee: src.koru.autonomous._guard_existing_autonomous_processes
+  call_type: resolved
+- caller: src.koru.autonomous._setup_autonomous_session
+  callee: src.koru.autonomous._ensure_init
+  call_type: resolved
+- caller: src.koru.autonomous._setup_autonomous_session
+  callee: src.koru.stdio_events.write_stdio_event
+  call_type: resolved
+- caller: src.koru.autonomous._setup_autopilot_daemon
+  callee: src.koru.autonomous._start_or_reuse_daemon
+  call_type: resolved
+- caller: src.koru.autonomous._setup_autopilot_daemon
+  callee: src.koruide.socket.default_socket_path
+  call_type: resolved
+- caller: src.koru.autonomous._configure_loop_state
+  callee: src.koru.autonomous._apply_agent_lane_environ
+  call_type: resolved
+- caller: src.koru.autonomous._configure_loop_state
+  callee: src.koru.autonomous_startup.resolve_autopilot_ide_for_autonomous
+  call_type: resolved
+- caller: src.koru.autonomous._configure_loop_state
+  callee: src.koru.autonomous._load_loop_checkpoint
+  call_type: resolved
+- caller: src.koru.autonomous._run_mcp_provision
+  callee: src.koru.mcp_provision.ensure_koru_mcp_not_disabled
+  call_type: resolved
+- caller: src.koru.autonomous._run_mcp_provision
+  callee: src.koru.autonomous._stdio_info
+  call_type: resolved
+- caller: src.koru.autonomous._setup_autopilot_plugin
+  callee: src.koruide.plugin_installer.install_plugin_for_ide
+  call_type: resolved
+- caller: src.koru.autonomous._setup_autopilot_plugin
+  callee: src.koru.autonomous._stdio_info
+  call_type: resolved
+- caller: src.koru.autonomous._setup_autopilot_plugin
+  callee: src.koruide.plugin_installer.format_plugin_install_result
+  call_type: resolved
+- caller: src.koru.autonomous._setup_autopilot_plugin
+  callee: src.koru.autonomous._wait_for_autopilot_plugin
+  call_type: resolved
+- caller: src.koru.autonomous._setup_autopilot_plugin
+  callee: src.koru.autonomous._allow_keyboard_autopilot_fallback
+  call_type: resolved
+- caller: src.koru.autonomous._run_operator_pipeline
+  callee: src.koru.autonomous_startup.format_post_startup_operator_hints
+  call_type: resolved
+- caller: src.koru.autonomous._run_operator_pipeline
+  callee: src.koru.autonomous._stdio_info
+  call_type: resolved
+- caller: src.koru.autonomous._run_operator_pipeline
+  callee: src.koru.autonomy.operator_pipeline.run_startup_operator_pipeline
+  call_type: resolved
+- caller: src.koru.autonomous._unblock_queue_if_needed
+  callee: src.koru.autonomy.ide_work.release_in_progress_tickets
+  call_type: resolved
+- caller: src.koru.autonomous._unblock_queue_if_needed
+  callee: src.koru.autonomous._stdio_info
+  call_type: resolved
+- caller: src.koru.autonomous._restart_daemon_if_needed
+  callee: src.koru.autonomous._stdio_info
+  call_type: resolved
+- caller: src.koru.autonomous._restart_daemon_if_needed
+  callee: src.koru.autonomous._start_or_reuse_daemon
+  call_type: resolved
+- caller: src.koru.autonomous._handle_cycle_exit_conditions
+  callee: src.koru.autonomous._stdio_info
+  call_type: resolved
+- caller: src.koru.autonomous._handle_cycle_exit_conditions
+  callee: src.koru.stdio_events.write_stdio_event
+  call_type: resolved
+- caller: src.koru.autonomous._cleanup_autonomous_session
+  callee: src.koru.autonomous_wup._stop_process
+  call_type: resolved
+- caller: src.koru.autonomous._run_autonomous_cycle
+  callee: src.koru.autonomous._restart_daemon_if_needed
+  call_type: resolved
+- caller: src.koru.autonomous._run_autonomous_cycle
+  callee: src.koru.autonomous._run_cycle
+  call_type: resolved
+- caller: src.koru.autonomous._run_autonomous_cycle
+  callee: src.koru.autonomous._save_loop_checkpoint
+  call_type: resolved
+- caller: src.koru.autonomous._run_autonomous_cycle
+  callee: src.koru.autonomous._handle_cycle_exit_conditions
+  call_type: resolved
+- caller: src.koru.autonomous._run_autonomous_cycle
+  callee: src.koru.autonomous._compute_backoff_sleep
+  call_type: resolved
+- caller: src.koru.autonomous._run_autonomous_cycle
+  callee: src.koru.autonomous._stdio_info
+  call_type: resolved
+- caller: src.koru.autonomous._run_autonomous_cycle
+  callee: scripts.koru-soak-monitor.print
+  call_type: resolved
+- caller: src.koru.autonomous._run_autonomous_cycle
+  callee: src.koru.autonomous._queue_loop_waiting_ticket_label
+  call_type: resolved
+- caller: src.koru.autonomous._action_up
+  callee: src.koru.autonomous._setup_autonomous_session
+  call_type: resolved
+- caller: src.koru.autonomous._action_up
+  callee: src.koru.autonomous._apply_agent_lane_environ
+  call_type: resolved
+- caller: src.koru.autonomous._action_up
+  callee: src.koru.autonomous_startup.build_startup_probe
+  call_type: resolved
+- caller: src.koru.autonomous._action_up
+  callee: src.koru.autonomous_startup.format_startup_banner
+  call_type: resolved
+- caller: src.koru.autonomous._action_up
+  callee: src.koru.autonomous._setup_autopilot_daemon
+  call_type: resolved
+- caller: src.koru.autonomous._action_up
+  callee: src.koru.autonomous._configure_loop_state
+  call_type: resolved
+- caller: src.koru.autonomous._action_up
+  callee: src.koru.autonomous_wup._build_wup_watch_config
+  call_type: resolved
+- caller: src.koru.autonomous._action_up
+  callee: src.koru.autonomous_wup._start_wup_watch
   call_type: resolved
 modules:
   plugins.koru-autopilot-vscode.src.extension:
@@ -4581,11 +4518,11 @@ modules:
   - services.healing-webhook.ticket_builder.build_ticket_payload
   src.koru.activity_log:
   - src.koru.activity_log.activity
+  - src.koru.activity_log.activity_info
   src.koru.agent_backends:
   - src.koru.agent_backends._parse_lane
   - src.koru.agent_backends.get_agent_backend_profile
   - src.koru.agent_backends.iter_agent_backend_profiles
-  - src.koru.agent_backends.list_agent_backend_ids
   - src.koru.agent_backends.load_agent_integration_config
   - src.koru.agent_backends.normalize_agent_backend_id
   - src.koru.agent_backends.validate_agent_integration_config
@@ -4596,9 +4533,48 @@ modules:
   src.koru.agents:
   - src.koru.agents.agent_lane_environment
   - src.koru.agents.detect_agent_options
-  - src.koru.agents.format_agent_lane_exports
-  - src.koru.agents.normalize_agent_lane_id
   src.koru.autonomous:
+  - src.koru.autonomous._action_up
+  - src.koru.autonomous._allow_keyboard_autopilot_fallback
+  - src.koru.autonomous._ancestor_pids
+  - src.koru.autonomous._apply_agent_lane_environ
+  - src.koru.autonomous._as_managed
+  - src.koru.autonomous._cleanup_autonomous_session
+  - src.koru.autonomous._command_project
+  - src.koru.autonomous._compute_backoff_sleep
+  - src.koru.autonomous._configure_loop_state
+  - src.koru.autonomous._confirm_replace_existing
+  - src.koru.autonomous._create_diagnostic_ticket
+  - src.koru.autonomous._daemon_activity_log
+  - src.koru.autonomous._ensure_init
+  - src.koru.autonomous._find_existing_autonomous_processes
+  - src.koru.autonomous._find_existing_wup_processes
+  - src.koru.autonomous._guard_existing_autonomous_processes
+  - src.koru.autonomous._handle_cycle_exit_conditions
+  - src.koru.autonomous._is_topology_enabled
+  - src.koru.autonomous._load_loop_checkpoint
+  - src.koru.autonomous._looks_like_autonomous_up_command
+  - src.koru.autonomous._process_cwd
+  - src.koru.autonomous._queue_loop_waiting_ticket_label
+  - src.koru.autonomous._resolve_autopilot_ide
+  - src.koru.autonomous._restart_daemon_if_needed
+  - src.koru.autonomous._run_autonomous_cycle
+  - src.koru.autonomous._run_command_check
+  - src.koru.autonomous._run_cycle
+  - src.koru.autonomous._run_idle_diagnostics
+  - src.koru.autonomous._run_mcp_provision
+  - src.koru.autonomous._run_operator_pipeline
+  - src.koru.autonomous._save_loop_checkpoint
+  - src.koru.autonomous._setup_autonomous_session
+  - src.koru.autonomous._setup_autopilot_daemon
+  - src.koru.autonomous._setup_autopilot_plugin
+  - src.koru.autonomous._start_or_reuse_daemon
+  - src.koru.autonomous._status_has_autopilot_plugin
+  - src.koru.autonomous._stdio_info
+  - src.koru.autonomous._terminate_existing_processes
+  - src.koru.autonomous._try_os_injector_fallback
+  - src.koru.autonomous._unblock_queue_if_needed
+  - src.koru.autonomous._wait_for_autopilot_plugin
   - src.koru.autonomous.autonomous_main
   - src.koru.autonomous.stop_prior_autonomous_for_auto_start
   src.koru.autonomous_diagnostics:
@@ -4607,8 +4583,23 @@ modules:
   - src.koru.autonomous_diagnostics.create_diagnostic_ticket
   - src.koru.autonomous_diagnostics.run_idle_check_loop
   - src.koru.autonomous_diagnostics.run_idle_diagnostics
+  src.koru.autonomous_parser:
+  - src.koru.autonomous_parser.looks_like_autonomous_up_command
+  src.koru.autonomous_startup:
+  - src.koru.autonomous_startup.build_startup_probe
+  - src.koru.autonomous_startup.format_post_startup_operator_hints
+  - src.koru.autonomous_startup.format_startup_banner
+  - src.koru.autonomous_startup.resolve_autopilot_ide_for_autonomous
+  src.koru.autonomous_wup:
+  - src.koru.autonomous_wup._build_wup_watch_config
+  - src.koru.autonomous_wup._start_wup_watch
+  - src.koru.autonomous_wup._stop_process
   src.koru.autonomy.env:
   - src.koru.autonomy.env.env_truthy
+  src.koru.autonomy.ide_work:
+  - src.koru.autonomy.ide_work.release_in_progress_tickets
+  src.koru.autonomy.operator_pipeline:
+  - src.koru.autonomy.operator_pipeline.run_startup_operator_pipeline
   src.koru.bootstrap:
   - src.koru.bootstrap._detect_cycle
   - src.koru.bootstrap._validate_cross_task_dependencies
@@ -4670,14 +4661,6 @@ modules:
   - src.koru.dev_sync.dev_main
   - src.koru.dev_sync.sync_developer_packages
   src.koru.doctor:
-  - src.koru.doctor._check_agent_backends_registry
-  - src.koru.doctor._check_koru_project_pipeline
-  - src.koru.doctor._check_planfile_cli_version
-  - src.koru.doctor._check_planfile_config
-  - src.koru.doctor._check_planfile_sprints
-  - src.koru.doctor._check_planfile_sprints_yaml
-  - src.koru.doctor._check_runtime_dir
-  - src.koru.doctor._planfile_version_argv
   - src.koru.doctor.run_diagnostics
   src.koru.events:
   - src.koru.events.emit_management_event
@@ -4693,37 +4676,16 @@ modules:
   - src.koru.gc_cli_helpers.print_gc_report
   - src.koru.gc_cli_helpers.print_gc_text_report
   src.koru.ide_client:
-  - src.koru.ide_client.LegacyAutopilotClientAdapter.drive
-  - src.koru.ide_client.adapt_legacy_autopilot_client
   - src.koru.ide_client.build_ide_client
-  - src.koru.ide_client.build_koruide_client
-  - src.koru.ide_client.build_legacy_ide_client
   src.koru.ide_router:
   - src.koru.ide_router.is_headless_environment
   - src.koru.ide_router.resolve_ide_route
   src.koru.init:
-  - src.koru.init._ensure_gitignore_entry
-  - src.koru.init._init_auto_agent_lane
-  - src.koru.init._read_persisted_agent_lane
-  - src.koru.init._remove_agent_lane_artifacts
-  - src.koru.init._resolve_init_agent_lane
-  - src.koru.init._write_agent_lane_artifacts
-  - src.koru.init._write_autopilot_host_setup_script
-  - src.koru.init._write_policy_stub_if_absent
   - src.koru.init.init_project
   - src.koru.init.refresh_init_agent_lane
-  - src.koru.init.resolve_project_agent_lane
-  src.koru.init_host_environment:
-  - src.koru.init_host_environment.write_host_environment_bundle
   src.koru.local_service:
-  - src.koru.local_service._build_handler
-  - src.koru.local_service._env_int
-  - src.koru.local_service._koru_version
-  - src.koru.local_service._read_bounded_json_object
-  - src.koru.local_service.build_local_service_server
   - src.koru.local_service.default_local_service_config
   - src.koru.local_service.run_local_service
-  - src.koru.local_service.start_local_service_background
   src.koru.loop:
   - src.koru.loop._search_root_for_include
   - src.koru.loop.discover_repositories
@@ -4750,9 +4712,6 @@ modules:
   - src.koru.mcp_provision.provision_vscode
   - src.koru.mcp_provision.provision_windsurf
   - src.koru.mcp_provision.remove_from_config
-  src.koru.project_pipeline:
-  - src.koru.project_pipeline.project_pipeline_path
-  - src.koru.project_pipeline.write_koru_project_pipeline_if_absent
   src.koru.queue.koru_queue_argv:
   - src.koru.queue.koru_queue_argv.build_koru_queue_argv
   src.koru.queue.loop:
@@ -4789,32 +4748,20 @@ modules:
   - src.koru.runtime.runtime_dir
   src.koru.scan:
   - src.koru.scan.run_scan
+  src.koru.stdio_events:
+  - src.koru.stdio_events.write_stdio_event
   src.koru.tasks:
   - src.koru.tasks.create_nl_task
   src.koru.tools:
-  - src.koru.tools._build_detection_result
-  - src.koru.tools._build_scaffold_inputs
-  - src.koru.tools._build_scaffold_labels
-  - src.koru.tools._build_scaffold_prompt_lines
-  - src.koru.tools._check_commands_exist
-  - src.koru.tools._check_env_vars_exist
-  - src.koru.tools._check_markers_exist
-  - src.koru.tools._extract_detect_config
-  - src.koru.tools._extract_tool_metadata
-  - src.koru.tools._first_token
-  - src.koru.tools._validate_adapter_kind
   - src.koru.tools.build_tool_task_scaffold
-  - src.koru.tools.default_registry_path
   - src.koru.tools.detect_tools
   - src.koru.tools.find_tool_entry
-  - src.koru.tools.infer_adapter_kind
   - src.koru.tools.load_tool_registry
-  - src.koru.tools.resolve_registry_path
   src.koru.topology:
   - src.koru.topology.enabled_components_for_pipeline
+  - src.koru.topology.is_component_enabled
+  - src.koru.topology.is_pipeline_enabled
   - src.koru.topology.load_topology
-  - src.koru.topology.save_topology
-  - src.koru.topology.set_component_enabled
   src.koru.topology_cli:
   - src.koru.topology_cli.apply_topology_mutations
   - src.koru.topology_cli.render_topology_text
@@ -4839,23 +4786,6 @@ modules:
   - src.koruapi.dashboard._env_truthy
   - src.koruapi.dashboard.build_serve_parser
   - src.koruapi.dashboard.dashboard_main
-  src.koruapi.dashboard_serve:
-  - src.koruapi.dashboard_serve._address_in_use
-  - src.koruapi.dashboard_serve._build_handler
-  - src.koruapi.dashboard_serve._bulk_waiting_input_action
-  - src.koruapi.dashboard_serve._cmdline_suggests_koru_serve
-  - src.koruapi.dashboard_serve._cmdline_suggests_koru_serve_from_bytes
-  - src.koruapi.dashboard_serve._list_tickets
-  - src.koruapi.dashboard_serve._listener_pids_for_tcp_port
-  - src.koruapi.dashboard_serve._try_stop_prior_koru_serve_listener
-  - src.koruapi.dashboard_serve.apply_topology_post_update
-  - src.koruapi.dashboard_serve.bind_serve_server
-  - src.koruapi.dashboard_serve.build_server
-  - src.koruapi.dashboard_serve.read_serve_endpoint
-  - src.koruapi.dashboard_serve.serve
-  - src.koruapi.dashboard_serve.serve_endpoint_path
-  - src.koruapi.dashboard_serve.start_serve_background
-  - src.koruapi.dashboard_serve.write_serve_endpoint_file
   src.koruapi.integrations:
   - src.koruapi.integrations.get_integration
   - src.koruapi.integrations.list_integrations
@@ -5038,6 +4968,7 @@ modules:
   - src.koruide.plugin_installer._settings_path_for_ide
   - src.koruide.plugin_installer._terminal_vscode_flavor
   - src.koruide.plugin_installer._valid_ide
+  - src.koruide.plugin_installer.format_plugin_install_result
   - src.koruide.plugin_installer.install_plugin_for_ide
   - src.koruide.plugin_installer.resolve_extension_vsix
   - src.koruide.plugin_installer.resolve_target_ide

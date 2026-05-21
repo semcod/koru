@@ -69,9 +69,16 @@ class LegacyAutopilotClientAdapter:
         )
         backend = reply.get("backend", "?")
         ok = bool(reply.get("ok", True))
+        verification = reply.get("verification", "-")
+        summary_bits = [f"verification={verification}"]
+        for key in ("winning_focus_open", "winning_paste", "winning_submit", "event"):
+            value = reply.get(key)
+            if value:
+                summary_bits.append(f"{key}={value}")
         activity(
             "CHAT",
-            f"drive wynik: ok={ok} backend={backend} tool_id={reply.get('tool_id', '-')}",
+            f"drive wynik: ok={ok} backend={backend} tool_id={reply.get('tool_id', '-')} "
+            + " ".join(summary_bits),
         )
         return reply
 

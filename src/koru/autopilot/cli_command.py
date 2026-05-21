@@ -1047,6 +1047,8 @@ def _resolve_jetbrains_plugin_artifact(plugin_dir: Path) -> Path:
 
 
 def _ide_from_terminal_env() -> str | None:
+    if os.environ.get("PYCHARM_HOSTED"):
+        return "jetbrains"
     term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
     if term_program in ("vscode", "code"):
         return "vscode"
@@ -1055,8 +1057,6 @@ def _ide_from_terminal_env() -> str | None:
     if term_program == "windsurf":
         return "windsurf"
     if term_program in ("pycharm", "jetbrains", "intellij", "idea"):
-        return "jetbrains"
-    if os.environ.get("PYCHARM_HOSTED"):
         return "jetbrains"
     if os.environ.get("VSCODE_PID"):
         return "vscode"

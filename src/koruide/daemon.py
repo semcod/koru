@@ -41,9 +41,11 @@ from pathlib import Path
 from typing import Any
 
 from koruide.audit import AuditLog
+from koruide.drive_orchestrator import DriveOrchestrator
 from koruide.ide import detect_running_ides_cached as detect_running_ides
 from koruide.ide import pick_target, resolve_drive_target
 from koruide.injector import Injector, InjectorError
+from koruide.plugin_router import PluginRouter
 from koruide.protocol import (
     MAX_LINE_BYTES,
     Message,
@@ -125,6 +127,7 @@ class _Client:
     buf: bytearray = field(default_factory=bytearray)
     role: str = "unknown"  # "plugin" | "cli" | "unknown"
     ide: str | None = None  # set when role == "plugin"
+    version: str | None = None
     # Pending CLI ack: when a CLI sends ``drive`` and we forward to a
     # plugin, we remember the CLI socket so we can reply after the
     # plugin acks.
@@ -180,6 +183,7 @@ class AutopilotDaemon:
         self._clients: dict[int, _Client] = {}
         self._stop = threading.Event()
         self._lock = threading.Lock()
+        self._plugin_router = PluginRouter(self._clients, drop_client=self._drop, log=self.log)
         self._handlers = self._build_handler_table()
 
     # ----- lifecycle -----------------------------------------------------
@@ -323,12 +327,7 @@ class AutopilotDaemon:
     # ----- helpers used by handlers --------------------------------------
 
     def _plugin_for(self, ide: str | None) -> _Client | None:
-        for client in self._clients.values():
-            if client.role != "plugin":
-                continue
-            if ide in (None, "auto") or client.ide == ide:
-                return client
-        return None
+        return self._plugin_router.plugin_for(ide)
 
     def _handle_drive(self, client: _Client, msg: Message) -> None:
         text = msg.data.get("text")
@@ -345,12 +344,7 @@ class AutopilotDaemon:
             return
         if require_plugin:
             label = ide_pref or "auto"
-            message = (
-                f"no connected autopilot plugin for ide={label}; "
-                "keyboard fallback disabled for this request. "
-                "Reload the IDE window or run the `koru: Connect autopilot daemon` command "
-                "so the extension connects to this socket."
-            )
+            message = DriveOrchestrator.plugin_required_message(ide_pref)
             self._send(client, error(msg.id, message).encode())
             self.log(f"drive blocked: {message}")
             self.audit.record(
@@ -506,7 +500,9 @@ class AutopilotDaemon:
             return
         client.role = "plugin"
         client.ide = ide
+        self._plugin_router.drop_stale_plugins(client, ide)
         version = msg.data.get("version")
+        client.version = version if isinstance(version, str) else None
         self.log(f"plugin connected: ide={ide} version={version!r}")
         self._send(client, ack(msg.id or "", info={"role": "plugin"}).encode())
         self.audit.record(
@@ -516,11 +512,7 @@ class AutopilotDaemon:
         )
 
     def _handle_status(self, client: _Client, msg: Message) -> None:
-        plugins = [
-            {"ide": c.ide, "fd": c.sock.fileno()}
-            for c in self._clients.values()
-            if c.role == "plugin"
-        ]
+        plugins = [row.to_dict() for row in self._plugin_router.status_rows()]
         info = {
             "socket": str(self.socket_path),
             "plugins": plugins,
@@ -539,14 +531,13 @@ class AutopilotDaemon:
         plugin_ide: str | None,
         require_plugin: bool,
     ) -> bool:
-        if require_plugin:
-            return False
-        if not plugin_ide:
-            return False
-        focus_error = "chat input is not focused/open" in str(info.get("message", "")).lower()
-        submit_failed = submit_requested and info.get("submitted") is False
-        undelivered = info.get("delivered") is False
-        return ((not plugin_ok) and focus_error) or (not plugin_ok) or submit_failed or undelivered
+        return DriveOrchestrator.should_try_os_fallback(
+            plugin_ok=plugin_ok,
+            info=info,
+            submit_requested=submit_requested,
+            plugin_ide=plugin_ide,
+            require_plugin=require_plugin,
+        )
 
     def _relay_os_fallback_ack(
         self,
@@ -594,17 +585,15 @@ class AutopilotDaemon:
             return False
         cli_client, corr, submit_requested, plugin_ide, _original_text, _require_plugin = pending
         client.awaiting_plugin = None
-        info: dict[str, Any] = {
-            "backend": "plugin",
-            "delivered": True,
-            "opened": True,
-            "submitted": submit_requested,
-            "event": "message.sent",
-        }
-        if plugin_ide:
-            info["ide"] = plugin_ide
-        if isinstance(msg.data.get("chat"), str):
-            info["chat"] = msg.data["chat"]
+        info = DriveOrchestrator.build_message_sent_info(
+            submit_requested=submit_requested,
+            plugin_ide=plugin_ide,
+            event_data=msg.data,
+        )
+        self.log(
+            "drive → plugin event completion: "
+            + DriveOrchestrator.plugin_ack_summary(info)
+        )
         self._send(cli_client, ack(corr, ok=True, info=info).encode())
         return True
 
@@ -620,6 +609,22 @@ class AutopilotDaemon:
         client.awaiting_plugin = None
         info = {k: v for k, v in msg.data.items() if k != "ok"}
         plugin_ok = bool(msg.data.get("ok", True))
+        info = DriveOrchestrator.annotate_plugin_ack(
+            info=info,
+            plugin_ok=plugin_ok,
+            submit_requested=submit_requested,
+        )
+        if DriveOrchestrator.should_fail_strict_plugin_ack(
+            info=info,
+            plugin_ok=plugin_ok,
+            submit_requested=submit_requested,
+            plugin_ide=plugin_ide,
+        ):
+            plugin_ok = False
+            info["message"] = (
+                "strict plugin verification failed: expected full VS Code plugin "
+                "ack with winning_focus_open / winning_paste / winning_submit"
+            )
         if self._plugin_ack_needs_os_fallback(
             plugin_ok=plugin_ok,
             info=info,
@@ -639,6 +644,7 @@ class AutopilotDaemon:
         # summaries (e.g. ``koru autonomous``) expect a stable backend label.
         if info.get("delivered") is True and "backend" not in info:
             info["backend"] = "plugin"
+        self.log("drive → plugin ack: " + DriveOrchestrator.plugin_ack_summary(info))
         relay = ack(corr, ok=plugin_ok, info=info)
         self._send(cli_client, relay.encode())
 

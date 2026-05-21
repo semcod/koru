@@ -201,6 +201,22 @@ class TestScanTodoMarkers(unittest.TestCase):
             self.assertEqual(len(result), 1)
             self.assertIn("src.py", result[0].title)
 
+    def test_ignores_common_virtualenv_dirs_by_default(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            venv_test = project / "connect-scenario" / "backend" / ".venv-test"
+            venv_test.mkdir(parents=True)
+            (venv_test / "noise.py").write_text(
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C),
+            )
+            (project / "src.py").write_text(
+                _marker_fixture(_MARK_A, _MARK_B, _MARK_C),
+            )
+
+            result = scan_todo_markers(project, min_per_file=3)
+            self.assertEqual(len(result), 1)
+            self.assertIn("src.py", result[0].title)
+
 
 class TestScanMissingGates(unittest.TestCase):
     def test_no_suggestions_when_tool_missing(self) -> None:

@@ -1,12 +1,12 @@
-# code2llm | 216f 38202L | python:129,shell:42,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:1,properties:1,xml:1,toml:1 | 2026-05-21
-# generated in 0.06s
+# code2llm | 216f 38256L | python:129,shell:42,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:1,properties:1,xml:1,toml:1 | 2026-05-21
+# generated in 0.07s
 # CC̄=4.1 | critical:4/1286 | dups:0 | cycles:0
 
 HEALTH[4]:
-  🟡 CC    pasteText CC=18 (limit:15)
-  🟡 CC    _handle_plugin_event CC=15 (limit:15)
   🟡 CC    _compose_service_ready CC=15 (limit:15)
   🟡 CC    _action_install_plugin_jetbrains CC=16 (limit:15)
+  🟡 CC    pasteText CC=18 (limit:15)
+  🟡 CC    _handle_plugin_event CC=15 (limit:15)
 
 REFACTOR[1]:
   1. split 4 high-CC methods  (CC>15)
@@ -32,12 +32,12 @@ LAYERS:
   src/                            CC̄=4.3    ←in:0  →out:0
   │ !! autonomous                1745L  2C   48m  CC=12     ←1
   │ !! cli_command               1542L  0C   50m  CC=16     ←0
-  │ !! dashboard_serve           1399L  1C   16m  CC=14     ←1
+  │ !! dashboard_serve           1427L  1C   16m  CC=14     ←1
   │ !! context                   1241L  0C   48m  CC=12     ←7
   │ !! autonomous_cycle          1236L  2C   38m  CC=14     ←0
   │ !! mcp_server                1040L  0C   34m  CC=14     ←2
-  │ !! scan                       918L  2C   24m  CC=13     ←3
-  │ !! daemon                     753L  2C   32m  CC=15     ←0
+  │ !! scan                       932L  2C   24m  CC=13     ←3
+  │ !! daemon                     765L  2C   32m  CC=15     ←0
   │ !! koru-autoloop.sh           676L  0C   17m  CC=0.0    ←0
   │ !! operator_pipeline          624L  2C   21m  CC=14     ←1
   │ !! init                       610L  1C   15m  CC=12     ←2
@@ -276,14 +276,14 @@ COUPLING:
                     src.korudsl                                                                                           ←4                                                                                           ──                               
        services.healing-webhook                                                                                                                                                          1                                                            ──
   CYCLES: none
-  HUB: plugins.koru-autopilot-vscode/ (fan-in=6)
-  HUB: src.koruide/ (fan-in=35)
   HUB: scripts/ (fan-in=289)
-  HUB: src.koru/ (fan-in=46)
+  HUB: src.koruide/ (fan-in=35)
+  HUB: plugins.koru-autopilot-vscode/ (fan-in=6)
   HUB: src.koruapi/ (fan-in=5)
+  HUB: src.koru/ (fan-in=46)
   SMELL: src.koruide/ fan-out=30 → split needed
-  SMELL: src.koru/ fan-out=287 → split needed
   SMELL: src.koruapi/ fan-out=67 → split needed
+  SMELL: src.koru/ fan-out=287 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

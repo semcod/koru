@@ -1,12 +1,12 @@
-# redup/duplication | 33 groups | 128f 30367L | 2026-05-21
+# redup/duplication | 33 groups | 128f 30421L | 2026-05-21
 
 SUMMARY:
   files_scanned: 128
-  total_lines:   30367
+  total_lines:   30421
   dup_groups:    33
   dup_fragments: 77
   saved_lines:   358
-  scan_ms:       3066
+  scan_ms:       4776
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/autonomous.py  dup=119L  groups=12  frags=12  (0.4%)
@@ -117,8 +117,8 @@ DUPLICATES[33] (ranked by impact):
       src/koru/autonomous.py:135-137  (_allow_keyboard_autopilot_fallback)
       src/koru/autonomous_cycle.py:102-104  (_allow_keyboard_autopilot_fallback)
   [0f8d5f341099fa34]   EXAC  _open_later  L=3 N=2 saved=3 sim=1.00
-      src/koruapi/dashboard_serve.py:1337-1339  (_open_later)
-      src/koruapi/dashboard_serve.py:1386-1388  (_open_later)
+      src/koruapi/dashboard_serve.py:1365-1367  (_open_later)
+      src/koruapi/dashboard_serve.py:1414-1416  (_open_later)
   [be027ff698a2786c]   STRU  _action_status  L=3 N=2 saved=3 sim=1.00
       src/koru/autopilot/cli_command.py:831-833  (_action_status)
       src/koru/autopilot/cli_command.py:836-843  (_action_shutdown)

@@ -225,7 +225,21 @@ def scan_pytest_collect(
 
 _MARKER_RE = re.compile(r"\b(TODO|FIXME|XXX|HACK)\b[: ]")
 _DEFAULT_SCAN_EXCLUDES: frozenset[str] = frozenset(
-    {".git", "__pycache__", ".venv", "venv", "node_modules", "build", "dist"},
+    {
+        ".git",
+        "__pycache__",
+        ".venv",
+        ".venv-test",
+        "venv",
+        "node_modules",
+        "build",
+        "dist",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        ".code2llm_cache",
+        ".playwright-browsers",
+    },
 )
 
 

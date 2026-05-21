@@ -1,5 +1,5 @@
 # System Architecture Analysis
-<!-- generated in 0.01s -->
+<!-- generated in 0.00s -->
 
 ## Overview
 
@@ -23,14 +23,14 @@
 - **Functions**: 50
 - **File**: `cli_command.py`
 
-### src.koru.context
-- **Functions**: 48
-- **File**: `context.py`
-
 ### src.koru.autonomous
 - **Functions**: 48
 - **Classes**: 2
 - **File**: `autonomous.py`
+
+### src.koru.context
+- **Functions**: 48
+- **File**: `context.py`
 
 ### src.koru.autonomous_cycle
 - **Functions**: 38
@@ -65,15 +65,15 @@
 - **Classes**: 2
 - **File**: `os_injector.py`
 
-### src.koru.scan
-- **Functions**: 24
-- **Classes**: 2
-- **File**: `scan.py`
-
 ### plugins.koru-autopilot-vscode.src.probe-ladder
 - **Functions**: 24
 - **Classes**: 3
 - **File**: `probe-ladder.ts`
+
+### src.koru.scan
+- **Functions**: 24
+- **Classes**: 2
+- **File**: `scan.py`
 
 ### src.koru.mcp_provision
 - **Functions**: 21
@@ -545,33 +545,33 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.scan.scan_pytest_collect` - 24 calls
 - `src.koru.init.init_project` - 23 calls
 - `src.koru.autonomy.ide_work.build_ide_work_prompt` - 23 calls
-- `src.koruapi.dashboard_serve.apply_topology_post_update` - 22 calls
 - `src.koru.gate.parse_authorizations` - 22 calls
 - `src.koru.agents.detect_project_environment` - 22 calls
 - `src.koru.queue.runner.run_next_planfile_task` - 22 calls
+- `src.koruapi.dashboard_serve.apply_topology_post_update` - 22 calls
 - `services.healing-webhook.app.heal_vallm_validate` - 21 calls
 - `services.healing-webhook.app.probe_failure` - 21 calls
 - `src.koruide.protocol.decode` - 21 calls
+- `src.koru.autonomous_startup.build_startup_probe` - 21 calls
 - `src.koru.doctor.render_text` - 21 calls
 - `src.koru.gc.collect_gc_candidates` - 21 calls
 - `src.koru.agents.detect_agent_options` - 21 calls
-- `src.koru.autonomous_startup.build_startup_probe` - 21 calls
 - `src.koruapi.cli.main` - 20 calls
 - `src.koruide.os_injector.inject_with_profile` - 20 calls
 - `src.koru.autonomous_diagnostics.build_idle_checks` - 20 calls
 - `src.koru.tools.render_tools_detect_text` - 20 calls
 - `scripts.planfile-sync-todo.do_from_planfile` - 20 calls
 - `services.healing-webhook.app.alertmanager_webhook` - 19 calls
-- `src.koruapi.dashboard_serve.serve` - 19 calls
 - `plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.focusChat` - 19 calls
+- `src.koruapi.dashboard_serve.serve` - 19 calls
 - `src.korudsl.cli.main` - 18 calls
 - `src.koruide.plugin_installer.resolve_extension_vsix` - 18 calls
 - `src.koru.agent_backends.load_agent_integration_config` - 18 calls
 - `src.koru.dev_sync.dev_main` - 18 calls
 - `src.koru.loop.run_closed_loop` - 18 calls
 - `src.koru.init_host_environment.build_host_environment_report` - 18 calls
-- `plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.pasteText` - 18 calls
 - `src.koru.autonomy.operator_pipeline.run_startup_operator_pipeline` - 18 calls
+- `plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.pasteText` - 18 calls
 
 ## System Interactions
 

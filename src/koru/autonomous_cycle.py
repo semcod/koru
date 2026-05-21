@@ -890,16 +890,30 @@ def _log_autopilot_result(
     """Log autopilot result."""
     if ok:
         backend = reply.get("backend", "?")
+        verification = reply.get("verification", "-")
+        if backend in (None, "?") and verification == "-" and not reply.get("event"):
+            _hp(
+                "  autopilot: no confirmed IDE delivery "
+                f"(kind={decision_kind}, queue_status={queue_result.last_status})",
+            )
+            return
+        extra = ""
+        if verification != "-":
+            extra = f", verification={verification}"
+        if reply.get("winning_submit"):
+            extra += f", submit={reply['winning_submit']}"
+        if reply.get("event"):
+            extra += f", event={reply['event']}"
         if decision_kind == "ticket_prompt":
             waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
             _hp(
                 "  autopilot: ok (ticket="
                 f"{waiting_ticket}, ide={autopilot_ide}, "
-                f"backend={backend}, kind={decision_kind})",
+                f"backend={backend}, kind={decision_kind}{extra})",
             )
         else:
             _hp(
-                f"  autopilot: ok (ide={autopilot_ide}, backend={backend}, kind={decision_kind})",
+                f"  autopilot: ok (ide={autopilot_ide}, backend={backend}, kind={decision_kind}{extra})",
             )
     else:
         _hp(

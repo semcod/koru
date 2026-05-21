@@ -1,5 +1,6 @@
 import {
   buildFocusOpenCommands,
+  buildSubmitCommands,
   captureEditorSnapshot,
   chatFocusHeuristic,
   mergeUnique,
@@ -59,10 +60,19 @@ function testBuildFocusOpenCursorFirst(): void {
   assert(cmds.includes("composer.showComposer"), "cursor list should include composer");
 }
 
+function testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance(): void {
+  const cmds = buildSubmitCommands("vscode");
+  assert(
+    !cmds.includes("workbench.action.acceptSelectedQuickOpenItem"),
+    "submit commands must not use Quick Open acceptance fallback",
+  );
+}
+
 testOrderWithCache();
 testChatFocusHeuristic();
 testVerifyFocusAfterOpen();
 testPasteLandedInEditor();
 testMergeUnique();
 testBuildFocusOpenCursorFirst();
+testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance();
 console.log("probe-ladder tests: ok");

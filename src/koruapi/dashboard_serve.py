@@ -50,11 +50,10 @@ from koru.context import build_context, render_markdown_handoff
 from koru.events import emit_management_event
 from koru.queue.runners import run_process
 from koru.queue.ticket import planfile_command
+from koruapi.runtime_insights import collect_runtime_insights
+from koruapi.topology_post import apply_topology_post_update
 from koru.topology import (
     load_topology,
-    save_topology,
-    set_component_enabled,
-    set_pipeline_enabled,
 )
 
 DEFAULT_HOST = "127.0.0.1"
@@ -75,61 +74,6 @@ def _list_tickets(project: Path) -> list[dict[str, Any]]:
     if isinstance(payload, list):
         return [item for item in payload if isinstance(item, dict)]
     return [payload] if isinstance(payload, dict) else []
-
-
-def apply_topology_post_update(
-    project: Path,
-    body: dict[str, Any],
-) -> tuple[dict[str, Any] | None, dict[str, Any] | None, int]:
-    """Apply topology enable/disable edits from a POST body."""
-    components = body.get("components") or {}
-    pipelines = body.get("pipelines") or {}
-    if not isinstance(components, dict) or not isinstance(pipelines, dict):
-        return None, {"error": "`components` and `pipelines` must be objects"}, 400
-    if not components and not pipelines:
-        return (
-            None,
-            {"error": "empty update; provide `components` and/or `pipelines`"},
-            400,
-        )
-
-    topo = load_topology(project)
-    errors: list[str] = []
-    applied: list[dict[str, Any]] = []
-
-    for component_id, enabled in components.items():
-        if not isinstance(enabled, bool):
-            errors.append(f"component {component_id!r}: value must be boolean")
-            continue
-        result = set_component_enabled(topo, str(component_id), enabled)
-        if not result.found:
-            errors.append(f"unknown component: {component_id!r}")
-            continue
-        applied.append(
-            {"kind": "component", "id": result.id, "enabled": result.current},
-        )
-
-    for pipeline_id, enabled in pipelines.items():
-        if not isinstance(enabled, bool):
-            errors.append(f"pipeline {pipeline_id!r}: value must be boolean")
-            continue
-        result = set_pipeline_enabled(topo, str(pipeline_id), enabled)
-        if not result.found:
-            errors.append(f"unknown pipeline: {pipeline_id!r}")
-            continue
-        applied.append(
-            {"kind": "pipeline", "id": result.id, "enabled": result.current},
-        )
-
-    if errors:
-        return None, {"error": "invalid topology update", "details": errors}, 400
-
-    saved = save_topology(project, topo)
-    merged = load_topology(project)
-    merged["path"] = str(saved)
-    merged["saved"] = applied
-    return merged, None, 200
-
 
 def _bulk_waiting_input_action(
     project: Path,
@@ -388,6 +332,17 @@ _DASHBOARD_HTML = """<!doctype html>
   .pill.ok { background: rgba(110, 231, 183, 0.15); color: var(--accent); }
   .pill.warn { background: rgba(251, 191, 36, 0.15); color: var(--warn); }
   .pill.err { background: rgba(248, 113, 113, 0.15); color: var(--err); }
+  .tool-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tool-icon {
+    width: 1.2rem;
+    text-align: center;
+    opacity: 0.9;
+    font-size: 13px;
+  }
   table { width: 100%; border-collapse: collapse; }
   th, td {
     text-align: left;
@@ -511,8 +466,25 @@ function renderAgents(env) {
     return panel("LLM / IDE lanes",
       `<div class="muted">No lanes detected.</div>`);
   }
+  const agentIcons = {
+    "antigravity": "🪂",
+    "claude-code": "✳",
+    "codex": "⌘",
+    "gemini-cli": "♊",
+    "cline": "🧩",
+    "qwen-code": "◌",
+    "opencode": "⌥",
+    "cursor": "⌖",
+    "windsurf": "〰",
+    "aider": "🛠",
+    "openrouter": "⇄",
+  };
+  const renderAgentId = (id) => {
+    const icon = agentIcons[id] || "•";
+    return `<span class="tool-label"><span class="tool-icon" aria-hidden="true">${icon}</span><code>${esc(id)}</code></span>`;
+  };
   const rows = agents.map(a => `<tr>
-    <td><code>${esc(a.id)}</code></td>
+    <td>${renderAgentId(a.id)}</td>
     <td>${a.available
       ? '<span class="pill ok">yes</span>'
       : '<span class="pill">no</span>'}</td>
@@ -759,6 +731,8 @@ function renderRuntimeContext(runtime) {
   }
   const summary = runtime.summary || {};
   const enabled = ((runtime.config || {}).enabled) || {};
+  const insights = runtime.insights || {};
+  const live = insights.summary || {};
   const labels = {
     systems: "systems", libraries: "libraries", algorithms: "algorithms",
     apis: "apis", applications: "applications", pipelines: "pipelines", topology: "topology"
@@ -772,6 +746,22 @@ function renderRuntimeContext(runtime) {
   const systems = (runtime.systems || []).slice(0, 12).map(s =>
     `<span class="pill">${esc(s.name || "?")}</span>`
   ).join("");
+  const activeTools = (insights.active_tools || []).slice(0, 8).map(t =>
+    `<span class="pill ok">${esc(t.label || t.id || "?")} · pid ${esc(t.pid)} · cpu ${esc(t.cpu)}%</span>`
+  ).join("");
+  const topProcesses = (insights.top_processes || []).slice(0, 6).map(p =>
+    `<tr>
+      <td><code>${esc(p.name || "?")}</code></td>
+      <td><code>${esc(p.pid)}</code></td>
+      <td>${esc(p.category || "-")}</td>
+      <td>${esc(p.cpu)}%</td>
+      <td>${esc(p.rss_mb)} MB</td>
+      <td>${esc(p.etime || "-")}</td>
+    </tr>`
+  ).join("");
+  const runningIdes = (insights.running_ides || []).slice(0, 8).map(ide =>
+    `<span class="pill">${esc(ide.label || ide.id || "?")} · pid ${esc(ide.pid)}</span>`
+  ).join("");
   const body = `
     <div class="kv">
       <dt>project</dt><dd><code>${esc(summary.project || runtime.project_root || "?")}</code></dd>
@@ -780,9 +770,19 @@ function renderRuntimeContext(runtime) {
       <dt>workspaces</dt><dd>${esc(summary.workspaces || 0)}</dd>
       <dt>pipelines</dt><dd>${esc(summary.pipelines || 0)}</dd>
       <dt>topology nodes</dt><dd>${esc(summary.topology_nodes || 0)}</dd>
+      <dt>live IDEs</dt><dd>${esc(live.running_ides || 0)}</dd>
+      <dt>active tools</dt><dd>${esc(live.active_tools || 0)}</dd>
+      <dt>top processes</dt><dd>${esc(live.top_processes || 0)}</dd>
     </div>
     <div style="margin-top:12px">${checks}</div>
     <div class="muted" style="margin-top:8px">First services: ${systems || "none"}</div>
+    <div class="muted" style="margin-top:10px">Running IDEs: ${runningIdes || "none"}</div>
+    <div class="muted" style="margin-top:10px">Active tools now: ${activeTools || "none"}</div>
+    <div style="margin-top:12px">
+      <table><thead><tr>
+        <th>process</th><th>pid</th><th>category</th><th>cpu</th><th>rss</th><th>etime</th>
+      </tr></thead><tbody>${topProcesses || `<tr><td colspan="6" class="muted">no process data</td></tr>`}</tbody></table>
+    </div>
     <div id="runtime-context-status" class="muted" style="margin-top:8px;min-height:1.2em"></div>
   `;
   return panel("Runtime context", body, true);
@@ -1097,6 +1097,7 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
                     runtime = build_runtime_context(config.project)
                 except Exception as exc:  # pragma: no cover — optional planfile integration
                     runtime = {"error": str(exc), "type": type(exc).__name__}
+                runtime["insights"] = collect_runtime_insights(config.project)
                 self._send_json(runtime)
                 return
             if path == "/api/handoff":

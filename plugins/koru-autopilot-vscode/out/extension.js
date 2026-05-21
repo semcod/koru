@@ -227,18 +227,6 @@ class AutopilotBridge {
             return { ok: false };
         }
     }
-    async _tryFallbackCommand(cmd) {
-        try {
-            await Promise.resolve(vscode.commands.executeCommand(cmd));
-            if (this.probeLadderEnabled()) {
-                await this.saveProbeCache({ submit: cmd });
-            }
-            return { ok: true, command: cmd };
-        }
-        catch {
-            return { ok: false };
-        }
-    }
     async submitChat() {
         const ide = this.detectIde();
         const existing = new Set(await Promise.resolve(vscode.commands.getCommands(true)));
@@ -254,7 +242,6 @@ class AutopilotBridge {
             console.warn(`koru autopilot: submitChat command not available: ${cmd}`);
         }
         const fallbacks = [
-            () => this._tryFallbackCommand("workbench.action.acceptSelectedQuickOpenItem"),
             () => this._tryTypeSubmit("\n"),
             () => this._tryTypeSubmit("\r"),
         ];

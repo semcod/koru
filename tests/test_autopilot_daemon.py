@@ -541,6 +541,49 @@ def test_message_sent_event_completes_pending_drive_without_plugin_ack(
         cli.close()
 
 
+def test_newer_plugin_connection_replaces_stale_same_ide_client(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """If the same IDE reconnects, the daemon should use the newest plugin fd."""
+    with _daemon(tmp_path, monkeypatch) as h:
+        stale_plugin, _stale_reader = _connect_plugin(h.sock_path, ide="vscode", pid=41)
+        fresh_plugin, fresh_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
+
+        # The new hello should evict the stale client so it no longer receives traffic.
+        stale_plugin.settimeout(0.2)
+        stale_read = stale_plugin.recv(1)
+        assert stale_read == b""
+
+        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli.settimeout(2.0)
+        cli.connect(str(h.sock_path))
+        cli_reader = _LineReader(cli)
+        cli.sendall(
+            Message(
+                type="drive",
+                id="d-fresh-plugin",
+                data={"text": "hi", "ide": "vscode", "submit": True},
+            ).encode(),
+        )
+
+        forwarded = fresh_reader.read_message()
+        assert forwarded.type == "chat.send"
+        assert forwarded.data["text"] == "hi"
+        fresh_plugin.sendall(
+            Message(type="ack", id=forwarded.id, data={"ok": True, "delivered": True}).encode(),
+        )
+
+        cli_reply = cli_reader.read_message()
+        assert cli_reply.type == "ack"
+        assert cli_reply.data.get("ok") is True
+        assert cli_reply.data.get("backend") == "plugin"
+
+        fresh_plugin.close()
+        stale_plugin.close()
+        cli.close()
+
+
 def test_visible_typing_prefers_keyboard_even_when_plugin_connected(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

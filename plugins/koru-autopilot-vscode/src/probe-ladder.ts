@@ -2,7 +2,7 @@
  * Probe ladder: try IDE commands in order, verify side-effects, cache winners.
  */
 
-export const PROBE_CACHE_VERSION = 1;
+export const PROBE_CACHE_VERSION = 2;
 
 export interface EditorSnapshot {
   hasEditor: boolean;
