@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.187', 'python').
+project_metadata('koru', '0.1.188', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 681, 'less').
@@ -222,6 +222,7 @@ project_file('src/koruide/drive_orchestrator.py', 246, 'python').
 project_file('src/koruide/host_setup.py', 227, 'python').
 project_file('src/koruide/ide.py', 715, 'python').
 project_file('src/koruide/injector.py', 510, 'python').
+project_file('src/koruide/injector_errors.py', 11, 'python').
 project_file('src/koruide/os_injector.py', 482, 'python').
 project_file('src/koruide/plugin_installer.py', 495, 'python').
 project_file('src/koruide/plugin_router.py', 87, 'python').
@@ -1550,6 +1551,17 @@ python_function('src/koruide/injector.py', '_ydotool_submit_mode', 0, 3, 3).
 python_function('src/koruide/injector.py', '_ydotool_ctrl_keycode', 0, 2, 3).
 python_function('src/koruide/injector.py', '_extra_enter_count', 0, 3, 4).
 python_function('src/koruide/injector.py', '_default_runner', 2, 2, 2).
+python_function('src/koruide/injector_backends.py', 'ydotool_enter_keycode', 0, 2, 3).
+python_function('src/koruide/injector_backends.py', 'ydotool_submit_mode', 0, 3, 3).
+python_function('src/koruide/injector_backends.py', 'ydotool_ctrl_keycode', 0, 2, 3).
+python_function('src/koruide/injector_backends.py', 'extra_enter_count', 0, 3, 4).
+python_function('src/koruide/injector_backends.py', '_log', 2, 2, 1).
+python_function('src/koruide/injector_backends.py', 'type_with_xdotool', 5, 3, 4).
+python_function('src/koruide/injector_backends.py', 'press_wtype', 2, 4, 5).
+python_function('src/koruide/injector_backends.py', 'type_with_wtype', 5, 3, 5).
+python_function('src/koruide/injector_backends.py', '_ydotool_submit_command', 3, 3, 0).
+python_function('src/koruide/injector_backends.py', 'type_with_ydotool', 8, 5, 5).
+python_function('src/koruide/injector_backends.py', 'type_with_backend', 5, 5, 10).
 python_function('src/koruide/os_injector.py', 'default_config_path', 0, 1, 1).
 python_function('src/koruide/os_injector.py', 'iter_config_paths', 0, 4, 7).
 python_function('src/koruide/os_injector.py', 'os_injector_env_disabled', 0, 1, 3).
@@ -2591,6 +2603,7 @@ python_method('Injector', 'submit_only', 0, 9, 8).
 python_method('Injector', '_probe_one', 1, 5, 2).
 python_method('Injector', '_call', 1, 10, 7).
 python_method('Injector', '_press_wtype', 1, 4, 5).
+python_class('src/koruide/injector_errors.py', 'InjectorError').
 python_class('src/koruide/os_injector.py', 'OsInjectorError').
 python_class('src/koruide/os_injector.py', 'OsInjectorProfile').
 python_class('src/koruide/plugin_installer.py', 'PluginInstallResult').

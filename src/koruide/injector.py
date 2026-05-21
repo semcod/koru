@@ -19,6 +19,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from koruide.config import cached_config
+from koruide.injector_backends import type_with_backend
+from koruide.injector_errors import InjectorError
 
 
 def _submit_key_for(ide: str) -> str:
@@ -56,51 +58,6 @@ def _forced_injector_backend() -> str | None:
     return None
 
 
-def _ydotool_enter_keycode() -> str:
-    """Keycode used by ydotool for submit.
-
-    Default remains ``28`` (classic Enter), but some hosts/layout stacks map it
-    differently. Override with ``KORU_YDOTOOL_ENTER_KEYCODE`` (e.g. ``96`` for KP Enter).
-    """
-    raw = os.environ.get("KORU_YDOTOOL_ENTER_KEYCODE", "").strip()
-    if raw.isdigit():
-        return raw
-    return "28"
-
-
-def _ydotool_submit_mode() -> str:
-    """How to submit for ydotool: ``keycode`` (default), ``newline``, ``ctrl-enter``."""
-    raw = os.environ.get("KORU_YDOTOOL_SUBMIT_MODE", "").strip().lower()
-    if raw in ("newline", "nl", "linefeed"):
-        return "newline"
-    if raw in ("ctrl-enter", "ctrl_enter", "ctrl+enter"):
-        return "ctrl-enter"
-    return "keycode"
-
-
-def _ydotool_ctrl_keycode() -> str:
-    """Keycode used for Ctrl in ydotool chord submit mode."""
-    raw = os.environ.get("KORU_YDOTOOL_CTRL_KEYCODE", "").strip()
-    if raw.isdigit():
-        return raw
-    return "29"
-
-
-def _extra_enter_count() -> int:
-    """Optional extra submit presses after normal submit.
-
-    Controlled by ``KORU_INJECTOR_EXTRA_ENTER`` (integer, default 0).
-    """
-    raw = os.environ.get("KORU_INJECTOR_EXTRA_ENTER", "").strip()
-    if not raw:
-        return 0
-    try:
-        value = int(raw)
-    except ValueError:
-        return 0
-    return max(0, value)
-
-
 @dataclass
 class BackendStatus:
     """Result of probing a single backend."""
@@ -127,10 +84,6 @@ class InjectionResult:
             "dry_run": self.dry_run,
             "output": self.output,
         }
-
-
-class InjectorError(RuntimeError):
-    """No usable backend, or the backend call failed."""
 
 
 # A backend is a callable taking (text, submit_key, runner) -> str.
@@ -228,114 +181,13 @@ class Injector:
         candidates = self._candidate_backends()
         return candidates[0] if candidates else None
 
-    def _type_with_xdotool(self, text: str, submit_key: str | None, extra_enters: int) -> None:
-        """Type text using xdotool backend."""
-        if self.log:
-            self.log(f"injector: xdotool typing {len(text)} chars, submit={submit_key}, extra_enters={extra_enters}")
-        self._call(["xdotool", "type", "--delay", "5", "--clearmodifiers", "--", text])
-        if submit_key:
-            if self.log:
-                self.log(f"injector: xdotool pressing submit key {submit_key}")
-            self._call(["xdotool", "key", "--clearmodifiers", submit_key])
-            for i in range(extra_enters):
-                if self.log:
-                    self.log(f"injector: xdotool extra Enter #{i+1}")
-                self._call(["xdotool", "key", "--clearmodifiers", "Return"])
-
-    def _type_with_wtype(self, text: str, submit_key: str | None, extra_enters: int) -> None:
-        """Type text using wtype backend."""
-        if self.log:
-            self.log(f"injector: wtype typing {len(text)} chars, submit={submit_key}, extra_enters={extra_enters}")
-        self._call(["wtype", "--", text])
-        if submit_key:
-            if self.log:
-                self.log(f"injector: wtype pressing submit key {submit_key}")
-            self._press_wtype(submit_key)
-            for i in range(extra_enters):
-                if self.log:
-                    self.log(f"injector: wtype extra Enter #{i+1}")
-                self._call(["wtype", "-k", "Return"])
-
-    def _type_with_ydotool(
-        self,
-        text: str,
-        submit_key: str | None,
-        extra_enters: int,
-        enter_code: int,
-        submit_mode: str,
-        ctrl_code: int,
-    ) -> None:
-        """Type text using ydotool backend."""
-        if self.log:
-            self.log(
-                f"injector: ydotool typing {len(text)} chars, submit={submit_key}, "
-                f"mode={submit_mode}, enter_code={enter_code}, extra_enters={extra_enters}"
-            )
-        self._call(["ydotool", "type", "--", text])
-        if submit_key:
-            if submit_mode == "newline":
-                if self.log:
-                    self.log("injector: ydotool submitting via newline")
-                self._call(["ydotool", "type", "--", "\n"])
-            elif submit_mode == "ctrl-enter":
-                if self.log:
-                    self.log(f"injector: ydotool submitting via ctrl-enter (ctrl_code={ctrl_code}, enter_code={enter_code})")
-                self._call(
-                    [
-                        "ydotool",
-                        "key",
-                        f"{ctrl_code}:1",
-                        f"{enter_code}:1",
-                        f"{enter_code}:0",
-                        f"{ctrl_code}:0",
-                    ],
-                )
-            else:
-                if self.log:
-                    self.log(f"injector: ydotool submitting via keycode {enter_code}")
-                self._call(["ydotool", "key", f"{enter_code}:1", f"{enter_code}:0"])
-            for i in range(extra_enters):
-                if self.log:
-                    self.log(f"injector: ydotool extra submit #{i+1} (mode={submit_mode})")
-                if submit_mode == "newline":
-                    self._call(["ydotool", "type", "--", "\n"])
-                elif submit_mode == "ctrl-enter":
-                    self._call(
-                        [
-                            "ydotool",
-                            "key",
-                            f"{ctrl_code}:1",
-                            f"{enter_code}:1",
-                            f"{enter_code}:0",
-                            f"{ctrl_code}:0",
-                        ],
-                    )
-                else:
-                    self._call(["ydotool", "key", f"{enter_code}:1", f"{enter_code}:0"])
-
     def _type_with_backend(
             self,
             backend: str,
             text: str,
             submit_key: str | None,
         ) -> None:
-        if self.log:
-            self.log(
-                f"injector: typing {len(text)} chars via {backend} "
-                f"(submit_key={submit_key or 'none'})"
-            )
-        extra_enters = _extra_enter_count()
-        if backend == "xdotool":
-            self._type_with_xdotool(text, submit_key, extra_enters)
-        elif backend == "wtype":
-            self._type_with_wtype(text, submit_key, extra_enters)
-        elif backend == "ydotool":
-            enter_code = _ydotool_enter_keycode()
-            submit_mode = _ydotool_submit_mode()
-            ctrl_code = _ydotool_ctrl_keycode()
-            self._type_with_ydotool(text, submit_key, extra_enters, enter_code, submit_mode, ctrl_code)
-        else:
-            raise InjectorError(f"unreachable: unknown backend {backend!r}")
+        type_with_backend(self._call, self.log, backend, text, submit_key)
 
     def type_text(
         self,
@@ -476,30 +328,6 @@ class Injector:
             raise InjectorError(f"{cmd[0]} exited {result.returncode}: {stderr or '(no stderr)'}")
         if self.log:
             self.log(f"injector: command succeeded: {cmd[0]}")
-
-    def _press_wtype(self, combo: str) -> None:
-        # Translate e.g. ``ctrl+Return`` into the wtype invocation.
-        # R3: refuse multi-modifier combos explicitly — the press /
-        # release ordering required for ``ctrl+shift+x`` differs per
-        # compositor and would silently misbehave under the previous
-        # naive implementation. Better to fail loud and let the caller
-        # set a different key in ``~/.config/koru/autopilot.toml``.
-        parts = combo.split("+")
-        key = parts[-1]
-        modifiers = parts[:-1]
-        if len(modifiers) > 1:
-            raise InjectorError(
-                f"wtype submit key {combo!r} has {len(modifiers)} modifiers; "
-                "only single-modifier combos are supported",
-            )
-        argv = ["wtype"]
-        for m in modifiers:
-            argv += ["-M", m]
-        argv += ["-k", key]
-        for m in reversed(modifiers):
-            argv += ["-m", m]
-        self._call(argv)
-
 
 __all__ = [
     "BackendStatus",

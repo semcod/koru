@@ -1,21 +1,19 @@
-# code2llm | 254f 46220L | python:164,shell:44,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:2,properties:1,xml:1,toml:1 | 2026-05-21
-# generated in 0.13s
-# CC̄=4.0 | critical:6/1670 | dups:0 | cycles:0
+# code2llm | 256f 46275L | python:166,shell:44,yaml:15,yml:8,typescript:6,kotlin:6,json:3,txt:2,properties:1,xml:1,toml:1 | 2026-05-21
+# generated in 0.12s
+# CC̄=4.0 | critical:6/1675 | dups:0 | cycles:0
 
-HEALTH[7]:
-  🔴 GOD   src/koruide/injector.py = 509L, 4 classes, 23m, max CC=18
-  🟡 CC    type_text CC=18 (limit:15)
+HEALTH[6]:
   🟡 CC    try_drive_with_profile CC=17 (limit:15)
   🟡 CC    _task_main CC=22 (limit:15)
   🟡 CC    _dedupe_key_from_scaffold CC=17 (limit:15)
   🟡 CC    _find_existing_task_by_dedupe_key CC=15 (limit:15)
   🟡 CC    create_nl_task CC=15 (limit:15)
+  🟡 CC    type_text CC=18 (limit:15)
 
-REFACTOR[2]:
-  1. split src/koruide/injector.py  (god module)
-  2. split 6 high-CC methods  (CC>15)
+REFACTOR[1]:
+  1. split 6 high-CC methods  (CC>15)
 
-PIPELINES[494]:
+PIPELINES[490]:
   [1] Src [heal_rebuild_restore]: heal_rebuild_restore → _run_docker
       PURITY: 100% pure
   [2] Src [heal_annotate]: heal_annotate → _record_action
@@ -34,7 +32,7 @@ LAYERS:
   │ Dockerfile                  36L  0C    0m  CC=0.0    ←0
   │
   src/                            CC̄=4.2    ←in:0  →out:0
-  │ !! autonomous_cycle          1492L  2C   54m  CC=14     ←1
+  │ !! autonomous_cycle          1502L  2C   56m  CC=14     ←1
   │ !! dashboard_serve           1400L  1C   15m  CC=13     ←1
   │ !! context                   1253L  0C   49m  CC=12     ←7
   │ !! autonomous                1219L  1C   57m  CC=10     ←1
@@ -49,7 +47,6 @@ LAYERS:
   │ !! init                       610L  1C   15m  CC=12     ←3
   │ !! autonomous_wup             557L  3C   30m  CC=12     ←1
   │ !! doctor                     545L  2C   23m  CC=11     ←3
-  │ !! injector                   509L  4C   23m  CC=18     ←0
   │ !! autonomous_startup         506L  1C   28m  CC=9      ←4
   │ plugin_installer           494L  1C   24m  CC=11     ←3
   │ !! os_injector                481L  2C   28m  CC=17     ←2
@@ -63,6 +60,7 @@ LAYERS:
   │ queue_clean                391L  2C   13m  CC=14     ←2
   │ post_run_verify            381L  2C   16m  CC=14     ←1
   │ gc                         371L  2C   12m  CC=11     ←2
+  │ !! injector                   337L  3C   15m  CC=18     ←0
   │ agents                     322L  1C   15m  CC=14     ←4
   │ tools                      318L  0C   19m  CC=11     ←1
   │ autonomous_processes       314L  2C   12m  CC=11     ←1
@@ -87,6 +85,7 @@ LAYERS:
   │ agent_backends             214L  3C    7m  CC=11     ←2
   │ calibrate_cli              210L  0C    5m  CC=13     ←0
   │ library                    207L  0C   19m  CC=9      ←1
+  │ injector_backends          207L  0C   11m  CC=5      ←1
   │ autonomous_process_guard   206L  2C    8m  CC=11     ←1
   │ gate                       202L  1C    5m  CC=12     ←2
   │ invoke_handlers            199L  1C   15m  CC=5      ←0
@@ -176,6 +175,7 @@ LAYERS:
   │ __init__                    18L  0C    0m  CC=0.0    ←0
   │ daemon                      16L  0C    0m  CC=0.0    ←0
   │ mcp                         15L  0C    1m  CC=2      ←2
+  │ injector_errors             10L  1C    0m  CC=0.0    ←0
   │ client                      10L  0C    0m  CC=0.0    ←0
   │ serve                        9L  0C    0m  CC=0.0    ←0
   │ mcp_server                   9L  0C    0m  CC=0.0    ←0
@@ -318,14 +318,14 @@ COUPLING:
                     src.korudsl                                                                                                                          ←4                                                            ──                               
        services.healing-webhook                                                                                                                                                          1                                                            ──
   CYCLES: none
-  HUB: src.koruide/ (fan-in=72)
-  HUB: src.koru/ (fan-in=45)
-  HUB: scripts/ (fan-in=344)
   HUB: plugins.koru-autopilot-vscode/ (fan-in=10)
   HUB: src.koruapi/ (fan-in=25)
+  HUB: scripts/ (fan-in=344)
+  HUB: src.koruide/ (fan-in=72)
+  HUB: src.koru/ (fan-in=45)
+  SMELL: src.koruapi/ fan-out=68 → split needed
   SMELL: src.koruide/ fan-out=50 → split needed
   SMELL: src.koru/ fan-out=381 → split needed
-  SMELL: src.koruapi/ fan-out=68 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

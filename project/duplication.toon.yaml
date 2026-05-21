@@ -1,12 +1,12 @@
-# redup/duplication | 69 groups | 163f 37474L | 2026-05-21
+# redup/duplication | 69 groups | 165f 37529L | 2026-05-21
 
 SUMMARY:
-  files_scanned: 163
-  total_lines:   37474
+  files_scanned: 165
+  total_lines:   37529
   dup_groups:    69
   dup_fragments: 156
-  saved_lines:   1278
-  scan_ms:       7782
+  saved_lines:   1274
+  scan_ms:       6032
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/cli.py  dup=593L  groups=17  frags=22  (1.6%)
@@ -145,9 +145,6 @@ DUPLICATES[69] (ranked by impact):
   [db3e3e3ad621b70e]   STRU  load_koru_project_pipeline  L=10 N=2 saved=10 sim=1.00
       src/koru/project_pipeline.py:111-120  (load_koru_project_pipeline)
       src/koruapi/dashboard_serve.py:240-249  (read_serve_endpoint)
-  [c66988d54f59cb9c]   STRU  _ydotool_enter_keycode  L=10 N=2 saved=10 sim=1.00
-      src/koruide/injector.py:59-68  (_ydotool_enter_keycode)
-      src/koruide/injector.py:81-86  (_ydotool_ctrl_keycode)
   [30376722d90c4f75]   EXAC  _is_topology_enabled  L=9 N=2 saved=9 sim=1.00
       src/koru/autonomous.py:337-345  (_is_topology_enabled)
       src/koru/autonomous_cycle.py:80-88  (_is_topology_enabled)
@@ -200,6 +197,9 @@ DUPLICATES[69] (ranked by impact):
   [c7374d52504d8e71]   STRU  set_component_enabled  L=6 N=2 saved=6 sim=1.00
       src/koru/topology.py:353-358  (set_component_enabled)
       src/koru/topology.py:361-366  (set_pipeline_enabled)
+  [c66988d54f59cb9c]   STRU  ydotool_enter_keycode  L=6 N=2 saved=6 sim=1.00
+      src/koruide/injector_backends.py:14-19  (ydotool_enter_keycode)
+      src/koruide/injector_backends.py:32-37  (ydotool_ctrl_keycode)
   [cede1a8630b48984]   STRU  os_injector_env_disabled  L=3 N=3 saved=6 sim=1.00
       src/koruide/os_injector.py:63-65  (os_injector_env_disabled)
       src/koruide/os_injector.py:68-70  (os_injector_env_forced)
@@ -362,54 +362,54 @@ REFACTOR[69] (ranked by priority):
   [39] ○ extract_function   → src/utils/load_koru_project_pipeline.py
       WHY: 2 occurrences of 10-line block across 2 files — saves 10 lines
       FILES: src/koru/project_pipeline.py, src/koruapi/dashboard_serve.py
-  [40] ○ extract_function   → src/koruide/utils/_ydotool_enter_keycode.py
-      WHY: 2 occurrences of 10-line block across 1 files — saves 10 lines
-      FILES: src/koruide/injector.py
-  [41] ○ extract_function   → src/koru/utils/_is_topology_enabled.py
+  [40] ○ extract_function   → src/koru/utils/_is_topology_enabled.py
       WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
       FILES: src/koru/autonomous.py, src/koru/autonomous_cycle.py
-  [42] ○ extract_function   → src/koru/utils/_compact_ticket_error.py
+  [41] ○ extract_function   → src/koru/utils/_compact_ticket_error.py
       WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
       FILES: src/koru/context.py, src/koru/context_render.py
-  [43] ○ extract_function   → src/koru/utils/current_head.py
+  [42] ○ extract_function   → src/koru/utils/current_head.py
       WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
       FILES: src/koru/autonomous_checkpoint.py, src/koru/autonomous_cycle.py
-  [44] ○ extract_function   → src/koru/utils/_cursor_project_config.py
+  [43] ○ extract_function   → src/koru/utils/_cursor_project_config.py
       WHY: 4 occurrences of 3-line block across 1 files — saves 9 lines
       FILES: src/koru/mcp_provision.py
-  [45] ○ extract_function   → src/korudsl/utils/_handle_wait.py
+  [44] ○ extract_function   → src/korudsl/utils/_handle_wait.py
       WHY: 4 occurrences of 3-line block across 1 files — saves 9 lines
       FILES: src/korudsl/library.py
-  [46] ○ extract_function   → src/utils/_versioned_plugin_vsix_candidates.py
+  [45] ○ extract_function   → src/utils/_versioned_plugin_vsix_candidates.py
       WHY: 2 occurrences of 8-line block across 2 files — saves 8 lines
       FILES: src/koru/autopilot/install_plugin_cli.py, src/koruide/plugin_installer.py
-  [47] ○ extract_function   → src/koru/utils/_check_git_commit_policy.py
+  [46] ○ extract_function   → src/koru/utils/_check_git_commit_policy.py
       WHY: 3 occurrences of 4-line block across 1 files — saves 8 lines
       FILES: src/koru/policy.py
-  [48] ○ extract_function   → src/utils/_plugin_package_version.py
+  [47] ○ extract_function   → src/utils/_plugin_package_version.py
       WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
       FILES: src/koru/autopilot/install_plugin_cli.py, src/koruide/plugin_installer.py
-  [49] ○ extract_function   → src/koru/utils/as_managed.py
+  [48] ○ extract_function   → src/koru/utils/as_managed.py
       WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
       FILES: src/koru/autonomous_process_guard.py, src/koru/autonomous_processes.py
-  [50] ○ extract_function   → src/koru/utils/confirm_replace_existing.py
+  [49] ○ extract_function   → src/koru/utils/confirm_replace_existing.py
       WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
       FILES: src/koru/autonomous_process_guard.py, src/koru/autonomous_processes.py
-  [51] ○ extract_function   → src/koru/utils/_render_rules.py
+  [50] ○ extract_function   → src/koru/utils/_render_rules.py
       WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
       FILES: src/koru/context.py, src/koru/context_render.py
-  [52] ○ extract_function   → src/utils/activity_enabled.py
+  [51] ○ extract_function   → src/utils/activity_enabled.py
       WHY: 3 occurrences of 3-line block across 3 files — saves 6 lines
       FILES: src/koru/activity_log.py, src/koru/autonomy/operator_pipeline.py, src/koruide/plugin_installer.py
-  [53] ○ extract_function   → src/koru/utils/_allow_keyboard_autopilot_fallback.py
+  [52] ○ extract_function   → src/koru/utils/_allow_keyboard_autopilot_fallback.py
       WHY: 3 occurrences of 3-line block across 2 files — saves 6 lines
       FILES: src/koru/autonomous_cycle.py, src/koru/autonomous_cycle_gate.py
-  [54] ○ extract_function   → src/koru/utils/process_cwd.py
+  [53] ○ extract_function   → src/koru/utils/process_cwd.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: src/koru/autonomous_process_guard.py, src/koru/autonomous_processes.py
-  [55] ○ extract_function   → src/koru/utils/set_component_enabled.py
+  [54] ○ extract_function   → src/koru/utils/set_component_enabled.py
       WHY: 2 occurrences of 6-line block across 1 files — saves 6 lines
       FILES: src/koru/topology.py
+  [55] ○ extract_function   → src/koruide/utils/ydotool_enter_keycode.py
+      WHY: 2 occurrences of 6-line block across 1 files — saves 6 lines
+      FILES: src/koruide/injector_backends.py
   [56] ○ extract_function   → src/koruide/utils/os_injector_env_disabled.py
       WHY: 3 occurrences of 3-line block across 1 files — saves 6 lines
       FILES: src/koruide/os_injector.py
@@ -475,7 +475,7 @@ QUICK_WINS[44] (low risk, high savings — do first):
   [22] extract_function   saved=22L  → src/koru/utils/_render_ai_tool_support_2026.py
       FILES: context.py, context_render.py
 
-EFFORT_ESTIMATE (total ≈ 52.0h):
+EFFORT_ESTIMATE (total ≈ 51.8h):
   hard   _build_queue_parser                 saved=65L  ~195min
   hard   _build_gate_parser                  saved=60L  ~180min
   hard   _init_main                          saved=60L  ~180min
@@ -486,8 +486,8 @@ EFFORT_ESTIMATE (total ≈ 52.0h):
   hard   _render_clean_report_text           saved=42L  ~126min
   hard   _render_gates                       saved=40L  ~120min
   hard   _queue_main                         saved=39L  ~117min
-  ... +59 more (~1627min)
+  ... +59 more (~1619min)
 
 METRICS-TARGET:
   dup_groups:  69 → 0
-  saved_lines: 1278 lines recoverable
+  saved_lines: 1274 lines recoverable

@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 164, shell: 44, yaml: 15, yml: 8, typescript: 6
+- **Languages**: python: 166, shell: 44, yaml: 15, yml: 8, typescript: 6
 - **Analysis Mode**: static
-- **Total Functions**: 1670
+- **Total Functions**: 1675
 - **Total Classes**: 108
-- **Modules**: 253
-- **Entry Points**: 607
+- **Modules**: 255
+- **Entry Points**: 603
 
 ## Architecture by Module
 
@@ -25,7 +25,7 @@
 - **File**: `autonomous.py`
 
 ### src.koru.autonomous_cycle
-- **Functions**: 54
+- **Functions**: 56
 - **Classes**: 2
 - **File**: `autonomous_cycle.py`
 
@@ -95,11 +95,6 @@
 - **Classes**: 3
 - **File**: `probe-ladder.ts`
 
-### src.koruide.injector
-- **Functions**: 23
-- **Classes**: 4
-- **File**: `injector.py`
-
 ### src.koru.doctor
 - **Functions**: 23
 - **Classes**: 2
@@ -108,6 +103,10 @@
 ### src.koru.autopilot.cli_command
 - **Functions**: 22
 - **File**: `cli_command.py`
+
+### plugins.koru-autopilot-vscode.src.dispatch-plan.test
+- **Functions**: 22
+- **File**: `dispatch-plan.test.ts`
 
 ## Key Entry Points
 
@@ -119,13 +118,13 @@ Main execution flows into the system:
 ### src.koru.autonomous_auto_pipeline._select_auto_pipeline_profile
 - **Calls**: src.koru.autonomous_auto_pipeline._auto_pipeline_stage, AutoPipelineProfile, max, AutoPipelineProfile, AutoPipelineProfile, int, int, src.koru.autonomous_auto_pipeline._auto_value
 
-### src.koru.autonomy.config.AutonomyConfig.from_env
-> Create config from environment variables (shell compatibility).
-- **Calls**: os.getenv, cls, None.strip, max, Path, os.getenv, os.getenv, src.koru.autonomy.env.env_truthy
-
 ### src.koruide.daemon.AutopilotDaemon._drive_via_keyboard
 > Fallback: OS injector profile (X11) or :class:`Injector` keyboard sim.
 - **Calls**: self.log, src.koruide.ide.resolve_drive_target, self.log, src.koruide.ide.pick_target, self.injector.select_backend, self.log, self._send, self.log
+
+### src.koru.autonomy.config.AutonomyConfig.from_env
+> Create config from environment variables (shell compatibility).
+- **Calls**: os.getenv, cls, None.strip, max, Path, os.getenv, os.getenv, src.koru.autonomy.env.env_truthy
 
 ### src.koru.context_render.render_markdown_handoff
 > Turn a context dict into a Markdown brief for the operator.
@@ -149,20 +148,20 @@ the LLM with the policy
 ### src.koru.cli_topology.topology_main
 - **Calls**: None.parse_args, args.project.resolve, src.koru.topology.load_topology, src.koru.topology_cli.apply_topology_mutations, src.koru.topology.load_topology, None.get, None.get, isinstance
 
-### src.koru.queue.runners.run_api_request
-> Execute an HTTP API request.
-- **Calls**: request.get, urllib.request.Request, float, str, str, None.encode, headers.setdefault, str
-
 ### src.koruide.daemon.AutopilotDaemon._drive_via_plugin
 > Forward a drive request to a connected plugin for that IDE.
 - **Calls**: self.log, DriveOrchestrator.plugin_version_info, self.log, version_info.get, DriveOrchestrator.should_block_plugin_version, self._send, time.monotonic, self.log
 
-### src.koru.autonomy.env.autonomous_environ_doctor_probe
-> Return ``(status, detail)`` for ``koru --doctor``; process-global, no I/O.
-- **Calls**: os.environ.get, src.koru.autonomy.env.env_truthy, os.environ.get, os.environ.get, src.koru.autonomy.env.env_truthy, None.strip, None.lower, None.strip
+### src.koru.queue.runners.run_api_request
+> Execute an HTTP API request.
+- **Calls**: request.get, urllib.request.Request, float, str, str, None.encode, headers.setdefault, str
 
 ### src.koruide.daemon.AutopilotDaemon._handle_drive
 - **Calls**: msg.data.get, bool, bool, self.log, self._plugin_for, self.log, self._drive_via_keyboard, self._send
+
+### src.koru.autonomy.env.autonomous_environ_doctor_probe
+> Return ``(status, detail)`` for ``koru --doctor``; process-global, no I/O.
+- **Calls**: os.environ.get, src.koru.autonomy.env.env_truthy, os.environ.get, os.environ.get, src.koru.autonomy.env.env_truthy, None.strip, None.lower, None.strip
 
 ### src.koru.autopilot.cli_command._action_drive
 - **Calls**: src.koru.autopilot.cli_command._client, src.koru.autopilot.cli_command._should_fallback_to_direct, scripts.koru-soak-monitor.print, None.strip, None.strip, scripts.koru-soak-monitor.print, src.koru.autopilot.cli_command._run_direct_drive, client.is_running
@@ -205,14 +204,14 @@ syntact
 ### src.koruapi.cli.main
 - **Calls**: src.koruapi.cli._build_parser, parser.parse_known_args, args.project.resolve, sys.stdout.write, src.koru.activity_log.activity, src.koru.activity_log.activity, sys.stdout.write, api_serve
 
+### src.koruide.daemon.AutopilotDaemon._on_readable
+- **Calls**: client.buf.extend, client.sock.recv, self.log, self._drop, len, self._send, self._drop, client.buf.partition
+
 ### src.koru.local_manager_state.ActionQueue.claim
 - **Calls**: src.koru.local_manager_state.utc_now, max, None.replace, set, set, min, src.koru.local_manager_state.normalize_capabilities, int
 
 ### src.koru.local_manager_state.WorkerRegistry.heartbeat
 - **Calls**: str, self.register, self._workers.get, dict, self.register, isinstance, src.koru.local_manager_state.utc_now, self._reconcile_locked
-
-### src.koruide.daemon.AutopilotDaemon._on_readable
-- **Calls**: client.buf.extend, client.sock.recv, self.log, self._drop, len, self._send, self._drop, client.buf.partition
 
 ### services.healing-webhook.app.alertmanager_webhook
 > Accept the Alertmanager webhook payload (v4).
@@ -246,12 +245,7 @@ _select_auto_pipeline_profile [src.koru.autonomous_auto_pipeline]
       └─> _auto_pipeline_has_pressure
 ```
 
-### Flow 3: from_env
-```
-from_env [src.koru.autonomy.config.AutonomyConfig]
-```
-
-### Flow 4: _drive_via_keyboard
+### Flow 3: _drive_via_keyboard
 ```
 _drive_via_keyboard [src.koruide.daemon.AutopilotDaemon]
   └─ →> resolve_drive_target
@@ -261,6 +255,11 @@ _drive_via_keyboard [src.koruide.daemon.AutopilotDaemon]
   └─ →> pick_target
       └─> normalize_ide_id
       └─> normalize_ide_id
+```
+
+### Flow 4: from_env
+```
+from_env [src.koru.autonomy.config.AutonomyConfig]
 ```
 
 ### Flow 5: render_markdown_handoff
@@ -353,8 +352,8 @@ Parameters
 ----------
 session:
     Overri
-- **Methods**: 12
-- **Key Methods**: src.koruide.injector.Injector.probe, src.koruide.injector.Injector._candidate_backends, src.koruide.injector.Injector.select_backend, src.koruide.injector.Injector._type_with_xdotool, src.koruide.injector.Injector._type_with_wtype, src.koruide.injector.Injector._type_with_ydotool, src.koruide.injector.Injector._type_with_backend, src.koruide.injector.Injector.type_text, src.koruide.injector.Injector.submit_only, src.koruide.injector.Injector._probe_one
+- **Methods**: 8
+- **Key Methods**: src.koruide.injector.Injector.probe, src.koruide.injector.Injector._candidate_backends, src.koruide.injector.Injector.select_backend, src.koruide.injector.Injector._type_with_backend, src.koruide.injector.Injector.type_text, src.koruide.injector.Injector.submit_only, src.koruide.injector.Injector._probe_one, src.koruide.injector.Injector._call
 
 ### src.koruide.client.KoruIDEClient
 > Connect, send one message, read one reply, disconnect.
@@ -613,15 +612,15 @@ graph TD
     _select_auto_pipelin --> _auto_pipeline_stage
     _select_auto_pipelin --> AutoPipelineProfile
     _select_auto_pipelin --> max
+    _drive_via_keyboard --> log
+    _drive_via_keyboard --> resolve_drive_target
+    _drive_via_keyboard --> pick_target
+    _drive_via_keyboard --> select_backend
     from_env --> getenv
     from_env --> cls
     from_env --> strip
     from_env --> max
     from_env --> Path
-    _drive_via_keyboard --> log
-    _drive_via_keyboard --> resolve_drive_target
-    _drive_via_keyboard --> pick_target
-    _drive_via_keyboard --> select_backend
     render_markdown_hand --> get
     render_markdown_hand --> extend
     render_markdown_hand --> bool

@@ -7,11 +7,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.188-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$14.95-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-80.2h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.189-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$15.02-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-80.3h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $14.9454 (247 commits)
-- 👤 **Human dev:** ~$8017 (80.2h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $15.0244 (248 commits)
+- 👤 **Human dev:** ~$8027 (80.3h @ $100/h, 30min dedup)
 
 Generated on 2026-05-21 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -1001,17 +1001,6 @@ Reference configurations from the c2004 reference deployment:
 - [`templates/redup.toml.template`](./templates/redup.toml.template) — duplicate budget
 - [`templates/redsl.yaml.template`](./templates/redsl.yaml.template) — refactor lane config
 - [`templates/regix.yaml.template`](./templates/regix.yaml.template) — regression metrics
-
-## Reference deployment
-
-[`maskservice/c2004`](https://github.com/maskservice/c2004) — the original
-production-grade closed-loop refactor system that koru generalizes.
-Real metrics from c2004 (May 2026):
-
-- **88% size reduction** in compatibility shim files (14640 → 1812 bytes)
-- **8 stale alerts auto-closed** in single workflow run
-- **0 errors / 42 improvements** via regix gates after refactor
-- **58/58 endpoint health probes** post-migration
 
 ## License
 

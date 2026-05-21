@@ -200,6 +200,19 @@ def _missing_plugin_label(wanted: str) -> str:
     return wanted if wanted not in {"", "auto"} else "any supported IDE"
 
 
+def _matching_plugin_row(plugins: list[Any], wanted: str) -> dict[str, Any] | None:
+    for row in plugins:
+        if isinstance(row, dict) and _plugin_row_matches_ide(row, wanted):
+            return row
+    return None
+
+
+def _usable_plugin_decision(row: dict[str, Any], wanted: str) -> tuple[bool, str]:
+    if block_reason := _plugin_row_version_block_reason(row, wanted):
+        return False, block_reason
+    return True, ""
+
+
 def _client_has_usable_plugin(client: Any, autopilot_ide: str) -> tuple[bool, str]:
     """Return whether a daemon status has a live plugin usable for this IDE."""
     plugins, status_error = _client_plugin_rows(client)
@@ -208,12 +221,9 @@ def _client_has_usable_plugin(client: Any, autopilot_ide: str) -> tuple[bool, st
     if status_error is not None:
         return False, status_error
     wanted = _wanted_plugin_ide(autopilot_ide)
-    for row in plugins:
-        if not isinstance(row, dict) or not _plugin_row_matches_ide(row, wanted):
-            continue
-        if block_reason := _plugin_row_version_block_reason(row, wanted):
-            return False, block_reason
-        return True, ""
+    row = _matching_plugin_row(plugins, wanted)
+    if row is not None:
+        return _usable_plugin_decision(row, wanted)
     return False, f"no connected autopilot plugin for {_missing_plugin_label(wanted)}"
 
 
