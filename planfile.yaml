@@ -43,19 +43,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-608b1621
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in src/koru/autopilot/cli_command.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autopilot/cli_command.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-3b3357ce
     name: Fix unused-imports issues
     description: Resolve 2 unused-imports issues in src/koru/autopilot/config.py
@@ -1300,6 +1287,32 @@ sprints:
     files:
     - src/koru/local_manager_client.py
     rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-fc801415
+    name: Fix unused-imports issues
+    description: Resolve 8 unused-imports issues in src/koru/autopilot/cli_command.py
+    task_type: prefactor
+    priority: high
+    estimate: 2d
+    files:
+    - src/koru/autopilot/cli_command.py
+    rule_id: unused-imports
+    count: 8
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-a8763d2d
+    name: Fix string-concat issues
+    description: Resolve 2 string-concat issues in src/koru/autopilot/install_plugin_cli.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autopilot/install_plugin_cli.py
+    rule_id: string-concat
     count: 2
     model_hints:
       planning: balanced

@@ -32,6 +32,7 @@ from typing import Any
 
 from koru.agents import detect_agent_environment
 from koru.autonomy.telemetry_snapshot import build_autonomy_loop_brief
+from koru.context_render import render_markdown_handoff
 from koru.dotenv_loader import load_dotenv as _load_dotenv_impl
 from koru.policy import Policy, load_policy
 from koru.project_pipeline import build_project_pipeline_brief

@@ -55,6 +55,8 @@ window, and run **`koru: Connect autopilot daemon`**. If the live `version`
 differs from `expected`, re-run `koru autopilot manage --ide <ide> --fix` and
 reload the IDE. Set `KORU_STRICT_PLUGIN_VERSION=1` when you want `drive` to
 fail fast on stale live plugins instead of accepting a best-effort `message.sent`.
+Strict mode is fail-closed: if the daemon cannot determine the expected plugin
+version, plugin `drive` is blocked.
 
 Monorepo guide: `maskservice/c2004/docs/autonomy-ide-cursor.md` (section *Po starcie*).
 

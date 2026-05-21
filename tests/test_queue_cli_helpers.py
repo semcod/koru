@@ -3,6 +3,7 @@
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+import koru.queue.local_manager as queue_local_manager
 import koru.queue_cli_helpers as helpers
 from koru.queue.types import QueueLoopResult, QueueRunResult
 from koru.queue_cli_helpers import (
@@ -65,7 +66,11 @@ class FakeLocalManagerClient:
 
 def test_run_queue_loop_mode_stops_after_local_manager_drain(monkeypatch) -> None:
     fake_client = FakeLocalManagerClient()
-    monkeypatch.setattr(helpers.LocalManagerClient, "from_env", Mock(return_value=fake_client))
+    monkeypatch.setattr(
+        queue_local_manager.LocalManagerClient,
+        "from_env",
+        Mock(return_value=fake_client),
+    )
 
     def fake_loop(**kwargs):  # noqa: ANN003, ANN202
         result = QueueRunResult(status="completed", ticket_id="PLF-1", executor_kind="shell")

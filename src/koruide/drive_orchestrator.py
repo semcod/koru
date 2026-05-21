@@ -8,6 +8,8 @@ import os
 from pathlib import Path
 from typing import Any
 
+from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
+
 
 class DriveOrchestrator:
     """Pure helpers used by the autopilot daemon."""
@@ -104,7 +106,7 @@ class DriveOrchestrator:
                 return None
             version = data.get("version")
             return str(version) if version else None
-        return None
+        return EXPECTED_VSCODE_PLUGIN_VERSION
 
     @staticmethod
     def strict_plugin_version_required() -> bool:
@@ -122,13 +124,16 @@ class DriveOrchestrator:
         expected_version: str | None = None,
     ) -> dict[str, Any]:
         expected = expected_version or DriveOrchestrator.expected_plugin_version()
+        strict = DriveOrchestrator.strict_plugin_version_required()
         mismatch = bool(connected_version and expected and connected_version != expected)
+        unknown_expected = bool(strict and connected_version and not expected)
         info: dict[str, Any] = {
             "plugin_version": connected_version,
             "expected_plugin_version": expected,
             "plugin_version_mismatch": mismatch,
+            "plugin_version_expected_missing": unknown_expected,
             "plugin_version_policy": (
-                "strict" if DriveOrchestrator.strict_plugin_version_required() else "warn"
+                "strict" if strict else "warn"
             ),
         }
         if plugin_ide:
@@ -138,7 +143,8 @@ class DriveOrchestrator:
     @staticmethod
     def should_block_plugin_version(info: dict[str, Any]) -> bool:
         return bool(
-            info.get("plugin_version_mismatch"),
+            info.get("plugin_version_mismatch")
+            or info.get("plugin_version_expected_missing"),
         ) and DriveOrchestrator.strict_plugin_version_required()
 
     @staticmethod

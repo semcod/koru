@@ -4,11 +4,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.169-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$12.70-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-73.3h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.170-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$12.85-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-73.6h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $12.7022 (228 commits)
-- 👤 **Human dev:** ~$7331 (73.3h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $12.8473 (229 commits)
+- 👤 **Human dev:** ~$7358 (73.6h @ $100/h, 30min dedup)
 
 Generated on 2026-05-21 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -318,13 +318,15 @@ Newer autopilot functions you can use directly from CLI:
 
 - `connected` / `version` — the live plugin currently attached to the daemon,
 - `installed` — the extension version reported by the editor CLI,
-- `expected` — the VSIX/package version from the koru source checkout.
+- `expected` — the VSIX/package version bundled with the active koru runtime.
 
 If `installed=expected` but `connected=False`, installation is healthy and the next
 step is runtime handshake: start the daemon, reload the IDE window and run
 `koru: Connect autopilot daemon`. If `version` differs from `expected`, reload the
 IDE after `manage --fix`; set `KORU_STRICT_PLUGIN_VERSION=1` to fail fast instead
-of sending prompts through a stale live plugin.
+of sending prompts through a stale live plugin. Strict mode is fail-closed: if
+the daemon cannot determine the expected plugin version, it blocks plugin
+`drive` rather than accepting a stale live plugin silently.
 
 Two injection paths, picked automatically:
 

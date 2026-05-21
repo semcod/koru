@@ -380,6 +380,11 @@ def test_drive_os_injector_failure_falls_back_to_keyboard(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    from koru.autopilot import os_injector as oi_mod
+
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.setattr(oi_mod, "try_load_profile", lambda *a, **k: None)
     fake = RunningIDE(id="cursor", label="Cursor", pid=1, exe="/opt/Cursor")
     monkeypatch.setattr(ide_mod, "detect_running_ides", lambda **_: [fake])
     monkeypatch.setattr(koruide_daemon_mod, "detect_running_ides", lambda **_: [fake])

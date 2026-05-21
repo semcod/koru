@@ -9,187 +9,47 @@ public entrypoint is :func:`autopilot_main` which mirrors the
 import argparse
 import json
 import os
-import shutil  # noqa: F401 - compatibility hook for existing CLI tests.
-import subprocess  # noqa: F401 - compatibility hook for existing CLI tests.
 import sys
 import time
 from pathlib import Path
 from typing import Any
 
-from koru.autopilot import default_socket_path, install_plugin_cli, systemd_cli, tail_cli
+from koru.autopilot import (
+    calibrate_cli,
+    daemon_cli,
+    doctor_cli,
+    install_plugin_cli,
+    systemd_cli,
+    tail_cli,
+)
 from koru.autopilot.client import AutopilotClient
-from koru.autopilot.daemon import AutopilotDaemon
 from koru.autopilot.ide import (
     detect_focused_ide_id,
     detect_running_ides,
     resolve_drive_target,
 )
 from koru.autopilot.injector import Injector, InjectorError
-from koru.autopilot.local_manager import (
-    autopilot_local_manager_session,
-    lifecycle_decision_action,
-    start_autopilot_manager_heartbeat,
-)
 from koru.autopilot.utils.client_helpers import call_daemon_method
-from koruide.audit import AuditLog
 
-
-def _resolve_session_ides(raw: str) -> list[str]:
-    text = (raw or "").strip()
-    if not text or text == "auto":
-        detected = [ide.id for ide in detect_running_ides()]
-        out: list[str] = []
-        seen: set[str] = set()
-        for ide_id in detected:
-            if ide_id in seen:
-                continue
-            seen.add(ide_id)
-            out.append(ide_id)
-        return out
-    return [chunk.strip() for chunk in text.split(",") if chunk.strip()]
+_resolve_session_ides = calibrate_cli.resolve_session_ides
+_capture_ide_profile = calibrate_cli.capture_ide_profile
+_detect_duplicate_coordinates = calibrate_cli.detect_duplicate_coordinates
 
 
 def _action_calibrate(args: argparse.Namespace) -> int:
-    from koru.autopilot import os_injector as oi
-
-    raw = str(args.ide).strip()
-    if raw.lower() in ("", "auto"):
-        _kb, ide, _reason = resolve_drive_target("auto", None)
-        if ide == "default":
-            print(
-                "koru autopilot calibrate: no running IDE detected; "
-                "open an editor or pass --ide windsurf|vscode|cursor|…",
-                file=sys.stderr,
-            )
-            return 2
-        auto_detected = True
-    else:
-        ide = raw
-        auto_detected = False
-
-    delay = max(0.0, float(args.delay_seconds))
-    print(f"Place mouse over IDE chat input; capturing in {delay:.1f}s...")
-    time.sleep(delay)
-    try:
-        x, y = oi.capture_mouse_xy()
-        profile = oi.profile_from_mouse(ide, x=x, y=y)
-        config_path = oi.save_profile(profile, config_path=args.config)
-        payload: dict[str, object] = {
-            "ok": True,
-            "profile": ide,
-            "chat_x": x,
-            "chat_y": y,
-            "config": str(config_path),
-            "window_id": 0,
-            "auto_detected": auto_detected,
-        }
-        if args.prompt:
-            payload["smoke"] = oi.inject_with_profile(
-                profile=profile,
-                text=str(args.prompt),
-                submit=True,
-                dry_run=False,
-            )
-        print(json.dumps(payload, indent=2, sort_keys=True))
-        return 0
-    except oi.OsInjectorError as exc:
-        print(f"koru autopilot calibrate: {exc}", file=sys.stderr)
-        return 1
-
-
-def _capture_ide_profile(
-    ide: str, delay: float, args: argparse.Namespace, captured: dict[tuple[int, int], list[str]]
-) -> dict[str, object]:
-    """Capture profile for a single IDE and return result row."""
-    from koru.autopilot import os_injector as oi
-
-    print(f"[{ide}] Place mouse over IDE chat input; capturing in {delay:.1f}s...")
-    time.sleep(delay)
-    try:
-        x, y = oi.capture_mouse_xy()
-        profile = oi.profile_from_mouse(ide, x=x, y=y)
-        config_path = oi.save_profile(profile, config_path=args.config)
-        pair = (x, y)
-        captured.setdefault(pair, []).append(ide)
-        row: dict[str, object] = {
-            "ok": True,
-            "ide": ide,
-            "backend": "os_injector",
-            "chat_x": x,
-            "chat_y": y,
-            "window_id": 0,
-            "config": str(config_path),
-        }
-        if args.prompt:
-            try:
-                row["smoke"] = oi.inject_with_profile(
-                    profile=profile,
-                    text=str(args.prompt),
-                    submit=True,
-                    dry_run=False,
-                )
-            except oi.OsInjectorError as smoke_exc:
-                row["smoke"] = {"ok": False, "error": str(smoke_exc)}
-                row["warning"] = "profile_saved_but_smoke_failed"
-        return row
-    except oi.OsInjectorError as exc:
-        return {"ok": False, "ide": ide, "error": str(exc)}
-
-
-def _detect_duplicate_coordinates(
-    captured: dict[tuple[int, int], list[str]],
-) -> list[dict[str, object]]:
-    """Detect and return list of duplicate coordinate warnings."""
-    dups: list[dict[str, object]] = []
-    for pair, id_list in captured.items():
-        if len(id_list) > 1:
-            dups.append({"chat_x": pair[0], "chat_y": pair[1], "ides": sorted(id_list)})
-    return dups
+    return calibrate_cli.action_calibrate(
+        args,
+        sleep_fn=time.sleep,
+        resolve_target=resolve_drive_target,
+    )
 
 
 def _action_session_start(args: argparse.Namespace) -> int:
-    ides = _resolve_session_ides(args.ides)
-    if not ides:
-        print(
-            "koru autopilot session-start: no IDE ids resolved "
-            "(pass --ides windsurf,cursor or run an IDE first)",
-            file=sys.stderr,
-        )
-        return 2
-
-    delay = max(0.0, float(args.delay_seconds))
-    targets: list[dict[str, object]] = []
-    ok = True
-    captured: dict[tuple[int, int], list[str]] = {}
-
-    for ide in ides:
-        row = _capture_ide_profile(ide, delay, args, captured)
-        if row.get("ok") is not True:
-            ok = False
-        targets.append(row)
-
-    for row in targets:
-        if row.get("ok") is not True:
-            continue
-        pair = (int(row["chat_x"]), int(row["chat_y"]))
-        peers = [i for i in captured.get(pair, []) if i != row["ide"]]
-        if peers:
-            row["shared_with"] = sorted(peers)
-            row["warning"] = "shared_coordinates_with_other_ides"
-
-    payload: dict[str, object] = {"ok": ok, "targets": targets}
-    dups = _detect_duplicate_coordinates(captured)
-    if dups:
-        payload["warnings"] = {
-            "duplicate_coordinates": dups,
-            "message": (
-                "Multiple IDE profiles captured identical coordinates; recalibrate each IDE "
-                "with its own chat input focus."
-            ),
-        }
-
-    print(json.dumps(payload, indent=2, sort_keys=True))
-    return 0 if ok else 1
+    return calibrate_cli.action_session_start(
+        args,
+        resolve_ides=_resolve_session_ides,
+        sleep_fn=time.sleep,
+    )
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -647,67 +507,7 @@ def _client(args: argparse.Namespace) -> AutopilotClient:
 # ----- action handlers ------------------------------------------------------
 
 
-def _action_daemon(args: argparse.Namespace) -> int:
-    socket_path = args.socket or default_socket_path()
-    if args.idempotent:
-        probe = AutopilotClient(socket_path=socket_path, timeout=0.5)
-        if probe.is_running():
-            print(f"koru autopilot: daemon already running on {socket_path}")
-            return 0
-    project = args.project.resolve() if args.handoff else None
-    manager = autopilot_local_manager_session(socket_path=socket_path)
-    if manager is not None:
-        manager.start(
-            project=project,
-            metadata={"socket": str(socket_path), "handoff": args.handoff},
-        )
-        if manager.should_stop():
-            action = lifecycle_decision_action(manager.last_reply)
-            print(f"koru autopilot daemon: local manager decision={action}; not starting")
-            return 1 if action == "quarantine" else 0
-    audit = AuditLog(enabled=True)
-    daemon = AutopilotDaemon(
-        socket_path=socket_path,
-        log=print,
-        project=project,
-        handoff_cooldown=args.handoff_cooldown,
-        audit=audit,
-    )
-    if audit.enabled:
-        print(f"koru autopilot daemon: audit log at {audit.path}")
-    try:
-        daemon.start()
-    except (OSError, RuntimeError) as exc:
-        if manager is not None:
-            manager.heartbeat(
-                health="bad",
-                metadata={"socket": str(socket_path), "error": str(exc)},
-            )
-        print(f"koru autopilot daemon: {exc}", file=sys.stderr)
-        return 1
-    heartbeat = start_autopilot_manager_heartbeat(
-        manager,
-        daemon,
-        socket_path=socket_path,
-        project=project,
-    )
-    if args.handoff:
-        print(f"koru autopilot daemon: handoff enabled for project={project}")
-    else:
-        print("koru autopilot daemon: handoff disabled (--no-handoff)")
-    try:
-        daemon.serve_forever()
-    except KeyboardInterrupt:
-        print()
-        print("koru autopilot daemon: interrupted")
-    finally:
-        if heartbeat is not None:
-            stop, thread = heartbeat
-            stop.set()
-            thread.join(timeout=2.0)
-        if manager is not None:
-            manager.complete(status="completed", result={"socket": str(socket_path)})
-    return 0
+_action_daemon = daemon_cli.action_daemon
 
 
 def _auto_direct_fallback_enabled() -> bool:
@@ -901,138 +701,33 @@ def _action_status(args: argparse.Namespace) -> int:
 
 
 def _action_shutdown(args: argparse.Namespace) -> int:
-    client = _client(args)
-    return call_daemon_method(
-        client,
-        "shutdown",
-        "koru autopilot shutdown",
-        not_running_return_code=0,
-    )
+    return daemon_cli.action_shutdown(args, client_fn=_client)
 
 
-def _action_ide_list(_args: argparse.Namespace) -> int:
-    ides = detect_running_ides()
-    if not ides:
-        print("koru autopilot: no IDE processes detected")
-        return 0
-    focused = detect_focused_ide_id()
-    for ide in ides:
-        suffix = "  [focused]" if focused is not None and ide.id == focused else ""
-        print(f"  {ide.id:<10} pid={ide.pid:<7} {ide.label}  ({ide.exe}){suffix}")
-    return 0
+_action_ide_list = daemon_cli.action_ide_list
 
 
-def _doctor_fix_payload() -> dict[str, object]:
-    """Guided remediation payload reused by text and json outputs."""
-    from koru.autopilot.host_setup import build_setup_host_report
-
-    report = build_setup_host_report()
-    return {
-        "commands": [
-            "koru autopilot setup-host",
-            "koru autopilot setup-host --install --dry-run",
-            "koru autopilot setup-host --install",
-            "koru autopilot install-plugin",
-        ],
-        "automated_apt_suggestion": report.get("automated_apt_suggestion"),
-        "human_actions_required": report.get("human_actions_required") or [],
-    }
-
-
-def _render_doctor_session_info(injector: Injector, selected: str | None) -> None:
-    """Render session and selected backend info."""
-    print(f"session: {injector.session or 'unknown'}")
-    print(f"selected backend: {selected or '(none — install xdotool/wtype/ydotool)'}")
-
-
-def _render_doctor_backends(statuses: list) -> None:
-    """Render backend status list."""
-    print("backends:")
-    for s in statuses:
-        mark = "✓" if s.available else "✗"
-        print(f"  {mark} {s.name:<10} {s.reason}")
-
-
-def _render_doctor_ides() -> None:
-    """Render running IDEs with focus indicator."""
-    ides = detect_running_ides()
-    focused = detect_focused_ide_id()
-    print(f"running IDEs ({len(ides)}):")
-    for ide in ides:
-        marker = " [focused]" if focused is not None and ide.id == focused else ""
-        print(f"  · {ide.label} (pid={ide.pid}){marker}")
-
-
-def _render_doctor_fix_steps(fix_payload: dict[str, object] | None) -> None:
-    """Render guided fix steps from payload."""
-    if fix_payload is None:
-        return
-    print("\nnext steps (guided fix):")
-    for cmd in fix_payload.get("commands", []):
-        print(f"  - {cmd}")
-    apt_hint = fix_payload.get("automated_apt_suggestion")
-    if isinstance(apt_hint, str) and apt_hint:
-        print(f"  - apt suggestion: {apt_hint}")
-    human_actions = fix_payload.get("human_actions_required")
-    if isinstance(human_actions, list) and human_actions:
-        print("human actions still required:")
-        for line in human_actions:
-            print(f"  - {line}")
-
-
-def _render_doctor_text(
-    injector: Injector,
-    statuses: list,
-    selected: str | None,
-    fix_payload: dict[str, object] | None,
-) -> None:
-    """Render doctor output in text format."""
-    _render_doctor_session_info(injector, selected)
-    _render_doctor_backends(statuses)
-    _render_doctor_ides()
-    _render_doctor_fix_steps(fix_payload)
-
-
-def _render_doctor_json(
-    injector: Injector,
-    statuses: list,
-    selected: str | None,
-    fix_payload: dict[str, object] | None,
-) -> None:
-    """Render doctor output in JSON format."""
-    focused = detect_focused_ide_id()
-    payload = {
-        "session": injector.session,
-        "selected_backend": selected,
-        "backends": [s.to_dict() for s in statuses],
-        "ides": [i.to_dict() for i in detect_running_ides()],
-        "focused_ide": focused,
-    }
-    if fix_payload is not None:
-        payload["fix"] = fix_payload
-    print(json.dumps(payload, indent=2, sort_keys=True))
+_doctor_fix_payload = doctor_cli.doctor_fix_payload
+_render_doctor_session_info = doctor_cli.render_doctor_session_info
+_render_doctor_backends = doctor_cli.render_doctor_backends
+_render_doctor_ides = doctor_cli.render_doctor_ides
+_render_doctor_fix_steps = doctor_cli.render_doctor_fix_steps
+_render_doctor_text = doctor_cli.render_doctor_text
+_render_doctor_json = doctor_cli.render_doctor_json
 
 
 def _action_doctor(args: argparse.Namespace) -> int:
-    injector = Injector()
-    statuses = injector.probe()
-    selected = injector.select_backend()
-    fix_payload = _doctor_fix_payload() if args.fix else None
-    if args.output_format == "json":
-        _render_doctor_json(injector, statuses, selected, fix_payload)
-        return 0
-    _render_doctor_text(injector, statuses, selected, fix_payload)
-    return 0 if selected else 1
+    return doctor_cli.action_doctor(
+        args,
+        injector_factory=Injector,
+        fix_payload_factory=_doctor_fix_payload,
+        detect_ides=detect_running_ides,
+        detect_focused=detect_focused_ide_id,
+    )
 
 
 def _action_setup_host(args: argparse.Namespace) -> int:
-    from koru.autopilot.host_setup import run_host_setup
-
-    return run_host_setup(
-        output_format=args.output_format,
-        install=args.install,
-        install_dry_run=args.install_dry_run,
-    )
+    return doctor_cli.action_setup_host(args)
 
 
 def _action_manage(args: argparse.Namespace) -> int:
@@ -1054,32 +749,21 @@ def _action_manage(args: argparse.Namespace) -> int:
     return 0 if report.ok else 1
 
 
-_plugin_repo_dir = install_plugin_cli.plugin_repo_dir
-_jetbrains_plugin_repo_dir = install_plugin_cli.jetbrains_plugin_repo_dir
-_resolve_plugin_vsix_path = install_plugin_cli.resolve_plugin_vsix_path
-_resolve_jetbrains_plugin_dir = install_plugin_cli.resolve_jetbrains_plugin_dir
-_resolve_gradle_bin = install_plugin_cli.resolve_gradle_bin
-_resolve_jetbrains_plugin_artifact = install_plugin_cli.resolve_jetbrains_plugin_artifact
-_ide_from_terminal_env = install_plugin_cli.ide_from_terminal_env
-_resolve_plugin_target_ide = install_plugin_cli.resolve_plugin_target_ide
-_resolve_plugin_editor_bin = install_plugin_cli.resolve_plugin_editor_bin
-
-
 def _action_install_plugin(args: argparse.Namespace) -> int:
     return install_plugin_cli.action_install_plugin(
         args,
-        resolve_target_ide=_resolve_plugin_target_ide,
-        resolve_editor_bin=_resolve_plugin_editor_bin,
-        resolve_vsix_path=_resolve_plugin_vsix_path,
+        resolve_target_ide=install_plugin_cli.resolve_plugin_target_ide,
+        resolve_editor_bin=install_plugin_cli.resolve_plugin_editor_bin,
+        resolve_vsix_path=install_plugin_cli.resolve_plugin_vsix_path,
     )
 
 
 def _action_install_plugin_jetbrains(args: argparse.Namespace) -> int:
     return install_plugin_cli.action_install_plugin_jetbrains(
         args,
-        resolve_plugin_dir=_resolve_jetbrains_plugin_dir,
-        resolve_gradle=_resolve_gradle_bin,
-        resolve_artifact=_resolve_jetbrains_plugin_artifact,
+        resolve_plugin_dir=install_plugin_cli.resolve_jetbrains_plugin_dir,
+        resolve_gradle=install_plugin_cli.resolve_gradle_bin,
+        resolve_artifact=install_plugin_cli.resolve_jetbrains_plugin_artifact,
     )
 
 
@@ -1137,26 +821,16 @@ def _action_handoff(args: argparse.Namespace) -> int:
     return 0 if reply.get("ok", True) else 1
 
 
-_format_tail_entry = tail_cli.format_tail_entry
-_render_tail_json = tail_cli.render_tail_json
-_render_tail_text = tail_cli.render_tail_text
-
-
 def _action_tail(args: argparse.Namespace) -> int:
     return tail_cli.action_tail(args)
-
-
-_systemd_user_dir = systemd_cli.systemd_user_dir
-_resolve_koru_bin = systemd_cli.resolve_koru_bin
-_render_unit = systemd_cli.render_unit
 
 
 def _action_install_unit(args: argparse.Namespace) -> int:
     return systemd_cli.action_install_unit(
         args,
-        resolve_bin=_resolve_koru_bin,
-        render=_render_unit,
-        resolve_unit_dir=_systemd_user_dir,
+        resolve_bin=systemd_cli.resolve_koru_bin,
+        render=systemd_cli.render_unit,
+        resolve_unit_dir=systemd_cli.systemd_user_dir,
     )
 
 

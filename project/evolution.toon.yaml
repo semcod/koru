@@ -1,4 +1,4 @@
-# code2llm/evolution | 1321 func | 120f | 2026-05-21
+# code2llm/evolution | 1356 func | 133f | 2026-05-21
 # generated in 0.01s
 
 NEXT[6] (ranked by impact):
@@ -14,7 +14,7 @@ NEXT[6] (ranked by impact):
       WHY: CC=18 exceeds 15
       EFFORT: ~1h  IMPACT: 324
 
-  [4] !  SPLIT-FUNC      _action_daemon  CC=15  fan=19
+  [4] !  SPLIT-FUNC      action_daemon  CC=15  fan=19
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 285
 
@@ -23,7 +23,7 @@ NEXT[6] (ranked by impact):
       EFFORT: ~1h  IMPACT: 210
 
   [6] !! SPLIT           planfile.yaml
-      WHY: 1306L, 0 classes, max CC=0
+      WHY: 1319L, 0 classes, max CC=0
       EFFORT: ~4h  IMPACT: 0
 
 

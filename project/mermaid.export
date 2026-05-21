@@ -809,12 +809,6 @@ flowchart TD
     src__koru__cli___tools_main --> scripts__koru_soak_monitor__print
     src__koru__cli___tools_main --> src__koru__cli___build_tools_parser
     src__koru__cli___tools_main --> src__koru__tools__render_tools_detect_text
-    src__koru__cli___scan_main --> src__koru__scan__run_scan
-    src__koru__cli___scan_main --> src__koru__events__emit_management_event
-    src__koru__cli___scan_main --> scripts__koru_soak_monitor__print
-    src__koru__cli___scan_main --> src__koru__cli___build_scan_parser
-    src__koru__cli___scan_main --> src__koru__cli___render_scan_markdown
-    src__koru__cli___scan_main --> src__koru__cli___render_scan_text
     src__koru__cli___gate_main --> scripts__koru_soak_monitor__print
     src__koru__cli___gate_main --> src__koru__events__emit_management_event
     src__koru__cli___gate_main --> src__koru__gate__authorize_gate
@@ -870,6 +864,7 @@ flowchart TD
     src__koru__cli___doctor_main --> src__koru__cli___doctor_fix_payload
     src__koru__cli___doctor_main --> scripts__koru_soak_monitor__print
     src__koru__cli___doctor_main --> src__koru__cli___render_doctor_with_fix
+    src__koru__cli___render_doctor_with_fix --> src__koru__autopilot__doctor_cli__render_doctor_text
     src__koru__cli___init_main --> scripts__koru_soak_monitor__print
     src__koru__cli___init_main --> src__koru__events__emit_management_event
     src__koru__cli___init_main --> src__koru__init__init_project
@@ -905,6 +900,10 @@ flowchart TD
     src__koru__cli__main --> src__koru__cli___queue_run_main
     src__koru__cli__main --> src__koru__cli___build_parser
     src__koru__loop__discover_repositories --> src__koru__loop___search_root_for_include
+    src__koru__cli_gate__gate_main --> scripts__koru_soak_monitor__print
+    src__koru__cli_gate__gate_main --> src__koru__events__emit_management_event
+    src__koru__cli_gate__gate_main --> src__koru__gate__authorize_gate
+    src__koru__cli_gate__gate_main --> src__koru__cli_gate__build_gate_parser
     src__koru__queue_clean___maybe_skip_active_ticket --> src__koru__queue_clean___parse_age_days
     src__koru__queue_clean___maybe_skip_active_ticket --> src__koru__queue_clean___matched_rules
     src__koru__queue_clean___candidate_from_ticket --> src__koru__queue_clean___parse_age_days
@@ -1001,8 +1000,9 @@ flowchart TD
     src__koru__autonomous___action_up --> src__koru__autonomous___stdio_info
     src__koru__autonomous__autonomous_main --> src__koru__autonomous___action_up
     src__koru__autonomous__autonomous_main --> src__koru__autonomous___build_parser
+    src__koru__autonomous_startup___terminal_agent_lane_from_env --> src__koruide__ide__detect_terminal_host_ide_id
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class src__koruide__daemon__AutopilotDaemon___handle_plugin_event,src__koru__autonomous_wup___compose_service_ready,plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__pasteText,src__koru__autopilot__cli_command___action_daemon highCC
+    class src__koruide__daemon__AutopilotDaemon___handle_plugin_event,src__koru__autonomous_wup___compose_service_ready,plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__pasteText,src__koru__autopilot__daemon_cli__action_daemon highCC
     class services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,services__healing_webhook__ticket_builder__build_ticket_payload,src__korudsl__cli__main,src__korudsl__transform__library_from_any,src__korudsl__library__convert_goals_json_to_library,src__korudsl__library___emit_step,src__korudsl__library___emit_goal,src__koruapi__runtime_insights___run_ps,src__koruapi__runtime_insights___active_tools,src__koruapi__cli__main,src__koruapi__server___parse_invoke_request,src__koruapi__topology_post__apply_topology_post_update,src__koruapi__dashboard_serve___list_tickets,src__koruapi__dashboard_serve___bulk_waiting_input_action,src__koruapi__dashboard_serve___try_stop_prior_koru_serve_listener,src__koruapi__dashboard_serve__bind_serve_server,src__koruapi__mcp_server___monitor_subprocess_oom,src__koruapi__mcp_server___parse_tickets_json,src__koruapi__mcp_server___tickets_for_status_filter,src__koruapi__mcp_server__tool_run_ticket,src__koruapi__mcp_server___run_single_gate,src__koruapi__mcp_server__tool_propose_edits,src__koruide__protocol__decode,src__koruide__host_setup___human_followups medCC

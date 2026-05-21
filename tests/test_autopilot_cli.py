@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from koru.autopilot import cli_command
+from koru.autopilot import cli_command, install_plugin_cli, systemd_cli
 from koru.autopilot.cli_command import autopilot_main
 
 
@@ -494,7 +494,7 @@ def test_ide_list_empty(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(cli_command, "detect_running_ides", lambda: [])
+    monkeypatch.setattr("koru.autopilot.daemon_cli.detect_running_ides", lambda: [])
     rc = autopilot_main(["ide-list"])
     assert rc == 0
     assert "no IDE processes" in capsys.readouterr().out
@@ -505,14 +505,13 @@ def test_ide_list_marks_focused_ide(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        cli_command,
-        "detect_running_ides",
+        "koru.autopilot.daemon_cli.detect_running_ides",
         lambda: [
             SimpleNamespace(id="windsurf", label="Windsurf", pid=10, exe="/opt/windsurf"),
             SimpleNamespace(id="jetbrains", label="JetBrains IDE", pid=20, exe="/opt/idea"),
         ],
     )
-    monkeypatch.setattr(cli_command, "detect_focused_ide_id", lambda: "jetbrains")
+    monkeypatch.setattr("koru.autopilot.daemon_cli.detect_focused_ide_id", lambda: "jetbrains")
     rc = autopilot_main(["ide-list"])
     assert rc == 0
     out = capsys.readouterr().out
@@ -632,11 +631,11 @@ def test_install_plugin_dry_run_auto_detect_from_term_program(
 
     monkeypatch.setenv("TERM_PROGRAM", "vscode")
     monkeypatch.setattr(
-        cli_command.shutil,
+        install_plugin_cli.shutil,
         "which",
         lambda name: "/usr/bin/code" if name == "code" else None,
     )
-    monkeypatch.setattr(cli_command, "_resolve_plugin_vsix_path", lambda _p: vsix)
+    monkeypatch.setattr(install_plugin_cli, "resolve_plugin_vsix_path", lambda _p: vsix)
 
     rc = autopilot_main(["install-plugin", "--dry-run", "--format", "json"])
     assert rc == 0
@@ -654,10 +653,17 @@ def test_install_plugin_auto_detect_ambiguous_running_ides_errors(
 ) -> None:
     monkeypatch.delenv("TERM_PROGRAM", raising=False)
     monkeypatch.delenv("VSCODE_PID", raising=False)
-    monkeypatch.setattr(cli_command, "detect_focused_ide_id", lambda: None)
+    monkeypatch.setattr("koru.autopilot.ide.detect_focused_ide_id", lambda: None)
+    monkeypatch.setattr("koru.autopilot.install_plugin_cli.detect_focused_ide_id", lambda: None)
     monkeypatch.setattr(
-        cli_command,
-        "detect_running_ides",
+        "koru.autopilot.ide.detect_running_ides",
+        lambda: [
+            SimpleNamespace(id="cursor", label="Cursor", pid=1, exe="/usr/bin/cursor"),
+            SimpleNamespace(id="windsurf", label="Windsurf", pid=2, exe="/usr/bin/windsurf"),
+        ],
+    )
+    monkeypatch.setattr(
+        "koru.autopilot.install_plugin_cli.detect_running_ides",
         lambda: [
             SimpleNamespace(id="cursor", label="Cursor", pid=1, exe="/usr/bin/cursor"),
             SimpleNamespace(id="windsurf", label="Windsurf", pid=2, exe="/usr/bin/windsurf"),
@@ -678,15 +684,19 @@ def test_install_plugin_exec_success_json_payload(
     vsix = tmp_path / "koru-autopilot-0.1.0.vsix"
     vsix.write_text("fake", encoding="utf-8")
 
-    monkeypatch.setattr(cli_command, "_resolve_plugin_target_ide", lambda _raw: "cursor")
-    monkeypatch.setattr(cli_command, "_resolve_plugin_editor_bin", lambda _ide: "/usr/bin/cursor")
-    monkeypatch.setattr(cli_command, "_resolve_plugin_vsix_path", lambda _p: vsix)
+    monkeypatch.setattr(install_plugin_cli, "resolve_plugin_target_ide", lambda _raw: "cursor")
+    monkeypatch.setattr(
+        install_plugin_cli,
+        "resolve_plugin_editor_bin",
+        lambda _ide: "/usr/bin/cursor",
+    )
+    monkeypatch.setattr(install_plugin_cli, "resolve_plugin_vsix_path", lambda _p: vsix)
 
     def _fake_run(cmd, capture_output, text, check):
         assert cmd[0] == "/usr/bin/cursor"
-        return cli_command.subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
+        return install_plugin_cli.subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
 
-    monkeypatch.setattr(cli_command.subprocess, "run", _fake_run)
+    monkeypatch.setattr(install_plugin_cli.subprocess, "run", _fake_run)
 
     rc = autopilot_main(["install-plugin", "--ide", "cursor", "--format", "json", "--force"])
     assert rc == 0
@@ -713,10 +723,10 @@ def test_install_plugin_jetbrains_dry_run_json(
 ) -> None:
     plugin_dir = tmp_path / "koru-autopilot-jetbrains"
     plugin_dir.mkdir()
-    monkeypatch.setattr(cli_command, "_resolve_jetbrains_plugin_dir", lambda _p: plugin_dir)
+    monkeypatch.setattr(install_plugin_cli, "resolve_jetbrains_plugin_dir", lambda _p: plugin_dir)
     monkeypatch.setattr(
-        cli_command,
-        "_resolve_gradle_bin",
+        install_plugin_cli,
+        "resolve_gradle_bin",
         lambda _p: (_ for _ in ()).throw(AssertionError("dry-run must not resolve gradle binary")),
     )
 
@@ -749,16 +759,20 @@ def test_install_plugin_jetbrains_success_json_payload(
     artifact.parent.mkdir(parents=True)
     artifact.write_text("fake", encoding="utf-8")
 
-    monkeypatch.setattr(cli_command, "_resolve_jetbrains_plugin_dir", lambda _p: plugin_dir)
-    monkeypatch.setattr(cli_command, "_resolve_gradle_bin", lambda _p: "/usr/bin/gradle")
-    monkeypatch.setattr(cli_command, "_resolve_jetbrains_plugin_artifact", lambda _p: artifact)
+    monkeypatch.setattr(install_plugin_cli, "resolve_jetbrains_plugin_dir", lambda _p: plugin_dir)
+    monkeypatch.setattr(install_plugin_cli, "resolve_gradle_bin", lambda _p: "/usr/bin/gradle")
+    monkeypatch.setattr(
+        install_plugin_cli,
+        "resolve_jetbrains_plugin_artifact",
+        lambda _p: artifact,
+    )
 
     def _fake_run(cmd, cwd, capture_output, text, check):
         assert cmd == ["/usr/bin/gradle", "buildPlugin"]
         assert cwd == str(plugin_dir)
-        return cli_command.subprocess.CompletedProcess(cmd, 0, stdout="built", stderr="")
+        return install_plugin_cli.subprocess.CompletedProcess(cmd, 0, stdout="built", stderr="")
 
-    monkeypatch.setattr(cli_command.subprocess, "run", _fake_run)
+    monkeypatch.setattr(install_plugin_cli.subprocess, "run", _fake_run)
 
     rc = autopilot_main(["install-plugin-jetbrains", "--format", "json"])
     assert rc == 0
@@ -992,7 +1006,7 @@ def test_install_unit_print_renders_execstart(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(cli_command, "_resolve_koru_bin", lambda: "/opt/koru/bin/koru")
+    monkeypatch.setattr(systemd_cli, "resolve_koru_bin", lambda: "/opt/koru/bin/koru")
     rc = autopilot_main(["install-unit", "--print"])
     assert rc == 0
     out = capsys.readouterr().out
@@ -1006,7 +1020,7 @@ def test_install_unit_writes_to_xdg_default_path(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "cfg"))
-    monkeypatch.setattr(cli_command, "_resolve_koru_bin", lambda: "/usr/bin/koru")
+    monkeypatch.setattr(systemd_cli, "resolve_koru_bin", lambda: "/usr/bin/koru")
     rc = autopilot_main(["install-unit"])
     assert rc == 0
     unit = tmp_path / "cfg" / "systemd" / "user" / "koru-autopilot.service"
@@ -1042,7 +1056,7 @@ def test_resolve_koru_bin_falls_back_to_sys_executable_sibling(
     koru.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
     koru.chmod(0o755)
 
-    monkeypatch.setattr(cli_command.shutil, "which", lambda _name: None)
-    monkeypatch.setattr(cli_command.sys, "executable", str(py))
+    monkeypatch.setattr(systemd_cli.shutil, "which", lambda _name: None)
+    monkeypatch.setattr(systemd_cli.sys, "executable", str(py))
 
-    assert cli_command._resolve_koru_bin() == str(koru)
+    assert systemd_cli.resolve_koru_bin() == str(koru)

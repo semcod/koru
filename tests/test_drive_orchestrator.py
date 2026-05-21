@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from koruide.drive_orchestrator import DriveOrchestrator
+from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 
 
 def test_plugin_required_message_mentions_ide_and_connect_command() -> None:
@@ -85,4 +89,26 @@ def test_plugin_version_policy_can_block(monkeypatch) -> None:
     monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
     info = {"plugin_version_mismatch": True}
 
+    assert DriveOrchestrator.should_block_plugin_version(info)
+
+
+def test_bundled_expected_plugin_version_matches_vscode_package_json() -> None:
+    package_json = (
+        Path(__file__).resolve().parents[1] / "plugins" / "koru-autopilot-vscode" / "package.json"
+    )
+    data = json.loads(package_json.read_text(encoding="utf-8"))
+
+    assert EXPECTED_VSCODE_PLUGIN_VERSION == data["version"]
+
+
+def test_strict_plugin_version_blocks_when_expected_version_missing(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
+    monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda: None)
+
+    info = DriveOrchestrator.plugin_version_info(
+        plugin_ide="vscode",
+        connected_version="0.1.11",
+    )
+
+    assert info["plugin_version_expected_missing"] is True
     assert DriveOrchestrator.should_block_plugin_version(info)

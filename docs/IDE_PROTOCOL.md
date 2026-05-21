@@ -302,7 +302,9 @@ Nakaz natychmiastowego wygaszenia integracji lub odłączenia klienta.
 `plugin_version_mismatch` i `plugin_version_policy`. Domyślnie mismatch jest
 ostrzegawczy (`plugin_version_policy="warn"`). Przy `KORU_STRICT_PLUGIN_VERSION=1`
 lub `KORU_PLUGIN_VERSION_POLICY=strict` daemon zwraca `error` przed wysłaniem
-`chat.send` do stale pluginu.
+`chat.send` do stale pluginu. Tryb strict jest fail-closed: jeśli daemon nie
+potrafi ustalić `expected_plugin_version`, blokuje plugin `drive` zamiast
+akceptować potencjalnie stary runtime.
 
 #### B. `status`
 Zapytanie o bieżący stan daemona, podłączone wtyczki, statusy procesów i dostępne backendy wstrzykiwania.

@@ -1,22 +1,24 @@
 """CLI helpers for ``koru queue``."""
 
 
-import os
 from argparse import Namespace
 from collections.abc import Callable
 from typing import Any
 
 from koru.events import emit_management_event
-from koru.local_manager_client import (
-    LocalManagerClient,
-    LocalManagerSession,
-    lifecycle_decision_action,
-)
 from koru.queue import (
     QueueLoopResult,
     QueueRunResult,
     run_next_planfile_task,
     run_planfile_queue_loop,
+)
+from koru.queue.local_manager import (
+    queue_local_manager_session,
+    queue_manager_complete,
+    queue_manager_decision_action,
+    queue_manager_health,
+    queue_manager_start,
+    queue_manager_stop_callback,
 )
 from koru.run_log import open_run_log_eagerly
 
@@ -31,15 +33,6 @@ QUEUE_STATUS_MARKERS: dict[str, str] = {
 }
 
 SUCCESS_QUEUE_STATUSES = frozenset({"completed", "idle", "waiting_input", "dry_run"})
-QUEUE_LOCAL_MANAGER_ACTION_TYPES = ["koru.queue", "koru.queue.run", "planfile.queue.run"]
-QUEUE_LOCAL_MANAGER_CAPABILITIES = [
-    "koru.queue",
-    "planfile.queue",
-    "queue.runner",
-    "shell.executor",
-    "api.executor",
-    "llm.executor",
-]
 
 
 def queue_status_marker(status: str) -> str:
@@ -130,94 +123,6 @@ def _emit_queue_completed(
     )
 
 
-def _queue_local_manager_session(args: Namespace) -> LocalManagerSession | None:
-    client = LocalManagerClient.from_env()
-    if not client.enabled:
-        return None
-    capabilities = list(QUEUE_LOCAL_MANAGER_CAPABILITIES)
-    if args.interactive:
-        capabilities.append("human.input")
-    return LocalManagerSession(
-        client=client,
-        worker_id=f"koru.queue:{os.getpid()}:{args.actor}",
-        worker_kind="koru.queue",
-        capabilities=capabilities,
-        action_types=list(QUEUE_LOCAL_MANAGER_ACTION_TYPES),
-    )
-
-
-def _queue_manager_start_or_exit(
-    args: Namespace,
-    manager: LocalManagerSession | None,
-) -> int | None:
-    if manager is None:
-        return None
-    manager.start(
-        project=args.project,
-        metadata={
-            "mode": "loop" if args.loop else "single",
-            "actor": args.actor,
-            "queue_name": args.queue_name,
-            "dry_run": args.dry_run,
-            "interactive": args.interactive,
-        },
-    )
-    if not manager.should_stop():
-        return None
-    action = lifecycle_decision_action(manager.last_reply)
-    exit_code = 1 if action == "quarantine" else 0
-    message = f"local manager decision={action}; exiting before queue work"
-    print(f"koru queue: {message}")
-    _emit_queue_completed(
-        args,
-        exit_code=exit_code,
-        status=action,
-        message=message,
-        details={"local_manager_decision": manager.last_reply},
-    )
-    return exit_code
-
-
-def _queue_manager_health(result: QueueRunResult) -> str:
-    return "bad" if result.status == "planfile_error" else "ok"
-
-
-def _queue_manager_stop_callback(
-    manager: LocalManagerSession | None,
-) -> Callable[[QueueRunResult, int], bool] | None:
-    if manager is None:
-        return None
-
-    def _stop(result: QueueRunResult, iteration: int) -> bool:
-        manager.heartbeat(
-            health=_queue_manager_health(result),
-            metadata={
-                "iteration": iteration,
-                "status": result.status,
-                "ticket_id": result.ticket_id,
-                "executor_kind": result.executor_kind,
-            },
-        )
-        if not manager.should_stop():
-            return False
-        action = lifecycle_decision_action(manager.last_reply)
-        print(f"koru queue: local manager decision={action}; stopping after current iteration")
-        return True
-
-    return _stop
-
-
-def _queue_manager_complete(
-    manager: LocalManagerSession | None,
-    *,
-    exit_code: int,
-    result: dict[str, Any],
-) -> None:
-    if manager is None:
-        return
-    manager.complete(status="completed" if exit_code == 0 else "failed", result=result)
-
-
 def run_queue_loop_mode(
     args: Namespace,
     run_log: Any | None,
@@ -228,10 +133,18 @@ def run_queue_loop_mode(
     llm_runner: Callable[..., Any],
     prompt_runner: Callable[..., Any],
 ) -> int:
-    manager = _queue_local_manager_session(args)
-    early_exit = _queue_manager_start_or_exit(args, manager)
+    manager = queue_local_manager_session(args)
+    early_exit = queue_manager_start(args, manager)
     if early_exit is not None:
-        return early_exit
+        print(f"koru queue: {early_exit.message}")
+        _emit_queue_completed(
+            args,
+            exit_code=early_exit.exit_code,
+            status=early_exit.status,
+            message=early_exit.message,
+            details=early_exit.details,
+        )
+        return early_exit.exit_code
     loop_result = run_planfile_queue_loop(
         project=args.project,
         actor=args.actor,
@@ -239,7 +152,7 @@ def run_queue_loop_mode(
         interactive=args.interactive,
         max_iterations=args.max_iterations,
         progress_callback=_queue_progress_callback(args, run_log),
-        stop_callback=_queue_manager_stop_callback(manager),
+        stop_callback=queue_manager_stop_callback(manager),
         planfile_runner=planfile_runner,
         shell_runner=shell_runner,
         api_runner=api_runner,
@@ -269,7 +182,7 @@ def run_queue_loop_mode(
             "iterations": loop_result.iterations,
         },
     )
-    _queue_manager_complete(
+    queue_manager_complete(
         manager,
         exit_code=exit_code,
         result={
@@ -306,10 +219,18 @@ def run_queue_single_mode(
     llm_runner: Callable[..., Any],
     prompt_runner: Callable[..., Any],
 ) -> int:
-    manager = _queue_local_manager_session(args)
-    early_exit = _queue_manager_start_or_exit(args, manager)
+    manager = queue_local_manager_session(args)
+    early_exit = queue_manager_start(args, manager)
     if early_exit is not None:
-        return early_exit
+        print(f"koru queue: {early_exit.message}")
+        _emit_queue_completed(
+            args,
+            exit_code=early_exit.exit_code,
+            status=early_exit.status,
+            message=early_exit.message,
+            details=early_exit.details,
+        )
+        return early_exit.exit_code
     result = run_next_planfile_task(
         project=args.project,
         actor=args.actor,
@@ -333,7 +254,7 @@ def run_queue_single_mode(
         print(result.message)
     if manager is not None:
         manager.heartbeat(
-            health=_queue_manager_health(result),
+            health=queue_manager_health(result),
             metadata={
                 "status": result.status,
                 "ticket_id": result.ticket_id,
@@ -341,7 +262,7 @@ def run_queue_single_mode(
             },
         )
         if manager.should_stop():
-            action = lifecycle_decision_action(manager.last_reply)
+            action = queue_manager_decision_action(manager.last_reply)
             print(f"koru queue: local manager decision={action}; exiting after current task")
     exit_code = queue_loop_exit_code(result.status)
     _emit_queue_completed(
@@ -356,7 +277,7 @@ def run_queue_single_mode(
             "dry_run": args.dry_run,
         },
     )
-    _queue_manager_complete(
+    queue_manager_complete(
         manager,
         exit_code=exit_code,
         result={
