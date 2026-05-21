@@ -612,6 +612,7 @@ def test_repeated_stale_plugin_hello_rejections_are_log_throttled(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
+    monkeypatch.setenv("KORU_PLUGIN_REJECTION_LOG_INTERVAL_SECONDS", "30")
     monkeypatch.setattr(
         DriveOrchestrator,
         "expected_plugin_version",
@@ -643,6 +644,70 @@ def test_repeated_stale_plugin_hello_rejections_are_log_throttled(
     rejection_logs = [line for line in logs if line.startswith("rejecting plugin connection")]
     assert len(rejection_logs) == 2
     assert "suppressed 2 repeated reconnects" in rejection_logs[1]
+
+
+def test_rejected_plugin_log_default_interval_is_quiet(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("KORU_PLUGIN_REJECTION_LOG_INTERVAL_SECONDS", raising=False)
+    logs: list[str] = []
+    ticks = iter([10.0, 45.0, 315.0])
+    monkeypatch.setattr(koruide_daemon_mod.time, "monotonic", lambda: next(ticks))
+    daemon = AutopilotDaemon(
+        socket_path=tmp_path / "autopilot.sock",
+        injector=_StubInjector(),
+        log=logs.append,
+    )
+
+    for _ in range(3):
+        daemon._log_rejected_plugin_connection(
+            ide="vscode",
+            plugin_version="0.1.11",
+            expected_plugin_version="0.1.14",
+            message="connected autopilot plugin version mismatch",
+        )
+
+    rejection_logs = [line for line in logs if line.startswith("rejecting plugin connection")]
+    assert len(rejection_logs) == 2
+    assert "suppressed 1 repeated reconnects" in rejection_logs[1]
+
+
+def test_status_reports_rejected_plugin_versions(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
+    monkeypatch.setattr(
+        DriveOrchestrator,
+        "expected_plugin_version",
+        lambda: "0.1.13",
+    )
+
+    with _daemon(tmp_path, monkeypatch) as h:
+        stale_plugin = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        stale_plugin.settimeout(2.0)
+        stale_plugin.connect(str(h.sock_path))
+        stale_reader = _LineReader(stale_plugin)
+        stale_plugin.sendall(
+            hello(ide="vscode", version="0.1.11", pid=41, id="hello-stale").encode(),
+        )
+        assert stale_reader.read_message().type == "error"
+        stale_plugin.close()
+
+        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli.settimeout(2.0)
+        cli.connect(str(h.sock_path))
+        cli_reader = _LineReader(cli)
+        cli.sendall(Message(type="status", id="status").encode())
+
+        reply = cli_reader.read_message()
+        rejected = reply.data.get("rejected_plugins", [])
+        assert rejected
+        assert rejected[0]["ide"] == "vscode"
+        assert rejected[0]["version"] == "0.1.11"
+        assert rejected[0]["expected_version"] == "0.1.13"
+        cli.close()
 
 
 def test_message_sent_event_completes_pending_drive_without_plugin_ack(

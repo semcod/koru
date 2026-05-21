@@ -1,0 +1,30 @@
+name: Docker IDE Matrix
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker-ide-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        system: [debian-slim, debian-bookworm, ubuntu-noble, fedora, alpine]
+        ide: [vscode, vscodium, cursor, windsurf, jetbrains, zed]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Docker OS x IDE smoke
+        env:
+          KORU_DOCKER_SYSTEMS: ${{ matrix.system }}
+          KORU_DOCKER_IDES: ${{ matrix.ide }}
+        run: bash scripts/docker-ide-matrix.sh

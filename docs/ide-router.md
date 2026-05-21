@@ -39,8 +39,36 @@ files; the router does **not** auto-enable MCP in Cursor/Windsurf.
 
 | Surface | Autoloop terminal | Chat / agent |
 | --- | --- | --- |
-| Cursor / Windsurf / VS Code | Autopilot optional | MCP + rules |
+| VS Code / VSCodium / Cursor / Windsurf | Autopilot plugin path | MCP + rules |
+| JetBrains / Zed | Autopilot fallback path | IDE-native agent where available |
 | Headless / CI | Queue + gates | Separate agent with MCP or API only |
+
+## IDE lanes and sockets
+
+Supported autopilot IDE ids are `vscode`, `vscodium`, `cursor`, `windsurf`,
+`jetbrains`, and `zed`.
+
+`vscode` and `vscodium` are intentionally separate lanes. If a terminal is
+hosted by VSCodium, or if the operator passes `--ide vscodium`, koru uses
+`KORU_AUTOPILOT_INSTANCE=vscodium`, VSCodium settings, and
+`koru-autopilot-vscodium.sock`. VS Code uses `KORU_AUTOPILOT_INSTANCE=vscode`
+and `koru-autopilot-vscode.sock`.
+
+This separation matters when several editors are open at once: the router should
+target the active/editor-specific lane instead of whichever VS Code-family
+window connected first.
+
+## Test coverage
+
+The current smoke matrix covers:
+
+- Docker Linux bases: `debian-slim`, `debian-bookworm`, `ubuntu-noble`,
+  `fedora`, `alpine`
+- Native GitHub runners: `ubuntu-latest`, `windows-latest`, `macos-latest`
+- IDE lanes: `vscode`, `vscodium`, `cursor`, `windsurf`, `jetbrains`, `zed`
+
+iOS is not part of the matrix because autopilot targets desktop IDE CLIs,
+extension hosts, and local socket/process workflows.
 
 For product-level agent lanes, see `koru agent --env-exports` and
 `docs/agent-guide.md`.

@@ -22,7 +22,8 @@ from pathlib import Path
 # ``/opt/windsurf/windsurf --type=renderer``.
 _IDE_SIGNATURES: dict[str, tuple[tuple[str, ...], str]] = {
     "windsurf": (("windsurf",), "Windsurf"),
-    "vscode": (("code", "code-oss", "vscodium"), "VS Code"),
+    "vscode": (("code", "code-insiders"), "VS Code"),
+    "vscodium": (("codium", "vscodium", "code-oss"), "VSCodium"),
     "cursor": (("cursor",), "Cursor"),
     "jetbrains": (
         # JetBrains products run as the JVM; the cmdline almost always
@@ -32,6 +33,73 @@ _IDE_SIGNATURES: dict[str, tuple[tuple[str, ...], str]] = {
     ),
     "zed": (("zed",), "Zed"),
 }
+
+_AUTOPILOT_IDE_ORDER = ("auto", *_IDE_SIGNATURES.keys())
+_SUPPORTED_AUTOPILOT_IDES = frozenset(_AUTOPILOT_IDE_ORDER)
+_VSCODE_EXTENSION_PLUGIN_IDES = frozenset({"windsurf", "vscode", "vscodium", "cursor"})
+_IDE_ALIASES: dict[str, str] = {
+    "code": "vscode",
+    "code-insiders": "vscode",
+    "vs-code": "vscode",
+    "visual-studio-code": "vscode",
+    "antigravity": "vscode",
+    "codium": "vscodium",
+    "vscodium": "vscodium",
+    "code-oss": "vscodium",
+    "code oss": "vscodium",
+    "cursor": "cursor",
+    "windsurf": "windsurf",
+    "pycharm": "jetbrains",
+    "idea": "jetbrains",
+    "intellij": "jetbrains",
+    "jetbrains": "jetbrains",
+    "webstorm": "jetbrains",
+    "phpstorm": "jetbrains",
+    "goland": "jetbrains",
+    "clion": "jetbrains",
+    "rubymine": "jetbrains",
+    "zed": "zed",
+    "zed-editor": "zed",
+    "zed-preview": "zed",
+}
+
+
+def normalize_ide_id(raw: str | None) -> str | None:
+    """Return Koru's canonical IDE id for common executable/config aliases."""
+    token = (raw or "").strip().lower()
+    if not token:
+        return None
+    token = token.rsplit("/", 1)[-1]
+    if token.endswith(".desktop"):
+        token = token[: -len(".desktop")]
+    token = " ".join(token.replace("_", "-").split())
+    candidates = (token, token.replace(" - ", "-").replace(" ", "-"))
+    for candidate in candidates:
+        normalized = _IDE_ALIASES.get(candidate)
+        if normalized is not None:
+            return normalized
+    return token
+
+
+def supported_autopilot_ide_ids() -> frozenset[str]:
+    """Return IDE ids accepted by Koru's autopilot surfaces."""
+    return _SUPPORTED_AUTOPILOT_IDES
+
+
+def autopilot_ide_choices() -> tuple[str, ...]:
+    """Return stable CLI choice order for autopilot IDE ids."""
+    return _AUTOPILOT_IDE_ORDER
+
+
+def vscode_extension_plugin_ide_ids() -> frozenset[str]:
+    """Return IDE ids supported by the VS Code-extension autopilot plugin."""
+    return _VSCODE_EXTENSION_PLUGIN_IDES
+
+
+def supports_vscode_extension_plugin(ide: str | None) -> bool:
+    """True when ``ide`` can run the bundled VS Code-family extension."""
+    normalized = normalize_ide_id(ide)
+    return bool(normalized and normalized in _VSCODE_EXTENSION_PLUGIN_IDES)
 
 
 @dataclass(frozen=True)
@@ -109,7 +177,8 @@ def _matches(comm: str, cmdline: str, patterns: tuple[str, ...]) -> bool:
 
 _CANONICAL_COMM: dict[str, tuple[str, ...]] = {
     "windsurf": ("windsurf",),
-    "vscode": ("code", "code-insiders", "code-oss", "codium", "vscodium"),
+    "vscode": ("code", "code-insiders"),
+    "vscodium": ("codium", "vscodium", "code-oss"),
     "cursor": ("cursor",),
     "zed": ("zed",),
 }
@@ -120,20 +189,33 @@ def _score_comm_name(ide_id: str, comm: str) -> int:
     return 100 if comm.lower() in canonical else 0
 
 
+_PRIMARY_EXE_SUFFIXES: dict[str, tuple[str, ...]] = {
+    "vscode": ("/code", "/code-insiders"),
+    "vscodium": ("/codium", "/vscodium", "/code-oss"),
+    "cursor": ("/cursor",),
+}
+
+
+def _score_windsurf_exe_path(exe_l: str) -> int:
+    if exe_l.endswith("/windsurf") and "/extensions/" not in exe_l:
+        return 120
+    if "/extensions/" in exe_l or "/devin/" in exe_l:
+        return -80
+    return 0
+
+
+def _score_primary_exe_path(ide_id: str, exe_l: str) -> int:
+    suffixes = _PRIMARY_EXE_SUFFIXES.get(ide_id, ())
+    return 120 if exe_l.endswith(suffixes) else 0
+
+
 def _score_exe_path(ide_id: str, exe: str) -> int:
     exe_l = exe.lower()
     if not exe_l:
         return 0
     if ide_id == "windsurf":
-        if exe_l.endswith("/windsurf") and "/extensions/" not in exe_l:
-            return 120
-        if "/extensions/" in exe_l or "/devin/" in exe_l:
-            return -80
-    if ide_id == "vscode" and (exe_l.endswith("/code") or exe_l.endswith("/code-insiders")):
-        return 120
-    if ide_id == "cursor" and exe_l.endswith("/cursor"):
-        return 120
-    return 0
+        return _score_windsurf_exe_path(exe_l)
+    return _score_primary_exe_path(ide_id, exe_l)
 
 
 def _score_cmdline_flags(cmdline: str) -> int:
@@ -267,8 +349,8 @@ def _vscode_family_flavor_from_env() -> str | None:
         return "cursor"
     if "windsurf" in blob:
         return "windsurf"
-    if "codium" in blob or "vscodium" in blob:
-        return "vscode"
+    if "codium" in blob or "vscodium" in blob or "code-oss" in blob or "code - oss" in blob:
+        return "vscodium"
     if blob.strip():
         return "vscode"
     return None
@@ -276,7 +358,8 @@ def _vscode_family_flavor_from_env() -> str | None:
 
 def _terminal_ide_from_env() -> str | None:
     chrome = os.environ.get("CHROME_DESKTOP", "").strip().lower()
-    if chrome == "cursor.desktop" or os.environ.get("CURSOR_AGENT") or os.environ.get("CURSOR_CLI"):
+    chrome_ide = normalize_ide_id(chrome)
+    if chrome_ide == "cursor" or os.environ.get("CURSOR_AGENT") or os.environ.get("CURSOR_CLI"):
         return "cursor"
 
     # Prioritize Windsurf detection via specific env markers before generic vscode/TERM_PROGRAM
@@ -284,14 +367,19 @@ def _terminal_ide_from_env() -> str | None:
     if (
         "windsurf" in term_program_version
         or os.environ.get("WINDSURF_CASCADE_TERMINAL")
-        or chrome == "windsurf.desktop"
+        or chrome_ide == "windsurf"
         or "windsurf" in os.environ.get("GIO_LAUNCHED_DESKTOP_FILE", "").lower()
     ):
         return "windsurf"
 
     term_program = os.environ.get("TERM_PROGRAM", "").strip().lower()
-    if term_program in _IDE_SIGNATURES:
-        return term_program
+    term_ide = normalize_ide_id(term_program)
+    if term_program in {"vscode", "code"} and _vscode_family_env_present():
+        return _vscode_family_flavor_from_env()
+    if term_ide in _IDE_SIGNATURES:
+        return term_ide
+    if chrome_ide in _IDE_SIGNATURES:
+        return chrome_ide
     if _vscode_family_env_present():
         return _vscode_family_flavor_from_env()
     if os.environ.get("WINDSURF_VERSION") or (
@@ -322,7 +410,7 @@ def _terminal_ide_from_parent_chain(start_pid: int) -> str | None:
         pid = ppid
     if not chain:
         return None
-    for preferred in ("cursor", "windsurf", "vscode", "zed"):
+    for preferred in ("cursor", "windsurf", "vscodium", "vscode", "zed", "jetbrains"):
         if preferred in chain:
             return preferred
     return chain[0]
@@ -371,16 +459,17 @@ def pick_target(
 
     1. ``prefer`` (the user's explicit ``--ide`` flag), if running.
     2. ``KORU_AUTOPILOT_IDE`` (when set and not ``auto``), if running.
-    3. Integrated-terminal host IDE (``CURSOR_*``, ``VSCODE_PID``, parent walk).
-    4. Focused IDE window (X11 active window, when detectable).
+    3. Focused IDE window (X11 active window, when detectable).
+    4. Integrated-terminal host IDE (``CURSOR_*``, ``VSCODE_PID``, parent walk).
     5. The first IDE in :data:`_IDE_SIGNATURES` order.
     """
+    prefer = normalize_ide_id(prefer)
     if prefer:
         for ide in detected:
             if ide.id == prefer:
                 return ide
         return None
-    env_prefer = os.environ.get("KORU_AUTOPILOT_IDE", "").strip().lower()
+    env_prefer = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_IDE"))
     if env_prefer and env_prefer != "auto":
         for ide in detected:
             if ide.id == env_prefer:
@@ -525,8 +614,9 @@ def resolve_drive_target(
     profile_check = has_profile or _has_os_injector_profile
     stripped_profile = (os_profile or "").strip()
     raw = (ide_arg or "").strip()
-    is_auto = not raw or raw.lower() == "auto"
-    prefer = None if is_auto else raw
+    normalized = normalize_ide_id(raw)
+    is_auto = not raw or normalized == "auto"
+    prefer = None if is_auto else (normalized or raw.lower())
     detected = detect_running_ides()
     target = pick_target(detected, prefer=prefer)
 
@@ -546,13 +636,18 @@ def resolve_drive_target(
 
 __all__ = [
     "RunningIDE",
+    "autopilot_ide_choices",
     "detect_running_ides",
     "detect_running_ides_cached",
     "detect_focused_ide_id",
     "detect_terminal_host_ide_id",
     "clear_detect_cache",
     "focused_ide",
+    "normalize_ide_id",
     "pick_target",
     "resolve_drive_target",
     "is_linux",
+    "supported_autopilot_ide_ids",
+    "supports_vscode_extension_plugin",
+    "vscode_extension_plugin_ide_ids",
 ]

@@ -18,6 +18,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal, TextIO
 
+import yaml
+
 from koru.autonomous_startup import AutonomousStartupProbe, supports_autopilot_plugin_ide
 from koru.tasks import CreatedTask, create_nl_task
 
@@ -68,6 +70,97 @@ def _write_marker(state_dir: Path, step_id: str, ticket_id: str) -> None:
 def _clear_marker(state_dir: Path, step_id: str) -> None:
     with contextlib.suppress(FileNotFoundError):
         _marker_path(state_dir, step_id).unlink()
+
+
+def _ticket_matches_step(ticket: dict[str, Any], *, step_id: str, queue_name: str) -> bool:
+    status = str(ticket.get("status") or "").strip().lower()
+    if status in {"done", "closed", "cancelled", "canceled"}:
+        return False
+    execution = ticket.get("execution") if isinstance(ticket.get("execution"), dict) else {}
+    queue = str(execution.get("queue") or "default")
+    if queue != queue_name:
+        return False
+    labels = ticket.get("labels") if isinstance(ticket.get("labels"), list) else []
+    if f"step:{step_id}" in {str(label) for label in labels}:
+        return True
+    source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}
+    context = source.get("context") if isinstance(source.get("context"), dict) else {}
+    return context.get("step_id") == step_id
+
+
+def _ticket_text(ticket: dict[str, Any]) -> str:
+    parts: list[str] = []
+    for key in ("name", "description"):
+        value = ticket.get(key)
+        if isinstance(value, str):
+            parts.append(value)
+    for section_key in ("source", "execution"):
+        section = ticket.get(section_key)
+        if not isinstance(section, dict):
+            continue
+        for key in ("message", "prompt", "input"):
+            value = section.get(key)
+            if isinstance(value, str):
+                parts.append(value)
+        inputs = section.get("inputs")
+        if isinstance(inputs, dict):
+            for value in inputs.values():
+                if isinstance(value, str):
+                    parts.append(value)
+    return "\n".join(parts)
+
+
+def _ticket_matches_current_step(ticket: dict[str, Any], step: OperatorStep) -> bool:
+    source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}
+    context = source.get("context") if isinstance(source.get("context"), dict) else {}
+    if context.get("step_id") == step.step_id:
+        context_detail = context.get("detail")
+        context_command = context.get("task_command")
+        if context_detail is not None or context_command is not None:
+            return context_detail == step.detail and context_command == step.task_command
+
+    text = _ticket_text(ticket)
+    if step.detail and step.detail not in text:
+        return False
+    if step.task_command and step.task_command not in text:
+        return False
+    return True
+
+
+def _find_ticket_by_id(project: Path, ticket_id: str) -> dict[str, Any] | None:
+    sprints_dir = project.resolve() / ".planfile" / "sprints"
+    for sprint_path in sorted(sprints_dir.glob("*.yaml")):
+        try:
+            data = yaml.safe_load(sprint_path.read_text(encoding="utf-8")) or {}
+        except (OSError, yaml.YAMLError):
+            continue
+        sprint = data.get("sprint") if isinstance(data, dict) else {}
+        tickets = sprint.get("tickets") if isinstance(sprint, dict) else {}
+        if not isinstance(tickets, dict):
+            continue
+        ticket = tickets.get(ticket_id)
+        if isinstance(ticket, dict):
+            return ticket
+    return None
+
+
+def _find_existing_step_ticket(project: Path, *, step_id: str, queue_name: str) -> str | None:
+    sprints_dir = project.resolve() / ".planfile" / "sprints"
+    for sprint_path in sorted(sprints_dir.glob("*.yaml")):
+        try:
+            data = yaml.safe_load(sprint_path.read_text(encoding="utf-8")) or {}
+        except (OSError, yaml.YAMLError):
+            continue
+        sprint = data.get("sprint") if isinstance(data, dict) else {}
+        tickets = sprint.get("tickets") if isinstance(sprint, dict) else {}
+        if not isinstance(tickets, dict):
+            continue
+        for raw_id, ticket in tickets.items():
+            if not isinstance(ticket, dict):
+                continue
+            if _ticket_matches_step(ticket, step_id=step_id, queue_name=queue_name):
+                return str(ticket.get("id") or raw_id)
+    return None
 
 
 def _close_resolved_step_ticket(
@@ -314,11 +407,11 @@ def build_operator_steps(
     elif plugin_connected is False:
         plug_status = "pending"
         plug_detail = f"brak pluginu na {probe.socket_path}"
-        plug_task = "task koru:operator:plugin-probe"
+        plug_task = f"task koru:operator:plugin-probe IDE={ide}"
     else:
         plug_status = "pending"
         plug_detail = "nie sprawdzono — podłącz plugin w IDE"
-        plug_task = "task koru:operator:plugin-probe"
+        plug_task = f"task koru:operator:plugin-probe IDE={ide}"
 
     steps.append(
         OperatorStep(
@@ -426,7 +519,11 @@ def _create_step_ticket(
             "executor_mode": "interactive",
             "labels": labels,
             "source_tool": "koru-operator-pipeline",
-            "source_context": {"step_id": step.step_id},
+            "source_context": {
+                "detail": step.detail,
+                "step_id": step.step_id,
+                "task_command": step.task_command,
+            },
         }
     else:
         script = step.task_command or "true"
@@ -436,7 +533,11 @@ def _create_step_ticket(
             "executor_mode": "noninteractive",
             "labels": labels,
             "source_tool": "koru-operator-pipeline",
-            "source_context": {"step_id": step.step_id},
+            "source_context": {
+                "detail": step.detail,
+                "step_id": step.step_id,
+                "task_command": step.task_command,
+            },
             "inputs": {"script": script},
         }
 
@@ -489,6 +590,20 @@ def _process_operator_step(
 ) -> OperatorStep:
     """Process a single operator step and return updated step with ticket_id."""
     ticket_id: str | None = _read_marker(state_dir, step.step_id)
+    if create_tickets and step.status == "pending" and ticket_id is not None:
+        ticket = _find_ticket_by_id(project, ticket_id)
+        if ticket is None or not _ticket_matches_current_step(ticket, step):
+            if ticket is not None:
+                _close_resolved_step_ticket(
+                    project,
+                    step_id=step.step_id,
+                    ticket_id=ticket_id,
+                    state_dir=state_dir,
+                    stdio_format=stdio_format,
+                )
+            else:
+                _clear_marker(state_dir, step.step_id)
+            ticket_id = None
     if create_tickets and step.status in {"ok", "skipped"} and ticket_id is not None:
         closed = _close_resolved_step_ticket(
             project,
@@ -499,6 +614,17 @@ def _process_operator_step(
         )
         if closed:
             ticket_id = None
+    if create_tickets and step.status == "pending" and ticket_id is None:
+        candidate_ticket_id = _find_existing_step_ticket(
+            project,
+            step_id=step.step_id,
+            queue_name=ticket_queue,
+        )
+        if candidate_ticket_id is not None:
+            ticket = _find_ticket_by_id(project, candidate_ticket_id)
+            if ticket is not None and _ticket_matches_current_step(ticket, step):
+                ticket_id = candidate_ticket_id
+                _write_marker(state_dir, step.step_id, ticket_id)
     if create_tickets and step.status == "pending" and ticket_id is None:
         created = _create_step_ticket(
             project,

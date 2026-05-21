@@ -7,12 +7,15 @@ Supported targets:
     windsurf   — ~/.codeium/windsurf/mcp_config.json
     cursor     — .cursor/mcp.json (per-project)
     vscode     — .vscode/mcp.json (per-project, VS Code 1.99+)
+    vscodium   — .vscode/mcp.json (per-project, VS Code-compatible layout)
+    zed        — .zed/settings.json (per-project context_servers)
 
 Usage::
 
     koru init-ide                        # auto-detect + provision all found
     koru init-ide --ide windsurf         # only Windsurf
     koru init-ide --ide cursor           # only Cursor
+    koru init-ide --ide zed              # only Zed
     koru init-ide --dry-run              # preview without writing
     koru init-ide --remove               # remove koru entries from configs
 """
@@ -25,6 +28,7 @@ from pathlib import Path
 from typing import Any
 
 from koru.ide_runtime import detect_running_ides
+from koruide.ide import normalize_ide_id
 
 # ---------------------------------------------------------------------------
 # IDE config locations
@@ -49,6 +53,11 @@ def _vscode_project_config(project: Path) -> Path:
 def _windsurf_project_config(project: Path) -> Path:
     """Return the Windsurf per-project MCP config path."""
     return project / ".windsurf" / "mcp_config.json"
+
+
+def _zed_project_settings(project: Path) -> Path:
+    """Return the Zed per-project settings path."""
+    return project / ".zed" / "settings.json"
 
 
 # ---------------------------------------------------------------------------
@@ -132,6 +141,8 @@ def detect_ides() -> list[str]:
         for name, check in [
             ("cursor", Path.home() / ".cursor"),
             ("vscode", Path.home() / ".vscode"),
+            ("vscodium", Path.home() / ".config" / "VSCodium"),
+            ("zed", Path.home() / ".config" / "zed"),
         ]:
             if check.exists() and name not in detected:
                 detected.append(name)
@@ -225,10 +236,39 @@ def provision_vscode(project: Path, *, dry_run: bool = False) -> dict[str, Any]:
     return {"ide": "vscode", "action": "added", "path": written, "dry_run": dry_run}
 
 
-def remove_from_config(config_path: Path, *, dry_run: bool = False) -> dict[str, Any]:
+def provision_vscodium(project: Path, *, dry_run: bool = False) -> dict[str, Any]:
+    """Add koru MCP server to VSCodium using the VS Code-compatible layout."""
+    result = provision_vscode(project, dry_run=dry_run)
+    result["ide"] = "vscodium"
+    return result
+
+
+def provision_zed(project: Path, *, dry_run: bool = False) -> dict[str, Any]:
+    """Add koru MCP server to Zed per-project settings."""
+    config_path = _zed_project_settings(project)
+    config = _read_json(config_path)
+    servers = config.setdefault("context_servers", {})
+
+    if "koru" in servers:
+        if _maybe_upgrade_koru_command(servers):
+            written = _write_json(config_path, config, dry_run=dry_run)
+            return {"ide": "zed", "action": "updated", "path": written, "dry_run": dry_run}
+        return {"ide": "zed", "action": "already_configured", "path": str(config_path)}
+
+    servers["koru"] = _koru_mcp_entry()
+    written = _write_json(config_path, config, dry_run=dry_run)
+    return {"ide": "zed", "action": "added", "path": written, "dry_run": dry_run}
+
+
+def remove_from_config(
+    config_path: Path,
+    *,
+    dry_run: bool = False,
+    server_key: str = "mcpServers",
+) -> dict[str, Any]:
     """Remove the koru entry from an MCP config file."""
     config = _read_json(config_path)
-    servers = config.get("mcpServers", {})
+    servers = config.get(server_key, {})
     if "koru" not in servers:
         return {"action": "not_present", "path": str(config_path)}
     del servers["koru"]
@@ -251,19 +291,20 @@ def ensure_koru_mcp_not_disabled(project: Path) -> list[dict[str, Any]]:
     """
     out: list[dict[str, Any]] = []
     global_windsurf = _windsurf_global_config()
-    paths: list[Path] = [
-        _cursor_project_config(project),
-        _vscode_project_config(project),
-        _windsurf_project_config(project),
+    paths: list[tuple[Path, str]] = [
+        (_cursor_project_config(project), "mcpServers"),
+        (_vscode_project_config(project), "mcpServers"),
+        (_windsurf_project_config(project), "mcpServers"),
+        (_zed_project_settings(project), "context_servers"),
     ]
-    if global_windsurf not in paths:
-        paths.append(global_windsurf)
+    if all(global_windsurf != path for path, _server_key in paths):
+        paths.append((global_windsurf, "mcpServers"))
 
-    for config_path in paths:
+    for config_path, server_key in paths:
         if not config_path.is_file():
             continue
         config = _read_json(config_path)
-        servers = config.get("mcpServers")
+        servers = config.get(server_key)
         if not isinstance(servers, dict) or "koru" not in servers:
             continue
         mutated = _maybe_upgrade_koru_command(servers)
@@ -281,12 +322,17 @@ _PROVISIONERS: dict[str, Any] = {
     "windsurf": provision_windsurf,
     "cursor": provision_cursor,
     "vscode": provision_vscode,
+    "vscodium": provision_vscodium,
+    "zed": provision_zed,
 }
 
 _IDE_ALIASES: dict[str, str] = {
     "code": "vscode",
     "vs-code": "vscode",
     "antigravity": "vscode",  # VSCode-fork, same config layout
+    "codium": "vscodium",
+    "code-oss": "vscodium",
+    "zed-editor": "zed",
 }
 
 
@@ -296,7 +342,8 @@ def _resolve_targets(ide: str) -> list[str]:
         return detected or ["windsurf", "cursor"]
     if ide == "all":
         return list(_PROVISIONERS.keys())
-    return [_IDE_ALIASES.get(ide, ide)]
+    normalized = normalize_ide_id(ide) or ide
+    return [_IDE_ALIASES.get(ide, normalized)]
 
 
 def _removal_paths_for_ide(ide: str, project: Path) -> list[Path]:
@@ -306,6 +353,10 @@ def _removal_paths_for_ide(ide: str, project: Path) -> list[Path]:
         return [_cursor_project_config(project)]
     if ide == "vscode":
         return [_vscode_project_config(project)]
+    if ide == "vscodium":
+        return [_vscode_project_config(project)]
+    if ide == "zed":
+        return [_zed_project_settings(project)]
     return []
 
 
@@ -318,8 +369,9 @@ def _apply_target(ide: str, project: Path, *, remove: bool, dry_run: bool) -> li
         return [provisioner(project, dry_run=dry_run)]
 
     results: list[dict[str, Any]] = []
+    server_key = "context_servers" if ide == "zed" else "mcpServers"
     for path in _removal_paths_for_ide(ide, project):
-        result = remove_from_config(path, dry_run=dry_run)
+        result = remove_from_config(path, dry_run=dry_run, server_key=server_key)
         result["ide"] = ide
         results.append(result)
     return results
@@ -351,7 +403,7 @@ def init_ide_main(argv: list[str]) -> int:
         prog="koru init-ide",
         description=(
             "Auto-provision MCP configuration so IDE agents (Windsurf Cascade, "
-            "Cursor Agent, VS Code Copilot) can discover koru tools."
+            "Cursor Agent, VS Code-family editors, and Zed) can discover koru tools."
         ),
     )
     parser.add_argument(
@@ -363,8 +415,7 @@ def init_ide_main(argv: list[str]) -> int:
     parser.add_argument(
         "--ide",
         default="auto",
-        choices=["auto", "windsurf", "cursor", "vscode", "all"],
-        help="Target IDE (default: auto-detect).",
+        help="Target IDE or alias: auto, all, windsurf, cursor, vscode, vscodium, zed.",
     )
     parser.add_argument(
         "--dry-run",

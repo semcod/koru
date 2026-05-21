@@ -7,12 +7,14 @@ and top processes by CPU / memory.
 
 from __future__ import annotations
 
-import os
 import subprocess
 from pathlib import Path
 from typing import Any
 
-from koru.autonomous_process_guard import find_existing_autonomous_processes, find_existing_wup_processes
+from koru.autonomous_process_guard import (
+    find_existing_autonomous_processes,
+    find_existing_wup_processes,
+)
 from koruide.ide import detect_running_ides
 
 _PS_COLUMNS = ("pid", "pcpu", "pmem", "rss", "etime", "comm", "args")
@@ -29,7 +31,8 @@ _TOOL_PATTERNS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ("gemini-cli", "Gemini CLI", ("gemini",)),
     ("cursor", "Cursor", ("cursor",)),
     ("windsurf", "Windsurf", ("windsurf",)),
-    ("vscode", "VS Code", ("code", "codium", "vscode")),
+    ("vscodium", "VSCodium", ("codium", "vscodium", "code-oss")),
+    ("vscode", "VS Code", ("code", "vscode")),
     ("jetbrains", "JetBrains", ("pycharm", "idea", "jetbrains")),
 )
 
@@ -93,7 +96,9 @@ def _classify_process(proc: dict[str, Any], project: Path) -> str:
     return "other"
 
 
-def _active_tools(processes: list[dict[str, Any]], project: Path, *, limit: int = 10) -> list[dict[str, Any]]:
+def _active_tools(
+    processes: list[dict[str, Any]], project: Path, *, limit: int = 10
+) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for proc in processes:
         tool_id = _classify_process(proc, project)
@@ -125,8 +130,13 @@ def _active_tools(processes: list[dict[str, Any]], project: Path, *, limit: int 
     return unique
 
 
-def _top_processes(processes: list[dict[str, Any]], project: Path, *, limit: int = 8) -> list[dict[str, Any]]:
-    ranked = sorted(processes, key=lambda row: (-float(row["pcpu"]), -float(row["rss_mb"]), int(row["pid"])))
+def _top_processes(
+    processes: list[dict[str, Any]], project: Path, *, limit: int = 8
+) -> list[dict[str, Any]]:
+    ranked = sorted(
+        processes,
+        key=lambda row: (-float(row["pcpu"]), -float(row["rss_mb"]), int(row["pid"])),
+    )
     out: list[dict[str, Any]] = []
     for proc in ranked[:limit]:
         out.append(

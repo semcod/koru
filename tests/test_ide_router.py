@@ -44,6 +44,17 @@ def test_resolve_ide_route_env_ide_case_insensitive() -> None:
     assert r.autopilot_ide == "cursor"
 
 
+def test_resolve_ide_route_normalizes_vscode_family_alias() -> None:
+    env = {"KORU_AUTOPILOT_IDE": "codium"}
+    r = resolve_ide_route(cli_autopilot_ide="vscode", environ=env)
+    assert r.autopilot_ide == "vscodium"
+
+
+def test_resolve_ide_route_normalizes_zed_alias() -> None:
+    r = resolve_ide_route(cli_autopilot_ide="zed-editor", environ={})
+    assert r.autopilot_ide == "zed"
+
+
 def test_resolve_ide_route_headless_sets_primary_surface() -> None:
     r = resolve_ide_route(cli_autopilot_ide="cursor", environ={"KORU_HEADLESS": "1"})
     assert r.primary_surface == "headless_terminal"

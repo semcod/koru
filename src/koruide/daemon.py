@@ -82,6 +82,16 @@ def _prefer_keyboard_drive() -> bool:
     )
 
 
+def _plugin_rejection_log_interval_seconds() -> float:
+    raw = os.environ.get("KORU_PLUGIN_REJECTION_LOG_INTERVAL_SECONDS", "").strip()
+    if not raw:
+        return 300.0
+    try:
+        return max(5.0, float(raw))
+    except ValueError:
+        return 300.0
+
+
 @functools.lru_cache(maxsize=1)
 def _load_context_module() -> tuple[Callable[..., dict[str, Any]], Callable[[dict[str, Any]], str]]:
     """Import ``koru.context`` exactly once (R4).
@@ -197,6 +207,7 @@ class AutopilotDaemon:
         self._plugin_rejection_log_state: dict[
             tuple[str, str | None, str | None], tuple[float, int]
         ] = {}
+        self._plugin_rejections: list[dict[str, Any]] = []
 
     # ----- lifecycle -----------------------------------------------------
 
@@ -568,7 +579,11 @@ class AutopilotDaemon:
         client.ide = ide
         client.version = plugin_version
         self._plugin_router.drop_stale_plugins(client, ide)
-        self.log(f"plugin connected: ide={ide} version={version!r}")
+        matching_cmds = msg.data.get("matchingCommands")
+        self.log(
+            f"plugin connected: ide={ide} version={version!r} "
+            f"matching_commands={matching_cmds}",
+        )
         self._send(client, ack(msg.id or "", info={"role": "plugin"}).encode())
         self.audit.record(
             "plugin_connected",
@@ -588,12 +603,24 @@ class AutopilotDaemon:
         key = (ide, plugin_version, expected)
         now = time.monotonic()
         last, suppressed = self._plugin_rejection_log_state.get(key, (0.0, 0))
-        if last and now - last < 30.0:
+        if last and now - last < _plugin_rejection_log_interval_seconds():
             self._plugin_rejection_log_state[key] = (last, suppressed + 1)
             return
         suffix = f" (suppressed {suppressed} repeated reconnects)" if suppressed else ""
         self.log(f"rejecting plugin connection: ide={ide} {message}{suffix}")
         self._plugin_rejection_log_state[key] = (now, 0)
+        self._plugin_rejections.append(
+            {
+                "ide": ide,
+                "version": plugin_version,
+                "expected_version": expected,
+                "message": message,
+                "suppressed": suppressed,
+                "at": time.time(),
+            }
+        )
+        if len(self._plugin_rejections) > 20:
+            del self._plugin_rejections[:-20]
 
     def _handle_status(self, client: _Client, msg: Message) -> None:
         plugins = [row.to_dict() for row in self._plugin_router.status_rows()]
@@ -607,6 +634,7 @@ class AutopilotDaemon:
                 "version": daemon_version,
             },
             "plugins": plugins,
+            "rejected_plugins": list(self._plugin_rejections),
             "backends": [b.to_dict() for b in self.injector.probe()],
             "selected_backend": self.injector.select_backend(),
             "ides": [i.to_dict() for i in detect_running_ides()],

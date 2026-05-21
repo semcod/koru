@@ -78,7 +78,7 @@ fight each other:
 | Piece                              | Lives in                                            | Purpose                                  |
 |------------------------------------|-----------------------------------------------------|------------------------------------------|
 | `koru autopilot` CLI               | already in `pip install koru`                       | daemon + client + diagnostics            |
-| VS Code / Windsurf / Cursor plugin | `plugins/koru-autopilot-vscode/` (this repo)        | preferred chat injection path            |
+| VS Code / VSCodium / Windsurf / Cursor plugin | `plugins/koru-autopilot-vscode/` (this repo)        | preferred chat injection path            |
 | JetBrains plugin                   | `plugins/koru-autopilot-jetbrains/` (stub, Phase 3) | currently keyboard-sim fallback only     |
 | Keyboard backends                  | system packages (`xdotool` / `wtype` / `ydotool`)   | fallback when no plugin is loaded        |
 | **OS injector (X11)**              | ``xdotool`` + ``.koru/ide-os-injector.json``         | optional click-to-focus chat before typing |
@@ -261,7 +261,7 @@ automatic handoff for a specific project, override `ExecStart` via:
 systemctl --user edit koru-autopilot.service
 ```
 
-### 3. Install or reassert the VS Code / Windsurf / Cursor plugin
+### 3. Install or reassert the VS Code / VSCodium / Windsurf / Cursor plugin
 
 The plugin makes injection 100 % reliable (no focus-stealing race) and
 emits `session.ended` events that drive the auto-handoff.
@@ -492,7 +492,7 @@ output.
 ## Configuration (`~/.config/koru/autopilot.toml`)
 
 The config file is **optional**. Without it, autopilot uses safe
-built-in defaults: `Return` for VS Code / Windsurf / Cursor / Zed,
+built-in defaults: `Return` for VS Code / VSCodium / Windsurf / Cursor / Zed,
 `ctrl+Return` for JetBrains.
 
 You only need to write a config if you want to override the submit

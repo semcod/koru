@@ -36,7 +36,12 @@ def test_resolve_target_ide_uses_running_supported_ide(monkeypatch) -> None:
 
 
 def test_resolve_target_ide_uses_integrated_terminal_hint(monkeypatch) -> None:
-    for key in ("TERM_PROGRAM_VERSION", "WINDSURF_CASCADE_TERMINAL", "GIO_LAUNCHED_DESKTOP_FILE"):
+    for key in (
+        "TERM_PROGRAM_VERSION",
+        "WINDSURF_CASCADE_TERMINAL",
+        "GIO_LAUNCHED_DESKTOP_FILE",
+        "CHROME_DESKTOP",
+    ):
         monkeypatch.delenv(key, raising=False)
     monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
     monkeypatch.setenv("TERM_PROGRAM", "cursor")
@@ -87,6 +92,24 @@ def test_resolve_extension_vsix_finds_repo_plugin_package(tmp_path: Path, monkey
     assert plugin_installer.resolve_extension_vsix() == new.resolve()
 
 
+def test_resolve_extension_vsix_prefers_package_version(tmp_path: Path, monkeypatch) -> None:
+    root = tmp_path / "koru"
+    plugin_dir = root / "plugins" / "koru-autopilot-vscode"
+    plugin_dir.mkdir(parents=True)
+    (root / "pyproject.toml").write_text("[project]\nname='koru'\n", encoding="utf-8")
+    (plugin_dir / "package.json").write_text('{"version":"0.1.15"}', encoding="utf-8")
+    stale = plugin_dir / "koru-autopilot-0.1.14.vsix"
+    current = plugin_dir / "koru-autopilot-0.1.15.vsix"
+    stale.write_text("stale", encoding="utf-8")
+    current.write_text("current", encoding="utf-8")
+    os.utime(stale, (20, 20))
+    os.utime(current, (10, 10))
+    monkeypatch.setattr(plugin_installer, "_repo_root", lambda: root)
+    monkeypatch.chdir(tmp_path)
+
+    assert plugin_installer.resolve_extension_vsix() == current.resolve()
+
+
 def test_install_plugin_configures_socket_path(
     tmp_path: Path,
     monkeypatch,
@@ -132,13 +155,15 @@ def test_install_plugin_targets_vscodium_from_integrated_terminal(
 ) -> None:
     vsix = tmp_path / "koru-autopilot-0.1.8.vsix"
     vsix.write_text("fake", encoding="utf-8")
-    socket_path = tmp_path / "koru-autopilot-vscode.sock"
+    socket_path = tmp_path / "koru-autopilot-vscodium.sock"
     config_home = tmp_path / "config"
 
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
     monkeypatch.setenv("XDG_CONFIG_HOME", str(config_home))
     monkeypatch.setenv("VSCODE_PID", "123")
     monkeypatch.setenv("VSCODE_NLS_CONFIG", "/snap/codium/current/resources/app")
     monkeypatch.setattr(plugin_installer, "detect_running_ides", lambda: [])
+    monkeypatch.setattr(plugin_installer, "detect_terminal_host_ide_id", lambda: "vscodium")
     monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda: vsix)
     monkeypatch.setattr(
         plugin_installer.shutil,
@@ -157,17 +182,60 @@ def test_install_plugin_targets_vscodium_from_integrated_terminal(
         raise AssertionError(f"unexpected cmd {cmd}")
 
     result = plugin_installer.install_plugin_for_ide(
-        ide="vscode",
+        ide="auto",
         socket_path=socket_path,
         runner=fake_runner,
     )
 
     settings_path = config_home / "VSCodium" / "User" / "settings.json"
     assert result.status == "already_installed"
+    assert result.ide == "vscodium"
     assert result.settings_path == str(settings_path)
     assert f'"{plugin_installer.SOCKET_SETTING_KEY}": "{socket_path}"' in settings_path.read_text(
         encoding="utf-8",
     )
+
+
+def test_install_plugin_explicit_vscode_does_not_use_codium_hint(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    vsix = tmp_path / "koru-autopilot-0.1.8.vsix"
+    vsix.write_text("fake", encoding="utf-8")
+    socket_path = tmp_path / "koru-autopilot-vscode.sock"
+    config_home = tmp_path / "config"
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(config_home))
+    monkeypatch.setenv("VSCODE_PID", "123")
+    monkeypatch.setenv("VSCODE_NLS_CONFIG", "/snap/codium/current/resources/app")
+    monkeypatch.setattr(plugin_installer, "detect_running_ides", lambda: [])
+    monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda: vsix)
+    monkeypatch.setattr(
+        plugin_installer.shutil,
+        "which",
+        lambda name: f"/usr/bin/{name}" if name in {"code", "codium"} else None,
+    )
+
+    def fake_runner(cmd, **_kwargs):
+        assert cmd[0] == "/usr/bin/code"
+        if cmd[1] == "--list-extensions":
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout=plugin_installer.EXTENSION_ID, stderr=""
+            )
+        if cmd[1] == "--install-extension":
+            return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
+        raise AssertionError(f"unexpected cmd {cmd}")
+
+    result = plugin_installer.install_plugin_for_ide(
+        ide="vscode",
+        socket_path=socket_path,
+        runner=fake_runner,
+    )
+
+    settings_path = config_home / "Code" / "User" / "settings.json"
+    assert result.status == "already_installed"
+    assert result.ide == "vscode"
+    assert result.settings_path == str(settings_path)
 
 
 def test_install_plugin_prefers_running_vscode_over_stale_codium_terminal_hint(

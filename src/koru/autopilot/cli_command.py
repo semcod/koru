@@ -118,7 +118,7 @@ def _build_parser() -> argparse.ArgumentParser:
     drive.add_argument(
         "--ide",
         default="auto",
-        choices=("auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"),
+        choices=("auto", "windsurf", "vscode", "vscodium", "cursor", "jetbrains", "zed"),
         help=(
             "Target IDE for keyboard fallback (default: auto). "
             "With --direct and without --os-profile, this is also the OS-injector "
@@ -188,7 +188,7 @@ def _build_parser() -> argparse.ArgumentParser:
         default="auto",
         metavar="IDE",
         help=(
-            "Profile id (windsurf, vscode, cursor, …). Default auto: same detection as "
+            "Profile id (windsurf, vscode, vscodium, cursor, …). Default auto: same detection as "
             "`drive --direct --ide auto` (focused IDE when known, else first running)."
         ),
     )
@@ -305,7 +305,7 @@ def _build_parser() -> argparse.ArgumentParser:
     manage.add_argument(
         "--ide",
         default="auto",
-        choices=("auto", "windsurf", "vscode", "cursor", "jetbrains", "pycharm"),
+        choices=("auto", "windsurf", "vscode", "vscodium", "cursor", "jetbrains", "pycharm", "zed"),
         help="IDE to inspect or repair (default: auto-detect).",
     )
     manage.add_argument(
@@ -339,7 +339,7 @@ def _build_parser() -> argparse.ArgumentParser:
     install_plugin.add_argument(
         "--ide",
         default="auto",
-        choices=("auto", "windsurf", "vscode", "cursor", "jetbrains", "pycharm"),
+        choices=("auto", "windsurf", "vscode", "vscodium", "cursor", "jetbrains", "pycharm", "zed"),
         help="Target editor CLI (default: auto-detect current IDE).",
     )
     install_plugin.add_argument(
@@ -421,7 +421,7 @@ def _build_parser() -> argparse.ArgumentParser:
     handoff.add_argument(
         "--ide",
         default="auto",
-        choices=("auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"),
+        choices=("auto", "windsurf", "vscode", "vscodium", "cursor", "jetbrains", "zed"),
         help="Target IDE (default: auto-detect the focused one).",
     )
     handoff.add_argument(

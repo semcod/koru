@@ -1,0 +1,223 @@
+# code2llm | 151f 34897L | python:149,shell:1 | 2026-05-21
+# CC̄=4.3 | critical:12/1242 | dups:0 | cycles:0
+
+HEALTH[13]:
+  🔴 GOD   koru/autonomous.py = 2235L, 4 classes, 65m, max CC=21
+  🟡 CC    _handle_plugin_event CC=15 (limit:15)
+  🟡 CC    _terminal_ide_from_env CC=16 (limit:15)
+  🟡 CC    inject_with_profile CC=15 (limit:15)
+  🟡 CC    _run_autonomous_cycle CC=21 (limit:15)
+  🟡 CC    _action_up CC=17 (limit:15)
+  🟡 CC    autonomous_main CC=15 (limit:15)
+  🟡 CC    build_startup_probe CC=15 (limit:15)
+  🟡 CC    _client_has_usable_plugin CC=15 (limit:15)
+  🟡 CC    _execute_autopilot_drive CC=19 (limit:15)
+  🟡 CC    _compose_service_ready CC=15 (limit:15)
+  🟡 CC    _process_operator_step CC=20 (limit:15)
+  🟡 CC    action_daemon CC=15 (limit:15)
+
+REFACTOR[2]:
+  1. split koru/autonomous.py  (god module)
+  2. split 12 high-CC methods  (CC>15)
+
+PIPELINES[326]:
+  [1] Src [main]: main → _read_input
+      PURITY: 100% pure
+  [2] Src [_handle_set]: _handle_set
+      PURITY: 100% pure
+  [3] Src [_handle_wait]: _handle_wait
+      PURITY: 100% pure
+  [4] Src [_handle_get]: _handle_get
+      PURITY: 100% pure
+  [5] Src [_handle_save]: _handle_save
+      PURITY: 100% pure
+
+LAYERS:
+  koru/                           CC̄=4.4    ←in:69  →out:71  !! split
+  │ !! autonomous                2235L  4C   65m  CC=21     ←1
+  │ !! cli                       1743L  0C   49m  CC=14     ←0
+  │ !! autonomous_cycle          1320L  2C   39m  CC=19     ←0
+  │ !! context                   1253L  0C   49m  CC=12     ←7
+  │ !! scan                       932L  2C   24m  CC=13     ←3
+  │ !! cli_command                848L  0C   22m  CC=14     ←0
+  │ !! operator_pipeline          741L  2C   26m  CC=20     ←1
+  │ !! koru-autoloop.sh           676L  0C   17m  CC=0.0    ←0
+  │ !! init                       610L  1C   15m  CC=12     ←3
+  │ !! install_manager            564L  2C   26m  CC=13     ←1
+  │ !! doctor                     545L  2C   23m  CC=11     ←3
+  │ !! autonomous_wup             538L  3C   25m  CC=15     ←1
+  │ context_render             471L  0C   18m  CC=11     ←0
+  │ bootstrap                  452L  2C   19m  CC=10     ←2
+  │ mcp_provision              449L  0C   24m  CC=10     ←5
+  │ install_plugin_cli         426L  0C   17m  CC=10     ←1
+  │ topology                   414L  1C   15m  CC=12     ←9
+  │ autonomous_parser          398L  0C    3m  CC=14     ←2
+  │ runner                     393L  0C   10m  CC=14     ←2
+  │ queue_clean                391L  2C   13m  CC=14     ←2
+  │ post_run_verify            381L  2C   16m  CC=14     ←1
+  │ gc                         371L  2C   12m  CC=11     ←2
+  │ agents                     322L  1C   15m  CC=14     ←4
+  │ tools                      318L  0C   19m  CC=11     ←1
+  │ init_host_environment      314L  0C   17m  CC=9      ←1
+  │ !! autonomous_startup         312L  1C    9m  CC=15     ←2
+  │ local_service              312L  1C    7m  CC=7      ←1
+  │ env                        304L  0C   11m  CC=12     ←3
+  │ ide_work                   301L  0C   11m  CC=12     ←2
+  │ local_manager_state        292L  4C   21m  CC=14     ←0
+  │ queue_cli_helpers          290L  0C   10m  CC=9      ←1
+  │ policy                     262L  1C   10m  CC=9      ←2
+  │ autonomous_diagnostics     258L  0C    8m  CC=11     ←1
+  │ local_manager_client       252L  2C   15m  CC=7      ←4
+  │ runners                    249L  0C   11m  CC=9      ←1
+  │ environment                245L  3C    6m  CC=14     ←1
+  │ tasks                      227L  1C   10m  CC=12     ←7
+  │ agent_backends             214L  3C    7m  CC=11     ←2
+  │ calibrate_cli              210L  0C    5m  CC=13     ←1
+  │ autonomous_process_guard   206L  2C    8m  CC=11     ←1
+  │ gate                       202L  1C    5m  CC=12     ←2
+  │ redup_integration          189L  0C   11m  CC=3      ←2
+  │ agent_backend_runtime      180L  5C    6m  CC=9      ←0
+  │ cli_queue                  163L  0C    3m  CC=12     ←0
+  │ ide_client                 152L  2C   12m  CC=3      ←2
+  │ doctor_cli                 152L  0C    9m  CC=8      ←3
+  │ project_pipeline           150L  0C    5m  CC=9      ←5
+  │ semcod_tools               148L  1C    4m  CC=7      ←3
+  │ ticket                     147L  0C    7m  CC=10     ←5
+  │ local_manager              136L  1C    6m  CC=5      ←1
+  │ dev_sync                   133L  1C    6m  CC=9      ←0
+  │ loop                       131L  3C    4m  CC=12     ←1
+  │ cli_scan                   129L  0C    4m  CC=7      ←0
+  │ run_log                    123L  1C    7m  CC=4      ←2
+  │ config                     123L  1C    1m  CC=4      ←0
+  │ cli_topology               122L  0C    3m  CC=12     ←0
+  │ cli_gate                   116L  0C    2m  CC=5      ←0
+  │ heal                       116L  1C    3m  CC=5      ←1
+  │ loop                       115L  0C    1m  CC=14     ←3
+  │ !! daemon_cli                 109L  0C    3m  CC=15     ←1
+  │ runtime                    104L  0C    5m  CC=2      ←6
+  │ dotenv_loader              104L  0C    3m  CC=7      ←0
+  │ systemd_cli                103L  0C    4m  CC=6      ←1
+  │ cli_init                   102L  0C    2m  CC=7      ←0
+  │ prompts                    101L  1C    1m  CC=10     ←1
+  │ ide_router                  98L  1C    2m  CC=8      ←4
+  │ watch                       93L  0C    6m  CC=9      ←2
+  │ events                      90L  0C    2m  CC=8      ←10
+  │ autoloop_cli                90L  0C    4m  CC=8      ←0
+  │ types                       88L  5C    1m  CC=2      ←0
+  │ agent_cli_helpers           87L  0C    3m  CC=10     ←1
+  │ cli_gc                      87L  0C    2m  CC=1      ←0
+  │ cli_doctor                  86L  0C    3m  CC=12     ←0
+  │ locking                     86L  0C    4m  CC=4      ←1
+  │ gc_cli_helpers              81L  0C    5m  CC=12     ←2
+  │ telemetry_snapshot          79L  0C    3m  CC=5      ←2
+  │ topology_cli                75L  1C    4m  CC=8      ←2
+  │ tail_cli                    73L  0C    4m  CC=6      ←1
+  │ shell_evidence              72L  0C    2m  CC=7      ←1
+  │ __init__                    69L  0C    0m  CC=0.0    ←0
+  │ activity_log                67L  0C    5m  CC=5      ←13
+  │ local_manager               67L  0C    2m  CC=2      ←1
+  │ wup_testql_compat           64L  0C    4m  CC=5      ←0
+  │ client_helpers              57L  0C    2m  CC=4      ←2
+  │ __init__                    55L  0C    2m  CC=4      ←0
+  │ planfile_ticket_note        55L  0C    2m  CC=5      ←1
+  │ stdio_events                49L  0C    3m  CC=3      ←4
+  │ protocol                    48L  0C    0m  CC=0.0    ←0
+  │ refactor_planfile_handoff    46L  0C    1m  CC=6      ←1
+  │ ide_runtime                 44L  0C    2m  CC=5      ←1
+  │ koru_queue_argv             44L  0C    1m  CC=5      ←1
+  │ cli_watch                   41L  0C    1m  CC=2      ←0
+  │ subprocess_runner           40L  0C    3m  CC=3      ←5
+  │ __init__                    38L  0C    0m  CC=0.0    ←0
+  │ planfile_queue              36L  0C    0m  CC=0.0    ←0
+  │ human                       31L  0C    1m  CC=5      ←0
+  │ autonomous_env              25L  0C    1m  CC=1      ←0
+  │ __init__                    24L  0C    0m  CC=0.0    ←0
+  │ __init__                    18L  0C    0m  CC=0.0    ←0
+  │ daemon                      16L  0C    0m  CC=0.0    ←0
+  │ client                      10L  0C    0m  CC=0.0    ←0
+  │ serve                        9L  0C    0m  CC=0.0    ←0
+  │ mcp_server                   9L  0C    0m  CC=0.0    ←0
+  │ __init__                     9L  0C    0m  CC=0.0    ←0
+  │ config                       9L  0C    0m  CC=0.0    ←0
+  │ host_setup                   9L  0C    0m  CC=0.0    ←0
+  │ ide                          9L  0C    0m  CC=0.0    ←0
+  │ injector                     9L  0C    0m  CC=0.0    ←0
+  │ os_injector                  9L  0C    0m  CC=0.0    ←0
+  │ audit                        9L  0C    0m  CC=0.0    ←0
+  │ plugin_installer             9L  0C    0m  CC=0.0    ←0
+  │ __init__                     9L  0C    0m  CC=0.0    ←0
+  │ __main__                     8L  0C    0m  CC=0.0    ←0
+  │ __main__                     7L  0C    0m  CC=0.0    ←0
+  │ __init__                     5L  0C    0m  CC=0.0    ←0
+  │ __init__                     5L  0C    0m  CC=0.0    ←0
+  │ commands                     0L  0C    0m  CC=0.0    ←0
+  │
+  korudsl/                        CC̄=4.1    ←in:4  →out:0
+  │ library                    207L  0C   19m  CC=9      ←1
+  │ cli                         81L  0C    3m  CC=11     ←0
+  │ transform                   70L  0C    4m  CC=12     ←2
+  │ __init__                    25L  0C    0m  CC=0.0    ←0
+  │
+  koruapi/                        CC̄=4.0    ←in:5  →out:47  !! split
+  │ !! dashboard_serve           1400L  1C   15m  CC=13     ←1
+  │ !! mcp_server                1040L  0C   34m  CC=14     ←2
+  │ invoke_handlers            199L  1C   15m  CC=5      ←0
+  │ integrations               198L  1C    2m  CC=4      ←4
+  │ runtime_insights           189L  0C    6m  CC=9      ←1
+  │ server                     175L  1C    8m  CC=9      ←1
+  │ openapi                    155L  0C    1m  CC=2      ←1
+  │ cli                        128L  0C    3m  CC=11     ←0
+  │ dashboard                   90L  0C    3m  CC=5      ←2
+  │ topology_post               68L  0C    1m  CC=14     ←1
+  │ local                       36L  0C    2m  CC=6      ←2
+  │ invoke                      31L  0C    1m  CC=4      ←2
+  │ __init__                    25L  0C    0m  CC=0.0    ←0
+  │ mcp                         15L  0C    1m  CC=2      ←2
+  │
+  koruide/                        CC̄=4.0    ←in:60  →out:3
+  │ !! daemon                     896L  2C   35m  CC=15     ←0
+  │ !! ide                        653L  1C   36m  CC=16     ←13
+  │ plugin_installer           494L  1C   24m  CC=11     ←3
+  │ injector                   406L  4C   20m  CC=14     ←0
+  │ !! os_injector                400L  2C   24m  CC=15     ←2
+  │ protocol                   231L  2C   14m  CC=12     ←3
+  │ host_setup                 226L  0C   12m  CC=14     ←3
+  │ drive_orchestrator         200L  1C   12m  CC=10     ←3
+  │ audit                      154L  2C    6m  CC=6      ←1
+  │ client                     128L  1C    8m  CC=7      ←0
+  │ config                     121L  1C    6m  CC=7      ←1
+  │ plugin_router               74L  3C    5m  CC=6      ←0
+  │ __init__                    67L  0C    0m  CC=0.0    ←0
+  │ socket                      44L  0C    2m  CC=7      ←6
+  │ utils                       21L  0C    1m  CC=2      ←2
+  │ plugin_version               8L  0C    0m  CC=0.0    ←0
+  │
+  ── zero ──
+     koru/cli/commands.py                      0L
+
+COUPLING:
+                            koru         koruide         koruapi  koru.autopilot      koru.queue   koru.autonomy        src.koru      koru.utils         korudsl
+            koru              ──              33               3               2              12              16               1               4                  hub
+         koruide               3              ──              ←1             ←25                                              ←1                                  hub
+         koruapi              32               1              ──                               9                              ←2               1               4  hub
+  koru.autopilot               8              25                              ──                                                                                  !! fan-out
+      koru.queue               6                              ←9                              ──                                                                  hub
+   koru.autonomy               7                                                                              ──                                                  hub
+        src.koru              13               1               2                                                              ──                                  !! fan-out
+      koru.utils              ←4                              ←1                                                                              ──                  hub
+         korudsl                                              ←4                                                                                              ──
+  CYCLES: none
+  HUB: koru.autonomy/ (fan-in=16)
+  HUB: koru.queue/ (fan-in=21)
+  HUB: koruide/ (fan-in=60)
+  HUB: koruapi/ (fan-in=5)
+  HUB: koru/ (fan-in=69)
+  HUB: koru.utils/ (fan-in=5)
+  SMELL: koruapi/ fan-out=47 → split needed
+  SMELL: koru/ fan-out=71 → split needed
+  SMELL: koru.autopilot/ fan-out=33 → split needed
+  SMELL: src.koru/ fan-out=16 → split needed
+
+EXTERNAL:
+  validation: run `vallm batch .` → validation.toon
+  duplication: run `redup scan .` → duplication.toon

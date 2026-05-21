@@ -172,7 +172,7 @@ class DriveOrchestrator:
             return False
         if not plugin_ok or not submit_requested:
             return False
-        if (plugin_ide or "").lower() != "vscode":
+        if (plugin_ide or "").lower() not in {"vscode", "vscodium"}:
             return False
         return str(info.get("verification", "")) != "strict"
 

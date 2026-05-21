@@ -36,9 +36,11 @@ For LLM agents starting a session in a koru-driven repository:
    Companion design doc: [`autopilot-design.md`](./autopilot-design.md);
    formal control-plane protocol: [`IDE_PROTOCOL.md`](./IDE_PROTOCOL.md);
    open items in [`autopilot-roadmap.md`](./autopilot-roadmap.md).
-8. **[`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md)** (PL) — autonomia
+8. **[`ide-router.md`](./ide-router.md)** — how koru chooses the active IDE
+   lane and keeps VS Code/VSCodium/Cursor/Windsurf/JetBrains/Zed separated.
+9. **[`autonomy-ide-cursor.md`](./autonomy-ide-cursor.md)** (PL) — autonomia
    koru vs Cursor IDE: luka funkcjonalna i checklista wdrożeniowa.
-9. **[`autodiagnostics-auto-repair.md`](./autodiagnostics-auto-repair.md)** —
+10. **[`autodiagnostics-auto-repair.md`](./autodiagnostics-auto-repair.md)** —
    implemented doctor, guided repair, autopilot host repair, and safe
    autonomous diagnostic-ticket loops.
 
@@ -49,7 +51,9 @@ For human operators / DevOps:
 2. **[`ci-github.md`](./ci-github.md)** / **[`ci-gitlab.md`](./ci-gitlab.md)** — minimalne pipeline’y smoke (Epic 2).
 3. **[`llm-tools/README.md`](./llm-tools/README.md)** — tool catalog and
    when to use which.
-4. **[`../templates/`](../templates/)** — copy-paste config templates for
+4. **IDE matrix workflows** — top-level README documents Docker Linux coverage
+   plus native Ubuntu/Windows/macOS smoke workflows for all supported IDE lanes.
+5. **[`../templates/`](../templates/)** — copy-paste config templates for
    `pyqual.yaml`, `redup.toml`, `redsl.yaml`, `regix.yaml`.
 
 ## The two-mode philosophy

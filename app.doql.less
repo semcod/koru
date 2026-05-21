@@ -2,7 +2,7 @@
 
 app {
   name: koru;
-  version: 0.1.169;
+  version: 0.1.176;
 }
 
 dependencies {
@@ -61,6 +61,11 @@ workflow[name="test:all"] {
 workflow[name="test:docker"] {
   trigger: manual;
   step-1: run cmd=python3 -m pytest tests/test_docker_e2e.py -v -m "" {{.CLI_ARGS}};
+}
+
+workflow[name="test:docker:ide-matrix"] {
+  trigger: manual;
+  step-1: run cmd=KORU_DOCKER_SYSTEMS="{{.SYSTEMS}}" KORU_DOCKER_IDES="{{.IDES}}" bash scripts/docker-ide-matrix.sh;
 }
 
 workflow[name="test:fast"] {
@@ -164,7 +169,7 @@ workflow[name="koru:mcp:bootstrap"] {
 
 workflow[name="koru:operator:plugin-probe"] {
   trigger: manual;
-  step-1: run cmd=python3 -m koru.cli autopilot status;
+  step-1: run cmd=python3 -m koru.cli autopilot manage --ide "{{.IDE}}";
 }
 
 workflow[name="koru:operator:setup-host"] {

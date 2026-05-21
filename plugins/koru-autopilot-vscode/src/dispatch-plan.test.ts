@@ -74,6 +74,33 @@ function testSocketCandidatesDoNotCrossIdeFallback(): void {
   }
 }
 
+function testSocketCandidatesSeparateVscodeAndVscodium(): void {
+  const oldSocket = process.env.KORU_AUTOPILOT_SOCKET;
+  const oldInstance = process.env.KORU_AUTOPILOT_INSTANCE;
+  const oldRuntime = process.env.XDG_RUNTIME_DIR;
+  try {
+    delete process.env.KORU_AUTOPILOT_SOCKET;
+    process.env.KORU_AUTOPILOT_INSTANCE = "vscode";
+    process.env.XDG_RUNTIME_DIR = "/run/user/1000";
+    const candidates = socketCandidatesFromEnv("vscodium");
+    assert(
+      candidates.includes("/run/user/1000/koru-autopilot-vscodium.sock"),
+      "vscodium socket should be considered",
+    );
+    assert(
+      !candidates.includes("/run/user/1000/koru-autopilot-vscode.sock"),
+      "VSCodium plugin must not fall back to VS Code socket",
+    );
+  } finally {
+    if (oldSocket === undefined) delete process.env.KORU_AUTOPILOT_SOCKET;
+    else process.env.KORU_AUTOPILOT_SOCKET = oldSocket;
+    if (oldInstance === undefined) delete process.env.KORU_AUTOPILOT_INSTANCE;
+    else process.env.KORU_AUTOPILOT_INSTANCE = oldInstance;
+    if (oldRuntime === undefined) delete process.env.XDG_RUNTIME_DIR;
+    else process.env.XDG_RUNTIME_DIR = oldRuntime;
+  }
+}
+
 function testSocketCandidatesPreferOverrideThenDefaults(): void {
   const candidates = socketCandidatesFromEnv("cursor", "/run/user/1000/koru-autopilot-cursor.sock");
   assert(candidates.length >= 2, "override should be tried first, then default lane candidates");
@@ -91,4 +118,5 @@ testShutdownPlan();
 testUnknownTypePlan();
 testSocketCandidatesPreferIdeInstanceBeforeSingleton();
 testSocketCandidatesDoNotCrossIdeFallback();
+testSocketCandidatesSeparateVscodeAndVscodium();
 testSocketCandidatesPreferOverrideThenDefaults();

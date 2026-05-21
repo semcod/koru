@@ -36,6 +36,7 @@ from koru.stdio_events import write_stdio_event
 from koru.tasks import create_nl_task
 from koru.topology import is_component_enabled, is_pipeline_enabled
 from koruide.drive_orchestrator import DriveOrchestrator
+from koruide.ide import normalize_ide_id, supports_vscode_extension_plugin
 
 
 def _stdio_info(msg: str, *, fmt: str) -> None:
@@ -113,9 +114,8 @@ def _prefer_keyboard_autopilot() -> bool:
 
 
 def _plugin_required_for_ide(autopilot_ide: str) -> bool:
-    ide = (autopilot_ide or "").strip().lower()
-    plugin_ides = {"auto", "cursor", "windsurf", "vscode"}
-    if ide not in plugin_ides:
+    ide = normalize_ide_id(autopilot_ide) or ""
+    if ide != "auto" and not supports_vscode_extension_plugin(ide):
         return False
     return not _allow_keyboard_autopilot_fallback() and not _prefer_keyboard_autopilot()
 
@@ -465,7 +465,7 @@ def _handle_scan_phase(
 def _build_queue_command(max_iterations: int, queue_name: str | None) -> str:
     """Build the queue loop command string."""
     base = f"koru --queue --loop --max-iterations {max_iterations}"
-    return base + (" --all-queues" if queue_name is None else f" --queue-name {queue_name}")
+    return base if queue_name is None else f"{base} --queue-name {queue_name}"
 
 
 def _run_queue_loop(

@@ -67,6 +67,7 @@ class AutopilotBridge {
     retryTimer = null;
     connectCandidates = [];
     connectIndex = 0;
+    reconnectBlockedReason = null;
     constructor(context) {
         this.context = context;
         this.status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 50);
@@ -83,6 +84,7 @@ class AutopilotBridge {
     }
     connect() {
         this.disconnect();
+        this.reconnectBlockedReason = null;
         const cfg = vscode.workspace.getConfiguration("koruAutopilot");
         const override = (cfg.get("socketPath") || "").trim();
         this.connectCandidates = (0, socketPath_1.socketCandidatesFromEnv)(this.detectIde(), override);
@@ -112,12 +114,22 @@ class AutopilotBridge {
             this.status.text = "$(plug) koru: on";
             this.status.tooltip = `koru autopilot: connected ${p}`;
             debugLog("CONNECT_OK", { path: p, ide: this.detectIde() });
-            this.send({
-                type: "hello",
-                id: "vscode-hello",
-                ide: this.detectIde(),
-                version: vscode.extensions.getExtension("semcod.koru-autopilot-vscode")?.packageJSON.version || "unknown",
-                pid: process.pid,
+            Promise.resolve(vscode.commands.getCommands(false)).then((cmds) => {
+                const matching = cmds.filter(c => c.includes("windsurf") || c.includes("cascade") || c.includes("codeium") || c.includes("chat") || c.includes("composer"));
+                try {
+                    fs.writeFileSync("/tmp/windsurf-commands.json", JSON.stringify(cmds, null, 2), "utf-8");
+                }
+                catch (err) {
+                    console.error("koru autopilot: failed to write commands to /tmp", err);
+                }
+                this.send({
+                    type: "hello",
+                    id: "vscode-hello",
+                    ide: this.detectIde(),
+                    version: vscode.extensions.getExtension("semcod.koru-autopilot-vscode")?.packageJSON.version || "unknown",
+                    pid: process.pid,
+                    matchingCommands: matching,
+                });
             });
         });
         sock.on("data", (chunk) => this.onData(chunk));
@@ -142,6 +154,11 @@ class AutopilotBridge {
                 return;
             this.status.text = "$(plug) koru: off";
             this.socket = null;
+            if (this.reconnectBlockedReason) {
+                this.status.text = "$(warning) koru: reload";
+                this.status.tooltip = `koru autopilot: ${this.reconnectBlockedReason}`;
+                return;
+            }
             this.scheduleRetry();
         });
     }
@@ -160,6 +177,8 @@ class AutopilotBridge {
         }
     }
     scheduleRetry() {
+        if (this.reconnectBlockedReason)
+            return;
         if (this.retryTimer)
             return;
         // Add ~±500 ms of jitter so 30 IDE windows don't all reconnect in
@@ -207,7 +226,17 @@ class AutopilotBridge {
     }
     getProbeCache() {
         const raw = this.context.globalState.get("probeCache");
-        return (0, probe_ladder_1.loadProbeCache)(raw, this.detectIde(), vscode.env.appName || "");
+        const cache = (0, probe_ladder_1.loadProbeCache)(raw, this.detectIde(), vscode.env.appName || "");
+        if (cache && this.detectIde() === "windsurf") {
+            const unsafePaste = ["editor.action.clipboardPasteAction", "type"];
+            if (cache.paste && unsafePaste.includes(cache.paste)) {
+                cache.paste = undefined;
+            }
+            if (cache.submit && (cache.submit.startsWith("type:") || cache.submit === "type")) {
+                cache.submit = undefined;
+            }
+        }
+        return cache;
     }
     async saveProbeCache(wins) {
         const next = (0, probe_ladder_1.mergeProbeCache)(this.getProbeCache(), this.detectIde(), vscode.env.appName || "", wins);
@@ -229,7 +258,7 @@ class AutopilotBridge {
     }
     async submitChat() {
         const ide = this.detectIde();
-        const existing = new Set(await Promise.resolve(vscode.commands.getCommands(true)));
+        const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
         const cache = this.getProbeCache();
         const candidates = (0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildSubmitCommands)(ide), cache?.submit), existing);
         for (const cmd of candidates) {
@@ -257,7 +286,7 @@ class AutopilotBridge {
         const cfg = vscode.workspace.getConfiguration("koruAutopilot");
         const primary = (cfg.get("chatOpenCommands") || []).filter(Boolean);
         const ide = this.detectIde();
-        const existing = new Set(await Promise.resolve(vscode.commands.getCommands(true)));
+        const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
         const cache = this.getProbeCache();
         const useProbe = this.probeLadderEnabled();
         const commands = (0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildFocusOpenCommands)(ide, primary), cache?.focusOpen), existing);
@@ -282,12 +311,16 @@ class AutopilotBridge {
     async pasteText(text) {
         const ide = this.detectIde();
         const useProbe = this.probeLadderEnabled();
-        const existing = new Set(await Promise.resolve(vscode.commands.getCommands(true)));
+        const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
         const cache = this.getProbeCache();
         const before = this.editorSnapshot();
         const direct = await this.tryDirectPasteCommands(text, ide, existing, cache, before, useProbe);
         if (direct) {
             return direct;
+        }
+        if (ide === "windsurf") {
+            // Direct paste must succeed on Windsurf to prevent fallback editor contamination.
+            return { ok: false };
         }
         const clipboard = await this.tryClipboardPaste(text, before, useProbe);
         if (clipboard.handled) {
@@ -362,7 +395,7 @@ class AutopilotBridge {
     }
     async focusChatInput() {
         const ide = this.detectIde();
-        const existing = new Set(await Promise.resolve(vscode.commands.getCommands(true)));
+        const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
         const cache = this.getProbeCache();
         const candidates = (0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildFocusInputCommands)(ide), cache?.focusInput), existing);
         for (const cmd of candidates) {
@@ -381,6 +414,8 @@ class AutopilotBridge {
             return "windsurf";
         if (app.includes("cursor"))
             return "cursor";
+        if (app.includes("codium") || app.includes("code - oss") || app.includes("code-oss"))
+            return "vscodium";
         return "vscode";
     }
     send(env) {
@@ -418,6 +453,16 @@ class AutopilotBridge {
         }
     }
     async dispatch(env) {
+        if (env.type === "error") {
+            const message = typeof env.message === "string" ? env.message : "daemon rejected plugin";
+            if (message.includes("plugin version mismatch")) {
+                this.reconnectBlockedReason = message;
+                this.status.text = "$(warning) koru: reload";
+                this.status.tooltip = message;
+                void vscode.window.showWarningMessage(`koru autopilot: ${message}`);
+            }
+            return;
+        }
         const plan = (0, dispatch_plan_1.planDispatch)(env);
         switch (plan.kind) {
             case "injectChat":
@@ -528,6 +573,41 @@ class AutopilotBridge {
         }
     }
     async _performInject(env, text, submit) {
+        const ide = this.detectIde();
+        if (ide === "windsurf") {
+            let existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+            if (!existing.has("windsurf.sendTextToChat")) {
+                try {
+                    let openCmd = "windsurf.openCascade";
+                    if (existing.has("workbench.view.windsurfAgentSidebarContainer")) {
+                        openCmd = "workbench.view.windsurfAgentSidebarContainer";
+                    }
+                    else if (existing.has("windsurf.cascadePanel.open")) {
+                        openCmd = "windsurf.cascadePanel.open";
+                    }
+                    await Promise.resolve(vscode.commands.executeCommand(openCmd));
+                    await this.sleep(200);
+                    existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+                }
+                catch (err) {
+                    console.warn("koru autopilot: failed to open Cascade early", err);
+                }
+            }
+            if (existing.has("windsurf.sendTextToChat")) {
+                try {
+                    await Promise.resolve(vscode.commands.executeCommand("windsurf.sendTextToChat", text));
+                    this.sendSuccessAck(env, { ok: true, command: "none" }, { ok: true, command: "windsurf.sendTextToChat" }, "windsurf.sendTextToChat");
+                    if (submit) {
+                        console.log("koru autopilot: sending message.sent");
+                        this.send({ type: "message.sent", chat: "default", text: text.substring(0, 200), length: text.length });
+                    }
+                    return;
+                }
+                catch (err) {
+                    console.warn("koru autopilot: windsurf.sendTextToChat fast path failed, trying fallback", err);
+                }
+            }
+        }
         const focus = await this.focusChat();
         if (focus.ok) {
             // Extra settle time after verified open (R13).
@@ -543,7 +623,7 @@ class AutopilotBridge {
             return;
         }
         let submitCmd;
-        if (submit) {
+        if (submit && pasted.command !== "windsurf.sendTextToChat") {
             await this.sleep(150);
             const submitResult = await this.submitChat();
             if (submitResult.ok) {
@@ -553,6 +633,9 @@ class AutopilotBridge {
                 this.sendSubmitFailureAck(env, focus, pasted);
                 return;
             }
+        }
+        else if (pasted.command === "windsurf.sendTextToChat") {
+            submitCmd = "windsurf.sendTextToChat";
         }
         this.sendSuccessAck(env, focus, pasted, submitCmd);
         if (submit) {

@@ -108,7 +108,7 @@ def build_parser(*, default_stdio_format: str) -> argparse.ArgumentParser:
     up.add_argument(
         "--autopilot-ide",
         default="auto",
-        choices=("auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"),
+        choices=("auto", "windsurf", "vscode", "vscodium", "cursor", "jetbrains", "zed"),
         help="IDE target for autopilot drive (default: auto).",
     )
     up.add_argument(

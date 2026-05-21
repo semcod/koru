@@ -13,7 +13,12 @@ from pathlib import Path
 from typing import Any
 
 from koru.autopilot.client import AutopilotClient
-from koru.autopilot.ide import detect_running_ides, detect_terminal_host_ide_id
+from koru.autopilot.ide import (
+    detect_running_ides,
+    detect_terminal_host_ide_id,
+    normalize_ide_id,
+    supports_vscode_extension_plugin,
+)
 from koru.autopilot.plugin_installer import (
     install_plugin_for_ide,
     installed_extension_version_for_ide,
@@ -121,12 +126,12 @@ def _expected_plugin_version(root: Path) -> str | None:
 
 
 def _resolve_ide(raw: str) -> str:
-    requested = (raw or "auto").strip().lower()
+    requested = normalize_ide_id(raw) or "auto"
     if requested != "auto":
-        return "jetbrains" if requested == "pycharm" else requested
-    env_ide = (os.environ.get("KORU_AUTOPILOT_IDE") or "").strip().lower()
+        return requested
+    env_ide = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_IDE"))
     if env_ide:
-        return "jetbrains" if env_ide == "pycharm" else env_ide
+        return env_ide
     terminal = detect_terminal_host_ide_id()
     if terminal:
         return terminal
@@ -306,6 +311,42 @@ def _check_plugin_installed_ok_but_not_connected_issue(
     ]
 
 
+def _check_plugin_live_host_stale_issue(
+    daemon: dict[str, Any], plugin: dict[str, Any], ide: str
+) -> list[ManagerIssue]:
+    installed_version = plugin.get("installed_version")
+    expected_version = plugin.get("expected_version")
+    if not daemon.get("running") or not installed_version or installed_version != expected_version:
+        return []
+    rejected = [
+        row
+        for row in daemon.get("rejected_plugins", [])
+        if isinstance(row, dict)
+        and row.get("ide") == ide
+        and row.get("version")
+        and row.get("version") != expected_version
+    ]
+    if not rejected:
+        return []
+    seen_versions = sorted({str(row.get("version")) for row in rejected if row.get("version")})
+    versions = ", ".join(seen_versions)
+    return [
+        ManagerIssue(
+            "plugin_live_host_stale",
+            "error",
+            (
+                f"{ide} extension is installed at {installed_version}, but the live IDE "
+                f"extension host is still reconnecting with stale version(s): {versions}."
+            ),
+            (
+                "Reload the IDE window with `Developer: Reload Window`, then run "
+                "`koru: Connect autopilot daemon`. If stale reconnects continue, fully "
+                "close that IDE window and open the project again."
+            ),
+        ),
+    ]
+
+
 def _check_plugin_version_mismatch_issue(
     daemon: dict[str, Any], plugin: dict[str, Any], ide: str
 ) -> list[ManagerIssue]:
@@ -365,8 +406,11 @@ def _issue_list(
     issues.extend(_check_pyenv_shim_issue(path_koru))
     issues.extend(_check_version_mismatch_issue(source_version, package_version))
     issues.extend(_check_daemon_issues(daemon))
+    if ide != "auto" and not supports_vscode_extension_plugin(ide):
+        return issues
     issues.extend(_check_plugin_version_missing_issue(daemon, plugin, ide))
     issues.extend(_check_plugin_installed_version_mismatch_issue(plugin, ide))
+    issues.extend(_check_plugin_live_host_stale_issue(daemon, plugin, ide))
     issues.extend(_check_plugin_installed_ok_but_not_connected_issue(daemon, plugin, ide))
     issues.extend(_check_plugin_version_mismatch_issue(daemon, plugin, ide))
     issues.extend(_check_plugin_not_connected_issue(daemon, plugin, ide))
@@ -383,10 +427,14 @@ def collect_install_manager_report(
     sock = socket_path or default_socket_path()
     daemon = _daemon_status(sock)
     connected_plugin = _plugin_for_ide(daemon, resolved_ide) if daemon.get("running") else None
-    expected_plugin = _expected_plugin_version(root)
-    installed_plugin = installed_extension_version_for_ide(resolved_ide)
+    plugin_supported = resolved_ide == "auto" or supports_vscode_extension_plugin(resolved_ide)
+    expected_plugin = _expected_plugin_version(root) if plugin_supported else None
+    installed_plugin = (
+        installed_extension_version_for_ide(resolved_ide) if plugin_supported else None
+    )
     plugin = {
         "ide": resolved_ide,
+        "supported": plugin_supported,
         "connected": connected_plugin is not None,
         "connected_version": connected_plugin.get("version") if connected_plugin else None,
         "installed_version": installed_plugin,
@@ -433,6 +481,18 @@ def repair_installation(
     report = collect_install_manager_report(ide=ide, socket_path=socket_path)
     resolved_ide = str(report.plugin.get("ide") or ide)
     actions: list[dict[str, Any]] = []
+    if report.plugin.get("supported") is False:
+        actions.append(
+            {
+                "action": "install_plugin",
+                "result": {
+                    "status": "skipped",
+                    "message": f"ide={resolved_ide} does not use the VS Code-family plugin",
+                },
+            }
+        )
+        report.actions = actions
+        return report
     plugin_result = install_plugin_for_ide(
         ide=resolved_ide,
         dry_run=dry_run,

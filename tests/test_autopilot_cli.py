@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -629,7 +630,19 @@ def test_install_plugin_dry_run_auto_detect_from_term_program(
     vsix = tmp_path / "koru-autopilot-0.1.0.vsix"
     vsix.write_text("fake", encoding="utf-8")
 
+    for key in (
+        "CHROME_DESKTOP",
+        "GIO_LAUNCHED_DESKTOP_FILE",
+        "TERM_PROGRAM_VERSION",
+        "VSCODE_CODE_CACHE_PATH",
+        "VSCODE_CWD",
+        "VSCODE_IPC_HOOK",
+        "VSCODE_NLS_CONFIG",
+        "VSCODE_PID",
+    ):
+        monkeypatch.delenv(key, raising=False)
     monkeypatch.setenv("TERM_PROGRAM", "vscode")
+    monkeypatch.setattr(install_plugin_cli, "detect_terminal_host_ide_id", lambda: None)
     monkeypatch.setattr(
         install_plugin_cli.shutil,
         "which",
@@ -647,6 +660,24 @@ def test_install_plugin_dry_run_auto_detect_from_term_program(
     assert payload["command"][0] == "/usr/bin/code"
 
 
+def test_install_plugin_vsix_resolver_prefers_package_version(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    plugin_dir = tmp_path / "plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "package.json").write_text('{"version":"0.1.15"}', encoding="utf-8")
+    stale = plugin_dir / "koru-autopilot-0.1.14.vsix"
+    current = plugin_dir / "koru-autopilot-0.1.15.vsix"
+    stale.write_text("stale", encoding="utf-8")
+    current.write_text("current", encoding="utf-8")
+    os.utime(stale, (20, 20))
+    os.utime(current, (10, 10))
+    monkeypatch.setattr(install_plugin_cli, "plugin_repo_dir", lambda: plugin_dir)
+
+    assert install_plugin_cli.resolve_plugin_vsix_path(None) == current.resolve()
+
+
 def test_install_plugin_auto_detect_ambiguous_running_ides_errors(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
@@ -655,6 +686,10 @@ def test_install_plugin_auto_detect_ambiguous_running_ides_errors(
     monkeypatch.delenv("VSCODE_PID", raising=False)
     monkeypatch.setattr("koru.autopilot.ide.detect_focused_ide_id", lambda: None)
     monkeypatch.setattr("koru.autopilot.install_plugin_cli.detect_focused_ide_id", lambda: None)
+    monkeypatch.setattr(
+        "koru.autopilot.install_plugin_cli.detect_terminal_host_ide_id",
+        lambda: None,
+    )
     monkeypatch.setattr(
         "koru.autopilot.ide.detect_running_ides",
         lambda: [
@@ -705,6 +740,36 @@ def test_install_plugin_exec_success_json_payload(
     assert payload["returncode"] == 0
     assert payload["ide"] == "cursor"
     assert payload["command"][-1] == "--force"
+
+
+def test_install_plugin_vscodium_dry_run_uses_codium_cli(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    vsix = tmp_path / "koru-autopilot-0.1.0.vsix"
+    vsix.write_text("fake", encoding="utf-8")
+    monkeypatch.setattr(
+        install_plugin_cli.shutil,
+        "which",
+        lambda name: "/usr/bin/codium" if name == "codium" else None,
+    )
+    monkeypatch.setattr(install_plugin_cli, "resolve_plugin_vsix_path", lambda _p: vsix)
+
+    rc = autopilot_main(["install-plugin", "--ide", "vscodium", "--dry-run", "--format", "json"])
+
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ide"] == "vscodium"
+    assert payload["editor"] == "/usr/bin/codium"
+
+
+def test_install_plugin_zed_reports_vsix_plugin_unsupported(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    rc = autopilot_main(["install-plugin", "--ide", "zed", "--dry-run"])
+    assert rc == 1
+    assert "zed does not support the VS Code VSIX plugin" in capsys.readouterr().err
 
 
 def test_install_plugin_pycharm_alias_maps_to_jetbrains(

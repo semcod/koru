@@ -4,11 +4,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.176-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.177-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 ![AI Cost](https://img.shields.io/badge/AI%20Cost-$12.54-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-76.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $12.5388 (235 commits)
-- 👤 **Human dev:** ~$7599 (76.0h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $12.5368 (236 commits)
+- 👤 **Human dev:** ~$7604 (76.0h @ $100/h, 30min dedup)
 
 Generated on 2026-05-21 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -135,9 +135,9 @@ poll — not chat readback). See [docs/post-run-verify.md](docs/post-run-verify.
 |---|---|
 | `koru autonomous: ... invalid choice: '.' (choose from 'up')` | Run `koru autonomous up --project .` |
 | `koru serve: cannot bind 127.0.0.1:8765` | Run `koru serve --auto-port` or free the port via `ss -ltnp \| rg 8765` then `kill <pid>` |
-| CLI seems to ignore freshly installed version | Verify with `koru --version`, `which koru`, and `python -m pip show koru`; prefer `.venv/bin/koru` in project-local workflows |
-| VS Code/Cursor/Windsurf plugin is installed but not connected | Run `KORU_AUTOPILOT_INSTANCE=vscode koru autopilot manage --ide vscode`, then start the daemon/reload the IDE/run `koru: Connect autopilot daemon` |
-| Autopilot accepts an old live plugin version | Use `KORU_STRICT_PLUGIN_VERSION=1` to block `drive` when connected plugin version differs from the expected VSIX/package version |
+| CLI seems to ignore freshly installed version | Run `koru autopilot manage --ide vscode`; compare `PATH koru`, `repo koru`, `source` and `package`; prefer `.venv/bin/koru` in project-local workflows |
+| VS Code/VSCodium/Cursor/Windsurf plugin is installed but not connected | Run `KORU_AUTOPILOT_INSTANCE=vscode koru autopilot manage --ide vscode` (or `vscodium`/`cursor`/`windsurf`), then start the daemon/reload the IDE/run `koru: Connect autopilot daemon` |
+| Live plugin keeps reconnecting as an old version | `koru auto` now rejects stale plugin versions by default. Run `koru autopilot manage --ide vscode`; if it reports `plugin_live_host_stale`, reload the IDE window, then run `koru: Connect autopilot daemon` |
 | `goal -a` takes too long to fail | Keep `strategies.python.test` fail-fast (`--maxfail=1`) for quick feedback; run full suite explicitly when needed |
 | `goal -a`: `No module named 'costs'` | Install dev extras: `pip install -e ".[dev]"`, or set `[tool.costs] badge = false` in `pyproject.toml` |
 | `goal -a` unstages `.code2llm_cache/*.pkl` | Ensure `.code2llm_cache/` is in `.gitignore` (not per-file pickle lines) |
@@ -219,7 +219,7 @@ ticket, and the exact lifecycle commands the agent may use.
 ## Autopilot — drive your IDE from the terminal
 
 `koru autopilot` lets a terminal-side koru take over the LLM chat in
-**Windsurf / VS Code / Cursor / JetBrains**: it types the next ticket
+**Windsurf / VS Code / VSCodium / Cursor / JetBrains / Zed**: it types the next ticket
 brief directly into the chat panel and presses submit, with zero
 clicks. Useful when an in-IDE session ends and you want koru to
 continue the loop from a separate terminal (or tmux pane, or SSH).
@@ -230,7 +230,7 @@ koru --version
 which koru
 
 # Choose one instance when several IDEs are open.
-# Common values: vscode, cursor, windsurf, jetbrains.
+# Common values: vscode, vscodium, cursor, windsurf, jetbrains, zed.
 export KORU_AUTOPILOT_INSTANCE=vscode
 
 # 1) verify host backends, IDE detection and install state
@@ -238,6 +238,10 @@ koru autopilot doctor
 koru autopilot doctor --fix
 koru autopilot ide-list
 koru autopilot manage --ide vscode
+
+# VS Code and VSCodium intentionally use separate identities and sockets:
+# /run/user/$UID/koru-autopilot-vscode.sock
+# /run/user/$UID/koru-autopilot-vscodium.sock
 
 # guided host setup (optional apt auto-install for xdotool/wtype/ydotool)
 koru autopilot setup-host
@@ -266,9 +270,10 @@ koru autopilot handoff --project "$(pwd)" --ide vscode --require-plugin
 koru autopilot drive --ide vscode --require-plugin 'continue with the next ticket'
 koru autopilot tail -n 50
 
-# Strict runtime gate: block drive if the connected plugin version is stale.
-KORU_STRICT_PLUGIN_VERSION=1 koru autopilot drive --ide vscode --require-plugin \
-  'probe strict plugin version'
+# Strict runtime gate for one-off drive commands:
+# block drive if the connected plugin version is stale.
+KORU_STRICT_PLUGIN_VERSION=1 KORU_STRICT_PLUGIN_ACK=1 \
+  koru autopilot drive --ide vscode --require-plugin 'probe strict plugin version'
 
 # Optional: coordinate fallback (global focus+click+type), bypassing daemon.
 koru autopilot calibrate --ide vscode
@@ -282,8 +287,10 @@ koru autopilot session-start --ides auto --delay-seconds 5
 # If PATH points to an older installed koru, run from source checkout:
 PYTHONPATH=src python -m koru.cli autopilot calibrate --ide vscode --delay-seconds 8
 
-# Optional: autonomous loop with strict plugin-version enforcement.
-KORU_STRICT_PLUGIN_VERSION=1 koru autonomous up --project .
+# Autonomous loop. `koru auto` enables strict plugin version + ACK policy by default
+# and skips chat drive until a compatible live plugin is connected.
+koru auto
+koru autonomous up --project .
 
 # phase-1 tool coverage detection (registry-backed)
 koru tools detect
@@ -322,19 +329,20 @@ Newer autopilot functions you can use directly from CLI:
 
 If `installed=expected` but `connected=False`, installation is healthy and the next
 step is runtime handshake: start the daemon, reload the IDE window and run
-`koru: Connect autopilot daemon`. If `version` differs from `expected`, reload the
-IDE after `manage --fix`; set `KORU_STRICT_PLUGIN_VERSION=1` to fail fast instead
-of sending prompts through a stale live plugin. Strict mode is fail-closed: if
-the daemon cannot determine the expected plugin version, it blocks plugin
-`drive` rather than accepting a stale live plugin silently.
+`koru: Connect autopilot daemon`. If the daemon recently rejected old live plugin
+versions, `manage` reports `plugin_live_host_stale`; the extension is installed on
+disk, but the editor's live extension host still needs a reload. `koru auto`
+enables strict plugin version and strict submit ACK policy by default, so it skips
+chat drive instead of sending prompts through a stale or unverifiable plugin.
 
 Two injection paths, picked automatically:
 
 1. **IDE plugin** — if `plugins/koru-autopilot-vscode/` is loaded in
    the editor, the daemon forwards `chat.send` to it and the
    extension pastes + submits via the editor's own API. Most reliable;
-   works on Wayland. Runtime version drift is reported in drive ACKs;
-   `KORU_STRICT_PLUGIN_VERSION=1` turns that warning into a fail-fast block.
+   works on Wayland. Runtime version drift is rejected by `koru auto`;
+   one-off `koru autopilot drive` can opt into the same behavior with
+   `KORU_STRICT_PLUGIN_VERSION=1 KORU_STRICT_PLUGIN_ACK=1`.
 2. **Keyboard simulation** — fallback for editors without the plugin.
    Uses `xdotool` on X11, `wtype`/`ydotool` on Wayland.
 
@@ -364,7 +372,7 @@ systemctl --user daemon-reload
 systemctl --user enable --now koru-autopilot.service
 ```
 
-Install and enable the VS Code/Windsurf/Cursor plugin from
+Install and enable the VS Code/VSCodium/Windsurf/Cursor plugin from
 [`plugins/koru-autopilot-vscode/`](plugins/koru-autopilot-vscode/) for the most
 reliable injection path on Wayland. Use `koru autopilot manage --ide windsurf --fix`
 to install or reassert the bundled VSIX and write the socket setting.
@@ -409,9 +417,10 @@ What each iteration does:
 4. sleep (`SLEEP_SECONDS`, default `120`)
 
 This loop is resilient by design: if one step fails, it logs the error and
-continues next iteration. Set `KORU_STRICT_PLUGIN_VERSION=1` when you want the
-loop to stop using a live plugin whose reported version differs from the
-expected VSIX/package version.
+continues next iteration. Autopilot drive is fail-closed by default: when the
+live plugin is missing, stale, or cannot confirm submit with a strict ACK, the
+cycle records `autopilot=skipped(...)` or `autopilot=failed` instead of using a
+Wayland keyboard fallback with the wrong focus.
 
 ### 3) Useful long-run overrides
 
@@ -735,6 +744,49 @@ setup required for basic quality control. The universal gates ensure:
   on-change loop for files and services
 - **Zero configuration** for basic validation
 - **Adaptive detection** of project-specific tooling
+
+### Docker OS × IDE smoke matrix
+
+Koru also ships a containerized IDE-routing smoke matrix for environments where
+real GUI automation is unavailable. It builds one image per Linux base and runs
+the same autopilot routing/dry-run checks for every supported IDE surface:
+
+```bash
+task test:docker:ide-matrix
+
+# Narrow the matrix while debugging:
+task test:docker:ide-matrix SYSTEMS=ubuntu-noble IDES="vscode cursor"
+```
+
+Default systems: `debian-slim`, `debian-bookworm`, `ubuntu-noble`, `fedora`,
+`alpine`. Default IDEs: `vscode`, `vscodium`, `cursor`, `windsurf`, `jetbrains`, `zed`.
+The GitHub Actions workflow `Docker IDE Matrix` runs the same 5 × 6 matrix on
+demand. Each container run verifies the headless IDE route, per-IDE submit-key
+defaults, isolated autopilot socket names, `koru autopilot drive --direct --dry-run`,
+and `koru autopilot manage` for plugin-managed IDEs.
+
+VS Code and VSCodium are separate lanes. A VSCodium terminal or explicit
+`--ide vscodium` routes to `KORU_AUTOPILOT_INSTANCE=vscodium`, VSCodium settings,
+and `koru-autopilot-vscodium.sock`; it should not attach to the VS Code socket.
+
+### Native OS × IDE smoke matrix
+
+Container tests cover popular Linux bases. Native GitHub Actions cover host
+platform differences that Docker does not model:
+
+- `ubuntu-latest`
+- `windows-latest`
+- `macos-latest`
+
+The `Native IDE Matrix` workflow runs the same IDE set:
+`vscode`, `vscodium`, `cursor`, `windsurf`, `jetbrains`, `zed`.
+It installs koru, adds fake editor CLIs to `PATH`, runs
+`tests/test_docker_ide_matrix.py`, then smoke-tests `koru autopilot drive` and
+`koru autopilot manage` where the IDE has a plugin-managed lane.
+
+iOS is intentionally not part of this matrix: koru autopilot targets desktop IDE
+CLIs, editor extension hosts, and local socket/process workflows. For Apple
+desktop coverage, use the `macos-latest` lane.
 
 For continuous monitoring, use the `semcod/wup` package directly:
 

@@ -11,18 +11,20 @@ from koru.autopilot import default_socket_path
 from koru.autopilot.ide import (
     detect_running_ides,
     detect_terminal_host_ide_id,
+    normalize_ide_id,
     pick_target,
+    supported_autopilot_ide_ids,
+    supports_vscode_extension_plugin,
 )
 from koru.ide_router import is_headless_environment, resolve_ide_route
 
-_PLUGIN_IDE_LANES = frozenset({"windsurf", "vscode", "cursor", "jetbrains", "zed"})
-_AUTOPILOT_PLUGIN_LANES = ("cursor", "windsurf", "vscode")
+_PLUGIN_IDE_LANES = supported_autopilot_ide_ids() - {"auto"}
+_AUTOPILOT_PLUGIN_LANES = ("cursor", "windsurf", "vscodium", "vscode")
 
 
 def supports_autopilot_plugin_ide(ide: str) -> bool:
     """Return ``True`` when ``ide`` has native autopilot plugin support."""
-    normalized = (ide or "").strip().lower()
-    return normalized in _AUTOPILOT_PLUGIN_LANES
+    return supports_vscode_extension_plugin(ide)
 
 
 def koru_distribution_version() -> str:
@@ -41,10 +43,10 @@ def _session_label() -> str:
 
 
 def _terminal_agent_lane_from_env() -> str | None:
-    host = detect_terminal_host_ide_id()
+    host = normalize_ide_id(detect_terminal_host_ide_id())
     if host:
         return host
-    explicit = (os.environ.get("KORU_AUTOPILOT_IDE") or "").strip().lower()
+    explicit = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_IDE"))
     if explicit and explicit != "auto":
         return explicit
     return None
@@ -57,7 +59,7 @@ def resolve_agent_lane_id(
     resolve_project_lane,
 ) -> tuple[str | None, str]:
     """Resolve ``--agent-lane``; return ``(lane_id, source_label)``."""
-    raw = (agent_lane_cli or "auto").strip().lower()
+    raw = normalize_ide_id(agent_lane_cli) or "auto"
     if raw == "none":
         return None, "cli:none"
     if raw != "auto":
@@ -93,7 +95,7 @@ def resolve_autopilot_ide_for_autonomous(
     detect_running_ides_fn=detect_running_ides,
 ) -> tuple[str, str]:
     """Return ``(autopilot_ide, source_label)`` aligned with the resolved lane."""
-    raw = (autopilot_ide_cli or "auto").strip().lower()
+    raw = normalize_ide_id(autopilot_ide_cli) or "auto"
     if raw != "auto":
         route = resolve_ide_route_fn(cli_autopilot_ide=raw)
         return route.autopilot_ide, f"cli:{raw}"
@@ -141,6 +143,22 @@ def build_startup_probe(
         lane,
         resolve_ide_route_fn=resolve_ide_route_fn,
     )
+    socket_path = str(default_socket_path())
+    if (
+        autopilot_ide
+        and autopilot_ide != "auto"
+        and not (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
+        and not (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip()
+    ):
+        previous_instance = os.environ.get("KORU_AUTOPILOT_INSTANCE")
+        try:
+            os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
+            socket_path = str(default_socket_path())
+        finally:
+            if previous_instance is None:
+                os.environ.pop("KORU_AUTOPILOT_INSTANCE", None)
+            else:
+                os.environ["KORU_AUTOPILOT_INSTANCE"] = previous_instance
     running = detect_running_ides()
     running_labels = tuple(f"{ide.label} (pid={ide.pid})" for ide in running)
     return AutonomousStartupProbe(
@@ -155,7 +173,7 @@ def build_startup_probe(
         autopilot_ide_source=ide_source,
         running_ides=running_labels,
         terminal_lane=_terminal_agent_lane_from_env(),
-        socket_path=str(default_socket_path()),
+        socket_path=socket_path,
         session=_session_label(),
         term_program=(os.environ.get("TERM_PROGRAM") or "").strip() or "-",
         headless=is_headless_environment(),
@@ -220,8 +238,8 @@ def format_post_startup_operator_hints(
         )
     elif plugin_supported and plugin_connected is False:
         lines.append(
-            f"koru autonomous: [!] brak pluginu na {sock} — drive może użyć klawiatury "
-            "(zły fokus). Napraw zanim zostawisz długi run.",
+            f"koru autonomous: [!] brak zgodnego pluginu na {sock} — "
+            "drive jest wstrzymany w trybie strict. Reload IDE, potem połącz plugin.",
         )
     elif not plugin_supported:
         lines.append(
@@ -248,12 +266,14 @@ def format_post_startup_operator_hints(
         lines.extend(
             [
                 f"koru autonomous: 1) Otwórz {ide} z root = {probe.project}",
-                "koru autonomous: 2) MCP: włącz serwer „koru” (po Reload po task koru:mcp:bootstrap)",
+                "koru autonomous: 2) MCP: włącz serwer „koru” "
+                "(po Reload po task koru:mcp:bootstrap)",
                 "koru autonomous: 3) Autopilot: Command Palette → „koru: Connect autopilot daemon” "
                 "(pasek: koru: on)",
                 f"koru autonomous: 4) Socket wtyczki = {sock} "
                 f"({settings_hint}: koruAutopilot.socketPath)",
-                f"koru autonomous: 5) Ten sam socket w shellu: export KORU_AUTOPILOT_INSTANCE={ide}",
+                "koru autonomous: 5) Ten sam socket w shellu: export "
+                f"KORU_AUTOPILOT_INSTANCE={ide}",
                 f"koru autonomous: 6) Test: koru autopilot status → plugins "
                 f"niepuste; potem koru autopilot drive --ide {ide} --require-plugin 'probe test'",
                 "koru autonomous: 7) (opcjonalnie) Command Palette → "
@@ -267,7 +287,8 @@ def format_post_startup_operator_hints(
         lines.extend(
             [
                 f"koru autonomous: 1) Otwórz {ide} z root = {probe.project}",
-                "koru autonomous: 2) MCP: włącz serwer „koru” (po Reload po task koru:mcp:bootstrap)",
+                "koru autonomous: 2) MCP: włącz serwer „koru” "
+                "(po Reload po task koru:mcp:bootstrap)",
                 f"koru autonomous: 3) Socket daemona = {sock}",
                 f"koru autonomous: 4) Ustaw w shellu: export KORU_AUTOPILOT_INSTANCE={ide}",
                 f"koru autonomous: 5) Skalibruj OS injector: task koru:ide-os:calibrate IDE={ide}",

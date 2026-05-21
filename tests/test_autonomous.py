@@ -12,6 +12,7 @@ from unittest.mock import patch
 import pytest
 
 from koru import autonomous as autonomous_mod
+from koru import autonomous_cycle as autonomous_cycle_mod
 from koru import autonomous_env as autonomous_env_mod
 from koru import autonomous_wup as autonomous_wup_mod
 from koru.queue.types import QueueLoopResult
@@ -457,6 +458,89 @@ def test_auto_pipeline_profiles_escalate_when_queue_stays_idle() -> None:
     assert fourth.idle_diagnostics == "deep"
 
 
+def test_effective_cycle_autopilot_skips_required_plugin_when_missing(
+    monkeypatch,
+) -> None:
+    messages: list[str] = []
+
+    class NoPluginClient:
+        def status(self):
+            return {"plugins": []}
+
+    monkeypatch.delenv("KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_PREFER_KEYBOARD", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_VISIBLE_TYPING", raising=False)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_stdio_info",
+        lambda msg, *, fmt: messages.append(msg),
+    )
+
+    enabled = autonomous_mod._effective_cycle_autopilot_enabled(
+        True,
+        client=NoPluginClient(),
+        autopilot_ide="vscode",
+        stdio_format="human",
+    )
+
+    assert enabled is False
+    assert any("autopilot skipped this cycle" in msg for msg in messages)
+
+
+def test_effective_cycle_autopilot_allows_non_plugin_required_ide() -> None:
+    enabled = autonomous_mod._effective_cycle_autopilot_enabled(
+        True,
+        client=None,
+        autopilot_ide="jetbrains",
+        stdio_format="human",
+    )
+
+    assert enabled is True
+
+
+def test_effective_cycle_scan_skips_after_waiting_input(monkeypatch) -> None:
+    messages: list[str] = []
+    state = autonomous_mod.AutoloopState(previous_signature="waiting_input:STARTER-048")
+
+    monkeypatch.delenv("KORU_AUTONOMOUS_SCAN_WHILE_WAITING", raising=False)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_stdio_info",
+        lambda msg, *, fmt: messages.append(msg),
+    )
+
+    enabled = autonomous_mod._effective_cycle_scan_enabled(
+        True,
+        state=state,
+        stdio_format="human",
+    )
+
+    assert enabled is False
+    assert any("scan skipped this cycle" in msg for msg in messages)
+
+
+def test_effective_cycle_scan_waiting_override(monkeypatch) -> None:
+    state = autonomous_mod.AutoloopState(previous_signature="waiting_input:STARTER-048")
+    monkeypatch.setenv("KORU_AUTONOMOUS_SCAN_WHILE_WAITING", "1")
+
+    enabled = autonomous_mod._effective_cycle_scan_enabled(
+        True,
+        state=state,
+        stdio_format="human",
+    )
+
+    assert enabled is True
+
+
+def test_build_queue_command_omits_unsupported_all_queues_flag() -> None:
+    assert autonomous_cycle_mod._build_queue_command(50, None) == (
+        "koru --queue --loop --max-iterations 50"
+    )
+    assert autonomous_cycle_mod._build_queue_command(50, "operator") == (
+        "koru --queue --loop --max-iterations 50 --queue-name operator"
+    )
+
+
 def test_stop_prior_autonomous_for_auto_start_terminates(tmp_path, monkeypatch) -> None:
     existing = [
         autonomous_mod.ExistingAutonomousProcess(
@@ -795,6 +879,21 @@ def test_apply_agent_lane_environ_auto_prefers_vscode_terminal(tmp_path, monkeyp
     monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
 
 
+def test_apply_agent_lane_environ_auto_prefers_vscodium_terminal(tmp_path, monkeypatch) -> None:
+    _isolate_integrated_terminal_env(monkeypatch)
+    monkeypatch.setenv("TERM_PROGRAM", "vscode")
+    monkeypatch.setenv("VSCODE_PID", "123")
+    monkeypatch.setenv("VSCODE_NLS_CONFIG", "/snap/codium/current/resources/app")
+    (tmp_path / ".vscode").mkdir()
+    with patch("koru.autonomous_startup.detect_running_ides", return_value=[]):
+        lane = autonomous_mod._apply_agent_lane_environ(tmp_path, "auto")
+    assert lane == "vscodium"
+    assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "vscodium"
+    assert os.environ["KORU_AUTOPILOT_IDE"] == "vscodium"
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+
+
 def test_apply_agent_lane_environ_auto_vscode_terminal_overrides_stale_windsurf_env(
     tmp_path,
     monkeypatch,
@@ -1055,7 +1154,7 @@ def test_up_auto_installs_plugin_before_autopilot_loop(
     )
 
     assert rc == 0
-    assert install_calls == ["cursor:koru-autopilot.sock"]
+    assert install_calls == ["cursor:koru-autopilot-cursor.sock"]
     assert "KORU_STRICT_PLUGIN_VERSION" not in os.environ
 
 

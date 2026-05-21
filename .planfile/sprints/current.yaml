@@ -2181,9 +2181,10 @@ sprint:
         to verify.'
       execution:
         attempt: 0
+        finished_at: '2026-05-21T14:49:52.418907Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -2196,6 +2197,16 @@ sprint:
           to verify.'
         source: koru task
         timestamp: '2026-05-20T20:09:07.357320+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T14:49:52.928145+00:00'
       id: STARTER-036
       inputs:
         api_headers: {}
@@ -2226,9 +2237,9 @@ sprint:
         timestamp: '2026-05-20T20:09:07.357320+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-20T20:09:07.357320+00:00'
+      updated_at: '2026-05-21T14:49:52.928085+00:00'
     STARTER-037:
       blocked_by: []
       blocks: []
@@ -2740,22 +2751,96 @@ sprint:
       sync: {}
       updated_at: '2026-05-21T12:09:38.447329+00:00'
     STARTER-042:
-      id: STARTER-042
-      name: 'Reduce cyclomatic complexity: _compose_service_ready (CC=15, limit=15)'
-      status: open
-      priority: normal
-      sprint: current
-      source:
-        tool: koru-scan
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T12:09:41.010954+00:00'
+      description: '`project/analysis.toon.yaml` reports `_compose_service_ready`
+        with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
         timestamp: '2026-05-21T12:09:41.010954+00:00'
+      id: STARTER-042
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _compose_service_ready (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
         context:
           input: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
             CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
             into strategy pattern.'
           signal: code2llm_cc
-      description: '`project/analysis.toon.yaml` reports `_compose_service_ready`
-        with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
-        into strategy pattern.'
+        timestamp: '2026-05-21T12:09:41.010954+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T12:09:41.010954+00:00'
+    STARTER-043:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T12:09:41.219210+00:00'
+      description: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T12:09:41.219210+00:00'
+      id: STARTER-043
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
       labels:
       - koru
       - nl-task
@@ -2764,56 +2849,55 @@ sprint:
       - complexity
       - refactor
       - scan
-      blocked_by: []
-      blocks: []
-      files:
-      - project/analysis.toon.yaml
-      executor:
-        kind: human
-        mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
-          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
-          into strategy pattern.'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
+      name: 'Reduce cyclomatic complexity: _handle_plugin_event (CC=15, limit=15)'
       outputs:
         artifacts: []
         notes: []
-      sync: {}
-      history:
-      - timestamp: '2026-05-21T12:09:41.010954+00:00'
-        action: created
-        source: koru task
-        message: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
-          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
-          into strategy pattern.'
-      created_at: '2026-05-21T12:09:41.010954+00:00'
-      updated_at: '2026-05-21T12:09:41.010954+00:00'
-    STARTER-043:
-      id: STARTER-043
-      name: 'Reduce cyclomatic complexity: _handle_plugin_event (CC=15, limit=15)'
-      status: open
       priority: normal
-      sprint: current
       source:
-        tool: koru-scan
-        timestamp: '2026-05-21T12:09:41.219210+00:00'
         context:
           input: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
             CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
             into strategy pattern.'
           signal: code2llm_cc
-      description: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
-        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
-        strategy pattern.'
+        timestamp: '2026-05-21T12:09:41.219210+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T12:09:41.219210+00:00'
+    STARTER-044:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T12:09:41.436135+00:00'
+      description: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T12:09:41.436135+00:00'
+      id: STARTER-044
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
       labels:
       - koru
       - nl-task
@@ -2822,56 +2906,53 @@ sprint:
       - complexity
       - refactor
       - scan
-      blocked_by: []
-      blocks: []
-      files:
-      - project/analysis.toon.yaml
-      executor:
-        kind: human
-        mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
-          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
-          into strategy pattern.'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
+      name: 'Reduce cyclomatic complexity: action_daemon (CC=15, limit=15)'
       outputs:
         artifacts: []
         notes: []
-      sync: {}
-      history:
-      - timestamp: '2026-05-21T12:09:41.219210+00:00'
-        action: created
-        source: koru task
-        message: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
-          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
-          into strategy pattern.'
-      created_at: '2026-05-21T12:09:41.219210+00:00'
-      updated_at: '2026-05-21T12:09:41.219210+00:00'
-    STARTER-044:
-      id: STARTER-044
-      name: 'Reduce cyclomatic complexity: action_daemon (CC=15, limit=15)'
-      status: open
       priority: normal
-      sprint: current
       source:
-        tool: koru-scan
-        timestamp: '2026-05-21T12:09:41.436135+00:00'
         context:
           input: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
             (limit=15). Extract sub-functions, simplify conditionals, or split into
             strategy pattern.'
           signal: code2llm_cc
-      description: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
-        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
-        pattern.'
+        timestamp: '2026-05-21T12:09:41.436135+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T12:09:41.436135+00:00'
+    STARTER-045:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T12:09:41.648224+00:00'
+      description: '`project/analysis.toon.yaml` reports `pasteText` with CC=18 (limit=15).
+        Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `pasteText` with CC=18 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T12:09:41.648224+00:00'
+      id: STARTER-045
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `pasteText` with CC=18 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
       labels:
       - koru
       - nl-task
@@ -2880,102 +2961,107 @@ sprint:
       - complexity
       - refactor
       - scan
-      blocked_by: []
-      blocks: []
-      files:
-      - project/analysis.toon.yaml
-      executor:
-        kind: human
-        mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15 (limit=15).
-          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
+      name: 'Reduce cyclomatic complexity: pasteText (CC=18, limit=15)'
       outputs:
         artifacts: []
         notes: []
-      sync: {}
-      history:
-      - timestamp: '2026-05-21T12:09:41.436135+00:00'
-        action: created
-        source: koru task
-        message: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
-          (limit=15). Extract sub-functions, simplify conditionals, or split into
-          strategy pattern.'
-      created_at: '2026-05-21T12:09:41.436135+00:00'
-      updated_at: '2026-05-21T12:09:41.436135+00:00'
-    STARTER-045:
-      id: STARTER-045
-      name: 'Reduce cyclomatic complexity: pasteText (CC=18, limit=15)'
-      status: open
       priority: normal
-      sprint: current
       source:
-        tool: koru-scan
-        timestamp: '2026-05-21T12:09:41.648224+00:00'
         context:
           input: '`project/analysis.toon.yaml` reports `pasteText` with CC=18 (limit=15).
             Extract sub-functions, simplify conditionals, or split into strategy pattern.'
           signal: code2llm_cc
-      description: '`project/analysis.toon.yaml` reports `pasteText` with CC=18 (limit=15).
-        Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+        timestamp: '2026-05-21T12:09:41.648224+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T12:09:41.648224+00:00'
+    STARTER-046:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T12:11:36.107352+00:00'
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        nie sprawdzono — podłącz plugin w IDE
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-21T12:38:03.715496Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+        source: koru task
+        timestamp: '2026-05-21T12:11:36.107352+00:00'
+      - action: update
+        changes:
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T12:34:23.059645+00:00'
+      - action: update
+        changes:
+        - execution
+        execution_state: done
+        previous_execution_state: ready
+        source: planfile.store
+        timestamp: '2026-05-21T12:38:03.853438+00:00'
+      id: STARTER-046
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
       labels:
       - koru
       - nl-task
       - llm-ready
-      - code2llm
-      - complexity
-      - refactor
-      - scan
-      blocked_by: []
-      blocks: []
-      files:
-      - project/analysis.toon.yaml
-      executor:
-        kind: human
-        mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '`project/analysis.toon.yaml` reports `pasteText` with CC=18 (limit=15).
-          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie nie sprawdzono — podłącz
+        plugin w IDE Wykonaj w IDE, potem zamknij ti...'
       outputs:
         artifacts: []
         notes: []
-      sync: {}
-      history:
-      - timestamp: '2026-05-21T12:09:41.648224+00:00'
-        action: created
-        source: koru task
-        message: '`project/analysis.toon.yaml` reports `pasteText` with CC=18 (limit=15).
-          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
-      created_at: '2026-05-21T12:09:41.648224+00:00'
-      updated_at: '2026-05-21T12:09:41.648224+00:00'
-    STARTER-046:
-      id: STARTER-046
-      name: '[OPERATOR] Autopilot: Connect + plugin w czacie nie sprawdzono — podłącz
-        plugin w IDE Wykonaj w IDE, potem zamknij ti...'
-      status: open
       priority: high
-      sprint: current
       source:
-        tool: koru-operator-pipeline
-        timestamp: '2026-05-21T12:11:36.107352+00:00'
         context:
           input: '[OPERATOR] Autopilot: Connect + plugin w czacie
 
@@ -2989,6 +3075,16 @@ sprint:
 
             Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
           step_id: autopilot_plugin
+        timestamp: '2026-05-21T12:11:36.107352+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-21T12:38:03.853390+00:00'
+    STARTER-047:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T12:38:54.361779+00:00'
       description: '[OPERATOR] Autopilot: Connect + plugin w czacie
 
 
@@ -3000,48 +3096,18 @@ sprint:
 
 
         Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - operator
-      - auto-pipeline
-      - step:autopilot_plugin
-      blocked_by: []
-      blocks: []
-      files: []
+      execution:
+        attempt: 0
+        finished_at: '2026-05-21T12:41:08.193075Z'
+        max_attempts: 1
+        queue: operator
+        state: done
       executor:
         kind: human
         mode: interactive
-      execution:
-        queue: operator
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
-
-
-          nie sprawdzono — podłącz plugin w IDE
-
-
-          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
-          ticket done.
-
-
-          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
-      outputs:
-        artifacts: []
-        notes: []
-      sync: {}
+      files: []
       history:
-      - timestamp: '2026-05-21T12:11:36.107352+00:00'
-        action: created
-        source: koru task
+      - action: created
         message: '[OPERATOR] Autopilot: Connect + plugin w czacie
 
 
@@ -3053,5 +3119,5166 @@ sprint:
 
 
           Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
-      created_at: '2026-05-21T12:11:36.107352+00:00'
-      updated_at: '2026-05-21T12:11:36.107352+00:00'
+        source: koru task
+        timestamp: '2026-05-21T12:38:54.361779+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T12:41:08.379423+00:00'
+      id: STARTER-047
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie nie sprawdzono — podłącz
+        plugin w IDE Wykonaj w IDE, potem zamknij ti...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            nie sprawdzono — podłącz plugin w IDE
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+          step_id: autopilot_plugin
+        timestamp: '2026-05-21T12:38:54.361779+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-21T12:41:08.379388+00:00'
+    STARTER-048:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T12:42:50.218447+00:00'
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-21T12:46:42.070226Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+        source: koru task
+        timestamp: '2026-05-21T12:42:50.218447+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T12:46:42.322895+00:00'
+      id: STARTER-048
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+        Wykonaj w I...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+          step_id: autopilot_plugin
+        timestamp: '2026-05-21T12:42:50.218447+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-21T12:46:42.322847+00:00'
+    STARTER-049:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T12:53:43.980868+00:00'
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        brak pluginu na /run/user/1000/koru-autopilot-windsurf.sock
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-21T12:55:59.011350Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          brak pluginu na /run/user/1000/koru-autopilot-windsurf.sock
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+        source: koru task
+        timestamp: '2026-05-21T12:53:43.980868+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T12:55:59.347811+00:00'
+      id: STARTER-049
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          brak pluginu na /run/user/1000/koru-autopilot-windsurf.sock
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie brak pluginu na /run/user/1000/koru-autopilot-windsurf.sock
+        Wykonaj w...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            brak pluginu na /run/user/1000/koru-autopilot-windsurf.sock
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
+          step_id: autopilot_plugin
+        timestamp: '2026-05-21T12:53:43.980868+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-21T12:55:59.347764+00:00'
+    STARTER-050:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T13:03:18.894845+00:00'
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        nie sprawdzono — podłącz plugin w IDE
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=windsurf`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-21T13:04:30.409172Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=windsurf`'
+        source: koru task
+        timestamp: '2026-05-21T13:03:18.894845+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T13:04:30.616326+00:00'
+      id: STARTER-050
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=windsurf`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie nie sprawdzono — podłącz
+        plugin w IDE Wykonaj w IDE, potem zamknij ti...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            nie sprawdzono — podłącz plugin w IDE
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=windsurf`'
+          step_id: autopilot_plugin
+        timestamp: '2026-05-21T13:03:18.894845+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-21T13:04:30.616273+00:00'
+    STARTER-051:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T13:59:58.112952+00:00'
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        brak pluginu na /run/user/1000/koru-autopilot-windsurf.sock
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=windsurf`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-21T14:53:20.066314Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          brak pluginu na /run/user/1000/koru-autopilot-windsurf.sock
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=windsurf`'
+        source: koru task
+        timestamp: '2026-05-21T13:59:58.112952+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T14:53:21.077036+00:00'
+      id: STARTER-051
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          brak pluginu na /run/user/1000/koru-autopilot-windsurf.sock
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=windsurf`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie brak pluginu na /run/user/1000/koru-autopilot-windsurf.sock
+        Wykonaj w...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            brak pluginu na /run/user/1000/koru-autopilot-windsurf.sock
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=windsurf`'
+          step_id: autopilot_plugin
+        timestamp: '2026-05-21T13:59:58.112952+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-21T14:53:21.076986+00:00'
+    STARTER-052:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:24:09.877328+00:00'
+      description: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as
+        a god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+        by responsibility.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koru/autonomous.py
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+          god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+          by responsibility.'
+        source: koru task
+        timestamp: '2026-05-21T14:24:09.877328+00:00'
+      id: STARTER-052
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+          god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+          by responsibility.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - god-module
+      - refactor
+      - scan
+      name: 'Split god module: src/koru/autonomous.py'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+            god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+            by responsibility.'
+          signal: code2llm_god
+        timestamp: '2026-05-21T14:24:09.877328+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:24:09.877328+00:00'
+    STARTER-053:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:24:10.183646+00:00'
+      description: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+        Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:24:10.183646+00:00'
+      id: STARTER-053
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _action_up (CC=17, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+            Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:24:10.183646+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:24:10.183646+00:00'
+    STARTER-054:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:24:10.497882+00:00'
+      description: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+        with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+          with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:24:10.497882+00:00'
+      id: STARTER-054
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+          with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _client_has_usable_plugin (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+            with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or
+            split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:24:10.497882+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:24:10.497882+00:00'
+    STARTER-055:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:24:10.827397+00:00'
+      description: '`project/analysis.toon.yaml` reports `_compose_service_ready`
+        with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:24:10.827397+00:00'
+      id: STARTER-055
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _compose_service_ready (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:24:10.827397+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:24:10.827397+00:00'
+    STARTER-056:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:24:11.219365+00:00'
+      description: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive`
+        with CC=19 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive`
+          with CC=19 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:24:11.219365+00:00'
+      id: STARTER-056
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive` with
+          CC=19 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _execute_autopilot_drive (CC=19, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive`
+            with CC=19 (limit=15). Extract sub-functions, simplify conditionals, or
+            split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:24:11.219365+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:24:11.219365+00:00'
+    STARTER-057:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:24:11.757380+00:00'
+      description: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:24:11.757380+00:00'
+      id: STARTER-057
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _handle_plugin_event (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:24:11.757380+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:24:11.757380+00:00'
+    STARTER-058:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:24:12.092957+00:00'
+      description: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:24:12.092957+00:00'
+      id: STARTER-058
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _performInject (CC=17, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:24:12.092957+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:24:12.092957+00:00'
+    STARTER-059:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:24:12.519173+00:00'
+      description: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+        CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+          CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:24:12.519173+00:00'
+      id: STARTER-059
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+          CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _run_autonomous_cycle (CC=21, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+            CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:24:12.519173+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:24:12.519173+00:00'
+    STARTER-060:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:24:13.070061+00:00'
+      description: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:24:13.070061+00:00'
+      id: STARTER-060
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _score_exe_path (CC=16, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:24:13.070061+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:24:13.070061+00:00'
+    STARTER-061:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:24:13.424973+00:00'
+      description: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env`
+        with CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env` with
+          CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:24:13.424973+00:00'
+      id: STARTER-061
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env` with
+          CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _terminal_ide_from_env (CC=16, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env` with
+            CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:24:13.424973+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:24:13.424973+00:00'
+    STARTER-062:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:24:13.788966+00:00'
+      description: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:24:13.788966+00:00'
+      id: STARTER-062
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: action_daemon (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:24:13.788966+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:24:13.788966+00:00'
+    STARTER-063:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:24:14.145993+00:00'
+      description: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:24:14.145993+00:00'
+      id: STARTER-063
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: autonomous_main (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:24:14.145993+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:24:14.145993+00:00'
+    STARTER-064:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:24:14.542902+00:00'
+      description: '`project/analysis.toon.yaml` reports `build_startup_probe` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `build_startup_probe` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:24:14.542902+00:00'
+      id: STARTER-064
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `build_startup_probe` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: build_startup_probe (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `build_startup_probe` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:24:14.542902+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:24:14.542902+00:00'
+    STARTER-065:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:24:15.062526+00:00'
+      description: '`project/analysis.toon.yaml` reports `inject_with_profile` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `inject_with_profile` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:24:15.062526+00:00'
+      id: STARTER-065
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `inject_with_profile` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: inject_with_profile (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `inject_with_profile` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:24:15.062526+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:24:15.062526+00:00'
+    STARTER-066:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:24:15.680908+00:00'
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+        methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+        to verify.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+        source: koru task
+        timestamp: '2026-05-21T14:24:15.680908+00:00'
+      id: STARTER-066
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - refactor
+      - scan
+      name: 'code2llm refactor: split 13 high-CC methods'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+            methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f
+            toon` to verify.'
+          signal: code2llm_refactor
+        timestamp: '2026-05-21T14:24:15.680908+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:24:15.680908+00:00'
+    STARTER-067:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:24:16.088032+00:00'
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+        (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+        verify.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+          (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+          verify.'
+        source: koru task
+        timestamp: '2026-05-21T14:24:16.088032+00:00'
+      id: STARTER-067
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+          (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+          verify.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - refactor
+      - scan
+      name: 'code2llm refactor: split src/koru/autonomous.py'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+            (god module). Execute this refactor step; re-run `code2llm ./ -f toon`
+            to verify.'
+          signal: code2llm_refactor
+        timestamp: '2026-05-21T14:24:16.088032+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:24:16.088032+00:00'
+    STARTER-068:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:25:21.695386+00:00'
+      description: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as
+        a god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+        by responsibility.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koru/autonomous.py
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+          god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+          by responsibility.'
+        source: koru task
+        timestamp: '2026-05-21T14:25:21.695386+00:00'
+      id: STARTER-068
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+          god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+          by responsibility.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - god-module
+      - refactor
+      - scan
+      name: 'Split god module: src/koru/autonomous.py'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+            god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+            by responsibility.'
+          signal: code2llm_god
+        timestamp: '2026-05-21T14:25:21.695386+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:25:21.695386+00:00'
+    STARTER-069:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:25:23.297454+00:00'
+      description: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+        Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:25:23.297454+00:00'
+      id: STARTER-069
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _action_up (CC=17, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+            Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:25:23.297454+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:25:23.297454+00:00'
+    STARTER-070:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:25:25.262988+00:00'
+      description: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+        with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+          with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:25:25.262988+00:00'
+      id: STARTER-070
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+          with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _client_has_usable_plugin (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+            with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or
+            split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:25:25.262988+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:25:25.262988+00:00'
+    STARTER-071:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:25:26.486683+00:00'
+      description: '`project/analysis.toon.yaml` reports `_compose_service_ready`
+        with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:25:26.486683+00:00'
+      id: STARTER-071
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _compose_service_ready (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:25:26.486683+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:25:26.486683+00:00'
+    STARTER-072:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:25:27.000117+00:00'
+      description: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive`
+        with CC=19 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive`
+          with CC=19 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:25:27.000117+00:00'
+      id: STARTER-072
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive` with
+          CC=19 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _execute_autopilot_drive (CC=19, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive`
+            with CC=19 (limit=15). Extract sub-functions, simplify conditionals, or
+            split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:25:27.000117+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:25:27.000117+00:00'
+    STARTER-073:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:25:27.992542+00:00'
+      description: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:25:27.992542+00:00'
+      id: STARTER-073
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _handle_plugin_event (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:25:27.992542+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:25:27.992542+00:00'
+    STARTER-074:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:25:29.912282+00:00'
+      description: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:25:29.912282+00:00'
+      id: STARTER-074
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _performInject (CC=17, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:25:29.912282+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:25:29.912282+00:00'
+    STARTER-075:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:25:30.693280+00:00'
+      description: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+        CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+          CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:25:30.693280+00:00'
+      id: STARTER-075
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+          CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _run_autonomous_cycle (CC=21, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+            CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:25:30.693280+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:25:30.693280+00:00'
+    STARTER-076:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:25:31.185455+00:00'
+      description: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:25:31.185455+00:00'
+      id: STARTER-076
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _score_exe_path (CC=16, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:25:31.185455+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:25:31.185455+00:00'
+    STARTER-077:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:25:31.859129+00:00'
+      description: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env`
+        with CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env` with
+          CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:25:31.859129+00:00'
+      id: STARTER-077
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env` with
+          CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _terminal_ide_from_env (CC=16, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env` with
+            CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:25:31.859129+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:25:31.859129+00:00'
+    STARTER-078:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:25:32.611885+00:00'
+      description: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:25:32.611885+00:00'
+      id: STARTER-078
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: action_daemon (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:25:32.611885+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:25:32.611885+00:00'
+    STARTER-079:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:25:33.388662+00:00'
+      description: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:25:33.388662+00:00'
+      id: STARTER-079
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: autonomous_main (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:25:33.388662+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:25:33.388662+00:00'
+    STARTER-080:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:25:33.979483+00:00'
+      description: '`project/analysis.toon.yaml` reports `build_startup_probe` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `build_startup_probe` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:25:33.979483+00:00'
+      id: STARTER-080
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `build_startup_probe` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: build_startup_probe (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `build_startup_probe` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:25:33.979483+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:25:33.979483+00:00'
+    STARTER-081:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:25:34.529688+00:00'
+      description: '`project/analysis.toon.yaml` reports `inject_with_profile` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `inject_with_profile` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:25:34.529688+00:00'
+      id: STARTER-081
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `inject_with_profile` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: inject_with_profile (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `inject_with_profile` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:25:34.529688+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:25:34.529688+00:00'
+    STARTER-082:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:25:35.070072+00:00'
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+        methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+        to verify.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+        source: koru task
+        timestamp: '2026-05-21T14:25:35.070072+00:00'
+      id: STARTER-082
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - refactor
+      - scan
+      name: 'code2llm refactor: split 13 high-CC methods'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+            methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f
+            toon` to verify.'
+          signal: code2llm_refactor
+        timestamp: '2026-05-21T14:25:35.070072+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:25:35.070072+00:00'
+    STARTER-083:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:25:35.634463+00:00'
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+        (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+        verify.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+          (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+          verify.'
+        source: koru task
+        timestamp: '2026-05-21T14:25:35.634463+00:00'
+      id: STARTER-083
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+          (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+          verify.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - refactor
+      - scan
+      name: 'code2llm refactor: split src/koru/autonomous.py'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+            (god module). Execute this refactor step; re-run `code2llm ./ -f toon`
+            to verify.'
+          signal: code2llm_refactor
+        timestamp: '2026-05-21T14:25:35.634463+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:25:35.634463+00:00'
+    STARTER-084:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:27:45.247019+00:00'
+      description: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as
+        a god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+        by responsibility.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koru/autonomous.py
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+          god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+          by responsibility.'
+        source: koru task
+        timestamp: '2026-05-21T14:27:45.247019+00:00'
+      id: STARTER-084
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+          god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+          by responsibility.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - god-module
+      - refactor
+      - scan
+      name: 'Split god module: src/koru/autonomous.py'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+            god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+            by responsibility.'
+          signal: code2llm_god
+        timestamp: '2026-05-21T14:27:45.247019+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:27:45.247019+00:00'
+    STARTER-085:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:27:46.042713+00:00'
+      description: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+        Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:27:46.042713+00:00'
+      id: STARTER-085
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _action_up (CC=17, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+            Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:27:46.042713+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:27:46.042713+00:00'
+    STARTER-086:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:27:46.949765+00:00'
+      description: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+        with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+          with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:27:46.949765+00:00'
+      id: STARTER-086
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+          with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _client_has_usable_plugin (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+            with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or
+            split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:27:46.949765+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:27:46.949765+00:00'
+    STARTER-087:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:27:47.910309+00:00'
+      description: '`project/analysis.toon.yaml` reports `_compose_service_ready`
+        with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:27:47.910309+00:00'
+      id: STARTER-087
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _compose_service_ready (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:27:47.910309+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:27:47.910309+00:00'
+    STARTER-088:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:27:48.846532+00:00'
+      description: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive`
+        with CC=19 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive`
+          with CC=19 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:27:48.846532+00:00'
+      id: STARTER-088
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive` with
+          CC=19 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _execute_autopilot_drive (CC=19, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive`
+            with CC=19 (limit=15). Extract sub-functions, simplify conditionals, or
+            split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:27:48.846532+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:27:48.846532+00:00'
+    STARTER-089:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:27:49.543827+00:00'
+      description: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:27:49.543827+00:00'
+      id: STARTER-089
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _handle_plugin_event (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:27:49.543827+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:27:49.543827+00:00'
+    STARTER-090:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:27:50.142395+00:00'
+      description: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:27:50.142395+00:00'
+      id: STARTER-090
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _performInject (CC=17, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:27:50.142395+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:27:50.142395+00:00'
+    STARTER-091:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:27:50.718114+00:00'
+      description: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+        CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+          CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:27:50.718114+00:00'
+      id: STARTER-091
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+          CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _run_autonomous_cycle (CC=21, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+            CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:27:50.718114+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:27:50.718114+00:00'
+    STARTER-092:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:27:51.475163+00:00'
+      description: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:27:51.475163+00:00'
+      id: STARTER-092
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _score_exe_path (CC=16, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:27:51.475163+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:27:51.475163+00:00'
+    STARTER-093:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:27:52.296406+00:00'
+      description: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env`
+        with CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env` with
+          CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:27:52.296406+00:00'
+      id: STARTER-093
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env` with
+          CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _terminal_ide_from_env (CC=16, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env` with
+            CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:27:52.296406+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:27:52.296406+00:00'
+    STARTER-094:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:27:54.775361+00:00'
+      description: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:27:54.775361+00:00'
+      id: STARTER-094
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: action_daemon (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:27:54.775361+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:27:54.775361+00:00'
+    STARTER-095:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:27:55.431316+00:00'
+      description: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:27:55.431316+00:00'
+      id: STARTER-095
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: autonomous_main (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:27:55.431316+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:27:55.431316+00:00'
+    STARTER-096:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:27:56.150028+00:00'
+      description: '`project/analysis.toon.yaml` reports `build_startup_probe` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `build_startup_probe` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:27:56.150028+00:00'
+      id: STARTER-096
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `build_startup_probe` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: build_startup_probe (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `build_startup_probe` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:27:56.150028+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:27:56.150028+00:00'
+    STARTER-097:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:27:57.392277+00:00'
+      description: '`project/analysis.toon.yaml` reports `inject_with_profile` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `inject_with_profile` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:27:57.392277+00:00'
+      id: STARTER-097
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `inject_with_profile` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: inject_with_profile (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `inject_with_profile` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:27:57.392277+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:27:57.392277+00:00'
+    STARTER-098:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:27:58.163769+00:00'
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+        methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+        to verify.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+        source: koru task
+        timestamp: '2026-05-21T14:27:58.163769+00:00'
+      id: STARTER-098
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - refactor
+      - scan
+      name: 'code2llm refactor: split 13 high-CC methods'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+            methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f
+            toon` to verify.'
+          signal: code2llm_refactor
+        timestamp: '2026-05-21T14:27:58.163769+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:27:58.163769+00:00'
+    STARTER-099:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:27:58.928278+00:00'
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+        (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+        verify.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+          (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+          verify.'
+        source: koru task
+        timestamp: '2026-05-21T14:27:58.928278+00:00'
+      id: STARTER-099
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+          (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+          verify.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - refactor
+      - scan
+      name: 'code2llm refactor: split src/koru/autonomous.py'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+            (god module). Execute this refactor step; re-run `code2llm ./ -f toon`
+            to verify.'
+          signal: code2llm_refactor
+        timestamp: '2026-05-21T14:27:58.928278+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:27:58.928278+00:00'
+    STARTER-100:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:32:04.107434+00:00'
+      description: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as
+        a god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+        by responsibility.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koru/autonomous.py
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+          god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+          by responsibility.'
+        source: koru task
+        timestamp: '2026-05-21T14:32:04.107434+00:00'
+      id: STARTER-100
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+          god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+          by responsibility.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - god-module
+      - refactor
+      - scan
+      name: 'Split god module: src/koru/autonomous.py'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+            god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+            by responsibility.'
+          signal: code2llm_god
+        timestamp: '2026-05-21T14:32:04.107434+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:32:04.107434+00:00'
+    STARTER-101:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:32:04.623542+00:00'
+      description: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+        Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:32:04.623542+00:00'
+      id: STARTER-101
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _action_up (CC=17, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+            Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:32:04.623542+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:32:04.623542+00:00'
+    STARTER-102:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:32:05.173976+00:00'
+      description: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+        with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+          with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:32:05.173976+00:00'
+      id: STARTER-102
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+          with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _client_has_usable_plugin (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+            with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or
+            split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:32:05.173976+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:32:05.173976+00:00'
+    STARTER-103:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:32:05.677097+00:00'
+      description: '`project/analysis.toon.yaml` reports `_compose_service_ready`
+        with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:32:05.677097+00:00'
+      id: STARTER-103
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _compose_service_ready (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:32:05.677097+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:32:05.677097+00:00'
+    STARTER-104:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:32:06.225858+00:00'
+      description: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive`
+        with CC=19 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive`
+          with CC=19 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:32:06.225858+00:00'
+      id: STARTER-104
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive` with
+          CC=19 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _execute_autopilot_drive (CC=19, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive`
+            with CC=19 (limit=15). Extract sub-functions, simplify conditionals, or
+            split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:32:06.225858+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:32:06.225858+00:00'
+    STARTER-105:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:32:06.815067+00:00'
+      description: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:32:06.815067+00:00'
+      id: STARTER-105
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _handle_plugin_event (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:32:06.815067+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:32:06.815067+00:00'
+    STARTER-106:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:32:07.387422+00:00'
+      description: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:32:07.387422+00:00'
+      id: STARTER-106
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _performInject (CC=17, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:32:07.387422+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:32:07.387422+00:00'
+    STARTER-107:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:32:08.241295+00:00'
+      description: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+        CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+          CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:32:08.241295+00:00'
+      id: STARTER-107
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+          CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _run_autonomous_cycle (CC=21, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+            CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:32:08.241295+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:32:08.241295+00:00'
+    STARTER-108:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:32:08.988220+00:00'
+      description: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:32:08.988220+00:00'
+      id: STARTER-108
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _score_exe_path (CC=16, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:32:08.988220+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:32:08.988220+00:00'
+    STARTER-109:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:32:09.691647+00:00'
+      description: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env`
+        with CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env` with
+          CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:32:09.691647+00:00'
+      id: STARTER-109
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env` with
+          CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _terminal_ide_from_env (CC=16, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env` with
+            CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:32:09.691647+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:32:09.691647+00:00'
+    STARTER-110:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:32:10.306980+00:00'
+      description: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:32:10.306980+00:00'
+      id: STARTER-110
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: action_daemon (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:32:10.306980+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:32:10.306980+00:00'
+    STARTER-111:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:32:10.877131+00:00'
+      description: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:32:10.877131+00:00'
+      id: STARTER-111
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: autonomous_main (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:32:10.877131+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:32:10.877131+00:00'
+    STARTER-112:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:32:11.460166+00:00'
+      description: '`project/analysis.toon.yaml` reports `build_startup_probe` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `build_startup_probe` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:32:11.460166+00:00'
+      id: STARTER-112
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `build_startup_probe` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: build_startup_probe (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `build_startup_probe` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:32:11.460166+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:32:11.460166+00:00'
+    STARTER-113:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:32:12.046995+00:00'
+      description: '`project/analysis.toon.yaml` reports `inject_with_profile` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `inject_with_profile` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:32:12.046995+00:00'
+      id: STARTER-113
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `inject_with_profile` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: inject_with_profile (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `inject_with_profile` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:32:12.046995+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:32:12.046995+00:00'
+    STARTER-114:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:32:12.641596+00:00'
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+        methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+        to verify.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+        source: koru task
+        timestamp: '2026-05-21T14:32:12.641596+00:00'
+      id: STARTER-114
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - refactor
+      - scan
+      name: 'code2llm refactor: split 13 high-CC methods'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+            methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f
+            toon` to verify.'
+          signal: code2llm_refactor
+        timestamp: '2026-05-21T14:32:12.641596+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:32:12.641596+00:00'
+    STARTER-115:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:32:13.624906+00:00'
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+        (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+        verify.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+          (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+          verify.'
+        source: koru task
+        timestamp: '2026-05-21T14:32:13.624906+00:00'
+      id: STARTER-115
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+          (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+          verify.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - refactor
+      - scan
+      name: 'code2llm refactor: split src/koru/autonomous.py'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+            (god module). Execute this refactor step; re-run `code2llm ./ -f toon`
+            to verify.'
+          signal: code2llm_refactor
+        timestamp: '2026-05-21T14:32:13.624906+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:32:13.624906+00:00'
+    STARTER-116:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:40:18.018519+00:00'
+      description: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as
+        a god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+        by responsibility.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koru/autonomous.py
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+          god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+          by responsibility.'
+        source: koru task
+        timestamp: '2026-05-21T14:40:18.018519+00:00'
+      id: STARTER-116
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+          god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+          by responsibility.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - god-module
+      - refactor
+      - scan
+      name: 'Split god module: src/koru/autonomous.py'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` flags `src/koru/autonomous.py` as a
+            god module (2235 lines, 4 classes, 65 methods). Split into focused submodules
+            by responsibility.'
+          signal: code2llm_god
+        timestamp: '2026-05-21T14:40:18.018519+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:40:18.018519+00:00'
+    STARTER-117:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:40:18.598352+00:00'
+      description: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+        Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:40:18.598352+00:00'
+      id: STARTER-117
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _action_up (CC=17, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_action_up` with CC=17 (limit=15).
+            Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:40:18.598352+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:40:18.598352+00:00'
+    STARTER-118:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:40:19.164500+00:00'
+      description: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+        with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+          with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:40:19.164500+00:00'
+      id: STARTER-118
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+          with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _client_has_usable_plugin (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_client_has_usable_plugin`
+            with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or
+            split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:40:19.164500+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:40:19.164500+00:00'
+    STARTER-119:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:40:19.755350+00:00'
+      description: '`project/analysis.toon.yaml` reports `_compose_service_ready`
+        with CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:40:19.755350+00:00'
+      id: STARTER-119
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _compose_service_ready (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_compose_service_ready` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:40:19.755350+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:40:19.755350+00:00'
+    STARTER-120:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:40:20.655642+00:00'
+      description: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive`
+        with CC=19 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive`
+          with CC=19 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:40:20.655642+00:00'
+      id: STARTER-120
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive` with
+          CC=19 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _execute_autopilot_drive (CC=19, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_execute_autopilot_drive`
+            with CC=19 (limit=15). Extract sub-functions, simplify conditionals, or
+            split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:40:20.655642+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:40:20.655642+00:00'
+    STARTER-121:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:40:21.438221+00:00'
+      description: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:40:21.438221+00:00'
+      id: STARTER-121
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _handle_plugin_event (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_handle_plugin_event` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:40:21.438221+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:40:21.438221+00:00'
+    STARTER-122:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:40:22.663266+00:00'
+      description: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:40:22.663266+00:00'
+      id: STARTER-122
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _performInject (CC=17, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_performInject` with CC=17
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:40:22.663266+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:40:22.663266+00:00'
+    STARTER-123:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:40:24.759585+00:00'
+      description: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+        CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+          CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:40:24.759585+00:00'
+      id: STARTER-123
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+          CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _run_autonomous_cycle (CC=21, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_run_autonomous_cycle` with
+            CC=21 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:40:24.759585+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:40:24.759585+00:00'
+    STARTER-124:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:40:25.495517+00:00'
+      description: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:40:25.495517+00:00'
+      id: STARTER-124
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _score_exe_path (CC=16, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_score_exe_path` with CC=16
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:40:25.495517+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:40:25.495517+00:00'
+    STARTER-125:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:40:26.157390+00:00'
+      description: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env`
+        with CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env` with
+          CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:40:26.157390+00:00'
+      id: STARTER-125
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env` with
+          CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: _terminal_ide_from_env (CC=16, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `_terminal_ide_from_env` with
+            CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:40:26.157390+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:40:26.157390+00:00'
+    STARTER-126:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:40:26.852174+00:00'
+      description: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:40:26.852174+00:00'
+      id: STARTER-126
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15 (limit=15).
+          Extract sub-functions, simplify conditionals, or split into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: action_daemon (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `action_daemon` with CC=15
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:40:26.852174+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:40:26.852174+00:00'
+    STARTER-127:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:40:27.499207+00:00'
+      description: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+        (limit=15). Extract sub-functions, simplify conditionals, or split into strategy
+        pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:40:27.499207+00:00'
+      id: STARTER-127
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: autonomous_main (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `autonomous_main` with CC=15
+            (limit=15). Extract sub-functions, simplify conditionals, or split into
+            strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:40:27.499207+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:40:27.499207+00:00'
+    STARTER-128:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:40:28.411645+00:00'
+      description: '`project/analysis.toon.yaml` reports `build_startup_probe` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `build_startup_probe` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:40:28.411645+00:00'
+      id: STARTER-128
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `build_startup_probe` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: build_startup_probe (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `build_startup_probe` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:40:28.411645+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:40:28.411645+00:00'
+    STARTER-129:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:40:29.251750+00:00'
+      description: '`project/analysis.toon.yaml` reports `inject_with_profile` with
+        CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split into
+        strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `inject_with_profile` with
+          CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-21T14:40:29.251750+00:00'
+      id: STARTER-129
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `inject_with_profile` with CC=15
+          (limit=15). Extract sub-functions, simplify conditionals, or split into
+          strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      name: 'Reduce cyclomatic complexity: inject_with_profile (CC=15, limit=15)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: '`project/analysis.toon.yaml` reports `inject_with_profile` with
+            CC=15 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-21T14:40:29.251750+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:40:29.251750+00:00'
+    STARTER-130:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:40:29.941226+00:00'
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+        methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+        to verify.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+        source: koru task
+        timestamp: '2026-05-21T14:40:29.941226+00:00'
+      id: STARTER-130
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - refactor
+      - scan
+      name: 'code2llm refactor: split 13 high-CC methods'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+            methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f
+            toon` to verify.'
+          signal: code2llm_refactor
+        timestamp: '2026-05-21T14:40:29.941226+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:40:29.941226+00:00'
+    STARTER-131:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:40:30.614202+00:00'
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+        (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+        verify.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+          (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+          verify.'
+        source: koru task
+        timestamp: '2026-05-21T14:40:30.614202+00:00'
+      id: STARTER-131
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+          (god module). Execute this refactor step; re-run `code2llm ./ -f toon` to
+          verify.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - refactor
+      - scan
+      name: 'code2llm refactor: split src/koru/autonomous.py'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split src/koru/autonomous.py**
+            (god module). Execute this refactor step; re-run `code2llm ./ -f toon`
+            to verify.'
+          signal: code2llm_refactor
+        timestamp: '2026-05-21T14:40:30.614202+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:40:30.614202+00:00'
+    STARTER-132:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-21T14:52:20.202173+00:00'
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: operator
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`'
+        source: koru task
+        timestamp: '2026-05-21T14:52:20.202173+00:00'
+      id: STARTER-132
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+        Wykonaj w I...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          detail: brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            brak pluginu na /run/user/1000/koru-autopilot-vscode.sock
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`'
+          step_id: autopilot_plugin
+          task_command: task koru:operator:plugin-probe IDE=vscode
+        timestamp: '2026-05-21T14:52:20.202173+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-21T14:52:20.202173+00:00'

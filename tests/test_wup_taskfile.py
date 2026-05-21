@@ -23,8 +23,11 @@ def test_operator_pipeline_taskfile_commands_exist() -> None:
     assert "koru:mcp:bootstrap:" in taskfile
     assert "python3 -m koru.cli init-ide --project . --ide all" in taskfile
     assert "koru:operator:plugin-probe:" in taskfile
+    assert "python3 -m koru.cli autopilot manage --ide" in taskfile
     assert "koru:operator:setup-host:" in taskfile
     assert "koru:ide-os:calibrate:" in taskfile
+    assert "test:docker:ide-matrix:" in taskfile
+    assert "scripts/docker-ide-matrix.sh" in taskfile
 
 
 def test_wup_yaml_is_bootstrapped_for_koru_project() -> None:

@@ -1,0 +1,110 @@
+name: Native IDE Matrix
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-ide-matrix:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # iOS is intentionally not included: Koru autopilot targets desktop IDE CLIs.
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        ide: [vscode, vscodium, cursor, windsurf, jetbrains, zed]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Add fake IDE tools to PATH
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-bin
+          cat > .ci-bin/fake-ide-tool.py <<'PY'
+          from __future__ import annotations
+
+          import os
+          import sys
+
+          args = set(sys.argv[1:])
+          version = os.environ.get("KORU_FAKE_EXTENSION_VERSION", "0.1.15")
+          if "--list-extensions" in args and "--show-versions" in args:
+              print(f"semcod.koru-autopilot-vscode@{version}")
+          elif "--list-extensions" in args:
+              print("semcod.koru-autopilot-vscode")
+          else:
+              print(f"fake-{os.path.basename(sys.argv[0])}")
+          PY
+          for tool in code code-insiders code-oss codium vscodium cursor windsurf zed pycharm idea wtype xdotool ydotool; do
+            cat > ".ci-bin/${tool}" <<'SH'
+          #!/usr/bin/env sh
+          python "$(dirname "$0")/fake-ide-tool.py" "$@"
+          SH
+            chmod +x ".ci-bin/${tool}"
+            cat > ".ci-bin/${tool}.cmd" <<'BAT'
+          @echo off
+          python "%~dp0\fake-ide-tool.py" %*
+          BAT
+          done
+          if command -v cygpath >/dev/null 2>&1; then
+            cygpath -w "$PWD/.ci-bin" >> "$GITHUB_PATH"
+          else
+            echo "$PWD/.ci-bin" >> "$GITHUB_PATH"
+          fi
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . pytest
+
+      - name: Run IDE routing tests
+        env:
+          KORU_MATRIX_IDE: ${{ matrix.ide }}
+          KORU_MATRIX_SYSTEM: ${{ matrix.os }}
+          KORU_AUTOPILOT_IDE: ${{ matrix.ide }}
+          KORU_AUTOPILOT_INSTANCE: ${{ matrix.ide }}
+          KORU_HEADLESS: "1"
+          KORU_HEADLESS_ALLOW_AUTOPILOT: "1"
+          KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK: "1"
+          KORU_FAKE_EXTENSION_VERSION: "0.1.15"
+          XDG_RUNTIME_DIR: ${{ runner.temp }}
+        run: python -m pytest tests/test_docker_ide_matrix.py -q
+
+      - name: Smoke autopilot drive
+        env:
+          KORU_AUTOPILOT_IDE: ${{ matrix.ide }}
+          KORU_AUTOPILOT_INSTANCE: ${{ matrix.ide }}
+          KORU_HEADLESS: "1"
+          KORU_HEADLESS_ALLOW_AUTOPILOT: "1"
+          KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK: "1"
+          XDG_RUNTIME_DIR: ${{ runner.temp }}
+        run: >
+          python -m koru.cli autopilot drive
+          --direct
+          --dry-run
+          --no-submit
+          --ide "${{ matrix.ide }}"
+          --prompt "koru native matrix smoke: ${{ matrix.os }}/${{ matrix.ide }}"
+
+      - name: Smoke plugin manager
+        if: ${{ contains(fromJSON('["vscode", "vscodium", "cursor", "windsurf", "jetbrains"]'), matrix.ide) }}
+        env:
+          KORU_AUTOPILOT_IDE: ${{ matrix.ide }}
+          KORU_AUTOPILOT_INSTANCE: ${{ matrix.ide }}
+          KORU_FAKE_EXTENSION_VERSION: "0.1.15"
+          XDG_RUNTIME_DIR: ${{ runner.temp }}
+        run: python -m koru.cli autopilot manage --ide "${{ matrix.ide }}" --format json

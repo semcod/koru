@@ -113,6 +113,9 @@ export function mergeUnique(primary: string[], secondary: string[]): string[] {
 
 export function buildFocusOpenCommands(ide: string, custom: string[]): string[] {
   const windsurfDefaults = [
+    "workbench.view.windsurfAgentSidebarContainer",
+    "windsurf.cascadePanel.open",
+    "windsurf.cascadePanel.focus",
     "windsurf.action.openCascade",
     "windsurf.action.openChat",
     "windsurf.chat.open",
@@ -123,6 +126,7 @@ export function buildFocusOpenCommands(ide: string, custom: string[]): string[] 
     "composer.showComposer",
     "workbench.action.chat.open",
     "aichat.newchataction",
+    "windsurf.openCascade",
   ];
   const genericDefaults = [
     "composer.showComposer",
@@ -137,6 +141,7 @@ export function buildFocusOpenCommands(ide: string, custom: string[]): string[] 
 
 export function buildFocusInputCommands(ide: string): string[] {
   const windsurf = [
+    "windsurf.cascadePanel.focus",
     "windsurf.action.focusChatInput",
     "windsurf.chat.focusInput",
     "windsurf.cascade.focusInput",
@@ -154,6 +159,7 @@ export function buildFocusInputCommands(ide: string): string[] {
 export function buildPasteDirectCommands(ide: string): string[] {
   if (ide === "windsurf") {
     return [
+      "windsurf.sendTextToChat",
       "windsurf.action.chat.typeText",
       "windsurf.action.cascade.typeText",
       "windsurf.chat.typeText",

@@ -1,42 +1,58 @@
-# code2llm/evolution | 1356 func | 133f | 2026-05-21
+# code2llm/evolution | 1404 func | 133f | 2026-05-21
 # generated in 0.01s
 
-NEXT[6] (ranked by impact):
+NEXT[10] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous.py
-      WHY: 1745L, 2 classes, max CC=12
-      EFFORT: ~4h  IMPACT: 20940
+      WHY: 2235L, 4 classes, max CC=21
+      EFFORT: ~4h  IMPACT: 46935
 
-  [2] !! SPLIT           src/koruapi/dashboard_serve.py
+  [2] !! SPLIT           src/koru/autonomous_cycle.py
+      WHY: 1320L, 2 classes, max CC=19
+      EFFORT: ~4h  IMPACT: 25080
+
+  [3] !! SPLIT           src/koruapi/dashboard_serve.py
       WHY: 1400L, 1 classes, max CC=13
       EFFORT: ~4h  IMPACT: 18200
 
-  [3] !  SPLIT-FUNC      AutopilotBridge.pasteText  CC=18  fan=18
-      WHY: CC=18 exceeds 15
-      EFFORT: ~1h  IMPACT: 324
+  [4] !  SPLIT-FUNC      _action_up  CC=17  fan=26
+      WHY: CC=17 exceeds 15
+      EFFORT: ~1h  IMPACT: 442
 
-  [4] !  SPLIT-FUNC      action_daemon  CC=15  fan=19
+  [5] !  SPLIT-FUNC      AutopilotBridge._performInject  CC=17  fan=19
+      WHY: CC=17 exceeds 15
+      EFFORT: ~1h  IMPACT: 323
+
+  [6] !  SPLIT-FUNC      _run_autonomous_cycle  CC=21  fan=15
+      WHY: CC=21 exceeds 15
+      EFFORT: ~1h  IMPACT: 315
+
+  [7] !  SPLIT-FUNC      action_daemon  CC=15  fan=19
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 285
 
-  [5] !  SPLIT-FUNC      AutopilotDaemon._handle_plugin_event  CC=15  fan=14
+  [8] !  SPLIT-FUNC      _execute_autopilot_drive  CC=19  fan=14
+      WHY: CC=19 exceeds 15
+      EFFORT: ~1h  IMPACT: 266
+
+  [9] !  SPLIT-FUNC      build_startup_probe  CC=15  fan=17
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 255
+
+  [10] !  SPLIT-FUNC      AutopilotDaemon._handle_plugin_event  CC=15  fan=14
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 210
 
-  [6] !! SPLIT           planfile.yaml
-      WHY: 1319L, 0 classes, max CC=0
-      EFFORT: ~4h  IMPACT: 0
-
 
 RISKS[3]:
-  ⚠ Splitting src/koru/autonomous.py may break 48 import paths
+  ⚠ Splitting src/koru/autonomous.py may break 65 import paths
   ⚠ Splitting src/koruapi/dashboard_serve.py may break 15 import paths
-  ⚠ Splitting planfile.yaml may break 0 import paths
+  ⚠ Splitting src/koru/autonomous_cycle.py may break 39 import paths
 
 METRICS-TARGET:
-  CC̄:          4.2 → ≤2.9
-  max-CC:      18 → ≤9
-  god-modules: 19 → 0
-  high-CC(≥15): 4 → ≤2
+  CC̄:          4.3 → ≤3.0
+  max-CC:      21 → ≤10
+  god-modules: 15 → 0
+  high-CC(≥15): 13 → ≤6
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -64,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.2 → now CC̄=4.2
+  prev CC̄=4.2 → now CC̄=4.3

@@ -83,6 +83,21 @@ def test_build_operator_steps_skips_plugin_for_jetbrains(
     assert "plugin niedostępny" in plugin.detail
 
 
+def test_build_operator_steps_plugin_probe_uses_resolved_ide(
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+) -> None:
+    steps = op.build_operator_steps(
+        project=tmp_path,
+        probe=probe,
+        plugin_connected=False,
+    )
+    plugin = next(s for s in steps if s.step_id == "autopilot_plugin")
+
+    assert plugin.status == "pending"
+    assert plugin.task_command == "task koru:operator:plugin-probe IDE=cursor"
+
+
 def test_run_startup_operator_pipeline_creates_tickets(
     tmp_path: Path,
     probe: AutonomousStartupProbe,
@@ -185,6 +200,126 @@ def test_run_startup_operator_pipeline_dedup_markers(
     )
     assert first.tickets_created
     assert not second.tickets_created
+
+
+def test_run_startup_operator_pipeline_recovers_missing_marker_from_open_ticket(
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (tmp_path / ".cursor").mkdir()
+    (tmp_path / ".cursor" / "mcp.json").write_text(
+        json.dumps({"mcpServers": {"koru": {"command": "koru", "args": ["mcp-serve"]}}}),
+        encoding="utf-8",
+    )
+    (tmp_path / ".planfile" / "sprints").mkdir(parents=True)
+    (tmp_path / ".planfile" / "config.yaml").write_text(
+        "prefix: PLF\nnext_id: 1\n",
+        encoding="utf-8",
+    )
+    (tmp_path / ".planfile" / "sprints" / "current.yaml").write_text(
+        "sprint:\n  name: current\n  tickets: {}\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(op, "_planfile_api_ok", lambda _p: (True, "ok"))
+    monkeypatch.setattr(op, "_host_injectors_ok", lambda: (True, "ok"))
+    monkeypatch.setattr(op, "_os_profile_ok", lambda _i, _p: (True, "ok"))
+
+    first = op.run_startup_operator_pipeline(
+        project=tmp_path,
+        probe=probe,
+        plugin_connected=False,
+        create_tickets=True,
+    )
+    first_plugin = next(s for s in first.steps if s.step_id == "autopilot_plugin")
+    assert first_plugin.ticket_id is not None
+
+    marker = tmp_path / ".planfile" / ".koru" / "operator-steps" / "autopilot_plugin.ticket"
+    marker.unlink()
+    second = op.run_startup_operator_pipeline(
+        project=tmp_path,
+        probe=probe,
+        plugin_connected=False,
+        create_tickets=True,
+    )
+    second_plugin = next(s for s in second.steps if s.step_id == "autopilot_plugin")
+
+    assert second.tickets_created == []
+    assert second_plugin.ticket_id == first_plugin.ticket_id
+    assert marker.read_text(encoding="utf-8") == first_plugin.ticket_id
+
+
+def test_run_startup_operator_pipeline_replaces_stale_ide_marker(
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    vscode_probe = replace(
+        probe,
+        resolved_lane="vscode",
+        resolved_autopilot_ide="vscode",
+        socket_path="/run/user/1000/koru-autopilot-vscode.sock",
+        terminal_lane="vscode",
+    )
+    (tmp_path / ".cursor").mkdir()
+    (tmp_path / ".cursor" / "mcp.json").write_text(
+        json.dumps({"mcpServers": {"koru": {"command": "koru", "args": ["mcp-serve"]}}}),
+        encoding="utf-8",
+    )
+    marker_dir = tmp_path / ".planfile" / ".koru" / "operator-steps"
+    marker_dir.mkdir(parents=True)
+    marker = marker_dir / "autopilot_plugin.ticket"
+    marker.write_text("PLF-1280", encoding="utf-8")
+    (tmp_path / ".planfile" / "sprints").mkdir(parents=True)
+    (tmp_path / ".planfile" / "config.yaml").write_text(
+        "prefix: PLF\nnext_id: 1281\n",
+        encoding="utf-8",
+    )
+    (tmp_path / ".planfile" / "sprints" / "current.yaml").write_text(
+        """
+sprint:
+  name: current
+  tickets:
+    PLF-1280:
+      id: PLF-1280
+      name: >-
+        [OPERATOR] Autopilot: Connect + plugin w czacie
+        brak pluginu na /run/user/1000/koru-autopilot-windsurf.sock
+      status: waiting_input
+      labels: [koru, operator, auto-pipeline, step:autopilot_plugin]
+      description: "brak pluginu na /run/user/1000/koru-autopilot-windsurf.sock"
+      execution:
+        queue: operator
+      source:
+        context:
+          step_id: autopilot_plugin
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(op, "_planfile_api_ok", lambda _p: (True, "ok"))
+    monkeypatch.setattr(op, "_host_injectors_ok", lambda: (True, "ok"))
+    monkeypatch.setattr(op, "_os_profile_ok", lambda _i, _p: (True, "ok"))
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, **_kwargs):
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0, stdout="done", stderr="")
+
+    monkeypatch.setattr(op.subprocess, "run", fake_run)
+
+    result = op.run_startup_operator_pipeline(
+        project=tmp_path,
+        probe=vscode_probe,
+        plugin_connected=False,
+        create_tickets=True,
+    )
+
+    plugin_step = next(s for s in result.steps if s.step_id == "autopilot_plugin")
+    assert plugin_step.ticket_id is not None
+    assert plugin_step.ticket_id != "PLF-1280"
+    assert plugin_step.task_command == "task koru:operator:plugin-probe IDE=vscode"
+    assert marker.read_text(encoding="utf-8") == plugin_step.ticket_id
+    assert calls == [["planfile", "ticket", "done", "PLF-1280"]]
 
 
 def test_run_startup_operator_pipeline_closes_resolved_marker_ticket(

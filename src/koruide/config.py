@@ -16,6 +16,7 @@ Schema (every section is optional):
     # `koru autopilot ide-list`. Unknown id falls back to "Return".
     windsurf  = "Return"
     vscode    = "Return"
+    vscodium  = "Return"
     cursor    = "Return"
     jetbrains = "ctrl+Return"
     zed       = "Return"
@@ -41,6 +42,7 @@ _BUILTIN_SUBMIT_KEYS: dict[str, str] = {
     "default": "Return",
     "windsurf": "Return",
     "vscode": "Return",
+    "vscodium": "Return",
     "cursor": "Return",
     "jetbrains": "ctrl+Return",
     "zed": "Return",

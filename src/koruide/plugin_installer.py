@@ -23,16 +23,20 @@ from koruide.ide import (
     detect_focused_ide_id,
     detect_running_ides,
     detect_terminal_host_ide_id,
+    normalize_ide_id,
+    supported_autopilot_ide_ids,
+    vscode_extension_plugin_ide_ids,
 )
 
-SUPPORTED_IDES = frozenset({"windsurf", "vscode", "cursor"})
+SUPPORTED_IDES = vscode_extension_plugin_ide_ids()
 EXTENSION_ID = "semcod.koru-autopilot-vscode"
 SOCKET_SETTING_KEY = "koruAutopilot.socketPath"
 
 _IDE_COMMANDS: dict[str, tuple[str, ...]] = {
     "windsurf": ("windsurf",),
     "cursor": ("cursor",),
-    "vscode": ("code", "code-insiders", "codium", "code-oss"),
+    "vscode": ("code", "code-insiders"),
+    "vscodium": ("codium", "vscodium", "code-oss"),
 }
 
 
@@ -64,10 +68,8 @@ class PluginInstallResult:
 
 
 def _valid_ide(raw: str | None) -> str | None:
-    if raw is None:
-        return None
-    ide = raw.strip().lower()
-    return ide if ide in {"auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"} else None
+    ide = normalize_ide_id(raw)
+    return ide if ide in supported_autopilot_ide_ids() else None
 
 
 def _ide_from_terminal_env() -> str | None:
@@ -103,6 +105,25 @@ def _repo_root() -> Path | None:
     return None
 
 
+def _plugin_package_version(plugin_dir: Path) -> str | None:
+    try:
+        data = json.loads((plugin_dir / "package.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    version = data.get("version") if isinstance(data, dict) else None
+    return str(version) if version else None
+
+
+def _versioned_vsix_candidates(plugin_dir: Path) -> list[Path]:
+    version = _plugin_package_version(plugin_dir)
+    if not version:
+        return []
+    return [
+        plugin_dir / f"koru-autopilot-{version}.vsix",
+        plugin_dir / f"koru-autopilot-vscode-{version}.vsix",
+    ]
+
+
 def _running_vscode_flavor() -> str | None:
     """Return VS Code-family flavor from the actually running editor process."""
     for ide in detect_running_ides():
@@ -130,11 +151,11 @@ def resolve_target_ide(requested: str = "auto") -> str | None:
     if env_ide and env_ide != "auto":
         return env_ide
 
-    terminal_ide = _ide_from_terminal_env()
+    terminal_ide = normalize_ide_id(_ide_from_terminal_env())
     if terminal_ide in SUPPORTED_IDES:
         return terminal_ide
 
-    focused = detect_focused_ide_id()
+    focused = normalize_ide_id(detect_focused_ide_id())
     if focused:
         return focused
 
@@ -154,9 +175,16 @@ def resolve_extension_vsix() -> Path | None:
 
     repo_root = _repo_root()
     if repo_root is not None:
-        candidates.extend((repo_root / "plugins" / "koru-autopilot-vscode").glob("*.vsix"))
+        plugin_dir = repo_root / "plugins" / "koru-autopilot-vscode"
+        for candidate in _versioned_vsix_candidates(plugin_dir):
+            if candidate.is_file():
+                return candidate.resolve()
+        candidates.extend(plugin_dir.glob("*.vsix"))
 
     cwd_plugin = Path.cwd() / "plugins" / "koru-autopilot-vscode"
+    for candidate in _versioned_vsix_candidates(cwd_plugin):
+        if candidate.is_file():
+            return candidate.resolve()
     candidates.extend(cwd_plugin.glob("*.vsix"))
 
     candidates = sorted(
@@ -171,11 +199,6 @@ def resolve_extension_vsix() -> Path | None:
 
 
 def _resolve_ide_command(ide: str) -> str | None:
-    if ide == "vscode" and _vscode_flavor() == "vscodium":
-        for name in ("codium", "vscodium"):
-            resolved = shutil.which(name)
-            if resolved:
-                return resolved
     for name in _IDE_COMMANDS.get(ide, ()):
         resolved = shutil.which(name)
         if resolved:
@@ -188,7 +211,8 @@ def _settings_path_for_ide(ide: str) -> Path | None:
     dirname = {
         "windsurf": "Windsurf",
         "cursor": "Cursor",
-        "vscode": "VSCodium" if _vscode_flavor() == "vscodium" else "Code",
+        "vscode": "Code",
+        "vscodium": "VSCodium",
     }.get(ide)
     if dirname is None:
         return None
@@ -403,7 +427,8 @@ def install_plugin_for_ide(
             ide=target,
             status="unsupported",
             message=(
-                "no installable koru plugin for this IDE yet (supported: windsurf, cursor, vscode)"
+                "no installable koru plugin for this IDE yet "
+                "(supported: windsurf, cursor, vscode, vscodium)"
             ),
         )
 

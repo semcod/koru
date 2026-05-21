@@ -258,6 +258,7 @@ _LANE_AUTOPILOT_IDE: dict[str, str] = {
     "cursor": "cursor",
     "windsurf": "windsurf",
     "vscode": "vscode",
+    "vscodium": "vscodium",
     "jetbrains": "jetbrains",
     "zed": "zed",
     "claude-code": "auto",

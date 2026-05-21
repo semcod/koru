@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.10] - 2026-05-21
 
 ### Fixed
+- Fix unused-imports issues (ticket-d9588027)
+
+## [0.1.10] - 2026-05-21
+
+### Fixed
 - Fix unused-imports issues (ticket-fc801415)
 - Fix string-concat issues (ticket-a8763d2d)
 
@@ -1470,6 +1475,47 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
   `deploy:{plan,dry,local,device,diagnose,resume,drift}`.
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
+
+## [0.1.177] - 2026-05-21
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update code2llm_output/README.md
+- Update code2llm_output/context.md
+- Update docs/IDE_PROTOCOL.md
+- Update docs/README.md
+- Update docs/agent-backends-architecture.md
+- ... and 5 more files
+
+### Test
+- Update tests/docker/ide-matrix.Dockerfile
+- Update tests/test_autonomous.py
+- Update tests/test_autonomous_startup.py
+- Update tests/test_autopilot_cli.py
+- Update tests/test_autopilot_daemon.py
+- Update tests/test_autopilot_ide.py
+- Update tests/test_autopilot_plugin_installer.py
+- Update tests/test_docker_ide_matrix.py
+- Update tests/test_docker_ide_matrix_config.py
+- Update tests/test_ide_router.py
+- ... and 4 more files
+
+### Other
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update Taskfile.yml
+- Update app.doql.less
+- Update code2llm_output/analysis.toon.yaml
+- Update code2llm_output/evolution.toon.yaml
+- Update code2llm_output/map.toon.yaml
+- Update code2llm_output/scripts_services/analysis.toon.yaml
+- Update code2llm_output/src/analysis.toon.yaml
+- Update code2llm_output/src_part2/analysis.toon.yaml
+- ... and 28 more files
 
 ## [0.1.176] - 2026-05-21
 

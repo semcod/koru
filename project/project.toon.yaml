@@ -1,55 +1,55 @@
-# koru | 1427 func | 145f | 42084L | python | 2026-05-21
+# koru | 1477 func | 146f | 43481L | python | 2026-05-21
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.0  critical=124 (limit:10)  dup=3  cycles=0
+  CC̄=4.1  critical=142 (limit:10)  dup=3  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     _build_handler = 36 (limit:10)
   !!! high_fan_out     _build_handler = 31 (limit:10)
+  !!! high_fan_out     _action_up = 26 (limit:10)
   !!! high_fan_out     init_project = 23 (limit:10)
   !!! high_fan_out     run_cycle = 23 (limit:10)
-  !!! high_fan_out     _action_up = 22 (limit:10)
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
   !!! high_fan_out     _build_parser = 21 (limit:10)
   !!! high_fan_out     create_nl_task = 20 (limit:10)
-  !!  high_fan_out     AutopilotDaemon._drive_via_keyboard = 19 (limit:10)
+  !!! high_fan_out     collect_install_manager_report = 20 (limit:10)
 
-MODULES[241] (top by size):
-  M[src/koru/autonomous.py] 1745L C:2 F:48 CC↑12 D:1 (python)
+MODULES[244] (top by size):
+  M[src/koru/autonomous.py] 2235L C:4 F:65 CC↑21 D:1 (python)
   M[src/koruapi/dashboard_serve.py] 1400L C:1 F:15 CC↑13 D:1 (python)
+  M[src/koru/autonomous_cycle.py] 1320L C:2 F:39 CC↑19 D:0 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
-  M[src/koru/autonomous_cycle.py] 1250L C:2 F:38 CC↑14 D:0 (python)
-  M[src/koru/context.py] 1242L C:0 F:48 CC↑12 D:7 (python)
+  M[src/koru/context.py] 1253L C:0 F:49 CC↑12 D:7 (python)
   M[src/koruapi/mcp_server.py] 1040L C:0 F:34 CC↑14 D:2 (python)
   M[src/koru/scan.py] 932L C:2 F:24 CC↑13 D:3 (python)
-  M[Taskfile.yml] 901L C:0 F:0 CC↑0 D:0 (yml)
-  M[src/koru/autopilot/cli_command.py] 885L C:0 F:22 CC↑14 D:0 (python)
-  M[src/koruide/daemon.py] 801L C:2 F:32 CC↑15 D:0 (python)
+  M[Taskfile.yml] 911L C:0 F:0 CC↑0 D:0 (yml)
+  M[src/koruide/daemon.py] 896L C:2 F:35 CC↑15 D:0 (python)
+  M[src/koru/autopilot/cli_command.py] 848L C:0 F:22 CC↑14 D:0 (python)
+  M[plugins/koru-autopilot-vscode/src/extension.ts] 753L C:2 F:72 CC↑17 D:6 (typescript)
+  M[src/koru/autonomy/operator_pipeline.py] 741L C:2 F:26 CC↑20 D:1 (python)
   M[services/healing-webhook/app.py] 702L C:0 F:27 CC↑11 D:0 (python)
   M[src/koru/scripts/koru-autoloop.sh] 676L C:0 F:17 CC↑0 D:0 (shell)
-  M[plugins/koru-autopilot-vscode/src/extension.ts] 628L C:2 F:69 CC↑18 D:6 (typescript)
-  M[src/koru/autonomy/operator_pipeline.py] 624L C:2 F:21 CC↑14 D:1 (python)
-  M[src/koru/init.py] 610L C:1 F:15 CC↑12 D:3 (python)
-  LANGS: python:155/shell:42/yaml:15/yml:8/typescript:6/kotlin:6/json:3/other:2/properties:1/xml:1/toml:1/txt:1
+  M[src/koruide/ide.py] 653L C:1 F:36 CC↑16 D:13 (python)
+  LANGS: python:155/shell:44/yaml:15/yml:8/typescript:6/kotlin:6/json:3/other:2/txt:2/properties:1/xml:1/toml:1
 
 HOTSPOTS[10]:
   ★ _build_handler fan=36  // Create a request handler closure bound to ``config``.
   ★ _build_handler fan=31  // Orchestrates 31 calls
+  ★ _action_up fan=26  // Orchestrates 26 calls
   ★ init_project fan=23  // Initialise (or re-initialise with ``force``) a koru project.
 
 Steps:
     1. Refu
   ★ run_cycle fan=23  // Orchestrates 23 calls
-  ★ _action_up fan=22  // Orchestrates 22 calls
 
 REFACTOR[15]:
-  [1] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (628L, 2 classes)
-  [2] H/H Split god module src/koru/autonomous_wup.py (538L, 3 classes)
-  [3] H/H Split god module src/koruide/daemon.py (801L, 2 classes)
-  [4] H/H Split god module src/koru/autonomous_cycle.py (1250L, 2 classes)
-  [5] H/H Split god module src/koru/autonomy/operator_pipeline.py (624L, 2 classes)
+  [1] H/H Split god module src/koru/autonomous.py (2235L, 4 classes)
+  [2] H/H Split god module src/koru/autonomy/operator_pipeline.py (741L, 2 classes)
+  [3] H/H Split god module src/koru/autonomous_cycle.py (1320L, 2 classes)
+  [4] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (753L, 2 classes)
+  [5] H/H Split god module src/koruide/ide.py (653L, 1 classes)
 
 EVOLUTION:
-  2026-05-21 CC̄=4.0 crit=124 42084L // Automated analysis
+  2026-05-21 CC̄=4.1 crit=142 43481L // Automated analysis

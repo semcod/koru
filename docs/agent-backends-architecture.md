@@ -44,7 +44,7 @@ MCP. MCP is the inverse direction: **IDE agent → koru tools**.
 | --- | --- |
 | Autopilot daemon + protocol | `src/koru/autopilot/daemon.py`, `protocol.py` |
 | CLI `drive` / `daemon` | `src/koru/autopilot/cli_command.py` |
-| VS Code / Windsurf / Cursor extension | `plugins/koru-autopilot-vscode/` |
+| VS Code / VSCodium / Windsurf / Cursor extension | `plugins/koru-autopilot-vscode/` |
 | JetBrains scaffold | `plugins/koru-autopilot-jetbrains/` |
 | MCP tools | `src/koru/mcp_server.py`, `mcp_provision.py` |
 | OS injector | `src/koru/autopilot/injector.py` |

@@ -47,7 +47,7 @@ CLI_TO_DAEMON = frozenset(
 ALL_TYPES = PLUGIN_TO_DAEMON | DAEMON_TO_PLUGIN | CLI_TO_DAEMON
 
 _FIELD_SCHEMA: dict[str, frozenset[str] | None] = {
-    "hello": frozenset({"ide", "version", "pid"}),
+    "hello": frozenset({"ide", "version", "pid", "matchingCommands"}),
     "session.started": frozenset({"chat"}),
     "session.ended": frozenset({"chat", "reason"}),
     "message.sent": frozenset({"chat", "text", "length"}),

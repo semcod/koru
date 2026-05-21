@@ -72,6 +72,14 @@ tasks:
     cmds:
       - python3 -m pytest tests/test_docker_e2e.py -v -m "" {{.CLI_ARGS}}
 
+  test:docker:ide-matrix:
+    desc: 'Run Docker OS x IDE smoke matrix. Vars: SYSTEMS, IDES (defaults cover Debian/Ubuntu/Fedora/Alpine and VS Code/VSCodium/Cursor/Windsurf/JetBrains/Zed)'
+    cmds:
+      - KORU_DOCKER_SYSTEMS="{{.SYSTEMS}}" KORU_DOCKER_IDES="{{.IDES}}" bash scripts/docker-ide-matrix.sh
+    vars:
+      SYSTEMS: '{{.SYSTEMS | default ""}}'
+      IDES: '{{.IDES | default ""}}'
+
   test:fast:
     desc: Run tests without verbose output
     cmds:
@@ -266,9 +274,11 @@ tasks:
       - python3 -m koru.cli init-ide --project . --ide all
 
   koru:operator:plugin-probe:
-    desc: Check autopilot daemon/plugin status
+    desc: Check autopilot daemon/plugin install, live version, and socket status
     cmds:
-      - python3 -m koru.cli autopilot status
+      - python3 -m koru.cli autopilot manage --ide "{{.IDE}}"
+    vars:
+      IDE: '{{.IDE | default "auto"}}'
 
   koru:operator:setup-host:
     desc: Probe host injector dependencies for autopilot
@@ -276,7 +286,7 @@ tasks:
       - python3 -m koru.cli autopilot setup-host
 
   koru:ide-os:calibrate:
-    desc: Calibrate OS injector chat coordinates for an IDE (IDE=vscode|cursor|windsurf|jetbrains|zed)
+    desc: Calibrate OS injector chat coordinates for an IDE (IDE=vscode|vscodium|cursor|windsurf|jetbrains|zed)
     cmds:
       - python3 -m koru.cli autopilot calibrate --ide "{{.IDE}}"
     vars:

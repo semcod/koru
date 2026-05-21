@@ -16,8 +16,9 @@ from dataclasses import dataclass
 from typing import Literal
 
 from koru.autonomy.env import env_truthy
+from koruide.ide import normalize_ide_id, supported_autopilot_ide_ids
 
-_VALID_AUTOPILOT_IDE = frozenset({"auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"})
+_VALID_AUTOPILOT_IDE = supported_autopilot_ide_ids()
 
 
 def is_headless_environment(environ: Mapping[str, str] | None = None) -> bool:
@@ -70,11 +71,11 @@ def resolve_ide_route(
             ),
         )
 
-    raw = (env.get("KORU_AUTOPILOT_IDE") or "").strip().lower()
+    raw = normalize_ide_id(env.get("KORU_AUTOPILOT_IDE"))
     if raw in _VALID_AUTOPILOT_IDE and raw != "auto":
         ide = raw
     else:
-        cli = cli_autopilot_ide.strip().lower()
+        cli = normalize_ide_id(cli_autopilot_ide)
         ide = cli if cli in _VALID_AUTOPILOT_IDE else "auto"
 
     return IDERoute(

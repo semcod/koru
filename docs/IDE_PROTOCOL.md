@@ -156,7 +156,7 @@ Wysyłane natychmiast po połączeniu wtyczki z socketem w celu rejestracji śro
 }
 ```
 * **Pola**:
-  - `ide` (string): Identyfikator środowiska (`vscode`, `cursor`, `windsurf`, `jetbrains`).
+  - `ide` (string): Identyfikator środowiska (`vscode`, `vscodium`, `cursor`, `windsurf`, `jetbrains`, `zed`).
   - `version` (string): Wersja wtyczki koru-autopilot.
   - `pid` (integer): ID procesu wtyczki w systemie.
 
@@ -388,7 +388,7 @@ do bazowej interoperacyjności sterowania.
 Różne wersje IDE i wbudowane w nie chaty posiadają odmienne interfejsy programistyczne (API). Ścisły kontrakt `v1` dopuszcza w `hello` tylko pola `ide`, `version` i `pid`, a decoder ignoruje pola spoza allowlisty. Capabilities pozostają więc opisowym modelem adaptera/future extension, a nie dodatkowym payloadem ramki `hello`.
 
 W praktyce rolę „negocjacji” pełni dziś głównie:
-- probe ladder po stronie pluginu VS Code/Windsurf/Cursor,
+- probe ladder po stronie pluginu VS Code/VSCodium/Windsurf/Cursor,
 - metadane zwrotne w `ack` (`winning_focus_open`, `winning_paste`, `winning_submit`, `probe_ladder`).
 
 Przykładowy JSON `capabilities` należy traktować jako **aspiracyjny model rozszerzenia**,

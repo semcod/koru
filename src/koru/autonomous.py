@@ -139,6 +139,62 @@ def _allow_keyboard_autopilot_fallback() -> bool:
     return raw in {"1", "true", "yes", "on"}
 
 
+def _effective_cycle_autopilot_enabled(
+    enabled: bool,
+    *,
+    client: object | None,
+    autopilot_ide: str,
+    stdio_format: str,
+) -> bool:
+    if not enabled:
+        return False
+    if not _autonomous_cycle_module._plugin_required_for_ide(autopilot_ide):
+        return True
+    plugin_ready = False
+    if client is not None:
+        status_fn = getattr(client, "status", None)
+        if callable(status_fn):
+            try:
+                plugin_ready = _status_has_autopilot_plugin(status_fn(), autopilot_ide)
+            except OSError:
+                plugin_ready = False
+    if plugin_ready:
+        return True
+    _stdio_info(
+        "koru autonomous: autopilot skipped this cycle; "
+        f"ide={autopilot_ide} requires a compatible connected plugin",
+        fmt=stdio_format,
+    )
+    return False
+
+
+def _scan_while_waiting_input_enabled() -> bool:
+    raw = os.environ.get("KORU_AUTONOMOUS_SCAN_WHILE_WAITING", "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
+def _effective_cycle_scan_enabled(
+    enabled: bool,
+    *,
+    state: object,
+    stdio_format: str,
+) -> bool:
+    if not enabled:
+        return False
+    if _scan_while_waiting_input_enabled():
+        return True
+    signature = str(getattr(state, "previous_signature", "") or "")
+    if signature.startswith("waiting_input:"):
+        waiting_ticket = signature.split(":", 1)[1] or "-"
+        _stdio_info(
+            "koru autonomous: scan skipped this cycle; "
+            f"queue is waiting_input ({waiting_ticket})",
+            fmt=stdio_format,
+        )
+        return False
+    return True
+
+
 @dataclass(frozen=True)
 class ExistingAutonomousProcess:
     pid: int
@@ -522,7 +578,7 @@ def _build_parser() -> argparse.ArgumentParser:
     up.add_argument(
         "--autopilot-ide",
         default="auto",
-        choices=("auto", "windsurf", "vscode", "cursor", "jetbrains", "zed"),
+        choices=("auto", "windsurf", "vscode", "vscodium", "cursor", "jetbrains", "zed"),
         help="IDE target for autopilot drive (default: auto).",
     )
     up.add_argument(
@@ -1346,6 +1402,18 @@ def _setup_autopilot_daemon(
     thread: threading.Thread | None = None
     socket_path: Path | None = None
     if args.enable_autopilot:
+        lane = _apply_agent_lane_environ(project, args.agent_lane)
+        autopilot_ide, _ = resolve_autopilot_ide_for_autonomous(
+            args.autopilot_ide,
+            lane,
+            resolve_ide_route_fn=resolve_ide_route,
+        )
+        if (
+            autopilot_ide
+            and "KORU_AUTOPILOT_INSTANCE" not in os.environ
+            and "KORU_AUTOPILOT_SOCKET" not in os.environ
+        ):
+            os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
         socket_path = (args.socket or default_socket_path()).resolve()
         client, daemon, thread = _start_or_reuse_daemon(
             project=project,
@@ -1464,7 +1532,8 @@ def _setup_autopilot_plugin(
                 _stdio_info(
                     "koru autonomous: no connected autopilot plugin "
                     f"for ide={autopilot_ide} after "
-                    f"{max(0.0, args.autopilot_plugin_wait_seconds):.1f}s; continuing",
+                    f"{max(0.0, args.autopilot_plugin_wait_seconds):.1f}s; "
+                    "autopilot drive will be skipped until it connects",
                     fmt=args.emit_events,
                 )
     return plugin_connected
@@ -1662,14 +1731,29 @@ def _run_autonomous_cycle(
             f"autopilot={'on' if profile.enable_autopilot else 'off'}",
             fmt=args.emit_events,
         )
+    requested_enable_scan = profile.enable_scan if profile is not None else enable_scan
+    effective_enable_scan = _effective_cycle_scan_enabled(
+        requested_enable_scan,
+        state=loop_state,
+        stdio_format=args.emit_events,
+    )
+    requested_enable_autopilot = (
+        profile.enable_autopilot if profile is not None else args.enable_autopilot
+    )
+    effective_enable_autopilot = _effective_cycle_autopilot_enabled(
+        requested_enable_autopilot,
+        client=client,
+        autopilot_ide=autopilot_ide,
+        stdio_format=args.emit_events,
+    )
     _scan_result, queue_result, _autopilot_status, diag_result = _run_cycle(
         cycle=cycle,
         project=project,
         actor=args.actor,
         queue_name=queue_name,
-        enable_scan=profile.enable_scan if profile is not None else enable_scan,
+        enable_scan=effective_enable_scan,
         max_iterations=profile.max_iterations if profile is not None else args.max_iterations,
-        enable_autopilot=profile.enable_autopilot if profile is not None else args.enable_autopilot,
+        enable_autopilot=effective_enable_autopilot,
         autopilot_ide=autopilot_ide,
         drive_prompt=args.drive_prompt,
         submit=args.submit,

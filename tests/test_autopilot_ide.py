@@ -102,6 +102,41 @@ def test_detect_running_ides_skips_unknown_processes(fake_proc: Path) -> None:
     assert detected == []
 
 
+def test_detect_running_ides_separates_vscode_and_vscodium(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rows = {
+        111: ("code", ["/snap/code/current/usr/share/code/code", "--type=browser"]),
+        222: ("codium", ["/snap/codium/current/usr/share/codium/codium", "--type=browser"]),
+    }
+    for pid, (comm, cmd) in rows.items():
+        d = tmp_path / str(pid)
+        d.mkdir()
+        (d / "comm").write_text(comm + "\n")
+        (d / "cmdline").write_bytes(b"\x00".join(c.encode() for c in cmd) + b"\x00")
+
+    monkeypatch.setattr(
+        ide_mod,
+        "_read_comm",
+        lambda pid: (tmp_path / str(pid) / "comm").read_text().strip(),
+    )
+    monkeypatch.setattr(
+        ide_mod,
+        "_read_cmdline",
+        lambda pid: (
+            (tmp_path / str(pid) / "cmdline").read_bytes().replace(b"\x00", b" ").decode().strip()
+        ),
+    )
+    monkeypatch.setattr(ide_mod, "_read_exe", lambda pid: rows[pid][1][0])
+
+    detected = ide_mod.detect_running_ides(_pids=[111, 222])
+    assert [row.id for row in detected if row.id in {"vscode", "vscodium"}] == [
+        "vscode",
+        "vscodium",
+    ]
+
+
 def test_pick_target_prefers_user_choice(fake_proc: Path) -> None:
     detected = ide_mod.detect_running_ides(_pids=[1234, 5678])
     chosen = ide_mod.pick_target(detected, prefer="jetbrains")
@@ -252,6 +287,62 @@ def test_detect_terminal_host_ide_id_vscode_nls_without_pid(
     assert ide_mod.detect_terminal_host_ide_id() == "vscode"
 
 
+def test_detect_terminal_host_ide_id_vscodium_from_vscode_family_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for key in (
+        "CURSOR_AGENT",
+        "CURSOR_CLI",
+        "CHROME_DESKTOP",
+        "WINDSURF_VERSION",
+        "WINDSURF_CSRF_TOKEN",
+        "TERM_PROGRAM_VERSION",
+        "WINDSURF_CASCADE_TERMINAL",
+        "GIO_LAUNCHED_DESKTOP_FILE",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("TERM_PROGRAM", "vscode")
+    monkeypatch.setenv("VSCODE_PID", "123")
+    monkeypatch.setenv("VSCODE_NLS_CONFIG", "/snap/codium/current/resources/app")
+
+    assert ide_mod.detect_terminal_host_ide_id() == "vscodium"
+
+
+def test_detect_terminal_host_ide_id_zed_term_program(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for key in (
+        "CURSOR_AGENT",
+        "CURSOR_CLI",
+        "CHROME_DESKTOP",
+        "VSCODE_PID",
+        "VSCODE_CODE_CACHE_PATH",
+        "VSCODE_IPC_HOOK",
+        "WINDSURF_VERSION",
+        "WINDSURF_CSRF_TOKEN",
+        "TERM_PROGRAM_VERSION",
+        "WINDSURF_CASCADE_TERMINAL",
+        "GIO_LAUNCHED_DESKTOP_FILE",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("TERM_PROGRAM", "zed")
+
+    assert ide_mod.detect_terminal_host_ide_id() == "zed"
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("codium", "vscodium"),
+        ("code-oss.desktop", "vscodium"),
+        ("pycharm", "jetbrains"),
+        ("zed-editor", "zed"),
+    ],
+)
+def test_normalize_ide_id_aliases(raw: str, expected: str) -> None:
+    assert ide_mod.normalize_ide_id(raw) == expected
+
+
 def test_pick_target_prefers_terminal_host_over_signature_order(
     fake_proc: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -308,6 +399,18 @@ def test_resolve_drive_target_auto_prefers_focused_when_it_has_profile(
     )
     assert profile == "jetbrains"
     assert reason == "auto:focused-profile"
+
+
+def test_resolve_drive_target_explicit_zed_without_running_process(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(ide_mod, "detect_running_ides", lambda: [])
+
+    kb, profile, reason = ide_mod.resolve_drive_target("zed", None)
+
+    assert kb == "zed"
+    assert profile == "zed"
+    assert reason == "explicit-missing:zed"
 
 
 # ---- R5: detect_running_ides_cached ----

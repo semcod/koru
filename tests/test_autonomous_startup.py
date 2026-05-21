@@ -114,7 +114,8 @@ def test_format_post_startup_operator_hints_mentions_socket(tmp_path: Path) -> N
     assert probe.socket_path in text
     assert "koru autopilot status" in text
     assert "require-plugin" in text
-    assert "[!] brak pluginu" in text
+    assert "[!] brak zgodnego pluginu" in text
+    assert "drive jest wstrzymany" in text
 
 
 def test_format_post_startup_operator_hints_for_jetbrains_skips_plugin_steps() -> None:
@@ -156,6 +157,25 @@ def test_format_startup_banner_includes_version(tmp_path: Path) -> None:
     assert "koru autonomous: koru " in text
     assert "python " in text
     assert "autopilot socket" in text
+
+
+def test_build_startup_probe_reports_per_ide_socket_for_explicit_ide(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
+    monkeypatch.setenv("XDG_RUNTIME_DIR", "/run/user/1000")
+
+    probe = startup.build_startup_probe(
+        tmp_path,
+        agent_lane_cli="none",
+        autopilot_ide_cli="vscodium",
+        resolve_project_lane=lambda _p, _a: None,
+    )
+
+    assert probe.socket_path == "/run/user/1000/koru-autopilot-vscodium.sock"
+    assert os.environ.get("KORU_AUTOPILOT_INSTANCE") is None
 
 
 def test_apply_agent_lane_environ_uses_running_ide(

@@ -50,8 +50,8 @@
 
 - [ ] **Python 3.12+** z `pip` i `venv`
 - [ ] **System operacyjny Linux** (X11 lub Wayland)
-- [ ] **IDE**: VS Code, Windsurf, Cursor, JetBrains albo Zed
-- [ ] **Backend wstrzykiwania tekstu**: preferowany plugin VS Code/Windsurf/Cursor; fallback X11 `xdotool`, Wayland `wtype` albo `ydotool`
+- [ ] **IDE**: VS Code, VSCodium, Windsurf, Cursor, JetBrains albo Zed
+- [ ] **Backend wstrzykiwania tekstu**: preferowany plugin VS Code/VSCodium/Windsurf/Cursor; fallback X11 `xdotool`, Wayland `wtype` albo `ydotool`
 - [ ] **Clipboard tools**: `wl-clipboard` lub `xclip`, gdy używasz backendu klawiaturowego
 
 ### Krok 2: Instalacja koru
