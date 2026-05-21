@@ -90,11 +90,23 @@ def test_resolve_autopilot_ide_keeps_jetbrains_when_no_plugin_ide_running() -> N
 
 
 def test_format_post_startup_operator_hints_mentions_socket(tmp_path: Path) -> None:
-    probe = startup.build_startup_probe(
-        tmp_path,
+    probe = startup.AutonomousStartupProbe(
+        koru_version="0.0-test",
+        python_version="3.12",
+        project=tmp_path,
         agent_lane_cli="cursor",
         autopilot_ide_cli="cursor",
-        resolve_project_lane=lambda _p, _a: "cursor",
+        resolved_lane="cursor",
+        lane_source="cli:cursor",
+        resolved_autopilot_ide="cursor",
+        autopilot_ide_source="cli:cursor",
+        running_ides=("Cursor (pid=1)",),
+        terminal_lane="cursor",
+        socket_path="/run/user/1000/koru-autopilot-cursor.sock",
+        session="wayland",
+        term_program="-",
+        headless=False,
+        xdg_runtime_dir="/run/user/1000",
     )
     text = "\n".join(
         startup.format_post_startup_operator_hints(probe, plugin_connected=False),
@@ -103,6 +115,34 @@ def test_format_post_startup_operator_hints_mentions_socket(tmp_path: Path) -> N
     assert "koru autopilot status" in text
     assert "require-plugin" in text
     assert "[!] brak pluginu" in text
+
+
+def test_format_post_startup_operator_hints_for_jetbrains_skips_plugin_steps() -> None:
+    probe = startup.AutonomousStartupProbe(
+        koru_version="0.0-test",
+        python_version="3.12",
+        project=Path("/tmp/project"),
+        agent_lane_cli="auto",
+        autopilot_ide_cli="auto",
+        resolved_lane="jetbrains",
+        lane_source="terminal",
+        resolved_autopilot_ide="jetbrains",
+        autopilot_ide_source="lane",
+        running_ides=("JetBrains IDE (pid=1)",),
+        terminal_lane="jetbrains",
+        socket_path="/run/user/1000/koru-autopilot-jetbrains.sock",
+        session="wayland",
+        term_program="-",
+        headless=False,
+        xdg_runtime_dir="/run/user/1000",
+    )
+    text = "\n".join(
+        startup.format_post_startup_operator_hints(probe, plugin_connected=False),
+    )
+    assert "plugin niedostępny dla ide=jetbrains" in text
+    assert "Command Palette" not in text
+    assert "--require-plugin" not in text
+    assert "koru: Connect autopilot daemon" not in text
 
 
 def test_format_startup_banner_includes_version(tmp_path: Path) -> None:

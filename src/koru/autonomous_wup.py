@@ -149,6 +149,39 @@ def _wup_config_path(config: WupWatchConfig) -> Path:
     return config.config if config.config is not None else config.project / "wup.yaml"
 
 
+def _load_project_env(project: Path) -> dict[str, str]:
+    """Load .wup.env and .env into a child-process environment without overwriting current vars."""
+    env = dict(os.environ)
+    for env_name in (".wup.env", ".env"):
+        env_path = project / env_name
+        if not env_path.is_file():
+            continue
+        try:
+            lines = env_path.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            continue
+        for raw_line in lines:
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in env:
+                env[key] = value
+    return env
+
+
+def _wup_subprocess_env(config: WupWatchConfig) -> dict[str, str]:
+    env = _load_project_env(config.project)
+    browsers_path = env.get("PLAYWRIGHT_BROWSERS_PATH", "").strip()
+    if not browsers_path:
+        local_browsers = config.project / ".playwright-browsers"
+        if local_browsers.exists():
+            env["PLAYWRIGHT_BROWSERS_PATH"] = str(local_browsers)
+    return env
+
+
 def _parse_wup_services(config: WupWatchConfig) -> dict | None:
     """Load and parse WUP YAML, returning the services dict or None."""
     path = _wup_config_path(config)
@@ -382,7 +415,7 @@ def _start_wup_watch(
     _ensure_wup_profiled_compose_services(config, stdio_format=stdio_format)
     command = _wup_watch_command(config)
     _wup_stdio_info("+ " + " ".join(command), fmt=stdio_format)
-    process = subprocess.Popen(command, cwd=config.project)
+    process = subprocess.Popen(command, cwd=config.project, env=_wup_subprocess_env(config))
     _wup_stdio_info(
         f"koru autonomous: started WUP watcher pid={process.pid} mode={config.mode}",
         fmt=stdio_format,

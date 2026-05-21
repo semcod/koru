@@ -1768,6 +1768,76 @@ def test_wup_watch_command_normalizes_percent_cpu_throttle(tmp_path) -> None:
     assert command[command.index("--cpu-throttle") + 1] == "0.7"
 
 
+def test_wup_subprocess_env_loads_project_wup_env(tmp_path, monkeypatch) -> None:
+    (tmp_path / ".wup.env").write_text(
+        "PLAYWRIGHT_BROWSERS_PATH=/tmp/project-browsers\nWUP_BASE_URL=http://localhost:8100\n",
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("PLAYWRIGHT_BROWSERS_PATH", raising=False)
+    config = autonomous_wup_mod.WupWatchConfig(
+        enabled=True,
+        mode="testql",
+        project=tmp_path,
+        deps_file="deps.json",
+        scenarios_dir="testql-scenarios",
+        testql_bin="testql",
+        track_dir=".wup/tracks",
+        debounce=2,
+        cooldown=300,
+        cpu_throttle=0.8,
+        quick_limit=3,
+        config=None,
+    )
+
+    env = autonomous_wup_mod._wup_subprocess_env(config)
+
+    assert env["PLAYWRIGHT_BROWSERS_PATH"] == "/tmp/project-browsers"
+    assert env["WUP_BASE_URL"] == "http://localhost:8100"
+
+
+def test_start_wup_watch_passes_playwright_env(tmp_path, monkeypatch) -> None:
+    (tmp_path / "wup.yaml").write_text("project:\n  name: test\n", encoding="utf-8")
+    (tmp_path / ".wup.env").write_text(
+        "PLAYWRIGHT_BROWSERS_PATH=/tmp/project-browsers\n",
+        encoding="utf-8",
+    )
+    config = autonomous_wup_mod.WupWatchConfig(
+        enabled=True,
+        mode="testql",
+        project=tmp_path,
+        deps_file="deps.json",
+        scenarios_dir="testql-scenarios",
+        testql_bin="testql",
+        track_dir=".wup/tracks",
+        debounce=2,
+        cooldown=300,
+        cpu_throttle=0.8,
+        quick_limit=3,
+        config=None,
+    )
+
+    popen_calls: list[dict[str, object]] = []
+
+    class DummyProcess:
+        pid = 123
+
+    monkeypatch.setattr(autonomous_wup_mod.shutil, "which", lambda name: "/usr/bin/wup" if name == "wup" else None)
+    monkeypatch.setattr(autonomous_wup_mod, "_ensure_wup_profiled_compose_services", lambda *args, **kwargs: None)
+
+    def fake_popen(command, cwd=None, env=None):
+        popen_calls.append({"command": command, "cwd": cwd, "env": env})
+        return DummyProcess()
+
+    monkeypatch.setattr(autonomous_wup_mod.subprocess, "Popen", fake_popen)
+
+    process = autonomous_wup_mod._start_wup_watch(config, topology_integration=False)
+
+    assert process is not None
+    assert popen_calls
+    assert popen_calls[0]["cwd"] == tmp_path
+    assert popen_calls[0]["env"]["PLAYWRIGHT_BROWSERS_PATH"] == "/tmp/project-browsers"
+
+
 def test_wup_profiled_compose_services_start_before_watch(tmp_path, monkeypatch) -> None:
     (tmp_path / "wup.yaml").write_text(
         """

@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal, TextIO
 
-from koru.autonomous_startup import AutonomousStartupProbe
+from koru.autonomous_startup import AutonomousStartupProbe, supports_autopilot_plugin_ide
 from koru.tasks import CreatedTask, create_nl_task
 
 StepStatus = Literal["ok", "pending", "skipped"]
@@ -303,8 +303,12 @@ def build_operator_steps(
         ),
     )
 
-    if plugin_connected is True:
-        plug_status: StepStatus = "ok"
+    if not supports_autopilot_plugin_ide(ide):
+        plug_status: StepStatus = "skipped"
+        plug_detail = f"plugin niedostępny dla ide={ide}; użyj ścieżki keyboard/OS-injector"
+        plug_task = None
+    elif plugin_connected is True:
+        plug_status = "ok"
         plug_detail = f"plugin połączony (ide={ide})"
         plug_task = None
     elif plugin_connected is False:
@@ -485,7 +489,7 @@ def _process_operator_step(
 ) -> OperatorStep:
     """Process a single operator step and return updated step with ticket_id."""
     ticket_id: str | None = _read_marker(state_dir, step.step_id)
-    if create_tickets and step.status == "ok" and ticket_id is not None:
+    if create_tickets and step.status in {"ok", "skipped"} and ticket_id is not None:
         closed = _close_resolved_step_ticket(
             project,
             step_id=step.step_id,

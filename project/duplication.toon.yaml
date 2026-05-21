@@ -1,12 +1,12 @@
-# redup/duplication | 33 groups | 128f 30143L | 2026-05-20
+# redup/duplication | 33 groups | 128f 30367L | 2026-05-21
 
 SUMMARY:
   files_scanned: 128
-  total_lines:   30143
+  total_lines:   30367
   dup_groups:    33
   dup_fragments: 77
   saved_lines:   358
-  scan_ms:       3807
+  scan_ms:       3066
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/autonomous.py  dup=119L  groups=12  frags=12  (0.4%)
@@ -23,7 +23,7 @@ DUPLICATES[33] (ranked by impact):
       src/koruapi/dashboard.py:17-61  (build_serve_parser)
   [2ae726bfafded9cc] ! EXAC  _run_idle_diagnostics  L=36 N=2 saved=36 sim=1.00
       src/koru/autonomous.py:1092-1127  (_run_idle_diagnostics)
-      src/koru/autonomous_cycle.py:192-227  (_run_idle_diagnostics)
+      src/koru/autonomous_cycle.py:200-235  (_run_idle_diagnostics)
   [cfa0e91c669b55c5]   STRU  _build_local_serve_parser  L=29 N=2 saved=29 sim=1.00
       src/koru/cli.py:438-466  (_build_local_serve_parser)
       src/koruapi/local.py:11-19  (build_local_parser)
@@ -36,13 +36,13 @@ DUPLICATES[33] (ranked by impact):
       src/koru/cli.py:1424-1427  (_api_main)
   [13996a2247a97ed8]   EXAC  _read_wup_health  L=16 N=2 saved=16 sim=1.00
       src/koru/autonomous.py:1074-1089  (_read_wup_health)
-      src/koru/autonomous_cycle.py:174-189  (_read_wup_health)
+      src/koru/autonomous_cycle.py:182-197  (_read_wup_health)
   [400f9f906a729d1a]   STRU  provision_cursor  L=15 N=2 saved=15 sim=1.00
       src/koru/mcp_provision.py:194-208  (provision_cursor)
       src/koru/mcp_provision.py:211-225  (provision_vscode)
   [b060ed239d7cc6c9]   EXAC  _run_command_check  L=13 N=2 saved=13 sim=1.00
       src/koru/autonomous.py:1017-1029  (_run_command_check)
-      src/koru/autonomous_cycle.py:121-133  (_run_command_check)
+      src/koru/autonomous_cycle.py:129-141  (_run_command_check)
   [d69cbedeb6dc8f2f]   EXAC  _parse_iso_datetime  L=13 N=2 saved=13 sim=1.00
       src/koru/autonomy/ide_work.py:140-152  (_parse_iso_datetime)
       src/koru/autonomy/post_run_verify.py:131-143  (_parse_iso_datetime)
@@ -123,7 +123,7 @@ DUPLICATES[33] (ranked by impact):
       src/koru/autopilot/cli_command.py:831-833  (_action_status)
       src/koru/autopilot/cli_command.py:836-843  (_action_shutdown)
   [781cd2265323c713]   STRU  _systemd_user_dir  L=3 N=2 saved=3 sim=1.00
-      src/koru/autopilot/cli_command.py:1416-1418  (_systemd_user_dir)
+      src/koru/autopilot/cli_command.py:1424-1426  (_systemd_user_dir)
       src/koruide/config.py:62-64  (default_config_path)
   [60d745664334ec54]   STRU  redup_scan_command  L=3 N=2 saved=3 sim=1.00
       src/koru/redup_integration.py:22-24  (redup_scan_command)

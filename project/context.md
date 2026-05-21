@@ -7,10 +7,10 @@
 - **Primary Language**: python
 - **Languages**: python: 129, shell: 42, yaml: 15, yml: 8, typescript: 6
 - **Analysis Mode**: static
-- **Total Functions**: 1277
+- **Total Functions**: 1286
 - **Total Classes**: 91
 - **Modules**: 215
-- **Entry Points**: 432
+- **Entry Points**: 433
 
 ## Architecture by Module
 
@@ -18,10 +18,6 @@
 - **Functions**: 111
 - **Classes**: 2
 - **File**: `extension.ts`
-
-### src.koru.cli
-- **Functions**: 52
-- **File**: `cli.py`
 
 ### src.koru.autopilot.cli_command
 - **Functions**: 50
@@ -37,7 +33,7 @@
 - **File**: `autonomous.py`
 
 ### src.koru.autonomous_cycle
-- **Functions**: 37
+- **Functions**: 38
 - **Classes**: 2
 - **File**: `autonomous_cycle.py`
 
@@ -46,7 +42,7 @@
 - **File**: `mcp_server.py`
 
 ### src.koruide.daemon
-- **Functions**: 31
+- **Functions**: 32
 - **Classes**: 2
 - **File**: `daemon.py`
 
@@ -59,20 +55,25 @@
 - **Functions**: 27
 - **File**: `app.py`
 
+### src.koru.autonomous_wup
+- **Functions**: 25
+- **Classes**: 3
+- **File**: `autonomous_wup.py`
+
 ### src.koruide.os_injector
 - **Functions**: 24
 - **Classes**: 2
 - **File**: `os_injector.py`
 
-### plugins.koru-autopilot-vscode.src.probe-ladder
-- **Functions**: 24
-- **Classes**: 3
-- **File**: `probe-ladder.ts`
-
 ### src.koru.scan
 - **Functions**: 24
 - **Classes**: 2
 - **File**: `scan.py`
+
+### plugins.koru-autopilot-vscode.src.probe-ladder
+- **Functions**: 24
+- **Classes**: 3
+- **File**: `probe-ladder.ts`
 
 ### src.koru.mcp_provision
 - **Functions**: 21
@@ -124,14 +125,14 @@ Main execution flows into the system:
 ### src.koruide.daemon.AutopilotDaemon._handle_plugin_event
 - **Calls**: self.log, self._append_event, self.audit.record, None.encode, self._send, time.monotonic, len, self._send
 
+### src.koru.autopilot.cli_command._action_install_plugin_jetbrains
+- **Calls**: proc.stdout.strip, proc.stderr.strip, src.koru.autopilot.cli_command._resolve_jetbrains_plugin_dir, src.koru.autopilot.cli_command._resolve_gradle_bin, subprocess.run, src.koru.autopilot.cli_command._resolve_jetbrains_plugin_artifact, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print
+
 ### src.koru.autonomous_cycle.run_cycle
 - **Calls**: src.koru.autonomous_cycle._initialize_cycle_telemetry, src.koru.autonomous_cycle._heal_stale_socket, src.koru.autonomous_cycle._handle_autopilot_events, src.koru.run_log.RunLogWriter._emit, src.koru.autonomous_cycle._handle_queue_hygiene, src.koru.autonomous_cycle._handle_post_run_verify_ide, src.koru.autonomous_cycle._handle_scan_phase, src.koru.autonomous_cycle._handle_queue_loop_phase
 
 ### src.koru.cli._topology_main
 - **Calls**: None.parse_args, args.project.resolve, src.koru.topology.load_topology, src.koru.topology_cli.apply_topology_mutations, src.koru.topology.load_topology, None.get, None.get, isinstance
-
-### src.koru.autopilot.cli_command._action_install_plugin_jetbrains
-- **Calls**: proc.stdout.strip, proc.stderr.strip, src.koru.autopilot.cli_command._resolve_jetbrains_plugin_dir, src.koru.autopilot.cli_command._resolve_gradle_bin, subprocess.run, src.koru.autopilot.cli_command._resolve_jetbrains_plugin_artifact, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print
 
 ### src.koru.queue.runners.run_api_request
 > Execute an HTTP API request.
@@ -186,14 +187,14 @@ syntact
 > Accept the Alertmanager webhook payload (v4).
 - **Calls**: app.post, payload.get, request.json, alert.get, labels.get, labels.get, labels.get, alert.get
 
-### src.koruide.daemon.AutopilotDaemon._on_readable
-- **Calls**: client.buf.extend, client.sock.recv, self._drop, len, self._send, self._drop, client.buf.partition, bytearray
-
 ### src.koruapi.dashboard_serve.serve
 > Start the dashboard server and block until Ctrl-C.
 
 Returns the process exit code (0 on clean shutdown).
 - **Calls**: src.koruapi.dashboard_serve.write_serve_endpoint_file, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, src.koru.events.emit_management_event, src.koruapi.dashboard_serve.bind_serve_server, scripts.koru-soak-monitor.print, None.start
+
+### src.koruide.daemon.AutopilotDaemon._on_readable
+- **Calls**: client.buf.extend, client.sock.recv, self._drop, len, self._send, self._drop, client.buf.partition, bytearray
 
 ### src.korudsl.cli.main
 - **Calls**: None.parse_args, src.korudsl.cli._read_input, src.korudsl.transform.library_from_any, src.korudsl.cli._read_input, src.korudsl.transform.library_from_any, src.korudsl.transform.library_to_any, src.korudsl.cli._read_input, src.korudsl.transform.dsl_roundtrip_report
@@ -254,7 +255,14 @@ _drive_via_keyboard [src.koruide.daemon.AutopilotDaemon]
 _handle_plugin_event [src.koruide.daemon.AutopilotDaemon]
 ```
 
-### Flow 5: run_cycle
+### Flow 5: _action_install_plugin_jetbrains
+```
+_action_install_plugin_jetbrains [src.koru.autopilot.cli_command]
+  └─> _resolve_jetbrains_plugin_dir
+  └─> _resolve_gradle_bin
+```
+
+### Flow 6: run_cycle
 ```
 run_cycle [src.koru.autonomous_cycle]
   └─> _initialize_cycle_telemetry
@@ -266,7 +274,7 @@ run_cycle [src.koru.autonomous_cycle]
       └─ →> print
 ```
 
-### Flow 6: _topology_main
+### Flow 7: _topology_main
 ```
 _topology_main [src.koru.cli]
   └─ →> load_topology
@@ -280,13 +288,6 @@ _topology_main [src.koru.cli]
   └─ →> apply_topology_mutations
       └─ →> print
       └─ →> print
-```
-
-### Flow 7: _action_install_plugin_jetbrains
-```
-_action_install_plugin_jetbrains [src.koru.autopilot.cli_command]
-  └─> _resolve_jetbrains_plugin_dir
-  └─> _resolve_gradle_bin
 ```
 
 ### Flow 8: run_api_request
@@ -323,7 +324,7 @@ Parameters
 ----------
 socket_path:
     Where to bind. Defaults t
-- **Methods**: 26
+- **Methods**: 27
 - **Key Methods**: src.koruide.daemon.AutopilotDaemon.__init__, src.koruide.daemon.AutopilotDaemon.start, src.koruide.daemon.AutopilotDaemon.serve_forever, src.koruide.daemon.AutopilotDaemon.stop, src.koruide.daemon.AutopilotDaemon._shutdown, src.koruide.daemon.AutopilotDaemon._accept, src.koruide.daemon.AutopilotDaemon._on_readable, src.koruide.daemon.AutopilotDaemon._dispatch, src.koruide.daemon.AutopilotDaemon._send, src.koruide.daemon.AutopilotDaemon._drop
 
 ### src.koruide.injector.Injector
@@ -341,18 +342,6 @@ session:
 - **Methods**: 7
 - **Key Methods**: src.koruide.client.KoruIDEClient.__init__, src.koruide.client.KoruIDEClient._connect, src.koruide.client.KoruIDEClient.request, src.koruide.client.KoruIDEClient.is_running, src.koruide.client.KoruIDEClient.drive, src.koruide.client.KoruIDEClient.status, src.koruide.client.KoruIDEClient.shutdown
 
-### src.koru.init.InitReport
-> Summary of what ``init_project`` actually changed on disk.
-- **Methods**: 4
-- **Key Methods**: src.koru.init.InitReport._env_bit, src.koru.init.InitReport._lane_summary, src.koru.init.InitReport._init_summary, src.koru.init.InitReport.summary
-
-### src.koru.run_log.RunLogWriter
-> Append-only JSONL writer with best-effort durability.
-
-The constructor does not open the file — that
-- **Methods**: 4
-- **Key Methods**: src.koru.run_log.RunLogWriter._emit, src.koru.run_log.RunLogWriter.write_header, src.koru.run_log.RunLogWriter.write_iteration, src.koru.run_log.RunLogWriter.write_footer
-
 ### src.koru.ide_client.IDEControlClient
 > Minimal interface `koru` runtime code expects from an IDE client.
 - **Methods**: 4
@@ -364,10 +353,22 @@ The constructor does not open the file — that
 - **Methods**: 4
 - **Key Methods**: src.koru.ide_client.LegacyAutopilotClientAdapter.is_running, src.koru.ide_client.LegacyAutopilotClientAdapter.drive, src.koru.ide_client.LegacyAutopilotClientAdapter.status, src.koru.ide_client.LegacyAutopilotClientAdapter.shutdown
 
+### src.koru.init.InitReport
+> Summary of what ``init_project`` actually changed on disk.
+- **Methods**: 4
+- **Key Methods**: src.koru.init.InitReport._env_bit, src.koru.init.InitReport._lane_summary, src.koru.init.InitReport._init_summary, src.koru.init.InitReport.summary
+
 ### src.koru.doctor.DoctorReport
 > Aggregate result of ``run_diagnostics``.
 - **Methods**: 4
 - **Key Methods**: src.koru.doctor.DoctorReport.has_failures, src.koru.doctor.DoctorReport.has_warnings, src.koru.doctor.DoctorReport.summary, src.koru.doctor.DoctorReport.to_dict
+
+### src.koru.run_log.RunLogWriter
+> Append-only JSONL writer with best-effort durability.
+
+The constructor does not open the file — that
+- **Methods**: 4
+- **Key Methods**: src.koru.run_log.RunLogWriter._emit, src.koru.run_log.RunLogWriter.write_header, src.koru.run_log.RunLogWriter.write_iteration, src.koru.run_log.RunLogWriter.write_footer
 
 ### src.koruapi.server.KoruAPIHandler
 - **Methods**: 3
@@ -390,17 +391,17 @@ Construct once at daemon start; call :meth:`record` for
 - **Methods**: 2
 - **Key Methods**: src.koruide.protocol.Message.to_dict, src.koruide.protocol.Message.encode
 
-### src.koru.queue.types.QueueLoopResult
-> Aggregate result of draining the planfile queue with run_planfile_queue_loop.
-- **Methods**: 2
-- **Key Methods**: src.koru.queue.types.QueueLoopResult.ticket_id, src.koru.queue.types.QueueLoopResult.summary
-
 ### src.koru.autonomy.environment.EnvironmentReport
 > Snapshot of the autonomy-relevant environment.
 
 Designed to be cheap (<200 ms) so it can be called o
 - **Methods**: 2
 - **Key Methods**: src.koru.autonomy.environment.EnvironmentReport.installed_ides, src.koru.autonomy.environment.EnvironmentReport.mcp_enabled_ides
+
+### src.koru.queue.types.QueueLoopResult
+> Aggregate result of draining the planfile queue with run_planfile_queue_loop.
+- **Methods**: 2
+- **Key Methods**: src.koru.queue.types.QueueLoopResult.ticket_id, src.koru.queue.types.QueueLoopResult.summary
 
 ### src.koruide.config.AutopilotConfig
 > In-memory view of ``autopilot.toml`` (or defaults).
@@ -412,20 +413,20 @@ Designed to be cheap (<200 ms) so it can be called o
 - **Methods**: 1
 - **Key Methods**: src.koruide.ide.RunningIDE.to_dict
 
+### src.koruide.injector.BackendStatus
+> Result of probing a single backend.
+- **Methods**: 1
+- **Key Methods**: src.koruide.injector.BackendStatus.to_dict
+
+### src.koruide.injector.InjectionResult
+- **Methods**: 1
+- **Key Methods**: src.koruide.injector.InjectionResult.to_dict
+
 ### src.koruide.audit._JSONFormatter
 > Emit ``record.msg`` verbatim — we hand it in pre-serialised.
 - **Methods**: 1
 - **Key Methods**: src.koruide.audit._JSONFormatter.format
 - **Inherits**: logging.Formatter
-
-### src.koruide.plugin_installer.PluginInstallResult
-- **Methods**: 1
-- **Key Methods**: src.koruide.plugin_installer.PluginInstallResult.to_dict
-
-### src.koru.gate.GateAuthorization
-> Parsed gate-authorization record extracted from a ticket note.
-- **Methods**: 1
-- **Key Methods**: src.koru.gate.GateAuthorization.to_note
 
 ## Data Transformation Functions
 
@@ -544,25 +545,25 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.scan.scan_pytest_collect` - 24 calls
 - `src.koru.init.init_project` - 23 calls
 - `src.koru.autonomy.ide_work.build_ide_work_prompt` - 23 calls
+- `src.koruapi.dashboard_serve.apply_topology_post_update` - 22 calls
 - `src.koru.gate.parse_authorizations` - 22 calls
 - `src.koru.agents.detect_project_environment` - 22 calls
 - `src.koru.queue.runner.run_next_planfile_task` - 22 calls
-- `src.koruapi.dashboard_serve.apply_topology_post_update` - 22 calls
 - `services.healing-webhook.app.heal_vallm_validate` - 21 calls
 - `services.healing-webhook.app.probe_failure` - 21 calls
 - `src.koruide.protocol.decode` - 21 calls
+- `src.koru.doctor.render_text` - 21 calls
 - `src.koru.gc.collect_gc_candidates` - 21 calls
 - `src.koru.agents.detect_agent_options` - 21 calls
 - `src.koru.autonomous_startup.build_startup_probe` - 21 calls
-- `src.koru.doctor.render_text` - 21 calls
 - `src.koruapi.cli.main` - 20 calls
 - `src.koruide.os_injector.inject_with_profile` - 20 calls
+- `src.koru.autonomous_diagnostics.build_idle_checks` - 20 calls
 - `src.koru.tools.render_tools_detect_text` - 20 calls
 - `scripts.planfile-sync-todo.do_from_planfile` - 20 calls
-- `src.koru.autonomous_diagnostics.build_idle_checks` - 20 calls
 - `services.healing-webhook.app.alertmanager_webhook` - 19 calls
-- `plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.focusChat` - 19 calls
 - `src.koruapi.dashboard_serve.serve` - 19 calls
+- `plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.focusChat` - 19 calls
 - `src.korudsl.cli.main` - 18 calls
 - `src.koruide.plugin_installer.resolve_extension_vsix` - 18 calls
 - `src.koru.agent_backends.load_agent_integration_config` - 18 calls
@@ -596,6 +597,10 @@ graph TD
     _handle_plugin_event --> record
     _handle_plugin_event --> encode
     _handle_plugin_event --> _send
+    _action_install_plug --> strip
+    _action_install_plug --> _resolve_jetbrains_p
+    _action_install_plug --> _resolve_gradle_bin
+    _action_install_plug --> run
     run_cycle --> _initialize_cycle_te
     run_cycle --> _heal_stale_socket
     run_cycle --> _handle_autopilot_ev
@@ -604,10 +609,6 @@ graph TD
     _topology_main --> parse_args
     _topology_main --> resolve
     _topology_main --> load_topology
-    _topology_main --> apply_topology_mutat
-    _action_install_plug --> strip
-    _action_install_plug --> _resolve_jetbrains_p
-    _action_install_plug --> _resolve_gradle_bin
 ```
 
 ## Reverse Engineering Guidelines

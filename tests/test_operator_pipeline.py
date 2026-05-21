@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -59,6 +60,27 @@ def test_build_operator_steps_mcp_ok_when_configured(
     steps = op.build_operator_steps(project=tmp_path, probe=probe, plugin_connected=True)
     mcp = next(s for s in steps if s.step_id == "mcp_koru")
     assert mcp.status == "ok"
+
+
+def test_build_operator_steps_skips_plugin_for_jetbrains(
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+) -> None:
+    jetbrains_probe = replace(
+        probe,
+        resolved_lane="jetbrains",
+        resolved_autopilot_ide="jetbrains",
+        terminal_lane="jetbrains",
+    )
+    steps = op.build_operator_steps(
+        project=tmp_path,
+        probe=jetbrains_probe,
+        plugin_connected=False,
+    )
+    plugin = next(s for s in steps if s.step_id == "autopilot_plugin")
+    assert plugin.status == "skipped"
+    assert plugin.task_command is None
+    assert "plugin niedostępny" in plugin.detail
 
 
 def test_run_startup_operator_pipeline_creates_tickets(
@@ -239,3 +261,50 @@ def test_run_startup_operator_pipeline_keeps_marker_when_close_times_out(
     plugin_step = next(s for s in result.steps if s.step_id == "autopilot_plugin")
     assert plugin_step.status == "ok"
     assert plugin_step.ticket_id == "PLF-1280"
+
+
+def test_run_startup_operator_pipeline_closes_marker_when_plugin_step_skipped(
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    jetbrains_probe = replace(
+        probe,
+        resolved_lane="jetbrains",
+        resolved_autopilot_ide="jetbrains",
+        terminal_lane="jetbrains",
+    )
+    (tmp_path / ".cursor").mkdir()
+    (tmp_path / ".cursor" / "mcp.json").write_text(
+        json.dumps({"mcpServers": {"koru": {"command": "koru", "args": ["mcp-serve"]}}}),
+        encoding="utf-8",
+    )
+    marker_dir = tmp_path / ".planfile" / ".koru" / "operator-steps"
+    marker_dir.mkdir(parents=True)
+    marker = marker_dir / "autopilot_plugin.ticket"
+    marker.write_text("PLF-1280", encoding="utf-8")
+
+    monkeypatch.setattr(op, "_planfile_api_ok", lambda _p: (True, "ok"))
+    monkeypatch.setattr(op, "_host_injectors_ok", lambda: (True, "ok"))
+    monkeypatch.setattr(op, "_os_profile_ok", lambda _i, _p: (True, "ok"))
+
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, **_kwargs):
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0, stdout="done", stderr="")
+
+    monkeypatch.setattr(op.subprocess, "run", fake_run)
+
+    result = op.run_startup_operator_pipeline(
+        project=tmp_path,
+        probe=jetbrains_probe,
+        plugin_connected=False,
+        create_tickets=True,
+    )
+
+    assert calls == [["planfile", "ticket", "done", "PLF-1280"]]
+    assert not marker.exists()
+    plugin_step = next(s for s in result.steps if s.step_id == "autopilot_plugin")
+    assert plugin_step.status == "skipped"
+    assert plugin_step.ticket_id is None

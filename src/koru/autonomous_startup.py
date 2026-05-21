@@ -19,6 +19,12 @@ _PLUGIN_IDE_LANES = frozenset({"windsurf", "vscode", "cursor", "jetbrains", "zed
 _AUTOPILOT_PLUGIN_LANES = ("cursor", "windsurf", "vscode")
 
 
+def supports_autopilot_plugin_ide(ide: str) -> bool:
+    """Return ``True`` when ``ide`` has native autopilot plugin support."""
+    normalized = (ide or "").strip().lower()
+    return normalized in _AUTOPILOT_PLUGIN_LANES
+
+
 def koru_distribution_version() -> str:
     try:
         return importlib.metadata.version("koru")
@@ -206,15 +212,21 @@ def format_post_startup_operator_hints(
         "",
         "koru autonomous: --- co zrobić teraz (operator IDE) ---",
     ]
-    if plugin_connected is True:
+    plugin_supported = supports_autopilot_plugin_ide(ide)
+    if plugin_supported and plugin_connected is True:
         lines.append(
             f"koru autonomous: [ok] plugin połączony (ide={ide}) — "
             "prompty idą do czatu, nie ydotool",
         )
-    elif plugin_connected is False:
+    elif plugin_supported and plugin_connected is False:
         lines.append(
             f"koru autonomous: [!] brak pluginu na {sock} — drive może użyć klawiatury "
             "(zły fokus). Napraw zanim zostawisz długi run.",
+        )
+    elif not plugin_supported:
+        lines.append(
+            f"koru autonomous: [i] plugin niedostępny dla ide={ide} — "
+            "używam ścieżki keyboard/OS-injector",
         )
     else:
         lines.append(
@@ -232,24 +244,38 @@ def format_post_startup_operator_hints(
             "jawnie ustaw --agent-lane cursor jeśli auto myli VS Code",
         )
 
-    lines.extend(
-        [
-            f"koru autonomous: 1) Otwórz {ide} z root = {probe.project}",
-            "koru autonomous: 2) MCP: włącz serwer „koru” (po Reload po task koru:mcp:bootstrap)",
-            "koru autonomous: 3) Autopilot: Command Palette → „koru: Connect autopilot daemon” "
-            "(pasek: koru: on)",
-            f"koru autonomous: 4) Socket wtyczki = {sock} "
-            f"({settings_hint}: koruAutopilot.socketPath)",
-            f"koru autonomous: 5) Ten sam socket w shellu: export KORU_AUTOPILOT_INSTANCE={ide}",
-            f"koru autonomous: 6) Test: koru autopilot status → plugins "
-            f"niepuste; potem koru autopilot drive --ide {ide} --require-plugin 'probe test'",
-            "koru autonomous: 7) (opcjonalnie) Command Palette → "
-            "„koru: Calibrate chat probe ladder”",
-            "koru autonomous: 8) Dashboard: task koru:server → http://localhost:8765/",
-            "koru autonomous: --- docs: <project>/docs/autonomy-ide-cursor.md "
-            "(sekcja „Po starcie”) ---",
-        ],
-    )
+    if plugin_supported:
+        lines.extend(
+            [
+                f"koru autonomous: 1) Otwórz {ide} z root = {probe.project}",
+                "koru autonomous: 2) MCP: włącz serwer „koru” (po Reload po task koru:mcp:bootstrap)",
+                "koru autonomous: 3) Autopilot: Command Palette → „koru: Connect autopilot daemon” "
+                "(pasek: koru: on)",
+                f"koru autonomous: 4) Socket wtyczki = {sock} "
+                f"({settings_hint}: koruAutopilot.socketPath)",
+                f"koru autonomous: 5) Ten sam socket w shellu: export KORU_AUTOPILOT_INSTANCE={ide}",
+                f"koru autonomous: 6) Test: koru autopilot status → plugins "
+                f"niepuste; potem koru autopilot drive --ide {ide} --require-plugin 'probe test'",
+                "koru autonomous: 7) (opcjonalnie) Command Palette → "
+                "„koru: Calibrate chat probe ladder”",
+                "koru autonomous: 8) Dashboard: task koru:server → http://localhost:8765/",
+                "koru autonomous: --- docs: <project>/docs/autonomy-ide-cursor.md "
+                "(sekcja „Po starcie”) ---",
+            ],
+        )
+    else:
+        lines.extend(
+            [
+                f"koru autonomous: 1) Otwórz {ide} z root = {probe.project}",
+                "koru autonomous: 2) MCP: włącz serwer „koru” (po Reload po task koru:mcp:bootstrap)",
+                f"koru autonomous: 3) Socket daemona = {sock}",
+                f"koru autonomous: 4) Ustaw w shellu: export KORU_AUTOPILOT_INSTANCE={ide}",
+                f"koru autonomous: 5) Skalibruj OS injector: task koru:ide-os:calibrate IDE={ide}",
+                f"koru autonomous: 6) Test: koru autopilot drive --ide {ide} 'probe test' "
+                "(fallback keyboard/OS-injector)",
+                "koru autonomous: 7) Dashboard: task koru:server → http://localhost:8765/",
+            ],
+        )
     return lines
 
 
@@ -261,4 +287,5 @@ __all__ = [
     "koru_distribution_version",
     "resolve_agent_lane_id",
     "resolve_autopilot_ide_for_autonomous",
+    "supports_autopilot_plugin_ide",
 ]
