@@ -380,6 +380,15 @@ def build_parser(*, default_stdio_format: str) -> argparse.ArgumentParser:
         ),
     )
     up.add_argument(
+        "--onboarding",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=(
+            "Enable/disable interactive onboarding wizard (IDE/project/strategy selection). "
+            "Default: auto-enabled for interactive `koru auto` sessions."
+        ),
+    )
+    up.add_argument(
         "--operator-pipeline",
         action=argparse.BooleanOptionalAction,
         default=True,

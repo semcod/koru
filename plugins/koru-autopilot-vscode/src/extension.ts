@@ -975,11 +975,27 @@ class AutopilotBridge {
     if (this.detectIde() !== "windsurf") {
       return false;
     }
-    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+    let existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     if (!existing.has("windsurf.sendTextToChat")) {
-      // Do not execute Windsurf open/sidebar commands here. In current
-      // Windsurf builds, workbench.view.windsurfAgentSidebarContainer is a
-      // toggle and closes Cascade when it is already visible.
+      try {
+        let openCmd = "windsurf.cascadePanel.focus";
+        if (!existing.has("windsurf.cascadePanel.focus") && existing.has("workbench.view.windsurfAgentSidebarContainer")) {
+          openCmd = "workbench.view.windsurfAgentSidebarContainer";
+        }
+        await Promise.resolve(vscode.commands.executeCommand(openCmd));
+        // Wait up to 3000ms for windsurf.sendTextToChat to register
+        for (let i = 0; i < 30; i++) {
+          await this.sleep(100);
+          existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+          if (existing.has("windsurf.sendTextToChat")) {
+            break;
+          }
+        }
+      } catch (err) {
+        console.warn("koru autopilot: failed to open Cascade safely", err);
+      }
+    }
+    if (!existing.has("windsurf.sendTextToChat")) {
       return false;
     }
     try {
@@ -1067,10 +1083,18 @@ class AutopilotBridge {
   }
 
   private async _performInject(env: Envelope, text: string, submit: boolean): Promise<void> {
+    const ide = this.detectIde();
     if (await this.tryAntigravitySendPromptFastPath(env, text, submit)) {
       return;
     }
     if (await this.tryWindsurfSendTextFastPath(env, text, submit)) {
+      return;
+    }
+    if (ide === "windsurf") {
+      // On Windsurf, if the fast path failed, we should NOT fall back to the traditional focus and paste path,
+      // because traditional paste is disabled on Windsurf to prevent active file editor contamination.
+      // Doing so would only cause unsafe toggles and failures.
+      this.sendPasteFailureAck(env, { ok: false }, { ok: false, reason: "fast path failed" });
       return;
     }
 

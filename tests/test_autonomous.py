@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import json
 import os
 import sys
@@ -410,6 +411,66 @@ def test_auto_invocation_can_enable_adaptive_pipeline(tmp_path: Path, monkeypatc
     assert rc == 0
     args = action_up.call_args.args[0]
     assert args._auto_pipeline_enabled is True
+
+
+def test_auto_onboarding_flow_uses_simulated_stdin(tmp_path: Path, monkeypatch) -> None:
+    project = tmp_path / "demo-onboarding"
+    project.mkdir()
+
+    monkeypatch.setenv("KORU_ONBOARDING_LLX", "0")
+    monkeypatch.setenv("KORU_ONBOARDING_CREATE_TICKET", "1")
+
+    from koru.wizard.ide import DetectedIDE
+    from koru.wizard.project import ProjectCandidate
+
+    ide = DetectedIDE(
+        id="vscode",
+        label="VS Code",
+        running=True,
+        pid=321,
+        path="/usr/bin/code",
+    )
+    monkeypatch.setattr("koru.wizard.cli.discover_installed_ides", lambda: [ide])
+    monkeypatch.setattr(
+        "koru.wizard.cli.propose_projects",
+        lambda _ides: [ProjectCandidate(path=project, source="VS Code workspace")],
+    )
+
+    class _TTYInput(io.StringIO):
+        def isatty(self) -> bool:
+            return True
+
+    class _TTYOutput(io.StringIO):
+        def isatty(self) -> bool:
+            return True
+
+    stdin = _TTYInput("1\n1\nquality\ncc_refactor\n")
+    stdout = _TTYOutput()
+    monkeypatch.setattr(autonomous_mod._autonomous_onboarding.sys, "stdin", stdin)
+    monkeypatch.setattr(autonomous_mod._autonomous_onboarding.sys, "stdout", stdout)
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(autonomous_mod, "_setup_autonomous_env_vars", lambda: (None, {}))
+
+    def fake_setup_session(args):
+        captured["autopilot_ide"] = args.autopilot_ide
+        captured["agent_lane"] = args.agent_lane
+        captured["project"] = args.project
+        return "cid", args.project.resolve(), 73
+
+    monkeypatch.setattr(autonomous_mod, "_setup_autonomous_session", fake_setup_session)
+
+    rc = autonomous_mod.autonomous_main(["--project", str(project)], invoked_as_auto=True)
+
+    assert rc == 73
+    assert captured["autopilot_ide"] == "vscode"
+    assert captured["agent_lane"] == "vscode"
+    assert Path(str(captured["project"])).resolve() == project.resolve()
+
+    sprint_yaml = project / ".planfile" / "sprints" / "current.yaml"
+    assert sprint_yaml.exists()
+    text = sprint_yaml.read_text(encoding="utf-8")
+    assert "koru-wizard" in text
 
 
 def test_auto_pipeline_profiles_escalate_when_queue_stays_idle() -> None:

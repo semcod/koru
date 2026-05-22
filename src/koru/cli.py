@@ -1416,7 +1416,7 @@ def _should_suggest_wizard(argv: list[str], project: Path) -> bool:
         return False
     if not (sys.stdin.isatty() and sys.stdout.isatty()):
         return False
-    return not (project / ".planfile").exists()
+    return not (project / ".planfile").exists() and not (project / ".koru").exists()
 
 
 def _auto_main(argv: list[str]) -> int:

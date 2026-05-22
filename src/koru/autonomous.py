@@ -34,6 +34,7 @@ from koru import autonomous_operator as _autonomous_operator
 from koru import autonomous_parser as _autonomous_parser
 from koru import autonomous_resources as _autonomous_resources
 from koru import autonomous_runtime as _autonomous_runtime
+from koru import autonomous_onboarding as _autonomous_onboarding
 from koru.autonomous_cycle import (
     AutoloopState,
     DiagnosticResult,
@@ -917,6 +918,18 @@ def _run_autonomous_pre_checks(
     return mcp_provision_ran, plugin_connected
 
 
+def _maybe_run_interactive_onboarding(args: argparse.Namespace) -> object | None:
+    """Run TTY onboarding for `koru auto` before autonomous resources are created."""
+    if not _autonomous_onboarding.should_run_interactive_onboarding(args):
+        if getattr(args, "_invoked_as_auto", False):
+            _autonomous_onboarding.ensure_project_state(args.project, source="auto")
+        return None
+    return _autonomous_onboarding.run_interactive_onboarding(
+        args,
+        stdio_info=lambda msg: _stdio_info(msg, fmt=args.emit_events),
+    )
+
+
 @dataclass
 class StopSignalState:
     stopped_by_sigterm: bool = False
@@ -961,6 +974,12 @@ def _handle_autonomous_interrupt(
 
 
 def _action_up(args: argparse.Namespace) -> int:
+    try:
+        _maybe_run_interactive_onboarding(args)
+    except KeyboardInterrupt:
+        _stdio_info("\nkoru auto onboarding: interrupted", fmt=args.emit_events)
+        return 130
+
     previous_stdio_format_env, strict_env = _setup_autonomous_env_vars()
     correlation_id, project, guard_rc = _setup_autonomous_session(args)
     if guard_rc:
@@ -1080,6 +1099,7 @@ def autonomous_main(argv: list[str], *, invoked_as_auto: bool = False) -> int:
     auto_user_options, argv = _configure_auto_mode_args(argv, None, invoked_as_auto)
     
     args = _build_parser().parse_args(argv)
+    args._invoked_as_auto = bool(invoked_as_auto)
     _apply_auto_pipeline_flags(args, invoked_as_auto)
     args._auto_user_options = auto_user_options
     _apply_replace_existing_flags(args, invoked_as_auto)

@@ -130,7 +130,6 @@ export function buildFocusOpenCommands(ide: string, custom: string[]): string[] 
   const windsurfDefaults = [
     "windsurf.cascadePanel.open",
     "windsurf.cascadePanel.focus",
-    "windsurf.action.openCascade",
     "windsurf.action.openChat",
     "windsurf.chat.open",
     "windsurf.cascade.open",
@@ -139,7 +138,6 @@ export function buildFocusOpenCommands(ide: string, custom: string[]): string[] 
     "windsurf.action.showCascade",
     "composer.showComposer",
     "aichat.newchataction",
-    "windsurf.openCascade",
   ];
   const genericDefaults = [
     "composer.showComposer",

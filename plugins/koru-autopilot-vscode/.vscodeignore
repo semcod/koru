@@ -1,0 +1,27 @@
+# Files that vsce should NOT ship inside the .vsix.
+# Keep this list small but conservative — the marketplace flags
+# stray TypeScript / config files.
+
+.vscode/**
+.vscode-test/**
+src/**
+**/*.ts
+**/tsconfig*.json
+**/.eslintrc*
+**/.prettierrc*
+
+# Build artefacts other than ./out
+node_modules/**
+*.vsix
+.gitignore
+.npmignore
+.yarnrc
+.git/**
+.planfile/**
+.koru/**
+
+# Tests
+**/test/**
+**/tests/**
+**/*.test.js
+**/*.spec.js
