@@ -453,6 +453,23 @@ def _collect_process_logs(
     return logs[-limit:]
 
 
+def _launch_oom_monitor(
+    proc: subprocess.Popen,
+    threshold_mb: int,
+    interval_seconds: float | int,
+    action: str,
+) -> list:
+    """Start OOM monitor thread. Returns mutable [killed_bool, logs_list] state."""
+    import threading
+
+    state: list = [False, []]
+    if threshold_mb > 0 and _PSUTIL_AVAILABLE:
+        def _monitor() -> None:
+            state[0], state[1] = _monitor_subprocess_oom(proc, threshold_mb, interval_seconds, action)
+        threading.Thread(target=_monitor, daemon=True).start()
+    return state
+
+
 def tool_run_ticket(arguments: dict[str, Any]) -> dict[str, Any]:
     """Run the koru pipeline for a single ticket."""
     project = Path(arguments["project_root"]).resolve()
@@ -484,25 +501,7 @@ def tool_run_ticket(arguments: dict[str, Any]) -> dict[str, Any]:
             cwd=str(project),
         )
 
-        # Start OOM monitoring in a thread if psutil is available and threshold > 0
-        import threading
-
-        oom_killed = False
-        oom_logs: list[str] = []
-
-        if oom_threshold > 0 and _PSUTIL_AVAILABLE:
-
-            def _oom_monitor():
-                nonlocal oom_killed, oom_logs
-                oom_killed, oom_logs = _monitor_subprocess_oom(
-                    proc,
-                    oom_threshold,
-                    oom_interval,
-                    oom_action,
-                )
-
-            monitor_thread = threading.Thread(target=_oom_monitor, daemon=True)
-            monitor_thread.start()
+        oom_state = _launch_oom_monitor(proc, oom_threshold, oom_interval, oom_action)
 
         try:
             stdout, stderr = proc.communicate(timeout=_RUN_TICKET_TIMEOUT_SECONDS)
@@ -526,6 +525,7 @@ def tool_run_ticket(arguments: dict[str, Any]) -> dict[str, Any]:
                 "logs": timeout_logs,
             }
 
+        oom_killed, oom_logs = oom_state[0], oom_state[1]
         if oom_killed:
             logs = oom_logs + _collect_process_logs(
                 subprocess.CompletedProcess(
@@ -672,25 +672,7 @@ def _run_single_gate(
             cwd=str(project),
         )
 
-        # Start OOM monitoring in a thread if psutil is available and threshold > 0
-        import threading
-
-        oom_killed = False
-        oom_logs: list[str] = []
-
-        if oom_threshold_mb > 0 and _PSUTIL_AVAILABLE:
-
-            def _oom_monitor():
-                nonlocal oom_killed, oom_logs
-                oom_killed, oom_logs = _monitor_subprocess_oom(
-                    proc,
-                    oom_threshold_mb,
-                    oom_interval_seconds,
-                    oom_action,
-                )
-
-            monitor_thread = threading.Thread(target=_oom_monitor, daemon=True)
-            monitor_thread.start()
+        oom_state = _launch_oom_monitor(proc, oom_threshold_mb, oom_interval_seconds, oom_action)
 
         try:
             stdout, stderr = proc.communicate(timeout=120)
@@ -703,6 +685,7 @@ def _run_single_gate(
                 "issues": ["Gate timed out after 120 seconds."],
             }
 
+        oom_killed, oom_logs = oom_state[0], oom_state[1]
         if oom_killed:
             output_lines = (stdout or "").strip().split("\n")
             error_lines = (stderr or "").strip().split("\n")

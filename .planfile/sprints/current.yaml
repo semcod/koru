@@ -9334,7 +9334,7 @@ sprint:
       execution:
         assigned_to: koru-shell
         attempt: 0
-        finished_at: '2026-05-21T21:20:17.896028Z'
+        finished_at: '2026-05-21T21:29:10.784141Z'
         lease_expires_at: '2026-05-21T22:20:05.268892Z'
         max_attempts: 1
         queue: default
@@ -9374,6 +9374,11 @@ sprint:
         source: planfile.store
         status: done
         timestamp: '2026-05-21T21:20:19.157901+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-21T21:29:11.409739+00:00'
       id: STARTER-133
       labels:
       - gates
@@ -9401,7 +9406,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-21T21:20:19.157845+00:00'
+      updated_at: '2026-05-21T21:29:11.409691+00:00'
     STARTER-134:
       blocked_by: []
       blocks: []
@@ -11845,9 +11850,10 @@ sprint:
         verify.'
       execution:
         attempt: 0
+        finished_at: '2026-05-21T21:35:09.147422Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -11860,6 +11866,22 @@ sprint:
           verify.'
         source: koru task
         timestamp: '2026-05-21T15:29:09.647054+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-21T21:29:34.898560+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-21T21:35:09.710005+00:00'
       id: STARTER-169
       inputs:
         api_headers: {}
@@ -11879,7 +11901,10 @@ sprint:
       name: 'code2llm refactor: split src/koru/autonomous.py'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - Split autonomous.py bootstrap/plugin/daemon responsibilities into autonomous_resources,
+          autonomous_cycle_config, autonomous_plugin, and autonomous_daemon; validated
+          with tests/test_autonomous.py and code2llm ./ -f toon output in /tmp/koru-code2llm-starter-169.
       priority: normal
       source:
         context:
@@ -11890,9 +11915,9 @@ sprint:
         timestamp: '2026-05-21T15:29:09.647054+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-21T15:29:09.647054+00:00'
+      updated_at: '2026-05-21T21:35:09.709971+00:00'
     STARTER-170:
       blocked_by: []
       blocks: []

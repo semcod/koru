@@ -1,7 +1,5 @@
 """Real-time, human-visible activity log for koru orchestration."""
 
-from __future__ import annotations
-
 import os
 import sys
 from pathlib import Path
@@ -23,7 +21,7 @@ def preview_text(text: str, *, limit: int = 120) -> str:
     one_line = " ".join(text.split())
     if len(one_line) <= limit:
         return one_line
-    return one_line[: limit - 1] + "…"
+    return f"{one_line[: limit - 1]}…"
 
 
 def _env_disabled(name: str) -> bool:

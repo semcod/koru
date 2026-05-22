@@ -6,6 +6,36 @@ from pathlib import Path
 from typing import Any
 
 
+def configure_loop_state(
+    args: Any,
+    project: Path,
+    *,
+    effective_flags: Any,
+    apply_agent_lane_environ: Any,
+    resolve_autopilot_ide: Any,
+    resolve_ide_route_fn: Any,
+    state_factory: Any,
+    load_checkpoint: Any,
+) -> tuple[bool, str | None, str, Any, Path, int]:
+    """Configure queue flags, autopilot IDE, and loop state."""
+    enable_scan, use_all_queues = effective_flags(args.ticket_sources)
+    queue_name = None if use_all_queues else args.queue_name
+    lane = apply_agent_lane_environ(project, args.agent_lane)
+    autopilot_ide, _autopilot_ide_source = resolve_autopilot_ide(
+        args.autopilot_ide,
+        lane,
+        resolve_ide_route_fn=resolve_ide_route_fn,
+    )
+    loop_state = state_factory()
+    checkpoint_path = (project / ".planfile/.koru/autonomous-state.json").resolve()
+    restored_cycle = load_checkpoint(
+        checkpoint_path,
+        state=loop_state,
+        stdio_format=args.emit_events,
+    )
+    return enable_scan, queue_name, autopilot_ide, loop_state, checkpoint_path, restored_cycle
+
+
 def select_and_log_cycle_profile(
     args: Any,
     auto_pipeline_state: Any | None,
@@ -156,6 +186,7 @@ def compute_cycle_sleep(
 
 
 __all__ = [
+    "configure_loop_state",
     "select_and_log_cycle_profile",
     "resolve_effective_cycle_flags",
     "build_cycle_run_kwargs",

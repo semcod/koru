@@ -15,7 +15,6 @@ started here).
 from __future__ import annotations
 
 import argparse
-import contextlib
 import os
 import signal
 import subprocess
@@ -35,6 +34,7 @@ from koru import autonomous_cli_config as _autonomous_cli_config
 from koru import autonomous_daemon as _autonomous_daemon
 from koru import autonomous_operator as _autonomous_operator
 from koru import autonomous_parser as _autonomous_parser
+from koru import autonomous_resources as _autonomous_resources
 from koru import autonomous_runtime as _autonomous_runtime
 from koru.autonomous_cycle import (
     AutoloopState,
@@ -63,8 +63,6 @@ from koru.autonomous_startup import (
 from koru.autonomous_wup import (
     WupHealthResult,
     WupWatchConfig,  # noqa: F401
-    _build_wup_watch_config,
-    _start_wup_watch,
     _stop_process,
     _wup_watch_command,  # noqa: F401
 )
@@ -579,29 +577,6 @@ def _enable_autonomous_strict_plugin_policy(args: argparse.Namespace) -> None:
     )
 
 
-def _configure_loop_state(
-    args: argparse.Namespace,
-    project: Path,
-) -> tuple[bool, str | None, str, AutoloopState, Path, int]:
-    """Configure queue flags, autopilot IDE, and loop state."""
-    enable_scan, use_all_queues = _effective_flags(args.ticket_sources)
-    queue_name = None if use_all_queues else args.queue_name
-    lane = _apply_agent_lane_environ(project, args.agent_lane)
-    autopilot_ide, _autopilot_ide_source = resolve_autopilot_ide_for_autonomous(
-        args.autopilot_ide,
-        lane,
-        resolve_ide_route_fn=resolve_ide_route,
-    )
-    loop_state = AutoloopState()
-    checkpoint_path = (project / ".planfile/.koru/autonomous-state.json").resolve()
-    restored_cycle = _load_loop_checkpoint(
-        checkpoint_path,
-        state=loop_state,
-        stdio_format=args.emit_events,
-    )
-    return enable_scan, queue_name, autopilot_ide, loop_state, checkpoint_path, restored_cycle
-
-
 def _run_mcp_provision(project: Path, stdio_format: str) -> bool:
     """Run MCP workspace provision and return True if it ran."""
     return _autonomous_operator.run_mcp_provision(
@@ -674,29 +649,17 @@ def _restart_daemon_if_needed(
     project: Path,
 ) -> tuple[IDEControlClient | None, AutopilotDaemon | None, threading.Thread | None]:
     """Restart daemon if socket is missing."""
-    if (
-        args.enable_autopilot
-        and client is not None
-        and socket_path is not None
-        and not socket_path.exists()
-        and (autopilot_socket_observed_at_boot or daemon is not None or thread is not None)
-    ):
-        _stdio_info(
-            f"koru autonomous: autopilot socket missing at {socket_path}; "
-            "restarting or taking over daemon…",
-            fmt=args.emit_events,
-        )
-        if daemon is not None:
-            with contextlib.suppress(OSError):
-                daemon.stop()
-        if thread is not None:
-            thread.join(timeout=2.0)
-        client, daemon, thread = _start_or_reuse_daemon(
-            project=project,
-            socket_path=socket_path,
-            stdio_format=args.emit_events,
-        )
-    return client, daemon, thread
+    return _autonomous_daemon.restart_daemon_if_needed(
+        args,
+        client,
+        socket_path,
+        daemon,
+        thread,
+        autopilot_socket_observed_at_boot,
+        project,
+        stdio_info=_stdio_info,
+        start_or_reuse_daemon_fn=_start_or_reuse_daemon,
+    )
 
 
 def _handle_cycle_exit_conditions(
@@ -947,64 +910,6 @@ def _restore_autonomous_env_vars(snapshot: dict[str, tuple[bool, str | None]]) -
     _autonomous_runtime.restore_autonomous_env_vars(snapshot)
 
 
-def _setup_autonomous_resources(
-    args: argparse.Namespace,
-    project: Path,
-) -> tuple[
-    object,
-    object,
-    threading.Thread | None,
-    Path,
-    bool,
-    bool,
-    str | None,
-    object,
-    Path,
-    int | None,
-    Path,
-    subprocess.Popen | None,
-    AutoPipelineState | None,
-]:
-    """Setup all resources needed for autonomous mode."""
-    _enable_autonomous_strict_plugin_policy(args)
-    client, daemon, thread, socket_path = _setup_autopilot_daemon(args, project)
-    autopilot_socket_observed_at_boot = (
-        bool(socket_path and socket_path.exists()) if args.enable_autopilot else False
-    )
-
-    enable_scan, queue_name, autopilot_ide, loop_state, checkpoint_path, restored_cycle = (
-        _configure_loop_state(args, project)
-    )
-
-    diagnostic_state_dir = (project / args.diagnostic_state_dir).resolve()
-    wup_config = _build_wup_watch_config(args, project)
-    wup_process = _start_wup_watch(
-        wup_config,
-        topology_integration=args.topology_integration,
-        stdio_format=args.emit_events,
-    )
-    auto_pipeline_state = (
-        AutoPipelineState() if getattr(args, "_auto_pipeline_enabled", False) else None
-    )
-
-    return (
-        client,
-        daemon,
-        thread,
-        socket_path,
-        autopilot_socket_observed_at_boot,
-        enable_scan,
-        queue_name,
-        autopilot_ide,
-        loop_state,
-        checkpoint_path,
-        restored_cycle,
-        diagnostic_state_dir,
-        wup_process,
-        auto_pipeline_state,
-    )
-
-
 def _run_autonomous_pre_checks(
     args: argparse.Namespace,
     project: Path,
@@ -1089,7 +994,13 @@ def _action_up(args: argparse.Namespace) -> int:
         diagnostic_state_dir,
         wup_process,
         auto_pipeline_state,
-    ) = _setup_autonomous_resources(args, project)
+    ) = _autonomous_resources.setup_autonomous_resources(
+        args,
+        project,
+        enable_strict_plugin_policy=_enable_autonomous_strict_plugin_policy,
+        setup_autopilot_daemon=_setup_autopilot_daemon,
+        load_checkpoint=_load_loop_checkpoint,
+    )
 
     stop_state = StopSignalState()
     previous_sigterm = _install_sigterm_interrupt_handler(args, stop_state)

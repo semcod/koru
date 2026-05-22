@@ -217,6 +217,12 @@ def restart_daemon_if_needed(
     thread: threading.Thread | None,
     autopilot_socket_observed_at_boot: bool,
     project: Path,
+    *,
+    stdio_info: Callable[..., Any] = _stdio_info,
+    start_or_reuse_daemon_fn: Callable[
+        ...,
+        tuple[IDEControlClient, AutopilotDaemon | None, threading.Thread | None],
+    ] = start_or_reuse_daemon,
 ) -> tuple[IDEControlClient | None, AutopilotDaemon | None, threading.Thread | None]:
     """Restart daemon if socket is missing."""
     if (
@@ -226,7 +232,7 @@ def restart_daemon_if_needed(
         and not socket_path.exists()
         and (autopilot_socket_observed_at_boot or daemon is not None or thread is not None)
     ):
-        _stdio_info(
+        stdio_info(
             f"koru autonomous: autopilot socket missing at {socket_path}; "
             "restarting or taking over daemon…",
             fmt=args.emit_events,
@@ -236,7 +242,7 @@ def restart_daemon_if_needed(
                 daemon.stop()
         if thread is not None:
             thread.join(timeout=2.0)
-        client, daemon, thread = start_or_reuse_daemon(
+        client, daemon, thread = start_or_reuse_daemon_fn(
             project=project,
             socket_path=socket_path,
             stdio_format=args.emit_events,
