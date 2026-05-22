@@ -12901,15 +12901,133 @@ sprint:
       sync: {}
       updated_at: '2026-05-22T12:00:52.235580+00:00'
     STARTER-183:
-      id: STARTER-183
-      name: '[ONBOARDING] Start strategii: Refaktoryzacja architektury'
-      status: open
-      priority: high
-      sprint: current
-      source:
-        tool: koru-auto-onboarding
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-22T12:29:01.304454+00:00'
+      description: 'Onboarding koru auto: przygotuj pierwszy iteracyjny plan zmian.
+
+
+        Projekt: /home/tom/github/semcod/koru
+
+        IDE: windsurf
+
+        Wybrana strategia: Refaktoryzacja architektury, Podzial na moduly i granice
+        odpowiedzialnosci
+
+        Tagi strategii: architecture, refactor, modularization
+
+
+        Szybka analiza projektu:
+
+        - basic metrics: code_files=286
+
+        - python_files=270
+
+        - js_ts_files=16
+
+
+        Zadanie:
+
+        1. Zweryfikuj stan projektu pod wybrana strategie.
+
+        2. Zaproponuj plan 3-5 krokow wdrozenia.
+
+        3. Wykonaj pierwszy bezpieczny krok i przygotuj test/regresje.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: 'Onboarding koru auto: przygotuj pierwszy iteracyjny plan zmian.
+
+
+          Projekt: /home/tom/github/semcod/koru
+
+          IDE: windsurf
+
+          Wybrana strategia: Refaktoryzacja architektury, Podzial na moduly i granice
+          odpowiedzialnosci
+
+          Tagi strategii: architecture, refactor, modularization
+
+
+          Szybka analiza projektu:
+
+          - basic metrics: code_files=286
+
+          - python_files=270
+
+          - js_ts_files=16
+
+
+          Zadanie:
+
+          1. Zweryfikuj stan projektu pod wybrana strategie.
+
+          2. Zaproponuj plan 3-5 krokow wdrozenia.
+
+          3. Wykonaj pierwszy bezpieczny krok i przygotuj test/regresje.'
+        source: koru task
         timestamp: '2026-05-22T12:29:01.304454+00:00'
+      id: STARTER-183
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'Onboarding koru auto: przygotuj pierwszy iteracyjny plan zmian.
+
+
+          Projekt: /home/tom/github/semcod/koru
+
+          IDE: windsurf
+
+          Wybrana strategia: Refaktoryzacja architektury, Podzial na moduly i granice
+          odpowiedzialnosci
+
+          Tagi strategii: architecture, refactor, modularization
+
+
+          Szybka analiza projektu:
+
+          - basic metrics: code_files=286
+
+          - python_files=270
+
+          - js_ts_files=16
+
+
+          Zadanie:
+
+          1. Zweryfikuj stan projektu pod wybrana strategie.
+
+          2. Zaproponuj plan 3-5 krokow wdrozenia.
+
+          3. Wykonaj pierwszy bezpieczny krok i przygotuj test/regresje.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - onboarding
+      - strategy
+      - architecture
+      - refactor
+      - modularization
+      name: '[ONBOARDING] Start strategii: Refaktoryzacja architektury'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
         context:
+          analysis_engine: basic
+          dedupe_key: koru-auto-onboarding:onboarding-start-strategii-refaktoryzacja-architektury
           input: 'Onboarding koru auto: przygotuj pierwszy iteracyjny plan zmian.
 
 
@@ -12942,152 +13060,53 @@ sprint:
           strategy_path:
           - focus:architektura
           - architektura_kierunek:modularyzacja
-          analysis_engine: basic
-          dedupe_key: koru-auto-onboarding:onboarding-start-strategii-refaktoryzacja-architektury
-      description: 'Onboarding koru auto: przygotuj pierwszy iteracyjny plan zmian.
-
-
-        Projekt: /home/tom/github/semcod/koru
-
-        IDE: windsurf
-
-        Wybrana strategia: Refaktoryzacja architektury, Podzial na moduly i granice
-        odpowiedzialnosci
-
-        Tagi strategii: architecture, refactor, modularization
-
-
-        Szybka analiza projektu:
-
-        - basic metrics: code_files=286
-
-        - python_files=270
-
-        - js_ts_files=16
-
-
-        Zadanie:
-
-        1. Zweryfikuj stan projektu pod wybrana strategie.
-
-        2. Zaproponuj plan 3-5 krokow wdrozenia.
-
-        3. Wykonaj pierwszy bezpieczny krok i przygotuj test/regresje.'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - onboarding
-      - strategy
-      - architecture
-      - refactor
-      - modularization
-      blocked_by: []
-      blocks: []
-      files: []
-      executor:
-        kind: human
-        mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: 'Onboarding koru auto: przygotuj pierwszy iteracyjny plan zmian.
-
-
-          Projekt: /home/tom/github/semcod/koru
-
-          IDE: windsurf
-
-          Wybrana strategia: Refaktoryzacja architektury, Podzial na moduly i granice
-          odpowiedzialnosci
-
-          Tagi strategii: architecture, refactor, modularization
-
-
-          Szybka analiza projektu:
-
-          - basic metrics: code_files=286
-
-          - python_files=270
-
-          - js_ts_files=16
-
-
-          Zadanie:
-
-          1. Zweryfikuj stan projektu pod wybrana strategie.
-
-          2. Zaproponuj plan 3-5 krokow wdrozenia.
-
-          3. Wykonaj pierwszy bezpieczny krok i przygotuj test/regresje.'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
-      outputs:
-        artifacts: []
-        notes: []
+        timestamp: '2026-05-22T12:29:01.304454+00:00'
+        tool: koru-auto-onboarding
+      sprint: current
+      status: open
       sync: {}
-      history:
-      - timestamp: '2026-05-22T12:29:01.304454+00:00'
-        action: created
-        source: koru task
-        message: 'Onboarding koru auto: przygotuj pierwszy iteracyjny plan zmian.
-
-
-          Projekt: /home/tom/github/semcod/koru
-
-          IDE: windsurf
-
-          Wybrana strategia: Refaktoryzacja architektury, Podzial na moduly i granice
-          odpowiedzialnosci
-
-          Tagi strategii: architecture, refactor, modularization
-
-
-          Szybka analiza projektu:
-
-          - basic metrics: code_files=286
-
-          - python_files=270
-
-          - js_ts_files=16
-
-
-          Zadanie:
-
-          1. Zweryfikuj stan projektu pod wybrana strategie.
-
-          2. Zaproponuj plan 3-5 krokow wdrozenia.
-
-          3. Wykonaj pierwszy bezpieczny krok i przygotuj test/regresje.'
-      created_at: '2026-05-22T12:29:01.304454+00:00'
       updated_at: '2026-05-22T12:29:01.304454+00:00'
     STARTER-184:
-      id: STARTER-184
-      name: 'Architektura: wprowadź CQRS + Event Sourcing'
-      status: open
-      priority: high
-      sprint: current
-      source:
-        tool: koru-cli-nl
-        timestamp: '2026-05-22T12:35:58.035262+00:00'
-        context:
-          input: 'Architektura: wprowadź CQRS + Event Sourcing
-
-
-            Wprowadź separację Command/Query oraz event-store dla koru. Pierwszy krok:
-            zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,
-            `queries/`, `events/`, dodaj event-bus.'
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-22T12:35:58.035262+00:00'
       description: 'Architektura: wprowadź CQRS + Event Sourcing
 
 
         Wprowadź separację Command/Query oraz event-store dla koru. Pierwszy krok:
         zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,
         `queries/`, `events/`, dodaj event-bus.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: 'Architektura: wprowadź CQRS + Event Sourcing
+
+
+          Wprowadź separację Command/Query oraz event-store dla koru. Pierwszy krok:
+          zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,
+          `queries/`, `events/`, dodaj event-bus.'
+        source: koru task
+        timestamp: '2026-05-22T12:35:58.035262+00:00'
+      id: STARTER-184
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'Architektura: wprowadź CQRS + Event Sourcing
+
+
+          Wprowadź separację Command/Query oraz event-store dla koru. Pierwszy krok:
+          zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,
+          `queries/`, `events/`, dodaj event-bus.'
       labels:
       - koru
       - nl-task
@@ -13096,70 +13115,29 @@ sprint:
       - cqrs
       - es
       - koru-wizard
-      blocked_by: []
-      blocks: []
-      files: []
-      executor:
-        kind: human
-        mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: 'Architektura: wprowadź CQRS + Event Sourcing
-
-
-          Wprowadź separację Command/Query oraz event-store dla koru. Pierwszy krok:
-          zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,
-          `queries/`, `events/`, dodaj event-bus.'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
+      name: 'Architektura: wprowadź CQRS + Event Sourcing'
       outputs:
         artifacts: []
         notes: []
+      priority: high
+      source:
+        context:
+          input: 'Architektura: wprowadź CQRS + Event Sourcing
+
+
+            Wprowadź separację Command/Query oraz event-store dla koru. Pierwszy krok:
+            zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,
+            `queries/`, `events/`, dodaj event-bus.'
+        timestamp: '2026-05-22T12:35:58.035262+00:00'
+        tool: koru-cli-nl
+      sprint: current
+      status: open
       sync: {}
-      history:
-      - timestamp: '2026-05-22T12:35:58.035262+00:00'
-        action: created
-        source: koru task
-        message: 'Architektura: wprowadź CQRS + Event Sourcing
-
-
-          Wprowadź separację Command/Query oraz event-store dla koru. Pierwszy krok:
-          zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,
-          `queries/`, `events/`, dodaj event-bus.'
-      created_at: '2026-05-22T12:35:58.035262+00:00'
       updated_at: '2026-05-22T12:35:58.035262+00:00'
     STARTER-185:
-      id: STARTER-185
-      name: '[OPERATOR] Autopilot: Connect + plugin w czacie brak pluginu na /run/user/1000/koru-autopilot-antigravity.sock
-        Wykona...'
-      status: open
-      priority: high
-      sprint: current
-      source:
-        tool: koru-operator-pipeline
-        timestamp: '2026-05-22T12:52:52.395485+00:00'
-        context:
-          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
-
-
-            brak pluginu na /run/user/1000/koru-autopilot-antigravity.sock
-
-
-            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
-            ticket done.
-
-
-            Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=antigravity`'
-          detail: brak pluginu na /run/user/1000/koru-autopilot-antigravity.sock
-          step_id: autopilot_plugin
-          task_command: task koru:operator:plugin-probe IDE=antigravity
-          dedupe_key: koru-operator-pipeline:operator-autopilot-connect-plugin-w-czacie-brak-pluginu-na-/run/user/1000/koru-autopilot-antigravity.sock-wykona...
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-22T12:52:52.395485+00:00'
       description: '[OPERATOR] Autopilot: Connect + plugin w czacie
 
 
@@ -13171,48 +13149,18 @@ sprint:
 
 
         Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=antigravity`'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - operator
-      - auto-pipeline
-      - step:autopilot_plugin
-      blocked_by: []
-      blocks: []
-      files: []
+      execution:
+        attempt: 0
+        finished_at: '2026-05-22T13:08:25.496801Z'
+        max_attempts: 1
+        queue: operator
+        state: done
       executor:
         kind: human
         mode: interactive
-      execution:
-        queue: operator
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
-
-
-          brak pluginu na /run/user/1000/koru-autopilot-antigravity.sock
-
-
-          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
-          ticket done.
-
-
-          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=antigravity`'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
-      outputs:
-        artifacts: []
-        notes: []
-      sync: {}
+      files: []
       history:
-      - timestamp: '2026-05-22T12:52:52.395485+00:00'
-        action: created
-        source: koru task
+      - action: created
         message: '[OPERATOR] Autopilot: Connect + plugin w czacie
 
 
@@ -13224,5 +13172,73 @@ sprint:
 
 
           Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=antigravity`'
-      created_at: '2026-05-22T12:52:52.395485+00:00'
-      updated_at: '2026-05-22T12:52:52.395485+00:00'
+        source: koru task
+        timestamp: '2026-05-22T12:52:52.395485+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-22T13:02:04.201744+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-22T13:08:26.245206+00:00'
+      id: STARTER-185
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          brak pluginu na /run/user/1000/koru-autopilot-antigravity.sock
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=antigravity`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie brak pluginu na /run/user/1000/koru-autopilot-antigravity.sock
+        Wykona...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-operator-pipeline:operator-autopilot-connect-plugin-w-czacie-brak-pluginu-na-/run/user/1000/koru-autopilot-antigravity.sock-wykona...
+          detail: brak pluginu na /run/user/1000/koru-autopilot-antigravity.sock
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            brak pluginu na /run/user/1000/koru-autopilot-antigravity.sock
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=antigravity`'
+          step_id: autopilot_plugin
+          task_command: task koru:operator:plugin-probe IDE=antigravity
+        timestamp: '2026-05-22T12:52:52.395485+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-22T13:08:26.245164+00:00'

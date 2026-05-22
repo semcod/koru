@@ -1453,6 +1453,47 @@ def _peek_project_from_argv(argv: list[str]) -> Path:
     return Path.cwd().resolve()
 
 
+def _path_is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+    except ValueError:
+        return False
+    return True
+
+
+def _project_cli_reexec_argv(project: Path) -> list[str] | None:
+    """Return argv for re-execing generic CLI commands inside repo-local .venv."""
+    if os.environ.get("KORU_CLI_REEXECED") or _env_truthy("KORU_CLI_NO_REEXEC"):
+        return None
+    local_venv = (project / ".venv").resolve()
+    local_koru = local_venv / "bin" / "koru"
+    if not (local_koru.is_file() and os.access(local_koru, os.X_OK)):
+        return None
+
+    executable = Path(sys.executable).expanduser()
+    prefix = Path(sys.prefix).expanduser()
+    if _path_is_relative_to(executable, local_venv) or _path_is_relative_to(prefix, local_venv):
+        return None
+
+    return [str(local_koru), *sys.argv[1:]]
+
+
+def _maybe_print_project_venv_hint(raw_args: list[str]) -> None:
+    """Print a deterministic hint to run the project-local CLI entrypoint."""
+    if _env_truthy("KORU_SUPPRESS_VENV_HINT"):
+        return
+    project = _peek_project_from_argv(raw_args)
+    local_koru = (project / ".venv" / "bin" / "koru").resolve()
+    if not (local_koru.is_file() and os.access(local_koru, os.X_OK)):
+        return
+    command = " ".join(shlex.quote(part) for part in [str(local_koru), *raw_args])
+    print(
+        "koru: hint: project-local CLI detected; if you hit unrecognized args, rerun:",
+        file=sys.stderr,
+    )
+    print(f"  {command}", file=sys.stderr)
+
+
 def _should_suggest_wizard(argv: list[str], project: Path) -> bool:
     """Heuristic: only nudge brand-new users running ``koru auto`` with no args.
 
@@ -1484,6 +1525,12 @@ def _auto_main(argv: list[str]) -> int:
             "`koru wizard` to pick a strategy and seed the first ticket.",
             file=sys.stderr,
         )
+        if os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"):
+            print(
+                "  GUI: `koru wizard --gui` opens a browser wizard "
+                "(requires pip install 'koru[api]').",
+                file=sys.stderr,
+            )
         print("(skip with KORU_AUTO_SKIP_WIZARD=1 or run `koru auto --allow-duplicate`)", file=sys.stderr)
     if "--allow-duplicate" not in argv:
         stdio = os.environ.get("KORU_STDIO_FORMAT", "human")
@@ -1507,7 +1554,6 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "gate": _gate_main,
     "queue": _queue_main,
     "gc": _gc_main,
-    "doctor": _doctor_subcommand_main,
     "git": git_main,
     "tools": _tools_main,
     "mcp-serve": _mcp_serve_main,
@@ -1882,14 +1928,25 @@ def _command_loop_main(args: argparse.Namespace) -> int:
 
 def _maybe_reexec_for_project_venv(raw_args: list[str]) -> None:
     subcommand = raw_args[0] if raw_args else ""
-    if subcommand not in {"auto", "autonomous"}:
+    if not raw_args:
         return
-    project = _peek_project_from_argv(raw_args[1:])
-    if reexec_argv := project_venv_reexec_argv(project):
-        env = dict(os.environ)
-        env["KORU_AUTONOMOUS_REEXECED"] = "1"
-        print(f"koru: switching to project venv: {' '.join(reexec_argv)}", file=sys.stderr)
-        os.execvpe(reexec_argv[0], reexec_argv, env)
+    project = _peek_project_from_argv(raw_args)
+
+    if subcommand in {"auto", "autonomous"}:
+        if reexec_argv := project_venv_reexec_argv(project):
+            env = dict(os.environ)
+            env["KORU_AUTONOMOUS_REEXECED"] = "1"
+            env["KORU_CLI_REEXECED"] = "1"
+            print(f"koru: switching to project venv: {' '.join(reexec_argv)}", file=sys.stderr)
+            os.execvpe(reexec_argv[0], reexec_argv, env)
+        return
+
+    if subcommand == "doctor" or "--doctor" in raw_args:
+        if reexec_argv := _project_cli_reexec_argv(project):
+            env = dict(os.environ)
+            env["KORU_CLI_REEXECED"] = "1"
+            print(f"koru: switching to project venv CLI: {' '.join(reexec_argv)}", file=sys.stderr)
+            os.execvpe(reexec_argv[0], reexec_argv, env)
 
 
 def _dispatch_flag_action(args: argparse.Namespace, raw_args: list[str]) -> int | None:
@@ -1917,7 +1974,13 @@ def main() -> int:
     if subcommand in _SUBCOMMANDS:
         return _SUBCOMMANDS[subcommand](raw_args[1:])
 
-    args = _build_parser().parse_args(raw_args)
+    try:
+        args = _build_parser().parse_args(raw_args)
+    except SystemExit as exc:
+        code = exc.code if isinstance(exc.code, int) else 1
+        if code == 2 and ("doctor" in raw_args or "--doctor" in raw_args):
+            _maybe_print_project_venv_hint(raw_args)
+        return code
 
     if _is_bare_invocation(args):
         args.context = True

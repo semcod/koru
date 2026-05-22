@@ -1,0 +1,215 @@
+/* koru wizard GUI — bundled offline styles (no CDN) */
+:root {
+  --bg: #0f1419;
+  --card: #1a2332;
+  --border: #2d3a4f;
+  --text: #e7ecf3;
+  --muted: #8b9cb3;
+  --accent: #3d8bfd;
+  --accent-hover: #5ca0ff;
+  --ok: #3dd68c;
+  --warn: #f5a623;
+  --radius: 10px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+}
+
+header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+header p {
+  margin: 0 0 1.5rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.steps {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.step-pill {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.step-pill.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.step-pill.done {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.panel {
+  display: none;
+}
+
+.panel.active {
+  display: block;
+}
+
+.panel h2 {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.9rem 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.card:hover {
+  border-color: var(--accent);
+  background: #222d3f;
+}
+
+.card .title {
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.card .meta {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  background: #243044;
+  color: var(--ok);
+  margin-left: 0.35rem;
+}
+
+.badge.installed {
+  color: var(--muted);
+}
+
+.help-box {
+  margin-top: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  background: #141c28;
+  border-left: 3px solid var(--accent);
+  font-size: 0.88rem;
+  color: var(--muted);
+  display: none;
+}
+
+.help-box.visible {
+  display: block;
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0.75rem 0 0;
+}
+
+.confirm-box {
+  padding: 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+}
+
+.confirm-box h3 {
+  margin: 0 0 0.5rem;
+}
+
+.confirm-box pre {
+  white-space: pre-wrap;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.65rem 1.2rem;
+  border: none;
+  border-radius: var(--radius);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn:hover {
+  background: var(--accent-hover);
+}
+
+.btn.secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  margin-right: 0.5rem;
+}
+
+.next-steps {
+  list-style: decimal;
+  padding-left: 1.25rem;
+  margin: 0.75rem 0 0;
+}
+
+.next-steps li {
+  margin-bottom: 0.4rem;
+}
+
+.error {
+  color: #ff6b6b;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.loading {
+  color: var(--muted);
+}

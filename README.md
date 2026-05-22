@@ -8,10 +8,10 @@
 ## AI Cost Tracking
 
 ![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$9.91-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-89.5h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$9.94-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-89.6h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $9.9093 (280 commits)
-- 👤 **Human dev:** ~$8948 (89.5h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $9.9440 (281 commits)
+- 👤 **Human dev:** ~$8959 (89.6h @ $100/h, 30min dedup)
 
 Generated on 2026-05-22 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -97,6 +97,9 @@ koru wizard --bilingual    # show every label as "Polski · English" side-by-sid
   to run next (`koru` brief, IDE chat prompt, `koru --queue --loop`).
 - **Optional `--llx`** — calls the [`llx`](https://pypi.org/project/llx/)
   CLI to *extend* branches dynamically based on the analysed project.
+- **Browser GUI** (`--gui`) — step-by-step UI at `http://127.0.0.1:<port>/wizard`
+  (localhost only, offline CSS/JS). Use `--no-browser` to print the URL only.
+  Requires `pip install 'koru[api]'`.
 - **Strategy templates** (`--template web-app`, `--template ml-research`,
   `--template cli-tool`, `--template library`) — curated decision trees for
   common project shapes. Run `koru wizard --list-templates` to see all

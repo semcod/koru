@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>koru wizard</title>
+  <link rel="stylesheet" href="/wizard/static/wizard.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>koru wizard</h1>
+      <p>Interaktywny start projektu — wybierz IDE, folder i strategię.</p>
+    </header>
+
+    <nav class="steps" aria-label="Kroki">
+      <span class="step-pill" data-i="0">1. IDE</span>
+      <span class="step-pill" data-i="1">2. Projekt</span>
+      <span class="step-pill" data-i="2">3. Strategia</span>
+      <span class="step-pill" data-i="3">4. Potwierdzenie</span>
+    </nav>
+
+    <p id="error" class="error" style="display:none" role="alert"></p>
+
+    <section class="panel active" data-step="ide">
+      <h2>Wybierz IDE</h2>
+      <div id="ide-list" class="cards"></div>
+      <p class="hint">Możesz pominąć i wybrać projekt ręcznie.</p>
+    </section>
+
+    <section class="panel" data-step="project">
+      <h2>Wybierz projekt</h2>
+      <div id="project-list" class="cards"></div>
+    </section>
+
+    <section class="panel" data-step="strategy">
+      <h2 id="strategy-prompt">Strategia</h2>
+      <p id="strategy-path" class="hint" style="display:none"></p>
+      <div id="strategy-list" class="cards"></div>
+    </section>
+
+    <section class="panel" data-step="confirm">
+      <h2>Potwierdź ticket</h2>
+      <div id="confirm-details" class="confirm-box"></div>
+      <button type="button" class="btn" id="btn-confirm">Utwórz ticket</button>
+    </section>
+
+    <section class="panel" data-step="done">
+      <h2>Gotowe</h2>
+      <div id="done-details" class="confirm-box"></div>
+      <button type="button" class="btn secondary" id="btn-done-close">Zamknij kartę</button>
+    </section>
+  </div>
+  <script src="/wizard/static/wizard.js"></script>
+</body>
+</html>

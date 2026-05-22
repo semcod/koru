@@ -32,6 +32,13 @@ in this order so reports diff cleanly across runs):
     autonomous_environ — ``TICKET_SOURCES`` / idle-diag / WUP-related env vars
                         for ``koru autonomous up`` (``FAIL`` on invalid
                         ``TICKET_SOURCES``).
+    koru_runtime_identity — active Python/package/PATH/repo-local executable
+                        identity for Koru itself.
+    autopilot_env     — selected autopilot lane/IDE/socket environment.
+    ide_runtime_presence — requested IDE is visible as a running process.
+    autopilot_socket  — selected autopilot socket exists and accepts connects.
+    autopilot_manage  — package/plugin/daemon state from ``koru autopilot manage``.
+    autopilot_debug_log — recent plugin debug log activity for selected IDE/socket.
     agent_backends_registry — static profile ids from ``koru.agent_backends``
                         (``PASS`` when the registry loads; see
                         ``koru agent-backends``).
@@ -47,6 +54,7 @@ The module is intentionally side-effect-free (no writes, no network).
 """
 
 
+import json
 import os
 import platform
 import re
@@ -54,17 +62,25 @@ import shlex
 import shutil
 import subprocess
 import sys
-import json
+import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
 
 from koru.autonomous_env import autonomous_environ_doctor_probe
+from koru.autonomy.environment import probe_socket_health
+from koru.autopilot.ide import (
+    detect_running_ides,
+    detect_terminal_host_ide_id,
+    normalize_ide_id,
+)
+from koru.autopilot.install_manager import collect_install_manager_report
 from koru.policy import policy_path
 from koru.project_pipeline import KORU_PROJECT_PIPELINE_FILENAME, project_pipeline_path
 from koru.runtime import planfile_dir, runtime_dir
 from koru.utils.subprocess_runner import get_python_cmd
+from koruide.socket import default_socket_path
 
 # Default timeout for the pytest-collect probe. Doctor is meant to be
 # *interactive and fast*; we deliberately keep this tighter than
@@ -143,6 +159,54 @@ _PROBLEM_CATALOG: tuple[ProblemCatalogEntry, ...] = (
         severity=FAIL,
         problem="Autonomous mode environment variables are inconsistent.",
         detection="Doctor probe validates `TICKET_SOURCES` and related env overrides.",
+    ),
+    ProblemCatalogEntry(
+        check="koru_runtime_identity",
+        severity=WARN,
+        problem="The active `koru` executable, imported package, and source tree differ.",
+        detection=(
+            "Doctor compares PATH `koru`, repo-local `.venv/bin/koru`, "
+            "Python executable, and pyproject/package versions."
+        ),
+    ),
+    ProblemCatalogEntry(
+        check="autopilot_env",
+        severity=WARN,
+        problem="Autopilot lane/IDE environment points at the wrong desktop lane.",
+        detection=(
+            "Doctor compares `KORU_AUTOPILOT_INSTANCE`, `KORU_AUTOPILOT_IDE`, "
+            "terminal hint, and runtime socket env."
+        ),
+    ),
+    ProblemCatalogEntry(
+        check="autopilot_socket",
+        severity=WARN,
+        problem="The selected autopilot socket is missing, stale, or not listening.",
+        detection="Doctor connect-probes the resolved autopilot Unix socket.",
+    ),
+    ProblemCatalogEntry(
+        check="autopilot_manage",
+        severity=FAIL,
+        problem="Autopilot daemon/plugin/package installation is inconsistent.",
+        detection=(
+            "Doctor reuses `koru autopilot manage` checks for version, daemon, "
+            "socket, live plugin, and installed VSIX state."
+        ),
+    ),
+    ProblemCatalogEntry(
+        check="autopilot_debug_log",
+        severity=WARN,
+        problem="The plugin debug log does not show activity for the selected IDE/socket.",
+        detection=(
+            "Doctor scans recent `/tmp/koru-plugin-debug.log` entries, "
+            "or `KORU_PLUGIN_DEBUG_LOG` when set."
+        ),
+    ),
+    ProblemCatalogEntry(
+        check="ide_runtime_presence",
+        severity=WARN,
+        problem="The requested IDE is not visible as a running process.",
+        detection="Doctor compares the selected autopilot IDE with detected running IDE processes.",
     ),
     ProblemCatalogEntry(
         check="wup_binary",
@@ -238,6 +302,12 @@ def run_diagnostics(project: Path) -> DoctorReport:
         ("policy_yaml", _check_policy_yaml),
         ("koru_project_pipeline", _check_koru_project_pipeline),
         ("autonomous_environ", autonomous_environ_doctor_probe),
+        ("koru_runtime_identity", _check_koru_runtime_identity),
+        ("autopilot_env", _check_autopilot_env),
+        ("ide_runtime_presence", _check_ide_runtime_presence),
+        ("autopilot_socket", _check_autopilot_socket),
+        ("autopilot_manage", _check_autopilot_manage),
+        ("autopilot_debug_log", _check_autopilot_debug_log),
         ("agent_backends_registry", _check_agent_backends_registry),
         ("inotify_watches", _check_inotify_watches),
         ("wup_binary", _check_wup_binary),
@@ -316,6 +386,8 @@ def _check_detected_environment(project: Path) -> tuple[str, str]:
         f"executable={sys.executable}",
     ]
     virtual_env = os.environ.get("VIRTUAL_ENV", "").strip()
+    if not virtual_env and getattr(sys, "base_prefix", sys.prefix) != sys.prefix:
+        virtual_env = sys.prefix
     bits.append(f"virtual_env={virtual_env or 'none'}")
     lane = os.environ.get("KORU_AGENT_LANE", "").strip()
     if lane:
@@ -363,6 +435,197 @@ def _check_detected_configuration(project: Path) -> tuple[str, str]:
             status = WARN
 
     return status, "; ".join(detail_bits)
+
+
+def _read_project_version(path: Path) -> str | None:
+    try:
+        data = tomllib.loads(path.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return None
+    project = data.get("project")
+    if not isinstance(project, dict):
+        return None
+    version = project.get("version")
+    return str(version) if version else None
+
+
+def _installed_koru_version() -> str | None:
+    try:
+        from importlib.metadata import PackageNotFoundError, version
+
+        return version("koru")
+    except (ImportError, PackageNotFoundError, ValueError):
+        return None
+
+
+def _selected_autopilot_ide(*, include_terminal_hint: bool = True) -> str | None:
+    raw_ide = os.environ.get("KORU_AUTOPILOT_IDE")
+    raw_instance = os.environ.get("KORU_AUTOPILOT_INSTANCE")
+    selected = normalize_ide_id(raw_ide) or normalize_ide_id(raw_instance)
+    if selected or not include_terminal_hint:
+        return selected
+    return normalize_ide_id(detect_terminal_host_ide_id())
+
+
+def _has_autopilot_selection() -> bool:
+    return bool(
+        os.environ.get("KORU_AUTOPILOT_IDE")
+        or os.environ.get("KORU_AUTOPILOT_INSTANCE")
+        or os.environ.get("KORU_AUTOPILOT_SOCKET")
+        or _selected_autopilot_ide(include_terminal_hint=True)
+    )
+
+
+def _resolve_autopilot_socket_for_doctor() -> Path:
+    selected = _selected_autopilot_ide()
+    if selected and not os.environ.get("KORU_AUTOPILOT_SOCKET"):
+        previous = os.environ.get("KORU_AUTOPILOT_INSTANCE")
+        try:
+            os.environ["KORU_AUTOPILOT_INSTANCE"] = selected
+            return default_socket_path()
+        finally:
+            if previous is None:
+                os.environ.pop("KORU_AUTOPILOT_INSTANCE", None)
+            else:
+                os.environ["KORU_AUTOPILOT_INSTANCE"] = previous
+    return default_socket_path()
+
+
+def _check_koru_runtime_identity(project: Path) -> tuple[str, str]:
+    package_version = _installed_koru_version()
+    source_version = _read_project_version(project / "pyproject.toml")
+    path_koru = shutil.which("koru")
+    project_koru = project / ".venv" / "bin" / "koru"
+    detail_bits = [
+        f"python={sys.executable}",
+        f"package={package_version or '-'}",
+        f"source_pyproject={source_version or '-'}",
+        f"path_koru={path_koru or '-'}",
+    ]
+    if project_koru.is_file():
+        detail_bits.append(f"project_venv_koru={project_koru}")
+
+    status = PASS
+    if project_koru.is_file() and path_koru:
+        try:
+            if Path(path_koru).resolve() != project_koru.resolve():
+                status = WARN
+                detail_bits.append("path_mismatch=true")
+        except OSError:
+            status = WARN
+            detail_bits.append("path_mismatch=unknown")
+    if package_version and source_version and package_version != source_version:
+        status = WARN
+        detail_bits.append("version_mismatch=true")
+    if package_version is None:
+        status = WARN
+        detail_bits.append("package_metadata=missing")
+    return status, "; ".join(detail_bits)
+
+
+def _check_autopilot_env(_project: Path) -> tuple[str, str]:
+    instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
+    ide = (os.environ.get("KORU_AUTOPILOT_IDE") or "").strip()
+    socket_env = (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip()
+    terminal = detect_terminal_host_ide_id() or "-"
+    detail_bits = [
+        f"instance={instance or '-'}",
+        f"ide={ide or '-'}",
+        f"socket_env={socket_env or '-'}",
+        f"terminal_hint={terminal}",
+        f"session={os.environ.get('XDG_SESSION_TYPE') or '-'}",
+        f"runtime={os.environ.get('XDG_RUNTIME_DIR') or '-'}",
+    ]
+    normalized_instance = normalize_ide_id(instance)
+    normalized_ide = normalize_ide_id(ide)
+    if normalized_instance and normalized_ide and normalized_instance != normalized_ide:
+        return WARN, "; ".join(detail_bits + ["instance_ide_mismatch=true"])
+    if not _selected_autopilot_ide(include_terminal_hint=True):
+        return SKIP, "; ".join(detail_bits + ["autopilot_env=unset"])
+    if not (instance or ide or socket_env):
+        return WARN, "; ".join(detail_bits + ["autopilot_env=unset", "using_terminal_hint=true"])
+    return PASS, "; ".join(detail_bits)
+
+
+def _check_ide_runtime_presence(_project: Path) -> tuple[str, str]:
+    selected = _selected_autopilot_ide()
+    running = detect_running_ides()
+    ids = [item.id for item in running]
+    detail = f"selected={selected or '-'}; running={', '.join(ids) or '-'}"
+    if not selected:
+        return SKIP, detail
+    if selected not in ids:
+        return WARN, detail + "; selected_ide_not_running=true"
+    return PASS, detail
+
+
+def _check_autopilot_socket(_project: Path) -> tuple[str, str]:
+    if not _has_autopilot_selection():
+        return SKIP, "autopilot env unset"
+    path = _resolve_autopilot_socket_for_doctor()
+    health = probe_socket_health(path)
+    detail = (
+        f"path={health.path}; exists={health.exists}; "
+        f"listening={health.listening}; stale={health.stale}"
+    )
+    if health.healthy:
+        return PASS, detail
+    if health.stale:
+        return WARN, detail + "; restart daemon or remove stale socket"
+    return WARN, detail + "; daemon not listening yet"
+
+
+def _check_autopilot_manage(_project: Path) -> tuple[str, str]:
+    if not _has_autopilot_selection():
+        return SKIP, "autopilot env unset"
+    selected = _selected_autopilot_ide() or "auto"
+    report = collect_install_manager_report(
+        ide=selected,
+        socket_path=_resolve_autopilot_socket_for_doctor(),
+    )
+    issue_rows = [issue.to_dict() for issue in report.issues]
+    severities = {str(row.get("severity")) for row in issue_rows}
+    issue_codes = ", ".join(str(row.get("code")) for row in issue_rows) or "-"
+    plugin = report.plugin
+    daemon_running = bool(report.daemon.get("running"))
+    detail = (
+        f"ide={plugin.get('ide')}; daemon={'running' if daemon_running else 'stopped'}; "
+        f"socket={report.socket}; connected={plugin.get('connected')}; "
+        f"connected_version={plugin.get('connected_version') or '-'}; "
+        f"installed={plugin.get('installed_version') or '-'}; "
+        f"expected={plugin.get('expected_version') or '-'}; issues={issue_codes}"
+    )
+    if "error" in severities:
+        return FAIL, detail
+    if severities:
+        return WARN, detail
+    return PASS, detail
+
+
+def _check_autopilot_debug_log(_project: Path) -> tuple[str, str]:
+    selected = _selected_autopilot_ide()
+    if not selected:
+        return SKIP, "autopilot env unset"
+    path = Path(os.environ.get("KORU_PLUGIN_DEBUG_LOG", "/tmp/koru-plugin-debug.log"))
+    if not path.is_file():
+        return SKIP, f"{path} missing"
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()[-400:]
+    except OSError as exc:
+        return WARN, f"cannot read {path}: {exc}"
+    socket_text = str(_resolve_autopilot_socket_for_doctor())
+    relevant = [
+        line
+        for line in lines
+        if f'"ide":"{selected}"' in line or socket_text in line or f"ide={selected}" in line
+    ]
+    if not relevant:
+        return WARN, f"{path}: no recent entries for ide={selected} or socket={socket_text}"
+    if any("CONNECT_OK" in line or "HELLO" in line for line in relevant):
+        return PASS, f"{path}: {len(relevant)} recent matching entrie(s)"
+    if any("CONNECT_ERROR" in line for line in relevant):
+        return WARN, f"{path}: {len(relevant)} matching entrie(s), latest connection errors present"
+    return PASS, f"{path}: {len(relevant)} recent matching entrie(s)"
 
 
 def _check_git_repo(project: Path) -> tuple[str, str]:
@@ -659,7 +922,10 @@ def _check_inotify_watches(project: Path) -> tuple[str, str]:
         limit_str = path.read_text(encoding="utf-8").strip()
         limit = int(limit_str)
         if limit < 524288:
-            return FAIL, f"watches limit too low: {limit} (recommend >= 524288; use `sudo sysctl -w fs.inotify.max_user_watches=1048576` to fix)"
+            return FAIL, (
+                f"watches limit too low: {limit} (recommend >= 524288; "
+                "use `sudo sysctl -w fs.inotify.max_user_watches=1048576` to fix)"
+            )
         return PASS, f"limit is {limit} (sufficient)"
     except Exception as exc:
         return WARN, f"could not read limit: {exc}"

@@ -26,10 +26,20 @@ from koru.doctor import (
     DoctorReport,
     detected_problems,
     problem_catalog,
-    render_text,
     render_problem_catalog_text,
+    render_text,
     run_diagnostics,
 )
+
+_AUTOPILOT_ENV_KEYS = (
+    "KORU_AUTOPILOT_IDE",
+    "KORU_AUTOPILOT_INSTANCE",
+    "KORU_AUTOPILOT_SOCKET",
+)
+
+
+def _without_autopilot_env() -> dict[str, str]:
+    return {k: v for k, v in os.environ.items() if k not in _AUTOPILOT_ENV_KEYS}
 
 
 def _scaffold(project: Path, *, write_koru_yaml: bool = True) -> None:
@@ -83,7 +93,10 @@ class TestHappyPath(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             _scaffold(project)
-            with patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"):
+            with (
+                patch.dict(os.environ, _without_autopilot_env(), clear=True),
+                patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"),
+            ):
                 report = _run(project)
             # No failures on a properly-set-up project.
             self.assertFalse(report.has_failures, msg=str(report.to_dict()))
@@ -166,6 +179,108 @@ class TestAutonomousEnvironDoctorIntegration(unittest.TestCase):
             # gitignore probe is skipped without git.
             with self.assertRaises(AssertionError):
                 _named(report, "gitignore")
+
+
+class TestAutopilotDoctorChecks(unittest.TestCase):
+    def test_autopilot_checks_skip_when_env_unset(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            with (
+                patch.dict(os.environ, _without_autopilot_env(), clear=True),
+                patch("koru.doctor.detect_terminal_host_ide_id", return_value=None),
+                patch("koru.doctor.detect_running_ides", return_value=[]),
+            ):
+                report = _run(project)
+            self.assertEqual(_named(report, "autopilot_env").status, SKIP)
+            self.assertEqual(_named(report, "autopilot_socket").status, SKIP)
+            self.assertEqual(_named(report, "autopilot_manage").status, SKIP)
+            self.assertEqual(_named(report, "autopilot_debug_log").status, SKIP)
+
+    def test_autopilot_env_warns_on_lane_ide_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            env = {
+                **_without_autopilot_env(),
+                "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                "KORU_AUTOPILOT_IDE": "antigravity",
+            }
+            with patch.dict(os.environ, env, clear=True):
+                report = _run(project)
+            check = _named(report, "autopilot_env")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("instance_ide_mismatch=true", check.detail)
+
+    def test_autopilot_manage_maps_manager_error_to_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            fake_report = SimpleNamespace(
+                issues=[
+                    SimpleNamespace(
+                        to_dict=lambda: {
+                            "code": "plugin_not_connected",
+                            "severity": "error",
+                            "message": "not connected",
+                        }
+                    )
+                ],
+                plugin={
+                    "ide": "antigravity",
+                    "connected": False,
+                    "connected_version": None,
+                    "installed_version": "0.1.40",
+                    "expected_version": "0.1.40",
+                },
+                daemon={"running": True},
+                socket="/run/user/1000/koru-autopilot-antigravity.sock",
+            )
+            with (
+                patch.dict(
+                    os.environ,
+                    {
+                        **_without_autopilot_env(),
+                        "KORU_AUTOPILOT_INSTANCE": "antigravity",
+                    },
+                    clear=True,
+                ),
+                patch("koru.doctor.collect_install_manager_report", return_value=fake_report),
+                patch(
+                    "koru.doctor._resolve_autopilot_socket_for_doctor",
+                    return_value=Path("/tmp/a.sock"),
+                ),
+            ):
+                report = _run(project)
+            check = _named(report, "autopilot_manage")
+            self.assertEqual(check.status, FAIL)
+            self.assertIn("plugin_not_connected", check.detail)
+
+    def test_autopilot_debug_log_warns_when_selected_ide_has_no_activity(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            log = project / "plugin.log"
+            log.write_text(
+                (
+                    "2026-05-22T12:00:00Z CONNECT_CANDIDATES "
+                    '{"ide":"windsurf","candidates":[]}\n'
+                ),
+                encoding="utf-8",
+            )
+            with patch.dict(
+                os.environ,
+                {
+                    **_without_autopilot_env(),
+                    "KORU_AUTOPILOT_INSTANCE": "antigravity",
+                    "KORU_PLUGIN_DEBUG_LOG": str(log),
+                },
+                clear=True,
+            ):
+                report = _run(project)
+            check = _named(report, "autopilot_debug_log")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("no recent entries", check.detail)
 
 
 class TestPlanfileBinary(unittest.TestCase):

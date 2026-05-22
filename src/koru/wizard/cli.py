@@ -691,6 +691,23 @@ def _build_parser() -> argparse.ArgumentParser:
         default="text",
         help="--detect-only output format",
     )
+    p.add_argument(
+        "--gui",
+        action="store_true",
+        help="Open browser UI on http://127.0.0.1:<port>/wizard (requires koru[api]).",
+    )
+    p.add_argument(
+        "--gui-port",
+        type=int,
+        default=0,
+        metavar="PORT",
+        help="Port for --gui (0 = pick a free port). Binds 127.0.0.1 only.",
+    )
+    p.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="With --gui, print URL but do not open a browser tab.",
+    )
     return p
 
 
@@ -704,6 +721,9 @@ def wizard_main(argv: Sequence[str] | None = None) -> int:
     if args.list_templates:
         print(format_templates_list())
         return 0
+
+    if args.gui and (args.quick or args.strategy):
+        parser.error("--gui cannot be combined with --quick or --strategy")
 
     if args.detect_only:
         ides = discover_installed_ides()
@@ -741,7 +761,6 @@ def wizard_main(argv: Sequence[str] | None = None) -> int:
     elif args.bilingual and language and "," not in language:
         language = f"{language},pl,en" if language not in {"pl", "en"} else "pl,en"
 
-    quick = args.quick or bool(args.strategy)
     try:
         strategies_path = resolve_strategies_source(
             strategies=args.strategies,
@@ -752,6 +771,23 @@ def wizard_main(argv: Sequence[str] | None = None) -> int:
         print(f"koru wizard error: {exc}", file=sys.stderr)
         return 2
 
+    if args.gui:
+        from koru.wizard.gui import run_gui_server
+
+        try:
+            return run_gui_server(
+                strategies_path=strategies_path,
+                language=language,
+                project_override=args.project,
+                create=not args.no_create,
+                port=args.gui_port,
+                open_browser=not args.no_browser,
+            )
+        except RuntimeError as exc:
+            print(f"koru wizard error: {exc}", file=sys.stderr)
+            return 2
+
+    quick = args.quick or bool(args.strategy)
     prompter = StdinPrompter()
     try:
         result = run_wizard(

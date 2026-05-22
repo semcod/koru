@@ -1,6 +1,6 @@
 # koru wizard — UX spec for non-technical users
 
-Status: **draft**, owner: Tom Sapletta, created: 2026-05-22.
+Status: **implemented** (features 1–6), owner: Tom Sapletta, created: 2026-05-22.
 
 This is the design contract for the next round of `koru wizard` improvements.
 Six features in scope, ordered by user-visible impact:

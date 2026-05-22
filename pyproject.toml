@@ -49,6 +49,7 @@ dev = [
 api = [
     "fastapi>=0.115,<1.0",
     "uvicorn[standard]>=0.30,<1.0",
+    "httpx>=0.27,<1.0",
     "prometheus-client>=0.21,<1.0",
 ]
 agent = [
@@ -133,6 +134,8 @@ koru = [
     "assets/*.json",
     "wizard/strategies.json",
     "wizard/templates/*.json",
+    "wizard/gui/templates/*.html",
+    "wizard/gui/static/*",
 ]
 
 [tool.pytest.ini_options]
