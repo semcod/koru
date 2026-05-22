@@ -10,7 +10,11 @@ import sys
 
 from koruobserve.cli_parser import build_observe_parser, project_path
 from koruobserve.lifecycle import observe_down, observe_status, observe_up
-
+from koruobserve.providers_cli import (
+    cmd_providers_list,
+    cmd_providers_reset,
+    cmd_providers_test,
+)
 
 _OBSERVE_RUNTIME_PACKAGES: tuple[tuple[str, str], ...] = (
     ("websockets", "websockets>=12.0,<16.0"),
@@ -19,7 +23,11 @@ _OBSERVE_RUNTIME_PACKAGES: tuple[tuple[str, str], ...] = (
 
 
 def _missing_observe_packages() -> list[tuple[str, str]]:
-    return [(name, spec) for name, spec in _OBSERVE_RUNTIME_PACKAGES if importlib.util.find_spec(name) is None]
+    return [
+        (name, spec)
+        for name, spec in _OBSERVE_RUNTIME_PACKAGES
+        if importlib.util.find_spec(name) is None
+    ]
 
 
 _INSTALL_HINT = (
@@ -94,11 +102,33 @@ def _cmd_grid(args: argparse.Namespace) -> int:
 
     path = state_file(project_path(args))
     if not path.is_file():
-        print("koru observe: not running (no state file). Run 'koru observe up' first.", file=sys.stderr)
+        print(
+            "koru observe: not running (no state file). Run 'koru observe up' first.",
+            file=sys.stderr,
+        )
         return 2
     data = json.loads(path.read_text(encoding="utf-8"))
     print(data.get("grid_url", ""))
     return 0
+
+
+def _cmd_providers(args: argparse.Namespace) -> int:
+    project = project_path(args)
+    json_out = bool(getattr(args, "json", False))
+    sub = getattr(args, "providers_command", None)
+    if sub == "list":
+        return cmd_providers_list(project, json_out=json_out)
+    if sub == "test":
+        return cmd_providers_test(
+            project,
+            getattr(args, "name", None),
+            json_out=json_out,
+            scale=float(getattr(args, "scale", 0.2) or 0.2),
+        )
+    if sub == "reset":
+        return cmd_providers_reset(project, json_out=json_out)
+    print(f"koru observe providers: unknown subcommand {sub!r}", file=sys.stderr)
+    return 2
 
 
 _HANDLERS = {
@@ -107,6 +137,7 @@ _HANDLERS = {
     "status": _cmd_status,
     "grid": _cmd_grid,
     "install": _cmd_install,
+    "providers": _cmd_providers,
 }
 
 

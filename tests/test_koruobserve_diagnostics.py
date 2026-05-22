@@ -6,15 +6,12 @@ import json
 from pathlib import Path
 from unittest import mock
 
-import pytest
-
 from koruobserve.diagnostics import (
     _last_failure_line,
     _monitors_from_xrandr,
     capture_diagnostics,
     detect_monitors,
 )
-
 
 _XRANDR_OUT = """\
 Monitors: 3
@@ -58,13 +55,15 @@ def test_capture_diagnostics_blocked_on_wayland(tmp_path: Path) -> None:
         "koru vision agent: capture failed: no screenshot backend succeeded; ...\n",
         encoding="utf-8",
     )
+    env = {"WAYLAND_DISPLAY": "wayland-0", "DISPLAY": ":0"}
+    xrandr_monitors = [
+        {"id": 0, "output": "DP-3", "width": 3840, "height": 2160, "source": "xrandr"},
+        {"id": 1, "output": "DP-2", "width": 2560, "height": 1600, "source": "xrandr"},
+    ]
     with (
-        mock.patch.dict("os.environ", {"WAYLAND_DISPLAY": "wayland-0", "DISPLAY": ":0"}, clear=False),
+        mock.patch.dict("os.environ", env, clear=False),
         mock.patch("koruobserve.diagnostics._monitors_from_mss", return_value=None),
-        mock.patch("koruobserve.diagnostics._monitors_from_xrandr", return_value=[
-            {"id": 0, "output": "DP-3", "width": 3840, "height": 2160, "source": "xrandr"},
-            {"id": 1, "output": "DP-2", "width": 2560, "height": 1600, "source": "xrandr"},
-        ]),
+        mock.patch("koruobserve.diagnostics._monitors_from_xrandr", return_value=xrandr_monitors),
     ):
         diag = capture_diagnostics(tmp_path)
     assert diag["session_type"] == "wayland"
@@ -73,6 +72,8 @@ def test_capture_diagnostics_blocked_on_wayland(tmp_path: Path) -> None:
     assert "wayland" in diag["hint"].lower()
     assert len(diag["monitors"]) == 2
     assert diag["monitors"][0]["output"] == "DP-3"
+    assert "providers" in diag
+    assert isinstance(diag.get("ranked_providers"), list)
 
 
 def test_capture_diagnostics_no_log(tmp_path: Path) -> None:

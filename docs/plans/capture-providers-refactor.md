@@ -22,6 +22,10 @@ Status: **draft**, autor: agent, data: 2026-05-22.
   - `run_png_command` sprawdza teraz `os.path.isfile(tmp_path)` po
     wywołaniu i zgłasza `{binary} did not write {tmp_path}` zamiast czytać
     pustą zawartość.
+- Phase 2 ✅ (kod) — `koru observe providers list|test|reset`, wspólne
+  `provider_diagnostics_rows()` / `probe_capture_providers()` w detectorze,
+  `/api/mesh/diagnostics` z `ranked_providers[]`, tabela providerów w
+  `/grid`, reset `.koru/keys/screencast.session`.
 - Posprzątane przy okazji: usunięty martwy moduł `koruvision/capture_fallback.py`
   oraz orchestratory `capture_backend`, `auto_backend_order`,
   `auto_failure_message`, `_fallback_after_mss`, `grab_single_mss`,

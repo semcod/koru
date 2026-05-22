@@ -119,6 +119,78 @@ def list_provider_status() -> list[dict[str, Any]]:
     return rows
 
 
+def provider_diagnostics_rows() -> tuple[list[str], list[dict[str, Any]]]:
+    """Return ``(ranked_names, rows)`` with ``selected`` and ``rank`` fields set."""
+    ranked = rank_providers()
+    ranked_names = [provider.name for provider in ranked]
+    selected = set(ranked_names)
+    rows: list[dict[str, Any]] = []
+    for row in list_provider_status():
+        name = str(row["name"])
+        enriched = dict(row)
+        enriched["selected"] = name in selected
+        enriched["rank"] = ranked_names.index(name) + 1 if name in selected else None
+        rows.append(enriched)
+    return ranked_names, rows
+
+
+def probe_capture_providers(
+    name: str | None = None,
+    *,
+    scale: float = 0.2,
+) -> list[dict[str, Any]]:
+    """Try capturing with one or all providers; never raises (results per provider)."""
+    from koruvision.scaling import resolve_scale
+
+    scale_value = resolve_scale(scale)
+    if name:
+        provider = provider_by_name(name.strip().lower())
+        if provider is None:
+            return [
+                {
+                    "name": name,
+                    "ok": False,
+                    "error": f"unknown provider {name!r}",
+                    "available": False,
+                }
+            ]
+        candidates = [provider]
+    else:
+        candidates = list(all_providers())
+
+    results: list[dict[str, Any]] = []
+    for provider in candidates:
+        avail = provider.availability()
+        row: dict[str, Any] = {
+            "name": provider.name,
+            "available": avail.available,
+            "reason": avail.reason,
+            "ok": False,
+        }
+        if not avail.available:
+            row["error"] = avail.reason or "not available"
+            results.append(row)
+            continue
+        try:
+            frames = provider.capture_all(scale_value)
+        except Exception as exc:  # noqa: BLE001
+            row["error"] = str(exc)[:500]
+            results.append(row)
+            continue
+        if not frames:
+            row["error"] = "no frames"
+            results.append(row)
+            continue
+        row["ok"] = True
+        row["frame_count"] = len(frames)
+        row["bytes"] = sum(len(item.get("payload") or b"") for item in frames)
+        first = frames[0]
+        row["width"] = first.get("width")
+        row["height"] = first.get("height")
+        results.append(row)
+    return results
+
+
 def _auto_failure_message(errors: list[str]) -> str:
     msg = "no screenshot backend succeeded"
     if looks_headless():

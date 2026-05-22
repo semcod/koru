@@ -130,18 +130,6 @@ def _wayland_hint(session: str) -> str:
     return ""
 
 
-def _provider_status() -> list[dict[str, Any]]:
-    try:
-        from koruvision.providers.detector import list_provider_status, rank_providers
-    except Exception:
-        return []
-    ranked = {provider.name for provider in rank_providers()}
-    rows = list_provider_status()
-    for row in rows:
-        row["selected"] = row["name"] in ranked
-    return rows
-
-
 def capture_diagnostics(project: Path) -> dict[str, Any]:
     """Return JSON-friendly diagnostics for ``/api/mesh/diagnostics``.
 
@@ -149,7 +137,9 @@ def capture_diagnostics(project: Path) -> dict[str, Any]:
 
         {
           "session_type": "wayland",
-          "monitors": [{"id": 0, "output": "DP-3", "width": 3840, "height": 2160, "source": "xrandr"}, ...],
+          "monitors": [
+            {"id": 0, "output": "DP-3", "width": 3840, "height": 2160}
+          ],
           "last_error": "no screenshot backend succeeded; ...",
           "status": "blocked" | "ok" | "no-log",
           "hint": "..."
@@ -166,10 +156,19 @@ def capture_diagnostics(project: Path) -> dict[str, Any]:
     else:
         status = "ok"
     session = _session_type()
+    ranked: list[str] = []
+    providers: list[dict[str, Any]] = []
+    try:
+        from koruvision.providers.detector import provider_diagnostics_rows
+
+        ranked, providers = provider_diagnostics_rows()
+    except Exception:
+        pass
     return {
         "session_type": session,
         "monitors": monitors,
-        "providers": _provider_status(),
+        "ranked_providers": ranked,
+        "providers": providers,
         "last_error": last_error,
         "status": status,
         "hint": _wayland_hint(session) if status == "blocked" else "",

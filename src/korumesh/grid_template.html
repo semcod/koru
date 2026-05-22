@@ -24,6 +24,12 @@ nav.top .sep{color:#555}
   font-size:13px;color:#e6a675;line-height:1.5}
 .diag strong{color:#ffb37a}
 .diag code{background:#1a0e0a;padding:1px 5px;border-radius:3px;color:#ffd1a8;font-size:12px}
+.providers{margin:0 0 18px;font-size:12px}
+.providers table{width:100%;border-collapse:collapse}
+.providers th,.providers td{text-align:left;padding:5px 8px;border-bottom:1px solid #333}
+.providers th{color:#9ad;font-weight:500}
+.providers .yes{color:#8d8}
+.providers .no{color:#c88}
 </style></head><body>
 <nav class="top">
   <a href="/">← Koru dashboard</a>
@@ -100,16 +106,43 @@ function renderBlockedTile(monitor) {
   </div>`;
 }
 
+function renderProviders(diag) {
+  const rows = (diag && diag.providers) || [];
+  if (!rows.length) return "";
+  const ranked = (diag && diag.ranked_providers) || [];
+  const body = rows.map((row) => {
+    const avail = row.available ? '<span class="yes">yes</span>' : '<span class="no">no</span>';
+    const rank = row.rank != null ? String(row.rank) : "—";
+    const sel = row.selected ? "★" : "";
+    const hint = row.install_hint ? `<br><span style="color:#888">${esc(row.install_hint)}</span>` : "";
+    return `<tr>
+      <td>${esc(row.name)} ${sel}</td>
+      <td>${avail}</td>
+      <td>${esc(rank)}</td>
+      <td>${esc(row.reason || "")}${hint}</td>
+    </tr>`;
+  }).join("");
+  const order = ranked.length
+    ? `<div style="margin-bottom:6px;color:#aaa">Auto-rank: <code>${esc(ranked.join(" → "))}</code></div>`
+    : "";
+  return `<div class="providers">${order}
+    <table><thead><tr><th>provider</th><th>avail</th><th>rank</th><th>reason</th></tr></thead>
+    <tbody>${body}</tbody></table>
+    <div style="margin-top:6px;color:#888">Probe: <code>koru observe providers test</code></div>
+  </div>`;
+}
+
 function renderDiagnostics(diag) {
-  if (!diag || diag.status === "ok") return "";
+  const providers = renderProviders(diag);
+  if (!diag || diag.status === "ok") return providers;
   if (diag.status === "no-log") {
-    return `<div class="diag">No vision agent log yet. Start it with
+    return providers + `<div class="diag">No vision agent log yet. Start it with
       <code>koru observe up</code>.</div>`;
   }
   const session = esc(diag.session_type || "unknown");
   const err = esc(diag.last_error || "(no error recorded)");
   const hint = diag.hint ? `<div style="margin-top:8px">${esc(diag.hint)}</div>` : "";
-  return `<div class="diag">
+  return providers + `<div class="diag">
     <strong>Capture blocked on ${session}.</strong>
     Last error: <code>${err}</code>${hint}
   </div>`;

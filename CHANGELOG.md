@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   CLI tools, and **`portal_screencast`** (xdg-desktop-portal ScreenCast +
   `gst-launch-1.0 pipewiresrc`). `capture.py` delegates to the detector;
   `/api/mesh/diagnostics` lists provider availability.
+- **`koru observe providers` CLI (Phase 2):** `list` shows provider availability
+  and auto-rank order; `test [NAME]` probes capture per provider; `reset`
+  clears `.koru/keys/screencast.session`. Grid `/api/mesh/diagnostics` adds
+  `ranked_providers` and renders a provider table when capture is blocked.
 - **Cross-OS capture smoke (Docker):** `docker/capture/{Dockerfile,smoke.py,
   run.sh,entrypoint-x11.sh}` plus `tests/test_docker_capture.py` (gated by
   `KORU_DOCKER_TESTS=1`). Builds two targets — `capture-headless` (no
@@ -63,6 +67,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   at the new neighbouring modules; `docs/korudsl-koruapi.md` and
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
+
+## [0.1.223] - 2026-05-22
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update docs/plans/capture-providers-refactor.md
+
+### Test
+- Update tests/test_koruobserve_diagnostics.py
+- Update tests/test_observe_providers_cli.py
+
+### Other
+- Update src/korumesh/grid_template.html
+- Update uv.lock
 
 ## [0.1.222] - 2026-05-22
 
