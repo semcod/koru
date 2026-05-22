@@ -23,6 +23,8 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 from unittest import mock
 
+import yaml
+
 from koru.serve import (
     ServeConfig,
     _bulk_waiting_input_action,
@@ -131,6 +133,54 @@ class TestServe(unittest.TestCase):
         self.assertIn("koru dashboard", body)
         # The HTML must reference the JSON endpoint it polls.
         self.assertIn("/api/context", body)
+        self.assertIn("view-tabs", body)
+        self.assertIn("searchParams", body)
+        self.assertIn("tab", body)
+        self.assertIn("project", body)
+        self.assertIn("change", body)
+
+    def test_dashboard_endpoint_lists_lan_state_projects_and_ides(self) -> None:
+        status, ctype, body = _get(self.port, "/api/dashboard")
+        self.assertEqual(status, 200)
+        self.assertIn("application/json", ctype)
+        payload = json.loads(body)
+        self.assertEqual(payload["default_project"], str(self.project.resolve()))
+        self.assertIn(f"http://127.0.0.1:{self.port}/", payload["urls"])
+        self.assertTrue(any(row["path"] == str(self.project.resolve()) for row in payload["projects"]))
+        self.assertTrue(any(row["id"] == "auto" for row in payload["ides"]))
+
+    def test_api_config_get_and_post_persist_dashboard_settings(self) -> None:
+        status, ctype, body = _get(self.port, "/api/config")
+        self.assertEqual(status, 200)
+        self.assertIn("application/json", ctype)
+        payload = json.loads(body)
+        self.assertEqual(payload["config"]["project"], str(self.project.resolve()))
+        self.assertFalse(payload["exists"])
+
+        status, _, body = _post_json(
+            self.port,
+            "/api/config",
+            {
+                "workspace": str(self.project.parent),
+                "ide": "windsurf",
+                "queue_name": "ops",
+                "serve": {
+                    "host": "0.0.0.0",
+                    "port": 9013,
+                    "lan": True,
+                    "auto_port": True,
+                },
+            },
+        )
+        self.assertEqual(status, 200)
+        saved_payload = json.loads(body)
+        self.assertTrue(saved_payload["saved"])
+        self.assertTrue(saved_payload["exists"])
+        saved = json.loads((self.project / ".koru" / "config.json").read_text(encoding="utf-8"))
+        self.assertEqual(saved["ide"], "windsurf")
+        self.assertEqual(saved["queue_name"], "ops")
+        self.assertEqual(saved["serve"]["port"], 9013)
+        self.assertTrue(saved["serve"]["lan"])
 
     def test_api_context_returns_brief(self) -> None:
         status, ctype, body = _get(self.port, "/api/context")
@@ -202,8 +252,103 @@ class TestServe(unittest.TestCase):
         else:
             self.fail("expected HTTPError 404")
 
+    def test_api_create_ticket_accepts_selected_ide(self) -> None:
+        status, ctype, body = _post_json(
+            self.port,
+            "/api/tickets/create",
+            {
+                "description": "ship LAN dashboard controls",
+                "title": "LAN dashboard controls",
+                "priority": "high",
+                "ide": "windsurf",
+                "queue_name": "ops",
+            },
+        )
+        self.assertEqual(status, 200)
+        self.assertIn("application/json", ctype)
+        payload = json.loads(body)
+        self.assertEqual(payload["project"], str(self.project.resolve()))
+        self.assertEqual(payload["ide"], "windsurf")
+
+        data = yaml.safe_load((self.project / ".planfile" / "sprints" / "current.yaml").read_text())
+        ticket = data["sprint"]["tickets"][payload["ticket_id"]]
+        self.assertEqual(ticket["priority"], "high")
+        self.assertEqual(ticket["execution"]["queue"], "ops")
+        self.assertEqual(ticket["source"]["context"]["ide"], "windsurf")
+
+    def test_api_ticket_update_and_reorder_mutate_current_sprint(self) -> None:
+        sprint_path = self.project / ".planfile" / "sprints" / "current.yaml"
+        sprint_path.write_text(
+            """
+sprint:
+  id: current
+  tickets:
+    PLF-001:
+      id: PLF-001
+      name: First
+      priority: normal
+      execution:
+        queue: default
+      history: []
+    PLF-002:
+      id: PLF-002
+      name: Second
+      priority: low
+      execution:
+        queue: default
+      history: []
+""".lstrip(),
+            encoding="utf-8",
+        )
+
+        status, _, body = _post_json(
+            self.port,
+            "/api/tickets/update",
+            {"ticket_id": "PLF-001", "priority": "critical", "queue_name": "lane-a"},
+        )
+        self.assertEqual(status, 200)
+        self.assertTrue(json.loads(body)["changed"])
+
+        status, _, body = _post_json(
+            self.port,
+            "/api/tickets/reorder",
+            {"ticket_id": "PLF-002", "direction": "up"},
+        )
+        self.assertEqual(status, 200)
+        self.assertTrue(json.loads(body)["changed"])
+
+        data = yaml.safe_load(sprint_path.read_text(encoding="utf-8"))
+        tickets = data["sprint"]["tickets"]
+        self.assertEqual(list(tickets), ["PLF-002", "PLF-001"])
+        self.assertEqual(tickets["PLF-001"]["priority"], "critical")
+        self.assertEqual(tickets["PLF-001"]["execution"]["queue"], "lane-a")
+        self.assertTrue(tickets["PLF-001"]["history"])
+
 
 class TestServeAutoPort(unittest.TestCase):
+    def test_endpoint_file_includes_lan_urls(self) -> None:
+        tmp, project = _minimal_planfile_project()
+        try:
+            cfg = ServeConfig(
+                project=project,
+                host="0.0.0.0",
+                port=8765,
+                open_browser=False,
+                lan=True,
+            )
+            from koru import serve as serve_mod
+
+            with mock.patch.object(serve_mod, "_local_lan_addresses", return_value=["192.168.1.50"]):
+                write_serve_endpoint_file(cfg)
+            data = read_serve_endpoint(project)
+            self.assertIsNotNone(data)
+            assert data is not None
+            self.assertTrue(data["lan"])
+            self.assertIn("http://localhost:8765/", data["urls"])
+            self.assertIn("http://192.168.1.50:8765/", data["urls"])
+        finally:
+            tmp.cleanup()
+
     def test_auto_port_skips_busy_port(self) -> None:
         tmp, project = _minimal_planfile_project()
         blocker = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

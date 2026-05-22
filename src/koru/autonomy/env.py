@@ -18,6 +18,12 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Final
 
+from koruide.ide import (
+    detect_terminal_host_ide_id,
+    normalize_ide_id,
+    supports_vscode_extension_plugin,
+)
+
 _VALID_TICKET_SOURCES: Final[frozenset[str]] = frozenset({"queue", "scan", "all"})
 
 # Mirrors scripts/koru-autoloop.sh initial "${VAR:-default}" (see script header).
@@ -302,3 +308,53 @@ def autonomous_environ_doctor_probe(project: Path) -> tuple[str, str]:
     if env_truthy("ENABLE_DIAGNOSTIC_TICKETS", False):
         bits.append("ENABLE_DIAGNOSTIC_TICKETS=true")
     return "pass", "; ".join(bits)
+
+
+def allow_keyboard_autopilot_fallback() -> bool:
+    raw = os.environ.get("KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK", "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
+def prefer_keyboard_autopilot() -> bool:
+    for key in ("KORU_AUTOPILOT_PREFER_KEYBOARD", "KORU_AUTOPILOT_VISIBLE_TYPING"):
+        if os.environ.get(key, "").strip().lower() in {"1", "true", "yes", "on"}:
+            return True
+    return False
+
+
+def plugin_required_for_ide(autopilot_ide: str) -> bool:
+    ide = normalize_ide_id(autopilot_ide) or ""
+    if ide != "auto" and not supports_vscode_extension_plugin(ide):
+        return False
+    return not allow_keyboard_autopilot_fallback() and not prefer_keyboard_autopilot()
+
+
+def allow_cross_ide_autopilot() -> bool:
+    return os.environ.get("KORU_AUTOPILOT_ALLOW_CROSS_IDE", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def autopilot_terminal_conflict_reason(
+    autopilot_ide: str,
+    *,
+    plugin_connected: bool = False,
+) -> str | None:
+    if plugin_connected:
+        return None
+    if allow_cross_ide_autopilot():
+        return None
+    wanted = normalize_ide_id(autopilot_ide)
+    terminal = normalize_ide_id(detect_terminal_host_ide_id())
+    if not wanted or wanted == "auto" or not terminal or terminal == wanted:
+        return None
+    if supports_vscode_extension_plugin(wanted) and supports_vscode_extension_plugin(terminal):
+        return (
+            f"terminal host is {terminal}, but autopilot target is {wanted}; "
+            "refusing cross-IDE plugin drive. Restart `koru auto` from the target IDE "
+            "terminal, or set KORU_AUTOPILOT_ALLOW_CROSS_IDE=1 explicitly."
+        )
+    return None

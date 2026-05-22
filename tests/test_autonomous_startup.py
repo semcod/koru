@@ -185,6 +185,77 @@ def test_resolve_agent_lane_explicit_vscodium_beats_generic_vscode_terminal(
     assert source == "env:KORU_AUTOPILOT_INSTANCE"
 
 
+def test_resolve_agent_lane_explicit_zed_beats_generic_vscode_terminal(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "zed")
+    running = [
+        RunningIDE(id="vscode", label="VS Code", pid=10, exe="/usr/bin/code"),
+        RunningIDE(id="zed", label="Zed", pid=11, exe="/usr/bin/zed"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value="vscode"),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+    assert lane == "zed"
+    assert source == "env:KORU_AUTOPILOT_INSTANCE"
+
+
+def test_resolve_agent_lane_terminal_zed_overrides_conflicting_env_instance(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "cursor")
+    running = [
+        RunningIDE(id="cursor", label="Cursor", pid=10, exe="/usr/bin/cursor"),
+        RunningIDE(id="zed", label="Zed", pid=11, exe="/usr/bin/zed"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value="zed"),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+    assert lane == "zed"
+    assert source == "terminal:over-env:KORU_AUTOPILOT_INSTANCE"
+
+
+def test_resolve_agent_lane_prefers_antigravity_when_terminal_unknown(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    running = [
+        RunningIDE(id="cursor", label="Cursor", pid=10, exe="/usr/bin/cursor"),
+        RunningIDE(
+            id="antigravity",
+            label="Antigravity",
+            pid=11,
+            exe="/usr/share/antigravity/antigravity",
+        ),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value="unknown"),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+    assert lane == "antigravity"
+    assert source == "terminal:prefer-antigravity-over-unknown"
+
+
 def test_resolve_autopilot_ide_keeps_jetbrains_lane_when_plugin_ide_running() -> None:
     running = [
         RunningIDE(id="cursor", label="Cursor", pid=10, exe="/usr/bin/cursor"),
@@ -302,6 +373,66 @@ def test_format_post_startup_operator_hints_for_jetbrains_skips_plugin_steps() -
     assert "koru: Connect autopilot daemon" not in text
 
 
+def test_format_post_startup_operator_hints_for_zed_uses_keyboard_path() -> None:
+    probe = startup.AutonomousStartupProbe(
+        koru_version="0.0-test",
+        python_version="3.12",
+        project=Path("/tmp/project"),
+        agent_lane_cli="auto",
+        autopilot_ide_cli="auto",
+        resolved_lane="zed",
+        lane_source="terminal",
+        resolved_autopilot_ide="zed",
+        autopilot_ide_source="lane",
+        running_ides=("Zed (pid=1)",),
+        terminal_lane="zed",
+        socket_path="/run/user/1000/koru-autopilot-zed.sock",
+        session="wayland",
+        term_program="zed",
+        headless=False,
+        xdg_runtime_dir="/run/user/1000",
+    )
+    text = "\n".join(
+        startup.format_post_startup_operator_hints(probe, plugin_connected=False),
+    )
+
+    assert "plugin niedostępny dla ide=zed" in text
+    assert "export KORU_AUTOPILOT_INSTANCE=zed" in text
+    assert "task koru:ide-os:calibrate IDE=zed" in text
+    assert "Command Palette" not in text
+    assert "--require-plugin" not in text
+
+
+def test_format_post_startup_operator_hints_for_antigravity_uses_plugin_path() -> None:
+    probe = startup.AutonomousStartupProbe(
+        koru_version="0.0-test",
+        python_version="3.12",
+        project=Path("/tmp/project"),
+        agent_lane_cli="auto",
+        autopilot_ide_cli="auto",
+        resolved_lane="antigravity",
+        lane_source="terminal",
+        resolved_autopilot_ide="antigravity",
+        autopilot_ide_source="lane",
+        running_ides=("Antigravity (pid=1)",),
+        terminal_lane="antigravity",
+        socket_path="/run/user/1000/koru-autopilot-antigravity.sock",
+        session="wayland",
+        term_program="vscode",
+        headless=False,
+        xdg_runtime_dir="/run/user/1000",
+    )
+    text = "\n".join(
+        startup.format_post_startup_operator_hints(probe, plugin_connected=True),
+    )
+
+    assert "[ok] plugin połączony (ide=antigravity)" in text
+    assert "~/.config/Antigravity/User/settings.json" in text
+    assert "koru: Connect autopilot daemon" in text
+    assert "--ide antigravity --require-plugin 'probe test'" in text
+    assert "task koru:ide-os:calibrate IDE=antigravity" not in text
+
+
 def test_format_startup_banner_includes_version(tmp_path: Path) -> None:
     probe = startup.build_startup_probe(
         tmp_path,
@@ -313,6 +444,32 @@ def test_format_startup_banner_includes_version(tmp_path: Path) -> None:
     assert "koru autonomous: koru " in text
     assert "python " in text
     assert "autopilot socket" in text
+
+
+def test_format_startup_banner_includes_terminal_hint_and_lane_details() -> None:
+    probe = startup.AutonomousStartupProbe(
+        koru_version="0.0-test",
+        python_version="3.12",
+        project=Path("/tmp/project"),
+        agent_lane_cli="auto",
+        autopilot_ide_cli="auto",
+        resolved_lane="zed",
+        lane_source="terminal",
+        resolved_autopilot_ide="zed",
+        autopilot_ide_source="lane",
+        running_ides=("Zed (pid=1)",),
+        terminal_lane="zed",
+        socket_path="/run/user/1000/koru-autopilot-zed.sock",
+        session="wayland",
+        term_program="zed",
+        headless=False,
+        xdg_runtime_dir="/run/user/1000",
+    )
+
+    text = "\n".join(startup.format_startup_banner(probe))
+    assert "terminal hint" in text
+    assert "lane=zed (from terminal" in text
+    assert "autopilot IDE=zed (from lane" in text
 
 
 def test_build_startup_probe_reports_per_ide_socket_for_explicit_ide(

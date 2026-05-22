@@ -55,21 +55,7 @@ class DiagnosticResult:
     failed: list[str]
 
 
-@dataclass
-class AutoloopState:
-    previous_signature: str = ""
-    stagnation_streak: int = 0
-    scan_clean_streak: int = 0
-    scan_last_head: str = ""
-    wup_seen_events: int = 0
-    autopilot_events: list[dict[str, Any]] = field(default_factory=list)
-    last_message_sent_ts: float = 0.0
-    telemetry_autopilot_idle_streak_skips: int = 0
-    telemetry_scan_after_idle_runs: int = 0
-    telemetry_scan_after_idle_tickets_applied: int = 0
-    last_scan_after_idle_ts: float = -1.0
-    pending_ide_verify_id: str | None = None
-    post_verify_seen: set[str] = field(default_factory=set)
+from koru.autonomy.state import AutoloopState
 
 
 def _queue_loop_waiting_ticket_label(queue_result: QueueLoopResult) -> str:
@@ -105,126 +91,29 @@ def _status_in_skip_list(status: str, skip_statuses: str) -> bool:
     }
 
 
-def _allow_keyboard_autopilot_fallback() -> bool:
-    raw = os.environ.get("KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK", "").strip().lower()
-    return raw in {"1", "true", "yes", "on"}
-
-
-def _prefer_keyboard_autopilot() -> bool:
-    for key in ("KORU_AUTOPILOT_PREFER_KEYBOARD", "KORU_AUTOPILOT_VISIBLE_TYPING"):
-        if os.environ.get(key, "").strip().lower() in {"1", "true", "yes", "on"}:
-            return True
-    return False
-
-
-def _plugin_required_for_ide(autopilot_ide: str) -> bool:
-    ide = normalize_ide_id(autopilot_ide) or ""
-    if ide != "auto" and not supports_vscode_extension_plugin(ide):
-        return False
-    return not _allow_keyboard_autopilot_fallback() and not _prefer_keyboard_autopilot()
-
-
-def _allow_cross_ide_autopilot() -> bool:
-    return os.environ.get("KORU_AUTOPILOT_ALLOW_CROSS_IDE", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
-
-
-def _autopilot_terminal_conflict_reason(
-    autopilot_ide: str,
-    *,
-    plugin_connected: bool = False,
-) -> str | None:
-    if plugin_connected:
-        return None
-    if _allow_cross_ide_autopilot():
-        return None
-    wanted = normalize_ide_id(autopilot_ide)
-    terminal = normalize_ide_id(detect_terminal_host_ide_id())
-    if not wanted or wanted == "auto" or not terminal or terminal == wanted:
-        return None
-    if supports_vscode_extension_plugin(wanted) and supports_vscode_extension_plugin(terminal):
-        return (
-            f"terminal host is {terminal}, but autopilot target is {wanted}; "
-            "refusing cross-IDE plugin drive. Restart `koru auto` from the target IDE "
-            "terminal, or set KORU_AUTOPILOT_ALLOW_CROSS_IDE=1 explicitly."
-        )
-    return None
-
-
-def _client_plugin_rows(client: Any) -> tuple[list[Any] | None, str | None]:
-    status_fn = getattr(client, "status", None)
-    if not callable(status_fn):
-        return None, None
-    try:
-        status = status_fn()
-    except (OSError, TimeoutError, RuntimeError) as exc:
-        return [], f"daemon status unavailable: {exc}"
-    plugins = status.get("plugins") if isinstance(status, dict) else None
-    if not isinstance(plugins, list):
-        return [], "daemon status has no plugin list"
-    return plugins, None
-
-
-def _wanted_plugin_ide(autopilot_ide: str) -> str:
-    return (autopilot_ide or "auto").strip().lower()
-
-
-def _plugin_row_matches_ide(row: dict[str, Any], wanted: str) -> bool:
-    ide = str(row.get("ide") or "").strip().lower()
-    return wanted in {"", "auto"} or ide == wanted
-
-
-def _plugin_row_version_block_reason(row: dict[str, Any], wanted: str) -> str | None:
-    ide = str(row.get("ide") or "").strip().lower()
-    version = row.get("version")
-    version_info = DriveOrchestrator.plugin_version_info(
-        plugin_ide=ide or wanted,
-        connected_version=version if isinstance(version, str) else None,
-        protocol_version=(
-            row.get("protocolVersion") if isinstance(row.get("protocolVersion"), int) else None
-        ),
-        capabilities=(
-            row.get("capabilities") if isinstance(row.get("capabilities"), list) else None
-        ),
-    )
-    if DriveOrchestrator.should_block_plugin_version(version_info):
-        return DriveOrchestrator.plugin_version_block_message(version_info)
-    return None
-
-
-def _missing_plugin_label(wanted: str) -> str:
-    return wanted if wanted not in {"", "auto"} else "any supported IDE"
-
-
-def _matching_plugin_row(plugins: list[Any], wanted: str) -> dict[str, Any] | None:
-    for row in plugins:
-        if isinstance(row, dict) and _plugin_row_matches_ide(row, wanted):
-            return row
-    return None
-
-
-def _usable_plugin_decision(row: dict[str, Any], wanted: str) -> tuple[bool, str]:
-    if block_reason := _plugin_row_version_block_reason(row, wanted):
-        return False, block_reason
-    return True, ""
+from koru.autonomy.env import (
+    autopilot_terminal_conflict_reason as _autopilot_terminal_conflict_reason,
+    plugin_required_for_ide as _plugin_required_for_ide,
+)
 
 
 def _client_has_usable_plugin(client: Any, autopilot_ide: str) -> tuple[bool, str]:
     """Return whether a daemon status has a live plugin usable for this IDE."""
-    plugins, status_error = _client_plugin_rows(client)
+    from koru.autonomous_plugin import plugin_status_decision
+
+    status_fn = getattr(client, "status", None)
+    if not callable(status_fn):
+        return True, ""
+    try:
+        status = status_fn()
+    except (OSError, TimeoutError, RuntimeError) as exc:
+        return False, f"daemon status unavailable: {exc}"
+    
+    plugins = status.get("plugins")
     if plugins is None:
         return True, ""
-    if status_error is not None:
-        return False, status_error
-    wanted = _wanted_plugin_ide(autopilot_ide)
-    row = _matching_plugin_row(plugins, wanted)
-    if row is not None:
-        return _usable_plugin_decision(row, wanted)
-    return False, f"no connected autopilot plugin for {_missing_plugin_label(wanted)}"
+    
+    return plugin_status_decision(status, autopilot_ide)
 
 
 def _try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | None:
@@ -981,13 +870,21 @@ def _reply_missing_autopilot_plugin(reply: dict[str, Any]) -> bool:
 
 def _reply_needs_focus_retry(reply: dict[str, Any]) -> bool:
     msg = str(reply.get("message") or "").lower()
+    return "focus" in msg
+
+
+def _reply_needs_plugin_retry(reply: dict[str, Any]) -> bool:
+    msg = str(reply.get("message") or "").lower()
+    if "no connected autopilot plugin" in msg:
+        return False
+    if "focus" in msg:
+        return False
     return (
-        "focus" in msg
-        or "plugin_error" in msg
+        "plugin_error" in msg
         or "connection" in msg
         or "verification" in msg
         or "connected" in msg
-        or str(reply.get("verification") or "") == "plugin_error"
+        or str(reply.get("verification") or "").lower() == "plugin_error"
     )
 
 
@@ -1058,6 +955,19 @@ def _warn_autopilot_manual_focus_required(reply: dict[str, Any] | None = None) -
     )
 
 
+def _warn_autopilot_plugin_retry(attempt: int, attempts: int, reply: dict[str, Any] | None = None) -> None:
+    print("\033[1;33m")  # bold yellow
+    print("================================================================================")
+    print("[AUTOPILOT PLUGIN RETRY] Plugin send did not succeed yet.")
+    print("This is usually transient in Windsurf; Koru will retry automatically.")
+    if reply:
+        for line in _format_autopilot_failure_details(reply):
+            print(line)
+    print(f"Retrying in 5 seconds... (Attempt {attempt + 1}/{attempts})")
+    print("================================================================================")
+    print("\033[0m")  # reset colors
+
+
 def _execute_autopilot_drive(
     project: Path,
     state: AutoloopState,
@@ -1096,6 +1006,9 @@ def _execute_autopilot_drive(
             break
         if _reply_needs_focus_retry(reply) and attempt < attempts - 1:
             _warn_autopilot_focus_retry(attempt, attempts, reply)
+            time.sleep(5)
+        elif _reply_needs_plugin_retry(reply) and attempt < attempts - 1:
+            _warn_autopilot_plugin_retry(attempt, attempts, reply)
             time.sleep(5)
         else:
             break

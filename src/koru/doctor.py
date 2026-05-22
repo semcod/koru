@@ -34,11 +34,19 @@ in this order so reports diff cleanly across runs):
                         ``TICKET_SOURCES``).
     koru_runtime_identity — active Python/package/PATH/repo-local executable
                         identity for Koru itself.
+    python_venv_alignment — active `VIRTUAL_ENV`, Python executable, and
+                        project `.venv` alignment.
+    autopilot_plugin_bundle — expected plugin version, package metadata, lockfile,
+                        and bundled VSIX asset alignment.
     autopilot_env     — selected autopilot lane/IDE/socket environment.
     ide_runtime_presence — requested IDE is visible as a running process.
     autopilot_socket  — selected autopilot socket exists and accepts connects.
     autopilot_manage  — package/plugin/daemon state from ``koru autopilot manage``.
     autopilot_debug_log — recent plugin debug log activity for selected IDE/socket.
+    autopilot_chat_control — recent IDE chat focus/paste/submit symptoms from
+                        plugin debug logs.
+    windsurf_chat_column_control — Windsurf right-chat column toggle symptoms
+                        after native chat send.
     agent_backends_registry — static profile ids from ``koru.agent_backends``
                         (``PASS`` when the registry loads; see
                         ``koru agent-backends``).
@@ -80,6 +88,7 @@ from koru.policy import policy_path
 from koru.project_pipeline import KORU_PROJECT_PIPELINE_FILENAME, project_pipeline_path
 from koru.runtime import planfile_dir, runtime_dir
 from koru.utils.subprocess_runner import get_python_cmd
+from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 from koruide.socket import default_socket_path
 
 # Default timeout for the pytest-collect probe. Doctor is meant to be
@@ -170,6 +179,24 @@ _PROBLEM_CATALOG: tuple[ProblemCatalogEntry, ...] = (
         ),
     ),
     ProblemCatalogEntry(
+        check="python_venv_alignment",
+        severity=WARN,
+        problem="The shell venv, Python executable, and project `.venv` do not agree.",
+        detection=(
+            "Doctor compares `VIRTUAL_ENV`, `sys.executable`, and `<project>/.venv` "
+            "to catch mixed `venv`/`.venv` runs."
+        ),
+    ),
+    ProblemCatalogEntry(
+        check="autopilot_plugin_bundle",
+        severity=FAIL,
+        problem="The expected autopilot plugin version is not bundled consistently.",
+        detection=(
+            "Doctor compares Python expected plugin version, plugin package.json, "
+            "package-lock.json, and the bundled VSIX asset."
+        ),
+    ),
+    ProblemCatalogEntry(
         check="autopilot_env",
         severity=WARN,
         problem="Autopilot lane/IDE environment points at the wrong desktop lane.",
@@ -203,6 +230,27 @@ _PROBLEM_CATALOG: tuple[ProblemCatalogEntry, ...] = (
         ),
     ),
     ProblemCatalogEntry(
+        check="autopilot_chat_control",
+        severity=WARN,
+        problem="The IDE chat panel opens but text injection/focus/paste is unstable.",
+        detection=(
+            "Doctor scans recent plugin debug events for native send failures, "
+            "paste failures, focus probe rejections, and retry recovery."
+        ),
+    ),
+    ProblemCatalogEntry(
+        check="windsurf_chat_column_control",
+        severity=WARN,
+        problem=(
+            "Windsurf native chat send can be followed by a Cascade open command "
+            "that toggles the right chat column closed."
+        ),
+        detection=(
+            "Doctor scans recent plugin debug events for `WINDSURF_KEEP_OPEN_OK` "
+            "after native `sendTextToChat`, and for the newer disabled guard."
+        ),
+    ),
+    ProblemCatalogEntry(
         check="ide_runtime_presence",
         severity=WARN,
         problem="The requested IDE is not visible as a running process.",
@@ -219,6 +267,15 @@ _PROBLEM_CATALOG: tuple[ProblemCatalogEntry, ...] = (
         severity=FAIL,
         problem="Linux inotify watch limit is too low for stable watch mode.",
         detection="`/proc/sys/fs/inotify/max_user_watches` is below recommended threshold.",
+    ),
+    ProblemCatalogEntry(
+        check="plugin_console_logs",
+        severity=WARN,
+        problem="The plugin has not forwarded recent extension-host console logs to the daemon.",
+        detection=(
+            "Doctor reads the selected autopilot daemon status `console_logs` tail, "
+            "then falls back to recent plugin debug log lines."
+        ),
     ),
     ProblemCatalogEntry(
         check="detected_configuration",
@@ -303,11 +360,17 @@ def run_diagnostics(project: Path) -> DoctorReport:
         ("koru_project_pipeline", _check_koru_project_pipeline),
         ("autonomous_environ", autonomous_environ_doctor_probe),
         ("koru_runtime_identity", _check_koru_runtime_identity),
+        ("python_venv_alignment", _check_python_venv_alignment),
+        ("autopilot_plugin_bundle", _check_autopilot_plugin_bundle),
         ("autopilot_env", _check_autopilot_env),
         ("ide_runtime_presence", _check_ide_runtime_presence),
         ("autopilot_socket", _check_autopilot_socket),
         ("autopilot_manage", _check_autopilot_manage),
         ("autopilot_debug_log", _check_autopilot_debug_log),
+        ("autopilot_chat_control", _check_autopilot_chat_control),
+        ("windsurf_chat_column_control", _check_windsurf_chat_column_control),
+        ("plugin_console_logs", _check_plugin_console_logs),
+        ("ide_console_log", _check_ide_console_log),
         ("agent_backends_registry", _check_agent_backends_registry),
         ("inotify_watches", _check_inotify_watches),
         ("wup_binary", _check_wup_binary),
@@ -523,6 +586,119 @@ def _check_koru_runtime_identity(project: Path) -> tuple[str, str]:
     return status, "; ".join(detail_bits)
 
 
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    # Use lexical containment rather than ``resolve()`` for the child:
+    # virtualenv Python binaries are often symlinks to /usr/bin/python,
+    # but the operator still launched the interpreter from project .venv.
+    try:
+        child = path.expanduser()
+        if not child.is_absolute():
+            child = Path.cwd() / child
+        child.absolute().relative_to(parent.expanduser().resolve())
+    except (OSError, ValueError):
+        return False
+    return True
+
+
+def _check_python_venv_alignment(project: Path) -> tuple[str, str]:
+    project_venv = project / ".venv"
+    virtual_env = os.environ.get("VIRTUAL_ENV", "").strip()
+    executable = Path(sys.executable)
+    detail_bits = [
+        f"virtual_env={virtual_env or '-'}",
+        f"python={sys.executable}",
+        f"project_venv={project_venv}",
+    ]
+    if not project_venv.exists():
+        return WARN, "; ".join(detail_bits + ["project_venv_missing=true"])
+
+    status = PASS
+    if virtual_env:
+        try:
+            if Path(virtual_env).expanduser().resolve() != project_venv.resolve():
+                status = WARN
+                detail_bits.append("virtual_env_mismatch=true")
+        except OSError:
+            status = WARN
+            detail_bits.append("virtual_env_mismatch=unknown")
+    else:
+        status = WARN
+        detail_bits.append("virtual_env_unset=true")
+
+    if not _is_relative_to(executable, project_venv):
+        status = WARN
+        detail_bits.append("python_not_from_project_venv=true")
+
+    path_koru = shutil.which("koru")
+    if path_koru and not _is_relative_to(Path(path_koru), project_venv):
+        status = WARN
+        detail_bits.append("path_koru_not_from_project_venv=true")
+    return status, "; ".join(detail_bits)
+
+
+def _read_json_file(path: Path) -> dict[str, object] | None:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _check_autopilot_plugin_bundle(project: Path) -> tuple[str, str]:
+    plugin_dir = project / "plugins" / "koru-autopilot-vscode"
+    if not plugin_dir.is_dir():
+        return SKIP, "plugin source tree not present"
+    package_json = _read_json_file(plugin_dir / "package.json")
+    package_lock = _read_json_file(plugin_dir / "package-lock.json")
+    package_version = str(package_json.get("version") or "") if package_json else ""
+    lock_version = str(package_lock.get("version") or "") if package_lock else ""
+    root_lock_version = ""
+    if package_lock:
+        packages = package_lock.get("packages")
+        if isinstance(packages, dict):
+            root = packages.get("")
+            if isinstance(root, dict):
+                root_lock_version = str(root.get("version") or "")
+
+    expected = EXPECTED_VSCODE_PLUGIN_VERSION
+    asset = (
+        project
+        / "src"
+        / "koru"
+        / "assets"
+        / "koru-autopilot-vscode"
+        / f"koru-autopilot-{expected}.vsix"
+    )
+    local_vsix = plugin_dir / f"koru-autopilot-{expected}.vsix"
+    detail_bits = [
+        f"expected={expected}",
+        f"package={package_version or '-'}",
+        f"lock={lock_version or '-'}",
+        f"lock_root={root_lock_version or '-'}",
+        f"local_vsix={'present' if local_vsix.is_file() else 'missing'}",
+        f"asset_vsix={'present' if asset.is_file() else 'missing'}",
+    ]
+    issues: list[str] = []
+    if not package_json:
+        issues.append("package_json_unreadable")
+    if not package_lock:
+        issues.append("package_lock_unreadable")
+    for label, version in (
+        ("package_version_mismatch", package_version),
+        ("lock_version_mismatch", lock_version),
+        ("lock_root_version_mismatch", root_lock_version),
+    ):
+        if version and version != expected:
+            issues.append(label)
+    if not local_vsix.is_file():
+        issues.append("local_vsix_missing")
+    if not asset.is_file():
+        issues.append("asset_vsix_missing")
+    if issues:
+        return WARN, "; ".join(detail_bits + [f"issues={','.join(issues)}"])
+    return PASS, "; ".join(detail_bits + ["bundle=consistent"])
+
+
 def _check_autopilot_env(_project: Path) -> tuple[str, str]:
     instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
     ide = (os.environ.get("KORU_AUTOPILOT_IDE") or "").strip()
@@ -602,23 +778,89 @@ def _check_autopilot_manage(_project: Path) -> tuple[str, str]:
     return PASS, detail
 
 
-def _check_autopilot_debug_log(_project: Path) -> tuple[str, str]:
-    selected = _selected_autopilot_ide()
-    if not selected:
-        return SKIP, "autopilot env unset"
-    path = Path(os.environ.get("KORU_PLUGIN_DEBUG_LOG", "/tmp/koru-plugin-debug.log"))
+def _autopilot_debug_log_path() -> Path:
+    return Path(os.environ.get("KORU_PLUGIN_DEBUG_LOG", "/tmp/koru-plugin-debug.log"))
+
+
+def _read_recent_autopilot_debug_lines(path: Path, *, limit: int = 400) -> list[str]:
+    return path.read_text(encoding="utf-8", errors="replace").splitlines()[-limit:]
+
+
+def _autopilot_line_mentions_selected(line: str, *, selected: str, socket_text: str) -> bool:
+    if f'"ide":"{selected}"' in line or socket_text in line or f"ide={selected}" in line:
+        return True
+    if selected == "windsurf" and "WINDSURF_" in line:
+        return True
+    if selected == "antigravity" and "ANTIGRAVITY_" in line:
+        return True
+    return False
+
+
+def _autopilot_debug_event_name(line: str) -> str:
+    parts = line.split(maxsplit=2)
+    if len(parts) < 2 or not parts[0][:4].isdigit():
+        return ""
+    return parts[1]
+
+
+def _autopilot_debug_event_has(line: str, token: str) -> bool:
+    event_name = _autopilot_debug_event_name(line)
+    if event_name == token:
+        return True
+    return event_name == "OUT" and token in line
+
+
+def _read_recent_autopilot_activity_lines(project: Path, *, limit: int = 600) -> list[str]:
+    path = runtime_dir(project) / "nfo-events.jsonl"
     if not path.is_file():
-        return SKIP, f"{path} missing"
+        return []
     try:
-        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()[-400:]
-    except OSError as exc:
-        return WARN, f"cannot read {path}: {exc}"
+        rows = path.read_text(encoding="utf-8", errors="replace").splitlines()[-limit:]
+    except OSError:
+        return []
+    activity: list[str] = []
+    for row in rows:
+        try:
+            payload = json.loads(row)
+        except json.JSONDecodeError:
+            continue
+        extra = payload.get("extra")
+        if isinstance(extra, dict):
+            message = str(extra.get("activity_message") or "")
+        else:
+            message = ""
+        if not message:
+            message = str(payload.get("kwargs") or "")
+        if message:
+            activity.append(message)
+    return activity
+
+
+def _recent_autopilot_debug_context() -> tuple[str | None, Path, str, list[str], str | None]:
+    selected = _selected_autopilot_ide()
+    path = _autopilot_debug_log_path()
+    if not selected:
+        return selected, path, "", [], "autopilot env unset"
+    if not path.is_file():
+        return selected, path, "", [], f"{path} missing"
     socket_text = str(_resolve_autopilot_socket_for_doctor())
+    lines = _read_recent_autopilot_debug_lines(path)
     relevant = [
         line
         for line in lines
-        if f'"ide":"{selected}"' in line or socket_text in line or f"ide={selected}" in line
+        if _autopilot_line_mentions_selected(line, selected=selected, socket_text=socket_text)
     ]
+    return selected, path, socket_text, relevant, None
+
+
+def _check_autopilot_debug_log(_project: Path) -> tuple[str, str]:
+    try:
+        selected, path, socket_text, relevant, skip_reason = _recent_autopilot_debug_context()
+    except OSError as exc:
+        path = _autopilot_debug_log_path()
+        return WARN, f"cannot read {path}: {exc}"
+    if skip_reason:
+        return SKIP, skip_reason
     if not relevant:
         return WARN, f"{path}: no recent entries for ide={selected} or socket={socket_text}"
     if any("CONNECT_OK" in line or "HELLO" in line for line in relevant):
@@ -626,6 +868,638 @@ def _check_autopilot_debug_log(_project: Path) -> tuple[str, str]:
     if any("CONNECT_ERROR" in line for line in relevant):
         return WARN, f"{path}: {len(relevant)} matching entrie(s), latest connection errors present"
     return PASS, f"{path}: {len(relevant)} recent matching entrie(s)"
+
+
+def _activity_line_mentions_selected(line: str, selected: str) -> bool:
+    return (
+        f"ide={selected}" in line
+        or f"'ide': '{selected}'" in line
+        or f'"ide": "{selected}"' in line
+        or f'"ide":"{selected}"' in line
+    )
+
+
+def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
+    try:
+        selected, path, _socket_text, relevant, skip_reason = _recent_autopilot_debug_context()
+    except OSError as exc:
+        path = _autopilot_debug_log_path()
+        return WARN, f"cannot read {path}: {exc}"
+    if skip_reason:
+        return SKIP, skip_reason
+    if not relevant:
+        return WARN, f"{path}: no recent chat-control entries for ide={selected}"
+
+    activity = [
+        line
+        for line in _read_recent_autopilot_activity_lines(project)
+        if selected and _activity_line_mentions_selected(line, selected)
+    ]
+    daemon_successes = sum(
+        any(token in line for token in ("autopilot: ok", "drive wynik: ok=True", "message.sent"))
+        for line in activity
+    )
+    daemon_failures = sum(
+        any(token in line for token in ("verification=plugin_error", "autopilot skipped"))
+        for line in activity
+    )
+    last_activity_success_index = max(
+        (
+            idx
+            for idx, line in enumerate(activity)
+            if any(
+                token in line
+                for token in ("autopilot: ok", "drive wynik: ok=True", "message.sent")
+            )
+        ),
+        default=-1,
+    )
+    last_activity_failure_index = max(
+        (
+            idx
+            for idx, line in enumerate(activity)
+            if any(token in line for token in ("verification=plugin_error", "autopilot skipped"))
+        ),
+        default=-1,
+    )
+
+    fast_send_errors = sum(
+        _autopilot_debug_event_has(line, "WINDSURF_FASTPATH_EXECUTE_SEND_ERROR")
+        for line in relevant
+    )
+    paste_failures = sum(
+        _autopilot_debug_event_has(line, "chat opened but paste command failed")
+        for line in relevant
+    )
+    focus_rejections = sum(
+        _autopilot_debug_event_has(line, "PROBE_FOCUS_REJECT")
+        for line in relevant
+    )
+    paste_rejections = sum(
+        _autopilot_debug_event_has(line, "PROBE_PASTE_REJECT")
+        for line in relevant
+    )
+    input_refusals = sum(
+        _autopilot_debug_event_has(line, token)
+        for line in relevant
+        for token in (
+            "HOST_PASTE_NO_INPUT_FOCUS",
+            "PROBE_PASTE_NO_INPUT_FOCUS",
+            "TYPE_PASTE_NO_INPUT_FOCUS_REFUSED",
+            "FOCUS_INPUT_ALL_FAILED",
+        )
+    )
+    send_successes = sum(
+        _autopilot_debug_event_has(line, token)
+        for line in relevant
+        for token in (
+            "WINDSURF_FASTPATH_EXECUTE_SEND_OK",
+            "winning_paste=windsurf.sendTextToChat",
+            "winning_submit=windsurf.sendTextToChat",
+            "message.sent",
+        )
+    )
+    command_available_index = max(
+        (
+            idx
+            for idx, line in enumerate(relevant)
+            if _autopilot_debug_event_has(line, "WINDSURF_FASTPATH_CHECK_COMMAND")
+            and '"hasSendCmd":true' in line
+        ),
+        default=-1,
+    )
+    command_missing_index = max(
+        (
+            idx
+            for idx, line in enumerate(relevant)
+            if _autopilot_debug_event_has(line, "WINDSURF_FASTPATH_ABORT_MISSING_COMMAND")
+            or (
+                _autopilot_debug_event_has(line, "WINDSURF_FASTPATH_CHECK_COMMAND")
+                and '"hasSendCmd":false' in line
+            )
+        ),
+        default=-1,
+    )
+    last_failure_index = max(
+        (
+            idx
+            for idx, line in enumerate(relevant)
+            if any(
+                _autopilot_debug_event_has(line, token)
+                for token in (
+                    "WINDSURF_FASTPATH_EXECUTE_SEND_ERROR",
+                    "chat opened but paste command failed",
+                    "PROBE_FOCUS_REJECT",
+                    "PROBE_PASTE_REJECT",
+                    "HOST_PASTE_NO_INPUT_FOCUS",
+                    "PROBE_PASTE_NO_INPUT_FOCUS",
+                    "TYPE_PASTE_NO_INPUT_FOCUS_REFUSED",
+                    "FOCUS_INPUT_ALL_FAILED",
+                )
+            )
+        ),
+        default=-1,
+    )
+    last_success_index = max(
+        (
+            idx
+            for idx, line in enumerate(relevant)
+            if any(
+                _autopilot_debug_event_has(line, token)
+                for token in (
+                    "WINDSURF_FASTPATH_EXECUTE_SEND_OK",
+                    "message.sent",
+                    "winning_paste=windsurf.sendTextToChat",
+                    "winning_submit=windsurf.sendTextToChat",
+                )
+            )
+        ),
+        default=-1,
+    )
+
+    detail_bits = [
+        f"ide={selected}",
+        f"entries={len(relevant)}",
+        f"fast_send_errors={fast_send_errors}",
+        f"paste_failures={paste_failures}",
+        f"focus_rejections={focus_rejections}",
+        f"paste_rejections={paste_rejections}",
+        f"input_refusals={input_refusals}",
+        f"send_successes={send_successes}",
+    ]
+    if activity:
+        detail_bits.append(f"daemon_events={len(activity)}")
+    if daemon_successes:
+        detail_bits.append(f"daemon_successes={daemon_successes}")
+    if daemon_failures:
+        detail_bits.append(f"daemon_failures={daemon_failures}")
+    command_available = command_available_index >= 0
+    command_missing_latest = command_missing_index > max(
+        command_available_index,
+        last_success_index,
+    )
+    if command_available:
+        detail_bits.append("native_send_command=available")
+    if command_missing_index >= 0:
+        detail_bits.append("native_send_command_missing_seen=true")
+
+    if command_missing_latest:
+        return WARN, "; ".join(detail_bits + ["native chat command unavailable"])
+    if any((fast_send_errors, paste_failures, focus_rejections, paste_rejections, input_refusals)):
+        if (
+            last_success_index > last_failure_index >= 0
+            or last_activity_success_index > last_activity_failure_index
+        ):
+            detail_bits.append("recovered_after_retry=true")
+        else:
+            detail_bits.append("latest_chat_control_failure=true")
+        return WARN, "; ".join(detail_bits)
+    if send_successes or daemon_successes:
+        return PASS, "; ".join(detail_bits + ["chat_control=stable"])
+    return WARN, "; ".join(detail_bits + ["no recent paste/submit success observed"])
+
+
+def _check_windsurf_chat_column_control(_project: Path) -> tuple[str, str]:
+    try:
+        selected, path, _socket_text, relevant, skip_reason = _recent_autopilot_debug_context()
+    except OSError as exc:
+        path = _autopilot_debug_log_path()
+        return WARN, f"cannot read {path}: {exc}"
+    if skip_reason:
+        return SKIP, skip_reason
+    if selected != "windsurf":
+        return SKIP, f"ide={selected or '-'}; only applicable to windsurf"
+    if not relevant:
+        return WARN, f"{path}: no recent Windsurf chat-column entries"
+
+    send_indexes = [
+        idx
+        for idx, line in enumerate(relevant)
+        if _autopilot_debug_event_has(line, "WINDSURF_FASTPATH_EXECUTE_SEND_OK")
+        or "winning_paste=windsurf.sendTextToChat" in line
+    ]
+    disabled_indexes = [
+        idx
+        for idx, line in enumerate(relevant)
+        if _autopilot_debug_event_has(line, "WINDSURF_KEEP_OPEN_DISABLED")
+    ]
+    keep_open_ok_indexes = [
+        idx
+        for idx, line in enumerate(relevant)
+        if _autopilot_debug_event_has(line, "WINDSURF_KEEP_OPEN_OK")
+    ]
+    cascade_toggle_indexes = [
+        idx
+        for idx, line in enumerate(relevant)
+        if _autopilot_debug_event_has(line, "WINDSURF_KEEP_OPEN_OK")
+        and (
+            "cascadePanel.open" in line
+            or "showCascade" in line
+            or "openChat" in line
+            or "panel.chat" in line
+        )
+    ]
+    last_send = max(send_indexes, default=-1)
+    last_disabled = max(disabled_indexes, default=-1)
+    last_toggle = max(cascade_toggle_indexes, default=-1)
+    detail_bits = [
+        "ide=windsurf",
+        f"entries={len(relevant)}",
+        f"native_sends={len(send_indexes)}",
+        f"keep_open_ok={len(keep_open_ok_indexes)}",
+        f"post_send_toggle_candidates={len(cascade_toggle_indexes)}",
+        f"keep_open_disabled={len(disabled_indexes)}",
+    ]
+    if last_toggle > last_disabled and last_toggle > -1:
+        return WARN, "; ".join(
+            detail_bits
+            + [
+                "risk=post_send_cascade_open_may_toggle_right_chat_column",
+                "upgrade_plugin_or_keep koruAutopilot.windsurfKeepOpenAfterSend=false",
+            ]
+        )
+    if last_disabled > last_send >= 0:
+        return PASS, "; ".join(detail_bits + ["post_send_keep_open_guard=disabled"])
+    if last_send >= 0 and not disabled_indexes and not keep_open_ok_indexes:
+        return WARN, "; ".join(
+            detail_bits
+            + ["post_send_keep_open_guard=unknown", "reload IDE if plugin was just upgraded"]
+        )
+    return PASS, "; ".join(detail_bits + ["no post-send toggle evidence"])
+
+
+def _doctor_console_log_tail_limit() -> int:
+    raw = os.environ.get("KORU_DOCTOR_CONSOLE_LOG_LINES", "").strip()
+    if not raw:
+        return 8
+    try:
+        value = int(raw)
+    except ValueError:
+        return 8
+    return min(max(value, 1), 40)
+
+
+def _compact_plugin_console_entry(entry: dict[str, object], *, max_len: int = 220) -> str:
+    timestamp = str(entry.get("timestamp") or "-").strip()
+    ide = str(entry.get("ide") or "-").strip()
+    message = str(entry.get("message") or "").strip()
+    data = entry.get("data")
+    if data is None:
+        data_text = ""
+    else:
+        try:
+            data_text = json.dumps(data, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        except (TypeError, ValueError):
+            data_text = str(data)
+    text = " ".join(part for part in (timestamp, ide, message, data_text) if part)
+    text = re.sub(r"\s+", " ", text).strip()
+    if len(text) > max_len:
+        text = text[: max_len - 3].rstrip() + "..."
+    return text
+
+
+def _plugin_console_entry_matches_selected(entry: dict[str, object], selected: str) -> bool:
+    ide = normalize_ide_id(str(entry.get("ide") or ""))
+    if ide:
+        return ide == selected
+    data = entry.get("data")
+    if isinstance(data, dict):
+        data_ide = normalize_ide_id(str(data.get("ide") or ""))
+        if data_ide:
+            return data_ide == selected
+    message = str(entry.get("message") or "")
+    if selected == "windsurf" and "WINDSURF_" in message:
+        return True
+    if selected == "antigravity" and "ANTIGRAVITY_" in message:
+        return True
+    return not ide
+
+
+def _daemon_console_logs_for_doctor(
+    socket_path: Path,
+) -> tuple[list[dict[str, object]], str | None]:
+    try:
+        from koru.autopilot.client import AutopilotClient
+
+        status = AutopilotClient(socket_path=socket_path, timeout=1.5).status()
+    except (OSError, RuntimeError) as exc:
+        return [], str(exc)
+    raw_logs = status.get("console_logs")
+    if not isinstance(raw_logs, list):
+        return [], None
+    return [row for row in raw_logs if isinstance(row, dict)], None
+
+
+def _plugin_debug_log_tail_for_doctor(limit: int) -> tuple[Path, list[str], str | None]:
+    try:
+        _selected, path, _socket_text, relevant, skip_reason = _recent_autopilot_debug_context()
+    except OSError as exc:
+        path = _autopilot_debug_log_path()
+        return path, [], str(exc)
+    if skip_reason:
+        return path, [], skip_reason
+    return path, relevant[-limit:], None
+
+
+def _check_plugin_console_logs(_project: Path) -> tuple[str, str]:
+    """Show recent extension-host console logs forwarded by the plugin."""
+    selected = _selected_autopilot_ide()
+    if not selected:
+        return SKIP, "autopilot env unset"
+    limit = _doctor_console_log_tail_limit()
+    socket_path = _resolve_autopilot_socket_for_doctor()
+    daemon_logs, daemon_error = _daemon_console_logs_for_doctor(socket_path)
+    selected_logs = [
+        entry
+        for entry in daemon_logs
+        if _plugin_console_entry_matches_selected(entry, selected)
+    ]
+    if selected_logs:
+        tail = selected_logs[-limit:]
+        latest = " | ".join(_compact_plugin_console_entry(entry) for entry in tail)
+        return PASS, (
+            f"ide={selected}; source=daemon; socket={socket_path}; "
+            f"entries={len(selected_logs)}; latest={latest}"
+        )
+
+    debug_path, debug_tail, debug_error = _plugin_debug_log_tail_for_doctor(limit)
+    if debug_tail:
+        latest = " | ".join(re.sub(r"\s+", " ", line).strip() for line in debug_tail)
+        offline_after_stop = _plugin_debug_tail_is_daemon_offline_noise(
+            debug_tail,
+            selected=selected,
+            socket_path=socket_path,
+            daemon_error=daemon_error,
+        )
+        status = PASS if offline_after_stop or not daemon_error else WARN
+        reason = f"; daemon_status_error={daemon_error}" if daemon_error else ""
+        if offline_after_stop:
+            reason = f"; daemon_offline_expected_after_stop=true{reason}"
+        return status, (
+            f"ide={selected}; source=plugin_debug_log; path={debug_path}; "
+            f"entries={len(debug_tail)}; latest={latest}{reason}"
+        )
+    if daemon_error:
+        return WARN, f"ide={selected}; socket={socket_path}; daemon_status_error={daemon_error}"
+    if debug_error:
+        return WARN, (
+            f"ide={selected}; source=daemon; entries=0; debug_log={debug_path}; "
+            f"debug_error={debug_error}"
+        )
+    return WARN, (
+        f"ide={selected}; source=daemon; socket={socket_path}; "
+        "no console logs received yet"
+    )
+
+
+def _plugin_debug_tail_is_daemon_offline_noise(
+    lines: list[str],
+    *,
+    selected: str,
+    socket_path: Path,
+    daemon_error: str | None,
+) -> bool:
+    if not daemon_error:
+        return False
+    error_text = daemon_error.lower()
+    if "no such file" not in error_text and "enoent" not in error_text:
+        return False
+
+    allowed = {"CONNECT_CANDIDATES", "CONNECT_TRY", "CONNECT_ERROR", "CONNECT_CLOSE"}
+    socket_text = str(socket_path)
+    for line in lines:
+        event = _autopilot_debug_event_name(line)
+        if event not in allowed:
+            return False
+        if selected not in line and socket_text not in line:
+            return False
+    return any(_autopilot_debug_event_has(line, "CONNECT_ERROR") for line in lines)
+
+
+def _ide_console_log_roots(selected: str) -> list[Path]:
+    override = os.environ.get("KORU_IDE_CONSOLE_LOG_DIR")
+    if override:
+        return [Path(override).expanduser()]
+    home = Path.home()
+    roots: dict[str, list[Path]] = {
+        "windsurf": [home / ".config" / "Windsurf" / "logs"],
+        "antigravity": [home / ".config" / "Antigravity" / "logs"],
+        "vscode": [home / ".config" / "Code" / "logs"],
+        "vscodium": [home / ".config" / "VSCodium" / "logs"],
+        "cursor": [home / ".config" / "Cursor" / "logs"],
+    }
+    return roots.get(selected, [])
+
+
+def _recent_ide_console_log_files(selected: str, *, max_sessions: int = 5) -> list[Path]:
+    files: list[Path] = []
+    for root in _ide_console_log_roots(selected):
+        if not root.is_dir():
+            continue
+        sessions = sorted(
+            (path for path in root.iterdir() if path.is_dir()),
+            key=lambda path: path.stat().st_mtime,
+            reverse=True,
+        )[:max_sessions]
+        root_files = [path for path in root.iterdir() if path.is_file()]
+        for session in sessions:
+            files.extend(
+                path
+                for path in session.rglob("*")
+                if path.is_file() and path.suffix.lower() in {".log", ".txt"}
+            )
+        files.extend(path for path in root_files if path.suffix.lower() in {".log", ".txt"})
+    return sorted(files, key=lambda path: path.stat().st_mtime, reverse=True)
+
+
+def _read_recent_ide_console_lines(
+    files: list[Path],
+    *,
+    per_file_limit: int = 120,
+) -> list[tuple[Path, str]]:
+    rows: list[tuple[Path, str]] = []
+    for path in files[:30]:
+        try:
+            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            continue
+        rows.extend((path, line) for line in lines[-per_file_limit:] if line.strip())
+    return rows
+
+
+def _ide_console_line_is_interesting(line: str) -> bool:
+    lowered = line.lower()
+    tokens = (
+        "[error]",
+        " error ",
+        " err ",
+        "[warn]",
+        " warn ",
+        "warning",
+        "exception",
+        "rejected promise",
+        "trustedscript",
+        "trustedtypepolicy",
+        "trustedstring",
+        "trusted types",
+        "language server has not been started",
+        "cannot register",
+        "already registered",
+        "overwriting grammar scope",
+        "marketplace",
+        "404",
+        "500",
+        "acknowledgecascadecodeedit",
+        "file or directory",
+        "does not exist",
+        "unable to read file",
+        "app icon customization is not supported",
+        "failed to find pyright executable",
+        "lifecyclephase.restored",
+        "extension host",
+        "koru",
+        "windsurf",
+        "cascade",
+        "chat",
+    )
+    return any(token in lowered for token in tokens)
+
+
+def _ide_console_line_is_diagnostic_headline(line: str) -> bool:
+    stripped = line.strip()
+    if stripped.startswith("at ") or stripped.startswith("at async "):
+        return False
+    lowered = stripped.lower()
+    return any(
+        token in lowered
+        for token in (
+            "[error]",
+            "[warn]",
+            "console.error",
+            "console.warn",
+            " error:",
+            " warn ",
+            " warning",
+            "rejected promise",
+            "trustedscript",
+            "trustedtypepolicy",
+            "trustedstring",
+            "trusted types",
+            "language server has not been started",
+            "cannot register",
+            "already registered",
+            "overwriting grammar scope",
+            "marketplace",
+            "acknowledgecascadecodeedit",
+            "file or directory",
+            "does not exist",
+            "unable to read file",
+            "app icon customization is not supported",
+            "failed to find pyright executable",
+            "lifecyclephase.restored",
+        )
+    )
+
+
+def _compact_console_excerpt(path: Path, line: str, *, max_len: int = 220) -> str:
+    text = re.sub(r"\s+", " ", line).strip()
+    if len(text) > max_len:
+        text = text[: max_len - 3].rstrip() + "..."
+    parent = path.parent.name
+    label = f"{parent}/{path.name}" if parent else path.name
+    return f"{label}: {text}"
+
+
+def _check_ide_console_log(_project: Path) -> tuple[str, str]:
+    selected = _selected_autopilot_ide()
+    if not selected:
+        return SKIP, "autopilot env unset"
+    roots = _ide_console_log_roots(selected)
+    if not roots:
+        return SKIP, f"no known console log root for ide={selected}"
+    existing_roots = [path for path in roots if path.is_dir()]
+    if not existing_roots:
+        roots_text = ", ".join(str(path) for path in roots)
+        return WARN, f"ide={selected}; log root missing: {roots_text}"
+
+    try:
+        files = _recent_ide_console_log_files(selected)
+        rows = _read_recent_ide_console_lines(files)
+    except OSError as exc:
+        return WARN, f"ide={selected}; cannot read console logs: {exc}"
+    if not files:
+        roots_text = ", ".join(str(path) for path in existing_roots)
+        return WARN, f"ide={selected}; no log files found under {roots_text}"
+    if not rows:
+        return WARN, f"ide={selected}; files={len(files)}; no readable recent log lines"
+
+    interesting = [(path, line) for path, line in rows if _ide_console_line_is_interesting(line)]
+    headlines = [
+        (path, line) for path, line in interesting if _ide_console_line_is_diagnostic_headline(line)
+    ]
+    error_count = sum(
+        "error" in line.lower() or "[err" in line.lower()
+        for _path, line in headlines
+    )
+    warn_count = sum(
+        any(
+            token in line.lower()
+            for token in (
+                "warn",
+                "trustedscript",
+                "trustedtypepolicy",
+                "trustedstring",
+                "trusted types",
+                "rejected promise",
+                "cannot register",
+                "already registered",
+                "overwriting grammar scope",
+                "language server has not been started",
+                "lifecyclephase.restored",
+            )
+        )
+        for _path, line in headlines
+    )
+    category_patterns = {
+        "trusted_types": (
+            ("trustedscript",),
+            ("trustedtypepolicy",),
+            ("trustedstring",),
+            ("trusted types",),
+        ),
+        "language_server_not_started": (("language server has not been started",),),
+        "extension_registration": (("cannot register",), ("already registered",)),
+        "grammar_scope_overwrite": (("overwriting grammar scope",),),
+        "missing_extension_file": (("unable to read file", "nonexistent file"),),
+        "missing_workspace_path": (("file or directory", "does not exist"),),
+        "marketplace_404": (("marketplace", "404"),),
+        "cascade_rpc_500": (("acknowledgecascadecodeedit", "500"),),
+        "cascade_panel_early_restore": (("windsurf.cascadepanel", "lifecyclephase.restored"),),
+        "app_icon_unsupported": (("app icon customization is not supported",),),
+        "pyright_fallback": (("failed to find pyright executable",),),
+    }
+    category_counts: list[str] = []
+    for name, patterns in category_patterns.items():
+        count = sum(
+            any(all(token in line.lower() for token in pattern) for pattern in patterns)
+            for _path, line in interesting
+        )
+        if count:
+            category_counts.append(f"{name}={count}")
+    detail = (
+        f"ide={selected}; roots={','.join(str(path) for path in existing_roots)}; "
+        f"files={len(files)}; interesting={len(interesting)}; errors={error_count}; "
+        f"warnings={warn_count}"
+    )
+    if category_counts:
+        detail += "; categories=" + ",".join(category_counts)
+    sample_rows = headlines or interesting
+    if sample_rows:
+        samples = [_compact_console_excerpt(path, line) for path, line in sample_rows[-3:]]
+        detail += "; latest=" + " | ".join(samples)
+    if error_count or warn_count:
+        return WARN, detail
+    return PASS, detail + "; no recent warnings/errors"
 
 
 def _check_git_repo(project: Path) -> tuple[str, str]:
@@ -852,6 +1726,33 @@ def _resolve_pytest_collect_timeout() -> float:
     return value if value > 0 else DEFAULT_PYTEST_COLLECT_TIMEOUT_SECONDS
 
 
+def _compact_pytest_collect_failure(stdout: str, stderr: str) -> str:
+    """Return one operator-useful line from a failed pytest collection."""
+    combined = f"{stdout or ''}\n{stderr or ''}"
+    lines = [line.strip() for line in combined.splitlines() if line.strip()]
+    if not lines:
+        return ""
+
+    diagnostic_tokens = (
+        "error:",
+        "error collecting",
+        "importerror",
+        "modulenotfounderror",
+        "syntaxerror",
+        "usage:",
+        "failed:",
+        "traceback",
+        "no module named",
+        "permission denied",
+    )
+    for line in lines:
+        lowered = line.lower()
+        if any(token in lowered for token in diagnostic_tokens):
+            return line[:220] + ("..." if len(line) > 220 else "")
+
+    return lines[0][:220] + ("..." if len(lines[0]) > 220 else "")
+
+
 def _check_pytest_collect(project: Path) -> tuple[str, str]:
     """Run ``pytest --collect-only`` and report whether collection works.
 
@@ -902,9 +1803,14 @@ def _check_pytest_collect(project: Path) -> tuple[str, str]:
         return PASS, "collection clean (count not parseable)"
 
     # Non-zero exit: collection failed. Keep the detail short — `koru
-    # scan` is the place to dig into per-file errors. We just tell the
-    # operator *that* it's broken and where to look.
-    return WARN, ("pytest --collect-only failed — run `koru scan` for actionable per-file tickets")
+    # scan` is the place to dig into per-file errors. We include one
+    # headline so doctor is still useful when the operator needs the
+    # first clue without opening another log.
+    detail = "pytest --collect-only failed — run `koru scan` for actionable per-file tickets"
+    headline = _compact_pytest_collect_failure(result.stdout or "", result.stderr or "")
+    if headline:
+        detail = f"{detail}; first_error={headline}"
+    return WARN, detail
 
 
 def _check_inotify_watches(project: Path) -> tuple[str, str]:

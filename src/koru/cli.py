@@ -1542,6 +1542,7 @@ def _auto_main(argv: list[str]) -> int:
 
 _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "doctor": _doctor_subcommand_main,
+    "configure": lambda argv: __import__("koru.configurator", fromlist=["configure_main"]).configure_main(argv),
     "init-ci": _init_ci_main,
     "init-ide": _init_ide_main,
     "agent-backends": _agent_backends_main,

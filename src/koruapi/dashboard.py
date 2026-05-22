@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 from pathlib import Path
 
 from koru.events import emit_management_event
@@ -12,6 +13,10 @@ from koruapi.dashboard_serve import DEFAULT_HOST, DEFAULT_PORT, ServeConfig, ser
 
 def _env_truthy(name: str) -> bool:
     return os.environ.get(name, "").strip().lower() in ("1", "true", "yes", "on")
+
+
+def _argv_has_flag(argv: list[str], *names: str) -> bool:
+    return any(arg == name or arg.startswith(f"{name}=") for arg in argv for name in names)
 
 
 def build_serve_parser() -> argparse.ArgumentParser:
@@ -32,6 +37,17 @@ def build_serve_parser() -> argparse.ArgumentParser:
         "--host",
         default=DEFAULT_HOST,
         help=f"Bind address (default {DEFAULT_HOST}).",
+    )
+    parser.add_argument(
+        "--lan",
+        action="store_true",
+        help="Expose the dashboard on the local network (binds 0.0.0.0).",
+    )
+    parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=None,
+        help="Workspace root used for project discovery in the dashboard.",
     )
     parser.add_argument(
         "--port",
@@ -64,15 +80,41 @@ def build_serve_parser() -> argparse.ArgumentParser:
 def dashboard_main(argv: list[str] | None = None) -> int:
     """Entry point for ``koru serve`` and ``koru api dashboard``."""
     from koru.activity_log import activity
+    from koru.configurator import load_project_config
 
-    args = build_serve_parser().parse_args(argv)
+    raw_argv = list(sys.argv[1:] if argv is None else argv)
+    args = build_serve_parser().parse_args(raw_argv)
+    project = args.project.resolve()
+    saved = load_project_config(project)
+    saved_serve = saved.get("serve") if isinstance(saved.get("serve"), dict) else {}
+    lan_from_config = bool(saved_serve.get("lan")) and not _argv_has_flag(raw_argv, "--lan", "--host")
+    lan = bool(args.lan) or lan_from_config
+    host = args.host
+    if not _argv_has_flag(raw_argv, "--host"):
+        host = str(saved_serve.get("host") or host)
+    if lan and host == DEFAULT_HOST:
+        host = "0.0.0.0"
+    port = args.port
+    if not _argv_has_flag(raw_argv, "--port"):
+        port = int(saved_serve.get("port") or port)
+    queue_name = args.queue_name
+    if queue_name is None:
+        queue_name = str(saved.get("queue_name") or "") or None
+    workspace = args.workspace
+    if workspace is None and saved.get("workspace"):
+        workspace = Path(str(saved["workspace"]))
+    auto_port = bool(args.auto_port) or _env_truthy("KORU_SERVE_AUTO_PORT")
+    if not _argv_has_flag(raw_argv, "--auto-port"):
+        auto_port = auto_port or bool(saved_serve.get("auto_port"))
     config = ServeConfig(
-        project=args.project.resolve(),
-        host=args.host,
-        port=args.port,
+        project=project,
+        host=host,
+        port=port,
         open_browser=args.open_browser,
-        queue_name=args.queue_name,
-        auto_port=bool(args.auto_port) or _env_truthy("KORU_SERVE_AUTO_PORT"),
+        queue_name=queue_name,
+        auto_port=auto_port,
+        lan=lan,
+        workspace=workspace.resolve() if workspace else None,
     )
     activity(
         "HTTP",

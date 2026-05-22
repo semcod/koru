@@ -562,12 +562,12 @@ def test_effective_cycle_autopilot_skips_required_plugin_when_missing(
 def test_autopilot_terminal_conflict_blocks_cross_vscode_family_drive(monkeypatch) -> None:
     monkeypatch.delenv("KORU_AUTOPILOT_ALLOW_CROSS_IDE", raising=False)
     monkeypatch.setattr(
-        autonomous_cycle_mod,
-        "detect_terminal_host_ide_id",
+        "koru.autonomy.env.detect_terminal_host_ide_id",
         lambda: "vscodium",
     )
 
-    reason = autonomous_cycle_mod._autopilot_terminal_conflict_reason("vscode")
+    from koru.autonomy.env import autopilot_terminal_conflict_reason
+    reason = autopilot_terminal_conflict_reason("vscode")
 
     assert reason is not None
     assert "terminal host is vscodium" in reason
@@ -576,24 +576,24 @@ def test_autopilot_terminal_conflict_blocks_cross_vscode_family_drive(monkeypatc
 def test_autopilot_terminal_conflict_can_be_explicitly_allowed(monkeypatch) -> None:
     monkeypatch.setenv("KORU_AUTOPILOT_ALLOW_CROSS_IDE", "1")
     monkeypatch.setattr(
-        autonomous_cycle_mod,
-        "detect_terminal_host_ide_id",
+        "koru.autonomy.env.detect_terminal_host_ide_id",
         lambda: "vscodium",
     )
 
-    assert autonomous_cycle_mod._autopilot_terminal_conflict_reason("vscode") is None
+    from koru.autonomy.env import autopilot_terminal_conflict_reason
+    assert autopilot_terminal_conflict_reason("vscode") is None
 
 
 def test_autopilot_terminal_conflict_allows_connected_target_plugin(monkeypatch) -> None:
     monkeypatch.delenv("KORU_AUTOPILOT_ALLOW_CROSS_IDE", raising=False)
     monkeypatch.setattr(
-        autonomous_cycle_mod,
-        "detect_terminal_host_ide_id",
+        "koru.autonomy.env.detect_terminal_host_ide_id",
         lambda: "vscode",
     )
 
+    from koru.autonomy.env import autopilot_terminal_conflict_reason
     assert (
-        autonomous_cycle_mod._autopilot_terminal_conflict_reason(
+        autopilot_terminal_conflict_reason(
             "vscodium",
             plugin_connected=True,
         )
@@ -1774,6 +1774,7 @@ def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(
         def drive(self, *_args, **_kwargs):
             return {"ok": False, "backend": "plugin", "message": "submit failed"}
 
+    monkeypatch.setattr("koru.autonomy.env.detect_terminal_host_ide_id", lambda: None)
     monkeypatch.setenv("KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK", "1")
     monkeypatch.setenv("KORU_OS_INJECTOR_PROFILE", "windsurf")
     monkeypatch.setattr(
@@ -1947,6 +1948,64 @@ def test_run_cycle_autopilot_focus_error_retry_loop_retries_and_warns(
     assert "lastRejected:" in captured
 
 
+def test_run_cycle_autopilot_plugin_retry_loop_for_windsurf_fastpath_failure(
+    tmp_path,
+    monkeypatch,
+    capsys,
+) -> None:
+    import time
+
+    calls: list[None] = []
+
+    class FastPathErrorClient:
+        def drive(self, *_args, **_kwargs):
+            calls.append(None)
+            return {
+                "ok": False,
+                "message": "chat opened but paste command failed (fast path failed)",
+                "verification": "plugin_error",
+                "diagnostics": {
+                    "ide": "windsurf",
+                    "appName": "Windsurf",
+                    "logPath": "/tmp/koru-plugin-debug.log",
+                },
+            }
+
+    monkeypatch.setattr(time, "sleep", lambda _x: None)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=0 last_status=idle",
+            last_status="idle",
+            last_message="",
+            waiting=[],
+        ),
+    )
+
+    _scan_result, _queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
+        cycle=1,
+        project=tmp_path,
+        actor="koru-test",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=50,
+        enable_autopilot=True,
+        autopilot_ide="windsurf",
+        drive_prompt="continue with the next ticket",
+        submit=True,
+        include_semcod_artifacts=False,
+        client=FastPathErrorClient(),
+    )
+
+    assert len(calls) == 5
+    assert autopilot_status == "failed"
+    captured = capsys.readouterr().out
+    assert "[AUTOPILOT PLUGIN RETRY]" in captured
+    assert "Plugin message: chat opened but paste command failed (fast path failed)" in captured
+    assert "[AUTOPILOT FOCUS ERROR]" not in captured
+
+
 def test_run_cycle_does_not_retry_missing_plugin_as_focus_error(
     tmp_path,
     monkeypatch,
@@ -2116,6 +2175,7 @@ def test_run_cycle_visible_typing_does_not_require_plugin(
             drive_calls.append(kwargs)
             return {"ok": True, "backend": "stub"}
 
+    monkeypatch.setattr("koru.autonomy.env.detect_terminal_host_ide_id", lambda: None)
     monkeypatch.setenv("KORU_AUTOPILOT_VISIBLE_TYPING", "1")
     monkeypatch.setattr(
         autonomous_mod,

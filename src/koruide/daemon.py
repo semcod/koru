@@ -163,6 +163,55 @@ class _PluginEventHandoff:
     reason: str
 
 
+# Thread-safe storage for plugin console logs (for koru doctor)
+_console_logs_lock = threading.Lock()
+_console_logs: list[dict[str, Any]] = []
+_MAX_CONSOLE_LOGS = 1000
+_STATUS_CONSOLE_LOGS_LIMIT = 80
+
+
+def add_console_log(
+    message: str,
+    data: Any | None,
+    timestamp: str,
+    *,
+    ide: str | None = None,
+    version: str | None = None,
+) -> None:
+    """Store a console log entry from the plugin."""
+    entry: dict[str, Any] = {
+        "message": message,
+        "data": data,
+        "timestamp": timestamp,
+    }
+    if ide:
+        entry["ide"] = ide
+    if version:
+        entry["version"] = version
+    with _console_logs_lock:
+        _console_logs.append(entry)
+        # Keep only the most recent logs
+        if len(_console_logs) > _MAX_CONSOLE_LOGS:
+            _console_logs.pop(0)
+
+
+def get_console_logs(*, limit: int | None = None) -> list[dict[str, Any]]:
+    """Retrieve all stored console logs."""
+    with _console_logs_lock:
+        rows = list(_console_logs)
+    if limit is None:
+        return rows
+    if limit <= 0:
+        return []
+    return rows[-limit:]
+
+
+def clear_console_logs() -> None:
+    """Clear all stored console logs."""
+    with _console_logs_lock:
+        _console_logs.clear()
+
+
 class AutopilotDaemon:
     """Selector-based unix-socket broker.
 
@@ -743,6 +792,7 @@ class AutopilotDaemon:
             },
             "plugins": plugins,
             "rejected_plugins": list(self._plugin_rejections),
+            "console_logs": get_console_logs(limit=_STATUS_CONSOLE_LOGS_LIMIT),
             "backends": [b.to_dict() for b in self.injector.probe()],
             "selected_backend": self.injector.select_backend(),
             "ides": [i.to_dict() for i in detect_running_ides()],
@@ -1057,6 +1107,23 @@ class AutopilotDaemon:
             client.role = "cli"
         self._send(client, ack(msg.id or "ping", info={"pong": True}).encode())
 
+    def _handle_console_log(self, client: _Client, msg: Message) -> None:
+        """Handle console log messages from the plugin for koru doctor."""
+        message = msg.data.get("message") if isinstance(msg.data, dict) else None
+        data = msg.data.get("data") if isinstance(msg.data, dict) else None
+        timestamp = msg.data.get("timestamp") if isinstance(msg.data, dict) else None
+        if isinstance(message, str) and isinstance(timestamp, str):
+            entry_ide = msg.data.get("ide") if isinstance(msg.data, dict) else None
+            entry_version = msg.data.get("version") if isinstance(msg.data, dict) else None
+            add_console_log(
+                message,
+                data,
+                timestamp,
+                ide=str(entry_ide or client.ide or "").strip() or None,
+                version=str(entry_version or client.version or "").strip() or None,
+            )
+        # Silent success - no ack needed for log messages
+
     def _build_handler_table(self) -> dict[str, Callable[[_Client, Message], None]]:
         """Return the per-instance dispatch table.
 
@@ -1075,6 +1142,7 @@ class AutopilotDaemon:
             "status.error": self._handle_plugin_event,
             "shutdown": self._handle_shutdown,
             "ping": self._handle_ping,
+            "console_log": self._handle_console_log,
         }
 
 

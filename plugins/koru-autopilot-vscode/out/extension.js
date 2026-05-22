@@ -76,8 +76,34 @@ function debugLog(message, data) {
         const suffix = data === undefined ? "" : " " + JSON.stringify(data);
         fs.appendFileSync("/tmp/koru-plugin-debug.log", `${new Date().toISOString()} ${message}${suffix}\n`);
     }
-    catch {
-        /* ignore */
+    catch (err) {
+        console.error("koru autopilot: debugLog failed", message, err);
+    }
+}
+function safeLogPayload(data) {
+    return JSON.stringify(data, (key, value) => {
+        // Avoid circular references and large objects.
+        if (typeof value === "object" && value !== null) {
+            if (key === "before" || key === "after" || key === "beforeSnapshot" || key === "afterSnapshot") {
+                const snapshot = value;
+                return { hasEditor: snapshot.hasEditor, isFileLike: snapshot.isFileLike };
+            }
+        }
+        return value;
+    });
+}
+let bridgeInstance = null;
+function safeLog(message, data) {
+    try {
+        const suffix = data === undefined ? "" : " " + safeLogPayload(data);
+        console.log(`[koru] ${message}${suffix}`);
+        debugLog(message, data);
+        // Send to daemon for koru doctor
+        bridgeInstance?.sendConsoleLog(message, data);
+    }
+    catch (err) {
+        console.log(`[koru] ${message}`);
+        debugLog(message, { log_error: String(err) });
     }
 }
 class AutopilotBridge {
@@ -97,6 +123,21 @@ class AutopilotBridge {
         this.status.command = "koruAutopilot.connect";
         this.status.show();
         context.subscriptions.push(this.status);
+        bridgeInstance = this;
+    }
+    isConnected() {
+        return this.socket !== null;
+    }
+    sendConsoleLog(message, data) {
+        if (!this.socket)
+            return;
+        this.send({
+            type: "console_log",
+            id: "console-log",
+            message,
+            data,
+            timestamp: new Date().toISOString(),
+        });
     }
     socketPath() {
         const cfg = vscode.workspace.getConfiguration("koruAutopilot");
@@ -509,21 +550,28 @@ class AutopilotBridge {
         const cache = this.getProbeCache();
         const useProbe = this.probeLadderEnabled();
         const commands = (0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildFocusOpenCommands)(ide, primary), cache?.focusOpen), existing);
+        debugLog("FOCUS_OPEN_START", { ide, commandsCount: commands.length, useProbe, cacheFocusOpen: cache?.focusOpen });
         debugLog("FOCUS_OPEN_CANDIDATES", { ide, commands });
         const before = this.editorSnapshot();
+        debugLog("FOCUS_OPEN_BEFORE_SNAPSHOT", { before });
         if (useProbe && ide === "vscode" && commands.length === 0 && (0, probe_ladder_1.chatFocusHeuristic)(before)) {
+            debugLog("FOCUS_OPEN_ALREADY_FOCUSED");
             return { ok: true, command: "already-focused" };
         }
         const rejected = [];
         for (const cmd of commands) {
+            debugLog("FOCUS_OPEN_ATTEMPT", { cmd, isToggle: cmd.includes("toggle") });
             if (!(await this.runCommand(cmd))) {
                 console.warn(`koru autopilot: focusChat command not available: ${cmd}`);
                 rejected.push({ cmd, reason: "executeCommand returned false" });
+                debugLog("FOCUS_OPEN_COMMAND_FAILED", { cmd, reason: "executeCommand returned false" });
                 continue;
             }
             await this.sleep(this.probeFocusDelayMs());
             const after = this.editorSnapshot();
+            debugLog("FOCUS_OPEN_AFTER_SNAPSHOT", { cmd, after });
             if (!useProbe || (0, probe_ladder_1.verifyFocusAfterOpen)(before, after, ide)) {
+                debugLog("FOCUS_OPEN_SUCCESS", { cmd });
                 if (useProbe) {
                     await this.saveProbeCache({ focusOpen: cmd });
                 }
@@ -532,6 +580,7 @@ class AutopilotBridge {
             debugLog("PROBE_FOCUS_REJECT", { cmd, before, after });
             rejected.push({ cmd, reason: "probe rejected focus snapshot", before, after });
         }
+        debugLog("FOCUS_OPEN_ALL_FAILED", { rejectedCount: rejected.length });
         return {
             ok: false,
             diagnostics: {
@@ -682,15 +731,20 @@ class AutopilotBridge {
         const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
         const cache = this.getProbeCache();
         const candidates = (0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildFocusInputCommands)(ide), cache?.focusInput), existing);
+        debugLog("FOCUS_INPUT_START", { ide, candidatesCount: candidates.length, cacheFocusInput: cache?.focusInput });
         debugLog("FOCUS_INPUT_CANDIDATES", { ide, candidates });
         for (const cmd of candidates) {
+            debugLog("FOCUS_INPUT_ATTEMPT", { cmd });
             if (await this.runCommand(cmd)) {
+                debugLog("FOCUS_INPUT_SUCCESS", { cmd });
                 if (this.probeLadderEnabled()) {
                     await this.saveProbeCache({ focusInput: cmd });
                 }
                 return { ok: true, command: cmd };
             }
+            debugLog("FOCUS_INPUT_COMMAND_FAILED", { cmd });
         }
+        debugLog("FOCUS_INPUT_ALL_FAILED");
         return { ok: false };
     }
     detectIde() {
@@ -888,30 +942,80 @@ class AutopilotBridge {
         if (this.detectIde() !== "windsurf") {
             return false;
         }
-        debugLog("WINDSURF_FASTPATH_START", { submit, textLength: text.length });
-        const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-        debugLog("WINDSURF_FASTPATH_CHECK_COMMAND", { hasSendCmd: existing.has("windsurf.sendTextToChat") });
-        if (!existing.has("windsurf.sendTextToChat")) {
-            debugLog("WINDSURF_FASTPATH_ABORT_MISSING_COMMAND", {
-                reason: "windsurf.sendTextToChat command is not registered",
-            });
+        safeLog("WINDSURF_FASTPATH_START", { submit, textLength: text.length });
+        const hasCommand = await this.waitForCommand("windsurf.sendTextToChat", 1200, 150);
+        safeLog("WINDSURF_FASTPATH_CHECK_COMMAND", { hasSendCmd: hasCommand });
+        if (!hasCommand) {
+            safeLog("WINDSURF_FASTPATH_ABORT_MISSING_COMMAND");
             return false;
         }
-        try {
-            debugLog("WINDSURF_FASTPATH_EXECUTE_SEND", { text: text.substring(0, 100) + "..." });
-            await Promise.resolve(vscode.commands.executeCommand("windsurf.sendTextToChat", text));
-            debugLog("WINDSURF_FASTPATH_EXECUTE_SEND_OK");
-            this.sendSuccessAck(env, { ok: true, command: "none" }, { ok: true, command: "windsurf.sendTextToChat" }, "windsurf.sendTextToChat");
-            if (submit) {
-                this.sendMessageSent(text);
+        let lastError = "";
+        for (let attempt = 1; attempt <= 4; attempt += 1) {
+            try {
+                safeLog("WINDSURF_FASTPATH_EXECUTE_SEND", { attempt, textLength: text.length });
+                await Promise.resolve(vscode.commands.executeCommand("windsurf.sendTextToChat", text));
+                await this.maybeKeepWindsurfChatPanelVisible("after-sendTextToChat");
+                safeLog("WINDSURF_FASTPATH_EXECUTE_SEND_OK", { attempt });
+                this.sendSuccessAck(env, { ok: true, command: "none" }, { ok: true, command: "windsurf.sendTextToChat" }, "windsurf.sendTextToChat");
+                if (submit) {
+                    this.sendMessageSent(text);
+                }
+                return true;
             }
-            return true;
+            catch (err) {
+                lastError = String(err);
+                safeLog("WINDSURF_FASTPATH_EXECUTE_SEND_ERROR", { attempt, error: lastError });
+                if (attempt < 4) {
+                    await this.sleep(450);
+                }
+            }
         }
-        catch (err) {
-            debugLog("WINDSURF_FASTPATH_EXECUTE_SEND_ERROR", { error: String(err) });
-            console.warn("koru autopilot: windsurf.sendTextToChat fast path failed, trying fallback", err);
-            return false;
+        console.warn("koru autopilot: windsurf.sendTextToChat fast path failed", lastError);
+        return false;
+    }
+    async maybeKeepWindsurfChatPanelVisible(reason) {
+        const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+        const enabled = cfg.get("windsurfKeepOpenAfterSend", false);
+        if (!enabled) {
+            safeLog("WINDSURF_KEEP_OPEN_DISABLED", {
+                reason,
+                detail: "post-send cascade open commands can toggle the Windsurf right chat column closed",
+            });
+            return;
         }
+        await this.ensureWindsurfChatPanelVisible(reason);
+    }
+    async ensureWindsurfChatPanelVisible(reason) {
+        if (this.detectIde() !== "windsurf") {
+            return;
+        }
+        const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+        const registered = (0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.buildFocusOpenCommands)("windsurf", []), existing);
+        const preferred = [
+            "windsurf.cascadePanel.open",
+            "windsurf.action.showCascade",
+            "windsurf.action.openChat",
+            "windsurf.chat.open",
+            "windsurf.cascade.open",
+            "windsurf.panel.chat",
+        ];
+        const commands = (0, probe_ladder_1.mergeUnique)(preferred.filter((cmd) => registered.includes(cmd)), registered.filter((cmd) => !cmd.includes(".focus")));
+        safeLog("WINDSURF_KEEP_OPEN_START", { reason, candidates: commands, registered });
+        for (let attempt = 1; attempt <= 3; attempt += 1) {
+            await this.sleep(attempt === 1 ? 900 : 700);
+            for (const cmd of commands) {
+                if (cmd.includes("toggle") || cmd === "workbench.view.windsurfAgentSidebarContainer") {
+                    safeLog("WINDSURF_KEEP_OPEN_SKIP_TOGGLE", { attempt, cmd });
+                    continue;
+                }
+                if (await this.runCommand(cmd)) {
+                    safeLog("WINDSURF_KEEP_OPEN_OK", { attempt, cmd, reason });
+                    return;
+                }
+                safeLog("WINDSURF_KEEP_OPEN_COMMAND_FAILED", { attempt, cmd, reason });
+            }
+        }
+        safeLog("WINDSURF_KEEP_OPEN_ALL_FAILED", { reason, candidatesCount: commands.length });
     }
     async tryAntigravitySendPromptFastPath(env, text, submit) {
         if (this.detectIde() !== "antigravity" || !submit) {

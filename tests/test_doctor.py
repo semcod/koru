@@ -5,8 +5,7 @@ The renderer and the JSON shape are also verified — the LLM consumer
 relies on stable keys and order.
 """
 
-from __future__ import annotations
-
+import json
 import os
 import shutil
 import subprocess
@@ -196,6 +195,8 @@ class TestAutopilotDoctorChecks(unittest.TestCase):
             self.assertEqual(_named(report, "autopilot_socket").status, SKIP)
             self.assertEqual(_named(report, "autopilot_manage").status, SKIP)
             self.assertEqual(_named(report, "autopilot_debug_log").status, SKIP)
+            self.assertEqual(_named(report, "plugin_console_logs").status, SKIP)
+            self.assertEqual(_named(report, "ide_console_log").status, SKIP)
 
     def test_autopilot_env_warns_on_lane_ide_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -211,6 +212,102 @@ class TestAutopilotDoctorChecks(unittest.TestCase):
             check = _named(report, "autopilot_env")
             self.assertEqual(check.status, WARN)
             self.assertIn("instance_ide_mismatch=true", check.detail)
+
+    def test_python_venv_alignment_warns_on_stale_virtual_env(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            (project / ".venv" / "bin").mkdir(parents=True)
+            with (
+                patch.dict(os.environ, {"VIRTUAL_ENV": str(project / "venv")}, clear=False),
+                patch("sys.executable", str(project / ".venv" / "bin" / "python")),
+                patch("shutil.which", return_value=str(project / ".venv" / "bin" / "koru")),
+            ):
+                report = _run(project)
+            check = _named(report, "python_venv_alignment")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("virtual_env_mismatch=true", check.detail)
+
+    def test_autopilot_plugin_bundle_warns_on_expected_version_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            plugin = project / "plugins" / "koru-autopilot-vscode"
+            plugin.mkdir(parents=True)
+            (plugin / "package.json").write_text(
+                json.dumps({"version": "9.9.9"}),
+                encoding="utf-8",
+            )
+            (plugin / "package-lock.json").write_text(
+                json.dumps({"version": "9.9.9", "packages": {"": {"version": "9.9.9"}}}),
+                encoding="utf-8",
+            )
+            report = _run(project)
+            check = _named(report, "autopilot_plugin_bundle")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("package_version_mismatch", check.detail)
+            self.assertIn("asset_vsix_missing", check.detail)
+
+    def test_windsurf_chat_column_control_warns_on_post_send_keep_open_toggle(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            log = project / "plugin.log"
+            log.write_text(
+                "\n".join(
+                    [
+                        "2026-05-22T14:27:48Z WINDSURF_FASTPATH_EXECUTE_SEND_OK "
+                        '{"attempt":1}',
+                        "2026-05-22T14:27:49Z WINDSURF_KEEP_OPEN_OK "
+                        '{"cmd":"windsurf.cascadePanel.open","reason":"after-sendTextToChat"}',
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            with patch.dict(
+                os.environ,
+                {
+                    **_without_autopilot_env(),
+                    "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                    "KORU_PLUGIN_DEBUG_LOG": str(log),
+                },
+                clear=True,
+            ):
+                report = _run(project)
+            check = _named(report, "windsurf_chat_column_control")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("risk=post_send_cascade_open", check.detail)
+
+    def test_windsurf_chat_column_control_passes_when_keep_open_guard_disabled(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            log = project / "plugin.log"
+            log.write_text(
+                "\n".join(
+                    [
+                        '2026-05-22T14:27:48Z WINDSURF_FASTPATH_EXECUTE_SEND_OK {"attempt":1}',
+                        (
+                            "2026-05-22T14:27:49Z WINDSURF_KEEP_OPEN_DISABLED "
+                            '{"reason":"after-sendTextToChat"}'
+                        ),
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            with patch.dict(
+                os.environ,
+                {
+                    **_without_autopilot_env(),
+                    "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                    "KORU_PLUGIN_DEBUG_LOG": str(log),
+                },
+                clear=True,
+            ):
+                report = _run(project)
+            check = _named(report, "windsurf_chat_column_control")
+            self.assertEqual(check.status, PASS)
+            self.assertIn("post_send_keep_open_guard=disabled", check.detail)
 
     def test_autopilot_manage_maps_manager_error_to_failure(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -281,6 +378,608 @@ class TestAutopilotDoctorChecks(unittest.TestCase):
             check = _named(report, "autopilot_debug_log")
             self.assertEqual(check.status, WARN)
             self.assertIn("no recent entries", check.detail)
+
+    def test_autopilot_chat_control_warns_on_windsurf_fast_path_retry(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            log = project / "plugin.log"
+            log.write_text(
+                "\n".join(
+                    [
+                        (
+                            '2026-05-22T13:35:25.100Z CONNECT_OK '
+                            '{"path":"/run/user/1000/koru-autopilot-windsurf.sock","ide":"windsurf"}'
+                        ),
+                        (
+                            '2026-05-22T13:35:25.500Z WINDSURF_FASTPATH_CHECK_COMMAND '
+                            '{"hasSendCmd":true}'
+                        ),
+                        (
+                            '2026-05-22T13:35:26.000Z WINDSURF_FASTPATH_EXECUTE_SEND_ERROR '
+                            '{"attempt":1,"error":"chat input not ready"}'
+                        ),
+                        (
+                            '2026-05-22T13:35:33.000Z WINDSURF_FASTPATH_EXECUTE_SEND_OK '
+                            '{"attempt":2}'
+                        ),
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            with (
+                patch.dict(
+                    os.environ,
+                    {
+                        **_without_autopilot_env(),
+                        "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                        "KORU_PLUGIN_DEBUG_LOG": str(log),
+                    },
+                    clear=True,
+                ),
+                patch(
+                    "koru.doctor._resolve_autopilot_socket_for_doctor",
+                    return_value=Path("/run/user/1000/koru-autopilot-windsurf.sock"),
+                ),
+            ):
+                report = _run(project)
+            check = _named(report, "autopilot_chat_control")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("fast_send_errors=1", check.detail)
+            self.assertIn("recovered_after_retry=true", check.detail)
+
+    def test_autopilot_chat_control_warns_on_latest_paste_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            log = project / "plugin.log"
+            log.write_text(
+                (
+                    '2026-05-22T13:35:26.000Z OUT {"ok":false,'
+                    '"ide":"windsurf","message":"chat opened but paste command failed '
+                    '(fast path failed)"}\n'
+                ),
+                encoding="utf-8",
+            )
+            with patch.dict(
+                os.environ,
+                {
+                    **_without_autopilot_env(),
+                    "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                    "KORU_PLUGIN_DEBUG_LOG": str(log),
+                },
+                clear=True,
+            ):
+                report = _run(project)
+            check = _named(report, "autopilot_chat_control")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("paste_failures=1", check.detail)
+            self.assertIn("latest_chat_control_failure=true", check.detail)
+
+    def test_autopilot_chat_control_passes_on_clean_native_send(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            log = project / "plugin.log"
+            log.write_text(
+                "\n".join(
+                    [
+                        (
+                            "2026-05-22T13:35:25.500Z WINDSURF_FASTPATH_CHECK_COMMAND "
+                            '{"hasSendCmd":true}'
+                        ),
+                        '2026-05-22T13:35:26.000Z WINDSURF_FASTPATH_EXECUTE_SEND_OK {"attempt":1}',
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            with patch.dict(
+                os.environ,
+                {
+                    **_without_autopilot_env(),
+                    "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                    "KORU_PLUGIN_DEBUG_LOG": str(log),
+                },
+                clear=True,
+            ):
+                report = _run(project)
+            check = _named(report, "autopilot_chat_control")
+            self.assertEqual(check.status, PASS)
+            self.assertIn("chat_control=stable", check.detail)
+
+    def test_autopilot_chat_control_uses_daemon_activity_success(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            log = project / "plugin.log"
+            log.write_text(
+                "\n".join(
+                    [
+                        (
+                            '2026-05-22T13:45:01.340Z CONNECT_CANDIDATES '
+                            '{"ide":"windsurf","candidates":[]}'
+                        ),
+                        (
+                            '2026-05-22T13:45:01.340Z CONNECT_ERROR '
+                            '{"path":"/run/user/1000/koru-autopilot-windsurf.sock"}'
+                        ),
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            nfo = project / ".planfile" / ".koru" / "nfo-events.jsonl"
+            nfo.write_text(
+                json.dumps(
+                    {
+                        "extra": {
+                            "activity_message": (
+                                "CHAT: autopilot: ok "
+                                "(ticket=STARTER-183, ide=windsurf, backend=plugin)"
+                            )
+                        }
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            with patch.dict(
+                os.environ,
+                {
+                    **_without_autopilot_env(),
+                    "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                    "KORU_PLUGIN_DEBUG_LOG": str(log),
+                },
+                clear=True,
+            ):
+                report = _run(project)
+            check = _named(report, "autopilot_chat_control")
+            self.assertEqual(check.status, PASS)
+            self.assertIn("daemon_successes=1", check.detail)
+
+    def test_plugin_console_logs_reads_daemon_status_tail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            with (
+                patch.dict(
+                    os.environ,
+                    {
+                        **_without_autopilot_env(),
+                        "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                    },
+                    clear=True,
+                ),
+                patch(
+                    "koru.doctor._resolve_autopilot_socket_for_doctor",
+                    return_value=Path("/run/user/1000/koru-autopilot-windsurf.sock"),
+                ),
+                patch(
+                    "koru.doctor._daemon_console_logs_for_doctor",
+                    return_value=(
+                        [
+                            {
+                                "timestamp": "2026-05-22T12:00:00Z",
+                                "ide": "antigravity",
+                                "message": "ANTIGRAVITY_FASTPATH_START",
+                            },
+                            {
+                                "timestamp": "2026-05-22T12:00:01Z",
+                                "ide": "windsurf",
+                                "version": "0.1.45",
+                                "message": "WINDSURF_FASTPATH_EXECUTE_SEND_OK",
+                                "data": {"attempt": 1},
+                            },
+                        ],
+                        None,
+                    ),
+                ),
+            ):
+                report = _run(project)
+            check = _named(report, "plugin_console_logs")
+            self.assertEqual(check.status, PASS)
+            self.assertIn("source=daemon", check.detail)
+            self.assertIn("WINDSURF_FASTPATH_EXECUTE_SEND_OK", check.detail)
+            self.assertNotIn("ANTIGRAVITY_FASTPATH_START", check.detail)
+
+    def test_plugin_console_logs_falls_back_to_debug_log_tail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            log = project / "plugin.log"
+            log.write_text(
+                "\n".join(
+                    [
+                        '2026-05-22T12:00:00Z WINDSURF_FASTPATH_START {"attempt":1}',
+                        '2026-05-22T12:00:01Z WINDSURF_FASTPATH_EXECUTE_SEND_OK {"attempt":1}',
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            with (
+                patch.dict(
+                    os.environ,
+                    {
+                        **_without_autopilot_env(),
+                        "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                        "KORU_PLUGIN_DEBUG_LOG": str(log),
+                    },
+                    clear=True,
+                ),
+                patch(
+                    "koru.doctor._daemon_console_logs_for_doctor",
+                    return_value=([], "daemon unreachable"),
+                ),
+            ):
+                report = _run(project)
+            check = _named(report, "plugin_console_logs")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("source=plugin_debug_log", check.detail)
+            self.assertIn("WINDSURF_FASTPATH_EXECUTE_SEND_OK", check.detail)
+            self.assertIn("daemon_status_error=daemon unreachable", check.detail)
+
+    def test_plugin_console_logs_treats_stopped_daemon_connect_tail_as_informational(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            socket = Path("/run/user/1000/koru-autopilot-windsurf.sock")
+            log = project / "plugin.log"
+            log.write_text(
+                "\n".join(
+                    [
+                        (
+                            '2026-05-22T12:00:00Z CONNECT_CANDIDATES '
+                            '{"ide":"windsurf","candidates":["'
+                            f'{socket}"]}}'
+                        ),
+                        f'2026-05-22T12:00:01Z CONNECT_TRY {{"path":"{socket}"}}',
+                        (
+                            '2026-05-22T12:00:02Z CONNECT_ERROR '
+                            f'{{"path":"{socket}","message":"connect ENOENT {socket}"}}'
+                        ),
+                        f'2026-05-22T12:00:03Z CONNECT_CLOSE {{"path":"{socket}"}}',
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            with (
+                patch.dict(
+                    os.environ,
+                    {
+                        **_without_autopilot_env(),
+                        "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                        "KORU_PLUGIN_DEBUG_LOG": str(log),
+                    },
+                    clear=True,
+                ),
+                patch(
+                    "koru.doctor._resolve_autopilot_socket_for_doctor",
+                    return_value=socket,
+                ),
+                patch(
+                    "koru.doctor._daemon_console_logs_for_doctor",
+                    return_value=([], "[Errno 2] No such file or directory"),
+                ),
+            ):
+                report = _run(project)
+            check = _named(report, "plugin_console_logs")
+            self.assertEqual(check.status, PASS)
+            self.assertIn("daemon_offline_expected_after_stop=true", check.detail)
+            self.assertIn("daemon_status_error=", check.detail)
+
+    def test_plugin_console_logs_respects_tail_limit_and_filters_selected_ide(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            with (
+                patch.dict(
+                    os.environ,
+                    {
+                        **_without_autopilot_env(),
+                        "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                        "KORU_DOCTOR_CONSOLE_LOG_LINES": "2",
+                    },
+                    clear=True,
+                ),
+                patch(
+                    "koru.doctor._resolve_autopilot_socket_for_doctor",
+                    return_value=Path("/run/user/1000/koru-autopilot-windsurf.sock"),
+                ),
+                patch(
+                    "koru.doctor._daemon_console_logs_for_doctor",
+                    return_value=(
+                        [
+                            {"ide": "windsurf", "message": "WINDSURF_FIRST"},
+                            {"ide": "antigravity", "message": "ANTIGRAVITY_IGNORED"},
+                            {"ide": "windsurf", "message": "WINDSURF_SECOND"},
+                            {"ide": "windsurf", "message": "WINDSURF_THIRD"},
+                        ],
+                        None,
+                    ),
+                ),
+            ):
+                report = _run(project)
+            check = _named(report, "plugin_console_logs")
+            self.assertEqual(check.status, PASS)
+            self.assertIn("entries=3", check.detail)
+            self.assertNotIn("WINDSURF_FIRST", check.detail)
+            self.assertNotIn("ANTIGRAVITY_IGNORED", check.detail)
+            self.assertIn("WINDSURF_SECOND", check.detail)
+            self.assertIn("WINDSURF_THIRD", check.detail)
+
+    def test_plugin_console_logs_matches_ide_nested_in_data_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            with (
+                patch.dict(
+                    os.environ,
+                    {
+                        **_without_autopilot_env(),
+                        "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                    },
+                    clear=True,
+                ),
+                patch(
+                    "koru.doctor._daemon_console_logs_for_doctor",
+                    return_value=(
+                        [
+                            {
+                                "timestamp": "2026-05-22T12:00:00Z",
+                                "message": "WINDSURF_KEEP_OPEN_OK",
+                                "data": {"ide": "windsurf", "cmd": "windsurf.cascadePanel.open"},
+                            }
+                        ],
+                        None,
+                    ),
+                ),
+            ):
+                report = _run(project)
+            check = _named(report, "plugin_console_logs")
+            self.assertEqual(check.status, PASS)
+            self.assertIn("WINDSURF_KEEP_OPEN_OK", check.detail)
+            self.assertIn("windsurf.cascadePanel.open", check.detail)
+
+    def test_plugin_console_logs_warns_when_no_daemon_or_debug_log_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            missing_log = project / "missing-plugin.log"
+            with (
+                patch.dict(
+                    os.environ,
+                    {
+                        **_without_autopilot_env(),
+                        "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                        "KORU_PLUGIN_DEBUG_LOG": str(missing_log),
+                    },
+                    clear=True,
+                ),
+                patch(
+                    "koru.doctor._daemon_console_logs_for_doctor",
+                    return_value=([], "daemon unreachable"),
+                ),
+            ):
+                report = _run(project)
+            check = _named(report, "plugin_console_logs")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("daemon_status_error=daemon unreachable", check.detail)
+
+    def test_ide_console_log_warns_with_recent_windsurf_errors(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            _scaffold(project)
+            logs = Path(tmp) / "logs"
+            session = logs / "20260522T130000"
+            session.mkdir(parents=True)
+            (session / "window.log").write_text(
+                "\n".join(
+                    [
+                        "2026-05-22 info started",
+                        "[Extension Host] rejected promise not handled within 1 second",
+                        "[codeium.windsurf] Error: Language server has not been started!",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            with patch.dict(
+                os.environ,
+                {
+                    **_without_autopilot_env(),
+                    "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                    "KORU_IDE_CONSOLE_LOG_DIR": str(logs),
+                },
+                clear=True,
+            ):
+                report = _run(project)
+            check = _named(report, "ide_console_log")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("interesting=2", check.detail)
+            self.assertIn("Language server has not been started", check.detail)
+            self.assertIn("language_server_not_started=1", check.detail)
+
+    def test_ide_console_log_passes_without_recent_warnings(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            _scaffold(project)
+            logs = Path(tmp) / "logs"
+            session = logs / "20260522T130000"
+            session.mkdir(parents=True)
+            (session / "window.log").write_text(
+                "2026-05-22 info workbench ready\n",
+                encoding="utf-8",
+            )
+            with patch.dict(
+                os.environ,
+                {
+                    **_without_autopilot_env(),
+                    "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                    "KORU_IDE_CONSOLE_LOG_DIR": str(logs),
+                },
+                clear=True,
+            ):
+                report = _run(project)
+            check = _named(report, "ide_console_log")
+            self.assertEqual(check.status, PASS)
+            self.assertIn("no recent warnings/errors", check.detail)
+
+    def test_ide_console_log_warns_when_log_root_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            _scaffold(project)
+            missing_logs = Path(tmp) / "missing-logs"
+            with patch.dict(
+                os.environ,
+                {
+                    **_without_autopilot_env(),
+                    "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                    "KORU_IDE_CONSOLE_LOG_DIR": str(missing_logs),
+                },
+                clear=True,
+            ):
+                report = _run(project)
+            check = _named(report, "ide_console_log")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("log root missing", check.detail)
+
+    def test_ide_console_log_prefers_error_headlines_over_stack_frames(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            _scaffold(project)
+            logs = Path(tmp) / "logs"
+            session = logs / "20260522T130000" / "window1" / "exthost"
+            session.mkdir(parents=True)
+            (session / "app.log").write_text(
+                "\n".join(
+                    [
+                        (
+                            "[Extension Host] stack trace: Error: "
+                            "Language server has not been started!"
+                        ),
+                        (
+                            "    at get client "
+                            "(/usr/share/windsurf/resources/app/extensions/windsurf/dist/"
+                            "extension.js:2:1)"
+                        ),
+                        "    at async runNextTicks (node:internal/process/task_queues:65:5)",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            with patch.dict(
+                os.environ,
+                {
+                    **_without_autopilot_env(),
+                    "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                    "KORU_IDE_CONSOLE_LOG_DIR": str(logs),
+                },
+                clear=True,
+            ):
+                report = _run(project)
+            check = _named(report, "ide_console_log")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("Language server has not been started", check.detail)
+            self.assertNotIn("at async", check.detail)
+
+    def test_ide_console_log_reads_nested_extension_host_logs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            _scaffold(project)
+            logs = Path(tmp) / "logs"
+            nested = logs / "20260522T130000" / "window1" / "exthost" / "codeium.windsurf"
+            nested.mkdir(parents=True)
+            (nested / "Windsurf.log").write_text(
+                "Creating a TrustedTypePolicy named 'lexical' violates CSP\n",
+                encoding="utf-8",
+            )
+            with patch.dict(
+                os.environ,
+                {
+                    **_without_autopilot_env(),
+                    "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                    "KORU_IDE_CONSOLE_LOG_DIR": str(logs),
+                },
+                clear=True,
+            ):
+                report = _run(project)
+            check = _named(report, "ide_console_log")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("TrustedTypePolicy", check.detail)
+
+    def test_ide_console_log_classifies_windsurf_startup_and_cascade_noise(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            _scaffold(project)
+            logs = Path(tmp) / "logs"
+            session = logs / "20260522T145552"
+            session.mkdir(parents=True)
+            (session / "window.log").write_text(
+                "\n".join(
+                    [
+                        (
+                            "This document requires 'TrustedScript' assignment. "
+                            "The action has been blocked."
+                        ),
+                        (
+                            "WARN IWorkbenchContributionsRegistry#getContribution"
+                            "('windsurf.cascadePanel'): contribution instantiated before "
+                            "LifecyclePhase.Restored!"
+                        ),
+                        (
+                            "WARN [codeium.windsurf]: Cannot register "
+                            "'windsurf.marketplaceGalleryItemURL'. "
+                            "This property is already registered."
+                        ),
+                        (
+                            "Overwriting grammar scope name to file mapping for scope source.ts."
+                        ),
+                        (
+                            "GET https://marketplace.windsurf.com/vscode/gallery/"
+                            "semcod/koru-autopilot-vscode/latest 404 (Not Found)"
+                        ),
+                        (
+                            "POST http://k.localhost:35697/"
+                            "exa.language_server_pb.LanguageServerService/"
+                            "AcknowledgeCascadeCodeEdit 500 (Internal Server Error)"
+                        ),
+                        (
+                            "File or directory "
+                            '"/home/tom/github/maskservice/c2004/app" does not exist.'
+                        ),
+                        "ERR App icon customization is not supported on this OS",
+                        (
+                            "[Extension Host] failed to find pyright executable, "
+                            "falling back to bundled"
+                        ),
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            with patch.dict(
+                os.environ,
+                {
+                    **_without_autopilot_env(),
+                    "KORU_AUTOPILOT_INSTANCE": "windsurf",
+                    "KORU_IDE_CONSOLE_LOG_DIR": str(logs),
+                },
+                clear=True,
+            ):
+                report = _run(project)
+            check = _named(report, "ide_console_log")
+            self.assertEqual(check.status, WARN)
+            for category in (
+                "trusted_types=1",
+                "extension_registration=1",
+                "grammar_scope_overwrite=1",
+                "missing_workspace_path=1",
+                "marketplace_404=1",
+                "cascade_rpc_500=1",
+                "cascade_panel_early_restore=1",
+                "app_icon_unsupported=1",
+                "pyright_fallback=1",
+            ):
+                self.assertIn(category, check.detail)
 
 
 class TestPlanfileBinary(unittest.TestCase):
@@ -471,7 +1170,7 @@ class TestPytestCollectProbe(unittest.TestCase):
             self.assertIn("0 tests collected", check.detail)
 
     def test_warn_when_collection_errors(self) -> None:
-        """Non-zero exit means errors — point operator at koru scan."""
+        """Non-zero exit means errors — include one useful headline."""
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             self._scaffold_with_pyproject(project)
@@ -485,6 +1184,41 @@ class TestPytestCollectProbe(unittest.TestCase):
             check = _named(report, "pytest_collect")
             self.assertEqual(check.status, WARN)
             self.assertIn("koru scan", check.detail)
+            self.assertIn("ImportError: foo", check.detail)
+
+    def test_warn_when_collection_error_is_reported_on_stdout(self) -> None:
+        """Some pytest failures put the collection headline on stdout."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            self._scaffold_with_pyproject(project)
+            fake = SimpleNamespace(
+                returncode=2,
+                stdout=(
+                    "============================= test session starts "
+                    "=============================\n"
+                    "ERROR collecting tests/test_plugin.py\n"
+                    "ModuleNotFoundError: No module named 'windsurf'\n"
+                ),
+                stderr="",
+            )
+            with patch("subprocess.run", return_value=fake):
+                report = _run(project)
+            check = _named(report, "pytest_collect")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("ERROR collecting tests/test_plugin.py", check.detail)
+
+    def test_warn_when_collection_failure_output_is_empty(self) -> None:
+        """Empty subprocess output still reports a clean actionable hint."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            self._scaffold_with_pyproject(project)
+            fake = SimpleNamespace(returncode=1, stdout="", stderr="")
+            with patch("subprocess.run", return_value=fake):
+                report = _run(project)
+            check = _named(report, "pytest_collect")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("koru scan", check.detail)
+            self.assertNotIn("first_error=", check.detail)
 
     def test_fail_when_collection_times_out(self) -> None:
         """Hangs are the strongest signal — promote to FAIL.

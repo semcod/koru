@@ -470,6 +470,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "init-ci",
             "init-ide",
             "ide-router",
+            "configure",
             "agent-backends",
             "task",
             "agent",

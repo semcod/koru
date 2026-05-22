@@ -265,3 +265,24 @@ def test_ide_router_main_json_when_headless(
 def test_resolve_ide_route_vscode_explicit_env() -> None:
     r = resolve_ide_route(cli_autopilot_ide="auto", environ={"KORU_AUTOPILOT_IDE": "vscode"})
     assert r.autopilot_ide == "vscode"
+
+
+def test_resolve_ide_route_env_instance_used_when_cli_auto_and_env_ide_missing() -> None:
+    env = {"KORU_AUTOPILOT_INSTANCE": "windsurf"}
+    r = resolve_ide_route(cli_autopilot_ide="auto", environ=env)
+    assert r.autopilot_ide == "windsurf"
+
+
+def test_resolve_ide_route_env_instance_ignored_when_cli_explicit() -> None:
+    env = {"KORU_AUTOPILOT_INSTANCE": "windsurf"}
+    r = resolve_ide_route(cli_autopilot_ide="jetbrains", environ=env)
+    assert r.autopilot_ide == "jetbrains"
+
+
+def test_resolve_ide_route_env_ide_wins_over_env_instance() -> None:
+    env = {
+        "KORU_AUTOPILOT_IDE": "cursor",
+        "KORU_AUTOPILOT_INSTANCE": "windsurf",
+    }
+    r = resolve_ide_route(cli_autopilot_ide="auto", environ=env)
+    assert r.autopilot_ide == "cursor"

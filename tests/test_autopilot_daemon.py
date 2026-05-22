@@ -442,6 +442,47 @@ def test_status_reports_socket_and_plugins(running_daemon) -> None:
     assert info["plugins"] == []
 
 
+def test_status_reports_plugin_console_logs(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    koruide_daemon_mod.clear_console_logs()
+    try:
+        with _daemon(tmp_path, monkeypatch) as h:
+            plugin, plugin_reader = _connect_plugin(
+                h.sock_path,
+                ide="windsurf",
+                version="0.1.45",
+                pid=42,
+            )
+            plugin.sendall(
+                Message(
+                    type="console_log",
+                    id="console-log",
+                    data={
+                        "message": "WINDSURF_FASTPATH_EXECUTE_SEND_OK",
+                        "data": {"attempt": 1},
+                        "timestamp": "2026-05-22T12:00:00Z",
+                    },
+                ).encode()
+            )
+            plugin.sendall(
+                Message(type="message.sent", id="flush", data={"chat": "default"}).encode()
+            )
+            assert plugin_reader.read_message().type == "ack"
+
+            info = h.client().status()
+            logs = info.get("console_logs")
+            assert isinstance(logs, list)
+            assert logs[-1]["message"] == "WINDSURF_FASTPATH_EXECUTE_SEND_OK"
+            assert logs[-1]["data"] == {"attempt": 1}
+            assert logs[-1]["ide"] == "windsurf"
+            assert logs[-1]["version"] == "0.1.45"
+            plugin.close()
+    finally:
+        koruide_daemon_mod.clear_console_logs()
+
+
 def test_accept_rejects_foreign_peer_uid(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscode",
   "displayName": "koru autopilot",
   "description": "Bridge between VS Code / Windsurf / Cursor and the koru autopilot daemon.",
-  "version": "0.1.40",
+  "version": "0.1.46",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -122,6 +122,11 @@
           "type": "boolean",
           "default": true,
           "description": "For VSCodium on Linux, treat a successful host Return/Ctrl+Return submit key as accepted when VS Code APIs cannot verify chat submission."
+        },
+        "koruAutopilot.windsurfKeepOpenAfterSend": {
+          "type": "boolean",
+          "default": false,
+          "description": "After using Windsurf's native sendTextToChat command, run extra Cascade open commands. Disabled by default because those commands can toggle the right chat column closed when it is already open."
         }
       }
     }
