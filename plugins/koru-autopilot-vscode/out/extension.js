@@ -485,6 +485,10 @@ class AutopilotBridge {
             }
             console.warn(`koru autopilot: submitChat command not available: ${cmd}`);
         }
+        if (ide === "windsurf") {
+            // On Windsurf, typing a newline is extremely dangerous because if Cascade is not focused, it toggles/closes the panel!
+            return { ok: false };
+        }
         const fallbacks = [
             () => this._tryTypeSubmit("\n"),
             () => this._tryTypeSubmit("\r"),
@@ -886,9 +890,9 @@ class AutopilotBridge {
         }
         const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
         if (!existing.has("windsurf.sendTextToChat")) {
-            // Some Windsurf "open" commands are toggle-style and close the chat
-            // when it is already visible. Avoid opening anything in the native
-            // fast path; the generic fallback can use non-toggle focus commands.
+            // Do not execute Windsurf open/sidebar commands here. In current
+            // Windsurf builds, workbench.view.windsurfAgentSidebarContainer is a
+            // toggle and closes Cascade when it is already visible.
             return false;
         }
         try {
