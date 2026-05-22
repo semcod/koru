@@ -164,3 +164,182 @@ def test_gui_csrf_rejected(gui_client: TestClient) -> None:
     _bootstrap(gui_client)
     r = gui_client.post("/wizard/api/ide", json={"csrf": "bad-token", "ide_id": "__none"})
     assert r.status_code == 403
+
+
+def test_gui_unknown_ide_id_returns_400(gui_client: TestClient) -> None:
+    csrf = _bootstrap(gui_client)
+    r = gui_client.post("/wizard/api/ide", json={"csrf": csrf, "ide_id": "does-not-exist"})
+    assert r.status_code == 400
+    assert "unknown IDE" in r.json()["detail"]
+
+
+def test_gui_unknown_strategy_option_returns_400(gui_client: TestClient) -> None:
+    csrf = _bootstrap(gui_client)
+    gui_client.post("/wizard/api/ide", json={"csrf": csrf, "ide_id": "__none"})
+    csrf = gui_client.post(
+        "/wizard/api/project",
+        json={"csrf": csrf, "project_path": "__cwd"},
+    ).json()["csrf"]
+    r = gui_client.post(
+        "/wizard/api/strategy",
+        json={"csrf": csrf, "option_id": "no-such"},
+    )
+    assert r.status_code == 400
+    assert "unknown option" in r.json()["detail"]
+
+
+def test_gui_project_path_must_be_in_allowed_list(gui_client: TestClient) -> None:
+    csrf = _bootstrap(gui_client)
+    gui_client.post("/wizard/api/ide", json={"csrf": csrf, "ide_id": "__none"})
+    csrf = gui_client.cookies[SESSION_COOKIE]
+    state = gui_client.get("/wizard/api/state").json()
+    csrf = state["csrf"]
+    r = gui_client.post(
+        "/wizard/api/project",
+        json={"csrf": csrf, "project_path": "/etc/passwd"},
+    )
+    assert r.status_code == 400
+    assert "not in allowed list" in r.json()["detail"]
+
+
+def test_gui_expired_session_yields_401(monkeypatch, tmp_path: Path) -> None:
+    """Touch a session timestamp into the past and expect 401."""
+    monkeypatch.setattr("koru.wizard.gui.app.discover_installed_ides", lambda: [])
+    monkeypatch.setattr("koru.wizard.gui.app.propose_projects", lambda _ides: [])
+
+    store = SessionStore()
+    app = create_app(
+        strategies_path=_tiny_tree_path(tmp_path),
+        language="pl",
+        project_override=None,
+        create=False,
+        store=store,
+    )
+    client = TestClient(app)
+    csrf = _bootstrap(client)
+    sid = client.cookies[SESSION_COOKIE]
+    sess = store.get(sid)
+    assert sess is not None
+    sess.last_touch -= 10_000  # force expiry
+
+    r = client.post("/wizard/api/ide", json={"csrf": csrf, "ide_id": "__none"})
+    assert r.status_code == 401
+
+
+def test_gui_done_endpoint_marks_shutdown(gui_client: TestClient) -> None:
+    csrf = _bootstrap(gui_client)
+    app = gui_client.app
+    assert getattr(app.state, "shutdown", False) is False
+    r = gui_client.post("/wizard/done", json={"csrf": csrf})
+    assert r.status_code == 200
+    assert r.json()["ok"] is True
+    assert app.state.shutdown is True
+
+
+def test_gui_done_without_session_yields_401(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr("koru.wizard.gui.app.discover_installed_ides", lambda: [])
+    monkeypatch.setattr("koru.wizard.gui.app.propose_projects", lambda _ides: [])
+    app = create_app(
+        strategies_path=_tiny_tree_path(tmp_path),
+        language="pl",
+        project_override=None,
+        store=SessionStore(),
+    )
+    client = TestClient(app)
+    # No bootstrap → no cookie → 401
+    r = client.post("/wizard/done", json={"csrf": "x"})
+    assert r.status_code == 401
+
+
+def test_gui_state_endpoint_lists_static_links(gui_client: TestClient) -> None:
+    """Sanity: HTML references bundled CSS+JS, not a CDN."""
+    r = gui_client.get("/wizard")
+    assert "/wizard/static/wizard.css" in r.text
+    assert "/wizard/static/wizard.js" in r.text
+    # No external CDN references in the bundle.
+    assert "cdn.tailwindcss" not in r.text
+    assert "cdn.jsdelivr" not in r.text
+
+
+def test_gui_static_assets_served(gui_client: TestClient) -> None:
+    r = gui_client.get("/wizard/static/wizard.css")
+    assert r.status_code == 200
+    assert "koru wizard" in r.text or "--bg" in r.text
+    r = gui_client.get("/wizard/static/wizard.js")
+    assert r.status_code == 200
+    assert "loadState" in r.text or "ScriptedPrompter" in r.text or "wizard" in r.text
+
+
+def test_gui_app_factory_raises_when_fastapi_missing(monkeypatch, tmp_path: Path) -> None:
+    """Cover the optional-dep gate when FastAPI is absent at runtime."""
+    monkeypatch.setattr("koru.wizard.gui.app.FastAPI", None)
+    with pytest.raises(RuntimeError, match="koru\\[api\\]"):
+        create_app(
+            strategies_path=_tiny_tree_path(tmp_path),
+            language="pl",
+            store=SessionStore(),
+        )
+
+
+def test_gui_select_running_ide_proposes_projects(monkeypatch, tmp_path: Path) -> None:
+    """When user picks a running IDE, propose_projects is called with that IDE only."""
+    monkeypatch.setattr(
+        "koru.wizard.gui.app.discover_installed_ides",
+        lambda: [
+            DetectedIDE(
+                id="cursor",
+                label="Cursor",
+                running=True,
+                pid=11,
+                path="/usr/bin/cursor",
+            ),
+            DetectedIDE(
+                id="vscode",
+                label="VS Code",
+                running=True,
+                pid=12,
+                path="/usr/bin/code",
+            ),
+        ],
+    )
+    seen_args: list[list[DetectedIDE]] = []
+
+    def fake_propose(ides):  # noqa: ANN001
+        seen_args.append(list(ides))
+        return []
+
+    monkeypatch.setattr("koru.wizard.gui.app.propose_projects", fake_propose)
+    app = create_app(
+        strategies_path=_tiny_tree_path(tmp_path),
+        language="pl",
+        store=SessionStore(),
+    )
+    client = TestClient(app)
+    csrf = _bootstrap(client)
+    r = client.post("/wizard/api/ide", json={"csrf": csrf, "ide_id": "vscode"})
+    assert r.status_code == 200
+    assert seen_args
+    assert [i.id for i in seen_args[-1]] == ["vscode"]
+
+
+def test_gui_walk_with_back_to_root_resets_strategy_path(gui_client: TestClient) -> None:
+    """Selecting a project after partial strategy walk resets node + path."""
+    csrf = _bootstrap(gui_client)
+    gui_client.post("/wizard/api/ide", json={"csrf": csrf, "ide_id": "__none"})
+    csrf = gui_client.post(
+        "/wizard/api/project",
+        json={"csrf": csrf, "project_path": "__cwd"},
+    ).json()["csrf"]
+    r = gui_client.post(
+        "/wizard/api/strategy",
+        json={"csrf": csrf, "option_id": "a"},
+    )
+    assert r.json()["strategy_path"] == ["a"]
+    csrf = r.json()["csrf"]
+    # Re-pick project → wizard rolls strategy back to root.
+    r = gui_client.post(
+        "/wizard/api/project",
+        json={"csrf": csrf, "project_path": "__cwd"},
+    )
+    assert r.json()["strategy_path"] == []
+    assert r.json()["strategy"]["node_id"] == "root"
