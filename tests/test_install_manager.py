@@ -51,6 +51,10 @@ def test_collect_report_flags_path_mismatch_and_plugin_version_missing(
     assert report.plugin["expected_version"] == "0.1.13"
 
 
+def test_expected_plugin_version_falls_back_to_bundled_metadata(tmp_path: Path) -> None:
+    assert install_manager._expected_plugin_version(tmp_path) == "0.1.28"
+
+
 def test_collect_report_uses_explicit_ide_socket_when_env_is_unset(
     monkeypatch,
     tmp_path: Path,

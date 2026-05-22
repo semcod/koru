@@ -23,6 +23,7 @@ from koru.autopilot.plugin_installer import (
     install_plugin_for_ide,
     installed_extension_version_for_ide,
 )
+from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 from koruide.socket import default_socket_path
 
 
@@ -120,7 +121,7 @@ def _expected_plugin_version(root: Path) -> str | None:
     try:
         data = json.loads(package_json.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
-        return None
+        return EXPECTED_VSCODE_PLUGIN_VERSION
     version = data.get("version")
     return str(version) if version else None
 
