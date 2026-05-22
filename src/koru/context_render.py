@@ -1,7 +1,5 @@
 """Markdown rendering functions for koru context handoff."""
 
-from __future__ import annotations
-
 import json
 from pathlib import Path
 from typing import Any
@@ -34,9 +32,8 @@ def render_environment(env: dict[str, Any], project: str) -> list[str]:
     lines.append(f"- **cwd**: `{project_env.get('cwd') or project}`")
     lines.append(f"- **python**: `{project_env.get('python', '?')}`")
     enabled_markers = [key for key, value in markers.items() if value]
-    lines.append(
-        f"- **markers**: {', '.join(f'`{marker}`' for marker in enabled_markers) if enabled_markers else '`none`'}",
-    )
+    markers_text = ", ".join(f"`{marker}`" for marker in enabled_markers)
+    lines.append(f"- **markers**: {markers_text if markers_text else '`none`'}")
     if recommended:
         lines.append(f"- **recommended agent**: `{recommended.get('label')}`")
     lines.append("")
