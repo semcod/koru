@@ -64,6 +64,12 @@ function testBuildFocusOpenCursorFirst(): void {
   assert(cmds.includes("composer.showComposer"), "cursor list should include composer");
 }
 
+function testBuildFocusOpenAntigravityFirst(): void {
+  const cmds = buildFocusOpenCommands("antigravity", []);
+  assert(cmds[0] === "antigravity.openAgent", "antigravity should open the native agent panel first");
+  assert(cmds.includes("antigravity.agentSidePanel.focus"), "antigravity should focus the agent side panel");
+}
+
 function testBuildFocusOpenVscodeDoesNotAutoOpenChatByDefault(): void {
   assert(buildFocusOpenCommands("vscode", []).length === 0, "vscode must not auto-open chat by default");
   assert(
@@ -97,6 +103,7 @@ testVerifyFocusAfterOpen();
 testPasteLandedInEditor();
 testMergeUnique();
 testBuildFocusOpenCursorFirst();
+testBuildFocusOpenAntigravityFirst();
 testBuildFocusOpenVscodeDoesNotAutoOpenChatByDefault();
 testBuildFocusInputUsesChatCommands();
 testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance();

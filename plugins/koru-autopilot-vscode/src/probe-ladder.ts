@@ -118,6 +118,15 @@ export function mergeUnique(primary: string[], secondary: string[]): string[] {
 }
 
 export function buildFocusOpenCommands(ide: string, custom: string[]): string[] {
+  const antigravityDefaults = [
+    "antigravity.openAgent",
+    "antigravity.agentSidePanel.open",
+    "antigravity.agentSidePanel.focus",
+    "antigravity.toggleChatFocus",
+    "antigravity.startNewConversation",
+    "workbench.action.focusAgentManager.continueConversation",
+    "workbench.action.openInAgentManager",
+  ];
   const windsurfDefaults = [
     "workbench.view.windsurfAgentSidebarContainer",
     "windsurf.cascadePanel.open",
@@ -144,7 +153,8 @@ export function buildFocusOpenCommands(ide: string, custom: string[]): string[] 
   if (ide === "vscode") {
     return mergeUnique(custom, []);
   }
-  const defaults = ide === "windsurf" ? windsurfDefaults : genericDefaults;
+  const defaults =
+    ide === "antigravity" ? antigravityDefaults : ide === "windsurf" ? windsurfDefaults : genericDefaults;
   return mergeUnique(custom, defaults);
 }
 

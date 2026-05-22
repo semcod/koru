@@ -906,6 +906,37 @@ class AutopilotBridge {
             return false;
         }
     }
+    async tryAntigravitySendPromptFastPath(env, text, submit) {
+        if (this.detectIde() !== "antigravity" || !submit) {
+            return false;
+        }
+        let existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+        if (!existing.has("antigravity.sendPromptToAgentPanel")) {
+            return false;
+        }
+        try {
+            for (const openCmd of [
+                "antigravity.openAgent",
+                "antigravity.agentSidePanel.open",
+                "antigravity.agentSidePanel.focus",
+            ]) {
+                if (existing.has(openCmd)) {
+                    await Promise.resolve(vscode.commands.executeCommand(openCmd));
+                    await this.sleep(200);
+                    existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+                    break;
+                }
+            }
+            await Promise.resolve(vscode.commands.executeCommand("antigravity.sendPromptToAgentPanel", text));
+            this.sendSuccessAck(env, { ok: true, command: "antigravity.agentSidePanel.open" }, { ok: true, command: "antigravity.sendPromptToAgentPanel" }, "antigravity.sendPromptToAgentPanel");
+            this.sendMessageSent(text);
+            return true;
+        }
+        catch (err) {
+            console.warn("koru autopilot: antigravity.sendPromptToAgentPanel fast path failed, trying fallback", err);
+            return false;
+        }
+    }
     async submitAfterPaste(env, focus, pasted, submit) {
         if (pasted.command === "windsurf.sendTextToChat") {
             return "windsurf.sendTextToChat";
@@ -927,6 +958,9 @@ class AutopilotBridge {
         return null;
     }
     async _performInject(env, text, submit) {
+        if (await this.tryAntigravitySendPromptFastPath(env, text, submit)) {
+            return;
+        }
         if (await this.tryWindsurfSendTextFastPath(env, text, submit)) {
             return;
         }
