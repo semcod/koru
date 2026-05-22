@@ -411,6 +411,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "autoloop",
             "autonomous",
             "auto",
+            "wizard",
             "dsl",
             "api",
             "topology",
