@@ -47,6 +47,30 @@ curl -X POST http://127.0.0.1:8790/api/v1/invoke \
 
 `koru serve` / `koru mcp-serve` / `koru local-serve` remain as **shims** → `koruapi`.
 
+#### Dashboard internals (modules)
+
+The `koru serve` dashboard was split out of one ~1800-line monolith into
+four cooperating modules so that the HTTP server, the per-route handlers,
+the binding/port-replacement logic, and the page template each evolve
+independently:
+
+| Module | Role |
+|--------|------|
+| [`koruapi/dashboard_serve.py`](../src/koruapi/dashboard_serve.py) | Public surface: `ServeConfig`, `serve()`, `start_serve_background()`, `bind_serve_server()`, `build_server()`, `read_serve_endpoint()`, `write_serve_endpoint_file()`. Owns the `serve_forever` / `KeyboardInterrupt` lifecycle and the `_BoundDashboard` summary that `serve` and `start_serve_background` share. |
+| [`koruapi/dashboard_serve_utils.py`](../src/koruapi/dashboard_serve_utils.py) | Port-locking helpers (`_address_in_use`, `_listener_pids_for_tcp_port`, `_cmdline_suggests_koru_serve*`, `_try_stop_prior_koru_serve_listener`), the bind retry loop (`_bind_fixed_port` / `_bind_auto_port`), and JSON I/O for `.planfile/.koru/serve-endpoint.json`. |
+| [`koruapi/dashboard_routes.py`](../src/koruapi/dashboard_routes.py) | `build_dashboard_handler(config)` — the `BaseHTTPRequestHandler` subclass with one method per `GET`/`POST` route (`/api/dashboard`, `/api/context`, `/api/topology`, `/api/runtime-context`, `/api/handoff`, `/api/tickets/*`, …). HTML template is loaded once via `@lru_cache` and shared across requests. |
+| [`koruapi/dashboard_template.html`](../src/koruapi/dashboard_template.html) | Single-file HTML/CSS/JS for the operator dashboard (auto-refresh, tabs, ticket forms, topology toggles, settings, link to `/grid`). Read at first `GET /`. |
+
+All public names from the pre-refactor `dashboard_serve` module are still
+re-exported from `koruapi.dashboard_serve` (and `koru.serve`, which is an
+alias module), so callers like `koru.autonomy.operator_pipeline.py` and
+`tests/test_serve.py` keep working unchanged.
+
+Adding a new route is a single-file change in `dashboard_routes.py`:
+add a method on the inner `_Handler` class and register the path in the
+inline route dict inside `do_GET` (for read-only endpoints) or `do_POST`
+(for mutations).
+
 ### Activity log
 
 Set `KORU_ACTIVITY_LOG=1` (default) for timestamped lines:

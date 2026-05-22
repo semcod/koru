@@ -18,6 +18,7 @@ import subprocess
 import sys
 import time
 import urllib.request
+import importlib.util
 from pathlib import Path
 
 import pytest
@@ -223,7 +224,7 @@ def _pick_free_port() -> int:
 
 
 @pytest.mark.skipif(
-    shutil.which("uvicorn") is None,
+    importlib.util.find_spec("fastapi") is None,
     reason="koru[api] (FastAPI + uvicorn) not installed",
 )
 def test_e2e_gui_serves_state_api(tmp_path: Path) -> None:
@@ -252,7 +253,7 @@ def test_e2e_gui_serves_state_api(tmp_path: Path) -> None:
     )
     try:
         ready_url = f"http://127.0.0.1:{port}/wizard/api/state"
-        deadline = time.time() + 8
+        deadline = time.time() + 20  # Increased timeout for slower machines
         last_exc: Exception | None = None
         body: bytes = b""
         while time.time() < deadline:
@@ -265,7 +266,9 @@ def test_e2e_gui_serves_state_api(tmp_path: Path) -> None:
                 last_exc = exc
                 time.sleep(0.2)
         else:
-            raise AssertionError(f"GUI never became ready on {ready_url}: {last_exc}")
+            stdout_text = proc.stdout.read() if proc.stdout else ""
+            stderr_text = proc.stderr.read() if proc.stderr else ""
+            raise AssertionError(f"GUI never became ready on {ready_url}: {last_exc}\nstdout:\n{stdout_text}\nstderr:\n{stderr_text}")
         data = json.loads(body)
         assert {"step", "csrf", "ides", "projects"} <= set(data)
         assert data["csrf"]

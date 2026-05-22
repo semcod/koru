@@ -1,113 +1,50 @@
-"""Dashboard helpers for mesh frame grid."""
+"""Dashboard helpers for the mesh observation grid.
+
+Exposes three HTTP endpoints (rendered by ``serve_mesh_http``):
+
+- ``GET /grid`` — single-page HTML loaded from ``grid_template.html``
+  via ``@lru_cache``.
+- ``GET /api/mesh/frames`` — JSON list of recently observed
+  ``vision/frame`` envelopes (decoded thumbnails + monitor metadata).
+- ``GET /api/mesh/diagnostics`` — JSON describing why ``/grid`` is empty
+  when capture is blocked (e.g. Wayland security policy): detected
+  monitors plus the last capture error from the agent log.
+"""
 
 from __future__ import annotations
+
+from functools import lru_cache
+from importlib.resources import files
+from pathlib import Path
+from typing import Any
 
 from korumesh.dashboard_parse import envelope_to_frame_entry
 from korumesh.store import list_vision_frames
 
+_TEMPLATE_NAME = "grid_template.html"
 
-_GRID_HTML = """<!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8"><title>Koru mesh grid</title>
-<style>
-body{font-family:system-ui,sans-serif;margin:16px;background:#111;color:#eee}
-nav.top{display:flex;gap:12px;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #2a2a2a;flex-wrap:wrap}
-nav.top a{color:#9ad;text-decoration:none}
-nav.top a:hover{text-decoration:underline}
-nav.top .sep{color:#555}
-.peer-section{margin-bottom:24px}
-.peer-section h2{margin:8px 0 10px;font-size:14px;color:#cde;text-transform:uppercase;letter-spacing:0.05em}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
-.tile{background:#1c1c1c;border:1px solid #333;border-radius:8px;padding:8px;display:flex;flex-direction:column}
-.tile img{width:100%;height:auto;border-radius:4px;background:#000;image-rendering:auto}
-.tile .badge{display:inline-block;background:#243149;color:#9ad;padding:1px 6px;border-radius:99px;font-size:11px;margin-right:4px}
-.tile .meta{font-size:12px;color:#aaa;margin-top:6px;line-height:1.4}
-.tile .meta strong{color:#cde}
-.empty{color:#888;font-style:italic;padding:24px;text-align:center}
-</style></head><body>
-<nav class="top">
-  <a href="/">\u2190 Koru dashboard</a>
-  <span class="sep">\u00b7</span>
-  <strong>Observation grid</strong>
-  <span class="sep">\u00b7</span>
-  <a href="/api/mesh/frames">frames JSON</a>
-  <span class="sep">\u00b7</span>
-  <span id="summary" class="meta"></span>
-</nav>
-<div id="content"></div>
-<script>
-const esc = (s) => String(s == null ? "" : s)
-  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 
-function groupFramesByPeer(frames) {
-  const map = new Map();
-  for (const frame of frames) {
-    if (!map.has(frame.peer_from)) map.set(frame.peer_from, []);
-    map.get(frame.peer_from).push(frame);
-  }
-  for (const list of map.values()) {
-    list.sort((a, b) => (a.monitor ?? 0) - (b.monitor ?? 0));
-  }
-  return map;
-}
+@lru_cache(maxsize=1)
+def grid_html() -> str:
+    """Return the cached observation grid HTML template."""
+    return (files(__package__) / _TEMPLATE_NAME).read_text(encoding="utf-8")
 
-function renderTile(frame) {
-  const monitor = frame.monitor ?? -1;
-  const output = frame.output || "";
-  const labelParts = [];
-  if (monitor >= 0) labelParts.push(`monitor ${monitor}`);
-  if (output) labelParts.push(output);
-  const label = labelParts.join(" \u00b7 ") || "screen";
-  const nativeRes = (frame.native_width && frame.native_height)
-    ? `${frame.native_width}\u00d7${frame.native_height}` : "?";
-  const thumbRes = (frame.width && frame.height)
-    ? `${frame.width}\u00d7${frame.height}` : "?";
-  const scale = (frame.native_width && frame.width)
-    ? Math.round((frame.width / frame.native_width) * 100) : null;
-  return `<div class="tile">
-    <img alt="${esc(label)}" src="data:${esc(frame.mime)};base64,${frame.image_b64}">
-    <div class="meta">
-      <span class="badge">${esc(label)}</span>
-      <strong>${esc(nativeRes)}</strong> native
-      \u2192 ${esc(thumbRes)} ${scale != null ? `(${scale}%)` : ""}
-      <br>${esc(frame.created_at)}
-      <br>${frame.bytes.toLocaleString()} bytes
-    </div>
-  </div>`;
-}
 
-function renderPeer(peer, frames) {
-  const tiles = frames.map(renderTile).join("");
-  return `<section class="peer-section">
-    <h2>${esc(peer)} \u00b7 ${frames.length} monitor${frames.length === 1 ? "" : "s"}</h2>
-    <div class="grid">${tiles}</div>
-  </section>`;
-}
-
-async function refresh() {
-  const res = await fetch("/api/mesh/frames", { cache: "no-store" });
-  const data = await res.json();
-  const content = document.getElementById("content");
-  const summary = document.getElementById("summary");
-  const frames = data.frames || [];
-  if (frames.length === 0) {
-    content.innerHTML = '<div class="empty">No frames yet. Run <code>koru observe up</code> '
-      + 'or <code>koru vision agent --publish-mesh</code> on a peer.</div>';
-    summary.textContent = "no frames";
-    return;
-  }
-  const peers = groupFramesByPeer(frames);
-  const html = Array.from(peers.entries())
-    .map(([peer, list]) => renderPeer(peer, list)).join("");
-  content.innerHTML = html;
-  const totalMonitors = frames.length;
-  summary.textContent = `${peers.size} peer${peers.size === 1 ? "" : "s"} \u00b7 `
-    + `${totalMonitors} monitor${totalMonitors === 1 ? "" : "s"} \u00b7 refresh every 30s`;
-}
-
-refresh();
-setInterval(refresh, 30000);
-</script></body></html>"""
+def _diagnostics_payload(project: Path) -> dict[str, Any]:
+    """Return capture diagnostics, gracefully degrading when koruobserve is absent."""
+    try:
+        from koruobserve.diagnostics import capture_diagnostics
+    except Exception:
+        return {"session_type": "unknown", "monitors": [], "status": "unavailable"}
+    try:
+        return capture_diagnostics(project)
+    except Exception as exc:  # noqa: BLE001 — diagnostics must never break /grid
+        return {
+            "session_type": "unknown",
+            "monitors": [],
+            "status": "error",
+            "last_error": str(exc),
+        }
 
 
 def mesh_frames_payload() -> dict[str, object]:
@@ -116,17 +53,34 @@ def mesh_frames_payload() -> dict[str, object]:
     return {"ok": True, "frames": frames}
 
 
-def grid_html() -> str:
-    return _GRID_HTML
+def mesh_diagnostics_payload(project: Path | None = None) -> dict[str, object]:
+    """Return ``/api/mesh/diagnostics`` JSON (monitors + last capture error)."""
+    return _diagnostics_payload(project or Path.cwd())
 
 
-def serve_mesh_http(handler: object, path: str) -> bool:
-    """Serve ``/grid`` or ``/api/mesh/frames`` when *path* matches."""
-    if path == "/grid":
-        body = grid_html().encode("utf-8")
-        getattr(handler, "_send")(200, body, "text/html; charset=utf-8")
-        return True
-    if path == "/api/mesh/frames":
-        getattr(handler, "_send_json")(mesh_frames_payload())
-        return True
-    return False
+def _serve_grid(handler: object, _project: Path | None) -> None:
+    getattr(handler, "_send")(200, grid_html().encode("utf-8"), "text/html; charset=utf-8")
+
+
+def _serve_frames(handler: object, _project: Path | None) -> None:
+    getattr(handler, "_send_json")(mesh_frames_payload())
+
+
+def _serve_diagnostics(handler: object, project: Path | None) -> None:
+    getattr(handler, "_send_json")(mesh_diagnostics_payload(project))
+
+
+_MESH_ROUTES = {
+    "/grid": _serve_grid,
+    "/api/mesh/frames": _serve_frames,
+    "/api/mesh/diagnostics": _serve_diagnostics,
+}
+
+
+def serve_mesh_http(handler: object, path: str, *, project: Path | None = None) -> bool:
+    """Serve any of the ``_MESH_ROUTES`` paths; return ``False`` otherwise."""
+    route = _MESH_ROUTES.get(path)
+    if route is None:
+        return False
+    route(handler, project)
+    return True

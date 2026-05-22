@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Dashboard refactor:** `src/koruapi/dashboard_serve.py` shrank from
+  ~1850 lines to ~240. Per-route HTTP handlers moved to
+  `src/koruapi/dashboard_routes.py` (`build_dashboard_handler`), port/bind
+  helpers moved to `src/koruapi/dashboard_serve_utils.py`, and the inline
+  HTML page is now `src/koruapi/dashboard_template.html` (loaded once via
+  `@lru_cache`). Public API and CLI behaviour are unchanged; `koru serve`,
+  `koru api dashboard`, `read_serve_endpoint`, `start_serve_background`,
+  `build_server(config)`, `bind_serve_server(config)`,
+  `write_serve_endpoint_file(config)` and all underscore-prefixed test
+  hooks (`_cmdline_suggests_koru_serve_from_bytes`,
+  `_try_stop_prior_koru_serve_listener`, …) are still importable from
+  `koru.serve` / `koruapi.dashboard_serve`.
+- Module-level documentation in `koruapi/dashboard_serve.py` now points
+  at the new neighbouring modules; `docs/korudsl-koruapi.md` and
+  `docs/plans/observation-mesh-plan.md` describe where to add new
+  dashboard routes.
+
+## [0.1.220] - 2026-05-22
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update docs/korudsl-koruapi.md
+- Update docs/plans/capture-providers-refactor.md
+- Update docs/plans/observation-mesh-plan.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_autopilot_ide.py
+- Update tests/test_koruobserve_diagnostics.py
+- Update tests/test_serve.py
+- Update tests/test_wizard_env_e2e.py
+
+### Other
+- Update app.doql.less
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- ... and 10 more files
+
 ## [0.1.10] - 2026-05-22
 
 ### Fixed

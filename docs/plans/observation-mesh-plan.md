@@ -4,6 +4,7 @@ Status: **draft**, autor: agent, data: 2026-05-22.
 Powiązane: [`docs/ide-control-surfaces.md`](../ide-control-surfaces.md),
 [`docs/local-service.md`](../local-service.md),
 [`docs/autopilot-design.md`](../autopilot-design.md),
+[`docs/plans/capture-providers-refactor.md`](./capture-providers-refactor.md) — refaktor warstwy capture,
 [`src/koru/configurator.py`](../../src/koru/configurator.py),
 [`src/koruapi/dashboard_serve.py`](../../src/koruapi/dashboard_serve.py),
 [`src/koruide/plugin_installer.py`](../../src/koruide/plugin_installer.py).
@@ -306,9 +307,12 @@ Trzy nowe widoki, dodane do istniejącego `koru serve`:
 3. **/browse** — sterowanie lokalnym `korubrowse`: lista profili/przeglądarek
    znanych temu hostowi, lista kart, pole prompt + wybór karty docelowej.
 
-Reużywamy istniejący stack (HTTP + WS) z `koruapi.dashboard_serve`. Klatki
-binarne lecą po WS, ale UI dostaje data-URI z miniaturką + endpoint
-`/frames/<frame_id>` dla pełnej rozdzielczości na żądanie.
+Reużywamy istniejący stack (HTTP + WS) z `koruapi.dashboard_serve` (lifecycle:
+`serve` / `start_serve_background`) oraz `koruapi.dashboard_routes`
+(`build_dashboard_handler` — to tu rejestrujemy nowe trasy `/api/mesh/*`,
+`/peer/*`, `/browse`). Klatki binarne lecą po WS, ale UI dostaje data-URI
+z miniaturką + endpoint `/frames/<frame_id>` dla pełnej rozdzielczości
+na żądanie.
 
 ---
 
@@ -485,8 +489,14 @@ regresji).
 
 - `src/koru/configurator.py` — schema config + interactive prompter →
   rozszerzamy o sekcje v2.
-- `src/koruapi/dashboard_serve.py` — HTTP+WS serwer → dodajemy widoki/grid i
-  endpointy frame.
+- `src/koruapi/dashboard_serve.py` — lifecycle HTTP+WS serwera
+  (`serve`, `start_serve_background`, `bind_serve_server`).
+- `src/koruapi/dashboard_serve_utils.py` — port-locking, bind retry,
+  `serve-endpoint.json` I/O.
+- `src/koruapi/dashboard_routes.py` — `build_dashboard_handler(config)`:
+  tu dochodzą nowe routy `/grid`, `/api/mesh/*`, `/peer/*`, `/browse`.
+- `src/koruapi/dashboard_template.html` — UI dashboardu (auto-refresh,
+  taby, link „Grid ↗”). Cache na pierwszym `GET /` przez `@lru_cache`.
 - `src/koruide/plugin_installer.py`, `socket.py`, `protocol.py`,
   `plugin_router.py` — wzorzec dla `korubrowse`: rozszerzenie + native host +
   socket lokalny + protokół.

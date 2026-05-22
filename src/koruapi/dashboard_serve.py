@@ -4,6 +4,13 @@ Serves a small HTML page that calls back into ``build_context`` to show
 the live LLM brief (active ticket, policy, agent lanes, gates). No
 external dependencies — uses ``http.server`` from the stdlib.
 
+This module owns the *lifecycle* (bind retry, ``serve_forever``,
+``KeyboardInterrupt`` shutdown, ``serve-endpoint.json``); the per-route
+implementations live in :mod:`koruapi.dashboard_routes`
+(``build_dashboard_handler``), the port/bind helpers live in
+:mod:`koruapi.dashboard_serve_utils`, and the HTML template lives in
+``koruapi/dashboard_template.html`` (loaded once via ``@lru_cache``).
+
 TCP port defaults to ``8765``. Use ``--auto-port`` or set
 ``KORU_SERVE_AUTO_PORT=1`` to try the next ports (then an ephemeral
 port) when the preferred port is busy. The resolved URL is written to
@@ -21,6 +28,8 @@ Endpoints:
     GET  /api/handoff   -> raw markdown handoff (``render_markdown_handoff``)
     GET  /api/topology  -> merged topology JSON (defaults + persisted overrides)
     POST /api/topology  -> persist topology enable/disable edits
+    GET  /grid          -> observation mesh screenshot grid (served by korumesh)
+    GET  /api/mesh/frames -> JSON frames published by ``koru observe`` peers
     GET  /health        -> ``{"ok": true}``
 
 Bound to ``127.0.0.1`` by default — never exposed to the network unless
@@ -30,13 +39,6 @@ Bound to ``127.0.0.1`` by default — never exposed to the network unless
 from __future__ import annotations
 
 import contextlib
-import errno
-import json
-import os
-import re
-import signal
-import socket
-import subprocess
 import sys
 import threading
 import time
@@ -44,1692 +46,153 @@ import webbrowser
 from collections.abc import Callable
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
 
 from koru.events import emit_management_event
-from koruapi.dashboard_config import (
-  DashboardConfigDefaults,
-  dashboard_config_payload,
-  save_dashboard_config,
+from koruapi.dashboard_routes import build_dashboard_handler
+from koruapi.dashboard_serve_utils import (
+    DEFAULT_HOST,
+    DEFAULT_PORT,
+    ServeConfig,
+    _address_in_use,
+    _cmdline_suggests_koru_serve,
+    _cmdline_suggests_koru_serve_from_bytes,
+    _listener_pids_for_tcp_port,
+    _try_stop_prior_koru_serve_listener,
+    bind_serve_server,
+    build_server,
+    read_serve_endpoint,
+    serve_endpoint_path,
+    write_serve_endpoint_file,
 )
-from koruapi.dashboard_context import dashboard_context_payload, dashboard_handoff_markdown
-from koruapi.dashboard_http import DashboardRequestHandler
-from koruapi.dashboard_projects import (
-  dashboard_workspace,
-  resolve_dashboard_project,
-)
-from koruapi.dashboard_state import dashboard_state, dashboard_urls
-from koruapi.dashboard_tickets import (
-  bulk_waiting_input_action,
-  create_ticket_from_dashboard,
-  reorder_ticket_from_dashboard,
-  update_ticket_from_dashboard,
-)
-from koruapi.dashboard_topology import (
-  apply_dashboard_topology_update,
-  dashboard_topology_payload,
-)
-from koruapi.dashboard_runtime import (
-  runtime_context_error_payload,
-  runtime_context_payload,
-  save_runtime_context_config,
-)
+from koruapi.dashboard_state import dashboard_urls
 
-DEFAULT_HOST = "127.0.0.1"
-DEFAULT_PORT = 8765
-
-_SERVE_ENDPOINT_REL = Path(".planfile") / ".koru" / "serve-endpoint.json"
-
-
-def _address_in_use(exc: BaseException) -> bool:
-    if isinstance(exc, OSError):
-        if exc.errno in (errno.EADDRINUSE, getattr(errno, "WSAEADDRINUSE", -1)):
-            return True
-        winerr = getattr(exc, "winerror", None)
-        if winerr == 10048:  # WSAEADDRINUSE
-            return True
-    return "Address already in use" in str(exc)
-
-
-def _listener_pids_for_tcp_port(port: int) -> list[int]:
-    """Return PIDs listening on *port* (Linux ``ss``); empty if unknown."""
-    if sys.platform == "win32":
-        return []
-    try:
-        proc = subprocess.run(
-            ["ss", "-H", "-ltnp", f"sport = :{port}"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            check=False,
-        )
-    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
-        return []
-    text = (proc.stdout or "") + "\n" + (proc.stderr or "")
-    pids: list[int] = []
-    for m in re.finditer(r"pid=(\d+)", text):
-        try:
-            pids.append(int(m.group(1)))
-        except ValueError:
-            continue
-    return list(dict.fromkeys(pids))
-
-
-def _cmdline_suggests_koru_serve_from_bytes(raw: bytes) -> bool:
-    """True if *raw* is a ``/proc/*/cmdline`` blob for ``koru … serve`` (not ``mcp-serve``)."""
-    s = raw.replace(b"\x00", b" ").decode("utf-8", errors="replace").lower()
-    if re.search(r"\bmcp-serve\b", s):
-        return False
-    if re.search(r"-m\s+koru\.cli\s+serve\b", s):
-        return True
-    return bool(re.search(r"(^|[\s/])koru(\.cli)?\s+serve\b", s))
-
-
-def _cmdline_suggests_koru_serve(pid: int) -> bool:
-    if sys.platform == "win32":
-        return False
-    try:
-        raw = Path(f"/proc/{pid}/cmdline").read_bytes()
-    except OSError:
-        return False
-    return _cmdline_suggests_koru_serve_from_bytes(raw)
-
-
-def _try_stop_prior_koru_serve_listener(host: str, port: int) -> bool:
-    """SIGTERM prior ``koru serve`` on *port*; return True if we sent a signal."""
-    del host  # ss filter is port-centric; 127.0.0.1 vs 0.0.0.0 both match sport
-    if os.environ.get("KORU_SERVE_NO_REPLACE", "").strip().lower() in (
-        "1",
-        "true",
-        "yes",
-        "on",
-    ):
-        return False
-    killed = False
-    for pid in _listener_pids_for_tcp_port(port):
-        if pid == os.getpid():
-            continue
-        if not _cmdline_suggests_koru_serve(pid):
-            continue
-        try:
-            print(
-                f"koru serve: port {port} busy — stopping prior listener pid={pid}",
-                file=sys.stderr,
-            )
-            os.kill(pid, signal.SIGTERM)
-            killed = True
-        except ProcessLookupError:
-            continue
-    if not killed:
-        return False
-    for _ in range(40):
-        remaining = [
-            p
-            for p in _listener_pids_for_tcp_port(port)
-            if p != os.getpid() and _cmdline_suggests_koru_serve(p)
-        ]
-        if not remaining:
-            break
-        time.sleep(0.1)
-    return True
-
-
-def serve_endpoint_path(project: Path) -> Path:
-    """JSON path where the last successful ``koru serve`` bind is recorded."""
-    return project.resolve() / _SERVE_ENDPOINT_REL
-
-
-def read_serve_endpoint(project: Path) -> dict[str, Any] | None:
-    """Load ``serve-endpoint.json`` if present; return ``None`` on missing/invalid."""
-    path = serve_endpoint_path(project)
-    if not path.is_file():
-        return None
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
-    return data if isinstance(data, dict) else None
-
-
-_DASHBOARD_HTML = """<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<title>koru dashboard</title>
-<style>
-  :root {
-    --bg: #0f1115;
-    --panel: #161922;
-    --muted: #8a93a6;
-    --fg: #e6e8ee;
-    --accent: #6ee7b7;
-    --warn: #fbbf24;
-    --err: #f87171;
-    --border: #232838;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--fg);
-    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          "Helvetica Neue", Arial, sans-serif;
-  }
-  header {
-    padding: 16px 24px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  header h1 { margin: 0; font-size: 18px; font-weight: 600; }
-  header .meta { color: var(--muted); font-size: 12px; }
-  .app-shell {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 24px;
-  }
-  .controls {
-    margin: 16px auto 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .controls label {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    color: var(--muted);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-  .controls select,
-  .controls input,
-  select.inline-select,
-  input,
-  textarea {
-    padding: 4px 8px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--bg);
-    color: var(--fg);
-    font-size: 13px;
-  }
-  .controls select { min-width: 220px; }
-  .controls .wide { min-width: 360px; max-width: min(70vw, 560px); }
-  button {
-    padding: 5px 10px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: #1f2533;
-    color: var(--fg);
-    cursor: pointer;
-    font-size: 12px;
-  }
-  button.primary { border: none; background: var(--accent); color: #0f1115; font-weight: 600; }
-  button.icon { width: 28px; height: 28px; padding: 0; }
-  .view-tabs {
-    margin: 16px auto 0;
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 2px;
-  }
-  .view-tab {
-    white-space: nowrap;
-    border-color: transparent;
-    background: transparent;
-    color: var(--muted);
-  }
-  .view-tab.active {
-    background: #1f2533;
-    border-color: var(--border);
-    color: var(--fg);
-  }
-  .scope-line {
-    margin: 10px auto 0;
-    color: var(--muted);
-    font-size: 12px;
-    word-break: break-word;
-  }
-  main {
-    margin: 0 auto;
-    padding: 16px 0 24px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
-    overflow-x: auto;
-  }
-  .panel h2 {
-    margin: 0 0 12px;
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--muted);
-  }
-  .panel.full { grid-column: 1 / -1; }
-  .kv { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; }
-  .kv dt { color: var(--muted); }
-  .kv dd { margin: 0; word-break: break-word; }
-  code, pre {
-    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo,
-                 Consolas, monospace;
-    font-size: 12px;
-  }
-  pre {
-    background: #0a0c11;
-    padding: 12px;
-    border-radius: 6px;
-    overflow-x: auto;
-    border: 1px solid var(--border);
-  }
-  .pill {
-    display: inline-block;
-    padding: 1px 8px;
-    border-radius: 99px;
-    background: #1f2533;
-    color: var(--fg);
-    font-size: 11px;
-    margin-right: 4px;
-  }
-  .pill.ok { background: rgba(110, 231, 183, 0.15); color: var(--accent); }
-  .pill.warn { background: rgba(251, 191, 36, 0.15); color: var(--warn); }
-  .pill.err { background: rgba(248, 113, 113, 0.15); color: var(--err); }
-  .tool-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .tool-icon {
-    width: 1.2rem;
-    text-align: center;
-    opacity: 0.9;
-    font-size: 13px;
-  }
-  table { width: 100%; border-collapse: collapse; }
-  .table-wrap { width: 100%; overflow-x: auto; }
-  .form-stack { display: flex; flex-direction: column; gap: 8px; }
-  .form-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  th, td {
-    text-align: left;
-    padding: 6px 8px;
-    border-bottom: 1px solid var(--border);
-    font-size: 12px;
-  }
-  th { color: var(--muted); font-weight: 500; }
-  .muted { color: var(--muted); }
-  .err { color: var(--err); }
-  .ok { color: var(--accent); }
-  footer {
-    padding: 16px 24px;
-    color: var(--muted);
-    font-size: 12px;
-    text-align: center;
-  }
-  a { color: var(--accent); }
-  @media (max-width: 760px) {
-    header {
-      align-items: flex-start;
-      flex-direction: column;
-      gap: 4px;
-      padding: 14px 16px;
-    }
-    .app-shell { padding: 0 12px; }
-    .controls {
-      align-items: stretch;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .controls select,
-    .controls input,
-    .controls .wide,
-    input,
-    textarea,
-    select.inline-select { width: 100%; min-width: 0; max-width: 100%; }
-    main { grid-template-columns: 1fr; gap: 12px; padding-top: 12px; }
-    .panel { padding: 12px; border-radius: 6px; }
-    .kv { grid-template-columns: 1fr; gap: 2px 0; }
-    th, td { padding: 7px 6px; }
-  }
-</style>
-</head>
-<body>
-<header>
-  <h1>koru dashboard</h1>
-  <div class="meta">
-    <span id="project">loading…</span>
-    <span class="muted"> · refreshed </span>
-    <span id="ts">-</span>
-  </div>
-</header>
-<div class="app-shell">
-  <section class="controls panel full" id="dashboard-controls">
-    <span class="muted">Loading dashboard controls…</span>
-  </section>
-  <nav class="view-tabs" id="view-tabs" aria-label="Dashboard views"></nav>
-  <div class="scope-line" id="scope-line"></div>
-  <main id="root">
-    <div class="panel full"><span class="muted">Loading brief…</span></div>
-  </main>
-</div>
-<footer>
-  Auto-refresh 5 s · URL carries current <code>tab</code>, <code>project</code>, <code>ide</code>, and <code>change</code> ·
-  <a href="/grid">Grid</a>
-  · <a href="/api/context">JSON</a> · <a href="/api/handoff">Markdown</a>
-  · <a href="/api/topology">Topology JSON</a>
-  · <a href="/api/runtime-context">Runtime context JSON</a>
-  · <a href="/api/mesh/frames">Mesh frames JSON</a>
-</footer>
-<script>
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s == null ? "" : s)
-  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-const attr = (s) => esc(s).replace(/"/g, "&quot;");
-const tabs = [
-  ["overview", "Overview"],
-  ["tickets", "Tickets"],
-  ["runtime", "Runtime"],
-  ["topology", "Topology"],
-  ["policy", "Policy"],
-  ["settings", "Settings"],
-  ["all", "All"],
-];
-const urlState = new URL(window.location.href);
-const state = {
-  project: urlState.searchParams.get("project") || localStorage.getItem("koru.dashboard.project") || "",
-  ide: urlState.searchParams.get("ide") || localStorage.getItem("koru.dashboard.ide") || "auto",
-  tab: urlState.searchParams.get("tab") || localStorage.getItem("koru.dashboard.tab") || "overview",
-  focus: urlState.searchParams.get("focus") || "",
-  change: urlState.searchParams.get("change") || "",
-};
-
-if (!tabs.some(([id]) => id === state.tab)) state.tab = "overview";
-
-function projectQuery() {
-  return state.project ? `?project=${encodeURIComponent(state.project)}` : "";
-}
-
-function syncUrlState({ replace=false } = {}) {
-  const url = new URL(window.location.href);
-  const pairs = {
-    tab: state.tab,
-    project: state.project,
-    ide: state.ide,
-    focus: state.focus,
-    change: state.change,
-  };
-  Object.entries(pairs).forEach(([key, value]) => {
-    if (value) url.searchParams.set(key, value);
-    else url.searchParams.delete(key);
-  });
-  const method = replace ? "replaceState" : "pushState";
-  window.history[method]({}, "", url);
-  const scope = $("scope-line");
-  if (scope) {
-    scope.innerHTML = `view <code>${esc(state.tab)}</code> · project <code>${esc(state.project || "default")}</code> · IDE <code>${esc(state.ide || "auto")}</code>${state.change ? ` · changing <code>${esc(state.change)}</code>` : ""}`;
-  }
-}
-
-function noteChange(change, focus="") {
-  state.change = change || "";
-  state.focus = focus || "";
-  syncUrlState();
-}
-
-function requestBody(extra) {
-  return Object.assign({}, extra, {
-    project: state.project || undefined,
-    ide: state.ide || "auto",
-  });
-}
-
-function renderDashboardControls(dash) {
-  const projects = dash.projects || [];
-  const ides = dash.ides || [];
-  const projectPaths = projects.map(p => p.path);
-  if (!state.project || !projectPaths.includes(state.project)) {
-    state.project = dash.default_project || (projects[0] || {}).path || "";
-    if (state.project) localStorage.setItem("koru.dashboard.project", state.project);
-  }
-  if (!state.ide) state.ide = "auto";
-  const projectOptions = projects.map(p => `<option value="${attr(p.path)}" ${p.path === state.project ? "selected" : ""}>
-    ${esc(p.name || p.path)}${p.planfile ? "" : " · no planfile"}
-  </option>`).join("");
-  const ideOptions = ides.map(ide => `<option value="${attr(ide.id)}" ${ide.id === state.ide ? "selected" : ""}>
-    ${esc(ide.label || ide.id)}${ide.running ? " · running" : ""}
-  </option>`).join("");
-  const urls = (dash.urls || []).map(url => `<code>${esc(url)}</code>`).join(" ");
-  const controls = $("dashboard-controls");
-  if (!controls) return;
-  controls.innerHTML = `
-    <label>Project
-      <select id="project-select" class="wide">${projectOptions}</select>
-    </label>
-    <label>IDE lane
-      <select id="ide-select">${ideOptions}</select>
-    </label>
-    <span class="muted">${dash.lan ? "LAN" : "local"} · ${urls}</span>
-  `;
-}
-
-function renderTabs() {
-  const node = $("view-tabs");
-  if (!node) return;
-  const buttons = tabs.map(([id, label]) => `
-    <button type="button" class="view-tab ${id === state.tab ? "active" : ""}" data-tab="${attr(id)}">
-      ${esc(label)}
-    </button>
-  `).join("");
-  const gridLink = `
-    <a class="view-tab" href="/grid" target="_blank" rel="noopener" title="Observation mesh screenshot grid">
-      Grid \u2197
-    </a>
-  `;
-  node.innerHTML = buttons + gridLink;
-}
-
-function panel(title, body, full=false) {
-  return `<section class="panel${full ? " full" : ""}">
-    <h2>${esc(title)}</h2>${body}</section>`;
-}
-
-function kv(pairs) {
-  return `<dl class="kv">${pairs.map(([k, v]) =>
-    `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("")}</dl>`;
-}
-
-function renderTicket(ticket, err) {
-  if (!ticket) {
-    return panel("Active ticket",
-      `<div class="muted">${esc(err || "no ticket")}</div>`);
-  }
-  const inputs = ticket.inputs || {};
-  const files = (ticket.files || []).map(f => `<code>${esc(f)}</code>`).join(", ");
-  return panel("Active ticket", kv([
-    ["id", `<code>${esc(ticket.id)}</code>`],
-    ["name", esc(ticket.name || "")],
-    ["status", `<span class="pill">${esc(ticket.status || "?")}</span>`],
-    ["executor", `<code>${esc((ticket.executor || {}).kind || "?")}</code>`],
-    ["files", files || `<span class="muted">none</span>`],
-    ["prompt", inputs.prompt
-      ? `<pre>${esc(inputs.prompt)}</pre>`
-      : `<span class="muted">—</span>`],
-  ]));
-}
-
-function renderEnv(env) {
-  const pe = (env && env.project) || {};
-  const markers = (pe.markers) || {};
-  const present = Object.entries(markers).filter(([_, v]) => v)
-    .map(([k]) => `<span class="pill ok">${esc(k)}</span>`).join("");
-  const absent = Object.entries(markers).filter(([_, v]) => !v)
-    .map(([k]) => `<span class="pill">${esc(k)}</span>`).join("");
-  const rec = (env && env.recommended_agent) || null;
-  return panel("Environment", kv([
-    ["project", `<code>${esc(pe.name || "?")}</code>`],
-    ["cwd", `<code>${esc(pe.cwd || "?")}</code>`],
-    ["python", `<code>${esc(pe.python || "?")}</code>`],
-    ["recommended", rec
-      ? `<code>${esc(rec.label)}</code>`
-      : `<span class="muted">none</span>`],
-    ["present", present || `<span class="muted">none</span>`],
-    ["absent", absent || `<span class="muted">—</span>`],
-  ]));
-}
-
-function renderAgents(env) {
-  const agents = (env && env.llm_agents) || [];
-  if (!agents.length) {
-    return panel("LLM / IDE lanes",
-      `<div class="muted">No lanes detected.</div>`);
-  }
-  const agentIcons = {
-    "antigravity": "🪂",
-    "claude-code": "✳",
-    "codex": "⌘",
-    "gemini-cli": "♊",
-    "cline": "🧩",
-    "qwen-code": "◌",
-    "opencode": "⌥",
-    "cursor": "⌖",
-    "windsurf": "〰",
-    "aider": "🛠",
-    "openrouter": "⇄",
-  };
-  const renderAgentId = (id) => {
-    const icon = agentIcons[id] || "•";
-    return `<span class="tool-label"><span class="tool-icon" aria-hidden="true">${icon}</span><code>${esc(id)}</code></span>`;
-  };
-  const rows = agents.map(a => `<tr>
-    <td>${renderAgentId(a.id)}</td>
-    <td>${a.available
-      ? '<span class="pill ok">yes</span>'
-      : '<span class="pill">no</span>'}</td>
-    <td>${a.launchable
-      ? '<span class="pill ok">yes</span>'
-      : '<span class="pill">no</span>'}</td>
-    <td class="muted">${esc(a.reason || "")}</td>
-  </tr>`).join("");
-  return panel("LLM / IDE lanes",
-    `<table><thead><tr><th>id</th><th>available</th>
-      <th>launchable</th><th>reason</th></tr></thead>
-      <tbody>${rows}</tbody></table>`);
-}
-
-function renderPolicy(policy) {
-  policy = policy || {};
-  const keys = [
-    "allow_commit", "allow_push", "allow_branch_create",
-    "allow_branch_switch", "allow_tag", "allow_destructive_shell",
-    "require_planfile_lifecycle", "require_ci_pass_before_complete",
-  ];
-  const rows = keys.map(k => {
-    const v = policy[k];
-    const pill = v === true
-      ? '<span class="pill ok">true</span>'
-      : v === false
-        ? '<span class="pill">false</span>'
-        : `<span class="pill">${esc(v)}</span>`;
-    return `<tr><td><code>${esc(k)}</code></td><td>${pill}</td></tr>`;
-  }).join("");
-  const ci = policy.ci_command
-    ? `<tr><td><code>ci_command</code></td>
-       <td><code>${esc(policy.ci_command)}</code></td></tr>`
-    : "";
-  return panel("Policy", `<table><tbody>${rows}${ci}</tbody></table>`);
-}
-
-function renderSelfService(ss) {
-  ss = ss || {};
-  const rows = Object.entries(ss).map(([k, v]) =>
-    `<tr><td><code>${esc(k)}</code></td>
-     <td><code>${esc(v)}</code></td></tr>`).join("");
-  return panel("Self-service commands",
-    `<table><tbody>${rows}</tbody></table>`);
-}
-
-function priorityPill(prio) {
-  const cls = prio === "critical" ? "err"
-            : prio === "high" ? "warn"
-            : prio === "low" ? "" : "ok";
-  return `<span class="pill ${cls}">${esc(prio || "normal")}</span>`;
-}
-
-function statusPill(status) {
-  const cls = status === "done" ? "ok"
-            : status === "in_progress" ? "warn"
-            : status === "blocked" ? "err"
-            : "";
-  return `<span class="pill ${cls}">${esc(status || "open")}</span>`;
-}
-
-function ticketRow(t, activeId) {
-  const id = esc(t.id || "?");
-  const rawId = attr(t.id || "");
-  const isActive = activeId && t.id === activeId;
-  const star = isActive ? '<span class="pill ok">active</span> ' : "";
-  const exec = esc(((t.executor) || {}).kind || "?");
-  const name = esc(t.name || "");
-  const priority = t.priority || "normal";
-  const priorities = ["critical", "high", "normal", "low"];
-  const prioritySelect = `<select class="inline-select" data-ticket-priority="${rawId}">
-    ${priorities.map(p => `<option value="${p}" ${p === priority ? "selected" : ""}>${p}</option>`).join("")}
-  </select>`;
-  return `<tr>
-    <td><code>${id}</code></td>
-    <td>${star}${name}</td>
-    <td>${prioritySelect}</td>
-    <td>${statusPill(t.status)}</td>
-    <td><code>${exec}</code></td>
-    <td>
-      <button class="icon" type="button" title="Move up" data-ticket-move="${rawId}" data-direction="up">&#8593;</button>
-      <button class="icon" type="button" title="Move down" data-ticket-move="${rawId}" data-direction="down">&#8595;</button>
-    </td>
-  </tr>`;
-}
-
-function ticketsTable(tickets, activeId) {
-  return `<div class="table-wrap"><table><thead><tr>
-    <th>id</th><th>name</th><th>priority</th>
-    <th>status</th><th>executor</th><th>order</th>
-  </tr></thead><tbody>${
-    tickets.map(t => ticketRow(t, activeId)).join("")
-  }</tbody></table></div>`;
-}
-
-function renderCreateTicketForm() {
-  return panel("Create ticket", `
-    <form id="create-ticket-form" autocomplete="off">
-      <div class="form-stack">
-        <input id="ct-title" placeholder="Ticket title (optional)" />
-        <textarea id="ct-description" rows="3" placeholder="Description / prompt (required)"></textarea>
-        <div class="form-row">
-          <select id="ct-priority">
-            <option value="normal">normal</option>
-            <option value="high">high</option>
-            <option value="critical">critical</option>
-            <option value="low">low</option>
-          </select>
-          <select id="ct-executor">
-            <option value="human">human (LLM IDE)</option>
-            <option value="shell">shell</option>
-            <option value="api">api</option>
-          </select>
-          <input id="ct-queue" value="default" placeholder="Queue" />
-          <button type="submit" class="primary">Create</button>
-        </div>
-      </div>
-      <div id="ct-status" class="muted" style="margin-top:6px;min-height:1.2em"></div>
-    </form>
-  `, true);
-}
-
-function renderOpenTickets(openTickets, allTickets, activeId, ticketError) {
-  openTickets = openTickets || [];
-  allTickets = allTickets || [];
-
-  // Happy path: open queue has work in it.
-  if (openTickets.length) {
-    return panel("Open tickets",
-      ticketsTable(openTickets, activeId), true);
-  }
-
-  // Idle queue, but we have history — show it.
-  if (allTickets.length) {
-    const counts = allTickets.reduce((acc, t) => {
-      const s = t.status || "open";
-      acc[s] = (acc[s] || 0) + 1;
-      return acc;
-    }, {});
-    const summary = Object.entries(counts).map(
-      ([s, n]) => `${statusPill(s)} <strong>${n}</strong>`
-    ).join(" · ");
-    const hint = `<div class="muted" style="margin-bottom:8px">
-      <strong>queue is idle</strong> — ${esc(ticketError || "no open tickets")}.
-      ${summary} ·
-      run <code>koru scan --apply</code> to generate new tickets
-      from real repo signals (pytest collect errors, TODO/FIXME,
-      missing gates).
-    </div>`;
-    return panel("Recent tickets",
-      hint + ticketsTable(allTickets, activeId), true);
-  }
-
-  // Truly empty.
-  return panel("Tickets",
-    `<div class="muted">queue is idle — no tickets recorded.
-     Try <code>koru scan --apply</code> or <code>koru task "&lt;desc&gt;"</code>.</div>`,
-    true);
-}
-
-function renderWaitingInputActions(allTickets) {
-  const waiting = (allTickets || []).filter(t => (t.status || "") === "waiting_input");
-  if (!waiting.length) return "";
-  const rows = waiting.map(t => `
-    <tr>
-      <td><input type="checkbox" class="wi-ticket" value="${esc(t.id || "")}" checked></td>
-      <td><code>${esc(t.id || "")}</code></td>
-      <td>${esc(t.name || "")}</td>
-      <td><code>${esc(((t.executor) || {}).kind || "?")}</code></td>
-    </tr>
-  `).join("");
-  const body = `
-    <div class="muted" style="margin-bottom:8px">
-      Queue is blocked on <code>waiting_input</code>. Select tickets and approve or reject in bulk.
-    </div>
-    <table><thead><tr>
-      <th>select</th><th>id</th><th>name</th><th>executor</th>
-    </tr></thead><tbody>${rows}</tbody></table>
-    <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button id="wi-approve">Approve selected</button>
-      <button id="wi-reject">Reject selected</button>
-      <input id="wi-reason" placeholder="Reject reason (optional)" style="min-width:320px" />
-    </div>
-    <div id="wi-status" class="muted" style="margin-top:8px;min-height:1.2em"></div>
-  `;
-  return panel("Waiting Input Actions", body, true);
-}
-
-function renderSemcodTools(env) {
-  const tools = (env && env.semcod_tools) || [];
-  if (!tools.length) return "";
-  const installed = tools.filter(t => t.available);
-  const missing = tools.filter(t => !t.available);
-  const rows = installed.map(t => `<tr>
-    <td><code>${esc(t.id)}</code></td>
-    <td><code>${esc(t.via)}</code>${
-      t.config_present ? ' <span class="pill ok">configured</span>' : ''
-    }</td>
-    <td class="muted">${esc(t.role || "")}</td>
-    <td><code>${esc(t.command_hint || "")}</code></td>
-  </tr>`).join("");
-  const missingNote = missing.length
-    ? `<div class="muted" style="margin-top:8px">Not installed: ${
-        missing.map(t => `<code>${esc(t.id)}</code>`).join(", ")
-      }</div>`
-    : "";
-  const body = installed.length
-    ? `<table><thead><tr>
-        <th>tool</th><th>via</th><th>role</th><th>command</th>
-       </tr></thead><tbody>${rows}</tbody></table>${missingNote}`
-    : `<div class="muted">No semcod tools detected.</div>${missingNote}`;
-  return panel("Available semcod tools", body, true);
-}
-
-function renderTopology(topo) {
-  if (!topo) return "";
-  const components = topo.components || {};
-  const pipelines = topo.pipelines || {};
-  const compRows = Object.entries(components).map(([id, c]) => {
-    const checked = c.enabled ? "checked" : "";
-    const avail = c.available
-      ? '<span class="pill ok">installed</span>'
-      : '<span class="pill">missing</span>';
-    const via = c.via && c.via !== "missing"
-      ? `<code>${esc(c.via)}</code>` : '<span class="muted">—</span>';
-    return `<tr>
-      <td><label><input type="checkbox" data-kind="component"
-        data-id="${esc(id)}" ${checked}/> <code>${esc(id)}</code></label></td>
-      <td>${avail}</td>
-      <td>${via}</td>
-      <td class="muted">${esc(c.role || "")}</td>
-    </tr>`;
-  }).join("");
-  const pipeRows = Object.entries(pipelines).map(([id, p]) => {
-    const checked = p.enabled ? "checked" : "";
-    const comps = (p.components || []).map(c =>
-      `<code>${esc(c)}</code>`).join(", ") || '<span class="muted">—</span>';
-    return `<tr>
-      <td><label><input type="checkbox" data-kind="pipeline"
-        data-id="${esc(id)}" ${checked}/> <code>${esc(id)}</code></label></td>
-      <td><span class="pill">${esc(p.trigger || "manual")}</span></td>
-      <td>${comps}</td>
-      <td class="muted">${esc(p.description || "")}</td>
-    </tr>`;
-  }).join("");
-  const savedNote = topo.exists
-    ? `<span class="pill ok">persisted</span>`
-    : `<span class="pill">defaults only — first edit creates ${
-        esc(topo.path || ".koru/topology.yaml")
-      }</span>`;
-  const body = `
-    <div style="margin-bottom:12px">${savedNote}
-      <span class="muted" style="margin-left:8px">
-        Toggle a checkbox to update <code>.koru/topology.yaml</code>.
-        Pipelines (gates, autoloop, idle-diagnostics) honour these flags.
-      </span>
-    </div>
-    <h3 style="margin:8px 0 4px;font-size:12px;color:var(--muted);
-               text-transform:uppercase;letter-spacing:0.05em">Components</h3>
-    <table><thead><tr>
-      <th>component</th><th>availability</th><th>via</th><th>role</th>
-    </tr></thead><tbody>${compRows}</tbody></table>
-    <h3 style="margin:16px 0 4px;font-size:12px;color:var(--muted);
-               text-transform:uppercase;letter-spacing:0.05em">Pipelines</h3>
-    <table><thead><tr>
-      <th>pipeline</th><th>trigger</th><th>components</th><th>description</th>
-    </tr></thead><tbody>${pipeRows}</tbody></table>
-    <div id="topology-status" class="muted"
-         style="margin-top:8px;min-height:1.2em"></div>
-  `;
-  return panel("Topology & pipelines", body, true);
-}
-
-function renderRuntimeContext(runtime) {
-  if (!runtime || runtime.error) {
-    return panel(
-      "Runtime context",
-      `<div class="muted">${esc((runtime && runtime.error) || "not available")}</div>`,
-      true,
-    );
-  }
-  const summary = runtime.summary || {};
-  const enabled = ((runtime.config || {}).enabled) || {};
-  const insights = runtime.insights || {};
-  const live = insights.summary || {};
-  const labels = {
-    systems: "systems", libraries: "libraries", algorithms: "algorithms",
-    apis: "apis", applications: "applications", pipelines: "pipelines", topology: "topology"
-  };
-  const checks = Object.entries(labels).map(([key, label]) => `
-    <label style="display:inline-block;margin:2px 12px 6px 0">
-      <input type="checkbox" data-runtime-section="${esc(key)}" ${enabled[key] ? "checked" : ""}/>
-      <code>${esc(label)}</code>
-    </label>
-  `).join("");
-  const systems = (runtime.systems || []).slice(0, 12).map(s =>
-    `<span class="pill">${esc(s.name || "?")}</span>`
-  ).join("");
-  const activeTools = (insights.active_tools || []).slice(0, 8).map(t =>
-    `<span class="pill ok">${esc(t.label || t.id || "?")} · pid ${esc(t.pid)} · cpu ${esc(t.cpu)}%</span>`
-  ).join("");
-  const topProcesses = (insights.top_processes || []).slice(0, 6).map(p =>
-    `<tr>
-      <td><code>${esc(p.name || "?")}</code></td>
-      <td><code>${esc(p.pid)}</code></td>
-      <td>${esc(p.category || "-")}</td>
-      <td>${esc(p.cpu)}%</td>
-      <td>${esc(p.rss_mb)} MB</td>
-      <td>${esc(p.etime || "-")}</td>
-    </tr>`
-  ).join("");
-  const runningIdes = (insights.running_ides || []).slice(0, 8).map(ide =>
-    `<span class="pill">${esc(ide.label || ide.id || "?")} · pid ${esc(ide.pid)}</span>`
-  ).join("");
-  const body = `
-    <div class="kv">
-      <dt>project</dt><dd><code>${esc(summary.project || runtime.project_root || "?")}</code></dd>
-      <dt>version</dt><dd>${esc(summary.version || "-")}</dd>
-      <dt>services</dt><dd>${esc(summary.services || 0)}</dd>
-      <dt>workspaces</dt><dd>${esc(summary.workspaces || 0)}</dd>
-      <dt>pipelines</dt><dd>${esc(summary.pipelines || 0)}</dd>
-      <dt>topology nodes</dt><dd>${esc(summary.topology_nodes || 0)}</dd>
-      <dt>live IDEs</dt><dd>${esc(live.running_ides || 0)}</dd>
-      <dt>active tools</dt><dd>${esc(live.active_tools || 0)}</dd>
-      <dt>top processes</dt><dd>${esc(live.top_processes || 0)}</dd>
-    </div>
-    <div style="margin-top:12px">${checks}</div>
-    <div class="muted" style="margin-top:8px">First services: ${systems || "none"}</div>
-    <div class="muted" style="margin-top:10px">Running IDEs: ${runningIdes || "none"}</div>
-    <div class="muted" style="margin-top:10px">Active tools now: ${activeTools || "none"}</div>
-    <div style="margin-top:12px">
-      <table><thead><tr>
-        <th>process</th><th>pid</th><th>category</th><th>cpu</th><th>rss</th><th>etime</th>
-      </tr></thead><tbody>${topProcesses || `<tr><td colspan="6" class="muted">no process data</td></tr>`}</tbody></table>
-    </div>
-    <div id="runtime-context-status" class="muted" style="margin-top:8px;min-height:1.2em"></div>
-  `;
-  return panel("Runtime context", body, true);
-}
-
-function renderSettings(configPayload) {
-  const cfg = (configPayload && configPayload.config) || {};
-  const serve = cfg.serve || {};
-  const choices = (configPayload && configPayload.ide_choices) || ["auto"];
-  const selectedIde = cfg.ide || state.ide || "auto";
-  const ideOptions = choices.map(ide => `<option value="${attr(ide)}" ${ide === selectedIde ? "selected" : ""}>${esc(ide)}</option>`).join("");
-  const body = `
-    <form id="config-form" autocomplete="off">
-      <div class="form-stack">
-        <label>Workspace root
-          <input id="cfg-workspace" value="${attr(cfg.workspace || "")}" />
-        </label>
-        <div class="form-row">
-          <label>IDE lane
-            <select id="cfg-ide">${ideOptions}</select>
-          </label>
-          <label>Default queue
-            <input id="cfg-queue" value="${attr(cfg.queue_name || "default")}" />
-          </label>
-        </div>
-        <div class="form-row">
-          <label>Dashboard host
-            <input id="cfg-host" value="${attr(serve.host || "127.0.0.1")}" />
-          </label>
-          <label>Dashboard port
-            <input id="cfg-port" type="number" min="1" max="65535" value="${attr(serve.port || 8765)}" />
-          </label>
-        </div>
-        <div class="form-row">
-          <label><input id="cfg-lan" type="checkbox" ${serve.lan ? "checked" : ""} /> LAN</label>
-          <label><input id="cfg-auto-port" type="checkbox" ${serve.auto_port ? "checked" : ""} /> auto port</label>
-          <button type="submit" class="primary">Save settings</button>
-        </div>
-      </div>
-      <div class="muted" style="margin-top:8px">Path: <code>${esc((configPayload && configPayload.path) || ".koru/config.json")}</code></div>
-      <div id="config-status" class="muted" style="margin-top:6px;min-height:1.2em"></div>
-    </form>
-  `;
-  return panel("Settings", body, true);
-}
-
-function renderViewContent(ctx, topo, runtime, configPayload) {
-  const activeId = (ctx.ticket || {}).id || null;
-  const views = {
-    overview: [
-      renderTicket(ctx.ticket, ctx.ticket_error),
-      renderEnv(ctx.environment),
-      renderAgents(ctx.environment),
-    ],
-    tickets: [
-      renderCreateTicketForm(),
-      renderWaitingInputActions(ctx.all_tickets),
-      renderOpenTickets(ctx.open_tickets, ctx.all_tickets, activeId, ctx.ticket_error),
-    ],
-    runtime: [
-      renderRuntimeContext(runtime),
-      renderSemcodTools(ctx.environment),
-      renderAgents(ctx.environment),
-    ],
-    topology: [
-      renderTopology(topo),
-    ],
-    policy: [
-      renderPolicy(ctx.policy),
-      renderSelfService(ctx.self_service),
-    ],
-    settings: [
-      renderSettings(configPayload),
-    ],
-    all: [
-      renderSettings(configPayload),
-      renderSelfService(ctx.self_service),
-      renderTicket(ctx.ticket, ctx.ticket_error),
-      renderEnv(ctx.environment),
-      renderWaitingInputActions(ctx.all_tickets),
-      renderOpenTickets(ctx.open_tickets, ctx.all_tickets, activeId, ctx.ticket_error),
-      renderAgents(ctx.environment),
-      renderSemcodTools(ctx.environment),
-      renderRuntimeContext(runtime),
-      renderTopology(topo),
-      renderPolicy(ctx.policy),
-    ],
-  };
-  return (views[state.tab] || views.overview).filter(Boolean).join("");
-}
-
-async function postTopologyToggle(kind, id, enabled) {
-  const status = document.getElementById("topology-status");
-  if (status) status.textContent = `saving ${kind} ${id}…`;
-  noteChange(`topology:${kind}`, id);
-  try {
-    const body = kind === "component"
-      ? { components: { [id]: enabled } }
-      : { pipelines:  { [id]: enabled } };
-    const res = await fetch("/api/topology", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody(body)),
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error("HTTP " + res.status + ": " + text);
-    }
-    const data = await res.json();
-    if (status) {
-      status.textContent = `saved ${kind} ${id} = ${enabled} `
-        + `(path: ${data.path || ".koru/topology.yaml"})`;
-      status.classList.remove("err");
-      status.classList.add("ok");
-    }
-  } catch (e) {
-    if (status) {
-      status.textContent = "save failed: " + e.message;
-      status.classList.remove("ok");
-      status.classList.add("err");
-    }
-  }
-}
-
-async function postRuntimeContextToggle(section, enabled) {
-  const status = document.getElementById("runtime-context-status");
-  if (status) status.textContent = `saving ${section}…`;
-  noteChange("runtime-context", section);
-  try {
-    const res = await fetch("/api/runtime-context/config", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody({ enabled: { [section]: enabled } })),
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error("HTTP " + res.status + ": " + text);
-    }
-    if (status) {
-      status.textContent = `saved ${section} = ${enabled}`;
-      status.classList.remove("err");
-      status.classList.add("ok");
-    }
-    setTimeout(refresh, 150);
-  } catch (e) {
-    if (status) {
-      status.textContent = "save failed: " + e.message;
-      status.classList.remove("ok");
-      status.classList.add("err");
-    }
-  }
-}
-
-function selectedWaitingTickets() {
-  return Array.from(document.querySelectorAll(".wi-ticket"))
-    .filter(el => el.checked)
-    .map(el => el.value)
-    .filter(Boolean);
-}
-
-async function postWaitingInputAction(action) {
-  const status = $("wi-status");
-  const ticket_ids = selectedWaitingTickets();
-  if (!ticket_ids.length) {
-    if (status) status.textContent = "select at least one ticket";
-    return;
-  }
-  const reasonEl = $("wi-reason");
-  const reason = reasonEl ? reasonEl.value : "";
-  if (status) status.textContent = `${action} ${ticket_ids.length} ticket(s)…`;
-  noteChange(`waiting-input:${action}`, ticket_ids.join(","));
-  try {
-    const res = await fetch("/api/tickets/waiting-input/bulk", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody({ action, ticket_ids, reason })),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
-    const okCount = (data.applied || []).filter(x => x.ok).length;
-    if (status) {
-      status.textContent = `${action}: ${okCount}/${(data.applied || []).length} succeeded`;
-      status.classList.remove("err");
-      status.classList.add("ok");
-    }
-    setTimeout(refresh, 150);
-  } catch (e) {
-    if (status) {
-      status.textContent = "action failed: " + e.message;
-      status.classList.remove("ok");
-      status.classList.add("err");
-    }
-  }
-}
-
-async function postTicketPriority(ticket_id, priority) {
-  noteChange("ticket.priority", ticket_id);
-  const res = await fetch("/api/tickets/update", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody({ ticket_id, priority })),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
-  setTimeout(refresh, 150);
-}
-
-async function postTicketReorder(ticket_id, direction) {
-  noteChange("ticket.order", ticket_id);
-  const res = await fetch("/api/tickets/reorder", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody({ ticket_id, direction })),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
-  setTimeout(refresh, 150);
-}
-
-async function postDashboardConfig() {
-  const status = $("config-status");
-  if (status) { status.textContent = "saving settings…"; status.className = "muted"; }
-  const port = Number($("cfg-port").value || 8765);
-  noteChange("settings.save", "config");
-  const body = requestBody({
-    workspace: $("cfg-workspace").value.trim(),
-    ide: $("cfg-ide").value,
-    queue_name: $("cfg-queue").value.trim() || "default",
-    serve: {
-      host: $("cfg-host").value.trim() || "127.0.0.1",
-      port,
-      lan: $("cfg-lan").checked,
-      auto_port: $("cfg-auto-port").checked,
-    },
-  });
-  const res = await fetch("/api/config", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
-  state.ide = data.config.ide || state.ide;
-  localStorage.setItem("koru.dashboard.ide", state.ide);
-  if (status) { status.textContent = `saved ${data.path}`; status.className = "muted ok"; }
-  setTimeout(refresh, 200);
-}
-
-document.addEventListener("change", (ev) => {
-  const t = ev.target;
-  if (t instanceof HTMLSelectElement) {
-    if (t.id === "project-select") {
-      state.project = t.value;
-      state.focus = "project";
-      state.change = "scope.project";
-      localStorage.setItem("koru.dashboard.project", state.project);
-      syncUrlState();
-      refresh();
-      return;
-    }
-    if (t.id === "ide-select") {
-      state.ide = t.value || "auto";
-      state.focus = "ide";
-      state.change = "scope.ide";
-      localStorage.setItem("koru.dashboard.ide", state.ide);
-      syncUrlState();
-      return;
-    }
-    const ticketId = t.getAttribute("data-ticket-priority");
-    if (ticketId) {
-      postTicketPriority(ticketId, t.value).catch(e => window.alert(e.message));
-      return;
-    }
-  }
-  if (!(t instanceof HTMLInputElement) || t.type !== "checkbox") return;
-  const runtimeSection = t.getAttribute("data-runtime-section");
-  if (runtimeSection) {
-    postRuntimeContextToggle(runtimeSection, t.checked);
-    return;
-  }
-  const kind = t.getAttribute("data-kind");
-  const id = t.getAttribute("data-id");
-  if (!kind || !id) return;
-  postTopologyToggle(kind, id, t.checked);
-});
-
-document.addEventListener("click", (ev) => {
-  const t = ev.target;
-  if (!(t instanceof HTMLElement)) return;
-  const tab = t.getAttribute("data-tab");
-  if (tab) {
-    state.tab = tab;
-    state.focus = "view";
-    state.change = "view.tab";
-    localStorage.setItem("koru.dashboard.tab", state.tab);
-    syncUrlState();
-    renderTabs();
-    refresh();
-    return;
-  }
-  const ticketMove = t.getAttribute("data-ticket-move");
-  if (ticketMove) {
-    postTicketReorder(ticketMove, t.getAttribute("data-direction") || "down")
-      .catch(e => window.alert(e.message));
-    return;
-  }
-  if (t.id === "wi-approve") {
-    postWaitingInputAction("approve");
-  } else if (t.id === "wi-reject") {
-    postWaitingInputAction("reject");
-  }
-});
-
-async function refresh() {
-  try {
-    const dashRes = await fetch("/api/dashboard", { cache: "no-store" });
-    if (!dashRes.ok) throw new Error("HTTP " + dashRes.status);
-    const dash = await dashRes.json();
-    renderDashboardControls(dash);
-    renderTabs();
-    syncUrlState({ replace: true });
-    const [ctxRes, topoRes, runtimeRes, configRes] = await Promise.all([
-      fetch("/api/context" + projectQuery(),  { cache: "no-store" }),
-      fetch("/api/topology" + projectQuery(), { cache: "no-store" }),
-      fetch("/api/runtime-context" + projectQuery(), { cache: "no-store" }),
-      fetch("/api/config" + projectQuery(), { cache: "no-store" }),
-    ]);
-    if (!ctxRes.ok)  throw new Error("HTTP " + ctxRes.status);
-    if (!topoRes.ok) throw new Error("HTTP " + topoRes.status);
-    const ctx = await ctxRes.json();
-    const topo = await topoRes.json();
-    const runtime = runtimeRes.ok
-      ? await runtimeRes.json()
-      : { error: "runtime context unavailable" };
-    const configPayload = configRes.ok
-      ? await configRes.json()
-      : { error: "configuration unavailable" };
-    $("project").textContent = ctx.project || "?";
-    $("ts").textContent = new Date().toLocaleTimeString();
-    const root = $("root");
-    const form = $("create-ticket-form");
-    const editingTicket = form && ($("ct-title")?.value || $("ct-description")?.value);
-    const configForm = $("config-form");
-    const editingConfig = configForm && document.activeElement && configForm.contains(document.activeElement);
-    if (!(state.tab === "tickets" && editingTicket) && !(state.tab === "settings" && editingConfig)) {
-      root.innerHTML = renderViewContent(ctx, topo, runtime, configPayload);
-    }
-  } catch (e) {
-    $("root").innerHTML = `<div class="panel full err">
-      Failed to load brief: ${esc(e.message)}</div>`;
-  }
-}
-
-refresh();
-setInterval(refresh, 5000);
-
-// --- Create Ticket form ---
-document.addEventListener("submit", async (ev) => {
-  if (!(ev.target instanceof HTMLFormElement)) return;
-  ev.preventDefault();
-  if (ev.target.id === "config-form") {
-    postDashboardConfig().catch(e => {
-      const status = $("config-status");
-      if (status) { status.textContent = "save failed: " + e.message; status.className = "muted err"; }
-    });
-    return;
-  }
-  if (ev.target.id !== "create-ticket-form") return;
-  const status = $("ct-status");
-  const description = $("ct-description").value.trim();
-  if (!description) {
-    if (status) { status.textContent = "description is required"; status.className = "muted err"; }
-    return;
-  }
-  const title = $("ct-title").value.trim();
-  const priority = $("ct-priority").value;
-  const executor = $("ct-executor").value;
-  const queue = $("ct-queue").value.trim() || "default";
-  if (status) { status.textContent = "creating…"; status.className = "muted"; }
-  noteChange("ticket.create", title || "new-ticket");
-  try {
-    const res = await fetch("/api/tickets/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody({ title, description, priority, executor_kind: executor, queue_name: queue })),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
-    if (status) {
-      status.textContent = `✓ created ${data.ticket_id} — ${data.name}`;
-      status.className = "muted ok";
-    }
-    $("ct-title").value = "";
-    $("ct-description").value = "";
-    setTimeout(refresh, 300);
-  } catch (e) {
-    if (status) {
-      status.textContent = "create failed: " + e.message;
-      status.className = "muted err";
-    }
-  }
-});
-</script>
-</body>
-</html>
-"""
-
-
-@dataclass
-class ServeConfig:
-    project: Path
-    host: str = DEFAULT_HOST
-    port: int = DEFAULT_PORT
-    open_browser: bool = True
-    queue_name: str | None = None
-    auto_port: bool = False
-    lan: bool = False
-    workspace: Path | None = None
+__all__ = [
+    "DEFAULT_HOST",
+    "DEFAULT_PORT",
+    "ServeConfig",
+    "_address_in_use",
+    "_cmdline_suggests_koru_serve",
+    "_cmdline_suggests_koru_serve_from_bytes",
+    "_listener_pids_for_tcp_port",
+    "_try_stop_prior_koru_serve_listener",
+    "bind_serve_server",
+    "build_server",
+    "read_serve_endpoint",
+    "serve",
+    "serve_endpoint_path",
+    "start_serve_background",
+    "write_serve_endpoint_file",
+]
 
 
 def _dashboard_urls(config: ServeConfig) -> list[str]:
-  return dashboard_urls(config.host, config.port)
-
-
-def _dashboard_workspace(config: ServeConfig) -> Path:
-  return dashboard_workspace(config.project, config.workspace)
-
-
-def _resolve_dashboard_project(config: ServeConfig, raw: object | None) -> Path:
-  return resolve_dashboard_project(config.project, config.workspace, raw)
-
-
-def _dashboard_state(config: ServeConfig) -> dict[str, Any]:
-  return dashboard_state(
-    project=config.project,
-    host=config.host,
-    port=config.port,
-    lan=bool(config.lan),
-    configured_workspace=config.workspace,
-    queue_name=config.queue_name,
-  )
-
-
-def _dashboard_config_defaults(config: ServeConfig) -> DashboardConfigDefaults:
-  return DashboardConfigDefaults(
-    workspace=_dashboard_workspace(config),
-    host=config.host,
-    port=config.port,
-    lan=bool(config.lan),
-    auto_port=bool(config.auto_port),
-    queue_name=config.queue_name,
-  )
+    """All visible URLs for the dashboard given ``config`` (local + LAN)."""
+    return dashboard_urls(config.host, config.port)
 
 
 def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
-    """Create a request handler closure bound to ``config``."""
-
-    class _Handler(DashboardRequestHandler):
-        def _selected_project(self, body: dict[str, Any] | None = None) -> Path:
-          raw: object | None = None
-          if body is not None and "project" in body:
-            raw = body.get("project")
-          else:
-            values = self._query_params().get("project") or []
-            raw = values[0] if values else None
-          return _resolve_dashboard_project(config, raw)
-
-        def _get_dashboard(self) -> None:
-          try:
-            self._send_json(_dashboard_state(config))
-          except Exception as exc:  # pragma: no cover — surface discovery errors
-            self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
-
-        def _get_config(self) -> None:
-          try:
-            project = self._selected_project()
-            self._send_json(
-              dashboard_config_payload(project, _dashboard_config_defaults(config))
-            )
-          except ValueError as exc:
-            self._send_json({"error": str(exc)}, status=400)
-          except Exception as exc:  # pragma: no cover — surface config errors
-            self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
-
-        def _get_context(self) -> None:
-          try:
-            project = self._selected_project()
-            ctx = dashboard_context_payload(project, config.queue_name)
-          except ValueError as exc:
-            self._send_json({"error": str(exc)}, status=400)
-            return
-          except Exception as exc:  # pragma: no cover — surface errors
-            self._send_json(
-              {"error": str(exc), "type": type(exc).__name__},
-              status=500,
-            )
-            return
-          self._send_json(ctx)
-
-        def _get_topology(self) -> None:
-          try:
-            project = self._selected_project()
-            topo = dashboard_topology_payload(project)
-          except ValueError as exc:
-            self._send_json({"error": str(exc)}, status=400)
-            return
-          except Exception as exc:  # pragma: no cover — surface errors
-            self._send_json(
-              {"error": str(exc), "type": type(exc).__name__},
-              status=500,
-            )
-            return
-          self._send_json(topo)
-
-        def _get_runtime_context(self) -> None:
-          project = config.project
-          try:
-            project = self._selected_project()
-            runtime = runtime_context_payload(project)
-          except ValueError as exc:
-            self._send_json({"error": str(exc)}, status=400)
-            return
-          except Exception as exc:  # pragma: no cover — optional planfile integration
-            runtime = runtime_context_error_payload(project, exc)
-          self._send_json(runtime)
-
-        def _get_handoff(self) -> None:
-          try:
-            project = self._selected_project()
-            md = dashboard_handoff_markdown(project, config.queue_name)
-          except ValueError as exc:
-            self._send(400, str(exc).encode("utf-8"))
-            return
-          except Exception as exc:  # pragma: no cover
-            self._send(500, str(exc).encode("utf-8"))
-            return
-          self._send(
-            200,
-            md.encode("utf-8"),
-            "text/markdown; charset=utf-8",
-          )
-
-        def do_GET(self) -> None:  # noqa: N802 — stdlib API
-          path = urlparse(self.path).path
-          if path in ("/", "/index.html"):
-            self._send(
-              200,
-              _DASHBOARD_HTML.encode("utf-8"),
-              "text/html; charset=utf-8",
-            )
-            return
-          if path == "/health":
-            self._send_json({"ok": True})
-            return
-          if path in ("/grid", "/api/mesh/frames"):
-            from korumesh.dashboard import serve_mesh_http
-
-            if serve_mesh_http(self, path):
-              return
-          route = {
-            "/api/dashboard": self._get_dashboard,
-            "/api/config": self._get_config,
-            "/api/context": self._get_context,
-            "/api/topology": self._get_topology,
-            "/api/runtime-context": self._get_runtime_context,
-            "/api/handoff": self._get_handoff,
-          }.get(path)
-          if route is not None:
-            route()
-            return
-          self._send(404, b"not found")
-
-        def _post_topology(self, body: dict[str, Any]) -> None:
-          try:
-            project = self._selected_project(body)
-          except ValueError as exc:
-            self._send_json({"error": str(exc)}, status=400)
-            return
-          merged, err, status = apply_dashboard_topology_update(project, body)
-          if err is not None:
-            self._send_json(err, status=status)
-            return
-          self._send_json(merged)
-
-        def _post_runtime_context_config(self, body: dict[str, Any]) -> None:
-          try:
-            project = self._selected_project(body)
-            saved_config = save_runtime_context_config(project, body)
-          except ValueError as exc:
-            self._send_json({"error": str(exc)}, status=400)
-            return
-          except Exception as exc:  # pragma: no cover — optional planfile integration
-            self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
-            return
-          self._send_json(saved_config)
-
-        def _post_config(self, body: dict[str, Any]) -> None:
-          try:
-            project = self._selected_project(body)
-            defaults = _dashboard_config_defaults(config)
-            result = save_dashboard_config(project, body, defaults)
-          except ValueError as exc:
-            self._send_json({"error": str(exc)}, status=400)
-            return
-          except Exception as exc:
-            self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
-            return
-          self._send_json({**dashboard_config_payload(project, defaults), "saved": True, "path": str(result.path)})
-
-        def _post_waiting_input_bulk(self, body: dict[str, Any]) -> None:
-          action = str(body.get("action") or "").strip().lower()
-          if action not in {"approve", "reject"}:
-            self._send_json({"error": "action must be approve|reject"}, status=400)
-            return
-          ticket_ids_raw = body.get("ticket_ids")
-          if not isinstance(ticket_ids_raw, list):
-            self._send_json({"error": "ticket_ids must be an array"}, status=400)
-            return
-          ticket_ids = [str(x).strip() for x in ticket_ids_raw if str(x).strip()]
-          reason = str(body.get("reason") or "").strip()
-          try:
-            project = self._selected_project(body)
-          except ValueError as exc:
-            self._send_json({"error": str(exc)}, status=400)
-            return
-          result = bulk_waiting_input_action(
-            project,
-            ticket_ids=ticket_ids,
-            action=action,
-            reason=reason,
-          )
-          if not result.get("ok"):
-            self._send_json(result, status=400)
-            return
-          self._send_json(result)
-
-        def _post_ticket_create(self, body: dict[str, Any]) -> None:
-          try:
-            project = self._selected_project(body)
-            self._send_json(create_ticket_from_dashboard(project, body))
-          except ValueError as exc:
-            self._send_json({"error": str(exc)}, status=400)
-          except Exception as exc:
-            self._send_json(
-              {"error": str(exc), "type": type(exc).__name__},
-              status=500,
-            )
-
-        def _post_ticket_update(self, body: dict[str, Any]) -> None:
-          ticket_id = str(body.get("ticket_id") or "").strip()
-          if not ticket_id:
-            self._send_json({"error": "ticket_id is required"}, status=400)
-            return
-          try:
-            project = self._selected_project(body)
-            result = update_ticket_from_dashboard(
-              project,
-              ticket_id=ticket_id,
-              priority=str(body["priority"]).strip() if "priority" in body else None,
-              queue_name=str(body["queue_name"]).strip() if "queue_name" in body else None,
-            )
-          except ValueError as exc:
-            self._send_json({"error": str(exc)}, status=400)
-            return
-          except Exception as exc:
-            self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
-            return
-          self._send_json(result)
-
-        def _post_ticket_reorder(self, body: dict[str, Any]) -> None:
-          ticket_id = str(body.get("ticket_id") or "").strip()
-          direction = str(body.get("direction") or "").strip().lower()
-          if not ticket_id:
-            self._send_json({"error": "ticket_id is required"}, status=400)
-            return
-          try:
-            project = self._selected_project(body)
-            result = reorder_ticket_from_dashboard(project, ticket_id=ticket_id, direction=direction)
-          except ValueError as exc:
-            self._send_json({"error": str(exc)}, status=400)
-            return
-          except Exception as exc:
-            self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
-            return
-          self._send_json(result)
-
-        def do_POST(self) -> None:  # noqa: N802 — stdlib API
-          path = urlparse(self.path).path
-          try:
-            body = self._read_json_body()
-          except Exception as exc:
-            self._send_json({"error": str(exc)}, status=400)
-            return
-
-          route = {
-            "/api/topology": self._post_topology,
-            "/api/runtime-context/config": self._post_runtime_context_config,
-            "/api/config": self._post_config,
-            "/api/tickets/waiting-input/bulk": self._post_waiting_input_bulk,
-            "/api/tickets/create": self._post_ticket_create,
-            "/api/tickets/update": self._post_ticket_update,
-            "/api/tickets/reorder": self._post_ticket_reorder,
-          }.get(path)
-          if route is not None:
-            route(body)
-            return
-          self._send(404, b"not found")
-
-    return _Handler
+    """Backwards-compatible alias for :func:`build_dashboard_handler`."""
+    return build_dashboard_handler(config)
 
 
-def build_server(config: ServeConfig) -> ThreadingHTTPServer:
-    """Construct (but do not start) the dashboard HTTP server."""
-    handler = _build_handler(config)
-    return ThreadingHTTPServer((config.host, config.port), handler)
+@dataclass(frozen=True)
+class _BoundDashboard:
+    server: ThreadingHTTPServer
+    actual: int
+    requested: int
+    url: str
+    urls: list[str]
 
 
-def write_serve_endpoint_file(config: ServeConfig) -> None:
-    """Persist dashboard base URL and port for other tools (``read_serve_endpoint``)."""
-    koru_dir = config.project.resolve() / ".planfile" / ".koru"
-    koru_dir.mkdir(parents=True, exist_ok=True)
-    payload = {
-        "http_base": f"http://{config.host}:{config.port}",
-        "host": config.host,
-      "lan": bool(config.lan or config.host in {"0.0.0.0", "::"}),
-      "urls": _dashboard_urls(config),
+def _emit_serve_event(
+    config: ServeConfig,
+    *,
+    url: str,
+    requested: int,
+    background: bool = False,
+) -> None:
+    details: dict[str, Any] = {
+        "project": str(config.project),
+        "open_browser": config.open_browser,
         "port": config.port,
-        "pid": os.getpid(),
+        "requested_port": requested,
     }
-    (koru_dir / "serve-endpoint.json").write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
+    if background:
+        details["background"] = True
+    emit_management_event(
+        tool="koru.serve",
+        action="started",
+        status="running",
+        message=url,
+        queue=config.queue_name,
+        details=details,
     )
 
 
-def bind_serve_server(config: ServeConfig) -> tuple[ThreadingHTTPServer, int, int]:
-    """Bind a server; set ``config.port`` to the listening port.
+def _schedule_browser_open(url: str) -> None:
+    def _open_later() -> None:
+        with contextlib.suppress(Exception):  # pragma: no cover — best-effort
+            webbrowser.open(url, new=2)
 
-    Returns ``(server, actual_port, requested_port)``.
-    """
-    requested = config.port
-    if not config.auto_port:
-        try:
-            server = build_server(config)
-            actual = int(server.server_address[1])
-            config.port = actual
-            return server, actual, requested
-        except OSError as exc:
-            if not _address_in_use(exc):
-                raise
-            if _try_stop_prior_koru_serve_listener(config.host, config.port):
-                server = build_server(config)
-                actual = int(server.server_address[1])
-                config.port = actual
-                return server, actual, requested
-            raise
+    threading.Timer(0.3, _open_later).start()
 
-    ceiling = min(requested + 33, 65536)
-    candidates = [requested] + [p for p in range(requested + 1, ceiling) if p != requested]
-    last_err: OSError | None = None
-    for p in candidates:
-        config.port = p
-        try:
-            server = build_server(config)
-            actual = int(server.server_address[1])
-            config.port = actual
-            return server, actual, requested
-        except OSError as exc:
-            last_err = exc
-            continue
 
-    config.port = 0
+def _log_bind_summary(
+    config: ServeConfig,
+    *,
+    bound: _BoundDashboard,
+    log: Callable[[str], None],
+) -> None:
+    if config.auto_port and bound.requested != 0 and bound.actual != bound.requested:
+        log(f"koru serve: port {bound.requested} busy — bound to {bound.actual} instead")
+    log(f"koru serve: dashboard at {bound.url}")
+    if len(bound.urls) > 1:
+        log("koru serve: LAN URLs:")
+        for visible_url in bound.urls:
+            log(f"  {visible_url}")
+    log(f"koru serve: project = {config.project}")
+
+
+def _prepare_bound_dashboard(config: ServeConfig) -> _BoundDashboard:
+    server, actual, requested = bind_serve_server(config)
+    write_serve_endpoint_file(config)
+    return _BoundDashboard(
+        server=server,
+        actual=actual,
+        requested=requested,
+        url=f"http://{config.host}:{config.port}/",
+        urls=_dashboard_urls(config),
+    )
+
+
+def _announce_bound_dashboard(
+    config: ServeConfig,
+    *,
+    bound: _BoundDashboard,
+    log: Callable[[str], None],
+    background: bool = False,
+) -> None:
+    _log_bind_summary(config, bound=bound, log=log)
+    _emit_serve_event(
+        config,
+        url=bound.url,
+        requested=bound.requested,
+        background=background,
+    )
+    if config.open_browser:
+        _schedule_browser_open(bound.url)
+
+
+def _bind_or_print(config: ServeConfig) -> _BoundDashboard | None:
     try:
-        server = build_server(config)
+        return _prepare_bound_dashboard(config)
     except OSError as exc:
-        msg = f"koru serve: cannot bind {config.host} starting from port {requested}"
-        if last_err is not None:
-            msg += f" — {last_err}"
-        raise OSError(msg) from exc
-    actual = int(server.server_address[1])
-    config.port = actual
-    return server, actual, requested
+        if config.auto_port:
+            print(str(exc), file=sys.stderr)
+        else:
+            print(f"koru serve: cannot bind {config.host}:{config.port} — {exc}", file=sys.stderr)
+        return None
 
 
 def serve(config: ServeConfig) -> int:
@@ -1737,64 +200,20 @@ def serve(config: ServeConfig) -> int:
 
     Returns the process exit code (0 on clean shutdown).
     """
-    try:
-        server, actual, requested = bind_serve_server(config)
-    except OSError as exc:
-        if not config.auto_port:
-            print(
-                f"koru serve: cannot bind {config.host}:{config.port} — {exc}",
-                file=sys.stderr,
-            )
-        else:
-            print(str(exc), file=sys.stderr)
+    bound = _bind_or_print(config)
+    if bound is None:
         return 1
 
-    write_serve_endpoint_file(config)
-    url = f"http://{config.host}:{config.port}/"
-    urls = _dashboard_urls(config)
-    if config.auto_port and requested != 0 and actual != requested:
-        print(
-            f"koru serve: port {requested} busy — bound to {actual} instead",
-            file=sys.stderr,
-        )
-    print(f"koru serve: dashboard at {url}")
-    if len(urls) > 1:
-      print("koru serve: LAN URLs:")
-      for visible_url in urls:
-        print(f"  {visible_url}")
-    print(f"koru serve: project = {config.project}")
+    _announce_bound_dashboard(config, bound=bound, log=print)
     print("koru serve: Ctrl-C to stop")
 
-    emit_management_event(
-        tool="koru.serve",
-        action="started",
-        status="running",
-        message=url,
-        queue=config.queue_name,
-        details={
-            "project": str(config.project),
-            "open_browser": config.open_browser,
-            "port": config.port,
-            "requested_port": requested,
-        },
-    )
-
-    if config.open_browser:
-        # Open browser after server is listening, on a background thread,
-        # so the open() call doesn't race with serve_forever().
-        def _open_later() -> None:
-            with contextlib.suppress(Exception):  # pragma: no cover — best-effort
-                webbrowser.open(url, new=2)
-
-        threading.Timer(0.3, _open_later).start()
-
     try:
-        server.serve_forever()
+        bound.server.serve_forever()
     except KeyboardInterrupt:
         print()
         print("koru serve: stopping")
     finally:
-        server.server_close()
+        bound.server.server_close()
     return 0
 
 
@@ -1808,40 +227,14 @@ def start_serve_background(
     The caller should ``shutdown()`` the server, ``server_close()``, and
     ``join()`` the returned thread when tearing down (e.g. ``koru autonomous``).
     """
-    server, actual, requested = bind_serve_server(config)
-    write_serve_endpoint_file(config)
-    url = f"http://{config.host}:{config.port}/"
-    if config.auto_port and requested != 0 and actual != requested:
-        log(f"koru serve: port {requested} busy — bound to {actual} instead")
-    log(f"koru serve: dashboard at {url}")
-    log(f"koru serve: project = {config.project}")
-    emit_management_event(
-        tool="koru.serve",
-        action="started",
-        status="running",
-        message=url,
-        queue=config.queue_name,
-        details={
-            "project": str(config.project),
-            "open_browser": config.open_browser,
-            "port": config.port,
-            "requested_port": requested,
-            "background": True,
-        },
-    )
-    if config.open_browser:
-
-        def _open_later() -> None:
-            with contextlib.suppress(Exception):  # pragma: no cover — best-effort
-                webbrowser.open(url, new=2)
-
-        threading.Timer(0.3, _open_later).start()
+    bound = _prepare_bound_dashboard(config)
+    _announce_bound_dashboard(config, bound=bound, log=log, background=True)
 
     thread = threading.Thread(
-        target=server.serve_forever,
+        target=bound.server.serve_forever,
         name="koru-serve-bg",
         daemon=True,
     )
     thread.start()
     time.sleep(0.05)
-    return server, thread
+    return bound.server, thread

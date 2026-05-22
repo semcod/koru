@@ -6,6 +6,25 @@ from pathlib import Path
 
 import pytest
 
+@pytest.fixture(autouse=True)
+def _clear_antigravity_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    for key in (
+        "GIO_LAUNCHED_DESKTOP_FILE",
+        "VSCODE_CODE_CACHE_PATH",
+        "VSCODE_IPC_HOOK",
+        "VSCODE_NLS_CONFIG",
+        "VSCODE_CWD",
+        "CHROME_DESKTOP",
+        "TERM_PROGRAM",
+        "TERM_PROGRAM_VERSION",
+        "CURSOR_CLI",
+        "CURSOR_AGENT",
+        "WINDSURF_VERSION",
+        "WINDSURF_CSRF_TOKEN",
+        "WINDSURF_CASCADE_TERMINAL",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
 from koru.autopilot import ide as ide_mod
 
 

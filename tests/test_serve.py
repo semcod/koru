@@ -25,13 +25,13 @@ from unittest import mock
 
 import yaml
 
-from koru.serve import (
-    ServeConfig,
+from koru.serve import start_serve_background
+from koruapi.dashboard_serve import ServeConfig
+from koruapi.dashboard_serve_utils import (
     _cmdline_suggests_koru_serve_from_bytes,
     bind_serve_server,
     build_server,
     read_serve_endpoint,
-    start_serve_background,
     write_serve_endpoint_file,
 )
 from koruapi.dashboard_tickets import bulk_waiting_input_action
@@ -62,7 +62,7 @@ def _start(project: Path, port: int) -> ThreadingHTTPServer:
         port=port,
         open_browser=False,
     )
-    server = build_server(config)
+    server = bind_serve_server(config)[0]
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     # Wait briefly so the listener is accepting.
@@ -168,14 +168,28 @@ class TestServe(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("text/html", ctype)
         self.assertIn("koru dashboard", body)
+        self.assertIn('name="viewport"', body)
         # The HTML must reference the JSON endpoint it polls.
         self.assertIn("/api/context", body)
         self.assertIn("view-tabs", body)
+        self.assertIn("mobile-view-control", body)
+        self.assertIn('id="view-select"', body)
+        self.assertIn("data-tab", body)
         self.assertIn('href="/grid"', body)
         self.assertIn("searchParams", body)
         self.assertIn("tab", body)
         self.assertIn("project", body)
         self.assertIn("change", body)
+
+    def test_dashboard_html_has_mobile_layout_guards(self) -> None:
+        status, _, body = _get(self.port, "/")
+        self.assertEqual(status, 200)
+        self.assertIn("@media (max-width: 760px)", body)
+        self.assertIn(".view-tabs { display: none; }", body)
+        self.assertIn(".mobile-view-control", body)
+        self.assertIn(".wide-input", body)
+        self.assertIn("overflow-wrap: anywhere", body)
+        self.assertIn("min-width: 620px", body)
 
     def test_dashboard_endpoint_lists_lan_state_projects_and_ides(self) -> None:
         status, ctype, body = _get(self.port, "/api/dashboard")
@@ -530,17 +544,17 @@ class TestServeReplacePrior(unittest.TestCase):
                     raise OSError(errno.EADDRINUSE, "Address already in use")
                 return real_build(c)
 
-            from koru import serve as serve_mod
+            import koruapi.dashboard_serve_utils as serve_utils_mod
 
             with (
-                mock.patch.object(serve_mod, "build_server", side_effect=fake_build),
+                mock.patch.object(serve_utils_mod, "build_server", side_effect=fake_build),
                 mock.patch.object(
-                    serve_mod,
+                    serve_utils_mod,
                     "_try_stop_prior_koru_serve_listener",
                     return_value=True,
                 ),
             ):
-                srv, actual, req = serve_mod.bind_serve_server(cfg)
+                srv, actual, req = serve_utils_mod.bind_serve_server(cfg)
             self.assertEqual(built["n"], 2)
             self.assertEqual(actual, port)
             self.assertEqual(req, port)
@@ -567,6 +581,43 @@ def test_start_serve_background_shutdown() -> None:
         srv.server_close()
         th.join(timeout=3.0)
         assert not th.is_alive()
+    finally:
+        tmp.cleanup()
+
+
+def test_start_serve_background_emits_event_and_endpoint() -> None:
+    tmp, project = _minimal_planfile_project()
+    try:
+        cfg = ServeConfig(
+            project=project,
+            host="127.0.0.1",
+            port=0,
+            open_browser=False,
+            auto_port=True,
+        )
+        logs: list[str] = []
+        import koruapi.dashboard_serve as serve_mod
+
+        with mock.patch.object(serve_mod, "emit_management_event") as emit:
+            srv, th = start_serve_background(cfg, log=logs.append)
+        try:
+            port = int(srv.server_address[1])
+            endpoint = read_serve_endpoint(project)
+            assert endpoint is not None
+            assert endpoint["port"] == port
+            assert endpoint["http_base"] == f"http://127.0.0.1:{port}"
+            assert any(f"dashboard at http://127.0.0.1:{port}/" in item for item in logs)
+            emit.assert_called_once()
+            _, kwargs = emit.call_args
+            assert kwargs["tool"] == "koru.serve"
+            assert kwargs["status"] == "running"
+            assert kwargs["message"] == f"http://127.0.0.1:{port}/"
+            assert kwargs["details"]["background"] is True
+            assert kwargs["details"]["port"] == port
+        finally:
+            srv.shutdown()
+            srv.server_close()
+            th.join(timeout=3.0)
     finally:
         tmp.cleanup()
 

@@ -37,10 +37,13 @@ def _load_legacy_cli_module() -> ModuleType:
 _legacy = _load_legacy_cli_module()
 
 from koru.cli_auto import _auto_main  # noqa: E402
+from koru.cli_agent_backends import agent_backends_main as _agent_backends_main  # noqa: E402
 from koru.cli_ide_router import ide_router_main  # noqa: E402
 
 if not hasattr(_legacy, "_auto_main"):
     _legacy._auto_main = _auto_main
+if not hasattr(_legacy, "_agent_backends_main"):
+    _legacy._agent_backends_main = _agent_backends_main
 if not hasattr(_legacy, "ide_router_main"):
     _legacy.ide_router_main = ide_router_main
 
@@ -49,6 +52,8 @@ _SUBCOMMANDS = _legacy._SUBCOMMANDS
 _build_parser = _legacy._build_parser
 _is_bare_invocation = _legacy._is_bare_invocation
 _command_value = _legacy._command_value
+_peek_project_from_argv = _legacy._peek_project_from_argv
+_should_suggest_wizard = _legacy._should_suggest_wizard
 
 __all__ = [
     "main",
@@ -57,6 +62,9 @@ __all__ = [
     "_is_bare_invocation",
     "_command_value",
     "_auto_main",
+    "_agent_backends_main",
+    "_peek_project_from_argv",
+    "_should_suggest_wizard",
     "ide_router_main",
 ]
 

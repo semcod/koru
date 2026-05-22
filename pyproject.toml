@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "koru"
-version = "0.1.219"
+version = "0.1.220"
 description = "Closed-loop automation across semcod/* repositories."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -149,6 +149,8 @@ koru = [
     "wizard/gui/templates/*.html",
     "wizard/gui/static/*",
 ]
+koruapi = ["dashboard_template.html"]
+korumesh = ["grid_template.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
