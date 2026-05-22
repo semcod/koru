@@ -1,0 +1,263 @@
+{
+  "version": 1,
+  "schema": "koru.wizard.strategies/v1",
+  "description": "Decision tree for `koru wizard`. Each node has a prompt and either branches (next-node ids) or a ticket template. Editable by users; LLX may extend at runtime when --llx is passed.",
+  "root": "root",
+  "language_default": "pl",
+  "nodes": {
+    "root": {
+      "prompt": {
+        "pl": "Co Cię najbardziej interesuje w tym projekcie?",
+        "en": "What do you want to work on first?"
+      },
+      "type": "single",
+      "options": [
+        {"id": "architecture", "label": {"pl": "Architektura projektu", "en": "Project architecture"}, "next": "architecture"},
+        {"id": "frontend", "label": {"pl": "Frontend / UI / UX", "en": "Frontend / UI / UX"}, "next": "frontend"},
+        {"id": "backend", "label": {"pl": "Backend / API / dane", "en": "Backend / API / data"}, "next": "backend"},
+        {"id": "quality", "label": {"pl": "Jakość kodu (refaktor, testy, CI)", "en": "Code quality (refactor, tests, CI)"}, "next": "quality"},
+        {"id": "performance", "label": {"pl": "Wydajność i obserwowalność", "en": "Performance & observability"}, "next": "performance"},
+        {"id": "devx", "label": {"pl": "Developer experience i narzędzia", "en": "Developer experience & tooling"}, "next": "devx"}
+      ]
+    },
+
+    "architecture": {
+      "prompt": {"pl": "Który aspekt architektury?", "en": "Which architecture aspect?"},
+      "type": "single",
+      "options": [
+        {"id": "cqrs_es", "label": {"pl": "Wdrożenie CQRS + Event Sourcing", "en": "Introduce CQRS + Event Sourcing"}, "ticket": "tpl_cqrs_es"},
+        {"id": "ddd", "label": {"pl": "Wytyczenie kontekstów DDD", "en": "Carve out DDD bounded contexts"}, "ticket": "tpl_ddd"},
+        {"id": "modules", "label": {"pl": "Modularyzacja monorepo / pakiety", "en": "Monorepo modularization / packages"}, "ticket": "tpl_modules"},
+        {"id": "cycles", "label": {"pl": "Eliminacja cykli zależności", "en": "Eliminate dependency cycles"}, "ticket": "tpl_cycles"},
+        {"id": "hexagonal", "label": {"pl": "Architektura heksagonalna / porty + adaptery", "en": "Hexagonal architecture / ports + adapters"}, "ticket": "tpl_hexagonal"}
+      ]
+    },
+
+    "frontend": {
+      "prompt": {"pl": "Co poprawić we frontendzie?", "en": "What to improve on the frontend?"},
+      "type": "single",
+      "options": [
+        {"id": "design_system", "label": {"pl": "Spójny design-system (tokens, komponenty)", "en": "Coherent design system (tokens, components)"}, "ticket": "tpl_design_system"},
+        {"id": "a11y", "label": {"pl": "Dostępność (WCAG, klawiatura, czytniki)", "en": "Accessibility (WCAG, keyboard, screen readers)"}, "ticket": "tpl_a11y"},
+        {"id": "ux_perf", "label": {"pl": "UX / wydajność renderingu", "en": "UX / render performance"}, "ticket": "tpl_ux_perf"},
+        {"id": "state_mgmt", "label": {"pl": "Zarządzanie stanem (store, signals)", "en": "State management (store, signals)"}, "ticket": "tpl_state_mgmt"},
+        {"id": "i18n", "label": {"pl": "Internacjonalizacja (i18n, RTL)", "en": "Internationalisation (i18n, RTL)"}, "ticket": "tpl_i18n"}
+      ]
+    },
+
+    "backend": {
+      "prompt": {"pl": "Co poprawić w backendzie?", "en": "What to improve in the backend?"},
+      "type": "single",
+      "options": [
+        {"id": "api_versioning", "label": {"pl": "Wersjonowanie API + kontrakty", "en": "API versioning + contracts"}, "ticket": "tpl_api_versioning"},
+        {"id": "data_model", "label": {"pl": "Refaktor modelu danych / schema", "en": "Refactor data model / schema"}, "ticket": "tpl_data_model"},
+        {"id": "async_jobs", "label": {"pl": "Kolejki, sagi, joby asynchroniczne", "en": "Queues, sagas, async jobs"}, "ticket": "tpl_async_jobs"},
+        {"id": "observability", "label": {"pl": "Logi, metryki, tracing", "en": "Logs, metrics, tracing"}, "ticket": "tpl_observability"},
+        {"id": "security", "label": {"pl": "Hardening bezpieczeństwa", "en": "Security hardening"}, "ticket": "tpl_security"}
+      ]
+    },
+
+    "quality": {
+      "prompt": {"pl": "Który element jakości?", "en": "Which quality dimension?"},
+      "type": "single",
+      "options": [
+        {"id": "cc_refactor", "label": {"pl": "Redukcja CC w hotspotach (>15)", "en": "Reduce CC in hotspots (>15)"}, "ticket": "tpl_cc_refactor"},
+        {"id": "tests", "label": {"pl": "Pokrycie testami + szybkie regresje", "en": "Test coverage + fast regressions"}, "ticket": "tpl_tests"},
+        {"id": "ci_gates", "label": {"pl": "CI gates: lint, mypy, ruff, regix", "en": "CI gates: lint, mypy, ruff, regix"}, "ticket": "tpl_ci_gates"},
+        {"id": "duplication", "label": {"pl": "Eliminacja duplikacji", "en": "Reduce duplication"}, "ticket": "tpl_duplication"}
+      ]
+    },
+
+    "performance": {
+      "prompt": {"pl": "Jaki obszar wydajności?", "en": "Which performance area?"},
+      "type": "single",
+      "options": [
+        {"id": "p99_latency", "label": {"pl": "P99 latencji ścieżek krytycznych", "en": "P99 latency on critical paths"}, "ticket": "tpl_p99"},
+        {"id": "memory", "label": {"pl": "Profil pamięci + leaki", "en": "Memory profile + leaks"}, "ticket": "tpl_memory"},
+        {"id": "n_plus_one", "label": {"pl": "N+1 query / cache", "en": "N+1 query / cache"}, "ticket": "tpl_nplusone"},
+        {"id": "frontend_perf", "label": {"pl": "Web vitals (LCP/INP/CLS)", "en": "Web vitals (LCP/INP/CLS)"}, "ticket": "tpl_web_vitals"}
+      ]
+    },
+
+    "devx": {
+      "prompt": {"pl": "Co usprawnić w DevX?", "en": "Which DevX improvement?"},
+      "type": "single",
+      "options": [
+        {"id": "local_dev", "label": {"pl": "Lokalny dev (make dev, hot-reload)", "en": "Local dev (make dev, hot-reload)"}, "ticket": "tpl_local_dev"},
+        {"id": "docs", "label": {"pl": "Dokumentacja onboardingu", "en": "Onboarding documentation"}, "ticket": "tpl_docs"},
+        {"id": "release", "label": {"pl": "Release / wersjonowanie", "en": "Release / versioning"}, "ticket": "tpl_release"},
+        {"id": "agents", "label": {"pl": "Agenci LLM (Koru, Cursor, llx)", "en": "LLM agents (Koru, Cursor, llx)"}, "ticket": "tpl_agents"}
+      ]
+    }
+  },
+
+  "tickets": {
+    "tpl_cqrs_es": {
+      "title": "Architektura: wprowadź CQRS + Event Sourcing",
+      "labels": ["architecture", "cqrs", "es"],
+      "priority": "high",
+      "body": "Wprowadź separację Command/Query oraz event-store dla {{project}}. Pierwszy krok: zidentyfikuj 1-2 ograniczone konteksty (np. {{hint_modules}}), wydziel `commands/`, `queries/`, `events/`, dodaj event-bus."
+    },
+    "tpl_ddd": {
+      "title": "Architektura: wytycz konteksty DDD",
+      "labels": ["architecture", "ddd"],
+      "priority": "normal",
+      "body": "Zidentyfikuj 3-5 bounded contexts w {{project}}, opisz ubiquitous language i zaproponuj mapę kontekstów (context map) jako diagram + plan migracji."
+    },
+    "tpl_modules": {
+      "title": "Architektura: modularyzacja {{project}}",
+      "labels": ["architecture", "modules"],
+      "priority": "normal",
+      "body": "Podziel {{project}} na niezależne moduły/pakiety, każdy z jasnym API publicznym. Krok 1: import-linter contracts + topologia zależności (`koru topology --format json`)."
+    },
+    "tpl_cycles": {
+      "title": "Architektura: eliminacja cykli zależności",
+      "labels": ["architecture", "cycles"],
+      "priority": "high",
+      "body": "Zlokalizuj wszystkie cykle przez `koru scan --cycles` lub `pydeps`. Dla każdego zaproponuj wstrzyknięcie zależności / inwersję."
+    },
+    "tpl_hexagonal": {
+      "title": "Architektura heksagonalna w {{project}}",
+      "labels": ["architecture", "hexagonal"],
+      "priority": "normal",
+      "body": "Dla wybranego modułu zaproponuj porty (interfejsy) + adaptery (DB, HTTP, queue). Wydziel `domain/`, `application/`, `adapters/`."
+    },
+
+    "tpl_design_system": {
+      "title": "Frontend: spójny design-system",
+      "labels": ["frontend", "design-system"],
+      "priority": "high",
+      "body": "Zbierz wszystkie hardkodowane wartości (px, kolory, fonty) z {{project}}, wyciągnij do tokenów CSS/JS i dodaj 5 kluczowych komponentów (Button, Input, Select, Modal, Toast)."
+    },
+    "tpl_a11y": {
+      "title": "Frontend: WCAG 2.1 AA",
+      "labels": ["frontend", "a11y"],
+      "priority": "normal",
+      "body": "Audyt klawiaturowy + axe-core na głównych widokach. Cel: zero błędów krytycznych, kontrast ≥ 4.5:1, fokus zawsze widoczny."
+    },
+    "tpl_ux_perf": {
+      "title": "Frontend: wydajność renderingu",
+      "labels": ["frontend", "performance"],
+      "priority": "normal",
+      "body": "Profil React/Lit/Vite, eliminacja niepotrzebnych re-renderów, lazy loading, splitting bundle. Mierz LCP < 2.5s."
+    },
+    "tpl_state_mgmt": {
+      "title": "Frontend: zarządzanie stanem",
+      "labels": ["frontend", "state"],
+      "priority": "normal",
+      "body": "Zinwentaryzuj source-of-truth stanu (lokalny vs globalny). Wprowadź jedno spójne podejście (signals / store / context)."
+    },
+    "tpl_i18n": {
+      "title": "Frontend: i18n",
+      "labels": ["frontend", "i18n"],
+      "priority": "low",
+      "body": "Wydziel wszystkie literały z UI do plików tłumaczeń. Dodaj fallback języka i przykładową translację (pl/en)."
+    },
+
+    "tpl_api_versioning": {
+      "title": "Backend: wersjonowanie API",
+      "labels": ["backend", "api"],
+      "priority": "high",
+      "body": "Wprowadź /v1, /v2 namespacy + kontrakty (OpenAPI / Pydantic schema). Polityka deprecation 6 mies."
+    },
+    "tpl_data_model": {
+      "title": "Backend: refaktor modelu danych",
+      "labels": ["backend", "data"],
+      "priority": "normal",
+      "body": "Zwaliduj schema (constraints, indeksy), zidentyfikuj denormalizacje, plan migracji (alembic / liquibase)."
+    },
+    "tpl_async_jobs": {
+      "title": "Backend: kolejki i sagi",
+      "labels": ["backend", "async"],
+      "priority": "normal",
+      "body": "Wybór: arq / celery / temporal. Pierwsza saga (przykład end-to-end z retry + DLQ)."
+    },
+    "tpl_observability": {
+      "title": "Backend: obserwowalność (OTel)",
+      "labels": ["backend", "observability"],
+      "priority": "high",
+      "body": "OpenTelemetry traces + metrics + structured logs. Dashboard: latency p50/p95/p99 + error rate."
+    },
+    "tpl_security": {
+      "title": "Backend: hardening",
+      "labels": ["backend", "security"],
+      "priority": "high",
+      "body": "OWASP Top 10 audit, rotacja sekretów, CSP, HSTS, rate-limiting, audit log dla akcji wrażliwych."
+    },
+
+    "tpl_cc_refactor": {
+      "title": "Quality: redukcja CC w hotspotach",
+      "labels": ["quality", "refactor", "complexity"],
+      "priority": "normal",
+      "body": "`project/analysis.toon.yaml` zawiera listę funkcji z CC>15. Wybierz top 5, wydziel sub-funkcje, dodaj testy regresji."
+    },
+    "tpl_tests": {
+      "title": "Quality: pokrycie testami",
+      "labels": ["quality", "tests"],
+      "priority": "high",
+      "body": "Krytyczne ścieżki bez testów: zidentyfikuj przez coverage.py / vitest. Cel: 70% line + 50% branch."
+    },
+    "tpl_ci_gates": {
+      "title": "Quality: CI gates",
+      "labels": ["quality", "ci"],
+      "priority": "normal",
+      "body": "ruff + mypy + pyright + regix + import-linter. Pre-commit blokuje commit przy regresji."
+    },
+    "tpl_duplication": {
+      "title": "Quality: eliminacja duplikacji",
+      "labels": ["quality", "duplication"],
+      "priority": "low",
+      "body": "Uruchom `jscpd` lub `pmd-cpd`, top 10 największych klonów → refactor do shared utils."
+    },
+
+    "tpl_p99": {
+      "title": "Performance: P99 latencji",
+      "labels": ["performance", "latency"],
+      "priority": "high",
+      "body": "Wybierz 3 endpointy SLO. Profiluj (py-spy / clinic.js), redukuj p99 o 30%."
+    },
+    "tpl_memory": {
+      "title": "Performance: pamięć i leaki",
+      "labels": ["performance", "memory"],
+      "priority": "normal",
+      "body": "memray / heaptrack / Chrome devtools. Eliminacja leaków referencji + LRU dla cache."
+    },
+    "tpl_nplusone": {
+      "title": "Performance: N+1 query",
+      "labels": ["performance", "database"],
+      "priority": "normal",
+      "body": "Audyt query log, eager loading, dataloader pattern, indeksy."
+    },
+    "tpl_web_vitals": {
+      "title": "Performance: Web Vitals",
+      "labels": ["frontend", "performance"],
+      "priority": "normal",
+      "body": "Lighthouse CI + RUM. LCP < 2.5s, INP < 200ms, CLS < 0.1 dla top 5 widoków."
+    },
+
+    "tpl_local_dev": {
+      "title": "DevX: lokalny dev",
+      "labels": ["devx"],
+      "priority": "normal",
+      "body": "make dev / docker compose w 1 komendzie, hot-reload, seedy danych testowych, /docs z OpenAPI."
+    },
+    "tpl_docs": {
+      "title": "DevX: dokumentacja onboardingu",
+      "labels": ["devx", "docs"],
+      "priority": "normal",
+      "body": "README + ARCHITECTURE.md + CONTRIBUTING.md + diagram (C4 lub mermaid). Nowy dev w 30 min."
+    },
+    "tpl_release": {
+      "title": "DevX: release flow",
+      "labels": ["devx", "release"],
+      "priority": "low",
+      "body": "Semantic versioning + changelog automation + tagged releases + rollback runbook."
+    },
+    "tpl_agents": {
+      "title": "DevX: agenci LLM",
+      "labels": ["devx", "llm", "agents"],
+      "priority": "normal",
+      "body": "Koru auto-pilot + Cursor/Windsurf rules + llx model routing. Bilety LLM-friendly, hooki pre-commit."
+    }
+  }
+}

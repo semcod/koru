@@ -7,11 +7,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.214-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$12.02-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-88.9h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$11.62-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-89.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $12.0241 (274 commits)
-- 👤 **Human dev:** ~$8885 (88.9h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $11.6173 (275 commits)
+- 👤 **Human dev:** ~$8896 (89.0h @ $100/h, 30min dedup)
 
 Generated on 2026-05-22 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -52,6 +52,37 @@ koru --init                # 1. set up .planfile/ + .koru/ + .gitignore
 koru                       # 2. print the LLM brief (paste into Cascade/Cursor/aider)
 koru --queue --loop        # 3. drain the queue (the agent works on each ticket)
 ```
+
+### Brand-new project? Run the wizard first
+
+```bash
+pip install koru
+koru wizard                # interactive: detects your IDE, picks a project,
+                           # walks a strategy decision tree, creates the first ticket
+```
+
+`koru wizard`:
+
+- **Detects IDEs** — both *running* processes (Cursor, VS Code, Windsurf,
+  PyCharm/IntelliJ, Zed, Antigravity, VSCodium) and *installed* ones found
+  in standard locations (`/usr/bin`, `/opt/*`, `/snap/*`, `~/.local/bin`,
+  `/Applications/*`).
+- **Suggests a project** — the workspace open in the running IDE, the
+  current shell `cwd`, plus JetBrains recent-projects history.
+- **Walks a JSON decision tree** (`koru/wizard/strategies.json`) so you
+  pick a strategy: *architecture refactor*, *frontend/UX*, *backend/API*,
+  *CQRS + Event Sourcing*, *quality (CC, tests, CI gates)*, *performance*,
+  *DevX*. The tree is fully **user-editable** — copy it, edit, and pass
+  `--strategies my-tree.json`.
+- **Creates the first planfile ticket** matching the chosen leaf.
+- **Optional `--llx`** — calls the [`llx`](https://pypi.org/project/llx/)
+  CLI to *extend* branches dynamically based on the analysed project.
+- **`--detect-only`** — prints the discovered IDEs + project candidates as
+  text or JSON without prompting; useful in scripts.
+
+Calling `koru auto` in a brand-new project (no `.planfile`, TTY attached)
+will now hint that `koru wizard` is the recommended first step. Skip the
+hint with `KORU_AUTO_SKIP_WIZARD=1`.
 
 That is the entire onboarding. **`koru` (no args) is the command an LLM
 agent runs at the start of every session** — the markdown brief it

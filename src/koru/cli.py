@@ -1404,13 +1404,41 @@ def _peek_project_from_argv(argv: list[str]) -> Path:
     return Path.cwd().resolve()
 
 
+def _should_suggest_wizard(argv: list[str], project: Path) -> bool:
+    """Heuristic: only nudge brand-new users running ``koru auto`` with no args.
+
+    We require: TTY stdin/stdout, no extra args, no ``.planfile`` in project,
+    and no ``KORU_AUTO_SKIP_WIZARD`` env override.
+    """
+    if argv:
+        return False
+    if os.environ.get("KORU_AUTO_SKIP_WIZARD", "").strip().lower() in ("1", "true", "yes"):
+        return False
+    if not (sys.stdin.isatty() and sys.stdout.isatty()):
+        return False
+    return not (project / ".planfile").exists()
+
+
 def _auto_main(argv: list[str]) -> int:
-    """``koru auto``: stop prior autonomous/auto loops, then start with ``--replace-existing``."""
+    """``koru auto``: stop prior autonomous/auto loops, then start with ``--replace-existing``.
+
+    On a brand-new project (no ``.planfile``, interactive TTY, no args) we
+    suggest running ``koru wizard`` first so the user can pick a strategy
+    instead of blindly entering the autonomous loop with an empty backlog.
+    """
     if any(arg in {"-h", "--help"} for arg in argv):
         return autonomous_main(argv, invoked_as_auto=True)
+    project = _peek_project_from_argv(argv)
+    if _should_suggest_wizard(argv, project):
+        print(
+            "koru auto: no .planfile detected — recommended first step is "
+            "`koru wizard` to pick a strategy and seed the first ticket.",
+            file=sys.stderr,
+        )
+        print("(skip with KORU_AUTO_SKIP_WIZARD=1 or run `koru auto --allow-duplicate`)", file=sys.stderr)
     if "--allow-duplicate" not in argv:
         stdio = os.environ.get("KORU_STDIO_FORMAT", "human")
-        stop_prior_autonomous_for_auto_start(_peek_project_from_argv(argv), stdio_format=stdio)
+        stop_prior_autonomous_for_auto_start(project, stdio_format=stdio)
     if "--replace-existing" not in argv and "--allow-duplicate" not in argv:
         argv = ["--replace-existing", *argv]
     return autonomous_main(argv, invoked_as_auto=True)
@@ -1437,6 +1465,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "autoloop": autoloop_main,
     "autonomous": autonomous_main,
     "auto": lambda argv: _auto_main(argv),
+    "wizard": lambda argv: __import__("koru.wizard.cli", fromlist=["wizard_main"]).wizard_main(argv),
     "dsl": _dsl_main,
     "api": _api_main,
     "topology": _topology_main,
