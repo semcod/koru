@@ -15,6 +15,7 @@ from koru.cli import main
 from korumesh.envelope import verify_envelope
 from korumesh.store import clear_vision_frames, list_vision_frames, remember_envelope
 from korumesh.transport import _relay_client
+from koruobserve.paths import pidfile
 from koruvision.capture import VisionFrame
 
 websockets = pytest.importorskip("websockets")
@@ -177,3 +178,50 @@ def test_vision_agent_cli_publishes_captured_frame_to_mesh(tmp_path: Path) -> No
     assert envelope.topic == "vision/frame"
     assert envelope.payload == b"\x89PNG"
     assert verify_envelope(envelope, b"vision-agent-e2e-key-32-bytes!!")
+
+
+def test_observe_cli_roundtrip_through_main_dispatch(tmp_path: Path, monkeypatch) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    next_pid = iter(range(30001, 30010))
+    spawned: list[tuple[str, list[str]]] = []
+
+    def _fake_spawn(name: str, args: list[str], project_root: Path) -> int:
+        pid = next(next_pid)
+        spawned.append((name, args))
+        pidfile(project_root, name).parent.mkdir(parents=True, exist_ok=True)
+        pidfile(project_root, name).write_text(f"{pid}\n", encoding="utf-8")
+        return pid
+
+    monkeypatch.setattr("koruobserve.cli._require_observe_runtime", lambda: None)
+    monkeypatch.setattr("koruobserve.lifecycle._spawn", _fake_spawn)
+    monkeypatch.setattr("koruobserve.lifecycle._is_alive", lambda pid: True)
+    monkeypatch.setattr("koruobserve.lifecycle.os.kill", lambda pid, sig: None)
+
+    code, out, err = _run_main(
+        "observe",
+        "up",
+        "--project",
+        str(project),
+        "--relay-port",
+        "0",
+        "--dashboard-port",
+        "0",
+    )
+    assert code == 0, err
+    assert "koru observe: up" in out
+    assert [name for name, _ in spawned] == ["relay", "vision", "dashboard"]
+    assert not out.split("relay", 1)[1].splitlines()[0].endswith(":0")
+
+    code, out, err = _run_main("observe", "status", "--project", str(project))
+    assert code == 0, err
+    assert '"alive": true' in out
+
+    code, out, err = _run_main("observe", "grid", "--project", str(project))
+    assert code == 0, err
+    assert out.strip().endswith("/grid")
+
+    code, out, err = _run_main("observe", "down", "--project", str(project))
+    assert code == 0, err
+    assert "dashboard stopped=True" in out
+    assert not pidfile(project, "relay").exists()

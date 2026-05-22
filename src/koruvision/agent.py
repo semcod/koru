@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 import time
 from collections.abc import Callable
 
@@ -25,10 +26,13 @@ def run_capture_loop(
         raise ValueError(msg)
     count = 0
     while max_frames is None or count < max_frames:
-        frame = capture_once(monitor_id)
-        if on_frame is not None:
-            on_frame(frame)
-        count += 1
+        try:
+            frame = capture_once(monitor_id)
+            if on_frame is not None:
+                on_frame(frame)
+            count += 1
+        except Exception as exc:  # noqa: BLE001 - capture/publish backends can raise vendor-specific errors.
+            print(f"koru vision agent: capture failed: {exc}", file=sys.stderr)
         if max_frames is not None and count >= max_frames:
             break
         time.sleep(interval_seconds)

@@ -1430,6 +1430,7 @@ all = [
     { name = "litellm" },
     { name = "mutmut" },
     { name = "mypy" },
+    { name = "mss" },
     { name = "openai" },
     { name = "opentelemetry-exporter-otlp" },
     { name = "opentelemetry-instrumentation-fastapi" },
@@ -1480,6 +1481,10 @@ dev = [
 mesh = [
     { name = "websockets" },
 ]
+observe = [
+    { name = "mss" },
+    { name = "websockets" },
+]
 obs = [
     { name = "opentelemetry-exporter-otlp" },
     { name = "opentelemetry-instrumentation-fastapi" },
@@ -1528,6 +1533,8 @@ requires-dist = [
     { name = "instructor", marker = "extra == 'all'", specifier = ">=1.6,<2.0" },
     { name = "litellm", marker = "extra == 'agent'", specifier = ">=1.51,<2.0" },
     { name = "litellm", marker = "extra == 'all'", specifier = ">=1.51,<2.0" },
+    { name = "mss", marker = "extra == 'all'", specifier = ">=9.0,<11.0" },
+    { name = "mss", marker = "extra == 'observe'", specifier = ">=9.0,<11.0" },
     { name = "mss", marker = "extra == 'vision'", specifier = ">=9.0,<11.0" },
     { name = "mutmut", marker = "extra == 'all'", specifier = ">=3.2,<4.0" },
     { name = "mutmut", marker = "extra == 'quality'", specifier = ">=3.2,<4.0" },
@@ -1582,9 +1589,10 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'api'", specifier = ">=0.30,<1.0" },
     { name = "websockets", marker = "extra == 'all'", specifier = ">=12.0,<16.0" },
     { name = "websockets", marker = "extra == 'mesh'", specifier = ">=12.0,<16.0" },
+    { name = "websockets", marker = "extra == 'observe'", specifier = ">=12.0,<16.0" },
     { name = "websockets", marker = "extra == 'watch'", specifier = ">=12.0,<16.0" },
 ]
-provides-extras = ["watch", "vision", "mesh", "dev", "api", "agent", "obs", "queue", "quality", "all"]
+provides-extras = ["watch", "vision", "mesh", "observe", "dev", "api", "agent", "obs", "queue", "quality", "all"]
 
 [[package]]
 name = "libcst"

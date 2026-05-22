@@ -48,6 +48,9 @@ def _resolve_serve_settings(config: dict[str, Any]) -> tuple[str, int]:
 
 def _pick_free_port(preferred: int) -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        if preferred <= 0:
+            sock.bind(("127.0.0.1", 0))
+            return sock.getsockname()[1]
         try:
             sock.bind(("127.0.0.1", preferred))
             return preferred
@@ -145,9 +148,9 @@ def observe_up(
 
     vision_args = _koru_cmd(
         "vision",
-        "agent",
         "--project",
         str(project),
+        "agent",
         "--publish-mesh",
         "--mesh-url",
         relay_url,

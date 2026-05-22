@@ -52,13 +52,21 @@ from urllib.parse import parse_qs, urlparse
 
 yaml = cast(Any, importlib.import_module("yaml"))
 
-from koru.configurator import CONFIG_REL_PATH, configure_project, load_project_config
 from koru.context import build_context, render_markdown_handoff
 from koru.events import emit_management_event
 from koru.queue.runners import run_process
 from koru.queue.ticket import planfile_command
-from koru.wizard.project import propose_projects
 from koruide.ide import autopilot_ide_choices, detect_running_ides, normalize_ide_id
+from koruapi.dashboard_config import (
+  DashboardConfigDefaults,
+  dashboard_config_payload,
+  save_dashboard_config,
+)
+from koruapi.dashboard_projects import (
+  dashboard_workspace,
+  discover_dashboard_projects,
+  resolve_dashboard_project,
+)
 from koruapi.runtime_insights import collect_runtime_insights
 from koruapi.topology_post import apply_topology_post_update
 from koru.topology import (
@@ -1474,97 +1482,20 @@ def _dashboard_urls(config: ServeConfig) -> list[str]:
   return list(dict.fromkeys(urls))
 
 
-def _project_label(path: Path) -> str:
-  return path.name or str(path)
-
-
 def _dashboard_workspace(config: ServeConfig) -> Path:
-  raw = os.environ.get("KORU_SERVE_WORKSPACE", "").strip()
-  if raw:
-    return Path(raw).expanduser().resolve()
-  if config.workspace is not None:
-    return config.workspace.expanduser().resolve()
-  return config.project.resolve().parent
-
-
-def _project_candidate_dict(path: Path, source: str) -> dict[str, Any]:
-  path = path.expanduser().resolve()
-  return {
-    "path": str(path),
-    "name": _project_label(path),
-    "source": source,
-    "planfile": (path / ".planfile" / "config.yaml").is_file(),
-    "git": (path / ".git").exists(),
-  }
-
-
-def _looks_like_project(path: Path) -> bool:
-  return any(
-    (path / marker).exists()
-    for marker in (
-      ".git",
-      ".planfile",
-      "pyproject.toml",
-      "package.json",
-      "Cargo.toml",
-      "go.mod",
-      "Taskfile.yml",
-      "Makefile",
-    )
-  )
-
-
-def _workspace_project_candidates(workspace: Path, *, max_results: int) -> list[Path]:
-  workspace = workspace.expanduser().resolve()
-  rows: list[Path] = []
-  if _looks_like_project(workspace):
-    rows.append(workspace)
-  try:
-    children = sorted(workspace.iterdir(), key=lambda item: item.name.lower())
-  except OSError:
-    return rows
-  for child in children:
-    if len(rows) >= max_results:
-      break
-    if child.name.startswith(".") or not child.is_dir():
-      continue
-    if _looks_like_project(child):
-      rows.append(child.resolve())
-  return rows
+  return dashboard_workspace(config.project, config.workspace)
 
 
 def _discover_dashboard_projects(config: ServeConfig, *, max_results: int = 80) -> list[dict[str, Any]]:
-  """Return projects the LAN dashboard may operate on."""
-  rows: list[dict[str, Any]] = [_project_candidate_dict(config.project, "serve project")]
-  with contextlib.suppress(Exception):
-    for item in propose_projects(cast(Any, detect_running_ides()), max_results=16):
-      rows.append(_project_candidate_dict(item.path, item.source))
-  workspace = _dashboard_workspace(config)
-  with contextlib.suppress(Exception):
-    for project in _workspace_project_candidates(workspace, max_results=max_results):
-      rows.append(_project_candidate_dict(project, f"workspace {workspace}"))
-
-  seen: set[str] = set()
-  out: list[dict[str, Any]] = []
-  for row in rows:
-    path = str(row["path"])
-    if path in seen:
-      continue
-    seen.add(path)
-    out.append(row)
-    if len(out) >= max_results:
-      break
-  return out
+  return discover_dashboard_projects(
+    config.project,
+    config.workspace,
+    max_results=max_results,
+  )
 
 
 def _resolve_dashboard_project(config: ServeConfig, raw: object | None) -> Path:
-  if raw is None or not str(raw).strip():
-    return config.project.resolve()
-  candidate = Path(str(raw)).expanduser().resolve()
-  allowed = {Path(str(row["path"])).resolve() for row in _discover_dashboard_projects(config)}
-  if candidate in allowed:
-    return candidate
-  raise ValueError(f"project is not available in this dashboard: {candidate}")
+  return resolve_dashboard_project(config.project, config.workspace, raw)
 
 
 def _dashboard_ide_rows() -> list[dict[str, Any]]:
@@ -1601,45 +1532,15 @@ def _dashboard_state(config: ServeConfig) -> dict[str, Any]:
   }
 
 
-def _bool_from_dashboard(value: object, *, default: bool = False) -> bool:
-  if value is None:
-    return default
-  if isinstance(value, bool):
-    return value
-  return str(value).strip().lower() in {"1", "true", "yes", "on", "y", "tak"}
-
-
-def _int_from_dashboard(value: object, *, default: int) -> int:
-  if value is None or str(value).strip() == "":
-    return default
-  return int(str(value).strip())
-
-
-def _dashboard_config_payload(config: ServeConfig, project: Path) -> dict[str, Any]:
-  saved = load_project_config(project)
-  serve = saved.get("serve") if isinstance(saved.get("serve"), dict) else {}
-  effective = {
-    "project": str(project.resolve()),
-    "workspace": str(saved.get("workspace") or _dashboard_workspace(config)),
-    "ide": str(saved.get("ide") or "auto"),
-    "queue_name": str(saved.get("queue_name") or config.queue_name or "default"),
-    "serve": {
-      "host": str(serve.get("host") or config.host),
-      "port": int(serve.get("port") or config.port),
-      "lan": _bool_from_dashboard(
-        serve.get("lan"),
-        default=bool(config.lan or config.host in {"0.0.0.0", "::"}),
-      ),
-      "auto_port": _bool_from_dashboard(serve.get("auto_port"), default=bool(config.auto_port)),
-    },
-  }
-  return {
-    "ok": True,
-    "path": str(project.resolve() / CONFIG_REL_PATH),
-    "exists": bool((project.resolve() / CONFIG_REL_PATH).is_file()),
-    "config": {**effective, **{k: v for k, v in saved.items() if k in {"schema", "created_at", "updated_at"}}},
-    "ide_choices": list(autopilot_ide_choices()),
-  }
+def _dashboard_config_defaults(config: ServeConfig) -> DashboardConfigDefaults:
+  return DashboardConfigDefaults(
+    workspace=_dashboard_workspace(config),
+    host=config.host,
+    port=config.port,
+    lan=bool(config.lan),
+    auto_port=bool(config.auto_port),
+    queue_name=config.queue_name,
+  )
 
 
 def _load_sprint_file(path: Path) -> dict[str, Any]:
@@ -1801,7 +1702,9 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
         def _get_config(self) -> None:
           try:
             project = self._selected_project()
-            self._send_json(_dashboard_config_payload(config, project))
+            self._send_json(
+              dashboard_config_payload(project, _dashboard_config_defaults(config))
+            )
           except ValueError as exc:
             self._send_json({"error": str(exc)}, status=400)
           except Exception as exc:  # pragma: no cover — surface config errors
@@ -1902,6 +1805,169 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
             return
           self._send(404, b"not found")
 
+        def _post_topology(self, body: dict[str, Any]) -> None:
+          try:
+            project = self._selected_project(body)
+          except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=400)
+            return
+          merged, err, status = apply_topology_post_update(project, body)
+          if err is not None:
+            self._send_json(err, status=status)
+            return
+          self._send_json(merged)
+
+        def _post_runtime_context_config(self, body: dict[str, Any]) -> None:
+          try:
+            runtime_context = importlib.import_module("planfile.runtime_context")
+            project = self._selected_project(body)
+            current = runtime_context.load_runtime_context_config(project)
+            merged = {
+              "enabled": {
+                **(current.get("enabled") or {}),
+                **(body.get("enabled") or {}),
+              },
+              "overrides": {
+                **(current.get("overrides") or {}),
+                **(body.get("overrides") or {}),
+              },
+            }
+            saved_config = runtime_context.save_runtime_context_config(project, merged)
+          except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=400)
+            return
+          except Exception as exc:  # pragma: no cover — optional planfile integration
+            self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+            return
+          self._send_json(saved_config)
+
+        def _post_config(self, body: dict[str, Any]) -> None:
+          try:
+            project = self._selected_project(body)
+            defaults = _dashboard_config_defaults(config)
+            result = save_dashboard_config(project, body, defaults)
+          except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=400)
+            return
+          except Exception as exc:
+            self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+            return
+          self._send_json({**dashboard_config_payload(project, defaults), "saved": True, "path": str(result.path)})
+
+        def _post_waiting_input_bulk(self, body: dict[str, Any]) -> None:
+          action = str(body.get("action") or "").strip().lower()
+          if action not in {"approve", "reject"}:
+            self._send_json({"error": "action must be approve|reject"}, status=400)
+            return
+          ticket_ids_raw = body.get("ticket_ids")
+          if not isinstance(ticket_ids_raw, list):
+            self._send_json({"error": "ticket_ids must be an array"}, status=400)
+            return
+          ticket_ids = [str(x).strip() for x in ticket_ids_raw if str(x).strip()]
+          reason = str(body.get("reason") or "").strip()
+          try:
+            project = self._selected_project(body)
+          except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=400)
+            return
+          result = _bulk_waiting_input_action(
+            project,
+            ticket_ids=ticket_ids,
+            action=action,
+            reason=reason,
+          )
+          if not result.get("ok"):
+            self._send_json(result, status=400)
+            return
+          self._send_json(result)
+
+        def _post_ticket_create(self, body: dict[str, Any]) -> None:
+          description = str(body.get("description") or "").strip()
+          if not description:
+            self._send_json({"error": "description is required"}, status=400)
+            return
+          title = str(body.get("title") or "").strip() or None
+          priority = str(body.get("priority") or "normal").strip()
+          executor_kind = str(body.get("executor_kind") or "human").strip()
+          queue_name = str(body.get("queue_name") or "default").strip()
+          ide = normalize_ide_id(str(body.get("ide") or "auto").strip() or "auto")
+          try:
+            from koru.tasks import create_nl_task
+
+            project = self._selected_project(body)
+            scaffold: dict[str, Any] = {
+              "executor_kind": executor_kind,
+              "executor_mode": "interactive",
+              "labels": ["koru", "dashboard", "llm-ready"],
+              "source_context": {"ide": ide},
+              "source_tool": "koru-dashboard",
+            }
+            if title:
+              scaffold["title"] = title
+            created = create_nl_task(
+              project,
+              description,
+              queue_name=queue_name,
+              priority=priority,
+              scaffold=scaffold,
+            )
+            self._send_json(
+              {
+                "ok": True,
+                "ticket_id": created.ticket_id,
+                "name": created.name,
+                "sprint": created.sprint,
+                "path": str(created.path),
+                "project": str(project),
+                "ide": ide,
+              }
+            )
+          except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=400)
+          except Exception as exc:
+            self._send_json(
+              {"error": str(exc), "type": type(exc).__name__},
+              status=500,
+            )
+
+        def _post_ticket_update(self, body: dict[str, Any]) -> None:
+          ticket_id = str(body.get("ticket_id") or "").strip()
+          if not ticket_id:
+            self._send_json({"error": "ticket_id is required"}, status=400)
+            return
+          try:
+            project = self._selected_project(body)
+            result = _update_ticket_from_dashboard(
+              project,
+              ticket_id=ticket_id,
+              priority=str(body["priority"]).strip() if "priority" in body else None,
+              queue_name=str(body["queue_name"]).strip() if "queue_name" in body else None,
+            )
+          except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=400)
+            return
+          except Exception as exc:
+            self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+            return
+          self._send_json(result)
+
+        def _post_ticket_reorder(self, body: dict[str, Any]) -> None:
+          ticket_id = str(body.get("ticket_id") or "").strip()
+          direction = str(body.get("direction") or "").strip().lower()
+          if not ticket_id:
+            self._send_json({"error": "ticket_id is required"}, status=400)
+            return
+          try:
+            project = self._selected_project(body)
+            result = _reorder_ticket_from_dashboard(project, ticket_id=ticket_id, direction=direction)
+          except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=400)
+            return
+          except Exception as exc:
+            self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+            return
+          self._send_json(result)
+
         def do_POST(self) -> None:  # noqa: N802 — stdlib API
           path = urlparse(self.path).path
           try:
@@ -1910,180 +1976,17 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
             self._send_json({"error": str(exc)}, status=400)
             return
 
-          if path == "/api/topology":
-            try:
-              project = self._selected_project(body)
-            except ValueError as exc:
-              self._send_json({"error": str(exc)}, status=400)
-              return
-            merged, err, status = apply_topology_post_update(project, body)
-            if err is not None:
-              self._send_json(err, status=status)
-              return
-            self._send_json(merged)
-            return
-
-          if path == "/api/runtime-context/config":
-            try:
-              runtime_context = importlib.import_module("planfile.runtime_context")
-              project = self._selected_project(body)
-              current = runtime_context.load_runtime_context_config(project)
-              merged = {
-                "enabled": {
-                  **(current.get("enabled") or {}),
-                  **(body.get("enabled") or {}),
-                },
-                "overrides": {
-                  **(current.get("overrides") or {}),
-                  **(body.get("overrides") or {}),
-                },
-              }
-              saved_config = runtime_context.save_runtime_context_config(project, merged)
-            except ValueError as exc:
-              self._send_json({"error": str(exc)}, status=400)
-              return
-            except Exception as exc:  # pragma: no cover — optional planfile integration
-              self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
-              return
-            self._send_json(saved_config)
-            return
-          if path == "/api/config":
-            try:
-              project = self._selected_project(body)
-              serve = body.get("serve") if isinstance(body.get("serve"), dict) else {}
-              workspace_raw = str(body.get("workspace") or "").strip()
-              result = configure_project(
-                project=project,
-                workspace=Path(workspace_raw) if workspace_raw else None,
-                ide=str(body.get("ide") or "auto").strip() or "auto",
-                queue_name=str(body.get("queue_name") or "default").strip() or "default",
-                host=str(serve.get("host") or config.host).strip() or config.host,
-                port=_int_from_dashboard(serve.get("port"), default=config.port),
-                lan=_bool_from_dashboard(serve.get("lan"), default=bool(config.lan)),
-                auto_port=_bool_from_dashboard(serve.get("auto_port"), default=bool(config.auto_port)),
-                interactive=False,
-              )
-            except ValueError as exc:
-              self._send_json({"error": str(exc)}, status=400)
-              return
-            except Exception as exc:
-              self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
-              return
-            self._send_json({**_dashboard_config_payload(config, project), "saved": True, "path": str(result.path)})
-            return
-          if path == "/api/tickets/waiting-input/bulk":
-            action = str(body.get("action") or "").strip().lower()
-            if action not in {"approve", "reject"}:
-              self._send_json({"error": "action must be approve|reject"}, status=400)
-              return
-            ticket_ids_raw = body.get("ticket_ids")
-            if not isinstance(ticket_ids_raw, list):
-              self._send_json({"error": "ticket_ids must be an array"}, status=400)
-              return
-            ticket_ids = [str(x).strip() for x in ticket_ids_raw if str(x).strip()]
-            reason = str(body.get("reason") or "").strip()
-            try:
-              project = self._selected_project(body)
-            except ValueError as exc:
-              self._send_json({"error": str(exc)}, status=400)
-              return
-            result = _bulk_waiting_input_action(
-              project,
-              ticket_ids=ticket_ids,
-              action=action,
-              reason=reason,
-            )
-            if not result.get("ok"):
-              self._send_json(result, status=400)
-              return
-            self._send_json(result)
-            return
-          if path == "/api/tickets/create":
-            description = str(body.get("description") or "").strip()
-            if not description:
-              self._send_json({"error": "description is required"}, status=400)
-              return
-            title = str(body.get("title") or "").strip() or None
-            priority = str(body.get("priority") or "normal").strip()
-            executor_kind = str(body.get("executor_kind") or "human").strip()
-            queue_name = str(body.get("queue_name") or "default").strip()
-            ide = normalize_ide_id(str(body.get("ide") or "auto").strip() or "auto")
-            try:
-              from koru.tasks import create_nl_task
-
-              project = self._selected_project(body)
-              scaffold: dict[str, Any] = {
-                "executor_kind": executor_kind,
-                "executor_mode": "interactive",
-                "labels": ["koru", "dashboard", "llm-ready"],
-                "source_context": {"ide": ide},
-                "source_tool": "koru-dashboard",
-              }
-              if title:
-                scaffold["title"] = title
-              created = create_nl_task(
-                project,
-                description,
-                queue_name=queue_name,
-                priority=priority,
-                scaffold=scaffold,
-              )
-              self._send_json(
-                {
-                  "ok": True,
-                  "ticket_id": created.ticket_id,
-                  "name": created.name,
-                  "sprint": created.sprint,
-                  "path": str(created.path),
-                  "project": str(project),
-                  "ide": ide,
-                }
-              )
-            except ValueError as exc:
-              self._send_json({"error": str(exc)}, status=400)
-            except Exception as exc:
-              self._send_json(
-                {"error": str(exc), "type": type(exc).__name__},
-                status=500,
-              )
-            return
-          if path == "/api/tickets/update":
-            ticket_id = str(body.get("ticket_id") or "").strip()
-            if not ticket_id:
-              self._send_json({"error": "ticket_id is required"}, status=400)
-              return
-            try:
-              project = self._selected_project(body)
-              result = _update_ticket_from_dashboard(
-                project,
-                ticket_id=ticket_id,
-                priority=str(body["priority"]).strip() if "priority" in body else None,
-                queue_name=str(body["queue_name"]).strip() if "queue_name" in body else None,
-              )
-            except ValueError as exc:
-              self._send_json({"error": str(exc)}, status=400)
-              return
-            except Exception as exc:
-              self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
-              return
-            self._send_json(result)
-            return
-          if path == "/api/tickets/reorder":
-            ticket_id = str(body.get("ticket_id") or "").strip()
-            direction = str(body.get("direction") or "").strip().lower()
-            if not ticket_id:
-              self._send_json({"error": "ticket_id is required"}, status=400)
-              return
-            try:
-              project = self._selected_project(body)
-              result = _reorder_ticket_from_dashboard(project, ticket_id=ticket_id, direction=direction)
-            except ValueError as exc:
-              self._send_json({"error": str(exc)}, status=400)
-              return
-            except Exception as exc:
-              self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
-              return
-            self._send_json(result)
+          route = {
+            "/api/topology": self._post_topology,
+            "/api/runtime-context/config": self._post_runtime_context_config,
+            "/api/config": self._post_config,
+            "/api/tickets/waiting-input/bulk": self._post_waiting_input_bulk,
+            "/api/tickets/create": self._post_ticket_create,
+            "/api/tickets/update": self._post_ticket_update,
+            "/api/tickets/reorder": self._post_ticket_reorder,
+          }.get(path)
+          if route is not None:
+            route(body)
             return
           self._send(404, b"not found")
 

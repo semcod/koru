@@ -514,11 +514,12 @@ class TestSubcommandDispatch(unittest.TestCase):
             with self.subTest(subcommand=name):
                 fake = mock.Mock(return_value=0)
                 with mock.patch.dict(_SUBCOMMANDS, {name: fake}):
-                    with mock.patch("sys.argv", ["koru", name, "a", "b", "c"]):
-                        code = main()
-                    # Assert INSIDE the patch context so the mock is still bound.
-                    fake.assert_called_once_with(["a", "b", "c"])
-                self.assertEqual(code, 0)
+                    with mock.patch("koru._legacy_cli_impl._maybe_reexec_for_project_venv"):
+                        with mock.patch("sys.argv", ["koru", name, "a", "b", "c"]):
+                            code = main()
+                        # Assert INSIDE the patch context so the mock is still bound.
+                        fake.assert_called_once_with(["a", "b", "c"])
+                    self.assertEqual(code, 0)
 
     def test_unknown_first_arg_falls_through_to_argparse(self) -> None:
         """A non-subcommand argv MUST NOT trigger any handler."""

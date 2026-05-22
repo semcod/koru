@@ -1546,6 +1546,20 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
 
+## [0.1.219] - 2026-05-22
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cli.py
+- Update tests/test_koruvision_agent.py
+- Update tests/test_observation_mesh_e2e.py
+
+### Other
+- Update .gitignore
+- Update uv.lock
+
 ## [0.1.218] - 2026-05-22
 
 ### Docs

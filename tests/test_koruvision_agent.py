@@ -18,3 +18,20 @@ def test_run_capture_loop_respects_max_frames() -> None:
             )
     assert count == 3
     assert frames == [1, 1, 1]
+
+
+def test_run_capture_loop_retries_after_capture_error() -> None:
+    frames: list[str] = []
+
+    with mock.patch("koruvision.agent.capture_once") as capture:
+        capture.side_effect = [RuntimeError("display unavailable"), mock.Mock(frame_id="abc")]
+        with mock.patch("koruvision.agent.time.sleep") as sleep:
+            count = run_capture_loop(
+                interval_seconds=60,
+                on_frame=lambda frame: frames.append(frame.frame_id),
+                max_frames=1,
+            )
+
+    assert count == 1
+    assert frames == ["abc"]
+    sleep.assert_called_once_with(60)

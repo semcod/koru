@@ -18,7 +18,7 @@ def build_mesh_parser() -> argparse.ArgumentParser:
     publish = sub.add_parser("publish", help="Publish one signed envelope to a relay.")
     publish.add_argument("--url", default="ws://127.0.0.1:9876", help="Relay WebSocket URL.")
     publish.add_argument("--from-peer", required=True, dest="peer_from", help="Sender peer id.")
-    publish.add_argument("--to-peer", default="*", help="Recipient peer id or *.")
+    publish.add_argument("--to-peer", default="*", dest="peer_to", help="Recipient peer id or *.")
     publish.add_argument("--topic", required=True, help="Envelope topic.")
     publish.add_argument("--mime", default="text/plain", help="Payload MIME type.")
     publish.add_argument("--payload", default="", help="Payload body.")

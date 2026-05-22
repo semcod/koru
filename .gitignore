@@ -233,6 +233,7 @@ __marimo__/
 .sumr/
 
 # koru runtime artefacts (generated)
+.koru/
 .planfile/.koru/
 .wup/
 deps.json

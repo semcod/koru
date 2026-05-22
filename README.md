@@ -7,11 +7,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$10.17-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-91.9h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.219-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$7.83-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-92.6h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $10.1680 (285 commits)
-- 👤 **Human dev:** ~$9191 (91.9h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $7.8346 (287 commits)
+- 👤 **Human dev:** ~$9262 (92.6h @ $100/h, 30min dedup)
 
 Generated on 2026-05-22 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -151,6 +151,9 @@ Install only the lanes you are working on:
 
 ```bash
 pip install "koru[watch]"    # WebSocket queue watcher
+pip install "koru[vision]"   # local screen capture for observation mesh
+pip install "koru[mesh]"     # WebSocket relay/publish transport for observation mesh
+pip install "koru[observe]"  # full local observation stack (vision + mesh)
 pip install "koru[dev]"      # tests, lint, typing, local quality tooling
 pip install "koru[api]"      # FastAPI healing webhook service
 pip install "koru[agent]"    # LLM / structured-output integrations
@@ -683,8 +686,9 @@ status even when they exceed `--max-age`.
 
 ## Filesystem contract
 
-**koru never writes outside `<project>/.planfile/`.** This is a hard
-rule for the production code path; any deviation is a bug.
+The planfile execution runtime writes under `<project>/.planfile/`.
+Feature-level local configuration and opt-in observation state can also live
+under `<project>/.koru/`; both trees are generated and gitignore-friendly.
 
 ```
 <project>/.planfile/
@@ -704,6 +708,7 @@ always the source of truth. Anything in `.koru/` can be deleted at any
 time without losing ticket state. Recommended `.gitignore` entry:
 
 ```gitignore
+.koru/
 .planfile/.koru/
 ```
 
