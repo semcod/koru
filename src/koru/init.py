@@ -554,7 +554,7 @@ def _write_agent_lane_artifacts(project: Path, lane: str) -> bool:
             "or use `koru autonomous up --agent-lane auto` (no source needed)."
         )
     shell_path = rt / "shell-env.sh"
-    shell_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    shell_path.write_text(f"{'\n'.join(lines)}\n", encoding="utf-8")
 
     runner = rt / "run-autonomous.sh"
     runner.write_text(RUN_AUTONOMOUS_SH, encoding="utf-8")
@@ -606,5 +606,5 @@ def _ensure_gitignore_entry(project: Path) -> bool:
         block.append("")  # blank line separator
     block.append(GITIGNORE_MARKER)
     block.append(GITIGNORE_LINE)
-    path.write_text(existing + "\n".join(block) + "\n", encoding="utf-8")
+    path.write_text(f"{existing}{'\n'.join(block)}\n", encoding="utf-8")
     return True

@@ -1006,7 +1006,7 @@ def _render_active_ticket(ticket: dict[str, Any]) -> list[str]:
         lines.append("")
         lines.append("### Prompt")
         lines.append("")
-        lines.append("> " + str(prompt).replace("\n", "\n> "))
+        lines.append(f"> {str(prompt).replace(chr(10), chr(10)+'> ')}")
     lines.append("")
     return lines
 

@@ -41,9 +41,7 @@ def enable_autonomous_strict_plugin_policy(
             details.append("ack")
         if stdio_info is not None:
             stdio_info(
-                "koru autonomous: strict plugin "
-                + "/".join(details)
-                + " policy enabled by default",
+                f"koru autonomous: strict plugin {'/'.join(details)} policy enabled by default",
                 fmt=args.emit_events,
             )
 
@@ -61,7 +59,7 @@ def plugin_rows_log_summary(rows: object) -> str:
         fd = row.get("fd")
         fd_part = f" fd={fd}" if fd is not None else ""
         parts.append(f"{ide}@{version_label}{fd_part}")
-    return "[" + ", ".join(parts) + "]"
+    return f"[{', '.join(parts)}]"
 
 
 def _plugin_rows(status: Mapping[str, Any]) -> tuple[list[Any] | None, str | None]:

@@ -298,7 +298,7 @@ def write_host_environment_bundle(project: Path) -> bool:
     except Exception as exc:  # noqa: BLE001 — best-effort host snapshot
         err = {"probe_error": str(exc), "koru_platform": sys.platform}
         (rt / "host-environment.json").write_text(
-            json.dumps(err, indent=2, sort_keys=True) + "\n",
+            f"{json.dumps(err, indent=2, sort_keys=True)}\n",
             encoding="utf-8",
         )
         (rt / "host-environment.md").write_text(
@@ -307,7 +307,7 @@ def write_host_environment_bundle(project: Path) -> bool:
         )
         return True
     (rt / "host-environment.json").write_text(
-        json.dumps(report, indent=2, sort_keys=True, default=str) + "\n",
+        f"{json.dumps(report, indent=2, sort_keys=True, default=str)}\n",
         encoding="utf-8",
     )
     (rt / "host-environment.md").write_text(_render_host_environment_md(report), encoding="utf-8")

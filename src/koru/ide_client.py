@@ -83,8 +83,7 @@ class LegacyAutopilotClientAdapter:
                 summary_bits.append(f"{key}={value}")
         activity(
             "CHAT",
-            f"drive wynik: ok={ok} backend={backend} tool_id={reply.get('tool_id', '-')} "
-            + " ".join(summary_bits),
+            f"drive wynik: ok={ok} backend={backend} tool_id={reply.get('tool_id', '-')} {' '.join(summary_bits)}",
             data={
                 "ide": ide,
                 "ok": ok,

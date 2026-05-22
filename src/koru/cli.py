@@ -1560,7 +1560,7 @@ def _init_main(args: argparse.Namespace) -> int:
             "`koru --queue --loop` to drain the starter sprint",
         ],
     )
-    print("Next: " + "; ".join(next_parts) + ".")
+    print(f"Next: {'; '.join(next_parts)}.")
     emit_management_event(
         tool="koru.init",
         action="completed",
@@ -1609,7 +1609,7 @@ def _init_agent_lane_main(args: argparse.Namespace) -> int:
         )
     if report.host_environment_written:
         next_parts.append("read `.planfile/.koru/host-environment.md` for this machine")
-    print("Next: " + "; ".join(next_parts or ["no shell helpers to run"]) + ".")
+    print(f"Next: {'; '.join(next_parts or ['no shell helpers to run'])}.")
     emit_management_event(
         tool="koru.init_agent_lane",
         action="completed",
@@ -1797,7 +1797,7 @@ def _maybe_reexec_for_project_venv(raw_args: list[str]) -> None:
     if reexec_argv := project_venv_reexec_argv(project):
         env = dict(os.environ)
         env["KORU_AUTONOMOUS_REEXECED"] = "1"
-        print("koru: switching to project venv: " + " ".join(reexec_argv), file=sys.stderr)
+        print(f"koru: switching to project venv: {' '.join(reexec_argv)}", file=sys.stderr)
         os.execvpe(reexec_argv[0], reexec_argv, env)
 
 

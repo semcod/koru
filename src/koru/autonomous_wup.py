@@ -359,7 +359,7 @@ def _ensure_wup_profiled_compose_services(
         for profile in profiles:
             command.extend(["--profile", profile])
         command.extend(["up", "-d", compose_service])
-        _wup_stdio_info("+ " + " ".join(command), fmt=stdio_format)
+        _wup_stdio_info(f"+ {' '.join(command)}", fmt=stdio_format)
         try:
             result = subprocess.run(
                 command,
@@ -455,7 +455,7 @@ def _start_wup_watch(
         return None
     _ensure_wup_profiled_compose_services(config, stdio_format=stdio_format)
     command = _wup_watch_command(config)
-    _wup_stdio_info("+ " + " ".join(command), fmt=stdio_format)
+    _wup_stdio_info(f"+ {' '.join(command)}", fmt=stdio_format)
     process = subprocess.Popen(command, cwd=config.project, env=_wup_subprocess_env(config))
     activity(
         "WUP",

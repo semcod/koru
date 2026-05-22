@@ -84,7 +84,7 @@ def parse_authorizations(notes: Sequence[str]) -> list[GateAuthorization]:
     for note in notes or ():
         if not isinstance(note, str):
             continue
-        if not note.startswith(GATE_AUTH_TAG + " "):
+        if not note.startswith(f"{GATE_AUTH_TAG} "):
             continue
         try:
             payload = json.loads(note[len(GATE_AUTH_TAG) + 1 :])

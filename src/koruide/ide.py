@@ -21,6 +21,7 @@ from pathlib import Path
 # as well as the full ``cmdline`` so we catch electron wrappers like
 # ``/opt/windsurf/windsurf --type=renderer``.
 _IDE_SIGNATURES: dict[str, tuple[tuple[str, ...], str]] = {
+    "antigravity": (("antigravity",), "Antigravity"),
     "windsurf": (("windsurf",), "Windsurf"),
     "vscode": (("code", "code-insiders"), "VS Code"),
     "vscodium": (("codium", "vscodium", "code-oss"), "VSCodium"),
@@ -36,13 +37,16 @@ _IDE_SIGNATURES: dict[str, tuple[tuple[str, ...], str]] = {
 
 _AUTOPILOT_IDE_ORDER = ("auto", *_IDE_SIGNATURES.keys())
 _SUPPORTED_AUTOPILOT_IDES = frozenset(_AUTOPILOT_IDE_ORDER)
-_VSCODE_EXTENSION_PLUGIN_IDES = frozenset({"windsurf", "vscode", "vscodium", "cursor"})
+_VSCODE_EXTENSION_PLUGIN_IDES = frozenset(
+    {"antigravity", "windsurf", "vscode", "vscodium", "cursor"}
+)
 _IDE_ALIASES: dict[str, str] = {
     "code": "vscode",
     "code-insiders": "vscode",
     "vs-code": "vscode",
     "visual-studio-code": "vscode",
-    "antigravity": "vscode",
+    "antigravity": "antigravity",
+    "google-antigravity": "antigravity",
     "codium": "vscodium",
     "vscodium": "vscodium",
     "code-oss": "vscodium",
@@ -176,6 +180,7 @@ def _matches(comm: str, cmdline: str, patterns: tuple[str, ...]) -> bool:
 
 
 _CANONICAL_COMM: dict[str, tuple[str, ...]] = {
+    "antigravity": ("antigravity",),
     "windsurf": ("windsurf",),
     "vscode": ("code", "code-insiders"),
     "vscodium": ("codium", "vscodium", "code-oss"),
@@ -190,6 +195,7 @@ def _score_comm_name(ide_id: str, comm: str) -> int:
 
 
 _PRIMARY_EXE_SUFFIXES: dict[str, tuple[str, ...]] = {
+    "antigravity": ("/antigravity",),
     "vscode": ("/code", "/code-insiders"),
     "vscodium": ("/codium", "/vscodium", "/code-oss"),
     "cursor": ("/cursor",),
@@ -354,6 +360,8 @@ def _vscode_family_flavor_from_env() -> str | None:
     ).lower()
     if "cursor" in blob:
         return "cursor"
+    if "antigravity" in blob:
+        return "antigravity"
     if "windsurf" in blob:
         return "windsurf"
     if "codium" in blob or "vscodium" in blob or "code-oss" in blob or "code - oss" in blob:
@@ -406,6 +414,9 @@ def _terminal_ide_env_candidates(
     term_ide: str | None,
 ) -> tuple[str | None, ...]:
     return (
+        "antigravity"
+        if "antigravity" in os.environ.get("GIO_LAUNCHED_DESKTOP_FILE", "").lower()
+        else None,
         "cursor" if _cursor_terminal_env_hint(chrome_ide) else None,
         "windsurf" if _windsurf_primary_terminal_env_hint(chrome_ide) else None,
         _vscode_family_terminal_hint(term_program),
@@ -456,7 +467,15 @@ def _terminal_ide_from_parent_chain(start_pid: int) -> str | None:
         pid = ppid
     if not chain:
         return None
-    for preferred in ("cursor", "windsurf", "vscodium", "vscode", "zed", "jetbrains"):
+    for preferred in (
+        "antigravity",
+        "cursor",
+        "windsurf",
+        "vscodium",
+        "vscode",
+        "zed",
+        "jetbrains",
+    ):
         if preferred in chain:
             return preferred
     return chain[0]

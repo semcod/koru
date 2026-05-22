@@ -21,7 +21,7 @@ from koruide.ide import (
 from koru.ide_router import is_headless_environment, resolve_ide_route
 
 _PLUGIN_IDE_LANES = supported_autopilot_ide_ids() - {"auto"}
-_AUTOPILOT_PLUGIN_LANES = ("cursor", "windsurf", "vscodium", "vscode")
+_AUTOPILOT_PLUGIN_LANES = ("antigravity", "cursor", "windsurf", "vscodium", "vscode")
 
 
 def supports_autopilot_plugin_ide(ide: str) -> bool:
@@ -396,7 +396,7 @@ def format_startup_banner(probe: AutonomousStartupProbe) -> list[str]:
         f"XDG_RUNTIME_DIR={probe.xdg_runtime_dir}",
     ]
     if probe.running_ides:
-        lines.append("koru autonomous: running IDEs: " + "; ".join(probe.running_ides))
+        lines.append(f"koru autonomous: running IDEs: {'; '.join(probe.running_ides)}")
     else:
         lines.append("koru autonomous: running IDEs: (none detected)")
     if probe.terminal_lane:
@@ -420,6 +420,8 @@ def format_startup_banner(probe: AutonomousStartupProbe) -> list[str]:
 
 def _get_settings_hint(ide: str) -> str:
     """Return settings file path for the given IDE."""
+    if ide == "antigravity":
+        return "~/.config/Antigravity/User/settings.json"
     if ide == "cursor":
         return "~/.config/Cursor/User/settings.json"
     if ide == "vscode":
@@ -573,4 +575,3 @@ __all__ = [
     "resolve_autopilot_ide_for_autonomous",
     "supports_autopilot_plugin_ide",
 ]
-

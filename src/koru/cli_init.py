@@ -50,7 +50,7 @@ def init_main(args: argparse.Namespace) -> int:
             "`koru --queue --loop` to drain the starter sprint",
         ],
     )
-    print("Next: " + "; ".join(next_parts) + ".")
+    print(f"Next: {'; '.join(next_parts)}.")
     emit_management_event(
         tool="koru.init",
         action="completed",

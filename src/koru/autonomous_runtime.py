@@ -51,7 +51,7 @@ def setup_autonomous_session(
         env = dict(os.environ)
         env["KORU_AUTONOMOUS_REEXECED"] = "1"
         stdio_info(
-            "koru autonomous: switching to project venv: " + " ".join(reexec_argv),
+            f"koru autonomous: switching to project venv: {' '.join(reexec_argv)}",
             fmt=args.emit_events,
         )
         os.execvpe(reexec_argv[0], reexec_argv, env)

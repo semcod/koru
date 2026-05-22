@@ -242,7 +242,7 @@ def _check_planfile_cli_version(project: Path) -> tuple[str, str]:
         )
     except (FileNotFoundError, OSError, subprocess.TimeoutExpired) as exc:
         return WARN, f"planfile --version failed: {exc}"
-    blob = (proc.stdout or "") + "\n" + (proc.stderr or "")
+    blob = f"{proc.stdout or ''}\n{proc.stderr or ''}"
     for line in blob.splitlines():
         if "version" in line.lower() and any(ch.isdigit() for ch in line):
             return PASS, line.strip()[:180]
@@ -448,7 +448,7 @@ def _check_pytest_collect(project: Path) -> tuple[str, str]:
     except (FileNotFoundError, OSError):
         return SKIP, "pytest not invokable (python3/pytest missing on PATH)"
 
-    output = (result.stdout or "") + "\n" + (result.stderr or "")
+    output = f"{result.stdout or ''}\n{result.stderr or ''}"
     if result.returncode == 0:
         match = _PYTEST_COLLECT_COUNT_RE.search(output)
         if match:
@@ -541,5 +541,5 @@ def render_text(report: DoctorReport) -> str:
     if counts.get(FAIL):
         parts.append(f"{counts[FAIL]} failed")
     lines.append("")
-    lines.append("  " + ", ".join(parts))
+    lines.append(f"  {', '.join(parts)}")
     return "\n".join(lines)

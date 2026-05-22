@@ -35,8 +35,7 @@ def render_environment(env: dict[str, Any], project: str) -> list[str]:
     lines.append(f"- **python**: `{project_env.get('python', '?')}`")
     enabled_markers = [key for key, value in markers.items() if value]
     lines.append(
-        "- **markers**: "
-        + (", ".join(f"`{marker}`" for marker in enabled_markers) if enabled_markers else "`none`"),
+        f"- **markers**: {', '.join(f'`{marker}`' for marker in enabled_markers) if enabled_markers else '`none`'}",
     )
     if recommended:
         lines.append(f"- **recommended agent**: `{recommended.get('label')}`")
@@ -213,7 +212,7 @@ def render_active_ticket(ticket: dict[str, Any]) -> list[str]:
         lines.append("")
         lines.append("### Prompt")
         lines.append("")
-        lines.append("> " + str(prompt).replace("\n", "\n> "))
+        lines.append(f"> {str(prompt).replace(chr(10), chr(10)+'> ')}")
     lines.append("")
     return lines
 
@@ -225,7 +224,7 @@ def _compact_ticket_error(ticket_error: str) -> str:
     if "Traceback" in text:
         return "planfile error (traceback hidden; run `planfile ticket next --format json`)"
     if len(text) > 160:
-        return text[:157].rstrip() + "..."
+        return f"{text[:157].rstrip()}..."
     return text
 
 
