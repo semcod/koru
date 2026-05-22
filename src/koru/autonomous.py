@@ -15,8 +15,6 @@ started here).
 from __future__ import annotations
 
 import argparse
-import os
-import signal
 import subprocess
 import sys
 import threading
@@ -71,28 +69,17 @@ from koru import autonomous_plugin as _autonomous_plugin
 from koru.autonomous_processes import (
     ExistingAutonomousProcess,
     ExistingManagedProcess,
-    _as_managed,
-    _confirm_replace_existing,
-    _find_existing_autonomous_processes,
-    _find_existing_wup_processes,
     _looks_like_autonomous_up_command,
-    _terminate_existing_processes,
     guard_existing_autonomous_processes as _guard_existing_autonomous_processes,
     stop_prior_autonomous_for_auto_start,
 )
 from koru.autonomous_auto_pipeline import (
-    AUTO_UP_DEFAULT_ARGS,
     AutoPipelineState,
     AutoPipelineProfile,
-    _argv_has_option,
-    _auto_pipeline_has_pressure,
-    _auto_pipeline_stage,
-    _auto_value,
     _collect_argv_options,
     _expand_auto_up_defaults,
     _select_auto_pipeline_profile,
     _update_auto_pipeline_state,
-    _user_option,
 )
 from koru.autonomy.ide_work import release_in_progress_tickets, resolve_idle_drive_prompt
 from koru.autonomy.operator_pipeline import run_startup_operator_pipeline

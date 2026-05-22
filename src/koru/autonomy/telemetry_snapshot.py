@@ -34,7 +34,7 @@ def write_autonomy_cycle_telemetry(
             "knobs": dict(knobs),
         }
         path.write_text(
-            json.dumps(payload, indent=2, sort_keys=True) + "\n",
+            f"{json.dumps(payload, indent=2, sort_keys=True)}\n",
             encoding="utf-8",
         )
     except OSError:

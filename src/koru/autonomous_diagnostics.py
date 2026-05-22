@@ -176,7 +176,7 @@ def run_command_check(
     command: list[str],
     stdio_format: str = "human",
 ) -> bool:
-    stdio_info("+ " + " ".join(command), fmt=stdio_format)
+    stdio_info(f"+ {' '.join(command)}", fmt=stdio_format)
     result = subprocess.run(command, cwd=project, check=False)
     if result.returncode != 0:
         stdio_info(f"! {check_id} failed (continuing loop)", fmt=stdio_format)

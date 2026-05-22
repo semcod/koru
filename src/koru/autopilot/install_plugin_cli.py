@@ -200,7 +200,7 @@ def render_install_plugin_dry_run(
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
         print("koru autopilot install-plugin: dry-run")
-        print("  " + " ".join(cmd))
+        print(f"  {' '.join(cmd)}")
 
 
 def render_install_plugin_result(
@@ -374,7 +374,7 @@ def action_install_plugin_jetbrains(
         else:
             print("koru autopilot install-plugin-jetbrains: dry-run")
             print(f"  cwd: {plugin_dir}")
-            print("  " + " ".join(cmd))
+            print(f"  {' '.join(cmd)}")
         return 0
 
     try:

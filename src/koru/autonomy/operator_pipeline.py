@@ -246,7 +246,7 @@ def _candidate_planfile_health_urls(project: Path) -> list[str]:
     if isinstance(endpoint, dict):
         base = str(endpoint.get("http_base") or "").strip()
         if base:
-            candidates.append(urllib.parse.urljoin(base.rstrip("/") + "/", "health"))
+            candidates.append(urllib.parse.urljoin(f"{base.rstrip('/')}/", "health"))
     candidates.append("http://127.0.0.1:8765/health")
     return list(dict.fromkeys(candidates))
 
@@ -499,7 +499,7 @@ def _emit_step(
         f"[{index}/{total}] {mark} {step.title} [{actor}] — {step.detail}",
         fmt=fmt,
     )
-    stream.write(line + "\n")
+    stream.write(f"{line}\n")
     if step.task_command and step.status == "pending":
         stream.write(f"koru autonomous:     uruchom: {step.task_command}\n")
     if step.ticket_id:

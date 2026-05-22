@@ -138,8 +138,7 @@ def start_or_reuse_daemon(
         try:
             status = probe.status()
             stdio_info(
-                "koru autonomous: autopilot daemon status \u2192 "
-                + daemon_status_log_summary(status, plugin_rows_summary=plugin_rows_summary),
+                f"koru autonomous: autopilot daemon status \u2192 {daemon_status_log_summary(status, plugin_rows_summary=plugin_rows_summary)}",
                 fmt=stdio_format,
             )
         except (OSError, RuntimeError, TimeoutError) as exc:

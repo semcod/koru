@@ -62,7 +62,7 @@ def render_unit(koru_bin: str) -> str:
             lines.append(f"ExecStart={koru_bin} autopilot daemon --idempotent --no-handoff")
         else:
             lines.append(line)
-    return "\n".join(lines) + "\n"
+    return f"{'\n'.join(lines)}\n"
 
 
 def action_install_unit(

@@ -133,7 +133,7 @@ def _parse_iso_datetime(value: str | None) -> datetime | None:
         return None
     text = str(value).strip()
     if text.endswith("Z"):
-        text = text[:-1] + "+00:00"
+        text = f"{text[:-1]}+00:00"
     try:
         dt = datetime.fromisoformat(text)
     except ValueError:
@@ -286,7 +286,7 @@ def _truncate(text: str, limit: int) -> str:
     text = text.replace("\n", " ").strip()
     if len(text) <= limit:
         return text
-    return text[: limit - 3] + "..."
+    return f"{text[:limit - 3]}..."
 
 
 def apply_verify_failure(

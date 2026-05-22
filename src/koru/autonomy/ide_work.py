@@ -85,7 +85,7 @@ def build_ide_work_prompt(
 
     lines = [
         f"Work on planfile ticket {ticket_id}: {name}",
-        f"Priority: {priority}" + (f", queue: {queue}" if queue else ""),
+        f"Priority: {priority}{f', queue: {queue}' if queue else ''}",
     ]
     if description:
         lines.append("")
@@ -142,7 +142,7 @@ def _parse_iso_datetime(value: str | None) -> datetime | None:
         return None
     text = str(value).strip()
     if text.endswith("Z"):
-        text = text[:-1] + "+00:00"
+        text = f"{text[:-1]}+00:00"
     try:
         dt = datetime.fromisoformat(text)
     except ValueError:
@@ -283,7 +283,7 @@ def release_in_progress_tickets(
         return 0
     if result.returncode != 0:
         return 0
-    text = (result.stdout or "") + (result.stderr or "")
+    text = f"{result.stdout or ''}{result.stderr or ''}"
     match = re.search(r"Updated\s+(\d+)\s+ticket", text)
     if match:
         return int(match.group(1))

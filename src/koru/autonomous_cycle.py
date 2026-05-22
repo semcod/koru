@@ -241,7 +241,7 @@ def _run_command_check(
     *,
     stdio_format: str = "human",
 ) -> bool:
-    _stdio_info("+ " + " ".join(command), fmt=stdio_format)
+    _stdio_info(f"+ {' '.join(command)}", fmt=stdio_format)
     result = subprocess.run(command, cwd=project, check=False)
     if result.returncode != 0:
         _stdio_info(f"! {check_id} failed (continuing loop)", fmt=stdio_format)
@@ -658,7 +658,7 @@ def _handle_queue_loop_phase(
         queue_result = QueueLoopResult(0, [], [], [], "disabled", "")
     else:
         qcmd = _build_queue_command(max_iterations, queue_name)
-        _hp("+ " + qcmd)
+        _hp(f"+ {qcmd}")
         queue_result = _run_queue_loop(project, actor, queue_name, max_iterations)
         _hp(f"  queue: {queue_result.summary()}")
         _emit_queue_iteration_event(queue_result, cycle, queue_name, actor, qcmd, _emit)
@@ -712,10 +712,8 @@ def _handle_scan_after_idle(
             )
             cycle_telemetry["scan_after_idle_skipped_rate_limit"] = True
         else:
-            scan_cmd = "koru scan --apply" + (
-                " --semcod-artifacts" if include_semcod_artifacts else ""
-            )
-            _hp("+ " + scan_cmd + " (queue idle → intake scan)")
+            scan_cmd = f"koru scan --apply{' --semcod-artifacts' if include_semcod_artifacts else ''}"
+            _hp(f"+ {scan_cmd} (queue idle → intake scan)")
             idle_scan = run_scan(
                 project=project,
                 apply=True,

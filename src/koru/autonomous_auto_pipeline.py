@@ -5,8 +5,6 @@ profile (rescue / stabilize / quality / architecture) based on queue
 health and idle streaks.
 """
 
-from __future__ import annotations
-
 import argparse
 from dataclasses import dataclass
 from typing import Any
