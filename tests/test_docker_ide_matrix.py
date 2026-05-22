@@ -12,8 +12,8 @@ from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 from koruide.socket import default_socket_path
 
 ROOT = Path(__file__).resolve().parents[1]
-MATRIX_IDES = ("vscode", "vscodium", "cursor", "windsurf", "jetbrains", "zed")
-PLUGIN_REQUIRED_IDES = frozenset({"vscode", "vscodium", "cursor", "windsurf"})
+MATRIX_IDES = ("vscode", "vscodium", "cursor", "windsurf", "antigravity", "jetbrains", "zed")
+PLUGIN_REQUIRED_IDES = frozenset({"vscode", "vscodium", "cursor", "windsurf", "antigravity"})
 
 
 @pytest.mark.parametrize("ide", MATRIX_IDES)

@@ -29,6 +29,7 @@ _TOOL_PATTERNS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ("codex", "Codex", ("codex",)),
     ("claude-code", "Claude Code", ("claude", "claude-code")),
     ("gemini-cli", "Gemini CLI", ("gemini",)),
+    ("antigravity", "Antigravity", ("antigravity",)),
     ("cursor", "Cursor", ("cursor",)),
     ("windsurf", "Windsurf", ("windsurf",)),
     ("vscodium", "VSCodium", ("codium", "vscodium", "code-oss")),

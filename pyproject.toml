@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "koru"
-version = "0.1.202"
+version = "0.1.203"
 description = "Closed-loop automation across semcod/* repositories."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -127,7 +127,7 @@ package-dir = { "" = "src" }
 where = ["src"]
 
 [tool.setuptools.package-data]
-koru = ["scripts/*.sh"]
+koru = ["scripts/*.sh", "assets/koru-autopilot-vscode/*.vsix"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

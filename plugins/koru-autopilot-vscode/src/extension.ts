@@ -744,6 +744,7 @@ class AutopilotBridge {
 
   private detectIde(): string {
     const app = (vscode.env.appName || "").toLowerCase();
+    if (app.includes("antigravity")) return "antigravity";
     if (app.includes("windsurf")) return "windsurf";
     if (app.includes("cursor")) return "cursor";
     if (app.includes("codium") || app.includes("code - oss") || app.includes("code-oss")) return "vscodium";

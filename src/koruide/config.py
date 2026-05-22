@@ -15,6 +15,7 @@ Schema (every section is optional):
     # Per-IDE submit shortcut. IDE id matches the one shown by
     # `koru autopilot ide-list`. Unknown id falls back to "Return".
     windsurf  = "Return"
+    antigravity = "Return"
     vscode    = "Return"
     vscodium  = "Return"
     cursor    = "Return"
@@ -40,6 +41,7 @@ from koruide.utils import resolve_xdg_path
 # fallback used when an IDE id has no explicit mapping.
 _BUILTIN_SUBMIT_KEYS: dict[str, str] = {
     "default": "Return",
+    "antigravity": "Return",
     "windsurf": "Return",
     "vscode": "Return",
     "vscodium": "Return",

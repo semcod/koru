@@ -31,7 +31,7 @@ def autopilot_backend_for_agent_id(agent_id: str) -> str:
     """Autopilot transport for a lane (``KORU_AUTOPILOT_BACKEND`` /
     ``AgentOption.autopilot_backend``)."""
     norm = normalize_agent_lane_id(agent_id)
-    if norm in {"openrouter", "antigravity"}:
+    if norm in {"openrouter"}:
         return "headless"
     if norm in {
         "claude-code",
@@ -255,6 +255,7 @@ def save_agent_prompt(project: Path, prompt: str) -> Path:
 
 # IDE id passed to ``koru autonomous up --autopilot-ide`` / ``koru autopilot drive --ide``.
 _LANE_AUTOPILOT_IDE: dict[str, str] = {
+    "antigravity": "antigravity",
     "cursor": "cursor",
     "windsurf": "windsurf",
     "vscode": "vscode",
@@ -269,7 +270,6 @@ _LANE_AUTOPILOT_IDE: dict[str, str] = {
     "opencode": "auto",
     "aider": "auto",
     "openrouter": "auto",
-    "antigravity": "auto",
 }
 
 

@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 from collections.abc import Callable
+from importlib import resources
 from pathlib import Path
 
 from koru.autopilot.ide import (
@@ -19,6 +20,7 @@ from koru.autopilot.ide import (
 )
 
 PLUGIN_IDE_CLI: dict[str, tuple[str, ...]] = {
+    "antigravity": ("antigravity",),
     "windsurf": ("windsurf",),
     "cursor": ("cursor",),
     "vscode": ("code", "code-insiders"),
@@ -29,7 +31,9 @@ PLUGIN_INSTALL_IDE_ALIASES: dict[str, str] = {
     "pycharm": "jetbrains",
 }
 
-PLUGIN_INSTALL_IDES = frozenset({"windsurf", "vscode", "vscodium", "cursor", "jetbrains"})
+PLUGIN_INSTALL_IDES = frozenset(
+    {"antigravity", "windsurf", "vscode", "vscodium", "cursor", "jetbrains"}
+)
 
 
 def plugin_repo_dir() -> Path:
@@ -55,6 +59,24 @@ def _versioned_plugin_vsix_candidates(plugin_dir: Path) -> list[Path]:
     ]
 
 
+def bundled_plugin_vsix_candidates() -> list[Path]:
+    try:
+        root = resources.files("koru").joinpath("assets", "koru-autopilot-vscode")
+    except (ModuleNotFoundError, AttributeError):
+        return []
+    try:
+        candidates = [
+            Path(str(candidate)) for candidate in root.iterdir() if candidate.name.endswith(".vsix")
+        ]
+    except (FileNotFoundError, NotADirectoryError, OSError):
+        return []
+    return sorted(
+        [candidate for candidate in candidates if candidate.is_file()],
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+
+
 def jetbrains_plugin_repo_dir() -> Path:
     return Path(__file__).resolve().parents[3] / "plugins" / "koru-autopilot-jetbrains"
 
@@ -75,6 +97,9 @@ def resolve_plugin_vsix_path(vsix: Path | None) -> Path:
         reverse=True,
     )
     if not matches:
+        for candidate in bundled_plugin_vsix_candidates():
+            if candidate.is_file():
+                return candidate.resolve()
         raise RuntimeError(
             "no packaged .vsix found under plugins/koru-autopilot-vscode; "
             "build one with: `cd plugins/koru-autopilot-vscode && npm install && npm run package`",
@@ -150,12 +175,12 @@ def resolve_plugin_target_ide(raw_ide: str) -> str:
     if not detected:
         raise RuntimeError(
             "could not detect running editor for plugin install; pass --ide "
-            "windsurf|vscode|vscodium|cursor|jetbrains|pycharm|zed",
+            "antigravity|windsurf|vscode|vscodium|cursor|jetbrains|pycharm|zed",
         )
     ids = ", ".join(ide.id for ide in detected)
     raise RuntimeError(
         "multiple supported IDEs detected with no clear active one "
-        f"({ids}); pass --ide windsurf|vscode|vscodium|cursor|jetbrains|pycharm|zed",
+        f"({ids}); pass --ide antigravity|windsurf|vscode|vscodium|cursor|jetbrains|pycharm|zed",
     )
 
 

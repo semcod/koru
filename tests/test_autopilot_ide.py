@@ -137,6 +137,41 @@ def test_detect_running_ides_separates_vscode_and_vscodium(
     ]
 
 
+def test_detect_running_ides_finds_antigravity_as_separate_ide(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rows = {
+        111: ("antigravity", ["/usr/share/antigravity/antigravity", "--type=browser"]),
+        222: ("code", ["/snap/code/current/usr/share/code/code", "--type=browser"]),
+    }
+    for pid, (comm, cmd) in rows.items():
+        d = tmp_path / str(pid)
+        d.mkdir()
+        (d / "comm").write_text(comm + "\n")
+        (d / "cmdline").write_bytes(b"\x00".join(c.encode() for c in cmd) + b"\x00")
+
+    monkeypatch.setattr(
+        ide_mod,
+        "_read_comm",
+        lambda pid: (tmp_path / str(pid) / "comm").read_text().strip(),
+    )
+    monkeypatch.setattr(
+        ide_mod,
+        "_read_cmdline",
+        lambda pid: (
+            (tmp_path / str(pid) / "cmdline").read_bytes().replace(b"\x00", b" ").decode().strip()
+        ),
+    )
+    monkeypatch.setattr(ide_mod, "_read_exe", lambda pid: rows[pid][1][0])
+
+    detected = ide_mod.detect_running_ides(_pids=[111, 222])
+    assert [row.id for row in detected if row.id in {"antigravity", "vscode"}] == [
+        "antigravity",
+        "vscode",
+    ]
+
+
 def test_pick_target_prefers_user_choice(fake_proc: Path) -> None:
     detected = ide_mod.detect_running_ides(_pids=[1234, 5678])
     chosen = ide_mod.pick_target(detected, prefer="jetbrains")
@@ -308,6 +343,27 @@ def test_detect_terminal_host_ide_id_vscodium_from_vscode_family_env(
     assert ide_mod.detect_terminal_host_ide_id() == "vscodium"
 
 
+def test_detect_terminal_host_ide_id_antigravity_from_vscode_family_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for key in (
+        "CURSOR_AGENT",
+        "CURSOR_CLI",
+        "CHROME_DESKTOP",
+        "WINDSURF_VERSION",
+        "WINDSURF_CSRF_TOKEN",
+        "TERM_PROGRAM_VERSION",
+        "WINDSURF_CASCADE_TERMINAL",
+        "GIO_LAUNCHED_DESKTOP_FILE",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("TERM_PROGRAM", "vscode")
+    monkeypatch.setenv("VSCODE_PID", "123")
+    monkeypatch.setenv("VSCODE_NLS_CONFIG", "/usr/share/antigravity/resources/app")
+
+    assert ide_mod.detect_terminal_host_ide_id() == "antigravity"
+
+
 def test_detect_terminal_host_ide_id_zed_term_program(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -334,6 +390,8 @@ def test_detect_terminal_host_ide_id_zed_term_program(
     ("raw", "expected"),
     [
         ("codium", "vscodium"),
+        ("antigravity", "antigravity"),
+        ("google-antigravity.desktop", "antigravity"),
         ("code-oss.desktop", "vscodium"),
         ("pycharm", "jetbrains"),
         ("zed-editor", "zed"),

@@ -17,6 +17,7 @@ import shutil
 import subprocess
 from collections.abc import Callable
 from dataclasses import dataclass
+from importlib import resources
 from pathlib import Path
 
 from koruide.ide import (
@@ -33,6 +34,7 @@ EXTENSION_ID = "semcod.koru-autopilot-vscode"
 SOCKET_SETTING_KEY = "koruAutopilot.socketPath"
 
 _IDE_COMMANDS: dict[str, tuple[str, ...]] = {
+    "antigravity": ("antigravity",),
     "windsurf": ("windsurf",),
     "cursor": ("cursor",),
     "vscode": ("code", "code-insiders"),
@@ -88,6 +90,8 @@ def _terminal_vscode_flavor() -> str | None:
             "SNAP_NAME",
         )
     ).lower()
+    if "antigravity" in hints:
+        return "antigravity"
     if "codium" in hints or "vscodium" in hints:
         return "vscodium"
     if os.environ.get("VSCODE_PID"):
@@ -124,12 +128,34 @@ def _versioned_vsix_candidates(plugin_dir: Path) -> list[Path]:
     ]
 
 
+def _bundled_vsix_candidates() -> list[Path]:
+    try:
+        root = resources.files("koru").joinpath("assets", "koru-autopilot-vscode")
+    except (ModuleNotFoundError, AttributeError):
+        return []
+    try:
+        candidates = [
+            Path(str(candidate)) for candidate in root.iterdir() if candidate.name.endswith(".vsix")
+        ]
+    except (FileNotFoundError, NotADirectoryError, OSError):
+        return []
+    return sorted(
+        [candidate for candidate in candidates if candidate.is_file()],
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+
+
 def _running_vscode_flavor() -> str | None:
     """Return VS Code-family flavor from the actually running editor process."""
     for ide in detect_running_ides():
+        if getattr(ide, "id", None) == "antigravity":
+            return "antigravity"
         if getattr(ide, "id", None) != "vscode":
             continue
         exe = str(getattr(ide, "exe", "") or "").lower()
+        if "antigravity" in exe:
+            return "antigravity"
         if "codium" in exe or "vscodium" in exe:
             return "vscodium"
         if "code" in exe:
@@ -179,13 +205,27 @@ def resolve_extension_vsix() -> Path | None:
         for candidate in _versioned_vsix_candidates(plugin_dir):
             if candidate.is_file():
                 return candidate.resolve()
-        candidates.extend(plugin_dir.glob("*.vsix"))
+        repo_matches = sorted(
+            plugin_dir.glob("*.vsix"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        if repo_matches:
+            return repo_matches[0].resolve()
 
     cwd_plugin = Path.cwd() / "plugins" / "koru-autopilot-vscode"
     for candidate in _versioned_vsix_candidates(cwd_plugin):
         if candidate.is_file():
             return candidate.resolve()
-    candidates.extend(cwd_plugin.glob("*.vsix"))
+    cwd_matches = sorted(
+        cwd_plugin.glob("*.vsix"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    if cwd_matches:
+        return cwd_matches[0].resolve()
+
+    candidates.extend(_bundled_vsix_candidates())
 
     candidates = sorted(
         {candidate.resolve() for candidate in candidates if candidate.is_file()},
@@ -209,6 +249,7 @@ def _resolve_ide_command(ide: str) -> str | None:
 def _settings_path_for_ide(ide: str) -> Path | None:
     config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")).expanduser()
     dirname = {
+        "antigravity": "Antigravity",
         "windsurf": "Windsurf",
         "cursor": "Cursor",
         "vscode": "Code",

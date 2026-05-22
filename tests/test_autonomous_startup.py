@@ -113,6 +113,34 @@ def test_resolve_agent_lane_prefers_vscodium_target_over_generic_vscode_terminal
     assert source == "target:over-terminal:vscode"
 
 
+def test_resolve_agent_lane_prefers_antigravity_target_over_generic_vscode_terminal(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    running = [
+        RunningIDE(
+            id="antigravity",
+            label="Antigravity",
+            pid=10,
+            exe="/usr/share/antigravity/antigravity",
+        ),
+        RunningIDE(id="vscode", label="VS Code", pid=11, exe="/usr/bin/code"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup.pick_target", return_value=running[0]),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value="vscode"),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+    assert lane == "antigravity"
+    assert source == "target:over-terminal:vscode"
+
+
 def test_resolve_agent_lane_env_instance_used_without_terminal_hint(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -303,6 +331,25 @@ def test_build_startup_probe_reports_per_ide_socket_for_explicit_ide(
     )
 
     assert probe.socket_path == "/run/user/1000/koru-autopilot-vscodium.sock"
+    assert os.environ.get("KORU_AUTOPILOT_INSTANCE") is None
+
+
+def test_build_startup_probe_reports_per_ide_socket_for_antigravity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
+    monkeypatch.setenv("XDG_RUNTIME_DIR", "/run/user/1000")
+
+    probe = startup.build_startup_probe(
+        tmp_path,
+        agent_lane_cli="none",
+        autopilot_ide_cli="antigravity",
+        resolve_project_lane=lambda _p, _a: None,
+    )
+
+    assert probe.socket_path == "/run/user/1000/koru-autopilot-antigravity.sock"
     assert os.environ.get("KORU_AUTOPILOT_INSTANCE") is None
 
 
