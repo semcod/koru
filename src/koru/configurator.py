@@ -14,7 +14,9 @@ from typing import Any, TextIO
 from koruide.ide import autopilot_ide_choices, normalize_ide_id
 
 
-CONFIG_SCHEMA = "koru.config/v1"
+CONFIG_SCHEMA_V1 = "koru.config/v1"
+CONFIG_SCHEMA_V2 = "koru.config/v2"
+CONFIG_SCHEMA = CONFIG_SCHEMA_V1
 CONFIG_REL_PATH = Path(".koru") / "config.json"
 
 
@@ -93,6 +95,75 @@ def save_project_config(project: Path, config: dict[str, Any]) -> Path:
         encoding="utf-8",
     )
     return path
+
+
+def default_v2_feature_sections() -> dict[str, Any]:
+    """Disabled-by-default sections for observation mesh (schema v2)."""
+    return {
+        "vision": {
+            "enabled": False,
+            "interval_seconds": 60,
+            "format": "webp",
+            "monitors": "all",
+            "windows": [],
+            "redact": [r"Bearer\s+\S+", r"sk-[A-Za-z0-9]{20,}"],
+        },
+        "mesh": {
+            "enabled": False,
+            "role": "peer",
+            "expose": "loopback",
+            "psk_path": ".koru/keys/mesh.hmac",
+            "relay_url": None,
+            "discovery": "mdns",
+        },
+        "browse": {
+            "enabled": False,
+            "targets": [],
+            "autoinstall": True,
+            "native_messaging_host": ".koru/keys/native-host.json",
+        },
+        "delegate": {
+            "accept": [],
+            "policy_path": ".koru/policies/delegate.yaml",
+        },
+        "sandbox": {
+            "enabled": False,
+            "engine": "clonebox",
+            "profile": "browse-chrome",
+        },
+    }
+
+
+def merge_v2_feature_sections(config: dict[str, Any]) -> dict[str, Any]:
+    """Return *config* with v2 feature keys filled from defaults (no overwrite)."""
+    merged = dict(config)
+    for key, defaults in default_v2_feature_sections().items():
+        if key not in merged:
+            merged[key] = defaults
+            continue
+        current = merged.get(key)
+        if not isinstance(current, dict):
+            merged[key] = defaults
+            continue
+        section = dict(defaults)
+        section.update(current)
+        merged[key] = section
+    return merged
+
+
+def migrate_project_config(project: Path) -> ConfigureResult:
+    """Upgrade ``.koru/config.json`` to schema v2 (idempotent, no side effects)."""
+    project = project.expanduser().resolve()
+    previous = load_project_config(project)
+    if not previous:
+        msg = "no .koru/config.json — run koru configure first"
+        raise ValueError(msg)
+    now = datetime.now(UTC).isoformat()
+    config = merge_v2_feature_sections(previous)
+    config["schema"] = CONFIG_SCHEMA_V2
+    config["updated_at"] = now
+    path = save_project_config(project, config)
+    return ConfigureResult(project=project, path=path, config=config)
 
 
 def _serve_command(config: dict[str, Any]) -> list[str]:
@@ -232,12 +303,37 @@ def build_configure_parser() -> argparse.ArgumentParser:
     port_group.add_argument("--auto-port", dest="auto_port", action="store_true", default=None, help="Auto-pick a free dashboard port.")
     port_group.add_argument("--no-auto-port", dest="auto_port", action="store_false", help="Fail if dashboard port is busy.")
     parser.add_argument("--non-interactive", action="store_true", help="Write defaults/flags without prompting.")
+    parser.add_argument(
+        "--migrate",
+        action="store_true",
+        help="Upgrade existing .koru/config.json to schema v2 (adds disabled feature sections).",
+    )
     parser.add_argument("--format", choices=("text", "json", "shell"), default="text")
     return parser
 
 
-def configure_main(argv: list[str] | None = None) -> int:
-    args = build_configure_parser().parse_args(argv)
+def _emit_configure_output(result: ConfigureResult, fmt: str, *, text: str | None = None) -> None:
+    if fmt == "json":
+        print(json.dumps(result.config, ensure_ascii=False, indent=2, sort_keys=True))
+        return
+    if fmt == "shell":
+        print(render_shell_exports(result.config))
+        return
+    print(text or render_text_summary(result))
+
+
+def _configure_migrate(args: argparse.Namespace) -> int:
+    try:
+        result = migrate_project_config(args.project)
+    except ValueError as exc:
+        print(f"koru configure: {exc}", file=sys.stderr)
+        return 2
+    summary = f"koru configure: migrated {result.path} -> {CONFIG_SCHEMA_V2}"
+    _emit_configure_output(result, args.format, text=summary)
+    return 0
+
+
+def _configure_write(args: argparse.Namespace) -> int:
     try:
         result = configure_project(
             project=args.project,
@@ -253,25 +349,31 @@ def configure_main(argv: list[str] | None = None) -> int:
     except (EOFError, ValueError) as exc:
         print(f"koru configure: {exc}", file=sys.stderr)
         return 2
-
-    if args.format == "json":
-        print(json.dumps(result.config, ensure_ascii=False, indent=2, sort_keys=True))
-    elif args.format == "shell":
-        print(render_shell_exports(result.config))
-    else:
-        print(render_text_summary(result))
+    _emit_configure_output(result, args.format)
     return 0
+
+
+def configure_main(argv: list[str] | None = None) -> int:
+    args = build_configure_parser().parse_args(argv)
+    if args.migrate:
+        return _configure_migrate(args)
+    return _configure_write(args)
 
 
 __all__ = [
     "CONFIG_REL_PATH",
     "CONFIG_SCHEMA",
+    "CONFIG_SCHEMA_V1",
+    "CONFIG_SCHEMA_V2",
     "ConfigureResult",
     "ShellPrompter",
     "build_configure_parser",
     "configure_main",
     "configure_project",
+    "default_v2_feature_sections",
     "load_project_config",
+    "merge_v2_feature_sections",
+    "migrate_project_config",
     "render_shell_exports",
     "render_text_summary",
     "save_project_config",

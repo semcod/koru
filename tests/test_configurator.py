@@ -7,7 +7,10 @@ from unittest import mock
 
 from koru.configurator import (
     CONFIG_SCHEMA,
+    CONFIG_SCHEMA_V1,
+    CONFIG_SCHEMA_V2,
     configure_project,
+    migrate_project_config,
     render_shell_exports,
 )
 
@@ -95,6 +98,42 @@ def test_render_shell_exports_includes_koru_environment(tmp_path: Path) -> None:
     assert "export KORU_AUTOPILOT_INSTANCE=vscode" in rendered
     assert "export KORU_SERVE_PORT=8766" in rendered
     assert "koru serve" in rendered
+
+
+def test_migrate_project_config_v1_to_v2_adds_disabled_sections(tmp_path: Path) -> None:
+    project = tmp_path / "demo"
+    project.mkdir()
+    configure_project(
+        project=project,
+        workspace=tmp_path,
+        ide="windsurf",
+        interactive=False,
+    )
+    assert json.loads((project / ".koru" / "config.json").read_text())["schema"] == CONFIG_SCHEMA_V1
+
+    result = migrate_project_config(project)
+
+    assert result.config["schema"] == CONFIG_SCHEMA_V2
+    assert result.config["vision"]["enabled"] is False
+    assert result.config["mesh"]["enabled"] is False
+    assert result.config["browse"]["enabled"] is False
+    assert result.config["sandbox"]["enabled"] is False
+    assert result.config["delegate"]["accept"] == []
+    saved = json.loads(result.path.read_text(encoding="utf-8"))
+    assert saved["schema"] == CONFIG_SCHEMA_V2
+
+
+def test_migrate_project_config_is_idempotent(tmp_path: Path) -> None:
+    project = tmp_path / "demo"
+    project.mkdir()
+    configure_project(project=project, workspace=tmp_path, interactive=False)
+    first = migrate_project_config(project)
+    tweaked = dict(first.config)
+    tweaked["vision"]["interval_seconds"] = 120
+    first.path.write_text(json.dumps(tweaked, indent=2) + "\n", encoding="utf-8")
+    second = migrate_project_config(project)
+    assert second.config["vision"]["interval_seconds"] == 120
+    assert second.config["schema"] == CONFIG_SCHEMA_V2
 
 
 def test_koru_serve_uses_configure_defaults(tmp_path: Path) -> None:
