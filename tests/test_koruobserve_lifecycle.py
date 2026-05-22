@@ -67,6 +67,25 @@ def test_observe_status_reports_pids(tmp_path: Path, fake_spawn) -> None:
     assert all(status[name]["pid"] for name in status)
 
 
+def test_project_path_resolves_from_args() -> None:
+    from argparse import Namespace
+
+    from koruobserve.cli import _project_path
+
+    assert _project_path(Namespace(project=Path("/tmp/demo"))) == Path("/tmp/demo").resolve()
+
+
+def test_observe_main_up_uses_parent_project_default(monkeypatch, tmp_path: Path, fake_spawn) -> None:
+    project = tmp_path / "demo"
+    project.mkdir()
+    monkeypatch.chdir(project)
+    from koruobserve.cli import observe_main
+
+    rc = observe_main(["up", "--relay-port", "19987", "--dashboard-port", "18765"])
+    assert rc == 0
+    assert (project / ".koru" / "run" / "relay.pid").is_file()
+
+
 def test_observe_down_removes_pidfiles(tmp_path: Path, fake_spawn) -> None:
     project = tmp_path / "demo"
     project.mkdir()
