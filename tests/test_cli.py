@@ -406,6 +406,57 @@ class TestAutoMain(unittest.TestCase):
         autonomous.assert_called_once_with(["--help"], invoked_as_auto=True)
 
 
+class TestDoctorReexecToProjectVenv(unittest.TestCase):
+    def _prepare_local_koru(self, project: Path) -> Path:
+        local_koru = project / ".venv" / "bin" / "koru"
+        local_koru.parent.mkdir(parents=True, exist_ok=True)
+        local_koru.write_text("#!/bin/sh\n", encoding="utf-8")
+        local_koru.chmod(0o755)
+        return local_koru.resolve()
+
+    def test_doctor_subcommand_reexecs_when_interpreter_is_outside_project_venv(self) -> None:
+        project = _tmp_git_project("koru-cli-doc-reexec-sub-")
+        try:
+            local_koru = self._prepare_local_koru(project)
+            with mock.patch("sys.argv", ["koru", "doctor", "--project", str(project)]):
+                with mock.patch("koru._legacy_cli_impl.sys.executable", "/usr/bin/python3"):
+                    with mock.patch("koru._legacy_cli_impl.sys.prefix", "/usr"):
+                        with mock.patch(
+                            "koru._legacy_cli_impl.os.execvpe",
+                            side_effect=RuntimeError("reexec"),
+                        ) as execvpe:
+                            with self.assertRaises(RuntimeError):
+                                main()
+
+            execvpe.assert_called_once()
+            called_argv = execvpe.call_args.args[1]
+            self.assertEqual(Path(called_argv[0]).resolve(), local_koru)
+            self.assertEqual(called_argv[1:], ["doctor", "--project", str(project)])
+        finally:
+            shutil.rmtree(project, ignore_errors=True)
+
+    def test_doctor_flag_reexecs_when_interpreter_is_outside_project_venv(self) -> None:
+        project = _tmp_git_project("koru-cli-doc-reexec-flag-")
+        try:
+            local_koru = self._prepare_local_koru(project)
+            with mock.patch("sys.argv", ["koru", "--doctor", "--project", str(project)]):
+                with mock.patch("koru._legacy_cli_impl.sys.executable", "/usr/bin/python3"):
+                    with mock.patch("koru._legacy_cli_impl.sys.prefix", "/usr"):
+                        with mock.patch(
+                            "koru._legacy_cli_impl.os.execvpe",
+                            side_effect=RuntimeError("reexec"),
+                        ) as execvpe:
+                            with self.assertRaises(RuntimeError):
+                                main()
+
+            execvpe.assert_called_once()
+            called_argv = execvpe.call_args.args[1]
+            self.assertEqual(Path(called_argv[0]).resolve(), local_koru)
+            self.assertEqual(called_argv[1:], ["--doctor", "--project", str(project)])
+        finally:
+            shutil.rmtree(project, ignore_errors=True)
+
+
 class TestSubcommandDispatch(unittest.TestCase):
     """R6: routing through ``_SUBCOMMANDS`` dispatch table.
 
@@ -437,7 +488,6 @@ class TestSubcommandDispatch(unittest.TestCase):
             "autonomous",
             "auto",
             "wizard",
-            "doctor",
             "dsl",
             "api",
             "topology",
@@ -468,16 +518,10 @@ class TestSubcommandDispatch(unittest.TestCase):
 
     def test_unknown_first_arg_falls_through_to_argparse(self) -> None:
         """A non-subcommand argv MUST NOT trigger any handler."""
-        fake_report = mock.Mock(has_failures=False)
-        fake_report.summary.return_value = {}
-        # Keep this routing test focused and fast: --doctor is an accepted
-        # top-level flag, but the diagnostic implementation is tested elsewhere.
         sentinels = {name: mock.Mock(side_effect=AssertionError) for name in self.EXPECTED_KEYS}
         with mock.patch.dict(_SUBCOMMANDS, sentinels):
-            with mock.patch("koru.cli.run_diagnostics", return_value=fake_report):
-                with mock.patch("koru.cli.render_doctor_text", return_value="doctor"):
-                    with mock.patch("koru.cli.emit_management_event"):
-                        code, _ = _run_main("--doctor", "--project", ".")
+            with mock.patch("koru._legacy_cli_impl._doctor_main", return_value=0):
+                code, _ = _run_main("--doctor", "--project", ".")
         self.assertEqual(code, 0)
         for handler in sentinels.values():
             handler.assert_not_called()

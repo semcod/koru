@@ -1524,6 +1524,18 @@ Full suite: **399 passed, 8 subtests passed** (393 → 399).
 - `README.md` + `docs/llm-tools/README.md` — sumd/sumr i redeploy dodane
   do list narzędzi i matrix konfiguracji.
 
+## [0.1.217] - 2026-05-22
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cli.py
+
+### Other
+- Update scripts/docker-ide-matrix-entrypoint.sh
+- Update uv.lock
+
 ## [0.1.212] - 2026-05-22
 
 ### Docs
