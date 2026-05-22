@@ -743,6 +743,14 @@ def _check_autopilot_skip_conditions(
         autopilot_skip_statuses,
     ):
         if _waiting_ticket_has_label(project, queue_result, "llm-ready"):
+            if _skip_due_to_recent_chat_activity(
+                project=project,
+                queue_result=queue_result,
+                state=state,
+                cycle_telemetry=cycle_telemetry,
+                _hp=_hp,
+            ):
+                return True, "skipped(chat_activity)"
             _hp(
                 "- autopilot not skipped "
                 f"(waiting ticket is llm-ready, streak={state.stagnation_streak})",
@@ -754,6 +762,101 @@ def _check_autopilot_skip_conditions(
         )
         return True, f"skipped(stuck_{queue_result.last_status})"
     return False, ""
+
+
+def _autopilot_redrive_cooldown_seconds() -> float:
+    """Operator-tunable cooldown (env: ``KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS``).
+
+    Defaults to 300 s. The autopilot loop must NOT redrive the same
+    ``llm-ready`` ticket prompt if a ``message.sent`` or ``message.received``
+    event has been logged within this window — that means the IDE-side LLM
+    is still working, or just answered, and a re-paste would clobber its
+    output. Set to ``0`` (or negative) to disable the new behavior and
+    restore the legacy "redrive every cycle" semantics.
+    """
+    raw = os.environ.get("KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS", "").strip()
+    if not raw:
+        return 300.0
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return 300.0
+
+
+def _skip_due_to_recent_chat_activity(
+    *,
+    project: Path,
+    queue_result: QueueLoopResult,
+    state: "AutoloopState",
+    cycle_telemetry: dict[str, Any],
+    _hp: Any,
+) -> bool:
+    """Return True iff the loop should skip drive because the IDE chat is busy.
+
+    Two signals (both optional, fail-closed → no skip):
+
+    1. Plain cooldown: ``message.sent`` for the same ticket within
+       :func:`_autopilot_redrive_cooldown_seconds`. This is the cheap path —
+       no llx, no network — and covers the common case where koru just drove
+       the prompt and the LLM is still streaming a response.
+    2. Optional :mod:`koru.llm_reflect` (when ``KORU_LLM_REFLECT=1`` and llx
+       is on PATH). Asks an OpenRouter-backed model to read the recent
+       ``message.received`` events and decide ``{done, needs_input}``. If
+       it returns ``needs_input=true`` we skip; if ``done=true`` we let the
+       loop proceed so the queue can advance.
+    """
+    cooldown = _autopilot_redrive_cooldown_seconds()
+    if cooldown <= 0:
+        return False
+    try:
+        from koruide.chat_history import has_recent_activity, last_event
+    except ImportError:
+        return False
+    ide = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip().lower() or None
+    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
+    if not has_recent_activity(
+        ide=ide,
+        within_seconds=cooldown,
+        types=("message.sent", "message.received"),
+    ):
+        return False
+    last = last_event(ide=ide, types=("message.sent", "message.received"))
+    age = f"{last.age_seconds:.0f}s" if last is not None else "?"
+    last_type = last.type if last is not None else "?"
+    cycle_telemetry["autopilot_skipped_chat_activity"] = True
+    cycle_telemetry["autopilot_chat_activity_last_event"] = last_type
+    _hp(
+        "- autopilot skipped (recent_chat_activity "
+        f"last={last_type} age={age} cooldown={cooldown:.0f}s "
+        f"ticket={waiting_ticket})",
+    )
+    try:
+        from koru.llm_reflect import llm_reflect_enabled, reflect_on_chat
+
+        if llm_reflect_enabled():
+            ticket_title = getattr(queue_result, "last_message", "") or ""
+            reflection = reflect_on_chat(
+                ticket_id=waiting_ticket or "-",
+                ticket_title=ticket_title,
+                driven_prompt=getattr(state, "last_driven_prompt", "") or ticket_title,
+                ide=ide or "",
+            )
+            if reflection is not None:
+                cycle_telemetry["autopilot_llx_reflection"] = {
+                    "done": reflection.done,
+                    "needs_input": reflection.needs_input,
+                    "summary": reflection.summary,
+                }
+                _hp(
+                    "- llx reflect: "
+                    f"done={reflection.done} needs_input={reflection.needs_input} "
+                    f"summary={reflection.summary!r}",
+                )
+                if reflection.done:
+                    return False
+    except ImportError:
+        pass
+    return True
 
 
 def _resolve_autopilot_drive_decision(

@@ -589,13 +589,43 @@ def _suggest_subcommand(token: str) -> str:
 
     if not token or token.startswith("-"):
         return ""
+    if token == "auto" and "auto" not in _SUBCOMMANDS and "autonomous" in _SUBCOMMANDS:
+        return "autonomous"
     matches = difflib.get_close_matches(token, list(_SUBCOMMANDS), n=1, cutoff=0.55)
     return matches[0] if matches else ""
+
+
+def _dispatch_auto_alias(raw_args: list[str]) -> int | None:
+    """Route ``koru auto`` on legacy installs that only expose ``autonomous``.
+
+    PyPI/pyenv builds before the ``auto`` entry was added to ``_SUBCOMMANDS``
+    reject ``koru auto`` with ``unrecognized arguments``. Prefer
+    :func:`koru.cli_auto._auto_main` when present (wizard hint, stop prior loop,
+    ``--replace-existing``); otherwise fall back to ``autonomous``.
+    """
+    if not raw_args or raw_args[0] != "auto" or "auto" in _SUBCOMMANDS:
+        return None
+    tail = raw_args[1:]
+    try:
+        from koru.cli_auto import _auto_main
+
+        return _auto_main(tail)
+    except (ImportError, AttributeError):
+        pass
+    if "autonomous" not in _SUBCOMMANDS:
+        return None
+    handler = _SUBCOMMANDS["autonomous"]
+    try:
+        return handler(tail, invoked_as_auto=True)
+    except TypeError:
+        return handler(tail)
 
 
 def main() -> int:
     raw_args = sys.argv[1:]
     _maybe_reexec_for_project_venv(raw_args)
+    if (auto_rc := _dispatch_auto_alias(raw_args)) is not None:
+        return auto_rc
     subcommand = raw_args[0] if raw_args else ""
     if subcommand in _SUBCOMMANDS:
         return _SUBCOMMANDS[subcommand](raw_args[1:])

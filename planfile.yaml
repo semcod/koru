@@ -26,7 +26,9 @@ sprints:
   task_patterns:
   - id: ticket-onboarding-001
     name: Extract onboarding state management into separate module
-    description: Extract onboarding state persistence logic from autonomous_onboarding.py into a dedicated src/koru/autonomous/onboarding_state.py module with clear interfaces for reading/writing onboarding state
+    description: Extract onboarding state persistence logic from autonomous_onboarding.py
+      into a dedicated src/koru/autonomous/onboarding_state.py module with clear interfaces
+      for reading/writing onboarding state
     task_type: refactor
     priority: high
     estimate: 2d
@@ -37,7 +39,9 @@ sprints:
       implementation: balanced
   - id: ticket-onboarding-002
     name: Add onboarding strategy tree node for architecture refactoring focus
-    description: Add a new root-level node in strategies.json specifically for architecture refactoring with options for modularization, responsibility boundaries, and CC reduction in hotspots (aligned with user's selected strategy)
+    description: Add a new root-level node in strategies.json specifically for architecture
+      refactoring with options for modularization, responsibility boundaries, and
+      CC reduction in hotspots (aligned with user's selected strategy)
     task_type: feature
     priority: high
     estimate: 2d
@@ -52,7 +56,9 @@ sprints:
       implementation: balanced
   - id: ticket-onboarding-003
     name: Implement onboarding checkpoint/recovery mechanism
-    description: Add checkpoint system in autonomous_onboarding.py to save progress at each wizard step and allow resuming from last checkpoint if onboarding is interrupted
+    description: Add checkpoint system in autonomous_onboarding.py to save progress
+      at each wizard step and allow resuming from last checkpoint if onboarding is
+      interrupted
     task_type: feature
     priority: medium
     estimate: 3d
@@ -63,7 +69,9 @@ sprints:
       implementation: balanced
   - id: ticket-onboarding-004
     name: Add onboarding validation and rollback
-    description: Add validation step after onboarding completion to verify all required files/tickets were created correctly, with rollback capability if validation fails
+    description: Add validation step after onboarding completion to verify all required
+      files/tickets were created correctly, with rollback capability if validation
+      fails
     task_type: feature
     priority: medium
     estimate: 2d
@@ -74,7 +82,9 @@ sprints:
       implementation: balanced
   - id: ticket-onboarding-005
     name: Add onboarding telemetry and diagnostics
-    description: Add telemetry collection for onboarding flow (time per step, drop-off points, common errors) and add `koru auto onboarding doctor` command to diagnose onboarding issues
+    description: Add telemetry collection for onboarding flow (time per step, drop-off
+      points, common errors) and add `koru auto onboarding doctor` command to diagnose
+      onboarding issues
     task_type: feature
     priority: low
     estimate: 2d

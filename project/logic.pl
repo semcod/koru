@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.225', 'python').
+project_metadata('koru', '0.1.227', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 691, 'less').
@@ -77,7 +77,7 @@ project_file('services/healing-webhook/app.py', 703, 'python').
 project_file('services/healing-webhook/ticket_builder.py', 224, 'python').
 project_file('src/koru/__init__.py', 70, 'python').
 project_file('src/koru/__main__.py', 13, 'python').
-project_file('src/koru/activity_log.py', 167, 'python').
+project_file('src/koru/activity_log.py', 174, 'python').
 project_file('src/koru/agent_backend_runtime.py', 181, 'python').
 project_file('src/koru/agent_backends.py', 213, 'python').
 project_file('src/koru/agent_cli_helpers.py', 88, 'python').
@@ -95,7 +95,7 @@ project_file('src/koru/autonomous_daemon.py', 283, 'python').
 project_file('src/koru/autonomous_diagnostics.py', 263, 'python').
 project_file('src/koru/autonomous_env.py', 26, 'python').
 project_file('src/koru/autonomous_onboarding.py', 232, 'python').
-project_file('src/koru/autonomous_operator.py', 145, 'python').
+project_file('src/koru/autonomous_operator.py', 160, 'python').
 project_file('src/koru/autonomous_parser.py', 450, 'python').
 project_file('src/koru/autonomous_plugin.py', 204, 'python').
 project_file('src/koru/autonomous_process_guard.py', 207, 'python').
@@ -147,7 +147,7 @@ project_file('src/koru/cli/__init__.py', 74, 'python').
 project_file('src/koru/cli/__main__.py', 13, 'python').
 project_file('src/koru/cli/commands.py', 1, 'python').
 project_file('src/koru/cli/parsers.py', 1, 'python').
-project_file('src/koru/cli.py', 617, 'python').
+project_file('src/koru/cli.py', 643, 'python').
 project_file('src/koru/cli_agent.py', 91, 'python').
 project_file('src/koru/cli_agent_backends.py', 62, 'python').
 project_file('src/koru/cli_auto.py', 77, 'python').
@@ -173,7 +173,8 @@ project_file('src/koru/configurator.py', 454, 'python').
 project_file('src/koru/context.py', 1270, 'python').
 project_file('src/koru/context_render.py', 473, 'python').
 project_file('src/koru/dev_sync.py', 214, 'python').
-project_file('src/koru/doctor.py', 1969, 'python').
+project_file('src/koru/doctor.py', 1789, 'python').
+project_file('src/koru/doctor_constants.py', 207, 'python').
 project_file('src/koru/dotenv_loader.py', 105, 'python').
 project_file('src/koru/dsl/__init__.py', 10, 'python').
 project_file('src/koru/env_config.py', 240, 'python').
@@ -277,7 +278,7 @@ project_file('src/koruide/__init__.py', 68, 'python').
 project_file('src/koruide/audit.py', 155, 'python').
 project_file('src/koruide/client.py', 161, 'python').
 project_file('src/koruide/config.py', 124, 'python').
-project_file('src/koruide/daemon.py', 1150, 'python').
+project_file('src/koruide/daemon.py', 1167, 'python').
 project_file('src/koruide/drive_orchestrator.py', 246, 'python').
 project_file('src/koruide/host_setup.py', 227, 'python').
 project_file('src/koruide/ide.py', 747, 'python').
@@ -330,7 +331,7 @@ project_file('src/koruvision/providers/env.py', 59, 'python').
 project_file('src/koruvision/providers/grim.py', 45, 'python').
 project_file('src/koruvision/providers/mss.py', 55, 'python').
 project_file('src/koruvision/providers/obs_websocket.py', 232, 'python').
-project_file('src/koruvision/providers/portal_screencast.py', 392, 'python').
+project_file('src/koruvision/providers/portal_screencast.py', 384, 'python').
 project_file('src/koruvision/providers/portal_screenshot.py', 45, 'python').
 project_file('src/koruvision/providers/registry.py', 33, 'python').
 project_file('src/koruvision/providers/screencast_session.py', 61, 'python').
@@ -338,7 +339,7 @@ project_file('src/koruvision/scaling.py', 53, 'python').
 project_file('tests/e2e/bootstrap.sh', 94, 'shell').
 project_file('tests/e2e/init.sh', 29, 'shell').
 project_file('tests/e2e/smoke.sh', 112, 'shell').
-project_file('tests/test_activity_log.py', 87, 'python').
+project_file('tests/test_activity_log.py', 122, 'python').
 project_file('tests/test_agent_backend_runtime.py', 156, 'python').
 project_file('tests/test_agent_backends.py', 88, 'python').
 project_file('tests/test_agent_backends_cli.py', 34, 'python').
@@ -348,6 +349,7 @@ project_file('tests/test_autoloop_cli.py', 52, 'python').
 project_file('tests/test_autonomous.py', 2896, 'python').
 project_file('tests/test_autonomous_diagnostics.py', 71, 'python').
 project_file('tests/test_autonomous_onboarding.py', 194, 'python').
+project_file('tests/test_autonomous_operator_unsupported_ide.py', 95, 'python').
 project_file('tests/test_autonomous_parser_detection.py', 16, 'python').
 project_file('tests/test_autonomous_process_detection.py', 37, 'python').
 project_file('tests/test_autonomous_runtime.py', 118, 'python').
@@ -361,7 +363,7 @@ project_file('tests/test_autopilot_audit.py', 125, 'python').
 project_file('tests/test_autopilot_cli.py', 1128, 'python').
 project_file('tests/test_autopilot_client_drive_errors.py', 16, 'python').
 project_file('tests/test_autopilot_config.py', 148, 'python').
-project_file('tests/test_autopilot_daemon.py', 1263, 'python').
+project_file('tests/test_autopilot_daemon.py', 1344, 'python').
 project_file('tests/test_autopilot_host_setup.py', 125, 'python').
 project_file('tests/test_autopilot_ide.py', 537, 'python').
 project_file('tests/test_autopilot_injector.py', 287, 'python').
@@ -372,7 +374,7 @@ project_file('tests/test_autopilot_protocol.py', 168, 'python').
 project_file('tests/test_autopilot_socket_path.py', 36, 'python').
 project_file('tests/test_bootstrap.py', 298, 'python').
 project_file('tests/test_capture_host_template.py', 20, 'python').
-project_file('tests/test_cli.py', 542, 'python').
+project_file('tests/test_cli.py', 583, 'python').
 project_file('tests/test_configurator.py', 175, 'python').
 project_file('tests/test_configurator_toggle.py', 53, 'python').
 project_file('tests/test_context.py', 628, 'python').
@@ -385,6 +387,7 @@ project_file('tests/test_docker_ide_matrix.py', 161, 'python').
 project_file('tests/test_docker_ide_matrix_config.py', 120, 'python').
 project_file('tests/test_docs_ide_control_surfaces.py', 85, 'python').
 project_file('tests/test_doctor.py', 1400, 'python').
+project_file('tests/test_doctor_facade.py', 62, 'python').
 project_file('tests/test_dotenv_loader.py', 117, 'python').
 project_file('tests/test_drive_orchestrator.py', 175, 'python').
 project_file('tests/test_e2e.py', 1181, 'python').
@@ -415,7 +418,7 @@ project_file('tests/test_korumesh_transport.py', 63, 'python').
 project_file('tests/test_koruobserve_diagnostics.py', 112, 'python').
 project_file('tests/test_koruobserve_lifecycle.py', 235, 'python').
 project_file('tests/test_koruvision_agent.py', 78, 'python').
-project_file('tests/test_koruvision_capture.py', 208, 'python').
+project_file('tests/test_koruvision_capture.py', 212, 'python').
 project_file('tests/test_koruvision_mesh.py', 74, 'python').
 project_file('tests/test_local_service.py', 265, 'python').
 project_file('tests/test_loop.py', 95, 'python').
@@ -540,7 +543,7 @@ python_function('src/koru/activity_log.py', 'preview_text', 1, 2, 3).
 python_function('src/koru/activity_log.py', '_env_disabled', 1, 1, 3).
 python_function('src/koru/activity_log.py', 'configure_nfo_activity_log', 1, 3, 7).
 python_function('src/koru/activity_log.py', 'nfo_activity_log_path', 0, 4, 7).
-python_function('src/koru/activity_log.py', '_emit_nfo_activity', 2, 8, 9).
+python_function('src/koru/activity_log.py', '_emit_nfo_activity', 2, 10, 11).
 python_function('src/koru/activity_log.py', '_out_stream', 1, 2, 0).
 python_function('src/koru/activity_log.py', 'activity', 2, 4, 8).
 python_function('src/koru/activity_log.py', 'activity_info', 1, 5, 10).
@@ -738,7 +741,7 @@ python_function('src/koru/autonomous_onboarding.py', 'discover_ide_candidates', 
 python_function('src/koru/autonomous_onboarding.py', 'load_strategy_tree', 1, 1, 3).
 python_function('src/koru/autonomous_onboarding.py', 'run_interactive_onboarding', 1, 10, 12).
 python_function('src/koru/autonomous_operator.py', 'run_mcp_provision', 2, 3, 2).
-python_function('src/koru/autonomous_operator.py', 'setup_autopilot_plugin', 4, 7, 6).
+python_function('src/koru/autonomous_operator.py', 'setup_autopilot_plugin', 4, 9, 10).
 python_function('src/koru/autonomous_operator.py', 'run_operator_pipeline', 6, 3, 3).
 python_function('src/koru/autonomous_operator.py', 'unblock_queue_if_needed', 2, 3, 5).
 python_function('src/koru/autonomous_parser.py', 'build_parser', 0, 1, 6).
@@ -1085,7 +1088,8 @@ python_function('src/koru/cli.py', '_should_suggest_wizard', 2, 6, 5).
 python_function('src/koru/cli.py', '_command_loop_main', 1, 7, 7).
 python_function('src/koru/cli.py', '_maybe_reexec_for_project_venv', 1, 8, 7).
 python_function('src/koru/cli.py', '_dispatch_flag_action', 2, 8, 8).
-python_function('src/koru/cli.py', 'main', 0, 11, 9).
+python_function('src/koru/cli.py', '_suggest_subcommand', 1, 4, 3).
+python_function('src/koru/cli.py', 'main', 0, 15, 14).
 python_function('src/koru/cli_agent.py', '_detect_agent_options', 1, 2, 3).
 python_function('src/koru/cli_agent.py', '_build_agent_parser', 0, 1, 3).
 python_function('src/koru/cli_agent.py', '_agent_main', 1, 3, 7).
@@ -1947,6 +1951,7 @@ python_function('src/koruide/config.py', 'clear_config_cache', 0, 1, 1).
 python_function('src/koruide/daemon.py', '_daemon_package_version', 0, 2, 1).
 python_function('src/koruide/daemon.py', '_env_truthy', 1, 1, 3).
 python_function('src/koruide/daemon.py', '_prefer_keyboard_drive', 0, 2, 1).
+python_function('src/koruide/daemon.py', '_verbose_io', 0, 1, 1).
 python_function('src/koruide/daemon.py', '_plugin_rejection_log_interval_seconds', 0, 3, 4).
 python_function('src/koruide/daemon.py', '_load_context_module', 0, 1, 1).
 python_function('src/koruide/daemon.py', '_default_handoff', 1, 1, 3).
@@ -2277,6 +2282,7 @@ python_function('tests/test_activity_log.py', 'test_activity_flushes_with_timest
 python_function('tests/test_activity_log.py', 'test_activity_disabled', 2, 2, 3).
 python_function('tests/test_activity_log.py', 'test_activity_emits_nfo_event_when_configured', 3, 8, 8).
 python_function('tests/test_activity_log.py', 'test_activity_warns_once_when_nfo_fails', 3, 2, 9).
+python_function('tests/test_activity_log.py', 'test_activity_module_not_found_warning_includes_install_hint', 3, 4, 8).
 python_function('tests/test_agent_backend_runtime.py', 'test_plugin_socket_backend_forwards_send_chat_to_drive', 0, 2, 5).
 python_function('tests/test_agent_backend_runtime.py', 'test_mcp_tool_backend_returns_ok_marker', 0, 5, 4).
 python_function('tests/test_agent_backend_runtime.py', 'test_mcp_tool_backend_no_server_field', 0, 3, 3).
@@ -2419,6 +2425,9 @@ python_function('tests/test_autonomous_onboarding.py', 'test_ensure_project_stat
 python_function('tests/test_autonomous_onboarding.py', 'test_discover_ide_candidates_delegates_to_wizard', 1, 2, 3).
 python_function('tests/test_autonomous_onboarding.py', 'test_load_strategy_tree_prefers_project_override', 1, 3, 5).
 python_function('tests/test_autonomous_onboarding.py', 'test_run_interactive_onboarding_updates_args_from_wizard', 2, 12, 10).
+python_function('tests/test_autonomous_operator_unsupported_ide.py', '_stub_plugin_install_result_unsupported', 0, 1, 1).
+python_function('tests/test_autonomous_operator_unsupported_ide.py', 'test_unsupported_ide_emits_env_remedy', 1, 5, 7).
+python_function('tests/test_autonomous_operator_unsupported_ide.py', 'test_unsupported_ide_without_env_does_not_print_env_remedy', 1, 3, 7).
 python_function('tests/test_autonomous_parser_detection.py', 'test_looks_like_koru_auto_command', 0, 2, 1).
 python_function('tests/test_autonomous_parser_detection.py', 'test_looks_like_koru_autonomous_up_command', 0, 2, 1).
 python_function('tests/test_autonomous_parser_detection.py', 'test_looks_like_unrelated_command', 0, 2, 1).
@@ -2612,6 +2621,11 @@ python_function('tests/test_autopilot_daemon.py', 'test_session_ended_no_handoff
 python_function('tests/test_autopilot_daemon.py', 'test_session_ended_skipped_during_cooldown', 2, 5, 9).
 python_function('tests/test_autopilot_daemon.py', 'test_session_started_event_just_acks', 2, 3, 8).
 python_function('tests/test_autopilot_daemon.py', 'test_shutdown_stops_daemon', 2, 5, 8).
+python_function('tests/test_autopilot_daemon.py', 'test_verbose_io_defaults_to_false', 1, 2, 2).
+python_function('tests/test_autopilot_daemon.py', 'test_verbose_io_opt_in', 2, 2, 3).
+python_function('tests/test_autopilot_daemon.py', 'test_verbose_io_opt_out', 2, 2, 3).
+python_function('tests/test_autopilot_daemon.py', 'test_connect_disconnect_silent_by_default', 2, 4, 10).
+python_function('tests/test_autopilot_daemon.py', 'test_connect_disconnect_logged_when_verbose', 2, 3, 9).
 python_function('tests/test_autopilot_host_setup.py', 'test_build_setup_host_report_has_expected_keys', 0, 6, 2).
 python_function('tests/test_autopilot_host_setup.py', 'test_build_setup_host_report_json_roundtrip', 0, 2, 3).
 python_function('tests/test_autopilot_host_setup.py', 'test_run_host_setup_install_dry_run_no_sudo', 1, 2, 3).
@@ -2800,6 +2814,11 @@ python_function('tests/test_doctor.py', '_without_autopilot_env', 0, 3, 1).
 python_function('tests/test_doctor.py', '_scaffold', 1, 2, 3).
 python_function('tests/test_doctor.py', '_run', 1, 1, 1).
 python_function('tests/test_doctor.py', '_named', 2, 4, 1).
+python_function('tests/test_doctor_facade.py', 'test_doctor_constants_module_exists', 0, 2, 0).
+python_function('tests/test_doctor_facade.py', 'test_doctor_constants_status_values', 0, 5, 0).
+python_function('tests/test_doctor_facade.py', 'test_doctor_constants_problem_catalog', 0, 4, 3).
+python_function('tests/test_doctor_facade.py', 'test_doctor_imports_from_constants', 0, 7, 2).
+python_function('tests/test_doctor_facade.py', 'test_doctor_constants_vs_doctor_consistency', 0, 7, 0).
 python_function('tests/test_drive_orchestrator.py', 'test_plugin_required_message_mentions_ide_and_connect_command', 0, 3, 1).
 python_function('tests/test_drive_orchestrator.py', 'test_should_try_os_fallback_false_when_plugin_required', 0, 2, 1).
 python_function('tests/test_drive_orchestrator.py', 'test_should_try_os_fallback_true_for_submit_failure', 0, 2, 1).
@@ -2988,10 +3007,10 @@ python_function('tests/test_koruvision_capture.py', '_require_mss', 0, 1, 1).
 python_function('tests/test_koruvision_capture.py', '_fake_grabber', 0, 1, 3).
 python_function('tests/test_koruvision_capture.py', '_png', 2, 1, 1).
 python_function('tests/test_koruvision_capture.py', 'test_list_monitors_returns_at_least_one', 0, 3, 7).
-python_function('tests/test_koruvision_capture.py', 'test_capture_monitor_png_returns_frame', 0, 10, 6).
-python_function('tests/test_koruvision_capture.py', 'test_capture_monitor_png_records_native_resolution_after_downscale', 0, 6, 8).
-python_function('tests/test_koruvision_capture.py', 'test_capture_monitor_png_skips_black_monitor', 0, 2, 6).
-python_function('tests/test_koruvision_capture.py', 'test_capture_all_monitors_returns_frame_per_display', 0, 3, 6).
+python_function('tests/test_koruvision_capture.py', 'test_capture_monitor_png_returns_frame', 1, 10, 7).
+python_function('tests/test_koruvision_capture.py', 'test_capture_monitor_png_records_native_resolution_after_downscale', 1, 6, 9).
+python_function('tests/test_koruvision_capture.py', 'test_capture_monitor_png_skips_black_monitor', 1, 2, 7).
+python_function('tests/test_koruvision_capture.py', 'test_capture_all_monitors_returns_frame_per_display', 1, 3, 7).
 python_function('tests/test_koruvision_capture.py', 'test_capture_monitor_png_auto_falls_back_to_portal_on_wayland', 2, 5, 8).
 python_function('tests/test_koruvision_capture.py', 'test_capture_monitor_png_auto_uses_native_command_when_mss_fails', 1, 4, 7).
 python_function('tests/test_koruvision_capture.py', 'test_capture_all_monitors_auto_falls_back_to_portal', 1, 4, 8).
@@ -3377,7 +3396,6 @@ python_method('ShellPrompter', 'ask_text', 1, 4, 4).
 python_method('ShellPrompter', 'ask_yes_no', 1, 7, 5).
 python_method('ShellPrompter', 'ask_choice', 1, 4, 4).
 python_class('src/koru/dev_sync.py', 'SyncItem').
-python_class('src/koru/doctor.py', 'ProblemCatalogEntry').
 python_class('src/koru/doctor.py', 'Check').
 python_method('Check', 'to_dict', 0, 2, 0).
 python_class('src/koru/doctor.py', 'DoctorReport').
@@ -3385,6 +3403,7 @@ python_method('DoctorReport', 'has_failures', 0, 2, 1).
 python_method('DoctorReport', 'has_warnings', 0, 2, 1).
 python_method('DoctorReport', 'summary', 0, 2, 1).
 python_method('DoctorReport', 'to_dict', 0, 2, 3).
+python_class('src/koru/doctor_constants.py', 'ProblemCatalogEntry').
 python_class('src/koru/env_config.py', 'EnvKey').
 python_class('src/koru/gate.py', 'GateAuthorization').
 python_method('GateAuthorization', 'to_note', 0, 1, 2).
@@ -3552,10 +3571,10 @@ python_method('AutopilotDaemon', 'start', 0, 3, 12).
 python_method('AutopilotDaemon', 'serve_forever', 0, 5, 6).
 python_method('AutopilotDaemon', 'stop', 0, 1, 1).
 python_method('AutopilotDaemon', '_shutdown', 0, 3, 9).
-python_method('AutopilotDaemon', '_accept', 0, 6, 9).
-python_method('AutopilotDaemon', '_on_readable', 1, 7, 14).
+python_method('AutopilotDaemon', '_accept', 0, 7, 10).
+python_method('AutopilotDaemon', '_on_readable', 1, 8, 15).
 python_method('AutopilotDaemon', '_dispatch', 2, 3, 6).
-python_method('AutopilotDaemon', '_send', 2, 2, 3).
+python_method('AutopilotDaemon', '_send', 2, 4, 4).
 python_method('AutopilotDaemon', '_drop', 1, 2, 4).
 python_method('AutopilotDaemon', '_plugin_for', 1, 1, 1).
 python_method('AutopilotDaemon', '_handle_drive', 2, 11, 14).
@@ -3707,17 +3726,20 @@ python_method('TestAgentLaneEnv', 'test_qwen_lane_env_defaults', 0, 1, 2).
 python_method('TestAgentLaneEnv', 'test_opencode_lane_env_defaults', 0, 1, 2).
 python_class('tests/test_agents.py', 'TestAutopilotBackendForLane').
 python_method('TestAutopilotBackendForLane', 'test_backend_matrix', 0, 1, 2).
+python_class('tests/test_autonomous_operator_unsupported_ide.py', '_Args').
 python_class('tests/test_autopilot_daemon.py', '_StubInjector').
-python_method('_StubInjector', '__init__', 0, 2, 0).
+python_method('_StubInjector', '__init__', 0, 3, 0).
 python_method('_StubInjector', 'type_text', 1, 2, 3).
 python_method('_StubInjector', 'probe', 0, 1, 0).
 python_method('_StubInjector', 'select_backend', 0, 1, 0).
 python_class('tests/test_autopilot_daemon.py', '_LineReader').
-python_method('_LineReader', '__init__', 1, 2, 1).
+python_method('_LineReader', '__init__', 1, 3, 1).
 python_method('_LineReader', 'read_line', 0, 4, 5).
 python_method('_LineReader', 'read_message', 0, 1, 2).
 python_class('tests/test_autopilot_daemon.py', '_DaemonHarness').
-python_method('_DaemonHarness', '__init__', 1, 2, 2).
+python_method('_DaemonHarness', '__init__', 1, 3, 2).
+python_method('_DaemonHarness', '__enter__', 0, 1, 1).
+python_method('_DaemonHarness', '__exit__', 0, 1, 1).
 python_method('_DaemonHarness', 'start', 0, 1, 3).
 python_method('_DaemonHarness', 'stop', 0, 2, 2).
 python_method('_DaemonHarness', 'client', 1, 1, 1).
@@ -3812,6 +3834,11 @@ python_method('TestSubcommandDispatch', 'test_table_values_are_callables', 0, 2,
 python_method('TestSubcommandDispatch', 'test_each_subcommand_routes_to_its_handler', 0, 2, 7).
 python_method('TestSubcommandDispatch', 'test_unknown_first_arg_falls_through_to_argparse', 0, 3, 7).
 python_method('TestSubcommandDispatch', 'test_empty_argv_does_not_call_any_handler', 0, 2, 6).
+python_class('tests/test_cli.py', 'TestUnknownSubcommandHint').
+python_method('TestUnknownSubcommandHint', '_run_capture_stderr', 0, 1, 4).
+python_method('TestUnknownSubcommandHint', 'test_typo_close_to_auto_suggests_auto', 0, 1, 3).
+python_method('TestUnknownSubcommandHint', 'test_typo_close_to_autoloop_suggests_autoloop', 0, 1, 3).
+python_method('TestUnknownSubcommandHint', 'test_unrelated_token_lists_known_subcommands', 0, 1, 3).
 python_class('tests/test_context.py', 'TestBuildContext').
 python_method('TestBuildContext', 'test_brief_with_runnable_ticket', 0, 1, 8).
 python_method('TestBuildContext', 'test_autonomy_loop_brief_reads_telemetry_file', 0, 2, 12).

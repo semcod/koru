@@ -7,10 +7,10 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.228-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$6.68-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-95.8h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.229-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$6.77-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-95.8h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $6.6815 (297 commits)
+- 🤖 **LLM usage:** $6.7688 (298 commits)
 - 👤 **Human dev:** ~$9582 (95.8h @ $100/h, 30min dedup)
 
 Generated on 2026-05-22 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
@@ -130,9 +130,16 @@ python -m venv .venv
 python -m pip install -U pip
 python -m pip install -e ".[dev]"
 
+# pyenv / ~/.venv often shadow the project CLI — force repo-first PATH:
+export PATH="$(pwd)/.venv/bin:$PATH"
+hash -r
+# or: source scripts/activate-koru-dev.sh
+# or: scripts/koru-from-repo.sh auto
+
 # verify which build this shell is using
 koru --version
-which koru
+which koru   # must be …/semcod/koru/.venv/bin/koru
+koru --doctor --project .   # warns if PATH koru lacks ``koru auto``
 
 # smoke-run one autonomous cycle (no IDE injection)
 koru autonomous up --project . --max-cycles 1 --sleep-seconds 0 --no-autopilot
@@ -198,7 +205,7 @@ poll — not chat readback). See [docs/post-run-verify.md](docs/post-run-verify.
 
 | Symptom | Fix |
 |---|---|
-| `koru: error: unrecognized arguments: auto` | The active `koru` on `PATH` is older than the source tree (or installed in a different venv than the one you activated). Check with `which koru` + `koru --version`. Fix: activate the project venv (`source .venv/bin/activate`) or run the dev build (`pip install -e ".[dev]"` inside `/path/to/semcod/koru`). `koru auto` is an alias of `koru autonomous`; both are first-class subcommands in current releases. Newer builds also print a `Did you mean 'koru auto'?` hint for typos. |
+| `koru: error: unrecognized arguments: auto` | The `koru` on your `PATH` is **not** the editable build you just installed. Common causes: (1) **pyenv shim** — run `type -a koru`; if you see `~/.pyenv/shims/koru`, that Python 3.12 wheel only has `koru autonomous`, not `koru auto`. Fix: `cd /path/to/semcod/koru && pip install -e . && pyenv rehash`, or use `koru autonomous` / `python -m koru auto`. (2) **Wrong venv active** — `pip install -e .` may have updated `c2004/.venv` while your shell still runs `~/.venv/bin/koru` or pyenv. Fix: `deactivate`, `cd semcod/koru`, `source .venv/bin/activate`, `hash -r`, `which koru` (must be `…/semcod/koru/.venv/bin/koru`), then `pip install -e ".[dev]"`. (3) **Stale global install** — `pip install -e .` into `~/.venv` or upgrade with `pip install -U -e .` from the koru repo. Current source maps `koru auto` → `autonomous` even on legacy `_SUBCOMMANDS` tables after reinstall. |
 | `koru auto` picks `lane=jetbrains` / `terminal hint → jetbrains` and then prints `autopilot plugin unsupported` | The shell has a stale `KORU_AUTOPILOT_INSTANCE=jetbrains` exported (e.g. from a previous session) and the IDE parent-process walk finds the JetBrains process. JetBrains does not have an installable koru plugin yet, so the loop falls back to the OS injector path — unreliable on Wayland. Fix: `unset KORU_AUTOPILOT_INSTANCE` (auto-pick the focused IDE) **or** export a supported lane: `export KORU_AUTOPILOT_INSTANCE=cursor` (also accepts `vscode`/`vscodium`/`windsurf`). `koru auto` now prints this remedy inline when it detects the stale env. |
 | Autonomous log floods with `client connected: fd5` / `client disconnected: fd5` | Health probes (dashboard `/api/dashboard`, MCP, WUP, status checks) connect to the autopilot daemon every second. These per-fd events are now hidden by default. Set `KORU_AUTOPILOT_VERBOSE=1` to re-enable them for debugging. `send to fdN failed: [Errno 32] Broken pipe` is similarly downgraded (it just means the caller already timed out and disconnected). |
 | `koru: nfo activity log disabled: ModuleNotFoundError: No module named 'nfo'` | `nfo` is an optional dependency for the structured activity log. Install it with `pip install nfo` (or `pip install "koru[obs]"`). The autonomous loop runs fine without it; the warning is printed once and then silenced. |

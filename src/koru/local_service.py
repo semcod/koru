@@ -16,6 +16,20 @@ from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
+from koru.bounded_contexts.local_manager import LocalManagerCommandService, LocalManagerQueryService
+from koru.bounded_contexts.local_manager.commands import (
+    ClaimActionCommand,
+    CompleteActionCommand,
+    EnqueueActionCommand,
+    HeartbeatWorkerCommand,
+    RegisterWorkerCommand,
+)
+from koru.bounded_contexts.local_manager.queries import (
+    HealthSnapshotQuery,
+    QueueSnapshotQuery,
+    StateSnapshotQuery,
+    WorkersSnapshotQuery,
+)
 from koru.local_manager_state import DEFAULT_LEASE_SECONDS
 from koru.local_manager_state import EventBuffer as _EventBuffer
 from koru.local_manager_state import ServiceState as _ServiceState
@@ -82,6 +96,9 @@ def default_local_service_config() -> LocalServiceConfig:
 
 
 def _build_handler(state: _ServiceState, koru_version: str) -> type[BaseHTTPRequestHandler]:
+    command_service = LocalManagerCommandService(state)
+    query_service = LocalManagerQueryService(state)
+
     class _Handler(BaseHTTPRequestHandler):
         def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
             return
@@ -121,16 +138,10 @@ def _build_handler(state: _ServiceState, koru_version: str) -> type[BaseHTTPRequ
         def do_GET(self) -> None:  # noqa: N802
             path = self.path.split("?", 1)[0]
             if path == "/health":
-                queue_snapshot = state.queue.snapshot()
-                workers_snapshot = state.workers.snapshot()
                 self._send_json(
-                    {
-                        "ok": True,
-                        "version": koru_version,
-                        "service": "koru-local-manager",
-                        "active_worker_id": workers_snapshot["active_worker_id"],
-                        "queue_counts": queue_snapshot["counts"],
-                    },
+                    query_service.health(
+                        HealthSnapshotQuery(koru_version=koru_version),
+                    ),
                 )
                 return
             if path == "/events":
@@ -141,18 +152,13 @@ def _build_handler(state: _ServiceState, koru_version: str) -> type[BaseHTTPRequ
                 self._send(200, nd, "application/x-ndjson; charset=utf-8")
                 return
             if path == "/queue":
-                self._send_json(state.queue.snapshot())
+                self._send_json(query_service.queue_snapshot(QueueSnapshotQuery()))
                 return
             if path == "/workers":
-                self._send_json(state.workers.snapshot())
+                self._send_json(query_service.workers_snapshot(WorkersSnapshotQuery()))
                 return
             if path == "/state":
-                self._send_json(
-                    {
-                        "queue": state.queue.snapshot(),
-                        "workers": state.workers.snapshot(),
-                    },
-                )
+                self._send_json(query_service.state_snapshot(StateSnapshotQuery()))
                 return
             self._send_json({"error": "not found"}, 404)
 
@@ -179,7 +185,9 @@ def _build_handler(state: _ServiceState, koru_version: str) -> type[BaseHTTPRequ
                 return
             if path == "/enqueue":
                 eid, received_at = self._append_event(data)
-                item = state.queue.enqueue(eid, data, received_at)
+                item = command_service.enqueue(
+                    EnqueueActionCommand(action_id=eid, payload=data, received_at=received_at),
+                )
                 self._send_json({"id": eid, "status": item["status"], "item": item})
                 return
             if path == "/queue/claim":
@@ -192,13 +200,15 @@ def _build_handler(state: _ServiceState, koru_version: str) -> type[BaseHTTPRequ
                 except (TypeError, ValueError):
                     self._send_json({"error": "lease_seconds must be an integer"}, 400)
                     return
-                item = state.queue.claim(
-                    worker_id=worker_id,
-                    capabilities=_normalize_capabilities(data.get("capabilities")),
-                    action_types=_normalize_capabilities(
-                        data.get("action_types", data.get("types")),
+                item = command_service.claim(
+                    ClaimActionCommand(
+                        worker_id=worker_id,
+                        capabilities=_normalize_capabilities(data.get("capabilities")),
+                        action_types=_normalize_capabilities(
+                            data.get("action_types", data.get("types")),
+                        ),
+                        lease_seconds=lease_seconds,
                     ),
-                    lease_seconds=lease_seconds,
                 )
                 if item is None:
                     self._send_json({"status": "idle", "item": None})
@@ -217,11 +227,15 @@ def _build_handler(state: _ServiceState, koru_version: str) -> type[BaseHTTPRequ
                 if final_status not in {"completed", "failed", "canceled"}:
                     self._send_json({"error": "status must be completed, failed, or canceled"}, 400)
                     return
-                item = state.queue.complete(
-                    action_id=action_id,
-                    worker_id=str(data.get("worker_id") or "") or None,
-                    status=final_status,
-                    result=data.get("result") if isinstance(data.get("result"), dict) else None,
+                item = command_service.complete(
+                    CompleteActionCommand(
+                        action_id=action_id,
+                        worker_id=str(data.get("worker_id") or "") or None,
+                        status=final_status,
+                        result=data.get("result")
+                        if isinstance(data.get("result"), dict)
+                        else None,
+                    ),
                 )
                 if item is None:
                     self._send_json({"error": "action not found"}, 404)
@@ -232,7 +246,7 @@ def _build_handler(state: _ServiceState, koru_version: str) -> type[BaseHTTPRequ
                 self._send_json({"status": final_status, "item": item})
                 return
             if path == "/workers/register":
-                reply = state.workers.register(data)
+                reply = command_service.register_worker(RegisterWorkerCommand(payload=data))
                 self._append_event(
                     {
                         "type": "worker.registered",
@@ -243,7 +257,7 @@ def _build_handler(state: _ServiceState, koru_version: str) -> type[BaseHTTPRequ
                 )
                 self._send_json(reply)
                 return
-            reply = state.workers.heartbeat(data)
+            reply = command_service.heartbeat_worker(HeartbeatWorkerCommand(payload=data))
             self._append_event(
                 {
                     "type": "worker.heartbeat",

@@ -5,13 +5,15 @@ from __future__ import annotations
 import io
 import json
 import shutil
+import sys
+import types
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
 
-from koru.cli import _SUBCOMMANDS, _build_parser, _is_bare_invocation, main
+from koru.cli import _SUBCOMMANDS, _build_parser, _dispatch_auto_alias, _is_bare_invocation, main
 
 
 def _tmp_git_project(prefix: str = "koru-cli-test-") -> Path:
@@ -539,6 +541,36 @@ class TestSubcommandDispatch(unittest.TestCase):
                 _run_main("--project", str(project))
         finally:
             shutil.rmtree(project, ignore_errors=True)
+
+
+class TestAutoAliasBackwardCompat(unittest.TestCase):
+    """Legacy installs expose ``autonomous`` but not ``auto`` (pyenv 3.12 wheels)."""
+
+    def test_dispatch_auto_alias_routes_to_autonomous_when_auto_missing(self) -> None:
+        called: list[tuple] = []
+
+        def fake_autonomous(argv: list[str], *, invoked_as_auto: bool = False) -> int:
+            called.append((list(argv), invoked_as_auto))
+            return 0
+
+        trimmed = {k: v for k, v in _SUBCOMMANDS.items() if k != "auto"}
+        trimmed["autonomous"] = fake_autonomous
+        stub = types.ModuleType("koru.cli_auto")
+        with mock.patch.dict(_SUBCOMMANDS, trimmed, clear=True):
+            with mock.patch.dict(sys.modules, {"koru.cli_auto": stub}):
+                rc = _dispatch_auto_alias(["auto", "doctor"])
+        self.assertEqual(rc, 0)
+        self.assertEqual(called, [(["doctor"], True)])
+
+    def test_dispatch_auto_alias_returns_none_when_auto_registered(self) -> None:
+        self.assertIsNone(_dispatch_auto_alias(["auto", "--help"]))
+
+    def test_suggest_auto_maps_to_autonomous_on_legacy_table(self) -> None:
+        from koru.cli import _suggest_subcommand
+
+        trimmed = {k: v for k, v in _SUBCOMMANDS.items() if k != "auto"}
+        with mock.patch.dict(_SUBCOMMANDS, trimmed, clear=True):
+            self.assertEqual(_suggest_subcommand("auto"), "autonomous")
 
 
 class TestUnknownSubcommandHint(unittest.TestCase):

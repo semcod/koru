@@ -374,6 +374,30 @@ def _resolve_autopilot_socket_for_doctor() -> Path:
     return default_socket_path()
 
 
+def _path_koru_supports_auto_subcommand(path_koru: str | None) -> bool | None:
+    """Probe whether ``koru auto`` works on the executable first on PATH."""
+    if not path_koru:
+        return None
+    try:
+        proc = subprocess.run(
+            [path_koru, "auto", "--help"],
+            capture_output=True,
+            text=True,
+            timeout=8,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    combined = f"{proc.stdout or ''}\n{proc.stderr or ''}"
+    if "unrecognized arguments: auto" in combined:
+        return False
+    if proc.returncode == 0 and (
+        "koru autonomous" in combined or "alias:" in combined.lower()
+    ):
+        return True
+    return proc.returncode == 0 if proc.returncode == 0 else False
+
+
 def _check_koru_runtime_identity(project: Path) -> tuple[str, str]:
     package_version = _installed_koru_version()
     source_version = _read_project_version(project / "pyproject.toml")
@@ -397,6 +421,16 @@ def _check_koru_runtime_identity(project: Path) -> tuple[str, str]:
         except OSError:
             status = WARN
             detail_bits.append("path_mismatch=unknown")
+    auto_ok = _path_koru_supports_auto_subcommand(path_koru)
+    if auto_ok is False:
+        status = WARN
+        detail_bits.append("koru_auto_unsupported=true")
+        if project_koru.is_file():
+            detail_bits.append(
+                f"fix=export PATH={project_koru.parent}:$PATH; hash -r; or {project_koru} auto"
+            )
+        else:
+            detail_bits.append("fix=pip install -e . && use koru autonomous")
     if package_version and source_version and package_version != source_version:
         status = WARN
         detail_bits.append("version_mismatch=true")
