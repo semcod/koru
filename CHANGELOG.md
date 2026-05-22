@@ -13,6 +13,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   CLI tools, and **`portal_screencast`** (xdg-desktop-portal ScreenCast +
   `gst-launch-1.0 pipewiresrc`). `capture.py` delegates to the detector;
   `/api/mesh/diagnostics` lists provider availability.
+- **Cross-OS capture smoke (Docker):** `docker/capture/{Dockerfile,smoke.py,
+  run.sh,entrypoint-x11.sh}` plus `tests/test_docker_capture.py` (gated by
+  `KORU_DOCKER_TESTS=1`). Builds two targets — `capture-headless` (no
+  display server) and `capture-x11` (Xvfb + scrot + mss) — and asserts the
+  provider chain reports the expected available/blocked status and produces
+  a non-trivial PNG.
+
+### Fixed
+- **`scrot` 1.x refuses to overwrite** an existing file. `command_candidates`
+  now passes `--overwrite`, and `run_png_command` unlinks the
+  `NamedTemporaryFile` placeholder before invoking gnome-screenshot /
+  spectacle / scrot / maim. Adds an explicit "did not write" error so a
+  silent empty PNG fails loudly instead of cascading through the chain.
+
+### Removed
+- **Dead capture orchestrators** in `koruvision/capture_mss.py`
+  (`capture_backend`, `auto_backend_order`, `auto_failure_message`,
+  `_fallback_after_mss`, `grab_single_mss`, `grab_all_mss`) replaced by
+  `koruvision.providers.detector`. Module `koruvision/capture_fallback.py`
+  deleted (no remaining importers).
 - **30 s capture floor:** `koruvision.agent.normalize_capture_interval`
   clamps any user-configured interval below 30 s up to the
   `MIN_CAPTURE_INTERVAL_SECONDS = 30` safety floor; `KORU_VISION_INTERVAL`
@@ -43,6 +63,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   at the new neighbouring modules; `docs/korudsl-koruapi.md` and
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
+
+## [0.1.222] - 2026-05-22
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update docs/plans/capture-providers-refactor.md
+
+### Other
+- Update uv.lock
 
 ## [0.1.221] - 2026-05-22
 

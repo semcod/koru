@@ -1,6 +1,34 @@
 # Plan: refaktor capture na model providerów + integracja z PipeWire / OBS
 
 Status: **draft**, autor: agent, data: 2026-05-22.
+
+## Postęp 2026-05-22 (popołudnie)
+
+- Phase 0 ✅ — providery rozbite na `src/koruvision/providers/{mss,
+  portal_screenshot, grim, cli_tools, portal_screencast}.py` +
+  `detector.py`; `capture.py` to fasada nad `capture_one_with_providers`.
+- Phase 1 ✅ (kod) — `portal_screencast.py` implementuje pełny flow
+  ScreenCast → PipeWire fd → `gst-launch-1.0 pipewiresrc`, ranked na końcu
+  fallback chain dla Waylanda (przed nim mss → portal_screenshot → cli_tools).
+- Cross-OS Docker testy ✅ — `docker/capture/{Dockerfile,smoke.py,run.sh,
+  entrypoint-x11.sh}` plus `tests/test_docker_capture.py`
+  (gated `KORU_DOCKER_TESTS=1`). Targety: **headless** (oczekuje 0 providerów,
+  status `no-log`), **x11** (Xvfb + xsetroot, mss raportuje czarny ekran,
+  cli_tools/scrot łapie 1280×800).
+- Naprawione przy okazji testów Dockerowych:
+  - scrot 1.x nie nadpisywał istniejącego pliku → dodany flag `--overwrite`
+    + `os.unlink(tmp_path)` przed `subprocess.run` dla wszystkich CLI
+    (gnome-screenshot, spectacle, scrot, maim).
+  - `run_png_command` sprawdza teraz `os.path.isfile(tmp_path)` po
+    wywołaniu i zgłasza `{binary} did not write {tmp_path}` zamiast czytać
+    pustą zawartość.
+- Posprzątane przy okazji: usunięty martwy moduł `koruvision/capture_fallback.py`
+  oraz orchestratory `capture_backend`, `auto_backend_order`,
+  `auto_failure_message`, `_fallback_after_mss`, `grab_single_mss`,
+  `grab_all_mss` w `capture_mss.py` — wszystko zastąpione przez
+  `koruvision.providers.detector`.
+
+
 Powiązane: [`observation-mesh-plan.md`](./observation-mesh-plan.md),
 [`src/koruvision/`](../../src/koruvision), [`src/koruobserve/`](../../src/koruobserve),
 [`src/koruapi/dashboard_routes.py`](../../src/koruapi/dashboard_routes.py).
