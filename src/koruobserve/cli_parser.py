@@ -11,6 +11,7 @@ _SUBCOMMANDS: tuple[tuple[str, str], ...] = (
     ("down", "Stop relay + vision agent + dashboard."),
     ("status", "Show PID and aliveness for each process."),
     ("grid", "Print the dashboard /grid URL."),
+    ("install", "Pip-install optional observe dependencies (mss + websockets)."),
 )
 
 

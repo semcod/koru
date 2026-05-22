@@ -5,22 +5,52 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import subprocess
 import sys
 
 from koruobserve.cli_parser import build_observe_parser, project_path
 from koruobserve.lifecycle import observe_down, observe_status, observe_up
 
 
-_OBSERVE_RUNTIME_EXTRAS = {"websockets": "mesh", "mss": "vision"}
+_OBSERVE_RUNTIME_PACKAGES: tuple[tuple[str, str], ...] = (
+    ("websockets", "websockets>=12.0,<16.0"),
+    ("mss", "mss>=9.0,<11.0"),
+)
+
+
+def _missing_observe_packages() -> list[tuple[str, str]]:
+    return [(name, spec) for name, spec in _OBSERVE_RUNTIME_PACKAGES if importlib.util.find_spec(name) is None]
+
+
+_INSTALL_HINT = (
+    "install with one of:\n"
+    "  koru observe install        # auto pip install\n"
+    "  pip install 'koru[observe]' # PyPI install\n"
+    "  pip install -e '.[observe]' # editable install"
+)
 
 
 def _require_observe_runtime() -> None:
-    missing = [name for name in _OBSERVE_RUNTIME_EXTRAS if importlib.util.find_spec(name) is None]
+    missing = _missing_observe_packages()
     if not missing:
         return
-    extras = ",".join(sorted({_OBSERVE_RUNTIME_EXTRAS[name] for name in missing}))
-    msg = f"missing observation dependency {', '.join(missing)}; install with: pip install -e '.[{extras}]'"
-    raise RuntimeError(msg)
+    names = ", ".join(name for name, _ in missing)
+    raise RuntimeError(f"missing observation dependency {names}; {_INSTALL_HINT}")
+
+
+def _pip_install(specs: list[str]) -> int:
+    if not specs:
+        print("koru observe: dependencies already installed")
+        return 0
+    cmd = [sys.executable, "-m", "pip", "install", *specs]
+    print(f"koru observe: $ {' '.join(cmd)}")
+    return subprocess.call(cmd)  # noqa: S603 — user-invoked
+
+
+def _cmd_install(_args: argparse.Namespace) -> int:
+    missing = _missing_observe_packages()
+    specs = [spec for _, spec in missing]
+    return _pip_install(specs)
 
 
 def _cmd_up(args: argparse.Namespace) -> int:
@@ -68,7 +98,13 @@ def _cmd_grid(args: argparse.Namespace) -> int:
     return 0
 
 
-_HANDLERS = {"up": _cmd_up, "down": _cmd_down, "status": _cmd_status, "grid": _cmd_grid}
+_HANDLERS = {
+    "up": _cmd_up,
+    "down": _cmd_down,
+    "status": _cmd_status,
+    "grid": _cmd_grid,
+    "install": _cmd_install,
+}
 
 
 def observe_main(argv: list[str] | None = None) -> int:

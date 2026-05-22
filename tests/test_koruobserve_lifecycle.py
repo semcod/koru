@@ -84,6 +84,32 @@ def test_require_observe_runtime_reports_missing_packages(monkeypatch) -> None:
         observe_cli._require_observe_runtime()
 
 
+def test_cmd_install_invokes_pip_with_missing_specs(monkeypatch) -> None:
+    from koruobserve import cli as observe_cli
+
+    monkeypatch.setattr(
+        observe_cli.importlib.util,
+        "find_spec",
+        lambda name: None if name == "mss" else object(),
+    )
+    captured: list[list[str]] = []
+    monkeypatch.setattr(observe_cli.subprocess, "call", lambda cmd: captured.append(cmd) or 0)
+    rc = observe_cli._cmd_install(None)
+    assert rc == 0
+    assert captured, "pip install was not invoked"
+    assert any(arg.startswith("mss") for arg in captured[0])
+    assert not any(arg.startswith("websockets") for arg in captured[0])
+
+
+def test_cmd_install_skips_when_all_present(monkeypatch, capsys) -> None:
+    from koruobserve import cli as observe_cli
+
+    monkeypatch.setattr(observe_cli.importlib.util, "find_spec", lambda name: object())
+    rc = observe_cli._cmd_install(None)
+    assert rc == 0
+    assert "already installed" in capsys.readouterr().out
+
+
 def test_project_path_resolves_from_args() -> None:
     from argparse import Namespace
 
