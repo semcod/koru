@@ -12900,3 +12900,237 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-05-22T12:00:52.235580+00:00'
+    STARTER-183:
+      id: STARTER-183
+      name: '[ONBOARDING] Start strategii: Refaktoryzacja architektury'
+      status: open
+      priority: high
+      sprint: current
+      source:
+        tool: koru-auto-onboarding
+        timestamp: '2026-05-22T12:29:01.304454+00:00'
+        context:
+          input: 'Onboarding koru auto: przygotuj pierwszy iteracyjny plan zmian.
+
+
+            Projekt: /home/tom/github/semcod/koru
+
+            IDE: windsurf
+
+            Wybrana strategia: Refaktoryzacja architektury, Podzial na moduly i granice
+            odpowiedzialnosci
+
+            Tagi strategii: architecture, refactor, modularization
+
+
+            Szybka analiza projektu:
+
+            - basic metrics: code_files=286
+
+            - python_files=270
+
+            - js_ts_files=16
+
+
+            Zadanie:
+
+            1. Zweryfikuj stan projektu pod wybrana strategie.
+
+            2. Zaproponuj plan 3-5 krokow wdrozenia.
+
+            3. Wykonaj pierwszy bezpieczny krok i przygotuj test/regresje.'
+          strategy_path:
+          - focus:architektura
+          - architektura_kierunek:modularyzacja
+          analysis_engine: basic
+          dedupe_key: koru-auto-onboarding:onboarding-start-strategii-refaktoryzacja-architektury
+      description: 'Onboarding koru auto: przygotuj pierwszy iteracyjny plan zmian.
+
+
+        Projekt: /home/tom/github/semcod/koru
+
+        IDE: windsurf
+
+        Wybrana strategia: Refaktoryzacja architektury, Podzial na moduly i granice
+        odpowiedzialnosci
+
+        Tagi strategii: architecture, refactor, modularization
+
+
+        Szybka analiza projektu:
+
+        - basic metrics: code_files=286
+
+        - python_files=270
+
+        - js_ts_files=16
+
+
+        Zadanie:
+
+        1. Zweryfikuj stan projektu pod wybrana strategie.
+
+        2. Zaproponuj plan 3-5 krokow wdrozenia.
+
+        3. Wykonaj pierwszy bezpieczny krok i przygotuj test/regresje.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - onboarding
+      - strategy
+      - architecture
+      - refactor
+      - modularization
+      blocked_by: []
+      blocks: []
+      files: []
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: 'Onboarding koru auto: przygotuj pierwszy iteracyjny plan zmian.
+
+
+          Projekt: /home/tom/github/semcod/koru
+
+          IDE: windsurf
+
+          Wybrana strategia: Refaktoryzacja architektury, Podzial na moduly i granice
+          odpowiedzialnosci
+
+          Tagi strategii: architecture, refactor, modularization
+
+
+          Szybka analiza projektu:
+
+          - basic metrics: code_files=286
+
+          - python_files=270
+
+          - js_ts_files=16
+
+
+          Zadanie:
+
+          1. Zweryfikuj stan projektu pod wybrana strategie.
+
+          2. Zaproponuj plan 3-5 krokow wdrozenia.
+
+          3. Wykonaj pierwszy bezpieczny krok i przygotuj test/regresje.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-22T12:29:01.304454+00:00'
+        action: created
+        source: koru task
+        message: 'Onboarding koru auto: przygotuj pierwszy iteracyjny plan zmian.
+
+
+          Projekt: /home/tom/github/semcod/koru
+
+          IDE: windsurf
+
+          Wybrana strategia: Refaktoryzacja architektury, Podzial na moduly i granice
+          odpowiedzialnosci
+
+          Tagi strategii: architecture, refactor, modularization
+
+
+          Szybka analiza projektu:
+
+          - basic metrics: code_files=286
+
+          - python_files=270
+
+          - js_ts_files=16
+
+
+          Zadanie:
+
+          1. Zweryfikuj stan projektu pod wybrana strategie.
+
+          2. Zaproponuj plan 3-5 krokow wdrozenia.
+
+          3. Wykonaj pierwszy bezpieczny krok i przygotuj test/regresje.'
+      created_at: '2026-05-22T12:29:01.304454+00:00'
+      updated_at: '2026-05-22T12:29:01.304454+00:00'
+    STARTER-184:
+      id: STARTER-184
+      name: 'Architektura: wprowadź CQRS + Event Sourcing'
+      status: open
+      priority: high
+      sprint: current
+      source:
+        tool: koru-cli-nl
+        timestamp: '2026-05-22T12:35:58.035262+00:00'
+        context:
+          input: 'Architektura: wprowadź CQRS + Event Sourcing
+
+
+            Wprowadź separację Command/Query oraz event-store dla koru. Pierwszy krok:
+            zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,
+            `queries/`, `events/`, dodaj event-bus.'
+      description: 'Architektura: wprowadź CQRS + Event Sourcing
+
+
+        Wprowadź separację Command/Query oraz event-store dla koru. Pierwszy krok:
+        zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,
+        `queries/`, `events/`, dodaj event-bus.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - architecture
+      - cqrs
+      - es
+      - koru-wizard
+      blocked_by: []
+      blocks: []
+      files: []
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: 'Architektura: wprowadź CQRS + Event Sourcing
+
+
+          Wprowadź separację Command/Query oraz event-store dla koru. Pierwszy krok:
+          zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,
+          `queries/`, `events/`, dodaj event-bus.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-22T12:35:58.035262+00:00'
+        action: created
+        source: koru task
+        message: 'Architektura: wprowadź CQRS + Event Sourcing
+
+
+          Wprowadź separację Command/Query oraz event-store dla koru. Pierwszy krok:
+          zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,
+          `queries/`, `events/`, dodaj event-bus.'
+      created_at: '2026-05-22T12:35:58.035262+00:00'
+      updated_at: '2026-05-22T12:35:58.035262+00:00'

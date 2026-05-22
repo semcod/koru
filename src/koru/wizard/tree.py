@@ -196,3 +196,11 @@ class Prompter:
         options: tuple[TreeOption, ...],
     ) -> TreeOption:
         raise NotImplementedError
+
+    def ask_yes_no(  # pragma: no cover - interface
+        self,
+        prompt: str,
+        *,
+        default: bool = True,
+    ) -> bool:
+        raise NotImplementedError
