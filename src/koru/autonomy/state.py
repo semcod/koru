@@ -14,6 +14,12 @@ class AutoloopState:
     scan_last_head: str = ""
     wup_seen_events: int = 0
     autopilot_events: list[dict[str, Any]] = field(default_factory=list)
+    last_driven_prompt: str = ""
+    last_driven_kind: str = ""
+    last_llm_reflection_summary: str = ""
+    last_llm_reflection_ts: float = 0.0
+    last_operator_needs_input_signature: str = ""
+    last_operator_needs_input_ticket_id: str = ""
     last_message_sent_ts: float = 0.0
     telemetry_autopilot_idle_streak_skips: int = 0
     telemetry_scan_after_idle_runs: int = 0

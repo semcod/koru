@@ -1,6 +1,7 @@
 
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -24,6 +25,7 @@ from koru.autonomy.post_run_verify import (
     verify_completed_tickets,
 )
 from koru.autonomy.prompts import DEFAULT_ESCALATION_THRESHOLD, build_prompt
+from koru.autonomy.prompts import PromptDecision
 from koru.autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
 from koru.queue import QueueLoopResult, run_planfile_queue_loop
 from koru.queue import default_human_prompt as _default_human_prompt
@@ -150,8 +152,10 @@ def _create_diagnostic_ticket(
     priority: str,
     state_dir: Path,
 ) -> None:
+    from koru.autonomous_diag_markers import diagnostic_marker_path
+
     state_dir.mkdir(parents=True, exist_ok=True)
-    marker = state_dir / f"{check_id}.failed"
+    marker = diagnostic_marker_path(state_dir, check_id)
     if marker.exists():
         _stdio_info(
             f"- diagnostic ticket marker exists for {check_id}, skipping create",
@@ -173,7 +177,9 @@ def _create_diagnostic_ticket(
 
 
 def _clear_diagnostic_marker(state_dir: Path, check_id: str) -> None:
-    (state_dir / f"{check_id}.failed").unlink(missing_ok=True)
+    from koru.autonomous_diag_markers import diagnostic_marker_path
+
+    diagnostic_marker_path(state_dir, check_id).unlink(missing_ok=True)
 
 
 def _read_wup_health(
@@ -290,9 +296,14 @@ def _handle_autopilot_events(
             ev_type = ev.get("type", "unknown")
             _hp(f"  event: {ev_type} ide={ev.get('ide', '?')}")
         state.autopilot_events.extend(events)
+        if len(state.autopilot_events) > 500:
+            state.autopilot_events = state.autopilot_events[-500:]
         for ev in events:
             if ev.get("type") == "message.sent":
-                state.last_message_sent_ts = ev.get("ts", time.time())
+                try:
+                    state.last_message_sent_ts = float(ev.get("ts") or time.time())
+                except (TypeError, ValueError):
+                    state.last_message_sent_ts = time.time()
 
 
 from koru.autonomy.phases.queue_phase import handle_queue_hygiene as _handle_queue_hygiene
@@ -783,6 +794,349 @@ def _autopilot_redrive_cooldown_seconds() -> float:
         return 300.0
 
 
+def _autopilot_escalation_cooldown_seconds(base_cooldown: float) -> float:
+    """Cooldown applied when the LAST drive was an ``escalation_prompt``.
+
+    Escalations ("Ticket X has been stuck in status 'waiting_input' for N
+    cycles…") are explicit nudges aimed at an LLM that has likely already
+    asked the user a clarifying question. Hammering the chat with another
+    escalation every 30 s actively destroys the dialog: it concatenates new
+    text on top of the user's pending reply or scrolls the LLM's question
+    out of view. Use ``KORU_AUTOPILOT_ESCALATION_COOLDOWN_SECONDS`` (default
+    1800 = 30 min) to give a real human / the IDE-side LLM enough time to
+    converge before the next nudge. Falls back to ``base_cooldown`` when set
+    to a value below it (cooldown can never shrink below the global one).
+    """
+    raw = os.environ.get("KORU_AUTOPILOT_ESCALATION_COOLDOWN_SECONDS", "").strip()
+    if not raw:
+        return max(base_cooldown, 1800.0)
+    try:
+        value = float(raw)
+    except ValueError:
+        return max(base_cooldown, 1800.0)
+    return max(base_cooldown, max(0.0, value))
+
+
+def _llm_reflection_summary_max_age_seconds() -> float:
+    raw = os.environ.get("KORU_LLM_REFLECTION_SUMMARY_MAX_AGE_SECONDS", "").strip()
+    if not raw:
+        return 1800.0
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return 1800.0
+
+
+def _recent_llm_reflection_summary(state: "AutoloopState") -> str:
+    summary = str(getattr(state, "last_llm_reflection_summary", "") or "").strip()
+    if not summary:
+        return ""
+    ts_raw = getattr(state, "last_llm_reflection_ts", 0.0)
+    try:
+        ts = float(ts_raw or 0.0)
+    except (TypeError, ValueError):
+        ts = 0.0
+    if ts <= 0:
+        return ""
+    max_age = _llm_reflection_summary_max_age_seconds()
+    if max_age > 0 and (time.time() - ts) > max_age:
+        return ""
+    return summary
+
+
+def _llm_needs_input_ticket_enabled() -> bool:
+    raw = os.environ.get("KORU_LLM_NEEDS_INPUT_TICKET", "1").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
+def _llm_needs_input_ticket_queue_name() -> str:
+    raw = os.environ.get("KORU_LLM_NEEDS_INPUT_TICKET_QUEUE", "").strip()
+    return raw or "operator"
+
+
+def _llm_needs_input_ticket_priority() -> str:
+    raw = os.environ.get("KORU_LLM_NEEDS_INPUT_TICKET_PRIORITY", "").strip()
+    return raw or "high"
+
+
+def _llm_needs_input_heuristic_enabled() -> bool:
+    raw = os.environ.get("KORU_LLM_NEEDS_INPUT_HEURISTIC", "1").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
+def _compact_question_text(text: str, *, limit: int = 240) -> str:
+    collapsed = " ".join(str(text or "").split()).strip()
+    if not collapsed:
+        return ""
+    return collapsed[:limit]
+
+
+def _extract_needs_input_question(
+    reflection_events: list[Any],
+    reflection_summary: str,
+) -> str:
+    """Best-effort extraction of the concrete question asked by IDE LLM."""
+    for event in reversed(reflection_events):
+        ev_type = str(getattr(event, "type", "") or "")
+        if ev_type != "message.received":
+            continue
+        text = str(getattr(event, "text", "") or getattr(event, "summary", "") or "")
+        if not text.strip():
+            continue
+        collapsed = _compact_question_text(text, limit=600)
+        if not collapsed:
+            continue
+        matches = re.findall(r"([^?]{8,260}\?)", collapsed)
+        if matches:
+            return _compact_question_text(matches[-1], limit=240)
+        for marker in (
+            "please provide",
+            "can you provide",
+            "could you provide",
+            "what is",
+            "which",
+            "need ",
+            "missing ",
+        ):
+            if marker in collapsed.lower():
+                return _compact_question_text(collapsed, limit=240)
+
+    summary = _compact_question_text(reflection_summary, limit=240)
+    if "?" in summary:
+        return summary
+    return ""
+
+
+def _latest_received_text(reflection_events: list[Any]) -> str:
+    for event in reversed(reflection_events):
+        ev_type = str(getattr(event, "type", "") or "")
+        if ev_type != "message.received":
+            continue
+        text = str(getattr(event, "text", "") or getattr(event, "summary", "") or "")
+        if not text.strip():
+            continue
+        return _compact_question_text(text, limit=320)
+    return ""
+
+
+def _upsert_llm_needs_input_operator_ticket(
+    *,
+    project: Path,
+    queue_result: QueueLoopResult,
+    state: "AutoloopState",
+    reflection_summary: str,
+    reflection_events: list[Any],
+    _hp: Any,
+) -> str | None:
+    """Create/update one deduplicated operator ticket for ``llm needs_input``."""
+    if not _llm_needs_input_ticket_enabled():
+        return None
+
+    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
+    if waiting_ticket == "-":
+        waiting_ticket = str(getattr(queue_result, "last_ticket_id", "") or "-")
+
+    summary = (reflection_summary or "").strip()
+    if not summary:
+        summary = str(getattr(queue_result, "last_message", "") or "").strip()
+    if not summary:
+        summary = "IDE-side LLM requested additional input without details."
+    question = _extract_needs_input_question(reflection_events, summary)
+
+    signature_key = question or summary
+    signature = f"{waiting_ticket}|{signature_key[:240]}"
+    previous_signature = str(getattr(state, "last_operator_needs_input_signature", "") or "")
+    previous_ticket = str(getattr(state, "last_operator_needs_input_ticket_id", "") or "")
+    if signature == previous_signature:
+        return previous_ticket or None
+
+    queue_name = _llm_needs_input_ticket_queue_name()
+    priority = _llm_needs_input_ticket_priority()
+    title = f"[OPERATOR] {waiting_ticket}: provide missing IDE input"
+    prompt = (
+        f"{title}\n\n"
+        + "IDE-side LLM asked for more context while this task is blocked in waiting_input.\n\n"
+        + f"Blocked ticket: {waiting_ticket}\n"
+        + f"Queue message: {str(getattr(queue_result, 'last_message', '') or '-').strip()}\n"
+        + (f"Detected question: {question}\n" if question else "")
+        + f"Reflection summary: {summary}\n\n"
+        + "Action:\n"
+        + "1. Open the related IDE chat thread.\n"
+        + "2. Answer the missing question/context from this summary.\n"
+        + "3. Let the LLM continue and close this operator ticket when unblocked."
+    )
+    scaffold: dict[str, Any] = {
+        "title": title,
+        "executor_kind": "human",
+        "executor_mode": "interactive",
+        "labels": ["koru", "operator", "autopilot-needs-input", f"waiting:{waiting_ticket}"],
+        "source_tool": "koru-autonomous-llx-reflect",
+        "source_context": {
+            "waiting_ticket": waiting_ticket,
+            "reflection_question": question,
+            "reflection_summary": summary,
+            "dedupe_key": f"autopilot-needs-input:{waiting_ticket}",
+        },
+    }
+
+    try:
+        created = create_nl_task(
+            project,
+            prompt,
+            queue_name=queue_name,
+            priority=priority,
+            scaffold=scaffold,
+        )
+    except Exception as exc:
+        _hp(f"- llx reflect: operator ticket upsert failed ({exc})")
+        return None
+
+    state.last_operator_needs_input_signature = signature
+    state.last_operator_needs_input_ticket_id = created.ticket_id
+
+    if getattr(created, "reused", False):
+        try:
+            from koru.queue.planfile_ticket_note import append_shell_evidence_note
+
+            def _planfile_runner(
+                command: list[str],
+                cwd: Path,
+            ) -> subprocess.CompletedProcess[str]:
+                return subprocess.run(
+                    command,
+                    cwd=cwd,
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                    check=False,
+                )
+
+            note = (
+                "[AUTOPILOT] llx reflection still needs operator input.\n"
+                + f"blocked_ticket={waiting_ticket}\n"
+                + (f"question={question}\n" if question else "")
+                + f"summary={summary}"
+            )
+            result, kind = append_shell_evidence_note(
+                project,
+                created.ticket_id,
+                note,
+                run_id=f"llx-{int(time.time())}",
+                planfile_runner=_planfile_runner,
+            )
+            if result.returncode == 0:
+                _hp(
+                    "- llx reflect: updated operator ticket "
+                    f"{created.ticket_id} ({kind})",
+                )
+            else:
+                detail = (result.stderr or result.stdout or "").strip()
+                _hp(
+                    "- llx reflect: operator ticket note failed "
+                    f"({created.ticket_id}: {detail})",
+                )
+        except Exception as exc:
+            _hp(
+                "- llx reflect: operator ticket note skipped "
+                f"({created.ticket_id}: {exc})",
+            )
+    else:
+        _hp(
+            "- llx reflect: created operator ticket "
+            f"{created.ticket_id} (queue={queue_name})",
+        )
+    if question:
+        _hp(f"- llx reflect: operator question candidate={question!r}")
+    return created.ticket_id
+
+
+def _inject_reflection_summary_into_prompt(
+    state: "AutoloopState",
+    queue_result: QueueLoopResult,
+    decision: PromptDecision,
+) -> PromptDecision:
+    if queue_result.last_status != "waiting_input":
+        return decision
+    if decision.kind not in {"ticket_prompt", "fallback_prompt", "escalation_prompt"}:
+        return decision
+    summary = _recent_llm_reflection_summary(state)
+    if not summary:
+        return decision
+    snippet = summary[:320]
+    augmented = (
+        decision.prompt.rstrip()
+        + "\n\nRecent IDE chat context:\n"
+        + f"- {snippet}\n"
+        + "Use this context to continue from current progress. Do not restart from scratch."
+    )
+    return PromptDecision(
+        prompt=augmented,
+        kind=decision.kind,
+        skip=decision.skip,
+        skip_reason=decision.skip_reason,
+    )
+
+
+_CHAT_ACTIVITY_TYPES = ("message.sent", "message.received")
+
+
+def _event_timestamp(payload: dict[str, Any], *, default: float = 0.0) -> float:
+    try:
+        return float(payload.get("ts") or default)
+    except (TypeError, ValueError):
+        return default
+
+
+def _recent_chat_activity_events(
+    state: "AutoloopState",
+    *,
+    ide: str | None,
+    within_seconds: float,
+) -> list[dict[str, Any]]:
+    now = time.time()
+    recent: list[dict[str, Any]] = []
+    raw_events = getattr(state, "autopilot_events", None)
+    if not isinstance(raw_events, list):
+        return []
+    for raw in raw_events:
+        if not isinstance(raw, dict):
+            continue
+        ev_type = str(raw.get("type") or "")
+        if ev_type not in _CHAT_ACTIVITY_TYPES:
+            continue
+        if ide and str(raw.get("ide") or "") != ide:
+            continue
+        ts = _event_timestamp(raw, default=0.0)
+        if ts <= 0:
+            continue
+        if (now - ts) > within_seconds:
+            continue
+        recent.append(raw)
+    return recent[-20:]
+
+
+def _state_events_to_chat_events(recent_events: list[dict[str, Any]]) -> list[Any]:
+    try:
+        from koruide.chat_history import ChatEvent
+    except ImportError:
+        return []
+    converted: list[Any] = []
+    for event in recent_events:
+        converted.append(
+            ChatEvent(
+                ts=_event_timestamp(event, default=time.time()),
+                type=str(event.get("type") or ""),
+                ide=str(event.get("ide") or ""),
+                chat=str(event.get("chat") or "default"),
+                text=str(event.get("text") or ""),
+                summary=str(event.get("summary") or ""),
+                length=int(event.get("length") or 0),
+                reason=str(event.get("reason") or ""),
+            ),
+        )
+    return converted
+
+
 def _skip_due_to_recent_chat_activity(
     *,
     project: Path,
@@ -799,30 +1153,61 @@ def _skip_due_to_recent_chat_activity(
        :func:`_autopilot_redrive_cooldown_seconds`. This is the cheap path —
        no llx, no network — and covers the common case where koru just drove
        the prompt and the LLM is still streaming a response.
-    2. Optional :mod:`koru.llm_reflect` (when ``KORU_LLM_REFLECT=1`` and llx
+    2. Optional :mod:`koru.llm_reflect` (when enabled and llx
        is on PATH). Asks an OpenRouter-backed model to read the recent
        ``message.received`` events and decide ``{done, needs_input}``. If
-       it returns ``needs_input=true`` we skip; if ``done=true`` we let the
-       loop proceed so the queue can advance.
+         it returns ``needs_input=true`` we skip and upsert one operator ticket;
+         if ``done=true`` we also skip redrive and let the queue state update
+         naturally.
     """
     cooldown = _autopilot_redrive_cooldown_seconds()
     if cooldown <= 0:
         return False
-    try:
-        from koruide.chat_history import has_recent_activity, last_event
-    except ImportError:
-        return False
+
+    # If the previous drive on this ticket was an escalation prompt
+    # ("stuck in waiting_input for N cycles"), apply a much longer cooldown
+    # so we do not flood the IDE-side LLM (which is likely waiting for the
+    # user to answer its clarifying question) with another nudge every 30 s.
+    last_kind = str(getattr(state, "last_driven_kind", "") or "")
+    if last_kind == "escalation_prompt":
+        cooldown = _autopilot_escalation_cooldown_seconds(cooldown)
+
     ide = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip().lower() or None
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
-    if not has_recent_activity(
+    recent_events = _recent_chat_activity_events(
+        state,
         ide=ide,
         within_seconds=cooldown,
-        types=("message.sent", "message.received"),
-    ):
-        return False
-    last = last_event(ide=ide, types=("message.sent", "message.received"))
-    age = f"{last.age_seconds:.0f}s" if last is not None else "?"
-    last_type = last.type if last is not None else "?"
+    )
+    reflection_events = _state_events_to_chat_events(recent_events)
+
+    if recent_events:
+        last_payload = recent_events[-1]
+        last_type = str(last_payload.get("type") or "?")
+        age_seconds = max(0.0, time.time() - _event_timestamp(last_payload, default=0.0))
+        age = f"{age_seconds:.0f}s"
+    else:
+        try:
+            from koruide.chat_history import has_recent_activity, last_event, read_events
+        except ImportError:
+            return False
+        if not has_recent_activity(
+            ide=ide,
+            within_seconds=cooldown,
+            types=_CHAT_ACTIVITY_TYPES,
+        ):
+            return False
+        last = last_event(ide=ide, types=_CHAT_ACTIVITY_TYPES)
+        age = f"{last.age_seconds:.0f}s" if last is not None else "?"
+        last_type = last.type if last is not None else "?"
+        if not reflection_events:
+            reflection_events = read_events(
+                ide=ide,
+                max_age_seconds=cooldown,
+                types=_CHAT_ACTIVITY_TYPES,
+                limit=20,
+            )
+
     cycle_telemetry["autopilot_skipped_chat_activity"] = True
     cycle_telemetry["autopilot_chat_activity_last_event"] = last_type
     _hp(
@@ -830,16 +1215,20 @@ def _skip_due_to_recent_chat_activity(
         f"last={last_type} age={age} cooldown={cooldown:.0f}s "
         f"ticket={waiting_ticket})",
     )
+    reflection_resolved = False
     try:
         from koru.llm_reflect import llm_reflect_enabled, reflect_on_chat
 
         if llm_reflect_enabled():
             ticket_title = getattr(queue_result, "last_message", "") or ""
+            raw_driven_prompt = getattr(state, "last_driven_prompt", "")
+            driven_prompt = raw_driven_prompt if isinstance(raw_driven_prompt, str) else ""
             reflection = reflect_on_chat(
                 ticket_id=waiting_ticket or "-",
                 ticket_title=ticket_title,
-                driven_prompt=getattr(state, "last_driven_prompt", "") or ticket_title,
+                driven_prompt=driven_prompt or ticket_title,
                 ide=ide or "",
+                events=reflection_events or None,
             )
             if reflection is not None:
                 cycle_telemetry["autopilot_llx_reflection"] = {
@@ -847,15 +1236,48 @@ def _skip_due_to_recent_chat_activity(
                     "needs_input": reflection.needs_input,
                     "summary": reflection.summary,
                 }
+                summary = (reflection.summary or "").strip()
+                if summary:
+                    state.last_llm_reflection_summary = summary[:320]
+                    state.last_llm_reflection_ts = time.time()
                 _hp(
                     "- llx reflect: "
                     f"done={reflection.done} needs_input={reflection.needs_input} "
                     f"summary={reflection.summary!r}",
                 )
+                if reflection.needs_input and not reflection.done:
+                    operator_ticket = _upsert_llm_needs_input_operator_ticket(
+                        project=project,
+                        queue_result=queue_result,
+                        state=state,
+                        reflection_summary=summary,
+                        reflection_events=reflection_events,
+                        _hp=_hp,
+                    )
+                    if operator_ticket:
+                        cycle_telemetry["autopilot_llx_operator_ticket"] = operator_ticket
                 if reflection.done:
-                    return False
+                    return True
+                reflection_resolved = True
     except ImportError:
         pass
+
+    # Fallback for environments where llx/OpenRouter is unavailable.
+    if not reflection_resolved and _llm_needs_input_heuristic_enabled():
+        question = _extract_needs_input_question(reflection_events, "")
+        if question:
+            operator_ticket = _upsert_llm_needs_input_operator_ticket(
+                project=project,
+                queue_result=queue_result,
+                state=state,
+                reflection_summary=_latest_received_text(reflection_events) or question,
+                reflection_events=reflection_events,
+                _hp=_hp,
+            )
+            if operator_ticket:
+                cycle_telemetry["autopilot_needs_input_heuristic"] = True
+                cycle_telemetry["autopilot_llx_operator_ticket"] = operator_ticket
+            _hp(f"- needs_input heuristic: question={question!r}")
     return True
 
 
@@ -888,6 +1310,7 @@ def _resolve_autopilot_drive_decision(
         autopilot_action=autopilot_action,
         stagnation_streak=state.stagnation_streak,
     )
+    decision = _inject_reflection_summary_into_prompt(state, queue_result, decision)
     return decision, idle_prompt_kind
 
 
@@ -916,6 +1339,21 @@ def _drive_autopilot_once(
 
 def _reply_missing_autopilot_plugin(reply: dict[str, Any]) -> bool:
     return "no connected autopilot plugin" in str(reply.get("message") or "").lower()
+
+
+def _reply_chat_input_busy(reply: dict[str, Any]) -> bool:
+    """``True`` when plugin (≥0.1.50) reported the chat input is non-empty.
+
+    The plugin acks with ``verification="input_busy"`` and
+    ``reason="chat_input_not_empty"`` when its pre-paste probe finds
+    un-submitted text in the chat textarea — typically the user is mid-reply
+    or the IDE-side LLM left a clarifying question. The autonomous loop
+    treats this exactly like a successful skip-with-cooldown so it does not
+    keep retrying every cycle.
+    """
+    if str(reply.get("verification") or "").lower() == "input_busy":
+        return True
+    return str(reply.get("reason") or "").lower() == "chat_input_not_empty"
 
 
 def _reply_needs_focus_retry(reply: dict[str, Any]) -> bool:
@@ -1037,6 +1475,10 @@ def _execute_autopilot_drive(
         drive_prompt=drive_prompt,
         autopilot_action=autopilot_action,
     )
+    state.last_driven_prompt = decision.prompt
+    # Telemetry hook used by ``_skip_due_to_recent_chat_activity`` to decide
+    # whether to apply the escalation-cooldown multiplier on the next cycle.
+    state.last_driven_kind = decision.kind
     require_plugin = _plugin_required_for_ide(autopilot_ide)
     attempts = 5
     for attempt in range(attempts):
@@ -1050,6 +1492,11 @@ def _execute_autopilot_drive(
         if ok:
             break
         if _reply_missing_autopilot_plugin(reply):
+            break
+        if _reply_chat_input_busy(reply):
+            # Plugin already declined to paste; do not retry within this
+            # cycle — the cooldown path on the next cycle will hold us off
+            # until the user has cleared their pending chat input.
             break
         if _reply_requires_manual_chat_focus(reply):
             _warn_autopilot_manual_focus_required(reply)

@@ -1766,6 +1766,522 @@ sprint:
     assert driven == ["remove duplicated classes"]
 
 
+def test_run_cycle_llm_ready_skips_redrive_on_recent_in_memory_chat_activity(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    PLF-2001:
+      labels: [llm-ready]
+""",
+        encoding="utf-8",
+    )
+    driven: list[str] = []
+
+    class RecordingClient:
+        def drive(self, prompt: str, **_kwargs):
+            driven.append(prompt)
+            return {"ok": True, "backend": "plugin"}
+
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    monkeypatch.setattr(
+        "koruide.chat_history.has_recent_activity",
+        lambda **_kwargs: (_ for _ in ()).throw(AssertionError("must use state.autopilot_events")),
+    )
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=1 last_status=waiting_input",
+            last_status="waiting_input",
+            last_message="continue CQRS refactor",
+            waiting=["PLF-2001"],
+        ),
+    )
+    state = autonomous_mod.AutoloopState(
+        previous_signature="waiting_input:PLF-2001",
+        stagnation_streak=0,
+        autopilot_events=[
+            {
+                "ts": autonomous_cycle_mod.time.time() - 30.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "Architektura: wprowadź CQRS + Event Sourcing",
+            },
+        ],
+    )
+
+    _scan_result, queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
+        cycle=3,
+        project=tmp_path,
+        actor="koru-test",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=50,
+        enable_autopilot=True,
+        autopilot_ide="vscode",
+        drive_prompt="ignored when blocked",
+        submit=True,
+        include_semcod_artifacts=False,
+        client=RecordingClient(),
+        state=state,
+    )
+
+    assert queue_result.last_status == "waiting_input"
+    assert autopilot_status == "skipped(chat_activity)"
+    assert driven == []
+
+
+def test_skip_due_to_recent_chat_activity_passes_events_to_llx_reflection(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-2010"],
+        last_status="waiting_input",
+        last_message="Wprowadź separację Command/Query",
+    )
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": autonomous_cycle_mod.time.time() - 12.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "Wprowadź separację Command/Query",
+            },
+        ],
+        last_driven_prompt="Wprowadź separację Command/Query",
+    )
+    reflection_calls: dict[str, object] = {}
+
+    monkeypatch.setattr("koru.llm_reflect.llm_reflect_enabled", lambda: True)
+
+    def _fake_reflect_on_chat(**kwargs):
+        reflection_calls["events"] = kwargs.get("events")
+        return SimpleNamespace(done=True, needs_input=False, summary="LLM finished")
+
+    monkeypatch.setattr("koru.llm_reflect.reflect_on_chat", _fake_reflect_on_chat)
+
+    telemetry: dict[str, object] = {}
+    logs: list[str] = []
+    should_skip = autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=logs.append,
+    )
+
+    assert should_skip is True
+    assert telemetry.get("autopilot_skipped_chat_activity") is True
+    assert isinstance(telemetry.get("autopilot_llx_reflection"), dict)
+    assert telemetry["autopilot_llx_reflection"]["done"] is True
+    events = reflection_calls.get("events")
+    assert isinstance(events, list)
+    assert events
+    assert events[-1].type == "message.sent"
+
+
+def test_extract_needs_input_question_prefers_recent_received_question() -> None:
+    question = autonomous_cycle_mod._extract_needs_input_question(
+        [
+            SimpleNamespace(
+                type="message.received",
+                text="I can continue, but which API gateway environment should be targeted?",
+                summary="",
+            ),
+        ],
+        "needs operator input",
+    )
+
+    assert "which api gateway environment should be targeted?" in question.lower()
+
+
+def test_skip_due_to_recent_chat_activity_creates_operator_ticket_on_needs_input(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-2012"],
+        last_status="waiting_input",
+        last_message="Missing deployment constraint for API gateway",
+    )
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": autonomous_cycle_mod.time.time() - 8.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "Please continue with CQRS rollout",
+            },
+            {
+                "ts": autonomous_cycle_mod.time.time() - 5.0,
+                "type": "message.received",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "I can continue, but which API gateway environment should be targeted?",
+            },
+        ],
+        last_driven_prompt="Please continue with CQRS rollout",
+    )
+    monkeypatch.setattr("koru.llm_reflect.llm_reflect_enabled", lambda: True)
+    monkeypatch.setattr(
+        "koru.llm_reflect.reflect_on_chat",
+        lambda **_kwargs: SimpleNamespace(
+            done=False,
+            needs_input=True,
+            summary="LLM needs more operator input.",
+        ),
+    )
+
+    created_calls: list[dict[str, object]] = []
+
+    def _fake_create_nl_task(project: Path, text: str, **kwargs):
+        created_calls.append({"project": project, "text": text, "kwargs": kwargs})
+        return SimpleNamespace(ticket_id="PLF-9901", reused=False)
+
+    monkeypatch.setattr(autonomous_cycle_mod, "create_nl_task", _fake_create_nl_task)
+
+    telemetry: dict[str, object] = {}
+    logs: list[str] = []
+    should_skip = autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=logs.append,
+    )
+
+    assert should_skip is True
+    assert len(created_calls) == 1
+    assert created_calls[0]["kwargs"]["queue_name"] == "operator"
+    assert created_calls[0]["kwargs"]["priority"] == "high"
+    assert "which API gateway environment should be targeted?" in created_calls[0]["text"]
+    assert telemetry.get("autopilot_llx_operator_ticket") == "PLF-9901"
+    assert state.last_operator_needs_input_ticket_id == "PLF-9901"
+
+
+def test_skip_due_to_recent_chat_activity_dedupes_needs_input_ticket_upsert(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-2013"],
+        last_status="waiting_input",
+        last_message="Need endpoint contract details",
+    )
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": autonomous_cycle_mod.time.time() - 6.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "Continue with local_manager bounded context",
+            },
+        ],
+        last_driven_prompt="Continue with local_manager bounded context",
+    )
+    monkeypatch.setattr("koru.llm_reflect.llm_reflect_enabled", lambda: True)
+    monkeypatch.setattr(
+        "koru.llm_reflect.reflect_on_chat",
+        lambda **_kwargs: SimpleNamespace(
+            done=False,
+            needs_input=True,
+            summary="LLM asks for endpoint contract details.",
+        ),
+    )
+
+    create_calls: list[str] = []
+
+    def _fake_create_nl_task(_project: Path, _text: str, **_kwargs):
+        create_calls.append("create")
+        return SimpleNamespace(ticket_id="PLF-9902", reused=False)
+
+    monkeypatch.setattr(autonomous_cycle_mod, "create_nl_task", _fake_create_nl_task)
+
+    telemetry_first: dict[str, object] = {}
+    telemetry_second: dict[str, object] = {}
+    assert (
+        autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+            project=tmp_path,
+            queue_result=queue_result,
+            state=state,
+            cycle_telemetry=telemetry_first,
+            _hp=lambda _msg: None,
+        )
+        is True
+    )
+    assert (
+        autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+            project=tmp_path,
+            queue_result=queue_result,
+            state=state,
+            cycle_telemetry=telemetry_second,
+            _hp=lambda _msg: None,
+        )
+        is True
+    )
+
+    assert create_calls == ["create"]
+    assert telemetry_second.get("autopilot_llx_operator_ticket") == "PLF-9902"
+
+
+def test_skip_due_to_recent_chat_activity_uses_heuristic_without_llx(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-2014"],
+        last_status="waiting_input",
+        last_message="Need API context",
+    )
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": autonomous_cycle_mod.time.time() - 8.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "Continue deployment task",
+            },
+            {
+                "ts": autonomous_cycle_mod.time.time() - 5.0,
+                "type": "message.received",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "Which API gateway environment should be targeted?",
+            },
+        ],
+        last_driven_prompt="Continue deployment task",
+    )
+    monkeypatch.setattr("koru.llm_reflect.llm_reflect_enabled", lambda: False)
+
+    created_calls: list[dict[str, object]] = []
+
+    def _fake_create_nl_task(project: Path, text: str, **kwargs):
+        created_calls.append({"project": project, "text": text, "kwargs": kwargs})
+        return SimpleNamespace(ticket_id="PLF-9903", reused=False)
+
+    monkeypatch.setattr(autonomous_cycle_mod, "create_nl_task", _fake_create_nl_task)
+
+    telemetry: dict[str, object] = {}
+    should_skip = autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=lambda _msg: None,
+    )
+
+    assert should_skip is True
+    assert len(created_calls) == 1
+    assert "Which API gateway environment should be targeted?" in created_calls[0]["text"]
+    assert telemetry.get("autopilot_needs_input_heuristic") is True
+    assert telemetry.get("autopilot_llx_operator_ticket") == "PLF-9903"
+
+
+def test_skip_due_to_recent_chat_activity_heuristic_can_be_disabled(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    monkeypatch.setenv("KORU_LLM_NEEDS_INPUT_HEURISTIC", "0")
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-2015"],
+        last_status="waiting_input",
+        last_message="Need API context",
+    )
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": autonomous_cycle_mod.time.time() - 7.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "Continue deployment task",
+            },
+            {
+                "ts": autonomous_cycle_mod.time.time() - 4.0,
+                "type": "message.received",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "Which API gateway environment should be targeted?",
+            },
+        ],
+        last_driven_prompt="Continue deployment task",
+    )
+    monkeypatch.setattr("koru.llm_reflect.llm_reflect_enabled", lambda: False)
+
+    create_calls: list[str] = []
+
+    def _fake_create_nl_task(_project: Path, _text: str, **_kwargs):
+        create_calls.append("create")
+        return SimpleNamespace(ticket_id="PLF-9904", reused=False)
+
+    monkeypatch.setattr(autonomous_cycle_mod, "create_nl_task", _fake_create_nl_task)
+
+    telemetry: dict[str, object] = {}
+    should_skip = autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=lambda _msg: None,
+    )
+
+    assert should_skip is True
+    assert create_calls == []
+    assert telemetry.get("autopilot_needs_input_heuristic") is None
+
+
+def test_autopilot_escalation_cooldown_applies_after_escalation_prompt(
+    tmp_path, monkeypatch
+) -> None:
+    """Regression: an escalation_prompt drive must trigger a 30-min cooldown.
+
+    Previously the autopilot loop kept re-driving the same
+    'Ticket X has been stuck in waiting_input for N cycles' nudge every cycle
+    (~30 s apart), trampling on whatever the IDE-side LLM was answering.
+    After the previous drive's ``decision.kind == "escalation_prompt"`` the
+    next cycle's cooldown must extend to ``KORU_AUTOPILOT_ESCALATION_COOLDOWN_SECONDS``
+    (default 1800 s) so a real human or the IDE LLM has time to reply.
+    """
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    monkeypatch.setenv("KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS", "60")
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-2099"],
+        last_status="waiting_input",
+        last_message="Continue CQRS work",
+    )
+    # message.sent 5 minutes ago. With the legacy 60s cooldown we'd allow the
+    # redrive; but because last_driven_kind=='escalation_prompt' the cooldown
+    # must extend to 1800 s and the skip must fire.
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": autonomous_cycle_mod.time.time() - 300.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "Ticket PLF-2099 has been stuck in status 'waiting_input' for 3 cycles…",
+            },
+        ],
+        last_driven_prompt="Ticket PLF-2099 has been stuck…",
+        last_driven_kind="escalation_prompt",
+    )
+    monkeypatch.setattr("koru.llm_reflect.llm_reflect_enabled", lambda: False)
+
+    telemetry: dict[str, object] = {}
+    logs: list[str] = []
+    should_skip = autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=logs.append,
+    )
+
+    assert should_skip is True
+    # Skip log line includes the *extended* cooldown (1800s) — proving the
+    # multiplier kicked in instead of the bare 60s default.
+    assert any("cooldown=1800" in line for line in logs)
+
+
+def test_reply_chat_input_busy_recognizes_plugin_ack_shape() -> None:
+    """Regression: koru autonomous must recognize plugin 0.1.50's input_busy ack.
+
+    When the plugin pre-checks the chat input and finds un-submitted text it
+    NACKs with ``verification="input_busy"`` and ``reason="chat_input_not_empty"``.
+    The autonomous loop must short-circuit retries instead of hammering the
+    drive five times per cycle (which would race with the user's typing).
+    """
+    busy = autonomous_cycle_mod._reply_chat_input_busy(
+        {
+            "ok": False,
+            "verification": "input_busy",
+            "reason": "chat_input_not_empty",
+            "message": "chat input already contains un-submitted text",
+        }
+    )
+    assert busy is True
+
+    # Negative cases: success ack and unrelated failure must NOT match.
+    assert (
+        autonomous_cycle_mod._reply_chat_input_busy(
+            {"ok": True, "verification": "strict"}
+        )
+        is False
+    )
+    assert (
+        autonomous_cycle_mod._reply_chat_input_busy(
+            {"ok": False, "verification": "submit_unverified"}
+        )
+        is False
+    )
+
+
+def test_resolve_autopilot_drive_decision_includes_recent_llx_summary(
+    tmp_path,
+) -> None:
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-2011"],
+        last_status="waiting_input",
+        last_message="Wydziel commands/queries/events",
+    )
+    state = autonomous_mod.AutoloopState(
+        last_llm_reflection_summary="Commands i queries zostały rozdzielone; teraz dodaj event-store i event-bus.",
+        last_llm_reflection_ts=autonomous_cycle_mod.time.time(),
+    )
+
+    decision, idle_kind = autonomous_cycle_mod._resolve_autopilot_drive_decision(
+        tmp_path,
+        state,
+        queue_result,
+        drive_prompt="ignored",
+        autopilot_action="drive",
+    )
+
+    assert idle_kind is None
+    assert decision.kind == "ticket_prompt"
+    assert "Recent IDE chat context:" in decision.prompt
+    assert "event-store i event-bus" in decision.prompt
+    assert "Do not restart from scratch" in decision.prompt
+
+
 def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(
     tmp_path,
     monkeypatch,
@@ -2861,6 +3377,77 @@ def test_read_wup_health_creates_high_priority_planfile_ticket(tmp_path) -> None
     text = sprint.read_text(encoding="utf-8")
     assert "[AUTO-DIAG] wup-api needs attention" in text
     assert "priority: high" in text
+
+
+def test_read_wup_health_sanitizes_slash_in_service_marker_path(tmp_path) -> None:
+    """WUP service ids like ``src/koru`` must not become nested marker dirs."""
+    health_dir = tmp_path / ".wup"
+    health_dir.mkdir()
+    (health_dir / "service-health.json").write_text(
+        json.dumps(
+            {
+                "src/koru": {
+                    "status": "failed",
+                    "stage": "quick",
+                    "message": "cli-koru.testql.toon.yaml",
+                    "track_file": "/tmp/track.json",
+                },
+            },
+        ),
+        encoding="utf-8",
+    )
+    state = autonomous_mod.AutoloopState()
+    result = autonomous_mod._read_wup_health(
+        project=tmp_path,
+        state=state,
+        diagnostic_tickets=True,
+        ticket_queue="default",
+        state_dir=tmp_path / ".planfile/.koru/autoloop-diag",
+    )
+    assert result.status == "failed"
+    assert result.failing_services == ["src/koru"]
+    marker = tmp_path / ".planfile/.koru/autoloop-diag/wup-src_koru.failed"
+    assert marker.exists()
+    assert marker.read_text(encoding="utf-8").strip()
+
+
+def test_read_wup_health_ignores_stale_services_not_in_wup_yaml(tmp_path) -> None:
+    """Renamed WUP services must not keep ``service-health.json`` rows blocking autopilot."""
+    (tmp_path / "wup.yaml").write_text(
+        "services:\n  - name: koru-shell\n    type: shell\n",
+        encoding="utf-8",
+    )
+    health_dir = tmp_path / ".wup"
+    health_dir.mkdir()
+    diag_dir = tmp_path / ".planfile/.koru/autoloop-diag"
+    diag_dir.mkdir(parents=True)
+    (diag_dir / "wup-koru-core.failed").write_text("stale", encoding="utf-8")
+    (health_dir / "service-health.json").write_text(
+        json.dumps(
+            {
+                "koru-core": {
+                    "status": "down",
+                    "stage": "quick",
+                    "message": "old failure",
+                },
+                "koru-shell": {"status": "up", "stage": "quick"},
+            },
+        ),
+        encoding="utf-8",
+    )
+    state = autonomous_mod.AutoloopState()
+    result = autonomous_mod._read_wup_health(
+        project=tmp_path,
+        state=state,
+        diagnostic_tickets=True,
+        ticket_queue="default",
+        state_dir=diag_dir,
+    )
+    assert result.status == "ok"
+    assert result.failing_services == []
+    assert not (diag_dir / "wup-koru-core.failed").exists()
+    pruned = json.loads((health_dir / "service-health.json").read_text(encoding="utf-8"))
+    assert set(pruned) == {"koru-shell"}
 
 
 def test_read_wup_health_ignores_degraded_fleet_and_clears_marker(tmp_path) -> None:
