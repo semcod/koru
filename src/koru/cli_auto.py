@@ -14,6 +14,7 @@ from koru.autonomous import autonomous_main, stop_prior_autonomous_for_auto_star
 from koru.bootstrap import import_flat_pipeline
 
 
+
 def _legacy_attr(name: str, fallback):
     legacy = sys.modules.get("koru._legacy_cli_impl")
     return getattr(legacy, name, fallback) if legacy is not None else fallback
@@ -45,6 +46,7 @@ def _auto_main(argv: list[str]) -> int:
     suggest running ``koru wizard`` first so the user can pick a strategy
     instead of blindly entering the autonomous loop with an empty backlog.
     """
+    from koru.cli import _peek_project_from_argv, _should_suggest_wizard
     if any(arg in {"-h", "--help"} for arg in argv):
         return autonomous_main(argv, invoked_as_auto=True)
     project = _peek_project_from_argv(argv)

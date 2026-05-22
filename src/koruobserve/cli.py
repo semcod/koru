@@ -15,8 +15,6 @@ from koruobserve.lifecycle import observe_down, observe_status, observe_up
 _OBSERVE_RUNTIME_PACKAGES: tuple[tuple[str, str], ...] = (
     ("websockets", "websockets>=12.0,<16.0"),
     ("mss", "mss>=9.0,<11.0"),
-    ("dbus", "dbus-python>=1.2.0,<2.0"),
-    ("gi", "PyGObject>=3.42,<4.0"),
 )
 
 

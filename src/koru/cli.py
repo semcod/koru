@@ -357,74 +357,7 @@ def _is_bare_invocation(args: argparse.Namespace) -> bool:
 
 
 
-def _init_ci_main(_argv: list[str]) -> int:
-    """Print where to copy the reference GitHub Actions workflow (Epic 2 thin CI)."""
-    print(
-        "koru init-ci:\n"
-        "  After copying the reference workflow, it should live at:\n"
-        "    .github/workflows/koru-ci.yml\n"
-        "  Upstream reference (semcod/koru):\n"
-        "    https://github.com/semcod/koru/blob/main/.github/workflows/koru-ci.yml\n"
-        "  How to adapt for your repo:\n"
-        "    https://github.com/semcod/koru/blob/main/docs/ci-github.md\n"
-        "  GitLab — example pipeline in this repo:\n"
-        "    examples/ci/gitlab-ci.example.yml\n"
-        "    https://github.com/semcod/koru/blob/main/examples/ci/gitlab-ci.example.yml\n"
-        "  GitLab — how to adapt:\n"
-        "    https://github.com/semcod/koru/blob/main/docs/ci-gitlab.md",
-    )
-    return 0
 
-
-def _mcp_serve_main(argv: list[str]) -> int:
-    from koruapi.mcp import mcp_main
-
-    return mcp_main(argv)
-
-
-def _agent_backends_main(argv: list[str]) -> int:
-    """List or describe IDE agent backend profiles (``agent_backends``)."""
-    from dataclasses import asdict
-
-    from koru.agent_backends import get_agent_backend_profile, iter_agent_backend_profiles
-
-    parser = argparse.ArgumentParser(prog="koru agent-backends")
-    parser.add_argument(
-        "--format",
-        dest="output_format",
-        choices=("text", "json"),
-        default="text",
-    )
-    parser.add_argument(
-        "backend_id",
-        nargs="?",
-        default=None,
-        metavar="BACKEND_ID",
-        help="When set, print one profile; otherwise list every profile id.",
-    )
-    args = parser.parse_args(argv)
-
-    if args.backend_id:
-        profile = get_agent_backend_profile(args.backend_id)
-        if profile is None:
-            sys.stderr.write(f"koru agent-backends: unknown id {args.backend_id!r}\n")
-            sys.stderr.write("  run `koru agent-backends` for ids.\n")
-            return 2
-    else:
-        profile = None
-
-    if args.output_format == "json":
-        if profile:
-            print(json.dumps(asdict(profile), indent=2, sort_keys=True))
-        else:
-            print(
-                json.dumps(
-                    [asdict(p) for p in iter_agent_backend_profiles()],
-                    indent=2,
-                    sort_keys=True,
-                ),
-            )
-        return 0
 
     if profile:
         print(f"id                 {profile.id}")
@@ -441,10 +374,6 @@ def _agent_backends_main(argv: list[str]) -> int:
     return 0
 
 
-def _init_ide_main(argv: list[str]) -> int:
-    from koru.mcp_provision import init_ide_main
-
-    return init_ide_main(argv)
 
 
 
@@ -538,9 +467,9 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "mesh": lambda argv: __import__("korumesh.cli", fromlist=["mesh_main"]).mesh_main(argv),
     "vision": lambda argv: __import__("koruvision.cli", fromlist=["vision_main"]).vision_main(argv),
     "observe": lambda argv: __import__("koruobserve.cli", fromlist=["observe_main"]).observe_main(argv),
-    "init-ci": _init_ci_main,
-    "init-ide": _init_ide_main,
-    "agent-backends": _agent_backends_main,
+    "init-ci": lambda argv: __import__("koru.cli_init", fromlist=["init_ci_main"]).init_ci_main(argv),
+    "init-ide": lambda argv: __import__("koru.mcp_provision", fromlist=["init_ide_main"]).init_ide_main(argv),
+    "agent-backends": lambda argv: __import__("koru.cli_agent_backends", fromlist=["agent_backends_main"]).agent_backends_main(argv),
     "task": lambda argv: __import__("koru.cli_task", fromlist=["_task_main"])._task_main(argv),
     "agent": lambda argv: __import__("koru.cli_agent", fromlist=["_agent_main"])._agent_main(argv),
     "local-serve": lambda argv: __import__("koru.cli_local_serve", fromlist=["_local_serve_main"])._local_serve_main(argv),
@@ -552,7 +481,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "gc": lambda argv: __import__("koru.cli_gc", fromlist=["gc_main"]).gc_main(argv),
     "git": git_main,
     "tools": lambda argv: __import__("koru.cli_tools", fromlist=["_tools_main"])._tools_main(argv),
-    "mcp-serve": _mcp_serve_main,
+    "mcp-serve": lambda argv: __import__("koruapi.mcp", fromlist=["mcp_main"]).mcp_main(argv),
     "ide-router": lambda argv: __import__("koru.cli_ide_router", fromlist=["ide_router_main"]).ide_router_main(argv),
     "autopilot": autopilot_main,
     "autoloop": autoloop_main,

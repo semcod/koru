@@ -39,8 +39,6 @@ mesh = [
 observe = [
     "mss>=9.0,<11.0",
     "websockets>=12.0,<16.0",
-    "dbus-python>=1.2.0,<2.0",
-    "PyGObject>=3.42,<4.0",
 ]
 dev = [
     "pytest>=8.0,<9.0",
@@ -90,10 +88,8 @@ quality = [
     "refurb>=2.0,<3.0",
 ]
 all = [
-    "PyGObject>=3.42,<4.0",
     "apscheduler>=3.10,<4.0",
     "arq>=0.26,<1.0",
-    "dbus-python>=1.2.0,<2.0",
     "fastapi>=0.115,<1.0",
     "hypothesis>=6.112,<7.0",
     "httpx>=0.27,<1.0",

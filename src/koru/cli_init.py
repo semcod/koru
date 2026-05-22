@@ -100,3 +100,21 @@ def init_agent_lane_main(args: argparse.Namespace) -> int:
         },
     )
     return 0
+
+def init_ci_main(_argv: list[str]) -> int:
+    """Print where to copy the reference GitHub Actions workflow (Epic 2 thin CI)."""
+    print(
+        "koru init-ci:\n"
+        "  After copying the reference workflow, it should live at:\n"
+        "    .github/workflows/koru-ci.yml\n"
+        "  Upstream reference (semcod/koru):\n"
+        "    https://github.com/semcod/koru/blob/main/.github/workflows/koru-ci.yml\n"
+        "  How to adapt for your repo:\n"
+        "    https://github.com/semcod/koru/blob/main/docs/ci-github.md\n"
+        "  GitLab — example pipeline in this repo:\n"
+        "    examples/ci/gitlab-ci.example.yml\n"
+        "    https://github.com/semcod/koru/blob/main/examples/ci/gitlab-ci.example.yml\n"
+        "  GitLab — how to adapt:\n"
+        "    https://github.com/semcod/koru/blob/main/docs/ci-gitlab.md",
+    )
+    return 0

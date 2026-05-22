@@ -32,7 +32,7 @@ def _png(width: int = 3, height: int = 2) -> bytes:
 
 def test_list_monitors_returns_at_least_one() -> None:
     _require_mss()
-    with mock.patch("mss.MSS", return_value=_fake_grabber(primary=True)):
+    with mock.patch("mss.mss", return_value=_fake_grabber(primary=True)):
         monitors = list_monitors()
     assert len(monitors) == 2
     assert any(monitor.get("is_primary") for monitor in monitors)
@@ -40,7 +40,7 @@ def test_list_monitors_returns_at_least_one() -> None:
 
 def test_capture_monitor_png_returns_frame() -> None:
     _require_mss()
-    with mock.patch("mss.MSS", return_value=_fake_grabber(primary=True)):
+    with mock.patch("mss.mss", return_value=_fake_grabber(primary=True)):
         frame = capture_monitor_png(0, scale=1.0)
     assert isinstance(frame, VisionFrame)
     assert frame.mime == "image/png"
@@ -66,7 +66,7 @@ def test_capture_monitor_png_records_native_resolution_after_downscale() -> None
     ]
     grabber.grab.return_value = shot
     grabber.__enter__.return_value = grabber
-    with mock.patch("mss.MSS", return_value=grabber):
+    with mock.patch("mss.mss", return_value=grabber):
         frame = capture_monitor_png(0, scale=0.2)
     assert frame.native_width == 10
     assert frame.native_height == 10
@@ -86,7 +86,7 @@ def test_capture_monitor_png_skips_black_monitor() -> None:
     ]
     grabber.grab.side_effect = [black, good]
     grabber.__enter__.return_value = grabber
-    with mock.patch("mss.MSS", return_value=grabber):
+    with mock.patch("mss.mss", return_value=grabber):
         frame = capture_monitor_png(None, scale=1.0)
     assert frame.monitor_id == 1
 
@@ -103,7 +103,7 @@ def test_capture_all_monitors_returns_frame_per_display() -> None:
     ]
     grabber.grab.return_value = shot
     grabber.__enter__.return_value = grabber
-    with mock.patch("mss.MSS", return_value=grabber):
+    with mock.patch("mss.mss", return_value=grabber):
         frames = capture_all_monitors(scale=1.0)
     assert [frame.monitor_id for frame in frames] == [0, 1]
     assert [frame.output for frame in frames] == ["DP-1", "DP-2"]
