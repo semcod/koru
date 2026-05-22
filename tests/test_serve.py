@@ -163,6 +163,7 @@ class TestServe(unittest.TestCase):
         # The HTML must reference the JSON endpoint it polls.
         self.assertIn("/api/context", body)
         self.assertIn("view-tabs", body)
+        self.assertIn('href="/grid"', body)
         self.assertIn("searchParams", body)
         self.assertIn("tab", body)
         self.assertIn("project", body)

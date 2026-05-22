@@ -487,9 +487,6 @@ _DASHBOARD_HTML = """<!doctype html>
     <span class="muted">Loading dashboard controls…</span>
   </section>
   <nav class="view-tabs" id="view-tabs" aria-label="Dashboard views"></nav>
-  <nav class="view-tabs" aria-label="External pages" style="margin-top:-4px">
-    <a class="view-tab" href="/grid" target="_blank" rel="noopener" title="Observation mesh screenshot grid">Grid ↗</a>
-  </nav>
   <div class="scope-line" id="scope-line"></div>
   <main id="root">
     <div class="panel full"><span class="muted">Loading brief…</span></div>
@@ -598,11 +595,17 @@ function renderDashboardControls(dash) {
 function renderTabs() {
   const node = $("view-tabs");
   if (!node) return;
-  node.innerHTML = tabs.map(([id, label]) => `
+  const buttons = tabs.map(([id, label]) => `
     <button type="button" class="view-tab ${id === state.tab ? "active" : ""}" data-tab="${attr(id)}">
       ${esc(label)}
     </button>
   `).join("");
+  const gridLink = `
+    <a class="view-tab" href="/grid" target="_blank" rel="noopener" title="Observation mesh screenshot grid">
+      Grid \u2197
+    </a>
+  `;
+  node.innerHTML = buttons + gridLink;
 }
 
 function panel(title, body, full=false) {
@@ -1789,6 +1792,86 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
             raw = values[0] if values else None
           return _resolve_dashboard_project(config, raw)
 
+        def _get_dashboard(self) -> None:
+          try:
+            self._send_json(_dashboard_state(config))
+          except Exception as exc:  # pragma: no cover — surface discovery errors
+            self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+
+        def _get_config(self) -> None:
+          try:
+            project = self._selected_project()
+            self._send_json(_dashboard_config_payload(config, project))
+          except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=400)
+          except Exception as exc:  # pragma: no cover — surface config errors
+            self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+
+        def _get_context(self) -> None:
+          try:
+            project = self._selected_project()
+            ctx = build_context(project=project, queue_name=config.queue_name)
+            ctx["dashboard_project"] = str(project)
+          except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=400)
+            return
+          except Exception as exc:  # pragma: no cover — surface errors
+            self._send_json(
+              {"error": str(exc), "type": type(exc).__name__},
+              status=500,
+            )
+            return
+          self._send_json(ctx)
+
+        def _get_topology(self) -> None:
+          try:
+            project = self._selected_project()
+            topo = load_topology(project)
+            topo["dashboard_project"] = str(project)
+          except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=400)
+            return
+          except Exception as exc:  # pragma: no cover — surface errors
+            self._send_json(
+              {"error": str(exc), "type": type(exc).__name__},
+              status=500,
+            )
+            return
+          self._send_json(topo)
+
+        def _get_runtime_context(self) -> None:
+          project = config.project
+          runtime: dict[str, Any]
+          try:
+            runtime_context = importlib.import_module("planfile.runtime_context")
+            project = self._selected_project()
+            runtime = runtime_context.build_runtime_context(project)
+          except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=400)
+            return
+          except Exception as exc:  # pragma: no cover — optional planfile integration
+            runtime = {"error": str(exc), "type": type(exc).__name__}
+          runtime["dashboard_project"] = str(project)
+          runtime["insights"] = collect_runtime_insights(project)
+          self._send_json(runtime)
+
+        def _get_handoff(self) -> None:
+          try:
+            project = self._selected_project()
+            ctx = build_context(project=project, queue_name=config.queue_name)
+            md = render_markdown_handoff(ctx)
+          except ValueError as exc:
+            self._send(400, str(exc).encode("utf-8"))
+            return
+          except Exception as exc:  # pragma: no cover
+            self._send(500, str(exc).encode("utf-8"))
+            return
+          self._send(
+            200,
+            md.encode("utf-8"),
+            "text/markdown; charset=utf-8",
+          )
+
         def do_GET(self) -> None:  # noqa: N802 — stdlib API
           path = urlparse(self.path).path
           if path in ("/", "/index.html"):
@@ -1806,85 +1889,16 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
 
             if serve_mesh_http(self, path):
               return
-          if path == "/api/dashboard":
-            try:
-              self._send_json(_dashboard_state(config))
-            except Exception as exc:  # pragma: no cover — surface discovery errors
-              self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
-            return
-          if path == "/api/config":
-            try:
-              project = self._selected_project()
-              self._send_json(_dashboard_config_payload(config, project))
-            except ValueError as exc:
-              self._send_json({"error": str(exc)}, status=400)
-            except Exception as exc:  # pragma: no cover — surface config errors
-              self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
-            return
-          if path == "/api/context":
-            try:
-              project = self._selected_project()
-              ctx = build_context(project=project, queue_name=config.queue_name)
-              ctx["dashboard_project"] = str(project)
-            except ValueError as exc:
-              self._send_json({"error": str(exc)}, status=400)
-              return
-            except Exception as exc:  # pragma: no cover — surface errors
-              self._send_json(
-                {"error": str(exc), "type": type(exc).__name__},
-                status=500,
-              )
-              return
-            self._send_json(ctx)
-            return
-          if path == "/api/topology":
-            try:
-              project = self._selected_project()
-              topo = load_topology(project)
-              topo["dashboard_project"] = str(project)
-            except ValueError as exc:
-              self._send_json({"error": str(exc)}, status=400)
-              return
-            except Exception as exc:  # pragma: no cover — surface errors
-              self._send_json(
-                {"error": str(exc), "type": type(exc).__name__},
-                status=500,
-              )
-              return
-            self._send_json(topo)
-            return
-          if path == "/api/runtime-context":
-            project = config.project
-            runtime: dict[str, Any]
-            try:
-              runtime_context = importlib.import_module("planfile.runtime_context")
-              project = self._selected_project()
-              runtime = runtime_context.build_runtime_context(project)
-            except ValueError as exc:
-              self._send_json({"error": str(exc)}, status=400)
-              return
-            except Exception as exc:  # pragma: no cover — optional planfile integration
-              runtime = {"error": str(exc), "type": type(exc).__name__}
-            runtime["dashboard_project"] = str(project)
-            runtime["insights"] = collect_runtime_insights(project)
-            self._send_json(runtime)
-            return
-          if path == "/api/handoff":
-            try:
-              project = self._selected_project()
-              ctx = build_context(project=project, queue_name=config.queue_name)
-              md = render_markdown_handoff(ctx)
-            except ValueError as exc:
-              self._send(400, str(exc).encode("utf-8"))
-              return
-            except Exception as exc:  # pragma: no cover
-              self._send(500, str(exc).encode("utf-8"))
-              return
-            self._send(
-              200,
-              md.encode("utf-8"),
-              "text/markdown; charset=utf-8",
-            )
+          route = {
+            "/api/dashboard": self._get_dashboard,
+            "/api/config": self._get_config,
+            "/api/context": self._get_context,
+            "/api/topology": self._get_topology,
+            "/api/runtime-context": self._get_runtime_context,
+            "/api/handoff": self._get_handoff,
+          }.get(path)
+          if route is not None:
+            route()
             return
           self._send(404, b"not found")
 
