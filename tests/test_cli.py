@@ -472,6 +472,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "ide-router",
             "configure",
             "mesh",
+            "vision",
             "agent-backends",
             "task",
             "agent",
