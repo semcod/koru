@@ -295,61 +295,8 @@ def _handle_autopilot_events(
                 state.last_message_sent_ts = ev.get("ts", time.time())
 
 
-def _handle_queue_hygiene(
-    project: Path,
-    cycle: int,
-    _hp: callable,
-    _emit: callable,
-) -> None:
-    stale_minutes = resolve_in_progress_stale_minutes(project)
-    if stale_minutes is not None:
-        released_stale = release_stale_in_progress_tickets(
-            project,
-            stale_minutes=stale_minutes,
-            runner=_run_process,
-        )
-        if released_stale:
-            _hp(
-                f"  queue hygiene: reopened {released_stale} stale in_progress "
-                f"(>{stale_minutes:.0f}m)",
-            )
-            _emit(
-                "QueueStaleReleased",
-                {"cycle": cycle, "count": released_stale, "stale_minutes": stale_minutes},
-            )
-
-
-def _handle_post_run_verify_ide(
-    project: Path,
-    state: AutoloopState,
-    cycle: int,
-    _hp: callable,
-    _emit: callable,
-) -> Any:
-    verify_config = load_post_run_verify_config(project)
-    ide_verify_outcomes = verify_after_ide_work(
-        project,
-        state,
-        config=verify_config,
-        planfile_runner=_run_process,
-        shell_runner=_run_shell_command,
-    )
-    if ide_verify_outcomes:
-        failed_ide = [o for o in ide_verify_outcomes if not o.get("ok")]
-        _hp(
-            f"  post_run_verify (IDE): tickets={len(ide_verify_outcomes)} failed={len(failed_ide)}",
-        )
-        _emit(
-            "PostRunVerifyIdeCompleted",
-            {
-                "cycle": cycle,
-                "ticket_count": len(ide_verify_outcomes),
-                "failed_count": len(failed_ide),
-                "outcomes": ide_verify_outcomes,
-            },
-            command="; ".join(verify_config.commands) if verify_config else None,
-        )
-    return verify_config
+from koru.autonomy.phases.queue_phase import handle_queue_hygiene as _handle_queue_hygiene
+from koru.autonomy.phases.verify_phase import handle_post_run_verify_ide as _handle_post_run_verify_ide
 
 
 def _handle_scan_phase(

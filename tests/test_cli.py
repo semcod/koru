@@ -473,6 +473,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "configure",
             "mesh",
             "vision",
+            "observe",
             "agent-backends",
             "task",
             "agent",

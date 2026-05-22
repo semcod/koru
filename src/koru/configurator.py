@@ -166,6 +166,38 @@ def migrate_project_config(project: Path) -> ConfigureResult:
     return ConfigureResult(project=project, path=path, config=config)
 
 
+_TOGGLEABLE_FEATURES: tuple[str, ...] = ("vision", "mesh", "browse", "sandbox")
+
+
+def toggle_feature_sections(
+    project: Path,
+    *,
+    enable: tuple[str, ...] = (),
+    disable: tuple[str, ...] = (),
+) -> ConfigureResult:
+    """Flip ``enabled`` on/off for v2 feature sections (vision/mesh/browse/sandbox)."""
+    project = project.expanduser().resolve()
+    previous = load_project_config(project)
+    if not previous:
+        msg = "no .koru/config.json — run koru configure first"
+        raise ValueError(msg)
+    config = merge_v2_feature_sections(previous)
+    config["schema"] = CONFIG_SCHEMA_V2
+    for name in enable:
+        if name not in _TOGGLEABLE_FEATURES:
+            msg = f"unknown feature {name!r}; expected one of {_TOGGLEABLE_FEATURES}"
+            raise ValueError(msg)
+        config[name] = {**config.get(name, {}), "enabled": True}
+    for name in disable:
+        if name not in _TOGGLEABLE_FEATURES:
+            msg = f"unknown feature {name!r}; expected one of {_TOGGLEABLE_FEATURES}"
+            raise ValueError(msg)
+        config[name] = {**config.get(name, {}), "enabled": False}
+    config["updated_at"] = datetime.now(UTC).isoformat()
+    path = save_project_config(project, config)
+    return ConfigureResult(project=project, path=path, config=config)
+
+
 def _serve_command(config: dict[str, Any]) -> list[str]:
     serve = config.get("serve") if isinstance(config.get("serve"), dict) else {}
     command = [
@@ -308,8 +340,30 @@ def build_configure_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Upgrade existing .koru/config.json to schema v2 (adds disabled feature sections).",
     )
+    parser.add_argument(
+        "--enable",
+        action="append",
+        default=[],
+        help="Enable a v2 feature section (vision, mesh, browse, sandbox). Repeatable.",
+    )
+    parser.add_argument(
+        "--disable",
+        action="append",
+        default=[],
+        help="Disable a v2 feature section. Repeatable.",
+    )
     parser.add_argument("--format", choices=("text", "json", "shell"), default="text")
     return parser
+
+
+def _split_feature_list(values: list[str]) -> tuple[str, ...]:
+    out: list[str] = []
+    for raw in values:
+        for item in str(raw).split(","):
+            stripped = item.strip().lower()
+            if stripped:
+                out.append(stripped)
+    return tuple(out)
 
 
 def _emit_configure_output(result: ConfigureResult, fmt: str, *, text: str | None = None) -> None:
@@ -329,6 +383,22 @@ def _configure_migrate(args: argparse.Namespace) -> int:
         print(f"koru configure: {exc}", file=sys.stderr)
         return 2
     summary = f"koru configure: migrated {result.path} -> {CONFIG_SCHEMA_V2}"
+    _emit_configure_output(result, args.format, text=summary)
+    return 0
+
+
+def _configure_toggle(args: argparse.Namespace) -> int:
+    enable = _split_feature_list(args.enable)
+    disable = _split_feature_list(args.disable)
+    try:
+        result = toggle_feature_sections(args.project, enable=enable, disable=disable)
+    except ValueError as exc:
+        print(f"koru configure: {exc}", file=sys.stderr)
+        return 2
+    changed = ", ".join(
+        f"+{name}" for name in enable
+    ) + (", " if enable and disable else "") + ", ".join(f"-{name}" for name in disable)
+    summary = f"koru configure: features {changed} in {result.path}"
     _emit_configure_output(result, args.format, text=summary)
     return 0
 
@@ -357,6 +427,8 @@ def configure_main(argv: list[str] | None = None) -> int:
     args = build_configure_parser().parse_args(argv)
     if args.migrate:
         return _configure_migrate(args)
+    if args.enable or args.disable:
+        return _configure_toggle(args)
     return _configure_write(args)
 
 
@@ -377,4 +449,5 @@ __all__ = [
     "render_shell_exports",
     "render_text_summary",
     "save_project_config",
+    "toggle_feature_sections",
 ]

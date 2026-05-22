@@ -1404,7 +1404,7 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.217"
+version = "0.1.218"
 source = { editable = "." }
 dependencies = [
     { name = "pyyaml" },
@@ -1477,6 +1477,9 @@ dev = [
     { name = "ruff" },
     { name = "types-pyyaml" },
 ]
+mesh = [
+    { name = "websockets" },
+]
 obs = [
     { name = "opentelemetry-exporter-otlp" },
     { name = "opentelemetry-instrumentation-fastapi" },
@@ -1495,6 +1498,9 @@ queue = [
     { name = "apscheduler" },
     { name = "arq" },
     { name = "redis" },
+]
+vision = [
+    { name = "mss" },
 ]
 watch = [
     { name = "websockets" },
@@ -1522,6 +1528,7 @@ requires-dist = [
     { name = "instructor", marker = "extra == 'all'", specifier = ">=1.6,<2.0" },
     { name = "litellm", marker = "extra == 'agent'", specifier = ">=1.51,<2.0" },
     { name = "litellm", marker = "extra == 'all'", specifier = ">=1.51,<2.0" },
+    { name = "mss", marker = "extra == 'vision'", specifier = ">=9.0,<11.0" },
     { name = "mutmut", marker = "extra == 'all'", specifier = ">=3.2,<4.0" },
     { name = "mutmut", marker = "extra == 'quality'", specifier = ">=3.2,<4.0" },
     { name = "mypy", marker = "extra == 'all'", specifier = ">=1.11,<2.0" },
@@ -1574,9 +1581,10 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30,<1.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'api'", specifier = ">=0.30,<1.0" },
     { name = "websockets", marker = "extra == 'all'", specifier = ">=12.0,<16.0" },
+    { name = "websockets", marker = "extra == 'mesh'", specifier = ">=12.0,<16.0" },
     { name = "websockets", marker = "extra == 'watch'", specifier = ">=12.0,<16.0" },
 ]
-provides-extras = ["watch", "dev", "api", "agent", "obs", "queue", "quality", "all"]
+provides-extras = ["watch", "vision", "mesh", "dev", "api", "agent", "obs", "queue", "quality", "all"]
 
 [[package]]
 name = "libcst"
@@ -1845,6 +1853,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/ca/84/620cc3f7e3adf6f5067e10f4dbae71295d8f9e16d5d3f9ef97c40f2f592c/mistune-3.2.1.tar.gz", hash = "sha256:7c8e5501d38bac1582e067e46c8343f17d57ea1aaa735823f3aba1fd59c88a28", size = 98003, upload-time = "2026-05-03T14:33:22.312Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2a/7f/a946aa4f8752b37102b41e64dca18a1976ac705c3a0d1dfe74d820a02552/mistune-3.2.1-py3-none-any.whl", hash = "sha256:78cdb0ba5e938053ccf63651b352508d2efa9411dc8810bfb05f2dc5140c0048", size = 53749, upload-time = "2026-05-03T14:33:20.551Z" },
+]
+
+[[package]]
+name = "mss"
+version = "10.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e5/5d/eee782a6d674f562c946ae6a026f4c595ea2b7b031f290bf9fbf60da09b5/mss-10.2.0.tar.gz", hash = "sha256:ab271860775545e62f29d7b11f82f279ac1048f5bbdd26cfad84830208dbd393", size = 200317, upload-time = "2026-04-23T10:44:57.305Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f2/c3/313e14f245c79b4c05bd0f3a84a4813aa26fa10f8993aebd91d04c5fad3f/mss-10.2.0-py3-none-any.whl", hash = "sha256:e79f428899280e7e64e38365b5bfed683851ebea807eeaeadaf06eb8e0d67197", size = 67106, upload-time = "2026-04-23T10:44:56.266Z" },
 ]
 
 [[package]]

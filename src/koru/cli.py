@@ -1545,6 +1545,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "configure": lambda argv: __import__("koru.configurator", fromlist=["configure_main"]).configure_main(argv),
     "mesh": lambda argv: __import__("korumesh.cli", fromlist=["mesh_main"]).mesh_main(argv),
     "vision": lambda argv: __import__("koruvision.cli", fromlist=["vision_main"]).vision_main(argv),
+    "observe": lambda argv: __import__("koruobserve.cli", fromlist=["observe_main"]).observe_main(argv),
     "init-ci": _init_ci_main,
     "init-ide": _init_ide_main,
     "agent-backends": _agent_backends_main,

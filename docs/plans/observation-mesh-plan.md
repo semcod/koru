@@ -20,17 +20,33 @@ Powiązane: [`docs/ide-control-surfaces.md`](../ide-control-surfaces.md),
 
 ## 1. Streszczenie wykonawcze
 
-Dodajemy do Koru **cztery nowe paczki sąsiadujące** w `src/`, zaprojektowane od
-początku tak, by mogły zostać wydzielone do osobnych repo/PyPI bez przepisywania
+Dodajemy do Koru **paczki sąsiadujące** w `src/`, zaprojektowane od początku
+tak, by mogły zostać wydzielone do osobnych repo/PyPI bez przepisywania
 importów:
 
 | Paczka          | Rola                                                                                       | Granica                                                          |
 | --------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
 | `koruvision`    | Capture monitorów i okien (screenshot, OCR opcjonalne, redakcja PII)                       | nie zna sieci ani przeglądarek                                   |
 | `korumesh`      | Rejestr peerów (LAN/WAN), discovery (mDNS), relay (HTTP/WS), auth (HMAC + opcjonalnie mTLS) | nie zna treści (binary blob in/out)                              |
+| `koruobserve`   | Orkiestrator `up/down/status` — startuje relay + vision + dashboard, zarządza PID-ami        | tylko zna istniejące CLI Koru, nie implementuje capture/transport |
 | `korubrowse`   | Sterowanie wieloma przeglądarkami: WebExtension (Chrome/Firefox), CDP, native messaging    | nie zna mesh — używa adaptera transportu                        |
 | `korudelegate`  | Pakiet zadań (Task Envelope), kolejka, podpisy, kwity wykonania                            | używa `korumesh` jako transportu                                |
 | `korusandbox`   | Adapter do [clonebox](https://pypi.org/project/clonebox/) — uruchamia klony VM/kontenerów z przeglądarką + wstrzykniętą wtyczką | opcjonalna zależność, fallback do natywnej instalacji wtyczek |
+
+### Najprostsze uruchomienie (po dodaniu `koruobserve`)
+
+```bash
+# jednorazowy bootstrap — tworzy config, klucz, włącza vision+mesh
+koru observe up --project .
+
+# w przeglądarce: stdout pokazuje URL np. http://127.0.0.1:8765/grid
+koru observe status            # PIDy, log paths, alive
+koru observe down              # zatrzymaj wszystko
+```
+
+`koru observe up` jest tylko convenience nad `koru configure --migrate / --enable vision,mesh`,
+`koru mesh init`, `koru mesh relay`, `koru vision agent --publish-mesh`, `koru serve --no-open`.
+Można dalej używać tych komend ręcznie — orkiestrator nie ukrywa żadnej z nich.
 
 Reszta zostaje: `koruapi` rozszerzamy o nowe widoki dashboardu i endpointy WS;
 `koruide` pozostaje wzorcem dla `korubrowse` (taki sam interfejs
