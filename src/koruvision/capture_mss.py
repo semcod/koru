@@ -1,9 +1,23 @@
-"""Internal mss/portal capture primitives used by :mod:`koruvision.capture`."""
+"""Low-level mss + native-screenshot primitives shared by :mod:`koruvision.providers`.
+
+This module used to orchestrate the full ``mss → portal → command`` fallback
+chain. That responsibility now lives in :mod:`koruvision.providers.detector`
+(ranked provider list), so the helpers below are intentionally narrow:
+
+* ``BlackFrameError`` + ``_grab_single_mss_raw`` / ``_grab_all_mss_raw`` —
+  the actual ``mss`` calls. Tests monkeypatch these directly.
+* ``command_candidates`` / ``run_png_command`` / ``command_capture_dict`` —
+  shell out to the native screenshot CLIs (``grim``, ``spectacle``,
+  ``scrot``…). Wrapped by :class:`koruvision.providers.cli_tools.CliToolsProvider`.
+* ``portal_capture_dict`` — single-shot portal screenshot wrapper.
+* ``png_dimensions`` / ``png_payload_descriptor`` / ``frame_from_shot`` —
+  byte-level helpers reused across providers.
+"""
 
 from __future__ import annotations
 
-import hashlib
 import contextlib
+import hashlib
 import os
 import shutil
 import struct
@@ -23,66 +37,12 @@ class BlackFrameError(RuntimeError):
 _PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 
-def capture_backend() -> str:
-    """Return the active capture backend (``auto``/``mss``/``portal``/``command``)."""
-    return os.environ.get("KORU_VISION_BACKEND", "auto").strip().lower() or "auto"
-
-
 def is_wayland() -> bool:
-    """True when the active session is Wayland (controls portal fallback)."""
+    """True when the active session is Wayland (kept for backward compatibility)."""
     return (
         os.environ.get("XDG_SESSION_TYPE", "").strip().lower() == "wayland"
         or bool(os.environ.get("WAYLAND_DISPLAY", "").strip())
     )
-
-
-def env_truthy(name: str) -> bool:
-    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
-
-
-def portal_possible() -> bool:
-    return sys.platform.startswith("linux") and (
-        is_wayland() or bool(os.environ.get("DBUS_SESSION_BUS_ADDRESS", "").strip())
-    )
-
-
-def looks_headless() -> bool:
-    if not sys.platform.startswith("linux"):
-        return False
-    return not any(
-        os.environ.get(name, "").strip()
-        for name in ("DISPLAY", "WAYLAND_DISPLAY", "DBUS_SESSION_BUS_ADDRESS")
-    )
-
-
-def auto_backend_order() -> list[str]:
-    order: list[str] = []
-    if env_truthy("KORU_VISION_PREFER_PORTAL") and portal_possible():
-        order.append("portal")
-    order.append("mss")
-    if is_wayland() and portal_possible():
-        order.append("portal")
-    order.append("command")
-    if portal_possible():
-        order.append("portal")
-    return list(dict.fromkeys(order))
-
-
-def auto_failure_message(errors: list[str]) -> str:
-    msg = "no screenshot backend succeeded"
-    if looks_headless():
-        msg += (
-            "; this looks headless because DISPLAY, WAYLAND_DISPLAY, and "
-            "DBUS_SESSION_BUS_ADDRESS are unset"
-        )
-    if errors:
-        msg += "; " + "; ".join(errors)
-    msg += (
-        ". Try KORU_VISION_BACKEND=portal on Wayland with screenshot permission, "
-        "KORU_VISION_BACKEND=command when a desktop screenshot tool is installed, "
-        "or run koru observe from the graphical session."
-    )
-    return msg
 
 
 def png_dimensions(payload: bytes) -> tuple[int, int]:
@@ -110,7 +70,13 @@ def png_payload_descriptor(payload: bytes, *, output: str) -> dict[str, Any]:
     }
 
 
-def frame_from_shot(shot: Any, *, monitor_id: int, scale: float, output: str = "") -> dict[str, Any]:
+def frame_from_shot(
+    shot: Any,
+    *,
+    monitor_id: int,
+    scale: float,
+    output: str = "",
+) -> dict[str, Any]:
     """Encode an mss shot as a PNG payload + descriptor dict for :class:`VisionFrame`."""
     import mss.tools
 
@@ -231,24 +197,6 @@ def command_capture_dict() -> dict[str, Any]:
     raise RuntimeError(msg)
 
 
-def _fallback_after_mss(exc: Exception) -> dict[str, Any]:
-    errors = [f"mss: {exc}"]
-    for backend in (item for item in auto_backend_order() if item != "mss"):
-        try:
-            if backend == "portal":
-                descriptor = portal_capture_dict()
-            elif backend == "command":
-                descriptor = command_capture_dict()
-            else:
-                continue
-        except Exception as backend_exc:  # noqa: BLE001 - backend-specific desktop capture failures.
-            errors.append(f"{backend}: {backend_exc}")
-            continue
-        print(f"koru vision: {errors[0]} — used {backend} capture", file=sys.stderr)
-        return descriptor
-    raise RuntimeError(auto_failure_message(errors))
-
-
 def grab_target(grabber: Any, target: dict[str, Any], index: int, scale: float) -> dict[str, Any]:
     """Grab a single monitor through *grabber* and turn it into a VisionFrame descriptor."""
     return frame_from_shot(
@@ -280,20 +228,6 @@ def _grab_single_mss_raw(monitor_id: int | None, scale: float) -> dict[str, Any]
         raise RuntimeError(msg) from last_error
 
 
-def grab_single_mss(monitor_id: int | None, scale: float) -> dict[str, Any]:
-    backend = capture_backend()
-    if backend in {"command", "native", "desktop"}:
-        return command_capture_dict()
-    if backend not in {"auto", "mss"}:
-        raise ValueError("KORU_VISION_BACKEND must be auto|mss|portal|command")
-    try:
-        return _grab_single_mss_raw(monitor_id, scale)
-    except Exception as exc:  # noqa: BLE001 - mss raises platform-specific exceptions.
-        if backend == "auto":
-            return _fallback_after_mss(exc)
-        raise
-
-
 def _grab_all_mss_raw(scale: float) -> list[dict[str, Any]]:
     """Capture every monitor mss reports; log+skip blacks/errors."""
     import mss
@@ -312,20 +246,3 @@ def _grab_all_mss_raw(scale: float) -> list[dict[str, Any]]:
                     file=sys.stderr,
                 )
     return frames
-
-
-def grab_all_mss(scale: float) -> list[dict[str, Any]]:
-    backend = capture_backend()
-    if backend in {"command", "native", "desktop"}:
-        return [command_capture_dict()]
-    if backend not in {"auto", "mss"}:
-        raise ValueError("KORU_VISION_BACKEND must be auto|mss|portal|command")
-    try:
-        frames = _grab_all_mss_raw(scale)
-        if frames:
-            return frames
-        raise RuntimeError("all monitors returned black frames")
-    except Exception as exc:  # noqa: BLE001 - mss raises platform-specific exceptions.
-        if backend == "auto":
-            return [_fallback_after_mss(exc)]
-        raise
