@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 261, shell: 47, yaml: 15, json: 9, yml: 8
+- **Languages**: python: 262, shell: 47, yaml: 15, json: 9, yml: 8
 - **Analysis Mode**: static
-- **Total Functions**: 2322
+- **Total Functions**: 2324
 - **Total Classes**: 150
-- **Modules**: 363
-- **Entry Points**: 794
+- **Modules**: 364
+- **Entry Points**: 793
 
 ## Architecture by Module
 
@@ -21,7 +21,7 @@
 
 ### src.koru.doctor
 - **Functions**: 73
-- **Classes**: 3
+- **Classes**: 2
 - **File**: `doctor.py`
 
 ### src.koru.autonomous
@@ -30,7 +30,7 @@
 - **File**: `autonomous.py`
 
 ### src.koruide.daemon
-- **Functions**: 49
+- **Functions**: 50
 - **Classes**: 3
 - **File**: `daemon.py`
 
@@ -118,13 +118,13 @@ Main execution flows into the system:
 ### src.koru.autonomous_auto_pipeline._select_auto_pipeline_profile
 - **Calls**: src.koru.autonomous_auto_pipeline._auto_pipeline_stage, AutoPipelineProfile, max, AutoPipelineProfile, AutoPipelineProfile, int, int, src.koru.autonomous_auto_pipeline._auto_value
 
-### src.koruide.daemon.AutopilotDaemon._drive_via_keyboard
-> Fallback: OS injector profile (X11) or :class:`Injector` keyboard sim.
-- **Calls**: self.log, src.koruide.ide.resolve_drive_target, self.log, src.koruide.ide.pick_target, self.injector.select_backend, self.log, self._send, self.log
-
 ### src.koru.autonomy.config.AutonomyConfig.from_env
 > Create config from environment variables (shell compatibility).
 - **Calls**: os.getenv, cls, None.strip, max, Path, os.getenv, os.getenv, src.koruvision.providers.env.env_truthy
+
+### src.koruide.daemon.AutopilotDaemon._drive_via_keyboard
+> Fallback: OS injector profile (X11) or :class:`Injector` keyboard sim.
+- **Calls**: self.log, src.koruide.ide.resolve_drive_target, self.log, src.koruide.ide.pick_target, self.injector.select_backend, self.log, self._send, self.log
 
 ### src.koru.context_render.render_markdown_handoff
 > Turn a context dict into a Markdown brief for the operator.
@@ -145,20 +145,20 @@ the LLM with the policy
 ### src.koru.doctor._check_ide_console_log
 - **Calls**: src.koru.doctor._selected_autopilot_ide, src.koru.doctor._ide_console_log_roots, sum, sum, category_patterns.items, None.join, src.koru.doctor._recent_ide_console_log_files, src.koru.doctor._read_recent_ide_console_lines
 
-### src.koruide.daemon.AutopilotDaemon._drive_via_plugin
-> Forward a drive request to a connected plugin for that IDE.
-- **Calls**: self.log, DriveOrchestrator.plugin_version_info, self.log, version_info.get, DriveOrchestrator.should_block_plugin_version, self._send, time.monotonic, self.log
-
 ### src.koru.queue.runners.run_api_request
 > Execute an HTTP API request.
 - **Calls**: request.get, urllib.request.Request, float, str, str, None.encode, headers.setdefault, str
 
-### src.koruide.daemon.AutopilotDaemon._handle_drive
-- **Calls**: msg.data.get, bool, bool, self.log, self._plugin_for, self.log, self._drive_via_keyboard, self._send
+### src.koruide.daemon.AutopilotDaemon._drive_via_plugin
+> Forward a drive request to a connected plugin for that IDE.
+- **Calls**: self.log, DriveOrchestrator.plugin_version_info, self.log, version_info.get, DriveOrchestrator.should_block_plugin_version, self._send, time.monotonic, self.log
 
 ### src.koru.autonomy.env.autonomous_environ_doctor_probe
 > Return ``(status, detail)`` for ``koru --doctor``; process-global, no I/O.
 - **Calls**: os.environ.get, src.koru.autonomy.env.env_truthy, os.environ.get, os.environ.get, src.koru.autonomy.env.env_truthy, None.strip, None.lower, None.strip
+
+### src.koruide.daemon.AutopilotDaemon._handle_drive
+- **Calls**: msg.data.get, bool, bool, self.log, self._plugin_for, self.log, self._drive_via_keyboard, self._send
 
 ### src.koru.autopilot.cli_command._action_drive
 - **Calls**: src.koru.autopilot.cli_command._client, src.koru.autopilot.cli_command._should_fallback_to_direct, scripts.koru-soak-monitor.print, None.strip, None.strip, scripts.koru-soak-monitor.print, src.koru.autopilot.cli_command._run_direct_drive, client.is_running
@@ -167,11 +167,11 @@ the LLM with the policy
 > Human-readable rendering — fixed-width status column.
 - **Calls**: lines.append, lines.append, max, report.summary, sum, counts.get, counts.get, counts.get
 
-### src.koru.doctor._check_detected_configuration
-- **Calls**: src.koru.policy.policy_path, src.koru.project_pipeline.project_pipeline_path, koru_project.is_file, src.koru.runtime.planfile_dir, None.strip, None.strip, detail_bits.append, detail_bits.append
-
 ### src.koru.autonomous_runtime.setup_autonomous_session
 - **Calls**: apply_env_defaults, str, args.project.resolve, project.mkdir, src.koru.activity_log.configure_nfo_activity_log, src.koru.activity_log.activity, src.koru.autonomous_runtime.project_venv_warning_lines, guard_existing_processes
+
+### src.koru.doctor._check_detected_configuration
+- **Calls**: src.koru.policy.policy_path, src.koru.project_pipeline.project_pipeline_path, koru_project.is_file, src.koru.runtime.planfile_dir, None.strip, None.strip, detail_bits.append, detail_bits.append
 
 ### src.koru.doctor._check_autopilot_plugin_bundle
 - **Calls**: src.koru.doctor._read_json_file, src.koru.doctor._read_json_file, plugin_dir.is_dir, str, str, package_lock.get, isinstance, issues.append
@@ -218,11 +218,11 @@ syntact
 > Programmatic entrypoint used by both the CLI and tests.
 - **Calls**: src.koru.wizard.tree.load_tree, None.resolve, src.koru.wizard.orchestrator._walk_with_llx, src.koru.wizard.orchestrator._finalise_ticket, WizardResult, src.koru.wizard.gui.static.wizard.list, src.koru.wizard.tree.walk_path, None.resolve
 
+### src.koruide.daemon.AutopilotDaemon._on_readable
+- **Calls**: client.buf.extend, client.sock.recv, src.koruide.daemon._verbose_io, self._drop, len, self._send, self._drop, client.buf.partition
+
 ### src.koruapi.cli.main
 - **Calls**: src.koruapi.cli._build_parser, parser.parse_known_args, args.project.resolve, sys.stdout.write, src.koru.activity_log.activity, src.koru.activity_log.activity, sys.stdout.write, api_serve
-
-### src.koruide.daemon.AutopilotDaemon._on_readable
-- **Calls**: client.buf.extend, client.sock.recv, self.log, self._drop, len, self._send, self._drop, client.buf.partition
 
 ## Process Flows
 
@@ -240,7 +240,12 @@ _select_auto_pipeline_profile [src.koru.autonomous_auto_pipeline]
       └─> _auto_pipeline_has_pressure
 ```
 
-### Flow 3: _drive_via_keyboard
+### Flow 3: from_env
+```
+from_env [src.koru.autonomy.config.AutonomyConfig]
+```
+
+### Flow 4: _drive_via_keyboard
 ```
 _drive_via_keyboard [src.koruide.daemon.AutopilotDaemon]
   └─ →> resolve_drive_target
@@ -250,11 +255,6 @@ _drive_via_keyboard [src.koruide.daemon.AutopilotDaemon]
   └─ →> pick_target
       └─> normalize_ide_id
       └─> normalize_ide_id
-```
-
-### Flow 4: from_env
-```
-from_env [src.koru.autonomy.config.AutonomyConfig]
 ```
 
 ### Flow 5: render_markdown_handoff
@@ -305,9 +305,9 @@ _check_ide_console_log [src.koru.doctor]
   └─> _ide_console_log_roots
 ```
 
-### Flow 10: _drive_via_plugin
+### Flow 10: run_api_request
 ```
-_drive_via_plugin [src.koruide.daemon.AutopilotDaemon]
+run_api_request [src.koru.queue.runners]
 ```
 
 ## Key Classes
@@ -389,9 +389,18 @@ Supports a ``?`` prefix
 - **Methods**: 5
 - **Key Methods**: src.koru.wizard.gui.session.SessionStore.__init__, src.koru.wizard.gui.session.SessionStore.create, src.koru.wizard.gui.session.SessionStore.get, src.koru.wizard.gui.session.SessionStore.delete, src.koru.wizard.gui.session.SessionStore.purge_expired
 
+### src.koruvision.providers.base.CaptureProvider
+- **Methods**: 4
+- **Key Methods**: src.koruvision.providers.base.CaptureProvider.availability, src.koruvision.providers.base.CaptureProvider.list_monitors, src.koruvision.providers.base.CaptureProvider.capture_all, src.koruvision.providers.base.CaptureProvider.capture_one
+- **Inherits**: Protocol
+
 ### src.koruvision.providers.cli_tools.CliToolsProvider
 - **Methods**: 4
 - **Key Methods**: src.koruvision.providers.cli_tools.CliToolsProvider.availability, src.koruvision.providers.cli_tools.CliToolsProvider.list_monitors, src.koruvision.providers.cli_tools.CliToolsProvider.capture_all, src.koruvision.providers.cli_tools.CliToolsProvider.capture_one
+
+### src.koruvision.providers.obs_websocket.ObsWebSocketProvider
+- **Methods**: 4
+- **Key Methods**: src.koruvision.providers.obs_websocket.ObsWebSocketProvider.availability, src.koruvision.providers.obs_websocket.ObsWebSocketProvider.list_monitors, src.koruvision.providers.obs_websocket.ObsWebSocketProvider.capture_all, src.koruvision.providers.obs_websocket.ObsWebSocketProvider.capture_one
 
 ### src.koruvision.providers.portal_screenshot.PortalScreenshotProvider
 - **Methods**: 4
@@ -405,21 +414,9 @@ Supports a ``?`` prefix
 - **Methods**: 4
 - **Key Methods**: src.koruvision.providers.mss.MssProvider.availability, src.koruvision.providers.mss.MssProvider.list_monitors, src.koruvision.providers.mss.MssProvider.capture_all, src.koruvision.providers.mss.MssProvider.capture_one
 
-### src.koruide.plugin_router.PluginRouter
-> Select, enumerate and deduplicate connected plugin sessions.
+### src.koruvision.providers.browser_getdisplay.BrowserGetDisplayProvider
 - **Methods**: 4
-- **Key Methods**: src.koruide.plugin_router.PluginRouter.__init__, src.koruide.plugin_router.PluginRouter.plugin_for, src.koruide.plugin_router.PluginRouter.drop_stale_plugins, src.koruide.plugin_router.PluginRouter.status_rows
-
-### src.koru.ide_client.IDEControlClient
-> Minimal interface `koru` runtime code expects from an IDE client.
-- **Methods**: 4
-- **Key Methods**: src.koru.ide_client.IDEControlClient.is_running, src.koru.ide_client.IDEControlClient.drive, src.koru.ide_client.IDEControlClient.status, src.koru.ide_client.IDEControlClient.shutdown
-- **Inherits**: Protocol
-
-### src.koru.ide_client.LegacyAutopilotClientAdapter
-> Expose legacy :class:`AutopilotClient` through :class:`IDEControlClient`.
-- **Methods**: 4
-- **Key Methods**: src.koru.ide_client.LegacyAutopilotClientAdapter.is_running, src.koru.ide_client.LegacyAutopilotClientAdapter.drive, src.koru.ide_client.LegacyAutopilotClientAdapter.status, src.koru.ide_client.LegacyAutopilotClientAdapter.shutdown
+- **Key Methods**: src.koruvision.providers.browser_getdisplay.BrowserGetDisplayProvider.availability, src.koruvision.providers.browser_getdisplay.BrowserGetDisplayProvider.list_monitors, src.koruvision.providers.browser_getdisplay.BrowserGetDisplayProvider.capture_all, src.koruvision.providers.browser_getdisplay.BrowserGetDisplayProvider.capture_one
 
 ## Data Transformation Functions
 
@@ -448,6 +445,9 @@ Cheap pre-flight gate: block
 ### src.koruobserve.lifecycle._stop_orphan_observe_processes
 > SIGTERM stale observe children when pidfiles are missing (e.g. after crash).
 - **Output to**: needles.items, src.koruobserve.lifecycle._pids_matching_koru_cmdline, None.unlink, contextlib.suppress, os.kill
+
+### src.koruobserve.cli_parser.build_observe_parser
+- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_subparsers, sub.add_parser, src.koruobserve.cli_parser._add_subproject
 
 ### src.korudsl.cli._build_parser
 - **Output to**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, to_lib.add_argument, to_lib.add_argument
@@ -510,9 +510,6 @@ Returns (should_kill, logs) tuple.
 ### src.korumesh.cli_parser.build_mesh_parser
 - **Output to**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, relay.add_argument, relay.add_argument
 
-### src.koruide.protocol.Message.encode
-- **Output to**: None.encode, json.dumps, self.to_dict
-
 ## Behavioral Patterns
 
 ### state_machine_EventBuffer
@@ -552,8 +549,8 @@ Functions exposed as public API (no underscore prefix):
 - `src.koruapi.dashboard.dashboard_main` - 34 calls
 - `src.koru.autonomous_cycle.run_cycle` - 33 calls
 - `src.koruobserve.lifecycle.observe_up` - 32 calls
-- `src.koru.cli_topology.topology_main` - 32 calls
 - `src.koruvision.providers.browser_getdisplay.ingest_browser_upload` - 32 calls
+- `src.koru.cli_topology.topology_main` - 32 calls
 - `koruapi.mcp_server.tool_run_ticket` - 31 calls
 - `src.koruapi.dashboard_config.dashboard_config_payload` - 30 calls
 - `src.koru.queue.runners.run_api_request` - 30 calls
@@ -562,11 +559,11 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
 - `src.koruide.plugin_installer.resolve_extension_vsix` - 28 calls
 - `src.koru.cli_queue.render_clean_report_text` - 28 calls
-- `src.koru.doctor.render_text` - 27 calls
 - `src.koruvision.providers.detector.rank_providers` - 27 calls
+- `src.koru.doctor.render_text` - 27 calls
+- `src.koru.env_config.write_env_config` - 26 calls
 - `src.koru.autonomous_daemon.start_or_reuse_daemon` - 26 calls
 - `src.koru.autonomous_runtime.setup_autonomous_session` - 26 calls
-- `src.koru.env_config.write_env_config` - 26 calls
 - `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
 - `src.koruapi.dashboard_projects.projects_by_ide` - 25 calls
 - `src.koru.configurator.render_shell_exports` - 24 calls
@@ -593,15 +590,15 @@ graph TD
     _select_auto_pipelin --> _auto_pipeline_stage
     _select_auto_pipelin --> AutoPipelineProfile
     _select_auto_pipelin --> max
-    _drive_via_keyboard --> log
-    _drive_via_keyboard --> resolve_drive_target
-    _drive_via_keyboard --> pick_target
-    _drive_via_keyboard --> select_backend
     from_env --> getenv
     from_env --> cls
     from_env --> strip
     from_env --> max
     from_env --> Path
+    _drive_via_keyboard --> log
+    _drive_via_keyboard --> resolve_drive_target
+    _drive_via_keyboard --> pick_target
+    _drive_via_keyboard --> select_backend
     render_markdown_hand --> get
     render_markdown_hand --> extend
     render_markdown_hand --> bool

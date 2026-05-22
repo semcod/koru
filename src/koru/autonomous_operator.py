@@ -58,6 +58,21 @@ def setup_autopilot_plugin(
             f"ide={autopilot_ide}; using keyboard/OS-injector path",
             fmt=args.emit_events,
         )
+        import os as _os
+
+        env_lane = _os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip()
+        if env_lane and env_lane.lower() == str(autopilot_ide).lower():
+            stdio_info(
+                "koru autonomous: ⚠ KORU_AUTOPILOT_INSTANCE="
+                f"{env_lane} forces an unsupported IDE. "
+                "Plugin-mode is unavailable; the OS injector path is unreliable on Wayland. "
+                "To switch the autopilot lane to a supported IDE, run one of:\n"
+                "  unset KORU_AUTOPILOT_INSTANCE             # auto-pick from running IDEs\n"
+                "  export KORU_AUTOPILOT_INSTANCE=cursor     # or vscode / vscodium / windsurf\n"
+                "Supported lanes: cursor, vscode, vscodium, windsurf "
+                "(see docs: docs/IDE_PROTOCOL.md).",
+                fmt=args.emit_events,
+            )
     elif client is not None and not allow_keyboard_fallback():
         wait_seconds = max(0.0, args.autopilot_plugin_wait_seconds)
         plugin_ready = wait_for_plugin(

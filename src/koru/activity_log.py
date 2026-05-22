@@ -98,8 +98,15 @@ def _emit_nfo_activity(
         _NFO_UNAVAILABLE = True
         if not _NFO_UNAVAILABLE_WARNED:
             _NFO_UNAVAILABLE_WARNED = True
+            hint = ""
+            if isinstance(exc, ModuleNotFoundError) and "nfo" in str(exc):
+                hint = (
+                    " (optional dependency; install with "
+                    "'pip install nfo' or 'pip install \"koru[obs]\"' "
+                    "to enable the structured activity log)"
+                )
             print(
-                f"koru: nfo activity log disabled: {type(exc).__name__}: {exc}",
+                f"koru: nfo activity log disabled: {type(exc).__name__}: {exc}{hint}",
                 file=sys.stderr,
                 flush=True,
             )

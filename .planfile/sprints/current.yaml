@@ -12935,9 +12935,10 @@ sprint:
         3. Wykonaj pierwszy bezpieczny krok i przygotuj test/regresje.'
       execution:
         attempt: 0
+        finished_at: '2026-05-22T20:52:04.915570Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -12975,6 +12976,16 @@ sprint:
           3. Wykonaj pierwszy bezpieczny krok i przygotuj test/regresje.'
         source: koru task
         timestamp: '2026-05-22T12:29:01.304454+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-22T20:52:05.632747+00:00'
       id: STARTER-183
       inputs:
         api_headers: {}
@@ -13063,9 +13074,9 @@ sprint:
         timestamp: '2026-05-22T12:29:01.304454+00:00'
         tool: koru-auto-onboarding
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-22T12:29:01.304454+00:00'
+      updated_at: '2026-05-22T20:52:05.632702+00:00'
     STARTER-184:
       blocked_by: []
       blocks: []

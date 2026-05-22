@@ -83,6 +83,17 @@ def _prefer_keyboard_drive() -> bool:
     )
 
 
+def _verbose_io() -> bool:
+    """Return True when per-connection IO events should be logged.
+
+    Connection accept/close events flood logs when health probes (dashboard,
+    MCP, WUP, ``koru autopilot status``) hit the daemon every second. Hide
+    them behind ``KORU_AUTOPILOT_VERBOSE=1`` so the autonomous log stays
+    readable while still allowing deep debugging on demand.
+    """
+    return _env_truthy("KORU_AUTOPILOT_VERBOSE")
+
+
 def _plugin_rejection_log_interval_seconds() -> float:
     raw = os.environ.get("KORU_PLUGIN_REJECTION_LOG_INTERVAL_SECONDS", "").strip()
     if not raw:
@@ -348,7 +359,8 @@ class AutopilotDaemon:
         client = _Client(sock=conn, addr=f"fd{conn.fileno()}")
         self._clients[conn.fileno()] = client
         self._sel.register(conn, selectors.EVENT_READ, data=client)
-        self.log(f"client connected: {client.addr}")
+        if _verbose_io():
+            self.log(f"client connected: {client.addr}")
 
     def _on_readable(self, client: _Client) -> None:
         try:
@@ -358,7 +370,8 @@ class AutopilotDaemon:
             self._drop(client)
             return
         if not chunk:
-            self.log(f"client disconnected: {client.addr}")
+            if _verbose_io():
+                self.log(f"client disconnected: {client.addr}")
             self._drop(client)
             return
         client.buf.extend(chunk)
@@ -395,6 +408,10 @@ class AutopilotDaemon:
     def _send(self, client: _Client, payload: bytes) -> None:
         try:
             client.sock.sendall(payload)
+        except BrokenPipeError:
+            if _verbose_io():
+                self.log(f"send to {client.addr} skipped: peer already gone")
+            self._drop(client)
         except OSError as exc:
             self.log(f"send to {client.addr} failed: {exc}")
             self._drop(client)

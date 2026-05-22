@@ -127,17 +127,30 @@ class _DaemonHarness:
         handoff=None,
         handoff_cooldown: float = 0.0,
         project: Path | None = None,
+        logs: list[str] | None = None,
     ) -> None:
         self.sock_path = tmp_path / "autopilot.sock"
         self.injector = injector or _StubInjector()
+        self.logs = logs
+        log_kw: dict[str, Any] = {}
+        if logs is not None:
+            log_kw["log"] = logs.append
         self.daemon = AutopilotDaemon(
             socket_path=self.sock_path,
             injector=self.injector,
             handoff=handoff,
             handoff_cooldown=handoff_cooldown,
             project=project,
+            **log_kw,
         )
         self._thread: threading.Thread | None = None
+
+    def __enter__(self) -> "_DaemonHarness":
+        self.start()
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        self.stop()
 
     def start(self) -> None:
         self.daemon.start()
@@ -1260,3 +1273,71 @@ def test_shutdown_stops_daemon(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
             harness._thread.join(timeout=2.0)
             assert not harness._thread.is_alive()
     assert not harness.sock_path.exists()
+
+
+# ---------------------------------------------------------------------------
+# Daemon log verbosity gate (R8)
+# ---------------------------------------------------------------------------
+
+
+def test_verbose_io_defaults_to_false(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without ``KORU_AUTOPILOT_VERBOSE`` the daemon must hide per-fd events."""
+    monkeypatch.delenv("KORU_AUTOPILOT_VERBOSE", raising=False)
+    assert koruide_daemon_mod._verbose_io() is False
+
+
+@pytest.mark.parametrize("value", ["1", "true", "yes", "on", "TRUE"])
+def test_verbose_io_opt_in(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_VERBOSE", value)
+    assert koruide_daemon_mod._verbose_io() is True
+
+
+@pytest.mark.parametrize("value", ["0", "false", "", "off"])
+def test_verbose_io_opt_out(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_VERBOSE", value)
+    assert koruide_daemon_mod._verbose_io() is False
+
+
+def test_connect_disconnect_silent_by_default(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Regression for ``koru auto`` log flood (``client connected: fd5`` x100).
+
+    Dashboard / MCP / WUP probes connect to the daemon every second. The
+    daemon used to log ``client connected`` + ``client disconnected`` for
+    each probe, drowning the autonomous log. With the verbose gate off
+    (default), no such lines should be emitted.
+    """
+    monkeypatch.delenv("KORU_AUTOPILOT_VERBOSE", raising=False)
+    _patch_no_running_ides(monkeypatch)
+    logs: list[str] = []
+
+    with _DaemonHarness(tmp_path, logs=logs) as harness:
+        for _ in range(3):
+            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+                s.settimeout(2.0)
+                s.connect(str(harness.sock_path))
+            time.sleep(0.05)
+        time.sleep(0.2)
+
+    assert not any("client connected" in line for line in logs), logs
+    assert not any("client disconnected" in line for line in logs), logs
+
+
+def test_connect_disconnect_logged_when_verbose(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_VERBOSE", "1")
+    _patch_no_running_ides(monkeypatch)
+    logs: list[str] = []
+
+    with _DaemonHarness(tmp_path, logs=logs) as harness:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+            s.settimeout(2.0)
+            s.connect(str(harness.sock_path))
+        time.sleep(0.2)
+
+    assert any("client connected" in line for line in logs), logs
+    assert any("client disconnected" in line for line in logs), logs

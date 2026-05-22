@@ -1,25 +1,26 @@
-# code2llm | 364f 60532L | python:261,shell:47,yaml:15,json:9,yml:8,typescript:8,kotlin:6,txt:2,javascript:1,properties:1,xml:1,toml:1 | 2026-05-22
-# generated in 0.20s
-# CC̄=4.0 | critical:12/2322 | dups:0 | cycles:0
+# code2llm | 365f 61225L | python:262,shell:47,yaml:15,json:9,yml:8,typescript:8,kotlin:6,txt:2,javascript:1,properties:1,xml:1,toml:1 | 2026-05-22
+# generated in 0.15s
+# CC̄=4.0 | critical:13/2324 | dups:0 | cycles:0
 
-HEALTH[12]:
+HEALTH[13]:
   🟡 CC    dashboard_main CC=23 (limit:15)
-  🟡 CC    _check_autopilot_plugin_bundle CC=23 (limit:15)
-  🟡 CC    _check_autopilot_env CC=17 (limit:15)
-  🟡 CC    _check_windsurf_chat_column_control CC=25 (limit:15)
-  🟡 CC    _check_ide_console_log CC=31 (limit:15)
-  🟡 CC    configure_project CC=20 (limit:15)
-  🟡 CC    doctor_main CC=15 (limit:15)
-  🟡 CC    submitChat CC=16 (limit:15)
   🟡 CC    projects_by_ide CC=16 (limit:15)
   🟡 CC    rank_providers CC=17 (limit:15)
   🟡 CC    ingest_browser_upload CC=18 (limit:15)
   🟡 CC    write_env_config CC=16 (limit:15)
+  🟡 CC    configure_project CC=20 (limit:15)
+  🟡 CC    doctor_main CC=15 (limit:15)
+  🟡 CC    submitChat CC=16 (limit:15)
+  🟡 CC    main CC=15 (limit:15)
+  🟡 CC    _check_autopilot_plugin_bundle CC=23 (limit:15)
+  🟡 CC    _check_autopilot_env CC=17 (limit:15)
+  🟡 CC    _check_windsurf_chat_column_control CC=25 (limit:15)
+  🟡 CC    _check_ide_console_log CC=31 (limit:15)
 
 REFACTOR[1]:
-  1. split 12 high-CC methods  (CC>15)
+  1. split 13 high-CC methods  (CC>15)
 
-PIPELINES[653]:
+PIPELINES[652]:
   [1] Src [heal_rebuild_restore]: heal_rebuild_restore → _run_docker
       PURITY: 100% pure
   [2] Src [heal_annotate]: heal_annotate → _record_action
@@ -38,10 +39,10 @@ LAYERS:
   │ Dockerfile                  36L  0C    0m  CC=0.0    ←0
   │
   src/                            CC̄=4.1    ←in:0  →out:0
-  │ !! doctor                    1968L  3C   73m  CC=31     ←2
+  │ !! doctor                    1788L  2C   73m  CC=31     ←2
   │ !! autonomous_cycle          1367L  1C   44m  CC=14     ←1
   │ !! context                   1269L  0C   49m  CC=14     ←8
-  │ !! daemon                    1149L  3C   49m  CC=14     ←0
+  │ !! daemon                    1166L  3C   50m  CC=14     ←0
   │ !! autonomous                1119L  1C   56m  CC=7      ←2
   │ !! mcp_server                1023L  0C   35m  CC=14     ←4
   │ !! scan                       991L  2C   27m  CC=13     ←4
@@ -50,6 +51,7 @@ LAYERS:
   │ !! ide                        746L  1C   44m  CC=13     ←22
   │ !! koru-autoloop.sh           676L  0C   17m  CC=0.0    ←0
   │ !! install_manager            653L  2C   30m  CC=13     ←2
+  │ !! cli                        642L  0C   17m  CC=15     ←0
   │ !! init                       610L  1C   15m  CC=12     ←2
   │ !! autonomous_wup             585L  3C   30m  CC=12     ←1
   │ !! autonomous_startup         577L  3C   31m  CC=9      ←3
@@ -66,7 +68,7 @@ LAYERS:
   │ dashboard_routes           411L  0C    4m  CC=1      ←2
   │ runner                     393L  0C   10m  CC=14     ←2
   │ queue_clean                391L  2C   13m  CC=14     ←1
-  │ portal_screencast          391L  1C    7m  CC=10     ←0
+  │ portal_screencast          383L  1C    7m  CC=10     ←0
   │ post_run_verify            381L  2C   16m  CC=14     ←3
   │ injector                   376L  3C   20m  CC=11     ←0
   │ gc                         371L  2C   12m  CC=11     ←1
@@ -83,9 +85,9 @@ LAYERS:
   │ local_service              312L  1C    7m  CC=7      ←1
   │ ide_work                   301L  0C   11m  CC=12     ←3
   │ app                        299L  0C    9m  CC=10     ←1
-  │ local_manager_state        292L  4C   21m  CC=14     ←0
-  │ wizard.js                  292L  0C   38m  CC=13     ←57
   │ !! detector                   292L  0C   11m  CC=17     ←8
+  │ local_manager_state        292L  4C   21m  CC=14     ←0
+  │ wizard.js                  292L  0C   38m  CC=13     ←58
   │ queue_cli_helpers          290L  0C   10m  CC=9      ←1
   │ lifecycle                  285L  1C   13m  CC=10     ←1
   │ autonomous_daemon          282L  0C   10m  CC=10     ←1
@@ -98,15 +100,15 @@ LAYERS:
   │ local_manager_client       252L  2C   15m  CC=7      ←4
   │ git_cli                    249L  0C   13m  CC=11     ←0
   │ runners                    249L  0C   11m  CC=9      ←2
-  │ capture_mss                248L  1C   12m  CC=14     ←3
+  │ capture_mss                248L  1C   12m  CC=14     ←4
   │ dashboard_serve_utils      246L  1C   18m  CC=7      ←2
   │ drive_orchestrator         245L  1C   12m  CC=14     ←0
   │ environment                245L  3C    6m  CC=14     ←2
   │ ide_install                241L  1C    6m  CC=9      ←1
   │ dashboard_serve            240L  1C   10m  CC=6      ←1
   │ !! env_config                 239L  1C    5m  CC=16     ←1
-  │ autonomous_onboarding      231L  1C   11m  CC=10     ←0
   │ obs_websocket              231L  1C   15m  CC=11     ←1
+  │ autonomous_onboarding      231L  1C   11m  CC=10     ←0
   │ dashboard_tickets          229L  0C   10m  CC=13     ←1
   │ !! browser_getdisplay         227L  1C    9m  CC=18     ←2
   │ host_setup                 226L  0C   12m  CC=14     ←2
@@ -117,6 +119,7 @@ LAYERS:
   │ library                    207L  0C   19m  CC=9      ←1
   │ injector_backends          207L  0C   11m  CC=5      ←1
   │ autonomous_process_guard   206L  2C    8m  CC=11     ←1
+  │ doctor_constants           206L  1C    0m  CC=0.0    ←0
   │ autonomous_plugin          203L  0C   14m  CC=12     ←2
   │ gate                       202L  1C    5m  CC=12     ←1
   │ invoke_handlers            199L  1C   15m  CC=5      ←0
@@ -128,26 +131,26 @@ LAYERS:
   │ cli_task                   189L  0C    5m  CC=11     ←0
   │ cli_queue                  185L  0C    4m  CC=12     ←0
   │ agent_backend_runtime      180L  5C    6m  CC=9      ←0
-  │ server                     175L  1C    8m  CC=9      ←1
   │ diagnostics                175L  0C    8m  CC=8      ←2
+  │ server                     175L  1C    8m  CC=9      ←1
   │ cli                        173L  0C    5m  CC=2      ←6
+  │ activity_log               173L  0C    9m  CC=10     ←19
   │ ide_client                 171L  2C   12m  CC=3      ←1
   │ queue_phase                170L  0C    6m  CC=11     ←0
-  │ activity_log               166L  0C    9m  CC=8      ←19
   │ scan_phase                 166L  0C    2m  CC=9      ←0
   │ ticket                     164L  0C    8m  CC=10     ←6
   │ client                     160L  1C    8m  CC=8      ←1
   │ project                    160L  1C   11m  CC=7      ←1
+  │ autonomous_operator        159L  0C    4m  CC=9      ←0
   │ autonomous_cycle_gate      158L  0C    8m  CC=8      ←2
   │ openapi                    155L  0C    1m  CC=2      ←1
-  │ audit                      154L  2C    6m  CC=6      ←1
   │ cli                        154L  0C   10m  CC=5      ←0
+  │ audit                      154L  2C    6m  CC=6      ←1
   │ doctor_cli                 152L  0C    9m  CC=8      ←1
   │ project_pipeline           150L  0C    5m  CC=9      ←5
-  │ semcod_tools               148L  1C    4m  CC=7      ←3
   │ providers_cli              148L  0C   10m  CC=13     ←1
+  │ semcod_tools               148L  1C    4m  CC=7      ←3
   │ git_attribution            147L  1C    6m  CC=9      ←2
-  │ autonomous_operator        144L  0C    4m  CC=7      ←0
   │ daemon_cli                 142L  0C    7m  CC=10     ←0
   │ !! cli_doctor                 139L  0C    5m  CC=15     ←0
   │ !! dashboard                  138L  0C    4m  CC=23     ←3
@@ -178,39 +181,38 @@ LAYERS:
   │ systemd_cli                103L  0C    4m  CC=6      ←0
   │ prompts                    101L  1C    1m  CC=10     ←1
   │ watch                       93L  0C    6m  CC=9      ←1
+  │ base                        90L  4C    6m  CC=5      ←4
   │ events                      90L  0C    2m  CC=8      ←14
   │ cli_agent                   90L  0C    3m  CC=3      ←0
   │ autonomous_resources        90L  0C    1m  CC=4      ←0
-  │ base                        90L  4C    6m  CC=5      ←4
   │ transport                   88L  0C    4m  CC=9      ←2
   │ autoloop_cli                88L  0C    4m  CC=8      ←0
   │ types                       88L  5C    1m  CC=2      ←0
   │ agent_cli_helpers           87L  0C    3m  CC=10     ←2
   │ cli_gc                      87L  0C    2m  CC=1      ←0
   │ dashboard                   86L  0C    8m  CC=3      ←1
+  │ browser_capture             86L  0C    5m  CC=10     ←1
   │ plugin_router               86L  3C    5m  CC=6      ←0
   │ locking                     86L  0C    4m  CC=4      ←1
-  │ browser_capture             86L  0C    5m  CC=10     ←1
   │ envelope                    85L  1C    4m  CC=3      ←4
   │ cli                         81L  0C    3m  CC=11     ←1
   │ gc_cli_helpers              81L  0C    5m  CC=12     ←1
+  │ mesh                        79L  0C    5m  CC=8      ←2
   │ cli_runtime_context         79L  0C    3m  CC=14     ←0
   │ telemetry_snapshot          79L  0C    3m  CC=5      ←2
-  │ mesh                        79L  0C    5m  CC=8      ←2
   │ agent                       76L  0C    5m  CC=11     ←1
   │ cli_auto                    76L  0C    4m  CC=9      ←0
   │ cli                         75L  0C    4m  CC=5      ←0
   │ topology_cli                75L  1C    4m  CC=8      ←1
   │ autonomous_cli_config       74L  0C    4m  CC=5      ←0
   │ cli_tools                   73L  0C    2m  CC=7      ←0
-  │ __init__                    73L  0C    2m  CC=4      ←0
   │ tail_cli                    73L  0C    4m  CC=6      ←0
   │ server                      73L  0C    3m  CC=4      ←1
   │ cli_serve                   72L  0C    2m  CC=1      ←0
   │ shell_evidence              72L  0C    2m  CC=7      ←1
   │ transform                   70L  0C    4m  CC=12     ←2
   │ cli_bootstrap               70L  0C    1m  CC=5      ←0
-  │ capture                     69L  1C    4m  CC=2      ←2
+  │ capture                     69L  1C    4m  CC=2      ←3
   │ __init__                    69L  0C    0m  CC=0.0    ←0
   │ topology_post               68L  0C    1m  CC=14     ←1
   │ store_persistence           68L  0C    4m  CC=8      ←1
@@ -218,8 +220,8 @@ LAYERS:
   │ __init__                    67L  0C    0m  CC=0.0    ←0
   │ wup_testql_compat           64L  0C    4m  CC=5      ←0
   │ cli_agent_backends          61L  0C    1m  CC=8      ←0
-  │ store                       60L  0C    4m  CC=6      ←2
   │ screencast_session          60L  0C    5m  CC=7      ←2
+  │ store                       60L  0C    4m  CC=6      ←2
   │ env                         58L  0C    7m  CC=5      ←7
   │ client_helpers              57L  0C    2m  CC=4      ←2
   │ cli_commands                56L  0C    3m  CC=3      ←1
@@ -238,7 +240,7 @@ LAYERS:
   │ __init__                    47L  0C    0m  CC=0.0    ←0
   │ dashboard_http              46L  1C    5m  CC=4      ←0
   │ refactor_planfile_handoff    46L  0C    1m  CC=6      ←2
-  │ cli_tools                   45L  1C    5m  CC=3      ←1
+  │ cli_tools                   45L  1C    5m  CC=3      ←0
   │ verify_phase                45L  0C    1m  CC=5      ←0
   │ portal_screenshot           44L  1C    4m  CC=2      ←0
   │ grim                        44L  1C    5m  CC=4      ←0
@@ -300,7 +302,7 @@ LAYERS:
   │ __init__                     5L  0C    0m  CC=0.0    ←0
   │ __init__                     5L  0C    0m  CC=0.0    ←0
   │ __init__                     3L  0C    0m  CC=0.0    ←0
-  │ cli                          0L  0C   16m  CC=11     ←0
+  │ __init__                     0L  0C    2m  CC=4      ←0
   │ commands                     0L  0C    0m  CC=0.0    ←0
   │
   plugins/                        CC̄=3.0    ←in:0  →out:0
@@ -329,7 +331,7 @@ LAYERS:
   │ run.sh                      58L  0C    0m  CC=0.0    ←0
   │ entrypoint-x11.sh           35L  0C    0m  CC=0.0    ←0
   │
-  scripts/                        CC̄=2.2    ←in:471  →out:0
+  scripts/                        CC̄=2.2    ←in:473  →out:0
   │ koru-gate-capture          314L  0C   14m  CC=9      ←0
   │ planfile-sync-todo         260L  0C   12m  CC=14     ←0
   │ autopilot-ide-autodetect-smoke.sh   182L  1C    4m  CC=0.0    ←0
@@ -347,7 +349,7 @@ LAYERS:
   │ koru-soak-start.sh          39L  0C    1m  CC=0.0    ←0
   │
   ./                              CC̄=0.0    ←in:0  →out:0
-  │ !! planfile.yaml             1319L  0C    0m  CC=0.0    ←0
+  │ !! planfile.yaml             1386L  0C    0m  CC=0.0    ←0
   │ !! Taskfile.yml               922L  0C    0m  CC=0.0    ←0
   │ !! goal.yaml                  511L  0C    0m  CC=0.0    ←0
   │ pyproject.toml             196L  0C    0m  CC=0.0    ←0
@@ -421,13 +423,13 @@ LAYERS:
   │ realtime-health.testql.toon.yaml    11L  0C    0m  CC=0.0    ←0
   │
   ── zero ──
-     src/koru/cli.py                           0L
+     src/koru/cli/__init__.py                  0L
      src/koru/cli/commands.py                  0L
 
 COUPLING:
                                                       src.koru                        scripts                    src.koruide                    src.koruapi                 src.koruvision                src.koruobserve                        koruapi                   src.korumesh  plugins.koru-autopilot-vscode                 docker.capture                           koru                    src.korudsl       services.healing-webhook
-                       src.koru                             ──                            391                             91                              7                             15                             10                            ←10                             ←2                             14                                                            ←6                              1                             ←1  hub
-                        scripts                           ←391                             ──                            ←27                            ←15                            ←12                            ←16                             ←2                             ←7                                                            ←1                                                                                               hub
+                       src.koru                             ──                            393                             91                              7                             15                             10                            ←10                             ←2                             14                                                            ←6                              1                             ←1  hub
+                        scripts                           ←393                             ──                            ←27                            ←15                            ←12                            ←16                             ←2                             ←7                                                            ←1                                                                                               hub
                     src.koruide                              8                             27                             ──                             ←7                                                                                           17                                                             1                                                                                                                              hub
                     src.koruapi                             62                             15                              7                             ──                                                                                            4                              3                              2                                                                                            4                                 hub
                  src.koruvision                              5                             12                                                                                           ──                              1                                                             8                              1                             ←4                                                                                               hub
@@ -440,23 +442,23 @@ COUPLING:
                     src.korudsl                             ←1                                                                                           ←4                                                                                                                                                                                                                                                      ──                                 hub
        services.healing-webhook                              1                                                                                                                                                                                                                                                       1                                                                                                                          ──
   CYCLES: none
-  HUB: src.korumesh/ (fan-in=12)
-  HUB: src.koruapi/ (fan-in=7)
-  HUB: src.koruvision/ (fan-in=28)
-  HUB: src.koruobserve/ (fan-in=13)
-  HUB: koruapi/ (fan-in=21)
   HUB: plugins.koru-autopilot-vscode/ (fan-in=20)
-  HUB: scripts/ (fan-in=471)
-  HUB: src.korudsl/ (fan-in=5)
-  HUB: src.koruide/ (fan-in=98)
+  HUB: src.koruapi/ (fan-in=7)
   HUB: src.koru/ (fan-in=100)
-  SMELL: src.korumesh/ fan-out=13 → split needed
+  HUB: src.koruobserve/ (fan-in=13)
+  HUB: scripts/ (fan-in=473)
+  HUB: src.koruvision/ (fan-in=28)
+  HUB: src.koruide/ (fan-in=98)
+  HUB: src.korumesh/ (fan-in=12)
+  HUB: koruapi/ (fan-in=21)
+  HUB: src.korudsl/ (fan-in=5)
   SMELL: src.koruapi/ fan-out=97 → split needed
-  SMELL: src.koruvision/ fan-out=27 → split needed
+  SMELL: src.koru/ fan-out=531 → split needed
   SMELL: src.koruobserve/ fan-out=30 → split needed
-  SMELL: koruapi/ fan-out=12 → split needed
+  SMELL: src.koruvision/ fan-out=27 → split needed
   SMELL: src.koruide/ fan-out=53 → split needed
-  SMELL: src.koru/ fan-out=529 → split needed
+  SMELL: src.korumesh/ fan-out=13 → split needed
+  SMELL: koruapi/ fan-out=12 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

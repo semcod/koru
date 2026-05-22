@@ -84,3 +84,38 @@ def test_activity_warns_once_when_nfo_fails(
 
     err = capsys.readouterr().err
     assert err.count("nfo activity log disabled") == 1
+
+
+def test_activity_module_not_found_warning_includes_install_hint(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Regression: missing ``nfo`` module must surface an actionable hint.
+
+    The user-facing autonomous log otherwise prints a cryptic
+    ``ModuleNotFoundError: No module named 'nfo'`` line with no fix.
+    """
+    monkeypatch.delitem(sys.modules, "nfo", raising=False)
+
+    import builtins
+
+    real_import = builtins.__import__
+
+    def fake_import(name: str, *args, **kwargs):
+        if name == "nfo":
+            raise ModuleNotFoundError("No module named 'nfo'")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+    monkeypatch.setenv("KORU_NFO_LOG_PATH", str(tmp_path / "nfo-events.jsonl"))
+    monkeypatch.setattr(al, "_NFO_CONFIGURED_PATH", None)
+    monkeypatch.setattr(al, "_NFO_UNAVAILABLE", False)
+    monkeypatch.setattr(al, "_NFO_UNAVAILABLE_WARNED", False)
+
+    al.activity("CHAT", "trigger", fmt="human")
+
+    err = capsys.readouterr().err
+    assert "nfo activity log disabled" in err
+    assert "pip install nfo" in err
+    assert 'koru[obs]' in err
