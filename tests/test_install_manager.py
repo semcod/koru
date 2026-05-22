@@ -5,6 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from koru.autopilot import install_manager
+from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 
 
 def test_collect_report_flags_path_mismatch_and_plugin_version_missing(
@@ -52,7 +53,7 @@ def test_collect_report_flags_path_mismatch_and_plugin_version_missing(
 
 
 def test_expected_plugin_version_falls_back_to_bundled_metadata(tmp_path: Path) -> None:
-    assert install_manager._expected_plugin_version(tmp_path) == "0.1.28"
+    assert install_manager._expected_plugin_version(tmp_path) == EXPECTED_VSCODE_PLUGIN_VERSION
 
 
 def test_collect_report_uses_explicit_ide_socket_when_env_is_unset(

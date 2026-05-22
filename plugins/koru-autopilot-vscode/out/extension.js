@@ -250,6 +250,17 @@ class AutopilotBridge {
     sleep(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
+    async waitForCommand(command, timeoutMs, intervalMs = 100) {
+        const deadline = Date.now() + timeoutMs;
+        while (Date.now() <= deadline) {
+            const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+            if (existing.has(command)) {
+                return true;
+            }
+            await this.sleep(intervalMs);
+        }
+        return false;
+    }
     editorSnapshot() {
         return (0, probe_ladder_1.captureEditorSnapshot)(vscode.window.activeTextEditor);
     }
@@ -883,7 +894,7 @@ class AutopilotBridge {
                     openCmd = "windsurf.cascadePanel.open";
                 }
                 await Promise.resolve(vscode.commands.executeCommand(openCmd));
-                await this.sleep(200);
+                await this.waitForCommand("windsurf.sendTextToChat", 1500);
                 existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
             }
             catch (err) {
@@ -895,7 +906,20 @@ class AutopilotBridge {
         }
         try {
             await Promise.resolve(vscode.commands.executeCommand("windsurf.sendTextToChat", text));
-            this.sendSuccessAck(env, { ok: true, command: "none" }, { ok: true, command: "windsurf.sendTextToChat" }, "windsurf.sendTextToChat");
+            let submitCmd = "windsurf.sendTextToChat";
+            if (submit) {
+                await this.sleep(150);
+                await this.focusChatInput();
+                const submitResult = await this.submitChat();
+                if (submitResult.ok) {
+                    submitCmd = submitResult.command;
+                }
+                else {
+                    await this._tryTypeSubmit("\n");
+                    submitCmd = "type:\n";
+                }
+            }
+            this.sendSuccessAck(env, { ok: true, command: "none" }, { ok: true, command: "windsurf.sendTextToChat" }, submitCmd);
             if (submit) {
                 this.sendMessageSent(text);
             }
