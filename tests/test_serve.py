@@ -126,6 +126,35 @@ class TestServe(unittest.TestCase):
         self.assertIn("application/json", ctype)
         self.assertEqual(json.loads(body), {"ok": True})
 
+    def test_mesh_grid_and_frames_endpoints(self) -> None:
+        from korumesh.envelope import sign_envelope
+        from korumesh.store import clear_vision_frames, remember_envelope
+
+        clear_vision_frames()
+        key = b"serve-mesh-grid-key-32-bytes!!!"
+        remember_envelope(
+            sign_envelope(
+                peer_from="host-a",
+                peer_to="*",
+                topic="vision/frame",
+                mime="image/png",
+                payload=b"\x89PNG",
+                key=key,
+            )
+        )
+        status, ctype, body = _get(self.port, "/api/mesh/frames")
+        self.assertEqual(status, 200)
+        self.assertIn("application/json", ctype)
+        payload = json.loads(body)
+        self.assertEqual(len(payload["frames"]), 1)
+        self.assertEqual(payload["frames"][0]["peer_from"], "host-a")
+
+        status, ctype, body = _get(self.port, "/grid")
+        self.assertEqual(status, 200)
+        self.assertIn("text/html", ctype)
+        self.assertIn("/api/mesh/frames", body)
+        clear_vision_frames()
+
     def test_dashboard_html_served_on_root(self) -> None:
         status, ctype, body = _get(self.port, "/")
         self.assertEqual(status, 200)

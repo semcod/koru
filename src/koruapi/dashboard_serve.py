@@ -1796,6 +1796,11 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
           if path == "/health":
             self._send_json({"ok": True})
             return
+          if path in ("/grid", "/api/mesh/frames"):
+            from korumesh.dashboard import serve_mesh_http
+
+            if serve_mesh_http(self, path):
+              return
           if path == "/api/dashboard":
             try:
               self._send_json(_dashboard_state(config))
