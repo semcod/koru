@@ -118,15 +118,7 @@ export function mergeUnique(primary: string[], secondary: string[]): string[] {
 }
 
 export function buildFocusOpenCommands(ide: string, custom: string[]): string[] {
-  const antigravityDefaults = [
-    "antigravity.openAgent",
-    "antigravity.agentSidePanel.open",
-    "antigravity.agentSidePanel.focus",
-    "antigravity.toggleChatFocus",
-    "antigravity.startNewConversation",
-    "workbench.action.focusAgentManager.continueConversation",
-    "workbench.action.openInAgentManager",
-  ];
+  const antigravityDefaults: string[] = [];
   const windsurfDefaults = [
     "windsurf.cascadePanel.open",
     "windsurf.cascadePanel.focus",

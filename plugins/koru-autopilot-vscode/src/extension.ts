@@ -975,50 +975,26 @@ class AutopilotBridge {
     if (this.detectIde() !== "windsurf") {
       return false;
     }
-    let existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+    debugLog("WINDSURF_FASTPATH_START", { submit, textLength: text.length });
+    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+    debugLog("WINDSURF_FASTPATH_CHECK_COMMAND", { hasSendCmd: existing.has("windsurf.sendTextToChat") });
     if (!existing.has("windsurf.sendTextToChat")) {
-      try {
-        let openCmd = "windsurf.cascadePanel.focus";
-        if (!existing.has("windsurf.cascadePanel.focus") && existing.has("workbench.view.windsurfAgentSidebarContainer")) {
-          openCmd = "workbench.view.windsurfAgentSidebarContainer";
-        }
-        await Promise.resolve(vscode.commands.executeCommand(openCmd));
-        // Wait up to 3000ms for windsurf.sendTextToChat to register
-        for (let i = 0; i < 30; i++) {
-          await this.sleep(100);
-          existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-          if (existing.has("windsurf.sendTextToChat")) {
-            break;
-          }
-        }
-      } catch (err) {
-        console.warn("koru autopilot: failed to open Cascade safely", err);
-      }
-    }
-    if (!existing.has("windsurf.sendTextToChat")) {
+      debugLog("WINDSURF_FASTPATH_ABORT_MISSING_COMMAND", {
+        reason: "windsurf.sendTextToChat command is not registered",
+      });
       return false;
     }
     try {
+      debugLog("WINDSURF_FASTPATH_EXECUTE_SEND", { text: text.substring(0, 100) + "..." });
       await Promise.resolve(vscode.commands.executeCommand("windsurf.sendTextToChat", text));
-      let submitCmd: string | undefined = "windsurf.sendTextToChat";
-      if (submit) {
-        await this.sleep(150);
-        await this.focusChatInput();
-        const submitResult = await this.submitChat();
-        if (submitResult.ok) {
-          submitCmd = submitResult.command;
-        } else {
-          // On Windsurf, typing a newline fallback when input is not focused is unsafe and closes the panel.
-          // Since windsurf.sendTextToChat might already send the text, we should not do any type:\n fallback!
-          submitCmd = "windsurf.sendTextToChat";
-        }
-      }
-      this.sendSuccessAck(env, { ok: true, command: "none" }, { ok: true, command: "windsurf.sendTextToChat" }, submitCmd);
+      debugLog("WINDSURF_FASTPATH_EXECUTE_SEND_OK");
+      this.sendSuccessAck(env, { ok: true, command: "none" }, { ok: true, command: "windsurf.sendTextToChat" }, "windsurf.sendTextToChat");
       if (submit) {
         this.sendMessageSent(text);
       }
       return true;
     } catch (err) {
+      debugLog("WINDSURF_FASTPATH_EXECUTE_SEND_ERROR", { error: String(err) });
       console.warn("koru autopilot: windsurf.sendTextToChat fast path failed, trying fallback", err);
       return false;
     }
@@ -1028,21 +1004,19 @@ class AutopilotBridge {
     if (this.detectIde() !== "antigravity" || !submit) {
       return false;
     }
-    let existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-    let openCommand = selectAntigravityOpenCommand(existing);
+    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     try {
-      if (openCommand !== "none") {
-        await Promise.resolve(vscode.commands.executeCommand(openCommand));
-        await this.sleep(200);
-        existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-      }
       if (!canUseAntigravitySendPrompt(existing)) {
+        debugLog("ANTIGRAVITY_FAST_PATH_MISSING", {
+          reason: `${ANTIGRAVITY_SEND_PROMPT_COMMAND} command is not registered`,
+          openCommand: selectAntigravityOpenCommand(existing),
+        });
         return false;
       }
       await Promise.resolve(vscode.commands.executeCommand(ANTIGRAVITY_SEND_PROMPT_COMMAND, text));
       this.sendSuccessAck(
         env,
-        { ok: true, command: openCommand },
+        { ok: true, command: "none" },
         { ok: true, command: ANTIGRAVITY_SEND_PROMPT_COMMAND },
         ANTIGRAVITY_SEND_PROMPT_COMMAND
       );
@@ -1095,6 +1069,12 @@ class AutopilotBridge {
       // because traditional paste is disabled on Windsurf to prevent active file editor contamination.
       // Doing so would only cause unsafe toggles and failures.
       this.sendPasteFailureAck(env, { ok: false }, { ok: false, reason: "fast path failed" });
+      return;
+    }
+    if (ide === "antigravity") {
+      // Antigravity exposes a native send command when its agent surface is ready.
+      // Avoid generic focus/open fallbacks here: several Antigravity commands behave like panel toggles.
+      this.sendPasteFailureAck(env, { ok: false }, { ok: false, reason: "native send command unavailable" });
       return;
     }
 

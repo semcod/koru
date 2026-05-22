@@ -66,8 +66,9 @@ function testBuildFocusOpenCursorFirst(): void {
 
 function testBuildFocusOpenAntigravityFirst(): void {
   const cmds = buildFocusOpenCommands("antigravity", []);
-  assert(cmds[0] === "antigravity.openAgent", "antigravity should open the native agent panel first");
-  assert(cmds.includes("antigravity.agentSidePanel.focus"), "antigravity should focus the agent side panel");
+  assert(cmds.length === 0, "antigravity must not auto-open/toggle agent panels from the generic ladder");
+  assert(!cmds.includes("antigravity.toggleChatFocus"), "antigravity toggle command must never be used automatically");
+  assert(!cmds.includes("antigravity.startNewConversation"), "antigravity must not create conversations as a focus side-effect");
 }
 
 function testBuildFocusOpenWindsurfDoesNotUseToggleSidebarCommand(): void {

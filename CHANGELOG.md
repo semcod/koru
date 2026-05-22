@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.216] - 2026-05-22
+
+### Fixed
+- Keep Antigravity autopilot on the native `antigravity.sendPromptToAgentPanel` path only.
+- Disable generic Antigravity focus/open fallbacks that can toggle the right-side agent panel.
+- Refuse unsafe Windsurf fallback open commands when `windsurf.sendTextToChat` is unavailable.
+
 ## [0.1.215] - 2026-05-22
 
 ### Fixed
