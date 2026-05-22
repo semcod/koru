@@ -826,6 +826,11 @@ def _render_environment(env: dict[str, Any], project: str) -> list[str]:
     lines.append(f"- **project**: `{project_env.get('name') or Path(project).name}`")
     lines.append(f"- **cwd**: `{project_env.get('cwd') or project}`")
     lines.append(f"- **python**: `{project_env.get('python', '?')}`")
+    koru_runtime = project_env.get("koru") or {}
+    koru_version = koru_runtime.get("version") or "unknown"
+    koru_executable = koru_runtime.get("executable")
+    koru_details = f" (`{koru_executable}`)" if koru_executable else ""
+    lines.append(f"- **koru**: `{koru_version}`{koru_details}")
     enabled_markers = [key for key, value in markers.items() if value]
     lines.append(
         "- **markers**: "

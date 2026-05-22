@@ -431,6 +431,32 @@ class TestBuildContext(unittest.TestCase):
 
 
 class TestMarkdownHandoff(unittest.TestCase):
+    def test_renders_koru_runtime_version_in_environment(self) -> None:
+        ctx = {
+            "project": "/tmp/project",
+            "ticket": None,
+            "ticket_error": "queue is idle",
+            "policy": {},
+            "environment": {
+                "planfile_initialised": True,
+                "project": {
+                    "name": "project",
+                    "cwd": "/tmp/project",
+                    "python": "3.13.0",
+                    "koru": {
+                        "version": "9.9.9",
+                        "executable": "/opt/koru/bin/koru",
+                    },
+                    "markers": {},
+                },
+            },
+            "instructions": [],
+        }
+
+        md = render_markdown_handoff(ctx)
+
+        self.assertIn("- **koru**: `9.9.9` (`/opt/koru/bin/koru`)", md)
+
     def test_renders_ticket_section(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             _init_planfile(Path(tmp))

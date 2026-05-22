@@ -1,6 +1,7 @@
 """Detect and launch LLM/IDE agents available for a koru project."""
 
 
+import importlib.metadata
 import os
 import platform
 import shutil
@@ -76,6 +77,13 @@ def _which(command: str) -> str | None:
 
 def _marker(project: Path, *parts: str) -> bool:
     return (project.joinpath(*parts)).exists()
+
+
+def _koru_package_version() -> str:
+    try:
+        return importlib.metadata.version("koru")
+    except importlib.metadata.PackageNotFoundError:
+        return "unknown"
 
 
 def _detect_agent_commands() -> dict[str, str | None]:
@@ -202,6 +210,10 @@ def detect_project_environment(project: Path) -> dict[str, Any]:
         "cwd": str(project),
         "name": project.name,
         "python": sys.version.split()[0],
+        "koru": {
+            "version": _koru_package_version(),
+            "executable": shutil.which("koru") or sys.argv[0],
+        },
         "platform": platform.platform(),
         "markers": markers,
     }
