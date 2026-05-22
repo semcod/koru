@@ -27,7 +27,6 @@ import yaml
 
 from koru.serve import (
     ServeConfig,
-    _bulk_waiting_input_action,
     _cmdline_suggests_koru_serve_from_bytes,
     bind_serve_server,
     build_server,
@@ -35,6 +34,7 @@ from koru.serve import (
     start_serve_background,
     write_serve_endpoint_file,
 )
+from koruapi.dashboard_tickets import bulk_waiting_input_action
 
 
 def _minimal_planfile_project() -> tuple[tempfile.TemporaryDirectory, Path]:
@@ -137,9 +137,10 @@ class TestServe(unittest.TestCase):
                 peer_from="host-a",
                 peer_to="*",
                 topic="vision/frame",
-                mime="image/png",
+                mime="image/png; monitor=2; w=432; h=768; nw=2160; nh=3840; output=DP-3",
                 payload=b"\x89PNG",
                 key=key,
+                envelope_id="host-a:vision:2",
             )
         )
         status, ctype, body = _get(self.port, "/api/mesh/frames")
@@ -147,7 +148,14 @@ class TestServe(unittest.TestCase):
         self.assertIn("application/json", ctype)
         payload = json.loads(body)
         self.assertEqual(len(payload["frames"]), 1)
-        self.assertEqual(payload["frames"][0]["peer_from"], "host-a")
+        frame = payload["frames"][0]
+        self.assertEqual(frame["peer_from"], "host-a")
+        self.assertEqual(frame["mime"], "image/png")
+        self.assertEqual(frame["monitor"], 2)
+        self.assertEqual(frame["width"], 432)
+        self.assertEqual(frame["native_width"], 2160)
+        self.assertEqual(frame["native_height"], 3840)
+        self.assertEqual(frame["output"], "DP-3")
 
         status, ctype, body = _get(self.port, "/grid")
         self.assertEqual(status, 200)
@@ -366,9 +374,7 @@ class TestServeAutoPort(unittest.TestCase):
                 open_browser=False,
                 lan=True,
             )
-            from koru import serve as serve_mod
-
-            with mock.patch.object(serve_mod, "_local_lan_addresses", return_value=["192.168.1.50"]):
+            with mock.patch("koruapi.dashboard_state.local_lan_addresses", return_value=["192.168.1.50"]):
                 write_serve_endpoint_file(cfg)
             data = read_serve_endpoint(project)
             self.assertIsNotNone(data)
@@ -432,6 +438,30 @@ class TestServeAutoPort(unittest.TestCase):
             blocker.close()
             tmp.cleanup()
 
+    def test_port_zero_updates_config_and_endpoint(self) -> None:
+        tmp, project = _minimal_planfile_project()
+        try:
+            cfg = ServeConfig(
+                project=project,
+                host="127.0.0.1",
+                port=0,
+                open_browser=False,
+                auto_port=False,
+            )
+            server, actual, requested = bind_serve_server(cfg)
+            self.assertEqual(requested, 0)
+            self.assertGreater(actual, 0)
+            self.assertEqual(cfg.port, actual)
+            write_serve_endpoint_file(cfg)
+            data = read_serve_endpoint(project)
+            self.assertIsNotNone(data)
+            assert data is not None
+            self.assertEqual(data["port"], actual)
+            self.assertEqual(data["http_base"], f"http://127.0.0.1:{actual}")
+            server.server_close()
+        finally:
+            tmp.cleanup()
+
 
 def test_cmdline_suggests_koru_serve_from_bytes() -> None:
     assert _cmdline_suggests_koru_serve_from_bytes(
@@ -446,9 +476,9 @@ def test_bulk_waiting_input_action_approve() -> None:
         project = Path(tmp)
         tickets = [{"id": "A-1", "status": "waiting_input"}]
         ok = subprocess.CompletedProcess(args=["planfile"], returncode=0, stdout="", stderr="")
-        with mock.patch("koru.serve._list_tickets", return_value=tickets):
-            with mock.patch("koru.serve.planfile_command", return_value=ok) as cmd:
-                out = _bulk_waiting_input_action(
+        with mock.patch("koruapi.dashboard_tickets.list_tickets", return_value=tickets):
+            with mock.patch("koruapi.dashboard_tickets.planfile_command", return_value=ok) as cmd:
+                out = bulk_waiting_input_action(
                     project,
                     ticket_ids=["A-1"],
                     action="approve",
@@ -464,9 +494,9 @@ def test_bulk_waiting_input_action_reject() -> None:
         project = Path(tmp)
         tickets = [{"id": "A-2", "status": "waiting_input"}]
         ok = subprocess.CompletedProcess(args=["planfile"], returncode=0, stdout="", stderr="")
-        with mock.patch("koru.serve._list_tickets", return_value=tickets):
-            with mock.patch("koru.serve.planfile_command", return_value=ok) as cmd:
-                out = _bulk_waiting_input_action(
+        with mock.patch("koruapi.dashboard_tickets.list_tickets", return_value=tickets):
+            with mock.patch("koruapi.dashboard_tickets.planfile_command", return_value=ok) as cmd:
+                out = bulk_waiting_input_action(
                     project,
                     ticket_ids=["A-2"],
                     action="reject",

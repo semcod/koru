@@ -12,16 +12,23 @@ def test_vision_frame_envelope_uses_vision_topic() -> None:
     key = b"vision-mesh-key-32-bytes-long!!"
     frame = VisionFrame(
         frame_id="abc",
-        monitor_id=0,
+        monitor_id=1,
         captured_at="2026-01-01T00:00:00+00:00",
         mime="image/png",
-        width=10,
-        height=10,
+        width=2,
+        height=2,
         payload=b"\x89PNG",
+        native_width=10,
+        native_height=10,
+        output="DP-1",
     )
     envelope = vision_frame_envelope(frame, peer_from="host-a", key=key)
     assert envelope.topic == "vision/frame"
-    assert envelope.mime == "image/png"
+    assert envelope.mime.startswith("image/png")
+    assert "monitor=1" in envelope.mime
+    assert "nw=10" in envelope.mime
+    assert "output=DP-1" in envelope.mime
+    assert envelope.envelope_id == "host-a:vision:1"
 
 
 def test_publish_vision_frame_calls_mesh_transport(tmp_path: Path) -> None:

@@ -228,6 +228,21 @@ class TestAutopilotDoctorChecks(unittest.TestCase):
             self.assertEqual(check.status, WARN)
             self.assertIn("virtual_env_mismatch=true", check.detail)
 
+    def test_python_venv_alignment_allows_unset_virtual_env_when_python_matches(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            (project / ".venv" / "bin").mkdir(parents=True)
+            with (
+                patch.dict(os.environ, {}, clear=True),
+                patch("sys.executable", str(project / ".venv" / "bin" / "python")),
+                patch("shutil.which", return_value=str(project / ".venv" / "bin" / "koru")),
+            ):
+                report = _run(project)
+            check = _named(report, "python_venv_alignment")
+            self.assertEqual(check.status, PASS)
+            self.assertIn("virtual_env_unset=true", check.detail)
+
     def test_autopilot_plugin_bundle_warns_on_expected_version_drift(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

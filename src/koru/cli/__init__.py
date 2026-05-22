@@ -36,6 +36,14 @@ def _load_legacy_cli_module() -> ModuleType:
 
 _legacy = _load_legacy_cli_module()
 
+from koru.cli_auto import _auto_main  # noqa: E402
+from koru.cli_ide_router import ide_router_main  # noqa: E402
+
+if not hasattr(_legacy, "_auto_main"):
+    _legacy._auto_main = _auto_main
+if not hasattr(_legacy, "ide_router_main"):
+    _legacy.ide_router_main = ide_router_main
+
 main = _legacy.main
 _SUBCOMMANDS = _legacy._SUBCOMMANDS
 _build_parser = _legacy._build_parser
@@ -48,6 +56,8 @@ __all__ = [
     "_build_parser",
     "_is_bare_invocation",
     "_command_value",
+    "_auto_main",
+    "ide_router_main",
 ]
 
 

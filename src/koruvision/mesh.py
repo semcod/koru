@@ -1,4 +1,9 @@
-"""Publish vision frames to a Koru mesh relay."""
+"""Publish vision frames to a Koru mesh relay.
+
+Per-monitor envelopes use a stable ``envelope_id`` (``{peer}:vision:{monitor}``)
+so the relay store keeps the latest frame for every (peer, monitor) pair
+instead of accumulating duplicates.
+"""
 
 from __future__ import annotations
 
@@ -32,14 +37,32 @@ def resolve_mesh_publish(
     return url, peer, load_mesh_key(key_path)
 
 
+def _vision_mime(frame: VisionFrame) -> str:
+    native_w = frame.native_width or frame.width
+    native_h = frame.native_height or frame.height
+    parts = [
+        "image/png",
+        f"monitor={frame.monitor_id}",
+        f"w={frame.width}",
+        f"h={frame.height}",
+        f"nw={native_w}",
+        f"nh={native_h}",
+    ]
+    if frame.output:
+        parts.append(f"output={frame.output}")
+    return "; ".join(parts)
+
+
 def vision_frame_envelope(frame: VisionFrame, *, peer_from: str, key: bytes):
+    envelope_id = f"{peer_from}:vision:{frame.monitor_id}"
     return sign_envelope(
         peer_from=peer_from,
         peer_to="*",
         topic="vision/frame",
-        mime=frame.mime,
+        mime=_vision_mime(frame),
         payload=frame.payload,
         key=key,
+        envelope_id=envelope_id,
     )
 
 

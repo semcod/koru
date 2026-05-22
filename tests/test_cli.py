@@ -334,7 +334,7 @@ class TestAutoMain(unittest.TestCase):
     """``koru auto`` stops prior loops and forwards ``--replace-existing`` without a full run."""
 
     def test_auto_main_stops_prior_and_injects_replace_existing(self) -> None:
-        from koru.cli import _auto_main
+        from koru.cli_auto import _auto_main
 
         stopped: list[Path] = []
         calls: list[tuple[list[str], bool]] = []
@@ -369,7 +369,7 @@ class TestAutoMain(unittest.TestCase):
         self.assertTrue(calls[0][1])
 
     def test_auto_main_allow_duplicate_skips_stop_and_replace_flag(self) -> None:
-        from koru.cli import _auto_main
+        from koru.cli_auto import _auto_main
 
         calls: list[list[str]] = []
 
@@ -388,17 +388,17 @@ class TestAutoMain(unittest.TestCase):
         self.assertNotIn("--replace-existing", calls[0])
 
     def test_subcommand_auto_routes_to_auto_main(self) -> None:
-        with mock.patch("koru._legacy_cli_impl._auto_main", return_value=7) as auto_main:
+        with mock.patch("koru.cli_auto._auto_main", return_value=7) as auto_main:
             with mock.patch("sys.argv", ["koru", "auto", "--project", "/tmp/p"]):
                 code = main()
         auto_main.assert_called_once_with(["--project", "/tmp/p"])
         self.assertEqual(code, 7)
 
     def test_auto_main_help_does_not_stop_existing_loop(self) -> None:
-        from koru.cli import _auto_main
+        from koru.cli_auto import _auto_main
 
-        with mock.patch("koru._legacy_cli_impl.autonomous_main", return_value=0) as autonomous:
-            with mock.patch("koru._legacy_cli_impl.stop_prior_autonomous_for_auto_start") as stop:
+        with mock.patch("koru.cli_auto.autonomous_main", return_value=0) as autonomous:
+            with mock.patch("koru.cli_auto.stop_prior_autonomous_for_auto_start") as stop:
                 code = _auto_main(["--help"])
 
         self.assertEqual(code, 0)
@@ -525,7 +525,7 @@ class TestSubcommandDispatch(unittest.TestCase):
         """A non-subcommand argv MUST NOT trigger any handler."""
         sentinels = {name: mock.Mock(side_effect=AssertionError) for name in self.EXPECTED_KEYS}
         with mock.patch.dict(_SUBCOMMANDS, sentinels):
-            with mock.patch("koru._legacy_cli_impl._doctor_main", return_value=0):
+            with mock.patch("koru.cli_doctor.doctor_main", return_value=0):
                 code, _ = _run_main("--doctor", "--project", ".")
         self.assertEqual(code, 0)
         for handler in sentinels.values():

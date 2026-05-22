@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 import pytest
@@ -10,6 +12,7 @@ import pytest
 from koruobserve.bootstrap import ensure_mesh_key, ensure_observe_config
 from koruobserve.lifecycle import observe_down, observe_status, observe_up
 from koruobserve.paths import pidfile, state_file
+from koruvision.capture_probe import resolve_observe_python
 
 
 @pytest.fixture
@@ -25,6 +28,7 @@ def fake_spawn(monkeypatch):
         return pid
 
     monkeypatch.setattr("koruobserve.lifecycle._spawn", _fake_spawn)
+    monkeypatch.setattr("koruobserve.lifecycle.resolve_observe_python", lambda: sys.executable)
     monkeypatch.setattr("koruobserve.cli._require_observe_runtime", lambda: None)
     return spawned
 
@@ -57,8 +61,10 @@ def test_observe_up_spawns_three_processes(tmp_path: Path, fake_spawn) -> None:
     assert not state.relay_url.endswith(":0")
     assert not state.dashboard_url.endswith(":0")
     vision_args = fake_spawn[1][1]
-    assert vision_args.index("--project") < vision_args.index("agent")
+    assert "vision" in vision_args and "agent" in vision_args
+    assert "--project" not in vision_args
     payload = json.loads(state_file(project).read_text(encoding="utf-8"))
+    assert payload["python"] == sys.executable
     assert payload["grid_url"].endswith("/grid")
 
 
@@ -70,6 +76,51 @@ def test_observe_status_reports_pids(tmp_path: Path, fake_spawn) -> None:
         status = observe_status(project)
     assert set(status) == {"relay", "vision", "dashboard"}
     assert all(status[name]["pid"] for name in status)
+
+
+def test_observe_down_stops_orphan_vision_agents(tmp_path: Path, monkeypatch) -> None:
+    project = tmp_path / "demo"
+    project.mkdir()
+    killed: list[int] = []
+    probes: list[str] = []
+
+    def _fake_pids(proj: Path, needle: str) -> list[int]:
+        probes.append(needle)
+        return [4242] if needle == " vision " else []
+
+    monkeypatch.setattr("koruobserve.lifecycle._pids_matching_koru_cmdline", _fake_pids)
+    monkeypatch.setattr("koruobserve.lifecycle.os.kill", lambda pid, sig: killed.append(pid))
+    observe_down(project)
+    assert " mesh relay " in probes
+    assert " vision " in probes
+    assert " serve " in probes
+    assert killed == [4242]
+
+
+def test_resolve_observe_python_prefers_working_interpreter(monkeypatch) -> None:
+    monkeypatch.delenv("KORU_OBSERVE_PYTHON", raising=False)
+    monkeypatch.setattr(
+        "koruvision.capture_probe.python_can_capture",
+        lambda exe: exe == "/good/python",
+    )
+    monkeypatch.setattr("koruvision.capture_probe.sys.executable", "/bad/koru")
+    monkeypatch.setattr("koruvision.capture_probe.shutil.which", lambda _: "/good/python")
+    assert resolve_observe_python() == "/good/python"
+
+
+def test_python_can_capture_uses_koruvision_capture_script(monkeypatch) -> None:
+    from koruvision import capture_probe
+
+    captured: dict[str, list[str]] = {}
+
+    def _fake_run(cmd, **kwargs):
+        captured["cmd"] = cmd
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(capture_probe.subprocess, "run", _fake_run)
+    assert capture_probe.python_can_capture("/probe/python") is True
+    assert captured["cmd"][:2] == ["/probe/python", "-c"]
+    assert "capture_monitor_png" in captured["cmd"][2]
 
 
 def test_require_observe_runtime_reports_missing_packages(monkeypatch) -> None:

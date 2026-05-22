@@ -80,7 +80,7 @@ def init_agent_lane_main(args: argparse.Namespace) -> int:
         )
     except FileNotFoundError as exc:
         print(f"koru init agent-lane: {exc}")
-        return 1
+        return 2
     except (ValueError, RuntimeError) as exc:
         print(f"koru init agent-lane: {exc}")
         return 2

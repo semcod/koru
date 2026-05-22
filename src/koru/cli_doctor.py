@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import shlex
+from pathlib import Path
 from typing import Any
 
 from koru.doctor import detected_problems as doctor_detected_problems
@@ -98,3 +99,41 @@ def doctor_main(args: argparse.Namespace, raw_args: list[str]) -> int:
         details={"project": str(args.project)},
     )
     return 1 if report.has_failures else 0
+
+
+def build_doctor_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru doctor",
+        description=(
+            "Diagnose project environment, configuration, and known failure patterns."
+        ),
+    )
+    parser.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
+    parser.add_argument(
+        "--format",
+        dest="output_format",
+        choices=["json", "markdown", "text"],
+        default="text",
+        help="Output format (default: text).",
+    )
+    parser.add_argument(
+        "--fix",
+        action="store_true",
+        help="Include guided repair commands without mutating files.",
+    )
+    parser.add_argument(
+        "--catalog",
+        action="store_true",
+        help="Include known problems catalog (check -> detection rule).",
+    )
+    parser.add_argument(
+        "--queue-name",
+        default=None,
+        help=argparse.SUPPRESS,
+    )
+    return parser
+
+
+def doctor_subcommand_main(argv: list[str]) -> int:
+    args = build_doctor_parser().parse_args(argv)
+    return doctor_main(args, argv)

@@ -161,3 +161,25 @@ def queue_main(argv: list[str]) -> int:
     if report.failed:
         return 1
     return 0
+
+
+def queue_run_main(args: argparse.Namespace) -> int:
+    from koru.queue_cli_helpers import (
+        emit_queue_run_started,
+        open_queue_run_log,
+        run_queue_loop_mode,
+        run_queue_single_mode,
+    )
+
+    emit_queue_run_started(args)
+    run_log = open_queue_run_log(args)
+    runners = {
+        "planfile_runner": _queue_run_process,
+        "shell_runner": _queue_run_shell_command,
+        "api_runner": _queue_run_api_request,
+        "llm_runner": _queue_run_llm_request,
+        "prompt_runner": _queue_default_human_prompt,
+    }
+    if args.loop:
+        return run_queue_loop_mode(args, run_log, **runners)
+    return run_queue_single_mode(args, run_log, **runners)

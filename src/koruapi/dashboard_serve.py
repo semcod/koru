@@ -31,7 +31,6 @@ from __future__ import annotations
 
 import contextlib
 import errno
-import importlib
 import json
 import os
 import re
@@ -42,122 +41,46 @@ import sys
 import threading
 import time
 import webbrowser
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, cast
-from urllib.parse import parse_qs, urlparse
+from typing import Any
+from urllib.parse import urlparse
 
-yaml = cast(Any, importlib.import_module("yaml"))
-
-from koru.context import build_context, render_markdown_handoff
 from koru.events import emit_management_event
-from koru.queue.runners import run_process
-from koru.queue.ticket import planfile_command
-from koruide.ide import autopilot_ide_choices, detect_running_ides, normalize_ide_id
 from koruapi.dashboard_config import (
   DashboardConfigDefaults,
   dashboard_config_payload,
   save_dashboard_config,
 )
+from koruapi.dashboard_context import dashboard_context_payload, dashboard_handoff_markdown
+from koruapi.dashboard_http import DashboardRequestHandler
 from koruapi.dashboard_projects import (
   dashboard_workspace,
-  discover_dashboard_projects,
   resolve_dashboard_project,
 )
-from koruapi.runtime_insights import collect_runtime_insights
-from koruapi.topology_post import apply_topology_post_update
-from koru.topology import (
-    load_topology,
+from koruapi.dashboard_state import dashboard_state, dashboard_urls
+from koruapi.dashboard_tickets import (
+  bulk_waiting_input_action,
+  create_ticket_from_dashboard,
+  reorder_ticket_from_dashboard,
+  update_ticket_from_dashboard,
+)
+from koruapi.dashboard_topology import (
+  apply_dashboard_topology_update,
+  dashboard_topology_payload,
+)
+from koruapi.dashboard_runtime import (
+  runtime_context_error_payload,
+  runtime_context_payload,
+  save_runtime_context_config,
 )
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
 
 _SERVE_ENDPOINT_REL = Path(".planfile") / ".koru" / "serve-endpoint.json"
-
-
-def _run_planfile(command: Sequence[str], project: Path) -> Any:
-    return run_process(list(command), project)
-
-
-def _list_tickets(project: Path) -> list[dict[str, Any]]:
-    """Return all planfile tickets as JSON list (empty on errors)."""
-    result = planfile_command(project, ["ticket", "list", "--format", "json"], runner=_run_planfile)
-    if result.returncode != 0:
-        return []
-    try:
-        payload = json.loads((result.stdout or "").strip() or "[]")
-    except json.JSONDecodeError:
-        return []
-    if isinstance(payload, list):
-        return [item for item in payload if isinstance(item, dict)]
-    return [payload] if isinstance(payload, dict) else []
-
-def _bulk_waiting_input_action(
-    project: Path,
-    *,
-    ticket_ids: list[str],
-    action: str,
-    reason: str,
-) -> dict[str, Any]:
-    tickets = _list_tickets(project)
-    waiting = {
-        str(t.get("id"))
-        for t in tickets
-        if isinstance(t, dict) and str(t.get("status") or "") == "waiting_input"
-    }
-    selected = [tid for tid in ticket_ids if tid in waiting]
-    if not selected:
-        return {"ok": False, "error": "no waiting_input tickets selected", "applied": []}
-
-    applied: list[dict[str, Any]] = []
-    for tid in selected:
-        if action == "approve":
-            claim = planfile_command(
-                project,
-                ["ticket", "claim", tid, "--assigned-to", "koru-web"],
-                runner=_run_planfile,
-            )
-            if claim.returncode != 0:
-                applied.append(
-                    {"id": tid, "ok": False, "step": "claim", "stderr": claim.stderr[-500:]}
-                )
-                continue
-            start = planfile_command(project, ["ticket", "start", tid], runner=_run_planfile)
-            if start.returncode != 0:
-                applied.append(
-                    {"id": tid, "ok": False, "step": "start", "stderr": start.stderr[-500:]}
-                )
-                continue
-            done = planfile_command(project, ["ticket", "done", tid], runner=_run_planfile)
-            applied.append(
-                {
-                    "id": tid,
-                    "ok": done.returncode == 0,
-                    "action": "approve",
-                    "stderr": done.stderr[-500:],
-                },
-            )
-            continue
-
-        block = planfile_command(
-            project,
-            ["ticket", "block", tid, "--reason", reason or "Rejected in koru web dashboard"],
-            runner=_run_planfile,
-        )
-        applied.append(
-            {
-                "id": tid,
-                "ok": block.returncode == 0,
-                "action": "reject",
-                "stderr": block.stderr[-500:],
-            },
-        )
-
-    return {"ok": True, "action": action, "requested": ticket_ids, "applied": applied}
 
 
 def _address_in_use(exc: BaseException) -> bool:
@@ -1445,91 +1368,27 @@ class ServeConfig:
     workspace: Path | None = None
 
 
-def _local_lan_addresses() -> list[str]:
-    """Return best-effort non-loopback IPv4 addresses for LAN dashboard URLs."""
-    found: list[str] = []
-
-    def add(addr: str) -> None:
-        if not addr or addr.startswith("127.") or addr == "0.0.0.0":
-            return
-        if "." not in addr or addr in found:
-            return
-        found.append(addr)
-
-    with contextlib.suppress(OSError):
-        hostname = socket.gethostname()
-        _name, _aliases, addrs = socket.gethostbyname_ex(hostname)
-        for addr in addrs:
-            add(addr)
-    with contextlib.suppress(OSError):
-        probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            probe.connect(("8.8.8.8", 80))
-            add(str(probe.getsockname()[0]))
-        finally:
-            probe.close()
-    return found
-
-
 def _dashboard_urls(config: ServeConfig) -> list[str]:
-  """Return URLs worth showing to the operator for this bind config."""
-  hosts: list[str]
-  if config.host in {"0.0.0.0", "::"}:
-    hosts = ["localhost", *_local_lan_addresses()]
-  else:
-    hosts = [config.host]
-  urls = [f"http://{host}:{config.port}/" for host in hosts]
-  return list(dict.fromkeys(urls))
+  return dashboard_urls(config.host, config.port)
 
 
 def _dashboard_workspace(config: ServeConfig) -> Path:
   return dashboard_workspace(config.project, config.workspace)
 
 
-def _discover_dashboard_projects(config: ServeConfig, *, max_results: int = 80) -> list[dict[str, Any]]:
-  return discover_dashboard_projects(
-    config.project,
-    config.workspace,
-    max_results=max_results,
-  )
-
-
 def _resolve_dashboard_project(config: ServeConfig, raw: object | None) -> Path:
   return resolve_dashboard_project(config.project, config.workspace, raw)
 
 
-def _dashboard_ide_rows() -> list[dict[str, Any]]:
-  running = {row.id: row for row in detect_running_ides()}
-  rows: list[dict[str, Any]] = [{"id": "auto", "label": "Auto", "running": False}]
-  for ide_id in autopilot_ide_choices():
-    if ide_id == "auto":
-      continue
-    detected = running.get(ide_id)
-    rows.append(
-      {
-        "id": ide_id,
-        "label": detected.label if detected else ide_id,
-        "running": detected is not None,
-        "pid": detected.pid if detected else None,
-        "exe": detected.exe if detected else None,
-      }
-    )
-  return rows
-
-
 def _dashboard_state(config: ServeConfig) -> dict[str, Any]:
-  return {
-    "ok": True,
-    "host": config.host,
-    "port": config.port,
-    "lan": bool(config.lan or config.host in {"0.0.0.0", "::"}),
-    "urls": _dashboard_urls(config),
-    "workspace": str(_dashboard_workspace(config)),
-    "default_project": str(config.project.resolve()),
-    "projects": _discover_dashboard_projects(config),
-    "ides": _dashboard_ide_rows(),
-    "queue_name": config.queue_name or "default",
-  }
+  return dashboard_state(
+    project=config.project,
+    host=config.host,
+    port=config.port,
+    lan=bool(config.lan),
+    configured_workspace=config.workspace,
+    queue_name=config.queue_name,
+  )
 
 
 def _dashboard_config_defaults(config: ServeConfig) -> DashboardConfigDefaults:
@@ -1543,147 +1402,10 @@ def _dashboard_config_defaults(config: ServeConfig) -> DashboardConfigDefaults:
   )
 
 
-def _load_sprint_file(path: Path) -> dict[str, Any]:
-  data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-  return data if isinstance(data, dict) else {}
-
-
-def _write_sprint_file(path: Path, data: dict[str, Any]) -> None:
-  path.write_text(
-    yaml.safe_dump(data, sort_keys=False, default_flow_style=False, allow_unicode=True),
-    encoding="utf-8",
-  )
-
-
-def _find_ticket_in_sprints(project: Path, ticket_id: str) -> tuple[Path, dict[str, Any], dict[str, Any], dict[str, Any]]:
-  sprints_dir = project / ".planfile" / "sprints"
-  for path in sorted(sprints_dir.glob("*.yaml")):
-    data = _load_sprint_file(path)
-    sprint_raw = data.get("sprint")
-    sprint = sprint_raw if isinstance(sprint_raw, dict) else {}
-    tickets_raw = sprint.get("tickets")
-    tickets = tickets_raw if isinstance(tickets_raw, dict) else {}
-    ticket = tickets.get(ticket_id)
-    if isinstance(ticket, dict):
-      return path, data, tickets, ticket
-  raise ValueError(f"ticket not found: {ticket_id}")
-
-
-def _append_dashboard_history(ticket: dict[str, Any], action: str, message: str) -> None:
-  history = ticket.setdefault("history", [])
-  if isinstance(history, list):
-    history.append(
-      {
-        "timestamp": datetime.now(UTC).isoformat(),
-        "action": action,
-        "source": "koru dashboard",
-        "message": message,
-      }
-    )
-  ticket["updated_at"] = datetime.now(UTC).isoformat()
-
-
-def _update_ticket_from_dashboard(
-  project: Path,
-  *,
-  ticket_id: str,
-  priority: str | None = None,
-  queue_name: str | None = None,
-) -> dict[str, Any]:
-  path, data, _tickets, ticket = _find_ticket_in_sprints(project, ticket_id)
-  changes: list[str] = []
-  if priority is not None:
-    normalized = priority.strip().lower()
-    if normalized not in {"critical", "high", "normal", "low"}:
-      raise ValueError("priority must be critical|high|normal|low")
-    if ticket.get("priority") != normalized:
-      ticket["priority"] = normalized
-      changes.append(f"priority={normalized}")
-  if queue_name is not None:
-    queue = queue_name.strip() or "default"
-    execution = ticket.setdefault("execution", {})
-    if not isinstance(execution, dict):
-      execution = {}
-      ticket["execution"] = execution
-    if execution.get("queue") != queue:
-      execution["queue"] = queue
-      changes.append(f"queue={queue}")
-  if changes:
-    _append_dashboard_history(ticket, "dashboard_update", ", ".join(changes))
-    _write_sprint_file(path, data)
-  return {"ok": True, "ticket_id": ticket_id, "changed": bool(changes), "changes": changes}
-
-
-def _reorder_ticket_from_dashboard(project: Path, *, ticket_id: str, direction: str) -> dict[str, Any]:
-  path, data, tickets, _ticket = _find_ticket_in_sprints(project, ticket_id)
-  items = list(tickets.items())
-  index = next((idx for idx, (key, _value) in enumerate(items) if key == ticket_id), -1)
-  if index < 0:
-    raise ValueError(f"ticket not found: {ticket_id}")
-  delta = -1 if direction == "up" else 1 if direction == "down" else 0
-  if delta == 0:
-    raise ValueError("direction must be up|down")
-  new_index = max(0, min(len(items) - 1, index + delta))
-  if new_index == index:
-    return {"ok": True, "ticket_id": ticket_id, "changed": False, "position": index}
-  item = items.pop(index)
-  items.insert(new_index, item)
-  sprint = data.setdefault("sprint", {})
-  sprint["tickets"] = {key: value for key, value in items}
-  _append_dashboard_history(item[1], "dashboard_reorder", f"position={new_index}")
-  _write_sprint_file(path, data)
-  return {"ok": True, "ticket_id": ticket_id, "changed": True, "position": new_index}
-
-
 def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
     """Create a request handler closure bound to ``config``."""
 
-    class _Handler(BaseHTTPRequestHandler):
-        # Silence default access log; we print one summary line on start.
-        def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
-            return
-
-        def _send(
-            self,
-            status: int,
-            body: bytes,
-            content_type: str = "text/plain; charset=utf-8",
-        ) -> None:
-            try:
-                self.send_response(status)
-                self.send_header("Content-Type", content_type)
-                self.send_header("Content-Length", str(len(body)))
-                # Aggressive no-cache: the dashboard ships embedded HTML
-                # and koru releases may change its structure. Stale
-                # browser cache otherwise shows tabs from old koru
-                # versions (e.g. self-service commands that no longer
-                # exist on the new planfile CLI surface).
-                self.send_header("Cache-Control", "no-store, no-cache, must-revalidate")
-                self.send_header("Pragma", "no-cache")
-                self.send_header("Expires", "0")
-                self.end_headers()
-                self.wfile.write(body)
-            except (BrokenPipeError, ConnectionResetError):
-                # Client closed the connection mid-write. Auto-refresh
-                # navigations and tab closures trigger this routinely;
-                # it's not an error worth a traceback.
-                return
-
-        def _send_json(self, payload: Any, status: int = 200) -> None:
-            body = json.dumps(payload, indent=2, sort_keys=True).encode("utf-8")
-            self._send(status, body, "application/json; charset=utf-8")
-
-        def _read_json_body(self) -> dict[str, Any]:
-            length = int(self.headers.get("Content-Length", "0") or "0")
-            if length <= 0:
-                return {}
-            raw = self.rfile.read(length).decode("utf-8")
-            data = json.loads(raw)
-            return data if isinstance(data, dict) else {}
-
-        def _query_params(self) -> dict[str, list[str]]:
-          return parse_qs(urlparse(self.path).query)
-
+    class _Handler(DashboardRequestHandler):
         def _selected_project(self, body: dict[str, Any] | None = None) -> Path:
           raw: object | None = None
           if body is not None and "project" in body:
@@ -1713,8 +1435,7 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
         def _get_context(self) -> None:
           try:
             project = self._selected_project()
-            ctx = build_context(project=project, queue_name=config.queue_name)
-            ctx["dashboard_project"] = str(project)
+            ctx = dashboard_context_payload(project, config.queue_name)
           except ValueError as exc:
             self._send_json({"error": str(exc)}, status=400)
             return
@@ -1729,8 +1450,7 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
         def _get_topology(self) -> None:
           try:
             project = self._selected_project()
-            topo = load_topology(project)
-            topo["dashboard_project"] = str(project)
+            topo = dashboard_topology_payload(project)
           except ValueError as exc:
             self._send_json({"error": str(exc)}, status=400)
             return
@@ -1744,25 +1464,20 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
 
         def _get_runtime_context(self) -> None:
           project = config.project
-          runtime: dict[str, Any]
           try:
-            runtime_context = importlib.import_module("planfile.runtime_context")
             project = self._selected_project()
-            runtime = runtime_context.build_runtime_context(project)
+            runtime = runtime_context_payload(project)
           except ValueError as exc:
             self._send_json({"error": str(exc)}, status=400)
             return
           except Exception as exc:  # pragma: no cover — optional planfile integration
-            runtime = {"error": str(exc), "type": type(exc).__name__}
-          runtime["dashboard_project"] = str(project)
-          runtime["insights"] = collect_runtime_insights(project)
+            runtime = runtime_context_error_payload(project, exc)
           self._send_json(runtime)
 
         def _get_handoff(self) -> None:
           try:
             project = self._selected_project()
-            ctx = build_context(project=project, queue_name=config.queue_name)
-            md = render_markdown_handoff(ctx)
+            md = dashboard_handoff_markdown(project, config.queue_name)
           except ValueError as exc:
             self._send(400, str(exc).encode("utf-8"))
             return
@@ -1811,7 +1526,7 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
           except ValueError as exc:
             self._send_json({"error": str(exc)}, status=400)
             return
-          merged, err, status = apply_topology_post_update(project, body)
+          merged, err, status = apply_dashboard_topology_update(project, body)
           if err is not None:
             self._send_json(err, status=status)
             return
@@ -1819,20 +1534,8 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
 
         def _post_runtime_context_config(self, body: dict[str, Any]) -> None:
           try:
-            runtime_context = importlib.import_module("planfile.runtime_context")
             project = self._selected_project(body)
-            current = runtime_context.load_runtime_context_config(project)
-            merged = {
-              "enabled": {
-                **(current.get("enabled") or {}),
-                **(body.get("enabled") or {}),
-              },
-              "overrides": {
-                **(current.get("overrides") or {}),
-                **(body.get("overrides") or {}),
-              },
-            }
-            saved_config = runtime_context.save_runtime_context_config(project, merged)
+            saved_config = save_runtime_context_config(project, body)
           except ValueError as exc:
             self._send_json({"error": str(exc)}, status=400)
             return
@@ -1870,7 +1573,7 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
           except ValueError as exc:
             self._send_json({"error": str(exc)}, status=400)
             return
-          result = _bulk_waiting_input_action(
+          result = bulk_waiting_input_action(
             project,
             ticket_ids=ticket_ids,
             action=action,
@@ -1882,46 +1585,9 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
           self._send_json(result)
 
         def _post_ticket_create(self, body: dict[str, Any]) -> None:
-          description = str(body.get("description") or "").strip()
-          if not description:
-            self._send_json({"error": "description is required"}, status=400)
-            return
-          title = str(body.get("title") or "").strip() or None
-          priority = str(body.get("priority") or "normal").strip()
-          executor_kind = str(body.get("executor_kind") or "human").strip()
-          queue_name = str(body.get("queue_name") or "default").strip()
-          ide = normalize_ide_id(str(body.get("ide") or "auto").strip() or "auto")
           try:
-            from koru.tasks import create_nl_task
-
             project = self._selected_project(body)
-            scaffold: dict[str, Any] = {
-              "executor_kind": executor_kind,
-              "executor_mode": "interactive",
-              "labels": ["koru", "dashboard", "llm-ready"],
-              "source_context": {"ide": ide},
-              "source_tool": "koru-dashboard",
-            }
-            if title:
-              scaffold["title"] = title
-            created = create_nl_task(
-              project,
-              description,
-              queue_name=queue_name,
-              priority=priority,
-              scaffold=scaffold,
-            )
-            self._send_json(
-              {
-                "ok": True,
-                "ticket_id": created.ticket_id,
-                "name": created.name,
-                "sprint": created.sprint,
-                "path": str(created.path),
-                "project": str(project),
-                "ide": ide,
-              }
-            )
+            self._send_json(create_ticket_from_dashboard(project, body))
           except ValueError as exc:
             self._send_json({"error": str(exc)}, status=400)
           except Exception as exc:
@@ -1937,7 +1603,7 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
             return
           try:
             project = self._selected_project(body)
-            result = _update_ticket_from_dashboard(
+            result = update_ticket_from_dashboard(
               project,
               ticket_id=ticket_id,
               priority=str(body["priority"]).strip() if "priority" in body else None,
@@ -1959,7 +1625,7 @@ def _build_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]:
             return
           try:
             project = self._selected_project(body)
-            result = _reorder_ticket_from_dashboard(project, ticket_id=ticket_id, direction=direction)
+            result = reorder_ticket_from_dashboard(project, ticket_id=ticket_id, direction=direction)
           except ValueError as exc:
             self._send_json({"error": str(exc)}, status=400)
             return
@@ -2026,13 +1692,17 @@ def bind_serve_server(config: ServeConfig) -> tuple[ThreadingHTTPServer, int, in
     if not config.auto_port:
         try:
             server = build_server(config)
-            return server, config.port, requested
+            actual = int(server.server_address[1])
+            config.port = actual
+            return server, actual, requested
         except OSError as exc:
             if not _address_in_use(exc):
                 raise
             if _try_stop_prior_koru_serve_listener(config.host, config.port):
                 server = build_server(config)
-                return server, config.port, requested
+                actual = int(server.server_address[1])
+                config.port = actual
+                return server, actual, requested
             raise
 
     ceiling = min(requested + 33, 65536)
@@ -2042,7 +1712,9 @@ def bind_serve_server(config: ServeConfig) -> tuple[ThreadingHTTPServer, int, in
         config.port = p
         try:
             server = build_server(config)
-            return server, p, requested
+            actual = int(server.server_address[1])
+            config.port = actual
+            return server, actual, requested
         except OSError as exc:
             last_err = exc
             continue
@@ -2080,7 +1752,7 @@ def serve(config: ServeConfig) -> int:
     write_serve_endpoint_file(config)
     url = f"http://{config.host}:{config.port}/"
     urls = _dashboard_urls(config)
-    if config.auto_port and actual != requested:
+    if config.auto_port and requested != 0 and actual != requested:
         print(
             f"koru serve: port {requested} busy — bound to {actual} instead",
             file=sys.stderr,
@@ -2139,7 +1811,7 @@ def start_serve_background(
     server, actual, requested = bind_serve_server(config)
     write_serve_endpoint_file(config)
     url = f"http://{config.host}:{config.port}/"
-    if config.auto_port and actual != requested:
+    if config.auto_port and requested != 0 and actual != requested:
         log(f"koru serve: port {requested} busy — bound to {actual} instead")
     log(f"koru serve: dashboard at {url}")
     log(f"koru serve: project = {config.project}")

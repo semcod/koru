@@ -15,6 +15,8 @@ from koruobserve.lifecycle import observe_down, observe_status, observe_up
 _OBSERVE_RUNTIME_PACKAGES: tuple[tuple[str, str], ...] = (
     ("websockets", "websockets>=12.0,<16.0"),
     ("mss", "mss>=9.0,<11.0"),
+    ("dbus", "dbus-python>=1.2.0,<2.0"),
+    ("gi", "PyGObject>=3.42,<4.0"),
 )
 
 
@@ -63,13 +65,16 @@ def _cmd_up(args: argparse.Namespace) -> int:
         dashboard_port=args.dashboard_port,
         interval_seconds=args.interval,
     )
-    print(
-        f"koru observe: up\n"
-        f"  relay     {state.relay_url}   pid={state.relay_pid}\n"
-        f"  vision    pid={state.vision_pid}\n"
-        f"  dashboard {state.dashboard_url}      pid={state.dashboard_pid}\n"
-        f"  open      {state.grid_url}"
-    )
+    lines = [
+        "koru observe: up",
+        f"  relay     {state.relay_url}   pid={state.relay_pid}",
+        f"  vision    pid={state.vision_pid}",
+        f"  dashboard {state.dashboard_url}      pid={state.dashboard_pid}",
+        f"  open      {state.grid_url}",
+    ]
+    if state.python != sys.executable:
+        lines.append(f"  python    {state.python}  (KORU_OBSERVE_PYTHON or capture probe)")
+    print("\n".join(lines))
     return 0
 
 

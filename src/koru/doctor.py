@@ -604,6 +604,7 @@ def _check_python_venv_alignment(project: Path) -> tuple[str, str]:
     project_venv = project / ".venv"
     virtual_env = os.environ.get("VIRTUAL_ENV", "").strip()
     executable = Path(sys.executable)
+    python_from_project_venv = _is_relative_to(executable, project_venv)
     detail_bits = [
         f"virtual_env={virtual_env or '-'}",
         f"python={sys.executable}",
@@ -622,10 +623,9 @@ def _check_python_venv_alignment(project: Path) -> tuple[str, str]:
             status = WARN
             detail_bits.append("virtual_env_mismatch=unknown")
     else:
-        status = WARN
         detail_bits.append("virtual_env_unset=true")
 
-    if not _is_relative_to(executable, project_venv):
+    if not python_from_project_venv:
         status = WARN
         detail_bits.append("python_not_from_project_venv=true")
 

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import contextlib
 import errno
 import json
 import os
+import re
 import signal
 import socket
 import subprocess
@@ -16,6 +18,7 @@ from typing import Any
 
 from koruobserve.bootstrap import ensure_mesh_key, ensure_observe_config
 from koruobserve.paths import logfile, pidfile, runtime_dir, state_file
+from koruvision.capture_probe import resolve_observe_python
 
 
 _PROCESSES: tuple[str, ...] = ("relay", "vision", "dashboard")
@@ -31,6 +34,7 @@ class ObserveProcesses:
     dashboard_url: str
     grid_url: str
     key_path: Path
+    python: str
 
     def to_json(self) -> dict[str, Any]:
         data = asdict(self)
@@ -63,6 +67,9 @@ def _spawn(name: str, args: list[str], project: Path) -> int:
     log_path = logfile(project, name)
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log_handle = log_path.open("ab", buffering=0)
+    env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"
+    env["KORU_MESH_FRAME_STORE"] = str(runtime_dir(project) / "mesh-frames.jsonl")
     proc = subprocess.Popen(  # noqa: S603 — caller-controlled koru CLI
         args,
         stdout=log_handle,
@@ -70,6 +77,7 @@ def _spawn(name: str, args: list[str], project: Path) -> int:
         stdin=subprocess.DEVNULL,
         cwd=str(project),
         start_new_session=True,
+        env=env,
     )
     pidfile(project, name).write_text(str(proc.pid) + "\n", encoding="utf-8")
     return proc.pid
@@ -107,8 +115,55 @@ def _stop_pid(project: Path, name: str) -> bool:
     return True
 
 
-def _koru_cmd(*args: str) -> list[str]:
-    return [sys.executable, "-m", "koru", *args]
+def _pids_matching_koru_cmdline(project: Path, needle: str) -> list[int]:
+    """Return PIDs for ``python -m koru …`` whose cmdline contains *needle* and *project*."""
+    if sys.platform == "win32":
+        return []
+    project_s = str(project.resolve())
+    try:
+        proc = subprocess.run(
+            ["pgrep", "-af", "koru"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return []
+    text = proc.stdout or ""
+    pids: list[int] = []
+    for line in text.splitlines():
+        if project_s not in line or needle not in line:
+            continue
+        match = re.match(r"(\d+)\s", line)
+        if not match:
+            continue
+        try:
+            pid = int(match.group(1))
+        except ValueError:
+            continue
+        if pid == os.getpid():
+            continue
+        pids.append(pid)
+    return list(dict.fromkeys(pids))
+
+
+def _stop_orphan_observe_processes(project: Path) -> None:
+    """SIGTERM stale observe children when pidfiles are missing (e.g. after crash)."""
+    needles = {
+        "relay": " mesh relay ",
+        "vision": " vision ",
+        "dashboard": " serve ",
+    }
+    for name, needle in needles.items():
+        for pid in _pids_matching_koru_cmdline(project, needle):
+            with contextlib.suppress(OSError):
+                os.kill(pid, signal.SIGTERM)
+        pidfile(project, name).unlink(missing_ok=True)
+
+
+def _koru_cmd(python: str, *args: str) -> list[str]:
+    return [python, "-m", "koru", *args]
 
 
 def observe_up(
@@ -121,9 +176,11 @@ def observe_up(
     interval_seconds: float | None = None,
 ) -> ObserveProcesses:
     project = project.expanduser().resolve()
+    observe_down(project)
     runtime_dir(project).mkdir(parents=True, exist_ok=True)
     config = ensure_observe_config(project)
     key_path = ensure_mesh_key(project, config)
+    python = resolve_observe_python()
 
     serve_host, serve_port = _resolve_serve_settings(config)
     host = dashboard_host or serve_host
@@ -133,6 +190,7 @@ def observe_up(
     relay_pid = _spawn(
         "relay",
         _koru_cmd(
+            python,
             "mesh",
             "relay",
             "--host",
@@ -147,9 +205,8 @@ def observe_up(
     relay_url = f"ws://{relay_host}:{relay_port_resolved}"
 
     vision_args = _koru_cmd(
+        python,
         "vision",
-        "--project",
-        str(project),
         "agent",
         "--publish-mesh",
         "--mesh-url",
@@ -166,6 +223,7 @@ def observe_up(
     dashboard_pid = _spawn(
         "dashboard",
         _koru_cmd(
+            python,
             "serve",
             "--project",
             str(project),
@@ -188,6 +246,7 @@ def observe_up(
         dashboard_url=dashboard_url,
         grid_url=f"{dashboard_url}/grid",
         key_path=key_path,
+        python=python,
     )
     state_file(project).write_text(
         json.dumps(
@@ -207,6 +266,7 @@ def observe_up(
 def observe_down(project: Path) -> dict[str, bool]:
     project = project.expanduser().resolve()
     stopped = {name: _stop_pid(project, name) for name in _PROCESSES}
+    _stop_orphan_observe_processes(project)
     state_file(project).unlink(missing_ok=True)
     return stopped
 

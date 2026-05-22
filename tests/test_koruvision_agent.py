@@ -35,3 +35,23 @@ def test_run_capture_loop_retries_after_capture_error() -> None:
     assert count == 1
     assert frames == ["abc"]
     sleep.assert_called_once_with(60)
+
+
+def test_run_capture_loop_multi_monitor_uses_capture_all() -> None:
+    from unittest.mock import MagicMock
+
+    frame_a = MagicMock(frame_id="m0")
+    frame_b = MagicMock(frame_id="m1")
+    seen: list[str] = []
+
+    with mock.patch("koruvision.agent.capture_all_once") as capture_all:
+        capture_all.return_value = [frame_a, frame_b]
+        with mock.patch("koruvision.agent.time.sleep"):
+            count = run_capture_loop(
+                interval_seconds=60,
+                monitor_id=None,
+                on_frame=lambda f: seen.append(f.frame_id),
+                max_frames=4,
+            )
+    assert count == 4
+    assert seen == ["m0", "m1", "m0", "m1"]
