@@ -100,6 +100,7 @@ from koru.autonomy.prompts import build_prompt
 from koru.autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
 from koru.autopilot import default_socket_path
 from koru.autopilot.plugin_installer import format_plugin_install_result, install_plugin_for_ide
+from koru.git_attribution import install_koru_agent_coauthor_hook
 from koru.ide_client import IDEControlClient, build_ide_client
 from koru.ide_router import resolve_ide_route
 from koru.init import init_project, resolve_project_agent_lane
@@ -977,6 +978,11 @@ def _action_up(args: argparse.Namespace) -> int:
     correlation_id, project, guard_rc = _setup_autonomous_session(args)
     if guard_rc:
         return guard_rc
+    install_koru_agent_coauthor_hook(
+        project,
+        stdio_info=_stdio_info,
+        stdio_format=args.emit_events,
+    )
 
     startup_probe = _build_and_log_startup_probe(args, project)
     (

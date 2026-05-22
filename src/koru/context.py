@@ -33,6 +33,7 @@ from typing import Any
 from koru.agents import detect_agent_environment
 from koru.autonomy.telemetry_snapshot import build_autonomy_loop_brief
 from koru.dotenv_loader import load_dotenv as _load_dotenv_impl
+from koru.git_attribution import KORU_AGENT_COAUTHOR_TRAILER
 from koru.policy import Policy, load_policy
 from koru.project_pipeline import build_project_pipeline_brief
 from koru.runtime import planfile_dir
@@ -739,7 +740,12 @@ def _build_ticket_rules(ticket: dict[str, Any] | None) -> list[str]:
 
 
 def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[str]:
-    rules = _build_policy_rules(policy) + _build_ticket_rules(ticket)
+    rules = [
+        f"When creating or preparing a Git commit, keep the human Git author "
+        f"unchanged and include this trailer: `{KORU_AGENT_COAUTHOR_TRAILER}`.",
+    ]
+    rules.extend(_build_policy_rules(policy))
+    rules.extend(_build_ticket_rules(ticket))
     rules.extend(policy.notes)
     return rules
 

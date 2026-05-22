@@ -302,7 +302,8 @@ def format_agent_lane_exports(env: dict[str, str]) -> str:
     ]
     for key in sorted(env.keys()):
         lines.append(f"export {key}='{_q(env[key])}'")
-    return "\n".join(lines) + "\n"
+    exports = "\n".join(lines)
+    return f"{exports}\n"
 
 
 def launch_agent(agent: AgentOption, project: Path, prompt: str) -> int:

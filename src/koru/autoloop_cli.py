@@ -1,7 +1,5 @@
 """CLI wrapper for the packaged ``koru-autoloop.sh`` script."""
 
-from __future__ import annotations
-
 import argparse
 import os
 import re

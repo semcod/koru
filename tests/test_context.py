@@ -14,6 +14,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from koru.context import build_context, render_markdown_handoff
+from koru.git_attribution import KORU_AGENT_COAUTHOR_TRAILER
 from koru.policy import Policy
 
 
@@ -221,6 +222,21 @@ class TestBuildContext(unittest.TestCase):
             joined = " ".join(ctx["instructions"]).lower()
             self.assertIn("git commit", joined)
             self.assertIn("git push", joined)
+
+    def test_instructions_include_koru_coauthor_trailer(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            _init_planfile(Path(tmp))
+            ctx = build_context(
+                project=Path(tmp),
+                planfile_runner=lambda _c, _p: _ok(
+                    json.dumps(
+                        {"id": "X", "executor": {"kind": "shell"}},
+                    )
+                ),
+                git_probe=_no_git,
+            )
+            joined = " ".join(ctx["instructions"])
+            self.assertIn(KORU_AGENT_COAUTHOR_TRAILER, joined)
 
     def test_instructions_include_ci_command_when_set(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
