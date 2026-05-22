@@ -177,6 +177,50 @@ def _coerce_ticket(ticket_id: str, raw: dict[str, Any], primary_lang: str) -> Ti
     )
 
 
+def _load_tree_data(source: Path | str | dict[str, Any] | None) -> dict[str, Any]:
+    """Load tree data from various sources."""
+    if isinstance(source, dict):
+        return source
+    if isinstance(source, (str, Path)):
+        path = Path(source)
+        return json.loads(path.read_text(encoding="utf-8"))
+    with resources.files("koru.wizard").joinpath("strategies.json").open(
+        "r", encoding="utf-8"
+    ) as fh:
+        return json.load(fh)
+
+
+def _validate_tree_references(
+    nodes: dict[str, TreeNode], tickets: dict[str, TicketTemplate]
+) -> None:
+    """Validate that all node/ticket references in options exist."""
+    for nid, node in nodes.items():
+        for opt in node.options:
+            if opt.next_node is not None and opt.next_node not in nodes:
+                raise ValueError(
+                    f"node {nid!r} option {opt.id!r}: next={opt.next_node!r} not in 'nodes'"
+                )
+            if opt.ticket is not None and opt.ticket not in tickets:
+                raise ValueError(
+                    f"node {nid!r} option {opt.id!r}: ticket={opt.ticket!r} not in 'tickets'"
+                )
+
+
+def _load_quick_defaults(
+    data: dict[str, Any], primary_lang: str
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Load quick_default path and default next_steps from data."""
+    quick = data.get("quick_default") or {}
+    quick_path = tuple(str(x) for x in (quick.get("path") or []))
+    default_steps_raw = (data.get("defaults") or {}).get("next_steps") or []
+    default_steps = tuple(
+        rendered for rendered in (
+            _pick_localized(item, primary_lang) for item in default_steps_raw
+        ) if rendered
+    )
+    return quick_path, default_steps
+
+
 def load_tree(
     source: Path | str | dict[str, Any] | None = None,
     *,
@@ -184,16 +228,7 @@ def load_tree(
     bilingual_separator: str = " · ",
 ) -> StrategyTree:
     """Load the decision tree from a path, dict, or the packaged default."""
-    if isinstance(source, dict):
-        data = source
-    elif isinstance(source, (str, Path)):
-        path = Path(source)
-        data = json.loads(path.read_text(encoding="utf-8"))
-    else:
-        with resources.files("koru.wizard").joinpath("strategies.json").open(
-            "r", encoding="utf-8"
-        ) as fh:
-            data = json.load(fh)
+    data = _load_tree_data(source)
 
     default_lang = str(data.get("language_default") or "pl")
     languages = _coerce_languages(language, default_lang)
@@ -212,25 +247,9 @@ def load_tree(
         tid: _coerce_ticket(tid, raw, primary_lang) for tid, raw in raw_tickets.items()
     }
 
-    for nid, node in nodes.items():
-        for opt in node.options:
-            if opt.next_node is not None and opt.next_node not in nodes:
-                raise ValueError(
-                    f"node {nid!r} option {opt.id!r}: next={opt.next_node!r} not in 'nodes'"
-                )
-            if opt.ticket is not None and opt.ticket not in tickets:
-                raise ValueError(
-                    f"node {nid!r} option {opt.id!r}: ticket={opt.ticket!r} not in 'tickets'"
-                )
+    _validate_tree_references(nodes, tickets)
 
-    quick = data.get("quick_default") or {}
-    quick_path = tuple(str(x) for x in (quick.get("path") or []))
-    default_steps_raw = (data.get("defaults") or {}).get("next_steps") or []
-    default_steps = tuple(
-        rendered for rendered in (
-            _pick_localized(item, primary_lang) for item in default_steps_raw
-        ) if rendered
-    )
+    quick_path, default_steps = _load_quick_defaults(data, primary_lang)
 
     return StrategyTree(
         version=int(data.get("version") or 1),

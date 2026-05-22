@@ -81,13 +81,19 @@ def dashboard_main(argv: list[str] | None = None) -> int:
     """Entry point for ``koru serve`` and ``koru api dashboard``."""
     from koru.activity_log import activity
     from koru.configurator import load_project_config
+    from koru.dotenv_loader import load_dotenv
 
     raw_argv = list(sys.argv[1:] if argv is None else argv)
     args = build_serve_parser().parse_args(raw_argv)
     project = args.project.resolve()
+    load_dotenv(project)
     saved = load_project_config(project)
     saved_serve = saved.get("serve") if isinstance(saved.get("serve"), dict) else {}
-    lan_from_config = bool(saved_serve.get("lan")) and not _argv_has_flag(raw_argv, "--lan", "--host")
+    lan_from_config = bool(saved_serve.get("lan")) and not _argv_has_flag(
+        raw_argv,
+        "--lan",
+        "--host",
+    )
     lan = bool(args.lan) or lan_from_config
     host = args.host
     if not _argv_has_flag(raw_argv, "--host"):

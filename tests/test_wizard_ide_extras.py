@@ -7,6 +7,7 @@ from pathlib import Path
 
 from koru.wizard import cli as wizard_cli
 from koru.wizard import ide as wiz_ide
+from koru.wizard import ide_install as wiz_ide_install
 from koru.wizard import project as wiz_project
 from koru.wizard.cli import (
     _IDE_INSTALL_CATALOG,
@@ -14,10 +15,13 @@ from koru.wizard.cli import (
     _MANAGER_BINARIES,
     ScriptedPrompter,
     StdinPrompter,
+)
+from koru.wizard.ide_install import (
     _available_install_managers,
     _build_install_method_options,
     _format_command,
-    _offer_ide_install,
+    _run_install_command,
+    offer_ide_install as _offer_ide_install,
 )
 from koru.wizard.ide import DetectedIDE, _merge_running, _scan_installed, discover_installed_ides
 from koru.wizard.project import (
@@ -218,7 +222,7 @@ def test_install_catalog_has_entries_for_known_ides() -> None:
 
 def test_available_install_managers_uses_path(monkeypatch) -> None:
     monkeypatch.setattr(
-        wizard_cli.shutil,
+        wiz_ide_install.shutil,
         "which",
         lambda name: "/usr/bin/" + name if name in ("snap", "apt-get") else None,
     )
@@ -245,10 +249,10 @@ def test_build_install_method_options_always_appends_web_and_cancel() -> None:
 
 
 def test_offer_ide_install_runs_command_and_rediscovers(monkeypatch) -> None:
-    monkeypatch.setattr(wizard_cli, "_available_install_managers", lambda: {"snap"})
+    monkeypatch.setattr(wiz_ide_install, "_available_install_managers", lambda: {"snap"})
     executed: list[tuple[str, ...]] = []
     monkeypatch.setattr(
-        wizard_cli,
+        wiz_ide_install,
         "_run_install_command",
         lambda argv, _out: executed.append(argv) or True,
     )
@@ -256,7 +260,7 @@ def test_offer_ide_install_runs_command_and_rediscovers(monkeypatch) -> None:
     expected_post_install = [
         DetectedIDE(id="vscode", label="VS Code", running=False, pid=None, path="/usr/bin/code"),
     ]
-    monkeypatch.setattr(wizard_cli, "discover_installed_ides", lambda: expected_post_install)
+    monkeypatch.setattr(wiz_ide_install, "discover_installed_ides", lambda: expected_post_install)
 
     prompter = ScriptedPrompter(
         ["install_vscode", "install_snap"],
@@ -269,11 +273,11 @@ def test_offer_ide_install_runs_command_and_rediscovers(monkeypatch) -> None:
 
 
 def test_offer_ide_install_handles_open_web_choice(monkeypatch) -> None:
-    monkeypatch.setattr(wizard_cli, "_available_install_managers", lambda: set())
-    monkeypatch.setattr(wizard_cli, "discover_installed_ides", lambda: [])
+    monkeypatch.setattr(wiz_ide_install, "_available_install_managers", lambda: set())
+    monkeypatch.setattr(wiz_ide_install, "discover_installed_ides", lambda: [])
     opened: list[str] = []
     monkeypatch.setattr(
-        wizard_cli, "_open_download_page", lambda url, _out: opened.append(url)
+        wiz_ide_install, "_open_download_page", lambda url, _out: opened.append(url)
     )
     prompter = ScriptedPrompter(["install_cursor", "open_web"])
     result = _offer_ide_install(prompter, io.StringIO())
@@ -282,8 +286,8 @@ def test_offer_ide_install_handles_open_web_choice(monkeypatch) -> None:
 
 
 def test_offer_ide_install_cancel_branch_returns_empty(monkeypatch) -> None:
-    monkeypatch.setattr(wizard_cli, "_available_install_managers", lambda: set())
-    monkeypatch.setattr(wizard_cli, "discover_installed_ides", lambda: [])
+    monkeypatch.setattr(wiz_ide_install, "_available_install_managers", lambda: set())
+    monkeypatch.setattr(wiz_ide_install, "discover_installed_ides", lambda: [])
     prompter = ScriptedPrompter(["install_cursor", "cancel"])
     assert _offer_ide_install(prompter, io.StringIO()) == []
 
@@ -294,11 +298,11 @@ def test_offer_ide_install_user_skips_returns_empty() -> None:
 
 
 def test_offer_ide_install_user_declines_to_run_command(monkeypatch) -> None:
-    monkeypatch.setattr(wizard_cli, "_available_install_managers", lambda: {"snap"})
-    monkeypatch.setattr(wizard_cli, "discover_installed_ides", lambda: [])
+    monkeypatch.setattr(wiz_ide_install, "_available_install_managers", lambda: {"snap"})
+    monkeypatch.setattr(wiz_ide_install, "discover_installed_ides", lambda: [])
     run_called: list[tuple[str, ...]] = []
     monkeypatch.setattr(
-        wizard_cli,
+        wiz_ide_install,
         "_run_install_command",
         lambda argv, _out: run_called.append(argv) or True,
     )
@@ -322,10 +326,10 @@ def test_run_install_command_drops_sudo_when_unavailable(monkeypatch) -> None:
         captured_argv.append(list(argv))
         return _Proc()
 
-    monkeypatch.setattr(wizard_cli.subprocess, "run", fake_run)
-    monkeypatch.setattr(wizard_cli.shutil, "which", lambda _name: None)
+    monkeypatch.setattr(wiz_ide_install.subprocess, "run", fake_run)
+    monkeypatch.setattr(wiz_ide_install.shutil, "which", lambda _name: None)
     out = io.StringIO()
-    ok = wizard_cli._run_install_command(("sudo", "apt-get", "install", "code"), out)
+    ok = _run_install_command(("sudo", "apt-get", "install", "code"), out)
     assert ok is True
     assert captured_argv == [["apt-get", "install", "code"]]
     assert "sudo not found" in out.getvalue()
@@ -335,9 +339,9 @@ def test_run_install_command_returns_false_on_oserror(monkeypatch) -> None:
     def _explode(*_a, **_k):  # noqa: ANN002, ANN003
         raise OSError("boom")
 
-    monkeypatch.setattr(wizard_cli.subprocess, "run", _explode)
+    monkeypatch.setattr(wiz_ide_install.subprocess, "run", _explode)
     out = io.StringIO()
-    assert wizard_cli._run_install_command(("apt-get", "install", "code"), out) is False
+    assert _run_install_command(("apt-get", "install", "code"), out) is False
     assert "failed to start" in out.getvalue()
 
 

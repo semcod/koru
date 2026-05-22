@@ -1,0 +1,203 @@
+"""Rank capture providers and run fallbacks."""
+
+from __future__ import annotations
+
+import re
+import subprocess
+import sys
+from typing import Any
+
+from koruvision.providers.base import CaptureProvider, MonitorSpec
+from koruvision.providers.env import (
+    capture_provider_pref,
+    compositor_hint,
+    env_truthy,
+    is_wayland,
+    looks_headless,
+    portal_possible,
+)
+from koruvision.providers.registry import all_providers, provider_by_name
+
+_LEGACY_MAP = {
+    "mss": "mss",
+    "portal": "portal_screenshot",
+    "command": "cli_tools",
+    "native": "cli_tools",
+    "desktop": "cli_tools",
+    "portal_screencast": "portal_screencast",
+    "screencast": "portal_screencast",
+}
+
+
+def monitors_via_xrandr() -> list[MonitorSpec]:
+    try:
+        proc = subprocess.run(
+            ["xrandr", "--query"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    if proc.returncode != 0:
+        return []
+    monitors: list[MonitorSpec] = []
+    index = 0
+    for line in (proc.stdout or "").splitlines():
+        match = re.match(
+            r"^(\S+)\s+connected(?:\s+primary)?\s+(\d+)x(\d+)\+(\d+)\+(\d+)",
+            line,
+        )
+        if not match:
+            continue
+        name, width, height, left, top = match.groups()
+        monitors.append(
+            MonitorSpec(
+                id=index,
+                output=name,
+                width=int(width),
+                height=int(height),
+                left=int(left),
+                top=int(top),
+                is_primary="primary" in line,
+            )
+        )
+        index += 1
+    return monitors
+
+
+def rank_providers() -> list[CaptureProvider]:
+    pref = capture_provider_pref()
+    if pref != "auto":
+        forced = _LEGACY_MAP.get(pref, pref)
+        provider = provider_by_name(forced)
+        if provider is None:
+            raise ValueError(f"unknown KORU_VISION_PROVIDER: {pref}")
+        return [provider]
+
+    ordered_names: list[str] = []
+    if env_truthy("KORU_VISION_PREFER_PORTAL") and portal_possible():
+        ordered_names.append("portal_screenshot")
+    ordered_names.append("mss")
+    if portal_possible():
+        ordered_names.append("portal_screenshot")
+    if compositor_hint() == "wlroots" or (is_wayland() and compositor_hint() != "gnome"):
+        ordered_names.append("grim")
+    ordered_names.append("cli_tools")
+    if is_wayland() and portal_possible():
+        ordered_names.append("portal_screencast")
+
+    seen: set[str] = set()
+    ranked: list[CaptureProvider] = []
+    for name in ordered_names:
+        if name in seen:
+            continue
+        seen.add(name)
+        provider = provider_by_name(name)
+        if provider is None:
+            continue
+        if provider.availability().available:
+            ranked.append(provider)
+    return ranked
+
+
+def list_provider_status() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for provider in all_providers():
+        avail = provider.availability()
+        rows.append(
+            {
+                "name": provider.name,
+                "streams": provider.streams,
+                "available": avail.available,
+                "reason": avail.reason,
+                "install_hint": avail.install_hint,
+                "needs_consent": avail.needs_consent,
+            }
+        )
+    return rows
+
+
+def _auto_failure_message(errors: list[str]) -> str:
+    msg = "no screenshot backend succeeded"
+    if looks_headless():
+        msg += (
+            "; this looks headless because DISPLAY, WAYLAND_DISPLAY, and "
+            "DBUS_SESSION_BUS_ADDRESS are unset"
+        )
+    if errors:
+        msg += "; " + "; ".join(errors)
+    msg += (
+        ". Try KORU_VISION_PROVIDER=portal_screencast on Wayland (one-time screen share), "
+        "KORU_VISION_PROVIDER=portal for portal screenshot, "
+        "KORU_VISION_PROVIDER=cli_tools when a desktop screenshot tool is installed, "
+        "or run koru observe from the graphical session."
+    )
+    return msg
+
+
+def _provider_label(provider: CaptureProvider) -> str:
+    return "portal" if provider.name == "portal_screenshot" else provider.name
+
+
+def _should_report_auto_portal(provider: CaptureProvider, index: int) -> bool:
+    return (
+        index == 0
+        and provider.name == "portal_screenshot"
+        and capture_provider_pref() == "auto"
+        and is_wayland()
+    )
+
+
+def capture_one_with_providers(monitor_id: int | None, scale: float) -> dict[str, Any]:
+    providers = rank_providers()
+    if not providers:
+        raise RuntimeError(_auto_failure_message(["no providers available"]))
+    errors: list[str] = []
+    for index, provider in enumerate(providers):
+        try:
+            frame = provider.capture_one(monitor_id, scale)
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{provider.name}: {exc}")
+            continue
+        if index > 0:
+            print(
+                f"koru vision: {errors[0]} — used {_provider_label(provider)} capture",
+                file=sys.stderr,
+            )
+        elif _should_report_auto_portal(provider, index):
+            print(
+                "koru vision: auto selected Wayland portal — used portal capture",
+                file=sys.stderr,
+            )
+        return frame
+    raise RuntimeError(_auto_failure_message(errors))
+
+
+def capture_all_with_providers(scale: float) -> list[dict[str, Any]]:
+    providers = rank_providers()
+    if not providers:
+        raise RuntimeError(_auto_failure_message(["no providers available"]))
+    errors: list[str] = []
+    for index, provider in enumerate(providers):
+        try:
+            frames = provider.capture_all(scale)
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{provider.name}: {exc}")
+            continue
+        if not frames:
+            errors.append(f"{provider.name}: no frames")
+            continue
+        if index > 0:
+            print(
+                f"koru vision: {errors[0]} — used {_provider_label(provider)} capture",
+                file=sys.stderr,
+            )
+        elif _should_report_auto_portal(provider, index):
+            print(
+                "koru vision: auto selected Wayland portal — used portal capture",
+                file=sys.stderr,
+            )
+        return frames
+    raise RuntimeError(_auto_failure_message(errors))

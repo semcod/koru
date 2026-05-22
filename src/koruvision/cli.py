@@ -6,17 +6,17 @@ import sys
 from pathlib import Path
 
 from koru.configurator import load_project_config
-from koruvision.agent import capture_once, run_capture_loop
+from koruvision.agent import capture_once, normalize_capture_interval, run_capture_loop
 from koruvision.cli_parser import build_vision_parser
 from koruvision.mesh import publish_vision_frame, resolve_mesh_publish
 
 
 def _vision_interval(project: Path, override: float | None) -> float:
     if override is not None:
-        return override
+        return normalize_capture_interval(override)
     saved = load_project_config(project)
     vision = saved.get("vision") if isinstance(saved.get("vision"), dict) else {}
-    return float(vision.get("interval_seconds") or 60)
+    return normalize_capture_interval(float(vision.get("interval_seconds") or 30))
 
 
 def _mesh_publish_enabled(project: Path, explicit: bool | None) -> bool:

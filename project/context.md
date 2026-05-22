@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 241, shell: 44, yaml: 15, json: 9, yml: 8
+- **Languages**: python: 257, shell: 47, yaml: 15, json: 9, yml: 8
 - **Analysis Mode**: static
-- **Total Functions**: 2198
-- **Total Classes**: 138
-- **Modules**: 339
-- **Entry Points**: 756
+- **Total Functions**: 2279
+- **Total Classes**: 148
+- **Modules**: 359
+- **Entry Points**: 789
 
 ## Architecture by Module
 
@@ -20,7 +20,7 @@
 - **File**: `extension.ts`
 
 ### src.koru.doctor
-- **Functions**: 68
+- **Functions**: 73
 - **Classes**: 3
 - **File**: `doctor.py`
 
@@ -94,11 +94,6 @@
 - **Classes**: 2
 - **File**: `scan.py`
 
-### src.koru.wizard.cli
-- **Functions**: 26
-- **Classes**: 4
-- **File**: `cli.py`
-
 ### src.koruide.plugin_installer
 - **Functions**: 25
 - **Classes**: 1
@@ -108,15 +103,17 @@
 - **Functions**: 24
 - **File**: `mcp_provision.py`
 
+### plugins.koru-autopilot-vscode.src.probe-ladder
+- **Functions**: 23
+- **Classes**: 3
+- **File**: `probe-ladder.ts`
+
 ## Key Entry Points
 
 Main execution flows into the system:
 
 ### src.koru.autonomous_parser.build_parser
 - **Calls**: argparse.ArgumentParser, parser.add_argument, parser.add_subparsers, sub.add_parser, doctor.add_argument, sub.add_parser, heal.add_argument, heal.add_argument
-
-### src.koru.doctor._check_autopilot_chat_control
-- **Calls**: sum, sum, max, max, sum, sum, sum, sum
 
 ### src.koru.autonomous_auto_pipeline._select_auto_pipeline_profile
 - **Calls**: src.koru.autonomous_auto_pipeline._auto_pipeline_stage, AutoPipelineProfile, max, AutoPipelineProfile, AutoPipelineProfile, int, int, src.koru.autonomous_auto_pipeline._auto_value
@@ -127,7 +124,7 @@ Main execution flows into the system:
 
 ### src.koru.autonomy.config.AutonomyConfig.from_env
 > Create config from environment variables (shell compatibility).
-- **Calls**: os.getenv, cls, None.strip, max, Path, os.getenv, os.getenv, src.koru.autonomy.env.env_truthy
+- **Calls**: os.getenv, cls, None.strip, max, Path, os.getenv, os.getenv, src.koruvision.capture_mss.env_truthy
 
 ### src.koru.context_render.render_markdown_handoff
 > Turn a context dict into a Markdown brief for the operator.
@@ -138,9 +135,6 @@ the LLM with the policy
 
 ### src.koru.local_manager_state.WorkerRegistry.register
 - **Calls**: src.koru.local_manager_state.utc_now, str, str, self._workers.get, self._reconcile_locked, self._reply_locked, payload.get, src.koru.local_manager_state.koru_version
-
-### src.koru.wizard.cli.wizard_main
-- **Calls**: src.koru.wizard.cli._build_parser, parser.parse_args, StdinPrompter, src.koru.wizard.cli._emit_human, parser.error, scripts.koru-soak-monitor.print, parser.error, src.koru.wizard.ide.discover_installed_ides
 
 ### src.koru.autonomous_cycle.run_cycle
 - **Calls**: src.koru.autonomous_cycle._initialize_cycle_telemetry, src.koru.autonomous_cycle._heal_stale_socket, src.koru.autonomous_cycle._handle_autopilot_events, src.koru.run_log.RunLogWriter._emit, _handle_queue_hygiene, _handle_post_run_verify_ide, src.koru.autonomous_cycle._handle_scan_phase, src.koru.autonomous_cycle._handle_queue_loop_phase
@@ -223,6 +217,12 @@ syntact
 ### src.koruapi.cli.main
 - **Calls**: src.koruapi.cli._build_parser, parser.parse_known_args, args.project.resolve, sys.stdout.write, src.koru.activity_log.activity, src.koru.activity_log.activity, sys.stdout.write, api_serve
 
+### src.koruide.daemon.AutopilotDaemon._on_readable
+- **Calls**: client.buf.extend, client.sock.recv, self.log, self._drop, len, self._send, self._drop, client.buf.partition
+
+### src.koru.local_manager_state.ActionQueue.claim
+- **Calls**: src.koru.local_manager_state.utc_now, max, None.replace, set, set, min, src.koru.local_manager_state.normalize_capabilities, int
+
 ## Process Flows
 
 Key execution flows identified:
@@ -232,19 +232,14 @@ Key execution flows identified:
 build_parser [src.koru.autonomous_parser]
 ```
 
-### Flow 2: _check_autopilot_chat_control
-```
-_check_autopilot_chat_control [src.koru.doctor]
-```
-
-### Flow 3: _select_auto_pipeline_profile
+### Flow 2: _select_auto_pipeline_profile
 ```
 _select_auto_pipeline_profile [src.koru.autonomous_auto_pipeline]
   └─> _auto_pipeline_stage
       └─> _auto_pipeline_has_pressure
 ```
 
-### Flow 4: _drive_via_keyboard
+### Flow 3: _drive_via_keyboard
 ```
 _drive_via_keyboard [src.koruide.daemon.AutopilotDaemon]
   └─ →> resolve_drive_target
@@ -256,32 +251,23 @@ _drive_via_keyboard [src.koruide.daemon.AutopilotDaemon]
       └─> normalize_ide_id
 ```
 
-### Flow 5: from_env
+### Flow 4: from_env
 ```
 from_env [src.koru.autonomy.config.AutonomyConfig]
 ```
 
-### Flow 6: render_markdown_handoff
+### Flow 5: render_markdown_handoff
 ```
 render_markdown_handoff [src.koru.context_render]
 ```
 
-### Flow 7: register
+### Flow 6: register
 ```
 register [src.koru.local_manager_state.WorkerRegistry]
   └─ →> utc_now
 ```
 
-### Flow 8: wizard_main
-```
-wizard_main [src.koru.wizard.cli]
-  └─> _build_parser
-  └─> _emit_human
-      └─ →> print
-      └─ →> print
-```
-
-### Flow 9: run_cycle
+### Flow 7: run_cycle
 ```
 run_cycle [src.koru.autonomous_cycle]
   └─> _initialize_cycle_telemetry
@@ -293,7 +279,7 @@ run_cycle [src.koru.autonomous_cycle]
       └─ →> print
 ```
 
-### Flow 10: topology_main
+### Flow 8: topology_main
 ```
 topology_main [src.koru.cli_topology]
   └─ →> load_topology
@@ -307,6 +293,20 @@ topology_main [src.koru.cli_topology]
   └─ →> apply_topology_mutations
       └─ →> print
       └─ →> print
+```
+
+### Flow 9: _check_ide_console_log
+```
+_check_ide_console_log [src.koru.doctor]
+  └─> _selected_autopilot_ide
+      └─ →> normalize_ide_id
+      └─ →> normalize_ide_id
+  └─> _ide_console_log_roots
+```
+
+### Flow 10: _drive_via_plugin
+```
+_drive_via_plugin [src.koruide.daemon.AutopilotDaemon]
 ```
 
 ## Key Classes
@@ -355,13 +355,18 @@ session:
 - **Methods**: 6
 - **Key Methods**: src.koru.local_manager_state.WorkerRegistry.__init__, src.koru.local_manager_state.WorkerRegistry.register, src.koru.local_manager_state.WorkerRegistry.heartbeat, src.koru.local_manager_state.WorkerRegistry._reconcile_locked, src.koru.local_manager_state.WorkerRegistry._reply_locked, src.koru.local_manager_state.WorkerRegistry.snapshot
 
-### src.koru.wizard.cli.StdinPrompter
+### src.koru.wizard.prompters.StdinPrompter
 > Default prompter: prints prompt + options, reads a single line from stdin.
 
 Supports a ``?`` prefix 
 - **Methods**: 6
-- **Key Methods**: src.koru.wizard.cli.StdinPrompter.__init__, src.koru.wizard.cli.StdinPrompter._print, src.koru.wizard.cli.StdinPrompter._render_prompt, src.koru.wizard.cli.StdinPrompter._show_help, src.koru.wizard.cli.StdinPrompter.ask_choice, src.koru.wizard.cli.StdinPrompter.ask_yes_no
+- **Key Methods**: src.koru.wizard.prompters.StdinPrompter.__init__, src.koru.wizard.prompters.StdinPrompter._print, src.koru.wizard.prompters.StdinPrompter._render_prompt, src.koru.wizard.prompters.StdinPrompter._show_help, src.koru.wizard.prompters.StdinPrompter.ask_choice, src.koru.wizard.prompters.StdinPrompter.ask_yes_no
 - **Inherits**: Prompter
+
+### src.koruapi.dashboard_http.DashboardRequestHandler
+- **Methods**: 5
+- **Key Methods**: src.koruapi.dashboard_http.DashboardRequestHandler.log_message, src.koruapi.dashboard_http.DashboardRequestHandler._send, src.koruapi.dashboard_http.DashboardRequestHandler._send_json, src.koruapi.dashboard_http.DashboardRequestHandler._read_json_body, src.koruapi.dashboard_http.DashboardRequestHandler._query_params
+- **Inherits**: BaseHTTPRequestHandler
 
 ### src.koru.local_manager_client.LocalManagerSession
 > Small lifecycle session for one CLI worker invocation.
@@ -378,15 +383,31 @@ Supports a ``?`` prefix
 - **Methods**: 5
 - **Key Methods**: src.koru.wizard.gui.session.SessionStore.__init__, src.koru.wizard.gui.session.SessionStore.create, src.koru.wizard.gui.session.SessionStore.get, src.koru.wizard.gui.session.SessionStore.delete, src.koru.wizard.gui.session.SessionStore.purge_expired
 
-### src.koruapi.dashboard_http.DashboardRequestHandler
-- **Methods**: 5
-- **Key Methods**: src.koruapi.dashboard_http.DashboardRequestHandler.log_message, src.koruapi.dashboard_http.DashboardRequestHandler._send, src.koruapi.dashboard_http.DashboardRequestHandler._send_json, src.koruapi.dashboard_http.DashboardRequestHandler._read_json_body, src.koruapi.dashboard_http.DashboardRequestHandler._query_params
-- **Inherits**: BaseHTTPRequestHandler
-
 ### src.koru.configurator.ShellPrompter
 > Small stdin/stdout prompter used by ``koru configure``.
 - **Methods**: 5
 - **Key Methods**: src.koru.configurator.ShellPrompter.__init__, src.koru.configurator.ShellPrompter._line, src.koru.configurator.ShellPrompter.ask_text, src.koru.configurator.ShellPrompter.ask_yes_no, src.koru.configurator.ShellPrompter.ask_choice
+
+### src.koruvision.providers.base.CaptureProvider
+- **Methods**: 4
+- **Key Methods**: src.koruvision.providers.base.CaptureProvider.availability, src.koruvision.providers.base.CaptureProvider.list_monitors, src.koruvision.providers.base.CaptureProvider.capture_all, src.koruvision.providers.base.CaptureProvider.capture_one
+- **Inherits**: Protocol
+
+### src.koruvision.providers.cli_tools.CliToolsProvider
+- **Methods**: 4
+- **Key Methods**: src.koruvision.providers.cli_tools.CliToolsProvider.availability, src.koruvision.providers.cli_tools.CliToolsProvider.list_monitors, src.koruvision.providers.cli_tools.CliToolsProvider.capture_all, src.koruvision.providers.cli_tools.CliToolsProvider.capture_one
+
+### src.koruvision.providers.portal_screencast.PortalScreenCastProvider
+- **Methods**: 4
+- **Key Methods**: src.koruvision.providers.portal_screencast.PortalScreenCastProvider.availability, src.koruvision.providers.portal_screencast.PortalScreenCastProvider.list_monitors, src.koruvision.providers.portal_screencast.PortalScreenCastProvider.capture_all, src.koruvision.providers.portal_screencast.PortalScreenCastProvider.capture_one
+
+### src.koruvision.providers.grim.GrimProvider
+- **Methods**: 4
+- **Key Methods**: src.koruvision.providers.grim.GrimProvider.availability, src.koruvision.providers.grim.GrimProvider.list_monitors, src.koruvision.providers.grim.GrimProvider.capture_all, src.koruvision.providers.grim.GrimProvider.capture_one
+
+### src.koruvision.providers.mss.MssProvider
+- **Methods**: 4
+- **Key Methods**: src.koruvision.providers.mss.MssProvider.availability, src.koruvision.providers.mss.MssProvider.list_monitors, src.koruvision.providers.mss.MssProvider.capture_all, src.koruvision.providers.mss.MssProvider.capture_one
 
 ### src.koruide.plugin_router.PluginRouter
 > Select, enumerate and deduplicate connected plugin sessions.
@@ -398,33 +419,6 @@ Supports a ``?`` prefix
 - **Methods**: 4
 - **Key Methods**: src.koru.ide_client.IDEControlClient.is_running, src.koru.ide_client.IDEControlClient.drive, src.koru.ide_client.IDEControlClient.status, src.koru.ide_client.IDEControlClient.shutdown
 - **Inherits**: Protocol
-
-### src.koru.ide_client.LegacyAutopilotClientAdapter
-> Expose legacy :class:`AutopilotClient` through :class:`IDEControlClient`.
-- **Methods**: 4
-- **Key Methods**: src.koru.ide_client.LegacyAutopilotClientAdapter.is_running, src.koru.ide_client.LegacyAutopilotClientAdapter.drive, src.koru.ide_client.LegacyAutopilotClientAdapter.status, src.koru.ide_client.LegacyAutopilotClientAdapter.shutdown
-
-### src.koru.init.InitReport
-> Summary of what ``init_project`` actually changed on disk.
-- **Methods**: 4
-- **Key Methods**: src.koru.init.InitReport._env_bit, src.koru.init.InitReport._lane_summary, src.koru.init.InitReport._init_summary, src.koru.init.InitReport.summary
-
-### src.koru.run_log.RunLogWriter
-> Append-only JSONL writer with best-effort durability.
-
-The constructor does not open the file — that
-- **Methods**: 4
-- **Key Methods**: src.koru.run_log.RunLogWriter._emit, src.koru.run_log.RunLogWriter.write_header, src.koru.run_log.RunLogWriter.write_iteration, src.koru.run_log.RunLogWriter.write_footer
-
-### src.koru.wizard.tree.StrategyTree
-> In-memory representation of ``strategies.json``.
-- **Methods**: 4
-- **Key Methods**: src.koru.wizard.tree.StrategyTree.root, src.koru.wizard.tree.StrategyTree.node, src.koru.wizard.tree.StrategyTree.ticket, src.koru.wizard.tree.StrategyTree.effective_next_steps
-
-### src.koru.doctor.DoctorReport
-> Aggregate result of ``run_diagnostics``.
-- **Methods**: 4
-- **Key Methods**: src.koru.doctor.DoctorReport.has_failures, src.koru.doctor.DoctorReport.has_warnings, src.koru.doctor.DoctorReport.summary, src.koru.doctor.DoctorReport.to_dict
 
 ## Data Transformation Functions
 
@@ -450,6 +444,10 @@ Cheap pre-flight gate: block
 ### services.healing-webhook.ticket_builder._format_acceptance
 - **Output to**: None.join
 
+### src.koruobserve.lifecycle._stop_orphan_observe_processes
+> SIGTERM stale observe children when pidfiles are missing (e.g. after crash).
+- **Output to**: needles.items, src.koruobserve.lifecycle._pids_matching_koru_cmdline, None.unlink, contextlib.suppress, os.kill
+
 ### src.korudsl.cli._build_parser
 - **Output to**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, to_lib.add_argument, to_lib.add_argument
 
@@ -462,9 +460,6 @@ Cheap pre-flight gate: block
 
 ### src.koruapi.runtime_insights._top_processes
 - **Output to**: sorted, out.append, src.koruapi.runtime_insights._classify_process, src.koruapi.runtime_insights._looks_project_related, int
-
-### src.koruapi.dashboard.build_serve_parser
-- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.add_argument, parser.add_argument
 
 ### src.koruapi.cli._build_parser
 - **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_subparsers, sub.add_parser, sub.add_parser
@@ -498,6 +493,17 @@ Returns (should_kill, logs) tuple.
 ### koruapi.mcp_server._collect_process_logs
 - **Output to**: logs.extend, logs.extend, None.split, None.split, result.stdout.strip
 
+### src.koruvision.capture_fallback.parse_png_size
+> Extract ``(width, height)`` from a PNG IHDR header (returns zeros on parse failure).
+- **Output to**: struct.unpack, int, int, len
+
+### src.korumesh.cli_parser.build_mesh_parser
+- **Output to**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, relay.add_argument, relay.add_argument
+
+### src.korumesh.dashboard_parse.parse_mime_params
+> Return ``(base_mime, params)`` from a mime string with ``;`` separators.
+- **Output to**: piece.strip, piece.split, value.strip, mime.split, piece.strip
+
 ### src.koruide.protocol.Message.encode
 - **Output to**: None.encode, json.dumps, self.to_dict
 
@@ -507,15 +513,6 @@ Returns (should_kill, logs) tuple.
 ### src.koruide.ide._ide_id_from_process
 > Map a single process to a known IDE id, if any.
 - **Output to**: src.koruide.ide._read_comm, src.koruide.ide._read_cmdline, _IDE_SIGNATURES.items, src.koruide.ide._matches
-
-### src.koruide.audit._JSONFormatter.format
-- **Output to**: record.getMessage
-
-### src.koruide.audit._isoformat_utc
-- **Output to**: int, int, time.gmtime, time.time, time.strftime
-
-### src.koruide.plugin_installer._parse_extension_version
-- **Output to**: output.splitlines, line.strip, None.startswith, EXTENSION_ID.lower, item.lower
 
 ## Behavioral Patterns
 
@@ -543,7 +540,7 @@ Returns (should_kill, logs) tuple.
 
 Functions exposed as public API (no underscore prefix):
 
-- `src.koruapi.dashboard_routes.build_dashboard_handler` - 156 calls
+- `src.koruapi.dashboard_routes.build_dashboard_handler` - 184 calls
 - `src.koru.wizard.gui.app.create_app` - 96 calls
 - `src.koru.autonomous_parser.build_parser` - 71 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 50 calls
@@ -553,35 +550,35 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.policy.load_policy` - 43 calls
 - `src.koru.git_cli.build_parser` - 39 calls
 - `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
-- `src.koru.wizard.cli.wizard_main` - 37 calls
-- `src.koru.wizard.tree.load_tree` - 37 calls
-- `src.koruapi.dashboard.dashboard_main` - 33 calls
+- `src.koruapi.dashboard.dashboard_main` - 34 calls
 - `src.koru.autonomous_cycle.run_cycle` - 33 calls
-- `src.koru.cli_topology.topology_main` - 32 calls
 - `src.koruobserve.lifecycle.observe_up` - 32 calls
+- `src.koru.cli_topology.topology_main` - 32 calls
 - `koruapi.mcp_server.tool_run_ticket` - 31 calls
 - `src.koru.queue.runners.run_api_request` - 30 calls
+- `src.koruapi.dashboard_config.dashboard_config_payload` - 30 calls
 - `src.koru.tasks.create_nl_task` - 29 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
-- `src.koruapi.dashboard_config.dashboard_config_payload` - 29 calls
+- `src.koruapi.dashboard_config.save_dashboard_config` - 29 calls
 - `src.koruide.plugin_installer.resolve_extension_vsix` - 28 calls
 - `src.koru.cli_queue.render_clean_report_text` - 28 calls
 - `src.koru.doctor.render_text` - 27 calls
 - `src.koru.autonomous_daemon.start_or_reuse_daemon` - 26 calls
 - `src.koru.autonomous_runtime.setup_autonomous_session` - 26 calls
+- `src.koru.env_config.write_env_config` - 26 calls
 - `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
 - `src.koru.scan.scan_pytest_collect` - 24 calls
 - `src.koru.agents.detect_project_environment` - 24 calls
 - `src.koru.autopilot.install_manager.collect_install_manager_report` - 24 calls
 - `plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.focusChat` - 24 calls
-- `src.koruapi.dashboard_config.save_dashboard_config` - 24 calls
 - `src.koru.configurator.render_shell_exports` - 24 calls
+- `src.koruapi.dashboard_tickets.create_ticket_from_dashboard` - 23 calls
 - `src.koru.dev_sync.dev_main` - 23 calls
+- `src.koru.cli_agent_backends.agent_backends_main` - 23 calls
 - `src.koru.init.init_project` - 23 calls
 - `src.koru.context_render.render_active_ticket` - 23 calls
 - `src.koru.autonomy.ide_work.build_ide_work_prompt` - 23 calls
-- `src.koruapi.dashboard_tickets.create_ticket_from_dashboard` - 23 calls
-- `src.koru.cli_agent_backends.agent_backends_main` - 23 calls
+- `src.koruvision.providers.detector.rank_providers` - 23 calls
 - `src.koruapi.topology_post.apply_topology_post_update` - 22 calls
 
 ## System Interactions
@@ -594,8 +591,6 @@ graph TD
     build_parser --> add_argument
     build_parser --> add_subparsers
     build_parser --> add_parser
-    _check_autopilot_cha --> sum
-    _check_autopilot_cha --> max
     _select_auto_pipelin --> _auto_pipeline_stage
     _select_auto_pipelin --> AutoPipelineProfile
     _select_auto_pipelin --> max
@@ -615,11 +610,13 @@ graph TD
     register --> str
     register --> get
     register --> _reconcile_locked
-    wizard_main --> _build_parser
-    wizard_main --> parse_args
-    wizard_main --> StdinPrompter
-    wizard_main --> _emit_human
-    wizard_main --> error
+    run_cycle --> _initialize_cycle_te
+    run_cycle --> _heal_stale_socket
+    run_cycle --> _handle_autopilot_ev
+    run_cycle --> _emit
+    run_cycle --> _handle_queue_hygien
+    topology_main --> parse_args
+    topology_main --> resolve
 ```
 
 ## Reverse Engineering Guidelines

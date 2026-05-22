@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
+from koru.env_config import apply_env_updates, env_config_payload, write_env_config
 from koruapi.dashboard_config import (
   DashboardConfigDefaults,
   dashboard_config_payload,
@@ -109,6 +110,15 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
             except Exception as exc:  # pragma: no cover — surface config errors
                 self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
 
+        def _get_env_config(self) -> None:
+            try:
+                project = self._selected_project()
+                self._send_json(env_config_payload(project))
+            except ValueError as exc:
+                self._send_json({"error": str(exc)}, status=400)
+            except Exception as exc:  # pragma: no cover — surface env-config errors
+                self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+
         def _get_context(self) -> None:
             try:
                 project = self._selected_project()
@@ -187,6 +197,7 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
             route = {
                 "/api/dashboard": self._get_dashboard,
                 "/api/config": self._get_config,
+                "/api/env-config": self._get_env_config,
                 "/api/context": self._get_context,
                 "/api/topology": self._get_topology,
                 "/api/runtime-context": self._get_runtime_context,
@@ -220,6 +231,37 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
                 self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
                 return
             self._send_json(saved_config)
+
+        def _post_env_config(self, body: dict[str, Any]) -> None:
+            try:
+                project = self._selected_project(body)
+            except ValueError as exc:
+                self._send_json({"error": str(exc)}, status=400)
+                return
+            raw = body.get("values")
+            if not isinstance(raw, dict):
+                self._send_json({"error": "values must be an object"}, status=400)
+                return
+            from koru.env_config import KORU_ENV_KEYS
+
+            allowed = {spec.name for spec in KORU_ENV_KEYS}
+            updates: dict[str, str] = {}
+            for key, value in raw.items():
+                if not isinstance(key, str) or key not in allowed:
+                    continue
+                updates[key] = "" if value is None else str(value).strip()
+            try:
+                path = write_env_config(project, updates)
+                apply_env_updates(updates)
+            except Exception as exc:  # pragma: no cover — write errors
+                self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+                return
+            self._send_json({
+                **env_config_payload(project),
+                "saved": True,
+                "path": str(path),
+                "applied": sorted(updates.keys()),
+            })
 
         def _post_config(self, body: dict[str, Any]) -> None:
             try:
@@ -323,6 +365,7 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
                 "/api/topology": self._post_topology,
                 "/api/runtime-context/config": self._post_runtime_context_config,
                 "/api/config": self._post_config,
+                "/api/env-config": self._post_env_config,
                 "/api/tickets/waiting-input/bulk": self._post_waiting_input_bulk,
                 "/api/tickets/create": self._post_ticket_create,
                 "/api/tickets/update": self._post_ticket_update,

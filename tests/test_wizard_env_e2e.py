@@ -266,9 +266,13 @@ def test_e2e_gui_serves_state_api(tmp_path: Path) -> None:
                 last_exc = exc
                 time.sleep(0.2)
         else:
-            stdout_text = proc.stdout.read() if proc.stdout else ""
-            stderr_text = proc.stderr.read() if proc.stderr else ""
-            raise AssertionError(f"GUI never became ready on {ready_url}: {last_exc}\nstdout:\n{stdout_text}\nstderr:\n{stderr_text}")
+            if proc.poll() is not None:
+                stdout, stderr = proc.communicate(timeout=1)
+                raise AssertionError(
+                    f"GUI process exited early (code={proc.returncode}) on {ready_url}: {last_exc}\n"
+                    f"stdout={stdout!r}\nstderr={stderr!r}"
+                )
+            raise AssertionError(f"GUI never became ready on {ready_url}: {last_exc}")
         data = json.loads(body)
         assert {"step", "csrf", "ides", "projects"} <= set(data)
         assert data["csrf"]

@@ -92,9 +92,9 @@ def test_run_wizard_offers_running_ide(project_with_planfile: Path) -> None:
 
 
 def test_run_wizard_no_ide_skip_install_continues(monkeypatch, project_with_planfile: Path) -> None:
-    from koru.wizard import cli as wizard_cli
+    from koru.wizard import ide as wizard_ide
 
-    monkeypatch.setattr(wizard_cli, "discover_installed_ides", lambda: [])
+    monkeypatch.setattr(wizard_ide, "discover_installed_ides", lambda: [])
     prompter = ScriptedPrompter(["__none", "quality", "cc_refactor"])
 
     result = run_wizard(
@@ -109,7 +109,8 @@ def test_run_wizard_no_ide_skip_install_continues(monkeypatch, project_with_plan
 
 
 def test_run_wizard_no_ide_install_command_path(monkeypatch, project_with_planfile: Path) -> None:
-    from koru.wizard import cli as wizard_cli
+    from koru.wizard import ide_install as wizard_ide_install
+    from koru.wizard import orchestrator as wizard_orchestrator
 
     state = {"n": 0}
 
@@ -128,10 +129,11 @@ def test_run_wizard_no_ide_install_command_path(monkeypatch, project_with_planfi
         ]
 
     executed: list[tuple[str, ...]] = []
-    monkeypatch.setattr(wizard_cli, "discover_installed_ides", fake_discover)
-    monkeypatch.setattr(wizard_cli, "_available_install_managers", lambda: {"snap"})
+    monkeypatch.setattr(wizard_orchestrator, "discover_installed_ides", fake_discover)
+    monkeypatch.setattr(wizard_ide_install, "discover_installed_ides", fake_discover)
+    monkeypatch.setattr(wizard_ide_install, "_available_install_managers", lambda: {"snap"})
     monkeypatch.setattr(
-        wizard_cli,
+        wizard_ide_install,
         "_run_install_command",
         lambda argv, _out: executed.append(argv) or True,
     )

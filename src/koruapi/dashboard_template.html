@@ -312,6 +312,7 @@ const tabs = [
   ["runtime", "Runtime"],
   ["topology", "Topology"],
   ["policy", "Policy"],
+  ["system", "System config"],
   ["settings", "Settings"],
   ["all", "All"],
 ];
@@ -871,7 +872,79 @@ function renderSettings(configPayload) {
   return panel("Settings", body, true);
 }
 
-function renderViewContent(ctx, topo, runtime, configPayload) {
+function renderSystemConfig(configPayload) {
+  const dotenv = (configPayload && configPayload.dotenv) || {};
+  const body = `
+    <form id="system-config-form" autocomplete="off">
+      <div class="form-stack">
+        <label>Project .env
+          <textarea id="cfg-dotenv" rows="18" spellcheck="false" placeholder="KEY=value">${esc(dotenv.text || "")}</textarea>
+        </label>
+        <div class="form-row">
+          <button type="submit" class="primary">Save .env</button>
+        </div>
+      </div>
+      <div class="muted" style="margin-top:8px">Path: <code>${esc(dotenv.path || ".env")}</code></div>
+      <div id="system-config-status" class="muted" style="margin-top:6px;min-height:1.2em"></div>
+    </form>
+  `;
+  return panel("System config", body, true);
+}
+
+function renderEnvConfig(payload) {
+  if (!payload || payload.error) {
+    return panel("Environment", `<div class="muted err">${esc((payload && payload.error) || "environment config unavailable")}</div>`, true);
+  }
+  const keys = Array.isArray(payload.keys) ? payload.keys : [];
+  if (!keys.length) {
+    return panel("Environment", `<div class="muted">no editable koru env vars</div>`, true);
+  }
+  const groups = {};
+  keys.forEach((row) => {
+    const g = row.group || "other";
+    (groups[g] = groups[g] || []).push(row);
+  });
+  const order = ["vision", "observe", "runtime", "other"].filter((g) => groups[g]);
+  const sections = order.map((g) => {
+    const rows = groups[g].map((row) => {
+      const current = row.in_file ? row.file_value : (row.env_value || "");
+      const fallback = !row.in_file && row.env_value ? ` (env: <code>${esc(row.env_value)}</code>)` : "";
+      const placeholder = row.default ? `default: ${row.default}` : "(empty)";
+      return `
+        <label class="form-stack">
+          <span><strong>${esc(row.name)}</strong>${fallback}</span>
+          <input type="text" name="${attr(row.name)}" value="${attr(current)}"
+                 placeholder="${attr(placeholder)}" autocomplete="off" />
+          <span class="muted">${esc(row.description || "")}</span>
+        </label>
+      `;
+    }).join("");
+    return `<fieldset style="border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:10px;">
+      <legend class="muted" style="text-transform:uppercase;font-size:11px;letter-spacing:0.04em;padding:0 6px;">${esc(g)}</legend>
+      <div class="form-stack">${rows}</div>
+    </fieldset>`;
+  }).join("");
+  const pathLine = payload.path
+    ? `<div class="muted">file: <code>${esc(payload.path)}</code>${payload.exists ? "" : " <span class=\"warn\">(does not exist — will be created on save)</span>"}</div>`
+    : "";
+  const body = `
+    <form id="env-config-form" class="form-stack">
+      ${pathLine}
+      ${sections}
+      <div class="form-row">
+        <button type="submit">Save .env</button>
+        <span id="env-config-status" class="muted"></span>
+      </div>
+      <div class="muted">
+        Screenshots are clamped to <strong>≥ 30 s</strong> regardless of <code>KORU_VISION_INTERVAL</code>.
+        Lower the floor with <code>KORU_VISION_INTERVAL_MIN</code> if you really need faster capture.
+      </div>
+    </form>
+  `;
+  return panel("Environment (.env)", body, true);
+}
+
+function renderViewContent(ctx, topo, runtime, configPayload, envConfigPayload) {
   const activeId = (ctx.ticket || {}).id || null;
   const views = {
     overview: [
@@ -896,10 +969,16 @@ function renderViewContent(ctx, topo, runtime, configPayload) {
       renderPolicy(ctx.policy),
       renderSelfService(ctx.self_service),
     ],
+    system: [
+      renderEnvConfig(envConfigPayload),
+      renderSystemConfig(configPayload),
+    ],
     settings: [
       renderSettings(configPayload),
     ],
     all: [
+      renderEnvConfig(envConfigPayload),
+      renderSystemConfig(configPayload),
       renderSettings(configPayload),
       renderSelfService(ctx.self_service),
       renderTicket(ctx.ticket, ctx.ticket_error),
@@ -924,11 +1003,19 @@ function renderCurrentViewFromCache() {
   const editingTicket = form && ($("ct-title")?.value || $("ct-description")?.value);
   const configForm = $("config-form");
   const editingConfig = configForm && document.activeElement && configForm.contains(document.activeElement);
-  if ((state.tab === "tickets" && editingTicket) || (state.tab === "settings" && editingConfig)) {
+  const systemConfigForm = $("system-config-form");
+  const editingSystemConfig = systemConfigForm && document.activeElement && systemConfigForm.contains(document.activeElement);
+  const envForm = $("env-config-form");
+  const editingEnv = envForm && document.activeElement && envForm.contains(document.activeElement);
+  if (
+    (state.tab === "tickets" && editingTicket)
+    || (state.tab === "settings" && editingConfig)
+    || (state.tab === "system" && (editingSystemConfig || editingEnv))
+  ) {
     return false;
   }
-  const { ctx, topo, runtime, configPayload } = lastRenderPayload;
-  root.innerHTML = renderViewContent(ctx, topo, runtime, configPayload);
+  const { ctx, topo, runtime, configPayload, envConfigPayload } = lastRenderPayload;
+  root.innerHTML = renderViewContent(ctx, topo, runtime, configPayload, envConfigPayload);
   return true;
 }
 
@@ -1089,6 +1176,90 @@ async function postDashboardConfig() {
   setTimeout(refresh, 200);
 }
 
+async function postEnvConfig(form) {
+  const status = $("env-config-status");
+  if (status) { status.textContent = "saving .env…"; status.className = "muted"; }
+  const values = {};
+  Array.from(form.querySelectorAll("input[name]")).forEach((input) => {
+    values[input.getAttribute("name")] = input.value;
+  });
+  noteChange("system.env.koru", "structured");
+  const res = await fetch("/api/env-config", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(requestBody({ values })),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error("HTTP " + res.status + ": " + text);
+  }
+  const data = await res.json();
+  if (status) {
+    const applied = Array.isArray(data.applied) ? data.applied.length : 0;
+    status.textContent = `saved ${applied} key(s) to ${data.path || ".env"}`;
+    status.className = "muted ok";
+  }
+  setTimeout(refresh, 150);
+}
+
+async function postEnvConfig(form) {
+  const status = $("env-config-status");
+  if (status) { status.textContent = "saving .env…"; status.className = "muted"; }
+  const values = {};
+  Array.from(form.querySelectorAll("input[name]")).forEach((input) => {
+    values[input.getAttribute("name")] = input.value;
+  });
+  noteChange("system.env.koru", "structured");
+  const res = await fetch("/api/env-config", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(requestBody({ values })),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error("HTTP " + res.status + ": " + text);
+  }
+  const data = await res.json();
+  if (status) {
+    const applied = Array.isArray(data.applied) ? data.applied.length : 0;
+    status.textContent = `saved ${applied} key(s) to ${data.path || ".env"}`;
+    status.className = "muted ok";
+  }
+  setTimeout(refresh, 150);
+}
+
+async function postSystemConfig() {
+  const status = $("system-config-status");
+  if (status) { status.textContent = "saving .env…"; status.className = "muted"; }
+  const payload = (lastRenderPayload && lastRenderPayload.configPayload) || {};
+  const cfg = payload.config || {};
+  const serve = cfg.serve || {};
+  noteChange("system.env.save", ".env");
+  const body = requestBody({
+    workspace: cfg.workspace || "",
+    ide: cfg.ide || state.ide || "auto",
+    queue_name: cfg.queue_name || "default",
+    serve: {
+      host: serve.host || "127.0.0.1",
+      port: Number(serve.port || 8765),
+      lan: !!serve.lan,
+      auto_port: !!serve.auto_port,
+    },
+    dotenv: {
+      text: $("cfg-dotenv").value,
+    },
+  });
+  const res = await fetch("/api/config", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
+  if (status) { status.textContent = `saved ${(data.dotenv || {}).path || ".env"}`; status.className = "muted ok"; }
+  setTimeout(refresh, 200);
+}
+
 document.addEventListener("change", (ev) => {
   const t = ev.target;
   if (t instanceof HTMLSelectElement) {
@@ -1195,11 +1366,12 @@ async function refresh() {
     renderDashboardControls(dash);
     renderTabs();
     syncUrlState({ replace: true });
-    const [ctxRes, topoRes, runtimeRes, configRes] = await Promise.all([
+    const [ctxRes, topoRes, runtimeRes, configRes, envConfigRes] = await Promise.all([
       fetch("/api/context" + projectQuery(),  { cache: "no-store" }),
       fetch("/api/topology" + projectQuery(), { cache: "no-store" }),
       fetch("/api/runtime-context" + projectQuery(), { cache: "no-store" }),
       fetch("/api/config" + projectQuery(), { cache: "no-store" }),
+      fetch("/api/env-config" + projectQuery(), { cache: "no-store" }),
     ]);
     if (!ctxRes.ok)  throw new Error("HTTP " + ctxRes.status);
     if (!topoRes.ok) throw new Error("HTTP " + topoRes.status);
@@ -1211,9 +1383,12 @@ async function refresh() {
     const configPayload = configRes.ok
       ? await configRes.json()
       : { error: "configuration unavailable" };
+    const envConfigPayload = envConfigRes.ok
+      ? await envConfigRes.json()
+      : { error: "environment config unavailable" };
     $("project").textContent = ctx.project || "?";
     $("ts").textContent = new Date().toLocaleTimeString();
-    lastRenderPayload = { ctx, topo, runtime, configPayload };
+    lastRenderPayload = { ctx, topo, runtime, configPayload, envConfigPayload };
     renderCurrentViewFromCache();
   } catch (e) {
     $("root").innerHTML = `<div class="panel full err">
@@ -1231,6 +1406,20 @@ document.addEventListener("submit", async (ev) => {
   if (ev.target.id === "config-form") {
     postDashboardConfig().catch(e => {
       const status = $("config-status");
+      if (status) { status.textContent = "save failed: " + e.message; status.className = "muted err"; }
+    });
+    return;
+  }
+  if (ev.target.id === "system-config-form") {
+    postSystemConfig().catch(e => {
+      const status = $("system-config-status");
+      if (status) { status.textContent = "save failed: " + e.message; status.className = "muted err"; }
+    });
+    return;
+  }
+  if (ev.target.id === "env-config-form") {
+    postEnvConfig(ev.target).catch(e => {
+      const status = $("env-config-status");
       if (status) { status.textContent = "save failed: " + e.message; status.className = "muted err"; }
     });
     return;

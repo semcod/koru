@@ -115,6 +115,7 @@ def test_migrate_project_config_v1_to_v2_adds_disabled_sections(tmp_path: Path) 
 
     assert result.config["schema"] == CONFIG_SCHEMA_V2
     assert result.config["vision"]["enabled"] is False
+    assert result.config["vision"]["interval_seconds"] == 30
     assert result.config["mesh"]["enabled"] is False
     assert result.config["browse"]["enabled"] is False
     assert result.config["sandbox"]["enabled"] is False

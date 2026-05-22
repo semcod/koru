@@ -26,7 +26,7 @@ def _add_capture_subparser(sub: argparse._SubParsersAction) -> None:
 def _add_agent_subparser(sub: argparse._SubParsersAction) -> None:
     agent = sub.add_parser("agent")
     agent.add_argument("--monitor", type=int, default=None, help="Monitor index (auto = all).")
-    agent.add_argument("--interval", type=float, default=None)
+    agent.add_argument("--interval", type=float, default=None, help="Capture interval seconds (minimum 30).")
     agent.add_argument("--max-frames", type=int, default=None)
     register_mesh_publish_args(agent, agent=True)
 

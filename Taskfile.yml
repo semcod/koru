@@ -59,19 +59,19 @@ tasks:
   # =====================================================================
 
   test:
-    desc: Run default koru tests (slow Docker/integration tests are deselected by pytest addopts)
+    desc: Run default koru tests in parallel when pytest-xdist is installed (slow Docker/integration tests are deselected by pytest addopts)
     cmds:
-      - python3 -m pytest tests/ -v {{.CLI_ARGS}}
+      - scripts/koru-pytest.sh --verbose {{.CLI_ARGS}}
 
   test:all:
-    desc: Run every koru test, including slow Docker/integration tests
+    desc: Run every koru test, including slow Docker/integration tests, serially
     cmds:
-      - python3 -m pytest tests/ -v -m "" {{.CLI_ARGS}}
+      - scripts/koru-pytest.sh --serial --all --verbose {{.CLI_ARGS}}
 
   test:docker:
     desc: Run Docker E2E tests only (slow; deselected by default addopts)
     cmds:
-      - python3 -m pytest tests/test_docker_e2e.py -v -m "" {{.CLI_ARGS}}
+      - scripts/koru-pytest.sh --serial tests/test_docker_e2e.py -v -m "" {{.CLI_ARGS}}
 
   test:docker:ide-matrix:
     desc: 'Run Docker OS x IDE smoke matrix. Vars: SYSTEMS, IDES (defaults cover Debian/Ubuntu/Fedora/Alpine and VS Code/VSCodium/Cursor/Windsurf/JetBrains/Zed)'
@@ -82,19 +82,29 @@ tasks:
       IDES: '{{.IDES | default ""}}'
 
   test:fast:
-    desc: Run tests without verbose output
+    desc: Run default tests quietly in parallel when pytest-xdist is installed
     cmds:
-      - python3 -m pytest tests/ -q
+      - scripts/koru-pytest.sh --fast {{.CLI_ARGS}}
 
   test:quick:
-    desc: Fastest possible test run (fail fast, no header)
+    desc: Fastest feedback loop (parallel, fail fast, failed tests first)
     cmds:
-      - python3 -m pytest tests/ -q --maxfail=1 --no-header
+      - scripts/koru-pytest.sh --quick {{.CLI_ARGS}}
 
   test:parallel:
-    desc: Run tests in parallel (safe only for isolated subsets)
+    desc: Run tests in parallel with configurable workers (KORU_PYTEST_WORKERS=4)
     cmds:
-      - python3 -m pytest tests/ -q -n auto --maxfail=1
+      - scripts/koru-pytest.sh --fast --maxfail=1 {{.CLI_ARGS}}
+
+  test:changed:
+    desc: Run changed pytest files under tests/; falls back to default tests when none changed
+    cmds:
+      - scripts/koru-pytest.sh --changed --quick {{.CLI_ARGS}}
+
+  test:profile:
+    desc: Run default tests and show the slowest test durations
+    cmds:
+      - scripts/koru-pytest.sh --fast --profile {{.CLI_ARGS}}
 
   lint:
     desc: Run ruff on koru sources and tests

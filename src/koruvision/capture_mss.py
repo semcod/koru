@@ -162,7 +162,9 @@ def command_candidates() -> list[tuple[str, list[str], bool]]:
             ("gnome-screenshot", ["gnome-screenshot", "-f", "{path}"], False),
             ("spectacle", ["spectacle", "-b", "-n", "-o", "{path}"], False),
             ("maim", ["maim", "{path}"], False),
-            ("scrot", ["scrot", "{path}"], False),
+            # scrot 1.x refuses to overwrite an existing file; the tempfile
+            # helper creates the path first so we always pass --overwrite.
+            ("scrot", ["scrot", "--overwrite", "{path}"], False),
         ]
     return []
 
@@ -188,6 +190,11 @@ def run_png_command(binary: str, template: list[str], stdout_png: bool) -> bytes
     try:
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
             tmp_path = tmp.name
+        # gnome-screenshot, spectacle and older scrot refuse to overwrite an
+        # existing path — remove the zero-byte placeholder NamedTemporaryFile
+        # leaves behind before invoking the screenshot binary.
+        with contextlib.suppress(OSError):
+            os.unlink(tmp_path)
         cmd = [exe if part == binary else part.format(path=tmp_path) for part in template]
         proc = subprocess.run(  # noqa: S603 — executable resolved with shutil.which, no shell.
             cmd,
@@ -198,6 +205,8 @@ def run_png_command(binary: str, template: list[str], stdout_png: bool) -> bytes
         if proc.returncode != 0:
             stderr = (proc.stderr or b"").decode("utf-8", "replace").strip()
             raise RuntimeError(f"{binary} failed ({proc.returncode}): {stderr[-300:]}")
+        if not os.path.isfile(tmp_path):
+            raise RuntimeError(f"{binary} did not write {tmp_path}")
         with open(tmp_path, "rb") as handle:
             return handle.read()
     finally:

@@ -30,7 +30,7 @@ def _register_up_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--relay-port", type=int, default=9876, help="Relay bind port (auto if busy).")
     parser.add_argument("--dashboard-host", default=None, help="Dashboard bind host (config default).")
     parser.add_argument("--dashboard-port", type=int, default=None, help="Dashboard bind port (config default).")
-    parser.add_argument("--interval", type=float, default=None, help="Vision capture interval seconds.")
+    parser.add_argument("--interval", type=float, default=None, help="Vision capture interval seconds (minimum 30).")
 
 
 def build_observe_parser() -> argparse.ArgumentParser:

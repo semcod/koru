@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from unittest import mock
 
-from koruvision.agent import run_capture_loop
+from koruvision.agent import (
+    MIN_CAPTURE_INTERVAL_SECONDS,
+    normalize_capture_interval,
+    run_capture_loop,
+)
 
 
 def test_run_capture_loop_respects_max_frames() -> None:
@@ -35,6 +39,22 @@ def test_run_capture_loop_retries_after_capture_error() -> None:
     assert count == 1
     assert frames == ["abc"]
     sleep.assert_called_once_with(60)
+
+
+def test_capture_interval_never_goes_below_30_seconds() -> None:
+    assert normalize_capture_interval(0.01) == MIN_CAPTURE_INTERVAL_SECONDS
+
+    with mock.patch("koruvision.agent.capture_once") as capture:
+        capture.return_value = mock.Mock(frame_id="abc", payload=b"x", captured_at="t")
+        with mock.patch("koruvision.agent.time.sleep") as sleep:
+            count = run_capture_loop(
+                interval_seconds=0.01,
+                on_frame=lambda _frame: None,
+                max_frames=2,
+            )
+
+    assert count == 2
+    sleep.assert_called_once_with(MIN_CAPTURE_INTERVAL_SECONDS)
 
 
 def test_run_capture_loop_multi_monitor_uses_capture_all() -> None:

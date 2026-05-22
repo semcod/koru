@@ -12,6 +12,8 @@ from koruvision.capture import (
     capture_monitor_png,
 )
 
+MIN_CAPTURE_INTERVAL_SECONDS = 30.0
+
 
 def capture_once(monitor_id: int | None = 0, scale: float | None = None) -> VisionFrame:
     """Capture a single monitor (default: primary)."""
@@ -30,6 +32,14 @@ def _capture_cycle(monitor_id: int | None, scale: float | None) -> list[VisionFr
     return [capture_once(monitor_id, scale=scale)]
 
 
+def normalize_capture_interval(interval_seconds: float) -> float:
+    """Return an interval that never captures screenshots more often than every 30s."""
+    if interval_seconds <= 0:
+        msg = "interval_seconds must be positive"
+        raise ValueError(msg)
+    return max(MIN_CAPTURE_INTERVAL_SECONDS, interval_seconds)
+
+
 def run_capture_loop(
     *,
     interval_seconds: float,
@@ -43,9 +53,7 @@ def run_capture_loop(
     When ``monitor_id`` is ``None`` every detected monitor is captured per cycle.
     ``max_frames`` bounds the total number of frames published, not cycles.
     """
-    if interval_seconds <= 0:
-        msg = "interval_seconds must be positive"
-        raise ValueError(msg)
+    interval_seconds = normalize_capture_interval(interval_seconds)
     count = 0
     while max_frames is None or count < max_frames:
         try:

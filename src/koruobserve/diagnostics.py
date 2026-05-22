@@ -123,11 +123,23 @@ def _wayland_hint(session: str) -> str:
     if session == "wayland":
         return (
             "GNOME/Wayland blocks silent screenshots for unsandboxed apps. "
-            "Workarounds: switch to an X11 login session ('Ubuntu on Xorg'), "
-            "package koru as a Flatpak with the screenshot permission, or set "
-            "KORU_VISION_BACKEND=portal and accept the interactive prompt."
+            "Try KORU_VISION_PROVIDER=portal_screencast and accept the screen-share "
+            "dialog once (PipeWire + xdg-desktop-portal), or KORU_VISION_PROVIDER=portal "
+            "for one-shot portal screenshots. X11 session ('Ubuntu on Xorg') also works."
         )
     return ""
+
+
+def _provider_status() -> list[dict[str, Any]]:
+    try:
+        from koruvision.providers.detector import list_provider_status, rank_providers
+    except Exception:
+        return []
+    ranked = {provider.name for provider in rank_providers()}
+    rows = list_provider_status()
+    for row in rows:
+        row["selected"] = row["name"] in ranked
+    return rows
 
 
 def capture_diagnostics(project: Path) -> dict[str, Any]:
@@ -157,6 +169,7 @@ def capture_diagnostics(project: Path) -> dict[str, Any]:
     return {
         "session_type": session,
         "monitors": monitors,
+        "providers": _provider_status(),
         "last_error": last_error,
         "status": status,
         "hint": _wayland_hint(session) if status == "blocked" else "",

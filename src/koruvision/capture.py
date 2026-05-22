@@ -1,10 +1,9 @@
-"""Monitor capture with mss → portal → native-command fallbacks.
+"""Monitor capture via ranked capture providers.
 
 The agent captures every detected monitor at ~20% native resolution
 (``KORU_VISION_SCALE``) so the grid stays fast even with multi-display
-setups. When ``mss`` fails (e.g. Wayland returns black frames) the
-``capture_mss`` helpers fall back to ``org.freedesktop.portal.Screenshot``
-or to a native screenshot binary (``grim``/``gnome-screenshot``/...).
+setups. Provider order is chosen by :mod:`koruvision.providers.detector`
+(Wayland: ScreenCast → mss → CLI tools → portal screenshot, etc.).
 """
 
 from __future__ import annotations
@@ -15,19 +14,9 @@ import subprocess  # noqa: F401 — re-exported for monkeypatching from tests
 from dataclasses import dataclass
 from typing import Any
 
-from koruvision.capture_mss import (
-    BlackFrameError,
-    capture_backend,
-    command_capture_dict as _command_capture_dict,
-    grab_all_mss,
-    grab_single_mss,
-    portal_capture_dict,
-)
+from koruvision.capture_mss import BlackFrameError
+from koruvision.providers.detector import capture_all_with_providers, capture_one_with_providers
 from koruvision.scaling import resolve_scale
-
-# Test-visible aliases — tests monkeypatch these directly.
-_capture_via_mss_single = grab_single_mss
-_capture_all_via_mss = grab_all_mss
 
 
 @dataclass(frozen=True)
@@ -52,13 +41,6 @@ def _frame(descriptor: dict[str, Any]) -> VisionFrame:
     return VisionFrame(**descriptor)
 
 
-def _command_candidates() -> list[tuple[str, list[str], bool]]:
-    """Pass-through for the native screenshot commands (kept for monkeypatching)."""
-    from koruvision.capture_mss import command_candidates
-
-    return command_candidates()
-
-
 def list_monitors() -> list[dict[str, Any]]:
     """Return all attached monitors (excluding the union "virtual screen")."""
     import mss
@@ -68,25 +50,13 @@ def list_monitors() -> list[dict[str, Any]]:
 
 
 def capture_monitor_png(monitor_id: int | None = None, scale: float | None = None) -> VisionFrame:
-    """Capture a single monitor; falls back to portal/native CLI when ``mss`` fails."""
-    scale_value = resolve_scale(scale)
-    backend = capture_backend()
-    if backend == "portal":
-        return _frame(portal_capture_dict())
-    if backend in {"command", "native", "desktop"}:
-        return _frame(_command_capture_dict())
-    return _frame(_capture_via_mss_single(monitor_id, scale_value))
+    """Capture a single monitor using the best available provider."""
+    return _frame(capture_one_with_providers(monitor_id, resolve_scale(scale)))
 
 
 def capture_all_monitors(scale: float | None = None) -> list[VisionFrame]:
     """Capture every detected monitor; black/failed monitors are skipped."""
-    scale_value = resolve_scale(scale)
-    backend = capture_backend()
-    if backend == "portal":
-        return [_frame(portal_capture_dict())]
-    if backend in {"command", "native", "desktop"}:
-        return [_frame(_command_capture_dict())]
-    return [_frame(item) for item in _capture_all_via_mss(scale_value)]
+    return [_frame(item) for item in capture_all_with_providers(resolve_scale(scale))]
 
 
 __all__ = [

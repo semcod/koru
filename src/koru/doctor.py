@@ -879,22 +879,8 @@ def _activity_line_mentions_selected(line: str, selected: str) -> bool:
     )
 
 
-def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
-    try:
-        selected, path, _socket_text, relevant, skip_reason = _recent_autopilot_debug_context()
-    except OSError as exc:
-        path = _autopilot_debug_log_path()
-        return WARN, f"cannot read {path}: {exc}"
-    if skip_reason:
-        return SKIP, skip_reason
-    if not relevant:
-        return WARN, f"{path}: no recent chat-control entries for ide={selected}"
-
-    activity = [
-        line
-        for line in _read_recent_autopilot_activity_lines(project)
-        if selected and _activity_line_mentions_selected(line, selected)
-    ]
+def _count_daemon_metrics(activity: list[str]) -> tuple[int, int, int, int]:
+    """Count daemon success/failure metrics from activity lines."""
     daemon_successes = sum(
         any(token in line for token in ("autopilot: ok", "drive wynik: ok=True", "message.sent"))
         for line in activity
@@ -922,7 +908,11 @@ def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
         ),
         default=-1,
     )
+    return daemon_successes, daemon_failures, last_activity_success_index, last_activity_failure_index
 
+
+def _count_chat_control_metrics(relevant: list[str]) -> dict[str, int | int]:
+    """Count various chat control metrics from relevant lines."""
     fast_send_errors = sum(
         _autopilot_debug_event_has(line, "WINDSURF_FASTPATH_EXECUTE_SEND_ERROR")
         for line in relevant
@@ -959,6 +949,18 @@ def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
             "message.sent",
         )
     )
+    return {
+        "fast_send_errors": fast_send_errors,
+        "paste_failures": paste_failures,
+        "focus_rejections": focus_rejections,
+        "paste_rejections": paste_rejections,
+        "input_refusals": input_refusals,
+        "send_successes": send_successes,
+    }
+
+
+def _calculate_command_indices(relevant: list[str]) -> tuple[int, int]:
+    """Calculate indices of command availability/missing events."""
     command_available_index = max(
         (
             idx
@@ -980,6 +982,11 @@ def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
         ),
         default=-1,
     )
+    return command_available_index, command_missing_index
+
+
+def _calculate_success_failure_indices(relevant: list[str]) -> tuple[int, int]:
+    """Calculate indices of last success/failure events."""
     last_failure_index = max(
         (
             idx
@@ -1016,16 +1023,29 @@ def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
         ),
         default=-1,
     )
+    return last_success_index, last_failure_index
 
+
+def _build_chat_control_detail_bits(
+    selected: str,
+    relevant: list[str],
+    chat_metrics: dict[str, int],
+    daemon_successes: int,
+    daemon_failures: int,
+    activity: list[str],
+    command_available: bool,
+    command_missing_index: int,
+) -> list[str]:
+    """Build detail bits for chat control check."""
     detail_bits = [
         f"ide={selected}",
         f"entries={len(relevant)}",
-        f"fast_send_errors={fast_send_errors}",
-        f"paste_failures={paste_failures}",
-        f"focus_rejections={focus_rejections}",
-        f"paste_rejections={paste_rejections}",
-        f"input_refusals={input_refusals}",
-        f"send_successes={send_successes}",
+        f"fast_send_errors={chat_metrics['fast_send_errors']}",
+        f"paste_failures={chat_metrics['paste_failures']}",
+        f"focus_rejections={chat_metrics['focus_rejections']}",
+        f"paste_rejections={chat_metrics['paste_rejections']}",
+        f"input_refusals={chat_metrics['input_refusals']}",
+        f"send_successes={chat_metrics['send_successes']}",
     ]
     if activity:
         detail_bits.append(f"daemon_events={len(activity)}")
@@ -1033,19 +1053,61 @@ def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
         detail_bits.append(f"daemon_successes={daemon_successes}")
     if daemon_failures:
         detail_bits.append(f"daemon_failures={daemon_failures}")
+    if command_available:
+        detail_bits.append("native_send_command=available")
+    if command_missing_index >= 0:
+        detail_bits.append("native_send_command_missing_seen=true")
+    return detail_bits
+
+
+def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
+    try:
+        selected, path, _socket_text, relevant, skip_reason = _recent_autopilot_debug_context()
+    except OSError as exc:
+        path = _autopilot_debug_log_path()
+        return WARN, f"cannot read {path}: {exc}"
+    if skip_reason:
+        return SKIP, skip_reason
+    if not relevant:
+        return WARN, f"{path}: no recent chat-control entries for ide={selected}"
+
+    activity = [
+        line
+        for line in _read_recent_autopilot_activity_lines(project)
+        if selected and _activity_line_mentions_selected(line, selected)
+    ]
+    daemon_successes, daemon_failures, last_activity_success_index, last_activity_failure_index = _count_daemon_metrics(activity)
+    chat_metrics = _count_chat_control_metrics(relevant)
+    command_available_index, command_missing_index = _calculate_command_indices(relevant)
+    last_success_index, last_failure_index = _calculate_success_failure_indices(relevant)
+
     command_available = command_available_index >= 0
     command_missing_latest = command_missing_index > max(
         command_available_index,
         last_success_index,
     )
-    if command_available:
-        detail_bits.append("native_send_command=available")
-    if command_missing_index >= 0:
-        detail_bits.append("native_send_command_missing_seen=true")
+    detail_bits = _build_chat_control_detail_bits(
+        selected,
+        relevant,
+        chat_metrics,
+        daemon_successes,
+        daemon_failures,
+        activity,
+        command_available,
+        command_missing_index,
+    )
 
     if command_missing_latest:
         return WARN, "; ".join(detail_bits + ["native chat command unavailable"])
-    if any((fast_send_errors, paste_failures, focus_rejections, paste_rejections, input_refusals)):
+    if any(
+        (
+            chat_metrics["fast_send_errors"],
+            chat_metrics["paste_failures"],
+            chat_metrics["focus_rejections"],
+            chat_metrics["paste_rejections"],
+            chat_metrics["input_refusals"],
+        )
+    ):
         if (
             last_success_index > last_failure_index >= 0
             or last_activity_success_index > last_activity_failure_index
@@ -1054,7 +1116,7 @@ def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
         else:
             detail_bits.append("latest_chat_control_failure=true")
         return WARN, "; ".join(detail_bits)
-    if send_successes or daemon_successes:
+    if chat_metrics["send_successes"] or daemon_successes:
         return PASS, "; ".join(detail_bits + ["chat_control=stable"])
     return WARN, "; ".join(detail_bits + ["no recent paste/submit success observed"])
 

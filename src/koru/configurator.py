@@ -102,7 +102,7 @@ def default_v2_feature_sections() -> dict[str, Any]:
     return {
         "vision": {
             "enabled": False,
-            "interval_seconds": 60,
+            "interval_seconds": 30,
             "format": "webp",
             "monitors": "all",
             "windows": [],

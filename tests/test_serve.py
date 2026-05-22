@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import errno
 import json
+import os
 import socket
 import subprocess
 import tempfile
@@ -114,6 +115,8 @@ class TestServe(unittest.TestCase):
         )
         self.port = _free_port()
         self.server = _start(self.project, self.port)
+        self.addCleanup(lambda: os.environ.pop("OPENROUTER_API_KEY", None))
+        self.addCleanup(lambda: os.environ.pop("ANY_CUSTOM_VAR", None))
 
     def tearDown(self) -> None:
         self.server.shutdown()
@@ -176,6 +179,8 @@ class TestServe(unittest.TestCase):
         self.assertIn('id="view-select"', body)
         self.assertIn("data-tab", body)
         self.assertIn('href="/grid"', body)
+        self.assertIn("System config", body)
+        self.assertIn("system-config-form", body)
         self.assertIn("searchParams", body)
         self.assertIn("tab", body)
         self.assertIn("project", body)
@@ -198,7 +203,9 @@ class TestServe(unittest.TestCase):
         payload = json.loads(body)
         self.assertEqual(payload["default_project"], str(self.project.resolve()))
         self.assertIn(f"http://127.0.0.1:{self.port}/", payload["urls"])
-        self.assertTrue(any(row["path"] == str(self.project.resolve()) for row in payload["projects"]))
+        self.assertTrue(
+            any(row["path"] == str(self.project.resolve()) for row in payload["projects"])
+        )
         self.assertTrue(any(row["id"] == "auto" for row in payload["ides"]))
 
     def test_api_config_get_and_post_persist_dashboard_settings(self) -> None:
@@ -222,6 +229,9 @@ class TestServe(unittest.TestCase):
                     "lan": True,
                     "auto_port": True,
                 },
+                "dotenv": {
+                    "text": "OPENROUTER_API_KEY=sk-or-dashboard\nANY_CUSTOM_VAR=ok\n",
+                },
             },
         )
         self.assertEqual(status, 200)
@@ -233,6 +243,10 @@ class TestServe(unittest.TestCase):
         self.assertEqual(saved["queue_name"], "ops")
         self.assertEqual(saved["serve"]["port"], 9013)
         self.assertTrue(saved["serve"]["lan"])
+        env_text = (self.project / ".env").read_text(encoding="utf-8")
+        self.assertIn("OPENROUTER_API_KEY=sk-or-dashboard", env_text)
+        self.assertIn("ANY_CUSTOM_VAR=ok", env_text)
+        self.assertEqual(saved_payload["dotenv"]["text"], env_text)
 
     def test_api_context_returns_brief(self) -> None:
         status, ctype, body = _get(self.port, "/api/context")
@@ -388,7 +402,10 @@ class TestServeAutoPort(unittest.TestCase):
                 open_browser=False,
                 lan=True,
             )
-            with mock.patch("koruapi.dashboard_state.local_lan_addresses", return_value=["192.168.1.50"]):
+            with mock.patch(
+                "koruapi.dashboard_state.local_lan_addresses",
+                return_value=["192.168.1.50"],
+            ):
                 write_serve_endpoint_file(cfg)
             data = read_serve_endpoint(project)
             self.assertIsNotNone(data)

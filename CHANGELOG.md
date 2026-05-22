@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Capture providers (Phase 0+1):** `koruvision/providers/` plugin layout with
+  ranked auto-detection (`detector.py`), MSS / portal screenshot / grim /
+  CLI tools, and **`portal_screencast`** (xdg-desktop-portal ScreenCast +
+  `gst-launch-1.0 pipewiresrc`). `capture.py` delegates to the detector;
+  `/api/mesh/diagnostics` lists provider availability.
+- **30 s capture floor:** `koruvision.agent.normalize_capture_interval`
+  clamps any user-configured interval below 30 s up to the
+  `MIN_CAPTURE_INTERVAL_SECONDS = 30` safety floor; `KORU_VISION_INTERVAL`
+  (env) and `vision.interval_seconds` (project config) honour the floor.
+- **`.env` auto-load:** `python -m koru` / the `koru` console script now
+  load `<cwd>/.env` (and `.env.local`) on startup via
+  `koru.dotenv_loader.load_dotenv` — existing env vars always win.
+- **System-config dashboard tab:** new `/api/env-config` GET/POST endpoint
+  + `Environment (.env)` panel under the **System config** nav item shows
+  every well-known `KORU_*` knob (capture interval, provider, scale,
+  portal interpreter, mesh frame store, …) with inline editing that writes
+  back to `.env` while preserving comments and unrelated lines.
+
 ### Changed
 - **Dashboard refactor:** `src/koruapi/dashboard_serve.py` shrank from
   ~1850 lines to ~240. Per-route HTTP handlers moved to
@@ -24,6 +43,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   at the new neighbouring modules; `docs/korudsl-koruapi.md` and
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
+
+## [0.1.221] - 2026-05-22
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_configurator.py
+- Update tests/test_docker_capture.py
+- Update tests/test_env_config.py
+- Update tests/test_koruvision_agent.py
+- Update tests/test_provider_portal_screencast.py
+- Update tests/test_serve.py
+- Update tests/test_vision_interval_floor.py
+- Update tests/test_wizard_cli.py
+- Update tests/test_wizard_env_e2e.py
+- Update tests/test_wizard_ide_extras.py
+
+### Other
+- Update Taskfile.yml
+- Update app.doql.less
+- Update docker/capture/Dockerfile
+- Update docker/capture/entrypoint-x11.sh
+- Update docker/capture/run.sh
+- Update docker/capture/smoke.py
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- ... and 16 more files
 
 ## [0.1.220] - 2026-05-22
 

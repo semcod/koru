@@ -2,7 +2,7 @@
 
 app {
   name: koru;
-  version: 0.1.219;
+  version: 0.1.220;
 }
 
 dependencies {
@@ -50,17 +50,17 @@ workflow[name="install:tools"] {
 
 workflow[name="test"] {
   trigger: manual;
-  step-1: run cmd=python3 -m pytest tests/ -v {{.CLI_ARGS}};
+  step-1: run cmd=scripts/koru-pytest.sh --verbose {{.CLI_ARGS}};
 }
 
 workflow[name="test:all"] {
   trigger: manual;
-  step-1: run cmd=python3 -m pytest tests/ -v -m "" {{.CLI_ARGS}};
+  step-1: run cmd=scripts/koru-pytest.sh --serial --all --verbose {{.CLI_ARGS}};
 }
 
 workflow[name="test:docker"] {
   trigger: manual;
-  step-1: run cmd=python3 -m pytest tests/test_docker_e2e.py -v -m "" {{.CLI_ARGS}};
+  step-1: run cmd=scripts/koru-pytest.sh --serial tests/test_docker_e2e.py -v -m "" {{.CLI_ARGS}};
 }
 
 workflow[name="test:docker:ide-matrix"] {
@@ -70,17 +70,27 @@ workflow[name="test:docker:ide-matrix"] {
 
 workflow[name="test:fast"] {
   trigger: manual;
-  step-1: run cmd=python3 -m pytest tests/ -q;
+  step-1: run cmd=scripts/koru-pytest.sh --fast {{.CLI_ARGS}};
 }
 
 workflow[name="test:quick"] {
   trigger: manual;
-  step-1: run cmd=python3 -m pytest tests/ -q --maxfail=1 --no-header;
+  step-1: run cmd=scripts/koru-pytest.sh --quick {{.CLI_ARGS}};
 }
 
 workflow[name="test:parallel"] {
   trigger: manual;
-  step-1: run cmd=python3 -m pytest tests/ -q -n auto --maxfail=1;
+  step-1: run cmd=scripts/koru-pytest.sh --fast --maxfail=1 {{.CLI_ARGS}};
+}
+
+workflow[name="test:changed"] {
+  trigger: manual;
+  step-1: run cmd=scripts/koru-pytest.sh --changed --quick {{.CLI_ARGS}};
+}
+
+workflow[name="test:profile"] {
+  trigger: manual;
+  step-1: run cmd=scripts/koru-pytest.sh --fast --profile {{.CLI_ARGS}};
 }
 
 workflow[name="lint"] {
