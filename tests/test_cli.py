@@ -404,6 +404,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "gate",
             "queue",
             "gc",
+            "git",
             "tools",
             "mcp-serve",
             "autopilot",

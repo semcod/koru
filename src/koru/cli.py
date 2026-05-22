@@ -28,6 +28,7 @@ from koru.events import emit_management_event
 from koru.gate import VALID_MODES as GATE_VALID_MODES
 from koru.gate import authorize_gate
 from koru.gc import DEFAULT_KEEP_LAST, DEFAULT_MAX_AGE_DAYS, GC_STATUSES, run_gc
+from koru.git_cli import git_main
 from koru.init import init_project, refresh_init_agent_lane
 from koru.loop import discover_repositories, run_closed_loop
 from koru.queue import (
@@ -1428,6 +1429,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "gate": _gate_main,
     "queue": _queue_main,
     "gc": _gc_main,
+    "git": git_main,
     "tools": _tools_main,
     "mcp-serve": _mcp_serve_main,
     "ide-router": ide_router_main,

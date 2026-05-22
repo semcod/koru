@@ -671,9 +671,14 @@ def _build_policy_rules(policy: Policy) -> list[str]:
     """Return rules derived from policy booleans and CI settings."""
     rules: list[str] = []
     if not policy.allow_commit:
-        rules.append("DO NOT run `git commit`. Commits are made by CI/CD or a human reviewer.")
+        rules.append(
+            "DO NOT run raw `git commit`. If committing is explicitly requested, "
+            "use `koru git commit` so koru can enforce attribution."
+        )
     if not policy.allow_push:
-        rules.append("DO NOT run `git push`. Pushing is reserved for CI/CD.")
+        rules.append(
+            "DO NOT run raw `git push`. If pushing is explicitly requested, use `koru git push`."
+        )
     if not policy.allow_branch_create:
         rules.append("DO NOT create or switch branches.")
     if not policy.allow_tag:
