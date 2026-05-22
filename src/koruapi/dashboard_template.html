@@ -296,6 +296,7 @@
 <footer>
   Auto-refresh 5 s · URL carries current <code>tab</code>, <code>project</code>, <code>ide</code>, and <code>change</code> ·
   <a href="/grid">Grid</a>
+  <a href="/capture/host">Browser capture</a>
   · <a href="/api/context">JSON</a> · <a href="/api/handoff">Markdown</a>
   · <a href="/api/topology">Topology JSON</a>
   · <a href="/api/runtime-context">Runtime context JSON</a>
@@ -369,6 +370,21 @@ function requestBody(extra) {
 function renderDashboardControls(dash) {
   const projects = dash.projects || [];
   const ides = dash.ides || [];
+  state.projectsByIde = dash.projects_by_ide || {};
+  const knownPaths = new Set(projects.map(p => p.path));
+  for (const ide of ides) {
+    for (const candidate of (ide.projects || [])) {
+      if (candidate.path && !knownPaths.has(candidate.path)) {
+        projects.push({
+          path: candidate.path,
+          name: candidate.path.split("/").pop() || candidate.path,
+          source: candidate.source || `${ide.label || ide.id} cwd`,
+          planfile: false,
+        });
+        knownPaths.add(candidate.path);
+      }
+    }
+  }
   const projectPaths = projects.map(p => p.path);
   if (!state.project || !projectPaths.includes(state.project)) {
     state.project = dash.default_project || (projects[0] || {}).path || "";
@@ -1260,6 +1276,33 @@ async function postSystemConfig() {
   setTimeout(refresh, 200);
 }
 
+function selectProjectForIde(ideId) {
+  if (!ideId || ideId === "auto") return false;
+  const map = state.projectsByIde || {};
+  const candidates = map[ideId] || [];
+  if (!candidates.length) return false;
+  const target = candidates[0].path;
+  if (!target || target === state.project) return false;
+  const projectSelect = $("project-select");
+  if (!projectSelect) return false;
+  let exists = false;
+  for (const opt of projectSelect.options) {
+    if (opt.value === target) { exists = true; break; }
+  }
+  if (!exists) {
+    const label = (candidates[0].source || ideId);
+    const opt = document.createElement("option");
+    opt.value = target;
+    opt.setAttribute("data-source", label);
+    opt.textContent = (target.split("/").pop() || target) + " · " + label;
+    projectSelect.appendChild(opt);
+  }
+  projectSelect.value = target;
+  state.project = target;
+  localStorage.setItem("koru.dashboard.project", target);
+  return true;
+}
+
 document.addEventListener("change", (ev) => {
   const t = ev.target;
   if (t instanceof HTMLSelectElement) {
@@ -1277,26 +1320,7 @@ document.addEventListener("change", (ev) => {
       state.focus = "ide";
       state.change = "scope.ide";
       localStorage.setItem("koru.dashboard.ide", state.ide);
-      
-      let changedProject = false;
-      if (state.ide !== "auto" && t.selectedIndex >= 0) {
-        const ideLabel = t.options[t.selectedIndex].getAttribute("data-label");
-        const projectSelect = $("project-select");
-        if (ideLabel && projectSelect) {
-          for (const opt of projectSelect.options) {
-            const src = opt.getAttribute("data-source") || "";
-            if (src.includes(ideLabel) && (src.includes("workspace") || src.includes("cwd"))) {
-              if (state.project !== opt.value) {
-                state.project = opt.value;
-                localStorage.setItem("koru.dashboard.project", state.project);
-                changedProject = true;
-              }
-              break;
-            }
-          }
-        }
-      }
-
+      selectProjectForIde(state.ide);
       syncUrlState();
       refresh();
       return;

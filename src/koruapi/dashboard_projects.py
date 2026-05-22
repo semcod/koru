@@ -7,8 +7,8 @@ import os
 from pathlib import Path
 from typing import Any, cast
 
-from koru.wizard.project import propose_projects
-from koruide.ide import detect_running_ides
+from koru.wizard.project import _candidates_from_running_ide, propose_projects
+from koruide.ide import RunningIDE, detect_running_ides
 
 
 def dashboard_workspace(project: Path, configured_workspace: Path | None) -> Path:
@@ -99,6 +99,33 @@ def discover_dashboard_projects(
   return out
 
 
+def _running_ide_to_detected(row: RunningIDE) -> Any:
+  """Adapt ``RunningIDE`` to the duck-typed shape expected by project discovery."""
+
+  class _Adapter:
+    def __init__(self, ide: RunningIDE) -> None:
+      self.id = ide.id
+      self.label = ide.label
+      self.pid = ide.pid
+      self.running = True
+
+  return _Adapter(row)
+
+
+def projects_by_ide(ides: list[RunningIDE] | None = None) -> dict[str, list[dict[str, str]]]:
+  """Return ``{ide_id: [{path, source}, …]}`` derived from each running IDE's cmdline/cwd."""
+  rows = list(ides) if ides is not None else list(detect_running_ides())
+  out: dict[str, list[dict[str, str]]] = {}
+  for ide in rows:
+    with contextlib.suppress(Exception):
+      candidates = _candidates_from_running_ide(_running_ide_to_detected(ide))
+      out[ide.id] = [
+        {"path": str(item.path), "source": item.source}
+        for item in candidates
+      ]
+  return out
+
+
 def resolve_dashboard_project(
   project: Path,
   configured_workspace: Path | None,
@@ -111,6 +138,10 @@ def resolve_dashboard_project(
     Path(str(row["path"])).resolve()
     for row in discover_dashboard_projects(project, configured_workspace)
   }
+  for rows in projects_by_ide().values():
+    for row in rows:
+      with contextlib.suppress(Exception):
+        allowed.add(Path(row["path"]).resolve())
   if candidate in allowed:
     return candidate
   raise ValueError(f"project is not available in this dashboard: {candidate}")

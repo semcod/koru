@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><title>Koru browser capture</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:20px;background:#111;color:#eee;max-width:720px}
+nav{margin-bottom:16px}
+nav a{color:#9ad;text-decoration:none}
+h1{font-size:20px;margin:0 0 8px}
+p{color:#aaa;font-size:14px;line-height:1.5}
+button{background:#2a5a8a;color:#fff;border:none;padding:10px 16px;border-radius:6px;
+  font-size:14px;cursor:pointer;margin-right:8px}
+button:disabled{opacity:0.5;cursor:not-allowed}
+#status{margin-top:14px;font-size:13px;color:#cde;min-height:1.4em}
+#preview{margin-top:16px;max-width:100%;border:1px solid #333;border-radius:6px;display:none}
+.err{color:#f88}
+.ok{color:#8d8}
+</style></head><body>
+<nav><a href="/">← Dashboard</a> · <a href="/grid">Grid</a></nav>
+<h1>Browser screen capture</h1>
+<p>Click <strong>Share screen</strong>, pick a display in the browser dialog, and Koru will
+upload a PNG snapshot every <strong>{{interval}}</strong> seconds to the observation mesh
+(<code>provider=browser_getdisplay</code>).</p>
+<p>Peer id: <code id="peer-label">{{peer}}</code> (override with <code>?peer=hostname</code>)</p>
+<button id="share" type="button">Share screen</button>
+<button id="stop" type="button" disabled>Stop</button>
+<video id="video" autoplay playsinline muted style="display:none"></video>
+<canvas id="canvas" style="display:none"></canvas>
+<img id="preview" alt="last upload preview"/>
+<div id="status">Waiting to start…</div>
+<script>
+const INTERVAL_SEC = Math.max(5, parseInt("{{interval}}", 10) || 30);
+const PEER = ("{{peer}}" || "").trim() || location.hostname;
+const peerLabel = document.getElementById("peer-label");
+if (peerLabel) peerLabel.textContent = PEER;
+
+const shareBtn = document.getElementById("share");
+const stopBtn = document.getElementById("stop");
+const statusEl = document.getElementById("status");
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const preview = document.getElementById("preview");
+let stream = null;
+let timer = null;
+let monitorId = 0;
+
+function setStatus(msg, cls) {
+  statusEl.className = cls || "";
+  statusEl.textContent = msg;
+}
+
+async function uploadFrame(blob) {
+  const buf = await blob.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  const image_b64 = btoa(binary);
+  const res = await fetch("/api/mesh/browser-upload", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      peer: PEER,
+      monitor_id: monitorId,
+      output: "browser",
+      image_b64,
+      scale: 1.0,
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+
+async function captureOnce() {
+  if (!stream || !video.videoWidth) return;
+  const w = video.videoWidth;
+  const h = video.videoHeight;
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, w, h);
+  const blob = await new Promise((resolve, reject) => {
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob failed"))), "image/png");
+  });
+  const data = await uploadFrame(blob);
+  preview.src = URL.createObjectURL(blob);
+  preview.style.display = "block";
+  setStatus(
+    `Uploaded monitor ${data.monitor_id} frame ${data.frame_id} (${new Date().toLocaleTimeString()})`,
+    "ok"
+  );
+}
+
+async function startCapture() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+    setStatus("getDisplayMedia is not available in this browser", "err");
+    return;
+  }
+  try {
+    stream = await navigator.mediaDevices.getDisplayMedia({video: true, audio: false});
+  } catch (err) {
+    setStatus("Screen share cancelled or denied: " + err, "err");
+    return;
+  }
+  video.srcObject = stream;
+  await video.play();
+  shareBtn.disabled = true;
+  stopBtn.disabled = false;
+  setStatus("Sharing — first upload…", "ok");
+  await captureOnce();
+  timer = setInterval(() => {
+    captureOnce().catch((err) => setStatus("Upload failed: " + err, "err"));
+  }, INTERVAL_SEC * 1000);
+  stream.getVideoTracks()[0]?.addEventListener("ended", () => stopCapture());
+}
+
+function stopCapture() {
+  if (timer) clearInterval(timer);
+  timer = null;
+  if (stream) {
+    stream.getTracks().forEach((t) => t.stop());
+    stream = null;
+  }
+  video.srcObject = null;
+  shareBtn.disabled = false;
+  stopBtn.disabled = true;
+  setStatus("Stopped.", "");
+}
+
+shareBtn.addEventListener("click", () => {
+  startCapture().catch((err) => setStatus("Start failed: " + err, "err"));
+});
+stopBtn.addEventListener("click", stopCapture);
+</script>
+</body></html>

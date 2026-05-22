@@ -7,7 +7,11 @@ import socket
 from pathlib import Path
 from typing import Any
 
-from koruapi.dashboard_projects import dashboard_workspace, discover_dashboard_projects
+from koruapi.dashboard_projects import (
+  dashboard_workspace,
+  discover_dashboard_projects,
+  projects_by_ide,
+)
 from koruide.ide import autopilot_ide_choices, detect_running_ides
 
 
@@ -48,9 +52,18 @@ def dashboard_urls(host: str, port: int) -> list[str]:
   return list(dict.fromkeys(urls))
 
 
-def dashboard_ide_rows() -> list[dict[str, Any]]:
-  running = {row.id: row for row in detect_running_ides()}
-  rows: list[dict[str, Any]] = [{"id": "auto", "label": "Auto", "running": False}]
+def dashboard_ide_rows() -> tuple[list[dict[str, Any]], dict[str, list[dict[str, str]]]]:
+  """Return ``(ide_rows, projects_by_ide_map)``.
+
+  Each detected IDE gains a ``projects`` list (workspace + cwd) so the dashboard
+  can switch the project picker to the project actually loaded in that IDE.
+  """
+  detected_ides = list(detect_running_ides())
+  running = {row.id: row for row in detected_ides}
+  by_ide = projects_by_ide(detected_ides)
+  rows: list[dict[str, Any]] = [
+    {"id": "auto", "label": "Auto", "running": False, "projects": []},
+  ]
   for ide_id in autopilot_ide_choices():
     if ide_id == "auto":
       continue
@@ -62,9 +75,10 @@ def dashboard_ide_rows() -> list[dict[str, Any]]:
         "running": detected is not None,
         "pid": detected.pid if detected else None,
         "exe": detected.exe if detected else None,
+        "projects": by_ide.get(ide_id, []),
       }
     )
-  return rows
+  return rows, by_ide
 
 
 def dashboard_state(
@@ -76,6 +90,7 @@ def dashboard_state(
   configured_workspace: Path | None,
   queue_name: str | None,
 ) -> dict[str, Any]:
+  ide_rows, by_ide = dashboard_ide_rows()
   return {
     "ok": True,
     "host": host,
@@ -85,6 +100,7 @@ def dashboard_state(
     "workspace": str(dashboard_workspace(project, configured_workspace)),
     "default_project": str(project.resolve()),
     "projects": discover_dashboard_projects(project, configured_workspace),
-    "ides": dashboard_ide_rows(),
+    "ides": ide_rows,
+    "projects_by_ide": by_ide,
     "queue_name": queue_name or "default",
   }

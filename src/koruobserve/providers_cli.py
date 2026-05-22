@@ -8,7 +8,9 @@ from typing import Any
 
 
 def screencast_session_path(project: Path) -> Path:
-    return project.resolve() / ".koru" / "keys" / "screencast.session"
+    from koruvision.providers.screencast_session import session_file_for_project
+
+    return session_file_for_project(project)
 
 
 def providers_list_payload(project: Path) -> dict[str, Any]:
@@ -68,7 +70,13 @@ def providers_test_text(payload: dict[str, Any]) -> str:
             lines.append(f"  {name}: ok ({detail})")
         else:
             err = str(row.get("error") or row.get("reason") or "failed")
-            lines.append(f"  {name}: FAIL — {err[:120]}")
+            if name == "portal_screencast" and "Missing token" in err:
+                err = (
+                    f"{err[:80]} — run from a GNOME terminal (not SSH), accept the "
+                    "'Share screen' dialog when it appears; use "
+                    "'koru observe providers reset' then 'koru observe up'"
+                )
+            lines.append(f"  {name}: FAIL — {err[:200]}")
     lines.append(
         f"  summary: {payload.get('ok_count', 0)} ok, {payload.get('fail_count', 0)} failed"
     )
@@ -77,10 +85,11 @@ def providers_test_text(payload: dict[str, Any]) -> str:
 
 def providers_reset_consent(project: Path) -> dict[str, Any]:
     """Remove saved ScreenCast session token (forces portal dialog on next capture)."""
+    from koruvision.providers.screencast_session import clear_session_file
+
     removed: list[str] = []
     session = screencast_session_path(project)
-    if session.is_file():
-        session.unlink()
+    if clear_session_file(session):
         removed.append(str(session))
     keys_dir = session.parent
     if keys_dir.is_dir() and not any(keys_dir.iterdir()):

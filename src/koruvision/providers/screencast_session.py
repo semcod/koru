@@ -7,8 +7,11 @@ import os
 from pathlib import Path
 from typing import Any
 
-
 SESSION_FILENAME = "screencast.session"
+
+
+def session_file_for_project(project: Path) -> Path:
+    return project.resolve() / ".koru" / "keys" / SESSION_FILENAME
 
 
 def resolve_screencast_session_file() -> Path:

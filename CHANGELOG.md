@@ -68,6 +68,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.224] - 2026-05-22
+
+### Docs
+- Update README.md
+- Update docs/plans/capture-providers-refactor.md
+
+### Test
+- Update tests/test_dashboard_projects_by_ide.py
+- Update tests/test_koruvision_capture.py
+- Update tests/test_provider_browser_upload.py
+- Update tests/test_provider_obs.py
+- Update tests/test_provider_portal_screencast.py
+- Update tests/test_screencast_session.py
+- Update tests/test_serve.py
+
+### Other
+- Update src/koruapi/dashboard_template.html
+- Update src/korumesh/capture_host.html
+- Update src/korumesh/grid_template.html
+- Update uv.lock
+
 ## [0.1.223] - 2026-05-22
 
 ### Docs

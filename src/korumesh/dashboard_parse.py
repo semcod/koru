@@ -48,4 +48,5 @@ def envelope_to_frame_entry(envelope: Envelope) -> dict[str, object]:
         "native_width": _int_param(params, "nw"),
         "native_height": _int_param(params, "nh"),
         "output": params.get("output", ""),
+        "provider": params.get("provider", ""),
     }

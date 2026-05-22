@@ -14,7 +14,10 @@ def _require_mss() -> None:
 
 
 def _fake_grabber(*, primary: bool = False) -> mock.MagicMock:
-    shot = SimpleNamespace(rgb=bytes([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]), size=(2, 2))
+    shot = SimpleNamespace(
+        rgb=bytes([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]),
+        size=(2, 2),
+    )
     grabber = mock.MagicMock()
     grabber.monitors = [
         {"left": 0, "top": 0, "width": 4, "height": 2},
@@ -77,7 +80,10 @@ def test_capture_monitor_png_records_native_resolution_after_downscale() -> None
 def test_capture_monitor_png_skips_black_monitor() -> None:
     _require_mss()
     black = SimpleNamespace(rgb=b"\x00\x00\x00" * 12, size=(2, 2))
-    good = SimpleNamespace(rgb=bytes([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]), size=(2, 2))
+    good = SimpleNamespace(
+        rgb=bytes([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]),
+        size=(2, 2),
+    )
     grabber = mock.MagicMock()
     grabber.monitors = [
         {"left": 0, "top": 0, "width": 4, "height": 2},
@@ -110,16 +116,26 @@ def test_capture_all_monitors_returns_frame_per_display() -> None:
 
 
 def test_capture_monitor_png_auto_falls_back_to_portal_on_wayland(monkeypatch, capsys) -> None:
+    from koruvision.providers.base import ProviderAvailability
+
     monkeypatch.delenv("KORU_VISION_BACKEND", raising=False)
     monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
     monkeypatch.setenv("WAYLAND_DISPLAY", "wayland-1")
     monkeypatch.setenv("DBUS_SESSION_BUS_ADDRESS", "unix:path=/tmp/koru-bus")
+    unavailable = ProviderAvailability(available=False, reason="mocked in test")
     with mock.patch(
-        "koruvision.capture_mss._grab_single_mss_raw",
-        side_effect=RuntimeError("black frames"),
+        "koruvision.providers.portal_screencast.PortalScreenCastProvider.availability",
+        return_value=unavailable,
     ):
-        with mock.patch("koruvision.portal_capture.capture_portal_png", return_value=_png(9, 4)):
-            frame = capture_monitor_png(None)
+        with mock.patch(
+            "koruvision.capture_mss._grab_single_mss_raw",
+            side_effect=RuntimeError("black frames"),
+        ):
+            with mock.patch(
+                "koruvision.portal_capture.capture_portal_png",
+                return_value=_png(9, 4),
+            ):
+                frame = capture_monitor_png(None)
     assert frame.output == "portal"
     assert frame.width == 9
     assert frame.height == 4
@@ -131,7 +147,10 @@ def test_capture_monitor_png_auto_uses_native_command_when_mss_fails(monkeypatch
     monkeypatch.delenv("XDG_SESSION_TYPE", raising=False)
     monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
     monkeypatch.delenv("DBUS_SESSION_BUS_ADDRESS", raising=False)
-    monkeypatch.setattr("koruvision.capture_mss.command_candidates", lambda: [("grim", ["grim", "-"], True)])
+    monkeypatch.setattr(
+        "koruvision.capture_mss.command_candidates",
+        lambda: [("grim", ["grim", "-"], True)],
+    )
     monkeypatch.setattr("koruvision.capture_mss.shutil.which", lambda binary: f"/usr/bin/{binary}")
     monkeypatch.setattr(
         "koruvision.capture_mss.subprocess.run",
@@ -148,16 +167,26 @@ def test_capture_monitor_png_auto_uses_native_command_when_mss_fails(monkeypatch
 
 
 def test_capture_all_monitors_auto_falls_back_to_portal(monkeypatch) -> None:
+    from koruvision.providers.base import ProviderAvailability
+
     monkeypatch.delenv("KORU_VISION_BACKEND", raising=False)
     monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
     monkeypatch.setenv("WAYLAND_DISPLAY", "wayland-1")
     monkeypatch.setenv("DBUS_SESSION_BUS_ADDRESS", "unix:path=/tmp/koru-bus")
+    unavailable = ProviderAvailability(available=False, reason="mocked in test")
     with mock.patch(
-        "koruvision.capture_mss._grab_all_mss_raw",
-        side_effect=RuntimeError("all monitors returned black frames"),
+        "koruvision.providers.portal_screencast.PortalScreenCastProvider.availability",
+        return_value=unavailable,
     ):
-        with mock.patch("koruvision.portal_capture.capture_portal_png", return_value=_png(5, 3)):
-            frames = capture_all_monitors()
+        with mock.patch(
+            "koruvision.capture_mss._grab_all_mss_raw",
+            side_effect=RuntimeError("all monitors returned black frames"),
+        ):
+            with mock.patch(
+                "koruvision.portal_capture.capture_portal_png",
+                return_value=_png(5, 3),
+            ):
+                frames = capture_all_monitors()
     assert len(frames) == 1
     assert frames[0].output == "portal"
     assert frames[0].width == 5

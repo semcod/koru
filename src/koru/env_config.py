@@ -42,7 +42,44 @@ KORU_ENV_KEYS: tuple[EnvKey, ...] = (
     EnvKey(
         "KORU_VISION_PROVIDER",
         "auto",
-        "Capture provider: auto | mss | portal_screencast | portal | grim | cli_tools.",
+        "Capture provider: auto | obs_websocket | portal_screencast | "
+        "mss | portal | grim | cli_tools.",
+        "vision",
+    ),
+    EnvKey(
+        "KORU_OBS_URL",
+        "ws://127.0.0.1:4455",
+        "OBS WebSocket URL (obs-websocket v5, built into OBS 28+).",
+        "vision",
+    ),
+    EnvKey(
+        "KORU_OBS_PASSWORD",
+        "",
+        "OBS WebSocket password (empty when authentication is disabled).",
+        "vision",
+    ),
+    EnvKey(
+        "KORU_OBS_SOURCE",
+        "Display Capture",
+        "OBS source name for GetSourceScreenshot (scene item / display capture).",
+        "vision",
+    ),
+    EnvKey(
+        "KORU_OBS_IMAGE_WIDTH",
+        "1920",
+        "Max width passed to OBS GetSourceScreenshot (height scales automatically).",
+        "vision",
+    ),
+    EnvKey(
+        "KORU_VISION_BROWSER",
+        "false",
+        "When true, rank browser_getdisplay (upload via /capture/host) in auto provider order.",
+        "vision",
+    ),
+    EnvKey(
+        "KORU_VISION_BROWSER_INTERVAL",
+        "",
+        "Seconds between browser uploads (defaults to KORU_VISION_INTERVAL, minimum 5).",
         "vision",
     ),
     EnvKey(

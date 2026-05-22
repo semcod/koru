@@ -26,6 +26,15 @@ Status: **draft**, autor: agent, data: 2026-05-22.
   `provider_diagnostics_rows()` / `probe_capture_providers()` w detectorze,
   `/api/mesh/diagnostics` z `ranked_providers[]`, tabela providerów w
   `/grid`, reset `.koru/keys/screencast.session`.
+- ScreenCast session reuse ✅ — `.koru/keys/screencast.session`, retry po
+  wygasłej sesji, JSON stdout z `payload_b64` (PNG bytes).
+- Wayland auto-rank ✅ — `portal_screencast` przed mss (po OBS jeśli
+  `probe_obs_reachable()`).
+- Phase 3 ✅ (kod) — `obs_websocket.py` (OBS WebSocket v5 przez
+  `websockets`), `KORU_OBS_*` w `.env` / dashboard Environment tab.
+- Phase 4 ✅ (kod) — `/capture/host` + `POST /api/mesh/browser-upload`,
+  `browser_getdisplay` provider, `capture_host.html`, frames tagged
+  `provider=browser_getdisplay` in mesh store / grid JSON.
 - Posprzątane przy okazji: usunięty martwy moduł `koruvision/capture_fallback.py`
   oraz orchestratory `capture_backend`, `auto_backend_order`,
   `auto_failure_message`, `_fallback_after_mss`, `grab_single_mss`,

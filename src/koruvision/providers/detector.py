@@ -26,6 +26,10 @@ _LEGACY_MAP = {
     "desktop": "cli_tools",
     "portal_screencast": "portal_screencast",
     "screencast": "portal_screencast",
+    "obs": "obs_websocket",
+    "obs_websocket": "obs_websocket",
+    "browser": "browser_getdisplay",
+    "browser_getdisplay": "browser_getdisplay",
 }
 
 
@@ -77,6 +81,15 @@ def rank_providers() -> list[CaptureProvider]:
         return [provider]
 
     ordered_names: list[str] = []
+    from koruvision.providers.browser_getdisplay import browser_capture_requested
+    from koruvision.providers.obs_websocket import probe_obs_reachable
+
+    if browser_capture_requested():
+        ordered_names.append("browser_getdisplay")
+    if probe_obs_reachable():
+        ordered_names.append("obs_websocket")
+    if is_wayland() and portal_possible():
+        ordered_names.append("portal_screencast")
     if env_truthy("KORU_VISION_PREFER_PORTAL") and portal_possible():
         ordered_names.append("portal_screenshot")
     ordered_names.append("mss")
@@ -85,8 +98,6 @@ def rank_providers() -> list[CaptureProvider]:
     if compositor_hint() == "wlroots" or (is_wayland() and compositor_hint() != "gnome"):
         ordered_names.append("grim")
     ordered_names.append("cli_tools")
-    if is_wayland() and portal_possible():
-        ordered_names.append("portal_screencast")
 
     seen: set[str] = set()
     ranked: list[CaptureProvider] = []

@@ -207,6 +207,11 @@ class TestServe(unittest.TestCase):
             any(row["path"] == str(self.project.resolve()) for row in payload["projects"])
         )
         self.assertTrue(any(row["id"] == "auto" for row in payload["ides"]))
+        self.assertIn("projects_by_ide", payload)
+        self.assertIsInstance(payload["projects_by_ide"], dict)
+        for row in payload["ides"]:
+            self.assertIn("projects", row)
+            self.assertIsInstance(row["projects"], list)
 
     def test_api_config_get_and_post_persist_dashboard_settings(self) -> None:
         status, ctype, body = _get(self.port, "/api/config")

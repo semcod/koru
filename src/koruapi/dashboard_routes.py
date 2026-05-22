@@ -15,33 +15,33 @@ from urllib.parse import parse_qs, urlparse
 
 from koru.env_config import apply_env_updates, env_config_payload, write_env_config
 from koruapi.dashboard_config import (
-  DashboardConfigDefaults,
-  dashboard_config_payload,
-  save_dashboard_config,
+    DashboardConfigDefaults,
+    dashboard_config_payload,
+    save_dashboard_config,
 )
 from koruapi.dashboard_context import dashboard_context_payload, dashboard_handoff_markdown
 from koruapi.dashboard_http import DashboardRequestHandler
 from koruapi.dashboard_projects import (
-  dashboard_workspace,
-  resolve_dashboard_project,
-)
-from koruapi.dashboard_state import dashboard_state
-from koruapi.dashboard_tickets import (
-  bulk_waiting_input_action,
-  create_ticket_from_dashboard,
-  reorder_ticket_from_dashboard,
-  update_ticket_from_dashboard,
-)
-from koruapi.dashboard_topology import (
-  apply_dashboard_topology_update,
-  dashboard_topology_payload,
+    dashboard_workspace,
+    resolve_dashboard_project,
 )
 from koruapi.dashboard_runtime import (
-  runtime_context_error_payload,
-  runtime_context_payload,
-  save_runtime_context_config,
+    runtime_context_error_payload,
+    runtime_context_payload,
+    save_runtime_context_config,
 )
 from koruapi.dashboard_serve_utils import ServeConfig
+from koruapi.dashboard_state import dashboard_state
+from koruapi.dashboard_tickets import (
+    bulk_waiting_input_action,
+    create_ticket_from_dashboard,
+    reorder_ticket_from_dashboard,
+    update_ticket_from_dashboard,
+)
+from koruapi.dashboard_topology import (
+    apply_dashboard_topology_update,
+    dashboard_topology_payload,
+)
 
 
 @lru_cache(maxsize=1)
@@ -194,6 +194,16 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
 
                 if serve_mesh_http(self, path, project=config.project):
                     return
+            if path == "/capture/host":
+                from korumesh.browser_capture import serve_browser_capture_http
+
+                if serve_browser_capture_http(
+                    self,
+                    path,
+                    project=config.project,
+                    method="GET",
+                ):
+                    return
             route = {
                 "/api/dashboard": self._get_dashboard,
                 "/api/config": self._get_config,
@@ -274,7 +284,13 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
             except Exception as exc:
                 self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
                 return
-            self._send_json({**dashboard_config_payload(project, defaults), "saved": True, "path": str(result.path)})
+            self._send_json(
+                {
+                    **dashboard_config_payload(project, defaults),
+                    "saved": True,
+                    "path": str(result.path),
+                }
+            )
 
         def _post_waiting_input_bulk(self, body: dict[str, Any]) -> None:
             action = str(body.get("action") or "").strip().lower()
@@ -344,7 +360,11 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
                 return
             try:
                 project = self._selected_project(body)
-                result = reorder_ticket_from_dashboard(project, ticket_id=ticket_id, direction=direction)
+                result = reorder_ticket_from_dashboard(
+                    project,
+                    ticket_id=ticket_id,
+                    direction=direction,
+                )
             except ValueError as exc:
                 self._send_json({"error": str(exc)}, status=400)
                 return
@@ -360,6 +380,18 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
             except Exception as exc:
                 self._send_json({"error": str(exc)}, status=400)
                 return
+
+            if path == "/api/mesh/browser-upload":
+                from korumesh.browser_capture import serve_browser_capture_http
+
+                if serve_browser_capture_http(
+                    self,
+                    path,
+                    project=config.project,
+                    method="POST",
+                    body=body,
+                ):
+                    return
 
             route = {
                 "/api/topology": self._post_topology,
