@@ -48,6 +48,7 @@ const net = __importStar(require("net"));
 const child_process_1 = require("child_process");
 const vscode = __importStar(require("vscode"));
 const dispatch_plan_1 = require("./dispatch-plan");
+const antigravity_fastpath_1 = require("./antigravity-fastpath");
 const probe_ladder_1 = require("./probe-ladder");
 const socketPath_1 = require("./socketPath");
 const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
@@ -883,25 +884,11 @@ class AutopilotBridge {
         if (this.detectIde() !== "windsurf") {
             return false;
         }
-        let existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+        const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
         if (!existing.has("windsurf.sendTextToChat")) {
-            try {
-                let openCmd = "windsurf.openCascade";
-                if (existing.has("workbench.view.windsurfAgentSidebarContainer")) {
-                    openCmd = "workbench.view.windsurfAgentSidebarContainer";
-                }
-                else if (existing.has("windsurf.cascadePanel.open")) {
-                    openCmd = "windsurf.cascadePanel.open";
-                }
-                await Promise.resolve(vscode.commands.executeCommand(openCmd));
-                await this.waitForCommand("windsurf.sendTextToChat", 1500);
-                existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-            }
-            catch (err) {
-                console.warn("koru autopilot: failed to open Cascade early", err);
-            }
-        }
-        if (!existing.has("windsurf.sendTextToChat")) {
+            // Some Windsurf "open" commands are toggle-style and close the chat
+            // when it is already visible. Avoid opening anything in the native
+            // fast path; the generic fallback can use non-toggle focus commands.
             return false;
         }
         try {
@@ -915,8 +902,9 @@ class AutopilotBridge {
                     submitCmd = submitResult.command;
                 }
                 else {
-                    await this._tryTypeSubmit("\n");
-                    submitCmd = "type:\n";
+                    // On Windsurf, typing a newline fallback when input is not focused is unsafe and closes the panel.
+                    // Since windsurf.sendTextToChat might already send the text, we should not do any type:\n fallback!
+                    submitCmd = "windsurf.sendTextToChat";
                 }
             }
             this.sendSuccessAck(env, { ok: true, command: "none" }, { ok: true, command: "windsurf.sendTextToChat" }, submitCmd);
@@ -935,24 +923,18 @@ class AutopilotBridge {
             return false;
         }
         let existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-        if (!existing.has("antigravity.sendPromptToAgentPanel")) {
-            return false;
-        }
+        let openCommand = (0, antigravity_fastpath_1.selectAntigravityOpenCommand)(existing);
         try {
-            for (const openCmd of [
-                "antigravity.openAgent",
-                "antigravity.agentSidePanel.open",
-                "antigravity.agentSidePanel.focus",
-            ]) {
-                if (existing.has(openCmd)) {
-                    await Promise.resolve(vscode.commands.executeCommand(openCmd));
-                    await this.sleep(200);
-                    existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-                    break;
-                }
+            if (openCommand !== "none") {
+                await Promise.resolve(vscode.commands.executeCommand(openCommand));
+                await this.sleep(200);
+                existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
             }
-            await Promise.resolve(vscode.commands.executeCommand("antigravity.sendPromptToAgentPanel", text));
-            this.sendSuccessAck(env, { ok: true, command: "antigravity.agentSidePanel.open" }, { ok: true, command: "antigravity.sendPromptToAgentPanel" }, "antigravity.sendPromptToAgentPanel");
+            if (!(0, antigravity_fastpath_1.canUseAntigravitySendPrompt)(existing)) {
+                return false;
+            }
+            await Promise.resolve(vscode.commands.executeCommand(antigravity_fastpath_1.ANTIGRAVITY_SEND_PROMPT_COMMAND, text));
+            this.sendSuccessAck(env, { ok: true, command: openCommand }, { ok: true, command: antigravity_fastpath_1.ANTIGRAVITY_SEND_PROMPT_COMMAND }, antigravity_fastpath_1.ANTIGRAVITY_SEND_PROMPT_COMMAND);
             this.sendMessageSent(text);
             return true;
         }

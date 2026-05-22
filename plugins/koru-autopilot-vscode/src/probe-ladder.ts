@@ -128,7 +128,6 @@ export function buildFocusOpenCommands(ide: string, custom: string[]): string[] 
     "workbench.action.openInAgentManager",
   ];
   const windsurfDefaults = [
-    "workbench.view.windsurfAgentSidebarContainer",
     "windsurf.cascadePanel.open",
     "windsurf.cascadePanel.focus",
     "windsurf.action.openCascade",

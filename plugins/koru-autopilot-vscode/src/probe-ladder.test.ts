@@ -70,6 +70,15 @@ function testBuildFocusOpenAntigravityFirst(): void {
   assert(cmds.includes("antigravity.agentSidePanel.focus"), "antigravity should focus the agent side panel");
 }
 
+function testBuildFocusOpenWindsurfDoesNotUseToggleSidebarCommand(): void {
+  const cmds = buildFocusOpenCommands("windsurf", []);
+  assert(
+    !cmds.includes("workbench.view.windsurfAgentSidebarContainer"),
+    "windsurf sidebar command toggles the chat closed and must not be used automatically",
+  );
+  assert(cmds.includes("windsurf.cascadePanel.open"), "windsurf keeps non-toggle cascade open fallback");
+}
+
 function testBuildFocusOpenVscodeDoesNotAutoOpenChatByDefault(): void {
   assert(buildFocusOpenCommands("vscode", []).length === 0, "vscode must not auto-open chat by default");
   assert(
@@ -104,6 +113,7 @@ testPasteLandedInEditor();
 testMergeUnique();
 testBuildFocusOpenCursorFirst();
 testBuildFocusOpenAntigravityFirst();
+testBuildFocusOpenWindsurfDoesNotUseToggleSidebarCommand();
 testBuildFocusOpenVscodeDoesNotAutoOpenChatByDefault();
 testBuildFocusInputUsesChatCommands();
 testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance();

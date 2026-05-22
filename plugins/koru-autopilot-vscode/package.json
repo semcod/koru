@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscode",
   "displayName": "koru autopilot",
   "description": "Bridge between VS Code / Windsurf / Cursor and the koru autopilot daemon.",
-  "version": "0.1.29",
+  "version": "0.1.31",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -128,7 +128,7 @@
   },
   "scripts": {
     "compile": "tsc -p ./",
-    "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js",
+    "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/antigravity-fastpath.test.js",
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
     "package": "vsce package --no-dependencies --out koru-autopilot-${npm_package_version}.vsix",
