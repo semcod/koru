@@ -1,5 +1,5 @@
-# code2llm/evolution | 2205 func | 230f | 2026-05-22
-# generated in 0.01s
+# code2llm/evolution | 2248 func | 234f | 2026-05-22
+# generated in 0.02s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           src/koru/doctor.py
@@ -22,25 +22,25 @@ NEXT[10] (ranked by impact):
       WHY: CC=20 exceeds 15
       EFFORT: ~1h  IMPACT: 420
 
-  [6] !  SPLIT-FUNC      AutopilotBridge.submitChat  CC=16  fan=18
+  [6] !  SPLIT-FUNC      ingest_browser_upload  CC=18  fan=21
+      WHY: CC=18 exceeds 15
+      EFFORT: ~1h  IMPACT: 378
+
+  [7] !  SPLIT-FUNC      AutopilotBridge.submitChat  CC=16  fan=18
       WHY: CC=16 exceeds 15
       EFFORT: ~1h  IMPACT: 288
 
-  [7] !  SPLIT-FUNC      write_env_config  CC=16  fan=18
+  [8] !  SPLIT-FUNC      write_env_config  CC=16  fan=18
       WHY: CC=16 exceeds 15
       EFFORT: ~1h  IMPACT: 288
 
-  [8] !  SPLIT-FUNC      _check_autopilot_plugin_bundle  CC=23  fan=12
+  [9] !  SPLIT-FUNC      _check_autopilot_plugin_bundle  CC=23  fan=12
       WHY: CC=23 exceeds 15
       EFFORT: ~1h  IMPACT: 276
 
-  [9] !  SPLIT-FUNC      doctor_main  CC=15  fan=16
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 240
-
-  [10] !  SPLIT-FUNC      rank_providers  CC=15  fan=13
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 195
+  [10] !  SPLIT-FUNC      rank_providers  CC=17  fan=15
+      WHY: CC=17 exceeds 15
+      EFFORT: ~1h  IMPACT: 255
 
 
 RISKS[3]:
@@ -52,7 +52,7 @@ METRICS-TARGET:
   CC̄:          4.0 → ≤2.8
   max-CC:      31 → ≤15
   god-modules: 20 → 0
-  high-CC(≥15): 10 → ≤5
+  high-CC(≥15): 12 → ≤6
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.1 → now CC̄=4.0
+  prev CC̄=4.0 → now CC̄=4.0

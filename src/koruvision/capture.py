@@ -31,6 +31,7 @@ class VisionFrame:
     native_width: int = 0
     native_height: int = 0
     output: str = ""
+    provider: str = ""
 
     @property
     def sha256(self) -> str:

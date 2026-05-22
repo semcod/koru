@@ -371,6 +371,7 @@ function renderDashboardControls(dash) {
   const projects = dash.projects || [];
   const ides = dash.ides || [];
   state.projectsByIde = dash.projects_by_ide || {};
+  state.defaultProject = dash.default_project || "";
   const knownPaths = new Set(projects.map(p => p.path));
   for (const ide of ides) {
     for (const candidate of (ide.projects || [])) {
@@ -391,7 +392,7 @@ function renderDashboardControls(dash) {
     if (state.project) localStorage.setItem("koru.dashboard.project", state.project);
   }
   if (!state.ide) state.ide = "auto";
-  const projectOptions = projects.map(p => `<option value="${attr(p.path)}" data-source="${attr(p.source || '')}" ${p.path === state.project ? "selected" : ""}>
+  const projectOptions = projects.map(p => `<option value="${attr(p.path)}" data-source="${attr(p.source || '')}" data-planfile="${p.planfile ? "1" : "0"}" data-git="${p.git ? "1" : "0"}" ${p.path === state.project ? "selected" : ""}>
     ${esc(p.name || p.path)}${p.planfile ? "" : " · no planfile"}
   </option>`).join("");
   const ideOptions = ides.map(ide => `<option value="${attr(ide.id)}" data-label="${attr(ide.label || ide.id)}" ${ide.id === state.ide ? "selected" : ""}>
@@ -409,6 +410,12 @@ function renderDashboardControls(dash) {
     </label>
     <span class="muted">${dash.lan ? "LAN" : "local"} · ${urls}</span>
   `;
+  if (selectProjectForIde(state.ide)) {
+    state.focus = "project";
+    state.change = "scope.ide.project";
+    syncUrlState({ replace: true });
+    setTimeout(() => refresh(), 0);
+  }
 }
 
 function renderTabs() {
@@ -1280,26 +1287,47 @@ function selectProjectForIde(ideId) {
   if (!ideId || ideId === "auto") return false;
   const map = state.projectsByIde || {};
   const candidates = map[ideId] || [];
-  if (!candidates.length) return false;
-  const target = candidates[0].path;
-  if (!target || target === state.project) return false;
   const projectSelect = $("project-select");
   if (!projectSelect) return false;
+
+  const optionsByPath = new Map();
+  for (const opt of projectSelect.options) {
+    optionsByPath.set(opt.value, opt);
+  }
+
+  let picked = "";
+  for (const candidate of candidates) {
+    if (!candidate || !candidate.path) continue;
+    const opt = optionsByPath.get(candidate.path);
+    if (!opt) continue;
+    const isProject = opt.dataset.planfile === "1" || opt.dataset.git === "1";
+    if (isProject || /workspace/i.test(String(candidate.source || ""))) {
+      picked = candidate.path;
+      break;
+    }
+  }
+  if (!picked) {
+    const fallback = state.defaultProject || "";
+    if (fallback && optionsByPath.has(fallback)) picked = fallback;
+  }
+  if (!picked || picked === state.project) return false;
+
   let exists = false;
   for (const opt of projectSelect.options) {
-    if (opt.value === target) { exists = true; break; }
+    if (opt.value === picked) { exists = true; break; }
   }
   if (!exists) {
-    const label = (candidates[0].source || ideId);
+    const first = candidates[0] || {};
+    const label = (first.source || ideId);
     const opt = document.createElement("option");
-    opt.value = target;
+    opt.value = picked;
     opt.setAttribute("data-source", label);
-    opt.textContent = (target.split("/").pop() || target) + " · " + label;
+    opt.textContent = (picked.split("/").pop() || picked) + " · " + label;
     projectSelect.appendChild(opt);
   }
-  projectSelect.value = target;
-  state.project = target;
-  localStorage.setItem("koru.dashboard.project", target);
+  projectSelect.value = picked;
+  state.project = picked;
+  localStorage.setItem("koru.dashboard.project", picked);
   return true;
 }
 

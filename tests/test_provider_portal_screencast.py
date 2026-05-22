@@ -40,6 +40,7 @@ def test_portal_screencast_capture_all_mocked(monkeypatch) -> None:
     assert frames[0]["output"] == "DP-1"
     assert frames[0]["width"] == 4
     assert frames[0]["height"] == 3
+    assert frames[0]["provider"] == "portal_screencast"
 
 
 def test_screencast_frames_retries_after_cache_clear(monkeypatch, tmp_path: Path) -> None:

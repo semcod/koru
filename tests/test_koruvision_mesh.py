@@ -21,6 +21,7 @@ def test_vision_frame_envelope_uses_vision_topic() -> None:
         native_width=10,
         native_height=10,
         output="DP-1",
+        provider="portal_screencast",
     )
     envelope = vision_frame_envelope(frame, peer_from="host-a", key=key)
     assert envelope.topic == "vision/frame"
@@ -28,6 +29,7 @@ def test_vision_frame_envelope_uses_vision_topic() -> None:
     assert "monitor=1" in envelope.mime
     assert "nw=10" in envelope.mime
     assert "output=DP-1" in envelope.mime
+    assert "provider=portal_screencast" in envelope.mime
     assert envelope.envelope_id == "host-a:vision:1"
 
 

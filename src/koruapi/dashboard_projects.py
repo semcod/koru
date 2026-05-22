@@ -3,12 +3,23 @@
 from __future__ import annotations
 
 import contextlib
+import json
 import os
 from pathlib import Path
 from typing import Any, cast
+from urllib.parse import unquote, urlparse
 
 from koru.wizard.project import _candidates_from_running_ide, propose_projects
 from koruide.ide import RunningIDE, detect_running_ides
+
+_VSCODE_LIKE_IDE_DIRS: dict[str, tuple[str, ...]] = {
+    "cursor": ("Cursor",),
+    "vscode": ("Code", "Code - OSS"),
+    "vscodium": ("VSCodium",),
+    "windsurf": ("Windsurf",),
+}
+
+_SHELL_BINARIES = {"bash", "zsh", "fish", "sh", "dash", "ksh", "tcsh", "csh"}
 
 
 def dashboard_workspace(project: Path, configured_workspace: Path | None) -> Path:
@@ -112,17 +123,179 @@ def _running_ide_to_detected(row: RunningIDE) -> Any:
   return _Adapter(row)
 
 
+def _read_workspace_folder(storage_dir: Path) -> Path | None:
+  """Return the folder referenced by VS Code-like ``workspace.json``."""
+  workspace_file = storage_dir / "workspace.json"
+  try:
+    data = json.loads(workspace_file.read_text(encoding="utf-8"))
+  except (OSError, ValueError):
+    return None
+  folder = data.get("folder") if isinstance(data, dict) else None
+  if not isinstance(folder, str) or not folder:
+    return None
+  parsed = urlparse(folder)
+  if parsed.scheme not in ("", "file"):
+    return None
+  candidate = Path(unquote(parsed.path)).expanduser()
+  if not candidate.exists() or not candidate.is_dir():
+    return None
+  return candidate.resolve()
+
+
+def _workspace_storage_projects(ide_id: str) -> list[dict[str, str]]:
+  """Read ``~/.config/<IDE>/User/workspaceStorage/*/workspace.json`` for *ide_id*."""
+  dirs = _VSCODE_LIKE_IDE_DIRS.get(ide_id, ())
+  rows: list[tuple[float, Path]] = []
+  for ide_label in dirs:
+    storage_root = Path("~").expanduser() / ".config" / ide_label / "User" / "workspaceStorage"
+    if not storage_root.is_dir():
+      continue
+    try:
+      entries = list(storage_root.iterdir())
+    except OSError:
+      continue
+    for entry in entries:
+      if not entry.is_dir():
+        continue
+      folder = _read_workspace_folder(entry)
+      if folder is None:
+        continue
+      try:
+        mtime = (entry / "workspace.json").stat().st_mtime
+      except OSError:
+        mtime = 0.0
+      rows.append((mtime, folder))
+  rows.sort(key=lambda item: item[0], reverse=True)
+  seen: set[Path] = set()
+  out: list[dict[str, str]] = []
+  for _, path in rows:
+    if path in seen:
+      continue
+    seen.add(path)
+    out.append({"path": str(path), "source": f"{ide_id} workspace storage"})
+  return out
+
+
+def _read_proc_comm(pid: int) -> str:
+  try:
+    return Path(f"/proc/{pid}/comm").read_text(encoding="utf-8").strip()
+  except OSError:
+    return ""
+
+
+def _read_proc_children(pid: int) -> list[int]:
+  """Return direct child PIDs via ``/proc/<pid>/task/*/children`` (Linux)."""
+  task_root = Path(f"/proc/{pid}/task")
+  if not task_root.is_dir():
+    return []
+  out: list[int] = []
+  try:
+    for task_dir in task_root.iterdir():
+      children_file = task_dir / "children"
+      try:
+        raw = children_file.read_text(encoding="utf-8").strip()
+      except OSError:
+        continue
+      for token in raw.split():
+        with contextlib.suppress(ValueError):
+          out.append(int(token))
+  except OSError:
+    return out
+  return out
+
+
+def _walk_descendant_pids(root_pid: int, *, max_pids: int = 256) -> list[int]:
+  seen: set[int] = set()
+  stack = [root_pid]
+  while stack and len(seen) < max_pids:
+    pid = stack.pop()
+    if pid in seen:
+      continue
+    seen.add(pid)
+    for child in _read_proc_children(pid):
+      if child not in seen:
+        stack.append(child)
+  seen.discard(root_pid)
+  return list(seen)
+
+
+def _read_proc_cwd_path(pid: int) -> Path | None:
+  try:
+    target = os.readlink(f"/proc/{pid}/cwd")
+  except OSError:
+    return None
+  candidate = Path(target)
+  return candidate if candidate.exists() and candidate.is_dir() else None
+
+
+def integrated_terminal_cwds(pid: int) -> list[Path]:
+  """Return unique cwd paths from shell processes inside an IDE's process tree."""
+  found: list[Path] = []
+  seen: set[Path] = set()
+  for descendant in _walk_descendant_pids(pid):
+    comm = _read_proc_comm(descendant)
+    if comm not in _SHELL_BINARIES:
+      continue
+    cwd = _read_proc_cwd_path(descendant)
+    if cwd is None:
+      continue
+    resolved = cwd.resolve()
+    if resolved in seen:
+      continue
+    seen.add(resolved)
+    found.append(resolved)
+  return found
+
+
+def _looks_like_real_project(path: Path) -> bool:
+  """Same as :func:`looks_like_project` but rejects ``$HOME`` itself."""
+  if not looks_like_project(path):
+    return False
+  try:
+    home = Path("~").expanduser().resolve()
+  except OSError:
+    home = Path.home()
+  return path.resolve() != home
+
+
 def projects_by_ide(ides: list[RunningIDE] | None = None) -> dict[str, list[dict[str, str]]]:
-  """Return ``{ide_id: [{path, source}, …]}`` derived from each running IDE's cmdline/cwd."""
+  """Return ``{ide_id: [{path, source}, …]}`` derived from cmdline/cwd + workspace storage."""
   rows = list(ides) if ides is not None else list(detect_running_ides())
   out: dict[str, list[dict[str, str]]] = {}
   for ide in rows:
+    collected: list[dict[str, str]] = []
     with contextlib.suppress(Exception):
       candidates = _candidates_from_running_ide(_running_ide_to_detected(ide))
-      out[ide.id] = [
-        {"path": str(item.path), "source": item.source}
-        for item in candidates
-      ]
+      for item in candidates:
+        if _looks_like_real_project(item.path):
+          collected.append({"path": str(item.path), "source": item.source})
+    with contextlib.suppress(Exception):
+      for entry in _workspace_storage_projects(ide.id):
+        if _looks_like_real_project(Path(entry["path"])):
+          collected.append(entry)
+    if ide.pid is not None:
+      with contextlib.suppress(Exception):
+        for term_cwd in integrated_terminal_cwds(ide.pid):
+          target = term_cwd
+          if not _looks_like_real_project(target):
+            walked = target
+            for _ in range(4):
+              if _looks_like_real_project(walked) or walked.parent == walked:
+                break
+              walked = walked.parent
+            if _looks_like_real_project(walked):
+              target = walked
+            else:
+              continue
+          collected.append({"path": str(target), "source": f"{ide.id} integrated shell"})
+    seen: set[str] = set()
+    deduped: list[dict[str, str]] = []
+    for entry in collected:
+      if entry["path"] in seen:
+        continue
+      seen.add(entry["path"])
+      deduped.append(entry)
+    out[ide.id] = deduped
   return out
 
 

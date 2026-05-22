@@ -67,6 +67,11 @@ def providers_test_text(payload: dict[str, Any]) -> str:
                 f"{row.get('bytes', 0)} bytes, "
                 f"{row.get('width')}x{row.get('height')}"
             )
+            if name == "portal_screencast" and int(row.get("frame_count") or 0) == 1:
+                detail += (
+                    " — for all monitors: koru observe providers reset, "
+                    "then test again and select every display in the GNOME picker (Ctrl+click)"
+                )
             lines.append(f"  {name}: ok ({detail})")
         else:
             err = str(row.get("error") or row.get("reason") or "failed")

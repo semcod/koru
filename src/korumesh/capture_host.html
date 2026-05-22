@@ -2,53 +2,171 @@
 <html lang="en"><head>
 <meta charset="utf-8"><title>Koru browser capture</title>
 <style>
-body{font-family:system-ui,sans-serif;margin:20px;background:#111;color:#eee;max-width:720px}
+body{font-family:system-ui,sans-serif;margin:20px;background:#111;color:#eee;max-width:880px}
 nav{margin-bottom:16px}
 nav a{color:#9ad;text-decoration:none}
 h1{font-size:20px;margin:0 0 8px}
+h2{font-size:14px;margin:18px 0 6px;color:#cde;text-transform:uppercase;letter-spacing:0.05em}
 p{color:#aaa;font-size:14px;line-height:1.5}
 button{background:#2a5a8a;color:#fff;border:none;padding:10px 16px;border-radius:6px;
   font-size:14px;cursor:pointer;margin-right:8px}
 button:disabled{opacity:0.5;cursor:not-allowed}
-#status{margin-top:14px;font-size:13px;color:#cde;min-height:1.4em}
-#preview{margin-top:16px;max-width:100%;border:1px solid #333;border-radius:6px;display:none}
-.err{color:#f88}
-.ok{color:#8d8}
+button.secondary{background:#333}
+#status{margin:14px 0;font-size:13px;color:#cde;min-height:1.4em;padding:8px 12px;
+  background:#1a1a1a;border-radius:6px;border-left:3px solid #555}
+#status.ok{border-left-color:#5a8;color:#bee5cc}
+#status.err{border-left-color:#a55;color:#f4b9b9;white-space:pre-wrap}
+.diag{background:#191919;border:1px solid #2a2a2a;border-radius:6px;padding:10px 14px;
+  font-size:12px;color:#aaa;margin-bottom:14px}
+.diag dt{display:inline;color:#9ad}
+.diag dd{display:inline;margin:0 12px 0 4px}
+.diag .warn{color:#f4b97a}
+.diag .err{color:#f4b9b9}
+.streams{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:12px}
+.stream{background:#1c1c1c;border:1px solid #333;border-radius:8px;padding:8px;
+  display:flex;flex-direction:column}
+.stream img{width:100%;height:auto;border-radius:4px;background:#000}
+.stream .meta{font-size:11px;color:#aaa;margin-top:6px;line-height:1.4}
+.stream .meta strong{color:#cde}
+.stream button{padding:4px 10px;font-size:12px;margin-top:6px;align-self:flex-start}
+code{background:#222;padding:1px 5px;border-radius:3px;color:#cde;font-size:12px}
+.hint{font-size:12px;color:#aaa;margin-top:8px;line-height:1.5}
+.hint code{font-size:11px}
 </style></head><body>
 <nav><a href="/">← Dashboard</a> · <a href="/grid">Grid</a></nav>
 <h1>Browser screen capture</h1>
 <p>Click <strong>Share screen</strong>, pick a display in the browser dialog, and Koru will
 upload a PNG snapshot every <strong>{{interval}}</strong> seconds to the observation mesh
-(<code>provider=browser_getdisplay</code>).</p>
-<p>Peer id: <code id="peer-label">{{peer}}</code> (override with <code>?peer=hostname</code>)</p>
+(<code>provider=browser_getdisplay</code>). You can share several monitors / windows — each is
+uploaded under a separate <code>monitor_id</code>.</p>
+
+<div class="diag" id="diag"></div>
+
 <button id="share" type="button">Share screen</button>
-<button id="stop" type="button" disabled>Stop</button>
-<video id="video" autoplay playsinline muted style="display:none"></video>
-<canvas id="canvas" style="display:none"></canvas>
-<img id="preview" alt="last upload preview"/>
+<button id="share-add" type="button" class="secondary" disabled>Add another monitor</button>
+<button id="stop-all" type="button" class="secondary" disabled>Stop all</button>
+<button id="open-external" type="button" class="secondary">Open in system browser</button>
+<button id="copy-url" type="button" class="secondary">Copy URL</button>
 <div id="status">Waiting to start…</div>
+<div id="streams" class="streams"></div>
+
+<h2>Tips when sharing fails</h2>
+<div class="hint">
+  <p><strong>NotAllowedError / Permission denied</strong> can mean:</p>
+  <ul>
+    <li>You clicked <em>Cancel</em> in the browser&apos;s screen-share dialog.</li>
+    <li>The page is not on <code>localhost</code> / <code>127.0.0.1</code> nor served over HTTPS.
+      <code>getDisplayMedia</code> requires a secure context. Open
+      <code id="this-url"></code> on the machine running koru.</li>
+    <li><strong>Wayland (GNOME 49):</strong> the xdg-desktop-portal dialog appeared and was
+      dismissed. Re-click <em>Share screen</em>, click on the GNOME portal popup, pick a
+      monitor, then <em>Share</em>.</li>
+    <li><strong>Chromium on Wayland</strong> needs PipeWire screencast (default since Chrome 116).
+      If disabled, enable <code>chrome://flags/#enable-webrtc-pipewire-capturer</code>.</li>
+    <li><strong>Firefox on Wayland</strong>: enable
+      <code>media.webrtc.camera.allow-system-permissions-prompt</code> in
+      <code>about:config</code>.</li>
+    <li><strong>macOS</strong>: System Settings → Privacy &amp; Security → Screen Recording
+      must include the browser, then restart it.</li>
+  </ul>
+</div>
+
 <script>
 const INTERVAL_SEC = Math.max(5, parseInt("{{interval}}", 10) || 30);
-const PEER = ("{{peer}}" || "").trim() || location.hostname;
-const peerLabel = document.getElementById("peer-label");
-if (peerLabel) peerLabel.textContent = PEER;
-
+const PEER = ("{{peer}}" || "").trim() || location.hostname || "browser";
 const shareBtn = document.getElementById("share");
-const stopBtn = document.getElementById("stop");
+const shareAddBtn = document.getElementById("share-add");
+const stopAllBtn = document.getElementById("stop-all");
+const openExternalBtn = document.getElementById("open-external");
 const statusEl = document.getElementById("status");
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const preview = document.getElementById("preview");
-let stream = null;
-let timer = null;
-let monitorId = 0;
+const streamsEl = document.getElementById("streams");
+const diagEl = document.getElementById("diag");
+const thisUrlEl = document.getElementById("this-url");
+if (thisUrlEl) thisUrlEl.textContent = location.origin + location.pathname;
+
+const streams = new Map();
+let nextMonitorId = 0;
+
+function inEmbeddedIdeBrowser() {
+  const ua = navigator.userAgent || "";
+  if (/\b(Electron|Code\/|Cursor\/|Windsurf\/)\b/i.test(ua)) return true;
+  if (document.documentElement.hasAttribute("data-cursor-element-id")) return true;
+  if (document.documentElement.hasAttribute("data-vscode-context")) return true;
+  return false;
+}
+
+function copyHostUrlToClipboard() {
+  const href = location.origin + location.pathname;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(href);
+  }
+  return Promise.reject(new Error("clipboard API not available"));
+}
 
 function setStatus(msg, cls) {
   statusEl.className = cls || "";
   statusEl.textContent = msg;
 }
 
-async function uploadFrame(blob) {
+function renderDiagnostics() {
+  const ua = navigator.userAgent;
+  const browser = /Firefox\//.test(ua) ? "Firefox"
+    : /Edg\//.test(ua) ? "Edge"
+    : /Chrome\//.test(ua) ? "Chromium/Chrome"
+    : /Safari\//.test(ua) ? "Safari"
+    : "unknown";
+  const platform = navigator.userAgentData?.platform || navigator.platform || "unknown";
+  const isSecure = window.isSecureContext;
+  const hasApi = !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
+  const embedded = inEmbeddedIdeBrowser();
+  const insecureNote = isSecure ? "" :
+    ' <span class="warn">⚠ insecure context — getDisplayMedia will be blocked. Use http://127.0.0.1 or HTTPS.</span>';
+  const apiNote = hasApi ? "" :
+    ' <span class="warn">⚠ getDisplayMedia API missing — browser too old or restricted by policy.</span>';
+  const embeddedNote = embedded
+    ? ' <span class="err">⚠ embedded IDE webview (Cursor / VS Code / Electron) — getDisplayMedia is blocked. Click Copy URL and open in Chromium/Firefox.</span>'
+    : "";
+  const url = location.origin + location.pathname;
+  diagEl.innerHTML = `
+    <dt>peer</dt><dd><code>${PEER}</code></dd>
+    <dt>url</dt><dd><code>${url}</code>${insecureNote}${embeddedNote}</dd>
+    <dt>browser</dt><dd>${browser}${apiNote}</dd>
+    <dt>platform</dt><dd>${platform}</dd>
+    <dt>interval</dt><dd>${INTERVAL_SEC}s</dd>
+    ${embedded ? `<dt>shell hint</dt><dd><code>xdg-open ${url}</code></dd>` : ""}
+  `;
+}
+
+function explainError(err) {
+  const name = (err && err.name) || "Error";
+  const msg = (err && err.message) || String(err);
+  if (name === "NotAllowedError") {
+    return "Permission denied. Either you cancelled the dialog, or the OS/portal "
+      + "blocked the screen share. Open this page on the koru host directly via "
+      + "http://127.0.0.1:<port>/capture/host and click Share screen again.";
+  }
+  if (name === "NotFoundError") {
+    return "No display source available. On Wayland, ensure xdg-desktop-portal is running.";
+  }
+  if (name === "NotReadableError") {
+    return "OS/hardware refused to read the screen (try another monitor/window).";
+  }
+  if (name === "AbortError") {
+    return "Share aborted before a stream started.";
+  }
+  if (name === "TypeError") {
+    return "Browser blocked getDisplayMedia — usually because the page is not on a secure context.";
+  }
+  if (name === "NotSupportedError") {
+    return "getDisplayMedia is not supported in this context. Most often this means the page "
+      + "is open inside an IDE webview (Cursor / VS Code / Electron) which disables screen "
+      + "picking. Click 'Copy URL' below, open your normal browser (Chromium, Firefox, etc.) "
+      + "on this machine, paste the URL and click Share screen there.";
+  }
+  return `${name}: ${msg}`;
+}
+
+async function uploadFrame(monitorId, blob, output) {
   const buf = await blob.arrayBuffer();
   const bytes = new Uint8Array(buf);
   let binary = "";
@@ -62,7 +180,7 @@ async function uploadFrame(blob) {
     body: JSON.stringify({
       peer: PEER,
       monitor_id: monitorId,
-      output: "browser",
+      output: output || `browser-${monitorId}`,
       image_b64,
       scale: 1.0,
     }),
@@ -72,24 +190,54 @@ async function uploadFrame(blob) {
   return data;
 }
 
-async function captureOnce() {
-  if (!stream || !video.videoWidth) return;
+function streamCard(rec) {
+  const card = document.createElement("div");
+  card.className = "stream";
+  card.id = `stream-${rec.monitorId}`;
+  card.innerHTML = `
+    <img alt="preview"/>
+    <div class="meta">
+      <strong>monitor ${rec.monitorId}</strong> · ${rec.label}<br/>
+      <span class="ts">waiting…</span>
+    </div>
+    <button type="button" data-stop="${rec.monitorId}">Stop</button>
+  `;
+  return card;
+}
+
+async function captureOnce(rec) {
+  const video = rec.video;
+  if (!rec.stream || !video.videoWidth) return;
   const w = video.videoWidth;
   const h = video.videoHeight;
+  const canvas = document.createElement("canvas");
   canvas.width = w;
   canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(video, 0, 0, w, h);
+  canvas.getContext("2d").drawImage(video, 0, 0, w, h);
   const blob = await new Promise((resolve, reject) => {
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob failed"))), "image/png");
   });
-  const data = await uploadFrame(blob);
-  preview.src = URL.createObjectURL(blob);
-  preview.style.display = "block";
-  setStatus(
-    `Uploaded monitor ${data.monitor_id} frame ${data.frame_id} (${new Date().toLocaleTimeString()})`,
-    "ok"
-  );
+  const data = await uploadFrame(rec.monitorId, blob, rec.label);
+  const img = rec.card.querySelector("img");
+  if (img) img.src = URL.createObjectURL(blob);
+  const ts = rec.card.querySelector(".ts");
+  if (ts) ts.textContent = `last upload ${new Date().toLocaleTimeString()} · ${data.frame_id || ""}`;
+}
+
+function stopStream(rec) {
+  if (rec.timer) clearInterval(rec.timer);
+  rec.timer = null;
+  if (rec.stream) rec.stream.getTracks().forEach((t) => t.stop());
+  rec.stream = null;
+  rec.video.srcObject = null;
+  if (rec.card) rec.card.remove();
+  streams.delete(rec.monitorId);
+  if (!streams.size) {
+    shareAddBtn.disabled = true;
+    stopAllBtn.disabled = true;
+    shareBtn.disabled = false;
+    setStatus("Stopped.", "");
+  }
 }
 
 async function startCapture() {
@@ -97,40 +245,97 @@ async function startCapture() {
     setStatus("getDisplayMedia is not available in this browser", "err");
     return;
   }
+  if (!window.isSecureContext) {
+    setStatus(
+      "Insecure context. Open this page on the koru host directly via http://127.0.0.1:<port>/capture/host (or HTTPS).",
+      "err"
+    );
+    return;
+  }
+  if (inEmbeddedIdeBrowser()) {
+    setStatus(
+      "Embedded IDE browser detected (Cursor / VS Code / Electron). Screen picking is "
+      + "disabled here — click 'Copy URL' then open the same address in a normal browser "
+      + "(Chromium, Firefox, Edge) on this machine and click Share screen there.",
+      "err"
+    );
+    return;
+  }
+  let stream;
   try {
     stream = await navigator.mediaDevices.getDisplayMedia({video: true, audio: false});
   } catch (err) {
-    setStatus("Screen share cancelled or denied: " + err, "err");
+    setStatus(explainError(err), "err");
     return;
   }
+  const monitorId = nextMonitorId++;
+  const track = stream.getVideoTracks()[0];
+  const settings = track ? track.getSettings() : {};
+  const label = (track && track.label) || `display ${monitorId}`;
+  const video = document.createElement("video");
+  video.autoplay = true;
+  video.muted = true;
+  video.playsInline = true;
   video.srcObject = stream;
-  await video.play();
-  shareBtn.disabled = true;
-  stopBtn.disabled = false;
-  setStatus("Sharing — first upload…", "ok");
-  await captureOnce();
-  timer = setInterval(() => {
-    captureOnce().catch((err) => setStatus("Upload failed: " + err, "err"));
-  }, INTERVAL_SEC * 1000);
-  stream.getVideoTracks()[0]?.addEventListener("ended", () => stopCapture());
-}
+  await video.play().catch(() => {});
 
-function stopCapture() {
-  if (timer) clearInterval(timer);
-  timer = null;
-  if (stream) {
-    stream.getTracks().forEach((t) => t.stop());
-    stream = null;
+  const rec = {monitorId, stream, track, video, label, settings, card: null, timer: null};
+  rec.card = streamCard(rec);
+  streamsEl.appendChild(rec.card);
+  streams.set(monitorId, rec);
+
+  shareAddBtn.disabled = false;
+  stopAllBtn.disabled = false;
+  shareBtn.disabled = streams.size >= 1; // keep the primary button; user adds via Add
+  setStatus(`Sharing ${streams.size} stream(s) — uploading every ${INTERVAL_SEC}s.`, "ok");
+
+  // Initial upload + periodic timer.
+  try {
+    await captureOnce(rec);
+  } catch (err) {
+    setStatus("Upload failed: " + explainError(err), "err");
   }
-  video.srcObject = null;
-  shareBtn.disabled = false;
-  stopBtn.disabled = true;
-  setStatus("Stopped.", "");
+  rec.timer = setInterval(() => {
+    captureOnce(rec).catch((err) => setStatus("Upload failed: " + explainError(err), "err"));
+  }, INTERVAL_SEC * 1000);
+  track && track.addEventListener("ended", () => stopStream(rec));
 }
 
 shareBtn.addEventListener("click", () => {
-  startCapture().catch((err) => setStatus("Start failed: " + err, "err"));
+  startCapture().catch((err) => setStatus("Start failed: " + explainError(err), "err"));
 });
-stopBtn.addEventListener("click", stopCapture);
+shareAddBtn.addEventListener("click", () => {
+  startCapture().catch((err) => setStatus("Start failed: " + explainError(err), "err"));
+});
+stopAllBtn.addEventListener("click", () => {
+  for (const rec of Array.from(streams.values())) stopStream(rec);
+});
+openExternalBtn.addEventListener("click", () => {
+  const href = location.origin + location.pathname + location.search;
+  window.open(href, "_blank", "noopener,noreferrer");
+  setStatus("Opened capture page in external browser tab/window (if allowed by the host).", "ok");
+});
+const copyBtn = document.getElementById("copy-url");
+if (copyBtn) {
+  copyBtn.addEventListener("click", () => {
+    copyHostUrlToClipboard()
+      .then(() => setStatus("URL copied — paste it into Chromium / Firefox to share your screen.", "ok"))
+      .catch(() => setStatus(
+        "Copy failed — open this URL manually: " + location.origin + location.pathname,
+        "err"
+      ));
+  });
+}
+streamsEl.addEventListener("click", (ev) => {
+  const target = ev.target;
+  if (!(target instanceof HTMLElement)) return;
+  const stopId = target.getAttribute("data-stop");
+  if (stopId !== null) {
+    const rec = streams.get(parseInt(stopId, 10));
+    if (rec) stopStream(rec);
+  }
+});
+
+renderDiagnostics();
 </script>
 </body></html>

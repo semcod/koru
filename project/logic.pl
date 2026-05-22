@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.220', 'python').
+project_metadata('koru', '0.1.225', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 691, 'less').
@@ -176,7 +176,7 @@ project_file('src/koru/dev_sync.py', 214, 'python').
 project_file('src/koru/doctor.py', 1969, 'python').
 project_file('src/koru/dotenv_loader.py', 105, 'python').
 project_file('src/koru/dsl/__init__.py', 10, 'python').
-project_file('src/koru/env_config.py', 203, 'python').
+project_file('src/koru/env_config.py', 240, 'python').
 project_file('src/koru/events.py', 91, 'python').
 project_file('src/koru/gate.py', 203, 'python').
 project_file('src/koru/gc.py', 372, 'python').
@@ -251,12 +251,12 @@ project_file('src/koruapi/dashboard.py', 139, 'python').
 project_file('src/koruapi/dashboard_config.py', 128, 'python').
 project_file('src/koruapi/dashboard_context.py', 18, 'python').
 project_file('src/koruapi/dashboard_http.py', 46, 'python').
-project_file('src/koruapi/dashboard_projects.py', 116, 'python').
-project_file('src/koruapi/dashboard_routes.py', 380, 'python').
+project_file('src/koruapi/dashboard_projects.py', 321, 'python').
+project_file('src/koruapi/dashboard_routes.py', 412, 'python').
 project_file('src/koruapi/dashboard_runtime.py', 40, 'python').
 project_file('src/koruapi/dashboard_serve.py', 241, 'python').
 project_file('src/koruapi/dashboard_serve_utils.py', 247, 'python').
-project_file('src/koruapi/dashboard_state.py', 90, 'python').
+project_file('src/koruapi/dashboard_state.py', 106, 'python').
 project_file('src/koruapi/dashboard_tickets.py', 229, 'python').
 project_file('src/koruapi/dashboard_topology.py', 22, 'python').
 project_file('src/koruapi/integrations.py', 199, 'python').
@@ -292,12 +292,13 @@ project_file('src/koruide/protocol.py', 253, 'python').
 project_file('src/koruide/socket.py', 45, 'python').
 project_file('src/koruide/utils.py', 22, 'python').
 project_file('src/korumesh/__init__.py', 6, 'python').
+project_file('src/korumesh/browser_capture.py', 87, 'python').
 project_file('src/korumesh/cli.py', 28, 'python').
 project_file('src/korumesh/cli_commands.py', 57, 'python').
 project_file('src/korumesh/cli_parser.py', 32, 'python').
 project_file('src/korumesh/codec.py', 38, 'python').
 project_file('src/korumesh/dashboard.py', 87, 'python').
-project_file('src/korumesh/dashboard_parse.py', 52, 'python').
+project_file('src/korumesh/dashboard_parse.py', 53, 'python').
 project_file('src/korumesh/envelope.py', 86, 'python').
 project_file('src/korumesh/keys.py', 26, 'python').
 project_file('src/korumesh/store.py', 61, 'python').
@@ -305,31 +306,34 @@ project_file('src/korumesh/store_persistence.py', 69, 'python').
 project_file('src/korumesh/transport.py', 89, 'python').
 project_file('src/koruobserve/__init__.py', 13, 'python').
 project_file('src/koruobserve/bootstrap.py', 39, 'python').
-project_file('src/koruobserve/cli.py', 124, 'python').
-project_file('src/koruobserve/cli_parser.py', 59, 'python').
-project_file('src/koruobserve/diagnostics.py', 177, 'python').
+project_file('src/koruobserve/cli.py', 155, 'python').
+project_file('src/koruobserve/cli_parser.py', 110, 'python').
+project_file('src/koruobserve/diagnostics.py', 176, 'python').
 project_file('src/koruobserve/lifecycle.py', 286, 'python').
 project_file('src/koruobserve/paths.py', 22, 'python').
+project_file('src/koruobserve/providers_cli.py', 149, 'python').
 project_file('src/koruvision/__init__.py', 13, 'python').
 project_file('src/koruvision/agent.py', 77, 'python').
-project_file('src/koruvision/capture.py', 69, 'python').
-project_file('src/koruvision/capture_fallback.py', 119, 'python').
-project_file('src/koruvision/capture_mss.py', 325, 'python').
+project_file('src/koruvision/capture.py', 70, 'python').
+project_file('src/koruvision/capture_mss.py', 249, 'python').
 project_file('src/koruvision/capture_probe.py', 51, 'python').
 project_file('src/koruvision/cli.py', 76, 'python').
 project_file('src/koruvision/cli_parser.py', 42, 'python').
-project_file('src/koruvision/mesh.py', 78, 'python').
+project_file('src/koruvision/mesh.py', 80, 'python').
 project_file('src/koruvision/portal_capture.py', 119, 'python').
-project_file('src/koruvision/providers/__init__.py', 19, 'python').
-project_file('src/koruvision/providers/base.py', 90, 'python').
+project_file('src/koruvision/providers/__init__.py', 23, 'python').
+project_file('src/koruvision/providers/base.py', 91, 'python').
+project_file('src/koruvision/providers/browser_getdisplay.py', 228, 'python').
 project_file('src/koruvision/providers/cli_tools.py', 46, 'python').
-project_file('src/koruvision/providers/detector.py', 183, 'python').
+project_file('src/koruvision/providers/detector.py', 293, 'python').
 project_file('src/koruvision/providers/env.py', 59, 'python').
 project_file('src/koruvision/providers/grim.py', 45, 'python').
 project_file('src/koruvision/providers/mss.py', 55, 'python').
-project_file('src/koruvision/providers/portal_screencast.py', 212, 'python').
+project_file('src/koruvision/providers/obs_websocket.py', 232, 'python').
+project_file('src/koruvision/providers/portal_screencast.py', 392, 'python').
 project_file('src/koruvision/providers/portal_screenshot.py', 45, 'python').
-project_file('src/koruvision/providers/registry.py', 29, 'python').
+project_file('src/koruvision/providers/registry.py', 33, 'python').
+project_file('src/koruvision/providers/screencast_session.py', 61, 'python').
 project_file('src/koruvision/scaling.py', 53, 'python').
 project_file('tests/e2e/bootstrap.sh', 94, 'shell').
 project_file('tests/e2e/init.sh', 29, 'shell').
@@ -367,12 +371,15 @@ project_file('tests/test_autopilot_plugin_installer.py', 326, 'python').
 project_file('tests/test_autopilot_protocol.py', 168, 'python').
 project_file('tests/test_autopilot_socket_path.py', 36, 'python').
 project_file('tests/test_bootstrap.py', 298, 'python').
+project_file('tests/test_capture_host_template.py', 20, 'python').
 project_file('tests/test_cli.py', 542, 'python').
 project_file('tests/test_configurator.py', 175, 'python').
 project_file('tests/test_configurator_toggle.py', 53, 'python').
 project_file('tests/test_context.py', 628, 'python').
+project_file('tests/test_dashboard_projects_by_ide.py', 242, 'python').
 project_file('tests/test_dashboard_topology_post.py', 36, 'python').
 project_file('tests/test_dev_sync.py', 109, 'python').
+project_file('tests/test_docker_capture.py', 132, 'python').
 project_file('tests/test_docker_e2e.py', 582, 'python').
 project_file('tests/test_docker_ide_matrix.py', 161, 'python').
 project_file('tests/test_docker_ide_matrix_config.py', 120, 'python').
@@ -405,22 +412,25 @@ project_file('tests/test_koruide_client.py', 83, 'python').
 project_file('tests/test_korumesh_envelope.py', 41, 'python').
 project_file('tests/test_korumesh_store.py', 59, 'python').
 project_file('tests/test_korumesh_transport.py', 63, 'python').
-project_file('tests/test_koruobserve_diagnostics.py', 111, 'python').
+project_file('tests/test_koruobserve_diagnostics.py', 112, 'python').
 project_file('tests/test_koruobserve_lifecycle.py', 235, 'python').
 project_file('tests/test_koruvision_agent.py', 78, 'python').
-project_file('tests/test_koruvision_capture.py', 179, 'python').
-project_file('tests/test_koruvision_mesh.py', 72, 'python').
+project_file('tests/test_koruvision_capture.py', 208, 'python').
+project_file('tests/test_koruvision_mesh.py', 74, 'python').
 project_file('tests/test_local_service.py', 265, 'python').
 project_file('tests/test_loop.py', 95, 'python').
 project_file('tests/test_mcp_provision.py', 277, 'python').
 project_file('tests/test_mcp_server.py', 245, 'python').
 project_file('tests/test_observation_mesh_e2e.py', 228, 'python').
+project_file('tests/test_observe_providers_cli.py', 83, 'python').
 project_file('tests/test_operator_pipeline.py', 579, 'python').
 project_file('tests/test_planfile_queue.py', 1271, 'python').
 project_file('tests/test_plugin_router.py', 67, 'python').
 project_file('tests/test_policy.py', 194, 'python').
 project_file('tests/test_post_run_verify.py', 156, 'python').
-project_file('tests/test_provider_portal_screencast.py', 53, 'python').
+project_file('tests/test_provider_browser_upload.py', 141, 'python').
+project_file('tests/test_provider_obs.py', 145, 'python').
+project_file('tests/test_provider_portal_screencast.py', 91, 'python').
 project_file('tests/test_pyproject_metadata.py', 51, 'python').
 project_file('tests/test_queue_clean.py', 341, 'python').
 project_file('tests/test_queue_cli_helpers.py', 120, 'python').
@@ -431,8 +441,9 @@ project_file('tests/test_run_log.py', 144, 'python').
 project_file('tests/test_runtime.py', 133, 'python').
 project_file('tests/test_runtime_insights.py', 60, 'python').
 project_file('tests/test_scan.py', 671, 'python').
+project_file('tests/test_screencast_session.py', 40, 'python').
 project_file('tests/test_semcod_tools.py', 51, 'python').
-project_file('tests/test_serve.py', 644, 'python').
+project_file('tests/test_serve.py', 649, 'python').
 project_file('tests/test_shell_evidence.py', 51, 'python').
 project_file('tests/test_stdio_autonomous_jsonl.py', 99, 'python').
 project_file('tests/test_tasks.py', 108, 'python').
@@ -440,6 +451,7 @@ project_file('tests/test_tools.py', 119, 'python').
 project_file('tests/test_topology.py', 55, 'python').
 project_file('tests/test_topology_cli.py', 28, 'python').
 project_file('tests/test_vision_interval_floor.py', 26, 'python').
+project_file('tests/test_vision_provider_mime.py', 79, 'python').
 project_file('tests/test_watch.py', 101, 'python').
 project_file('tests/test_wizard_cli.py', 311, 'python').
 project_file('tests/test_wizard_env_e2e.py', 371, 'python').
@@ -1767,11 +1779,21 @@ python_function('src/koruapi/dashboard_projects.py', 'project_candidate_dict', 2
 python_function('src/koruapi/dashboard_projects.py', 'looks_like_project', 1, 2, 2).
 python_function('src/koruapi/dashboard_projects.py', 'workspace_project_candidates', 1, 8, 10).
 python_function('src/koruapi/dashboard_projects.py', 'discover_dashboard_projects', 2, 6, 12).
-python_function('src/koruapi/dashboard_projects.py', 'resolve_dashboard_project', 3, 5, 7).
+python_function('src/koruapi/dashboard_projects.py', '_running_ide_to_detected', 1, 1, 1).
+python_function('src/koruapi/dashboard_projects.py', '_read_workspace_folder', 1, 8, 11).
+python_function('src/koruapi/dashboard_projects.py', '_workspace_storage_projects', 1, 10, 13).
+python_function('src/koruapi/dashboard_projects.py', '_read_proc_comm', 1, 2, 3).
+python_function('src/koruapi/dashboard_projects.py', '_read_proc_children', 1, 6, 9).
+python_function('src/koruapi/dashboard_projects.py', '_walk_descendant_pids', 1, 6, 8).
+python_function('src/koruapi/dashboard_projects.py', '_read_proc_cwd_path', 1, 4, 4).
+python_function('src/koruapi/dashboard_projects.py', 'integrated_terminal_cwds', 1, 5, 7).
+python_function('src/koruapi/dashboard_projects.py', '_looks_like_real_project', 1, 3, 5).
+python_function('src/koruapi/dashboard_projects.py', 'projects_by_ide', 1, 16, 14).
+python_function('src/koruapi/dashboard_projects.py', 'resolve_dashboard_project', 3, 7, 11).
 python_function('src/koruapi/dashboard_routes.py', '_load_dashboard_html', 0, 1, 3).
 python_function('src/koruapi/dashboard_routes.py', '_config_defaults', 1, 1, 3).
 python_function('src/koruapi/dashboard_routes.py', '_state_payload', 1, 1, 2).
-python_function('src/koruapi/dashboard_routes.py', 'build_dashboard_handler', 1, 1, 39).
+python_function('src/koruapi/dashboard_routes.py', 'build_dashboard_handler', 1, 1, 40).
 python_function('src/koruapi/dashboard_runtime.py', 'runtime_context_payload', 1, 1, 4).
 python_function('src/koruapi/dashboard_runtime.py', 'runtime_context_error_payload', 2, 1, 3).
 python_function('src/koruapi/dashboard_runtime.py', 'save_runtime_context_config', 2, 5, 4).
@@ -1805,7 +1827,7 @@ python_function('src/koruapi/dashboard_serve_utils.py', '_dashboard_urls_for', 1
 python_function('src/koruapi/dashboard_serve_utils.py', 'write_serve_endpoint_file', 1, 2, 7).
 python_function('src/koruapi/dashboard_state.py', 'local_lan_addresses', 0, 2, 11).
 python_function('src/koruapi/dashboard_state.py', 'dashboard_urls', 2, 3, 3).
-python_function('src/koruapi/dashboard_state.py', 'dashboard_ide_rows', 0, 7, 4).
+python_function('src/koruapi/dashboard_state.py', 'dashboard_ide_rows', 0, 7, 6).
 python_function('src/koruapi/dashboard_state.py', 'dashboard_state', 0, 3, 7).
 python_function('src/koruapi/dashboard_tickets.py', 'run_planfile', 2, 1, 2).
 python_function('src/koruapi/dashboard_tickets.py', 'list_tickets', 1, 9, 4).
@@ -2071,6 +2093,11 @@ python_function('src/koruide/protocol.py', 'status_error', 0, 1, 1).
 python_function('src/koruide/socket.py', '_autopilot_socket_basename', 0, 7, 6).
 python_function('src/koruide/socket.py', 'default_socket_path', 0, 4, 10).
 python_function('src/koruide/utils.py', 'resolve_xdg_path', 1, 2, 3).
+python_function('src/korumesh/browser_capture.py', 'capture_host_html', 0, 1, 3).
+python_function('src/korumesh/browser_capture.py', 'capture_host_context', 1, 2, 6).
+python_function('src/korumesh/browser_capture.py', '_render_capture_host', 1, 2, 5).
+python_function('src/korumesh/browser_capture.py', 'browser_upload_payload', 2, 1, 1).
+python_function('src/korumesh/browser_capture.py', 'serve_browser_capture_http', 2, 10, 8).
 python_function('src/korumesh/cli.py', 'mesh_main', 1, 5, 7).
 python_function('src/korumesh/cli_commands.py', 'mesh_init', 1, 3, 6).
 python_function('src/korumesh/cli_commands.py', 'mesh_relay', 2, 3, 3).
@@ -2117,10 +2144,11 @@ python_function('src/koruobserve/cli.py', '_cmd_up', 1, 2, 6).
 python_function('src/koruobserve/cli.py', '_cmd_down', 1, 2, 4).
 python_function('src/koruobserve/cli.py', '_cmd_status', 1, 3, 6).
 python_function('src/koruobserve/cli.py', '_cmd_grid', 1, 2, 7).
+python_function('src/koruobserve/cli.py', '_cmd_providers', 1, 5, 8).
 python_function('src/koruobserve/cli.py', 'observe_main', 1, 3, 5).
 python_function('src/koruobserve/cli_parser.py', '_add_subproject', 1, 1, 1).
 python_function('src/koruobserve/cli_parser.py', '_register_up_arguments', 1, 1, 1).
-python_function('src/koruobserve/cli_parser.py', 'build_observe_parser', 0, 3, 7).
+python_function('src/koruobserve/cli_parser.py', 'build_observe_parser', 0, 6, 7).
 python_function('src/koruobserve/cli_parser.py', 'project_path', 1, 3, 5).
 python_function('src/koruobserve/diagnostics.py', '_session_type', 0, 4, 1).
 python_function('src/koruobserve/diagnostics.py', '_monitors_from_mss', 0, 8, 5).
@@ -2129,8 +2157,7 @@ python_function('src/koruobserve/diagnostics.py', 'detect_monitors', 0, 3, 2).
 python_function('src/koruobserve/diagnostics.py', '_read_log_tail', 1, 3, 5).
 python_function('src/koruobserve/diagnostics.py', '_last_failure_line', 1, 3, 4).
 python_function('src/koruobserve/diagnostics.py', '_wayland_hint', 1, 2, 0).
-python_function('src/koruobserve/diagnostics.py', '_provider_status', 0, 4, 2).
-python_function('src/koruobserve/diagnostics.py', 'capture_diagnostics', 1, 6, 7).
+python_function('src/koruobserve/diagnostics.py', 'capture_diagnostics', 1, 7, 7).
 python_function('src/koruobserve/lifecycle.py', '_resolve_serve_settings', 1, 4, 4).
 python_function('src/koruobserve/lifecycle.py', '_pick_free_port', 1, 3, 3).
 python_function('src/koruobserve/lifecycle.py', '_spawn', 3, 1, 9).
@@ -2147,6 +2174,16 @@ python_function('src/koruobserve/paths.py', 'runtime_dir', 1, 1, 1).
 python_function('src/koruobserve/paths.py', 'pidfile', 2, 1, 1).
 python_function('src/koruobserve/paths.py', 'logfile', 2, 1, 1).
 python_function('src/koruobserve/paths.py', 'state_file', 1, 1, 1).
+python_function('src/koruobserve/providers_cli.py', 'screencast_session_path', 1, 1, 1).
+python_function('src/koruobserve/providers_cli.py', 'providers_list_payload', 1, 1, 1).
+python_function('src/koruobserve/providers_cli.py', 'providers_list_text', 1, 13, 5).
+python_function('src/koruobserve/providers_cli.py', 'providers_test_payload', 1, 6, 3).
+python_function('src/koruobserve/providers_cli.py', 'providers_test_text', 1, 13, 5).
+python_function('src/koruobserve/providers_cli.py', 'providers_reset_consent', 1, 5, 8).
+python_function('src/koruobserve/providers_cli.py', 'providers_reset_text', 1, 3, 2).
+python_function('src/koruobserve/providers_cli.py', 'cmd_providers_list', 1, 2, 4).
+python_function('src/koruobserve/providers_cli.py', 'cmd_providers_test', 2, 3, 5).
+python_function('src/koruobserve/providers_cli.py', 'cmd_providers_reset', 1, 2, 4).
 python_function('src/koruvision/agent.py', 'capture_once', 2, 1, 1).
 python_function('src/koruvision/agent.py', 'capture_all_once', 1, 1, 1).
 python_function('src/koruvision/agent.py', '_capture_cycle', 2, 2, 2).
@@ -2156,36 +2193,18 @@ python_function('src/koruvision/capture.py', '_frame', 1, 1, 1).
 python_function('src/koruvision/capture.py', 'list_monitors', 0, 2, 2).
 python_function('src/koruvision/capture.py', 'capture_monitor_png', 2, 1, 3).
 python_function('src/koruvision/capture.py', 'capture_all_monitors', 1, 2, 3).
-python_function('src/koruvision/capture_fallback.py', 'parse_png_size', 1, 3, 3).
-python_function('src/koruvision/capture_fallback.py', 'png_descriptor', 1, 1, 5).
-python_function('src/koruvision/capture_fallback.py', 'command_candidates', 0, 1, 0).
-python_function('src/koruvision/capture_fallback.py', 'try_native_command', 0, 6, 4).
-python_function('src/koruvision/capture_fallback.py', 'looks_headless', 0, 3, 3).
-python_function('src/koruvision/capture_fallback.py', 'portal_descriptor', 0, 1, 3).
-python_function('src/koruvision/capture_fallback.py', 'wayland_portal_fallback', 1, 2, 3).
-python_function('src/koruvision/capture_fallback.py', 'command_fallback', 1, 3, 3).
-python_function('src/koruvision/capture_fallback.py', 'fallback_for_environment', 1, 2, 3).
-python_function('src/koruvision/capture_mss.py', 'capture_backend', 0, 2, 3).
 python_function('src/koruvision/capture_mss.py', 'is_wayland', 0, 2, 4).
-python_function('src/koruvision/capture_mss.py', 'env_truthy', 1, 1, 3).
-python_function('src/koruvision/capture_mss.py', 'portal_possible', 0, 3, 5).
-python_function('src/koruvision/capture_mss.py', 'looks_headless', 0, 3, 4).
-python_function('src/koruvision/capture_mss.py', 'auto_backend_order', 0, 6, 6).
-python_function('src/koruvision/capture_mss.py', 'auto_failure_message', 1, 3, 2).
 python_function('src/koruvision/capture_mss.py', 'png_dimensions', 1, 4, 4).
 python_function('src/koruvision/capture_mss.py', 'png_payload_descriptor', 1, 2, 6).
 python_function('src/koruvision/capture_mss.py', 'frame_from_shot', 1, 2, 10).
 python_function('src/koruvision/capture_mss.py', 'ordered_monitor_indices', 1, 5, 4).
 python_function('src/koruvision/capture_mss.py', 'portal_capture_dict', 0, 2, 4).
 python_function('src/koruvision/capture_mss.py', 'command_candidates', 0, 3, 1).
-python_function('src/koruvision/capture_mss.py', 'run_png_command', 3, 13, 11).
+python_function('src/koruvision/capture_mss.py', 'run_png_command', 3, 14, 12).
 python_function('src/koruvision/capture_mss.py', 'command_capture_dict', 0, 4, 6).
-python_function('src/koruvision/capture_mss.py', '_fallback_after_mss', 1, 7, 7).
 python_function('src/koruvision/capture_mss.py', 'grab_target', 4, 2, 4).
 python_function('src/koruvision/capture_mss.py', '_grab_single_mss_raw', 2, 6, 8).
-python_function('src/koruvision/capture_mss.py', 'grab_single_mss', 2, 5, 5).
 python_function('src/koruvision/capture_mss.py', '_grab_all_mss_raw', 1, 5, 6).
-python_function('src/koruvision/capture_mss.py', 'grab_all_mss', 1, 6, 6).
 python_function('src/koruvision/capture_probe.py', 'python_can_capture', 1, 2, 2).
 python_function('src/koruvision/capture_probe.py', 'resolve_observe_python', 0, 7, 7).
 python_function('src/koruvision/cli.py', '_vision_interval', 2, 4, 5).
@@ -2198,20 +2217,30 @@ python_function('src/koruvision/cli_parser.py', '_add_agent_subparser', 1, 1, 3)
 python_function('src/koruvision/cli_parser.py', 'build_vision_parser', 0, 1, 6).
 python_function('src/koruvision/mesh.py', 'default_peer_id', 0, 1, 1).
 python_function('src/koruvision/mesh.py', 'resolve_mesh_publish', 1, 8, 6).
-python_function('src/koruvision/mesh.py', '_vision_mime', 1, 4, 2).
+python_function('src/koruvision/mesh.py', '_vision_mime', 1, 5, 2).
 python_function('src/koruvision/mesh.py', 'vision_frame_envelope', 1, 1, 2).
 python_function('src/koruvision/mesh.py', 'publish_vision_frame', 1, 1, 3).
 python_function('src/koruvision/portal_capture.py', '_portal_python', 0, 6, 4).
 python_function('src/koruvision/portal_capture.py', 'capture_portal_png', 0, 8, 7).
 python_function('src/koruvision/providers/base.py', 'png_dimensions', 1, 4, 4).
 python_function('src/koruvision/providers/base.py', 'frame_from_png', 1, 5, 9).
+python_function('src/koruvision/providers/browser_getdisplay.py', 'browser_capture_requested', 0, 2, 2).
+python_function('src/koruvision/providers/browser_getdisplay.py', 'browser_capture_interval_seconds', 0, 3, 4).
+python_function('src/koruvision/providers/browser_getdisplay.py', '_vision_mime_with_provider', 1, 7, 6).
+python_function('src/koruvision/providers/browser_getdisplay.py', '_frames_from_store', 0, 4, 6).
+python_function('src/koruvision/providers/browser_getdisplay.py', 'ingest_browser_upload', 2, 18, 20).
 python_function('src/koruvision/providers/cli_tools.py', '_tool_available', 1, 1, 2).
 python_function('src/koruvision/providers/detector.py', 'monitors_via_xrandr', 0, 6, 7).
-python_function('src/koruvision/providers/detector.py', 'rank_providers', 0, 15, 12).
+python_function('src/koruvision/providers/detector.py', 'rank_providers', 0, 17, 14).
 python_function('src/koruvision/providers/detector.py', 'list_provider_status', 0, 2, 3).
+python_function('src/koruvision/providers/detector.py', 'provider_diagnostics_rows', 0, 4, 7).
+python_function('src/koruvision/providers/detector.py', 'probe_capture_providers', 1, 10, 13).
 python_function('src/koruvision/providers/detector.py', '_auto_failure_message', 1, 3, 2).
-python_function('src/koruvision/providers/detector.py', 'capture_one_with_providers', 2, 6, 7).
-python_function('src/koruvision/providers/detector.py', 'capture_all_with_providers', 1, 7, 7).
+python_function('src/koruvision/providers/detector.py', '_provider_label', 1, 2, 0).
+python_function('src/koruvision/providers/detector.py', '_should_report_auto_portal', 2, 4, 2).
+python_function('src/koruvision/providers/detector.py', '_stamp_provider', 2, 1, 1).
+python_function('src/koruvision/providers/detector.py', 'capture_one_with_providers', 2, 6, 10).
+python_function('src/koruvision/providers/detector.py', 'capture_all_with_providers', 1, 8, 10).
 python_function('src/koruvision/providers/env.py', 'capture_provider_pref', 0, 4, 3).
 python_function('src/koruvision/providers/env.py', 'is_wayland', 0, 2, 4).
 python_function('src/koruvision/providers/env.py', 'env_truthy', 1, 1, 3).
@@ -2220,9 +2249,27 @@ python_function('src/koruvision/providers/env.py', 'looks_headless', 0, 3, 4).
 python_function('src/koruvision/providers/env.py', 'compositor_hint', 0, 5, 3).
 python_function('src/koruvision/providers/env.py', 'tool_available', 1, 1, 2).
 python_function('src/koruvision/providers/grim.py', '_grim_png', 0, 4, 4).
-python_function('src/koruvision/providers/portal_screencast.py', '_screencast_frames', 1, 10, 8).
+python_function('src/koruvision/providers/obs_websocket.py', 'obs_url', 0, 2, 2).
+python_function('src/koruvision/providers/obs_websocket.py', 'obs_password', 0, 1, 2).
+python_function('src/koruvision/providers/obs_websocket.py', 'obs_source_name', 0, 2, 2).
+python_function('src/koruvision/providers/obs_websocket.py', 'obs_screenshot_width', 0, 2, 4).
+python_function('src/koruvision/providers/obs_websocket.py', '_obs_auth', 3, 1, 5).
+python_function('src/koruvision/providers/obs_websocket.py', '_websockets_missing', 0, 2, 0).
+python_function('src/koruvision/providers/obs_websocket.py', '_with_obs_connection', 1, 9, 13).
+python_function('src/koruvision/providers/obs_websocket.py', '_obs_request', 3, 11, 9).
+python_function('src/koruvision/providers/obs_websocket.py', 'probe_obs_reachable', 0, 6, 5).
+python_function('src/koruvision/providers/obs_websocket.py', '_run_obs_capture', 1, 1, 1).
+python_function('src/koruvision/providers/obs_websocket.py', '_capture_source_png', 1, 2, 8).
+python_function('src/koruvision/providers/portal_screencast.py', '_screencast_frames', 1, 9, 11).
+python_function('src/koruvision/providers/portal_screencast.py', '_run_screencast_subprocess', 1, 2, 2).
+python_function('src/koruvision/providers/portal_screencast.py', '_parse_screencast_stdout', 1, 10, 9).
 python_function('src/koruvision/providers/registry.py', 'all_providers', 0, 1, 1).
 python_function('src/koruvision/providers/registry.py', 'provider_by_name', 1, 1, 3).
+python_function('src/koruvision/providers/screencast_session.py', 'session_file_for_project', 1, 1, 1).
+python_function('src/koruvision/providers/screencast_session.py', 'resolve_screencast_session_file', 0, 3, 6).
+python_function('src/koruvision/providers/screencast_session.py', 'load_session_path', 1, 7, 8).
+python_function('src/koruvision/providers/screencast_session.py', 'save_session_path', 2, 2, 5).
+python_function('src/koruvision/providers/screencast_session.py', 'clear_session_file', 1, 3, 3).
 python_function('src/koruvision/scaling.py', 'resolve_scale', 1, 4, 5).
 python_function('src/koruvision/scaling.py', 'downscale_rgb_nearest', 5, 6, 4).
 python_function('src/koruvision/scaling.py', 'rgb_mostly_black', 1, 5, 3).
@@ -2682,6 +2729,8 @@ python_function('tests/test_autopilot_socket_path.py', 'test_instance_env_change
 python_function('tests/test_autopilot_socket_path.py', 'test_default_basename_legacy_when_no_instance', 1, 2, 2).
 python_function('tests/test_autopilot_socket_path.py', 'test_auto_instance_uses_default_basename', 1, 2, 3).
 python_function('tests/test_bootstrap.py', '_write_yaml', 2, 1, 2).
+python_function('tests/test_capture_host_template.py', 'test_capture_host_template_detects_cursor_webview', 0, 5, 2).
+python_function('tests/test_capture_host_template.py', 'test_render_capture_host_substitutes_interval_and_peer', 0, 4, 2).
 python_function('tests/test_cli.py', '_tmp_git_project', 1, 1, 4).
 python_function('tests/test_cli.py', '_run_main', 0, 1, 4).
 python_function('tests/test_configurator.py', 'test_configure_project_non_interactive_writes_project_config', 1, 10, 6).
@@ -2697,12 +2746,27 @@ python_function('tests/test_context.py', '_ok', 1, 1, 1).
 python_function('tests/test_context.py', '_fail', 1, 1, 1).
 python_function('tests/test_context.py', '_no_git', 1, 1, 0).
 python_function('tests/test_context.py', '_init_planfile', 1, 1, 2).
+python_function('tests/test_dashboard_projects_by_ide.py', '_fake_running_ides', 1, 1, 1).
+python_function('tests/test_dashboard_projects_by_ide.py', 'test_projects_by_ide_uses_cmdline_and_cwd', 1, 7, 6).
+python_function('tests/test_dashboard_projects_by_ide.py', 'test_dashboard_state_includes_projects_by_ide', 1, 8, 9).
+python_function('tests/test_dashboard_projects_by_ide.py', 'test_read_workspace_folder_parses_file_url', 1, 3, 5).
+python_function('tests/test_dashboard_projects_by_ide.py', 'test_workspace_storage_projects_reads_cursor_dir', 2, 5, 9).
+python_function('tests/test_dashboard_projects_by_ide.py', 'test_walk_descendant_pids_traverses_children', 1, 2, 5).
+python_function('tests/test_dashboard_projects_by_ide.py', 'test_walk_descendant_pids_handles_cycles', 1, 2, 5).
+python_function('tests/test_dashboard_projects_by_ide.py', 'test_integrated_terminal_cwds_reads_shell_processes', 2, 2, 5).
+python_function('tests/test_dashboard_projects_by_ide.py', 'test_projects_by_ide_picks_up_terminal_cwd', 2, 5, 8).
+python_function('tests/test_dashboard_projects_by_ide.py', 'test_projects_by_ide_skips_home_directory', 2, 2, 6).
 python_function('tests/test_dashboard_topology_post.py', 'test_apply_topology_post_update_rejects_non_object_components', 0, 4, 2).
 python_function('tests/test_dashboard_topology_post.py', 'test_apply_topology_post_update_applies_component_toggle', 1, 5, 3).
 python_function('tests/test_dev_sync.py', 'test_sync_developer_packages_installs_existing_repos', 1, 3, 7).
 python_function('tests/test_dev_sync.py', 'test_sync_developer_packages_can_target_repo_venv_and_upgrade', 1, 3, 7).
 python_function('tests/test_dev_sync.py', 'test_sync_developer_packages_fails_when_target_venv_missing', 1, 4, 6).
 python_function('tests/test_dev_sync.py', 'test_sync_developer_packages_skips_dirty_pull', 1, 4, 7).
+python_function('tests/test_docker_capture.py', '_docker_available', 0, 3, 2).
+python_function('tests/test_docker_capture.py', '_build', 1, 1, 2).
+python_function('tests/test_docker_capture.py', '_run', 1, 7, 6).
+python_function('tests/test_docker_capture.py', 'test_docker_capture_headless', 0, 8, 4).
+python_function('tests/test_docker_capture.py', 'test_docker_capture_x11', 0, 16, 3).
 python_function('tests/test_docker_ide_matrix.py', 'test_headless_bridge_route_honors_each_matrix_ide', 1, 4, 2).
 python_function('tests/test_docker_ide_matrix.py', 'test_autopilot_plugin_requirement_matrix', 2, 2, 3).
 python_function('tests/test_docker_ide_matrix.py', 'test_every_matrix_ide_has_submit_key_default', 1, 2, 3).
@@ -2895,7 +2959,7 @@ python_function('tests/test_korumesh_transport.py', 'test_relay_forwards_signed_
 python_function('tests/test_koruobserve_diagnostics.py', '_proc', 2, 1, 1).
 python_function('tests/test_koruobserve_diagnostics.py', 'test_xrandr_parses_three_monitors', 0, 7, 5).
 python_function('tests/test_koruobserve_diagnostics.py', 'test_last_failure_line_picks_most_recent', 0, 2, 1).
-python_function('tests/test_koruobserve_diagnostics.py', 'test_capture_diagnostics_blocked_on_wayland', 1, 7, 7).
+python_function('tests/test_koruobserve_diagnostics.py', 'test_capture_diagnostics_blocked_on_wayland', 1, 9, 9).
 python_function('tests/test_koruobserve_diagnostics.py', 'test_capture_diagnostics_no_log', 1, 4, 2).
 python_function('tests/test_koruobserve_diagnostics.py', 'test_detect_monitors_prefers_mss_over_xrandr', 0, 2, 3).
 python_function('tests/test_koruobserve_diagnostics.py', 'test_mesh_diagnostics_endpoint_payload', 1, 3, 5).
@@ -2928,11 +2992,11 @@ python_function('tests/test_koruvision_capture.py', 'test_capture_monitor_png_re
 python_function('tests/test_koruvision_capture.py', 'test_capture_monitor_png_records_native_resolution_after_downscale', 0, 6, 8).
 python_function('tests/test_koruvision_capture.py', 'test_capture_monitor_png_skips_black_monitor', 0, 2, 6).
 python_function('tests/test_koruvision_capture.py', 'test_capture_all_monitors_returns_frame_per_display', 0, 3, 6).
-python_function('tests/test_koruvision_capture.py', 'test_capture_monitor_png_auto_falls_back_to_portal_on_wayland', 2, 5, 7).
+python_function('tests/test_koruvision_capture.py', 'test_capture_monitor_png_auto_falls_back_to_portal_on_wayland', 2, 5, 8).
 python_function('tests/test_koruvision_capture.py', 'test_capture_monitor_png_auto_uses_native_command_when_mss_fails', 1, 4, 7).
-python_function('tests/test_koruvision_capture.py', 'test_capture_all_monitors_auto_falls_back_to_portal', 1, 4, 7).
+python_function('tests/test_koruvision_capture.py', 'test_capture_all_monitors_auto_falls_back_to_portal', 1, 4, 8).
 python_function('tests/test_koruvision_capture.py', 'test_capture_monitor_png_reports_headless_environment', 1, 1, 6).
-python_function('tests/test_koruvision_mesh.py', 'test_vision_frame_envelope_uses_vision_topic', 0, 7, 3).
+python_function('tests/test_koruvision_mesh.py', 'test_vision_frame_envelope_uses_vision_topic', 0, 8, 3).
 python_function('tests/test_koruvision_mesh.py', 'test_publish_vision_frame_calls_mesh_transport', 1, 1, 6).
 python_function('tests/test_koruvision_mesh.py', 'test_resolve_mesh_publish_reads_project_defaults', 1, 4, 4).
 python_function('tests/test_local_service.py', '_urlopen_json', 1, 2, 6).
@@ -2978,6 +3042,12 @@ python_function('tests/test_observation_mesh_e2e.py', '_run_main', 0, 3, 5).
 python_function('tests/test_observation_mesh_e2e.py', 'test_mesh_cli_init_publish_reaches_relay_store', 1, 9, 12).
 python_function('tests/test_observation_mesh_e2e.py', 'test_vision_agent_cli_publishes_captured_frame_to_mesh', 1, 8, 10).
 python_function('tests/test_observation_mesh_e2e.py', 'test_observe_cli_roundtrip_through_main_dispatch', 2, 12, 15).
+python_function('tests/test_observe_providers_cli.py', 'test_provider_diagnostics_rows_marks_selected', 0, 10, 5).
+python_function('tests/test_observe_providers_cli.py', 'test_probe_capture_providers_unknown_name', 0, 3, 2).
+python_function('tests/test_observe_providers_cli.py', 'test_probe_capture_providers_mss_mocked', 0, 3, 3).
+python_function('tests/test_observe_providers_cli.py', 'test_providers_list_payload_structure', 0, 4, 3).
+python_function('tests/test_observe_providers_cli.py', 'test_providers_reset_clears_session_file', 1, 3, 5).
+python_function('tests/test_observe_providers_cli.py', 'test_cmd_providers_list_prints', 1, 4, 3).
 python_function('tests/test_operator_pipeline.py', '_ticket_args', 1, 1, 1).
 python_function('tests/test_operator_pipeline.py', 'probe', 1, 1, 1).
 python_function('tests/test_operator_pipeline.py', 'test_build_operator_steps_mcp_pending_without_config', 2, 5, 2).
@@ -3003,8 +3073,23 @@ python_function('tests/test_plugin_router.py', 'test_status_rows_include_only_pl
 python_function('tests/test_policy.py', '_write_policy', 2, 1, 4).
 python_function('tests/test_post_run_verify.py', '_ok', 1, 1, 1).
 python_function('tests/test_post_run_verify.py', '_fail', 1, 1, 1).
+python_function('tests/test_provider_browser_upload.py', '_png', 2, 1, 1).
+python_function('tests/test_provider_browser_upload.py', 'test_ingest_browser_upload_stores_frame_with_provider', 1, 6, 10).
+python_function('tests/test_provider_browser_upload.py', 'test_ingest_rejects_non_png', 1, 1, 4).
+python_function('tests/test_provider_browser_upload.py', 'test_browser_provider_reads_from_store', 1, 3, 7).
+python_function('tests/test_provider_browser_upload.py', '_serve_project', 1, 1, 4).
+python_function('tests/test_provider_browser_upload.py', 'test_capture_host_route_served', 1, 6, 4).
+python_function('tests/test_provider_browser_upload.py', 'test_browser_upload_post', 1, 6, 13).
+python_function('tests/test_provider_obs.py', '_png', 2, 1, 1).
+python_function('tests/test_provider_obs.py', 'test_obs_auth_matches_protocol', 0, 3, 3).
+python_function('tests/test_provider_obs.py', 'test_probe_obs_reachable_uses_cache', 1, 4, 3).
+python_function('tests/test_provider_obs.py', 'test_obs_request_parses_screenshot_response', 0, 2, 9).
+python_function('tests/test_provider_obs.py', 'test_obs_provider_capture_one', 1, 4, 6).
+python_function('tests/test_provider_obs.py', 'test_rank_puts_obs_first_when_reachable', 1, 4, 4).
+python_function('tests/test_provider_obs.py', 'test_rank_forced_obs_skips_probe', 1, 3, 3).
 python_function('tests/test_provider_portal_screencast.py', '_png', 2, 1, 1).
-python_function('tests/test_provider_portal_screencast.py', 'test_portal_screencast_capture_all_mocked', 1, 6, 5).
+python_function('tests/test_provider_portal_screencast.py', 'test_portal_screencast_capture_all_mocked', 1, 7, 5).
+python_function('tests/test_provider_portal_screencast.py', 'test_screencast_frames_retries_after_cache_clear', 2, 3, 13).
 python_function('tests/test_provider_portal_screencast.py', 'test_rank_providers_forces_screencast', 1, 3, 3).
 python_function('tests/test_pyproject_metadata.py', '_pyproject', 0, 1, 2).
 python_function('tests/test_pyproject_metadata.py', '_uv_lock_koru_package', 0, 3, 3).
@@ -3047,6 +3132,9 @@ python_function('tests/test_runtime_insights.py', 'test_collect_runtime_insights
 python_function('tests/test_runtime_insights.py', 'test_collect_runtime_insights_includes_detected_ides', 1, 3, 4).
 python_function('tests/test_scan.py', '_ok', 3, 1, 1).
 python_function('tests/test_scan.py', '_marker_fixture', 0, 2, 1).
+python_function('tests/test_screencast_session.py', 'test_save_and_load_session_path', 1, 3, 6).
+python_function('tests/test_screencast_session.py', 'test_resolve_from_mesh_frame_store', 2, 2, 5).
+python_function('tests/test_screencast_session.py', 'test_clear_session_file', 1, 4, 4).
 python_function('tests/test_semcod_tools.py', 'test_detect_semcod_tools_covers_core_semcod_extensions', 1, 6, 2).
 python_function('tests/test_semcod_tools.py', 'test_detect_semcod_tools_marks_pyproject_config_without_binary', 1, 4, 2).
 python_function('tests/test_serve.py', '_minimal_planfile_project', 0, 1, 4).
@@ -3076,6 +3164,10 @@ python_function('tests/test_topology_cli.py', 'test_render_topology_text_include
 python_function('tests/test_vision_interval_floor.py', 'test_normalize_clamps_short_intervals_up', 0, 4, 1).
 python_function('tests/test_vision_interval_floor.py', 'test_normalize_passes_long_intervals_through', 0, 3, 1).
 python_function('tests/test_vision_interval_floor.py', 'test_normalize_rejects_non_positive', 0, 1, 2).
+python_function('tests/test_vision_provider_mime.py', '_png', 2, 1, 1).
+python_function('tests/test_vision_provider_mime.py', 'test_frame_from_png_includes_provider', 0, 2, 2).
+python_function('tests/test_vision_provider_mime.py', 'test_capture_one_stamps_provider_from_winning_backend', 1, 2, 6).
+python_function('tests/test_vision_provider_mime.py', 'test_envelope_roundtrip_preserves_provider', 0, 3, 4).
 python_function('tests/test_wizard_cli.py', 'project_with_planfile', 1, 1, 3).
 python_function('tests/test_wizard_cli.py', 'test_run_wizard_creates_ticket_from_default_tree', 1, 6, 8).
 python_function('tests/test_wizard_cli.py', 'test_run_wizard_no_create_skips_planfile_write', 1, 5, 5).
@@ -3560,6 +3652,11 @@ python_method('CaptureProvider', 'availability', 0, 1, 0).
 python_method('CaptureProvider', 'list_monitors', 0, 1, 0).
 python_method('CaptureProvider', 'capture_all', 1, 1, 0).
 python_method('CaptureProvider', 'capture_one', 2, 1, 0).
+python_class('src/koruvision/providers/browser_getdisplay.py', 'BrowserGetDisplayProvider').
+python_method('BrowserGetDisplayProvider', 'availability', 0, 2, 3).
+python_method('BrowserGetDisplayProvider', 'list_monitors', 0, 8, 6).
+python_method('BrowserGetDisplayProvider', 'capture_all', 1, 5, 6).
+python_method('BrowserGetDisplayProvider', 'capture_one', 2, 4, 4).
 python_class('src/koruvision/providers/cli_tools.py', 'CliToolsProvider').
 python_method('CliToolsProvider', 'availability', 0, 3, 3).
 python_method('CliToolsProvider', 'list_monitors', 0, 1, 1).
@@ -3575,8 +3672,13 @@ python_method('MssProvider', 'availability', 0, 2, 1).
 python_method('MssProvider', 'list_monitors', 0, 8, 7).
 python_method('MssProvider', 'capture_all', 1, 2, 3).
 python_method('MssProvider', 'capture_one', 2, 1, 2).
+python_class('src/koruvision/providers/obs_websocket.py', 'ObsWebSocketProvider').
+python_method('ObsWebSocketProvider', 'availability', 0, 3, 5).
+python_method('ObsWebSocketProvider', 'list_monitors', 0, 1, 3).
+python_method('ObsWebSocketProvider', 'capture_all', 1, 1, 3).
+python_method('ObsWebSocketProvider', 'capture_one', 2, 1, 1).
 python_class('src/koruvision/providers/portal_screencast.py', 'PortalScreenCastProvider').
-python_method('PortalScreenCastProvider', 'availability', 0, 6, 5).
+python_method('PortalScreenCastProvider', 'availability', 0, 7, 7).
 python_method('PortalScreenCastProvider', 'list_monitors', 0, 1, 1).
 python_method('PortalScreenCastProvider', 'capture_all', 1, 3, 5).
 python_method('PortalScreenCastProvider', 'capture_one', 2, 5, 4).
@@ -4094,6 +4196,10 @@ python_method('TestPostRunVerify', 'test_verify_reopens_on_failure', 0, 3, 13).
 python_method('TestPostRunVerify', 'test_verify_after_ide_work_pending_done', 0, 1, 11).
 python_method('TestPostRunVerify', 'test_fetch_recently_done_ticket_ids', 0, 1, 8).
 python_method('TestPostRunVerify', 'test_run_verify_commands_success', 0, 1, 6).
+python_class('tests/test_provider_obs.py', 'FakeWsForCapture').
+python_method('FakeWsForCapture', '__init__', 0, 1, 0).
+python_method('FakeWsForCapture', 'send', 1, 1, 1).
+python_method('FakeWsForCapture', 'recv', 1, 1, 5).
 python_class('tests/test_queue_cli_helpers.py', 'FakeLocalManagerClient').
 python_method('FakeLocalManagerClient', '__init__', 0, 1, 0).
 python_method('FakeLocalManagerClient', 'register_worker', 0, 1, 1).
@@ -4180,7 +4286,7 @@ python_method('TestServe', 'test_health_endpoint', 0, 1, 4).
 python_method('TestServe', 'test_mesh_grid_and_frames_endpoints', 0, 1, 8).
 python_method('TestServe', 'test_dashboard_html_served_on_root', 0, 1, 3).
 python_method('TestServe', 'test_dashboard_html_has_mobile_layout_guards', 0, 1, 3).
-python_method('TestServe', 'test_dashboard_endpoint_lists_lan_state_projects_and_ides', 0, 3, 8).
+python_method('TestServe', 'test_dashboard_endpoint_lists_lan_state_projects_and_ides', 0, 4, 9).
 python_method('TestServe', 'test_api_config_get_and_post_persist_dashboard_settings', 0, 1, 10).
 python_method('TestServe', 'test_api_context_returns_brief', 0, 1, 4).
 python_method('TestServe', 'test_api_handoff_returns_markdown', 0, 1, 3).
@@ -4338,6 +4444,10 @@ env_variable('PFIX_CREATE_BACKUPS', 'false', 'disable .pfix_backups/ directory')
 env_variable('KORU_VISION_INTERVAL', '30', 'this for slower cycles. Use KORU_VISION_INTERVAL_MIN to override the floor.').
 env_variable('KORU_VISION_INTERVAL_MIN', '30', '').
 env_variable('KORU_VISION_PROVIDER', 'auto', 'cli_tools         — grim / spectacle / scrot fallback').
+env_variable('KORU_OBS_URL', 'ws://127.0.0.1:4455', 'OBS WebSocket (optional; auto-ranked first when OBS is reachable)').
+env_variable('KORU_OBS_PASSWORD', '*(not set)*', '').
+env_variable('KORU_OBS_SOURCE', 'Display Capture', '').
+env_variable('KORU_OBS_IMAGE_WIDTH', '1920', '').
 env_variable('KORU_VISION_SCALE', '0.2', 'Thumbnail scale (0.05–1.0) — relative to native resolution.').
 env_variable('KORU_VISION_PREFER_PORTAL', 'false', 'Prefer the portal screenshot over mss on Wayland (rarely useful).').
 env_variable('KORU_PORTAL_PYTHON', '*(not set)*', 'Empty = auto-detect /usr/bin/python3 with dbus + gi.').

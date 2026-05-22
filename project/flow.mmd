@@ -17,10 +17,10 @@ flowchart TD
         services__healing_webhook__app__probe_failure["probe_failure"]
         services__healing_webhook__app__get_tickets["get_tickets"]
         src__koruobserve__lifecycle__ObserveProcesses__to_json["to_json"]
-        src__koruobserve__cli___missing_observe_packages["_missing_observe_packages"]
-        src__koruobserve__cli___require_observe_runtime["_require_observe_runtime"]
-        src__koruobserve__cli___pip_install["_pip_install"]
-        ...["+941 more"]
+        src__korudsl__cli___build_parser["_build_parser"]
+        src__korudsl__cli___read_input["_read_input"]
+        src__korudsl__cli__main["main"]
+        ...["+963 more"]
     end
 
     subgraph Exporters

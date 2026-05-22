@@ -68,6 +68,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.226] - 2026-05-22
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_capture_host_template.py
+- Update tests/test_dashboard_projects_by_ide.py
+- Update tests/test_koruvision_capture.py
+- Update tests/test_koruvision_mesh.py
+- Update tests/test_provider_portal_screencast.py
+- Update tests/test_vision_provider_mime.py
+
+### Other
+- Update .koru/project.json
+- Update app.doql.less
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- ... and 13 more files
+
 ## [0.1.225] - 2026-05-22
 
 ### Docs

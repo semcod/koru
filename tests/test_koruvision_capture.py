@@ -41,8 +41,9 @@ def test_list_monitors_returns_at_least_one() -> None:
     assert any(monitor.get("is_primary") for monitor in monitors)
 
 
-def test_capture_monitor_png_returns_frame() -> None:
+def test_capture_monitor_png_returns_frame(monkeypatch) -> None:
     _require_mss()
+    monkeypatch.setenv("KORU_VISION_PROVIDER", "mss")
     with mock.patch("mss.mss", return_value=_fake_grabber(primary=True)):
         frame = capture_monitor_png(0, scale=1.0)
     assert isinstance(frame, VisionFrame)
@@ -56,8 +57,9 @@ def test_capture_monitor_png_returns_frame() -> None:
     assert frame.frame_id == frame.sha256[:16]
 
 
-def test_capture_monitor_png_records_native_resolution_after_downscale() -> None:
+def test_capture_monitor_png_records_native_resolution_after_downscale(monkeypatch) -> None:
     _require_mss()
+    monkeypatch.setenv("KORU_VISION_PROVIDER", "mss")
     pixels = []
     for _ in range(10 * 10):
         pixels.extend([10, 20, 30])
@@ -77,8 +79,9 @@ def test_capture_monitor_png_records_native_resolution_after_downscale() -> None
     assert frame.height == 2
 
 
-def test_capture_monitor_png_skips_black_monitor() -> None:
+def test_capture_monitor_png_skips_black_monitor(monkeypatch) -> None:
     _require_mss()
+    monkeypatch.setenv("KORU_VISION_PROVIDER", "mss")
     black = SimpleNamespace(rgb=b"\x00\x00\x00" * 12, size=(2, 2))
     good = SimpleNamespace(
         rgb=bytes([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]),
@@ -97,8 +100,9 @@ def test_capture_monitor_png_skips_black_monitor() -> None:
     assert frame.monitor_id == 1
 
 
-def test_capture_all_monitors_returns_frame_per_display() -> None:
+def test_capture_all_monitors_returns_frame_per_display(monkeypatch) -> None:
     _require_mss()
+    monkeypatch.setenv("KORU_VISION_PROVIDER", "mss")
     pixels = bytes([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120])
     shot = SimpleNamespace(rgb=pixels, size=(2, 2))
     grabber = mock.MagicMock()

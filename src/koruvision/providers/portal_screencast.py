@@ -21,6 +21,7 @@ _SCREENCAST_SCRIPT = r"""
 import base64
 import json
 import os
+import shlex
 import subprocess
 import sys
 
@@ -39,9 +40,23 @@ def _gst_frames(fd, streams, out_dir, scale):
     for index, stream in enumerate(streams):
         node_id = int(stream[0])
         props = stream[1] if len(stream) > 1 else {}
-        size = props.get("size", {}) if isinstance(props, dict) else {}
-        native_w = int(size.get("width", 1920) or 1920)
-        native_h = int(size.get("height", 1080) or 1080)
+        if not hasattr(props, "get"):
+            try:
+                props = dict(props)
+            except Exception:
+                props = {}
+        size = props.get("size", None)
+        if size is None:
+            native_w, native_h = 1920, 1080
+        elif hasattr(size, "get"):
+            native_w = int(size.get("width", 1920) or 1920)
+            native_h = int(size.get("height", 1080) or 1080)
+        else:
+            try:
+                native_w = int(size[0])
+                native_h = int(size[1])
+            except (IndexError, TypeError, ValueError):
+                native_w, native_h = 1920, 1080
         thumb_w = max(1, int(native_w * scale))
         thumb_h = max(1, int(native_h * scale))
         path = os.path.join(out_dir, f"monitor-{index}.png")
@@ -50,8 +65,9 @@ def _gst_frames(fd, streams, out_dir, scale):
             f"videoconvert ! videoscale ! video/x-raw,width={thumb_w},height={thumb_h} ! "
             f"pngenc snapshot=true ! filesink location={path}"
         )
+        gst_cmd = ["gst-launch-1.0", "-e", *shlex.split(pipeline)]
         proc = subprocess.run(
-            ["gst-launch-1.0", "-e", pipeline],
+            gst_cmd,
             capture_output=True,
             timeout=30,
             check=False,
@@ -75,123 +91,155 @@ def _gst_frames(fd, streams, out_dir, scale):
     return frames
 
 
-def _wait_session_request(session_iface, session_path, token, method_name, options):
-    # Wait for a portal Request response (SelectSources or Start).
-    bus = dbus.SessionBus()
+def _request_path(bus, token):
     sender = bus.get_unique_name()[1:].replace(".", "_")
-    request_path = f"/org/freedesktop/portal/desktop/request/{sender}/{token}"
-    state = {"error": None, "result": None}
+    return f"/org/freedesktop/portal/desktop/request/{sender}/{token}"
+
+
+def _make_responder(bus, request_path, timeout_ms=120000):
+    # Register a Response listener BEFORE issuing the portal call so we don't lose the signal.
+    state = {"error": None, "result": None, "done": False}
+    loop = GLib.MainLoop()
 
     def _on_response(response, results):
+        if state["done"]:
+            return
+        state["done"] = True
         if int(response) != 0:
             state["error"] = f"portal response code {response}"
         else:
-            state["result"] = results
+            try:
+                state["result"] = dict(results)
+            except (TypeError, ValueError):
+                state["result"] = {}
         loop.quit()
 
-    bus.add_signal_receiver(
+    match = bus.add_signal_receiver(
         _on_response,
         dbus_interface="org.freedesktop.portal.Request",
         path=request_path,
         signal_name="Response",
     )
-    opts = dict(options)
-    opts.setdefault("handle_token", token)
-    if method_name == "SelectSources":
-        session_iface.SelectSources(session_path, opts)
-    elif method_name == "Start":
-        session_iface.Start(session_path, "", opts)
-    else:
-        raise RuntimeError(f"unsupported portal method {method_name!r}")
-    loop = GLib.MainLoop()
-    GLib.timeout_add(120000, lambda: (loop.quit(), False)[1])
-    loop.run()
-    if state.get("error"):
-        raise RuntimeError(state["error"])
-    return state.get("result") or {}
+
+    def _wait():
+        GLib.timeout_add(timeout_ms, lambda: (loop.quit(), False)[1])
+        loop.run()
+        try:
+            match.remove()
+        except Exception:
+            pass
+        if state.get("error"):
+            raise RuntimeError(state["error"])
+        if state.get("result") is None:
+            raise RuntimeError(f"portal request timed out: {request_path}")
+        return state["result"]
+
+    return _wait
 
 
-def _wait_start(session_iface, session_path, token):
-    result = _wait_session_request(
-        session_iface,
-        session_path,
-        token,
-        "Start",
-        {"handle_token": token},
-    )
-    streams = result.get("streams") or []
-    if not streams:
-        raise RuntimeError("screencast: no streams in portal response")
-    remote = session_iface.OpenPipeWireRemote(session_path, {})
-    fd = int(remote.take())
-    return fd, streams
+def _screencast_iface(bus):
+    proxy = bus.get_object("org.freedesktop.portal.Desktop", "/org/freedesktop/portal/desktop")
+    return dbus.Interface(proxy, "org.freedesktop.portal.ScreenCast")
+
+
+def _open_pipewire_fd(bus, session_path):
+    iface = _screencast_iface(bus)
+    remote = iface.OpenPipeWireRemote(session_path, {})
+    return int(remote.take())
 
 
 def _try_reuse(session_path):
     bus = dbus.SessionBus()
-    session_iface = dbus.Interface(
-        bus.get_object("org.freedesktop.portal.Desktop", session_path),
-        "org.freedesktop.portal.Session",
-    )
-    fd, streams = _wait_start(session_iface, session_path, "koruvision_screencast_reuse")
+    iface = _screencast_iface(bus)
+    start_token = "koruvision_screencast_reuse_start"
+    wait_start = _make_responder(bus, _request_path(bus, start_token))
+    iface.Start(session_path, "", {"handle_token": start_token})
+    result = wait_start()
+    streams = result.get("streams") or []
+    if not streams:
+        raise RuntimeError("screencast: no streams in portal response (reuse)")
+    fd = _open_pipewire_fd(bus, session_path)
     return _gst_frames(fd, streams, OUT_DIR, SCALE)
 
 
-def _full_flow():
+def _full_flow(restore_token=None):
+    import uuid as _uuid
     bus = dbus.SessionBus()
-    token = "koruvision_screencast"
-    proxy = bus.get_object("org.freedesktop.portal.Desktop", "/org/freedesktop/portal/desktop")
-    iface = dbus.Interface(proxy, "org.freedesktop.portal.ScreenCast")
-    session_path = iface.CreateSession({"handle_token": token + "_session", "persist_mode": 2})
-    session_iface = dbus.Interface(
-        bus.get_object("org.freedesktop.portal.Desktop", session_path),
-        "org.freedesktop.portal.Session",
-    )
-    # GNOME requires an async SelectSources request (picker dialog) before Start.
-    _wait_session_request(
-        session_iface,
-        session_path,
-        token + "_select",
-        "SelectSources",
-        {
-            "types": UInt32(1),
-            "multiple": True,
-            "cursor_mode": UInt32(2),
-            "handle_token": token + "_select",
-        },
-    )
-    fd, streams = _wait_start(session_iface, session_path, token)
+    iface = _screencast_iface(bus)
+
+    # Use a random suffix so GNOME never matches a stale cached selection.
+    rand = _uuid.uuid4().hex[:8]
+    create_token = f"ksc_{rand}_c"
+    session_token = f"ksc_{rand}_s"
+    wait_create = _make_responder(bus, _request_path(bus, create_token))
+    iface.CreateSession({
+        "handle_token": create_token,
+        "session_handle_token": session_token,
+    })
+    create_result = wait_create()
+    session_path = create_result.get("session_handle")
+    if not session_path:
+        raise RuntimeError("screencast: portal did not return session_handle")
+
+    select_token = f"ksc_{rand}_sel"
+    select_opts = {
+        "types": UInt32(1),
+        "multiple": True,
+        "cursor_mode": UInt32(2),
+        "persist_mode": UInt32(2),
+        "handle_token": select_token,
+    }
+    if restore_token:
+        select_opts["restore_token"] = restore_token
+    wait_select = _make_responder(bus, _request_path(bus, select_token))
+    iface.SelectSources(session_path, select_opts)
+    wait_select()
+
+    start_token = f"ksc_{rand}_st"
+    wait_start = _make_responder(bus, _request_path(bus, start_token))
+    iface.Start(session_path, "", {"handle_token": start_token})
+    start_result = wait_start()
+    streams = start_result.get("streams") or []
+    if not streams:
+        raise RuntimeError("screencast: no streams in portal response")
+
+    restore_data = start_result.get("restore_token")
+    fd = _open_pipewire_fd(bus, session_path)
     frames = _gst_frames(fd, streams, OUT_DIR, SCALE)
-    return frames, session_path
+    return frames, session_path, restore_data
 
 
 def _load_saved_session():
     if not SESSION_FILE or not os.path.isfile(SESSION_FILE):
-        return None
+        return None, None
     try:
         with open(SESSION_FILE, encoding="utf-8") as handle:
             data = json.load(handle)
         path = str(data.get("session_path") or "").strip()
-        return path or None
+        restore = data.get("restore_token") or None
+        return (path or None), restore
     except Exception:
-        return None
+        return None, None
 
 
-def _save_session(session_path):
+def _save_session(session_path, restore_token=None):
     if not SESSION_FILE or not session_path:
         return
     os.makedirs(os.path.dirname(SESSION_FILE) or ".", exist_ok=True)
+    payload = {"session_path": session_path}
+    if restore_token:
+        payload["restore_token"] = str(restore_token)
     with open(SESSION_FILE, "w", encoding="utf-8") as handle:
-        json.dump({"session_path": session_path}, handle)
+        json.dump(payload, handle)
     os.chmod(SESSION_FILE, 0o600)
 
 
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
-saved = _load_saved_session()
-if saved:
+saved_path, saved_restore = _load_saved_session()
+if saved_path:
     try:
-        frames = _try_reuse(saved)
+        frames = _try_reuse(saved_path)
         if frames:
             print(json.dumps(frames))
             sys.exit(0)
@@ -199,16 +247,16 @@ if saved:
         print(f"screencast reuse failed: {exc}", file=sys.stderr)
 
 try:
-    frames, session_path = _full_flow()
+    frames, session_path, restore_data = _full_flow(restore_token=saved_restore)
 except Exception as exc:
-    print(str(exc), file=sys.stderr)
+    print(f"screencast full_flow failed: {exc}", file=sys.stderr)
     sys.exit(2)
 
 if not frames:
     print("screencast: no frames captured", file=sys.stderr)
     sys.exit(3)
 
-_save_session(session_path)
+_save_session(session_path, restore_data)
 print(json.dumps(frames))
 """
 
@@ -301,7 +349,7 @@ def _screencast_frames(scale: float, *, retry_without_cache: bool = True) -> lis
             if proc.returncode == 0:
                 return _parse_screencast_stdout(proc.stdout or "")
         detail = (proc.stderr or "").strip() or f"exit {proc.returncode}"
-        raise RuntimeError(f"portal screencast failed: {detail[-500:]}")
+        raise RuntimeError(f"portal screencast failed: {detail[-2000:]}")
 
 
 def _run_screencast_subprocess(args: list[str]) -> subprocess.CompletedProcess[str]:

@@ -233,6 +233,12 @@ def _should_report_auto_portal(provider: CaptureProvider, index: int) -> bool:
     )
 
 
+def _stamp_provider(frame: dict[str, Any], provider_name: str) -> dict[str, Any]:
+    stamped = dict(frame)
+    stamped["provider"] = provider_name
+    return stamped
+
+
 def capture_one_with_providers(monitor_id: int | None, scale: float) -> dict[str, Any]:
     providers = rank_providers()
     if not providers:
@@ -254,7 +260,7 @@ def capture_one_with_providers(monitor_id: int | None, scale: float) -> dict[str
                 "koru vision: auto selected Wayland portal — used portal capture",
                 file=sys.stderr,
             )
-        return frame
+        return _stamp_provider(frame, provider.name)
     raise RuntimeError(_auto_failure_message(errors))
 
 
@@ -282,5 +288,5 @@ def capture_all_with_providers(scale: float) -> list[dict[str, Any]]:
                 "koru vision: auto selected Wayland portal — used portal capture",
                 file=sys.stderr,
             )
-        return frames
+        return [_stamp_provider(item, provider.name) for item in frames]
     raise RuntimeError(_auto_failure_message(errors))

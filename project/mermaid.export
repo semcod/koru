@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 0.01s
+%% generated in 0.02s
     subgraph docker__capture
         docker__capture__smoke___png_size["_png_size"]
         docker__capture__smoke___scan_providers["_scan_providers"]
@@ -321,13 +321,13 @@ flowchart TD
         src__koruapi__runtime_insights___top_processes["_top_processes"]
         src__koruapi__runtime_insights__collect_runtime_insights["collect_runtime_insights"]
         src__koruapi__mcp__mcp_main["mcp_main"]
+        src__koruapi__dashboard___env_truthy["_env_truthy"]
+        src__koruapi__dashboard___argv_has_flag["_argv_has_flag"]
+        src__koruapi__dashboard__build_serve_parser["build_serve_parser"]
+        src__koruapi__dashboard__dashboard_main{{dashboard_main CC=23}}
         src__koruapi__cli___build_parser["_build_parser"]
         src__koruapi__cli___parse_body["_parse_body"]
         src__koruapi__cli__main("main CC=11")
-        src__koruapi__dashboard_state__local_lan_addresses["local_lan_addresses"]
-        src__koruapi__dashboard_state__dashboard_urls["dashboard_urls"]
-        src__koruapi__dashboard_state__dashboard_ide_rows["dashboard_ide_rows"]
-        src__koruapi__dashboard_state__dashboard_state["dashboard_state"]
         src__koruapi__local__build_local_parser["build_local_parser"]
         src__koruapi__local__local_main["local_main"]
         src__koruapi__invoke_handlers___handle_context_build["_handle_context_build"]
@@ -494,14 +494,19 @@ flowchart TD
         src__korumesh__transport___relay_client("_relay_client CC=9")
         src__korumesh__transport__run_relay["run_relay"]
         src__korumesh__transport__publish_envelope["publish_envelope"]
-        src__korumesh__dashboard_parse__parse_mime_params["parse_mime_params"]
-        src__korumesh__dashboard_parse___int_param["_int_param"]
-        src__korumesh__dashboard_parse__envelope_to_frame_entry["envelope_to_frame_entry"]
         src__korumesh__cli_commands__mesh_init["mesh_init"]
         src__korumesh__cli_commands__mesh_relay["mesh_relay"]
         src__korumesh__cli_commands__mesh_publish["mesh_publish"]
         src__korumesh__keys__load_mesh_key["load_mesh_key"]
         src__korumesh__keys__write_mesh_key["write_mesh_key"]
+        src__korumesh__dashboard_parse__parse_mime_params["parse_mime_params"]
+        src__korumesh__dashboard_parse___int_param["_int_param"]
+        src__korumesh__dashboard_parse__envelope_to_frame_entry["envelope_to_frame_entry"]
+        src__korumesh__browser_capture__capture_host_html["capture_host_html"]
+        src__korumesh__browser_capture__capture_host_context["capture_host_context"]
+        src__korumesh__browser_capture___render_capture_host["_render_capture_host"]
+        src__korumesh__browser_capture__browser_upload_payload["browser_upload_payload"]
+        src__korumesh__browser_capture__serve_browser_capture_http("serve_browser_capture_http CC=10")
     end
     subgraph src__koruobserve
         src__koruobserve__lifecycle__ObserveProcesses__to_json["to_json"]
@@ -520,6 +525,10 @@ flowchart TD
         src__koruobserve__bootstrap___config_has_v2_sections["_config_has_v2_sections"]
         src__koruobserve__bootstrap__ensure_observe_config["ensure_observe_config"]
         src__koruobserve__bootstrap__ensure_mesh_key["ensure_mesh_key"]
+        src__koruobserve__paths__runtime_dir["runtime_dir"]
+        src__koruobserve__paths__pidfile["pidfile"]
+        src__koruobserve__paths__logfile["logfile"]
+        src__koruobserve__paths__state_file["state_file"]
         src__koruobserve__cli___missing_observe_packages["_missing_observe_packages"]
         src__koruobserve__cli___require_observe_runtime["_require_observe_runtime"]
         src__koruobserve__cli___pip_install["_pip_install"]
@@ -528,11 +537,8 @@ flowchart TD
         src__koruobserve__cli___cmd_down["_cmd_down"]
         src__koruobserve__cli___cmd_status["_cmd_status"]
         src__koruobserve__cli___cmd_grid["_cmd_grid"]
+        src__koruobserve__cli___cmd_providers["_cmd_providers"]
         src__koruobserve__cli__observe_main["observe_main"]
-        src__koruobserve__paths__runtime_dir["runtime_dir"]
-        src__koruobserve__paths__pidfile["pidfile"]
-        src__koruobserve__paths__logfile["logfile"]
-        src__koruobserve__paths__state_file["state_file"]
         src__koruobserve__diagnostics___session_type["_session_type"]
         src__koruobserve__diagnostics___monitors_from_mss("_monitors_from_mss CC=8")
         src__koruobserve__diagnostics___monitors_from_xrandr["_monitors_from_xrandr"]
@@ -540,8 +546,17 @@ flowchart TD
         src__koruobserve__diagnostics___read_log_tail["_read_log_tail"]
         src__koruobserve__diagnostics___last_failure_line["_last_failure_line"]
         src__koruobserve__diagnostics___wayland_hint["_wayland_hint"]
-        src__koruobserve__diagnostics___provider_status["_provider_status"]
         src__koruobserve__diagnostics__capture_diagnostics["capture_diagnostics"]
+        src__koruobserve__providers_cli__screencast_session_path["screencast_session_path"]
+        src__koruobserve__providers_cli__providers_list_payload["providers_list_payload"]
+        src__koruobserve__providers_cli__providers_list_text("providers_list_text CC=13")
+        src__koruobserve__providers_cli__providers_test_payload["providers_test_payload"]
+        src__koruobserve__providers_cli__providers_test_text("providers_test_text CC=13")
+        src__koruobserve__providers_cli__providers_reset_consent["providers_reset_consent"]
+        src__koruobserve__providers_cli__providers_reset_text["providers_reset_text"]
+        src__koruobserve__providers_cli__cmd_providers_list["cmd_providers_list"]
+        src__koruobserve__providers_cli__cmd_providers_test["cmd_providers_test"]
+        src__koruobserve__providers_cli__cmd_providers_reset["cmd_providers_reset"]
         src__koruobserve__cli_parser___add_subproject["_add_subproject"]
         src__koruobserve__cli_parser___register_up_arguments["_register_up_arguments"]
         src__koruobserve__cli_parser__build_observe_parser["build_observe_parser"]
@@ -553,61 +568,61 @@ flowchart TD
         src__koruvision__scaling__resolve_scale["resolve_scale"]
         src__koruvision__scaling__downscale_rgb_nearest["downscale_rgb_nearest"]
         src__koruvision__scaling__rgb_mostly_black["rgb_mostly_black"]
-        src__koruvision__capture_fallback__parse_png_size["parse_png_size"]
-        src__koruvision__capture_fallback__png_descriptor["png_descriptor"]
-        src__koruvision__capture_fallback__command_candidates["command_candidates"]
-        src__koruvision__capture_fallback__try_native_command["try_native_command"]
-        src__koruvision__capture_fallback__looks_headless["looks_headless"]
-        src__koruvision__capture_fallback__portal_descriptor["portal_descriptor"]
-        src__koruvision__capture_fallback__wayland_portal_fallback["wayland_portal_fallback"]
-        src__koruvision__capture_fallback__command_fallback["command_fallback"]
-        src__koruvision__capture_fallback__fallback_for_environment["fallback_for_environment"]
+        src__koruvision__cli___vision_interval["_vision_interval"]
+        src__koruvision__cli___mesh_publish_enabled["_mesh_publish_enabled"]
+        src__koruvision__cli___maybe_publish_mesh["_maybe_publish_mesh"]
+        src__koruvision__cli__vision_main["vision_main"]
+        src__koruvision__portal_capture___portal_python["_portal_python"]
+        src__koruvision__portal_capture__capture_portal_png("capture_portal_png CC=8")
+        src__koruvision__agent__capture_once["capture_once"]
+        src__koruvision__agent__capture_all_once["capture_all_once"]
+        src__koruvision__agent___capture_cycle["_capture_cycle"]
+        src__koruvision__agent__normalize_capture_interval["normalize_capture_interval"]
+        src__koruvision__agent__run_capture_loop("run_capture_loop CC=11")
+        src__koruvision__cli_parser__register_mesh_publish_args["register_mesh_publish_args"]
+        src__koruvision__cli_parser___add_capture_subparser["_add_capture_subparser"]
+        src__koruvision__cli_parser___add_agent_subparser["_add_agent_subparser"]
+        src__koruvision__cli_parser__build_vision_parser["build_vision_parser"]
+        src__koruvision__providers__cli_tools__CliToolsProvider__availability["availability"]
+        src__koruvision__providers__cli_tools__CliToolsProvider__list_monitors["list_monitors"]
+        src__koruvision__providers__cli_tools__CliToolsProvider__capture_all["capture_all"]
+        src__koruvision__providers__cli_tools__CliToolsProvider__capture_one["capture_one"]
+        src__koruvision__providers__cli_tools___tool_available["_tool_available"]
+        src__koruvision__providers__portal_screenshot__PortalScreenshotProvider__availability["availability"]
+        src__koruvision__providers__portal_screenshot__PortalScreenshotProvider__list_monitors["list_monitors"]
+        src__koruvision__providers__portal_screenshot__PortalScreenshotProvider__capture_all["capture_all"]
+        src__koruvision__providers__portal_screenshot__PortalScreenshotProvider__capture_one["capture_one"]
+        src__koruvision__providers__grim__GrimProvider__availability["availability"]
+        src__koruvision__providers__grim__GrimProvider__list_monitors["list_monitors"]
+        src__koruvision__providers__grim__GrimProvider__capture_all["capture_all"]
+        src__koruvision__providers__grim__GrimProvider__capture_one["capture_one"]
+        src__koruvision__providers__grim___grim_png["_grim_png"]
+        src__koruvision__providers__mss__MssProvider__availability["availability"]
+        src__koruvision__providers__mss__MssProvider__list_monitors("list_monitors CC=8")
+        src__koruvision__providers__mss__MssProvider__capture_all["capture_all"]
+        src__koruvision__providers__mss__MssProvider__capture_one["capture_one"]
+        src__koruvision__providers__env__capture_provider_pref["capture_provider_pref"]
+        src__koruvision__providers__env__is_wayland["is_wayland"]
+        src__koruvision__providers__env__env_truthy["env_truthy"]
+        src__koruvision__providers__env__portal_possible["portal_possible"]
+        src__koruvision__providers__env__looks_headless["looks_headless"]
+        src__koruvision__providers__env__compositor_hint["compositor_hint"]
+        src__koruvision__providers__env__tool_available["tool_available"]
         src__koruvision__capture___frame["_frame"]
         src__koruvision__capture__list_monitors["list_monitors"]
         src__koruvision__capture__capture_monitor_png["capture_monitor_png"]
         src__koruvision__capture__capture_all_monitors["capture_all_monitors"]
-        src__koruvision__capture_mss__capture_backend["capture_backend"]
         src__koruvision__capture_mss__is_wayland["is_wayland"]
-        src__koruvision__capture_mss__env_truthy["env_truthy"]
-        src__koruvision__capture_mss__portal_possible["portal_possible"]
-        src__koruvision__capture_mss__looks_headless["looks_headless"]
-        src__koruvision__capture_mss__auto_backend_order["auto_backend_order"]
-        src__koruvision__capture_mss__auto_failure_message["auto_failure_message"]
         src__koruvision__capture_mss__png_dimensions["png_dimensions"]
         src__koruvision__capture_mss__png_payload_descriptor["png_payload_descriptor"]
         src__koruvision__capture_mss__frame_from_shot["frame_from_shot"]
         src__koruvision__capture_mss__ordered_monitor_indices["ordered_monitor_indices"]
         src__koruvision__capture_mss__portal_capture_dict["portal_capture_dict"]
         src__koruvision__capture_mss__command_candidates["command_candidates"]
-        src__koruvision__capture_mss__run_png_command("run_png_command CC=13")
+        src__koruvision__capture_mss__run_png_command("run_png_command CC=14")
         src__koruvision__capture_mss__command_capture_dict["command_capture_dict"]
-        src__koruvision__capture_mss___fallback_after_mss["_fallback_after_mss"]
         src__koruvision__capture_mss__grab_target["grab_target"]
         src__koruvision__capture_mss___grab_single_mss_raw["_grab_single_mss_raw"]
-        src__koruvision__capture_mss__grab_single_mss["grab_single_mss"]
-        src__koruvision__capture_mss___grab_all_mss_raw["_grab_all_mss_raw"]
-        src__koruvision__capture_mss__grab_all_mss["grab_all_mss"]
-        src__koruvision__portal_capture___portal_python["_portal_python"]
-        src__koruvision__portal_capture__capture_portal_png("capture_portal_png CC=8")
-        src__koruvision__mesh__default_peer_id["default_peer_id"]
-        src__koruvision__mesh__resolve_mesh_publish("resolve_mesh_publish CC=8")
-        src__koruvision__mesh___vision_mime["_vision_mime"]
-        src__koruvision__mesh__vision_frame_envelope["vision_frame_envelope"]
-        src__koruvision__mesh__publish_vision_frame["publish_vision_frame"]
-        src__koruvision__providers__base__CaptureProvider__availability["availability"]
-        src__koruvision__providers__base__CaptureProvider__list_monitors["list_monitors"]
-        src__koruvision__providers__base__CaptureProvider__capture_all["capture_all"]
-        src__koruvision__providers__base__CaptureProvider__capture_one["capture_one"]
-        src__koruvision__providers__base__png_dimensions["png_dimensions"]
-        src__koruvision__providers__base__frame_from_png["frame_from_png"]
-        src__koruvision__providers__cli_tools__CliToolsProvider__availability["availability"]
-        src__koruvision__providers__cli_tools__CliToolsProvider__list_monitors["list_monitors"]
-        src__koruvision__providers__cli_tools__CliToolsProvider__capture_all["capture_all"]
-        src__koruvision__providers__cli_tools__CliToolsProvider__capture_one["capture_one"]
-        src__koruvision__providers__cli_tools___tool_available["_tool_available"]
-        src__koruvision__providers__registry__all_providers["all_providers"]
-        src__koruvision__providers__registry__provider_by_name["provider_by_name"]
-        src__koruvision__providers__portal_screencast__PortalScreenCastProvider__availability["availability"]
     end
     services__healing_webhook__app___enrich_ticket_with_vallm --> services__healing_webhook__app___resolve_affected_files
     services__healing_webhook__app___enrich_ticket_with_vallm --> services__healing_webhook__app___run_vallm_check
@@ -671,25 +686,6 @@ flowchart TD
     src__koruobserve__bootstrap__ensure_observe_config --> src__koruobserve__bootstrap___config_has_v2_sections
     src__koruobserve__bootstrap__ensure_observe_config --> src__koru__configurator__migrate_project_config
     src__koruobserve__bootstrap__ensure_mesh_key --> src__korumesh__keys__write_mesh_key
-    src__koruobserve__cli___require_observe_runtime --> src__koruobserve__cli___missing_observe_packages
-    src__koruobserve__cli___pip_install --> scripts__koru_soak_monitor__print
-    src__koruobserve__cli___cmd_install --> src__koruobserve__cli___missing_observe_packages
-    src__koruobserve__cli___cmd_install --> src__koruobserve__cli___pip_install
-    src__koruobserve__cli___cmd_up --> src__koruobserve__cli___require_observe_runtime
-    src__koruobserve__cli___cmd_up --> src__koruobserve__lifecycle__observe_up
-    src__koruobserve__cli___cmd_up --> scripts__koru_soak_monitor__print
-    src__koruobserve__cli___cmd_up --> src__koruobserve__cli_parser__project_path
-    src__koruobserve__cli___cmd_down --> src__koruobserve__lifecycle__observe_down
-    src__koruobserve__cli___cmd_down --> src__koruobserve__cli_parser__project_path
-    src__koruobserve__cli___cmd_down --> scripts__koru_soak_monitor__print
-    src__koruobserve__cli___cmd_status --> src__koruobserve__lifecycle__observe_status
-    src__koruobserve__cli___cmd_status --> scripts__koru_soak_monitor__print
-    src__koruobserve__cli___cmd_status --> src__koruobserve__cli_parser__project_path
-    src__koruobserve__cli___cmd_grid --> src__koruobserve__paths__state_file
-    src__koruobserve__cli___cmd_grid --> scripts__koru_soak_monitor__print
-    src__koruobserve__cli___cmd_grid --> src__koruobserve__cli_parser__project_path
-    src__koruobserve__cli__observe_main --> scripts__koru_soak_monitor__print
-    src__koruobserve__cli__observe_main --> src__koruobserve__cli_parser__build_observe_parser
     src__koruobserve__paths__pidfile --> src__koruobserve__paths__runtime_dir
     src__koruobserve__paths__logfile --> src__koruobserve__paths__runtime_dir
     src__koruobserve__paths__state_file --> src__koruobserve__paths__runtime_dir
@@ -730,6 +726,13 @@ flowchart TD
     src__koruapi__runtime_insights__collect_runtime_insights --> src__koru__autonomous_process_guard__find_existing_wup_processes
     src__koruapi__mcp__mcp_main --> src__koru__activity_log__activity
     src__koruapi__mcp__mcp_main --> koruapi__mcp_server__mcp_serve_main
+    src__koruapi__dashboard__dashboard_main --> src__koru__wizard__gui__static__wizard__list
+    src__koruapi__dashboard__dashboard_main --> src__koru__dotenv_loader__load_dotenv
+    src__koruapi__dashboard__dashboard_main --> src__koru__configurator__load_project_config
+    src__koruapi__dashboard__dashboard_main --> src__koru__activity_log__activity
+    src__koruapi__dashboard__dashboard_main --> src__koruapi__server__serve
+    src__koruapi__dashboard__dashboard_main --> src__koru__events__emit_management_event
+    src__koruapi__dashboard__dashboard_main --> src__koruapi__dashboard___argv_has_flag
     src__koruapi__cli__main --> src__koruapi__cli___build_parser
     src__koruapi__cli__main --> src__koru__activity_log__activity
     src__koruapi__cli__main --> src__koruapi__dashboard__dashboard_main
@@ -739,14 +742,6 @@ flowchart TD
     src__koruapi__cli__main --> src__koruapi__invoke__invoke_integration
     src__koruapi__cli__main --> src__koru__wizard__gui__static__wizard__list
     src__koruapi__cli__main --> src__koruapi__integrations__list_integrations
-    src__koruapi__dashboard_state__dashboard_urls --> src__koru__wizard__gui__static__wizard__list
-    src__koruapi__dashboard_state__dashboard_urls --> src__koruapi__dashboard_state__local_lan_addresses
-    src__koruapi__dashboard_state__dashboard_ide_rows --> src__koruide__ide__autopilot_ide_choices
-    src__koruapi__dashboard_state__dashboard_ide_rows --> src__koruide__ide__detect_running_ides
-    src__koruapi__dashboard_state__dashboard_state --> src__koruapi__dashboard_state__dashboard_urls
-    src__koruapi__dashboard_state__dashboard_state --> src__koruapi__dashboard_projects__discover_dashboard_projects
-    src__koruapi__dashboard_state__dashboard_state --> src__koruapi__dashboard_state__dashboard_ide_rows
-    src__koruapi__dashboard_state__dashboard_state --> src__koruapi__dashboard_projects__dashboard_workspace
     src__koruapi__local__local_main --> src__koru__local_service__default_local_service_config
     src__koruapi__local__local_main --> src__koru__activity_log__activity
     src__koruapi__local__local_main --> src__koru__local_service__run_local_service
@@ -849,14 +844,17 @@ flowchart TD
     src__koruapi__dashboard_serve__serve --> scripts__koru_soak_monitor__print
     src__koruapi__dashboard_serve__start_serve_background --> src__koruapi__dashboard_serve___prepare_bound_dashboard
     src__koruapi__dashboard_serve__start_serve_background --> src__koruapi__dashboard_serve___announce_bound_dashboard
-    src__koruapi__dashboard_projects__project_candidate_dict --> src__koruapi__dashboard_projects__project_label
-    src__koruapi__dashboard_projects__workspace_project_candidates --> src__koruapi__dashboard_projects__looks_like_project
-    src__koruapi__dashboard_projects__discover_dashboard_projects --> src__koruapi__dashboard_projects__dashboard_workspace
-    src__koruapi__dashboard_projects__discover_dashboard_projects --> src__koruapi__dashboard_projects__project_candidate_dict
-    src__koruapi__dashboard_projects__discover_dashboard_projects --> src__koru__wizard__project__propose_projects
-    src__koruapi__dashboard_projects__discover_dashboard_projects --> src__koruapi__dashboard_projects__workspace_project_candidates
-    src__koruapi__dashboard_projects__discover_dashboard_projects --> src__koruide__ide__detect_running_ides
-    src__koruapi__dashboard_projects__resolve_dashboard_project --> src__koruapi__dashboard_projects__discover_dashboard_projects
+    src__koruapi__dashboard_config___dotenv_payload --> src__koruapi__dashboard_config___dotenv_path
+    src__koruapi__dashboard_config__save_dashboard_dotenv --> src__koruapi__dashboard_config___dotenv_path
+    src__koruapi__dashboard_config__save_dashboard_dotenv --> src__koru__dotenv_loader__load_dotenv
+    src__koruapi__dashboard_config__dashboard_config_payload --> src__koru__configurator__load_project_config
+    src__koruapi__dashboard_config__dashboard_config_payload --> src__koruapi__dashboard_config___dotenv_payload
+    src__koruapi__dashboard_config__dashboard_config_payload --> src__koru__wizard__gui__static__wizard__list
+    src__koruapi__dashboard_config__dashboard_config_payload --> src__koruapi__dashboard_config__bool_from_dashboard
+    src__koruapi__dashboard_config__save_dashboard_config --> src__koru__configurator__configure_project
+    src__koruapi__dashboard_config__save_dashboard_config --> src__koruapi__dashboard_config__save_dashboard_dotenv
+    src__koruapi__dashboard_config__save_dashboard_config --> src__koruapi__dashboard_config__int_from_dashboard
+    src__koruapi__dashboard_config__save_dashboard_config --> src__koruapi__dashboard_config__bool_from_dashboard
     koruapi__mcp_server___load_jobs --> koruapi__mcp_server___get_job_store_path
     koruapi__mcp_server___save_jobs --> koruapi__mcp_server___get_job_store_path
     koruapi__mcp_server___monitor_subprocess_oom --> koruapi__mcp_server___get_process_memory_mb
@@ -895,79 +893,38 @@ flowchart TD
     koruapi__mcp_server__mcp_serve_main --> koruapi__mcp_server__run_stdio
     koruapi__mcp_server__mcp_serve_main --> scripts__koru_soak_monitor__print
     src__koruvision__capture_probe__resolve_observe_python --> src__koruvision__capture_probe__python_can_capture
-    src__koruvision__capture_fallback__png_descriptor --> src__koruvision__capture_fallback__parse_png_size
-    src__koruvision__capture_fallback__try_native_command --> src__koruvision__capture_fallback__command_candidates
-    src__koruvision__capture_fallback__try_native_command --> src__koruvision__capture_fallback__png_descriptor
-    src__koruvision__capture_fallback__looks_headless --> src__koruvision__capture_fallback__try_native_command
-    src__koruvision__capture_fallback__portal_descriptor --> src__koruvision__capture_mss__portal_capture_dict
-    src__koruvision__capture_fallback__portal_descriptor --> src__koruvision__capture_fallback__png_descriptor
-    src__koruvision__capture_fallback__wayland_portal_fallback --> scripts__koru_soak_monitor__print
-    src__koruvision__capture_fallback__wayland_portal_fallback --> src__koruvision__capture_fallback__portal_descriptor
-    src__koruvision__capture_fallback__command_fallback --> src__koruvision__capture_fallback__try_native_command
-    src__koruvision__capture_fallback__command_fallback --> src__koruvision__capture_fallback__looks_headless
-    src__koruvision__capture_fallback__fallback_for_environment --> src__koruvision__capture_mss__is_wayland
-    src__koruvision__capture_fallback__fallback_for_environment --> src__koruvision__capture_fallback__command_fallback
-    src__koruvision__capture_fallback__fallback_for_environment --> src__koruvision__capture_fallback__wayland_portal_fallback
-    src__koruvision__capture__capture_monitor_png --> src__koruvision__capture___frame
-    src__koruvision__capture__capture_monitor_png --> src__koruvision__providers__detector__capture_one_with_providers
-    src__koruvision__capture__capture_monitor_png --> src__koruvision__scaling__resolve_scale
-    src__koruvision__capture__capture_all_monitors --> src__koruvision__capture___frame
-    src__koruvision__capture__capture_all_monitors --> src__koruvision__providers__detector__capture_all_with_providers
-    src__koruvision__capture__capture_all_monitors --> src__koruvision__scaling__resolve_scale
-    src__koruvision__capture_mss__portal_possible --> src__koruvision__capture_mss__is_wayland
-    src__koruvision__capture_mss__auto_backend_order --> src__koruvision__capture_mss__portal_possible
-    src__koruvision__capture_mss__auto_backend_order --> src__koru__wizard__gui__static__wizard__list
-    src__koruvision__capture_mss__auto_backend_order --> src__koruvision__capture_mss__env_truthy
-    src__koruvision__capture_mss__auto_backend_order --> src__koruvision__capture_mss__is_wayland
-    src__koruvision__capture_mss__auto_failure_message --> src__koruvision__capture_mss__looks_headless
-    src__koruvision__capture_mss__png_payload_descriptor --> src__koruvision__capture_mss__png_dimensions
-    src__koruvision__capture_mss__frame_from_shot --> src__koruvision__scaling__rgb_mostly_black
-    src__koruvision__capture_mss__frame_from_shot --> src__koruvision__scaling__downscale_rgb_nearest
-    src__koruvision__capture_mss__portal_capture_dict --> src__koruvision__capture_mss__png_payload_descriptor
-    src__koruvision__capture_mss__portal_capture_dict --> src__koruvision__portal_capture__capture_portal_png
-    src__koruvision__capture_mss__command_capture_dict --> src__koruvision__capture_mss__command_candidates
-    src__koruvision__capture_mss__command_capture_dict --> src__koruvision__capture_mss__png_payload_descriptor
-    src__koruvision__capture_mss__command_capture_dict --> src__koruvision__capture_mss__run_png_command
-    src__koruvision__capture_mss___fallback_after_mss --> scripts__koru_soak_monitor__print
-    src__koruvision__capture_mss___fallback_after_mss --> src__koruvision__capture_mss__auto_failure_message
-    src__koruvision__capture_mss___fallback_after_mss --> src__koruvision__capture_mss__auto_backend_order
-    src__koruvision__capture_mss___fallback_after_mss --> src__koruvision__capture_mss__portal_capture_dict
-    src__koruvision__capture_mss___fallback_after_mss --> src__koruvision__capture_mss__command_capture_dict
-    src__koruvision__capture_mss__grab_target --> src__koruvision__capture_mss__frame_from_shot
-    src__koruvision__capture_mss___grab_single_mss_raw --> src__koruvision__capture_mss__ordered_monitor_indices
-    src__koruvision__capture_mss___grab_single_mss_raw --> src__koruvision__capture_mss__grab_target
-    src__koruvision__capture_mss__grab_single_mss --> src__koruvision__capture_mss__capture_backend
-    src__koruvision__capture_mss__grab_single_mss --> src__koruvision__capture_mss__command_capture_dict
-    src__koruvision__capture_mss__grab_single_mss --> src__koruvision__capture_mss___grab_single_mss_raw
-    src__koruvision__capture_mss__grab_single_mss --> src__koruvision__capture_mss___fallback_after_mss
-    src__koruvision__capture_mss___grab_all_mss_raw --> src__koruvision__capture_mss__grab_target
-    src__koruvision__capture_mss___grab_all_mss_raw --> scripts__koru_soak_monitor__print
-    src__koruvision__capture_mss__grab_all_mss --> src__koruvision__capture_mss__capture_backend
-    src__koruvision__capture_mss__grab_all_mss --> src__koruvision__capture_mss___grab_all_mss_raw
-    src__koruvision__capture_mss__grab_all_mss --> src__koruvision__capture_mss__command_capture_dict
-    src__koruvision__capture_mss__grab_all_mss --> src__koruvision__capture_mss___fallback_after_mss
+    src__koruvision__cli___vision_interval --> src__koru__configurator__load_project_config
+    src__koruvision__cli___vision_interval --> src__koruvision__agent__normalize_capture_interval
+    src__koruvision__cli___mesh_publish_enabled --> src__koru__configurator__load_project_config
+    src__koruvision__cli___maybe_publish_mesh --> src__koruvision__mesh__resolve_mesh_publish
+    src__koruvision__cli___maybe_publish_mesh --> src__koruvision__mesh__publish_vision_frame
+    src__koruvision__cli___maybe_publish_mesh --> src__koruvision__cli___mesh_publish_enabled
+    src__koruvision__cli__vision_main --> src__koruvision__cli___vision_interval
+    src__koruvision__cli__vision_main --> src__koruvision__agent__run_capture_loop
+    src__koruvision__cli__vision_main --> scripts__koru_soak_monitor__print
+    src__koruvision__cli__vision_main --> src__koruvision__cli_parser__build_vision_parser
+    src__koruvision__cli__vision_main --> src__koruvision__agent__capture_once
+    src__koruvision__cli__vision_main --> src__koruvision__cli___maybe_publish_mesh
     src__koruvision__portal_capture__capture_portal_png --> src__koruvision__portal_capture___portal_python
-    src__koruvision__mesh__resolve_mesh_publish --> src__koru__configurator__load_project_config
-    src__koruvision__mesh__resolve_mesh_publish --> src__korumesh__keys__load_mesh_key
-    src__koruvision__mesh__resolve_mesh_publish --> src__koruvision__mesh__default_peer_id
-    src__koruvision__mesh__vision_frame_envelope --> src__korumesh__envelope__sign_envelope
-    src__koruvision__mesh__vision_frame_envelope --> src__koruvision__mesh___vision_mime
-    src__koruvision__mesh__publish_vision_frame --> src__koruvision__mesh__vision_frame_envelope
-    src__koruvision__mesh__publish_vision_frame --> src__korumesh__transport__publish_envelope
-    src__koruvision__providers__base__frame_from_png --> src__koruvision__providers__base__png_dimensions
-    src__koruvision__providers__base__frame_from_png --> src__koruvision__scaling__resolve_scale
-    src__koruvision__providers__cli_tools__CliToolsProvider__availability --> src__koruvision__capture_fallback__command_candidates
+    src__koruvision__agent__capture_once --> src__koruvision__capture__capture_monitor_png
+    src__koruvision__agent__capture_all_once --> src__koruvision__capture__capture_all_monitors
+    src__koruvision__agent___capture_cycle --> src__koruvision__agent__capture_all_once
+    src__koruvision__agent___capture_cycle --> src__koruvision__agent__capture_once
+    src__koruvision__agent__run_capture_loop --> src__koruvision__agent__normalize_capture_interval
+    src__koruvision__agent__run_capture_loop --> src__koruvision__agent___capture_cycle
+    src__koruvision__agent__run_capture_loop --> scripts__koru_soak_monitor__print
+    src__koruvision__cli_parser___add_capture_subparser --> src__koruvision__cli_parser__register_mesh_publish_args
+    src__koruvision__cli_parser___add_agent_subparser --> src__koruvision__cli_parser__register_mesh_publish_args
+    src__koruvision__cli_parser__build_vision_parser --> src__koruvision__cli_parser___add_capture_subparser
+    src__koruvision__cli_parser__build_vision_parser --> src__koruvision__cli_parser___add_agent_subparser
+    src__koruvision__providers__cli_tools__CliToolsProvider__availability --> src__koruvision__capture_mss__command_candidates
     src__koruvision__providers__cli_tools__CliToolsProvider__availability --> src__koruvision__providers__cli_tools___tool_available
     src__koruvision__providers__cli_tools__CliToolsProvider__list_monitors --> src__koruvision__providers__detector__monitors_via_xrandr
     src__koruvision__providers__cli_tools__CliToolsProvider__capture_all --> src__koruvision__capture_mss__command_capture_dict
-    src__koruvision__providers__registry__all_providers --> src__koru__wizard__gui__static__wizard__list
-    src__koruvision__providers__portal_screencast__PortalScreenCastProvider__availability --> src__koruvision__portal_capture___portal_python
-    src__koruvision__providers__portal_screencast__PortalScreenCastProvider__availability --> src__koruvision__capture_mss__portal_possible
-    src__koruvision__providers__portal_screencast__PortalScreenCastProvider__availability --> src__koruvision__providers__env__tool_available
-    src__koruvision__providers__portal_screencast__PortalScreenCastProvider__list_monitors --> src__koruvision__providers__detector__monitors_via_xrandr
-    src__koruvision__providers__portal_screencast__PortalScreenCastProvider__capture_all --> src__koruvision__providers__portal_screencast___screencast_frames
-    src__koruvision__providers__portal_screencast__PortalScreenCastProvider__capture_all --> src__koruvision__providers__base__frame_from_png
-    src__koruvision__providers__portal_screencast___screencast_frames --> src__koruvision__portal_capture___portal_python
+    src__koruvision__providers__portal_screenshot__PortalScreenshotProvider__availability --> src__koruvision__providers__env__portal_possible
+    src__koruvision__providers__portal_screenshot__PortalScreenshotProvider__list_monitors --> src__koruvision__providers__detector__monitors_via_xrandr
+    src__koruvision__providers__portal_screenshot__PortalScreenshotProvider__capture_one --> src__koruvision__capture_mss__png_payload_descriptor
+    src__koruvision__providers__portal_screenshot__PortalScreenshotProvider__capture_one --> src__koruvision__portal_capture__capture_portal_png
     src__koruvision__providers__grim__GrimProvider__availability --> src__koruvision__providers__env__tool_available
     src__koruvision__providers__grim__GrimProvider__list_monitors --> src__koruvision__providers__detector__monitors_via_xrandr
     src__koruvision__providers__grim__GrimProvider__capture_all --> src__koruvision__providers__grim___grim_png
@@ -1011,8 +968,6 @@ flowchart TD
     src__korumesh__transport__publish_envelope --> src__korumesh__transport___require_websockets
     src__korumesh__transport__publish_envelope --> src__korumesh__codec__envelope_to_wire
     src__korumesh__transport__publish_envelope --> src__korumesh__codec__envelope_from_wire
-    src__korumesh__dashboard_parse__envelope_to_frame_entry --> src__korumesh__dashboard_parse__parse_mime_params
-    src__korumesh__dashboard_parse__envelope_to_frame_entry --> src__korumesh__dashboard_parse___int_param
     src__korumesh__cli_commands__mesh_init --> src__koru__configurator__load_project_config
     src__korumesh__cli_commands__mesh_init --> src__korumesh__keys__write_mesh_key
     src__korumesh__cli_commands__mesh_init --> scripts__koru_soak_monitor__print
@@ -1209,8 +1164,68 @@ flowchart TD
     src__koruide__plugin_installer__installed_extension_version_for_ide --> src__koruide__plugin_installer__resolve_target_ide
     src__koruide__plugin_installer___reassert_extension_extra --> src__koruide__plugin_installer__resolve_extension_vsix
     src__koruide__plugin_installer___reassert_extension_extra --> src__koruide__plugin_installer___env_reassert_extension_install
+    src__koruide__plugin_installer___result_already_installed --> src__koruide__plugin_installer___reassert_extension_extra
+    src__koruide__plugin_installer__install_plugin_for_ide --> src__koruide__plugin_installer___resolve_ide_command
+    src__koruide__plugin_installer__install_plugin_for_ide --> src__koruide__plugin_installer__resolve_extension_vsix
+    src__koruide__plugin_installer__install_plugin_for_ide --> src__koruide__plugin_installer___install_extension_vsix
+    src__koruide__plugin_installer__install_plugin_for_ide --> src__koruide__plugin_installer__resolve_target_ide
+    src__koruide__plugin_installer__install_plugin_for_ide --> src__koruide__plugin_installer___configure_socket_path
+    src__koruide__plugin_installer__install_plugin_for_ide --> src__koruide__plugin_installer___extension_is_installed
+    src__koruide__plugin_installer__install_plugin_for_ide --> src__koruide__plugin_installer___result_already_installed
+    src__koru__autonomous_auto_pipeline___expand_auto_up_defaults --> src__koru__wizard__gui__static__wizard__list
+    src__koru__autonomous_auto_pipeline___expand_auto_up_defaults --> src__koru__autonomous_auto_pipeline___argv_has_option
+    src__koru__autonomous_auto_pipeline___auto_value --> src__koru__autonomous_auto_pipeline___user_option
+    src__koru__autonomous_auto_pipeline___auto_pipeline_stage --> src__koru__autonomous_auto_pipeline___auto_pipeline_has_pressure
+    src__koru__autonomous_auto_pipeline___select_auto_pipeline_profile --> src__koru__autonomous_auto_pipeline___auto_pipeline_stage
+    src__koru__autonomous_auto_pipeline___select_auto_pipeline_profile --> src__koru__autonomous_auto_pipeline___auto_value
+    src__koru__runtime__planfile_dir --> src__koru__utils__subprocess_runner__resolve_planfile_subpath
+    src__koru__runtime__runtime_dir --> src__koru__runtime__planfile_dir
+    src__koru__runtime__runs_dir --> src__koru__runtime__runtime_dir
+    src__koru__runtime__ensure_runs_dir --> src__koru__runtime__runs_dir
+    src__koru__runtime__ensure_runs_dir --> src__koru__runtime__runtime_dir
+    src__koru__agent_backends__get_agent_backend_profile --> src__koru__agent_backends__normalize_agent_backend_id
+    src__koru__agent_backends___parse_lane --> src__koru__agent_backends__normalize_agent_backend_id
+    src__koru__agent_backends__load_agent_integration_config --> src__koru__agent_backends___parse_lane
+    src__koru__agent_backends__validate_agent_integration_config --> src__koru__agent_backends__get_agent_backend_profile
+    src__koru__gc_cli_helpers__print_gc_text_report --> scripts__koru_soak_monitor__print
+    src__koru__gc_cli_helpers__emit_gc_management_event --> src__koru__events__emit_management_event
+    src__koru__gc_cli_helpers__print_gc_report --> scripts__koru_soak_monitor__print
+    src__koru__gc_cli_helpers__print_gc_report --> src__koru__gc_cli_helpers__print_gc_text_report
+    src__koru__gc_cli_helpers__print_gc_report --> src__koru__gc_cli_helpers__gc_result_to_json
+    src__koru__dev_sync___target_python --> src__koru__dev_sync___venv_python
+    src__koru__dev_sync___run --> src__koru__wizard__gui__static__wizard__list
+    src__koru__dev_sync___pull_repo --> src__koru__dev_sync___is_dirty
+    src__koru__dev_sync___sync_single_package --> src__koru__dev_sync___pull_repo
+    src__koru__dev_sync__sync_developer_packages --> src__koru__dev_sync___target_python
+    src__koru__dev_sync__sync_developer_packages --> src__koru__dev_sync___sync_single_package
+    src__koru__dev_sync__sync_developer_packages --> src__koru__dev_sync___default_semcod_root
+    src__koru__dev_sync__dev_main --> src__koru__dev_sync__sync_developer_packages
+    src__koru__ide_router__is_headless_environment --> src__koruvision__providers__env__env_truthy
+    src__koru__ide_router__resolve_ide_route --> src__koruvision__providers__env__env_truthy
+    src__koru__ide_router__resolve_ide_route --> src__koruide__ide__normalize_ide_id
+    src__koru__ide_router__resolve_ide_route --> src__koru__ide_router__is_headless_environment
+    src__koru__autonomous_diagnostics__build_idle_checks --> src__koru__autonomous_diagnostics___has_redup_module
+    src__koru__autonomous_diagnostics__run_idle_check_loop --> src__koru__autonomy__phases__utils__is_topology_enabled
+    src__koru__autonomous_diagnostics__create_diagnostic_ticket --> src__koru__activity_log__activity
+    src__koru__autonomous_diagnostics__create_diagnostic_ticket --> src__koru__tasks__create_nl_task
+    src__koru__autonomous_diagnostics__run_idle_diagnostics --> src__koru__autonomous_diagnostics__build_idle_checks
+    src__koru__autonomous_diagnostics__run_idle_diagnostics --> src__koru__autonomous_diagnostics__run_idle_check_loop
+    src__koru__autonomous_diagnostics__run_idle_diagnostics --> src__koru__autonomy__phases__utils__is_topology_enabled
+    src__koru__autonomous_processes___looks_like_autonomous_up_command --> src__koru__autonomous_parser__looks_like_autonomous_up_command
+    src__koru__autonomous_processes___find_existing_autonomous_processes --> src__koru__autonomous_processes___process_cwd
+    src__koru__autonomous_processes___find_existing_autonomous_processes --> src__koru__autonomous_processes___command_project
+    src__koru__autonomous_processes___find_existing_autonomous_processes --> src__koru__autonomous_processes___ancestor_pids
+    src__koru__autonomous_processes___find_existing_autonomous_processes --> src__koru__autonomous_processes___looks_like_autonomous_up_command
+    src__koru__autonomous_processes___find_existing_wup_processes --> src__koru__autonomous_processes___process_cwd
+    src__koru__autonomous_processes___find_existing_wup_processes --> src__koru__autonomous_processes___ancestor_pids
+    src__koru__autonomous_processes___stdio_info --> src__koru__activity_log__activity_info
+    src__koru__autonomous_processes___terminate_existing_processes --> src__koru__autonomous_processes___stdio_info
+    src__koru__autonomous_processes___confirm_replace_existing --> scripts__koru_soak_monitor__print
+    src__koru__autonomous_processes__stop_prior_autonomous_for_auto_start --> src__koru__autonomous_processes___stdio_info
+    src__koru__autonomous_processes__stop_prior_autonomous_for_auto_start --> src__koru__autonomous_processes___terminate_existing_processes
+    src__koru__autonomous_processes__stop_prior_autonomous_for_auto_start --> src__koru__autonomous_processes___find_existing_wup_processes
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class src__koru__cli_doctor__doctor_main,plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submitChat,src__koruapi__dashboard__dashboard_main,src__koruvision__providers__detector__rank_providers,src__koru__env_config__write_env_config,src__koru__doctor___check_autopilot_plugin_bundle,src__koru__doctor___check_autopilot_env,src__koru__doctor___check_windsurf_chat_column_control,src__koru__doctor___check_ide_console_log,src__koru__configurator__configure_project highCC
-    class services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,services__healing_webhook__ticket_builder__build_ticket_payload,src__koruobserve__lifecycle___pids_matching_koru_cmdline,src__korudsl__cli__main,src__korudsl__transform__library_from_any,src__korudsl__library__convert_goals_json_to_library,src__korudsl__library___emit_step,src__korudsl__library___emit_goal,src__koruapi__runtime_insights___run_ps,src__koruapi__runtime_insights___active_tools,src__koruapi__cli__main,src__koruapi__dashboard_tickets__list_tickets,src__koruapi__dashboard_tickets__bulk_waiting_input_action,src__koruapi__dashboard_tickets__create_ticket_from_dashboard,src__koruapi__dashboard_tickets__update_ticket_from_dashboard,src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard,src__koruapi__server___parse_invoke_request,src__koruapi__topology_post__apply_topology_post_update,src__koruapi__dashboard_projects__workspace_project_candidates,koruapi__mcp_server___monitor_subprocess_oom,koruapi__mcp_server___parse_tickets_json,koruapi__mcp_server___tickets_for_status_filter,koruapi__mcp_server__tool_run_ticket,koruapi__mcp_server___run_single_gate medCC
+    class src__koruapi__dashboard__dashboard_main,src__koru__doctor___check_autopilot_plugin_bundle,src__koru__doctor___check_autopilot_env,src__koru__doctor___check_windsurf_chat_column_control,src__koru__doctor___check_ide_console_log,src__koru__configurator__configure_project,src__koru__cli_doctor__doctor_main,plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__submitChat,src__koruapi__dashboard_projects__projects_by_ide,src__koruvision__providers__detector__rank_providers,src__koruvision__providers__browser_getdisplay__ingest_browser_upload,src__koru__env_config__write_env_config highCC
+    class services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,services__healing_webhook__ticket_builder__build_ticket_payload,src__koruobserve__lifecycle___pids_matching_koru_cmdline,src__korudsl__cli__main,src__korudsl__transform__library_from_any,src__korudsl__library__convert_goals_json_to_library,src__korudsl__library___emit_step,src__korudsl__library___emit_goal,src__koruapi__runtime_insights___run_ps,src__koruapi__runtime_insights___active_tools,src__koruapi__cli__main,src__koruapi__dashboard_tickets__list_tickets,src__koruapi__dashboard_tickets__bulk_waiting_input_action,src__koruapi__dashboard_tickets__create_ticket_from_dashboard,src__koruapi__dashboard_tickets__update_ticket_from_dashboard,src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard,src__koruapi__server___parse_invoke_request,src__koruapi__topology_post__apply_topology_post_update,src__koruapi__dashboard_config__dashboard_config_payload,src__koruapi__dashboard_config__save_dashboard_config,koruapi__mcp_server___monitor_subprocess_oom,koruapi__mcp_server___parse_tickets_json,koruapi__mcp_server___tickets_for_status_filter,koruapi__mcp_server__tool_run_ticket medCC

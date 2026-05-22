@@ -1,10 +1,10 @@
-# koru | 450f 85661L | python:376,shell:55,javascript:9,typescript:8,less:1,css:1 | 2026-05-22
-# stats: 2766 func | 246 cls | 450 mod | CC̄=4.0 | critical:183 | cycles:0
+# koru | 462f 87854L | python:388,shell:55,javascript:9,typescript:8,less:1,css:1 | 2026-05-22
+# stats: 2846 func | 249 cls | 462 mod | CC̄=4.0 | critical:193 | cycles:0
 # alerts[5]: CC _check_ide_console_log=31; CC _check_windsurf_chat_column_control=25; CC _check_autopilot_plugin_bundle=23; CC dashboard_main=23; CC configure_project=20
-# hotspots[5]: create_app fan=41; build_dashboard_handler fan=39; _build_handler fan=28; run_cycle fan=23; observe_up fan=22
+# hotspots[5]: create_app fan=41; build_dashboard_handler fan=40; _build_handler fan=28; run_cycle fan=23; observe_up fan=22
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[450]:
+M[462]:
   app.doql.less,691
   docker/capture/entrypoint-x11.sh,36
   docker/capture/run.sh,59
@@ -179,7 +179,7 @@ M[450]:
   src/koru/doctor.py,1969
   src/koru/dotenv_loader.py,105
   src/koru/dsl/__init__.py,10
-  src/koru/env_config.py,203
+  src/koru/env_config.py,240
   src/koru/events.py,91
   src/koru/gate.py,203
   src/koru/gc.py,372
@@ -254,12 +254,12 @@ M[450]:
   src/koruapi/dashboard_config.py,128
   src/koruapi/dashboard_context.py,18
   src/koruapi/dashboard_http.py,46
-  src/koruapi/dashboard_projects.py,116
-  src/koruapi/dashboard_routes.py,380
+  src/koruapi/dashboard_projects.py,321
+  src/koruapi/dashboard_routes.py,412
   src/koruapi/dashboard_runtime.py,40
   src/koruapi/dashboard_serve.py,241
   src/koruapi/dashboard_serve_utils.py,247
-  src/koruapi/dashboard_state.py,90
+  src/koruapi/dashboard_state.py,106
   src/koruapi/dashboard_tickets.py,229
   src/koruapi/dashboard_topology.py,22
   src/koruapi/integrations.py,199
@@ -295,12 +295,13 @@ M[450]:
   src/koruide/socket.py,45
   src/koruide/utils.py,22
   src/korumesh/__init__.py,6
+  src/korumesh/browser_capture.py,87
   src/korumesh/cli.py,28
   src/korumesh/cli_commands.py,57
   src/korumesh/cli_parser.py,32
   src/korumesh/codec.py,38
   src/korumesh/dashboard.py,87
-  src/korumesh/dashboard_parse.py,52
+  src/korumesh/dashboard_parse.py,53
   src/korumesh/envelope.py,86
   src/korumesh/keys.py,26
   src/korumesh/store.py,61
@@ -308,31 +309,34 @@ M[450]:
   src/korumesh/transport.py,89
   src/koruobserve/__init__.py,13
   src/koruobserve/bootstrap.py,39
-  src/koruobserve/cli.py,124
-  src/koruobserve/cli_parser.py,59
-  src/koruobserve/diagnostics.py,177
+  src/koruobserve/cli.py,155
+  src/koruobserve/cli_parser.py,110
+  src/koruobserve/diagnostics.py,176
   src/koruobserve/lifecycle.py,286
   src/koruobserve/paths.py,22
+  src/koruobserve/providers_cli.py,149
   src/koruvision/__init__.py,13
   src/koruvision/agent.py,77
-  src/koruvision/capture.py,69
-  src/koruvision/capture_fallback.py,119
-  src/koruvision/capture_mss.py,325
+  src/koruvision/capture.py,70
+  src/koruvision/capture_mss.py,249
   src/koruvision/capture_probe.py,51
   src/koruvision/cli.py,76
   src/koruvision/cli_parser.py,42
-  src/koruvision/mesh.py,78
+  src/koruvision/mesh.py,80
   src/koruvision/portal_capture.py,119
-  src/koruvision/providers/__init__.py,19
-  src/koruvision/providers/base.py,90
+  src/koruvision/providers/__init__.py,23
+  src/koruvision/providers/base.py,91
+  src/koruvision/providers/browser_getdisplay.py,228
   src/koruvision/providers/cli_tools.py,46
-  src/koruvision/providers/detector.py,183
+  src/koruvision/providers/detector.py,293
   src/koruvision/providers/env.py,59
   src/koruvision/providers/grim.py,45
   src/koruvision/providers/mss.py,55
-  src/koruvision/providers/portal_screencast.py,212
+  src/koruvision/providers/obs_websocket.py,232
+  src/koruvision/providers/portal_screencast.py,392
   src/koruvision/providers/portal_screenshot.py,45
-  src/koruvision/providers/registry.py,29
+  src/koruvision/providers/registry.py,33
+  src/koruvision/providers/screencast_session.py,61
   src/koruvision/scaling.py,53
   tests/e2e/bootstrap.sh,94
   tests/e2e/init.sh,29
@@ -370,12 +374,15 @@ M[450]:
   tests/test_autopilot_protocol.py,168
   tests/test_autopilot_socket_path.py,36
   tests/test_bootstrap.py,298
+  tests/test_capture_host_template.py,20
   tests/test_cli.py,542
   tests/test_configurator.py,175
   tests/test_configurator_toggle.py,53
   tests/test_context.py,628
+  tests/test_dashboard_projects_by_ide.py,242
   tests/test_dashboard_topology_post.py,36
   tests/test_dev_sync.py,109
+  tests/test_docker_capture.py,132
   tests/test_docker_e2e.py,582
   tests/test_docker_ide_matrix.py,161
   tests/test_docker_ide_matrix_config.py,120
@@ -408,22 +415,25 @@ M[450]:
   tests/test_korumesh_envelope.py,41
   tests/test_korumesh_store.py,59
   tests/test_korumesh_transport.py,63
-  tests/test_koruobserve_diagnostics.py,111
+  tests/test_koruobserve_diagnostics.py,112
   tests/test_koruobserve_lifecycle.py,235
   tests/test_koruvision_agent.py,78
-  tests/test_koruvision_capture.py,179
-  tests/test_koruvision_mesh.py,72
+  tests/test_koruvision_capture.py,208
+  tests/test_koruvision_mesh.py,74
   tests/test_local_service.py,265
   tests/test_loop.py,95
   tests/test_mcp_provision.py,277
   tests/test_mcp_server.py,245
   tests/test_observation_mesh_e2e.py,228
+  tests/test_observe_providers_cli.py,83
   tests/test_operator_pipeline.py,579
   tests/test_planfile_queue.py,1271
   tests/test_plugin_router.py,67
   tests/test_policy.py,194
   tests/test_post_run_verify.py,156
-  tests/test_provider_portal_screencast.py,53
+  tests/test_provider_browser_upload.py,141
+  tests/test_provider_obs.py,145
+  tests/test_provider_portal_screencast.py,91
   tests/test_pyproject_metadata.py,51
   tests/test_queue_clean.py,341
   tests/test_queue_cli_helpers.py,120
@@ -434,8 +444,9 @@ M[450]:
   tests/test_runtime.py,133
   tests/test_runtime_insights.py,60
   tests/test_scan.py,671
+  tests/test_screencast_session.py,40
   tests/test_semcod_tools.py,51
-  tests/test_serve.py,644
+  tests/test_serve.py,649
   tests/test_shell_evidence.py,51
   tests/test_stdio_autonomous_jsonl.py,99
   tests/test_tasks.py,108
@@ -443,6 +454,7 @@ M[450]:
   tests/test_topology.py,55
   tests/test_topology_cli.py,28
   tests/test_vision_interval_floor.py,26
+  tests/test_vision_provider_mime.py,79
   tests/test_watch.py,101
   tests/test_wizard_cli.py,311
   tests/test_wizard_env_e2e.py,371
@@ -2191,13 +2203,23 @@ D:
     e: DashboardRequestHandler
     DashboardRequestHandler: log_message(1),_send(3),_send_json(2),_read_json_body(0),_query_params(0)
   src/koruapi/dashboard_projects.py:
-    e: dashboard_workspace,project_label,project_candidate_dict,looks_like_project,workspace_project_candidates,discover_dashboard_projects,resolve_dashboard_project
+    e: dashboard_workspace,project_label,project_candidate_dict,looks_like_project,workspace_project_candidates,discover_dashboard_projects,_running_ide_to_detected,_read_workspace_folder,_workspace_storage_projects,_read_proc_comm,_read_proc_children,_walk_descendant_pids,_read_proc_cwd_path,integrated_terminal_cwds,_looks_like_real_project,projects_by_ide,resolve_dashboard_project
     dashboard_workspace(project;configured_workspace)
     project_label(path)
     project_candidate_dict(path;source)
     looks_like_project(path)
     workspace_project_candidates(workspace)
     discover_dashboard_projects(project;configured_workspace)
+    _running_ide_to_detected(row)
+    _read_workspace_folder(storage_dir)
+    _workspace_storage_projects(ide_id)
+    _read_proc_comm(pid)
+    _read_proc_children(pid)
+    _walk_descendant_pids(root_pid)
+    _read_proc_cwd_path(pid)
+    integrated_terminal_cwds(pid)
+    _looks_like_real_project(path)
+    projects_by_ide(ides)
     resolve_dashboard_project(project;configured_workspace;raw)
   src/koruapi/dashboard_routes.py:
     e: _load_dashboard_html,_config_defaults,_state_payload,build_dashboard_handler
@@ -2604,6 +2626,13 @@ D:
     e: resolve_xdg_path
     resolve_xdg_path(relative_path)
   src/korumesh/__init__.py:
+  src/korumesh/browser_capture.py:
+    e: capture_host_html,capture_host_context,_render_capture_host,browser_upload_payload,serve_browser_capture_http
+    capture_host_html()
+    capture_host_context(path)
+    _render_capture_host(path)
+    browser_upload_payload(project;body)
+    serve_browser_capture_http(handler;path)
   src/korumesh/cli.py:
     e: mesh_main
     mesh_main(argv)
@@ -2669,7 +2698,7 @@ D:
     ensure_observe_config(project)
     ensure_mesh_key(project;config)
   src/koruobserve/cli.py:
-    e: _missing_observe_packages,_require_observe_runtime,_pip_install,_cmd_install,_cmd_up,_cmd_down,_cmd_status,_cmd_grid,observe_main
+    e: _missing_observe_packages,_require_observe_runtime,_pip_install,_cmd_install,_cmd_up,_cmd_down,_cmd_status,_cmd_grid,_cmd_providers,observe_main
     _missing_observe_packages()
     _require_observe_runtime()
     _pip_install(specs)
@@ -2678,6 +2707,7 @@ D:
     _cmd_down(args)
     _cmd_status(args)
     _cmd_grid(args)
+    _cmd_providers(args)
     observe_main(argv)
   src/koruobserve/cli_parser.py:
     e: _add_subproject,_register_up_arguments,build_observe_parser,project_path
@@ -2686,7 +2716,7 @@ D:
     build_observe_parser()
     project_path(args)
   src/koruobserve/diagnostics.py:
-    e: _session_type,_monitors_from_mss,_monitors_from_xrandr,detect_monitors,_read_log_tail,_last_failure_line,_wayland_hint,_provider_status,capture_diagnostics
+    e: _session_type,_monitors_from_mss,_monitors_from_xrandr,detect_monitors,_read_log_tail,_last_failure_line,_wayland_hint,capture_diagnostics
     _session_type()
     _monitors_from_mss()
     _monitors_from_xrandr()
@@ -2694,7 +2724,6 @@ D:
     _read_log_tail(path)
     _last_failure_line(text)
     _wayland_hint(session)
-    _provider_status()
     capture_diagnostics(project)
   src/koruobserve/lifecycle.py:
     e: _resolve_serve_settings,_pick_free_port,_spawn,_is_alive,_read_pid,_stop_pid,_pids_matching_koru_cmdline,_stop_orphan_observe_processes,_koru_cmd,observe_up,observe_down,observe_status,ObserveProcesses
@@ -2717,6 +2746,18 @@ D:
     pidfile(project;name)
     logfile(project;name)
     state_file(project)
+  src/koruobserve/providers_cli.py:
+    e: screencast_session_path,providers_list_payload,providers_list_text,providers_test_payload,providers_test_text,providers_reset_consent,providers_reset_text,cmd_providers_list,cmd_providers_test,cmd_providers_reset
+    screencast_session_path(project)
+    providers_list_payload(project)
+    providers_list_text(payload)
+    providers_test_payload(name)
+    providers_test_text(payload)
+    providers_reset_consent(project)
+    providers_reset_text(payload)
+    cmd_providers_list(project)
+    cmd_providers_test(project;name)
+    cmd_providers_reset(project)
   src/koruvision/__init__.py:
   src/koruvision/agent.py:
     e: capture_once,capture_all_once,_capture_cycle,normalize_capture_interval,run_capture_loop
@@ -2732,27 +2773,10 @@ D:
     list_monitors()
     capture_monitor_png(monitor_id;scale)
     capture_all_monitors(scale)
-  src/koruvision/capture_fallback.py:
-    e: parse_png_size,png_descriptor,command_candidates,try_native_command,looks_headless,portal_descriptor,wayland_portal_fallback,command_fallback,fallback_for_environment
-    parse_png_size(payload)
-    png_descriptor(payload)
-    command_candidates()
-    try_native_command()
-    looks_headless()
-    portal_descriptor()
-    wayland_portal_fallback(mss_exc)
-    command_fallback(mss_exc)
-    fallback_for_environment(mss_exc)
   src/koruvision/capture_mss.py:
-    e: capture_backend,is_wayland,env_truthy,portal_possible,looks_headless,auto_backend_order,auto_failure_message,png_dimensions,png_payload_descriptor,frame_from_shot,ordered_monitor_indices,portal_capture_dict,command_candidates,run_png_command,command_capture_dict,_fallback_after_mss,grab_target,_grab_single_mss_raw,grab_single_mss,_grab_all_mss_raw,grab_all_mss,BlackFrameError
+    e: is_wayland,png_dimensions,png_payload_descriptor,frame_from_shot,ordered_monitor_indices,portal_capture_dict,command_candidates,run_png_command,command_capture_dict,grab_target,_grab_single_mss_raw,_grab_all_mss_raw,BlackFrameError
     BlackFrameError:  # Captured buffer is empty/black (common with XWayland + ``mss
-    capture_backend()
     is_wayland()
-    env_truthy(name)
-    portal_possible()
-    looks_headless()
-    auto_backend_order()
-    auto_failure_message(errors)
     png_dimensions(payload)
     png_payload_descriptor(payload)
     frame_from_shot(shot)
@@ -2761,12 +2785,9 @@ D:
     command_candidates()
     run_png_command(binary;template;stdout_png)
     command_capture_dict()
-    _fallback_after_mss(exc)
     grab_target(grabber;target;index;scale)
     _grab_single_mss_raw(monitor_id;scale)
-    grab_single_mss(monitor_id;scale)
     _grab_all_mss_raw(scale)
-    grab_all_mss(scale)
   src/koruvision/capture_probe.py:
     e: python_can_capture,resolve_observe_python
     python_can_capture(executable)
@@ -2804,16 +2825,29 @@ D:
     CaptureProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
     png_dimensions(payload)
     frame_from_png(payload)
+  src/koruvision/providers/browser_getdisplay.py:
+    e: browser_capture_requested,browser_capture_interval_seconds,_vision_mime_with_provider,_frames_from_store,ingest_browser_upload,BrowserGetDisplayProvider
+    BrowserGetDisplayProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
+    browser_capture_requested()
+    browser_capture_interval_seconds()
+    _vision_mime_with_provider(frame)
+    _frames_from_store()
+    ingest_browser_upload(project;body)
   src/koruvision/providers/cli_tools.py:
     e: _tool_available,CliToolsProvider
     CliToolsProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
     _tool_available(name)
   src/koruvision/providers/detector.py:
-    e: monitors_via_xrandr,rank_providers,list_provider_status,_auto_failure_message,capture_one_with_providers,capture_all_with_providers
+    e: monitors_via_xrandr,rank_providers,list_provider_status,provider_diagnostics_rows,probe_capture_providers,_auto_failure_message,_provider_label,_should_report_auto_portal,_stamp_provider,capture_one_with_providers,capture_all_with_providers
     monitors_via_xrandr()
     rank_providers()
     list_provider_status()
+    provider_diagnostics_rows()
+    probe_capture_providers(name)
     _auto_failure_message(errors)
+    _provider_label(provider)
+    _should_report_auto_portal(provider;index)
+    _stamp_provider(frame;provider_name)
     capture_one_with_providers(monitor_id;scale)
     capture_all_with_providers(scale)
   src/koruvision/providers/env.py:
@@ -2832,10 +2866,26 @@ D:
   src/koruvision/providers/mss.py:
     e: MssProvider
     MssProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
+  src/koruvision/providers/obs_websocket.py:
+    e: obs_url,obs_password,obs_source_name,obs_screenshot_width,_obs_auth,_websockets_missing,_with_obs_connection,_obs_request,probe_obs_reachable,_run_obs_capture,_capture_source_png,ObsWebSocketProvider
+    ObsWebSocketProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
+    obs_url()
+    obs_password()
+    obs_source_name()
+    obs_screenshot_width()
+    _obs_auth(password;salt;challenge)
+    _websockets_missing()
+    _with_obs_connection(fn)
+    _obs_request(ws;request_type;request_data)
+    probe_obs_reachable()
+    _run_obs_capture(fn)
+    _capture_source_png(source_name)
   src/koruvision/providers/portal_screencast.py:
-    e: _screencast_frames,PortalScreenCastProvider
+    e: _screencast_frames,_run_screencast_subprocess,_parse_screencast_stdout,PortalScreenCastProvider
     PortalScreenCastProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
     _screencast_frames(scale)
+    _run_screencast_subprocess(args)
+    _parse_screencast_stdout(stdout)
   src/koruvision/providers/portal_screenshot.py:
     e: PortalScreenshotProvider
     PortalScreenshotProvider: availability(0),list_monitors(0),capture_all(1),capture_one(2)
@@ -2843,6 +2893,13 @@ D:
     e: all_providers,provider_by_name
     all_providers()
     provider_by_name(name)
+  src/koruvision/providers/screencast_session.py:
+    e: session_file_for_project,resolve_screencast_session_file,load_session_path,save_session_path,clear_session_file
+    session_file_for_project(project)
+    resolve_screencast_session_file()
+    load_session_path(path)
+    save_session_path(session_path;path)
+    clear_session_file(path)
   src/koruvision/scaling.py:
     e: resolve_scale,downscale_rgb_nearest,rgb_mostly_black
     resolve_scale(override)
@@ -3382,6 +3439,10 @@ D:
     TestImportReport: test_summary_includes_key_facts(0)
     TestValidationError: test_str_format(0)
     _write_yaml(path;content)
+  tests/test_capture_host_template.py:
+    e: test_capture_host_template_detects_cursor_webview,test_render_capture_host_substitutes_interval_and_peer
+    test_capture_host_template_detects_cursor_webview()
+    test_render_capture_host_substitutes_interval_and_peer()
   tests/test_cli.py:
     e: _tmp_git_project,_run_main,TestBareInvocation,TestDoctorDispatch,TestInitDispatch,TestInitAgentLaneDispatch,TestContextDispatch,TestBareEmitsMarkdown,TestTopologySubcommand,TestInitCiSubcommand,TestAutoMain,TestDoctorReexecToProjectVenv,TestSubcommandDispatch
     TestBareInvocation: _parse(0),test_no_args_is_bare(0),test_project_only_is_bare(0),test_init_is_not_bare(0),test_init_skip_host_environment_flag(0),test_init_agent_lane_is_not_bare(0),test_doctor_is_not_bare(0),test_context_is_not_bare(0),test_queue_is_not_bare(0),test_watch_is_not_bare(0),test_bootstrap_is_not_bare(0),test_command_is_not_bare(0)  # ``koru`` with no action flag should route to markdown brief.
@@ -3420,6 +3481,18 @@ D:
     _fail(stderr)
     _no_git(_project)
     _init_planfile(project)
+  tests/test_dashboard_projects_by_ide.py:
+    e: _fake_running_ides,test_projects_by_ide_uses_cmdline_and_cwd,test_dashboard_state_includes_projects_by_ide,test_read_workspace_folder_parses_file_url,test_workspace_storage_projects_reads_cursor_dir,test_walk_descendant_pids_traverses_children,test_walk_descendant_pids_handles_cycles,test_integrated_terminal_cwds_reads_shell_processes,test_projects_by_ide_picks_up_terminal_cwd,test_projects_by_ide_skips_home_directory
+    _fake_running_ides(tmp_path)
+    test_projects_by_ide_uses_cmdline_and_cwd(tmp_path)
+    test_dashboard_state_includes_projects_by_ide(tmp_path)
+    test_read_workspace_folder_parses_file_url(tmp_path)
+    test_workspace_storage_projects_reads_cursor_dir(tmp_path;monkeypatch)
+    test_walk_descendant_pids_traverses_children(monkeypatch)
+    test_walk_descendant_pids_handles_cycles(monkeypatch)
+    test_integrated_terminal_cwds_reads_shell_processes(tmp_path;monkeypatch)
+    test_projects_by_ide_picks_up_terminal_cwd(tmp_path;monkeypatch)
+    test_projects_by_ide_skips_home_directory(tmp_path;monkeypatch)
   tests/test_dashboard_topology_post.py:
     e: test_apply_topology_post_update_rejects_non_object_components,test_apply_topology_post_update_applies_component_toggle
     test_apply_topology_post_update_rejects_non_object_components()
@@ -3430,6 +3503,13 @@ D:
     test_sync_developer_packages_can_target_repo_venv_and_upgrade(tmp_path)
     test_sync_developer_packages_fails_when_target_venv_missing(tmp_path)
     test_sync_developer_packages_skips_dirty_pull(tmp_path)
+  tests/test_docker_capture.py:
+    e: _docker_available,_build,_run,test_docker_capture_headless,test_docker_capture_x11
+    _docker_available()
+    _build(target)
+    _run(image)
+    test_docker_capture_headless()
+    test_docker_capture_x11()
   tests/test_docker_e2e.py:
     e: TestDockerE2E,TestDockerComposeIntegration
     TestDockerE2E: docker_image(0),test_project(1),test_docker_image_builds_successfully(1),test_koru_help_in_docker(1),test_koru_doctor_in_docker(1),test_koru_init_in_docker(1),test_task_creation_with_priority_in_docker(2),test_autonomous_mode_single_cycle_in_docker(2),test_priority_ordering_in_docker(2),test_external_tool_detection_in_docker(1),test_agent_detection_in_docker(1),test_full_workflow_in_docker(2)  # Test Koru functionality in Docker containers.
@@ -3835,6 +3915,14 @@ D:
     test_mesh_cli_init_publish_reaches_relay_store(tmp_path)
     test_vision_agent_cli_publishes_captured_frame_to_mesh(tmp_path)
     test_observe_cli_roundtrip_through_main_dispatch(tmp_path;monkeypatch)
+  tests/test_observe_providers_cli.py:
+    e: test_provider_diagnostics_rows_marks_selected,test_probe_capture_providers_unknown_name,test_probe_capture_providers_mss_mocked,test_providers_list_payload_structure,test_providers_reset_clears_session_file,test_cmd_providers_list_prints
+    test_provider_diagnostics_rows_marks_selected()
+    test_probe_capture_providers_unknown_name()
+    test_probe_capture_providers_mss_mocked()
+    test_providers_list_payload_structure()
+    test_providers_reset_clears_session_file(tmp_path)
+    test_cmd_providers_list_prints(capsys)
   tests/test_operator_pipeline.py:
     e: _ticket_args,probe,test_build_operator_steps_mcp_pending_without_config,test_build_operator_steps_mcp_ok_when_configured,test_build_operator_steps_skips_plugin_for_jetbrains,test_build_operator_steps_plugin_probe_uses_resolved_ide,test_build_operator_steps_skips_os_calibration_for_plugin_ide,test_run_startup_operator_pipeline_creates_tickets,test_run_startup_operator_pipeline_autostarts_planfile_api_when_missing,test_candidate_planfile_health_urls_use_serve_endpoint,test_run_startup_operator_pipeline_dedup_markers,test_run_startup_operator_pipeline_recovers_missing_marker_from_open_ticket,test_run_startup_operator_pipeline_replaces_stale_ide_marker,test_run_startup_operator_pipeline_closes_resolved_marker_ticket,test_run_startup_operator_pipeline_clears_missing_resolved_marker_ticket,test_run_startup_operator_pipeline_keeps_marker_when_close_times_out,test_run_startup_operator_pipeline_closes_marker_when_plugin_step_skipped
     _ticket_args(command)
@@ -3882,10 +3970,30 @@ D:
     TestPostRunVerify: test_load_from_koru_yaml(0),test_verify_reopens_on_failure(0),test_verify_after_ide_work_pending_done(0),test_fetch_recently_done_ticket_ids(0),test_run_verify_commands_success(0)
     _ok(stdout)
     _fail(stderr)
+  tests/test_provider_browser_upload.py:
+    e: _png,test_ingest_browser_upload_stores_frame_with_provider,test_ingest_rejects_non_png,test_browser_provider_reads_from_store,_serve_project,test_capture_host_route_served,test_browser_upload_post
+    _png(width;height)
+    test_ingest_browser_upload_stores_frame_with_provider(tmp_path)
+    test_ingest_rejects_non_png(tmp_path)
+    test_browser_provider_reads_from_store(tmp_path)
+    _serve_project(tmp_path)
+    test_capture_host_route_served(tmp_path)
+    test_browser_upload_post(tmp_path)
+  tests/test_provider_obs.py:
+    e: _png,test_obs_auth_matches_protocol,test_probe_obs_reachable_uses_cache,test_obs_request_parses_screenshot_response,test_obs_provider_capture_one,test_rank_puts_obs_first_when_reachable,test_rank_forced_obs_skips_probe,FakeWsForCapture
+    FakeWsForCapture: __init__(0),send(1),recv(1)
+    _png(width;height)
+    test_obs_auth_matches_protocol()
+    test_probe_obs_reachable_uses_cache(monkeypatch)
+    test_obs_request_parses_screenshot_response()
+    test_obs_provider_capture_one(monkeypatch)
+    test_rank_puts_obs_first_when_reachable(monkeypatch)
+    test_rank_forced_obs_skips_probe(monkeypatch)
   tests/test_provider_portal_screencast.py:
-    e: _png,test_portal_screencast_capture_all_mocked,test_rank_providers_forces_screencast
+    e: _png,test_portal_screencast_capture_all_mocked,test_screencast_frames_retries_after_cache_clear,test_rank_providers_forces_screencast
     _png(width;height)
     test_portal_screencast_capture_all_mocked(monkeypatch)
+    test_screencast_frames_retries_after_cache_clear(monkeypatch;tmp_path)
     test_rank_providers_forces_screencast(monkeypatch)
   tests/test_pyproject_metadata.py:
     e: _pyproject,_uv_lock_koru_package,test_base_runtime_dependencies_stay_small,test_all_extra_matches_union_of_other_extras,test_readme_documents_each_installation_extra,test_uv_lock_koru_metadata_matches_pyproject
@@ -3963,6 +4071,11 @@ D:
     TestScanSemcodArtifacts: test_jscpd_report_emits_when_duplicates(0),test_code2llm_analysis_emits_when_god_rows(0),test_code2llm_analysis_emits_dup_ticket(0),test_code2llm_analysis_emits_cc_ticket(0),test_code2llm_analysis_emits_refactor_items(0),test_testql_export_emits_when_many_failures(0),test_redup_filtered_emits_when_many_groups(0),test_redup_changed_emits_when_wup_scan_has_groups(0)
     _ok(stdout;returncode;stderr)
     _marker_fixture()
+  tests/test_screencast_session.py:
+    e: test_save_and_load_session_path,test_resolve_from_mesh_frame_store,test_clear_session_file
+    test_save_and_load_session_path(tmp_path)
+    test_resolve_from_mesh_frame_store(monkeypatch;tmp_path)
+    test_clear_session_file(tmp_path)
   tests/test_semcod_tools.py:
     e: test_detect_semcod_tools_covers_core_semcod_extensions,test_detect_semcod_tools_marks_pyproject_config_without_binary
     test_detect_semcod_tools_covers_core_semcod_extensions(tmp_path)
@@ -4015,6 +4128,12 @@ D:
     test_normalize_clamps_short_intervals_up()
     test_normalize_passes_long_intervals_through()
     test_normalize_rejects_non_positive()
+  tests/test_vision_provider_mime.py:
+    e: _png,test_frame_from_png_includes_provider,test_capture_one_stamps_provider_from_winning_backend,test_envelope_roundtrip_preserves_provider
+    _png(width;height)
+    test_frame_from_png_includes_provider()
+    test_capture_one_stamps_provider_from_winning_backend(monkeypatch)
+    test_envelope_roundtrip_preserves_provider()
   tests/test_watch.py:
     e: FakeWebSocket,TestWatch
     FakeWebSocket: __init__(1),__aenter__(0),__aexit__(0),recv(0)

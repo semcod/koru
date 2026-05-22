@@ -1,12 +1,12 @@
-# koru | 2279 func | 244f | 59291L | python | 2026-05-22
+# koru | 2322 func | 248f | 60532L | python | 2026-05-22
 # generated in 0.00s
 
 HEALTH:
-  CC̄=3.9  critical=184 (limit:10)  dup=6  cycles=0
+  CC̄=4.0  critical=192 (limit:10)  dup=6  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     create_app = 44 (limit:10)
-  !!! high_fan_out     build_dashboard_handler = 43 (limit:10)
+  !!! high_fan_out     build_dashboard_handler = 44 (limit:10)
   !!! cc_exceeded      _check_ide_console_log = 31 (limit:15)
   !!! high_fan_out     _build_handler = 31 (limit:10)
   !!! cc_exceeded      _check_windsurf_chat_column_control = 25 (limit:15)
@@ -16,11 +16,11 @@ ALERTS[20]:
   !!! high_fan_out     observe_up = 22 (limit:10)
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
 
-MODULES[360] (top by size):
+MODULES[364] (top by size):
   M[src/koru/doctor.py] 1968L C:3 F:73 CC↑31 D:2 (python)
   M[src/koru/autonomous_cycle.py] 1367L C:1 F:44 CC↑14 D:1 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
-  M[plugins/koru-autopilot-vscode/src/extension.ts] 1310L C:2 F:121 CC↑16 D:14 (typescript)
+  M[plugins/koru-autopilot-vscode/src/extension.ts] 1310L C:2 F:121 CC↑16 D:16 (typescript)
   M[src/koru/context.py] 1269L C:0 F:49 CC↑14 D:8 (python)
   M[src/koruide/daemon.py] 1149L C:3 F:49 CC↑14 D:0 (python)
   M[src/koru/autonomous.py] 1119L C:1 F:56 CC↑7 D:2 (python)
@@ -32,11 +32,11 @@ MODULES[360] (top by size):
   M[src/koruide/ide.py] 746L C:1 F:44 CC↑13 D:22 (python)
   M[services/healing-webhook/app.py] 702L C:0 F:27 CC↑11 D:0 (python)
   M[src/koru/scripts/koru-autoloop.sh] 676L C:0 F:17 CC↑0 D:0 (shell)
-  LANGS: python:258/shell:47/yaml:15/json:9/typescript:8/yml:8/kotlin:6/other:3/txt:2/javascript:1/properties:1/xml:1/toml:1
+  LANGS: python:262/shell:47/yaml:15/json:9/typescript:8/yml:8/kotlin:6/other:3/txt:2/javascript:1/properties:1/xml:1/toml:1
 
 HOTSPOTS[10]:
   ★ create_app fan=44  // Build the FastAPI app (requires ``koru[api]``).
-  ★ build_dashboard_handler fan=43  // Build and return a DashboardRequestHandler subclass for the dashboard.
+  ★ build_dashboard_handler fan=44  // Build and return a DashboardRequestHandler subclass for the dashboard.
   ★ _build_handler fan=31  // Orchestrates 31 calls
   ★ AutopilotBridge.focusChat fan=24  // Orchestrates 24 calls
   ★ init_project fan=23  // Initialise (or re-initialise with ``force``) a koru project.
@@ -52,4 +52,4 @@ REFACTOR[15]:
   [5] H/H Split god module src/koru/autonomous_cycle.py (1367L, 1 classes)
 
 EVOLUTION:
-  2026-05-22 CC̄=3.9 crit=184 59291L // Automated analysis
+  2026-05-22 CC̄=4.0 crit=192 60532L // Automated analysis

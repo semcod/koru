@@ -7,11 +7,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.225-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$7.04-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-95.2h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.226-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$6.68-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-95.3h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $7.0377 (294 commits)
-- 👤 **Human dev:** ~$9524 (95.2h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $6.6837 (295 commits)
+- 👤 **Human dev:** ~$9532 (95.3h @ $100/h, 30min dedup)
 
 Generated on 2026-05-22 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -198,6 +198,7 @@ poll — not chat readback). See [docs/post-run-verify.md](docs/post-run-verify.
 
 | Symptom | Fix |
 |---|---|
+| `koru: error: unrecognized arguments: auto` | The active `koru` on `PATH` is older than the source tree (or installed in a different venv than the one you activated). Check with `which koru` + `koru --version`. Fix: activate the project venv (`source .venv/bin/activate`) or run the dev build (`pip install -e ".[dev]"` inside `/path/to/semcod/koru`). `koru auto` is an alias of `koru autonomous`; both are first-class subcommands in current releases. Newer builds also print a `Did you mean 'koru auto'?` hint for typos. |
 | `koru autonomous: ... invalid choice: '.' (choose from 'up')` | Run `koru autonomous up --project .` |
 | `koru serve: cannot bind 127.0.0.1:8765` | Run `koru serve --auto-port` or free the port via `ss -ltnp \| rg 8765` then `kill <pid>` |
 | CLI seems to ignore freshly installed version | Run `koru autopilot manage --ide vscode`; compare `PATH koru`, `repo koru`, `source` and `package`; prefer `.venv/bin/koru` in project-local workflows |
@@ -206,6 +207,46 @@ poll — not chat readback). See [docs/post-run-verify.md](docs/post-run-verify.
 | `goal -a` takes too long to fail | Keep `strategies.python.test` fail-fast (`--maxfail=1`) for quick feedback; run full suite explicitly when needed |
 | `goal -a`: `No module named 'costs'` | Install dev extras: `pip install -e ".[dev]"`, or set `[tool.costs] badge = false` in `pyproject.toml` |
 | `goal -a` unstages `.code2llm_cache/*.pkl` | Ensure `.code2llm_cache/` is in `.gitignore` (not per-file pickle lines) |
+
+### CLI subcommand reference
+
+`koru <subcommand> [args…]` dispatches to one of the registered subcommands
+below; running `koru` with no args (or just flags like `--ticket`, `--doctor`,
+`--init`) keeps the legacy single-shot behavior (closed-loop runner / context
+brief / etc.).
+
+| Subcommand | What it does |
+|---|---|
+| `koru auto`, `koru autonomous` | Bootstrap and run the closed loop (init → scan → queue → autopilot daemon → optional WUP watch). `auto` is an alias of `autonomous`. Run `koru auto --help` for `doctor` / `self-heal` / `up`. |
+| `koru autopilot` | Drive an IDE chat session (handoff / drive / manage / setup-host / install-unit / status / tail / calibrate / session-start). See [`docs/IDE_PROTOCOL.md`](docs/IDE_PROTOCOL.md). |
+| `koru autoloop` | Loop a single command across `semcod/*` repositories with retries. |
+| `koru wizard` | Interactive (or `--gui` browser) onboarding: detect IDEs, pick project, scaffold `.planfile/`. |
+| `koru init-ci` / `koru init-ide` | Scaffold CI templates / install IDE plugins + MCP. |
+| `koru serve` / `koru local-serve` | Start the dashboard / HTTP healing webhook (`pip install "koru[api]"`). |
+| `koru mesh` | Run / publish to the observation mesh (WebSocket relay). |
+| `koru vision` | Local screen capture providers (`pip install "koru[vision]"`). |
+| `koru observe` | Convenience launcher for the full observation stack (vision + mesh + dashboard). |
+| `koru mcp-serve` | Run koru as an MCP server (stdio) for Cursor / VS Code / Claude Desktop. |
+| `koru ide-router` | Route ticket events to specific IDE lanes. |
+| `koru task` / `koru agent` | Planfile task creation and LLM agent management. |
+| `koru tools` | Inspect / dispatch the AI tool registry. |
+| `koru gate` / `koru queue` / `koru scan` | Run individual stages of the closed loop in isolation. |
+| `koru gc` | Garbage-collect old planfile tickets / artifacts (see [Queue GC](#queue-garbage-collection--koru-gc)). |
+| `koru git` | Git helpers used by the autopilot daemon. |
+| `koru doctor` | Detailed diagnostics catalog (alias for `koru --doctor`). |
+| `koru configure` | Edit `koru.yaml` interactively. |
+| `koru topology` | Print the live topology (active systems / pipelines). |
+| `koru runtime-context` | Print the runtime context the LLM brief is built from. |
+| `koru dsl` / `koru api` | DSL evaluator / dashboard API helpers. |
+| `koru dev` | Internal dev-sync helpers used by the monorepo. |
+
+If an unknown token is passed where a subcommand is expected, koru now prints
+a `Did you mean 'koru …'?` hint based on the closest match (e.g. `koru autox`
+→ `koru auto`), followed by the list of known subcommands. This is the same
+mechanism that disambiguates the **`koru: error: unrecognized arguments: auto`**
+case in the troubleshooting table above — that error only happens when the
+active `koru` on `PATH` was installed from an older release that predates the
+`auto` alias; upgrading or activating the project `.venv` resolves it.
 
 ## Topology & pipelines — what is active right now
 

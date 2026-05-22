@@ -50,6 +50,8 @@ def _vision_mime(frame: VisionFrame) -> str:
     ]
     if frame.output:
         parts.append(f"output={frame.output}")
+    if frame.provider:
+        parts.append(f"provider={frame.provider}")
     return "; ".join(parts)
 
 

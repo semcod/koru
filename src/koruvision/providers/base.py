@@ -86,4 +86,5 @@ def frame_from_png(
         "native_width": native_w,
         "native_height": native_h,
         "output": output or provider,
+        "provider": provider,
     }
