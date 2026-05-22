@@ -1,13 +1,16 @@
 import {
   buildFocusInputCommands,
   buildFocusOpenCommands,
+  buildHostKeySubmitCandidates,
   buildSubmitCommands,
   captureEditorSnapshot,
   chatFocusHeuristic,
   mergeUnique,
   orderWithCache,
   pasteLandedInEditor,
+  sanitizeProbeCacheForIde,
   verifyFocusAfterOpen,
+  PROBE_CACHE_VERSION,
 } from "./probe-ladder";
 
 function assert(condition: unknown, message: string): void {
@@ -107,6 +110,90 @@ function testVscodiumSubmitStillExposesWorkbenchFallback(): void {
   assert(cmds.includes("workbench.action.chat.submit"), "vscodium keeps workbench submit as fallback");
 }
 
+function testSanitizeCursorDiscardsTypeSubmit(): void {
+  // Regression for plugin ≤0.1.46: on Cursor the submit ladder cached
+  // ``type:\n`` as the "winning" submit command because executing the
+  // ``type`` builtin in a multi-line chat textarea succeeds without actually
+  // submitting. That made every autonomous redrive paste-but-not-send.
+  const poisoned = {
+    version: PROBE_CACHE_VERSION as typeof PROBE_CACHE_VERSION,
+    ide: "cursor",
+    appName: "Cursor",
+    updatedAt: "2026-05-22T20:00:00Z",
+    submit: "type:\n",
+    paste: "editor.action.clipboardPasteAction",
+  };
+  const sanitized = sanitizeProbeCacheForIde(poisoned, "cursor");
+  assert(sanitized !== undefined, "sanitize must keep the entry, only mutate submit");
+  assert(sanitized?.submit === undefined, "Cursor: 'type:\\n' must be discarded");
+  assert(
+    sanitized?.paste === "editor.action.clipboardPasteAction",
+    "Cursor: paste cache must be preserved (it really does land in chat input)",
+  );
+}
+
+function testSanitizeCursorPreservesNonTypeSubmit(): void {
+  const good = {
+    version: PROBE_CACHE_VERSION as typeof PROBE_CACHE_VERSION,
+    ide: "cursor",
+    appName: "Cursor",
+    updatedAt: "2026-05-22T20:00:00Z",
+    submit: "wtype -M ctrl -k Return -m ctrl",
+  };
+  const sanitized = sanitizeProbeCacheForIde(good, "cursor");
+  assert(
+    sanitized?.submit === "wtype -M ctrl -k Return -m ctrl",
+    "Cursor: Ctrl+Return host-key submit must survive sanitize",
+  );
+}
+
+function testSanitizeCursorDiscardsHostPlainReturn(): void {
+  // Regression for plugin 0.1.47: ``xdotool key Return`` got cached even
+  // though plain Return does not submit Cursor's multi-line chat textarea.
+  for (const submit of ["xdotool key Return", "wtype -k Return", "ydotool key Return"]) {
+    const poisoned = {
+      version: PROBE_CACHE_VERSION as typeof PROBE_CACHE_VERSION,
+      ide: "cursor",
+      appName: "Cursor",
+      updatedAt: "2026-05-22T20:00:00Z",
+      submit,
+      paste: "editor.action.clipboardPasteAction",
+    };
+    const sanitized = sanitizeProbeCacheForIde(poisoned, "cursor");
+    assert(sanitized?.submit === undefined, `Cursor: '${submit}' must be discarded`);
+    assert(
+      sanitized?.paste === "editor.action.clipboardPasteAction",
+      `Cursor: paste cache must survive while submit '${submit}' is discarded`,
+    );
+  }
+}
+
+function testSanitizeWindsurfStillDiscardsTypeSubmit(): void {
+  const poisoned = {
+    version: PROBE_CACHE_VERSION as typeof PROBE_CACHE_VERSION,
+    ide: "windsurf",
+    appName: "Windsurf",
+    updatedAt: "2026-05-22T20:00:00Z",
+    submit: "type:\n",
+  };
+  const sanitized = sanitizeProbeCacheForIde(poisoned, "windsurf");
+  assert(sanitized?.submit === undefined, "Windsurf must keep discarding 'type:\\n'");
+}
+
+function testSanitizeIsIdempotent(): void {
+  const empty = sanitizeProbeCacheForIde(undefined, "cursor");
+  assert(empty === undefined, "no cache should sanitize to no cache");
+  const clean = {
+    version: PROBE_CACHE_VERSION as typeof PROBE_CACHE_VERSION,
+    ide: "vscode",
+    appName: "Visual Studio Code",
+    updatedAt: "2026-05-22T20:00:00Z",
+    submit: "workbench.action.chat.submit",
+  };
+  const sanitized = sanitizeProbeCacheForIde(clean, "vscode");
+  assert(sanitized?.submit === "workbench.action.chat.submit", "clean vscode cache must be untouched");
+}
+
 testOrderWithCache();
 testChatFocusHeuristic();
 testVerifyFocusAfterOpen();
@@ -119,4 +206,94 @@ testBuildFocusOpenVscodeDoesNotAutoOpenChatByDefault();
 testBuildFocusInputUsesChatCommands();
 testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance();
 testVscodiumSubmitStillExposesWorkbenchFallback();
+testSanitizeCursorDiscardsTypeSubmit();
+testSanitizeCursorPreservesNonTypeSubmit();
+testSanitizeCursorDiscardsHostPlainReturn();
+testSanitizeWindsurfStillDiscardsTypeSubmit();
+testSanitizeIsIdempotent();
+
+function firstKey(cands: ReadonlyArray<[string, string[]]>): string {
+  const [cmd, args] = cands[0];
+  return `${cmd} ${args.join(" ")}`;
+}
+
+function renderKey(cand: [string, string[]]): string {
+  const [cmd, args] = cand;
+  return `${cmd} ${args.join(" ")}`;
+}
+
+const WAYLAND_ENV = { XDG_SESSION_TYPE: "wayland", WAYLAND_DISPLAY: "wayland-0" };
+const X11_ENV = { XDG_SESSION_TYPE: "x11" };
+
+function testHostKeyOrderCursorPrefersCtrlReturn(): void {
+  // Regression for plugin ≤0.1.47: on Cursor the chat textarea treats plain
+  // ``Enter`` as a newline. Injectors all exit 0 even though the message
+  // never gets submitted, so the host-key ladder latched onto a no-op Return.
+  // Ctrl+Return is the canonical submit shortcut and must be tried first for
+  // Cursor.
+  const cands = buildHostKeySubmitCandidates("cursor", "auto", WAYLAND_ENV);
+  assert(
+    firstKey(cands).includes("ctrl"),
+    "Cursor host-key ladder must try Ctrl+Return first",
+  );
+  const flat = cands.map(renderKey).join("|");
+  assert(flat.includes("Return"), "plain Return must remain in the ladder");
+}
+
+function testHostKeyOrderVscodeKeepsPlainReturnFirst(): void {
+  const cands = buildHostKeySubmitCandidates("vscode", "auto", WAYLAND_ENV);
+  assert(
+    !firstKey(cands).includes("ctrl"),
+    "VS Code keeps Return-first ordering (Ctrl+Return is its newline shortcut)",
+  );
+}
+
+function testHostKeyOverrideCtrlReturnForcesCtrlForAllIdes(): void {
+  const cands = buildHostKeySubmitCandidates("vscode", "ctrl+Return", WAYLAND_ENV);
+  assert(
+    firstKey(cands).includes("ctrl"),
+    "submitHostKey=ctrl+Return overrides VS Code default and tries Ctrl first",
+  );
+}
+
+function testHostKeyOverrideReturnForcesPlainEvenOnCursor(): void {
+  const cands = buildHostKeySubmitCandidates("cursor", "Return", WAYLAND_ENV);
+  assert(
+    !firstKey(cands).includes("ctrl"),
+    "submitHostKey=Return overrides Cursor auto and tries plain Return first",
+  );
+}
+
+function testHostKeyWaylandPrefersYdotoolOverXdotool(): void {
+  // Regression for plugin 0.1.48: on Wayland-native compositors (GNOME),
+  // ``xdotool key Return`` exits 0 but only delivers the synthetic key to
+  // whatever XWayland window is active — never reaching Wayland-native apps
+  // like recent Cursor builds. ``ydotool`` (uinput) is the only injector
+  // that reliably crosses from process to compositor, so it must come BEFORE
+  // ``xdotool`` whenever the session is Wayland.
+  const cands = buildHostKeySubmitCandidates("vscode", "auto", WAYLAND_ENV);
+  const flat = cands.map(renderKey).join("|");
+  const ydotoolPos = flat.indexOf("ydotool key");
+  const xdotoolPos = flat.indexOf("xdotool key");
+  assert(ydotoolPos !== -1, "ydotool must appear in the ladder");
+  assert(xdotoolPos !== -1, "xdotool must remain as fallback");
+  assert(
+    ydotoolPos < xdotoolPos,
+    "Wayland session must try ydotool before xdotool (xdotool cannot reach Wayland-native windows)",
+  );
+}
+
+function testHostKeyX11KeepsXdotoolFirst(): void {
+  const cands = buildHostKeySubmitCandidates("vscode", "auto", X11_ENV);
+  const plainOnly = cands.filter((c) => !renderKey(c).includes("ctrl"));
+  const order = plainOnly.map(([cmd]) => cmd);
+  assert(order[0] === "xdotool", "X11 session must keep xdotool first within plain-Return row");
+}
+
+testHostKeyOrderCursorPrefersCtrlReturn();
+testHostKeyOrderVscodeKeepsPlainReturnFirst();
+testHostKeyOverrideCtrlReturnForcesCtrlForAllIdes();
+testHostKeyOverrideReturnForcesPlainEvenOnCursor();
+testHostKeyWaylandPrefersYdotoolOverXdotool();
+testHostKeyX11KeepsXdotoolFirst();
 console.log("probe-ladder tests: ok");

@@ -51,6 +51,7 @@ const dispatch_plan_1 = require("./dispatch-plan");
 const antigravity_fastpath_1 = require("./antigravity-fastpath");
 const probe_ladder_1 = require("./probe-ladder");
 const socketPath_1 = require("./socketPath");
+const chat_history_watcher_1 = require("./chat-history-watcher");
 const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
     "workbench.action.chat.open",
     "workbench.action.chat.openagent",
@@ -115,6 +116,7 @@ class AutopilotBridge {
     connectCandidates = [];
     connectIndex = 0;
     reconnectBlockedReason = null;
+    chatHistoryWatcher = null;
     constructor(context) {
         this.context = context;
         this.status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 50);
@@ -196,11 +198,13 @@ class AutopilotBridge {
                         "chat.paste",
                         "chat.submit",
                         "chat.events",
+                        "chat.history",
                         "probe.ladder",
                     ],
                     pid: process.pid,
                     matchingCommands: matching,
                 });
+                this.startChatHistoryWatcherIfEligible();
             });
         });
         sock.on("data", (chunk) => this.onData(chunk));
@@ -246,6 +250,62 @@ class AutopilotBridge {
             catch { /* ignore */ }
             this.socket = null;
         }
+        if (this.chatHistoryWatcher) {
+            this.chatHistoryWatcher.stop();
+            this.chatHistoryWatcher = null;
+        }
+    }
+    /**
+     * Start the per-IDE chat-history watcher when (a) the IDE is one we
+     * have an adapter for, (b) the user has not explicitly disabled it,
+     * and (c) the watcher is not already running. The watcher reads the
+     * assistant's latest replies from each IDE's local conversation store
+     * and forwards them as ``message.received`` events — exactly the half
+     * of ``chat.events`` that the VS Code Extension API itself does NOT
+     * expose. Encrypted stores (Windsurf Cascade, Antigravity) are still
+     * recognized but no rows are emitted; the input-busy precheck and
+     * escalation cooldown still protect those IDEs.
+     */
+    startChatHistoryWatcherIfEligible() {
+        if (this.chatHistoryWatcher)
+            return;
+        const ide = this.detectIde();
+        const supported = ["cursor", "vscode", "vscodium", "windsurf", "antigravity"];
+        if (!supported.includes(ide))
+            return;
+        const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+        if (!cfg.get("chatHistoryWatch", true))
+            return;
+        const persistKey = `chatHistory.cursor.${ide}`;
+        const initialCursor = String(this.context.globalState.get(persistKey, "") || "");
+        this.chatHistoryWatcher = new chat_history_watcher_1.ChatHistoryWatcher({
+            ide: ide,
+            pollIntervalMs: cfg.get("chatHistoryPollIntervalMs", 4000) || 4000,
+            initialCursor,
+            log: (msg, data) => debugLog(msg, data),
+            onMessage: async (row) => {
+                if (!this.socket)
+                    return false;
+                this.send({
+                    type: "message.received",
+                    chat: row.conversationId || "default",
+                    text: row.text.substring(0, 4000),
+                    length: row.text.length,
+                    summary: row.text.split(/\r?\n/, 1)[0].substring(0, 200),
+                    createdAt: row.createdAt,
+                });
+                return true;
+            },
+            onCursorAdvance: async (cursor) => {
+                await this.context.globalState.update(persistKey, cursor);
+            },
+        });
+        this.chatHistoryWatcher.start();
+        debugLog("CHAT_HISTORY_WATCH_START", {
+            ide,
+            adapter: this.chatHistoryWatcher.adapterDescription,
+            initialCursor,
+        });
     }
     scheduleRetry() {
         if (this.reconnectBlockedReason)
@@ -307,21 +367,10 @@ class AutopilotBridge {
         return (0, probe_ladder_1.captureEditorSnapshot)(vscode.window.activeTextEditor);
     }
     getProbeCache() {
+        const ide = this.detectIde();
         const raw = this.context.globalState.get("probeCache.v3");
-        const cache = (0, probe_ladder_1.loadProbeCache)(raw, this.detectIde(), vscode.env.appName || "");
-        if (cache && this.detectIde() === "windsurf") {
-            const unsafePaste = ["editor.action.clipboardPasteAction", "type"];
-            if (cache.paste && unsafePaste.includes(cache.paste)) {
-                cache.paste = undefined;
-            }
-            if (cache.submit && (cache.submit.startsWith("type:") || cache.submit === "type")) {
-                cache.submit = undefined;
-            }
-        }
-        if (cache && this.detectIde() === "vscodium" && cache.submit === "workbench.action.chat.submit") {
-            cache.submit = undefined;
-        }
-        return cache;
+        const cache = (0, probe_ladder_1.loadProbeCache)(raw, ide, vscode.env.appName || "");
+        return (0, probe_ladder_1.sanitizeProbeCacheForIde)(cache, ide);
     }
     async saveProbeCache(wins) {
         const next = (0, probe_ladder_1.mergeProbeCache)(this.getProbeCache(), this.detectIde(), vscode.env.appName || "", wins);
@@ -341,18 +390,14 @@ class AutopilotBridge {
             return { ok: false };
         }
     }
-    async _tryHostKeySubmit() {
+    async _tryHostKeySubmit(ide) {
         if (process.platform !== "linux") {
             return { ok: false };
         }
-        return this.runHostKeyCandidates("SUBMIT_HOST_KEY", [
-            ["wtype", ["-k", "Return"]],
-            ["xdotool", ["key", "Return"]],
-            ["ydotool", ["key", "Return"]],
-            ["wtype", ["-M", "ctrl", "-k", "Return", "-m", "ctrl"]],
-            ["xdotool", ["key", "ctrl+Return"]],
-            ["ydotool", ["key", "ctrl+Return"]],
-        ]);
+        const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+        const override = cfg.get("submitHostKey", "auto") || "auto";
+        const candidates = (0, probe_ladder_1.buildHostKeySubmitCandidates)(ide, override);
+        return this.runHostKeyCandidates("SUBMIT_HOST_KEY", candidates);
     }
     async runHostCommand(command, args, input) {
         if (process.platform !== "linux") {
@@ -529,6 +574,31 @@ class AutopilotBridge {
         if (ide === "windsurf") {
             // On Windsurf, typing a newline is extremely dangerous because if Cascade is not focused, it toggles/closes the panel!
             return { ok: false };
+        }
+        if (ide === "cursor") {
+            // Cursor's chat command surface is locked down — none of the
+            // workbench.action.chat.* / composer.* / aichat.* candidates above
+            // actually live in the registered command set, so we end up here
+            // every time. The "type" fallback only inserts a newline into the
+            // chat textarea (which is multi-line); the LLM never sees the
+            // message. Use a real host-level Enter (wtype/xdotool/ydotool)
+            // instead — that submits in Cursor reliably. Pass ide so we prefer
+            // Ctrl+Return (Cursor's actual submit shortcut on Linux) over a
+            // plain Return that just inserts a newline.
+            const hostKey = await this._tryHostKeySubmit("cursor");
+            if (hostKey.ok) {
+                if (this.probeLadderEnabled()) {
+                    await this.saveProbeCache({ submit: hostKey.command || "host-key:Return" });
+                }
+                return { ...hostKey, unverified: !this.trustUnverifiedHostSubmit() };
+            }
+            return {
+                ok: false,
+                command: "cursor-submit-unavailable",
+                reason: hostKey.reason,
+                attempts: hostKey.attempts,
+                unverified: true,
+            };
         }
         const fallbacks = [
             () => this._tryTypeSubmit("\n"),
@@ -841,6 +911,69 @@ class AutopilotBridge {
             }
         }
     }
+    /**
+     * Best-effort detection: is the chat input already holding un-submitted text?
+     *
+     * Cursor's chat input is a webview-rooted contenteditable, not a normal
+     * TextEditor, so it is invisible to ``vscode.window.activeTextEditor``. We
+     * therefore probe via the only thing the editor reliably exposes when chat
+     * has focus: select-all + clipboardCopy will copy the chat input's current
+     * contents into VS Code's clipboard. We snapshot, sentinel-write, copy,
+     * and compare; if the clipboard ends up holding non-trivial text that is
+     * NOT our sentinel, we treat the chat input as busy and abort drive.
+     *
+     * Falls closed on errors (missing commands, clipboard failures): when in
+     * doubt, do NOT skip — let the legacy paste path run.
+     */
+    async chatInputAppearsBusy() {
+        if (!this.probeLadderEnabled()) {
+            return false;
+        }
+        if (!vscode.workspace.getConfiguration("koruAutopilot").get("skipWhenInputBusy", true)) {
+            return false;
+        }
+        const sentinel = `__koru_busy_probe_${Date.now().toString(36)}__`;
+        const previous = await this.saveClipboard();
+        try {
+            await vscode.env.clipboard.writeText(sentinel);
+            await this.runCommand("editor.action.selectAll");
+            await this.runCommand("editor.action.clipboardCopyAction");
+            await this.sleep(60);
+            const observed = await this.saveClipboard();
+            if (observed === null || observed === sentinel) {
+                return false;
+            }
+            const trimmed = observed.trim();
+            // Tolerate trivial residue (single chars, leftover whitespace) but
+            // treat anything substantive as un-submitted user/LLM content.
+            const busy = trimmed.length >= 4;
+            debugLog("CHAT_INPUT_BUSY_PROBE", { busy, length: trimmed.length });
+            return busy;
+        }
+        catch (err) {
+            debugLog("CHAT_INPUT_BUSY_PROBE_ERROR", { err: String(err) });
+            return false;
+        }
+        finally {
+            await this.restoreClipboard(previous);
+        }
+    }
+    sendInputBusyAck(env, focus) {
+        this.send({
+            type: "ack",
+            id: env.id,
+            ok: false,
+            delivered: false,
+            opened: focus.ok,
+            submitted: false,
+            probe_ladder: this.probeLadderEnabled(),
+            winning_focus_open: focus.command,
+            verification: "input_busy",
+            reason: "chat_input_not_empty",
+            message: "chat input already contains un-submitted text — skipping drive to "
+                + "avoid clobbering the user's reply or concatenating prompts.",
+        });
+    }
     sendFocusFailureAck(env, focus) {
         const details = focus.diagnostics || {};
         const candidates = Array.isArray(details.focusOpenCandidates)
@@ -1088,6 +1221,17 @@ class AutopilotBridge {
         }
         if (!focus.ok) {
             this.sendFocusFailureAck(env, focus);
+            return;
+        }
+        if (await this.chatInputAppearsBusy()) {
+            // The chat input already has un-submitted content (the user is typing,
+            // or the IDE-side LLM left the user with a prompt and nothing has been
+            // sent yet). Pasting our prompt on top would either concatenate with
+            // their text (creating a Frankenstein prompt) or overwrite an answer
+            // they were preparing. Skip the drive cleanly so the autonomous loop
+            // can either back off or retry later — it is the operator's job to
+            // resolve the pending input.
+            this.sendInputBusyAck(env, focus);
             return;
         }
         const pasted = await this.pasteText(text);

@@ -10,13 +10,96 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 from typing import Any
 
 from koruide.ide import detect_focused_ide_id, detect_running_ides
 from koruide.injector import Injector
+
+YDOTOOLD_UNIT_NAME = "ydotoold.service"
+YDOTOOLD_UNIT_TEMPLATE = """[Unit]
+Description=ydotool user-mode keystroke injection daemon
+Documentation=man:ydotoold(8)
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStartPre=/bin/rm -f {socket}
+ExecStart={ydotoold} --socket-path={socket} --socket-perm=0600
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
+"""
+
+
+def _ydotoold_socket_path() -> str:
+    # Match the default ydotool client lookup path (no override needed for downstream
+    # tooling). /tmp is always writable and survives session restarts cleanly.
+    return "/tmp/.ydotool_socket"
+
+
+def install_ydotoold_user_service(*, dry_run: bool = False) -> dict[str, Any]:
+    """Generate, enable and start a per-user ydotoold systemd service.
+
+    Returns a structured report (success / skipped / error). On Wayland-native
+    compositors that lack ``virtual-keyboard-v1`` (e.g. GNOME on Wayland),
+    ``ydotool`` is the only injector that crosses into the compositor, and
+    running it as a daemon avoids the ``ydotoold backend unavailable`` notice
+    plus the per-call uinput device race that comes with daemonless mode.
+    """
+    log: list[str] = []
+    ydotoold = shutil.which("ydotoold")
+    if ydotoold is None:
+        return {
+            "ok": False,
+            "skipped": True,
+            "reason": "ydotoold binary not on PATH (install the ydotool package).",
+            "log": log,
+        }
+    if shutil.which("systemctl") is None:
+        return {
+            "ok": False,
+            "skipped": True,
+            "reason": "systemctl not found — cannot manage user services here.",
+            "log": log,
+        }
+    unit_dir = Path(os.path.expanduser("~/.config/systemd/user"))
+    unit_path = unit_dir / YDOTOOLD_UNIT_NAME
+    socket = _ydotoold_socket_path()
+    desired = YDOTOOLD_UNIT_TEMPLATE.format(socket=socket, ydotoold=ydotoold)
+    actions: list[str] = []
+    if not unit_path.exists() or unit_path.read_text() != desired:
+        actions.append(f"write {unit_path}")
+        if not dry_run:
+            unit_dir.mkdir(parents=True, exist_ok=True)
+            unit_path.write_text(desired)
+    actions.extend([
+        "systemctl --user daemon-reload",
+        f"systemctl --user enable --now {YDOTOOLD_UNIT_NAME}",
+    ])
+    log.extend(actions)
+    if dry_run:
+        return {"ok": True, "skipped": False, "dry_run": True, "log": log, "unit": str(unit_path)}
+    for cmd in (
+        ["systemctl", "--user", "daemon-reload"],
+        ["systemctl", "--user", "enable", "--now", YDOTOOLD_UNIT_NAME],
+    ):
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        if proc.returncode != 0:
+            return {
+                "ok": False,
+                "skipped": False,
+                "reason": f"{' '.join(cmd)} exited {proc.returncode}: {proc.stderr.strip()}",
+                "log": log,
+                "unit": str(unit_path),
+            }
+    return {"ok": True, "skipped": False, "log": log, "unit": str(unit_path), "socket": socket}
 
 _INSTRUMENT_DEB = (
     ("xdotool", "xdotool"),

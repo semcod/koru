@@ -4,6 +4,127 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.52] — 2026-05-23
+
+### Added
+- **Multi-IDE chat-history watcher.** The watcher introduced in 0.1.51 is
+  now adapter-driven and ships coverage for every IDE the plugin can
+  detect. The cursor (resume position) is persisted per-IDE under
+  ``chatHistory.cursor.<ide>``.
+  - ``cursor`` — full support via ``cursorDiskKV.bubbleId:*`` (SQLite,
+    ``type=2``, ``text``).
+  - ``vscode`` / ``vscodium`` — best-effort support via VS Code's
+    Built-in Chat API store (``ItemTable.chat.ChatSessionStore.index``
+    JSON; oldest-first by ``createdAt``). Returns nothing when the chat
+    surface is provided by a third-party extension that owns its
+    storage (Copilot Chat, Continue, …).
+  - ``windsurf`` — Cascade conversations live in
+    ``~/.codeium/windsurf/cascade/*.pb`` and are encrypted at rest, so
+    the watcher logs ``CHAT_HISTORY_UNSUPPORTED`` once and emits no
+    events. Input-busy precheck and escalation cooldown still protect
+    Windsurf.
+  - ``antigravity`` — analogous: ``~/.gemini/antigravity/conversations/*.pb``
+    is encrypted; same fallback as Windsurf.
+
+## [0.1.51] — 2026-05-23
+
+### Added
+- **Cursor chat-history watcher → real ``message.received`` events.** The
+  plugin now polls Cursor's per-user chat-history SQLite DB
+  (``~/.config/Cursor/User/globalStorage/state.vscdb``, table
+  ``cursorDiskKV``, ``bubbleId:*`` keys) and forwards every newly observed
+  assistant bubble (``type=2``, non-empty ``.text``) as a
+  ``message.received`` event over the autopilot socket. This is the
+  long-missing other half of the ``chat.events`` capability — without it
+  the koru daemon could see only what *koru* pasted, never what the
+  IDE-side LLM actually answered, leaving ``koru.llm_reflect`` (the
+  OpenRouter-backed reflection layer) without input. With this watcher
+  active, koru can now decide on each cycle whether the LLM is still
+  working, has finished, or is asking the user a clarifying question.
+- ``koruAutopilot.chatHistoryWatch`` (default true).
+- ``koruAutopilot.chatHistoryPollIntervalMs`` (default 4000 ms).
+
+## [0.1.50] — 2026-05-23
+
+### Added
+- **Pre-paste check: chat input must be empty.** Before driving a prompt, the
+  plugin now sentinel-probes the chat input via select-all + clipboardCopy.
+  If the chat input already holds un-submitted text — typically because the
+  user is in the middle of typing a reply, or the IDE-side LLM left a
+  pending question — the drive aborts with ``ack.verification="input_busy"``
+  and ``reason="chat_input_not_empty"`` instead of pasting on top. Without
+  this guard koru would either concatenate its prompt onto the user's reply
+  (creating a Frankenstein prompt) or overwrite work the user had not yet
+  sent.
+- ``koruAutopilot.skipWhenInputBusy`` (default true). Set to false to
+  restore the legacy 'always paste on top' behavior.
+
+## [0.1.49] — 2026-05-23
+
+### Fixed
+- **Cursor on Wayland-native compositors (e.g. GNOME): submit silently
+  delivered keystrokes to the wrong OS window.** ``xdotool`` cannot see
+  Wayland-native surfaces; it succeeds with exit 0 but routes the synthetic
+  ``Return`` / ``Ctrl+Return`` to whatever XWayland window happens to be
+  active (often a terminal where ``koru auto`` is running, or a sibling
+  VS Code window). Cursor never received the key, so the message stayed in
+  the chat input. The probe ladder happily latched onto ``xdotool`` because
+  ``rc=0`` looks like success.
+- The host-key ladder is now **session-aware**: when ``XDG_SESSION_TYPE`` is
+  ``wayland`` or ``WAYLAND_DISPLAY`` is set, ``ydotool`` (which uses
+  ``/dev/uinput`` and is accepted by Wayland compositors as legitimate
+  hardware input) is tried BEFORE ``xdotool`` for every modifier row. On
+  X11 sessions the previous order is preserved.
+- Combined with 0.1.48's Cursor-prefers-Ctrl+Return change, the resulting
+  Cursor/Wayland order is: ``wtype -M ctrl -k Return`` (only succeeds on
+  Sway/wlroots), then ``ydotool key ctrl+Return``, then ``xdotool key
+  ctrl+Return`` as a last resort.
+
+### Notes
+- For ``ydotool`` to reach Cursor, the Cursor window must be the focused
+  Wayland surface. Running ``koru auto`` from a foreground terminal in front
+  of Cursor works; switching focus to another window during a drive cycle
+  will route the key elsewhere.
+- If ``ydotool`` reports ``ydotoold backend unavailable``, install and
+  enable the system service (``systemctl --user enable --now ydotool``)
+  for lower-latency injection. Without the daemon ``ydotool`` still works
+  via ``/dev/uinput`` (the user must be in the ``input`` group).
+
+## [0.1.48] — 2026-05-23
+
+### Fixed
+- **Cursor on Wayland: submit silently inserted a newline instead of sending.**
+  The chat textarea on recent Cursor builds (Linux, GNOME/Wayland with XWayland)
+  treats plain `Enter` as "newline" and reserves `Ctrl+Enter` for "submit". The
+  host-key ladder previously tried `Return` first; on Wayland `wtype -k Return`
+  fails (compositor lacks the virtual-keyboard protocol) and `xdotool key
+  Return` succeeds with exit 0 but only adds a newline to the input. The next
+  autonomous cycle re-pasted the same prompt with another newline above it.
+- For `ide === "cursor"` we now try `Ctrl+Return` BEFORE plain `Return` on every
+  injector (`wtype` / `xdotool` / `ydotool`). Other IDEs keep the old order.
+
+### Added
+- `koruAutopilot.submitHostKey` (`auto` | `Return` | `ctrl+Return`, default
+  `auto`) — explicit override for users whose chat input expects a different
+  submit shortcut.
+
+## [0.1.47] — 2026-05-22
+
+### Fixed
+- **Cursor: submit step silently failed** (text was pasted into chat but never
+  sent). The submit ladder fell through to `vscode.commands.executeCommand("type",
+  { text: "\n" })`, which in Cursor's multi-line chat textarea only inserts a
+  newline. The daemon then logged `winning_submit=type:` with
+  `verification=strict` and the next autonomous cycle drove the same prompt
+  again, accumulating pasted-but-not-sent messages in the chat.
+- For `ide === "cursor"`, after the registered-command ladder is exhausted we
+  now try `_tryHostKeySubmit()` (real **Enter** via `wtype` / `xdotool` /
+  `ydotool`) before any `type:` fallback. Cursor accepts the host-level Enter
+  as "submit chat".
+- Poisoned cache: any previously cached `submit = "type:…"` value for Cursor
+  is now invalidated on load, so existing installations recover without a
+  manual reset.
+
 ## [0.1.12] — 2026-05-18
 
 ### Added

@@ -9,7 +9,11 @@ from unittest import mock
 
 import pytest
 
-from koru.autopilot.host_setup import build_setup_host_report, run_host_setup
+from koru.autopilot.host_setup import (
+    build_setup_host_report,
+    install_ydotoold_user_service,
+    run_host_setup,
+)
 
 
 def test_build_setup_host_report_has_expected_keys() -> None:
@@ -122,3 +126,57 @@ def test_autopilot_cli_setup_host_invokes_runner() -> None:
     kwargs = m.call_args.kwargs
     assert kwargs["output_format"] == "json"
     assert kwargs["install"] is False
+
+
+def test_install_ydotoold_user_service_skips_when_binary_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("koru.autopilot.host_setup.shutil.which", lambda name: None)
+    result = install_ydotoold_user_service(dry_run=True)
+    assert result["ok"] is False
+    assert result["skipped"] is True
+    assert "ydotoold binary not on PATH" in result["reason"]
+
+
+def test_install_ydotoold_user_service_dry_run_writes_no_files(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    # Regression for plugin/koru autopilot bootstrap: on Wayland-native
+    # compositors that lack `virtual-keyboard-v1` (e.g. GNOME), `ydotool` is the
+    # only injector that actually reaches the focused window. Running it as a
+    # systemd --user service avoids the "ydotoold backend unavailable" notice
+    # plus the daemonless-mode latency. The installer must be a single
+    # idempotent call wired into `koru autopilot setup-host`.
+    fake_path = {"ydotoold": "/usr/bin/ydotoold", "systemctl": "/usr/bin/systemctl"}
+    monkeypatch.setattr("koru.autopilot.host_setup.shutil.which", fake_path.get)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    result = install_ydotoold_user_service(dry_run=True)
+    assert result["ok"] is True
+    assert result.get("dry_run") is True
+    assert any("daemon-reload" in step for step in result["log"])
+    # Dry-run must not actually touch the user systemd dir.
+    assert not (tmp_path / ".config/systemd/user/ydotoold.service").exists()
+
+
+def test_install_ydotoold_user_service_writes_unit_and_runs_systemctl(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    fake_path = {"ydotoold": "/usr/bin/ydotoold", "systemctl": "/usr/bin/systemctl"}
+    monkeypatch.setattr("koru.autopilot.host_setup.shutil.which", fake_path.get)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, capture_output=False, text=False, timeout=None):  # noqa: ARG001
+        calls.append(list(cmd))
+        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+    monkeypatch.setattr("koru.autopilot.host_setup.subprocess.run", fake_run)
+    result = install_ydotoold_user_service(dry_run=False)
+    assert result["ok"] is True
+    unit_path = tmp_path / ".config/systemd/user/ydotoold.service"
+    assert unit_path.exists()
+    contents = unit_path.read_text()
+    assert "/usr/bin/ydotoold" in contents
+    assert "/tmp/.ydotool_socket" in contents
+    assert ["systemctl", "--user", "daemon-reload"] in calls
+    assert ["systemctl", "--user", "enable", "--now", "ydotoold.service"] in calls

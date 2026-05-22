@@ -11,7 +11,7 @@ from .audit import AuditLog, default_log_path
 from .client import KoruIDEClient, build_client
 from .config import AutopilotConfig, cached_config, clear_config_cache, load_config
 from .daemon import AutopilotDaemon
-from .host_setup import build_setup_host_report, run_host_setup
+from .host_setup import build_setup_host_report, install_ydotoold_user_service, run_host_setup
 from .ide import RunningIDE, detect_focused_ide_id, detect_running_ides, pick_target
 from .injector import Injector, InjectorError
 from .os_injector import OsInjectorError, inject_with_profile, load_profile, try_drive_with_profile
@@ -59,6 +59,7 @@ __all__ = [
     "format_plugin_install_result",
     "inject_with_profile",
     "install_plugin_for_ide",
+    "install_ydotoold_user_service",
     "load_config",
     "load_profile",
     "pick_target",

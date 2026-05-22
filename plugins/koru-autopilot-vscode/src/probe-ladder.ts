@@ -215,13 +215,170 @@ export function buildSubmitCommands(ide: string): string[] {
     ];
   }
   if (ide === "cursor") {
-    return ["composer.submit", "aichat.submit", ...generic];
+    // Cursor's actual submit command is ``composer.sendToAgent`` — it sends
+    // whatever is currently in the Composer/Agent chat input. The legacy
+    // ``composer.submit`` / ``aichat.submit`` candidates are NOT registered
+    // in recent Cursor builds, so we kept falling through to the host-key
+    // ladder where ``xdotool key Return`` and ``xdotool key ctrl+Return``
+    // both exit 0 but only insert a newline (the chat textarea is multi-line
+    // and accepts both as in-input keys, not "submit"). Try the registered
+    // command FIRST so we never need to forge keystrokes.
+    return [
+      "composer.sendToAgent",
+      "composer.acceptComposerStep",
+      "composer.startComposerPrompt",
+      "composer.startComposerPrompt2",
+      "composer.submit",
+      "aichat.submit",
+      ...generic,
+    ];
   }
   return generic;
 }
 
 export function filterRegistered(commands: string[], existing: Set<string>): string[] {
   return commands.filter((cmd) => existing.has(cmd));
+}
+
+export type HostKeyCandidate = [string, string[]];
+
+type Mod = "plain" | "ctrl";
+
+function injectorRow(mod: Mod): ReadonlyArray<HostKeyCandidate> {
+  if (mod === "ctrl") {
+    return [
+      ["wtype", ["-M", "ctrl", "-k", "Return", "-m", "ctrl"]],
+      ["ydotool", ["key", "ctrl+Return"]],
+      ["xdotool", ["key", "ctrl+Return"]],
+    ];
+  }
+  return [
+    ["wtype", ["-k", "Return"]],
+    ["ydotool", ["key", "Return"]],
+    ["xdotool", ["key", "Return"]],
+  ];
+}
+
+function reorderForXSession(
+  row: ReadonlyArray<HostKeyCandidate>,
+  isWayland: boolean
+): HostKeyCandidate[] {
+  if (isWayland) {
+    return [...row];
+  }
+  // X11 / no Wayland: xdotool is the only injector that reaches X clients,
+  // wtype always fails, ydotool works only with daemon. Try xdotool first.
+  const order = ["xdotool", "ydotool", "wtype"];
+  return [...row].sort(
+    (a, b) => order.indexOf(a[0]) - order.indexOf(b[0])
+  );
+}
+
+/**
+ * Order host-level submit candidates for an IDE and X session.
+ *
+ * Three forces fight for priority here:
+ *
+ * 1. **Modifier**: Cursor's chat textarea (Linux, recent builds) treats plain
+ *    ``Enter`` as a newline and only submits on ``Ctrl+Enter``. Injectors all
+ *    return exit code 0 even when the keystroke just inserts a newline, so
+ *    the probe ladder happily latches onto a no-op ``Return`` if it is tried
+ *    first. Force the ``Ctrl+Return`` variants ahead of ``Return`` for
+ *    ``ide === "cursor"``.
+ * 2. **Injector vs session**: on Wayland-native compositors (e.g. GNOME),
+ *    ``xdotool`` cannot see Wayland surfaces — it succeeds with exit 0 but
+ *    delivers the synthetic key to whatever XWayland window is active (often
+ *    a terminal or an X11 sibling), never reaching Cursor. ``ydotool`` works
+ *    via /dev/uinput which the compositor accepts as legitimate hardware
+ *    input. ``wtype`` only works when the compositor advertises
+ *    ``virtual-keyboard-v1`` (Sway / wlroots; not stock GNOME). On Wayland
+ *    we therefore must try ``ydotool`` BEFORE ``xdotool`` — otherwise xdotool
+ *    silently wins the probe and the message never reaches Cursor.
+ * 3. **Override**: ``koruAutopilot.submitHostKey`` lets users pin a specific
+ *    modifier (``"Return"`` / ``"ctrl+Return"`` / ``"auto"``).
+ */
+export function buildHostKeySubmitCandidates(
+  ide: string | undefined,
+  override: string = "auto",
+  env: NodeJS.ProcessEnv = process.env
+): HostKeyCandidate[] {
+  const normalized = (override || "auto").toLowerCase();
+  const isWayland =
+    (env.XDG_SESSION_TYPE || "").toLowerCase() === "wayland" ||
+    Boolean(env.WAYLAND_DISPLAY);
+  const plain = reorderForXSession(injectorRow("plain"), isWayland);
+  const ctrl = reorderForXSession(injectorRow("ctrl"), isWayland);
+  if (normalized === "return" || normalized === "enter") {
+    return [...plain, ...ctrl];
+  }
+  if (normalized === "ctrl+return" || normalized === "ctrl+enter") {
+    return [...ctrl, ...plain];
+  }
+  if (ide === "cursor") {
+    return [...ctrl, ...plain];
+  }
+  return [...plain, ...ctrl];
+}
+
+/**
+ * Discard cache entries that are known to be poisonous for the given IDE.
+ *
+ * Historical note (plugin ≤0.1.46): on Cursor, the submit ladder would fall
+ * through to ``vscode.commands.executeCommand("type", { text: "\n" })`` and
+ * cache that as the "winning" submit command. In Cursor's multi-line chat
+ * textarea this only inserts a newline (the LLM never receives the message),
+ * but the plugin reported ``ok: true`` so the daemon logged
+ * ``winning_submit=type:`` with ``verification=strict``. The next autonomous
+ * cycle drove the same prompt again, accumulating pasted-but-not-sent
+ * messages.
+ *
+ * Mutates a copy of the entry and returns it (callers may pass the value
+ * straight from ``loadProbeCache``). Idempotent for already-clean caches.
+ */
+export function sanitizeProbeCacheForIde(
+  entry: ProbeCacheEntry | undefined,
+  ide: string
+): ProbeCacheEntry | undefined {
+  if (!entry) {
+    return entry;
+  }
+  const sanitized = { ...entry };
+  if (ide === "windsurf") {
+    const unsafePaste = ["editor.action.clipboardPasteAction", "type"];
+    if (sanitized.paste && unsafePaste.includes(sanitized.paste)) {
+      sanitized.paste = undefined;
+    }
+    if (sanitized.submit && (sanitized.submit.startsWith("type:") || sanitized.submit === "type")) {
+      sanitized.submit = undefined;
+    }
+  }
+  if (
+    ide === "cursor" &&
+    sanitized.submit &&
+    (sanitized.submit.startsWith("type:") || sanitized.submit === "type")
+  ) {
+    sanitized.submit = undefined;
+  }
+  // Plugin 0.1.47 cached host-level plain ``Return`` for Cursor. On Linux
+  // (Wayland with XWayland) ``xdotool key Return`` exits 0 even though
+  // Cursor's chat textarea treats it as a newline rather than a submit.
+  // Force a re-probe so 0.1.48's reordered ladder can pick ``Ctrl+Return``.
+  // Match injector-specific renderings without ctrl modifier:
+  //   "xdotool key Return", "ydotool key Return", "wtype -k Return"
+  if (ide === "cursor" && typeof sanitized.submit === "string") {
+    const cmd = sanitized.submit;
+    const hasCtrl = /\bctrl\b/i.test(cmd) || /-M\s+ctrl\b/.test(cmd);
+    const isHostKey =
+      /^(xdotool|ydotool)\s+key\s+Return$/.test(cmd) ||
+      /^wtype(\s+-[Mm]\s+\S+)*\s+-k\s+Return$/.test(cmd);
+    if (!hasCtrl && isHostKey) {
+      sanitized.submit = undefined;
+    }
+  }
+  if (ide === "vscodium" && sanitized.submit === "workbench.action.chat.submit") {
+    sanitized.submit = undefined;
+  }
+  return sanitized;
 }
 
 export function loadProbeCache(

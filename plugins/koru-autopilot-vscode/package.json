@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscode",
   "displayName": "koru autopilot",
   "description": "Bridge between VS Code / Windsurf / Cursor and the koru autopilot daemon.",
-  "version": "0.1.46",
+  "version": "0.1.52",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -118,6 +118,29 @@
           "minimum": 0,
           "description": "Optional absolute screen Y coordinate for clicking the chat Send button after paste. Use command `koru: Capture submit button position`."
         },
+        "koruAutopilot.chatHistoryWatch": {
+          "type": "boolean",
+          "default": true,
+          "description": "Cursor only: poll the chat-history SQLite DB and forward newly observed assistant messages as 'message.received' events to the koru daemon. Without this, koru cannot tell whether the IDE-side LLM has answered, asked a follow-up question, or finished the task."
+        },
+        "koruAutopilot.chatHistoryPollIntervalMs": {
+          "type": "number",
+          "default": 4000,
+          "minimum": 500,
+          "maximum": 60000,
+          "description": "Cursor only: how often (ms) to poll Cursor's chat-history SQLite DB for new assistant messages."
+        },
+        "koruAutopilot.skipWhenInputBusy": {
+          "type": "boolean",
+          "default": true,
+          "description": "Before pasting into chat, probe via select-all + copy to detect un-submitted text in the chat input. When non-empty, skip the drive instead of clobbering the user's reply or concatenating prompts. Disable to restore the legacy 'always paste on top' behavior."
+        },
+        "koruAutopilot.submitHostKey": {
+          "type": "string",
+          "enum": ["auto", "Return", "ctrl+Return"],
+          "default": "auto",
+          "description": "Host-level key combo used to submit the chat after paste. 'auto' picks Ctrl+Return for Cursor (where plain Return inserts a newline) and Return otherwise. Override to force a specific key."
+        },
         "koruAutopilot.trustUnverifiedHostSubmit": {
           "type": "boolean",
           "default": true,
@@ -133,7 +156,7 @@
   },
   "scripts": {
     "compile": "tsc -p ./",
-    "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/antigravity-fastpath.test.js",
+    "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/antigravity-fastpath.test.js && node out/chat-history-watcher.test.js",
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
     "package": "vsce package --no-dependencies --out koru-autopilot-${npm_package_version}.vsix",
