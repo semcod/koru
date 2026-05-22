@@ -132,6 +132,7 @@ koru = [
     "assets/koru-autopilot-vscode/*.vsix",
     "assets/*.json",
     "wizard/strategies.json",
+    "wizard/templates/*.json",
 ]
 
 [tool.pytest.ini_options]

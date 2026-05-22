@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "schema": "koru.wizard.strategies/v1",
+  "description": "Library template — API stability, types, examples, CI.",
+  "root": "root",
+  "language_default": "pl",
+  "quick_default": {
+    "path": ["api_stability"],
+    "description": {
+      "pl": "Domyślny ticket: stabilność publicznego API.",
+      "en": "Default ticket: public API stability."
+    }
+  },
+  "defaults": {
+    "next_steps": [
+      {"pl": "Uruchom `koru` — brief refaktoru API.", "en": "Run `koru` for API refactor brief."},
+      {"pl": "W IDE: 'Pracuj nad {{ticket_id}}'.", "en": "In IDE: 'Work on {{ticket_id}}'."},
+      {"pl": "`koru --queue --loop` — kolejne kroki.", "en": "`koru --queue --loop` for follow-ups."}
+    ]
+  },
+  "nodes": {
+    "root": {
+      "prompt": {"pl": "Co poprawić w bibliotece?", "en": "What to improve in your library?"},
+      "options": [
+        {"id": "api_stability", "label": {"pl": "Stabilność API", "en": "API stability"}, "ticket": "tpl_api_stability",
+         "help": {"pl": "Semver, deprecation policy.", "en": "Semver, deprecation policy."}},
+        {"id": "typing", "label": {"pl": "Typy i stub files", "en": "Types & stub files"}, "ticket": "tpl_typing",
+         "help": {"pl": "py.typed, mypy strict.", "en": "py.typed, mypy strict."}},
+        {"id": "examples", "label": {"pl": "Przykłady użycia", "en": "Usage examples"}, "ticket": "tpl_examples",
+         "help": {"pl": "examples/ + doctest.", "en": "examples/ + doctest."}},
+        {"id": "quality", "label": {"pl": "Jakość i CI", "en": "Quality & CI"}, "next": "quality",
+         "help": {"pl": "Testy, coverage, gates.", "en": "Tests, coverage, gates."}},
+        {"id": "modules", "label": {"pl": "Modularyzacja", "en": "Modularization"}, "ticket": "tpl_modules",
+         "help": {"pl": "Public API per moduł.", "en": "Public API per module."}}
+      ]
+    },
+    "quality": {
+      "prompt": {"pl": "Jakość biblioteki?", "en": "Library quality?"},
+      "options": [
+        {"id": "tests", "label": {"pl": "Pokrycie testami", "en": "Test coverage"}, "ticket": "tpl_tests",
+         "help": {"pl": "90%+ na public API.", "en": "90%+ on public API."}},
+        {"id": "ci_gates", "label": {"pl": "CI gates", "en": "CI gates"}, "ticket": "tpl_ci_gates",
+         "help": {"pl": "mypy + ruff w CI.", "en": "mypy + ruff in CI."}}
+      ]
+    }
+  },
+  "tickets": {
+    "tpl_api_stability": {"title": "Lib: stabilność API", "labels": ["library", "api"], "priority": "high", "body": "Semver + deprecation warnings + CHANGELOG policy dla {{project}}."},
+    "tpl_typing": {"title": "Lib: typowanie", "labels": ["library", "typing"], "priority": "high", "body": "py.typed + mypy strict na publicznym API {{project}}."},
+    "tpl_examples": {"title": "Lib: przykłady", "labels": ["library", "docs"], "priority": "normal", "body": "examples/ + doctest dla głównych use-case {{project}}."},
+    "tpl_modules": {"title": "Lib: modularyzacja", "labels": ["library", "architecture"], "priority": "normal", "body": "Import-linter contracts + jasne public API per moduł {{project}}."},
+    "tpl_tests": {"title": "Lib: testy", "labels": ["library", "tests"], "priority": "high", "body": "90% coverage na public API {{project}}."},
+    "tpl_ci_gates": {"title": "Lib: CI gates", "labels": ["library", "ci"], "priority": "normal", "body": "mypy + ruff + regix w CI {{project}}."}
+  }
+}

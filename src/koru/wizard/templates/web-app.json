@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "schema": "koru.wizard.strategies/v1",
+  "description": "Web app / SPA template — frontend-first decision tree.",
+  "root": "root",
+  "language_default": "pl",
+  "quick_default": {
+    "path": ["frontend", "ux_perf"],
+    "description": {
+      "pl": "Domyślny ticket: wydajność renderingu (LCP).",
+      "en": "Default ticket: render performance (LCP)."
+    }
+  },
+  "defaults": {
+    "next_steps": [
+      {"pl": "Uruchom `koru` aby zobaczyć brief LLM.", "en": "Run `koru` to see the LLM brief."},
+      {"pl": "W IDE: 'Pracuj nad ticketem {{ticket_id}}'.", "en": "In IDE: 'Work on ticket {{ticket_id}}'."},
+      {"pl": "`koru --queue --loop` — agent przepracuje kolejkę.", "en": "`koru --queue --loop` drains the queue."}
+    ]
+  },
+  "nodes": {
+    "root": {
+      "prompt": {"pl": "Co poprawić w aplikacji webowej?", "en": "What to improve in your web app?"},
+      "options": [
+        {"id": "frontend", "label": {"pl": "Frontend / UI / UX", "en": "Frontend / UI / UX"}, "next": "frontend",
+         "help": {"pl": "Design system, dostępność, stan, i18n.", "en": "Design system, accessibility, state, i18n."}},
+        {"id": "backend", "label": {"pl": "Backend / API", "en": "Backend / API"}, "next": "backend",
+         "help": {"pl": "API, dane, bezpieczeństwo.", "en": "API, data, security."}},
+        {"id": "performance", "label": {"pl": "Wydajność (Web Vitals)", "en": "Performance (Web Vitals)"}, "next": "performance",
+         "help": {"pl": "LCP, INP, CLS, bundle size.", "en": "LCP, INP, CLS, bundle size."}},
+        {"id": "quality", "label": {"pl": "Jakość i testy", "en": "Quality & tests"}, "next": "quality",
+         "help": {"pl": "CC, testy, CI gates.", "en": "CC, tests, CI gates."}},
+        {"id": "devx", "label": {"pl": "DevX / deploy", "en": "DevX / deploy"}, "next": "devx",
+         "help": {"pl": "Lokalny dev, CI/CD, agenci.", "en": "Local dev, CI/CD, agents."}}
+      ]
+    },
+    "frontend": {
+      "prompt": {"pl": "Obszar frontendu?", "en": "Frontend area?"},
+      "options": [
+        {"id": "design_system", "label": {"pl": "Design system", "en": "Design system"}, "ticket": "tpl_design_system",
+         "help": {"pl": "Tokeny + komponenty.", "en": "Tokens + components."}},
+        {"id": "a11y", "label": {"pl": "Dostępność WCAG", "en": "WCAG accessibility"}, "ticket": "tpl_a11y",
+         "help": {"pl": "Klawiatura, kontrast, axe.", "en": "Keyboard, contrast, axe."}},
+        {"id": "ux_perf", "label": {"pl": "Wydajność renderingu", "en": "Render performance"}, "ticket": "tpl_ux_perf",
+         "help": {"pl": "Re-render, lazy load, LCP.", "en": "Re-render, lazy load, LCP."}},
+        {"id": "state_mgmt", "label": {"pl": "Zarządzanie stanem", "en": "State management"}, "ticket": "tpl_state_mgmt",
+         "help": {"pl": "Store vs signals.", "en": "Store vs signals."}}
+      ]
+    },
+    "backend": {
+      "prompt": {"pl": "Obszar backendu?", "en": "Backend area?"},
+      "options": [
+        {"id": "api_versioning", "label": {"pl": "Wersjonowanie API", "en": "API versioning"}, "ticket": "tpl_api_versioning",
+         "help": {"pl": "/v1, OpenAPI.", "en": "/v1, OpenAPI."}},
+        {"id": "security", "label": {"pl": "Bezpieczeństwo", "en": "Security"}, "ticket": "tpl_security",
+         "help": {"pl": "OWASP, CSP, rate limit.", "en": "OWASP, CSP, rate limit."}},
+        {"id": "observability", "label": {"pl": "Obserwowalność", "en": "Observability"}, "ticket": "tpl_observability",
+         "help": {"pl": "OTel traces.", "en": "OTel traces."}}
+      ]
+    },
+    "performance": {
+      "prompt": {"pl": "Wydajność?", "en": "Performance?"},
+      "options": [
+        {"id": "web_vitals", "label": {"pl": "Web Vitals (LCP/INP/CLS)", "en": "Web Vitals"}, "ticket": "tpl_web_vitals",
+         "help": {"pl": "Lighthouse + RUM.", "en": "Lighthouse + RUM."}},
+        {"id": "bundle", "label": {"pl": "Rozmiar bundle", "en": "Bundle size"}, "ticket": "tpl_bundle",
+         "help": {"pl": "Tree-shaking, code-split.", "en": "Tree-shaking, code-split."}}
+      ]
+    },
+    "quality": {
+      "prompt": {"pl": "Jakość?", "en": "Quality?"},
+      "options": [
+        {"id": "tests", "label": {"pl": "Testy E2E + unit", "en": "E2E + unit tests"}, "ticket": "tpl_tests",
+         "help": {"pl": "Playwright/vitest.", "en": "Playwright/vitest."}},
+        {"id": "ci_gates", "label": {"pl": "CI gates", "en": "CI gates"}, "ticket": "tpl_ci_gates",
+         "help": {"pl": "Lint w CI.", "en": "Lint in CI."}}
+      ]
+    },
+    "devx": {
+      "prompt": {"pl": "DevX?", "en": "DevX?"},
+      "options": [
+        {"id": "local_dev", "label": {"pl": "Lokalny dev", "en": "Local dev"}, "ticket": "tpl_local_dev",
+         "help": {"pl": "make dev, hot-reload.", "en": "make dev, hot-reload."}},
+        {"id": "agents", "label": {"pl": "Agenci LLM", "en": "LLM agents"}, "ticket": "tpl_agents",
+         "help": {"pl": "Koru + Cursor.", "en": "Koru + Cursor."}}
+      ]
+    }
+  },
+  "tickets": {
+    "tpl_design_system": {"title": "Web: design system", "labels": ["frontend", "web-app"], "priority": "high", "body": "Tokeny CSS/JS + 5 komponentów bazowych dla {{project}}."},
+    "tpl_a11y": {"title": "Web: WCAG 2.1 AA", "labels": ["frontend", "a11y"], "priority": "normal", "body": "Audyt axe + klawiatura na głównych widokach {{project}}."},
+    "tpl_ux_perf": {"title": "Web: wydajność renderingu", "labels": ["frontend", "performance"], "priority": "high", "body": "Profil renderu, lazy load, cel LCP < 2.5s w {{project}}."},
+    "tpl_state_mgmt": {"title": "Web: zarządzanie stanem", "labels": ["frontend"], "priority": "normal", "body": "Jedno spójne podejście do stanu w {{project}}."},
+    "tpl_api_versioning": {"title": "Web: wersjonowanie API", "labels": ["backend", "api"], "priority": "high", "body": "/v1 namespace + OpenAPI dla {{project}}."},
+    "tpl_security": {"title": "Web: security hardening", "labels": ["backend", "security"], "priority": "high", "body": "OWASP audit + CSP + rate-limit w {{project}}."},
+    "tpl_observability": {"title": "Web: obserwowalność", "labels": ["backend"], "priority": "normal", "body": "OTel traces + dashboard p99 w {{project}}."},
+    "tpl_web_vitals": {"title": "Web: Web Vitals", "labels": ["frontend", "performance"], "priority": "high", "body": "LCP/INP/CLS dla top 5 widoków {{project}}."},
+    "tpl_bundle": {"title": "Web: optymalizacja bundle", "labels": ["frontend", "performance"], "priority": "normal", "body": "Analiza bundle, code-split, tree-shake w {{project}}."},
+    "tpl_tests": {"title": "Web: pokrycie testami", "labels": ["quality", "tests"], "priority": "high", "body": "E2E + unit dla krytycznych ścieżek {{project}}."},
+    "tpl_ci_gates": {"title": "Web: CI gates", "labels": ["quality", "ci"], "priority": "normal", "body": "Lint + testy blokują merge w {{project}}."},
+    "tpl_local_dev": {"title": "Web: lokalny dev", "labels": ["devx"], "priority": "normal", "body": "make dev w 1 komendzie dla {{project}}."},
+    "tpl_agents": {"title": "Web: agenci LLM", "labels": ["devx", "llm"], "priority": "normal", "body": "Koru + Cursor rules dla {{project}}."}
+  }
+}

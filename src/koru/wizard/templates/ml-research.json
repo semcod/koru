@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "schema": "koru.wizard.strategies/v1",
+  "description": "ML research template — reproducibility and data quality first.",
+  "root": "root",
+  "language_default": "pl",
+  "quick_default": {
+    "path": ["reproducibility"],
+    "description": {
+      "pl": "Domyślny ticket: reprodukowalność eksperymentów.",
+      "en": "Default ticket: experiment reproducibility."
+    }
+  },
+  "defaults": {
+    "next_steps": [
+      {"pl": "Uruchom `koru` — brief do notebooka / IDE.", "en": "Run `koru` for a notebook/IDE brief."},
+      {"pl": "W IDE: 'Pracuj nad {{ticket_id}}'.", "en": "In IDE: 'Work on {{ticket_id}}'."},
+      {"pl": "`koru --queue --loop` dla kolejnych kroków.", "en": "`koru --queue --loop` for follow-ups."}
+    ]
+  },
+  "nodes": {
+    "root": {
+      "prompt": {"pl": "Co poprawić w projekcie ML?", "en": "What to improve in your ML project?"},
+      "options": [
+        {"id": "reproducibility", "label": {"pl": "Reprodukowalność", "en": "Reproducibility"}, "ticket": "tpl_repro",
+         "help": {"pl": "Seedy, wersje, lockfile, MLflow.", "en": "Seeds, versions, lockfile, MLflow."}},
+        {"id": "data_quality", "label": {"pl": "Jakość danych", "en": "Data quality"}, "ticket": "tpl_data_quality",
+         "help": {"pl": "Walidacja, leakage, schema.", "en": "Validation, leakage, schema."}},
+        {"id": "experiments", "label": {"pl": "Eksperymenty i metryki", "en": "Experiments & metrics"}, "ticket": "tpl_experiments",
+         "help": {"pl": "Tracking, porównania runów.", "en": "Tracking, run comparison."}},
+        {"id": "quality", "label": {"pl": "Jakość kodu", "en": "Code quality"}, "next": "quality",
+         "help": {"pl": "Testy, typy, lint.", "en": "Tests, types, lint."}},
+        {"id": "docs", "label": {"pl": "Dokumentacja", "en": "Documentation"}, "ticket": "tpl_docs",
+         "help": {"pl": "README, repro steps.", "en": "README, repro steps."}}
+      ]
+    },
+    "quality": {
+      "prompt": {"pl": "Jakość kodu ML?", "en": "ML code quality?"},
+      "options": [
+        {"id": "tests", "label": {"pl": "Testy pipeline", "en": "Pipeline tests"}, "ticket": "tpl_tests",
+         "help": {"pl": "pytest na transformacjach.", "en": "pytest on transforms."}},
+        {"id": "typing", "label": {"pl": "Typowanie (mypy)", "en": "Typing (mypy)"}, "ticket": "tpl_typing",
+         "help": {"pl": "Typy na API datasetów.", "en": "Types on dataset APIs."}}
+      ]
+    }
+  },
+  "tickets": {
+    "tpl_repro": {"title": "ML: reprodukowalność", "labels": ["ml", "reproducibility"], "priority": "high", "body": "Seedy, pinned deps, config YAML + MLflow/W&B dla {{project}}."},
+    "tpl_data_quality": {"title": "ML: jakość danych", "labels": ["ml", "data"], "priority": "high", "body": "Great Expectations / pandera na pipeline {{project}}."},
+    "tpl_experiments": {"title": "ML: tracking eksperymentów", "labels": ["ml", "experiments"], "priority": "normal", "body": "MLflow lub W&B + porównanie metryk w {{project}}."},
+    "tpl_docs": {"title": "ML: dokumentacja", "labels": ["ml", "docs"], "priority": "normal", "body": "README z krokami repro + diagram pipeline {{project}}."},
+    "tpl_tests": {"title": "ML: testy pipeline", "labels": ["ml", "tests"], "priority": "normal", "body": "pytest na transformacjach danych w {{project}}."},
+    "tpl_typing": {"title": "ML: typowanie", "labels": ["ml", "typing"], "priority": "low", "body": "mypy na publicznym API datasetów {{project}}."}
+  }
+}

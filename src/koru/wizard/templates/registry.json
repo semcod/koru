@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "schema": "koru.wizard.templates/v1",
+  "templates": {
+    "default": {
+      "file": "strategies.json",
+      "description": {
+        "pl": "Ogólne drzewo decyzyjne (7 gałęzi: architektura, frontend, backend, jakość, wydajność, DevX)",
+        "en": "General-purpose decision tree (7 branches: architecture, frontend, backend, quality, performance, DevX)"
+      }
+    },
+    "web-app": {
+      "file": "templates/web-app.json",
+      "description": {
+        "pl": "Aplikacja webowa / SPA — frontend, API, Web Vitals, jakość, DevX",
+        "en": "Web app / SPA — frontend, API, Web Vitals, quality, DevX"
+      }
+    },
+    "ml-research": {
+      "file": "templates/ml-research.json",
+      "description": {
+        "pl": "Badania ML — reprodukowalność, jakość danych, eksperymenty, dokumentacja",
+        "en": "ML research — reproducibility, data quality, experiments, documentation"
+      }
+    },
+    "cli-tool": {
+      "file": "templates/cli-tool.json",
+      "description": {
+        "pl": "Narzędzie CLI — dystrybucja, packaging, semver, dokumentacja, testy",
+        "en": "CLI tool — distribution, packaging, semver, docs, tests"
+      }
+    },
+    "library": {
+      "file": "templates/library.json",
+      "description": {
+        "pl": "Biblioteka — stabilność API, typy, przykłady, CI, modularyzacja",
+        "en": "Library — API stability, types, examples, CI, modularization"
+      }
+    }
+  }
+}

@@ -22,6 +22,7 @@ from koru.tasks import create_nl_task
 from koru.wizard.ide import DetectedIDE, discover_installed_ides, summarize_ides
 from koru.wizard.llx import expand_node, llx_available
 from koru.wizard.project import ProjectCandidate, propose_projects
+from koru.wizard.templates import format_templates_list, resolve_strategies_source
 from koru.wizard.tree import (
     Prompter,
     StrategyTree,
@@ -611,9 +612,31 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument(
         "--strategies",
-        type=Path,
         default=None,
-        help="Custom strategies.json",
+        metavar="PATH|URL",
+        help=(
+            "Custom strategies.json (local path or https:// URL; "
+            "HTTPS requires --allow-remote)"
+        ),
+    )
+    p.add_argument(
+        "--template",
+        default=None,
+        metavar="NAME",
+        help=(
+            "Built-in strategy template (default, web-app, ml-research, "
+            "cli-tool, library). Mutually exclusive with --strategies."
+        ),
+    )
+    p.add_argument(
+        "--list-templates",
+        action="store_true",
+        help="List built-in strategy templates and exit.",
+    )
+    p.add_argument(
+        "--allow-remote",
+        action="store_true",
+        help="Allow fetching --strategies from HTTPS URLs (cached locally).",
     )
     p.add_argument(
         "--language",
@@ -675,6 +698,13 @@ def wizard_main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(list(argv) if argv is not None else None)
 
+    if args.template and args.strategies:
+        parser.error("--template and --strategies are mutually exclusive")
+
+    if args.list_templates:
+        print(format_templates_list())
+        return 0
+
     if args.detect_only:
         ides = discover_installed_ides()
         candidates = propose_projects(ides)
@@ -712,11 +742,21 @@ def wizard_main(argv: Sequence[str] | None = None) -> int:
         language = f"{language},pl,en" if language not in {"pl", "en"} else "pl,en"
 
     quick = args.quick or bool(args.strategy)
+    try:
+        strategies_path = resolve_strategies_source(
+            strategies=args.strategies,
+            template=args.template,
+            allow_remote=args.allow_remote,
+        )
+    except (FileNotFoundError, KeyError, ValueError, RuntimeError) as exc:
+        print(f"koru wizard error: {exc}", file=sys.stderr)
+        return 2
+
     prompter = StdinPrompter()
     try:
         result = run_wizard(
             prompter=prompter,
-            strategies_path=args.strategies,
+            strategies_path=strategies_path,
             language=language,
             project_override=args.project,
             create=not args.no_create,

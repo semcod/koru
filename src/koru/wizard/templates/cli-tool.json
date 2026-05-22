@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "schema": "koru.wizard.strategies/v1",
+  "description": "CLI tool template — distribution, packaging, docs.",
+  "root": "root",
+  "language_default": "pl",
+  "quick_default": {
+    "path": ["packaging"],
+    "description": {
+      "pl": "Domyślny ticket: packaging i dystrybucja.",
+      "en": "Default ticket: packaging and distribution."
+    }
+  },
+  "defaults": {
+    "next_steps": [
+      {"pl": "Uruchom `koru` — brief do implementacji.", "en": "Run `koru` for implementation brief."},
+      {"pl": "W IDE: 'Pracuj nad {{ticket_id}}'.", "en": "In IDE: 'Work on {{ticket_id}}'."},
+      {"pl": "`koru --queue --loop` — kolejne kroki CLI.", "en": "`koru --queue --loop` for follow-ups."}
+    ]
+  },
+  "nodes": {
+    "root": {
+      "prompt": {"pl": "Co poprawić w narzędziu CLI?", "en": "What to improve in your CLI tool?"},
+      "options": [
+        {"id": "packaging", "label": {"pl": "Packaging (PyPI / npm)", "en": "Packaging (PyPI / npm)"}, "ticket": "tpl_packaging",
+         "help": {"pl": "pyproject, wheel, entry points.", "en": "pyproject, wheel, entry points."}},
+        {"id": "distribution", "label": {"pl": "Dystrybucja (install script)", "en": "Distribution"}, "ticket": "tpl_distribution",
+         "help": {"pl": "curl|bash, homebrew, snap.", "en": "curl|bash, homebrew, snap."}},
+        {"id": "docs", "label": {"pl": "Dokumentacja CLI", "en": "CLI documentation"}, "ticket": "tpl_docs",
+         "help": {"pl": "--help, man page, examples.", "en": "--help, man page, examples."}},
+        {"id": "quality", "label": {"pl": "Jakość i testy", "en": "Quality & tests"}, "next": "quality",
+         "help": {"pl": "Testy CLI, integration.", "en": "CLI tests, integration."}},
+        {"id": "release", "label": {"pl": "Release / semver", "en": "Release / semver"}, "ticket": "tpl_release",
+         "help": {"pl": "Changelog, tagged releases.", "en": "Changelog, tagged releases."}}
+      ]
+    },
+    "quality": {
+      "prompt": {"pl": "Jakość?", "en": "Quality?"},
+      "options": [
+        {"id": "tests", "label": {"pl": "Testy CLI (exit codes)", "en": "CLI tests (exit codes)"}, "ticket": "tpl_tests",
+         "help": {"pl": "pytest + subprocess.", "en": "pytest + subprocess."}},
+        {"id": "ci_gates", "label": {"pl": "CI na wielu OS", "en": "CI on multiple OS"}, "ticket": "tpl_ci_gates",
+         "help": {"pl": "matrix linux/mac/win.", "en": "matrix linux/mac/win."}}
+      ]
+    }
+  },
+  "tickets": {
+    "tpl_packaging": {"title": "CLI: packaging", "labels": ["cli", "packaging"], "priority": "high", "body": "pyproject.toml / package.json + entry points dla {{project}}."},
+    "tpl_distribution": {"title": "CLI: dystrybucja", "labels": ["cli", "distribution"], "priority": "normal", "body": "Install script + homebrew formula / snap dla {{project}}."},
+    "tpl_docs": {"title": "CLI: dokumentacja", "labels": ["cli", "docs"], "priority": "normal", "body": "README z przykładami + `man` / `--help` w {{project}}."},
+    "tpl_release": {"title": "CLI: release flow", "labels": ["cli", "release"], "priority": "normal", "body": "Semver + automated changelog + tagged releases {{project}}."},
+    "tpl_tests": {"title": "CLI: testy", "labels": ["cli", "tests"], "priority": "high", "body": "pytest subprocess na głównych komendach {{project}}."},
+    "tpl_ci_gates": {"title": "CLI: CI matrix", "labels": ["cli", "ci"], "priority": "normal", "body": "CI matrix linux/macOS/windows dla {{project}}."}
+  }
+}

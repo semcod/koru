@@ -16,6 +16,7 @@ from koru.wizard.ide import (
     summarize_ides,
 )
 from koru.wizard.project import ProjectCandidate, propose_projects
+from koru.wizard.templates import TemplateInfo, format_templates_list, list_templates
 from koru.wizard.tree import (
     StrategyTree,
     TicketTemplate,
@@ -40,4 +41,7 @@ __all__ = [
     "load_tree",
     "walk",
     "walk_path",
+    "TemplateInfo",
+    "list_templates",
+    "format_templates_list",
 ]
