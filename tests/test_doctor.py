@@ -24,7 +24,10 @@ from koru.doctor import (
     WARN,
     Check,
     DoctorReport,
+    detected_problems,
+    problem_catalog,
     render_text,
+    render_problem_catalog_text,
     run_diagnostics,
 )
 
@@ -505,6 +508,27 @@ class TestWupAndInotifyProbes(unittest.TestCase):
             status, detail = _check_wup_binary(Path("."))
             self.assertEqual(status, PASS)
             self.assertIn("/usr/bin/wup", detail)
+
+
+class TestProblemCatalogAndDetectedProblems(unittest.TestCase):
+    def test_problem_catalog_has_entries(self) -> None:
+        catalog = problem_catalog()
+        self.assertTrue(catalog)
+        self.assertTrue(any(item.get("check") == "planfile_config" for item in catalog))
+
+    def test_detected_problems_only_warn_or_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            report = _run(project)
+            problems = detected_problems(report)
+            self.assertTrue(problems)
+            self.assertTrue(all(p["status"] in {WARN, FAIL} for p in problems))
+
+    def test_render_problem_catalog_text_mentions_detection(self) -> None:
+        text = render_problem_catalog_text()
+        self.assertIn("Known problems", text)
+        self.assertIn("detection:", text)
 
 
 if __name__ == "__main__":

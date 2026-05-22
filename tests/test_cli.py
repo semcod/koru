@@ -111,6 +111,30 @@ class TestDoctorDispatch(unittest.TestCase):
         self.assertIn("checks", data)
         self.assertIn("project", data)
 
+    def test_doctor_subcommand_text(self) -> None:
+        code, output = _run_main("doctor", "--project", str(self.project))
+        self.assertIn("koru doctor", output)
+        self.assertTrue(
+            any(m in output for m in ("[OK ]", "[WARN]", "[FAIL]")),
+            f"Expected text markers in output:\n{output}",
+        )
+        self.assertIsInstance(code, int)
+
+    def test_doctor_subcommand_catalog_json(self) -> None:
+        code, output = _run_main(
+            "doctor",
+            "--project",
+            str(self.project),
+            "--format",
+            "json",
+            "--catalog",
+        )
+        data = json.loads(output)
+        self.assertIn("detected_problems", data)
+        self.assertIn("problem_catalog", data)
+        self.assertIsInstance(data["problem_catalog"], list)
+        self.assertIsInstance(code, int)
+
     def test_doctor_fix_text_is_guidance_only(self) -> None:
         code, output = _run_main("--doctor", "--fix", "--project", str(self.project))
         self.assertIn("Guided repair (--fix):", output)
@@ -404,6 +428,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "gate",
             "queue",
             "gc",
+            "doctor",
             "git",
             "tools",
             "mcp-serve",
@@ -412,6 +437,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "autonomous",
             "auto",
             "wizard",
+            "doctor",
             "dsl",
             "api",
             "topology",

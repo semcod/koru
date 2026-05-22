@@ -7,6 +7,9 @@ import json
 import shlex
 from typing import Any
 
+from koru.doctor import detected_problems as doctor_detected_problems
+from koru.doctor import problem_catalog as doctor_problem_catalog
+from koru.doctor import render_problem_catalog_text
 from koru.doctor import render_text as render_doctor_text
 from koru.doctor import run_diagnostics
 from koru.events import emit_management_event
@@ -64,16 +67,27 @@ def render_doctor_with_fix(report: Any, fix_payload: dict[str, object] | None) -
 def doctor_main(args: argparse.Namespace, raw_args: list[str]) -> int:
     report = run_diagnostics(args.project)
     fix_payload = doctor_fix_payload(report) if getattr(args, "fix", False) else None
+    include_catalog = bool(getattr(args, "catalog", False))
+    problems = doctor_detected_problems(report)
     explicit_format = "--format" in raw_args
     if explicit_format and args.output_format == "json":
         payload = report.to_dict()
+        payload["detected_problems"] = problems
+        if include_catalog:
+            payload["problem_catalog"] = doctor_problem_catalog()
         if fix_payload is not None:
             payload["fix"] = fix_payload
         print(json.dumps(payload, indent=2, sort_keys=True))
     elif explicit_format and args.output_format == "markdown":
-        print(render_doctor_with_fix(report, fix_payload))
+        text = render_doctor_with_fix(report, fix_payload)
+        if include_catalog:
+            text = f"{text}\n\n{render_problem_catalog_text()}"
+        print(text)
     else:
-        print(render_doctor_with_fix(report, fix_payload))
+        text = render_doctor_with_fix(report, fix_payload)
+        if include_catalog:
+            text = f"{text}\n\n{render_problem_catalog_text()}"
+        print(text)
     emit_management_event(
         tool="koru.doctor",
         action="completed",

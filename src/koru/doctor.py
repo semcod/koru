@@ -48,10 +48,13 @@ The module is intentionally side-effect-free (no writes, no network).
 
 
 import os
+import platform
 import re
 import shlex
 import shutil
 import subprocess
+import sys
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -74,6 +77,92 @@ PASS = "pass"
 WARN = "warn"
 FAIL = "fail"
 SKIP = "skip"
+
+
+@dataclass(frozen=True)
+class ProblemCatalogEntry:
+    """Static description of a known diagnostic problem and its detector."""
+
+    check: str
+    severity: str
+    problem: str
+    detection: str
+
+
+_PROBLEM_CATALOG: tuple[ProblemCatalogEntry, ...] = (
+    ProblemCatalogEntry(
+        check="git_repo",
+        severity=WARN,
+        problem="Project is not inside a Git repository.",
+        detection="`.git` is missing or unresolved from the project root.",
+    ),
+    ProblemCatalogEntry(
+        check="planfile_binary",
+        severity=FAIL,
+        problem="planfile CLI is unavailable or misconfigured.",
+        detection="KORU_PLANFILE_CMD is not executable and `planfile` is not on PATH.",
+    ),
+    ProblemCatalogEntry(
+        check="planfile_config",
+        severity=FAIL,
+        problem="planfile project configuration is missing or invalid.",
+        detection="`.planfile/config.yaml` missing or YAML cannot be parsed as a mapping.",
+    ),
+    ProblemCatalogEntry(
+        check="planfile_sprints",
+        severity=FAIL,
+        problem="Sprint queue data is missing, malformed, or empty.",
+        detection="No valid `.planfile/sprints/*.yaml` ticket mapping is found.",
+    ),
+    ProblemCatalogEntry(
+        check="runtime_dir",
+        severity=FAIL,
+        problem="Koru runtime directory is not writable.",
+        detection="`.planfile/.koru/` (or its parent) lacks write permission.",
+    ),
+    ProblemCatalogEntry(
+        check="policy_yaml",
+        severity=FAIL,
+        problem="Policy file is malformed or has invalid gate value types.",
+        detection="`.planfile/.koru/policy.yaml` parse/type validation fails.",
+    ),
+    ProblemCatalogEntry(
+        check="ci_command",
+        severity=FAIL,
+        problem="Configured CI command cannot be executed.",
+        detection="First token in `policy.ci.command` cannot be resolved on PATH.",
+    ),
+    ProblemCatalogEntry(
+        check="pytest_collect",
+        severity=FAIL,
+        problem="Pytest discovery hangs or cannot collect tests.",
+        detection="`pytest --collect-only` times out or exits with collection errors.",
+    ),
+    ProblemCatalogEntry(
+        check="autonomous_environ",
+        severity=FAIL,
+        problem="Autonomous mode environment variables are inconsistent.",
+        detection="Doctor probe validates `TICKET_SOURCES` and related env overrides.",
+    ),
+    ProblemCatalogEntry(
+        check="wup_binary",
+        severity=WARN,
+        problem="WUP watcher is unavailable.",
+        detection="`wup` executable is not found on PATH.",
+    ),
+    ProblemCatalogEntry(
+        check="inotify_watches",
+        severity=FAIL,
+        problem="Linux inotify watch limit is too low for stable watch mode.",
+        detection="`/proc/sys/fs/inotify/max_user_watches` is below recommended threshold.",
+    ),
+    ProblemCatalogEntry(
+        check="detected_configuration",
+        severity=WARN,
+        problem="Project metadata/config snapshots are inconsistent.",
+        detection="`.koru/project.json` is missing, malformed, or points at a different project.",
+    ),
+)
 
 
 @dataclass
@@ -136,6 +225,8 @@ def run_diagnostics(project: Path) -> DoctorReport:
     has_git = (project / ".git").exists()
 
     probes = [
+        ("detected_environment", _check_detected_environment),
+        ("detected_configuration", _check_detected_configuration),
         ("git_repo", _check_git_repo),
         ("planfile_binary", _check_planfile_binary),
         ("koru_package_version", _check_koru_package_version),
@@ -171,6 +262,38 @@ def run_diagnostics(project: Path) -> DoctorReport:
     return report
 
 
+def detected_problems(report: DoctorReport) -> list[dict[str, str]]:
+    """Return warnings/failures as an explicit problem list for UX and JSON output."""
+    return [
+        c.to_dict()
+        for c in report.checks
+        if c.status in (WARN, FAIL)
+    ]
+
+
+def problem_catalog() -> list[dict[str, str]]:
+    """Return known problem classes and their detection rules."""
+    return [
+        {
+            "check": item.check,
+            "severity": item.severity,
+            "problem": item.problem,
+            "detection": item.detection,
+        }
+        for item in _PROBLEM_CATALOG
+    ]
+
+
+def render_problem_catalog_text() -> str:
+    """Render known problem classes in a compact text table."""
+    lines = ["Known problems and detection rules:"]
+    for item in _PROBLEM_CATALOG:
+        sev = item.severity.upper()
+        lines.append(f"  - [{sev}] {item.check}: {item.problem}")
+        lines.append(f"      detection: {item.detection}")
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------------------
 # Individual probes
 # ---------------------------------------------------------------------------
@@ -182,6 +305,64 @@ def _check_agent_backends_registry(_project: Path) -> tuple[str, str]:
 
     ids = list_agent_backend_ids()
     return PASS, f"{len(ids)} profiles: {', '.join(ids)}"
+
+
+def _check_detected_environment(project: Path) -> tuple[str, str]:
+    del project
+    py = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    bits = [
+        f"os={platform.system().lower()} {platform.release()} ({platform.machine()})",
+        f"python={py}",
+        f"executable={sys.executable}",
+    ]
+    virtual_env = os.environ.get("VIRTUAL_ENV", "").strip()
+    bits.append(f"virtual_env={virtual_env or 'none'}")
+    lane = os.environ.get("KORU_AGENT_LANE", "").strip()
+    if lane:
+        bits.append(f"agent_lane={lane}")
+    return PASS, "; ".join(bits)
+
+
+def _check_detected_configuration(project: Path) -> tuple[str, str]:
+    koru_project = project / ".koru" / "project.json"
+    planfile_cfg = planfile_dir(project) / "config.yaml"
+    policy_cfg = policy_path(project)
+    pipeline_cfg = project_pipeline_path(project)
+
+    status = PASS
+    detail_bits: list[str] = [
+        f"planfile_config={'present' if planfile_cfg.is_file() else 'missing'}",
+        f"policy_yaml={'present' if policy_cfg.is_file() else 'missing'}",
+        f"koru_yaml={'present' if pipeline_cfg.is_file() else 'missing'}",
+    ]
+
+    if koru_project.is_file():
+        try:
+            payload = json.loads(koru_project.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            return FAIL, f".koru/project.json malformed JSON: {exc}"
+
+        schema = str(payload.get("schema", "")).strip()
+        declared_project = str(payload.get("project", "")).strip()
+        detail_bits.append(f"koru_project_json=present(schema={schema or 'unknown'})")
+
+        if declared_project:
+            try:
+                if Path(declared_project).expanduser().resolve() != project.resolve():
+                    status = WARN
+                    detail_bits.append("project_path_mismatch=true")
+            except OSError:
+                status = WARN
+                detail_bits.append("project_path_mismatch=unknown")
+        if schema and schema != "koru.project/v1":
+            status = WARN
+            detail_bits.append("schema_mismatch=true")
+    else:
+        detail_bits.append("koru_project_json=missing")
+        if planfile_cfg.is_file():
+            status = WARN
+
+    return status, "; ".join(detail_bits)
 
 
 def _check_git_repo(project: Path) -> tuple[str, str]:
@@ -542,4 +723,12 @@ def render_text(report: DoctorReport) -> str:
         parts.append(f"{counts[FAIL]} failed")
     lines.append("")
     lines.append(f"  {', '.join(parts)}")
+
+    problems = detected_problems(report)
+    if problems:
+        lines.append("")
+        lines.append("Detected problems:")
+        for p in problems:
+            glyph = _STATUS_GLYPH.get(p["status"], p["status"].upper())
+            lines.append(f"  - [{glyph}] {p['name']}: {p['detail']}")
     return "\n".join(lines)

@@ -7,11 +7,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.216-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$11.36-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-89.2h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$10.41-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-89.4h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $11.3564 (277 commits)
-- 👤 **Human dev:** ~$8919 (89.2h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $10.4142 (279 commits)
+- 👤 **Human dev:** ~$8937 (89.4h @ $100/h, 30min dedup)
 
 Generated on 2026-05-22 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -59,6 +59,9 @@ koru --queue --loop        # 3. drain the queue (the agent works on each ticket)
 pip install koru
 koru wizard                # interactive: detects your IDE, picks a project,
                            # walks a strategy decision tree, creates the first ticket
+koru wizard --quick        # zero prompts — creates a sensible default ticket
+                           # (quality → CC hotspots) immediately
+koru wizard --bilingual    # show every label as "Polski · English" side-by-side
 ```
 
 `koru wizard`:
@@ -67,6 +70,9 @@ koru wizard                # interactive: detects your IDE, picks a project,
   PyCharm/IntelliJ, Zed, Antigravity, VSCodium) and *installed* ones found
   in standard locations (`/usr/bin`, `/opt/*`, `/snap/*`, `~/.local/bin`,
   `/Applications/*`).
+- **Offers to install an IDE** when none is found — runs a guarded
+  `snap`/`apt`/`brew` command for Cursor / VS Code / Windsurf / VSCodium
+  (you confirm before anything mutates the system).
 - **Suggests a project** — the workspace open in the running IDE, the
   current shell `cwd`, plus JetBrains recent-projects history.
 - **Walks a JSON decision tree** (`koru/wizard/strategies.json`) so you
@@ -74,7 +80,21 @@ koru wizard                # interactive: detects your IDE, picks a project,
   *CQRS + Event Sourcing*, *quality (CC, tests, CI gates)*, *performance*,
   *DevX*. The tree is fully **user-editable** — copy it, edit, and pass
   `--strategies my-tree.json`.
-- **Creates the first planfile ticket** matching the chosen leaf.
+- **`[?]` per option** — every choice ships with a 1-2 sentence
+  explanation. Type `?2` to read help for option 2, `?` to list help for
+  every option in the current prompt. You never need to know what "CQRS"
+  or "Hexagonal" means up front.
+- **Bilingual mode** (`--bilingual` or `--language pl,en`) — shows both
+  Polish and English labels in one prompt so you don't pick a language
+  up front.
+- **Quick mode** (`--quick`) — skips every prompt, follows the
+  `quick_default.path` declared in `strategies.json` (defaults to
+  *quality → CC refactor*), and creates the first ticket immediately.
+  Use `--quick --strategy architecture.cqrs_es` to pick a different path
+  without prompts.
+- **Creates the first planfile ticket** matching the chosen leaf, then
+  prints a *"Co teraz / What's next"* panel listing the exact 3 commands
+  to run next (`koru` brief, IDE chat prompt, `koru --queue --loop`).
 - **Optional `--llx`** — calls the [`llx`](https://pypi.org/project/llx/)
   CLI to *extend* branches dynamically based on the analysed project.
 - **`--detect-only`** — prints the discovered IDEs + project candidates as

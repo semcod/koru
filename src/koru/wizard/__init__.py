@@ -22,6 +22,8 @@ from koru.wizard.tree import (
     TreeNode,
     TreeOption,
     load_tree,
+    walk,
+    walk_path,
 )
 
 __all__ = [
@@ -36,4 +38,6 @@ __all__ = [
     "TreeOption",
     "TicketTemplate",
     "load_tree",
+    "walk",
+    "walk_path",
 ]

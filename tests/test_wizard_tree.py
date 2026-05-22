@@ -40,14 +40,26 @@ def _tiny_tree() -> dict:
             "root": {
                 "prompt": {"pl": "Co?", "en": "What?"},
                 "options": [
-                    {"id": "a", "label": {"pl": "Architektura"}, "next": "arch"},
-                    {"id": "q", "label": {"pl": "Jakość"}, "ticket": "tpl_q"},
+                    {
+                        "id": "a",
+                        "label": {"pl": "Architektura", "en": "Architecture"},
+                        "next": "arch",
+                    },
+                    {
+                        "id": "q",
+                        "label": {"pl": "Jakość", "en": "Quality"},
+                        "ticket": "tpl_q",
+                    },
                 ],
             },
             "arch": {
-                "prompt": {"pl": "Aspekt?"},
+                "prompt": {"pl": "Aspekt?", "en": "Aspect?"},
                 "options": [
-                    {"id": "cqrs", "label": {"pl": "CQRS+ES"}, "ticket": "tpl_cqrs"},
+                    {
+                        "id": "cqrs",
+                        "label": {"pl": "CQRS+ES", "en": "CQRS+ES"},
+                        "ticket": "tpl_cqrs",
+                    },
                 ],
             },
         },
@@ -115,3 +127,87 @@ def test_packaged_strategies_loads_and_has_root() -> None:
     assert tree.root().options, "root must have options"
     for ticket_id in tree.tickets:
         assert tree.tickets[ticket_id].title
+
+
+def test_load_tree_supports_bilingual_language_list() -> None:
+    """Passing ``['pl', 'en']`` joins labels with the default separator."""
+    tree = load_tree(_tiny_tree(), language=["pl", "en"])
+    labels = [opt.label for opt in tree.root().options]
+    assert "Architektura · Architecture" in labels or "Architektura" in labels[0]
+    assert " · " in labels[0]
+
+
+def test_load_tree_supports_comma_separated_language() -> None:
+    tree = load_tree(_tiny_tree(), language="pl,en")
+    labels = [opt.label for opt in tree.root().options]
+    assert any("·" in lbl for lbl in labels)
+
+
+def test_load_tree_bilingual_custom_separator() -> None:
+    tree = load_tree(_tiny_tree(), language=["pl", "en"], bilingual_separator=" / ")
+    assert " / " in tree.root().options[0].label
+
+
+def test_load_tree_dedupes_identical_translations() -> None:
+    """When pl and en strings are identical, render only once."""
+    data = {
+        "version": 1,
+        "language_default": "pl",
+        "root": "root",
+        "nodes": {
+            "root": {
+                "prompt": {"pl": "Same", "en": "Same"},
+                "options": [
+                    {"id": "x", "label": {"pl": "Identical", "en": "Identical"}, "ticket": "tpl_x"},
+                ],
+            }
+        },
+        "tickets": {"tpl_x": {"title": "x", "body": "y"}},
+    }
+    tree = load_tree(data, language=["pl", "en"])
+    assert tree.root().options[0].label == "Identical"
+
+
+def test_tree_option_loads_help_text() -> None:
+    data = _tiny_tree()
+    data["nodes"]["root"]["options"][0]["help"] = {"pl": "Pomoc PL", "en": "Help EN"}
+    tree = load_tree(data, language="pl")
+    assert tree.root().options[0].help == "Pomoc PL"
+
+
+def test_tree_quick_default_path_parsed() -> None:
+    """Packaged strategies.json declares a quick default path."""
+    tree = load_tree()
+    assert tree.quick_default_path == ("quality", "cc_refactor")
+
+
+def test_ticket_template_loads_next_steps() -> None:
+    tree = load_tree()
+    cc = tree.ticket("tpl_cc_refactor")
+    assert cc.next_steps, "tpl_cc_refactor declares its own next_steps"
+    assert any("koru scan" in step or "code2llm" in step for step in cc.next_steps)
+
+
+def test_effective_next_steps_falls_back_to_defaults() -> None:
+    """A ticket without explicit next_steps must use defaults.next_steps."""
+    tree = load_tree()
+    steps = tree.effective_next_steps("tpl_ddd")
+    assert steps, "default next_steps must exist"
+    assert any("koru" in s.lower() for s in steps)
+
+
+def test_walk_path_follows_pre_resolved_ids() -> None:
+    from koru.wizard.tree import walk_path
+
+    tree = load_tree(_tiny_tree())
+    consumed, ticket = walk_path(tree, ["a", "cqrs"])
+    assert consumed == ["a", "cqrs"]
+    assert ticket.id == "tpl_cqrs"
+
+
+def test_walk_path_rejects_unknown_option() -> None:
+    from koru.wizard.tree import walk_path
+
+    tree = load_tree(_tiny_tree())
+    with pytest.raises(KeyError, match="no option 'missing'"):
+        walk_path(tree, ["a", "missing"])

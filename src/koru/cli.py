@@ -22,6 +22,9 @@ from koru.autopilot.cli_command import autopilot_main
 from koru.bootstrap import import_flat_pipeline
 from koru.context import build_context, render_markdown_handoff
 from koru.dev_sync import dev_main
+from koru.doctor import detected_problems as doctor_detected_problems
+from koru.doctor import problem_catalog as doctor_problem_catalog
+from koru.doctor import render_problem_catalog_text
 from koru.doctor import render_text as render_doctor_text
 from koru.doctor import run_diagnostics
 from koru.events import emit_management_event
@@ -259,6 +262,14 @@ def _build_parser() -> argparse.ArgumentParser:
         help=(
             "With --doctor, include guided auto-repair commands. The top-level "
             "doctor still does not mutate the project by itself."
+        ),
+    )
+    parser.add_argument(
+        "--catalog",
+        action="store_true",
+        help=(
+            "With --doctor, include a catalog of known problems and their "
+            "detection rules."
         ),
     )
     parser.add_argument(
@@ -1346,6 +1357,44 @@ def _refactor_planfile_handoff_main(argv: list[str]) -> int:
     return 0
 
 
+def _build_doctor_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru doctor",
+        description=(
+            "Diagnose project environment, configuration, and known failure patterns."
+        ),
+    )
+    parser.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
+    parser.add_argument(
+        "--format",
+        dest="output_format",
+        choices=["json", "markdown", "text"],
+        default="text",
+        help="Output format (default: text).",
+    )
+    parser.add_argument(
+        "--fix",
+        action="store_true",
+        help="Include guided repair commands without mutating files.",
+    )
+    parser.add_argument(
+        "--catalog",
+        action="store_true",
+        help="Include known problems catalog (check -> detection rule).",
+    )
+    parser.add_argument(
+        "--queue-name",
+        default=None,
+        help=argparse.SUPPRESS,
+    )
+    return parser
+
+
+def _doctor_subcommand_main(argv: list[str]) -> int:
+    args = _build_doctor_parser().parse_args(argv)
+    return _doctor_main(args, argv)
+
+
 def ide_router_main(argv: list[str]) -> int:
     """CLI: ``koru ide-router`` — print resolved IDE / headless routing."""
     import argparse
@@ -1445,6 +1494,7 @@ def _auto_main(argv: list[str]) -> int:
 
 
 _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
+    "doctor": _doctor_subcommand_main,
     "init-ci": _init_ci_main,
     "init-ide": _init_ide_main,
     "agent-backends": _agent_backends_main,
@@ -1457,6 +1507,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "gate": _gate_main,
     "queue": _queue_main,
     "gc": _gc_main,
+    "doctor": _doctor_subcommand_main,
     "git": git_main,
     "tools": _tools_main,
     "mcp-serve": _mcp_serve_main,
@@ -1477,16 +1528,27 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
 def _doctor_main(args: argparse.Namespace, raw_args: list[str]) -> int:
     report = run_diagnostics(args.project)
     fix_payload = _doctor_fix_payload(report) if getattr(args, "fix", False) else None
+    include_catalog = bool(getattr(args, "catalog", False))
+    problems = doctor_detected_problems(report)
     explicit_format = "--format" in raw_args
     if explicit_format and args.output_format == "json":
         payload = report.to_dict()
+        payload["detected_problems"] = problems
+        if include_catalog:
+            payload["problem_catalog"] = doctor_problem_catalog()
         if fix_payload is not None:
             payload["fix"] = fix_payload
         print(json.dumps(payload, indent=2, sort_keys=True))
     elif explicit_format and args.output_format == "markdown":
-        print(_render_doctor_with_fix(report, fix_payload))
+        text = _render_doctor_with_fix(report, fix_payload)
+        if include_catalog:
+            text = f"{text}\n\n{render_problem_catalog_text()}"
+        print(text)
     else:
-        print(_render_doctor_with_fix(report, fix_payload))
+        text = _render_doctor_with_fix(report, fix_payload)
+        if include_catalog:
+            text = f"{text}\n\n{render_problem_catalog_text()}"
+        print(text)
     emit_management_event(
         tool="koru.doctor",
         action="completed",

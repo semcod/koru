@@ -91,6 +91,74 @@ def test_run_wizard_offers_running_ide(project_with_planfile: Path) -> None:
     assert result.path == ["architecture", "ddd"]
 
 
+def test_run_wizard_no_ide_skip_install_continues(monkeypatch, project_with_planfile: Path) -> None:
+    from koru.wizard import cli as wizard_cli
+
+    monkeypatch.setattr(wizard_cli, "discover_installed_ides", lambda: [])
+    prompter = ScriptedPrompter(["__none", "quality", "cc_refactor"])
+
+    result = run_wizard(
+        prompter=prompter,
+        project_override=project_with_planfile,
+        create=False,
+        use_llx=False,
+    )
+
+    assert result.chosen_ide is None
+    assert result.path == ["quality", "cc_refactor"]
+
+
+def test_run_wizard_no_ide_install_command_path(monkeypatch, project_with_planfile: Path) -> None:
+    from koru.wizard import cli as wizard_cli
+
+    state = {"n": 0}
+
+    def fake_discover() -> list[DetectedIDE]:
+        state["n"] += 1
+        if state["n"] == 1:
+            return []
+        return [
+            DetectedIDE(
+                id="vscode",
+                label="VS Code",
+                running=False,
+                pid=None,
+                path="/usr/bin/code",
+            )
+        ]
+
+    executed: list[tuple[str, ...]] = []
+    monkeypatch.setattr(wizard_cli, "discover_installed_ides", fake_discover)
+    monkeypatch.setattr(wizard_cli, "_available_install_managers", lambda: {"snap"})
+    monkeypatch.setattr(
+        wizard_cli,
+        "_run_install_command",
+        lambda argv, _out: executed.append(argv) or True,
+    )
+
+    prompter = ScriptedPrompter(
+        [
+            "install_vscode",
+            "install_snap",
+            "vscode",
+            "quality",
+            "cc_refactor",
+        ],
+        yes_no_answers=[True],
+    )
+    result = run_wizard(
+        prompter=prompter,
+        project_override=project_with_planfile,
+        create=False,
+        use_llx=False,
+    )
+
+    assert executed
+    assert "snap" in executed[0]
+    assert result.chosen_ide is not None
+    assert result.chosen_ide.id == "vscode"
+
+
 def test_stdin_prompter_accepts_numeric_and_id(monkeypatch) -> None:
     from koru.wizard.tree import TreeOption
 
@@ -109,3 +177,132 @@ def test_wizard_detect_only_json_output(capsys) -> None:
     assert rc == 0
     payload = json.loads(captured.out)
     assert "ides" in payload and "projects" in payload and "llx_available" in payload
+
+
+def test_run_wizard_quick_mode_skips_prompts(project_with_planfile: Path) -> None:
+    """--quick must not call ask_choice at all and use the default path."""
+    prompter = ScriptedPrompter([])
+
+    result = run_wizard(
+        prompter=prompter,
+        project_override=project_with_planfile,
+        ide_override=[],
+        project_candidates_override=[],
+        create=True,
+        quick=True,
+    )
+
+    assert result.quick_mode is True
+    assert result.path == ["quality", "cc_refactor"]
+    assert result.ticket_id is not None
+    assert result.next_steps
+
+
+def test_run_wizard_quick_with_explicit_strategy(project_with_planfile: Path) -> None:
+    prompter = ScriptedPrompter([])
+
+    result = run_wizard(
+        prompter=prompter,
+        project_override=project_with_planfile,
+        ide_override=[],
+        project_candidates_override=[],
+        create=False,
+        quick=True,
+        quick_strategy="architecture.ddd",
+    )
+
+    assert result.quick_mode is True
+    assert result.path == ["architecture", "ddd"]
+    assert result.ticket_title.lower().startswith("architektura: wytycz")
+
+
+def test_run_wizard_quick_invalid_strategy_raises(project_with_planfile: Path) -> None:
+    prompter = ScriptedPrompter([])
+
+    with pytest.raises(KeyError, match="no option 'nope'"):
+        run_wizard(
+            prompter=prompter,
+            project_override=project_with_planfile,
+            ide_override=[],
+            project_candidates_override=[],
+            create=False,
+            quick=True,
+            quick_strategy="architecture.nope",
+        )
+
+
+def test_run_wizard_emits_next_steps(project_with_planfile: Path) -> None:
+    prompter = ScriptedPrompter(["quality", "cc_refactor"])
+
+    result = run_wizard(
+        prompter=prompter,
+        project_override=project_with_planfile,
+        ide_override=[],
+        project_candidates_override=[],
+        create=True,
+    )
+
+    assert result.next_steps
+    rendered = "\n".join(result.next_steps)
+    assert "koru scan" in rendered or "code2llm" in rendered
+
+
+def test_stdin_prompter_question_mark_shows_help(monkeypatch) -> None:
+    from koru.wizard.tree import TreeOption
+
+    options = (
+        TreeOption(id="a", label="Option A", help="A is for Apple"),
+        TreeOption(id="b", label="Option B", help="B is for Banana"),
+    )
+    out_buf = io.StringIO()
+    p = StdinPrompter(stream_in=io.StringIO("?1\n2\n"), stream_out=out_buf)
+    chosen = p.ask_choice("Pick:", options)
+    assert chosen.id == "b"
+    rendered = out_buf.getvalue()
+    assert "A is for Apple" in rendered
+    assert "Option A" in rendered
+
+
+def test_stdin_prompter_question_mark_lists_all_help() -> None:
+    from koru.wizard.tree import TreeOption
+
+    options = (
+        TreeOption(id="a", label="A", help="apple"),
+        TreeOption(id="b", label="B", help="banana"),
+    )
+    out_buf = io.StringIO()
+    p = StdinPrompter(stream_in=io.StringIO("?\n1\n"), stream_out=out_buf)
+    p.ask_choice("Pick:", options)
+    rendered = out_buf.getvalue()
+    assert "apple" in rendered and "banana" in rendered
+
+
+def test_wizard_cli_bilingual_flag_renders_both_labels(project_with_planfile: Path) -> None:
+    """--bilingual must produce labels that include the separator."""
+    from koru.wizard.tree import load_tree as _load_tree
+
+    tree = _load_tree(language="pl,en")
+    labels = [opt.label for opt in tree.root().options]
+    assert any(" · " in label for label in labels)
+    assert any("Architektura" in label and "Project" in label for label in labels)
+
+
+def test_cli_quick_creates_ticket_via_main(tmp_path: Path, monkeypatch) -> None:
+    project = tmp_path / "demo"
+    project.mkdir()
+    (project / ".planfile").mkdir()
+    (project / "pyproject.toml").write_text("[project]\nname='demo'\n", encoding="utf-8")
+    monkeypatch.chdir(project)
+
+    rc = wizard_main(["--quick", "--project", str(project)])
+
+    assert rc == 0
+    sprint = project / ".planfile" / "sprints" / "current.yaml"
+    assert sprint.exists()
+    import yaml as _yaml
+
+    data = _yaml.safe_load(sprint.read_text(encoding="utf-8"))
+    tickets = data["sprint"]["tickets"]
+    assert tickets
+    first = next(iter(tickets.values()))
+    assert "koru-wizard" in first.get("labels", [])
