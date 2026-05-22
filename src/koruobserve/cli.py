@@ -18,22 +18,36 @@ def build_observe_parser() -> argparse.ArgumentParser:
     parser.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
     sub = parser.add_subparsers(dest="command", required=True)
 
+    def _add_project(p: argparse.ArgumentParser) -> None:
+        p.add_argument("--project", type=Path, default=None, help="Project root (overrides global flag).")
+
     up = sub.add_parser("up", help="Start relay + vision agent + dashboard in the background.")
+    _add_project(up)
     up.add_argument("--relay-host", default="127.0.0.1", help="Relay bind host.")
     up.add_argument("--relay-port", type=int, default=9876, help="Relay bind port (auto if busy).")
     up.add_argument("--dashboard-host", default=None, help="Dashboard bind host (config default).")
     up.add_argument("--dashboard-port", type=int, default=None, help="Dashboard bind port (config default).")
     up.add_argument("--interval", type=float, default=None, help="Vision capture interval seconds.")
 
-    sub.add_parser("down", help="Stop relay + vision agent + dashboard.")
-    sub.add_parser("status", help="Show PID and aliveness for each process.")
-    sub.add_parser("grid", help="Print the dashboard /grid URL.")
+    for name, help_text in (
+        ("down", "Stop relay + vision agent + dashboard."),
+        ("status", "Show PID and aliveness for each process."),
+        ("grid", "Print the dashboard /grid URL."),
+    ):
+        _add_project(sub.add_parser(name, help=help_text))
     return parser
+
+
+def _project_arg(args: argparse.Namespace) -> Path:
+    sub_project = getattr(args, "project", None)
+    if isinstance(sub_project, Path):
+        return sub_project
+    return args.project
 
 
 def _cmd_up(args: argparse.Namespace) -> int:
     state = observe_up(
-        args.project,
+        _project_arg(args),
         relay_host=args.relay_host,
         relay_port=args.relay_port,
         dashboard_host=args.dashboard_host,
@@ -51,14 +65,14 @@ def _cmd_up(args: argparse.Namespace) -> int:
 
 
 def _cmd_down(args: argparse.Namespace) -> int:
-    stopped = observe_down(args.project)
+    stopped = observe_down(_project_arg(args))
     for name, killed in stopped.items():
         print(f"koru observe: {name} stopped={killed}")
     return 0
 
 
 def _cmd_status(args: argparse.Namespace) -> int:
-    status = observe_status(args.project)
+    status = observe_status(_project_arg(args))
     print(json.dumps(status, indent=2, sort_keys=True))
     return 0 if all(item["alive"] for item in status.values()) else 1
 
@@ -66,7 +80,7 @@ def _cmd_status(args: argparse.Namespace) -> int:
 def _cmd_grid(args: argparse.Namespace) -> int:
     from koruobserve.paths import state_file
 
-    path = state_file(args.project)
+    path = state_file(_project_arg(args))
     if not path.is_file():
         print("koru observe: not running (no state file). Run 'koru observe up' first.", file=sys.stderr)
         return 2
