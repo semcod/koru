@@ -68,6 +68,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.227] - 2026-05-22
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_cli.py
+- Update tests/test_doctor_facade.py
+
+### Other
+- Update planfile.yaml
+- Update uv.lock
+
 ## [0.1.226] - 2026-05-22
 
 ### Docs

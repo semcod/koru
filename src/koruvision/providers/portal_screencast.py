@@ -162,12 +162,12 @@ def _try_reuse(session_path):
     return _gst_frames(fd, streams, OUT_DIR, SCALE)
 
 
-def _full_flow(restore_token=None):
+def _full_flow():
     import uuid as _uuid
     bus = dbus.SessionBus()
     iface = _screencast_iface(bus)
 
-    # Use a random suffix so GNOME never matches a stale cached selection.
+    # Random suffix prevents GNOME from matching a stale cached monitor selection.
     rand = _uuid.uuid4().hex[:8]
     create_token = f"ksc_{rand}_c"
     session_token = f"ksc_{rand}_s"
@@ -182,17 +182,14 @@ def _full_flow(restore_token=None):
         raise RuntimeError("screencast: portal did not return session_handle")
 
     select_token = f"ksc_{rand}_sel"
-    select_opts = {
+    wait_select = _make_responder(bus, _request_path(bus, select_token))
+    iface.SelectSources(session_path, {
         "types": UInt32(1),
         "multiple": True,
         "cursor_mode": UInt32(2),
-        "persist_mode": UInt32(2),
+        "persist_mode": UInt32(0),
         "handle_token": select_token,
-    }
-    if restore_token:
-        select_opts["restore_token"] = restore_token
-    wait_select = _make_responder(bus, _request_path(bus, select_token))
-    iface.SelectSources(session_path, select_opts)
+    })
     wait_select()
 
     start_token = f"ksc_{rand}_st"
@@ -203,43 +200,38 @@ def _full_flow(restore_token=None):
     if not streams:
         raise RuntimeError("screencast: no streams in portal response")
 
-    restore_data = start_result.get("restore_token")
     fd = _open_pipewire_fd(bus, session_path)
     frames = _gst_frames(fd, streams, OUT_DIR, SCALE)
-    return frames, session_path, restore_data
+    return frames, session_path
 
 
 def _load_saved_session():
     if not SESSION_FILE or not os.path.isfile(SESSION_FILE):
-        return None, None
+        return None
     try:
         with open(SESSION_FILE, encoding="utf-8") as handle:
             data = json.load(handle)
         path = str(data.get("session_path") or "").strip()
-        restore = data.get("restore_token") or None
-        return (path or None), restore
+        return path or None
     except Exception:
-        return None, None
+        return None
 
 
-def _save_session(session_path, restore_token=None):
+def _save_session(session_path):
     if not SESSION_FILE or not session_path:
         return
     os.makedirs(os.path.dirname(SESSION_FILE) or ".", exist_ok=True)
-    payload = {"session_path": session_path}
-    if restore_token:
-        payload["restore_token"] = str(restore_token)
     with open(SESSION_FILE, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle)
+        json.dump({"session_path": session_path}, handle)
     os.chmod(SESSION_FILE, 0o600)
 
 
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
-saved_path, saved_restore = _load_saved_session()
-if saved_path:
+saved = _load_saved_session()
+if saved:
     try:
-        frames = _try_reuse(saved_path)
+        frames = _try_reuse(saved)
         if frames:
             print(json.dumps(frames))
             sys.exit(0)
@@ -247,7 +239,7 @@ if saved_path:
         print(f"screencast reuse failed: {exc}", file=sys.stderr)
 
 try:
-    frames, session_path, restore_data = _full_flow(restore_token=saved_restore)
+    frames, session_path = _full_flow()
 except Exception as exc:
     print(f"screencast full_flow failed: {exc}", file=sys.stderr)
     sys.exit(2)
@@ -256,7 +248,7 @@ if not frames:
     print("screencast: no frames captured", file=sys.stderr)
     sys.exit(3)
 
-_save_session(session_path, restore_data)
+_save_session(session_path)
 print(json.dumps(frames))
 """
 

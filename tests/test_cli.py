@@ -539,3 +539,44 @@ class TestSubcommandDispatch(unittest.TestCase):
                 _run_main("--project", str(project))
         finally:
             shutil.rmtree(project, ignore_errors=True)
+
+
+class TestUnknownSubcommandHint(unittest.TestCase):
+    """Regression: ``koru autox`` must print a ``Did you mean 'koru auto'?`` hint.
+
+    Earlier `koru` builds shipped without the ``auto`` alias of ``autonomous``;
+    users who upgraded the source tree but kept an older `koru` on PATH would
+    just see ``koru: error: unrecognized arguments: auto`` with no hint. The
+    suggestion engine in `main()` now points at the closest match.
+    """
+
+    def _run_capture_stderr(self, *argv: str) -> tuple[int, str]:
+        buf_out = io.StringIO()
+        buf_err = io.StringIO()
+        with mock.patch("sys.argv", ["koru", *argv]):
+            with mock.patch("sys.stdout", new=buf_out):
+                with mock.patch("sys.stderr", new=buf_err):
+                    with mock.patch(
+                        "koru._legacy_cli_impl._maybe_reexec_for_project_venv"
+                    ):
+                        code = main()
+        return code, buf_err.getvalue()
+
+    def test_typo_close_to_auto_suggests_auto(self) -> None:
+        code, stderr = self._run_capture_stderr("autox")
+        self.assertEqual(code, 2)
+        self.assertIn("'autox' is not a known subcommand", stderr)
+        self.assertIn("Did you mean 'koru auto'", stderr)
+
+    def test_typo_close_to_autoloop_suggests_autoloop(self) -> None:
+        code, stderr = self._run_capture_stderr("floop")
+        self.assertEqual(code, 2)
+        self.assertIn("Did you mean 'koru autoloop'", stderr)
+
+    def test_unrelated_token_lists_known_subcommands(self) -> None:
+        code, stderr = self._run_capture_stderr("zzzzzzzzz")
+        self.assertEqual(code, 2)
+        self.assertIn("'zzzzzzzzz' is not a known subcommand", stderr)
+        self.assertIn("Known subcommands:", stderr)
+        self.assertIn("autonomous", stderr)
+        self.assertIn("autopilot", stderr)

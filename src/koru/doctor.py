@@ -84,6 +84,14 @@ from koru.autopilot.ide import (
     normalize_ide_id,
 )
 from koru.autopilot.install_manager import collect_install_manager_report
+from koru.doctor_constants import (
+    FAIL,
+    PASS,
+    ProblemCatalogEntry,
+    SKIP,
+    WARN,
+    _PROBLEM_CATALOG,
+)
 from koru.policy import policy_path
 from koru.project_pipeline import KORU_PROJECT_PIPELINE_FILENAME, project_pipeline_path
 from koru.runtime import planfile_dir, runtime_dir
@@ -96,194 +104,6 @@ from koruide.socket import default_socket_path
 # ``scan_pytest_collect``'s 30 s so the operator does not stare at a
 # black terminal for half a minute. Override via ``KORU_DOCTOR_PYTEST_TIMEOUT``.
 DEFAULT_PYTEST_COLLECT_TIMEOUT_SECONDS: float = 15.0
-
-
-PASS = "pass"
-WARN = "warn"
-FAIL = "fail"
-SKIP = "skip"
-
-
-@dataclass(frozen=True)
-class ProblemCatalogEntry:
-    """Static description of a known diagnostic problem and its detector."""
-
-    check: str
-    severity: str
-    problem: str
-    detection: str
-
-
-_PROBLEM_CATALOG: tuple[ProblemCatalogEntry, ...] = (
-    ProblemCatalogEntry(
-        check="git_repo",
-        severity=WARN,
-        problem="Project is not inside a Git repository.",
-        detection="`.git` is missing or unresolved from the project root.",
-    ),
-    ProblemCatalogEntry(
-        check="planfile_binary",
-        severity=FAIL,
-        problem="planfile CLI is unavailable or misconfigured.",
-        detection="KORU_PLANFILE_CMD is not executable and `planfile` is not on PATH.",
-    ),
-    ProblemCatalogEntry(
-        check="planfile_config",
-        severity=FAIL,
-        problem="planfile project configuration is missing or invalid.",
-        detection="`.planfile/config.yaml` missing or YAML cannot be parsed as a mapping.",
-    ),
-    ProblemCatalogEntry(
-        check="planfile_sprints",
-        severity=FAIL,
-        problem="Sprint queue data is missing, malformed, or empty.",
-        detection="No valid `.planfile/sprints/*.yaml` ticket mapping is found.",
-    ),
-    ProblemCatalogEntry(
-        check="runtime_dir",
-        severity=FAIL,
-        problem="Koru runtime directory is not writable.",
-        detection="`.planfile/.koru/` (or its parent) lacks write permission.",
-    ),
-    ProblemCatalogEntry(
-        check="policy_yaml",
-        severity=FAIL,
-        problem="Policy file is malformed or has invalid gate value types.",
-        detection="`.planfile/.koru/policy.yaml` parse/type validation fails.",
-    ),
-    ProblemCatalogEntry(
-        check="ci_command",
-        severity=FAIL,
-        problem="Configured CI command cannot be executed.",
-        detection="First token in `policy.ci.command` cannot be resolved on PATH.",
-    ),
-    ProblemCatalogEntry(
-        check="pytest_collect",
-        severity=FAIL,
-        problem="Pytest discovery hangs or cannot collect tests.",
-        detection="`pytest --collect-only` times out or exits with collection errors.",
-    ),
-    ProblemCatalogEntry(
-        check="autonomous_environ",
-        severity=FAIL,
-        problem="Autonomous mode environment variables are inconsistent.",
-        detection="Doctor probe validates `TICKET_SOURCES` and related env overrides.",
-    ),
-    ProblemCatalogEntry(
-        check="koru_runtime_identity",
-        severity=WARN,
-        problem="The active `koru` executable, imported package, and source tree differ.",
-        detection=(
-            "Doctor compares PATH `koru`, repo-local `.venv/bin/koru`, "
-            "Python executable, and pyproject/package versions."
-        ),
-    ),
-    ProblemCatalogEntry(
-        check="python_venv_alignment",
-        severity=WARN,
-        problem="The shell venv, Python executable, and project `.venv` do not agree.",
-        detection=(
-            "Doctor compares `VIRTUAL_ENV`, `sys.executable`, and `<project>/.venv` "
-            "to catch mixed `venv`/`.venv` runs."
-        ),
-    ),
-    ProblemCatalogEntry(
-        check="autopilot_plugin_bundle",
-        severity=FAIL,
-        problem="The expected autopilot plugin version is not bundled consistently.",
-        detection=(
-            "Doctor compares Python expected plugin version, plugin package.json, "
-            "package-lock.json, and the bundled VSIX asset."
-        ),
-    ),
-    ProblemCatalogEntry(
-        check="autopilot_env",
-        severity=WARN,
-        problem="Autopilot lane/IDE environment points at the wrong desktop lane.",
-        detection=(
-            "Doctor compares `KORU_AUTOPILOT_INSTANCE`, `KORU_AUTOPILOT_IDE`, "
-            "terminal hint, and runtime socket env."
-        ),
-    ),
-    ProblemCatalogEntry(
-        check="autopilot_socket",
-        severity=WARN,
-        problem="The selected autopilot socket is missing, stale, or not listening.",
-        detection="Doctor connect-probes the resolved autopilot Unix socket.",
-    ),
-    ProblemCatalogEntry(
-        check="autopilot_manage",
-        severity=FAIL,
-        problem="Autopilot daemon/plugin/package installation is inconsistent.",
-        detection=(
-            "Doctor reuses `koru autopilot manage` checks for version, daemon, "
-            "socket, live plugin, and installed VSIX state."
-        ),
-    ),
-    ProblemCatalogEntry(
-        check="autopilot_debug_log",
-        severity=WARN,
-        problem="The plugin debug log does not show activity for the selected IDE/socket.",
-        detection=(
-            "Doctor scans recent `/tmp/koru-plugin-debug.log` entries, "
-            "or `KORU_PLUGIN_DEBUG_LOG` when set."
-        ),
-    ),
-    ProblemCatalogEntry(
-        check="autopilot_chat_control",
-        severity=WARN,
-        problem="The IDE chat panel opens but text injection/focus/paste is unstable.",
-        detection=(
-            "Doctor scans recent plugin debug events for native send failures, "
-            "paste failures, focus probe rejections, and retry recovery."
-        ),
-    ),
-    ProblemCatalogEntry(
-        check="windsurf_chat_column_control",
-        severity=WARN,
-        problem=(
-            "Windsurf native chat send can be followed by a Cascade open command "
-            "that toggles the right chat column closed."
-        ),
-        detection=(
-            "Doctor scans recent plugin debug events for `WINDSURF_KEEP_OPEN_OK` "
-            "after native `sendTextToChat`, and for the newer disabled guard."
-        ),
-    ),
-    ProblemCatalogEntry(
-        check="ide_runtime_presence",
-        severity=WARN,
-        problem="The requested IDE is not visible as a running process.",
-        detection="Doctor compares the selected autopilot IDE with detected running IDE processes.",
-    ),
-    ProblemCatalogEntry(
-        check="wup_binary",
-        severity=WARN,
-        problem="WUP watcher is unavailable.",
-        detection="`wup` executable is not found on PATH.",
-    ),
-    ProblemCatalogEntry(
-        check="inotify_watches",
-        severity=FAIL,
-        problem="Linux inotify watch limit is too low for stable watch mode.",
-        detection="`/proc/sys/fs/inotify/max_user_watches` is below recommended threshold.",
-    ),
-    ProblemCatalogEntry(
-        check="plugin_console_logs",
-        severity=WARN,
-        problem="The plugin has not forwarded recent extension-host console logs to the daemon.",
-        detection=(
-            "Doctor reads the selected autopilot daemon status `console_logs` tail, "
-            "then falls back to recent plugin debug log lines."
-        ),
-    ),
-    ProblemCatalogEntry(
-        check="detected_configuration",
-        severity=WARN,
-        problem="Project metadata/config snapshots are inconsistent.",
-        detection="`.koru/project.json` is missing, malformed, or points at a different project.",
-    ),
-)
 
 
 @dataclass

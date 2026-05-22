@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "koru"
-version = "0.1.226"
+version = "0.1.227"
 description = "Closed-loop automation across semcod/* repositories."
 readme = "README.md"
 requires-python = ">=3.12"

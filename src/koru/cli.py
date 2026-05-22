@@ -583,6 +583,16 @@ def _dispatch_flag_action(args: argparse.Namespace, raw_args: list[str]) -> int 
     return None
 
 
+def _suggest_subcommand(token: str) -> str:
+    """Return the closest known subcommand for typo-friendly hints."""
+    import difflib
+
+    if not token or token.startswith("-"):
+        return ""
+    matches = difflib.get_close_matches(token, list(_SUBCOMMANDS), n=1, cutoff=0.55)
+    return matches[0] if matches else ""
+
+
 def main() -> int:
     raw_args = sys.argv[1:]
     _maybe_reexec_for_project_venv(raw_args)
@@ -594,6 +604,22 @@ def main() -> int:
         args = _build_parser().parse_args(raw_args)
     except SystemExit as exc:
         code = exc.code if isinstance(exc.code, int) else 1
+        if code == 2 and subcommand and not subcommand.startswith("-"):
+            suggestion = _suggest_subcommand(subcommand)
+            if suggestion:
+                print(
+                    f"koru: '{subcommand}' is not a known subcommand. "
+                    f"Did you mean 'koru {suggestion}'?",
+                    file=sys.stderr,
+                )
+            else:
+                known = ", ".join(sorted(_SUBCOMMANDS))
+                print(
+                    f"koru: '{subcommand}' is not a known subcommand. "
+                    f"Known subcommands: {known}",
+                    file=sys.stderr,
+                )
+            _maybe_print_project_venv_hint(raw_args)
         if code == 2 and ("doctor" in raw_args or "--doctor" in raw_args):
             _maybe_print_project_venv_hint(raw_args)
         return code
