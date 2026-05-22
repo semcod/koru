@@ -487,6 +487,9 @@ _DASHBOARD_HTML = """<!doctype html>
     <span class="muted">Loading dashboard controls…</span>
   </section>
   <nav class="view-tabs" id="view-tabs" aria-label="Dashboard views"></nav>
+  <nav class="view-tabs" aria-label="External pages" style="margin-top:-4px">
+    <a class="view-tab" href="/grid" target="_blank" rel="noopener" title="Observation mesh screenshot grid">Grid ↗</a>
+  </nav>
   <div class="scope-line" id="scope-line"></div>
   <main id="root">
     <div class="panel full"><span class="muted">Loading brief…</span></div>
@@ -494,9 +497,11 @@ _DASHBOARD_HTML = """<!doctype html>
 </div>
 <footer>
   Auto-refresh 5 s · URL carries current <code>tab</code>, <code>project</code>, <code>ide</code>, and <code>change</code> ·
-  <a href="/api/context">JSON</a> · <a href="/api/handoff">Markdown</a>
+  <a href="/grid">Grid</a>
+  · <a href="/api/context">JSON</a> · <a href="/api/handoff">Markdown</a>
   · <a href="/api/topology">Topology JSON</a>
   · <a href="/api/runtime-context">Runtime context JSON</a>
+  · <a href="/api/mesh/frames">Mesh frames JSON</a>
 </footer>
 <script>
 const $ = (id) => document.getElementById(id);

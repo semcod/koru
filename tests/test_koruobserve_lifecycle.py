@@ -25,6 +25,7 @@ def fake_spawn(monkeypatch):
         return pid
 
     monkeypatch.setattr("koruobserve.lifecycle._spawn", _fake_spawn)
+    monkeypatch.setattr("koruobserve.cli._require_observe_runtime", lambda: None)
     return spawned
 
 
@@ -53,6 +54,10 @@ def test_observe_up_spawns_three_processes(tmp_path: Path, fake_spawn) -> None:
     names = [name for name, _ in fake_spawn]
     assert names == ["relay", "vision", "dashboard"]
     assert state.relay_pid and state.vision_pid and state.dashboard_pid
+    assert not state.relay_url.endswith(":0")
+    assert not state.dashboard_url.endswith(":0")
+    vision_args = fake_spawn[1][1]
+    assert vision_args.index("--project") < vision_args.index("agent")
     payload = json.loads(state_file(project).read_text(encoding="utf-8"))
     assert payload["grid_url"].endswith("/grid")
 
@@ -67,12 +72,32 @@ def test_observe_status_reports_pids(tmp_path: Path, fake_spawn) -> None:
     assert all(status[name]["pid"] for name in status)
 
 
+def test_require_observe_runtime_reports_missing_packages(monkeypatch) -> None:
+    from koruobserve import cli as observe_cli
+
+    monkeypatch.setattr(
+        observe_cli.importlib.util,
+        "find_spec",
+        lambda name: None if name in {"websockets", "mss"} else object(),
+    )
+    with pytest.raises(RuntimeError, match="missing observation dependency"):
+        observe_cli._require_observe_runtime()
+
+
 def test_project_path_resolves_from_args() -> None:
     from argparse import Namespace
 
-    from koruobserve.cli import _project_path
+    from koruobserve.cli_parser import project_path
 
-    assert _project_path(Namespace(project=Path("/tmp/demo"))) == Path("/tmp/demo").resolve()
+    assert project_path(Namespace(project=Path("/tmp/demo"))) == Path("/tmp/demo").resolve()
+
+
+def test_project_path_defaults_to_cwd_when_unset() -> None:
+    from argparse import Namespace
+
+    from koruobserve.cli_parser import project_path
+
+    assert project_path(Namespace(project=None)) == Path.cwd().resolve()
 
 
 def test_observe_main_up_uses_parent_project_default(monkeypatch, tmp_path: Path, fake_spawn) -> None:
@@ -84,6 +109,40 @@ def test_observe_main_up_uses_parent_project_default(monkeypatch, tmp_path: Path
     rc = observe_main(["up", "--relay-port", "19987", "--dashboard-port", "18765"])
     assert rc == 0
     assert (project / ".koru" / "run" / "relay.pid").is_file()
+
+
+def test_observe_main_up_accepts_project_after_subcommand(tmp_path: Path, fake_spawn) -> None:
+    project = tmp_path / "demo"
+    project.mkdir()
+    from koruobserve.cli import observe_main
+
+    rc = observe_main(
+        [
+            "up",
+            "--project",
+            str(project),
+            "--relay-port",
+            "19988",
+            "--dashboard-port",
+            "18766",
+        ],
+    )
+    assert rc == 0
+    assert (project / ".koru" / "run" / "relay.pid").is_file()
+
+
+def test_observe_main_up_reports_missing_optional_dependencies(monkeypatch, tmp_path: Path) -> None:
+    project = tmp_path / "demo"
+    project.mkdir()
+    from koruobserve.cli import observe_main
+
+    def _missing() -> None:
+        raise RuntimeError("missing observation dependency websockets")
+
+    monkeypatch.setattr("koruobserve.cli._require_observe_runtime", _missing)
+    rc = observe_main(["up", "--project", str(project)])
+    assert rc == 2
+    assert not (project / ".koru" / "run" / "relay.pid").exists()
 
 
 def test_observe_down_removes_pidfiles(tmp_path: Path, fake_spawn) -> None:

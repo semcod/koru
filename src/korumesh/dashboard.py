@@ -12,13 +12,25 @@ _GRID_HTML = """<!doctype html>
 <meta charset="utf-8"><title>Koru mesh grid</title>
 <style>
 body{font-family:system-ui,sans-serif;margin:16px;background:#111;color:#eee}
+nav.top{display:flex;gap:12px;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #2a2a2a}
+nav.top a{color:#9ad;text-decoration:none}
+nav.top a:hover{text-decoration:underline}
+nav.top .sep{color:#555}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
 .tile{background:#1c1c1c;border:1px solid #333;border-radius:8px;padding:8px}
 .tile img{width:100%;height:auto;border-radius:4px;background:#000}
 .meta{font-size:12px;color:#aaa;margin-top:6px}
+.empty{color:#888;font-style:italic;padding:24px;text-align:center}
 </style></head><body>
-<h1>Koru observation grid</h1>
-<p class="meta">Refreshes every 60s from <code>/api/mesh/frames</code></p>
+<nav class="top">
+  <a href="/">← Koru dashboard</a>
+  <span class="sep">·</span>
+  <strong>Observation grid</strong>
+  <span class="sep">·</span>
+  <a href="/api/mesh/frames">frames JSON</a>
+  <span class="sep">·</span>
+  <span class="meta">refresh every 60s</span>
+</nav>
 <div id="grid" class="grid"></div>
 <script>
 async function refresh() {
@@ -26,7 +38,13 @@ async function refresh() {
   const data = await res.json();
   const grid = document.getElementById("grid");
   grid.innerHTML = "";
-  for (const frame of (data.frames || [])) {
+  const frames = data.frames || [];
+  if (frames.length === 0) {
+    grid.innerHTML = '<div class="empty">No frames yet. Run <code>koru observe up</code> '
+      + 'or <code>koru vision agent --publish-mesh</code> on a peer.</div>';
+    return;
+  }
+  for (const frame of frames) {
     const tile = document.createElement("div");
     tile.className = "tile";
     tile.innerHTML = `<img alt="" src="data:${frame.mime};base64,${frame.image_b64}">`
