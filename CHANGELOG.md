@@ -74,6 +74,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Other
 - Update uv.lock
 
+## [0.1.222] - 2026-05-22
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update docs/plans/capture-providers-refactor.md
+
+### Other
+- Update uv.lock
+
 ## [0.1.221] - 2026-05-22
 
 ### Docs
