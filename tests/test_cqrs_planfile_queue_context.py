@@ -14,9 +14,12 @@ from koru.bounded_contexts.planfile_queue.events import (
     PLANFILE_QUEUE_IDLE,
     PLANFILE_QUEUE_TASK_COMPLETED,
 )
-from koru.bounded_contexts.planfile_queue.queries import LoadNextRunnableTicketQuery
+from koru.bounded_contexts.planfile_queue.queries import (
+    LoadNextRunnableTicketQuery,
+    LoadPlanfileQueueHistoryQuery,
+)
 from koru.bounded_contexts.planfile_queue.read_model import PlanfileQueueEventLogProjection
-from koru.cqrs import EventSourcingRuntime
+from koru.cqrs import EventSourcingRuntime, runtime_for_project
 
 
 def _ticket_args(command: list[str]) -> list[str]:
@@ -93,3 +96,37 @@ def test_planfile_queue_command_emits_idle_event_when_no_ticket(tmp_path: Path) 
     assert [event.event_type for event in events] == [PLANFILE_QUEUE_IDLE]
     projected = projection.recent()
     assert [entry.event_type for entry in projected] == [PLANFILE_QUEUE_IDLE]
+
+
+def test_planfile_queue_history_query_reads_persisted_events(tmp_path: Path) -> None:
+    runtime = runtime_for_project(tmp_path)
+    command_service = PlanfileQueueCommandService(runtime)
+    query_service = PlanfileQueueQueryService(runtime)
+    ticket = {
+        "id": "PLF-777",
+        "name": "Persist queue history",
+        "executor": {"kind": "shell", "handler": "echo ok"},
+        "execution": {"state": "ready"},
+    }
+
+    def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+        if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
+            return _ok(json.dumps(ticket))
+        return _ok()
+
+    def shell_runner(_command: str, _project: Path) -> SimpleNamespace:
+        return SimpleNamespace(returncode=0, stdout="ok\n", stderr="")
+
+    result = command_service.run_next_task(
+        RunNextPlanfileTaskCommand(
+            project=tmp_path,
+            planfile_runner=planfile_runner,
+            shell_runner=shell_runner,
+        )
+    )
+
+    history = query_service.history(LoadPlanfileQueueHistoryQuery(ticket_id="PLF-777", limit=10))
+
+    assert result.status == "completed"
+    assert [entry.event_type for entry in history] == [PLANFILE_QUEUE_TASK_COMPLETED]
+    assert history[0].aggregate_id == "PLF-777"

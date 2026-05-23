@@ -18,4 +18,10 @@ class LoadTaskSprintQuery:
     sprint: str = "current"
 
 
-__all__ = ["LoadTaskConfigQuery", "LoadTaskSprintQuery"]
+@dataclass(frozen=True)
+class LoadTaskHistoryQuery:
+    ticket_id: str | None = None
+    limit: int | None = None
+
+
+__all__ = ["LoadTaskConfigQuery", "LoadTaskHistoryQuery", "LoadTaskSprintQuery"]

@@ -16,4 +16,10 @@ class LoadNextRunnableTicketQuery:
     planfile_runner: Callable[[list[str], Path], CommandResult] = run_process
 
 
-__all__ = ["LoadNextRunnableTicketQuery"]
+@dataclass(frozen=True)
+class LoadPlanfileQueueHistoryQuery:
+    ticket_id: str | None = None
+    limit: int | None = None
+
+
+__all__ = ["LoadNextRunnableTicketQuery", "LoadPlanfileQueueHistoryQuery"]

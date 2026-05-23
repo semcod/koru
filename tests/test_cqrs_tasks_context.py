@@ -5,9 +5,13 @@ from pathlib import Path
 from koru.bounded_contexts.tasks.application import TaskCommandService, TaskQueryService
 from koru.bounded_contexts.tasks.commands import CreateNlTaskCommand
 from koru.bounded_contexts.tasks.events import TASK_CONTEXT, TASK_CREATED, TASK_REUSED
-from koru.bounded_contexts.tasks.queries import LoadTaskConfigQuery, LoadTaskSprintQuery
+from koru.bounded_contexts.tasks.queries import (
+    LoadTaskConfigQuery,
+    LoadTaskHistoryQuery,
+    LoadTaskSprintQuery,
+)
 from koru.bounded_contexts.tasks.read_model import TaskEventLogProjection
-from koru.cqrs import EventSourcingRuntime
+from koru.cqrs import EventSourcingRuntime, runtime_for_project
 
 
 def test_task_commands_emit_domain_events_and_queries_read_snapshots(tmp_path: Path) -> None:
@@ -72,3 +76,18 @@ def test_task_command_emits_reused_event_for_deduped_ticket(tmp_path: Path) -> N
     assert [event.event_type for event in events] == [TASK_CREATED, TASK_REUSED]
     projected = projection.recent()
     assert [entry.event_type for entry in projected] == [TASK_CREATED, TASK_REUSED]
+
+
+def test_task_history_query_reads_persisted_events(tmp_path: Path) -> None:
+    runtime = runtime_for_project(tmp_path)
+    command_service = TaskCommandService(runtime)
+    query_service = TaskQueryService(runtime)
+
+    created = command_service.create_nl_task(
+        CreateNlTaskCommand(project=tmp_path, text="Persisted history", queue_name="refactor")
+    )
+
+    history = query_service.history(LoadTaskHistoryQuery(ticket_id=created.ticket_id, limit=10))
+
+    assert [entry.event_type for entry in history] == [TASK_CREATED]
+    assert history[0].aggregate_id == created.ticket_id

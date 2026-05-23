@@ -5,11 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from koru.cqrs import EventSourcingRuntime
+from koru.cqrs import EventLogEntry, EventLogQueryService, EventSourcingRuntime
+from koru.domain.env import _build_env_payload, _write_env_file
 
 from .commands import ApplyEnvUpdatesCommand, WriteEnvConfigCommand
 from .events import ENV_CONFIG_CONTEXT, ENV_CONFIG_WRITTEN, ENV_UPDATES_APPLIED, EnvConfigWritten, EnvUpdatesApplied
-from .queries import LoadEnvConfigQuery
+from .queries import LoadEnvConfigHistoryQuery, LoadEnvConfigQuery
 
 
 class EnvConfigCommandService:
@@ -19,7 +20,6 @@ class EnvConfigCommandService:
         self.runtime = runtime or EventSourcingRuntime()
 
     def write(self, command: WriteEnvConfigCommand) -> Path:
-        from koru.env_config import _write_env_file
         path = _write_env_file(command.project, command.updates)
         event = EnvConfigWritten(
             project=str(command.project.resolve()),
@@ -56,9 +56,19 @@ class EnvConfigCommandService:
 class EnvConfigQueryService:
     """Handles read-only environment configuration queries."""
 
+    def __init__(self, runtime: EventSourcingRuntime | None = None) -> None:
+        self.runtime = runtime or EventSourcingRuntime()
+
     def load(self, query: LoadEnvConfigQuery) -> dict[str, Any]:
-        from koru.env_config import _build_env_payload
         return _build_env_payload(query.project, query.environ)
+
+    def history(self, query: LoadEnvConfigHistoryQuery) -> list[EventLogEntry]:
+        aggregate_id = str(query.project.resolve()) if query.project is not None else None
+        return EventLogQueryService(self.runtime.store).recent(
+            context=ENV_CONFIG_CONTEXT,
+            aggregate_id=aggregate_id,
+            limit=query.limit,
+        )
 
 
 __all__ = ["EnvConfigCommandService", "EnvConfigQueryService"]

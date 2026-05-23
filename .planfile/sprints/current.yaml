@@ -4,10 +4,18 @@ sprint:
   status: active
   tickets:
     STARTER-001:
-      description: "Verify the koru \u2194 planfile \u2194 LLM loop end-to-end on\
-        \ this project.\n\n1. Run `koru` (no args) and read the markdown brief.\n\
-        2. Confirm the policy table shows all gates as `False`.\n3. Confirm `STARTER-001`\
-        \ is the active ticket.\n4. Run `planfile ticket done STARTER-001`.\n"
+      description: 'Verify the koru ↔ planfile ↔ LLM loop end-to-end on this project.
+
+
+        1. Run `koru` (no args) and read the markdown brief.
+
+        2. Confirm the policy table shows all gates as `False`.
+
+        3. Confirm `STARTER-001` is the active ticket.
+
+        4. Run `planfile ticket done STARTER-001`.
+
+        '
       execution:
         assigned_to: koru-shell
         attempt: 0
@@ -307,8 +315,11 @@ sprint:
       files: []
       history:
       - action: created
-        message: "[OPERATOR] MCP \u201Ekoru\u201D w IDE: brak \u201Ekoru\u201D w .cursor/mcp.json\
-          \ \u2014 task koru:mcp:bootstrap, potem Reload Window\n\nShell: `task koru:mcp:bootstrap`"
+        message: '[OPERATOR] MCP „koru” w IDE: brak „koru” w .cursor/mcp.json — task
+          koru:mcp:bootstrap, potem Reload Window
+
+
+          Shell: `task koru:mcp:bootstrap`'
         source: koru task
         timestamp: '2026-05-18T19:20:50.725677+00:00'
       - action: update
@@ -355,8 +366,11 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "[OPERATOR] MCP \u201Ekoru\u201D w IDE: brak \u201Ekoru\u201D w .cursor/mcp.json\
-          \ \u2014 task koru:mcp:bootstrap, potem Reload Window\n\nShell: `task koru:mcp:bootstrap`"
+        prompt: '[OPERATOR] MCP „koru” w IDE: brak „koru” w .cursor/mcp.json — task
+          koru:mcp:bootstrap, potem Reload Window
+
+
+          Shell: `task koru:mcp:bootstrap`'
         script: task koru:mcp:bootstrap
       labels:
       - koru
@@ -365,17 +379,19 @@ sprint:
       - operator
       - auto-pipeline
       - step:mcp_koru
-      name: "[OPERATOR] MCP \u201Ekoru\u201D w IDE: brak \u201Ekoru\u201D w .cursor/mcp.json\
-        \ \u2014 task koru:mcp:bootstrap, potem Reload Window Shell: `ta..."
+      name: '[OPERATOR] MCP „koru” w IDE: brak „koru” w .cursor/mcp.json — task koru:mcp:bootstrap,
+        potem Reload Window Shell: `ta...'
       outputs:
         artifacts: []
         notes: []
       priority: high
       source:
         context:
-          input: "[OPERATOR] MCP \u201Ekoru\u201D w IDE: brak \u201Ekoru\u201D w .cursor/mcp.json\
-            \ \u2014 task koru:mcp:bootstrap, potem Reload Window\n\nShell: `task\
-            \ koru:mcp:bootstrap`"
+          input: '[OPERATOR] MCP „koru” w IDE: brak „koru” w .cursor/mcp.json — task
+            koru:mcp:bootstrap, potem Reload Window
+
+
+            Shell: `task koru:mcp:bootstrap`'
           step_id: mcp_koru
         timestamp: '2026-05-18T19:20:50.725677+00:00'
         tool: koru-operator-pipeline
@@ -1791,10 +1807,17 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-20T19:08:34.201194+00:00'
-      description: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-        \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij ticket:\
-        \ `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja (opcjonalnie):\
-        \ `task koru:operator:plugin-probe`"
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        nie sprawdzono — podłącz plugin w IDE
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
       execution:
         attempt: 0
         finished_at: '2026-05-20T19:09:00.851536Z'
@@ -1807,10 +1830,17 @@ sprint:
       files: []
       history:
       - action: created
-        message: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-          \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij\
-          \ ticket: `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja\
-          \ (opcjonalnie): `task koru:operator:plugin-probe`"
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
         source: koru task
         timestamp: '2026-05-20T19:08:34.201194+00:00'
       - action: update
@@ -1829,10 +1859,17 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-          \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij\
-          \ ticket: `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja\
-          \ (opcjonalnie): `task koru:operator:plugin-probe`"
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
       labels:
       - koru
       - nl-task
@@ -1840,18 +1877,25 @@ sprint:
       - operator
       - auto-pipeline
       - step:autopilot_plugin
-      name: "[OPERATOR] Autopilot: Connect + plugin w czacie nie sprawdzono \u2014\
-        \ pod\u0142\u0105cz plugin w IDE Wykonaj w IDE, potem zamknij ti..."
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie nie sprawdzono — podłącz
+        plugin w IDE Wykonaj w IDE, potem zamknij ti...'
       outputs:
         artifacts: []
         notes: []
       priority: high
       source:
         context:
-          input: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-            \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij\
-            \ ticket: `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja\
-            \ (opcjonalnie): `task koru:operator:plugin-probe`"
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            nie sprawdzono — podłącz plugin w IDE
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
           step_id: autopilot_plugin
         timestamp: '2026-05-20T19:08:34.201194+00:00'
         tool: koru-operator-pipeline
@@ -1963,10 +2007,17 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-20T20:09:04.565111+00:00'
-      description: "[OPERATOR] Kalibracja czatu OS injectora (jetbrains)\n\nbrak kalibracji\
-        \ chatu dla jetbrains \u2014 task koru:ide-os:calibrate IDE=jetbrains\n\n\
-        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile\
-        \ ticket done.\n\nWeryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`"
+      description: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains)
+
+
+        brak kalibracji chatu dla jetbrains — task koru:ide-os:calibrate IDE=jetbrains
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`'
       execution:
         attempt: 0
         finished_at: '2026-05-21T06:54:33.931459Z'
@@ -1979,11 +2030,17 @@ sprint:
       files: []
       history:
       - action: created
-        message: "[OPERATOR] Kalibracja czatu OS injectora (jetbrains)\n\nbrak kalibracji\
-          \ chatu dla jetbrains \u2014 task koru:ide-os:calibrate IDE=jetbrains\n\n\
-          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile\
-          \ ticket done.\n\nWeryfikacja (opcjonalnie): `task koru:ide-os:calibrate\
-          \ IDE=jetbrains`"
+        message: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains)
+
+
+          brak kalibracji chatu dla jetbrains — task koru:ide-os:calibrate IDE=jetbrains
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`'
         source: koru task
         timestamp: '2026-05-20T20:09:04.565111+00:00'
       - action: update
@@ -2002,11 +2059,17 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "[OPERATOR] Kalibracja czatu OS injectora (jetbrains)\n\nbrak kalibracji\
-          \ chatu dla jetbrains \u2014 task koru:ide-os:calibrate IDE=jetbrains\n\n\
-          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile\
-          \ ticket done.\n\nWeryfikacja (opcjonalnie): `task koru:ide-os:calibrate\
-          \ IDE=jetbrains`"
+        prompt: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains)
+
+
+          brak kalibracji chatu dla jetbrains — task koru:ide-os:calibrate IDE=jetbrains
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`'
       labels:
       - koru
       - nl-task
@@ -2014,19 +2077,25 @@ sprint:
       - operator
       - auto-pipeline
       - step:os_calibrate
-      name: "[OPERATOR] Kalibracja czatu OS injectora (jetbrains) brak kalibracji\
-        \ chatu dla jetbrains \u2014 task koru:ide-os:calibrate..."
+      name: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains) brak kalibracji
+        chatu dla jetbrains — task koru:ide-os:calibrate...'
       outputs:
         artifacts: []
         notes: []
       priority: high
       source:
         context:
-          input: "[OPERATOR] Kalibracja czatu OS injectora (jetbrains)\n\nbrak kalibracji\
-            \ chatu dla jetbrains \u2014 task koru:ide-os:calibrate IDE=jetbrains\n\
-            \nWykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub\
-            \ planfile ticket done.\n\nWeryfikacja (opcjonalnie): `task koru:ide-os:calibrate\
-            \ IDE=jetbrains`"
+          input: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains)
+
+
+            brak kalibracji chatu dla jetbrains — task koru:ide-os:calibrate IDE=jetbrains
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`'
           step_id: os_calibrate
         timestamp: '2026-05-20T20:09:04.565111+00:00'
         tool: koru-operator-pipeline
@@ -2280,10 +2349,17 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-21T07:30:45.583390+00:00'
-      description: "[OPERATOR] Kalibracja czatu OS injectora (jetbrains)\n\nbrak kalibracji\
-        \ chatu dla jetbrains \u2014 task koru:ide-os:calibrate IDE=jetbrains\n\n\
-        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile\
-        \ ticket done.\n\nWeryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`"
+      description: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains)
+
+
+        brak kalibracji chatu dla jetbrains — task koru:ide-os:calibrate IDE=jetbrains
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`'
       execution:
         attempt: 0
         finished_at: '2026-05-21T09:24:22.957361Z'
@@ -2296,11 +2372,17 @@ sprint:
       files: []
       history:
       - action: created
-        message: "[OPERATOR] Kalibracja czatu OS injectora (jetbrains)\n\nbrak kalibracji\
-          \ chatu dla jetbrains \u2014 task koru:ide-os:calibrate IDE=jetbrains\n\n\
-          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile\
-          \ ticket done.\n\nWeryfikacja (opcjonalnie): `task koru:ide-os:calibrate\
-          \ IDE=jetbrains`"
+        message: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains)
+
+
+          brak kalibracji chatu dla jetbrains — task koru:ide-os:calibrate IDE=jetbrains
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`'
         source: koru task
         timestamp: '2026-05-21T07:30:45.583390+00:00'
       - action: update
@@ -2324,11 +2406,17 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "[OPERATOR] Kalibracja czatu OS injectora (jetbrains)\n\nbrak kalibracji\
-          \ chatu dla jetbrains \u2014 task koru:ide-os:calibrate IDE=jetbrains\n\n\
-          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile\
-          \ ticket done.\n\nWeryfikacja (opcjonalnie): `task koru:ide-os:calibrate\
-          \ IDE=jetbrains`"
+        prompt: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains)
+
+
+          brak kalibracji chatu dla jetbrains — task koru:ide-os:calibrate IDE=jetbrains
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`'
       labels:
       - koru
       - nl-task
@@ -2336,19 +2424,25 @@ sprint:
       - operator
       - auto-pipeline
       - step:os_calibrate
-      name: "[OPERATOR] Kalibracja czatu OS injectora (jetbrains) brak kalibracji\
-        \ chatu dla jetbrains \u2014 task koru:ide-os:calibrate..."
+      name: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains) brak kalibracji
+        chatu dla jetbrains — task koru:ide-os:calibrate...'
       outputs:
         artifacts: []
         notes: []
       priority: high
       source:
         context:
-          input: "[OPERATOR] Kalibracja czatu OS injectora (jetbrains)\n\nbrak kalibracji\
-            \ chatu dla jetbrains \u2014 task koru:ide-os:calibrate IDE=jetbrains\n\
-            \nWykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub\
-            \ planfile ticket done.\n\nWeryfikacja (opcjonalnie): `task koru:ide-os:calibrate\
-            \ IDE=jetbrains`"
+          input: '[OPERATOR] Kalibracja czatu OS injectora (jetbrains)
+
+
+            brak kalibracji chatu dla jetbrains — task koru:ide-os:calibrate IDE=jetbrains
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=jetbrains`'
           step_id: os_calibrate
         timestamp: '2026-05-21T07:30:45.583390+00:00'
         tool: koru-operator-pipeline
@@ -2923,10 +3017,17 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-21T12:11:36.107352+00:00'
-      description: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-        \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij ticket:\
-        \ `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja (opcjonalnie):\
-        \ `task koru:operator:plugin-probe`"
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        nie sprawdzono — podłącz plugin w IDE
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
       execution:
         attempt: 0
         finished_at: '2026-05-21T12:38:03.715496Z'
@@ -2939,10 +3040,17 @@ sprint:
       files: []
       history:
       - action: created
-        message: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-          \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij\
-          \ ticket: `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja\
-          \ (opcjonalnie): `task koru:operator:plugin-probe`"
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
         source: koru task
         timestamp: '2026-05-21T12:11:36.107352+00:00'
       - action: update
@@ -2965,10 +3073,17 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-          \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij\
-          \ ticket: `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja\
-          \ (opcjonalnie): `task koru:operator:plugin-probe`"
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
       labels:
       - koru
       - nl-task
@@ -2976,18 +3091,25 @@ sprint:
       - operator
       - auto-pipeline
       - step:autopilot_plugin
-      name: "[OPERATOR] Autopilot: Connect + plugin w czacie nie sprawdzono \u2014\
-        \ pod\u0142\u0105cz plugin w IDE Wykonaj w IDE, potem zamknij ti..."
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie nie sprawdzono — podłącz
+        plugin w IDE Wykonaj w IDE, potem zamknij ti...'
       outputs:
         artifacts: []
         notes: []
       priority: high
       source:
         context:
-          input: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-            \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij\
-            \ ticket: `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja\
-            \ (opcjonalnie): `task koru:operator:plugin-probe`"
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            nie sprawdzono — podłącz plugin w IDE
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
           step_id: autopilot_plugin
         timestamp: '2026-05-21T12:11:36.107352+00:00'
         tool: koru-operator-pipeline
@@ -2999,10 +3121,17 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-21T12:38:54.361779+00:00'
-      description: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-        \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij ticket:\
-        \ `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja (opcjonalnie):\
-        \ `task koru:operator:plugin-probe`"
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        nie sprawdzono — podłącz plugin w IDE
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
       execution:
         attempt: 0
         finished_at: '2026-05-21T12:41:08.193075Z'
@@ -3015,10 +3144,17 @@ sprint:
       files: []
       history:
       - action: created
-        message: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-          \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij\
-          \ ticket: `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja\
-          \ (opcjonalnie): `task koru:operator:plugin-probe`"
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
         source: koru task
         timestamp: '2026-05-21T12:38:54.361779+00:00'
       - action: update
@@ -3037,10 +3173,17 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-          \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij\
-          \ ticket: `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja\
-          \ (opcjonalnie): `task koru:operator:plugin-probe`"
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
       labels:
       - koru
       - nl-task
@@ -3048,18 +3191,25 @@ sprint:
       - operator
       - auto-pipeline
       - step:autopilot_plugin
-      name: "[OPERATOR] Autopilot: Connect + plugin w czacie nie sprawdzono \u2014\
-        \ pod\u0142\u0105cz plugin w IDE Wykonaj w IDE, potem zamknij ti..."
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie nie sprawdzono — podłącz
+        plugin w IDE Wykonaj w IDE, potem zamknij ti...'
       outputs:
         artifacts: []
         notes: []
       priority: high
       source:
         context:
-          input: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-            \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij\
-            \ ticket: `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja\
-            \ (opcjonalnie): `task koru:operator:plugin-probe`"
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            nie sprawdzono — podłącz plugin w IDE
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe`'
           step_id: autopilot_plugin
         timestamp: '2026-05-21T12:38:54.361779+00:00'
         tool: koru-operator-pipeline
@@ -3271,10 +3421,17 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-21T13:03:18.894845+00:00'
-      description: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-        \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij ticket:\
-        \ `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja (opcjonalnie):\
-        \ `task koru:operator:plugin-probe IDE=windsurf`"
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        nie sprawdzono — podłącz plugin w IDE
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=windsurf`'
       execution:
         attempt: 0
         finished_at: '2026-05-21T13:04:30.409172Z'
@@ -3287,10 +3444,17 @@ sprint:
       files: []
       history:
       - action: created
-        message: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-          \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij\
-          \ ticket: `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja\
-          \ (opcjonalnie): `task koru:operator:plugin-probe IDE=windsurf`"
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=windsurf`'
         source: koru task
         timestamp: '2026-05-21T13:03:18.894845+00:00'
       - action: update
@@ -3309,10 +3473,17 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-          \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij\
-          \ ticket: `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja\
-          \ (opcjonalnie): `task koru:operator:plugin-probe IDE=windsurf`"
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=windsurf`'
       labels:
       - koru
       - nl-task
@@ -3320,18 +3491,25 @@ sprint:
       - operator
       - auto-pipeline
       - step:autopilot_plugin
-      name: "[OPERATOR] Autopilot: Connect + plugin w czacie nie sprawdzono \u2014\
-        \ pod\u0142\u0105cz plugin w IDE Wykonaj w IDE, potem zamknij ti..."
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie nie sprawdzono — podłącz
+        plugin w IDE Wykonaj w IDE, potem zamknij ti...'
       outputs:
         artifacts: []
         notes: []
       priority: high
       source:
         context:
-          input: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-            \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij\
-            \ ticket: `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja\
-            \ (opcjonalnie): `task koru:operator:plugin-probe IDE=windsurf`"
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            nie sprawdzono — podłącz plugin w IDE
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=windsurf`'
           step_id: autopilot_plugin
         timestamp: '2026-05-21T13:03:18.894845+00:00'
         tool: koru-operator-pipeline
@@ -9142,10 +9320,17 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-21T14:59:21.829614Z'
-      description: "Gate `regix` failed.\n\n- Failing line: `mi: 26.24441701037158\
-        \ (target: \u2265 30.0)`\n- Command: `regix gates 2>&1 | tail -20`\n- Next\
-        \ step: Lower offending complexity/quality metric or relax gate threshold\
-        \ intentionally.\n"
+      description: 'Gate `regix` failed.
+
+
+        - Failing line: `mi: 26.24441701037158 (target: ≥ 30.0)`
+
+        - Command: `regix gates 2>&1 | tail -20`
+
+        - Next step: Lower offending complexity/quality metric or relax gate threshold
+        intentionally.
+
+        '
       execution:
         assigned_to: koru-shell
         attempt: 0
@@ -12122,10 +12307,17 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-21T16:15:33.734498+00:00'
-      description: "[OPERATOR] Kalibracja czatu OS injectora (vscodium)\n\nbrak kalibracji\
-        \ chatu dla vscodium \u2014 task koru:ide-os:calibrate IDE=vscodium\n\nWykonaj\
-        \ w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile ticket\
-        \ done.\n\nWeryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`"
+      description: '[OPERATOR] Kalibracja czatu OS injectora (vscodium)
+
+
+        brak kalibracji chatu dla vscodium — task koru:ide-os:calibrate IDE=vscodium
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`'
       execution:
         attempt: 0
         finished_at: '2026-05-21T16:35:06.119320Z'
@@ -12138,11 +12330,17 @@ sprint:
       files: []
       history:
       - action: created
-        message: "[OPERATOR] Kalibracja czatu OS injectora (vscodium)\n\nbrak kalibracji\
-          \ chatu dla vscodium \u2014 task koru:ide-os:calibrate IDE=vscodium\n\n\
-          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile\
-          \ ticket done.\n\nWeryfikacja (opcjonalnie): `task koru:ide-os:calibrate\
-          \ IDE=vscodium`"
+        message: '[OPERATOR] Kalibracja czatu OS injectora (vscodium)
+
+
+          brak kalibracji chatu dla vscodium — task koru:ide-os:calibrate IDE=vscodium
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`'
         source: koru task
         timestamp: '2026-05-21T16:15:33.734498+00:00'
       - action: update
@@ -12161,11 +12359,17 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "[OPERATOR] Kalibracja czatu OS injectora (vscodium)\n\nbrak kalibracji\
-          \ chatu dla vscodium \u2014 task koru:ide-os:calibrate IDE=vscodium\n\n\
-          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile\
-          \ ticket done.\n\nWeryfikacja (opcjonalnie): `task koru:ide-os:calibrate\
-          \ IDE=vscodium`"
+        prompt: '[OPERATOR] Kalibracja czatu OS injectora (vscodium)
+
+
+          brak kalibracji chatu dla vscodium — task koru:ide-os:calibrate IDE=vscodium
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`'
       labels:
       - koru
       - nl-task
@@ -12173,21 +12377,27 @@ sprint:
       - operator
       - auto-pipeline
       - step:os_calibrate
-      name: "[OPERATOR] Kalibracja czatu OS injectora (vscodium) brak kalibracji chatu\
-        \ dla vscodium \u2014 task koru:ide-os:calibrate I..."
+      name: '[OPERATOR] Kalibracja czatu OS injectora (vscodium) brak kalibracji chatu
+        dla vscodium — task koru:ide-os:calibrate I...'
       outputs:
         artifacts: []
         notes: []
       priority: high
       source:
         context:
-          detail: "brak kalibracji chatu dla vscodium \u2014 task koru:ide-os:calibrate\
-            \ IDE=vscodium"
-          input: "[OPERATOR] Kalibracja czatu OS injectora (vscodium)\n\nbrak kalibracji\
-            \ chatu dla vscodium \u2014 task koru:ide-os:calibrate IDE=vscodium\n\n\
-            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile\
-            \ ticket done.\n\nWeryfikacja (opcjonalnie): `task koru:ide-os:calibrate\
-            \ IDE=vscodium`"
+          detail: brak kalibracji chatu dla vscodium — task koru:ide-os:calibrate
+            IDE=vscodium
+          input: '[OPERATOR] Kalibracja czatu OS injectora (vscodium)
+
+
+            brak kalibracji chatu dla vscodium — task koru:ide-os:calibrate IDE=vscodium
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`'
           step_id: os_calibrate
           task_command: task koru:ide-os:calibrate IDE=vscodium
         timestamp: '2026-05-21T16:15:33.734498+00:00'
@@ -12302,10 +12512,17 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-21T16:41:25.618498+00:00'
-      description: "[OPERATOR] Kalibracja czatu OS injectora (vscodium)\n\nbrak kalibracji\
-        \ chatu dla vscodium \u2014 task koru:ide-os:calibrate IDE=vscodium\n\nWykonaj\
-        \ w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile ticket\
-        \ done.\n\nWeryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`"
+      description: '[OPERATOR] Kalibracja czatu OS injectora (vscodium)
+
+
+        brak kalibracji chatu dla vscodium — task koru:ide-os:calibrate IDE=vscodium
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`'
       execution:
         attempt: 0
         finished_at: '2026-05-21T18:42:00.887334Z'
@@ -12318,11 +12535,17 @@ sprint:
       files: []
       history:
       - action: created
-        message: "[OPERATOR] Kalibracja czatu OS injectora (vscodium)\n\nbrak kalibracji\
-          \ chatu dla vscodium \u2014 task koru:ide-os:calibrate IDE=vscodium\n\n\
-          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile\
-          \ ticket done.\n\nWeryfikacja (opcjonalnie): `task koru:ide-os:calibrate\
-          \ IDE=vscodium`"
+        message: '[OPERATOR] Kalibracja czatu OS injectora (vscodium)
+
+
+          brak kalibracji chatu dla vscodium — task koru:ide-os:calibrate IDE=vscodium
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`'
         source: koru task
         timestamp: '2026-05-21T16:41:25.618498+00:00'
       - action: update
@@ -12346,11 +12569,17 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "[OPERATOR] Kalibracja czatu OS injectora (vscodium)\n\nbrak kalibracji\
-          \ chatu dla vscodium \u2014 task koru:ide-os:calibrate IDE=vscodium\n\n\
-          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile\
-          \ ticket done.\n\nWeryfikacja (opcjonalnie): `task koru:ide-os:calibrate\
-          \ IDE=vscodium`"
+        prompt: '[OPERATOR] Kalibracja czatu OS injectora (vscodium)
+
+
+          brak kalibracji chatu dla vscodium — task koru:ide-os:calibrate IDE=vscodium
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`'
       labels:
       - koru
       - nl-task
@@ -12358,21 +12587,27 @@ sprint:
       - operator
       - auto-pipeline
       - step:os_calibrate
-      name: "[OPERATOR] Kalibracja czatu OS injectora (vscodium) brak kalibracji chatu\
-        \ dla vscodium \u2014 task koru:ide-os:calibrate I..."
+      name: '[OPERATOR] Kalibracja czatu OS injectora (vscodium) brak kalibracji chatu
+        dla vscodium — task koru:ide-os:calibrate I...'
       outputs:
         artifacts: []
         notes: []
       priority: high
       source:
         context:
-          detail: "brak kalibracji chatu dla vscodium \u2014 task koru:ide-os:calibrate\
-            \ IDE=vscodium"
-          input: "[OPERATOR] Kalibracja czatu OS injectora (vscodium)\n\nbrak kalibracji\
-            \ chatu dla vscodium \u2014 task koru:ide-os:calibrate IDE=vscodium\n\n\
-            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile\
-            \ ticket done.\n\nWeryfikacja (opcjonalnie): `task koru:ide-os:calibrate\
-            \ IDE=vscodium`"
+          detail: brak kalibracji chatu dla vscodium — task koru:ide-os:calibrate
+            IDE=vscodium
+          input: '[OPERATOR] Kalibracja czatu OS injectora (vscodium)
+
+
+            brak kalibracji chatu dla vscodium — task koru:ide-os:calibrate IDE=vscodium
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:ide-os:calibrate IDE=vscodium`'
           step_id: os_calibrate
           task_command: task koru:ide-os:calibrate IDE=vscodium
         timestamp: '2026-05-21T16:41:25.618498+00:00'
@@ -12846,37 +13081,54 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-22T12:35:58.035262+00:00'
-      description: "Architektura: wprowad\u017A CQRS + Event Sourcing\n\nWprowad\u017A\
-        \ separacj\u0119 Command/Query oraz event-store dla koru. Pierwszy krok: zidentyfikuj\
-        \ 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`, `queries/`,\
-        \ `events/`, dodaj event-bus."
+      description: 'Architektura: wprowadź CQRS + Event Sourcing
+
+
+        Wprowadź separację Command/Query oraz event-store dla koru. Pierwszy krok:
+        zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,
+        `queries/`, `events/`, dodaj event-bus.'
       execution:
         attempt: 0
+        finished_at: '2026-05-23T15:03:00.728503Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
       files: []
       history:
       - action: created
-        message: "Architektura: wprowad\u017A CQRS + Event Sourcing\n\nWprowad\u017A\
-          \ separacj\u0119 Command/Query oraz event-store dla koru. Pierwszy krok:\
-          \ zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,\
-          \ `queries/`, `events/`, dodaj event-bus."
+        message: 'Architektura: wprowadź CQRS + Event Sourcing
+
+
+          Wprowadź separację Command/Query oraz event-store dla koru. Pierwszy krok:
+          zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,
+          `queries/`, `events/`, dodaj event-bus.'
         source: koru task
         timestamp: '2026-05-22T12:35:58.035262+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-23T15:03:01.479517+00:00'
       id: STARTER-184
       inputs:
         api_headers: {}
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "Architektura: wprowad\u017A CQRS + Event Sourcing\n\nWprowad\u017A\
-          \ separacj\u0119 Command/Query oraz event-store dla koru. Pierwszy krok:\
-          \ zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,\
-          \ `queries/`, `events/`, dodaj event-bus."
+        prompt: 'Architektura: wprowadź CQRS + Event Sourcing
+
+
+          Wprowadź separację Command/Query oraz event-store dla koru. Pierwszy krok:
+          zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,
+          `queries/`, `events/`, dodaj event-bus.'
       labels:
       - koru
       - nl-task
@@ -12885,23 +13137,25 @@ sprint:
       - cqrs
       - es
       - koru-wizard
-      name: "Architektura: wprowad\u017A CQRS + Event Sourcing"
+      name: 'Architektura: wprowadź CQRS + Event Sourcing'
       outputs:
         artifacts: []
         notes: []
       priority: high
       source:
         context:
-          input: "Architektura: wprowad\u017A CQRS + Event Sourcing\n\nWprowad\u017A\
-            \ separacj\u0119 Command/Query oraz event-store dla koru. Pierwszy krok:\
-            \ zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,\
-            \ `queries/`, `events/`, dodaj event-bus."
+          input: 'Architektura: wprowadź CQRS + Event Sourcing
+
+
+            Wprowadź separację Command/Query oraz event-store dla koru. Pierwszy krok:
+            zidentyfikuj 1-2 ograniczone konteksty (np. <module>), wydziel `commands/`,
+            `queries/`, `events/`, dodaj event-bus.'
         timestamp: '2026-05-22T12:35:58.035262+00:00'
         tool: koru-cli-nl
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-22T12:35:58.035262+00:00'
+      updated_at: '2026-05-23T15:03:01.479469+00:00'
     STARTER-185:
       blocked_by: []
       blocks: []
@@ -13135,13 +13389,13 @@ sprint:
         \ 0. queue_status=wup_failure. Check: WUP service=koru-autopilot-vscode stage=quick\
         \ message=\U0001F4DC OQL: cli-koru_api.testql.toon.yaml\n\U0001F4DD SET \"\
         cli_command\" = \"koru-api\"\n\U0001F4DD SET \"timeout_ms\" = \"30000\"\n\U0001F4BB\
-        \ SHELL \"koru-api --help\" [5000ms] (dry-run)\n  \u2705 ASSERT_EXIT_CODE\
-        \ 0\n  \u274C ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB SHELL \"koru-api\
-        \ --version\" [5000ms] (dry-run)\n  \u2705 ASSERT_EXIT_CODE 0\n\U0001F4BB\
-        \ SHELL \"koru-api --invalid-flag-xyz123\" [5000ms] (dry-run)\n\u274C Handler\
-        \ error for ASSERT_EXIT_CODE: invalid literal for int() with base 10: '!=\
-        \ 0'\n\u274C L9: list.append() takes no keyword arguments\n\n\u274C cli-koru_api.testql.toon.yaml:\
-        \ 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485081_koru-autopilot-vscode_quick.json.\
+        \ SHELL \"koru-api --help\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE 0\n \
+        \ ❌ ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB SHELL \"koru-api --version\"\
+        \ [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE 0\n\U0001F4BB SHELL \"koru-api\
+        \ --invalid-flag-xyz123\" [5000ms] (dry-run)\n❌ Handler error for ASSERT_EXIT_CODE:\
+        \ invalid literal for int() with base 10: '!= 0'\n❌ L9: list.append() takes\
+        \ no keyword arguments\n\n❌ cli-koru_api.testql.toon.yaml: 5/7 passed, 2 failed\
+        \ (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485081_koru-autopilot-vscode_quick.json.\
         \ Investigate and fix regression, stale quality artifact, or broken diagnostic\
         \ gate."
       execution:
@@ -13159,13 +13413,13 @@ sprint:
           \ queue_status=wup_failure. Check: WUP service=koru-autopilot-vscode stage=quick\
           \ message=\U0001F4DC OQL: cli-koru_api.testql.toon.yaml\n\U0001F4DD SET\
           \ \"cli_command\" = \"koru-api\"\n\U0001F4DD SET \"timeout_ms\" = \"30000\"\
-          \n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n  \u2705 ASSERT_EXIT_CODE\
-          \ 0\n  \u274C ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB SHELL \"koru-api\
-          \ --version\" [5000ms] (dry-run)\n  \u2705 ASSERT_EXIT_CODE 0\n\U0001F4BB\
-          \ SHELL \"koru-api --invalid-flag-xyz123\" [5000ms] (dry-run)\n\u274C Handler\
-          \ error for ASSERT_EXIT_CODE: invalid literal for int() with base 10: '!=\
-          \ 0'\n\u274C L9: list.append() takes no keyword arguments\n\n\u274C cli-koru_api.testql.toon.yaml:\
-          \ 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485081_koru-autopilot-vscode_quick.json.\
+          \n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE\
+          \ 0\n  ❌ ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB SHELL \"koru-api --version\"\
+          \ [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE 0\n\U0001F4BB SHELL \"koru-api\
+          \ --invalid-flag-xyz123\" [5000ms] (dry-run)\n❌ Handler error for ASSERT_EXIT_CODE:\
+          \ invalid literal for int() with base 10: '!= 0'\n❌ L9: list.append() takes\
+          \ no keyword arguments\n\n❌ cli-koru_api.testql.toon.yaml: 5/7 passed, 2\
+          \ failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485081_koru-autopilot-vscode_quick.json.\
           \ Investigate and fix regression, stale quality artifact, or broken diagnostic\
           \ gate."
         source: koru task
@@ -13180,13 +13434,13 @@ sprint:
           \ queue_status=wup_failure. Check: WUP service=koru-autopilot-vscode stage=quick\
           \ message=\U0001F4DC OQL: cli-koru_api.testql.toon.yaml\n\U0001F4DD SET\
           \ \"cli_command\" = \"koru-api\"\n\U0001F4DD SET \"timeout_ms\" = \"30000\"\
-          \n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n  \u2705 ASSERT_EXIT_CODE\
-          \ 0\n  \u274C ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB SHELL \"koru-api\
-          \ --version\" [5000ms] (dry-run)\n  \u2705 ASSERT_EXIT_CODE 0\n\U0001F4BB\
-          \ SHELL \"koru-api --invalid-flag-xyz123\" [5000ms] (dry-run)\n\u274C Handler\
-          \ error for ASSERT_EXIT_CODE: invalid literal for int() with base 10: '!=\
-          \ 0'\n\u274C L9: list.append() takes no keyword arguments\n\n\u274C cli-koru_api.testql.toon.yaml:\
-          \ 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485081_koru-autopilot-vscode_quick.json.\
+          \n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE\
+          \ 0\n  ❌ ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB SHELL \"koru-api --version\"\
+          \ [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE 0\n\U0001F4BB SHELL \"koru-api\
+          \ --invalid-flag-xyz123\" [5000ms] (dry-run)\n❌ Handler error for ASSERT_EXIT_CODE:\
+          \ invalid literal for int() with base 10: '!= 0'\n❌ L9: list.append() takes\
+          \ no keyword arguments\n\n❌ cli-koru_api.testql.toon.yaml: 5/7 passed, 2\
+          \ failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485081_koru-autopilot-vscode_quick.json.\
           \ Investigate and fix regression, stale quality artifact, or broken diagnostic\
           \ gate."
       labels:
@@ -13205,13 +13459,13 @@ sprint:
             \ queue_status=wup_failure. Check: WUP service=koru-autopilot-vscode stage=quick\
             \ message=\U0001F4DC OQL: cli-koru_api.testql.toon.yaml\n\U0001F4DD SET\
             \ \"cli_command\" = \"koru-api\"\n\U0001F4DD SET \"timeout_ms\" = \"30000\"\
-            \n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n  \u2705 ASSERT_EXIT_CODE\
-            \ 0\n  \u274C ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB SHELL \"koru-api\
-            \ --version\" [5000ms] (dry-run)\n  \u2705 ASSERT_EXIT_CODE 0\n\U0001F4BB\
-            \ SHELL \"koru-api --invalid-flag-xyz123\" [5000ms] (dry-run)\n\u274C\
-            \ Handler error for ASSERT_EXIT_CODE: invalid literal for int() with base\
-            \ 10: '!= 0'\n\u274C L9: list.append() takes no keyword arguments\n\n\u274C\
-            \ cli-koru_api.testql.toon.yaml: 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485081_koru-autopilot-vscode_quick.json.\
+            \n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE\
+            \ 0\n  ❌ ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB SHELL \"koru-api\
+            \ --version\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE 0\n\U0001F4BB SHELL\
+            \ \"koru-api --invalid-flag-xyz123\" [5000ms] (dry-run)\n❌ Handler error\
+            \ for ASSERT_EXIT_CODE: invalid literal for int() with base 10: '!= 0'\n\
+            ❌ L9: list.append() takes no keyword arguments\n\n❌ cli-koru_api.testql.toon.yaml:\
+            \ 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485081_koru-autopilot-vscode_quick.json.\
             \ Investigate and fix regression, stale quality artifact, or broken diagnostic\
             \ gate."
         timestamp: '2026-05-22T21:24:43.754985+00:00'
@@ -13228,12 +13482,12 @@ sprint:
         \ Check: WUP service=koru-core stage=quick message=\U0001F4DC OQL: cli-koru_api.testql.toon.yaml\n\
         \U0001F4DD SET \"cli_command\" = \"koru-api\"\n\U0001F4DD SET \"timeout_ms\"\
         \ = \"30000\"\n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n \
-        \ \u2705 ASSERT_EXIT_CODE 0\n  \u274C ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB\
-        \ SHELL \"koru-api --version\" [5000ms] (dry-run)\n  \u2705 ASSERT_EXIT_CODE\
-        \ 0\n\U0001F4BB SHELL \"koru-api --invalid-flag-xyz123\" [5000ms] (dry-run)\n\
-        \u274C Handler error for ASSERT_EXIT_CODE: invalid literal for int() with\
-        \ base 10: '!= 0'\n\u274C L9: list.append() takes no keyword arguments\n\n\
-        \u274C cli-koru_api.testql.toon.yaml: 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485080_koru-core_quick.json.\
+        \ ✅ ASSERT_EXIT_CODE 0\n  ❌ ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB SHELL\
+        \ \"koru-api --version\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE 0\n\U0001F4BB\
+        \ SHELL \"koru-api --invalid-flag-xyz123\" [5000ms] (dry-run)\n❌ Handler error\
+        \ for ASSERT_EXIT_CODE: invalid literal for int() with base 10: '!= 0'\n❌\
+        \ L9: list.append() takes no keyword arguments\n\n❌ cli-koru_api.testql.toon.yaml:\
+        \ 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485080_koru-core_quick.json.\
         \ Investigate and fix regression, stale quality artifact, or broken diagnostic\
         \ gate."
       execution:
@@ -13251,12 +13505,12 @@ sprint:
           \ Check: WUP service=koru-core stage=quick message=\U0001F4DC OQL: cli-koru_api.testql.toon.yaml\n\
           \U0001F4DD SET \"cli_command\" = \"koru-api\"\n\U0001F4DD SET \"timeout_ms\"\
           \ = \"30000\"\n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n\
-          \  \u2705 ASSERT_EXIT_CODE 0\n  \u274C ASSERT_STDOUT_CONTAINS \"usage\"\n\
-          \U0001F4BB SHELL \"koru-api --version\" [5000ms] (dry-run)\n  \u2705 ASSERT_EXIT_CODE\
+          \  ✅ ASSERT_EXIT_CODE 0\n  ❌ ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB\
+          \ SHELL \"koru-api --version\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE\
           \ 0\n\U0001F4BB SHELL \"koru-api --invalid-flag-xyz123\" [5000ms] (dry-run)\n\
-          \u274C Handler error for ASSERT_EXIT_CODE: invalid literal for int() with\
-          \ base 10: '!= 0'\n\u274C L9: list.append() takes no keyword arguments\n\
-          \n\u274C cli-koru_api.testql.toon.yaml: 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485080_koru-core_quick.json.\
+          ❌ Handler error for ASSERT_EXIT_CODE: invalid literal for int() with base\
+          \ 10: '!= 0'\n❌ L9: list.append() takes no keyword arguments\n\n❌ cli-koru_api.testql.toon.yaml:\
+          \ 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485080_koru-core_quick.json.\
           \ Investigate and fix regression, stale quality artifact, or broken diagnostic\
           \ gate."
         source: koru task
@@ -13271,12 +13525,12 @@ sprint:
           \ Check: WUP service=koru-core stage=quick message=\U0001F4DC OQL: cli-koru_api.testql.toon.yaml\n\
           \U0001F4DD SET \"cli_command\" = \"koru-api\"\n\U0001F4DD SET \"timeout_ms\"\
           \ = \"30000\"\n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n\
-          \  \u2705 ASSERT_EXIT_CODE 0\n  \u274C ASSERT_STDOUT_CONTAINS \"usage\"\n\
-          \U0001F4BB SHELL \"koru-api --version\" [5000ms] (dry-run)\n  \u2705 ASSERT_EXIT_CODE\
+          \  ✅ ASSERT_EXIT_CODE 0\n  ❌ ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB\
+          \ SHELL \"koru-api --version\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE\
           \ 0\n\U0001F4BB SHELL \"koru-api --invalid-flag-xyz123\" [5000ms] (dry-run)\n\
-          \u274C Handler error for ASSERT_EXIT_CODE: invalid literal for int() with\
-          \ base 10: '!= 0'\n\u274C L9: list.append() takes no keyword arguments\n\
-          \n\u274C cli-koru_api.testql.toon.yaml: 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485080_koru-core_quick.json.\
+          ❌ Handler error for ASSERT_EXIT_CODE: invalid literal for int() with base\
+          \ 10: '!= 0'\n❌ L9: list.append() takes no keyword arguments\n\n❌ cli-koru_api.testql.toon.yaml:\
+          \ 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485080_koru-core_quick.json.\
           \ Investigate and fix regression, stale quality artifact, or broken diagnostic\
           \ gate."
       labels:
@@ -13295,13 +13549,12 @@ sprint:
             \ Check: WUP service=koru-core stage=quick message=\U0001F4DC OQL: cli-koru_api.testql.toon.yaml\n\
             \U0001F4DD SET \"cli_command\" = \"koru-api\"\n\U0001F4DD SET \"timeout_ms\"\
             \ = \"30000\"\n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n\
-            \  \u2705 ASSERT_EXIT_CODE 0\n  \u274C ASSERT_STDOUT_CONTAINS \"usage\"\
-            \n\U0001F4BB SHELL \"koru-api --version\" [5000ms] (dry-run)\n  \u2705\
-            \ ASSERT_EXIT_CODE 0\n\U0001F4BB SHELL \"koru-api --invalid-flag-xyz123\"\
-            \ [5000ms] (dry-run)\n\u274C Handler error for ASSERT_EXIT_CODE: invalid\
-            \ literal for int() with base 10: '!= 0'\n\u274C L9: list.append() takes\
-            \ no keyword arguments\n\n\u274C cli-koru_api.testql.toon.yaml: 5/7 passed,\
-            \ 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485080_koru-core_quick.json.\
+            \  ✅ ASSERT_EXIT_CODE 0\n  ❌ ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB\
+            \ SHELL \"koru-api --version\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE\
+            \ 0\n\U0001F4BB SHELL \"koru-api --invalid-flag-xyz123\" [5000ms] (dry-run)\n\
+            ❌ Handler error for ASSERT_EXIT_CODE: invalid literal for int() with base\
+            \ 10: '!= 0'\n❌ L9: list.append() takes no keyword arguments\n\n❌ cli-koru_api.testql.toon.yaml:\
+            \ 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485080_koru-core_quick.json.\
             \ Investigate and fix regression, stale quality artifact, or broken diagnostic\
             \ gate."
         timestamp: '2026-05-22T21:24:44.845862+00:00'
@@ -13557,10 +13810,17 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-22T21:48:51.223501+00:00'
-      description: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-        \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij ticket:\
-        \ `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja (opcjonalnie):\
-        \ `task koru:operator:plugin-probe IDE=vscode`"
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        nie sprawdzono — podłącz plugin w IDE
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`'
       execution:
         attempt: 0
         finished_at: '2026-05-22T22:30:37.156889Z'
@@ -13573,10 +13833,17 @@ sprint:
       files: []
       history:
       - action: created
-        message: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-          \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij\
-          \ ticket: `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja\
-          \ (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`"
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`'
         source: koru task
         timestamp: '2026-05-22T21:48:51.223501+00:00'
       - action: update
@@ -13600,10 +13867,17 @@ sprint:
         api_method: GET
         api_timeout_seconds: 30.0
         env_keys: []
-        prompt: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-          \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij\
-          \ ticket: `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja\
-          \ (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`"
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`'
       labels:
       - koru
       - nl-task
@@ -13611,8 +13885,8 @@ sprint:
       - operator
       - auto-pipeline
       - step:autopilot_plugin
-      name: "[OPERATOR] Autopilot: Connect + plugin w czacie nie sprawdzono \u2014\
-        \ pod\u0142\u0105cz plugin w IDE Wykonaj w IDE, potem zamknij ti..."
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie nie sprawdzono — podłącz
+        plugin w IDE Wykonaj w IDE, potem zamknij ti...'
       outputs:
         artifacts: []
         notes: []
@@ -13620,11 +13894,18 @@ sprint:
       source:
         context:
           dedupe_key: koru-operator-pipeline:operator-autopilot-connect-plugin-w-czacie-nie-sprawdzono-pod-cz-plugin-w-ide-wykonaj-w-ide-potem-zamknij-ti...
-          detail: "nie sprawdzono \u2014 pod\u0142\u0105cz plugin w IDE"
-          input: "[OPERATOR] Autopilot: Connect + plugin w czacie\n\nnie sprawdzono\
-            \ \u2014 pod\u0142\u0105cz plugin w IDE\n\nWykonaj w IDE, potem zamknij\
-            \ ticket: `task tickets:done -- <id>` lub planfile ticket done.\n\nWeryfikacja\
-            \ (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`"
+          detail: nie sprawdzono — podłącz plugin w IDE
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            nie sprawdzono — podłącz plugin w IDE
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`'
           step_id: autopilot_plugin
           task_command: task koru:operator:plugin-probe IDE=vscode
         timestamp: '2026-05-22T21:48:51.223501+00:00'

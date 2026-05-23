@@ -11,4 +11,10 @@ class LoadLoopCheckpointSnapshotQuery:
     path: Path
 
 
-__all__ = ["LoadLoopCheckpointSnapshotQuery"]
+@dataclass(frozen=True)
+class LoadCheckpointHistoryQuery:
+    path: Path | None = None
+    limit: int | None = None
+
+
+__all__ = ["LoadCheckpointHistoryQuery", "LoadLoopCheckpointSnapshotQuery"]

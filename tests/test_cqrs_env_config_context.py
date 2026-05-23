@@ -16,9 +16,9 @@ from koru.bounded_contexts.env_config.events import (
     ENV_CONFIG_WRITTEN,
     ENV_UPDATES_APPLIED,
 )
-from koru.bounded_contexts.env_config.queries import LoadEnvConfigQuery
+from koru.bounded_contexts.env_config.queries import LoadEnvConfigHistoryQuery, LoadEnvConfigQuery
 from koru.bounded_contexts.env_config.read_model import EnvConfigEventLogProjection
-from koru.cqrs import EventSourcingRuntime
+from koru.cqrs import EventSourcingRuntime, runtime_for_project
 
 
 def test_env_config_commands_emit_domain_events(tmp_path: Path) -> None:
@@ -64,3 +64,31 @@ def test_env_config_commands_emit_domain_events(tmp_path: Path) -> None:
         ENV_UPDATES_APPLIED,
     ]
     assert projected[0].aggregate_id == str(tmp_path.resolve())
+
+
+def test_env_config_history_query_reads_persisted_events(tmp_path: Path) -> None:
+    runtime = runtime_for_project(tmp_path)
+    command_service = EnvConfigCommandService(runtime)
+    query_service = EnvConfigQueryService(runtime)
+
+    command_service.write(
+        WriteEnvConfigCommand(
+            project=tmp_path,
+            updates={"KORU_VISION_INTERVAL": "45"},
+        )
+    )
+    command_service.apply_updates(
+        ApplyEnvUpdatesCommand(
+            project=tmp_path,
+            updates={"KORU_VISION_SCALE": "0.4"},
+            environ={},
+        )
+    )
+
+    history = query_service.history(LoadEnvConfigHistoryQuery(project=tmp_path, limit=10))
+
+    assert [entry.event_type for entry in history] == [
+        ENV_CONFIG_WRITTEN,
+        ENV_UPDATES_APPLIED,
+    ]
+    assert all(entry.aggregate_id == str(tmp_path.resolve()) for entry in history)

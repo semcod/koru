@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from koru.cqrs import EventSourcingRuntime
+from koru.cqrs import EventLogEntry, EventLogQueryService, EventSourcingRuntime
 from koru.queue.runner import _run_next_planfile_task_impl
 from koru.queue.ticket import parse_next_ticket, planfile_command
 from koru.queue.types import QueueRunResult
@@ -24,6 +24,7 @@ from .events import (
     PlanfileQueueTickError,
 )
 from .queries import LoadNextRunnableTicketQuery
+from .queries import LoadPlanfileQueueHistoryQuery
 
 
 def _event_for_result(result: QueueRunResult) -> tuple[str, dict[str, Any], str]:
@@ -98,6 +99,9 @@ class PlanfileQueueCommandService:
 class PlanfileQueueQueryService:
     """Handles read-only queue queries."""
 
+    def __init__(self, runtime: EventSourcingRuntime | None = None) -> None:
+        self.runtime = runtime or EventSourcingRuntime()
+
     def load_next_runnable_ticket(self, query: LoadNextRunnableTicketQuery) -> dict[str, Any] | None:
         result = planfile_command(
             query.project,
@@ -108,6 +112,13 @@ class PlanfileQueueQueryService:
             return None
         ticket = parse_next_ticket(result.stdout)
         return dict(ticket) if isinstance(ticket, dict) else None
+
+    def history(self, query: LoadPlanfileQueueHistoryQuery) -> list[EventLogEntry]:
+        return EventLogQueryService(self.runtime.store).recent(
+            context=PLANFILE_QUEUE_CONTEXT,
+            aggregate_id=query.ticket_id,
+            limit=query.limit,
+        )
 
 
 __all__ = ["PlanfileQueueCommandService", "PlanfileQueueQueryService"]

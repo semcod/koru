@@ -11,7 +11,7 @@ from koru.autonomous_checkpoint import (
     _stdio_info,
     _write_checkpoint_payload,
 )
-from koru.cqrs import EventSourcingRuntime
+from koru.cqrs import EventLogEntry, EventLogQueryService, EventSourcingRuntime
 
 from .commands import RestoreLoopCheckpointCommand, SaveLoopCheckpointCommand
 from .events import (
@@ -21,7 +21,7 @@ from .events import (
     LoopCheckpointRestored,
     LoopCheckpointSaved,
 )
-from .queries import LoadLoopCheckpointSnapshotQuery
+from .queries import LoadCheckpointHistoryQuery, LoadLoopCheckpointSnapshotQuery
 
 
 class AutonomousCheckpointCommandService:
@@ -80,8 +80,19 @@ class AutonomousCheckpointCommandService:
 class AutonomousCheckpointQueryService:
     """Handles read-only checkpoint queries."""
 
+    def __init__(self, runtime: EventSourcingRuntime | None = None) -> None:
+        self.runtime = runtime or EventSourcingRuntime()
+
     def load_snapshot(self, query: LoadLoopCheckpointSnapshotQuery) -> dict[str, Any] | None:
         return _read_checkpoint_payload(query.path)
+
+    def history(self, query: LoadCheckpointHistoryQuery) -> list[EventLogEntry]:
+        aggregate_id = str(query.path) if query.path is not None else None
+        return EventLogQueryService(self.runtime.store).recent(
+            context=AUTONOMOUS_CHECKPOINT_CONTEXT,
+            aggregate_id=aggregate_id,
+            limit=query.limit,
+        )
 
 
 __all__ = ["AutonomousCheckpointCommandService", "AutonomousCheckpointQueryService"]

@@ -12,4 +12,10 @@ class LoadEnvConfigQuery:
     environ: dict[str, str]
 
 
-__all__ = ["LoadEnvConfigQuery"]
+@dataclass(frozen=True)
+class LoadEnvConfigHistoryQuery:
+    project: Path | None = None
+    limit: int | None = None
+
+
+__all__ = ["LoadEnvConfigHistoryQuery", "LoadEnvConfigQuery"]

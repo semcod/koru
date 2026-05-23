@@ -18,12 +18,13 @@ from koru.bounded_contexts.autonomous_checkpoint.events import (
     LOOP_CHECKPOINT_SAVED,
 )
 from koru.bounded_contexts.autonomous_checkpoint.queries import (
+    LoadCheckpointHistoryQuery,
     LoadLoopCheckpointSnapshotQuery,
 )
 from koru.bounded_contexts.autonomous_checkpoint.read_model import (
     AutonomousCheckpointEventLogProjection,
 )
-from koru.cqrs import EventSourcingRuntime
+from koru.cqrs import EventSourcingRuntime, runtime_for_storage_dir
 from koru.cqrs.event_store import JsonlEventStore
 
 
@@ -104,3 +105,32 @@ def test_public_checkpoint_helpers_round_trip_state(tmp_path: Path) -> None:
         LOOP_CHECKPOINT_SAVED,
         LOOP_CHECKPOINT_RESTORED,
     ]
+
+
+def test_checkpoint_history_query_reads_persisted_events(tmp_path: Path) -> None:
+    path = tmp_path / ".koru" / "checkpoint.json"
+    runtime = runtime_for_storage_dir(path.parent)
+    command_service = AutonomousCheckpointCommandService(runtime)
+    query_service = AutonomousCheckpointQueryService(runtime)
+
+    state = AutoloopState(previous_signature="sig-2")
+    command_service.save(
+        SaveLoopCheckpointCommand(
+            path=path,
+            cycle=2,
+            state=state,
+            queue_status="idle",
+            waiting_ticket="-",
+        ),
+    )
+    command_service.restore(
+        RestoreLoopCheckpointCommand(path=path, state=AutoloopState(), stdio_format="jsonl"),
+    )
+
+    history = query_service.history(LoadCheckpointHistoryQuery(path=path, limit=10))
+
+    assert [entry.event_type for entry in history] == [
+        LOOP_CHECKPOINT_SAVED,
+        LOOP_CHECKPOINT_RESTORED,
+    ]
+    assert all(entry.aggregate_id == str(path) for entry in history)
