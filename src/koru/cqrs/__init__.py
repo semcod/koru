@@ -8,6 +8,7 @@ from typing import Any
 from koru.cqrs.domain_event import DomainEvent
 from koru.cqrs.event_bus import InProcessEventBus
 from koru.cqrs.event_log_projection import EventLogEntry, EventLogProjection
+from koru.cqrs.event_log_query import EventLogQueryService
 from koru.cqrs.event_store import (
     EventStore,
     InMemoryEventStore,
@@ -74,6 +75,7 @@ __all__ = [
     "EventSourcingRuntime",
     "EventLogEntry",
     "EventLogProjection",
+    "EventLogQueryService",
     "InMemoryEventStore",
     "InProcessEventBus",
     "JsonlEventStore",

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from koru.cqrs import DomainEvent, EventLogProjection
+from koru.cqrs import DomainEvent, EventLogProjection, EventLogQueryService
 from koru.cqrs.event_store import JsonlEventStore, StoredEvent
 
 
@@ -81,6 +81,63 @@ def test_event_log_projection_filters_context_and_applies_recent_limit() -> None
     last_entry = projection.recent(limit=1)
     assert [entry.sequence for entry in last_entry] == [3]
     assert projection.recent(limit=0) == []
+
+
+def test_event_log_projection_can_replay_store_and_filter_aggregate(tmp_path: Path) -> None:
+    path = tmp_path / ".koru" / "event-store.jsonl"
+    store = JsonlEventStore(path)
+    store.append(
+        context="topology",
+        event_type="topology.component_toggled",
+        payload={"component_id": "redsl"},
+        aggregate_id="redsl",
+    )
+    store.append(
+        context="topology",
+        event_type="topology.pipeline_toggled",
+        payload={"pipeline_id": "gate:wup"},
+        aggregate_id="gate:wup",
+    )
+    store.append(
+        context="local_manager",
+        event_type="local_manager.action_enqueued",
+        payload={"action_id": "a-1"},
+        aggregate_id="a-1",
+    )
+
+    projection = EventLogProjection(context="topology")
+    projection.replay(store)
+
+    assert [entry.event_type for entry in projection.recent()] == [
+        "topology.component_toggled",
+        "topology.pipeline_toggled",
+    ]
+    assert [entry.aggregate_id for entry in projection.recent(aggregate_id="redsl")] == ["redsl"]
+
+
+def test_event_log_query_service_reads_recent_history(tmp_path: Path) -> None:
+    path = tmp_path / ".koru" / "event-store.jsonl"
+    store = JsonlEventStore(path)
+    store.append(
+        context="tasks",
+        event_type="tasks.created",
+        payload={"ticket_id": "PLF-001"},
+        aggregate_id="PLF-001",
+    )
+    store.append(
+        context="tasks",
+        event_type="tasks.reused",
+        payload={"ticket_id": "PLF-001"},
+        aggregate_id="PLF-001",
+    )
+
+    history = EventLogQueryService(store).recent(
+        context="tasks",
+        aggregate_id="PLF-001",
+        limit=1,
+    )
+
+    assert [entry.event_type for entry in history] == ["tasks.reused"]
 
 
 def test_jsonl_event_store_persists_and_reloads(tmp_path: Path) -> None:
