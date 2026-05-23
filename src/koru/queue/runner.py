@@ -263,7 +263,7 @@ def _finalize_ticket(
     )
 
 
-def run_next_planfile_task(
+def _run_next_planfile_task_impl(
     *,
     project: Path,
     actor: str = "koru-shell",
@@ -391,3 +391,36 @@ def run_next_planfile_task(
             action_label,
             planfile_runner,
         )
+
+
+def run_next_planfile_task(
+    *,
+    project: Path,
+    actor: str = "koru-shell",
+    dry_run: bool = False,
+    queue_name: str | None = None,
+    interactive: bool = False,
+    planfile_runner: Callable[[list[str], Path], CommandResult] = run_process,
+    shell_runner: Callable[[str, Path], CommandResult] = run_shell_command,
+    api_runner: Callable[[dict[str, any], Path], CommandResult] = run_api_request,
+    llm_runner: Callable[[dict[str, any], Path], CommandResult] = run_llm_request,
+    prompt_runner: Callable[[str, str], str | None] = default_human_prompt,
+) -> QueueRunResult:
+    from koru.bounded_contexts.planfile_queue.application import PlanfileQueueCommandService
+    from koru.bounded_contexts.planfile_queue.commands import RunNextPlanfileTaskCommand
+    from koru.cqrs import runtime_for_project
+
+    return PlanfileQueueCommandService(runtime=runtime_for_project(project)).run_next_task(
+        RunNextPlanfileTaskCommand(
+            project=project,
+            actor=actor,
+            dry_run=dry_run,
+            queue_name=queue_name,
+            interactive=interactive,
+            planfile_runner=planfile_runner,
+            shell_runner=shell_runner,
+            api_runner=api_runner,
+            llm_runner=llm_runner,
+            prompt_runner=prompt_runner,
+        )
+    )

@@ -7,11 +7,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.230-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$6.34-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-96.8h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.231-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$6.62-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-97.3h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $6.3385 (301 commits)
-- 👤 **Human dev:** ~$9682 (96.8h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $6.6248 (302 commits)
+- 👤 **Human dev:** ~$9732 (97.3h @ $100/h, 30min dedup)
 
 Generated on 2026-05-23 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -229,7 +229,7 @@ The cycle telemetry records the decision so it's visible in the dashboard:
 * `autopilot_llx_reflection={"done":…,"needs_input":…,"summary":…}` — only
   when `KORU_LLM_REFLECT=1`.
 
-If you want koru to "react to the IDE chat" the way the operator described:
+If you want koru to "react to the IDE chat" the way the operator described (using OpenRouter / LLM-reflection to inspect the chat context, make autonomous decisions, and drive Cascade/Cursor):
 
 ```bash
 pip install -U llx                 # OpenRouter-aware router
@@ -237,6 +237,27 @@ export OPENROUTER_API_KEY=sk-…     # or whatever llx asks for
 export KORU_LLM_REFLECT=1
 export KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS=300
 koru auto
+```
+
+In this mode:
+- Koru **reads the active IDE chat history** dynamically.
+- Refers to **OpenRouter LLMs** to intelligently reflect on whether the IDE agent successfully completed the task, is stuck, or requires a corrective prompt.
+- Automatically drives the chat with **adaptive prompt escalation** instead of blindly pasting text.
+
+### Live Plugin Console Logs on the Dashboard
+
+You can now diagnose issues within the Windsurf/Cursor/VS Code extension host dynamically (e.g. chat panels closing unexpectedly) **without opening the IDE Developer Tools**:
+1. Run the local dashboard: `koru serve --project .` (or through `koru observe up`).
+2. Navigate to **`http://127.0.0.1:8765/`** and select the **`Plugin logs`** tab.
+3. Logs are automatically grouped into **collapsible service execution sessions**.
+4. To avoid clutter and optimize bandwidth, logs are strictly **clamped to 10KB per session**.
+5. Use the built-in interactive buttons to:
+   - **Copy to Clipboard** — copies full/session logs with a temporary green "Copied!" feedback badge.
+   - **Download .log file** — downloads raw log files (`koru-plugin-console.log`) directly to your machine.
+
+You can also inspect plugin console logs at any time on the terminal using:
+```bash
+koru doctor
 ```
 
 ### Quick troubleshooting

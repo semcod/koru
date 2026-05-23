@@ -43,7 +43,12 @@ def _require_observe_runtime() -> None:
     if not missing:
         return
     names = ", ".join(name for name, _ in missing)
-    raise RuntimeError(f"missing observation dependency {names}; {_INSTALL_HINT}")
+    print(f"koru observe: missing observation dependency {names}. Attempting automatic installation...")
+    specs = [spec for _, spec in missing]
+    rc = _pip_install(specs)
+    if rc != 0:
+        raise RuntimeError(f"automatic installation of {names} failed with exit code {rc}; {_INSTALL_HINT}")
+    print("koru observe: dependencies installed successfully!")
 
 
 def _pip_install(specs: list[str]) -> int:

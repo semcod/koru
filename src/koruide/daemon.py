@@ -177,8 +177,19 @@ class _PluginEventHandoff:
 # Thread-safe storage for plugin console logs (for koru doctor)
 _console_logs_lock = threading.Lock()
 _console_logs: list[dict[str, Any]] = []
-_MAX_CONSOLE_LOGS = 1000
+_MAX_CONSOLE_LOGS = 2000
 _STATUS_CONSOLE_LOGS_LIMIT = 80
+_current_session_id = "initial"
+_current_session_name = "Initial Session"
+
+
+def start_new_log_session(session_id: str | None = None, name: str | None = None) -> None:
+    """Start a new console log session (service execution)."""
+    global _current_session_id, _current_session_name
+    from datetime import datetime
+    with _console_logs_lock:
+        _current_session_id = session_id or datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        _current_session_name = name or f"Session at {datetime.now().strftime('%H:%M:%S')}"
 
 
 def add_console_log(
@@ -194,6 +205,8 @@ def add_console_log(
         "message": message,
         "data": data,
         "timestamp": timestamp,
+        "session_id": _current_session_id,
+        "session_name": _current_session_name,
     }
     if ide:
         entry["ide"] = ide
@@ -207,14 +220,53 @@ def add_console_log(
 
 
 def get_console_logs(*, limit: int | None = None) -> list[dict[str, Any]]:
-    """Retrieve all stored console logs."""
+    """Retrieve all stored console logs with 10KB clamping per session."""
     with _console_logs_lock:
         rows = list(_console_logs)
+
+    # Group rows by session
+    sessions: dict[str, list[dict[str, Any]]] = {}
+    session_order: list[str] = []
+    for row in rows:
+        sid = row.get("session_id", "default")
+        if sid not in sessions:
+            sessions[sid] = []
+            session_order.append(sid)
+        sessions[sid].append(row)
+
+    # Apply 10KB clamping per session
+    clamped_rows: list[dict[str, Any]] = []
+    for sid in session_order:
+        s_rows = sessions[sid]
+        total_size = 0
+        keep_rows: list[dict[str, Any]] = []
+        truncated = False
+        
+        # Add from newest to oldest up to 10KB
+        for row in reversed(s_rows):
+            msg_len = len(row.get("message") or "")
+            if total_size + msg_len <= 10240:
+                keep_rows.insert(0, row)
+                total_size += msg_len
+            else:
+                truncated = True
+                
+        if truncated and keep_rows:
+            first_ts = keep_rows[0].get("timestamp", "")
+            keep_rows.insert(0, {
+                "message": "[... session log truncated to 10KB ...]",
+                "timestamp": first_ts,
+                "session_id": sid,
+                "session_name": s_rows[0].get("session_name", "Session"),
+                "truncated": True
+            })
+        clamped_rows.extend(keep_rows)
+
     if limit is None:
-        return rows
+        return clamped_rows
     if limit <= 0:
         return []
-    return rows[-limit:]
+    return clamped_rows[-limit:]
 
 
 def clear_console_logs() -> None:
@@ -1079,6 +1131,11 @@ class AutopilotDaemon:
         )
 
     def _handle_plugin_event(self, client: _Client, msg: Message) -> None:
+        if msg.type == "session.started":
+            start_new_log_session(
+                session_id=msg.data.get("session_id"),
+                name=msg.data.get("session_name") or msg.data.get("reason")
+            )
         handoff = self._handle_plugin_event_basic(client, msg)
         if handoff is None:
             return

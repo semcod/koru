@@ -102,8 +102,9 @@ def load_loop_checkpoint(
     from koru.bounded_contexts.autonomous_checkpoint.commands import (
         RestoreLoopCheckpointCommand,
     )
+    from koru.cqrs import runtime_for_storage_dir
 
-    return AutonomousCheckpointCommandService().restore(
+    return AutonomousCheckpointCommandService(runtime=runtime_for_storage_dir(path.parent)).restore(
         RestoreLoopCheckpointCommand(path=path, state=state, stdio_format=stdio_format),
     )
 
@@ -162,8 +163,9 @@ def save_loop_checkpoint(
         AutonomousCheckpointCommandService,
     )
     from koru.bounded_contexts.autonomous_checkpoint.commands import SaveLoopCheckpointCommand
+    from koru.cqrs import runtime_for_storage_dir
 
-    AutonomousCheckpointCommandService().save(
+    AutonomousCheckpointCommandService(runtime=runtime_for_storage_dir(path.parent)).save(
         SaveLoopCheckpointCommand(
             path=path,
             cycle=cycle,

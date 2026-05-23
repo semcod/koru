@@ -233,7 +233,9 @@ def _write_env_file(project: Path, updates: dict[str, str]) -> Path:
 def write_env_config(project: Path, updates: dict[str, str]) -> Path:
     """Merge ``updates`` into ``<project>/.env`` preserving comments and order."""
     from koru.bounded_contexts.env_config.application import EnvConfigCommandService
-    return EnvConfigCommandService().write(
+    from koru.cqrs import runtime_for_project
+
+    return EnvConfigCommandService(runtime=runtime_for_project(project)).write(
         WriteEnvConfigCommand(project=project, updates=updates),
     )
 
@@ -241,7 +243,9 @@ def write_env_config(project: Path, updates: dict[str, str]) -> Path:
 def apply_env_updates(updates: dict[str, str]) -> None:
     """Push updated values into ``os.environ`` (skips empty strings to allow unset)."""
     from koru.bounded_contexts.env_config.application import EnvConfigCommandService
-    EnvConfigCommandService().apply_updates(
+    from koru.cqrs import runtime_for_project
+
+    EnvConfigCommandService(runtime=runtime_for_project(Path.cwd())).apply_updates(
         ApplyEnvUpdatesCommand(project=Path.cwd(), updates=updates, environ=os.environ),
     )
 

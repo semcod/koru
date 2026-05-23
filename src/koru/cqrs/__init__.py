@@ -2,12 +2,20 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from koru.cqrs.domain_event import DomainEvent
 from koru.cqrs.event_bus import InProcessEventBus
 from koru.cqrs.event_log_projection import EventLogEntry, EventLogProjection
-from koru.cqrs.event_store import InMemoryEventStore, StoredEvent
+from koru.cqrs.event_store import (
+    EventStore,
+    InMemoryEventStore,
+    JsonlEventStore,
+    StoredEvent,
+    project_event_store_path,
+    storage_dir_event_store_path,
+)
 
 
 class EventSourcingRuntime:
@@ -16,7 +24,7 @@ class EventSourcingRuntime:
     def __init__(
         self,
         *,
-        store: InMemoryEventStore | None = None,
+        store: EventStore | None = None,
         bus: InProcessEventBus | None = None,
     ) -> None:
         self.store = store or InMemoryEventStore()
@@ -42,12 +50,36 @@ class EventSourcingRuntime:
         return event
 
 
+def runtime_for_project(project: Path, *, bus: InProcessEventBus | None = None) -> EventSourcingRuntime:
+    return EventSourcingRuntime(
+        store=JsonlEventStore(project_event_store_path(project)),
+        bus=bus,
+    )
+
+
+def runtime_for_storage_dir(
+    storage_dir: Path,
+    *,
+    bus: InProcessEventBus | None = None,
+) -> EventSourcingRuntime:
+    return EventSourcingRuntime(
+        store=JsonlEventStore(storage_dir_event_store_path(storage_dir)),
+        bus=bus,
+    )
+
+
 __all__ = [
     "DomainEvent",
+    "EventStore",
     "EventSourcingRuntime",
     "EventLogEntry",
     "EventLogProjection",
     "InMemoryEventStore",
     "InProcessEventBus",
+    "JsonlEventStore",
     "StoredEvent",
+    "project_event_store_path",
+    "runtime_for_project",
+    "runtime_for_storage_dir",
+    "storage_dir_event_store_path",
 ]

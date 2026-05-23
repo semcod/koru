@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 from koru.cqrs import DomainEvent, EventLogProjection
-from koru.cqrs.event_store import StoredEvent
+from koru.cqrs.event_store import JsonlEventStore, StoredEvent
 
 
 @dataclass(frozen=True)
@@ -80,3 +81,31 @@ def test_event_log_projection_filters_context_and_applies_recent_limit() -> None
     last_entry = projection.recent(limit=1)
     assert [entry.sequence for entry in last_entry] == [3]
     assert projection.recent(limit=0) == []
+
+
+def test_jsonl_event_store_persists_and_reloads(tmp_path: Path) -> None:
+    path = tmp_path / ".koru" / "event-store.jsonl"
+    store = JsonlEventStore(path)
+
+    first = store.append(
+        context="tasks",
+        event_type="tasks.created",
+        payload={"ticket_id": "PLF-001"},
+        aggregate_id="PLF-001",
+    )
+    second = store.append(
+        context="tasks",
+        event_type="tasks.reused",
+        payload={"ticket_id": "PLF-001"},
+        aggregate_id="PLF-001",
+    )
+
+    reloaded = JsonlEventStore(path)
+
+    assert first.sequence == 1
+    assert second.sequence == 2
+    assert [event.sequence for event in reloaded.all_events(context="tasks")] == [1, 2]
+    assert [event.event_type for event in reloaded.events_for_aggregate(context="tasks", aggregate_id="PLF-001")] == [
+        "tasks.created",
+        "tasks.reused",
+    ]

@@ -24,6 +24,7 @@ from koru.bounded_contexts.autonomous_checkpoint.read_model import (
     AutonomousCheckpointEventLogProjection,
 )
 from koru.cqrs import EventSourcingRuntime
+from koru.cqrs.event_store import JsonlEventStore
 
 
 def test_autonomous_checkpoint_commands_emit_domain_events(tmp_path: Path) -> None:
@@ -95,3 +96,11 @@ def test_public_checkpoint_helpers_round_trip_state(tmp_path: Path) -> None:
     assert cycle == 4
     assert restored.previous_signature == "sig-1"
     assert restored.scan_clean_streak == 3
+
+    events = JsonlEventStore(path.parent / "event-store.jsonl").all_events(
+        context=AUTONOMOUS_CHECKPOINT_CONTEXT
+    )
+    assert [event.event_type for event in events] == [
+        LOOP_CHECKPOINT_SAVED,
+        LOOP_CHECKPOINT_RESTORED,
+    ]

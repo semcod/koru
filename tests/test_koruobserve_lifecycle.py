@@ -131,7 +131,8 @@ def test_require_observe_runtime_reports_missing_packages(monkeypatch) -> None:
         "find_spec",
         lambda name: None if name in {"websockets", "mss"} else object(),
     )
-    with pytest.raises(RuntimeError, match="missing observation dependency"):
+    monkeypatch.setattr(observe_cli, "_pip_install", lambda specs: 1)
+    with pytest.raises(RuntimeError, match="automatic installation.*failed"):
         observe_cli._require_observe_runtime()
 
 

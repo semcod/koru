@@ -68,6 +68,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.231] - 2026-05-23
+
+### Docs
+- Update README.md
+- Update docs/refactoring_plan.md
+
+### Test
+- Update tests/test_cqrs_autonomous_checkpoint_context.py
+- Update tests/test_cqrs_planfile_queue_context.py
+- Update tests/test_cqrs_primitives.py
+- Update tests/test_cqrs_tasks_context.py
+- Update tests/test_koruobserve_lifecycle.py
+- Update tests/test_planfile_queue.py
+- Update tests/test_tasks.py
+
+### Other
+- Update .planfile/sprints/current.yaml
+- Update src/koruapi/dashboard_template.html
+- Update uv.lock
+
+## [0.1.231] - 2026-05-23
+
+### Docs
+- Update README.md
+- Update docs/refactoring_plan.md
+
+### Test
+- Update tests/test_cqrs_autonomous_checkpoint_context.py
+- Update tests/test_cqrs_planfile_queue_context.py
+- Update tests/test_cqrs_primitives.py
+- Update tests/test_cqrs_tasks_context.py
+- Update tests/test_koruobserve_lifecycle.py
+- Update tests/test_planfile_queue.py
+- Update tests/test_tasks.py
+
+### Other
+- Update .planfile/sprints/current.yaml
+- Update src/koruapi/dashboard_template.html
+- Update uv.lock
+
 ## [0.1.230] - 2026-05-23
 
 ### Docs

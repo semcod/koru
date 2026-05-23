@@ -6,6 +6,7 @@ from pathlib import Path
 
 import yaml
 
+from koru.cqrs.event_store import JsonlEventStore
 from koru.tasks import create_nl_task
 
 
@@ -105,3 +106,13 @@ class TestNaturalLanguageTask(unittest.TestCase):
             self.assertEqual(second.ticket_id, first.ticket_id)
             config = yaml.safe_load((project / ".planfile" / "config.yaml").read_text())
             self.assertEqual(config["next_id"], 2)
+
+
+def test_create_nl_task_persists_domain_event(tmp_path: Path) -> None:
+    created = create_nl_task(tmp_path, "Persist CQRS task")
+
+    events = JsonlEventStore(tmp_path / ".koru" / "event-store.jsonl").all_events(context="tasks")
+
+    assert created.ticket_id == "PLF-001"
+    assert [event.event_type for event in events] == ["tasks.created"]
+    assert events[0].aggregate_id == created.ticket_id

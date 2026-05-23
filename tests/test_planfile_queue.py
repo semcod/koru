@@ -8,6 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from koru.cqrs.event_store import JsonlEventStore
 from koru.queue import run_next_planfile_task
 from koru.queue.ticket import planfile_command
 
@@ -391,6 +392,37 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(result.status, "planfile_error")
             self.assertEqual(result.exit_code, 2)
             self.assertEqual(result.stderr, "planfile broken")
+
+
+def test_run_next_planfile_task_persists_queue_event(tmp_path: Path) -> None:
+    ticket = {
+        "id": "PLF-900",
+        "name": "Persist queue event",
+        "executor": {"kind": "shell", "handler": "echo ok"},
+        "execution": {"state": "ready"},
+    }
+
+    def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+        if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
+            return _ok(json.dumps(ticket))
+        return _ok()
+
+    def shell_runner(_command: str, _project: Path) -> SimpleNamespace:
+        return SimpleNamespace(returncode=0, stdout="ok\n", stderr="")
+
+    result = run_next_planfile_task(
+        project=tmp_path,
+        planfile_runner=planfile_runner,
+        shell_runner=shell_runner,
+    )
+
+    events = JsonlEventStore(tmp_path / ".koru" / "event-store.jsonl").all_events(
+        context="planfile_queue"
+    )
+
+    assert result.status == "completed"
+    assert [event.event_type for event in events] == ["planfile_queue.task_completed"]
+    assert events[0].aggregate_id == "PLF-900"
 
     def test_dry_run_returns_command_without_executing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

@@ -313,6 +313,7 @@ const tabs = [
   ["runtime", "Runtime"],
   ["topology", "Topology"],
   ["policy", "Policy"],
+  ["plugin-logs", "Plugin logs"],
   ["system", "System config"],
   ["settings", "Settings"],
   ["all", "All"],
@@ -992,6 +993,9 @@ function renderViewContent(ctx, topo, runtime, configPayload, envConfigPayload) 
       renderPolicy(ctx.policy),
       renderSelfService(ctx.self_service),
     ],
+    "plugin-logs": [
+      renderPluginLogs(),
+    ],
     system: [
       renderEnvConfig(envConfigPayload),
       renderSystemConfig(configPayload),
@@ -1013,6 +1017,7 @@ function renderViewContent(ctx, topo, runtime, configPayload, envConfigPayload) 
       renderRuntimeContext(runtime),
       renderTopology(topo),
       renderPolicy(ctx.policy),
+      renderPluginLogs(),
     ],
   };
   return (views[state.tab] || views.overview).filter(Boolean).join("");
@@ -1102,6 +1107,165 @@ async function postRuntimeContextToggle(section, enabled) {
       status.classList.add("err");
     }
   }
+}
+
+function renderPluginLogs() {
+  setTimeout(loadPluginLogsAsync, 50);
+  return panel("Plugin Console Logs (grouped by service execution)", `
+    <div style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      <button onclick="copyAllPluginLogs()" class="primary">Copy All to Clipboard</button>
+      <button onclick="downloadAllPluginLogs()">Download All Logs</button>
+      <button onclick="loadPluginLogsAsync()">Refresh</button>
+      <span id="plugin-logs-source" class="pill ok">loading...</span>
+    </div>
+    <div id="plugin-logs-sessions-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
+  `, true);
+}
+
+let lastFetchedLogs = [];
+
+async function loadPluginLogsAsync() {
+  const container = $("plugin-logs-sessions-container");
+  const sourceIndicator = $("plugin-logs-source");
+  if (!container) return;
+  try {
+    const res = await fetch("/api/plugin-logs" + projectQuery(), { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    lastFetchedLogs = data.logs || [];
+    
+    if (sourceIndicator) {
+      sourceIndicator.textContent = "source: " + (data.source || "unknown") + " (" + lastFetchedLogs.length + " entries)";
+      sourceIndicator.className = "pill " + (data.source === "daemon" ? "ok" : "warn");
+    }
+    
+    if (!lastFetchedLogs.length) {
+      container.innerHTML = '<span class="muted">No console logs recorded yet.</span>';
+      return;
+    }
+    
+    // Group rows by session
+    const sessions = {};
+    const sessionOrder = [];
+    lastFetchedLogs.forEach(row => {
+      const sid = row.session_id || "default";
+      if (!sessions[sid]) {
+        sessions[sid] = {
+          id: sid,
+          name: row.session_name || "Service Execution",
+          rows: []
+        };
+        sessionOrder.push(sid);
+      }
+      sessions[sid].rows.push(row);
+    });
+    
+    // Generate HTML for each session
+    container.innerHTML = sessionOrder.reverse().map((sid, index) => {
+      const sess = sessions[sid];
+      const text = sess.rows.map(row => {
+        const ts = row.timestamp ? `[${row.timestamp}] ` : "";
+        return ts + (row.message || "");
+      }).join("\n");
+      
+      const isTruncated = sess.rows.some(r => r.truncated);
+      const truncBadge = isTruncated ? ' <span class="pill err">clamped to 10KB</span>' : "";
+      
+      // Expand the latest session by default, collapse others
+      const openAttr = index === 0 ? "open" : "";
+      
+      return `
+        <details ${openAttr} style="border: 1px solid var(--border); border-radius: 6px; background: var(--panel); overflow: hidden;">
+          <summary style="padding: 10px 14px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #1a1d28; user-select: none;">
+            <div>
+              <span style="color: var(--accent); font-family: monospace;">〰</span> 
+              <span>${esc(sess.name)}</span>
+              ${truncBadge}
+            </div>
+            <div style="display: flex; gap: 6px;" onclick="event.stopPropagation()">
+              <button onclick="copySessionLogs('${attr(sid)}', this)" style="padding: 2px 8px; font-size: 11px;">Copy</button>
+              <button onclick="downloadSessionLogs('${attr(sid)}')" style="padding: 2px 8px; font-size: 11px;">Download</button>
+            </div>
+          </summary>
+          <div style="padding: 10px; background: #0a0c11; border-top: 1px solid var(--border);">
+            <pre style="margin: 0; max-height: 350px; overflow-y: auto; background: transparent; border: none; color: #a8b3cf; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; text-align: left;">${esc(text)}</pre>
+          </div>
+        </details>
+      `;
+    }).join("");
+    
+  } catch (e) {
+    container.innerHTML = `<span class="muted err">Failed to load logs: ${esc(e.message)}</span>`;
+  }
+}
+
+function getSessionText(sid) {
+  const rows = lastFetchedLogs.filter(row => (row.session_id || "default") === sid);
+  return rows.map(row => {
+    const ts = row.timestamp ? `[${row.timestamp}] ` : "";
+    return ts + (row.message || "");
+  }).join("\n");
+}
+
+function copySessionLogs(sid, btn) {
+  const text = getSessionText(sid);
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = "Copied!";
+    btn.style.background = "var(--accent)";
+    btn.style.color = "#0f1115";
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ""; btn.style.color = ""; }, 1500);
+  }).catch(err => {
+    window.alert("Copy failed: " + err);
+  });
+}
+
+function downloadSessionLogs(sid) {
+  const text = getSessionText(sid);
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `koru-session-${sid}.log`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function getAllLogsText() {
+  return lastFetchedLogs.map(row => {
+    const ts = row.timestamp ? `[${row.timestamp}] ` : "";
+    return ts + (row.message || "");
+  }).join("\n");
+}
+
+function copyAllPluginLogs() {
+  const text = getAllLogsText();
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector("button[onclick='copyAllPluginLogs()']");
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = "Copied!";
+      btn.className = "primary ok";
+      setTimeout(() => { btn.textContent = orig; btn.className = "primary"; }, 1500);
+    }
+  }).catch(err => {
+    window.alert("Copy failed: " + err);
+  });
+}
+
+function downloadAllPluginLogs() {
+  const text = getAllLogsText();
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "koru-all-plugin-console.log";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function selectedWaitingTickets() {
@@ -1197,32 +1361,6 @@ async function postDashboardConfig() {
   localStorage.setItem("koru.dashboard.ide", state.ide);
   if (status) { status.textContent = `saved ${data.path}`; status.className = "muted ok"; }
   setTimeout(refresh, 200);
-}
-
-async function postEnvConfig(form) {
-  const status = $("env-config-status");
-  if (status) { status.textContent = "saving .env…"; status.className = "muted"; }
-  const values = {};
-  Array.from(form.querySelectorAll("input[name]")).forEach((input) => {
-    values[input.getAttribute("name")] = input.value;
-  });
-  noteChange("system.env.koru", "structured");
-  const res = await fetch("/api/env-config", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody({ values })),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error("HTTP " + res.status + ": " + text);
-  }
-  const data = await res.json();
-  if (status) {
-    const applied = Array.isArray(data.applied) ? data.applied.length : 0;
-    status.textContent = `saved ${applied} key(s) to ${data.path || ".env"}`;
-    status.className = "muted ok";
-  }
-  setTimeout(refresh, 150);
 }
 
 async function postEnvConfig(form) {
