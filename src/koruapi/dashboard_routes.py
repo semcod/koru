@@ -394,6 +394,24 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
                 return
             self._send_json(result)
 
+        def _post_remote_drive(self, body: dict[str, Any]) -> None:
+            ide = str(body.get("ide") or "").strip()
+            text = str(body.get("text") or "").strip()
+            require_plugin = bool(body.get("require_plugin", False))
+            if not ide or not text:
+                self._send_json({"error": "ide and text are required"}, status=400)
+                return
+            try:
+                from koruide.socket import default_socket_path
+                from koru.autopilot.client import AutopilotClient
+                
+                socket_path = default_socket_path()
+                client = AutopilotClient(socket_path=socket_path, timeout=5.0)
+                res = client.drive(ide=ide, text=text, require_plugin=require_plugin)
+                self._send_json({"ok": True, "result": res})
+            except Exception as exc:
+                self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+
         def _post_ticket_reorder(self, body: dict[str, Any]) -> None:
             ticket_id = str(body.get("ticket_id") or "").strip()
             direction = str(body.get("direction") or "").strip().lower()
@@ -444,6 +462,7 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
                 "/api/tickets/create": self._post_ticket_create,
                 "/api/tickets/update": self._post_ticket_update,
                 "/api/tickets/reorder": self._post_ticket_reorder,
+                "/api/remote/drive": self._post_remote_drive,
             }.get(path)
             if route is not None:
                 route(body)

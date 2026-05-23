@@ -13681,6 +13681,13 @@ sprint:
           gate.'
         source: koru task
         timestamp: '2026-05-22T21:27:42.861459+00:00'
+      - action: update
+        changes:
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-23T15:15:55.172731+00:00'
       id: STARTER-192
       inputs:
         api_headers: {}
@@ -13722,9 +13729,9 @@ sprint:
         timestamp: '2026-05-22T21:27:42.861459+00:00'
         tool: koru-cli-nl
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-22T21:27:42.861459+00:00'
+      updated_at: '2026-05-23T15:15:55.172686+00:00'
     STARTER-193:
       blocked_by: []
       blocks: []
@@ -13762,6 +13769,13 @@ sprint:
           gate.'
         source: koru task
         timestamp: '2026-05-22T21:43:25.707801+00:00'
+      - action: update
+        changes:
+        - status
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-23T15:15:57.557152+00:00'
       id: STARTER-193
       inputs:
         api_headers: {}
@@ -13803,9 +13817,9 @@ sprint:
         timestamp: '2026-05-22T21:43:25.707801+00:00'
         tool: koru-cli-nl
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-22T21:43:25.707801+00:00'
+      updated_at: '2026-05-23T15:15:57.557089+00:00'
     STARTER-196:
       blocked_by: []
       blocks: []

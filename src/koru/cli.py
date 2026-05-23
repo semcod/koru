@@ -462,6 +462,7 @@ def _should_suggest_wizard(argv: list[str], project: Path) -> bool:
 
 
 _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
+    "events": lambda argv: __import__("koru.cli_events", fromlist=["events_main"]).events_main(argv),
     "doctor": lambda argv: __import__("koru.cli_doctor", fromlist=["doctor_subcommand_main"]).doctor_subcommand_main(argv),
     "configure": lambda argv: __import__("koru.configurator", fromlist=["configure_main"]).configure_main(argv),
     "mesh": lambda argv: __import__("korumesh.cli", fromlist=["mesh_main"]).mesh_main(argv),

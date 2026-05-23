@@ -14,6 +14,7 @@ from pathlib import Path
 from unittest import mock
 
 from koru.cli import _SUBCOMMANDS, _build_parser, _dispatch_auto_alias, _is_bare_invocation, main
+from koru.cqrs import runtime_for_project
 
 
 def _tmp_git_project(prefix: str = "koru-cli-test-") -> Path:
@@ -408,6 +409,95 @@ class TestAutoMain(unittest.TestCase):
         autonomous.assert_called_once_with(["--help"], invoked_as_auto=True)
 
 
+
+class TestEventsSubcommand(unittest.TestCase):
+    def setUp(self) -> None:
+        self.project = _tmp_git_project("koru-cli-events-")
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.project, ignore_errors=True)
+
+    def test_events_json_reports_context_history(self) -> None:
+        runtime = runtime_for_project(self.project)
+        runtime.append_event(
+            context="tasks",
+            event_type="tasks.created",
+            payload={"ticket_id": "PLF-001"},
+            aggregate_id="PLF-001",
+        )
+
+        code, output = _run_main(
+            "events",
+            "--project",
+            str(self.project),
+            "--context",
+            "tasks",
+            "--format",
+            "json",
+        )
+
+        self.assertEqual(code, 0)
+        data = json.loads(output)
+        self.assertEqual(data["context"], "tasks")
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["events"][0]["event_type"], "tasks.created")
+
+    def test_events_filters_by_aggregate_id(self) -> None:
+        runtime = runtime_for_project(self.project)
+        runtime.append_event(
+            context="tasks",
+            event_type="tasks.created",
+            payload={"ticket_id": "PLF-001"},
+            aggregate_id="PLF-001",
+        )
+        runtime.append_event(
+            context="tasks",
+            event_type="tasks.created",
+            payload={"ticket_id": "PLF-002"},
+            aggregate_id="PLF-002",
+        )
+
+        code, output = _run_main(
+            "events",
+            "--project",
+            str(self.project),
+            "--context",
+            "tasks",
+            "--aggregate-id",
+            "PLF-002",
+            "--format",
+            "json",
+        )
+
+        self.assertEqual(code, 0)
+        data = json.loads(output)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["events"][0]["aggregate_id"], "PLF-002")
+
+    def test_events_text_format(self) -> None:
+        runtime = runtime_for_project(self.project)
+        runtime.append_event(
+            context="planfile_queue",
+            event_type="planfile_queue.task_completed",
+            payload={"ticket_id": "PLF-900"},
+            aggregate_id="PLF-900",
+        )
+
+        code, output = _run_main(
+            "events",
+            "--project",
+            str(self.project),
+            "--context",
+            "planfile_queue",
+            "--format",
+            "text",
+        )
+
+        self.assertEqual(code, 0)
+        self.assertIn("koru events context=planfile_queue", output)
+        self.assertIn("planfile_queue.task_completed", output)
+
+
 class TestDoctorReexecToProjectVenv(unittest.TestCase):
     def _prepare_local_koru(self, project: Path) -> Path:
         local_koru = project / ".venv" / "bin" / "koru"
@@ -500,6 +590,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "runtime-context",
             "refactor-planfile-handoff",
             "dev",
+            "events",
         },
     )
 
