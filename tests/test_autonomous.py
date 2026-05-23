@@ -1842,6 +1842,17 @@ def test_skip_due_to_recent_chat_activity_passes_events_to_llx_reflection(
     tmp_path,
     monkeypatch,
 ) -> None:
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    PLF-2010:
+      labels: [llm-ready]
+""",
+        encoding="utf-8",
+    )
     monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
     queue_result = QueueLoopResult(
         iterations=1,
@@ -1981,6 +1992,17 @@ def test_skip_due_to_recent_chat_activity_dedupes_needs_input_ticket_upsert(
     tmp_path,
     monkeypatch,
 ) -> None:
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    PLF-2013:
+      labels: [llm-ready]
+""",
+        encoding="utf-8",
+    )
     monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
     queue_result = QueueLoopResult(
         iterations=1,
@@ -2160,6 +2182,94 @@ def test_skip_due_to_recent_chat_activity_heuristic_can_be_disabled(
     assert should_skip is True
     assert create_calls == []
     assert telemetry.get("autopilot_needs_input_heuristic") is None
+
+
+def test_skip_chat_activity_blocks_redrive_for_llm_ready_ticket(
+    tmp_path, monkeypatch
+) -> None:
+    """llm-ready tickets keep cooldown even when message.received is missing."""
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    PLF-2001:
+      labels: [llm-ready]
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-2001"],
+        last_status="waiting_input",
+        last_message="continue CQRS refactor",
+    )
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": autonomous_cycle_mod.time.time() - 30.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "Architektura: wprowadź CQRS",
+            },
+        ],
+    )
+    telemetry: dict[str, object] = {}
+    logs: list[str] = []
+    should_skip = autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=logs.append,
+    )
+    assert should_skip is True
+    assert telemetry.get("autopilot_skipped_chat_activity") is True
+    assert not any("redrive allowed" in line for line in logs)
+
+
+def test_skip_chat_activity_allows_redrive_when_sent_without_received(
+    tmp_path, monkeypatch
+) -> None:
+    """Regression: message.sent without any message.received must not block
+    waiting_input redrive — false-positive submits on Wayland still log sent."""
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "cursor")
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["STARTER-184"],
+        last_status="waiting_input",
+        last_message="CQRS task",
+    )
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": autonomous_cycle_mod.time.time() - 120.0,
+                "type": "message.sent",
+                "ide": "cursor",
+                "chat": "default",
+                "text": "Architektura: wprowadź CQRS",
+            },
+        ],
+    )
+    monkeypatch.setattr("koru.llm_reflect.llm_reflect_enabled", lambda: False)
+    telemetry: dict[str, object] = {}
+    logs: list[str] = []
+    should_skip = autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=logs.append,
+    )
+    assert should_skip is False
+    assert any("redrive allowed" in line for line in logs)
 
 
 def test_autopilot_escalation_cooldown_applies_after_escalation_prompt(

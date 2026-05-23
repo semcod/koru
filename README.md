@@ -7,13 +7,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.229-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$6.77-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-95.8h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.230-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$6.34-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-96.8h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $6.7688 (298 commits)
-- 👤 **Human dev:** ~$9582 (95.8h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $6.3385 (301 commits)
+- 👤 **Human dev:** ~$9682 (96.8h @ $100/h, 30min dedup)
 
-Generated on 2026-05-22 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
+Generated on 2026-05-23 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
 ---
 
@@ -201,6 +201,44 @@ Projects can declare regression gates in root **`koru.yaml`** under
 closes tickets and after the IDE marks tickets `done` in planfile (status
 poll — not chat readback). See [docs/post-run-verify.md](docs/post-run-verify.md).
 
+### Autopilot redrive cooldown (chat-aware loop)
+
+Before this change, `koru autonomous up` would re-paste the same ticket
+prompt into the IDE chat on **every cycle** (default 60 s sleep) as long as
+the queue stayed `waiting_input` with an `llm-ready` label. That clobbered
+the IDE-side LLM mid-response and produced spurious "random task suggestions"
+that ignored what the LLM had already written. See `terminal selection` in
+PLF-…/`autonomy-ide-cursor.md` for the original repro (STARTER-184: "CQRS +
+Event Sourcing" driven twice in 60 s while VS Code Copilot was still typing).
+
+The autonomous loop now reads the daemon-emitted plugin events
+(`message.sent`, `message.received`) from
+`$XDG_RUNTIME_DIR/koru-autopilot-events.ndjson` (see
+[`src/koruide/chat_history.py`](src/koruide/chat_history.py)) and **skips
+the drive** when the IDE chat has been active within the cooldown window.
+
+| Env var | Default | Effect |
+|---|---|---|
+| `KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS` | `300` | Skip the next drive for the same ticket if any `message.sent` / `message.received` was emitted within this many seconds. Set to `0` to disable and restore the legacy "redrive every cycle" behavior. |
+| `KORU_LLM_REFLECT` | unset (off) | When set to `1`/`true` **and** `llx` is on `PATH`, the loop calls `llx chat --free --prompt …` (OpenRouter-backed) with the recent chat events to decide `{done, needs_input}`. If llx replies `done=true`, the loop unblocks even within the cooldown so the queue can move on. Falls back to the plain cooldown if llx is missing, errors, or returns non-JSON. |
+
+The cycle telemetry records the decision so it's visible in the dashboard:
+
+* `autopilot_skipped_chat_activity=true` — drive was skipped by the cooldown
+* `autopilot_chat_activity_last_event=message.sent|message.received`
+* `autopilot_llx_reflection={"done":…,"needs_input":…,"summary":…}` — only
+  when `KORU_LLM_REFLECT=1`.
+
+If you want koru to "react to the IDE chat" the way the operator described:
+
+```bash
+pip install -U llx                 # OpenRouter-aware router
+export OPENROUTER_API_KEY=sk-…     # or whatever llx asks for
+export KORU_LLM_REFLECT=1
+export KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS=300
+koru auto
+```
+
 ### Quick troubleshooting
 
 | Symptom | Fix |
@@ -217,6 +255,8 @@ poll — not chat readback). See [docs/post-run-verify.md](docs/post-run-verify.
 | `goal -a` takes too long to fail | Keep `strategies.python.test` fail-fast (`--maxfail=1`) for quick feedback; run full suite explicitly when needed |
 | `goal -a`: `No module named 'costs'` | Install dev extras: `pip install -e ".[dev]"`, or set `[tool.costs] badge = false` in `pyproject.toml` |
 | `goal -a` unstages `.code2llm_cache/*.pkl` | Ensure `.code2llm_cache/` is in `.gitignore` (not per-file pickle lines) |
+| Autopilot re-pastes the same ticket prompt every cycle while the IDE chat is still typing | The cooldown is too low or the events file is missing. Default cooldown is 300 s; tune via `KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS=<seconds>`. Verify the plugin actually emits events: `tail -f $XDG_RUNTIME_DIR/koru-autopilot-events.ndjson`. If empty, the plugin is connected but `chat.events` capability is missing — reload the IDE window. To opt into OpenRouter-backed reflection (decide *based on what the LLM wrote* whether to redrive): `pip install llx && export KORU_LLM_REFLECT=1`. |
+| **Cursor**: Koru drives the prompt into the chat but the LLM never starts working (log shows `winning_submit=...Return` and `verification=strict`, message stays in input box as a new line, or even ends up in another OS window) | Two stacked bugs combine here. (1) Cursor's chat textarea treats plain `Enter` as a newline; only `Ctrl+Enter` actually submits on Linux. (2) On Wayland-native compositors (GNOME, KDE on Wayland) `xdotool` cannot reach Cursor at all — it exits 0 but routes the synthetic key to whatever XWayland window happens to be active (commonly the terminal running `koru auto` or a sibling VS Code). **Upgrade the plugin to ≥0.1.49**: `cd plugins/koru-autopilot-vscode && npm run package && /usr/bin/cursor --install-extension koru-autopilot-0.1.49.vsix --force`, then reload the Cursor window and run `koru: Connect autopilot daemon`. The new version (a) prefers `Ctrl+Return` over `Return` for Cursor and (b) prefers `ydotool` (which uses `/dev/uinput` and crosses into the Wayland compositor) over `xdotool` whenever `XDG_SESSION_TYPE=wayland` or `WAYLAND_DISPLAY` is set. Already-poisoned caches from 0.1.47/0.1.48 are auto-discarded on first load. For best results on Wayland: keep Cursor as the focused window during autonomous cycles (uinput events go to whichever surface has compositor focus), make sure the user is in the `input` group, and consider `systemctl --user enable --now ydotool` to start the daemon for lower-latency injection. Override the shortcut with `koruAutopilot.submitHostKey` if your setup differs. |
 
 ### CLI subcommand reference
 

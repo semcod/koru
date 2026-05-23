@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from koru.cqrs import EventSourcingRuntime
 from koru.bounded_contexts.local_manager.application import (
     LocalManagerCommandService,
     LocalManagerQueryService,
@@ -19,13 +20,17 @@ from koru.bounded_contexts.local_manager.events import (
     WORKER_HEARTBEATED,
     WORKER_REGISTERED,
 )
+from koru.bounded_contexts.local_manager.read_model import LocalManagerEventLogProjection
 from koru.bounded_contexts.local_manager.queries import HealthSnapshotQuery
 from koru.local_manager_state import ServiceState
 
 
 def test_local_manager_commands_emit_domain_events() -> None:
     state = ServiceState(max_events=16)
-    command_service = LocalManagerCommandService(state)
+    runtime = EventSourcingRuntime()
+    projection = LocalManagerEventLogProjection()
+    runtime.bus.subscribe(projection.handle)
+    command_service = LocalManagerCommandService(state, runtime)
     query_service = LocalManagerQueryService(state)
 
     enqueued = command_service.enqueue(
@@ -69,3 +74,13 @@ def test_local_manager_commands_emit_domain_events() -> None:
         WORKER_REGISTERED,
         WORKER_HEARTBEATED,
     ]
+
+    projected = projection.recent()
+    assert [entry.event_type for entry in projected] == [
+        ACTION_ENQUEUED,
+        ACTION_CLAIMED,
+        ACTION_COMPLETED,
+        WORKER_REGISTERED,
+        WORKER_HEARTBEATED,
+    ]
+    assert projected[0].aggregate_id == "a-1"

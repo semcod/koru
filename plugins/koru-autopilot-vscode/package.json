@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscode",
   "displayName": "koru autopilot",
   "description": "Bridge between VS Code / Windsurf / Cursor and the koru autopilot daemon.",
-  "version": "0.1.52",
+  "version": "0.1.55",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -146,6 +146,16 @@
           "default": true,
           "description": "For VSCodium on Linux, treat a successful host Return/Ctrl+Return submit key as accepted when VS Code APIs cannot verify chat submission."
         },
+        "koruAutopilot.verifySubmit": {
+          "type": "boolean",
+          "default": true,
+          "description": "After every submit candidate (registered IDE command or host-level Return/Ctrl+Return), probe the chat input via select-all + copy. If the trailing portion of the pasted prompt is still present, discard the cached winner and try the next candidate. Applies to Cursor, VS Code, VSCodium, and other plugin-ladder IDEs. Skipped for Windsurf/Antigravity native atomic send paths."
+        },
+        "koruAutopilot.verifySubmitOnCursor": {
+          "type": "boolean",
+          "default": true,
+          "description": "Deprecated alias for koruAutopilot.verifySubmit (kept for settings migration)."
+        },
         "koruAutopilot.windsurfKeepOpenAfterSend": {
           "type": "boolean",
           "default": false,
@@ -156,7 +166,7 @@
   },
   "scripts": {
     "compile": "tsc -p ./",
-    "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/antigravity-fastpath.test.js && node out/chat-history-watcher.test.js",
+    "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/step-decisions.test.js && node out/antigravity-fastpath.test.js && node out/chat-history-watcher.test.js",
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
     "package": "vsce package --no-dependencies --out koru-autopilot-${npm_package_version}.vsix",

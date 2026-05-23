@@ -1,0 +1,12 @@
+# SCENARIO: koru-dsl Command Tests (WUP quick / dry-run safe)
+# TYPE: cli
+
+CONFIG[2]{key, value}:
+  cli_command, koru-dsl
+  timeout_ms, 30000
+
+SHELL "koru-dsl --help" 5000
+ASSERT_EXIT_CODE 0
+
+SHELL "koru-dsl --version" 5000
+ASSERT_EXIT_CODE 0

@@ -6,6 +6,7 @@ import json
 import subprocess
 import time
 from pathlib import Path
+from typing import Any
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -45,18 +46,19 @@ def compute_backoff_sleep(base: float, streak: int, cap: float, enabled: bool) -
     return candidate
 
 
-def load_loop_checkpoint(
-    path: Path,
-    *,
-    state: AutoloopState,
-    stdio_format: str = "human",
-) -> int | None:
+def _read_checkpoint_payload(path: Path) -> dict[str, Any] | None:
     if not path.exists():
         return None
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError, TypeError, ValueError):
         return None
+    if not isinstance(payload, dict):
+        return None
+    return payload
+
+
+def _apply_checkpoint_payload(payload: dict[str, Any], state: AutoloopState) -> int | None:
     try:
         cycle = int(payload.get("cycle", 0))
     except (TypeError, ValueError):
@@ -69,6 +71,11 @@ def load_loop_checkpoint(
             "scan_clean_streak",
             "scan_last_head",
             "wup_seen_events",
+            "last_driven_prompt",
+            "last_llm_reflection_summary",
+            "last_llm_reflection_ts",
+            "last_operator_needs_input_signature",
+            "last_operator_needs_input_ticket_id",
             "last_message_sent_ts",
             "telemetry_autopilot_idle_streak_skips",
             "telemetry_scan_after_idle_runs",
@@ -80,21 +87,35 @@ def load_loop_checkpoint(
         events = state_payload.get("autopilot_events")
         if isinstance(events, list):
             state.autopilot_events = [ev for ev in events if isinstance(ev, dict)]
-    if cycle > 0:
-        _stdio_info(f"koru autonomous: restored checkpoint cycle={cycle}", fmt=stdio_format)
-        return cycle
-    return None
+    return cycle if cycle > 0 else None
 
 
-def save_loop_checkpoint(
+def load_loop_checkpoint(
     path: Path,
+    *,
+    state: AutoloopState,
+    stdio_format: str = "human",
+) -> int | None:
+    from koru.bounded_contexts.autonomous_checkpoint.application import (
+        AutonomousCheckpointCommandService,
+    )
+    from koru.bounded_contexts.autonomous_checkpoint.commands import (
+        RestoreLoopCheckpointCommand,
+    )
+
+    return AutonomousCheckpointCommandService().restore(
+        RestoreLoopCheckpointCommand(path=path, state=state, stdio_format=stdio_format),
+    )
+
+
+def _build_checkpoint_payload(
     *,
     cycle: int,
     state: AutoloopState,
     queue_status: str,
     waiting_ticket: str,
-) -> None:
-    payload = {
+) -> dict[str, Any]:
+    return {
         "cycle": cycle,
         "saved_at": time.time(),
         "queue_status": queue_status,
@@ -106,6 +127,11 @@ def save_loop_checkpoint(
             "scan_last_head": state.scan_last_head,
             "wup_seen_events": state.wup_seen_events,
             "autopilot_events": list(state.autopilot_events)[-50:],
+            "last_driven_prompt": state.last_driven_prompt,
+            "last_llm_reflection_summary": state.last_llm_reflection_summary,
+            "last_llm_reflection_ts": state.last_llm_reflection_ts,
+            "last_operator_needs_input_signature": state.last_operator_needs_input_signature,
+            "last_operator_needs_input_ticket_id": state.last_operator_needs_input_ticket_id,
             "last_message_sent_ts": state.last_message_sent_ts,
             "telemetry_autopilot_idle_streak_skips": state.telemetry_autopilot_idle_streak_skips,
             "telemetry_scan_after_idle_runs": state.telemetry_scan_after_idle_runs,
@@ -115,10 +141,37 @@ def save_loop_checkpoint(
             "last_scan_after_idle_ts": state.last_scan_after_idle_ts,
         },
     }
+
+
+def _write_checkpoint_payload(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(f"{json.dumps(payload, ensure_ascii=True, indent=2)}\n", encoding="utf-8")
     tmp.replace(path)
+
+
+def save_loop_checkpoint(
+    path: Path,
+    *,
+    cycle: int,
+    state: AutoloopState,
+    queue_status: str,
+    waiting_ticket: str,
+) -> None:
+    from koru.bounded_contexts.autonomous_checkpoint.application import (
+        AutonomousCheckpointCommandService,
+    )
+    from koru.bounded_contexts.autonomous_checkpoint.commands import SaveLoopCheckpointCommand
+
+    AutonomousCheckpointCommandService().save(
+        SaveLoopCheckpointCommand(
+            path=path,
+            cycle=cycle,
+            state=state,
+            queue_status=queue_status,
+            waiting_ticket=waiting_ticket,
+        ),
+    )
 
 
 def status_in_skip_list(status: str, skip_statuses: str) -> bool:

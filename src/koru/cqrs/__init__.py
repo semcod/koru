@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from koru.cqrs.domain_event import DomainEvent
 from koru.cqrs.event_bus import InProcessEventBus
+from koru.cqrs.event_log_projection import EventLogEntry, EventLogProjection
 from koru.cqrs.event_store import InMemoryEventStore, StoredEvent
 
 
@@ -41,7 +43,10 @@ class EventSourcingRuntime:
 
 
 __all__ = [
+    "DomainEvent",
     "EventSourcingRuntime",
+    "EventLogEntry",
+    "EventLogProjection",
     "InMemoryEventStore",
     "InProcessEventBus",
     "StoredEvent",

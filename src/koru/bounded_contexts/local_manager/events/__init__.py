@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+
+from koru.cqrs import DomainEvent
 
 LOCAL_MANAGER_CONTEXT = "local_manager"
 
@@ -15,71 +16,37 @@ WORKER_HEARTBEATED = "local_manager.worker_heartbeated"
 
 
 @dataclass(frozen=True)
-class ActionEnqueued:
+class ActionEnqueued(DomainEvent):
     action_id: str
     action_type: str
     status: str
 
-    def to_payload(self) -> dict[str, Any]:
-        return {
-            "action_id": self.action_id,
-            "action_type": self.action_type,
-            "status": self.status,
-        }
-
 
 @dataclass(frozen=True)
-class ActionClaimed:
+class ActionClaimed(DomainEvent):
     action_id: str
     worker_id: str
 
-    def to_payload(self) -> dict[str, Any]:
-        return {
-            "action_id": self.action_id,
-            "worker_id": self.worker_id,
-        }
-
 
 @dataclass(frozen=True)
-class ActionCompleted:
+class ActionCompleted(DomainEvent):
     action_id: str
     status: str
     worker_id: str | None
 
-    def to_payload(self) -> dict[str, Any]:
-        return {
-            "action_id": self.action_id,
-            "status": self.status,
-            "worker_id": self.worker_id,
-        }
+
+@dataclass(frozen=True)
+class WorkerRegistered(DomainEvent):
+    worker_id: str
+    version: str
+    decision: dict[str, object]
 
 
 @dataclass(frozen=True)
-class WorkerRegistered:
+class WorkerHeartbeated(DomainEvent):
     worker_id: str
     version: str
-    decision: dict[str, Any]
-
-    def to_payload(self) -> dict[str, Any]:
-        return {
-            "worker_id": self.worker_id,
-            "version": self.version,
-            "decision": self.decision,
-        }
-
-
-@dataclass(frozen=True)
-class WorkerHeartbeated:
-    worker_id: str
-    version: str
-    decision: dict[str, Any]
-
-    def to_payload(self) -> dict[str, Any]:
-        return {
-            "worker_id": self.worker_id,
-            "version": self.version,
-            "decision": self.decision,
-        }
+    decision: dict[str, object]
 
 
 __all__ = [

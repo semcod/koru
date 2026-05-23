@@ -5,6 +5,7 @@ import {
   buildSubmitCommands,
   captureEditorSnapshot,
   chatFocusHeuristic,
+  decideSubmitCleared,
   mergeUnique,
   orderWithCache,
   pasteLandedInEditor,
@@ -147,6 +148,32 @@ function testSanitizeCursorPreservesNonTypeSubmit(): void {
   );
 }
 
+function testSanitizeCursorDiscardsXdotoolSubmitOnWayland(): void {
+  const prev = process.env.XDG_SESSION_TYPE;
+  process.env.XDG_SESSION_TYPE = "wayland";
+  try {
+    const poisoned = {
+      version: PROBE_CACHE_VERSION as typeof PROBE_CACHE_VERSION,
+      ide: "cursor",
+      appName: "Cursor",
+      updatedAt: "2026-05-22T20:00:00Z",
+      submit: "xdotool key ctrl+Return",
+      paste: "editor.action.clipboardPasteAction",
+    };
+    const sanitized = sanitizeProbeCacheForIde(poisoned, "cursor");
+    assert(
+      sanitized?.submit === undefined,
+      "Cursor on Wayland: xdotool ctrl+Return false-positive must be discarded",
+    );
+  } finally {
+    if (prev === undefined) {
+      delete process.env.XDG_SESSION_TYPE;
+    } else {
+      process.env.XDG_SESSION_TYPE = prev;
+    }
+  }
+}
+
 function testSanitizeCursorDiscardsHostPlainReturn(): void {
   // Regression for plugin 0.1.47: ``xdotool key Return`` got cached even
   // though plain Return does not submit Cursor's multi-line chat textarea.
@@ -208,6 +235,7 @@ testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance();
 testVscodiumSubmitStillExposesWorkbenchFallback();
 testSanitizeCursorDiscardsTypeSubmit();
 testSanitizeCursorPreservesNonTypeSubmit();
+testSanitizeCursorDiscardsXdotoolSubmitOnWayland();
 testSanitizeCursorDiscardsHostPlainReturn();
 testSanitizeWindsurfStillDiscardsTypeSubmit();
 testSanitizeIsIdempotent();
@@ -296,4 +324,57 @@ testHostKeyOverrideCtrlReturnForcesCtrlForAllIdes();
 testHostKeyOverrideReturnForcesPlainEvenOnCursor();
 testHostKeyWaylandPrefersYdotoolOverXdotool();
 testHostKeyX11KeepsXdotoolFirst();
+
+function testDecideSubmitClearedNullProbeFallsClosedToCleared(): void {
+  // When the post-submit probe could not run (no chat focus, clipboard
+  // unreadable, …), we have no evidence that the submit failed — fall
+  // back to trusting the IDE command's own success signal so we don't
+  // flap on transient issues.
+  const decision = decideSubmitCleared(null, "anything");
+  assert(decision.cleared, "null probe must fall closed to cleared=true");
+  assert(!decision.tailMatched, "null probe cannot have a tail match");
+}
+
+function testDecideSubmitClearedEmptyInputMeansSubmitWorked(): void {
+  const decision = decideSubmitCleared("", "Architektura: wprowadź CQRS");
+  assert(decision.cleared, "empty input after submit means submit cleared the textarea");
+}
+
+function testDecideSubmitClearedTextStillPresentMeansSubmitFailed(): void {
+  // Regression for plugin ≤0.1.53: Cursor's ``composer.sendToAgent``
+  // returned ``ok=true`` even when it no-oped (wrong focus surface,
+  // agent panel not foreground, …). Without verification the daemon
+  // was told ``submitted: true`` while the prompt sat in the textarea
+  // — exactly the symptom the user reported. The probe must catch this
+  // by detecting that the trailing portion of the original prompt is
+  // still in the input.
+  const original = "Architektura: wprowadź CQRS + Event Sourcing — test wysyłki";
+  const decision = decideSubmitCleared(original, original);
+  assert(!decision.cleared, "input still containing pasted text means submit no-oped");
+  assert(decision.tailMatched, "tail of the original prompt must match the residue");
+}
+
+function testDecideSubmitClearedDifferentResidueIsTrusted(): void {
+  // If after submit the input contains some unrelated text (an
+  // attachment chip placeholder, a fresh user message, slash command
+  // hint, …), the prompt clearly cleared and we must NOT punish the
+  // submit command for that residue.
+  const decision = decideSubmitCleared("@file: src/main.rs", "send this prompt please");
+  assert(decision.cleared, "unrelated residue must not flag the submit as failed");
+  assert(!decision.tailMatched, "unrelated residue cannot match the prompt tail");
+}
+
+function testDecideSubmitClearedShortPromptDoesNotFalsePositive(): void {
+  // Tail length must be ≥4 to avoid matching trivial residue. A 3-char
+  // prompt could otherwise collide with arbitrary punctuation in the
+  // input and cause permanent verification failure.
+  const decision = decideSubmitCleared("hi.", "hi.");
+  assert(decision.cleared, "very short prompts do not have a usable tail and fall to cleared=true");
+}
+
+testDecideSubmitClearedNullProbeFallsClosedToCleared();
+testDecideSubmitClearedEmptyInputMeansSubmitWorked();
+testDecideSubmitClearedTextStillPresentMeansSubmitFailed();
+testDecideSubmitClearedDifferentResidueIsTrusted();
+testDecideSubmitClearedShortPromptDoesNotFalsePositive();
 console.log("probe-ladder tests: ok");

@@ -52,6 +52,7 @@ const antigravity_fastpath_1 = require("./antigravity-fastpath");
 const probe_ladder_1 = require("./probe-ladder");
 const socketPath_1 = require("./socketPath");
 const chat_history_watcher_1 = require("./chat-history-watcher");
+const step_decisions_1 = require("./step-decisions");
 const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
     "workbench.action.chat.open",
     "workbench.action.chat.openagent",
@@ -539,16 +540,88 @@ class AutopilotBridge {
             ["ydotool", ["key", "Backspace"]],
         ]);
     }
-    async submitChat() {
+    koruStepConfig() {
+        const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+        const legacyVerify = cfg.get("verifySubmitOnCursor");
+        const verifySubmit = cfg.get("verifySubmit");
+        return {
+            probeLadder: this.probeLadderEnabled(),
+            verifySubmit: typeof verifySubmit === "boolean" ? verifySubmit : (legacyVerify ?? true),
+            verifySubmitOnCursor: legacyVerify,
+            skipWhenInputBusy: cfg.get("skipWhenInputBusy", true),
+        };
+    }
+    postSubmitVerifyEnabled(verifyText) {
+        return (0, step_decisions_1.shouldVerifyPostSubmit)(this.detectIde(), verifyText, this.koruStepConfig());
+    }
+    async discardCachedSubmitWinner(cmd) {
+        if (!this.probeLadderEnabled()) {
+            return;
+        }
+        const current = this.getProbeCache();
+        if (current?.submit === cmd) {
+            await this.saveProbeCache({ submit: undefined });
+        }
+    }
+    /**
+     * Post-submit step: probe chat input and decide accept vs retry next candidate.
+     */
+    async verifySubmitStep(originalText) {
+        await this.sleep(180);
+        const probe = await this._probeChatInputContents();
+        const result = (0, step_decisions_1.interpretPostSubmitProbe)(probe, originalText);
+        if (result.action === "retry") {
+            debugLog("SUBMIT_VERIFY_FAILED", {
+                observedLength: result.observedLength,
+                tailMatched: result.tailMatched,
+            });
+        }
+        return { cleared: result.cleared, observedLength: result.observedLength };
+    }
+    /**
+     * Run submit candidate + optional post-submit verify + cache winner.
+     * Returns ``null`` when verification failed and the ladder should continue.
+     */
+    async finalizeSubmitCandidate(cmd, verifyText, verifyEnabled, extra) {
+        if (verifyEnabled && verifyText) {
+            const verify = await this.verifySubmitStep(verifyText);
+            if (!verify.cleared) {
+                debugLog("SUBMIT_VERIFY_DISCARD", { cmd, observedLength: verify.observedLength });
+                await this.discardCachedSubmitWinner(cmd);
+                return null;
+            }
+        }
+        if (this.probeLadderEnabled()) {
+            await this.saveProbeCache({ submit: cmd });
+        }
+        return { ok: true, command: cmd, ...extra };
+    }
+    async submitChat(verifyText) {
         const ide = this.detectIde();
+        const verifyEnabled = this.postSubmitVerifyEnabled(verifyText);
         if (ide === "vscodium") {
             const hostClick = await this._tryHostClickSubmit();
-            if (hostClick.ok) {
-                return hostClick;
+            if (hostClick.ok && hostClick.command) {
+                const accepted = await this.finalizeSubmitCandidate(hostClick.command, verifyText, verifyEnabled);
+                if (accepted) {
+                    return accepted;
+                }
             }
             const hostKey = await this._tryHostKeySubmit();
-            if (hostKey.ok) {
-                return { ...hostKey, unverified: !this.trustUnverifiedHostSubmit() };
+            if (hostKey.ok && hostKey.command) {
+                const accepted = await this.finalizeSubmitCandidate(hostKey.command, verifyText, verifyEnabled, { unverified: !this.trustUnverifiedHostSubmit() });
+                if (accepted) {
+                    return accepted;
+                }
+                if (verifyEnabled && verifyText) {
+                    return {
+                        ok: false,
+                        command: hostKey.command || "vscodium-host-key-noop",
+                        reason: "host-key submit ran but chat input still contains pasted text",
+                        attempts: hostKey.attempts,
+                        unverified: true,
+                    };
+                }
             }
             return {
                 ok: false,
@@ -561,44 +634,47 @@ class AutopilotBridge {
         const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
         const cache = this.getProbeCache();
         const candidates = (0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildSubmitCommands)(ide), cache?.submit), existing);
-        debugLog("SUBMIT_CANDIDATES", { ide, candidates });
+        debugLog("SUBMIT_CANDIDATES", { ide, candidates, verifyEnabled });
         for (const cmd of candidates) {
-            if (await this.runCommand(cmd)) {
-                if (this.probeLadderEnabled()) {
-                    await this.saveProbeCache({ submit: cmd });
-                }
-                return { ok: true, command: cmd };
+            if (!(await this.runCommand(cmd))) {
+                console.warn(`koru autopilot: submitChat command not available: ${cmd}`);
+                continue;
             }
-            console.warn(`koru autopilot: submitChat command not available: ${cmd}`);
+            const accepted = await this.finalizeSubmitCandidate(cmd, verifyText, verifyEnabled);
+            if (accepted) {
+                return accepted;
+            }
         }
         if (ide === "windsurf") {
             // On Windsurf, typing a newline is extremely dangerous because if Cascade is not focused, it toggles/closes the panel!
             return { ok: false };
         }
-        if (ide === "cursor") {
-            // Cursor's chat command surface is locked down — none of the
-            // workbench.action.chat.* / composer.* / aichat.* candidates above
-            // actually live in the registered command set, so we end up here
-            // every time. The "type" fallback only inserts a newline into the
-            // chat textarea (which is multi-line); the LLM never sees the
-            // message. Use a real host-level Enter (wtype/xdotool/ydotool)
-            // instead — that submits in Cursor reliably. Pass ide so we prefer
-            // Ctrl+Return (Cursor's actual submit shortcut on Linux) over a
-            // plain Return that just inserts a newline.
-            const hostKey = await this._tryHostKeySubmit("cursor");
-            if (hostKey.ok) {
-                if (this.probeLadderEnabled()) {
-                    await this.saveProbeCache({ submit: hostKey.command || "host-key:Return" });
+        if (ide === "cursor" || ide === "vscode") {
+            const hostKey = await this._tryHostKeySubmit(ide === "cursor" ? "cursor" : undefined);
+            if (hostKey.ok && hostKey.command) {
+                const accepted = await this.finalizeSubmitCandidate(hostKey.command, verifyText, verifyEnabled, { unverified: !this.trustUnverifiedHostSubmit() });
+                if (accepted) {
+                    return accepted;
                 }
-                return { ...hostKey, unverified: !this.trustUnverifiedHostSubmit() };
+                if (verifyEnabled && verifyText) {
+                    return {
+                        ok: false,
+                        command: hostKey.command || `${ide}-host-key-noop`,
+                        reason: "host-key submit ran but chat input still contains pasted text",
+                        attempts: hostKey.attempts,
+                        unverified: true,
+                    };
+                }
             }
-            return {
-                ok: false,
-                command: "cursor-submit-unavailable",
-                reason: hostKey.reason,
-                attempts: hostKey.attempts,
-                unverified: true,
-            };
+            if (ide === "cursor") {
+                return {
+                    ok: false,
+                    command: "cursor-submit-unavailable",
+                    reason: hostKey.reason,
+                    attempts: hostKey.attempts,
+                    unverified: true,
+                };
+            }
         }
         const fallbacks = [
             () => this._tryTypeSubmit("\n"),
@@ -606,8 +682,11 @@ class AutopilotBridge {
         ];
         for (const attempt of fallbacks) {
             const result = await attempt();
-            if (result.ok) {
-                return result;
+            if (result.ok && result.command) {
+                const accepted = await this.finalizeSubmitCandidate(result.command, verifyText, verifyEnabled);
+                if (accepted) {
+                    return accepted;
+                }
             }
         }
         return { ok: false };
@@ -926,13 +1005,29 @@ class AutopilotBridge {
      * doubt, do NOT skip — let the legacy paste path run.
      */
     async chatInputAppearsBusy() {
-        if (!this.probeLadderEnabled()) {
+        if (!(0, step_decisions_1.shouldVerifyPrePasteBusy)(this.koruStepConfig())) {
             return false;
         }
-        if (!vscode.workspace.getConfiguration("koruAutopilot").get("skipWhenInputBusy", true)) {
+        const observed = await this._probeChatInputContents();
+        if (observed === null) {
             return false;
         }
-        const sentinel = `__koru_busy_probe_${Date.now().toString(36)}__`;
+        const busy = observed.trim().length >= 4;
+        debugLog("CHAT_INPUT_BUSY_PROBE", { busy, length: observed.trim().length });
+        return busy;
+    }
+    /**
+     * Sentinel-probe the chat input via select-all + clipboardCopy.
+     *
+     * Returns the chat input's current text (empty string if cleared by a
+     * successful submit), or ``null`` when the probe could not run (clipboard
+     * unreadable, sentinel still present meaning select+copy did not pick up
+     * any chat content). The sentinel guards against false positives when the
+     * select+copy pipeline has no effect — without it an empty clipboard read
+     * would look identical to "input is empty".
+     */
+    async _probeChatInputContents() {
+        const sentinel = `__koru_input_probe_${Date.now().toString(36)}__`;
         const previous = await this.saveClipboard();
         try {
             await vscode.env.clipboard.writeText(sentinel);
@@ -941,18 +1036,13 @@ class AutopilotBridge {
             await this.sleep(60);
             const observed = await this.saveClipboard();
             if (observed === null || observed === sentinel) {
-                return false;
+                return null;
             }
-            const trimmed = observed.trim();
-            // Tolerate trivial residue (single chars, leftover whitespace) but
-            // treat anything substantive as un-submitted user/LLM content.
-            const busy = trimmed.length >= 4;
-            debugLog("CHAT_INPUT_BUSY_PROBE", { busy, length: trimmed.length });
-            return busy;
+            return observed;
         }
         catch (err) {
-            debugLog("CHAT_INPUT_BUSY_PROBE_ERROR", { err: String(err) });
-            return false;
+            debugLog("CHAT_INPUT_PROBE_ERROR", { err: String(err) });
+            return null;
         }
         finally {
             await this.restoreClipboard(previous);
@@ -1173,7 +1263,7 @@ class AutopilotBridge {
             return false;
         }
     }
-    async submitAfterPaste(env, focus, pasted, submit) {
+    async submitAfterPaste(env, focus, pasted, submit, pastedText) {
         if (pasted.command === "windsurf.sendTextToChat") {
             return "windsurf.sendTextToChat";
         }
@@ -1182,7 +1272,7 @@ class AutopilotBridge {
         }
         await this.sleep(150);
         await this.focusChatInput();
-        const submitResult = await this.submitChat();
+        const submitResult = await this.submitChat(pastedText);
         if (submitResult.unverified) {
             this.sendSubmitFailureAck(env, focus, pasted, submitResult.command, submitResult);
             return null;
@@ -1239,7 +1329,7 @@ class AutopilotBridge {
             this.sendPasteFailureAck(env, focus, pasted);
             return;
         }
-        const submitCmd = await this.submitAfterPaste(env, focus, pasted, submit);
+        const submitCmd = await this.submitAfterPaste(env, focus, pasted, submit, text);
         if (submitCmd === null) {
             return;
         }

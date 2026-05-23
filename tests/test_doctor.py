@@ -95,6 +95,7 @@ class TestHappyPath(unittest.TestCase):
             with (
                 patch.dict(os.environ, _without_autopilot_env(), clear=True),
                 patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"),
+                patch("koru.doctor.detect_terminal_host_ide_id", return_value=None),
             ):
                 report = _run(project)
             # No failures on a properly-set-up project.

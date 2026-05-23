@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import socket as _socket
 from pathlib import Path
+from unittest.mock import patch
 
 from koru.autonomy.environment import (
     KNOWN_IDES,
@@ -138,7 +139,14 @@ def test_probe_environment_flags_missing_mcp_when_ide_installed(tmp_path: Path) 
     (bin_dir / "cursor").write_text("#!/bin/sh\nexit 0\n")
     (bin_dir / "cursor").chmod(0o755)
 
-    report = probe_environment(tmp_path, environ={"PATH": str(bin_dir)})
+    fake_cfg = tmp_path / "no-mcp.json"
+    with (
+        patch("koru.mcp_provision._cursor_project_config", return_value=fake_cfg),
+        patch("koru.mcp_provision._vscode_project_config", return_value=fake_cfg),
+        patch("koru.mcp_provision._windsurf_project_config", return_value=fake_cfg),
+        patch("koru.mcp_provision._windsurf_global_config", return_value=fake_cfg),
+    ):
+        report = probe_environment(tmp_path, environ={"PATH": str(bin_dir)})
     assert "cursor" in report.installed_ides
     assert report.mcp_enabled_ides == []
     assert any("koru:mcp:bootstrap" in issue for issue in report.fixable_issues)

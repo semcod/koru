@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+
+from koru.cqrs import DomainEvent
 
 TOPOLOGY_CONTEXT = "topology"
 
@@ -13,47 +14,25 @@ TOPOLOGY_SAVED = "topology.saved"
 
 
 @dataclass(frozen=True)
-class TopologyComponentToggled:
+class TopologyComponentToggled(DomainEvent):
     project: str
     component_id: str
     previous: bool
     current: bool
 
-    def to_payload(self) -> dict[str, Any]:
-        return {
-            "project": self.project,
-            "component_id": self.component_id,
-            "previous": self.previous,
-            "current": self.current,
-        }
-
 
 @dataclass(frozen=True)
-class TopologyPipelineToggled:
+class TopologyPipelineToggled(DomainEvent):
     project: str
     pipeline_id: str
     previous: bool
     current: bool
 
-    def to_payload(self) -> dict[str, Any]:
-        return {
-            "project": self.project,
-            "pipeline_id": self.pipeline_id,
-            "previous": self.previous,
-            "current": self.current,
-        }
-
 
 @dataclass(frozen=True)
-class TopologySaved:
+class TopologySaved(DomainEvent):
     project: str
     path: str
-
-    def to_payload(self) -> dict[str, Any]:
-        return {
-            "project": self.project,
-            "path": self.path,
-        }
 
 
 __all__ = [

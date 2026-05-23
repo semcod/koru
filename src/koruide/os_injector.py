@@ -231,6 +231,13 @@ def _xdotool(argv_tail: list[str]) -> None:
     _run_cmd(["xdotool", *argv_tail])
 
 
+def _ydotool(argv_tail: list[str]) -> None:
+    binary = shutil.which("ydotool")
+    if not binary:
+        raise OsInjectorError("ydotool not on PATH (required for Wayland os_injector)")
+    _run_cmd([binary, *argv_tail])
+
+
 def _tool_pid(tool_id: str) -> int | None:
     try:
         from .ide import detect_running_ides
@@ -301,15 +308,26 @@ def _focus_profile_chat(
 ) -> None:
     if _log:
         _log(f"os_injector: move mouse to ({profile.chat_x}, {profile.chat_y}) focus={focus}")
-    _xdotool(["mousemove", str(profile.chat_x), str(profile.chat_y)])
-    if focus == "click":
-        if _log:
-            _log("os_injector: click 1")
-        _xdotool(["click", "1"])
+    if _is_wayland_session() and shutil.which("ydotool"):
+        _ydotool(["mousemove", "--absolute", str(profile.chat_x), str(profile.chat_y)])
+        if focus == "click":
+            if _log:
+                _log("os_injector: ydotool click 0xC0")
+            _ydotool(["click", "0xC0"])
+        else:
+            if _log:
+                _log("os_injector: ydotool press Return")
+            _ydotool(["key", "28:1", "28:0"])
     else:
-        if _log:
-            _log("os_injector: press Return")
-        _xdotool(["key", "--clearmodifiers", "Return"])
+        _xdotool(["mousemove", str(profile.chat_x), str(profile.chat_y)])
+        if focus == "click":
+            if _log:
+                _log("os_injector: click 1")
+            _xdotool(["click", "1"])
+        else:
+            if _log:
+                _log("os_injector: press Return")
+            _xdotool(["key", "--clearmodifiers", "Return"])
     if post_focus_delay > 0:
         if _log:
             _log(f"os_injector: post-focus delay {post_focus_delay:.2f}s")
@@ -418,10 +436,16 @@ def _os_injector_skip_reason(tool_id: str) -> str | None:
         return "tool_id=default"
     if os_injector_env_disabled():
         return "env disabled"
+    if _is_wayland_session():
+        if os_injector_env_forced() and shutil.which("xdotool"):
+            return None
+        if shutil.which("ydotool"):
+            return None
+        if os_injector_env_forced():
+            return "wayland forced but neither ydotool nor xdotool available"
+        return "wayland without ydotool"
     if shutil.which("xdotool") is None:
         return "xdotool missing"
-    if _is_wayland_session() and not os_injector_env_forced():
-        return "wayland without force"
     return None
 
 

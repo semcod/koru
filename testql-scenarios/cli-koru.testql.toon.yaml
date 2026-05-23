@@ -1,0 +1,15 @@
+# SCENARIO: koru Command Tests (WUP quick / dry-run safe)
+# TYPE: cli
+# WUP quick probes use: testql run … --dry-run (no real SHELL execution).
+# Use only ASSERT_EXIT_CODE 0 here. Full CLI checks: testql run this file without --dry-run
+# or see cli-koru-live.testql.toon.yaml.
+
+CONFIG[2]{key, value}:
+  cli_command, koru
+  timeout_ms, 30000
+
+SHELL "koru --help" 5000
+ASSERT_EXIT_CODE 0
+
+SHELL "koru --version" 5000
+ASSERT_EXIT_CODE 0

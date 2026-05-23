@@ -183,7 +183,7 @@ def test_iter_config_paths_dedupes_project_and_cwd(tmp_path: Path) -> None:
     assert len(paths) == len({str(p.resolve()) for p in paths})
 
 
-def test_try_drive_with_profile_skips_saved_profile_on_wayland_unless_forced(
+def test_try_drive_with_profile_skips_saved_profile_on_wayland_without_ydotool(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -191,7 +191,7 @@ def test_try_drive_with_profile_skips_saved_profile_on_wayland_unless_forced(
 
     monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
     monkeypatch.delenv("KORU_OS_INJECTOR", raising=False)
-    monkeypatch.setattr(oi.shutil, "which", lambda _n: "/xdotool")
+    monkeypatch.setattr(oi.shutil, "which", lambda _n: "/xdotool" if _n == "xdotool" else None)
     cfg = tmp_path / ".koru" / "ide-os-injector.json"
     cfg.parent.mkdir(parents=True)
     cfg.write_text(
@@ -203,6 +203,38 @@ def test_try_drive_with_profile_skips_saved_profile_on_wayland_unless_forced(
         tool_id="cursor", text="x", submit=False, project=None, cli_dry_run=False
     )
     assert out is None
+
+
+def test_try_drive_with_profile_uses_saved_profile_on_wayland_with_ydotool(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Regression: calibrated chat coordinates must work on Wayland via ydotool
+    without requiring KORU_OS_INJECTOR=1 — otherwise JetBrains drive types into
+    the file editor because try_drive_with_profile is skipped."""
+    import koru.autopilot.os_injector as oi
+
+    monkeypatch.setenv("XDG_SESSION_TYPE", "wayland")
+    monkeypatch.delenv("KORU_OS_INJECTOR", raising=False)
+    monkeypatch.setattr(
+        oi.shutil,
+        "which",
+        lambda n: "/usr/bin/ydotool" if n == "ydotool" else None,
+    )
+    cfg = tmp_path / ".koru" / "ide-os-injector.json"
+    cfg.parent.mkdir(parents=True)
+    cfg.write_text(json.dumps({"jetbrains": {"chat_x": 9, "chat_y": 10}}), encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    out = try_drive_with_profile(
+        tool_id="jetbrains",
+        text="x",
+        submit=False,
+        project=None,
+        cli_dry_run=True,
+    )
+    assert out is not None
+    assert out["backend"] == "os_injector"
+    assert out["chat_x"] == 9
 
 
 def test_try_drive_with_profile_forced_works_on_wayland(

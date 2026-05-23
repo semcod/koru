@@ -22,6 +22,10 @@ from koru.ide_router import is_headless_environment, resolve_ide_route
 
 _PLUGIN_IDE_LANES = supported_autopilot_ide_ids() - {"auto"}
 _AUTOPILOT_PLUGIN_LANES = ("antigravity", "cursor", "windsurf", "vscodium", "vscode")
+# Lanes that have no installable autopilot plugin but often appear in env/terminal
+# hints (integrated terminal inside the IDE). Auto-correct to a plugin IDE when
+# one is running — see ``_resolve_lane_from_explicit`` / ``_resolve_lane_from_terminal``.
+_STALE_NONPLUGIN_LANES = frozenset({"jetbrains"})
 
 
 def supports_autopilot_plugin_ide(ide: str) -> bool:
@@ -71,16 +75,36 @@ def _resolve_lane_from_cli(raw: str) -> tuple[str | None, str] | None:
     return None
 
 
+def _pick_plugin_capable_running(
+    running: Sequence[RunningIDE],
+) -> RunningIDE | None:
+    """Best running IDE that can use the VS Code-family autopilot plugin."""
+    candidates = [ide for ide in running if supports_autopilot_plugin_ide(ide.id)]
+    if not candidates:
+        return None
+    return pick_target(candidates)
+
+
 def _resolve_lane_from_explicit(
     explicit: str | None,
     explicit_source: str,
     terminal: str | None,
+    running: Sequence[RunningIDE] | None = None,
 ) -> tuple[str | None, str] | None:
     """Resolve lane from explicit KORU_AUTOPILOT_INSTANCE env var."""
     if not explicit:
         return None
     if terminal in _PLUGIN_IDE_LANES and terminal != explicit and terminal != "vscode":
         return terminal, f"terminal:over-{explicit_source}"
+    # Stale ``KORU_AUTOPILOT_INSTANCE=jetbrains`` (or zed) is a common foot-gun:
+    # the lane has no installable plugin, so koru falls back to raw ydotool/wtype
+    # which types into whatever window has focus — usually the file editor when
+    # the integrated terminal lives inside JetBrains. If a plugin-capable IDE is
+    # also running (Cursor, Windsurf, …), prefer it over the explicit env.
+    if running and explicit in _STALE_NONPLUGIN_LANES:
+        picked = _pick_plugin_capable_running(running)
+        if picked is not None:
+            return picked.id, f"running:over-{explicit_source}:{explicit}"
     return explicit, explicit_source
 
 
@@ -102,8 +126,12 @@ def _resolve_lane_from_terminal(
     running: Sequence[RunningIDE],
 ) -> tuple[str | None, str] | None:
     """Resolve lane from terminal hint with fallback to running IDEs."""
-    if terminal in _PLUGIN_IDE_LANES:
+    if terminal in _PLUGIN_IDE_LANES and supports_autopilot_plugin_ide(terminal):
         return terminal, "terminal"
+    if terminal == "jetbrains" and running:
+        picked = _pick_plugin_capable_running(running)
+        if picked is not None:
+            return picked.id, f"terminal:prefer-{picked.id}-over-jetbrains"
     if not terminal:
         return None
     for alt in _AUTOPILOT_PLUGIN_LANES:
@@ -147,13 +175,17 @@ def resolve_agent_lane_id(
 
     terminal = _terminal_agent_lane_from_env()
     explicit, explicit_source = _explicit_agent_lane_from_env()
+    running = detect_running_ides()
 
-    explicit_result = _resolve_lane_from_explicit(explicit, explicit_source, terminal)
+    explicit_result = _resolve_lane_from_explicit(
+        explicit,
+        explicit_source,
+        terminal,
+        running,
+    )
     if explicit_result:
         lane, source = explicit_result
         return _project_lane(project, lane, resolve_project_lane), source
-
-    running = detect_running_ides()
     for result in (
         _resolve_lane_from_vscode_terminal(running, terminal),
         _resolve_lane_from_terminal(terminal, running),

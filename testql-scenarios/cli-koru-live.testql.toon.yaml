@@ -1,0 +1,16 @@
+# SCENARIO: koru Command Tests (live — not for WUP --dry-run quick probes)
+# TYPE: cli
+
+CONFIG[2]{key, value}:
+  cli_command, koru
+  timeout_ms, 30000
+
+SHELL "koru --help" 5000
+ASSERT_EXIT_CODE 0
+ASSERT_STDOUT_CONTAINS "usage"
+
+SHELL "koru --version" 5000
+ASSERT_EXIT_CODE 0
+
+SHELL "koru --invalid-flag-xyz123" 5000
+ASSERT_EXIT_CODE 2

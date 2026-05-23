@@ -1186,6 +1186,32 @@ def _skip_due_to_recent_chat_activity(
         last_type = str(last_payload.get("type") or "?")
         age_seconds = max(0.0, time.time() - _event_timestamp(last_payload, default=0.0))
         age = f"{age_seconds:.0f}s"
+        # ``message.sent`` only means the plugin *attempted* a drive — on
+        # Wayland a false-positive xdotool submit still logs sent while nothing
+        # reached the IDE LLM. If we never saw ``message.received`` afterwards
+        # and the queue is still ``waiting_input``, allow redrive instead of
+        # waiting out the full cooldown.
+        has_received = any(
+            str(ev.get("type") or "") == "message.received" for ev in recent_events
+        )
+        last_kind = str(getattr(state, "last_driven_kind", "") or "")
+        if (
+            last_type == "message.sent"
+            and not has_received
+            and getattr(queue_result, "last_status", "") == "waiting_input"
+            and last_kind != "escalation_prompt"
+            and not _waiting_ticket_has_label(project, queue_result, "llm-ready")
+        ):
+            # Non-llm-ready: allow redrive — false-positive submits (Wayland
+            # xdotool, composer.sendToAgent no-op) still log message.sent.
+            # llm-ready: the IDE LLM is expected to be working; keep cooldown
+            # even without message.received (regression:
+            # test_run_cycle_llm_ready_skips_redrive_on_recent_in_memory_chat_activity).
+            _hp(
+                "- autopilot redrive allowed (message.sent without "
+                f"message.received age={age} ticket={waiting_ticket})",
+            )
+            return False
     else:
         try:
             from koruide.chat_history import has_recent_activity, last_event, read_events

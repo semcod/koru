@@ -13,6 +13,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from koru.bounded_contexts.env_config.commands import (
+    ApplyEnvUpdatesCommand,
+    WriteEnvConfigCommand,
+)
+from koru.bounded_contexts.env_config.queries import LoadEnvConfigQuery
 from koru.dotenv_loader import parse_dotenv
 
 ENV_FILENAME = ".env"
@@ -145,8 +150,8 @@ def _format_env_value(value: str) -> str:
     return value
 
 
-def env_config_payload(project: Path) -> dict[str, Any]:
-    """Return current ``.env`` + ``os.environ`` snapshot for known koru keys."""
+def _build_env_payload(project: Path, environ: dict[str, str]) -> dict[str, Any]:
+    """Return current ``.env`` + environment snapshot for known koru keys."""
     path = env_path(project)
     file_values: dict[str, str] = {}
     if path.is_file():
@@ -163,7 +168,7 @@ def env_config_payload(project: Path) -> dict[str, Any]:
                 "default": spec.default,
                 "description": spec.description,
                 "file_value": file_values.get(spec.name, ""),
-                "env_value": os.environ.get(spec.name, ""),
+                "env_value": environ.get(spec.name, ""),
                 "in_file": spec.name in file_values,
             }
         )
@@ -175,7 +180,13 @@ def env_config_payload(project: Path) -> dict[str, Any]:
     }
 
 
-def write_env_config(project: Path, updates: dict[str, str]) -> Path:
+def env_config_payload(project: Path) -> dict[str, Any]:
+    """Return current ``.env`` + ``os.environ`` snapshot for known koru keys."""
+    from koru.bounded_contexts.env_config.application import EnvConfigQueryService
+    return EnvConfigQueryService().load(LoadEnvConfigQuery(project=project, environ=os.environ))
+
+
+def _write_env_file(project: Path, updates: dict[str, str]) -> Path:
     """Merge ``updates`` into ``<project>/.env`` preserving comments and order."""
     path = env_path(project)
     existing_text = ""
@@ -219,13 +230,20 @@ def write_env_config(project: Path, updates: dict[str, str]) -> Path:
     return path
 
 
+def write_env_config(project: Path, updates: dict[str, str]) -> Path:
+    """Merge ``updates`` into ``<project>/.env`` preserving comments and order."""
+    from koru.bounded_contexts.env_config.application import EnvConfigCommandService
+    return EnvConfigCommandService().write(
+        WriteEnvConfigCommand(project=project, updates=updates),
+    )
+
+
 def apply_env_updates(updates: dict[str, str]) -> None:
     """Push updated values into ``os.environ`` (skips empty strings to allow unset)."""
-    for key, value in updates.items():
-        if value:
-            os.environ[key] = value
-        else:
-            os.environ.pop(key, None)
+    from koru.bounded_contexts.env_config.application import EnvConfigCommandService
+    EnvConfigCommandService().apply_updates(
+        ApplyEnvUpdatesCommand(project=Path.cwd(), updates=updates, environ=os.environ),
+    )
 
 
 __all__ = [

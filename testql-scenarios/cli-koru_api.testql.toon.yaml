@@ -1,0 +1,12 @@
+# SCENARIO: koru-api Command Tests (WUP quick / dry-run safe)
+# TYPE: cli
+
+CONFIG[2]{key, value}:
+  cli_command, koru-api
+  timeout_ms, 30000
+
+SHELL "koru-api --help" 5000
+ASSERT_EXIT_CODE 0
+
+SHELL "koru-api --version" 5000
+ASSERT_EXIT_CODE 0

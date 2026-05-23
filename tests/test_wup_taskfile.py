@@ -33,7 +33,7 @@ def test_operator_pipeline_taskfile_commands_exist() -> None:
 def test_wup_yaml_is_bootstrapped_for_koru_project() -> None:
     wup_yaml = (ROOT / "wup.yaml").read_text(encoding="utf-8")
 
-    assert 'name: "koru"' in wup_yaml
-    assert "src/**" in wup_yaml
-    assert "plugins/koru-autopilot-vscode/src/**" in wup_yaml
+    assert 'name: koru' in wup_yaml
+    assert "**" in wup_yaml
+    assert "tests/**" in wup_yaml
     assert "debounce_s: 2" in wup_yaml

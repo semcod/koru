@@ -1,0 +1,110 @@
+# WUP Configuration for CLI Testing
+# Generated automatically by wup init-cli
+# Project: koru
+
+project:
+  name: koru
+  description: CLI testing for koru
+watch:
+  paths:
+  - '**'
+  exclude_patterns:
+  - '*.md'
+  - tests/**
+  - .venv/**
+  - venv/**
+  - node_modules/**
+  file_types:
+  - .py
+services:
+- name: koru-shell
+  type: shell
+  paths: []
+  root: /home/tom/github/semcod/koru
+  quick_tests:
+    scope: all
+    max_endpoints: 4
+  detail_tests:
+    scope: all
+    max_endpoints: 8
+test_strategy:
+  quick:
+    debounce_s: 2
+    max_queue: 5
+    timeout_s: 30
+  detail:
+    debounce_s: 10
+    max_queue: 1
+    timeout_s: 60
+testql:
+  scenario_dir: testql-scenarios
+  smoke_scenario: cli-smoke.testql.toon.yaml
+  output_format: json
+  probe_interval_s: 60
+
+# BEGIN WUP MONITORING MANIFEST (auto-generated — do not edit; run: wup sync-testql --write)
+monitoring:
+  generated_at: '2026-05-22T21:24:33Z'
+  generated_by: wup sync-testql --write (or wup watch startup)
+  how_to_refresh: wup sync-testql . --write
+  probe_interval_s: 0
+  health_scenario: ''
+  base_url: (set testql.base_url or WUP_BASE_URL)
+  endpoint_discovery: true
+  scenario_dir: testql-scenarios
+  service_map_globs: []
+  docker_compose_files:
+  - docker-compose.yml
+  wup_services:
+    koru-shell:
+      wup_paths: []
+      docker: []
+      live_probes: []
+      testql_dry_run_scenarios: []
+  docker_not_mapped_to_wup:
+  - compose_service: koru
+    container_name: koru-test
+    host_ports: []
+    profiles:
+    - test
+    compose_file: docker-compose.yml
+  - compose_service: koru-dev
+    container_name: koru-dev
+    host_ports: []
+    profiles:
+    - dev
+    compose_file: docker-compose.yml
+  - compose_service: planfile
+    container_name: planfile-test
+    host_ports: []
+    profiles:
+    - deps
+    compose_file: docker-compose.yml
+  - compose_service: regix
+    container_name: regix-test
+    host_ports: []
+    profiles:
+    - deps
+    compose_file: docker-compose.yml
+  - compose_service: testql
+    container_name: testql-test
+    host_ports: []
+    profiles:
+    - deps
+    compose_file: docker-compose.yml
+  - compose_service: healing-webhook
+    container_name: healing-webhook-test
+    host_ports:
+    - 8810:8810
+    profiles:
+    - deps
+    compose_file: docker-compose.yml
+  troubleshooting:
+    probe_failed_check:
+    - Czy kontener z sekcji docker jest uruchomiony (docker ps)?
+    - Czy host_ports mapuje na URL w live_probes (np. 8100 vs 8202)?
+    - Czy błąd dotyczy proxy frontendu (/firmware na :8100) vs bezpośredniego :8202?
+    - 'Czy endpoint jest w live_probes — jeśli nie, uruchom: wup sync-testql . --write'
+    config_vs_runtime: Pole live_probes to faktyczne żądania HTTP WUP. Jeśli endpointu
+      tu nie ma, WUP go nie sprawdza — to błąd konfiguracji, nie aplikacji.
+# END WUP MONITORING MANIFEST

@@ -15,6 +15,7 @@ from typing import Protocol
 
 import yaml
 
+from koru.autonomous_diag_markers import diagnostic_marker_path
 from koru.topology import is_component_enabled, is_pipeline_enabled
 
 
@@ -500,6 +501,52 @@ def _load_wup_health(health_path: Path) -> dict[str, dict]:
     return health
 
 
+def _wup_service_names_from_yaml(project: Path) -> set[str] | None:
+    """Service names declared in ``wup.yaml`` (``None`` when config is absent)."""
+    path = project / "wup.yaml"
+    if not path.is_file():
+        return None
+    try:
+        payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    services = payload.get("services")
+    if not isinstance(services, list):
+        return None
+    names = {
+        str(item["name"])
+        for item in services
+        if isinstance(item, dict) and str(item.get("name") or "").strip()
+    }
+    return names or None
+
+
+def _prune_stale_wup_health(
+    health: dict[str, dict],
+    *,
+    active_services: set[str],
+    health_path: Path,
+    state_dir: Path,
+) -> dict[str, dict]:
+    """Drop health rows for services no longer listed in ``wup.yaml``."""
+    stale = set(health) - active_services
+    if not stale:
+        return health
+    pruned = {name: data for name, data in health.items() if name in active_services}
+    for service in stale:
+        diagnostic_marker_path(state_dir, f"wup-{service}").unlink(missing_ok=True)
+    try:
+        health_path.write_text(
+            json.dumps(pruned, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+    except OSError:
+        pass
+    return pruned
+
+
 def _identify_failing_services(health: dict[str, dict]) -> list[str]:
     """Identify services with failing status."""
     return [
@@ -535,7 +582,7 @@ def _create_wup_diagnostic_tickets(
                 state_dir=state_dir,
             )
         else:
-            (state_dir / f"{check_id}.failed").unlink(missing_ok=True)
+            diagnostic_marker_path(state_dir, check_id).unlink(missing_ok=True)
 
 
 def _count_wup_events(events_path: Path, previous_count: int) -> tuple[int, int]:
@@ -564,6 +611,14 @@ def _read_wup_health(
     events_path = project / ".wup" / "service-health-events.jsonl"
 
     health = _load_wup_health(health_path)
+    active_services = _wup_service_names_from_yaml(project)
+    if active_services is not None:
+        health = _prune_stale_wup_health(
+            health,
+            active_services=active_services,
+            health_path=health_path,
+            state_dir=state_dir,
+        )
     failing = _identify_failing_services(health)
 
     if diagnostic_tickets:

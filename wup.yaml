@@ -1,83 +1,63 @@
-project:
-  name: "koru"
-  description: "On-change watcher for koru core and autopilot plugin."
+# WUP Configuration for CLI Testing
+# Generated automatically by wup init-cli
+# Project: koru
 
+project:
+  name: koru
+  description: CLI testing for koru
 watch:
   paths:
-    - "src/**"
-    - "plugins/koru-autopilot-vscode/src/**"
+  - '**'
+  exclude_patterns:
+  - '*.md'
+  - tests/**
+  - .venv/**
+  - venv/**
+  - node_modules/**
   file_types:
-    - ".py"
-    - ".ts"
-    - ".js"
-  excludes:
-    - "**/__pycache__/**"
-    - "**/.venv/**"
-    - "**/node_modules/**"
-    - "**/out/**"
-    - "**/*.md"
-
+  - .py
 services:
-  - name: "koru-core"
-    root: "src"
-    paths:
-      - "src/**"
-    type: "auto"
-    quick_tests:
-      scope: "all"
-      max_endpoints: 3
-
-  - name: "koru-autopilot-vscode"
-    root: "plugins/koru-autopilot-vscode/src"
-    paths:
-      - "plugins/koru-autopilot-vscode/src/**"
-    type: "auto"
-    quick_tests:
-      scope: "all"
-      max_endpoints: 3
-
+- name: koru-shell
+  type: shell
+  paths: []
+  root: /home/tom/github/semcod/koru
+  quick_tests:
+    scope: all
+    max_endpoints: 4
+  detail_tests:
+    scope: all
+    max_endpoints: 8
 test_strategy:
   quick:
     debounce_s: 2
     max_queue: 5
-    timeout_s: 10
-  full:
-    debounce_s: 5
+    timeout_s: 30
+  detail:
+    debounce_s: 10
+    max_queue: 1
     timeout_s: 60
-    only_on_quick_fail: true
-
-reporting:
-  dashboard: true
-  blame_log: ".wup/blame-history.jsonl"
-  webhook_url: "${WUP_WEBHOOK_URL:-}"
-
-resources:
-  max_cpu_percent: 70
-  defer_below_idle_percent: 20
+testql:
+  scenario_dir: testql-scenarios
+  smoke_scenario: cli-smoke.testql.toon.yaml
+  output_format: json
+  probe_interval_s: 60
 
 # BEGIN WUP MONITORING MANIFEST (auto-generated — do not edit; run: wup sync-testql --write)
 monitoring:
-  generated_at: '2026-05-22T21:03:04Z'
+  generated_at: '2026-05-23T14:04:09Z'
   generated_by: wup sync-testql --write (or wup watch startup)
   how_to_refresh: wup sync-testql . --write
   probe_interval_s: 60
   health_scenario: ''
   base_url: (set testql.base_url or WUP_BASE_URL)
   endpoint_discovery: true
-  scenario_dir: scenarios/tests
+  scenario_dir: testql-scenarios
   service_map_globs: []
   docker_compose_files:
   - docker-compose.yml
   wup_services:
-    koru-core:
-      wup_paths:
-      - src/**
-      docker: []
-      live_probes: []
-      testql_dry_run_scenarios: []
-    koru-autopilot-vscode:
-      wup_paths:
-      - plugins/koru-autopilot-vscode/src/**
+    koru-shell:
+      wup_paths: []
       docker: []
       live_probes: []
       testql_dry_run_scenarios: []

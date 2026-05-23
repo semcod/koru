@@ -4,6 +4,53 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.55] — 2026-05-23
+
+### Changed
+- **Post-submit verification for all plugin-ladder IDEs.** The submit
+  input probe (select-all + copy, tail-match via ``decideSubmitCleared``)
+  now runs after every submit candidate on Cursor, VS Code, VSCodium, and
+  generic fallbacks — not only Cursor. Policy lives in new module
+  ``step-decisions.ts`` (``shouldVerifyPostSubmit``, ``interpretPostSubmitProbe``,
+  ``shouldVerifyPrePasteBusy``) so focus → busy → paste → submit steps share
+  one decision tree. Setting renamed to ``koruAutopilot.verifySubmit``
+  (``verifySubmitOnCursor`` kept as deprecated alias). VS Code host-key
+  ladder and type-submit fallbacks are verified the same way.
+
+### Fixed
+- **Autonomous: llm-ready tickets no longer redrive on stale message.sent.**
+  Redrive when ``message.sent`` lacks ``message.received`` is limited to
+  non-``llm-ready`` tickets (false-positive Wayland submits). ``llm-ready``
+  tickets keep the chat-activity cooldown while the IDE LLM works.
+
+## [0.1.54] — 2026-05-23
+
+### Fixed
+- **Cursor: post-submit verification of the chat input.** Cursor's
+  ``composer.sendToAgent`` (and its sibling commands ``composer.acceptComposerStep``,
+  ``composer.startComposerPrompt`` …) returned ``ok=true`` from the VS Code
+  command host even when they no-oped — wrong focus surface, agent panel
+  not foreground, command resolved against an empty Composer input rather
+  than the chat textarea, etc. The plugin trusted that signal and the
+  daemon was told ``submitted: true`` while the prompt was still sitting
+  in the chat input. The reported symptom: "Koru typed the prompt but
+  did not press Send."
+  - After every winning submit candidate (registered command OR host-key
+    fallback) on Cursor we now sentinel-probe the chat input via
+    select-all + ``editor.action.clipboardCopyAction`` and check whether
+    the trailing portion of the original prompt is still present.
+  - When the residue matches, the plugin discards the cached "winner"
+    (``probeCache.v3.submit``), keeps walking the candidate ladder, and
+    finally falls through to the host-level Ctrl+Return ladder
+    (wtype → ydotool → xdotool, Wayland-aware ordering).
+  - When verification fails on the host-key path too, the plugin emits
+    a ``submit_failed`` ack with ``verification: "strict"`` so the
+    autonomous loop will not log ``message.sent`` for a phantom send.
+  - Controlled by new setting ``koruAutopilot.verifySubmitOnCursor``
+    (default ``true``). The probe is only run when a non-trivial prompt
+    (≥4 trimmed chars) is in flight; short prompts can collide with
+    arbitrary input residue, so we trust the command's own signal there.
+
 ## [0.1.52] — 2026-05-23
 
 ### Added

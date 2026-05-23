@@ -1,8 +1,8 @@
 """Optional ``llx`` bridge for reflecting on IDE chat state.
 
 The IDE plugin streams ``message.sent`` and ``message.received`` events into
-the shared NDJSON file consumed by :mod:`koruide.chat_history`. When the user
-opts in with ``KORU_LLM_REFLECT=1`` (and ``llx`` is on ``PATH``), the
+the shared NDJSON file consumed by :mod:`koruide.chat_history`. When ``llx``
+is on ``PATH`` (unless disabled with ``KORU_LLM_REFLECT=0``), the
 autonomous loop can ask an OpenRouter-backed model to interpret those events
 *before* deciding whether to redrive the same ticket prompt.
 
@@ -61,9 +61,17 @@ class ReflectionResult:
 
 
 def llm_reflect_enabled() -> bool:
-    """``True`` iff the operator opted into llx reflection AND llx is on PATH."""
+    """``True`` iff llx reflection is enabled and ``llx`` is on PATH.
+
+    Behavior:
+    - default (unset): disabled,
+    - explicit falsey value (0/false/no/off): disabled,
+    - explicit truthy value (1/true/yes/on/auto): enabled when ``llx`` exists.
+    """
     flag = os.environ.get("KORU_LLM_REFLECT", "").strip().lower()
-    if flag not in {"1", "true", "yes", "on"}:
+    if not flag or flag in {"0", "false", "no", "off"}:
+        return False
+    if flag not in {"1", "true", "yes", "on", "auto"}:
         return False
     return shutil.which("llx") is not None
 
@@ -81,22 +89,6 @@ def _format_events_for_prompt(events: list[ChatEvent]) -> str:
     return "\n".join(lines)
 
 
-_PROMPT_TEMPLATE = (
-    "You are a reflection assistant for the koru autonomous loop. The koru\n"
-    "loop just drove the prompt below into the IDE chat. Based ONLY on the\n"
-    "recent IDE chat events, decide whether the IDE-side LLM is:\n"
-    "  - done = true: it produced a final answer or completed the task;\n"
-    "  - needs_input = true: it is asking the user / koru a question and is\n"
-    "    blocked until someone answers;\n"
-    "  - otherwise (still working) leave both false.\n\n"
-    "Respond STRICTLY as JSON, no prose:\n"
-    "  {\"done\": bool, \"needs_input\": bool, \"summary\": \"<1 short sentence>\"}\n\n"
-    "Ticket: {ticket_id} — {ticket_title}\n"
-    "Driven prompt (last):\n  «{driven_preview}»\n\n"
-    "Recent IDE chat events (newest last):\n{events}"
-)
-
-
 def build_reflect_prompt(
     *,
     ticket_id: str,
@@ -104,11 +96,21 @@ def build_reflect_prompt(
     driven_prompt: str,
     events: list[ChatEvent],
 ) -> str:
-    return _PROMPT_TEMPLATE.format(
-        ticket_id=ticket_id or "-",
-        ticket_title=ticket_title or "-",
-        driven_preview=(driven_prompt or "")[:300].replace("\n", " "),
-        events=_format_events_for_prompt(events),
+    schema_example = '{"done": bool, "needs_input": bool, "summary": "<1 short sentence>"}'
+    preview = (driven_prompt or "")[:300].replace("\n", " ")
+    return (
+        "You are a reflection assistant for the koru autonomous loop. The koru\n"
+        "loop just drove the prompt below into the IDE chat. Based ONLY on the\n"
+        "recent IDE chat events, decide whether the IDE-side LLM is:\n"
+        "  - done = true: it produced a final answer or completed the task;\n"
+        "  - needs_input = true: it is asking the user / koru a question and is\n"
+        "    blocked until someone answers;\n"
+        "  - otherwise (still working) leave both false.\n\n"
+        "Respond STRICTLY as JSON, no prose:\n"
+        f"  {schema_example}\n\n"
+        f"Ticket: {ticket_id or '-'} — {ticket_title or '-'}\n"
+        f"Driven prompt (last):\n  «{preview}»\n\n"
+        f"Recent IDE chat events (newest last):\n{_format_events_for_prompt(events)}"
     )
 
 

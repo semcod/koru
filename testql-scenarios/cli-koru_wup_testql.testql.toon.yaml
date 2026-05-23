@@ -1,0 +1,12 @@
+# SCENARIO: koru-wup-testql Command Tests (WUP quick / dry-run safe)
+# TYPE: cli
+
+CONFIG[2]{key, value}:
+  cli_command, koru-wup-testql
+  timeout_ms, 30000
+
+SHELL "koru-wup-testql --help" 5000
+ASSERT_EXIT_CODE 0
+
+SHELL "koru-wup-testql --version" 5000
+ASSERT_EXIT_CODE 0

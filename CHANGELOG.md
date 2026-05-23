@@ -68,6 +68,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.230] - 2026-05-23
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update plugins/koru-autopilot-vscode/CHANGELOG.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update testql-scenarios/cli-koru-live.testql.toon.yaml
+- Update testql-scenarios/cli-koru.testql.toon.yaml
+- Update testql-scenarios/cli-koru_api.testql.toon.yaml
+- Update testql-scenarios/cli-koru_dsl.testql.toon.yaml
+- Update testql-scenarios/cli-koru_wup_testql.testql.toon.yaml
+- Update testql-scenarios/cli-smoke.testql.toon.yaml
+- Update tests/test_autonomous.py
+- Update tests/test_autonomous_diag_markers.py
+- Update tests/test_autonomous_redrive_cooldown.py
+- Update tests/test_autonomous_startup.py
+- ... and 12 more files
+
+### Other
+- Update .koru/project.json
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update app.doql.less
+- Update plugins/koru-autopilot-vscode/out/extension.js
+- Update plugins/koru-autopilot-vscode/out/extension.js.map
+- Update plugins/koru-autopilot-vscode/package.json
+- Update plugins/koru-autopilot-vscode/src/extension.ts
+- Update plugins/koru-autopilot-vscode/src/probe-ladder.test.ts
+- Update plugins/koru-autopilot-vscode/src/probe-ladder.ts
+- ... and 23 more files
+
 ## [0.1.229] - 2026-05-22
 
 ### Docs

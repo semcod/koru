@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from koru.cqrs import EventSourcingRuntime
 from koru.bounded_contexts.topology.application import TopologyCommandService, TopologyQueryService
 from koru.bounded_contexts.topology.commands import (
     PersistTopologyCommand,
@@ -14,11 +15,15 @@ from koru.bounded_contexts.topology.events import (
     TOPOLOGY_PIPELINE_TOGGLED,
     TOPOLOGY_SAVED,
 )
+from koru.bounded_contexts.topology.read_model import TopologyEventLogProjection
 from koru.bounded_contexts.topology.queries import LoadTopologyQuery
 
 
 def test_topology_commands_emit_events_and_persist(tmp_path: Path) -> None:
-    command_service = TopologyCommandService()
+    runtime = EventSourcingRuntime()
+    projection = TopologyEventLogProjection()
+    runtime.bus.subscribe(projection.handle)
+    command_service = TopologyCommandService(runtime)
     query_service = TopologyQueryService()
 
     topology = query_service.load(LoadTopologyQuery(project=tmp_path))
@@ -55,3 +60,11 @@ def test_topology_commands_emit_events_and_persist(tmp_path: Path) -> None:
     ]
     assert events[0].aggregate_id == "redsl"
     assert events[1].aggregate_id == "gate:wup"
+
+    projected = projection.recent()
+    assert [entry.event_type for entry in projected] == [
+        TOPOLOGY_COMPONENT_TOGGLED,
+        TOPOLOGY_PIPELINE_TOGGLED,
+        TOPOLOGY_SAVED,
+    ]
+    assert projected[0].aggregate_id == "redsl"

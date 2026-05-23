@@ -13254,23 +13254,38 @@ sprint:
       sync: {}
       updated_at: '2026-05-22T13:08:26.245164+00:00'
     STARTER-186:
-      id: STARTER-186
-      name: 'Reduce cyclomatic complexity: _check_autopilot_env (CC=17, limit=15)'
-      status: open
-      priority: normal
-      sprint: current
-      source:
-        tool: koru-scan
-        timestamp: '2026-05-22T21:02:26.128663+00:00'
-        context:
-          input: '`project/analysis.toon.yaml` reports `_check_autopilot_env` with
-            CC=17 (limit=15). Extract sub-functions, simplify conditionals, or split
-            into strategy pattern.'
-          signal: code2llm_cc
-          dedupe_key: koru-scan:code2llm_cc:project/analysis.toon.yaml
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-22T21:02:26.128663+00:00'
       description: '`project/analysis.toon.yaml` reports `_check_autopilot_env` with
         CC=17 (limit=15). Extract sub-functions, simplify conditionals, or split into
         strategy pattern.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_check_autopilot_env` with
+          CC=17 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-22T21:02:26.128663+00:00'
+      id: STARTER-186
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_check_autopilot_env` with
+          CC=17 (limit=15). Extract sub-functions, simplify conditionals, or split
+          into strategy pattern.'
       labels:
       - koru
       - nl-task
@@ -13279,57 +13294,57 @@ sprint:
       - complexity
       - refactor
       - scan
-      blocked_by: []
-      blocks: []
-      files:
-      - project/analysis.toon.yaml
-      executor:
-        kind: human
-        mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '`project/analysis.toon.yaml` reports `_check_autopilot_env` with
-          CC=17 (limit=15). Extract sub-functions, simplify conditionals, or split
-          into strategy pattern.'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
+      name: 'Reduce cyclomatic complexity: _check_autopilot_env (CC=17, limit=15)'
       outputs:
         artifacts: []
         notes: []
+      priority: normal
+      source:
+        context:
+          dedupe_key: koru-scan:code2llm_cc:project/analysis.toon.yaml
+          input: '`project/analysis.toon.yaml` reports `_check_autopilot_env` with
+            CC=17 (limit=15). Extract sub-functions, simplify conditionals, or split
+            into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-22T21:02:26.128663+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
       sync: {}
-      history:
-      - timestamp: '2026-05-22T21:02:26.128663+00:00'
-        action: created
-        source: koru task
-        message: '`project/analysis.toon.yaml` reports `_check_autopilot_env` with
-          CC=17 (limit=15). Extract sub-functions, simplify conditionals, or split
-          into strategy pattern.'
-      created_at: '2026-05-22T21:02:26.128663+00:00'
       updated_at: '2026-05-22T21:02:26.128663+00:00'
     STARTER-188:
-      id: STARTER-188
-      name: 'code2llm refactor: split 13 high-CC methods'
-      status: open
-      priority: normal
-      sprint: current
-      source:
-        tool: koru-scan
-        timestamp: '2026-05-22T21:03:09.344551+00:00'
-        context:
-          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
-            methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f
-            toon` to verify.'
-          signal: code2llm_refactor
-          dedupe_key: semcod:code2llm:refactor:project/analysis.toon.yaml
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-22T21:03:09.344551+00:00'
       description: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
         methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
         to verify.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+        source: koru task
+        timestamp: '2026-05-22T21:03:09.344551+00:00'
+      id: STARTER-188
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
       labels:
       - koru
       - nl-task
@@ -13337,36 +13352,716 @@ sprint:
       - code2llm
       - refactor
       - scan
-      blocked_by: []
-      blocks: []
-      files:
-      - project/analysis.toon.yaml
-      executor:
-        kind: human
-        mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
-          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
-          to verify.'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
+      name: 'code2llm refactor: split 13 high-CC methods'
       outputs:
         artifacts: []
         notes: []
+      priority: normal
+      source:
+        context:
+          dedupe_key: semcod:code2llm:refactor:project/analysis.toon.yaml
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+            methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f
+            toon` to verify.'
+          signal: code2llm_refactor
+        timestamp: '2026-05-22T21:03:09.344551+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
       sync: {}
-      history:
-      - timestamp: '2026-05-22T21:03:09.344551+00:00'
-        action: created
-        source: koru task
-        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
-          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
-          to verify.'
-      created_at: '2026-05-22T21:03:09.344551+00:00'
       updated_at: '2026-05-22T21:03:09.344551+00:00'
+    STARTER-189:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-22T21:24:43.754985+00:00'
+      description: "[AUTO-DIAG] wup-koru-autopilot-vscode needs attention in cycle\
+        \ 0. queue_status=wup_failure. Check: WUP service=koru-autopilot-vscode stage=quick\
+        \ message=\U0001F4DC OQL: cli-koru_api.testql.toon.yaml\n\U0001F4DD SET \"\
+        cli_command\" = \"koru-api\"\n\U0001F4DD SET \"timeout_ms\" = \"30000\"\n\U0001F4BB\
+        \ SHELL \"koru-api --help\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE 0\n \
+        \ ❌ ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB SHELL \"koru-api --version\"\
+        \ [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE 0\n\U0001F4BB SHELL \"koru-api\
+        \ --invalid-flag-xyz123\" [5000ms] (dry-run)\n❌ Handler error for ASSERT_EXIT_CODE:\
+        \ invalid literal for int() with base 10: '!= 0'\n❌ L9: list.append() takes\
+        \ no keyword arguments\n\n❌ cli-koru_api.testql.toon.yaml: 5/7 passed, 2 failed\
+        \ (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485081_koru-autopilot-vscode_quick.json.\
+        \ Investigate and fix regression, stale quality artifact, or broken diagnostic\
+        \ gate."
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: "[AUTO-DIAG] wup-koru-autopilot-vscode needs attention in cycle 0.\
+          \ queue_status=wup_failure. Check: WUP service=koru-autopilot-vscode stage=quick\
+          \ message=\U0001F4DC OQL: cli-koru_api.testql.toon.yaml\n\U0001F4DD SET\
+          \ \"cli_command\" = \"koru-api\"\n\U0001F4DD SET \"timeout_ms\" = \"30000\"\
+          \n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE\
+          \ 0\n  ❌ ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB SHELL \"koru-api --version\"\
+          \ [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE 0\n\U0001F4BB SHELL \"koru-api\
+          \ --invalid-flag-xyz123\" [5000ms] (dry-run)\n❌ Handler error for ASSERT_EXIT_CODE:\
+          \ invalid literal for int() with base 10: '!= 0'\n❌ L9: list.append() takes\
+          \ no keyword arguments\n\n❌ cli-koru_api.testql.toon.yaml: 5/7 passed, 2\
+          \ failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485081_koru-autopilot-vscode_quick.json.\
+          \ Investigate and fix regression, stale quality artifact, or broken diagnostic\
+          \ gate."
+        source: koru task
+        timestamp: '2026-05-22T21:24:43.754985+00:00'
+      id: STARTER-189
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: "[AUTO-DIAG] wup-koru-autopilot-vscode needs attention in cycle 0.\
+          \ queue_status=wup_failure. Check: WUP service=koru-autopilot-vscode stage=quick\
+          \ message=\U0001F4DC OQL: cli-koru_api.testql.toon.yaml\n\U0001F4DD SET\
+          \ \"cli_command\" = \"koru-api\"\n\U0001F4DD SET \"timeout_ms\" = \"30000\"\
+          \n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE\
+          \ 0\n  ❌ ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB SHELL \"koru-api --version\"\
+          \ [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE 0\n\U0001F4BB SHELL \"koru-api\
+          \ --invalid-flag-xyz123\" [5000ms] (dry-run)\n❌ Handler error for ASSERT_EXIT_CODE:\
+          \ invalid literal for int() with base 10: '!= 0'\n❌ L9: list.append() takes\
+          \ no keyword arguments\n\n❌ cli-koru_api.testql.toon.yaml: 5/7 passed, 2\
+          \ failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485081_koru-autopilot-vscode_quick.json.\
+          \ Investigate and fix regression, stale quality artifact, or broken diagnostic\
+          \ gate."
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      name: '[AUTO-DIAG] wup-koru-autopilot-vscode needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=koru-a...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: "[AUTO-DIAG] wup-koru-autopilot-vscode needs attention in cycle 0.\
+            \ queue_status=wup_failure. Check: WUP service=koru-autopilot-vscode stage=quick\
+            \ message=\U0001F4DC OQL: cli-koru_api.testql.toon.yaml\n\U0001F4DD SET\
+            \ \"cli_command\" = \"koru-api\"\n\U0001F4DD SET \"timeout_ms\" = \"30000\"\
+            \n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE\
+            \ 0\n  ❌ ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB SHELL \"koru-api\
+            \ --version\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE 0\n\U0001F4BB SHELL\
+            \ \"koru-api --invalid-flag-xyz123\" [5000ms] (dry-run)\n❌ Handler error\
+            \ for ASSERT_EXIT_CODE: invalid literal for int() with base 10: '!= 0'\n\
+            ❌ L9: list.append() takes no keyword arguments\n\n❌ cli-koru_api.testql.toon.yaml:\
+            \ 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485081_koru-autopilot-vscode_quick.json.\
+            \ Investigate and fix regression, stale quality artifact, or broken diagnostic\
+            \ gate."
+        timestamp: '2026-05-22T21:24:43.754985+00:00'
+        tool: koru-cli-nl
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-22T21:24:43.754985+00:00'
+    STARTER-190:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-22T21:24:44.845862+00:00'
+      description: "[AUTO-DIAG] wup-koru-core needs attention in cycle 0. queue_status=wup_failure.\
+        \ Check: WUP service=koru-core stage=quick message=\U0001F4DC OQL: cli-koru_api.testql.toon.yaml\n\
+        \U0001F4DD SET \"cli_command\" = \"koru-api\"\n\U0001F4DD SET \"timeout_ms\"\
+        \ = \"30000\"\n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n \
+        \ ✅ ASSERT_EXIT_CODE 0\n  ❌ ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB SHELL\
+        \ \"koru-api --version\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE 0\n\U0001F4BB\
+        \ SHELL \"koru-api --invalid-flag-xyz123\" [5000ms] (dry-run)\n❌ Handler error\
+        \ for ASSERT_EXIT_CODE: invalid literal for int() with base 10: '!= 0'\n❌\
+        \ L9: list.append() takes no keyword arguments\n\n❌ cli-koru_api.testql.toon.yaml:\
+        \ 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485080_koru-core_quick.json.\
+        \ Investigate and fix regression, stale quality artifact, or broken diagnostic\
+        \ gate."
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: "[AUTO-DIAG] wup-koru-core needs attention in cycle 0. queue_status=wup_failure.\
+          \ Check: WUP service=koru-core stage=quick message=\U0001F4DC OQL: cli-koru_api.testql.toon.yaml\n\
+          \U0001F4DD SET \"cli_command\" = \"koru-api\"\n\U0001F4DD SET \"timeout_ms\"\
+          \ = \"30000\"\n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n\
+          \  ✅ ASSERT_EXIT_CODE 0\n  ❌ ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB\
+          \ SHELL \"koru-api --version\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE\
+          \ 0\n\U0001F4BB SHELL \"koru-api --invalid-flag-xyz123\" [5000ms] (dry-run)\n\
+          ❌ Handler error for ASSERT_EXIT_CODE: invalid literal for int() with base\
+          \ 10: '!= 0'\n❌ L9: list.append() takes no keyword arguments\n\n❌ cli-koru_api.testql.toon.yaml:\
+          \ 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485080_koru-core_quick.json.\
+          \ Investigate and fix regression, stale quality artifact, or broken diagnostic\
+          \ gate."
+        source: koru task
+        timestamp: '2026-05-22T21:24:44.845862+00:00'
+      id: STARTER-190
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: "[AUTO-DIAG] wup-koru-core needs attention in cycle 0. queue_status=wup_failure.\
+          \ Check: WUP service=koru-core stage=quick message=\U0001F4DC OQL: cli-koru_api.testql.toon.yaml\n\
+          \U0001F4DD SET \"cli_command\" = \"koru-api\"\n\U0001F4DD SET \"timeout_ms\"\
+          \ = \"30000\"\n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n\
+          \  ✅ ASSERT_EXIT_CODE 0\n  ❌ ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB\
+          \ SHELL \"koru-api --version\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE\
+          \ 0\n\U0001F4BB SHELL \"koru-api --invalid-flag-xyz123\" [5000ms] (dry-run)\n\
+          ❌ Handler error for ASSERT_EXIT_CODE: invalid literal for int() with base\
+          \ 10: '!= 0'\n❌ L9: list.append() takes no keyword arguments\n\n❌ cli-koru_api.testql.toon.yaml:\
+          \ 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485080_koru-core_quick.json.\
+          \ Investigate and fix regression, stale quality artifact, or broken diagnostic\
+          \ gate."
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      name: '[AUTO-DIAG] wup-koru-core needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=koru-core stage=qu...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: "[AUTO-DIAG] wup-koru-core needs attention in cycle 0. queue_status=wup_failure.\
+            \ Check: WUP service=koru-core stage=quick message=\U0001F4DC OQL: cli-koru_api.testql.toon.yaml\n\
+            \U0001F4DD SET \"cli_command\" = \"koru-api\"\n\U0001F4DD SET \"timeout_ms\"\
+            \ = \"30000\"\n\U0001F4BB SHELL \"koru-api --help\" [5000ms] (dry-run)\n\
+            \  ✅ ASSERT_EXIT_CODE 0\n  ❌ ASSERT_STDOUT_CONTAINS \"usage\"\n\U0001F4BB\
+            \ SHELL \"koru-api --version\" [5000ms] (dry-run)\n  ✅ ASSERT_EXIT_CODE\
+            \ 0\n\U0001F4BB SHELL \"koru-api --invalid-flag-xyz123\" [5000ms] (dry-run)\n\
+            ❌ Handler error for ASSERT_EXIT_CODE: invalid literal for int() with base\
+            \ 10: '!= 0'\n❌ L9: list.append() takes no keyword arguments\n\n❌ cli-koru_api.testql.toon.yaml:\
+            \ 5/7 passed, 2 failed (0ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779485080_koru-core_quick.json.\
+            \ Investigate and fix regression, stale quality artifact, or broken diagnostic\
+            \ gate."
+        timestamp: '2026-05-22T21:24:44.845862+00:00'
+        tool: koru-cli-nl
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-22T21:24:44.845862+00:00'
+    STARTER-191:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-22T21:24:45.943760+00:00'
+      description: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+        FILES...
+
+        Try ''testql run --help'' for help.
+
+
+        Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+        Investigate and fix regression, stale quality artifact, or broken diagnostic
+        gate.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+          Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+          FILES...
+
+          Try ''testql run --help'' for help.
+
+
+          Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+          Investigate and fix regression, stale quality artifact, or broken diagnostic
+          gate.'
+        source: koru task
+        timestamp: '2026-05-22T21:24:45.943760+00:00'
+      id: STARTER-191
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+          Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+          FILES...
+
+          Try ''testql run --help'' for help.
+
+
+          Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+          Investigate and fix regression, stale quality artifact, or broken diagnostic
+          gate.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      name: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=src/koru stage=quic...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+            Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+            FILES...
+
+            Try ''testql run --help'' for help.
+
+
+            Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+            Investigate and fix regression, stale quality artifact, or broken diagnostic
+            gate.'
+        timestamp: '2026-05-22T21:24:45.943760+00:00'
+        tool: koru-cli-nl
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-22T21:24:45.943760+00:00'
+    STARTER-192:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-22T21:27:42.861459+00:00'
+      description: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+        FILES...
+
+        Try ''testql run --help'' for help.
+
+
+        Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+        Investigate and fix regression, stale quality artifact, or broken diagnostic
+        gate.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+          Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+          FILES...
+
+          Try ''testql run --help'' for help.
+
+
+          Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+          Investigate and fix regression, stale quality artifact, or broken diagnostic
+          gate.'
+        source: koru task
+        timestamp: '2026-05-22T21:27:42.861459+00:00'
+      id: STARTER-192
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+          Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+          FILES...
+
+          Try ''testql run --help'' for help.
+
+
+          Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+          Investigate and fix regression, stale quality artifact, or broken diagnostic
+          gate.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      name: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=src/koru stage=quic...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+            Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+            FILES...
+
+            Try ''testql run --help'' for help.
+
+
+            Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+            Investigate and fix regression, stale quality artifact, or broken diagnostic
+            gate.'
+        timestamp: '2026-05-22T21:27:42.861459+00:00'
+        tool: koru-cli-nl
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-22T21:27:42.861459+00:00'
+    STARTER-193:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-22T21:43:25.707801+00:00'
+      description: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+        FILES...
+
+        Try ''testql run --help'' for help.
+
+
+        Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+        Investigate and fix regression, stale quality artifact, or broken diagnostic
+        gate.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+          Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+          FILES...
+
+          Try ''testql run --help'' for help.
+
+
+          Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+          Investigate and fix regression, stale quality artifact, or broken diagnostic
+          gate.'
+        source: koru task
+        timestamp: '2026-05-22T21:43:25.707801+00:00'
+      id: STARTER-193
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+          Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+          FILES...
+
+          Try ''testql run --help'' for help.
+
+
+          Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+          Investigate and fix regression, stale quality artifact, or broken diagnostic
+          gate.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      name: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=src/koru stage=quic...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+            Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+            FILES...
+
+            Try ''testql run --help'' for help.
+
+
+            Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+            Investigate and fix regression, stale quality artifact, or broken diagnostic
+            gate.'
+        timestamp: '2026-05-22T21:43:25.707801+00:00'
+        tool: koru-cli-nl
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-22T21:43:25.707801+00:00'
+    STARTER-194:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-22T21:44:12.599836+00:00'
+      description: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+        FILES...
+
+        Try ''testql run --help'' for help.
+
+
+        Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+        Investigate and fix regression, stale quality artifact, or broken diagnostic
+        gate.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+          Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+          FILES...
+
+          Try ''testql run --help'' for help.
+
+
+          Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+          Investigate and fix regression, stale quality artifact, or broken diagnostic
+          gate.'
+        source: koru task
+        timestamp: '2026-05-22T21:44:12.599836+00:00'
+      id: STARTER-194
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+          Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+          FILES...
+
+          Try ''testql run --help'' for help.
+
+
+          Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+          Investigate and fix regression, stale quality artifact, or broken diagnostic
+          gate.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      name: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=src/koru stage=quic...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+            Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+            FILES...
+
+            Try ''testql run --help'' for help.
+
+
+            Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+            Investigate and fix regression, stale quality artifact, or broken diagnostic
+            gate.'
+        timestamp: '2026-05-22T21:44:12.599836+00:00'
+        tool: koru-cli-nl
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-22T21:44:12.599836+00:00'
+    STARTER-195:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-22T21:47:05.864010+00:00'
+      description: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+        FILES...
+
+        Try ''testql run --help'' for help.
+
+
+        Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+        Investigate and fix regression, stale quality artifact, or broken diagnostic
+        gate.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+          Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+          FILES...
+
+          Try ''testql run --help'' for help.
+
+
+          Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+          Investigate and fix regression, stale quality artifact, or broken diagnostic
+          gate.'
+        source: koru task
+        timestamp: '2026-05-22T21:47:05.864010+00:00'
+      id: STARTER-195
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+          Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+          FILES...
+
+          Try ''testql run --help'' for help.
+
+
+          Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+          Investigate and fix regression, stale quality artifact, or broken diagnostic
+          gate.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      name: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=src/koru stage=quic...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          input: '[AUTO-DIAG] wup-src/koru needs attention in cycle 0. queue_status=wup_failure.
+            Check: WUP service=src/koru stage=quick message=Usage: testql run [OPTIONS]
+            FILES...
+
+            Try ''testql run --help'' for help.
+
+
+            Error: No such option: --timeout 10s Did you mean --timeout? track=/home/tom/github/semcod/koru/.wup/tracks/1779485076_src_koru_quick.json.
+            Investigate and fix regression, stale quality artifact, or broken diagnostic
+            gate.'
+        timestamp: '2026-05-22T21:47:05.864010+00:00'
+        tool: koru-cli-nl
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-22T21:47:05.864010+00:00'
+    STARTER-196:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-22T21:48:51.223501+00:00'
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        nie sprawdzono — podłącz plugin w IDE
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-22T22:30:37.156889Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`'
+        source: koru task
+        timestamp: '2026-05-22T21:48:51.223501+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-22T21:51:33.640185+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-22T22:30:38.010010+00:00'
+      id: STARTER-196
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          nie sprawdzono — podłącz plugin w IDE
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie nie sprawdzono — podłącz
+        plugin w IDE Wykonaj w IDE, potem zamknij ti...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-operator-pipeline:operator-autopilot-connect-plugin-w-czacie-nie-sprawdzono-pod-cz-plugin-w-ide-wykonaj-w-ide-potem-zamknij-ti...
+          detail: nie sprawdzono — podłącz plugin w IDE
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            nie sprawdzono — podłącz plugin w IDE
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `task koru:operator:plugin-probe IDE=vscode`'
+          step_id: autopilot_plugin
+          task_command: task koru:operator:plugin-probe IDE=vscode
+        timestamp: '2026-05-22T21:48:51.223501+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-22T22:30:38.009974+00:00'

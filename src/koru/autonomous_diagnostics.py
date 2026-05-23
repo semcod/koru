@@ -6,8 +6,10 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
+from koru.autonomous_diag_markers import diagnostic_marker_path
 from koru.autonomous_wup import WupHealthResult
-from koru.autonomous_wup import _read_wup_health as _read_wup_health_impl
+from koru.bounded_contexts.wup.application import WupCommandService
+from koru.bounded_contexts.wup.commands import EvaluateWupHealthCommand
 from koru.redup_integration import redup_changed_scan_runner_command, redup_scan_command
 from koru.tasks import create_nl_task
 
@@ -139,7 +141,7 @@ def create_diagnostic_ticket(
     state_dir: Path,
 ) -> None:
     state_dir.mkdir(parents=True, exist_ok=True)
-    marker = state_dir / f"{check_id}.failed"
+    marker = diagnostic_marker_path(state_dir, check_id)
     if marker.exists():
         stdio_info(
             f"- diagnostic ticket marker exists for {check_id}, skipping create",
@@ -165,7 +167,7 @@ def create_diagnostic_ticket(
 
 
 def clear_diagnostic_marker(state_dir: Path, check_id: str) -> None:
-    (state_dir / f"{check_id}.failed").unlink(missing_ok=True)
+    diagnostic_marker_path(state_dir, check_id).unlink(missing_ok=True)
 
 
 def run_command_check(
@@ -193,13 +195,16 @@ def read_wup_health(
     state_dir: Path,
     create_ticket: Any,
 ) -> WupHealthResult:
-    return _read_wup_health_impl(
-        project=project,
-        state=state,
-        diagnostic_tickets=diagnostic_tickets,
-        ticket_queue=ticket_queue,
-        state_dir=state_dir,
-        create_diagnostic_ticket=create_ticket,
+    command_service = WupCommandService()
+    return command_service.evaluate_health(
+        EvaluateWupHealthCommand(
+            project=project,
+            state=state,
+            diagnostic_tickets=diagnostic_tickets,
+            ticket_queue=ticket_queue,
+            state_dir=state_dir,
+            create_diagnostic_ticket=create_ticket,
+        ),
     )
 
 

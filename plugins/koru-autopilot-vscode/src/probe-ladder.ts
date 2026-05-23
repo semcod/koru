@@ -44,6 +44,55 @@ export function captureEditorSnapshot(
   };
 }
 
+/**
+ * Decide, given the contents of the chat input observed AFTER running a
+ * submit command, whether the submit actually cleared the input.
+ *
+ * This is the pure decision used by the runtime ``verifySubmitClearedInput``
+ * helper in ``extension.ts``. Extracted here so it can be unit-tested
+ * without mocking the ``vscode`` module (clipboard, command host, …).
+ *
+ * Inputs:
+ * - ``observedAfter`` is the text the select-all + clipboardCopy probe
+ *   read from the input. ``null`` means the probe could not run (no
+ *   chat focus, clipboard unreadable, …) and we fall back to trusting
+ *   the submit command's own success signal.
+ * - ``originalText`` is the prompt we just pasted and asked the IDE to
+ *   submit. Trimmed before comparison.
+ *
+ * Decision:
+ * - ``null`` probe → ``cleared = true`` (ambiguous; do not punish a
+ *   working submit because the probe failed).
+ * - empty / whitespace probe → ``cleared = true``.
+ * - probe contains the trailing ``tailLen`` characters of the original
+ *   prompt (default 40) → ``cleared = false`` (the submit no-oped and
+ *   our text is still in the textarea).
+ * - otherwise → ``cleared = true`` (different content; probably an
+ *   attachment chip or a fresh user message — leave it alone).
+ */
+export function decideSubmitCleared(
+  observedAfter: string | null,
+  originalText: string,
+  tailLen = 40
+): { cleared: boolean; tailMatched: boolean } {
+  if (observedAfter === null) {
+    return { cleared: true, tailMatched: false };
+  }
+  const trimmed = observedAfter.trim();
+  if (trimmed.length === 0) {
+    return { cleared: true, tailMatched: false };
+  }
+  const original = originalText.trim();
+  if (original.length === 0) {
+    return { cleared: true, tailMatched: false };
+  }
+  const tail = original.slice(-tailLen);
+  if (tail.length >= 4 && trimmed.includes(tail)) {
+    return { cleared: false, tailMatched: true };
+  }
+  return { cleared: true, tailMatched: false };
+}
+
 /** True when focus is unlikely to be a normal source file editor. */
 export function chatFocusHeuristic(snapshot: EditorSnapshot): boolean {
   if (!snapshot.hasEditor) {
@@ -335,6 +384,14 @@ export function buildHostKeySubmitCandidates(
  * Mutates a copy of the entry and returns it (callers may pass the value
  * straight from ``loadProbeCache``). Idempotent for already-clean caches.
  */
+function isLikelyWaylandSession(): boolean {
+  const env = process.env;
+  return (
+    (env.XDG_SESSION_TYPE || "").toLowerCase() === "wayland" ||
+    Boolean(env.WAYLAND_DISPLAY)
+  );
+}
+
 export function sanitizeProbeCacheForIde(
   entry: ProbeCacheEntry | undefined,
   ide: string
@@ -367,6 +424,12 @@ export function sanitizeProbeCacheForIde(
   //   "xdotool key Return", "ydotool key Return", "wtype -k Return"
   if (ide === "cursor" && typeof sanitized.submit === "string") {
     const cmd = sanitized.submit;
+    // On Wayland, xdotool cannot reach native Cursor windows at all — every
+    // xdotool host-key probe is a false positive (exit 0, no effect). Discard
+    // the cached winner so the ladder re-probes composer.sendToAgent / ydotool.
+    if (isLikelyWaylandSession() && cmd.startsWith("xdotool ")) {
+      sanitized.submit = undefined;
+    }
     const hasCtrl = /\bctrl\b/i.test(cmd) || /-M\s+ctrl\b/.test(cmd);
     const isHostKey =
       /^(xdotool|ydotool)\s+key\s+Return$/.test(cmd) ||
