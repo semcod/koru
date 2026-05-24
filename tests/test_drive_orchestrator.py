@@ -130,8 +130,25 @@ def test_plugin_version_policy_can_block(monkeypatch) -> None:
     assert DriveOrchestrator.should_block_plugin_version(info)
 
 
-def test_compatible_protocol_allows_version_drift_under_strict_policy(monkeypatch) -> None:
+def test_compatible_protocol_does_not_bypass_strict_version_policy(monkeypatch) -> None:
     monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
+    monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda: "0.1.15")
+
+    info = DriveOrchestrator.plugin_version_info(
+        plugin_ide="vscode",
+        connected_version="0.1.14",
+        protocol_version=1,
+        capabilities=["chat.submit"],
+    )
+
+    assert info["plugin_version_mismatch"] is True
+    assert info["plugin_protocol_compatible"] is True
+    assert info["plugin_version_policy"] == "strict"
+    assert DriveOrchestrator.should_block_plugin_version(info)
+
+
+def test_explicit_protocol_policy_allows_compatible_version_drift(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_PLUGIN_VERSION_POLICY", "protocol")
     monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda: "0.1.15")
 
     info = DriveOrchestrator.plugin_version_info(

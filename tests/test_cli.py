@@ -661,8 +661,7 @@ class TestSubcommandDispatch(unittest.TestCase):
         sentinels = {name: mock.Mock(side_effect=AssertionError) for name in self.EXPECTED_KEYS}
         with mock.patch.dict(_SUBCOMMANDS, sentinels):
             with mock.patch("koru.cli_doctor.doctor_main", return_value=0):
-                with mock.patch("koru.cli._maybe_reexec_for_project_venv"):
-                    code, _ = _run_main("--doctor", "--project", ".")
+                code, _ = _run_main("--doctor", "--project", ".")
         self.assertEqual(code, 0)
         for handler in sentinels.values():
             handler.assert_not_called()

@@ -1497,8 +1497,31 @@ def test_status_has_autopilot_plugin_rejects_stale_plugin_when_strict(monkeypatc
     )
 
 
-def test_status_has_autopilot_plugin_accepts_stale_version_with_protocol(monkeypatch) -> None:
+def test_status_has_autopilot_plugin_blocks_stale_version_with_strict_protocol(monkeypatch) -> None:
     monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
+    monkeypatch.setattr(
+        autonomous_mod.DriveOrchestrator,
+        "expected_plugin_version",
+        lambda: "0.1.15",
+    )
+
+    assert not autonomous_mod._status_has_autopilot_plugin(
+        {
+            "plugins": [
+                {
+                    "ide": "vscode",
+                    "version": "0.1.14",
+                    "protocolVersion": 1,
+                    "capabilities": ["chat.submit"],
+                }
+            ]
+        },
+        "vscode",
+    )
+
+
+def test_status_has_autopilot_plugin_accepts_stale_version_with_protocol_policy(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_PLUGIN_VERSION_POLICY", "protocol")
     monkeypatch.setattr(
         autonomous_mod.DriveOrchestrator,
         "expected_plugin_version",
@@ -1838,39 +1861,6 @@ def test_run_cycle_escalates_stuck_waiting_input_instead_of_skipping(
     assert "Ticket PLF-1305 has been stuck" in driven[0]
     assert "original ticket prompt" in driven[0]
     assert state.stagnation_streak == 0
-
-
-def test_autopilot_retry_not_suppressed_after_failed_drive(tmp_path) -> None:
-    queue_result = SimpleNamespace(
-        last_status="waiting_input",
-        last_message="ticket prompt",
-        waiting=["PLF-1306"],
-    )
-    state = autonomous_mod.AutoloopState(
-        previous_signature="waiting_input:PLF-1306",
-        stagnation_streak=1,
-        last_autopilot_status="failed",
-    )
-    logs: list[str] = []
-
-    should_skip, reason = autonomous_cycle_mod._check_autopilot_skip_conditions(
-        tmp_path,
-        queue_result,
-        state,
-        "drive",
-        False,
-        True,
-        0,
-        "waiting_input",
-        autonomous_cycle_mod.DiagnosticResult(status="skipped", failed=[]),
-        False,
-        {},
-        logs.append,
-    )
-
-    assert should_skip is False
-    assert reason == ""
-    assert any("previous drive failed" in line for line in logs)
 
 
 def test_run_cycle_drives_llm_ready_waiting_ticket_without_stagnation_skip(

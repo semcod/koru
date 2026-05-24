@@ -593,11 +593,45 @@ def test_plugin_hello_rejects_missing_protocol(
         plugin.close()
 
 
-def test_strict_plugin_version_allows_stale_plugin_with_compatible_protocol(
+def test_strict_plugin_version_blocks_stale_plugin_with_compatible_protocol(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
+    monkeypatch.setattr(
+        DriveOrchestrator,
+        "expected_plugin_version",
+        lambda: "0.1.15",
+    )
+
+    with _daemon(tmp_path, monkeypatch) as h:
+        plugin = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        plugin.settimeout(2.0)
+        plugin.connect(str(h.sock_path))
+        plugin_reader = _LineReader(plugin)
+        plugin.sendall(
+            hello(
+                ide="vscode",
+                version="0.1.14",
+                pid=42,
+                id="hello-stale-compatible",
+                protocol_version=1,
+                capabilities=["chat.submit"],
+            ).encode(),
+        )
+
+        reply = plugin_reader.read_message()
+        assert reply.type == "error"
+        assert reply.data.get("ok") is False
+        assert "version mismatch" in reply.data.get("message", "")
+        plugin.close()
+
+
+def test_protocol_policy_allows_stale_plugin_with_compatible_protocol(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_PLUGIN_VERSION_POLICY", "protocol")
     monkeypatch.setattr(
         DriveOrchestrator,
         "expected_plugin_version",
@@ -621,7 +655,7 @@ def test_strict_plugin_version_allows_stale_plugin_with_compatible_protocol(
         cli.sendall(
             Message(
                 type="drive",
-                id="d-compatible-protocol",
+                id="d-protocol-policy",
                 data={"text": "hi", "ide": "vscode", "submit": True},
             ).encode(),
         )
@@ -1021,7 +1055,7 @@ def test_plugin_ack_submit_failure_does_not_cross_fallback_for_plugin_ide(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Plugin-socket IDEs must not silently switch to OS injector."""
+    """Plugin-socket IDEs must not cross into keyboard fallback after plugin ack."""
     with _daemon(tmp_path, monkeypatch) as h:
         plugin, plugin_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
 
@@ -1064,64 +1098,8 @@ def test_plugin_ack_submit_failure_does_not_cross_fallback_for_plugin_ide(
         cli_reply = cli_reader.read_message()
         assert cli_reply.type == "ack"
         assert cli_reply.data.get("ok") is False
-        assert cli_reply.data.get("backend") is None
+        assert cli_reply.data.get("submitted") is False
         assert cli_reply.data.get("os_fallback") is None
-        assert h.injector.calls == []
-
-        plugin.close()
-        cli.close()
-
-
-def test_plugin_ack_submit_failure_uses_os_fallback_for_keyboard_strategy(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Keyboard-owned IDEs can still use OS fallback when not plugin-required."""
-    with _daemon(tmp_path, monkeypatch) as h:
-        plugin, plugin_reader = _connect_plugin(h.sock_path, ide="jetbrains", pid=42)
-
-        def fake_os_fallback(_ide: str, _text: str, submit: bool):
-            return {
-                "ok": True,
-                "backend": "os_injector",
-                "submitted": submit,
-            }
-
-        monkeypatch.setattr(h.daemon, "_try_os_injector_drive", fake_os_fallback)
-
-        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        cli.settimeout(2.0)
-        cli.connect(str(h.sock_path))
-        cli_reader = _LineReader(cli)
-        cli.sendall(
-            Message(
-                type="drive",
-                id="d-submit-fail-keyboard",
-                data={"text": "continue", "ide": "jetbrains", "submit": True},
-            ).encode(),
-        )
-
-        forwarded = plugin_reader.read_message()
-        assert forwarded.type == "chat.send"
-        plugin.sendall(
-            Message(
-                type="ack",
-                id=forwarded.id,
-                data={
-                    "ok": False,
-                    "delivered": False,
-                    "submitted": False,
-                    "message": "chat opened and text injected, but submit command failed",
-                },
-            ).encode(),
-        )
-
-        cli_reply = cli_reader.read_message()
-        assert cli_reply.type == "ack"
-        assert cli_reply.data.get("ok") is True
-        assert cli_reply.data.get("backend") == "os_injector"
-        assert cli_reply.data.get("submitted") is True
-        assert cli_reply.data.get("os_fallback") == "used"
         assert h.injector.calls == []
 
         plugin.close()

@@ -122,6 +122,11 @@ class DriveOrchestrator:
         return policy in {"strict", "fail", "fail-fast", "block"}
 
     @staticmethod
+    def protocol_plugin_version_policy() -> bool:
+        policy = os.environ.get("KORU_PLUGIN_VERSION_POLICY", "").strip().lower()
+        return policy in {"protocol", "compatible", "compat"}
+
+    @staticmethod
     def plugin_version_info(
         *,
         plugin_ide: str | None,
@@ -142,6 +147,7 @@ class DriveOrchestrator:
         )
         missing_connected = bool(strict and expected and connected_version is None)
         unknown_expected = bool(strict and connected_version and not expected)
+        protocol_policy = DriveOrchestrator.protocol_plugin_version_policy()
         info: dict[str, Any] = {
             "plugin_version": connected_version,
             "expected_plugin_version": expected,
@@ -154,7 +160,7 @@ class DriveOrchestrator:
             "plugin_version_missing": missing_connected,
             "plugin_version_expected_missing": unknown_expected,
             "plugin_version_policy": (
-                "protocol" if protocol_compatible else "strict" if strict else "warn"
+                "protocol" if protocol_policy else "strict" if strict else "warn"
             ),
         }
         if capabilities is not None:
@@ -167,7 +173,10 @@ class DriveOrchestrator:
     def should_block_plugin_version(info: dict[str, Any]) -> bool:
         if info.get("plugin_protocol_incompatible"):
             return True
-        if info.get("plugin_protocol_compatible"):
+        if (
+            info.get("plugin_protocol_compatible")
+            and DriveOrchestrator.protocol_plugin_version_policy()
+        ):
             return False
         return bool(
             info.get("plugin_version_mismatch")
