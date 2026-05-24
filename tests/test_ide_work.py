@@ -69,7 +69,7 @@ class TestIdeWork(unittest.TestCase):
             self.assertIn("PLF-99", prompt)
             self.assertIn("koru_run_ticket", prompt)
 
-    def test_resolve_idle_drive_prompt_falls_back_when_no_open(self) -> None:
+    def test_resolve_idle_drive_prompt_marks_idle_when_no_open(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
 
@@ -81,7 +81,7 @@ class TestIdeWork(unittest.TestCase):
                 drive_prompt="continue with the next ticket",
                 runner=runner,
             )
-            self.assertEqual(kind, "drive_prompt")
+            self.assertEqual(kind, "idle_no_ticket")
             self.assertEqual(prompt, "continue with the next ticket")
 
     def test_release_stale_in_progress_reopens_old_ticket(self) -> None:

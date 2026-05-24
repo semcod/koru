@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from koru.ide_adapters import shared
+from koru.ide_adapters.base import SettingsReport
 from koru.ide_adapters.bridge import evaluate_bridge, format_bridge_text, gc_stale_sockets_for_lane
 from koru.ide_adapters.registry import get_adapter
 
@@ -42,6 +43,61 @@ def test_untrusted_publisher_hypothesis(monkeypatch: pytest.MonkeyPatch) -> None
     assert hyp.confidence >= 0.9
 
 
+def test_apply_safe_fixes_adds_trusted_publisher_while_ide_runs(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    adapter = get_adapter("vscode")
+    assert adapter is not None
+    calls: list[str] = []
+    monkeypatch.setattr(
+        shared,
+        "analyze_socket_settings",
+        lambda **_kwargs: SettingsReport(
+            expected_socket="/tmp/koru-autopilot-vscode.sock",
+            user_socket=None,
+            workspace_socket=None,
+            mismatch=False,
+        ),
+    )
+    monkeypatch.setattr(shared, "publisher_trusted", lambda _ide: False)
+
+    def fake_add_trusted_publisher(ide: str) -> bool:
+        calls.append(ide)
+        return True
+
+    monkeypatch.setattr(shared, "add_trusted_publisher", fake_add_trusted_publisher)
+
+    applied = adapter.apply_safe_fixes(
+        project=tmp_path,
+        expected_socket="/tmp/koru-autopilot-vscode.sock",
+        fix=True,
+        ide_running=True,
+    )
+
+    assert calls == ["vscode"]
+    assert applied == [
+        "extensions.trustedPublishers += semcod (wymagany Developer: Reload Window w VS Code)",
+    ]
+
+
+def test_inactive_extension_hypothesis_uses_real_config_home(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = tmp_path / "Code"
+    log_dir = config / "logs" / "20260524T120000" / "window1" / "exthost"
+    log_dir.mkdir(parents=True)
+    (log_dir / "exthost.log").write_text("extension host started\n", encoding="utf-8")
+    monkeypatch.setattr(shared, "config_home_for_ide", lambda _ide: config)
+
+    hyp = shared.inactive_extension_hypothesis("vscode")
+
+    assert hyp is not None
+    assert str(config / "logs") in hyp.evidence
+    assert "Vscode" not in hyp.evidence
+
+
 def test_workspace_socket_mismatch(tmp_path: Path) -> None:
     project = tmp_path / "proj"
     (project / ".cursor").mkdir(parents=True)
@@ -57,6 +113,9 @@ def test_workspace_socket_mismatch(tmp_path: Path) -> None:
     assert report.mismatch is True
     hyp = shared.settings_mismatch_hypothesis(report)
     assert hyp is not None
+    assert hyp.remediation.command is not None
+    assert "koru ide doctor --fix" in hyp.remediation.command
+    assert "--fix-settings" not in hyp.remediation.command
     fixed = shared.fix_workspace_socket(
         project=project,
         ide="cursor",
@@ -86,6 +145,16 @@ def test_gc_stale_socket_removes_dead_file(tmp_path: Path) -> None:
     removed = shared.gc_stale_autopilot_sockets(keep=keep, runtime_dir=tmp_path)
     assert str(stale) in removed
     assert keep.exists() or not keep.exists()
+
+
+def test_gc_stale_sockets_for_lane_removes_dead_target(tmp_path: Path) -> None:
+    target = tmp_path / "koru-autopilot-vscode.sock"
+    target.touch()
+
+    removed = gc_stale_sockets_for_lane(target)
+
+    assert str(target) in removed
+    assert not target.exists()
 
 
 def test_evaluate_bridge_no_daemon(tmp_path: Path) -> None:

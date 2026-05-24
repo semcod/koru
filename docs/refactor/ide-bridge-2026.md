@@ -1,61 +1,79 @@
-# IDE bridge refactor (2026)
+# Plan refaktoryzacji autopilota Koru (2026)
 
-## Problem
+## 🩺 Diagnoza: co dziś zawodzi
+Z analizy problemów w kooperacji z edytorami (np. Cursor 3.5.17 / VS Code 1.105+ z mechanizmem `trustedPublishers`) wynikają poniższe klasy problemów technicznych:
 
-Autopilot paste failures (`plugins: []`) had many root causes but one generic error message. Common cases:
+1. **Cicha awaria aktywacji wtyczki**: VSIX zainstalowany przez `cursor --install-extension --force` nie aktywuje wtyczki, bo publisher `semcod` nie jest zaufany. Instalator traktuje kod wyjścia `0` jako sukces, a wtyczka pozostaje martwa.
+2. **Niespójne źródła konfiguracji socketu**: Niezgodności między globalnymi ustawieniami użytkownika a plikiem `.cursor/settings.json` w projekcie.
+3. **Wielość osieroconych daemonów**: Brak garbage collection / czyszczenia martwych gniazd unixowych po zamknięciu pętli `koru auto`.
+4. **Generyczne komunikaty błędów**: Komunikat `plugins: []` maskuje wiele różnych przyczyn źródłowych.
+5. **Brak kontraktu wersji**: Brak handshake'u sprawdzającego zgodność protokołu plugin ↔ daemon.
 
-- **Cursor 1.105+**: `extensions.trustedPublishers` blocks VSIX-installed extensions until the publisher is trusted.
-- **Workspace settings** override user `koruAutopilot.socketPath` (e.g. `.cursor/settings.json` vs `KORU_AUTOPILOT_INSTANCE=cursor`).
-- **Stale Unix sockets** after `koru auto` exits leave `Connection refused` while the socket file exists.
+---
 
-## Solution
+## 🎯 Cele refaktoryzacji
+* **Diagnoza zamiast nadziei**: Każde niepowodzenie autopilota mapuje się na precyzyjną hipotezę i instrukcję naprawczą.
+* **Jedno źródło prawdy**: Spójne i deterministyczne ścieżki gniazd IPC dla każdego z edytorów.
+* **Aktywna weryfikacja wtyczki**: Potwierdzenie rzeczywistego uruchomienia i aktywacji rozszerzenia w edytorze.
+* **Wsparcie dla nowych IDE**: Modularne adaptery per-IDE z prostym interfejsem.
 
-### `koru ide doctor`
+---
 
-Single diagnostic entry point:
-
-```bash
-export KORU_AUTOPILOT_INSTANCE=cursor
-koru ide doctor --ide cursor --fix --gc-sockets
-```
-
-- Enumerates **hypotheses** with confidence and remediation steps.
-- **`--fix`**: safe auto-fixes (workspace socket path; `trustedPublishers` when IDE is closed).
-- **`--gc-sockets`**: remove dead `koru-autopilot-*.sock` files.
-
-### `koru autopilot status --explain`
-
-When `plugins` is empty, prints bridge diagnostics to stderr after the JSON status.
-
-### Operator pipeline
-
-Step `autopilot_plugin` uses bridge diagnostics in ticket detail and points to `koru ide doctor --ide … --fix`.
-
-### Daemon start
-
-`koru autopilot daemon` garbage-collects stale sockets (keeps the target socket path) before binding.
-
-## Architecture
+## 🏗️ Architektura docelowa
 
 ```
-koru ide doctor
-    → ide_adapters/bridge.evaluate_bridge()
-    → ide_adapters/registry.get_adapter(ide)
-    → ide_adapters/vscode_family.VSCodeFamilyAdapter
-    → ide_adapters/shared.py (vscdb, exthost logs, settings)
+┌────────────────────────────────────────────────────────────┐
+│  koru auto / autonomous up                                 │
+└────────────────────────────────────────────────────────────┘
+              │
+              ▼
+┌────────────────────────────────────────────────────────────┐
+│  IdeBridge — orkiestrator startu autopilota                │
+│  • wybiera adapter wg lane                                 │
+│  • uruchamia: ensure_daemon → ensure_plugin → handshake    │
+│  • zwraca strukturę BridgeStatus z konkretnymi hipotezami  │
+└────────────────────────────────────────────────────────────┘
+       │            │                  │                │
+       ▼            ▼                  ▼                ▼
+   ┌────────┐  ┌────────┐         ┌─────────┐     ┌──────────┐
+   │ Cursor │  │ VSCode │   …     │Antigrav │     │JetBrains │
+   │Adapter │  │Adapter │         │Adapter  │     │Adapter   │
+   └────────┘  └────────┘         └─────────┘     └──────────┘
 ```
 
-## Cursor trusted publisher (manual if IDE open)
+### Interfejs `IdeAdapter` (`src/koru/ide_adapters/base.py`)
+```python
+class IdeAdapter(Protocol):
+    ide_id: str
+    capabilities: IdeCapabilities
 
-1. Extensions → **koru autopilot** → **Trust Publisher 'semcod'**
-2. **Developer: Reload Window**
-3. Command Palette → **koru: Connect autopilot daemon**
-4. `koru autopilot status` → `plugins` not empty
+    def detect(self) -> IdePresence: ...
+    def install_plugin(self, vsix: Path) -> InstallReport: ...
+    def verify_plugin_active(self, *, timeout_s: float) -> ActivationReport: ...
+    def resolve_settings(self, *, project: Path, socket_path: Path) -> SettingsReport: ...
+    def diagnose_inactive(self, *, runtime: IdePresence) -> list[Hypothesis]: ...
+    def hint_remediation(self, hypothesis: Hypothesis) -> Remediation: ...
+```
 
-Or close Cursor and run `koru ide doctor --ide cursor --fix`.
+---
 
-## Follow-up (not in this phase)
+## 📅 Harmonogram wdrożenia
 
-- Plugin handshake contract v3
-- End-to-end echo probe in chat input
-- Headless CI matrix per IDE version
+### Faza 0 — Szybkie poprawki (Quick Wins)
+* **0.1**: Dodanie dokumentacji do `docs/` o `trustedPublishers` w Cursorze 1.105+.
+* **0.2**: Wprowadzenie w `operator_pipeline.py` dedykowanej diagnozy i instrukcji dla `semcod` w `trustedPublishers`.
+* **0.3**: Dodanie flagi `koru autopilot status --explain`.
+* **0.4**: Garbage collection (usuwanie) martwych/starych plików `.sock` przy starcie.
+* **0.5**: Reconciliacja i ostrzeżenie o niezgodności socketu w `settings.json`.
+
+### Faza 1 — Abstrakcja `IdeAdapter`
+Przeniesienie rozproszonej logiki rozgałęzień per-IDE do wyizolowanych modułów w `src/koru/ide_adapters/`.
+
+### Faza 2 — Aktywny uścisk dłoni (Handshake) i E2E Echo
+Wdrożenie protokołu powitalnego z weryfikacją wersji kontraktu oraz komendy `koru autopilot drive --probe` sprawdzającej poprawność wpisywania tokenów.
+
+### Faza 3 — Inteligentna autodiagnoza i samonaprawa
+Automatyczne rozwiązywanie prostych konfliktów (usuwanie nieaktywnych socketów, zapisywanie zaufanych wydawców, reload okna IDE).
+
+### Faza 4 — `koru ide doctor --fix`
+Stworzenie jednego, wszechstronnego CLI do natychmiastowego testowania i naprawiania całego łańcucha połączenia z IDE.

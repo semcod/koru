@@ -125,12 +125,14 @@ def resolve_idle_drive_prompt(
 ) -> tuple[str, str]:
     """When the queue is idle, prefer a ticket-specific IDE prompt if work exists.
 
-    Returns ``(prompt, kind)`` where ``kind`` is ``idle_ticket_prompt`` or
-    ``drive_prompt``.
+    Returns ``(prompt, kind)`` where ``kind`` is ``idle_ticket_prompt`` when
+    runnable IDE work exists, or ``idle_no_ticket`` when the queue is idle and
+    no open ticket is available. The prompt is preserved for compatibility, but
+    callers should not drive it for ``idle_no_ticket``.
     """
     ticket = fetch_next_open_ticket(project, runner=runner)
     if ticket is None:
-        return drive_prompt, "drive_prompt"
+        return drive_prompt, "idle_no_ticket"
     return (
         build_ide_work_prompt(ticket, fallback=drive_prompt, include_mcp_hint=include_mcp_hint),
         "idle_ticket_prompt",

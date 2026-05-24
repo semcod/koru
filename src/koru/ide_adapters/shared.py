@@ -328,7 +328,7 @@ def settings_mismatch_hypothesis(settings: SettingsReport) -> Hypothesis | None:
             kind="command",
             summary="Wyrównaj socket w workspace settings",
             command=(
-                "koru ide doctor --fix-settings "
+                "koru ide doctor --fix "
                 f"(lub ręcznie {settings.workspace_settings_path})"
             ),
         ),
@@ -361,12 +361,14 @@ def inactive_extension_hypothesis(ide: str) -> Hypothesis | None:
     active = extension_activated_in_exthost(ide)
     if active is not False:
         return None
+    log_home = config_home_for_ide(ide)
+    logs_hint = str(log_home / "logs") if log_home is not None else f"~/.config/{ide}/logs"
     return Hypothesis(
         id=f"{ide}.extension.not_activated",
         confidence=0.75,
         evidence=(
             f"Brak aktywacji {EXTENSION_ID} w ostatnich logach exthost "
-            f"(~/.config/{ide.title()}/logs/.../exthost.log)"
+            f"({logs_hint}/.../exthost.log)"
         ),
         remediation=Remediation(
             kind="manual",

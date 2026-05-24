@@ -235,7 +235,7 @@ def test_run_cycle_auto_heals_stale_socket():
 
 
 def test_autonomous_cycle_skips_autopilot_after_repeated_idle_when_threshold_set():
-    """With autopilot_skip_drive_idle_streak=N, skip drive once stagnation_streak >= N on idle."""
+    """Idle queue without open tickets does not drive; repeated idle can still hit streak skip."""
     drive_calls: list[tuple[str, dict]] = []
 
     class RecordingClient:
@@ -299,6 +299,6 @@ def test_autonomous_cycle_skips_autopilot_after_repeated_idle_when_threshold_set
                 _, _, ap1, _ = _run_cycle(cycle=1, **common)
                 _, _, ap2, _ = _run_cycle(cycle=2, **common)
 
-                assert ap1 == "ok"
+                assert ap1 == "skipped(idle_no_ticket)"
                 assert ap2 == "skipped(idle_streak)"
-                assert len(drive_calls) == 1
+                assert drive_calls == []

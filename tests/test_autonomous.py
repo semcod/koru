@@ -32,6 +32,14 @@ def _isolate_terminal_ide(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
 
+def _force_idle_drive_prompt(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        autonomous_mod,
+        "resolve_idle_drive_prompt",
+        lambda *_args, drive_prompt, **_kwargs: (drive_prompt, "drive_prompt"),
+    )
+
+
 def test_effective_flags_matrix() -> None:
     assert autonomous_env_mod.effective_ticket_source_flags("queue") == (False, False)
     assert autonomous_env_mod.effective_ticket_source_flags("scan") == (True, False)
@@ -192,6 +200,7 @@ def test_idle_streak_skip_increments_telemetry(tmp_path, monkeypatch) -> None:
             last_ticket_id=None,
         ),
     )
+    _force_idle_drive_prompt(monkeypatch)
     monkeypatch.setattr(autonomous_mod, "run_scan", lambda **kwargs: ScanResult([], [], []))
     st = autonomous_mod.AutoloopState()
     common = dict(
@@ -2393,6 +2402,58 @@ def test_resolve_autopilot_drive_decision_includes_recent_llx_summary(
     assert "Do not restart from scratch" in decision.prompt
 
 
+def test_autopilot_idle_without_open_ticket_does_not_drive(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    class Client:
+        def drive(self, *_args, **_kwargs):
+            raise AssertionError("idle queue without open tickets must not drive")
+
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=[],
+        last_status="idle",
+        last_message="",
+        last_ticket_id=None,
+    )
+    messages: list[str] = []
+    monkeypatch.setattr(
+        autonomous_cycle_mod,
+        "resolve_idle_drive_prompt",
+        lambda *_args, **_kwargs: ("continue with the next ticket", "idle_no_ticket"),
+    )
+
+    status, backend, kind = autonomous_cycle_mod._handle_autopilot_phase(
+        tmp_path,
+        autonomous_mod.AutoloopState(),
+        1,
+        queue_result,
+        True,
+        Client(),
+        "auto",
+        "continue with the next ticket",
+        True,
+        "drive",
+        False,
+        True,
+        0,
+        "waiting_input",
+        autonomous_cycle_mod.DiagnosticResult("ok", []),
+        False,
+        {},
+        messages.append,
+        lambda *_args, **_kwargs: None,
+    )
+
+    assert status == "skipped(idle_no_ticket)"
+    assert backend is None
+    assert kind == "idle_no_ticket"
+    assert any("idle_no_ticket" in message for message in messages)
+
+
 def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(
     tmp_path,
     monkeypatch,
@@ -2414,6 +2475,7 @@ def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(
             waiting=[],
         ),
     )
+    _force_idle_drive_prompt(monkeypatch)
     fallback_calls: list[dict] = []
     monkeypatch.setattr(
         "koru.autonomous_cycle_gate.try_os_injector_fallback_with_deps",
@@ -2481,6 +2543,7 @@ def test_run_cycle_plugin_required_failure_skips_os_injector_fallback(
             waiting=[],
         ),
     )
+    _force_idle_drive_prompt(monkeypatch)
 
     _scan_result, queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
         cycle=1,
@@ -2545,6 +2608,7 @@ def test_run_cycle_autopilot_focus_error_retry_loop_retries_and_warns(
             waiting=[],
         ),
     )
+    _force_idle_drive_prompt(monkeypatch)
 
     _scan_result, queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
         cycle=1,
@@ -2609,6 +2673,7 @@ def test_run_cycle_autopilot_plugin_retry_loop_for_windsurf_fastpath_failure(
             waiting=[],
         ),
     )
+    _force_idle_drive_prompt(monkeypatch)
 
     _scan_result, _queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
         cycle=1,
@@ -2661,6 +2726,7 @@ def test_run_cycle_does_not_retry_missing_plugin_as_focus_error(
             waiting=[],
         ),
     )
+    _force_idle_drive_prompt(monkeypatch)
 
     _scan_result, _queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
         cycle=1,
@@ -2720,6 +2786,7 @@ def test_run_cycle_does_not_retry_when_plugin_requires_manual_focus(
             waiting=[],
         ),
     )
+    _force_idle_drive_prompt(monkeypatch)
 
     _scan_result, _queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
         cycle=1,

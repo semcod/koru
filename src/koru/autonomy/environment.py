@@ -156,9 +156,14 @@ def probe_socket_health(path: Path, *, connect_timeout: float = 0.5) -> SocketHe
     except (ConnectionRefusedError, FileNotFoundError):
         # File exists but no listener → stale
         return SocketHealth(path=path, exists=True, listening=False, stale=True)
-    except OSError:
-        # Not a socket / permission denied / other → treat as stale-ish
-        return SocketHealth(path=path, exists=True, listening=False, stale=True)
+    except TimeoutError:
+        # Busy daemon or slow accept — do not unlink the socket file.
+        return SocketHealth(path=path, exists=True, listening=False, stale=False)
+    except OSError as exc:
+        # Only treat definitive "nothing listening" as stale.
+        if getattr(exc, "errno", None) in {111, 2}:  # ECONNREFUSED, ENOENT
+            return SocketHealth(path=path, exists=True, listening=False, stale=True)
+        return SocketHealth(path=path, exists=True, listening=False, stale=False)
     finally:
         with contextlib.suppress(OSError):
             sock.close()

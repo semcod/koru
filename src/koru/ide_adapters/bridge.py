@@ -91,7 +91,15 @@ def apply_bridge_fixes(
 
 
 def gc_stale_sockets_for_lane(socket_path: Path) -> list[str]:
-    return shared.gc_stale_autopilot_sockets(keep=socket_path)
+    removed: list[str] = []
+    if socket_path.exists() and not shared.socket_reachable(socket_path):
+        try:
+            socket_path.unlink()
+            removed.append(str(socket_path))
+        except OSError:
+            pass
+    removed.extend(shared.gc_stale_autopilot_sockets(keep=socket_path, runtime_dir=socket_path.parent))
+    return removed
 
 
 def format_bridge_text(status: BridgeStatus, *, explain: bool = False) -> str:

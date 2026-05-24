@@ -33,7 +33,7 @@ class VSCodeFamilyAdapter:
                     ),
                 ),
             )
-        if self.requires_trusted_publisher:
+        if self.requires_trusted_publisher and shared.publisher_trusted(self.ide_id) is False:
             hyp = shared.untrusted_publisher_hypothesis(self.ide_id)
             if hyp is not None:
                 hypotheses.append(hyp)
@@ -127,17 +127,10 @@ class VSCodeFamilyAdapter:
             )
             if path is not None:
                 applied.append(f"workspace socketPath → {expected_socket} ({path})")
-        if self.requires_trusted_publisher and not ide_running:
-            trusted = shared.publisher_trusted(self.ide_id)
-            if trusted is False and shared.add_trusted_publisher(self.ide_id):
+        if self.requires_trusted_publisher and shared.publisher_trusted(self.ide_id) is False:
+            if shared.add_trusted_publisher(self.ide_id):
                 applied.append(
                     f"extensions.trustedPublishers += {shared.PUBLISHER_ID} "
-                    f"(zamknij {self.label} przed edycją — teraz OK)"
-                )
-        elif self.requires_trusted_publisher and ide_running:
-            if shared.publisher_trusted(self.ide_id) is False:
-                applied.append(
-                    f"Pominięto auto-trust: {self.label} działa — zamknij IDE i "
-                    f"uruchom: koru ide doctor --ide {self.ide_id} --fix"
+                    f"(wymagany Developer: Reload Window w {self.label})"
                 )
         return applied

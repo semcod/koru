@@ -271,17 +271,14 @@ def _initialize_cycle_telemetry() -> dict[str, Any]:
 
 
 def _heal_stale_socket() -> None:
-    """Auto-heal: best-effort stale socket removal so daemon restart can bind."""
+    """Auto-heal: remove only orphan socket files (not the active daemon's socket)."""
     try:
-        from koru.autonomy.environment import probe_socket_health
-        from koru.autonomy.heal import remove_stale_socket
         from koru.autopilot import default_socket_path
+        from koru.ide_adapters.bridge import gc_stale_sockets_for_lane
 
-        sock = probe_socket_health(default_socket_path())
-        if sock.stale:
-            result = remove_stale_socket(sock)
-            if result.status == "fixed":
-                print(f"koru autonomous: auto-healed stale socket {sock.path}")
+        target = default_socket_path()
+        for removed in gc_stale_sockets_for_lane(target):
+            print(f"koru autonomous: auto-healed stale socket {removed}")
     except Exception:
         pass
 
@@ -1691,6 +1688,19 @@ def _execute_autopilot_drive(
         drive_prompt=drive_prompt,
         autopilot_action=autopilot_action,
     )
+    if idle_prompt_kind == "idle_no_ticket":
+        _hp("- autopilot skipped (idle_no_ticket)")
+        return (
+            {
+                "ok": False,
+                "backend": None,
+                "message": "queue idle and no open ticket",
+                "prompt": "",
+            },
+            False,
+            "idle_no_ticket",
+            idle_prompt_kind,
+        )
     state.last_driven_prompt = decision.prompt
     # Telemetry hook used by ``_skip_due_to_recent_chat_activity`` to decide
     # whether to apply the escalation-cooldown multiplier on the next cycle.
@@ -1784,7 +1794,9 @@ def _log_autopilot_result(
                 f"(ide={autopilot_ide}, backend={backend}, kind={decision_kind}{extra})",
             )
     else:
-        if _reply_requires_manual_chat_focus(reply):
+        if decision_kind == "idle_no_ticket":
+            _hp("  autopilot: skipped(idle_no_ticket)")
+        elif _reply_requires_manual_chat_focus(reply):
             _hp(
                 "  autopilot: skipped(manual_focus) "
                 f"({reply.get('message', 'unknown error')}, kind={decision_kind})",
@@ -1865,7 +1877,10 @@ def _handle_autopilot_phase(
                 _hp,
             )
             autopilot_drive_kind = idle_prompt_kind or decision_kind
-            if ok:
+            if decision_kind == "idle_no_ticket":
+                autopilot_status = "skipped(idle_no_ticket)"
+                cycle_telemetry["autopilot_skipped_idle_no_ticket"] = True
+            elif ok:
                 autopilot_status = "ok"
             elif _reply_requires_manual_chat_focus(reply):
                 autopilot_status = "skipped(manual_focus)"
