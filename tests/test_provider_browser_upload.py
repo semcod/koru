@@ -4,12 +4,20 @@ from __future__ import annotations
 
 import base64
 import json
+import socket
 import struct
+import threading
+import time
+import urllib.request
+from contextlib import closing
+from http.server import ThreadingHTTPServer
 from pathlib import Path
 from unittest import mock
 
 import pytest
 
+from koruapi.dashboard_serve import ServeConfig
+from koruapi.dashboard_serve_utils import bind_serve_server
 from koruvision.providers.browser_getdisplay import (
     BrowserGetDisplayProvider,
     ingest_browser_upload,
@@ -82,8 +90,6 @@ def test_browser_provider_reads_from_store(tmp_path: Path) -> None:
 
 
 def _serve_project(tmp_path: Path):
-    from tests.test_serve import _free_port, _get, _post_json, _start
-
     (tmp_path / ".planfile" / "sprints").mkdir(parents=True, exist_ok=True)
     (tmp_path / ".planfile" / "config.yaml").write_text("project: test\n", encoding="utf-8")
     (tmp_path / ".planfile" / "sprints" / "current.yaml").write_text(
@@ -93,6 +99,49 @@ def _serve_project(tmp_path: Path):
     port = _free_port()
     server = _start(tmp_path, port)
     return server, port, _get, _post_json
+
+
+def _free_port() -> int:
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]
+
+
+def _start(project: Path, port: int) -> ThreadingHTTPServer:
+    config = ServeConfig(project=project, host="127.0.0.1", port=port, open_browser=False)
+    server = bind_serve_server(config)[0]
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    for _ in range(50):
+        try:
+            with closing(socket.create_connection(("127.0.0.1", port), 0.1)):
+                break
+        except OSError:
+            time.sleep(0.02)
+    return server
+
+
+def _get(port: int, path: str) -> tuple[int, str, str]:
+    url = f"http://127.0.0.1:{port}{path}"
+    with urllib.request.urlopen(url, timeout=5) as resp:  # noqa: S310
+        body = resp.read().decode("utf-8")
+        content_type = resp.headers.get("Content-Type", "")
+        return resp.status, content_type, body
+
+
+def _post_json(port: int, path: str, payload: dict[str, object]) -> tuple[int, str, str]:
+    url = f"http://127.0.0.1:{port}{path}"
+    body = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=body,
+        method="POST",
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310
+        text = resp.read().decode("utf-8")
+        content_type = resp.headers.get("Content-Type", "")
+        return resp.status, content_type, text
 
 
 def test_capture_host_route_served(tmp_path: Path) -> None:

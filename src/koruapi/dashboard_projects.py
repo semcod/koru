@@ -258,44 +258,58 @@ def _looks_like_real_project(path: Path) -> bool:
   return path.resolve() != home
 
 
+def _project_entry_from_terminal_cwd(term_cwd: Path, ide_id: str) -> dict[str, str] | None:
+  target = term_cwd
+  if not _looks_like_real_project(target):
+    walked = target
+    for _ in range(4):
+      if _looks_like_real_project(walked) or walked.parent == walked:
+        break
+      walked = walked.parent
+    if _looks_like_real_project(walked):
+      target = walked
+    else:
+      return None
+  return {"path": str(target), "source": f"{ide_id} integrated shell"}
+
+
+def _dedupe_project_entries(entries: list[dict[str, str]]) -> list[dict[str, str]]:
+  seen: set[str] = set()
+  deduped: list[dict[str, str]] = []
+  for entry in entries:
+    if entry["path"] in seen:
+      continue
+    seen.add(entry["path"])
+    deduped.append(entry)
+  return deduped
+
+
+def _collect_projects_for_ide(ide: RunningIDE) -> list[dict[str, str]]:
+  collected: list[dict[str, str]] = []
+  with contextlib.suppress(Exception):
+    candidates = _candidates_from_running_ide(_running_ide_to_detected(ide))
+    for item in candidates:
+      if _looks_like_real_project(item.path):
+        collected.append({"path": str(item.path), "source": item.source})
+  with contextlib.suppress(Exception):
+    for entry in _workspace_storage_projects(ide.id):
+      if _looks_like_real_project(Path(entry["path"])):
+        collected.append(entry)
+  if ide.pid is not None:
+    with contextlib.suppress(Exception):
+      for term_cwd in integrated_terminal_cwds(ide.pid):
+        entry = _project_entry_from_terminal_cwd(term_cwd, ide.id)
+        if entry is not None:
+          collected.append(entry)
+  return _dedupe_project_entries(collected)
+
+
 def projects_by_ide(ides: list[RunningIDE] | None = None) -> dict[str, list[dict[str, str]]]:
   """Return ``{ide_id: [{path, source}, …]}`` derived from cmdline/cwd + workspace storage."""
   rows = list(ides) if ides is not None else list(detect_running_ides())
   out: dict[str, list[dict[str, str]]] = {}
   for ide in rows:
-    collected: list[dict[str, str]] = []
-    with contextlib.suppress(Exception):
-      candidates = _candidates_from_running_ide(_running_ide_to_detected(ide))
-      for item in candidates:
-        if _looks_like_real_project(item.path):
-          collected.append({"path": str(item.path), "source": item.source})
-    with contextlib.suppress(Exception):
-      for entry in _workspace_storage_projects(ide.id):
-        if _looks_like_real_project(Path(entry["path"])):
-          collected.append(entry)
-    if ide.pid is not None:
-      with contextlib.suppress(Exception):
-        for term_cwd in integrated_terminal_cwds(ide.pid):
-          target = term_cwd
-          if not _looks_like_real_project(target):
-            walked = target
-            for _ in range(4):
-              if _looks_like_real_project(walked) or walked.parent == walked:
-                break
-              walked = walked.parent
-            if _looks_like_real_project(walked):
-              target = walked
-            else:
-              continue
-          collected.append({"path": str(target), "source": f"{ide.id} integrated shell"})
-    seen: set[str] = set()
-    deduped: list[dict[str, str]] = []
-    for entry in collected:
-      if entry["path"] in seen:
-        continue
-      seen.add(entry["path"])
-      deduped.append(entry)
-    out[ide.id] = deduped
+    out[ide.id] = _collect_projects_for_ide(ide)
   return out
 
 

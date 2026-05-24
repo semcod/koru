@@ -17,11 +17,28 @@ from pathlib import Path
 from types import ModuleType
 
 
+_LEGACY_REQUIRED_EXPORTS = (
+    "main",
+    "_SUBCOMMANDS",
+    "_build_parser",
+    "_is_bare_invocation",
+    "_command_value",
+    "_peek_project_from_argv",
+    "_should_suggest_wizard",
+)
+
+
+def _has_legacy_exports(module: ModuleType) -> bool:
+    return all(hasattr(module, name) for name in _LEGACY_REQUIRED_EXPORTS)
+
+
 def _load_legacy_cli_module() -> ModuleType:
     module_name = "koru._legacy_cli_impl"
     existing = sys.modules.get(module_name)
-    if existing is not None:
+    if existing is not None and _has_legacy_exports(existing):
         return existing
+    if existing is not None:
+        sys.modules.pop(module_name, None)
 
     module_path = Path(__file__).resolve().parents[1] / "cli.py"
     spec = spec_from_file_location(module_name, module_path)
@@ -31,6 +48,11 @@ def _load_legacy_cli_module() -> ModuleType:
     module = module_from_spec(spec)
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
+    missing = [name for name in _LEGACY_REQUIRED_EXPORTS if not hasattr(module, name)]
+    if missing:
+        sys.modules.pop(module_name, None)
+        missing_names = ", ".join(missing)
+        raise ImportError(f"Legacy CLI module from {module_path} is missing: {missing_names}")
     return module
 
 

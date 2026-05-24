@@ -1,8 +1,12 @@
 flowchart TD
-%% generated in 0.14s
+%% generated in 0.08s
 
     %% Entry points (blue)
     classDef entry fill:#4dabf7,stroke:#1971c2,color:#fff
+
+    subgraph CLI
+        koru__cli_loop__command_loop_main["command_loop_main"]
+    end
 
     subgraph Core
         services__healing_webhook__app__heal_rebuild_restore["heal_rebuild_restore"]
@@ -20,11 +24,12 @@ flowchart TD
         src__koruobserve__cli___missing_observe_packages["_missing_observe_packages"]
         src__koruobserve__cli___require_observe_runtime["_require_observe_runtime"]
         src__koruobserve__cli___pip_install["_pip_install"]
-        ...["+1045 more"]
+        ...["+1113 more"]
     end
 
     subgraph Exporters
         src__koru__agent_cli_helpers__try_agent_env_exports["try_agent_env_exports"]
+        src__koru__cli___has_legacy_exports["_has_legacy_exports"]
     end
 
     class services__healing_webhook__app__heal_rebuild_restore,services__healing_webhook__app__heal_annotate,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app__heal_redup_check,services__healing_webhook__app__healthz,services__healing_webhook__app__metrics,services__healing_webhook__app__get_history,services__healing_webhook__app__alertmanager_webhook,services__healing_webhook__app__probe_failure entry

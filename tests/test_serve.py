@@ -253,6 +253,35 @@ class TestServe(unittest.TestCase):
         self.assertIn("ANY_CUSTOM_VAR=ok", env_text)
         self.assertEqual(saved_payload["dotenv"]["text"], env_text)
 
+    def test_api_plugin_logs_reads_daemon_console_logs(self) -> None:
+        class FakeAutopilotClient:
+            def __init__(self, **_kwargs: object) -> None:
+                pass
+
+            def status(self) -> dict[str, object]:
+                return {
+                    "console_logs": [
+                        {"timestamp": "2026-05-24T10:00:00Z", "message": "ready"},
+                        "ignored",
+                    ]
+                }
+
+        with mock.patch(
+            "koru.autopilot.client.AutopilotClient",
+            FakeAutopilotClient,
+        ):
+            status, ctype, body = _get(self.port, "/api/plugin-logs")
+
+        self.assertEqual(status, 200)
+        self.assertIn("application/json", ctype)
+        payload = json.loads(body)
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["source"], "daemon")
+        self.assertEqual(
+            payload["logs"],
+            [{"timestamp": "2026-05-24T10:00:00Z", "message": "ready"}],
+        )
+
     def test_api_context_returns_brief(self) -> None:
         status, ctype, body = _get(self.port, "/api/context")
         self.assertEqual(status, 200)

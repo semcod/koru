@@ -1,58 +1,30 @@
-# code2llm/evolution | 2396 func | 250f | 2026-05-23
+# code2llm/evolution | 2603 func | 275f | 2026-05-24
 # generated in 0.01s
 
-NEXT[10] (ranked by impact):
+NEXT[3] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous_cycle.py
-      WHY: 1917L, 1 classes, max CC=32
-      EFFORT: ~4h  IMPACT: 61344
+      WHY: 2148L, 1 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 30072
 
   [2] !! SPLIT           src/koru/doctor.py
-      WHY: 1822L, 2 classes, max CC=31
-      EFFORT: ~4h  IMPACT: 56482
+      WHY: 1965L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 27510
 
   [3] !! SPLIT           plugins/koru-autopilot-vscode/src/extension.ts
-      WHY: 1443L, 2 classes, max CC=20
-      EFFORT: ~4h  IMPACT: 28860
-
-  [4] !! SPLIT-FUNC      _skip_due_to_recent_chat_activity  CC=32  fan=25
-      WHY: CC=32 exceeds 15
-      EFFORT: ~1h  IMPACT: 800
-
-  [5] !! SPLIT-FUNC      _check_ide_console_log  CC=31  fan=17
-      WHY: CC=31 exceeds 15
-      EFFORT: ~1h  IMPACT: 527
-
-  [6] !  SPLIT-FUNC      dashboard_main  CC=23  fan=20
-      WHY: CC=23 exceeds 15
-      EFFORT: ~1h  IMPACT: 460
-
-  [7] !  SPLIT-FUNC      configure_project  CC=20  fan=21
-      WHY: CC=20 exceeds 15
-      EFFORT: ~1h  IMPACT: 420
-
-  [8] !  SPLIT-FUNC      AutopilotBridge.submitChat  CC=20  fan=21
-      WHY: CC=20 exceeds 15
-      EFFORT: ~1h  IMPACT: 420
-
-  [9] !  SPLIT-FUNC      ingest_browser_upload  CC=18  fan=21
-      WHY: CC=18 exceeds 15
-      EFFORT: ~1h  IMPACT: 378
-
-  [10] !  SPLIT-FUNC      _upsert_llm_needs_input_operator_ticket  CC=23  fan=14
-      WHY: CC=23 exceeds 15
-      EFFORT: ~1h  IMPACT: 322
+      WHY: 1600L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 22400
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/autonomous_cycle.py may break 62 import paths
-  ⚠ Splitting src/koru/doctor.py may break 74 import paths
-  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 128 import paths
+  ⚠ Splitting src/koru/autonomous_cycle.py may break 73 import paths
+  ⚠ Splitting src/koru/doctor.py may break 91 import paths
+  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 141 import paths
 
 METRICS-TARGET:
-  CC̄:          4.0 → ≤2.8
-  max-CC:      32 → ≤16
-  god-modules: 20 → 0
-  high-CC(≥15): 18 → ≤9
+  CC̄:          3.9 → ≤2.7
+  max-CC:      14 → ≤7
+  god-modules: 22 → 0
+  high-CC(≥15): 0 → ≤0
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +52,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.0 → now CC̄=4.0
+  prev CC̄=3.9 → now CC̄=3.9

@@ -27,6 +27,17 @@ class ConfigureResult:
     config: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class _ConfigureValues:
+    workspace: str
+    ide: str
+    queue_name: str
+    host: str
+    port: int
+    lan: bool
+    auto_port: bool
+
+
 class ShellPrompter:
     """Small stdin/stdout prompter used by ``koru configure``."""
 
@@ -253,6 +264,121 @@ def render_shell_exports(config: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _previous_serve_config(previous: dict[str, Any]) -> dict[str, Any]:
+    serve = previous.get("serve")
+    return serve if isinstance(serve, dict) else {}
+
+
+def _default_workspace_value(
+    *,
+    project: Path,
+    previous: dict[str, Any],
+    workspace: Path | None,
+) -> str:
+    raw = workspace or Path(str(previous.get("workspace") or project.parent))
+    return str(raw.expanduser().resolve())
+
+
+def _default_serve_values(
+    *,
+    previous_serve: dict[str, Any],
+    host: str | None,
+    port: int | None,
+    lan: bool | None,
+    auto_port: bool | None,
+) -> tuple[str, int, bool, bool]:
+    lan_value = bool(previous_serve.get("lan")) if lan is None else lan
+    host_default = str(previous_serve.get("host") or ("0.0.0.0" if lan_value else "127.0.0.1"))
+    port_value = int(port if port is not None else previous_serve.get("port") or 8765)
+    auto_port_value = bool(previous_serve.get("auto_port", True)) if auto_port is None else auto_port
+    return host or host_default, port_value, lan_value, auto_port_value
+
+
+def _default_configure_values(
+    *,
+    project: Path,
+    previous: dict[str, Any],
+    workspace: Path | None,
+    ide: str | None,
+    queue_name: str | None,
+    host: str | None,
+    port: int | None,
+    lan: bool | None,
+    auto_port: bool | None,
+) -> _ConfigureValues:
+    previous_serve = _previous_serve_config(previous)
+    workspace_value = _default_workspace_value(project=project, previous=previous, workspace=workspace)
+    ide_value = normalize_ide_id(ide or str(previous.get("ide") or "auto")) or "auto"
+    queue_value = queue_name or str(previous.get("queue_name") or "default")
+    host_value, port_value, lan_value, auto_port_value = _default_serve_values(
+        previous_serve=previous_serve,
+        host=host,
+        port=port,
+        lan=lan,
+        auto_port=auto_port,
+    )
+    return _ConfigureValues(
+        workspace=workspace_value,
+        ide=ide_value,
+        queue_name=queue_value,
+        host=host_value,
+        port=port_value,
+        lan=lan_value,
+        auto_port=auto_port_value,
+    )
+
+
+def _prompt_configure_values(
+    values: _ConfigureValues,
+    prompter: ShellPrompter,
+) -> _ConfigureValues:
+    workspace_value = str(Path(prompter.ask_text("Workspace root", default=values.workspace)).expanduser().resolve())
+    ide_choices = autopilot_ide_choices()
+    ide_value = prompter.ask_choice(
+        "IDE lane",
+        choices=ide_choices,
+        default=values.ide if values.ide in ide_choices else "auto",
+    )
+    queue_value = prompter.ask_text("Default queue", default=values.queue_name)
+    lan_value = prompter.ask_yes_no("Expose dashboard on LAN", default=values.lan)
+    host_value = prompter.ask_text("Dashboard host", default="0.0.0.0" if lan_value else values.host)
+    raw_port = prompter.ask_text("Dashboard port", default=str(values.port))
+    auto_port_value = prompter.ask_yes_no("Auto-pick next port when busy", default=values.auto_port)
+    return _ConfigureValues(
+        workspace=workspace_value,
+        ide=ide_value,
+        queue_name=queue_value,
+        host=host_value,
+        port=int(raw_port),
+        lan=lan_value,
+        auto_port=auto_port_value,
+    )
+
+
+def _build_project_config(
+    *,
+    project: Path,
+    previous: dict[str, Any],
+    values: _ConfigureValues,
+) -> dict[str, Any]:
+    now = datetime.now(UTC).isoformat()
+    return {
+        "schema": CONFIG_SCHEMA,
+        "project": str(project),
+        "workspace": values.workspace,
+        "ide": values.ide,
+        "queue_name": values.queue_name,
+        "serve": {
+            "host": values.host,
+            "port": values.port,
+            "lan": bool(values.lan),
+            "auto_port": bool(values.auto_port),
+        },
+        "created_at": previous.get("created_at") or now,
+        "updated_at": now,
+    }
+
+
 def configure_project(
     *,
     project: Path,
@@ -269,50 +395,23 @@ def configure_project(
 ) -> ConfigureResult:
     project = project.expanduser().resolve()
     previous = load_project_config(project)
-    previous_serve = previous.get("serve") if isinstance(previous.get("serve"), dict) else {}
     prompter = ShellPrompter(stream_in=stream_in, stream_out=stream_out)
-
-    workspace_value = str(
-        (workspace or Path(str(previous.get("workspace") or project.parent))).expanduser().resolve()
+    values = _default_configure_values(
+        project=project,
+        previous=previous,
+        workspace=workspace,
+        ide=ide,
+        queue_name=queue_name,
+        host=host,
+        port=port,
+        lan=lan,
+        auto_port=auto_port,
     )
-    ide_value = normalize_ide_id(ide or str(previous.get("ide") or "auto")) or "auto"
-    queue_value = queue_name or str(previous.get("queue_name") or "default")
-    lan_value = bool(previous_serve.get("lan")) if lan is None else lan
-    host_default = str(previous_serve.get("host") or ("0.0.0.0" if lan_value else "127.0.0.1"))
-    host_value = host or host_default
-    port_value = int(port if port is not None else previous_serve.get("port") or 8765)
-    auto_port_value = bool(previous_serve.get("auto_port", True)) if auto_port is None else auto_port
 
     if interactive:
-        workspace_value = str(Path(prompter.ask_text("Workspace root", default=workspace_value)).expanduser().resolve())
-        ide_value = prompter.ask_choice(
-            "IDE lane",
-            choices=autopilot_ide_choices(),
-            default=ide_value if ide_value in autopilot_ide_choices() else "auto",
-        )
-        queue_value = prompter.ask_text("Default queue", default=queue_value)
-        lan_value = prompter.ask_yes_no("Expose dashboard on LAN", default=lan_value)
-        host_value = prompter.ask_text("Dashboard host", default="0.0.0.0" if lan_value else host_value)
-        raw_port = prompter.ask_text("Dashboard port", default=str(port_value))
-        port_value = int(raw_port)
-        auto_port_value = prompter.ask_yes_no("Auto-pick next port when busy", default=auto_port_value)
+        values = _prompt_configure_values(values, prompter)
 
-    now = datetime.now(UTC).isoformat()
-    config = {
-        "schema": CONFIG_SCHEMA,
-        "project": str(project),
-        "workspace": workspace_value,
-        "ide": ide_value,
-        "queue_name": queue_value,
-        "serve": {
-            "host": host_value,
-            "port": port_value,
-            "lan": bool(lan_value),
-            "auto_port": bool(auto_port_value),
-        },
-        "created_at": previous.get("created_at") or now,
-        "updated_at": now,
-    }
+    config = _build_project_config(project=project, previous=previous, values=values)
     path = save_project_config(project, config)
     return ConfigureResult(project=project, path=path, config=config)
 

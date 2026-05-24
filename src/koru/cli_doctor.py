@@ -65,6 +65,18 @@ def render_doctor_with_fix(report: Any, fix_payload: dict[str, object] | None) -
     return "\n".join(lines)
 
 
+def _doctor_emit_management_event(report: Any, args: argparse.Namespace) -> None:
+    emit_management_event(
+        tool="koru.doctor",
+        action="completed",
+        status="failed" if report.has_failures else "completed",
+        level="error" if report.has_failures else "info",
+        message=", ".join(f"{k}={v}" for k, v in report.summary().items() if v),
+        queue=args.queue_name,
+        details={"project": str(args.project)},
+    )
+
+
 def doctor_main(args: argparse.Namespace, raw_args: list[str]) -> int:
     report = run_diagnostics(args.project)
     fix_payload = doctor_fix_payload(report) if getattr(args, "fix", False) else None
@@ -89,15 +101,7 @@ def doctor_main(args: argparse.Namespace, raw_args: list[str]) -> int:
         if include_catalog:
             text = f"{text}\n\n{render_problem_catalog_text()}"
         print(text)
-    emit_management_event(
-        tool="koru.doctor",
-        action="completed",
-        status="failed" if report.has_failures else "completed",
-        level="error" if report.has_failures else "info",
-        message=", ".join(f"{k}={v}" for k, v in report.summary().items() if v),
-        queue=args.queue_name,
-        details={"project": str(args.project)},
-    )
+    _doctor_emit_management_event(report, args)
     return 1 if report.has_failures else 0
 
 

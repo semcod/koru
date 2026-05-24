@@ -71,15 +71,17 @@ def monitors_via_xrandr() -> list[MonitorSpec]:
     return monitors
 
 
-def rank_providers() -> list[CaptureProvider]:
-    pref = capture_provider_pref()
-    if pref != "auto":
-        forced = _LEGACY_MAP.get(pref, pref)
-        provider = provider_by_name(forced)
-        if provider is None:
-            raise ValueError(f"unknown KORU_VISION_PROVIDER: {pref}")
-        return [provider]
+def _forced_provider_rank(pref: str) -> list[CaptureProvider] | None:
+    if pref == "auto":
+        return None
+    forced = _LEGACY_MAP.get(pref, pref)
+    provider = provider_by_name(forced)
+    if provider is None:
+        raise ValueError(f"unknown KORU_VISION_PROVIDER: {pref}")
+    return [provider]
 
+
+def _auto_provider_order() -> list[str]:
     ordered_names: list[str] = []
     from koruvision.providers.browser_getdisplay import browser_capture_requested
     from koruvision.providers.obs_websocket import probe_obs_reachable
@@ -98,7 +100,10 @@ def rank_providers() -> list[CaptureProvider]:
     if compositor_hint() == "wlroots" or (is_wayland() and compositor_hint() != "gnome"):
         ordered_names.append("grim")
     ordered_names.append("cli_tools")
+    return ordered_names
 
+
+def _available_ranked_providers(ordered_names: list[str]) -> list[CaptureProvider]:
     seen: set[str] = set()
     ranked: list[CaptureProvider] = []
     for name in ordered_names:
@@ -111,6 +116,15 @@ def rank_providers() -> list[CaptureProvider]:
         if provider.availability().available:
             ranked.append(provider)
     return ranked
+
+
+def rank_providers() -> list[CaptureProvider]:
+    pref = capture_provider_pref()
+    forced = _forced_provider_rank(pref)
+    if forced is not None:
+        return forced
+
+    return _available_ranked_providers(_auto_provider_order())
 
 
 def list_provider_status() -> list[dict[str, Any]]:

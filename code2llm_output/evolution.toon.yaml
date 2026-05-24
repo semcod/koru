@@ -1,57 +1,30 @@
-# code2llm/evolution | 7414 func | 135f | 2026-05-21
+# code2llm/evolution | 4646 func | 275f | 2026-05-24
+# generated in 0.02s
 
-NEXT[10] (ranked by impact):
-  [1] !! SPLIT           src/koru/autonomous.py
-      WHY: 2235L, 4 classes, max CC=21
-      EFFORT: ~4h  IMPACT: 46935
+NEXT[3] (ranked by impact):
+  [1] !! SPLIT           src/koru/autonomous_cycle.py
+      WHY: 2148L, 1 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 30072
 
-  [2] !! SPLIT           src/koru/cli.py
-      WHY: 1743L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 24402
+  [2] !! SPLIT           src/koru/doctor.py
+      WHY: 1965L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 27510
 
-  [3] !! SPLIT           src/koruapi/dashboard_serve.py
-      WHY: 1400L, 1 classes, max CC=13
-      EFFORT: ~4h  IMPACT: 18200
-
-  [4] !  SPLIT-FUNC      _action_up  CC=17  fan=26
-      WHY: CC=17 exceeds 15
-      EFFORT: ~1h  IMPACT: 442
-
-  [5] !  SPLIT-FUNC      _action_up  CC=17  fan=26
-      WHY: CC=17 exceeds 15
-      EFFORT: ~1h  IMPACT: 442
-
-  [6] !  SPLIT-FUNC      AutopilotBridge._performInject  CC=17  fan=19
-      WHY: CC=17 exceeds 15
-      EFFORT: ~1h  IMPACT: 323
-
-  [7] !  SPLIT-FUNC      _run_autonomous_cycle  CC=21  fan=15
-      WHY: CC=21 exceeds 15
-      EFFORT: ~1h  IMPACT: 315
-
-  [8] !  SPLIT-FUNC      _run_autonomous_cycle  CC=21  fan=15
-      WHY: CC=21 exceeds 15
-      EFFORT: ~1h  IMPACT: 315
-
-  [9] !  SPLIT-FUNC      action_daemon  CC=15  fan=19
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 285
-
-  [10] !  SPLIT-FUNC      action_daemon  CC=15  fan=19
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 285
+  [3] !! SPLIT           CHANGELOG.md
+      WHY: 4779L, 0 classes, max CC=0
+      EFFORT: ~4h  IMPACT: 0
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/autonomous.py may break 130 import paths
-  ⚠ Splitting src/koru/cli.py may break 98 import paths
-  ⚠ Splitting src/koruapi/dashboard_serve.py may break 30 import paths
+  ⚠ Splitting CHANGELOG.md may break 0 import paths
+  ⚠ Splitting src/koru/autonomous_cycle.py may break 146 import paths
+  ⚠ Splitting src/koru/doctor.py may break 182 import paths
 
 METRICS-TARGET:
-  CC̄:          1.5 → ≤1.0
-  max-CC:      21 → ≤10
-  god-modules: 16 → 0
-  high-CC(≥15): 24 → ≤12
+  CC̄:          3.9 → ≤2.7
+  max-CC:      14 → ≤7
+  god-modules: 28 → 0
+  high-CC(≥15): 0 → ≤0
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -79,4 +52,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=1.4 → now CC̄=1.5
+  prev CC̄=3.9 → now CC̄=3.9

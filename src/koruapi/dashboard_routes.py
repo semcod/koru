@@ -21,6 +21,7 @@ from koruapi.dashboard_config import (
 )
 from koruapi.dashboard_context import dashboard_context_payload, dashboard_handoff_markdown
 from koruapi.dashboard_http import DashboardRequestHandler
+from koruapi.dashboard_plugin_logs import dashboard_plugin_logs_payload
 from koruapi.dashboard_projects import (
     dashboard_workspace,
     resolve_dashboard_project,
@@ -179,42 +180,7 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
 
         def _get_plugin_logs(self) -> None:
             try:
-                from koruide.socket import default_socket_path
-                from koru.autopilot.client import AutopilotClient
-                import os
-
-                socket_path = default_socket_path()
-                try:
-                    status = AutopilotClient(socket_path=socket_path, timeout=1.0).status()
-                    daemon_logs = status.get("console_logs", [])
-                    logs = [row for row in daemon_logs if isinstance(row, dict)]
-                    source = "daemon"
-                except Exception:
-                    # Fallback to file-based logs
-                    logs = []
-                    source = "file"
-                    debug_path = Path("/tmp/koru-plugin-debug.log")
-                    if debug_path.is_file():
-                        try:
-                            # Read last 500 lines of debug file
-                            content = debug_path.read_text(encoding="utf-8", errors="ignore")
-                            for line in content.splitlines()[-500:]:
-                                if line.strip():
-                                    # Try to split timestamp and text
-                                    parts = line.strip().split(" ", 1)
-                                    if len(parts) == 2:
-                                        logs.append({
-                                            "timestamp": parts[0],
-                                            "message": parts[1]
-                                        })
-                                    else:
-                                        logs.append({
-                                            "timestamp": "",
-                                            "message": line.strip()
-                                        })
-                        except Exception:
-                            pass
-                self._send_json({"ok": True, "source": source, "logs": logs})
+                self._send_json(dashboard_plugin_logs_payload())
             except Exception as exc:
                 self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
 

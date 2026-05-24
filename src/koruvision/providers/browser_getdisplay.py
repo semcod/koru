@@ -69,13 +69,7 @@ def _frames_from_store() -> list[dict[str, Any]]:
     return rows[-_MAX_STORED:]
 
 
-def ingest_browser_upload(
-    project: Path,
-    body: dict[str, Any],
-    *,
-    publish_mesh: bool = True,
-) -> dict[str, Any]:
-    """Validate a browser PNG upload, persist to the mesh store, optionally publish."""
+def _decode_browser_png_upload(body: dict[str, Any]) -> bytes:
     image_b64 = body.get("image_b64") or body.get("payload_b64") or ""
     if not isinstance(image_b64, str) or not image_b64.strip():
         raise ValueError("image_b64 is required")
@@ -85,13 +79,83 @@ def ingest_browser_upload(
         raise ValueError("image_b64 is not valid base64") from exc
     if not payload.startswith(b"\x89PNG\r\n\x1a\n"):
         raise ValueError("upload must be a PNG image")
+    return payload
 
+
+def _browser_upload_monitor_id(body: dict[str, Any]) -> int:
     monitor_raw = body.get("monitor_id", body.get("monitor", 0))
     try:
-        monitor_id = int(monitor_raw)
+        return int(monitor_raw)
     except (TypeError, ValueError):
-        monitor_id = 0
+        return 0
 
+
+def _mesh_key_for_browser_upload(project: Path) -> bytes:
+    from korumesh.keys import load_mesh_key
+
+    key_path = project / ".koru" / "keys" / "mesh.hmac"
+    if not key_path.is_file():
+        from koruobserve.bootstrap import ensure_mesh_key
+
+        ensure_mesh_key(project)
+    return load_mesh_key(key_path)
+
+
+def _remember_browser_upload_envelope(
+    *,
+    project: Path,
+    peer: str,
+    frame_dict: dict[str, Any],
+) -> None:
+    from korumesh.envelope import sign_envelope
+    from korumesh.store import remember_envelope
+
+    envelope = sign_envelope(
+        peer_from=peer,
+        peer_to="*",
+        topic="vision/frame",
+        mime=_vision_mime_with_provider(frame_dict),
+        payload=frame_dict["payload"],
+        key=_mesh_key_for_browser_upload(project),
+        envelope_id=f"{peer}:vision:{frame_dict['monitor_id']}",
+    )
+    remember_envelope(envelope)
+
+
+def _publish_browser_upload_if_requested(
+    *,
+    project: Path,
+    peer: str,
+    frame_dict: dict[str, Any],
+    publish_mesh: bool,
+) -> bool:
+    if not publish_mesh:
+        return False
+    try:
+        from koruvision.capture import VisionFrame
+        from koruvision.mesh import publish_vision_frame, resolve_mesh_publish
+
+        mesh_url, mesh_peer, mesh_key = resolve_mesh_publish(project)
+        publish_vision_frame(
+            VisionFrame(**frame_dict),
+            mesh_url=mesh_url,
+            peer_from=peer or mesh_peer,
+            key=mesh_key,
+        )
+        return True
+    except Exception:
+        return False
+
+
+def ingest_browser_upload(
+    project: Path,
+    body: dict[str, Any],
+    *,
+    publish_mesh: bool = True,
+) -> dict[str, Any]:
+    """Validate a browser PNG upload, persist to the mesh store, optionally publish."""
+    payload = _decode_browser_png_upload(body)
+    monitor_id = _browser_upload_monitor_id(body)
     output = str(body.get("output") or "browser").strip() or "browser"
     peer = str(body.get("peer") or body.get("peer_from") or "").strip()
     scale = float(body.get("scale", 1.0) or 1.0)
@@ -104,47 +168,22 @@ def ingest_browser_upload(
         provider=_PROVIDER_NAME,
     )
 
-    from korumesh.envelope import sign_envelope
-    from korumesh.keys import load_mesh_key
-    from korumesh.store import remember_envelope
-    from koruvision.mesh import default_peer_id, publish_vision_frame, resolve_mesh_publish
+    from koruvision.mesh import default_peer_id
 
     if not peer:
         peer = default_peer_id()
 
-    key_path = project / ".koru" / "keys" / "mesh.hmac"
-    if not key_path.is_file():
-        from koruobserve.bootstrap import ensure_mesh_key
-
-        ensure_mesh_key(project)
-    key = load_mesh_key(key_path)
-
-    envelope = sign_envelope(
-        peer_from=peer,
-        peer_to="*",
-        topic="vision/frame",
-        mime=_vision_mime_with_provider(frame_dict),
-        payload=frame_dict["payload"],
-        key=key,
-        envelope_id=f"{peer}:vision:{frame_dict['monitor_id']}",
+    _remember_browser_upload_envelope(
+        project=project,
+        peer=peer,
+        frame_dict=frame_dict,
     )
-    remember_envelope(envelope)
-
-    published = False
-    if publish_mesh:
-        try:
-            from koruvision.capture import VisionFrame
-
-            mesh_url, mesh_peer, mesh_key = resolve_mesh_publish(project)
-            publish_vision_frame(
-                VisionFrame(**frame_dict),
-                mesh_url=mesh_url,
-                peer_from=peer or mesh_peer,
-                key=mesh_key,
-            )
-            published = True
-        except Exception:
-            published = False
+    published = _publish_browser_upload_if_requested(
+        project=project,
+        peer=peer,
+        frame_dict=frame_dict,
+        publish_mesh=publish_mesh,
+    )
 
     return {
         "ok": True,

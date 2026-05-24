@@ -112,7 +112,7 @@ def render_autonomous_mode(*, planfile_initialised: bool) -> list[str]:
             "- Queue drains for the same repo are **serialized** via "
             "`.planfile/.koru/queue-runner.lock` (POSIX); disable only if you accept races:",
             "  `KORU_QUEUE_RUNNER_LOCK=0`.",
-            "- Use a **unique** `--actor` / `ACTOR` per automated lane so `ticket claim`"
+            "- Use a **unique** `--actor` / `ACTOR` per automated lane so `ticket claim`",
             "  ownership is visible in planfile.",
             "",
         ],

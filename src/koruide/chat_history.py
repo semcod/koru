@@ -76,6 +76,25 @@ def _parse_line(line: str) -> ChatEvent | None:
         return None
 
 
+def _event_matches_filters(
+    ev: ChatEvent,
+    *,
+    ide: str | None,
+    chat: str | None,
+    type_filter: set[str] | None,
+    max_age_seconds: float | None,
+) -> bool:
+    if ide is not None and ev.ide != ide:
+        return False
+    if chat is not None and ev.chat != chat:
+        return False
+    if type_filter is not None and ev.type not in type_filter:
+        return False
+    if max_age_seconds is not None and ev.age_seconds > max_age_seconds:
+        return False
+    return True
+
+
 def read_events(
     path: Path | None = None,
     *,
@@ -99,13 +118,9 @@ def read_events(
         ev = _parse_line(line)
         if ev is None:
             continue
-        if ide is not None and ev.ide != ide:
-            continue
-        if chat is not None and ev.chat != chat:
-            continue
-        if type_filter is not None and ev.type not in type_filter:
-            continue
-        if max_age_seconds is not None and ev.age_seconds > max_age_seconds:
+        if not _event_matches_filters(
+            ev, ide=ide, chat=chat, type_filter=type_filter, max_age_seconds=max_age_seconds
+        ):
             continue
         events.append(ev)
     return events[-limit:]

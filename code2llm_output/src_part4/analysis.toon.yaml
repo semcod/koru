@@ -1,12 +1,12 @@
-# code2llm | 327f 53652L | python:318,json:6,shell:1,javascript:1 | 2026-05-24
-# generated in 0.17s
-# CC̄=4.0 | critical:0/2220 | dups:0 | cycles:0
+# code2llm | 328f 53396L | python:319,json:6,shell:1,javascript:1 | 2026-05-24
+# generated in 0.15s
+# CC̄=4.0 | critical:0/2221 | dups:0 | cycles:0
 
 HEALTH[0]: ok
 
 REFACTOR[0]: none needed
 
-PIPELINES[602]:
+PIPELINES[603]:
   [1] Src [to_json]: to_json
       PURITY: 100% pure
   [2] Src [_cmd_install]: _cmd_install → _missing_observe_packages
@@ -67,7 +67,6 @@ LAYERS:
   │ autonomous_parser          449L  0C    3m  CC=14     ←2
   │ runner                     426L  0C   11m  CC=14     ←3
   │ topology                   414L  1C   15m  CC=12     ←9
-  │ cli                        400L  0C   17m  CC=8      ←0
   │ queue_clean                391L  2C   13m  CC=14     ←1
   │ post_run_verify            381L  2C   16m  CC=14     ←3
   │ gc                         371L  2C   12m  CC=11     ←1
@@ -134,7 +133,7 @@ LAYERS:
   │ cli_doctor                 143L  0C    6m  CC=11     ←0
   │ daemon_cli                 142L  0C    7m  CC=10     ←0
   │ local_manager              136L  1C    6m  CC=5      ←1
-  │ loop                       131L  3C    4m  CC=12     ←2
+  │ loop                       131L  3C    4m  CC=12     ←3
   │ cli_scan                   129L  0C    4m  CC=7      ←0
   │ llx                        128L  1C    4m  CC=14     ←3
   │ application                124L  2C    6m  CC=12     ←0
@@ -156,8 +155,9 @@ LAYERS:
   │ prompts                    101L  1C    1m  CC=10     ←1
   │ application                 98L  2C    6m  CC=5      ←0
   │ __init__                    97L  0C    2m  CC=2      ←0
+  │ __init__                    95L  0C    3m  CC=9      ←0
   │ watch                       93L  0C    6m  CC=9      ←1
-  │ events                      90L  0C    2m  CC=8      ←14
+  │ events                      90L  0C    2m  CC=8      ←15
   │ cli_agent                   90L  0C    3m  CC=3      ←0
   │ autonomous_resources        90L  0C    1m  CC=4      ←0
   │ autoloop_cli                88L  0C    4m  CC=8      ←0
@@ -196,6 +196,7 @@ LAYERS:
   │ cli-tool.json               55L  0C    0m  CC=0.0    ←0
   │ cli_local_serve             53L  0C    2m  CC=1      ←0
   │ cli_ide_router              53L  0C    1m  CC=3      ←0
+  │ cli_loop                    49L  0C    1m  CC=7      ←0
   │ stdio_events                49L  0C    3m  CC=3      ←4
   │ __init__                    48L  5C    0m  CC=0.0    ←0
   │ protocol                    48L  0C    0m  CC=0.0    ←0
@@ -274,7 +275,7 @@ LAYERS:
   │ __init__                     5L  0C    0m  CC=0.0    ←0
   │ __init__                     3L  0C    0m  CC=0.0    ←0
   │ __init__                     1L  0C    0m  CC=0.0    ←0
-  │ __init__                     0L  0C    3m  CC=9      ←0
+  │ cli                          0L  0C   17m  CC=8      ←0
   │ commands                     0L  0C    0m  CC=0.0    ←0
   │
   korudsl/                        CC̄=4.0    ←in:7  →out:0
@@ -361,7 +362,7 @@ LAYERS:
   │ __init__                     5L  0C    0m  CC=0.0    ←0
   │
   ── zero ──
-     koru/cli/__init__.py                      0L
+     koru/cli.py                               0L
      koru/cli/commands.py                      0L
 
 COUPLING:

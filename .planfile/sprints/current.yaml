@@ -13273,9 +13273,10 @@ sprint:
         strategy pattern.'
       execution:
         attempt: 0
+        finished_at: '2026-05-24T13:15:14.631564Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -13288,6 +13289,17 @@ sprint:
           into strategy pattern.'
         source: koru task
         timestamp: '2026-05-22T21:02:26.128663+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T13:15:15.633843+00:00'
       id: STARTER-186
       inputs:
         api_headers: {}
@@ -13308,7 +13320,9 @@ sprint:
       name: 'Reduce cyclomatic complexity: _check_autopilot_env (CC=17, limit=15)'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - Refactored _check_autopilot_env into smaller helpers; focused doctor autopilot
+          tests passed and _check_autopilot_env CC is now 1.
       priority: normal
       source:
         context:
@@ -13320,9 +13334,9 @@ sprint:
         timestamp: '2026-05-22T21:02:26.128663+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-22T21:02:26.128663+00:00'
+      updated_at: '2026-05-24T13:15:15.633804+00:00'
     STARTER-188:
       blocked_by: []
       blocks: []
@@ -13332,9 +13346,11 @@ sprint:
         to verify.'
       execution:
         attempt: 0
+        finished_at: '2026-05-24T14:30:14.491556Z'
         max_attempts: 1
         queue: default
-        state: ready
+        started_at: '2026-05-24T13:23:37.296609Z'
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -13347,6 +13363,27 @@ sprint:
           to verify.'
         source: koru task
         timestamp: '2026-05-22T21:03:09.344551+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-24T13:23:38.109689+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T14:30:15.277394+00:00'
       id: STARTER-188
       inputs:
         api_headers: {}
@@ -13366,7 +13403,11 @@ sprint:
       name: 'code2llm refactor: split 13 high-CC methods'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - 'Refactored high-CC batch across doctor/autonomous/provider/dashboard/config/env/CLI
+          paths. code2llm ./ -f toon now reports split 5 high-CC methods, down from
+          13; remaining plugin god-module is tracked separately by STARTER-203. Validation:
+          focused pytest suites passed; code2llm verifier completed successfully.'
       priority: normal
       source:
         context:
@@ -13378,9 +13419,9 @@ sprint:
         timestamp: '2026-05-22T21:03:09.344551+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-22T21:03:09.344551+00:00'
+      updated_at: '2026-05-24T14:30:15.277350+00:00'
     STARTER-189:
       blocked_by: []
       blocks: []
@@ -13515,12 +13556,12 @@ sprint:
         \ gate."
       execution:
         attempt: 0
-        max_attempts: 1
-        queue: default
-        state: done
         finished_at: '2026-05-24T13:02:16.446968+00:00'
         last_error: null
         lease_expires_at: null
+        max_attempts: 1
+        queue: default
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -13541,10 +13582,10 @@ sprint:
           \ gate."
         source: koru task
         timestamp: '2026-05-22T21:24:44.845862+00:00'
-      - timestamp: '2026-05-24T13:02:16.446968+00:00'
-        action: auto_resolved
-        source: koru wup
+      - action: auto_resolved
         message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-core as failing.'
+        source: koru wup
+        timestamp: '2026-05-24T13:02:16.446968+00:00'
       id: STARTER-190
       inputs:
         api_headers: {}
@@ -13610,12 +13651,12 @@ sprint:
         gate.'
       execution:
         attempt: 0
-        max_attempts: 1
-        queue: default
-        state: done
         finished_at: '2026-05-24T13:02:16.447086+00:00'
         last_error: null
         lease_expires_at: null
+        max_attempts: 1
+        queue: default
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -13634,10 +13675,10 @@ sprint:
           gate.'
         source: koru task
         timestamp: '2026-05-22T21:24:45.943760+00:00'
-      - timestamp: '2026-05-24T13:02:16.447086+00:00'
-        action: auto_resolved
-        source: koru wup
+      - action: auto_resolved
         message: 'Auto-resolved by Koru: WUP no longer reports wup-src/koru as failing.'
+        source: koru wup
+        timestamp: '2026-05-24T13:02:16.447086+00:00'
       id: STARTER-191
       inputs:
         api_headers: {}
@@ -13967,3 +14008,863 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-05-22T22:30:38.009974+00:00'
+    STARTER-197:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T13:21:57.765873+00:00'
+      description: "`pytest --collect-only` cannot import `tests/test_agent_cli.py`.\n\
+        \nReason: AttributeError: module 'koru._legacy_cli_impl...\n\nThis blocks\
+        \ the CI gate; resolve before any other ticket.\n\nRaw error context:\n```\n\
+        y ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n   \
+        \ from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n  \
+        \  main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError: module\
+        \ 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+        \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+        ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+        ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl' has\
+        \ ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+        ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl' has\
+        \ ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+        \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+        \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+        \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+        \ in 1.66s\n```"
+      execution:
+        attempt: 0
+        finished_at: '2026-05-24T14:36:29.560390Z'
+        max_attempts: 1
+        queue: default
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - tests/test_agent_cli.py
+      history:
+      - action: created
+        message: "`pytest --collect-only` cannot import `tests/test_agent_cli.py`.\n\
+          \nReason: AttributeError: module 'koru._legacy_cli_impl...\n\nThis blocks\
+          \ the CI gate; resolve before any other ticket.\n\nRaw error context:\n\
+          ```\ny ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n\
+          \    from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n\
+          \    main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError: module\
+          \ 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+          \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+          ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+          ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+          ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+          \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+          \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+          \ in 1.66s\n```"
+        source: koru task
+        timestamp: '2026-05-24T13:21:57.765873+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T14:36:10.815234+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-24T14:36:30.506648+00:00'
+      id: STARTER-197
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: "`pytest --collect-only` cannot import `tests/test_agent_cli.py`.\n\
+          \nReason: AttributeError: module 'koru._legacy_cli_impl...\n\nThis blocks\
+          \ the CI gate; resolve before any other ticket.\n\nRaw error context:\n\
+          ```\ny ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n\
+          \    from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n\
+          \    main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError: module\
+          \ 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+          \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+          ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+          ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+          ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+          \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+          \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+          \ in 1.66s\n```"
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - ci
+      - bug
+      - scan
+      name: Fix pytest collection error in tests/test_agent_cli.py
+      outputs:
+        artifacts: []
+        notes:
+        - 'Resolved CLI collection failure: koru.cli shim now reloads a partial koru._legacy_cli_impl
+          module, and full `python -m pytest --collect-only -q` passes with 1471/1524
+          tests collected (53 deselected). Also verified py_compile for src/koru/doctor.py,
+          src/koru/cli/__init__.py, and src/koru/cli.py.'
+        - 'Could not reproduce collection error in current Koru venv. Validation:
+          .venv/bin/python -m pytest -q tests/test_agent_cli.py => 2 passed.'
+        result:
+          collected: 1471
+          deselected: 53
+          pytest_collect: passed
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-scan:pytest_collect:tests/test_agent_cli.py
+          input: "`pytest --collect-only` cannot import `tests/test_agent_cli.py`.\n\
+            \nReason: AttributeError: module 'koru._legacy_cli_impl...\n\nThis blocks\
+            \ the CI gate; resolve before any other ticket.\n\nRaw error context:\n\
+            ```\ny ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n\
+            \    from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n\
+            \    main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError:\
+            \ module 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+            \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+            ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+            ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl'\
+            \ has ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+            ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl'\
+            \ has ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+            \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+            \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+            \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+            \ in 1.66s\n```"
+          signal: pytest_collect
+        timestamp: '2026-05-24T13:21:57.765873+00:00'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T14:36:30.506612+00:00'
+    STARTER-198:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T13:21:59.288468+00:00'
+      description: "`pytest --collect-only` cannot import `tests/test_cli.py`.\n\n\
+        Reason: AttributeError: module 'koru._legacy_cli_impl' has ...\n\nThis blocks\
+        \ the CI gate; resolve before any other ticket.\n\nRaw error context:\n```\n\
+        y ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n   \
+        \ from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n  \
+        \  main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError: module\
+        \ 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+        \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+        ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+        ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl' has\
+        \ ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+        ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl' has\
+        \ ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+        \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+        \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+        \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+        \ in 1.66s\n```"
+      execution:
+        attempt: 0
+        finished_at: '2026-05-24T14:37:09.171203Z'
+        max_attempts: 1
+        queue: default
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - tests/test_cli.py
+      history:
+      - action: created
+        message: "`pytest --collect-only` cannot import `tests/test_cli.py`.\n\nReason:\
+          \ AttributeError: module 'koru._legacy_cli_impl' has ...\n\nThis blocks\
+          \ the CI gate; resolve before any other ticket.\n\nRaw error context:\n\
+          ```\ny ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n\
+          \    from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n\
+          \    main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError: module\
+          \ 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+          \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+          ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+          ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+          ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+          \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+          \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+          \ in 1.66s\n```"
+        source: koru task
+        timestamp: '2026-05-24T13:21:59.288468+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T14:36:13.323399+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-24T14:37:10.043812+00:00'
+      id: STARTER-198
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: "`pytest --collect-only` cannot import `tests/test_cli.py`.\n\nReason:\
+          \ AttributeError: module 'koru._legacy_cli_impl' has ...\n\nThis blocks\
+          \ the CI gate; resolve before any other ticket.\n\nRaw error context:\n\
+          ```\ny ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n\
+          \    from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n\
+          \    main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError: module\
+          \ 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+          \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+          ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+          ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+          ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+          \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+          \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+          \ in 1.66s\n```"
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - ci
+      - bug
+      - scan
+      name: Fix pytest collection error in tests/test_cli.py
+      outputs:
+        artifacts: []
+        notes:
+        - 'Resolved CLI collection failure: koru.cli shim now reloads a partial koru._legacy_cli_impl
+          module, and full `python -m pytest --collect-only -q` passes with 1471/1524
+          tests collected (53 deselected). Also verified py_compile for src/koru/doctor.py,
+          src/koru/cli/__init__.py, and src/koru/cli.py.'
+        - 'Could not reproduce collection error in current Koru venv. Validation:
+          .venv/bin/python -m pytest -q tests/test_cli.py => 51 passed.'
+        result:
+          collected: 1471
+          deselected: 53
+          pytest_collect: passed
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-scan:pytest_collect:tests/test_cli.py
+          input: "`pytest --collect-only` cannot import `tests/test_cli.py`.\n\nReason:\
+            \ AttributeError: module 'koru._legacy_cli_impl' has ...\n\nThis blocks\
+            \ the CI gate; resolve before any other ticket.\n\nRaw error context:\n\
+            ```\ny ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n\
+            \    from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n\
+            \    main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError:\
+            \ module 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+            \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+            ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+            ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl'\
+            \ has ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+            ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl'\
+            \ has ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+            \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+            \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+            \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+            \ in 1.66s\n```"
+          signal: pytest_collect
+        timestamp: '2026-05-24T13:21:59.288468+00:00'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T14:37:10.043754+00:00'
+    STARTER-199:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T13:22:00.781906+00:00'
+      description: "`pytest --collect-only` cannot import `tests/test_e2e.py`.\n\n\
+        Reason: AttributeError: module 'koru._legacy_cli_impl' has ...\n\nThis blocks\
+        \ the CI gate; resolve before any other ticket.\n\nRaw error context:\n```\n\
+        y ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n   \
+        \ from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n  \
+        \  main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError: module\
+        \ 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+        \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+        ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+        ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl' has\
+        \ ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+        ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl' has\
+        \ ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+        \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+        \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+        \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+        \ in 1.66s\n```"
+      execution:
+        attempt: 0
+        finished_at: '2026-05-24T14:37:31.937354Z'
+        max_attempts: 1
+        queue: default
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - tests/test_e2e.py
+      history:
+      - action: created
+        message: "`pytest --collect-only` cannot import `tests/test_e2e.py`.\n\nReason:\
+          \ AttributeError: module 'koru._legacy_cli_impl' has ...\n\nThis blocks\
+          \ the CI gate; resolve before any other ticket.\n\nRaw error context:\n\
+          ```\ny ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n\
+          \    from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n\
+          \    main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError: module\
+          \ 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+          \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+          ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+          ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+          ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+          \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+          \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+          \ in 1.66s\n```"
+        source: koru task
+        timestamp: '2026-05-24T13:22:00.781906+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T14:36:15.675465+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-24T14:37:32.816490+00:00'
+      id: STARTER-199
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: "`pytest --collect-only` cannot import `tests/test_e2e.py`.\n\nReason:\
+          \ AttributeError: module 'koru._legacy_cli_impl' has ...\n\nThis blocks\
+          \ the CI gate; resolve before any other ticket.\n\nRaw error context:\n\
+          ```\ny ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n\
+          \    from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n\
+          \    main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError: module\
+          \ 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+          \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+          ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+          ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+          ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+          \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+          \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+          \ in 1.66s\n```"
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - ci
+      - bug
+      - scan
+      name: Fix pytest collection error in tests/test_e2e.py
+      outputs:
+        artifacts: []
+        notes:
+        - 'Resolved CLI collection failure: koru.cli shim now reloads a partial koru._legacy_cli_impl
+          module, and full `python -m pytest --collect-only -q` passes with 1471/1524
+          tests collected (53 deselected). Also verified py_compile for src/koru/doctor.py,
+          src/koru/cli/__init__.py, and src/koru/cli.py.'
+        - 'Could not reproduce collection error in current Koru venv. Validation:
+          .venv/bin/python -m pytest -q tests/test_e2e.py => collection succeeded,
+          40 deselected, exit 0.'
+        result:
+          collected: 1471
+          deselected: 53
+          pytest_collect: passed
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-scan:pytest_collect:tests/test_e2e.py
+          input: "`pytest --collect-only` cannot import `tests/test_e2e.py`.\n\nReason:\
+            \ AttributeError: module 'koru._legacy_cli_impl' has ...\n\nThis blocks\
+            \ the CI gate; resolve before any other ticket.\n\nRaw error context:\n\
+            ```\ny ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n\
+            \    from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n\
+            \    main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError:\
+            \ module 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+            \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+            ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+            ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl'\
+            \ has ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+            ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl'\
+            \ has ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+            \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+            \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+            \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+            \ in 1.66s\n```"
+          signal: pytest_collect
+        timestamp: '2026-05-24T13:22:00.781906+00:00'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T14:37:32.816454+00:00'
+    STARTER-200:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T13:22:02.300171+00:00'
+      description: "`pytest --collect-only` cannot import `tests/test_loop.py`.\n\n\
+        Reason: AttributeError: module 'koru._legacy_cli_impl' has...\n\nThis blocks\
+        \ the CI gate; resolve before any other ticket.\n\nRaw error context:\n```\n\
+        y ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n   \
+        \ from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n  \
+        \  main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError: module\
+        \ 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+        \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+        ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+        ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl' has\
+        \ ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+        ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl' has\
+        \ ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+        \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+        \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+        \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+        \ in 1.66s\n```"
+      execution:
+        attempt: 0
+        finished_at: '2026-05-24T14:37:54.312440Z'
+        max_attempts: 1
+        queue: default
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - tests/test_loop.py
+      history:
+      - action: created
+        message: "`pytest --collect-only` cannot import `tests/test_loop.py`.\n\n\
+          Reason: AttributeError: module 'koru._legacy_cli_impl' has...\n\nThis blocks\
+          \ the CI gate; resolve before any other ticket.\n\nRaw error context:\n\
+          ```\ny ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n\
+          \    from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n\
+          \    main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError: module\
+          \ 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+          \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+          ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+          ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+          ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+          \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+          \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+          \ in 1.66s\n```"
+        source: koru task
+        timestamp: '2026-05-24T13:22:02.300171+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T14:36:17.977375+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-24T14:37:55.087224+00:00'
+      id: STARTER-200
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: "`pytest --collect-only` cannot import `tests/test_loop.py`.\n\nReason:\
+          \ AttributeError: module 'koru._legacy_cli_impl' has...\n\nThis blocks the\
+          \ CI gate; resolve before any other ticket.\n\nRaw error context:\n```\n\
+          y ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n \
+          \   from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n\
+          \    main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError: module\
+          \ 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+          \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+          ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+          ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+          ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+          \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+          \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+          \ in 1.66s\n```"
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - ci
+      - bug
+      - scan
+      name: Fix pytest collection error in tests/test_loop.py
+      outputs:
+        artifacts: []
+        notes:
+        - 'Resolved CLI collection failure: koru.cli shim now reloads a partial koru._legacy_cli_impl
+          module, and full `python -m pytest --collect-only -q` passes with 1471/1524
+          tests collected (53 deselected). Also verified py_compile for src/koru/doctor.py,
+          src/koru/cli/__init__.py, and src/koru/cli.py.'
+        - 'Could not reproduce collection error in current Koru venv. Validation:
+          .venv/bin/python -m pytest -q tests/test_loop.py => 5 passed.'
+        result:
+          collected: 1471
+          deselected: 53
+          pytest_collect: passed
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-scan:pytest_collect:tests/test_loop.py
+          input: "`pytest --collect-only` cannot import `tests/test_loop.py`.\n\n\
+            Reason: AttributeError: module 'koru._legacy_cli_impl' has...\n\nThis\
+            \ blocks the CI gate; resolve before any other ticket.\n\nRaw error context:\n\
+            ```\ny ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n\
+            \    from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n\
+            \    main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError:\
+            \ module 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+            \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+            ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+            ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl'\
+            \ has ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+            ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl'\
+            \ has ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+            \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+            \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+            \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+            \ in 1.66s\n```"
+          signal: pytest_collect
+        timestamp: '2026-05-24T13:22:02.300171+00:00'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T14:37:55.087191+00:00'
+    STARTER-201:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T13:22:03.855028+00:00'
+      description: "`pytest --collect-only` cannot import `tests/test_observation_mesh_e2e.py`.\n\
+        \nReason: AttributeError: module 'koru._lega...\n\nThis blocks the CI gate;\
+        \ resolve before any other ticket.\n\nRaw error context:\n```\ny ______________\n\
+        tests/test_observation_mesh_e2e.py:14: in <module>\n    from koru.cli import\
+        \ main\nsrc/koru/cli/__init__.py:50: in <module>\n    main = _legacy.main\n\
+        \           ^^^^^^^^^^^^\nE   AttributeError: module 'koru._legacy_cli_impl'\
+        \ has no attribute 'main'\n=========================== short test summary\
+        \ info ============================\nERROR tests/test_agent_backends_cli.py\n\
+        ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+        ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl' has\
+        \ ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+        ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl' has\
+        \ ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+        \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+        \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+        \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+        \ in 1.66s\n```"
+      execution:
+        attempt: 0
+        finished_at: '2026-05-24T14:38:14.251978Z'
+        max_attempts: 1
+        queue: default
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - tests/test_observation_mesh_e2e.py
+      history:
+      - action: created
+        message: "`pytest --collect-only` cannot import `tests/test_observation_mesh_e2e.py`.\n\
+          \nReason: AttributeError: module 'koru._lega...\n\nThis blocks the CI gate;\
+          \ resolve before any other ticket.\n\nRaw error context:\n```\ny ______________\n\
+          tests/test_observation_mesh_e2e.py:14: in <module>\n    from koru.cli import\
+          \ main\nsrc/koru/cli/__init__.py:50: in <module>\n    main = _legacy.main\n\
+          \           ^^^^^^^^^^^^\nE   AttributeError: module 'koru._legacy_cli_impl'\
+          \ has no attribute 'main'\n=========================== short test summary\
+          \ info ============================\nERROR tests/test_agent_backends_cli.py\n\
+          ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+          ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+          ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+          \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+          \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+          \ in 1.66s\n```"
+        source: koru task
+        timestamp: '2026-05-24T13:22:03.855028+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T14:36:20.084852+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-24T14:38:15.037817+00:00'
+      id: STARTER-201
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: "`pytest --collect-only` cannot import `tests/test_observation_mesh_e2e.py`.\n\
+          \nReason: AttributeError: module 'koru._lega...\n\nThis blocks the CI gate;\
+          \ resolve before any other ticket.\n\nRaw error context:\n```\ny ______________\n\
+          tests/test_observation_mesh_e2e.py:14: in <module>\n    from koru.cli import\
+          \ main\nsrc/koru/cli/__init__.py:50: in <module>\n    main = _legacy.main\n\
+          \           ^^^^^^^^^^^^\nE   AttributeError: module 'koru._legacy_cli_impl'\
+          \ has no attribute 'main'\n=========================== short test summary\
+          \ info ============================\nERROR tests/test_agent_backends_cli.py\n\
+          ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+          ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+          ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+          \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+          \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+          \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+          \ in 1.66s\n```"
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - ci
+      - bug
+      - scan
+      name: Fix pytest collection error in tests/test_observation_mesh_e2e.py
+      outputs:
+        artifacts: []
+        notes:
+        - 'Resolved CLI collection failure: koru.cli shim now reloads a partial koru._legacy_cli_impl
+          module, and full `python -m pytest --collect-only -q` passes with 1471/1524
+          tests collected (53 deselected). Also verified py_compile for src/koru/doctor.py,
+          src/koru/cli/__init__.py, and src/koru/cli.py.'
+        - 'Could not reproduce collection error in current Koru venv. Validation:
+          .venv/bin/python -m pytest -q tests/test_observation_mesh_e2e.py => 1 skipped,
+          exit 0.'
+        result:
+          collected: 1471
+          deselected: 53
+          pytest_collect: passed
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-scan:pytest_collect:tests/test_observation_mesh_e2e.py
+          input: "`pytest --collect-only` cannot import `tests/test_observation_mesh_e2e.py`.\n\
+            \nReason: AttributeError: module 'koru._lega...\n\nThis blocks the CI\
+            \ gate; resolve before any other ticket.\n\nRaw error context:\n```\n\
+            y ______________\ntests/test_observation_mesh_e2e.py:14: in <module>\n\
+            \    from koru.cli import main\nsrc/koru/cli/__init__.py:50: in <module>\n\
+            \    main = _legacy.main\n           ^^^^^^^^^^^^\nE   AttributeError:\
+            \ module 'koru._legacy_cli_impl' has no attribute 'main'\n===========================\
+            \ short test summary info ============================\nERROR tests/test_agent_backends_cli.py\n\
+            ERROR tests/test_agent_cli.py - AttributeError: module 'koru._legacy_cli_impl...\n\
+            ERROR tests/test_cli.py - AttributeError: module 'koru._legacy_cli_impl'\
+            \ has ...\nERROR tests/test_doctor.py\nERROR tests/test_doctor_koru_auto_probe.py\n\
+            ERROR tests/test_e2e.py - AttributeError: module 'koru._legacy_cli_impl'\
+            \ has ...\nERROR tests/test_loop.py - AttributeError: module 'koru._legacy_cli_impl'\
+            \ has...\nERROR tests/test_observation_mesh_e2e.py - AttributeError: module\
+            \ 'koru._lega...\n!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection\
+            \ !!!!!!!!!!!!!!!!!!!!\n1322/1335 tests collected (13 deselected), 8 errors\
+            \ in 1.66s\n```"
+          signal: pytest_collect
+        timestamp: '2026-05-24T13:22:03.855028+00:00'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T14:38:15.037772+00:00'
+    STARTER-202:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T13:22:29.124065+00:00'
+      description: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
+        0/4 passed, 2 failed (731ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779628933_koru-shell_quick.json.
+        Investigate and fix regression, stale quality artifact, or broken diagnostic
+        gate.'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-24T13:24:13.760808+00:00'
+        last_error: null
+        lease_expires_at: null
+        max_attempts: 1
+        queue: default
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
+          Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
+          0/4 passed, 2 failed (731ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779628933_koru-shell_quick.json.
+          Investigate and fix regression, stale quality artifact, or broken diagnostic
+          gate.'
+        source: koru task
+        timestamp: '2026-05-24T13:22:29.124065+00:00'
+      - action: auto_resolved
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+        source: koru wup
+        timestamp: '2026-05-24T13:24:13.760808+00:00'
+      id: STARTER-202
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
+          Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
+          0/4 passed, 2 failed (731ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779628933_koru-shell_quick.json.
+          Investigate and fix regression, stale quality artifact, or broken diagnostic
+          gate.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      name: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
+        Check: WUP service=koru-shell stage=...'
+      outputs:
+        artifacts: []
+        notes:
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-shell as failing.'
+      priority: high
+      source:
+        context:
+          input: '[AUTO-DIAG] wup-koru-shell needs attention in cycle 0. queue_status=wup_failure.
+            Check: WUP service=koru-shell stage=quick message=❌ cli-koru.testql.toon.yaml:
+            0/4 passed, 2 failed (731ms) track=/home/tom/github/semcod/koru/.wup/tracks/1779628933_koru-shell_quick.json.
+            Investigate and fix regression, stale quality artifact, or broken diagnostic
+            gate.'
+        timestamp: '2026-05-24T13:22:29.124065+00:00'
+        tool: koru-cli-nl
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T13:24:13.760808+00:00'
+    STARTER-203:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T13:45:21.883467+00:00'
+      description: '`project/analysis.toon.yaml` flags `plugins/koru-autopilot-vscode/src/chat-history-watcher.ts`
+        as a god module (504 lines, 9 classes, 48 methods). Split into focused submodules
+        by responsibility.'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-24T14:35:48.934340Z'
+        max_attempts: 1
+        queue: default
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - plugins/koru-autopilot-vscode/src/chat-history-watcher.ts
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` flags `plugins/koru-autopilot-vscode/src/chat-history-watcher.ts`
+          as a god module (504 lines, 9 classes, 48 methods). Split into focused submodules
+          by responsibility.'
+        source: koru task
+        timestamp: '2026-05-24T13:45:21.883467+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T14:35:49.783907+00:00'
+      id: STARTER-203
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` flags `plugins/koru-autopilot-vscode/src/chat-history-watcher.ts`
+          as a god module (504 lines, 9 classes, 48 methods). Split into focused submodules
+          by responsibility.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - god-module
+      - refactor
+      - scan
+      name: 'Split god module: plugins/koru-autopilot-vscode/src/chat-history-watcher.ts'
+      outputs:
+        artifacts: []
+        notes:
+        - 'Split plugins/koru-autopilot-vscode/src/chat-history-watcher.ts into focused
+          chat-history modules: shared types, IDE paths, Cursor bubble adapter, VS
+          Code chat-session adapter, unsupported adapter, and adapter selector facade.
+          Public exports remain available from chat-history-watcher.ts. Validation:
+          npm run compile, node out/chat-history-watcher.test.js, npm test, and ../koru/venv/bin/code2llm
+          ./ -f toon. project/analysis.toon.yaml now reports HEALTH[0] ok and REFACTOR[0]
+          none needed.'
+      priority: high
+      source:
+        context:
+          dedupe_key: semcod:code2llm:refactor:plugins/koru-autopilot-vscode/src/chat-history-watcher.ts
+          input: '`project/analysis.toon.yaml` flags `plugins/koru-autopilot-vscode/src/chat-history-watcher.ts`
+            as a god module (504 lines, 9 classes, 48 methods). Split into focused
+            submodules by responsibility.'
+          signal: code2llm_god
+        timestamp: '2026-05-24T13:45:21.883467+00:00'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T14:35:49.783866+00:00'

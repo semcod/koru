@@ -604,6 +604,31 @@ def _complete_wup_diagnostic_ticket(ticket: dict, *, note: str) -> None:
         )
 
 
+def _process_stale_ticket_batch(
+    tickets: dict,
+    failing_check_ids: set[str],
+    state_dir: Path,
+) -> bool:
+    """Resolve open diagnostic tickets whose check is no longer failing. Returns True if any changed."""
+    changed = False
+    for ticket in tickets.values():
+        if not isinstance(ticket, dict):
+            continue
+        if str(ticket.get("status") or "").strip().lower() != "open":
+            continue
+        check_id = _extract_wup_diagnostic_check_id(ticket)
+        if not check_id or check_id in failing_check_ids:
+            continue
+        ticket_id = str(ticket.get("id") or "")
+        if not ticket_id:
+            continue
+        note = f"Auto-resolved by Koru: WUP no longer reports {check_id} as failing."
+        _complete_wup_diagnostic_ticket(ticket, note=note)
+        diagnostic_marker_path(state_dir, check_id).unlink(missing_ok=True)
+        changed = True
+    return changed
+
+
 def _resolve_stale_wup_diagnostic_tickets(
     *,
     project: Path,
@@ -623,22 +648,7 @@ def _resolve_stale_wup_diagnostic_tickets(
     tickets = sprint.get("tickets") if isinstance(sprint, dict) else None
     if not isinstance(tickets, dict):
         return
-    changed = False
-    for ticket in tickets.values():
-        if not isinstance(ticket, dict):
-            continue
-        if str(ticket.get("status") or "").strip().lower() != "open":
-            continue
-        check_id = _extract_wup_diagnostic_check_id(ticket)
-        if not check_id or check_id in failing_check_ids:
-            continue
-        ticket_id = str(ticket.get("id") or "")
-        if not ticket_id:
-            continue
-        note = f"Auto-resolved by Koru: WUP no longer reports {check_id} as failing."
-        _complete_wup_diagnostic_ticket(ticket, note=note)
-        diagnostic_marker_path(state_dir, check_id).unlink(missing_ok=True)
-        changed = True
+    changed = _process_stale_ticket_batch(tickets, failing_check_ids, state_dir)
     if changed:
         try:
             sprint_path.write_text(

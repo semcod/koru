@@ -1,54 +1,55 @@
-# koru | 2470 func | 264f | 63856L | python | 2026-05-23
+# koru | 2678 func | 290f | 67411L | python | 2026-05-24
 # generated in 0.00s
 
 HEALTH:
-  CC̄=3.9  critical=204 (limit:10)  dup=6  cycles=0
+  CC̄=3.8  critical=199 (limit:10)  dup=6  cycles=0
 
 ALERTS[20]:
-  !!! high_fan_out     build_dashboard_handler = 44 (limit:10)
+  !!! high_fan_out     build_dashboard_handler = 49 (limit:10)
   !!! high_fan_out     _build_handler = 44 (limit:10)
   !!! high_fan_out     create_app = 44 (limit:10)
-  !!! cc_exceeded      _skip_due_to_recent_chat_activity = 32 (limit:15)
-  !!! cc_exceeded      _check_ide_console_log = 31 (limit:15)
-  !!! cc_exceeded      _check_windsurf_chat_column_control = 25 (limit:15)
-  !!! high_fan_out     _skip_due_to_recent_chat_activity = 25 (limit:10)
   !!! high_fan_out     AutopilotBridge.focusChat = 24 (limit:10)
   !!! high_fan_out     init_project = 23 (limit:10)
+  !!! high_fan_out     run_cycle = 23 (limit:10)
   !!! high_fan_out     topology_main = 23 (limit:10)
+  !!! high_fan_out     observe_up = 22 (limit:10)
+  !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
+  !!! high_fan_out     _create_nl_task_impl = 21 (limit:10)
 
-MODULES[403] (top by size):
-  M[src/koru/autonomous_cycle.py] 1917L C:1 F:62 CC↑32 D:1 (python)
-  M[src/koru/doctor.py] 1822L C:2 F:74 CC↑31 D:2 (python)
-  M[plugins/koru-autopilot-vscode/src/extension.ts] 1443L C:2 F:128 CC↑20 D:16 (typescript)
+MODULES[449] (top by size):
+  M[src/koru/autonomous_cycle.py] 2148L C:1 F:73 CC↑14 D:1 (python)
+  M[src/koru/doctor.py] 1965L C:2 F:91 CC↑14 D:2 (python)
+  M[plugins/koru-autopilot-vscode/src/extension.ts] 1600L C:2 F:141 CC↑14 D:16 (typescript)
   M[planfile.yaml] 1396L C:0 F:0 CC↑0 D:0 (yaml)
-  M[src/koru/context.py] 1269L C:0 F:49 CC↑14 D:8 (python)
-  M[src/koruide/daemon.py] 1166L C:3 F:50 CC↑14 D:0 (python)
   M[src/koru/autonomous.py] 1119L C:1 F:56 CC↑7 D:2 (python)
   M[src/koruapi/mcp_server.py] 1023L C:0 F:35 CC↑14 D:4 (python)
   M[src/koru/scan.py] 991L C:2 F:27 CC↑13 D:4 (python)
   M[Taskfile.yml] 922L C:0 F:0 CC↑0 D:0 (yml)
   M[src/koru/autopilot/cli_command.py] 886L C:0 F:22 CC↑14 D:0 (python)
-  M[src/koru/autonomy/operator_pipeline.py] 862L C:2 F:31 CC↑12 D:0 (python)
-  M[src/koruide/ide.py] 746L C:1 F:44 CC↑13 D:22 (python)
+  M[src/koru/autonomy/operator_pipeline.py] 871L C:2 F:31 CC↑12 D:0 (python)
+  M[src/koru/context.py] 822L C:0 F:31 CC↑12 D:8 (python)
+  M[src/koruide/daemon/handlers.py] 815L C:0 F:32 CC↑14 D:1 (python)
+  M[src/koru/autonomous_wup.py] 808L C:3 F:39 CC↑12 D:2 (python)
+  M[src/koruide/ide.py] 746L C:1 F:44 CC↑13 D:21 (python)
   M[services/healing-webhook/app.py] 702L C:0 F:27 CC↑11 D:0 (python)
-  M[src/koru/scripts/koru-autoloop.sh] 676L C:0 F:17 CC↑0 D:0 (shell)
-  LANGS: python:290/shell:49/yaml:22/typescript:10/json:9/yml:8/kotlin:6/other:3/txt:2/javascript:1/properties:1/xml:1/toml:1
+  LANGS: python:327/shell:49/yaml:22/typescript:18/yml:9/json:9/kotlin:6/other:3/txt:2/javascript:1/properties:1/xml:1/toml:1
 
 HOTSPOTS[10]:
-  ★ build_dashboard_handler fan=44  // Build and return a DashboardRequestHandler subclass for the dashboard.
+  ★ build_dashboard_handler fan=49  // Build and return a DashboardRequestHandler subclass for the dashboard.
   ★ _build_handler fan=44  // Orchestrates 44 calls
   ★ create_app fan=44  // Build the FastAPI app (requires ``koru[api]``).
-  ★ _skip_due_to_recent_chat_activity fan=25  // Return True iff the loop should skip drive because the IDE chat is busy.
-
-Two si
   ★ AutopilotBridge.focusChat fan=24  // Orchestrates 24 calls
+  ★ init_project fan=23  // Initialise (or re-initialise with ``force``) a koru project.
+
+Steps:
+    1. Refu
 
 REFACTOR[15]:
-  [1] H/L Split _check_windsurf_chat_column_control (CC=25)
-  [2] H/L Split _check_ide_console_log (CC=31)
-  [3] H/L Split _skip_due_to_recent_chat_activity (CC=32)
-  [4] H/H Split god module src/koru/autonomous_cycle.py (1917L, 1 classes)
-  [5] H/H Split god module src/koru/doctor.py (1822L, 2 classes)
+  [1] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (1600L, 2 classes)
+  [2] H/H Split god module src/koru/autonomous_cycle.py (2148L, 1 classes)
+  [3] H/H Split god module src/koru/autopilot/cli_command.py (886L, 0 classes)
+  [4] H/H Split god module src/koru/cli_cleaned.py (564L, 0 classes)
+  [5] H/H Split god module src/koru/doctor.py (1965L, 2 classes)
 
 EVOLUTION:
-  2026-05-23 CC̄=3.9 crit=204 63856L // Automated analysis
+  2026-05-24 CC̄=3.8 crit=199 67411L // Automated analysis

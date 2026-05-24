@@ -13,6 +13,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import koru.cli as cli_module
 from koru.cli import _SUBCOMMANDS, _build_parser, _dispatch_auto_alias, _is_bare_invocation, main
 from koru.cqrs import runtime_for_project
 
@@ -30,6 +31,25 @@ def _run_main(*argv: str) -> tuple[int, str]:
         with mock.patch("sys.stdout", new=buf):
             code = main()
     return code, buf.getvalue()
+
+
+def test_cli_shim_reloads_partial_legacy_module() -> None:
+    """Collection must survive a stale synthetic legacy module in sys.modules."""
+    module_name = "koru._legacy_cli_impl"
+    original = sys.modules.get(module_name)
+    partial = types.ModuleType(module_name)
+    sys.modules[module_name] = partial
+    try:
+        loaded = cli_module._load_legacy_cli_module()
+        assert loaded is not partial
+        assert loaded is sys.modules[module_name]
+        assert hasattr(loaded, "main")
+        assert hasattr(loaded, "_SUBCOMMANDS")
+    finally:
+        if original is None:
+            sys.modules.pop(module_name, None)
+        else:
+            sys.modules[module_name] = original
 
 
 class TestBareInvocation(unittest.TestCase):

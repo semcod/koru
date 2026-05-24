@@ -64,42 +64,90 @@ def save_dashboard_dotenv(project: Path, text: str) -> Path:
   return path
 
 
-def dashboard_config_payload(
-  project: Path,
+def _saved_serve_config(saved: dict[str, Any]) -> dict[str, Any]:
+  raw_serve = saved.get("serve")
+  return raw_serve if isinstance(raw_serve, dict) else {}
+
+
+def _dashboard_config_path_payload(project: Path) -> tuple[str, bool]:
+  path = project.resolve() / CONFIG_REL_PATH
+  return str(path), path.is_file()
+
+
+def _effective_serve_config(
+  serve: dict[str, Any],
   defaults: DashboardConfigDefaults,
 ) -> dict[str, Any]:
-  saved = load_project_config(project)
-  raw_serve = saved.get("serve")
-  serve: dict[str, Any] = raw_serve if isinstance(raw_serve, dict) else {}
+  return {
+    "host": str(serve.get("host") or defaults.host),
+    "port": int(serve.get("port") or defaults.port),
+    "lan": bool_from_dashboard(
+      serve.get("lan"),
+      default=bool(defaults.lan or defaults.host in {"0.0.0.0", "::"}),
+    ),
+    "auto_port": bool_from_dashboard(
+      serve.get("auto_port"),
+      default=bool(defaults.auto_port),
+    ),
+  }
+
+
+def _effective_dashboard_config(
+  project: Path,
+  saved: dict[str, Any],
+  defaults: DashboardConfigDefaults,
+) -> dict[str, Any]:
   effective = {
     "project": str(project.resolve()),
     "workspace": str(saved.get("workspace") or defaults.workspace),
     "ide": str(saved.get("ide") or "auto"),
     "queue_name": str(saved.get("queue_name") or defaults.queue_name or "default"),
-    "serve": {
-      "host": str(serve.get("host") or defaults.host),
-      "port": int(serve.get("port") or defaults.port),
-      "lan": bool_from_dashboard(
-        serve.get("lan"),
-        default=bool(defaults.lan or defaults.host in {"0.0.0.0", "::"}),
-      ),
-      "auto_port": bool_from_dashboard(
-        serve.get("auto_port"),
-        default=bool(defaults.auto_port),
-      ),
-    },
+    "serve": _effective_serve_config(_saved_serve_config(saved), defaults),
   }
   return {
+    **effective,
+    **{k: v for k, v in saved.items() if k in {"schema", "created_at", "updated_at"}},
+  }
+
+
+def dashboard_config_payload(
+  project: Path,
+  defaults: DashboardConfigDefaults,
+) -> dict[str, Any]:
+  saved = load_project_config(project)
+  config_path, config_exists = _dashboard_config_path_payload(project)
+  return {
     "ok": True,
-    "path": str(project.resolve() / CONFIG_REL_PATH),
-    "exists": bool((project.resolve() / CONFIG_REL_PATH).is_file()),
-    "config": {
-      **effective,
-      **{k: v for k, v in saved.items() if k in {"schema", "created_at", "updated_at"}},
-    },
+    "path": config_path,
+    "exists": config_exists,
+    "config": _effective_dashboard_config(project, saved, defaults),
     "dotenv": _dotenv_payload(project),
     "ide_choices": list(autopilot_ide_choices()),
   }
+
+
+def _dashboard_config_request_kwargs(
+  body: dict[str, Any],
+  defaults: DashboardConfigDefaults,
+) -> dict[str, Any]:
+  raw_serve = body.get("serve")
+  serve: dict[str, Any] = raw_serve if isinstance(raw_serve, dict) else {}
+  workspace_raw = str(body.get("workspace") or "").strip()
+  return {
+    "workspace": Path(workspace_raw) if workspace_raw else None,
+    "ide": str(body.get("ide") or "auto").strip() or "auto",
+    "queue_name": str(body.get("queue_name") or "default").strip() or "default",
+    "host": str(serve.get("host") or defaults.host).strip() or defaults.host,
+    "port": int_from_dashboard(serve.get("port"), default=defaults.port),
+    "lan": bool_from_dashboard(serve.get("lan"), default=bool(defaults.lan)),
+    "auto_port": bool_from_dashboard(serve.get("auto_port"), default=bool(defaults.auto_port)),
+  }
+
+
+def _save_dashboard_dotenv_from_body(project: Path, body: dict[str, Any]) -> None:
+  raw_dotenv = body.get("dotenv")
+  if isinstance(raw_dotenv, dict) and "text" in raw_dotenv:
+    save_dashboard_dotenv(project, str(raw_dotenv.get("text") or ""))
 
 
 def save_dashboard_config(
@@ -107,21 +155,10 @@ def save_dashboard_config(
   body: dict[str, Any],
   defaults: DashboardConfigDefaults,
 ) -> Any:
-  raw_serve = body.get("serve")
-  serve: dict[str, Any] = raw_serve if isinstance(raw_serve, dict) else {}
-  workspace_raw = str(body.get("workspace") or "").strip()
   result = configure_project(
     project=project,
-    workspace=Path(workspace_raw) if workspace_raw else None,
-    ide=str(body.get("ide") or "auto").strip() or "auto",
-    queue_name=str(body.get("queue_name") or "default").strip() or "default",
-    host=str(serve.get("host") or defaults.host).strip() or defaults.host,
-    port=int_from_dashboard(serve.get("port"), default=defaults.port),
-    lan=bool_from_dashboard(serve.get("lan"), default=bool(defaults.lan)),
-    auto_port=bool_from_dashboard(serve.get("auto_port"), default=bool(defaults.auto_port)),
     interactive=False,
+    **_dashboard_config_request_kwargs(body, defaults),
   )
-  raw_dotenv = body.get("dotenv")
-  if isinstance(raw_dotenv, dict) and "text" in raw_dotenv:
-    save_dashboard_dotenv(project, str(raw_dotenv.get("text") or ""))
+  _save_dashboard_dotenv_from_body(project, body)
   return result

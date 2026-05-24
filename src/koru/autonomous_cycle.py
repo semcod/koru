@@ -919,39 +919,33 @@ def _latest_received_text(reflection_events: list[Any]) -> str:
     return ""
 
 
-def _upsert_llm_needs_input_operator_ticket(
-    *,
-    project: Path,
-    queue_result: QueueLoopResult,
-    state: "AutoloopState",
-    reflection_summary: str,
-    reflection_events: list[Any],
-    _hp: Any,
-) -> str | None:
-    """Create/update one deduplicated operator ticket for ``llm needs_input``."""
-    if not _llm_needs_input_ticket_enabled():
-        return None
-
+def _llm_needs_input_waiting_ticket(queue_result: QueueLoopResult) -> str:
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
     if waiting_ticket == "-":
         waiting_ticket = str(getattr(queue_result, "last_ticket_id", "") or "-")
+    return waiting_ticket
 
+
+def _llm_needs_input_summary(
+    queue_result: QueueLoopResult,
+    reflection_summary: str,
+) -> str:
     summary = (reflection_summary or "").strip()
-    if not summary:
-        summary = str(getattr(queue_result, "last_message", "") or "").strip()
-    if not summary:
-        summary = "IDE-side LLM requested additional input without details."
-    question = _extract_needs_input_question(reflection_events, summary)
+    if summary:
+        return summary
+    summary = str(getattr(queue_result, "last_message", "") or "").strip()
+    if summary:
+        return summary
+    return "IDE-side LLM requested additional input without details."
 
-    signature_key = question or summary
-    signature = f"{waiting_ticket}|{signature_key[:240]}"
-    previous_signature = str(getattr(state, "last_operator_needs_input_signature", "") or "")
-    previous_ticket = str(getattr(state, "last_operator_needs_input_ticket_id", "") or "")
-    if signature == previous_signature:
-        return previous_ticket or None
 
-    queue_name = _llm_needs_input_ticket_queue_name()
-    priority = _llm_needs_input_ticket_priority()
+def _llm_needs_input_operator_payload(
+    *,
+    queue_result: QueueLoopResult,
+    waiting_ticket: str,
+    summary: str,
+    question: str,
+) -> tuple[str, str, dict[str, Any]]:
     title = f"[OPERATOR] {waiting_ticket}: provide missing IDE input"
     prompt = (
         f"{title}\n\n"
@@ -978,6 +972,97 @@ def _upsert_llm_needs_input_operator_ticket(
             "dedupe_key": f"autopilot-needs-input:{waiting_ticket}",
         },
     }
+    return title, prompt, scaffold
+
+
+def _note_reused_llm_needs_input_operator_ticket(
+    *,
+    project: Path,
+    created: Any,
+    waiting_ticket: str,
+    question: str,
+    summary: str,
+    _hp: Any,
+) -> None:
+    try:
+        from koru.queue.planfile_ticket_note import append_shell_evidence_note
+
+        def _planfile_runner(
+            command: list[str],
+            cwd: Path,
+        ) -> subprocess.CompletedProcess[str]:
+            return subprocess.run(
+                command,
+                cwd=cwd,
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+
+        note = (
+            "[AUTOPILOT] llx reflection still needs operator input.\n"
+            + f"blocked_ticket={waiting_ticket}\n"
+            + (f"question={question}\n" if question else "")
+            + f"summary={summary}"
+        )
+        result, kind = append_shell_evidence_note(
+            project,
+            created.ticket_id,
+            note,
+            run_id=f"llx-{int(time.time())}",
+            planfile_runner=_planfile_runner,
+        )
+        if result.returncode == 0:
+            _hp(
+                "- llx reflect: updated operator ticket "
+                f"{created.ticket_id} ({kind})",
+            )
+        else:
+            detail = (result.stderr or result.stdout or "").strip()
+            _hp(
+                "- llx reflect: operator ticket note failed "
+                f"({created.ticket_id}: {detail})",
+            )
+    except Exception as exc:
+        _hp(
+            "- llx reflect: operator ticket note skipped "
+            f"({created.ticket_id}: {exc})",
+        )
+
+
+def _upsert_llm_needs_input_operator_ticket(
+    *,
+    project: Path,
+    queue_result: QueueLoopResult,
+    state: "AutoloopState",
+    reflection_summary: str,
+    reflection_events: list[Any],
+    _hp: Any,
+) -> str | None:
+    """Create/update one deduplicated operator ticket for ``llm needs_input``."""
+    if not _llm_needs_input_ticket_enabled():
+        return None
+
+    waiting_ticket = _llm_needs_input_waiting_ticket(queue_result)
+    summary = _llm_needs_input_summary(queue_result, reflection_summary)
+    question = _extract_needs_input_question(reflection_events, summary)
+
+    signature_key = question or summary
+    signature = f"{waiting_ticket}|{signature_key[:240]}"
+    previous_signature = str(getattr(state, "last_operator_needs_input_signature", "") or "")
+    previous_ticket = str(getattr(state, "last_operator_needs_input_ticket_id", "") or "")
+    if signature == previous_signature:
+        return previous_ticket or None
+
+    queue_name = _llm_needs_input_ticket_queue_name()
+    priority = _llm_needs_input_ticket_priority()
+    _, prompt, scaffold = _llm_needs_input_operator_payload(
+        queue_result=queue_result,
+        waiting_ticket=waiting_ticket,
+        summary=summary,
+        question=question,
+    )
 
     try:
         created = create_nl_task(
@@ -995,51 +1080,14 @@ def _upsert_llm_needs_input_operator_ticket(
     state.last_operator_needs_input_ticket_id = created.ticket_id
 
     if getattr(created, "reused", False):
-        try:
-            from koru.queue.planfile_ticket_note import append_shell_evidence_note
-
-            def _planfile_runner(
-                command: list[str],
-                cwd: Path,
-            ) -> subprocess.CompletedProcess[str]:
-                return subprocess.run(
-                    command,
-                    cwd=cwd,
-                    capture_output=True,
-                    text=True,
-                    timeout=60,
-                    check=False,
-                )
-
-            note = (
-                "[AUTOPILOT] llx reflection still needs operator input.\n"
-                + f"blocked_ticket={waiting_ticket}\n"
-                + (f"question={question}\n" if question else "")
-                + f"summary={summary}"
-            )
-            result, kind = append_shell_evidence_note(
-                project,
-                created.ticket_id,
-                note,
-                run_id=f"llx-{int(time.time())}",
-                planfile_runner=_planfile_runner,
-            )
-            if result.returncode == 0:
-                _hp(
-                    "- llx reflect: updated operator ticket "
-                    f"{created.ticket_id} ({kind})",
-                )
-            else:
-                detail = (result.stderr or result.stdout or "").strip()
-                _hp(
-                    "- llx reflect: operator ticket note failed "
-                    f"({created.ticket_id}: {detail})",
-                )
-        except Exception as exc:
-            _hp(
-                "- llx reflect: operator ticket note skipped "
-                f"({created.ticket_id}: {exc})",
-            )
+        _note_reused_llm_needs_input_operator_ticket(
+            project=project,
+            created=created,
+            waiting_ticket=waiting_ticket,
+            question=question,
+            summary=summary,
+            _hp=_hp,
+        )
     else:
         _hp(
             "- llx reflect: created operator ticket "
@@ -1137,6 +1185,198 @@ def _state_events_to_chat_events(recent_events: list[dict[str, Any]]) -> list[An
     return converted
 
 
+def _chat_activity_cooldown_for_state(state: "AutoloopState") -> float:
+    cooldown = _autopilot_redrive_cooldown_seconds()
+    if cooldown <= 0:
+        return cooldown
+    last_kind = str(getattr(state, "last_driven_kind", "") or "")
+    if last_kind == "escalation_prompt":
+        return _autopilot_escalation_cooldown_seconds(cooldown)
+    return cooldown
+
+
+def _last_successful_drive_ack_age(
+    state: "AutoloopState",
+    *,
+    waiting_ticket: str,
+) -> float | None:
+    try:
+        last_sent_ts = float(getattr(state, "last_message_sent_ts", 0.0) or 0.0)
+    except (TypeError, ValueError):
+        last_sent_ts = 0.0
+    last_driven_ticket = str(getattr(state, "last_driven_ticket_id", "") or "")
+    if waiting_ticket == "-" or last_driven_ticket != waiting_ticket or last_sent_ts <= 0:
+        return None
+    return max(0.0, time.time() - last_sent_ts)
+
+
+def _recent_message_sent_allows_redrive(
+    *,
+    project: Path,
+    queue_result: QueueLoopResult,
+    state: "AutoloopState",
+    recent_events: list[dict[str, Any]],
+    last_type: str,
+    age: str,
+    waiting_ticket: str,
+    _hp: Any,
+) -> bool:
+    has_received = any(str(ev.get("type") or "") == "message.received" for ev in recent_events)
+    last_kind = str(getattr(state, "last_driven_kind", "") or "")
+    if not (
+        last_type == "message.sent"
+        and not has_received
+        and getattr(queue_result, "last_status", "") == "waiting_input"
+        and last_kind != "escalation_prompt"
+        and not _waiting_ticket_has_label(project, queue_result, "llm-ready")
+    ):
+        return False
+    _hp(
+        "- autopilot redrive allowed (message.sent without "
+        f"message.received age={age} ticket={waiting_ticket})",
+    )
+    return True
+
+
+def _recent_chat_history_fallback(
+    *,
+    ide: str | None,
+    cooldown: float,
+    reflection_events: list[Any],
+) -> tuple[str, str, list[Any]] | None:
+    try:
+        from koruide.chat_history import has_recent_activity, last_event, read_events
+    except ImportError:
+        return None
+    if not has_recent_activity(
+        ide=ide,
+        within_seconds=cooldown,
+        types=_CHAT_ACTIVITY_TYPES,
+    ):
+        return None
+    last = last_event(ide=ide, types=_CHAT_ACTIVITY_TYPES)
+    age = f"{last.age_seconds:.0f}s" if last is not None else "?"
+    last_type = last.type if last is not None else "?"
+    if not reflection_events:
+        reflection_events = read_events(
+            ide=ide,
+            max_age_seconds=cooldown,
+            types=_CHAT_ACTIVITY_TYPES,
+            limit=20,
+        )
+    return last_type, age, reflection_events
+
+
+def _upsert_reflection_needs_input_ticket(
+    *,
+    reflection: Any,
+    project: Path,
+    queue_result: QueueLoopResult,
+    state: "AutoloopState",
+    summary: str,
+    reflection_events: list[Any],
+    cycle_telemetry: dict[str, Any],
+    _hp: Any,
+) -> None:
+    """Upsert an operator ticket when reflection indicates needs_input and not done."""
+    if not (reflection.needs_input and not reflection.done):
+        return
+    operator_ticket = _upsert_llm_needs_input_operator_ticket(
+        project=project,
+        queue_result=queue_result,
+        state=state,
+        reflection_summary=summary,
+        reflection_events=reflection_events,
+        _hp=_hp,
+    )
+    if operator_ticket:
+        cycle_telemetry["autopilot_llx_operator_ticket"] = operator_ticket
+
+
+def _apply_llx_chat_reflection(
+    *,
+    project: Path,
+    queue_result: QueueLoopResult,
+    state: "AutoloopState",
+    cycle_telemetry: dict[str, Any],
+    waiting_ticket: str,
+    ide: str | None,
+    reflection_events: list[Any],
+    _hp: Any,
+) -> tuple[bool, bool]:
+    try:
+        from koru.llm_reflect import llm_reflect_enabled, reflect_on_chat
+    except ImportError:
+        return False, False
+    if not llm_reflect_enabled():
+        return False, False
+    ticket_title = getattr(queue_result, "last_message", "") or ""
+    raw_driven_prompt = getattr(state, "last_driven_prompt", "")
+    driven_prompt = raw_driven_prompt if isinstance(raw_driven_prompt, str) else ""
+    reflection = reflect_on_chat(
+        ticket_id=waiting_ticket or "-",
+        ticket_title=ticket_title,
+        driven_prompt=driven_prompt or ticket_title,
+        ide=ide or "",
+        events=reflection_events or None,
+    )
+    if reflection is None:
+        return False, False
+    cycle_telemetry["autopilot_llx_reflection"] = {
+        "done": reflection.done,
+        "needs_input": reflection.needs_input,
+        "summary": reflection.summary,
+    }
+    summary = (reflection.summary or "").strip()
+    if summary:
+        state.last_llm_reflection_summary = summary[:320]
+        state.last_llm_reflection_ts = time.time()
+    _hp(
+        "- llx reflect: "
+        f"done={reflection.done} needs_input={reflection.needs_input} "
+        f"summary={reflection.summary!r}",
+    )
+    _upsert_reflection_needs_input_ticket(
+        reflection=reflection,
+        project=project,
+        queue_result=queue_result,
+        state=state,
+        summary=summary,
+        reflection_events=reflection_events,
+        cycle_telemetry=cycle_telemetry,
+        _hp=_hp,
+    )
+    return True, bool(reflection.done)
+
+
+def _apply_needs_input_heuristic(
+    *,
+    project: Path,
+    queue_result: QueueLoopResult,
+    state: "AutoloopState",
+    cycle_telemetry: dict[str, Any],
+    reflection_events: list[Any],
+    _hp: Any,
+) -> None:
+    if not _llm_needs_input_heuristic_enabled():
+        return
+    question = _extract_needs_input_question(reflection_events, "")
+    if not question:
+        return
+    operator_ticket = _upsert_llm_needs_input_operator_ticket(
+        project=project,
+        queue_result=queue_result,
+        state=state,
+        reflection_summary=_latest_received_text(reflection_events) or question,
+        reflection_events=reflection_events,
+        _hp=_hp,
+    )
+    if operator_ticket:
+        cycle_telemetry["autopilot_needs_input_heuristic"] = True
+        cycle_telemetry["autopilot_llx_operator_ticket"] = operator_ticket
+    _hp(f"- needs_input heuristic: question={question!r}")
+
+
 def _skip_due_to_recent_chat_activity(
     *,
     project: Path,
@@ -1160,40 +1400,26 @@ def _skip_due_to_recent_chat_activity(
          if ``done=true`` we also skip redrive and let the queue state update
          naturally.
     """
-    cooldown = _autopilot_redrive_cooldown_seconds()
+    cooldown = _chat_activity_cooldown_for_state(state)
     if cooldown <= 0:
         return False
-
-    # If the previous drive on this ticket was an escalation prompt
-    # ("stuck in waiting_input for N cycles"), apply a much longer cooldown
-    # so we do not flood the IDE-side LLM (which is likely waiting for the
-    # user to answer its clarifying question) with another nudge every 30 s.
-    last_kind = str(getattr(state, "last_driven_kind", "") or "")
-    if last_kind == "escalation_prompt":
-        cooldown = _autopilot_escalation_cooldown_seconds(cooldown)
 
     ide = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip().lower() or None
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
 
     # Fallback dedupe when plugin chat events are delayed/missing: rely on
     # the last successful drive for this exact waiting ticket.
-    try:
-        last_sent_ts = float(getattr(state, "last_message_sent_ts", 0.0) or 0.0)
-    except (TypeError, ValueError):
-        last_sent_ts = 0.0
-    last_driven_ticket = str(getattr(state, "last_driven_ticket_id", "") or "")
-    if waiting_ticket != "-" and last_driven_ticket == waiting_ticket and last_sent_ts > 0:
-        age_seconds = max(0.0, time.time() - last_sent_ts)
-        if age_seconds <= cooldown:
-            age = f"{age_seconds:.0f}s"
-            cycle_telemetry["autopilot_skipped_chat_activity"] = True
-            cycle_telemetry["autopilot_chat_activity_last_event"] = "drive.ack"
-            _hp(
-                "- autopilot skipped (recent_drive_ack "
-                f"last=drive.ack age={age} cooldown={cooldown:.0f}s "
-                f"ticket={waiting_ticket})",
-            )
-            return True
+    drive_ack_age = _last_successful_drive_ack_age(state, waiting_ticket=waiting_ticket)
+    if drive_ack_age is not None and drive_ack_age <= cooldown:
+        age = f"{drive_ack_age:.0f}s"
+        cycle_telemetry["autopilot_skipped_chat_activity"] = True
+        cycle_telemetry["autopilot_chat_activity_last_event"] = "drive.ack"
+        _hp(
+            "- autopilot skipped (recent_drive_ack "
+            f"last=drive.ack age={age} cooldown={cooldown:.0f}s "
+            f"ticket={waiting_ticket})",
+        )
+        return True
 
     recent_events = _recent_chat_activity_events(
         state,
@@ -1212,48 +1438,31 @@ def _skip_due_to_recent_chat_activity(
         # reached the IDE LLM. If we never saw ``message.received`` afterwards
         # and the queue is still ``waiting_input``, allow redrive instead of
         # waiting out the full cooldown.
-        has_received = any(
-            str(ev.get("type") or "") == "message.received" for ev in recent_events
-        )
-        last_kind = str(getattr(state, "last_driven_kind", "") or "")
-        if (
-            last_type == "message.sent"
-            and not has_received
-            and getattr(queue_result, "last_status", "") == "waiting_input"
-            and last_kind != "escalation_prompt"
-            and not _waiting_ticket_has_label(project, queue_result, "llm-ready")
+        if _recent_message_sent_allows_redrive(
+            project=project,
+            queue_result=queue_result,
+            state=state,
+            recent_events=recent_events,
+            last_type=last_type,
+            age=age,
+            waiting_ticket=waiting_ticket,
+            _hp=_hp,
         ):
             # Non-llm-ready: allow redrive — false-positive submits (Wayland
             # xdotool, composer.sendToAgent no-op) still log message.sent.
             # llm-ready: the IDE LLM is expected to be working; keep cooldown
             # even without message.received (regression:
             # test_run_cycle_llm_ready_skips_redrive_on_recent_in_memory_chat_activity).
-            _hp(
-                "- autopilot redrive allowed (message.sent without "
-                f"message.received age={age} ticket={waiting_ticket})",
-            )
             return False
     else:
-        try:
-            from koruide.chat_history import has_recent_activity, last_event, read_events
-        except ImportError:
-            return False
-        if not has_recent_activity(
+        fallback = _recent_chat_history_fallback(
             ide=ide,
-            within_seconds=cooldown,
-            types=_CHAT_ACTIVITY_TYPES,
-        ):
+            cooldown=cooldown,
+            reflection_events=reflection_events,
+        )
+        if fallback is None:
             return False
-        last = last_event(ide=ide, types=_CHAT_ACTIVITY_TYPES)
-        age = f"{last.age_seconds:.0f}s" if last is not None else "?"
-        last_type = last.type if last is not None else "?"
-        if not reflection_events:
-            reflection_events = read_events(
-                ide=ide,
-                max_age_seconds=cooldown,
-                types=_CHAT_ACTIVITY_TYPES,
-                limit=20,
-            )
+        last_type, age, reflection_events = fallback
 
     cycle_telemetry["autopilot_skipped_chat_activity"] = True
     cycle_telemetry["autopilot_chat_activity_last_event"] = last_type
@@ -1262,69 +1471,29 @@ def _skip_due_to_recent_chat_activity(
         f"last={last_type} age={age} cooldown={cooldown:.0f}s "
         f"ticket={waiting_ticket})",
     )
-    reflection_resolved = False
-    try:
-        from koru.llm_reflect import llm_reflect_enabled, reflect_on_chat
-
-        if llm_reflect_enabled():
-            ticket_title = getattr(queue_result, "last_message", "") or ""
-            raw_driven_prompt = getattr(state, "last_driven_prompt", "")
-            driven_prompt = raw_driven_prompt if isinstance(raw_driven_prompt, str) else ""
-            reflection = reflect_on_chat(
-                ticket_id=waiting_ticket or "-",
-                ticket_title=ticket_title,
-                driven_prompt=driven_prompt or ticket_title,
-                ide=ide or "",
-                events=reflection_events or None,
-            )
-            if reflection is not None:
-                cycle_telemetry["autopilot_llx_reflection"] = {
-                    "done": reflection.done,
-                    "needs_input": reflection.needs_input,
-                    "summary": reflection.summary,
-                }
-                summary = (reflection.summary or "").strip()
-                if summary:
-                    state.last_llm_reflection_summary = summary[:320]
-                    state.last_llm_reflection_ts = time.time()
-                _hp(
-                    "- llx reflect: "
-                    f"done={reflection.done} needs_input={reflection.needs_input} "
-                    f"summary={reflection.summary!r}",
-                )
-                if reflection.needs_input and not reflection.done:
-                    operator_ticket = _upsert_llm_needs_input_operator_ticket(
-                        project=project,
-                        queue_result=queue_result,
-                        state=state,
-                        reflection_summary=summary,
-                        reflection_events=reflection_events,
-                        _hp=_hp,
-                    )
-                    if operator_ticket:
-                        cycle_telemetry["autopilot_llx_operator_ticket"] = operator_ticket
-                if reflection.done:
-                    return True
-                reflection_resolved = True
-    except ImportError:
-        pass
+    reflection_resolved, reflection_done = _apply_llx_chat_reflection(
+        project=project,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=cycle_telemetry,
+        waiting_ticket=waiting_ticket,
+        ide=ide,
+        reflection_events=reflection_events,
+        _hp=_hp,
+    )
+    if reflection_done:
+        return True
 
     # Fallback for environments where llx/OpenRouter is unavailable.
-    if not reflection_resolved and _llm_needs_input_heuristic_enabled():
-        question = _extract_needs_input_question(reflection_events, "")
-        if question:
-            operator_ticket = _upsert_llm_needs_input_operator_ticket(
-                project=project,
-                queue_result=queue_result,
-                state=state,
-                reflection_summary=_latest_received_text(reflection_events) or question,
-                reflection_events=reflection_events,
-                _hp=_hp,
-            )
-            if operator_ticket:
-                cycle_telemetry["autopilot_needs_input_heuristic"] = True
-                cycle_telemetry["autopilot_llx_operator_ticket"] = operator_ticket
-            _hp(f"- needs_input heuristic: question={question!r}")
+    if not reflection_resolved:
+        _apply_needs_input_heuristic(
+            project=project,
+            queue_result=queue_result,
+            state=state,
+            cycle_telemetry=cycle_telemetry,
+            reflection_events=reflection_events,
+            _hp=_hp,
+        )
     return True
 
 

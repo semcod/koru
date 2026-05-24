@@ -77,6 +77,92 @@ def build_serve_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _resolve_serve_config(
+    args: argparse.Namespace,
+    raw_argv: list[str],
+    saved: dict,
+    project: "Path",
+) -> "ServeConfig":
+    saved_serve = saved.get("serve") if isinstance(saved.get("serve"), dict) else {}
+    lan = _resolve_serve_lan(args, raw_argv, saved_serve)
+    host = _resolve_serve_host(args, raw_argv, saved_serve, lan=lan)
+    port = _resolve_serve_port(args, raw_argv, saved_serve)
+    queue_name = _resolve_serve_queue_name(args, saved)
+    workspace = _resolve_serve_workspace(args, saved)
+    auto_port = _resolve_serve_auto_port(args, raw_argv, saved_serve)
+    return ServeConfig(
+        project=project,
+        host=host,
+        port=port,
+        open_browser=args.open_browser,
+        queue_name=queue_name,
+        auto_port=auto_port,
+        lan=lan,
+        workspace=workspace.resolve() if workspace else None,
+    )
+
+
+def _resolve_serve_lan(
+    args: argparse.Namespace,
+    raw_argv: list[str],
+    saved_serve: dict,
+) -> bool:
+    lan_from_config = bool(saved_serve.get("lan")) and not _argv_has_flag(
+        raw_argv, "--lan", "--host"
+    )
+    return bool(args.lan) or lan_from_config
+
+
+def _resolve_serve_host(
+    args: argparse.Namespace,
+    raw_argv: list[str],
+    saved_serve: dict,
+    *,
+    lan: bool,
+) -> str:
+    host = args.host
+    if not _argv_has_flag(raw_argv, "--host"):
+        host = str(saved_serve.get("host") or host)
+    if lan and host == DEFAULT_HOST:
+        return "0.0.0.0"
+    return host
+
+
+def _resolve_serve_port(
+    args: argparse.Namespace,
+    raw_argv: list[str],
+    saved_serve: dict,
+) -> int:
+    if _argv_has_flag(raw_argv, "--port"):
+        return args.port
+    return int(saved_serve.get("port") or args.port)
+
+
+def _resolve_serve_queue_name(args: argparse.Namespace, saved: dict) -> str | None:
+    if args.queue_name is not None:
+        return args.queue_name
+    return str(saved.get("queue_name") or "") or None
+
+
+def _resolve_serve_workspace(args: argparse.Namespace, saved: dict) -> Path | None:
+    if args.workspace is not None:
+        return args.workspace
+    if saved.get("workspace"):
+        return Path(str(saved["workspace"]))
+    return None
+
+
+def _resolve_serve_auto_port(
+    args: argparse.Namespace,
+    raw_argv: list[str],
+    saved_serve: dict,
+) -> bool:
+    auto_port = bool(args.auto_port) or _env_truthy("KORU_SERVE_AUTO_PORT")
+    if _argv_has_flag(raw_argv, "--auto-port"):
+        return auto_port
+    return auto_port or bool(saved_serve.get("auto_port"))
+
+
 def dashboard_main(argv: list[str] | None = None) -> int:
     """Entry point for ``koru serve`` and ``koru api dashboard``."""
     from koru.activity_log import activity
@@ -88,40 +174,7 @@ def dashboard_main(argv: list[str] | None = None) -> int:
     project = args.project.resolve()
     load_dotenv(project)
     saved = load_project_config(project)
-    saved_serve = saved.get("serve") if isinstance(saved.get("serve"), dict) else {}
-    lan_from_config = bool(saved_serve.get("lan")) and not _argv_has_flag(
-        raw_argv,
-        "--lan",
-        "--host",
-    )
-    lan = bool(args.lan) or lan_from_config
-    host = args.host
-    if not _argv_has_flag(raw_argv, "--host"):
-        host = str(saved_serve.get("host") or host)
-    if lan and host == DEFAULT_HOST:
-        host = "0.0.0.0"
-    port = args.port
-    if not _argv_has_flag(raw_argv, "--port"):
-        port = int(saved_serve.get("port") or port)
-    queue_name = args.queue_name
-    if queue_name is None:
-        queue_name = str(saved.get("queue_name") or "") or None
-    workspace = args.workspace
-    if workspace is None and saved.get("workspace"):
-        workspace = Path(str(saved["workspace"]))
-    auto_port = bool(args.auto_port) or _env_truthy("KORU_SERVE_AUTO_PORT")
-    if not _argv_has_flag(raw_argv, "--auto-port"):
-        auto_port = auto_port or bool(saved_serve.get("auto_port"))
-    config = ServeConfig(
-        project=project,
-        host=host,
-        port=port,
-        open_browser=args.open_browser,
-        queue_name=queue_name,
-        auto_port=auto_port,
-        lan=lan,
-        workspace=workspace.resolve() if workspace else None,
-    )
+    config = _resolve_serve_config(args, raw_argv, saved, project)
     activity(
         "HTTP",
         f"dashboard start project={config.project} http://{config.host}:{config.port}/",

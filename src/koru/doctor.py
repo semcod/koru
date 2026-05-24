@@ -398,6 +398,42 @@ def _path_koru_supports_auto_subcommand(path_koru: str | None) -> bool | None:
     return proc.returncode == 0 if proc.returncode == 0 else False
 
 
+def _koru_path_version_issues(
+    project_koru: Path,
+    path_koru: str | None,
+    package_version: str | None,
+    source_version: str | None,
+) -> tuple[str, list[str]]:
+    """Return (status, extra_bits) for path-mismatch and version checks."""
+    status = PASS
+    bits: list[str] = []
+    if project_koru.is_file() and path_koru:
+        try:
+            if Path(path_koru).resolve() != project_koru.resolve():
+                status = WARN
+                bits.append("path_mismatch=true")
+        except OSError:
+            status = WARN
+            bits.append("path_mismatch=unknown")
+    auto_ok = _path_koru_supports_auto_subcommand(path_koru)
+    if auto_ok is False:
+        status = WARN
+        bits.append("koru_auto_unsupported=true")
+        if project_koru.is_file():
+            bits.append(
+                f"fix=export PATH={project_koru.parent}:$PATH; hash -r; or {project_koru} auto"
+            )
+        else:
+            bits.append("fix=pip install -e . && use koru autonomous")
+    if package_version and source_version and package_version != source_version:
+        status = WARN
+        bits.append("version_mismatch=true")
+    if package_version is None:
+        status = WARN
+        bits.append("package_metadata=missing")
+    return status, bits
+
+
 def _check_koru_runtime_identity(project: Path) -> tuple[str, str]:
     package_version = _installed_koru_version()
     source_version = _read_project_version(project / "pyproject.toml")
@@ -411,32 +447,10 @@ def _check_koru_runtime_identity(project: Path) -> tuple[str, str]:
     ]
     if project_koru.is_file():
         detail_bits.append(f"project_venv_koru={project_koru}")
-
-    status = PASS
-    if project_koru.is_file() and path_koru:
-        try:
-            if Path(path_koru).resolve() != project_koru.resolve():
-                status = WARN
-                detail_bits.append("path_mismatch=true")
-        except OSError:
-            status = WARN
-            detail_bits.append("path_mismatch=unknown")
-    auto_ok = _path_koru_supports_auto_subcommand(path_koru)
-    if auto_ok is False:
-        status = WARN
-        detail_bits.append("koru_auto_unsupported=true")
-        if project_koru.is_file():
-            detail_bits.append(
-                f"fix=export PATH={project_koru.parent}:$PATH; hash -r; or {project_koru} auto"
-            )
-        else:
-            detail_bits.append("fix=pip install -e . && use koru autonomous")
-    if package_version and source_version and package_version != source_version:
-        status = WARN
-        detail_bits.append("version_mismatch=true")
-    if package_version is None:
-        status = WARN
-        detail_bits.append("package_metadata=missing")
+    status, extra_bits = _koru_path_version_issues(
+        project_koru, path_koru, package_version, source_version
+    )
+    detail_bits.extend(extra_bits)
     return status, "; ".join(detail_bits)
 
 
@@ -498,6 +512,81 @@ def _read_json_file(path: Path) -> dict[str, object] | None:
     return payload if isinstance(payload, dict) else None
 
 
+def _package_lock_root_version(package_lock: dict[str, object] | None) -> str:
+    if not package_lock:
+        return ""
+    packages = package_lock.get("packages")
+    if not isinstance(packages, dict):
+        return ""
+    root = packages.get("")
+    if not isinstance(root, dict):
+        return ""
+    return str(root.get("version") or "")
+
+
+def _autopilot_plugin_bundle_paths(project: Path, plugin_dir: Path) -> tuple[Path, Path]:
+    expected = EXPECTED_VSCODE_PLUGIN_VERSION
+    return (
+        project
+        / "src"
+        / "koru"
+        / "assets"
+        / "koru-autopilot-vscode"
+        / f"koru-autopilot-{expected}.vsix",
+        plugin_dir / f"koru-autopilot-{expected}.vsix",
+    )
+
+
+def _autopilot_plugin_bundle_detail_bits(
+    *,
+    package_version: str,
+    lock_version: str,
+    root_lock_version: str,
+    local_vsix: Path,
+    asset: Path,
+) -> list[str]:
+    expected = EXPECTED_VSCODE_PLUGIN_VERSION
+    return [
+        f"expected={expected}",
+        f"package={package_version or '-'}",
+        f"lock={lock_version or '-'}",
+        f"lock_root={root_lock_version or '-'}",
+        f"local_vsix={'present' if local_vsix.is_file() else 'missing'}",
+        f"asset_vsix={'present' if asset.is_file() else 'missing'}",
+    ]
+
+
+def _autopilot_plugin_bundle_issues(
+    *,
+    package_json: dict[str, object] | None,
+    package_lock: dict[str, object] | None,
+    package_version: str,
+    lock_version: str,
+    root_lock_version: str,
+    local_vsix: Path,
+    asset: Path,
+) -> list[str]:
+    expected = EXPECTED_VSCODE_PLUGIN_VERSION
+    issues: list[str] = []
+    version_checks = (
+        ("package_version_mismatch", package_version),
+        ("lock_version_mismatch", lock_version),
+        ("lock_root_version_mismatch", root_lock_version),
+    )
+    if not package_json:
+        issues.append("package_json_unreadable")
+    if not package_lock:
+        issues.append("package_lock_unreadable")
+    for label, version in version_checks:
+        if version and version != expected:
+            issues.append(label)
+    if not local_vsix.is_file():
+        issues.append("local_vsix_missing")
+    if not asset.is_file():
+        issues.append("asset_vsix_missing")
+    return issues
+
+
 def _check_autopilot_plugin_bundle(project: Path) -> tuple[str, str]:
     plugin_dir = project / "plugins" / "koru-autopilot-vscode"
     if not plugin_dir.is_dir():
@@ -506,48 +595,24 @@ def _check_autopilot_plugin_bundle(project: Path) -> tuple[str, str]:
     package_lock = _read_json_file(plugin_dir / "package-lock.json")
     package_version = str(package_json.get("version") or "") if package_json else ""
     lock_version = str(package_lock.get("version") or "") if package_lock else ""
-    root_lock_version = ""
-    if package_lock:
-        packages = package_lock.get("packages")
-        if isinstance(packages, dict):
-            root = packages.get("")
-            if isinstance(root, dict):
-                root_lock_version = str(root.get("version") or "")
-
-    expected = EXPECTED_VSCODE_PLUGIN_VERSION
-    asset = (
-        project
-        / "src"
-        / "koru"
-        / "assets"
-        / "koru-autopilot-vscode"
-        / f"koru-autopilot-{expected}.vsix"
+    root_lock_version = _package_lock_root_version(package_lock)
+    asset, local_vsix = _autopilot_plugin_bundle_paths(project, plugin_dir)
+    detail_bits = _autopilot_plugin_bundle_detail_bits(
+        package_version=package_version,
+        lock_version=lock_version,
+        root_lock_version=root_lock_version,
+        local_vsix=local_vsix,
+        asset=asset,
     )
-    local_vsix = plugin_dir / f"koru-autopilot-{expected}.vsix"
-    detail_bits = [
-        f"expected={expected}",
-        f"package={package_version or '-'}",
-        f"lock={lock_version or '-'}",
-        f"lock_root={root_lock_version or '-'}",
-        f"local_vsix={'present' if local_vsix.is_file() else 'missing'}",
-        f"asset_vsix={'present' if asset.is_file() else 'missing'}",
-    ]
-    issues: list[str] = []
-    if not package_json:
-        issues.append("package_json_unreadable")
-    if not package_lock:
-        issues.append("package_lock_unreadable")
-    for label, version in (
-        ("package_version_mismatch", package_version),
-        ("lock_version_mismatch", lock_version),
-        ("lock_root_version_mismatch", root_lock_version),
-    ):
-        if version and version != expected:
-            issues.append(label)
-    if not local_vsix.is_file():
-        issues.append("local_vsix_missing")
-    if not asset.is_file():
-        issues.append("asset_vsix_missing")
+    issues = _autopilot_plugin_bundle_issues(
+        package_json=package_json,
+        package_lock=package_lock,
+        package_version=package_version,
+        lock_version=lock_version,
+        root_lock_version=root_lock_version,
+        local_vsix=local_vsix,
+        asset=asset,
+    )
     if issues:
         return WARN, "; ".join(detail_bits + [f"issues={','.join(issues)}"])
     return PASS, "; ".join(detail_bits + ["bundle=consistent"])
@@ -991,6 +1056,79 @@ def _check_autopilot_chat_control(project: Path) -> tuple[str, str]:
     return WARN, "; ".join(detail_bits + ["no recent paste/submit success observed"])
 
 
+def _windsurf_chat_column_indexes(relevant: list[str]) -> dict[str, list[int]]:
+    return {
+        "send": [
+            idx
+            for idx, line in enumerate(relevant)
+            if _autopilot_debug_event_has(line, "WINDSURF_FASTPATH_EXECUTE_SEND_OK")
+            or "winning_paste=windsurf.sendTextToChat" in line
+        ],
+        "disabled": [
+            idx
+            for idx, line in enumerate(relevant)
+            if _autopilot_debug_event_has(line, "WINDSURF_KEEP_OPEN_DISABLED")
+        ],
+        "keep_open_ok": [
+            idx
+            for idx, line in enumerate(relevant)
+            if _autopilot_debug_event_has(line, "WINDSURF_KEEP_OPEN_OK")
+        ],
+        "cascade_toggle": [
+            idx
+            for idx, line in enumerate(relevant)
+            if _autopilot_debug_event_has(line, "WINDSURF_KEEP_OPEN_OK")
+            and _windsurf_line_mentions_chat_open_command(line)
+        ],
+    }
+
+
+def _windsurf_line_mentions_chat_open_command(line: str) -> bool:
+    return any(
+        marker in line
+        for marker in ("cascadePanel.open", "showCascade", "openChat", "panel.chat")
+    )
+
+
+def _windsurf_chat_column_detail_bits(
+    relevant: list[str],
+    indexes: dict[str, list[int]],
+) -> list[str]:
+    return [
+        "ide=windsurf",
+        f"entries={len(relevant)}",
+        f"native_sends={len(indexes['send'])}",
+        f"keep_open_ok={len(indexes['keep_open_ok'])}",
+        f"post_send_toggle_candidates={len(indexes['cascade_toggle'])}",
+        f"keep_open_disabled={len(indexes['disabled'])}",
+    ]
+
+
+def _windsurf_chat_column_result(
+    indexes: dict[str, list[int]],
+    detail_bits: list[str],
+) -> tuple[str, str]:
+    last_send = max(indexes["send"], default=-1)
+    last_disabled = max(indexes["disabled"], default=-1)
+    last_toggle = max(indexes["cascade_toggle"], default=-1)
+    if last_toggle > last_disabled and last_toggle > -1:
+        return WARN, "; ".join(
+            detail_bits
+            + [
+                "risk=post_send_cascade_open_may_toggle_right_chat_column",
+                "upgrade_plugin_or_keep koruAutopilot.windsurfKeepOpenAfterSend=false",
+            ]
+        )
+    if last_disabled > last_send >= 0:
+        return PASS, "; ".join(detail_bits + ["post_send_keep_open_guard=disabled"])
+    if last_send >= 0 and not indexes["disabled"] and not indexes["keep_open_ok"]:
+        return WARN, "; ".join(
+            detail_bits
+            + ["post_send_keep_open_guard=unknown", "reload IDE if plugin was just upgraded"]
+        )
+    return PASS, "; ".join(detail_bits + ["no post-send toggle evidence"])
+
+
 def _check_windsurf_chat_column_control(_project: Path) -> tuple[str, str]:
     try:
         selected, path, _socket_text, relevant, skip_reason = _recent_autopilot_debug_context()
@@ -1004,60 +1142,9 @@ def _check_windsurf_chat_column_control(_project: Path) -> tuple[str, str]:
     if not relevant:
         return WARN, f"{path}: no recent Windsurf chat-column entries"
 
-    send_indexes = [
-        idx
-        for idx, line in enumerate(relevant)
-        if _autopilot_debug_event_has(line, "WINDSURF_FASTPATH_EXECUTE_SEND_OK")
-        or "winning_paste=windsurf.sendTextToChat" in line
-    ]
-    disabled_indexes = [
-        idx
-        for idx, line in enumerate(relevant)
-        if _autopilot_debug_event_has(line, "WINDSURF_KEEP_OPEN_DISABLED")
-    ]
-    keep_open_ok_indexes = [
-        idx
-        for idx, line in enumerate(relevant)
-        if _autopilot_debug_event_has(line, "WINDSURF_KEEP_OPEN_OK")
-    ]
-    cascade_toggle_indexes = [
-        idx
-        for idx, line in enumerate(relevant)
-        if _autopilot_debug_event_has(line, "WINDSURF_KEEP_OPEN_OK")
-        and (
-            "cascadePanel.open" in line
-            or "showCascade" in line
-            or "openChat" in line
-            or "panel.chat" in line
-        )
-    ]
-    last_send = max(send_indexes, default=-1)
-    last_disabled = max(disabled_indexes, default=-1)
-    last_toggle = max(cascade_toggle_indexes, default=-1)
-    detail_bits = [
-        "ide=windsurf",
-        f"entries={len(relevant)}",
-        f"native_sends={len(send_indexes)}",
-        f"keep_open_ok={len(keep_open_ok_indexes)}",
-        f"post_send_toggle_candidates={len(cascade_toggle_indexes)}",
-        f"keep_open_disabled={len(disabled_indexes)}",
-    ]
-    if last_toggle > last_disabled and last_toggle > -1:
-        return WARN, "; ".join(
-            detail_bits
-            + [
-                "risk=post_send_cascade_open_may_toggle_right_chat_column",
-                "upgrade_plugin_or_keep koruAutopilot.windsurfKeepOpenAfterSend=false",
-            ]
-        )
-    if last_disabled > last_send >= 0:
-        return PASS, "; ".join(detail_bits + ["post_send_keep_open_guard=disabled"])
-    if last_send >= 0 and not disabled_indexes and not keep_open_ok_indexes:
-        return WARN, "; ".join(
-            detail_bits
-            + ["post_send_keep_open_guard=unknown", "reload IDE if plugin was just upgraded"]
-        )
-    return PASS, "; ".join(detail_bits + ["no post-send toggle evidence"])
+    indexes = _windsurf_chat_column_indexes(relevant)
+    detail_bits = _windsurf_chat_column_detail_bits(relevant, indexes)
+    return _windsurf_chat_column_result(indexes, detail_bits)
 
 
 def _doctor_console_log_tail_limit() -> int:
@@ -1342,6 +1429,102 @@ def _compact_console_excerpt(path: Path, line: str, *, max_len: int = 220) -> st
     return f"{label}: {text}"
 
 
+_IDE_CONSOLE_WARN_TOKENS: tuple[str, ...] = (
+    "warn",
+    "trustedscript",
+    "trustedtypepolicy",
+    "trustedstring",
+    "trusted types",
+    "rejected promise",
+    "cannot register",
+    "already registered",
+    "overwriting grammar scope",
+    "language server has not been started",
+    "lifecyclephase.restored",
+)
+
+_IDE_CONSOLE_CATEGORY_PATTERNS: dict[str, tuple[tuple[str, ...], ...]] = {
+    "trusted_types": (
+        ("trustedscript",),
+        ("trustedtypepolicy",),
+        ("trustedstring",),
+        ("trusted types",),
+    ),
+    "language_server_not_started": (("language server has not been started",),),
+    "extension_registration": (("cannot register",), ("already registered",)),
+    "grammar_scope_overwrite": (("overwriting grammar scope",),),
+    "missing_extension_file": (("unable to read file", "nonexistent file"),),
+    "missing_workspace_path": (("file or directory", "does not exist"),),
+    "marketplace_404": (("marketplace", "404"),),
+    "cascade_rpc_500": (("acknowledgecascadecodeedit", "500"),),
+    "cascade_panel_early_restore": (("windsurf.cascadepanel", "lifecyclephase.restored"),),
+    "app_icon_unsupported": (("app icon customization is not supported",),),
+    "pyright_fallback": (("failed to find pyright executable",),),
+}
+
+
+def _ide_console_error_count(headlines: list[tuple[Path, str]]) -> int:
+    return sum("error" in line.lower() or "[err" in line.lower() for _path, line in headlines)
+
+
+def _ide_console_warn_count(headlines: list[tuple[Path, str]]) -> int:
+    return sum(
+        any(token in line.lower() for token in _IDE_CONSOLE_WARN_TOKENS)
+        for _path, line in headlines
+    )
+
+
+def _ide_console_category_counts(interesting: list[tuple[Path, str]]) -> list[str]:
+    counts: list[str] = []
+    for name, patterns in _IDE_CONSOLE_CATEGORY_PATTERNS.items():
+        count = sum(
+            any(all(token in line.lower() for token in pattern) for pattern in patterns)
+            for _path, line in interesting
+        )
+        if count:
+            counts.append(f"{name}={count}")
+    return counts
+
+
+def _classify_ide_console_lines(
+    rows: list[tuple[Path, str]],
+) -> tuple[list[tuple[Path, str]], list[tuple[Path, str]], list[tuple[Path, str]]]:
+    """Return (interesting, headlines, sample_rows) from raw log rows."""
+    interesting = [
+        (path, line) for path, line in rows if _ide_console_line_is_interesting(line)
+    ]
+    headlines = [
+        (path, line)
+        for path, line in interesting
+        if _ide_console_line_is_diagnostic_headline(line)
+    ]
+    sample_rows = headlines or interesting
+    return interesting, headlines, sample_rows
+
+
+def _ide_console_build_detail(
+    selected: str,
+    existing_roots: list[Path],
+    files: list[Path],
+    interesting: list[tuple[Path, str]],
+    error_count: int,
+    warn_count: int,
+    category_counts: list[str],
+    sample_rows: list[tuple[Path, str]],
+) -> str:
+    detail = (
+        f"ide={selected}; roots={','.join(str(path) for path in existing_roots)}; "
+        f"files={len(files)}; interesting={len(interesting)}; errors={error_count}; "
+        f"warnings={warn_count}"
+    )
+    if category_counts:
+        detail += "; categories=" + ",".join(category_counts)
+    if sample_rows:
+        samples = [_compact_console_excerpt(path, line) for path, line in sample_rows[-3:]]
+        detail += "; latest=" + " | ".join(samples)
+    return detail
+
+
 def _check_ide_console_log(_project: Path) -> tuple[str, str]:
     selected = _selected_autopilot_ide()
     if not selected:
@@ -1365,70 +1548,14 @@ def _check_ide_console_log(_project: Path) -> tuple[str, str]:
     if not rows:
         return WARN, f"ide={selected}; files={len(files)}; no readable recent log lines"
 
-    interesting = [(path, line) for path, line in rows if _ide_console_line_is_interesting(line)]
-    headlines = [
-        (path, line) for path, line in interesting if _ide_console_line_is_diagnostic_headline(line)
-    ]
-    error_count = sum(
-        "error" in line.lower() or "[err" in line.lower()
-        for _path, line in headlines
+    interesting, headlines, sample_rows = _classify_ide_console_lines(rows)
+    error_count = _ide_console_error_count(headlines)
+    warn_count = _ide_console_warn_count(headlines)
+    category_counts = _ide_console_category_counts(interesting)
+    detail = _ide_console_build_detail(
+        selected, existing_roots, files, interesting, error_count, warn_count,
+        category_counts, sample_rows,
     )
-    warn_count = sum(
-        any(
-            token in line.lower()
-            for token in (
-                "warn",
-                "trustedscript",
-                "trustedtypepolicy",
-                "trustedstring",
-                "trusted types",
-                "rejected promise",
-                "cannot register",
-                "already registered",
-                "overwriting grammar scope",
-                "language server has not been started",
-                "lifecyclephase.restored",
-            )
-        )
-        for _path, line in headlines
-    )
-    category_patterns = {
-        "trusted_types": (
-            ("trustedscript",),
-            ("trustedtypepolicy",),
-            ("trustedstring",),
-            ("trusted types",),
-        ),
-        "language_server_not_started": (("language server has not been started",),),
-        "extension_registration": (("cannot register",), ("already registered",)),
-        "grammar_scope_overwrite": (("overwriting grammar scope",),),
-        "missing_extension_file": (("unable to read file", "nonexistent file"),),
-        "missing_workspace_path": (("file or directory", "does not exist"),),
-        "marketplace_404": (("marketplace", "404"),),
-        "cascade_rpc_500": (("acknowledgecascadecodeedit", "500"),),
-        "cascade_panel_early_restore": (("windsurf.cascadepanel", "lifecyclephase.restored"),),
-        "app_icon_unsupported": (("app icon customization is not supported",),),
-        "pyright_fallback": (("failed to find pyright executable",),),
-    }
-    category_counts: list[str] = []
-    for name, patterns in category_patterns.items():
-        count = sum(
-            any(all(token in line.lower() for token in pattern) for pattern in patterns)
-            for _path, line in interesting
-        )
-        if count:
-            category_counts.append(f"{name}={count}")
-    detail = (
-        f"ide={selected}; roots={','.join(str(path) for path in existing_roots)}; "
-        f"files={len(files)}; interesting={len(interesting)}; errors={error_count}; "
-        f"warnings={warn_count}"
-    )
-    if category_counts:
-        detail += "; categories=" + ",".join(category_counts)
-    sample_rows = headlines or interesting
-    if sample_rows:
-        samples = [_compact_console_excerpt(path, line) for path, line in sample_rows[-3:]]
-        detail += "; latest=" + " | ".join(samples)
     if error_count or warn_count:
         return WARN, detail
     return PASS, detail + "; no recent warnings/errors"
