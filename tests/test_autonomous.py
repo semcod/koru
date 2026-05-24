@@ -1446,6 +1446,7 @@ def test_setup_autopilot_plugin_installed_but_not_loaded_hints_reload(
     assert wait_called["n"] == 0
     text = "\n".join(messages)
     assert "Developer: Reload Window" in text
+    assert "\033[33m" in text
     assert "pomijam oczekiwanie na plugin" in text
     assert "koru ide doctor --ide cursor --fix --explain" in text
 

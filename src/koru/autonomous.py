@@ -33,6 +33,7 @@ from koru import autonomous_daemon as _autonomous_daemon
 from koru import autonomous_operator as _autonomous_operator
 from koru import autonomous_parser as _autonomous_parser
 from koru import autonomous_resources as _autonomous_resources
+from koru import autonomous_loop_runner as _autonomous_loop_runner
 from koru import autonomous_runtime as _autonomous_runtime
 from koru import autonomous_onboarding as _autonomous_onboarding
 from koru.autonomous_cycle import (
@@ -120,7 +121,6 @@ from koruide.drive_orchestrator import DriveOrchestrator
 from koruide import os_injector as _os_injector_module
 from koruide.os_injector import OsInjectorError, inject_with_profile, load_profile
 
-_AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 _ORIGINAL_LOAD_PROFILE = load_profile
 _ORIGINAL_INJECT_WITH_PROFILE = inject_with_profile
 
@@ -658,39 +658,15 @@ def _handle_cycle_exit_conditions(
     correlation_id: str,
 ) -> bool:
     """Check if we should exit the cycle loop. Returns True if should exit."""
-    if args.stop_on_waiting_input and queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES:
-        if args.emit_events == "jsonl":
-            write_stdio_event(
-                sys.stdout,
-                event_type="AutonomousStopped",
-                correlation_id=correlation_id,
-                payload={"reason": "waiting_input", "cycle": cycle},
-            )
-        _stdio_info(
-            "koru autonomous: queue is waiting_input; stopping until "
-            "human/manual ticket recovery marks it ready or done",
-            fmt=args.emit_events,
-        )
-        return True
-
-    if args.max_cycles > 0 and cycle >= args.max_cycles:
-        if args.emit_events == "jsonl":
-            write_stdio_event(
-                sys.stdout,
-                event_type="AutonomousStopped",
-                correlation_id=correlation_id,
-                payload={
-                    "reason": "max_cycles",
-                    "cycle": cycle,
-                    "max_cycles": args.max_cycles,
-                },
-            )
-        _stdio_info(
-            f"koru autonomous: reached max-cycles={args.max_cycles}; stopping",
-            fmt=args.emit_events,
-        )
-        return True
-    return False
+    return _autonomous_loop_runner.handle_cycle_exit_conditions(
+        args,
+        queue_result,
+        cycle,
+        correlation_id,
+        write_event=write_stdio_event,
+        stdio_info=_stdio_info,
+        output_stream=sys.stdout,
+    )
 
 
 def _cleanup_autonomous_session(
@@ -823,74 +799,37 @@ def _run_autonomous_cycle(
     auto_pipeline_state: AutoPipelineState | None = None,
 ) -> bool:
     """Run one autonomous cycle. Returns True if the loop should exit."""
-    if args.emit_events == "human":
-        print(f"\n=== koru autonomous cycle #{cycle} ===")
-    client, daemon, thread = _restart_daemon_if_needed(
-        args,
-        client,
-        socket_path,
-        daemon,
-        thread,
-        autopilot_socket_observed_at_boot,
-        project,
-    )
-    profile = _select_and_log_cycle_profile(
-        args,
-        auto_pipeline_state,
-        enable_scan=enable_scan,
-    )
-    effective_enable_scan, effective_enable_autopilot = _resolve_effective_cycle_flags(
-        args,
-        profile,
-        enable_scan=enable_scan,
-        loop_state=loop_state,
-        client=client,
-        autopilot_ide=autopilot_ide,
-    )
-    cycle_kwargs = _build_cycle_run_kwargs(
-        args,
-        profile,
+    return _autonomous_loop_runner.run_autonomous_cycle(
         cycle=cycle,
+        args=args,
         project=project,
-        queue_name=queue_name,
-        enable_scan=effective_enable_scan,
-        autopilot_ide=autopilot_ide,
         client=client,
+        daemon=daemon,
+        thread=thread,
+        socket_path=socket_path,
+        autopilot_socket_observed_at_boot=autopilot_socket_observed_at_boot,
+        queue_name=queue_name,
+        enable_scan=enable_scan,
+        autopilot_ide=autopilot_ide,
         loop_state=loop_state,
+        checkpoint_path=checkpoint_path,
         diagnostic_state_dir=diagnostic_state_dir,
         wup_process=wup_process,
         correlation_id=correlation_id,
+        auto_pipeline_state=auto_pipeline_state,
+        restart_daemon_if_needed=_restart_daemon_if_needed,
+        select_and_log_cycle_profile=_select_and_log_cycle_profile,
+        resolve_effective_cycle_flags=_resolve_effective_cycle_flags,
+        build_cycle_run_kwargs=_build_cycle_run_kwargs,
+        run_cycle=_run_cycle,
+        update_auto_pipeline_state=_update_auto_pipeline_state,
+        save_loop_checkpoint=_save_loop_checkpoint,
+        queue_loop_waiting_ticket_label=_queue_loop_waiting_ticket_label,
+        handle_exit_conditions=_handle_cycle_exit_conditions,
+        compute_cycle_sleep=_compute_cycle_sleep,
+        stdio_info=_stdio_info,
+        sleep=_sleep,
     )
-    _scan_result, queue_result, _autopilot_status, diag_result = _run_cycle(**cycle_kwargs)
-    if auto_pipeline_state is not None:
-        _update_auto_pipeline_state(
-            auto_pipeline_state,
-            queue_result,
-            diag_result,
-            _autopilot_status,
-        )
-    _save_loop_checkpoint(
-        checkpoint_path,
-        cycle=cycle,
-        state=loop_state,
-        queue_status=queue_result.last_status,
-        waiting_ticket=_queue_loop_waiting_ticket_label(queue_result),
-    )
-
-    if _handle_cycle_exit_conditions(args, queue_result, cycle, correlation_id):
-        return True
-
-    effective_sleep = _compute_cycle_sleep(args, loop_state, queue_result)
-    _stdio_info(
-        f"koru autonomous: summary cycle={cycle} queue={queue_result.last_status} "
-        f"waiting={_queue_loop_waiting_ticket_label(queue_result)} "
-        f"streak={loop_state.stagnation_streak} diagnostics={diag_result.status} "
-        f"autopilot={_autopilot_status} sleep={effective_sleep}s",
-        fmt=args.emit_events,
-    )
-    if effective_sleep > 0:
-        _sleep(effective_sleep)
-    return False
 
 
 def _setup_autonomous_env_vars() -> tuple[str | None, dict[str, tuple[bool, str | None]]]:

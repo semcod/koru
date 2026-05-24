@@ -118,7 +118,10 @@ def setup_autopilot_plugin(
             if active is False:
                 from koru.ide_adapters import shared
 
-                for line in shared.extension_reload_required_lines(autopilot_ide):
+                for line in shared.extension_reload_required_lines(
+                    autopilot_ide,
+                    color=args.emit_events == "human",
+                ):
                     stdio_info(line, fmt=args.emit_events)
                 stdio_info(
                     "koru autonomous: pomijam oczekiwanie na plugin "
@@ -153,7 +156,10 @@ def setup_autopilot_plugin(
                 if plugin_install_status in {"installed", "already_installed"}:
                     from koru.ide_adapters import shared
 
-                    for line in shared.extension_reload_required_lines(autopilot_ide):
+                    for line in shared.extension_reload_required_lines(
+                        autopilot_ide,
+                        color=args.emit_events == "human",
+                    ):
                         stdio_info(line, fmt=args.emit_events)
     return plugin_connected
 

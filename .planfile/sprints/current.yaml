@@ -14887,7 +14887,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide cursor --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-05-24T17:26:31.354001Z'
+        finished_at: '2026-05-24T17:30:50.773849Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -14942,6 +14942,11 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-05-24T17:26:32.076852+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-24T17:30:51.518181+00:00'
       id: STARTER-204
       inputs:
         api_headers: {}
@@ -15002,7 +15007,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-24T17:26:32.076815+00:00'
+      updated_at: '2026-05-24T17:30:51.518137+00:00'
     STARTER-205:
       blocked_by: []
       blocks: []
@@ -15140,9 +15145,10 @@ sprint:
         before broad edits.'
       execution:
         attempt: 0
+        finished_at: '2026-05-24T17:34:58.875575Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -15156,6 +15162,16 @@ sprint:
           edits.'
         source: koru task
         timestamp: '2026-05-24T16:59:38.931490+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T17:34:59.714343+00:00'
       id: STARTER-206
       inputs:
         api_headers: {}
@@ -15191,9 +15207,9 @@ sprint:
         timestamp: '2026-05-24T16:59:38.931490+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-24T16:59:38.931490+00:00'
+      updated_at: '2026-05-24T17:34:59.714305+00:00'
     STARTER-207:
       acceptance_criteria: []
       blocked_by: []

@@ -14,6 +14,12 @@ from koru.ide_adapters.base import Hypothesis, Remediation, SettingsReport
 EXTENSION_ID = "semcod.koru-autopilot-vscode"
 SOCKET_SETTING_KEY = "koruAutopilot.socketPath"
 PUBLISHER_ID = "semcod"
+_ANSI_YELLOW = "\033[33m"
+_ANSI_RESET = "\033[0m"
+
+
+def _yellow(text: str, *, enabled: bool) -> str:
+    return f"{_ANSI_YELLOW}{text}{_ANSI_RESET}" if enabled else text
 
 
 def config_home_for_ide(ide: str) -> Path | None:
@@ -220,22 +226,41 @@ def extension_activated_in_exthost(ide: str, extension_id: str = EXTENSION_ID) -
     return False
 
 
-def extension_reload_required_lines(ide: str, *, label: str | None = None) -> list[str]:
+def extension_reload_required_lines(
+    ide: str,
+    *,
+    label: str | None = None,
+    color: bool = False,
+) -> list[str]:
     """Actionable operator lines when VSIX is on disk but exthost never loaded the extension."""
     name = label or ide
     lines = [
-        f"koru autonomous: [!] VSIX zainstalowany, ale {EXTENSION_ID} nie jest aktywny "
-        f"w bieżącej sesji {name}.",
-        "koru autonomous:     1) Developer: Reload Window (Ctrl+Shift+P)",
-        "koru autonomous:     2) Command Palette → „koru: Connect autopilot daemon”",
+        _yellow(
+            f"koru autonomous: [!] VSIX zainstalowany, ale {EXTENSION_ID} "
+            f"nie jest aktywny w bieżącej sesji {name}.",
+            enabled=color,
+        ),
+        _yellow(
+            "koru autonomous:     1) W Cursorze/VS Code naciśnij Ctrl+Shift+P "
+            "i uruchom: Developer: Reload Window",
+            enabled=color,
+        ),
+        _yellow(
+            "koru autonomous:     2) Po reloadzie uruchom: "
+            "koru: Connect autopilot daemon",
+            enabled=color,
+        ),
         f"koru autonomous:     Diagnostyka: koru ide doctor --ide {ide} --fix --explain",
     ]
     trusted = publisher_trusted(ide)
     if trusted is False:
         lines.insert(
             2,
-            "koru autonomous:     0) Extensions → Trust Publisher „semcod” "
-            "(albo: koru ide doctor --fix), potem Reload Window",
+            _yellow(
+                "koru autonomous:     0) Extensions → Trust Publisher „semcod” "
+                "(albo: koru ide doctor --fix), potem Reload Window",
+                enabled=color,
+            ),
         )
     return lines
 

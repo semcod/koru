@@ -622,7 +622,7 @@ def _gate_commands(project: Path) -> dict[str, list[str]]:
         "redup": redup_check_command(project),
         "vallm": ["vallm", str(project)],
         "sumr": ["sumr", str(project)],
-        "testql": ["testql", "run", "--project", str(project), "--dry-run"],
+        "testql": ["testql", "suite", "--path", str(project), "--pattern", "*.testql.toon.yaml", "--output", "console"],
         "security": ["bandit", "-r", str(project), "-f", "json"],
     }
 
