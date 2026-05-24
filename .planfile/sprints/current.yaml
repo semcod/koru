@@ -14887,7 +14887,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide cursor --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-05-24T17:30:50.773849Z'
+        finished_at: '2026-05-24T17:50:30.227566Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -14947,6 +14947,16 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-05-24T17:30:51.518181+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-24T17:38:38.695741+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-24T17:50:30.925824+00:00'
       id: STARTER-204
       inputs:
         api_headers: {}
@@ -15007,7 +15017,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-24T17:30:51.518137+00:00'
+      updated_at: '2026-05-24T17:50:30.925783+00:00'
     STARTER-205:
       blocked_by: []
       blocks: []
@@ -15219,10 +15229,40 @@ sprint:
         a large/hot module (2163 lines, 1 class, 73 methods, CC=14). Extract cohesive
         submodules around stable responsibilities and add focused regression tests
         before broad edits.
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: waiting_input
       files:
       - project/analysis.toon.yaml
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - inputs
+        - outputs
+        execution_state: waiting_input
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-24T18:01:07.169169+00:00'
       id: STARTER-207
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'Choose how to close STARTER-207 (Split large module: autonomous_cycle,
+          2221 lines):
+
+          A) Proceed now with the refactor — extract cohesive submodules from autonomous_cycle.py
+          (chat-activity cooldown, drive/retry, skip conditions, autopilot orchestrator),
+          add focused regression tests, then mark done.
+
+          B) Close the ticket as-is (acknowledge the split was deferred) and move
+          on — only the autopilot regression fix from this session counts.
+
+          C) Different scope — please describe what you actually want for this ticket.'
       labels:
       - code2llm
       - architecture
@@ -15230,6 +15270,25 @@ sprint:
       - refactor
       - scan
       name: 'Split large module: autonomous_cycle'
+      outputs:
+        artifacts: []
+        notes:
+        - 'Verified in this session:
+
+          - src/koru/autonomous_cycle.py = 2221 LOC (1 class, ~73 methods), unchanged
+          in size since ticket creation
+
+          - This session only touched ~26 lines in autonomous_cycle.py (require_plugin
+          guard) + env.py + tests; no module split happened
+
+          - Tests green: 154 passed across test_autonomous + test_ide_reload + test_ide_adapters
+          + test_autonomous_operator_unsupported_ide + test_autonomy_env + test_autonomy_environment
+
+          - Cycle 515 confirmed Cursor VSIX plugin works (composer.sendToAgent ack);
+          cycle 516 OS-injector regression fixed (keyboard fallback now opt-in)
+
+          - Acceptance criteria on the ticket are empty, so ''done'' definition is
+          ambiguous; refactor scope is not yet delivered'
       priority: high
       source:
         context: {}
@@ -15238,4 +15297,4 @@ sprint:
       sprint: current
       status: open
       sync: {}
-      updated_at: '2026-05-24T17:00:02.847297Z'
+      updated_at: '2026-05-24T18:01:07.169127+00:00'

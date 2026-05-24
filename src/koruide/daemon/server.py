@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Any
 
 from koruide.audit import AuditLog
+from koruide.daemon.handlers import _default_handoff
+from koruide.daemon.protocol import _Client, _peer_uid
 from koruide.injector import Injector
 from koruide.plugin_router import PluginRouter
 from koruide.protocol import (
@@ -22,15 +24,6 @@ from koruide.protocol import (
     error,
 )
 from koruide.socket import default_socket_path
-
-from koruide.daemon.protocol import (
-    _Client,
-    _peer_uid,
-)
-from koruide.daemon.handlers import (
-    _default_handoff,
-)
-
 
 # Type alias
 HandoffBuilder = Callable[[dict[str, Any]], str]
@@ -55,6 +48,7 @@ class AutopilotDaemon:
         log: Callable[[str], None] | None = None,
         handoff: HandoffBuilder | None = None,
         project: Path | None = None,
+        enable_project_handoff: bool = True,
         handoff_cooldown: float = 2.0,
         audit: AuditLog | None = None,
     ) -> None:
@@ -65,7 +59,7 @@ class AutopilotDaemon:
         self.audit = audit or AuditLog(enabled=False)
         if handoff is not None:
             self.handoff: HandoffBuilder | None = handoff
-        elif project is not None:
+        elif project is not None and enable_project_handoff:
             self.handoff = _default_handoff(project)
         else:
             self.handoff = None
@@ -265,16 +259,18 @@ class AutopilotDaemon:
             message=message,
         )
 
-    def _build_handler_table(self) -> dict[str, Callable[[AutopilotDaemon, _Client, Message], None]]:
+    def _build_handler_table(
+        self,
+    ) -> dict[str, Callable[[AutopilotDaemon, _Client, Message], None]]:
         from koruide.daemon.handlers import (
+            handle_ack,
+            handle_console_log,
             handle_drive,
             handle_hello,
-            handle_status,
-            handle_ack,
+            handle_ping,
             handle_plugin_event,
             handle_shutdown,
-            handle_ping,
-            handle_console_log,
+            handle_status,
         )
         return {
             "drive": handle_drive,

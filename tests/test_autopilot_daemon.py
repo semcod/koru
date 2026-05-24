@@ -127,6 +127,7 @@ class _DaemonHarness:
         handoff=None,
         handoff_cooldown: float = 0.0,
         project: Path | None = None,
+        enable_project_handoff: bool = True,
         logs: list[str] | None = None,
     ) -> None:
         self.sock_path = tmp_path / "autopilot.sock"
@@ -141,11 +142,12 @@ class _DaemonHarness:
             handoff=handoff,
             handoff_cooldown=handoff_cooldown,
             project=project,
+            enable_project_handoff=enable_project_handoff,
             **log_kw,
         )
         self._thread: threading.Thread | None = None
 
-    def __enter__(self) -> "_DaemonHarness":
+    def __enter__(self) -> _DaemonHarness:
         self.start()
         return self
 
@@ -177,6 +179,7 @@ def _daemon(
     handoff=None,
     handoff_cooldown: float = 0.0,
     project: Path | None = None,
+    enable_project_handoff: bool = True,
     patch_ides: bool = True,
 ) -> Iterator[_DaemonHarness]:
     if patch_ides:
@@ -187,6 +190,7 @@ def _daemon(
         handoff=handoff,
         handoff_cooldown=handoff_cooldown,
         project=project,
+        enable_project_handoff=enable_project_handoff,
     )
     harness.start()
     try:
@@ -1200,6 +1204,29 @@ def test_session_ended_no_handoff_when_disabled(
         assert msg.type == "ack"
         assert msg.id == "ev1"
         assert msg.data.get("event") == "session.ended"
+        _assert_no_more_data(plugin)
+        plugin.close()
+
+
+def test_session_ended_no_project_handoff_when_disabled(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with _daemon(
+        tmp_path,
+        monkeypatch,
+        project=tmp_path,
+        enable_project_handoff=False,
+    ) as h:
+        plugin, reader = _connect_plugin(h.sock_path, ide="cursor")
+        plugin.sendall(
+            Message(type="session.ended", id="ev1", data={"chat": "x"}).encode(),
+        )
+        msg = reader.read_message()
+        assert msg.type == "ack"
+        assert msg.id == "ev1"
+        assert msg.data.get("event") == "session.ended"
+        assert "handoff" not in msg.data
         _assert_no_more_data(plugin)
         plugin.close()
 

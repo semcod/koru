@@ -609,6 +609,7 @@ def test_effective_cycle_autopilot_skips_required_plugin_when_missing(
     monkeypatch.delenv("KORU_AUTOPILOT_ALLOW_KEYBOARD_FALLBACK", raising=False)
     monkeypatch.delenv("KORU_AUTOPILOT_PREFER_KEYBOARD", raising=False)
     monkeypatch.delenv("KORU_AUTOPILOT_VISIBLE_TYPING", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_KEYBOARD_IF_NO_PLUGIN", raising=False)
     monkeypatch.setattr(
         autonomous_mod,
         "_stdio_info",
@@ -1372,6 +1373,7 @@ def test_setup_autopilot_plugin_unsupported_skips_wait(tmp_path, monkeypatch) ->
         enable_autopilot=True,
         emit_events="human",
         autopilot_plugin_wait_seconds=5.0,
+        project=str(tmp_path),
     )
 
     monkeypatch.setattr(
@@ -1409,6 +1411,7 @@ def test_setup_autopilot_plugin_installed_but_not_loaded_hints_reload(
         enable_autopilot=True,
         emit_events="human",
         autopilot_plugin_wait_seconds=5.0,
+        project=str(tmp_path),
     )
     messages: list[str] = []
     wait_called = {"n": 0}
@@ -1434,6 +1437,13 @@ def test_setup_autopilot_plugin_installed_but_not_loaded_hints_reload(
         "koru.autonomous_operator._extension_active_in_latest_session",
         lambda _ide: False,
     )
+    from koru.ide_adapters.ide_reload import IdeReloadOutcome
+
+    monkeypatch.setattr(
+        "koru.ide_adapters.ide_reload.try_reload_vscode_family_ide",
+        lambda *_a, **_k: IdeReloadOutcome(attempted=False, ok=False),
+    )
+    monkeypatch.setenv("KORU_AUTOPILOT_KEYBOARD_IF_NO_PLUGIN", "0")
 
     connected = autonomous_mod._setup_autopilot_plugin(
         args,
@@ -1631,7 +1641,10 @@ def test_start_or_reuse_daemon_restarts_daemon_without_version(tmp_path, monkeyp
             return {"ok": True}
 
     class FakeDaemon:
-        def __init__(self, **_kwargs) -> None:
+        kwargs: dict[str, object] = {}
+
+        def __init__(self, **kwargs) -> None:
+            FakeDaemon.kwargs = dict(kwargs)
             self.started = False
 
         def start(self):
@@ -1670,6 +1683,7 @@ def test_start_or_reuse_daemon_restarts_daemon_without_version(tmp_path, monkeyp
     assert daemon.started is True
     assert isinstance(thread, FakeThread)
     assert thread.started is True
+    assert FakeDaemon.kwargs["enable_project_handoff"] is False
     assert FakeClient.shutdowns == 1
     assert any("restarting stale autopilot daemon" in line for line in messages)
 
@@ -2980,6 +2994,7 @@ def test_run_cycle_skips_drive_when_required_plugin_missing(
             waiting=["PLF-1"],
         ),
     )
+    monkeypatch.delenv("KORU_AUTOPILOT_KEYBOARD_IF_NO_PLUGIN", raising=False)
 
     _scan_result, _queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
         cycle=1,

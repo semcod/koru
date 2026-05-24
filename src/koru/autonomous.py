@@ -587,6 +587,7 @@ def _setup_autopilot_plugin(
         autopilot_ide,
         socket_path,
         client,
+        project=Path(getattr(args, "project", ".")).expanduser().resolve(),
         install_plugin_for_ide=install_plugin_for_ide,
         format_plugin_install_result=format_plugin_install_result,
         allow_keyboard_fallback=_allow_keyboard_autopilot_fallback,

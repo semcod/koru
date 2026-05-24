@@ -193,7 +193,16 @@ def _try_os_injector_drive(
             _log=daemon.log,
         )
         if result:
-            daemon.log(f"try_os_injector_drive: SUCCESS backend={result.get('backend')}, chat_coords=({result.get('chat_x')}, {result.get('chat_y')}), input_method={result.get('input_method')}")
+            daemon.log(
+                f"try_os_injector_drive: SUCCESS backend={result.get('backend')}, "
+                f"chat_coords=({result.get('chat_x')}, {result.get('chat_y')}), "
+                f"input_method={result.get('input_method')}"
+            )
+        else:
+            daemon.log(
+                f"try_os_injector_drive: no profile for '{target_id}' — "
+                f"uruchom: koru autopilot calibrate --ide {target_id}"
+            )
         return result
     except oi.OsInjectorError as exc:
         daemon.log(f"try_os_injector_drive: FAILED: {exc}")

@@ -8,8 +8,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.net.StandardProtocolFamily
 import java.nio.channels.Channels
@@ -45,6 +47,7 @@ class KoruAutopilotService : Disposable {
                 ch.connect(socketAddress as java.net.SocketAddress)
                 channel = ch
                 sendHello(ch)
+                startReadLoop(ch)
             }.onFailure { err ->
                 log.warn("Failed to connect to koru autopilot daemon at $socketPath", err)
             }
@@ -73,6 +76,52 @@ class KoruAutopilotService : Disposable {
         }
     }
 
+    private fun startReadLoop(ch: SocketChannel) {
+        scope.launch {
+            runCatching {
+                val reader = BufferedReader(
+                    Channels.newReader(ch, StandardCharsets.UTF_8.name()),
+                )
+                while (isActive) {
+                    val line = withContext(Dispatchers.IO) { reader.readLine() } ?: break
+                    handleIncoming(line.trim())
+                }
+            }.onFailure { err ->
+                if (isActive) log.warn("koru autopilot read loop ended", err)
+            }
+        }
+    }
+
+    private fun handleIncoming(line: String) {
+        if (line.isEmpty()) return
+        val type = extractJsonString(line, "type") ?: return
+        when (type) {
+            "chat.send" -> {
+                val text = extractJsonString(line, "text") ?: return
+                val submit = extractJsonBool(line, "submit") ?: true
+                val msgId = extractJsonString(line, "id")
+                log.info("koru chat.send: ${text.length} chars, submit=$submit")
+                val ok = ChatInjector.sendToChat(text, submit = submit)
+                val status = if (ok) "ok" else "error"
+                val replyId = msgId ?: "jetbrains-ack-${UUID.randomUUID()}"
+                scope.launch { channel?.let { writeJsonLine(it, mapOf("type" to "ack", "id" to replyId, "status" to status)) } }
+            }
+            else -> log.debug("koru autopilot: unhandled message type=$type")
+        }
+    }
+
+    private fun extractJsonString(json: String, key: String): String? {
+        val pattern = Regex("\"${Regex.escape(key)}\"\\s*:\\s*\"((?:[^\\\\\"]|\\\\.)*)\"")
+        return pattern.find(json)?.groupValues?.get(1)
+            ?.replace("\\\\", "\\").replace("\\\"", "\"")
+            ?.replace("\\n", "\n").replace("\\r", "\r").replace("\\t", "\t")
+    }
+
+    private fun extractJsonBool(json: String, key: String): Boolean? {
+        val pattern = Regex("\"${Regex.escape(key)}\"\\s*:\\s*(true|false)")
+        return pattern.find(json)?.groupValues?.get(1)?.let { it == "true" }
+    }
+
     private suspend fun sendHello(ch: SocketChannel) {
         val appInfo = ApplicationInfo.getInstance()
         writeJsonLine(
@@ -83,6 +132,7 @@ class KoruAutopilotService : Disposable {
                 "ide" to "jetbrains",
                 "version" to appInfo.fullVersion,
                 "pid" to ProcessHandle.current().pid(),
+                "capabilities" to listOf("chat.paste", "chat.submit").joinToString(",", "[", "]") { "\"$it\"" },
             ),
         )
     }

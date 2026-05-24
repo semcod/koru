@@ -6,6 +6,7 @@ public entrypoint is :func:`autopilot_main` which mirrors the
 """
 
 import argparse
+import contextlib
 import json
 import os
 import sys
@@ -16,6 +17,7 @@ from typing import Any
 from koru.autopilot import (
     calibrate_cli,
     daemon_cli,
+    default_socket_path,
     doctor_cli,
     install_plugin_cli,
     systemd_cli,
@@ -25,11 +27,11 @@ from koru.autopilot.client import AutopilotClient
 from koru.autopilot.ide import (
     detect_focused_ide_id,
     detect_running_ides,
+    detect_terminal_host_ide_id,
     normalize_ide_id,
     resolve_drive_target,
 )
 from koru.autopilot.injector import Injector, InjectorError
-from koru.autopilot.utils.client_helpers import call_daemon_method
 
 
 def _action_calibrate(args: argparse.Namespace) -> int:
@@ -255,6 +257,24 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     status = sub.add_parser("status", help="Print daemon health + connected plugins.")
+    status.add_argument(
+        "--ide",
+        default="auto",
+        choices=(
+            "auto",
+            "antigravity",
+            "windsurf",
+            "vscode",
+            "vscodium",
+            "cursor",
+            "jetbrains",
+            "zed",
+        ),
+        help=(
+            "IDE lane whose daemon socket should be inspected (default: auto from env, "
+            "terminal host, focused IDE, or the default socket)."
+        ),
+    )
     status.add_argument(
         "--json",
         action="store_true",
@@ -545,8 +565,64 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+@contextlib.contextmanager
+def _temporary_autopilot_instance(instance: str):
+    previous = os.environ.get("KORU_AUTOPILOT_INSTANCE")
+    os.environ["KORU_AUTOPILOT_INSTANCE"] = instance
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("KORU_AUTOPILOT_INSTANCE", None)
+        else:
+            os.environ["KORU_AUTOPILOT_INSTANCE"] = previous
+
+
+def _resolve_cli_ide_lane(args: argparse.Namespace) -> str | None:
+    requested = normalize_ide_id(getattr(args, "ide", None))
+    if requested and requested != "auto":
+        return requested
+    instance = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_INSTANCE"))
+    if instance and instance != "auto":
+        return instance
+    env_ide = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_IDE"))
+    if env_ide and env_ide != "auto":
+        return env_ide
+    terminal = normalize_ide_id(detect_terminal_host_ide_id())
+    if terminal:
+        return terminal
+    focused = normalize_ide_id(detect_focused_ide_id())
+    if focused:
+        return focused
+    return None
+
+
+def _resolve_client_socket(args: argparse.Namespace) -> Path | None:
+    if getattr(args, "socket", None) is not None:
+        return args.socket
+    if (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip():
+        return None
+    if (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip():
+        return None
+    lane = _resolve_cli_ide_lane(args)
+    if not lane:
+        return None
+    with _temporary_autopilot_instance(lane):
+        return default_socket_path()
+
+
 def _client(args: argparse.Namespace) -> AutopilotClient:
-    return AutopilotClient(socket_path=args.socket)
+    return AutopilotClient(socket_path=_resolve_client_socket(args))
+
+
+def _daemon_start_hint(args: argparse.Namespace) -> str:
+    lane = _resolve_cli_ide_lane(args)
+    if lane:
+        return (
+            f"Start it with `KORU_AUTOPILOT_INSTANCE={lane} koru autopilot daemon`, "
+            "or run `koru auto` for the selected lane."
+        )
+    return "Start it with `koru autopilot daemon`, or pass --direct to inject from this terminal."
 
 
 # ----- action handlers ------------------------------------------------------
@@ -699,8 +775,7 @@ def _action_drive(args: argparse.Namespace) -> int:
     if not client.is_running():
         print(
             "koru autopilot drive: daemon not running. "
-            "Start it with `koru autopilot daemon`, or pass --direct "
-            "to inject from this terminal.",
+            f"{_daemon_start_hint(args)}",
             file=sys.stderr,
         )
         return 2
@@ -743,7 +818,8 @@ def _action_drive(args: argparse.Namespace) -> int:
 def _action_status(args: argparse.Namespace) -> int:
     client = _client(args)
     if not client.is_running():
-        print("koru autopilot: daemon is NOT running")
+        print(f"koru autopilot: daemon is NOT running on {client.socket_path}")
+        print(f"hint: {_daemon_start_hint(args)}")
         return 1
     try:
         info = client.status()

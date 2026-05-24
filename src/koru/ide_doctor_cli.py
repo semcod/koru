@@ -83,6 +83,19 @@ def build_parser() -> argparse.ArgumentParser:
         default="text",
     )
     doctor.add_argument("--explain", action="store_true", help="Always print hypothesis details.")
+    reload = sub.add_parser(
+        "reload",
+        help="Reload IDE window so a newly installed VSIX extension can activate.",
+    )
+    reload.add_argument("--ide", default="cursor", help="IDE lane (cursor, vscode, vscodium, …).")
+    reload.add_argument("--project", type=Path, default=Path.cwd())
+    reload.add_argument("--dry-run", action="store_true")
+    reload.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+    )
     return parser
 
 
@@ -139,6 +152,34 @@ def action_ide_doctor(args: argparse.Namespace) -> int:
     return 0 if status.ready else 1
 
 
+def action_ide_reload(args: argparse.Namespace) -> int:
+    from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
+
+    ide = _resolve_ide(args.ide) or args.ide
+    outcome = try_reload_vscode_family_ide(
+        ide,
+        project=args.project.expanduser().resolve(),
+        dry_run=args.dry_run,
+    )
+    payload = {
+        "ide": ide,
+        "attempted": outcome.attempted,
+        "ok": outcome.ok,
+        "method": outcome.method,
+        "detail": outcome.detail,
+    }
+    if args.output_format == "json":
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        if outcome.ok:
+            print(f"koru ide reload: ok ({outcome.method})")
+        elif outcome.attempted:
+            print(f"koru ide reload: failed ({outcome.method}): {outcome.detail}", file=sys.stderr)
+        else:
+            print(f"koru ide reload: skipped: {outcome.detail}", file=sys.stderr)
+    return 0 if outcome.ok else 1
+
+
 def action_ide_discover(args: argparse.Namespace) -> int:
     from koru.autonomy.code2llm_discovery import (
         DEFAULT_EXCLUDES,
@@ -183,5 +224,7 @@ def ide_main(argv: list[str] | None = None) -> int:
         return action_ide_doctor(args)
     if args.action == "discover":
         return action_ide_discover(args)
+    if args.action == "reload":
+        return action_ide_reload(args)
     parser.error(f"unknown action: {args.action}")
     return 2

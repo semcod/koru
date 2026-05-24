@@ -472,12 +472,18 @@ def try_drive_with_profile(
 
     profile = try_load_profile(tool_id, project=project)
     if profile is None:
-        if os_injector_env_forced():
-            if _log:
-                _log(f"try_drive_with_profile: no profile for {tool_id} (forced mode)")
-        else:
-            if _log:
-                _log(f"try_drive_with_profile: no profile for {tool_id}")
+        forced = os_injector_env_forced()
+        suffix = " (forced mode)" if forced else ""
+        if _log:
+            _log(f"try_drive_with_profile: no profile for {tool_id}{suffix}")
+        try:
+            from koru.activity_log import activity_warn
+            activity_warn(
+                f"OS injector: brak kalibracji dla '{tool_id}' — chat drive niedostępny{suffix}",
+                hint=f"koru autopilot calibrate --ide {tool_id}",
+            )
+        except Exception:
+            pass
         return None
 
     if _log:

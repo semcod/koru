@@ -70,6 +70,7 @@ def setup_autopilot_plugin(
     socket_path: Path | None,
     client: Any | None,
     *,
+    project: Path | None = None,
     install_plugin_for_ide: Any,
     format_plugin_install_result: Any,
     allow_keyboard_fallback: Any,
@@ -108,6 +109,7 @@ def setup_autopilot_plugin(
             )
     elif client is not None and not allow_keyboard_fallback():
         skip_plugin_wait = False
+        reload_after_install = None
         if plugin_install_status in {"installed", "already_installed"}:
             _ensure_trusted_publisher_for_plugin(
                 autopilot_ide,
@@ -117,23 +119,67 @@ def setup_autopilot_plugin(
             active = _extension_active_in_latest_session(autopilot_ide)
             if active is False:
                 from koru.ide_adapters import shared
+                from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
 
-                for line in shared.extension_reload_required_lines(
+                reload_after_install = try_reload_vscode_family_ide(
                     autopilot_ide,
-                    color=args.emit_events == "human",
-                ):
-                    stdio_info(line, fmt=args.emit_events)
-                stdio_info(
-                    "koru autonomous: pomijam oczekiwanie na plugin "
-                    "(wtyczka nie załadowana w extension host — Reload Window wymagany)",
-                    fmt=args.emit_events,
+                    project=project,
                 )
-                skip_plugin_wait = True
+                reload = reload_after_install
+                if reload.attempted:
+                    if reload.ok:
+                        stdio_info(
+                            "koru autonomous: automatyczny Reload Window "
+                            f"({reload.method}) — czekam na plugin…",
+                            fmt=args.emit_events,
+                        )
+                    else:
+                        stdio_info(
+                            "koru autonomous: automatyczny reload IDE nie powiódł się "
+                            f"({reload.method or '-'}: {reload.detail or 'unknown'})",
+                            fmt=args.emit_events,
+                        )
+                        for line in shared.extension_reload_required_lines(
+                            autopilot_ide,
+                            color=args.emit_events == "human",
+                        ):
+                            stdio_info(line, fmt=args.emit_events)
+                else:
+                    for line in shared.extension_reload_required_lines(
+                        autopilot_ide,
+                        color=args.emit_events == "human",
+                    ):
+                        stdio_info(line, fmt=args.emit_events)
+
+                if not reload.ok:
+                    from koru.autonomy.env import keyboard_fallback_when_plugin_missing
+
+                    if keyboard_fallback_when_plugin_missing(autopilot_ide):
+                        stdio_info(
+                            "koru autonomous: plugin nieaktywny — włączam fallback "
+                            "klawiatury/OS-injectora (Wayland); ustaw profil: "
+                            "task koru:ide-os:calibrate IDE=cursor",
+                            fmt=args.emit_events,
+                        )
+                        skip_plugin_wait = True
+                    else:
+                        stdio_info(
+                            "koru autonomous: pomijam oczekiwanie na plugin "
+                            "(wtyczka nie załadowana w extension host)",
+                            fmt=args.emit_events,
+                        )
+                        skip_plugin_wait = True
+                # When reload succeeded, fall through to wait_for_plugin below.
 
         if skip_plugin_wait:
             plugin_connected = False
         else:
             wait_seconds = max(0.0, args.autopilot_plugin_wait_seconds)
+            if (
+                reload_after_install is not None
+                and reload_after_install.ok
+            ):
+                wait_seconds = max(wait_seconds, 30.0)
             plugin_ready = wait_for_plugin(
                 client,
                 autopilot_ide,

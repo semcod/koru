@@ -119,3 +119,71 @@ def test_activity_module_not_found_warning_includes_install_hint(
     assert "nfo activity log disabled" in err
     assert "pip install nfo" in err
     assert 'koru[obs]' in err
+
+
+def test_activity_warn_emits_warn_tag(capsys: pytest.CaptureFixture[str]) -> None:
+    al.activity_warn("coś poszło nie tak", fmt="human")
+    out = capsys.readouterr().out
+    assert "koru ▸" in out
+    assert "WARN" in out
+    assert "coś poszło nie tak" in out
+
+
+def test_activity_warn_includes_hint(capsys: pytest.CaptureFixture[str]) -> None:
+    al.activity_warn("brak profilu", hint="koru autopilot calibrate --ide jetbrains", fmt="human")
+    out = capsys.readouterr().out
+    assert "brak profilu" in out
+    assert "koru autopilot calibrate --ide jetbrains" in out
+    assert "→" in out
+
+
+def test_activity_warn_disabled(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("KORU_ACTIVITY_LOG", "0")
+    al.activity_warn("hidden", fmt="human")
+    assert capsys.readouterr().out == ""
+
+
+def test_activity_warn_no_color_on_non_tty(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(al, "_supports_color", lambda _stream: False)
+    al.activity_warn("plain warning", fmt="human")
+    out = capsys.readouterr().out
+    assert "\033[" not in out
+    assert "WARN" in out
+    assert "plain warning" in out
+
+
+def test_os_injector_no_profile_emits_activity_warn(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """try_drive_with_profile must call activity_warn when no calibration profile exists."""
+    from koruide import os_injector as oi
+
+    monkeypatch.setattr(oi, "try_load_profile", lambda *_a, **_kw: None)
+    warned: list[tuple] = []
+    monkeypatch.setattr(
+        oi,
+        "activity_warn" if hasattr(oi, "activity_warn") else "__builtins__",
+        None,
+        raising=False,
+    )
+    import koru.activity_log as _al
+    monkeypatch.setattr(_al, "activity_warn", lambda msg, hint=None, **_kw: warned.append((msg, hint)))
+
+    result = oi.try_drive_with_profile(
+        tool_id="jetbrains",
+        text="hello",
+        submit=True,
+        project=tmp_path,
+        _log=None,
+    )
+    assert result is None
+    assert len(warned) == 1
+    msg, hint = warned[0]
+    assert "jetbrains" in msg
+    assert hint is not None and "calibrate" in hint and "jetbrains" in hint

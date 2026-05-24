@@ -11,7 +11,6 @@ import contextlib
 import os
 import signal
 import subprocess
-import sys
 import threading
 import time
 from collections.abc import Callable, Mapping
@@ -19,9 +18,9 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
+from koru import autonomous_plugin
 from koru.ide_client import IDEControlClient, build_ide_client
 from koruide.daemon import AutopilotDaemon
-from koru import autonomous_plugin
 
 
 def _stdio_info(msg: str, *, fmt: str) -> None:
@@ -184,6 +183,7 @@ def start_or_reuse_daemon(
     daemon = daemon_factory(
         socket_path=socket_path,
         project=project,
+        enable_project_handoff=False,
         log=lambda m: stdio_info(m, fmt=stdio_format),
     )
     daemon.start()

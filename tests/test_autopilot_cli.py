@@ -32,6 +32,20 @@ def test_drive_missing_text_errors(capsys: pytest.CaptureFixture[str]) -> None:
     assert "missing text" in capsys.readouterr().err
 
 
+def test_client_uses_explicit_ide_socket_when_env_is_unset(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
+
+    client = cli_command._client(SimpleNamespace(socket=None, ide="cursor"))
+
+    assert client.socket_path == tmp_path / "koru-autopilot-cursor.sock"
+    assert os.environ.get("KORU_AUTOPILOT_INSTANCE") is None
+
+
 def test_drive_prompt_flag(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],

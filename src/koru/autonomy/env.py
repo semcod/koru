@@ -322,11 +322,31 @@ def prefer_keyboard_autopilot() -> bool:
     return False
 
 
+def keyboard_fallback_when_plugin_missing(autopilot_ide: str) -> bool:
+    """Allow OS keyboard/injector drive when the VSIX plugin is not connected.
+
+    Opt-in: ``KORU_AUTOPILOT_KEYBOARD_IF_NO_PLUGIN=1`` enables a Wayland-style
+    blind paste via wtype/ydotool when the plugin does not connect. Default is
+    OFF — once a real VSIX plugin is connected, blind OS-injector shots only
+    cause chat clobbering and miswritten input (e.g. clicking the wrong
+    monitor coordinates). The strict plugin path is preferred.
+    """
+    raw = os.environ.get("KORU_AUTOPILOT_KEYBOARD_IF_NO_PLUGIN", "0").strip().lower()
+    if raw in {"1", "true", "yes", "on"}:
+        ide = normalize_ide_id(autopilot_ide) or ""
+        return supports_vscode_extension_plugin(ide)
+    return False
+
+
 def plugin_required_for_ide(autopilot_ide: str) -> bool:
     ide = normalize_ide_id(autopilot_ide) or ""
     if ide != "auto" and not supports_vscode_extension_plugin(ide):
         return False
-    return not allow_keyboard_autopilot_fallback() and not prefer_keyboard_autopilot()
+    if allow_keyboard_autopilot_fallback() or prefer_keyboard_autopilot():
+        return False
+    if keyboard_fallback_when_plugin_missing(autopilot_ide):
+        return False
+    return True
 
 
 def allow_cross_ide_autopilot() -> bool:

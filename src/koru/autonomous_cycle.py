@@ -94,9 +94,23 @@ def _status_in_skip_list(status: str, skip_statuses: str) -> bool:
 
 
 from koru.autonomy.env import (
+    allow_keyboard_autopilot_fallback as _allow_keyboard_autopilot_fallback,
     autopilot_terminal_conflict_reason as _autopilot_terminal_conflict_reason,
     plugin_required_for_ide as _plugin_required_for_ide,
+    prefer_keyboard_autopilot as _prefer_keyboard_autopilot,
 )
+from koruide.ide import normalize_ide_id as _normalize_ide_id
+from koruide.ide import supports_vscode_extension_plugin as _supports_vscode_extension_plugin
+
+
+def _ide_supports_vscode_plugin(autopilot_ide: str) -> bool:
+    ide = _normalize_ide_id(autopilot_ide) or ""
+    return _supports_vscode_extension_plugin(ide)
+
+
+def _operator_forces_keyboard() -> bool:
+    """User explicitly demanded keyboard/OS-injector path; do not override."""
+    return _allow_keyboard_autopilot_fallback() or _prefer_keyboard_autopilot()
 
 
 def _client_has_usable_plugin(client: Any, autopilot_ide: str) -> tuple[bool, str]:
@@ -1738,6 +1752,18 @@ def _execute_autopilot_drive(
     # whether to apply the escalation-cooldown multiplier on the next cycle.
     state.last_driven_kind = decision.kind
     require_plugin = _plugin_required_for_ide(autopilot_ide)
+    # When the plugin is actually connected for a VS Code-family IDE, demand a
+    # plugin ack even if the keyboard/OS-injector fallback policy is otherwise
+    # active. Otherwise a busy IDE chat causes the daemon to switch to an
+    # OS-injector blind shot (often into the wrong window on Wayland).
+    if (
+        not require_plugin
+        and _ide_supports_vscode_plugin(autopilot_ide)
+        and not _operator_forces_keyboard()
+    ):
+        plugin_live, _ = _client_has_usable_plugin(client, autopilot_ide)
+        if plugin_live:
+            require_plugin = True
     attempts = 5
     for attempt in range(attempts):
         reply, ok = _drive_autopilot_once(

@@ -112,6 +112,14 @@ def _emit_nfo_activity(
             )
 
 
+_ANSI_YELLOW = "\033[33m"
+_ANSI_RESET = "\033[0m"
+
+
+def _supports_color(stream: TextIO) -> bool:
+    return hasattr(stream, "isatty") and stream.isatty()
+
+
 def _out_stream(fmt: str) -> TextIO:
     return sys.stderr if fmt == "jsonl" else sys.stdout
 
@@ -137,6 +145,32 @@ def activity(
     stream = _out_stream(fmt)
     print(line, file=stream, flush=True)
     _emit_nfo_activity(category, message, fmt=fmt, preview=preview, data=data)
+
+
+def activity_warn(
+    message: str,
+    *,
+    hint: str | None = None,
+    fmt: str | None = None,
+    data: dict[str, Any] | None = None,
+) -> None:
+    """Emit a yellow-highlighted WARN line to stdout — for actionable user warnings."""
+    if not activity_enabled():
+        return
+    fmt = fmt or default_stdio_format_from_env()
+    from datetime import UTC, datetime
+
+    ts = datetime.now(UTC).strftime("%H:%M:%S")
+    stream = _out_stream(fmt)
+    color = _supports_color(stream) and fmt != "jsonl"
+    warn_tag = f"{_ANSI_YELLOW}WARN{_ANSI_RESET}" if color else "WARN"
+    msg_colored = f"{_ANSI_YELLOW}{message}{_ANSI_RESET}" if color else message
+    line = f"[{ts}] koru ▸ {warn_tag}: {msg_colored}"
+    if hint:
+        hint_colored = f"{_ANSI_YELLOW}  → {hint}{_ANSI_RESET}" if color else f"  → {hint}"
+        line = f"{line}\n{hint_colored}"
+    print(line, file=stream, flush=True)
+    _emit_nfo_activity("WARN", message, fmt=fmt, preview=hint, data=data)
 
 
 def activity_info(
@@ -167,6 +201,7 @@ __all__ = [
     "activity",
     "activity_enabled",
     "activity_info",
+    "activity_warn",
     "configure_nfo_activity_log",
     "nfo_activity_log_path",
     "preview_text",
