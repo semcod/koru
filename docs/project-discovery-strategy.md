@@ -28,13 +28,15 @@ Automatyczne discovery po pustej kolejce jest aktywne, gdy:
 
 - `koru auto` albo `koru autonomous up` uruchamia petle autonomiczna;
 - kolejka `planfile` po `koru --queue --loop` zwraca `idle`;
-- wlaczony jest skan po pustej kolejce: `--scan-after-idle-queue`;
+- wlaczony jest skan po pustej kolejce: `koru auto` robi to domyslnie,
+  `koru autonomous up` potrzebuje `--scan-after-idle-queue`;
 - wlaczone sa artefakty semcod: `--semcod-artifacts`;
 - `code2llm` jest dostepne w `PATH`;
 - rate-limit `--scan-after-idle-min-interval` pozwala na kolejny skan.
 
-W trybie adaptacyjnym `KORU_AUTO_PIPELINE=1` moze wlaczyc te elementy dla
-etapow jakosci i architektury. Recznie mozna uruchomic:
+W `koru auto` mozna to wylaczyc przez `--no-scan-after-idle-queue`. W trybie
+adaptacyjnym `KORU_AUTO_PIPELINE=1` moze wlaczyc te elementy dla etapow jakosci
+i architektury. Recznie mozna uruchomic:
 
 ```bash
 koru autonomous up \

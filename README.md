@@ -7,11 +7,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.260-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$9.87-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-105.2h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.261-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$9.97-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-105.6h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $9.8696 (334 commits)
-- 👤 **Human dev:** ~$10519 (105.2h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $9.9673 (335 commits)
+- 👤 **Human dev:** ~$10565 (105.6h @ $100/h, 30min dedup)
 
 Generated on 2026-05-24 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -1024,8 +1024,11 @@ Agents should consume the resulting work through `planfile ticket next` or
 When `koru auto` or `koru autonomous up` drains the queue and reports `idle`,
 Koru can move from local ticket execution back to whole-project discovery. The
 strategy is active when scan-after-idle is enabled and semcod artifacts are
-included. In adaptive runs, `KORU_AUTO_PIPELINE=1` enables those knobs for the
-quality/architecture stages; otherwise pass them explicitly:
+included. `koru auto` enables scan-after-idle by default so a cycle that moves
+from `waiting_input` to `idle` does not wait for the next outer tick before
+running intake discovery. Use `--no-scan-after-idle-queue` to disable that
+behavior. For `koru autonomous up`, pass the knobs explicitly, or let adaptive
+runs (`KORU_AUTO_PIPELINE=1`) enable them for the quality/architecture stages:
 
 ```bash
 koru autonomous up \

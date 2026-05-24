@@ -442,11 +442,16 @@ def _last_successful_drive_ack_age(
     state: "AutoloopState",
     *,
     waiting_ticket: str,
+    ide: str | None,
 ) -> float | None:
     try:
         last_sent_ts = float(getattr(state, "last_message_sent_ts", 0.0) or 0.0)
     except (TypeError, ValueError):
         last_sent_ts = 0.0
+    raw_last_sent_ide = getattr(state, "last_message_sent_ide", "")
+    last_sent_ide = raw_last_sent_ide if isinstance(raw_last_sent_ide, str) else ""
+    if ide and last_sent_ide and last_sent_ide != ide:
+        return None
     last_driven_ticket = str(getattr(state, "last_driven_ticket_id", "") or "")
     if waiting_ticket == "-" or last_driven_ticket != waiting_ticket or last_sent_ts <= 0:
         return None
@@ -654,7 +659,11 @@ def _skip_due_to_recent_chat_activity(
 
     # Fallback dedupe when plugin chat events are delayed/missing: rely on
     # the last successful drive for this exact waiting ticket.
-    drive_ack_age = _last_successful_drive_ack_age(state, waiting_ticket=waiting_ticket)
+    drive_ack_age = _last_successful_drive_ack_age(
+        state,
+        waiting_ticket=waiting_ticket,
+        ide=ide,
+    )
     if drive_ack_age is not None and drive_ack_age <= cooldown:
         age = f"{drive_ack_age:.0f}s"
         cycle_telemetry["autopilot_skipped_chat_activity"] = True

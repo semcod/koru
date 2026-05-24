@@ -35,6 +35,16 @@ def test_plugin_for_prefers_newest_matching_client() -> None:
     assert picked is second
 
 
+def test_plugin_for_matches_canonical_aliases() -> None:
+    vscode = _Client(1, ide="vscode")
+    cursor = _Client(2, ide="Cursor")
+    clients = {1: vscode, 2: cursor}
+    router = PluginRouter(clients, drop_client=lambda _c: None)
+
+    assert router.plugin_for("code") is vscode
+    assert router.plugin_for("cursor") is cursor
+
+
 def test_drop_stale_plugins_removes_older_same_ide() -> None:
     current = _Client(3, ide="vscode")
     stale_a = _Client(1, ide="vscode")
@@ -53,6 +63,25 @@ def test_drop_stale_plugins_removes_older_same_ide() -> None:
     assert stale_a.dropped is True
     assert stale_b.dropped is True
     assert 1 not in clients and 2 not in clients
+    assert 3 in clients and 4 in clients
+
+
+def test_drop_stale_plugins_matches_canonical_aliases() -> None:
+    current = _Client(3, ide="vscode")
+    stale = _Client(1, ide="code")
+    other = _Client(4, ide="cursor")
+    clients = {1: stale, 3: current, 4: other}
+
+    def _drop(client: _Client) -> None:
+        client.dropped = True
+        clients.pop(client.fd, None)
+
+    router = PluginRouter(clients, drop_client=_drop)
+    dropped = router.drop_stale_plugins(current, "vscode")
+
+    assert dropped == 1
+    assert stale.dropped is True
+    assert 1 not in clients
     assert 3 in clients and 4 in clients
 
 

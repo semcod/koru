@@ -71,7 +71,8 @@ if [ "$changed_only" = true ]; then
   fi
 fi
 
-workers="${KORU_PYTEST_WORKERS:-auto}"
+workers="${KORU_PYTEST_WORKERS:-${PYTEST_WORKERS:-${TEST_JOBS:-auto}}}"
+dist="${KORU_PYTEST_DIST:-${PYTEST_DIST:-loadfile}}"
 case "$workers" in
   0|1|false|False|FALSE|off|Off|OFF|no|No|NO)
     use_xdist=false
@@ -84,7 +85,7 @@ if [ "$use_xdist" = true ]; then
 fi
 
 if [ "$use_xdist" = true ] && grep -q -- "--numprocesses" <<<"$pytest_help"; then
-  pytest_args=(-n "$workers" --dist loadfile "${pytest_args[@]}")
+  pytest_args=(-n "$workers" --dist "$dist" "${pytest_args[@]}")
 elif [ "$use_xdist" = true ]; then
   echo "pytest-xdist is not installed; running tests serially. Install dev extras with: pip install -e '.[dev]'" >&2
 fi

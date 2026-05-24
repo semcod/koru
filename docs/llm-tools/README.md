@@ -160,9 +160,11 @@ DRY_RUN=1 task quality:semcod:planfile
 Gdy `koru auto` / `koru autonomous up` kończy cykl z pustą kolejką
 (`last_status=idle`), może przejść z realizacji lokalnych ticketów do szerokiego
 odkrywania pracy w całym projekcie. Warunkiem jest aktywne skanowanie po idle i
-artefakty semcod: `--scan-after-idle-queue` oraz `--semcod-artifacts`. W trybie
-adaptacyjnym `KORU_AUTO_PIPELINE=1` włącza te ustawienia dla etapów quality i
-architecture; bez tego można uruchomić je jawnie:
+artefakty semcod. `koru auto` włącza `--scan-after-idle-queue` domyślnie, żeby
+cykl przechodzący z `waiting_input` do `idle` od razu uruchamiał intake
+discovery; można to wyłączyć przez `--no-scan-after-idle-queue`. Dla `koru
+autonomous up` włącz te ustawienia jawnie albo użyj trybu adaptacyjnego
+`KORU_AUTO_PIPELINE=1`, który robi to dla etapów quality i architecture:
 
 ```bash
 koru autonomous up \

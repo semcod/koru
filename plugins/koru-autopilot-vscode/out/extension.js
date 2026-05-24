@@ -850,6 +850,7 @@ class AutopilotBridge {
             debugLog("HOST_PASTE_NO_CLIPBOARD_TOOL");
             return { handled: false, result: { ok: false, reason: "no host clipboard tool" } };
         }
+        await this.writeClipboardVerified(text);
         const paste = await this.runHostKeyCandidates("HOST_PASTE_KEY", [
             ["wtype", ["-M", "ctrl", "-k", "v", "-m", "ctrl"]],
             ["xdotool", ["key", "ctrl+v"]],
@@ -878,7 +879,18 @@ class AutopilotBridge {
         }
         try {
             await this.clearChatInput();
-            await vscode.env.clipboard.writeText(text);
+            const ok = await this.writeClipboardVerified(text);
+            if (!ok) {
+                debugLog("CLIPBOARD_PASTE_ABORT_UNVERIFIED");
+                return {
+                    handled: true,
+                    result: {
+                        ok: false,
+                        reason: "clipboard writeText did not propagate (readback mismatch); "
+                            + "refusing paste to avoid clobbering chat input with stale clipboard content",
+                    },
+                };
+            }
             await vscode.commands.executeCommand("editor.action.clipboardPasteAction");
             await this.sleep(this.probePasteDelayMs());
             const after = this.editorSnapshot();
@@ -1024,6 +1036,45 @@ class AutopilotBridge {
                 /* ignore */
             }
         }
+    }
+    /**
+     * Write `text` to the OS clipboard and verify the write took effect.
+     *
+     * On Linux/Wayland (and some Cursor builds where the chat input is a
+     * webview-rooted contenteditable that reads the OS clipboard natively
+     * via the browser APIs), `vscode.env.clipboard.writeText` returns
+     * before the underlying `wl-copy` / selection-manager pipeline has
+     * propagated. If we fire `editor.action.clipboardPasteAction`
+     * immediately, the webview can paste the *previous* clipboard content
+     * (e.g. the user's last manual copy, freshly restored by the
+     * input-busy probe). Read back the clipboard with a short retry loop
+     * to guarantee the prompt text is actually visible before paste.
+     */
+    async writeClipboardVerified(text) {
+        const maxTries = 6;
+        for (let i = 0; i < maxTries; i++) {
+            try {
+                await vscode.env.clipboard.writeText(text);
+            }
+            catch (err) {
+                debugLog("CLIPBOARD_WRITE_ERROR", { err: String(err) });
+            }
+            await this.sleep(i === 0 ? 20 : 40);
+            try {
+                const observed = await vscode.env.clipboard.readText();
+                if (observed === text) {
+                    if (i > 0) {
+                        debugLog("CLIPBOARD_WRITE_VERIFIED_RETRY", { attempts: i + 1 });
+                    }
+                    return true;
+                }
+            }
+            catch (err) {
+                debugLog("CLIPBOARD_READBACK_ERROR", { err: String(err) });
+            }
+        }
+        debugLog("CLIPBOARD_WRITE_UNVERIFIED", { length: text.length });
+        return false;
     }
     /**
      * Best-effort detection: is the chat input already holding un-submitted text?

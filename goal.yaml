@@ -222,7 +222,12 @@ git:
     format: '{prefix}{version}'
 strategies:
   python:
-    test: scripts/koru-pytest.sh --quick
+    test: make test-python-parallel
+    parallel_test_command: make test-parallel
+    test_jobs: auto
+    pytest_workers: auto
+    pytest_distribution: loadfile
+    timeout_test: 180
     build: python -m build
     publish: twine upload dist/koru-{version}*
     publish_enabled: true

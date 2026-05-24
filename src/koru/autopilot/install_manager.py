@@ -27,6 +27,18 @@ from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 from koruide.socket import default_socket_path
 
 
+_ANSI_YELLOW = "\033[33m"
+_ANSI_RESET = "\033[0m"
+
+
+def _supports_color() -> bool:
+    return os.environ.get("NO_COLOR") is None and hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
+
+
+def _yellow(text: str, *, enabled: bool) -> str:
+    return f"{_ANSI_YELLOW}{text}{_ANSI_RESET}" if enabled else text
+
+
 @dataclass
 class ManagerIssue:
     code: str
@@ -612,6 +624,7 @@ def repair_installation(
 
 def format_install_manager_report(report: InstallManagerReport) -> str:
     data = report.to_dict()
+    color = _supports_color()
     lines = [
         "koru autopilot manage",
         f"  ok: {str(data['ok']).lower()}",
@@ -634,7 +647,7 @@ def format_install_manager_report(report: InstallManagerReport) -> str:
         for issue in report.issues:
             lines.append(f"    - [{issue.severity}] {issue.code}: {issue.message}")
             if issue.fix:
-                lines.append(f"      fix: {issue.fix}")
+                lines.append(_yellow(f"      fix: {issue.fix}", enabled=color))
     if report.actions:
         lines.append("  actions:")
         for action in report.actions:

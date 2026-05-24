@@ -1,4 +1,5 @@
 flowchart TD
+%% generated in 0.15s
 
     %% Entry points (blue)
     classDef entry fill:#4dabf7,stroke:#1971c2,color:#fff
@@ -23,26 +24,12 @@ flowchart TD
         src__koruobserve__cli___missing_observe_packages["_missing_observe_packages"]
         src__koruobserve__cli___require_observe_runtime["_require_observe_runtime"]
         src__koruobserve__cli___pip_install["_pip_install"]
-        ...["+6143 more"]
+        ...["+1284 more"]
     end
 
     subgraph Exporters
         src__koru__agent_cli_helpers__try_agent_env_exports["try_agent_env_exports"]
         src__koru__cli___has_legacy_exports["_has_legacy_exports"]
-        code2llm_output__map__toon__format_agent_lane_exports["format_agent_lane_exports"]
-        code2llm_output__map__toon___scan_testql_export["_scan_testql_export"]
-        code2llm_output__map__toon__render_shell_exports["render_shell_exports"]
-        code2llm_output__map__toon__try_agent_env_exports["try_agent_env_exports"]
-        code2llm_output__map__toon___has_legacy_exports["_has_legacy_exports"]
-        project__map__toon__try_agent_env_exports["try_agent_env_exports"]
-        project__map__toon__format_agent_lane_exports["format_agent_lane_exports"]
-        project__map__toon___has_legacy_exports["_has_legacy_exports"]
-        project__map__toon__render_shell_exports["render_shell_exports"]
-        project__map__toon___scan_testql_export["_scan_testql_export"]
-        project__map__toon__test_agent_env_exports_cursor_lane["test_agent_env_exports_cursor_"]
-        project__map__toon__test_render_shell_exports_includes_koru_environment["test_render_shell_exports_incl"]
-        project__map__toon__test_koruide_ide_bridge_exports_legacy_symbols["test_koruide_ide_bridge_export"]
-        ...["+2 more"]
     end
 
     class services__healing_webhook__app__heal_rebuild_restore,services__healing_webhook__app__heal_annotate,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app__heal_redup_check,services__healing_webhook__app__healthz,services__healing_webhook__app__metrics,services__healing_webhook__app__get_history,services__healing_webhook__app__alertmanager_webhook,services__healing_webhook__app__probe_failure entry

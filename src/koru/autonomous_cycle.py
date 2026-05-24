@@ -268,6 +268,7 @@ def _handle_autopilot_events(
                     state.last_message_sent_ts = float(ev.get("ts") or time.time())
                 except (TypeError, ValueError):
                     state.last_message_sent_ts = time.time()
+                state.last_message_sent_ide = str(ev.get("ide") or "")
 
 
 from koru.autonomy.phases.queue_phase import handle_queue_hygiene as _handle_queue_hygiene

@@ -4,6 +4,22 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.59] — 2026-05-24
+
+### Fixed
+- **Cursor/Wayland: paste no longer leaks the user's previous clipboard
+  contents into chat.** The input-busy probe saves and restores the clipboard
+  before paste, so on Wayland (where `vscode.env.clipboard.writeText` is
+  asynchronous against the underlying `wl-copy` / selection-manager pipeline)
+  the immediate `editor.action.clipboardPasteAction` could land the *restored*
+  pre-probe clipboard into the Cursor chat webview instead of the prompt text.
+  The plugin now writes the prompt with a verified read-back retry loop and
+  aborts the paste if the clipboard does not match, returning a clean
+  `ok: false` instead of clobbering the chat with stale user text. The host
+  clipboard path (`wl-copy` + Ctrl+V) also mirrors the prompt into
+  `vscode.env.clipboard` so any webview-internal paste route reads the same
+  text.
+
 ## [0.1.58] — 2026-05-24
 
 ### Fixed

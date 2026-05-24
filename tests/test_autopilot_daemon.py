@@ -576,6 +576,44 @@ def test_plugin_hello_then_drive_forwards(tmp_path: Path, monkeypatch: pytest.Mo
         cli.close()
 
 
+def test_plugin_drive_routes_alias_to_canonical_plugin(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Direct daemon clients can use IDE aliases and still hit the plugin lane."""
+    with _daemon(tmp_path, monkeypatch) as h:
+        plugin, plugin_reader = _connect_plugin(h.sock_path, ide="code", pid=42)
+
+        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli.settimeout(2.0)
+        cli.connect(str(h.sock_path))
+        cli_reader = _LineReader(cli)
+        cli.sendall(
+            Message(
+                type="drive",
+                id="d-alias",
+                data={"text": "hi", "ide": "VS-Code", "submit": True},
+            ).encode(),
+        )
+
+        forwarded = plugin_reader.read_message()
+        assert forwarded.type == "chat.send"
+        assert forwarded.data["text"] == "hi"
+        assert h.daemon._plugin_for("vscode") is not None
+        assert h.daemon._plugin_for("code") is not None
+
+        plugin.sendall(
+            Message(type="ack", id=forwarded.id, data={"ok": True, "delivered": True}).encode(),
+        )
+
+        cli_reply = cli_reader.read_message()
+        assert cli_reply.type == "ack"
+        assert cli_reply.data.get("backend") == "plugin"
+        assert h.injector.calls == []
+        plugin.close()
+        cli.close()
+
+
 def test_plugin_hello_rejects_missing_protocol(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

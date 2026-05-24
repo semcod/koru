@@ -6,6 +6,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from koruide.ide import normalize_ide_id
+
 
 class PluginClient(Protocol):
     role: str
@@ -49,23 +51,28 @@ class PluginRouter:
         self._log = log or (lambda _msg: None)
 
     def plugin_for(self, ide: str | None) -> PluginClient | None:
+        target_ide = normalize_ide_id(ide)
         for client in reversed(list(self._clients.values())):
             if client.role != "plugin":
                 continue
-            if ide in (None, "auto") or client.ide == ide:
+            client_ide = normalize_ide_id(client.ide)
+            if target_ide in (None, "auto") or client_ide == target_ide:
                 self._log(f"plugin_for: matched ide={client.ide} fd={client.sock.fileno()}")
                 return client
-        self._log(f"plugin_for: no plugin for ide={ide or 'auto'}")
+        self._log(f"plugin_for: no plugin for ide={target_ide or 'auto'}")
         return None
 
     def drop_stale_plugins(self, current: PluginClient, ide: str) -> int:
+        target_ide = normalize_ide_id(ide)
         stale = [
             other
             for other in self._clients.values()
-            if other is not current and other.role == "plugin" and other.ide == ide
+            if other is not current
+            and other.role == "plugin"
+            and normalize_ide_id(other.ide) == target_ide
         ]
         for other in stale:
-            self._log(f"dropping stale plugin connection: ide={ide} fd={other.sock.fileno()}")
+            self._log(f"dropping stale plugin connection: ide={target_ide} fd={other.sock.fileno()}")
             self._drop_client(other)
         return len(stale)
 

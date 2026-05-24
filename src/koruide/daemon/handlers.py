@@ -10,6 +10,7 @@ from typing import Any
 
 from koruide.drive_orchestrator import DriveOrchestrator
 from koruide.ide import detect_running_ides_cached as detect_running_ides
+from koruide.ide import normalize_ide_id
 from koruide.ide import pick_target, resolve_drive_target
 from koruide.injector import InjectorError
 from koruide.protocol import (
@@ -81,7 +82,8 @@ def handle_drive(daemon: Any, client: _Client, msg: Message) -> None:
         daemon._send(client, error(msg.id, "missing 'text'").encode())
         return
     raw_ide = msg.data.get("ide") if isinstance(msg.data.get("ide"), str) else None
-    ide_pref = raw_ide if raw_ide not in (None, "auto") else None
+    normalized_ide = normalize_ide_id(raw_ide)
+    ide_pref = normalized_ide if normalized_ide not in (None, "auto") else None
     submit = bool(msg.data.get("submit", True))
     require_plugin = bool(msg.data.get("require_plugin", False))
     daemon.log(f"drive request: ide={raw_ide or 'auto'}, chars={len(text)}, submit={submit}, require_plugin={require_plugin}")
@@ -308,7 +310,8 @@ def _drive_via_keyboard(
 
 def _extract_hello_metadata(msg: Message) -> tuple[str | None, str | None, int | None, list[str]]:
     """Extract and validate hello message metadata."""
-    ide = msg.data.get("ide")
+    raw_ide = msg.data.get("ide")
+    ide = normalize_ide_id(raw_ide) if isinstance(raw_ide, str) else raw_ide
     version = msg.data.get("version")
     plugin_version = version if isinstance(version, str) else None
     protocol_raw = msg.data.get("protocolVersion")

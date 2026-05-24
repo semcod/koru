@@ -104,6 +104,7 @@ def _handle_autopilot_phase(
             )
             if ok:
                 state.last_message_sent_ts = time.time()
+                state.last_message_sent_ide = autopilot_ide
                 state.last_driven_ticket_id = _queue_loop_waiting_ticket_label(queue_result)
             state.last_autopilot_status = autopilot_status
             _update_autopilot_state(
