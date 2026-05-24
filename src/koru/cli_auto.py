@@ -47,6 +47,10 @@ def _auto_main(argv: list[str]) -> int:
     instead of blindly entering the autonomous loop with an empty backlog.
     """
     from koru.cli import _peek_project_from_argv, _should_suggest_wizard
+    # ``koru auto up`` is equivalent to ``koru auto``; argv normalization injects
+    # the ``up`` subcommand once — a redundant token here becomes a duplicate.
+    if argv and argv[0] == "up":
+        argv = argv[1:]
     if any(arg in {"-h", "--help"} for arg in argv):
         return autonomous_main(argv, invoked_as_auto=True)
     project = _peek_project_from_argv(argv)

@@ -428,6 +428,25 @@ class TestAutoMain(unittest.TestCase):
         stop.assert_not_called()
         autonomous.assert_called_once_with(["--help"], invoked_as_auto=True)
 
+    def test_auto_main_strips_redundant_up_subcommand(self) -> None:
+        from koru.cli_auto import _auto_main
+
+        calls: list[list[str]] = []
+
+        with mock.patch(
+            "koru._legacy_cli_impl.stop_prior_autonomous_for_auto_start",
+        ):
+            with mock.patch(
+                "koru._legacy_cli_impl.autonomous_main",
+                side_effect=lambda argv, **kw: calls.append(list(argv)) or 0,
+            ):
+                code = _auto_main(["up", "--project", "/tmp/proj"])
+
+        self.assertEqual(code, 0)
+        self.assertEqual(len(calls), 1)
+        self.assertNotIn("up", calls[0])
+        self.assertIn("--replace-existing", calls[0])
+        self.assertIn("--project", calls[0])
 
 
 class TestEventsSubcommand(unittest.TestCase):
