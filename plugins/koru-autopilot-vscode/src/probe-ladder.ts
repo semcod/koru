@@ -146,8 +146,11 @@ export function pasteLandedInEditor(
 }
 
 export function orderWithCache(commands: string[], cached?: string): string[] {
-  if (!cached || !commands.includes(cached)) {
+  if (!cached) {
     return [...commands];
+  }
+  if (!commands.includes(cached)) {
+    return [cached, ...commands];
   }
   const rest = commands.filter((c) => c !== cached);
   return [cached, ...rest];

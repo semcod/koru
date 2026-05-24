@@ -24,7 +24,10 @@ function testOrderWithCache(): void {
   const ordered = orderWithCache(["a", "b", "c"], "b");
   assert(ordered[0] === "b" && ordered.length === 3, "cached command should be first");
   assert(orderWithCache(["a", "b"], undefined).join() === "a,b", "no cache preserves order");
-  assert(orderWithCache(["a", "b"], "z").join() === "a,b", "stale cache must not add removed commands");
+  assert(
+    orderWithCache(["a", "b"], "z").join() === "z,a,b",
+    "cached command outside defaults should be retried before availability filtering",
+  );
 }
 
 function testChatFocusHeuristic(): void {

@@ -68,6 +68,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.248] - 2026-05-24
+
+### Other
+- Update .koru/project.json
+- Update plugins/koru-autopilot-vscode/src/probe-ladder.test.ts
+- Update plugins/koru-autopilot-vscode/src/probe-ladder.ts
+- Update project.sh
+- Update uv.lock
+- Update wup.yaml
+
 ## [0.1.247] - 2026-05-24
 
 ### Docs

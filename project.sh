@@ -41,8 +41,13 @@ $VENV/bin/sumd .
 $VENV/bin/sumr .
 
 
-pip install -U goal
-$PIP install goal --upgrade --quiet
+if [ -d "../goal/goal" ] && [ -f "../goal/pyproject.toml" ]; then
+    pip install -e ../goal
+    $PIP install -e ../goal --quiet
+else
+    pip install -U goal
+    $PIP install goal --upgrade --quiet
+fi
 #$VENV/bin/goal -a
 
 if [ -x "./tree.sh" ]; then

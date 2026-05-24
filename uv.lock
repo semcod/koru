@@ -1404,7 +1404,7 @@ wheels = [
 
 [[package]]
 name = "koru"
-version = "0.1.246"
+version = "0.1.248"
 source = { editable = "." }
 dependencies = [
     { name = "pyyaml" },
@@ -1431,6 +1431,7 @@ all = [
     { name = "mss" },
     { name = "mutmut" },
     { name = "mypy" },
+    { name = "nfo" },
     { name = "openai" },
     { name = "opentelemetry-exporter-otlp" },
     { name = "opentelemetry-instrumentation-fastapi" },
@@ -1482,6 +1483,7 @@ mesh = [
     { name = "websockets" },
 ]
 obs = [
+    { name = "nfo" },
     { name = "opentelemetry-exporter-otlp" },
     { name = "opentelemetry-instrumentation-fastapi" },
     { name = "opentelemetry-instrumentation-httpx" },
@@ -1540,6 +1542,8 @@ requires-dist = [
     { name = "mutmut", marker = "extra == 'quality'", specifier = ">=3.2,<4.0" },
     { name = "mypy", marker = "extra == 'all'", specifier = ">=1.11,<2.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.11,<2.0" },
+    { name = "nfo", marker = "extra == 'all'", specifier = ">=0.2.22,<1.0" },
+    { name = "nfo", marker = "extra == 'obs'", specifier = ">=0.2.22,<1.0" },
     { name = "openai", marker = "extra == 'agent'", specifier = ">=1.54,<2.0" },
     { name = "openai", marker = "extra == 'all'", specifier = ">=1.54,<2.0" },
     { name = "opentelemetry-exporter-otlp", marker = "extra == 'all'", specifier = ">=1.28,<2.0" },
@@ -2093,6 +2097,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/6d/fd/91545e604bc3dad7dca9ed03284086039b294c6b3d75c0d2fa45f9e9caf3/nbformat-5.10.4.tar.gz", hash = "sha256:322168b14f937a5d11362988ecac2a4952d3d8e3a2cbeb2319584631226d5b3a", size = 142749, upload-time = "2024-04-04T11:20:37.371Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a9/82/0340caa499416c78e5d8f5f05947ae4bc3cba53c9f038ab6e9ed964e22f1/nbformat-5.10.4-py3-none-any.whl", hash = "sha256:3b48d6c8fbca4b299bf3982ea7db1af21580e4fec269ad087b9e81588891200b", size = 78454, upload-time = "2024-04-04T11:20:34.895Z" },
+]
+
+[[package]]
+name = "nfo"
+version = "0.2.22"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0c/ef/3275f422f8c52f47143c224d5dc4f82eff08c17cdada683ea7b4b8c2dd77/nfo-0.2.22.tar.gz", hash = "sha256:88cfa392e212d66cf44822fd8dc108887c62cad5081980c88befac40a0c79ceb", size = 120618, upload-time = "2026-04-09T16:23:56.816Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5b/af/3deb9803ef371a1ab0754448eb0f5e47445eb4e779dc45bf84d776ff06c2/nfo-0.2.22-py3-none-any.whl", hash = "sha256:f83601490da408d2394cf21f6318d1a9a27885c5016efb9679d456e997e9f83d", size = 91191, upload-time = "2026-04-09T16:23:55.099Z" },
 ]
 
 [[package]]

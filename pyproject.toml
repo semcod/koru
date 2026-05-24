@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "koru"
-version = "0.1.247"
+version = "0.1.248"
 description = "Closed-loop automation across semcod/* repositories."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -69,6 +69,7 @@ agent = [
     "tiktoken>=0.8,<1.0",
 ]
 obs = [
+    "nfo>=0.2.22,<1.0",
     "opentelemetry-exporter-otlp>=1.28,<2.0",
     "opentelemetry-instrumentation-fastapi>=0.49b0,<1.0",
     "opentelemetry-instrumentation-httpx>=0.49b0,<1.0",
@@ -99,6 +100,7 @@ all = [
     "mutmut>=3.2,<4.0",
     "mypy>=1.11,<2.0",
     "mss>=9.0,<11.0",
+    "nfo>=0.2.22,<1.0",
     "openai>=1.54,<2.0",
     "opentelemetry-exporter-otlp>=1.28,<2.0",
     "opentelemetry-instrumentation-fastapi>=0.49b0,<1.0",
