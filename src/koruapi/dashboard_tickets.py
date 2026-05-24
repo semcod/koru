@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
+from koru.queue.locking import ticket_claim_command_missing
 from koru.queue.runners import run_process
 from koru.queue.ticket import planfile_command
 from koruide.ide import normalize_ide_id
@@ -60,10 +61,11 @@ def bulk_waiting_input_action(
         runner=run_planfile,
       )
       if claim.returncode != 0:
-        applied.append(
-          {"id": tid, "ok": False, "step": "claim", "stderr": claim.stderr[-500:]}
-        )
-        continue
+        if not ticket_claim_command_missing(claim):
+          applied.append(
+            {"id": tid, "ok": False, "step": "claim", "stderr": claim.stderr[-500:]}
+          )
+          continue
       start = planfile_command(project, ["ticket", "start", tid], runner=run_planfile)
       if start.returncode != 0:
         applied.append(

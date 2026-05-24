@@ -15,16 +15,16 @@ flowchart TD
     scripts__koru_soak_monitor["scripts.koru-soak-monitor<br/>6 funcs"]
     scripts__planfile_sync_todo["scripts.planfile-sync-todo<br/>12 funcs"]
     services__healing_webhook["services.healing-webhook<br/>34 funcs"]
-    src__koru["src.koru<br/>1473 funcs"]
+    src__koru["src.koru<br/>1474 funcs"]
     src__koruapi["src.koruapi<br/>144 funcs"]
     src__korudsl["src.korudsl<br/>27 funcs"]
-    src__koruide["src.koruide<br/>259 funcs"]
+    src__koruide["src.koruide<br/>263 funcs"]
     src__korumesh["src.korumesh<br/>41 funcs"]
     src__koruobserve["src.koruobserve<br/>52 funcs"]
     src__koruvision["src.koruvision<br/>129 funcs"]
     src__koru ==>|382| scripts__koru_soak_monitor
     src__koru ==>|93| src__koruide
-    src__koruapi ==>|56| src__koru
+    src__koruapi ==>|57| src__koru
     src__koruide ==>|27| scripts__koru_soak_monitor
     src__koruide ==>|19| koruapi__mcp_server
     src__koruobserve ==>|18| scripts__koru_soak_monitor

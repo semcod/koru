@@ -206,6 +206,59 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(result.ticket_id, "PLF-0X")
             self.assertEqual(result.message, "already claimed")
 
+    def test_ticket_claim_missing_command_falls_back_to_start(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = {
+                "id": "PLF-0Y",
+                "name": "Run with older planfile",
+                "executor": {"kind": "shell", "handler": "echo ok"},
+                "execution": {"state": "ready"},
+            }
+            planfile_calls: list[list[str]] = []
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                planfile_calls.append(command)
+                ta = _ticket_args(command)
+                if ta[:5] == ["ticket", "list", "--status", "open", "--format"]:
+                    return _ok(json.dumps(ticket))
+                if ta[:3] == ["ticket", "claim", "PLF-0Y"]:
+                    return SimpleNamespace(
+                        returncode=2,
+                        stdout="",
+                        stderr="Usage: planfile ticket [OPTIONS] COMMAND [ARGS]...\n"
+                        "Error: No such command 'claim'.",
+                    )
+                return _ok()
+
+            def shell_runner(command: str, _project: Path) -> SimpleNamespace:
+                self.assertEqual(command, "echo ok")
+                return SimpleNamespace(returncode=0, stdout="ok\n", stderr="")
+
+            result = run_next_planfile_task(
+                project=project,
+                actor="koru-test",
+                planfile_runner=planfile_runner,
+                shell_runner=shell_runner,
+            )
+
+            self.assertEqual(result.status, "completed")
+            tail_args = [_ticket_args(call) for call in planfile_calls]
+            self.assertIn(
+                [
+                    "ticket",
+                    "claim",
+                    "PLF-0Y",
+                    "--assigned-to",
+                    "koru-test",
+                    "--lease-seconds",
+                    "3600",
+                ],
+                tail_args,
+            )
+            self.assertIn(["ticket", "start", "PLF-0Y"], tail_args)
+            self.assertIn(["ticket", "done", "PLF-0Y"], tail_args)
+
     def test_human_ticket_returns_waiting_input(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)

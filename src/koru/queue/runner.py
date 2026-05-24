@@ -288,7 +288,8 @@ def _run_next_planfile_task_impl(
     Concurrent drains (several IDE windows) are serialized per project
     via ``.planfile/.koru/queue-runner.lock`` (POSIX); disable with
     ``KORU_QUEUE_RUNNER_LOCK=0``. Before ``ticket start``, koru calls
-    ``ticket claim --assigned-to <actor>`` for tracing / lease metadata.
+    ``ticket claim --assigned-to <actor>`` for tracing / lease metadata when
+    the installed planfile CLI supports it.
     """
     project = project.resolve()
 

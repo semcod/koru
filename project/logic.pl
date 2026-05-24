@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.239', 'python').
+project_metadata('koru', '0.1.242', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 691, 'less').
@@ -279,10 +279,10 @@ project_file('src/koru/queue/__init__.py', 39, 'python').
 project_file('src/koru/queue/human.py', 32, 'python').
 project_file('src/koru/queue/koru_queue_argv.py', 45, 'python').
 project_file('src/koru/queue/local_manager.py', 136, 'python').
-project_file('src/koru/queue/locking.py', 87, 'python').
+project_file('src/koru/queue/locking.py', 95, 'python').
 project_file('src/koru/queue/loop.py', 116, 'python').
 project_file('src/koru/queue/planfile_ticket_note.py', 56, 'python').
-project_file('src/koru/queue/runner.py', 427, 'python').
+project_file('src/koru/queue/runner.py', 428, 'python').
 project_file('src/koru/queue/runners.py', 250, 'python').
 project_file('src/koru/queue/shell_evidence.py', 73, 'python').
 project_file('src/koru/queue/ticket.py', 165, 'python').
@@ -338,7 +338,7 @@ project_file('src/koruapi/dashboard_runtime.py', 40, 'python').
 project_file('src/koruapi/dashboard_serve.py', 241, 'python').
 project_file('src/koruapi/dashboard_serve_utils.py', 247, 'python').
 project_file('src/koruapi/dashboard_state.py', 106, 'python').
-project_file('src/koruapi/dashboard_tickets.py', 229, 'python').
+project_file('src/koruapi/dashboard_tickets.py', 232, 'python').
 project_file('src/koruapi/dashboard_topology.py', 22, 'python').
 project_file('src/koruapi/integrations.py', 199, 'python').
 project_file('src/koruapi/invoke.py', 32, 'python').
@@ -354,7 +354,7 @@ project_file('src/korudsl/__init__.py', 26, 'python').
 project_file('src/korudsl/cli.py', 91, 'python').
 project_file('src/korudsl/library.py', 208, 'python').
 project_file('src/korudsl/transform.py', 71, 'python').
-project_file('src/koruide/__init__.py', 69, 'python').
+project_file('src/koruide/__init__.py', 81, 'python').
 project_file('src/koruide/audit.py', 155, 'python').
 project_file('src/koruide/chat_history.py', 167, 'python').
 project_file('src/koruide/client.py', 161, 'python').
@@ -375,6 +375,7 @@ project_file('src/koruide/os_injector.py', 508, 'python').
 project_file('src/koruide/plugin_installer.py', 536, 'python').
 project_file('src/koruide/plugin_router.py', 87, 'python').
 project_file('src/koruide/plugin_version.py', 9, 'python').
+project_file('src/koruide/ports.py', 119, 'python').
 project_file('src/koruide/protocol.py', 253, 'python').
 project_file('src/koruide/socket.py', 45, 'python').
 project_file('src/koruide/utils.py', 22, 'python').
@@ -510,6 +511,7 @@ project_file('tests/test_koruapi_transports.py', 21, 'python').
 project_file('tests/test_korudsl.py', 41, 'python').
 project_file('tests/test_koruide_bridges.py', 78, 'python').
 project_file('tests/test_koruide_client.py', 83, 'python').
+project_file('tests/test_koruide_ports.py', 100, 'python').
 project_file('tests/test_korumesh_envelope.py', 41, 'python').
 project_file('tests/test_korumesh_store.py', 59, 'python').
 project_file('tests/test_korumesh_transport.py', 63, 'python').
@@ -526,7 +528,7 @@ project_file('tests/test_mcp_server.py', 245, 'python').
 project_file('tests/test_observation_mesh_e2e.py', 230, 'python').
 project_file('tests/test_observe_providers_cli.py', 83, 'python').
 project_file('tests/test_operator_pipeline.py', 602, 'python').
-project_file('tests/test_planfile_queue.py', 1303, 'python').
+project_file('tests/test_planfile_queue.py', 1356, 'python').
 project_file('tests/test_plugin_router.py', 67, 'python').
 project_file('tests/test_policy.py', 194, 'python').
 project_file('tests/test_post_run_verify.py', 156, 'python').
@@ -546,7 +548,7 @@ project_file('tests/test_runtime_insights.py', 60, 'python').
 project_file('tests/test_scan.py', 671, 'python').
 project_file('tests/test_screencast_session.py', 40, 'python').
 project_file('tests/test_semcod_tools.py', 51, 'python').
-project_file('tests/test_serve.py', 678, 'python').
+project_file('tests/test_serve.py', 706, 'python').
 project_file('tests/test_shell_evidence.py', 51, 'python').
 project_file('tests/test_stdio_autonomous_jsonl.py', 99, 'python').
 project_file('tests/test_tasks.py', 119, 'python').
@@ -1673,7 +1675,8 @@ python_function('src/koru/queue/local_manager.py', 'queue_manager_complete', 1, 
 python_function('src/koru/queue/locking.py', 'queue_lock_wanted', 0, 1, 3).
 python_function('src/koru/queue/locking.py', 'queue_runner_lock', 1, 3, 5).
 python_function('src/koru/queue/locking.py', 'claim_lease_seconds_str', 0, 2, 6).
-python_function('src/koru/queue/locking.py', 'ticket_claim_or_error', 3, 4, 4).
+python_function('src/koru/queue/locking.py', 'ticket_claim_command_missing', 1, 2, 1).
+python_function('src/koru/queue/locking.py', 'ticket_claim_or_error', 3, 5, 5).
 python_function('src/koru/queue/loop.py', 'run_planfile_queue_loop', 0, 14, 7).
 python_function('src/koru/queue/planfile_ticket_note.py', '_stderr_unknown_option', 2, 3, 0).
 python_function('src/koru/queue/planfile_ticket_note.py', 'append_shell_evidence_note', 3, 5, 7).
@@ -2031,7 +2034,7 @@ python_function('src/koruapi/dashboard_state.py', 'dashboard_ide_rows', 0, 7, 6)
 python_function('src/koruapi/dashboard_state.py', 'dashboard_state', 0, 3, 7).
 python_function('src/koruapi/dashboard_tickets.py', 'run_planfile', 2, 1, 2).
 python_function('src/koruapi/dashboard_tickets.py', 'list_tickets', 1, 9, 4).
-python_function('src/koruapi/dashboard_tickets.py', 'bulk_waiting_input_action', 1, 13, 6).
+python_function('src/koruapi/dashboard_tickets.py', 'bulk_waiting_input_action', 1, 14, 7).
 python_function('src/koruapi/dashboard_tickets.py', 'create_ticket_from_dashboard', 2, 11, 6).
 python_function('src/koruapi/dashboard_tickets.py', '_load_sprint_file', 1, 3, 3).
 python_function('src/koruapi/dashboard_tickets.py', '_write_sprint_file', 2, 1, 2).
@@ -3292,6 +3295,10 @@ python_function('tests/test_koruide_client.py', 'test_koruide_client_forwards_al
 python_function('tests/test_koruide_client.py', 'test_build_client_sets_socket_path_and_timeout', 0, 4, 3).
 python_function('tests/test_koruide_client.py', 'test_injected_client_without_request_raises_on_request_path', 0, 5, 7).
 python_function('tests/test_koruide_client.py', 'test_drive_missing_socket_returns_ok_false', 1, 3, 4).
+python_function('tests/test_koruide_ports.py', 'test_real_client_satisfies_chat_and_lifecycle_ports', 0, 3, 2).
+python_function('tests/test_koruide_ports.py', 'test_fake_adapter_satisfies_chat_port', 0, 5, 3).
+python_function('tests/test_koruide_ports.py', 'test_fake_history_adapter_satisfies_history_port', 0, 4, 7).
+python_function('tests/test_koruide_ports.py', 'test_drive_outcome_is_immutable_dataclass', 0, 5, 2).
 python_function('tests/test_korumesh_envelope.py', 'test_sign_and_verify_envelope_roundtrip', 0, 3, 3).
 python_function('tests/test_korumesh_envelope.py', 'test_verify_envelope_rejects_tampered_payload', 0, 2, 3).
 python_function('tests/test_korumesh_store.py', 'test_remember_envelope_keeps_vision_frames_only', 0, 3, 5).
@@ -3506,6 +3513,7 @@ python_function('tests/test_serve.py', '_get', 2, 1, 4).
 python_function('tests/test_serve.py', '_post_json', 3, 1, 7).
 python_function('tests/test_serve.py', 'test_cmdline_suggests_koru_serve_from_bytes', 0, 4, 1).
 python_function('tests/test_serve.py', 'test_bulk_waiting_input_action_approve', 0, 4, 5).
+python_function('tests/test_serve.py', 'test_bulk_waiting_input_action_approve_without_claim_command', 0, 4, 5).
 python_function('tests/test_serve.py', 'test_bulk_waiting_input_action_reject', 0, 6, 6).
 python_function('tests/test_serve.py', 'test_start_serve_background_shutdown', 0, 3, 10).
 python_function('tests/test_serve.py', 'test_start_serve_background_emits_event_and_endpoint', 0, 10, 12).
@@ -4141,6 +4149,15 @@ python_method('PluginRouter', '__init__', 1, 2, 0).
 python_method('PluginRouter', 'plugin_for', 1, 6, 5).
 python_method('PluginRouter', 'drop_stale_plugins', 2, 6, 5).
 python_method('PluginRouter', 'status_rows', 0, 3, 4).
+python_class('src/koruide/ports.py', 'DriveOutcome').
+python_class('src/koruide/ports.py', 'ChatMessage').
+python_class('src/koruide/ports.py', 'IdeChatPort').
+python_method('IdeChatPort', 'drive', 1, 1, 0).
+python_class('src/koruide/ports.py', 'IdeChatHistoryPort').
+python_method('IdeChatHistoryPort', 'subscribe', 1, 1, 0).
+python_class('src/koruide/ports.py', 'IdeLifecyclePort').
+python_method('IdeLifecyclePort', 'is_running', 0, 1, 0).
+python_method('IdeLifecyclePort', 'shutdown', 0, 1, 0).
 python_class('src/koruide/protocol.py', 'ProtocolError').
 python_class('src/koruide/protocol.py', 'Message').
 python_method('Message', 'to_dict', 0, 4, 1).
@@ -4640,6 +4657,13 @@ python_method('TestAgentLaneArtifacts', 'test_none_skips_helpers', 0, 1, 7).
 python_class('tests/test_init.py', 'TestRefreshInitAgentLane').
 python_method('TestRefreshInitAgentLane', 'test_requires_planfile', 0, 1, 6).
 python_method('TestRefreshInitAgentLane', 'test_writes_after_init_with_agent_lane_none', 0, 1, 10).
+python_class('tests/test_koruide_ports.py', '_FakeChatAdapter').
+python_method('_FakeChatAdapter', '__init__', 0, 1, 0).
+python_method('_FakeChatAdapter', 'drive', 1, 1, 2).
+python_class('tests/test_koruide_ports.py', '_FakeHistoryAdapter').
+python_method('_FakeHistoryAdapter', '__init__', 0, 1, 0).
+python_method('_FakeHistoryAdapter', 'subscribe', 1, 1, 2).
+python_method('_FakeHistoryAdapter', 'emit', 1, 2, 2).
 python_class('tests/test_loop.py', 'TestKoruLoop').
 python_method('TestKoruLoop', 'test_search_root_for_include_uses_literal_prefix', 0, 1, 3).
 python_method('TestKoruLoop', 'test_discover_repositories_with_pattern', 0, 1, 6).
@@ -4660,6 +4684,7 @@ python_method('TestPlanfileCommand', 'test_module_cli_probe_treats_missing_paren
 python_class('tests/test_planfile_queue.py', 'TestPlanfileQueue').
 python_method('TestPlanfileQueue', 'test_shell_ticket_runs_lifecycle_commands', 0, 7, 16).
 python_method('TestPlanfileQueue', 'test_ticket_claim_failure_returns_claim_failed', 0, 1, 8).
+python_method('TestPlanfileQueue', 'test_ticket_claim_missing_command_falls_back_to_start', 0, 2, 10).
 python_method('TestPlanfileQueue', 'test_human_ticket_returns_waiting_input', 0, 1, 7).
 python_method('TestPlanfileQueue', 'test_shell_failure_marks_ticket_failed', 0, 3, 11).
 python_method('TestPlanfileQueue', 'test_api_ticket_runs_lifecycle_commands', 0, 2, 12).

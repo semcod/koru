@@ -1,4 +1,4 @@
-# koru | 2678 func | 290f | 67133L | python | 2026-05-24
+# koru | 2683 func | 291f | 67274L | python | 2026-05-24
 # generated in 0.00s
 
 HEALTH:
@@ -16,7 +16,7 @@ ALERTS[20]:
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
   !!! high_fan_out     _create_nl_task_impl = 21 (limit:10)
 
-MODULES[449] (top by size):
+MODULES[450] (top by size):
   M[src/koru/autonomous_cycle.py] 2148L C:1 F:73 CC↑14 D:1 (python)
   M[src/koru/doctor.py] 1965L C:2 F:91 CC↑14 D:2 (python)
   M[plugins/koru-autopilot-vscode/src/extension.ts] 1600L C:2 F:141 CC↑14 D:16 (typescript)
@@ -32,7 +32,7 @@ MODULES[449] (top by size):
   M[src/koru/autonomous_wup.py] 808L C:3 F:39 CC↑12 D:2 (python)
   M[src/koruide/ide.py] 746L C:1 F:44 CC↑13 D:21 (python)
   M[services/healing-webhook/app.py] 702L C:0 F:27 CC↑11 D:0 (python)
-  LANGS: python:327/shell:49/yaml:22/typescript:18/yml:9/json:9/kotlin:6/other:3/txt:2/javascript:1/properties:1/xml:1/toml:1
+  LANGS: python:328/shell:49/yaml:22/typescript:18/yml:9/json:9/kotlin:6/other:3/txt:2/javascript:1/properties:1/xml:1/toml:1
 
 HOTSPOTS[10]:
   ★ build_dashboard_handler fan=49  // Build and return a DashboardRequestHandler subclass for the dashboard.
@@ -52,4 +52,4 @@ REFACTOR[15]:
   [5] H/H Split god module src/koru/doctor.py (1965L, 2 classes)
 
 EVOLUTION:
-  2026-05-24 CC̄=3.8 crit=199 67133L // Automated analysis
+  2026-05-24 CC̄=3.8 crit=199 67274L // Automated analysis

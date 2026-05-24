@@ -51,6 +51,12 @@ def claim_lease_seconds_str() -> str:
     return str(max(60, min(n, 86400 * 7)))
 
 
+def ticket_claim_command_missing(result: CommandResult) -> bool:
+    """Return true when the installed planfile CLI predates ``ticket claim``."""
+    output = f"{result.stderr}\n{result.stdout}".lower()
+    return "no such command 'claim'" in output or 'no such command "claim"' in output
+
+
 def ticket_claim_or_error(
     project: Path,
     ticket_id: str,
@@ -58,7 +64,7 @@ def ticket_claim_or_error(
     *,
     planfile_runner: Callable[[Sequence[str], Path], CommandResult],
 ) -> QueueRunResult | None:
-    """Run ``planfile ticket claim``; return ``QueueRunResult`` on CLI failure."""
+    """Run best-effort ``planfile ticket claim``; return an error for real failures."""
     from koru.queue.ticket import planfile_command
 
     claim = planfile_command(
@@ -75,6 +81,8 @@ def ticket_claim_or_error(
         runner=planfile_runner,
     )
     if claim.returncode != 0:
+        if ticket_claim_command_missing(claim):
+            return None
         return QueueRunResult(
             status="claim_failed",
             ticket_id=ticket_id,

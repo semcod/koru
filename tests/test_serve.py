@@ -554,6 +554,34 @@ def test_bulk_waiting_input_action_approve() -> None:
         assert cmd.call_count == 3
 
 
+def test_bulk_waiting_input_action_approve_without_claim_command() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        project = Path(tmp)
+        tickets = [{"id": "A-1", "status": "waiting_input"}]
+        missing_claim = subprocess.CompletedProcess(
+            args=["planfile"],
+            returncode=2,
+            stdout="",
+            stderr="Usage: planfile ticket [OPTIONS] COMMAND [ARGS]...\n"
+            "Error: No such command 'claim'.",
+        )
+        ok = subprocess.CompletedProcess(args=["planfile"], returncode=0, stdout="", stderr="")
+        with mock.patch("koruapi.dashboard_tickets.list_tickets", return_value=tickets):
+            with mock.patch(
+                "koruapi.dashboard_tickets.planfile_command",
+                side_effect=[missing_claim, ok, ok],
+            ) as cmd:
+                out = bulk_waiting_input_action(
+                    project,
+                    ticket_ids=["A-1"],
+                    action="approve",
+                    reason="",
+                )
+        assert out["ok"] is True
+        assert out["applied"][0]["ok"] is True
+        assert cmd.call_count == 3
+
+
 def test_bulk_waiting_input_action_reject() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         project = Path(tmp)

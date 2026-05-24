@@ -1,5 +1,5 @@
-# code2llm/evolution | 2603 func | 275f | 2026-05-24
-# generated in 0.06s
+# code2llm/evolution | 2608 func | 276f | 2026-05-24
+# generated in 0.01s
 
 NEXT[3] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous_cycle.py

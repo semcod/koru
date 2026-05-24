@@ -16,7 +16,7 @@ SUMD - Structured Unified Markdown Descriptor for AI-aware project refactorizati
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.239`
+- **version**: `0.1.242`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -36,7 +36,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.239;
+  version: 0.1.242;
 }
 
 dependencies {
@@ -1682,7 +1682,7 @@ pfix>=0.1.60
 
 ## Call Graph
 
-*401 nodes · 500 edges · 87 modules · CC̄=3.8*
+*402 nodes · 500 edges · 87 modules · CC̄=3.8*
 
 ### Hubs (by degree)
 
@@ -1692,15 +1692,15 @@ pfix>=0.1.60
 | `build_dashboard_handler` *(in koruapi.dashboard_routes)* | 1 | 2 | 207 | **209** |
 | `list` *(in src.koru.wizard.gui.static.wizard)* | 5 | 110 | 9 | **119** |
 | `render_markdown_handoff` *(in koru.context_render)* | 10 ⚠ | 6 | 47 | **53** |
-| `normalize_ide_id` *(in src.koruide.ide)* | 6 | 42 | 11 | **53** |
 | `activity` *(in src.koru.activity_log)* | 4 | 40 | 8 | **48** |
 | `emit_management_event` *(in src.koru.events)* | 8 | 31 | 7 | **38** |
 | `observe_up` *(in src.koruobserve.lifecycle)* | 4 | 1 | 32 | **33** |
+| `detect_running_ides` *(in src.koruide.ide)* | 13 ⚠ | 22 | 10 | **32** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
 # generated in 0.22s
-# nodes: 401 | edges: 500 | modules: 87
+# nodes: 402 | edges: 500 | modules: 87
 # CC̄=3.8
 
 HUBS[20]:
@@ -1712,8 +1712,6 @@ HUBS[20]:
     CC=5  in:110  out:9  total:119
   koru.context_render.render_markdown_handoff
     CC=10  in:6  out:47  total:53
-  src.koruide.ide.normalize_ide_id
-    CC=6  in:42  out:11  total:53
   src.koru.activity_log.activity
     CC=4  in:40  out:8  total:48
   src.koru.events.emit_management_event
@@ -1728,22 +1726,24 @@ HUBS[20]:
     CC=9  in:2  out:26  total:28
   src.koruide.socket.default_socket_path
     CC=4  in:12  out:15  total:27
-  services.healing-webhook.app._resolve_affected_files
-    CC=11  in:2  out:24  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
+  services.healing-webhook.app._resolve_affected_files
+    CC=11  in:2  out:24  total:26
   koru.context.build_context
     CC=6  in:9  out:16  total:25
   examples.remote_orchestration_demo.run_multi_node_orchestration
     CC=9  in:0  out:24  total:24
   src.koru.queue.ticket.planfile_command
     CC=5  in:17  out:7  total:24
-  src.koruapi.dashboard_tickets.create_ticket_from_dashboard
-    CC=11  in:1  out:23  total:24
   src.koruapi.dashboard_config._dashboard_config_request_kwargs
     CC=10  in:1  out:23  total:24
   src.koruapi.topology_post.apply_topology_post_update
     CC=14  in:1  out:22  total:23
+  koruapi.mcp_server._log
+    CC=1  in:21  out:1  total:22
+  src.koruvision.providers.obs_websocket._obs_request
+    CC=11  in:2  out:19  total:21
 
 MODULES:
   examples.remote_orchestration_demo  [1 funcs]
@@ -1824,8 +1824,6 @@ MODULES:
     redup_check_command  CC=1  out:3
   src.koru.scan  [1 funcs]
     run_scan  CC=10  out:15
-  src.koru.tasks  [1 funcs]
-    create_nl_task  CC=1  out:4
   src.koru.topology  [2 funcs]
     load_topology  CC=1  out:9
     set_component_enabled  CC=1  out:1
@@ -1912,17 +1910,6 @@ MODULES:
     dashboard_state  CC=3  out:8
     dashboard_urls  CC=3  out:3
     local_lan_addresses  CC=2  out:13
-  src.koruapi.dashboard_tickets  [10 funcs]
-    _append_dashboard_history  CC=2  out:7
-    _find_ticket_in_sprints  CC=5  out:10
-    _load_sprint_file  CC=3  out:3
-    _write_sprint_file  CC=1  out:2
-    bulk_waiting_input_action  CC=13  out:14
-    create_ticket_from_dashboard  CC=11  out:23
-    list_tickets  CC=9  out:6
-    reorder_ticket_from_dashboard  CC=9  out:15
-    run_planfile  CC=1  out:2
-    update_ticket_from_dashboard  CC=9  out:15
   src.koruapi.dashboard_topology  [2 funcs]
     apply_dashboard_topology_update  CC=1  out:1
     dashboard_topology_payload  CC=1  out:2
@@ -1986,17 +1973,21 @@ MODULES:
     dsl_roundtrip_report  CC=1  out:7
     library_from_any  CC=12  out:15
     library_to_any  CC=2  out:3
-  src.koruide.ide  [3 funcs]
+  src.koruide.ide  [2 funcs]
     autopilot_ide_choices  CC=1  out:0
     detect_running_ides  CC=13  out:10
-    normalize_ide_id  CC=6  out:11
   src.koruide.socket  [1 funcs]
     default_socket_path  CC=4  out:15
+  src.korumesh.dashboard_parse  [1 funcs]
+    parse_mime_params  CC=6  out:6
   src.korumesh.envelope  [1 funcs]
     sign_envelope  CC=3  out:8
   src.korumesh.keys  [2 funcs]
     load_mesh_key  CC=2  out:6
     write_mesh_key  CC=3  out:6
+  src.korumesh.store  [2 funcs]
+    list_vision_frames  CC=6  out:3
+    remember_envelope  CC=3  out:3
   src.korumesh.transport  [1 funcs]
     publish_envelope  CC=4  out:9
   src.koruobserve.bootstrap  [3 funcs]
@@ -2101,8 +2092,16 @@ MODULES:
   src.koruvision.providers.base  [2 funcs]
     frame_from_png  CC=5  out:12
     png_dimensions  CC=4  out:5
-  src.koruvision.providers.browser_getdisplay  [1 funcs]
+  src.koruvision.providers.browser_getdisplay  [9 funcs]
+    _browser_upload_monitor_id  CC=2  out:3
+    _decode_browser_png_upload  CC=7  out:9
+    _frames_from_store  CC=4  out:8
+    _mesh_key_for_browser_upload  CC=2  out:3
+    _publish_browser_upload_if_requested  CC=4  out:3
+    _remember_browser_upload_envelope  CC=1  out:4
+    _vision_mime_with_provider  CC=7  out:11
     browser_capture_requested  CC=2  out:2
+    ingest_browser_upload  CC=7  out:15
   src.koruvision.providers.cli_tools  [4 funcs]
     availability  CC=3  out:4
     capture_all  CC=1  out:1
@@ -2119,8 +2118,10 @@ MODULES:
     capture_one_with_providers  CC=6  out:13
     list_provider_status  CC=2  out:3
     monitors_via_xrandr  CC=6  out:10
-  src.koruvision.providers.env  [5 funcs]
+  src.koruvision.providers.env  [7 funcs]
     capture_provider_pref  CC=4  out:6
+    compositor_hint  CC=5  out:3
+    env_truthy  CC=1  out:3
     is_wayland  CC=2  out:6
     looks_headless  CC=3  out:4
     portal_possible  CC=3  out:5
@@ -2253,7 +2254,7 @@ EDGES:
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
 # generated in 0.22s
-# nodes: 401 | edges: 500 | modules: 87
+# nodes: 402 | edges: 500 | modules: 87
 # CC̄=3.8
 
 HUBS[20]:
@@ -2265,8 +2266,6 @@ HUBS[20]:
     CC=5  in:110  out:9  total:119
   koru.context_render.render_markdown_handoff
     CC=10  in:6  out:47  total:53
-  src.koruide.ide.normalize_ide_id
-    CC=6  in:42  out:11  total:53
   src.koru.activity_log.activity
     CC=4  in:40  out:8  total:48
   src.koru.events.emit_management_event
@@ -2281,22 +2280,24 @@ HUBS[20]:
     CC=9  in:2  out:26  total:28
   src.koruide.socket.default_socket_path
     CC=4  in:12  out:15  total:27
-  services.healing-webhook.app._resolve_affected_files
-    CC=11  in:2  out:24  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
+  services.healing-webhook.app._resolve_affected_files
+    CC=11  in:2  out:24  total:26
   koru.context.build_context
     CC=6  in:9  out:16  total:25
   examples.remote_orchestration_demo.run_multi_node_orchestration
     CC=9  in:0  out:24  total:24
   src.koru.queue.ticket.planfile_command
     CC=5  in:17  out:7  total:24
-  src.koruapi.dashboard_tickets.create_ticket_from_dashboard
-    CC=11  in:1  out:23  total:24
   src.koruapi.dashboard_config._dashboard_config_request_kwargs
     CC=10  in:1  out:23  total:24
   src.koruapi.topology_post.apply_topology_post_update
     CC=14  in:1  out:22  total:23
+  koruapi.mcp_server._log
+    CC=1  in:21  out:1  total:22
+  src.koruvision.providers.obs_websocket._obs_request
+    CC=11  in:2  out:19  total:21
 
 MODULES:
   examples.remote_orchestration_demo  [1 funcs]
@@ -2377,8 +2378,6 @@ MODULES:
     redup_check_command  CC=1  out:3
   src.koru.scan  [1 funcs]
     run_scan  CC=10  out:15
-  src.koru.tasks  [1 funcs]
-    create_nl_task  CC=1  out:4
   src.koru.topology  [2 funcs]
     load_topology  CC=1  out:9
     set_component_enabled  CC=1  out:1
@@ -2465,17 +2464,6 @@ MODULES:
     dashboard_state  CC=3  out:8
     dashboard_urls  CC=3  out:3
     local_lan_addresses  CC=2  out:13
-  src.koruapi.dashboard_tickets  [10 funcs]
-    _append_dashboard_history  CC=2  out:7
-    _find_ticket_in_sprints  CC=5  out:10
-    _load_sprint_file  CC=3  out:3
-    _write_sprint_file  CC=1  out:2
-    bulk_waiting_input_action  CC=13  out:14
-    create_ticket_from_dashboard  CC=11  out:23
-    list_tickets  CC=9  out:6
-    reorder_ticket_from_dashboard  CC=9  out:15
-    run_planfile  CC=1  out:2
-    update_ticket_from_dashboard  CC=9  out:15
   src.koruapi.dashboard_topology  [2 funcs]
     apply_dashboard_topology_update  CC=1  out:1
     dashboard_topology_payload  CC=1  out:2
@@ -2539,17 +2527,21 @@ MODULES:
     dsl_roundtrip_report  CC=1  out:7
     library_from_any  CC=12  out:15
     library_to_any  CC=2  out:3
-  src.koruide.ide  [3 funcs]
+  src.koruide.ide  [2 funcs]
     autopilot_ide_choices  CC=1  out:0
     detect_running_ides  CC=13  out:10
-    normalize_ide_id  CC=6  out:11
   src.koruide.socket  [1 funcs]
     default_socket_path  CC=4  out:15
+  src.korumesh.dashboard_parse  [1 funcs]
+    parse_mime_params  CC=6  out:6
   src.korumesh.envelope  [1 funcs]
     sign_envelope  CC=3  out:8
   src.korumesh.keys  [2 funcs]
     load_mesh_key  CC=2  out:6
     write_mesh_key  CC=3  out:6
+  src.korumesh.store  [2 funcs]
+    list_vision_frames  CC=6  out:3
+    remember_envelope  CC=3  out:3
   src.korumesh.transport  [1 funcs]
     publish_envelope  CC=4  out:9
   src.koruobserve.bootstrap  [3 funcs]
@@ -2654,8 +2646,16 @@ MODULES:
   src.koruvision.providers.base  [2 funcs]
     frame_from_png  CC=5  out:12
     png_dimensions  CC=4  out:5
-  src.koruvision.providers.browser_getdisplay  [1 funcs]
+  src.koruvision.providers.browser_getdisplay  [9 funcs]
+    _browser_upload_monitor_id  CC=2  out:3
+    _decode_browser_png_upload  CC=7  out:9
+    _frames_from_store  CC=4  out:8
+    _mesh_key_for_browser_upload  CC=2  out:3
+    _publish_browser_upload_if_requested  CC=4  out:3
+    _remember_browser_upload_envelope  CC=1  out:4
+    _vision_mime_with_provider  CC=7  out:11
     browser_capture_requested  CC=2  out:2
+    ingest_browser_upload  CC=7  out:15
   src.koruvision.providers.cli_tools  [4 funcs]
     availability  CC=3  out:4
     capture_all  CC=1  out:1
@@ -2672,8 +2672,10 @@ MODULES:
     capture_one_with_providers  CC=6  out:13
     list_provider_status  CC=2  out:3
     monitors_via_xrandr  CC=6  out:10
-  src.koruvision.providers.env  [5 funcs]
+  src.koruvision.providers.env  [7 funcs]
     capture_provider_pref  CC=4  out:6
+    compositor_hint  CC=5  out:3
+    env_truthy  CC=1  out:3
     is_wayland  CC=2  out:6
     looks_headless  CC=3  out:4
     portal_possible  CC=3  out:5
@@ -2776,9 +2778,9 @@ EDGES:
 ### Code Analysis (`project/analysis.toon.yaml`)
 
 ```toon markpact:analysis path=project/analysis.toon.yaml
-# code2llm | 449f 67133L | python:326,shell:49,yaml:22,typescript:18,yml:9,json:9,kotlin:6,txt:2,javascript:1,properties:1,xml:1,toml:1 | 2026-05-24
+# code2llm | 450f 67274L | python:327,shell:49,yaml:22,typescript:18,yml:9,json:9,kotlin:6,txt:2,javascript:1,properties:1,xml:1,toml:1 | 2026-05-24
 # generated in 0.18s
-# CC̄=3.8 | critical:0/2678 | dups:0 | cycles:0
+# CC̄=3.8 | critical:0/2683 | dups:0 | cycles:0
 
 HEALTH[0]: ok
 
@@ -2846,7 +2848,7 @@ LAYERS:
   │ mcp_provision              449L  0C   24m  CC=10     ←5
   │ autonomous_parser          449L  0C    3m  CC=14     ←2
   │ dashboard_routes           438L  0C    4m  CC=1      ←2
-  │ runner                     426L  0C   11m  CC=14     ←3
+  │ runner                     427L  0C   11m  CC=14     ←3
   │ topology                   414L  1C   15m  CC=12     ←9
   │ queue_clean                391L  2C   13m  CC=14     ←1
   │ portal_screencast          383L  1C    7m  CC=10     ←0
@@ -2893,7 +2895,7 @@ LAYERS:
   │ dashboard_serve            240L  1C   10m  CC=6      ←1
   │ obs_websocket              231L  1C   15m  CC=11     ←1
   │ autonomous_onboarding      231L  1C   11m  CC=10     ←0
-  │ dashboard_tickets          229L  0C   10m  CC=13     ←1
+  │ dashboard_tickets          231L  0C   10m  CC=14     ←1
   │ event_store                220L  4C   17m  CC=10     ←3
   │ ide                        216L  1C    6m  CC=10     ←1
   │ dev_sync                   213L  1C    9m  CC=11     ←0
@@ -2957,6 +2959,7 @@ LAYERS:
   │ prompters                  120L  2C    9m  CC=11     ←0
   │ application                119L  2C    7m  CC=5      ←0
   │ portal_capture             118L  1C    2m  CC=8      ←3
+  │ ports                      118L  5C    4m  CC=1      ←0
   │ cli_gate                   116L  0C    2m  CC=5      ←0
   │ heal                       116L  1C    3m  CC=5      ←1
   │ loop                       115L  0C    1m  CC=14     ←4
@@ -2973,6 +2976,7 @@ LAYERS:
   │ application                 98L  2C    6m  CC=5      ←0
   │ __init__                    97L  0C    2m  CC=2      ←0
   │ __init__                    95L  0C    3m  CC=9      ←0
+  │ locking                     94L  0C    5m  CC=5      ←2
   │ watch                       93L  0C    6m  CC=9      ←1
   │ cli                         90L  0C    4m  CC=11     ←2
   │ base                        90L  4C    6m  CC=5      ←4
@@ -2988,10 +2992,10 @@ LAYERS:
   │ dashboard                   86L  0C    8m  CC=3      ←1
   │ browser_capture             86L  0C    5m  CC=10     ←1
   │ plugin_router               86L  3C    5m  CC=6      ←0
-  │ locking                     86L  0C    4m  CC=4      ←1
   │ envelope                    85L  1C    4m  CC=3      ←4
   │ application                 82L  2C    6m  CC=3      ←0
   │ gc_cli_helpers              81L  0C    5m  CC=12     ←1
+  │ __init__                    80L  0C    0m  CC=0.0    ←0
   │ mesh                        79L  0C    5m  CC=8      ←2
   │ cli_runtime_context         79L  0C    3m  CC=14     ←0
   │ telemetry_snapshot          79L  0C    3m  CC=5      ←2
@@ -3013,7 +3017,6 @@ LAYERS:
   │ __init__                    69L  5C    0m  CC=0.0    ←0
   │ topology_post               68L  0C    1m  CC=14     ←1
   │ store_persistence           68L  0C    4m  CC=8      ←1
-  │ __init__                    68L  0C    0m  CC=0.0    ←0
   │ local_manager               67L  0C    2m  CC=2      ←1
   │ event_log_projection        66L  2C    5m  CC=6      ←0
   │ env_config                  65L  0C    3m  CC=1      ←1
@@ -3279,7 +3282,7 @@ COUPLING:
                        src.koru                             ──                            382                             93                              7                            ←12                             15                             16                             10                              8                             ←2                                                             3                                                            ←1  hub
                         scripts                           ←382                             ──                            ←27                            ←15                             ←2                            ←12                                                           ←18                             ←5                             ←7                            ←12                                                            ←1                                 hub
                     src.koruide                              6                             27                             ──                             ←8                             19                                                            10                                                             2                                                                                                                                                             hub
-                    src.koruapi                             56                             15                              8                             ──                              6                                                             3                                                             3                                                                                            4                                                                hub
+                    src.koruapi                             57                             15                              8                             ──                              6                                                             3                                                             3                                                                                            4                                                                hub
                         koruapi                             12                              2                              1                             18                             ──                                                            13                                                             2                              3                                                                                                                              hub
                  src.koruvision                              5                             12                                                                                                                          ──                              1                              1                                                             8                                                                                           ←4                                 hub
   plugins.koru-autopilot-vscode                            ←16                                                           ←10                             ←3                            ←13                             ←1                             ──                                                                                           ←2                                                            ←1                                                            ←1  hub
@@ -3291,26 +3294,26 @@ COUPLING:
                  docker.capture                                                             1                                                                                                                           4                                                             1                                                                                                                                                         ──                               
        services.healing-webhook                              1                                                                                                                                                                                         1                                                                                                                                                                                                                       ──
   CYCLES: none
-  HUB: src.koruapi/ (fan-in=25)
-  HUB: koruapi/ (fan-in=25)
-  HUB: koru/ (fan-in=15)
-  HUB: src.koruide/ (fan-in=102)
   HUB: src.koruobserve/ (fan-in=13)
-  HUB: src.korudsl/ (fan-in=7)
-  HUB: plugins.koru-autopilot-vscode/ (fan-in=47)
-  HUB: src.koru/ (fan-in=105)
   HUB: src.koruvision/ (fan-in=28)
+  HUB: src.koruide/ (fan-in=102)
+  HUB: koruapi/ (fan-in=25)
+  HUB: src.koruapi/ (fan-in=25)
+  HUB: koru/ (fan-in=15)
   HUB: src.korumesh/ (fan-in=12)
+  HUB: src.koru/ (fan-in=106)
+  HUB: plugins.koru-autopilot-vscode/ (fan-in=47)
   HUB: scripts/ (fan-in=481)
-  SMELL: src.koruapi/ fan-out=95 → split needed
-  SMELL: koruapi/ fan-out=51 → split needed
-  SMELL: koru/ fan-out=22 → split needed
-  SMELL: src.koruide/ fan-out=64 → split needed
-  SMELL: examples/ fan-out=12 → split needed
+  HUB: src.korudsl/ (fan-in=7)
   SMELL: src.koruobserve/ fan-out=32 → split needed
-  SMELL: src.koru/ fan-out=534 → split needed
+  SMELL: examples/ fan-out=12 → split needed
   SMELL: src.koruvision/ fan-out=27 → split needed
+  SMELL: src.koruide/ fan-out=64 → split needed
+  SMELL: koruapi/ fan-out=51 → split needed
+  SMELL: src.koruapi/ fan-out=96 → split needed
+  SMELL: koru/ fan-out=22 → split needed
   SMELL: src.korumesh/ fan-out=14 → split needed
+  SMELL: src.koru/ fan-out=534 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon
@@ -3320,15 +3323,15 @@ EXTERNAL:
 ### Duplication (`project/duplication.toon.yaml`)
 
 ```toon markpact:analysis path=project/duplication.toon.yaml
-# redup/duplication | 84 groups | 316f 52877L | 2026-05-24
+# redup/duplication | 84 groups | 317f 53018L | 2026-05-24
 
 SUMMARY:
-  files_scanned: 316
-  total_lines:   52877
+  files_scanned: 317
+  total_lines:   53018
   dup_groups:    84
   dup_fragments: 203
   saved_lines:   1022
-  scan_ms:       3566
+  scan_ms:       3484
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/cli_cleaned.py  dup=409L  groups=32  frags=37  (0.8%)
@@ -3925,8 +3928,8 @@ METRICS-TARGET:
 ### Evolution / Churn (`project/evolution.toon.yaml`)
 
 ```toon markpact:analysis path=project/evolution.toon.yaml
-# code2llm/evolution | 2603 func | 275f | 2026-05-24
-# generated in 0.05s
+# code2llm/evolution | 2608 func | 276f | 2026-05-24
+# generated in 0.01s
 
 NEXT[3] (ranked by impact):
   [1] !! SPLIT           src/koru/autonomous_cycle.py
