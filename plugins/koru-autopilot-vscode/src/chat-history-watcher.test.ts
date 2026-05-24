@@ -220,6 +220,35 @@ async function testParseVSCodeChatIndexReturnsEmptyOnGarbage(): Promise<void> {
   assert.deepStrictEqual(parseVSCodeChatIndex("not json", "0"), []);
   assert.deepStrictEqual(parseVSCodeChatIndex(JSON.stringify({ version: 1, entries: {} }), "0"), []);
   assert.deepStrictEqual(parseVSCodeChatIndex(JSON.stringify({ version: 1 }), "0"), []);
+  // entries must be an object — string/number/array are rejected
+  assert.deepStrictEqual(
+    parseVSCodeChatIndex(JSON.stringify({ entries: "nope" }), "0"),
+    [],
+    "entries=string must yield no rows",
+  );
+  assert.deepStrictEqual(
+    parseVSCodeChatIndex(JSON.stringify({ entries: 42 }), "0"),
+    [],
+    "entries=number must yield no rows",
+  );
+  // null sessions inside entries must be skipped without throwing
+  const payload = JSON.stringify({
+    entries: {
+      "session-broken": null,
+      "session-ok": {
+        sessionId: "session-ok",
+        responses: [
+          { message: { text: "kept" }, createdAt: 1700000010000 },
+        ],
+      },
+    },
+  });
+  const rows = parseVSCodeChatIndex(payload, "0");
+  assert.strictEqual(rows.length, 1, "broken null session must be skipped, valid kept");
+  assert.strictEqual(rows[0].text, "kept");
+  // afterCursor parsing: malformed input falls back to 0 (does not throw)
+  const allRows = parseVSCodeChatIndex(payload, "not-a-number");
+  assert.strictEqual(allRows.length, 1, "malformed afterCursor must be treated as 0");
 }
 
 async function testWatcherSkipsPollingWhenStoreUnavailable(): Promise<void> {

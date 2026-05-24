@@ -596,99 +596,111 @@ class AutopilotBridge {
         }
         return { ok: true, command: cmd, ...extra };
     }
-    async submitChat(verifyText) {
-        const ide = this.detectIde();
-        const verifyEnabled = this.postSubmitVerifyEnabled(verifyText);
-        if (ide === "vscodium") {
-            const hostClick = await this._tryHostClickSubmit();
-            if (hostClick.ok && hostClick.command) {
-                const accepted = await this.finalizeSubmitCandidate(hostClick.command, verifyText, verifyEnabled);
-                if (accepted) {
-                    return accepted;
-                }
+    async _submitChatVSCodium(verifyText, verifyEnabled) {
+        const hostClick = await this._tryHostClickSubmit();
+        if (hostClick.ok && hostClick.command) {
+            const accepted = await this.finalizeSubmitCandidate(hostClick.command, verifyText, verifyEnabled);
+            if (accepted)
+                return accepted;
+        }
+        const hostKey = await this._tryHostKeySubmit();
+        if (hostKey.ok && hostKey.command) {
+            const accepted = await this.finalizeSubmitCandidate(hostKey.command, verifyText, verifyEnabled, { unverified: !this.trustUnverifiedHostSubmit() });
+            if (accepted)
+                return accepted;
+            if (verifyEnabled && verifyText) {
+                return {
+                    ok: false,
+                    command: hostKey.command || "vscodium-host-key-noop",
+                    reason: "host-key submit ran but chat input still contains pasted text",
+                    attempts: hostKey.attempts,
+                    unverified: true,
+                };
             }
-            const hostKey = await this._tryHostKeySubmit();
-            if (hostKey.ok && hostKey.command) {
-                const accepted = await this.finalizeSubmitCandidate(hostKey.command, verifyText, verifyEnabled, { unverified: !this.trustUnverifiedHostSubmit() });
-                if (accepted) {
-                    return accepted;
-                }
-                if (verifyEnabled && verifyText) {
-                    return {
-                        ok: false,
-                        command: hostKey.command || "vscodium-host-key-noop",
-                        reason: "host-key submit ran but chat input still contains pasted text",
-                        attempts: hostKey.attempts,
-                        unverified: true,
-                    };
-                }
+        }
+        return {
+            ok: false,
+            command: "vscodium-submit-unavailable",
+            reason: hostClick.reason || hostKey.reason,
+            attempts: [...(hostClick.attempts || []), ...(hostKey.attempts || [])],
+            unverified: true,
+        };
+    }
+    async _submitChatCursorVSCodeFallback(ide, verifyText, verifyEnabled) {
+        const hostKey = await this._tryHostKeySubmit(ide === "cursor" ? "cursor" : undefined);
+        if (hostKey.ok && hostKey.command) {
+            const accepted = await this.finalizeSubmitCandidate(hostKey.command, verifyText, verifyEnabled, { unverified: !this.trustUnverifiedHostSubmit() });
+            if (accepted)
+                return accepted;
+            if (verifyEnabled && verifyText) {
+                return {
+                    ok: false,
+                    command: hostKey.command || `${ide}-host-key-noop`,
+                    reason: "host-key submit ran but chat input still contains pasted text",
+                    attempts: hostKey.attempts,
+                    unverified: true,
+                };
             }
+        }
+        if (ide === "cursor") {
             return {
                 ok: false,
-                command: "vscodium-submit-unavailable",
-                reason: hostClick.reason || hostKey.reason,
-                attempts: [...(hostClick.attempts || []), ...(hostKey.attempts || [])],
+                command: "cursor-submit-unavailable",
+                reason: hostKey.reason,
+                attempts: hostKey.attempts,
                 unverified: true,
             };
         }
-        const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-        const cache = this.getProbeCache();
-        const candidates = (0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildSubmitCommands)(ide), cache?.submit), existing);
-        debugLog("SUBMIT_CANDIDATES", { ide, candidates, verifyEnabled });
+        return null;
+    }
+    async _tryRegisteredCommands(candidates, verifyText, verifyEnabled) {
         for (const cmd of candidates) {
             if (!(await this.runCommand(cmd))) {
                 console.warn(`koru autopilot: submitChat command not available: ${cmd}`);
                 continue;
             }
             const accepted = await this.finalizeSubmitCandidate(cmd, verifyText, verifyEnabled);
-            if (accepted) {
+            if (accepted)
                 return accepted;
+        }
+        return null;
+    }
+    async _tryTypeSubmitFallbacks(verifyText, verifyEnabled) {
+        for (const attempt of [() => this._tryTypeSubmit("\n"), () => this._tryTypeSubmit("\r")]) {
+            const result = await attempt();
+            if (result.ok && result.command) {
+                const accepted = await this.finalizeSubmitCandidate(result.command, verifyText, verifyEnabled);
+                if (accepted)
+                    return accepted;
             }
         }
+        return null;
+    }
+    async submitChat(verifyText) {
+        const ide = this.detectIde();
+        const verifyEnabled = this.postSubmitVerifyEnabled(verifyText);
+        if (ide === "vscodium") {
+            return this._submitChatVSCodium(verifyText, verifyEnabled);
+        }
+        const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+        const cache = this.getProbeCache();
+        const candidates = (0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildSubmitCommands)(ide), cache?.submit), existing);
+        debugLog("SUBMIT_CANDIDATES", { ide, candidates, verifyEnabled });
+        const registered = await this._tryRegisteredCommands(candidates, verifyText, verifyEnabled);
+        if (registered)
+            return registered;
         if (ide === "windsurf") {
             // On Windsurf, typing a newline is extremely dangerous because if Cascade is not focused, it toggles/closes the panel!
             return { ok: false };
         }
         if (ide === "cursor" || ide === "vscode") {
-            const hostKey = await this._tryHostKeySubmit(ide === "cursor" ? "cursor" : undefined);
-            if (hostKey.ok && hostKey.command) {
-                const accepted = await this.finalizeSubmitCandidate(hostKey.command, verifyText, verifyEnabled, { unverified: !this.trustUnverifiedHostSubmit() });
-                if (accepted) {
-                    return accepted;
-                }
-                if (verifyEnabled && verifyText) {
-                    return {
-                        ok: false,
-                        command: hostKey.command || `${ide}-host-key-noop`,
-                        reason: "host-key submit ran but chat input still contains pasted text",
-                        attempts: hostKey.attempts,
-                        unverified: true,
-                    };
-                }
-            }
-            if (ide === "cursor") {
-                return {
-                    ok: false,
-                    command: "cursor-submit-unavailable",
-                    reason: hostKey.reason,
-                    attempts: hostKey.attempts,
-                    unverified: true,
-                };
-            }
+            const fallback = await this._submitChatCursorVSCodeFallback(ide, verifyText, verifyEnabled);
+            if (fallback)
+                return fallback;
         }
-        const fallbacks = [
-            () => this._tryTypeSubmit("\n"),
-            () => this._tryTypeSubmit("\r"),
-        ];
-        for (const attempt of fallbacks) {
-            const result = await attempt();
-            if (result.ok && result.command) {
-                const accepted = await this.finalizeSubmitCandidate(result.command, verifyText, verifyEnabled);
-                if (accepted) {
-                    return accepted;
-                }
-            }
-        }
+        const typeFallback = await this._tryTypeSubmitFallbacks(verifyText, verifyEnabled);
+        if (typeFallback)
+            return typeFallback;
         return { ok: false };
     }
     async focusChat() {

@@ -392,6 +392,45 @@ function isLikelyWaylandSession(): boolean {
   );
 }
 
+function sanitizeWindsurfCache(sanitized: ProbeCacheEntry): void {
+  const unsafePaste = ["editor.action.clipboardPasteAction", "type"];
+  if (sanitized.paste && unsafePaste.includes(sanitized.paste)) {
+    sanitized.paste = undefined;
+  }
+  if (sanitized.submit && (sanitized.submit.startsWith("type:") || sanitized.submit === "type")) {
+    sanitized.submit = undefined;
+  }
+}
+
+function sanitizeCursorSubmitCache(sanitized: ProbeCacheEntry): void {
+  if (sanitized.submit && (sanitized.submit.startsWith("type:") || sanitized.submit === "type")) {
+    sanitized.submit = undefined;
+    return;
+  }
+  if (typeof sanitized.submit !== "string") return;
+  const cmd = sanitized.submit;
+  // On Wayland, xdotool cannot reach native Cursor windows at all — every
+  // xdotool host-key probe is a false positive (exit 0, no effect). Discard
+  // the cached winner so the ladder re-probes composer.sendToAgent / ydotool.
+  if (isLikelyWaylandSession() && cmd.startsWith("xdotool ")) {
+    sanitized.submit = undefined;
+    return;
+  }
+  // Plugin 0.1.47 cached host-level plain ``Return`` for Cursor. On Linux
+  // (Wayland with XWayland) ``xdotool key Return`` exits 0 even though
+  // Cursor's chat textarea treats it as a newline rather than a submit.
+  // Force a re-probe so 0.1.48's reordered ladder can pick ``Ctrl+Return``.
+  // Match injector-specific renderings without ctrl modifier:
+  //   "xdotool key Return", "ydotool key Return", "wtype -k Return"
+  const hasCtrl = /\bctrl\b/i.test(cmd) || /-M\s+ctrl\b/.test(cmd);
+  const isHostKey =
+    /^(xdotool|ydotool)\s+key\s+Return$/.test(cmd) ||
+    /^wtype(\s+-[Mm]\s+\S+)*\s+-k\s+Return$/.test(cmd);
+  if (!hasCtrl && isHostKey) {
+    sanitized.submit = undefined;
+  }
+}
+
 export function sanitizeProbeCacheForIde(
   entry: ProbeCacheEntry | undefined,
   ide: string
@@ -400,44 +439,8 @@ export function sanitizeProbeCacheForIde(
     return entry;
   }
   const sanitized = { ...entry };
-  if (ide === "windsurf") {
-    const unsafePaste = ["editor.action.clipboardPasteAction", "type"];
-    if (sanitized.paste && unsafePaste.includes(sanitized.paste)) {
-      sanitized.paste = undefined;
-    }
-    if (sanitized.submit && (sanitized.submit.startsWith("type:") || sanitized.submit === "type")) {
-      sanitized.submit = undefined;
-    }
-  }
-  if (
-    ide === "cursor" &&
-    sanitized.submit &&
-    (sanitized.submit.startsWith("type:") || sanitized.submit === "type")
-  ) {
-    sanitized.submit = undefined;
-  }
-  // Plugin 0.1.47 cached host-level plain ``Return`` for Cursor. On Linux
-  // (Wayland with XWayland) ``xdotool key Return`` exits 0 even though
-  // Cursor's chat textarea treats it as a newline rather than a submit.
-  // Force a re-probe so 0.1.48's reordered ladder can pick ``Ctrl+Return``.
-  // Match injector-specific renderings without ctrl modifier:
-  //   "xdotool key Return", "ydotool key Return", "wtype -k Return"
-  if (ide === "cursor" && typeof sanitized.submit === "string") {
-    const cmd = sanitized.submit;
-    // On Wayland, xdotool cannot reach native Cursor windows at all — every
-    // xdotool host-key probe is a false positive (exit 0, no effect). Discard
-    // the cached winner so the ladder re-probes composer.sendToAgent / ydotool.
-    if (isLikelyWaylandSession() && cmd.startsWith("xdotool ")) {
-      sanitized.submit = undefined;
-    }
-    const hasCtrl = /\bctrl\b/i.test(cmd) || /-M\s+ctrl\b/.test(cmd);
-    const isHostKey =
-      /^(xdotool|ydotool)\s+key\s+Return$/.test(cmd) ||
-      /^wtype(\s+-[Mm]\s+\S+)*\s+-k\s+Return$/.test(cmd);
-    if (!hasCtrl && isHostKey) {
-      sanitized.submit = undefined;
-    }
-  }
+  if (ide === "windsurf") sanitizeWindsurfCache(sanitized);
+  if (ide === "cursor") sanitizeCursorSubmitCache(sanitized);
   if (ide === "vscodium" && sanitized.submit === "workbench.action.chat.submit") {
     sanitized.submit = undefined;
   }
