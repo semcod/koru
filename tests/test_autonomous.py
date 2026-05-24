@@ -107,6 +107,63 @@ def test_scan_after_idle_queue_runs_scan_when_queue_idle(tmp_path, monkeypatch) 
     assert calls[0]["apply"] is True
 
 
+def test_scan_after_idle_runs_code2llm_discovery_when_semcod_scan_empty(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        autonomous_cycle_mod,
+        "run_scan",
+        lambda **_kwargs: ScanResult(suggestions=[], applied=[], skipped=[]),
+    )
+    discoveries: list[Path] = []
+
+    def fake_discovery(project, _hp, _emit):
+        discoveries.append(project)
+        return {"ran": True, "applied": ["Split god module: src/a.py"], "skipped": []}
+
+    monkeypatch.setattr(
+        autonomous_cycle_mod,
+        "_run_code2llm_discovery_after_idle",
+        fake_discovery,
+    )
+    state = autonomous_cycle_mod.AutoloopState()
+    telemetry = {
+        "scan_after_idle_run": False,
+        "scan_after_idle_applied": 0,
+        "scan_after_idle_skipped_rate_limit": False,
+    }
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=[],
+        last_status="idle",
+        last_message="",
+        last_ticket_id=None,
+    )
+
+    result = autonomous_cycle_mod._handle_scan_after_idle(
+        tmp_path,
+        state,
+        1,
+        queue_result,
+        True,
+        True,
+        0.0,
+        False,
+        telemetry,
+        lambda *_args, **_kwargs: None,
+        lambda *_args, **_kwargs: None,
+    )
+
+    assert result is not None
+    assert discoveries == [tmp_path]
+    assert telemetry["code2llm_discovery_run"] is True
+    assert telemetry["code2llm_discovery_applied"] == 1
+    assert state.telemetry_scan_after_idle_tickets_applied == 1
+
+
 def test_scan_after_idle_min_interval_skips_second_scan(tmp_path, monkeypatch) -> None:
     calls: list[dict] = []
 
@@ -834,7 +891,7 @@ def test_autonomous_jsonl_keyboard_interrupt_emits_reason(tmp_path, monkeypatch)
         if n_sleep == 1:
             raise KeyboardInterrupt()
 
-    monkeypatch.setattr(autonomous_mod.time, "sleep", sleep_side)
+    monkeypatch.setattr(autonomous_mod, "_sleep", sleep_side)
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         rc = autonomous_mod.autonomous_main(
@@ -1344,6 +1401,55 @@ def test_setup_autopilot_plugin_unsupported_skips_wait(tmp_path, monkeypatch) ->
     assert connected is False
 
 
+def test_setup_autopilot_plugin_installed_but_not_loaded_hints_reload(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    args = SimpleNamespace(
+        enable_autopilot=True,
+        emit_events="human",
+        autopilot_plugin_wait_seconds=5.0,
+    )
+    messages: list[str] = []
+    wait_called = {"n": 0}
+
+    def _wait(*_a, **_k):
+        wait_called["n"] += 1
+        return False
+
+    monkeypatch.setattr(
+        autonomous_mod,
+        "install_plugin_for_ide",
+        lambda **_kwargs: SimpleNamespace(
+            status="already_installed",
+            ide="cursor",
+            message="ok",
+            command=None,
+        ),
+    )
+    monkeypatch.setattr(autonomous_mod, "format_plugin_install_result", lambda _r: "already")
+    monkeypatch.setattr(autonomous_mod, "_wait_for_autopilot_plugin", _wait)
+    monkeypatch.setattr(autonomous_mod, "_stdio_info", lambda message, **_kwargs: messages.append(message))
+    monkeypatch.setattr(
+        "koru.autonomous_operator._extension_active_in_latest_session",
+        lambda _ide: False,
+    )
+
+    connected = autonomous_mod._setup_autopilot_plugin(
+        args,
+        "cursor",
+        tmp_path / "koru-autopilot-cursor.sock",
+        client=object(),
+    )
+
+    assert connected is False
+    assert wait_called["n"] == 0
+    text = "\n".join(messages)
+    assert "Developer: Reload Window" in text
+    assert "pomijam oczekiwanie na plugin" in text
+    assert "koru ide doctor --ide cursor --fix --explain" in text
+
+
 def test_status_has_autopilot_plugin_matches_specific_ide(monkeypatch) -> None:
     monkeypatch.delenv("KORU_STRICT_PLUGIN_VERSION", raising=False)
     monkeypatch.delenv("KORU_PLUGIN_VERSION_POLICY", raising=False)
@@ -1660,7 +1766,10 @@ def test_run_cycle_autopilot_waiting_input_logs_ticket_from_waiting_list(
 
     assert queue_result.last_status == "waiting_input"
     assert autopilot_status == "ok"
-    assert driven == ["answer this prompt"]
+    assert len(driven) == 1
+    assert driven[0].startswith("answer this prompt")
+    assert "planfile ticket done PLF-999" in driven[0]
+    assert "planfile ticket input PLF-999" in driven[0]
     out = capsys.readouterr().out
     assert "ticket=PLF-999" in out
     assert "backend=plugin" in out
@@ -1773,7 +1882,9 @@ sprint:
     assert queue_result.last_status == "waiting_input"
     assert state.stagnation_streak == 1
     assert autopilot_status == "ok"
-    assert driven == ["remove duplicated classes"]
+    assert len(driven) == 1
+    assert driven[0].startswith("remove duplicated classes")
+    assert "planfile ticket done PLF-1321" in driven[0]
 
 
 def test_run_cycle_llm_ready_skips_redrive_on_recent_in_memory_chat_activity(

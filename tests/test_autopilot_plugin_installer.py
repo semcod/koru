@@ -145,7 +145,9 @@ def test_install_plugin_configures_socket_path(
     assert f'"{plugin_installer.SOCKET_SETTING_KEY}": "{socket_path}"' in settings_path.read_text(
         encoding="utf-8",
     )
+    assert '"koruAutopilot.autoConnect": true' in settings_path.read_text(encoding="utf-8")
     assert "reassert rc=0" in result.message
+    assert "Developer: Reload Window" in result.message
     assert result.command == ["/usr/bin/windsurf", "--install-extension", str(vsix), "--force"]
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -28,16 +29,43 @@ def _resolve_ide(raw: str) -> str | None:
 def _resolve_socket(args: argparse.Namespace, ide: str) -> Path:
     if args.socket:
         return Path(args.socket).expanduser().resolve()
-    if args.instance:
-        import os
-
-        os.environ["KORU_AUTOPILOT_INSTANCE"] = args.instance
-    return default_socket_path()
+    instance = (args.instance or ide or "").strip()
+    if not instance:
+        return default_socket_path()
+    previous = os.environ.get("KORU_AUTOPILOT_INSTANCE")
+    os.environ["KORU_AUTOPILOT_INSTANCE"] = instance
+    try:
+        return default_socket_path()
+    finally:
+        if previous is None:
+            os.environ.pop("KORU_AUTOPILOT_INSTANCE", None)
+        else:
+            os.environ["KORU_AUTOPILOT_INSTANCE"] = previous
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="koru ide")
     sub = parser.add_subparsers(dest="action", required=True)
+    discover = sub.add_parser(
+        "discover",
+        help="Run code2llm broad discovery and apply planfile tickets (idle queue helper).",
+    )
+    discover.add_argument("--project", type=Path, default=Path.cwd())
+    discover.add_argument("--output-subdir", default="project")
+    discover.add_argument("--formats", default="all")
+    discover.add_argument("--exclude", action="append", default=None, metavar="PATTERN")
+    discover.add_argument("--no-apply", dest="apply_planfile", action="store_false", default=True)
+    discover.add_argument("--source", default="koru-project-discovery")
+    discover.add_argument("--sprint", default="current")
+    discover.add_argument("--limit", type=int, default=20)
+    discover.add_argument("--stale-minutes", type=float, default=60.0)
+    discover.add_argument("--force", action="store_true")
+    discover.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+    )
     doctor = sub.add_parser(
         "doctor",
         help="Diagnose autopilot daemon + IDE plugin bridge for one IDE lane.",
@@ -111,10 +139,49 @@ def action_ide_doctor(args: argparse.Namespace) -> int:
     return 0 if status.ready else 1
 
 
+def action_ide_discover(args: argparse.Namespace) -> int:
+    from koru.autonomy.code2llm_discovery import (
+        DEFAULT_EXCLUDES,
+        format_discovery_summary,
+        run_code2llm_discovery,
+    )
+
+    excludes = tuple(args.exclude) if args.exclude else DEFAULT_EXCLUDES
+    outcome = run_code2llm_discovery(
+        args.project.expanduser().resolve(),
+        output_subdir=args.output_subdir,
+        formats=args.formats,
+        excludes=excludes,
+        apply_planfile=args.apply_planfile,
+        planfile_source=args.source,
+        planfile_sprint=args.sprint,
+        planfile_limit=args.limit,
+        stale_minutes=args.stale_minutes,
+        force=args.force,
+    )
+    if args.output_format == "json":
+        print(json.dumps(outcome.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(format_discovery_summary(outcome))
+        if outcome.applied_titles:
+            print("applied tickets:")
+            for title in outcome.applied_titles:
+                print(f"  · {title}")
+        if outcome.error:
+            return 1
+    if outcome.error:
+        return 1
+    if not outcome.ran and not outcome.applied_titles:
+        return 2  # nothing happened — caller should know
+    return 0
+
+
 def ide_main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     if args.action == "doctor":
         return action_ide_doctor(args)
+    if args.action == "discover":
+        return action_ide_discover(args)
     parser.error(f"unknown action: {args.action}")
     return 2

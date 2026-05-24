@@ -404,6 +404,38 @@ def test_format_post_startup_operator_hints_for_jetbrains_skips_plugin_steps() -
     assert "Command Palette" not in text
     assert "--require-plugin" not in text
     assert "koru: Connect autopilot daemon" not in text
+    assert "KORU_OS_INJECTOR=1" in text
+
+
+def test_format_post_startup_operator_hints_warns_when_jetbrains_running_but_windsurf_selected(
+    tmp_path: Path,
+) -> None:
+    probe = startup.AutonomousStartupProbe(
+        koru_version="0.0-test",
+        python_version="3.12",
+        project=tmp_path,
+        agent_lane_cli="auto",
+        autopilot_ide_cli="auto",
+        resolved_lane="windsurf",
+        lane_source="env:KORU_AUTOPILOT_INSTANCE",
+        resolved_autopilot_ide="windsurf",
+        autopilot_ide_source="lane",
+        running_ides=("Windsurf (pid=1)", "JetBrains IDE (pid=2)"),
+        terminal_lane="windsurf",
+        socket_path="/run/user/1000/koru-autopilot-windsurf.sock",
+        session="wayland",
+        term_program="vscode",
+        headless=False,
+        xdg_runtime_dir="/run/user/1000",
+    )
+
+    text = "\n".join(
+        startup.format_post_startup_operator_hints(probe, plugin_connected=True),
+    )
+
+    assert "JetBrains IDE działa, ale autopilot wybrał ide=windsurf" in text
+    assert "--agent-lane jetbrains --autopilot-ide jetbrains" in text
+    assert "keyboard/OS-injector" in text
 
 
 def test_format_post_startup_operator_hints_for_zed_uses_keyboard_path() -> None:

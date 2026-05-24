@@ -96,6 +96,8 @@ def test_inactive_extension_hypothesis_uses_real_config_home(
     assert hyp is not None
     assert str(config / "logs") in hyp.evidence
     assert "Vscode" not in hyp.evidence
+    assert "Reload Window" in hyp.remediation.summary
+    assert "extension host" in hyp.remediation.summary
 
 
 def test_workspace_socket_mismatch(tmp_path: Path) -> None:
@@ -136,6 +138,43 @@ def test_extension_activated_in_exthost(tmp_path: Path, monkeypatch: pytest.Monk
     )
     monkeypatch.setattr(shared, "config_home_for_ide", lambda _ide: config)
     assert shared.extension_activated_in_exthost("cursor") is True
+
+
+def test_extension_activated_uses_latest_session_only(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stale activation in an older session must not hide missing activation now."""
+    config = tmp_path / "Cursor"
+    old = config / "logs" / "20260524T100000" / "window1" / "exthost"
+    new = config / "logs" / "20260524T190000" / "window1" / "exthost"
+    old.mkdir(parents=True)
+    new.mkdir(parents=True)
+    (old / "exthost.log").write_text(
+        "Extension activated success: semcod.koru-autopilot-vscode\n",
+        encoding="utf-8",
+    )
+    (new / "exthost.log").write_text(
+        "Extension activated success: vscode.git\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(shared, "config_home_for_ide", lambda _ide: config)
+    assert shared.extension_activated_in_exthost("cursor") is False
+
+
+def test_latest_ide_exthost_session_skips_cli_only_logs(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = tmp_path / "Cursor"
+    cli_only = config / "logs" / "20260524T191323"
+    cli_only.mkdir(parents=True)
+    (cli_only / "cli.log").write_text("list-extensions\n", encoding="utf-8")
+    real = config / "logs" / "20260524T190238" / "window1_wb0" / "exthost"
+    real.mkdir(parents=True)
+    (real / "exthost.log").write_text("Extension host started\n", encoding="utf-8")
+    monkeypatch.setattr(shared, "config_home_for_ide", lambda _ide: config)
+    assert shared.latest_ide_exthost_session("cursor") == config / "logs" / "20260524T190238"
 
 
 def test_gc_stale_socket_removes_dead_file(tmp_path: Path) -> None:

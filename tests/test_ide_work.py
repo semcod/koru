@@ -136,6 +136,20 @@ class TestIdeWork(unittest.TestCase):
         )
         self.assertIn("PLF-1", prompt)
         self.assertIn("Do the thing", prompt)
+        self.assertIn("planfile ticket done PLF-1", prompt)
+        self.assertIn("planfile ticket input PLF-1", prompt)
+        self.assertIn("planfile ticket fail PLF-1", prompt)
+
+    def test_build_ide_work_prompt_includes_planfile_commands_without_mcp(self) -> None:
+        prompt = build_ide_work_prompt(
+            {"id": "STARTER-206", "name": "Refactor autonomous"},
+            fallback="x",
+            include_mcp_hint=False,
+        )
+        self.assertNotIn("koru_run_ticket", prompt)
+        self.assertIn("planfile ticket done STARTER-206", prompt)
+        self.assertIn("planfile ticket input STARTER-206", prompt)
+        self.assertIn("Do not leave completed IDE work in waiting_input", prompt)
 
 
 if __name__ == "__main__":

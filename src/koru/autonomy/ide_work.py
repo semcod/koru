@@ -12,6 +12,7 @@ from typing import Any
 
 import yaml
 
+from koru.autonomy.planfile_handoff import planfile_status_handoff_lines
 from koru.project_pipeline import load_koru_project_pipeline
 from koru.tasks import create_nl_task
 
@@ -149,11 +150,48 @@ def _ticket_from_created_discovery(ticket_id: str) -> dict[str, Any]:
     }
 
 
-def ensure_project_discovery_ticket(project: Path) -> dict[str, Any] | None:
-    """Create or return the active broad-analysis ticket for an idle queue."""
+def ensure_project_discovery_ticket(
+    project: Path,
+    *,
+    auto_run_code2llm: bool = True,
+) -> dict[str, Any] | None:
+    """Run code2llm discovery automatically when possible; otherwise create ticket.
+
+    When ``code2llm`` is installed we generate fresh artifacts and apply
+    planfile tickets locally rather than sending a long checklist to the IDE
+    LLM. The legacy human ticket is created only when:
+
+    * ``auto_run_code2llm`` is ``False`` (test/CI override),
+    * the ``code2llm`` binary is missing,
+    * the discovery run failed.
+
+    Returns the active discovery ticket (existing or newly created) or
+    ``None`` when discovery succeeded and produced runnable tickets.
+    """
     existing = _active_project_discovery_ticket(project)
     if existing is not None:
         return existing
+
+    if auto_run_code2llm:
+        from koru.autonomy.code2llm_discovery import (
+            format_discovery_summary,
+            run_code2llm_discovery,
+        )
+
+        outcome = run_code2llm_discovery(project)
+        summary = format_discovery_summary(outcome)
+        try:
+            from koru.activity_log import activity
+
+            activity("SCAN", summary)
+        except Exception:  # noqa: BLE001 — activity log is best-effort
+            print(f"koru autonomous: {summary}")
+        if outcome.ran and outcome.code2llm_returncode == 0:
+            # Real, actionable tickets were applied (or already up-to-date).
+            return None
+        if outcome.skipped_reason and outcome.applied_titles:
+            return None
+
     generation = datetime.now(UTC).isoformat()
     try:
         created = create_nl_task(
@@ -211,20 +249,16 @@ def build_ide_work_prompt(
                 "Use koru MCP tools when available:",
                 "- koru_list_tickets (project_root = this workspace)",
                 f"- koru_run_ticket(ticket_id={ticket_id!r}, mode=apply)",
-                (
-                    "Implement the change, run local regression gates, "
-                    "then mark the ticket done in planfile."
-                ),
+                "Implement the change and run local regression gates.",
+                "",
+                *planfile_status_handoff_lines(ticket_id),
             ],
         )
     else:
         lines.append("")
-        lines.append(
-            (
-                "Implement the change, run tests/regression gates, "
-                "then mark the ticket done in planfile."
-            ),
-        )
+        lines.append("Implement the change and run tests/regression gates.")
+        lines.append("")
+        lines.extend(planfile_status_handoff_lines(ticket_id))
     prompt = "\n".join(lines).strip()
     return prompt if prompt else fallback
 

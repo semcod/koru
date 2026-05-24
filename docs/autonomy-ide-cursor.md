@@ -20,6 +20,8 @@
 - [x] Keyboard simulation fallback — xdotool/wtype/ydotool
 - [x] WUP integration — `--wup-watch` z testql mode
 - [x] Idle diagnostics — regix, redup, testql, redsl, sumr
+- [x] Idle project discovery — pusta kolejka moze uruchomic `code2llm -f all`
+      i wygenerowac nowe tickety `planfile` z analizy calego projektu
 - [x] Post-run verify — `queue.post_run_verify` in `koru.yaml` (queue + IDE `done` detection)
 - [x] Diagnostic tickets — automatyczne tworzenie ticketów przy błędach
 - [x] Topology integration — `.koru/topology.yaml` toggles

@@ -478,7 +478,9 @@ def _format_plugin_status_line(
     if plugin_supported and plugin_connected is False:
         return (
             f"koru autonomous: [!] brak zgodnego pluginu na {sock} — "
-            f"drive jest wstrzymany w trybie strict. Reload IDE, potem połącz plugin."
+            f"drive jest wstrzymany w trybie strict. Jeśli VSIX był instalowany "
+            f"po starcie IDE, zrób Developer: Reload Window albo restart IDE, "
+            f"potem połącz plugin."
         )
     if not plugin_supported:
         return (
@@ -518,6 +520,14 @@ def _format_ide_mismatch_warnings(probe: AutonomousStartupProbe) -> list[str]:
             "koru autonomous: [!] terminal wygląda na VSCodium, ale autopilot wybrał vscode — "
             "ustaw KORU_AUTOPILOT_INSTANCE=vscodium albo użyj --autopilot-ide vscodium",
         )
+    if ide != "jetbrains" and "jetbrains" in running_labels:
+        lines.append(
+            "koru autonomous: [!] JetBrains IDE działa, ale autopilot wybrał "
+            f"ide={ide}; Koru nie będzie sterował oknem chatu JetBrains. "
+            "Jeśli chcesz JetBrains, uruchom z --agent-lane jetbrains "
+            "--autopilot-ide jetbrains albo ustaw KORU_AUTOPILOT_INSTANCE=jetbrains. "
+            "Uwaga: JetBrains używa ścieżki keyboard/OS-injector, nie VSIX pluginu."
+        )
 
     return lines
 
@@ -535,6 +545,8 @@ def _format_plugin_setup_steps(
         "(po Reload po task koru:mcp:bootstrap)",
         "koru autonomous: 3) Autopilot: Command Palette → „koru: Connect autopilot daemon” "
         "(pasek: koru: on)",
+        "koru autonomous:    Jeśli komendy nie ma albo plugin list jest pusty po instalacji VSIX: "
+        "Developer: Reload Window / restart IDE",
         f"koru autonomous: 4) Socket wtyczki = {sock} "
         f"({settings_hint}: koruAutopilot.socketPath)",
         "koru autonomous: 5) Ten sam socket w shellu: export "
@@ -563,6 +575,8 @@ def _format_keyboard_setup_steps(
         f"koru autonomous: 3) Socket daemona = {sock}",
         f"koru autonomous: 4) Ustaw w shellu: export KORU_AUTOPILOT_INSTANCE={ide}",
         f"koru autonomous: 5) Skalibruj OS injector: task koru:ide-os:calibrate IDE={ide}",
+        "koru autonomous:    Na Waylandzie włącz fallback jawnie: export KORU_OS_INJECTOR=1; "
+        "kliknij/skalibruj pole chatu przed testem.",
         f"koru autonomous: 6) Test: koru autopilot drive --ide {ide} 'probe test' "
         "(fallback keyboard/OS-injector)",
         "koru autonomous: 7) Dashboard: task koru:server → http://localhost:8765/",

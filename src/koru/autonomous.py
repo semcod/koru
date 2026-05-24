@@ -798,6 +798,10 @@ def _compute_cycle_sleep(
     )
 
 
+def _sleep(seconds: float) -> None:
+    time.sleep(seconds)
+
+
 def _run_autonomous_cycle(
     *,
     cycle: int,
@@ -885,7 +889,7 @@ def _run_autonomous_cycle(
         fmt=args.emit_events,
     )
     if effective_sleep > 0:
-        time.sleep(effective_sleep)
+        _sleep(effective_sleep)
     return False
 
 

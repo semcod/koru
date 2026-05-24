@@ -181,7 +181,8 @@ def vscode_core_version(ide: str) -> str | None:
     return None
 
 
-def extension_activated_in_exthost(ide: str, extension_id: str = EXTENSION_ID) -> bool | None:
+def latest_ide_exthost_session(ide: str) -> Path | None:
+    """Return the newest log session that has a real IDE window exthost (not CLI-only)."""
     home = config_home_for_ide(ide)
     if home is None:
         return None
@@ -189,22 +190,54 @@ def extension_activated_in_exthost(ide: str, extension_id: str = EXTENSION_ID) -
     if not logs_root.is_dir():
         return None
     sessions = sorted(logs_root.glob("20*"), key=lambda p: p.stat().st_mtime, reverse=True)
+    for session in sessions:
+        if any(session.glob("window*/exthost/exthost.log")):
+            return session
+    return None
+
+
+def extension_activated_in_exthost(ide: str, extension_id: str = EXTENSION_ID) -> bool | None:
+    """Whether ``extension_id`` activated in the **current** IDE session's extension host.
+
+    Only the newest session with ``window*/exthost/exthost.log`` is checked so a
+  stale activation from an older Cursor/VS Code run does not mask a VSIX that was
+    installed after the IDE started (requires Reload Window).
+    """
+    session = latest_ide_exthost_session(ide)
+    if session is None:
+        return None
     pattern = re.compile(
         rf"_doActivateExtension\s+{re.escape(extension_id)}\b|"
         rf"Extension activated success:\s+{re.escape(extension_id)}\b",
     )
-    for session in sessions[:5]:
-        for log_path in session.glob("window*/exthost/exthost.log"):
-            try:
-                text = log_path.read_text(encoding="utf-8", errors="replace")
-            except OSError:
-                continue
-            if pattern.search(text):
-                return True
-    # Scanned recent logs without activation line — inconclusive vs not active.
-    if sessions:
-        return False
-    return None
+    for log_path in session.glob("window*/exthost/exthost.log"):
+        try:
+            text = log_path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if pattern.search(text):
+            return True
+    return False
+
+
+def extension_reload_required_lines(ide: str, *, label: str | None = None) -> list[str]:
+    """Actionable operator lines when VSIX is on disk but exthost never loaded the extension."""
+    name = label or ide
+    lines = [
+        f"koru autonomous: [!] VSIX zainstalowany, ale {EXTENSION_ID} nie jest aktywny "
+        f"w bieżącej sesji {name}.",
+        "koru autonomous:     1) Developer: Reload Window (Ctrl+Shift+P)",
+        "koru autonomous:     2) Command Palette → „koru: Connect autopilot daemon”",
+        f"koru autonomous:     Diagnostyka: koru ide doctor --ide {ide} --fix --explain",
+    ]
+    trusted = publisher_trusted(ide)
+    if trusted is False:
+        lines.insert(
+            2,
+            "koru autonomous:     0) Extensions → Trust Publisher „semcod” "
+            "(albo: koru ide doctor --fix), potem Reload Window",
+        )
+    return lines
 
 
 def extension_metadata_path(ide: str) -> Path | None:
@@ -373,8 +406,9 @@ def inactive_extension_hypothesis(ide: str) -> Hypothesis | None:
         remediation=Remediation(
             kind="manual",
             summary=(
-                "Command Palette → koru: Connect autopilot daemon; "
-                "jeśli brak komendy → Reload Window po Trust Publisher"
+                "Developer: Reload Window albo restart IDE, potem Command Palette "
+                "→ koru: Connect autopilot daemon. Jeśli komendy brak, IDE "
+                "nie załadowało VSIX z obecnej sesji extension host."
             ),
         ),
     )

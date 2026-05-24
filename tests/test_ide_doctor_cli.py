@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from koru.cli_ide import ide_main
+from koru.ide_doctor_cli import _resolve_socket
 from koru.ide_adapters import shared
 from koru.ide_adapters import bridge as bridge_mod
 
@@ -75,3 +76,32 @@ def test_ide_doctor_json_reports_plugin_not_connected(
     assert payload["daemon_running"] is True
     assert payload["plugins_connected"] is False
     assert payload["hypotheses"][0]["id"] == "vscode.plugin.not_connected"
+
+
+def test_ide_doctor_defaults_socket_to_selected_lane(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
+    args = type("Args", (), {"socket": None, "instance": None})()
+
+    socket = _resolve_socket(args, "cursor")
+
+    assert socket == tmp_path / "koru-autopilot-cursor.sock"
+    assert "KORU_AUTOPILOT_INSTANCE" not in __import__("os").environ
+
+
+def test_ide_doctor_instance_overrides_selected_lane(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
+    args = type("Args", (), {"socket": None, "instance": "vscodium"})()
+
+    socket = _resolve_socket(args, "cursor")
+
+    assert socket == tmp_path / "koru-autopilot-vscodium.sock"

@@ -585,7 +585,39 @@ def _handle_scan_after_idle(
                 },
                 command=scan_cmd,
             )
+            if include_semcod_artifacts and not idle_scan.applied:
+                discovery = _run_code2llm_discovery_after_idle(project, _hp, _emit)
+                if discovery is not None:
+                    applied_count = len(discovery.get("applied", []))
+                    skipped_count = len(discovery.get("skipped", []))
+                    state.telemetry_scan_after_idle_tickets_applied += applied_count
+                    cycle_telemetry["code2llm_discovery_run"] = bool(discovery.get("ran"))
+                    cycle_telemetry["code2llm_discovery_applied"] = applied_count
+                    cycle_telemetry["code2llm_discovery_skipped"] = skipped_count
     return scan_result
+
+
+def _run_code2llm_discovery_after_idle(
+    project: Path,
+    _hp: callable,
+    _emit: callable,
+) -> dict[str, Any] | None:
+    """Run broad code2llm ticket discovery after an idle scan found no new work."""
+    try:
+        from koru.autonomy.code2llm_discovery import (
+            format_discovery_summary,
+            run_code2llm_discovery,
+        )
+    except Exception as exc:  # noqa: BLE001 - optional integration
+        _hp(f"- code2llm discovery unavailable: {exc}")
+        return None
+
+    outcome = run_code2llm_discovery(project)
+    summary = format_discovery_summary(outcome)
+    _hp(f"  {summary}")
+    payload = outcome.to_dict()
+    _emit("Code2llmDiscoveryCompleted", payload)
+    return payload
 
 
 def _update_stagnation_state(

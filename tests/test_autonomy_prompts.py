@@ -50,7 +50,9 @@ def test_waiting_input_with_message_uses_ticket_prompt():
         waiting_ticket_id="PLF-1234",
     )
     assert decision.kind == "ticket_prompt"
-    assert decision.prompt == "Please review the tests for module X"
+    assert decision.prompt.startswith("Please review the tests for module X")
+    assert "planfile ticket done PLF-1234" in decision.prompt
+    assert "planfile ticket input PLF-1234" in decision.prompt
 
 
 def test_waiting_input_empty_message_uses_fallback_prompt():
@@ -63,6 +65,7 @@ def test_waiting_input_empty_message_uses_fallback_prompt():
     assert decision.kind == "fallback_prompt"
     assert decision.skip is False
     assert "PLF-1234" in decision.prompt
+    assert "planfile ticket done PLF-1234" in decision.prompt
     assert "next pending ticket" in decision.prompt.lower() or "continue" in decision.prompt.lower()
 
 
@@ -88,6 +91,16 @@ def test_waiting_input_strips_whitespace_message():
     assert decision.kind == "fallback_prompt"
 
 
+def test_waiting_input_does_not_duplicate_planfile_handoff():
+    decision = _call(
+        queue_status="waiting_input",
+        last_message="Do it\n\nPlanfile status handoff:\n- When complete, run: `planfile ticket done PLF-9`",
+        waiting_ticket_id="PLF-9",
+    )
+    assert decision.kind == "ticket_prompt"
+    assert decision.prompt.count("planfile ticket done PLF-9") == 1
+
+
 def test_stagnation_below_threshold_no_escalation():
     """Stagnation streak below threshold → normal prompt, no escalation."""
     decision = _call(
@@ -111,6 +124,9 @@ def test_stagnation_at_threshold_triggers_escalation():
     assert "PLF-42" in decision.prompt
     assert "stuck" in decision.prompt.lower()
     assert "Refactor duplicate classes" in decision.prompt
+    assert "planfile ticket done PLF-42" in decision.prompt
+    assert "planfile ticket input PLF-42" in decision.prompt
+    assert "planfile ticket fail PLF-42" in decision.prompt
 
 
 def test_escalation_includes_status_and_streak():

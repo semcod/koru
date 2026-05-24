@@ -68,6 +68,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.253] - 2026-05-24
+
+### Docs
+- Update README.md
+- Update docs/README.md
+- Update docs/autonomy-ide-cursor.md
+- Update docs/llm-tools/README.md
+- Update docs/project-discovery-strategy.md
+
+### Test
+- Update tests/test_autonomous.py
+- Update tests/test_autonomous_startup.py
+- Update tests/test_autonomy_prompts.py
+- Update tests/test_autopilot_plugin_installer.py
+- Update tests/test_code2llm_discovery.py
+- Update tests/test_ide_adapters.py
+- Update tests/test_ide_doctor_cli.py
+- Update tests/test_ide_work.py
+
+### Other
+- Update .koru/project.json
+- Update .planfile/sprints/current.yaml
+- Update uv.lock
+- Update wup.yaml
+
 ## [0.1.252] - 2026-05-24
 
 ### Docs

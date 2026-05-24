@@ -155,6 +155,56 @@ istniejącego zgłoszenia. Do bezpiecznego sprawdzenia użyj:
 DRY_RUN=1 task quality:semcod:planfile
 ```
 
+### Autonomiczna strategia przy pustej kolejce
+
+Gdy `koru auto` / `koru autonomous up` kończy cykl z pustą kolejką
+(`last_status=idle`), może przejść z realizacji lokalnych ticketów do szerokiego
+odkrywania pracy w całym projekcie. Warunkiem jest aktywne skanowanie po idle i
+artefakty semcod: `--scan-after-idle-queue` oraz `--semcod-artifacts`. W trybie
+adaptacyjnym `KORU_AUTO_PIPELINE=1` włącza te ustawienia dla etapów quality i
+architecture; bez tego można uruchomić je jawnie:
+
+```bash
+koru autonomous up \
+  --ticket-sources queue \
+  --scan-after-idle-queue \
+  --scan-after-idle-min-interval 60 \
+  --semcod-artifacts
+```
+
+Kolejność działania jest celowo deterministyczna:
+
+1. Koru uruchamia `koru scan --apply --semcod-artifacts` jako tani intake scan.
+2. Jeżeli scan nie doda nowych ticketów, Koru uruchamia lokalnie `code2llm`:
+
+  ```bash
+  code2llm "$PROJECT" \
+    -f all \
+    -o "$PROJECT/project" \
+    --no-chunk \
+    --exclude '*.md' \
+    --planfile-apply \
+    --planfile-source koru-project-discovery \
+    --planfile-sprint current \
+    --planfile-project "$PROJECT" \
+    --planfile-limit 20
+  ```
+
+3. `code2llm` odświeża `project/analysis.toon.yaml`, mapy projektu i
+  `project/planfile-tickets.yaml`, a następnie aplikuje maksymalnie 20
+  deduplikowanych ticketów przez `planfile`.
+4. Nowe zgłoszenia trafiają do normalnej kolejki `planfile`; agent wraca do
+  pracy ticket po tickecie zamiast wykonywać szeroki refactor bez zadania.
+5. Koru emituje `Code2llmDiscoveryCompleted` z polami `ran`, `applied`,
+  `skipped` i `error`, więc przebieg jest widoczny w logach/JSONL.
+
+Pełny przebieg `code2llm` jest pomijany, gdy `project/analysis.toon.yaml` jest
+młodszy niż 60 minut; `--scan-after-idle-min-interval` ogranicza też częstotliwość
+intake scanów po idle. Jeżeli `code2llm` nie jest dostępny na `PATH` albo kończy
+się błędem, Koru zapisuje wynik jako skipped/error i nie wstrzykuje ogólnego
+promptu do IDE. Po instalacji `code2llm` można ponowić cykl albo uruchomić
+powyższą komendę ręcznie.
+
 3. **Walidacja**  
    Przed zakończeniem patcha agent powinien przejść co najmniej:
 

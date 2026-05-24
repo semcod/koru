@@ -7,11 +7,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.252-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$8.78-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-103.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.253-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$9.85-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-103.1h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $8.7788 (325 commits)
-- 👤 **Human dev:** ~$10300 (103.0h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $9.8512 (326 commits)
+- 👤 **Human dev:** ~$10312 (103.1h @ $100/h, 30min dedup)
 
 Generated on 2026-05-24 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -1018,6 +1018,71 @@ PRIORITY=critical task quality:semcod:planfile # promote new gate findings
 The source of truth stays in `.planfile/`; Koru does not hand-edit sprint YAML.
 Agents should consume the resulting work through `planfile ticket next` or
 `koru --queue`.
+
+#### Idle queue discovery with code2llm
+
+When `koru auto` or `koru autonomous up` drains the queue and reports `idle`,
+Koru can move from local ticket execution back to whole-project discovery. The
+strategy is active when scan-after-idle is enabled and semcod artifacts are
+included. In adaptive runs, `KORU_AUTO_PIPELINE=1` enables those knobs for the
+quality/architecture stages; otherwise pass them explicitly:
+
+```bash
+koru autonomous up \
+  --ticket-sources queue \
+  --scan-after-idle-queue \
+  --scan-after-idle-min-interval 60 \
+  --semcod-artifacts
+```
+
+On an idle cycle Koru first runs a normal intake scan:
+
+```bash
+koru scan --apply --semcod-artifacts
+```
+
+If that scan applies no tickets, Koru runs `code2llm` locally instead of
+pasting a broad "find work" prompt into the IDE chat:
+
+```bash
+code2llm "$PROJECT" \
+  -f all \
+  -o "$PROJECT/project" \
+  --no-chunk \
+  --exclude '*.md' \
+  --planfile-apply \
+  --planfile-source koru-project-discovery \
+  --planfile-sprint current \
+  --planfile-project "$PROJECT" \
+  --planfile-limit 20
+```
+
+`code2llm` refreshes `project/` artifacts such as `analysis.toon.yaml` and
+`planfile-tickets.yaml`, then applies up to 20 high-signal tickets through
+`planfile`. The generated tickets come from whole-project signals such as god
+modules, duplicated code, cyclomatic complexity, stale architecture pressure,
+and other code2llm findings. Koru records the result as a
+`Code2llmDiscoveryCompleted` event with `applied`, `skipped`, `ran`, and error
+metadata.
+
+This is the intentional autonomy rhythm: work concrete tickets first; when the
+queue is empty, inspect the whole project; turn broad findings into planfile
+tickets; then stop discovery and let the normal queue work those tickets one by
+one. IDE LLM prompts for generated or existing tickets include a Planfile status
+handoff, so the agent is expected to run `planfile ticket done <ID>` after
+successful checks, `planfile ticket input <ID> --prompt ... --note ...` when it
+is blocked, or `planfile ticket fail <ID> --error ...` after a real failed
+attempt. The Planfile status is the source of truth for what the IDE LLM
+actually completed.
+
+Discovery is rate-limited in two places: `--scan-after-idle-min-interval`
+limits idle scans, and fresh `project/analysis.toon.yaml` artifacts younger
+than 60 minutes skip a full `code2llm` rerun. If `code2llm` is missing or the
+run fails, Koru logs a structured skipped/error outcome; install `code2llm` or
+run the command above manually, then continue through the normal planfile queue.
+
+Full strategy details are in
+[`docs/project-discovery-strategy.md`](./docs/project-discovery-strategy.md).
 
 ### Auto-promotion & auto-repair for blocking tickets
 

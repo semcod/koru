@@ -32,6 +32,7 @@ from koruide.ide import (
 SUPPORTED_IDES = vscode_extension_plugin_ide_ids()
 EXTENSION_ID = "semcod.koru-autopilot-vscode"
 SOCKET_SETTING_KEY = "koruAutopilot.socketPath"
+AUTO_CONNECT_SETTING_KEY = "koruAutopilot.autoConnect"
 
 _IDE_COMMANDS: dict[str, tuple[str, ...]] = {
     "antigravity": ("antigravity",),
@@ -275,9 +276,15 @@ def _configure_socket_path(ide: str, socket_path: Path | None) -> Path | None:
         if not isinstance(settings, dict):
             return None
         wanted = str(socket_path.resolve())
-        if settings.get(SOCKET_SETTING_KEY) == wanted:
+        changed = False
+        if settings.get(SOCKET_SETTING_KEY) != wanted:
+            settings[SOCKET_SETTING_KEY] = wanted
+            changed = True
+        if settings.get(AUTO_CONNECT_SETTING_KEY) is not True:
+            settings[AUTO_CONNECT_SETTING_KEY] = True
+            changed = True
+        if not changed:
             return settings_path
-        settings[SOCKET_SETTING_KEY] = wanted
         settings_path.parent.mkdir(parents=True, exist_ok=True)
         settings_path.write_text(
             json.dumps(settings, indent=4, ensure_ascii=False) + "\n",
@@ -392,7 +399,9 @@ def _result_already_installed(
         status="already_installed",
         message=(
             f"{EXTENSION_ID} is already installed for {target}{extra}; "
-            "reload the IDE window or run `koru: Connect autopilot daemon` if it is already open"
+            "if the IDE was already open during install/reassert, run "
+            "`Developer: Reload Window` (or restart it), then run "
+            "`koru: Connect autopilot daemon`"
         ),
         command=last_cmd,
         settings_path=str(settings_path) if settings_path is not None else None,
@@ -446,7 +455,10 @@ def _install_extension_vsix(
     return PluginInstallResult(
         ide=target,
         status="installed",
-        message=f"installed {EXTENSION_ID}; reload/restart {target} if it is already open",
+        message=(
+            f"installed {EXTENSION_ID}; if {target} is already open, run "
+            "`Developer: Reload Window` or restart it so the extension host scans the VSIX"
+        ),
         command=cmd,
         vsix=str(vsix),
         settings_path=str(settings_path) if settings_path is not None else None,

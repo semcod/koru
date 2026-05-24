@@ -13,6 +13,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
+from koru.autonomy.planfile_handoff import planfile_status_handoff_text
+
 DriveKind = Literal[
     "drive_prompt",  # default outer prompt (idle / progressing)
     "ticket_prompt",  # waiting_input with concrete message from ticket
@@ -34,6 +36,15 @@ class PromptDecision:
 
 # Repeating the same (status, ticket_id) this many cycles triggers escalation.
 DEFAULT_ESCALATION_THRESHOLD = 3
+
+
+def _with_planfile_status_handoff(prompt: str, ticket_id: str | None) -> str:
+    clean_ticket_id = (ticket_id or "").strip()
+    if not clean_ticket_id:
+        return prompt
+    if f"planfile ticket done {clean_ticket_id}" in prompt:
+        return prompt
+    return f"{prompt.rstrip()}\n\n{planfile_status_handoff_text(clean_ticket_id)}"
 
 
 def build_prompt(
@@ -68,13 +79,14 @@ def build_prompt(
     if stagnation_streak >= escalation_threshold and waiting_ticket_id:
         original = last_message.strip() if last_message else ""
         task_line = f" Original ticket prompt: {original}" if original else ""
+        handoff = planfile_status_handoff_text(waiting_ticket_id)
         escalation = (
             f"Ticket {waiting_ticket_id} has been stuck in status "
             f"'{queue_status}' for {stagnation_streak} cycles. "
             "Continue the actual implementation work for this ticket now. "
-            "If the work is done, run the relevant checks and mark the ticket "
-            "as done. If you are blocked, update the ticket with the exact "
-            f"input you need.{task_line}"
+            "Run the relevant checks before closing it. "
+            f"{handoff} "
+            f"{task_line}"
         )
         return PromptDecision(prompt=escalation, kind="escalation_prompt")
 
@@ -82,7 +94,10 @@ def build_prompt(
     if queue_status == "waiting_input":
         ticket_msg = last_message.strip() if last_message else ""
         if ticket_msg:
-            return PromptDecision(prompt=ticket_msg, kind="ticket_prompt")
+            return PromptDecision(
+                prompt=_with_planfile_status_handoff(ticket_msg, waiting_ticket_id),
+                kind="ticket_prompt",
+            )
         # Fallback: empty message must NOT result in a no-op. Send a
         # generic continue-prompt so the IDE LLM at least picks the
         # next ticket / progresses.
@@ -92,7 +107,10 @@ def build_prompt(
             "message was attached. Pick the next pending ticket from the "
             "planfile and continue, or update the blocked ticket's status."
         )
-        return PromptDecision(prompt=fallback, kind="fallback_prompt")
+        return PromptDecision(
+            prompt=_with_planfile_status_handoff(fallback, waiting_ticket_id),
+            kind="fallback_prompt",
+        )
 
     # Default: outer drive prompt.
     return PromptDecision(prompt=drive_prompt, kind="drive_prompt")

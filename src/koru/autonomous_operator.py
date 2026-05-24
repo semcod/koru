@@ -6,6 +6,10 @@ import os
 from pathlib import Path
 from typing import Any
 
+_VSCODE_FAMILY_PLUGIN_IDES = frozenset(
+    {"antigravity", "cursor", "vscode", "vscodium", "windsurf"},
+)
+
 
 def run_mcp_provision(
     project: Path,
@@ -32,6 +36,34 @@ def run_mcp_provision(
     return mcp_provision_ran
 
 
+def _ensure_trusted_publisher_for_plugin(
+    autopilot_ide: str,
+    *,
+    stdio_info: Any,
+    emit_fmt: str,
+) -> None:
+    if autopilot_ide not in _VSCODE_FAMILY_PLUGIN_IDES:
+        return
+    from koru.ide_adapters import shared
+
+    if shared.publisher_trusted(autopilot_ide) is not False:
+        return
+    if shared.add_trusted_publisher(autopilot_ide):
+        stdio_info(
+            f"koru autonomous: dodano „{shared.PUBLISHER_ID}” do "
+            f"extensions.trustedPublishers ({autopilot_ide}) — wymagany Reload Window",
+            fmt=emit_fmt,
+        )
+
+
+def _extension_active_in_latest_session(autopilot_ide: str) -> bool | None:
+    if autopilot_ide not in _VSCODE_FAMILY_PLUGIN_IDES:
+        return None
+    from koru.ide_adapters import shared
+
+    return shared.extension_activated_in_exthost(autopilot_ide)
+
+
 def setup_autopilot_plugin(
     args: Any,
     autopilot_ide: str,
@@ -51,6 +83,7 @@ def setup_autopilot_plugin(
 
     plugin_result = install_plugin_for_ide(ide=autopilot_ide, socket_path=socket_path)
     stdio_info(format_plugin_install_result(plugin_result), fmt=args.emit_events)
+    plugin_install_status = str(getattr(plugin_result, "status", "") or "")
     if plugin_result.status == "unsupported":
         plugin_connected = False
         stdio_info(
@@ -74,26 +107,54 @@ def setup_autopilot_plugin(
                 fmt=args.emit_events,
             )
     elif client is not None and not allow_keyboard_fallback():
-        wait_seconds = max(0.0, args.autopilot_plugin_wait_seconds)
-        plugin_ready = wait_for_plugin(
-            client,
-            autopilot_ide,
-            timeout_seconds=wait_seconds,
-            stdio_format=args.emit_events,
-        )
-        plugin_connected = plugin_ready
-        if plugin_ready:
-            stdio_info(
-                f"koru autonomous: autopilot plugin connected ide={autopilot_ide}",
-                fmt=args.emit_events,
+        skip_plugin_wait = False
+        if plugin_install_status in {"installed", "already_installed"}:
+            _ensure_trusted_publisher_for_plugin(
+                autopilot_ide,
+                stdio_info=stdio_info,
+                emit_fmt=args.emit_events,
             )
+            active = _extension_active_in_latest_session(autopilot_ide)
+            if active is False:
+                from koru.ide_adapters import shared
+
+                for line in shared.extension_reload_required_lines(autopilot_ide):
+                    stdio_info(line, fmt=args.emit_events)
+                stdio_info(
+                    "koru autonomous: pomijam oczekiwanie na plugin "
+                    "(wtyczka nie załadowana w extension host — Reload Window wymagany)",
+                    fmt=args.emit_events,
+                )
+                skip_plugin_wait = True
+
+        if skip_plugin_wait:
+            plugin_connected = False
         else:
-            stdio_info(
-                "koru autonomous: no connected autopilot plugin "
-                f"for ide={autopilot_ide} after {wait_seconds:.1f}s; "
-                "autopilot drive will be skipped until it connects",
-                fmt=args.emit_events,
+            wait_seconds = max(0.0, args.autopilot_plugin_wait_seconds)
+            plugin_ready = wait_for_plugin(
+                client,
+                autopilot_ide,
+                timeout_seconds=wait_seconds,
+                stdio_format=args.emit_events,
             )
+            plugin_connected = plugin_ready
+            if plugin_ready:
+                stdio_info(
+                    f"koru autonomous: autopilot plugin connected ide={autopilot_ide}",
+                    fmt=args.emit_events,
+                )
+            else:
+                stdio_info(
+                    "koru autonomous: no connected autopilot plugin "
+                    f"for ide={autopilot_ide} after {wait_seconds:.1f}s; "
+                    "autopilot drive will be skipped until it connects",
+                    fmt=args.emit_events,
+                )
+                if plugin_install_status in {"installed", "already_installed"}:
+                    from koru.ide_adapters import shared
+
+                    for line in shared.extension_reload_required_lines(autopilot_ide):
+                        stdio_info(line, fmt=args.emit_events)
     return plugin_connected
 
 

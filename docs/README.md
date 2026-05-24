@@ -43,6 +43,9 @@ For LLM agents starting a session in a koru-driven repository:
 10. **[`autodiagnostics-auto-repair.md`](./autodiagnostics-auto-repair.md)** —
    implemented doctor, guided repair, autopilot host repair, and safe
    autonomous diagnostic-ticket loops.
+11. **[`project-discovery-strategy.md`](./project-discovery-strategy.md)** —
+   how an idle planfile queue triggers whole-project `code2llm` discovery,
+   `planfile` ticket generation, and explicit IDE LLM status handoff.
 
 For human operators / DevOps:
 
