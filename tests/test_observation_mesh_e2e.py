@@ -163,6 +163,8 @@ def test_vision_agent_cli_publishes_captured_frame_to_mesh(tmp_path: Path) -> No
                 "--project",
                 str(project),
                 "agent",
+                "--monitor",
+                "0",
                 "--max-frames",
                 "1",
                 "--interval",

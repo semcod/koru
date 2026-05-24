@@ -250,19 +250,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-f1e7e2d6
-    name: Fix string-concat issues
-    description: Resolve 2 string-concat issues in src/koru/context.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/context.py
-    rule_id: string-concat
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-7212e0d5
     name: Fix string-concat issues
     description: Resolve 4 string-concat issues in src/koru/doctor.py

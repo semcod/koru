@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.237', 'python').
+project_metadata('koru', '0.1.239', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 691, 'less').
@@ -214,7 +214,7 @@ project_file('src/koru/cli/__init__.py', 96, 'python').
 project_file('src/koru/cli/__main__.py', 13, 'python').
 project_file('src/koru/cli/commands.py', 1, 'python').
 project_file('src/koru/cli/parsers.py', 1, 'python').
-project_file('src/koru/cli.py', 424, 'python').
+project_file('src/koru/cli.py', 361, 'python').
 project_file('src/koru/cli_agent.py', 91, 'python').
 project_file('src/koru/cli_agent_backends.py', 62, 'python').
 project_file('src/koru/cli_auto.py', 77, 'python').
@@ -228,6 +228,7 @@ project_file('src/koru/cli_gc.py', 88, 'python').
 project_file('src/koru/cli_ide_router.py', 54, 'python').
 project_file('src/koru/cli_init.py', 121, 'python').
 project_file('src/koru/cli_local_serve.py', 54, 'python').
+project_file('src/koru/cli_loop.py', 50, 'python').
 project_file('src/koru/cli_parser.py', 255, 'python').
 project_file('src/koru/cli_queue.py', 186, 'python').
 project_file('src/koru/cli_refactor_planfile_handoff.py', 36, 'python').
@@ -239,7 +240,7 @@ project_file('src/koru/cli_tools.py', 74, 'python').
 project_file('src/koru/cli_topology.py', 149, 'python').
 project_file('src/koru/cli_watch.py', 42, 'python').
 project_file('src/koru/configurator.py', 553, 'python').
-project_file('src/koru/context.py', 1270, 'python').
+project_file('src/koru/context.py', 823, 'python').
 project_file('src/koru/context_render.py', 473, 'python').
 project_file('src/koru/cqrs/__init__.py', 88, 'python').
 project_file('src/koru/cqrs/domain_event.py', 19, 'python').
@@ -330,8 +331,9 @@ project_file('src/koruapi/dashboard.py', 192, 'python').
 project_file('src/koruapi/dashboard_config.py', 165, 'python').
 project_file('src/koruapi/dashboard_context.py', 18, 'python').
 project_file('src/koruapi/dashboard_http.py', 46, 'python').
+project_file('src/koruapi/dashboard_plugin_logs.py', 57, 'python').
 project_file('src/koruapi/dashboard_projects.py', 335, 'python').
-project_file('src/koruapi/dashboard_routes.py', 473, 'python').
+project_file('src/koruapi/dashboard_routes.py', 439, 'python').
 project_file('src/koruapi/dashboard_runtime.py', 40, 'python').
 project_file('src/koruapi/dashboard_serve.py', 241, 'python').
 project_file('src/koruapi/dashboard_serve_utils.py', 247, 'python').
@@ -544,7 +546,7 @@ project_file('tests/test_runtime_insights.py', 60, 'python').
 project_file('tests/test_scan.py', 671, 'python').
 project_file('tests/test_screencast_session.py', 40, 'python').
 project_file('tests/test_semcod_tools.py', 51, 'python').
-project_file('tests/test_serve.py', 649, 'python').
+project_file('tests/test_serve.py', 678, 'python').
 project_file('tests/test_shell_evidence.py', 51, 'python').
 project_file('tests/test_stdio_autonomous_jsonl.py', 99, 'python').
 project_file('tests/test_tasks.py', 119, 'python').
@@ -1222,7 +1224,7 @@ python_function('src/koru/cli/__init__.py', '_has_legacy_exports', 1, 2, 2).
 python_function('src/koru/cli/__init__.py', '_load_legacy_cli_module', 0, 9, 11).
 python_function('src/koru/cli/__init__.py', '__getattr__', 1, 1, 1).
 python_function('src/koru/cli.py', '_env_truthy', 1, 1, 3).
-python_function('src/koru/cli.py', '_is_bare_invocation', 1, 10, 2).
+python_function('src/koru/cli.py', '_is_bare_invocation', 1, 8, 0).
 python_function('src/koru/cli.py', '_dsl_main', 1, 1, 1).
 python_function('src/koru/cli.py', '_api_main', 1, 1, 1).
 python_function('src/koru/cli.py', '_peek_project_from_argv', 1, 5, 8).
@@ -1230,7 +1232,6 @@ python_function('src/koru/cli.py', '_path_is_relative_to', 2, 2, 1).
 python_function('src/koru/cli.py', '_project_cli_reexec_argv', 1, 7, 9).
 python_function('src/koru/cli.py', '_maybe_print_project_venv_hint', 1, 5, 9).
 python_function('src/koru/cli.py', '_should_suggest_wizard', 2, 6, 5).
-python_function('src/koru/cli.py', '_command_loop_main', 1, 7, 7).
 python_function('src/koru/cli.py', '_maybe_reexec_for_project_venv', 1, 8, 7).
 python_function('src/koru/cli.py', '_dispatch_flag_action', 2, 8, 8).
 python_function('src/koru/cli.py', '_suggest_subcommand', 1, 7, 3).
@@ -1308,6 +1309,7 @@ python_function('src/koru/cli_init.py', 'init_agent_lane_main', 1, 3, 5).
 python_function('src/koru/cli_init.py', 'init_ci_main', 1, 1, 1).
 python_function('src/koru/cli_local_serve.py', '_build_local_serve_parser', 0, 1, 2).
 python_function('src/koru/cli_local_serve.py', '_local_serve_main', 1, 1, 1).
+python_function('src/koru/cli_loop.py', 'command_loop_main', 1, 7, 7).
 python_function('src/koru/cli_parser.py', '_command_value', 1, 2, 2).
 python_function('src/koru/cli_parser.py', '_cli_version', 0, 2, 1).
 python_function('src/koru/cli_parser.py', '_build_parser', 0, 1, 4).
@@ -1391,24 +1393,6 @@ python_function('src/koru/context.py', '_build_policy_rules', 1, 8, 1).
 python_function('src/koru/context.py', '_build_ticket_rules', 1, 8, 6).
 python_function('src/koru/context.py', '_build_shared_rules', 2, 1, 3).
 python_function('src/koru/context.py', '_build_self_service', 2, 5, 2).
-python_function('src/koru/context.py', '_render_header', 1, 1, 0).
-python_function('src/koru/context.py', '_render_environment', 2, 14, 5).
-python_function('src/koru/context.py', '_render_agent_lanes', 1, 3, 2).
-python_function('src/koru/context.py', '_render_autonomous_mode', 0, 2, 1).
-python_function('src/koru/context.py', '_render_ai_tool_support_2026', 0, 1, 0).
-python_function('src/koru/context.py', '_render_semcod_tools', 1, 11, 3).
-python_function('src/koru/context.py', '_render_setup_required', 1, 1, 0).
-python_function('src/koru/context.py', '_render_active_ticket', 1, 7, 6).
-python_function('src/koru/context.py', '_compact_ticket_error', 1, 5, 5).
-python_function('src/koru/context.py', '_render_no_active_ticket', 1, 1, 1).
-python_function('src/koru/context.py', '_render_gates', 1, 6, 6).
-python_function('src/koru/context.py', '_render_project_pipeline', 1, 9, 3).
-python_function('src/koru/context.py', '_render_policy', 1, 3, 2).
-python_function('src/koru/context.py', '_render_rules', 1, 2, 1).
-python_function('src/koru/context.py', '_render_self_service', 1, 2, 2).
-python_function('src/koru/context.py', '_render_dashboard', 0, 1, 0).
-python_function('src/koru/context.py', '_render_autonomy_loop_brief', 1, 8, 5).
-python_function('src/koru/context.py', 'render_markdown_handoff', 1, 10, 20).
 python_function('src/koru/context_render.py', 'render_header', 1, 1, 0).
 python_function('src/koru/context_render.py', 'render_environment', 2, 14, 5).
 python_function('src/koru/context_render.py', 'render_agent_lanes', 1, 3, 2).
@@ -1981,6 +1965,11 @@ python_function('src/koruapi/dashboard_config.py', '_save_dashboard_dotenv_from_
 python_function('src/koruapi/dashboard_config.py', 'save_dashboard_config', 3, 1, 3).
 python_function('src/koruapi/dashboard_context.py', 'dashboard_context_payload', 2, 1, 2).
 python_function('src/koruapi/dashboard_context.py', 'dashboard_handoff_markdown', 2, 1, 2).
+python_function('src/koruapi/dashboard_plugin_logs.py', '_plugin_debug_log_path', 0, 1, 1).
+python_function('src/koruapi/dashboard_plugin_logs.py', '_daemon_plugin_logs', 0, 3, 5).
+python_function('src/koruapi/dashboard_plugin_logs.py', '_debug_log_row', 1, 3, 3).
+python_function('src/koruapi/dashboard_plugin_logs.py', '_file_plugin_logs', 1, 5, 5).
+python_function('src/koruapi/dashboard_plugin_logs.py', 'dashboard_plugin_logs_payload', 0, 2, 3).
 python_function('src/koruapi/dashboard_projects.py', 'dashboard_workspace', 2, 3, 5).
 python_function('src/koruapi/dashboard_projects.py', 'project_label', 1, 2, 1).
 python_function('src/koruapi/dashboard_projects.py', 'project_candidate_dict', 2, 1, 6).
@@ -2004,7 +1993,7 @@ python_function('src/koruapi/dashboard_projects.py', 'resolve_dashboard_project'
 python_function('src/koruapi/dashboard_routes.py', '_load_dashboard_html', 0, 1, 3).
 python_function('src/koruapi/dashboard_routes.py', '_config_defaults', 1, 1, 3).
 python_function('src/koruapi/dashboard_routes.py', '_state_payload', 1, 1, 2).
-python_function('src/koruapi/dashboard_routes.py', 'build_dashboard_handler', 1, 1, 52).
+python_function('src/koruapi/dashboard_routes.py', 'build_dashboard_handler', 1, 1, 45).
 python_function('src/koruapi/dashboard_runtime.py', 'runtime_context_payload', 1, 1, 4).
 python_function('src/koruapi/dashboard_runtime.py', 'runtime_context_error_payload', 2, 1, 3).
 python_function('src/koruapi/dashboard_runtime.py', 'save_runtime_context_config', 2, 5, 4).
@@ -4822,6 +4811,7 @@ python_method('TestServe', 'test_dashboard_html_served_on_root', 0, 1, 3).
 python_method('TestServe', 'test_dashboard_html_has_mobile_layout_guards', 0, 1, 3).
 python_method('TestServe', 'test_dashboard_endpoint_lists_lan_state_projects_and_ides', 0, 4, 9).
 python_method('TestServe', 'test_api_config_get_and_post_persist_dashboard_settings', 0, 1, 10).
+python_method('TestServe', 'test_api_plugin_logs_reads_daemon_console_logs', 0, 1, 6).
 python_method('TestServe', 'test_api_context_returns_brief', 0, 1, 4).
 python_method('TestServe', 'test_api_handoff_returns_markdown', 0, 1, 3).
 python_method('TestServe', 'test_api_topology_returns_components_and_pipelines', 0, 1, 4).

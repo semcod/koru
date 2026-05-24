@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import socket
 import subprocess
 import sys
@@ -23,8 +22,9 @@ from pathlib import Path
 
 import pytest
 
-KORU_BIN = shutil.which("koru")
-pytestmark = pytest.mark.skipif(KORU_BIN is None, reason="`koru` CLI not installed in test venv")
+KORU_CLI_SPEC = importlib.util.find_spec("koru.cli")
+KORU_CMD = [sys.executable, "-m", "koru.cli"]
+pytestmark = pytest.mark.skipif(KORU_CLI_SPEC is None, reason="`koru` CLI not importable in test venv")
 
 
 def _run(
@@ -38,7 +38,7 @@ def _run(
     if env:
         base_env.update(env)
     return subprocess.run(
-        [KORU_BIN, *args],
+        [*KORU_CMD, *args],
         cwd=str(cwd) if cwd else None,
         env=base_env,
         input=input_text,
@@ -236,7 +236,7 @@ def test_e2e_gui_serves_state_api(tmp_path: Path) -> None:
     env["KORU_AUTO_SKIP_WIZARD"] = "1"
     proc = subprocess.Popen(
         [
-            KORU_BIN,
+            *KORU_CMD,
             "wizard",
             "--gui",
             "--no-browser",

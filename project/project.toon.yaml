@@ -1,4 +1,4 @@
-# koru | 2678 func | 290f | 67411L | python | 2026-05-24
+# koru | 2678 func | 290f | 67133L | python | 2026-05-24
 # generated in 0.00s
 
 HEALTH:
@@ -20,7 +20,7 @@ MODULES[449] (top by size):
   M[src/koru/autonomous_cycle.py] 2148L C:1 F:73 CC↑14 D:1 (python)
   M[src/koru/doctor.py] 1965L C:2 F:91 CC↑14 D:2 (python)
   M[plugins/koru-autopilot-vscode/src/extension.ts] 1600L C:2 F:141 CC↑14 D:16 (typescript)
-  M[planfile.yaml] 1396L C:0 F:0 CC↑0 D:0 (yaml)
+  M[planfile.yaml] 1383L C:0 F:0 CC↑0 D:0 (yaml)
   M[src/koru/autonomous.py] 1119L C:1 F:56 CC↑7 D:2 (python)
   M[src/koruapi/mcp_server.py] 1023L C:0 F:35 CC↑14 D:4 (python)
   M[src/koru/scan.py] 991L C:2 F:27 CC↑13 D:4 (python)
@@ -52,4 +52,4 @@ REFACTOR[15]:
   [5] H/H Split god module src/koru/doctor.py (1965L, 2 classes)
 
 EVOLUTION:
-  2026-05-24 CC̄=3.8 crit=199 67411L // Automated analysis
+  2026-05-24 CC̄=3.8 crit=199 67133L // Automated analysis

@@ -6,7 +6,7 @@ SUMMARY:
   dup_groups:    84
   dup_fragments: 203
   saved_lines:   1022
-  scan_ms:       3452
+  scan_ms:       3566
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/cli_cleaned.py  dup=409L  groups=32  frags=37  (0.8%)

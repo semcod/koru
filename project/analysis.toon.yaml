@@ -1,5 +1,5 @@
-# code2llm | 449f 67411L | python:326,shell:49,yaml:22,typescript:18,yml:9,json:9,kotlin:6,txt:2,toml:1,javascript:1,properties:1,xml:1 | 2026-05-24
-# generated in 0.19s
+# code2llm | 449f 67133L | python:326,shell:49,yaml:22,typescript:18,yml:9,json:9,kotlin:6,txt:2,javascript:1,properties:1,xml:1,toml:1 | 2026-05-24
+# generated in 0.18s
 # CC̄=3.8 | critical:0/2678 | dups:0 | cycles:0
 
 HEALTH[0]: ok
@@ -77,7 +77,6 @@ LAYERS:
   │ gc                         371L  2C   12m  CC=11     ←1
   │ tasks                      364L  1C   21m  CC=13     ←9
   │ env                        360L  0C   16m  CC=12     ←2
-  │ cli                        360L  0C   16m  CC=8      ←0
   │ tree                       342L  5C   19m  CC=10     ←4
   │ agents                     335L  1C   16m  CC=14     ←4
   │ dashboard_projects         334L  0C   20m  CC=10     ←2
@@ -195,6 +194,7 @@ LAYERS:
   │ storage                    100L  0C    5m  CC=6      ←1
   │ application                 98L  2C    6m  CC=5      ←0
   │ __init__                    97L  0C    2m  CC=2      ←0
+  │ __init__                    95L  0C    3m  CC=9      ←0
   │ watch                       93L  0C    6m  CC=9      ←1
   │ cli                         90L  0C    4m  CC=11     ←2
   │ base                        90L  4C    6m  CC=5      ←4
@@ -247,9 +247,9 @@ LAYERS:
   │ env                         58L  0C    7m  CC=5      ←7
   │ client                      58L  1C    7m  CC=6      ←0
   │ client_helpers              57L  0C    2m  CC=4      ←2
+  │ dashboard_plugin_logs       56L  0C    5m  CC=5      ←1
   │ cli_commands                56L  0C    3m  CC=3      ←1
   │ protocol                    56L  2C    2m  CC=3      ←2
-  │ dashboard_plugin_logs       56L  0C    5m  CC=5      ←1
   │ planfile_ticket_note        55L  0C    2m  CC=5      ←2
   │ library.json                55L  0C    0m  CC=0.0    ←0
   │ ml-research.json            55L  0C    0m  CC=0.0    ←0
@@ -369,7 +369,7 @@ LAYERS:
   │ __init__                     5L  0C    0m  CC=0.0    ←0
   │ __init__                     3L  0C    0m  CC=0.0    ←0
   │ __init__                     1L  0C    0m  CC=0.0    ←0
-  │ __init__                     0L  0C    3m  CC=9      ←0
+  │ cli                          0L  0C   16m  CC=8      ←0
   │ commands                     0L  0C    0m  CC=0.0    ←0
   │
   plugins/                        CC̄=2.9    ←in:0  →out:0
@@ -428,7 +428,7 @@ LAYERS:
   │ koru-from-repo.sh           10L  0C    0m  CC=0.0    ←0
   │
   ./                              CC̄=0.0    ←in:0  →out:0
-  │ !! planfile.yaml             1396L  0C    0m  CC=0.0    ←0
+  │ !! planfile.yaml             1383L  0C    0m  CC=0.0    ←0
   │ !! Taskfile.yml               922L  0C    0m  CC=0.0    ←0
   │ !! goal.yaml                  511L  0C    0m  CC=0.0    ←0
   │ pyproject.toml             196L  0C    0m  CC=0.0    ←0
@@ -493,7 +493,7 @@ LAYERS:
   │ realtime-health.testql.toon.yaml    11L  0C    0m  CC=0.0    ←0
   │
   ── zero ──
-     src/koru/cli/__init__.py                  0L
+     src/koru/cli.py                           0L
      src/koru/cli/commands.py                  0L
 
 COUPLING:
@@ -513,26 +513,26 @@ COUPLING:
                  docker.capture                                                             1                                                                                                                           4                                                             1                                                                                                                                                         ──                               
        services.healing-webhook                              1                                                                                                                                                                                         1                                                                                                                                                                                                                       ──
   CYCLES: none
-  HUB: plugins.koru-autopilot-vscode/ (fan-in=47)
-  HUB: src.korumesh/ (fan-in=12)
-  HUB: src.korudsl/ (fan-in=7)
   HUB: src.koruapi/ (fan-in=25)
   HUB: koruapi/ (fan-in=25)
-  HUB: scripts/ (fan-in=481)
-  HUB: src.koru/ (fan-in=105)
-  HUB: src.koruobserve/ (fan-in=13)
-  HUB: src.koruvision/ (fan-in=28)
   HUB: koru/ (fan-in=15)
   HUB: src.koruide/ (fan-in=102)
-  SMELL: src.korumesh/ fan-out=14 → split needed
-  SMELL: examples/ fan-out=12 → split needed
+  HUB: src.koruobserve/ (fan-in=13)
+  HUB: src.korudsl/ (fan-in=7)
+  HUB: plugins.koru-autopilot-vscode/ (fan-in=47)
+  HUB: src.koru/ (fan-in=105)
+  HUB: src.koruvision/ (fan-in=28)
+  HUB: src.korumesh/ (fan-in=12)
+  HUB: scripts/ (fan-in=481)
   SMELL: src.koruapi/ fan-out=95 → split needed
   SMELL: koruapi/ fan-out=51 → split needed
-  SMELL: src.koru/ fan-out=534 → split needed
-  SMELL: src.koruobserve/ fan-out=32 → split needed
-  SMELL: src.koruvision/ fan-out=27 → split needed
   SMELL: koru/ fan-out=22 → split needed
   SMELL: src.koruide/ fan-out=64 → split needed
+  SMELL: examples/ fan-out=12 → split needed
+  SMELL: src.koruobserve/ fan-out=32 → split needed
+  SMELL: src.koru/ fan-out=534 → split needed
+  SMELL: src.koruvision/ fan-out=27 → split needed
+  SMELL: src.korumesh/ fan-out=14 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

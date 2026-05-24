@@ -1,4 +1,4 @@
-# koru | 448f 67411L | yaml:22,txt:2,yml:9,toml:1,shell:49,json:9,python:326,javascript:1,typescript:18,kotlin:6,properties:1,xml:1 | 2026-05-24
+# koru | 448f 67133L | yaml:22,txt:2,yml:9,shell:49,json:9,python:326,javascript:1,typescript:18,kotlin:6,properties:1,xml:1,toml:1 | 2026-05-24
 # generated in 0.05s
 # stats: 2678 func | 0 cls | 448 mod | CC̄=3.8 | critical:0 | cycles:0
 # alerts[5]: fan-out build_dashboard_handler=49; fan-out _build_handler=44; fan-out create_app=44; fan-out AutopilotBridge.focusChat=24; fan-out init_project=23
@@ -66,7 +66,7 @@ M[448]:
   src/koruapi/mcp_server.py,1023
   output.txt,3
   pipeline.yaml,142
-  planfile.yaml,1396
+  planfile.yaml,1383
   plugins/koru-autopilot-jetbrains/build.gradle.kts,49
   plugins/koru-autopilot-jetbrains/gradle.properties,6
   plugins/koru-autopilot-jetbrains/settings.gradle.kts,8
@@ -231,7 +231,7 @@ M[448]:
   src/koru/bounded_contexts/wup/events/__init__.py,32
   src/koru/bounded_contexts/wup/queries/__init__.py,14
   src/koru/bounded_contexts/wup/read_model.py,17
-  src/koru/cli.py,360
+  src/koru/cli/__init__.py,95
   src/koru/cli/__main__.py,12
   src/koru/cli/commands.py,0
   src/koru/cli_agent.py,90
@@ -2209,6 +2209,11 @@ P...
     format_queue_event(event)
     _default_connect(ws_url)
     watch_planfile_events(ws_url)
+  src/koru/cli/__init__.py:
+    e: _has_legacy_exports,_load_legacy_cli_module,__getattr__
+    _has_legacy_exports(module)
+    _load_legacy_cli_module()
+    __getattr__(name)
   src/koru/autonomous_cycle_config.py:
     e: configure_loop_state,select_and_log_cycle_profile,resolve_effective_cycle_flags,build_cycle_run_kwargs,compute_cycle_sleep
     configure_loop_state(args;project)
@@ -2472,24 +2477,6 @@ No soc...
     _render_component_rows(topology)
     _render_pipeline_rows(topology)
     apply_topology_mutations(topo;mutations)
-  src/koru/cli.py:
-    e: _env_truthy,_is_bare_invocation,_dsl_main,_api_main,_peek_project_from_argv,_path_is_relative_to,_project_cli_reexec_argv,_maybe_print_project_venv_hint,_should_suggest_wizard,_maybe_reexec_for_project_venv,_dispatch_flag_action,_suggest_subcommand,_dispatch_auto_alias,_print_unknown_subcommand_hint,_handle_parser_exit,main
-    _env_truthy(name)
-    _is_bare_invocation(args)
-    _dsl_main(argv)
-    _api_main(argv)
-    _peek_project_from_argv(argv)
-    _path_is_relative_to(path;parent)
-    _project_cli_reexec_argv(project)
-    _maybe_print_project_venv_hint(raw_args)
-    _should_suggest_wizard(argv;project)
-    _maybe_reexec_for_project_venv(raw_args)
-    _dispatch_flag_action(args;raw_args)
-    _suggest_subcommand(token)
-    _dispatch_auto_alias(raw_args)
-    _print_unknown_subcommand_hint(subcommand)
-    _handle_parser_exit(exc;raw_args;subcommand)
-    main()
   src/koru/autopilot/doctor_cli.py:
     e: doctor_fix_payload,render_doctor_session_info,render_doctor_backends,render_doctor_ides,render_doctor_fix_steps,render_doctor_text,render_doctor_json,action_doctor,action_setup_host
     doctor_fix_payload()
@@ -2903,6 +2890,13 @@ Construct once ...
     runtime_context_payload(project)
     runtime_context_error_payload(project;exc)
     save_runtime_context_config(project;body)
+  src/koruapi/dashboard_plugin_logs.py:
+    e: _plugin_debug_log_path,_daemon_plugin_logs,_debug_log_row,_file_plugin_logs,dashboard_plugin_logs_payload
+    _plugin_debug_log_path()
+    _daemon_plugin_logs()
+    _debug_log_row(line)
+    _file_plugin_logs(path)
+    dashboard_plugin_logs_payload()
   src/koruvision/cli.py:
     e: _vision_interval,_mesh_publish_enabled,_maybe_publish_mesh,vision_main
     _vision_interval(project;override)
@@ -3009,13 +3003,6 @@ Construct once ...
   src/koru/cqrs/event_log_query.py:
     e: EventLogQueryService
     EventLogQueryService: __init__(1),recent(0)  # Provides simple history queries over an event store...
-  src/koruapi/dashboard_plugin_logs.py:
-    e: _plugin_debug_log_path,_daemon_plugin_logs,_debug_log_row,_file_plugin_logs,dashboard_plugin_logs_payload
-    _plugin_debug_log_path()
-    _daemon_plugin_logs()
-    _debug_log_row(line)
-    _file_plugin_logs(path)
-    dashboard_plugin_logs_payload()
   src/koruapi/invoke.py:
     e: invoke_integration
     invoke_integration(integration_id)
@@ -3427,11 +3414,9 @@ The c...
   regix.yaml:
   wup-shell-only.yaml:
   output.txt:
-  planfile.yaml:
   koru.yaml:
   wup.yaml:
   docker-compose.yml:
-  pyproject.toml:
   tree.sh:
   todo.txt:
   pipeline.yaml:
@@ -3762,3 +3747,5 @@ The c...
   testql-scenarios/generated-cli-tests.testql.toon.yaml:
   testql-scenarios/cli-koru-live.testql.toon.yaml:
   testql-testing/scenarios/realtime-health.testql.toon.yaml:
+  planfile.yaml:
+  pyproject.toml:

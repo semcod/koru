@@ -58,9 +58,9 @@ flowchart TD
     docker__capture ==>|4| src__koruvision
     src__koruapi -->|3| plugins__koru_autopilot_vscode
     koruapi__dashboard_routes -->|3| src__korumesh
+    src__koru -->|3| src__korudsl
     koru__autonomous_cycle_config -->|3| src__koru
     koru__context -->|3| scripts__koru_soak_monitor
-    src__koru -->|3| src__korudsl
     koru__autonomous_resources -->|3| src__koru
     src__koruapi -->|2| koru__context
     src__koruapi -->|2| koruapi__dashboard_routes

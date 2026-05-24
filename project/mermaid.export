@@ -972,6 +972,11 @@ flowchart TD
     src__koruapi__openapi__build_openapi_document --> src__koruapi__integrations__list_integrations
     src__koruapi__dashboard_topology__dashboard_topology_payload --> src__koru__topology__load_topology
     src__koruapi__dashboard_topology__apply_dashboard_topology_update --> src__koruapi__topology_post__apply_topology_post_update
+    src__koruapi__dashboard_plugin_logs___daemon_plugin_logs --> src__koruide__socket__default_socket_path
+    src__koruapi__dashboard_plugin_logs___file_plugin_logs --> src__koruapi__dashboard_plugin_logs___debug_log_row
+    src__koruapi__dashboard_plugin_logs__dashboard_plugin_logs_payload --> src__koruapi__dashboard_plugin_logs___daemon_plugin_logs
+    src__koruapi__dashboard_plugin_logs__dashboard_plugin_logs_payload --> src__koruapi__dashboard_plugin_logs___file_plugin_logs
+    src__koruapi__dashboard_plugin_logs__dashboard_plugin_logs_payload --> src__koruapi__dashboard_plugin_logs___plugin_debug_log_path
     src__koruapi__topology_post__apply_topology_post_update --> src__koru__topology__set_component_enabled
     src__koruapi__topology_post__apply_topology_post_update --> src__koru__topology__set_pipeline_enabled
     src__koruapi__dashboard_serve___dashboard_urls --> src__koruapi__dashboard_state__dashboard_urls
@@ -1285,11 +1290,6 @@ flowchart TD
     src__korumesh__cli_commands__mesh_init --> src__koru__configurator__load_project_config
     src__korumesh__cli_commands__mesh_init --> src__korumesh__keys__write_mesh_key
     src__korumesh__cli_commands__mesh_init --> scripts__koru_soak_monitor__print
-    src__korumesh__cli_commands__mesh_relay --> src__korumesh__transport__run_relay
-    src__korumesh__cli_commands__mesh_relay --> scripts__koru_soak_monitor__print
-    src__korumesh__cli_commands__mesh_publish --> src__korumesh__envelope__sign_envelope
-    src__korumesh__cli_commands__mesh_publish --> scripts__koru_soak_monitor__print
-    src__korumesh__cli_commands__mesh_publish --> src__korumesh__transport__publish_envelope
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
