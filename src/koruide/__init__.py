@@ -20,6 +20,13 @@ from .plugin_installer import (
     format_plugin_install_result,
     install_plugin_for_ide,
 )
+from .ports import (
+    ChatMessage,
+    DriveOutcome,
+    IdeChatHistoryPort,
+    IdeChatPort,
+    IdeLifecyclePort,
+)
 from .protocol import (
     MAX_LINE_BYTES,
     Message,
@@ -35,6 +42,11 @@ __all__ = [
     "AuditLog",
     "AutopilotConfig",
     "AutopilotDaemon",
+    "ChatMessage",
+    "DriveOutcome",
+    "IdeChatHistoryPort",
+    "IdeChatPort",
+    "IdeLifecyclePort",
     "Injector",
     "InjectorError",
     "KoruIDEClient",
