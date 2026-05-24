@@ -1615,9 +1615,15 @@ def _log_autopilot_result(
                 f"(ide={autopilot_ide}, backend={backend}, kind={decision_kind}{extra})",
             )
     else:
-        _hp(
-            f"  autopilot: failed ({reply.get('message', 'unknown error')}, kind={decision_kind})",
-        )
+        if _reply_requires_manual_chat_focus(reply):
+            _hp(
+                "  autopilot: skipped(manual_focus) "
+                f"({reply.get('message', 'unknown error')}, kind={decision_kind})",
+            )
+        else:
+            _hp(
+                f"  autopilot: failed ({reply.get('message', 'unknown error')}, kind={decision_kind})",
+            )
 
 
 def _handle_autopilot_phase(

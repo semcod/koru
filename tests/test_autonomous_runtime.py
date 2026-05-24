@@ -1,8 +1,17 @@
 from __future__ import annotations
 
+import os
+from types import SimpleNamespace
+from unittest.mock import patch
+
 from pathlib import Path
 
 from koru import autonomous_runtime
+from koru.autonomous import _apply_agent_lane_environ
+from koru.autonomous_startup import resolve_autopilot_ide_for_autonomous
+from koru.autopilot import default_socket_path
+from koru.autopilot.ide import RunningIDE
+from koru.ide_router import resolve_ide_route
 
 
 def test_project_venv_warning_when_running_from_other_venv(
@@ -115,3 +124,59 @@ def test_project_venv_reexec_argv_skips_when_disabled(
     monkeypatch.setenv("KORU_AUTO_REEXEC", "0")
 
     assert autonomous_runtime.project_venv_reexec_argv(tmp_path) is None
+
+
+def test_setup_autopilot_daemon_keeps_lane_and_socket_in_sync(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("XDG_RUNTIME_DIR", "/run/user/1000")
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "antigravity")
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
+
+    args = SimpleNamespace(
+        enable_autopilot=True,
+        agent_lane="auto",
+        autopilot_ide="auto",
+        socket=None,
+        emit_events="human",
+    )
+
+    info_lines: list[str] = []
+    captured: dict[str, object] = {}
+
+    def _stdio_info(msg: str, *, fmt: str) -> None:
+        info_lines.append(msg)
+
+    def _start_or_reuse_daemon(*, project: Path, socket_path: Path, stdio_format: str):
+        captured["project"] = project
+        captured["socket_path"] = socket_path
+        captured["stdio_format"] = stdio_format
+        return None, None, None
+
+    running = [
+        RunningIDE(id="antigravity", label="Antigravity", pid=10, exe="/usr/bin/antigravity"),
+        RunningIDE(id="jetbrains", label="JetBrains IDE", pid=11, exe="/usr/bin/pycharm"),
+    ]
+
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup.detect_terminal_host_ide_id", return_value="jetbrains"),
+    ):
+        _client, _daemon, _thread, socket_path = autonomous_runtime.setup_autopilot_daemon(
+            args,
+            tmp_path,
+            apply_agent_lane_environ=_apply_agent_lane_environ,
+            resolve_autopilot_ide=resolve_autopilot_ide_for_autonomous,
+            resolve_ide_route_fn=resolve_ide_route,
+            default_socket_path=default_socket_path,
+            start_or_reuse_daemon=_start_or_reuse_daemon,
+            stdio_info=_stdio_info,
+        )
+
+    assert socket_path is not None
+    assert str(socket_path).endswith("koru-autopilot-jetbrains.sock")
+    assert captured["socket_path"] == socket_path
+    assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "jetbrains"
+    assert any("autopilot socket decision: lane=jetbrains ide=jetbrains" in line for line in info_lines)

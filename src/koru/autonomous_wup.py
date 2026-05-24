@@ -10,6 +10,7 @@ import sys
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Protocol
 
@@ -558,6 +559,96 @@ def _prune_stale_wup_health(
     return pruned
 
 
+def _extract_wup_diagnostic_check_id(ticket: object) -> str | None:
+    marker = "[AUTO-DIAG] wup-"
+    if isinstance(ticket, dict):
+        values = (ticket.get("name", ""), ticket.get("description", ""))
+    else:
+        values = (getattr(ticket, "name", ""), getattr(ticket, "description", ""))
+    for value in values:
+        text = str(value or "")
+        marker_index = text.find(marker)
+        if marker_index < 0:
+            continue
+        tail = text[marker_index + len("[AUTO-DIAG] ") :]
+        check_id = tail.split(" needs attention", 1)[0].strip()
+        if check_id.startswith("wup-"):
+            return check_id
+    return None
+
+
+def _complete_wup_diagnostic_ticket(ticket: dict, *, note: str) -> None:
+    now = datetime.now(UTC).isoformat()
+    ticket["status"] = "done"
+    ticket["updated_at"] = now
+    execution = ticket.setdefault("execution", {})
+    if isinstance(execution, dict):
+        execution["state"] = "done"
+        execution["finished_at"] = now
+        execution["last_error"] = None
+        execution["lease_expires_at"] = None
+    outputs = ticket.setdefault("outputs", {})
+    if isinstance(outputs, dict):
+        notes = outputs.setdefault("notes", [])
+        if isinstance(notes, list):
+            notes.append(note)
+    history = ticket.setdefault("history", [])
+    if isinstance(history, list):
+        history.append(
+            {
+                "timestamp": now,
+                "action": "auto_resolved",
+                "source": "koru wup",
+                "message": note,
+            },
+        )
+
+
+def _resolve_stale_wup_diagnostic_tickets(
+    *,
+    project: Path,
+    health: dict[str, dict],
+    failing: list[str],
+    state_dir: Path,
+) -> None:
+    if not health or not (project / ".planfile").is_dir():
+        return
+    failing_check_ids = {f"wup-{service}" for service in failing}
+    try:
+        sprint_path = project / ".planfile" / "sprints" / "current.yaml"
+        payload = yaml.safe_load(sprint_path.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError):
+        return
+    sprint = payload.get("sprint") if isinstance(payload, dict) else None
+    tickets = sprint.get("tickets") if isinstance(sprint, dict) else None
+    if not isinstance(tickets, dict):
+        return
+    changed = False
+    for ticket in tickets.values():
+        if not isinstance(ticket, dict):
+            continue
+        if str(ticket.get("status") or "").strip().lower() != "open":
+            continue
+        check_id = _extract_wup_diagnostic_check_id(ticket)
+        if not check_id or check_id in failing_check_ids:
+            continue
+        ticket_id = str(ticket.get("id") or "")
+        if not ticket_id:
+            continue
+        note = f"Auto-resolved by Koru: WUP no longer reports {check_id} as failing."
+        _complete_wup_diagnostic_ticket(ticket, note=note)
+        diagnostic_marker_path(state_dir, check_id).unlink(missing_ok=True)
+        changed = True
+    if changed:
+        try:
+            sprint_path.write_text(
+                yaml.safe_dump(payload, sort_keys=False, default_flow_style=False, allow_unicode=True),
+                encoding="utf-8",
+            )
+        except OSError:
+            pass
+
+
 def _identify_failing_services(health: dict[str, dict]) -> list[str]:
     """Identify services with failing status."""
     return [
@@ -694,6 +785,12 @@ def _read_wup_health(
                 state_dir,
                 create_diagnostic_ticket,
             )
+        _resolve_stale_wup_diagnostic_tickets(
+            project=project,
+            health=health,
+            failing=failing,
+            state_dir=state_dir,
+        )
 
     event_count, new_events = _count_wup_events(events_path, state.wup_seen_events)
     state.wup_seen_events = max(state.wup_seen_events, event_count)

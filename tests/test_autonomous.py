@@ -11,6 +11,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
+import yaml
 
 from koru import autonomous as autonomous_mod
 from koru import autonomous_cycle as autonomous_cycle_mod
@@ -2742,6 +2743,37 @@ def test_run_cycle_does_not_retry_when_plugin_requires_manual_focus(
     assert "[AUTOPILOT FOCUS REQUIRED]" in captured
     assert "Retrying in 5 seconds" not in captured
     assert "focusOpenCandidates: (none)" in captured
+    assert "autopilot: failed" not in captured
+
+
+def test_log_autopilot_result_reports_manual_focus_as_skipped() -> None:
+    messages: list[str] = []
+    autonomous_cycle_mod._log_autopilot_result(
+        False,
+        QueueLoopResult(
+            iterations=1,
+            completed=[],
+            failed=[],
+            waiting=["PLF-1"],
+            last_status="waiting_input",
+            last_message="",
+            last_ticket_id="PLF-1",
+        ),
+        "vscode",
+        "escalation_prompt",
+        {
+            "ok": False,
+            "message": "chat input is not focused/open; focus_open_candidates=(none)",
+            "verification": "plugin_error",
+            "diagnostics": {"focusOpenCandidates": []},
+        },
+        messages.append,
+    )
+
+    assert messages == [
+        "  autopilot: skipped(manual_focus) "
+        "(chat input is not focused/open; focus_open_candidates=(none), kind=escalation_prompt)",
+    ]
 
 
 def test_run_cycle_skips_drive_when_required_plugin_missing(
@@ -3523,6 +3555,8 @@ def test_read_wup_health_sanitizes_slash_in_service_marker_path(tmp_path) -> Non
 
 def test_read_wup_health_ignores_stale_services_not_in_wup_yaml(tmp_path) -> None:
     """Renamed WUP services must not keep ``service-health.json`` rows blocking autopilot."""
+    from koru.tasks import create_nl_task
+
     (tmp_path / "wup.yaml").write_text(
         "services:\n  - name: koru-shell\n    type: shell\n",
         encoding="utf-8",
@@ -3531,7 +3565,13 @@ def test_read_wup_health_ignores_stale_services_not_in_wup_yaml(tmp_path) -> Non
     health_dir.mkdir()
     diag_dir = tmp_path / ".planfile/.koru/autoloop-diag"
     diag_dir.mkdir(parents=True)
-    (diag_dir / "wup-koru-core.failed").write_text("stale", encoding="utf-8")
+    stale_ticket = create_nl_task(
+        tmp_path,
+        "[AUTO-DIAG] wup-koru-core needs attention in cycle 0. "
+        "queue_status=wup_failure. Check: old failure.",
+        priority="high",
+    )
+    (diag_dir / "wup-koru-core.failed").write_text(stale_ticket.ticket_id, encoding="utf-8")
     (health_dir / "service-health.json").write_text(
         json.dumps(
             {
@@ -3558,6 +3598,11 @@ def test_read_wup_health_ignores_stale_services_not_in_wup_yaml(tmp_path) -> Non
     assert not (diag_dir / "wup-koru-core.failed").exists()
     pruned = json.loads((health_dir / "service-health.json").read_text(encoding="utf-8"))
     assert set(pruned) == {"koru-shell"}
+    sprint = yaml.safe_load((tmp_path / ".planfile/sprints/current.yaml").read_text(encoding="utf-8"))
+    ticket = sprint["sprint"]["tickets"][stale_ticket.ticket_id]
+    assert ticket["status"] == "done"
+    assert ticket["execution"]["state"] == "done"
+    assert "WUP no longer reports wup-koru-core" in ticket["outputs"]["notes"][-1]
 
 
 def test_read_wup_health_ignores_degraded_fleet_and_clears_marker(tmp_path) -> None:

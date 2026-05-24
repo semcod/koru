@@ -13517,7 +13517,10 @@ sprint:
         attempt: 0
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
+        finished_at: '2026-05-24T13:02:16.446968+00:00'
+        last_error: null
+        lease_expires_at: null
       executor:
         kind: human
         mode: interactive
@@ -13538,6 +13541,10 @@ sprint:
           \ gate."
         source: koru task
         timestamp: '2026-05-22T21:24:44.845862+00:00'
+      - timestamp: '2026-05-24T13:02:16.446968+00:00'
+        action: auto_resolved
+        source: koru wup
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-koru-core as failing.'
       id: STARTER-190
       inputs:
         api_headers: {}
@@ -13564,7 +13571,8 @@ sprint:
         Check: WUP service=koru-core stage=qu...'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - 'Auto-resolved by Koru: WUP no longer reports wup-koru-core as failing.'
       priority: high
       source:
         context:
@@ -13583,9 +13591,9 @@ sprint:
         timestamp: '2026-05-22T21:24:44.845862+00:00'
         tool: koru-cli-nl
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-22T21:24:44.845862+00:00'
+      updated_at: '2026-05-24T13:02:16.446968+00:00'
     STARTER-191:
       blocked_by: []
       blocks: []
@@ -13604,7 +13612,10 @@ sprint:
         attempt: 0
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
+        finished_at: '2026-05-24T13:02:16.447086+00:00'
+        last_error: null
+        lease_expires_at: null
       executor:
         kind: human
         mode: interactive
@@ -13623,6 +13634,10 @@ sprint:
           gate.'
         source: koru task
         timestamp: '2026-05-22T21:24:45.943760+00:00'
+      - timestamp: '2026-05-24T13:02:16.447086+00:00'
+        action: auto_resolved
+        source: koru wup
+        message: 'Auto-resolved by Koru: WUP no longer reports wup-src/koru as failing.'
       id: STARTER-191
       inputs:
         api_headers: {}
@@ -13647,7 +13662,8 @@ sprint:
         Check: WUP service=src/koru stage=quic...'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - 'Auto-resolved by Koru: WUP no longer reports wup-src/koru as failing.'
       priority: high
       source:
         context:
@@ -13664,9 +13680,9 @@ sprint:
         timestamp: '2026-05-22T21:24:45.943760+00:00'
         tool: koru-cli-nl
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-22T21:24:45.943760+00:00'
+      updated_at: '2026-05-24T13:02:16.447086+00:00'
     STARTER-192:
       blocked_by: []
       blocks: []
