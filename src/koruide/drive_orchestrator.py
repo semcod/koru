@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 from typing import Any
 
+from koruide.ide_control import ide_control_strategy
 from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 from koruide.protocol import MIN_PLUGIN_PROTOCOL_VERSION
 
@@ -35,6 +36,9 @@ class DriveOrchestrator:
         require_plugin: bool,
     ) -> bool:
         if require_plugin or not plugin_ide:
+            return False
+        strategy = ide_control_strategy(plugin_ide)
+        if not strategy.allow_keyboard_fallback_after_plugin_ack:
             return False
         focus_error = "chat input is not focused/open" in str(info.get("message", "")).lower()
         submit_failed = submit_requested and info.get("submitted") is False
@@ -208,7 +212,7 @@ class DriveOrchestrator:
             return False
         if not plugin_ok or not submit_requested:
             return False
-        if (plugin_ide or "").lower() not in {"vscode", "vscodium"}:
+        if not ide_control_strategy(plugin_ide).strict_ack_supported:
             return False
         return str(info.get("verification", "")) != "strict"
 

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from koruide.drive_orchestrator import DriveOrchestrator
+from koruide.ide_control import ide_control_strategy
 from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 
 
@@ -23,14 +24,33 @@ def test_should_try_os_fallback_false_when_plugin_required() -> None:
     )
 
 
-def test_should_try_os_fallback_true_for_submit_failure() -> None:
-    assert DriveOrchestrator.should_try_os_fallback(
+def test_should_try_os_fallback_false_for_plugin_socket_ides() -> None:
+    assert not DriveOrchestrator.should_try_os_fallback(
         plugin_ok=True,
         info={"submitted": False},
         submit_requested=True,
         plugin_ide="vscode",
         require_plugin=False,
     )
+
+
+def test_should_try_os_fallback_true_for_keyboard_strategy_submit_failure() -> None:
+    assert DriveOrchestrator.should_try_os_fallback(
+        plugin_ok=True,
+        info={"submitted": False},
+        submit_requested=True,
+        plugin_ide="jetbrains",
+        require_plugin=False,
+    )
+
+
+def test_ide_control_strategies_keep_plugin_and_keyboard_lanes_separate() -> None:
+    assert ide_control_strategy("vscodium").requires_plugin is True
+    assert ide_control_strategy("vscodium").allow_keyboard_fallback_after_plugin_ack is False
+    assert ide_control_strategy("cursor").strict_ack_supported is True
+    assert ide_control_strategy("windsurf").strict_ack_supported is False
+    assert ide_control_strategy("jetbrains").requires_plugin is False
+    assert ide_control_strategy("jetbrains").allow_keyboard_fallback_after_plugin_ack is True
 
 
 def test_build_message_sent_info_keeps_chat_and_backend() -> None:

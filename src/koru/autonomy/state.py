@@ -22,10 +22,10 @@ class AutoloopState:
     last_operator_needs_input_ticket_id: str = ""
     last_message_sent_ts: float = 0.0
     last_driven_ticket_id: str = ""
+    last_autopilot_status: str = ""
     telemetry_autopilot_idle_streak_skips: int = 0
     telemetry_scan_after_idle_runs: int = 0
     telemetry_scan_after_idle_tickets_applied: int = 0
     last_scan_after_idle_ts: float = -1.0
     pending_ide_verify_id: str | None = None
     post_verify_seen: set[str] = field(default_factory=set)
-

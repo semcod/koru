@@ -10,24 +10,42 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from koru.ide_adapters.shared import config_home_for_ide
+from koruide.ides import get_strategy as _get_ide_strategy
 
 _VSCODE_FAMILY_IDES = frozenset({"antigravity", "cursor", "vscode", "vscodium", "windsurf"})
 
-_WINDOW_NAME_HINTS: dict[str, tuple[str, ...]] = {
-    "cursor": ("Cursor",),
+# Window-title hints and CLI executable names for IDEs that do not have a
+# dedicated ``koruide.ides.<ide>`` module yet. Cursor is intentionally absent
+# because :class:`CursorStrategy` provides those values directly.
+_LEGACY_WINDOW_NAME_HINTS: dict[str, tuple[str, ...]] = {
     "vscode": ("Visual Studio Code",),
     "vscodium": ("VSCodium",),
     "windsurf": ("Windsurf",),
     "antigravity": ("Antigravity",),
 }
 
-_EDITOR_CLI: dict[str, tuple[str, ...]] = {
-    "cursor": ("cursor",),
+_LEGACY_EDITOR_CLI: dict[str, tuple[str, ...]] = {
     "vscode": ("code", "code-insiders"),
     "vscodium": ("codium", "vscodium"),
     "windsurf": ("windsurf",),
     "antigravity": ("antigravity",),
 }
+
+
+def _window_name_hints(ide: str) -> tuple[str, ...]:
+    strategy = _get_ide_strategy(ide)
+    if strategy is not None:
+        return strategy.window_name_hints()
+    return _LEGACY_WINDOW_NAME_HINTS.get(ide, (ide,))
+
+
+def _editor_cli_candidates(ide: str) -> tuple[str, ...]:
+    strategy = _get_ide_strategy(ide)
+    if strategy is not None:
+        candidates = strategy.editor_cli_candidates()
+        if candidates:
+            return candidates
+    return _LEGACY_EDITOR_CLI.get(ide, ())
 
 
 @dataclass(frozen=True)
@@ -54,7 +72,7 @@ def _run(argv: list[str], *, timeout: float = 15.0) -> subprocess.CompletedProce
 
 
 def _resolve_editor_cli(ide: str) -> str | None:
-    for name in _EDITOR_CLI.get(ide, ()):
+    for name in _editor_cli_candidates(ide):
         path = shutil.which(name)
         if path:
             return path
@@ -64,7 +82,7 @@ def _resolve_editor_cli(ide: str) -> str | None:
 def _focus_ide_window(ide: str) -> bool:
     if not shutil.which("xdotool"):
         return False
-    for hint in _WINDOW_NAME_HINTS.get(ide, (ide,)):
+    for hint in _window_name_hints(ide):
         proc = _run(["xdotool", "search", "--onlyvisible", "--name", hint])
         if proc.returncode != 0 or not proc.stdout.strip():
             proc = _run(["xdotool", "search", "--name", hint])

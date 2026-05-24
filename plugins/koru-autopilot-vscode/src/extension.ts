@@ -38,11 +38,15 @@ import {
 import { defaultSocketPathFromEnv, socketCandidatesFromEnv } from "./socketPath";
 import { ChatHistoryWatcher, SupportedIde } from "./chat-history-watcher";
 import {
+  decideBusyInputAction,
   interpretPostSubmitProbe,
   shouldVerifyPostSubmit,
   shouldVerifyPrePasteBusy,
+  type BusyInputAction,
   type KoruAutopilotStepConfig,
 } from "./step-decisions";
+import { ideControlStrategy } from "./ide-control-strategy";
+import { getStrategy } from "./ides/registry";
 
 
 const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
@@ -690,7 +694,8 @@ class AutopilotBridge {
     verifyText: string | undefined,
     verifyEnabled: boolean
   ): Promise<SubmitOutcome | null> {
-    const hostKey = await this._tryHostKeySubmit(ide === "cursor" ? "cursor" : undefined);
+    const strategy = getStrategy(ide);
+    const hostKey = await this._tryHostKeySubmit(strategy?.preferCtrlSubmit() ? ide : undefined);
     if (hostKey.ok && hostKey.command) {
       const accepted = await this.finalizeSubmitCandidate(
         hostKey.command,
@@ -709,10 +714,10 @@ class AutopilotBridge {
         };
       }
     }
-    if (ide === "cursor") {
+    if (strategy?.submitFallback.refuseTypeNewlineFallback) {
       return {
         ok: false,
-        command: "cursor-submit-unavailable",
+        command: `${ide}-submit-unavailable`,
         reason: hostKey.reason,
         attempts: hostKey.attempts,
         unverified: true,
@@ -837,12 +842,26 @@ class AutopilotBridge {
     };
   }
 
-  private async pasteText(text: string): Promise<CommandOutcome> {
+  private async pasteText(text: string, replaceCurrentInput = false): Promise<CommandOutcome> {
     const ide = this.detectIde();
     const useProbe = this.probeLadderEnabled();
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     const cache = this.getProbeCache();
     const before = this.editorSnapshot();
+
+    if (replaceCurrentInput) {
+      await this.focusChatInput();
+      await this.runCommand("editor.action.selectAll");
+      await this.sleep(50);
+      const clipboard = await this.tryClipboardPaste(text, before, useProbe);
+      if (clipboard.handled && clipboard.result.ok) {
+        return clipboard.result;
+      }
+      const typed = await this.tryTypePaste(text, before, useProbe);
+      if (typed.ok) {
+        return typed;
+      }
+    }
 
     if (ide === "vscodium") {
       const hostPaste = await this.tryHostClipboardPaste(text, before, useProbe);
@@ -1127,17 +1146,15 @@ class AutopilotBridge {
    * Falls closed on errors (missing commands, clipboard failures): when in
    * doubt, do NOT skip — let the legacy paste path run.
    */
-  private async chatInputAppearsBusy(): Promise<boolean> {
+  private async decideBusyInput(text: string): Promise<{ action: BusyInputAction; observedLength: number }> {
     if (!shouldVerifyPrePasteBusy(this.koruStepConfig())) {
-      return false;
+      return { action: "empty", observedLength: 0 };
     }
     const observed = await this._probeChatInputContents();
-    if (observed === null) {
-      return false;
-    }
-    const busy = observed.trim().length >= 4;
-    debugLog("CHAT_INPUT_BUSY_PROBE", { busy, length: observed.trim().length });
-    return busy;
+    const observedLength = observed === null ? -1 : observed.trim().length;
+    const action = decideBusyInputAction(observed, text);
+    debugLog("CHAT_INPUT_BUSY_PROBE", { busy: action !== "empty", action, length: observedLength });
+    return { action, observedLength };
   }
 
   /**
@@ -1171,7 +1188,11 @@ class AutopilotBridge {
     }
   }
 
-  private sendInputBusyAck(env: Envelope, focus: { ok: boolean; command?: string }): void {
+  private sendInputBusyAck(
+    env: Envelope,
+    focus: { ok: boolean; command?: string },
+    observedLength?: number
+  ): void {
     this.send({
       type: "ack",
       id: env.id,
@@ -1183,10 +1204,46 @@ class AutopilotBridge {
       winning_focus_open: focus.command,
       verification: "input_busy",
       reason: "chat_input_not_empty",
+      observed_length: observedLength,
       message:
         "chat input already contains un-submitted text — skipping drive to "
         + "avoid clobbering the user's reply or concatenating prompts.",
     });
+  }
+
+  private async submitExistingChatInput(
+    env: Envelope,
+    focus: { ok: boolean; command?: string },
+    text: string,
+    submit: boolean
+  ): Promise<void> {
+    if (!submit) {
+      this.send({
+        type: "ack",
+        id: env.id,
+        ok: true,
+        delivered: true,
+        opened: true,
+        submitted: false,
+        probe_ladder: this.probeLadderEnabled(),
+        winning_focus_open: focus.command,
+        verification: "input_matches_prompt",
+      });
+      return;
+    }
+    const submitResult = await this.submitChat(text);
+    if (submitResult.unverified || !submitResult.ok) {
+      this.sendSubmitFailureAck(
+        env,
+        focus,
+        { ok: true, command: "existing-input" },
+        submitResult.command,
+        submitResult
+      );
+      return;
+    }
+    this.sendSuccessAck(env, focus, { ok: true, command: "existing-input" }, submitResult.command);
+    this.sendMessageSent(text);
   }
 
   private sendFocusFailureAck(env: Envelope, focus: FocusOutcome): void {
@@ -1458,16 +1515,16 @@ class AutopilotBridge {
 
   private async _performInject(env: Envelope, text: string, submit: boolean): Promise<void> {
     const ide = this.detectIde();
+    const strategy = ideControlStrategy(ide);
     if (await this.tryAntigravitySendPromptFastPath(env, text, submit)) {
       return;
     }
     if (await this.tryWindsurfSendTextFastPath(env, text, submit)) {
       return;
     }
-    if (ide === "windsurf") {
-      // On Windsurf, if the fast path failed, we should NOT fall back to the traditional focus and paste path,
-      // because traditional paste is disabled on Windsurf to prevent active file editor contamination.
-      // Doing so would only cause unsafe toggles and failures.
+    if (ide === "windsurf" || (strategy.nativeAtomicSend && !strategy.allowGenericPaste)) {
+      // Native-send IDEs must not fall back to the generic focus/paste path.
+      // That path can target the active editor instead of the chat surface.
       this.sendPasteFailureAck(env, { ok: false }, { ok: false, reason: "fast path failed" });
       return;
     }
@@ -1487,7 +1544,13 @@ class AutopilotBridge {
       this.sendFocusFailureAck(env, focus);
       return;
     }
-    if (await this.chatInputAppearsBusy()) {
+    const busyInput = await this.decideBusyInput(text);
+    if (busyInput.action === "submit_existing") {
+      debugLog("CHAT_INPUT_BUSY_SUBMIT_EXISTING", { length: busyInput.observedLength });
+      await this.submitExistingChatInput(env, focus, text, submit);
+      return;
+    }
+    if (busyInput.action === "block") {
       // The chat input already has un-submitted content (the user is typing,
       // or the IDE-side LLM left the user with a prompt and nothing has been
       // sent yet). Pasting our prompt on top would either concatenate with
@@ -1495,10 +1558,13 @@ class AutopilotBridge {
       // they were preparing. Skip the drive cleanly so the autonomous loop
       // can either back off or retry later — it is the operator's job to
       // resolve the pending input.
-      this.sendInputBusyAck(env, focus);
+      this.sendInputBusyAck(env, focus, busyInput.observedLength);
       return;
     }
-    const pasted = await this.pasteText(text);
+    if (busyInput.action === "replace_known_koru_draft") {
+      debugLog("CHAT_INPUT_BUSY_REPLACE_KORU_DRAFT", { length: busyInput.observedLength });
+    }
+    const pasted = await this.pasteText(text, busyInput.action === "replace_known_koru_draft");
     if (!pasted.ok) {
       this.sendPasteFailureAck(env, focus, pasted);
       return;

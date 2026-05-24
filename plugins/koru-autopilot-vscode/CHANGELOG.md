@@ -4,6 +4,16 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.56] — 2026-05-23
+
+### Fixed
+- **VS Code/Cursor: recover from stale Koru chat drafts.** The pre-paste
+  busy-input guard now distinguishes user text from known Koru leftovers:
+  if the chat input already contains the exact prompt, the plugin submits it
+  instead of pasting a duplicate; if it contains a short command-like
+  ``koru auto`` draft, the plugin replaces it with the requested autonomous
+  prompt. Arbitrary user text still blocks drive to avoid clobbering replies.
+
 ## [0.1.55] — 2026-05-23
 
 ### Changed

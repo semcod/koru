@@ -1,9 +1,11 @@
 import {
+  decideBusyInputAction,
   interpretPostSubmitProbe,
   readVerifySubmitEnabled,
   shouldVerifyPostSubmit,
   shouldVerifyPrePasteBusy,
 } from "./step-decisions";
+import { ideControlStrategy } from "./ide-control-strategy";
 
 function assert(condition: unknown, message: string): void {
   if (!condition) {
@@ -40,6 +42,25 @@ function testShouldVerifyPostSubmitAllPluginIdes(): void {
   );
 }
 
+function testIdeStrategiesAreSeparated(): void {
+  assert(
+    ideControlStrategy("vscodium").submitStrategy === "vscodium-host-submit",
+    "VSCodium has its own host-submit strategy",
+  );
+  assert(
+    ideControlStrategy("cursor").submitStrategy === "cursor-host-submit",
+    "Cursor has its own host-submit strategy",
+  );
+  assert(
+    ideControlStrategy("windsurf").nativeAtomicSend,
+    "Windsurf must stay on native atomic send",
+  );
+  assert(
+    !ideControlStrategy("windsurf").allowGenericPaste,
+    "Windsurf must not use generic paste fallback",
+  );
+}
+
 function testShouldVerifyPrePasteBusy(): void {
   assert(
     shouldVerifyPrePasteBusy({ probeLadder: true, verifySubmit: true, skipWhenInputBusy: true }),
@@ -51,6 +72,28 @@ function testShouldVerifyPrePasteBusy(): void {
   );
 }
 
+function testDecideBusyInputAction(): void {
+  assert(decideBusyInputAction("", "next prompt") === "empty", "empty input is not busy");
+  assert(
+    decideBusyInputAction("same prompt", " same\n prompt ") === "submit_existing",
+    "existing matching prompt should be submitted instead of pasted twice",
+  );
+  assert(
+    decideBusyInputAction("koru auto", "next prompt") === "replace_known_koru_draft",
+    "stale koru auto draft may be replaced",
+  );
+  assert(
+    decideBusyInputAction("KORU_AUTOPILOT_INSTANCE=vscode .venv/bin/koru auto", "next prompt")
+      === "replace_known_koru_draft",
+    "command-like koru auto draft with env/path may be replaced",
+  );
+  assert(
+    decideBusyInputAction("koru auto nie działa", "next prompt") === "block",
+    "natural-language user text must not be replaced",
+  );
+  assert(decideBusyInputAction("please answer this", "next prompt") === "block", "user draft blocks drive");
+}
+
 function testInterpretPostSubmitProbeRetry(): void {
   const original = "Architektura: wprowadź CQRS — test";
   const result = interpretPostSubmitProbe(original, original);
@@ -60,6 +103,8 @@ function testInterpretPostSubmitProbeRetry(): void {
 
 testReadVerifySubmitPrefersNewSetting();
 testShouldVerifyPostSubmitAllPluginIdes();
+testIdeStrategiesAreSeparated();
 testShouldVerifyPrePasteBusy();
+testDecideBusyInputAction();
 testInterpretPostSubmitProbeRetry();
 console.log("step-decisions tests: ok");

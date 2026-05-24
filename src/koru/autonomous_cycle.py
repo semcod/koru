@@ -796,6 +796,12 @@ def _check_autopilot_skip_conditions(
         queue_result.last_status,
         autopilot_skip_statuses,
     ):
+        if str(getattr(state, "last_autopilot_status", "") or "") == "failed":
+            _hp(
+                "- autopilot not skipped "
+                f"(previous drive failed, streak={state.stagnation_streak})",
+            )
+            return False, ""
         if _waiting_ticket_has_label(project, queue_result, "llm-ready"):
             if _skip_due_to_recent_chat_activity(
                 project=project,
@@ -1951,6 +1957,7 @@ def _handle_autopilot_phase(
             if ok:
                 state.last_message_sent_ts = time.time()
                 state.last_driven_ticket_id = _queue_loop_waiting_ticket_label(queue_result)
+            state.last_autopilot_status = autopilot_status
             _update_autopilot_state(
                 state, ok, decision_kind, autopilot_drive_kind, reply.get("prompt", "")
             )

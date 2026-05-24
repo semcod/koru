@@ -1017,11 +1017,11 @@ def test_plugin_ack_with_shutdown_info_is_relayed(
         cli.close()
 
 
-def test_plugin_ack_submit_failure_uses_os_fallback(
+def test_plugin_ack_submit_failure_does_not_cross_fallback_for_plugin_ide(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """When plugin cannot submit, daemon should try os-injector fallback."""
+    """Plugin-socket IDEs must not silently switch to OS injector."""
     with _daemon(tmp_path, monkeypatch) as h:
         plugin, plugin_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
 
@@ -1043,6 +1043,61 @@ def test_plugin_ack_submit_failure_uses_os_fallback(
                 type="drive",
                 id="d-submit-fail",
                 data={"text": "continue", "ide": "vscode", "submit": True},
+            ).encode(),
+        )
+
+        forwarded = plugin_reader.read_message()
+        assert forwarded.type == "chat.send"
+        plugin.sendall(
+            Message(
+                type="ack",
+                id=forwarded.id,
+                data={
+                    "ok": False,
+                    "delivered": False,
+                    "submitted": False,
+                    "message": "chat opened and text injected, but submit command failed",
+                },
+            ).encode(),
+        )
+
+        cli_reply = cli_reader.read_message()
+        assert cli_reply.type == "ack"
+        assert cli_reply.data.get("ok") is False
+        assert cli_reply.data.get("backend") is None
+        assert cli_reply.data.get("os_fallback") is None
+        assert h.injector.calls == []
+
+        plugin.close()
+        cli.close()
+
+
+def test_plugin_ack_submit_failure_uses_os_fallback_for_keyboard_strategy(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Keyboard-owned IDEs can still use OS fallback when not plugin-required."""
+    with _daemon(tmp_path, monkeypatch) as h:
+        plugin, plugin_reader = _connect_plugin(h.sock_path, ide="jetbrains", pid=42)
+
+        def fake_os_fallback(_ide: str, _text: str, submit: bool):
+            return {
+                "ok": True,
+                "backend": "os_injector",
+                "submitted": submit,
+            }
+
+        monkeypatch.setattr(h.daemon, "_try_os_injector_drive", fake_os_fallback)
+
+        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli.settimeout(2.0)
+        cli.connect(str(h.sock_path))
+        cli_reader = _LineReader(cli)
+        cli.sendall(
+            Message(
+                type="drive",
+                id="d-submit-fail-keyboard",
+                data={"text": "continue", "ide": "jetbrains", "submit": True},
             ).encode(),
         )
 

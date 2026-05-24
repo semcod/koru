@@ -10,6 +10,7 @@ import sqlite3
 from pathlib import Path
 
 from koru.ide_adapters.base import Hypothesis, Remediation, SettingsReport
+from koruide.ides import get_strategy as _get_ide_strategy
 
 EXTENSION_ID = "semcod.koru-autopilot-vscode"
 SOCKET_SETTING_KEY = "koruAutopilot.socketPath"
@@ -17,26 +18,39 @@ PUBLISHER_ID = "semcod"
 _ANSI_YELLOW = "\033[33m"
 _ANSI_RESET = "\033[0m"
 
+# IDE ids that still use the legacy ``shared.py`` dict-driven layout because
+# they have not yet been extracted into their own ``koruide.ides.<ide>`` module.
+# Strategies (e.g. ``CursorStrategy``) take precedence when available.
+_LEGACY_CONFIG_DIRS: dict[str, str] = {
+    "antigravity": "Antigravity",
+    "windsurf": "Windsurf",
+    "vscode": "Code",
+    "vscodium": "VSCodium",
+}
+_LEGACY_VSCODE_WORKSPACE_IDES = frozenset({"vscode", "vscodium", "windsurf", "antigravity"})
+
 
 def _yellow(text: str, *, enabled: bool) -> str:
     return f"{_ANSI_YELLOW}{text}{_ANSI_RESET}" if enabled else text
 
 
 def config_home_for_ide(ide: str) -> Path | None:
-    base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")).expanduser()
-    dirname = {
-        "antigravity": "Antigravity",
-        "windsurf": "Windsurf",
-        "cursor": "Cursor",
-        "vscode": "Code",
-        "vscodium": "VSCodium",
-    }.get(ide)
+    # Per-IDE modules (e.g. ``koruide.ides.cursor``) own this knowledge.
+    # Fall back to the legacy dict for IDEs that have not been extracted.
+    strategy = _get_ide_strategy(ide)
+    if strategy is not None:
+        return strategy.config_home()
+    dirname = _LEGACY_CONFIG_DIRS.get(ide)
     if dirname is None:
         return None
+    base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")).expanduser()
     return base / dirname
 
 
 def user_settings_path(ide: str) -> Path | None:
+    strategy = _get_ide_strategy(ide)
+    if strategy is not None:
+        return strategy.user_settings_path()
     home = config_home_for_ide(ide)
     if home is None:
         return None
@@ -44,9 +58,11 @@ def user_settings_path(ide: str) -> Path | None:
 
 
 def workspace_settings_path(project: Path, ide: str) -> Path | None:
-    if ide == "cursor":
-        candidate = project / ".cursor" / "settings.json"
-    elif ide in {"vscode", "vscodium", "windsurf", "antigravity"}:
+    strategy = _get_ide_strategy(ide)
+    if strategy is not None:
+        candidate = strategy.workspace_settings_path(project)
+        return candidate if candidate is not None and candidate.is_file() else None
+    if ide in _LEGACY_VSCODE_WORKSPACE_IDES:
         candidate = project / ".vscode" / "settings.json"
     else:
         return None
@@ -102,9 +118,12 @@ def analyze_socket_settings(
 
 
 def fix_workspace_socket(*, project: Path, ide: str, expected_socket: str) -> Path | None:
-    if ide == "cursor":
-        path = project / ".cursor" / "settings.json"
-    elif ide in {"vscode", "vscodium", "windsurf", "antigravity"}:
+    strategy = _get_ide_strategy(ide)
+    if strategy is not None:
+        path = strategy.workspace_settings_path(project)
+        if path is None:
+            return None
+    elif ide in _LEGACY_VSCODE_WORKSPACE_IDES:
         path = project / ".vscode" / "settings.json"
     else:
         return None
@@ -265,14 +284,19 @@ def extension_reload_required_lines(
     return lines
 
 
+_LEGACY_EXTENSIONS_DIRNAME: dict[str, str] = {
+    "antigravity": ".antigravity",
+    "vscode": ".vscode",
+    "vscodium": ".vscode-oss",
+    "windsurf": ".windsurf",
+}
+
+
 def extension_metadata_path(ide: str) -> Path | None:
-    dirname = {
-        "antigravity": ".antigravity",
-        "cursor": ".cursor",
-        "vscode": ".vscode",
-        "vscodium": ".vscode-oss",
-        "windsurf": ".windsurf",
-    }.get(ide)
+    strategy = _get_ide_strategy(ide)
+    if strategy is not None:
+        return strategy.extensions_metadata_path()
+    dirname = _LEGACY_EXTENSIONS_DIRNAME.get(ide)
     if dirname is None:
         return None
     return Path.home() / dirname / "extensions" / "extensions.json"

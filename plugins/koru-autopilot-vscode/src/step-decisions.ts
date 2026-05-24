@@ -6,6 +6,7 @@
  */
 
 import { decideSubmitCleared } from "./probe-ladder";
+import { ideControlStrategy } from "./ide-control-strategy";
 
 export type InjectStep = "focus" | "busy" | "paste" | "submit";
 
@@ -17,6 +18,8 @@ export interface KoruAutopilotStepConfig {
   verifySubmitOnCursor?: boolean;
   skipWhenInputBusy?: boolean;
 }
+
+export type BusyInputAction = "empty" | "submit_existing" | "replace_known_koru_draft" | "block";
 
 /** Read ``verifySubmit`` with fallback to deprecated ``verifySubmitOnCursor``. */
 export function readVerifySubmitEnabled(cfg: KoruAutopilotStepConfig): boolean {
@@ -44,7 +47,7 @@ export function shouldVerifyPostSubmit(
   if (!pastedText || pastedText.trim().length < 4) {
     return false;
   }
-  if (ide === "windsurf" || ide === "antigravity") {
+  if (!ideControlStrategy(ide).verifyPostSubmit) {
     return false;
   }
   return true;
@@ -53,6 +56,36 @@ export function shouldVerifyPostSubmit(
 /** Should the pre-paste busy probe run before injecting? */
 export function shouldVerifyPrePasteBusy(cfg: KoruAutopilotStepConfig): boolean {
   return cfg.probeLadder && (cfg.skipWhenInputBusy ?? true);
+}
+
+function normalizeDraft(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function isKnownStaleKoruCommandDraft(text: string): boolean {
+  if (text.length > 120) {
+    return false;
+  }
+  const withoutEnv = text.replace(/^(?:[A-Z_][A-Z0-9_]*=\S+\s+)*/, "");
+  return /^(?:\.\/)?(?:\.venv\/bin\/)?koru\s+auto(?:\s+--[A-Za-z0-9][A-Za-z0-9_.-]*(?:=\S+)?)?$/i.test(withoutEnv);
+}
+
+export function decideBusyInputAction(
+  observedInput: string | null,
+  requestedText: string
+): BusyInputAction {
+  const observed = normalizeDraft(observedInput || "");
+  if (observed.length < 4) {
+    return "empty";
+  }
+  const requested = normalizeDraft(requestedText);
+  if (requested && observed === requested) {
+    return "submit_existing";
+  }
+  if (isKnownStaleKoruCommandDraft(observed)) {
+    return "replace_known_koru_draft";
+  }
+  return "block";
 }
 
 export type PostSubmitVerifyResult = ReturnType<typeof decideSubmitCleared> & {

@@ -1840,6 +1840,39 @@ def test_run_cycle_escalates_stuck_waiting_input_instead_of_skipping(
     assert state.stagnation_streak == 0
 
 
+def test_autopilot_retry_not_suppressed_after_failed_drive(tmp_path) -> None:
+    queue_result = SimpleNamespace(
+        last_status="waiting_input",
+        last_message="ticket prompt",
+        waiting=["PLF-1306"],
+    )
+    state = autonomous_mod.AutoloopState(
+        previous_signature="waiting_input:PLF-1306",
+        stagnation_streak=1,
+        last_autopilot_status="failed",
+    )
+    logs: list[str] = []
+
+    should_skip, reason = autonomous_cycle_mod._check_autopilot_skip_conditions(
+        tmp_path,
+        queue_result,
+        state,
+        "drive",
+        False,
+        True,
+        0,
+        "waiting_input",
+        autonomous_cycle_mod.DiagnosticResult(status="skipped", failed=[]),
+        False,
+        {},
+        logs.append,
+    )
+
+    assert should_skip is False
+    assert reason == ""
+    assert any("previous drive failed" in line for line in logs)
+
+
 def test_run_cycle_drives_llm_ready_waiting_ticket_without_stagnation_skip(
     tmp_path,
     monkeypatch,

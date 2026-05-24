@@ -2,6 +2,8 @@
  * Probe ladder: try IDE commands in order, verify side-effects, cache winners.
  */
 
+import { getStrategy } from "./ides/registry";
+
 export const PROBE_CACHE_VERSION = 2;
 
 export interface EditorSnapshot {
@@ -216,10 +218,25 @@ export function buildFocusInputCommands(ide: string): string[] {
     "workbench.action.focusPanel",
     "workbench.action.focusSideBar",
   ];
+  const strategy = getStrategy(ide);
+  if (strategy) {
+    const prefix = strategy.focusInputCommandsPrefix();
+    return prefix.length ? [...prefix, ...generic] : generic;
+  }
   return ide === "windsurf" ? [...windsurf, ...generic] : generic;
 }
 
 export function buildPasteDirectCommands(ide: string): string[] {
+  const generic = [
+    "workbench.action.chat.insertText",
+    "workbench.action.chat.typeText",
+    "aichat.typeText",
+  ];
+  const strategy = getStrategy(ide);
+  if (strategy) {
+    const prefix = strategy.pasteDirectCommandsPrefix();
+    return prefix.length ? prefix : generic;
+  }
   if (ide === "windsurf") {
     return [
       "windsurf.sendTextToChat",
@@ -230,18 +247,7 @@ export function buildPasteDirectCommands(ide: string): string[] {
       "cascade.typeText",
     ];
   }
-  if (ide === "cursor") {
-    return [
-      "cursor.action.chat.typeText",
-      "composer.typeText",
-      "aichat.typeText",
-    ];
-  }
-  return [
-    "workbench.action.chat.insertText",
-    "workbench.action.chat.typeText",
-    "aichat.typeText",
-  ];
+  return generic;
 }
 
 export function buildSubmitCommands(ide: string): string[] {
@@ -254,6 +260,12 @@ export function buildSubmitCommands(ide: string): string[] {
     "composer.submit",
     "aichat.submit",
   ];
+  const strategy = getStrategy(ide);
+  if (strategy) {
+    const override = strategy.submitCommandsOverride();
+    if (override !== null) return override;
+    return generic;
+  }
   if (ide === "windsurf") {
     return [
       "windsurf.action.cascade.submit",
@@ -263,25 +275,6 @@ export function buildSubmitCommands(ide: string): string[] {
       "windsurf.chat.submit",
       "windsurf.cascade.submit",
       "cascade.submit",
-      ...generic,
-    ];
-  }
-  if (ide === "cursor") {
-    // Cursor's actual submit command is ``composer.sendToAgent`` — it sends
-    // whatever is currently in the Composer/Agent chat input. The legacy
-    // ``composer.submit`` / ``aichat.submit`` candidates are NOT registered
-    // in recent Cursor builds, so we kept falling through to the host-key
-    // ladder where ``xdotool key Return`` and ``xdotool key ctrl+Return``
-    // both exit 0 but only insert a newline (the chat textarea is multi-line
-    // and accepts both as in-input keys, not "submit"). Try the registered
-    // command FIRST so we never need to forge keystrokes.
-    return [
-      "composer.sendToAgent",
-      "composer.acceptComposerStep",
-      "composer.startComposerPrompt",
-      "composer.startComposerPrompt2",
-      "composer.submit",
-      "aichat.submit",
       ...generic,
     ];
   }
@@ -366,7 +359,8 @@ export function buildHostKeySubmitCandidates(
   if (normalized === "ctrl+return" || normalized === "ctrl+enter") {
     return [...ctrl, ...plain];
   }
-  if (ide === "cursor") {
+  const strategy = getStrategy(ide);
+  if (strategy?.preferCtrlSubmit()) {
     return [...ctrl, ...plain];
   }
   return [...plain, ...ctrl];
@@ -405,35 +399,6 @@ function sanitizeWindsurfCache(sanitized: ProbeCacheEntry): void {
   }
 }
 
-function sanitizeCursorSubmitCache(sanitized: ProbeCacheEntry): void {
-  if (sanitized.submit && (sanitized.submit.startsWith("type:") || sanitized.submit === "type")) {
-    sanitized.submit = undefined;
-    return;
-  }
-  if (typeof sanitized.submit !== "string") return;
-  const cmd = sanitized.submit;
-  // On Wayland, xdotool cannot reach native Cursor windows at all — every
-  // xdotool host-key probe is a false positive (exit 0, no effect). Discard
-  // the cached winner so the ladder re-probes composer.sendToAgent / ydotool.
-  if (isLikelyWaylandSession() && cmd.startsWith("xdotool ")) {
-    sanitized.submit = undefined;
-    return;
-  }
-  // Plugin 0.1.47 cached host-level plain ``Return`` for Cursor. On Linux
-  // (Wayland with XWayland) ``xdotool key Return`` exits 0 even though
-  // Cursor's chat textarea treats it as a newline rather than a submit.
-  // Force a re-probe so 0.1.48's reordered ladder can pick ``Ctrl+Return``.
-  // Match injector-specific renderings without ctrl modifier:
-  //   "xdotool key Return", "ydotool key Return", "wtype -k Return"
-  const hasCtrl = /\bctrl\b/i.test(cmd) || /-M\s+ctrl\b/.test(cmd);
-  const isHostKey =
-    /^(xdotool|ydotool)\s+key\s+Return$/.test(cmd) ||
-    /^wtype(\s+-[Mm]\s+\S+)*\s+-k\s+Return$/.test(cmd);
-  if (!hasCtrl && isHostKey) {
-    sanitized.submit = undefined;
-  }
-}
-
 export function sanitizeProbeCacheForIde(
   entry: ProbeCacheEntry | undefined,
   ide: string
@@ -442,8 +407,12 @@ export function sanitizeProbeCacheForIde(
     return entry;
   }
   const sanitized = { ...entry };
+  const strategy = getStrategy(ide);
+  if (strategy) {
+    strategy.sanitizeProbeCache(sanitized, { isWayland: isLikelyWaylandSession() });
+    return sanitized;
+  }
   if (ide === "windsurf") sanitizeWindsurfCache(sanitized);
-  if (ide === "cursor") sanitizeCursorSubmitCache(sanitized);
   if (ide === "vscodium" && sanitized.submit === "workbench.action.chat.submit") {
     sanitized.submit = undefined;
   }
