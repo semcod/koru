@@ -156,5 +156,6 @@ def test_matrix_fake_extension_version_matches_bundled_plugin() -> None:
         encoding="utf-8",
     )
 
-    assert f"KORU_FAKE_EXTENSION_VERSION:-{EXPECTED_VSCODE_PLUGIN_VERSION}" in entrypoint
+    assert "koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION" in entrypoint
+    assert "KORU_FAKE_EXTENSION_VERSION:-" in entrypoint
     assert f'"{EXPECTED_VSCODE_PLUGIN_VERSION}"' in native

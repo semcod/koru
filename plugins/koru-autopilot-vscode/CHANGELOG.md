@@ -4,6 +4,15 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.58] — 2026-05-24
+
+### Fixed
+- **VSCodium: submit with the Codium host-key strategy.** The Codium submit
+  path now passes ``ide=vscodium`` into the host-key ladder, so auto mode
+  prefers ``Ctrl+Return`` before plain ``Return``. Plain ``Return`` can report
+  success while leaving the pasted prompt in the chat input, which produced
+  ``verification=submit_unverified``.
+
 ## [0.1.57] — 2026-05-24
 
 ### Fixed

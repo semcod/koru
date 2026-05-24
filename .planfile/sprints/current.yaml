@@ -4,25 +4,52 @@ sprint:
   status: active
   tickets:
     STARTER-214:
-      id: STARTER-214
-      name: 'Split large module: autonomous'
-      status: open
-      priority: high
-      sprint: current
-      source:
-        tool: koru-scan
-        timestamp: '2026-05-24T19:02:10.400046+00:00'
-        context:
-          input: '`project/analysis.toon.yaml` flags `autonomous` in LAYERS as a large/hot
-            module (1119 lines, 1 classes, 56 methods, CC=7). Extract cohesive submodules
-            around stable responsibilities and add focused regression tests before
-            broad edits.'
-          signal: code2llm_layer_hotspot
-          dedupe_key: koru-scan:code2llm_layer_hotspot:project/analysis.toon.yaml
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T19:02:10.400046+00:00'
       description: '`project/analysis.toon.yaml` flags `autonomous` in LAYERS as a
         large/hot module (1119 lines, 1 classes, 56 methods, CC=7). Extract cohesive
         submodules around stable responsibilities and add focused regression tests
         before broad edits.'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-24T19:18:52.461202Z'
+        max_attempts: 1
+        queue: default
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` flags `autonomous` in LAYERS as a large/hot
+          module (1119 lines, 1 classes, 56 methods, CC=7). Extract cohesive submodules
+          around stable responsibilities and add focused regression tests before broad
+          edits.'
+        source: koru task
+        timestamp: '2026-05-24T19:02:10.400046+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T19:18:52.471096+00:00'
+      id: STARTER-214
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` flags `autonomous` in LAYERS as a large/hot
+          module (1119 lines, 1 classes, 56 methods, CC=7). Extract cohesive submodules
+          around stable responsibilities and add focused regression tests before broad
+          edits.'
       labels:
       - koru
       - nl-task
@@ -32,38 +59,130 @@ sprint:
       - large-module
       - refactor
       - scan
-      blocked_by: []
-      blocks: []
-      files:
-      - project/analysis.toon.yaml
-      executor:
-        kind: human
-        mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '`project/analysis.toon.yaml` flags `autonomous` in LAYERS as a large/hot
-          module (1119 lines, 1 classes, 56 methods, CC=7). Extract cohesive submodules
-          around stable responsibilities and add focused regression tests before broad
-          edits.'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
+      name: 'Split large module: autonomous'
       outputs:
         artifacts: []
         notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-scan:code2llm_layer_hotspot:project/analysis.toon.yaml
+          input: '`project/analysis.toon.yaml` flags `autonomous` in LAYERS as a large/hot
+            module (1119 lines, 1 classes, 56 methods, CC=7). Extract cohesive submodules
+            around stable responsibilities and add focused regression tests before
+            broad edits.'
+          signal: code2llm_layer_hotspot
+        timestamp: '2026-05-24T19:02:10.400046+00:00'
+        tool: koru-scan
+      sprint: current
+      status: done
       sync: {}
+      updated_at: '2026-05-24T19:18:52.471065+00:00'
+    STARTER-215:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T19:10:23.396376+00:00'
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        Plugin nie połączony z daemonem na /run/user/1000/koru-autopilot-vscodium.sock
+        → Command Palette → koru: Connect autopilot daemon (socket /run/user/1000/koru-autopilot-vscodium.sock)
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-24T19:11:13.324522Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
       history:
-      - timestamp: '2026-05-24T19:02:10.400046+00:00'
-        action: created
+      - action: created
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          Plugin nie połączony z daemonem na /run/user/1000/koru-autopilot-vscodium.sock
+          → Command Palette → koru: Connect autopilot daemon (socket /run/user/1000/koru-autopilot-vscodium.sock)
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
         source: koru task
-        message: '`project/analysis.toon.yaml` flags `autonomous` in LAYERS as a large/hot
-          module (1119 lines, 1 classes, 56 methods, CC=7). Extract cohesive submodules
-          around stable responsibilities and add focused regression tests before broad
-          edits.'
-      created_at: '2026-05-24T19:02:10.400046+00:00'
-      updated_at: '2026-05-24T19:02:10.400046+00:00'
+        timestamp: '2026-05-24T19:10:23.396376+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T19:11:13.337457+00:00'
+      id: STARTER-215
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          Plugin nie połączony z daemonem na /run/user/1000/koru-autopilot-vscodium.sock
+          → Command Palette → koru: Connect autopilot daemon (socket /run/user/1000/koru-autopilot-vscodium.sock)
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie Plugin nie połączony
+        z daemonem na /run/user/1000/koru-autopilot-vsco...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-operator-pipeline:operator-autopilot-connect-plugin-w-czacie-plugin-nie-po-czony-z-daemonem-na-/run/user/1000/koru-autopilot-vsco...
+          detail: 'Plugin nie połączony z daemonem na /run/user/1000/koru-autopilot-vscodium.sock
+            → Command Palette → koru: Connect autopilot daemon (socket /run/user/1000/koru-autopilot-vscodium.sock)'
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            Plugin nie połączony z daemonem na /run/user/1000/koru-autopilot-vscodium.sock
+            → Command Palette → koru: Connect autopilot daemon (socket /run/user/1000/koru-autopilot-vscodium.sock)
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
+          step_id: autopilot_plugin
+          task_command: koru ide doctor --ide vscodium --fix --gc-sockets
+        timestamp: '2026-05-24T19:10:23.396376+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T19:11:13.337412+00:00'

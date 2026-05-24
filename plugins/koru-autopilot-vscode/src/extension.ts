@@ -668,7 +668,7 @@ class AutopilotBridge {
       );
       if (accepted) return accepted;
     }
-    const hostKey = await this._tryHostKeySubmit();
+    const hostKey = await this._tryHostKeySubmit("vscodium");
     if (hostKey.ok && hostKey.command) {
       const accepted = await this.finalizeSubmitCandidate(
         hostKey.command,

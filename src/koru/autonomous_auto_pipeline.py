@@ -14,7 +14,9 @@ from koru.queue import QueueLoopResult
 
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
-AUTO_UP_DEFAULT_ARGS: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = ()
+AUTO_UP_DEFAULT_ARGS: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = (
+    (("--scan-after-idle-queue", "--no-scan-after-idle-queue"), ("--scan-after-idle-queue",)),
+)
 
 
 @dataclass

@@ -463,11 +463,25 @@ def test_auto_invocation_uses_full_autonomous_defaults(tmp_path: Path, monkeypat
     assert args.max_cycles == 0
     assert args.max_iterations == 50
     assert args.stop_on_waiting_input is False
+    assert args.scan_after_idle_queue is True
     assert args.semcod_artifacts is True
     assert args.operator_pipeline is True
     assert args.operator_tickets is True
     assert args.enable_autopilot is True
     assert args.autopilot_action == "drive"
+
+
+def test_auto_invocation_can_disable_after_idle_intake(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.delenv("KORU_AUTO_PIPELINE", raising=False)
+    with patch.object(autonomous_mod, "_action_up", return_value=0) as action_up:
+        rc = autonomous_mod.autonomous_main(
+            ["--project", str(tmp_path), "--no-scan-after-idle-queue"],
+            invoked_as_auto=True,
+        )
+
+    assert rc == 0
+    args = action_up.call_args.args[0]
+    assert args.scan_after_idle_queue is False
 
 
 def test_auto_invocation_can_enable_adaptive_pipeline(tmp_path: Path, monkeypatch) -> None:
