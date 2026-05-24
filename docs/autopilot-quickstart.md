@@ -44,10 +44,24 @@ the autopilot daemon starts. Do this in the **same IDE** shown in the log
 6. Test: `koru autopilot drive --ide <ide> --require-plugin 'probe test'` →
    `ok: true` with `winning_*` fields (not `backend: ydotool`).
 
-If `plugins` stays empty, the daemon is fine but the extension is not connected
-(wrong socket, wrong IDE window, or Connect not run in Cursor). Use
-`--require-plugin` on drive while debugging so you never silently fall back to
+If `plugins` stays empty, run the IDE bridge doctor (replaces manual log hunting):
+
+```bash
+export KORU_AUTOPILOT_INSTANCE=cursor   # same lane as koru auto
+koru ide doctor --ide cursor --fix --gc-sockets
+koru autopilot status --explain
+```
+
+**Cursor 3.5+ / VS Code 1.105+:** VSIX install alone may not activate the extension
+until you **Trust Publisher `semcod`** (Extensions panel → koru autopilot → Trust
+Publisher) and **Reload Window**. `koru ide doctor` detects missing
+`extensions.trustedPublishers` and can add `semcod` automatically when Cursor is
+closed (`--fix`).
+
+Use `--require-plugin` on drive while debugging so you never silently fall back to
 keyboard injection.
+
+See also: [`refactor/ide-bridge-2026.md`](./refactor/ide-bridge-2026.md).
 
 If `installed=expected` but `connected=False`, the plugin is installed correctly
 and only the runtime handshake is missing: start the daemon, reload the IDE

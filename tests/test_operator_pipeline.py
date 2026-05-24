@@ -123,7 +123,7 @@ def test_build_operator_steps_plugin_probe_uses_resolved_ide(
     plugin = next(s for s in steps if s.step_id == "autopilot_plugin")
 
     assert plugin.status == "pending"
-    assert plugin.task_command == "task koru:operator:plugin-probe IDE=cursor"
+    assert plugin.task_command == "koru ide doctor --ide cursor --fix --gc-sockets"
 
 
 def test_build_operator_steps_skips_os_calibration_for_plugin_ide(
@@ -376,7 +376,7 @@ sprint:
     plugin_step = next(s for s in result.steps if s.step_id == "autopilot_plugin")
     assert plugin_step.ticket_id is not None
     assert plugin_step.ticket_id != "PLF-1280"
-    assert plugin_step.task_command == "task koru:operator:plugin-probe IDE=vscode"
+    assert plugin_step.task_command == "koru ide doctor --ide vscode --fix --gc-sockets"
     assert marker.read_text(encoding="utf-8") == plugin_step.ticket_id
     assert [_ticket_args(call) for call in calls] == [["ticket", "done", "PLF-1280"]]
 

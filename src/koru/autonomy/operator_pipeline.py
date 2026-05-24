@@ -356,6 +356,29 @@ def _os_profile_ok(ide: str, project: Path) -> tuple[bool, str]:
     return False, f"brak kalibracji chatu dla {ide} — task koru:ide-os:calibrate IDE={ide}"
 
 
+def _autopilot_plugin_operator_hints(
+    *,
+    ide: str,
+    socket_path: str,
+    project: Path,
+    unchecked: bool = False,
+) -> tuple[str, str]:
+    """Return (detail, task_command) for the autopilot_plugin operator step."""
+    task = f"koru ide doctor --ide {ide} --fix --gc-sockets"
+    if unchecked:
+        return (
+            "nie sprawdzono — uruchom diagnostykę mostu IDE",
+            task,
+        )
+    try:
+        from koru.ide_adapters.bridge import evaluate_bridge
+
+        bridge = evaluate_bridge(ide=ide, socket_path=socket_path, project=project)
+        return bridge.operator_detail(), bridge.operator_task_command()
+    except Exception:
+        return (f"brak pluginu na {socket_path}", task)
+
+
 def _host_injectors_ok() -> tuple[bool, str]:
     from koruide.host_setup import build_setup_host_report
 
@@ -445,12 +468,19 @@ def build_operator_steps(
         plug_task = None
     elif plugin_connected is False:
         plug_status = "pending"
-        plug_detail = f"brak pluginu na {probe.socket_path}"
-        plug_task = f"task koru:operator:plugin-probe IDE={ide}"
+        plug_detail, plug_task = _autopilot_plugin_operator_hints(
+            ide=ide,
+            socket_path=str(probe.socket_path),
+            project=project,
+        )
     else:
         plug_status = "pending"
-        plug_detail = "nie sprawdzono — podłącz plugin w IDE"
-        plug_task = f"task koru:operator:plugin-probe IDE={ide}"
+        plug_detail, plug_task = _autopilot_plugin_operator_hints(
+            ide=ide,
+            socket_path=str(probe.socket_path),
+            project=project,
+            unchecked=True,
+        )
 
     steps.append(
         OperatorStep(

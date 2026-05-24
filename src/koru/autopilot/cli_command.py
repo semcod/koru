@@ -25,6 +25,7 @@ from koru.autopilot.client import AutopilotClient
 from koru.autopilot.ide import (
     detect_focused_ide_id,
     detect_running_ides,
+    normalize_ide_id,
     resolve_drive_target,
 )
 from koru.autopilot.injector import Injector, InjectorError
@@ -258,6 +259,17 @@ def _build_parser() -> argparse.ArgumentParser:
         "--json",
         action="store_true",
         help=argparse.SUPPRESS,
+    )
+    status.add_argument(
+        "--explain",
+        action="store_true",
+        help="When plugins are empty, print IDE bridge hypotheses (koru ide doctor).",
+    )
+    status.add_argument(
+        "--project",
+        type=Path,
+        default=Path.cwd(),
+        help="Project root for workspace settings checks with --explain.",
     )
     sub.add_parser("shutdown", help="Ask a running daemon to stop.")
 
@@ -730,7 +742,37 @@ def _action_drive(args: argparse.Namespace) -> int:
 
 def _action_status(args: argparse.Namespace) -> int:
     client = _client(args)
-    return call_daemon_method(client, "status", "koru autopilot status", not_running_return_code=1)
+    if not client.is_running():
+        print("koru autopilot: daemon is NOT running")
+        return 1
+    try:
+        info = client.status()
+    except (OSError, RuntimeError) as exc:
+        print(f"koru autopilot status: {exc}", file=sys.stderr)
+        return 1
+    import json
+
+    print(json.dumps(info, indent=2, sort_keys=True))
+    plugins = info.get("plugins") if isinstance(info, dict) else []
+    if args.explain and isinstance(plugins, list) and not plugins:
+        from koru.ide_adapters.bridge import evaluate_bridge, format_bridge_text
+        from koruide.plugin_installer import resolve_target_ide
+
+        instance = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip()
+        ide = normalize_ide_id(instance) if instance else resolve_target_ide("auto")
+        ide = ide or "cursor"
+        socket = getattr(client, "socket_path", None)
+        if socket is not None:
+            bridge = evaluate_bridge(
+                ide=ide,
+                socket_path=socket,
+                project=getattr(args, "project", Path.cwd()),
+                plugins=plugins,
+            )
+            print("\n--- explain ---", file=sys.stderr)
+            print(format_bridge_text(bridge, explain=True), file=sys.stderr)
+            print(f"hint: koru ide doctor --ide {ide} --fix", file=sys.stderr)
+    return 0
 
 
 def _action_shutdown(args: argparse.Namespace) -> int:

@@ -539,11 +539,12 @@ def _format_plugin_setup_steps(
         f"({settings_hint}: koruAutopilot.socketPath)",
         "koru autonomous: 5) Ten sam socket w shellu: export "
         f"KORU_AUTOPILOT_INSTANCE={ide}",
-        f"koru autonomous: 6) Test: koru autopilot status → plugins "
-        f"niepuste; potem koru autopilot drive --ide {ide} --require-plugin 'probe test'",
-        "koru autonomous: 7) (opcjonalnie) Command Palette → "
+        f"koru autonomous: 6) Diagnostyka mostu: koru ide doctor --ide {ide} --fix",
+        f"koru autonomous: 7) Test: koru autopilot status --explain → plugins niepuste; "
+        f"potem koru autopilot drive --ide {ide} --require-plugin 'probe test'",
+        "koru autonomous: 8) (opcjonalnie) Command Palette → "
         "„koru: Calibrate chat probe ladder”",
-        "koru autonomous: 8) Dashboard: task koru:server → http://localhost:8765/",
+        "koru autonomous: 9) Dashboard: task koru:server → http://localhost:8765/",
         "koru autonomous: --- docs: <project>/docs/autonomy-ide-cursor.md "
         "(sekcja „Po starcie”) ---",
     ]

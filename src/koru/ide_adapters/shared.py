@@ -1,0 +1,378 @@
+"""Shared helpers for VS Code–family IDE adapters."""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import socket
+import sqlite3
+from pathlib import Path
+
+from koru.ide_adapters.base import Hypothesis, Remediation, SettingsReport
+
+EXTENSION_ID = "semcod.koru-autopilot-vscode"
+SOCKET_SETTING_KEY = "koruAutopilot.socketPath"
+PUBLISHER_ID = "semcod"
+
+
+def config_home_for_ide(ide: str) -> Path | None:
+    base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")).expanduser()
+    dirname = {
+        "antigravity": "Antigravity",
+        "windsurf": "Windsurf",
+        "cursor": "Cursor",
+        "vscode": "Code",
+        "vscodium": "VSCodium",
+    }.get(ide)
+    if dirname is None:
+        return None
+    return base / dirname
+
+
+def user_settings_path(ide: str) -> Path | None:
+    home = config_home_for_ide(ide)
+    if home is None:
+        return None
+    return home / "User" / "settings.json"
+
+
+def workspace_settings_path(project: Path, ide: str) -> Path | None:
+    if ide == "cursor":
+        candidate = project / ".cursor" / "settings.json"
+    elif ide in {"vscode", "vscodium", "windsurf", "antigravity"}:
+        candidate = project / ".vscode" / "settings.json"
+    else:
+        return None
+    return candidate if candidate.is_file() else None
+
+
+def _read_json_object(path: Path) -> dict | None:
+    try:
+        raw = path.read_text(encoding="utf-8").strip()
+        if not raw:
+            return {}
+        data = json.loads(raw)
+        return data if isinstance(data, dict) else None
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def read_socket_from_settings(path: Path | None) -> str | None:
+    if path is None or not path.is_file():
+        return None
+    data = _read_json_object(path)
+    if not data:
+        return None
+    value = data.get(SOCKET_SETTING_KEY)
+    return str(value).strip() if isinstance(value, str) and value.strip() else None
+
+
+def analyze_socket_settings(
+    *,
+    ide: str,
+    project: Path | None,
+    expected_socket: str,
+) -> SettingsReport:
+    user_path = user_settings_path(ide)
+    workspace_path = workspace_settings_path(project, ide) if project is not None else None
+    user_sock = read_socket_from_settings(user_path)
+    workspace_sock = read_socket_from_settings(workspace_path)
+    expected = str(Path(expected_socket).resolve())
+    mismatch = False
+    if workspace_sock and Path(workspace_sock).resolve() != Path(expected).resolve():
+        mismatch = True
+    if user_sock and Path(user_sock).resolve() != Path(expected).resolve():
+        if workspace_sock is None:
+            mismatch = True
+    return SettingsReport(
+        expected_socket=expected,
+        user_socket=user_sock,
+        workspace_socket=workspace_sock,
+        mismatch=mismatch,
+        workspace_settings_path=str(workspace_path) if workspace_path else None,
+        user_settings_path=str(user_path) if user_path else None,
+    )
+
+
+def fix_workspace_socket(*, project: Path, ide: str, expected_socket: str) -> Path | None:
+    if ide == "cursor":
+        path = project / ".cursor" / "settings.json"
+    elif ide in {"vscode", "vscodium", "windsurf", "antigravity"}:
+        path = project / ".vscode" / "settings.json"
+    else:
+        return None
+    data = _read_json_object(path) or {}
+    wanted = str(Path(expected_socket).resolve())
+    current = data.get(SOCKET_SETTING_KEY)
+    if current == wanted:
+        return path if path.is_file() else None
+    data[SOCKET_SETTING_KEY] = wanted
+    if "koruAutopilot.autoConnect" not in data:
+        data["koruAutopilot.autoConnect"] = True
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return path
+
+
+def state_vscdb_path(ide: str) -> Path | None:
+    home = config_home_for_ide(ide)
+    if home is None:
+        return None
+    return home / "User" / "globalStorage" / "state.vscdb"
+
+
+def read_vscdb_json(key: str, *, ide: str) -> object | None:
+    db_path = state_vscdb_path(ide)
+    if db_path is None or not db_path.is_file():
+        return None
+    try:
+        con = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        row = con.execute("SELECT value FROM ItemTable WHERE key = ?", (key,)).fetchone()
+        con.close()
+    except sqlite3.Error:
+        return None
+    if row is None:
+        return None
+    raw = row[0]
+    if isinstance(raw, bytes):
+        raw = raw.decode("utf-8", errors="replace")
+    if not isinstance(raw, str):
+        return raw
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return raw
+
+
+def extension_disabled(ide: str) -> bool:
+    disabled = read_vscdb_json("extensionsIdentifiers/disabled", ide=ide)
+    if not isinstance(disabled, list):
+        return False
+    return EXTENSION_ID in {str(item) for item in disabled}
+
+
+def publisher_trusted(ide: str, publisher: str = PUBLISHER_ID) -> bool | None:
+    trusted = read_vscdb_json("extensions.trustedPublishers", ide=ide)
+    if not isinstance(trusted, dict):
+        return None
+    return publisher in trusted
+
+
+def vscode_core_version(ide: str) -> str | None:
+    product = config_home_for_ide(ide)
+    if product is None:
+        return None
+    # Cursor/VS Code product.json lives next to resources, not under User/.
+    for candidate in (
+        Path("/usr/share/cursor/resources/app/product.json"),
+        Path("/usr/share/code/resources/app/product.json"),
+        Path("/snap/code/current/usr/share/code/resources/app/product.json"),
+    ):
+        if not candidate.is_file():
+            continue
+        try:
+            data = json.loads(candidate.read_text(encoding="utf-8"))
+            version = data.get("vscodeVersion") if isinstance(data, dict) else None
+            if version:
+                return str(version)
+        except (OSError, json.JSONDecodeError):
+            continue
+    return None
+
+
+def extension_activated_in_exthost(ide: str, extension_id: str = EXTENSION_ID) -> bool | None:
+    home = config_home_for_ide(ide)
+    if home is None:
+        return None
+    logs_root = home / "logs"
+    if not logs_root.is_dir():
+        return None
+    sessions = sorted(logs_root.glob("20*"), key=lambda p: p.stat().st_mtime, reverse=True)
+    pattern = re.compile(
+        rf"_doActivateExtension\s+{re.escape(extension_id)}\b|"
+        rf"Extension activated success:\s+{re.escape(extension_id)}\b",
+    )
+    for session in sessions[:5]:
+        for log_path in session.glob("window*/exthost/exthost.log"):
+            try:
+                text = log_path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            if pattern.search(text):
+                return True
+    # Scanned recent logs without activation line — inconclusive vs not active.
+    if sessions:
+        return False
+    return None
+
+
+def extension_metadata_path(ide: str) -> Path | None:
+    dirname = {
+        "antigravity": ".antigravity",
+        "cursor": ".cursor",
+        "vscode": ".vscode",
+        "vscodium": ".vscode-oss",
+        "windsurf": ".windsurf",
+    }.get(ide)
+    if dirname is None:
+        return None
+    return Path.home() / dirname / "extensions" / "extensions.json"
+
+
+def extension_listed_in_extensions_json(ide: str) -> bool:
+    ext_json = extension_metadata_path(ide)
+    if not ext_json.is_file():
+        return False
+    try:
+        data = json.loads(ext_json.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    if not isinstance(data, list):
+        return False
+    for entry in data:
+        if not isinstance(entry, dict):
+            continue
+        ident = entry.get("identifier")
+        if isinstance(ident, dict) and ident.get("id") == EXTENSION_ID:
+            return True
+    return False
+
+
+def add_trusted_publisher(ide: str, publisher: str = PUBLISHER_ID) -> bool:
+    db_path = state_vscdb_path(ide)
+    if db_path is None or not db_path.is_file():
+        return False
+    try:
+        con = sqlite3.connect(db_path)
+        row = con.execute(
+            "SELECT value FROM ItemTable WHERE key = ?",
+            ("extensions.trustedPublishers",),
+        ).fetchone()
+        if row is None:
+            trusted: dict[str, object] = {}
+        else:
+            raw = row[0]
+            if isinstance(raw, bytes):
+                raw = raw.decode("utf-8")
+            trusted = json.loads(raw) if isinstance(raw, str) else {}
+            if not isinstance(trusted, dict):
+                trusted = {}
+        if publisher in trusted:
+            con.close()
+            return True
+        trusted[publisher] = {
+            "publisher": publisher,
+            "publisherDisplayName": publisher,
+        }
+        con.execute(
+            "INSERT OR REPLACE INTO ItemTable(key, value) VALUES (?, ?)",
+            ("extensions.trustedPublishers", json.dumps(trusted)),
+        )
+        con.commit()
+        con.close()
+        return True
+    except (sqlite3.Error, json.JSONDecodeError, TypeError):
+        return False
+
+
+def socket_reachable(path: str | Path, *, timeout: float = 0.3) -> bool:
+    sock_path = Path(path)
+    if not sock_path.exists():
+        return False
+    try:
+        client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        client.settimeout(timeout)
+        client.connect(str(sock_path))
+        client.close()
+        return True
+    except OSError:
+        return False
+
+
+def gc_stale_autopilot_sockets(
+    *,
+    keep: Path | None = None,
+    runtime_dir: Path | None = None,
+) -> list[str]:
+    """Remove koru-autopilot-*.sock files that refuse connections."""
+    xdg = runtime_dir or Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
+    if not xdg.is_dir():
+        return []
+    removed: list[str] = []
+    keep_resolved = keep.resolve() if keep is not None else None
+    for sock in sorted(xdg.glob("koru-autopilot*.sock")):
+        if keep_resolved is not None and sock.resolve() == keep_resolved:
+            continue
+        if socket_reachable(sock):
+            continue
+        try:
+            sock.unlink()
+            removed.append(str(sock))
+        except OSError:
+            continue
+    return removed
+
+
+def settings_mismatch_hypothesis(settings: SettingsReport) -> Hypothesis | None:
+    if not settings.mismatch:
+        return None
+    ws = settings.workspace_socket or "(brak)"
+    return Hypothesis(
+        id="settings.socket.workspace_mismatch",
+        confidence=0.88,
+        evidence=(
+            f"workspace socketPath={ws} ≠ oczekiwany {settings.expected_socket}"
+        ),
+        remediation=Remediation(
+            kind="command",
+            summary="Wyrównaj socket w workspace settings",
+            command=(
+                "koru ide doctor --fix-settings "
+                f"(lub ręcznie {settings.workspace_settings_path})"
+            ),
+        ),
+    )
+
+
+def untrusted_publisher_hypothesis(ide: str) -> Hypothesis | None:
+    trusted = publisher_trusted(ide)
+    if trusted is not False:
+        return None
+    core = vscode_core_version(ide) or "?"
+    return Hypothesis(
+        id=f"{ide}.trustedPublishers.missing",
+        confidence=0.92,
+        evidence=(
+            f"Publisher '{PUBLISHER_ID}' nie jest w extensions.trustedPublishers "
+            f"(VS Code core {core}); wtyczka nie aktywuje się mimo instalacji VSIX"
+        ),
+        remediation=Remediation(
+            kind="manual",
+            summary=(
+                f"Extensions → koru autopilot → Trust Publisher '{PUBLISHER_ID}' "
+                "→ Developer: Reload Window"
+            ),
+        ),
+    )
+
+
+def inactive_extension_hypothesis(ide: str) -> Hypothesis | None:
+    active = extension_activated_in_exthost(ide)
+    if active is not False:
+        return None
+    return Hypothesis(
+        id=f"{ide}.extension.not_activated",
+        confidence=0.75,
+        evidence=(
+            f"Brak aktywacji {EXTENSION_ID} w ostatnich logach exthost "
+            f"(~/.config/{ide.title()}/logs/.../exthost.log)"
+        ),
+        remediation=Remediation(
+            kind="manual",
+            summary=(
+                "Command Palette → koru: Connect autopilot daemon; "
+                "jeśli brak komendy → Reload Window po Trust Publisher"
+            ),
+        ),
+    )

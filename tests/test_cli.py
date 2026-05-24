@@ -600,6 +600,7 @@ class TestSubcommandDispatch(unittest.TestCase):
         {
             "init-ci",
             "init-ide",
+            "ide",
             "ide-router",
             "configure",
             "mesh",
@@ -630,6 +631,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "refactor-planfile-handoff",
             "dev",
             "events",
+            "ide",
         },
     )
 

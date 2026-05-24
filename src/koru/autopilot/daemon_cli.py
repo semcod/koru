@@ -72,6 +72,10 @@ def action_daemon(
     default_socket_fn: Callable[[], Path] = default_socket_path,
 ) -> int:
     socket_path = args.socket or default_socket_fn()
+    from koru.ide_adapters.bridge import gc_stale_sockets_for_lane
+
+    for path in gc_stale_sockets_for_lane(socket_path):
+        print(f"koru autopilot daemon: removed stale socket {path}")
     if _daemon_already_running(args, socket_path):
         return 0
     project = args.project.resolve() if args.handoff else None

@@ -203,6 +203,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "tools": lambda argv: __import__("koru.cli_tools", fromlist=["_tools_main"])._tools_main(argv),
     "mcp-serve": lambda argv: __import__("koruapi.mcp", fromlist=["mcp_main"]).mcp_main(argv),
     "ide-router": lambda argv: __import__("koru.cli_ide_router", fromlist=["ide_router_main"]).ide_router_main(argv),
+    "ide": lambda argv: __import__("koru.cli_ide", fromlist=["ide_main"]).ide_main(argv),
     "autopilot": autopilot_main,
     "autoloop": autoloop_main,
     "autonomous": autonomous_main,
