@@ -20,6 +20,36 @@ def _has_redup_module() -> bool:
     return shutil.which("redup") is not None or find_spec("redup") is not None
 
 
+def _code2llm_project_snapshot_command() -> list[str]:
+    return [
+        "code2llm",
+        "./",
+        "-f",
+        "all",
+        "-o",
+        "./project",
+        "--no-chunk",
+        "--exclude",
+        "*.md",
+        "--exclude",
+        "node_modules/**",
+        "--exclude",
+        ".venv/**",
+        "--exclude",
+        "dist/**",
+        "--exclude",
+        "build/**",
+        "--exclude",
+        ".git/**",
+        "--exclude",
+        ".planfile/**",
+        "--exclude",
+        ".wup/**",
+        "--exclude",
+        "project/**",
+    ]
+
+
 def build_idle_checks(project: Path, profile: str) -> list[IdleCheck]:
     """Build semcod idle diagnostic commands for the given profile."""
     profile = profile.lower()
@@ -36,6 +66,14 @@ def build_idle_checks(project: Path, profile: str) -> list[IdleCheck]:
         checks.append(("wup", "wup status", ["wup", "status"]))
     if profile not in {"full", "deep"}:
         return checks
+    if profile == "deep" and shutil.which("code2llm"):
+        checks.append(
+            (
+                "code2llm",
+                "code2llm ./ -f all -o ./project --no-chunk",
+                _code2llm_project_snapshot_command(),
+            ),
+        )
     if _has_redup_module():
         if (project / "wup.yaml").is_file():
             command = redup_changed_scan_runner_command()

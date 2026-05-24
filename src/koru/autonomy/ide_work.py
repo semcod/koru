@@ -10,10 +10,33 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from koru.project_pipeline import load_koru_project_pipeline
+from koru.tasks import create_nl_task
 
 _PRIORITY_RANK = {"critical": 0, "high": 1, "normal": 2, "low": 3}
 _TICKET_ID_RE = re.compile(r"\b(PLF-\d+)\b", re.IGNORECASE)
+_PROJECT_DISCOVERY_SOURCE = "koru-project-discovery"
+_PROJECT_DISCOVERY_SIGNAL = "project_discovery"
+_PROJECT_DISCOVERY_TITLE = "Project discovery: generate code2llm analysis and tickets"
+_PROJECT_DISCOVERY_ACTIVE_STATUSES = {"open", "ready", "todo", "in_progress"}
+_PROJECT_DISCOVERY_BODY = """Run a broad project discovery pass because the planfile queue is idle.
+
+Goal: move Koru from local implementation mode back to whole-project strategy, then create concrete tickets and let the normal queue work through them.
+
+1. Generate fresh whole-project context:
+    code2llm ./ -f all -o ./project --no-chunk --exclude '*.md'
+
+2. Inspect the generated ./project artifacts, especially project/analysis.toon.yaml. Use llx/OpenRouter or the IDE LLM for synthesis if useful, but keep the output as actionable planfile tickets rather than direct broad edits.
+
+3. Convert findings into tickets:
+    koru scan --apply --semcod-artifacts --source koru-scan
+
+4. Prefer high-signal work: failing gates, god modules, duplicated code, high cyclomatic complexity, missing tests, and architecture seams that block future tickets.
+
+5. When new tickets exist, stop broad discovery and work the tickets one by one. After those tickets are done and the queue is empty again, another discovery pass is allowed.
+"""
 
 
 def extract_ticket_id_from_text(text: str) -> str | None:
@@ -65,6 +88,88 @@ def fetch_next_open_ticket(
         return None
     tickets = _parse_open_tickets(result.stdout or "")
     return tickets[0] if tickets else None
+
+
+def _current_sprint_tickets(project: Path) -> list[dict[str, Any]]:
+    sprint_path = project / ".planfile" / "sprints" / "current.yaml"
+    try:
+        data = yaml.safe_load(sprint_path.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError):
+        return []
+    sprint = data.get("sprint") if isinstance(data, dict) else None
+    tickets = sprint.get("tickets") if isinstance(sprint, dict) else None
+    if isinstance(tickets, dict):
+        return [ticket for ticket in tickets.values() if isinstance(ticket, dict)]
+    if isinstance(tickets, list):
+        return [ticket for ticket in tickets if isinstance(ticket, dict)]
+    return []
+
+
+def _is_active_project_discovery_ticket(ticket: dict[str, Any]) -> bool:
+    status = str(ticket.get("status") or "").strip().lower()
+    if status not in _PROJECT_DISCOVERY_ACTIVE_STATUSES:
+        return False
+    source = ticket.get("source")
+    context = source.get("context") if isinstance(source, dict) else None
+    if not isinstance(context, dict):
+        return False
+    return (
+        source.get("tool") == _PROJECT_DISCOVERY_SOURCE
+        and context.get("signal") == _PROJECT_DISCOVERY_SIGNAL
+    )
+
+
+def _active_project_discovery_ticket(project: Path) -> dict[str, Any] | None:
+    tickets = [t for t in _current_sprint_tickets(project) if _is_active_project_discovery_ticket(t)]
+    tickets.sort(
+        key=lambda t: (
+            _PRIORITY_RANK.get(str(t.get("priority") or "normal"), 2),
+            str(t.get("created_at") or ""),
+        ),
+    )
+    return tickets[0] if tickets else None
+
+
+def _ticket_from_created_discovery(ticket_id: str) -> dict[str, Any]:
+    return {
+        "id": ticket_id,
+        "status": "open",
+        "priority": "high",
+        "name": _PROJECT_DISCOVERY_TITLE,
+        "description": _PROJECT_DISCOVERY_BODY,
+        "execution": {"queue": "operator"},
+    }
+
+
+def ensure_project_discovery_ticket(project: Path) -> dict[str, Any] | None:
+    """Create or return the active broad-analysis ticket for an idle queue."""
+    existing = _active_project_discovery_ticket(project)
+    if existing is not None:
+        return existing
+    generation = datetime.now(UTC).isoformat()
+    try:
+        created = create_nl_task(
+            project,
+            _PROJECT_DISCOVERY_BODY,
+            queue_name="operator",
+            priority="high",
+            scaffold={
+                "title": _PROJECT_DISCOVERY_TITLE,
+                "labels": ["project-discovery", "code2llm", "scan", "strategy"],
+                "files": ["project/analysis.toon.yaml"],
+                "source_tool": _PROJECT_DISCOVERY_SOURCE,
+                "source_context": {
+                    "signal": _PROJECT_DISCOVERY_SIGNAL,
+                    "generation": generation,
+                    "dedupe_key": f"koru:project-discovery:{generation}",
+                },
+                "executor_kind": "human",
+                "executor_mode": "interactive",
+            },
+        )
+    except (OSError, ValueError):
+        return None
+    return _ticket_from_created_discovery(created.ticket_id)
 
 
 def build_ide_work_prompt(
@@ -126,11 +231,13 @@ def resolve_idle_drive_prompt(
     """When the queue is idle, prefer a ticket-specific IDE prompt if work exists.
 
     Returns ``(prompt, kind)`` where ``kind`` is ``idle_ticket_prompt`` when
-    runnable IDE work exists, or ``idle_no_ticket`` when the queue is idle and
-    no open ticket is available. The prompt is preserved for compatibility, but
-    callers should not drive it for ``idle_no_ticket``.
+    runnable IDE work exists. If no ticket exists, Koru creates/reuses a broad
+    project-discovery ticket so the loop alternates between whole-project
+    strategy and focused ticket execution.
     """
     ticket = fetch_next_open_ticket(project, runner=runner)
+    if ticket is None:
+        ticket = ensure_project_discovery_ticket(project)
     if ticket is None:
         return drive_prompt, "idle_no_ticket"
     return (
@@ -294,6 +401,7 @@ def release_in_progress_tickets(
 
 __all__ = [
     "build_ide_work_prompt",
+    "ensure_project_discovery_ticket",
     "extract_ticket_id_from_text",
     "fetch_next_open_ticket",
     "release_in_progress_tickets",

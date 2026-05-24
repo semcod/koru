@@ -24,6 +24,32 @@ def test_build_idle_checks_full_includes_redup_when_available(tmp_path: Path, mo
     assert "redup" in [c[0] for c in checks]
 
 
+def test_build_idle_checks_deep_refreshes_code2llm_artifacts(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "koru.autonomous_diagnostics.shutil.which",
+        lambda name: name == "code2llm",
+    )
+
+    checks = build_idle_checks(tmp_path, "deep")
+    code2llm_check = next(check for check in checks if check[0] == "code2llm")
+
+    assert code2llm_check[2][:7] == [
+        "code2llm",
+        "./",
+        "-f",
+        "all",
+        "-o",
+        "./project",
+        "--no-chunk",
+    ]
+    assert "*.md" in code2llm_check[2]
+    assert "node_modules/**" in code2llm_check[2]
+    assert "project/**" in code2llm_check[2]
+
+
 def test_build_idle_checks_full_uses_changed_redup_when_wup_configured(
     tmp_path: Path,
     monkeypatch,

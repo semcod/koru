@@ -8,6 +8,8 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
+import yaml
+
 from koru.autonomy.ide_work import (
     build_ide_work_prompt,
     extract_ticket_id_from_text,
@@ -69,7 +71,7 @@ class TestIdeWork(unittest.TestCase):
             self.assertIn("PLF-99", prompt)
             self.assertIn("koru_run_ticket", prompt)
 
-    def test_resolve_idle_drive_prompt_marks_idle_when_no_open(self) -> None:
+    def test_resolve_idle_drive_prompt_creates_discovery_ticket_when_no_open(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
 
@@ -81,8 +83,25 @@ class TestIdeWork(unittest.TestCase):
                 drive_prompt="continue with the next ticket",
                 runner=runner,
             )
-            self.assertEqual(kind, "idle_no_ticket")
-            self.assertEqual(prompt, "continue with the next ticket")
+            self.assertEqual(kind, "idle_ticket_prompt")
+            self.assertIn("Project discovery", prompt)
+            self.assertIn("code2llm ./ -f all -o ./project --no-chunk --exclude '*.md'", prompt)
+            self.assertIn("koru scan --apply --semcod-artifacts --source koru-scan", prompt)
+
+            data = yaml.safe_load((project / ".planfile" / "sprints" / "current.yaml").read_text())
+            tickets = data["sprint"]["tickets"]
+            self.assertEqual(len(tickets), 1)
+            ticket = tickets["PLF-001"]
+            self.assertEqual(ticket["source"]["tool"], "koru-project-discovery")
+            self.assertEqual(ticket["source"]["context"]["signal"], "project_discovery")
+
+            resolve_idle_drive_prompt(
+                project,
+                drive_prompt="continue with the next ticket",
+                runner=runner,
+            )
+            data = yaml.safe_load((project / ".planfile" / "sprints" / "current.yaml").read_text())
+            self.assertEqual(len(data["sprint"]["tickets"]), 1)
 
     def test_release_stale_in_progress_reopens_old_ticket(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -234,8 +234,8 @@ def test_run_cycle_auto_heals_stale_socket():
         assert not sock.exists()
 
 
-def test_autonomous_cycle_skips_autopilot_after_repeated_idle_when_threshold_set():
-    """Idle queue without open tickets does not drive; repeated idle can still hit streak skip."""
+def test_autonomous_cycle_drives_discovery_then_skips_repeated_idle_when_threshold_set():
+    """Idle queue without open tickets starts broad discovery; repeated idle can still hit streak skip."""
     drive_calls: list[tuple[str, dict]] = []
 
     class RecordingClient:
@@ -299,6 +299,8 @@ def test_autonomous_cycle_skips_autopilot_after_repeated_idle_when_threshold_set
                 _, _, ap1, _ = _run_cycle(cycle=1, **common)
                 _, _, ap2, _ = _run_cycle(cycle=2, **common)
 
-                assert ap1 == "skipped(idle_no_ticket)"
+                assert ap1 == "ok"
                 assert ap2 == "skipped(idle_streak)"
-                assert drive_calls == []
+                assert len(drive_calls) == 1
+                assert "Project discovery" in drive_calls[0][0]
+                assert "code2llm ./ -f all -o ./project --no-chunk --exclude '*.md'" in drive_calls[0][0]
