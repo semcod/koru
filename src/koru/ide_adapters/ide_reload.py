@@ -14,22 +14,9 @@ from koruide.ides import get_strategy as _get_ide_strategy
 
 _VSCODE_FAMILY_IDES = frozenset({"antigravity", "cursor", "vscode", "vscodium", "windsurf"})
 
-# Window-title hints and CLI executable names for IDEs that do not have a
-# dedicated ``koruide.ides.<ide>`` module yet. Cursor is intentionally absent
-# because :class:`CursorStrategy` provides those values directly.
-_LEGACY_WINDOW_NAME_HINTS: dict[str, tuple[str, ...]] = {
-    "vscode": ("Visual Studio Code",),
-    "vscodium": ("VSCodium",),
-    "windsurf": ("Windsurf",),
-    "antigravity": ("Antigravity",),
-}
-
-_LEGACY_EDITOR_CLI: dict[str, tuple[str, ...]] = {
-    "vscode": ("code", "code-insiders"),
-    "vscodium": ("codium", "vscodium"),
-    "windsurf": ("windsurf",),
-    "antigravity": ("antigravity",),
-}
+# Fallback when an unknown IDE id is passed (supported IDEs use strategies).
+_LEGACY_WINDOW_NAME_HINTS: dict[str, tuple[str, ...]] = {}
+_LEGACY_EDITOR_CLI: dict[str, tuple[str, ...]] = {}
 
 
 def _window_name_hints(ide: str) -> tuple[str, ...]:

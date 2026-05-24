@@ -18,16 +18,10 @@ PUBLISHER_ID = "semcod"
 _ANSI_YELLOW = "\033[33m"
 _ANSI_RESET = "\033[0m"
 
-# IDE ids that still use the legacy ``shared.py`` dict-driven layout because
-# they have not yet been extracted into their own ``koruide.ides.<ide>`` module.
-# Strategies (e.g. ``CursorStrategy``) take precedence when available.
-_LEGACY_CONFIG_DIRS: dict[str, str] = {
-    "antigravity": "Antigravity",
-    "windsurf": "Windsurf",
-    "vscode": "Code",
-    "vscodium": "VSCodium",
-}
-_LEGACY_VSCODE_WORKSPACE_IDES = frozenset({"vscode", "vscodium", "windsurf", "antigravity"})
+# Legacy fallbacks for unknown IDE ids only — all supported autopilot IDEs
+# register a ``koruide.ides.<ide>`` strategy module.
+_LEGACY_CONFIG_DIRS: dict[str, str] = {}
+_LEGACY_VSCODE_WORKSPACE_IDES: frozenset[str] = frozenset()
 
 
 def _yellow(text: str, *, enabled: bool) -> str:
@@ -284,12 +278,7 @@ def extension_reload_required_lines(
     return lines
 
 
-_LEGACY_EXTENSIONS_DIRNAME: dict[str, str] = {
-    "antigravity": ".antigravity",
-    "vscode": ".vscode",
-    "vscodium": ".vscode-oss",
-    "windsurf": ".windsurf",
-}
+_LEGACY_EXTENSIONS_DIRNAME: dict[str, str] = {}
 
 
 def extension_metadata_path(ide: str) -> Path | None:

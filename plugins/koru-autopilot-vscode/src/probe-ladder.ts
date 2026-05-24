@@ -110,13 +110,8 @@ export function chatFocusHeuristic(snapshot: EditorSnapshot): boolean {
 }
 
 export function verifyFocusAfterOpen(before: EditorSnapshot, after: EditorSnapshot, ide?: string): boolean {
-  if (ide === "windsurf") {
-    return true;
-  }
-  if (ide === "vscodium") {
-    // VSCodium chat opens as a workbench/webview surface that often leaves
-    // activeTextEditor unchanged, so the editor snapshot is not a reliable
-    // proof of focus. Paste verification still catches file-editor leakage.
+  const strategy = ide ? getStrategy(ide) : undefined;
+  if (strategy?.trustFocusOpenWithoutEditorSnapshot()) {
     return true;
   }
   if (chatFocusHeuristic(after)) {
@@ -172,19 +167,18 @@ export function mergeUnique(primary: string[], secondary: string[]): string[] {
 }
 
 export function buildFocusOpenCommands(ide: string, custom: string[]): string[] {
-  const antigravityDefaults: string[] = [];
-  const windsurfDefaults = [
-    "windsurf.cascadePanel.open",
-    "windsurf.cascadePanel.focus",
-    "windsurf.action.openChat",
-    "windsurf.chat.open",
-    "windsurf.cascade.open",
-    "windsurf.panel.chat",
-    "cascade.focus",
-    "windsurf.action.showCascade",
-    "composer.showComposer",
-    "aichat.newchataction",
-  ];
+  const strategy = getStrategy(ide);
+  if (strategy) {
+    const ideDefaults = strategy.focusOpenCommandsDefaults();
+    // VS Code and Antigravity must not auto-open chat from generic defaults
+    // (Antigravity panel commands often toggle closed).
+    if (ide === "vscode" || ide === "antigravity") {
+      return mergeUnique(custom, ideDefaults);
+    }
+    if (ideDefaults.length > 0) {
+      return mergeUnique(custom, ideDefaults);
+    }
+  }
   const genericDefaults = [
     "composer.showComposer",
     "workbench.panel.chat",
@@ -193,23 +187,10 @@ export function buildFocusOpenCommands(ide: string, custom: string[]): string[] 
     "cursor.composer.open",
     "workbench.panel.aichat.view.copilot.focus",
   ];
-  if (ide === "vscode") {
-    return mergeUnique(custom, []);
-  }
-  const defaults =
-    ide === "antigravity" ? antigravityDefaults : ide === "windsurf" ? windsurfDefaults : genericDefaults;
-  return mergeUnique(custom, defaults);
+  return mergeUnique(custom, genericDefaults);
 }
 
 export function buildFocusInputCommands(ide: string): string[] {
-  const windsurf = [
-    "windsurf.cascadePanel.focus",
-    "windsurf.action.focusChatInput",
-    "windsurf.chat.focusInput",
-    "windsurf.cascade.focusInput",
-    "cascade.focusInput",
-    "windsurf.action.focusCascadeInput",
-  ];
   const generic = [
     "workbench.action.chat.focusInput",
     "chat.action.focus",
@@ -223,7 +204,7 @@ export function buildFocusInputCommands(ide: string): string[] {
     const prefix = strategy.focusInputCommandsPrefix();
     return prefix.length ? [...prefix, ...generic] : generic;
   }
-  return ide === "windsurf" ? [...windsurf, ...generic] : generic;
+  return generic;
 }
 
 export function buildPasteDirectCommands(ide: string): string[] {
@@ -236,16 +217,6 @@ export function buildPasteDirectCommands(ide: string): string[] {
   if (strategy) {
     const prefix = strategy.pasteDirectCommandsPrefix();
     return prefix.length ? prefix : generic;
-  }
-  if (ide === "windsurf") {
-    return [
-      "windsurf.sendTextToChat",
-      "windsurf.action.chat.typeText",
-      "windsurf.action.cascade.typeText",
-      "windsurf.chat.typeText",
-      "windsurf.cascade.typeText",
-      "cascade.typeText",
-    ];
   }
   return generic;
 }
@@ -265,18 +236,6 @@ export function buildSubmitCommands(ide: string): string[] {
     const override = strategy.submitCommandsOverride();
     if (override !== null) return override;
     return generic;
-  }
-  if (ide === "windsurf") {
-    return [
-      "windsurf.action.cascade.submit",
-      "windsurf.action.submitCascade",
-      "windsurf.action.submitChat",
-      "windsurf.action.chat.submit",
-      "windsurf.chat.submit",
-      "windsurf.cascade.submit",
-      "cascade.submit",
-      ...generic,
-    ];
   }
   return generic;
 }
@@ -389,16 +348,6 @@ function isLikelyWaylandSession(): boolean {
   );
 }
 
-function sanitizeWindsurfCache(sanitized: ProbeCacheEntry): void {
-  const unsafePaste = ["editor.action.clipboardPasteAction", "type"];
-  if (sanitized.paste && unsafePaste.includes(sanitized.paste)) {
-    sanitized.paste = undefined;
-  }
-  if (sanitized.submit && (sanitized.submit.startsWith("type:") || sanitized.submit === "type")) {
-    sanitized.submit = undefined;
-  }
-}
-
 export function sanitizeProbeCacheForIde(
   entry: ProbeCacheEntry | undefined,
   ide: string
@@ -411,10 +360,6 @@ export function sanitizeProbeCacheForIde(
   if (strategy) {
     strategy.sanitizeProbeCache(sanitized, { isWayland: isLikelyWaylandSession() });
     return sanitized;
-  }
-  if (ide === "windsurf") sanitizeWindsurfCache(sanitized);
-  if (ide === "vscodium" && sanitized.submit === "workbench.action.chat.submit") {
-    sanitized.submit = undefined;
   }
   return sanitized;
 }

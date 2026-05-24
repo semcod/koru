@@ -14,12 +14,12 @@ from __future__ import annotations
 from koru.ide_adapters.vscode_family import VSCodeFamilyAdapter
 from koruide.ides import get_strategy as _get_ide_strategy
 
-_LEGACY_ADAPTER_DEFS: tuple[tuple[str, str, bool], ...] = (
-    # (ide_id, label, requires_trusted_publisher)
-    ("vscode", "VS Code", True),
-    ("vscodium", "VSCodium", True),
-    ("windsurf", "Windsurf", False),
-    ("antigravity", "Antigravity", False),
+_VSCODE_PLUGIN_STRATEGY_IDS = (
+    "antigravity",
+    "cursor",
+    "vscodium",
+    "vscode",
+    "windsurf",
 )
 
 
@@ -36,20 +36,10 @@ def _adapter_from_strategy(ide_id: str) -> VSCodeFamilyAdapter | None:
 
 def _build_adapters() -> dict[str, VSCodeFamilyAdapter]:
     adapters: dict[str, VSCodeFamilyAdapter] = {}
-    # IDEs with a dedicated strategy take precedence.
-    for ide_id in ("cursor",):
+    for ide_id in _VSCODE_PLUGIN_STRATEGY_IDS:
         adapter = _adapter_from_strategy(ide_id)
         if adapter is not None:
             adapters[ide_id] = adapter
-    # Legacy entries for IDEs not yet extracted to ``koruide.ides``.
-    for ide_id, label, requires_trusted_publisher in _LEGACY_ADAPTER_DEFS:
-        if ide_id in adapters:
-            continue
-        adapters[ide_id] = VSCodeFamilyAdapter(
-            ide_id=ide_id,
-            label=label,
-            requires_trusted_publisher=requires_trusted_publisher,
-        )
     return adapters
 
 

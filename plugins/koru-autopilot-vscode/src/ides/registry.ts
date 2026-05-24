@@ -46,8 +46,16 @@ export function detectIdeViaStrategies(appName: string): string | undefined {
 export function bootstrapStrategies(): void {
   // The require() form means TypeScript compiles to commonjs and each
   // strategy's top-level `registerStrategy(...)` call runs once.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  require("./cursor");
+  for (const mod of [
+    "./antigravity",
+    "./cursor",
+    "./vscodium",
+    "./vscode",
+    "./windsurf",
+  ]) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require(mod);
+  }
 }
 
 bootstrapStrategies();

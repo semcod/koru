@@ -45,8 +45,7 @@ import {
   type BusyInputAction,
   type KoruAutopilotStepConfig,
 } from "./step-decisions";
-import { ideControlStrategy } from "./ide-control-strategy";
-import { getStrategy } from "./ides/registry";
+import { detectIdeViaStrategies, getStrategy } from "./ides/registry";
 
 
 const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
@@ -72,6 +71,14 @@ function sanitizeFocusOpenCommand(command: unknown): string | undefined {
 
 function sanitizeFocusOpenCandidates(commands: readonly string[]): string[] {
   return commands.filter(isAllowedFocusOpenCommand);
+}
+
+function isSpecificChatInputFocusCommand(command: string | undefined): boolean {
+  if (!command) {
+    return false;
+  }
+  const normalized = command.toLowerCase();
+  return normalized.includes("chat") || normalized.includes("composer") || normalized.includes("cascade");
 }
 
 
@@ -813,6 +820,15 @@ class AutopilotBridge {
         continue;
       }
       await this.sleep(this.probeFocusDelayMs());
+      const inputFocus = await this.focusChatInput();
+      if (isSpecificChatInputFocusCommand(inputFocus.command)) {
+        const combined = `${cmd}+${inputFocus.command}`;
+        debugLog("FOCUS_OPEN_SUCCESS_INPUT", { cmd, inputFocus: inputFocus.command });
+        if (useProbe) {
+          await this.saveProbeCache({ focusOpen: cmd });
+        }
+        return { ok: true, command: combined };
+      }
       const after = this.editorSnapshot();
       debugLog("FOCUS_OPEN_AFTER_SNAPSHOT", { cmd, after });
       if (!useProbe || verifyFocusAfterOpen(before, after, ide)) {
@@ -1043,12 +1059,8 @@ class AutopilotBridge {
   }
 
   private detectIde(): string {
-    const app = (vscode.env.appName || "").toLowerCase();
-    if (app.includes("antigravity")) return "antigravity";
-    if (app.includes("windsurf")) return "windsurf";
-    if (app.includes("cursor")) return "cursor";
-    if (app.includes("codium") || app.includes("code - oss") || app.includes("code-oss")) return "vscodium";
-    return "vscode";
+    const app = vscode.env.appName || "";
+    return detectIdeViaStrategies(app) ?? "vscode";
   }
 
   private send(env: Envelope): void {
@@ -1515,16 +1527,16 @@ class AutopilotBridge {
 
   private async _performInject(env: Envelope, text: string, submit: boolean): Promise<void> {
     const ide = this.detectIde();
-    const strategy = ideControlStrategy(ide);
     if (await this.tryAntigravitySendPromptFastPath(env, text, submit)) {
       return;
     }
     if (await this.tryWindsurfSendTextFastPath(env, text, submit)) {
       return;
     }
-    if (ide === "windsurf" || (strategy.nativeAtomicSend && !strategy.allowGenericPaste)) {
-      // Native-send IDEs must not fall back to the generic focus/paste path.
-      // That path can target the active editor instead of the chat surface.
+    if (ide === "windsurf") {
+      // On Windsurf, if the fast path failed, we should NOT fall back to the traditional focus and paste path,
+      // because traditional paste is disabled on Windsurf to prevent active file editor contamination.
+      // Doing so would only cause unsafe toggles and failures.
       this.sendPasteFailureAck(env, { ok: false }, { ok: false, reason: "fast path failed" });
       return;
     }

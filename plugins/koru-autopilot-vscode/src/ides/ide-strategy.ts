@@ -67,8 +67,9 @@ export interface IdeStrategy {
    * over plain `Return` when `koruAutopilot.submitHostKey === "auto"`.
    *
    * Cursor's chat textarea treats `Return` as a newline; only `Ctrl+Return`
-   * actually submits. Other IDEs (VS Code, VSCodium) submit on plain
-   * `Return`.
+   * actually submits. VSCodium on Wayland can also report a successful plain
+   * `Return` while the input remains unsent, so its own strategy prefers
+   * `Ctrl+Return` without changing VS Code.
    */
   preferCtrlSubmit(): boolean;
 
@@ -78,6 +79,18 @@ export interface IdeStrategy {
    * may be a no-op.
    */
   sanitizeProbeCache(entry: ProbeCacheEntry, opts: { isWayland: boolean }): void;
+
+  /**
+   * IDE-specific commands to open/focus chat before generic defaults
+   * (e.g. Windsurf Cascade panel commands).
+   */
+  focusOpenCommandsDefaults(): string[];
+
+  /**
+   * When true, ``verifyFocusAfterOpen`` accepts open without editor-snapshot
+   * proof (VSCodium chat webview).
+   */
+  trustFocusOpenWithoutEditorSnapshot(): boolean;
 
   /** Submit fallback policy used by `_submitChat*Fallback` in extension.ts. */
   readonly submitFallback: SubmitFallbackPolicy;

@@ -98,6 +98,14 @@ function sanitizeProbeCache(
   }
 }
 
+function focusOpenCommandsDefaults(): string[] {
+  return [];
+}
+
+function trustFocusOpenWithoutEditorSnapshot(): boolean {
+  return false;
+}
+
 export const cursorStrategy: IdeStrategy = {
   id: ID,
   label: "Cursor",
@@ -107,6 +115,8 @@ export const cursorStrategy: IdeStrategy = {
   focusInputCommandsPrefix,
   preferCtrlSubmit,
   sanitizeProbeCache,
+  focusOpenCommandsDefaults,
+  trustFocusOpenWithoutEditorSnapshot,
   submitFallback: {
     // When the host-key submit produced no effect we must NOT fall back to
     // typing newlines into the chat textarea — those just accumulate

@@ -55,7 +55,15 @@ def _bootstrap_default_strategies() -> None:
     # Import order is irrelevant; modules self-register.
     import importlib
 
-    for module_name in ("koruide.ides.cursor",):
+    for module_name in (
+        "koruide.ides.antigravity",
+        "koruide.ides.cursor",
+        "koruide.ides.jetbrains",
+        "koruide.ides.vscodium",
+        "koruide.ides.vscode",
+        "koruide.ides.windsurf",
+        "koruide.ides.zed",
+    ):
         try:
             importlib.import_module(module_name)
         except Exception:  # pragma: no cover - defensive

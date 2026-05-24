@@ -4,6 +4,17 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.57] — 2026-05-24
+
+### Fixed
+- **VS Code: focus chat input after opening the Chat panel.** When an explicit
+  focus-open command such as ``workbench.panel.chat`` only opens the panel and
+  leaves the active file editor unchanged, the plugin now immediately runs the
+  chat-input focus ladder and accepts the open step only when a specific
+  chat/composer/cascade input command wins. This prevents `koru auto` from
+  stopping at `chat input is not focused/open` while still avoiding generic
+  panel/sidebar focus as proof of chat readiness.
+
 ## [0.1.56] — 2026-05-23
 
 ### Fixed

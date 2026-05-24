@@ -279,6 +279,14 @@ function testHostKeyOrderVscodeKeepsPlainReturnFirst(): void {
   );
 }
 
+function testHostKeyOrderVscodiumPrefersCtrlReturn(): void {
+  const cands = buildHostKeySubmitCandidates("vscodium", "auto", WAYLAND_ENV);
+  assert(
+    firstKey(cands).includes("ctrl"),
+    "VSCodium strategy must try Ctrl+Return before plain Return",
+  );
+}
+
 function testHostKeyOverrideCtrlReturnForcesCtrlForAllIdes(): void {
   const cands = buildHostKeySubmitCandidates("vscode", "ctrl+Return", WAYLAND_ENV);
   assert(
@@ -323,6 +331,7 @@ function testHostKeyX11KeepsXdotoolFirst(): void {
 
 testHostKeyOrderCursorPrefersCtrlReturn();
 testHostKeyOrderVscodeKeepsPlainReturnFirst();
+testHostKeyOrderVscodiumPrefersCtrlReturn();
 testHostKeyOverrideCtrlReturnForcesCtrlForAllIdes();
 testHostKeyOverrideReturnForcesPlainEvenOnCursor();
 testHostKeyWaylandPrefersYdotoolOverXdotool();

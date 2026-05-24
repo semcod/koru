@@ -15231,9 +15231,10 @@ sprint:
         before broad edits.
       execution:
         attempt: 0
+        finished_at: '2026-05-24T18:44:20.368671Z'
         max_attempts: 1
         queue: default
-        state: waiting_input
+        state: done
       files:
       - project/analysis.toon.yaml
       history:
@@ -15246,6 +15247,16 @@ sprint:
         previous_execution_state: null
         source: planfile.store
         timestamp: '2026-05-24T18:01:07.169169+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: waiting_input
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T18:44:21.138413+00:00'
       id: STARTER-207
       inputs:
         api_headers: {}
@@ -15295,6 +15306,771 @@ sprint:
         timestamp: '2026-05-24T17:00:02.840457Z'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-24T18:01:07.169127+00:00'
+      updated_at: '2026-05-24T18:44:21.138374+00:00'
+    STARTER-208:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T18:40:26.501919Z'
+      description: 'Move all VSCodium (id=vscodium) specific knowledge from the legacy
+        hubs into a dedicated strategy module (mirror of what was done for Cursor
+        in src/koruide/ides/cursor.py and plugins/koru-autopilot-vscode/src/ides/cursor.ts).
+
+
+        Python:
+
+        - Create src/koruide/ides/vscodium.py with a strategy implementing koruide.ides.base.IdeStrategy.
+
+        - Detection comm patterns: codium,vscodium. Window hint: VSCodium. Workspace
+        settings dir: .vscode.
+
+        - Plugin policy notes: requires trusted publisher YES, strict ack YES.
+
+        - Register module name in _bootstrap_default_strategies() inside src/koruide/ides/registry.py.
+
+        - Remove the ''vscodium'' entries from the legacy fallback dicts in src/koru/ide_adapters/shared.py
+        and ide_reload.py.
+
+        - If applicable, build the VSCodeFamilyAdapter for vscodium from the strategy
+        (src/koru/ide_adapters/registry.py).
+
+
+        TypeScript (only if vscodium supports the VS Code-family VSIX):
+
+        - Create plugins/koru-autopilot-vscode/src/ides/vscodium.ts with the same
+        contract.
+
+        - Move existing per-vscodium branches from probe-ladder.ts and extension.ts
+        into this module.
+
+        - Register module in src/ides/registry.ts and add cursor.test.ts-style test
+        at src/ides/vscodium.test.ts.
+
+        - Append the new test to the test script in plugins/koru-autopilot-vscode/package.json.
+
+
+        Tests:
+
+        - Add tests/ides/test_vscodium_strategy.py asserting the contract in isolation
+        (no autonomous_cycle / daemon imports).
+
+        - All existing tests must remain green.
+
+
+        References: docs/ide-strategy-contract.md and src/koruide/ides/cursor.py.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-24T18:50:26.347976Z'
+        lease_expires_at: '2026-05-24T19:46:18.315064Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-24T18:46:20.736934Z'
+        state: done
+      files: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-24T18:46:19.065925+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-24T18:46:21.503842+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-24T18:46:23.888643+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T18:46:26.294044+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-24T18:50:27.140770+00:00'
+      id: STARTER-208
+      labels:
+      - refactor
+      - ide-strategy
+      - vscodium
+      name: Extract VSCodium IDE strategy module
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "a752e6c00de44540", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-24T18:40:26.498497Z'
+        tool: human
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T18:50:27.140722+00:00'
+    STARTER-209:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T18:40:28.218463Z'
+      description: 'Move all VS Code (id=vscode) specific knowledge from the legacy
+        hubs into a dedicated strategy module (mirror of what was done for Cursor
+        in src/koruide/ides/cursor.py and plugins/koru-autopilot-vscode/src/ides/cursor.ts).
+
+
+        Python:
+
+        - Create src/koruide/ides/vscode.py with a strategy implementing koruide.ides.base.IdeStrategy.
+
+        - Detection comm patterns: code,code-insiders. Window hint: Visual Studio
+        Code. Workspace settings dir: .vscode.
+
+        - Plugin policy notes: requires trusted publisher YES, strict ack YES.
+
+        - Register module name in _bootstrap_default_strategies() inside src/koruide/ides/registry.py.
+
+        - Remove the ''vscode'' entries from the legacy fallback dicts in src/koru/ide_adapters/shared.py
+        and ide_reload.py.
+
+        - If applicable, build the VSCodeFamilyAdapter for vscode from the strategy
+        (src/koru/ide_adapters/registry.py).
+
+
+        TypeScript (only if vscode supports the VS Code-family VSIX):
+
+        - Create plugins/koru-autopilot-vscode/src/ides/vscode.ts with the same contract.
+
+        - Move existing per-vscode branches from probe-ladder.ts and extension.ts
+        into this module.
+
+        - Register module in src/ides/registry.ts and add cursor.test.ts-style test
+        at src/ides/vscode.test.ts.
+
+        - Append the new test to the test script in plugins/koru-autopilot-vscode/package.json.
+
+
+        Tests:
+
+        - Add tests/ides/test_vscode_strategy.py asserting the contract in isolation
+        (no autonomous_cycle / daemon imports).
+
+        - All existing tests must remain green.
+
+
+        References: docs/ide-strategy-contract.md and src/koruide/ides/cursor.py.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-24T18:50:28.786672Z'
+        lease_expires_at: '2026-05-24T19:46:29.341451Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-24T18:46:31.800860Z'
+        state: done
+      files: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-24T18:46:30.159703+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-24T18:46:32.599956+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-24T18:46:34.992068+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T18:46:37.340117+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-24T18:50:29.528959+00:00'
+      id: STARTER-209
+      labels:
+      - refactor
+      - ide-strategy
+      - vscode
+      name: Extract VS Code IDE strategy module
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "28a87b4d69b64767", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-24T18:40:28.214350Z'
+        tool: human
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T18:50:29.528921+00:00'
+    STARTER-210:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T18:40:30.065292Z'
+      description: 'Move all Windsurf (id=windsurf) specific knowledge from the legacy
+        hubs into a dedicated strategy module (mirror of what was done for Cursor
+        in src/koruide/ides/cursor.py and plugins/koru-autopilot-vscode/src/ides/cursor.ts).
+
+
+        Python:
+
+        - Create src/koruide/ides/windsurf.py with a strategy implementing koruide.ides.base.IdeStrategy.
+
+        - Detection comm patterns: windsurf. Window hint: Windsurf. Workspace settings
+        dir: .vscode.
+
+        - Plugin policy notes: trusted publisher NO, native atomic send via windsurf.sendTextToChat.
+
+        - Register module name in _bootstrap_default_strategies() inside src/koruide/ides/registry.py.
+
+        - Remove the ''windsurf'' entries from the legacy fallback dicts in src/koru/ide_adapters/shared.py
+        and ide_reload.py.
+
+        - If applicable, build the VSCodeFamilyAdapter for windsurf from the strategy
+        (src/koru/ide_adapters/registry.py).
+
+
+        TypeScript (only if windsurf supports the VS Code-family VSIX):
+
+        - Create plugins/koru-autopilot-vscode/src/ides/windsurf.ts with the same
+        contract.
+
+        - Move existing per-windsurf branches from probe-ladder.ts and extension.ts
+        into this module.
+
+        - Register module in src/ides/registry.ts and add cursor.test.ts-style test
+        at src/ides/windsurf.test.ts.
+
+        - Append the new test to the test script in plugins/koru-autopilot-vscode/package.json.
+
+
+        Tests:
+
+        - Add tests/ides/test_windsurf_strategy.py asserting the contract in isolation
+        (no autonomous_cycle / daemon imports).
+
+        - All existing tests must remain green.
+
+
+        References: docs/ide-strategy-contract.md and src/koruide/ides/cursor.py.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-24T18:50:31.124156Z'
+        lease_expires_at: '2026-05-24T19:46:40.095111Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-24T18:46:42.405941Z'
+        state: done
+      files: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-24T18:46:40.828999+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-24T18:46:43.158309+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-24T18:46:45.550629+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T18:46:47.926914+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-24T18:50:31.911742+00:00'
+      id: STARTER-210
+      labels:
+      - refactor
+      - ide-strategy
+      - windsurf
+      name: Extract Windsurf IDE strategy module
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "b7a4da69d0114bc8", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-24T18:40:30.056532Z'
+        tool: human
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T18:50:31.911702+00:00'
+    STARTER-211:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T18:40:31.920133Z'
+      description: 'Move all Antigravity (id=antigravity) specific knowledge from
+        the legacy hubs into a dedicated strategy module (mirror of what was done
+        for Cursor in src/koruide/ides/cursor.py and plugins/koru-autopilot-vscode/src/ides/cursor.ts).
+
+
+        Python:
+
+        - Create src/koruide/ides/antigravity.py with a strategy implementing koruide.ides.base.IdeStrategy.
+
+        - Detection comm patterns: antigravity. Window hint: Antigravity. Workspace
+        settings dir: .vscode.
+
+        - Plugin policy notes: trusted publisher NO, native atomic send.
+
+        - Register module name in _bootstrap_default_strategies() inside src/koruide/ides/registry.py.
+
+        - Remove the ''antigravity'' entries from the legacy fallback dicts in src/koru/ide_adapters/shared.py
+        and ide_reload.py.
+
+        - If applicable, build the VSCodeFamilyAdapter for antigravity from the strategy
+        (src/koru/ide_adapters/registry.py).
+
+
+        TypeScript (only if antigravity supports the VS Code-family VSIX):
+
+        - Create plugins/koru-autopilot-vscode/src/ides/antigravity.ts with the same
+        contract.
+
+        - Move existing per-antigravity branches from probe-ladder.ts and extension.ts
+        into this module.
+
+        - Register module in src/ides/registry.ts and add cursor.test.ts-style test
+        at src/ides/antigravity.test.ts.
+
+        - Append the new test to the test script in plugins/koru-autopilot-vscode/package.json.
+
+
+        Tests:
+
+        - Add tests/ides/test_antigravity_strategy.py asserting the contract in isolation
+        (no autonomous_cycle / daemon imports).
+
+        - All existing tests must remain green.
+
+
+        References: docs/ide-strategy-contract.md and src/koruide/ides/cursor.py.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-24T18:50:33.558672Z'
+        lease_expires_at: '2026-05-24T19:46:50.685270Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-24T18:46:53.034502Z'
+        state: done
+      files: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-24T18:46:51.445215+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-24T18:46:53.766643+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-24T18:46:56.080054+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T18:46:58.434580+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-24T18:50:34.313951+00:00'
+      id: STARTER-211
+      labels:
+      - refactor
+      - ide-strategy
+      - antigravity
+      name: Extract Antigravity IDE strategy module
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "52b5836a490e4918", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-24T18:40:31.908682Z'
+        tool: human
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T18:50:34.313904+00:00'
+    STARTER-212:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T18:40:33.670354Z'
+      description: 'Move all JetBrains IDE (id=jetbrains) specific knowledge from
+        the legacy hubs into a dedicated strategy module (mirror of what was done
+        for Cursor in src/koruide/ides/cursor.py and plugins/koru-autopilot-vscode/src/ides/cursor.ts).
+
+
+        Python:
+
+        - Create src/koruide/ides/jetbrains.py with a strategy implementing koruide.ides.base.IdeStrategy.
+
+        - Detection comm patterns: idea,pycharm,webstorm,phpstorm,goland,clion,rubymine.
+        Window hint: n/a (PyCharm/IDEA/etc). Workspace settings dir: n/a.
+
+        - Plugin policy notes: no VSIX; OS-injector path only; install CLI must refuse.
+
+        - Register module name in _bootstrap_default_strategies() inside src/koruide/ides/registry.py.
+
+        - Remove the ''jetbrains'' entries from the legacy fallback dicts in src/koru/ide_adapters/shared.py
+        and ide_reload.py.
+
+        - If applicable, build the VSCodeFamilyAdapter for jetbrains from the strategy
+        (src/koru/ide_adapters/registry.py).
+
+
+        TypeScript (only if jetbrains supports the VS Code-family VSIX):
+
+        - Create plugins/koru-autopilot-vscode/src/ides/jetbrains.ts with the same
+        contract.
+
+        - Move existing per-jetbrains branches from probe-ladder.ts and extension.ts
+        into this module.
+
+        - Register module in src/ides/registry.ts and add cursor.test.ts-style test
+        at src/ides/jetbrains.test.ts.
+
+        - Append the new test to the test script in plugins/koru-autopilot-vscode/package.json.
+
+
+        Tests:
+
+        - Add tests/ides/test_jetbrains_strategy.py asserting the contract in isolation
+        (no autonomous_cycle / daemon imports).
+
+        - All existing tests must remain green.
+
+
+        References: docs/ide-strategy-contract.md and src/koruide/ides/cursor.py.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-24T18:50:35.951491Z'
+        lease_expires_at: '2026-05-24T19:47:01.232559Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-24T18:47:03.560147Z'
+        state: done
+      files: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-24T18:47:01.967651+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-24T18:47:04.301628+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-24T18:47:06.765593+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T18:47:09.125764+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-24T18:50:36.719779+00:00'
+      id: STARTER-212
+      labels:
+      - refactor
+      - ide-strategy
+      - jetbrains
+      name: Extract JetBrains IDE IDE strategy module
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "841d9774630541c6", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-24T18:40:33.665349Z'
+        tool: human
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T18:50:36.719735+00:00'
+    STARTER-213:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T18:40:35.466801Z'
+      description: 'Move all Zed (id=zed) specific knowledge from the legacy hubs
+        into a dedicated strategy module (mirror of what was done for Cursor in src/koruide/ides/cursor.py
+        and plugins/koru-autopilot-vscode/src/ides/cursor.ts).
+
+
+        Python:
+
+        - Create src/koruide/ides/zed.py with a strategy implementing koruide.ides.base.IdeStrategy.
+
+        - Detection comm patterns: zed,zed-editor,zed-preview. Window hint: Zed. Workspace
+        settings dir: n/a.
+
+        - Plugin policy notes: no VSIX; OS-injector path only.
+
+        - Register module name in _bootstrap_default_strategies() inside src/koruide/ides/registry.py.
+
+        - Remove the ''zed'' entries from the legacy fallback dicts in src/koru/ide_adapters/shared.py
+        and ide_reload.py.
+
+        - If applicable, build the VSCodeFamilyAdapter for zed from the strategy (src/koru/ide_adapters/registry.py).
+
+
+        TypeScript (only if zed supports the VS Code-family VSIX):
+
+        - Create plugins/koru-autopilot-vscode/src/ides/zed.ts with the same contract.
+
+        - Move existing per-zed branches from probe-ladder.ts and extension.ts into
+        this module.
+
+        - Register module in src/ides/registry.ts and add cursor.test.ts-style test
+        at src/ides/zed.test.ts.
+
+        - Append the new test to the test script in plugins/koru-autopilot-vscode/package.json.
+
+
+        Tests:
+
+        - Add tests/ides/test_zed_strategy.py asserting the contract in isolation
+        (no autonomous_cycle / daemon imports).
+
+        - All existing tests must remain green.
+
+
+        References: docs/ide-strategy-contract.md and src/koruide/ides/cursor.py.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-24T18:50:38.333295Z'
+        lease_expires_at: '2026-05-24T19:47:12.005047Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-24T18:47:14.430634Z'
+        state: done
+      files: []
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-24T18:47:12.806639+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-24T18:47:15.196360+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-24T18:47:17.536179+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T18:47:19.902371+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-24T18:50:39.099372+00:00'
+      id: STARTER-213
+      labels:
+      - refactor
+      - ide-strategy
+      - zed
+      name: Extract Zed IDE strategy module
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "6c150dd548ed4813", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: normal
+      source:
+        context: {}
+        timestamp: '2026-05-24T18:40:35.462391Z'
+        tool: human
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T18:50:39.099336+00:00'
