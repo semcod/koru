@@ -23,19 +23,25 @@ _PROJECT_DISCOVERY_TITLE = "Project discovery: generate code2llm analysis and ti
 _PROJECT_DISCOVERY_ACTIVE_STATUSES = {"open", "ready", "todo", "in_progress"}
 _PROJECT_DISCOVERY_BODY = """Run a broad project discovery pass because the planfile queue is idle.
 
-Goal: move Koru from local implementation mode back to whole-project strategy, then create concrete tickets and let the normal queue work through them.
+Goal: move Koru from local implementation mode back to whole-project strategy,
+then create concrete tickets and let the normal queue work through them.
 
 1. Generate fresh whole-project context:
     code2llm ./ -f all -o ./project --no-chunk --exclude '*.md'
 
-2. Inspect the generated ./project artifacts, especially project/analysis.toon.yaml. Use llx/OpenRouter or the IDE LLM for synthesis if useful, but keep the output as actionable planfile tickets rather than direct broad edits.
+2. Inspect the generated ./project artifacts, especially project/analysis.toon.yaml.
+    Use llx/OpenRouter or the IDE LLM for synthesis if useful, but keep the output
+    as actionable planfile tickets rather than direct broad edits.
 
 3. Convert findings into tickets:
     koru scan --apply --semcod-artifacts --source koru-scan
 
-4. Prefer high-signal work: failing gates, god modules, duplicated code, high cyclomatic complexity, missing tests, and architecture seams that block future tickets.
+4. Prefer high-signal work: failing gates, god modules, duplicated code, high
+    cyclomatic complexity, missing tests, and architecture seams that block future tickets.
 
-5. When new tickets exist, stop broad discovery and work the tickets one by one. After those tickets are done and the queue is empty again, another discovery pass is allowed.
+5. When new tickets exist, stop broad discovery and work the tickets one by one.
+    After those tickets are done and the queue is empty again, another discovery pass
+    is allowed.
 """
 
 
@@ -120,7 +126,9 @@ def _is_active_project_discovery_ticket(ticket: dict[str, Any]) -> bool:
 
 
 def _active_project_discovery_ticket(project: Path) -> dict[str, Any] | None:
-    tickets = [t for t in _current_sprint_tickets(project) if _is_active_project_discovery_ticket(t)]
+    tickets = [
+        t for t in _current_sprint_tickets(project) if _is_active_project_discovery_ticket(t)
+    ]
     tickets.sort(
         key=lambda t: (
             _PRIORITY_RANK.get(str(t.get("priority") or "normal"), 2),
@@ -231,13 +239,11 @@ def resolve_idle_drive_prompt(
     """When the queue is idle, prefer a ticket-specific IDE prompt if work exists.
 
     Returns ``(prompt, kind)`` where ``kind`` is ``idle_ticket_prompt`` when
-    runnable IDE work exists. If no ticket exists, Koru creates/reuses a broad
-    project-discovery ticket so the loop alternates between whole-project
-    strategy and focused ticket execution.
+    runnable IDE work exists. If no ticket exists, return ``idle_no_ticket``;
+    broad project discovery is handled locally by the idle scan/diagnostics
+    phases rather than pasted into the IDE chat.
     """
     ticket = fetch_next_open_ticket(project, runner=runner)
-    if ticket is None:
-        ticket = ensure_project_discovery_ticket(project)
     if ticket is None:
         return drive_prompt, "idle_no_ticket"
     return (

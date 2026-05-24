@@ -1,18 +1,25 @@
 # System Architecture Analysis
-<!-- generated in 0.01s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 327, shell: 49, yaml: 22, typescript: 18, yml: 9
+- **Languages**: python: 334, shell: 48, yaml: 46, typescript: 18, yml: 9
 - **Analysis Mode**: static
-- **Total Functions**: 2683
-- **Total Classes**: 251
-- **Modules**: 449
-- **Entry Points**: 974
+- **Total Functions**: 7752
+- **Total Classes**: 258
+- **Modules**: 480
+- **Entry Points**: 6014
 
 ## Architecture by Module
+
+### code2llm_output.map.toon
+- **Functions**: 4066
+- **File**: `map.toon.yaml`
+
+### project.map.toon
+- **Functions**: 3112
+- **File**: `map.toon.yaml`
 
 ### plugins.koru-autopilot-vscode.src.extension
 - **Functions**: 263
@@ -74,14 +81,14 @@
 - **Classes**: 3
 - **File**: `autonomous_startup.py`
 
+### src.koru.autonomy.operator_pipeline
+- **Functions**: 32
+- **Classes**: 2
+- **File**: `operator_pipeline.py`
+
 ### koru.context
 - **Functions**: 31
 - **File**: `context.py`
-
-### src.koru.autonomy.operator_pipeline
-- **Functions**: 31
-- **Classes**: 2
-- **File**: `operator_pipeline.py`
 
 ### src.koruide.os_injector
 - **Functions**: 30
@@ -96,15 +103,6 @@
 ### plugins.koru-autopilot-vscode.src.chat-history-watcher.test
 - **Functions**: 30
 - **File**: `chat-history-watcher.test.ts`
-
-### src.koru.configurator
-- **Functions**: 29
-- **Classes**: 3
-- **File**: `configurator.py`
-
-### services.healing-webhook.app
-- **Functions**: 27
-- **File**: `app.py`
 
 ## Key Entry Points
 
@@ -126,11 +124,11 @@ Main execution flows into the system:
 ### src.koru.local_manager_state.WorkerRegistry.register
 - **Calls**: src.koru.local_manager_state.utc_now, str, str, self._workers.get, self._reconcile_locked, self._reply_locked, payload.get, src.koru.local_manager_state.koru_version
 
-### src.koru.autonomous_cycle.run_cycle
-- **Calls**: src.koru.autonomous_cycle._initialize_cycle_telemetry, src.koru.autonomous_cycle._heal_stale_socket, src.koru.autonomous_cycle._handle_autopilot_events, src.koru.run_log.RunLogWriter._emit, _handle_queue_hygiene, _handle_post_run_verify_ide, src.koru.autonomous_cycle._handle_scan_phase, src.koru.autonomous_cycle._handle_queue_loop_phase
-
 ### src.koru.cli_topology.topology_main
 - **Calls**: None.parse_args, args.project.resolve, TopologyCommandService, TopologyQueryService, query_service.load, src.koru.topology_cli.apply_topology_mutations, query_service.is_enabled, scripts.koru-soak-monitor.print
+
+### src.koru.autonomous_cycle.run_cycle
+- **Calls**: src.koru.autonomous_cycle._initialize_cycle_telemetry, src.koru.autonomous_cycle._heal_stale_socket, src.koru.autonomous_cycle._handle_autopilot_events, src.koru.run_log.RunLogWriter._emit, _handle_queue_hygiene, _handle_post_run_verify_ide, src.koru.autonomous_cycle._handle_scan_phase, src.koru.autonomous_cycle._handle_queue_loop_phase
 
 ### src.koru.queue.runners.run_api_request
 > Execute an HTTP API request.
@@ -177,6 +175,9 @@ Returns them in insertion order so callers can pick the most
 recent one with ``parse_authorizat
 - **Calls**: str, out.append, isinstance, note.startswith, json.loads, payload.get, payload.get, isinstance
 
+### src.koru.autopilot.cli_command._action_status
+- **Calls**: src.koru.autopilot.cli_command._client, scripts.koru-soak-monitor.print, client.is_running, scripts.koru-soak-monitor.print, client.status, json.dumps, isinstance, info.get
+
 ### services.healing-webhook.app.heal_vallm_validate
 > Run vallm tier-1 (check) on all files mapped from the alert component.
 
@@ -204,22 +205,14 @@ syntact
 > Programmatic entrypoint used by both the CLI and tests.
 - **Calls**: src.koru.wizard.tree.load_tree, None.resolve, src.koru.wizard.orchestrator._walk_with_llx, src.koru.wizard.orchestrator._finalise_ticket, WizardResult, src.koru.wizard.gui.static.wizard.list, src.koru.wizard.tree.walk_path, None.resolve
 
+### src.koru.autopilot.daemon_cli.action_daemon
+- **Calls**: src.koru.ide_adapters.bridge.gc_stale_sockets_for_lane, src.koru.autopilot.daemon_cli._daemon_already_running, src.koru.autopilot.daemon_cli._start_local_manager, AuditLog, AutopilotDaemon, src.koru.autopilot.local_manager.start_autopilot_manager_heartbeat, default_socket_fn, scripts.koru-soak-monitor.print
+
 ### src.koru.local_manager_state.ActionQueue.claim
 - **Calls**: src.koru.local_manager_state.utc_now, max, None.replace, set, set, min, src.koru.local_manager_state.normalize_capabilities, int
 
 ### src.koru.local_manager_state.WorkerRegistry.heartbeat
 - **Calls**: str, self.register, self._workers.get, dict, self.register, isinstance, src.koru.local_manager_state.utc_now, self._reconcile_locked
-
-### services.healing-webhook.app.alertmanager_webhook
-> Accept the Alertmanager webhook payload (v4).
-- **Calls**: app.post, payload.get, request.json, alert.get, labels.get, labels.get, labels.get, alert.get
-
-### src.koruide.host_setup.install_ydotoold_user_service
-> Generate, enable and start a per-user ydotoold systemd service.
-
-Returns a structured report (success / skipped / error). On Wayland-native
-compositor
-- **Calls**: shutil.which, Path, src.koruide.host_setup._ydotoold_socket_path, YDOTOOLD_UNIT_TEMPLATE.format, actions.extend, log.extend, shutil.which, os.path.expanduser
 
 ## Process Flows
 
@@ -253,21 +246,21 @@ register [src.koru.local_manager_state.WorkerRegistry]
   └─ →> utc_now
 ```
 
-### Flow 6: run_cycle
+### Flow 6: topology_main
+```
+topology_main [src.koru.cli_topology]
+```
+
+### Flow 7: run_cycle
 ```
 run_cycle [src.koru.autonomous_cycle]
   └─> _initialize_cycle_telemetry
   └─> _heal_stale_socket
-      └─ →> probe_socket_health
       └─ →> default_socket_path
           └─> _autopilot_socket_basename
+      └─ →> gc_stale_sockets_for_lane
   └─ →> _emit
       └─ →> print
-```
-
-### Flow 7: topology_main
-```
-topology_main [src.koru.cli_topology]
 ```
 
 ### Flow 8: run_api_request
@@ -411,12 +404,6 @@ Cheap pre-flight gate: block
 > Parse redup-check.sh JSON payload into summary dict.
 - **Output to**: payload.get, int, int, sorted, s.get
 
-### services.healing-webhook.ticket_builder._format_paths
-- **Output to**: None.join
-
-### services.healing-webhook.ticket_builder._format_acceptance
-- **Output to**: None.join
-
 ### src.koruobserve.lifecycle._stop_orphan_observe_processes
 > SIGTERM stale observe children when pidfiles are missing (e.g. after crash).
 - **Output to**: needles.items, src.koruobserve.lifecycle._pids_matching_koru_cmdline, None.unlink, contextlib.suppress, os.kill
@@ -485,6 +472,12 @@ Returns (should_kill, logs) tuple.
 ### src.koruvision.providers.portal_screencast._run_screencast_subprocess
 - **Output to**: subprocess.run, RuntimeError
 
+### src.koruvision.providers.portal_screencast._parse_screencast_stdout
+- **Output to**: stdout.strip, RuntimeError, json.loads, RuntimeError, dict
+
+### src.koruvision.providers.browser_getdisplay._decode_browser_png_upload
+- **Output to**: body.get, body.get, ValueError, base64.b64decode, payload.startswith
+
 ## Behavioral Patterns
 
 ### recursion_enabled_components_for_pipeline
@@ -524,8 +517,8 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.policy.load_policy` - 43 calls
 - `src.koru.git_cli.build_parser` - 39 calls
 - `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
-- `src.koru.autonomous_cycle.run_cycle` - 33 calls
 - `src.koru.cli_topology.topology_main` - 33 calls
+- `src.koru.autonomous_cycle.run_cycle` - 33 calls
 - `src.koruobserve.lifecycle.observe_up` - 32 calls
 - `koruapi.mcp_server.tool_run_ticket` - 31 calls
 - `src.koru.queue.runners.run_api_request` - 30 calls
@@ -536,7 +529,7 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.doctor.render_text` - 27 calls
 - `src.koru.autonomous_daemon.start_or_reuse_daemon` - 26 calls
 - `src.koru.autonomous_runtime.setup_autonomous_session` - 26 calls
-- `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
+- `src.koru.ide_adapters.bridge.evaluate_bridge` - 26 calls
 - `examples.remote_orchestration_demo.run_multi_node_orchestration` - 24 calls
 - `src.koru.configurator.render_shell_exports` - 24 calls
 - `src.koru.scan.scan_pytest_collect` - 24 calls
@@ -549,13 +542,13 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.init.init_project` - 23 calls
 - `koru.context_render.render_active_ticket` - 23 calls
 - `src.koru.autonomy.ide_work.build_ide_work_prompt` - 23 calls
+- `src.koru.autonomous_diagnostics.build_idle_checks` - 23 calls
 - `src.koruapi.topology_post.apply_topology_post_update` - 22 calls
 - `src.koru.gate.parse_authorizations` - 22 calls
 - `koru.context_render.render_environment` - 22 calls
 - `services.healing-webhook.app.heal_vallm_validate` - 21 calls
 - `services.healing-webhook.app.probe_failure` - 21 calls
 - `src.koruapi.cli.main` - 21 calls
-- `src.koruide.protocol.decode` - 21 calls
 
 ## System Interactions
 
@@ -581,16 +574,16 @@ graph TD
     register --> str
     register --> get
     register --> _reconcile_locked
-    run_cycle --> _initialize_cycle_te
-    run_cycle --> _heal_stale_socket
-    run_cycle --> _handle_autopilot_ev
-    run_cycle --> _emit
-    run_cycle --> _handle_queue_hygien
     topology_main --> parse_args
     topology_main --> resolve
     topology_main --> TopologyCommandServi
     topology_main --> TopologyQueryService
     topology_main --> load
+    run_cycle --> _initialize_cycle_te
+    run_cycle --> _heal_stale_socket
+    run_cycle --> _handle_autopilot_ev
+    run_cycle --> _emit
+    run_cycle --> _handle_queue_hygien
     run_api_request --> get
     run_api_request --> Request
 ```

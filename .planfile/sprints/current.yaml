@@ -14989,15 +14989,110 @@ sprint:
       sync: {}
       updated_at: '2026-05-24T16:57:00.226894+00:00'
     STARTER-205:
-      id: STARTER-205
-      name: 'Project discovery: generate code2llm analysis and tickets'
-      status: open
-      priority: high
-      sprint: current
-      source:
-        tool: koru-project-discovery
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T16:57:09.187143+00:00'
+      description: "Run a broad project discovery pass because the planfile queue\
+        \ is idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+        \ strategy, then create concrete tickets and let the normal queue work through\
+        \ them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all\
+        \ -o ./project --no-chunk --exclude '*.md'\n\n2. Inspect the generated ./project\
+        \ artifacts, especially project/analysis.toon.yaml. Use llx/OpenRouter or\
+        \ the IDE LLM for synthesis if useful, but keep the output as actionable planfile\
+        \ tickets rather than direct broad edits.\n\n3. Convert findings into tickets:\n\
+        \    koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer\
+        \ high-signal work: failing gates, god modules, duplicated code, high cyclomatic\
+        \ complexity, missing tests, and architecture seams that block future tickets.\n\
+        \n5. When new tickets exist, stop broad discovery and work the tickets one\
+        \ by one. After those tickets are done and the queue is empty again, another\
+        \ discovery pass is allowed."
+      execution:
+        attempt: 0
+        finished_at: '2026-05-24T17:00:29.863875Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: "Run a broad project discovery pass because the planfile queue is\
+          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+          \ strategy, then create concrete tickets and let the normal queue work through\
+          \ them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f\
+          \ all -o ./project --no-chunk --exclude '*.md'\n\n2. Inspect the generated\
+          \ ./project artifacts, especially project/analysis.toon.yaml. Use llx/OpenRouter\
+          \ or the IDE LLM for synthesis if useful, but keep the output as actionable\
+          \ planfile tickets rather than direct broad edits.\n\n3. Convert findings\
+          \ into tickets:\n    koru scan --apply --semcod-artifacts --source koru-scan\n\
+          \n4. Prefer high-signal work: failing gates, god modules, duplicated code,\
+          \ high cyclomatic complexity, missing tests, and architecture seams that\
+          \ block future tickets.\n\n5. When new tickets exist, stop broad discovery\
+          \ and work the tickets one by one. After those tickets are done and the\
+          \ queue is empty again, another discovery pass is allowed."
+        source: koru task
         timestamp: '2026-05-24T16:57:09.187143+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-24T17:00:28.369754+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T17:00:30.582569+00:00'
+      id: STARTER-205
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: "Run a broad project discovery pass because the planfile queue is\
+          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
+          \ strategy, then create concrete tickets and let the normal queue work through\
+          \ them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f\
+          \ all -o ./project --no-chunk --exclude '*.md'\n\n2. Inspect the generated\
+          \ ./project artifacts, especially project/analysis.toon.yaml. Use llx/OpenRouter\
+          \ or the IDE LLM for synthesis if useful, but keep the output as actionable\
+          \ planfile tickets rather than direct broad edits.\n\n3. Convert findings\
+          \ into tickets:\n    koru scan --apply --semcod-artifacts --source koru-scan\n\
+          \n4. Prefer high-signal work: failing gates, god modules, duplicated code,\
+          \ high cyclomatic complexity, missing tests, and architecture seams that\
+          \ block future tickets.\n\n5. When new tickets exist, stop broad discovery\
+          \ and work the tickets one by one. After those tickets are done and the\
+          \ queue is empty again, another discovery pass is allowed."
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - project-discovery
+      - code2llm
+      - scan
+      - strategy
+      name: 'Project discovery: generate code2llm analysis and tickets'
+      outputs:
+        artifacts: []
+        notes:
+        - 'Generated fresh project artifacts with code2llm ./ -f all -o ./project
+          --no-chunk --exclude ''*.md''. Inspected project/analysis.toon.yaml: HEALTH[0],
+          REFACTOR[0], but LAYERS exposes large-module hotspots. Extended koru scan
+          to emit code2llm_layer_hotspot tickets from LAYERS rows and reran koru scan
+          --apply --semcod-artifacts --source koru-scan. Created STARTER-206 and STARTER-207;
+          stopping broad discovery so normal queue can work concrete tickets.'
+      priority: high
+      source:
         context:
+          dedupe_key: koru:project-discovery:2026-05-24T16:57:08.481355+00:00
+          generation: '2026-05-24T16:57:08.481355+00:00'
           input: "Run a broad project discovery pass because the planfile queue is\
             \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
             \ strategy, then create concrete tickets and let the normal queue work\
@@ -15014,82 +15109,102 @@ sprint:
             \ tickets are done and the queue is empty again, another discovery pass\
             \ is allowed."
           signal: project_discovery
-          generation: '2026-05-24T16:57:08.481355+00:00'
-          dedupe_key: koru:project-discovery:2026-05-24T16:57:08.481355+00:00
-      description: "Run a broad project discovery pass because the planfile queue\
-        \ is idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
-        \ strategy, then create concrete tickets and let the normal queue work through\
-        \ them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f all\
-        \ -o ./project --no-chunk --exclude '*.md'\n\n2. Inspect the generated ./project\
-        \ artifacts, especially project/analysis.toon.yaml. Use llx/OpenRouter or\
-        \ the IDE LLM for synthesis if useful, but keep the output as actionable planfile\
-        \ tickets rather than direct broad edits.\n\n3. Convert findings into tickets:\n\
-        \    koru scan --apply --semcod-artifacts --source koru-scan\n\n4. Prefer\
-        \ high-signal work: failing gates, god modules, duplicated code, high cyclomatic\
-        \ complexity, missing tests, and architecture seams that block future tickets.\n\
-        \n5. When new tickets exist, stop broad discovery and work the tickets one\
-        \ by one. After those tickets are done and the queue is empty again, another\
-        \ discovery pass is allowed."
+        timestamp: '2026-05-24T16:57:09.187143+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T17:00:30.582513+00:00'
+    STARTER-206:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T16:59:38.931490+00:00'
+      description: '`project/analysis.toon.yaml` flags `autonomous` in LAYERS as a
+        large/hot module (1119 lines, 1 classes, 56 methods, CC=7). Extract cohesive
+        submodules around stable responsibilities and add focused regression tests
+        before broad edits.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` flags `autonomous` in LAYERS as a large/hot
+          module (1119 lines, 1 classes, 56 methods, CC=7). Extract cohesive submodules
+          around stable responsibilities and add focused regression tests before broad
+          edits.'
+        source: koru task
+        timestamp: '2026-05-24T16:59:38.931490+00:00'
+      id: STARTER-206
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` flags `autonomous` in LAYERS as a large/hot
+          module (1119 lines, 1 classes, 56 methods, CC=7). Extract cohesive submodules
+          around stable responsibilities and add focused regression tests before broad
+          edits.'
       labels:
       - koru
       - nl-task
       - llm-ready
-      - project-discovery
       - code2llm
+      - architecture
+      - large-module
+      - refactor
       - scan
-      - strategy
-      blocked_by: []
-      blocks: []
-      files:
-      - project/analysis.toon.yaml
-      executor:
-        kind: human
-        mode: interactive
-      execution:
-        queue: operator
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: "Run a broad project discovery pass because the planfile queue is\
-          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
-          \ strategy, then create concrete tickets and let the normal queue work through\
-          \ them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f\
-          \ all -o ./project --no-chunk --exclude '*.md'\n\n2. Inspect the generated\
-          \ ./project artifacts, especially project/analysis.toon.yaml. Use llx/OpenRouter\
-          \ or the IDE LLM for synthesis if useful, but keep the output as actionable\
-          \ planfile tickets rather than direct broad edits.\n\n3. Convert findings\
-          \ into tickets:\n    koru scan --apply --semcod-artifacts --source koru-scan\n\
-          \n4. Prefer high-signal work: failing gates, god modules, duplicated code,\
-          \ high cyclomatic complexity, missing tests, and architecture seams that\
-          \ block future tickets.\n\n5. When new tickets exist, stop broad discovery\
-          \ and work the tickets one by one. After those tickets are done and the\
-          \ queue is empty again, another discovery pass is allowed."
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
+      name: 'Split large module: autonomous'
       outputs:
         artifacts: []
         notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-scan:code2llm_layer_hotspot:project/analysis.toon.yaml
+          input: '`project/analysis.toon.yaml` flags `autonomous` in LAYERS as a large/hot
+            module (1119 lines, 1 classes, 56 methods, CC=7). Extract cohesive submodules
+            around stable responsibilities and add focused regression tests before
+            broad edits.'
+          signal: code2llm_layer_hotspot
+        timestamp: '2026-05-24T16:59:38.931490+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
       sync: {}
-      history:
-      - timestamp: '2026-05-24T16:57:09.187143+00:00'
-        action: created
-        source: koru task
-        message: "Run a broad project discovery pass because the planfile queue is\
-          \ idle.\n\nGoal: move Koru from local implementation mode back to whole-project\
-          \ strategy, then create concrete tickets and let the normal queue work through\
-          \ them.\n\n1. Generate fresh whole-project context:\n    code2llm ./ -f\
-          \ all -o ./project --no-chunk --exclude '*.md'\n\n2. Inspect the generated\
-          \ ./project artifacts, especially project/analysis.toon.yaml. Use llx/OpenRouter\
-          \ or the IDE LLM for synthesis if useful, but keep the output as actionable\
-          \ planfile tickets rather than direct broad edits.\n\n3. Convert findings\
-          \ into tickets:\n    koru scan --apply --semcod-artifacts --source koru-scan\n\
-          \n4. Prefer high-signal work: failing gates, god modules, duplicated code,\
-          \ high cyclomatic complexity, missing tests, and architecture seams that\
-          \ block future tickets.\n\n5. When new tickets exist, stop broad discovery\
-          \ and work the tickets one by one. After those tickets are done and the\
-          \ queue is empty again, another discovery pass is allowed."
-      created_at: '2026-05-24T16:57:09.187143+00:00'
-      updated_at: '2026-05-24T16:57:09.187143+00:00'
+      updated_at: '2026-05-24T16:59:38.931490+00:00'
+    STARTER-207:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T17:00:02.847291Z'
+      description: project/analysis.toon.yaml flags autonomous_cycle in LAYERS as
+        a large/hot module (2163 lines, 1 class, 73 methods, CC=14). Extract cohesive
+        submodules around stable responsibilities and add focused regression tests
+        before broad edits.
+      files:
+      - project/analysis.toon.yaml
+      history: []
+      id: STARTER-207
+      labels:
+      - code2llm
+      - architecture
+      - large-module
+      - refactor
+      - scan
+      name: 'Split large module: autonomous_cycle'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-24T17:00:02.840457Z'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-24T17:00:02.847297Z'

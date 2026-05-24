@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 0.09s
+    code2llm_output__map["code2llm_output.map<br/>2072 funcs"]
     docker__capture["docker.capture<br/>8 funcs"]
     examples__remote_orchestration_demo["examples.remote_orchestration_demo<br/>1 funcs"]
     koru__autonomous_cycle_config["koru.autonomous_cycle_config<br/>5 funcs"]
@@ -14,16 +14,16 @@ flowchart TD
     scripts__koru_gate_capture["scripts.koru-gate-capture<br/>14 funcs"]
     scripts__koru_soak_monitor["scripts.koru-soak-monitor<br/>6 funcs"]
     scripts__planfile_sync_todo["scripts.planfile-sync-todo<br/>12 funcs"]
-    services__healing_webhook["services.healing-webhook<br/>34 funcs"]
-    src__koru["src.koru<br/>1474 funcs"]
+    services__healing_webhook["services.healing-webhook<br/>27 funcs"]
+    src__koru["src.koru<br/>1521 funcs"]
     src__koruapi["src.koruapi<br/>144 funcs"]
     src__korudsl["src.korudsl<br/>27 funcs"]
     src__koruide["src.koruide<br/>263 funcs"]
     src__korumesh["src.korumesh<br/>41 funcs"]
     src__koruobserve["src.koruobserve<br/>52 funcs"]
     src__koruvision["src.koruvision<br/>129 funcs"]
-    src__koru ==>|382| scripts__koru_soak_monitor
-    src__koru ==>|93| src__koruide
+    src__koru ==>|393| scripts__koru_soak_monitor
+    src__koru ==>|101| src__koruide
     src__koruapi ==>|57| src__koru
     src__koruide ==>|27| scripts__koru_soak_monitor
     src__koruide ==>|19| koruapi__mcp_server
@@ -32,6 +32,7 @@ flowchart TD
     src__koru ==>|16| plugins__koru_autopilot_vscode
     src__koruapi ==>|15| scripts__koru_soak_monitor
     src__koru ==>|15| src__koruvision
+    src__koru ==>|14| code2llm_output__map
     koruapi__dashboard_routes ==>|13| plugins__koru_autopilot_vscode
     examples__remote_orchestration_demo ==>|12| scripts__koru_soak_monitor
     src__koruvision ==>|12| scripts__koru_soak_monitor
@@ -58,10 +59,11 @@ flowchart TD
     docker__capture ==>|4| src__koruvision
     src__koruapi -->|3| plugins__koru_autopilot_vscode
     koruapi__dashboard_routes -->|3| src__korumesh
-    src__koru -->|3| src__korudsl
     koru__autonomous_cycle_config -->|3| src__koru
     koru__context -->|3| scripts__koru_soak_monitor
+    src__koru -->|3| src__korudsl
     koru__autonomous_resources -->|3| src__koru
+    services__healing_webhook -->|2| code2llm_output__map
     src__koruapi -->|2| koru__context
     src__koruapi -->|2| koruapi__dashboard_routes
     koruapi__mcp_server -->|2| koru__context

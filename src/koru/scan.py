@@ -500,6 +500,11 @@ _TOON_DUP_RE = re.compile(
     re.MULTILINE,
 )
 _TOON_REFACTOR_ITEM_RE = re.compile(r"^\s*(?P<num>\d+)\.\s+(?P<desc>.+?)\s*\((?P<note>[^)]+)\)\s*$")
+_TOON_LAYER_HOTSPOT_RE = re.compile(
+    r"^\s*│\s*!!\s+(?P<module>\S+)\s+(?P<loc>\d+)L\s+"
+    r"(?P<classes>\d+)C\s+(?P<methods>\d+)m\s+CC=(?P<cc>[0-9.]+)",
+    re.MULTILINE,
+)
 
 
 def _find_analysis_file(project: Path) -> tuple[Path | None, str]:
@@ -622,6 +627,42 @@ def _parse_refactor_suggestions(text: str, rel: str) -> list[Suggestion]:
     return suggestions
 
 
+def _parse_layer_hotspot_suggestions(text: str, rel: str) -> list[Suggestion]:
+    """Parse large ``LAYERS`` module rows from newer code2llm output."""
+    suggestions: list[Suggestion] = []
+    seen: set[str] = set()
+    for m in _TOON_LAYER_HOTSPOT_RE.finditer(text):
+        module = m.group("module").strip()
+        if module in seen:
+            continue
+        seen.add(module)
+        loc = int(m.group("loc"))
+        classes = int(m.group("classes"))
+        methods = int(m.group("methods"))
+        cc = float(m.group("cc"))
+        if loc < 500 and cc < 12:
+            continue
+        priority = "high" if loc >= 800 or cc >= 14 else "normal"
+        suggestions.append(
+            Suggestion(
+                signal="code2llm_layer_hotspot",
+                title=f"Split large module: {module}",
+                description=(
+                    f"`{rel}` flags `{module}` in LAYERS as a large/hot module "
+                    f"({loc} lines, {classes} classes, {methods} methods, CC={cc:g}). "
+                    "Extract cohesive submodules around stable responsibilities and add "
+                    "focused regression tests before broad edits."
+                ),
+                priority=priority,
+                labels=("code2llm", "architecture", "large-module", "refactor", "scan"),
+                files=(rel,),
+            ),
+        )
+        if len(suggestions) >= 5:
+            break
+    return suggestions
+
+
 def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
     path, rel = _find_analysis_file(project)
     if path is None:
@@ -636,6 +677,7 @@ def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
     suggestions.extend(_parse_god_module_suggestions(text, rel))
     suggestions.extend(_parse_high_cc_suggestions(text, rel))
     suggestions.extend(_parse_refactor_suggestions(text, rel))
+    suggestions.extend(_parse_layer_hotspot_suggestions(text, rel))
     return suggestions
 
 

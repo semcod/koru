@@ -1,5 +1,66 @@
 flowchart TD
-%% generated in 0.01s
+    subgraph code2llm_output__map
+        code2llm_output__map__toon__apply_topology_post_update["apply_topology_post_update"]
+        code2llm_output__map__toon___get_job_store_path["_get_job_store_path"]
+        code2llm_output__map__toon___load_jobs["_load_jobs"]
+        code2llm_output__map__toon___save_jobs["_save_jobs"]
+        code2llm_output__map__toon___get_process_memory_mb["_get_process_memory_mb"]
+        code2llm_output__map__toon___monitor_subprocess_oom["_monitor_subprocess_oom"]
+        code2llm_output__map__toon___get_python_cmd["_get_python_cmd"]
+        code2llm_output__map__toon___run_planfile_cli["_run_planfile_cli"]
+        code2llm_output__map__toon___parse_tickets_json["_parse_tickets_json"]
+        code2llm_output__map__toon___tickets_for_status_filter["_tickets_for_status_filter"]
+        code2llm_output__map__toon___serialize_mcp_ticket["_serialize_mcp_ticket"]
+        code2llm_output__map__toon__tool_list_tickets["tool_list_tickets"]
+        code2llm_output__map__toon___create_job["_create_job"]
+        code2llm_output__map__toon___update_job["_update_job"]
+        code2llm_output__map__toon___collect_process_logs["_collect_process_logs"]
+        code2llm_output__map__toon___launch_oom_monitor["_launch_oom_monitor"]
+        code2llm_output__map__toon__tool_run_ticket["tool_run_ticket"]
+        code2llm_output__map__toon__tool_job_status["tool_job_status"]
+        code2llm_output__map__toon___gate_commands["_gate_commands"]
+        code2llm_output__map__toon___detect_enabled_gates["_detect_enabled_gates"]
+        code2llm_output__map__toon___resolve_gates["_resolve_gates"]
+        code2llm_output__map__toon___run_single_gate["_run_single_gate"]
+        code2llm_output__map__toon__tool_run_quality_gates["tool_run_quality_gates"]
+        code2llm_output__map__toon___find_ticket["_find_ticket"]
+        code2llm_output__map__toon___build_edit_context["_build_edit_context"]
+        code2llm_output__map__toon__tool_propose_edits["tool_propose_edits"]
+        code2llm_output__map__toon___jsonrpc_response["_jsonrpc_response"]
+        code2llm_output__map__toon___jsonrpc_error["_jsonrpc_error"]
+        code2llm_output__map__toon___handle_initialize["_handle_initialize"]
+        code2llm_output__map__toon___handle_tools_list["_handle_tools_list"]
+        code2llm_output__map__toon___handle_tools_call["_handle_tools_call"]
+        code2llm_output__map__toon__handle_message["handle_message"]
+        code2llm_output__map__toon__run_stdio["run_stdio"]
+        code2llm_output__map__toon___write["_write"]
+        code2llm_output__map__toon___log["_log"]
+        code2llm_output__map__toon__mcp_serve_main["mcp_serve_main"]
+        code2llm_output__map__toon__is_wayland["is_wayland"]
+        code2llm_output__map__toon__png_dimensions["png_dimensions"]
+        code2llm_output__map__toon__png_payload_descriptor["png_payload_descriptor"]
+        code2llm_output__map__toon__frame_from_shot["frame_from_shot"]
+        code2llm_output__map__toon__ordered_monitor_indices["ordered_monitor_indices"]
+        code2llm_output__map__toon__portal_capture_dict["portal_capture_dict"]
+        code2llm_output__map__toon__command_candidates["command_candidates"]
+        code2llm_output__map__toon__run_png_command["run_png_command"]
+        code2llm_output__map__toon__command_capture_dict["command_capture_dict"]
+        code2llm_output__map__toon__grab_target["grab_target"]
+        code2llm_output__map__toon___grab_single_mss_raw["_grab_single_mss_raw"]
+        code2llm_output__map__toon___grab_all_mss_raw["_grab_all_mss_raw"]
+        code2llm_output__map__toon___ydotoold_socket_path["_ydotoold_socket_path"]
+        code2llm_output__map__toon__install_ydotoold_user_service["install_ydotoold_user_service"]
+        code2llm_output__map__toon___package_manager_hint["_package_manager_hint"]
+        code2llm_output__map__toon___human_followups["_human_followups"]
+        code2llm_output__map__toon__build_setup_host_report["build_setup_host_report"]
+        code2llm_output__map__toon___try_apt_install["_try_apt_install"]
+        code2llm_output__map__toon__run_host_setup["run_host_setup"]
+        code2llm_output__map__toon___print_setup_host_header["_print_setup_host_header"]
+        code2llm_output__map__toon___print_setup_host_backends["_print_setup_host_backends"]
+        code2llm_output__map__toon___print_setup_host_ides["_print_setup_host_ides"]
+        code2llm_output__map__toon___print_setup_host_apt_section["_print_setup_host_apt_section"]
+        code2llm_output__map__toon___print_setup_host_human_followups["_print_setup_host_human_followups"]
+    end
     subgraph docker__capture
         docker__capture__smoke___png_size["_png_size"]
         docker__capture__smoke___scan_providers["_scan_providers"]
@@ -125,10 +186,6 @@ flowchart TD
     subgraph plugins__koru_autopilot_jetbrains
         plugins__koru_autopilot_jetbrains__settings__gradle__gradlePluginPortal["gradlePluginPortal"]
         plugins__koru_autopilot_jetbrains__settings__gradle__mavenCentral["mavenCentral"]
-        plugins__koru_autopilot_jetbrains__build__gradle__jvmToolchain["jvmToolchain"]
-        plugins__koru_autopilot_jetbrains__build__gradle__mavenCentral["mavenCentral"]
-        plugins__koru_autopilot_jetbrains__build__gradle__defaultRepositories["defaultRepositories"]
-        plugins__koru_autopilot_jetbrains__build__gradle__bundledPlugin["bundledPlugin"]
         plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__reconnect["reconnect"]
         plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__disconnect["disconnect"]
         plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__sendHello["sendHello"]
@@ -196,6 +253,68 @@ flowchart TD
         plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__deadline["deadline"]
         plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__existing["existing"]
         plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__editorSnapshot["editorSnapshot"]
+    end
+    subgraph project__map
+        project__map__toon___png_size["_png_size"]
+        project__map__toon___scan_providers["_scan_providers"]
+        project__map__toon___diagnostics_payload["_diagnostics_payload"]
+        project__map__toon___capture_one["_capture_one"]
+        project__map__toon___capture_all["_capture_all"]
+        project__map__toon___run_headless["_run_headless"]
+        project__map__toon___run_x11["_run_x11"]
+        project__map__toon__main["main"]
+        project__map__toon__run_multi_node_orchestration["run_multi_node_orchestration"]
+        project__map__toon___normalize_line["_normalize_line"]
+        project__map__toon___first_nonempty_line["_first_nonempty_line"]
+        project__map__toon___is_noise_line["_is_noise_line"]
+        project__map__toon___first_meaningful_line["_first_meaningful_line"]
+        project__map__toon___run_planfile["_run_planfile"]
+        project__map__toon___parse_args["_parse_args"]
+        project__map__toon___run_gate_command["_run_gate_command"]
+        project__map__toon___matched_failure_line["_matched_failure_line"]
+        project__map__toon___extract_finding_keys_from_item["_extract_finding_keys_from_item"]
+        project__map__toon___existing_finding_tickets["_existing_finding_tickets"]
+        project__map__toon___append_existing_note["_append_existing_note"]
+        project__map__toon___create_ticket["_create_ticket"]
+        project__map__toon___handle_existing_finding["_handle_existing_finding"]
+        project__map__toon___find_scripts_dir_with_settings["_find_scripts_dir_with_settings"]
+        project__map__toon__run_planfile["run_planfile"]
+        project__map__toon__load_tickets["load_tickets"]
+        project__map__toon__build_auto_section["build_auto_section"]
+        project__map__toon__replace_auto_section["replace_auto_section"]
+        project__map__toon__do_from_planfile["do_from_planfile"]
+        project__map__toon___extract_todo_items["_extract_todo_items"]
+        project__map__toon___resolve_import_labels["_resolve_import_labels"]
+        project__map__toon__do_from_todo["do_from_todo"]
+        project__map__toon___llm_stub["_llm_stub"]
+        project__map__toon___rate_limit_ok["_rate_limit_ok"]
+        project__map__toon___record_action["_record_action"]
+        project__map__toon___enrich_ticket_with_vallm["_enrich_ticket_with_vallm"]
+        project__map__toon___build_planfile_command["_build_planfile_command"]
+        project__map__toon___extract_ticket_id_from_stdout["_extract_ticket_id_from_stdout"]
+        project__map__toon___execute_planfile_create["_execute_planfile_create"]
+        project__map__toon__create_planfile_ticket["create_planfile_ticket"]
+        project__map__toon___run_docker["_run_docker"]
+        project__map__toon__heal_redsl_gate["heal_redsl_gate"]
+        project__map__toon__heal_redsl_improve["heal_redsl_improve"]
+        project__map__toon__heal_rebuild_restore["heal_rebuild_restore"]
+        project__map__toon__heal_annotate["heal_annotate"]
+        project__map__toon___run_vallm_check["_run_vallm_check"]
+        project__map__toon___run_vallm_validate["_run_vallm_validate"]
+        project__map__toon___resolve_affected_files["_resolve_affected_files"]
+        project__map__toon__heal_vallm_validate["heal_vallm_validate"]
+        project__map__toon___parse_redup_summary["_parse_redup_summary"]
+        project__map__toon___update_redup_metrics["_update_redup_metrics"]
+        project__map__toon___run_redup_check["_run_redup_check"]
+        project__map__toon__heal_redup_check["heal_redup_check"]
+        project__map__toon___resolve_strategy["_resolve_strategy"]
+        project__map__toon__healthz["healthz"]
+        project__map__toon__metrics["metrics"]
+        project__map__toon__get_history["get_history"]
+        project__map__toon__alertmanager_webhook["alertmanager_webhook"]
+        project__map__toon__probe_failure["probe_failure"]
+        project__map__toon__get_tickets["get_tickets"]
+        project__map__toon___git_commit["_git_commit"]
     end
     subgraph scripts___koru_autodiag_filter_tickets
         scripts___koru_autodiag_filter_tickets__main("main CC=12")
@@ -308,13 +427,6 @@ flowchart TD
         services__healing_webhook__app__alertmanager_webhook["alertmanager_webhook"]
         services__healing_webhook__app__probe_failure["probe_failure"]
         services__healing_webhook__app__get_tickets["get_tickets"]
-        services__healing_webhook__ticket_builder___git_commit["_git_commit"]
-        services__healing_webhook__ticket_builder___infer_paths["_infer_paths"]
-        services__healing_webhook__ticket_builder___format_paths["_format_paths"]
-        services__healing_webhook__ticket_builder___default_acceptance["_default_acceptance"]
-        services__healing_webhook__ticket_builder___format_acceptance["_format_acceptance"]
-        services__healing_webhook__ticket_builder___reproduction_for["_reproduction_for"]
-        services__healing_webhook__ticket_builder__build_ticket_payload("build_ticket_payload CC=11")
     end
     subgraph src__koru
         src__koru__autonomous_auto_pipeline___argv_has_option["_argv_has_option"]
@@ -354,14 +466,6 @@ flowchart TD
         src__koru__dev_sync__dev_main("dev_main CC=9")
         src__koru__ide_router__is_headless_environment("is_headless_environment CC=8")
         src__koru__ide_router__resolve_ide_route("resolve_ide_route CC=10")
-        src__koru__autonomous_diagnostics___has_redup_module["_has_redup_module"]
-        src__koru__autonomous_diagnostics__build_idle_checks("build_idle_checks CC=11")
-        src__koru__autonomous_diagnostics__run_idle_check_loop["run_idle_check_loop"]
-        src__koru__autonomous_diagnostics__create_diagnostic_ticket["create_diagnostic_ticket"]
-        src__koru__autonomous_diagnostics__clear_diagnostic_marker["clear_diagnostic_marker"]
-        src__koru__autonomous_diagnostics__run_command_check["run_command_check"]
-        src__koru__autonomous_diagnostics__read_wup_health["read_wup_health"]
-        src__koru__autonomous_diagnostics__run_idle_diagnostics["run_idle_diagnostics"]
         src__koru__env_config__env_config_payload["env_config_payload"]
         src__koru__env_config__write_env_config["write_env_config"]
         src__koru__env_config__apply_env_updates["apply_env_updates"]
@@ -377,6 +481,14 @@ flowchart TD
         src__koru__autonomous_processes___confirm_replace_existing["_confirm_replace_existing"]
         src__koru__autonomous_processes__stop_prior_autonomous_for_auto_start["stop_prior_autonomous_for_auto_star"]
         src__koru__autonomous_processes__guard_existing_autonomous_processes("guard_existing_autonomous_processes CC=11")
+        src__koru__wup_testql_compat___normalize_timeout["_normalize_timeout"]
+        src__koru__wup_testql_compat___normalize_args["_normalize_args"]
+        src__koru__wup_testql_compat___real_testql["_real_testql"]
+        src__koru__wup_testql_compat__main["main"]
+        src__koru__mcp_provision___windsurf_global_config["_windsurf_global_config"]
+        src__koru__mcp_provision___cursor_project_config["_cursor_project_config"]
+        src__koru__mcp_provision___vscode_project_config["_vscode_project_config"]
+        src__koru__mcp_provision___windsurf_project_config["_windsurf_project_config"]
     end
     subgraph src__koruapi
         src__koruapi__runtime_insights___run_ps("_run_ps CC=9")
@@ -698,7 +810,7 @@ flowchart TD
     services__healing_webhook__app__create_planfile_ticket --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__next
     services__healing_webhook__app__create_planfile_ticket --> services__healing_webhook__app___build_planfile_command
     services__healing_webhook__app__create_planfile_ticket --> services__healing_webhook__app___execute_planfile_create
-    services__healing_webhook__app__create_planfile_ticket --> services__healing_webhook__ticket_builder__build_ticket_payload
+    services__healing_webhook__app__create_planfile_ticket --> code2llm_output__map__toon__build_ticket_payload
     services__healing_webhook__app__heal_redsl_gate --> services__healing_webhook__app___run_docker
     services__healing_webhook__app__heal_redsl_gate --> services__healing_webhook__app___record_action
     services__healing_webhook__app__heal_redsl_improve --> services__healing_webhook__app___run_docker
@@ -708,7 +820,7 @@ flowchart TD
     services__healing_webhook__app__heal_rebuild_restore --> services__healing_webhook__app___record_action
     services__healing_webhook__app__heal_rebuild_restore --> services__healing_webhook__app___rate_limit_ok
     services__healing_webhook__app__heal_annotate --> services__healing_webhook__app___record_action
-    services__healing_webhook__app___resolve_affected_files --> services__healing_webhook__ticket_builder___infer_paths
+    services__healing_webhook__app___resolve_affected_files --> code2llm_output__map__toon___infer_paths
     services__healing_webhook__app__heal_vallm_validate --> services__healing_webhook__app___resolve_affected_files
     services__healing_webhook__app__heal_vallm_validate --> services__healing_webhook__app___record_action
     services__healing_webhook__app__heal_vallm_validate --> services__healing_webhook__app___run_vallm_check
@@ -721,9 +833,6 @@ flowchart TD
     services__healing_webhook__app__probe_failure --> services__healing_webhook__app__create_planfile_ticket
     services__healing_webhook__app__probe_failure --> services__healing_webhook__app__heal_redsl_improve
     services__healing_webhook__app__probe_failure --> services__healing_webhook__app__heal_redsl_gate
-    services__healing_webhook__ticket_builder__build_ticket_payload --> services__healing_webhook__ticket_builder___format_paths
-    services__healing_webhook__ticket_builder__build_ticket_payload --> services__healing_webhook__ticket_builder___default_acceptance
-    services__healing_webhook__ticket_builder__build_ticket_payload --> services__healing_webhook__ticket_builder___reproduction_for
     src__koruobserve__lifecycle___spawn --> src__koruobserve__paths__logfile
     src__koruobserve__lifecycle___spawn --> src__koruobserve__paths__runtime_dir
     src__koruobserve__lifecycle___spawn --> src__koruobserve__paths__pidfile
@@ -1290,7 +1399,10 @@ flowchart TD
     src__korumesh__browser_capture__serve_browser_capture_http --> plugins__koru_autopilot_vscode__src__cursor_bubble_adapter__CursorBubbleAdapter__type
     src__korumesh__cli_commands__mesh_init --> src__koru__configurator__load_project_config
     src__korumesh__cli_commands__mesh_init --> src__korumesh__keys__write_mesh_key
+    src__korumesh__cli_commands__mesh_init --> scripts__koru_soak_monitor__print
+    src__korumesh__cli_commands__mesh_relay --> src__korumesh__transport__run_relay
+    src__korumesh__cli_commands__mesh_relay --> scripts__koru_soak_monitor__print
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class examples__remote_orchestration_demo__run_multi_node_orchestration,services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,services__healing_webhook__ticket_builder__build_ticket_payload,src__koruobserve__lifecycle___pids_matching_koru_cmdline,src__koruobserve__diagnostics___monitors_from_mss,src__koruobserve__providers_cli__providers_list_text,src__koruobserve__providers_cli__providers_test_text,src__korudsl__cli__main,src__korudsl__transform__library_from_any,src__korudsl__library__convert_goals_json_to_library,src__korudsl__library___emit_step,src__korudsl__library___emit_goal,src__koruapi__runtime_insights___run_ps,src__koruapi__runtime_insights___active_tools,src__koruapi__cli__main,src__koruapi__dashboard_tickets__list_tickets,src__koruapi__dashboard_tickets__bulk_waiting_input_action,src__koruapi__dashboard_tickets__create_ticket_from_dashboard,src__koruapi__dashboard_tickets__update_ticket_from_dashboard,src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard,src__koruapi__server___parse_invoke_request,src__koruapi__topology_post__apply_topology_post_update,src__koruapi__dashboard_config___dashboard_config_request_kwargs,src__koruapi__dashboard_projects__workspace_project_candidates medCC
+    class examples__remote_orchestration_demo__run_multi_node_orchestration,services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,src__koruobserve__lifecycle___pids_matching_koru_cmdline,src__koruobserve__diagnostics___monitors_from_mss,src__koruobserve__providers_cli__providers_list_text,src__koruobserve__providers_cli__providers_test_text,src__korudsl__cli__main,src__korudsl__transform__library_from_any,src__korudsl__library__convert_goals_json_to_library,src__korudsl__library___emit_step,src__korudsl__library___emit_goal,src__koruapi__runtime_insights___run_ps,src__koruapi__runtime_insights___active_tools,src__koruapi__cli__main,src__koruapi__dashboard_tickets__list_tickets,src__koruapi__dashboard_tickets__bulk_waiting_input_action,src__koruapi__dashboard_tickets__create_ticket_from_dashboard,src__koruapi__dashboard_tickets__update_ticket_from_dashboard,src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard,src__koruapi__server___parse_invoke_request,src__koruapi__topology_post__apply_topology_post_update,src__koruapi__dashboard_config___dashboard_config_request_kwargs,src__koruapi__dashboard_projects__workspace_project_candidates,src__koruapi__dashboard_projects___read_workspace_folder medCC

@@ -632,6 +632,24 @@ class TestScanSemcodArtifacts(unittest.TestCase):
             refactor_tickets = [s for s in out if s.signal == "code2llm_refactor"]
             self.assertEqual(len(refactor_tickets), 2)
 
+    def test_code2llm_analysis_emits_layer_hotspots(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "project").mkdir()
+            (project / "project" / "analysis.toon.yaml").write_text(
+                "HEALTH[0]: ok\n"
+                "REFACTOR[0]: none needed\n\n"
+                "LAYERS:\n"
+                "  src/                            CC̄=4.0    ←in:0  →out:0\n"
+                "  │ !! autonomous_cycle          2163L  1C   73m  CC=14     ←0\n",
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            hotspots = [s for s in out if s.signal == "code2llm_layer_hotspot"]
+            self.assertEqual(len(hotspots), 1)
+            self.assertEqual(hotspots[0].priority, "high")
+            self.assertIn("autonomous_cycle", hotspots[0].title)
+
     def test_testql_export_emits_when_many_failures(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
