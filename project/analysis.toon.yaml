@@ -1,4 +1,4 @@
-# code2llm | 450f 67274L | python:327,shell:49,yaml:22,typescript:18,yml:9,json:9,kotlin:6,txt:2,javascript:1,properties:1,xml:1,toml:1 | 2026-05-24
+# code2llm | 450f 67285L | python:327,shell:49,yaml:22,typescript:18,yml:9,json:9,kotlin:6,txt:2,javascript:1,properties:1,xml:1,toml:1 | 2026-05-24
 # generated in 0.18s
 # CC̄=3.8 | critical:0/2683 | dups:0 | cycles:0
 
@@ -113,9 +113,9 @@ LAYERS:
   │ environment                245L  3C    6m  CC=14     ←2
   │ ide_install                241L  1C    6m  CC=9      ←1
   │ dashboard_serve            240L  1C   10m  CC=6      ←1
+  │ dashboard_tickets          231L  0C   10m  CC=14     ←1
   │ obs_websocket              231L  1C   15m  CC=11     ←1
   │ autonomous_onboarding      231L  1C   11m  CC=10     ←0
-  │ dashboard_tickets          231L  0C   10m  CC=14     ←1
   │ event_store                220L  4C   17m  CC=10     ←3
   │ ide                        216L  1C    6m  CC=10     ←1
   │ dev_sync                   213L  1C    9m  CC=11     ←0
@@ -132,11 +132,11 @@ LAYERS:
   │ autonomous_cycle_config    194L  0C    5m  CC=9      ←0
   │ autonomous_checkpoint      194L  0C   11m  CC=9      ←3
   │ templates                  194L  1C   12m  CC=9      ←1
+  │ cli_queue                  192L  0C    4m  CC=12     ←0
   │ dashboard                  191L  0C   11m  CC=5      ←3
   │ runtime_insights           190L  0C    6m  CC=9      ←1
   │ redup_integration          189L  0C   11m  CC=3      ←2
   │ cli_task                   189L  0C    5m  CC=11     ←0
-  │ cli_queue                  185L  0C    4m  CC=12     ←0
   │ agent_backend_runtime      180L  5C    6m  CC=9      ←0
   │ diagnostics                175L  0C    8m  CC=8      ←2
   │ server                     175L  1C    8m  CC=9      ←1
@@ -215,12 +215,12 @@ LAYERS:
   │ envelope                    85L  1C    4m  CC=3      ←4
   │ application                 82L  2C    6m  CC=3      ←0
   │ gc_cli_helpers              81L  0C    5m  CC=12     ←1
+  │ cli_auto                    80L  0C    4m  CC=11     ←0
   │ __init__                    80L  0C    0m  CC=0.0    ←0
   │ mesh                        79L  0C    5m  CC=8      ←2
   │ cli_runtime_context         79L  0C    3m  CC=14     ←0
   │ telemetry_snapshot          79L  0C    3m  CC=5      ←2
   │ agent                       76L  0C    5m  CC=11     ←1
-  │ cli_auto                    76L  0C    4m  CC=9      ←1
   │ cli                         75L  0C    4m  CC=5      ←0
   │ topology_cli                75L  1C    4m  CC=8      ←1
   │ autonomous_cli_config       74L  0C    4m  CC=5      ←0
@@ -515,25 +515,25 @@ COUPLING:
        services.healing-webhook                              1                                                                                                                                                                                         1                                                                                                                                                                                                                       ──
   CYCLES: none
   HUB: src.koruobserve/ (fan-in=13)
-  HUB: src.koruvision/ (fan-in=28)
-  HUB: src.koruide/ (fan-in=102)
-  HUB: koruapi/ (fan-in=25)
-  HUB: src.koruapi/ (fan-in=25)
-  HUB: koru/ (fan-in=15)
-  HUB: src.korumesh/ (fan-in=12)
   HUB: src.koru/ (fan-in=106)
-  HUB: plugins.koru-autopilot-vscode/ (fan-in=47)
-  HUB: scripts/ (fan-in=481)
   HUB: src.korudsl/ (fan-in=7)
+  HUB: src.koruapi/ (fan-in=25)
+  HUB: koruapi/ (fan-in=25)
+  HUB: scripts/ (fan-in=481)
+  HUB: src.koruvision/ (fan-in=28)
+  HUB: src.korumesh/ (fan-in=12)
+  HUB: plugins.koru-autopilot-vscode/ (fan-in=47)
+  HUB: koru/ (fan-in=15)
+  HUB: src.koruide/ (fan-in=102)
   SMELL: src.koruobserve/ fan-out=32 → split needed
-  SMELL: examples/ fan-out=12 → split needed
-  SMELL: src.koruvision/ fan-out=27 → split needed
-  SMELL: src.koruide/ fan-out=64 → split needed
-  SMELL: koruapi/ fan-out=51 → split needed
-  SMELL: src.koruapi/ fan-out=96 → split needed
-  SMELL: koru/ fan-out=22 → split needed
-  SMELL: src.korumesh/ fan-out=14 → split needed
   SMELL: src.koru/ fan-out=534 → split needed
+  SMELL: src.koruapi/ fan-out=96 → split needed
+  SMELL: koruapi/ fan-out=51 → split needed
+  SMELL: src.koruvision/ fan-out=27 → split needed
+  SMELL: src.korumesh/ fan-out=14 → split needed
+  SMELL: koru/ fan-out=22 → split needed
+  SMELL: examples/ fan-out=12 → split needed
+  SMELL: src.koruide/ fan-out=64 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

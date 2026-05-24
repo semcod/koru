@@ -1,8 +1,8 @@
-# koru | 2683 func | 291f | 67274L | python | 2026-05-24
+# koru | 2683 func | 291f | 67285L | python | 2026-05-24
 # generated in 0.00s
 
 HEALTH:
-  CC̄=3.8  critical=199 (limit:10)  dup=6  cycles=0
+  CC̄=3.8  critical=200 (limit:10)  dup=6  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     build_dashboard_handler = 49 (limit:10)
@@ -52,4 +52,4 @@ REFACTOR[15]:
   [5] H/H Split god module src/koru/doctor.py (1965L, 2 classes)
 
 EVOLUTION:
-  2026-05-24 CC̄=3.8 crit=199 67274L // Automated analysis
+  2026-05-24 CC̄=3.8 crit=200 67285L // Automated analysis

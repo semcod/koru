@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.242', 'python').
+project_metadata('koru', '0.1.245', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 691, 'less').
@@ -217,7 +217,7 @@ project_file('src/koru/cli/parsers.py', 1, 'python').
 project_file('src/koru/cli.py', 361, 'python').
 project_file('src/koru/cli_agent.py', 91, 'python').
 project_file('src/koru/cli_agent_backends.py', 62, 'python').
-project_file('src/koru/cli_auto.py', 77, 'python').
+project_file('src/koru/cli_auto.py', 81, 'python').
 project_file('src/koru/cli_bootstrap.py', 71, 'python').
 project_file('src/koru/cli_cleaned.py', 564, 'python').
 project_file('src/koru/cli_context.py', 32, 'python').
@@ -230,7 +230,7 @@ project_file('src/koru/cli_init.py', 121, 'python').
 project_file('src/koru/cli_local_serve.py', 54, 'python').
 project_file('src/koru/cli_loop.py', 50, 'python').
 project_file('src/koru/cli_parser.py', 255, 'python').
-project_file('src/koru/cli_queue.py', 186, 'python').
+project_file('src/koru/cli_queue.py', 193, 'python').
 project_file('src/koru/cli_refactor_planfile_handoff.py', 36, 'python').
 project_file('src/koru/cli_runtime_context.py', 80, 'python').
 project_file('src/koru/cli_scan.py', 130, 'python').
@@ -464,7 +464,7 @@ project_file('tests/test_autopilot_socket_path.py', 36, 'python').
 project_file('tests/test_bootstrap.py', 298, 'python').
 project_file('tests/test_capture_host_template.py', 20, 'python').
 project_file('tests/test_chat_history.py', 119, 'python').
-project_file('tests/test_cli.py', 726, 'python').
+project_file('tests/test_cli.py', 745, 'python').
 project_file('tests/test_configurator.py', 175, 'python').
 project_file('tests/test_configurator_toggle.py', 53, 'python').
 project_file('tests/test_context.py', 628, 'python').
@@ -1248,7 +1248,7 @@ python_function('src/koru/cli_agent_backends.py', 'agent_backends_main', 1, 8, 9
 python_function('src/koru/cli_auto.py', '_legacy_attr', 2, 2, 2).
 python_function('src/koru/cli_auto.py', '_peek_project_from_argv', 1, 5, 8).
 python_function('src/koru/cli_auto.py', '_should_suggest_wizard', 2, 6, 5).
-python_function('src/koru/cli_auto.py', '_auto_main', 1, 9, 9).
+python_function('src/koru/cli_auto.py', '_auto_main', 1, 11, 9).
 python_function('src/koru/cli_bootstrap.py', '_bootstrap_main', 1, 5, 7).
 python_function('src/koru/cli_cleaned.py', '_env_truthy', 1, 1, 3).
 python_function('src/koru/cli_cleaned.py', '_command_value', 1, 2, 2).
@@ -4333,6 +4333,7 @@ python_method('TestAutoMain', 'test_auto_main_stops_prior_and_injects_replace_ex
 python_method('TestAutoMain', 'test_auto_main_allow_duplicate_skips_stop_and_replace_flag', 0, 2, 8).
 python_method('TestAutoMain', 'test_subcommand_auto_routes_to_auto_main', 0, 1, 4).
 python_method('TestAutoMain', 'test_auto_main_help_does_not_stop_existing_loop', 0, 1, 5).
+python_method('TestAutoMain', 'test_auto_main_strips_redundant_up_subcommand', 0, 2, 8).
 python_class('tests/test_cli.py', 'TestEventsSubcommand').
 python_method('TestEventsSubcommand', 'setUp', 0, 1, 1).
 python_method('TestEventsSubcommand', 'tearDown', 0, 1, 1).

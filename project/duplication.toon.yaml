@@ -1,12 +1,12 @@
-# redup/duplication | 84 groups | 317f 53018L | 2026-05-24
+# redup/duplication | 84 groups | 317f 53029L | 2026-05-24
 
 SUMMARY:
   files_scanned: 317
-  total_lines:   53018
+  total_lines:   53029
   dup_groups:    84
   dup_fragments: 203
   saved_lines:   1022
-  scan_ms:       3484
+  scan_ms:       3562
 
 HOTSPOTS[7] (files with most duplication):
   src/koru/cli_cleaned.py  dup=409L  groups=32  frags=37  (0.8%)

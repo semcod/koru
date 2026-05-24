@@ -1,5 +1,5 @@
-# koru | 567f 99071L | python:471,shell:57,javascript:19,typescript:18,less:1,css:1 | 2026-05-24
-# stats: 3112 func | 349 cls | 567 mod | CC̄=4.0 | critical:202 | cycles:0
+# koru | 567f 99101L | python:471,shell:57,javascript:19,typescript:18,less:1,css:1 | 2026-05-24
+# stats: 3112 func | 349 cls | 567 mod | CC̄=4.0 | critical:203 | cycles:0
 # alerts[5]: CC test_autonomy_config_from_env=16; CC test_docker_capture_x11=16; CC test_auto_pipeline_profiles_escalate_when_queue_stays_idle=15; CC test_autonomy_config_defaults=15; CC test_jsonl_session_emits_versioned_envelope=15
 # hotspots[5]: build_dashboard_handler fan=45; _build_handler fan=43; create_app fan=41; run_cycle fan=23; topology_main fan=23
 # evolution: baseline
@@ -220,7 +220,7 @@ M[567]:
   src/koru/cli.py,361
   src/koru/cli_agent.py,91
   src/koru/cli_agent_backends.py,62
-  src/koru/cli_auto.py,77
+  src/koru/cli_auto.py,81
   src/koru/cli_bootstrap.py,71
   src/koru/cli_cleaned.py,564
   src/koru/cli_context.py,32
@@ -233,7 +233,7 @@ M[567]:
   src/koru/cli_local_serve.py,54
   src/koru/cli_loop.py,50
   src/koru/cli_parser.py,255
-  src/koru/cli_queue.py,186
+  src/koru/cli_queue.py,193
   src/koru/cli_refactor_planfile_handoff.py,36
   src/koru/cli_runtime_context.py,80
   src/koru/cli_scan.py,130
@@ -467,7 +467,7 @@ M[567]:
   tests/test_bootstrap.py,298
   tests/test_capture_host_template.py,20
   tests/test_chat_history.py,119
-  tests/test_cli.py,726
+  tests/test_cli.py,745
   tests/test_configurator.py,175
   tests/test_configurator_toggle.py,53
   tests/test_context.py,628
@@ -3984,7 +3984,7 @@ D:
     TestBareEmitsMarkdown: setUp(0),tearDown(0),test_bare_produces_markdown(0)  # Bare ``koru`` should produce a markdown brief.
     TestTopologySubcommand: setUp(0),tearDown(0),test_topology_json_lists_components_and_pipelines(0),test_topology_disable_then_is_enabled_false(0),test_topology_enabled_components_for_pipeline(0)
     TestInitCiSubcommand: test_init_ci_exits_zero_with_paths(0)
-    TestAutoMain: test_auto_main_stops_prior_and_injects_replace_existing(0),test_auto_main_allow_duplicate_skips_stop_and_replace_flag(0),test_subcommand_auto_routes_to_auto_main(0),test_auto_main_help_does_not_stop_existing_loop(0)  # ``koru auto`` stops prior loops and forwards ``--replace-exi
+    TestAutoMain: test_auto_main_stops_prior_and_injects_replace_existing(0),test_auto_main_allow_duplicate_skips_stop_and_replace_flag(0),test_subcommand_auto_routes_to_auto_main(0),test_auto_main_help_does_not_stop_existing_loop(0),test_auto_main_strips_redundant_up_subcommand(0)  # ``koru auto`` stops prior loops and forwards ``--replace-exi
     TestEventsSubcommand: setUp(0),tearDown(0),test_events_json_reports_context_history(0),test_events_filters_by_aggregate_id(0),test_events_text_format(0)
     TestDoctorReexecToProjectVenv: _prepare_local_koru(1),test_doctor_subcommand_reexecs_when_interpreter_is_outside_project_venv(0),test_doctor_flag_reexecs_when_interpreter_is_outside_project_venv(0)
     TestSubcommandDispatch: test_table_contains_all_documented_subcommands(0),test_table_values_are_callables(0),test_each_subcommand_routes_to_its_handler(0),test_unknown_first_arg_falls_through_to_argparse(0),test_empty_argv_does_not_call_any_handler(0)  # R6: routing through ``_SUBCOMMANDS`` dispatch table.

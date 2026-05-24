@@ -543,12 +543,12 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.agents.detect_project_environment` - 24 calls
 - `src.koru.autopilot.install_manager.collect_install_manager_report` - 24 calls
 - `plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.focusChat` - 24 calls
+- `src.koruapi.dashboard_tickets.create_ticket_from_dashboard` - 23 calls
 - `src.koru.dev_sync.dev_main` - 23 calls
 - `src.koru.cli_agent_backends.agent_backends_main` - 23 calls
 - `src.koru.init.init_project` - 23 calls
 - `koru.context_render.render_active_ticket` - 23 calls
 - `src.koru.autonomy.ide_work.build_ide_work_prompt` - 23 calls
-- `src.koruapi.dashboard_tickets.create_ticket_from_dashboard` - 23 calls
 - `src.koruapi.topology_post.apply_topology_post_update` - 22 calls
 - `src.koru.gate.parse_authorizations` - 22 calls
 - `koru.context_render.render_environment` - 22 calls
