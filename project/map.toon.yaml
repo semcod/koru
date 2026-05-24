@@ -3414,6 +3414,7 @@ The c...
   regix.yaml:
   wup-shell-only.yaml:
   output.txt:
+  planfile.yaml:
   koru.yaml:
   wup.yaml:
   docker-compose.yml:
@@ -3747,5 +3748,4 @@ The c...
   testql-scenarios/generated-cli-tests.testql.toon.yaml:
   testql-scenarios/cli-koru-live.testql.toon.yaml:
   testql-testing/scenarios/realtime-health.testql.toon.yaml:
-  planfile.yaml:
   pyproject.toml:

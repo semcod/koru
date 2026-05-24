@@ -21,7 +21,7 @@ Closed-loop automation across semcod/* repositories.
 ## Metadata
 
 - **name**: `koru`
-- **version**: `0.1.238`
+- **version**: `0.1.239`
 - **python_requires**: `>=3.12`
 - **license**: Apache-2.0
 - **ai_model**: `openrouter/qwen/qwen3-coder-next`
@@ -41,7 +41,7 @@ SUMD (description) → DOQL/source (code) → taskfile (automation) → testql (
 
 app {
   name: koru;
-  version: 0.1.238;
+  version: 0.1.239;
 }
 
 dependencies {
@@ -1854,7 +1854,7 @@ tasks:
 ```yaml
 project:
   name: koru
-  version: 0.1.238
+  version: 0.1.239
   env: local
 ```
 
@@ -1951,7 +1951,7 @@ pip install -e .[dev]
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# koru | 565f 98745L | python:469,shell:57,javascript:19,typescript:18,less:1,css:1 | 2026-05-24
+# koru | 565f 98747L | python:469,shell:57,javascript:19,typescript:18,less:1,css:1 | 2026-05-24
 # stats: 3106 func | 342 cls | 565 mod | CC̄=4.0 | critical:202 | cycles:0
 # alerts[5]: CC test_autonomy_config_from_env=16; CC test_docker_capture_x11=16; CC test_auto_pipeline_profiles_escalate_when_queue_stays_idle=15; CC test_autonomy_config_defaults=15; CC test_jsonl_session_emits_versioned_envelope=15
 # hotspots[5]: build_dashboard_handler fan=45; _build_handler fan=43; create_app fan=41; run_cycle fan=23; topology_main fan=23
@@ -2479,7 +2479,7 @@ M[565]:
   tests/test_loop.py,95
   tests/test_mcp_provision.py,277
   tests/test_mcp_server.py,245
-  tests/test_observation_mesh_e2e.py,228
+  tests/test_observation_mesh_e2e.py,230
   tests/test_observe_providers_cli.py,83
   tests/test_operator_pipeline.py,602
   tests/test_planfile_queue.py,1303
@@ -6870,7 +6870,7 @@ D:
 
 ```prolog markpact:analysis path=project/logic.pl
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('koru', '0.1.238', 'python').
+project_metadata('koru', '0.1.239', 'python').
 
 % ── Project Files ────────────────────────────────────────
 project_file('app.doql.less', 691, 'less').
@@ -7394,7 +7394,7 @@ project_file('tests/test_local_service.py', 265, 'python').
 project_file('tests/test_loop.py', 95, 'python').
 project_file('tests/test_mcp_provision.py', 277, 'python').
 project_file('tests/test_mcp_server.py', 245, 'python').
-project_file('tests/test_observation_mesh_e2e.py', 228, 'python').
+project_file('tests/test_observation_mesh_e2e.py', 230, 'python').
 project_file('tests/test_observe_providers_cli.py', 83, 'python').
 project_file('tests/test_operator_pipeline.py', 602, 'python').
 project_file('tests/test_planfile_queue.py', 1303, 'python').
@@ -12084,7 +12084,7 @@ sumd_deploy_compose_file('docker-compose.yml').
 
 ## Call Graph
 
-*400 nodes · 500 edges · 87 modules · CC̄=3.8*
+*401 nodes · 500 edges · 87 modules · CC̄=3.8*
 
 ### Hubs (by degree)
 
@@ -12093,16 +12093,16 @@ sumd_deploy_compose_file('docker-compose.yml').
 | `print` *(in scripts.koru-soak-monitor)* | 0 | 496 | 0 | **496** |
 | `build_dashboard_handler` *(in koruapi.dashboard_routes)* | 1 | 2 | 207 | **209** |
 | `list` *(in src.koru.wizard.gui.static.wizard)* | 5 | 110 | 9 | **119** |
-| `normalize_ide_id` *(in src.koruide.ide)* | 6 | 42 | 11 | **53** |
 | `render_markdown_handoff` *(in koru.context_render)* | 10 ⚠ | 6 | 47 | **53** |
+| `normalize_ide_id` *(in src.koruide.ide)* | 6 | 42 | 11 | **53** |
 | `activity` *(in src.koru.activity_log)* | 4 | 40 | 8 | **48** |
 | `emit_management_event` *(in src.koru.events)* | 8 | 31 | 7 | **38** |
 | `observe_up` *(in src.koruobserve.lifecycle)* | 4 | 1 | 32 | **33** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.27s
-# nodes: 400 | edges: 500 | modules: 87
+# generated in 0.22s
+# nodes: 401 | edges: 500 | modules: 87
 # CC̄=3.8
 
 HUBS[20]:
@@ -12112,10 +12112,10 @@ HUBS[20]:
     CC=1  in:2  out:207  total:209
   src.koru.wizard.gui.static.wizard.list
     CC=5  in:110  out:9  total:119
-  src.koruide.ide.normalize_ide_id
-    CC=6  in:42  out:11  total:53
   koru.context_render.render_markdown_handoff
     CC=10  in:6  out:47  total:53
+  src.koruide.ide.normalize_ide_id
+    CC=6  in:42  out:11  total:53
   src.koru.activity_log.activity
     CC=4  in:40  out:8  total:48
   src.koru.events.emit_management_event
@@ -12128,24 +12128,24 @@ HUBS[20]:
     CC=12  in:1  out:31  total:32
   src.koruvision.providers.obs_websocket._with_obs_connection
     CC=9  in:2  out:26  total:28
-  services.healing-webhook.ticket_builder.build_ticket_payload
-    CC=11  in:1  out:25  total:26
+  src.koruide.socket.default_socket_path
+    CC=4  in:12  out:15  total:27
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
+  services.healing-webhook.ticket_builder.build_ticket_payload
+    CC=11  in:1  out:25  total:26
   koru.context.build_context
     CC=6  in:9  out:16  total:25
-  src.koruapi.dashboard_config._dashboard_config_request_kwargs
-    CC=10  in:1  out:23  total:24
-  src.koru.queue.ticket.planfile_command
-    CC=5  in:17  out:7  total:24
   examples.remote_orchestration_demo.run_multi_node_orchestration
     CC=9  in:0  out:24  total:24
+  src.koru.queue.ticket.planfile_command
+    CC=5  in:17  out:7  total:24
   src.koruapi.dashboard_tickets.create_ticket_from_dashboard
     CC=11  in:1  out:23  total:24
+  src.koruapi.dashboard_config._dashboard_config_request_kwargs
+    CC=10  in:1  out:23  total:24
   src.koruapi.topology_post.apply_topology_post_update
     CC=14  in:1  out:22  total:23
-  koruapi.mcp_server._log
-    CC=1  in:21  out:1  total:22
 
 MODULES:
   examples.remote_orchestration_demo  [1 funcs]
@@ -12267,6 +12267,12 @@ MODULES:
   src.koruapi.dashboard_context  [2 funcs]
     dashboard_context_payload  CC=1  out:2
     dashboard_handoff_markdown  CC=1  out:2
+  src.koruapi.dashboard_plugin_logs  [5 funcs]
+    _daemon_plugin_logs  CC=3  out:5
+    _debug_log_row  CC=3  out:3
+    _file_plugin_logs  CC=5  out:5
+    _plugin_debug_log_path  CC=1  out:1
+    dashboard_plugin_logs_payload  CC=2  out:3
   src.koruapi.dashboard_projects  [20 funcs]
     _collect_projects_for_ide  CC=8  out:16
     _dedupe_project_entries  CC=3  out:3
@@ -12386,15 +12392,13 @@ MODULES:
     autopilot_ide_choices  CC=1  out:0
     detect_running_ides  CC=13  out:10
     normalize_ide_id  CC=6  out:11
-  src.korumesh.dashboard_parse  [1 funcs]
-    parse_mime_params  CC=6  out:6
+  src.koruide.socket  [1 funcs]
+    default_socket_path  CC=4  out:15
   src.korumesh.envelope  [1 funcs]
     sign_envelope  CC=3  out:8
   src.korumesh.keys  [2 funcs]
     load_mesh_key  CC=2  out:6
     write_mesh_key  CC=3  out:6
-  src.korumesh.store  [1 funcs]
-    list_vision_frames  CC=6  out:3
   src.korumesh.transport  [1 funcs]
     publish_envelope  CC=4  out:9
   src.koruobserve.bootstrap  [3 funcs]
@@ -12499,8 +12503,7 @@ MODULES:
   src.koruvision.providers.base  [2 funcs]
     frame_from_png  CC=5  out:12
     png_dimensions  CC=4  out:5
-  src.koruvision.providers.browser_getdisplay  [2 funcs]
-    _frames_from_store  CC=4  out:8
+  src.koruvision.providers.browser_getdisplay  [1 funcs]
     browser_capture_requested  CC=2  out:2
   src.koruvision.providers.cli_tools  [4 funcs]
     availability  CC=3  out:4
@@ -12518,10 +12521,8 @@ MODULES:
     capture_one_with_providers  CC=6  out:13
     list_provider_status  CC=2  out:3
     monitors_via_xrandr  CC=6  out:10
-  src.koruvision.providers.env  [7 funcs]
+  src.koruvision.providers.env  [5 funcs]
     capture_provider_pref  CC=4  out:6
-    compositor_hint  CC=5  out:3
-    env_truthy  CC=1  out:3
     is_wayland  CC=2  out:6
     looks_headless  CC=3  out:4
     portal_possible  CC=3  out:5
