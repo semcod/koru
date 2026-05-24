@@ -83,19 +83,23 @@ def _check_autopilot_skip_conditions(
     ):
         _hp("- autopilot skipped (autopilot:drive disabled in topology)")
         return True, "skipped(topology)"
-    elif autopilot_action == "off":
+
+    if autopilot_action == "off":
         _hp("- autopilot action set to off, skipping")
         return True, "skipped(action_off)"
-    elif autopilot_on_idle_only and queue_result.last_status != "idle":
+
+    if autopilot_on_idle_only and queue_result.last_status != "idle":
         _hp("- autopilot skipped (idle_only)")
         return True, "skipped(idle_only)"
-    elif autopilot_skip_on_diagnostics_fail and diag_result.status == "failed":
+
+    if autopilot_skip_on_diagnostics_fail and diag_result.status == "failed":
         _hp("- autopilot skipped (diagnostics_fail)")
         return True, "skipped(diagnostics_fail)"
-    elif (
-        autopilot_skip_drive_idle_streak > 0
-        and queue_result.last_status == "idle"
-        and state.stagnation_streak >= autopilot_skip_drive_idle_streak
+
+    if _should_skip_for_idle_streak(
+        queue_result=queue_result,
+        state=state,
+        autopilot_skip_drive_idle_streak=autopilot_skip_drive_idle_streak,
     ):
         _hp(
             "- autopilot skipped "
@@ -104,33 +108,89 @@ def _check_autopilot_skip_conditions(
         state.telemetry_autopilot_idle_streak_skips += 1
         cycle_telemetry["autopilot_skipped_idle_streak"] = True
         return True, "skipped(idle_streak)"
-    elif 0 < state.stagnation_streak < DEFAULT_ESCALATION_THRESHOLD and _status_in_skip_list(
-        queue_result.last_status,
-        autopilot_skip_statuses,
+
+    if _is_waiting_llm_ready_ticket(queue_result=queue_result, project=project):
+        if _skip_due_to_recent_chat_activity(
+            project=project,
+            queue_result=queue_result,
+            state=state,
+            cycle_telemetry=cycle_telemetry,
+            _hp=_hp,
+        ):
+            return True, "skipped(chat_activity)"
+
+    if _is_stuck_status_skip_candidate(
+        queue_result=queue_result,
+        state=state,
+        autopilot_skip_statuses=autopilot_skip_statuses,
     ):
-        if str(getattr(state, "last_autopilot_status", "") or "") == "failed":
-            _hp(
-                "- autopilot not skipped "
-                f"(previous drive failed, streak={state.stagnation_streak})",
-            )
-            return False, ""
-        if _waiting_ticket_has_label(project, queue_result, "llm-ready"):
-            if _skip_due_to_recent_chat_activity(
-                project=project,
-                queue_result=queue_result,
-                state=state,
-                cycle_telemetry=cycle_telemetry,
-                _hp=_hp,
-            ):
-                return True, "skipped(chat_activity)"
-            _hp(
-                "- autopilot not skipped "
-                f"(waiting ticket is llm-ready, streak={state.stagnation_streak})",
-            )
-            return False, ""
-        _hp(
-            "- autopilot skipped "
-            f"(stuck_{queue_result.last_status}_streak_{state.stagnation_streak})",
+        return _handle_stuck_status_skip_candidate(
+            project=project,
+            queue_result=queue_result,
+            state=state,
+            cycle_telemetry=cycle_telemetry,
+            _hp=_hp,
         )
-        return True, f"skipped(stuck_{queue_result.last_status})"
+
     return False, ""
+
+
+def _should_skip_for_idle_streak(
+    *,
+    queue_result: QueueLoopResult,
+    state: AutoloopState,
+    autopilot_skip_drive_idle_streak: int,
+) -> bool:
+    return (
+        autopilot_skip_drive_idle_streak > 0
+        and queue_result.last_status == "idle"
+        and state.stagnation_streak >= autopilot_skip_drive_idle_streak
+    )
+
+
+def _is_stuck_status_skip_candidate(
+    *,
+    queue_result: QueueLoopResult,
+    state: AutoloopState,
+    autopilot_skip_statuses: str,
+) -> bool:
+    return (
+        0 < state.stagnation_streak < DEFAULT_ESCALATION_THRESHOLD
+        and _status_in_skip_list(queue_result.last_status, autopilot_skip_statuses)
+    )
+
+
+def _is_waiting_llm_ready_ticket(*, queue_result: QueueLoopResult, project: Path) -> bool:
+    return (
+        queue_result.last_status == "waiting_input"
+        and _waiting_ticket_has_label(project, queue_result, "llm-ready")
+    )
+
+
+def _handle_stuck_status_skip_candidate(
+    *,
+    project: Path,
+    queue_result: QueueLoopResult,
+    state: AutoloopState,
+    cycle_telemetry: dict[str, Any],
+    _hp: callable,
+) -> tuple[bool, str]:
+    if str(getattr(state, "last_autopilot_status", "") or "") == "failed":
+        _hp(
+            "- autopilot not skipped "
+            f"(previous drive failed, streak={state.stagnation_streak})",
+        )
+        return False, ""
+
+    if _waiting_ticket_has_label(project, queue_result, "llm-ready"):
+        _hp(
+            "- autopilot not skipped "
+            f"(waiting ticket is llm-ready, streak={state.stagnation_streak})",
+        )
+        return False, ""
+
+    _hp(
+        "- autopilot skipped "
+        f"(stuck_{queue_result.last_status}_streak_{state.stagnation_streak})",
+    )
+    return True, f"skipped(stuck_{queue_result.last_status})"

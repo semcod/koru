@@ -4,6 +4,30 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.61] — 2026-05-24
+
+### Fixed
+- **Cursor: ticket prompts no longer paste the user's clipboard instead of
+  the drive text.** The probe ladder had cached
+  `editor.action.clipboardPasteAction` as the paste winner. That VS Code
+  command ignores the `text` argument and reads the OS clipboard, so Koru
+  reported `verification=strict` while the chat received unrelated copied
+  content. Direct paste now seeds the clipboard with a verified write before
+  invoking clipboard-reading commands, restores the user's clipboard
+  afterward, and the Cursor strategy discards stale clipboard-paste cache
+  entries so `cursor.action.chat.typeText` / `composer.typeText` are tried
+  first.
+
+## [0.1.60] — 2026-05-24
+
+### Fixed
+- **Transparent per-operation routing diagnostics.** Chat drive ACKs now carry
+  an `operation_trace` showing the independent focus, input-busy probe, paste,
+  submit, submit verification, and message-sent routes. The daemon logs the
+  same trace so regressions such as "pasted but not sent" identify the exact
+  failing operation and host tool (`wtype`, `xdotool`, `ydotool`, click, or
+  registered IDE command) instead of only reporting the final winner.
+
 ## [0.1.59] — 2026-05-24
 
 ### Fixed

@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import os
 import re
 import subprocess
 import time
+from hashlib import sha1
 from pathlib import Path
 from typing import Any
 
 from koru.autonomous_cycle_common import _queue_loop_waiting_ticket_label
 from koru.autonomy.prompts import PromptDecision
+from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
 from koru.tasks import create_nl_task
 
@@ -69,7 +73,7 @@ def _llm_reflection_summary_max_age_seconds() -> float:
         return 1800.0
 
 
-def _recent_llm_reflection_summary(state: "AutoloopState") -> str:
+def _recent_llm_reflection_summary(state: AutoloopState) -> str:
     summary = str(getattr(state, "last_llm_reflection_summary", "") or "").strip()
     if not summary:
         return ""
@@ -104,6 +108,138 @@ def _llm_needs_input_ticket_priority() -> str:
 def _llm_needs_input_heuristic_enabled() -> bool:
     raw = os.environ.get("KORU_LLM_NEEDS_INPUT_HEURISTIC", "1").strip().lower()
     return raw not in {"0", "false", "no", "off"}
+
+
+def _chat_intake_ticket_enabled() -> bool:
+    raw = os.environ.get("KORU_AUTOPILOT_CHAT_INTAKE_TICKET", "1").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
+def _normalize_prompt_text(text: str) -> str:
+    return " ".join(str(text or "").split()).strip().lower()
+
+
+def _looks_like_autopilot_generated_prompt(text: str) -> bool:
+    normalized = _normalize_prompt_text(text)
+    if not normalized:
+        return False
+    if normalized.startswith("ticket ") and " has been stuck in status " in normalized:
+        return True
+    if normalized.startswith("work on planfile ticket "):
+        return True
+    if "planfile ticket done " in normalized:
+        return True
+    if normalized.startswith("the queue is blocked on waiting_input"):
+        return True
+    return False
+
+
+def _looks_like_explicit_intake_text(text: str) -> bool:
+    raw = " ".join(str(text or "").split()).strip()
+    if not raw:
+        return False
+    lowered = raw.lower()
+    if lowered.startswith(("/", "./", "../", "~/")):
+        return True
+    if lowered.startswith(("bug:", "task:", "todo:", "ticket:", "fix:", "feature:")):
+        return True
+    if re.search(r"\b(?:src|tests|docs|plugins|services|project)/[\w./-]+", raw):
+        return True
+    return False
+
+
+def _external_message_sent_text(
+    *,
+    state: AutoloopState,
+    recent_events: list[dict[str, Any]],
+) -> str:
+    last_driven = _normalize_prompt_text(str(getattr(state, "last_driven_prompt", "") or ""))
+    for event in reversed(recent_events):
+        if str(event.get("type") or "") != "message.sent":
+            continue
+        text = " ".join(str(event.get("text") or "").split()).strip()
+        if len(text) < 3:
+            continue
+        if _looks_like_autopilot_generated_prompt(text):
+            continue
+        if not _looks_like_explicit_intake_text(text):
+            continue
+        normalized = _normalize_prompt_text(text)
+        if last_driven and (normalized in last_driven or last_driven.startswith(normalized)):
+            continue
+        return text
+    return ""
+
+
+def _upsert_chat_intake_operator_ticket(
+    *,
+    project: Path,
+    queue_result: QueueLoopResult,
+    state: AutoloopState,
+    recent_events: list[dict[str, Any]],
+    cycle_telemetry: dict[str, Any],
+    _hp: Any,
+) -> str | None:
+    if not _chat_intake_ticket_enabled():
+        return None
+    if str(getattr(queue_result, "last_status", "") or "") != "waiting_input":
+        return None
+
+    intake_text = _external_message_sent_text(state=state, recent_events=recent_events)
+    if not intake_text:
+        return None
+
+    waiting_ticket = _llm_needs_input_waiting_ticket(queue_result)
+    intake_hash = sha1(intake_text.encode("utf-8", errors="ignore")).hexdigest()[:16]
+    dedupe_key = f"autopilot:chat-intake:{intake_hash}"
+    title = "[OPERATOR] intake from IDE chat"
+    prompt = (
+        f"{title}\n\n"
+        + "A new external chat message was sent in IDE while the queue "
+        + "is blocked in waiting_input.\n"
+        + "Create/update a dedicated operator task from this intake "
+        + "instead of re-driving the old prompt.\n\n"
+        + f"Origin waiting ticket: {waiting_ticket}\n"
+        + f"Incoming intake:\n{intake_text}\n"
+    )
+    scaffold: dict[str, Any] = {
+        "title": title,
+        "executor_kind": "human",
+        "executor_mode": "interactive",
+        "labels": ["koru", "operator", "autopilot-chat-intake"],
+        "source_tool": "koru-autonomous-chat-intake",
+        "source_context": {
+            "signal": "chat_intake_message_sent",
+            "origin_waiting_ticket": waiting_ticket,
+            "dedupe_key": dedupe_key,
+            "intake_preview": intake_text[:200],
+        },
+    }
+    try:
+        create_task = _cycle_attr("create_nl_task", create_nl_task)
+        created = create_task(
+            project,
+            prompt,
+            queue_name="operator",
+            priority="high",
+            scaffold=scaffold,
+        )
+    except Exception as exc:
+        _hp(f"- chat intake: operator ticket upsert failed ({exc})")
+        return None
+
+    cycle_telemetry["autopilot_chat_intake_ticket"] = created.ticket_id
+    if getattr(created, "reused", False):
+        _hp(
+            "- chat intake: reused operator ticket "
+            f"{created.ticket_id} (waiting={waiting_ticket})",
+        )
+    else:
+        _hp(
+            "- chat intake: created operator ticket "
+            f"{created.ticket_id} (waiting={waiting_ticket})",
+        )
+    return created.ticket_id
 
 
 def _compact_question_text(text: str, *, limit: int = 240) -> str:
@@ -277,7 +413,7 @@ def _upsert_llm_needs_input_operator_ticket(
     *,
     project: Path,
     queue_result: QueueLoopResult,
-    state: "AutoloopState",
+    state: AutoloopState,
     reflection_summary: str,
     reflection_events: list[Any],
     _hp: Any,
@@ -342,7 +478,7 @@ def _upsert_llm_needs_input_operator_ticket(
 
 
 def _inject_reflection_summary_into_prompt(
-    state: "AutoloopState",
+    state: AutoloopState,
     queue_result: QueueLoopResult,
     decision: PromptDecision,
 ) -> PromptDecision:
@@ -379,7 +515,7 @@ def _event_timestamp(payload: dict[str, Any], *, default: float = 0.0) -> float:
 
 
 def _recent_chat_activity_events(
-    state: "AutoloopState",
+    state: AutoloopState,
     *,
     ide: str | None,
     within_seconds: float,
@@ -428,7 +564,7 @@ def _state_events_to_chat_events(recent_events: list[dict[str, Any]]) -> list[An
     return converted
 
 
-def _chat_activity_cooldown_for_state(state: "AutoloopState") -> float:
+def _chat_activity_cooldown_for_state(state: AutoloopState) -> float:
     cooldown = _autopilot_redrive_cooldown_seconds()
     if cooldown <= 0:
         return cooldown
@@ -439,7 +575,7 @@ def _chat_activity_cooldown_for_state(state: "AutoloopState") -> float:
 
 
 def _last_successful_drive_ack_age(
-    state: "AutoloopState",
+    state: AutoloopState,
     *,
     waiting_ticket: str,
     ide: str | None,
@@ -458,11 +594,43 @@ def _last_successful_drive_ack_age(
     return max(0.0, time.time() - last_sent_ts)
 
 
+def _event_matches_last_driven_prompt(
+    state: AutoloopState,
+    event: dict[str, Any],
+) -> bool:
+    if str(event.get("type") or "") != "message.sent":
+        return False
+    event_text = _normalize_prompt_text(str(event.get("text") or ""))
+    last_driven = _normalize_prompt_text(str(getattr(state, "last_driven_prompt", "") or ""))
+    if not event_text or not last_driven:
+        return False
+    return event_text == last_driven or event_text in last_driven or last_driven in event_text
+
+
+def _last_self_drive_event_age(
+    state: AutoloopState,
+    recent_events: list[dict[str, Any]],
+) -> float | None:
+    for event in reversed(recent_events):
+        if not _event_matches_last_driven_prompt(state, event):
+            continue
+        return max(0.0, time.time() - _event_timestamp(event, default=0.0))
+    return None
+
+
+def _llx_chat_reflection_enabled() -> bool:
+    try:
+        from koru.llm_reflect import llm_reflect_enabled
+    except ImportError:
+        return False
+    return bool(llm_reflect_enabled())
+
+
 def _recent_message_sent_allows_redrive(
     *,
     project: Path,
     queue_result: QueueLoopResult,
-    state: "AutoloopState",
+    state: AutoloopState,
     recent_events: list[dict[str, Any]],
     last_type: str,
     age: str,
@@ -522,7 +690,7 @@ def _upsert_reflection_needs_input_ticket(
     reflection: Any,
     project: Path,
     queue_result: QueueLoopResult,
-    state: "AutoloopState",
+    state: AutoloopState,
     summary: str,
     reflection_events: list[Any],
     cycle_telemetry: dict[str, Any],
@@ -547,7 +715,7 @@ def _apply_llx_chat_reflection(
     *,
     project: Path,
     queue_result: QueueLoopResult,
-    state: "AutoloopState",
+    state: AutoloopState,
     cycle_telemetry: dict[str, Any],
     waiting_ticket: str,
     ide: str | None,
@@ -603,7 +771,7 @@ def _apply_needs_input_heuristic(
     *,
     project: Path,
     queue_result: QueueLoopResult,
-    state: "AutoloopState",
+    state: AutoloopState,
     cycle_telemetry: dict[str, Any],
     reflection_events: list[Any],
     _hp: Any,
@@ -631,7 +799,7 @@ def _skip_due_to_recent_chat_activity(
     *,
     project: Path,
     queue_result: QueueLoopResult,
-    state: "AutoloopState",
+    state: AutoloopState,
     cycle_telemetry: dict[str, Any],
     _hp: Any,
 ) -> bool:
@@ -681,6 +849,36 @@ def _skip_due_to_recent_chat_activity(
         within_seconds=cooldown,
     )
     reflection_events = _state_events_to_chat_events(recent_events)
+
+    has_received = any(str(ev.get("type") or "") == "message.received" for ev in recent_events)
+    self_drive_age = _last_self_drive_event_age(state, recent_events)
+    if (
+        self_drive_age is not None
+        and self_drive_age <= cooldown
+        and not has_received
+        and not _llx_chat_reflection_enabled()
+    ):
+        age = f"{self_drive_age:.0f}s"
+        cycle_telemetry["autopilot_skipped_chat_activity"] = True
+        cycle_telemetry["autopilot_chat_activity_last_event"] = "message.sent"
+        _hp(
+            "- autopilot skipped (recent_self_drive "
+            f"last=message.sent age={age} cooldown={cooldown:.0f}s "
+            f"ticket={waiting_ticket})",
+        )
+        return True
+
+    intake_ticket = _upsert_chat_intake_operator_ticket(
+        project=project,
+        queue_result=queue_result,
+        state=state,
+        recent_events=recent_events,
+        cycle_telemetry=cycle_telemetry,
+        _hp=_hp,
+    )
+    if intake_ticket:
+        cycle_telemetry["autopilot_skipped_chat_intake"] = True
+        return True
 
     if recent_events:
         last_payload = recent_events[-1]

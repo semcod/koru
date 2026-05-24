@@ -1,0 +1,19 @@
+packages:
+  - koru
+  - koruapi
+  - korudsl
+  - koruide
+  - korumesh
+  - koruobserve
+  - koruvision
+
+test_dirs:
+  - tests
+
+min_duplicate_score: 0.85
+planfiles_dir: .planfiles
+coverage_dir: .coverage_data
+
+pytest_args:
+  - -m
+  - "not slow"

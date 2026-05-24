@@ -67,6 +67,20 @@ function sanitizeProbeCache(
   entry: ProbeCacheEntry,
   opts: { isWayland: boolean }
 ): void {
+  // ``editor.action.clipboardPasteAction`` ignores the ``text`` argument and
+  // reads the OS clipboard. Cached as paste winner it caused ticket prompts to
+  // be replaced by whatever the user had copied earlier. Prefer re-probing
+  // ``cursor.action.chat.typeText`` / ``composer.typeText`` which take text
+  // directly (or clipboard paste after verified seed in extension.ts).
+  if (
+    typeof entry.paste === "string" &&
+    (entry.paste === "editor.action.clipboardPasteAction" ||
+      entry.paste === "editor.action.pasteAs" ||
+      entry.paste === "execPaste" ||
+      entry.paste === "paste")
+  ) {
+    entry.paste = undefined;
+  }
   // Discard "type:" wins (legacy plugin ≤0.1.46 cached typing `\n` as the
   // submit; in Cursor that just inserts a newline).
   if (

@@ -96,7 +96,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-05-24T19:11:13.324522Z'
+        finished_at: '2026-05-24T20:33:20.496715Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -130,6 +130,21 @@ sprint:
         source: planfile.store
         status: done
         timestamp: '2026-05-24T19:11:13.337457+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-24T20:02:18.248252+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-24T20:04:04.559145+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-24T20:33:20.499792+00:00'
       id: STARTER-215
       inputs:
         api_headers: {}
@@ -185,26 +200,51 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-24T19:11:13.337412+00:00'
+      updated_at: '2026-05-24T20:33:20.499757+00:00'
     STARTER-216:
-      id: STARTER-216
-      name: 'Reduce cyclomatic complexity: _check_autopilot_skip_conditions (CC=16,
-        limit=15)'
-      status: open
-      priority: normal
-      sprint: current
-      source:
-        tool: koru-scan
-        timestamp: '2026-05-24T19:34:14.999631+00:00'
-        context:
-          input: '`project/analysis.toon.yaml` reports `_check_autopilot_skip_conditions`
-            with CC=16 (limit=15). Extract sub-functions, simplify conditionals, or
-            split into strategy pattern.'
-          signal: code2llm_cc
-          dedupe_key: koru-scan:code2llm_cc:project/analysis.toon.yaml
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T19:34:14.999631+00:00'
       description: '`project/analysis.toon.yaml` reports `_check_autopilot_skip_conditions`
         with CC=16 (limit=15). Extract sub-functions, simplify conditionals, or split
         into strategy pattern.'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-24T20:10:52.311102Z'
+        max_attempts: 1
+        queue: default
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports `_check_autopilot_skip_conditions`
+          with CC=16 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+        source: koru task
+        timestamp: '2026-05-24T19:34:14.999631+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T20:10:52.313459+00:00'
+      id: STARTER-216
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports `_check_autopilot_skip_conditions`
+          with CC=16 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
       labels:
       - koru
       - nl-task
@@ -213,57 +253,58 @@ sprint:
       - complexity
       - refactor
       - scan
-      blocked_by: []
-      blocks: []
-      files:
-      - project/analysis.toon.yaml
-      executor:
-        kind: human
-        mode: interactive
-      execution:
-        queue: default
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '`project/analysis.toon.yaml` reports `_check_autopilot_skip_conditions`
-          with CC=16 (limit=15). Extract sub-functions, simplify conditionals, or
-          split into strategy pattern.'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
+      name: 'Reduce cyclomatic complexity: _check_autopilot_skip_conditions (CC=16,
+        limit=15)'
       outputs:
         artifacts: []
         notes: []
-      sync: {}
-      history:
-      - timestamp: '2026-05-24T19:34:14.999631+00:00'
-        action: created
-        source: koru task
-        message: '`project/analysis.toon.yaml` reports `_check_autopilot_skip_conditions`
-          with CC=16 (limit=15). Extract sub-functions, simplify conditionals, or
-          split into strategy pattern.'
-      created_at: '2026-05-24T19:34:14.999631+00:00'
-      updated_at: '2026-05-24T19:34:14.999631+00:00'
-    STARTER-217:
-      id: STARTER-217
-      name: 'code2llm refactor: split 4 high-CC methods'
-      status: open
       priority: normal
-      sprint: current
       source:
-        tool: koru-scan
-        timestamp: '2026-05-24T19:34:15.160219+00:00'
         context:
-          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split 4 high-CC
-            methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f
-            toon` to verify.'
-          signal: code2llm_refactor
-          dedupe_key: semcod:code2llm:refactor:project/analysis.toon.yaml
+          dedupe_key: koru-scan:code2llm_cc:project/analysis.toon.yaml
+          input: '`project/analysis.toon.yaml` reports `_check_autopilot_skip_conditions`
+            with CC=16 (limit=15). Extract sub-functions, simplify conditionals, or
+            split into strategy pattern.'
+          signal: code2llm_cc
+        timestamp: '2026-05-24T19:34:14.999631+00:00'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T20:10:52.313431+00:00'
+    STARTER-217:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T19:34:15.160219+00:00'
       description: 'REFACTOR item from `project/analysis.toon.yaml`: **split 4 high-CC
         methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
         to verify.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split 4 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+        source: koru task
+        timestamp: '2026-05-24T19:34:15.160219+00:00'
+      id: STARTER-217
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split 4 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
       labels:
       - koru
       - nl-task
@@ -271,22 +312,189 @@ sprint:
       - code2llm
       - refactor
       - scan
+      name: 'code2llm refactor: split 4 high-CC methods'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: normal
+      source:
+        context:
+          dedupe_key: semcod:code2llm:refactor:project/analysis.toon.yaml
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split 4 high-CC
+            methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f
+            toon` to verify.'
+          signal: code2llm_refactor
+        timestamp: '2026-05-24T19:34:15.160219+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-24T19:34:15.160219+00:00'
+    STARTER-218:
       blocked_by: []
       blocks: []
+      created_at: '2026-05-24T20:14:18.387982+00:00'
+      description: 'Bug: koru auto treated copy-paste intake as an IDE chat drive
+        instead of creating a new operator ticket. Repro: run koru auto, paste a short
+        intake text/path, and observe immediate chat drive (message.sent) for existing
+        waiting_input ticket (e.g., STARTER-217) instead of creating a fresh ticket.
+        Expected: create or upsert a new planfile ticket from intake and keep chat
+        drive scoped to that ticket.'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-24T20:25:04.243775Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
       files:
-      - project/analysis.toon.yaml
+      - src/koru/autonomy/prompts.py
+      - src/koru/autonomous_cycle.py
+      history:
+      - action: created
+        message: 'Bug: koru auto treated copy-paste intake as an IDE chat drive instead
+          of creating a new operator ticket. Repro: run koru auto, paste a short intake
+          text/path, and observe immediate chat drive (message.sent) for existing
+          waiting_input ticket (e.g., STARTER-217) instead of creating a fresh ticket.
+          Expected: create or upsert a new planfile ticket from intake and keep chat
+          drive scoped to that ticket.'
+        source: koru task
+        timestamp: '2026-05-24T20:14:18.387982+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T20:25:04.246947+00:00'
+      id: STARTER-218
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'Bug: koru auto treated copy-paste intake as an IDE chat drive instead
+          of creating a new operator ticket. Repro: run koru auto, paste a short intake
+          text/path, and observe immediate chat drive (message.sent) for existing
+          waiting_input ticket (e.g., STARTER-217) instead of creating a fresh ticket.
+          Expected: create or upsert a new planfile ticket from intake and keep chat
+          drive scoped to that ticket.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      name: 'Bug: koru auto treated copy-paste intake as an IDE chat drive instead
+        of creating a new operator ticket. Repro: run k...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: autopilot:intake:copy-paste-should-create-ticket
+          input: 'Bug: koru auto treated copy-paste intake as an IDE chat drive instead
+            of creating a new operator ticket. Repro: run koru auto, paste a short
+            intake text/path, and observe immediate chat drive (message.sent) for
+            existing waiting_input ticket (e.g., STARTER-217) instead of creating
+            a fresh ticket. Expected: create or upsert a new planfile ticket from
+            intake and keep chat drive scoped to that ticket.'
+          signal: autopilot-intake
+        timestamp: '2026-05-24T20:14:18.387982+00:00'
+        tool: koru-auto
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T20:25:04.246897+00:00'
+    STARTER-219:
+      id: STARTER-219
+      name: '[OPERATOR] intake from IDE chat'
+      status: open
+      priority: high
+      sprint: current
+      source:
+        tool: koru-autonomous-chat-intake
+        timestamp: '2026-05-24T20:42:35.637964+00:00'
+        context:
+          input: '[OPERATOR] intake from IDE chat
+
+
+            A new external chat message was sent in IDE while the queue is blocked
+            in waiting_input.
+
+            Create/update a dedicated operator task from this intake instead of re-driving
+            the old prompt.
+
+
+            Origin waiting ticket: STARTER-217
+
+            Incoming intake:
+
+            Bug: koru auto treated copy-paste intake as an IDE chat drive instead
+            of creating a new operator ticket. Repro: run koru auto, paste a short
+            intake text/path, and observe immediate chat drive (message'
+          signal: chat_intake_message_sent
+          origin_waiting_ticket: STARTER-217
+          dedupe_key: autopilot:chat-intake:35ee44c2b9d7861c
+          intake_preview: 'Bug: koru auto treated copy-paste intake as an IDE chat
+            drive instead of creating a new operator ticket. Repro: run koru auto,
+            paste a short intake text/path, and observe immediate chat drive (message'
+      description: '[OPERATOR] intake from IDE chat
+
+
+        A new external chat message was sent in IDE while the queue is blocked in
+        waiting_input.
+
+        Create/update a dedicated operator task from this intake instead of re-driving
+        the old prompt.
+
+
+        Origin waiting ticket: STARTER-217
+
+        Incoming intake:
+
+        Bug: koru auto treated copy-paste intake as an IDE chat drive instead of creating
+        a new operator ticket. Repro: run koru auto, paste a short intake text/path,
+        and observe immediate chat drive (message'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - autopilot-chat-intake
+      blocked_by: []
+      blocks: []
+      files: []
       executor:
         kind: human
         mode: interactive
       execution:
-        queue: default
+        queue: operator
         state: ready
         attempt: 0
         max_attempts: 1
       inputs:
-        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split 4 high-CC
-          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
-          to verify.'
+        prompt: '[OPERATOR] intake from IDE chat
+
+
+          A new external chat message was sent in IDE while the queue is blocked in
+          waiting_input.
+
+          Create/update a dedicated operator task from this intake instead of re-driving
+          the old prompt.
+
+
+          Origin waiting ticket: STARTER-217
+
+          Incoming intake:
+
+          Bug: koru auto treated copy-paste intake as an IDE chat drive instead of
+          creating a new operator ticket. Repro: run koru auto, paste a short intake
+          text/path, and observe immediate chat drive (message'
         env_keys: []
         api_method: GET
         api_headers: {}
@@ -296,11 +504,25 @@ sprint:
         notes: []
       sync: {}
       history:
-      - timestamp: '2026-05-24T19:34:15.160219+00:00'
+      - timestamp: '2026-05-24T20:42:35.637964+00:00'
         action: created
         source: koru task
-        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split 4 high-CC
-          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
-          to verify.'
-      created_at: '2026-05-24T19:34:15.160219+00:00'
-      updated_at: '2026-05-24T19:34:15.160219+00:00'
+        message: '[OPERATOR] intake from IDE chat
+
+
+          A new external chat message was sent in IDE while the queue is blocked in
+          waiting_input.
+
+          Create/update a dedicated operator task from this intake instead of re-driving
+          the old prompt.
+
+
+          Origin waiting ticket: STARTER-217
+
+          Incoming intake:
+
+          Bug: koru auto treated copy-paste intake as an IDE chat drive instead of
+          creating a new operator ticket. Repro: run koru auto, paste a short intake
+          text/path, and observe immediate chat drive (message'
+      created_at: '2026-05-24T20:42:35.637964+00:00'
+      updated_at: '2026-05-24T20:42:35.637964+00:00'

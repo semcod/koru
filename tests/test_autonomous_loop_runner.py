@@ -41,7 +41,7 @@ def test_run_autonomous_cycle_checkpoints_updates_pipeline_and_sleeps() -> None:
     queue_result = SimpleNamespace(last_status="idle")
     diag_result = SimpleNamespace(status="ok")
     loop_state = SimpleNamespace(stagnation_streak=2)
-    args = SimpleNamespace(emit_events="human")
+    args = SimpleNamespace(emit_events="human", max_iterations=50, scan_after_idle_queue=True)
 
     def restart_daemon_if_needed(*args):
         calls["restart_args"] = args
@@ -108,4 +108,30 @@ def test_run_autonomous_cycle_checkpoints_updates_pipeline_and_sleeps() -> None:
         },
     )
     assert "summary cycle=3 queue=idle" in logs[0]
+    assert logs[1:4] == [
+        "koru autonomous: next 1/3 wait 4.5s; no runnable ticket is blocking the queue",
+        "koru autonomous: next 2/3 run idle intake strategy next cycle "
+        "(scan/code2llm discovery is eligible)",
+        "koru autonomous: next 3/3 create/upsert new planfile tickets from findings, "
+        "then work them one by one",
+    ]
     assert sleeps == [4.5]
+
+
+def test_operator_next_steps_explain_waiting_input_chat_cooldown() -> None:
+    steps = autonomous_loop_runner._operator_next_steps(
+        args=SimpleNamespace(max_iterations=12),
+        queue_result=SimpleNamespace(last_status="waiting_input"),
+        waiting_ticket="STARTER-217",
+        autopilot_status="skipped(chat_activity)",
+        effective_sleep=60.0,
+        stagnation_streak=1,
+    )
+
+    assert steps == [
+        "1/3 wait 60s; chat cooldown is active for STARTER-217, "
+        "so Koru will not paste over the IDE chat",
+        "2/3 rerun planfile queue (max 12) and check whether STARTER-217 moved",
+        "3/3 if queue becomes idle, run scan/discovery; if still waiting, "
+        "use chat events/reflection before any redrive",
+    ]

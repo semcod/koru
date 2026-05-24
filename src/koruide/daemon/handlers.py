@@ -161,6 +161,12 @@ def _drive_via_plugin(
         )
         return
     plugin.awaiting_plugin = (client, corr, submit, plugin.ide, text, require_plugin)
+    daemon.log(
+        "drive_via_plugin: route_decision "
+        f"corr={corr} plugin_fd={plugin.sock.fileno()} cli_fd={client.sock.fileno()} "
+        f"ide={plugin.ide} submit={submit} require_plugin={require_plugin} "
+        "transport=plugin phases=focus_open,input_busy_probe,paste,submit",
+    )
     daemon._send(plugin, chat_send(text, submit=submit, id=corr).encode())
     daemon._last_chat_send_at = time.monotonic()
     preview = text.replace("\n", " ")[:100]
@@ -627,7 +633,11 @@ def handle_ack(daemon: Any, client: _Client, msg: Message) -> None:
         return
     if info.get("delivered") is True and "backend" not in info:
         info["backend"] = "plugin"
-    daemon.log("drive → plugin ack: " + DriveOrchestrator.plugin_ack_summary(info))
+    summary = DriveOrchestrator.plugin_ack_summary(info)
+    daemon.log("drive → plugin ack: " + summary)
+    route_summary = DriveOrchestrator.operation_trace_summary(info)
+    if route_summary:
+        daemon.log(f"drive → plugin operation trace: {route_summary}")
     relay = ack(corr, ok=plugin_ok, info=info)
     daemon._send(cli_client, relay.encode())
 

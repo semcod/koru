@@ -40,11 +40,22 @@ function preferCtrlSubmit(): boolean {
 }
 
 function sanitizeProbeCache(_entry: ProbeCacheEntry, _opts: { isWayland: boolean }): void {
-  // no-op
+  // These commands can behave like panel toggles in VS Code and hide chat.
+  const unsafeFocusOpen = new Set<string>([
+    "workbench.panel.chat",
+    "workbench.panel.chat.view.copilot.focus",
+    "workbench.panel.aichat.view.copilot.focus",
+    "workbench.action.chat.openagent",
+    "workbench.action.chat.openask",
+  ]);
+  const focusOpen = String(_entry.focusOpen || "").trim().toLowerCase();
+  if (focusOpen && unsafeFocusOpen.has(focusOpen)) {
+    _entry.focusOpen = undefined;
+  }
 }
 
 function focusOpenCommandsDefaults(): string[] {
-  return [];
+  return ["workbench.action.chat.open"];
 }
 
 function trustFocusOpenWithoutEditorSnapshot(): boolean {

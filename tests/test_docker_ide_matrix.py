@@ -128,6 +128,9 @@ def test_vscodium_plugin_does_not_report_submit_success_without_submission() -> 
     assert 'verification: "submit_unverified"' in source
     assert "submitted: false" in source
     assert "manual Send may be required" in source
+    assert "operation_trace" in source
+    assert "OP_ROUTE" in source
+    assert "submit_verify" in source
 
 
 def test_vscodium_plugin_supports_configured_submit_click() -> None:

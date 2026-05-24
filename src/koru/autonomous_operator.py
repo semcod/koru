@@ -64,6 +64,25 @@ def _extension_active_in_latest_session(autopilot_ide: str) -> bool | None:
     return shared.extension_activated_in_exthost(autopilot_ide)
 
 
+def _plugin_status_reason(client: Any, autopilot_ide: str) -> str:
+    try:
+        from koru.autonomous_plugin import plugin_status_decision
+
+        _ready, reason = plugin_status_decision(client.status(), autopilot_ide)
+        return reason
+    except (OSError, RuntimeError, TimeoutError) as exc:
+        return f"daemon status unavailable: {exc}"
+
+
+def _plugin_reason_requires_reload(reason: str) -> bool:
+    text = reason.lower()
+    return (
+        "plugin version mismatch" in text
+        or "plugin protocol" in text
+        or "plugin list is empty" in text
+    )
+
+
 def setup_autopilot_plugin(
     args: Any,
     autopilot_ide: str,
@@ -193,6 +212,43 @@ def setup_autopilot_plugin(
                     fmt=args.emit_events,
                 )
             else:
+                reason = _plugin_status_reason(client, autopilot_ide)
+                if (
+                    plugin_install_status in {"installed", "already_installed"}
+                    and _plugin_reason_requires_reload(reason)
+                ):
+                    from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
+
+                    reload = try_reload_vscode_family_ide(autopilot_ide, project=project)
+                    if reload.attempted and reload.ok:
+                        retry_wait = max(wait_seconds, 30.0)
+                        stdio_info(
+                            "koru autonomous: plugin wymaga przeładowania IDE; "
+                            f"automatyczny Reload Window ({reload.method}) — "
+                            f"czekam ponownie {retry_wait:.1f}s…",
+                            fmt=args.emit_events,
+                        )
+                        plugin_ready = wait_for_plugin(
+                            client,
+                            autopilot_ide,
+                            timeout_seconds=retry_wait,
+                            stdio_format=args.emit_events,
+                        )
+                        plugin_connected = plugin_ready
+                        if plugin_ready:
+                            stdio_info(
+                                "koru autonomous: autopilot plugin reconnected "
+                                f"after reload ide={autopilot_ide}",
+                                fmt=args.emit_events,
+                            )
+                            return plugin_connected
+                    elif reload.attempted:
+                        stdio_info(
+                            "koru autonomous: automatyczny Reload Window po mismatch "
+                            f"nie powiódł się ({reload.method or '-'}: "
+                            f"{reload.detail or 'unknown'})",
+                            fmt=args.emit_events,
+                        )
                 stdio_info(
                     "koru autonomous: no connected autopilot plugin "
                     f"for ide={autopilot_ide} after {wait_seconds:.1f}s; "

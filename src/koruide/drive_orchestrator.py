@@ -244,6 +244,9 @@ class DriveOrchestrator:
         attempts = info.get("submit_attempts")
         if isinstance(attempts, list) and attempts:
             parts.append("submit_attempts=" + " | ".join(str(item) for item in attempts))
+        route_trace = DriveOrchestrator.operation_trace_summary(info)
+        if route_trace:
+            parts.append(f"route_trace={route_trace}")
         if info.get("plugin_version_mismatch"):
             parts.append(
                 "plugin_version="
@@ -253,6 +256,30 @@ class DriveOrchestrator:
         if info.get("event"):
             parts.append(f"event={info['event']}")
         return " ".join(parts)
+
+    @staticmethod
+    def operation_trace_summary(info: dict[str, Any]) -> str:
+        trace = info.get("operation_trace")
+        if not isinstance(trace, list):
+            return ""
+        pieces: list[str] = []
+        for raw_step in trace:
+            if not isinstance(raw_step, dict):
+                continue
+            op = str(raw_step.get("op") or "?")
+            route = str(raw_step.get("route") or "?")
+            ok = "ok" if raw_step.get("ok") is True else "fail" if raw_step.get("ok") is False else "?"
+            command = raw_step.get("command")
+            reason = raw_step.get("reason")
+            suffix = ""
+            if command:
+                suffix = f":{command}"
+            elif reason:
+                suffix = f":{reason}"
+            pieces.append(f"{op}/{route}={ok}{suffix}")
+            if len(pieces) >= 12:
+                break
+        return " > ".join(pieces)
 
 
 __all__ = ["DriveOrchestrator"]

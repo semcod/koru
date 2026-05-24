@@ -198,6 +198,23 @@ def test_bundled_expected_plugin_version_matches_vscode_package_json() -> None:
     assert EXPECTED_VSCODE_PLUGIN_VERSION == data["version"]
 
 
+def test_plugin_ack_summary_includes_operation_trace() -> None:
+    summary = DriveOrchestrator.plugin_ack_summary(
+        {
+            "verification": "submit_unverified",
+            "operation_trace": [
+                {"op": "focus_open", "route": "command", "ok": True, "command": "chat.open"},
+                {"op": "paste", "route": "host-clipboard", "ok": True, "command": "wl-copy+wtype"},
+                {"op": "submit", "route": "host-key", "ok": False, "reason": "input still contains pasted text"},
+            ],
+        },
+    )
+
+    assert "route_trace=" in summary
+    assert "focus_open/command=ok:chat.open" in summary
+    assert "submit/host-key=fail:input still contains pasted text" in summary
+
+
 def test_strict_plugin_version_blocks_when_expected_version_missing(monkeypatch) -> None:
     monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
     monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda: None)

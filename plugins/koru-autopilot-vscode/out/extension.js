@@ -55,9 +55,13 @@ const chat_history_watcher_1 = require("./chat-history-watcher");
 const step_decisions_1 = require("./step-decisions");
 const registry_1 = require("./ides/registry");
 const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
-    "workbench.action.chat.open",
     "workbench.action.chat.openagent",
     "workbench.action.chat.openask",
+]);
+const UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS = new Set([
+    "workbench.panel.chat",
+    "workbench.panel.chat.view.copilot.focus",
+    "workbench.panel.aichat.view.copilot.focus",
 ]);
 function isAllowedFocusOpenCommand(command) {
     return (typeof command === "string" &&
@@ -72,6 +76,12 @@ function sanitizeFocusOpenCommand(command) {
 }
 function sanitizeFocusOpenCandidates(commands) {
     return commands.filter(isAllowedFocusOpenCommand);
+}
+function filterUnsafeFocusOpenForIde(commands, ide) {
+    if (ide !== "vscode") {
+        return [...commands];
+    }
+    return commands.filter((command) => !UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase()));
 }
 function isSpecificChatInputFocusCommand(command) {
     if (!command) {
@@ -126,6 +136,7 @@ class AutopilotBridge {
     connectIndex = 0;
     reconnectBlockedReason = null;
     chatHistoryWatcher = null;
+    operationTrace = [];
     constructor(context) {
         this.context = context;
         this.status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 50);
@@ -149,6 +160,20 @@ class AutopilotBridge {
             data,
             timestamp: new Date().toISOString(),
         });
+    }
+    resetOperationTrace() {
+        this.operationTrace = [];
+    }
+    traceOperation(step) {
+        const clipped = {
+            ...step,
+            attempts: step.attempts?.slice(0, 12),
+        };
+        this.operationTrace.push(clipped);
+        safeLog("OP_ROUTE", clipped);
+    }
+    currentOperationTrace() {
+        return this.operationTrace.slice(-40);
     }
     socketPath() {
         const cfg = vscode.workspace.getConfiguration("koruAutopilot");
@@ -430,11 +455,23 @@ class AutopilotBridge {
     }
     async runHostKeyCandidates(label, candidates) {
         const attempts = [];
+        this.traceOperation({
+            op: label.toLowerCase(),
+            route: "host-key-candidates",
+            ok: true,
+            detail: { candidates: candidates.map(([command, args]) => `${command} ${args.join(" ")}`) },
+        });
         for (const [command, args] of candidates) {
             const res = await this.runHostCommand(command, args);
             const rendered = `${command} ${args.join(" ")}`;
             attempts.push(`${rendered} => ${res.ok ? "ok" : "failed"}`);
             debugLog(label, { command: rendered, ok: res.ok });
+            this.traceOperation({
+                op: label.toLowerCase(),
+                route: command,
+                ok: res.ok,
+                command: rendered,
+            });
             if (res.ok) {
                 return { ok: true, command: rendered, attempts };
             }
@@ -453,11 +490,18 @@ class AutopilotBridge {
     }
     async _tryHostClickSubmit() {
         if (process.platform !== "linux") {
+            this.traceOperation({ op: "submit", route: "host-click", ok: false, reason: "non-linux" });
             return { ok: false };
         }
         const point = this.submitClickPoint();
         if (!point) {
             debugLog("SUBMIT_CLICK_SKIP", { reason: "missing submitClickX/submitClickY" });
+            this.traceOperation({
+                op: "submit",
+                route: "host-click",
+                ok: false,
+                reason: "missing submitClickX/submitClickY",
+            });
             return {
                 ok: false,
                 reason: "missing submit click coordinates",
@@ -475,20 +519,24 @@ class AutopilotBridge {
         const details = [];
         details.push(`${attempts[0][0]} ${attempts[0][1].join(" ")} => ${xdotoolResult.ok ? "ok" : "failed"}`);
         debugLog("SUBMIT_CLICK", { command: `${attempts[0][0]} ${attempts[0][1].join(" ")}`, ok: xdotoolResult.ok, x: point.x, y: point.y });
+        this.traceOperation({ op: "submit", route: "host-click:xdotool", ok: xdotoolResult.ok, command: `xdotool click@${point.x},${point.y}` });
         if (xdotoolResult.ok) {
             return { ok: true, command: `xdotool click@${point.x},${point.y}`, attempts: details };
         }
         const move = await this.runHostCommand(attempts[1][0], attempts[1][1]);
         details.push(`${attempts[1][0]} ${attempts[1][1].join(" ")} => ${move.ok ? "ok" : "failed"}`);
         debugLog("SUBMIT_CLICK", { command: `${attempts[1][0]} ${attempts[1][1].join(" ")}`, ok: move.ok, x: point.x, y: point.y });
+        this.traceOperation({ op: "submit", route: "host-click:ydotool-move", ok: move.ok, command: `${attempts[1][0]} ${attempts[1][1].join(" ")}` });
         if (move.ok) {
             const click = await this.runHostCommand(attempts[2][0], attempts[2][1]);
             details.push(`${attempts[2][0]} ${attempts[2][1].join(" ")} => ${click.ok ? "ok" : "failed"}`);
             debugLog("SUBMIT_CLICK", { command: `${attempts[2][0]} ${attempts[2][1].join(" ")}`, ok: click.ok, x: point.x, y: point.y });
+            this.traceOperation({ op: "submit", route: "host-click:ydotool-click", ok: click.ok, command: `ydotool click@${point.x},${point.y}` });
             if (click.ok) {
                 return { ok: true, command: `ydotool click@${point.x},${point.y}`, attempts: details };
             }
         }
+        this.traceOperation({ op: "submit", route: "host-click", ok: false, reason: "submit click failed", attempts: details });
         return { ok: false, reason: "submit click failed", attempts: details };
     }
     trustUnverifiedHostSubmit() {
@@ -584,6 +632,13 @@ class AutopilotBridge {
                 tailMatched: result.tailMatched,
             });
         }
+        this.traceOperation({
+            op: "submit_verify",
+            route: "chat-input-probe",
+            ok: result.cleared,
+            reason: result.cleared ? undefined : "input still contains pasted text",
+            detail: { observedLength: result.observedLength, tailMatched: result.tailMatched },
+        });
         return { cleared: result.cleared, observedLength: result.observedLength };
     }
     /**
@@ -602,9 +657,22 @@ class AutopilotBridge {
         if (this.probeLadderEnabled()) {
             await this.saveProbeCache({ submit: cmd });
         }
+        this.traceOperation({
+            op: "submit",
+            route: "accepted",
+            ok: true,
+            command: cmd,
+            detail: { verifyEnabled },
+        });
         return { ok: true, command: cmd, ...extra };
     }
     async _submitChatVSCodium(verifyText, verifyEnabled) {
+        this.traceOperation({
+            op: "submit",
+            route: "vscodium",
+            ok: true,
+            detail: { verifyEnabled, trustUnverifiedHostSubmit: this.trustUnverifiedHostSubmit() },
+        });
         const hostClick = await this._tryHostClickSubmit();
         if (hostClick.ok && hostClick.command) {
             const accepted = await this.finalizeSubmitCandidate(hostClick.command, verifyText, verifyEnabled);
@@ -688,6 +756,12 @@ class AutopilotBridge {
     async submitChat(verifyText) {
         const ide = this.detectIde();
         const verifyEnabled = this.postSubmitVerifyEnabled(verifyText);
+        this.traceOperation({
+            op: "submit",
+            route: "start",
+            ok: true,
+            detail: { ide, verifyEnabled, verifyTextLength: verifyText?.length || 0 },
+        });
         if (ide === "vscodium") {
             return this._submitChatVSCodium(verifyText, verifyEnabled);
         }
@@ -719,16 +793,36 @@ class AutopilotBridge {
         const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
         const cache = this.getProbeCache();
         const useProbe = this.probeLadderEnabled();
-        const commands = (0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildFocusOpenCommands)(ide, primary), cache?.focusOpen), existing);
+        const commands = filterUnsafeFocusOpenForIde((0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildFocusOpenCommands)(ide, primary), cache?.focusOpen), existing), ide);
         debugLog("FOCUS_OPEN_START", { ide, commandsCount: commands.length, useProbe, cacheFocusOpen: cache?.focusOpen });
         debugLog("FOCUS_OPEN_CANDIDATES", { ide, commands });
         const before = this.editorSnapshot();
         debugLog("FOCUS_OPEN_BEFORE_SNAPSHOT", { before });
         if (useProbe && ide === "vscode" && commands.length === 0 && (0, probe_ladder_1.chatFocusHeuristic)(before)) {
             debugLog("FOCUS_OPEN_ALREADY_FOCUSED");
+            this.traceOperation({ op: "focus_open", route: "already-focused", ok: true });
             return { ok: true, command: "already-focused" };
         }
         const rejected = [];
+        if (commands.length === 0) {
+            // VS Code often has no safe focus-open command configured; try direct
+            // chat-input focus before declaring manual-focus required.
+            const inputOnly = await this.focusChatInput();
+            if (isSpecificChatInputFocusCommand(inputOnly.command)) {
+                debugLog("FOCUS_OPEN_INPUT_ONLY_SUCCESS", { command: inputOnly.command });
+                this.traceOperation({
+                    op: "focus_open",
+                    route: "input-only",
+                    ok: true,
+                    command: inputOnly.command,
+                });
+                return { ok: true, command: inputOnly.command };
+            }
+            rejected.push({
+                cmd: "(input-only)",
+                reason: "no specific chat input focus command succeeded",
+            });
+        }
         for (const cmd of commands) {
             debugLog("FOCUS_OPEN_ATTEMPT", { cmd, isToggle: cmd.includes("toggle") });
             if (!(await this.runCommand(cmd))) {
@@ -745,6 +839,7 @@ class AutopilotBridge {
                 if (useProbe) {
                     await this.saveProbeCache({ focusOpen: cmd });
                 }
+                this.traceOperation({ op: "focus_open", route: "command+input", ok: true, command: combined });
                 return { ok: true, command: combined };
             }
             const after = this.editorSnapshot();
@@ -754,12 +849,20 @@ class AutopilotBridge {
                 if (useProbe) {
                     await this.saveProbeCache({ focusOpen: cmd });
                 }
+                this.traceOperation({ op: "focus_open", route: "command", ok: true, command: cmd });
                 return { ok: true, command: cmd };
             }
             debugLog("PROBE_FOCUS_REJECT", { cmd, before, after });
             rejected.push({ cmd, reason: "probe rejected focus snapshot", before, after });
         }
         debugLog("FOCUS_OPEN_ALL_FAILED", { rejectedCount: rejected.length });
+        this.traceOperation({
+            op: "focus_open",
+            route: "all-candidates",
+            ok: false,
+            reason: "no focus-open candidate verified",
+            detail: { rejectedCount: rejected.length, candidates: sanitizeFocusOpenCandidates(commands) },
+        });
         return {
             ok: false,
             diagnostics: {
@@ -781,27 +884,44 @@ class AutopilotBridge {
         const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
         const cache = this.getProbeCache();
         const before = this.editorSnapshot();
+        this.traceOperation({
+            op: "paste",
+            route: "start",
+            ok: true,
+            detail: { ide, replaceCurrentInput, useProbe, textLength: text.length },
+        });
         if (replaceCurrentInput) {
             await this.focusChatInput();
             await this.runCommand("editor.action.selectAll");
             await this.sleep(50);
             const clipboard = await this.tryClipboardPaste(text, before, useProbe);
             if (clipboard.handled && clipboard.result.ok) {
+                this.traceOperation({ op: "paste", route: "replace:clipboard", ok: true, command: clipboard.result.command });
                 return clipboard.result;
             }
             const typed = await this.tryTypePaste(text, before, useProbe);
             if (typed.ok) {
+                this.traceOperation({ op: "paste", route: "replace:type", ok: true, command: typed.command });
                 return typed;
             }
         }
         if (ide === "vscodium") {
             const hostPaste = await this.tryHostClipboardPaste(text, before, useProbe);
             if (hostPaste.handled) {
+                this.traceOperation({
+                    op: "paste",
+                    route: "vscodium:host-clipboard",
+                    ok: hostPaste.result.ok,
+                    command: hostPaste.result.command,
+                    reason: hostPaste.result.reason,
+                    attempts: hostPaste.result.attempts,
+                });
                 return hostPaste.result;
             }
         }
         const direct = await this.tryDirectPasteCommands(text, ide, existing, cache, before, useProbe);
         if (direct) {
+            this.traceOperation({ op: "paste", route: "direct-command", ok: direct.ok, command: direct.command, reason: direct.reason });
             return direct;
         }
         if (ide === "windsurf") {
@@ -810,46 +930,97 @@ class AutopilotBridge {
         }
         const clipboard = await this.tryClipboardPaste(text, before, useProbe);
         if (clipboard.handled) {
+            this.traceOperation({
+                op: "paste",
+                route: "vscode-clipboard",
+                ok: clipboard.result.ok,
+                command: clipboard.result.command,
+                reason: clipboard.result.reason,
+            });
             return clipboard.result;
         }
-        return this.tryTypePaste(text, before, useProbe);
+        const typed = await this.tryTypePaste(text, before, useProbe);
+        this.traceOperation({ op: "paste", route: "type", ok: typed.ok, command: typed.command, reason: typed.reason });
+        return typed;
+    }
+    /**
+     * Whether ``cmd`` reads the system clipboard rather than its ``text``
+     * argument. ``editor.action.clipboardPasteAction`` (and friends) ignore
+     * the argument we pass and paste whatever is currently in the OS
+     * clipboard — so we MUST seed the clipboard with ``text`` first or the
+     * IDE will paste whatever the user had on their clipboard (a copy from
+     * earlier, completely unrelated content, etc.).
+     */
+    static directPasteReadsClipboard(cmd) {
+        return (cmd === "editor.action.clipboardPasteAction"
+            || cmd === "editor.action.pasteAs"
+            || cmd === "execPaste"
+            || cmd === "paste");
     }
     async tryDirectPasteCommands(text, ide, existing, cache, before, useProbe) {
         const directCommands = (0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildPasteDirectCommands)(ide), cache?.paste), existing);
-        for (const cmd of directCommands) {
-            try {
-                const result = await Promise.resolve(vscode.commands.executeCommand(cmd, text));
-                if (result === false) {
-                    continue;
+        const previousClip = await this.saveClipboard();
+        let clipboardSeeded = false;
+        try {
+            for (const cmd of directCommands) {
+                const readsClipboard = AutopilotBridge.directPasteReadsClipboard(cmd);
+                if (readsClipboard) {
+                    const seeded = await this.writeClipboardVerified(text);
+                    if (!seeded) {
+                        debugLog("DIRECT_PASTE_CLIPBOARD_SEED_FAILED", { cmd });
+                        this.traceOperation({
+                            op: "paste",
+                            route: `direct-command:${cmd}`,
+                            ok: false,
+                            reason: "clipboard seed unverified; refusing to invoke clipboard-reading paste with stale clipboard",
+                        });
+                        continue;
+                    }
+                    clipboardSeeded = true;
                 }
-                await this.sleep(this.probePasteDelayMs());
-                const after = this.editorSnapshot();
-                if (useProbe && (0, probe_ladder_1.pasteLandedInEditor)(before, after, text)) {
-                    debugLog("PROBE_PASTE_REJECT", { cmd, reason: "landed_in_editor" });
-                    continue;
+                try {
+                    const result = await Promise.resolve(vscode.commands.executeCommand(cmd, text));
+                    if (result === false) {
+                        continue;
+                    }
+                    await this.sleep(this.probePasteDelayMs());
+                    const after = this.editorSnapshot();
+                    if (useProbe && (0, probe_ladder_1.pasteLandedInEditor)(before, after, text)) {
+                        debugLog("PROBE_PASTE_REJECT", { cmd, reason: "landed_in_editor" });
+                        continue;
+                    }
+                    if (useProbe) {
+                        await this.saveProbeCache({ paste: cmd });
+                    }
+                    return { ok: true, command: cmd };
                 }
-                if (useProbe) {
-                    await this.saveProbeCache({ paste: cmd });
+                catch {
+                    /* command doesn't exist — try next */
                 }
-                return { ok: true, command: cmd };
             }
-            catch {
-                /* command doesn't exist — try next */
+            return undefined;
+        }
+        finally {
+            if (clipboardSeeded) {
+                await this.sleep(120);
+                await this.restoreClipboard(previousClip);
             }
         }
-        return undefined;
     }
     async tryHostClipboardPaste(text, before, useProbe) {
         const inputFocused = await this.focusChatInput();
         if (!inputFocused.ok) {
             debugLog("HOST_PASTE_NO_INPUT_FOCUS");
+            this.traceOperation({ op: "paste", route: "host-clipboard:focus-input", ok: false, reason: "input focus unavailable" });
         }
         await this.clearChatInput();
         const clip = await this.writeHostClipboard(text);
         if (!clip) {
             debugLog("HOST_PASTE_NO_CLIPBOARD_TOOL");
+            this.traceOperation({ op: "paste", route: "host-clipboard:write", ok: false, reason: "no host clipboard tool" });
             return { handled: false, result: { ok: false, reason: "no host clipboard tool" } };
         }
+        this.traceOperation({ op: "paste", route: `host-clipboard:${clip}`, ok: true, detail: { textLength: text.length } });
         await this.writeClipboardVerified(text);
         const paste = await this.runHostKeyCandidates("HOST_PASTE_KEY", [
             ["wtype", ["-M", "ctrl", "-k", "v", "-m", "ctrl"]],
@@ -862,6 +1033,7 @@ class AutopilotBridge {
         await this.sleep(Math.max(this.probePasteDelayMs(), 350));
         const after = this.editorSnapshot();
         if (useProbe && (0, probe_ladder_1.pasteLandedInEditor)(before, after, text)) {
+            this.traceOperation({ op: "paste", route: "host-clipboard:probe", ok: false, reason: "paste landed in editor" });
             return { handled: true, result: { ok: false, command: paste.command, reason: "paste landed in editor" } };
         }
         if (useProbe) {
@@ -944,11 +1116,19 @@ class AutopilotBridge {
                 if (this.probeLadderEnabled()) {
                     await this.saveProbeCache({ focusInput: cmd });
                 }
+                this.traceOperation({ op: "focus_input", route: "command", ok: true, command: cmd });
                 return { ok: true, command: cmd };
             }
             debugLog("FOCUS_INPUT_COMMAND_FAILED", { cmd });
         }
         debugLog("FOCUS_INPUT_ALL_FAILED");
+        this.traceOperation({
+            op: "focus_input",
+            route: "all-candidates",
+            ok: false,
+            reason: "no focus-input command succeeded",
+            detail: { candidates },
+        });
         return { ok: false };
     }
     detectIde() {
@@ -1092,12 +1272,20 @@ class AutopilotBridge {
      */
     async decideBusyInput(text) {
         if (!(0, step_decisions_1.shouldVerifyPrePasteBusy)(this.koruStepConfig())) {
+            this.traceOperation({ op: "input_busy_probe", route: "disabled", ok: true });
             return { action: "empty", observedLength: 0 };
         }
         const observed = await this._probeChatInputContents();
         const observedLength = observed === null ? -1 : observed.trim().length;
         const action = (0, step_decisions_1.decideBusyInputAction)(observed, text);
         debugLog("CHAT_INPUT_BUSY_PROBE", { busy: action !== "empty", action, length: observedLength });
+        this.traceOperation({
+            op: "input_busy_probe",
+            route: "select-copy",
+            ok: action !== "block",
+            reason: action === "block" ? "input contains unrelated draft" : undefined,
+            detail: { action, observedLength },
+        });
         return { action, observedLength };
     }
     /**
@@ -1120,8 +1308,20 @@ class AutopilotBridge {
             await this.sleep(60);
             const observed = await this.saveClipboard();
             if (observed === null || observed === sentinel) {
+                this.traceOperation({
+                    op: "input_probe",
+                    route: "select-copy",
+                    ok: false,
+                    reason: observed === sentinel ? "sentinel unchanged" : "clipboard unreadable",
+                });
                 return null;
             }
+            this.traceOperation({
+                op: "input_probe",
+                route: "select-copy",
+                ok: true,
+                detail: { observedLength: observed.length },
+            });
             return observed;
         }
         catch (err) {
@@ -1143,6 +1343,7 @@ class AutopilotBridge {
             probe_ladder: this.probeLadderEnabled(),
             winning_focus_open: focus.command,
             verification: "input_busy",
+            operation_trace: this.currentOperationTrace(),
             reason: "chat_input_not_empty",
             observed_length: observedLength,
             message: "chat input already contains un-submitted text — skipping drive to "
@@ -1161,6 +1362,7 @@ class AutopilotBridge {
                 probe_ladder: this.probeLadderEnabled(),
                 winning_focus_open: focus.command,
                 verification: "input_matches_prompt",
+                operation_trace: this.currentOperationTrace(),
             });
             return;
         }
@@ -1185,6 +1387,7 @@ class AutopilotBridge {
             submitted: false,
             probe_ladder: this.probeLadderEnabled(),
             diagnostics: details,
+            operation_trace: this.currentOperationTrace(),
             message: "chat input is not focused/open; "
                 + `ide=${details.ide || this.detectIde()} app=${details.appName || vscode.env.appName}; `
                 + `focus_open_candidates=${candidates || "(none)"}; `
@@ -1202,6 +1405,7 @@ class AutopilotBridge {
             winning_focus_open: focus.command,
             attempted_paste: pasted.command,
             paste_failure_reason: reason,
+            operation_trace: this.currentOperationTrace(),
             message: `chat opened but paste command failed (${reason})`,
         });
     }
@@ -1220,6 +1424,7 @@ class AutopilotBridge {
             submit_failure_reason: submitDetails?.reason,
             submit_attempts: submitDetails?.attempts,
             verification: "submit_unverified",
+            operation_trace: this.currentOperationTrace(),
             message: "chat opened and text injected, but submit could not be verified; "
                 + "manual Send may be required. Input was cleared before paste to avoid prompt concatenation.",
         });
@@ -1236,17 +1441,32 @@ class AutopilotBridge {
             winning_focus_open: focus.command,
             winning_paste: pasted.command,
             winning_submit: submitCmd,
+            operation_trace: this.currentOperationTrace(),
         });
     }
     sendMessageSent(text) {
         console.log("koru autopilot: sending message.sent");
+        this.traceOperation({
+            op: "message_sent",
+            route: "plugin-event",
+            ok: true,
+            detail: { length: text.length },
+        });
         this.send({ type: "message.sent", chat: "default", text: text.substring(0, 200), length: text.length });
     }
     async injectChat(env) {
         const text = typeof env.text === "string" ? env.text : "";
         const submit = env.submit !== false;
+        this.resetOperationTrace();
+        this.traceOperation({
+            op: "drive",
+            route: "plugin",
+            ok: true,
+            detail: { ide: this.detectIde(), submit, textLength: text.length, id: env.id },
+        });
         if (!text) {
-            this.send({ type: "ack", id: env.id, ok: false, message: "empty text" });
+            this.traceOperation({ op: "drive", route: "validate", ok: false, reason: "empty text" });
+            this.send({ type: "ack", id: env.id, ok: false, message: "empty text", operation_trace: this.currentOperationTrace() });
             return;
         }
         // Snapshot the user's clipboard BEFORE we do anything else so we
@@ -1258,7 +1478,8 @@ class AutopilotBridge {
         }
         catch (err) {
             const message = err instanceof Error ? err.message : String(err);
-            this.send({ type: "ack", id: env.id, ok: false, message });
+            this.traceOperation({ op: "drive", route: "exception", ok: false, reason: message });
+            this.send({ type: "ack", id: env.id, ok: false, message, operation_trace: this.currentOperationTrace() });
         }
         finally {
             // Restore clipboard regardless of outcome.
@@ -1373,42 +1594,71 @@ class AutopilotBridge {
     }
     async submitAfterPaste(env, focus, pasted, submit, pastedText) {
         if (pasted.command === "windsurf.sendTextToChat") {
+            this.traceOperation({ op: "submit", route: "windsurf-native", ok: true, command: "windsurf.sendTextToChat" });
             return "windsurf.sendTextToChat";
         }
         if (!submit) {
+            this.traceOperation({ op: "submit", route: "disabled-by-request", ok: true });
             return undefined;
         }
         await this.sleep(150);
         await this.focusChatInput();
         const submitResult = await this.submitChat(pastedText);
         if (submitResult.unverified) {
+            this.traceOperation({
+                op: "submit",
+                route: "unverified",
+                ok: false,
+                command: submitResult.command,
+                reason: submitResult.reason,
+                attempts: submitResult.attempts,
+            });
             this.sendSubmitFailureAck(env, focus, pasted, submitResult.command, submitResult);
             return null;
         }
         if (submitResult.ok) {
+            this.traceOperation({ op: "submit", route: "success", ok: true, command: submitResult.command });
             return submitResult.command;
         }
+        this.traceOperation({
+            op: "submit",
+            route: "failed",
+            ok: false,
+            command: submitResult.command,
+            reason: submitResult.reason,
+            attempts: submitResult.attempts,
+        });
         this.sendSubmitFailureAck(env, focus, pasted, submitResult.command, submitResult);
         return null;
     }
     async _performInject(env, text, submit) {
         const ide = this.detectIde();
+        this.traceOperation({
+            op: "drive",
+            route: "perform",
+            ok: true,
+            detail: { ide, submit, textLength: text.length },
+        });
         if (await this.tryAntigravitySendPromptFastPath(env, text, submit)) {
+            this.traceOperation({ op: "drive", route: "antigravity-fastpath", ok: true });
             return;
         }
         if (await this.tryWindsurfSendTextFastPath(env, text, submit)) {
+            this.traceOperation({ op: "drive", route: "windsurf-fastpath", ok: true });
             return;
         }
         if (ide === "windsurf") {
             // On Windsurf, if the fast path failed, we should NOT fall back to the traditional focus and paste path,
             // because traditional paste is disabled on Windsurf to prevent active file editor contamination.
             // Doing so would only cause unsafe toggles and failures.
+            this.traceOperation({ op: "paste", route: "windsurf-fastpath-required", ok: false, reason: "fast path failed" });
             this.sendPasteFailureAck(env, { ok: false }, { ok: false, reason: "fast path failed" });
             return;
         }
         if (ide === "antigravity") {
             // Antigravity exposes a native send command when its agent surface is ready.
             // Avoid generic focus/open fallbacks here: several Antigravity commands behave like panel toggles.
+            this.traceOperation({ op: "paste", route: "antigravity-native-required", ok: false, reason: "native send command unavailable" });
             this.sendPasteFailureAck(env, { ok: false }, { ok: false, reason: "native send command unavailable" });
             return;
         }

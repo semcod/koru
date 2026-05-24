@@ -88,10 +88,36 @@ function testBuildFocusOpenWindsurfDoesNotUseToggleSidebarCommand(): void {
 }
 
 function testBuildFocusOpenVscodeDoesNotAutoOpenChatByDefault(): void {
-  assert(buildFocusOpenCommands("vscode", []).length === 0, "vscode must not auto-open chat by default");
+  const defaults = buildFocusOpenCommands("vscode", []);
   assert(
-    buildFocusOpenCommands("vscode", ["workbench.action.chat.focusInput"]).join() === "workbench.action.chat.focusInput",
-    "vscode should only use explicitly configured focus-open commands",
+    defaults.includes("workbench.action.chat.open"),
+    "vscode should include a safe chat-open fallback",
+  );
+  assert(
+    buildFocusOpenCommands("vscode", ["workbench.action.chat.focusInput"]).join()
+      === "workbench.action.chat.focusInput,workbench.action.chat.open",
+    "vscode custom focus-open commands should preserve order and keep safe fallback",
+  );
+}
+
+function testSanitizeVscodeDropsUnsafeFocusOpenCache(): void {
+  const poisoned = {
+    version: PROBE_CACHE_VERSION as typeof PROBE_CACHE_VERSION,
+    ide: "vscode",
+    appName: "Visual Studio Code",
+    updatedAt: "2026-05-24T20:00:00Z",
+    focusOpen: "workbench.panel.chat",
+    focusInput: "workbench.action.chat.focusInput",
+  };
+  const sanitized = sanitizeProbeCacheForIde(poisoned, "vscode");
+  assert(sanitized !== undefined, "sanitize must keep vscode entry");
+  assert(
+    sanitized?.focusOpen === undefined,
+    "VS Code: unsafe focus-open cache entry must be dropped",
+  );
+  assert(
+    sanitized?.focusInput === "workbench.action.chat.focusInput",
+    "VS Code: safe focus-input cache should be preserved",
   );
 }
 
@@ -131,8 +157,8 @@ function testSanitizeCursorDiscardsTypeSubmit(): void {
   assert(sanitized !== undefined, "sanitize must keep the entry, only mutate submit");
   assert(sanitized?.submit === undefined, "Cursor: 'type:\\n' must be discarded");
   assert(
-    sanitized?.paste === "editor.action.clipboardPasteAction",
-    "Cursor: paste cache must be preserved (it really does land in chat input)",
+    sanitized?.paste === undefined,
+    "Cursor: clipboardPasteAction paste cache must be discarded (reads OS clipboard, not drive text)",
   );
 }
 
@@ -192,8 +218,8 @@ function testSanitizeCursorDiscardsHostPlainReturn(): void {
     const sanitized = sanitizeProbeCacheForIde(poisoned, "cursor");
     assert(sanitized?.submit === undefined, `Cursor: '${submit}' must be discarded`);
     assert(
-      sanitized?.paste === "editor.action.clipboardPasteAction",
-      `Cursor: paste cache must survive while submit '${submit}' is discarded`,
+      sanitized?.paste === undefined,
+      `Cursor: clipboard paste cache must be discarded while submit '${submit}' is discarded`,
     );
   }
 }
@@ -233,6 +259,7 @@ testBuildFocusOpenCursorFirst();
 testBuildFocusOpenAntigravityFirst();
 testBuildFocusOpenWindsurfDoesNotUseToggleSidebarCommand();
 testBuildFocusOpenVscodeDoesNotAutoOpenChatByDefault();
+testSanitizeVscodeDropsUnsafeFocusOpenCache();
 testBuildFocusInputUsesChatCommands();
 testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance();
 testVscodiumSubmitStillExposesWorkbenchFallback();

@@ -119,6 +119,22 @@ function testProbeCacheSanitizationForCursor(): void {
   );
   eq(typeSubmit?.submit, undefined, "type: submit must be cleared");
 
+  const clipboardPaste = sanitizeProbeCacheForIde(
+    {
+      version: PROBE_CACHE_VERSION,
+      ide: "cursor",
+      appName: "Cursor",
+      paste: "editor.action.clipboardPasteAction",
+      updatedAt: "",
+    },
+    "cursor",
+  );
+  eq(
+    clipboardPaste?.paste,
+    undefined,
+    "clipboardPasteAction paste cache must be cleared for Cursor",
+  );
+
   // Plain Return via any injector must be cleared for Cursor (chat textarea
   // treats Return as newline; only Ctrl+Return submits).
   const plainReturn = sanitizeProbeCacheForIde(

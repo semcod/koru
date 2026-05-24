@@ -1475,6 +1475,131 @@ def test_setup_autopilot_plugin_installed_but_not_loaded_hints_reload(
     assert "koru ide doctor --ide cursor --fix --explain" in text
 
 
+def test_setup_autopilot_plugin_stale_version_attempts_reload_and_waits_again(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    args = SimpleNamespace(
+        enable_autopilot=True,
+        emit_events="human",
+        autopilot_plugin_wait_seconds=5.0,
+        project=str(tmp_path),
+    )
+    messages: list[str] = []
+    wait_timeouts: list[float] = []
+
+    class _Client:
+        def status(self):
+            return {
+                "plugins": [
+                    {
+                        "ide": "vscode",
+                        "version": "0.0.1",
+                        "protocolVersion": 1,
+                        "capabilities": ["chat.submit"],
+                    }
+                ]
+            }
+
+    def _wait(*_a, **kwargs):
+        wait_timeouts.append(float(kwargs["timeout_seconds"]))
+        return len(wait_timeouts) == 2
+
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
+    monkeypatch.delenv("KORU_PLUGIN_VERSION_POLICY", raising=False)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "install_plugin_for_ide",
+        lambda **_kwargs: SimpleNamespace(
+            status="already_installed",
+            ide="vscode",
+            message="ok",
+            command=None,
+        ),
+    )
+    monkeypatch.setattr(autonomous_mod, "format_plugin_install_result", lambda _r: "already")
+    monkeypatch.setattr(autonomous_mod, "_wait_for_autopilot_plugin", _wait)
+    monkeypatch.setattr(autonomous_mod, "_stdio_info", lambda message, **_kwargs: messages.append(message))
+    monkeypatch.setattr(
+        "koru.autonomous_operator._extension_active_in_latest_session",
+        lambda _ide: True,
+    )
+    from koru.ide_adapters.ide_reload import IdeReloadOutcome
+
+    monkeypatch.setattr(
+        "koru.ide_adapters.ide_reload.try_reload_vscode_family_ide",
+        lambda *_a, **_k: IdeReloadOutcome(attempted=True, ok=True, method="dry_run"),
+    )
+
+    connected = autonomous_mod._setup_autopilot_plugin(
+        args,
+        "vscode",
+        tmp_path / "koru-autopilot-vscode.sock",
+        client=_Client(),
+    )
+
+    assert connected is True
+    assert wait_timeouts == [5.0, 30.0]
+    text = "\n".join(messages)
+    assert "plugin wymaga przeładowania IDE" in text
+    assert "autopilot plugin reconnected after reload" in text
+
+
+def test_setup_autopilot_plugin_empty_plugin_list_attempts_reload(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    args = SimpleNamespace(
+        enable_autopilot=True,
+        emit_events="human",
+        autopilot_plugin_wait_seconds=5.0,
+        project=str(tmp_path),
+    )
+    wait_timeouts: list[float] = []
+
+    class _Client:
+        def status(self):
+            return {"plugins": []}
+
+    def _wait(*_a, **kwargs):
+        wait_timeouts.append(float(kwargs["timeout_seconds"]))
+        return len(wait_timeouts) == 2
+
+    monkeypatch.setattr(
+        autonomous_mod,
+        "install_plugin_for_ide",
+        lambda **_kwargs: SimpleNamespace(
+            status="already_installed",
+            ide="vscode",
+            message="ok",
+            command=None,
+        ),
+    )
+    monkeypatch.setattr(autonomous_mod, "format_plugin_install_result", lambda _r: "already")
+    monkeypatch.setattr(autonomous_mod, "_wait_for_autopilot_plugin", _wait)
+    monkeypatch.setattr(autonomous_mod, "_stdio_info", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        "koru.autonomous_operator._extension_active_in_latest_session",
+        lambda _ide: True,
+    )
+    from koru.ide_adapters.ide_reload import IdeReloadOutcome
+
+    monkeypatch.setattr(
+        "koru.ide_adapters.ide_reload.try_reload_vscode_family_ide",
+        lambda *_a, **_k: IdeReloadOutcome(attempted=True, ok=True, method="dry_run"),
+    )
+
+    connected = autonomous_mod._setup_autopilot_plugin(
+        args,
+        "vscode",
+        tmp_path / "koru-autopilot-vscode.sock",
+        client=_Client(),
+    )
+
+    assert connected is True
+    assert wait_timeouts == [5.0, 30.0]
+
+
 def test_status_has_autopilot_plugin_matches_specific_ide(monkeypatch) -> None:
     monkeypatch.delenv("KORU_STRICT_PLUGIN_VERSION", raising=False)
     monkeypatch.delenv("KORU_PLUGIN_VERSION_POLICY", raising=False)
@@ -2443,6 +2568,254 @@ def test_skip_chat_activity_allows_redrive_when_sent_without_received(
     )
     assert should_skip is False
     assert any("redrive allowed" in line for line in logs)
+
+
+def test_skip_chat_activity_upserts_external_chat_intake_ticket(
+    tmp_path, monkeypatch
+) -> None:
+    """External IDE chat intake should create/reuse an operator ticket."""
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    PLF-3001:
+      labels: [llm-ready]
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-3001"],
+        last_status="waiting_input",
+        last_message="continue",
+    )
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": autonomous_cycle_mod.time.time() - 8.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "/home/tom/github/semcod/koru",
+            },
+        ],
+        last_driven_prompt="Ticket PLF-3001 has been stuck in status 'waiting_input'",
+    )
+    monkeypatch.setattr("koru.llm_reflect.llm_reflect_enabled", lambda: False)
+
+    created_calls: list[tuple[str, dict[str, object]]] = []
+
+    def _fake_create_nl_task(_project: Path, text: str, **kwargs):
+        created_calls.append((text, kwargs))
+        return SimpleNamespace(ticket_id="PLF-INTAKE-1", reused=False)
+
+    monkeypatch.setattr(autonomous_cycle_mod, "create_nl_task", _fake_create_nl_task)
+
+    telemetry: dict[str, object] = {}
+    should_skip = autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=lambda _msg: None,
+    )
+
+    assert should_skip is True
+    assert len(created_calls) == 1
+    assert "Incoming intake" in created_calls[0][0]
+    scaffold = created_calls[0][1]["scaffold"]
+    assert scaffold["title"] == "[OPERATOR] intake from IDE chat"
+    assert "waiting:PLF-3001" not in scaffold["labels"]
+    assert scaffold["source_context"]["origin_waiting_ticket"] == "PLF-3001"
+    assert scaffold["source_context"]["dedupe_key"].startswith("autopilot:chat-intake:")
+    assert "PLF-3001" not in scaffold["source_context"]["dedupe_key"]
+    assert telemetry.get("autopilot_chat_intake_ticket") == "PLF-INTAKE-1"
+    assert telemetry.get("autopilot_skipped_chat_intake") is True
+
+
+def test_skip_chat_activity_treats_short_explicit_sent_text_as_intake(
+    tmp_path, monkeypatch
+) -> None:
+    """Short explicit intake snippets must become tickets, not old-ticket redrives."""
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    PLF-3003:
+      labels: [llm-ready]
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-3003"],
+        last_status="waiting_input",
+        last_message="continue",
+    )
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": autonomous_cycle_mod.time.time() - 8.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "fix: x",
+            },
+        ],
+        last_driven_prompt="Ticket PLF-3003 has been stuck in status 'waiting_input'",
+    )
+    monkeypatch.setattr("koru.llm_reflect.llm_reflect_enabled", lambda: False)
+
+    created_calls: list[tuple[str, dict[str, object]]] = []
+
+    def _fake_create_nl_task(_project: Path, text: str, **kwargs):
+        created_calls.append((text, kwargs))
+        return SimpleNamespace(ticket_id="PLF-INTAKE-3", reused=False)
+
+    monkeypatch.setattr(autonomous_cycle_mod, "create_nl_task", _fake_create_nl_task)
+
+    logs: list[str] = []
+    telemetry: dict[str, object] = {}
+    should_skip = autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=logs.append,
+    )
+
+    assert should_skip is True
+    assert len(created_calls) == 1
+    assert "fix: x" in created_calls[0][0]
+    assert not any("redrive allowed" in line for line in logs)
+    assert telemetry.get("autopilot_chat_intake_ticket") == "PLF-INTAKE-3"
+
+
+def test_skip_chat_activity_blocks_self_drive_even_without_ticket_ack(
+    tmp_path, monkeypatch
+) -> None:
+    """A recent Koru-driven message.sent should cooldown even if ticket ack state is stale."""
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    PLF-3004:
+      labels: [llm-ready]
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    prompt = "`project/analysis.toon.yaml` reports `autonomous_main` with CC=15."
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-3004"],
+        last_status="waiting_input",
+        last_message=prompt,
+    )
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": autonomous_cycle_mod.time.time() - 30.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": prompt,
+            },
+        ],
+        last_driven_prompt=prompt,
+        last_driven_ticket_id="",
+    )
+    monkeypatch.setattr("koru.llm_reflect.llm_reflect_enabled", lambda: False)
+
+    logs: list[str] = []
+    telemetry: dict[str, object] = {}
+    should_skip = autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=logs.append,
+    )
+
+    assert should_skip is True
+    assert telemetry.get("autopilot_skipped_chat_activity") is True
+    assert any("recent_self_drive" in line for line in logs)
+    assert not any("redrive allowed" in line for line in logs)
+
+
+def test_skip_chat_activity_does_not_ticket_self_driven_message(
+    tmp_path, monkeypatch
+) -> None:
+    """Recent message.sent matching last driven prompt should not create intake ticket."""
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    PLF-3002:
+      labels: [llm-ready]
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    sent_text = "REFACTOR item from project analysis"
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-3002"],
+        last_status="waiting_input",
+        last_message="continue",
+    )
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": autonomous_cycle_mod.time.time() - 8.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": sent_text,
+            },
+        ],
+        last_driven_prompt=sent_text,
+    )
+    monkeypatch.setattr("koru.llm_reflect.llm_reflect_enabled", lambda: False)
+
+    create_calls: list[str] = []
+
+    def _fake_create_nl_task(_project: Path, _text: str, **_kwargs):
+        create_calls.append("create")
+        return SimpleNamespace(ticket_id="PLF-INTAKE-2", reused=False)
+
+    monkeypatch.setattr(autonomous_cycle_mod, "create_nl_task", _fake_create_nl_task)
+
+    telemetry: dict[str, object] = {}
+    should_skip = autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=lambda _msg: None,
+    )
+
+    assert should_skip is True
+    assert create_calls == []
+    assert telemetry.get("autopilot_chat_intake_ticket") is None
 
 
 def test_autopilot_escalation_cooldown_applies_after_escalation_prompt(

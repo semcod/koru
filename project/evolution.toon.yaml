@@ -1,42 +1,41 @@
-# code2llm/evolution | 2850 func | 310f | 2026-05-24
-# generated in 0.02s
+# code2llm/evolution | 10117 func | 317f | 2026-05-24
 
 NEXT[6] (ranked by impact):
   [1] !! SPLIT           src/koru/doctor.py
       WHY: 1965L, 2 classes, max CC=14
       EFFORT: ~4h  IMPACT: 27510
 
-  [2] !! SPLIT           plugins/koru-autopilot-vscode/src/extension.ts
-      WHY: 1678L, 2 classes, max CC=16
-      EFFORT: ~4h  IMPACT: 26848
+  [2] !! SPLIT           src/koru/scan.py
+      WHY: 1033L, 2 classes, max CC=13
+      EFFORT: ~4h  IMPACT: 13429
 
-  [3] !! SPLIT-FUNC      setup_autopilot_plugin  CC=25  fan=17
-      WHY: CC=25 exceeds 15
-      EFFORT: ~1h  IMPACT: 425
+  [3] !! SPLIT           src/koru/autonomous.py
+      WHY: 1063L, 1 classes, max CC=7
+      EFFORT: ~4h  IMPACT: 7441
 
-  [4] !  SPLIT-FUNC      AutopilotBridge.focusChat  CC=16  fan=26
+  [4] !! SPLIT-FUNC      setup_autopilot_plugin  CC=33  fan=19
+      WHY: CC=33 exceeds 15
+      EFFORT: ~1h  IMPACT: 627
+
+  [5] !  SPLIT-FUNC      AutopilotBridge.focusChat  CC=16  fan=26
       WHY: CC=16 exceeds 15
       EFFORT: ~1h  IMPACT: 416
 
-  [5] !  SPLIT-FUNC      _execute_autopilot_drive  CC=15  fan=17
+  [6] !  SPLIT-FUNC      _execute_autopilot_drive  CC=15  fan=17
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 255
-
-  [6] !! SPLIT           planfile.yaml
-      WHY: 1383L, 0 classes, max CC=0
-      EFFORT: ~4h  IMPACT: 0
 
 
 RISKS[3]:
   ⚠ Splitting src/koru/doctor.py may break 91 import paths
-  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 147 import paths
-  ⚠ Splitting planfile.yaml may break 0 import paths
+  ⚠ Splitting src/koru/autonomous.py may break 57 import paths
+  ⚠ Splitting src/koru/scan.py may break 28 import paths
 
 METRICS-TARGET:
-  CC̄:          3.8 → ≤2.7
-  max-CC:      25 → ≤12
-  god-modules: 22 → 0
-  high-CC(≥15): 4 → ≤2
+  CC̄:          1.1 → ≤0.8
+  max-CC:      33 → ≤16
+  god-modules: 20 → 0
+  high-CC(≥15): 3 → ≤1
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -64,4 +63,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=1.3 → now CC̄=3.8
+  prev CC̄=3.8 → now CC̄=1.1

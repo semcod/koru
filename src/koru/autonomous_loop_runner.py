@@ -9,6 +9,90 @@ from typing import Any
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
 
+def _operator_next_steps(
+    *,
+    args: Any,
+    queue_result: Any,
+    waiting_ticket: str,
+    autopilot_status: str,
+    effective_sleep: float,
+    stagnation_streak: int,
+) -> list[str]:
+    """Human-readable plan for the next outer-loop moves."""
+    status = str(getattr(queue_result, "last_status", "") or "")
+    max_iterations = int(getattr(args, "max_iterations", 50) or 50)
+    ticket = waiting_ticket if waiting_ticket and waiting_ticket != "-" else "none"
+    sleep_text = f"{effective_sleep:g}s"
+
+    if status == "waiting_input":
+        if "chat_activity" in autopilot_status:
+            first = (
+                f"1/3 wait {sleep_text}; chat cooldown is active for {ticket}, "
+                "so Koru will not paste over the IDE chat"
+            )
+        elif "plugin_missing" in autopilot_status:
+            first = (
+                f"1/3 wait {sleep_text}; keep queue on {ticket} while the IDE "
+                "plugin reconnects"
+            )
+        else:
+            first = f"1/3 wait {sleep_text}; keep current waiting ticket {ticket} scoped"
+        return [
+            first,
+            f"2/3 rerun planfile queue (max {max_iterations}) and check whether {ticket} moved",
+            (
+                "3/3 if queue becomes idle, run scan/discovery; if still waiting, "
+                "use chat events/reflection before any redrive"
+            ),
+        ]
+
+    if status == "idle":
+        discovery = (
+            "scan/code2llm discovery is eligible"
+            if getattr(args, "scan_after_idle_queue", False)
+            else "idle scan is disabled unless explicitly requested"
+        )
+        return [
+            f"1/3 wait {sleep_text}; no runnable ticket is blocking the queue",
+            f"2/3 run idle intake strategy next cycle ({discovery})",
+            "3/3 create/upsert new planfile tickets from findings, then work them one by one",
+        ]
+
+    if status in {"completed", "failed"}:
+        return [
+            f"1/3 wait {sleep_text}; queue just reported {status}",
+            f"2/3 rerun planfile queue (max {max_iterations}) to pick the next ticket",
+            "3/3 if no ticket remains, switch to idle scan/discovery strategy",
+        ]
+
+    return [
+        f"1/3 wait {sleep_text}; preserve current loop state (streak={stagnation_streak})",
+        f"2/3 rerun queue/status checks for status={status or 'unknown'}",
+        "3/3 choose scan, ticket drive, or operator input based on the next queue result",
+    ]
+
+
+def _log_operator_next_steps(
+    *,
+    args: Any,
+    queue_result: Any,
+    waiting_ticket: str,
+    autopilot_status: str,
+    effective_sleep: float,
+    loop_state: Any,
+    stdio_info: Any,
+) -> None:
+    for line in _operator_next_steps(
+        args=args,
+        queue_result=queue_result,
+        waiting_ticket=waiting_ticket,
+        autopilot_status=autopilot_status,
+        effective_sleep=effective_sleep,
+        stagnation_streak=int(getattr(loop_state, "stagnation_streak", 0) or 0),
+    ):
+        stdio_info(f"koru autonomous: next {line}", fmt=args.emit_events)
+
+
 def handle_cycle_exit_conditions(
     args: Any,
     queue_result: Any,
@@ -146,16 +230,29 @@ def run_autonomous_cycle(
         return True
 
     effective_sleep = compute_cycle_sleep(args, loop_state, queue_result)
+    waiting_ticket = queue_loop_waiting_ticket_label(queue_result)
     stdio_info(
         f"koru autonomous: summary cycle={cycle} queue={queue_result.last_status} "
-        f"waiting={queue_loop_waiting_ticket_label(queue_result)} "
+        f"waiting={waiting_ticket} "
         f"streak={loop_state.stagnation_streak} diagnostics={diag_result.status} "
         f"autopilot={autopilot_status} sleep={effective_sleep}s",
         fmt=args.emit_events,
+    )
+    _log_operator_next_steps(
+        args=args,
+        queue_result=queue_result,
+        waiting_ticket=waiting_ticket,
+        autopilot_status=autopilot_status,
+        effective_sleep=effective_sleep,
+        loop_state=loop_state,
+        stdio_info=stdio_info,
     )
     if effective_sleep > 0:
         sleep(effective_sleep)
     return False
 
 
-__all__ = ["handle_cycle_exit_conditions", "run_autonomous_cycle"]
+__all__ = [
+    "handle_cycle_exit_conditions",
+    "run_autonomous_cycle",
+]
