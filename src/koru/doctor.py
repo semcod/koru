@@ -553,28 +553,44 @@ def _check_autopilot_plugin_bundle(project: Path) -> tuple[str, str]:
     return PASS, "; ".join(detail_bits + ["bundle=consistent"])
 
 
-def _check_autopilot_env(_project: Path) -> tuple[str, str]:
-    instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
-    ide = (os.environ.get("KORU_AUTOPILOT_IDE") or "").strip()
-    socket_env = (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip()
-    terminal = detect_terminal_host_ide_id() or "-"
-    detail_bits = [
-        f"instance={instance or '-'}",
-        f"ide={ide or '-'}",
-        f"socket_env={socket_env or '-'}",
-        f"terminal_hint={terminal}",
-        f"session={os.environ.get('XDG_SESSION_TYPE') or '-'}",
-        f"runtime={os.environ.get('XDG_RUNTIME_DIR') or '-'}",
+def _autopilot_env_snapshot() -> dict[str, str]:
+    return {
+        "instance": (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip(),
+        "ide": (os.environ.get("KORU_AUTOPILOT_IDE") or "").strip(),
+        "socket_env": (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip(),
+        "terminal": detect_terminal_host_ide_id() or "-",
+        "session": os.environ.get("XDG_SESSION_TYPE") or "-",
+        "runtime": os.environ.get("XDG_RUNTIME_DIR") or "-",
+    }
+
+
+def _autopilot_env_detail_bits(values: dict[str, str]) -> list[str]:
+    return [
+        f"instance={values['instance'] or '-'}",
+        f"ide={values['ide'] or '-'}",
+        f"socket_env={values['socket_env'] or '-'}",
+        f"terminal_hint={values['terminal']}",
+        f"session={values['session']}",
+        f"runtime={values['runtime']}",
     ]
-    normalized_instance = normalize_ide_id(instance)
-    normalized_ide = normalize_ide_id(ide)
+
+
+def _autopilot_env_status(values: dict[str, str]) -> tuple[str, list[str]]:
+    normalized_instance = normalize_ide_id(values["instance"])
+    normalized_ide = normalize_ide_id(values["ide"])
     if normalized_instance and normalized_ide and normalized_instance != normalized_ide:
-        return WARN, "; ".join(detail_bits + ["instance_ide_mismatch=true"])
+        return WARN, ["instance_ide_mismatch=true"]
     if not _selected_autopilot_ide(include_terminal_hint=True):
-        return SKIP, "; ".join(detail_bits + ["autopilot_env=unset"])
-    if not (instance or ide or socket_env):
-        return WARN, "; ".join(detail_bits + ["autopilot_env=unset", "using_terminal_hint=true"])
-    return PASS, "; ".join(detail_bits)
+        return SKIP, ["autopilot_env=unset"]
+    if not (values["instance"] or values["ide"] or values["socket_env"]):
+        return WARN, ["autopilot_env=unset", "using_terminal_hint=true"]
+    return PASS, []
+
+
+def _check_autopilot_env(_project: Path) -> tuple[str, str]:
+    values = _autopilot_env_snapshot()
+    status, extra_bits = _autopilot_env_status(values)
+    return status, "; ".join(_autopilot_env_detail_bits(values) + extra_bits)
 
 
 def _check_ide_runtime_presence(_project: Path) -> tuple[str, str]:
