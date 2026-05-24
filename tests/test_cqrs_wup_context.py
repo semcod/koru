@@ -9,6 +9,7 @@ from koru.autonomous_wup import WupHealthResult
 from koru.bounded_contexts.wup.application import WupCommandService, WupQueryService
 from koru.bounded_contexts.wup.commands import EvaluateWupHealthCommand
 from koru.bounded_contexts.wup.events import WUP_CONTEXT, WUP_HEALTH_FAILED
+from koru.bounded_contexts.wup.events import WUP_HEALTH_INTERRUPTED
 from koru.bounded_contexts.wup.queries import LoadWupHealthSnapshotQuery
 from koru.bounded_contexts.wup.read_model import WupEventLogProjection
 
@@ -78,3 +79,36 @@ def test_wup_query_loads_health_snapshot(tmp_path: Path) -> None:
     snapshot = query_service.health_snapshot(LoadWupHealthSnapshotQuery(project=tmp_path))
 
     assert snapshot == health_payload
+
+
+def test_wup_command_emits_interrupted_event(monkeypatch, tmp_path: Path) -> None:
+    def fake_read_wup_health_impl(**_kwargs) -> WupHealthResult:
+        return WupHealthResult(
+            status="interrupted",
+            failing_services=[],
+            new_events=1,
+        )
+
+    monkeypatch.setattr(
+        "koru.bounded_contexts.wup.application._read_wup_health_impl",
+        fake_read_wup_health_impl,
+    )
+
+    runtime = EventSourcingRuntime()
+    command_service = WupCommandService(runtime)
+    result = command_service.evaluate_health(
+        EvaluateWupHealthCommand(
+            project=tmp_path,
+            state=_State(),
+            diagnostic_tickets=False,
+            ticket_queue="default",
+            state_dir=tmp_path / ".planfile/.koru/autoloop-diag",
+            create_diagnostic_ticket=None,
+        ),
+    )
+
+    assert result.status == "interrupted"
+    events = command_service.runtime.store.all_events(context=WUP_CONTEXT)
+    assert len(events) == 1
+    assert events[0].event_type == WUP_HEALTH_INTERRUPTED
+    assert events[0].payload["status"] == "interrupted"

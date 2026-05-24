@@ -68,6 +68,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.235] - 2026-05-24
+
+### Docs
+- Update README.md
+- Update docs/koru_auto_vs_observe_up.md
+
+### Test
+- Update testql-scenarios/cli-smoke.testql.toon.yaml
+- Update tests/test_autonomous.py
+- Update tests/test_autonomous_redrive_cooldown.py
+- Update tests/test_autonomous_startup.py
+- Update tests/test_cqrs_wup_context.py
+- Update tests/test_koruapi.py
+- Update tests/test_korudsl.py
+- Update tests/test_operator_pipeline.py
+
+### Other
+- Update .koru/project.json
+- Update .planfile/sprints/current.yaml
+- Update examples/docker-compose-remote-mesh.yml
+- Update examples/remote_orchestration_demo.py
+- Update uv.lock
+- Update wup.yaml
+
 ## [0.1.234] - 2026-05-23
 
 ### Docs

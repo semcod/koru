@@ -45,5 +45,38 @@ Różne edytory i czaty mają inne zachowanie domyślne klawisza `Enter`:
 ---
 
 ## Podsumowanie i Rekomendacje
+
 * Dla **Windsurf** i **VS Code** autopilot działa najstabilniej i najszybciej, ponieważ korzysta z bezpośredniego API rozszerzeń.
 * Dla **Cursor** autopilot wymaga poprawnej konfiguracji focusu okna oraz uprawnień do `ydotool` (na Waylandzie), aby skutecznie symulować skrót `Ctrl+Enter`.
+
+---
+
+## 3. Zdalna Kontrola Sieciowa (Multi-Node Orchestration)
+
+Dzięki wbudowanej bibliotece zdalnego sterowania `KoruRemoteClient`, możesz zarządzać, monitorować i wysyłać komendy do wszystkich uruchomionych IDE w całej sieci lokalnej z poziomu jednego centralnego skryptu.
+
+### Jak to działa?
+1. Na maszynach zdalnych (Node 1, Node 2) uruchamiasz serwer Koru:
+   ```bash
+   koru serve --host 0.0.0.0 --port 8765
+   ```
+2. Na swojej głównej maszynie sterującej używasz klasy `KoruRemoteClient`, aby połączyć się z wybranym komputerem i wysłać żądanie wstrzyknięcia tekstu (promptu) bezpośrednio do aktywnego IDE:
+
+```python
+from koru.remote import KoruRemoteClient
+
+# Połącz się ze zdalną maszyną w sieci
+remote_node = KoruRemoteClient(host="192.168.1.15", port=8765)
+
+# Pobierz status maszyn i podłączone wtyczki IDE
+status = remote_node.get_status()
+print(f"Project: {status['project']}")
+
+# Wyślij zdalną komendę wstrzyknięcia do Cursora na zdalnej maszynie!
+response = remote_node.send_drive_command(
+    ide="cursor",
+    text="Refactor login view and add logs"
+)
+print("Response:", response)
+```
+

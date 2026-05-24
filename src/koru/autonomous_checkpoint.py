@@ -77,6 +77,7 @@ def _apply_checkpoint_payload(payload: dict[str, Any], state: AutoloopState) -> 
             "last_operator_needs_input_signature",
             "last_operator_needs_input_ticket_id",
             "last_message_sent_ts",
+            "last_driven_ticket_id",
             "telemetry_autopilot_idle_streak_skips",
             "telemetry_scan_after_idle_runs",
             "telemetry_scan_after_idle_tickets_applied",
@@ -134,6 +135,7 @@ def _build_checkpoint_payload(
             "last_operator_needs_input_signature": state.last_operator_needs_input_signature,
             "last_operator_needs_input_ticket_id": state.last_operator_needs_input_ticket_id,
             "last_message_sent_ts": state.last_message_sent_ts,
+            "last_driven_ticket_id": state.last_driven_ticket_id,
             "telemetry_autopilot_idle_streak_skips": state.telemetry_autopilot_idle_streak_skips,
             "telemetry_scan_after_idle_runs": state.telemetry_scan_after_idle_runs,
             "telemetry_scan_after_idle_tickets_applied": (

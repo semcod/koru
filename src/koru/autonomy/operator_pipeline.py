@@ -212,8 +212,16 @@ def _close_resolved_step_ticket(
     return True
 
 
-def _mcp_koru_configured(project: Path) -> tuple[bool, str]:
-    for rel in (".cursor/mcp.json", ".vscode/mcp.json"):
+def _mcp_koru_configured(project: Path, ide: str) -> tuple[bool, str]:
+    ide_norm = str(ide or "").strip().lower()
+    if ide_norm == "cursor":
+        candidates = (".cursor/mcp.json",)
+    elif ide_norm in {"vscode", "vscodium", "windsurf", "antigravity"}:
+        candidates = (".vscode/mcp.json",)
+    else:
+        candidates = (".cursor/mcp.json", ".vscode/mcp.json")
+
+    for rel in candidates:
         path = project / rel
         if not path.is_file():
             continue
@@ -224,9 +232,10 @@ def _mcp_koru_configured(project: Path) -> tuple[bool, str]:
         servers = data.get("mcpServers") or {}
         if isinstance(servers, dict) and "koru" in servers:
             return True, f"serwer „koru” w {rel}"
+    expected = " / ".join(candidates)
     return (
         False,
-        "brak „koru” w .cursor/mcp.json / .vscode/mcp.json — "
+        f"brak „koru” w {expected} — "
         "task koru:mcp:bootstrap, potem Reload Window",
     )
 
@@ -412,7 +421,7 @@ def build_operator_steps(
         ),
     )
 
-    mcp_ok, mcp_detail = _mcp_koru_configured(project)
+    mcp_ok, mcp_detail = _mcp_koru_configured(project, ide)
     if mcp_already_bootstrapped and not mcp_ok:
         mcp_detail += " (bootstrap właśnie wykonany — zrób Reload Window w IDE)"
     steps.append(

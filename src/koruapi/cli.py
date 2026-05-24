@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import json
 import sys
 from pathlib import Path
@@ -22,6 +23,7 @@ def _build_parser() -> argparse.ArgumentParser:
         prog="koru api",
         description="HTTP API and CLI for all koru integrations.",
     )
+    parser.add_argument("--version", action="version", version=f"koru-api {_cli_version()}")
     parser.add_argument(
         "--project",
         type=Path,
@@ -55,6 +57,13 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _cli_version() -> str:
+    try:
+        return importlib.metadata.version("koru")
+    except importlib.metadata.PackageNotFoundError:
+        return "unknown"
+
+
 def _parse_body(raw: str) -> dict:
     if raw.startswith("@"):
         return json.loads(Path(raw[1:]).read_text(encoding="utf-8"))
@@ -62,7 +71,7 @@ def _parse_body(raw: str) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
-    argv = argv if argv is not None else []
+    argv = list(sys.argv[1:] if argv is None else argv)
     parser = _build_parser()
     args, rest = parser.parse_known_args(argv)
     project = args.project.resolve()

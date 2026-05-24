@@ -52,6 +52,7 @@ class _FakeQueue:
     def __init__(self, ticket: str = "STARTER-184") -> None:
         self.last_status = "waiting_input"
         self.last_message = "Architektura: wprowadź CQRS"
+        self.waiting = [ticket]
         self.last_ticket_id = ticket
         self.waiting_ticket_id = ticket
 
@@ -206,3 +207,58 @@ def test_llx_reflection_done_keeps_skip(
     )
     assert skipped is True
     assert telemetry.get("autopilot_llx_reflection", {}).get("done") is True
+
+
+def test_skip_when_recent_successful_drive_for_same_waiting_ticket(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    monkeypatch.setenv("KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS", "300")
+
+    state = mock.Mock()
+    state.stagnation_streak = 1
+    state.autopilot_events = []
+    state.last_driven_kind = "ticket_prompt"
+    state.last_message_sent_ts = time.time() - 20.0
+    state.last_driven_ticket_id = "STARTER-184"
+
+    telemetry: dict[str, Any] = {}
+    logs: list[str] = []
+    skipped = _skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=_FakeQueue(ticket="STARTER-184"),
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=logs.append,
+    )
+
+    assert skipped is True
+    assert telemetry.get("autopilot_skipped_chat_activity") is True
+    assert telemetry.get("autopilot_chat_activity_last_event") == "drive.ack"
+    assert any("recent_drive_ack" in line for line in logs)
+
+
+def test_recent_successful_drive_fallback_does_not_block_different_ticket(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    monkeypatch.setenv("KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS", "300")
+
+    state = mock.Mock()
+    state.stagnation_streak = 1
+    state.autopilot_events = []
+    state.last_driven_kind = "ticket_prompt"
+    state.last_message_sent_ts = time.time() - 20.0
+    state.last_driven_ticket_id = "SOME-OTHER-TICKET"
+
+    skipped = _skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=_FakeQueue(ticket="STARTER-184"),
+        state=state,
+        cycle_telemetry={},
+        _hp=lambda _msg: None,
+    )
+
+    assert skipped is False

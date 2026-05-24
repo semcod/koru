@@ -19,7 +19,7 @@ ASSERT_EXIT_CODE 0
 # Test: koru-wup-testql --help
 SHELL "koru-wup-testql --help" 5000
 ASSERT_EXIT_CODE 0
-ASSERT_STDOUT_CONTAINS "usage"
+ASSERT_STDOUT_CONTAINS "Usage"
 
 # Test: koru-wup-testql --version
 SHELL "koru-wup-testql --version" 5000

@@ -63,6 +63,17 @@ class WupHealthResult:
     new_events: int
 
 
+_FAIL_STATUSES = {"down", "failed", "failure", "error"}
+_INTERRUPTED_MARKERS = (
+    "aborted",
+    "interrupted",
+    "ctrl+c",
+    "cancelled",
+    "canceled",
+    "sigterm",
+)
+
+
 class _WupEventState(Protocol):
     wup_seen_events: int
 
@@ -552,8 +563,56 @@ def _identify_failing_services(health: dict[str, dict]) -> list[str]:
     return [
         service
         for service, data in sorted(health.items())
-        if str(data.get("status", "")).lower() in {"down", "failed", "failure", "error"}
+        if str(data.get("status", "")).lower() in _FAIL_STATUSES
     ]
+
+
+def _identify_interrupted_services(health: dict[str, dict]) -> list[str]:
+    """Identify services whose latest quick run was operator-interrupted."""
+    return [
+        service
+        for service, data in sorted(health.items())
+        if str(data.get("status", "")).lower() == "interrupted"
+    ]
+
+
+def _is_interrupted_wup_entry(data: dict) -> bool:
+    status = str(data.get("status", "")).strip().lower()
+    if status not in _FAIL_STATUSES:
+        return False
+    message = str(data.get("message") or "").strip().lower()
+    return any(marker in message for marker in _INTERRUPTED_MARKERS)
+
+
+def _normalize_interrupted_wup_health(
+    health: dict[str, dict],
+    *,
+    health_path: Path,
+) -> dict[str, dict]:
+    """Rewrite transient interrupted failures to status=interrupted.
+
+    Manual operator stops (Ctrl+C) may leave stale ``down: Aborted!`` rows in
+    ``service-health.json``. Those should not block autopilot or create
+    diagnostic tickets.
+    """
+    changed = False
+    normalized: dict[str, dict] = {}
+    for service, data in health.items():
+        item = dict(data)
+        if _is_interrupted_wup_entry(item):
+            item["status"] = "interrupted"
+            item["interrupted"] = True
+            changed = True
+        normalized[service] = item
+    if changed:
+        try:
+            health_path.write_text(
+                json.dumps(normalized, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+        except OSError:
+            pass
+    return normalized
 
 
 def _create_wup_diagnostic_tickets(
@@ -611,6 +670,7 @@ def _read_wup_health(
     events_path = project / ".wup" / "service-health-events.jsonl"
 
     health = _load_wup_health(health_path)
+    health = _normalize_interrupted_wup_health(health, health_path=health_path)
     active_services = _wup_service_names_from_yaml(project)
     if active_services is not None:
         health = _prune_stale_wup_health(
@@ -620,6 +680,7 @@ def _read_wup_health(
             state_dir=state_dir,
         )
     failing = _identify_failing_services(health)
+    interrupted = _identify_interrupted_services(health)
 
     if diagnostic_tickets:
         if failing and create_diagnostic_ticket is None:
@@ -636,5 +697,5 @@ def _read_wup_health(
 
     event_count, new_events = _count_wup_events(events_path, state.wup_seen_events)
     state.wup_seen_events = max(state.wup_seen_events, event_count)
-    status = "failed" if failing else ("changed" if new_events else "ok")
+    status = "failed" if failing else ("interrupted" if interrupted else ("changed" if new_events else "ok"))
     return WupHealthResult(status=status, failing_services=failing, new_events=new_events)

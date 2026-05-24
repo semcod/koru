@@ -2737,7 +2737,7 @@ def test_run_cycle_does_not_retry_when_plugin_requires_manual_focus(
 
     assert calls == [1]
     assert sleeps == []
-    assert autopilot_status == "failed"
+    assert autopilot_status == "skipped(manual_focus)"
     captured = capsys.readouterr().out
     assert "[AUTOPILOT FOCUS REQUIRED]" in captured
     assert "Retrying in 5 seconds" not in captured
@@ -3590,3 +3590,39 @@ def test_read_wup_health_ignores_degraded_fleet_and_clears_marker(tmp_path) -> N
     assert result.status == "ok"
     assert result.failing_services == []
     assert not (diag_dir / "wup-c2004.failed").exists()
+
+
+def test_read_wup_health_treats_aborted_as_interrupted_not_failure(tmp_path) -> None:
+    health_dir = tmp_path / ".wup"
+    health_dir.mkdir()
+    diag_dir = tmp_path / ".planfile/.koru/autoloop-diag"
+    diag_dir.mkdir(parents=True)
+    (health_dir / "service-health.json").write_text(
+        json.dumps(
+            {
+                "koru-shell": {
+                    "status": "down",
+                    "stage": "quick",
+                    "message": "Aborted!",
+                    "track_file": ".wup/tracks/abc.json",
+                },
+            },
+        ),
+        encoding="utf-8",
+    )
+    state = autonomous_mod.AutoloopState()
+    result = autonomous_mod._read_wup_health(
+        project=tmp_path,
+        state=state,
+        diagnostic_tickets=True,
+        ticket_queue="default",
+        state_dir=diag_dir,
+    )
+
+    assert result.status == "interrupted"
+    assert result.failing_services == []
+    assert not (diag_dir / "wup-koru-shell.failed").exists()
+
+    normalized = json.loads((health_dir / "service-health.json").read_text(encoding="utf-8"))
+    assert normalized["koru-shell"]["status"] == "interrupted"
+    assert normalized["koru-shell"]["interrupted"] is True

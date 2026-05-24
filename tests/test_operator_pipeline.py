@@ -67,6 +67,29 @@ def test_build_operator_steps_mcp_ok_when_configured(
     assert mcp.status == "ok"
 
 
+def test_build_operator_steps_vscode_ignores_cursor_mcp_config(
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+) -> None:
+    (tmp_path / ".cursor").mkdir()
+    (tmp_path / ".cursor" / "mcp.json").write_text(
+        json.dumps({"mcpServers": {"koru": {"command": "koru", "args": ["mcp-serve"]}}}),
+        encoding="utf-8",
+    )
+    vscode_probe = replace(
+        probe,
+        resolved_lane="vscode",
+        resolved_autopilot_ide="vscode",
+        terminal_lane="vscode",
+    )
+
+    steps = op.build_operator_steps(project=tmp_path, probe=vscode_probe, plugin_connected=True)
+    mcp = next(s for s in steps if s.step_id == "mcp_koru")
+
+    assert mcp.status == "pending"
+    assert ".vscode/mcp.json" in mcp.detail
+
+
 def test_build_operator_steps_skips_plugin_for_jetbrains(
     tmp_path: Path,
     probe: AutonomousStartupProbe,

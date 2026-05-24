@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import json
 import sys
 from pathlib import Path
@@ -15,6 +16,7 @@ def _build_parser() -> argparse.ArgumentParser:
         prog="koru dsl",
         description="Bidirectional scenario DSL ↔ OQL library transforms.",
     )
+    parser.add_argument("--version", action="version", version=f"koru-dsl {_cli_version()}")
     sub = parser.add_subparsers(dest="action", required=True)
 
     to_lib = sub.add_parser("to-library", help="DSL or goals JSON → library JSON.")
@@ -34,6 +36,13 @@ def _build_parser() -> argparse.ArgumentParser:
     rt.add_argument("input", type=Path, nargs="?", help="DSL file (stdin if omitted).")
 
     return parser
+
+
+def _cli_version() -> str:
+    try:
+        return importlib.metadata.version("koru")
+    except importlib.metadata.PackageNotFoundError:
+        return "unknown"
 
 
 def _read_input(path: Path | None) -> str:

@@ -1174,6 +1174,27 @@ def _skip_due_to_recent_chat_activity(
 
     ide = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip().lower() or None
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
+
+    # Fallback dedupe when plugin chat events are delayed/missing: rely on
+    # the last successful drive for this exact waiting ticket.
+    try:
+        last_sent_ts = float(getattr(state, "last_message_sent_ts", 0.0) or 0.0)
+    except (TypeError, ValueError):
+        last_sent_ts = 0.0
+    last_driven_ticket = str(getattr(state, "last_driven_ticket_id", "") or "")
+    if waiting_ticket != "-" and last_driven_ticket == waiting_ticket and last_sent_ts > 0:
+        age_seconds = max(0.0, time.time() - last_sent_ts)
+        if age_seconds <= cooldown:
+            age = f"{age_seconds:.0f}s"
+            cycle_telemetry["autopilot_skipped_chat_activity"] = True
+            cycle_telemetry["autopilot_chat_activity_last_event"] = "drive.ack"
+            _hp(
+                "- autopilot skipped (recent_drive_ack "
+                f"last=drive.ack age={age} cooldown={cooldown:.0f}s "
+                f"ticket={waiting_ticket})",
+            )
+            return True
+
     recent_events = _recent_chat_activity_events(
         state,
         ide=ide,
@@ -1669,10 +1690,19 @@ def _handle_autopilot_phase(
                 _hp,
             )
             autopilot_drive_kind = idle_prompt_kind or decision_kind
-            autopilot_status = "ok" if ok else "failed"
+            if ok:
+                autopilot_status = "ok"
+            elif _reply_requires_manual_chat_focus(reply):
+                autopilot_status = "skipped(manual_focus)"
+                cycle_telemetry["autopilot_skipped_manual_focus"] = True
+            else:
+                autopilot_status = "failed"
             autopilot_backend = (
                 str(reply.get("backend")) if reply.get("backend") is not None else None
             )
+            if ok:
+                state.last_message_sent_ts = time.time()
+                state.last_driven_ticket_id = _queue_loop_waiting_ticket_label(queue_result)
             _update_autopilot_state(
                 state, ok, decision_kind, autopilot_drive_kind, reply.get("prompt", "")
             )

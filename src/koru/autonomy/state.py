@@ -21,6 +21,7 @@ class AutoloopState:
     last_operator_needs_input_signature: str = ""
     last_operator_needs_input_ticket_id: str = ""
     last_message_sent_ts: float = 0.0
+    last_driven_ticket_id: str = ""
     telemetry_autopilot_idle_streak_skips: int = 0
     telemetry_scan_after_idle_runs: int = 0
     telemetry_scan_after_idle_tickets_applied: int = 0

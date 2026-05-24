@@ -13400,9 +13400,10 @@ sprint:
         \ gate."
       execution:
         attempt: 0
+        finished_at: '2026-05-24T12:24:40.874092Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -13424,6 +13425,21 @@ sprint:
           \ gate."
         source: koru task
         timestamp: '2026-05-22T21:24:43.754985+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-24T12:24:39.260512+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T12:24:41.568840+00:00'
       id: STARTER-189
       inputs:
         api_headers: {}
@@ -13451,7 +13467,14 @@ sprint:
         Check: WUP service=koru-a...'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - 'Implemented CLI diagnostic fix: koru-api now honors process argv for console
+          entrypoints and supports --version; koru-dsl now supports --version; cli-smoke
+          expectation updated for proxied TestQL ''Usage:'' help output. Verified:
+          python -m pytest tests/test_koruapi.py tests/test_korudsl.py -q; testql
+          run testql-scenarios/cli-koru_api.testql.toon.yaml --output console --dry-run;
+          testql run testql-scenarios/cli-smoke.testql.toon.yaml --output console;
+          wup status.'
       priority: high
       source:
         context:
@@ -13471,9 +13494,9 @@ sprint:
         timestamp: '2026-05-22T21:24:43.754985+00:00'
         tool: koru-cli-nl
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-22T21:24:43.754985+00:00'
+      updated_at: '2026-05-24T12:24:41.568800+00:00'
     STARTER-190:
       blocked_by: []
       blocks: []

@@ -10,7 +10,6 @@ from koru.agents import agent_lane_environment
 from koru.autonomous_startup import resolve_agent_lane_id
 from koru.ide_router import resolve_ide_route
 from koru.init import resolve_project_agent_lane
-from koruide.ide import normalize_ide_id, supported_autopilot_ide_ids
 from koruide.os_injector import OsInjectorError, inject_with_profile, load_profile
 
 
@@ -124,21 +123,11 @@ def resolve_autopilot_ide(cli_value: str) -> str:
 
 def apply_agent_lane_environ(project: Path, agent_lane: str) -> str | None:
     """Set lane exports in ``os.environ``; returns lane id or ``None`` if skipped."""
-    raw_agent_lane = (agent_lane or "auto").strip().lower()
-    explicit_instance = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_INSTANCE"))
-    if (
-        raw_agent_lane == "auto"
-        and explicit_instance
-        and explicit_instance != "auto"
-        and explicit_instance in supported_autopilot_ide_ids()
-    ):
-        lane = explicit_instance
-    else:
-        lane, _source = resolve_agent_lane_id(
-            project,
-            agent_lane,
-            resolve_project_lane=resolve_project_agent_lane,
-        )
+    lane, _source = resolve_agent_lane_id(
+        project,
+        agent_lane,
+        resolve_project_lane=resolve_project_agent_lane,
+    )
     if lane is None:
         return None
     for key, val in agent_lane_environment(lane).items():

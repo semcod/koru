@@ -14,6 +14,7 @@ from .events import (
     WUP_CONTEXT,
     WUP_HEALTH_CHANGED,
     WUP_HEALTH_FAILED,
+    WUP_HEALTH_INTERRUPTED,
     WUP_HEALTH_OK,
     WupHealthEvaluated,
 )
@@ -24,6 +25,8 @@ def _wup_health_event_type(status: str) -> str:
     normalized = status.strip().lower()
     if normalized == "failed":
         return WUP_HEALTH_FAILED
+    if normalized == "interrupted":
+        return WUP_HEALTH_INTERRUPTED
     if normalized == "changed":
         return WUP_HEALTH_CHANGED
     return WUP_HEALTH_OK

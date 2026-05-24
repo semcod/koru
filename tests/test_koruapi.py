@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from koruapi import list_integrations
+from koruapi.cli import main as koru_api_main
 from koruapi.invoke import InvokeError, invoke_integration
 
 
@@ -29,6 +30,32 @@ def test_dsl_roundtrip_invoke() -> None:
 def test_unknown_integration() -> None:
     with pytest.raises(InvokeError):
         invoke_integration("no.such.integration", project=Path("."))
+
+
+def test_koru_api_main_uses_process_argv_for_help(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr("sys.argv", ["koru-api", "--help"])
+
+    with pytest.raises(SystemExit) as exc:
+        koru_api_main()
+
+    assert exc.value.code == 0
+    assert "usage:" in capsys.readouterr().out
+
+
+def test_koru_api_main_uses_process_argv_for_version(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr("sys.argv", ["koru-api", "--version"])
+
+    with pytest.raises(SystemExit) as exc:
+        koru_api_main()
+
+    assert exc.value.code == 0
+    assert capsys.readouterr().out.startswith("koru-api ")
 
 
 def test_wired_handlers_are_catalogued() -> None:

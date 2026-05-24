@@ -566,3 +566,23 @@ def test_apply_agent_lane_environ_uses_running_ide(
     assert lane == "vscode"
     assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "vscode"
     assert os.environ["KORU_AUTOPILOT_IDE"] == "vscode"
+
+
+def test_apply_agent_lane_environ_terminal_overrides_conflicting_env_instance(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "antigravity")
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    running = [
+        RunningIDE(id="antigravity", label="Antigravity", pid=10, exe="/usr/bin/antigravity"),
+        RunningIDE(id="jetbrains", label="JetBrains IDE", pid=11, exe="/usr/bin/pycharm"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup.detect_terminal_host_ide_id", return_value="jetbrains"),
+    ):
+        lane = _apply_agent_lane_environ(tmp_path, "auto")
+    assert lane == "jetbrains"
+    assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "jetbrains"
+    assert os.environ["KORU_AUTOPILOT_IDE"] == "jetbrains"
