@@ -109,7 +109,30 @@ class DriveOrchestrator:
         ide = str(plugin_ide or info.get("ide") or "").lower()
         if ide != "vscodium":
             return False
-        return str(info.get("winning_submit") or "") == "workbench.action.chat.submit"
+        if str(info.get("winning_submit") or "") != "workbench.action.chat.submit":
+            return False
+        return not DriveOrchestrator.has_strong_submit_verification(info)
+
+    @staticmethod
+    def has_strong_submit_verification(info: dict[str, Any]) -> bool:
+        """Return True when the plugin proved the input was committed.
+
+        VSCodium's registered submit command has produced false positives
+        before, so the command name alone is not enough. A successful
+        post-submit input probe is stronger evidence: the prompt was pasted,
+        submit was attempted, and the input no longer contains that prompt.
+        """
+        if info.get("submitted") is not True:
+            return False
+        trace = info.get("operation_trace")
+        if not isinstance(trace, list):
+            return False
+        for raw_step in trace:
+            if not isinstance(raw_step, dict):
+                continue
+            if raw_step.get("op") == "submit_verify" and raw_step.get("ok") is True:
+                return True
+        return False
 
     @staticmethod
     def strict_plugin_ack_required() -> bool:

@@ -1,6 +1,6 @@
-# code2llm/evolution | 30204 func | 440f | 2026-05-25
+# code2llm/evolution | 30509 func | 432f | 2026-05-25
 
-NEXT[4] (ranked by impact):
+NEXT[5] (ranked by impact):
   [1] !! SPLIT           src/koru/doctor.py
       WHY: 1670L, 2 classes, max CC=13
       EFFORT: ~4h  IMPACT: 21710
@@ -13,9 +13,13 @@ NEXT[4] (ranked by impact):
       WHY: 1183L, 0 classes, max CC=13
       EFFORT: ~4h  IMPACT: 15379
 
-  [4] !  SPLIT-FUNC      AutopilotBridge._performInject  CC=15  fan=20
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 300
+  [4] !  SPLIT-FUNC      SharedAutopilotBridge._performInject  CC=16  fan=20
+      WHY: CC=16 exceeds 15
+      EFFORT: ~1h  IMPACT: 320
+
+  [5] !  SPLIT-FUNC      AutopilotBridge._performInject  CC=16  fan=20
+      WHY: CC=16 exceeds 15
+      EFFORT: ~1h  IMPACT: 320
 
 
 RISKS[3]:
@@ -24,10 +28,10 @@ RISKS[3]:
   ⚠ Splitting src/koru/scan.py may break 74 import paths
 
 METRICS-TARGET:
-  CC̄:          1.0 → ≤0.7
+  CC̄:          0.9 → ≤0.6
   max-CC:      30 → ≤15
   god-modules: 23 → 0
-  high-CC(≥15): 7 → ≤3
+  high-CC(≥15): 8 → ≤4
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -55,4 +59,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=1.4 → now CC̄=1.0
+  prev CC̄=0.9 → now CC̄=0.9

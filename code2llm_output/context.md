@@ -4,17 +4,17 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 896, md: 115, typescript: 79, yaml: 65, shell: 49
+- **Languages**: python: 892, md: 108, typescript: 61, yaml: 58, shell: 49
 - **Analysis Mode**: static
-- **Total Functions**: 30318
-- **Total Classes**: 685
-- **Modules**: 1255
+- **Total Functions**: 30623
+- **Total Classes**: 681
+- **Modules**: 1219
 - **Entry Points**: 0
 
 ## Architecture by Module
 
 ### code2llm_output.map.toon
-- **Functions**: 67223
+- **Functions**: 92399
 - **File**: `map.toon.yaml`
 
 ### batch_1.SUMD
@@ -42,10 +42,10 @@
 - **Functions**: 2544
 - **File**: `map.toon.yaml`
 
-### plugins.koru-autopilot-cursor.src.extension
-- **Functions**: 396
-- **Classes**: 2
-- **File**: `extension.ts`
+### plugins.koru-autopilot-shared.src.autopilot-bridge
+- **Functions**: 391
+- **Classes**: 3
+- **File**: `autopilot-bridge.ts`
 
 ### plugins.koru-autopilot-vscodium.src.extension
 - **Functions**: 389
@@ -60,11 +60,6 @@
 ### plugins.koru-autopilot-windsurf.src.extension
 - **Functions**: 373
 - **Classes**: 2
-- **File**: `extension.ts`
-
-### plugins.koru-autopilot-vscode.src.extension
-- **Functions**: 373
-- **Classes**: 1
 - **File**: `extension.ts`
 
 ### koru.doctor
@@ -105,6 +100,10 @@
 - **Classes**: 1
 - **File**: `autonomous_loop_runner.py`
 
+### plugins.koru-autopilot-cursor.src.probe-ladder.test
+- **Functions**: 48
+- **File**: `probe-ladder.test.ts`
+
 ## Key Entry Points
 
 Main execution flows into the system:
@@ -119,13 +118,13 @@ Key execution flows identified:
 - **Methods**: 382
 - **Key Methods**: plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.value, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.commands, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.server, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.safeLog, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.emitLiveDsl, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.seq
 
-### plugins.koru-autopilot-cursor.src.extension.AutopilotBridge
-- **Methods**: 381
-- **Key Methods**: plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.value, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.commands, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.server, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.safeLog, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.emitLiveDsl, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.seq
+### plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge
+- **Methods**: 376
+- **Key Methods**: plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.isConnected, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sendConsoleLog, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.resetOperationTrace, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.value, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.commands, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.server, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.traceOperation, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.safeLog, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.emitLiveDsl, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.seq
 
-### plugins.koru-autopilot-vscode.src.extension.AutopilotBridge
-- **Methods**: 367
-- **Key Methods**: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.value, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.commands, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.server, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.safeLog, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.emitLiveDsl, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.seq
+### plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge
+- **Methods**: 375
+- **Key Methods**: plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.isConnected, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.value, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.commands, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.server, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.traceOperation, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.safeLog, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.emitLiveDsl, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.seq
 
 ### plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge
 - **Methods**: 358
@@ -261,6 +260,35 @@ Key functions that process and transform data:
 ### koruapi.local.build_local_parser
 - **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.add_argument
 
+### koruapi.invoke_handlers._handle_ide_scenario_validate
+- **Output to**: koruide.command_scenario.validate_ide_command_scenario, payload.get, isinstance, InvokeError, result.to_dict
+
+### koruapi.server._parse_invoke_request
+- **Output to**: str, str, None.resolve, body.get, str
+
+### koruapi.mcp_server._get_process_memory_mb
+> Get process memory usage in MB.
+- **Output to**: psutil.Process, process.memory_info
+
+### koruapi.mcp_server._monitor_subprocess_oom
+> Monitor subprocess for OOM conditions.
+
+Returns (should_kill, logs) tuple.
+- **Output to**: proc.poll, koruapi.mcp_server._get_process_memory_mb, time.sleep, logs.append, logs.append
+
+### koruapi.mcp_server._parse_tickets_json
+> Parse planfile ticket list JSON output.
+- **Output to**: stdout.strip, isinstance, isinstance, json.loads, isinstance
+
+### koruapi.mcp_server._serialize_mcp_ticket
+- **Output to**: ticket.get, ticket.get, ticket.get, ticket.get, ticket.get
+
+### koruapi.mcp_server.tool_validate_ide_command_scenario
+- **Output to**: arguments.get, koruide.command_scenario.validate_ide_command_scenario, isinstance, validation.to_dict
+
+### koruapi.mcp_server._collect_process_logs
+- **Output to**: logs.extend, logs.extend, None.split, None.split, result.stdout.strip
+
 ### koruvision.cli_parser._add_capture_subparser
 - **Output to**: sub.add_parser, once.add_argument, koruvision.cli_parser.register_mesh_publish_args
 
@@ -282,33 +310,6 @@ Key functions that process and transform data:
 
 ### korumesh.cli_parser.build_mesh_parser
 - **Output to**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, relay.add_argument, relay.add_argument
-
-### korumesh.dashboard_parse.parse_mime_params
-> Return ``(base_mime, params)`` from a mime string with ``;`` separators.
-- **Output to**: piece.strip, piece.split, value.strip, mime.split, piece.strip
-
-### koruide.chat_history._parse_line
-- **Output to**: line.strip, json.loads, isinstance, ChatEvent, float
-
-### koruide.ide._ide_id_from_process
-> Map a single process to a known IDE id, if any.
-- **Output to**: koruide.ide._read_comm, koruide.ide._read_cmdline, _IDE_SIGNATURES.items, koruide.ide._matches
-
-### koruide.audit._JSONFormatter.format
-- **Output to**: record.getMessage
-
-### koruide.audit._isoformat_utc
-- **Output to**: int, int, time.gmtime, time.time, time.strftime
-
-### koru.agent_backends._parse_lane
-- **Output to**: raw.get, raw.get, raw.get, raw.get, raw.get
-
-### koru.agent_backends.validate_agent_integration_config
-> Return human-readable validation errors (empty list when OK).
-- **Output to**: config.lanes.items, errors.append, koru.agent_backends.get_agent_backend_profile, errors.append
-
-### koru.autonomous_processes._process_cwd
-- **Output to**: proc_cwd.resolve, Path, str
 
 ## Public API Surface
 
@@ -346,14 +347,14 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.autonomy.phases.scan_phase.handle_scan_after_idle` - 30 calls
 - `src.koru.deployment_events.models.DeploymentEvent.from_dict` - 30 calls
 - `koru.ide_client.LegacyAutopilotClientAdapter.drive` - 29 calls
+- `koru.observability_dsl.parse_observability_dsl` - 29 calls
 - `koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
 - `koru.ide_adapters.bridge.evaluate_bridge` - 29 calls
-- `koru.observability_dsl.parse_observability_dsl` - 29 calls
+- `src.koru.observability_dsl.parse_observability_dsl` - 29 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
 - `src.koru.ide_adapters.bridge.evaluate_bridge` - 29 calls
-- `src.koru.observability_dsl.parse_observability_dsl` - 29 calls
+- `koruide.daemon.handlers_hello.handle_hello` - 28 calls
 - `koru.control_commands.control_command_replay_plan` - 28 calls
-- `koru.cli_queue.render_clean_report_text` - 28 calls
 
 ## System Interactions
 

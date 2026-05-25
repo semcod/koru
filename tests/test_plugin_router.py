@@ -19,6 +19,7 @@ class _Client:
     role: str = "plugin"
     ide: str | None = None
     dropped: bool = False
+    awaiting_plugin: object | None = None
     sock: _Sock = field(init=False)
 
     def __post_init__(self) -> None:
@@ -83,6 +84,25 @@ def test_drop_stale_plugins_matches_canonical_aliases() -> None:
     assert stale.dropped is True
     assert 1 not in clients
     assert 3 in clients and 4 in clients
+
+
+def test_drop_stale_plugins_keeps_plugin_with_pending_drive() -> None:
+    current = _Client(3, ide="vscode")
+    pending = _Client(1, ide="vscode", awaiting_plugin=object())
+    stale = _Client(2, ide="vscode")
+    clients = {1: pending, 2: stale, 3: current}
+
+    def _drop(client: _Client) -> None:
+        client.dropped = True
+        clients.pop(client.fd, None)
+
+    router = PluginRouter(clients, drop_client=_drop)
+    dropped = router.drop_stale_plugins(current, "vscode")
+
+    assert dropped == 1
+    assert pending.dropped is False
+    assert stale.dropped is True
+    assert 1 in clients and 2 not in clients and 3 in clients
 
 
 def test_status_rows_include_only_plugin_clients() -> None:

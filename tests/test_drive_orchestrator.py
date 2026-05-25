@@ -101,6 +101,28 @@ def test_annotate_plugin_ack_rejects_vscodium_registered_submit_false_positive()
     assert "registered submit command is not trusted" in info["submit_failure_reason"]
 
 
+def test_annotate_plugin_ack_accepts_vscodium_registered_submit_with_verify_probe() -> None:
+    info = DriveOrchestrator.annotate_plugin_ack(
+        info={
+            "delivered": True,
+            "opened": True,
+            "submitted": True,
+            "winning_focus_open": "workbench.panel.chat+workbench.action.chat.focusInput",
+            "winning_paste": "host-clipboard:wl-copy+xdotool key ctrl+v",
+            "winning_submit": "workbench.action.chat.submit",
+            "operation_trace": [
+                {"op": "submit", "route": "accepted", "ok": True},
+                {"op": "submit_verify", "route": "chat-input-probe", "ok": True},
+            ],
+        },
+        plugin_ok=True,
+        submit_requested=True,
+        plugin_ide="vscodium",
+    )
+
+    assert info["verification"] == "strict"
+
+
 def test_annotate_plugin_ack_marks_plugin_ack_without_winning_commands() -> None:
     info = DriveOrchestrator.annotate_plugin_ack(
         info={"delivered": True, "opened": True, "submitted": True},

@@ -1,6 +1,6 @@
 # ADR AUTO-002 — Autonomiczna pętla decyzyjna: OpenRouter LLM + heurystyki + IDE LLM
 
-- Status: **Phase 1+2 implemented**, Phase 3+4 proposed
+- Status: **Phase 1+2+3 implemented**, Phase 4 proposed
 - Date: 2026-05-25
 - Updated: 2026-05-25
 - Related: `koru.yaml` `autonomy.strategy.planning_assistant`, `korullm`, `decision_engine.py`
@@ -183,13 +183,17 @@ class ActionPlan:
 - Nowe pole w `AutoloopState`: `last_drive_action_plan`
 - Testy: `tests/test_decision_arbiter.py` (18), `tests/test_verification_cycle_integration.py` (10)
 
-### Faza 3: Planning LLM (OpenRouter)
-- `planning_llm.py`: OpenRouter API client
-- `plan_next_action()`: context → ActionPlan
-- `evaluate_drive_result()`: evidence → Verdict (LLM-enhanced)
-- `generate_better_prompt()`: failed attempts → improved prompt
-- Budget guard: `budget_per_cycle_usd` limit
-- Fallback: jeśli OpenRouter niedostępny → heurystyki only
+### Faza 3: Planning LLM (OpenRouter) ✅ DONE
+- `planning_llm.py`: OpenRouter API client z `BudgetTracker`
+- `evaluate_drive_result()`: evidence + heuristic verdict → `LlmEvaluation`
+- `generate_better_prompt()`: stagnant ticket → improved prompt text
+- `plan_next_action()`: advisory `LlmActionAdvice` (queue state → action)
+- Budget guard: `budget_per_cycle_usd` + `budget_per_hour_usd` z auto-reset
+- Fallback: jeśli OpenRouter niedostępny/over budget → heurystyki only (zero crash risk)
+- Zintegrowany w `_handle_post_drive_verification()` z try/except (fail-safe)
+- Env: `KORU_PLANNING_LLM` (on/off), `KORU_PLANNING_LLM_MODEL`, `KORU_PLANNING_LLM_TIMEOUT`
+- Emituje eventy: `LlmEvaluation`, `LlmImprovedPrompt`
+- Testy: `tests/test_planning_llm.py` (22 testów)
 
 ### Faza 4: Reflection + Self-Improvement
 - `reflect_on_chat()`: interpretuj niejednoznaczne chat eventy

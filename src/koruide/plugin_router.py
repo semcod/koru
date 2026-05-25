@@ -15,6 +15,7 @@ class PluginClient(Protocol):
     protocol_version: int | None
     capabilities: list[str]
     sock: Any
+    awaiting_plugin: Any | None
 
 
 @dataclass(frozen=True)
@@ -70,6 +71,7 @@ class PluginRouter:
             if other is not current
             and other.role == "plugin"
             and normalize_ide_id(other.ide) == target_ide
+            and other.awaiting_plugin is None
         ]
         for other in stale:
             self._log(f"dropping stale plugin connection: ide={target_ide} fd={other.sock.fileno()}")

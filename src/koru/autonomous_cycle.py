@@ -43,6 +43,11 @@ from koru.autonomy.post_run_verify import (
 )
 from koru.autonomy.state import AutoloopState
 from koru.autonomy.decision_arbiter import ArbiterSignals, decide
+from koru.autonomy.planning_llm import (
+    evaluate_drive_result as _llm_evaluate_drive_result,
+    generate_better_prompt as _llm_generate_better_prompt,
+    get_budget_tracker as _get_planning_budget,
+)
 from koru.autonomy.verification_engine import (
     assess_verdict,
     collect_evidence,
@@ -642,7 +647,67 @@ def _handle_post_drive_verification(
         },
     )
 
+    # Phase 3: LLM-enhanced evaluation (optional, fail-safe)
+    llm_eval = None
+    llm_improved_prompt = None
+    try:
+        llm_eval = _llm_evaluate_drive_result(
+            evidence,
+            ticket_id=ticket_id,
+            ticket_title=str(getattr(queue_result, "last_message", "") or ""),
+            driven_prompt=state.last_driven_prompt,
+            heuristic_verdict=verdict,
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+    if llm_eval is not None:
+        _hp(
+            f"  llm_eval: {llm_eval.outcome} (confidence={llm_eval.confidence:.2f}) "
+            f"{llm_eval.reason[:80]}"
+        )
+        _emit(
+            "LlmEvaluation",
+            {
+                "cycle": cycle,
+                "ticket_id": ticket_id,
+                "outcome": llm_eval.outcome,
+                "confidence": llm_eval.confidence,
+                "reason": llm_eval.reason,
+                "suggestion": llm_eval.suggestion,
+            },
+        )
+
+    if (
+        verdict.outcome == "no_change"
+        and state.drive_count_for_ticket >= 2
+        and state.last_driven_prompt
+    ):
+        try:
+            llm_improved_prompt = _llm_generate_better_prompt(
+                ticket_id=ticket_id,
+                ticket_title=str(getattr(queue_result, "last_message", "") or ""),
+                original_prompt=state.last_driven_prompt,
+                drive_count=state.drive_count_for_ticket,
+                last_verdict_reason=verdict.reason,
+            )
+        except Exception:  # noqa: BLE001
+            pass
+
+        if llm_improved_prompt:
+            _hp(f"  llm_prompt: improved prompt generated ({len(llm_improved_prompt)} chars)")
+            _emit(
+                "LlmImprovedPrompt",
+                {
+                    "cycle": cycle,
+                    "ticket_id": ticket_id,
+                    "original_length": len(state.last_driven_prompt),
+                    "improved_length": len(llm_improved_prompt),
+                },
+            )
+
     # Phase 2: Decision Arbiter — produce advisory ActionPlan
+    _get_planning_budget().reset_cycle()
     signals = ArbiterSignals(
         queue_status=str(queue_result.last_status or ""),
         waiting_ticket=ticket_id,
