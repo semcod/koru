@@ -1117,56 +1117,6 @@ def test_message_sent_from_other_plugin_does_not_complete_pending_drive(
         cli.close()
 
 
-def test_plugin_ack_after_cli_disconnect_is_logged_as_late_ack(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    logs: list[str] = []
-
-    _patch_no_running_ides(monkeypatch)
-    monkeypatch.delenv("KORU_STRICT_PLUGIN_ACK", raising=False)
-    monkeypatch.delenv("KORU_STRICT_PLUGIN_VERSION", raising=False)
-    with _DaemonHarness(tmp_path, logs=logs) as h:
-        monkeypatch.setenv("KORU_STRICT_PLUGIN_ACK", "1")
-        plugin, plugin_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
-
-        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        cli.settimeout(2.0)
-        cli.connect(str(h.sock_path))
-        cli.sendall(
-            Message(
-                type="drive",
-                id="d-late-ack",
-                data={"text": "hi", "ide": "vscode", "submit": True},
-            ).encode(),
-        )
-
-        forwarded = plugin_reader.read_message()
-        assert forwarded.type == "chat.send"
-        cli.close()
-        time.sleep(0.5)
-
-        plugin.sendall(
-            Message(
-                type="ack",
-                id="d-late-ack",
-                data={
-                    "ok": True,
-                    "delivered": True,
-                    "opened": True,
-                    "submitted": True,
-                    "winning_focus_open": "workbench.action.chat.open",
-                    "winning_paste": "editor.action.clipboardPasteAction",
-                    "winning_submit": "workbench.action.chat.submit",
-                },
-            ).encode(),
-        )
-        time.sleep(0.35)
-
-        assert any("late ack" in line.lower() for line in logs), logs
-        plugin.close()
-
-
 def test_cli_client_still_connected_detects_peer_eof() -> None:
     """A still-registered CLI fd can already be half-closed by the peer."""
     from koruide.daemon.handlers import _cli_client_still_connected

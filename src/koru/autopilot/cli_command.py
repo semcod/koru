@@ -56,6 +56,7 @@ from koru.autopilot.cli_parser import build_autopilot_parser as _build_parser
 from koru.autopilot.commands.drive import action_drive as _drive_action_impl
 from koru.autopilot.commands.drive import _drive_command_argv
 from koru.autopilot.commands.handoff import action_handoff as _handoff_action_impl
+from koru.autopilot.commands.manage import action_manage as _manage_action_impl
 from koru.autopilot.commands.shutdown import action_shutdown as _shutdown_action_impl
 from koru.autopilot.commands.status import action_status as _status_action_impl
 from koru.autopilot.cli_trace import action_trace as _action_trace
@@ -202,22 +203,19 @@ def _action_setup_host(args: argparse.Namespace) -> int:
 
 
 def _action_manage(args: argparse.Namespace) -> int:
+    """Wrapper for manage command with dependency injection."""
     from koru.autopilot.install_manager import (
         collect_install_manager_report,
         format_install_manager_report,
         repair_installation,
     )
 
-    report = (
-        repair_installation(ide=args.ide, socket_path=args.socket, dry_run=args.dry_run)
-        if args.fix
-        else collect_install_manager_report(ide=args.ide, socket_path=args.socket)
+    return _manage_action_impl(
+        args,
+        collect_report_fn=collect_install_manager_report,
+        format_report_fn=format_install_manager_report,
+        repair_fn=repair_installation,
     )
-    if args.output_format == "json":
-        print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
-    else:
-        print(format_install_manager_report(report))
-    return 0 if report.ok else 1
 
 
 def _action_install_plugin(args: argparse.Namespace) -> int:
