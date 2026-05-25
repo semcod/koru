@@ -2274,3 +2274,104 @@ sprint:
       status: open
       sync: {}
       updated_at: '2026-05-25T16:47:06.495637+00:00'
+    STARTER-278:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T18:04:08.982057+00:00'
+      description: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+        auto-repair ran (pip_install_editable, install_plugin, reload_ide_and_reconnect);
+        autopilot_install_manager: ide=vscode; socket=/run/user/1000/koru-autopilot-vscode.sock;
+        package=0.1.274; source=0.1.274; connected=False; installed=0.1.77; expected=0.1.78;
+        repairable=plugin_installed_version_mismatch:error
+
+
+        Shell: `koru self --project /home/tom/github/semcod/koru --ide vscode repair
+        --yes`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T18:05:09.911863Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: shell
+        mode: noninteractive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+          auto-repair ran (pip_install_editable, install_plugin, reload_ide_and_reconnect);
+          autopilot_install_manager: ide=vscode; socket=/run/user/1000/koru-autopilot-vscode.sock;
+          package=0.1.274; source=0.1.274; connected=False; installed=0.1.77; expected=0.1.78;
+          repairable=plugin_installed_version_mismatch:error
+
+
+          Shell: `koru self --project /home/tom/github/semcod/koru --ide vscode repair
+          --yes`'
+        source: koru task
+        timestamp: '2026-05-25T18:04:08.982057+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T18:05:09.922704+00:00'
+      id: STARTER-278
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+          auto-repair ran (pip_install_editable, install_plugin, reload_ide_and_reconnect);
+          autopilot_install_manager: ide=vscode; socket=/run/user/1000/koru-autopilot-vscode.sock;
+          package=0.1.274; source=0.1.274; connected=False; installed=0.1.77; expected=0.1.78;
+          repairable=plugin_installed_version_mismatch:error
+
+
+          Shell: `koru self --project /home/tom/github/semcod/koru --ide vscode repair
+          --yes`'
+        script: koru self --project /home/tom/github/semcod/koru --ide vscode repair
+          --yes
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:self_control
+      name: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+        auto-repair ran (pip_install_editable, install_p...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-operator-pipeline:operator-koru-self-control-paczka-/-vsix-/-runtime-self-control-auto-repair-ran-pip_install_editable-install_p...
+          detail: 'self-control auto-repair ran (pip_install_editable, install_plugin,
+            reload_ide_and_reconnect); autopilot_install_manager: ide=vscode; socket=/run/user/1000/koru-autopilot-vscode.sock;
+            package=0.1.274; source=0.1.274; connected=False; installed=0.1.77; expected=0.1.78;
+            repairable=plugin_installed_version_mismatch:error'
+          input: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+            auto-repair ran (pip_install_editable, install_plugin, reload_ide_and_reconnect);
+            autopilot_install_manager: ide=vscode; socket=/run/user/1000/koru-autopilot-vscode.sock;
+            package=0.1.274; source=0.1.274; connected=False; installed=0.1.77; expected=0.1.78;
+            repairable=plugin_installed_version_mismatch:error
+
+
+            Shell: `koru self --project /home/tom/github/semcod/koru --ide vscode
+            repair --yes`'
+          step_id: self_control
+          task_command: koru self --project /home/tom/github/semcod/koru --ide vscode
+            repair --yes
+        timestamp: '2026-05-25T18:04:08.982057+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T18:05:09.922668+00:00'

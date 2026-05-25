@@ -223,6 +223,10 @@ def test_control_command_dsl_roundtrips_to_replay_plan(tmp_path) -> None:
     assert plan["surface"] == "shell_cli"
     assert plan["argv"] == ["planfile", "ticket", "done", "STARTER-1"]
     assert plan["cwd"] == str(tmp_path)
+    compact = render_compact_observability_line(event)
+    assert "args=" in compact
+    assert "planfile" in compact
+    assert "STARTER-1" in compact
 
 
 def test_queue_shell_and_api_runners_emit_control_commands(tmp_path, monkeypatch) -> None:
@@ -517,6 +521,7 @@ def test_plugin_bootstrap_blocker_emits_control_command_dsl(tmp_path, capsys) ->
     assert {row["payload"]["corr"] for row in rows} == {"bootstrap-plugin-vscodium"}
     gui_command = rows[5]["payload"]["data"]
     assert gui_command["surface"] == "desktop_gui"
+    assert gui_command["interface_id"] == "ide_command_palette"
     assert gui_command["operation"] == "command_palette_sequence"
     assert gui_command["replayable"] is False
     shell = rows[6]["payload"]["data"]
@@ -524,7 +529,7 @@ def test_plugin_bootstrap_blocker_emits_control_command_dsl(tmp_path, capsys) ->
     assert shell["args"]["argv"] == ["koru", "autopilot", "status", "--explain"]
     terminal = capsys.readouterr().err
     assert "OBS-PATH:" in terminal
-    assert "command(desktop_gui command_palette_sequence)" in terminal
+    assert "command(ide_command_palette command_palette_sequence)" in terminal
     assert "command(shell_cli koru)" in terminal
 
 

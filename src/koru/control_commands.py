@@ -183,6 +183,8 @@ def desktop_gui_command(
 
 def _desktop_interface_id(backend: str) -> str:
     key = backend.strip().lower()
+    if "command_palette" in key or "command-palette" in key:
+        return "ide_command_palette"
     if "xdotool" in key or "x11" in key:
         return "os_injector_xdotool"
     if "ydotool" in key or "uinput" in key:

@@ -201,6 +201,9 @@ def _path_step(event: KoruObsEvent) -> str:
     data = event.data
     if event.kind == "control.command":
         surface = str(data.get("surface") or "control")
+        interface_id = str(data.get("interface_id") or "")
+        if surface == "desktop_gui" and interface_id.startswith("ide_"):
+            surface = interface_id
         operation = str(data.get("operation") or "").strip()
         return f"command({surface} {operation})" if operation else f"command({surface})"
     if event.kind == "autopilot.intent":
@@ -270,6 +273,7 @@ def _compact_data(event: KoruObsEvent) -> dict[str, Any]:
             "transport",
             "operation",
             "target",
+            "args",
             "replayable",
         )
     return data
