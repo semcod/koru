@@ -121,6 +121,14 @@ from koruide import os_injector as _os_injector_module
 from koruide.daemon import AutopilotDaemon
 from koruide.drive_orchestrator import DriveOrchestrator
 from koruide.os_injector import OsInjectorError, inject_with_profile, load_profile
+from koru.autonomous_env import effective_ticket_source_flags as _effective_flags
+from koru.autonomous_processes import (
+    ExistingAutonomousProcess,
+    ExistingManagedProcess,
+    _looks_like_autonomous_up_command,
+    guard_existing_autonomous_processes as _guard_existing_autonomous_processes,
+    stop_prior_autonomous_for_auto_start,
+)
 
 _ORIGINAL_LOAD_PROFILE = load_profile
 _ORIGINAL_INJECT_WITH_PROFILE = inject_with_profile
