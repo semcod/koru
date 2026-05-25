@@ -55,6 +55,7 @@ from koru.autopilot.cli_direct_drive import (
 from koru.autopilot.cli_parser import build_autopilot_parser as _build_parser
 from koru.autopilot.commands.drive import action_drive as _drive_action_impl
 from koru.autopilot.commands.drive import _drive_command_argv
+from koru.autopilot.commands.shutdown import action_shutdown as _shutdown_action_impl
 from koru.autopilot.commands.status import action_status as _status_action_impl
 from koru.autopilot.cli_trace import action_trace as _action_trace
 from koru.autopilot.client import AutopilotClient
@@ -174,7 +175,12 @@ def _action_status(args: argparse.Namespace) -> int:
 
 
 def _action_shutdown(args: argparse.Namespace) -> int:
-    return daemon_cli.action_shutdown(args, client_fn=_client)
+    """Wrapper for shutdown command with dependency injection."""
+    return _shutdown_action_impl(
+        args,
+        client_fn=_client,
+        daemon_shutdown_fn=daemon_cli.action_shutdown,
+    )
 
 
 _action_ide_list = daemon_cli.action_ide_list
