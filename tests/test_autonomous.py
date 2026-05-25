@@ -2003,6 +2003,71 @@ def test_run_cycle_escalates_stuck_waiting_input_instead_of_skipping(
     assert state.stagnation_streak == 0
 
 
+def test_run_cycle_auto_marks_waiting_ticket_llm_ready_before_stuck_skip(
+    tmp_path,
+    monkeypatch,
+    capsys,
+) -> None:
+    """Runnable waiting_input tickets should not require a manual label command."""
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    PLF-1317:
+      labels: [refactor]
+""",
+        encoding="utf-8",
+    )
+    driven: list[str] = []
+
+    class RecordingClient:
+        def drive(self, prompt: str, **_kwargs):
+            driven.append(prompt)
+            return {"ok": True, "backend": "plugin"}
+
+    monkeypatch.setattr(
+        autonomous_mod,
+        "run_planfile_queue_loop",
+        lambda **kwargs: SimpleNamespace(
+            summary=lambda: "iterations=1 completed=0 failed=0 waiting=1 last_status=waiting_input",
+            last_status="waiting_input",
+            last_message="refactor this module",
+            waiting=["PLF-1317"],
+        ),
+    )
+    state = autonomous_mod.AutoloopState(
+        previous_signature="waiting_input:PLF-1317",
+        stagnation_streak=1,
+    )
+
+    _scan_result, queue_result, autopilot_status, _diag = autonomous_mod._run_cycle(
+        cycle=3,
+        project=tmp_path,
+        actor="koru-test",
+        queue_name=None,
+        enable_scan=False,
+        max_iterations=50,
+        enable_autopilot=True,
+        autopilot_ide="vscode",
+        drive_prompt="ignored when blocked",
+        submit=True,
+        include_semcod_artifacts=False,
+        client=RecordingClient(),
+        state=state,
+    )
+
+    assert queue_result.last_status == "waiting_input"
+    assert autopilot_status == "ok"
+    assert len(driven) == 1
+    assert driven[0].startswith("refactor this module")
+    sprint = yaml.safe_load((sprint_dir / "current.yaml").read_text(encoding="utf-8"))
+    assert "llm-ready" in sprint["sprint"]["tickets"]["PLF-1317"]["labels"]
+    out = capsys.readouterr().out
+    assert "auto llm-ready: added label to PLF-1317" in out
+
+
 def test_run_cycle_drives_llm_ready_waiting_ticket_without_stagnation_skip(
     tmp_path,
     monkeypatch,
@@ -3445,11 +3510,12 @@ def test_run_cycle_autopilot_focus_error_retry_loop_retries_and_warns(
         client=FocusErrorClient(),
     )
 
-    # Assert that client.drive was called 5 times (due to retry loop)
-    assert len(calls) == 5
+    # Identical-failure dedup breaks out after the second attempt rather than
+    # wasting 25 s on five identical retries (see
+    # `_drive_failure_signature` in `koru.autonomous_cycle_drive_retry`).
+    assert len(calls) == 2
     assert autopilot_status == "failed"
 
-    # Assert that warning message was printed in red
     captured = capsys.readouterr().out
     assert "[AUTOPILOT FOCUS ERROR]" in captured
     assert "Plugin message: chat input is not focused" in captured
@@ -3457,6 +3523,7 @@ def test_run_cycle_autopilot_focus_error_retry_loop_retries_and_warns(
     assert "logPath: /tmp/koru-plugin-debug.log" in captured
     assert "focusOpenCandidates: workbench.action.chat.open" in captured
     assert "lastRejected:" in captured
+    assert "identical failure repeated" in captured
 
 
 def test_run_cycle_autopilot_plugin_retry_loop_for_windsurf_fastpath_failure(
@@ -3510,12 +3577,15 @@ def test_run_cycle_autopilot_plugin_retry_loop_for_windsurf_fastpath_failure(
         client=FastPathErrorClient(),
     )
 
-    assert len(calls) == 5
+    # Identical-failure dedup applies to the plugin-retry path too: the loop
+    # stops after seeing the same signature twice rather than five times.
+    assert len(calls) == 2
     assert autopilot_status == "failed"
     captured = capsys.readouterr().out
     assert "[AUTOPILOT PLUGIN RETRY]" in captured
     assert "Plugin message: chat opened but paste command failed (fast path failed)" in captured
     assert "[AUTOPILOT FOCUS ERROR]" not in captured
+    assert "identical failure repeated" in captured
 
 
 def test_run_cycle_does_not_retry_missing_plugin_as_focus_error(

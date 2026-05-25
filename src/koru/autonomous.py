@@ -65,12 +65,6 @@ from koru.autonomous_cycle import (
 from koru.autonomous_env import (
     apply_autonomous_env_overrides as _env_apply_autoloop_defaults,
 )
-from koru.autonomous_processes import (
-    guard_existing_autonomous_processes as _guard_existing_autonomous_processes,
-)
-from koru.autonomous_processes import (
-    stop_prior_autonomous_for_auto_start,
-)
 from koru.autonomous_startup import (
     build_startup_probe,
     format_post_startup_operator_hints,

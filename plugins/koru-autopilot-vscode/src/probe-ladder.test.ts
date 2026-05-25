@@ -68,7 +68,7 @@ function testMergeUnique(): void {
 
 function testBuildFocusOpenCursorFirst(): void {
   const cmds = buildFocusOpenCommands("cursor", []);
-  assert(cmds.includes("composer.showComposer"), "cursor list should include composer");
+  assert(cmds.includes("composer.openComposer"), "cursor list should include composer.openComposer");
 }
 
 function testBuildFocusOpenAntigravityFirst(): void {

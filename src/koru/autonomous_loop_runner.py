@@ -360,8 +360,8 @@ def _quick_action_lines(
     if queue_status == "waiting_input" and waiting_ticket and waiting_ticket != "-":
         if "stuck_waiting_input" in status:
             actions.append(
-                f"[mark llm-ready] `planfile ticket bulk-update -s current "
-                f"-l {waiting_ticket} --add-label llm-ready --force`"
+                "[auto llm-ready] enabled by default; set "
+                "`KORU_AUTOPILOT_AUTO_LLM_READY=0` to require manual approval"
             )
         actions.append(
             f"[mark ticket input] `planfile ticket input {waiting_ticket} "

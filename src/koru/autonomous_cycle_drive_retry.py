@@ -1,4 +1,5 @@
 import json
+import os
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -12,6 +13,39 @@ from koru.autonomy.env import (
 from koru.autonomy.env import (
     env_truthy,
 )
+
+
+def _max_drive_retries() -> int:
+    """Read ``KORU_AUTOPILOT_DRIVE_MAX_RETRIES`` (default 3, was 5 historically).
+
+    Three attempts handles the common transient case (focus race, plugin
+    cold-start) without wasting 25s on identical failures when the issue is
+    persistent (chat panel closed, plugin still loading old code).
+    """
+    raw = os.environ.get("KORU_AUTOPILOT_DRIVE_MAX_RETRIES", "").strip()
+    if not raw:
+        return 3
+    try:
+        value = int(raw)
+    except ValueError:
+        return 3
+    return max(1, min(value, 10))
+
+
+def _drive_failure_signature(reply: dict[str, Any]) -> str:
+    """Stable signature for de-duplicating repeated retry attempts.
+
+    The autonomous loop used to retry up to 5 times with a 5s sleep even when
+    every reply carried the *same* failure reason (e.g. ``chat input is not
+    focused/open``). That wasted 25s per cycle and spammed the operator with
+    identical red banners. We collapse retries by hashing the most
+    discriminating fields and breaking the loop as soon as the same signature
+    appears twice in a row.
+    """
+    msg = str(reply.get("message") or "").strip().lower()
+    verification = str(reply.get("verification") or "").strip().lower()
+    reason = str(reply.get("reason") or "").strip().lower()
+    return f"{verification}|{reason}|{msg[:200]}"
 from koru.autonomy.env import (
     plugin_required_for_ide as _plugin_required_for_ide,
 )
@@ -477,7 +511,8 @@ def _execute_autopilot_drive(
     # whether to apply the escalation-cooldown multiplier on the next cycle.
     state.last_driven_kind = decision.kind
     require_plugin = _resolve_drive_plugin_requirement(client, autopilot_ide)
-    attempts = 5
+    attempts = _max_drive_retries()
+    previous_signature: str | None = None
     for attempt in range(attempts):
         reply, ok = _drive_autopilot_once(
             client,
@@ -488,6 +523,14 @@ def _execute_autopilot_drive(
         )
         if ok:
             break
+        signature = _drive_failure_signature(reply)
+        if previous_signature is not None and signature == previous_signature:
+            _hp(
+                "  autopilot: aborting retry loop — identical failure repeated "
+                f"(attempt {attempt + 1}/{attempts}, signature unchanged)",
+            )
+            break
+        previous_signature = signature
         if not _handle_failed_drive_attempt(reply, attempt, attempts):
             break
 

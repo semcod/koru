@@ -92,6 +92,7 @@ from koru.doctor_constants import (
     WARN,
     _PROBLEM_CATALOG,
 )
+from koru.doctor_render import detected_problems, render_problem_catalog_text, render_text
 from koru.policy import policy_path
 from koru.project_pipeline import KORU_PROJECT_PIPELINE_FILENAME, project_pipeline_path
 from koru.runtime import planfile_dir, runtime_dir
@@ -216,15 +217,6 @@ def run_diagnostics(project: Path) -> DoctorReport:
     return report
 
 
-def detected_problems(report: DoctorReport) -> list[dict[str, str]]:
-    """Return warnings/failures as an explicit problem list for UX and JSON output."""
-    return [
-        c.to_dict()
-        for c in report.checks
-        if c.status in (WARN, FAIL)
-    ]
-
-
 def problem_catalog() -> list[dict[str, str]]:
     """Return known problem classes and their detection rules."""
     return [
@@ -236,17 +228,6 @@ def problem_catalog() -> list[dict[str, str]]:
         }
         for item in _PROBLEM_CATALOG
     ]
-
-
-def render_problem_catalog_text() -> str:
-    """Render known problem classes in a compact text table."""
-    lines = ["Known problems and detection rules:"]
-    for item in _PROBLEM_CATALOG:
-        sev = item.severity.upper()
-        lines.append(f"  - [{sev}] {item.check}: {item.problem}")
-        lines.append(f"      detection: {item.detection}")
-    return "\n".join(lines)
-
 
 # ---------------------------------------------------------------------------
 # Individual probes
@@ -1938,41 +1919,3 @@ def _check_ci_command(project: Path) -> tuple[str, str]:
         return PASS, f"`{policy.ci_command}` (file exists)"
     return FAIL, f"ci.command first token `{first}` not on PATH"
 
-
-# ---------------------------------------------------------------------------
-# Renderers
-# ---------------------------------------------------------------------------
-
-
-_STATUS_GLYPH = {PASS: "OK ", WARN: "WARN", FAIL: "FAIL", SKIP: "SKIP"}
-
-
-def render_text(report: DoctorReport) -> str:
-    """Human-readable rendering — fixed-width status column."""
-    lines: list[str] = []
-    lines.append(f"koru doctor — {report.project}")
-    lines.append("")
-    width = max((len(c.name) for c in report.checks), default=0)
-    for c in report.checks:
-        glyph = _STATUS_GLYPH.get(c.status, c.status.upper())
-        lines.append(f"  [{glyph}] {c.name.ljust(width)}  {c.detail}")
-    counts = report.summary()
-    total = sum(counts.values())
-    parts = [f"{total} checks"]
-    if counts.get(PASS):
-        parts.append(f"{counts[PASS]} passed")
-    if counts.get(WARN):
-        parts.append(f"{counts[WARN]} warning(s)")
-    if counts.get(FAIL):
-        parts.append(f"{counts[FAIL]} failed")
-    lines.append("")
-    lines.append(f"  {', '.join(parts)}")
-
-    problems = detected_problems(report)
-    if problems:
-        lines.append("")
-        lines.append("Detected problems:")
-        for p in problems:
-            glyph = _STATUS_GLYPH.get(p["status"], p["status"].upper())
-            lines.append(f"  - [{glyph}] {p['name']}: {p['detail']}")
-    return "\n".join(lines)

@@ -62,6 +62,15 @@ function focusInputCommandsPrefix(): string[] {
   ];
 }
 
+/** Generic VS Code focus commands that are NOT chat input on Cursor. */
+function focusInputCommandsBlocklist(): string[] {
+  return [
+    "workbench.action.focusAuxiliaryBar",
+    "workbench.action.focusPanel",
+    "workbench.action.focusSideBar",
+  ];
+}
+
 function preferCtrlSubmit(): boolean {
   // Cursor's chat textarea treats plain `Return` as a newline; only
   // `Ctrl+Return` actually submits.
@@ -97,6 +106,17 @@ function sanitizeProbeCache(
     entry.focusOpen === "aichat.newchataction"
   ) {
     entry.focusOpen = undefined;
+  }
+  // ``workbench.action.focusAuxiliaryBar`` exits 0 but only focuses the
+  // auxiliary bar chrome — not the Composer textarea. Cached as focusInput
+  // it blocked every focus_open attempt because snapshot verify never saw
+  // chat focus.
+  if (typeof entry.focusInput === "string") {
+    const blocked = new Set(focusInputCommandsBlocklist().map((c) => c.toLowerCase()));
+    const cmd = entry.focusInput.toLowerCase();
+    if (blocked.has(cmd) || (!cmd.includes("chat") && !cmd.includes("composer") && !cmd.includes("cascade"))) {
+      entry.focusInput = undefined;
+    }
   }
   // Discard "type:" wins (legacy plugin ≤0.1.46 cached typing `\n` as the
   // submit; in Cursor that just inserts a newline).
@@ -140,7 +160,7 @@ function sanitizeProbeCache(
  */
 function focusOpenCommandsDefaults(): string[] {
   return [
-    "composer.showComposer",
+    "composer.openComposer",
     "composer.openAsPane",
     "composer.focusComposer",
     "cursor.composer.open",
@@ -149,6 +169,25 @@ function focusOpenCommandsDefaults(): string[] {
     "workbench.panel.aichat.view.copilot.focus",
     "workbench.panel.chat",
   ];
+}
+
+/**
+ * Cursor keeps the file ``TextEditor`` active while Composer lives in the
+ * auxiliary bar webview, so ``verifyFocusAfterOpen`` (editor snapshot) always
+ * rejects valid open commands. Trust composer/chat surface commands when
+ * ``executeCommand`` returned true.
+ */
+function trustFocusOpenCommand(command: string): boolean {
+  const n = command.toLowerCase();
+  if (n === "aichat.newchataction") {
+    return false;
+  }
+  return (
+    n.startsWith("composer.")
+    || n.includes("panel.chat")
+    || n.includes("panel.aichat")
+    || n.includes("cursor.composer")
+  );
 }
 
 function trustFocusOpenWithoutEditorSnapshot(): boolean {
@@ -166,6 +205,8 @@ export const cursorStrategy: IdeStrategy = {
   sanitizeProbeCache,
   focusOpenCommandsDefaults,
   trustFocusOpenWithoutEditorSnapshot,
+  trustFocusOpenCommand,
+  focusInputCommandsBlocklist,
   submitFallback: {
     // When the host-key submit produced no effect we must NOT fall back to
     // typing newlines into the chat textarea — those just accumulate

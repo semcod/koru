@@ -36,7 +36,6 @@ import shutil
 import subprocess
 from collections import Counter
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
@@ -44,76 +43,14 @@ from typing import Any
 import yaml
 
 from koru.semcod_tools import detect_semcod_tools
+from koru.scan_types import (
+    CreateTicketResult,
+    ScanResult,
+    Suggestion,
+    format_create_exception as _format_create_exception,
+)
 from koru.tasks import create_nl_task
 from koru.utils.subprocess_runner import default_subprocess_runner, get_python_cmd
-
-# ---------------------------------------------------------------------------
-# Public dataclass
-# ---------------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class Suggestion:
-    """One proposed planfile ticket derived from a repo signal."""
-
-    signal: str  # e.g. "pytest_collect" / "todo_markers" / "missing_gate"
-    title: str
-    description: str
-    priority: str = "normal"  # critical | high | normal | low
-    labels: tuple[str, ...] = ()
-    files: tuple[str, ...] = ()
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "signal": self.signal,
-            "title": self.title,
-            "description": self.description,
-            "priority": self.priority,
-            "labels": list(self.labels),
-            "files": list(self.files),
-        }
-
-
-@dataclass(frozen=True)
-class ScanResult:
-    """Aggregate output of ``run_scan``."""
-
-    suggestions: list[Suggestion]
-    applied: list[str] = field(default_factory=list)  # ticket IDs / names actually created
-    skipped: list[str] = field(default_factory=list)  # duplicates + failed creates
-    # Fine-grained breakdown of ``skipped`` so operator logs can explain WHY
-    # nothing was applied. ``skipped_as_duplicate`` = title or signal already
-    # exists in an *active* ticket in the planfile sprint (closed tickets are
-    # excluded by ``_existing_scan_titles`` so regressing signals can reopen
-    # work). ``skipped_create_failed`` = planfile rejected the create call
-    # (permission, lock, validation, etc.).
-    skipped_as_duplicate: list[str] = field(default_factory=list)
-    skipped_create_failed: list[str] = field(default_factory=list)
-    skipped_create_failed_details: list[str] = field(default_factory=list)
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "suggestions": [s.to_dict() for s in self.suggestions],
-            "applied": list(self.applied),
-            "skipped": list(self.skipped),
-            "skipped_as_duplicate": list(self.skipped_as_duplicate),
-            "skipped_create_failed": list(self.skipped_create_failed),
-            "skipped_create_failed_details": list(self.skipped_create_failed_details),
-        }
-
-
-@dataclass(frozen=True)
-class CreateTicketResult:
-    ok: bool
-    detail: str = ""
-
-
-def _format_create_exception(exc: BaseException) -> str:
-    text = str(exc).strip()
-    if text:
-        return text
-    return exc.__class__.__name__
-
 
 # ---------------------------------------------------------------------------
 # Signal probes — each returns a list[Suggestion]; never raises

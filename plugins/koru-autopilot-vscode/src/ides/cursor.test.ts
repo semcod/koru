@@ -103,6 +103,10 @@ function testProbeLadderUsesCursorStrategy(): void {
   // buildFocusInputCommands: Cursor has composer-specific focus commands first
   const focus = buildFocusInputCommands("cursor");
   eq(focus[0], "composer.focusComposer", "Cursor focus list starts with composer.focusComposer");
+  assert(
+    !focus.includes("workbench.action.focusAuxiliaryBar"),
+    "Cursor must not try focusAuxiliaryBar (false-positive chat focus)",
+  );
 }
 
 function testProbeCacheSanitizationForCursor(): void {
@@ -186,6 +190,22 @@ function testProbeCacheSanitizationForCursor(): void {
     "registered composer.sendToAgent must be preserved",
   );
 
+  const auxBar = sanitizeProbeCacheForIde(
+    {
+      version: PROBE_CACHE_VERSION,
+      ide: "cursor",
+      appName: "Cursor",
+      focusInput: "workbench.action.focusAuxiliaryBar",
+      updatedAt: "",
+    },
+    "cursor",
+  );
+  eq(
+    auxBar?.focusInput,
+    undefined,
+    "focusAuxiliaryBar focusInput cache must be cleared for Cursor",
+  );
+
   // aichat.newchataction opens a NEW chat tab in Cursor. If it ever
   // wins the focus_open probe, the cache must be invalidated so the
   // ladder re-probes against commands that target the existing chat
@@ -226,9 +246,9 @@ function testFocusOpenDefaultsExcludeNewChatTab(): void {
         "(opens a new chat tab; submits land in the wrong pane)",
     );
   }
-  if (!defaults.includes("composer.showComposer")) {
+  if (!defaults.includes("composer.openComposer")) {
     throw new Error(
-      "Cursor focus_open defaults must include composer.showComposer " +
+      "Cursor focus_open defaults must include composer.openComposer " +
         "as the primary candidate for the existing chat surface",
     );
   }

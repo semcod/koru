@@ -1,3 +1,5 @@
+import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +15,11 @@ from koru.autonomy.prompts import DEFAULT_ESCALATION_THRESHOLD
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
 from koru.topology import is_component_enabled, is_pipeline_enabled
+
+
+def _auto_llm_ready_enabled() -> bool:
+    raw = os.getenv("KORU_AUTOPILOT_AUTO_LLM_READY", "1").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
 
 
 def _is_topology_enabled(project: Path, key: str, *, fallback: bool, enabled: bool) -> bool:
@@ -58,6 +65,169 @@ def _waiting_ticket_has_label(
         labels = ticket.get("labels") or []
         return label in {str(item) for item in labels}
     return False
+
+
+def _waiting_ticket_path_and_ticket(
+    project: Path,
+    queue_result: QueueLoopResult,
+) -> tuple[Path, dict[str, Any]] | None:
+    ticket_id = _waiting_ticket_id(queue_result)
+    if not ticket_id:
+        return None
+    for sprint_path in (
+        project / ".planfile" / "sprints" / "current.yaml",
+        project / "planfile.yaml",
+    ):
+        if not sprint_path.is_file():
+            continue
+        try:
+            data = yaml.safe_load(sprint_path.read_text(encoding="utf-8")) or {}
+        except (OSError, yaml.YAMLError):
+            continue
+        tickets = data.get("tickets")
+        if tickets is None and isinstance(data.get("sprint"), dict):
+            tickets = data["sprint"].get("tickets")
+        if not isinstance(tickets, dict):
+            continue
+        ticket = tickets.get(ticket_id)
+        if not isinstance(ticket, dict):
+            continue
+        return sprint_path, data
+    return None
+
+
+def _add_waiting_ticket_label(
+    project: Path,
+    queue_result: QueueLoopResult,
+    label: str,
+) -> bool:
+    found = _waiting_ticket_path_and_ticket(project, queue_result)
+    if found is None:
+        return False
+    sprint_path, data = found
+    ticket_id = _waiting_ticket_id(queue_result)
+    if _waiting_ticket_has_label(project, queue_result, label):
+        return True
+    try:
+        text = sprint_path.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    updated = _add_label_to_ticket_yaml_text(text, ticket_id, label)
+    if updated is None:
+        return False
+    try:
+        sprint_path.write_text(updated, encoding="utf-8")
+    except OSError:
+        return False
+    return True
+
+
+def _add_label_to_ticket_yaml_text(text: str, ticket_id: str, label: str) -> str | None:
+    """Text-preserving Planfile label insert for a single ticket block."""
+    lines = text.splitlines(keepends=True)
+    start = -1
+    ticket_indent = ""
+    ticket_re = re.compile(rf"^(\s*){re.escape(ticket_id)}:\s*(?:#.*)?\n?$")
+    for idx, line in enumerate(lines):
+        match = ticket_re.match(line)
+        if match:
+            start = idx
+            ticket_indent = match.group(1)
+            break
+    if start < 0:
+        return None
+    end = len(lines)
+    next_ticket_re = re.compile(rf"^{re.escape(ticket_indent)}\S[^:]*:\s*(?:#.*)?\n?$")
+    for idx in range(start + 1, len(lines)):
+        if next_ticket_re.match(lines[idx]):
+            end = idx
+            break
+
+    label_line_idx = -1
+    for idx in range(start + 1, end):
+        if lines[idx].lstrip().startswith("labels:"):
+            label_line_idx = idx
+            break
+    item_indent = f"{ticket_indent}  "
+    if label_line_idx < 0:
+        lines.insert(start + 1, f"{item_indent}labels:\n")
+        lines.insert(start + 2, f"{item_indent}- {label}\n")
+        return "".join(lines)
+
+    label_line = lines[label_line_idx]
+    label_indent = label_line[: len(label_line) - len(label_line.lstrip())]
+    stripped = label_line.strip()
+    if "[" in stripped:
+        try:
+            parsed = yaml.safe_load(stripped) or {}
+        except yaml.YAMLError:
+            parsed = {}
+        existing = [str(item) for item in parsed.get("labels", [])] if isinstance(parsed, dict) else []
+        if label in existing:
+            return text
+        existing.append(label)
+        replacement = [f"{label_indent}labels:\n"]
+        replacement.extend(f"{label_indent}- {item}\n" for item in existing)
+        lines[label_line_idx : label_line_idx + 1] = replacement
+        return "".join(lines)
+
+    insert_at = end
+    existing_items: set[str] = set()
+    item_re = re.compile(rf"^{re.escape(label_indent)}-\s*(.+?)\s*(?:#.*)?\n?$")
+    for idx in range(label_line_idx + 1, end):
+        line = lines[idx]
+        if line.strip() == "":
+            continue
+        match = item_re.match(line)
+        if not match:
+            insert_at = idx
+            break
+        existing_items.add(match.group(1).strip().strip("'\""))
+        insert_at = idx + 1
+    if label in existing_items:
+        return text
+    lines.insert(insert_at, f"{label_indent}- {label}\n")
+    return "".join(lines)
+
+
+def _waiting_ticket_id(queue_result: QueueLoopResult) -> str:
+    ticket_id = _queue_loop_waiting_ticket_label(queue_result)
+    if ticket_id == "-":
+        ticket_id = getattr(queue_result, "last_ticket_id", None) or ""
+    return str(ticket_id or "")
+
+
+def _autopromote_waiting_ticket_llm_ready(
+    project: Path,
+    queue_result: QueueLoopResult,
+    *,
+    cycle_telemetry: dict[str, Any],
+    _hp: callable,
+) -> bool:
+    """Add ``llm-ready`` to the waiting ticket so autopilot can do the work.
+
+    ``waiting_input`` is a safe default for human operators, but in autonomous
+    mode it can strand runnable tickets until someone copies the suggested
+    ``planfile bulk-update`` command. This promotion keeps the old guardrail
+    opt-out-able while letting Koru unblock its own operator tickets.
+    """
+    if not _auto_llm_ready_enabled():
+        return False
+    ticket_id = _waiting_ticket_id(queue_result)
+    if not ticket_id:
+        return False
+    if _waiting_ticket_has_label(project, queue_result, "llm-ready"):
+        return True
+    if not _add_waiting_ticket_label(project, queue_result, "llm-ready"):
+        text = "ticket not found or sprint file is not writable"
+        cycle_telemetry["autopilot_auto_llm_ready_failed"] = True
+        cycle_telemetry["autopilot_auto_llm_ready_error"] = text
+        _hp(f"- autopilot auto llm-ready failed ({ticket_id}: {text})")
+        return False
+    cycle_telemetry["autopilot_auto_llm_ready"] = True
+    cycle_telemetry["autopilot_auto_llm_ready_ticket"] = ticket_id
+    _hp(f"- autopilot auto llm-ready: added label to {ticket_id}")
+    return True
 
 
 def _check_autopilot_skip_conditions(
@@ -133,6 +303,17 @@ def _check_autopilot_skip_conditions(
         state=state,
         autopilot_skip_statuses=autopilot_skip_statuses,
     ):
+        if _autopromote_waiting_ticket_llm_ready(
+            project,
+            queue_result,
+            cycle_telemetry=cycle_telemetry,
+            _hp=_hp,
+        ):
+            _hp(
+                "- autopilot not skipped "
+                f"(auto llm-ready, streak={state.stagnation_streak})",
+            )
+            return False, ""
         return _handle_stuck_status_skip_candidate(
             project=project,
             queue_result=queue_result,

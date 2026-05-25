@@ -92,6 +92,17 @@ export interface IdeStrategy {
    */
   trustFocusOpenWithoutEditorSnapshot(): boolean;
 
+  /**
+   * When ``executeCommand`` succeeds for a focus-open candidate, accept it
+   * without editor-snapshot proof (Cursor Composer in auxiliary bar).
+   */
+  trustFocusOpenCommand?(command: string): boolean;
+
+  /**
+   * Generic focus-input commands to skip for this IDE (false positives).
+   */
+  focusInputCommandsBlocklist?(): string[];
+
   /** Submit fallback policy used by `_submitChat*Fallback` in extension.ts. */
   readonly submitFallback: SubmitFallbackPolicy;
 }

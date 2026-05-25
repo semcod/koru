@@ -7,18 +7,33 @@ import time
 from pathlib import Path
 from typing import Any
 
+from koru.autonomous_cycle_chat_activity import (
+    _autopilot_redrive_cooldown_seconds,
+    _extract_needs_input_question,
+    _skip_due_to_recent_chat_activity,
+)
 from koru.autonomous_cycle_common import DiagnosticResult, _queue_loop_waiting_ticket_label
+from koru.autonomous_cycle_drive_retry import (
+    _log_autopilot_result,
+    _reply_chat_input_busy,
+    _resolve_autopilot_drive_decision,
+)
 from koru.autonomous_cycle_orchestrator import _handle_autopilot_phase
 from koru.autonomous_cycle_skip_conditions import (
     _is_topology_enabled,
 )
 from koru.autonomous_wup import WupHealthResult
 from koru.autonomous_wup import _read_wup_health as _read_wup_health_impl
-from koru.autonomy.decision_trace import (
-    append_decision_record,
-    build_decision_record,
-    human_skip_reason,
+from koru.autonomy.cycle_finalize import (
+    emit_cycle_completion_events as _emit_cycle_completion_events_impl,
 )
+from koru.autonomy.cycle_trace import (
+    decision_next_step_hint as _decision_next_step_hint_impl,
+)
+from koru.autonomy.cycle_trace import (
+    record_decision_trace as _record_decision_trace_impl,
+)
+from koru.autonomy.env import plugin_required_for_ide as _plugin_required_for_ide
 from koru.autonomy.phases.queue_phase import handle_queue_hygiene as _handle_queue_hygiene
 from koru.autonomy.phases.verify_phase import (
     handle_post_run_verify_ide as _handle_post_run_verify_ide,
@@ -27,7 +42,6 @@ from koru.autonomy.post_run_verify import (
     verify_completed_tickets,
 )
 from koru.autonomy.state import AutoloopState
-from koru.autonomy.telemetry_snapshot import write_autonomy_cycle_telemetry
 from koru.queue import QueueLoopResult, run_planfile_queue_loop
 from koru.queue import default_human_prompt as _default_human_prompt
 from koru.queue import run_api_request as _run_api_request
@@ -37,19 +51,18 @@ from koru.queue import run_shell_command as _run_shell_command
 from koru.scan import ScanResult, run_scan
 from koru.stdio_events import write_stdio_event
 from koru.tasks import create_nl_task
-from koru.autonomy.env import plugin_required_for_ide as _plugin_required_for_ide
 from koruide.ide import detect_terminal_host_ide_id
-from koru.autonomous_cycle_chat_activity import (
+
+_LEGACY_AUTONOMOUS_CYCLE_EXPORTS = (
+    detect_terminal_host_ide_id,
+    _plugin_required_for_ide,
     _autopilot_redrive_cooldown_seconds,
     _skip_due_to_recent_chat_activity,
     _extract_needs_input_question,
-)
-from koru.autonomous_cycle_drive_retry import (
     _reply_chat_input_busy,
     _resolve_autopilot_drive_decision,
     _log_autopilot_result,
 )
-
 
 
 def _stdio_info(msg: str, *, fmt: str) -> None:
@@ -554,94 +567,6 @@ def _handle_diagnostics(
     return diag_result, wup_health
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def _record_decision_trace(
     *,
     project: Path,
@@ -657,40 +582,20 @@ def _record_decision_trace(
     stagnation_streak: int,
     _hp: callable,
 ) -> None:
-    """Build + persist + log a structured ``DecisionRecord`` for this cycle.
-
-    The shell line uses the ``  decision:`` prefix so the existing ``_hp``
-    categorizer (in ``run_cycle``'s closure) sends it to the
-    ``KORUAUTONOMOUS`` activity channel without a hand-rolled rule for
-    each new field.
-    """
-    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
-    next_step = _decision_next_step_hint(
-        queue_status=str(queue_result.last_status or ""),
-        autopilot_status=autopilot_status,
-        cycle_telemetry=cycle_telemetry,
-    )
-    record = build_decision_record(
+    _record_decision_trace_impl(
+        project=project,
         cycle=cycle,
-        queue_status=str(queue_result.last_status or ""),
-        waiting_ticket=waiting_ticket,
-        stagnation_streak=stagnation_streak,
+        queue_result=queue_result,
+        diag_result=diag_result,
+        wup_health=wup_health,
         autopilot_status=autopilot_status,
         autopilot_ide=autopilot_ide,
         autopilot_backend=autopilot_backend,
         autopilot_drive_kind=autopilot_drive_kind,
-        diag_status=str(getattr(diag_result, "status", "") or ""),
-        wup_status=str(getattr(wup_health, "status", "") or ""),
         cycle_telemetry=cycle_telemetry,
-        next_step=next_step,
+        stagnation_streak=stagnation_streak,
+        hp=_hp,
     )
-    append_decision_record(project, record)
-    _hp(f"  decision: {record.compact_line()}")
-    if record.skip_code not in ("ok",):
-        reason = human_skip_reason(record.skip_code, fallback=record.skip_code)
-        because = record.skip_because
-        suffix = f" — {because}" if because else ""
-        _hp(f"  decision: because[{record.skip_code}] {reason}{suffix}")
 
 
 def _decision_next_step_hint(
@@ -699,42 +604,11 @@ def _decision_next_step_hint(
     autopilot_status: str,
     cycle_telemetry: dict[str, Any],
 ) -> str:
-    """Compact ``next=`` token for the decision trace.
-
-    Picks a SHORT verb-phrase (≤ 60 chars) describing what the next
-    cycle will try. Long human-readable instructions stay in
-    ``_operator_next_steps``.
-    """
-    status = (autopilot_status or "").lower()
-    if status == "ok":
-        return "wait for IDE response, then advance queue"
-    if cycle_telemetry.get("autopilot_skipped_plugin_missing"):
-        return "wait for plugin reconnect (manual reload may be needed)"
-    if cycle_telemetry.get("autopilot_skipped_ide_mismatch"):
-        return "switch lane or set KORU_AUTOPILOT_INSTANCE for target IDE"
-    if cycle_telemetry.get("autopilot_skipped_chat_activity"):
-        return "wait for chat cooldown to expire"
-    if cycle_telemetry.get("autopilot_skipped_idle_no_ticket"):
-        return "scan / reopen done ticket / `koru --ticket`"
-    if cycle_telemetry.get("autopilot_skipped_idle_streak"):
-        return "let idle backoff drain before next drive"
-    if cycle_telemetry.get("autopilot_skipped_manual_focus"):
-        return "operator must foreground the chat surface"
-    if cycle_telemetry.get("autopilot_skipped_stuck_status"):
-        return "mark ticket llm-ready OR move it to input/done before next drive"
-    if cycle_telemetry.get("autopilot_skipped_diagnostics_fail"):
-        return (
-            "fix failing WUP/diagnostics, OR mark the diag ticket done, "
-            "OR rerun with --no-autopilot-skip-on-diagnostics-fail"
-        )
-    if status == "failed":
-        return "retry next cycle (cached winner discarded)"
-    queue_status = (queue_status or "").lower()
-    if queue_status == "waiting_input":
-        return "keep waiting ticket scoped; rerun queue next cycle"
-    if queue_status == "idle":
-        return "run idle scan / intake strategy"
-    return "rerun queue + diagnostics"
+    return _decision_next_step_hint_impl(
+        queue_status=queue_status,
+        autopilot_status=autopilot_status,
+        cycle_telemetry=cycle_telemetry,
+    )
 
 
 def _emit_cycle_completion_events(
@@ -752,63 +626,12 @@ def _emit_cycle_completion_events(
     scan_after_idle_queue: bool,
     scan_after_idle_min_interval_seconds: float,
     autopilot_skip_drive_idle_streak: int,
-    _hp: callable,
-    _emit: callable,
+    hp: callable,
+    emit: callable,
 ) -> None:
-    _emit(
-        "AutopilotDecision",
-        {
-            "cycle": cycle,
-            "decision": autopilot_status,
-            "queue_status": queue_result.last_status,
-            "ide": autopilot_ide,
-            "backend": autopilot_backend,
-            "drive_kind": autopilot_drive_kind,
-        },
-    )
-    _hp(
-        f"koru autonomous: cycle={cycle} queue={queue_result.last_status} "
-        f"diagnostics={diag_result.status} wup={wup_health.status} autopilot={autopilot_status}",
-    )
-    _emit(
-        "CycleCompleted",
-        {
-            "cycle": cycle,
-            "queue_status": queue_result.last_status,
-            "diagnostics_status": diag_result.status,
-            "wup_status": wup_health.status,
-            "autopilot_status": autopilot_status,
-            "telemetry": {
-                "cycle": cycle_telemetry,
-                "cumulative": {
-                    "autopilot_idle_streak_skips": state.telemetry_autopilot_idle_streak_skips,
-                    "scan_after_idle_runs": state.telemetry_scan_after_idle_runs,
-                    "scan_after_idle_tickets_applied": (
-                        state.telemetry_scan_after_idle_tickets_applied
-                    ),
-                },
-            },
-        },
-    )
-
-    write_autonomy_cycle_telemetry(
-        project,
-        cycle=cycle,
-        cumulative={
-            "autopilot_idle_streak_skips": state.telemetry_autopilot_idle_streak_skips,
-            "scan_after_idle_runs": state.telemetry_scan_after_idle_runs,
-            "scan_after_idle_tickets_applied": state.telemetry_scan_after_idle_tickets_applied,
-        },
-        cycle_metrics=cycle_telemetry,
-        knobs={
-            "scan_after_idle_queue": scan_after_idle_queue,
-            "scan_after_idle_min_interval_seconds": scan_after_idle_min_interval_seconds,
-            "autopilot_skip_drive_idle_streak": autopilot_skip_drive_idle_streak,
-        },
-    )
-
-    _record_decision_trace(
+    _emit_cycle_completion_events_impl(
         project=project,
+        state=state,
         cycle=cycle,
         queue_result=queue_result,
         diag_result=diag_result,
@@ -818,9 +641,100 @@ def _emit_cycle_completion_events(
         autopilot_backend=autopilot_backend,
         autopilot_drive_kind=autopilot_drive_kind,
         cycle_telemetry=cycle_telemetry,
-        stagnation_streak=int(getattr(state, "stagnation_streak", 0) or 0),
-        _hp=_hp,
+        scan_after_idle_queue=scan_after_idle_queue,
+        scan_after_idle_min_interval_seconds=scan_after_idle_min_interval_seconds,
+        autopilot_skip_drive_idle_streak=autopilot_skip_drive_idle_streak,
+        hp=hp,
+        emit=emit,
     )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def run_cycle(
@@ -998,22 +912,22 @@ def run_cycle(
     )
 
     _emit_cycle_completion_events(
-        project,
-        state,
-        cycle,
-        queue_result,
-        diag_result,
-        wup_health,
-        autopilot_status,
-        autopilot_ide,
-        autopilot_backend,
-        autopilot_drive_kind,
-        cycle_telemetry,
-        scan_after_idle_queue,
-        scan_after_idle_min_interval_seconds,
-        autopilot_skip_drive_idle_streak,
-        _hp,
-        _emit,
+        project=project,
+        state=state,
+        cycle=cycle,
+        queue_result=queue_result,
+        diag_result=diag_result,
+        wup_health=wup_health,
+        autopilot_status=autopilot_status,
+        autopilot_ide=autopilot_ide,
+        autopilot_backend=autopilot_backend,
+        autopilot_drive_kind=autopilot_drive_kind,
+        cycle_telemetry=cycle_telemetry,
+        scan_after_idle_queue=scan_after_idle_queue,
+        scan_after_idle_min_interval_seconds=scan_after_idle_min_interval_seconds,
+        autopilot_skip_drive_idle_streak=autopilot_skip_drive_idle_streak,
+        hp=_hp,
+        emit=_emit,
     )
 
     return scan_result, queue_result, autopilot_status, diag_result

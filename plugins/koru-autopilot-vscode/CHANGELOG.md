@@ -4,6 +4,31 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.71] — 2026-05-25
+
+### Fixed
+- **Cursor: drive failed with `focus_open/all-candidates=fail` and
+  `focus_input/command=ok:workbench.action.focusAuxiliaryBar`.** Two bugs:
+  1. ``focusAuxiliaryBar`` was cached as the focus-input winner even though
+     it only focuses the auxiliary bar chrome, not the Composer textarea.
+     Every ``focus_open`` attempt then failed snapshot verification because
+     the file editor stayed active.
+  2. ``composer.showComposer`` is not registered in recent Cursor builds;
+     ``composer.openComposer`` is. Valid open commands were rejected because
+     Cursor keeps the file ``TextEditor`` active while Composer lives in the
+     auxiliary bar — ``verifyFocusAfterOpen`` never saw a snapshot change.
+
+  Fix:
+  - ``focusChatInput`` only accepts/caches commands that pass
+    ``isSpecificChatInputFocusCommand`` (chat/composer/cascade).
+  - Cursor strategy blocklists ``focusAuxiliaryBar`` / ``focusPanel`` /
+    ``focusSideBar`` from the focus-input ladder and clears poisoned cache
+    entries on load.
+  - Cursor ``focusOpenCommandsDefaults`` now lead with ``composer.openComposer``.
+  - New ``trustFocusOpenCommand`` strategy hook: composer/chat surface
+    commands are accepted after ``executeCommand`` succeeds without
+    requiring editor-snapshot proof.
+
 ## [0.1.70] — 2026-05-25
 
 ### Fixed

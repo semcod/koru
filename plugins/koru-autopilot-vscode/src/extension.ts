@@ -1250,6 +1250,15 @@ class AutopilotBridge {
       this.traceOperation({ op: "focus_open", route: "command+input", ok: true, command: combined });
       return { ok: true, command: combined };
     }
+    const strategy = getStrategy(context.ide);
+    if (strategy?.trustFocusOpenCommand?.(command)) {
+      debugLog("FOCUS_OPEN_SUCCESS_TRUSTED", { cmd: command, ide: context.ide });
+      if (context.useProbe) {
+        await this.saveProbeCache({ focusOpen: command });
+      }
+      this.traceOperation({ op: "focus_open", route: "trusted-command", ok: true, command });
+      return { ok: true, command };
+    }
     const after = this.editorSnapshot();
     debugLog("FOCUS_OPEN_AFTER_SNAPSHOT", { cmd: command, after });
     if (!context.useProbe || verifyFocusAfterOpen(context.before, after, context.ide)) {
@@ -1590,15 +1599,27 @@ class AutopilotBridge {
     debugLog("FOCUS_INPUT_CANDIDATES", { ide, candidates });
     for (const cmd of candidates) {
       debugLog("FOCUS_INPUT_ATTEMPT", { cmd });
-      if (await this.runCommand(cmd)) {
-        debugLog("FOCUS_INPUT_SUCCESS", { cmd });
-        if (this.probeLadderEnabled()) {
-          await this.saveProbeCache({ focusInput: cmd });
-        }
-        this.traceOperation({ op: "focus_input", route: "command", ok: true, command: cmd });
-        return { ok: true, command: cmd };
+      if (!(await this.runCommand(cmd))) {
+        debugLog("FOCUS_INPUT_COMMAND_FAILED", { cmd });
+        continue;
       }
-      debugLog("FOCUS_INPUT_COMMAND_FAILED", { cmd });
+      if (!isSpecificChatInputFocusCommand(cmd)) {
+        debugLog("FOCUS_INPUT_NOT_CHAT", { cmd });
+        this.traceOperation({
+          op: "focus_input",
+          route: "non-chat-command",
+          ok: false,
+          command: cmd,
+          reason: "command succeeded but is not a chat/composer focus command",
+        });
+        continue;
+      }
+      debugLog("FOCUS_INPUT_SUCCESS", { cmd });
+      if (this.probeLadderEnabled()) {
+        await this.saveProbeCache({ focusInput: cmd });
+      }
+      this.traceOperation({ op: "focus_input", route: "command", ok: true, command: cmd });
+      return { ok: true, command: cmd };
     }
     debugLog("FOCUS_INPUT_ALL_FAILED");
     this.traceOperation({

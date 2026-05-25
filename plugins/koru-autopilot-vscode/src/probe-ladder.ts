@@ -200,11 +200,19 @@ export function buildFocusInputCommands(ide: string): string[] {
     "workbench.action.focusSideBar",
   ];
   const strategy = getStrategy(ide);
+  let merged: string[];
   if (strategy) {
     const prefix = strategy.focusInputCommandsPrefix();
-    return prefix.length ? [...prefix, ...generic] : generic;
+    merged = prefix.length ? [...prefix, ...generic] : generic;
+    const block = strategy.focusInputCommandsBlocklist?.() ?? [];
+    if (block.length > 0) {
+      const blocked = new Set(block.map((c) => c.toLowerCase()));
+      merged = merged.filter((c) => !blocked.has(c.toLowerCase()));
+    }
+  } else {
+    merged = generic;
   }
-  return generic;
+  return merged;
 }
 
 export function buildPasteDirectCommands(ide: string): string[] {
