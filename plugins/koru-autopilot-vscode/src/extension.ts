@@ -331,6 +331,7 @@ class AutopilotBridge {
       this.status.text = "$(plug) koru: on";
       this.status.tooltip = `koru autopilot: connected ${p}`;
       debugLog("CONNECT_OK", { path: p, ide: this.detectIde() });
+      this.maybeOpenChatOnConnect();
       Promise.resolve(vscode.commands.getCommands(false)).then((cmds) => {
         const matching = cmds.filter(c =>
           c.includes("windsurf") || c.includes("cascade") || c.includes("codeium") || c.includes("chat") || c.includes("composer")
@@ -464,6 +465,48 @@ class AutopilotBridge {
       const cfg = vscode.workspace.getConfiguration("koruAutopilot");
       if (cfg.get<boolean>("autoConnect", true)) this.connect();
     }, delay);
+  }
+
+  private maybeOpenChatOnConnect(): void {
+    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+    if (cfg.get<boolean>("openChatOnConnect", true) === false) {
+      return;
+    }
+    setTimeout(() => {
+      void this.openChatPanel("connect").catch((err) => {
+        const detail = err instanceof Error ? err.message : String(err);
+        safeLog("OPEN_CHAT_ON_CONNECT_FAILED", { detail });
+      });
+    }, 500);
+  }
+
+  private async openChatPanel(reason: string): Promise<FocusOutcome> {
+    this.resetOperationTrace();
+    this.traceOperation({
+      op: "focus_open",
+      route: "plugin",
+      ok: true,
+      detail: { ide: this.detectIde(), reason },
+    });
+    const focus = await this.focusChat();
+    this.traceOperation({
+      op: "focus_open",
+      route: focus.command ? `command:${focus.command}` : "command",
+      ok: focus.ok,
+      reason: focus.reason,
+      attempts: focus.attempts,
+      detail: focus.diagnostics,
+    });
+    this.send({
+      type: "chat.opened",
+      chat: "default",
+      ok: focus.ok,
+      reason,
+      command: focus.command,
+      message: focus.reason,
+      operation_trace: this.currentOperationTrace(),
+    });
+    return focus;
   }
 
   private async runCommand(command: string): Promise<boolean> {

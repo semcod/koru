@@ -1,18 +1,8 @@
-import argparse
-import asyncio
 import os
 import sys
 from pathlib import Path
-from typing import Any
-from koru.events import emit_management_event
-from koru.tasks import create_nl_task
-from koru.tools import build_tool_task_scaffold, detect_tools, find_tool_entry, load_tool_registry, render_tools_detect_text
-from koru.serve import DEFAULT_HOST, DEFAULT_PORT
-from koru.agents import detect_agent_options
-from koru.context import build_context, render_markdown_handoff
-from koru.autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
-from koru.bootstrap import import_flat_pipeline
 
+from koru.autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
 
 
 def _legacy_attr(name: str, fallback):
@@ -39,6 +29,17 @@ def _should_suggest_wizard(argv: list[str], project: Path) -> bool:
     return not (project / ".planfile").exists() and not (project / ".koru").exists()
 
 
+def _enable_auto_reload_reuse_window_for_auto() -> None:
+    """Let ``koru auto`` recover a cold VSIX plugin without manual reload.
+
+    The lower-level reload module keeps ``--reuse-window`` off by default
+    because library callers may not be running the target project in the
+    target IDE. ``koru auto`` is an explicit autonomous IDE session, so its
+    startup path opts in unless the operator set a value already.
+    """
+    os.environ.setdefault("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", "1")
+
+
 def _auto_main(argv: list[str]) -> int:
     """``koru auto``: stop prior autonomous/auto loops, then start with ``--replace-existing``.
 
@@ -53,6 +54,7 @@ def _auto_main(argv: list[str]) -> int:
         argv = argv[1:]
     if any(arg in {"-h", "--help"} for arg in argv):
         return autonomous_main(argv, invoked_as_auto=True)
+    _enable_auto_reload_reuse_window_for_auto()
     project = _peek_project_from_argv(argv)
     if _should_suggest_wizard(argv, project):
         print(
@@ -66,7 +68,23 @@ def _auto_main(argv: list[str]) -> int:
                 "(requires pip install 'koru[api]').",
                 file=sys.stderr,
             )
-        print("(skip with KORU_AUTO_SKIP_WIZARD=1 or run `koru auto --allow-duplicate`)", file=sys.stderr)
+        print(
+            "(skip with KORU_AUTO_SKIP_WIZARD=1 or run `koru auto --allow-duplicate`)",
+            file=sys.stderr,
+        )
+    try:
+        from koru.autonomy_strategy import ensure_autonomy_strategy_config
+
+        strategy_result = ensure_autonomy_strategy_config(project)
+        if strategy_result.created_koru_yaml or strategy_result.added_strategy:
+            print(
+                "koru auto: wrote default autonomy.strategy to "
+                f"{strategy_result.path}; strategy={strategy_result.strategy_id}. "
+                "Review/tune with `koru strategy --prompt`.",
+                file=sys.stderr,
+            )
+    except Exception as exc:  # noqa: BLE001 - advisory setup must not block auto
+        print(f"koru auto: autonomy.strategy ensure skipped: {exc}", file=sys.stderr)
     if "--allow-duplicate" not in argv:
         stdio = os.environ.get("KORU_STDIO_FORMAT", "human")
         stop_prior = _legacy_attr(

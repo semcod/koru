@@ -230,6 +230,64 @@ def test_scan_after_idle_runs_code2llm_discovery_when_semcod_scan_empty(
     assert state.telemetry_scan_after_idle_tickets_applied == 1
 
 
+def test_scan_after_idle_duplicate_cooldown_still_runs_general_discovery(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        autonomous_cycle_mod,
+        "run_scan",
+        lambda **_kwargs: pytest.fail("duplicate cooldown should skip concrete scan"),
+    )
+    discoveries: list[Path] = []
+    logs: list[str] = []
+
+    def fake_discovery(project, _hp, _emit):
+        discoveries.append(project)
+        return {"ran": False, "applied": ["Project-wide finding"], "skipped": []}
+
+    monkeypatch.setattr(
+        autonomous_cycle_mod,
+        "_run_code2llm_discovery_after_idle",
+        fake_discovery,
+    )
+    state = autonomous_cycle_mod.AutoloopState(
+        last_scan_duplicate_fingerprint="1:abc",
+        last_scan_duplicate_ts=9999999999.0,
+    )
+    telemetry: dict[str, object] = {}
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=[],
+        last_status="idle",
+        last_message="",
+        last_ticket_id=None,
+    )
+
+    result = autonomous_cycle_mod._handle_scan_after_idle(
+        tmp_path,
+        state,
+        1,
+        queue_result,
+        True,
+        True,
+        0.0,
+        False,
+        telemetry,
+        logs.append,
+        lambda *_args, **_kwargs: None,
+    )
+
+    assert result is None
+    assert discoveries == [tmp_path]
+    assert telemetry["scan_after_idle_skipped_duplicate_cooldown"] is True
+    assert telemetry["code2llm_discovery_applied"] == 1
+    assert state.telemetry_scan_after_idle_tickets_applied == 1
+    assert any("detail→general" in line for line in logs)
+
+
 def test_scan_after_idle_min_interval_skips_second_scan(tmp_path, monkeypatch) -> None:
     calls: list[dict] = []
 

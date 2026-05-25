@@ -17,6 +17,7 @@ def test_detect_semcod_tools_covers_core_semcod_extensions(tmp_path: Path) -> No
         "redup",
         "sumr",
         "sumd",
+        "code2llm",
         "prefact",
         "pfix",
         "vallm",

@@ -209,7 +209,11 @@ def _handle_status_idle(args: Any, project: Any, sleep_text: str, **kwargs: Any)
             "are 'done' or canceled. autopilot drive is suppressed so the "
             "user's chat input isn't clobbered with stale prompts"
         ),
-        f"2/3 next cycle: {discovery}; deduplicated against active tickets only",
+        (
+            "2/3 strategy detail→general: planfile ticket queue first; "
+            f"when empty, {discovery}; then code2llm whole-project discovery "
+            "can create new focused tickets"
+        ),
         (
             "3/3 quick links: create discovery ticket "
             f"{urls['create_project_ticket_action']} ; tickets {urls['tickets']} ; "
@@ -586,6 +590,56 @@ def _record_reconnect_plugin_command(project: Any, *, corr: str, autopilot_ide: 
     )
 
 
+def _should_warn_idle_no_ticket(
+    *,
+    queue_status: str,
+    waiting_ticket: str,
+    autopilot_status: str,
+) -> bool:
+    if waiting_ticket and waiting_ticket != "-":
+        return False
+    status = (autopilot_status or "").strip().lower()
+    queue = (queue_status or "").strip().lower()
+    return queue == "idle" or "idle_no_ticket" in status
+
+
+def _idle_no_ticket_warning(project: Any | None) -> tuple[str, str, dict[str, Any]]:
+    urls = _safe_dashboard_action_urls(project)
+    message = "autonomia nie wykonuje zadania: brak otwartych ticketów w planfile"
+    hint = (
+        "plan: szczegół→ogół — najpierw planfile queue, potem idle scan/code2llm; "
+        "prefact/metrun są narzędziami advisory bez automatycznych adapterów ticketów. "
+        f"Napisz ticket w Web GUI: {urls['create_project_ticket']} ; "
+        f"lista ticketów: {urls['tickets']}"
+    )
+    data = {
+        "blocked_by": "idle_no_ticket",
+        "create_ticket_url": urls["create_project_ticket"],
+        "tickets_url": urls["tickets"],
+    }
+    return message, hint, data
+
+
+def _emit_idle_no_ticket_warning(
+    *,
+    args: Any,
+    project: Any | None,
+    queue_status: str,
+    waiting_ticket: str,
+    autopilot_status: str,
+) -> None:
+    if not _should_warn_idle_no_ticket(
+        queue_status=queue_status,
+        waiting_ticket=waiting_ticket,
+        autopilot_status=autopilot_status,
+    ):
+        return
+    from koru.activity_log import activity_warn
+
+    message, hint, data = _idle_no_ticket_warning(project)
+    activity_warn(message, hint=hint, fmt=args.emit_events, data=data)
+
+
 def _slug(value: str) -> str:
     return "-".join(
         part
@@ -683,7 +737,30 @@ def _log_operator_next_steps(
         actions=actions,
     )
     for action in actions:
-        stdio_info(f"koru autonomous: action {action}", fmt=args.emit_events)
+        _emit_quick_action_line(args=args, action=action, stdio_info=stdio_info)
+
+
+def _emit_quick_action_line(*, args: Any, action: str, stdio_info: Any) -> None:
+    line = f"koru autonomous: action {action}"
+    if _is_create_ticket_action(action):
+        from koru.activity_log import activity_warn
+
+        activity_warn(
+            line,
+            hint=(
+                "ważne: queue jest idle i planfile zgłasza brak otwartych ticketów; "
+                "utwórz ticket, żeby autonomia miała zadanie do wykonania"
+            ),
+            fmt=args.emit_events,
+            data={"action": "create_ticket", "blocked_by": "idle_no_ticket"},
+        )
+        return
+    stdio_info(line, fmt=args.emit_events)
+
+
+def _is_create_ticket_action(action: str) -> bool:
+    label, _body = _split_quick_action(action)
+    return label == "create ticket"
 
 
 def _cycle_stop_reason(args: Any, queue_result: Any, cycle: int) -> str | None:
@@ -897,6 +974,13 @@ def run_autonomous_cycle(
         autopilot_status=autopilot_status,
         effective_sleep=effective_sleep,
         stdio_info=stdio_info,
+    )
+    _emit_idle_no_ticket_warning(
+        args=args,
+        project=project,
+        queue_status=str(getattr(queue_result, "last_status", "") or ""),
+        waiting_ticket=waiting_ticket,
+        autopilot_status=autopilot_status,
     )
     _log_operator_next_steps(
         args=args,

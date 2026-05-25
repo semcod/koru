@@ -31,6 +31,7 @@
   "activationEvents": [
     "*",
     "onCommand:koruAutopilot.connect",
+    "onCommand:koruAutopilot.openChat",
     "onCommand:koruAutopilot.sendChat",
     "onCommand:koruAutopilot.calibrateProbe",
     "onCommand:koruAutopilot.calibrate",
@@ -44,6 +45,10 @@
       {
         "command": "koruAutopilot.connect",
         "title": "koru: Connect autopilot daemon"
+      },
+      {
+        "command": "koruAutopilot.openChat",
+        "title": "koru: Open/focus IDE chat"
       },
       {
         "command": "koruAutopilot.sendChat",
@@ -86,6 +91,11 @@
           "type": "boolean",
           "default": true,
           "description": "Connect to the daemon automatically when the editor starts."
+        },
+        "koruAutopilot.openChatOnConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "After connecting to the koru daemon, open/focus the existing AI chat surface without sending text. The extension uses the configured chatOpenCommands/default focus ladder and does not request a new agent/chat mode."
         },
         "koruAutopilot.probeLadder": {
           "type": "boolean",

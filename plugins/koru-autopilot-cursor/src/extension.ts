@@ -2514,6 +2514,114 @@ class AutopilotBridge {
     }
   }
 
+  /**
+   * Cursor-native fast path: paste **and** submit in a single
+   * ``composer.startComposerPrompt2(text)`` (or fallback
+   * ``composer.startComposerPrompt(text)``) call.
+   *
+   * Why this matters — the regression captured in cycle #810 DSL trace:
+   *   #004 focus_open route=command+input:composer.openAsPane+composer.focusComposer ok=true
+   *   #009 paste     route=vscode-clipboard:editor.action.clipboardPasteAction ok=true
+   *   #013 submit_verify route=chat-input-probe   ok=true   ← input pusty (false positive!)
+   *   #014 submit_verify route=cursor-bubble-db   ok=false  ← w SQLite brak bubble
+   *
+   * Root cause: ``composer.focusComposer`` ustawia focus na **webview**
+   * Composer, ale ``editor.action.clipboardPasteAction`` celuje w
+   * ``vscode.window.activeTextEditor`` (otwarty plik .ts) — paste
+   * landuje w pliku, composer pozostaje pusty, ``composer.sendToAgent``
+   * jest no-op (nic do wysłania), bubble nie powstaje.
+   *
+   * Cursor 3.5 udostępnia ``composer.startComposerPrompt2`` (i legacy
+   * ``composer.startComposerPrompt``), które **bezpośrednio** wpisują
+   * tekst do composer i wykonują submit — bez polegania na clipboard,
+   * focus matching ani VS Code editor commands. Tutaj wywołujemy je
+   * jako fast path z weryfikacją przez ``cursorDiskKV``.
+   */
+  private async tryCursorComposerPromptFastPath(env: Envelope, text: string, submit: boolean): Promise<boolean> {
+    if (this.detectIde() !== "cursor" || !submit) {
+      return false;
+    }
+    const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
+    const candidates = [
+      "composer.startComposerPrompt2",
+      "composer.startComposerPrompt",
+    ];
+    const available = candidates.filter((cmd) => existing.has(cmd));
+    if (available.length === 0) {
+      this.traceOperation({
+        op: "paste",
+        route: "cursor-composer-fastpath:probe",
+        ok: false,
+        reason: "composer.startComposerPrompt2/startComposerPrompt not registered",
+      });
+      return false;
+    }
+    await this.captureCursorBubbleAnchor();
+    for (const cmd of available) {
+      this.traceOperation({
+        op: "paste",
+        route: `cursor-composer-fastpath:${cmd}`,
+        ok: true,
+        detail: { ide: "cursor", textLength: text.length },
+      });
+      try {
+        safeLog("CURSOR_COMPOSER_FASTPATH_EXECUTE", { cmd, textLength: text.length });
+        await Promise.resolve(vscode.commands.executeCommand(cmd, text));
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : String(err);
+        safeLog("CURSOR_COMPOSER_FASTPATH_EXEC_ERROR", { cmd, detail });
+        this.traceOperation({
+          op: "paste",
+          route: `cursor-composer-fastpath:${cmd}`,
+          ok: false,
+          reason: `executeCommand threw: ${detail}`,
+        });
+        continue;
+      }
+      const verifyResult = await this._verifySubmitViaCursorBubble(text);
+      if (verifyResult === null) {
+        this.traceOperation({
+          op: "submit_verify",
+          route: "cursor-bubble-db",
+          ok: false,
+          reason: "verification skipped (no anchor / sqlite unavailable)",
+          detail: { cmd },
+        });
+        return false;
+      }
+      if (verifyResult.matched) {
+        safeLog("CURSOR_COMPOSER_FASTPATH_VERIFIED", { cmd, newUserBubbles: verifyResult.newUserBubbles });
+        this.traceOperation({
+          op: "submit",
+          route: `cursor-composer-fastpath:${cmd}`,
+          ok: true,
+          command: cmd,
+          detail: { newUserBubbles: verifyResult.newUserBubbles },
+        });
+        this.traceOperation({
+          op: "submit_verify",
+          route: "cursor-bubble-db",
+          ok: true,
+          detail: { cmd, newUserBubbles: verifyResult.newUserBubbles },
+        });
+        const focusOutcome: CommandOutcome = { ok: true, command: cmd };
+        const pasteOutcome: CommandOutcome = { ok: true, command: cmd };
+        this.sendSuccessAck(env, focusOutcome, pasteOutcome, cmd);
+        this.sendMessageSent(text);
+        return true;
+      }
+      safeLog("CURSOR_COMPOSER_FASTPATH_NO_BUBBLE", { cmd, newUserBubbles: verifyResult.newUserBubbles });
+      this.traceOperation({
+        op: "submit_verify",
+        route: "cursor-bubble-db",
+        ok: false,
+        reason: "no new user bubble in cursorDiskKV after composer prompt fastpath",
+        detail: { cmd, newUserBubbles: verifyResult.newUserBubbles },
+      });
+    }
+    return false;
+  }
+
   private async submitAfterPaste(
     env: Envelope,
     focus: CommandOutcome,
@@ -2577,6 +2685,10 @@ class AutopilotBridge {
     }
     if (await this.tryWindsurfSendTextFastPath(env, text, submit)) {
       this.traceOperation({ op: "drive", route: "windsurf-fastpath", ok: true });
+      return;
+    }
+    if (await this.tryCursorComposerPromptFastPath(env, text, submit)) {
+      this.traceOperation({ op: "drive", route: "cursor-composer-fastpath", ok: true });
       return;
     }
     if (ide === "windsurf") {

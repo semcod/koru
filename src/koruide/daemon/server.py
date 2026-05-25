@@ -313,6 +313,7 @@ class AutopilotDaemon:
             "session.ended": handle_plugin_event,
             "message.sent": handle_plugin_event,
             "message.received": handle_plugin_event,
+            "chat.opened": handle_plugin_event,
             "status.error": handle_plugin_event,
             "shutdown": handle_shutdown,
             "ping": handle_ping,

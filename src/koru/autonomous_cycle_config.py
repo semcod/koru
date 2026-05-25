@@ -178,9 +178,9 @@ def compute_cycle_sleep(
     loop_state: Any,
     queue_result: Any,
     *,
-    autopilot_status: str = "",
     compute_backoff_sleep: Any,
     now: Any,
+    autopilot_status: str = "",
 ) -> float:
     """Compute sleep duration for the cycle."""
     effective_sleep = compute_backoff_sleep(

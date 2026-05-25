@@ -190,6 +190,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "dsl": _dsl_main,
     "api": _api_main,
     "topology": lambda argv: _lazy_module_main("koru.cli_topology", "topology_main", argv),
+    "strategy": lambda argv: _lazy_module_main("koru.cli_strategy", "strategy_main", argv),
     "runtime-context": lambda argv: _lazy_module_main(
         "koru.cli_runtime_context",
         "_runtime_context_main",

@@ -67,6 +67,7 @@ _TOOLS: tuple[tuple[str, str, str, str | None], ...] = (
     ("redup", "duplicate-code detector", "redup scan . / redup check", "redup"),
     ("sumr", "debounced project summary", "sumr generate / scripts/sumr-refresh.sh", "sumr"),
     ("sumd", "LLM-friendly project snapshot", "sumd . / code2llm ./ -f toon", "sumd"),
+    ("code2llm", "whole-project LLM analysis and ticket discovery", "code2llm . -f all", None),
     ("prefact", "pre-refactor checks", "prefact check", "prefact"),
     ("pfix", "self-healing Python auto-fix", "pfix run", "pfix"),
     ("vallm", "syntax / semantic validation", "vallm validate -f <file>", "vallm"),

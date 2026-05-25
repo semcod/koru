@@ -121,13 +121,64 @@ def test_run_autonomous_cycle_checkpoints_updates_pipeline_and_sleeps() -> None:
     )
     assert "all planfile tickets" in logs[1]
     assert logs[2].startswith(
-        "koru autonomous: next 2/3 next cycle: "
-        "scan/code2llm discovery if freshness and rate limits allow"
+        "koru autonomous: next 2/3 strategy detail→general: "
+        "planfile ticket queue first"
     )
+    assert "code2llm whole-project discovery" in logs[2]
     assert logs[3].startswith("koru autonomous: next 3/3 quick links:")
     assert "/llm/action/create-ticket-for-project" in logs[3]
     assert "/?tab=tickets" in logs[3]
     assert sleeps == [4.5]
+
+
+def test_idle_no_ticket_warning_points_to_web_gui(monkeypatch) -> None:
+    warnings: list[tuple[str, dict[str, object]]] = []
+
+    def capture_warning(message: str, **kwargs: object) -> None:
+        warnings.append((message, kwargs))
+
+    monkeypatch.setattr("koru.activity_log.activity_warn", capture_warning)
+
+    autonomous_loop_runner._emit_idle_no_ticket_warning(
+        args=SimpleNamespace(emit_events="human"),
+        project="project",
+        queue_status="idle",
+        waiting_ticket="-",
+        autopilot_status="skipped(idle_no_ticket)",
+    )
+
+    assert len(warnings) == 1
+    message, kwargs = warnings[0]
+    assert "brak otwartych ticketów" in message
+    assert kwargs["fmt"] == "human"
+    assert "/llm/prompt/create-ticket-for-project" in str(kwargs["hint"])
+    assert "lista ticketów" in str(kwargs["hint"])
+    assert "szczegół→ogół" in str(kwargs["hint"])
+    assert "prefact/metrun" in str(kwargs["hint"])
+    assert kwargs["data"]["blocked_by"] == "idle_no_ticket"
+
+
+def test_create_ticket_quick_action_is_warn_highlighted(monkeypatch) -> None:
+    warnings: list[tuple[str, dict[str, object]]] = []
+    info_lines: list[str] = []
+
+    def capture_warning(message: str, **kwargs: object) -> None:
+        warnings.append((message, kwargs))
+
+    monkeypatch.setattr("koru.activity_log.activity_warn", capture_warning)
+
+    autonomous_loop_runner._emit_quick_action_line(
+        args=SimpleNamespace(emit_events="human"),
+        action="[create ticket] http://127.0.0.1:8765/llm/action/create-ticket-for-project",
+        stdio_info=lambda message, **_kwargs: info_lines.append(message),
+    )
+
+    assert info_lines == []
+    assert len(warnings) == 1
+    message, kwargs = warnings[0]
+    assert "action [create ticket]" in message
+    assert "brak otwartych ticketów" in str(kwargs["hint"])
+    assert kwargs["data"] == {"action": "create_ticket", "blocked_by": "idle_no_ticket"}
 
 
 def test_run_autonomous_cycle_logs_plan_before_max_cycles_exit() -> None:

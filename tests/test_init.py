@@ -135,6 +135,10 @@ class TestStarterInit(unittest.TestCase):
             data = yaml.safe_load(kf.read_text(encoding="utf-8"))
             self.assertEqual(data.get("schema"), "1.0")
             self.assertIn("when", data)
+            self.assertEqual(
+                data["autonomy"]["strategy"]["id"],
+                "accordion_detail_to_general",
+            )
 
     def test_host_environment_bundle_written_by_default(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import shutil
 import sys
 import types
@@ -370,15 +371,20 @@ class TestAutoMain(unittest.TestCase):
             calls.append((list(argv), invoked_as_auto))
             return 0
 
-        with mock.patch(
-            "koru._legacy_cli_impl.stop_prior_autonomous_for_auto_start",
-            side_effect=fake_stop,
-        ):
-            with mock.patch(
+        with (
+            mock.patch(
+                "koru._legacy_cli_impl.stop_prior_autonomous_for_auto_start",
+                side_effect=fake_stop,
+            ),
+            mock.patch(
                 "koru._legacy_cli_impl.autonomous_main",
                 side_effect=fake_autonomous,
-            ):
-                code = _auto_main(["--project", "/tmp/proj"])
+            ),
+            mock.patch.dict(os.environ, {"KORU_AUTO_SKIP_WIZARD": "1"}, clear=False),
+        ):
+            os.environ.pop("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", None)
+            code = _auto_main(["--project", "/tmp/proj"])
+            reuse_reload = os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD")
 
         self.assertEqual(code, 0)
         self.assertEqual(len(stopped), 1)
@@ -391,6 +397,36 @@ class TestAutoMain(unittest.TestCase):
         self.assertNotIn("--max-cycles", calls[0][0])
         self.assertNotIn("--max-iterations", calls[0][0])
         self.assertTrue(calls[0][1])
+        self.assertEqual(reuse_reload, "1")
+
+    def test_auto_main_preserves_explicit_reuse_window_reload_setting(self) -> None:
+        from koru.cli_auto import _auto_main
+
+        calls: list[list[str]] = []
+        with (
+            mock.patch(
+                "koru._legacy_cli_impl.stop_prior_autonomous_for_auto_start",
+                return_value=None,
+            ),
+            mock.patch(
+                "koru._legacy_cli_impl.autonomous_main",
+                side_effect=lambda argv, **kw: calls.append(list(argv)) or 0,
+            ),
+            mock.patch.dict(
+                os.environ,
+                {
+                    "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD": "0",
+                    "KORU_AUTO_SKIP_WIZARD": "1",
+                },
+                clear=False,
+            ),
+        ):
+            code = _auto_main(["--project", "/tmp/proj"])
+            reuse_reload = os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD")
+
+        self.assertEqual(code, 0)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(reuse_reload, "0")
 
     def test_auto_main_allow_duplicate_skips_stop_and_replace_flag(self) -> None:
         from koru.cli_auto import _auto_main
@@ -628,6 +664,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "dsl",
             "api",
             "topology",
+            "strategy",
             "runtime-context",
             "refactor-planfile-handoff",
             "dev",

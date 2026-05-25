@@ -363,11 +363,24 @@ def handle_scan_after_idle(
                 },
             )
             cycle_telemetry["scan_after_idle_skipped_duplicate_cooldown"] = True
+            if include_semcod_artifacts:
+                _hp(
+                    "  idle strategy: detailed scan is in duplicate cooldown; "
+                    "continue detail→general by checking whole-project discovery",
+                )
+                discovery = _run_code2llm_discovery_after_idle(project, _hp, _emit)
+                _record_code2llm_discovery_telemetry(state, cycle_telemetry, discovery)
         else:
             scan_cmd = (
                 "koru scan --apply"
                 f"{' --semcod-artifacts' if include_semcod_artifacts else ''}"
             )
+            if include_semcod_artifacts:
+                _hp(
+                    "  idle strategy: detail→general; first apply concrete scan "
+                    "signals, then run whole-project code2llm discovery if no "
+                    "tickets were created",
+                )
             _hp(f"+ {scan_cmd} (queue idle → intake scan)")
             idle_scan = run_scan(
                 project=project,
@@ -398,14 +411,23 @@ def handle_scan_after_idle(
             )
             if include_semcod_artifacts and not idle_scan.applied:
                 discovery = _run_code2llm_discovery_after_idle(project, _hp, _emit)
-                if discovery is not None:
-                    applied_count = len(discovery.get("applied", []))
-                    skipped_count = len(discovery.get("skipped", []))
-                    state.telemetry_scan_after_idle_tickets_applied += applied_count
-                    cycle_telemetry["code2llm_discovery_run"] = bool(discovery.get("ran"))
-                    cycle_telemetry["code2llm_discovery_applied"] = applied_count
-                    cycle_telemetry["code2llm_discovery_skipped"] = skipped_count
+                _record_code2llm_discovery_telemetry(state, cycle_telemetry, discovery)
     return scan_result
+
+
+def _record_code2llm_discovery_telemetry(
+    state: AutoloopState,
+    cycle_telemetry: dict[str, Any],
+    discovery: dict[str, Any] | None,
+) -> None:
+    if discovery is None:
+        return
+    applied_count = len(discovery.get("applied", []))
+    skipped_count = len(discovery.get("skipped", []))
+    state.telemetry_scan_after_idle_tickets_applied += applied_count
+    cycle_telemetry["code2llm_discovery_run"] = bool(discovery.get("ran"))
+    cycle_telemetry["code2llm_discovery_applied"] = applied_count
+    cycle_telemetry["code2llm_discovery_skipped"] = skipped_count
 
 
 def _run_code2llm_discovery_after_idle(
@@ -414,6 +436,7 @@ def _run_code2llm_discovery_after_idle(
     _emit: Callable[..., Any],
 ) -> dict[str, Any] | None:
     """Run broad code2llm ticket discovery after an idle scan found no new work."""
+    _hp(_format_idle_discovery_toolchain_line(project))
     try:
         from koru.autonomy.code2llm_discovery import (
             format_discovery_summary,
@@ -429,3 +452,27 @@ def _run_code2llm_discovery_after_idle(
     payload = outcome.to_dict()
     _emit("Code2llmDiscoveryCompleted", payload)
     return payload
+
+
+def _format_idle_discovery_toolchain_line(project: Path) -> str:
+    try:
+        from koru.semcod_tools import detect_semcod_tools
+
+        tools = {tool.id: tool for tool in detect_semcod_tools(project)}
+    except Exception:  # noqa: BLE001 - advisory log only
+        return (
+            "  discovery toolchain: automated sources=koru scan + code2llm; "
+            "optional prefact/metrun status unavailable"
+        )
+    interesting = []
+    for tool_id in ("code2llm", "redup", "testql", "prefact", "metrun"):
+        tool = tools.get(tool_id)
+        if tool is None:
+            continue
+        interesting.append(f"{tool_id}={tool.via if tool.available else 'missing'}")
+    suffix = ", ".join(interesting) if interesting else "no optional tools detected"
+    return (
+        "  discovery toolchain: automated sources=koru scan + code2llm; "
+        f"tool availability: {suffix}; prefact/metrun are advisory until "
+        "dedicated ticket adapters are enabled"
+    )

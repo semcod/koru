@@ -22,6 +22,9 @@ def project_pipeline_path(project: Path) -> Path:
 
 def default_koru_project_pipeline_text() -> str:
     """Default ``koru.yaml`` body for new projects (schema 1.0)."""
+    from koru.autonomy_strategy.defaults import default_autonomy_strategy_yaml_block
+
+    autonomy_block = default_autonomy_strategy_yaml_block().rstrip()
     return f"""# {KORU_PROJECT_PIPELINE_FILENAME} — project pipeline (schema 1.0)
 # Created by `koru --init` when this file was missing. Edit freely and commit.
 #
@@ -91,6 +94,8 @@ when:
     description: Right before `planfile ticket done` / policy CI hook.
     commands:
       - task quality:regix:local
+
+{autonomy_block}
 """
 
 
@@ -142,9 +147,12 @@ def build_project_pipeline_brief(project: Path) -> dict[str, Any] | None:
                 },
             )
     rel = KORU_PROJECT_PIPELINE_FILENAME
+    autonomy = raw.get("autonomy")
+    strategy = autonomy.get("strategy") if isinstance(autonomy, dict) else None
     return {
         "path": rel,
         "schema": raw.get("schema"),
         "extends_profile": raw.get("extends_profile"),
         "phases": phases,
+        "autonomy_strategy": strategy if isinstance(strategy, dict) else None,
     }

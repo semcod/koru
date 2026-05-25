@@ -4,6 +4,44 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.81] — 2026-05-25
+
+### Fixed
+- **"Wkleja ale nie wysyła" — paste landuje w pliku, nie w composerze.**
+  Cycle #810 DSL trace ujawnił że po fixie z 0.1.79
+  (`focus_open route=command+input:composer.openAsPane+composer.focusComposer ok=true`)
+  drive nadal kończy się `submit_unverified`:
+
+  ```
+  #009 paste route=vscode-clipboard:editor.action.clipboardPasteAction ok=true
+  #013 submit_verify route=chat-input-probe ok=true   ← input pusty (false positive!)
+  #014 submit_verify route=cursor-bubble-db ok=false  ← w SQLite brak nowego bubble
+  ```
+
+  Root cause to architekturalna różnica między VS Code i Cursor:
+  - `composer.focusComposer` ustawia focus na **webview** Composera;
+  - `editor.action.clipboardPasteAction` (probe-ladder winner dla paste)
+    celuje w `vscode.window.activeTextEditor`, nie w webview;
+  - paste landuje w **aktywnym pliku TextEditor** (np. otwarty `.ts`);
+  - composer pozostaje pusty, `composer.sendToAgent` jest no-op
+    (nie ma co wysłać), bubble nie powstaje w `cursorDiskKV`.
+
+  **Fix: natywny fast path przez `composer.startComposerPrompt2(text)`**
+  (z fallback do `composer.startComposerPrompt`). Cursor 3.5+ udostępnia
+  te komendy w `matchingCommands`, biorą `text` jako argument i wykonują
+  paste **i** submit w jednym kroku — całkowicie pomijają clipboard,
+  focus matching oraz VS Code editor commands. Weryfikacja przez
+  `cursorDiskKV` (anchor rowid + 2.5s polling) potwierdza że nowy
+  user-bubble z naszym promptem rzeczywiście powstał.
+
+  Jeśli fast path zwraca matched=false (rare edge case) lub komendy nie
+  są dostępne, plugin spada do legacy paste+submit ladder z pełnym
+  loggingiem (DSL `act=paste route=cursor-composer-fastpath:* ok=false`).
+
+  Implementacja: nowa metoda `tryCursorComposerPromptFastPath()`
+  wywoływana w `_performInject()` zaraz po sprawdzeniu Antigravity i
+  Windsurf fast-paths (analogiczna struktura).
+
 ## [0.1.80] — 2026-05-25
 
 ### Fixed
