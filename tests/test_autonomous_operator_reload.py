@@ -219,6 +219,54 @@ class RetryPluginWaitAfterReloadTests(unittest.TestCase):
         self.assertIn("automatyczny Reload Window po mismatch nie powiódł się", joined)
         self.assertIn("would write into the shell", joined)
 
+    def test_reuse_window_falls_back_to_fresh_window_when_plugin_still_missing(self) -> None:
+        logs: list[str] = []
+        wait_results = iter([False, True])
+        wait_calls: list[float] = []
+        reload_result = mock.Mock(
+            attempted=True,
+            ok=True,
+            method="reuse_window",
+            detail="opened",
+        )
+        fresh_window = mock.Mock(
+            attempted=True,
+            ok=True,
+            method="new_window",
+            detail="opened",
+        )
+
+        def wait_for_plugin(*_a: Any, timeout_seconds: float, **_kw: Any) -> bool:
+            wait_calls.append(timeout_seconds)
+            return next(wait_results)
+
+        with (
+            mock.patch(
+                "koru.ide_adapters.ide_reload.try_reload_vscode_family_ide",
+                return_value=reload_result,
+            ),
+            mock.patch(
+                "koru.ide_adapters.ide_reload.try_open_vscode_family_ide_new_window",
+                return_value=fresh_window,
+            ) as open_new,
+        ):
+            result = _retry_plugin_wait_after_reload(
+                mock.Mock(emit_events="text"),
+                "vscodium",
+                5.0,
+                client=StubClient({"plugins": []}),
+                project=mock.Mock(),
+                wait_for_plugin=wait_for_plugin,
+                stdio_info=lambda msg, **_kw: logs.append(msg),
+            )
+
+        self.assertTrue(result)
+        self.assertEqual(wait_calls, [12.0, 12.0])
+        open_new.assert_called_once()
+        joined = "\n".join(logs)
+        self.assertIn("reuse-window workspace reopen", joined)
+        self.assertIn("otwieram świeże okno IDE", joined)
+
 
 if __name__ == "__main__":
     unittest.main()

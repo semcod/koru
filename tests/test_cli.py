@@ -398,6 +398,7 @@ class TestAutoMain(unittest.TestCase):
         self.assertNotIn("--max-iterations", calls[0][0])
         self.assertTrue(calls[0][1])
         self.assertEqual(reuse_reload, "1")
+        self.assertEqual(os.environ.get("KORU_AUTOPILOT_NEW_WINDOW_RELOAD"), "1")
 
     def test_auto_main_preserves_explicit_reuse_window_reload_setting(self) -> None:
         from koru.cli_auto import _auto_main
@@ -416,6 +417,7 @@ class TestAutoMain(unittest.TestCase):
                 os.environ,
                 {
                     "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD": "0",
+                    "KORU_AUTOPILOT_NEW_WINDOW_RELOAD": "0",
                     "KORU_AUTO_SKIP_WIZARD": "1",
                 },
                 clear=False,
@@ -423,10 +425,12 @@ class TestAutoMain(unittest.TestCase):
         ):
             code = _auto_main(["--project", "/tmp/proj"])
             reuse_reload = os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD")
+            new_window_reload = os.environ.get("KORU_AUTOPILOT_NEW_WINDOW_RELOAD")
 
         self.assertEqual(code, 0)
         self.assertEqual(len(calls), 1)
         self.assertEqual(reuse_reload, "0")
+        self.assertEqual(new_window_reload, "0")
 
     def test_auto_main_allow_duplicate_skips_stop_and_replace_flag(self) -> None:
         from koru.cli_auto import _auto_main

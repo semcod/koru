@@ -161,14 +161,22 @@ def retry_plugin_wait_after_reload(
     stdio_info: Any,
     reload_retry_wait: Any = plugin_runtime.reload_retry_wait_seconds,
 ) -> bool | None:
-    from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
+    from koru.ide_adapters.ide_reload import (
+        try_open_vscode_family_ide_new_window,
+        try_reload_vscode_family_ide,
+    )
 
     reload = try_reload_vscode_family_ide(autopilot_ide, project=project)
     if reload.attempted and reload.ok:
         retry_wait = reload_retry_wait(wait_seconds)
+        reload_label = (
+            "reuse-window workspace reopen"
+            if reload.method == "reuse_window"
+            else f"Reload Window ({reload.method})"
+        )
         stdio_info(
             "koru autonomous: plugin wymaga przeładowania IDE; "
-            f"automatyczny Reload Window ({reload.method}) — "
+            f"automatyczny {reload_label} — "
             f"czekam ponownie {retry_wait:.1f}s…",
             fmt=args.emit_events,
         )
@@ -182,6 +190,40 @@ def retry_plugin_wait_after_reload(
             stdio_info(
                 "koru autonomous: autopilot plugin reconnected "
                 f"after reload ide={autopilot_ide}",
+                fmt=args.emit_events,
+            )
+            return True
+        if reload.method != "reuse_window":
+            return False
+        fresh_window = try_open_vscode_family_ide_new_window(
+            autopilot_ide,
+            project=project,
+        )
+        if not (fresh_window.attempted and fresh_window.ok):
+            if fresh_window.attempted:
+                stdio_info(
+                    "koru autonomous: fresh IDE window fallback nie powiódł się "
+                    f"({fresh_window.method or '-'}: "
+                    f"{fresh_window.detail or 'unknown'})",
+                    fmt=args.emit_events,
+                )
+            return False
+        stdio_info(
+            "koru autonomous: reuse-window nie uruchomił pluginu; "
+            f"otwieram świeże okno IDE ({fresh_window.method}) — "
+            f"czekam ponownie {retry_wait:.1f}s…",
+            fmt=args.emit_events,
+        )
+        plugin_ready = wait_for_plugin(
+            client,
+            autopilot_ide,
+            timeout_seconds=retry_wait,
+            stdio_format=args.emit_events,
+        )
+        if plugin_ready:
+            stdio_info(
+                "koru autonomous: autopilot plugin connected "
+                f"after fresh IDE window ide={autopilot_ide}",
                 fmt=args.emit_events,
             )
         return plugin_ready

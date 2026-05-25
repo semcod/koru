@@ -38,6 +38,7 @@ def _enable_auto_reload_reuse_window_for_auto() -> None:
     startup path opts in unless the operator set a value already.
     """
     os.environ.setdefault("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", "1")
+    os.environ.setdefault("KORU_AUTOPILOT_NEW_WINDOW_RELOAD", "1")
 
 
 def _auto_main(argv: list[str]) -> int:

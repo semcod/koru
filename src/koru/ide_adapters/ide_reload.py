@@ -98,6 +98,21 @@ def reuse_window_reload_enabled() -> bool:
     return raw in {"1", "true", "yes", "on"}
 
 
+def new_window_reload_enabled() -> bool:
+    """Whether opening a fresh IDE window is allowed after reopen fails.
+
+    This is a stronger recovery than ``--reuse-window``: it starts a fresh
+    extension host for the project, which gives auto-connect VSIX plugins a
+    clean activation path. It may create an extra editor window, so callers
+    must opt in explicitly.
+    """
+    raw = os.environ.get(
+        "KORU_AUTOPILOT_NEW_WINDOW_RELOAD",
+        "",
+    ).strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
 def _run(argv: list[str], *, timeout: float = 15.0) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         argv,
@@ -298,6 +313,23 @@ def reload_via_reopen_workspace(ide: str, project: Path) -> IdeReloadOutcome:
     return IdeReloadOutcome(attempted=True, ok=True, method="reuse_window")
 
 
+def reload_via_new_window(ide: str, project: Path) -> IdeReloadOutcome:
+    """Open ``project`` in a fresh IDE window to start a new extension host."""
+    editor = _resolve_editor_cli(ide)
+    if editor is None:
+        return IdeReloadOutcome(attempted=False, ok=False, detail="editor CLI not found")
+    proc = _run([editor, "-n", str(project.resolve())], timeout=30.0)
+    if proc.returncode != 0:
+        hint = (proc.stderr or proc.stdout or "").strip()[:200]
+        return IdeReloadOutcome(
+            attempted=True,
+            ok=False,
+            method="new_window",
+            detail=hint or f"rc={proc.returncode}",
+        )
+    return IdeReloadOutcome(attempted=True, ok=True, method="new_window")
+
+
 def _reload_fallback_reopen(
     ide: str,
     project: Path,
@@ -477,6 +509,27 @@ def try_reload_vscode_family_ide(
     )
 
 
+def try_open_vscode_family_ide_new_window(
+    ide: str,
+    *,
+    project: Path | None = None,
+) -> IdeReloadOutcome:
+    """Open a fresh IDE window as plugin activation fallback."""
+    if ide not in _VSCODE_FAMILY_IDES:
+        return IdeReloadOutcome(attempted=False, ok=False, detail=f"unsupported ide={ide}")
+    if not auto_reload_enabled():
+        return IdeReloadOutcome(attempted=False, ok=False, detail="auto reload disabled")
+    if not new_window_reload_enabled():
+        return IdeReloadOutcome(
+            attempted=False,
+            ok=False,
+            detail="new-window reload fallback disabled",
+        )
+    if project is None or not project.is_dir():
+        return IdeReloadOutcome(attempted=False, ok=False, detail="project directory missing")
+    return reload_via_new_window(ide, project)
+
+
 __all__ = [
     "IdeReloadOutcome",
     "await_plugin_handshake",
@@ -485,8 +538,11 @@ __all__ = [
     "execute_reload",
     "explain_reload_failure",
     "reload_via_command_palette",
+    "reload_via_new_window",
     "reload_via_reopen_workspace",
+    "new_window_reload_enabled",
     "reuse_window_reload_enabled",
+    "try_open_vscode_family_ide_new_window",
     "try_reload_vscode_family_ide",
     "_focus_ide_window",
     "_ide_accepts_integrated_terminal",

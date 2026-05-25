@@ -89,6 +89,13 @@ def test_reuse_window_reload_opt_in(monkeypatch: pytest.MonkeyPatch) -> None:
     assert ide_reload.reuse_window_reload_enabled() is True
 
 
+def test_new_window_reload_opt_in(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_NEW_WINDOW_RELOAD", raising=False)
+    assert ide_reload.new_window_reload_enabled() is False
+    monkeypatch.setenv("KORU_AUTOPILOT_NEW_WINDOW_RELOAD", "1")
+    assert ide_reload.new_window_reload_enabled() is True
+
+
 def test_try_reload_does_not_call_reuse_window_by_default(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
@@ -163,6 +170,27 @@ def test_try_reload_calls_reuse_window_when_opted_in(
     assert reopen_calls == [tmp_path]
     assert outcome.ok is True
     assert outcome.method == "reuse_window"
+
+
+def test_try_open_new_window_when_opted_in(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_NEW_WINDOW_RELOAD", "1")
+    monkeypatch.setattr(ide_reload, "_resolve_editor_cli", lambda _ide: "/bin/echo")
+    calls: list[list[str]] = []
+
+    def fake_run(argv: list[str], *, timeout: float = 15.0):
+        calls.append(argv)
+        return mock.Mock(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(ide_reload, "_run", fake_run)
+    outcome = ide_reload.try_open_vscode_family_ide_new_window(
+        "vscodium",
+        project=tmp_path,
+    )
+    assert outcome.ok is True
+    assert outcome.method == "new_window"
+    assert calls == [["/bin/echo", "-n", str(tmp_path.resolve())]]
 
 
 def test_detect_reload_command_reports_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
