@@ -57,7 +57,7 @@ def test_install_plugin_dry_run_builds_editor_command(
     vsix = tmp_path / "koru-autopilot-0.1.0.vsix"
     vsix.write_text("fake", encoding="utf-8")
 
-    monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda: vsix)
+    monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda _ide=None: vsix)
     monkeypatch.setattr(plugin_installer.shutil, "which", lambda name: f"/usr/bin/{name}")
 
     def fake_runner(cmd, **_kwargs):
@@ -120,7 +120,7 @@ def test_install_plugin_configures_socket_path(
     config_home = tmp_path / "config"
 
     monkeypatch.setenv("XDG_CONFIG_HOME", str(config_home))
-    monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda: vsix)
+    monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda _ide=None: vsix)
     monkeypatch.setattr(plugin_installer.shutil, "which", lambda name: f"/usr/bin/{name}")
 
     def fake_runner(cmd, **_kwargs):
@@ -164,14 +164,14 @@ def test_install_plugin_reassert_falls_back_when_resolved_vsix_is_missing(
     missing_vsix = plugin_dir / "koru-autopilot-vscode-0.1.66.vsix"
 
     monkeypatch.setattr(plugin_installer, "_repo_root", lambda: root)
-    monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda: missing_vsix)
+    monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda _ide=None: missing_vsix)
     monkeypatch.setattr(plugin_installer.shutil, "which", lambda name: f"/usr/bin/{name}")
+
+    cursor_ext_id = plugin_installer.extension_id_for_ide("cursor")
 
     def fake_runner(cmd, **_kwargs):
         if cmd[1] == "--list-extensions":
-            return subprocess.CompletedProcess(
-                cmd, 0, stdout=plugin_installer.EXTENSION_ID, stderr=""
-            )
+            return subprocess.CompletedProcess(cmd, 0, stdout=cursor_ext_id, stderr="")
         if cmd[1] == "--install-extension" and cmd[2] == str(missing_vsix):
             return subprocess.CompletedProcess(cmd, 1, stdout="", stderr="ENOENT: no such file")
         if cmd[1] == "--install-extension" and cmd[2] == str(fallback_vsix):
@@ -208,7 +208,7 @@ def test_install_plugin_targets_vscodium_from_integrated_terminal(
     monkeypatch.setenv("VSCODE_NLS_CONFIG", "/snap/codium/current/resources/app")
     monkeypatch.setattr(plugin_installer, "detect_running_ides", lambda: [])
     monkeypatch.setattr(plugin_installer, "detect_terminal_host_ide_id", lambda: "vscodium")
-    monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda: vsix)
+    monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda _ide=None: vsix)
     monkeypatch.setattr(
         plugin_installer.shutil,
         "which",
@@ -253,7 +253,7 @@ def test_install_plugin_explicit_vscode_does_not_use_codium_hint(
     monkeypatch.setenv("VSCODE_PID", "123")
     monkeypatch.setenv("VSCODE_NLS_CONFIG", "/snap/codium/current/resources/app")
     monkeypatch.setattr(plugin_installer, "detect_running_ides", lambda: [])
-    monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda: vsix)
+    monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda _ide=None: vsix)
     monkeypatch.setattr(
         plugin_installer.shutil,
         "which",
@@ -299,7 +299,7 @@ def test_install_plugin_prefers_running_vscode_over_stale_codium_terminal_hint(
         "detect_running_ides",
         lambda: [SimpleNamespace(id="vscode", exe="/snap/code/240/usr/share/code/code")],
     )
-    monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda: vsix)
+    monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda _ide=None: vsix)
     monkeypatch.setattr(
         plugin_installer.shutil,
         "which",

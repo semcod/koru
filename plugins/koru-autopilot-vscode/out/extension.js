@@ -2289,11 +2289,23 @@ class AutopilotBridge {
     }
 }
 function activate(context) {
+    const appName = vscode.env.appName || "";
     debugLog("ACTIVATE", {
-        appName: vscode.env.appName,
+        appName,
         extensionMode: context.extensionMode,
         extensionPath: context.extensionPath,
     });
+    // Cursor now has its own dedicated VSIX (``koru-autopilot-cursor``)
+    // that fully owns the chat-paste/submit pipeline. If a Cursor user
+    // still has this legacy multi-IDE VSIX installed we silently no-op
+    // so we never race the dedicated plugin for the same Unix socket.
+    if (appName.toLowerCase().includes("cursor")) {
+        console.warn("koru-autopilot-vscode: not activating on Cursor — Cursor is " +
+            "served by the dedicated koru-autopilot-cursor VSIX. Uninstall " +
+            "this legacy plugin from Cursor: `cursor --uninstall-extension " +
+            "semcod.koru-autopilot-vscode`.");
+        return;
+    }
     const bridge = new AutopilotBridge(context);
     activeBridge = bridge;
     context.subscriptions.push(vscode.commands.registerCommand("koruAutopilot.connect", () => bridge.connect()), vscode.commands.registerCommand("koruAutopilot.sendChat", async () => {

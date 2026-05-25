@@ -684,7 +684,7 @@ def test_strict_plugin_version_blocks_stale_plugin_with_compatible_protocol(
     monkeypatch.setattr(
         DriveOrchestrator,
         "expected_plugin_version",
-        lambda: "0.1.15",
+        lambda _plugin_ide: "0.1.15",
     )
 
     with _daemon(tmp_path, monkeypatch) as h:
@@ -718,7 +718,7 @@ def test_protocol_policy_allows_stale_plugin_with_compatible_protocol(
     monkeypatch.setattr(
         DriveOrchestrator,
         "expected_plugin_version",
-        lambda: "0.1.15",
+        lambda _plugin_ide: "0.1.15",
     )
 
     with _daemon(tmp_path, monkeypatch) as h:
@@ -765,7 +765,7 @@ def test_strict_plugin_hello_rejects_stale_without_evicting_current(
     monkeypatch.setattr(
         DriveOrchestrator,
         "expected_plugin_version",
-        lambda: "0.1.13",
+        lambda _plugin_ide: "0.1.13",
     )
 
     with _daemon(tmp_path, monkeypatch) as h:
@@ -826,7 +826,7 @@ def test_repeated_stale_plugin_hello_rejections_are_log_throttled(
     monkeypatch.setattr(
         DriveOrchestrator,
         "expected_plugin_version",
-        lambda: "0.1.13",
+        lambda _plugin_ide: "0.1.13",
     )
     logs: list[str] = []
     ticks = iter([10.0, 12.0, 14.0, 45.0])
@@ -916,7 +916,7 @@ def test_status_reports_rejected_plugin_versions(
     monkeypatch.setattr(
         DriveOrchestrator,
         "expected_plugin_version",
-        lambda: "0.1.13",
+        lambda _plugin_ide: "0.1.13",
     )
 
     with _daemon(tmp_path, monkeypatch) as h:

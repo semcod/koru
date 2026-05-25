@@ -110,6 +110,7 @@ PIPELINE: list[ScanStage] = [DetectStage(), AnalyzeStage(), ReportStage()]
 - [x] **R1**: `dashboard_routes.py` – ekstrakcja helpera `_safe_respond_json()` (commit `bdd2bf1`, -39 LOC, 0 zmian zachowania)
 - [x] **R2**: `dashboard_routes.py` – wyciągnięcie HTML response builderów do `dashboard_html.py` (-49 LOC, +8 testów)
 - [x] **R3**: `koruapi/cli.py::main` – rozbicie na subcommand dispatcher (`main` CC: 11 → 3, +2 testy zabezpieczające spójność dispatch table)
+- [x] **R-IM1**: `install_manager.py` – ekstrakcja 11 funkcji `_check_*` + `ManagerIssue` do `install_checks.py` (`install_manager.py`: 734 → 466 LOC, **-36.5%**; +23 testy jednostkowe; legacy `_check_*` aliasy zachowane dla backward-compat z testami)
 
 ### FAZA 2 — Rozbicia modułów (3–5 dni)
 - [ ] **R4**: `dashboard_routes.py` – migracja z closure do ClassVar config injection

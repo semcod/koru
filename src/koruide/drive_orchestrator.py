@@ -9,7 +9,10 @@ from pathlib import Path
 from typing import Any
 
 from koruide.ide_control import ide_control_strategy
-from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
+from koruide.plugin_version import (
+    EXPECTED_VSCODE_PLUGIN_VERSION,
+    expected_plugin_version_for_ide,
+)
 from koruide.protocol import MIN_PLUGIN_PROTOCOL_VERSION
 
 
@@ -98,20 +101,32 @@ class DriveOrchestrator:
         return raw in {"1", "true", "yes", "on"}
 
     @staticmethod
-    @functools.lru_cache(maxsize=1)
-    def expected_plugin_version() -> str | None:
+    @functools.lru_cache(maxsize=8)
+    def expected_plugin_version(ide_id: str | None = None) -> str | None:
+        """Resolve expected plugin VSIX version for ``ide_id``.
+
+        Each per-IDE plugin lives under ``plugins/<dir>/package.json``;
+        we prefer the live ``package.json`` (fresh dev builds) and fall
+        back to the static table in ``koruide.plugin_version``.
+        """
+
+        # Lazy import to avoid a top-level cycle when this module is
+        # loaded before ``koruide.plugin_installer``.
+        from koruide.plugin_installer import plugin_dir_names_for_ide
+
         here = Path(__file__).resolve()
-        for parent in here.parents:
-            package_json = parent / "plugins" / "koru-autopilot-vscode" / "package.json"
-            if not package_json.is_file():
-                continue
-            try:
-                data = json.loads(package_json.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
-                return None
-            version = data.get("version")
-            return str(version) if version else None
-        return EXPECTED_VSCODE_PLUGIN_VERSION
+        for dir_name in plugin_dir_names_for_ide(ide_id):
+            for parent in here.parents:
+                package_json = parent / "plugins" / dir_name / "package.json"
+                if not package_json.is_file():
+                    continue
+                try:
+                    data = json.loads(package_json.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    return None
+                version = data.get("version")
+                return str(version) if version else None
+        return expected_plugin_version_for_ide(ide_id) or EXPECTED_VSCODE_PLUGIN_VERSION
 
     @staticmethod
     def strict_plugin_version_required() -> bool:
@@ -135,7 +150,7 @@ class DriveOrchestrator:
         protocol_version: int | None = None,
         capabilities: list[str] | None = None,
     ) -> dict[str, Any]:
-        expected = expected_version or DriveOrchestrator.expected_plugin_version()
+        expected = expected_version or DriveOrchestrator.expected_plugin_version(plugin_ide)
         strict = DriveOrchestrator.strict_plugin_version_required()
         mismatch = bool(connected_version and expected and connected_version != expected)
         protocol_missing = protocol_version is None

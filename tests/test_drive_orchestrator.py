@@ -110,7 +110,7 @@ def test_plugin_ack_summary_includes_submit_failure_details() -> None:
 
 
 def test_plugin_version_info_marks_mismatch(monkeypatch) -> None:
-    monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda: "0.1.13")
+    monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda _ide=None: "0.1.13")
 
     info = DriveOrchestrator.plugin_version_info(
         plugin_ide="vscode",
@@ -132,7 +132,7 @@ def test_plugin_version_policy_can_block(monkeypatch) -> None:
 
 def test_compatible_protocol_does_not_bypass_strict_version_policy(monkeypatch) -> None:
     monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
-    monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda: "0.1.15")
+    monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda _ide=None: "0.1.15")
 
     info = DriveOrchestrator.plugin_version_info(
         plugin_ide="vscode",
@@ -149,7 +149,7 @@ def test_compatible_protocol_does_not_bypass_strict_version_policy(monkeypatch) 
 
 def test_explicit_protocol_policy_allows_compatible_version_drift(monkeypatch) -> None:
     monkeypatch.setenv("KORU_PLUGIN_VERSION_POLICY", "protocol")
-    monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda: "0.1.15")
+    monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda _ide=None: "0.1.15")
 
     info = DriveOrchestrator.plugin_version_info(
         plugin_ide="vscode",
@@ -217,7 +217,7 @@ def test_plugin_ack_summary_includes_operation_trace() -> None:
 
 def test_strict_plugin_version_blocks_when_expected_version_missing(monkeypatch) -> None:
     monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
-    monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda: None)
+    monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda _ide=None: None)
 
     info = DriveOrchestrator.plugin_version_info(
         plugin_ide="vscode",

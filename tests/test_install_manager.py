@@ -20,11 +20,11 @@ def test_collect_report_flags_path_mismatch_and_plugin_version_missing(
     repo_koru.write_text("#!/bin/sh\n", encoding="utf-8")
 
     monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path / "repo")
-    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root, _ide=None: "1.0")
     monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
     monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: path_koru)
-    monkeypatch.setattr(install_manager, "_repo_koru_bin", lambda _root: repo_koru)
-    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.13")
+    monkeypatch.setattr(install_manager, "_repo_koru_bin", lambda _root, _ide=None: repo_koru)
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root, _ide=None: "0.1.13")
     monkeypatch.setattr(
         install_manager,
         "installed_extension_version_for_ide",
@@ -65,16 +65,16 @@ def test_collect_report_accepts_nonlocal_koru_when_editable_source_matches(
     repo_koru.write_text("#!/bin/sh\n", encoding="utf-8")
 
     monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path / "repo")
-    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root, _ide=None: "1.0")
     monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
     monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: path_koru)
-    monkeypatch.setattr(install_manager, "_repo_koru_bin", lambda _root: repo_koru)
+    monkeypatch.setattr(install_manager, "_repo_koru_bin", lambda _root, _ide=None: repo_koru)
     monkeypatch.setattr(
         install_manager,
         "_installed_editable_source_root",
         lambda: (tmp_path / "repo").resolve(),
     )
-    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.13")
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root, _ide=None: "0.1.13")
     monkeypatch.setattr(
         install_manager,
         "installed_extension_version_for_ide",
@@ -109,15 +109,15 @@ def test_collect_report_uses_explicit_ide_socket_when_env_is_unset(
     monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
     monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
     monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
-    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root, _ide=None: "1.0")
     monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
     monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: tmp_path / ".venv/bin/koru")
     monkeypatch.setattr(
         install_manager,
         "_repo_koru_bin",
-        lambda _root: tmp_path / ".venv/bin/koru",
+        lambda _root, _ide=None: tmp_path / ".venv/bin/koru",
     )
-    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.15")
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root, _ide=None: "0.1.15")
     monkeypatch.setattr(
         install_manager,
         "installed_extension_version_for_ide",
@@ -149,15 +149,15 @@ def test_collect_report_auto_prefers_autopilot_instance_over_terminal_hint(
     monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscodium")
     monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
     monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
-    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root, _ide=None: "1.0")
     monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
     monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: tmp_path / ".venv/bin/koru")
     monkeypatch.setattr(
         install_manager,
         "_repo_koru_bin",
-        lambda _root: tmp_path / ".venv/bin/koru",
+        lambda _root, _ide=None: tmp_path / ".venv/bin/koru",
     )
-    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.15")
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root, _ide=None: "0.1.15")
     monkeypatch.setattr(
         install_manager,
         "installed_extension_version_for_ide",
@@ -180,15 +180,15 @@ def test_collect_report_flags_connected_plugin_version_mismatch(
     tmp_path: Path,
 ) -> None:
     monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
-    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root, _ide=None: "1.0")
     monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
     monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: tmp_path / ".venv/bin/koru")
     monkeypatch.setattr(
         install_manager,
         "_repo_koru_bin",
-        lambda _root: tmp_path / ".venv/bin/koru",
+        lambda _root, _ide=None: tmp_path / ".venv/bin/koru",
     )
-    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.13")
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root, _ide=None: "0.1.13")
     monkeypatch.setattr(
         install_manager,
         "installed_extension_version_for_ide",
@@ -220,15 +220,15 @@ def test_collect_report_flags_installed_plugin_version_mismatch(
     tmp_path: Path,
 ) -> None:
     monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
-    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root, _ide=None: "1.0")
     monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
     monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: tmp_path / ".venv/bin/koru")
     monkeypatch.setattr(
         install_manager,
         "_repo_koru_bin",
-        lambda _root: tmp_path / ".venv/bin/koru",
+        lambda _root, _ide=None: tmp_path / ".venv/bin/koru",
     )
-    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.13")
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root, _ide=None: "0.1.13")
     monkeypatch.setattr(
         install_manager,
         "installed_extension_version_for_ide",
@@ -253,15 +253,15 @@ def test_collect_report_marks_installed_ok_but_not_connected_as_info(
     tmp_path: Path,
 ) -> None:
     monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
-    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root, _ide=None: "1.0")
     monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
     monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: tmp_path / ".venv/bin/koru")
     monkeypatch.setattr(
         install_manager,
         "_repo_koru_bin",
-        lambda _root: tmp_path / ".venv/bin/koru",
+        lambda _root, _ide=None: tmp_path / ".venv/bin/koru",
     )
-    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.13")
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root, _ide=None: "0.1.13")
     monkeypatch.setattr(
         install_manager,
         "installed_extension_version_for_ide",
@@ -287,15 +287,15 @@ def test_collect_report_flags_stale_live_extension_host(
     tmp_path: Path,
 ) -> None:
     monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
-    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root, _ide=None: "1.0")
     monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
     monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: tmp_path / ".venv/bin/koru")
     monkeypatch.setattr(
         install_manager,
         "_repo_koru_bin",
-        lambda _root: tmp_path / ".venv/bin/koru",
+        lambda _root, _ide=None: tmp_path / ".venv/bin/koru",
     )
-    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.14")
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root, _ide=None: "0.1.14")
     monkeypatch.setattr(
         install_manager,
         "installed_extension_version_for_ide",
@@ -341,15 +341,15 @@ def test_collect_report_flags_plugin_socket_candidate_mismatch(
     )
     monkeypatch.setenv("KORU_PLUGIN_DEBUG_LOG", str(log))
     monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
-    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root, _ide=None: "1.0")
     monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
     monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: tmp_path / ".venv/bin/koru")
     monkeypatch.setattr(
         install_manager,
         "_repo_koru_bin",
-        lambda _root: tmp_path / ".venv/bin/koru",
+        lambda _root, _ide=None: tmp_path / ".venv/bin/koru",
     )
-    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.15")
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root, _ide=None: "0.1.15")
     monkeypatch.setattr(
         install_manager,
         "installed_extension_version_for_ide",
@@ -377,15 +377,15 @@ def test_collect_report_flags_plugin_socket_candidate_mismatch(
 
 def test_collect_report_warns_for_pyenv_shim(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
-    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root, _ide=None: "1.0")
     monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
     monkeypatch.setattr(
         install_manager,
         "_path_koru_bin",
         lambda: Path("/home/tom/.pyenv/shims/koru"),
     )
-    monkeypatch.setattr(install_manager, "_repo_koru_bin", lambda _root: None)
-    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.13")
+    monkeypatch.setattr(install_manager, "_repo_koru_bin", lambda _root, _ide=None: None)
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root, _ide=None: "0.1.13")
     monkeypatch.setattr(
         install_manager,
         "installed_extension_version_for_ide",
@@ -406,11 +406,11 @@ def test_collect_report_warns_for_pyenv_shim(monkeypatch, tmp_path: Path) -> Non
 
 def test_collect_report_warns_when_daemon_not_running(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
-    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root, _ide=None: "1.0")
     monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
     monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: None)
-    monkeypatch.setattr(install_manager, "_repo_koru_bin", lambda _root: None)
-    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.13")
+    monkeypatch.setattr(install_manager, "_repo_koru_bin", lambda _root, _ide=None: None)
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root, _ide=None: "0.1.13")
     monkeypatch.setattr(
         install_manager,
         "installed_extension_version_for_ide",
@@ -586,15 +586,15 @@ def test_repair_installation_returns_refreshed_report_after_plugin_fix(
 
 def test_collect_report_for_zed_does_not_require_vsix_plugin(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
-    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root, _ide=None: "1.0")
     monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
     monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: tmp_path / ".venv/bin/koru")
     monkeypatch.setattr(
         install_manager,
         "_repo_koru_bin",
-        lambda _root: tmp_path / ".venv/bin/koru",
+        lambda _root, _ide=None: tmp_path / ".venv/bin/koru",
     )
-    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.13")
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root, _ide=None: "0.1.13")
     monkeypatch.setattr(
         install_manager,
         "installed_extension_version_for_ide",
@@ -617,15 +617,15 @@ def test_collect_report_for_zed_does_not_require_vsix_plugin(monkeypatch, tmp_pa
 def test_collect_report_auto_still_checks_plugin_connection(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
     monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
-    monkeypatch.setattr(install_manager, "_source_version", lambda _root: "1.0")
+    monkeypatch.setattr(install_manager, "_source_version", lambda _root, _ide=None: "1.0")
     monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
     monkeypatch.setattr(install_manager, "_path_koru_bin", lambda: tmp_path / ".venv/bin/koru")
     monkeypatch.setattr(
         install_manager,
         "_repo_koru_bin",
-        lambda _root: tmp_path / ".venv/bin/koru",
+        lambda _root, _ide=None: tmp_path / ".venv/bin/koru",
     )
-    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root: "0.1.13")
+    monkeypatch.setattr(install_manager, "_expected_plugin_version", lambda _root, _ide=None: "0.1.13")
     monkeypatch.setattr(install_manager, "installed_extension_version_for_ide", lambda _ide: None)
     # Mock functions at their actual import location in install_manager module
     monkeypatch.setattr("koru.autopilot.install_manager.detect_terminal_host_ide_id", lambda: None)

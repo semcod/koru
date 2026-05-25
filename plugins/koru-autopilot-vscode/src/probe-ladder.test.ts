@@ -135,9 +135,9 @@ function testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance(): void {
   );
 }
 
-function testVscodiumSubmitStillExposesWorkbenchFallback(): void {
+function testVscodiumSubmitSkipsRegisteredFallback(): void {
   const cmds = buildSubmitCommands("vscodium");
-  assert(cmds.includes("workbench.action.chat.submit"), "vscodium keeps workbench submit as fallback");
+  assert(cmds.length === 0, "vscodium must use verified host-key submit instead of registered no-op commands");
 }
 
 function testSanitizeCursorDiscardsTypeSubmit(): void {
@@ -262,7 +262,7 @@ testBuildFocusOpenVscodeDoesNotAutoOpenChatByDefault();
 testSanitizeVscodeDropsUnsafeFocusOpenCache();
 testBuildFocusInputUsesChatCommands();
 testBuildSubmitCommandsDoesNotUseQuickOpenAcceptance();
-testVscodiumSubmitStillExposesWorkbenchFallback();
+testVscodiumSubmitSkipsRegisteredFallback();
 testSanitizeCursorDiscardsTypeSubmit();
 testSanitizeCursorPreservesNonTypeSubmit();
 testSanitizeCursorDiscardsXdotoolSubmitOnWayland();

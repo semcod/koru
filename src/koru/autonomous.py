@@ -66,7 +66,6 @@ from koru.autonomous_env import (
     apply_autonomous_env_overrides as _env_apply_autoloop_defaults,
 )
 from koru.autonomous_processes import (
-    ExistingManagedProcess,
     guard_existing_autonomous_processes as _guard_existing_autonomous_processes,
 )
 from koru.autonomous_processes import (

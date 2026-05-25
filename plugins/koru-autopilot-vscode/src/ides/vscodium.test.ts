@@ -43,9 +43,9 @@ function testTrustFocusOpen() {
   assert(verifyFocusAfterOpen(file, file, "vscodium"), "vscodium trusts focus open");
 }
 
-function testSubmitCommandsGenericFallback() {
+function testSubmitCommandsSkipRegisteredSubmit() {
   const cmds = buildSubmitCommands("vscodium");
-  assert(cmds.includes("workbench.action.chat.submit"), "generic submit fallback kept");
+  assert(cmds.length === 0, "vscodium must not trust registered submit commands");
 }
 
 function run() {
@@ -53,7 +53,7 @@ function run() {
   testPreferCtrlSubmit();
   testSubmitSanitize();
   testTrustFocusOpen();
-  testSubmitCommandsGenericFallback();
+  testSubmitCommandsSkipRegisteredSubmit();
   console.log("vscodium-strategy tests: ok");
 }
 

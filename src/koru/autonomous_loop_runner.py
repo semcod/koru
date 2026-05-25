@@ -109,6 +109,24 @@ def _dashboard_action_urls(project: Any) -> dict[str, str]:
     }
 
 
+def _default_dashboard_action_urls() -> dict[str, str]:
+    return {
+        "dashboard": "http://127.0.0.1:8765/",
+        "create_project_ticket": "http://127.0.0.1:8765/llm/prompt/create-ticket-for-project",
+        "create_project_ticket_action": "http://127.0.0.1:8765/llm/action/create-ticket-for-project",
+        "tickets": "http://127.0.0.1:8765/?tab=tickets",
+    }
+
+
+def _safe_dashboard_action_urls(project: Any | None) -> dict[str, str]:
+    if project is None:
+        return _default_dashboard_action_urls()
+    try:
+        return _dashboard_action_urls(project)
+    except Exception:
+        return _default_dashboard_action_urls()
+
+
 def _handle_stop_reason_waiting_input(ticket: str, **kwargs: Any) -> list[str]:
     return [
         f"1/3 stop now; queue is waiting for operator input on {ticket}",
@@ -288,6 +306,94 @@ def _operator_next_steps(
     )
 
 
+def _base_quick_action_lines() -> list[str]:
+    return [
+        "[show decision trace] `curl -s http://127.0.0.1:8765/api/autonomy/trace | jq .decisions`",
+        (
+            "[show interfaces] "
+            "`curl -s http://127.0.0.1:8765/api/interfaces | jq '.families, .blockers'`"
+        ),
+    ]
+
+
+def _autopilot_quick_action_lines(
+    *,
+    status: str,
+    blocked_by: str,
+    autopilot_ide: str,
+) -> list[str]:
+    actions = _blocked_interface_action_lines(blocked_by, autopilot_ide=autopilot_ide)
+    if _is_plugin_blocker(blocked_by):
+        actions.append(
+            "[reconnect plugin] in IDE: Command Palette → `Developer: Reload Window`, "
+            "then `koru: Connect autopilot daemon`"
+        )
+    if "ide_mismatch" in status:
+        actions.append(
+            "[switch lane] export KORU_AUTOPILOT_INSTANCE=<ide> "
+            "(or rerun `koru auto --autopilot-ide <ide>`)"
+        )
+    if "chat_activity" in status:
+        actions.append(
+            "[pause autopilot 10m] "
+            "`touch .planfile/.koru/autopilot-pause-until-$(date +%s -d '+10 minutes')`"
+        )
+    return actions
+
+
+def _queue_quick_action_lines(
+    *,
+    status: str,
+    queue_status: str,
+    waiting_ticket: str,
+    autopilot_ide: str,
+    urls: dict[str, str],
+) -> list[str]:
+    actions: list[str] = []
+    if "idle_no_ticket" in status or queue_status == "idle":
+        actions.append(f"[create ticket] {urls['create_project_ticket_action']}")
+        actions.append(f"[reopen done ticket] {urls['tickets']}")
+        actions.append(
+            "[force fresh scan] `rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`"
+        )
+    if queue_status == "waiting_input" and waiting_ticket and waiting_ticket != "-":
+        if "stuck_waiting_input" in status:
+            actions.append(
+                "[auto llm-ready] enabled by default; set "
+                "`KORU_AUTOPILOT_AUTO_LLM_READY=0` to require manual approval"
+            )
+        actions.append(
+            f"[mark ticket input] `planfile ticket input {waiting_ticket} "
+            "--prompt '<input needed>' --note '<what was verified>'`"
+        )
+        actions.append(f"[open ticket] {urls['tickets']}#{waiting_ticket}")
+    if "submit_unverified" in status or status == "failed":
+        retry_ide = autopilot_ide or "auto"
+        actions.append(
+            f"[retry submit] `koru autopilot drive --ide {retry_ide} --require-plugin "
+            f"-p 'continue with {waiting_ticket}'`"
+        )
+    return actions
+
+
+def _diagnostics_quick_action_lines(status: str) -> list[str]:
+    if "diagnostics_fail" not in status:
+        return []
+    return [
+        "[show wup track] `ls -t .wup/tracks/*_quick.json | head -1 | xargs cat`",
+        (
+            "[show wup failures] "
+            "`curl -s http://127.0.0.1:8765/api/dashboard 2>/dev/null | "
+            "jq '.wup.health' || cat .wup/service-health.json`"
+        ),
+        (
+            "[disable diagnostics gate] "
+            "`koru auto --no-autopilot-skip-on-diagnostics-fail` "
+            "(or env: KORU_AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL=0)"
+        ),
+    ]
+
+
 def _quick_action_lines(
     *,
     project: Any | None,
@@ -305,101 +411,29 @@ def _quick_action_lines(
     drown out the next-step narrative. Items only appear when they are
     actually relevant to the current cycle.
     """
-    actions: list[str] = []
-    if project is not None:
-        try:
-            urls = _dashboard_action_urls(project)
-        except Exception:
-            urls = {
-                "dashboard": "http://127.0.0.1:8765/",
-                "create_project_ticket": (
-                    "http://127.0.0.1:8765/llm/prompt/create-ticket-for-project"
-                ),
-                "create_project_ticket_action": (
-                    "http://127.0.0.1:8765/llm/action/create-ticket-for-project"
-                ),
-                "tickets": "http://127.0.0.1:8765/?tab=tickets",
-            }
-    else:
-        urls = {
-            "dashboard": "http://127.0.0.1:8765/",
-            "create_project_ticket": "http://127.0.0.1:8765/llm/prompt/create-ticket-for-project",
-            "create_project_ticket_action": "http://127.0.0.1:8765/llm/action/create-ticket-for-project",
-            "tickets": "http://127.0.0.1:8765/?tab=tickets",
-        }
-
-    actions.append(
-        "[show decision trace] `curl -s http://127.0.0.1:8765/api/autonomy/trace | jq .decisions`"
-    )
-    actions.append(
-        "[show interfaces] "
-        "`curl -s http://127.0.0.1:8765/api/interfaces | jq '.families, .blockers'`"
-    )
-
+    urls = _safe_dashboard_action_urls(project)
     status = (autopilot_status or "").lower()
     queue_status = (queue_status or "").lower()
     blocked_by = _blocked_by_from_autopilot_status(autopilot_status)
 
-    actions.extend(_blocked_interface_action_lines(blocked_by, autopilot_ide=autopilot_ide))
-
-    if _is_plugin_blocker(blocked_by):
-        actions.append(
-            "[reconnect plugin] in IDE: Command Palette → `Developer: Reload Window`, "
-            "then `koru: Connect autopilot daemon`"
+    actions = _base_quick_action_lines()
+    actions.extend(
+        _autopilot_quick_action_lines(
+            status=status,
+            blocked_by=blocked_by,
+            autopilot_ide=autopilot_ide,
         )
-    if "ide_mismatch" in status:
-        actions.append(
-            "[switch lane] export KORU_AUTOPILOT_INSTANCE=<ide> "
-            "(or rerun `koru auto --autopilot-ide <ide>`)"
+    )
+    actions.extend(
+        _queue_quick_action_lines(
+            status=status,
+            queue_status=queue_status,
+            waiting_ticket=waiting_ticket,
+            autopilot_ide=autopilot_ide,
+            urls=urls,
         )
-    if "chat_activity" in status:
-        actions.append(
-            "[pause autopilot 10m] "
-            "`touch .planfile/.koru/autopilot-pause-until-$(date +%s -d '+10 minutes')`"
-        )
-    if "idle_no_ticket" in status or queue_status == "idle":
-        actions.append(f"[create ticket] {urls['create_project_ticket_action']}")
-        actions.append(f"[reopen done ticket] {urls['tickets']}")
-        actions.append(
-            "[force fresh scan] `rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`"
-        )
-    if queue_status == "waiting_input" and waiting_ticket and waiting_ticket != "-":
-        if "stuck_waiting_input" in status:
-            actions.append(
-                "[auto llm-ready] enabled by default; set "
-                "`KORU_AUTOPILOT_AUTO_LLM_READY=0` to require manual approval"
-            )
-        actions.append(
-            f"[mark ticket input] `planfile ticket input {waiting_ticket} "
-            "--prompt '<input needed>' --note '<what was verified>'`"
-        )
-        actions.append(
-            f"[open ticket] {urls['tickets']}#{waiting_ticket}"
-        )
-    if "submit_unverified" in status or status == "failed":
-        retry_ide = autopilot_ide or "auto"
-        actions.append(
-            f"[retry submit] `koru autopilot drive --ide {retry_ide} --require-plugin "
-            f"-p 'continue with {waiting_ticket}'`"
-        )
-    if "diagnostics_fail" in status:
-        # When WUP / diagnostics blocks the cycle, the generic
-        # "wait + rerun queue" advice is useless — the loop will report
-        # the SAME skip until the human fixes the failing service or
-        # disables the gate. Hand the operator three concrete commands.
-        actions.append(
-            "[show wup track] `ls -t .wup/tracks/*_quick.json | head -1 | xargs cat`"
-        )
-        actions.append(
-            "[show wup failures] "
-            "`curl -s http://127.0.0.1:8765/api/dashboard 2>/dev/null | "
-            "jq '.wup.health' || cat .wup/service-health.json`"
-        )
-        actions.append(
-            "[disable diagnostics gate] "
-            "`koru auto --no-autopilot-skip-on-diagnostics-fail` "
-            "(or env: KORU_AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL=0)"
-        )
+    )
+    actions.extend(_diagnostics_quick_action_lines(status))
     return actions
 
 
@@ -546,6 +580,57 @@ def handle_cycle_exit_conditions(
     return False
 
 
+def _save_cycle_checkpoint(
+    *,
+    checkpoint_path: Any,
+    cycle: int,
+    loop_state: Any,
+    queue_result: Any,
+    queue_loop_waiting_ticket_label: Any,
+    save_loop_checkpoint: Any,
+) -> str:
+    waiting_ticket = queue_loop_waiting_ticket_label(queue_result)
+    save_loop_checkpoint(
+        checkpoint_path,
+        cycle=cycle,
+        state=loop_state,
+        queue_status=queue_result.last_status,
+        waiting_ticket=waiting_ticket,
+    )
+    return waiting_ticket
+
+
+def _cycle_idle_context(project: Any, queue_result: Any) -> str:
+    if queue_result.last_status != "idle":
+        return ""
+    from koru.autonomy.ide_work import sprint_ticket_status_summary
+
+    return f" {sprint_ticket_status_summary(project)}"
+
+
+def _emit_cycle_summary(
+    *,
+    args: Any,
+    project: Any,
+    cycle: int,
+    queue_result: Any,
+    waiting_ticket: str,
+    loop_state: Any,
+    diag_result: Any,
+    autopilot_status: str,
+    effective_sleep: float,
+    stdio_info: Any,
+) -> None:
+    idle_context = _cycle_idle_context(project, queue_result)
+    stdio_info(
+        f"koru autonomous: summary cycle={cycle} queue={queue_result.last_status} "
+        f"waiting={waiting_ticket} "
+        f"streak={loop_state.stagnation_streak} diagnostics={diag_result.status} "
+        f"autopilot={autopilot_status} sleep={effective_sleep}s{idle_context}",
+        fmt=args.emit_events,
+    )
+
+
 def run_autonomous_cycle(
     *,
     cycle: int,
@@ -625,28 +710,28 @@ def run_autonomous_cycle(
             diag_result,
             autopilot_status,
         )
-    save_loop_checkpoint(
-        checkpoint_path,
+    waiting_ticket = _save_cycle_checkpoint(
+        checkpoint_path=checkpoint_path,
         cycle=cycle,
-        state=loop_state,
-        queue_status=queue_result.last_status,
-        waiting_ticket=queue_loop_waiting_ticket_label(queue_result),
+        loop_state=loop_state,
+        queue_result=queue_result,
+        queue_loop_waiting_ticket_label=queue_loop_waiting_ticket_label,
+        save_loop_checkpoint=save_loop_checkpoint,
     )
 
     effective_sleep = compute_cycle_sleep(args, loop_state, queue_result)
     stop_reason = _cycle_stop_reason(args, queue_result, cycle)
-    waiting_ticket = queue_loop_waiting_ticket_label(queue_result)
-    idle_context = ""
-    if queue_result.last_status == "idle":
-        from koru.autonomy.ide_work import sprint_ticket_status_summary
-
-        idle_context = f" {sprint_ticket_status_summary(project)}"
-    stdio_info(
-        f"koru autonomous: summary cycle={cycle} queue={queue_result.last_status} "
-        f"waiting={waiting_ticket} "
-        f"streak={loop_state.stagnation_streak} diagnostics={diag_result.status} "
-        f"autopilot={autopilot_status} sleep={effective_sleep}s{idle_context}",
-        fmt=args.emit_events,
+    _emit_cycle_summary(
+        args=args,
+        project=project,
+        cycle=cycle,
+        queue_result=queue_result,
+        waiting_ticket=waiting_ticket,
+        loop_state=loop_state,
+        diag_result=diag_result,
+        autopilot_status=autopilot_status,
+        effective_sleep=effective_sleep,
+        stdio_info=stdio_info,
     )
     _log_operator_next_steps(
         args=args,

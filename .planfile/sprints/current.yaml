@@ -1532,7 +1532,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide vscode --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-05-25T14:52:24.223611Z'
+        finished_at: '2026-05-25T15:17:16.018246Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -1566,6 +1566,11 @@ sprint:
         source: planfile.store
         status: done
         timestamp: '2026-05-25T14:52:24.240085+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T15:17:16.028709+00:00'
       id: STARTER-271
       inputs:
         api_headers: {}
@@ -1621,7 +1626,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-25T14:52:24.240039+00:00'
+      updated_at: '2026-05-25T15:17:16.028664+00:00'
     STARTER-272:
       blocked_by: []
       blocks: []
@@ -1719,3 +1724,106 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-05-25T14:51:28.554821+00:00'
+    STARTER-273:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T15:18:52.447431+00:00'
+      description: "BLOCKED: FAIL: oru/autopilot/install_manager.py\", line 605, in
+        collect_install_manager_report\n    expected_plugin = _expected_plugin_version(root,
+        resolved_ide) if plugin_supported else None\n                      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\n
+        \ File \"/home/tom/github/semcod/koru/src/koru/autopilot/install_manager.py\",
+        line 187, in _expected_plugin_version\n    except (OSError, json.JSONDecodeError):\n
+        \                    ^^^^\nNameError: name 'json' is not defined. Did you
+        forget to import 'json'?"
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        lease_expires_at: '2026-05-25T16:18:53.869543Z'
+        max_attempts: 1
+        queue: operator
+        started_at: '2026-05-25T15:18:54.538035Z'
+        state: running
+      executor:
+        kind: shell
+        mode: noninteractive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+          auto-repair failed: NameError: name ''json'' is not defined
+
+
+          Shell: `koru self --project /home/tom/github/semcod/koru --ide vscode repair
+          --yes`'
+        source: koru task
+        timestamp: '2026-05-25T15:18:52.447431+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T15:18:53.881170+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T15:18:54.556844+00:00'
+      - action: update
+        changes:
+        - description
+        - status
+        previous_status: in_progress
+        source: planfile.store
+        status: blocked
+        timestamp: '2026-05-25T15:18:58.169343+00:00'
+      id: STARTER-273
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+          auto-repair failed: NameError: name ''json'' is not defined
+
+
+          Shell: `koru self --project /home/tom/github/semcod/koru --ide vscode repair
+          --yes`'
+        script: koru self --project /home/tom/github/semcod/koru --ide vscode repair
+          --yes
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:self_control
+      name: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+        auto-repair failed: NameError: name ''json'' is no...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-operator-pipeline:operator-koru-self-control-paczka-/-vsix-/-runtime-self-control-auto-repair-failed-nameerror-name-json-is-no...
+          detail: 'self-control auto-repair failed: NameError: name ''json'' is not
+            defined'
+          input: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+            auto-repair failed: NameError: name ''json'' is not defined
+
+
+            Shell: `koru self --project /home/tom/github/semcod/koru --ide vscode
+            repair --yes`'
+          step_id: self_control
+          task_command: koru self --project /home/tom/github/semcod/koru --ide vscode
+            repair --yes
+        timestamp: '2026-05-25T15:18:52.447431+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: blocked
+      sync: {}
+      updated_at: '2026-05-25T15:18:58.169285+00:00'

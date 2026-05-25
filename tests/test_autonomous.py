@@ -1685,7 +1685,7 @@ def test_status_has_autopilot_plugin_rejects_stale_plugin_when_strict(monkeypatc
     monkeypatch.setattr(
         autonomous_mod.DriveOrchestrator,
         "expected_plugin_version",
-        lambda: "0.1.14",
+        lambda _plugin_ide: "0.1.14",
     )
 
     assert not autonomous_mod._status_has_autopilot_plugin(
@@ -1707,7 +1707,7 @@ def test_status_has_autopilot_plugin_blocks_stale_version_with_strict_protocol(m
     monkeypatch.setattr(
         autonomous_mod.DriveOrchestrator,
         "expected_plugin_version",
-        lambda: "0.1.15",
+        lambda _plugin_ide: "0.1.15",
     )
 
     assert not autonomous_mod._status_has_autopilot_plugin(
@@ -1730,7 +1730,7 @@ def test_status_has_autopilot_plugin_accepts_stale_version_with_protocol_policy(
     monkeypatch.setattr(
         autonomous_mod.DriveOrchestrator,
         "expected_plugin_version",
-        lambda: "0.1.15",
+        lambda _plugin_ide: "0.1.15",
     )
 
     assert autonomous_mod._status_has_autopilot_plugin(
@@ -3173,7 +3173,7 @@ def test_reply_chat_input_busy_recognizes_plugin_ack_shape() -> None:
 
 def test_submit_unverified_drive_failure_is_retryable(monkeypatch) -> None:
     sleeps: list[int] = []
-    monkeypatch.setattr(drive_retry_mod.time, "sleep", lambda seconds: sleeps.append(seconds))
+    monkeypatch.setattr("koru.autonomous_drive_retry_policy.time.sleep", lambda seconds: sleeps.append(seconds))
 
     should_retry = drive_retry_mod._handle_failed_drive_attempt(
         {

@@ -125,6 +125,27 @@ def _add_waiting_ticket_label(
 def _add_label_to_ticket_yaml_text(text: str, ticket_id: str, label: str) -> str | None:
     """Text-preserving Planfile label insert for a single ticket block."""
     lines = text.splitlines(keepends=True)
+    block = _ticket_yaml_block_bounds(lines, ticket_id)
+    if block is None:
+        return None
+    start, end, ticket_indent = block
+    item_indent = f"{ticket_indent}  "
+    label_line_idx = _find_label_line_index(lines, start, end)
+    if label_line_idx < 0:
+        return _insert_missing_label_block(lines, start, item_indent, label)
+
+    label_line = lines[label_line_idx]
+    label_indent = label_line[: len(label_line) - len(label_line.lstrip())]
+    stripped = label_line.strip()
+    if "[" in stripped:
+        return _append_inline_label(lines, label_line_idx, label_indent, label, text)
+    return _append_block_label(lines, label_line_idx, end, label_indent, label, text)
+
+
+def _ticket_yaml_block_bounds(
+    lines: list[str],
+    ticket_id: str,
+) -> tuple[int, int, str] | None:
     start = -1
     ticket_indent = ""
     ticket_re = re.compile(rf"^(\s*){re.escape(ticket_id)}:\s*(?:#.*)?\n?$")
@@ -136,41 +157,83 @@ def _add_label_to_ticket_yaml_text(text: str, ticket_id: str, label: str) -> str
             break
     if start < 0:
         return None
+
     end = len(lines)
     next_ticket_re = re.compile(rf"^{re.escape(ticket_indent)}\S[^:]*:\s*(?:#.*)?\n?$")
     for idx in range(start + 1, len(lines)):
         if next_ticket_re.match(lines[idx]):
             end = idx
             break
+    return start, end, ticket_indent
 
+
+def _find_label_line_index(lines: list[str], start: int, end: int) -> int:
     label_line_idx = -1
     for idx in range(start + 1, end):
         if lines[idx].lstrip().startswith("labels:"):
             label_line_idx = idx
             break
-    item_indent = f"{ticket_indent}  "
-    if label_line_idx < 0:
-        lines.insert(start + 1, f"{item_indent}labels:\n")
-        lines.insert(start + 2, f"{item_indent}- {label}\n")
-        return "".join(lines)
+    return label_line_idx
 
-    label_line = lines[label_line_idx]
-    label_indent = label_line[: len(label_line) - len(label_line.lstrip())]
-    stripped = label_line.strip()
-    if "[" in stripped:
-        try:
-            parsed = yaml.safe_load(stripped) or {}
-        except yaml.YAMLError:
-            parsed = {}
-        existing = [str(item) for item in parsed.get("labels", [])] if isinstance(parsed, dict) else []
-        if label in existing:
-            return text
-        existing.append(label)
-        replacement = [f"{label_indent}labels:\n"]
-        replacement.extend(f"{label_indent}- {item}\n" for item in existing)
-        lines[label_line_idx : label_line_idx + 1] = replacement
-        return "".join(lines)
 
+def _insert_missing_label_block(
+    lines: list[str],
+    start: int,
+    item_indent: str,
+    label: str,
+) -> str:
+    lines.insert(start + 1, f"{item_indent}labels:\n")
+    lines.insert(start + 2, f"{item_indent}- {label}\n")
+    return "".join(lines)
+
+
+def _append_inline_label(
+    lines: list[str],
+    label_line_idx: int,
+    label_indent: str,
+    label: str,
+    original_text: str,
+) -> str:
+    parsed = _parse_inline_label_line(lines[label_line_idx].strip())
+    existing = [str(item) for item in parsed.get("labels", [])] if isinstance(parsed, dict) else []
+    if label in existing:
+        return original_text
+    existing.append(label)
+    replacement = [f"{label_indent}labels:\n"]
+    replacement.extend(f"{label_indent}- {item}\n" for item in existing)
+    lines[label_line_idx : label_line_idx + 1] = replacement
+    return "".join(lines)
+
+
+def _parse_inline_label_line(stripped_line: str) -> dict[str, Any]:
+    try:
+        parsed = yaml.safe_load(stripped_line) or {}
+    except yaml.YAMLError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _append_block_label(
+    lines: list[str],
+    label_line_idx: int,
+    end: int,
+    label_indent: str,
+    label: str,
+    original_text: str,
+) -> str:
+    insert_at, existing_items = _block_label_insert_at(lines, label_line_idx, end, label_indent)
+    if label in existing_items:
+        return original_text
+    lines.insert(insert_at, f"{label_indent}- {label}\n")
+    return "".join(lines)
+
+
+def _block_label_insert_at(
+    lines: list[str],
+    label_line_idx: int,
+    end: int,
+    label_indent: str,
+) -> tuple[int, set[str]]:
     insert_at = end
     existing_items: set[str] = set()
     item_re = re.compile(rf"^{re.escape(label_indent)}-\s*(.+?)\s*(?:#.*)?\n?$")
@@ -184,10 +247,7 @@ def _add_label_to_ticket_yaml_text(text: str, ticket_id: str, label: str) -> str
             break
         existing_items.add(match.group(1).strip().strip("'\""))
         insert_at = idx + 1
-    if label in existing_items:
-        return text
-    lines.insert(insert_at, f"{label_indent}- {label}\n")
-    return "".join(lines)
+    return insert_at, existing_items
 
 
 def _waiting_ticket_id(queue_result: QueueLoopResult) -> str:

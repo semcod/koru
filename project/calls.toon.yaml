@@ -1,13 +1,11 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.33s
-# nodes: 407 | edges: 500 | modules: 91
+# generated in 0.26s
+# nodes: 408 | edges: 500 | modules: 91
 # CC̄=3.7
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
     CC=0  in:550  out:0  total:550
-  src.koruapi.dashboard_routes._build_dashboard_handler_impl
-    CC=1  in:1  out:267  total:268
   src.koru.wizard.gui.static.wizard.list
     CC=5  in:127  out:9  total:136
   src.koruide.ide.normalize_ide_id
@@ -18,8 +16,6 @@ HUBS[20]:
     CC=10  in:6  out:47  total:53
   src.koru.events.emit_management_event
     CC=8  in:31  out:7  total:38
-  plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.type
-    CC=1  in:32  out:2  total:34
   src.koruide.ide.detect_running_ides
     CC=13  in:24  out:10  total:34
   src.koru.scan.run_scan
@@ -38,12 +34,16 @@ HUBS[20]:
     CC=11  in:1  out:25  total:26
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
+  plugins.koru-autopilot-vscode.src.ack-payload.type
+    CC=3  in:25  out:0  total:25
   src.koru.queue.ticket.planfile_command
     CC=5  in:17  out:7  total:24
   src.koruapi.dashboard_tickets.create_ticket_from_dashboard
     CC=8  in:2  out:22  total:24
   examples.remote_orchestration_demo.run_multi_node_orchestration
     CC=9  in:0  out:24  total:24
+  src.koruapi.dashboard_config._dashboard_config_request_kwargs
+    CC=10  in:1  out:23  total:24
 
 MODULES:
   examples.remote_orchestration_demo  [1 funcs]
@@ -51,10 +51,9 @@ MODULES:
   plugins.koru-autopilot-cursor.src.extension  [2 funcs]
     connect  CC=2  out:7
     next  CC=2  out:1
-  plugins.koru-autopilot-vscode.src.ack-payload  [1 funcs]
+  plugins.koru-autopilot-vscode.src.ack-payload  [2 funcs]
     bytes  CC=2  out:0
-  plugins.koru-autopilot-vscode.src.cursor-bubble-adapter  [1 funcs]
-    type  CC=1  out:2
+    type  CC=3  out:0
   scripts.koru-soak-monitor  [1 funcs]
     print  CC=0  out:0
   services.healing-webhook.app  [23 funcs]
@@ -127,9 +126,6 @@ MODULES:
     list  CC=5  out:9
   src.koru.wizard.project  [1 funcs]
     _candidates_from_running_ide  CC=7  out:10
-  src.koruapi.cli  [2 funcs]
-    _build_parser  CC=2  out:17
-    main  CC=11  out:21
   src.koruapi.dashboard  [11 funcs]
     _argv_has_flag  CC=4  out:2
     _env_truthy  CC=1  out:3
@@ -172,10 +168,7 @@ MODULES:
     _read_workspace_folder  CC=8  out:12
     _running_ide_to_detected  CC=1  out:1
     _walk_descendant_pids  CC=6  out:8
-  src.koruapi.dashboard_routes  [4 funcs]
-    _build_dashboard_handler_impl  CC=1  out:267
-    _config_defaults  CC=1  out:4
-    _state_payload  CC=1  out:2
+  src.koruapi.dashboard_routes  [1 funcs]
     build_dashboard_handler  CC=1  out:1
   src.koruapi.dashboard_runtime  [3 funcs]
     _interface_runtime_payload  CC=5  out:3
@@ -450,10 +443,11 @@ MODULES:
     capture_one_with_providers  CC=6  out:13
     list_provider_status  CC=2  out:3
     monitors_via_xrandr  CC=6  out:10
-  src.koruvision.providers.env  [3 funcs]
+  src.koruvision.providers.env  [4 funcs]
     capture_provider_pref  CC=4  out:6
     looks_headless  CC=3  out:4
     portal_possible  CC=3  out:5
+    tool_available  CC=1  out:2
   src.koruvision.providers.obs_websocket  [13 funcs]
     availability  CC=3  out:8
     capture_all  CC=1  out:3
@@ -465,11 +459,18 @@ MODULES:
     _with_obs_connection  CC=9  out:26
     obs_password  CC=1  out:2
     obs_screenshot_width  CC=2  out:4
+  src.koruvision.providers.portal_screencast  [1 funcs]
+    availability  CC=7  out:10
+  src.koruvision.providers.portal_screenshot  [3 funcs]
+    availability  CC=2  out:3
+    capture_one  CC=2  out:4
+    list_monitors  CC=1  out:1
   src.koruvision.providers.registry  [2 funcs]
     all_providers  CC=1  out:1
     provider_by_name  CC=1  out:3
-  src.koruvision.providers.screencast_session  [2 funcs]
+  src.koruvision.providers.screencast_session  [3 funcs]
     clear_session_file  CC=3  out:3
+    resolve_screencast_session_file  CC=3  out:12
     session_file_for_project  CC=1  out:1
   src.koruvision.scaling  [3 funcs]
     downscale_rgb_nearest  CC=6  out:5

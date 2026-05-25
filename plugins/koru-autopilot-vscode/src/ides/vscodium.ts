@@ -25,7 +25,7 @@ function pasteDirectCommandsPrefix(): string[] {
 }
 
 function submitCommandsOverride(): string[] | null {
-  return null;
+  return [];
 }
 
 function focusInputCommandsPrefix(): string[] {
