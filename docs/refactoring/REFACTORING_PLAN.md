@@ -107,8 +107,8 @@ PIPELINE: list[ScanStage] = [DetectStage(), AnalyzeStage(), ReportStage()]
 ## 3. Plan fazowy
 
 ### FAZA 1 — Quick wins (1–2 dni)
-- [ ] **R1**: `dashboard_routes.py` – ekstrakcja helpera `_handle_request()` (przykład zademonstrowany w tym PR)
-- [ ] **R2**: `dashboard_routes.py` – wyciągnięcie HTML response builderów do osobnego modułu `dashboard_html.py`
+- [x] **R1**: `dashboard_routes.py` – ekstrakcja helpera `_safe_respond_json()` (commit `bdd2bf1`, -39 LOC, 0 zmian zachowania)
+- [x] **R2**: `dashboard_routes.py` – wyciągnięcie HTML response builderów do `dashboard_html.py` (-49 LOC, +8 testów)
 - [ ] **R3**: `koruapi/cli.py::main` – rozbicie na subcommand dispatcher
 
 ### FAZA 2 — Rozbicia modułów (3–5 dni)

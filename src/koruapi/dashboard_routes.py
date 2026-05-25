@@ -7,7 +7,6 @@ route implementations for the dashboard API.
 from __future__ import annotations
 
 from functools import lru_cache
-from html import escape
 from http.server import BaseHTTPRequestHandler
 from importlib.resources import files
 from pathlib import Path
@@ -23,6 +22,12 @@ from koruapi.dashboard_config import (
     save_dashboard_config,
 )
 from koruapi.dashboard_context import dashboard_context_payload, dashboard_handoff_markdown
+from koruapi.dashboard_html import (
+    PROJECT_DISCOVERY_PROMPT_QUERY,
+    PROJECT_DISCOVERY_TICKET_FIELDS,
+    render_action_error_html,
+    render_create_ticket_success_html,
+)
 from koruapi.dashboard_http import DashboardRequestHandler
 from koruapi.dashboard_plugin_logs import dashboard_plugin_logs_payload
 from koruapi.dashboard_projects import (
@@ -207,21 +212,7 @@ def _build_dashboard_handler_impl(config: ServeConfig) -> type[BaseHTTPRequestHa
 
         def _redirect_create_project_ticket_prompt(self) -> None:
             qs = parse_qs(urlparse(self.path).query)
-            query: dict[str, str] = {
-                "tab": "tickets",
-                "focus": "create-ticket",
-                "change": "llm.prompt.create-ticket-for-project",
-                "title": "Project discovery: generate code2llm analysis and tickets",
-                "priority": "high",
-                "executor_kind": "human",
-                "queue_name": "operator",
-                "description": (
-                    "Run a broad project discovery pass because the planfile queue is idle.\n\n"
-                    "1. Refresh project/code2llm artifacts when stale.\n"
-                    "2. Review findings and create focused planfile tickets for concrete work.\n"
-                    "3. Keep broad discovery scoped: stop when runnable tickets exist."
-                ),
-            }
+            query = dict(PROJECT_DISCOVERY_PROMPT_QUERY)
             raw_project = qs.get("project", [""])[0].strip()
             if raw_project:
                 query["project"] = raw_project
@@ -235,55 +226,15 @@ def _build_dashboard_handler_impl(config: ServeConfig) -> type[BaseHTTPRequestHa
                 project = self._selected_project()
                 result = create_ticket_from_dashboard(
                     project,
-                    {
-                        "title": "Project discovery: generate code2llm analysis and tickets",
-                        "description": (
-                            "Run a broad project discovery pass because the planfile queue is idle.\n\n"
-                            "1. Refresh project/code2llm artifacts when stale.\n"
-                            "2. Review findings and create focused planfile tickets for concrete work.\n"
-                            "3. Keep broad discovery scoped: stop when runnable tickets exist."
-                        ),
-                        "priority": "high",
-                        "executor_kind": "human",
-                        "queue_name": "operator",
-                        "dedupe_key": "koru:quick-action:create-ticket-for-project",
-                        "signal": "project_discovery_quick_action",
-                    },
+                    dict(PROJECT_DISCOVERY_TICKET_FIELDS),
                 )
-                status = "reused" if result.get("reused") else "created"
-                title = f"Ticket {status}: {result.get('ticket_id')}"
-                body = (
-                    "<!doctype html><meta charset='utf-8'>"
-                    "<meta name='viewport' content='width=device-width, initial-scale=1'>"
-                    "<title>koru action result</title>"
-                    "<style>"
-                    "body{font-family:system-ui,sans-serif;max-width:760px;margin:48px auto;padding:0 20px;"
-                    "line-height:1.45;color:#17202a} .ok{color:#147a3d;font-weight:700}"
-                    "code{background:#eef2f7;padding:2px 5px;border-radius:4px}"
-                    "a{color:#0b5fff}"
-                    "</style>"
-                    f"<h1 class='ok'>{escape(title)}</h1>"
-                    f"<p>Project: <code>{escape(str(project))}</code></p>"
-                    f"<p>Ticket: <code>{escape(str(result.get('ticket_id') or ''))}</code></p>"
-                    f"<p>Name: {escape(str(result.get('name') or ''))}</p>"
-                    "<p>This quick action is idempotent: repeated clicks reuse the same active ticket.</p>"
-                    "<p><a href='/?tab=tickets'>Open tickets</a> · "
-                    "<a href='/api/context'>Context JSON</a></p>"
+                self._send(
+                    200,
+                    render_create_ticket_success_html(str(project), result),
+                    "text/html; charset=utf-8",
                 )
-                self._send(200, body.encode("utf-8"), "text/html; charset=utf-8")
             except Exception as exc:
-                body = (
-                    "<!doctype html><meta charset='utf-8'>"
-                    "<meta name='viewport' content='width=device-width, initial-scale=1'>"
-                    "<title>koru action failed</title>"
-                    "<style>body{font-family:system-ui,sans-serif;max-width:760px;margin:48px auto;padding:0 20px;"
-                    "line-height:1.45;color:#17202a}.err{color:#b42318;font-weight:700}"
-                    "pre{white-space:pre-wrap;background:#fff1f0;padding:12px;border-radius:6px}</style>"
-                    "<h1 class='err'>Action failed</h1>"
-                    f"<pre>{escape(type(exc).__name__ + ': ' + str(exc))}</pre>"
-                    "<p><a href='/?tab=tickets'>Open tickets</a></p>"
-                )
-                self._send(500, body.encode("utf-8"), "text/html; charset=utf-8")
+                self._send(500, render_action_error_html(exc), "text/html; charset=utf-8")
 
         def do_GET(self) -> None:  # noqa: N802 — stdlib API
             path = urlparse(self.path).path
