@@ -55,7 +55,13 @@ workflow[name="test-api-parallel"] {
 
 workflow[name="sync-plugin-version"] {
   trigger: manual;
-  step-1: run cmd=python3 scripts/sync-vscode-plugin-version.py;
+  step-1: run cmd=python3 scripts/sync-plugin-version.py --ide vscode;
+  step-2: run cmd=python3 scripts/sync-plugin-version.py --ide cursor;
+}
+
+workflow[name="sync-plugin-shared"] {
+  trigger: manual;
+  step-1: run cmd=python3 scripts/sync-plugin-shared.py;
 }
 
 workflow[name="default"] {

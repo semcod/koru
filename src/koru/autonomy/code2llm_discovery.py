@@ -27,7 +27,29 @@ Runner = Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]]
 
 DEFAULT_OUTPUT_SUBDIR = "project"
 DEFAULT_FORMATS = "all"
-DEFAULT_EXCLUDES = ("*.md",)
+# Default exclude patterns for ``code2llm`` runs.
+#
+# - ``*.md``: markdown files (docs) — analysing them adds noise to the
+#   refactor candidates and bloats the artifact size.
+# - ``plugins``: the IDE plugin folder. Each IDE has its own dedicated
+#   VSIX (cursor / vscode / vscodium / windsurf / antigravity) and the
+#   ``AutopilotBridge`` class is *intentionally* duplicated across the
+#   five plugins. That is the whole point of the per-IDE split — a
+#   regression in one IDE pipeline cannot leak into another's runtime.
+#   Without this exclude code2llm flagged 10 duplicated classes every
+#   cycle and created a "Remove duplicated classes" planfile ticket
+#   (STARTER-276) that would only be fixable by re-collapsing the
+#   plugins, undoing the whole split. Shared TypeScript that *is* safe
+#   to deduplicate already lives in ``plugins/koru-autopilot-shared/``
+#   and is copied into each plugin's ``src/_shared/`` at build time;
+#   code2llm sees both copies as duplicates too, which is why we exclude
+#   the whole ``plugins/`` tree rather than a glob below it. code2llm's
+#   ``--exclude`` argument matches by directory name / simple pattern,
+#   not full glob, so the literal ``plugins`` is what works.
+DEFAULT_EXCLUDES: tuple[str, ...] = (
+    "*.md",
+    "plugins",
+)
 DEFAULT_STALE_MINUTES = 60.0
 DEFAULT_SOURCE = "koru-project-discovery"
 

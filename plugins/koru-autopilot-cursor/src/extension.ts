@@ -313,7 +313,7 @@ class AutopilotBridge {
           type: "hello",
           id: "vscode-hello",
           ide: this.detectIde(),
-          version: vscode.extensions.getExtension("semcod.koru-autopilot-vscode")?.packageJSON.version || "unknown",
+          version: vscode.extensions.getExtension("semcod.koru-autopilot-cursor")?.packageJSON.version || "unknown",
           protocolVersion: 1,
           capabilities: [
             "ide.commands",
@@ -2561,29 +2561,16 @@ class AutopilotBridge {
   }
 }
 
-export function activate(context: vscode.ExtensionContext): void {
-  const appName = vscode.env.appName || "";
-  debugLog("ACTIVATE", {
-    appName,
-    extensionMode: context.extensionMode,
-    extensionPath: context.extensionPath,
-  });
-  // ``koru-autopilot-cursor`` is a Cursor-only VSIX. The matching
-  // VS Code Marketplace metadata cannot constrain installation to a
-  // single IDE, so we enforce it at runtime: silently no-op when the
-  // host is not Cursor. Sibling plugins
-  // (``koru-autopilot-vscode``/``-vscodium``/``-windsurf``/``-antigravity``)
-  // handle the other IDEs and a regression here cannot bleed into them.
-  if (!appName.toLowerCase().includes("cursor")) {
-    console.warn(
-      `koru-autopilot-cursor: not activating (appName="${appName}"; ` +
-      "this VSIX is the Cursor-only build — install the matching " +
-      "koru-autopilot-<ide> VSIX for this IDE)."
-    );
-    return;
-  }
-  const bridge = new AutopilotBridge(context);
-  activeBridge = bridge;
+function isCursorHost(appName: string): boolean {
+  return appName.toLowerCase().includes("cursor");
+}
+
+function maybeAutoConnect(bridge: AutopilotBridge): void {
+  const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+  if (cfg.get<boolean>("autoConnect", true)) bridge.connect();
+}
+
+function registerBridgeCommands(context: vscode.ExtensionContext, bridge: AutopilotBridge): void {
   context.subscriptions.push(
     vscode.commands.registerCommand("koruAutopilot.connect", () => bridge.connect()),
     vscode.commands.registerCommand("koruAutopilot.sendChat", async () => {
@@ -2599,13 +2586,41 @@ export function activate(context: vscode.ExtensionContext): void {
         event.affectsConfiguration("koruAutopilot.socketPath") ||
         event.affectsConfiguration("koruAutopilot.autoConnect")
       ) {
-        const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-        if (cfg.get<boolean>("autoConnect", true)) bridge.connect();
+        maybeAutoConnect(bridge);
       }
     }),
   );
-  const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-  if (cfg.get<boolean>("autoConnect", true)) bridge.connect();
+}
+
+function activateBridge(context: vscode.ExtensionContext): void {
+  const bridge = new AutopilotBridge(context);
+  activeBridge = bridge;
+  registerBridgeCommands(context, bridge);
+  maybeAutoConnect(bridge);
+}
+
+export function activate(context: vscode.ExtensionContext): void {
+  const appName = vscode.env.appName || "";
+  debugLog("ACTIVATE", {
+    appName,
+    extensionMode: context.extensionMode,
+    extensionPath: context.extensionPath,
+  });
+  // ``koru-autopilot-cursor`` is a Cursor-only VSIX. The matching
+  // VS Code Marketplace metadata cannot constrain installation to a
+  // single IDE, so we enforce it at runtime: silently no-op when the
+  // host is not Cursor. Sibling plugins
+  // (``koru-autopilot-vscode``/``-vscodium``/``-windsurf``/``-antigravity``)
+  // handle the other IDEs and a regression here cannot bleed into them.
+  if (!isCursorHost(appName)) {
+    console.warn(
+      `koru-autopilot-cursor: not activating (appName="${appName}"; ` +
+      "this VSIX is the Cursor-only build — install the matching " +
+      "koru-autopilot-<ide> VSIX for this IDE)."
+    );
+    return;
+  }
+  activateBridge(context);
 }
 
 export function deactivate(): void {

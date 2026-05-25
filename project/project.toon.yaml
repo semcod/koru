@@ -1,55 +1,57 @@
-# koru | 4477 func | 390f | 97472L | python | 2026-05-25
+# koru | 5786 func | 493f | 110347L | python | 2026-05-25
 # generated in 0.00s
 
 HEALTH:
-  CC̄=3.6  critical=271 (limit:10)  dup=9  cycles=0
+  CC̄=3.5  critical=298 (limit:10)  dup=24  cycles=0
 
 ALERTS[20]:
-  !!! high_fan_out     _build_dashboard_handler_impl = 62 (limit:10)
-  !!! high_fan_out     _build_handler = 44 (limit:10)
-  !!! high_fan_out     create_app = 44 (limit:10)
-  !!! high_fan_out     run_cycle = 25 (limit:10)
   !!! high_fan_out     init_project = 23 (limit:10)
   !!! high_fan_out     topology_main = 23 (limit:10)
   !!! high_fan_out     observe_up = 22 (limit:10)
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
   !!! high_fan_out     _build_parser = 22 (limit:10)
+  !!! high_fan_out     run_cycle = 21 (limit:10)
+  !!! high_fan_out     handle_ack = 20 (limit:10)
   !!! high_fan_out     setup_autonomous_session = 20 (limit:10)
+  !!! high_fan_out     collect_install_manager_report = 20 (limit:10)
+  !!! high_fan_out     evaluate_bridge = 20 (limit:10)
 
-MODULES[572] (top by size):
-  M[plugins/koru-autopilot-vscode/src/extension.ts] 2619L C:2 F:192 CC↑15 D:0 (typescript)
-  M[plugins/koru-autopilot-cursor/src/extension.ts] 2616L C:2 F:191 CC↑14 D:0 (typescript)
-  M[plugins/koru-autopilot-antigravity/src/extension.ts] 2610L C:2 F:191 CC↑14 D:19 (typescript)
-  M[plugins/koru-autopilot-vscodium/src/extension.ts] 2610L C:2 F:191 CC↑14 D:0 (typescript)
-  M[plugins/koru-autopilot-windsurf/src/extension.ts] 2610L C:2 F:191 CC↑14 D:0 (typescript)
+MODULES[707] (top by size):
+  M[plugins/koru-autopilot-vscode/src/extension.ts] 2635L C:2 F:197 CC↑14 D:0 (typescript)
+  M[plugins/koru-autopilot-cursor/src/extension.ts] 2631L C:2 F:195 CC↑14 D:0 (typescript)
+  M[plugins/koru-autopilot-vscodium/src/extension.ts] 2626L C:2 F:196 CC↑14 D:0 (typescript)
+  M[plugins/koru-autopilot-antigravity/src/extension.ts] 2625L C:2 F:195 CC↑14 D:19 (typescript)
+  M[plugins/koru-autopilot-windsurf/src/extension.ts] 2625L C:2 F:195 CC↑14 D:0 (typescript)
   M[src/koru/doctor.py] 2083L C:2 F:98 CC↑13 D:2 (python)
   M[planfile.yaml] 1357L C:0 F:0 CC↑0 D:0 (yaml)
-  M[src/koru/autonomous_cycle_chat_activity.py] 1118L C:0 F:44 CC↑12 D:2 (python)
-  M[src/koru/scan.py] 1104L C:0 F:28 CC↑15 D:3 (python)
-  M[src/koru/autopilot/cli_command.py] 1084L C:0 F:27 CC↑14 D:0 (python)
+  M[src/koru/scan.py] 1183L C:0 F:37 CC↑13 D:3 (python)
+  M[src/koru/autopilot/cli_command.py] 1142L C:0 F:32 CC↑10 D:0 (python)
+  M[src/koruide/daemon/handlers.py] 1053L C:0 F:38 CC↑19 D:1 (python)
   M[src/koruapi/mcp_server.py] 1023L C:0 F:35 CC↑14 D:4 (python)
   M[src/koru/autonomy/operator_pipeline.py] 1016L C:2 F:44 CC↑14 D:0 (python)
-  M[src/koruide/daemon/handlers.py] 999L C:0 F:38 CC↑14 D:1 (python)
+  M[src/koru/autonomous_cycle.py] 974L C:0 F:29 CC↑11 D:1 (python)
   M[src/koru/autonomous.py] 974L C:0 F:62 CC↑4 D:4 (python)
-  M[src/koru/autonomous_cycle.py] 953L C:0 F:27 CC↑11 D:1 (python)
-  LANGS: python:401/typescript:55/shell:49/yaml:23/json:16/yml:10/kotlin:6/other:4/txt:2/javascript:1/md:1/properties:1/xml:1/toml:1/proto:1
+  M[Taskfile.yml] 922L C:0 F:0 CC↑0 D:0 (yml)
+  LANGS: python:404/typescript:178/shell:49/yaml:28/json:20/yml:10/kotlin:6/other:4/txt:2/javascript:1/md:1/properties:1/xml:1/toml:1/proto:1
 
 HOTSPOTS[10]:
-  ★ _build_dashboard_handler_impl fan=62  // Build and return a DashboardRequestHandler subclass for the dashboard.
-  ★ _build_handler fan=44  // Orchestrates 44 calls
-  ★ create_app fan=44  // Build the FastAPI app (requires ``koru[api]``).
-  ★ run_cycle fan=25  // Orchestrates 25 calls
   ★ init_project fan=23  // Initialise (or re-initialise with ``force``) a koru project.
 
 Steps:
     1. Refu
+  ★ topology_main fan=23  // Orchestrates 23 calls
+  ★ observe_up fan=22  // Orchestrates 22 calls
+  ★ render_markdown_handoff fan=22  // Turn a context dict into a Markdown brief for the operator.
+
+Designed to be past
+  ★ _build_parser fan=22  // Orchestrates 22 calls
 
 REFACTOR[15]:
-  [1] H/H Split god module src/koruide/plugin_installer.py (708L, 1 classes)
-  [2] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (2619L, 2 classes)
-  [3] H/H Split god module src/koru/scan.py (1104L, 0 classes)
-  [4] H/H Split god module plugins/koru-autopilot-antigravity/src/extension.ts (2610L, 2 classes)
-  [5] H/H Split god module plugins/koru-autopilot-cursor/src/extension.ts (2616L, 2 classes)
+  [1] H/H Split god module src/koruide/daemon/handlers.py (1053L, 0 classes)
+  [2] H/H Split god module plugins/koru-autopilot-antigravity/src/extension.ts (2625L, 2 classes)
+  [3] H/H Split god module plugins/koru-autopilot-cursor/src/extension.ts (2631L, 2 classes)
+  [4] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (2635L, 2 classes)
+  [5] H/H Split god module plugins/koru-autopilot-vscodium/src/extension.ts (2626L, 2 classes)
 
 EVOLUTION:
-  2026-05-25 CC̄=3.6 crit=271 97472L // Automated analysis
+  2026-05-25 CC̄=3.5 crit=298 110347L // Automated analysis

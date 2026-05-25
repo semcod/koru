@@ -1,13 +1,15 @@
 flowchart TD
-%% generated in 0.25s
+%% generated in 0.16s
     docker__capture["docker.capture<br/>8 funcs"]
     examples__remote_orchestration_demo["examples.remote_orchestration_demo<br/>1 funcs"]
+    koru__activity_log["koru.activity_log<br/>15 funcs"]
+    koru__autonomous_drive_retry_policy["koru.autonomous_drive_retry_policy<br/>8 funcs"]
     koru__bootstrap["koru.bootstrap<br/>21 funcs"]
     koru__deployment_events["koru.deployment_events<br/>28 funcs"]
-    koruide__ide["koruide.ide<br/>46 funcs"]
-    plugins__koru_autopilot_antigravity["plugins.koru-autopilot-antigravity<br/>237 funcs"]
-    plugins__koru_autopilot_cursor["plugins.koru-autopilot-cursor<br/>295 funcs"]
-    plugins__koru_autopilot_vscode["plugins.koru-autopilot-vscode<br/>488 funcs"]
+    koruide__daemon["koruide.daemon<br/>38 funcs"]
+    plugins__koru_autopilot_antigravity["plugins.koru-autopilot-antigravity<br/>525 funcs"]
+    plugins__koru_autopilot_cursor["plugins.koru-autopilot-cursor<br/>578 funcs"]
+    plugins__koru_autopilot_shared["plugins.koru-autopilot-shared<br/>58 funcs"]
     scripts___koru_autodiag_filter_tickets["scripts._koru_autodiag_filter_tickets<br/>1 funcs"]
     scripts__koru_gate_capture["scripts.koru-gate-capture<br/>14 funcs"]
     scripts__koru_soak_monitor["scripts.koru-soak-monitor<br/>6 funcs"]
@@ -18,76 +20,85 @@ flowchart TD
     scripts__sync_vscode_plugin_version["scripts.sync-vscode-plugin-version<br/>6 funcs"]
     scripts__write_ide_plugin_tests["scripts.write-ide-plugin-tests<br/>3 funcs"]
     services__healing_webhook["services.healing-webhook<br/>34 funcs"]
-    src__koru["src.koru<br/>1916 funcs"]
-    src__koruapi["src.koruapi<br/>196 funcs"]
+    src__koru["src.koru<br/>1939 funcs"]
+    src__koruapi["src.koruapi<br/>220 funcs"]
     src__korudsl["src.korudsl<br/>27 funcs"]
-    src__koruide["src.koruide<br/>274 funcs"]
+    src__koruide["src.koruide<br/>289 funcs"]
     src__korullm["src.korullm<br/>39 funcs"]
     src__korumesh["src.korumesh<br/>41 funcs"]
     src__koruobserve["src.koruobserve<br/>52 funcs"]
     src__koruos["src.koruos<br/>39 funcs"]
     src__koruvision["src.koruvision<br/>129 funcs"]
-    src__koru ==>|427| scripts__koru_soak_monitor
-    src__koru ==>|84| koruide__ide
-    src__koruapi ==>|82| src__koru
-    src__koru ==>|41| src__koruide
+    src__koru ==>|391| scripts__koru_soak_monitor
+    src__koru ==>|130| src__koruide
+    src__koruapi ==>|74| src__koru
+    src__koru ==>|41| koru__activity_log
+    koruide__daemon ==>|33| src__koruide
+    koru__autonomous_drive_retry_policy ==>|31| scripts__koru_soak_monitor
     src__koruide ==>|27| scripts__koru_soak_monitor
-    src__koruide ==>|22| koruide__ide
     src__koruobserve ==>|18| scripts__koru_soak_monitor
+    src__koruide ==>|18| src__koruapi
     src__koru ==>|18| plugins__koru_autopilot_antigravity
     src__koruapi ==>|17| scripts__koru_soak_monitor
     src__koru ==>|16| src__koruvision
-    src__koruide ==>|14| src__koruapi
     examples__remote_orchestration_demo ==>|12| scripts__koru_soak_monitor
     src__koruvision ==>|12| scripts__koru_soak_monitor
-    src__koruapi ==>|11| plugins__koru_autopilot_vscode
-    src__koruide ==>|10| plugins__koru_autopilot_antigravity
+    src__koruapi ==>|11| plugins__koru_autopilot_shared
+    src__koruide ==>|11| plugins__koru_autopilot_antigravity
     src__koru ==>|10| src__koruobserve
-    src__koruide ==>|9| src__koru
+    src__koruapi ==>|9| src__koruide
     scripts__planfile_sync_todo ==>|9| scripts__koru_soak_monitor
     scripts__sync_vscode_plugin_version ==>|9| scripts__koru_soak_monitor
+    src__koruapi ==>|8| koru__activity_log
     src__koruvision ==>|8| src__korumesh
-    src__koruide ==>|8| plugins__koru_autopilot_vscode
-    src__koru ==>|8| plugins__koru_autopilot_vscode
+    src__koruide ==>|8| plugins__koru_autopilot_shared
     src__koru ==>|8| src__koruapi
     scripts__sync_plugin_version ==>|8| scripts__koru_soak_monitor
     src__koruobserve ==>|7| src__koruvision
-    src__koruapi ==>|7| koruide__ide
     src__korumesh ==>|7| scripts__koru_soak_monitor
+    src__koru ==>|7| plugins__koru_autopilot_shared
     src__koruobserve ==>|6| src__koru
+    koruide__daemon ==>|6| src__koru
     src__koru ==>|6| src__koruos
     src__koruvision ==>|5| src__koru
     src__koru ==>|5| koru__deployment_events
     scripts__koru_gate_capture ==>|5| scripts__koru_soak_monitor
     src__koruapi ==>|4| src__korudsl
-    koruide__ide ==>|4| src__koruapi
+    src__koruide ==>|4| src__koru
+    koru__activity_log ==>|4| src__koru
+    koru__activity_log ==>|4| scripts__koru_soak_monitor
     docker__capture ==>|4| src__koruvision
     src__koruapi -->|3| src__korumesh
     src__koru -->|3| koru__bootstrap
-    src__koru -->|3| src__korullm
     scripts__sync_plugin_shared -->|3| scripts__koru_soak_monitor
     scripts__scaffold_ide_plugin -->|3| scripts__koru_soak_monitor
     services__healing_webhook -->|2| plugins__koru_autopilot_antigravity
     src__koruapi -->|2| plugins__koru_autopilot_antigravity
-    src__koruapi -->|2| src__koruide
     src__korumesh -->|2| src__koru
     src__korumesh -->|2| src__koruvision
+    src__koruide -->|2| koru__activity_log
     src__koru -->|2| src__korudsl
+    src__koru -->|2| src__korullm
     koru__deployment_events -->|2| scripts__koru_soak_monitor
     services__healing_webhook -->|1| src__koru
     src__koruobserve -->|1| src__korumesh
-    src__koruos -->|1| plugins__koru_autopilot_vscode
+    src__koruos -->|1| plugins__koru_autopilot_shared
     src__koruos -->|1| src__koru
-    src__korudsl -->|1| plugins__koru_autopilot_vscode
-    src__korullm -->|1| plugins__koru_autopilot_vscode
-    src__koruvision -->|1| plugins__koru_autopilot_vscode
+    src__korudsl -->|1| plugins__koru_autopilot_shared
+    src__korullm -->|1| plugins__koru_autopilot_shared
+    src__koruvision -->|1| plugins__koru_autopilot_shared
     src__koruvision -->|1| plugins__koru_autopilot_antigravity
     src__koruvision -->|1| src__koruobserve
     src__korumesh -->|1| src__koruobserve
     src__korumesh -->|1| plugins__koru_autopilot_antigravity
-    src__korumesh -->|1| plugins__koru_autopilot_vscode
-    koruide__ide -->|1| plugins__koru_autopilot_antigravity
+    src__korumesh -->|1| plugins__koru_autopilot_shared
+    src__koruide -->|1| koruide__daemon
     src__koru -->|1| plugins__koru_autopilot_cursor
+    koru__autonomous_drive_retry_policy -->|1| koru__activity_log
+    koru__autonomous_drive_retry_policy -->|1| src__korullm
+    koru__autonomous_drive_retry_policy -->|1| src__koru
+    koru__activity_log -->|1| plugins__koru_autopilot_shared
+    src__koru -->|1| koru__autonomous_drive_retry_policy
     docker__capture -->|1| src__koruobserve
     docker__capture -->|1| scripts__koru_soak_monitor
     scripts__write_ide_plugin_tests -->|1| scripts__koru_soak_monitor

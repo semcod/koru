@@ -40,6 +40,46 @@ def test_skipped_when_binary_missing(tmp_path: Path, monkeypatch: pytest.MonkeyP
     assert outcome.skipped_reason == "code2llm not on PATH"
 
 
+def test_default_excludes_skip_plugins_folder() -> None:
+    """The ``plugins/`` folder must be excluded from code2llm dup analysis.
+
+    The five ``plugins/koru-autopilot-<ide>/`` plugins each carry their
+    own copy of ``AutopilotBridge`` by design — that is the whole point
+    of the per-IDE VSIX split (regression isolation). Without this
+    exclusion code2llm flags 10 duplicated classes on every discovery
+    cycle and re-creates a planfile ticket (STARTER-276) that, if
+    "fixed", would re-collapse the plugins and undo the architectural
+    split. code2llm's ``--exclude`` matches by directory name, so the
+    literal ``plugins`` is what works.
+    """
+    excludes = cd.DEFAULT_EXCLUDES
+    assert "*.md" in excludes
+    assert "plugins" in excludes
+
+
+def test_build_cmd_passes_excludes_to_code2llm(tmp_path: Path) -> None:
+    """``_build_code2llm_cmd`` must forward every exclude pattern via ``--exclude``."""
+    cmd = cd._build_code2llm_cmd(
+        "/usr/bin/code2llm",
+        project=tmp_path,
+        output_dir=tmp_path / "project",
+        formats="toon",
+        excludes=cd.DEFAULT_EXCLUDES,
+        apply_planfile=False,
+        planfile_source="koru-test",
+        planfile_sprint="current",
+        planfile_limit=None,
+    )
+    # Each pattern should appear immediately after a ``--exclude`` flag.
+    for pattern in cd.DEFAULT_EXCLUDES:
+        positions = [i for i, tok in enumerate(cmd) if tok == "--exclude"]
+        assert any(cmd[i + 1] == pattern for i in positions), (
+            f"exclude pattern {pattern!r} missing from {cmd!r}"
+        )
+    # ``plugins`` must be excluded so the per-IDE VSIX split is preserved.
+    assert "plugins" in cmd
+
+
 def test_runs_and_parses_applied(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(cd, "_code2llm_executable", lambda: "/usr/bin/code2llm")
     runner = _make_runner(

@@ -184,6 +184,13 @@ def _patch_extension_activate(dest: Path, cfg: dict[str, object]) -> None:
         insert + "  const bridge = new AutopilotBridge(context);",
         1,
     )
+    # The hello payload looks up the plugin's own version via the extension API.
+    # The vscode template hard-codes the umbrella ID; switch each per-IDE
+    # plugin to its dedicated ID so the daemon never sees ``version=unknown``.
+    text = text.replace(
+        'vscode.extensions.getExtension("semcod.koru-autopilot-vscode")',
+        f'vscode.extensions.getExtension("semcod.koru-autopilot-{ide}")',
+    )
     path.write_text(text, encoding="utf-8")
 
 

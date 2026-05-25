@@ -1,19 +1,13 @@
-# code2llm | 399f 67074L | python:388,json:6,proto:1,shell:1,javascript:1 | 2026-05-25
-# CC̄=3.9 | critical:5/2801 | dups:0 | cycles:0
+# code2llm | 402f 67963L | python:391,json:6,proto:1,shell:1,javascript:1 | 2026-05-25
+# CC̄=3.9 | critical:0/2890 | dups:0 | cycles:0
 
-HEALTH[6]:
+HEALTH[1]:
   🔴 GOD   koru/deployment_events.py = 505L, 8 classes, 28m, max CC=12
-  🟡 CC    resolve_extension_vsix CC=17 (limit:15)
-  🟡 CC    _reassert_extension_extra CC=18 (limit:15)
-  🟡 CC    _handle_autopilot_phase CC=15 (limit:15)
-  🟡 CC    run_scan CC=15 (limit:15)
-  🟡 CC    _install_manager_checks CC=15 (limit:15)
 
-REFACTOR[2]:
+REFACTOR[1]:
   1. split koru/deployment_events.py  (god module)
-  2. split 5 high-CC methods  (CC>15)
 
-PIPELINES[815]:
+PIPELINES[848]:
   [1] Src [to_json]: to_json
       PURITY: 100% pure
   [2] Src [_cmd_install]: _cmd_install → _missing_observe_packages
@@ -26,17 +20,23 @@ PIPELINES[815]:
       PURITY: 100% pure
 
 LAYERS:
-  koru/                           CC̄=4.1    ←in:139  →out:230  !! split
+  korudsl/                        CC̄=4.0    ←in:6  →out:0
+  │ library                    207L  0C   19m  CC=9      ←1
+  │ cli                         90L  0C    4m  CC=11     ←1
+  │ transform                   70L  0C    4m  CC=12     ←2
+  │ __init__                    25L  0C    0m  CC=0.0    ←0
+  │
+  koru/                           CC̄=4.0    ←in:144  →out:241  !! split
   │ !! doctor                    2083L  2C   98m  CC=13     ←2
-  │ !! autonomous_cycle_chat_activity  1118L  0C   44m  CC=12     ←2
-  │ !! scan                      1104L  0C   28m  CC=15     ←3
-  │ !! cli_command               1084L  0C   27m  CC=14     ←0
+  │ !! scan                      1183L  0C   37m  CC=13     ←3
+  │ !! cli_command               1142L  0C   32m  CC=10     ←0
   │ !! operator_pipeline         1016L  2C   44m  CC=14     ←0
   │ !! autonomous                 974L  0C   62m  CC=4      ←4
-  │ !! autonomous_cycle           953L  0C   27m  CC=11     ←1
+  │ !! autonomous_cycle           974L  0C   29m  CC=11     ←1
   │ !! context                    822L  0C   31m  CC=12     ←8
   │ !! autonomous_wup             808L  3C   39m  CC=12     ←2
   │ !! autonomous_loop_runner     776L  1C   34m  CC=10     ←2
+  │ !! autonomous_cycle_chat_activity   770L  0C   20m  CC=12     ←2
   │ !! decision_trace             676L  1C   24m  CC=11     ←3
   │ !! koru-autoloop.sh           676L  0C   17m  CC=0.0    ←0
   │ !! autonomous_startup         662L  3C   32m  CC=11     ←3
@@ -52,33 +52,34 @@ LAYERS:
   │ install_manager            466L  1C   18m  CC=13     ←3
   │ ide_work                   465L  0C   17m  CC=12     ←4
   │ runner                     463L  0C   14m  CC=9      ←3
+  │ shared                     463L  0C   24m  CC=9      ←4
   │ bootstrap                  459L  2C   21m  CC=10     ←3
   │ autonomous_parser          454L  0C    4m  CC=14     ←2
-  │ shared                     452L  0C   24m  CC=9      ←4
+  │ code2llm_discovery         451L  1C   20m  CC=13     ←4
   │ mcp_provision              449L  0C   24m  CC=10     ←5
   │ scan_phase                 431L  0C   15m  CC=13     ←1
-  │ code2llm_discovery         429L  1C   20m  CC=13     ←4
   │ topology                   425L  1C   18m  CC=9      ←9
   │ tasks                      410L  1C   26m  CC=12     ←11
   │ queue_clean                391L  2C   13m  CC=14     ←1
   │ post_run_verify            381L  2C   16m  CC=14     ←3
+  │ local_service              380L  1C   15m  CC=10     ←1
   │ env                        380L  0C   17m  CC=12     ←3
   │ install_checks             378L  1C   15m  CC=12     ←0
   │ gc                         371L  2C   12m  CC=11     ←1
   │ autonomous_processes       355L  3C   16m  CC=11     ←2
+  │ self_control               351L  2C   18m  CC=12     ←2
   │ cli                        350L  0C   17m  CC=8      ←0
-  │ !! self_control               344L  2C   16m  CC=15     ←2
   │ tree                       342L  5C   19m  CC=10     ←4
   │ agents                     335L  1C   16m  CC=14     ←4
   │ init_host_environment      329L  0C   17m  CC=14     ←1
-  │ local_service              326L  1C    7m  CC=7      ←1
-  │ activity_log               326L  0C   15m  CC=10     ←21
+  │ activity_log               327L  0C   15m  CC=10     ←22
   │ autonomous_runtime         322L  1C   12m  CC=13     ←4
   │ tools                      318L  0C   19m  CC=11     ←3
   │ strategies.json            315L  0C    0m  CC=0.0    ←0
+  │ app                        312L  0C   17m  CC=10     ←1
   │ autonomous_diagnostics     305L  0C    9m  CC=13     ←1
   │ autonomous_operator        304L  0C   18m  CC=3      ←1
-  │ app                        299L  0C    9m  CC=10     ←1
+  │ autonomous_cycle_chat_activity_analyzer   301L  0C   18m  CC=11     ←1
   │ local_manager_state        292L  4C   21m  CC=14     ←0
   │ wizard.js                  292L  0C   38m  CC=13     ←70
   │ queue_cli_helpers          290L  0C   10m  CC=9      ←1
@@ -88,29 +89,31 @@ LAYERS:
   │ autonomous_plugin_wait     274L  0C    4m  CC=9      ←0
   │ environment_profile        265L  5C   11m  CC=9      ←4
   │ policy                     262L  1C   10m  CC=9      ←2
+  │ git_cli                    262L  0C   16m  CC=9      ←0
   │ orchestrator               259L  1C    9m  CC=10     ←2
   │ autonomous_auto_pipeline   255L  2C    9m  CC=9      ←0
   │ local_manager_client       252L  2C   15m  CC=7      ←4
+  │ decision_engine            251L  4C   10m  CC=11     ←2
   │ environment                250L  3C    6m  CC=14     ←1
-  │ git_cli                    249L  0C   13m  CC=11     ←0
   │ runners                    249L  0C   11m  CC=9      ←2
+  │ autonomous_plugin          241L  0C   17m  CC=12     ←4
   │ ide_install                241L  1C    6m  CC=9      ←1
   │ autonomous_onboarding      231L  1C   11m  CC=10     ←0
   │ ide_doctor_cli             230L  0C    7m  CC=11     ←0
-  │ decision_engine            228L  4C    9m  CC=11     ←2
   │ autonomous_up              226L  2C    5m  CC=5      ←0
-  │ autonomous_plugin          222L  0C   15m  CC=12     ←4
+  │ calibrate_cli              225L  0C    7m  CC=9      ←1
   │ event_store                220L  4C   17m  CC=10     ←3
+  │ autonomous_drive_retry_policy   216L  0C    8m  CC=13     ←1
   │ ide                        216L  1C    6m  CC=10     ←1
   │ doctor_constants           215L  1C    0m  CC=0.0    ←0
   │ dev_sync                   213L  1C    9m  CC=11     ←0
   │ agent_backends             212L  3C    7m  CC=11     ←3
   │ interface_registry         212L  3C   12m  CC=9      ←7
-  │ calibrate_cli              210L  0C    5m  CC=13     ←1
   │ autonomous_process_guard   206L  2C    8m  CC=11     ←1
   │ autonomous_checkpoint      205L  0C   11m  CC=9      ←4
   │ gate                       202L  1C    5m  CC=12     ←1
   │ autonomous_cycle_config    194L  0C    5m  CC=9      ←1
+  │ autonomous_cycle_orchestrator   194L  0C    5m  CC=6      ←1
   │ templates                  194L  1C   12m  CC=9      ←1
   │ cli_queue                  192L  0C    4m  CC=12     ←0
   │ autonomous_plugin_runtime   191L  0C   10m  CC=11     ←1
@@ -118,11 +121,10 @@ LAYERS:
   │ cli_task                   189L  0C    5m  CC=11     ←0
   │ agent_backend_runtime      180L  5C    6m  CC=9      ←0
   │ events                     174L  1C   11m  CC=7      ←1
-  │ llm_reflect                173L  1C    5m  CC=8      ←1
+  │ llm_reflect                173L  1C    5m  CC=8      ←2
   │ cli                        173L  0C    5m  CC=2      ←6
   │ ide_client                 171L  2C   12m  CC=3      ←1
   │ queue_phase                170L  0C    6m  CC=11     ←0
-  │ autonomous_drive_retry_policy   168L  0C    7m  CC=13     ←1
   │ application                164L  2C   11m  CC=3      ←0
   │ ticket                     164L  0C    8m  CC=10     ←7
   │ project                    160L  1C   11m  CC=7      ←1
@@ -134,9 +136,10 @@ LAYERS:
   │ autonomous_cycle_gate      147L  0C    8m  CC=7      ←2
   │ daemon_cli                 146L  0C    7m  CC=11     ←1
   │ cli_doctor                 143L  0C    6m  CC=11     ←0
+  │ autonomous_cycle_chat_activity_text   138L  0C    6m  CC=12     ←0
   │ local_manager              136L  1C    6m  CC=5      ←1
   │ vscode_family              136L  1C    4m  CC=8      ←0
-  │ !! autonomous_cycle_orchestrator   134L  0C    1m  CC=15     ←1
+  │ integration_ledger         135L  0C    4m  CC=5      ←2
   │ bridge                     134L  0C    5m  CC=14     ←5
   │ loop                       131L  3C    4m  CC=12     ←2
   │ llx                        128L  1C    4m  CC=14     ←3
@@ -299,18 +302,12 @@ LAYERS:
   │ __init__                     1L  0C    0m  CC=0.0    ←0
   │ commands                     0L  0C    0m  CC=0.0    ←0
   │
-  korudsl/                        CC̄=4.0    ←in:6  →out:0
-  │ library                    207L  0C   19m  CC=9      ←1
-  │ cli                         90L  0C    4m  CC=11     ←1
-  │ transform                   70L  0C    4m  CC=12     ←2
-  │ __init__                    25L  0C    0m  CC=0.0    ←0
-  │
-  koruide/                        CC̄=3.9    ←in:192  →out:22  !! split
-  │ !! handlers                   999L  0C   38m  CC=14     ←1
-  │ !! ide                        753L  1C   46m  CC=13     ←25
-  │ !! plugin_installer           708L  1C   29m  CC=18     ←7
-  │ !! os_injector                513L  2C   30m  CC=12     ←2
-  │ injector                   376L  3C   24m  CC=10     ←0
+  koruide/                        CC̄=3.8    ←in:196  →out:6
+  │ !! handlers                  1153L  0C   43m  CC=14     ←1
+  │ !! ide                        755L  1C   46m  CC=13     ←25
+  │ !! plugin_installer           727L  1C   36m  CC=11     ←8
+  │ !! os_injector                535L  2C   32m  CC=9      ←2
+  │ injector                   393L  3C   24m  CC=10     ←0
   │ drive_orchestrator         316L  1C   15m  CC=14     ←2
   │ host_setup                 309L  0C   14m  CC=14     ←3
   │ server                     308L  1C   16m  CC=8      ←0
@@ -356,7 +353,7 @@ LAYERS:
   │
   koruapi/                        CC̄=3.4    ←in:26  →out:98  !! split
   │ !! mcp_server                1023L  0C   35m  CC=14     ←4
-  │ !! dashboard_routes           504L  0C    5m  CC=1      ←2
+  │ !! dashboard_routes           509L  0C   29m  CC=9      ←2
   │ dashboard_projects         334L  0C   20m  CC=10     ←2
   │ dashboard_tickets          253L  0C   11m  CC=14     ←1
   │ dashboard_serve_utils      246L  1C   18m  CC=7      ←3
@@ -447,49 +444,52 @@ LAYERS:
      koru/cli/commands.py                      0L
 
 COUPLING:
-                                          koru                koruide                koruapi            koru.wizard          koru.autonomy         koru.autopilot         koruide.daemon   koruvision.providers             koru.queue             koruvision            koruobserve      koru.ide_adapters  koru.bounded_contexts               korumesh              koru.cqrs
-                   koru                     ──                     74                      6                     65                     20                      4                     ←2                      3                     13                     ←3                     10                     15                    ←15                     ←1                      5  hub
-                koruide                      2                     ──                     18                      2                    ←10                    ←41                    ←54                                                                                                                 ←3                                                                       hub
-                koruapi                     46                      9                     ──                     23                      1                                                                                          11                                                                                                                  3                         hub
-            koru.wizard                      1                      1                    ←23                     ──                    ←11                     ←1                     ←3                     ←2                     ←2                                            ←1                                            ←1                     ←1                     ←4  hub
-          koru.autonomy                     49                     10                      2                     11                     ──                     ←2                                            13                      2                                                                    1                                                                       hub
-         koru.autopilot                      8                     41                                             1                      2                     ──                                                                                                                                         3                                                                       !! fan-out
-         koruide.daemon                      2                     54                                             3                                                                   ──                                                                                                                                                                                          !! fan-out
-   koruvision.providers                     ←3                                                                    2                    ←13                                                                   ──                                            18                      1                                                                    5                         hub
-             koru.queue                      7                                           ←11                      2                     ←2                                                                                          ──                                                                                          ←3                                                hub
-             koruvision                      3                                                                                                                                                                2                                            ──                     ←2                                                                    3                         hub
-            koruobserve                      5                                                                    1                                                                                           5                                             2                     ──                                                                    1                         hub
-      koru.ide_adapters                    ←15                      3                                                                   ←1                     ←3                                                                                                                                        ──                                                                       hub
-  koru.bounded_contexts                     15                                                                    1                                                                                                                  3                                                                                          ──                                                !! fan-out
-               korumesh                      1                                            ←3                      1                                                                                           2                                            ←3                      1                                                                   ──                         hub
-              koru.cqrs                     ←5                                                                    4                                                                                                                                                                                                                                                           ──  hub
+                                          koru                koruide            koru.wizard                koruapi          koru.autonomy         koruide.daemon         koru.autopilot   koruvision.providers               src.koru             koru.queue      koru.ide_adapters             koruvision            koruobserve            src.koruide  koru.bounded_contexts
+                   koru                     ──                     67                     65                      6                     15                     ←5                      4                      3                     19                     13                     15                     ←3                     10                      4                    ←15  hub
+                koruide                    ←67                     ──                      2                      4                    ←10                    ←54                    ←41                                            ←3                                            ←8                                                                   ←3                         hub
+            koru.wizard                      1                      1                     ──                    ←23                     ←8                     ←3                     ←1                     ←2                      1                     ←2                                                                   ←1                                            ←1  hub
+                koruapi                     46                      9                     23                     ──                      1                                                                                                                 11                                                                                         ←14                         hub
+          koru.autonomy                     48                     10                      8                      2                     ──                                            ←2                     13                      4                      2                      1                                                                                              hub
+         koruide.daemon                      5                     54                      3                                                                   ──                                                                                                                                                                                                                 !! fan-out
+         koru.autopilot                      8                     41                      1                                             2                                            ──                                                                                           3                                                                                              !! fan-out
+   koruvision.providers                     ←3                                             2                                           ←13                                                                   ──                                                                                          18                      1                                                hub
+               src.koru                      3                      3                     12                                             1                                                                                          ──                                                                                                                                            hub
+             koru.queue                      7                                             2                    ←11                     ←2                                                                                                                 ──                                                                                                                 ←3  hub
+      koru.ide_adapters                    ←15                      8                                                                   ←1                                            ←3                                                                                          ──                                                                                              hub
+             koruvision                      3                                                                                                                                                                2                                                                                          ──                     ←2                                                hub
+            koruobserve                      5                                             1                                                                                                                  5                                                                                           2                     ──                                                hub
+            src.koruide                      2                      3                                            14                                                                                                                                                                                                                                    ──                         !! fan-out
+  koru.bounded_contexts                     15                                             1                                                                                                                                                                3                                                                                                                 ──  !! fan-out
   CYCLES: none
-  HUB: koru.utils/ (fan-in=5)
-  HUB: koruvision/ (fan-in=20)
-  HUB: koru.autonomy/ (fan-in=23)
-  HUB: koruvision.providers/ (fan-in=25)
-  HUB: korumesh/ (fan-in=12)
-  HUB: koruapi/ (fan-in=26)
-  HUB: koruide/ (fan-in=192)
-  HUB: koru.cqrs/ (fan-in=5)
-  HUB: koru.wizard/ (fan-in=118)
+  HUB: koru.autonomy/ (fan-in=19)
   HUB: koru.queue/ (fan-in=29)
   HUB: koru.ide_adapters/ (fan-in=19)
-  HUB: koru/ (fan-in=139)
-  HUB: korudsl/ (fan-in=6)
-  HUB: koruos.strategies/ (fan-in=6)
+  HUB: korumesh/ (fan-in=12)
   HUB: koruobserve/ (fan-in=12)
-  SMELL: koru.bounded_contexts/ fan-out=19 → split needed
-  SMELL: koruvision/ fan-out=8 → split needed
+  HUB: src.koru/ (fan-in=24)
+  HUB: koru.cqrs/ (fan-in=5)
+  HUB: koru.utils/ (fan-in=5)
+  HUB: koruvision/ (fan-in=20)
+  HUB: koru.wizard/ (fan-in=127)
+  HUB: korudsl/ (fan-in=6)
+  HUB: koruide/ (fan-in=196)
+  HUB: koruvision.providers/ (fan-in=25)
+  HUB: koru/ (fan-in=144)
+  HUB: koruos.strategies/ (fan-in=6)
+  HUB: koruapi/ (fan-in=26)
   SMELL: koru.autonomy/ fan-out=88 → split needed
-  SMELL: koruvision.providers/ fan-out=26 → split needed
-  SMELL: koruapi/ fan-out=98 → split needed
-  SMELL: koruide/ fan-out=22 → split needed
+  SMELL: koru.bounded_contexts/ fan-out=19 → split needed
   SMELL: koru.queue/ fan-out=9 → split needed
   SMELL: koru.autopilot/ fan-out=55 → split needed
-  SMELL: koru/ fan-out=230 → split needed
-  SMELL: koruide.daemon/ fan-out=59 → split needed
+  SMELL: koru.ide_adapters/ fan-out=9 → split needed
   SMELL: koruobserve/ fan-out=14 → split needed
+  SMELL: src.koru/ fan-out=19 → split needed
+  SMELL: koruvision/ fan-out=8 → split needed
+  SMELL: koruvision.providers/ fan-out=26 → split needed
+  SMELL: src.koruide/ fan-out=19 → split needed
+  SMELL: koru/ fan-out=241 → split needed
+  SMELL: koruapi/ fan-out=98 → split needed
+  SMELL: koruide.daemon/ fan-out=62 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

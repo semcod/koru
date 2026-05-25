@@ -42,13 +42,15 @@ from typing import Any
 
 import yaml
 
-from koru.semcod_tools import detect_semcod_tools
 from koru.scan_types import (
     CreateTicketResult,
     ScanResult,
     Suggestion,
+)
+from koru.scan_types import (
     format_create_exception as _format_create_exception,
 )
+from koru.semcod_tools import detect_semcod_tools
 from koru.tasks import create_nl_task
 from koru.utils.subprocess_runner import default_subprocess_runner, get_python_cmd
 
@@ -805,6 +807,22 @@ def _add_existing_scan_title_keys(titles: set[str], entry: object, *, source: st
         titles.add(name)
 
 
+def _add_active_scan_title_keys(titles: set[str], entry: object) -> None:
+    if not isinstance(entry, dict):
+        return
+    status = str(entry.get("status") or "").lower()
+    if status in _SCAN_DEDUP_SKIP_STATUSES:
+        return
+    entry_context = entry.get("source", {}).get("context")
+    if isinstance(entry_context, dict):
+        signal = entry_context.get("signal")
+        if isinstance(signal, str) and signal:
+            titles.add(f"signal:{signal}")
+    name = entry.get("name") or entry.get("title")
+    if isinstance(name, str):
+        titles.add(name)
+
+
 def _existing_scan_titles_from_sprint(project: Path, *, source: str) -> set[str]:
     sprint_path = project / ".planfile" / "sprints" / "current.yaml"
     try:
@@ -825,6 +843,55 @@ def _existing_scan_titles_from_sprint(project: Path, *, source: str) -> set[str]
     return titles
 
 
+def _scan_ticket_list_payload(
+    project: Path,
+    cmd: list[str],
+    runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]],
+) -> list[Any]:
+    try:
+        result = runner(cmd, project)
+    except (FileNotFoundError, OSError):
+        return []
+    if result.returncode != 0:
+        return []
+    try:
+        payload = json.loads(result.stdout or "[]")
+    except json.JSONDecodeError:
+        return []
+    return payload if isinstance(payload, list) else []
+
+
+def _existing_scan_titles_from_payload(
+    payload: list[Any],
+    *,
+    source: str,
+    filter_source: bool = False,
+) -> set[str]:
+    titles: set[str] = set()
+    for entry in payload:
+        if filter_source:
+            _add_existing_scan_title_keys(titles, entry, source=source)
+            continue
+        _add_active_scan_title_keys(titles, entry)
+    return titles
+
+
+def _load_existing_scan_titles(
+    project: Path,
+    cmd: list[str],
+    *,
+    source: str,
+    runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]],
+    filter_source: bool = False,
+) -> set[str]:
+    payload = _scan_ticket_list_payload(project, cmd, runner)
+    return _existing_scan_titles_from_payload(
+        payload,
+        source=source,
+        filter_source=filter_source,
+    )
+
+
 def _existing_scan_titles(
     project: Path,
     *,
@@ -843,46 +910,19 @@ def _existing_scan_titles(
             return titles
 
     use_runner = runner or default_subprocess_runner
-
-    def _load_titles(cmd: list[str], *, filter_source: bool = False) -> set[str]:
-        try:
-            result = use_runner(cmd, project)
-        except (FileNotFoundError, OSError):
-            return set()
-        if result.returncode != 0:
-            return set()
-        try:
-            payload = json.loads(result.stdout or "[]")
-        except json.JSONDecodeError:
-            return set()
-        if not isinstance(payload, list):
-            return set()
-        titles: set[str] = set()
-        for entry in payload:
-            if filter_source:
-                _add_existing_scan_title_keys(titles, entry, source=source)
-                continue
-            if isinstance(entry, dict):
-                status = str(entry.get("status") or "").lower()
-                if status in _SCAN_DEDUP_SKIP_STATUSES:
-                    continue
-                entry_context = entry.get("source", {}).get("context")
-                if isinstance(entry_context, dict):
-                    signal = entry_context.get("signal")
-                    if isinstance(signal, str) and signal:
-                        titles.add(f"signal:{signal}")
-                name = entry.get("name") or entry.get("title")
-                if isinstance(name, str):
-                    titles.add(name)
-        return titles
-
-    titles = _load_titles(
+    titles = _load_existing_scan_titles(
+        project,
         ["planfile", "ticket", "list", "--source", source, "--format", "json"],
+        source=source,
+        runner=use_runner,
     )
     if titles:
         return titles
-    return _load_titles(
+    return _load_existing_scan_titles(
+        project,
         ["planfile", "ticket", "list", "--format", "json"],
+        source=source,
+        runner=use_runner,
         filter_source=True,
     )
 
@@ -967,6 +1007,148 @@ def _is_reused_create_detail(detail: str) -> bool:
     return "reused" in normalized or "already exists" in normalized
 
 
+def _log_scan_decision(
+    suggestion: Suggestion,
+    *,
+    decision: str,
+    reason: str | None,
+    message: str,
+) -> None:
+    payload: dict[str, Any] = {
+        "decision": decision,
+        "signal": suggestion.signal,
+        "title": suggestion.title,
+        "priority": suggestion.priority,
+    }
+    if reason is not None:
+        payload["reason"] = reason
+    _record_scan_activity(
+        message,
+        preview=suggestion.description,
+        data=payload,
+    )
+
+
+def _scan_duplicate_skip(
+    suggestion: Suggestion,
+    existing: set[str],
+) -> tuple[str, str] | None:
+    if suggestion.title in existing:
+        return (
+            "duplicate_title",
+            f"pomijam ze skanu (duplikat tytułu): {suggestion.title} "
+            f"(signal={suggestion.signal})",
+        )
+    if f"signal:{suggestion.signal}" in existing:
+        return (
+            "duplicate_signal",
+            f"pomijam ze skanu (duplikat sygnału): {suggestion.title} "
+            f"(signal={suggestion.signal} — istnieje aktywny ticket dla tego sygnału)",
+        )
+    return None
+
+
+def _normalize_create_detail(detail: str) -> str:
+    detail = (detail or "").strip()
+    return detail.replace("\n", " ") if detail else ""
+
+
+def _apply_create_result(
+    suggestion: Suggestion,
+    create_result: CreateTicketResult,
+    *,
+    applied: list[str],
+    skipped: list[str],
+    skipped_as_duplicate: list[str],
+    skipped_create_failed: list[str],
+    skipped_create_failed_details: list[str],
+) -> None:
+    if create_result.ok:
+        applied.append(suggestion.title)
+        _log_scan_decision(
+            suggestion,
+            decision="applied",
+            reason=None,
+            message=f"ticket ze skanu: {suggestion.title} (priority={suggestion.priority})",
+        )
+        return
+
+    skipped.append(suggestion.title)
+    detail = _normalize_create_detail(create_result.detail or "")
+    if detail and _is_reused_create_detail(detail):
+        skipped_as_duplicate.append(suggestion.title)
+        _log_scan_decision(
+            suggestion,
+            decision="skipped",
+            reason="duplicate_reused",
+            message=(
+                f"pomijam ze skanu (ticket już istnieje / reused): {suggestion.title} "
+                f"(signal={suggestion.signal} — {detail[:180]})"
+            ),
+        )
+        return
+
+    skipped_create_failed.append(suggestion.title)
+    if detail:
+        skipped_create_failed_details.append(f"{suggestion.title}: {detail[:240]}")
+    fallback_hint = " — sprawdź `.planfile/` uprawnienia/lock"
+    _log_scan_decision(
+        suggestion,
+        decision="skipped",
+        reason="create_failed",
+        message=(
+            f"pomijam ze skanu (planfile odrzucił create): {suggestion.title} "
+            f"(signal={suggestion.signal}"
+            + (f" — {detail[:180]}" if detail else fallback_hint)
+            + ")"
+        ),
+    )
+
+
+def _apply_scan_suggestions(
+    project: Path,
+    suggestions: list[Suggestion],
+    *,
+    source: str,
+    runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]] | None,
+) -> ScanResult:
+    existing = _existing_scan_titles(project, source=source, runner=runner)
+    applied: list[str] = []
+    skipped: list[str] = []
+    skipped_as_duplicate: list[str] = []
+    skipped_create_failed: list[str] = []
+    skipped_create_failed_details: list[str] = []
+
+    for suggestion in suggestions:
+        duplicate = _scan_duplicate_skip(suggestion, existing)
+        if duplicate is not None:
+            reason, message = duplicate
+            skipped.append(suggestion.title)
+            skipped_as_duplicate.append(suggestion.title)
+            _log_scan_decision(suggestion, decision="skipped", reason=reason, message=message)
+            continue
+
+        create_result = _create_ticket(project, suggestion, source=source, runner=runner)
+        _apply_create_result(
+            suggestion,
+            create_result,
+            applied=applied,
+            skipped=skipped,
+            skipped_as_duplicate=skipped_as_duplicate,
+            skipped_create_failed=skipped_create_failed,
+            skipped_create_failed_details=skipped_create_failed_details,
+        )
+
+    return ScanResult(
+        suggestions=suggestions,
+        applied=applied,
+        skipped=skipped,
+        skipped_as_duplicate=skipped_as_duplicate,
+        skipped_create_failed=skipped_create_failed,
+        skipped_create_failed_details=skipped_create_failed_details,
+    )
+
+
 def run_scan(
     project: Path,
     *,
@@ -998,107 +1180,4 @@ def run_scan(
     if not apply:
         return ScanResult(suggestions=suggestions)
 
-    existing = _existing_scan_titles(project, source=source, runner=runner)
-    applied: list[str] = []
-    skipped: list[str] = []
-    skipped_as_duplicate: list[str] = []
-    skipped_create_failed: list[str] = []
-    skipped_create_failed_details: list[str] = []
-
-    def _log_scan_decision(
-        s: "Suggestion",
-        *,
-        decision: str,
-        reason: str | None,
-        message: str,
-    ) -> None:
-        payload: dict[str, Any] = {
-            "decision": decision,
-            "signal": s.signal,
-            "title": s.title,
-            "priority": s.priority,
-        }
-        if reason is not None:
-            payload["reason"] = reason
-        _record_scan_activity(
-            message,
-            preview=s.description,
-            data=payload,
-        )
-
-    for s in suggestions:
-        if s.title in existing:
-            skipped.append(s.title)
-            skipped_as_duplicate.append(s.title)
-            _log_scan_decision(
-                s,
-                decision="skipped",
-                reason="duplicate_title",
-                message=(
-                    f"pomijam ze skanu (duplikat tytułu): {s.title} "
-                    f"(signal={s.signal})"
-                ),
-            )
-            continue
-        if f"signal:{s.signal}" in existing:
-            skipped.append(s.title)
-            skipped_as_duplicate.append(s.title)
-            _log_scan_decision(
-                s,
-                decision="skipped",
-                reason="duplicate_signal",
-                message=(
-                    f"pomijam ze skanu (duplikat sygnału): {s.title} "
-                    f"(signal={s.signal} — istnieje aktywny ticket dla tego sygnału)"
-                ),
-            )
-            continue
-        create_result = _create_ticket(project, s, source=source, runner=runner)
-        if create_result.ok:
-            applied.append(s.title)
-            _log_scan_decision(
-                s,
-                decision="applied",
-                reason=None,
-                message=f"ticket ze skanu: {s.title} (priority={s.priority})",
-            )
-        else:
-            skipped.append(s.title)
-            detail = (create_result.detail or "").strip()
-            if detail:
-                detail = detail.replace("\n", " ")
-            if detail and _is_reused_create_detail(detail):
-                skipped_as_duplicate.append(s.title)
-                _log_scan_decision(
-                    s,
-                    decision="skipped",
-                    reason="duplicate_reused",
-                    message=(
-                        f"pomijam ze skanu (ticket już istnieje / reused): {s.title} "
-                        f"(signal={s.signal} — {detail[:180]})"
-                    ),
-                )
-            else:
-                skipped_create_failed.append(s.title)
-                if detail:
-                    skipped_create_failed_details.append(f"{s.title}: {detail[:240]}")
-                fallback_hint = " — sprawdź `.planfile/` uprawnienia/lock"
-                _log_scan_decision(
-                    s,
-                    decision="skipped",
-                    reason="create_failed",
-                    message=(
-                        f"pomijam ze skanu (planfile odrzucił create): {s.title} "
-                        f"(signal={s.signal}"
-                        + (f" — {detail[:180]}" if detail else fallback_hint)
-                        + ")"
-                    ),
-                )
-    return ScanResult(
-        suggestions=suggestions,
-        applied=applied,
-        skipped=skipped,
-        skipped_as_duplicate=skipped_as_duplicate,
-        skipped_create_failed=skipped_create_failed,
-        skipped_create_failed_details=skipped_create_failed_details,
-    )
+    return _apply_scan_suggestions(project, suggestions, source=source, runner=runner)

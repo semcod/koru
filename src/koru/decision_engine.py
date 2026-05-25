@@ -109,6 +109,14 @@ class EnvironmentDecisionEngine:
         max_attempts: int,
     ) -> DriveRetryDecision:
         """Map a failed plugin drive reply to retry/stop behaviour."""
+        if self._submit_retry_is_known_unsafe(reply):
+            assessment = DriveFailureAssessment(
+                kind="stop",
+                failure_signature=self.llm_strategy.failure_signature(reply),
+                detail="vscodium_submit_unverified_not_retryable",
+            )
+            return DriveRetryDecision(assessment=assessment, should_retry=False)
+
         assessment = self.llm_strategy.assess_drive_failure(
             reply,
             attempt=attempt,
@@ -132,6 +140,21 @@ class EnvironmentDecisionEngine:
             should_warn=assessment.warn_banner,
             sleep_seconds=assessment.sleep_seconds,
         )
+
+    def _submit_retry_is_known_unsafe(self, reply: dict[str, Any]) -> bool:
+        """Avoid paste/submit loops for IDEs that cannot confirm Send reliably."""
+        if self.ide_id != "vscodium":
+            return False
+        verification = str(reply.get("verification") or "").strip().lower()
+        if verification in {"submit_unverified", "submit_failed"}:
+            return True
+        if reply.get("submitted") is False and (
+            reply.get("attempted_submit")
+            or reply.get("winning_paste")
+            or reply.get("submit_failure_reason")
+        ):
+            return True
+        return "submit could not be verified" in str(reply.get("message") or "").lower()
 
     def detect_stale_extension_host(
         self,

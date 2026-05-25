@@ -106,50 +106,74 @@ function slimRejectedEntry(raw: unknown): Record<string, unknown> | null {
   return Object.keys(out).length > 0 ? out : null;
 }
 
+const DIAGNOSTIC_SCALAR_KEYS = [
+  "ide",
+  "appName",
+  "logPath",
+  "probeLadder",
+  "cacheFocusOpen",
+] as const;
+
+function copyDiagnosticScalar(
+  out: Record<string, unknown>,
+  diag: Record<string, unknown>,
+  key: typeof DIAGNOSTIC_SCALAR_KEYS[number],
+): void {
+  const value = diag[key];
+  if (typeof value === "string") {
+    out[key] = clipString(value, 120);
+  } else if (typeof value === "boolean") {
+    out[key] = value;
+  }
+}
+
+function slimDiagnosticStringList(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  return value
+    .slice(0, MAX_FOCUS_OPEN_CANDIDATES)
+    .map((item) => clipString(item, 80) || String(item).slice(0, 80));
+}
+
+function slimRejectedDiagnostics(value: unknown): Record<string, unknown> | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const rejected: Record<string, unknown>[] = [];
+  for (const raw of value.slice(0, MAX_REJECTED_WIRE)) {
+    const entry = slimRejectedEntry(raw);
+    if (entry) {
+      rejected.push(entry);
+    }
+  }
+  if (rejected.length <= 0) {
+    return undefined;
+  }
+  const out: Record<string, unknown> = { rejected };
+  if (value.length > MAX_REJECTED_WIRE) {
+    out.rejected_truncated = value.length - MAX_REJECTED_WIRE;
+  }
+  return out;
+}
+
 function slimDiagnostics(diagnostics: unknown): Record<string, unknown> | undefined {
   if (!diagnostics || typeof diagnostics !== "object") {
     return undefined;
   }
   const diag = diagnostics as Record<string, unknown>;
   const out: Record<string, unknown> = {};
-  for (const key of [
-    "ide",
-    "appName",
-    "logPath",
-    "probeLadder",
-    "cacheFocusOpen",
-  ] as const) {
-    if (typeof diag[key] === "string") {
-      out[key] = clipString(diag[key], 120);
-    } else if (typeof diag[key] === "boolean") {
-      out[key] = diag[key];
-    }
+  for (const key of DIAGNOSTIC_SCALAR_KEYS) {
+    copyDiagnosticScalar(out, diag, key);
   }
-  if (Array.isArray(diag.configuredChatOpenCommands)) {
-    out.configuredChatOpenCommands = diag.configuredChatOpenCommands
-      .slice(0, MAX_FOCUS_OPEN_CANDIDATES)
-      .map((c) => clipString(c, 80) || String(c).slice(0, 80));
-  }
-  if (Array.isArray(diag.focusOpenCandidates)) {
-    out.focusOpenCandidates = diag.focusOpenCandidates
-      .slice(0, MAX_FOCUS_OPEN_CANDIDATES)
-      .map((c) => clipString(c, 80) || String(c).slice(0, 80));
-  }
-  if (Array.isArray(diag.rejected)) {
-    const rejected: Record<string, unknown>[] = [];
-    for (const raw of diag.rejected.slice(0, MAX_REJECTED_WIRE)) {
-      const entry = slimRejectedEntry(raw);
-      if (entry) {
-        rejected.push(entry);
-      }
-    }
-    if (rejected.length > 0) {
-      out.rejected = rejected;
-      if (diag.rejected.length > MAX_REJECTED_WIRE) {
-        out.rejected_truncated = diag.rejected.length - MAX_REJECTED_WIRE;
-      }
-    }
-  }
+  const configuredCommands = slimDiagnosticStringList(diag.configuredChatOpenCommands);
+  const focusCandidates = slimDiagnosticStringList(diag.focusOpenCandidates);
+  const rejected = slimRejectedDiagnostics(diag.rejected);
+  Object.assign(out, {
+    ...(configuredCommands ? { configuredChatOpenCommands: configuredCommands } : {}),
+    ...(focusCandidates ? { focusOpenCandidates: focusCandidates } : {}),
+    ...(rejected ?? {}),
+  });
   return Object.keys(out).length > 0 ? out : undefined;
 }
 

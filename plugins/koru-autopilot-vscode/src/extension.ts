@@ -2561,32 +2561,23 @@ class AutopilotBridge {
   }
 }
 
-export function activate(context: vscode.ExtensionContext): void {
-  const appName = vscode.env.appName || "";
-  debugLog("ACTIVATE", {
-    appName,
-    extensionMode: context.extensionMode,
-    extensionPath: context.extensionPath,
-  });
-  // Each sibling IDE has its own dedicated VSIX. This umbrella plugin
-  // serves Microsoft VS Code only — silently no-op on other hosts so we
-  // never race the per-IDE plugin for the same Unix socket.
+function siblingIdeForAppName(appName: string): string | null {
   const lowered = appName.toLowerCase();
-  const siblingIde =
-    lowered.includes("cursor") ? "cursor" :
-    lowered.includes("vscodium") || lowered.includes("code - oss") || lowered.includes("code-oss") ? "vscodium" :
-    lowered.includes("windsurf") ? "windsurf" :
-    lowered.includes("antigravity") ? "antigravity" :
-    null;
-  if (siblingIde) {
-    console.warn(
-      `koru-autopilot-vscode: not activating on ${siblingIde} (appName="${appName}"); ` +
-      `install koru-autopilot-${siblingIde} instead.`
-    );
-    return;
+  if (lowered.includes("cursor")) return "cursor";
+  if (lowered.includes("vscodium") || lowered.includes("code - oss") || lowered.includes("code-oss")) {
+    return "vscodium";
   }
-  const bridge = new AutopilotBridge(context);
-  activeBridge = bridge;
+  if (lowered.includes("windsurf")) return "windsurf";
+  if (lowered.includes("antigravity")) return "antigravity";
+  return null;
+}
+
+function maybeAutoConnect(bridge: AutopilotBridge): void {
+  const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+  if (cfg.get<boolean>("autoConnect", true)) bridge.connect();
+}
+
+function registerBridgeCommands(context: vscode.ExtensionContext, bridge: AutopilotBridge): void {
   context.subscriptions.push(
     vscode.commands.registerCommand("koruAutopilot.connect", () => bridge.connect()),
     vscode.commands.registerCommand("koruAutopilot.sendChat", async () => {
@@ -2602,13 +2593,38 @@ export function activate(context: vscode.ExtensionContext): void {
         event.affectsConfiguration("koruAutopilot.socketPath") ||
         event.affectsConfiguration("koruAutopilot.autoConnect")
       ) {
-        const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-        if (cfg.get<boolean>("autoConnect", true)) bridge.connect();
+        maybeAutoConnect(bridge);
       }
     }),
   );
-  const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-  if (cfg.get<boolean>("autoConnect", true)) bridge.connect();
+}
+
+function activateBridge(context: vscode.ExtensionContext): void {
+  const bridge = new AutopilotBridge(context);
+  activeBridge = bridge;
+  registerBridgeCommands(context, bridge);
+  maybeAutoConnect(bridge);
+}
+
+export function activate(context: vscode.ExtensionContext): void {
+  const appName = vscode.env.appName || "";
+  debugLog("ACTIVATE", {
+    appName,
+    extensionMode: context.extensionMode,
+    extensionPath: context.extensionPath,
+  });
+  // Each sibling IDE has its own dedicated VSIX. This umbrella plugin
+  // serves Microsoft VS Code only — silently no-op on other hosts so we
+  // never race the per-IDE plugin for the same Unix socket.
+  const siblingIde = siblingIdeForAppName(appName);
+  if (siblingIde) {
+    console.warn(
+      `koru-autopilot-vscode: not activating on ${siblingIde} (appName="${appName}"); ` +
+      `install koru-autopilot-${siblingIde} instead.`
+    );
+    return;
+  }
+  activateBridge(context);
 }
 
 export function deactivate(): void {

@@ -8,6 +8,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from koru.integration_ledger import record_integration_action
 from koruide.daemon.protocol import (
     _Client,
     _daemon_package_version,
@@ -219,12 +220,47 @@ def _drive_via_plugin(
         f"ide={plugin.ide} submit={submit} require_plugin={require_plugin} "
         "transport=plugin phases=focus_open,input_busy_probe,paste,submit",
     )
+    record_integration_action(
+        project=daemon.project,
+        action="drive.route",
+        intent="deliver prompt to IDE chat and request submit",
+        actor="autopilot-daemon",
+        target=plugin.ide,
+        transport="plugin-socket",
+        phase="route",
+        outcome="selected",
+        evidence=(
+            f"corr={corr}; plugin_fd={plugin.sock.fileno()}; cli_fd={client.sock.fileno()}; "
+            f"submit={submit}; require_plugin={require_plugin}"
+        ),
+        next_step="send chat.send to plugin",
+        data={
+            "corr": corr,
+            "plugin_fd": plugin.sock.fileno(),
+            "cli_fd": client.sock.fileno(),
+            "submit": submit,
+            "require_plugin": require_plugin,
+        },
+    )
     daemon._send(plugin, chat_send(text, submit=submit, id=corr).encode())
     daemon._last_chat_send_at = time.monotonic()
     preview = text.replace("\n", " ")[:100]
     daemon.log(
         f"drive → plugin/{plugin.ide}: wklejam do czatu ({len(text)} zn, "
         f"submit={submit}) «{preview}»",
+    )
+    record_integration_action(
+        project=daemon.project,
+        action="chat.send",
+        intent="paste prompt into current chat surface",
+        actor="autopilot-daemon",
+        target=plugin.ide,
+        transport="plugin-socket",
+        phase="paste+submit",
+        outcome="requested",
+        evidence=f"chars={len(text)}; submit={submit}; preview={preview}",
+        next_step="await plugin ack with verification",
+        data={"chars": len(text), "submit": submit, "corr": corr},
     )
     daemon.audit.record(
         "drive",
@@ -741,8 +777,119 @@ def handle_ack(daemon: Any, client: _Client, msg: Message) -> None:
     if msg.id != corr:
         return
     client.awaiting_plugin = None
-    info = {k: v for k, v in msg.data.items() if k != "ok"}
     plugin_ok = bool(msg.data.get("ok", True))
+    info = _annotated_plugin_ack_info(
+        client,
+        msg,
+        plugin_ok=plugin_ok,
+        submit_requested=submit_requested,
+        plugin_ide=plugin_ide,
+    )
+    plugin_ok = _strict_plugin_ack_ok(
+        info,
+        plugin_ok=plugin_ok,
+        submit_requested=submit_requested,
+        plugin_ide=plugin_ide,
+    )
+    fallback_ide = plugin_ide or "auto"
+    if _relay_plugin_ack_os_fallback(
+        daemon,
+        cli_client,
+        corr,
+        fallback_ide,
+        original_text,
+        info=info,
+        plugin_ok=plugin_ok,
+        submit_requested=submit_requested,
+        plugin_ide=plugin_ide,
+        require_plugin=require_plugin,
+    ):
+        return
+    _send_plugin_ack_reply(
+        daemon,
+        cli_client,
+        corr,
+        fallback_ide,
+        info=info,
+        plugin_ok=plugin_ok,
+    )
+
+
+def _relay_plugin_ack_os_fallback(
+    daemon: Any,
+    cli_client: _Client,
+    corr: str,
+    fallback_ide: str,
+    original_text: str,
+    *,
+    info: dict[str, Any],
+    plugin_ok: bool,
+    submit_requested: bool,
+    plugin_ide: str | None,
+    require_plugin: bool,
+) -> bool:
+    if not _plugin_ack_needs_os_fallback(
+        plugin_ok=plugin_ok,
+        info=info,
+        submit_requested=submit_requested,
+        plugin_ide=plugin_ide,
+        require_plugin=require_plugin,
+    ):
+        return False
+    return _relay_os_fallback_ack(
+        daemon,
+        cli_client,
+        corr,
+        fallback_ide,
+        original_text,
+        submit_requested,
+        info,
+    )
+
+
+def _send_plugin_ack_reply(
+    daemon: Any,
+    cli_client: _Client,
+    corr: str,
+    fallback_ide: str,
+    *,
+    info: dict[str, Any],
+    plugin_ok: bool,
+) -> None:
+    if info.get("delivered") is True and "backend" not in info:
+        info["backend"] = "plugin"
+    summary = DriveOrchestrator.plugin_ack_summary(info)
+    daemon.log("drive → plugin ack: " + summary)
+    route_summary = DriveOrchestrator.operation_trace_summary(info)
+    if route_summary:
+        daemon.log(f"drive → plugin operation trace: {route_summary}")
+    _record_plugin_ack_integration(
+        daemon,
+        target_ide=fallback_ide,
+        info=info,
+        plugin_ok=plugin_ok,
+        summary=summary,
+        route_summary=route_summary,
+    )
+    if not _cli_client_still_connected(daemon, cli_client):
+        daemon.log(
+            "drive → plugin ack arrived after CLI client disconnected; "
+            "treating as late ack"
+        )
+        return
+    relay = ack(corr, ok=plugin_ok, info=_cap_ack_info_for_cli(info))
+    daemon._send(cli_client, relay.encode())
+
+
+def _annotated_plugin_ack_info(
+    client: _Client,
+    msg: Message,
+    *,
+    plugin_ok: bool,
+    submit_requested: bool,
+    plugin_ide: str | None,
+) -> dict[str, Any]:
+    info = {k: v for k, v in msg.data.items() if k != "ok"}
     info = DriveOrchestrator.annotate_plugin_ack(
         info=info,
         plugin_ok=plugin_ok,
@@ -757,50 +904,57 @@ def handle_ack(daemon: Any, client: _Client, msg: Message) -> None:
             capabilities=client.capabilities,
         ),
     )
-    if DriveOrchestrator.should_fail_strict_plugin_ack(
+    return info
+
+
+def _strict_plugin_ack_ok(
+    info: dict[str, Any],
+    *,
+    plugin_ok: bool,
+    submit_requested: bool,
+    plugin_ide: str | None,
+) -> bool:
+    if not DriveOrchestrator.should_fail_strict_plugin_ack(
         info=info,
         plugin_ok=plugin_ok,
         submit_requested=submit_requested,
         plugin_ide=plugin_ide,
     ):
-        plugin_ok = False
-        info["message"] = (
-            "strict plugin verification failed: expected full VS Code plugin "
-            "ack with winning_focus_open / winning_paste / winning_submit"
-        )
-    if _plugin_ack_needs_os_fallback(
-        plugin_ok=plugin_ok,
-        info=info,
-        submit_requested=submit_requested,
-        plugin_ide=plugin_ide,
-        require_plugin=require_plugin,
-    ):
-        fallback_ide = plugin_ide or "auto"
-        if _relay_os_fallback_ack(
-            daemon,
-            cli_client,
-            corr,
-            fallback_ide,
-            original_text,
-            submit_requested,
-            info,
-        ):
-            return
-    if info.get("delivered") is True and "backend" not in info:
-        info["backend"] = "plugin"
-    summary = DriveOrchestrator.plugin_ack_summary(info)
-    daemon.log("drive → plugin ack: " + summary)
-    route_summary = DriveOrchestrator.operation_trace_summary(info)
-    if route_summary:
-        daemon.log(f"drive → plugin operation trace: {route_summary}")
-    if not _cli_client_still_connected(daemon, cli_client):
-        daemon.log(
-            "drive → plugin ack arrived after CLI client disconnected; "
-            "treating as late ack"
-        )
-        return
-    relay = ack(corr, ok=plugin_ok, info=_cap_ack_info_for_cli(info))
-    daemon._send(cli_client, relay.encode())
+        return plugin_ok
+    info["message"] = (
+        "strict plugin verification failed: expected full VS Code plugin "
+        "ack with winning_focus_open / winning_paste / winning_submit"
+    )
+    return False
+
+
+def _record_plugin_ack_integration(
+    daemon: Any,
+    *,
+    target_ide: str,
+    info: dict[str, Any],
+    plugin_ok: bool,
+    summary: str,
+    route_summary: str,
+) -> None:
+    record_integration_action(
+        project=daemon.project,
+        action="plugin.ack",
+        intent="verify whether paste and submit actually completed",
+        actor="autopilot-daemon",
+        target=target_ide,
+        transport="plugin-socket",
+        phase=str(info.get("verification") or "ack"),
+        outcome="ok" if plugin_ok else "failed",
+        reason=str(info.get("submit_failure_reason") or info.get("reason") or ""),
+        evidence=summary + (f"; route={route_summary}" if route_summary else ""),
+        next_step=(
+            "continue queue"
+            if plugin_ok
+            else "stop retry for non-confirmed submit; inspect integration ledger"
+        ),
+        data={"ack": info, "route_trace": route_summary},
+    )
 
 
 def _event_path() -> Path:

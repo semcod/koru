@@ -12,6 +12,7 @@ import os
 import sys
 import threading
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
@@ -95,6 +96,182 @@ def default_local_service_config() -> LocalServiceConfig:
     return LocalServiceConfig(host=host, port=port, max_events=max(1, min(max_ev, 10_000)))
 
 
+def _append_event(state: _ServiceState, payload: dict[str, Any]) -> tuple[str, str]:
+    eid = uuid.uuid4().hex
+    received_at = _utc_now()
+    state.events.append(
+        {
+            "id": eid,
+            "received_at": received_at,
+            "payload": payload,
+        },
+    )
+    return eid, received_at
+
+
+def _handle_get(
+    handler: Any,
+    *,
+    path: str,
+    state: _ServiceState,
+    query_service: LocalManagerQueryService,
+    koru_version: str,
+) -> None:
+    if path == "/health":
+        handler._send_json(query_service.health(HealthSnapshotQuery(koru_version=koru_version)))
+        return
+    if path == "/events":
+        lines = [json.dumps(rec, sort_keys=True) for rec in state.events.snapshot()]
+        nd = ("\n".join(lines) + ("\n" if lines else "")).encode("utf-8")
+        handler._send(200, nd, "application/x-ndjson; charset=utf-8")
+        return
+    if path == "/queue":
+        handler._send_json(query_service.queue_snapshot(QueueSnapshotQuery()))
+        return
+    if path == "/workers":
+        handler._send_json(query_service.workers_snapshot(WorkersSnapshotQuery()))
+        return
+    if path == "/state":
+        handler._send_json(query_service.state_snapshot(StateSnapshotQuery()))
+        return
+    handler._send_json({"error": "not found"}, 404)
+
+
+def _post_event(
+    handler: Any,
+    data: dict[str, Any],
+    state: _ServiceState,
+    _command_service: LocalManagerCommandService,
+) -> None:
+    eid, _received_at = _append_event(state, data)
+    handler._send_json({"id": eid})
+
+
+def _post_enqueue(
+    handler: Any,
+    data: dict[str, Any],
+    state: _ServiceState,
+    command_service: LocalManagerCommandService,
+) -> None:
+    eid, received_at = _append_event(state, data)
+    item = command_service.enqueue(
+        EnqueueActionCommand(action_id=eid, payload=data, received_at=received_at),
+    )
+    handler._send_json({"id": eid, "status": item["status"], "item": item})
+
+
+def _post_queue_claim(
+    handler: Any,
+    data: dict[str, Any],
+    state: _ServiceState,
+    command_service: LocalManagerCommandService,
+) -> None:
+    worker_id = str(data.get("worker_id") or data.get("id") or "").strip()
+    if not worker_id:
+        handler._send_json({"error": "worker_id is required"}, 400)
+        return
+    try:
+        lease_seconds = int(data.get("lease_seconds") or DEFAULT_LEASE_SECONDS)
+    except (TypeError, ValueError):
+        handler._send_json({"error": "lease_seconds must be an integer"}, 400)
+        return
+    item = command_service.claim(
+        ClaimActionCommand(
+            worker_id=worker_id,
+            capabilities=_normalize_capabilities(data.get("capabilities")),
+            action_types=_normalize_capabilities(data.get("action_types", data.get("types"))),
+            lease_seconds=lease_seconds,
+        ),
+    )
+    if item is None:
+        handler._send_json({"status": "idle", "item": None})
+        return
+    _append_event(state, {"type": "queue.claimed", "action_id": item["id"], "worker_id": worker_id})
+    handler._send_json({"status": "leased", "item": item})
+
+
+def _post_queue_complete(
+    handler: Any,
+    data: dict[str, Any],
+    state: _ServiceState,
+    command_service: LocalManagerCommandService,
+) -> None:
+    action_id = str(data.get("action_id") or data.get("id") or "").strip()
+    if not action_id:
+        handler._send_json({"error": "action_id is required"}, 400)
+        return
+    final_status = str(data.get("status") or "completed")
+    if final_status not in {"completed", "failed", "canceled"}:
+        handler._send_json({"error": "status must be completed, failed, or canceled"}, 400)
+        return
+    item = command_service.complete(
+        CompleteActionCommand(
+            action_id=action_id,
+            worker_id=str(data.get("worker_id") or "") or None,
+            status=final_status,
+            result=data.get("result") if isinstance(data.get("result"), dict) else None,
+        ),
+    )
+    if item is None:
+        handler._send_json({"error": "action not found"}, 404)
+        return
+    _append_event(
+        state,
+        {"type": "queue.completed", "action_id": action_id, "status": final_status},
+    )
+    handler._send_json({"status": final_status, "item": item})
+
+
+def _post_workers_register(
+    handler: Any,
+    data: dict[str, Any],
+    state: _ServiceState,
+    command_service: LocalManagerCommandService,
+) -> None:
+    reply = command_service.register_worker(RegisterWorkerCommand(payload=data))
+    _append_event(
+        state,
+        {
+            "type": "worker.registered",
+            "worker_id": reply["worker"]["worker_id"],
+            "version": reply["worker"]["version"],
+            "decision": reply["decision"],
+        },
+    )
+    handler._send_json(reply)
+
+
+def _post_worker_heartbeat(
+    handler: Any,
+    data: dict[str, Any],
+    state: _ServiceState,
+    command_service: LocalManagerCommandService,
+) -> None:
+    reply = command_service.heartbeat_worker(HeartbeatWorkerCommand(payload=data))
+    _append_event(
+        state,
+        {
+            "type": "worker.heartbeat",
+            "worker_id": reply["worker"]["worker_id"],
+            "version": reply["worker"]["version"],
+            "decision": reply["decision"],
+        },
+    )
+    handler._send_json(reply)
+
+
+_PostHandler = Callable[[Any, dict[str, Any], _ServiceState, LocalManagerCommandService], None]
+_POST_HANDLERS: dict[str, _PostHandler] = {
+    "/event": _post_event,
+    "/enqueue": _post_enqueue,
+    "/queue/claim": _post_queue_claim,
+    "/queue/complete": _post_queue_complete,
+    "/workers/register": _post_workers_register,
+    "/workers/heartbeat": _post_worker_heartbeat,
+    "/lifecycle/decision": _post_worker_heartbeat,
+}
+
+
 def _build_handler(state: _ServiceState, koru_version: str) -> type[BaseHTTPRequestHandler]:
     command_service = LocalManagerCommandService(state)
     query_service = LocalManagerQueryService(state)
@@ -123,150 +300,27 @@ def _build_handler(state: _ServiceState, koru_version: str) -> type[BaseHTTPRequ
             raw = json.dumps(payload, sort_keys=True).encode("utf-8")
             self._send(status, raw)
 
-        def _append_event(self, payload: dict[str, Any]) -> tuple[str, str]:
-            eid = uuid.uuid4().hex
-            received_at = _utc_now()
-            state.events.append(
-                {
-                    "id": eid,
-                    "received_at": received_at,
-                    "payload": payload,
-                },
-            )
-            return eid, received_at
-
         def do_GET(self) -> None:  # noqa: N802
             path = self.path.split("?", 1)[0]
-            if path == "/health":
-                self._send_json(
-                    query_service.health(
-                        HealthSnapshotQuery(koru_version=koru_version),
-                    ),
-                )
-                return
-            if path == "/events":
-                lines = []
-                for rec in state.events.snapshot():
-                    lines.append(json.dumps(rec, sort_keys=True))
-                nd = ("\n".join(lines) + ("\n" if lines else "")).encode("utf-8")
-                self._send(200, nd, "application/x-ndjson; charset=utf-8")
-                return
-            if path == "/queue":
-                self._send_json(query_service.queue_snapshot(QueueSnapshotQuery()))
-                return
-            if path == "/workers":
-                self._send_json(query_service.workers_snapshot(WorkersSnapshotQuery()))
-                return
-            if path == "/state":
-                self._send_json(query_service.state_snapshot(StateSnapshotQuery()))
-                return
-            self._send_json({"error": "not found"}, 404)
+            _handle_get(
+                self,
+                path=path,
+                state=state,
+                query_service=query_service,
+                koru_version=koru_version,
+            )
 
         def do_POST(self) -> None:  # noqa: N802
             path = self.path.split("?", 1)[0]
-            if path not in (
-                "/event",
-                "/enqueue",
-                "/queue/claim",
-                "/queue/complete",
-                "/workers/register",
-                "/workers/heartbeat",
-                "/lifecycle/decision",
-            ):
+            post_handler = _POST_HANDLERS.get(path)
+            if post_handler is None:
                 self._send_json({"error": "not found"}, 404)
                 return
             data, err, status = _read_bounded_json_object(self)
             if err is not None:
                 self._send_json(err, status=status)
                 return
-            if path == "/event":
-                eid, _received_at = self._append_event(data)
-                self._send_json({"id": eid})
-                return
-            if path == "/enqueue":
-                eid, received_at = self._append_event(data)
-                item = command_service.enqueue(
-                    EnqueueActionCommand(action_id=eid, payload=data, received_at=received_at),
-                )
-                self._send_json({"id": eid, "status": item["status"], "item": item})
-                return
-            if path == "/queue/claim":
-                worker_id = str(data.get("worker_id") or data.get("id") or "").strip()
-                if not worker_id:
-                    self._send_json({"error": "worker_id is required"}, 400)
-                    return
-                try:
-                    lease_seconds = int(data.get("lease_seconds") or DEFAULT_LEASE_SECONDS)
-                except (TypeError, ValueError):
-                    self._send_json({"error": "lease_seconds must be an integer"}, 400)
-                    return
-                item = command_service.claim(
-                    ClaimActionCommand(
-                        worker_id=worker_id,
-                        capabilities=_normalize_capabilities(data.get("capabilities")),
-                        action_types=_normalize_capabilities(
-                            data.get("action_types", data.get("types")),
-                        ),
-                        lease_seconds=lease_seconds,
-                    ),
-                )
-                if item is None:
-                    self._send_json({"status": "idle", "item": None})
-                    return
-                self._append_event(
-                    {"type": "queue.claimed", "action_id": item["id"], "worker_id": worker_id},
-                )
-                self._send_json({"status": "leased", "item": item})
-                return
-            if path == "/queue/complete":
-                action_id = str(data.get("action_id") or data.get("id") or "").strip()
-                if not action_id:
-                    self._send_json({"error": "action_id is required"}, 400)
-                    return
-                final_status = str(data.get("status") or "completed")
-                if final_status not in {"completed", "failed", "canceled"}:
-                    self._send_json({"error": "status must be completed, failed, or canceled"}, 400)
-                    return
-                item = command_service.complete(
-                    CompleteActionCommand(
-                        action_id=action_id,
-                        worker_id=str(data.get("worker_id") or "") or None,
-                        status=final_status,
-                        result=data.get("result")
-                        if isinstance(data.get("result"), dict)
-                        else None,
-                    ),
-                )
-                if item is None:
-                    self._send_json({"error": "action not found"}, 404)
-                    return
-                self._append_event(
-                    {"type": "queue.completed", "action_id": action_id, "status": final_status},
-                )
-                self._send_json({"status": final_status, "item": item})
-                return
-            if path == "/workers/register":
-                reply = command_service.register_worker(RegisterWorkerCommand(payload=data))
-                self._append_event(
-                    {
-                        "type": "worker.registered",
-                        "worker_id": reply["worker"]["worker_id"],
-                        "version": reply["worker"]["version"],
-                        "decision": reply["decision"],
-                    },
-                )
-                self._send_json(reply)
-                return
-            reply = command_service.heartbeat_worker(HeartbeatWorkerCommand(payload=data))
-            self._append_event(
-                {
-                    "type": "worker.heartbeat",
-                    "worker_id": reply["worker"]["worker_id"],
-                    "version": reply["worker"]["version"],
-                    "decision": reply["decision"],
-                },
-            )
-            self._send_json(reply)
+            post_handler(self, data, state, command_service)
 
     return _Handler
 

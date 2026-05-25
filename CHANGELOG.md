@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **STARTER-276 — code2llm no longer flags the per-IDE plugin folders as
+  duplicates.** The architectural split into five dedicated VSIX packages
+  (`koru-autopilot-{cursor,vscode,vscodium,windsurf,antigravity}`)
+  intentionally duplicates `AutopilotBridge` and helper classes across
+  every plugin so a regression in one IDE pipeline cannot leak into
+  another's runtime. Before this fix the autonomous discovery pass
+  (`run_code2llm_discovery`) created a fresh "Remove 10 duplicated
+  classes" planfile ticket on every cycle, suggesting a refactor that
+  would re-collapse the plugins. `DEFAULT_EXCLUDES` now includes
+  `plugins` so code2llm skips the entire IDE-plugin tree (the shared
+  TypeScript that *is* safe to deduplicate already lives in
+  `plugins/koru-autopilot-shared/` and is copied into each plugin's
+  `src/_shared/` at build time). New regression tests in
+  `tests/test_code2llm_discovery.py` lock the invariant.
+
 ### Added
 - **Capture providers (Phase 0+1):** `koruvision/providers/` plugin layout with
   ranked auto-detection (`detector.py`), MSS / portal screenshot / grim /

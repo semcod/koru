@@ -5,7 +5,9 @@ import { promisify } from "util";
 import { defaultGlobalStateDbPath } from "./chat-history-paths";
 import type { AdapterRunner, ChatHistoryRow, IdeAdapter, SupportedIde } from "./chat-history-types";
 
-const execFile = promisify(cp.execFile);
+const execFileAsync = promisify(cp.execFile);
+const SQLITE_ROWID_MAX_BUFFER = 1024 * 1024;
+const SQLITE_QUERY_MAX_BUFFER = 8 * 1024 * 1024;
 
 const SQL_CURSOR_NEW_BUBBLES = `SELECT rowid, key, json_extract(value,'$.type'), json_extract(value,'$.text'), json_extract(value,'$.createdAt')
 FROM cursorDiskKV
@@ -24,6 +26,19 @@ WHERE key LIKE 'bubbleId:%'
   AND length(json_extract(value,'$.text')) > 0
 ORDER BY rowid DESC
 LIMIT 5;`;
+
+async function runSqliteCommand(
+  binary: string,
+  args: string[],
+  maxBuffer: number,
+): Promise<{ stdout: string; stderr: string }> {
+  const result = await execFileAsync(binary, args, { maxBuffer });
+  return { stdout: result.stdout, stderr: result.stderr };
+}
+
+function sqliteRunner(runner: AdapterRunner | null, maxBuffer: number): AdapterRunner {
+  return runner ?? ((binary, args) => runSqliteCommand(binary, args, maxBuffer));
+}
 
 export class CursorBubbleAdapter implements IdeAdapter {
   readonly ide: SupportedIde;
@@ -77,12 +92,8 @@ export class CursorBubbleAdapter implements IdeAdapter {
       this.dbPath,
       "SELECT COALESCE(MAX(rowid), 0) FROM cursorDiskKV WHERE key LIKE 'bubbleId:%';",
     ];
-    const exec = runner ?? (async (bin, a) => {
-      const r = await execFile(bin, a, { maxBuffer: 1024 * 1024 });
-      return { stdout: r.stdout, stderr: r.stderr };
-    });
     try {
-      const r = await exec(this.sqlite, args);
+      const r = await sqliteRunner(runner, SQLITE_ROWID_MAX_BUFFER)(this.sqlite, args);
       const n = Number.parseInt((r.stdout || "0").trim(), 10);
       return Number.isFinite(n) ? n : 0;
     } catch {
@@ -104,13 +115,9 @@ export class CursorBubbleAdapter implements IdeAdapter {
       this.dbPath,
       sql.replace("?", String(rowid)),
     ];
-    const exec = runner ?? (async (bin, a) => {
-      const r = await execFile(bin, a, { maxBuffer: 8 * 1024 * 1024 });
-      return { stdout: r.stdout, stderr: r.stderr };
-    });
     let stdout = "";
     try {
-      const r = await exec(this.sqlite, args);
+      const r = await sqliteRunner(runner, SQLITE_QUERY_MAX_BUFFER)(this.sqlite, args);
       stdout = r.stdout;
     } catch {
       return [];

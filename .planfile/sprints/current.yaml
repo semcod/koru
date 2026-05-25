@@ -1390,9 +1390,10 @@ sprint:
         to verify.'
       execution:
         attempt: 0
+        finished_at: '2026-05-25T16:43:20.497225Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -1410,6 +1411,16 @@ sprint:
         - outputs
         source: planfile.store
         timestamp: '2026-05-25T15:25:08.894219+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T16:43:20.512065+00:00'
       id: STARTER-269
       inputs:
         api_headers: {}
@@ -1447,9 +1458,9 @@ sprint:
         timestamp: '2026-05-25T14:27:19.988762+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-25T15:25:08.894186+00:00'
+      updated_at: '2026-05-25T16:43:20.511994+00:00'
     STARTER-270:
       blocked_by: []
       blocks: []
@@ -1765,13 +1776,13 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-25T15:18:52.447431+00:00'
-      description: "BLOCKED: FAIL: oru/autopilot/install_manager.py\", line 605, in\
-        \ collect_install_manager_report\n    expected_plugin = _expected_plugin_version(root,\
-        \ resolved_ide) if plugin_supported else None\n                      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\n\
-        \  File \"/home/tom/github/semcod/koru/src/koru/autopilot/install_manager.py\"\
-        , line 187, in _expected_plugin_version\n    except (OSError, json.JSONDecodeError):\n\
-        \                     ^^^^\nNameError: name 'json' is not defined. Did you\
-        \ forget to import 'json'?"
+      description: "BLOCKED: FAIL: oru/autopilot/install_manager.py\", line 605, in
+        collect_install_manager_report\n    expected_plugin = _expected_plugin_version(root,
+        resolved_ide) if plugin_supported else None\n                      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\n
+        \ File \"/home/tom/github/semcod/koru/src/koru/autopilot/install_manager.py\",
+        line 187, in _expected_plugin_version\n    except (OSError, json.JSONDecodeError):\n
+        \                    ^^^^\nNameError: name 'json' is not defined. Did you
+        forget to import 'json'?"
       execution:
         assigned_to: koru-shell
         attempt: 0
@@ -1990,31 +2001,9 @@ sprint:
       sync: {}
       updated_at: '2026-05-25T16:27:55.743297+00:00'
     STARTER-275:
-      id: STARTER-275
-      name: '[OPERATOR] Autopilot: Connect + plugin w czacie plugin połączony (ide=vscodium)
-        Wykonaj w IDE, potem zamknij ticket: ...'
-      status: open
-      priority: high
-      sprint: current
-      source:
-        tool: koru-operator-pipeline
-        timestamp: '2026-05-25T16:31:21.547394+00:00'
-        context:
-          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
-
-
-            plugin połączony (ide=vscodium)
-
-
-            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
-            ticket done.
-
-
-            Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
-          detail: plugin połączony (ide=vscodium)
-          step_id: autopilot_plugin
-          task_command: koru ide doctor --ide vscodium --fix --gc-sockets
-          dedupe_key: koru:operator-pipeline:autopilot-plugin:vscodium
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T16:31:21.547394+00:00'
       description: '[OPERATOR] Autopilot: Connect + plugin w czacie
 
 
@@ -2026,48 +2015,18 @@ sprint:
 
 
         Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - operator
-      - auto-pipeline
-      - step:autopilot_plugin
-      blocked_by: []
-      blocks: []
-      files: []
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T16:46:27.853230Z'
+        max_attempts: 1
+        queue: operator
+        state: done
       executor:
         kind: human
         mode: interactive
-      execution:
-        queue: operator
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
-
-
-          plugin połączony (ide=vscodium)
-
-
-          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
-          ticket done.
-
-
-          Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
-      outputs:
-        artifacts: []
-        notes: []
-      sync: {}
+      files: []
       history:
-      - timestamp: '2026-05-25T16:31:21.547394+00:00'
-        action: created
-        source: koru task
+      - action: created
         message: '[OPERATOR] Autopilot: Connect + plugin w czacie
 
 
@@ -2079,5 +2038,209 @@ sprint:
 
 
           Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
-      created_at: '2026-05-25T16:31:21.547394+00:00'
-      updated_at: '2026-05-25T16:31:21.547394+00:00'
+        source: koru task
+        timestamp: '2026-05-25T16:31:21.547394+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T16:34:47.712221+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T16:46:27.872319+00:00'
+      id: STARTER-275
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          plugin połączony (ide=vscodium)
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie plugin połączony (ide=vscodium)
+        Wykonaj w IDE, potem zamknij ticket: ...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru:operator-pipeline:autopilot-plugin:vscodium
+          detail: plugin połączony (ide=vscodium)
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            plugin połączony (ide=vscodium)
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
+          step_id: autopilot_plugin
+          task_command: koru ide doctor --ide vscodium --fix --gc-sockets
+        timestamp: '2026-05-25T16:31:21.547394+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T16:46:27.872279+00:00'
+    STARTER-276:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T16:47:05.905799+00:00'
+      description: '`project/analysis.toon.yaml` reports **10** duplicated classes.
+        Extract shared helpers/modules; re-run `code2llm ./ -f toon` to refresh.'
+      execution:
+        attempt: 1
+        finished_at: '2026-05-25T17:01:15.707401Z'
+        last_error: 'duplicate-class refactor remains: code2llm still reports DUP
+          after adding integration logging DSL; full plugin/host dedupe needs separate
+          broad refactor'
+        max_attempts: 1
+        queue: default
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` reports **10** duplicated classes.
+          Extract shared helpers/modules; re-run `code2llm ./ -f toon` to refresh.'
+        source: koru task
+        timestamp: '2026-05-25T16:47:05.905799+00:00'
+      - action: update
+        changes:
+        - execution
+        execution_state: failed
+        previous_execution_state: ready
+        source: planfile.store
+        timestamp: '2026-05-25T17:00:46.136070+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: failed
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T17:01:15.719261+00:00'
+      id: STARTER-276
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` reports **10** duplicated classes. Extract
+          shared helpers/modules; re-run `code2llm ./ -f toon` to refresh.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - duplication
+      - refactor
+      - scan
+      name: Remove 10 duplicated classes (code2llm analysis)
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-scan:code2llm_dup:project/analysis.toon.yaml
+          input: '`project/analysis.toon.yaml` reports **10** duplicated classes.
+            Extract shared helpers/modules; re-run `code2llm ./ -f toon` to refresh.'
+          signal: code2llm_dup
+        timestamp: '2026-05-25T16:47:05.905799+00:00'
+        tool: koru-scan
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T17:01:15.719226+00:00'
+    STARTER-277:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T16:47:06.495637+00:00'
+      description: '`project/analysis.toon.yaml` flags `src/koru/deployment_events.py`
+        as a god module (505 lines, 8 classes, 28 methods). Split into focused submodules
+        by responsibility.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koru/deployment_events.py
+      - project/analysis.toon.yaml
+      history:
+      - action: created
+        message: '`project/analysis.toon.yaml` flags `src/koru/deployment_events.py`
+          as a god module (505 lines, 8 classes, 28 methods). Split into focused submodules
+          by responsibility.'
+        source: koru task
+        timestamp: '2026-05-25T16:47:06.495637+00:00'
+      id: STARTER-277
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '`project/analysis.toon.yaml` flags `src/koru/deployment_events.py`
+          as a god module (505 lines, 8 classes, 28 methods). Split into focused submodules
+          by responsibility.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - god-module
+      - refactor
+      - scan
+      name: 'Split god module: src/koru/deployment_events.py'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: semcod:code2llm:refactor:src/koru/deployment_events.py
+          input: '`project/analysis.toon.yaml` flags `src/koru/deployment_events.py`
+            as a god module (505 lines, 8 classes, 28 methods). Split into focused
+            submodules by responsibility.'
+          signal: code2llm_god
+        timestamp: '2026-05-25T16:47:06.495637+00:00'
+        tool: koru-scan
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T16:47:06.495637+00:00'

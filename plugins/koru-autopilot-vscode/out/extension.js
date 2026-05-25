@@ -2288,6 +2288,42 @@ class AutopilotBridge {
         await this.injectChat({ type: "chat.send", text, submit: true });
     }
 }
+function siblingIdeForAppName(appName) {
+    const lowered = appName.toLowerCase();
+    if (lowered.includes("cursor"))
+        return "cursor";
+    if (lowered.includes("vscodium") || lowered.includes("code - oss") || lowered.includes("code-oss")) {
+        return "vscodium";
+    }
+    if (lowered.includes("windsurf"))
+        return "windsurf";
+    if (lowered.includes("antigravity"))
+        return "antigravity";
+    return null;
+}
+function maybeAutoConnect(bridge) {
+    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+    if (cfg.get("autoConnect", true))
+        bridge.connect();
+}
+function registerBridgeCommands(context, bridge) {
+    context.subscriptions.push(vscode.commands.registerCommand("koruAutopilot.connect", () => bridge.connect()), vscode.commands.registerCommand("koruAutopilot.sendChat", async () => {
+        const text = await vscode.window.showInputBox({ prompt: "Send to chat:" });
+        if (text)
+            await bridge.sendManualChat(text);
+    }), vscode.commands.registerCommand("koruAutopilot.calibrateProbe", () => bridge.calibrateProbe()), vscode.commands.registerCommand("koruAutopilot.calibrate", () => bridge.calibrateProbe()), vscode.commands.registerCommand("koruAutopilot.calibrateCompact", () => bridge.calibrateProbe()), vscode.commands.registerCommand("koruAutopilot.captureSubmitClick", () => bridge.captureSubmitClickPosition()), vscode.workspace.onDidChangeConfiguration((event) => {
+        if (event.affectsConfiguration("koruAutopilot.socketPath") ||
+            event.affectsConfiguration("koruAutopilot.autoConnect")) {
+            maybeAutoConnect(bridge);
+        }
+    }));
+}
+function activateBridge(context) {
+    const bridge = new AutopilotBridge(context);
+    activeBridge = bridge;
+    registerBridgeCommands(context, bridge);
+    maybeAutoConnect(bridge);
+}
 function activate(context) {
     const appName = vscode.env.appName || "";
     debugLog("ACTIVATE", {
@@ -2298,34 +2334,13 @@ function activate(context) {
     // Each sibling IDE has its own dedicated VSIX. This umbrella plugin
     // serves Microsoft VS Code only — silently no-op on other hosts so we
     // never race the per-IDE plugin for the same Unix socket.
-    const lowered = appName.toLowerCase();
-    const siblingIde = lowered.includes("cursor") ? "cursor" :
-        lowered.includes("vscodium") || lowered.includes("code - oss") || lowered.includes("code-oss") ? "vscodium" :
-            lowered.includes("windsurf") ? "windsurf" :
-                lowered.includes("antigravity") ? "antigravity" :
-                    null;
+    const siblingIde = siblingIdeForAppName(appName);
     if (siblingIde) {
         console.warn(`koru-autopilot-vscode: not activating on ${siblingIde} (appName="${appName}"); ` +
             `install koru-autopilot-${siblingIde} instead.`);
         return;
     }
-    const bridge = new AutopilotBridge(context);
-    activeBridge = bridge;
-    context.subscriptions.push(vscode.commands.registerCommand("koruAutopilot.connect", () => bridge.connect()), vscode.commands.registerCommand("koruAutopilot.sendChat", async () => {
-        const text = await vscode.window.showInputBox({ prompt: "Send to chat:" });
-        if (text)
-            await bridge.sendManualChat(text);
-    }), vscode.commands.registerCommand("koruAutopilot.calibrateProbe", () => bridge.calibrateProbe()), vscode.commands.registerCommand("koruAutopilot.calibrate", () => bridge.calibrateProbe()), vscode.commands.registerCommand("koruAutopilot.calibrateCompact", () => bridge.calibrateProbe()), vscode.commands.registerCommand("koruAutopilot.captureSubmitClick", () => bridge.captureSubmitClickPosition()), vscode.workspace.onDidChangeConfiguration((event) => {
-        if (event.affectsConfiguration("koruAutopilot.socketPath") ||
-            event.affectsConfiguration("koruAutopilot.autoConnect")) {
-            const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-            if (cfg.get("autoConnect", true))
-                bridge.connect();
-        }
-    }));
-    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-    if (cfg.get("autoConnect", true))
-        bridge.connect();
+    activateBridge(context);
 }
 function deactivate() {
     if (activeBridge) {

@@ -15,6 +15,7 @@ import {
   buildHostKeySubmitCandidates,
   buildPasteDirectCommands,
   buildSubmitCommands,
+  ProbeCacheEntry,
   PROBE_CACHE_VERSION,
   sanitizeProbeCacheForIde,
 } from "../probe-ladder";
@@ -31,6 +32,26 @@ function eq<T>(actual: T, expected: T, message: string): void {
       `cursor-strategy test failed: ${message}\n  expected: ${String(expected)}\n  actual:   ${String(actual)}`,
     );
   }
+}
+
+function cursorCacheEntry(fields: Partial<ProbeCacheEntry>): ProbeCacheEntry {
+  return {
+    version: PROBE_CACHE_VERSION,
+    ide: "cursor",
+    appName: "Cursor",
+    updatedAt: "",
+    ...fields,
+  };
+}
+
+function assertSanitizedCacheField(
+  fields: Partial<ProbeCacheEntry>,
+  key: keyof ProbeCacheEntry,
+  expected: string | undefined,
+  message: string,
+): void {
+  const sanitized = sanitizeProbeCacheForIde(cursorCacheEntry(fields), "cursor");
+  eq(sanitized?.[key], expected, message);
 }
 
 function testRegistry(): void {
@@ -110,120 +131,68 @@ function testProbeLadderUsesCursorStrategy(): void {
 }
 
 function testProbeCacheSanitizationForCursor(): void {
-  // type: cached submit must be cleared
-  const typeSubmit = sanitizeProbeCacheForIde(
-    {
-      version: PROBE_CACHE_VERSION,
-      ide: "cursor",
-      appName: "Cursor",
-      submit: "type:",
-      updatedAt: "",
-    },
-    "cursor",
-  );
-  eq(typeSubmit?.submit, undefined, "type: submit must be cleared");
+  testCursorSubmitCacheSanitization();
+  testCursorPasteAndFocusInputCacheSanitization();
+  testCursorFocusOpenCacheSanitization();
+}
 
-  const clipboardPaste = sanitizeProbeCacheForIde(
-    {
-      version: PROBE_CACHE_VERSION,
-      ide: "cursor",
-      appName: "Cursor",
-      paste: "editor.action.clipboardPasteAction",
-      updatedAt: "",
-    },
-    "cursor",
-  );
-  eq(
-    clipboardPaste?.paste,
-    undefined,
-    "clipboardPasteAction paste cache must be cleared for Cursor",
-  );
-
+function testCursorSubmitCacheSanitization(): void {
+  assertSanitizedCacheField({ submit: "type:" }, "submit", undefined, "type: submit must be cleared");
   // Plain Return via any injector must be cleared for Cursor (chat textarea
   // treats Return as newline; only Ctrl+Return submits).
-  const plainReturn = sanitizeProbeCacheForIde(
-    {
-      version: PROBE_CACHE_VERSION,
-      ide: "cursor",
-      appName: "Cursor",
-      submit: "ydotool key Return",
-      updatedAt: "",
-    },
-    "cursor",
+  assertSanitizedCacheField(
+    { submit: "ydotool key Return" },
+    "submit",
+    undefined,
+    "plain Return host-key win must be cleared for Cursor",
   );
-  eq(plainReturn?.submit, undefined, "plain Return host-key win must be cleared for Cursor");
 
   // Ctrl+Return via ydotool must be preserved (ydotool works on both X11
   // and Wayland — xdotool wins would also be cleared on Wayland by the
   // strategy's separate xdotool-on-Wayland rule, which is exactly the
   // regression behaviour we want).
-  const ctrl = sanitizeProbeCacheForIde(
-    {
-      version: PROBE_CACHE_VERSION,
-      ide: "cursor",
-      appName: "Cursor",
-      submit: "ydotool key ctrl+Return",
-      updatedAt: "",
-    },
-    "cursor",
-  );
-  eq(
-    ctrl?.submit,
+  assertSanitizedCacheField(
+    { submit: "ydotool key ctrl+Return" },
+    "submit",
     "ydotool key ctrl+Return",
     "ydotool ctrl+Return win must be preserved for Cursor",
   );
 
   // Cursor strategy must not touch unrelated submit commands.
-  const registered = sanitizeProbeCacheForIde(
-    {
-      version: PROBE_CACHE_VERSION,
-      ide: "cursor",
-      appName: "Cursor",
-      submit: "composer.sendToAgent",
-      updatedAt: "",
-    },
-    "cursor",
-  );
-  eq(
-    registered?.submit,
+  assertSanitizedCacheField(
+    { submit: "composer.sendToAgent" },
+    "submit",
     "composer.sendToAgent",
     "registered composer.sendToAgent must be preserved",
   );
+}
 
-  const auxBar = sanitizeProbeCacheForIde(
-    {
-      version: PROBE_CACHE_VERSION,
-      ide: "cursor",
-      appName: "Cursor",
-      focusInput: "workbench.action.focusAuxiliaryBar",
-      updatedAt: "",
-    },
-    "cursor",
+function testCursorPasteAndFocusInputCacheSanitization(): void {
+  assertSanitizedCacheField(
+    { paste: "editor.action.clipboardPasteAction" },
+    "paste",
+    undefined,
+    "clipboardPasteAction paste cache must be cleared for Cursor",
   );
-  eq(
-    auxBar?.focusInput,
+
+  assertSanitizedCacheField(
+    { focusInput: "workbench.action.focusAuxiliaryBar" },
+    "focusInput",
     undefined,
     "focusAuxiliaryBar focusInput cache must be cleared for Cursor",
   );
+}
 
+function testCursorFocusOpenCacheSanitization(): void {
   // aichat.newchataction opens a NEW chat tab in Cursor. If it ever
   // wins the focus_open probe, the cache must be invalidated so the
   // ladder re-probes against commands that target the existing chat
   // (composer.showComposer / workbench.panel.chat). Caching it leaves
   // every subsequent drive pasting+submitting into a fresh tab while
   // the user is staring at the original chat — i.e. the v0.1.64 bug.
-  const newChatTab = sanitizeProbeCacheForIde(
-    {
-      version: PROBE_CACHE_VERSION,
-      ide: "cursor",
-      appName: "Cursor",
-      focusOpen: "aichat.newchataction",
-      updatedAt: "",
-    },
-    "cursor",
-  );
-  eq(
-    newChatTab?.focusOpen,
+  assertSanitizedCacheField(
+    { focusOpen: "aichat.newchataction" },
+    "focusOpen",
     undefined,
     "aichat.newchataction focus_open cache must be cleared for Cursor",
   );
@@ -234,18 +203,9 @@ function testProbeCacheSanitizationForCursor(): void {
   // ale nie wysłał" symptom — the plugin pastes into a now-invisible
   // surface and submit commands no-op. The cache must be invalidated
   // so the ladder re-probes the non-toggling composer.openComposer.
-  const openAsPane = sanitizeProbeCacheForIde(
-    {
-      version: PROBE_CACHE_VERSION,
-      ide: "cursor",
-      appName: "Cursor",
-      focusOpen: "composer.openAsPane",
-      updatedAt: "",
-    },
-    "cursor",
-  );
-  eq(
-    openAsPane?.focusOpen,
+  assertSanitizedCacheField(
+    { focusOpen: "composer.openAsPane" },
+    "focusOpen",
     undefined,
     "composer.openAsPane focus_open cache must be cleared for Cursor "
       + "(toggle hides an already-open chat panel)",

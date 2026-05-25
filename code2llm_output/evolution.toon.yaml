@@ -1,57 +1,37 @@
-# code2llm/evolution | 15454 func | 342f | 2026-05-25
+# code2llm/evolution | 17400 func | 381f | 2026-05-25
 
-NEXT[10] (ranked by impact):
+NEXT[5] (ranked by impact):
   [1] !! SPLIT           src/koru/doctor.py
       WHY: 2083L, 2 classes, max CC=13
       EFFORT: ~4h  IMPACT: 27079
 
-  [2] !! SPLIT           src/koru/autonomous_cycle_chat_activity.py
-      WHY: 1185L, 0 classes, max CC=12
-      EFFORT: ~4h  IMPACT: 14220
+  [2] !! SPLIT           src/koru/scan.py
+      WHY: 1183L, 0 classes, max CC=13
+      EFFORT: ~4h  IMPACT: 15379
 
-  [3] !! SPLIT           src/koru/autonomous.py
-      WHY: 1138L, 2 classes, max CC=5
-      EFFORT: ~4h  IMPACT: 5690
+  [3] !! SPLIT           src/koru/autopilot/cli_command.py
+      WHY: 1142L, 0 classes, max CC=10
+      EFFORT: ~4h  IMPACT: 11420
 
-  [4] !  SPLIT-FUNC      _add_label_to_ticket_yaml_text  CC=20  fan=26
-      WHY: CC=20 exceeds 15
-      EFFORT: ~1h  IMPACT: 520
-
-  [5] !! SPLIT-FUNC      _backfill_existing_dedupe_keys  CC=26  fan=20
-      WHY: CC=26 exceeds 15
-      EFFORT: ~1h  IMPACT: 520
-
-  [6] !  SPLIT-FUNC      _add_label_to_ticket_yaml_text  CC=20  fan=26
-      WHY: CC=20 exceeds 15
-      EFFORT: ~1h  IMPACT: 520
-
-  [7] !! SPLIT-FUNC      _backfill_existing_dedupe_keys  CC=26  fan=20
-      WHY: CC=26 exceeds 15
-      EFFORT: ~1h  IMPACT: 520
-
-  [8] !  SPLIT-FUNC      execFile  CC=18  fan=18
+  [4] !  SPLIT-FUNC      execFile  CC=18  fan=18
       WHY: CC=18 exceeds 15
       EFFORT: ~1h  IMPACT: 324
 
-  [9] !  SPLIT-FUNC      run_scan  CC=15  fan=19
+  [5] !  SPLIT-FUNC      AutopilotBridge.activate  CC=15  fan=15
       WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 285
-
-  [10] !  SPLIT-FUNC      run_scan  CC=15  fan=19
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 285
+      EFFORT: ~1h  IMPACT: 225
 
 
 RISKS[3]:
   ⚠ Splitting src/koru/doctor.py may break 196 import paths
-  ⚠ Splitting src/koru/autonomous_cycle_chat_activity.py may break 102 import paths
-  ⚠ Splitting src/koru/autonomous.py may break 122 import paths
+  ⚠ Splitting src/koru/scan.py may break 74 import paths
+  ⚠ Splitting src/koru/autopilot/cli_command.py may break 64 import paths
 
 METRICS-TARGET:
   CC̄:          1.5 → ≤1.0
-  max-CC:      26 → ≤13
-  god-modules: 25 → 0
-  high-CC(≥15): 25 → ≤12
+  max-CC:      18 → ≤9
+  god-modules: 24 → 0
+  high-CC(≥15): 4 → ≤2
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -79,4 +59,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=1.6 → now CC̄=1.5
+  prev CC̄=1.5 → now CC̄=1.5

@@ -313,7 +313,7 @@ class AutopilotBridge {
           type: "hello",
           id: "vscode-hello",
           ide: this.detectIde(),
-          version: vscode.extensions.getExtension("semcod.koru-autopilot-vscode")?.packageJSON.version || "unknown",
+          version: vscode.extensions.getExtension("semcod.koru-autopilot-antigravity")?.packageJSON.version || "unknown",
           protocolVersion: 1,
           capabilities: [
             "ide.commands",
@@ -2561,23 +2561,16 @@ class AutopilotBridge {
   }
 }
 
-export function activate(context: vscode.ExtensionContext): void {
-  const appName = vscode.env.appName || "";
-  debugLog("ACTIVATE", {
-    appName,
-    extensionMode: context.extensionMode,
-    extensionPath: context.extensionPath,
-  });
-  // ``koru-autopilot-antigravity`` is a Antigravity-only VSIX.
-  if (!(appName.toLowerCase().includes("antigravity"))) {
-    console.warn(
-      `koru-autopilot-antigravity: not activating (appName="${appName}"; ` +
-      "install the matching koru-autopilot-<ide> VSIX for this IDE)."
-    );
-    return;
-  }
-  const bridge = new AutopilotBridge(context);
-  activeBridge = bridge;
+function isAntigravityHost(appName: string): boolean {
+  return appName.toLowerCase().includes("antigravity");
+}
+
+function maybeAutoConnect(bridge: AutopilotBridge): void {
+  const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+  if (cfg.get<boolean>("autoConnect", true)) bridge.connect();
+}
+
+function registerBridgeCommands(context: vscode.ExtensionContext, bridge: AutopilotBridge): void {
   context.subscriptions.push(
     vscode.commands.registerCommand("koruAutopilot.connect", () => bridge.connect()),
     vscode.commands.registerCommand("koruAutopilot.sendChat", async () => {
@@ -2593,13 +2586,35 @@ export function activate(context: vscode.ExtensionContext): void {
         event.affectsConfiguration("koruAutopilot.socketPath") ||
         event.affectsConfiguration("koruAutopilot.autoConnect")
       ) {
-        const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-        if (cfg.get<boolean>("autoConnect", true)) bridge.connect();
+        maybeAutoConnect(bridge);
       }
     }),
   );
-  const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-  if (cfg.get<boolean>("autoConnect", true)) bridge.connect();
+}
+
+function activateBridge(context: vscode.ExtensionContext): void {
+  const bridge = new AutopilotBridge(context);
+  activeBridge = bridge;
+  registerBridgeCommands(context, bridge);
+  maybeAutoConnect(bridge);
+}
+
+export function activate(context: vscode.ExtensionContext): void {
+  const appName = vscode.env.appName || "";
+  debugLog("ACTIVATE", {
+    appName,
+    extensionMode: context.extensionMode,
+    extensionPath: context.extensionPath,
+  });
+  // ``koru-autopilot-antigravity`` is a Antigravity-only VSIX.
+  if (!isAntigravityHost(appName)) {
+    console.warn(
+      `koru-autopilot-antigravity: not activating (appName="${appName}"; ` +
+      "install the matching koru-autopilot-<ide> VSIX for this IDE)."
+    );
+    return;
+  }
+  activateBridge(context);
 }
 
 export function deactivate(): void {

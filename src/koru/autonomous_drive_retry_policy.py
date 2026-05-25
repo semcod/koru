@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import time
+from pathlib import Path
 from typing import Any
 
 from koru.decision_engine import DriveRetryDecision, EnvironmentDecisionEngine
+from koru.integration_ledger import record_integration_action
 
 
 def _format_autopilot_failure_details(reply: dict[str, Any]) -> list[str]:
@@ -147,6 +149,7 @@ def _handle_failed_drive_attempt(
         engine=engine,
     )
     kind = retry_decision.assessment.kind
+    _record_drive_retry_decision(reply, retry_decision, attempt, attempts, engine=engine)
     if kind == "skip_cooldown":
         return False
     if not retry_decision.should_retry:
@@ -163,6 +166,51 @@ def _handle_failed_drive_attempt(
     if retry_decision.sleep_seconds > 0:
         time.sleep(retry_decision.sleep_seconds)
     return True
+
+
+def _record_drive_retry_decision(
+    reply: dict[str, Any],
+    retry_decision: DriveRetryDecision,
+    attempt: int,
+    attempts: int,
+    *,
+    engine: EnvironmentDecisionEngine | None,
+) -> None:
+    ide = getattr(engine, "ide_id", "auto") if engine is not None else "auto"
+    project = getattr(engine, "project", None) if engine is not None else None
+    if not isinstance(project, Path):
+        project = None
+    verification = str(reply.get("verification") or "-")
+    reason = str(
+        reply.get("submit_failure_reason")
+        or reply.get("reason")
+        or retry_decision.assessment.detail
+        or reply.get("message")
+        or ""
+    )
+    record_integration_action(
+        project=project,
+        action="drive.retry_decision",
+        intent="decide whether another IDE interaction is safe",
+        actor="autonomous-loop",
+        target=str(ide),
+        transport=str(reply.get("backend") or "unknown"),
+        phase=verification,
+        attempt=attempt + 1,
+        outcome="retry" if retry_decision.should_retry else "stop",
+        reason=reason,
+        evidence=(
+            f"kind={retry_decision.assessment.kind}; "
+            f"warn={retry_decision.should_warn or '-'}; "
+            f"sleep={retry_decision.sleep_seconds}; max_attempts={attempts}"
+        ),
+        next_step=(
+            "retry after policy sleep"
+            if retry_decision.should_retry
+            else "do not paste again; surface root cause to operator"
+        ),
+        data={"reply": reply, "assessment": retry_decision.assessment.__dict__},
+    )
 
 
 __all__ = ["_handle_failed_drive_attempt"]

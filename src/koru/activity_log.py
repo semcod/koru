@@ -228,6 +228,7 @@ def _color_category(category: str, *, enabled: bool) -> str:
         "HTTP": _ANSI_BLUE,
         "DASHBOARD": _ANSI_BLUE,
         "OPERATOR": _ANSI_CYAN,
+        "INTEGRATION": _ANSI_BLUE,
         "INFO": _ANSI_GRAY,
     }
     color = palette.get(category.upper(), _ANSI_BOLD)

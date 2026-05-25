@@ -72,6 +72,49 @@ def _stdio_info(msg: str, *, fmt: str) -> None:
     activity_info(msg, fmt=fmt)
 
 
+def _emit_stdio_cycle_event(
+    event_type: str,
+    payload: dict,
+    *,
+    command: str | None = None,
+    stdio_format: str,
+    correlation_id: str,
+) -> None:
+    if stdio_format == "jsonl":
+        write_stdio_event(
+            sys.stdout,
+            event_type=event_type,
+            correlation_id=correlation_id,
+            payload=payload,
+            command=command,
+        )
+
+
+def _cycle_human_progress(msg: str, *, stdio_format: str) -> None:
+    from koru.activity_log import activity, activity_info
+
+    if msg.startswith("+ "):
+        activity("RUN", msg[2:], fmt=stdio_format)
+    elif msg.startswith("  scan:"):
+        activity("SCAN", msg.strip(), fmt=stdio_format)
+    elif msg.startswith("  queue:"):
+        activity("QUEUE", msg.strip(), fmt=stdio_format)
+    elif msg.startswith("  autopilot:"):
+        activity("CHAT", msg.strip(), fmt=stdio_format)
+    elif msg.startswith("- autopilot skipped"):
+        activity("CHAT", msg[2:].strip(), fmt=stdio_format)
+    elif msg.startswith("  decision:"):
+        activity("DECISION", msg.strip(), fmt=stdio_format)
+    elif msg.startswith("  planfile snapshot:") or msg.startswith(
+        ("  what koru auto", "  to give koru work", "  →")
+    ):
+        activity("KORUAUTONOMOUS", msg.strip(), fmt=stdio_format)
+    elif stdio_format == "human":
+        activity_info(msg, fmt=stdio_format)
+    else:
+        activity_info(msg, fmt=stdio_format)
+
+
 def _current_head(project: Path) -> str:
     result = subprocess.run(
         ["git", "-C", str(project), "rev-parse", "HEAD"],
@@ -796,38 +839,16 @@ def run_cycle(
     _heal_stale_socket()
 
     def _emit(event_type: str, payload: dict, command: str | None = None) -> None:
-        if stdio_format == "jsonl":
-            write_stdio_event(
-                sys.stdout,
-                event_type=event_type,
-                correlation_id=correlation_id,
-                payload=payload,
-                command=command,
-            )
+        _emit_stdio_cycle_event(
+            event_type,
+            payload,
+            command=command,
+            stdio_format=stdio_format,
+            correlation_id=correlation_id,
+        )
 
     def _hp(msg: str) -> None:
-        from koru.activity_log import activity, activity_info
-
-        if msg.startswith("+ "):
-            activity("RUN", msg[2:], fmt=stdio_format)
-        elif msg.startswith("  scan:"):
-            activity("SCAN", msg.strip(), fmt=stdio_format)
-        elif msg.startswith("  queue:"):
-            activity("QUEUE", msg.strip(), fmt=stdio_format)
-        elif msg.startswith("  autopilot:"):
-            activity("CHAT", msg.strip(), fmt=stdio_format)
-        elif msg.startswith("- autopilot skipped"):
-            activity("CHAT", msg[2:].strip(), fmt=stdio_format)
-        elif msg.startswith("  decision:"):
-            activity("DECISION", msg.strip(), fmt=stdio_format)
-        elif msg.startswith("  planfile snapshot:") or msg.startswith(
-            ("  what koru auto", "  to give koru work", "  →")
-        ):
-            activity("KORUAUTONOMOUS", msg.strip(), fmt=stdio_format)
-        elif stdio_format == "human":
-            activity_info(msg, fmt=stdio_format)
-        else:
-            activity_info(msg, fmt=stdio_format)
+        _cycle_human_progress(msg, stdio_format=stdio_format)
 
     _handle_autopilot_events(state, _hp)
     scan_result: ScanResult | None = None

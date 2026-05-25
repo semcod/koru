@@ -71,6 +71,47 @@ class DecisionEngineTests(unittest.TestCase):
         self.assertTrue(decision.should_retry)
         self.assertEqual(decision.should_warn, "focus")
 
+    def test_vscodium_submit_unverified_does_not_retry(self) -> None:
+        project = Path("/tmp/koru-decision-engine-test")
+        llm = IdeChatStrategy()
+        os_strategy = WaylandLinuxStrategy()
+        with (
+            mock.patch("koru.decision_engine.resolve_environment_profile") as mock_profile,
+            mock.patch(
+                "koru.decision_engine.resolve_active_os_strategy",
+                return_value=os_strategy,
+            ),
+            mock.patch(
+                "koru.decision_engine.resolve_active_llm_strategy",
+                return_value=llm,
+            ),
+            mock.patch("koru.decision_engine.get_ide_strategy", return_value=None),
+        ):
+            mock_profile.return_value = mock.Mock(
+                ide=mock.Mock(id="vscodium"),
+                decision_key="test",
+            )
+            from koru.decision_engine import EnvironmentDecisionEngine
+
+            engine = EnvironmentDecisionEngine(
+                project,
+                ide="vscodium",
+                profile=mock_profile.return_value,
+                os_strategy=os_strategy,
+                llm_strategy=llm,
+            )
+            decision = engine.assess_drive_failure(
+                {
+                    "verification": "submit_unverified",
+                    "winning_paste": "host-clipboard:wl-copy+xdotool key ctrl+v",
+                    "attempted_submit": "vscodium-host-key-noop",
+                },
+                attempt=0,
+                max_attempts=3,
+            )
+        self.assertFalse(decision.should_retry)
+        self.assertEqual(decision.assessment.detail, "vscodium_submit_unverified_not_retryable")
+
     def test_focus_ide_window_accepts_integrated_terminal_for_cursor(self) -> None:
         project = Path("/tmp/koru-decision-engine-test")
         os_strategy = WaylandLinuxStrategy()

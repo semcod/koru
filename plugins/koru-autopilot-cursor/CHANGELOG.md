@@ -4,6 +4,24 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.77] — 2026-05-25
+
+### Fixed
+- **Hello payload now reports the correct plugin version.** The scaffold
+  copied from `koru-autopilot-vscode` hard-coded
+  `vscode.extensions.getExtension("semcod.koru-autopilot-vscode")` to
+  resolve `packageJSON.version`. Cursor's dedicated VSIX
+  `semcod.koru-autopilot-cursor` returned `undefined` from that lookup,
+  so the hello envelope carried `version: "unknown"` and the daemon
+  rejected the connection as a version mismatch (`connected=unknown
+  expected=0.1.76`). The plugin now uses its own extension ID so the
+  hello carries the installed `package.json` version verbatim.
+- Daemon-side diagnostics (`koru.ide_adapters.shared`) now resolve the
+  expected extension ID per IDE (e.g. `semcod.koru-autopilot-cursor`),
+  so doctor/status no longer falsely report `Brak
+  semcod.koru-autopilot-vscode w extensions.json` on Cursor when only
+  the Cursor VSIX is installed.
+
 ## [0.1.76] — 2026-05-25
 
 ### Changed (architecture — Cursor split)

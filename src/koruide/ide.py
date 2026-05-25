@@ -133,14 +133,16 @@ def _iter_proc_pids() -> list[int]:
 
 def _read_comm(pid: int) -> str:
     try:
-        return Path(f"/proc/{pid}/comm").read_text(encoding="utf-8", errors="replace").strip()
+        with open(f"/proc/{pid}/comm", "r", encoding="utf-8", errors="replace") as f:
+            return f.read().strip()
     except OSError:
         return ""
 
 
 def _read_cmdline(pid: int) -> str:
     try:
-        raw = Path(f"/proc/{pid}/cmdline").read_bytes()
+        with open(f"/proc/{pid}/cmdline", "rb") as f:
+            raw = f.read()
     except OSError:
         return ""
     # cmdline is NUL-separated; join with spaces for substring matches.

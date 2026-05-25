@@ -117,6 +117,168 @@ def _check_csrf(session: WizardGuiSession, token: str | None, HTTPException: Any
         raise HTTPException(status_code=403, detail="invalid CSRF token")
 
 
+def _get_session(request: Any, session_store: SessionStore) -> WizardGuiSession:
+    session_store.purge_expired()
+    sid = request.cookies.get(SESSION_COOKIE)
+    session = session_store.get(sid)
+    if session is None:
+        raise HTTPException(status_code=401, detail="session expired; reload /wizard")
+    return session
+
+
+def _cookie_response(payload: dict[str, Any], session: WizardGuiSession) -> Any:
+    response = JSONResponse(payload)
+    response.set_cookie(
+        SESSION_COOKIE,
+        session.session_id,
+        httponly=True,
+        samesite="lax",
+        max_age=1800,
+    )
+    return response
+
+
+def _ensure_session(request: Any, app: Any, session_store: SessionStore) -> WizardGuiSession:
+    sid = request.cookies.get(SESSION_COOKIE)
+    session = session_store.get(sid)
+    if session is not None:
+        return session
+    cfg = app.state.gui_config
+    session = WizardGuiSession.new(
+        strategies_path=cfg["strategies_path"],
+        language=cfg["language"],
+        bilingual_separator=cfg["bilingual_separator"],
+        create=cfg["create"],
+        tree=cfg["tree"],
+        ides=discover_installed_ides(),
+        fallback_cwd=Path.cwd(),
+        project_override=cfg["project_override"],
+    )
+    session_store.create(session)
+    return session
+
+
+def _select_ide(session: WizardGuiSession, body: dict[str, Any]) -> None:
+    _check_csrf(session, body.get("csrf"), HTTPException)
+    ide_id = str(body.get("ide_id") or "").strip()
+    if ide_id and ide_id != "__none":
+        if not any(i.id == ide_id for i in session.ides):
+            raise HTTPException(status_code=400, detail=f"unknown IDE {ide_id!r}")
+        session.chosen_ide_id = ide_id
+        chosen = next(i for i in session.ides if i.id == ide_id)
+        session.project_candidates = propose_projects([chosen])
+    else:
+        session.chosen_ide_id = None
+        session.project_candidates = propose_projects(session.ides)
+    session.step = "project"
+    session.touch()
+
+
+def _select_project(session: WizardGuiSession, body: dict[str, Any]) -> None:
+    _check_csrf(session, body.get("csrf"), HTTPException)
+    raw = str(body.get("project_path") or "").strip()
+    project = session.fallback_cwd if raw == "__cwd" else Path(raw).expanduser().resolve()
+    allowed = _allowed_project_paths(session)
+    if project not in allowed:
+        raise HTTPException(status_code=400, detail="project path not in allowed list")
+    session.project_path = project
+    session.current_node_id = session.tree.root_id
+    session.strategy_path = []
+    session.pending_ticket = None
+    session.step = "strategy"
+    session.touch()
+
+
+def _select_strategy(session: WizardGuiSession, body: dict[str, Any]) -> None:
+    _check_csrf(session, body.get("csrf"), HTTPException)
+    if session.project_path is None:
+        raise HTTPException(status_code=400, detail="project not selected")
+    option_id = str(body.get("option_id") or "").strip()
+    node = session.tree.node(session.current_node_id)
+    matched = next((o for o in node.options if o.id == option_id), None)
+    if matched is None:
+        raise HTTPException(status_code=400, detail=f"unknown option {option_id!r}")
+    session.strategy_path.append(option_id)
+    if matched.ticket:
+        session.pending_ticket = session.tree.ticket(matched.ticket)
+        session.step = "confirm"
+    elif matched.next_node:
+        session.current_node_id = matched.next_node
+    else:
+        raise HTTPException(status_code=500, detail="option has no ticket or next node")
+    session.touch()
+
+
+def _confirm_ticket(session: WizardGuiSession, body: dict[str, Any]) -> None:
+    _check_csrf(session, body.get("csrf"), HTTPException)
+    if session.pending_ticket is None or session.project_path is None:
+        raise HTTPException(status_code=400, detail="nothing to confirm")
+    template = session.pending_ticket
+    ticket_id, ticket_body = _finalise_ticket(template, session.project_path, create=session.create)
+    session.ticket_id = ticket_id
+    session.ticket_title = template.title
+    session.ticket_body = ticket_body
+    session.next_steps = session.tree.effective_next_steps(template.id)
+    session.pending_ticket = None
+    session.step = "done"
+    session.touch()
+
+
+def _register_routes(app: Any, session_store: SessionStore) -> None:
+    @app.get("/wizard")
+    def wizard_page(request: Request) -> HTMLResponse:
+        session_store.purge_expired()
+        session = _ensure_session(request, app, session_store)
+        response = HTMLResponse(content=_read_template())
+        response.set_cookie(
+            SESSION_COOKIE,
+            session.session_id,
+            httponly=True,
+            samesite="lax",
+            max_age=1800,
+        )
+        return response
+
+    @app.get("/wizard/api/state")
+    def api_state(request: Request) -> JSONResponse:
+        session_store.purge_expired()
+        session = _ensure_session(request, app, session_store)
+        return _cookie_response(_session_state(session), session)
+
+    @app.post("/wizard/api/ide")
+    async def api_select_ide(request: Request) -> JSONResponse:
+        session = _get_session(request, session_store)
+        _select_ide(session, await request.json())
+        return JSONResponse(_session_state(session))
+
+    @app.post("/wizard/api/project")
+    async def api_select_project(request: Request) -> JSONResponse:
+        session = _get_session(request, session_store)
+        _select_project(session, await request.json())
+        return JSONResponse(_session_state(session))
+
+    @app.post("/wizard/api/strategy")
+    async def api_strategy_choice(request: Request) -> JSONResponse:
+        session = _get_session(request, session_store)
+        _select_strategy(session, await request.json())
+        return JSONResponse(_session_state(session))
+
+    @app.post("/wizard/api/confirm")
+    async def api_confirm(request: Request) -> JSONResponse:
+        session = _get_session(request, session_store)
+        _confirm_ticket(session, await request.json())
+        return JSONResponse(_session_state(session))
+
+    @app.post("/wizard/done")
+    async def api_done(request: Request) -> JSONResponse:
+        _get_session(request, session_store)
+        app.state.shutdown = True
+        server = getattr(app.state, "uvicorn_server", None)
+        if server is not None:
+            server.should_exit = True
+        return JSONResponse({"ok": True, "message": "wizard finished; server shutting down"})
+
+
 def create_app(
     *,
     strategies_path: Path,
@@ -146,154 +308,5 @@ def create_app(
     if _STATIC_DIR.is_dir():
         app.mount("/wizard/static", StaticFiles(directory=str(_STATIC_DIR)), name="wizard-static")
 
-    def _get_session(request: Request) -> WizardGuiSession:
-        session_store.purge_expired()
-        sid = request.cookies.get(SESSION_COOKIE)
-        session = session_store.get(sid)
-        if session is None:
-            raise HTTPException(status_code=401, detail="session expired; reload /wizard")
-        return session
-
-    def _cookie_response(payload: dict[str, Any], session: WizardGuiSession) -> JSONResponse:
-        response = JSONResponse(payload)
-        response.set_cookie(
-            SESSION_COOKIE,
-            session.session_id,
-            httponly=True,
-            samesite="lax",
-            max_age=1800,
-        )
-        return response
-
-    def _ensure_session(request: Request) -> WizardGuiSession:
-        sid = request.cookies.get(SESSION_COOKIE)
-        session = session_store.get(sid)
-        if session is not None:
-            return session
-        cfg = app.state.gui_config
-        session = WizardGuiSession.new(
-            strategies_path=cfg["strategies_path"],
-            language=cfg["language"],
-            bilingual_separator=cfg["bilingual_separator"],
-            create=cfg["create"],
-            tree=cfg["tree"],
-            ides=discover_installed_ides(),
-            fallback_cwd=Path.cwd(),
-            project_override=cfg["project_override"],
-        )
-        session_store.create(session)
-        return session
-
-    @app.get("/wizard")
-    def wizard_page(request: Request) -> HTMLResponse:
-        session_store.purge_expired()
-        session = _ensure_session(request)
-        response = HTMLResponse(content=_read_template())
-        response.set_cookie(
-            SESSION_COOKIE,
-            session.session_id,
-            httponly=True,
-            samesite="lax",
-            max_age=1800,
-        )
-        return response
-
-    @app.get("/wizard/api/state")
-    def api_state(request: Request) -> JSONResponse:
-        session_store.purge_expired()
-        session = _ensure_session(request)
-        return _cookie_response(_session_state(session), session)
-
-    @app.post("/wizard/api/ide")
-    async def api_select_ide(request: Request) -> JSONResponse:
-        session = _get_session(request)
-        body = await request.json()
-        _check_csrf(session, body.get("csrf"), HTTPException)
-        ide_id = str(body.get("ide_id") or "").strip()
-        if ide_id and ide_id != "__none":
-            if not any(i.id == ide_id for i in session.ides):
-                raise HTTPException(status_code=400, detail=f"unknown IDE {ide_id!r}")
-            session.chosen_ide_id = ide_id
-            chosen = next(i for i in session.ides if i.id == ide_id)
-            session.project_candidates = propose_projects([chosen])
-        else:
-            session.chosen_ide_id = None
-            session.project_candidates = propose_projects(session.ides)
-        session.step = "project"
-        session.touch()
-        return JSONResponse(_session_state(session))
-
-    @app.post("/wizard/api/project")
-    async def api_select_project(request: Request) -> JSONResponse:
-        session = _get_session(request)
-        body = await request.json()
-        _check_csrf(session, body.get("csrf"), HTTPException)
-        raw = str(body.get("project_path") or "").strip()
-        if raw == "__cwd":
-            project = session.fallback_cwd
-        else:
-            project = Path(raw).expanduser().resolve()
-        allowed = _allowed_project_paths(session)
-        if project not in allowed:
-            raise HTTPException(status_code=400, detail="project path not in allowed list")
-        session.project_path = project
-        session.current_node_id = session.tree.root_id
-        session.strategy_path = []
-        session.pending_ticket = None
-        session.step = "strategy"
-        session.touch()
-        return JSONResponse(_session_state(session))
-
-    @app.post("/wizard/api/strategy")
-    async def api_strategy_choice(request: Request) -> JSONResponse:
-        session = _get_session(request)
-        body = await request.json()
-        _check_csrf(session, body.get("csrf"), HTTPException)
-        if session.project_path is None:
-            raise HTTPException(status_code=400, detail="project not selected")
-        option_id = str(body.get("option_id") or "").strip()
-        node = session.tree.node(session.current_node_id)
-        matched = next((o for o in node.options if o.id == option_id), None)
-        if matched is None:
-            raise HTTPException(status_code=400, detail=f"unknown option {option_id!r}")
-        session.strategy_path.append(option_id)
-        if matched.ticket:
-            session.pending_ticket = session.tree.ticket(matched.ticket)
-            session.step = "confirm"
-        elif matched.next_node:
-            session.current_node_id = matched.next_node
-        else:
-            raise HTTPException(status_code=500, detail="option has no ticket or next node")
-        session.touch()
-        return JSONResponse(_session_state(session))
-
-    @app.post("/wizard/api/confirm")
-    async def api_confirm(request: Request) -> JSONResponse:
-        session = _get_session(request)
-        body = await request.json()
-        _check_csrf(session, body.get("csrf"), HTTPException)
-        if session.pending_ticket is None or session.project_path is None:
-            raise HTTPException(status_code=400, detail="nothing to confirm")
-        template = session.pending_ticket
-        ticket_id, ticket_body = _finalise_ticket(
-            template, session.project_path, create=session.create
-        )
-        session.ticket_id = ticket_id
-        session.ticket_title = template.title
-        session.ticket_body = ticket_body
-        session.next_steps = session.tree.effective_next_steps(template.id)
-        session.pending_ticket = None
-        session.step = "done"
-        session.touch()
-        return JSONResponse(_session_state(session))
-
-    @app.post("/wizard/done")
-    async def api_done(request: Request) -> JSONResponse:
-        _get_session(request)
-        app.state.shutdown = True
-        server = getattr(app.state, "uvicorn_server", None)
-        if server is not None:
-            server.should_exit = True
-        return JSONResponse({"ok": True, "message": "wizard finished; server shutting down"})
-
+    _register_routes(app, session_store)
     return app

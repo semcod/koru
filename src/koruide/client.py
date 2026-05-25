@@ -35,15 +35,36 @@ class KoruIDEClient:
         self._log = log
 
     def _drive_timeout(self) -> float:
+        """Return how long the CLI waits for a drive ack.
+
+        Drive ACKs can legitimately arrive *much* later than simple
+        ping/status because the daemon waits for the plugin to:
+
+        1. focus the chat panel (open/show + verify with editor snapshot),
+        2. run the input-busy probe (select-all + clipboardCopyAction),
+        3. paste the prompt (try N candidates with verification),
+        4. run submit (try N candidates),
+        5. verify each submit via probe AND ``cursorDiskKV`` poll
+           (the bubble-DB poll alone has a 2.5s deadline).
+
+        With 12 attempts each, the worst-case Cursor drive can take
+        15-25s. The legacy 8s cap caused ``CHAT: autopilot: failed
+        (autopilot daemon unreachable: timed out, kind=ticket_prompt)``
+        even when the plugin was still working — the CLI gave up, the
+        late ack carried real diagnostics that nobody saw, and the
+        autonomous loop logged a misleading "daemon unreachable" failure.
+
+        The new default is **45 seconds** (covers Cursor's worst case
+        plus headroom for Wayland host-key fallbacks). Operators can
+        tune via ``KORU_AUTOPILOT_DRIVE_TIMEOUT_SECONDS``.
+        """
         raw = os.environ.get("KORU_AUTOPILOT_DRIVE_TIMEOUT_SECONDS", "").strip()
         if raw:
             try:
                 return max(self.timeout, float(raw))
             except ValueError:
                 pass
-        # Drive acks can legitimately arrive later than simple ping/status
-        # because the daemon waits for plugin focus/paste/submit verification.
-        return max(self.timeout, 8.0)
+        return max(self.timeout, 45.0)
 
     def _connect(self, *, timeout: float | None = None) -> socket.socket:
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

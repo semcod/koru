@@ -113,12 +113,13 @@ PIPELINE: list[ScanStage] = [DetectStage(), AnalyzeStage(), ReportStage()]
 - [x] **R-IM1**: `install_manager.py` – ekstrakcja 11 funkcji `_check_*` + `ManagerIssue` do `install_checks.py` (`install_manager.py`: 734 → 466 LOC, **-36.5%**; +23 testy jednostkowe; legacy `_check_*` aliasy zachowane dla backward-compat z testami)
 - [x] **R-CA1**: `autonomous_cycle_chat_activity.py` – ekstrakcja 8 env-readerów do `autonomous_cycle_chat_activity_config.py` (1186 → 1118 LOC, +18 testów jednostkowych; legacy `_*` aliasy zachowane)
 - [x] **R-CA2**: `autonomous_cycle_chat_activity.py` – ekstrakcja 6 czystych funkcji text-processing (`normalize_prompt_text`, `looks_like_*`, `compact_question_text`, `extract_needs_input_question`, `latest_received_text`) do `autonomous_cycle_chat_activity_text.py` (1118 → 1037 LOC, łącznie z R-CA1: **-149 LOC, -12.6%**; +24 testy; legacy `_*` aliasy zachowane)
+- [x] **R-CA3**: `autonomous_cycle_chat_activity.py` – ekstrakcja warstwy analizy event-ów (19 funkcji/stałych: `_CHAT_ACTIVITY_TYPES`, `_event_timestamp`, `_recent_chat_activity_events`, `_state_events_to_chat_events`, `_chat_activity_cooldown_for_state`, `_last_successful_drive_ack_age`, `_event_matches_last_driven_prompt`, `_last_self_drive_event_age`, `_event_is_self_drive_for_other_ticket`, `_filter_chat_activity_events_for_waiting_ticket`, `_record_normalized_chat_activity_events`, `_llx_chat_reflection_enabled`, `_recent_chat_history_fallback`, `_determine_chat_activity_status`, `classify_chat_event`, `decide_intake_ticket`, `decide_redrive_cooldown`, `explain_skip`, `_age_seconds_from_label`) do `autonomous_cycle_chat_activity_analyzer.py` (1037 → 770 LOC, łącznie R-CA1+R-CA2+R-CA3: **-416 LOC, -35.1%**; +39 testów; backward-compat re-eksport publicznych funkcji `classify_chat_event`/`decide_*`/`explain_skip`)
 
 ### FAZA 2 — Rozbicia modułów (3–5 dni)
 - [ ] **R4**: `dashboard_routes.py` – migracja z closure do ClassVar config injection
 - [ ] **R5**: `autopilot/cli_command.py` – podział na `commands/{daemon,drive,status,doctor}.py`
 - [ ] **R6**: `koruide/daemon/handlers.py` – podział per typ wiadomości
-- [ ] **R7**: `autonomous_cycle_chat_activity.py` – wyciągnięcie analizy do `chat_activity_analyzer.py` (R-CA1 to wstępny krok — pozostaje analiza chat-activity i ticket upsert)
+- [ ] **R7**: `autonomous_cycle_chat_activity.py` – pozostała część (ticket-upsert, operator-payload, skip-orchestration) — R-CA1/R-CA2/R-CA3 zrealizowały już warstwy config, text-processing i event-analysis; pozostaje wyodrębnienie warstwy ticket-upsert / orchestracji do osobnego modułu
 
 ### FAZA 3 — Pipeline-y (5–7 dni)
 - [ ] **R8**: `scan.py::run_scan` – pipeline ScanStage

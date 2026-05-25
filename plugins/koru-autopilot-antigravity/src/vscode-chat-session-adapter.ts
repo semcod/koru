@@ -5,13 +5,27 @@ import { promisify } from "util";
 import { defaultGlobalStateDbPath } from "./chat-history-paths";
 import type { AdapterRunner, ChatHistoryRow, IdeAdapter, SupportedIde } from "./chat-history-types";
 
-const execFile = promisify(cp.execFile);
+const execFileAsync = promisify(cp.execFile);
+const SQLITE_MAX_BUFFER = 8 * 1024 * 1024;
 
 interface VSCodeChatSessionEntry {
   sessionId: string;
   title?: string;
   lastMessageDate?: number;
   responses?: Array<{ message?: { text?: string } | string; createdAt?: number }>;
+}
+
+async function runSqliteCommand(
+  binary: string,
+  args: string[],
+  maxBuffer: number,
+): Promise<{ stdout: string; stderr: string }> {
+  const result = await execFileAsync(binary, args, { maxBuffer });
+  return { stdout: result.stdout, stderr: result.stderr };
+}
+
+function sqliteRunner(runner: AdapterRunner | null, maxBuffer = SQLITE_MAX_BUFFER): AdapterRunner {
+  return runner ?? ((binary, args) => runSqliteCommand(binary, args, maxBuffer));
 }
 
 /**
@@ -52,13 +66,9 @@ export class VSCodeChatSessionAdapter implements IdeAdapter {
       this.dbPath,
       "SELECT value FROM ItemTable WHERE key='chat.ChatSessionStore.index';",
     ];
-    const exec = runner ?? (async (bin, a) => {
-      const r = await execFile(bin, a, { maxBuffer: 8 * 1024 * 1024 });
-      return { stdout: r.stdout, stderr: r.stderr };
-    });
     let stdout = "";
     try {
-      const r = await exec(this.sqlite, args);
+      const r = await sqliteRunner(runner)(this.sqlite, args);
       stdout = r.stdout;
     } catch {
       return [];
