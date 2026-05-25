@@ -76,6 +76,7 @@ def test_ide_doctor_json_reports_plugin_not_connected(
     assert payload["daemon_running"] is True
     assert payload["plugins_connected"] is False
     assert payload["hypotheses"][0]["id"] == "vscode.plugin.not_connected"
+    assert "Developer: Reload Window" in payload["hypotheses"][0]["remediation"]["summary"]
 
 
 def test_ide_doctor_json_prioritizes_stale_rejected_plugin(

@@ -1988,16 +1988,32 @@ class AutopilotBridge {
     void vscode.window.showInformationMessage(
       `koru autopilot: ${message}. Reloading the window to load the new VSIX…`,
     );
-    try {
-      await vscode.commands.executeCommand("workbench.action.reloadWindow");
-    } catch (err) {
-      const detail = err instanceof Error ? err.message : String(err);
-      safeLog("PLUGIN_VERSION_MISMATCH_RELOAD_FAILED", { detail });
-      void vscode.window.showWarningMessage(
-        `koru autopilot: automatic reload failed (${detail}). ` +
-        "Run `Developer: Reload Window` manually.",
-      );
+    const reloadStrategies: { id: string; cmd: string }[] = [
+      { id: "restartExtensionHost", cmd: "workbench.action.restartExtensionHost" },
+      { id: "reloadWindow", cmd: "workbench.action.reloadWindow" },
+      { id: "reloadExtensions", cmd: "workbench.action.reloadExtensions" },
+    ];
+    const failures: { id: string; cmd: string; detail: string }[] = [];
+    for (const strategy of reloadStrategies) {
+      try {
+        safeLog("PLUGIN_VERSION_MISMATCH_RELOAD_ATTEMPT", { strategy: strategy.id, cmd: strategy.cmd });
+        await vscode.commands.executeCommand(strategy.cmd);
+        safeLog("PLUGIN_VERSION_MISMATCH_RELOAD_ISSUED", { strategy: strategy.id, cmd: strategy.cmd });
+        return;
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : String(err);
+        failures.push({ id: strategy.id, cmd: strategy.cmd, detail });
+        safeLog("PLUGIN_VERSION_MISMATCH_RELOAD_STRATEGY_FAILED", { strategy: strategy.id, cmd: strategy.cmd, detail });
+      }
     }
+    safeLog("PLUGIN_VERSION_MISMATCH_RELOAD_FAILED", {
+      detail: failures.map((f) => `${f.id}=${f.detail}`).join("; "),
+    });
+    void vscode.window.showWarningMessage(
+      `koru autopilot: automatic reload failed (all strategies failed: ${failures
+        .map((f) => `${f.id}=${f.detail}`)
+        .join(", ")}). Run \`Developer: Reload Window\` manually.`,
+    );
   }
 
   private async saveClipboard(): Promise<string | null> {

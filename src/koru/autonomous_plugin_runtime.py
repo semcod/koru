@@ -110,7 +110,7 @@ def plugin_blocker_line(reason: str, autopilot_ide: str) -> str:
     elif blocker == "plugin_status_unavailable":
         action = "check daemon socket and run `koru autopilot status --explain`"
     elif blocker == "plugin_not_connected":
-        action = "run `koru: Connect autopilot daemon` in the IDE"
+        action = "run `Developer: Reload Window`, then `koru: Connect autopilot daemon`"
     else:
         action = "reload/reconnect the autopilot plugin"
     return (

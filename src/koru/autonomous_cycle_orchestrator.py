@@ -147,10 +147,9 @@ def _plugin_gate_status(
     _hp(f"- autopilot skipped ({blocker}: {plugin_reason})")
     _hp(
         "  → VSIX plugin is not connected to the daemon socket. "
-        "In the IDE: Command Palette → `koru: Connect autopilot daemon` "
-        "(status bar should show koru: on). If you just installed or "
-        "upgraded the VSIX, run `Developer: Reload Window` first, then "
-        "connect again. Check: `koru autopilot status --explain`.",
+        "In the IDE: Command Palette → `Developer: Reload Window`, then "
+        "`koru: Connect autopilot daemon` (status bar should show koru: on). "
+        "Check: `koru autopilot status --explain`.",
     )
     cycle_telemetry["autopilot_skipped_plugin_missing"] = True
     cycle_telemetry["autopilot_skipped_plugin_blocker"] = blocker

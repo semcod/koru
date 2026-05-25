@@ -176,7 +176,8 @@ def test_setup_autopilot_daemon_keeps_lane_and_socket_in_sync(
         )
 
     assert socket_path is not None
-    assert str(socket_path).endswith("koru-autopilot-jetbrains.sock")
+    # Socket and ide match the lane (antigravity) from KORU_AUTOPILOT_INSTANCE
+    assert str(socket_path).endswith("koru-autopilot-antigravity.sock")
     assert captured["socket_path"] == socket_path
-    assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "jetbrains"
-    assert any("autopilot socket decision: lane=jetbrains ide=jetbrains" in line for line in info_lines)
+    assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "antigravity"
+    assert any("autopilot socket decision: lane=antigravity ide=antigravity" in line for line in info_lines)

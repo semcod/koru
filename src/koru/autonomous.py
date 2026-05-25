@@ -728,12 +728,14 @@ def _compute_cycle_sleep(
     args: argparse.Namespace,
     loop_state: object,
     queue_result: object,
+    autopilot_status: str = "",
 ) -> float:
     """Compute sleep duration for the cycle."""
     return _autonomous_cycle_config.compute_cycle_sleep(
         args,
         loop_state,
         queue_result,
+        autopilot_status=autopilot_status,
         compute_backoff_sleep=_compute_backoff_sleep,
         now=time.time,
     )

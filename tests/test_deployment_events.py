@@ -5,9 +5,6 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
-from unittest.mock import patch
-
-import pytest
 
 from koru.deployment_events import (
     Component,
@@ -245,10 +242,20 @@ def test_deployment_event_emitter(tmp_path: Path) -> None:
 
 def test_deployment_event_emitter_flush(tmp_path: Path) -> None:
     """Test flushing emitter batch."""
-    emitter = DeploymentEventEmitter(log_file=tmp_path / "events.log", enable_dsl_logging=False, enable_json_logging=False)
+    emitter = DeploymentEventEmitter(
+        log_file=tmp_path / "events.log",
+        enable_dsl_logging=False,
+        enable_json_logging=False,
+    )
 
-    event1 = DeploymentEvent(event_type=DeploymentEventType.DEPLOYMENT_STARTED, source=EventSource.KORU_CLI)
-    event2 = DeploymentEvent(event_type=DeploymentEventType.DEPLOYMENT_COMPLETED, source=EventSource.KORU_CLI)
+    event1 = DeploymentEvent(
+        event_type=DeploymentEventType.DEPLOYMENT_STARTED,
+        source=EventSource.KORU_CLI,
+    )
+    event2 = DeploymentEvent(
+        event_type=DeploymentEventType.DEPLOYMENT_COMPLETED,
+        source=EventSource.KORU_CLI,
+    )
 
     emitter.emit(event1)
     emitter.emit(event2)

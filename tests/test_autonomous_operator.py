@@ -29,6 +29,14 @@ def test_plugin_blocker_line_includes_recovery_action() -> None:
     assert "reload IDE window" in line
 
 
+def test_plugin_blocker_line_for_empty_list_is_reload_first() -> None:
+    line = _plugin_blocker_line("daemon status plugin list is empty", "vscodium")
+
+    assert "blocked_by=plugin_not_connected" in line
+    assert "Developer: Reload Window" in line
+    assert "koru: Connect autopilot daemon" in line
+
+
 def test_plugin_status_decision_uses_stale_rejection_when_plugin_list_empty() -> None:
     ready, reason = plugin_status_decision(
         {

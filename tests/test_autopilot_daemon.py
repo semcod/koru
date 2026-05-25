@@ -1139,7 +1139,7 @@ def test_plugin_ack_after_cli_disconnect_is_logged_as_late_ack(
         forwarded = plugin_reader.read_message()
         assert forwarded.type == "chat.send"
         cli.close()
-        time.sleep(0.05)
+        time.sleep(0.2)
 
         plugin.sendall(
             Message(

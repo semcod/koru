@@ -348,21 +348,10 @@ def check_plugin_not_connected_issue(
   daemon: dict[str, Any], plugin: dict[str, Any], ide: str
 ) -> list[ManagerIssue]:
   if daemon.get("running") and not plugin.get("connected"):
-    stale_rejections = [
-      row
-      for row in daemon.get("rejected_plugins", [])
-      if isinstance(row, dict)
-      and row.get("ide") == ide
-      and row.get("version")
-      and row.get("expected_version")
-      and row.get("version") != row.get("expected_version")
-    ]
-    fix = "Run the IDE command `koru: Connect autopilot daemon`."
-    if stale_rejections:
-      fix = (
-        "Reload the IDE window with `Developer: Reload Window`, then run "
-        "`koru: Connect autopilot daemon`."
-      )
+    fix = (
+      "Reload the IDE window with `Developer: Reload Window`, then run "
+      "`koru: Connect autopilot daemon`."
+    )
     return [
       ManagerIssue(
         "plugin_not_connected",

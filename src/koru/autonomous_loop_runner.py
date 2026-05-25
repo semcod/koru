@@ -884,7 +884,7 @@ def run_autonomous_cycle(
         save_loop_checkpoint=save_loop_checkpoint,
     )
 
-    effective_sleep = compute_cycle_sleep(args, loop_state, queue_result)
+    effective_sleep = compute_cycle_sleep(args, loop_state, queue_result, autopilot_status)
     stop_reason = _cycle_stop_reason(args, queue_result, cycle)
     _emit_cycle_summary(
         args=args,

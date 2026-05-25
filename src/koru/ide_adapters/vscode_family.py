@@ -99,7 +99,8 @@ class VSCodeFamilyAdapter:
                     remediation=Remediation(
                         kind="manual",
                         summary=(
-                            "Command Palette → koru: Connect autopilot daemon "
+                            "Command Palette → Developer: Reload Window, potem "
+                            "koru: Connect autopilot daemon "
                             f"(socket {expected_socket})"
                         ),
                     ),

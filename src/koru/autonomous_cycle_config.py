@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -20,17 +21,23 @@ def configure_loop_state(
     """Configure queue flags, autopilot IDE, and loop state."""
     enable_scan, use_all_queues = effective_flags(args.ticket_sources)
     queue_name = None if use_all_queues else args.queue_name
-    lane = apply_agent_lane_environ(project, args.agent_lane)
-    # If lane is explicitly set (not auto), use it as the autopilot_ide to respect user's choice
-    # This ensures non-plugin lanes like jetbrains are not overridden by the router
-    cli_autopilot_ide = args.autopilot_ide
-    if lane and lane != "auto" and (cli_autopilot_ide == "auto" or cli_autopilot_ide is None):
-        cli_autopilot_ide = lane
-    autopilot_ide, _autopilot_ide_source = resolve_autopilot_ide(
-        cli_autopilot_ide,
-        lane,
-        resolve_ide_route_fn=resolve_ide_route_fn,
+    # apply_agent_lane_environ is already called in build_and_log_startup_probe
+    # so we can read the lane directly from the environment variable
+    lane = os.environ.get("KORU_AUTOPILOT_INSTANCE") or apply_agent_lane_environ(
+        project,
+        args.agent_lane,
     )
+    # If lane is explicit, use it directly as autopilot_ide to respect the user's choice.
+    # This ensures non-plugin lanes like jetbrains are not overridden by the router
+    if lane and lane != "auto":
+        autopilot_ide = lane
+        _autopilot_ide_source = f"lane:{lane}"
+    else:
+        autopilot_ide, _autopilot_ide_source = resolve_autopilot_ide(
+            args.autopilot_ide,
+            lane,
+            resolve_ide_route_fn=resolve_ide_route_fn,
+        )
     loop_state = state_factory()
     checkpoint_path = (project / ".planfile/.koru/autonomous-state.json").resolve()
     restored_cycle = load_checkpoint(
@@ -171,6 +178,7 @@ def compute_cycle_sleep(
     loop_state: Any,
     queue_result: Any,
     *,
+    autopilot_status: str = "",
     compute_backoff_sleep: Any,
     now: Any,
 ) -> float:
@@ -187,7 +195,18 @@ def compute_cycle_sleep(
         and now() - loop_state.last_message_sent_ts < 120.0
     ):
         effective_sleep = min(effective_sleep, 15.0)
+    if _autopilot_needs_plugin_reconnect(autopilot_status):
+        effective_sleep = min(effective_sleep, 15.0)
     return effective_sleep
+
+
+def _autopilot_needs_plugin_reconnect(autopilot_status: str) -> bool:
+    return autopilot_status in {
+        "skipped(plugin_missing)",
+        "skipped(plugin_not_connected)",
+        "skipped(plugin_status_unavailable)",
+        "skipped(plugin_version_mismatch)",
+    }
 
 
 __all__ = [

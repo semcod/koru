@@ -4,6 +4,31 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.80] — 2026-05-25
+
+### Fixed
+- **Auto-reload no longer relies solely on `workbench.action.reloadWindow`.**
+  Live evidence from Cursor 3.5.17 showed that the previous single-shot
+  call to `workbench.action.reloadWindow` returned a successful Promise
+  but did **not** actually restart the extension host (the same plugin
+  process kept serving `version=0.1.78` for minutes after a daemon
+  rejection while the IDE never reloaded). This left the user stuck in
+  an endless mismatch loop where every `koru auto` reported the same
+  stale plugin version.
+
+  The version-mismatch recovery now walks a three-strategy ladder:
+  1. `workbench.action.restartExtensionHost` — the targeted command
+     that swaps the extension host without disturbing the editor UI.
+  2. `workbench.action.reloadWindow` — the classic full-window reload
+     (kept for parity with earlier releases).
+  3. `workbench.action.reloadExtensions` — last-ditch fallback that
+     reloads extensions without restarting the host.
+
+  Each attempt is logged with `PLUGIN_VERSION_MISMATCH_RELOAD_ATTEMPT`
+  and a successful issue is logged as
+  `PLUGIN_VERSION_MISMATCH_RELOAD_ISSUED`. Only if all three fail does
+  the plugin show the user a `Developer: Reload Window` reminder.
+
 ## [0.1.79] — 2026-05-25
 
 ### Fixed

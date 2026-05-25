@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from koru.autopilot.install_checks import (
     ManagerIssue,
     check_daemon_issues,
@@ -24,7 +22,6 @@ from koru.autopilot.install_checks import (
     check_version_mismatch_issue,
     is_pyenv_shim,
 )
-
 
 # ---------------------------------------------------------------------------
 # Pure helpers
@@ -220,4 +217,7 @@ def test_check_plugin_not_connected_issue_mentions_reload_after_stale_rejection(
 
 
 def test_check_plugin_not_connected_issue_silent_when_daemon_down() -> None:
-    assert check_plugin_not_connected_issue({"running": False}, {"connected": False}, "vscode") == []
+    assert (
+        check_plugin_not_connected_issue({"running": False}, {"connected": False}, "vscode")
+        == []
+    )

@@ -97,7 +97,8 @@ DECISION_TRACE_RING_SIZE = 10
 SKIP_CODE_DESCRIPTIONS: dict[str, str] = {
     "plugin_not_connected": (
         "Autopilot needs a connected VSIX plugin but no compatible live "
-        "session is attached to the daemon yet. Reload/connect the IDE plugin."
+        "session is attached to the daemon yet. Reload the IDE window, then "
+        "connect the IDE plugin."
     ),
     "plugin_version_mismatch": (
         "Autopilot found a plugin session, but its version/protocol does not "

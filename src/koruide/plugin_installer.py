@@ -268,6 +268,7 @@ def _vscode_flavor() -> str | None:
 def resolve_target_ide(requested: str = "auto") -> str | None:
     """Resolve the IDE that should receive the plugin install."""
     explicit = _valid_ide(requested)
+    # Return explicit IDE even if not in SUPPORTED_IDES - let caller handle unsupported
     if explicit and explicit != "auto":
         return explicit
 
