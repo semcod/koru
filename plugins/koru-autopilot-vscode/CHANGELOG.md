@@ -4,6 +4,26 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.63] — 2026-05-25
+
+### Fixed
+- **Cursor: drive reported `verification=strict ok=true` but the prompt
+  stayed in the chat input.** Root cause: Cursor's chat surface is a
+  webview, so the post-submit `editor.action.selectAll` +
+  clipboard-copy probe has no effect and returns `null`. The legacy
+  `decideSubmitCleared` falls closed to `cleared=true` on `null`, so a
+  silently-failing `composer.sendToAgent` was cached as the winning
+  submit command and the ladder never re-probed. Cursor submits are now
+  cross-checked against `cursorDiskKV`: the plugin captures the highest
+  `bubbleId:*` rowid right before invoking the submit command, then
+  looks for a fresh `type = 1` (user) bubble whose text contains the
+  tail of the pasted prompt. When the DB confirms the bubble → verified
+  (`route=cursor-bubble-db ok=true`). When the DB query worked but no
+  matching bubble appeared → submit is treated as failed, the cached
+  winner is discarded, and the ladder advances to the next candidate.
+  Daemon logs now show `submit_verify:route=cursor-bubble-db ok=...`
+  so the user can see whether Cursor actually accepted the message.
+
 ## [0.1.61] — 2026-05-24
 
 ### Fixed

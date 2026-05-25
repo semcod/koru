@@ -278,6 +278,59 @@ async function testWatcherSkipsPollingWhenStoreUnavailable(): Promise<void> {
   );
 }
 
+async function testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor(): Promise<void> {
+  const capturedArgs: string[][] = [];
+  const adapter = new CursorBubbleAdapter({
+    ide: "cursor",
+    dbPath: "/tmp/nonexistent.vscdb",
+  });
+  const fakeRunner = async (_bin: string, args: string[]) => {
+    capturedArgs.push(args);
+    return {
+      stdout: buildSqliteOutput([
+        {
+          cursor: "42",
+          conversationId: "conv1",
+          bubbleId: "user-bubble-1",
+          type: 1,
+          text: "Run a broad project discovery pass… STARTER-237",
+          createdAt: "2026-05-25T10:00:00.000Z",
+        },
+      ]),
+      stderr: "",
+    };
+  };
+  const rows = await adapter.fetchLatestUserBubbles(99, fakeRunner);
+  assert.strictEqual(capturedArgs.length, 1);
+  const sqlArg = capturedArgs[0][capturedArgs[0].length - 1] || "";
+  assert.ok(
+    sqlArg.includes("AND json_extract(value,'$.type') = 1"),
+    "must filter to type=1 (user bubbles)",
+  );
+  assert.ok(sqlArg.includes("rowid > 99"), "must use the anchor rowid as lower bound");
+  assert.strictEqual(rows.length, 1);
+  assert.strictEqual(rows[0].type, 1);
+  assert.strictEqual(rows[0].bubbleId, "user-bubble-1");
+}
+
+async function testCursorBubbleAdapterLatestBubbleRowidParsesMax(): Promise<void> {
+  const adapter = new CursorBubbleAdapter({
+    ide: "cursor",
+    dbPath: "/tmp/nonexistent.vscdb",
+  });
+  const fakeRunner = async () => ({ stdout: "  101\n", stderr: "" });
+  const rowid = await adapter.latestBubbleRowid(fakeRunner);
+  assert.strictEqual(rowid, 101);
+
+  const adapterEmpty = new CursorBubbleAdapter({
+    ide: "cursor",
+    dbPath: "/tmp/nonexistent.vscdb",
+  });
+  const emptyRunner = async () => ({ stdout: "", stderr: "" });
+  const rowidEmpty = await adapterEmpty.latestBubbleRowid(emptyRunner);
+  assert.strictEqual(rowidEmpty, 0, "empty stdout must yield 0 instead of NaN");
+}
+
 async function main(): Promise<void> {
   await testParseCursorBubbleRowsHandlesMultilineText();
   await testWatcherEmitsNewBubblesAndAdvancesCursor();
@@ -288,6 +341,8 @@ async function main(): Promise<void> {
   await testParseVSCodeChatIndexExtractsAssistantResponses();
   await testParseVSCodeChatIndexReturnsEmptyOnGarbage();
   await testWatcherSkipsPollingWhenStoreUnavailable();
+  await testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor();
+  await testCursorBubbleAdapterLatestBubbleRowidParsesMax();
   console.log("chat-history-watcher tests: ok");
 }
 

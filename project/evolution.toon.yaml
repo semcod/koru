@@ -1,10 +1,10 @@
-# code2llm/evolution | 2922 func | 310f | 2026-05-25
-# generated in 0.02s
+# code2llm/evolution | 2932 func | 310f | 2026-05-25
+# generated in 0.01s
 
-NEXT[4] (ranked by impact):
+NEXT[5] (ranked by impact):
   [1] !! SPLIT           plugins/koru-autopilot-vscode/src/extension.ts
-      WHY: 2061L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 28854
+      WHY: 2201L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 30814
 
   [2] !! SPLIT           src/koru/scan.py
       WHY: 1117L, 2 classes, max CC=13
@@ -18,17 +18,21 @@ NEXT[4] (ranked by impact):
       WHY: CC=18 exceeds 15
       EFFORT: ~1h  IMPACT: 414
 
+  [5] !  SPLIT-FUNC      execFile  CC=18  fan=18
+      WHY: CC=18 exceeds 15
+      EFFORT: ~1h  IMPACT: 324
+
 
 RISKS[3]:
-  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 166 import paths
+  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 172 import paths
   ⚠ Splitting src/koru/autonomous.py may break 59 import paths
   ⚠ Splitting src/koru/scan.py may break 29 import paths
 
 METRICS-TARGET:
   CC̄:          3.8 → ≤2.7
   max-CC:      18 → ≤9
-  god-modules: 7 → 0
-  high-CC(≥15): 3 → ≤1
+  god-modules: 8 → 0
+  high-CC(≥15): 5 → ≤2
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

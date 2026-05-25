@@ -1,16 +1,18 @@
-# code2llm | 493f 73870L | python:355,shell:49,typescript:29,yaml:22,json:10,yml:10,kotlin:6,txt:2,md:1,javascript:1,properties:1,xml:1,toml:1 | 2026-05-25
-# generated in 0.32s
-# CC̄=3.7 | critical:3/2997 | dups:0 | cycles:0
+# code2llm | 493f 74177L | python:355,shell:49,typescript:29,yaml:22,json:10,yml:10,kotlin:6,txt:2,toml:1,md:1,javascript:1,properties:1,xml:1 | 2026-05-25
+# generated in 0.25s
+# CC̄=3.7 | critical:5/3007 | dups:0 | cycles:0
 
-HEALTH[3]:
-  🟡 CC    _skip_due_to_recent_chat_activity CC=18 (limit:15)
+HEALTH[5]:
+  🟡 CC    create_ticket_from_dashboard CC=15 (limit:15)
   🟡 CC    _operator_next_steps CC=16 (limit:15)
+  🟡 CC    _skip_due_to_recent_chat_activity CC=18 (limit:15)
   🟡 CC    try_reload_vscode_family_ide CC=16 (limit:15)
+  🟡 CC    execFile CC=18 (limit:15)
 
 REFACTOR[1]:
-  1. split 3 high-CC methods  (CC>15)
+  1. split 5 high-CC methods  (CC>15)
 
-PIPELINES[882]:
+PIPELINES[887]:
   [1] Src [run_multi_node_orchestration]: run_multi_node_orchestration → print
       PURITY: 100% pure
   [2] Src [heal_rebuild_restore]: heal_rebuild_restore → _run_docker
@@ -66,17 +68,17 @@ LAYERS:
   │ !! cli_cleaned                564L  0C   41m  CC=14     ←1
   │ !! configurator               552L  3C   29m  CC=12     ←6
   │ !! plugin_installer           547L  1C   25m  CC=13     ←5
+  │ !! dashboard_routes           525L  0C    4m  CC=1      ←2
   │ !! os_injector                513L  2C   30m  CC=12     ←2
   │ context_render             472L  0C   18m  CC=14     ←6
-  │ dashboard_routes           466L  0C    4m  CC=1      ←2
   │ ide_work                   465L  0C   17m  CC=12     ←4
+  │ autonomous_cycle_drive_retry   462L  0C   23m  CC=13     ←1
   │ bootstrap                  452L  2C   19m  CC=10     ←3
   │ shared                     452L  0C   24m  CC=9      ←1
   │ install_plugin_cli         451L  0C   18m  CC=10     ←0
   │ mcp_provision              449L  0C   24m  CC=10     ←5
   │ autonomous_parser          449L  0C    3m  CC=14     ←2
   │ runner                     427L  0C   11m  CC=14     ←3
-  │ autonomous_cycle_drive_retry   422L  0C   21m  CC=13     ←1
   │ autonomous_operator        417L  0C   13m  CC=9      ←0
   │ topology                   414L  1C   15m  CC=12     ←9
   │ queue_clean                391L  2C   13m  CC=14     ←1
@@ -87,7 +89,7 @@ LAYERS:
   │ gc                         371L  2C   12m  CC=11     ←1
   │ tasks                      364L  1C   21m  CC=13     ←10
   │ tree                       342L  5C   19m  CC=10     ←4
-  │ !! autonomous_loop_runner     337L  0C    6m  CC=16     ←0
+  │ !! autonomous_loop_runner     339L  0C    6m  CC=16     ←1
   │ agents                     335L  1C   16m  CC=14     ←4
   │ dashboard_projects         334L  0C   20m  CC=10     ←2
   │ local_service              326L  1C    7m  CC=7      ←1
@@ -124,9 +126,9 @@ LAYERS:
   │ dashboard_serve_utils      246L  1C   18m  CC=7      ←3
   │ !! ide_reload                 244L  1C   11m  CC=16     ←2
   │ ide_install                241L  1C    6m  CC=9      ←1
+  │ !! dashboard_tickets          240L  0C   10m  CC=15     ←1
   │ dashboard_serve            240L  1C   10m  CC=6      ←1
   │ code2llm_discovery         235L  1C    8m  CC=11     ←4
-  │ dashboard_tickets          231L  0C   10m  CC=14     ←1
   │ obs_websocket              231L  1C   15m  CC=11     ←1
   │ autonomous_onboarding      231L  1C   11m  CC=10     ←0
   │ ide_doctor_cli             230L  0C    7m  CC=11     ←0
@@ -405,15 +407,16 @@ LAYERS:
   │ __init__                     1L  0C    0m  CC=0.0    ←0
   │ cli                          0L  0C   16m  CC=8      ←0
   │
-  plugins/                        CC̄=2.6    ←in:0  →out:0
-  │ !! extension.ts              2061L  2C  166m  CC=14     ←17
+  plugins/                        CC̄=2.7    ←in:0  →out:0
+  │ !! extension.ts              2201L  2C  172m  CC=14     ←17
   │ probe-ladder.test.ts       419L  0C   47m  CC=6      ←0
-  │ probe-ladder.ts            411L  3C   39m  CC=10     ←0
+  │ probe-ladder.ts            411L  3C   39m  CC=10     ←1
   │ chat-history-watcher.test.ts   297L  0C   22m  CC=3      ←1
   │ cursor.test.ts             203L  0C   24m  CC=10     ←1
   │ chat-history-watcher.ts    197L  2C   11m  CC=10     ←0
   │ KoruAutopilotService.kt    186L  1C    6m  CC=0.0    ←0
   │ package.json               182L  0C    0m  CC=0.0    ←0
+  │ !! cursor-bubble-adapter.ts   152L  1C   17m  CC=18     ←8
   │ cursor.ts                  144L  0C    9m  CC=3      ←0
   │ vscode-chat-session-adapter.ts   136L  2C   19m  CC=10     ←0
   │ step-decisions.ts          133L  1C   14m  CC=7      ←0
@@ -421,7 +424,6 @@ LAYERS:
   │ dispatch-plan.test.ts      118L  0C   12m  CC=4      ←0
   │ windsurf.ts                108L  0C    8m  CC=6      ←0
   │ ide-strategy.ts             97L  2C    0m  CC=0.0    ←0
-  │ cursor-bubble-adapter.ts    95L  1C   15m  CC=12     ←8
   │ vscodium.ts                 82L  0C   10m  CC=4      ←0
   │ vscode.ts                   81L  0C   11m  CC=7      ←0
   │ ChatInjector.kt             74L  0C    2m  CC=0.0    ←0
@@ -452,7 +454,7 @@ LAYERS:
   │ run.sh                      58L  0C    0m  CC=0.0    ←0
   │ entrypoint-x11.sh           35L  0C    0m  CC=0.0    ←0
   │
-  scripts/                        CC̄=2.2    ←in:503  →out:0
+  scripts/                        CC̄=2.2    ←in:511  →out:0
   │ koru-gate-capture          314L  0C   14m  CC=9      ←0
   │ planfile-sync-todo         260L  0C   12m  CC=14     ←0
   │ autopilot-ide-autodetect-smoke.sh   182L  1C    4m  CC=0.0    ←0
@@ -546,12 +548,12 @@ LAYERS:
 
 COUPLING:
                                                       src.koru                        scripts                    src.koruide                    src.koruapi                 src.koruvision  plugins.koru-autopilot-vscode                src.koruobserve                   src.korumesh                       examples                    src.korudsl                 docker.capture       services.healing-webhook
-                       src.koru                             ──                            409                            112                              8                             15                             18                             10                             ←2                                                             3                                                            ←1  hub
-                        scripts                           ←409                             ──                            ←27                            ←17                            ←12                                                           ←18                             ←7                            ←12                                                            ←1                                 hub
+                       src.koru                             ──                            417                            112                              8                             15                             18                             10                             ←2                                                             3                                                            ←1  hub
+                        scripts                           ←417                             ──                            ←27                            ←17                            ←12                                                           ←18                             ←7                            ←12                                                            ←1                                 hub
                     src.koruide                              9                             27                             ──                             18                                                            13                                                                                                                                                                                            hub
-                    src.koruapi                             74                             17                              9                             ──                                                            16                                                             3                                                             4                                                                hub
+                    src.koruapi                             74                             17                              9                             ──                                                            17                                                             3                                                             4                                                                hub
                  src.koruvision                              5                             12                                                                                           ──                              1                              1                              8                                                                                           ←4                                 hub
-  plugins.koru-autopilot-vscode                            ←18                                                           ←13                            ←16                             ←1                             ──                                                            ←2                                                            ←1                                                            ←2  hub
+  plugins.koru-autopilot-vscode                            ←18                                                           ←13                            ←17                             ←1                             ──                                                            ←2                                                            ←1                                                            ←2  hub
                 src.koruobserve                              6                             18                                                                                            7                                                            ──                              1                                                                                           ←1                                 hub
                    src.korumesh                              2                              7                                                            ←3                              2                              2                              1                             ──                                                                                                                              hub
                        examples                                                            12                                                                                                                                                                                                                       ──                                                                                               !! fan-out
@@ -559,22 +561,22 @@ COUPLING:
                  docker.capture                                                             1                                                                                            4                                                             1                                                                                                                          ──                               
        services.healing-webhook                              1                                                                                                                                                          2                                                                                                                                                                                        ──
   CYCLES: none
-  HUB: plugins.koru-autopilot-vscode/ (fan-in=53)
-  HUB: src.koruide/ (fan-in=121)
   HUB: src.koruapi/ (fan-in=26)
-  HUB: src.korudsl/ (fan-in=7)
-  HUB: src.koru/ (fan-in=97)
-  HUB: src.koruobserve/ (fan-in=13)
-  HUB: src.koruvision/ (fan-in=28)
   HUB: src.korumesh/ (fan-in=12)
-  HUB: scripts/ (fan-in=503)
-  SMELL: src.koruide/ fan-out=67 → split needed
-  SMELL: src.koruapi/ fan-out=123 → split needed
-  SMELL: examples/ fan-out=12 → split needed
-  SMELL: src.koru/ fan-out=575 → split needed
-  SMELL: src.koruobserve/ fan-out=32 → split needed
-  SMELL: src.koruvision/ fan-out=27 → split needed
+  HUB: src.koru/ (fan-in=97)
+  HUB: src.koruvision/ (fan-in=28)
+  HUB: src.korudsl/ (fan-in=7)
+  HUB: src.koruide/ (fan-in=121)
+  HUB: scripts/ (fan-in=511)
+  HUB: src.koruobserve/ (fan-in=13)
+  HUB: plugins.koru-autopilot-vscode/ (fan-in=54)
+  SMELL: src.koruapi/ fan-out=124 → split needed
   SMELL: src.korumesh/ fan-out=14 → split needed
+  SMELL: src.koru/ fan-out=583 → split needed
+  SMELL: src.koruvision/ fan-out=27 → split needed
+  SMELL: examples/ fan-out=12 → split needed
+  SMELL: src.koruide/ fan-out=67 → split needed
+  SMELL: src.koruobserve/ fan-out=32 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

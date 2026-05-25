@@ -7,15 +7,15 @@
 - **Primary Language**: python
 - **Languages**: python: 355, shell: 49, typescript: 29, yaml: 22, json: 10
 - **Analysis Mode**: static
-- **Total Functions**: 2997
+- **Total Functions**: 3007
 - **Total Classes**: 277
 - **Modules**: 492
-- **Entry Points**: 1146
+- **Entry Points**: 1153
 
 ## Architecture by Module
 
 ### plugins.koru-autopilot-vscode.src.extension
-- **Functions**: 306
+- **Functions**: 319
 - **Classes**: 2
 - **File**: `extension.ts`
 
@@ -69,6 +69,10 @@
 - **Classes**: 2
 - **File**: `operator_pipeline.py`
 
+### src.koruide.daemon.handlers
+- **Functions**: 32
+- **File**: `handlers.py`
+
 ### src.koru.autonomous_startup
 - **Functions**: 32
 - **Classes**: 3
@@ -78,10 +82,6 @@
 - **Functions**: 32
 - **Classes**: 2
 - **File**: `install_manager.py`
-
-### src.koruide.daemon.handlers
-- **Functions**: 32
-- **File**: `handlers.py`
 
 ### src.koru.context
 - **Functions**: 31
@@ -129,12 +129,12 @@ Main execution flows into the system:
 ### src.koru.cli_topology.topology_main
 - **Calls**: None.parse_args, args.project.resolve, TopologyCommandService, TopologyQueryService, query_service.load, src.koru.topology_cli.apply_topology_mutations, query_service.is_enabled, scripts.koru-soak-monitor.print
 
+### src.koruide.daemon.handlers.handle_drive
+- **Calls**: msg.data.get, src.koruide.ide.normalize_ide_id, bool, bool, daemon.log, daemon._plugin_for, daemon.log, src.koruide.daemon.handlers._drive_via_keyboard
+
 ### src.koru.queue.runners.run_api_request
 > Execute an HTTP API request.
 - **Calls**: request.get, urllib.request.Request, float, str, str, None.encode, headers.setdefault, str
-
-### src.koruide.daemon.handlers.handle_drive
-- **Calls**: msg.data.get, src.koruide.ide.normalize_ide_id, bool, bool, daemon.log, daemon._plugin_for, daemon.log, src.koruide.daemon.handlers._drive_via_keyboard
 
 ### src.koru.autonomy.env.autonomous_environ_doctor_probe
 > Return ``(status, detail)`` for ``koru --doctor``; process-global, no I/O.
@@ -253,15 +253,15 @@ register [src.koru.local_manager_state.WorkerRegistry]
 topology_main [src.koru.cli_topology]
 ```
 
-### Flow 7: run_api_request
-```
-run_api_request [src.koru.queue.runners]
-```
-
-### Flow 8: handle_drive
+### Flow 7: handle_drive
 ```
 handle_drive [src.koruide.daemon.handlers]
   └─ →> normalize_ide_id
+```
+
+### Flow 8: run_api_request
+```
+run_api_request [src.koru.queue.runners]
 ```
 
 ### Flow 9: autonomous_environ_doctor_probe
@@ -286,8 +286,12 @@ _action_drive [src.koru.autopilot.cli_command]
 ## Key Classes
 
 ### plugins.koru-autopilot-vscode.src.extension.AutopilotBridge
-- **Methods**: 292
+- **Methods**: 305
 - **Key Methods**: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.safeLog, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.currentOperationTrace, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
+
+### plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter
+- **Methods**: 20
+- **Key Methods**: plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.storeAvailable, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.fetchNewer, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.lastRowid, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.latestBubbleRowid, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.exec, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.n, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.exec, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.r
 
 ### plugins.koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter
 - **Methods**: 19
@@ -301,10 +305,6 @@ no
 - **Methods**: 15
 - **Key Methods**: src.koruide.ides.base.IdeStrategy.id, src.koruide.ides.base.IdeStrategy.label, src.koruide.ides.base.IdeStrategy.detection, src.koruide.ides.base.IdeStrategy.terminal, src.koruide.ides.base.IdeStrategy.aliases, src.koruide.ides.base.IdeStrategy.config_home, src.koruide.ides.base.IdeStrategy.user_settings_path, src.koruide.ides.base.IdeStrategy.workspace_settings_path, src.koruide.ides.base.IdeStrategy.state_vscdb_path, src.koruide.ides.base.IdeStrategy.extensions_metadata_path
 - **Inherits**: ABC
-
-### plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter
-- **Methods**: 15
-- **Key Methods**: plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.storeAvailable, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.fetchNewer, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.lastRowid, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.exec, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.parseCursorBubbleRows, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.recSep, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.fldSep, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.fields
 
 ### src.koruide.drive_orchestrator.DriveOrchestrator
 > Pure helpers used by the autopilot daemon.
@@ -515,7 +515,7 @@ Returns (should_kill, logs) tuple.
 
 Functions exposed as public API (no underscore prefix):
 
-- `src.koruapi.dashboard_routes.build_dashboard_handler` - 216 calls
+- `src.koruapi.dashboard_routes.build_dashboard_handler` - 237 calls
 - `src.koru.wizard.gui.app.create_app` - 96 calls
 - `src.koru.autonomous_parser.build_parser` - 71 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 50 calls
@@ -528,8 +528,9 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.cli_topology.topology_main` - 33 calls
 - `src.koruobserve.lifecycle.observe_up` - 32 calls
 - `src.koruapi.mcp_server.tool_run_ticket` - 31 calls
-- `src.koru.queue.runners.run_api_request` - 30 calls
+- `src.koruapi.dashboard_tickets.create_ticket_from_dashboard` - 30 calls
 - `src.koruide.daemon.handlers.handle_drive` - 30 calls
+- `src.koru.queue.runners.run_api_request` - 30 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
 - `src.koruide.plugin_installer.resolve_extension_vsix` - 28 calls
 - `src.koru.cli_queue.render_clean_report_text` - 28 calls
@@ -541,16 +542,15 @@ Functions exposed as public API (no underscore prefix):
 - `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
 - `examples.remote_orchestration_demo.run_multi_node_orchestration` - 24 calls
 - `src.koru.configurator.render_shell_exports` - 24 calls
+- `src.koru.scan.scan_pytest_collect` - 24 calls
 - `src.koru.agents.detect_project_environment` - 24 calls
 - `src.koru.autopilot.install_manager.collect_install_manager_report` - 24 calls
-- `src.koru.scan.scan_pytest_collect` - 24 calls
-- `src.koruapi.dashboard_tickets.create_ticket_from_dashboard` - 23 calls
 - `src.koru.dev_sync.dev_main` - 23 calls
 - `src.koru.autonomous_diagnostics.build_idle_checks` - 23 calls
 - `src.koru.cli_agent_backends.agent_backends_main` - 23 calls
 - `src.koru.init.init_project` - 23 calls
-- `src.koru.context_render.render_active_ticket` - 23 calls
 - `src.koru.scan.run_scan` - 23 calls
+- `src.koru.context_render.render_active_ticket` - 23 calls
 - `src.koru.autonomy.phases.scan_phase.handle_scan_after_idle` - 23 calls
 - `src.koruapi.topology_post.apply_topology_post_update` - 22 calls
 - `src.koru.gate.parse_authorizations` - 22 calls
@@ -585,13 +585,13 @@ graph TD
     topology_main --> TopologyCommandServi
     topology_main --> TopologyQueryService
     topology_main --> load
-    run_api_request --> get
-    run_api_request --> Request
-    run_api_request --> float
-    run_api_request --> str
     handle_drive --> get
     handle_drive --> normalize_ide_id
     handle_drive --> bool
+    handle_drive --> log
+    run_api_request --> get
+    run_api_request --> Request
+    run_api_request --> float
 ```
 
 ## Reverse Engineering Guidelines

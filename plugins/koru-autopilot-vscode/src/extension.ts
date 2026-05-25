@@ -37,6 +37,7 @@ import {
 } from "./probe-ladder";
 import { defaultSocketPathFromEnv, socketCandidatesFromEnv } from "./socketPath";
 import { ChatHistoryWatcher, SupportedIde } from "./chat-history-watcher";
+import { CursorBubbleAdapter } from "./cursor-bubble-adapter";
 import {
   decideBusyInputAction,
   interpretPostSubmitProbe,
@@ -172,6 +173,20 @@ class AutopilotBridge {
   private reconnectBlockedReason: string | null = null;
   private chatHistoryWatcher: ChatHistoryWatcher | null = null;
   private operationTrace: OperationTraceStep[] = [];
+  /**
+   * Anchor ``rowid`` captured from Cursor's ``cursorDiskKV`` *just before*
+   * the current drive's submit step. Used by ``verifySubmitStep`` to look
+   * for a fresh ``type = 1`` (user) bubble proving Cursor actually
+   * accepted the message — the only ground truth available because the
+   * clipboard sentinel probe cannot reach Cursor's chat webview.
+   */
+  private cursorBubbleAnchorRowid: number | null = null;
+  /**
+   * Adapter used to query Cursor's bubble database for post-submit
+   * verification. Reused across calls so we don't repeatedly resolve the
+   * db path.
+   */
+  private cursorBubbleVerifierAdapter: CursorBubbleAdapter | null = null;
 
   constructor(private context: vscode.ExtensionContext) {
     this.status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 50);
@@ -705,7 +720,130 @@ class AutopilotBridge {
       reason: result.cleared ? undefined : "input still contains pasted text",
       detail: { observedLength: result.observedLength, tailMatched: result.tailMatched },
     });
+    // The clipboard probe falls closed to ``cleared=true`` whenever it
+    // cannot read the chat input (sentinel unchanged, clipboard
+    // unreadable). For Cursor that is the COMMON case: the chat surface
+    // is a webview, so ``editor.action.selectAll`` has no effect and the
+    // probe returns ``null`` → the legacy logic treats failed submits as
+    // success and caches the bogus winner. Cross-check against Cursor's
+    // own conversation database, which is the only ground truth.
+    if (
+      result.cleared
+      && this.detectIde() === "cursor"
+      && probe === null
+      && originalText.trim().length >= 4
+    ) {
+      const dbResult = await this._verifySubmitViaCursorBubble(originalText);
+      if (dbResult !== null) {
+        const detail = {
+          observedLength: result.observedLength,
+          tailMatched: result.tailMatched,
+          dbVerified: dbResult.matched,
+          newUserBubbles: dbResult.newUserBubbles,
+        };
+        this.traceOperation({
+          op: "submit_verify",
+          route: "cursor-bubble-db",
+          ok: dbResult.matched,
+          reason: dbResult.matched
+            ? undefined
+            : "no new user bubble in cursorDiskKV after submit "
+              + "(probe-cleared was a false positive on the webview chat input)",
+          detail,
+        });
+        return { cleared: dbResult.matched, observedLength: result.observedLength };
+      }
+    }
     return { cleared: result.cleared, observedLength: result.observedLength };
+  }
+
+  /**
+   * Cursor-specific post-submit verification using ``cursorDiskKV``.
+   *
+   * Returns ``null`` when the verification could not run (sqlite missing,
+   * database unavailable, no anchor recorded), in which case the caller
+   * keeps the previous probe result. Returns ``{ matched: true }`` when a
+   * fresh ``type = 1`` bubble containing the tail of our prompt was
+   * observed (real submit). Returns ``{ matched: false }`` when the
+   * sqlite query worked but no matching user bubble appeared (the
+   * submit-command call no-oped on the webview).
+   */
+  private async _verifySubmitViaCursorBubble(
+    originalText: string
+  ): Promise<{ matched: boolean; newUserBubbles: number } | null> {
+    const anchor = this.cursorBubbleAnchorRowid;
+    if (anchor === null) {
+      debugLog("CURSOR_BUBBLE_VERIFY_NO_ANCHOR");
+      return null;
+    }
+    const adapter = this.cursorBubbleVerifierAdapter ?? new CursorBubbleAdapter({ ide: "cursor" });
+    this.cursorBubbleVerifierAdapter = adapter;
+    if (!adapter.storeAvailable()) {
+      debugLog("CURSOR_BUBBLE_VERIFY_DB_UNAVAILABLE");
+      return null;
+    }
+    const tail = originalText.trim().slice(-40);
+    const deadline = Date.now() + 1200;
+    let attempts = 0;
+    let lastRows: number = 0;
+    while (Date.now() <= deadline) {
+      attempts += 1;
+      let rows;
+      try {
+        rows = await adapter.fetchLatestUserBubbles(anchor, null);
+      } catch (err) {
+        debugLog("CURSOR_BUBBLE_VERIFY_QUERY_ERROR", { err: String(err) });
+        return null;
+      }
+      lastRows = rows.length;
+      for (const row of rows) {
+        if (row.type === 1 && typeof row.text === "string" && row.text.includes(tail)) {
+          debugLog("CURSOR_BUBBLE_VERIFY_MATCH", {
+            attempts,
+            rowid: row.cursor,
+            bubbleId: row.bubbleId,
+            textLength: row.text.length,
+          });
+          return { matched: true, newUserBubbles: rows.length };
+        }
+      }
+      await this.sleep(150);
+    }
+    debugLog("CURSOR_BUBBLE_VERIFY_NO_MATCH", {
+      attempts,
+      anchor,
+      tailLength: tail.length,
+      newUserBubbles: lastRows,
+    });
+    return { matched: false, newUserBubbles: lastRows };
+  }
+
+  /**
+   * Capture the current ``MAX(rowid)`` from Cursor's ``cursorDiskKV``
+   * so the post-submit verifier can tell "new" rows from "stale" ones.
+   * Called right before ``submitChat`` for Cursor. No-op on other IDEs.
+   */
+  private async captureCursorBubbleAnchor(): Promise<void> {
+    if (this.detectIde() !== "cursor") {
+      this.cursorBubbleAnchorRowid = null;
+      return;
+    }
+    const adapter = this.cursorBubbleVerifierAdapter ?? new CursorBubbleAdapter({ ide: "cursor" });
+    this.cursorBubbleVerifierAdapter = adapter;
+    if (!adapter.storeAvailable()) {
+      this.cursorBubbleAnchorRowid = null;
+      debugLog("CURSOR_BUBBLE_ANCHOR_DB_UNAVAILABLE");
+      return;
+    }
+    try {
+      this.cursorBubbleAnchorRowid = await adapter.latestBubbleRowid(null);
+      debugLog("CURSOR_BUBBLE_ANCHOR_CAPTURED", {
+        rowid: this.cursorBubbleAnchorRowid,
+      });
+    } catch (err) {
+      this.cursorBubbleAnchorRowid = null;
+      debugLog("CURSOR_BUBBLE_ANCHOR_ERROR", { err: String(err) });
+    }
   }
 
   /**
@@ -1578,6 +1716,7 @@ class AutopilotBridge {
       });
       return;
     }
+    await this.captureCursorBubbleAnchor();
     const submitResult = await this.submitChat(text);
     if (submitResult.unverified || !submitResult.ok) {
       this.sendSubmitFailureAck(
@@ -1869,6 +2008,7 @@ class AutopilotBridge {
     }
     await this.sleep(150);
     await this.focusChatInput();
+    await this.captureCursorBubbleAnchor();
     const submitResult = await this.submitChat(pastedText);
     if (submitResult.unverified) {
       this.traceOperation({

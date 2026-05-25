@@ -1,15 +1,15 @@
 # System Architecture Analysis
-<!-- generated in 0.03s -->
+<!-- generated in 0.01s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 718, md: 89, shell: 50, typescript: 29, yaml: 22
+- **Languages**: python: 714, md: 89, shell: 50, typescript: 29, yaml: 22
 - **Analysis Mode**: static
-- **Total Functions**: 5375
-- **Total Classes**: 532
-- **Modules**: 951
+- **Total Functions**: 5338
+- **Total Classes**: 529
+- **Modules**: 947
 - **Entry Points**: 0
 
 ## Architecture by Module
@@ -100,9 +100,10 @@
 - **Functions**: 35
 - **File**: `mcp_server.py`
 
-### koruide.daemon.handlers
-- **Functions**: 32
-- **File**: `handlers.py`
+### src.koru.autonomy.operator_pipeline
+- **Functions**: 33
+- **Classes**: 2
+- **File**: `operator_pipeline.py`
 
 ## Key Entry Points
 
@@ -323,8 +324,8 @@ Returns (should_kill, logs) tuple.
 
 Functions exposed as public API (no underscore prefix):
 
-- `koruapi.dashboard_routes.build_dashboard_handler` - 207 calls
-- `src.koruapi.dashboard_routes.build_dashboard_handler` - 207 calls
+- `koruapi.dashboard_routes.build_dashboard_handler` - 237 calls
+- `src.koruapi.dashboard_routes.build_dashboard_handler` - 237 calls
 - `koru.wizard.gui.app.create_app` - 96 calls
 - `src.koru.wizard.gui.app.create_app` - 96 calls
 - `koru.autonomous_parser.build_parser` - 71 calls
@@ -335,24 +336,25 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.context_render.render_markdown_handoff` - 47 calls
 - `koru.policy.load_policy` - 43 calls
 - `src.koru.policy.load_policy` - 43 calls
+- `src.koru.autonomous_cycle.run_cycle` - 40 calls
 - `koru.git_cli.build_parser` - 39 calls
 - `src.koru.git_cli.build_parser` - 39 calls
 - `koru.local_manager_state.WorkerRegistry.register` - 37 calls
 - `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
-- `koru.autonomous_cycle.run_cycle` - 33 calls
 - `koru.ide_doctor_cli.build_parser` - 33 calls
 - `koru.cli_topology.topology_main` - 33 calls
-- `src.koru.autonomous_cycle.run_cycle` - 33 calls
 - `src.koru.ide_doctor_cli.build_parser` - 33 calls
 - `src.koru.cli_topology.topology_main` - 33 calls
 - `koruobserve.lifecycle.observe_up` - 32 calls
 - `src.koruobserve.lifecycle.observe_up` - 32 calls
 - `koruapi.mcp_server.tool_run_ticket` - 31 calls
 - `src.koruapi.mcp_server.tool_run_ticket` - 31 calls
-- `koruide.daemon.handlers.handle_drive` - 30 calls
 - `koru.queue.runners.run_api_request` - 30 calls
+- `koruapi.dashboard_tickets.create_ticket_from_dashboard` - 30 calls
+- `koruide.daemon.handlers.handle_drive` - 30 calls
 - `src.koruide.daemon.handlers.handle_drive` - 30 calls
 - `src.koru.queue.runners.run_api_request` - 30 calls
+- `src.koruapi.dashboard_tickets.create_ticket_from_dashboard` - 30 calls
 - `koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
 - `koruide.plugin_installer.resolve_extension_vsix` - 28 calls
@@ -362,7 +364,6 @@ Functions exposed as public API (no underscore prefix):
 - `koru.doctor.render_text` - 27 calls
 - `koru.autonomy.ide_work.build_ide_work_prompt` - 27 calls
 - `src.koru.doctor.render_text` - 27 calls
-- `src.koru.autonomy.ide_work.build_ide_work_prompt` - 27 calls
 
 ## System Interactions
 

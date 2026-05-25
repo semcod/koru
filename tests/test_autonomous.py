@@ -15,6 +15,7 @@ import yaml
 
 from koru import autonomous as autonomous_mod
 from koru import autonomous_cycle as autonomous_cycle_mod
+from koru import autonomous_cycle_drive_retry as drive_retry_mod
 from koru import autonomous_env as autonomous_env_mod
 from koru import autonomous_processes as autonomous_processes_mod
 from koru import autonomous_wup as autonomous_wup_mod
@@ -3040,6 +3041,26 @@ def test_reply_chat_input_busy_recognizes_plugin_ack_shape() -> None:
     )
 
 
+def test_submit_unverified_drive_failure_is_retryable(monkeypatch) -> None:
+    sleeps: list[int] = []
+    monkeypatch.setattr(drive_retry_mod.time, "sleep", lambda seconds: sleeps.append(seconds))
+
+    should_retry = drive_retry_mod._handle_failed_drive_attempt(
+        {
+            "ok": False,
+            "submitted": False,
+            "verification": "submit_unverified",
+            "attempted_submit": "ydotool key ctrl+Return",
+            "message": "chat opened and text injected, but submit could not be verified",
+        },
+        attempt=0,
+        attempts=5,
+    )
+
+    assert should_retry is True
+    assert sleeps == [5]
+
+
 def test_resolve_autopilot_drive_decision_includes_recent_llx_summary(
     tmp_path,
 ) -> None:
@@ -3121,6 +3142,8 @@ def test_autopilot_idle_without_open_ticket_does_not_drive(
     assert backend is None
     assert kind == "idle_no_ticket"
     assert any("idle_no_ticket" in message for message in messages)
+    assert any("/llm/action/create-ticket-for-project" in message for message in messages)
+    assert not any("open the dashboard at http://127.0.0.1:8765/" in message for message in messages)
 
 
 def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(

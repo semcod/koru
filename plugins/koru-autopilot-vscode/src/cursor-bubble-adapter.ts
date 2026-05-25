@@ -16,6 +16,15 @@ WHERE key LIKE 'bubbleId:%'
 ORDER BY rowid ASC
 LIMIT 50;`;
 
+const SQL_CURSOR_LATEST_USER_BUBBLES = `SELECT rowid, key, json_extract(value,'$.type'), json_extract(value,'$.text'), json_extract(value,'$.createdAt')
+FROM cursorDiskKV
+WHERE key LIKE 'bubbleId:%'
+  AND rowid > ?
+  AND json_extract(value,'$.type') = 1
+  AND length(json_extract(value,'$.text')) > 0
+ORDER BY rowid DESC
+LIMIT 5;`;
+
 export class CursorBubbleAdapter implements IdeAdapter {
   readonly ide: SupportedIde;
   readonly description = "cursorDiskKV.bubbleId (Cursor SQLite)";
@@ -38,6 +47,54 @@ export class CursorBubbleAdapter implements IdeAdapter {
 
   async fetchNewer(afterCursor: string, runner: AdapterRunner | null): Promise<ChatHistoryRow[]> {
     const lastRowid = Number.parseInt(afterCursor || "0", 10) || 0;
+    return this._runQuery(SQL_CURSOR_NEW_BUBBLES, lastRowid, runner);
+  }
+
+  /**
+   * Fetch the most recent ``type = 1`` (user) bubbles strictly after
+   * ``afterRowid``. Used to verify that a programmatic submit actually
+   * persisted to Cursor's conversation store — the only reliable signal
+   * since ``editor.action.selectAll`` cannot reach Cursor's chat webview
+   * and the post-submit clipboard probe always returns ``null``.
+   */
+  async fetchLatestUserBubbles(
+    afterRowid: number,
+    runner: AdapterRunner | null
+  ): Promise<ChatHistoryRow[]> {
+    return this._runQuery(SQL_CURSOR_LATEST_USER_BUBBLES, afterRowid, runner);
+  }
+
+  /**
+   * Highest ``rowid`` currently in ``cursorDiskKV`` for any bubble. Used
+   * as a "since" anchor: capture it BEFORE submit, then look for a fresh
+   * user bubble with ``rowid > anchor`` after submit.
+   */
+  async latestBubbleRowid(runner: AdapterRunner | null): Promise<number> {
+    const args = [
+      "-readonly",
+      "-bail",
+      "-noheader",
+      this.dbPath,
+      "SELECT COALESCE(MAX(rowid), 0) FROM cursorDiskKV WHERE key LIKE 'bubbleId:%';",
+    ];
+    const exec = runner ?? (async (bin, a) => {
+      const r = await execFile(bin, a, { maxBuffer: 1024 * 1024 });
+      return { stdout: r.stdout, stderr: r.stderr };
+    });
+    try {
+      const r = await exec(this.sqlite, args);
+      const n = Number.parseInt((r.stdout || "0").trim(), 10);
+      return Number.isFinite(n) ? n : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private async _runQuery(
+    sql: string,
+    rowid: number,
+    runner: AdapterRunner | null
+  ): Promise<ChatHistoryRow[]> {
     const args = [
       "-readonly",
       "-bail",
@@ -45,7 +102,7 @@ export class CursorBubbleAdapter implements IdeAdapter {
       "-cmd",
       ".separator \\x1f \\x1e",
       this.dbPath,
-      SQL_CURSOR_NEW_BUBBLES.replace("?", String(lastRowid)),
+      sql.replace("?", String(rowid)),
     ];
     const exec = runner ?? (async (bin, a) => {
       const r = await execFile(bin, a, { maxBuffer: 8 * 1024 * 1024 });

@@ -173,6 +173,27 @@ def _reply_needs_plugin_retry(reply: dict[str, Any]) -> bool:
     )
 
 
+def _reply_needs_submit_retry(reply: dict[str, Any]) -> bool:
+    """True when text was injected but the submit step did not complete.
+
+    The VS Code-family plugin verifies host-key submits by probing whether the
+    chat input was cleared. If that verification fails, a second drive can
+    safely re-use the already pasted prompt: the plugin detects matching input
+    and runs ``submit_existing`` instead of pasting again.
+    """
+    verification = str(reply.get("verification") or "").lower()
+    if verification in {"submit_unverified", "submit_failed"}:
+        return True
+    if reply.get("submitted") is False and (
+        reply.get("attempted_submit")
+        or reply.get("winning_paste")
+        or reply.get("submit_failure_reason")
+    ):
+        return True
+    msg = str(reply.get("message") or "").lower()
+    return "submit could not be verified" in msg or "submit failed" in msg
+
+
 def _reply_requires_manual_chat_focus(reply: dict[str, Any]) -> bool:
     msg = str(reply.get("message") or "").lower()
     if "chat input is not focused/open" not in msg:
@@ -253,6 +274,19 @@ def _warn_autopilot_plugin_retry(attempt: int, attempts: int, reply: dict[str, A
     print("\033[0m")  # reset colors
 
 
+def _warn_autopilot_submit_retry(attempt: int, attempts: int, reply: dict[str, Any] | None = None) -> None:
+    print("\033[1;33m")  # bold yellow
+    print("================================================================================")
+    print("[AUTOPILOT SUBMIT RETRY] Text was pasted, but Send was not confirmed.")
+    print("Koru will retry submit against the existing matching chat input.")
+    if reply:
+        for line in _format_autopilot_failure_details(reply):
+            print(line)
+    print(f"Retrying in 5 seconds... (Attempt {attempt + 1}/{attempts})")
+    print("================================================================================")
+    print("\033[0m")  # reset colors
+
+
 def _handle_failed_drive_attempt(
     reply: dict[str, Any],
     attempt: int,
@@ -267,6 +301,10 @@ def _handle_failed_drive_attempt(
         return False
     if attempt >= attempts - 1:
         return False
+    if _reply_needs_submit_retry(reply):
+        _warn_autopilot_submit_retry(attempt, attempts, reply)
+        time.sleep(5)
+        return True
     if _reply_needs_focus_retry(reply):
         _warn_autopilot_focus_retry(attempt, attempts, reply)
         time.sleep(5)
@@ -298,8 +336,10 @@ def _execute_autopilot_drive(
         autopilot_action=autopilot_action,
     )
     if idle_prompt_kind == "idle_no_ticket":
+        from koru.autonomous_loop_runner import _dashboard_action_urls
         from koru.autonomy.ide_work import sprint_ticket_status_summary
 
+        urls = _dashboard_action_urls(project)
         _hp(
             "- autopilot skipped (idle_no_ticket): "
             "queue empty AND no open ticket in planfile → nothing to paste "
@@ -312,14 +352,14 @@ def _execute_autopilot_drive(
             "(1) wait the configured sleep; (2) when queue stays idle, "
             "rerun `koru scan --apply` to look for new signals; "
             "(3) if scan finds signals already present as done tickets, "
-            "they will be skipped as duplicates and nothing new is queued.",
+            "they will be skipped as duplicates; use the quick action below "
+            "to create a fresh discovery ticket immediately.",
         )
         _hp(
-            "  to give koru work right now: "
-            "open the dashboard at http://127.0.0.1:8765/ and reopen a "
-            "relevant ticket (status: done → open), OR create a new ticket "
-            "with `koru --ticket 'Title' --description '...'`, OR force a "
-            "fresh scan with `rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`.",
+            "  quick actions: create discovery ticket "
+            f"{urls['create_project_ticket_action']} ; tickets {urls['tickets']} ; "
+            "force fresh scan command remains: "
+            "`rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`.",
         )
         return (
             {
