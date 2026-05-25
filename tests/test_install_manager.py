@@ -31,6 +31,7 @@ def test_collect_report_flags_path_mismatch_and_plugin_version_missing(
         lambda _ide: "0.1.13",
     )
     monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
     monkeypatch.setattr(
         install_manager,
         "_daemon_status",
@@ -80,6 +81,7 @@ def test_collect_report_accepts_nonlocal_koru_when_editable_source_matches(
         lambda _ide: "0.1.13",
     )
     monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
     monkeypatch.setattr(
         install_manager,
         "_daemon_status",
@@ -122,6 +124,7 @@ def test_collect_report_uses_explicit_ide_socket_when_env_is_unset(
         lambda _ide: "0.1.15",
     )
     monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
     checked: list[Path] = []
 
     def fake_daemon_status(socket: Path) -> dict[str, object]:
@@ -162,6 +165,8 @@ def test_collect_report_auto_prefers_autopilot_instance_over_terminal_hint(
     )
     monkeypatch.setattr(install_manager, "detect_terminal_host_ide_id", lambda: "vscode")
     monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr("koruide.ide.detect_terminal_host_ide_id", lambda: "vscode")
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
     monkeypatch.setattr(install_manager, "_daemon_status", lambda _socket: {"running": False})
 
     report = install_manager.collect_install_manager_report(ide="auto")
@@ -190,6 +195,7 @@ def test_collect_report_flags_connected_plugin_version_mismatch(
         lambda _ide: "0.1.13",
     )
     monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
     monkeypatch.setattr(
         install_manager,
         "_daemon_status",
@@ -229,6 +235,7 @@ def test_collect_report_flags_installed_plugin_version_mismatch(
         lambda _ide: "0.1.11",
     )
     monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
     monkeypatch.setattr(install_manager, "_daemon_status", lambda _socket: {"running": False})
 
     report = install_manager.collect_install_manager_report(
@@ -261,6 +268,7 @@ def test_collect_report_marks_installed_ok_but_not_connected_as_info(
         lambda _ide: "0.1.13",
     )
     monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
     monkeypatch.setattr(install_manager, "_daemon_status", lambda _socket: {"running": False})
 
     report = install_manager.collect_install_manager_report(
@@ -294,6 +302,7 @@ def test_collect_report_flags_stale_live_extension_host(
         lambda _ide: "0.1.14",
     )
     monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
     monkeypatch.setattr(
         install_manager,
         "_daemon_status",
@@ -347,6 +356,7 @@ def test_collect_report_flags_plugin_socket_candidate_mismatch(
         lambda _ide: "0.1.15",
     )
     monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
     monkeypatch.setattr(
         install_manager,
         "_daemon_status",
@@ -382,6 +392,7 @@ def test_collect_report_warns_for_pyenv_shim(monkeypatch, tmp_path: Path) -> Non
         lambda _ide: None,
     )
     monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
     monkeypatch.setattr(install_manager, "_daemon_status", lambda _socket: {"running": False})
 
     report = install_manager.collect_install_manager_report(
@@ -406,6 +417,7 @@ def test_collect_report_warns_when_daemon_not_running(monkeypatch, tmp_path: Pat
         lambda _ide: None,
     )
     monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
     monkeypatch.setattr(install_manager, "_daemon_status", lambda _socket: {"running": False})
 
     report = install_manager.collect_install_manager_report(
@@ -589,6 +601,7 @@ def test_collect_report_for_zed_does_not_require_vsix_plugin(monkeypatch, tmp_pa
         lambda _ide: (_ for _ in ()).throw(AssertionError("Zed should not query VSIX state")),
     )
     monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
     monkeypatch.setattr(install_manager, "_daemon_status", lambda _socket: {"running": True})
 
     report = install_manager.collect_install_manager_report(
@@ -617,6 +630,9 @@ def test_collect_report_auto_still_checks_plugin_connection(monkeypatch, tmp_pat
     monkeypatch.setattr(install_manager, "detect_terminal_host_ide_id", lambda: None)
     monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
     monkeypatch.setattr(install_manager, "_daemon_status", lambda _socket: {"running": True})
+    # Mock koruide.ide functions since koru.autopilot.ide is now a compatibility shim
+    monkeypatch.setattr("koruide.ide.detect_terminal_host_ide_id", lambda: None)
+    monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
 
     report = install_manager.collect_install_manager_report(
         ide="auto",

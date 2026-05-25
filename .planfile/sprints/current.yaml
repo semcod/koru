@@ -735,9 +735,26 @@ sprint:
 
         code2llm-dedupe: code2llm:smell:god_function:src/koruapi/dashboard_routes.py:79:God
         Function: build_dashboard_handler'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T13:45:53.400973Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - src/koruapi/dashboard_routes.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T13:45:53.407425+00:00'
       id: STARTER-261
       labels:
       - llm-ready
@@ -745,6 +762,9 @@ sprint:
       - code-smell
       - god-function
       name: 'Address code smell: God Function: build_dashboard_handler'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context:
@@ -754,9 +774,9 @@ sprint:
         timestamp: '2026-05-25T13:16:19.029807Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-25T13:16:19.030907Z'
+      updated_at: '2026-05-25T13:45:53.407382+00:00'
     STARTER-262:
       acceptance_criteria: []
       blocked_by: []
@@ -773,9 +793,26 @@ sprint:
 
         code2llm-dedupe: code2llm:smell:god_function:src/koru/autonomy/operator_pipeline.py:499:God
         Function: build_operator_steps'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T13:46:41.705096Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - src/koru/autonomy/operator_pipeline.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T13:46:41.709020+00:00'
       id: STARTER-262
       labels:
       - llm-ready
@@ -783,6 +820,9 @@ sprint:
       - code-smell
       - god-function
       name: 'Address code smell: God Function: build_operator_steps'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context:
@@ -792,9 +832,9 @@ sprint:
         timestamp: '2026-05-25T13:16:19.801362Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-25T13:16:19.802318Z'
+      updated_at: '2026-05-25T13:46:41.708984+00:00'
     STARTER-263:
       acceptance_criteria: []
       blocked_by: []
@@ -811,9 +851,26 @@ sprint:
 
         code2llm-dedupe: code2llm:smell:god_function:src/koru/autonomous_parser.py:8:God
         Function: build_parser'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T13:47:17.666440Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - src/koru/autonomous_parser.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T13:47:17.671018+00:00'
       id: STARTER-263
       labels:
       - llm-ready
@@ -821,6 +878,9 @@ sprint:
       - code-smell
       - god-function
       name: 'Address code smell: God Function: build_parser'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context:
@@ -830,6 +890,6 @@ sprint:
         timestamp: '2026-05-25T13:16:20.596472Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-25T13:16:20.597498Z'
+      updated_at: '2026-05-25T13:47:17.670973+00:00'

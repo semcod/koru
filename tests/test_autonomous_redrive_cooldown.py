@@ -268,6 +268,42 @@ def test_recent_successful_drive_fallback_does_not_block_different_ticket(
     assert skipped is False
 
 
+def test_recent_self_drive_event_does_not_block_next_waiting_ticket(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    monkeypatch.setenv("KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS", "300")
+
+    prompt = "code2llm reports previous ticket"
+    state = mock.Mock()
+    state.stagnation_streak = 1
+    state.autopilot_events = [
+        {
+            "type": "message.sent",
+            "ts": time.time() - 30.0,
+            "ide": "vscode",
+            "text": prompt,
+        }
+    ]
+    state.last_driven_kind = "ticket_prompt"
+    state.last_driven_prompt = prompt
+    state.last_driven_ticket_id = "STARTER-260"
+    state.last_message_sent_ts = time.time() - 30.0
+    state.last_message_sent_ide = "vscode"
+
+    skipped = _skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=_FakeQueue(ticket="STARTER-261"),
+        state=state,
+        cycle_telemetry={},
+        _hp=lambda _msg: None,
+    )
+
+    assert skipped is False
+
+
 def test_recent_successful_drive_fallback_does_not_block_different_ide(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

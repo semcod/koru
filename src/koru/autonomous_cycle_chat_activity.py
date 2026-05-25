@@ -631,6 +631,34 @@ def _last_self_drive_event_age(
     return None
 
 
+def _event_is_self_drive_for_other_ticket(
+    state: AutoloopState,
+    event: dict[str, Any],
+    waiting_ticket: str,
+) -> bool:
+    if not _event_matches_last_driven_prompt(state, event):
+        return False
+    last_driven_ticket = str(getattr(state, "last_driven_ticket_id", "") or "")
+    return bool(
+        waiting_ticket
+        and waiting_ticket != "-"
+        and last_driven_ticket
+        and last_driven_ticket != waiting_ticket
+    )
+
+
+def _filter_chat_activity_events_for_waiting_ticket(
+    state: AutoloopState,
+    recent_events: list[dict[str, Any]],
+    waiting_ticket: str,
+) -> list[dict[str, Any]]:
+    return [
+        event
+        for event in recent_events
+        if not _event_is_self_drive_for_other_ticket(state, event, waiting_ticket)
+    ]
+
+
 def _llx_chat_reflection_enabled() -> bool:
     try:
         from koru.llm_reflect import llm_reflect_enabled
@@ -1060,6 +1088,11 @@ def _skip_due_to_recent_chat_activity(
         state,
         ide=ide,
         within_seconds=cooldown,
+    )
+    recent_events = _filter_chat_activity_events_for_waiting_ticket(
+        state,
+        recent_events,
+        waiting_ticket,
     )
     reflection_events = _state_events_to_chat_events(recent_events)
 

@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 
-def build_parser(*, default_stdio_format: str) -> argparse.ArgumentParser:
+def _build_parser_impl(*, default_stdio_format: str) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="koru autonomous",
         description=(
@@ -424,6 +424,11 @@ def build_parser(*, default_stdio_format: str) -> argparse.ArgumentParser:
     )
 
     return parser
+
+
+def build_parser(*, default_stdio_format: str) -> argparse.ArgumentParser:
+    """Public parser factory for ``koru autonomous`` CLI."""
+    return _build_parser_impl(default_stdio_format=default_stdio_format)
 
 
 def _match_koru_auto_parts(parts: list[str]) -> bool:

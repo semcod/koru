@@ -496,43 +496,39 @@ def _build_os_calibration_step(ide: str, project: Path) -> OperatorStep:
     )
 
 
-def build_operator_steps(
-    *,
-    project: Path,
-    probe: AutonomousStartupProbe,
-    plugin_connected: bool | None,
-    mcp_already_bootstrapped: bool = False,
-) -> list[OperatorStep]:
-    """Return ordered steps with probe status (no ticket I/O)."""
-    ide = probe.resolved_autopilot_ide
-    steps: list[OperatorStep] = []
-
+def _build_planfile_api_step(project: Path) -> OperatorStep:
     api_ok, api_detail = _planfile_api_ok(project)
-    steps.append(
-        OperatorStep(
-            step_id="planfile_api",
-            title="Planfile API (dashboard / kolejka)",
-            actor="taskfile",
-            status="ok" if api_ok else "pending",
-            detail=api_detail,
-            task_command=None if api_ok else "task koru:server",
-        ),
+    return OperatorStep(
+        step_id="planfile_api",
+        title="Planfile API (dashboard / kolejka)",
+        actor="taskfile",
+        status="ok" if api_ok else "pending",
+        detail=api_detail,
+        task_command=None if api_ok else "task koru:server",
     )
 
+
+def _build_mcp_step(project: Path, ide: str, *, mcp_already_bootstrapped: bool) -> OperatorStep:
     mcp_ok, mcp_detail = _mcp_koru_configured(project, ide)
     if mcp_already_bootstrapped and not mcp_ok:
         mcp_detail += " (bootstrap właśnie wykonany — zrób Reload Window w IDE)"
-    steps.append(
-        OperatorStep(
-            step_id="mcp_koru",
-            title="MCP „koru” w IDE",
-            actor="taskfile",
-            status="ok" if mcp_ok else "pending",
-            detail=mcp_detail,
-            task_command=None if mcp_ok else "task koru:mcp:bootstrap",
-        ),
+    return OperatorStep(
+        step_id="mcp_koru",
+        title="MCP „koru” w IDE",
+        actor="taskfile",
+        status="ok" if mcp_ok else "pending",
+        detail=mcp_detail,
+        task_command=None if mcp_ok else "task koru:mcp:bootstrap",
     )
 
+
+def _build_plugin_step(
+    *,
+    ide: str,
+    plugin_connected: bool | None,
+    socket_path: str,
+    project: Path,
+) -> OperatorStep:
     if not supports_autopilot_plugin_ide(ide):
         plug_status: StepStatus = "skipped"
         plug_detail = f"plugin niedostępny dla ide={ide}; użyj ścieżki keyboard/OS-injector"
@@ -545,66 +541,85 @@ def build_operator_steps(
         plug_status = "pending"
         plug_detail, plug_task = _autopilot_plugin_operator_hints(
             ide=ide,
-            socket_path=str(probe.socket_path),
+            socket_path=socket_path,
             project=project,
         )
     else:
         plug_status = "pending"
         plug_detail, plug_task = _autopilot_plugin_operator_hints(
             ide=ide,
-            socket_path=str(probe.socket_path),
+            socket_path=socket_path,
             project=project,
             unchecked=True,
         )
-
-    steps.append(
-        OperatorStep(
-            step_id="autopilot_plugin",
-            title="Autopilot: Connect + plugin w czacie",
-            actor="human",
-            status=plug_status,
-            detail=plug_detail,
-            task_command=plug_task,
-        ),
+    return OperatorStep(
+        step_id="autopilot_plugin",
+        title="Autopilot: Connect + plugin w czacie",
+        actor="human",
+        status=plug_status,
+        detail=plug_detail,
+        task_command=plug_task,
     )
 
+
+def _build_host_injectors_step() -> OperatorStep:
     host_ok, host_detail = _host_injectors_ok()
-    steps.append(
-        OperatorStep(
-            step_id="host_injectors",
-            title="Zależności hosta (xdotool / wtype / ydotool)",
-            actor="taskfile",
-            status="ok" if host_ok else "pending",
-            detail=host_detail,
-            task_command=None if host_ok else "task koru:operator:setup-host",
-        ),
+    return OperatorStep(
+        step_id="host_injectors",
+        title="Zależności hosta (xdotool / wtype / ydotool)",
+        actor="taskfile",
+        status="ok" if host_ok else "pending",
+        detail=host_detail,
+        task_command=None if host_ok else "task koru:operator:setup-host",
     )
 
-    self_ok, self_detail, self_task = _self_control_ok(project, ide, str(probe.socket_path))
-    steps.append(
-        OperatorStep(
-            step_id="self_control",
-            title="Koru self-control (paczka / VSIX / runtime)",
-            actor="taskfile",
-            status="ok" if self_ok else "pending",
-            detail=self_detail,
-            task_command=self_task,
-        ),
+
+def _build_self_control_step(project: Path, ide: str, socket_path: str) -> OperatorStep:
+    self_ok, self_detail, self_task = _self_control_ok(project, ide, socket_path)
+    return OperatorStep(
+        step_id="self_control",
+        title="Koru self-control (paczka / VSIX / runtime)",
+        actor="taskfile",
+        status="ok" if self_ok else "pending",
+        detail=self_detail,
+        task_command=self_task,
     )
 
-    steps.append(_build_os_calibration_step(ide, project))
 
-    steps.append(
-        OperatorStep(
-            step_id="ready",
-            title="Gotowość: pętla scan → queue → IDE",
-            actor="koru",
-            status="ok",
-            detail="Koru kontynuuje cykle; tickety operatora można zamykać równolegle",
-            task_command=None,
-        ),
+def _build_ready_step() -> OperatorStep:
+    return OperatorStep(
+        step_id="ready",
+        title="Gotowość: pętla scan → queue → IDE",
+        actor="koru",
+        status="ok",
+        detail="Koru kontynuuje cykle; tickety operatora można zamykać równolegle",
+        task_command=None,
     )
-    return steps
+
+
+def build_operator_steps(
+    *,
+    project: Path,
+    probe: AutonomousStartupProbe,
+    plugin_connected: bool | None,
+    mcp_already_bootstrapped: bool = False,
+) -> list[OperatorStep]:
+    """Return ordered steps with probe status (no ticket I/O)."""
+    ide = probe.resolved_autopilot_ide
+    return [
+        _build_planfile_api_step(project),
+        _build_mcp_step(project, ide, mcp_already_bootstrapped=mcp_already_bootstrapped),
+        _build_plugin_step(
+            ide=ide,
+            plugin_connected=plugin_connected,
+            socket_path=str(probe.socket_path),
+            project=project,
+        ),
+        _build_host_injectors_step(),
+        _build_self_control_step(project, ide, str(probe.socket_path)),
+        _build_os_calibration_step(ide, project),
+        _build_ready_step(),
+    ]
 
 
 def _emit_step(
