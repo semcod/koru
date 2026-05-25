@@ -922,9 +922,19 @@ class AutopilotBridge {
     debugLog("HOST_CLIPBOARD_RESTORE", { length: previous.length });
   }
 
-  private async clearChatInput(): Promise<void> {
+  private async clearChatInput(): Promise<boolean> {
     if (this.detectIde() !== "vscodium" || process.platform !== "linux") {
-      return;
+      return true;
+    }
+    const inputFocused = await this.focusChatInput();
+    if (!inputFocused.ok) {
+      this.traceOperation({
+        op: "clear_input",
+        route: "focus-input",
+        ok: false,
+        reason: "chat input focus unavailable; refusing select-all/backspace",
+      });
+      return false;
     }
     await this.runHostKeyCandidates("CLEAR_INPUT_SELECT_ALL", [
       ["wtype", ["-M", "ctrl", "-k", "a", "-m", "ctrl"]],
@@ -936,6 +946,7 @@ class AutopilotBridge {
       ["xdotool", ["key", "BackSpace"]],
       ["ydotool", ["key", "Backspace"]],
     ]);
+    return true;
   }
 
   private koruStepConfig(): KoruAutopilotStepConfig {
@@ -1596,9 +1607,9 @@ class AutopilotBridge {
     });
 
     if (replaceCurrentInput) {
-      await this.focusChatInput();
-      await this.runCommand("editor.action.selectAll");
-      await this.sleep(50);
+      if (!(await this.clearChatInput())) {
+        return { ok: false, reason: "chat input focus unavailable; refusing replace-current-input paste" };
+      }
       const clipboard = await this.tryClipboardPaste(text, before, useProbe);
       if (clipboard.handled && clipboard.result.ok) {
         this.traceOperation({ op: "paste", route: "replace:clipboard", ok: true, command: clipboard.result.command });
@@ -1739,8 +1750,11 @@ class AutopilotBridge {
     if (!inputFocused.ok) {
       debugLog("HOST_PASTE_NO_INPUT_FOCUS");
       this.traceOperation({ op: "paste", route: "host-clipboard:focus-input", ok: false, reason: "input focus unavailable" });
+      return { handled: true, result: { ok: false, reason: "chat input focus unavailable; refusing host clipboard paste" } };
     }
-    await this.clearChatInput();
+    if (!(await this.clearChatInput())) {
+      return { handled: true, result: { ok: false, reason: "chat input focus unavailable; refusing clear before host clipboard paste" } };
+    }
     const clip = await this.writeHostClipboard(text);
     if (!clip) {
       debugLog("HOST_PASTE_NO_CLIPBOARD_TOOL");
@@ -1782,7 +1796,9 @@ class AutopilotBridge {
       }
     }
     try {
-      await this.clearChatInput();
+      if (!(await this.clearChatInput())) {
+        return { handled: true, result: { ok: false, reason: "chat input focus unavailable; refusing clear before clipboard paste" } };
+      }
       const ok = await this.writeClipboardVerified(text);
       if (!ok) {
         debugLog("CLIPBOARD_PASTE_ABORT_UNVERIFIED");
@@ -1824,7 +1840,9 @@ class AutopilotBridge {
       return { ok: false, reason: "chat input focus unavailable; refusing editor type fallback" };
     }
     try {
-      await this.clearChatInput();
+      if (!(await this.clearChatInput())) {
+        return { ok: false, reason: "chat input focus unavailable; refusing clear before type paste" };
+      }
       await Promise.resolve(vscode.commands.executeCommand("type", { text }));
       await this.sleep(this.probePasteDelayMs());
       const after = this.editorSnapshot();
@@ -2128,6 +2146,16 @@ class AutopilotBridge {
     const sentinel = `__koru_input_probe_${Date.now().toString(36)}__`;
     const previous = await this.saveClipboard();
     try {
+      const inputFocused = await this.focusChatInput();
+      if (!inputFocused.ok) {
+        this.traceOperation({
+          op: "input_probe",
+          route: "focus-input",
+          ok: false,
+          reason: "chat input focus unavailable; refusing select-copy probe",
+        });
+        return null;
+      }
       await vscode.env.clipboard.writeText(sentinel);
       await this.runCommand("editor.action.selectAll");
       await this.runCommand("editor.action.clipboardCopyAction");

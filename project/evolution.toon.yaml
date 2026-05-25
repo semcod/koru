@@ -1,37 +1,41 @@
-# code2llm/evolution | 4829 func | 416f | 2026-05-25
-# generated in 0.03s
+# code2llm/evolution | 4892 func | 419f | 2026-05-25
+# generated in 0.02s
 
-NEXT[5] (ranked by impact):
-  [1] !! SPLIT           plugins/koru-autopilot-cursor/src/extension.ts
-      WHY: 3013L, 2 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 45195
+NEXT[6] (ranked by impact):
+  [1] !! SPLIT           plugins/koru-autopilot-antigravity/src/extension.ts
+      WHY: 2704L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 37856
 
-  [2] !! SPLIT           plugins/koru-autopilot-vscode/src/extension.ts
-      WHY: 2757L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 38598
+  [2] !! SPLIT           plugins/koru-autopilot-windsurf/src/extension.ts
+      WHY: 2704L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 37856
 
-  [3] !! SPLIT           plugins/koru-autopilot-vscodium/src/extension.ts
-      WHY: 2753L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 38542
+  [3] !  SPLIT-FUNC      _handle_post_drive_verification  CC=18  fan=21
+      WHY: CC=18 exceeds 15
+      EFFORT: ~1h  IMPACT: 378
 
-  [4] !! SPLIT-FUNC      validate_ide_command_scenario  CC=37  fan=18
-      WHY: CC=37 exceeds 15
-      EFFORT: ~1h  IMPACT: 666
+  [4] !  SPLIT-FUNC      AutopilotBridge._performInject  CC=16  fan=20
+      WHY: CC=16 exceeds 15
+      EFFORT: ~1h  IMPACT: 320
 
-  [5] !  SPLIT-FUNC      AutopilotBridge._performInject  CC=15  fan=20
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 300
+  [5] !  SPLIT-FUNC      SharedAutopilotBridge._performInject  CC=16  fan=20
+      WHY: CC=16 exceeds 15
+      EFFORT: ~1h  IMPACT: 320
+
+  [6] !! SPLIT           planfile.yaml
+      WHY: 1357L, 0 classes, max CC=0
+      EFFORT: ~4h  IMPACT: 0
 
 
 RISKS[3]:
-  ⚠ Splitting plugins/koru-autopilot-cursor/src/extension.ts may break 210 import paths
-  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 207 import paths
-  ⚠ Splitting plugins/koru-autopilot-vscodium/src/extension.ts may break 207 import paths
+  ⚠ Splitting plugins/koru-autopilot-antigravity/src/extension.ts may break 202 import paths
+  ⚠ Splitting plugins/koru-autopilot-windsurf/src/extension.ts may break 202 import paths
+  ⚠ Splitting planfile.yaml may break 0 import paths
 
 METRICS-TARGET:
   CC̄:          3.6 → ≤2.5
-  max-CC:      37 → ≤18
-  god-modules: 17 → 0
+  max-CC:      30 → ≤15
+  god-modules: 13 → 0
   high-CC(≥15): 6 → ≤3
   hub-types:   0 → ≤0
 

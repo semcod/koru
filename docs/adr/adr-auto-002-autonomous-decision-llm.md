@@ -1,6 +1,6 @@
 # ADR AUTO-002 — Autonomiczna pętla decyzyjna: OpenRouter LLM + heurystyki + IDE LLM
 
-- Status: **Phase 1+2+3 implemented**, Phase 4 proposed
+- Status: **ALL 4 phases implemented**
 - Date: 2026-05-25
 - Updated: 2026-05-25
 - Related: `koru.yaml` `autonomy.strategy.planning_assistant`, `korullm`, `decision_engine.py`
@@ -193,13 +193,15 @@ class ActionPlan:
 - Zintegrowany w `_handle_post_drive_verification()` z try/except (fail-safe)
 - Env: `KORU_PLANNING_LLM` (on/off), `KORU_PLANNING_LLM_MODEL`, `KORU_PLANNING_LLM_TIMEOUT`
 - Emituje eventy: `LlmEvaluation`, `LlmImprovedPrompt`
-- Testy: `tests/test_planning_llm.py` (22 testów)
+- Testy: `tests/test_planning_llm.py` (38 testów)
 
-### Faza 4: Reflection + Self-Improvement
-- `reflect_on_chat()`: interpretuj niejednoznaczne chat eventy
-- Planning LLM proponuje zmiany `koru.yaml` strategy
-- Auto-tuning: LLM analizuje telemetrię i sugeruje lepsze parametry
-- Multi-ticket planning: LLM widzi cały backlog i priorytetyzuje
+### Faza 4: Reflection + Self-Improvement ✅ DONE
+- `reflect_on_chat()` — OpenRouter-native chat reflection (dodane do `planning_llm.py`)
+- `propose_strategy_tuning()` — analiza telemetry + proposal YAML patch dla `koru.yaml`
+- `prioritize_tickets()` — multi-ticket planning, LLM widzi cały backlog i priorytetyzuje
+- Nowe typy: `LlmReflection`, `StrategyTuning`, `TicketPriority`
+- Wszystkie funkcje fail-safe (None jeśli LLM niedostępny/over budget)
+- Testy: `tests/test_planning_llm.py` (+16 nowych testów Phase 4)
 
 ## Integracja z istniejącym kodem
 

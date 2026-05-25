@@ -13,12 +13,18 @@ from koru.autonomy.planning_llm import (
     BudgetTracker,
     LlmActionAdvice,
     LlmEvaluation,
+    LlmReflection,
     LlmResponse,
+    StrategyTuning,
+    TicketPriority,
     _call_openrouter,
     evaluate_drive_result,
     generate_better_prompt,
     get_budget_tracker,
     plan_next_action,
+    prioritize_tickets,
+    propose_strategy_tuning,
+    reflect_on_chat,
 )
 from koru.autonomy.verification_engine import (
     ChatEvidence,
@@ -386,3 +392,241 @@ class TestLlmEvaluationSerialization:
         d = ev.to_dict()
         assert d["outcome"] == "completed"
         assert d["confidence"] == 0.8
+
+
+# ---------------------------------------------------------------------------
+# reflect_on_chat (Phase 4)
+# ---------------------------------------------------------------------------
+
+
+class TestReflectOnChat:
+    def test_returns_none_for_empty_events(self):
+        result = reflect_on_chat(
+            ticket_id="T-1",
+            ticket_title="Fix bug",
+            driven_prompt="Fix the bug",
+            chat_events=[],
+        )
+        assert result is None
+
+    def test_returns_none_when_disabled(self, monkeypatch):
+        monkeypatch.setenv("KORU_PLANNING_LLM", "off")
+        result = reflect_on_chat(
+            ticket_id="T-1",
+            ticket_title="Fix bug",
+            driven_prompt="Fix it",
+            chat_events=[{"type": "message.received", "text": "Done"}],
+        )
+        assert result is None
+
+    def test_returns_reflection_on_success(self, monkeypatch):
+        monkeypatch.setenv("KORU_PLANNING_LLM", "1")
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+        tracker = get_budget_tracker()
+        tracker.reset_cycle()
+
+        llm_response = {"done": True, "needs_input": False, "summary": "Task completed"}
+        fake_resp = _fake_openrouter_response(llm_response)
+
+        with patch("koru.autonomy.planning_llm.call_openrouter_json", return_value=fake_resp):
+            result = reflect_on_chat(
+                ticket_id="T-1",
+                ticket_title="Fix bug",
+                driven_prompt="Fix it",
+                chat_events=[
+                    {"type": "message.sent", "text": "Fix it"},
+                    {"type": "message.received", "text": "Done, fixed the bug"},
+                ],
+            )
+
+        assert result is not None
+        assert result.done is True
+        assert result.needs_input is False
+        assert "completed" in result.summary
+
+    def test_needs_input_flag(self, monkeypatch):
+        monkeypatch.setenv("KORU_PLANNING_LLM", "1")
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+        tracker = get_budget_tracker()
+        tracker.reset_cycle()
+
+        llm_response = {"done": False, "needs_input": True, "summary": "LLM is asking a question"}
+        fake_resp = _fake_openrouter_response(llm_response)
+
+        with patch("koru.autonomy.planning_llm.call_openrouter_json", return_value=fake_resp):
+            result = reflect_on_chat(
+                ticket_id="T-1",
+                ticket_title="Fix bug",
+                driven_prompt="Fix it",
+                chat_events=[{"type": "message.received", "text": "Which file?"}],
+            )
+
+        assert result is not None
+        assert result.done is False
+        assert result.needs_input is True
+
+    def test_to_dict(self):
+        r = LlmReflection(done=True, needs_input=False, summary="done")
+        d = r.to_dict()
+        assert d["done"] is True
+        assert d["summary"] == "done"
+
+
+# ---------------------------------------------------------------------------
+# propose_strategy_tuning (Phase 4)
+# ---------------------------------------------------------------------------
+
+
+class TestProposeStrategyTuning:
+    def test_returns_none_for_empty_decisions(self):
+        result = propose_strategy_tuning(
+            current_strategy_yaml="id: test",
+            recent_decisions=[],
+        )
+        assert result is None
+
+    def test_returns_none_when_disabled(self, monkeypatch):
+        monkeypatch.setenv("KORU_PLANNING_LLM", "off")
+        result = propose_strategy_tuning(
+            current_strategy_yaml="id: test",
+            recent_decisions=[{"cycle": 1, "skip_code": "ok"}],
+        )
+        assert result is None
+
+    def test_returns_tuning_on_success(self, monkeypatch):
+        monkeypatch.setenv("KORU_PLANNING_LLM", "1")
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+        tracker = get_budget_tracker()
+        tracker.reset_cycle()
+
+        llm_response = {
+            "patch": "idle_discovery:\n  min_interval_seconds: 30",
+            "reason": "Too many idle cycles, reduce interval",
+            "confidence": 0.7,
+        }
+        fake_resp = _fake_openrouter_response(llm_response)
+
+        with patch("koru.autonomy.planning_llm.call_openrouter_json", return_value=fake_resp):
+            result = propose_strategy_tuning(
+                current_strategy_yaml="id: accordion\nidle_discovery:\n  min_interval_seconds: 60",
+                recent_decisions=[
+                    {"cycle": i, "skip_code": "idle_streak"} for i in range(5)
+                ],
+            )
+
+        assert result is not None
+        assert "30" in result.patch
+        assert result.confidence == 0.7
+
+    def test_returns_none_on_empty_patch_and_reason(self, monkeypatch):
+        monkeypatch.setenv("KORU_PLANNING_LLM", "1")
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+        tracker = get_budget_tracker()
+        tracker.reset_cycle()
+
+        llm_response = {"patch": "", "reason": "", "confidence": 0.1}
+        fake_resp = _fake_openrouter_response(llm_response)
+
+        with patch("koru.autonomy.planning_llm.call_openrouter_json", return_value=fake_resp):
+            result = propose_strategy_tuning(
+                current_strategy_yaml="id: test",
+                recent_decisions=[{"cycle": 1}],
+            )
+        assert result is None
+
+    def test_to_dict(self):
+        t = StrategyTuning(patch="x: 1", reason="tune", confidence=0.5)
+        d = t.to_dict()
+        assert d["patch"] == "x: 1"
+
+
+# ---------------------------------------------------------------------------
+# prioritize_tickets (Phase 4)
+# ---------------------------------------------------------------------------
+
+
+class TestPrioritizeTickets:
+    def test_returns_none_for_single_ticket(self):
+        result = prioritize_tickets(tickets=[{"id": "T-1", "title": "Fix"}])
+        assert result is None
+
+    def test_returns_none_when_disabled(self, monkeypatch):
+        monkeypatch.setenv("KORU_PLANNING_LLM", "off")
+        result = prioritize_tickets(
+            tickets=[
+                {"id": "T-1", "title": "Fix bug"},
+                {"id": "T-2", "title": "Add feature"},
+            ],
+        )
+        assert result is None
+
+    def test_returns_priority_on_success(self, monkeypatch):
+        monkeypatch.setenv("KORU_PLANNING_LLM", "1")
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+        tracker = get_budget_tracker()
+        tracker.reset_cycle()
+
+        llm_response = {
+            "ordered": ["T-2", "T-1"],
+            "reason": "T-2 fixes failing tests",
+            "confidence": 0.8,
+        }
+        fake_resp = _fake_openrouter_response(llm_response)
+
+        with patch("koru.autonomy.planning_llm.call_openrouter_json", return_value=fake_resp):
+            result = prioritize_tickets(
+                tickets=[
+                    {"id": "T-1", "title": "Add feature"},
+                    {"id": "T-2", "title": "Fix failing test"},
+                ],
+                test_status="failing",
+            )
+
+        assert result is not None
+        assert result.ordered_ticket_ids == ("T-2", "T-1")
+        assert result.confidence == 0.8
+
+    def test_filters_invalid_ticket_ids(self, monkeypatch):
+        monkeypatch.setenv("KORU_PLANNING_LLM", "1")
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+        tracker = get_budget_tracker()
+        tracker.reset_cycle()
+
+        llm_response = {
+            "ordered": ["T-1", "FAKE-99", "T-2"],
+            "reason": "order",
+            "confidence": 0.5,
+        }
+        fake_resp = _fake_openrouter_response(llm_response)
+
+        with patch("koru.autonomy.planning_llm.call_openrouter_json", return_value=fake_resp):
+            result = prioritize_tickets(
+                tickets=[
+                    {"id": "T-1", "title": "A"},
+                    {"id": "T-2", "title": "B"},
+                ],
+            )
+
+        assert result is not None
+        assert "FAKE-99" not in result.ordered_ticket_ids
+        assert result.ordered_ticket_ids == ("T-1", "T-2")
+
+    def test_returns_none_if_no_valid_ids(self, monkeypatch):
+        monkeypatch.setenv("KORU_PLANNING_LLM", "1")
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+        tracker = get_budget_tracker()
+        tracker.reset_cycle()
+
+        llm_response = {"ordered": ["FAKE-1", "FAKE-2"], "reason": "x"}
+        fake_resp = _fake_openrouter_response(llm_response)
+
+        with patch("koru.autonomy.planning_llm.call_openrouter_json", return_value=fake_resp):
+            result = prioritize_tickets(
+                tickets=[{"id": "T-1", "title": "A"}, {"id": "T-2", "title": "B"}],
+            )
+        assert result is None
+
+    def test_to_dict(self):
+        tp = TicketPriority(ordered_ticket_ids=("T-1", "T-2"), reason="go")
+        d = tp.to_dict()
+        assert d["ordered_ticket_ids"] == ["T-1", "T-2"]

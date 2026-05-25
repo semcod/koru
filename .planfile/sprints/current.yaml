@@ -1826,13 +1826,13 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-25T15:18:52.447431+00:00'
-      description: "BLOCKED: FAIL: oru/autopilot/install_manager.py\", line 605, in
-        collect_install_manager_report\n    expected_plugin = _expected_plugin_version(root,
-        resolved_ide) if plugin_supported else None\n                      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\n
-        \ File \"/home/tom/github/semcod/koru/src/koru/autopilot/install_manager.py\",
-        line 187, in _expected_plugin_version\n    except (OSError, json.JSONDecodeError):\n
-        \                    ^^^^\nNameError: name 'json' is not defined. Did you
-        forget to import 'json'?"
+      description: "BLOCKED: FAIL: oru/autopilot/install_manager.py\", line 605, in\
+        \ collect_install_manager_report\n    expected_plugin = _expected_plugin_version(root,\
+        \ resolved_ide) if plugin_supported else None\n                      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\n\
+        \  File \"/home/tom/github/semcod/koru/src/koru/autopilot/install_manager.py\"\
+        , line 187, in _expected_plugin_version\n    except (OSError, json.JSONDecodeError):\n\
+        \                     ^^^^\nNameError: name 'json' is not defined. Did you\
+        \ forget to import 'json'?"
       execution:
         assigned_to: koru-shell
         attempt: 0
@@ -4342,3 +4342,123 @@ sprint:
       status: open
       sync: {}
       updated_at: '2026-05-25T20:37:39.921337+00:00'
+    STARTER-304:
+      id: STARTER-304
+      name: 'Split god module: plugins/koru-autopilot-shared/src/autopilot-bridge.ts'
+      status: open
+      priority: high
+      sprint: current
+      source:
+        tool: koru-scan
+        timestamp: '2026-05-25T21:30:16.999560+00:00'
+        context:
+          input: '`project/analysis.toon.yaml` flags `plugins/koru-autopilot-shared/src/autopilot-bridge.ts`
+            as a god module (3059 lines, 6 classes, 403 methods). Split into focused
+            submodules by responsibility.'
+          signal: code2llm_god
+          dedupe_key: semcod:code2llm:refactor:plugins/koru-autopilot-shared/src/autopilot-bridge.ts
+      description: '`project/analysis.toon.yaml` flags `plugins/koru-autopilot-shared/src/autopilot-bridge.ts`
+        as a god module (3059 lines, 6 classes, 403 methods). Split into focused submodules
+        by responsibility.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - god-module
+      - refactor
+      - scan
+      blocked_by: []
+      blocks: []
+      files:
+      - plugins/koru-autopilot-shared/src/autopilot-bridge.ts
+      - project/analysis.toon.yaml
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '`project/analysis.toon.yaml` flags `plugins/koru-autopilot-shared/src/autopilot-bridge.ts`
+          as a god module (3059 lines, 6 classes, 403 methods). Split into focused
+          submodules by responsibility.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-25T21:30:16.999560+00:00'
+        action: created
+        source: koru task
+        message: '`project/analysis.toon.yaml` flags `plugins/koru-autopilot-shared/src/autopilot-bridge.ts`
+          as a god module (3059 lines, 6 classes, 403 methods). Split into focused
+          submodules by responsibility.'
+      created_at: '2026-05-25T21:30:16.999560+00:00'
+      updated_at: '2026-05-25T21:30:16.999560+00:00'
+    STARTER-305:
+      id: STARTER-305
+      name: 'Split god module: src/koru/autonomy/planning_llm.py'
+      status: open
+      priority: high
+      sprint: current
+      source:
+        tool: koru-scan
+        timestamp: '2026-05-25T21:30:17.455257+00:00'
+        context:
+          input: '`project/analysis.toon.yaml` flags `src/koru/autonomy/planning_llm.py`
+            as a god module (664 lines, 7 classes, 23 methods). Split into focused
+            submodules by responsibility.'
+          signal: code2llm_god
+          dedupe_key: semcod:code2llm:refactor:src/koru/autonomy/planning_llm.py
+      description: '`project/analysis.toon.yaml` flags `src/koru/autonomy/planning_llm.py`
+        as a god module (664 lines, 7 classes, 23 methods). Split into focused submodules
+        by responsibility.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - god-module
+      - refactor
+      - scan
+      blocked_by: []
+      blocks: []
+      files:
+      - src/koru/autonomy/planning_llm.py
+      - project/analysis.toon.yaml
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '`project/analysis.toon.yaml` flags `src/koru/autonomy/planning_llm.py`
+          as a god module (664 lines, 7 classes, 23 methods). Split into focused submodules
+          by responsibility.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-25T21:30:17.455257+00:00'
+        action: created
+        source: koru task
+        message: '`project/analysis.toon.yaml` flags `src/koru/autonomy/planning_llm.py`
+          as a god module (664 lines, 7 classes, 23 methods). Split into focused submodules
+          by responsibility.'
+      created_at: '2026-05-25T21:30:17.455257+00:00'
+      updated_at: '2026-05-25T21:30:17.455257+00:00'
