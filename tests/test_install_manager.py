@@ -616,6 +616,7 @@ def test_collect_report_for_zed_does_not_require_vsix_plugin(monkeypatch, tmp_pa
 
 def test_collect_report_auto_still_checks_plugin_connection(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
     monkeypatch.setattr(install_manager, "_source_root", lambda: tmp_path)
     monkeypatch.setattr(install_manager, "_source_version", lambda _root, _ide=None: "1.0")
     monkeypatch.setattr(install_manager, "_package_version", lambda: "1.0")
