@@ -1,18 +1,18 @@
-# code2llm/evolution | 4682 func | 398f | 2026-05-25
-# generated in 0.02s
+# code2llm/evolution | 4829 func | 416f | 2026-05-25
+# generated in 0.03s
 
 NEXT[5] (ranked by impact):
   [1] !! SPLIT           plugins/koru-autopilot-cursor/src/extension.ts
-      WHY: 2965L, 2 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 44475
+      WHY: 3013L, 2 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 45195
 
   [2] !! SPLIT           plugins/koru-autopilot-vscode/src/extension.ts
-      WHY: 2709L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 37926
+      WHY: 2757L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 38598
 
   [3] !! SPLIT           plugins/koru-autopilot-vscodium/src/extension.ts
-      WHY: 2705L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 37870
+      WHY: 2753L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 38542
 
   [4] !! SPLIT-FUNC      validate_ide_command_scenario  CC=37  fan=18
       WHY: CC=37 exceeds 15
@@ -24,14 +24,14 @@ NEXT[5] (ranked by impact):
 
 
 RISKS[3]:
-  ⚠ Splitting plugins/koru-autopilot-cursor/src/extension.ts may break 207 import paths
-  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 204 import paths
-  ⚠ Splitting plugins/koru-autopilot-vscodium/src/extension.ts may break 204 import paths
+  ⚠ Splitting plugins/koru-autopilot-cursor/src/extension.ts may break 210 import paths
+  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 207 import paths
+  ⚠ Splitting plugins/koru-autopilot-vscodium/src/extension.ts may break 207 import paths
 
 METRICS-TARGET:
   CC̄:          3.6 → ≤2.5
   max-CC:      37 → ≤18
-  god-modules: 15 → 0
+  god-modules: 17 → 0
   high-CC(≥15): 6 → ≤3
   hub-types:   0 → ≤0
 

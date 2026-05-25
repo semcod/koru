@@ -219,6 +219,9 @@ def _daemon(
 ) -> Iterator[_DaemonHarness]:
     if patch_ides:
         _patch_no_running_ides(monkeypatch)
+    monkeypatch.delenv("KORU_STRICT_PLUGIN_ACK", raising=False)
+    monkeypatch.delenv("KORU_STRICT_PLUGIN_VERSION", raising=False)
+    monkeypatch.delenv("KORU_PLUGIN_VERSION_POLICY", raising=False)
     harness = _DaemonHarness(
         tmp_path,
         injector=injector,
@@ -1141,7 +1144,7 @@ def test_plugin_ack_after_cli_disconnect_is_logged_as_late_ack(
         forwarded = plugin_reader.read_message()
         assert forwarded.type == "chat.send"
         cli.close()
-        time.sleep(0.35)
+        time.sleep(0.5)
 
         plugin.sendall(
             Message(

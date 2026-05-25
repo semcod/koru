@@ -59,3 +59,50 @@ def test_doctor_constants_vs_doctor_consistency():
     # Check that problem catalog values match (not necessarily the same object)
     assert doctor._PROBLEM_CATALOG == doctor_constants._PROBLEM_CATALOG
     assert doctor.ProblemCatalogEntry is doctor_constants.ProblemCatalogEntry
+
+
+def test_doctor_project_checks_are_reexported():
+    """Verify extracted project checks remain available from koru.doctor."""
+    from koru import doctor
+    from koru import doctor_project_checks
+
+    assert doctor._check_detected_environment is doctor_project_checks._check_detected_environment
+    assert doctor._check_detected_configuration is doctor_project_checks._check_detected_configuration
+    assert (
+        doctor._detected_configuration_presence_bits
+        is doctor_project_checks._detected_configuration_presence_bits
+    )
+    assert doctor._detected_configuration_json_bits is doctor_project_checks._detected_configuration_json_bits
+
+
+def test_doctor_plugin_bundle_checks_are_reexported():
+    """Verify extracted plugin bundle checks remain available from koru.doctor."""
+    from koru import doctor
+    from koru import doctor_plugin_bundle
+
+    assert doctor._check_autopilot_plugin_bundle is doctor_plugin_bundle._check_autopilot_plugin_bundle
+    assert doctor._read_json_file is doctor_plugin_bundle._read_json_file
+    assert doctor._package_lock_root_version is doctor_plugin_bundle._package_lock_root_version
+    assert (
+        doctor._autopilot_plugin_bundle_detail_bits
+        is doctor_plugin_bundle._autopilot_plugin_bundle_detail_bits
+    )
+    assert doctor._autopilot_plugin_bundle_issues is doctor_plugin_bundle._autopilot_plugin_bundle_issues
+    assert doctor._autopilot_plugin_bundle_paths is doctor_plugin_bundle._autopilot_plugin_bundle_paths
+
+
+def test_doctor_runtime_checks_are_reexported():
+    """Verify extracted runtime checks remain available from koru.doctor."""
+    from koru import doctor
+    from koru import doctor_runtime_checks
+
+    assert doctor._check_koru_runtime_identity is doctor_runtime_checks._check_koru_runtime_identity
+    assert doctor._check_python_venv_alignment is doctor_runtime_checks._check_python_venv_alignment
+    assert doctor._read_project_version is doctor_runtime_checks._read_project_version
+    assert doctor._installed_koru_version is doctor_runtime_checks._installed_koru_version
+    assert (
+        doctor._path_koru_supports_auto_subcommand
+        is doctor_runtime_checks._path_koru_supports_auto_subcommand
+    )
+    assert doctor._koru_path_version_issues is doctor_runtime_checks._koru_path_version_issues
+    assert doctor._is_relative_to is doctor_runtime_checks._is_relative_to

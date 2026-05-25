@@ -11,6 +11,7 @@ import pytest
 
 from koru.autopilot import cli_command, doctor_cli, install_plugin_cli, systemd_cli
 from koru.autopilot.cli_command import autopilot_main
+from koru.autopilot.commands import handoff
 from koru.autopilot.cli_parser import build_autopilot_parser
 
 
@@ -927,7 +928,7 @@ def test_handoff_dry_run_prints_brief_and_skips_daemon(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """``handoff --dry-run`` must print the brief and never touch the socket."""
-    monkeypatch.setattr(cli_command, "_build_brief", lambda _p: "# fake brief\n\nhi")
+    monkeypatch.setattr(handoff, "_build_brief", lambda _p, **kw: "# fake brief\n\nhi")
     rc = autopilot_main(
         [
             "handoff",
@@ -946,7 +947,7 @@ def test_handoff_requires_running_daemon(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(cli_command, "_build_brief", lambda _p: "# brief")
+    monkeypatch.setattr(handoff, "_build_brief", lambda _p, **kw: "# brief")
     socket = tmp_path / "missing.sock"
     rc = autopilot_main(
         [
@@ -968,7 +969,7 @@ def test_handoff_drives_brief_through_client(
 ) -> None:
     """Happy path: build_brief + daemon up → client.drive called with the brief."""
 
-    monkeypatch.setattr(cli_command, "_build_brief", lambda _p: "# the brief")
+    monkeypatch.setattr(handoff, "_build_brief", lambda _p, **kw: "# the brief")
 
     class _FakeClient:
         def __init__(self, *_a, **_kw) -> None:

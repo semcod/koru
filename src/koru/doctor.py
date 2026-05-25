@@ -64,13 +64,11 @@ The module is intentionally side-effect-free (no writes, no network).
 
 import json
 import os
-import platform
 import re
 import shlex
 import shutil
 import subprocess
 import sys
-import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -92,12 +90,34 @@ from koru.doctor_constants import (
     WARN,
     _PROBLEM_CATALOG,
 )
+from koru.doctor_plugin_bundle import (
+    _autopilot_plugin_bundle_detail_bits,
+    _autopilot_plugin_bundle_issues,
+    _autopilot_plugin_bundle_paths,
+    _check_autopilot_plugin_bundle,
+    _package_lock_root_version,
+    _read_json_file,
+)
+from koru.doctor_project_checks import (
+    _check_detected_configuration,
+    _check_detected_environment,
+    _detected_configuration_json_bits,
+    _detected_configuration_presence_bits,
+)
 from koru.doctor_render import detected_problems, render_problem_catalog_text, render_text
+from koru.doctor_runtime_checks import (
+    _check_koru_runtime_identity,
+    _check_python_venv_alignment,
+    _installed_koru_version,
+    _is_relative_to,
+    _koru_path_version_issues,
+    _path_koru_supports_auto_subcommand,
+    _read_project_version,
+)
 from koru.policy import policy_path
 from koru.project_pipeline import KORU_PROJECT_PIPELINE_FILENAME, project_pipeline_path
 from koru.runtime import planfile_dir, runtime_dir
 from koru.utils.subprocess_runner import get_python_cmd
-from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 from koruide.socket import default_socket_path
 
 # Default timeout for the pytest-collect probe. Doctor is meant to be
@@ -254,121 +274,6 @@ def _check_interface_registry(_project: Path) -> tuple[str, str]:
     return PASS, f"{len(ids)} interfaces: {', '.join(ids[:5])}{' ...' if len(ids) > 5 else ''}; families: {family_summary}"
 
 
-def _check_detected_environment(project: Path) -> tuple[str, str]:
-    del project
-    py = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    bits = [
-        f"os={platform.system().lower()} {platform.release()} ({platform.machine()})",
-        f"python={py}",
-        f"executable={sys.executable}",
-    ]
-    virtual_env = os.environ.get("VIRTUAL_ENV", "").strip()
-    if not virtual_env and getattr(sys, "base_prefix", sys.prefix) != sys.prefix:
-        virtual_env = sys.prefix
-    bits.append(f"virtual_env={virtual_env or 'none'}")
-    lane = os.environ.get("KORU_AGENT_LANE", "").strip()
-    if lane:
-        bits.append(f"agent_lane={lane}")
-    return PASS, "; ".join(bits)
-
-
-def _detected_configuration_presence_bits(
-    *,
-    planfile_cfg: Path,
-    policy_cfg: Path,
-    pipeline_cfg: Path,
-) -> list[str]:
-    return [
-        f"planfile_config={'present' if planfile_cfg.is_file() else 'missing'}",
-        f"policy_yaml={'present' if policy_cfg.is_file() else 'missing'}",
-        f"koru_yaml={'present' if pipeline_cfg.is_file() else 'missing'}",
-    ]
-
-
-def _detected_configuration_json_bits(
-    *,
-    project: Path,
-    payload: dict[str, object],
-) -> tuple[str, list[str]]:
-    """Return (status, detail_bits) derived from .koru/project.json payload."""
-    status = PASS
-    bits: list[str] = []
-
-    schema = str(payload.get("schema", "")).strip()
-    declared_project = str(payload.get("project", "")).strip()
-    bits.append(f"koru_project_json=present(schema={schema or 'unknown'})")
-
-    if declared_project:
-        try:
-            if Path(declared_project).expanduser().resolve() != project.resolve():
-                status = WARN
-                bits.append("project_path_mismatch=true")
-        except OSError:
-            status = WARN
-            bits.append("project_path_mismatch=unknown")
-
-    if schema and schema != "koru.project/v1":
-        status = WARN
-        bits.append("schema_mismatch=true")
-
-    return status, bits
-
-
-def _check_detected_configuration(project: Path) -> tuple[str, str]:
-    koru_project = project / ".koru" / "project.json"
-    planfile_cfg = planfile_dir(project) / "config.yaml"
-    policy_cfg = policy_path(project)
-    pipeline_cfg = project_pipeline_path(project)
-
-    status = PASS
-    detail_bits = _detected_configuration_presence_bits(
-        planfile_cfg=planfile_cfg,
-        policy_cfg=policy_cfg,
-        pipeline_cfg=pipeline_cfg,
-    )
-
-    if koru_project.is_file():
-        try:
-            payload = json.loads(koru_project.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            return FAIL, f".koru/project.json malformed JSON: {exc}"
-
-        payload_status, payload_bits = _detected_configuration_json_bits(
-            project=project,
-            payload=payload,
-        )
-        detail_bits.extend(payload_bits)
-        if payload_status != PASS:
-            status = payload_status
-    else:
-        detail_bits.append("koru_project_json=missing")
-        if planfile_cfg.is_file():
-            status = WARN
-
-    return status, "; ".join(detail_bits)
-
-
-def _read_project_version(path: Path) -> str | None:
-    try:
-        data = tomllib.loads(path.read_text(encoding="utf-8"))
-    except (OSError, tomllib.TOMLDecodeError):
-        return None
-    project = data.get("project")
-    if not isinstance(project, dict):
-        return None
-    version = project.get("version")
-    return str(version) if version else None
-
-
-def _installed_koru_version() -> str | None:
-    try:
-        from importlib.metadata import PackageNotFoundError, version
-
-        return version("koru")
-    except (ImportError, PackageNotFoundError, ValueError):
-        return None
-
-
 def _selected_autopilot_ide(*, include_terminal_hint: bool = True) -> str | None:
     raw_ide = os.environ.get("KORU_AUTOPILOT_IDE")
     raw_instance = os.environ.get("KORU_AUTOPILOT_INSTANCE")
@@ -400,250 +305,6 @@ def _resolve_autopilot_socket_for_doctor() -> Path:
             else:
                 os.environ["KORU_AUTOPILOT_INSTANCE"] = previous
     return default_socket_path()
-
-
-def _path_koru_supports_auto_subcommand(path_koru: str | None) -> bool | None:
-    """Probe whether ``koru auto`` works on the executable first on PATH."""
-    if not path_koru:
-        return None
-    try:
-        proc = subprocess.run(
-            [path_koru, "auto", "--help"],
-            capture_output=True,
-            text=True,
-            timeout=8,
-            check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired):
-        return None
-    combined = f"{proc.stdout or ''}\n{proc.stderr or ''}"
-    if "unrecognized arguments: auto" in combined:
-        return False
-    if proc.returncode == 0 and (
-        "koru autonomous" in combined or "alias:" in combined.lower()
-    ):
-        return True
-    return proc.returncode == 0 if proc.returncode == 0 else False
-
-
-def _koru_path_version_issues(
-    project_koru: Path,
-    path_koru: str | None,
-    package_version: str | None,
-    source_version: str | None,
-) -> tuple[str, list[str]]:
-    """Return (status, extra_bits) for path-mismatch and version checks."""
-    status = PASS
-    bits: list[str] = []
-    if project_koru.is_file() and path_koru:
-        try:
-            if Path(path_koru).resolve() != project_koru.resolve():
-                status = WARN
-                bits.append("path_mismatch=true")
-        except OSError:
-            status = WARN
-            bits.append("path_mismatch=unknown")
-    auto_ok = _path_koru_supports_auto_subcommand(path_koru)
-    if auto_ok is False:
-        status = WARN
-        bits.append("koru_auto_unsupported=true")
-        if project_koru.is_file():
-            bits.append(
-                f"fix=export PATH={project_koru.parent}:$PATH; hash -r; or {project_koru} auto"
-            )
-        else:
-            bits.append("fix=pip install -e . && use koru autonomous")
-    if package_version and source_version and package_version != source_version:
-        status = WARN
-        bits.append("version_mismatch=true")
-    if package_version is None:
-        status = WARN
-        bits.append("package_metadata=missing")
-    return status, bits
-
-
-def _check_koru_runtime_identity(project: Path) -> tuple[str, str]:
-    package_version = _installed_koru_version()
-    source_version = _read_project_version(project / "pyproject.toml")
-    path_koru = shutil.which("koru")
-    project_koru = project / ".venv" / "bin" / "koru"
-    detail_bits = [
-        f"python={sys.executable}",
-        f"package={package_version or '-'}",
-        f"source_pyproject={source_version or '-'}",
-        f"path_koru={path_koru or '-'}",
-    ]
-    if project_koru.is_file():
-        detail_bits.append(f"project_venv_koru={project_koru}")
-    status, extra_bits = _koru_path_version_issues(
-        project_koru, path_koru, package_version, source_version
-    )
-    detail_bits.extend(extra_bits)
-    return status, "; ".join(detail_bits)
-
-
-def _is_relative_to(path: Path, parent: Path) -> bool:
-    # Use lexical containment rather than ``resolve()`` for the child:
-    # virtualenv Python binaries are often symlinks to /usr/bin/python,
-    # but the operator still launched the interpreter from project .venv.
-    try:
-        child = path.expanduser()
-        if not child.is_absolute():
-            child = Path.cwd() / child
-        child.absolute().relative_to(parent.expanduser().resolve())
-    except (OSError, ValueError):
-        return False
-    return True
-
-
-def _check_python_venv_alignment(project: Path) -> tuple[str, str]:
-    project_venv = project / ".venv"
-    virtual_env = os.environ.get("VIRTUAL_ENV", "").strip()
-    executable = Path(sys.executable)
-    python_from_project_venv = _is_relative_to(executable, project_venv)
-    detail_bits = [
-        f"virtual_env={virtual_env or '-'}",
-        f"python={sys.executable}",
-        f"project_venv={project_venv}",
-    ]
-    if not project_venv.exists():
-        return WARN, "; ".join(detail_bits + ["project_venv_missing=true"])
-
-    status = PASS
-    if virtual_env:
-        try:
-            if Path(virtual_env).expanduser().resolve() != project_venv.resolve():
-                status = WARN
-                detail_bits.append("virtual_env_mismatch=true")
-        except OSError:
-            status = WARN
-            detail_bits.append("virtual_env_mismatch=unknown")
-    else:
-        detail_bits.append("virtual_env_unset=true")
-
-    if not python_from_project_venv:
-        status = WARN
-        detail_bits.append("python_not_from_project_venv=true")
-
-    path_koru = shutil.which("koru")
-    if path_koru and not _is_relative_to(Path(path_koru), project_venv):
-        status = WARN
-        detail_bits.append("path_koru_not_from_project_venv=true")
-    return status, "; ".join(detail_bits)
-
-
-def _read_json_file(path: Path) -> dict[str, object] | None:
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
-    return payload if isinstance(payload, dict) else None
-
-
-def _package_lock_root_version(package_lock: dict[str, object] | None) -> str:
-    if not package_lock:
-        return ""
-    packages = package_lock.get("packages")
-    if not isinstance(packages, dict):
-        return ""
-    root = packages.get("")
-    if not isinstance(root, dict):
-        return ""
-    return str(root.get("version") or "")
-
-
-def _autopilot_plugin_bundle_paths(project: Path, plugin_dir: Path) -> tuple[Path, Path]:
-    expected = EXPECTED_VSCODE_PLUGIN_VERSION
-    return (
-        project
-        / "src"
-        / "koru"
-        / "assets"
-        / "koru-autopilot-vscode"
-        / f"koru-autopilot-{expected}.vsix",
-        plugin_dir / f"koru-autopilot-{expected}.vsix",
-    )
-
-
-def _autopilot_plugin_bundle_detail_bits(
-    *,
-    package_version: str,
-    lock_version: str,
-    root_lock_version: str,
-    local_vsix: Path,
-    asset: Path,
-) -> list[str]:
-    expected = EXPECTED_VSCODE_PLUGIN_VERSION
-    return [
-        f"expected={expected}",
-        f"package={package_version or '-'}",
-        f"lock={lock_version or '-'}",
-        f"lock_root={root_lock_version or '-'}",
-        f"local_vsix={'present' if local_vsix.is_file() else 'missing'}",
-        f"asset_vsix={'present' if asset.is_file() else 'missing'}",
-    ]
-
-
-def _autopilot_plugin_bundle_issues(
-    *,
-    package_json: dict[str, object] | None,
-    package_lock: dict[str, object] | None,
-    package_version: str,
-    lock_version: str,
-    root_lock_version: str,
-    local_vsix: Path,
-    asset: Path,
-) -> list[str]:
-    expected = EXPECTED_VSCODE_PLUGIN_VERSION
-    issues: list[str] = []
-    version_checks = (
-        ("package_version_mismatch", package_version),
-        ("lock_version_mismatch", lock_version),
-        ("lock_root_version_mismatch", root_lock_version),
-    )
-    if not package_json:
-        issues.append("package_json_unreadable")
-    if not package_lock:
-        issues.append("package_lock_unreadable")
-    for label, version in version_checks:
-        if version and version != expected:
-            issues.append(label)
-    if not local_vsix.is_file():
-        issues.append("local_vsix_missing")
-    if not asset.is_file():
-        issues.append("asset_vsix_missing")
-    return issues
-
-
-def _check_autopilot_plugin_bundle(project: Path) -> tuple[str, str]:
-    plugin_dir = project / "plugins" / "koru-autopilot-vscode"
-    if not plugin_dir.is_dir():
-        return SKIP, "plugin source tree not present"
-    package_json = _read_json_file(plugin_dir / "package.json")
-    package_lock = _read_json_file(plugin_dir / "package-lock.json")
-    package_version = str(package_json.get("version") or "") if package_json else ""
-    lock_version = str(package_lock.get("version") or "") if package_lock else ""
-    root_lock_version = _package_lock_root_version(package_lock)
-    asset, local_vsix = _autopilot_plugin_bundle_paths(project, plugin_dir)
-    detail_bits = _autopilot_plugin_bundle_detail_bits(
-        package_version=package_version,
-        lock_version=lock_version,
-        root_lock_version=root_lock_version,
-        local_vsix=local_vsix,
-        asset=asset,
-    )
-    issues = _autopilot_plugin_bundle_issues(
-        package_json=package_json,
-        package_lock=package_lock,
-        package_version=package_version,
-        lock_version=lock_version,
-        root_lock_version=root_lock_version,
-        local_vsix=local_vsix,
-        asset=asset,
-    )
-    if issues:
-        return WARN, "; ".join(detail_bits + [f"issues={','.join(issues)}"])
-    return PASS, "; ".join(detail_bits + ["bundle=consistent"])
 
 
 def _autopilot_env_snapshot() -> dict[str, str]:

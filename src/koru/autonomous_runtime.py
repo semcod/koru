@@ -155,6 +155,9 @@ def setup_autopilot_daemon(
         lane,
         resolve_ide_route_fn=resolve_ide_route_fn,
     )
+    if autopilot_ide and autopilot_ide != "auto":
+        os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
+        lane = autopilot_ide
     env_socket = (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip()
     env_instance_before = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
     socket_source = "cli --socket" if args.socket else "default socket"
@@ -254,8 +257,7 @@ def build_and_log_startup_probe(
         autopilot_ide_cli=args.autopilot_ide,
         resolve_project_lane=resolve_project_lane,
     )
-    # Update KORU_AUTOPILOT_INSTANCE to match the resolved autopilot_ide from the startup probe
-    # This ensures subsequent socket path computations use the correct value instead of a stale env var
+    # Keep later socket computations aligned with the resolved IDE, not stale env.
     if hasattr(startup_probe, "resolved_autopilot_ide") and startup_probe.resolved_autopilot_ide:
         os.environ["KORU_AUTOPILOT_INSTANCE"] = startup_probe.resolved_autopilot_ide
     for line in format_startup_banner(startup_probe):

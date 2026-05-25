@@ -99,6 +99,7 @@ class PluginInstallResult:
     settings_path: str | None = None
     socket_path: str | None = None
     conflicts_removed: tuple[str, ...] = ()
+    stale_extension_dirs_moved: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, object]:
         out: dict[str, object] = {
@@ -116,6 +117,8 @@ class PluginInstallResult:
             out["socket_path"] = self.socket_path
         if self.conflicts_removed:
             out["conflicts_removed"] = list(self.conflicts_removed)
+        if self.stale_extension_dirs_moved:
+            out["stale_extension_dirs_moved"] = list(self.stale_extension_dirs_moved)
         return out
 
 
@@ -495,6 +498,90 @@ def _remove_conflicting_extensions(
     return tuple(removed)
 
 
+def _extensions_metadata_path_for_ide(ide: str) -> Path | None:
+    roots = {
+        "antigravity": Path.home() / ".antigravity" / "extensions" / "extensions.json",
+        "cursor": Path.home() / ".cursor" / "extensions" / "extensions.json",
+        "vscode": Path.home() / ".vscode" / "extensions" / "extensions.json",
+        "vscodium": Path.home() / ".vscode-oss" / "extensions" / "extensions.json",
+        "windsurf": Path.home() / ".windsurf" / "extensions" / "extensions.json",
+    }
+    return roots.get(ide)
+
+
+def _active_extension_locations(metadata_path: Path) -> set[str]:
+    try:
+        data = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return set()
+    if not isinstance(data, list):
+        return set()
+    active: set[str] = set()
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        relative = item.get("relativeLocation")
+        if isinstance(relative, str) and relative:
+            active.add(relative.lower())
+            continue
+        location = item.get("location")
+        if isinstance(location, dict):
+            raw_path = location.get("path") or location.get("fsPath")
+            if isinstance(raw_path, str) and raw_path:
+                active.add(Path(raw_path).name.lower())
+    return active
+
+
+def _move_path_aside(path: Path, disabled_root: Path) -> Path:
+    disabled_root.mkdir(parents=True, exist_ok=True)
+    target = disabled_root / path.name
+    if not target.exists():
+        shutil.move(str(path), str(target))
+        return target
+    for index in range(1, 100):
+        candidate = disabled_root / f"{path.name}.stale{index}"
+        if not candidate.exists():
+            shutil.move(str(path), str(candidate))
+            return candidate
+    raise OSError(f"cannot find free stale-extension target for {path}")
+
+
+def _prune_stale_koru_extension_dirs(
+    *,
+    target_ide: str,
+    dry_run: bool,
+) -> tuple[str, ...]:
+    metadata_path = _extensions_metadata_path_for_ide(target_ide)
+    if metadata_path is None:
+        return ()
+    extensions_root = metadata_path.parent
+    if not extensions_root.is_dir():
+        return ()
+
+    active_locations = _active_extension_locations(metadata_path)
+    koru_ids = {extension_id_for_ide(target_ide).lower()}
+    koru_ids.update(_conflicting_extension_ids(target_ide))
+    stale_dirs = sorted(
+        child
+        for child in extensions_root.iterdir()
+        if child.is_dir()
+        and child.name.lower() not in active_locations
+        and any(child.name.lower().startswith(f"{ext_id}-") for ext_id in koru_ids)
+    )
+    if dry_run:
+        return tuple(child.name for child in stale_dirs)
+
+    disabled_root = extensions_root.parent / "extensions-disabled"
+    moved: list[str] = []
+    for child in stale_dirs:
+        try:
+            target = _move_path_aside(child, disabled_root)
+        except OSError:
+            continue
+        moved.append(str(target))
+    return tuple(moved)
+
+
 def _parse_extension_version(
     output: str,
     *,
@@ -630,6 +717,7 @@ def _result_already_installed(
     settings_path: Path | None,
     socket_path_str: str | None,
     conflicts_removed: tuple[str, ...] = (),
+    stale_extension_dirs_moved: tuple[str, ...] = (),
 ) -> PluginInstallResult:
     last_cmd, extra = _reassert_extension_extra(
         command, dry_run=dry_run, runner=runner, target_ide=target
@@ -645,6 +733,12 @@ def _result_already_installed(
                 if conflicts_removed
                 else ""
             )
+            + (
+                "moved stale extension dirs: "
+                f"{', '.join(stale_extension_dirs_moved)}; "
+                if stale_extension_dirs_moved
+                else ""
+            )
             +
             "if the IDE was already open during install/reassert, run "
             "`Developer: Reload Window` (or restart it), then run "
@@ -654,6 +748,7 @@ def _result_already_installed(
         settings_path=str(settings_path) if settings_path is not None else None,
         socket_path=socket_path_str,
         conflicts_removed=conflicts_removed,
+        stale_extension_dirs_moved=stale_extension_dirs_moved,
     )
 
 
@@ -667,6 +762,7 @@ def _install_extension_vsix(
     settings_path: Path | None,
     socket_path_str: str | None,
     conflicts_removed: tuple[str, ...] = (),
+    stale_extension_dirs_moved: tuple[str, ...] = (),
 ) -> PluginInstallResult:
     cmd = [command, "--install-extension", str(vsix)]
     if dry_run:
@@ -678,6 +774,7 @@ def _install_extension_vsix(
             vsix=str(vsix),
             socket_path=socket_path_str,
             conflicts_removed=conflicts_removed,
+            stale_extension_dirs_moved=stale_extension_dirs_moved,
         )
     try:
         proc = runner(cmd, timeout=120.0)
@@ -712,6 +809,12 @@ def _install_extension_vsix(
                 if conflicts_removed
                 else ""
             )
+            + (
+                "moved stale extension dirs: "
+                f"{', '.join(stale_extension_dirs_moved)}; "
+                if stale_extension_dirs_moved
+                else ""
+            )
             +
             "`Developer: Reload Window` or restart it so the extension host scans the VSIX"
         ),
@@ -720,6 +823,7 @@ def _install_extension_vsix(
         settings_path=str(settings_path) if settings_path is not None else None,
         socket_path=socket_path_str,
         conflicts_removed=conflicts_removed,
+        stale_extension_dirs_moved=stale_extension_dirs_moved,
     )
 
 
@@ -758,6 +862,10 @@ def install_plugin_for_ide(
         target_ide=target,
         dry_run=dry_run,
     )
+    stale_extension_dirs_moved = _prune_stale_koru_extension_dirs(
+        target_ide=target,
+        dry_run=dry_run,
+    )
 
     if _extension_is_installed(
         command, runner, extension_id=extension_id_for_ide(target)
@@ -770,6 +878,7 @@ def install_plugin_for_ide(
             settings_path=settings_path,
             socket_path_str=socket_path_str,
             conflicts_removed=conflicts_removed,
+            stale_extension_dirs_moved=stale_extension_dirs_moved,
         )
 
     vsix = resolve_extension_vsix(target)
@@ -783,6 +892,7 @@ def install_plugin_for_ide(
             ),
             settings_path=str(settings_path) if settings_path is not None else None,
             socket_path=socket_path_str,
+            stale_extension_dirs_moved=stale_extension_dirs_moved,
         )
 
     return _install_extension_vsix(
@@ -794,6 +904,7 @@ def install_plugin_for_ide(
         settings_path=settings_path,
         socket_path_str=socket_path_str,
         conflicts_removed=conflicts_removed,
+        stale_extension_dirs_moved=stale_extension_dirs_moved,
     )
 
 

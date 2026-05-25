@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
-
-from pathlib import Path
 
 from koru import autonomous_runtime
 from koru.autonomous import _apply_agent_lane_environ
@@ -180,4 +179,45 @@ def test_setup_autopilot_daemon_keeps_lane_and_socket_in_sync(
     assert str(socket_path).endswith("koru-autopilot-antigravity.sock")
     assert captured["socket_path"] == socket_path
     assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "antigravity"
-    assert any("autopilot socket decision: lane=antigravity ide=antigravity" in line for line in info_lines)
+    assert any(
+        "autopilot socket decision: lane=antigravity ide=antigravity" in line
+        for line in info_lines
+    )
+
+
+def test_setup_autopilot_daemon_sets_instance_before_default_socket(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("XDG_RUNTIME_DIR", "/run/user/1000")
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
+
+    args = SimpleNamespace(
+        enable_autopilot=True,
+        agent_lane="auto",
+        autopilot_ide="vscodium",
+        socket=None,
+        emit_events="human",
+    )
+    captured: dict[str, object] = {}
+
+    def _start_or_reuse_daemon(*, project: Path, socket_path: Path, stdio_format: str):
+        captured["socket_path"] = socket_path
+        return None, None, None
+
+    _client, _daemon, _thread, socket_path = autonomous_runtime.setup_autopilot_daemon(
+        args,
+        tmp_path,
+        apply_agent_lane_environ=_apply_agent_lane_environ,
+        resolve_autopilot_ide=resolve_autopilot_ide_for_autonomous,
+        resolve_ide_route_fn=resolve_ide_route,
+        default_socket_path=default_socket_path,
+        start_or_reuse_daemon=_start_or_reuse_daemon,
+        stdio_info=lambda *_args, **_kwargs: None,
+    )
+
+    assert socket_path is not None
+    assert str(socket_path).endswith("koru-autopilot-vscodium.sock")
+    assert captured["socket_path"] == socket_path
+    assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "vscodium"

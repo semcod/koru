@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -377,6 +378,57 @@ def test_install_plugin_removes_conflicting_family_extension(monkeypatch) -> Non
     assert result.status == "already_installed"
     assert result.conflicts_removed == (conflict_ext_id,)
     assert ["/usr/bin/codium", "--uninstall-extension", conflict_ext_id] in calls
+
+
+def test_install_plugin_moves_stale_family_extension_dirs(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("KORU_AUTOPILOT_REASSERT_INSTALL", "0")
+    monkeypatch.setattr(plugin_installer.shutil, "which", lambda name: f"/usr/bin/{name}")
+    extensions_root = tmp_path / ".vscode-oss" / "extensions"
+    extensions_root.mkdir(parents=True)
+    active_dir = extensions_root / "semcod.koru-autopilot-vscodium-0.1.78"
+    stale_target_dir = extensions_root / "semcod.koru-autopilot-vscodium-0.1.77"
+    stale_conflict_dir = extensions_root / "semcod.koru-autopilot-vscode-0.1.77"
+    unrelated_dir = extensions_root / "other.extension-1.0.0"
+    for path in (active_dir, stale_target_dir, stale_conflict_dir, unrelated_dir):
+        path.mkdir()
+    (extensions_root / "extensions.json").write_text(
+        json.dumps(
+            [
+                {
+                    "identifier": {
+                        "id": plugin_installer.extension_id_for_ide("vscodium"),
+                    },
+                    "relativeLocation": active_dir.name,
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    vscodium_ext_id = plugin_installer.extension_id_for_ide("vscodium")
+
+    def fake_runner(cmd, **_kwargs):
+        if cmd[1] == "--list-extensions":
+            return subprocess.CompletedProcess(cmd, 0, stdout=vscodium_ext_id, stderr="")
+        raise AssertionError(f"unexpected cmd {cmd}")
+
+    result = plugin_installer.install_plugin_for_ide(
+        ide="vscodium",
+        runner=fake_runner,
+    )
+
+    assert result.status == "already_installed"
+    assert not stale_target_dir.exists()
+    assert not stale_conflict_dir.exists()
+    assert active_dir.exists()
+    assert unrelated_dir.exists()
+    disabled_root = tmp_path / ".vscode-oss" / "extensions-disabled"
+    assert (disabled_root / stale_target_dir.name).is_dir()
+    assert (disabled_root / stale_conflict_dir.name).is_dir()
+    assert len(result.stale_extension_dirs_moved) == 2
 
 
 def test_installed_extension_version_for_ide_reads_editor_cli(monkeypatch) -> None:

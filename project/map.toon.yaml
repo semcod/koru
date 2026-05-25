@@ -1,11 +1,11 @@
-# koru | 601f 103777L | yaml:24,txt:2,json:16,yml:10,shell:49,python:430,md:1,javascript:1,typescript:55,kotlin:6,properties:1,xml:1,toml:1 | 2026-05-25
-# generated in 0.07s
-# stats: 4779 func | 0 cls | 601 mod | CC̄=3.6 | critical:6 | cycles:0
-# alerts[5]: CC validate_ide_command_scenario=37; CC _path_step=32; fan-out run_api_request=24; fan-out _drive_via_plugin=23; fan-out init_project=23
-# hotspots[5]: run_api_request fan=24; _drive_via_plugin fan=23; init_project fan=23; topology_main fan=23; observe_up fan=22
-# evolution: CC̄ 3.6→3.6 (flat 0.0)
+# koru | 620f 106277L | yaml:24,txt:2,json:16,yml:10,toml:1,shell:49,python:439,md:1,javascript:1,typescript:65,kotlin:6,properties:1,xml:1 | 2026-05-25
+# generated in 0.23s
+# stats: 4926 func | 0 cls | 620 mod | CC̄=3.5 | critical:6 | cycles:0
+# alerts[5]: CC validate_ide_command_scenario=37; CC _path_step=32; fan-out _drive_via_plugin=29; fan-out run_api_request=24; fan-out init_project=23
+# hotspots[5]: _drive_via_plugin fan=29; run_api_request fan=24; init_project fan=23; topology_main fan=23; observe_up fan=22
+# evolution: CC̄ 3.6→3.5 (improved -0.1)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[601]:
+M[620]:
   .pretest.yml,17
   Dockerfile,73
   Makefile,36
@@ -68,24 +68,26 @@ M[601]:
   src/koru/bootstrap.py,459
   src/koru/ide_client.py,191
   src/koru/observability_events.py,122
-  src/koruide/client.py,249
-  src/koruide/drive_orchestrator.py,450
   output.txt,3
   package.json,24
   pipeline.yaml,142
   planfile.yaml,1357
-  plugins/koru-autopilot-antigravity/package.json,195
+  plugins/koru-autopilot-antigravity/package.json,189
   plugins/koru-autopilot-antigravity/src/chat-history-adapters.ts,24
   plugins/koru-autopilot-antigravity/src/chat-history-watcher.test.ts,353
+  plugins/koru-autopilot-antigravity/src/command-catalog.ts,126
+  plugins/koru-autopilot-antigravity/src/command-catalog.test.ts,55
   plugins/koru-autopilot-antigravity/src/cursor-bubble-adapter.ts,159
-  plugins/koru-autopilot-antigravity/src/extension.ts,2656
+  plugins/koru-autopilot-antigravity/src/extension.ts,2704
   plugins/koru-autopilot-antigravity/src/ides/registry.ts,42
   plugins/koru-autopilot-antigravity/src/probe-ladder.test.ts,63
   plugins/koru-autopilot-antigravity/src/vscode-chat-session-adapter.ts,146
-  plugins/koru-autopilot-cursor/package.json,180
+  plugins/koru-autopilot-cursor/package.json,174
   plugins/koru-autopilot-cursor/src/chat-history-adapters.ts,31
   plugins/koru-autopilot-cursor/src/chat-history-watcher.test.ts,363
-  plugins/koru-autopilot-cursor/src/extension.ts,2965
+  plugins/koru-autopilot-cursor/src/command-catalog.ts,126
+  plugins/koru-autopilot-cursor/src/command-catalog.test.ts,55
+  plugins/koru-autopilot-cursor/src/extension.ts,3013
   plugins/koru-autopilot-cursor/src/ides/cursor.test.ts,254
   plugins/koru-autopilot-cursor/src/ides/registry.ts,63
   plugins/koru-autopilot-cursor/src/probe-ladder.test.ts,296
@@ -101,7 +103,7 @@ M[601]:
   plugins/koru-autopilot-shared/src/index.ts,37
   plugins/koru-autopilot-shared/src/ack-payload.ts,260
   plugins/koru-autopilot-shared/src/socketPath.ts,67
-  plugins/koru-autopilot-vscode/package.json,201
+  plugins/koru-autopilot-vscode/package.json,194
   plugins/koru-autopilot-vscode/src/ack-payload.test.ts,52
   plugins/koru-autopilot-vscode/src/antigravity-fastpath.ts,20
   plugins/koru-autopilot-vscode/src/antigravity-fastpath.test.ts,39
@@ -110,9 +112,11 @@ M[601]:
   plugins/koru-autopilot-vscode/src/chat-history-types.ts,32
   plugins/koru-autopilot-vscode/src/chat-history-watcher.ts,197
   plugins/koru-autopilot-vscode/src/chat-history-watcher.test.ts,353
+  plugins/koru-autopilot-vscode/src/command-catalog.ts,126
+  plugins/koru-autopilot-vscode/src/command-catalog.test.ts,55
   plugins/koru-autopilot-vscode/src/dispatch-plan.ts,26
   plugins/koru-autopilot-vscode/src/dispatch-plan.test.ts,118
-  plugins/koru-autopilot-vscode/src/extension.ts,2709
+  plugins/koru-autopilot-vscode/src/extension.ts,2757
   plugins/koru-autopilot-vscode/src/host-click-submit.ts,35
   plugins/koru-autopilot-vscode/src/host-click-submit.test.ts,39
   plugins/koru-autopilot-vscode/src/ide-control-strategy.ts,64
@@ -130,18 +134,22 @@ M[601]:
   plugins/koru-autopilot-vscode/src/step-decisions.test.ts,148
   plugins/koru-autopilot-vscode/src/unsupported-chat-adapter.ts,19
   plugins/koru-autopilot-vscode/tsconfig.json,15
-  plugins/koru-autopilot-vscodium/package.json,206
+  plugins/koru-autopilot-vscodium/package.json,199
   plugins/koru-autopilot-vscodium/src/chat-history-adapters.ts,21
   plugins/koru-autopilot-vscodium/src/chat-history-watcher.test.ts,355
-  plugins/koru-autopilot-vscodium/src/extension.ts,2705
+  plugins/koru-autopilot-vscodium/src/command-catalog.ts,126
+  plugins/koru-autopilot-vscodium/src/command-catalog.test.ts,55
+  plugins/koru-autopilot-vscodium/src/extension.ts,2753
   plugins/koru-autopilot-vscodium/src/ides/registry.ts,42
   plugins/koru-autopilot-vscodium/src/ides/vscodium.ts,82
   plugins/koru-autopilot-vscodium/src/ides/vscodium.test.ts,60
   plugins/koru-autopilot-vscodium/src/probe-ladder.test.ts,70
-  plugins/koru-autopilot-windsurf/package.json,196
+  plugins/koru-autopilot-windsurf/package.json,190
   plugins/koru-autopilot-windsurf/src/chat-history-adapters.ts,24
   plugins/koru-autopilot-windsurf/src/chat-history-watcher.test.ts,353
-  plugins/koru-autopilot-windsurf/src/extension.ts,2656
+  plugins/koru-autopilot-windsurf/src/command-catalog.ts,126
+  plugins/koru-autopilot-windsurf/src/command-catalog.test.ts,55
+  plugins/koru-autopilot-windsurf/src/extension.ts,2704
   plugins/koru-autopilot-windsurf/src/ides/registry.ts,42
   plugins/koru-autopilot-windsurf/src/probe-ladder.test.ts,77
   prefact.yaml,93
@@ -215,7 +223,7 @@ M[601]:
   src/koru/autonomous_process_guard.py,206
   src/koru/autonomous_processes.py,355
   src/koru/autonomous_resources.py,90
-  src/koru/autonomous_runtime.py,323
+  src/koru/autonomous_runtime.py,325
   src/koru/autonomous_startup.py,673
   src/koru/autonomous_up.py,226
   src/koru/autonomous_wup.py,808
@@ -246,16 +254,20 @@ M[601]:
   src/koru/autonomy_strategy/config.py,94
   src/koru/autonomy_strategy/defaults.py,88
   src/koru/autonomy_strategy/heuristics.py,67
-  src/koru/autonomy_strategy/openrouter.py,70
+  src/koru/autonomy_strategy/openrouter.py,89
   src/koru/autonomy_strategy/prompts.py,49
   src/koru/autopilot/__init__.py,18
   src/koru/autopilot/audit.py,9
   src/koru/autopilot/calibrate_cli.py,225
-  src/koru/autopilot/cli_command.py,421
+  src/koru/autopilot/cli_command.py,333
   src/koru/autopilot/cli_direct_drive.py,273
   src/koru/autopilot/cli_parser.py,556
   src/koru/autopilot/cli_trace.py,78
   src/koru/autopilot/client.py,10
+  src/koru/autopilot/commands/__init__.py,7
+  src/koru/autopilot/commands/drive.py,125
+  src/koru/autopilot/commands/shutdown.py,32
+  src/koru/autopilot/commands/status.py,77
   src/koru/autopilot/config.py,9
   src/koru/autopilot/daemon.py,16
   src/koru/autopilot/daemon_cli.py,146
@@ -364,8 +376,10 @@ M[601]:
   src/koru/deployment_events/enums.py,78
   src/koru/deployment_events/models.py,190
   src/koru/dev_sync.py,213
-  src/koru/doctor.py,2083
+  src/koru/doctor.py,1887
   src/koru/doctor_constants.py,215
+  src/koru/doctor_plugin_bundle.py,123
+  src/koru/doctor_project_checks.py,108
   src/koru/doctor_render.py,62
   src/koru/dotenv_loader.py,104
   src/koru/dsl/__init__.py,9
@@ -483,7 +497,7 @@ M[601]:
   src/koruapi/invoke_handlers.py,232
   src/koruapi/local.py,36
   src/koruapi/mcp.py,15
-  src/koruapi/mcp_server.py,1108
+  src/koruapi/mcp_server.py,1277
   src/koruapi/openapi.py,183
   src/koruapi/runtime_insights.py,190
   src/koruapi/server.py,190
@@ -495,19 +509,24 @@ M[601]:
   src/koruide/__init__.py,80
   src/koruide/audit.py,154
   src/koruide/chat_history.py,166
+  src/koruide/client.py,252
   src/koruide/command_catalog.py,557
-  src/koruide/command_scenario.py,247
+  src/koruide/command_catalog_store.py,169
+  src/koruide/command_picker.py,260
+  src/koruide/command_scenario.py,264
+  src/koruide/command_telemetry.py,210
   src/koruide/config.py,123
   src/koruide/daemon/__init__.py,50
   src/koruide/daemon/handlers.py,281
-  src/koruide/daemon/handlers_ack.py,362
-  src/koruide/daemon/handlers_drive.py,452
-  src/koruide/daemon/handlers_hello.py,195
+  src/koruide/daemon/handlers_ack.py,390
+  src/koruide/daemon/handlers_drive.py,496
+  src/koruide/daemon/handlers_hello.py,222
   src/koruide/daemon/handlers_plugin_event.py,191
-  src/koruide/daemon/protocol.py,56
-  src/koruide/daemon/server.py,321
+  src/koruide/daemon/protocol.py,57
+  src/koruide/daemon/server.py,326
   src/koruide/daemon/storage.py,100
   src/koruide/daemon_storage.py,24
+  src/koruide/drive_orchestrator.py,471
   src/koruide/host_setup.py,309
   src/koruide/ide.py,755
   src/koruide/ide_control.py,95
@@ -526,11 +545,11 @@ M[601]:
   src/koruide/injector_backends.py,207
   src/koruide/injector_errors.py,10
   src/koruide/os_injector.py,535
-  src/koruide/plugin_installer.py,728
+  src/koruide/plugin_installer.py,927
   src/koruide/plugin_router.py,93
   src/koruide/plugin_version.py,46
   src/koruide/ports.py,118
-  src/koruide/protocol.py,254
+  src/koruide/protocol.py,279
   src/koruide/socket.py,44
   src/koruide/utils.py,21
   src/korullm/__init__.py,37
@@ -609,12 +628,13 @@ M[601]:
   wup-shell-only.yaml,110
 D:
   src/koruide/command_scenario.py:
-    e: ScenarioValidation,ide_command_scenario_schema,validate_ide_command_scenario,llm_scenario_prompt,_rows_by_command,_allowed_actions
+    e: ScenarioValidation,ide_command_scenario_schema,validate_ide_command_scenario,llm_scenario_prompt,_rows_by_command,_risk_rank,_allowed_actions
     ScenarioValidation: to_dict(0)
     ide_command_scenario_schema()
     validate_ide_command_scenario(raw)
     llm_scenario_prompt(ide)
     _rows_by_command(ide)
+    _risk_rank(risk)
     _allowed_actions()
   src/koru/observability_dsl.py:
     e: KoruObsEvent,kind_to_keyword,keyword_to_kind,render_observability_dsl,parse_observability_dsl,stored_event_to_dsl,render_compact_observability_line,render_compact_observability_message,stored_event_to_compact_line,render_observability_path,_as_obs_event,_path_step,_compact_data,_pick,_argv_text,_compact_time,_parse_pairs,_parse_scalar,_quote,_optional_str,_optional_int
@@ -663,7 +683,7 @@ D:
     i: ./ack-payload,./chat-history-watcher,./cursor-bubble-adapter,./dispatch-plan,./ides/registry,./socketPath,child_process,fs,net,vscode
     e: Envelope,AutopilotBridge,DISALLOWED_FOCUS_OPEN_COMMANDS,UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS,isAllowedFocusOpenCommand,sanitizeFocusOpenCommand,sanitizeFocusOpenCandidates,filterUnsafeFocusOpenForIde,isSpecificChatInputFocusCommand,normalized,isTogglingFocusOpenCommand,debugLog,suffix,safeLogPayload,snapshot,safeLog,suffix
     Envelope:
-    AutopilotBridge: isConnected(-1),sendConsoleLog(-1),resetOperationTrace(-1),traceOperation(-1),safeLog(-1),emitLiveDsl(-1),seq(-1),okToken(-1),routeToken(-1),reason(-1),debugLog(-1),currentOperationTrace(-1),socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),matching(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),startChatHistoryWatcherIfEligible(-1),ide(-1),cfg(-1),initialCursor(-1),scheduleRetry(-1),delay(-1),cfg(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),waitForCommand(-1),deadline(-1),existing(-1),editorSnapshot(-1),getProbeCache(-1),ide(-1),raw(-1),cache(-1),next(-1),debugLog(-1),_tryTypeSubmit(-1),_tryHostKeySubmit(-1),cfg(-1),override(-1),candidates(-1),cfg(-1),override(-1),candidates(-1),res(-1),verify(-1),runHostCommand(-1),child(-1),resolve(-1),res(-1),debugLog(-1),submitClickPoint(-1),cfg(-1),x(-1),y(-1),autoSubmitClickPoint(-1),geometry(-1),parsed(-1),point(-1),isWaylandSession(-1),move(-1),debugLog(-1),click(-1),debugLog(-1),x(-1),y(-1),xdotoolResult(-1),_tryHostClickSubmit(-1),configuredPoint(-1),point(-1),debugLog(-1),source(-1),tryYdotoolFirst(-1),first(-1),second(-1),trustUnverifiedHostSubmit(-1),cfg(-1),saveHostClipboard(-1),res(-1),debugLog(-1),writeHostClipboard(-1),res(-1),debugLog(-1),restoreHostClipboard(-1),debugLog(-1),clearChatInput(-1),koruStepConfig(-1),cfg(-1),legacyVerify(-1),verifySubmit(-1),postSubmitVerifyEnabled(-1),discardCachedSubmitWinner(-1),current(-1),verifySubmitStep(-1),probe(-1),result(-1),dbResult(-1),anchor(-1),debugLog(-1),adapter(-1),debugLog(-1),tail(-1),deadline(-1),attempts(-1),debugLog(-1),captureCursorBubbleAnchor(-1),adapter(-1),debugLog(-1),debugLog(-1),verify(-1),debugLog(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),shouldRequireVerifiedHostSubmit(-1),registered(-1),hostClick(-1),accepted(-1),hostKey(-1),hostKey(-1),strategy(-1),shouldRequireVerifiedHostSubmit(-1),hostKey(-1),accepted(-1),accepted(-1),result(-1),accepted(-1),submitChat(-1),ide(-1),verifyEnabled(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),debugLog(-1),registered(-1),fallback(-1),typeFallback(-1),_buildFocusChatContext(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),orderWithCache(-1),debugLog(-1),before(-1),debugLog(-1),debugLog(-1),debugLog(-1),_focusChatAlreadyFocused(-1),debugLog(-1),before(-1),inputOnly(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),inputFocus(-1),debugLog(-1),strategy(-1),debugLog(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),focusChat(-1),cfg(-1),primary(-1),context(-1),alreadyFocused(-1),inputOnly(-1),inputOnly(-1),result(-1),_shouldPreflightFocusOnly(-1),hasNonToggleOpen(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),clipboard(-1),typed(-1),hostPaste(-1),direct(-1),clipboard(-1),typed(-1),directPasteReadsClipboard(-1),directCommands(-1),orderWithCache(-1),previousClip(-1),clipboardSeeded(-1),readsClipboard(-1),seeded(-1),debugLog(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),clip(-1),debugLog(-1),paste(-1),after(-1),inputFocused(-1),debugLog(-1),ok(-1),debugLog(-1),after(-1),inputFocused(-1),debugLog(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),detectIde(-1),app(-1),send(-1),wire(-1),line(-1),debugLog(-1),bytes(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),_handleVersionMismatchRejection(-1),cfg(-1),enabled(-1),ctx(-1),lastReloadAt(-1),COOLDOWN_MS(-1),safeLog(-1),safeLog(-1),safeLog(-1),detail(-1),safeLog(-1),saveClipboard(-1),restoreClipboard(-1),writeClipboardVerified(-1),maxTries(-1),debugLog(-1),observed(-1),debugLog(-1),debugLog(-1),debugLog(-1),decideBusyInput(-1),observed(-1),observedLength(-1),action(-1),debugLog(-1),_probeChatInputContents(-1),previous(-1),observed(-1),debugLog(-1),submitResult(-1),sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),debugLog(-1),discardToxicFocusOpenCache(-1),cache(-1),cached(-1),focusToken(-1),debugLog(-1),sendMessageSent(-1),injectChat(-1),text(-1),submit(-1),previous(-1),previousHost(-1),message(-1),tryWindsurfSendTextFastPath(-1),safeLog(-1),hasCommand(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),maybeKeepWindsurfChatPanelVisible(-1),cfg(-1),enabled(-1),ensureWindsurfChatPanelVisible(-1),existing(-1),registered(-1),buildFocusOpenCommands(-1),commands(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),tryAntigravitySendPromptFastPath(-1),existing(-1),tryCursorComposerPromptFastPath(-1),existing(-1),pasteCmd(-1),submitCmd(-1),safeLog(-1),detail(-1),safeLog(-1),safeLog(-1),detail(-1),safeLog(-1),verifyResult(-1),_clearComposerDraft(-1),detail(-1),safeLog(-1),submitResult(-1),_performInject(-1),ide(-1),focus(-1),busyInput(-1),debugLog(-1),debugLog(-1),pasted(-1),submitCmd(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),captureSubmitClickPosition(-1),res(-1),match(-1),debugLog(-1),x(-1),y(-1),cfg(-1),debugLog(-1),sendManualChat(-1),isCursorHost(-1),maybeAutoConnect(-1),cfg(-1),registerBridgeCommands(-1),text(-1),maybeAutoConnect(-1),activateBridge(-1),bridge(-1),registerBridgeCommands(-1),maybeAutoConnect(-1),activate(-1),appName(-1),activateBridge(-1),deactivate(-1)
+    AutopilotBridge: isConnected(-1),sendConsoleLog(-1),resetOperationTrace(-1),value(-1),commands(-1),server(-1),traceOperation(-1),safeLog(-1),emitLiveDsl(-1),seq(-1),okToken(-1),routeToken(-1),reason(-1),debugLog(-1),currentOperationTrace(-1),socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),commandCatalog(-1),matching(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),startChatHistoryWatcherIfEligible(-1),ide(-1),cfg(-1),initialCursor(-1),scheduleRetry(-1),delay(-1),cfg(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),waitForCommand(-1),deadline(-1),existing(-1),editorSnapshot(-1),getProbeCache(-1),ide(-1),raw(-1),cache(-1),next(-1),debugLog(-1),_tryTypeSubmit(-1),_tryHostKeySubmit(-1),cfg(-1),override(-1),candidates(-1),cfg(-1),override(-1),candidates(-1),res(-1),verify(-1),runHostCommand(-1),child(-1),resolve(-1),res(-1),debugLog(-1),submitClickPoint(-1),cfg(-1),x(-1),y(-1),autoSubmitClickPoint(-1),geometry(-1),parsed(-1),point(-1),isWaylandSession(-1),move(-1),debugLog(-1),click(-1),debugLog(-1),x(-1),y(-1),xdotoolResult(-1),_tryHostClickSubmit(-1),configuredPoint(-1),point(-1),debugLog(-1),source(-1),tryYdotoolFirst(-1),first(-1),second(-1),trustUnverifiedHostSubmit(-1),cfg(-1),saveHostClipboard(-1),res(-1),debugLog(-1),writeHostClipboard(-1),res(-1),debugLog(-1),restoreHostClipboard(-1),debugLog(-1),clearChatInput(-1),koruStepConfig(-1),cfg(-1),legacyVerify(-1),verifySubmit(-1),postSubmitVerifyEnabled(-1),discardCachedSubmitWinner(-1),current(-1),verifySubmitStep(-1),probe(-1),result(-1),dbResult(-1),anchor(-1),debugLog(-1),adapter(-1),debugLog(-1),tail(-1),deadline(-1),attempts(-1),debugLog(-1),captureCursorBubbleAnchor(-1),adapter(-1),debugLog(-1),debugLog(-1),verify(-1),debugLog(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),shouldRequireVerifiedHostSubmit(-1),registered(-1),hostClick(-1),accepted(-1),hostKey(-1),hostKey(-1),strategy(-1),shouldRequireVerifiedHostSubmit(-1),hostKey(-1),accepted(-1),accepted(-1),result(-1),accepted(-1),submitChat(-1),ide(-1),verifyEnabled(-1),existing(-1),cache(-1),candidates(-1),debugLog(-1),registered(-1),fallback(-1),typeFallback(-1),_buildFocusChatContext(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),buildFocusOpenCommands(-1),debugLog(-1),before(-1),debugLog(-1),debugLog(-1),debugLog(-1),_focusChatAlreadyFocused(-1),debugLog(-1),before(-1),inputOnly(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),inputFocus(-1),debugLog(-1),strategy(-1),debugLog(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),focusChat(-1),cfg(-1),primary(-1),context(-1),alreadyFocused(-1),inputOnly(-1),inputOnly(-1),result(-1),_shouldPreflightFocusOnly(-1),hasNonToggleOpen(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),clipboard(-1),typed(-1),hostPaste(-1),direct(-1),clipboard(-1),typed(-1),directPasteReadsClipboard(-1),directCommands(-1),previousClip(-1),clipboardSeeded(-1),readsClipboard(-1),seeded(-1),debugLog(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),clip(-1),debugLog(-1),paste(-1),after(-1),inputFocused(-1),debugLog(-1),ok(-1),debugLog(-1),after(-1),inputFocused(-1),debugLog(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),detectIde(-1),app(-1),send(-1),wire(-1),line(-1),debugLog(-1),bytes(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),_handleVersionMismatchRejection(-1),cfg(-1),enabled(-1),ctx(-1),lastReloadAt(-1),COOLDOWN_MS(-1),safeLog(-1),safeLog(-1),safeLog(-1),detail(-1),safeLog(-1),saveClipboard(-1),restoreClipboard(-1),writeClipboardVerified(-1),maxTries(-1),debugLog(-1),observed(-1),debugLog(-1),debugLog(-1),debugLog(-1),decideBusyInput(-1),observed(-1),observedLength(-1),action(-1),debugLog(-1),_probeChatInputContents(-1),previous(-1),observed(-1),debugLog(-1),submitResult(-1),sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),debugLog(-1),discardToxicFocusOpenCache(-1),cache(-1),cached(-1),focusToken(-1),debugLog(-1),sendMessageSent(-1),injectChat(-1),text(-1),submit(-1),previous(-1),previousHost(-1),message(-1),tryWindsurfSendTextFastPath(-1),safeLog(-1),hasCommand(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),maybeKeepWindsurfChatPanelVisible(-1),cfg(-1),enabled(-1),ensureWindsurfChatPanelVisible(-1),existing(-1),registered(-1),buildFocusOpenCommands(-1),commands(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),tryAntigravitySendPromptFastPath(-1),existing(-1),tryCursorComposerPromptFastPath(-1),existing(-1),pasteCmd(-1),submitCmd(-1),safeLog(-1),detail(-1),safeLog(-1),safeLog(-1),detail(-1),safeLog(-1),verifyResult(-1),_clearComposerDraft(-1),detail(-1),safeLog(-1),submitResult(-1),_performInject(-1),ide(-1),focus(-1),busyInput(-1),debugLog(-1),debugLog(-1),pasted(-1),submitCmd(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),captureSubmitClickPosition(-1),res(-1),match(-1),debugLog(-1),x(-1),y(-1),cfg(-1),debugLog(-1),sendManualChat(-1),isCursorHost(-1),maybeAutoConnect(-1),cfg(-1),registerBridgeCommands(-1),text(-1),maybeAutoConnect(-1),activateBridge(-1),bridge(-1),registerBridgeCommands(-1),maybeAutoConnect(-1),activate(-1),appName(-1),activateBridge(-1),deactivate(-1)
     DISALLOWED_FOCUS_OPEN_COMMANDS()
     UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS()
     isAllowedFocusOpenCommand()
@@ -726,9 +746,6 @@ D:
     _print_setup_host_human_followups(report)
     _print_setup_host_install_details(report)
     _print_text_report(report)
-  src/koruide/drive_orchestrator.py:
-    e: DriveOrchestrator
-    DriveOrchestrator: plugin_required_message(0),should_try_os_fallback(-1),build_message_sent_info(-1),annotate_plugin_ack(-1),is_poisoned_submit_ack(1),strict_plugin_ack_required(-1),expected_plugin_version(0),strict_plugin_version_required(-1),protocol_plugin_version_policy(-1),plugin_version_info(-1),should_block_plugin_version(0),plugin_version_block_message(0),should_fail_strict_plugin_ack(-1),plugin_ack_summary(0),operation_trace_summary(0),_dsl_intent(0),_dsl_ok_token(0),_dsl_quote(0),operation_trace_dsl(0),drive_outcome_dsl(0)  # Pure helpers used by the autopilot daemon...
   src/koru/queue_clean.py:
     e: CleanupCandidate,CleanupReport,_planfile_base,_parse_age_days,_matched_rules,_cleanable_statuses,_maybe_skip_active_ticket,_candidate_from_ticket,find_candidates,_build_close_note,_list_tickets,_close_ticket,clean_queue
     CleanupCandidate: explanation(0)  # A planfile ticket selected for cleanup, with the reasons why...
@@ -793,6 +810,13 @@ D:
     agent_lane_environment(agent_id)
     format_agent_lane_exports(env)
     launch_agent(agent;project;prompt)
+  src/koru/cli_auto.py:
+    e: _legacy_attr,_peek_project_from_argv,_should_suggest_wizard,_enable_auto_reload_reuse_window_for_auto,_auto_main
+    _legacy_attr(name;fallback)
+    _peek_project_from_argv(argv)
+    _should_suggest_wizard(argv;project)
+    _enable_auto_reload_reuse_window_for_auto()
+    _auto_main(argv)
   src/koru/init_host_environment.py:
     e: _read_os_release,_id_group_names,_uinput_snapshot,build_host_environment_report,_build_backend_steps,_build_pm_steps,_recommended_next_steps,_render_session_section,_render_os_section,_render_injector_section,_render_clipboard_section,_render_uinput_section,_render_next_steps_section,_render_human_actions_section,_render_apt_suggestion_section,_render_host_environment_md,write_host_environment_bundle
     _read_os_release()
@@ -1016,86 +1040,6 @@ Designed to ...
     apply_bridge_fixes(status)
     gc_stale_sockets_for_lane(socket_path)
     format_bridge_text(status)
-  plugins/koru-autopilot-antigravity/src/extension.ts:
-    i: ./ack-payload,./chat-history-watcher,./cursor-bubble-adapter,./dispatch-plan,./ides/registry,./socketPath,child_process,fs,net,vscode
-    e: Envelope,AutopilotBridge,DISALLOWED_FOCUS_OPEN_COMMANDS,UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS,isAllowedFocusOpenCommand,sanitizeFocusOpenCommand,sanitizeFocusOpenCandidates,filterUnsafeFocusOpenForIde,isSpecificChatInputFocusCommand,normalized,isTogglingFocusOpenCommand,debugLog,suffix,safeLogPayload,snapshot,safeLog,suffix
-    Envelope:
-    AutopilotBridge: isConnected(-1),sendConsoleLog(-1),resetOperationTrace(-1),traceOperation(-1),safeLog(-1),emitLiveDsl(-1),seq(-1),okToken(-1),routeToken(-1),reason(-1),debugLog(-1),currentOperationTrace(-1),socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),matching(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),startChatHistoryWatcherIfEligible(-1),ide(-1),cfg(-1),initialCursor(-1),scheduleRetry(-1),delay(-1),cfg(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),waitForCommand(-1),deadline(-1),existing(-1),editorSnapshot(-1),getProbeCache(-1),ide(-1),raw(-1),cache(-1),next(-1),debugLog(-1),_tryTypeSubmit(-1),_tryHostKeySubmit(-1),cfg(-1),override(-1),candidates(-1),cfg(-1),override(-1),candidates(-1),res(-1),verify(-1),runHostCommand(-1),child(-1),resolve(-1),res(-1),debugLog(-1),submitClickPoint(-1),cfg(-1),x(-1),y(-1),autoSubmitClickPoint(-1),geometry(-1),parsed(-1),point(-1),isWaylandSession(-1),move(-1),debugLog(-1),click(-1),debugLog(-1),x(-1),y(-1),xdotoolResult(-1),_tryHostClickSubmit(-1),configuredPoint(-1),point(-1),debugLog(-1),source(-1),tryYdotoolFirst(-1),first(-1),second(-1),trustUnverifiedHostSubmit(-1),cfg(-1),saveHostClipboard(-1),res(-1),debugLog(-1),writeHostClipboard(-1),res(-1),debugLog(-1),restoreHostClipboard(-1),debugLog(-1),clearChatInput(-1),koruStepConfig(-1),cfg(-1),legacyVerify(-1),verifySubmit(-1),postSubmitVerifyEnabled(-1),discardCachedSubmitWinner(-1),current(-1),verifySubmitStep(-1),probe(-1),result(-1),dbResult(-1),anchor(-1),debugLog(-1),adapter(-1),debugLog(-1),tail(-1),deadline(-1),attempts(-1),debugLog(-1),captureCursorBubbleAnchor(-1),adapter(-1),debugLog(-1),debugLog(-1),verify(-1),debugLog(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),shouldRequireVerifiedHostSubmit(-1),registered(-1),hostClick(-1),accepted(-1),hostKey(-1),hostKey(-1),strategy(-1),shouldRequireVerifiedHostSubmit(-1),hostKey(-1),accepted(-1),accepted(-1),result(-1),accepted(-1),submitChat(-1),ide(-1),verifyEnabled(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),debugLog(-1),registered(-1),fallback(-1),typeFallback(-1),_buildFocusChatContext(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),orderWithCache(-1),debugLog(-1),before(-1),debugLog(-1),debugLog(-1),debugLog(-1),_focusChatAlreadyFocused(-1),debugLog(-1),before(-1),inputOnly(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),inputFocus(-1),debugLog(-1),strategy(-1),debugLog(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),focusChat(-1),cfg(-1),primary(-1),context(-1),alreadyFocused(-1),inputOnly(-1),inputOnly(-1),result(-1),_shouldPreflightFocusOnly(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),clipboard(-1),typed(-1),hostPaste(-1),direct(-1),clipboard(-1),typed(-1),directPasteReadsClipboard(-1),directCommands(-1),orderWithCache(-1),previousClip(-1),clipboardSeeded(-1),readsClipboard(-1),seeded(-1),debugLog(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),clip(-1),debugLog(-1),paste(-1),after(-1),inputFocused(-1),debugLog(-1),ok(-1),debugLog(-1),after(-1),inputFocused(-1),debugLog(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),detectIde(-1),app(-1),send(-1),wire(-1),line(-1),debugLog(-1),bytes(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),_handleVersionMismatchRejection(-1),cfg(-1),enabled(-1),ctx(-1),lastReloadAt(-1),COOLDOWN_MS(-1),safeLog(-1),detail(-1),safeLog(-1),saveClipboard(-1),restoreClipboard(-1),writeClipboardVerified(-1),maxTries(-1),debugLog(-1),observed(-1),debugLog(-1),debugLog(-1),debugLog(-1),decideBusyInput(-1),observed(-1),observedLength(-1),action(-1),debugLog(-1),_probeChatInputContents(-1),previous(-1),observed(-1),debugLog(-1),submitResult(-1),sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),sendMessageSent(-1),injectChat(-1),text(-1),submit(-1),previous(-1),previousHost(-1),message(-1),tryWindsurfSendTextFastPath(-1),safeLog(-1),hasCommand(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),maybeKeepWindsurfChatPanelVisible(-1),cfg(-1),enabled(-1),ensureWindsurfChatPanelVisible(-1),existing(-1),registered(-1),buildFocusOpenCommands(-1),commands(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),tryAntigravitySendPromptFastPath(-1),existing(-1),submitResult(-1),_performInject(-1),ide(-1),focus(-1),busyInput(-1),debugLog(-1),debugLog(-1),pasted(-1),submitCmd(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),captureSubmitClickPosition(-1),res(-1),match(-1),debugLog(-1),x(-1),y(-1),cfg(-1),debugLog(-1),sendManualChat(-1),isAntigravityHost(-1),maybeAutoConnect(-1),cfg(-1),registerBridgeCommands(-1),text(-1),maybeAutoConnect(-1),activateBridge(-1),bridge(-1),registerBridgeCommands(-1),maybeAutoConnect(-1),activate(-1),appName(-1),activateBridge(-1),deactivate(-1)
-    DISALLOWED_FOCUS_OPEN_COMMANDS()
-    UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS()
-    isAllowedFocusOpenCommand()
-    sanitizeFocusOpenCommand()
-    sanitizeFocusOpenCandidates()
-    filterUnsafeFocusOpenForIde()
-    isSpecificChatInputFocusCommand()
-    normalized()
-    isTogglingFocusOpenCommand()
-    debugLog()
-    suffix()
-    safeLogPayload()
-    snapshot()
-    safeLog()
-    suffix()
-  plugins/koru-autopilot-vscode/src/extension.ts:
-    i: ./ack-payload,./chat-history-watcher,./cursor-bubble-adapter,./dispatch-plan,./ides/registry,./socketPath,child_process,fs,net,vscode
-    e: Envelope,AutopilotBridge,DISALLOWED_FOCUS_OPEN_COMMANDS,UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS,isAllowedFocusOpenCommand,sanitizeFocusOpenCommand,sanitizeFocusOpenCandidates,filterUnsafeFocusOpenForIde,isSpecificChatInputFocusCommand,normalized,isTogglingFocusOpenCommand,debugLog,suffix,safeLogPayload,snapshot,safeLog,suffix
-    Envelope:
-    AutopilotBridge: isConnected(-1),sendConsoleLog(-1),resetOperationTrace(-1),traceOperation(-1),safeLog(-1),emitLiveDsl(-1),seq(-1),okToken(-1),routeToken(-1),reason(-1),debugLog(-1),currentOperationTrace(-1),socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),matching(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),startChatHistoryWatcherIfEligible(-1),ide(-1),cfg(-1),initialCursor(-1),scheduleRetry(-1),delay(-1),cfg(-1),maybeOpenChatOnConnect(-1),cfg(-1),setTimeout(-1),detail(-1),safeLog(-1),openChatPanel(-1),focus(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),waitForCommand(-1),deadline(-1),existing(-1),editorSnapshot(-1),getProbeCache(-1),ide(-1),raw(-1),cache(-1),next(-1),debugLog(-1),_tryTypeSubmit(-1),_tryHostKeySubmit(-1),cfg(-1),override(-1),candidates(-1),cfg(-1),override(-1),candidates(-1),res(-1),verify(-1),runHostCommand(-1),child(-1),resolve(-1),res(-1),debugLog(-1),submitClickPoint(-1),cfg(-1),x(-1),y(-1),autoSubmitClickPoint(-1),geometry(-1),parsed(-1),point(-1),isWaylandSession(-1),move(-1),debugLog(-1),click(-1),debugLog(-1),x(-1),y(-1),xdotoolResult(-1),_tryHostClickSubmit(-1),configuredPoint(-1),point(-1),debugLog(-1),source(-1),tryYdotoolFirst(-1),first(-1),second(-1),trustUnverifiedHostSubmit(-1),cfg(-1),saveHostClipboard(-1),res(-1),debugLog(-1),writeHostClipboard(-1),res(-1),debugLog(-1),restoreHostClipboard(-1),debugLog(-1),clearChatInput(-1),koruStepConfig(-1),cfg(-1),legacyVerify(-1),verifySubmit(-1),postSubmitVerifyEnabled(-1),discardCachedSubmitWinner(-1),current(-1),verifySubmitStep(-1),probe(-1),result(-1),dbResult(-1),anchor(-1),debugLog(-1),adapter(-1),debugLog(-1),tail(-1),deadline(-1),attempts(-1),debugLog(-1),captureCursorBubbleAnchor(-1),adapter(-1),debugLog(-1),debugLog(-1),verify(-1),debugLog(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),shouldRequireVerifiedHostSubmit(-1),registered(-1),hostClick(-1),accepted(-1),hostKey(-1),hostKey(-1),strategy(-1),shouldRequireVerifiedHostSubmit(-1),hostKey(-1),accepted(-1),accepted(-1),result(-1),accepted(-1),submitChat(-1),ide(-1),verifyEnabled(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),debugLog(-1),registered(-1),fallback(-1),typeFallback(-1),_buildFocusChatContext(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),orderWithCache(-1),debugLog(-1),before(-1),debugLog(-1),debugLog(-1),debugLog(-1),_focusChatAlreadyFocused(-1),debugLog(-1),before(-1),inputOnly(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),inputFocus(-1),debugLog(-1),strategy(-1),debugLog(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),focusChat(-1),cfg(-1),primary(-1),context(-1),alreadyFocused(-1),inputOnly(-1),inputOnly(-1),result(-1),_shouldPreflightFocusOnly(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),clipboard(-1),typed(-1),hostPaste(-1),direct(-1),clipboard(-1),typed(-1),directPasteReadsClipboard(-1),directCommands(-1),orderWithCache(-1),previousClip(-1),clipboardSeeded(-1),readsClipboard(-1),seeded(-1),debugLog(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),clip(-1),debugLog(-1),paste(-1),after(-1),inputFocused(-1),debugLog(-1),ok(-1),debugLog(-1),after(-1),inputFocused(-1),debugLog(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),detectIde(-1),app(-1),send(-1),wire(-1),line(-1),debugLog(-1),bytes(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),_handleVersionMismatchRejection(-1),cfg(-1),enabled(-1),ctx(-1),lastReloadAt(-1),COOLDOWN_MS(-1),safeLog(-1),detail(-1),safeLog(-1),saveClipboard(-1),restoreClipboard(-1),writeClipboardVerified(-1),maxTries(-1),debugLog(-1),observed(-1),debugLog(-1),debugLog(-1),debugLog(-1),decideBusyInput(-1),observed(-1),observedLength(-1),action(-1),debugLog(-1),_probeChatInputContents(-1),previous(-1),observed(-1),debugLog(-1),submitResult(-1),sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),sendMessageSent(-1),injectChat(-1),text(-1),submit(-1),previous(-1),previousHost(-1),message(-1),tryWindsurfSendTextFastPath(-1),safeLog(-1),hasCommand(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),maybeKeepWindsurfChatPanelVisible(-1),cfg(-1),enabled(-1),ensureWindsurfChatPanelVisible(-1),existing(-1),registered(-1),buildFocusOpenCommands(-1),commands(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),tryAntigravitySendPromptFastPath(-1),existing(-1),submitResult(-1),_performInject(-1),ide(-1),focus(-1),busyInput(-1),debugLog(-1),debugLog(-1),pasted(-1),submitCmd(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),captureSubmitClickPosition(-1),res(-1),match(-1),debugLog(-1),x(-1),y(-1),cfg(-1),debugLog(-1),sendManualChat(-1),siblingIdeForAppName(-1),lowered(-1),maybeAutoConnect(-1),cfg(-1),registerBridgeCommands(-1),text(-1),maybeAutoConnect(-1),activateBridge(-1),bridge(-1),registerBridgeCommands(-1),maybeAutoConnect(-1),activate(-1),appName(-1),siblingIde(-1),activateBridge(-1),deactivate(-1)
-    DISALLOWED_FOCUS_OPEN_COMMANDS()
-    UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS()
-    isAllowedFocusOpenCommand()
-    sanitizeFocusOpenCommand()
-    sanitizeFocusOpenCandidates()
-    filterUnsafeFocusOpenForIde()
-    isSpecificChatInputFocusCommand()
-    normalized()
-    isTogglingFocusOpenCommand()
-    debugLog()
-    suffix()
-    safeLogPayload()
-    snapshot()
-    safeLog()
-    suffix()
-  plugins/koru-autopilot-windsurf/src/extension.ts:
-    i: ./ack-payload,./chat-history-watcher,./cursor-bubble-adapter,./dispatch-plan,./ides/registry,./socketPath,child_process,fs,net,vscode
-    e: Envelope,AutopilotBridge,DISALLOWED_FOCUS_OPEN_COMMANDS,UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS,isAllowedFocusOpenCommand,sanitizeFocusOpenCommand,sanitizeFocusOpenCandidates,filterUnsafeFocusOpenForIde,isSpecificChatInputFocusCommand,normalized,isTogglingFocusOpenCommand,debugLog,suffix,safeLogPayload,snapshot,safeLog,suffix
-    Envelope:
-    AutopilotBridge: isConnected(-1),sendConsoleLog(-1),resetOperationTrace(-1),traceOperation(-1),safeLog(-1),emitLiveDsl(-1),seq(-1),okToken(-1),routeToken(-1),reason(-1),debugLog(-1),currentOperationTrace(-1),socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),matching(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),startChatHistoryWatcherIfEligible(-1),ide(-1),cfg(-1),initialCursor(-1),scheduleRetry(-1),delay(-1),cfg(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),waitForCommand(-1),deadline(-1),existing(-1),editorSnapshot(-1),getProbeCache(-1),ide(-1),raw(-1),cache(-1),next(-1),debugLog(-1),_tryTypeSubmit(-1),_tryHostKeySubmit(-1),cfg(-1),override(-1),candidates(-1),cfg(-1),override(-1),candidates(-1),res(-1),verify(-1),runHostCommand(-1),child(-1),resolve(-1),res(-1),debugLog(-1),submitClickPoint(-1),cfg(-1),x(-1),y(-1),autoSubmitClickPoint(-1),geometry(-1),parsed(-1),point(-1),isWaylandSession(-1),move(-1),debugLog(-1),click(-1),debugLog(-1),x(-1),y(-1),xdotoolResult(-1),_tryHostClickSubmit(-1),configuredPoint(-1),point(-1),debugLog(-1),source(-1),tryYdotoolFirst(-1),first(-1),second(-1),trustUnverifiedHostSubmit(-1),cfg(-1),saveHostClipboard(-1),res(-1),debugLog(-1),writeHostClipboard(-1),res(-1),debugLog(-1),restoreHostClipboard(-1),debugLog(-1),clearChatInput(-1),koruStepConfig(-1),cfg(-1),legacyVerify(-1),verifySubmit(-1),postSubmitVerifyEnabled(-1),discardCachedSubmitWinner(-1),current(-1),verifySubmitStep(-1),probe(-1),result(-1),dbResult(-1),anchor(-1),debugLog(-1),adapter(-1),debugLog(-1),tail(-1),deadline(-1),attempts(-1),debugLog(-1),captureCursorBubbleAnchor(-1),adapter(-1),debugLog(-1),debugLog(-1),verify(-1),debugLog(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),shouldRequireVerifiedHostSubmit(-1),registered(-1),hostClick(-1),accepted(-1),hostKey(-1),hostKey(-1),strategy(-1),shouldRequireVerifiedHostSubmit(-1),hostKey(-1),accepted(-1),accepted(-1),result(-1),accepted(-1),submitChat(-1),ide(-1),verifyEnabled(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),debugLog(-1),registered(-1),fallback(-1),typeFallback(-1),_buildFocusChatContext(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),orderWithCache(-1),debugLog(-1),before(-1),debugLog(-1),debugLog(-1),debugLog(-1),_focusChatAlreadyFocused(-1),debugLog(-1),before(-1),inputOnly(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),inputFocus(-1),debugLog(-1),strategy(-1),debugLog(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),focusChat(-1),cfg(-1),primary(-1),context(-1),alreadyFocused(-1),inputOnly(-1),inputOnly(-1),result(-1),_shouldPreflightFocusOnly(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),clipboard(-1),typed(-1),hostPaste(-1),direct(-1),clipboard(-1),typed(-1),directPasteReadsClipboard(-1),directCommands(-1),orderWithCache(-1),previousClip(-1),clipboardSeeded(-1),readsClipboard(-1),seeded(-1),debugLog(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),clip(-1),debugLog(-1),paste(-1),after(-1),inputFocused(-1),debugLog(-1),ok(-1),debugLog(-1),after(-1),inputFocused(-1),debugLog(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),detectIde(-1),app(-1),send(-1),wire(-1),line(-1),debugLog(-1),bytes(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),_handleVersionMismatchRejection(-1),cfg(-1),enabled(-1),ctx(-1),lastReloadAt(-1),COOLDOWN_MS(-1),safeLog(-1),detail(-1),safeLog(-1),saveClipboard(-1),restoreClipboard(-1),writeClipboardVerified(-1),maxTries(-1),debugLog(-1),observed(-1),debugLog(-1),debugLog(-1),debugLog(-1),decideBusyInput(-1),observed(-1),observedLength(-1),action(-1),debugLog(-1),_probeChatInputContents(-1),previous(-1),observed(-1),debugLog(-1),submitResult(-1),sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),sendMessageSent(-1),injectChat(-1),text(-1),submit(-1),previous(-1),previousHost(-1),message(-1),tryWindsurfSendTextFastPath(-1),safeLog(-1),hasCommand(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),maybeKeepWindsurfChatPanelVisible(-1),cfg(-1),enabled(-1),ensureWindsurfChatPanelVisible(-1),existing(-1),registered(-1),buildFocusOpenCommands(-1),commands(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),tryAntigravitySendPromptFastPath(-1),existing(-1),submitResult(-1),_performInject(-1),ide(-1),focus(-1),busyInput(-1),debugLog(-1),debugLog(-1),pasted(-1),submitCmd(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),captureSubmitClickPosition(-1),res(-1),match(-1),debugLog(-1),x(-1),y(-1),cfg(-1),debugLog(-1),sendManualChat(-1),isWindsurfHost(-1),maybeAutoConnect(-1),cfg(-1),registerBridgeCommands(-1),text(-1),maybeAutoConnect(-1),activateBridge(-1),bridge(-1),registerBridgeCommands(-1),maybeAutoConnect(-1),activate(-1),appName(-1),activateBridge(-1),deactivate(-1)
-    DISALLOWED_FOCUS_OPEN_COMMANDS()
-    UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS()
-    isAllowedFocusOpenCommand()
-    sanitizeFocusOpenCommand()
-    sanitizeFocusOpenCandidates()
-    filterUnsafeFocusOpenForIde()
-    isSpecificChatInputFocusCommand()
-    normalized()
-    isTogglingFocusOpenCommand()
-    debugLog()
-    suffix()
-    safeLogPayload()
-    snapshot()
-    safeLog()
-    suffix()
-  plugins/koru-autopilot-vscodium/src/extension.ts:
-    i: ./ack-payload,./chat-history-watcher,./cursor-bubble-adapter,./dispatch-plan,./ides/registry,./socketPath,child_process,fs,net,vscode
-    e: Envelope,AutopilotBridge,DISALLOWED_FOCUS_OPEN_COMMANDS,UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS,isAllowedFocusOpenCommand,sanitizeFocusOpenCommand,sanitizeFocusOpenCandidates,filterUnsafeFocusOpenForIde,isSpecificChatInputFocusCommand,normalized,isTogglingFocusOpenCommand,debugLog,suffix,safeLogPayload,snapshot,safeLog,suffix
-    Envelope:
-    AutopilotBridge: isConnected(-1),sendConsoleLog(-1),resetOperationTrace(-1),traceOperation(-1),safeLog(-1),emitLiveDsl(-1),seq(-1),okToken(-1),routeToken(-1),reason(-1),debugLog(-1),currentOperationTrace(-1),socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),matching(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),startChatHistoryWatcherIfEligible(-1),ide(-1),cfg(-1),initialCursor(-1),scheduleRetry(-1),delay(-1),cfg(-1),maybeOpenChatOnConnect(-1),cfg(-1),setTimeout(-1),detail(-1),safeLog(-1),openChatPanel(-1),focus(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),waitForCommand(-1),deadline(-1),existing(-1),editorSnapshot(-1),getProbeCache(-1),ide(-1),raw(-1),cache(-1),next(-1),debugLog(-1),_tryTypeSubmit(-1),_tryHostKeySubmit(-1),cfg(-1),override(-1),candidates(-1),cfg(-1),override(-1),candidates(-1),res(-1),verify(-1),runHostCommand(-1),child(-1),resolve(-1),res(-1),debugLog(-1),submitClickPoint(-1),cfg(-1),x(-1),y(-1),autoSubmitClickPoint(-1),geometry(-1),parsed(-1),point(-1),isWaylandSession(-1),move(-1),debugLog(-1),click(-1),debugLog(-1),x(-1),y(-1),xdotoolResult(-1),_tryHostClickSubmit(-1),configuredPoint(-1),point(-1),debugLog(-1),source(-1),tryYdotoolFirst(-1),first(-1),second(-1),trustUnverifiedHostSubmit(-1),cfg(-1),saveHostClipboard(-1),res(-1),debugLog(-1),writeHostClipboard(-1),res(-1),debugLog(-1),restoreHostClipboard(-1),debugLog(-1),clearChatInput(-1),koruStepConfig(-1),cfg(-1),legacyVerify(-1),verifySubmit(-1),postSubmitVerifyEnabled(-1),discardCachedSubmitWinner(-1),current(-1),verifySubmitStep(-1),probe(-1),result(-1),dbResult(-1),anchor(-1),debugLog(-1),adapter(-1),debugLog(-1),tail(-1),deadline(-1),attempts(-1),debugLog(-1),captureCursorBubbleAnchor(-1),adapter(-1),debugLog(-1),debugLog(-1),verify(-1),debugLog(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),shouldRequireVerifiedHostSubmit(-1),registered(-1),hostClick(-1),accepted(-1),hostKey(-1),hostKey(-1),strategy(-1),shouldRequireVerifiedHostSubmit(-1),hostKey(-1),accepted(-1),accepted(-1),result(-1),accepted(-1),submitChat(-1),ide(-1),verifyEnabled(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),debugLog(-1),registered(-1),fallback(-1),typeFallback(-1),_buildFocusChatContext(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),orderWithCache(-1),debugLog(-1),before(-1),debugLog(-1),debugLog(-1),debugLog(-1),_focusChatAlreadyFocused(-1),debugLog(-1),before(-1),inputOnly(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),inputFocus(-1),debugLog(-1),strategy(-1),debugLog(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),focusChat(-1),cfg(-1),primary(-1),context(-1),alreadyFocused(-1),inputOnly(-1),inputOnly(-1),result(-1),_shouldPreflightFocusOnly(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),clipboard(-1),typed(-1),hostPaste(-1),direct(-1),clipboard(-1),typed(-1),directPasteReadsClipboard(-1),directCommands(-1),orderWithCache(-1),previousClip(-1),clipboardSeeded(-1),readsClipboard(-1),seeded(-1),debugLog(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),clip(-1),debugLog(-1),paste(-1),after(-1),inputFocused(-1),debugLog(-1),ok(-1),debugLog(-1),after(-1),inputFocused(-1),debugLog(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),detectIde(-1),app(-1),send(-1),wire(-1),line(-1),debugLog(-1),bytes(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),_handleVersionMismatchRejection(-1),cfg(-1),enabled(-1),ctx(-1),lastReloadAt(-1),COOLDOWN_MS(-1),safeLog(-1),detail(-1),safeLog(-1),saveClipboard(-1),restoreClipboard(-1),writeClipboardVerified(-1),maxTries(-1),debugLog(-1),observed(-1),debugLog(-1),debugLog(-1),debugLog(-1),decideBusyInput(-1),observed(-1),observedLength(-1),action(-1),debugLog(-1),_probeChatInputContents(-1),previous(-1),observed(-1),debugLog(-1),submitResult(-1),sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),sendMessageSent(-1),injectChat(-1),text(-1),submit(-1),previous(-1),previousHost(-1),message(-1),tryWindsurfSendTextFastPath(-1),safeLog(-1),hasCommand(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),maybeKeepWindsurfChatPanelVisible(-1),cfg(-1),enabled(-1),ensureWindsurfChatPanelVisible(-1),existing(-1),registered(-1),buildFocusOpenCommands(-1),commands(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),tryAntigravitySendPromptFastPath(-1),existing(-1),submitResult(-1),_performInject(-1),ide(-1),focus(-1),busyInput(-1),debugLog(-1),debugLog(-1),pasted(-1),submitCmd(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),captureSubmitClickPosition(-1),res(-1),match(-1),debugLog(-1),x(-1),y(-1),cfg(-1),debugLog(-1),sendManualChat(-1),openChatFromCommand(-1),isVscodiumHost(-1),lowered(-1),maybeAutoConnect(-1),cfg(-1),registerBridgeCommands(-1),text(-1),maybeAutoConnect(-1),activateBridge(-1),bridge(-1),registerBridgeCommands(-1),maybeAutoConnect(-1),activate(-1),appName(-1),activateBridge(-1),deactivate(-1)
-    DISALLOWED_FOCUS_OPEN_COMMANDS()
-    UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS()
-    isAllowedFocusOpenCommand()
-    sanitizeFocusOpenCommand()
-    sanitizeFocusOpenCandidates()
-    filterUnsafeFocusOpenForIde()
-    isSpecificChatInputFocusCommand()
-    normalized()
-    isTogglingFocusOpenCommand()
-    debugLog()
-    suffix()
-    safeLogPayload()
-    snapshot()
-    safeLog()
-    suffix()
   scripts/planfile-sync-todo.py:
     e: _find_scripts_dir_with_settings,run_planfile,load_tickets,build_auto_section,replace_auto_section,do_from_planfile,_extract_todo_items,_resolve_import_labels,_create_ticket,do_from_todo,_llm_stub,main
     _find_scripts_dir_with_settings()
@@ -1110,8 +1054,33 @@ Designed to ...
     do_from_todo(heading;check)
     _llm_stub(item;heading;source_name)
     main()
+  src/koru/autonomous_runtime.py:
+    e: StopSignalState,setup_autonomous_session,_path_is_relative_to,_env_disabled,project_venv_reexec_argv,project_venv_warning_lines,setup_autopilot_daemon,cleanup_autonomous_session,setup_autonomous_env_vars,restore_autonomous_env_vars,build_and_log_startup_probe,install_sigterm_interrupt_handler,handle_autonomous_interrupt
+    StopSignalState:
+    setup_autonomous_session(args)
+    _path_is_relative_to(path;parent)
+    _env_disabled(name)
+    project_venv_reexec_argv(project)
+    project_venv_warning_lines(project)
+    setup_autopilot_daemon(args;project)
+    cleanup_autonomous_session(previous_stdio_format_env;previous_sigterm;daemon;thread;wup_process;stdio_format)
+    setup_autonomous_env_vars()
+    restore_autonomous_env_vars(snapshot)
+    build_and_log_startup_probe(args;project)
+    install_sigterm_interrupt_handler(args;stop_state)
+    handle_autonomous_interrupt(args)
+  src/koruide/daemon/handlers_drive.py:
+    e: _prefer_keyboard_drive,handle_drive,_drive_via_plugin,_try_os_injector_drive,_drive_via_keyboard,_resolve_keyboard_drive_selection,_drive_via_os_injector_backend,_drive_via_keyboard_backend
+    _prefer_keyboard_drive()
+    handle_drive(daemon;client;msg)
+    _drive_via_plugin(daemon;client;msg;plugin;text;submit;require_plugin)
+    _try_os_injector_drive(daemon;target_id;text;submit)
+    _drive_via_keyboard(daemon;client;msg;ide_pref;text;submit)
+    _resolve_keyboard_drive_selection()
+    _drive_via_os_injector_backend()
+    _drive_via_keyboard_backend()
   src/koruapi/mcp_server.py:
-    e: _get_job_store_path,_load_jobs,_save_jobs,_get_process_memory_mb,_monitor_subprocess_oom,_get_python_cmd,_run_planfile_cli,_parse_tickets_json,_tickets_for_status_filter,_serialize_mcp_ticket,tool_list_tickets,tool_ide_command_catalog,tool_ide_command_scenario_schema,tool_validate_ide_command_scenario,_create_job,_update_job,_collect_process_logs,_launch_oom_monitor,tool_run_ticket,tool_job_status,_gate_commands,_detect_enabled_gates,_resolve_gates,_run_single_gate,tool_run_quality_gates,_find_ticket,_build_edit_context,tool_propose_edits,_jsonrpc_response,_jsonrpc_error,_handle_initialize,_handle_tools_list,_handle_tools_call,handle_message,run_stdio,_write,_log,mcp_serve_main
+    e: _get_job_store_path,_load_jobs,_save_jobs,_get_process_memory_mb,_monitor_subprocess_oom,_get_python_cmd,_run_planfile_cli,_parse_tickets_json,_tickets_for_status_filter,_serialize_mcp_ticket,tool_list_tickets,tool_ide_command_catalog,tool_ide_command_scenario_schema,tool_ide_commands,tool_ide_drive,tool_ide_dsl_recent,tool_validate_ide_command_scenario,_create_job,_update_job,_collect_process_logs,_launch_oom_monitor,tool_run_ticket,tool_job_status,_gate_commands,_detect_enabled_gates,_resolve_gates,_run_single_gate,tool_run_quality_gates,_find_ticket,_build_edit_context,tool_propose_edits,_jsonrpc_response,_jsonrpc_error,_handle_initialize,_handle_tools_list,_handle_tools_call,handle_message,run_stdio,_write,_log,mcp_serve_main
     _get_job_store_path(project)
     _load_jobs(project)
     _save_jobs(jobs;project)
@@ -1125,6 +1094,9 @@ Designed to ...
     tool_list_tickets(arguments)
     tool_ide_command_catalog(arguments)
     tool_ide_command_scenario_schema(_arguments)
+    tool_ide_commands(arguments)
+    tool_ide_drive(arguments)
+    tool_ide_dsl_recent(arguments)
     tool_validate_ide_command_scenario(arguments)
     _create_job(ticket_id;mode;project)
     _update_job(job_id;project)
@@ -1150,13 +1122,98 @@ Designed to ...
     _write(payload)
     _log(msg)
     mcp_serve_main(argv)
-  src/koru/cli_auto.py:
-    e: _legacy_attr,_peek_project_from_argv,_should_suggest_wizard,_enable_auto_reload_reuse_window_for_auto,_auto_main
-    _legacy_attr(name;fallback)
-    _peek_project_from_argv(argv)
-    _should_suggest_wizard(argv;project)
-    _enable_auto_reload_reuse_window_for_auto()
-    _auto_main(argv)
+  src/koruide/drive_orchestrator.py:
+    e: DriveOrchestrator
+    DriveOrchestrator: plugin_required_message(0),should_try_os_fallback(-1),build_message_sent_info(-1),annotate_plugin_ack(-1),is_poisoned_submit_ack(1),strict_plugin_ack_required(-1),expected_plugin_version(0),strict_plugin_version_required(-1),protocol_plugin_version_policy(-1),plugin_version_info(-1),should_block_plugin_version(0),plugin_version_block_message(0),should_fail_strict_plugin_ack(-1),plugin_ack_summary(0),operation_trace_summary(0),_dsl_intent(0),_dsl_ok_token(0),_dsl_quote(0),operation_trace_dsl(0),drive_outcome_dsl(0),command_catalog_for(1),unknown_chat_commands_for(1)  # Pure helpers used by the autopilot daemon...
+  plugins/koru-autopilot-vscode/src/extension.ts:
+    i: ./ack-payload,./chat-history-watcher,./cursor-bubble-adapter,./dispatch-plan,./ides/registry,./socketPath,child_process,fs,net,vscode
+    e: Envelope,AutopilotBridge,DISALLOWED_FOCUS_OPEN_COMMANDS,UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS,isAllowedFocusOpenCommand,sanitizeFocusOpenCommand,sanitizeFocusOpenCandidates,filterUnsafeFocusOpenForIde,isSpecificChatInputFocusCommand,normalized,isTogglingFocusOpenCommand,debugLog,suffix,safeLogPayload,snapshot,safeLog,suffix
+    Envelope:
+    AutopilotBridge: isConnected(-1),sendConsoleLog(-1),resetOperationTrace(-1),value(-1),commands(-1),server(-1),traceOperation(-1),safeLog(-1),emitLiveDsl(-1),seq(-1),okToken(-1),routeToken(-1),reason(-1),debugLog(-1),currentOperationTrace(-1),socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),commandCatalog(-1),matching(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),startChatHistoryWatcherIfEligible(-1),ide(-1),cfg(-1),initialCursor(-1),scheduleRetry(-1),delay(-1),cfg(-1),maybeOpenChatOnConnect(-1),cfg(-1),setTimeout(-1),detail(-1),safeLog(-1),openChatPanel(-1),focus(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),waitForCommand(-1),deadline(-1),existing(-1),editorSnapshot(-1),getProbeCache(-1),ide(-1),raw(-1),cache(-1),next(-1),debugLog(-1),_tryTypeSubmit(-1),_tryHostKeySubmit(-1),cfg(-1),override(-1),candidates(-1),cfg(-1),override(-1),candidates(-1),res(-1),verify(-1),runHostCommand(-1),child(-1),resolve(-1),res(-1),debugLog(-1),submitClickPoint(-1),cfg(-1),x(-1),y(-1),autoSubmitClickPoint(-1),geometry(-1),parsed(-1),point(-1),isWaylandSession(-1),move(-1),debugLog(-1),click(-1),debugLog(-1),x(-1),y(-1),xdotoolResult(-1),_tryHostClickSubmit(-1),configuredPoint(-1),point(-1),debugLog(-1),source(-1),tryYdotoolFirst(-1),first(-1),second(-1),trustUnverifiedHostSubmit(-1),cfg(-1),saveHostClipboard(-1),res(-1),debugLog(-1),writeHostClipboard(-1),res(-1),debugLog(-1),restoreHostClipboard(-1),debugLog(-1),clearChatInput(-1),koruStepConfig(-1),cfg(-1),legacyVerify(-1),verifySubmit(-1),postSubmitVerifyEnabled(-1),discardCachedSubmitWinner(-1),current(-1),verifySubmitStep(-1),probe(-1),result(-1),dbResult(-1),anchor(-1),debugLog(-1),adapter(-1),debugLog(-1),tail(-1),deadline(-1),attempts(-1),debugLog(-1),captureCursorBubbleAnchor(-1),adapter(-1),debugLog(-1),debugLog(-1),verify(-1),debugLog(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),shouldRequireVerifiedHostSubmit(-1),registered(-1),hostClick(-1),accepted(-1),hostKey(-1),hostKey(-1),strategy(-1),shouldRequireVerifiedHostSubmit(-1),hostKey(-1),accepted(-1),accepted(-1),result(-1),accepted(-1),submitChat(-1),ide(-1),verifyEnabled(-1),existing(-1),cache(-1),candidates(-1),debugLog(-1),registered(-1),fallback(-1),typeFallback(-1),_buildFocusChatContext(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),buildFocusOpenCommands(-1),debugLog(-1),before(-1),debugLog(-1),debugLog(-1),debugLog(-1),_focusChatAlreadyFocused(-1),debugLog(-1),before(-1),inputOnly(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),inputFocus(-1),debugLog(-1),strategy(-1),debugLog(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),focusChat(-1),cfg(-1),primary(-1),context(-1),alreadyFocused(-1),inputOnly(-1),inputOnly(-1),result(-1),_shouldPreflightFocusOnly(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),clipboard(-1),typed(-1),hostPaste(-1),direct(-1),clipboard(-1),typed(-1),directPasteReadsClipboard(-1),directCommands(-1),previousClip(-1),clipboardSeeded(-1),readsClipboard(-1),seeded(-1),debugLog(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),clip(-1),debugLog(-1),paste(-1),after(-1),inputFocused(-1),debugLog(-1),ok(-1),debugLog(-1),after(-1),inputFocused(-1),debugLog(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),detectIde(-1),app(-1),send(-1),wire(-1),line(-1),debugLog(-1),bytes(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),_handleVersionMismatchRejection(-1),cfg(-1),enabled(-1),ctx(-1),lastReloadAt(-1),COOLDOWN_MS(-1),safeLog(-1),detail(-1),safeLog(-1),saveClipboard(-1),restoreClipboard(-1),writeClipboardVerified(-1),maxTries(-1),debugLog(-1),observed(-1),debugLog(-1),debugLog(-1),debugLog(-1),decideBusyInput(-1),observed(-1),observedLength(-1),action(-1),debugLog(-1),_probeChatInputContents(-1),previous(-1),observed(-1),debugLog(-1),submitResult(-1),sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),sendMessageSent(-1),injectChat(-1),text(-1),submit(-1),previous(-1),previousHost(-1),message(-1),tryWindsurfSendTextFastPath(-1),safeLog(-1),hasCommand(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),maybeKeepWindsurfChatPanelVisible(-1),cfg(-1),enabled(-1),ensureWindsurfChatPanelVisible(-1),existing(-1),registered(-1),buildFocusOpenCommands(-1),commands(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),tryAntigravitySendPromptFastPath(-1),existing(-1),submitResult(-1),_performInject(-1),ide(-1),focus(-1),busyInput(-1),debugLog(-1),debugLog(-1),pasted(-1),submitCmd(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),captureSubmitClickPosition(-1),res(-1),match(-1),debugLog(-1),x(-1),y(-1),cfg(-1),debugLog(-1),sendManualChat(-1),siblingIdeForAppName(-1),lowered(-1),maybeAutoConnect(-1),cfg(-1),registerBridgeCommands(-1),text(-1),maybeAutoConnect(-1),activateBridge(-1),bridge(-1),registerBridgeCommands(-1),maybeAutoConnect(-1),activate(-1),appName(-1),siblingIde(-1),activateBridge(-1),deactivate(-1)
+    DISALLOWED_FOCUS_OPEN_COMMANDS()
+    UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS()
+    isAllowedFocusOpenCommand()
+    sanitizeFocusOpenCommand()
+    sanitizeFocusOpenCandidates()
+    filterUnsafeFocusOpenForIde()
+    isSpecificChatInputFocusCommand()
+    normalized()
+    isTogglingFocusOpenCommand()
+    debugLog()
+    suffix()
+    safeLogPayload()
+    snapshot()
+    safeLog()
+    suffix()
+  src/koruide/command_picker.py:
+    e: HeuristicPicker,OpenRouterPicker,_seed_append,_llm_picker_mode,_seed_order,build_command_picker,pick_command_order
+    HeuristicPicker: pick(2)
+    OpenRouterPicker: pick(2),_should_call_llm(3),_call_llm(2)
+    _seed_append(category;command_id)
+    _llm_picker_mode()
+    _seed_order(capability)
+    build_command_picker(telemetry)
+    pick_command_order()
+  plugins/koru-autopilot-vscodium/src/extension.ts:
+    i: ./ack-payload,./chat-history-watcher,./cursor-bubble-adapter,./dispatch-plan,./ides/registry,./socketPath,child_process,fs,net,vscode
+    e: Envelope,AutopilotBridge,DISALLOWED_FOCUS_OPEN_COMMANDS,UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS,isAllowedFocusOpenCommand,sanitizeFocusOpenCommand,sanitizeFocusOpenCandidates,filterUnsafeFocusOpenForIde,isSpecificChatInputFocusCommand,normalized,isTogglingFocusOpenCommand,debugLog,suffix,safeLogPayload,snapshot,safeLog,suffix
+    Envelope:
+    AutopilotBridge: isConnected(-1),sendConsoleLog(-1),resetOperationTrace(-1),value(-1),commands(-1),server(-1),traceOperation(-1),safeLog(-1),emitLiveDsl(-1),seq(-1),okToken(-1),routeToken(-1),reason(-1),debugLog(-1),currentOperationTrace(-1),socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),commandCatalog(-1),matching(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),startChatHistoryWatcherIfEligible(-1),ide(-1),cfg(-1),initialCursor(-1),scheduleRetry(-1),delay(-1),cfg(-1),maybeOpenChatOnConnect(-1),cfg(-1),setTimeout(-1),detail(-1),safeLog(-1),openChatPanel(-1),focus(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),waitForCommand(-1),deadline(-1),existing(-1),editorSnapshot(-1),getProbeCache(-1),ide(-1),raw(-1),cache(-1),next(-1),debugLog(-1),_tryTypeSubmit(-1),_tryHostKeySubmit(-1),cfg(-1),override(-1),candidates(-1),cfg(-1),override(-1),candidates(-1),res(-1),verify(-1),runHostCommand(-1),child(-1),resolve(-1),res(-1),debugLog(-1),submitClickPoint(-1),cfg(-1),x(-1),y(-1),autoSubmitClickPoint(-1),geometry(-1),parsed(-1),point(-1),isWaylandSession(-1),move(-1),debugLog(-1),click(-1),debugLog(-1),x(-1),y(-1),xdotoolResult(-1),_tryHostClickSubmit(-1),configuredPoint(-1),point(-1),debugLog(-1),source(-1),tryYdotoolFirst(-1),first(-1),second(-1),trustUnverifiedHostSubmit(-1),cfg(-1),saveHostClipboard(-1),res(-1),debugLog(-1),writeHostClipboard(-1),res(-1),debugLog(-1),restoreHostClipboard(-1),debugLog(-1),clearChatInput(-1),koruStepConfig(-1),cfg(-1),legacyVerify(-1),verifySubmit(-1),postSubmitVerifyEnabled(-1),discardCachedSubmitWinner(-1),current(-1),verifySubmitStep(-1),probe(-1),result(-1),dbResult(-1),anchor(-1),debugLog(-1),adapter(-1),debugLog(-1),tail(-1),deadline(-1),attempts(-1),debugLog(-1),captureCursorBubbleAnchor(-1),adapter(-1),debugLog(-1),debugLog(-1),verify(-1),debugLog(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),shouldRequireVerifiedHostSubmit(-1),registered(-1),hostClick(-1),accepted(-1),hostKey(-1),hostKey(-1),strategy(-1),shouldRequireVerifiedHostSubmit(-1),hostKey(-1),accepted(-1),accepted(-1),result(-1),accepted(-1),submitChat(-1),ide(-1),verifyEnabled(-1),existing(-1),cache(-1),candidates(-1),debugLog(-1),registered(-1),fallback(-1),typeFallback(-1),_buildFocusChatContext(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),buildFocusOpenCommands(-1),debugLog(-1),before(-1),debugLog(-1),debugLog(-1),debugLog(-1),_focusChatAlreadyFocused(-1),debugLog(-1),before(-1),inputOnly(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),inputFocus(-1),debugLog(-1),strategy(-1),debugLog(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),focusChat(-1),cfg(-1),primary(-1),context(-1),alreadyFocused(-1),inputOnly(-1),inputOnly(-1),result(-1),_shouldPreflightFocusOnly(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),clipboard(-1),typed(-1),hostPaste(-1),direct(-1),clipboard(-1),typed(-1),directPasteReadsClipboard(-1),directCommands(-1),previousClip(-1),clipboardSeeded(-1),readsClipboard(-1),seeded(-1),debugLog(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),clip(-1),debugLog(-1),paste(-1),after(-1),inputFocused(-1),debugLog(-1),ok(-1),debugLog(-1),after(-1),inputFocused(-1),debugLog(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),detectIde(-1),app(-1),send(-1),wire(-1),line(-1),debugLog(-1),bytes(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),_handleVersionMismatchRejection(-1),cfg(-1),enabled(-1),ctx(-1),lastReloadAt(-1),COOLDOWN_MS(-1),safeLog(-1),detail(-1),safeLog(-1),saveClipboard(-1),restoreClipboard(-1),writeClipboardVerified(-1),maxTries(-1),debugLog(-1),observed(-1),debugLog(-1),debugLog(-1),debugLog(-1),decideBusyInput(-1),observed(-1),observedLength(-1),action(-1),debugLog(-1),_probeChatInputContents(-1),previous(-1),observed(-1),debugLog(-1),submitResult(-1),sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),sendMessageSent(-1),injectChat(-1),text(-1),submit(-1),previous(-1),previousHost(-1),message(-1),tryWindsurfSendTextFastPath(-1),safeLog(-1),hasCommand(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),maybeKeepWindsurfChatPanelVisible(-1),cfg(-1),enabled(-1),ensureWindsurfChatPanelVisible(-1),existing(-1),registered(-1),buildFocusOpenCommands(-1),commands(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),tryAntigravitySendPromptFastPath(-1),existing(-1),submitResult(-1),_performInject(-1),ide(-1),focus(-1),busyInput(-1),debugLog(-1),debugLog(-1),pasted(-1),submitCmd(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),captureSubmitClickPosition(-1),res(-1),match(-1),debugLog(-1),x(-1),y(-1),cfg(-1),debugLog(-1),sendManualChat(-1),openChatFromCommand(-1),isVscodiumHost(-1),lowered(-1),maybeAutoConnect(-1),cfg(-1),registerBridgeCommands(-1),text(-1),maybeAutoConnect(-1),activateBridge(-1),bridge(-1),registerBridgeCommands(-1),maybeAutoConnect(-1),activate(-1),appName(-1),activateBridge(-1),deactivate(-1)
+    DISALLOWED_FOCUS_OPEN_COMMANDS()
+    UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS()
+    isAllowedFocusOpenCommand()
+    sanitizeFocusOpenCommand()
+    sanitizeFocusOpenCandidates()
+    filterUnsafeFocusOpenForIde()
+    isSpecificChatInputFocusCommand()
+    normalized()
+    isTogglingFocusOpenCommand()
+    debugLog()
+    suffix()
+    safeLogPayload()
+    snapshot()
+    safeLog()
+    suffix()
+  plugins/koru-autopilot-antigravity/src/extension.ts:
+    i: ./ack-payload,./chat-history-watcher,./cursor-bubble-adapter,./dispatch-plan,./ides/registry,./socketPath,child_process,fs,net,vscode
+    e: Envelope,AutopilotBridge,DISALLOWED_FOCUS_OPEN_COMMANDS,UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS,isAllowedFocusOpenCommand,sanitizeFocusOpenCommand,sanitizeFocusOpenCandidates,filterUnsafeFocusOpenForIde,isSpecificChatInputFocusCommand,normalized,isTogglingFocusOpenCommand,debugLog,suffix,safeLogPayload,snapshot,safeLog,suffix
+    Envelope:
+    AutopilotBridge: isConnected(-1),sendConsoleLog(-1),resetOperationTrace(-1),value(-1),commands(-1),server(-1),traceOperation(-1),safeLog(-1),emitLiveDsl(-1),seq(-1),okToken(-1),routeToken(-1),reason(-1),debugLog(-1),currentOperationTrace(-1),socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),commandCatalog(-1),matching(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),startChatHistoryWatcherIfEligible(-1),ide(-1),cfg(-1),initialCursor(-1),scheduleRetry(-1),delay(-1),cfg(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),waitForCommand(-1),deadline(-1),existing(-1),editorSnapshot(-1),getProbeCache(-1),ide(-1),raw(-1),cache(-1),next(-1),debugLog(-1),_tryTypeSubmit(-1),_tryHostKeySubmit(-1),cfg(-1),override(-1),candidates(-1),cfg(-1),override(-1),candidates(-1),res(-1),verify(-1),runHostCommand(-1),child(-1),resolve(-1),res(-1),debugLog(-1),submitClickPoint(-1),cfg(-1),x(-1),y(-1),autoSubmitClickPoint(-1),geometry(-1),parsed(-1),point(-1),isWaylandSession(-1),move(-1),debugLog(-1),click(-1),debugLog(-1),x(-1),y(-1),xdotoolResult(-1),_tryHostClickSubmit(-1),configuredPoint(-1),point(-1),debugLog(-1),source(-1),tryYdotoolFirst(-1),first(-1),second(-1),trustUnverifiedHostSubmit(-1),cfg(-1),saveHostClipboard(-1),res(-1),debugLog(-1),writeHostClipboard(-1),res(-1),debugLog(-1),restoreHostClipboard(-1),debugLog(-1),clearChatInput(-1),koruStepConfig(-1),cfg(-1),legacyVerify(-1),verifySubmit(-1),postSubmitVerifyEnabled(-1),discardCachedSubmitWinner(-1),current(-1),verifySubmitStep(-1),probe(-1),result(-1),dbResult(-1),anchor(-1),debugLog(-1),adapter(-1),debugLog(-1),tail(-1),deadline(-1),attempts(-1),debugLog(-1),captureCursorBubbleAnchor(-1),adapter(-1),debugLog(-1),debugLog(-1),verify(-1),debugLog(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),shouldRequireVerifiedHostSubmit(-1),registered(-1),hostClick(-1),accepted(-1),hostKey(-1),hostKey(-1),strategy(-1),shouldRequireVerifiedHostSubmit(-1),hostKey(-1),accepted(-1),accepted(-1),result(-1),accepted(-1),submitChat(-1),ide(-1),verifyEnabled(-1),existing(-1),cache(-1),candidates(-1),debugLog(-1),registered(-1),fallback(-1),typeFallback(-1),_buildFocusChatContext(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),buildFocusOpenCommands(-1),debugLog(-1),before(-1),debugLog(-1),debugLog(-1),debugLog(-1),_focusChatAlreadyFocused(-1),debugLog(-1),before(-1),inputOnly(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),inputFocus(-1),debugLog(-1),strategy(-1),debugLog(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),focusChat(-1),cfg(-1),primary(-1),context(-1),alreadyFocused(-1),inputOnly(-1),inputOnly(-1),result(-1),_shouldPreflightFocusOnly(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),clipboard(-1),typed(-1),hostPaste(-1),direct(-1),clipboard(-1),typed(-1),directPasteReadsClipboard(-1),directCommands(-1),previousClip(-1),clipboardSeeded(-1),readsClipboard(-1),seeded(-1),debugLog(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),clip(-1),debugLog(-1),paste(-1),after(-1),inputFocused(-1),debugLog(-1),ok(-1),debugLog(-1),after(-1),inputFocused(-1),debugLog(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),detectIde(-1),app(-1),send(-1),wire(-1),line(-1),debugLog(-1),bytes(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),_handleVersionMismatchRejection(-1),cfg(-1),enabled(-1),ctx(-1),lastReloadAt(-1),COOLDOWN_MS(-1),safeLog(-1),detail(-1),safeLog(-1),saveClipboard(-1),restoreClipboard(-1),writeClipboardVerified(-1),maxTries(-1),debugLog(-1),observed(-1),debugLog(-1),debugLog(-1),debugLog(-1),decideBusyInput(-1),observed(-1),observedLength(-1),action(-1),debugLog(-1),_probeChatInputContents(-1),previous(-1),observed(-1),debugLog(-1),submitResult(-1),sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),sendMessageSent(-1),injectChat(-1),text(-1),submit(-1),previous(-1),previousHost(-1),message(-1),tryWindsurfSendTextFastPath(-1),safeLog(-1),hasCommand(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),maybeKeepWindsurfChatPanelVisible(-1),cfg(-1),enabled(-1),ensureWindsurfChatPanelVisible(-1),existing(-1),registered(-1),buildFocusOpenCommands(-1),commands(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),tryAntigravitySendPromptFastPath(-1),existing(-1),submitResult(-1),_performInject(-1),ide(-1),focus(-1),busyInput(-1),debugLog(-1),debugLog(-1),pasted(-1),submitCmd(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),captureSubmitClickPosition(-1),res(-1),match(-1),debugLog(-1),x(-1),y(-1),cfg(-1),debugLog(-1),sendManualChat(-1),isAntigravityHost(-1),maybeAutoConnect(-1),cfg(-1),registerBridgeCommands(-1),text(-1),maybeAutoConnect(-1),activateBridge(-1),bridge(-1),registerBridgeCommands(-1),maybeAutoConnect(-1),activate(-1),appName(-1),activateBridge(-1),deactivate(-1)
+    DISALLOWED_FOCUS_OPEN_COMMANDS()
+    UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS()
+    isAllowedFocusOpenCommand()
+    sanitizeFocusOpenCommand()
+    sanitizeFocusOpenCandidates()
+    filterUnsafeFocusOpenForIde()
+    isSpecificChatInputFocusCommand()
+    normalized()
+    isTogglingFocusOpenCommand()
+    debugLog()
+    suffix()
+    safeLogPayload()
+    snapshot()
+    safeLog()
+    suffix()
+  plugins/koru-autopilot-windsurf/src/extension.ts:
+    i: ./ack-payload,./chat-history-watcher,./cursor-bubble-adapter,./dispatch-plan,./ides/registry,./socketPath,child_process,fs,net,vscode
+    e: Envelope,AutopilotBridge,DISALLOWED_FOCUS_OPEN_COMMANDS,UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS,isAllowedFocusOpenCommand,sanitizeFocusOpenCommand,sanitizeFocusOpenCandidates,filterUnsafeFocusOpenForIde,isSpecificChatInputFocusCommand,normalized,isTogglingFocusOpenCommand,debugLog,suffix,safeLogPayload,snapshot,safeLog,suffix
+    Envelope:
+    AutopilotBridge: isConnected(-1),sendConsoleLog(-1),resetOperationTrace(-1),value(-1),commands(-1),server(-1),traceOperation(-1),safeLog(-1),emitLiveDsl(-1),seq(-1),okToken(-1),routeToken(-1),reason(-1),debugLog(-1),currentOperationTrace(-1),socketPath(-1),cfg(-1),override(-1),connect(-1),cfg(-1),override(-1),tryConnectNext(-1),p(-1),debugLog(-1),sock(-1),connected(-1),debugLog(-1),commandCatalog(-1),matching(-1),debugLog(-1),debugLog(-1),disconnect(-1),debugLog(-1),clearTimeout(-1),startChatHistoryWatcherIfEligible(-1),ide(-1),cfg(-1),initialCursor(-1),scheduleRetry(-1),delay(-1),cfg(-1),runCommand(-1),result(-1),probeLadderEnabled(-1),probeFocusDelayMs(-1),probePasteDelayMs(-1),sleep(-1),waitForCommand(-1),deadline(-1),existing(-1),editorSnapshot(-1),getProbeCache(-1),ide(-1),raw(-1),cache(-1),next(-1),debugLog(-1),_tryTypeSubmit(-1),_tryHostKeySubmit(-1),cfg(-1),override(-1),candidates(-1),cfg(-1),override(-1),candidates(-1),res(-1),verify(-1),runHostCommand(-1),child(-1),resolve(-1),res(-1),debugLog(-1),submitClickPoint(-1),cfg(-1),x(-1),y(-1),autoSubmitClickPoint(-1),geometry(-1),parsed(-1),point(-1),isWaylandSession(-1),move(-1),debugLog(-1),click(-1),debugLog(-1),x(-1),y(-1),xdotoolResult(-1),_tryHostClickSubmit(-1),configuredPoint(-1),point(-1),debugLog(-1),source(-1),tryYdotoolFirst(-1),first(-1),second(-1),trustUnverifiedHostSubmit(-1),cfg(-1),saveHostClipboard(-1),res(-1),debugLog(-1),writeHostClipboard(-1),res(-1),debugLog(-1),restoreHostClipboard(-1),debugLog(-1),clearChatInput(-1),koruStepConfig(-1),cfg(-1),legacyVerify(-1),verifySubmit(-1),postSubmitVerifyEnabled(-1),discardCachedSubmitWinner(-1),current(-1),verifySubmitStep(-1),probe(-1),result(-1),dbResult(-1),anchor(-1),debugLog(-1),adapter(-1),debugLog(-1),tail(-1),deadline(-1),attempts(-1),debugLog(-1),captureCursorBubbleAnchor(-1),adapter(-1),debugLog(-1),debugLog(-1),verify(-1),debugLog(-1),existing(-1),cache(-1),candidates(-1),orderWithCache(-1),shouldRequireVerifiedHostSubmit(-1),registered(-1),hostClick(-1),accepted(-1),hostKey(-1),hostKey(-1),strategy(-1),shouldRequireVerifiedHostSubmit(-1),hostKey(-1),accepted(-1),accepted(-1),result(-1),accepted(-1),submitChat(-1),ide(-1),verifyEnabled(-1),existing(-1),cache(-1),candidates(-1),debugLog(-1),registered(-1),fallback(-1),typeFallback(-1),_buildFocusChatContext(-1),ide(-1),existing(-1),cache(-1),useProbe(-1),commands(-1),buildFocusOpenCommands(-1),debugLog(-1),before(-1),debugLog(-1),debugLog(-1),debugLog(-1),_focusChatAlreadyFocused(-1),debugLog(-1),before(-1),inputOnly(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),inputFocus(-1),debugLog(-1),strategy(-1),debugLog(-1),after(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),focusChat(-1),cfg(-1),primary(-1),context(-1),alreadyFocused(-1),inputOnly(-1),inputOnly(-1),result(-1),_shouldPreflightFocusOnly(-1),pasteText(-1),ide(-1),useProbe(-1),existing(-1),cache(-1),before(-1),clipboard(-1),typed(-1),hostPaste(-1),direct(-1),clipboard(-1),typed(-1),directPasteReadsClipboard(-1),directCommands(-1),previousClip(-1),clipboardSeeded(-1),readsClipboard(-1),seeded(-1),debugLog(-1),result(-1),after(-1),debugLog(-1),inputFocused(-1),debugLog(-1),clip(-1),debugLog(-1),paste(-1),after(-1),inputFocused(-1),debugLog(-1),ok(-1),debugLog(-1),after(-1),inputFocused(-1),debugLog(-1),after(-1),focusChatInput(-1),ide(-1),existing(-1),cache(-1),candidates(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),debugLog(-1),detectIde(-1),app(-1),send(-1),wire(-1),line(-1),debugLog(-1),bytes(-1),onData(-1),idx(-1),line(-1),env(-1),message(-1),dispatch(-1),message(-1),plan(-1),_handleVersionMismatchRejection(-1),cfg(-1),enabled(-1),ctx(-1),lastReloadAt(-1),COOLDOWN_MS(-1),safeLog(-1),detail(-1),safeLog(-1),saveClipboard(-1),restoreClipboard(-1),writeClipboardVerified(-1),maxTries(-1),debugLog(-1),observed(-1),debugLog(-1),debugLog(-1),debugLog(-1),decideBusyInput(-1),observed(-1),observedLength(-1),action(-1),debugLog(-1),_probeChatInputContents(-1),previous(-1),observed(-1),debugLog(-1),submitResult(-1),sendFocusFailureAck(-1),details(-1),candidates(-1),reason(-1),sendMessageSent(-1),injectChat(-1),text(-1),submit(-1),previous(-1),previousHost(-1),message(-1),tryWindsurfSendTextFastPath(-1),safeLog(-1),hasCommand(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),maybeKeepWindsurfChatPanelVisible(-1),cfg(-1),enabled(-1),ensureWindsurfChatPanelVisible(-1),existing(-1),registered(-1),buildFocusOpenCommands(-1),commands(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),safeLog(-1),tryAntigravitySendPromptFastPath(-1),existing(-1),submitResult(-1),_performInject(-1),ide(-1),focus(-1),busyInput(-1),debugLog(-1),debugLog(-1),pasted(-1),submitCmd(-1),calibrateProbe(-1),focus(-1),pasted(-1),cache(-1),captureSubmitClickPosition(-1),res(-1),match(-1),debugLog(-1),x(-1),y(-1),cfg(-1),debugLog(-1),sendManualChat(-1),isWindsurfHost(-1),maybeAutoConnect(-1),cfg(-1),registerBridgeCommands(-1),text(-1),maybeAutoConnect(-1),activateBridge(-1),bridge(-1),registerBridgeCommands(-1),maybeAutoConnect(-1),activate(-1),appName(-1),activateBridge(-1),deactivate(-1)
+    DISALLOWED_FOCUS_OPEN_COMMANDS()
+    UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS()
+    isAllowedFocusOpenCommand()
+    sanitizeFocusOpenCommand()
+    sanitizeFocusOpenCandidates()
+    filterUnsafeFocusOpenForIde()
+    isSpecificChatInputFocusCommand()
+    normalized()
+    isTogglingFocusOpenCommand()
+    debugLog()
+    suffix()
+    safeLogPayload()
+    snapshot()
+    safeLog()
+    suffix()
   src/koruobserve/providers_cli.py:
     e: screencast_session_path,providers_list_payload,providers_list_text,providers_test_payload,providers_test_text,providers_reset_consent,providers_reset_text,cmd_providers_list,cmd_providers_test,cmd_providers_reset
     screencast_session_path(project)
@@ -1226,17 +1283,6 @@ Designed to ...
     _log_drive_target_result(result;log)
     _resolve_profile_override(stripped_profile;target;prefer)
     resolve_drive_target(ide_arg;os_profile)
-  src/koruide/daemon/handlers_ack.py:
-    e: _plugin_ack_needs_os_fallback,_relay_os_fallback_ack,_relay_message_sent_ack,_relay_plugin_ack_os_fallback,_send_plugin_ack_reply,_annotated_plugin_ack_info,_strict_plugin_ack_ok,_record_plugin_ack_integration,handle_ack
-    _plugin_ack_needs_os_fallback(plugin_ok;info;submit_requested;plugin_ide;require_plugin)
-    _relay_os_fallback_ack(daemon;cli_client;corr;plugin_ide;original_text;submit_requested;info)
-    _relay_message_sent_ack(daemon;client;msg)
-    _relay_plugin_ack_os_fallback(daemon;cli_client;corr;fallback_ide;original_text)
-    _send_plugin_ack_reply(daemon;cli_client;corr;fallback_ide)
-    _annotated_plugin_ack_info(client;msg)
-    _strict_plugin_ack_ok(info)
-    _record_plugin_ack_integration(daemon)
-    handle_ack(daemon;client;msg)
   src/koru/autonomous_diagnostics.py:
     e: _has_redup_module,_code2llm_project_snapshot_command,build_idle_checks,run_idle_check_loop,create_diagnostic_ticket,clear_diagnostic_marker,run_command_check,read_wup_health,run_idle_diagnostics
     _has_redup_module()
@@ -1248,105 +1294,6 @@ Designed to ...
     run_command_check()
     read_wup_health()
     run_idle_diagnostics()
-  src/koru/doctor.py:
-    e: Check,DoctorReport,run_diagnostics,problem_catalog,_check_agent_backends_registry,_check_interface_registry,_check_detected_environment,_detected_configuration_presence_bits,_detected_configuration_json_bits,_check_detected_configuration,_read_project_version,_installed_koru_version,_selected_autopilot_ide,_has_autopilot_selection,_resolve_autopilot_socket_for_doctor,_path_koru_supports_auto_subcommand,_koru_path_version_issues,_check_koru_runtime_identity,_is_relative_to,_check_python_venv_alignment,_read_json_file,_package_lock_root_version,_autopilot_plugin_bundle_paths,_autopilot_plugin_bundle_detail_bits,_autopilot_plugin_bundle_issues,_check_autopilot_plugin_bundle,_autopilot_env_snapshot,_autopilot_env_detail_bits,_autopilot_env_status,_check_autopilot_env,_check_ide_runtime_presence,_check_autopilot_socket,_check_autopilot_manage,_autopilot_debug_log_path,_read_recent_autopilot_debug_lines,_autopilot_line_mentions_selected,_autopilot_debug_event_name,_autopilot_debug_event_has,_read_recent_autopilot_activity_lines,_recent_autopilot_debug_context,_check_autopilot_debug_log,_activity_line_mentions_selected,_count_daemon_metrics,_count_chat_control_metrics,_calculate_command_indices,_calculate_success_failure_indices,_build_chat_control_detail_bits,_chat_control_context,_chat_control_has_failures,_chat_control_recovered_after_retry,_chat_control_result,_check_autopilot_chat_control,_windsurf_chat_column_indexes,_windsurf_line_mentions_chat_open_command,_windsurf_chat_column_detail_bits,_windsurf_chat_column_result,_check_windsurf_chat_column_control,_doctor_console_log_tail_limit,_compact_plugin_console_entry,_plugin_console_entry_matches_selected,_daemon_console_logs_for_doctor,_plugin_debug_log_tail_for_doctor,_plugin_console_logs_daemon_result,_plugin_console_logs_debug_tail_result,_plugin_console_logs_empty_result,_check_plugin_console_logs,_plugin_debug_tail_is_daemon_offline_noise,_ide_console_log_roots,_recent_ide_console_log_files,_read_recent_ide_console_lines,_ide_console_line_is_interesting,_ide_console_line_is_diagnostic_headline,_compact_console_excerpt,_ide_console_error_count,_ide_console_warn_count,_ide_console_category_counts,_classify_ide_console_lines,_ide_console_build_detail,_check_ide_console_log,_check_git_repo,_check_planfile_binary,_planfile_version_argv,_check_koru_package_version,_check_planfile_cli_version,_check_planfile_config,_check_planfile_sprints,_check_planfile_sprints_yaml,_check_runtime_dir,_check_koru_project_pipeline,_check_policy_yaml,_check_gitignore,_resolve_pytest_collect_timeout,_compact_pytest_collect_failure,_check_pytest_collect,_check_inotify_watches,_check_wup_binary,_check_ci_command
-    Check: to_dict(0)  # A single diagnostic outcome...
-    DoctorReport: summary(0),to_dict(0)  # Aggregate result of ``run_diagnostics``...
-    run_diagnostics(project)
-    problem_catalog()
-    _check_agent_backends_registry(_project)
-    _check_interface_registry(_project)
-    _check_detected_environment(project)
-    _detected_configuration_presence_bits()
-    _detected_configuration_json_bits()
-    _check_detected_configuration(project)
-    _read_project_version(path)
-    _installed_koru_version()
-    _selected_autopilot_ide()
-    _has_autopilot_selection()
-    _resolve_autopilot_socket_for_doctor()
-    _path_koru_supports_auto_subcommand(path_koru)
-    _koru_path_version_issues(project_koru;path_koru;package_version;source_version)
-    _check_koru_runtime_identity(project)
-    _is_relative_to(path;parent)
-    _check_python_venv_alignment(project)
-    _read_json_file(path)
-    _package_lock_root_version(package_lock)
-    _autopilot_plugin_bundle_paths(project;plugin_dir)
-    _autopilot_plugin_bundle_detail_bits()
-    _autopilot_plugin_bundle_issues()
-    _check_autopilot_plugin_bundle(project)
-    _autopilot_env_snapshot()
-    _autopilot_env_detail_bits(values)
-    _autopilot_env_status(values)
-    _check_autopilot_env(_project)
-    _check_ide_runtime_presence(_project)
-    _check_autopilot_socket(_project)
-    _check_autopilot_manage(_project)
-    _autopilot_debug_log_path()
-    _read_recent_autopilot_debug_lines(path)
-    _autopilot_line_mentions_selected(line)
-    _autopilot_debug_event_name(line)
-    _autopilot_debug_event_has(line;token)
-    _read_recent_autopilot_activity_lines(project)
-    _recent_autopilot_debug_context()
-    _check_autopilot_debug_log(_project)
-    _activity_line_mentions_selected(line;selected)
-    _count_daemon_metrics(activity)
-    _count_chat_control_metrics(relevant)
-    _calculate_command_indices(relevant)
-    _calculate_success_failure_indices(relevant)
-    _build_chat_control_detail_bits(selected;relevant;chat_metrics;daemon_successes;daemon_failures;activity;command_available;command_missing_index)
-    _chat_control_context(project)
-    _chat_control_has_failures(chat_metrics)
-    _chat_control_recovered_after_retry()
-    _chat_control_result()
-    _check_autopilot_chat_control(project)
-    _windsurf_chat_column_indexes(relevant)
-    _windsurf_line_mentions_chat_open_command(line)
-    _windsurf_chat_column_detail_bits(relevant;indexes)
-    _windsurf_chat_column_result(indexes;detail_bits)
-    _check_windsurf_chat_column_control(_project)
-    _doctor_console_log_tail_limit()
-    _compact_plugin_console_entry(entry)
-    _plugin_console_entry_matches_selected(entry;selected)
-    _daemon_console_logs_for_doctor(socket_path)
-    _plugin_debug_log_tail_for_doctor(limit)
-    _plugin_console_logs_daemon_result()
-    _plugin_console_logs_debug_tail_result()
-    _plugin_console_logs_empty_result()
-    _check_plugin_console_logs(_project)
-    _plugin_debug_tail_is_daemon_offline_noise(lines)
-    _ide_console_log_roots(selected)
-    _recent_ide_console_log_files(selected)
-    _read_recent_ide_console_lines(files)
-    _ide_console_line_is_interesting(line)
-    _ide_console_line_is_diagnostic_headline(line)
-    _compact_console_excerpt(path;line)
-    _ide_console_error_count(headlines)
-    _ide_console_warn_count(headlines)
-    _ide_console_category_counts(interesting)
-    _classify_ide_console_lines(rows)
-    _ide_console_build_detail(selected;existing_roots;files;interesting;error_count;warn_count;category_counts;sample_rows)
-    _check_ide_console_log(_project)
-    _check_git_repo(project)
-    _check_planfile_binary(_project)
-    _planfile_version_argv()
-    _check_koru_package_version(_project)
-    _check_planfile_cli_version(project)
-    _check_planfile_config(project)
-    _check_planfile_sprints(project)
-    _check_planfile_sprints_yaml(project)
-    _check_runtime_dir(project)
-    _check_koru_project_pipeline(project)
-    _check_policy_yaml(project)
-    _check_gitignore(project)
-    _resolve_pytest_collect_timeout()
-    _compact_pytest_collect_failure(stdout;stderr)
-    _check_pytest_collect(project)
-    _check_inotify_watches(project)
-    _check_wup_binary(_project)
-    _check_ci_command(project)
   src/koru/scan.py:
     e: scan_pytest_collect,_load_koruignore_patterns,_is_koruignored,scan_todo_markers,scan_missing_gates,scan_missing_tools,scan_gitignore_drift,_scan_jscpd_report,_find_analysis_file,_parse_dup_suggestions,_parse_god_module_suggestions,_parse_high_cc_suggestions,_parse_refactor_suggestions,_parse_layer_hotspot_suggestions,_scan_code2llm_analysis,_scan_testql_export,_scan_redup_filtered,_scan_redup_changed,scan_semcod_quality_artifacts,collect_suggestions,_record_scan_activity,_add_existing_scan_title_keys,_add_active_scan_title_keys,_existing_scan_titles_from_sprint,_scan_ticket_list_payload,_existing_scan_titles_from_payload,_load_existing_scan_titles,_existing_scan_titles,_create_ticket,_suggestion_dedupe_key,_is_reused_create_detail,_log_scan_decision,_scan_duplicate_skip,_normalize_create_detail,_apply_create_result,_apply_scan_suggestions,run_scan
     scan_pytest_collect(project)
@@ -1487,6 +1434,112 @@ Designed to ...
     selectStrategy()
     confirmTicket()
     escapeHtml()
+  src/koruide/daemon/handlers_ack.py:
+    e: _persist_recent_dsl,_plugin_ack_needs_os_fallback,_relay_os_fallback_ack,_relay_message_sent_ack,_relay_plugin_ack_os_fallback,_send_plugin_ack_reply,_annotated_plugin_ack_info,_strict_plugin_ack_ok,_record_plugin_ack_integration,handle_ack
+    _persist_recent_dsl(daemon)
+    _plugin_ack_needs_os_fallback(plugin_ok;info;submit_requested;plugin_ide;require_plugin)
+    _relay_os_fallback_ack(daemon;cli_client;corr;plugin_ide;original_text;submit_requested;info)
+    _relay_message_sent_ack(daemon;client;msg)
+    _relay_plugin_ack_os_fallback(daemon;cli_client;corr;fallback_ide;original_text)
+    _send_plugin_ack_reply(daemon;cli_client;corr;fallback_ide)
+    _annotated_plugin_ack_info(client;msg)
+    _strict_plugin_ack_ok(info)
+    _record_plugin_ack_integration(daemon)
+    handle_ack(daemon;client;msg)
+  src/koru/doctor.py:
+    e: Check,DoctorReport,run_diagnostics,problem_catalog,_check_agent_backends_registry,_check_interface_registry,_read_project_version,_installed_koru_version,_selected_autopilot_ide,_has_autopilot_selection,_resolve_autopilot_socket_for_doctor,_path_koru_supports_auto_subcommand,_koru_path_version_issues,_check_koru_runtime_identity,_is_relative_to,_check_python_venv_alignment,_autopilot_env_snapshot,_autopilot_env_detail_bits,_autopilot_env_status,_check_autopilot_env,_check_ide_runtime_presence,_check_autopilot_socket,_check_autopilot_manage,_autopilot_debug_log_path,_read_recent_autopilot_debug_lines,_autopilot_line_mentions_selected,_autopilot_debug_event_name,_autopilot_debug_event_has,_read_recent_autopilot_activity_lines,_recent_autopilot_debug_context,_check_autopilot_debug_log,_activity_line_mentions_selected,_count_daemon_metrics,_count_chat_control_metrics,_calculate_command_indices,_calculate_success_failure_indices,_build_chat_control_detail_bits,_chat_control_context,_chat_control_has_failures,_chat_control_recovered_after_retry,_chat_control_result,_check_autopilot_chat_control,_windsurf_chat_column_indexes,_windsurf_line_mentions_chat_open_command,_windsurf_chat_column_detail_bits,_windsurf_chat_column_result,_check_windsurf_chat_column_control,_doctor_console_log_tail_limit,_compact_plugin_console_entry,_plugin_console_entry_matches_selected,_daemon_console_logs_for_doctor,_plugin_debug_log_tail_for_doctor,_plugin_console_logs_daemon_result,_plugin_console_logs_debug_tail_result,_plugin_console_logs_empty_result,_check_plugin_console_logs,_plugin_debug_tail_is_daemon_offline_noise,_ide_console_log_roots,_recent_ide_console_log_files,_read_recent_ide_console_lines,_ide_console_line_is_interesting,_ide_console_line_is_diagnostic_headline,_compact_console_excerpt,_ide_console_error_count,_ide_console_warn_count,_ide_console_category_counts,_classify_ide_console_lines,_ide_console_build_detail,_check_ide_console_log,_check_git_repo,_check_planfile_binary,_planfile_version_argv,_check_koru_package_version,_check_planfile_cli_version,_check_planfile_config,_check_planfile_sprints,_check_planfile_sprints_yaml,_check_runtime_dir,_check_koru_project_pipeline,_check_policy_yaml,_check_gitignore,_resolve_pytest_collect_timeout,_compact_pytest_collect_failure,_check_pytest_collect,_check_inotify_watches,_check_wup_binary,_check_ci_command
+    Check: to_dict(0)  # A single diagnostic outcome...
+    DoctorReport: summary(0),to_dict(0)  # Aggregate result of ``run_diagnostics``...
+    run_diagnostics(project)
+    problem_catalog()
+    _check_agent_backends_registry(_project)
+    _check_interface_registry(_project)
+    _read_project_version(path)
+    _installed_koru_version()
+    _selected_autopilot_ide()
+    _has_autopilot_selection()
+    _resolve_autopilot_socket_for_doctor()
+    _path_koru_supports_auto_subcommand(path_koru)
+    _koru_path_version_issues(project_koru;path_koru;package_version;source_version)
+    _check_koru_runtime_identity(project)
+    _is_relative_to(path;parent)
+    _check_python_venv_alignment(project)
+    _autopilot_env_snapshot()
+    _autopilot_env_detail_bits(values)
+    _autopilot_env_status(values)
+    _check_autopilot_env(_project)
+    _check_ide_runtime_presence(_project)
+    _check_autopilot_socket(_project)
+    _check_autopilot_manage(_project)
+    _autopilot_debug_log_path()
+    _read_recent_autopilot_debug_lines(path)
+    _autopilot_line_mentions_selected(line)
+    _autopilot_debug_event_name(line)
+    _autopilot_debug_event_has(line;token)
+    _read_recent_autopilot_activity_lines(project)
+    _recent_autopilot_debug_context()
+    _check_autopilot_debug_log(_project)
+    _activity_line_mentions_selected(line;selected)
+    _count_daemon_metrics(activity)
+    _count_chat_control_metrics(relevant)
+    _calculate_command_indices(relevant)
+    _calculate_success_failure_indices(relevant)
+    _build_chat_control_detail_bits(selected;relevant;chat_metrics;daemon_successes;daemon_failures;activity;command_available;command_missing_index)
+    _chat_control_context(project)
+    _chat_control_has_failures(chat_metrics)
+    _chat_control_recovered_after_retry()
+    _chat_control_result()
+    _check_autopilot_chat_control(project)
+    _windsurf_chat_column_indexes(relevant)
+    _windsurf_line_mentions_chat_open_command(line)
+    _windsurf_chat_column_detail_bits(relevant;indexes)
+    _windsurf_chat_column_result(indexes;detail_bits)
+    _check_windsurf_chat_column_control(_project)
+    _doctor_console_log_tail_limit()
+    _compact_plugin_console_entry(entry)
+    _plugin_console_entry_matches_selected(entry;selected)
+    _daemon_console_logs_for_doctor(socket_path)
+    _plugin_debug_log_tail_for_doctor(limit)
+    _plugin_console_logs_daemon_result()
+    _plugin_console_logs_debug_tail_result()
+    _plugin_console_logs_empty_result()
+    _check_plugin_console_logs(_project)
+    _plugin_debug_tail_is_daemon_offline_noise(lines)
+    _ide_console_log_roots(selected)
+    _recent_ide_console_log_files(selected)
+    _read_recent_ide_console_lines(files)
+    _ide_console_line_is_interesting(line)
+    _ide_console_line_is_diagnostic_headline(line)
+    _compact_console_excerpt(path;line)
+    _ide_console_error_count(headlines)
+    _ide_console_warn_count(headlines)
+    _ide_console_category_counts(interesting)
+    _classify_ide_console_lines(rows)
+    _ide_console_build_detail(selected;existing_roots;files;interesting;error_count;warn_count;category_counts;sample_rows)
+    _check_ide_console_log(_project)
+    _check_git_repo(project)
+    _check_planfile_binary(_project)
+    _planfile_version_argv()
+    _check_koru_package_version(_project)
+    _check_planfile_cli_version(project)
+    _check_planfile_config(project)
+    _check_planfile_sprints(project)
+    _check_planfile_sprints_yaml(project)
+    _check_runtime_dir(project)
+    _check_koru_project_pipeline(project)
+    _check_policy_yaml(project)
+    _check_gitignore(project)
+    _resolve_pytest_collect_timeout()
+    _compact_pytest_collect_failure(stdout;stderr)
+    _check_pytest_collect(project)
+    _check_inotify_watches(project)
+    _check_wup_binary(_project)
+    _check_ci_command(project)
+  src/koruide/command_telemetry.py:
+    e: CommandTelemetry,_telemetry_path,_make_key
+    CommandTelemetry: __init__(1),record(0),success_rate(4),attempts(4),rows_for(1),record_from_ack(0),_trim(0),_persist(0),_load(0)  # Tracks attempts/ok per (ide, plugin_version, capability, com...
+    _telemetry_path(project)
+    _make_key(ide;plugin_version;capability;command)
   src/koruobserve/cli.py:
     e: _missing_observe_packages,_require_observe_runtime,_pip_install,_cmd_install,_cmd_up,_cmd_down,_cmd_status,_cmd_grid,_cmd_trace,_trace_event_matches,_cmd_providers,observe_main
     _missing_observe_packages()
@@ -1507,32 +1560,6 @@ Designed to ...
     library_to_any(library)
     dsl_roundtrip_report(dsl_text)
     load_path(path)
-  src/koruide/protocol.py:
-    e: ProtocolError,Message,_filter_extras,decode,hello,chat_send,drive,ack,error,session_started,session_ended,message_sent,message_received,status_error
-    ProtocolError(ValueError):  # Raised when a line cannot be decoded into a valid message...
-    Message: to_dict(0),encode(0)
-    _filter_extras(msg_type;obj)
-    decode(line)
-    hello()
-    chat_send(text)
-    drive(text)
-    ack(reply_to)
-    error(reply_to;message)
-    session_started()
-    session_ended()
-    message_sent()
-    message_received()
-    status_error()
-  src/koruide/daemon/handlers_drive.py:
-    e: _prefer_keyboard_drive,handle_drive,_drive_via_plugin,_try_os_injector_drive,_drive_via_keyboard,_resolve_keyboard_drive_selection,_drive_via_os_injector_backend,_drive_via_keyboard_backend
-    _prefer_keyboard_drive()
-    handle_drive(daemon;client;msg)
-    _drive_via_plugin(daemon;client;msg;plugin;text;submit;require_plugin)
-    _try_os_injector_drive(daemon;target_id;text;submit)
-    _drive_via_keyboard(daemon;client;msg;ide_pref;text;submit)
-    _resolve_keyboard_drive_selection()
-    _drive_via_os_injector_backend()
-    _drive_via_keyboard_backend()
   src/koru/gc_cli_helpers.py:
     e: gc_statuses_from_args,gc_result_to_json,print_gc_text_report,emit_gc_management_event,print_gc_report
     gc_statuses_from_args(status_csv)
@@ -1806,21 +1833,6 @@ Designed to ...
     run_self_control(project)
     repair_self_control(project)
     format_self_control_report(report)
-  src/koru/autonomous_runtime.py:
-    e: StopSignalState,setup_autonomous_session,_path_is_relative_to,_env_disabled,project_venv_reexec_argv,project_venv_warning_lines,setup_autopilot_daemon,cleanup_autonomous_session,setup_autonomous_env_vars,restore_autonomous_env_vars,build_and_log_startup_probe,install_sigterm_interrupt_handler,handle_autonomous_interrupt
-    StopSignalState:
-    setup_autonomous_session(args)
-    _path_is_relative_to(path;parent)
-    _env_disabled(name)
-    project_venv_reexec_argv(project)
-    project_venv_warning_lines(project)
-    setup_autopilot_daemon(args;project)
-    cleanup_autonomous_session(previous_stdio_format_env;previous_sigterm;daemon;thread;wup_process;stdio_format)
-    setup_autonomous_env_vars()
-    restore_autonomous_env_vars(snapshot)
-    build_and_log_startup_probe(args;project)
-    install_sigterm_interrupt_handler(args;stop_state)
-    handle_autonomous_interrupt(args)
   src/koru/autonomy/ide_work.py:
     e: extract_ticket_id_from_text,_parse_open_tickets,fetch_next_open_ticket,sprint_ticket_status_summary,_current_sprint_tickets,_is_active_project_discovery_ticket,_active_project_discovery_ticket,_ticket_from_created_discovery,ensure_project_discovery_ticket,build_ide_work_prompt,resolve_idle_drive_prompt,_parse_iso_datetime,_ticket_in_progress_started_at,_list_in_progress_tickets,release_stale_in_progress_tickets,resolve_in_progress_stale_minutes,release_in_progress_tickets
     extract_ticket_id_from_text(text)
@@ -1940,6 +1952,67 @@ Re-exported f...
   scripts/_koru_autodiag_filter_tickets.py:
     e: main
     main()
+  src/koruide/plugin_installer.py:
+    e: PluginInstallResult,extension_id_for_ide,plugin_dir_names_for_ide,_valid_ide,_ide_from_terminal_env,_terminal_vscode_flavor,_repo_root,_plugin_package_version,_plugin_package_name,_versioned_vsix_candidates,_bundled_vsix_candidates,_fallback_vsix_candidates,_running_vscode_flavor,_vscode_flavor,resolve_target_ide,resolve_extension_vsix,_first_local_extension_vsix,_newest_plugin_dir_vsix,_newest_existing_vsix,_resolve_ide_command,_settings_path_for_ide,_configure_socket_path,_run,_env_reassert_extension_install,_extension_is_installed,_installed_extension_ids,_conflicting_extension_ids,_remove_conflicting_extensions,_extensions_metadata_path_for_ide,_active_extension_locations,_move_path_aside,_prune_stale_koru_extension_dirs,_parse_extension_version,installed_extension_version_for_ide,_reassert_extension_extra,_run_reassert_command,_maybe_retry_missing_vsix,_should_retry_missing_vsix,_reassert_extra,_result_already_installed,_install_extension_vsix,install_plugin_for_ide,format_plugin_install_result
+    PluginInstallResult: to_dict(0)
+    extension_id_for_ide(ide_id)
+    plugin_dir_names_for_ide(ide_id)
+    _valid_ide(raw)
+    _ide_from_terminal_env()
+    _terminal_vscode_flavor()
+    _repo_root()
+    _plugin_package_version(plugin_dir)
+    _plugin_package_name(plugin_dir)
+    _versioned_vsix_candidates(plugin_dir)
+    _bundled_vsix_candidates(plugin_dir_name)
+    _fallback_vsix_candidates(anchor)
+    _running_vscode_flavor()
+    _vscode_flavor()
+    resolve_target_ide(requested)
+    resolve_extension_vsix(target_ide)
+    _first_local_extension_vsix(dir_names)
+    _newest_plugin_dir_vsix(plugin_dir)
+    _newest_existing_vsix(candidates)
+    _resolve_ide_command(ide)
+    _settings_path_for_ide(ide)
+    _configure_socket_path(ide;socket_path)
+    _run(cmd)
+    _env_reassert_extension_install()
+    _extension_is_installed(command;runner)
+    _installed_extension_ids(command;runner)
+    _conflicting_extension_ids(target_ide)
+    _remove_conflicting_extensions(command;runner)
+    _extensions_metadata_path_for_ide(ide)
+    _active_extension_locations(metadata_path)
+    _move_path_aside(path;disabled_root)
+    _prune_stale_koru_extension_dirs()
+    _parse_extension_version(output)
+    installed_extension_version_for_ide(ide)
+    _reassert_extension_extra(command)
+    _run_reassert_command(runner;command)
+    _maybe_retry_missing_vsix(command)
+    _should_retry_missing_vsix(vsix;proc)
+    _reassert_extra(proc)
+    _result_already_installed(target;command)
+    _install_extension_vsix(target;command;vsix)
+    install_plugin_for_ide()
+    format_plugin_install_result(result)
+  src/koruide/protocol.py:
+    e: ProtocolError,Message,_filter_extras,decode,hello,chat_send,drive,ack,error,session_started,session_ended,message_sent,message_received,status_error
+    ProtocolError(ValueError):  # Raised when a line cannot be decoded into a valid message...
+    Message: to_dict(0),encode(0)
+    _filter_extras(msg_type;obj)
+    decode(line)
+    hello()
+    chat_send(text)
+    drive(text)
+    ack(reply_to)
+    error(reply_to;message)
+    session_started()
+    session_ended()
+    message_sent()
+    message_received()
+    status_error()
   services/healing-webhook/app.py:
     e: _rate_limit_ok,_record_action,_enrich_ticket_with_vallm,_build_planfile_command,_extract_ticket_id_from_stdout,_execute_planfile_create,create_planfile_ticket,_run_docker,heal_redsl_gate,heal_redsl_improve,heal_rebuild_restore,heal_annotate,_run_vallm_check,_run_vallm_validate,_resolve_affected_files,heal_vallm_validate,_parse_redup_summary,_update_redup_metrics,_run_redup_check,heal_redup_check,_resolve_strategy,healthz,metrics,get_history,alertmanager_webhook,probe_failure,get_tickets
     _rate_limit_ok()
@@ -2025,52 +2098,6 @@ Re-exported f...
     probe_obs_reachable()
     _run_obs_capture(fn)
     _capture_source_png(source_name)
-  src/koruide/plugin_installer.py:
-    e: PluginInstallResult,extension_id_for_ide,plugin_dir_names_for_ide,_valid_ide,_ide_from_terminal_env,_terminal_vscode_flavor,_repo_root,_plugin_package_version,_plugin_package_name,_versioned_vsix_candidates,_bundled_vsix_candidates,_fallback_vsix_candidates,_running_vscode_flavor,_vscode_flavor,resolve_target_ide,resolve_extension_vsix,_first_local_extension_vsix,_newest_plugin_dir_vsix,_newest_existing_vsix,_resolve_ide_command,_settings_path_for_ide,_configure_socket_path,_run,_env_reassert_extension_install,_extension_is_installed,_parse_extension_version,installed_extension_version_for_ide,_reassert_extension_extra,_run_reassert_command,_maybe_retry_missing_vsix,_should_retry_missing_vsix,_reassert_extra,_result_already_installed,_install_extension_vsix,install_plugin_for_ide,format_plugin_install_result
-    PluginInstallResult: to_dict(0)
-    extension_id_for_ide(ide_id)
-    plugin_dir_names_for_ide(ide_id)
-    _valid_ide(raw)
-    _ide_from_terminal_env()
-    _terminal_vscode_flavor()
-    _repo_root()
-    _plugin_package_version(plugin_dir)
-    _plugin_package_name(plugin_dir)
-    _versioned_vsix_candidates(plugin_dir)
-    _bundled_vsix_candidates(plugin_dir_name)
-    _fallback_vsix_candidates(anchor)
-    _running_vscode_flavor()
-    _vscode_flavor()
-    resolve_target_ide(requested)
-    resolve_extension_vsix(target_ide)
-    _first_local_extension_vsix(dir_names)
-    _newest_plugin_dir_vsix(plugin_dir)
-    _newest_existing_vsix(candidates)
-    _resolve_ide_command(ide)
-    _settings_path_for_ide(ide)
-    _configure_socket_path(ide;socket_path)
-    _run(cmd)
-    _env_reassert_extension_install()
-    _extension_is_installed(command;runner)
-    _parse_extension_version(output)
-    installed_extension_version_for_ide(ide)
-    _reassert_extension_extra(command)
-    _run_reassert_command(runner;command)
-    _maybe_retry_missing_vsix(command)
-    _should_retry_missing_vsix(vsix;proc)
-    _reassert_extra(proc)
-    _result_already_installed(target;command)
-    _install_extension_vsix(target;command;vsix)
-    install_plugin_for_ide()
-    format_plugin_install_result(result)
-  src/koruide/daemon/handlers_hello.py:
-    e: _extract_hello_metadata,_handle_plugin_version_check,_configure_plugin_client,_log_plugin_hello_accepted,handle_hello,_log_rejected_plugin_connection
-    _extract_hello_metadata(msg)
-    _handle_plugin_version_check(daemon;client;msg;ide;plugin_version;protocol_version;capabilities)
-    _configure_plugin_client(daemon;client;ide;plugin_version;protocol_version;capabilities)
-    _log_plugin_hello_accepted(daemon;ide;plugin_version;protocol_version;capabilities;version_info;matching_cmds)
-    handle_hello(daemon;client;msg)
-    _log_rejected_plugin_connection(daemon)
   src/koru/agent_backends.py:
     e: AgentBackendProfile,LaneConfig,AgentIntegrationConfig,normalize_agent_backend_id,list_agent_backend_ids,iter_agent_backend_profiles,get_agent_backend_profile,_parse_lane,load_agent_integration_config,validate_agent_integration_config
     AgentBackendProfile:  # Static description of one way koru can reach an IDE-side age...
@@ -2279,6 +2306,19 @@ Re-exported f...
     decide_redrive_cooldown()
     explain_skip(decision)
     _age_seconds_from_label(age)
+  src/koru/ide_doctor_cli.py:
+    e: _resolve_ide,_resolve_socket,build_parser,action_ide_doctor,action_ide_reload,action_ide_discover,action_ide_commands,action_ide_scenario_schema,action_ide_scenario_prompt,action_ide_scenario_validate,ide_main
+    _resolve_ide(raw)
+    _resolve_socket(args;ide)
+    build_parser()
+    action_ide_doctor(args)
+    action_ide_reload(args)
+    action_ide_discover(args)
+    action_ide_commands(args)
+    action_ide_scenario_schema(args)
+    action_ide_scenario_prompt(args)
+    action_ide_scenario_validate(args)
+    ide_main(argv)
   src/koru/autonomous_cycle_drive_retry.py:
     e: _max_drive_retries,_drive_failure_signature,_active_decision_engine,_cycle_attr,_ide_supports_vscode_plugin,_operator_forces_keyboard,_client_has_usable_plugin,_try_os_injector_fallback,_skip_closed_waiting_ticket_enabled,_resolve_waiting_ticket_id,_planfile_ticket_status,_waiting_ticket_is_closed,_resolve_autopilot_drive_decision,_drive_autopilot_once,_waiting_ticket_closed_skip_result,_idle_no_ticket_skip_result,_resolve_drive_plugin_requirement,_reply_missing_autopilot_plugin,_reply_chat_input_busy,_reply_needs_focus_retry,_reply_needs_plugin_retry,_reply_needs_submit_retry,_reply_requires_manual_chat_focus,_run_drive_retry_loop,_execute_autopilot_drive,_update_autopilot_state,_log_autopilot_result
     _max_drive_retries()
@@ -2379,42 +2419,18 @@ Re-exported f...
     runSqliteCommand()
     result()
     sqliteRunner()
-  src/koru/ide_doctor_cli.py:
-    e: _resolve_ide,_resolve_socket,build_parser,action_ide_doctor,action_ide_reload,action_ide_discover,action_ide_commands,action_ide_scenario_schema,action_ide_scenario_prompt,action_ide_scenario_validate,ide_main
-    _resolve_ide(raw)
-    _resolve_socket(args;ide)
-    build_parser()
-    action_ide_doctor(args)
-    action_ide_reload(args)
-    action_ide_discover(args)
-    action_ide_commands(args)
-    action_ide_scenario_schema(args)
-    action_ide_scenario_prompt(args)
-    action_ide_scenario_validate(args)
-    ide_main(argv)
-  src/koru/autopilot/cli_command.py:
-    e: _action_calibrate,_action_session_start,_temporary_autopilot_instance,_resolve_cli_ide_lane,_resolve_client_socket,_client,_daemon_start_hint,_action_drive,_drive_command_argv,_action_status,_action_shutdown,_action_doctor,_action_setup_host,_action_manage,_action_install_plugin,_action_install_plugin_jetbrains,_build_brief,_action_handoff,_action_tail,_action_install_unit,autopilot_main
-    _action_calibrate(args)
-    _action_session_start(args)
-    _temporary_autopilot_instance(instance)
-    _resolve_cli_ide_lane(args)
-    _resolve_client_socket(args)
-    _client(args)
-    _daemon_start_hint(args)
-    _action_drive(args)
+  src/koru/autopilot/commands/drive.py:
+    e: _drive_command_argv,action_drive
     _drive_command_argv(args;text)
-    _action_status(args)
-    _action_shutdown(args)
-    _action_doctor(args)
-    _action_setup_host(args)
-    _action_manage(args)
-    _action_install_plugin(args)
-    _action_install_plugin_jetbrains(args)
-    _build_brief(project)
-    _action_handoff(args)
-    _action_tail(args)
-    _action_install_unit(args)
-    autopilot_main(argv)
+    action_drive(args)
+  src/koruide/daemon/handlers_hello.py:
+    e: _extract_hello_metadata,_handle_plugin_version_check,_configure_plugin_client,_log_plugin_hello_accepted,handle_hello,_log_rejected_plugin_connection
+    _extract_hello_metadata(msg)
+    _handle_plugin_version_check(daemon;client;msg;ide;plugin_version;protocol_version;capabilities)
+    _configure_plugin_client(daemon;client;ide;plugin_version;protocol_version;capabilities)
+    _log_plugin_hello_accepted(daemon;ide;plugin_version;protocol_version;capabilities;version_info;matching_cmds)
+    handle_hello(daemon;client;msg)
+    _log_rejected_plugin_connection(daemon)
   src/koruobserve/lifecycle.py:
     e: ObserveProcesses,_resolve_serve_settings,_pick_free_port,_spawn,_is_alive,_read_pid,_stop_pid,_pids_matching_koru_cmdline,_stop_orphan_observe_processes,_koru_cmd,observe_up,observe_down,observe_status
     ObserveProcesses: to_json(0)
@@ -2481,10 +2497,6 @@ Re-exported f...
     _render_capture_host(path)
     browser_upload_payload(project;body)
     serve_browser_capture_http(handler;path)
-  src/koruide/client.py:
-    e: KoruIDEClient,build_client
-    KoruIDEClient: __init__(0),_drive_timeout(0),_connect(0),request(1),_extract_reply(1),is_running(0),drive(1),status(0),shutdown(0)  # Connect, send one message, read one reply, disconnect...
-    build_client()
   src/koruide/injector.py:
     e: BackendStatus,InjectionResult,Injector,_submit_key_for,_which,_session_type,_forced_injector_backend,_unique_backend_names,_session_backend_order,_default_runner
     BackendStatus: to_dict(0)  # Result of probing a single backend...
@@ -2848,6 +2860,22 @@ P...
     entry()
     makeProbeCache()
     mergeProbeCache()
+  src/koru/autopilot/commands/status.py:
+    e: _print_status_json,action_status
+    _print_status_json(info)
+    action_status(args)
+  src/koruide/client.py:
+    e: KoruIDEClient,build_client
+    KoruIDEClient: __init__(0),_drive_timeout(0),_connect(0),request(1),_extract_reply(1),is_running(0),drive(1),status(0),shutdown(0)  # Connect, send one message, read one reply, disconnect...
+    build_client()
+  src/koruide/command_catalog_store.py:
+    e: CommandCatalogStore,command_catalog_enabled,command_picker_enabled,_catalog_dir,_normalize_catalog,parse_hello_command_catalog
+    CommandCatalogStore: __init__(1),update(1),get(1),catalog_for(1),unknown_chat_commands_for(1),all_ides(0),_persist(3),_load_from_disk(0)  # In-memory catalog per IDE with optional on-disk persistence...
+    command_catalog_enabled()
+    command_picker_enabled()
+    _catalog_dir(project)
+    _normalize_catalog(raw)
+    parse_hello_command_catalog(msg_data)
   examples/remote_orchestration_demo.py:
     e: run_multi_node_orchestration
     run_multi_node_orchestration()
@@ -2887,6 +2915,50 @@ P...
     _active_tools(processes;project)
     _top_processes(processes;project)
     collect_runtime_insights(project)
+  src/koruapi/dashboard_routes.py:
+    e: _load_dashboard_html,_config_defaults,_state_payload,_get_dashboard,_get_config,_get_env_config,_get_context,_get_topology,_get_runtime_context,_get_ide_commands,_get_ide_scenario_schema,_get_autonomy_trace,_get_observe_trace,_first_query_value,_int_query_value,_get_interfaces,_get_environment,_get_handoff,_get_plugin_logs,_redirect_create_project_ticket_prompt,_get_create_project_ticket_action,_post_topology,_post_runtime_context_config,_post_env_config,_post_config,_post_waiting_input_bulk,_post_ticket_create,_post_ticket_update,_post_remote_drive,_post_ticket_reorder,_handle_dashboard_get,_handle_dashboard_post,_build_dashboard_handler_impl,build_dashboard_handler
+    _load_dashboard_html()
+    _config_defaults(config)
+    _state_payload(config)
+    _get_dashboard(handler;config)
+    _get_config(handler;config)
+    _get_env_config(handler;_config)
+    _get_context(handler;config)
+    _get_topology(handler;_config)
+    _get_runtime_context(handler;config)
+    _get_ide_commands(handler;_config)
+    _get_ide_scenario_schema(handler;_config)
+    _get_autonomy_trace(handler;_config)
+    _get_observe_trace(handler;_config)
+    _first_query_value(qs;key)
+    _int_query_value(qs;key)
+    _get_interfaces(handler;_config)
+    _get_environment(handler;_config)
+    _get_handoff(handler;config)
+    _get_plugin_logs(handler;_config)
+    _redirect_create_project_ticket_prompt(handler;_config)
+    _get_create_project_ticket_action(handler;_config)
+    _post_topology(handler;_config;body)
+    _post_runtime_context_config(handler;_config;body)
+    _post_env_config(handler;_config;body)
+    _post_config(handler;config;body)
+    _post_waiting_input_bulk(handler;_config;body)
+    _post_ticket_create(handler;_config;body)
+    _post_ticket_update(handler;_config;body)
+    _post_remote_drive(handler;_config;body)
+    _post_ticket_reorder(handler;_config;body)
+    _handle_dashboard_get(handler;config)
+    _handle_dashboard_post(handler;config)
+    _build_dashboard_handler_impl(config)
+    build_dashboard_handler(config)
+  src/koruapi/server.py:
+    e: KoruAPIHandler,_json_response,_read_json_body,_parse_invoke_request,_handle_invoke_post,serve
+    KoruAPIHandler(BaseHTTPRequestHandler): log_message(1),do_GET(0),do_POST(0)
+    _json_response(handler;status;payload)
+    _read_json_body(handler)
+    _parse_invoke_request(body;default_project)
+    _handle_invoke_post(handler)
+    serve()
   src/korullm/strategies/registry.py:
     e: ResolvedLlmEnvironment,register_llm_strategy,get_llm_strategy,list_llm_strategy_ids,_fallback_strategy,resolve_active_llm_strategy,resolve_llm_strategy_from_environment
     ResolvedLlmEnvironment:
@@ -2905,6 +2977,16 @@ P...
     _relay_client(websocket)
     run_relay()
     publish_envelope(url;envelope)
+  src/koruide/command_catalog.py:
+    e: IdeCommand,_command,_rows,supported_catalog_ides,build_ide_command_catalog,command_catalog_for_llm,format_command_catalog_text,_selected_ide_rows
+    IdeCommand: to_dict(0)
+    _command(category;id)
+    _rows(category;ids)
+    supported_catalog_ides()
+    build_ide_command_catalog(ide)
+    command_catalog_for_llm(ide)
+    format_command_catalog_text(ide)
+    _selected_ide_rows(ide)
   src/koruide/os_injector.py:
     e: OsInjectorError,OsInjectorProfile,default_config_path,iter_config_paths,os_injector_env_disabled,os_injector_env_forced,dry_run_from_env,focus_mode_from_env,input_mode_from_env,_is_wayland_session,_cmd_timeout_seconds,_post_focus_delay_seconds,try_load_profile,_read_json,load_profile,save_profile,profile_from_mouse,capture_mouse_xy,capture_from_xdotool,_run_cmd,_xdotool,_ydotool,_tool_pid,_clipboard_backend,_set_clipboard,_resolve_input_method,_injection_result,_focus_profile_chat,_focus_with_ydotool,_focus_with_xdotool,_inject_profile_text,inject_with_profile,_os_injector_skip_reason,try_drive_with_profile
     OsInjectorError(RuntimeError):  # Raised when profile config or xdotool operations fail...
@@ -3169,6 +3251,32 @@ No soc...
     _run_install_command(argv;out)
     _build_install_method_options(spec;available_managers)
     offer_ide_install(prompter;out)
+  src/koru/ide_adapters/ide_reload.py:
+    e: IdeReloadOutcome,_on_wayland,_ide_accepts_integrated_terminal,_os_strategy,_window_name_hints,_editor_cli_candidates,auto_reload_enabled,reuse_window_reload_enabled,new_window_reload_enabled,_run,_resolve_editor_cli,_focus_ide_window,reload_jetbrains_via_shortcut,reload_via_command_palette,reload_via_reopen_workspace,reload_via_new_window,_reload_fallback_reopen,_reload_explain_reuse_window_disabled,detect_reload_command,execute_reload,await_plugin_handshake,explain_reload_failure,try_reload_vscode_family_ide,try_open_vscode_family_ide_new_window
+    IdeReloadOutcome:
+    _on_wayland()
+    _ide_accepts_integrated_terminal(ide)
+    _os_strategy()
+    _window_name_hints(ide)
+    _editor_cli_candidates(ide)
+    auto_reload_enabled()
+    reuse_window_reload_enabled()
+    new_window_reload_enabled()
+    _run(argv)
+    _resolve_editor_cli(ide)
+    _focus_ide_window(ide)
+    reload_jetbrains_via_shortcut()
+    reload_via_command_palette(ide)
+    reload_via_reopen_workspace(ide;project)
+    reload_via_new_window(ide;project)
+    _reload_fallback_reopen(ide;project;palette)
+    _reload_explain_reuse_window_disabled(palette)
+    detect_reload_command(ide)
+    execute_reload(ide)
+    await_plugin_handshake(ide)
+    explain_reload_failure()
+    try_reload_vscode_family_ide(ide)
+    try_open_vscode_family_ide_new_window(ide)
   src/koru/ide_adapters/shared.py:
     e: _yellow,config_home_for_ide,user_settings_path,workspace_settings_path,_read_json_object,read_socket_from_settings,analyze_socket_settings,fix_workspace_socket,state_vscdb_path,read_vscdb_json,extension_disabled,publisher_trusted,vscode_core_version,latest_ide_exthost_session,extension_activated_in_exthost,extension_reload_required_lines,extension_metadata_path,extension_listed_in_extensions_json,add_trusted_publisher,socket_reachable,gc_stale_autopilot_sockets,settings_mismatch_hypothesis,untrusted_publisher_hypothesis,inactive_extension_hypothesis
     _yellow(text)
@@ -3251,86 +3359,28 @@ No soc...
     _create_ticket()
     _handle_existing_finding()
     main()
-  src/koruapi/dashboard_routes.py:
-    e: _load_dashboard_html,_config_defaults,_state_payload,_get_dashboard,_get_config,_get_env_config,_get_context,_get_topology,_get_runtime_context,_get_ide_commands,_get_ide_scenario_schema,_get_autonomy_trace,_get_observe_trace,_first_query_value,_int_query_value,_get_interfaces,_get_environment,_get_handoff,_get_plugin_logs,_redirect_create_project_ticket_prompt,_get_create_project_ticket_action,_post_topology,_post_runtime_context_config,_post_env_config,_post_config,_post_waiting_input_bulk,_post_ticket_create,_post_ticket_update,_post_remote_drive,_post_ticket_reorder,_handle_dashboard_get,_handle_dashboard_post,_build_dashboard_handler_impl,build_dashboard_handler
-    _load_dashboard_html()
-    _config_defaults(config)
-    _state_payload(config)
-    _get_dashboard(handler;config)
-    _get_config(handler;config)
-    _get_env_config(handler;_config)
-    _get_context(handler;config)
-    _get_topology(handler;_config)
-    _get_runtime_context(handler;config)
-    _get_ide_commands(handler;_config)
-    _get_ide_scenario_schema(handler;_config)
-    _get_autonomy_trace(handler;_config)
-    _get_observe_trace(handler;_config)
-    _first_query_value(qs;key)
-    _int_query_value(qs;key)
-    _get_interfaces(handler;_config)
-    _get_environment(handler;_config)
-    _get_handoff(handler;config)
-    _get_plugin_logs(handler;_config)
-    _redirect_create_project_ticket_prompt(handler;_config)
-    _get_create_project_ticket_action(handler;_config)
-    _post_topology(handler;_config;body)
-    _post_runtime_context_config(handler;_config;body)
-    _post_env_config(handler;_config;body)
-    _post_config(handler;config;body)
-    _post_waiting_input_bulk(handler;_config;body)
-    _post_ticket_create(handler;_config;body)
-    _post_ticket_update(handler;_config;body)
-    _post_remote_drive(handler;_config;body)
-    _post_ticket_reorder(handler;_config;body)
-    _handle_dashboard_get(handler;config)
-    _handle_dashboard_post(handler;config)
-    _build_dashboard_handler_impl(config)
-    build_dashboard_handler(config)
-  src/koruapi/server.py:
-    e: KoruAPIHandler,_json_response,_read_json_body,_parse_invoke_request,_handle_invoke_post,serve
-    KoruAPIHandler(BaseHTTPRequestHandler): log_message(1),do_GET(0),do_POST(0)
-    _json_response(handler;status;payload)
-    _read_json_body(handler)
-    _parse_invoke_request(body;default_project)
-    _handle_invoke_post(handler)
-    serve()
-  src/koruide/command_catalog.py:
-    e: IdeCommand,_command,_rows,supported_catalog_ides,build_ide_command_catalog,command_catalog_for_llm,format_command_catalog_text,_selected_ide_rows
-    IdeCommand: to_dict(0)
-    _command(category;id)
-    _rows(category;ids)
-    supported_catalog_ides()
-    build_ide_command_catalog(ide)
-    command_catalog_for_llm(ide)
-    format_command_catalog_text(ide)
-    _selected_ide_rows(ide)
-  src/koru/ide_adapters/ide_reload.py:
-    e: IdeReloadOutcome,_on_wayland,_ide_accepts_integrated_terminal,_os_strategy,_window_name_hints,_editor_cli_candidates,auto_reload_enabled,reuse_window_reload_enabled,new_window_reload_enabled,_run,_resolve_editor_cli,_focus_ide_window,reload_jetbrains_via_shortcut,reload_via_command_palette,reload_via_reopen_workspace,reload_via_new_window,_reload_fallback_reopen,_reload_explain_reuse_window_disabled,detect_reload_command,execute_reload,await_plugin_handshake,explain_reload_failure,try_reload_vscode_family_ide,try_open_vscode_family_ide_new_window
-    IdeReloadOutcome:
-    _on_wayland()
-    _ide_accepts_integrated_terminal(ide)
-    _os_strategy()
-    _window_name_hints(ide)
-    _editor_cli_candidates(ide)
-    auto_reload_enabled()
-    reuse_window_reload_enabled()
-    new_window_reload_enabled()
-    _run(argv)
-    _resolve_editor_cli(ide)
-    _focus_ide_window(ide)
-    reload_jetbrains_via_shortcut()
-    reload_via_command_palette(ide)
-    reload_via_reopen_workspace(ide;project)
-    reload_via_new_window(ide;project)
-    _reload_fallback_reopen(ide;project;palette)
-    _reload_explain_reuse_window_disabled(palette)
-    detect_reload_command(ide)
-    execute_reload(ide)
-    await_plugin_handshake(ide)
-    explain_reload_failure()
-    try_reload_vscode_family_ide(ide)
-    try_open_vscode_family_ide_new_window(ide)
+  src/koru/autopilot/cli_command.py:
+    e: _action_calibrate,_action_session_start,_temporary_autopilot_instance,_resolve_cli_ide_lane,_resolve_client_socket,_client,_daemon_start_hint,_action_drive,_action_status,_action_shutdown,_action_doctor,_action_setup_host,_action_manage,_action_install_plugin,_action_install_plugin_jetbrains,_build_brief,_action_handoff,_action_tail,_action_install_unit,autopilot_main
+    _action_calibrate(args)
+    _action_session_start(args)
+    _temporary_autopilot_instance(instance)
+    _resolve_cli_ide_lane(args)
+    _resolve_client_socket(args)
+    _client(args)
+    _daemon_start_hint(args)
+    _action_drive(args)
+    _action_status(args)
+    _action_shutdown(args)
+    _action_doctor(args)
+    _action_setup_host(args)
+    _action_manage(args)
+    _action_install_plugin(args)
+    _action_install_plugin_jetbrains(args)
+    _build_brief(project)
+    _action_handoff(args)
+    _action_tail(args)
+    _action_install_unit(args)
+    autopilot_main(argv)
   src/koruobserve/diagnostics.py:
     e: _session_type,_monitors_from_mss,_monitors_from_xrandr,detect_monitors,_read_log_tail,_last_failure_line,_wayland_hint,capture_diagnostics
     _session_type()
@@ -3375,11 +3425,6 @@ No soc...
     append_envelope(path;envelope)
     rotate_store(path)
     load_recent_envelopes(path)
-  src/koruide/daemon/server.py:
-    e: AutopilotDaemon,_env_truthy,_verbose_io
-    AutopilotDaemon: __init__(0),start(0),serve_forever(0),stop(0),_shutdown(0),_accept(0),_on_readable(1),_dispatch(2),_send(2),_drop(1),_plugin_for(1),_try_os_injector_drive(3),_log_rejected_plugin_connection(0),_build_handler_table(0)  # Selector-based unix-socket broker...
-    _env_truthy(name)
-    _verbose_io()
   src/koru/cli_agent_backends.py:
     e: agent_backends_main
     agent_backends_main(argv)
@@ -3458,6 +3503,19 @@ No soc...
   src/koru/ide_adapters/vscode_family.py:
     e: VSCodeFamilyAdapter
     VSCodeFamilyAdapter: diagnose_activation(0),analyze_settings(0),collect_hypotheses(0),apply_safe_fixes(0)
+  src/koruide/daemon/server.py:
+    e: AutopilotDaemon,_env_truthy,_verbose_io
+    AutopilotDaemon: __init__(0),start(0),serve_forever(0),stop(0),_shutdown(0),_accept(0),_on_readable(1),_dispatch(2),_send(2),_drop(1),_plugin_for(1),_try_os_injector_drive(3),_log_rejected_plugin_connection(0),_build_handler_table(0)  # Selector-based unix-socket broker...
+    _env_truthy(name)
+    _verbose_io()
+  src/koru/doctor_plugin_bundle.py:
+    e: _read_json_file,_package_lock_root_version,_autopilot_plugin_bundle_paths,_autopilot_plugin_bundle_detail_bits,_autopilot_plugin_bundle_issues,_check_autopilot_plugin_bundle
+    _read_json_file(path)
+    _package_lock_root_version(package_lock)
+    _autopilot_plugin_bundle_paths(project;plugin_dir)
+    _autopilot_plugin_bundle_detail_bits()
+    _autopilot_plugin_bundle_issues()
+    _check_autopilot_plugin_bundle(project)
   src/koruobserve/cli_parser.py:
     e: _add_subproject,_register_up_arguments,build_observe_parser,project_path
     _add_subproject(parser)
@@ -3519,6 +3577,18 @@ No soc...
     e: _autopilot_socket_basename,default_socket_path
     _autopilot_socket_basename()
     default_socket_path()
+  src/koruide/daemon/handlers_plugin_event.py:
+    e: _PluginEventHandoff,_event_path,_append_event,_plugin_event_should_handoff,_ack_plugin_event_without_handoff,_handle_plugin_event_basic,_check_handoff_cooldown,_execute_handoff,_forward_handoff_to_plugin,handle_plugin_event
+    _PluginEventHandoff:  # Result of basic plugin event handling when handoff is requir...
+    _event_path()
+    _append_event(client;msg)
+    _plugin_event_should_handoff(daemon;msg)
+    _ack_plugin_event_without_handoff(daemon;client;msg;ack_info)
+    _handle_plugin_event_basic(daemon;client;msg)
+    _check_handoff_cooldown(daemon;ack_info)
+    _execute_handoff(daemon;client;msg;chat;reason;ack_info)
+    _forward_handoff_to_plugin(daemon;client;msg;text;chat;reason;ack_info)
+    handle_plugin_event(daemon;client;msg)
   src/koru/cli_tools.py:
     e: _build_tools_parser,_tools_main
     _build_tools_parser()
@@ -3673,18 +3743,12 @@ No soc...
     _update_expected_versions(ide_id;version)
     _update_workflow_version(version)
     main()
-  src/koruide/daemon/handlers_plugin_event.py:
-    e: _PluginEventHandoff,_event_path,_append_event,_plugin_event_should_handoff,_ack_plugin_event_without_handoff,_handle_plugin_event_basic,_check_handoff_cooldown,_execute_handoff,_forward_handoff_to_plugin,handle_plugin_event
-    _PluginEventHandoff:  # Result of basic plugin event handling when handoff is requir...
-    _event_path()
-    _append_event(client;msg)
-    _plugin_event_should_handoff(daemon;msg)
-    _ack_plugin_event_without_handoff(daemon;client;msg;ack_info)
-    _handle_plugin_event_basic(daemon;client;msg)
-    _check_handoff_cooldown(daemon;ack_info)
-    _execute_handoff(daemon;client;msg;chat;reason;ack_info)
-    _forward_handoff_to_plugin(daemon;client;msg;text;chat;reason;ack_info)
-    handle_plugin_event(daemon;client;msg)
+  src/koru/doctor_project_checks.py:
+    e: _check_detected_environment,_detected_configuration_presence_bits,_detected_configuration_json_bits,_check_detected_configuration
+    _check_detected_environment(project)
+    _detected_configuration_presence_bits()
+    _detected_configuration_json_bits()
+    _check_detected_configuration(project)
   src/koruapi/local.py:
     e: build_local_parser,local_main
     build_local_parser()
@@ -3766,6 +3830,11 @@ Construct once ...
     render_tail_json(tail)
     render_tail_text(tail)
     action_tail(args)
+  src/koru/autonomy_strategy/heuristics.py:
+    e: build_strategy_heuristics,_file_age_seconds,_recommendations
+    build_strategy_heuristics(project)
+    _file_age_seconds(path)
+    _recommendations(available_tools;has_code2llm_analysis)
   plugins/koru-autopilot-vscode/src/host-click-submit.ts:
     e: parseXdotoolGeometryShell,match,x,y,width,height,bottomRightSubmitPoint
     parseXdotoolGeometryShell()
@@ -3841,11 +3910,6 @@ Construct once ...
     detectIdeViaStrategies()
     id()
     bootstrapStrategies()
-  src/koru/autonomy_strategy/heuristics.py:
-    e: build_strategy_heuristics,_file_age_seconds,_recommendations
-    build_strategy_heuristics(project)
-    _file_age_seconds(path)
-    _recommendations(available_tools;has_code2llm_analysis)
   src/koruos/strategies/base.py:
     e: OsCapabilities,FocusOutcome,KeySequence,OsStrategy
     OsCapabilities:  # Which OS-level tools are usable in the current session.
@@ -3877,6 +3941,27 @@ The constructor must be argument-l...
     _resolve_serve_workspace(args;saved)
     _resolve_serve_auto_port(args;raw_argv;saved_serve)
     dashboard_main(argv)
+  src/koruapi/invoke_handlers.py:
+    e: InvokeError,_handle_context_build,_handle_doctor_run,_handle_scan_apply,_handle_queue_loop,_handle_autopilot_status,_handle_autopilot_drive,_handle_ide_commands,_handle_ide_scenario_schema,_handle_ide_scenario_validate,_handle_dsl_to_library,_handle_dsl_to_dsl,_handle_dsl_roundtrip,_handle_topology_read,_handle_gate_regix,_handle_planfile_tickets,_handle_mcp_list_tickets,_handle_mcp_run_ticket,_handle_mcp_quality_gates
+    InvokeError(RuntimeError):
+    _handle_context_build(project;_method;payload)
+    _handle_doctor_run(project;_method;_payload)
+    _handle_scan_apply(project;method;payload)
+    _handle_queue_loop(project;method;payload)
+    _handle_autopilot_status(_project;_method;_payload)
+    _handle_autopilot_drive(_project;_method;payload)
+    _handle_ide_commands(_project;method;payload)
+    _handle_ide_scenario_schema(_project;_method;_payload)
+    _handle_ide_scenario_validate(_project;_method;payload)
+    _handle_dsl_to_library(_project;_method;payload)
+    _handle_dsl_to_dsl(_project;_method;payload)
+    _handle_dsl_roundtrip(_project;_method;payload)
+    _handle_topology_read(project;_method;_payload)
+    _handle_gate_regix(project;_method;payload)
+    _handle_planfile_tickets(project;_method;payload)
+    _handle_mcp_list_tickets(project;_method;payload)
+    _handle_mcp_run_ticket(project;_method;payload)
+    _handle_mcp_quality_gates(project;_method;payload)
   src/koruapi/dashboard_runtime.py:
     e: _interface_runtime_payload,runtime_context_payload,runtime_context_error_payload,save_runtime_context_config
     _interface_runtime_payload()
@@ -4019,10 +4104,6 @@ The constructor must be argument-l...
   src/koru/cqrs/event_log_query.py:
     e: EventLogQueryService
     EventLogQueryService: __init__(1),recent(0)  # Provides simple history queries over an event store...
-  src/koru/autonomy_strategy/openrouter.py:
-    e: OpenRouterStrategyResponse,ask_openrouter_for_strategy_patch
-    OpenRouterStrategyResponse:
-    ask_openrouter_for_strategy_patch(prompt)
   plugins/koru-autopilot-cursor/src/chat-history-watcher.test.ts:
     i: assert
     e: buildSqliteOutput,testParseCursorBubbleRowsHandlesMultilineText,stdout,rows,testWatcherEmitsNewBubblesAndAdvancesCursor,call,fakeRunner,r,watcher,testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse,watcher,testWatcherSwallowsAdapterErrors,watcher,rows,testUnsupportedAdapterEmitsNothing,adapter,rows,testBuildAdapterForIdeReturnsCorrectKind,threw,testParseVSCodeChatIndexExtractsAssistantResponses,payload,allRows,partialRows,testParseVSCodeChatIndexReturnsEmptyOnGarbage,payload,rows,allRows,testWatcherSkipsPollingWhenStoreUnavailable,polls,watcher,testCursorBubbleAdapterFetchLatestUserBubblesPassesAnchor,adapter,fakeRunner,rows,sqlArg,testCursorBubbleAdapterLatestBubbleRowidParsesMax,adapter,fakeRunner,rowid,adapterEmpty,emptyRunner,rowidEmpty,main
@@ -4167,27 +4248,11 @@ The constructor must be argument-l...
     trustFocusOpenCommand()
     n()
     trustFocusOpenWithoutEditorSnapshot()
-  src/koruapi/invoke_handlers.py:
-    e: InvokeError,_handle_context_build,_handle_doctor_run,_handle_scan_apply,_handle_queue_loop,_handle_autopilot_status,_handle_autopilot_drive,_handle_ide_commands,_handle_ide_scenario_schema,_handle_ide_scenario_validate,_handle_dsl_to_library,_handle_dsl_to_dsl,_handle_dsl_roundtrip,_handle_topology_read,_handle_gate_regix,_handle_planfile_tickets,_handle_mcp_list_tickets,_handle_mcp_run_ticket,_handle_mcp_quality_gates
-    InvokeError(RuntimeError):
-    _handle_context_build(project;_method;payload)
-    _handle_doctor_run(project;_method;_payload)
-    _handle_scan_apply(project;method;payload)
-    _handle_queue_loop(project;method;payload)
-    _handle_autopilot_status(_project;_method;_payload)
-    _handle_autopilot_drive(_project;_method;payload)
-    _handle_ide_commands(_project;method;payload)
-    _handle_ide_scenario_schema(_project;_method;_payload)
-    _handle_ide_scenario_validate(_project;_method;payload)
-    _handle_dsl_to_library(_project;_method;payload)
-    _handle_dsl_to_dsl(_project;_method;payload)
-    _handle_dsl_roundtrip(_project;_method;payload)
-    _handle_topology_read(project;_method;_payload)
-    _handle_gate_regix(project;_method;payload)
-    _handle_planfile_tickets(project;_method;payload)
-    _handle_mcp_list_tickets(project;_method;payload)
-    _handle_mcp_run_ticket(project;_method;payload)
-    _handle_mcp_quality_gates(project;_method;payload)
+  src/koru/autonomy_strategy/openrouter.py:
+    e: OpenRouterStrategyResponse,call_openrouter_json,ask_openrouter_for_strategy_patch
+    OpenRouterStrategyResponse:
+    call_openrouter_json(prompt)
+    ask_openrouter_for_strategy_patch(prompt)
   src/koruos/strategies/darwin.py:
     e: DarwinStrategy,_run
     DarwinStrategy(OsStrategy): matches_current_environment(0),capabilities(0),focus_window(1),inject_keys(1)
@@ -4200,6 +4265,11 @@ The constructor must be argument-l...
   src/koruapi/invoke.py:
     e: invoke_integration
     invoke_integration(integration_id)
+  src/koruapi/integrations.py:
+    e: IntegrationSpec,list_integrations,get_integration
+    IntegrationSpec:  # One invokable integration exposed via :mod:`koruapi`...
+    list_integrations()
+    get_integration(integration_id)
   src/koruapi/dashboard_http.py:
     e: DashboardRequestHandler
     DashboardRequestHandler(BaseHTTPRequestHandler): log_message(1),_send(3),_send_json(2),_read_json_body(0),_query_params(0),_safe_respond_json(1)
@@ -4410,11 +4480,56 @@ The c...
     cmd()
     focusOpenCommandsDefaults()
     trustFocusOpenWithoutEditorSnapshot()
-  src/koruapi/integrations.py:
-    e: IntegrationSpec,list_integrations,get_integration
-    IntegrationSpec:  # One invokable integration exposed via :mod:`koruapi`...
-    list_integrations()
-    get_integration(integration_id)
+  plugins/koru-autopilot-antigravity/src/command-catalog.ts:
+    e: CommandCatalog,emptyCatalog,pushUnique,classifyCommand,classifyCommands,catalog,capability,matchingCommandsFlat
+    CommandCatalog:
+    emptyCatalog()
+    pushUnique()
+    classifyCommand()
+    classifyCommands()
+    catalog()
+    capability()
+    matchingCommandsFlat()
+  plugins/koru-autopilot-cursor/src/command-catalog.ts:
+    e: CommandCatalog,emptyCatalog,pushUnique,classifyCommand,classifyCommands,catalog,capability,matchingCommandsFlat
+    CommandCatalog:
+    emptyCatalog()
+    pushUnique()
+    classifyCommand()
+    classifyCommands()
+    catalog()
+    capability()
+    matchingCommandsFlat()
+  plugins/koru-autopilot-vscode/src/command-catalog.ts:
+    e: CommandCatalog,emptyCatalog,pushUnique,classifyCommand,classifyCommands,catalog,capability,matchingCommandsFlat
+    CommandCatalog:
+    emptyCatalog()
+    pushUnique()
+    classifyCommand()
+    classifyCommands()
+    catalog()
+    capability()
+    matchingCommandsFlat()
+  plugins/koru-autopilot-windsurf/src/command-catalog.ts:
+    e: CommandCatalog,emptyCatalog,pushUnique,classifyCommand,classifyCommands,catalog,capability,matchingCommandsFlat
+    CommandCatalog:
+    emptyCatalog()
+    pushUnique()
+    classifyCommand()
+    classifyCommands()
+    catalog()
+    capability()
+    matchingCommandsFlat()
+  plugins/koru-autopilot-vscodium/src/command-catalog.ts:
+    e: CommandCatalog,emptyCatalog,pushUnique,classifyCommand,classifyCommands,catalog,capability,matchingCommandsFlat
+    CommandCatalog:
+    emptyCatalog()
+    pushUnique()
+    classifyCommand()
+    classifyCommands()
+    catalog()
+    capability()
+    matchingCommandsFlat()
   src/koruobserve/bootstrap.py:
     e: _config_has_v2_sections,ensure_observe_config,ensure_mesh_key
     _config_has_v2_sections(config)
@@ -4470,12 +4585,6 @@ The c...
     IdeControlStrategy:
     ide_control_strategy(ide)
     plugin_socket_ide_ids()
-  src/koruide/daemon/protocol.py:
-    e: _Client,_PluginEventHandoff,_daemon_package_version,_peer_uid
-    _Client:  # In-memory state for one connected socket...
-    _PluginEventHandoff:
-    _daemon_package_version()
-    _peer_uid(sock)
   src/koru/autonomous_operator.py:
     e: run_mcp_provision,_ensure_trusted_publisher_for_plugin,_extension_active_in_latest_session,_live_plugin_version,_detect_stale_extension_host,_plugin_status_reason,_plugin_reason_requires_reload,_plugin_blocker_line,_reload_retry_wait_seconds,_report_unsupported_plugin_result,_emit_reload_required_lines,_prepare_plugin_wait,_force_reload_if_extension_host_stale,_retry_plugin_wait_after_reload,_wait_for_plugin_connection,setup_autopilot_plugin,run_operator_pipeline,unblock_queue_if_needed
     run_mcp_provision(project;stdio_format)
@@ -4809,9 +4918,18 @@ The c...
     write_probe_tests(ide)
     patch_watcher_test(ide)
     main()
+  src/koruide/daemon/protocol.py:
+    e: _Client,_PluginEventHandoff,_daemon_package_version,_peer_uid
+    _Client:  # In-memory state for one connected socket...
+    _PluginEventHandoff:
+    _daemon_package_version()
+    _peer_uid(sock)
   src/koruapi/mcp.py:
     e: mcp_main
     mcp_main(argv)
+  src/koruapi/openapi.py:
+    e: build_openapi_document
+    build_openapi_document()
   src/korullm/strategies/ollama.py:
     e: OllamaStrategy
     OllamaStrategy(LlmStrategy): matches_environment(0),capabilities(0),assess_drive_failure(1),idle_marker_patterns(0)
@@ -4912,6 +5030,9 @@ Subclasses are **pure data + thin...
     create_nl_task()
     _finalise_ticket(template;project)
     run_wizard()
+  src/koru/autonomy_strategy/prompts.py:
+    e: build_strategy_update_prompt
+    build_strategy_update_prompt(project)
   plugins/koru-autopilot-vscode/src/step-decisions.test.ts:
     i: ./ide-control-strategy
     e: assert,testReadVerifySubmitPrefersNewSetting,testShouldVerifyPostSubmitAllPluginIdes,testHostSubmitIdesRequireVerificationEvenWhenOptionalVerifyDisabled,testIdeStrategiesAreSeparated,testShouldVerifyPrePasteBusy,testDecideBusyInputAction,testInterpretPostSubmitProbeRetry,result,testInterpretPostSubmitProbeStrictEmpty,result,inconclusive,empty
@@ -5017,15 +5138,69 @@ Subclasses are **pure data + thin...
     update_package_json(version;root)
     update_github_workflow(version;root)
     main()
-  src/koruapi/openapi.py:
-    e: build_openapi_document
-    build_openapi_document()
   src/koruide/plugin_version.py:
     e: expected_plugin_version_for_ide
     expected_plugin_version_for_ide(ide_id)
-  src/koru/autonomy_strategy/prompts.py:
-    e: build_strategy_update_prompt
-    build_strategy_update_prompt(project)
+  plugins/koru-autopilot-antigravity/src/command-catalog.test.ts:
+    i: ./command-catalog
+    e: assertEqual,assertDeepEqual,actualJson,expectedJson,testClassifiesCursorSubmitAndPaste,testClassifiesFocusOpenVsInput,testClassifiesUnknownChatHints,testClassifyCommandsDeduplicatesAndSorts,catalog
+    assertEqual()
+    assertDeepEqual()
+    actualJson()
+    expectedJson()
+    testClassifiesCursorSubmitAndPaste()
+    testClassifiesFocusOpenVsInput()
+    testClassifiesUnknownChatHints()
+    testClassifyCommandsDeduplicatesAndSorts()
+    catalog()
+  plugins/koru-autopilot-cursor/src/command-catalog.test.ts:
+    i: ./command-catalog
+    e: assertEqual,assertDeepEqual,actualJson,expectedJson,testClassifiesCursorSubmitAndPaste,testClassifiesFocusOpenVsInput,testClassifiesUnknownChatHints,testClassifyCommandsDeduplicatesAndSorts,catalog
+    assertEqual()
+    assertDeepEqual()
+    actualJson()
+    expectedJson()
+    testClassifiesCursorSubmitAndPaste()
+    testClassifiesFocusOpenVsInput()
+    testClassifiesUnknownChatHints()
+    testClassifyCommandsDeduplicatesAndSorts()
+    catalog()
+  plugins/koru-autopilot-vscode/src/command-catalog.test.ts:
+    i: ./command-catalog
+    e: assertEqual,assertDeepEqual,actualJson,expectedJson,testClassifiesCursorSubmitAndPaste,testClassifiesFocusOpenVsInput,testClassifiesUnknownChatHints,testClassifyCommandsDeduplicatesAndSorts,catalog
+    assertEqual()
+    assertDeepEqual()
+    actualJson()
+    expectedJson()
+    testClassifiesCursorSubmitAndPaste()
+    testClassifiesFocusOpenVsInput()
+    testClassifiesUnknownChatHints()
+    testClassifyCommandsDeduplicatesAndSorts()
+    catalog()
+  plugins/koru-autopilot-windsurf/src/command-catalog.test.ts:
+    i: ./command-catalog
+    e: assertEqual,assertDeepEqual,actualJson,expectedJson,testClassifiesCursorSubmitAndPaste,testClassifiesFocusOpenVsInput,testClassifiesUnknownChatHints,testClassifyCommandsDeduplicatesAndSorts,catalog
+    assertEqual()
+    assertDeepEqual()
+    actualJson()
+    expectedJson()
+    testClassifiesCursorSubmitAndPaste()
+    testClassifiesFocusOpenVsInput()
+    testClassifiesUnknownChatHints()
+    testClassifyCommandsDeduplicatesAndSorts()
+    catalog()
+  plugins/koru-autopilot-vscodium/src/command-catalog.test.ts:
+    i: ./command-catalog
+    e: assertEqual,assertDeepEqual,actualJson,expectedJson,testClassifiesCursorSubmitAndPaste,testClassifiesFocusOpenVsInput,testClassifiesUnknownChatHints,testClassifyCommandsDeduplicatesAndSorts,catalog
+    assertEqual()
+    assertDeepEqual()
+    actualJson()
+    expectedJson()
+    testClassifiesCursorSubmitAndPaste()
+    testClassifiesFocusOpenVsInput()
+    testClassifiesUnknownChatHints()
+    testClassifyCommandsDeduplicatesAndSorts()
+    catalog()
   src/koruobserve/paths.py:
     e: runtime_dir,pidfile,logfile,state_file
     runtime_dir(project)
@@ -5154,6 +5329,9 @@ Th...
     i: ./chat-history-types
     e: UnsupportedAdapter
     UnsupportedAdapter: storeAvailable(-1),fetchNewer(-1)
+  src/koru/autopilot/commands/shutdown.py:
+    e: action_shutdown
+    action_shutdown(args)
   goal.yaml:
   regix.yaml:
   wup-shell-only.yaml:
@@ -5163,15 +5341,18 @@ Th...
   coverage.json:
   koru.yaml:
   docker-compose.yml:
+  pyproject.toml:
   tree.sh:
   todo.txt:
   pipeline.yaml:
+  package.json:
   prefact.yaml:
   Taskfile.yml:
   Dockerfile:
   project.sh:
   .pretest.yml:
   schemas/koru-stdio-event.schema.json:
+  docs/ide-command-api-map.yaml:
   docs/ai-tool-registry-2026.yaml:
   docs/recipes/python-quality-baseline.yaml:
   docs/recipes/monorepo-hygiene.yaml:
@@ -5424,15 +5605,12 @@ Th...
     AdapterRunner:
     IdeAdapter:
   plugins/koru-autopilot-vscode/tsconfig.json:
-  plugins/koru-autopilot-antigravity/package.json:
   plugins/koru-autopilot-vscode/src/ides/index.ts:
   plugins/koru-autopilot-vscode/src/ides/ide-strategy.ts:
     i: ../probe-ladder
     e: SubmitFallbackPolicy,IdeStrategy
     SubmitFallbackPolicy:
     IdeStrategy:
-  plugins/koru-autopilot-vscode/package.json:
-  plugins/koru-autopilot-windsurf/package.json:
   plugins/koru-autopilot-jetbrains/settings.gradle.kts:
     e: gradlePluginPortal,mavenCentral
     gradlePluginPortal()
@@ -5464,7 +5642,6 @@ Th...
     openAiPanel()
     pasteViaClipboard()
   plugins/koru-autopilot-jetbrains/src/main/resources/META-INF/plugin.xml:
-  plugins/koru-autopilot-vscodium/package.json:
   scripts/koru-from-repo.sh:
   scripts/koru-soak-monitor.sh:
     e: find_pid,pid_elapsed,state_field,print,print,error_count,write_report
@@ -5534,7 +5711,9 @@ Th...
   testql-scenarios/cli-koru-live.testql.toon.yaml:
   testql-testing/scenarios/realtime-health.testql.toon.yaml:
   wup.yaml:
-  pyproject.toml:
-  package.json:
-  docs/ide-command-api-map.yaml:
+  src/koru/autopilot/commands/__init__.py:
+  plugins/koru-autopilot-antigravity/package.json:
   plugins/koru-autopilot-cursor/package.json:
+  plugins/koru-autopilot-vscode/package.json:
+  plugins/koru-autopilot-windsurf/package.json:
+  plugins/koru-autopilot-vscodium/package.json:

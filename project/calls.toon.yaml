@@ -1,15 +1,17 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.30s
-# nodes: 400 | edges: 500 | modules: 91
-# CC̄=3.6
+# generated in 0.56s
+# nodes: 427 | edges: 500 | modules: 100
+# CC̄=3.5
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
     CC=0  in:593  out:0  total:593
   src.koru.wizard.gui.static.wizard.list
-    CC=5  in:133  out:9  total:142
+    CC=5  in:141  out:9  total:150
   src.koruide.ide.normalize_ide_id
-    CC=6  in:65  out:11  total:76
+    CC=6  in:64  out:11  total:75
+  src.koruide.command_scenario.validate_ide_command_scenario
+    CC=37  in:3  out:67  total:70
   koru.activity_log.activity
     CC=6  in:47  out:13  total:60
   src.koru.context_render.render_markdown_handoff
@@ -20,42 +22,41 @@ HUBS[20]:
     CC=13  in:24  out:10  total:34
   src.koruobserve.lifecycle.observe_up
     CC=4  in:1  out:32  total:33
+  src.koruapi.mcp_server.tool_run_ticket
+    CC=12  in:1  out:31  total:32
   src.koruide.socket.default_socket_path
-    CC=4  in:15  out:15  total:30
-  src.koruvision.providers.obs_websocket._with_obs_connection
-    CC=9  in:2  out:26  total:28
+    CC=4  in:16  out:15  total:31
   services.healing-webhook.app._resolve_affected_files
     CC=11  in:2  out:24  total:26
   services.healing-webhook.ticket_builder.build_ticket_payload
     CC=11  in:1  out:25  total:26
-  plugins.koru-autopilot-shared.src.ack-payload.type
-    CC=3  in:25  out:0  total:25
   src.koru.context.build_context
     CC=6  in:9  out:16  total:25
-  examples.remote_orchestration_demo.run_multi_node_orchestration
-    CC=9  in:0  out:24  total:24
+  plugins.koru-autopilot-shared.src.ack-payload.type
+    CC=3  in:25  out:0  total:25
   src.koruapi.dashboard_config._dashboard_config_request_kwargs
     CC=10  in:1  out:23  total:24
   src.koru.queue.ticket.planfile_command
     CC=5  in:17  out:7  total:24
   src.koruapi.dashboard_tickets.create_ticket_from_dashboard
     CC=8  in:2  out:22  total:24
-  src.koruapi.topology_post.apply_topology_post_update
-    CC=14  in:1  out:22  total:23
-  src.koruobserve.providers_cli.providers_test_text
-    CC=13  in:1  out:20  total:21
+  examples.remote_orchestration_demo.run_multi_node_orchestration
+    CC=9  in:0  out:24  total:24
+  src.koruapi.dashboard_routes._post_remote_drive
+    CC=9  in:0  out:24  total:24
 
 MODULES:
   examples.remote_orchestration_demo  [1 funcs]
     run_multi_node_orchestration  CC=9  out:24
   koru.activity_log  [1 funcs]
     activity  CC=6  out:13
-  plugins.koru-autopilot-antigravity.src.extension  [2 funcs]
-    connect  CC=2  out:7
-    next  CC=2  out:1
+  koru.ide_client  [1 funcs]
+    build_ide_client  CC=3  out:5
   plugins.koru-autopilot-shared.src.ack-payload  [2 funcs]
     bytes  CC=2  out:0
     type  CC=3  out:0
+  plugins.koru-autopilot-vscode.src.extension  [1 funcs]
+    next  CC=2  out:1
   scripts.koru-soak-monitor  [1 funcs]
     print  CC=0  out:0
   services.healing-webhook.app  [23 funcs]
@@ -78,6 +79,8 @@ MODULES:
   src.koru.autonomous_process_guard  [2 funcs]
     find_existing_autonomous_processes  CC=11  out:16
     find_existing_wup_processes  CC=11  out:15
+  src.koru.autonomy.decision_trace  [1 funcs]
+    load_recent_decisions  CC=9  out:8
   src.koru.configurator  [4 funcs]
     configure_project  CC=2  out:9
     load_project_config  CC=4  out:5
@@ -87,11 +90,22 @@ MODULES:
     build_context  CC=6  out:16
   src.koru.context_render  [1 funcs]
     render_markdown_handoff  CC=10  out:47
+  src.koru.control_commands  [1 funcs]
+    api_command  CC=4  out:4
+  src.koru.doctor  [1 funcs]
+    run_diagnostics  CC=6  out:11
   src.koru.dotenv_loader  [1 funcs]
     load_dotenv  CC=7  out:5
+  src.koru.env_config  [3 funcs]
+    apply_env_updates  CC=1  out:6
+    env_config_payload  CC=1  out:3
+    write_env_config  CC=1  out:4
+  src.koru.environment_profile  [1 funcs]
+    environment_profile_payload  CC=1  out:2
   src.koru.events  [1 funcs]
     emit_management_event  CC=8  out:7
-  src.koru.interface_registry  [2 funcs]
+  src.koru.interface_registry  [3 funcs]
+    blocker_interface_payload  CC=2  out:2
     iter_interfaces  CC=1  out:1
     summarize_interfaces_by_family  CC=2  out:2
   src.koru.local_service  [2 funcs]
@@ -103,10 +117,14 @@ MODULES:
     stored_event_to_dsl  CC=1  out:2
   src.koru.observability_writer  [1 funcs]
     observability_event_store_path  CC=1  out:1
+  src.koru.queue.loop  [1 funcs]
+    run_planfile_queue_loop  CC=14  out:9
   src.koru.queue.runners  [1 funcs]
     run_process  CC=1  out:4
   src.koru.queue.ticket  [1 funcs]
     planfile_command  CC=5  out:7
+  src.koru.scan  [1 funcs]
+    run_scan  CC=5  out:9
   src.koru.tasks  [1 funcs]
     create_nl_task  CC=1  out:4
   src.koru.topology  [2 funcs]
@@ -179,12 +197,22 @@ MODULES:
     _read_workspace_folder  CC=8  out:12
     _running_ide_to_detected  CC=1  out:1
     _walk_descendant_pids  CC=6  out:8
-  src.koruapi.dashboard_routes  [1 funcs]
-    build_dashboard_handler  CC=1  out:1
-  src.koruapi.dashboard_runtime  [3 funcs]
+  src.koruapi.dashboard_routes  [30 funcs]
+    _build_dashboard_handler_impl  CC=1  out:9
+    _config_defaults  CC=1  out:4
+    _first_query_value  CC=4  out:3
+    _get_autonomy_trace  CC=8  out:17
+    _get_config  CC=1  out:4
+    _get_context  CC=1  out:3
+    _get_create_project_ticket_action  CC=2  out:8
+    _get_dashboard  CC=1  out:2
+    _get_env_config  CC=1  out:3
+    _get_environment  CC=1  out:3
+  src.koruapi.dashboard_runtime  [4 funcs]
     _interface_runtime_payload  CC=5  out:3
     runtime_context_error_payload  CC=1  out:5
     runtime_context_payload  CC=1  out:5
+    save_runtime_context_config  CC=5  out:7
   src.koruapi.dashboard_serve  [10 funcs]
     _announce_bound_dashboard  CC=2  out:3
     _bind_or_print  CC=3  out:4
@@ -231,13 +259,29 @@ MODULES:
     list_integrations  CC=4  out:2
   src.koruapi.invoke  [1 funcs]
     invoke_integration  CC=4  out:6
+  src.koruapi.invoke_handlers  [18 funcs]
+    _handle_autopilot_drive  CC=5  out:17
+    _handle_autopilot_status  CC=2  out:3
+    _handle_context_build  CC=1  out:3
+    _handle_doctor_run  CC=1  out:2
+    _handle_dsl_roundtrip  CC=3  out:6
+    _handle_dsl_to_dsl  CC=2  out:3
+    _handle_dsl_to_library  CC=3  out:4
+    _handle_gate_regix  CC=3  out:5
+    _handle_ide_commands  CC=3  out:6
+    _handle_ide_scenario_schema  CC=1  out:1
   src.koruapi.local  [2 funcs]
     build_local_parser  CC=1  out:4
     local_main  CC=6  out:9
   src.koruapi.mcp  [1 funcs]
     mcp_main  CC=2  out:2
-  src.koruapi.mcp_server  [1 funcs]
+  src.koruapi.mcp_server  [4 funcs]
     mcp_serve_main  CC=2  out:10
+    tool_list_tickets  CC=3  out:9
+    tool_run_quality_gates  CC=6  out:13
+    tool_run_ticket  CC=12  out:31
+  src.koruapi.openapi  [1 funcs]
+    build_openapi_document  CC=2  out:1
   src.koruapi.runtime_insights  [6 funcs]
     _active_tools  CC=8  out:13
     _classify_process  CC=5  out:8
@@ -245,6 +289,15 @@ MODULES:
     _run_ps  CC=9  out:11
     _top_processes  CC=2  out:9
     collect_runtime_insights  CC=4  out:14
+  src.koruapi.server  [8 funcs]
+    do_GET  CC=9  out:21
+    do_POST  CC=2  out:4
+    log_message  CC=1  out:2
+    _handle_invoke_post  CC=5  out:13
+    _json_response  CC=1  out:9
+    _parse_invoke_request  CC=9  out:16
+    _read_json_body  CC=5  out:7
+    serve  CC=2  out:8
   src.koruapi.topology_post  [1 funcs]
     apply_topology_post_update  CC=14  out:22
   src.korudsl.cli  [3 funcs]
@@ -266,6 +319,12 @@ MODULES:
     dsl_roundtrip_report  CC=1  out:7
     library_from_any  CC=12  out:15
     library_to_any  CC=2  out:3
+  src.koruide.command_catalog  [2 funcs]
+    build_ide_command_catalog  CC=4  out:4
+    command_catalog_for_llm  CC=4  out:4
+  src.koruide.command_scenario  [2 funcs]
+    ide_command_scenario_schema  CC=1  out:0
+    validate_ide_command_scenario  CC=37  out:67
   src.koruide.ide  [3 funcs]
     autopilot_ide_choices  CC=1  out:0
     detect_running_ides  CC=13  out:10
@@ -279,16 +338,15 @@ MODULES:
     get_llm_strategy  CC=3  out:3
     resolve_active_llm_strategy  CC=1  out:1
     resolve_llm_strategy_from_environment  CC=9  out:17
-  src.korumesh.dashboard_parse  [1 funcs]
-    parse_mime_params  CC=6  out:6
+  src.korumesh.browser_capture  [1 funcs]
+    serve_browser_capture_http  CC=10  out:14
+  src.korumesh.dashboard  [1 funcs]
+    serve_mesh_http  CC=2  out:2
   src.korumesh.envelope  [1 funcs]
     sign_envelope  CC=3  out:8
   src.korumesh.keys  [2 funcs]
     load_mesh_key  CC=2  out:6
     write_mesh_key  CC=3  out:6
-  src.korumesh.store  [2 funcs]
-    list_vision_frames  CC=6  out:3
-    remember_envelope  CC=3  out:3
   src.korumesh.transport  [1 funcs]
     publish_envelope  CC=4  out:9
   src.koruobserve.bootstrap  [3 funcs]
@@ -399,9 +457,8 @@ MODULES:
     _add_capture_subparser  CC=1  out:3
     build_vision_parser  CC=1  out:6
     register_mesh_publish_args  CC=2  out:6
-  src.koruvision.mesh  [5 funcs]
+  src.koruvision.mesh  [4 funcs]
     _vision_mime  CC=5  out:3
-    default_peer_id  CC=1  out:1
     publish_vision_frame  CC=1  out:3
     resolve_mesh_publish  CC=8  out:12
     vision_frame_envelope  CC=1  out:2
@@ -411,78 +468,35 @@ MODULES:
   src.koruvision.providers.base  [2 funcs]
     frame_from_png  CC=5  out:12
     png_dimensions  CC=4  out:5
-  src.koruvision.providers.browser_getdisplay  [12 funcs]
-    availability  CC=2  out:4
-    capture_all  CC=5  out:6
-    list_monitors  CC=8  out:13
-    _browser_upload_monitor_id  CC=2  out:3
-    _decode_browser_png_upload  CC=7  out:9
-    _frames_from_store  CC=4  out:8
-    _mesh_key_for_browser_upload  CC=2  out:3
-    _publish_browser_upload_if_requested  CC=4  out:3
-    _remember_browser_upload_envelope  CC=1  out:4
-    _vision_mime_with_provider  CC=7  out:11
+  src.koruvision.providers.browser_getdisplay  [1 funcs]
+    browser_capture_requested  CC=2  out:2
   src.koruvision.providers.cli_tools  [4 funcs]
     availability  CC=3  out:4
     capture_all  CC=1  out:1
     list_monitors  CC=1  out:1
     _tool_available  CC=1  out:2
-  src.koruvision.providers.detector  [13 funcs]
+  src.koruvision.providers.detector  [12 funcs]
     _auto_failure_message  CC=3  out:2
     _auto_provider_order  CC=11  out:18
     _available_ranked_providers  CC=5  out:5
     _forced_provider_rank  CC=3  out:3
     _should_report_auto_portal  CC=4  out:2
-    _stamp_provider  CC=1  out:1
     capture_all_with_providers  CC=8  out:14
     capture_one_with_providers  CC=6  out:13
     list_provider_status  CC=2  out:3
     monitors_via_xrandr  CC=6  out:10
-  src.koruvision.providers.env  [7 funcs]
+    probe_capture_providers  CC=10  out:19
+  src.koruvision.providers.env  [3 funcs]
     capture_provider_pref  CC=4  out:6
-    compositor_hint  CC=5  out:3
-    env_truthy  CC=1  out:3
-    is_wayland  CC=2  out:6
     looks_headless  CC=3  out:4
     portal_possible  CC=3  out:5
-    tool_available  CC=1  out:2
-  src.koruvision.providers.grim  [4 funcs]
-    availability  CC=2  out:3
-    capture_all  CC=1  out:2
-    list_monitors  CC=1  out:1
-    _grim_png  CC=4  out:4
-  src.koruvision.providers.mss  [2 funcs]
-    capture_all  CC=2  out:3
-    capture_one  CC=1  out:2
-  src.koruvision.providers.obs_websocket  [13 funcs]
-    availability  CC=3  out:8
-    capture_all  CC=1  out:3
-    list_monitors  CC=1  out:3
-    _capture_source_png  CC=2  out:8
-    _obs_request  CC=11  out:19
-    _run_obs_capture  CC=1  out:1
-    _websockets_missing  CC=2  out:0
-    _with_obs_connection  CC=9  out:26
-    obs_password  CC=1  out:2
-    obs_screenshot_width  CC=2  out:4
-  src.koruvision.providers.portal_screencast  [6 funcs]
-    availability  CC=7  out:10
-    capture_all  CC=3  out:5
-    list_monitors  CC=1  out:1
-    _parse_screencast_stdout  CC=10  out:13
-    _run_screencast_subprocess  CC=2  out:2
-    _screencast_frames  CC=9  out:14
-  src.koruvision.providers.portal_screenshot  [3 funcs]
-    availability  CC=2  out:3
-    capture_one  CC=2  out:4
-    list_monitors  CC=1  out:1
+  src.koruvision.providers.obs_websocket  [1 funcs]
+    probe_obs_reachable  CC=6  out:5
   src.koruvision.providers.registry  [2 funcs]
     all_providers  CC=1  out:1
     provider_by_name  CC=1  out:3
-  src.koruvision.providers.screencast_session  [4 funcs]
+  src.koruvision.providers.screencast_session  [2 funcs]
     clear_session_file  CC=3  out:3
-    load_session_path  CC=7  out:8
-    resolve_screencast_session_file  CC=3  out:12
     session_file_for_project  CC=1  out:1
   src.koruvision.scaling  [3 funcs]
     downscale_rgb_nearest  CC=6  out:5
@@ -495,7 +509,7 @@ EDGES:
   services.healing-webhook.app._enrich_ticket_with_vallm → services.healing-webhook.app._run_vallm_check
   services.healing-webhook.app._execute_planfile_create → services.healing-webhook.app._extract_ticket_id_from_stdout
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._enrich_ticket_with_vallm
-  services.healing-webhook.app.create_planfile_ticket → plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.next
+  services.healing-webhook.app.create_planfile_ticket → plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.next
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._build_planfile_command
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.app._execute_planfile_create
   services.healing-webhook.app.create_planfile_ticket → services.healing-webhook.ticket_builder.build_ticket_payload

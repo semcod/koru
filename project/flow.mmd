@@ -1,26 +1,22 @@
 flowchart TD
-%% generated in 0.16s
+%% generated in 0.44s
 
     %% Entry points (blue)
     classDef entry fill:#4dabf7,stroke:#1971c2,color:#fff
 
     subgraph CLI
-        koruide__client__KoruIDEClient___drive_timeout["_drive_timeout"]
-        koruide__client__KoruIDEClient___connect["_connect"]
-        koruide__client__KoruIDEClient__request["request"]
-        koruide__client__KoruIDEClient___extract_reply["_extract_reply"]
-        koruide__client__KoruIDEClient__is_running["is_running"]
-        koruide__client__KoruIDEClient__drive["drive"]
-        koruide__client__KoruIDEClient__status["status"]
-        koruide__client__KoruIDEClient__shutdown["shutdown"]
-        koruide__client__build_client["build_client"]
         koru__ide_client__IDEControlClient__is_running["is_running"]
         koru__ide_client__IDEControlClient__drive["drive"]
         koru__ide_client__IDEControlClient__status["status"]
         koru__ide_client__IDEControlClient__shutdown["shutdown"]
         koru__ide_client__LegacyAutopilotClientAdapter__is_running["is_running"]
         koru__ide_client__LegacyAutopilotClientAdapter__drive["drive"]
-        ...["+6 more"]
+        koru__ide_client__LegacyAutopilotClientAdapter__status["status"]
+        koru__ide_client__LegacyAutopilotClientAdapter__shutdown["shutdown"]
+        koru__ide_client__adapt_legacy_autopilot_client["adapt_legacy_autopilot_client"]
+        koru__ide_client__build_legacy_ide_client["build_legacy_ide_client"]
+        koru__ide_client__build_koruide_client["build_koruide_client"]
+        koru__ide_client__build_ide_client["build_ide_client"]
     end
 
     subgraph Core
@@ -39,7 +35,7 @@ flowchart TD
         src__koruobserve__cli___missing_observe_packages["_missing_observe_packages"]
         src__koruobserve__cli___require_observe_runtime["_require_observe_runtime"]
         src__koruobserve__cli___pip_install["_pip_install"]
-        ...["+2356 more"]
+        ...["+2473 more"]
     end
 
     subgraph Exporters

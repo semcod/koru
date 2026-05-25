@@ -55,6 +55,7 @@ from koru.autopilot.cli_direct_drive import (
 from koru.autopilot.cli_parser import build_autopilot_parser as _build_parser
 from koru.autopilot.commands.drive import action_drive as _drive_action_impl
 from koru.autopilot.commands.drive import _drive_command_argv
+from koru.autopilot.commands.handoff import action_handoff as _handoff_action_impl
 from koru.autopilot.commands.shutdown import action_shutdown as _shutdown_action_impl
 from koru.autopilot.commands.status import action_status as _status_action_impl
 from koru.autopilot.cli_trace import action_trace as _action_trace
@@ -237,58 +238,16 @@ def _action_install_plugin_jetbrains(args: argparse.Namespace) -> int:
     )
 
 
-def _build_brief(project: Path) -> str:
-    """Build the koru markdown brief for ``project``.
-
-    Imported lazily so ``autopilot doctor`` / ``ide-list`` don't drag
-    in the heavy ``context`` stack on every CLI invocation.
-    """
+def _action_handoff(args: argparse.Namespace) -> int:
+    """Wrapper for handoff command with dependency injection."""
     from koru.context import build_context, render_markdown_handoff
 
-    ctx = build_context(project=project)
-    return render_markdown_handoff(ctx)
-
-
-def _action_handoff(args: argparse.Namespace) -> int:
-    """P2.5: build the koru brief and pipe it through ``drive``."""
-    project = args.project.resolve()
-    try:
-        brief = _build_brief(project)
-    except Exception as exc:  # pragma: no cover — surfaces context errors
-        print(f"koru autopilot handoff: {exc}", file=sys.stderr)
-        return 1
-    if not brief.strip():
-        print("koru autopilot handoff: empty brief, refusing to drive", file=sys.stderr)
-        return 1
-    if args.dry_run:
-        print(brief)
-        return 0
-    client = _client(args)
-    if not client.is_running():
-        print(
-            "koru autopilot handoff: daemon not running. Start it with `koru autopilot daemon`.",
-            file=sys.stderr,
-        )
-        return 2
-    try:
-        reply = client.drive(
-            brief,
-            submit=args.submit,
-            ide=args.ide,
-            require_plugin=args.require_plugin,
-        )
-    except (OSError, RuntimeError) as exc:
-        print(f"koru autopilot handoff: {exc}", file=sys.stderr)
-        return 1
-    summary = {
-        "ok": reply.get("ok", False),
-        "chars": len(brief),
-        "ide": args.ide,
-        "submit": args.submit,
-        "backend": reply.get("backend") or ("plugin" if reply.get("delivered") else "?"),
-    }
-    print(json.dumps(summary, indent=2, sort_keys=True))
-    return 0 if reply.get("ok", True) else 1
+    return _handoff_action_impl(
+        args,
+        client_fn=_client,
+        build_context_fn=build_context,
+        render_markdown_handoff_fn=render_markdown_handoff,
+    )
 
 
 def _action_tail(args: argparse.Namespace) -> int:
