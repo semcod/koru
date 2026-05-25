@@ -1309,9 +1309,10 @@ sprint:
         into strategy pattern.'
       execution:
         attempt: 0
+        finished_at: '2026-05-25T15:23:26.466913Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -1324,6 +1325,22 @@ sprint:
           split into strategy pattern.'
         source: koru task
         timestamp: '2026-05-25T14:27:18.872451+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T15:21:34.558923+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T15:23:26.483071+00:00'
       id: STARTER-268
       inputs:
         api_headers: {}
@@ -1345,7 +1362,11 @@ sprint:
         limit=15)'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - 'Refactored _add_label_to_ticket_yaml_text into focused helpers; target
+          no longer trips ruff C901. Validation: pytest -q tests/test_autonomous_cycle_skip_conditions.py;
+          ruff check src/koru/autonomous_cycle_skip_conditions.py tests/test_autonomous_cycle_skip_conditions.py;
+          ruff check --select C901 src/koru/autonomous_cycle_skip_conditions.py.'
       priority: normal
       source:
         context:
@@ -1357,9 +1378,9 @@ sprint:
         timestamp: '2026-05-25T14:27:18.872451+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-25T14:27:18.872451+00:00'
+      updated_at: '2026-05-25T15:23:26.483021+00:00'
     STARTER-269:
       blocked_by: []
       blocks: []
@@ -1384,6 +1405,11 @@ sprint:
           to verify.'
         source: koru task
         timestamp: '2026-05-25T14:27:19.988762+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T15:25:08.894219+00:00'
       id: STARTER-269
       inputs:
         api_headers: {}
@@ -1403,7 +1429,13 @@ sprint:
       name: 'code2llm refactor: split 13 high-CC methods'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - 'Progress slice: removed C901 from src/koru/autonomous_cycle_skip_conditions.py
+          and src/koru/autonomy/cycle_trace.py by extracting diagnostics skip handling
+          and ordered telemetry next-step hints. Added tests/test_cycle_trace.py and
+          kept tests/test_autonomous_cycle_skip_conditions.py lint-clean. Validation:
+          focused pytest for skip/decision paths passed; ruff check and ruff C901
+          clean for touched modules. Remaining repo C901 count: 23.'
       priority: normal
       source:
         context:
@@ -1417,7 +1449,7 @@ sprint:
       sprint: current
       status: open
       sync: {}
-      updated_at: '2026-05-25T14:27:19.988762+00:00'
+      updated_at: '2026-05-25T15:25:08.894186+00:00'
     STARTER-270:
       blocked_by: []
       blocks: []
@@ -1532,7 +1564,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide vscode --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-05-25T15:17:16.018246Z'
+        finished_at: '2026-05-25T16:18:04.726685Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -1571,6 +1603,11 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-05-25T15:17:16.028709+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T16:18:04.742402+00:00'
       id: STARTER-271
       inputs:
         api_headers: {}
@@ -1626,7 +1663,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-25T15:17:16.028664+00:00'
+      updated_at: '2026-05-25T16:18:04.742359+00:00'
     STARTER-272:
       blocked_by: []
       blocks: []
@@ -1738,11 +1775,12 @@ sprint:
       execution:
         assigned_to: koru-shell
         attempt: 0
+        finished_at: '2026-05-25T16:18:05.831380Z'
         lease_expires_at: '2026-05-25T16:18:53.869543Z'
         max_attempts: 1
         queue: operator
         started_at: '2026-05-25T15:18:54.538035Z'
-        state: running
+        state: done
       executor:
         kind: shell
         mode: noninteractive
@@ -1780,6 +1818,22 @@ sprint:
         source: planfile.store
         status: blocked
         timestamp: '2026-05-25T15:18:58.169343+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: blocked
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T15:23:27.191476+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T16:18:05.842954+00:00'
       id: STARTER-273
       inputs:
         api_headers: {}
@@ -1805,7 +1859,11 @@ sprint:
         auto-repair failed: NameError: name ''json'' is no...'
       outputs:
         artifacts: []
-        notes: []
+        notes:
+        - 'Re-ran koru self --project /home/tom/github/semcod/koru --ide vscode repair
+          --yes; prior NameError: json is not defined no longer reproduces. Follow-up
+          doctor reports ok=True needs_repair=False; remaining advisory is plugin
+          daemon/connect handled by autopilot plugin lane.'
       priority: high
       source:
         context:
@@ -1824,6 +1882,110 @@ sprint:
         timestamp: '2026-05-25T15:18:52.447431+00:00'
         tool: koru-operator-pipeline
       sprint: current
-      status: blocked
+      status: done
       sync: {}
-      updated_at: '2026-05-25T15:18:58.169285+00:00'
+      updated_at: '2026-05-25T16:18:05.842919+00:00'
+    STARTER-274:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T16:26:45.581955+00:00'
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        Brak semcod.koru-autopilot-vscode w extensions.json → Zainstaluj wtyczkę
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `koru ide doctor --ide cursor --fix --gc-sockets`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T16:27:55.730923Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          Brak semcod.koru-autopilot-vscode w extensions.json → Zainstaluj wtyczkę
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `koru ide doctor --ide cursor --fix --gc-sockets`'
+        source: koru task
+        timestamp: '2026-05-25T16:26:45.581955+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T16:27:55.743342+00:00'
+      id: STARTER-274
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          Brak semcod.koru-autopilot-vscode w extensions.json → Zainstaluj wtyczkę
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `koru ide doctor --ide cursor --fix --gc-sockets`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie Brak semcod.koru-autopilot-vscode
+        w extensions.json → Zainstaluj wtyc...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru:operator-pipeline:autopilot-plugin:cursor
+          detail: Brak semcod.koru-autopilot-vscode w extensions.json → Zainstaluj
+            wtyczkę
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            Brak semcod.koru-autopilot-vscode w extensions.json → Zainstaluj wtyczkę
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `koru ide doctor --ide cursor --fix --gc-sockets`'
+          step_id: autopilot_plugin
+          task_command: koru ide doctor --ide cursor --fix --gc-sockets
+        timestamp: '2026-05-25T16:26:45.581955+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T16:27:55.743297+00:00'

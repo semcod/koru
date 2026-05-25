@@ -82,6 +82,25 @@ def test_annotate_plugin_ack_marks_strict_when_winning_commands_exist() -> None:
     assert info["verification"] == "strict"
 
 
+def test_annotate_plugin_ack_rejects_vscodium_registered_submit_false_positive() -> None:
+    info = DriveOrchestrator.annotate_plugin_ack(
+        info={
+            "delivered": True,
+            "opened": True,
+            "submitted": True,
+            "winning_focus_open": "workbench.panel.chat+workbench.action.chat.focusInput",
+            "winning_paste": "host-clipboard:wl-copy+xdotool key ctrl+v",
+            "winning_submit": "workbench.action.chat.submit",
+        },
+        plugin_ok=True,
+        submit_requested=True,
+        plugin_ide="vscodium",
+    )
+
+    assert info["verification"] == "submit_unverified"
+    assert "registered submit command is not trusted" in info["submit_failure_reason"]
+
+
 def test_annotate_plugin_ack_marks_plugin_ack_without_winning_commands() -> None:
     info = DriveOrchestrator.annotate_plugin_ack(
         info={"delivered": True, "opened": True, "submitted": True},

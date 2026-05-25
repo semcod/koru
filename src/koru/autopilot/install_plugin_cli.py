@@ -36,8 +36,23 @@ PLUGIN_INSTALL_IDES = frozenset(
 )
 
 
-def plugin_repo_dir() -> Path:
-    return Path(__file__).resolve().parents[3] / "plugins" / "koru-autopilot-vscode"
+def plugin_repo_dir(ide: str | None = None) -> Path:
+    """Return the plugin source directory for ``ide``.
+
+    Cursor has its own ``plugins/koru-autopilot-cursor`` package;
+    every other VS Code-family IDE still shares the legacy umbrella
+    ``plugins/koru-autopilot-vscode`` until it is extracted into its
+    own VSIX.
+    """
+
+    from koruide.plugin_installer import plugin_dir_names_for_ide
+
+    repo = Path(__file__).resolve().parents[3] / "plugins"
+    for dir_name in plugin_dir_names_for_ide(ide):
+        candidate = repo / dir_name
+        if candidate.is_dir():
+            return candidate
+    return repo / "koru-autopilot-vscode"
 
 
 def _plugin_package_version(plugin_dir: Path) -> str | None:
@@ -49,60 +64,73 @@ def _plugin_package_version(plugin_dir: Path) -> str | None:
     return str(version) if version else None
 
 
+def _plugin_package_name(plugin_dir: Path) -> str | None:
+    try:
+        data = json.loads((plugin_dir / "package.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    name = data.get("name") if isinstance(data, dict) else None
+    return str(name) if name else None
+
+
 def _versioned_plugin_vsix_candidates(plugin_dir: Path) -> list[Path]:
     version = _plugin_package_version(plugin_dir)
     if not version:
         return []
+    name = _plugin_package_name(plugin_dir) or "koru-autopilot"
     return [
+        plugin_dir / f"{name}-{version}.vsix",
         plugin_dir / f"koru-autopilot-{version}.vsix",
         plugin_dir / f"koru-autopilot-vscode-{version}.vsix",
     ]
 
 
-def bundled_plugin_vsix_candidates() -> list[Path]:
-    try:
-        root = resources.files("koru").joinpath("assets", "koru-autopilot-vscode")
-    except (ModuleNotFoundError, AttributeError):
-        return []
-    try:
-        candidates = [
-            Path(str(candidate)) for candidate in root.iterdir() if candidate.name.endswith(".vsix")
-        ]
-    except (FileNotFoundError, NotADirectoryError, OSError):
-        return []
-    return sorted(
-        [candidate for candidate in candidates if candidate.is_file()],
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
+def bundled_plugin_vsix_candidates(ide: str | None = None) -> list[Path]:
+    from koruide.plugin_installer import plugin_dir_names_for_ide
+
+    out: list[Path] = []
+    for dir_name in plugin_dir_names_for_ide(ide):
+        try:
+            root = resources.files("koru").joinpath("assets", dir_name)
+        except (ModuleNotFoundError, AttributeError):
+            continue
+        try:
+            out.extend(
+                Path(str(candidate)) for candidate in root.iterdir()
+                if candidate.name.endswith(".vsix")
+            )
+        except (FileNotFoundError, NotADirectoryError, OSError):
+            continue
+    files = [candidate for candidate in out if candidate.is_file()]
+    return sorted(files, key=lambda p: p.stat().st_mtime, reverse=True)
 
 
 def jetbrains_plugin_repo_dir() -> Path:
     return Path(__file__).resolve().parents[3] / "plugins" / "koru-autopilot-jetbrains"
 
 
-def resolve_plugin_vsix_path(vsix: Path | None) -> Path:
+def resolve_plugin_vsix_path(vsix: Path | None, ide: str | None = None) -> Path:
     if vsix is not None:
         candidate = vsix.expanduser().resolve()
         if not candidate.is_file():
             raise RuntimeError(f"vsix not found: {candidate}")
         return candidate
-    plugin_dir = plugin_repo_dir()
+    plugin_dir = plugin_repo_dir(ide)
     for candidate in _versioned_plugin_vsix_candidates(plugin_dir):
         if candidate.is_file():
             return candidate.resolve()
     matches = sorted(
-        plugin_dir.glob("koru-autopilot-*.vsix"),
+        plugin_dir.glob("*.vsix"),
         key=lambda p: p.stat().st_mtime,
         reverse=True,
     )
     if not matches:
-        for candidate in bundled_plugin_vsix_candidates():
+        for candidate in bundled_plugin_vsix_candidates(ide):
             if candidate.is_file():
                 return candidate.resolve()
         raise RuntimeError(
-            "no packaged .vsix found under plugins/koru-autopilot-vscode; "
-            "build one with: `cd plugins/koru-autopilot-vscode && npm install && npm run package`",
+            f"no packaged .vsix found under {plugin_dir}; "
+            f"build one with: `cd {plugin_dir} && npm install && npm run package`",
         )
     return matches[0]
 
@@ -264,12 +292,18 @@ def action_install_plugin(
     *,
     resolve_target_ide: Callable[[str], str] = resolve_plugin_target_ide,
     resolve_editor_bin: Callable[[str], str] = resolve_plugin_editor_bin,
-    resolve_vsix_path: Callable[[Path | None], Path] = resolve_plugin_vsix_path,
+    resolve_vsix_path: Callable[..., Path] = resolve_plugin_vsix_path,
 ) -> int:
     try:
         ide = resolve_target_ide(args.ide)
         editor_bin = resolve_editor_bin(ide)
-        vsix_path = resolve_vsix_path(args.vsix)
+        # Newer ``resolve_plugin_vsix_path`` accepts ``ide``; legacy
+        # callers (test doubles) still implement ``(vsix)`` only —
+        # fall back gracefully so this CLI keeps working in both modes.
+        try:
+            vsix_path = resolve_vsix_path(args.vsix, ide=ide)
+        except TypeError:
+            vsix_path = resolve_vsix_path(args.vsix)
     except RuntimeError as exc:
         print(f"koru autopilot install-plugin: {exc}", file=sys.stderr)
         return 1

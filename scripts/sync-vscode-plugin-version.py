@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Sync VSCode plugin version across all files.
+"""Legacy alias for ``sync-plugin-version.py``.
 
-Source of truth: src/koruide/plugin_version.py
-Targets:
-- plugins/koru-autopilot-vscode/package.json
-- .github/workflows/native-ide-matrix.yml
-
-Usage:
-    python3 scripts/sync-vscode-plugin-version.py           # sync from plugin_version.py
-    python3 scripts/sync-vscode-plugin-version.py --from-package  # sync from package.json
+The umbrella VS Code-family VSIX used to be the only autopilot plugin,
+so this script hard-coded ``EXPECTED_VSCODE_PLUGIN_VERSION`` and the
+``plugins/koru-autopilot-vscode`` source dir. Cursor now ships its own
+``koru-autopilot-cursor`` VSIX with its own version — calling this
+script implicitly bumps only the umbrella plugin and never the Cursor
+entry. Prefer ``scripts/sync-plugin-version.py --plugin <name>`` (or
+``--ide <id>``) for new per-plugin workflows; this file remains in
+place so existing CI jobs that still reference the old name keep
+working.
 """
 
 from __future__ import annotations

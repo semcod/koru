@@ -246,15 +246,30 @@ def validate_flat_pipeline(tasks: list[dict[str, Any]]) -> list[ValidationError]
     return errors
 
 
+def _dependency_graph(tasks: list[dict[str, Any]]) -> dict[str, list[str]]:
+    graph: dict[str, list[str]] = {}
+    for task in tasks:
+        task_id = str(task.get("id") or "")
+        if not task_id:
+            continue
+        graph[task_id] = [dep for dep in (task.get("blocked_by") or []) if isinstance(dep, str)]
+    return graph
+
+
+def _reconstruct_cycle(parent: dict[str, str], *, node: str, neighbor: str) -> list[str]:
+    cycle = [node]
+    cursor = node
+    while cursor != neighbor and cursor in parent:
+        cursor = parent[cursor]
+        cycle.append(cursor)
+    cycle.append(node)
+    cycle.reverse()
+    return cycle
+
+
 def _detect_cycle(tasks: list[dict[str, Any]]) -> list[str]:
     """Return the first detected dependency cycle, or empty list."""
-    graph: dict[str, list[str]] = {}
-    for t in tasks:
-        tid = str(t.get("id") or "")
-        if not tid:
-            continue
-        graph[tid] = [d for d in (t.get("blocked_by") or []) if isinstance(d, str)]
-
+    graph = _dependency_graph(tasks)
     WHITE, GRAY, BLACK = 0, 1, 2
     color: dict[str, int] = dict.fromkeys(graph, WHITE)
     parent: dict[str, str] = {}
@@ -263,15 +278,7 @@ def _detect_cycle(tasks: list[dict[str, Any]]) -> list[str]:
         color[node] = GRAY
         for nb in graph.get(node, []):
             if color.get(nb, WHITE) == GRAY:
-                # Reconstruct cycle node → ... → nb → node
-                cycle = [node]
-                cursor = node
-                while cursor != nb and cursor in parent:
-                    cursor = parent[cursor]
-                    cycle.append(cursor)
-                cycle.append(node)
-                cycle.reverse()
-                return cycle
+                return _reconstruct_cycle(parent, node=node, neighbor=nb)
             if color.get(nb, WHITE) == WHITE:
                 parent[nb] = node
                 found = dfs(nb)

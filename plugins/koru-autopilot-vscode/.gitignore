@@ -4,5 +4,8 @@ out/
 *.log
 .vscode-test/
 
+# Synced from plugins/koru-autopilot-shared/ via scripts/sync-plugin-shared.py
+src/_shared/
+
 # koru runtime artefacts (generated)
 .planfile/.koru/

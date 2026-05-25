@@ -176,6 +176,26 @@ class DeploymentEvent:
         """Convert event to JSON string."""
         return json.dumps(self.to_dict(), indent=2)
 
+    def _component_dsl_message_parts(self) -> list[str]:
+        if self.component is None:
+            return []
+        if self.component.type == "plugin":
+            parts = [f"Plugin {self.component.name}"]
+            if self.component.version:
+                parts.append(f"v{self.component.version}")
+            if self.plugin_ide:
+                parts.append(f"for {self.plugin_ide}")
+            return parts
+        if self.component.type == "service":
+            parts = [f"Service {self.component.name}"]
+            if self.deployment_target:
+                parts.append(f"on {self.deployment_target}")
+            return parts
+        parts = [f"{self.component.type.capitalize()} {self.component.name}"]
+        if self.component.version:
+            parts.append(f"v{self.component.version}")
+        return parts
+
     def to_dsl(self) -> str:
         """Convert event to shortened DSL format for logs.
 
@@ -195,21 +215,8 @@ class DeploymentEvent:
         message_parts = []
         if self.message:
             message_parts.append(self.message)
-        elif self.component:
-            if self.component.type == "plugin":
-                message_parts.append(f"Plugin {self.component.name}")
-                if self.component.version:
-                    message_parts.append(f"v{self.component.version}")
-                if self.plugin_ide:
-                    message_parts.append(f"for {self.plugin_ide}")
-            elif self.component.type == "service":
-                message_parts.append(f"Service {self.component.name}")
-                if self.deployment_target:
-                    message_parts.append(f"on {self.deployment_target}")
-            else:
-                message_parts.append(f"{self.component.type.capitalize()} {self.component.name}")
-                if self.component.version:
-                    message_parts.append(f"v{self.component.version}")
+        else:
+            message_parts.extend(self._component_dsl_message_parts())
 
         # Add error information if present
         if self.error_code:

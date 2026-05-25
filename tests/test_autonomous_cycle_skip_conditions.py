@@ -28,7 +28,8 @@ def test_add_label_to_ticket_yaml_text_expands_inline_labels_once() -> None:
     updated_again = _add_label_to_ticket_yaml_text(updated or "", "STARTER-268", "llm-ready")
 
     assert updated == updated_again
-    assert "      labels:\n      - code2llm\n      - refactor\n      - llm-ready\n" in (updated or "")
+    expected = "      labels:\n      - code2llm\n      - refactor\n      - llm-ready\n"
+    assert expected in (updated or "")
 
 
 def test_add_label_to_ticket_yaml_text_appends_block_label_before_next_field() -> None:

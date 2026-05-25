@@ -29,4 +29,8 @@ test-api-parallel:
 		$(PYTEST_ARGS)
 
 sync-plugin-version:
-	python3 scripts/sync-vscode-plugin-version.py
+	python3 scripts/sync-plugin-version.py --ide vscode
+	python3 scripts/sync-plugin-version.py --ide cursor
+
+sync-plugin-shared:
+	python3 scripts/sync-plugin-shared.py

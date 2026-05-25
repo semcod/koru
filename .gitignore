@@ -1,4 +1,7 @@
 # Byte-compiled / optimized / DLL files
+plugins/koru-autopilot-antigravity/.vscodeignore
+plugins/koru-autopilot-vscodium/.vscodeignore
+plugins/koru-autopilot-windsurf/.vscodeignore
 plugins/koru-autopilot-cursor/.vscodeignore
 .code2llm_cache/
 plugins/koru-autopilot-vscode/.vscodeignore

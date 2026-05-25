@@ -188,31 +188,8 @@ def _backfill_existing_dedupe_keys(
         return 0
     changed = 0
     for ticket in tickets.values():
-        if not isinstance(ticket, dict):
-            continue
-        ticket_source = ticket.get("source")
-        if not isinstance(ticket_source, dict) or ticket_source.get("tool") != source:
-            continue
-        context = ticket_source.get("context")
-        if isinstance(context, dict) and context.get("dedupe_key"):
-            continue
-        key = (
-            str(ticket.get("name") or "").strip(),
-            tuple(str(v) for v in (ticket.get("files") or []) if str(v).strip()),
-        )
-        item = by_key.get(key)
-        if not item:
-            continue
-        dedupe_key = str(item.get("dedupe_key") or "").strip()
-        if not dedupe_key:
-            continue
-        new_context = dict(context) if isinstance(context, dict) else {}
-        signal = str(item.get("signal") or "").strip()
-        if signal:
-            new_context.setdefault("signal", signal)
-        new_context["dedupe_key"] = dedupe_key
-        ticket_source["context"] = new_context
-        changed += 1
+        if _backfill_ticket_dedupe_key(ticket, by_key, source):
+            changed += 1
     if changed:
         try:
             sprint_path.write_text(
@@ -222,6 +199,53 @@ def _backfill_existing_dedupe_keys(
         except OSError:
             return 0
     return changed
+
+
+def _backfill_ticket_dedupe_key(
+    ticket: Any,
+    by_key: dict[tuple[str, tuple[str, ...]], dict[str, Any]],
+    source: str,
+) -> bool:
+    if not isinstance(ticket, dict):
+        return False
+    ticket_source = ticket.get("source")
+    if not _ticket_source_matches(ticket_source, source):
+        return False
+    context = ticket_source.get("context")
+    if isinstance(context, dict) and context.get("dedupe_key"):
+        return False
+    item = by_key.get(_existing_ticket_match_key(ticket))
+    if not item:
+        return False
+    dedupe_key = str(item.get("dedupe_key") or "").strip()
+    if not dedupe_key:
+        return False
+    ticket_source["context"] = _merged_ticket_source_context(context, item, dedupe_key)
+    return True
+
+
+def _ticket_source_matches(ticket_source: Any, source: str) -> bool:
+    return isinstance(ticket_source, dict) and ticket_source.get("tool") == source
+
+
+def _existing_ticket_match_key(ticket: dict[str, Any]) -> tuple[str, tuple[str, ...]]:
+    return (
+        str(ticket.get("name") or "").strip(),
+        tuple(str(v) for v in (ticket.get("files") or []) if str(v).strip()),
+    )
+
+
+def _merged_ticket_source_context(
+    context: Any,
+    item: dict[str, Any],
+    dedupe_key: str,
+) -> dict[str, Any]:
+    new_context = dict(context) if isinstance(context, dict) else {}
+    signal = str(item.get("signal") or "").strip()
+    if signal:
+        new_context.setdefault("signal", signal)
+    new_context["dedupe_key"] = dedupe_key
+    return new_context
 
 
 def _apply_planfile_ticket_items(
@@ -242,31 +266,15 @@ def _apply_planfile_ticket_items(
     skipped: list[str] = []
     selected = items[:limit] if limit is not None and limit > 0 else items
     for item in selected:
-        title = str(item.get("title") or "code2llm discovery ticket").strip()
-        dedupe_key = str(item.get("dedupe_key") or "").strip()
-        signal = str(item.get("signal") or "").strip()
-        source_context: dict[str, Any] = {}
-        if signal:
-            source_context["signal"] = signal
-        if dedupe_key:
-            source_context["dedupe_key"] = dedupe_key
-        files = [str(v) for v in (item.get("files") or []) if str(v).strip()]
-        labels = [str(v) for v in (item.get("labels") or []) if str(v).strip()]
+        scaffold = _ticket_item_scaffold(item, source)
+        title = str(scaffold["title"])
         try:
             created = create_nl_task(
                 project,
                 _ticket_item_text(item),
                 sprint=sprint,
                 priority=str(item.get("priority") or "normal"),
-                scaffold={
-                    "title": title,
-                    "labels": labels,
-                    "files": files,
-                    "source_tool": source,
-                    "source_context": source_context,
-                    "executor_kind": "human",
-                    "executor_mode": "interactive",
-                },
+                scaffold=scaffold,
             )
         except (OSError, ValueError) as exc:
             skipped.append(f"{title}: {exc}")
@@ -276,6 +284,31 @@ def _apply_planfile_ticket_items(
         else:
             applied.append(title)
     return applied, skipped
+
+
+def _ticket_item_scaffold(item: dict[str, Any], source: str) -> dict[str, Any]:
+    return {
+        "title": str(item.get("title") or "code2llm discovery ticket").strip(),
+        "labels": _string_list(item.get("labels")),
+        "files": _string_list(item.get("files")),
+        "source_tool": source,
+        "source_context": _ticket_item_source_context(item),
+        "executor_kind": "human",
+        "executor_mode": "interactive",
+    }
+
+
+def _ticket_item_source_context(item: dict[str, Any]) -> dict[str, Any]:
+    source_context: dict[str, Any] = {}
+    for key in ("signal", "dedupe_key"):
+        value = str(item.get(key) or "").strip()
+        if value:
+            source_context[key] = value
+    return source_context
+
+
+def _string_list(value: Any) -> list[str]:
+    return [str(v) for v in (value or []) if str(v).strip()]
 
 
 def run_code2llm_discovery(

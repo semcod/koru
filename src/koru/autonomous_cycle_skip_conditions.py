@@ -290,6 +290,23 @@ def _autopromote_waiting_ticket_llm_ready(
     return True
 
 
+def _diagnostics_fail_skip_result(
+    *,
+    enabled: bool,
+    diag_result: DiagnosticResult,
+    cycle_telemetry: dict[str, Any],
+    _hp: callable,
+) -> tuple[bool, str] | None:
+    if not enabled or diag_result.status != "failed":
+        return None
+    _hp("- autopilot skipped (diagnostics_fail)")
+    cycle_telemetry["autopilot_skipped_diagnostics_fail"] = True
+    failed = list(getattr(diag_result, "failed", []) or [])
+    if failed:
+        cycle_telemetry["autopilot_skipped_diagnostics_failed_services"] = failed
+    return True, "skipped(diagnostics_fail)"
+
+
 def _check_autopilot_skip_conditions(
     project: Path,
     queue_result: QueueLoopResult,
@@ -322,18 +339,14 @@ def _check_autopilot_skip_conditions(
         _hp("- autopilot skipped (idle_only)")
         return True, "skipped(idle_only)"
 
-    if autopilot_skip_on_diagnostics_fail and diag_result.status == "failed":
-        _hp("- autopilot skipped (diagnostics_fail)")
-        # Capture the concrete failing services (e.g. "wup", "koru-shell")
-        # so decision_trace can build a machine + human reason like
-        # "diagnostic failure: wup". Without this the trace falls back to
-        # the generic "Pre-drive diagnostics reported a failure" sentence
-        # which doesn't tell the operator what to fix.
-        cycle_telemetry["autopilot_skipped_diagnostics_fail"] = True
-        failed = list(getattr(diag_result, "failed", []) or [])
-        if failed:
-            cycle_telemetry["autopilot_skipped_diagnostics_failed_services"] = failed
-        return True, "skipped(diagnostics_fail)"
+    diagnostics_skip = _diagnostics_fail_skip_result(
+        enabled=autopilot_skip_on_diagnostics_fail,
+        diag_result=diag_result,
+        cycle_telemetry=cycle_telemetry,
+        _hp=_hp,
+    )
+    if diagnostics_skip is not None:
+        return diagnostics_skip
 
     if _should_skip_for_idle_streak(
         queue_result=queue_result,

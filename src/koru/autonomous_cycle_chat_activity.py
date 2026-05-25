@@ -8,6 +8,16 @@ from hashlib import sha1
 from pathlib import Path
 from typing import Any
 
+from koru.autonomous_cycle_chat_activity_config import (
+    autopilot_escalation_cooldown_seconds as _autopilot_escalation_cooldown_seconds,
+    autopilot_redrive_cooldown_seconds as _autopilot_redrive_cooldown_seconds,
+    chat_intake_ticket_enabled as _chat_intake_ticket_enabled,
+    llm_needs_input_heuristic_enabled as _llm_needs_input_heuristic_enabled,
+    llm_needs_input_ticket_enabled as _llm_needs_input_ticket_enabled,
+    llm_needs_input_ticket_priority as _llm_needs_input_ticket_priority,
+    llm_needs_input_ticket_queue_name as _llm_needs_input_ticket_queue_name,
+    llm_reflection_summary_max_age_seconds as _llm_reflection_summary_max_age_seconds,
+)
 from koru.autonomous_cycle_common import _queue_loop_waiting_ticket_label
 from koru.autonomy.events import normalize_chat_events
 from koru.autonomy.prompts import PromptDecision
@@ -21,58 +31,6 @@ def _cycle_attr(name: str, fallback: Any) -> Any:
     from koru import autonomous_cycle as _cycle_mod
 
     return getattr(_cycle_mod, name, fallback)
-
-
-def _autopilot_redrive_cooldown_seconds() -> float:
-    """Operator-tunable cooldown (env: ``KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS``).
-
-    Defaults to 300 s. The autopilot loop must NOT redrive the same
-    ``llm-ready`` ticket prompt if a ``message.sent`` or ``message.received``
-    event has been logged within this window — that means the IDE-side LLM
-    is still working, or just answered, and a re-paste would clobber its
-    output. Set to ``0`` (or negative) to disable the new behavior and
-    restore the legacy "redrive every cycle" semantics.
-    """
-    raw = os.environ.get("KORU_AUTOPILOT_REDRIVE_COOLDOWN_SECONDS", "").strip()
-    if not raw:
-        return 300.0
-    try:
-        return max(0.0, float(raw))
-    except ValueError:
-        return 300.0
-
-
-def _autopilot_escalation_cooldown_seconds(base_cooldown: float) -> float:
-    """Cooldown applied when the LAST drive was an ``escalation_prompt``.
-
-    Escalations ("Ticket X has been stuck in status 'waiting_input' for N
-    cycles…") are explicit nudges aimed at an LLM that has likely already
-    asked the user a clarifying question. Hammering the chat with another
-    escalation every 30 s actively destroys the dialog: it concatenates new
-    text on top of the user's pending reply or scrolls the LLM's question
-    out of view. Use ``KORU_AUTOPILOT_ESCALATION_COOLDOWN_SECONDS`` (default
-    1800 = 30 min) to give a real human / the IDE-side LLM enough time to
-    converge before the next nudge. Falls back to ``base_cooldown`` when set
-    to a value below it (cooldown can never shrink below the global one).
-    """
-    raw = os.environ.get("KORU_AUTOPILOT_ESCALATION_COOLDOWN_SECONDS", "").strip()
-    if not raw:
-        return max(base_cooldown, 1800.0)
-    try:
-        value = float(raw)
-    except ValueError:
-        return max(base_cooldown, 1800.0)
-    return max(base_cooldown, max(0.0, value))
-
-
-def _llm_reflection_summary_max_age_seconds() -> float:
-    raw = os.environ.get("KORU_LLM_REFLECTION_SUMMARY_MAX_AGE_SECONDS", "").strip()
-    if not raw:
-        return 1800.0
-    try:
-        return max(0.0, float(raw))
-    except ValueError:
-        return 1800.0
 
 
 def _recent_llm_reflection_summary(state: AutoloopState) -> str:
@@ -90,31 +48,6 @@ def _recent_llm_reflection_summary(state: AutoloopState) -> str:
     if max_age > 0 and (time.time() - ts) > max_age:
         return ""
     return summary
-
-
-def _llm_needs_input_ticket_enabled() -> bool:
-    raw = os.environ.get("KORU_LLM_NEEDS_INPUT_TICKET", "1").strip().lower()
-    return raw not in {"0", "false", "no", "off"}
-
-
-def _llm_needs_input_ticket_queue_name() -> str:
-    raw = os.environ.get("KORU_LLM_NEEDS_INPUT_TICKET_QUEUE", "").strip()
-    return raw or "operator"
-
-
-def _llm_needs_input_ticket_priority() -> str:
-    raw = os.environ.get("KORU_LLM_NEEDS_INPUT_TICKET_PRIORITY", "").strip()
-    return raw or "high"
-
-
-def _llm_needs_input_heuristic_enabled() -> bool:
-    raw = os.environ.get("KORU_LLM_NEEDS_INPUT_HEURISTIC", "1").strip().lower()
-    return raw not in {"0", "false", "no", "off"}
-
-
-def _chat_intake_ticket_enabled() -> bool:
-    raw = os.environ.get("KORU_AUTOPILOT_CHAT_INTAKE_TICKET", "1").strip().lower()
-    return raw not in {"0", "false", "no", "off"}
 
 
 def _waiting_ticket_has_chat_intake_label(

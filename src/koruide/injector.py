@@ -15,7 +15,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 
 from koruide.config import cached_config
@@ -56,6 +56,26 @@ def _forced_injector_backend() -> str | None:
     if raw in ("xdotool", "wtype", "ydotool"):
         return raw
     return None
+
+
+def _unique_backend_names(names: Iterable[str]) -> list[str]:
+    out: list[str] = []
+    for name in names:
+        if name not in out:
+            out.append(name)
+    return out
+
+
+def _session_backend_order(session: str) -> list[str]:
+    if session == "x11":
+        preferred = ["xdotool"]
+    elif session == "wayland":
+        preferred = ["wtype", "ydotool"]
+    elif not os.environ.get("DISPLAY"):
+        preferred = ["wtype", "ydotool"]
+    else:
+        preferred = []
+    return _unique_backend_names([*preferred, "xdotool", "wtype", "ydotool"])
 
 
 @dataclass
@@ -139,38 +159,32 @@ class Injector:
         """
         forced = _forced_injector_backend()
         if forced is not None:
-            if self.which(forced):
-                if self.log:
-                    self.log(f"injector: forced backend={forced} (KORU_INJECTOR_BACKEND)")
-                return [forced]
-            if self.log:
-                self.log(f"injector: forced backend={forced} not found, no backends available")
-            return []
-
-        out: list[str] = []
-
-        def add(name: str) -> None:
-            if self.which(name) and name not in out:
-                out.append(name)
-                if self.log:
-                    self.log(f"injector: candidate backend {name} available")
+            return self._forced_backend_candidates(forced)
 
         if self.log:
             self.log(f"injector: session={self.session or 'unknown'}")
-        if self.session == "x11":
-            add("xdotool")
-        elif self.session == "wayland":
-            add("wtype")
-            add("ydotool")
-        elif not os.environ.get("DISPLAY"):
-            add("wtype")
-            add("ydotool")
-        # Same fallbacks as legacy ``select_backend`` (cross-session last resort).
-        add("xdotool")
-        add("wtype")
-        add("ydotool")
+        out = self._available_backend_candidates(_session_backend_order(self.session))
         if self.log:
             self.log(f"injector: candidate backends: {out}")
+        return out
+
+    def _forced_backend_candidates(self, forced: str) -> list[str]:
+        if self.which(forced):
+            if self.log:
+                self.log(f"injector: forced backend={forced} (KORU_INJECTOR_BACKEND)")
+            return [forced]
+        if self.log:
+            self.log(f"injector: forced backend={forced} not found, no backends available")
+        return []
+
+    def _available_backend_candidates(self, names: Iterable[str]) -> list[str]:
+        out: list[str] = []
+        for name in names:
+            if not self.which(name):
+                continue
+            out.append(name)
+            if self.log:
+                self.log(f"injector: candidate backend {name} available")
         return out
 
     def select_backend(self) -> str | None:
@@ -363,7 +377,10 @@ class Injector:
         if result.returncode != 0:
             stderr = (result.stderr or b"").decode("utf-8", errors="replace").strip()
             if self.log:
-                self.log(f"injector: command failed with code {result.returncode}: {stderr or '(no stderr)'}")
+                self.log(
+                    f"injector: command failed with code {result.returncode}: "
+                    f"{stderr or '(no stderr)'}"
+                )
             raise InjectorError(f"{cmd[0]} exited {result.returncode}: {stderr or '(no stderr)'}")
         if self.log:
             self.log(f"injector: command succeeded: {cmd[0]}")

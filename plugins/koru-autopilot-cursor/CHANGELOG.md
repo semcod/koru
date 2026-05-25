@@ -1,8 +1,30 @@
-# Changelog — koru autopilot (VS Code extension)
+# Changelog — koru autopilot (Cursor edition)
 
 All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+## [0.1.76] — 2026-05-25
+
+### Changed (architecture — Cursor split)
+
+- **Cursor moved to a dedicated VSIX**: `koru-autopilot-cursor` is now
+  a standalone package with extension ID `semcod.koru-autopilot-cursor`.
+  Sibling IDEs (VS Code / VSCodium / Windsurf / Antigravity) stay in
+  `koru-autopilot-vscode` until each is extracted in a follow-up
+  iteration. A regression in Cursor focus/paste/submit logic can no
+  longer leak into another IDE's runtime — and vice versa.
+- Runtime guard: the new VSIX silently no-ops on any host whose
+  `vscode.env.appName` does not contain "cursor". The legacy
+  `koru-autopilot-vscode` plugin now refuses to activate on Cursor
+  so the two builds never race for the same Unix socket.
+- Migration: `koru up` / `cursor --install-extension` automatically
+  picks the matching VSIX. Existing Cursor installs that still carry
+  the legacy `semcod.koru-autopilot-vscode` extension should run:
+  `cursor --uninstall-extension semcod.koru-autopilot-vscode`.
+- Daemon: per-IDE expected version table
+  (`koruide.plugin_version.EXPECTED_PLUGIN_VERSIONS`); strict version
+  check resolves the expected version from the connected plugin's IDE.
 
 ## [0.1.75] — 2026-05-25
 

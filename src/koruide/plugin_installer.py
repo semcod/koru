@@ -1,12 +1,9 @@
 """Install the koru autopilot IDE plugin for the active editor.
 
-The current shipped plugin targets the VS Code extension API, which is shared
-by VS Code, Windsurf and Cursor. Installation is best-effort and intentionally
-non-privileged: we call the editor's own ``--install-extension`` CLI when the
-matching command is available. When the extension is already installed,
-``--install-extension <id>`` is run again by default (helps Windsurf/Cursor
-recover from a disabled extension); set ``KORU_AUTOPILOT_REASSERT_INSTALL=0``
-to skip that step.
+Each IDE (Cursor, VS Code, VSCodium, Windsurf, Antigravity) ships its own
+VSIX with a distinct extension ID so a regression in one plugin cannot
+leak into another. Installation is best-effort and non-privileged: we call
+the editor's ``--install-extension`` CLI when available.
 """
 
 from __future__ import annotations
@@ -41,20 +38,18 @@ EXTENSION_ID = "semcod.koru-autopilot-vscode"
 _EXTENSION_IDS: dict[str, str] = {
     "cursor": "semcod.koru-autopilot-cursor",
     "vscode": EXTENSION_ID,
-    "vscodium": EXTENSION_ID,
-    "windsurf": EXTENSION_ID,
-    "antigravity": EXTENSION_ID,
+    "vscodium": "semcod.koru-autopilot-vscodium",
+    "windsurf": "semcod.koru-autopilot-windsurf",
+    "antigravity": "semcod.koru-autopilot-antigravity",
 }
 
-# Per-IDE plugin source directories under ``plugins/``. ``resolve_extension_vsix``
-# walks these in order; the first ``*.vsix`` found wins so a fresh Cursor
-# build wins even when the legacy umbrella VSIX is also present.
+# Per-IDE plugin source directories under ``plugins/``.
 _PLUGIN_DIR_NAMES: dict[str, tuple[str, ...]] = {
     "cursor": ("koru-autopilot-cursor",),
     "vscode": ("koru-autopilot-vscode",),
-    "vscodium": ("koru-autopilot-vscode",),
-    "windsurf": ("koru-autopilot-vscode",),
-    "antigravity": ("koru-autopilot-vscode",),
+    "vscodium": ("koru-autopilot-vscodium",),
+    "windsurf": ("koru-autopilot-windsurf",),
+    "antigravity": ("koru-autopilot-antigravity",),
 }
 
 SOCKET_SETTING_KEY = "koruAutopilot.socketPath"

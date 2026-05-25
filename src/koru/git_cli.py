@@ -75,14 +75,7 @@ def _sync_gh2mcp_token(args: argparse.Namespace) -> bool:
     return True
 
 
-def _action_commit(args: argparse.Namespace) -> int:
-    project = args.project.resolve()
-    if not _ensure_git_repo(project):
-        print(f"koru git commit: not a git repository: {project}", file=sys.stderr)
-        return 2
-
-    install_koru_agent_coauthor_hook(project)
-
+def _stage_commit_changes(project: Path, args: argparse.Namespace) -> int | None:
     if args.add:
         add_result = _run_git(project, ["add", "--", *args.add])
         if add_result.returncode != 0:
@@ -93,7 +86,10 @@ def _action_commit(args: argparse.Namespace) -> int:
         if add_result.returncode != 0:
             _print_result(add_result)
             return add_result.returncode
+    return None
 
+
+def _commit_command(args: argparse.Namespace) -> list[str]:
     command = ["commit", "-m", args.message]
     if args.allow_empty:
         command.append("--allow-empty")
@@ -101,24 +97,41 @@ def _action_commit(args: argparse.Namespace) -> int:
         command.append("--no-verify")
     if args.dry_run:
         command.append("--dry-run")
+    return command
 
-    result = _run_git(project, command)
+
+def _push_args_after_commit(project: Path, args: argparse.Namespace) -> argparse.Namespace:
+    return argparse.Namespace(
+        project=project,
+        remote=args.remote,
+        branch=args.branch,
+        set_upstream=args.set_upstream,
+        dry_run=False,
+        gh2mcp=args.gh2mcp,
+        env_file=args.env_file,
+        force_gh_cli=args.force_gh_cli,
+    )
+
+
+def _action_commit(args: argparse.Namespace) -> int:
+    project = args.project.resolve()
+    if not _ensure_git_repo(project):
+        print(f"koru git commit: not a git repository: {project}", file=sys.stderr)
+        return 2
+
+    install_koru_agent_coauthor_hook(project)
+
+    stage_error = _stage_commit_changes(project, args)
+    if stage_error is not None:
+        return stage_error
+
+    result = _run_git(project, _commit_command(args))
     _print_result(result)
     if result.returncode != 0:
         return result.returncode
 
     if args.push:
-        push_args = argparse.Namespace(
-            project=project,
-            remote=args.remote,
-            branch=args.branch,
-            set_upstream=args.set_upstream,
-            dry_run=False,
-            gh2mcp=args.gh2mcp,
-            env_file=args.env_file,
-            force_gh_cli=args.force_gh_cli,
-        )
-        return _action_push(push_args)
+        return _action_push(_push_args_after_commit(project, args))
     return 0
 
 

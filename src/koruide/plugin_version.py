@@ -17,16 +17,13 @@ from __future__ import annotations
 # bump only the matching entry — do NOT lockstep all IDEs.
 EXPECTED_PLUGIN_VERSIONS: dict[str, str] = {
     "cursor": "0.1.76",
-    "vscode": "0.1.76",
-    "vscodium": "0.1.76",
-    "windsurf": "0.1.76",
-    "antigravity": "0.1.76",
+    "vscode": "0.1.77",
+    "vscodium": "0.1.77",
+    "windsurf": "0.1.77",
+    "antigravity": "0.1.77",
 }
 
-# Legacy alias: most callers still expect a single VS Code-family
-# plugin version. Once Cursor moved to its own VSIX we kept this
-# pointing at the umbrella ``koru-autopilot-vscode`` package which
-# now covers VSCode/VSCodium/Windsurf/Antigravity only.
+# Legacy alias: points at the VS Code-only umbrella plugin.
 EXPECTED_VSCODE_PLUGIN_VERSION = EXPECTED_PLUGIN_VERSIONS["vscode"]
 
 

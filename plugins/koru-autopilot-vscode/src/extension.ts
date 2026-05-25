@@ -2568,16 +2568,20 @@ export function activate(context: vscode.ExtensionContext): void {
     extensionMode: context.extensionMode,
     extensionPath: context.extensionPath,
   });
-  // Cursor now has its own dedicated VSIX (``koru-autopilot-cursor``)
-  // that fully owns the chat-paste/submit pipeline. If a Cursor user
-  // still has this legacy multi-IDE VSIX installed we silently no-op
-  // so we never race the dedicated plugin for the same Unix socket.
-  if (appName.toLowerCase().includes("cursor")) {
+  // Each sibling IDE has its own dedicated VSIX. This umbrella plugin
+  // serves Microsoft VS Code only — silently no-op on other hosts so we
+  // never race the per-IDE plugin for the same Unix socket.
+  const lowered = appName.toLowerCase();
+  const siblingIde =
+    lowered.includes("cursor") ? "cursor" :
+    lowered.includes("vscodium") || lowered.includes("code - oss") || lowered.includes("code-oss") ? "vscodium" :
+    lowered.includes("windsurf") ? "windsurf" :
+    lowered.includes("antigravity") ? "antigravity" :
+    null;
+  if (siblingIde) {
     console.warn(
-      "koru-autopilot-vscode: not activating on Cursor — Cursor is " +
-      "served by the dedicated koru-autopilot-cursor VSIX. Uninstall " +
-      "this legacy plugin from Cursor: `cursor --uninstall-extension " +
-      "semcod.koru-autopilot-vscode`."
+      `koru-autopilot-vscode: not activating on ${siblingIde} (appName="${appName}"); ` +
+      `install koru-autopilot-${siblingIde} instead.`
     );
     return;
   }

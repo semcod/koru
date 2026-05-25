@@ -75,6 +75,7 @@ class DriveOrchestrator:
         info: dict[str, Any],
         plugin_ok: bool,
         submit_requested: bool,
+        plugin_ide: str | None = None,
     ) -> dict[str, Any]:
         enriched = dict(info)
         if not plugin_ok:
@@ -87,6 +88,13 @@ class DriveOrchestrator:
             has_submit_proof = bool(enriched.get("winning_submit"))
             has_paste_proof = bool(enriched.get("winning_paste"))
             has_open_proof = bool(enriched.get("winning_focus_open"))
+            if DriveOrchestrator.is_poisoned_submit_ack(enriched, plugin_ide):
+                enriched["verification"] = "submit_unverified"
+                enriched.setdefault(
+                    "submit_failure_reason",
+                    "VSCodium registered submit command is not trusted as send proof",
+                )
+                return enriched
             if has_submit_proof and has_paste_proof and has_open_proof:
                 enriched["verification"] = "strict"
             else:
@@ -94,6 +102,14 @@ class DriveOrchestrator:
         else:
             enriched.setdefault("verification", "plugin_ack")
         return enriched
+
+    @staticmethod
+    def is_poisoned_submit_ack(info: dict[str, Any], plugin_ide: str | None) -> bool:
+        """Reject known false-positive submit proofs before strict ack accepts them."""
+        ide = str(plugin_ide or info.get("ide") or "").lower()
+        if ide != "vscodium":
+            return False
+        return str(info.get("winning_submit") or "") == "workbench.action.chat.submit"
 
     @staticmethod
     def strict_plugin_ack_required() -> bool:

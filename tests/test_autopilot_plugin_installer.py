@@ -123,10 +123,12 @@ def test_install_plugin_configures_socket_path(
     monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda _ide=None: vsix)
     monkeypatch.setattr(plugin_installer.shutil, "which", lambda name: f"/usr/bin/{name}")
 
+    windsurf_ext_id = plugin_installer.extension_id_for_ide("windsurf")
+
     def fake_runner(cmd, **_kwargs):
         if cmd[1] == "--list-extensions":
             return subprocess.CompletedProcess(
-                cmd, 0, stdout=plugin_installer.EXTENSION_ID, stderr=""
+                cmd, 0, stdout=windsurf_ext_id, stderr=""
             )
         if cmd[1] == "--install-extension" and cmd[2] == str(vsix) and cmd[3] == "--force":
             return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
@@ -215,11 +217,13 @@ def test_install_plugin_targets_vscodium_from_integrated_terminal(
         lambda name: f"/usr/bin/{name}" if name in {"code", "codium"} else None,
     )
 
+    vscodium_ext_id = plugin_installer.extension_id_for_ide("vscodium")
+
     def fake_runner(cmd, **_kwargs):
         assert cmd[0] == "/usr/bin/codium"
         if cmd[1] == "--list-extensions":
             return subprocess.CompletedProcess(
-                cmd, 0, stdout=plugin_installer.EXTENSION_ID, stderr=""
+                cmd, 0, stdout=vscodium_ext_id, stderr=""
             )
         if cmd[1] == "--install-extension":
             return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
@@ -330,13 +334,14 @@ def test_install_plugin_prefers_running_vscode_over_stale_codium_terminal_hint(
 def test_install_plugin_skips_when_extension_already_installed(monkeypatch) -> None:
     monkeypatch.setenv("KORU_AUTOPILOT_REASSERT_INSTALL", "0")
     monkeypatch.setattr(plugin_installer.shutil, "which", lambda name: f"/usr/bin/{name}")
+    windsurf_ext_id = plugin_installer.extension_id_for_ide("windsurf")
 
     def fake_runner(cmd, **_kwargs):
         assert cmd[1] == "--list-extensions"
         return subprocess.CompletedProcess(
             cmd,
             0,
-            stdout=plugin_installer.EXTENSION_ID + "\n",
+            stdout=windsurf_ext_id + "\n",
             stderr="",
         )
 

@@ -304,34 +304,56 @@ def _injection_result(
 
 
 def _focus_profile_chat(
-    profile: OsInjectorProfile, focus: str, post_focus_delay: float, *, _log: Callable[[str], None] | None = None
+    profile: OsInjectorProfile,
+    focus: str,
+    post_focus_delay: float,
+    *,
+    _log: Callable[[str], None] | None = None,
 ) -> None:
     if _log:
         _log(f"os_injector: move mouse to ({profile.chat_x}, {profile.chat_y}) focus={focus}")
     if _is_wayland_session() and shutil.which("ydotool"):
-        _ydotool(["mousemove", "--absolute", str(profile.chat_x), str(profile.chat_y)])
-        if focus == "click":
-            if _log:
-                _log("os_injector: ydotool click 0xC0")
-            _ydotool(["click", "0xC0"])
-        else:
-            if _log:
-                _log("os_injector: ydotool press Return")
-            _ydotool(["key", "28:1", "28:0"])
+        _focus_with_ydotool(profile, focus, _log=_log)
     else:
-        _xdotool(["mousemove", str(profile.chat_x), str(profile.chat_y)])
-        if focus == "click":
-            if _log:
-                _log("os_injector: click 1")
-            _xdotool(["click", "1"])
-        else:
-            if _log:
-                _log("os_injector: press Return")
-            _xdotool(["key", "--clearmodifiers", "Return"])
+        _focus_with_xdotool(profile, focus, _log=_log)
     if post_focus_delay > 0:
         if _log:
             _log(f"os_injector: post-focus delay {post_focus_delay:.2f}s")
         time.sleep(post_focus_delay)
+
+
+def _focus_with_ydotool(
+    profile: OsInjectorProfile,
+    focus: str,
+    *,
+    _log: Callable[[str], None] | None = None,
+) -> None:
+    _ydotool(["mousemove", "--absolute", str(profile.chat_x), str(profile.chat_y)])
+    if focus == "click":
+        if _log:
+            _log("os_injector: ydotool click 0xC0")
+        _ydotool(["click", "0xC0"])
+        return
+    if _log:
+        _log("os_injector: ydotool press Return")
+    _ydotool(["key", "28:1", "28:0"])
+
+
+def _focus_with_xdotool(
+    profile: OsInjectorProfile,
+    focus: str,
+    *,
+    _log: Callable[[str], None] | None = None,
+) -> None:
+    _xdotool(["mousemove", str(profile.chat_x), str(profile.chat_y)])
+    if focus == "click":
+        if _log:
+            _log("os_injector: click 1")
+        _xdotool(["click", "1"])
+        return
+    if _log:
+        _log("os_injector: press Return")
+    _xdotool(["key", "--clearmodifiers", "Return"])
 
 
 def _inject_profile_text(

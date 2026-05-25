@@ -4,6 +4,34 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.77] — 2026-05-25
+
+### Changed (architecture — full per-IDE split)
+
+- **VS Code is now VS Code-only.** Cursor, VSCodium, Windsurf and
+  Antigravity each have dedicated VSIX packages
+  (`koru-autopilot-cursor`, `-vscodium`, `-windsurf`, `-antigravity`).
+  This umbrella plugin refuses to activate on any sibling IDE.
+- Daemon/install: `koru up` resolves the matching VSIX and extension ID
+  per detected IDE (`semcod.koru-autopilot-vscode` here).
+
+## [0.1.76] — 2026-05-25
+
+### Changed (architecture — Cursor split)
+
+- **Cursor is no longer served by this VSIX.** A new dedicated
+  `koru-autopilot-cursor` package (extension ID
+  `semcod.koru-autopilot-cursor`) owns the Cursor pipeline so a
+  regression in Cursor focus/paste/submit logic can no longer leak
+  here. This umbrella VSIX continues to serve VS Code / VSCodium /
+  Windsurf / Antigravity until each is extracted in a follow-up
+  iteration.
+- The plugin now refuses to activate on Cursor (silently no-ops with
+  a warning), so the two builds never race for the same Unix socket
+  if a Cursor install temporarily carries both extensions during
+  migration. Recommended cleanup:
+  `cursor --uninstall-extension semcod.koru-autopilot-vscode`.
+
 ## [0.1.75] — 2026-05-25
 
 ### Fixed

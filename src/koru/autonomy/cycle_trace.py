@@ -11,6 +11,39 @@ from koru.autonomy.decision_trace import (
 )
 from koru.queue import QueueLoopResult
 
+_TELEMETRY_NEXT_STEP_HINTS: tuple[tuple[str, str], ...] = (
+    (
+        "autopilot_skipped_plugin_missing",
+        "wait for plugin reconnect (manual reload may be needed)",
+    ),
+    (
+        "autopilot_skipped_ide_mismatch",
+        "switch lane or set KORU_AUTOPILOT_INSTANCE for target IDE",
+    ),
+    ("autopilot_skipped_chat_activity", "wait for chat cooldown to expire"),
+    ("autopilot_skipped_idle_no_ticket", "scan / reopen done ticket / `koru --ticket`"),
+    ("autopilot_skipped_idle_streak", "let idle backoff drain before next drive"),
+    ("autopilot_skipped_manual_focus", "operator must foreground the chat surface"),
+    (
+        "autopilot_skipped_stuck_status",
+        "mark ticket llm-ready OR move it to input/done before next drive",
+    ),
+    (
+        "autopilot_skipped_diagnostics_fail",
+        (
+            "fix failing WUP/diagnostics, OR mark the diag ticket done, "
+            "OR rerun with --no-autopilot-skip-on-diagnostics-fail"
+        ),
+    ),
+)
+
+
+def _telemetry_next_step_hint(cycle_telemetry: dict[str, Any]) -> str | None:
+    for key, hint in _TELEMETRY_NEXT_STEP_HINTS:
+        if cycle_telemetry.get(key):
+            return hint
+    return None
+
 
 def decision_next_step_hint(
     *,
@@ -22,25 +55,9 @@ def decision_next_step_hint(
     status = (autopilot_status or "").lower()
     if status == "ok":
         return "wait for IDE response, then advance queue"
-    if cycle_telemetry.get("autopilot_skipped_plugin_missing"):
-        return "wait for plugin reconnect (manual reload may be needed)"
-    if cycle_telemetry.get("autopilot_skipped_ide_mismatch"):
-        return "switch lane or set KORU_AUTOPILOT_INSTANCE for target IDE"
-    if cycle_telemetry.get("autopilot_skipped_chat_activity"):
-        return "wait for chat cooldown to expire"
-    if cycle_telemetry.get("autopilot_skipped_idle_no_ticket"):
-        return "scan / reopen done ticket / `koru --ticket`"
-    if cycle_telemetry.get("autopilot_skipped_idle_streak"):
-        return "let idle backoff drain before next drive"
-    if cycle_telemetry.get("autopilot_skipped_manual_focus"):
-        return "operator must foreground the chat surface"
-    if cycle_telemetry.get("autopilot_skipped_stuck_status"):
-        return "mark ticket llm-ready OR move it to input/done before next drive"
-    if cycle_telemetry.get("autopilot_skipped_diagnostics_fail"):
-        return (
-            "fix failing WUP/diagnostics, OR mark the diag ticket done, "
-            "OR rerun with --no-autopilot-skip-on-diagnostics-fail"
-        )
+    telemetry_hint = _telemetry_next_step_hint(cycle_telemetry)
+    if telemetry_hint is not None:
+        return telemetry_hint
     if status == "failed":
         return "retry next cycle (cached winner discarded)"
     queue_status = (queue_status or "").lower()

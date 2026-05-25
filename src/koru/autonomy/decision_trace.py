@@ -345,6 +345,48 @@ def load_recent_decisions(
     return items
 
 
+_TELEMETRY_SKIP_FLAGS: tuple[tuple[str, str], ...] = (
+    ("autopilot_skipped_ide_mismatch", "ide_mismatch"),
+    ("autopilot_skipped_chat_activity", "chat_activity"),
+    ("autopilot_skipped_idle_no_ticket", "idle_no_ticket"),
+    ("autopilot_skipped_waiting_ticket_closed", "waiting_ticket_closed"),
+    ("autopilot_skipped_idle_streak", "idle_streak"),
+    ("autopilot_skipped_manual_focus", "manual_focus"),
+    ("autopilot_skipped_diagnostics_fail", "diagnostics_fail"),
+)
+
+
+def _plugin_missing_skip_code(cycle_telemetry: dict[str, Any]) -> str | None:
+    if not cycle_telemetry.get("autopilot_skipped_plugin_missing"):
+        return None
+    blocker = str(cycle_telemetry.get("autopilot_skipped_plugin_blocker") or "").strip()
+    return blocker if blocker in SKIP_CODE_DESCRIPTIONS else "plugin_missing"
+
+
+def _stuck_status_skip_code(cycle_telemetry: dict[str, Any]) -> str | None:
+    if not cycle_telemetry.get("autopilot_skipped_stuck_status"):
+        return None
+    queue = str(cycle_telemetry.get("autopilot_skipped_stuck_status_queue") or "")
+    specific = f"stuck_{queue}" if queue else "stuck_status"
+    return specific if specific in SKIP_CODE_DESCRIPTIONS else "stuck_status"
+
+
+def _status_skip_code(autopilot_status: str) -> str | None:
+    status = (autopilot_status or "").lower()
+    if status.startswith("skipped("):
+        # ``skipped(idle_only)`` -> ``idle_only`` etc.
+        inner = status[len("skipped("):].rstrip(")").strip()
+        if inner in SKIP_CODE_DESCRIPTIONS:
+            return inner
+        # ``skipped(stuck_waiting_input)`` even when no telemetry flag was set
+        # by an upstream skip path (defensive: keeps the trace honest).
+        if inner.startswith("stuck_"):
+            return inner if inner in SKIP_CODE_DESCRIPTIONS else "stuck_status"
+    if status in {"ok", "failed"}:
+        return status
+    return None
+
+
 def classify_skip_code(cycle_telemetry: dict[str, Any], autopilot_status: str) -> str:
     """Pick the canonical skip code from telemetry flags.
 
@@ -354,43 +396,15 @@ def classify_skip_code(cycle_telemetry: dict[str, Any], autopilot_status: str) -
     ``autopilot_status`` directly because the orchestrator only sets one
     of them on the happy path.
     """
-    if cycle_telemetry.get("autopilot_skipped_plugin_missing"):
-        blocker = str(cycle_telemetry.get("autopilot_skipped_plugin_blocker") or "").strip()
-        if blocker in SKIP_CODE_DESCRIPTIONS:
-            return blocker
-        return "plugin_missing"
-    if cycle_telemetry.get("autopilot_skipped_ide_mismatch"):
-        return "ide_mismatch"
-    if cycle_telemetry.get("autopilot_skipped_chat_activity"):
-        return "chat_activity"
-    if cycle_telemetry.get("autopilot_skipped_idle_no_ticket"):
-        return "idle_no_ticket"
-    if cycle_telemetry.get("autopilot_skipped_waiting_ticket_closed"):
-        return "waiting_ticket_closed"
-    if cycle_telemetry.get("autopilot_skipped_idle_streak"):
-        return "idle_streak"
-    if cycle_telemetry.get("autopilot_skipped_manual_focus"):
-        return "manual_focus"
-    if cycle_telemetry.get("autopilot_skipped_diagnostics_fail"):
-        return "diagnostics_fail"
-    if cycle_telemetry.get("autopilot_skipped_stuck_status"):
-        queue = str(cycle_telemetry.get("autopilot_skipped_stuck_status_queue") or "")
-        specific = f"stuck_{queue}" if queue else "stuck_status"
-        return specific if specific in SKIP_CODE_DESCRIPTIONS else "stuck_status"
-    status = (autopilot_status or "").lower()
-    if status.startswith("skipped("):
-        # ``skipped(idle_only)`` → ``idle_only`` etc.
-        inner = status[len("skipped("):].rstrip(")").strip()
-        if inner in SKIP_CODE_DESCRIPTIONS:
-            return inner
-        # ``skipped(stuck_waiting_input)`` even when no telemetry flag was set
-        # by an upstream skip path (defensive — keeps the trace honest).
-        if inner.startswith("stuck_"):
-            return inner if inner in SKIP_CODE_DESCRIPTIONS else "stuck_status"
-    if status == "ok":
-        return "ok"
-    if status == "failed":
-        return "failed"
+    if plugin_code := _plugin_missing_skip_code(cycle_telemetry):
+        return plugin_code
+    for flag, code in _TELEMETRY_SKIP_FLAGS:
+        if cycle_telemetry.get(flag):
+            return code
+    if stuck_code := _stuck_status_skip_code(cycle_telemetry):
+        return stuck_code
+    if status_code := _status_skip_code(autopilot_status):
+        return status_code
     return "unknown"
 
 

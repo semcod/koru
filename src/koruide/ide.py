@@ -519,6 +519,20 @@ def focused_ide(
     return None
 
 
+def _find_ide_by_id(detected: list[RunningIDE], ide_id: str | None) -> RunningIDE | None:
+    if not ide_id:
+        return None
+    for ide in detected:
+        if ide.id == ide_id:
+            return ide
+    return None
+
+
+def _env_preferred_ide_id() -> str | None:
+    env_prefer = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_IDE"))
+    return env_prefer if env_prefer and env_prefer != "auto" else None
+
+
 def pick_target(
     detected: list[RunningIDE],
     *,
@@ -537,23 +551,16 @@ def pick_target(
     """
     prefer = normalize_ide_id(prefer)
     if prefer:
-        for ide in detected:
-            if ide.id == prefer:
-                return ide
-        return None
-    env_prefer = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_IDE"))
-    if env_prefer and env_prefer != "auto":
-        for ide in detected:
-            if ide.id == env_prefer:
-                return ide
+        return _find_ide_by_id(detected, prefer)
+    env_preferred = _find_ide_by_id(detected, _env_preferred_ide_id())
+    if env_preferred is not None:
+        return env_preferred
     focused = focused_ide(detected, focused_id=focused_id)
     if focused is not None:
         return focused
-    terminal = detect_terminal_host_ide_id()
+    terminal = _find_ide_by_id(detected, detect_terminal_host_ide_id())
     if terminal is not None:
-        for ide in detected:
-            if ide.id == terminal:
-                return ide
+        return terminal
     return detected[0] if detected else None
 
 

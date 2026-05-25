@@ -82,38 +82,88 @@ def normalize_chat_events(
     environment_key: str = "",
 ) -> list[AutonomyEvent]:
     """Normalize raw plugin chat events and attach ticket correlation when known."""
-    normalized: list[AutonomyEvent] = []
-    for event in events:
-        text = _event_text(event)
-        ide = str(event.get("ide") or "")
-        matched_last_prompt = _same_prompt(text, last_driven_prompt)
-        ticket_id = last_driven_ticket if matched_last_prompt and last_driven_ticket else "-"
-        if ticket_id == "-" and waiting_ticket and waiting_ticket != "-":
-            ticket_id = waiting_ticket
-        normalized.append(
-            AutonomyEvent(
-                kind=_chat_kind(str(event.get("type") or "")),
-                ts=_event_ts(event) or time.time(),
-                source="autopilot-plugin",
-                ticket_id=ticket_id,
-                correlation_id=correlation_id(
-                    ticket_id=ticket_id,
-                    ide=ide,
-                    prompt=text if text else last_driven_prompt,
-                ),
-                environment_key=environment_key,
-                payload={
-                    "ide": ide,
-                    "chat": str(event.get("chat") or "default"),
-                    "raw_type": str(event.get("type") or ""),
-                    "age_seconds": max(0.0, time.time() - (_event_ts(event) or time.time())),
-                    "matches_last_driven_prompt": matched_last_prompt,
-                    "last_driven_ticket": last_driven_ticket or "-",
-                    "waiting_ticket": waiting_ticket or "-",
-                },
-            )
+    return [
+        _normalize_chat_event(
+            event,
+            waiting_ticket=waiting_ticket,
+            last_driven_ticket=last_driven_ticket,
+            last_driven_prompt=last_driven_prompt,
+            environment_key=environment_key,
         )
-    return normalized
+        for event in events
+    ]
+
+
+def _normalize_chat_event(
+    event: dict[str, Any],
+    *,
+    waiting_ticket: str,
+    last_driven_ticket: str,
+    last_driven_prompt: str,
+    environment_key: str,
+) -> AutonomyEvent:
+    text = _event_text(event)
+    ide = str(event.get("ide") or "")
+    matched_last_prompt = _same_prompt(text, last_driven_prompt)
+    ticket_id = _chat_event_ticket_id(
+        matched_last_prompt=matched_last_prompt,
+        last_driven_ticket=last_driven_ticket,
+        waiting_ticket=waiting_ticket,
+    )
+    event_ts = _event_ts(event) or time.time()
+    return AutonomyEvent(
+        kind=_chat_kind(str(event.get("type") or "")),
+        ts=event_ts,
+        source="autopilot-plugin",
+        ticket_id=ticket_id,
+        correlation_id=correlation_id(
+            ticket_id=ticket_id,
+            ide=ide,
+            prompt=text if text else last_driven_prompt,
+        ),
+        environment_key=environment_key,
+        payload=_chat_event_payload(
+            event,
+            ide=ide,
+            event_ts=event_ts,
+            matched_last_prompt=matched_last_prompt,
+            last_driven_ticket=last_driven_ticket,
+            waiting_ticket=waiting_ticket,
+        ),
+    )
+
+
+def _chat_event_ticket_id(
+    *,
+    matched_last_prompt: bool,
+    last_driven_ticket: str,
+    waiting_ticket: str,
+) -> str:
+    if matched_last_prompt and last_driven_ticket:
+        return last_driven_ticket
+    if waiting_ticket and waiting_ticket != "-":
+        return waiting_ticket
+    return "-"
+
+
+def _chat_event_payload(
+    event: dict[str, Any],
+    *,
+    ide: str,
+    event_ts: float,
+    matched_last_prompt: bool,
+    last_driven_ticket: str,
+    waiting_ticket: str,
+) -> dict[str, Any]:
+    return {
+        "ide": ide,
+        "chat": str(event.get("chat") or "default"),
+        "raw_type": str(event.get("type") or ""),
+        "age_seconds": max(0.0, time.time() - event_ts),
+        "matches_last_driven_prompt": matched_last_prompt,
+        "last_driven_ticket": last_driven_ticket or "-",
+        "waiting_ticket": waiting_ticket or "-",
+    }
 
 
 __all__ = [

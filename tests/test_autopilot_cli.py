@@ -687,7 +687,7 @@ def test_install_plugin_vsix_resolver_prefers_package_version(
     current.write_text("current", encoding="utf-8")
     os.utime(stale, (20, 20))
     os.utime(current, (10, 10))
-    monkeypatch.setattr(install_plugin_cli, "plugin_repo_dir", lambda: plugin_dir)
+    monkeypatch.setattr(install_plugin_cli, "plugin_repo_dir", lambda _ide=None: plugin_dir)
 
     assert install_plugin_cli.resolve_plugin_vsix_path(None) == current.resolve()
 

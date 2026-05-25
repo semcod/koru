@@ -111,12 +111,13 @@ PIPELINE: list[ScanStage] = [DetectStage(), AnalyzeStage(), ReportStage()]
 - [x] **R2**: `dashboard_routes.py` – wyciągnięcie HTML response builderów do `dashboard_html.py` (-49 LOC, +8 testów)
 - [x] **R3**: `koruapi/cli.py::main` – rozbicie na subcommand dispatcher (`main` CC: 11 → 3, +2 testy zabezpieczające spójność dispatch table)
 - [x] **R-IM1**: `install_manager.py` – ekstrakcja 11 funkcji `_check_*` + `ManagerIssue` do `install_checks.py` (`install_manager.py`: 734 → 466 LOC, **-36.5%**; +23 testy jednostkowe; legacy `_check_*` aliasy zachowane dla backward-compat z testami)
+- [x] **R-CA1**: `autonomous_cycle_chat_activity.py` – ekstrakcja 8 env-readerów do `autonomous_cycle_chat_activity_config.py` (1186 → 1118 LOC, +18 testów jednostkowych; legacy `_*` aliasy zachowane)
 
 ### FAZA 2 — Rozbicia modułów (3–5 dni)
 - [ ] **R4**: `dashboard_routes.py` – migracja z closure do ClassVar config injection
 - [ ] **R5**: `autopilot/cli_command.py` – podział na `commands/{daemon,drive,status,doctor}.py`
 - [ ] **R6**: `koruide/daemon/handlers.py` – podział per typ wiadomości
-- [ ] **R7**: `autonomous_cycle_chat_activity.py` – wyciągnięcie analizy do `chat_activity_analyzer.py`
+- [ ] **R7**: `autonomous_cycle_chat_activity.py` – wyciągnięcie analizy do `chat_activity_analyzer.py` (R-CA1 to wstępny krok — pozostaje analiza chat-activity i ticket upsert)
 
 ### FAZA 3 — Pipeline-y (5–7 dni)
 - [ ] **R8**: `scan.py::run_scan` – pipeline ScanStage

@@ -1,10 +1,8 @@
 /**
- * Lightweight per-IDE strategy registry.
+ * VS Code-only strategy registry.
  *
- * Strategies self-register at import time. Callers must use `getStrategy`
- * (returns `undefined` for IDEs without a dedicated module) so the legacy
- * fall-through code in `probe-ladder.ts` / `extension.ts` keeps working
- * for IDEs that have not been extracted yet.
+ * Cursor / VSCodium / Windsurf / Antigravity each have their own
+ * standalone VSIX; this umbrella plugin serves Microsoft VS Code only.
  */
 
 import type { IdeStrategy } from "./ide-strategy";
@@ -13,9 +11,7 @@ const REGISTRY = new Map<string, IdeStrategy>();
 
 export function registerStrategy(strategy: IdeStrategy, opts: { override?: boolean } = {}): void {
   const id = strategy.id;
-  if (!id) {
-    throw new Error("IdeStrategy.id must be a non-empty string");
-  }
+  if (!id) throw new Error("IdeStrategy.id must be a non-empty string");
   if (!opts.override && REGISTRY.has(id)) {
     throw new Error(`IdeStrategy for ${id} already registered`);
   }
@@ -39,20 +35,8 @@ export function detectIdeViaStrategies(appName: string): string | undefined {
   return undefined;
 }
 
-/**
- * Eager-load per-IDE strategy modules so they self-register before any
- * caller asks for them.
- */
 export function bootstrapStrategies(): void {
-  // The require() form means TypeScript compiles to commonjs and each
-  // strategy's top-level `registerStrategy(...)` call runs once.
-  for (const mod of [
-    "./antigravity",
-    "./cursor",
-    "./vscodium",
-    "./vscode",
-    "./windsurf",
-  ]) {
+  for (const mod of ["./vscode"]) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     require(mod);
   }

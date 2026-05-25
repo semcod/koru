@@ -166,11 +166,12 @@ async function testUnsupportedAdapterEmitsNothing(): Promise<void> {
 }
 
 async function testBuildAdapterForIdeReturnsCorrectKind(): Promise<void> {
-  assert.ok(buildAdapterForIde("cursor") instanceof CursorBubbleAdapter);
   assert.ok(buildAdapterForIde("vscode") instanceof VSCodeChatSessionAdapter);
-  assert.ok(buildAdapterForIde("vscodium") instanceof VSCodeChatSessionAdapter);
-  assert.ok(buildAdapterForIde("windsurf") instanceof UnsupportedAdapter);
-  assert.ok(buildAdapterForIde("antigravity") instanceof UnsupportedAdapter);
+  for (const foreign of ["cursor", "vscodium", "windsurf", "antigravity"] as const) {
+    let threw = false;
+    try { buildAdapterForIde(foreign); } catch { threw = true; }
+    assert.ok(threw, `must refuse ${foreign}`);
+  }
 }
 
 async function testParseVSCodeChatIndexExtractsAssistantResponses(): Promise<void> {
@@ -200,7 +201,7 @@ async function testParseVSCodeChatIndexExtractsAssistantResponses(): Promise<voi
   const allRows = parseVSCodeChatIndex(payload, "0");
   assert.strictEqual(allRows.length, 4, "should ignore the null message but keep the rest");
   assert.deepStrictEqual(
-    allRows.map((r) => r.text),
+    allRows.map((r: { text: string }) => r.text),
     ["Older B", "First answer", "Second answer (string form)", "Newer B"],
     "rows must be sorted oldest-first",
   );

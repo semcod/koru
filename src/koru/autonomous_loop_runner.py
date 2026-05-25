@@ -49,39 +49,56 @@ def _blocked_interface_action_lines(
         payload = blocker_interface_payload(key)
     except Exception:
         return []
-    items = payload.get("interfaces")
-    if not isinstance(items, list) or not items:
+    items = _blocked_interface_items(payload)
+    if not items:
         return []
-    lines: list[str] = []
+    selected = _select_blocked_interface_items(items, autopilot_ide)
+    return [_format_blocked_interface_line(item) for item in selected if item.get("id")]
+
+
+def _blocked_interface_items(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    items = payload.get("interfaces")
+    if not isinstance(items, list):
+        return []
+    return [item for item in items if isinstance(item, dict)]
+
+
+def _select_blocked_interface_items(
+    items: list[dict[str, Any]],
+    autopilot_ide: str,
+) -> list[dict[str, Any]]:
     matching_items = [
         item
         for item in items
-        if isinstance(item, dict)
-        and _interface_matches_ide(str(item.get("id") or "").strip(), autopilot_ide)
+        if _interface_matches_ide(str(item.get("id") or "").strip(), autopilot_ide)
     ]
-    for item in (matching_items or items)[:2]:
-        if not isinstance(item, dict):
-            continue
-        interface_id = str(item.get("id") or "").strip()
-        family = str(item.get("family") or "").strip()
-        transport = str(item.get("transport") or "").strip()
-        recovery = item.get("operator_recovery")
-        recovery_text = ""
-        if isinstance(recovery, list):
-            steps = [str(step).strip() for step in recovery if str(step).strip()]
-            if steps:
-                recovery_text = " ; recovery: " + " | ".join(steps[:2])
-        if interface_id:
-            details: list[str] = []
-            if family:
-                details.append(f"family={family}")
-            if transport:
-                details.append(f"transport={transport}")
-            suffix = f" ({', '.join(details)})" if details else ""
-            lines.append(
-                f"[blocked interface] {interface_id}{suffix}{recovery_text}"
-            )
-    return lines
+    return (matching_items or items)[:2]
+
+
+def _format_blocked_interface_line(item: dict[str, Any]) -> str:
+    interface_id = str(item.get("id") or "").strip()
+    return (
+        f"[blocked interface] {interface_id}"
+        f"{_blocked_interface_detail_suffix(item)}"
+        f"{_blocked_interface_recovery_suffix(item)}"
+    )
+
+
+def _blocked_interface_detail_suffix(item: dict[str, Any]) -> str:
+    details = [
+        f"{key}={value}"
+        for key in ("family", "transport")
+        if (value := str(item.get(key) or "").strip())
+    ]
+    return f" ({', '.join(details)})" if details else ""
+
+
+def _blocked_interface_recovery_suffix(item: dict[str, Any]) -> str:
+    recovery = item.get("operator_recovery")
+    if not isinstance(recovery, list):
+        return ""
+    steps = [str(step).strip() for step in recovery if str(step).strip()]
+    return " ; recovery: " + " | ".join(steps[:2]) if steps else ""
 
 
 def _dashboard_action_urls(project: Any) -> dict[str, str]:

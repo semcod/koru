@@ -747,6 +747,7 @@ def handle_ack(daemon: Any, client: _Client, msg: Message) -> None:
         info=info,
         plugin_ok=plugin_ok,
         submit_requested=submit_requested,
+        plugin_ide=plugin_ide,
     )
     info.update(
         DriveOrchestrator.plugin_version_info(
