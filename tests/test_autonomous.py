@@ -2701,6 +2701,139 @@ sprint:
     assert telemetry.get("autopilot_chat_intake_ticket") == "PLF-INTAKE-3"
 
 
+def test_skip_chat_activity_does_not_reupsert_current_chat_intake_ticket(
+    tmp_path, monkeypatch
+) -> None:
+    """An intake ticket must not recursively create/reuse itself every cycle."""
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    PLF-3005:
+      labels: [llm-ready, autopilot-chat-intake]
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-3005"],
+        last_status="waiting_input",
+        last_message="[OPERATOR] intake from IDE chat",
+    )
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": autonomous_cycle_mod.time.time() - 8.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "fix: x",
+            },
+        ],
+        last_driven_prompt="",
+    )
+    monkeypatch.setattr("koru.llm_reflect.llm_reflect_enabled", lambda: False)
+
+    create_calls: list[str] = []
+
+    def _fake_create_nl_task(_project: Path, _text: str, **_kwargs):
+        create_calls.append("create")
+        return SimpleNamespace(ticket_id="PLF-INTAKE-5", reused=True)
+
+    monkeypatch.setattr(autonomous_cycle_mod, "create_nl_task", _fake_create_nl_task)
+
+    telemetry: dict[str, object] = {}
+    should_skip = autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=lambda _msg: None,
+    )
+
+    assert should_skip is True
+    assert create_calls == []
+    assert telemetry.get("autopilot_chat_intake_ticket") is None
+
+
+def test_skip_chat_activity_prefers_external_intake_over_self_drive_cooldown(
+    tmp_path, monkeypatch
+) -> None:
+    """External intake should upsert ticket even when self-drive cooldown is active."""
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    PLF-3010:
+      labels: [llm-ready]
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "vscode")
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-3010"],
+        last_status="waiting_input",
+        last_message="continue",
+    )
+    now = autonomous_cycle_mod.time.time()
+    state = autonomous_mod.AutoloopState(
+        autopilot_events=[
+            {
+                "ts": now - 24.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "Ticket PLF-3010 has been stuck in status 'waiting_input' for 5 cycles",
+            },
+            {
+                "ts": now - 8.0,
+                "type": "message.sent",
+                "ide": "vscode",
+                "chat": "default",
+                "text": "bug: koru auto misroutes copy-paste intake",
+            },
+        ],
+        last_driven_prompt="Ticket PLF-3010 has been stuck in status 'waiting_input' for 5 cycles",
+    )
+    monkeypatch.setattr("koru.llm_reflect.llm_reflect_enabled", lambda: False)
+
+    create_calls: list[tuple[str, dict[str, object]]] = []
+
+    def _fake_create_nl_task(_project: Path, text: str, **kwargs):
+        create_calls.append((text, kwargs))
+        return SimpleNamespace(ticket_id="PLF-INTAKE-10", reused=False)
+
+    monkeypatch.setattr(autonomous_cycle_mod, "create_nl_task", _fake_create_nl_task)
+
+    telemetry: dict[str, object] = {}
+    logs: list[str] = []
+    should_skip = autonomous_cycle_mod._skip_due_to_recent_chat_activity(
+        project=tmp_path,
+        queue_result=queue_result,
+        state=state,
+        cycle_telemetry=telemetry,
+        _hp=logs.append,
+    )
+
+    assert should_skip is True
+    assert len(create_calls) == 1
+    assert "Incoming intake" in create_calls[0][0]
+    assert "bug: koru auto misroutes copy-paste intake" in create_calls[0][0]
+    assert telemetry.get("autopilot_chat_intake_ticket") == "PLF-INTAKE-10"
+    assert telemetry.get("autopilot_skipped_chat_intake") is True
+    assert not any("recent_self_drive" in line for line in logs)
+
+
 def test_skip_chat_activity_blocks_self_drive_even_without_ticket_ack(
     tmp_path, monkeypatch
 ) -> None:

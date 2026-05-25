@@ -83,6 +83,228 @@ def _plugin_reason_requires_reload(reason: str) -> bool:
     )
 
 
+def _report_unsupported_plugin_result(
+    autopilot_ide: str,
+    *,
+    emit_fmt: str,
+    stdio_info: Any,
+) -> bool:
+    stdio_info(
+        "koru autonomous: autopilot plugin unsupported for "
+        f"ide={autopilot_ide}; using keyboard/OS-injector path",
+        fmt=emit_fmt,
+    )
+
+    env_lane = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip()
+    if env_lane and env_lane.lower() == str(autopilot_ide).lower():
+        stdio_info(
+            "koru autonomous: ⚠ KORU_AUTOPILOT_INSTANCE="
+            f"{env_lane} forces an unsupported IDE. "
+            "Plugin-mode is unavailable; the OS injector path is unreliable on Wayland. "
+            "To switch the autopilot lane to a supported IDE, run one of:\n"
+            "  unset KORU_AUTOPILOT_INSTANCE             # auto-pick from running IDEs\n"
+            "  export KORU_AUTOPILOT_INSTANCE=cursor     # or vscode / vscodium / windsurf\n"
+            "Supported lanes: cursor, vscode, vscodium, windsurf "
+            "(see docs: docs/IDE_PROTOCOL.md).",
+            fmt=emit_fmt,
+        )
+    return False
+
+
+def _emit_reload_required_lines(
+    autopilot_ide: str,
+    *,
+    emit_fmt: str,
+    stdio_info: Any,
+) -> None:
+    from koru.ide_adapters import shared
+
+    for line in shared.extension_reload_required_lines(
+        autopilot_ide,
+        color=emit_fmt == "human",
+    ):
+        stdio_info(line, fmt=emit_fmt)
+
+
+def _prepare_plugin_wait(
+    args: Any,
+    autopilot_ide: str,
+    plugin_install_status: str,
+    *,
+    project: Path | None,
+    stdio_info: Any,
+) -> tuple[bool, Any | None]:
+    skip_plugin_wait = False
+    reload_after_install = None
+    if plugin_install_status not in {"installed", "already_installed"}:
+        return skip_plugin_wait, reload_after_install
+
+    _ensure_trusted_publisher_for_plugin(
+        autopilot_ide,
+        stdio_info=stdio_info,
+        emit_fmt=args.emit_events,
+    )
+    active = _extension_active_in_latest_session(autopilot_ide)
+    if active is not False:
+        return skip_plugin_wait, reload_after_install
+
+    from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
+
+    reload_after_install = try_reload_vscode_family_ide(
+        autopilot_ide,
+        project=project,
+    )
+    reload = reload_after_install
+    if reload.attempted:
+        if reload.ok:
+            stdio_info(
+                "koru autonomous: automatyczny Reload Window "
+                f"({reload.method}) — czekam na plugin…",
+                fmt=args.emit_events,
+            )
+        else:
+            stdio_info(
+                "koru autonomous: automatyczny reload IDE nie powiódł się "
+                f"({reload.method or '-'}: {reload.detail or 'unknown'})",
+                fmt=args.emit_events,
+            )
+            _emit_reload_required_lines(
+                autopilot_ide,
+                emit_fmt=args.emit_events,
+                stdio_info=stdio_info,
+            )
+    else:
+        _emit_reload_required_lines(
+            autopilot_ide,
+            emit_fmt=args.emit_events,
+            stdio_info=stdio_info,
+        )
+
+    if reload.ok:
+        return skip_plugin_wait, reload_after_install
+
+    from koru.autonomy.env import keyboard_fallback_when_plugin_missing
+
+    if keyboard_fallback_when_plugin_missing(autopilot_ide):
+        stdio_info(
+            "koru autonomous: plugin nieaktywny — włączam fallback "
+            "klawiatury/OS-injectora (Wayland); ustaw profil: "
+            "task koru:ide-os:calibrate IDE=cursor",
+            fmt=args.emit_events,
+        )
+    else:
+        stdio_info(
+            "koru autonomous: pomijam oczekiwanie na plugin "
+            "(wtyczka nie załadowana w extension host)",
+            fmt=args.emit_events,
+        )
+    return True, reload_after_install
+
+
+def _retry_plugin_wait_after_reload(
+    args: Any,
+    autopilot_ide: str,
+    wait_seconds: float,
+    *,
+    client: Any,
+    project: Path | None,
+    wait_for_plugin: Any,
+    stdio_info: Any,
+) -> bool | None:
+    from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
+
+    reload = try_reload_vscode_family_ide(autopilot_ide, project=project)
+    if reload.attempted and reload.ok:
+        retry_wait = max(wait_seconds, 30.0)
+        stdio_info(
+            "koru autonomous: plugin wymaga przeładowania IDE; "
+            f"automatyczny Reload Window ({reload.method}) — "
+            f"czekam ponownie {retry_wait:.1f}s…",
+            fmt=args.emit_events,
+        )
+        plugin_ready = wait_for_plugin(
+            client,
+            autopilot_ide,
+            timeout_seconds=retry_wait,
+            stdio_format=args.emit_events,
+        )
+        if plugin_ready:
+            stdio_info(
+                "koru autonomous: autopilot plugin reconnected "
+                f"after reload ide={autopilot_ide}",
+                fmt=args.emit_events,
+            )
+        return plugin_ready
+    if reload.attempted:
+        stdio_info(
+            "koru autonomous: automatyczny Reload Window po mismatch "
+            f"nie powiódł się ({reload.method or '-'}: "
+            f"{reload.detail or 'unknown'})",
+            fmt=args.emit_events,
+        )
+    return None
+
+
+def _wait_for_plugin_connection(
+    args: Any,
+    autopilot_ide: str,
+    plugin_install_status: str,
+    reload_after_install: Any | None,
+    *,
+    client: Any,
+    project: Path | None,
+    wait_for_plugin: Any,
+    stdio_info: Any,
+) -> bool:
+    wait_seconds = max(0.0, args.autopilot_plugin_wait_seconds)
+    if reload_after_install is not None and reload_after_install.ok:
+        wait_seconds = max(wait_seconds, 30.0)
+
+    plugin_ready = wait_for_plugin(
+        client,
+        autopilot_ide,
+        timeout_seconds=wait_seconds,
+        stdio_format=args.emit_events,
+    )
+    if plugin_ready:
+        stdio_info(
+            f"koru autonomous: autopilot plugin connected ide={autopilot_ide}",
+            fmt=args.emit_events,
+        )
+        return True
+
+    reason = _plugin_status_reason(client, autopilot_ide)
+    if (
+        plugin_install_status in {"installed", "already_installed"}
+        and _plugin_reason_requires_reload(reason)
+    ):
+        reloaded_ready = _retry_plugin_wait_after_reload(
+            args,
+            autopilot_ide,
+            wait_seconds,
+            client=client,
+            project=project,
+            wait_for_plugin=wait_for_plugin,
+            stdio_info=stdio_info,
+        )
+        if reloaded_ready is not None:
+            return reloaded_ready
+
+    stdio_info(
+        "koru autonomous: no connected autopilot plugin "
+        f"for ide={autopilot_ide} after {wait_seconds:.1f}s; "
+        "autopilot drive will be skipped until it connects",
+        fmt=args.emit_events,
+    )
+    if plugin_install_status in {"installed", "already_installed"}:
+        _emit_reload_required_lines(
+            autopilot_ide,
+            emit_fmt=args.emit_events,
+            stdio_info=stdio_info,
+        )
+    return False
+
+
 def setup_autopilot_plugin(
     args: Any,
     autopilot_ide: str,
@@ -97,173 +319,40 @@ def setup_autopilot_plugin(
     stdio_info: Any,
 ) -> bool | None:
     """Install and wait for autopilot plugin if enabled."""
-    plugin_connected: bool | None = None
     if not args.enable_autopilot or socket_path is None:
-        return plugin_connected
+        return None
 
     plugin_result = install_plugin_for_ide(ide=autopilot_ide, socket_path=socket_path)
     stdio_info(format_plugin_install_result(plugin_result), fmt=args.emit_events)
     plugin_install_status = str(getattr(plugin_result, "status", "") or "")
     if plugin_result.status == "unsupported":
-        plugin_connected = False
-        stdio_info(
-            "koru autonomous: autopilot plugin unsupported for "
-            f"ide={autopilot_ide}; using keyboard/OS-injector path",
-            fmt=args.emit_events,
+        return _report_unsupported_plugin_result(
+            autopilot_ide,
+            emit_fmt=args.emit_events,
+            stdio_info=stdio_info,
         )
-        import os as _os
+    if client is None or allow_keyboard_fallback():
+        return None
 
-        env_lane = _os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip()
-        if env_lane and env_lane.lower() == str(autopilot_ide).lower():
-            stdio_info(
-                "koru autonomous: ⚠ KORU_AUTOPILOT_INSTANCE="
-                f"{env_lane} forces an unsupported IDE. "
-                "Plugin-mode is unavailable; the OS injector path is unreliable on Wayland. "
-                "To switch the autopilot lane to a supported IDE, run one of:\n"
-                "  unset KORU_AUTOPILOT_INSTANCE             # auto-pick from running IDEs\n"
-                "  export KORU_AUTOPILOT_INSTANCE=cursor     # or vscode / vscodium / windsurf\n"
-                "Supported lanes: cursor, vscode, vscodium, windsurf "
-                "(see docs: docs/IDE_PROTOCOL.md).",
-                fmt=args.emit_events,
-            )
-    elif client is not None and not allow_keyboard_fallback():
-        skip_plugin_wait = False
-        reload_after_install = None
-        if plugin_install_status in {"installed", "already_installed"}:
-            _ensure_trusted_publisher_for_plugin(
-                autopilot_ide,
-                stdio_info=stdio_info,
-                emit_fmt=args.emit_events,
-            )
-            active = _extension_active_in_latest_session(autopilot_ide)
-            if active is False:
-                from koru.ide_adapters import shared
-                from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
-
-                reload_after_install = try_reload_vscode_family_ide(
-                    autopilot_ide,
-                    project=project,
-                )
-                reload = reload_after_install
-                if reload.attempted:
-                    if reload.ok:
-                        stdio_info(
-                            "koru autonomous: automatyczny Reload Window "
-                            f"({reload.method}) — czekam na plugin…",
-                            fmt=args.emit_events,
-                        )
-                    else:
-                        stdio_info(
-                            "koru autonomous: automatyczny reload IDE nie powiódł się "
-                            f"({reload.method or '-'}: {reload.detail or 'unknown'})",
-                            fmt=args.emit_events,
-                        )
-                        for line in shared.extension_reload_required_lines(
-                            autopilot_ide,
-                            color=args.emit_events == "human",
-                        ):
-                            stdio_info(line, fmt=args.emit_events)
-                else:
-                    for line in shared.extension_reload_required_lines(
-                        autopilot_ide,
-                        color=args.emit_events == "human",
-                    ):
-                        stdio_info(line, fmt=args.emit_events)
-
-                if not reload.ok:
-                    from koru.autonomy.env import keyboard_fallback_when_plugin_missing
-
-                    if keyboard_fallback_when_plugin_missing(autopilot_ide):
-                        stdio_info(
-                            "koru autonomous: plugin nieaktywny — włączam fallback "
-                            "klawiatury/OS-injectora (Wayland); ustaw profil: "
-                            "task koru:ide-os:calibrate IDE=cursor",
-                            fmt=args.emit_events,
-                        )
-                        skip_plugin_wait = True
-                    else:
-                        stdio_info(
-                            "koru autonomous: pomijam oczekiwanie na plugin "
-                            "(wtyczka nie załadowana w extension host)",
-                            fmt=args.emit_events,
-                        )
-                        skip_plugin_wait = True
-                # When reload succeeded, fall through to wait_for_plugin below.
-
-        if skip_plugin_wait:
-            plugin_connected = False
-        else:
-            wait_seconds = max(0.0, args.autopilot_plugin_wait_seconds)
-            if (
-                reload_after_install is not None
-                and reload_after_install.ok
-            ):
-                wait_seconds = max(wait_seconds, 30.0)
-            plugin_ready = wait_for_plugin(
-                client,
-                autopilot_ide,
-                timeout_seconds=wait_seconds,
-                stdio_format=args.emit_events,
-            )
-            plugin_connected = plugin_ready
-            if plugin_ready:
-                stdio_info(
-                    f"koru autonomous: autopilot plugin connected ide={autopilot_ide}",
-                    fmt=args.emit_events,
-                )
-            else:
-                reason = _plugin_status_reason(client, autopilot_ide)
-                if (
-                    plugin_install_status in {"installed", "already_installed"}
-                    and _plugin_reason_requires_reload(reason)
-                ):
-                    from koru.ide_adapters.ide_reload import try_reload_vscode_family_ide
-
-                    reload = try_reload_vscode_family_ide(autopilot_ide, project=project)
-                    if reload.attempted and reload.ok:
-                        retry_wait = max(wait_seconds, 30.0)
-                        stdio_info(
-                            "koru autonomous: plugin wymaga przeładowania IDE; "
-                            f"automatyczny Reload Window ({reload.method}) — "
-                            f"czekam ponownie {retry_wait:.1f}s…",
-                            fmt=args.emit_events,
-                        )
-                        plugin_ready = wait_for_plugin(
-                            client,
-                            autopilot_ide,
-                            timeout_seconds=retry_wait,
-                            stdio_format=args.emit_events,
-                        )
-                        plugin_connected = plugin_ready
-                        if plugin_ready:
-                            stdio_info(
-                                "koru autonomous: autopilot plugin reconnected "
-                                f"after reload ide={autopilot_ide}",
-                                fmt=args.emit_events,
-                            )
-                            return plugin_connected
-                    elif reload.attempted:
-                        stdio_info(
-                            "koru autonomous: automatyczny Reload Window po mismatch "
-                            f"nie powiódł się ({reload.method or '-'}: "
-                            f"{reload.detail or 'unknown'})",
-                            fmt=args.emit_events,
-                        )
-                stdio_info(
-                    "koru autonomous: no connected autopilot plugin "
-                    f"for ide={autopilot_ide} after {wait_seconds:.1f}s; "
-                    "autopilot drive will be skipped until it connects",
-                    fmt=args.emit_events,
-                )
-                if plugin_install_status in {"installed", "already_installed"}:
-                    from koru.ide_adapters import shared
-
-                    for line in shared.extension_reload_required_lines(
-                        autopilot_ide,
-                        color=args.emit_events == "human",
-                    ):
-                        stdio_info(line, fmt=args.emit_events)
-    return plugin_connected
+    skip_plugin_wait, reload_after_install = _prepare_plugin_wait(
+        args,
+        autopilot_ide,
+        plugin_install_status,
+        project=project,
+        stdio_info=stdio_info,
+    )
+    if skip_plugin_wait:
+        return False
+    return _wait_for_plugin_connection(
+        args,
+        autopilot_ide,
+        plugin_install_status,
+        reload_after_install,
+        client=client,
+        project=project,
+        wait_for_plugin=wait_for_plugin,
+        stdio_info=stdio_info,
+    )
 
 
 def run_operator_pipeline(

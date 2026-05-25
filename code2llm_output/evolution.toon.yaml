@@ -1,30 +1,38 @@
-# code2llm/evolution | 4646 func | 275f | 2026-05-24
-# generated in 0.02s
+# code2llm/evolution | 5283 func | 310f | 2026-05-25
+# generated in 0.07s
 
-NEXT[3] (ranked by impact):
-  [1] !! SPLIT           src/koru/autonomous_cycle.py
-      WHY: 2148L, 1 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 30072
+NEXT[5] (ranked by impact):
+  [1] !! SPLIT           plugins/koru-autopilot-vscode/src/extension.ts
+      WHY: 2061L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 28854
 
-  [2] !! SPLIT           src/koru/doctor.py
-      WHY: 1965L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 27510
+  [2] !  SPLIT-FUNC      _skip_due_to_recent_chat_activity  CC=18  fan=23
+      WHY: CC=18 exceeds 15
+      EFFORT: ~1h  IMPACT: 414
 
-  [3] !! SPLIT           CHANGELOG.md
-      WHY: 4779L, 0 classes, max CC=0
+  [3] !  SPLIT-FUNC      _skip_due_to_recent_chat_activity  CC=18  fan=23
+      WHY: CC=18 exceeds 15
+      EFFORT: ~1h  IMPACT: 414
+
+  [4] !! SPLIT           CHANGELOG.md
+      WHY: 5234L, 0 classes, max CC=0
+      EFFORT: ~4h  IMPACT: 0
+
+  [5] !! SPLIT           README.md
+      WHY: 1264L, 0 classes, max CC=0
       EFFORT: ~4h  IMPACT: 0
 
 
 RISKS[3]:
   ⚠ Splitting CHANGELOG.md may break 0 import paths
-  ⚠ Splitting src/koru/autonomous_cycle.py may break 146 import paths
-  ⚠ Splitting src/koru/doctor.py may break 182 import paths
+  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 166 import paths
+  ⚠ Splitting README.md may break 0 import paths
 
 METRICS-TARGET:
   CC̄:          3.9 → ≤2.7
-  max-CC:      14 → ≤7
-  god-modules: 28 → 0
-  high-CC(≥15): 0 → ≤0
+  max-CC:      18 → ≤9
+  god-modules: 10 → 0
+  high-CC(≥15): 4 → ≤2
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

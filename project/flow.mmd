@@ -1,44 +1,31 @@
 flowchart TD
+%% generated in 0.09s
 
     %% Entry points (blue)
     classDef entry fill:#4dabf7,stroke:#1971c2,color:#fff
 
     subgraph Core
-        README__critical["critical"]
-        docs__plans__capture_providers_refactor__availability["availability"]
-        docs__plans__capture_providers_refactor__capture_all["capture_all"]
-        docs__plans__capture_providers_refactor__start_stream["start_stream"]
-        docs__plans__observation_mesh_plan__start["start"]
-        docs__plans__observation_mesh_plan__stop["stop"]
-        docs__plans__observation_mesh_plan__latest["latest"]
-        docs__refactor__ide_bridge_2026__detect["detect"]
-        docs__refactor__ide_bridge_2026__install_plugin["install_plugin"]
-        docs__refactor__ide_bridge_2026__verify_plugin_active["verify_plugin_active"]
-        docs__refactor__ide_bridge_2026__resolve_settings["resolve_settings"]
-        docs__refactor__ide_bridge_2026__diagnose_inactive["diagnose_inactive"]
-        docs__refactor__ide_bridge_2026__hint_remediation["hint_remediation"]
-        SUMD___png_size["_png_size"]
-        SUMD___scan_providers["_scan_providers"]
-        ...["+8400 more"]
+        services__healing_webhook__app__heal_rebuild_restore["heal_rebuild_restore"]
+        services__healing_webhook__app__heal_annotate["heal_annotate"]
+        services__healing_webhook__app___run_vallm_validate["_run_vallm_validate"]
+        services__healing_webhook__app__heal_vallm_validate["heal_vallm_validate"]
+        services__healing_webhook__app__heal_redup_check["heal_redup_check"]
+        services__healing_webhook__app__healthz["healthz"]
+        services__healing_webhook__app__metrics["metrics"]
+        services__healing_webhook__app__get_history["get_history"]
+        services__healing_webhook__app__alertmanager_webhook["alertmanager_webhook"]
+        services__healing_webhook__app__probe_failure["probe_failure"]
+        services__healing_webhook__app__get_tickets["get_tickets"]
+        src__koruobserve__lifecycle__ObserveProcesses__to_json["to_json"]
+        src__koruobserve__cli___missing_observe_packages["_missing_observe_packages"]
+        src__koruobserve__cli___require_observe_runtime["_require_observe_runtime"]
+        src__koruobserve__cli___pip_install["_pip_install"]
+        ...["+1307 more"]
     end
 
     subgraph Exporters
-        SUMD___has_legacy_exports["_has_legacy_exports"]
-        SUMD__render_shell_exports["render_shell_exports"]
-        SUMD___scan_testql_export["_scan_testql_export"]
-        SUMD__test_agent_env_exports_cursor_lane["test_agent_env_exports_cursor_"]
-        SUMD__test_render_shell_exports_includes_koru_environment["test_render_shell_exports_incl"]
-        SUMD__test_koruide_ide_bridge_exports_legacy_symbols["test_koruide_ide_bridge_export"]
-        SUMD__test_koruide_injector_bridge_exports_legacy_symbols["test_koruide_injector_bridge_e"]
-        SUMD__test_koruide_os_injector_bridge_exports_legacy_symbols["test_koruide_os_injector_bridg"]
-        code2llm_output__map__toon__format_agent_lane_exports["format_agent_lane_exports"]
-        code2llm_output__map__toon___scan_testql_export["_scan_testql_export"]
-        code2llm_output__map__toon__render_shell_exports["render_shell_exports"]
-        code2llm_output__map__toon__try_agent_env_exports["try_agent_env_exports"]
-        code2llm_output__map__toon___has_legacy_exports["_has_legacy_exports"]
         src__koru__agent_cli_helpers__try_agent_env_exports["try_agent_env_exports"]
-        src__koru__agents__format_agent_lane_exports["format_agent_lane_exports"]
-        ...["+6 more"]
+        src__koru__cli___has_legacy_exports["_has_legacy_exports"]
     end
 
-    class README__critical,docs__plans__capture_providers_refactor__availability,docs__plans__capture_providers_refactor__capture_all,docs__plans__capture_providers_refactor__start_stream,docs__plans__observation_mesh_plan__start,docs__plans__observation_mesh_plan__stop,docs__plans__observation_mesh_plan__latest,docs__refactor__ide_bridge_2026__detect,docs__refactor__ide_bridge_2026__install_plugin,docs__refactor__ide_bridge_2026__verify_plugin_active entry
+    class services__healing_webhook__app__heal_rebuild_restore,services__healing_webhook__app__heal_annotate,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app__heal_redup_check,services__healing_webhook__app__healthz,services__healing_webhook__app__metrics,services__healing_webhook__app__get_history,services__healing_webhook__app__alertmanager_webhook,services__healing_webhook__app__probe_failure entry

@@ -121,6 +121,19 @@ def _drive_autopilot_once(
     return fallback, bool(fallback.get("ok", True))
 
 
+def _resolve_drive_plugin_requirement(client: Any, autopilot_ide: str) -> bool:
+    require_plugin = _plugin_required_for_ide(autopilot_ide)
+    if (
+        not require_plugin
+        and _ide_supports_vscode_plugin(autopilot_ide)
+        and not _operator_forces_keyboard()
+    ):
+        plugin_live, _ = _client_has_usable_plugin(client, autopilot_ide)
+        if plugin_live:
+            return True
+    return require_plugin
+
+
 def _reply_missing_autopilot_plugin(reply: dict[str, Any]) -> bool:
     return "no connected autopilot plugin" in str(reply.get("message") or "").lower()
 
@@ -240,6 +253,31 @@ def _warn_autopilot_plugin_retry(attempt: int, attempts: int, reply: dict[str, A
     print("\033[0m")  # reset colors
 
 
+def _handle_failed_drive_attempt(
+    reply: dict[str, Any],
+    attempt: int,
+    attempts: int,
+) -> bool:
+    if _reply_missing_autopilot_plugin(reply):
+        return False
+    if _reply_chat_input_busy(reply):
+        return False
+    if _reply_requires_manual_chat_focus(reply):
+        _warn_autopilot_manual_focus_required(reply)
+        return False
+    if attempt >= attempts - 1:
+        return False
+    if _reply_needs_focus_retry(reply):
+        _warn_autopilot_focus_retry(attempt, attempts, reply)
+        time.sleep(5)
+        return True
+    if _reply_needs_plugin_retry(reply):
+        _warn_autopilot_plugin_retry(attempt, attempts, reply)
+        time.sleep(5)
+        return True
+    return False
+
+
 def _execute_autopilot_drive(
     project: Path,
     state: AutoloopState,
@@ -276,19 +314,7 @@ def _execute_autopilot_drive(
     # Telemetry hook used by ``_skip_due_to_recent_chat_activity`` to decide
     # whether to apply the escalation-cooldown multiplier on the next cycle.
     state.last_driven_kind = decision.kind
-    require_plugin = _plugin_required_for_ide(autopilot_ide)
-    # When the plugin is actually connected for a VS Code-family IDE, demand a
-    # plugin ack even if the keyboard/OS-injector fallback policy is otherwise
-    # active. Otherwise a busy IDE chat causes the daemon to switch to an
-    # OS-injector blind shot (often into the wrong window on Wayland).
-    if (
-        not require_plugin
-        and _ide_supports_vscode_plugin(autopilot_ide)
-        and not _operator_forces_keyboard()
-    ):
-        plugin_live, _ = _client_has_usable_plugin(client, autopilot_ide)
-        if plugin_live:
-            require_plugin = True
+    require_plugin = _resolve_drive_plugin_requirement(client, autopilot_ide)
     attempts = 5
     for attempt in range(attempts):
         reply, ok = _drive_autopilot_once(
@@ -300,23 +326,7 @@ def _execute_autopilot_drive(
         )
         if ok:
             break
-        if _reply_missing_autopilot_plugin(reply):
-            break
-        if _reply_chat_input_busy(reply):
-            # Plugin already declined to paste; do not retry within this
-            # cycle — the cooldown path on the next cycle will hold us off
-            # until the user has cleared their pending chat input.
-            break
-        if _reply_requires_manual_chat_focus(reply):
-            _warn_autopilot_manual_focus_required(reply)
-            break
-        if _reply_needs_focus_retry(reply) and attempt < attempts - 1:
-            _warn_autopilot_focus_retry(attempt, attempts, reply)
-            time.sleep(5)
-        elif _reply_needs_plugin_retry(reply) and attempt < attempts - 1:
-            _warn_autopilot_plugin_retry(attempt, attempts, reply)
-            time.sleep(5)
-        else:
+        if not _handle_failed_drive_attempt(reply, attempt, attempts):
             break
 
     return reply, ok, decision.kind, idle_prompt_kind

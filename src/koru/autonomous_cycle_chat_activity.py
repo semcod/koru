@@ -115,6 +115,17 @@ def _chat_intake_ticket_enabled() -> bool:
     return raw not in {"0", "false", "no", "off"}
 
 
+def _waiting_ticket_has_chat_intake_label(
+    project: Path,
+    queue_result: QueueLoopResult,
+) -> bool:
+    try:
+        from koru.autonomous_cycle_skip_conditions import _waiting_ticket_has_label
+    except ImportError:
+        return False
+    return _waiting_ticket_has_label(project, queue_result, "autopilot-chat-intake")
+
+
 def _normalize_prompt_text(text: str) -> str:
     return " ".join(str(text or "").split()).strip().lower()
 
@@ -183,6 +194,8 @@ def _upsert_chat_intake_operator_ticket(
     if not _chat_intake_ticket_enabled():
         return None
     if str(getattr(queue_result, "last_status", "") or "") != "waiting_input":
+        return None
+    if _waiting_ticket_has_chat_intake_label(project, queue_result):
         return None
 
     intake_text = _external_message_sent_text(state=state, recent_events=recent_events)
@@ -850,6 +863,18 @@ def _skip_due_to_recent_chat_activity(
     )
     reflection_events = _state_events_to_chat_events(recent_events)
 
+    intake_ticket = _upsert_chat_intake_operator_ticket(
+        project=project,
+        queue_result=queue_result,
+        state=state,
+        recent_events=recent_events,
+        cycle_telemetry=cycle_telemetry,
+        _hp=_hp,
+    )
+    if intake_ticket:
+        cycle_telemetry["autopilot_skipped_chat_intake"] = True
+        return True
+
     has_received = any(str(ev.get("type") or "") == "message.received" for ev in recent_events)
     self_drive_age = _last_self_drive_event_age(state, recent_events)
     if (
@@ -866,18 +891,6 @@ def _skip_due_to_recent_chat_activity(
             f"last=message.sent age={age} cooldown={cooldown:.0f}s "
             f"ticket={waiting_ticket})",
         )
-        return True
-
-    intake_ticket = _upsert_chat_intake_operator_ticket(
-        project=project,
-        queue_result=queue_result,
-        state=state,
-        recent_events=recent_events,
-        cycle_telemetry=cycle_telemetry,
-        _hp=_hp,
-    )
-    if intake_ticket:
-        cycle_telemetry["autopilot_skipped_chat_intake"] = True
         return True
 
     if recent_events:

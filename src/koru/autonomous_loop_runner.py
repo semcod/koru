@@ -17,12 +17,27 @@ def _operator_next_steps(
     autopilot_status: str,
     effective_sleep: float,
     stagnation_streak: int,
+    stop_reason: str | None = None,
 ) -> list[str]:
     """Human-readable plan for the next outer-loop moves."""
     status = str(getattr(queue_result, "last_status", "") or "")
     max_iterations = int(getattr(args, "max_iterations", 50) or 50)
     ticket = waiting_ticket if waiting_ticket and waiting_ticket != "-" else "none"
     sleep_text = f"{effective_sleep:g}s"
+
+    if stop_reason == "waiting_input":
+        return [
+            f"1/3 stop now; queue is waiting for operator input on {ticket}",
+            f"2/3 operator should mark {ticket} done/input/fail through planfile",
+            "3/3 next koru auto run will resume from the updated queue state",
+        ]
+
+    if stop_reason == "max_cycles":
+        return [
+            f"1/3 stop now; reached max-cycles={getattr(args, 'max_cycles', '?')}",
+            f"2/3 preserve checkpoint with queue={status or 'unknown'} waiting={ticket}",
+            "3/3 next koru auto run will continue from the saved checkpoint",
+        ]
 
     if status == "waiting_input":
         if "chat_activity" in autopilot_status:
@@ -80,6 +95,7 @@ def _log_operator_next_steps(
     autopilot_status: str,
     effective_sleep: float,
     loop_state: Any,
+    stop_reason: str | None,
     stdio_info: Any,
 ) -> None:
     for line in _operator_next_steps(
@@ -89,8 +105,21 @@ def _log_operator_next_steps(
         autopilot_status=autopilot_status,
         effective_sleep=effective_sleep,
         stagnation_streak=int(getattr(loop_state, "stagnation_streak", 0) or 0),
+        stop_reason=stop_reason,
     ):
         stdio_info(f"koru autonomous: next {line}", fmt=args.emit_events)
+
+
+def _cycle_stop_reason(args: Any, queue_result: Any, cycle: int) -> str | None:
+    if (
+        getattr(args, "stop_on_waiting_input", False)
+        and queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES
+    ):
+        return "waiting_input"
+    max_cycles = int(getattr(args, "max_cycles", 0) or 0)
+    if max_cycles > 0 and cycle >= max_cycles:
+        return "max_cycles"
+    return None
 
 
 def handle_cycle_exit_conditions(
@@ -104,7 +133,8 @@ def handle_cycle_exit_conditions(
     output_stream: Any = sys.stdout,
 ) -> bool:
     """Return True when the autonomous loop should stop after a cycle."""
-    if args.stop_on_waiting_input and queue_result.last_status in _AUTOPILOT_BLOCKED_QUEUE_STATUSES:
+    stop_reason = _cycle_stop_reason(args, queue_result, cycle)
+    if stop_reason == "waiting_input":
         if args.emit_events == "jsonl":
             write_event(
                 output_stream,
@@ -119,7 +149,7 @@ def handle_cycle_exit_conditions(
         )
         return True
 
-    if args.max_cycles > 0 and cycle >= args.max_cycles:
+    if stop_reason == "max_cycles":
         if args.emit_events == "jsonl":
             write_event(
                 output_stream,
@@ -226,10 +256,8 @@ def run_autonomous_cycle(
         waiting_ticket=queue_loop_waiting_ticket_label(queue_result),
     )
 
-    if handle_exit_conditions(args, queue_result, cycle, correlation_id):
-        return True
-
     effective_sleep = compute_cycle_sleep(args, loop_state, queue_result)
+    stop_reason = _cycle_stop_reason(args, queue_result, cycle)
     waiting_ticket = queue_loop_waiting_ticket_label(queue_result)
     stdio_info(
         f"koru autonomous: summary cycle={cycle} queue={queue_result.last_status} "
@@ -245,8 +273,12 @@ def run_autonomous_cycle(
         autopilot_status=autopilot_status,
         effective_sleep=effective_sleep,
         loop_state=loop_state,
+        stop_reason=stop_reason,
         stdio_info=stdio_info,
     )
+    if handle_exit_conditions(args, queue_result, cycle, correlation_id):
+        return True
+
     if effective_sleep > 0:
         sleep(effective_sleep)
     return False

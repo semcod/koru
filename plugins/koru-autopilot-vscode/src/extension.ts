@@ -40,6 +40,7 @@ import { ChatHistoryWatcher, SupportedIde } from "./chat-history-watcher";
 import {
   decideBusyInputAction,
   interpretPostSubmitProbe,
+  shouldRequireVerifiedHostSubmit,
   shouldVerifyPostSubmit,
   shouldVerifyPrePasteBusy,
   type BusyInputAction,
@@ -105,6 +106,13 @@ type FocusOutcome = CommandOutcome & { diagnostics?: Record<string, unknown> };
 type PasteAttempt = { handled: boolean; result: CommandOutcome };
 type SubmitOutcome = CommandOutcome & { unverified?: boolean };
 type HostCommandResult = { ok: boolean; stdout: string };
+type FocusChatContext = {
+  ide: string;
+  cache: ProbeCacheEntry | undefined;
+  useProbe: boolean;
+  commands: string[];
+  before: ReturnType<typeof captureEditorSnapshot>;
+};
 type OperationTraceStep = {
   op: string;
   route: string;
@@ -735,18 +743,25 @@ class AutopilotBridge {
     verifyText: string | undefined,
     verifyEnabled: boolean
   ): Promise<SubmitOutcome> {
+    const hostVerifyEnabled =
+      verifyEnabled ||
+      shouldRequireVerifiedHostSubmit("vscodium", verifyText, this.koruStepConfig());
     this.traceOperation({
       op: "submit",
       route: "vscodium",
       ok: true,
-      detail: { verifyEnabled, trustUnverifiedHostSubmit: this.trustUnverifiedHostSubmit() },
+      detail: {
+        verifyEnabled,
+        hostVerifyEnabled,
+        trustUnverifiedHostSubmit: this.trustUnverifiedHostSubmit(),
+      },
     });
     const hostClick = await this._tryHostClickSubmit();
     if (hostClick.ok && hostClick.command) {
       const accepted = await this.finalizeSubmitCandidate(
         hostClick.command,
         verifyText,
-        verifyEnabled
+        hostVerifyEnabled
       );
       if (accepted) return accepted;
     }
@@ -755,11 +770,11 @@ class AutopilotBridge {
       const accepted = await this.finalizeSubmitCandidate(
         hostKey.command,
         verifyText,
-        verifyEnabled,
-        { unverified: !this.trustUnverifiedHostSubmit() }
+        hostVerifyEnabled,
+        { unverified: hostVerifyEnabled ? false : !this.trustUnverifiedHostSubmit() }
       );
       if (accepted) return accepted;
-      if (verifyEnabled && verifyText) {
+      if (hostVerifyEnabled && verifyText) {
         return {
           ok: false,
           command: hostKey.command || "vscodium-host-key-noop",
@@ -879,100 +894,152 @@ class AutopilotBridge {
     return { ok: false };
   }
 
-  private async focusChat(): Promise<FocusOutcome> {
-    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
-    const primary = (cfg.get<string[]>("chatOpenCommands") || []).filter(Boolean);
+  private async _buildFocusChatContext(primary: string[]): Promise<FocusChatContext> {
     const ide = this.detectIde();
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     const cache = this.getProbeCache();
     const useProbe = this.probeLadderEnabled();
-    const commands = filterUnsafeFocusOpenForIde(filterRegistered(
+    let commands = filterUnsafeFocusOpenForIde(filterRegistered(
       orderWithCache(buildFocusOpenCommands(ide, primary), cache?.focusOpen),
       existing
     ), ide);
+    if (ide === "vscode" && commands.length === 0 && existing.has("workbench.action.chat.open")) {
+      commands = ["workbench.action.chat.open"];
+      debugLog("FOCUS_OPEN_HARD_FALLBACK", { ide, command: "workbench.action.chat.open" });
+    }
+    const before = this.editorSnapshot();
     debugLog("FOCUS_OPEN_START", { ide, commandsCount: commands.length, useProbe, cacheFocusOpen: cache?.focusOpen });
     debugLog("FOCUS_OPEN_CANDIDATES", { ide, commands });
-    const before = this.editorSnapshot();
     debugLog("FOCUS_OPEN_BEFORE_SNAPSHOT", { before });
-    if (useProbe && ide === "vscode" && commands.length === 0 && chatFocusHeuristic(before)) {
+    return { ide, cache, useProbe, commands, before };
+  }
+
+  private _focusChatAlreadyFocused(context: FocusChatContext): FocusOutcome | null {
+    if (
+      context.useProbe
+      && context.ide === "vscode"
+      && context.commands.length === 0
+      && chatFocusHeuristic(context.before)
+    ) {
       debugLog("FOCUS_OPEN_ALREADY_FOCUSED");
       this.traceOperation({ op: "focus_open", route: "already-focused", ok: true });
       return { ok: true, command: "already-focused" };
     }
-    const rejected: Array<Record<string, unknown>> = [];
-    if (commands.length === 0) {
-      // VS Code often has no safe focus-open command configured; try direct
-      // chat-input focus before declaring manual-focus required.
-      const inputOnly = await this.focusChatInput();
-      if (isSpecificChatInputFocusCommand(inputOnly.command)) {
-        debugLog("FOCUS_OPEN_INPUT_ONLY_SUCCESS", { command: inputOnly.command });
-        this.traceOperation({
-          op: "focus_open",
-          route: "input-only",
-          ok: true,
-          command: inputOnly.command,
-        });
-        return { ok: true, command: inputOnly.command };
-      }
-      rejected.push({
-        cmd: "(input-only)",
-        reason: "no specific chat input focus command succeeded",
+    return null;
+  }
+
+  private async _focusChatWithoutOpenCommands(
+    rejected: Array<Record<string, unknown>>
+  ): Promise<FocusOutcome | null> {
+    const inputOnly = await this.focusChatInput();
+    if (isSpecificChatInputFocusCommand(inputOnly.command)) {
+      debugLog("FOCUS_OPEN_INPUT_ONLY_SUCCESS", { command: inputOnly.command });
+      this.traceOperation({
+        op: "focus_open",
+        route: "input-only",
+        ok: true,
+        command: inputOnly.command,
       });
+      return { ok: true, command: inputOnly.command };
     }
-    for (const cmd of commands) {
-      debugLog("FOCUS_OPEN_ATTEMPT", { cmd, isToggle: cmd.includes("toggle") });
-      if (!(await this.runCommand(cmd))) {
-        console.warn(`koru autopilot: focusChat command not available: ${cmd}`);
-        rejected.push({ cmd, reason: "executeCommand returned false" });
-        debugLog("FOCUS_OPEN_COMMAND_FAILED", { cmd, reason: "executeCommand returned false" });
-        continue;
-      }
-      await this.sleep(this.probeFocusDelayMs());
-      const inputFocus = await this.focusChatInput();
-      if (isSpecificChatInputFocusCommand(inputFocus.command)) {
-        const combined = `${cmd}+${inputFocus.command}`;
-        debugLog("FOCUS_OPEN_SUCCESS_INPUT", { cmd, inputFocus: inputFocus.command });
-        if (useProbe) {
-          await this.saveProbeCache({ focusOpen: cmd });
-        }
-        this.traceOperation({ op: "focus_open", route: "command+input", ok: true, command: combined });
-        return { ok: true, command: combined };
-      }
-      const after = this.editorSnapshot();
-      debugLog("FOCUS_OPEN_AFTER_SNAPSHOT", { cmd, after });
-      if (!useProbe || verifyFocusAfterOpen(before, after, ide)) {
-        debugLog("FOCUS_OPEN_SUCCESS", { cmd });
-        if (useProbe) {
-          await this.saveProbeCache({ focusOpen: cmd });
-        }
-        this.traceOperation({ op: "focus_open", route: "command", ok: true, command: cmd });
-        return { ok: true, command: cmd };
-      }
-      debugLog("PROBE_FOCUS_REJECT", { cmd, before, after });
-      rejected.push({ cmd, reason: "probe rejected focus snapshot", before, after });
+    rejected.push({
+      cmd: "(input-only)",
+      reason: "no specific chat input focus command succeeded",
+    });
+    return null;
+  }
+
+  private async _tryFocusChatCommand(
+    command: string,
+    context: FocusChatContext,
+    rejected: Array<Record<string, unknown>>,
+  ): Promise<FocusOutcome | null> {
+    debugLog("FOCUS_OPEN_ATTEMPT", { cmd: command, isToggle: command.includes("toggle") });
+    if (!(await this.runCommand(command))) {
+      console.warn(`koru autopilot: focusChat command not available: ${command}`);
+      rejected.push({ cmd: command, reason: "executeCommand returned false" });
+      debugLog("FOCUS_OPEN_COMMAND_FAILED", { cmd: command, reason: "executeCommand returned false" });
+      return null;
     }
+    await this.sleep(this.probeFocusDelayMs());
+    const inputFocus = await this.focusChatInput();
+    if (isSpecificChatInputFocusCommand(inputFocus.command)) {
+      const combined = `${command}+${inputFocus.command}`;
+      debugLog("FOCUS_OPEN_SUCCESS_INPUT", { cmd: command, inputFocus: inputFocus.command });
+      if (context.useProbe) {
+        await this.saveProbeCache({ focusOpen: command });
+      }
+      this.traceOperation({ op: "focus_open", route: "command+input", ok: true, command: combined });
+      return { ok: true, command: combined };
+    }
+    const after = this.editorSnapshot();
+    debugLog("FOCUS_OPEN_AFTER_SNAPSHOT", { cmd: command, after });
+    if (!context.useProbe || verifyFocusAfterOpen(context.before, after, context.ide)) {
+      debugLog("FOCUS_OPEN_SUCCESS", { cmd: command });
+      if (context.useProbe) {
+        await this.saveProbeCache({ focusOpen: command });
+      }
+      this.traceOperation({ op: "focus_open", route: "command", ok: true, command });
+      return { ok: true, command };
+    }
+    debugLog("PROBE_FOCUS_REJECT", { cmd: command, before: context.before, after });
+    rejected.push({ cmd: command, reason: "probe rejected focus snapshot", before: context.before, after });
+    return null;
+  }
+
+  private _focusChatFailure(
+    primary: string[],
+    context: FocusChatContext,
+    rejected: Array<Record<string, unknown>>,
+  ): FocusOutcome {
     debugLog("FOCUS_OPEN_ALL_FAILED", { rejectedCount: rejected.length });
     this.traceOperation({
       op: "focus_open",
       route: "all-candidates",
       ok: false,
       reason: "no focus-open candidate verified",
-      detail: { rejectedCount: rejected.length, candidates: sanitizeFocusOpenCandidates(commands) },
+      detail: { rejectedCount: rejected.length, candidates: sanitizeFocusOpenCandidates(context.commands) },
     });
     return {
       ok: false,
       diagnostics: {
-        ide,
+        ide: context.ide,
         appName: vscode.env.appName,
         logPath: "/tmp/koru-plugin-debug.log",
-        probeLadder: useProbe,
+        probeLadder: context.useProbe,
         configuredChatOpenCommands: primary,
-        focusOpenCandidates: sanitizeFocusOpenCandidates(commands),
-        cacheFocusOpen: sanitizeFocusOpenCommand(cache?.focusOpen),
-        before,
+        focusOpenCandidates: sanitizeFocusOpenCandidates(context.commands),
+        cacheFocusOpen: sanitizeFocusOpenCommand(context.cache?.focusOpen),
+        before: context.before,
         rejected,
       },
     };
+  }
+
+  private async focusChat(): Promise<FocusOutcome> {
+    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+    const primary = (cfg.get<string[]>("chatOpenCommands") || []).filter(Boolean);
+    const context = await this._buildFocusChatContext(primary);
+    const alreadyFocused = this._focusChatAlreadyFocused(context);
+    if (alreadyFocused) {
+      return alreadyFocused;
+    }
+    const rejected: Array<Record<string, unknown>> = [];
+    if (context.commands.length === 0) {
+      // VS Code often has no safe focus-open command configured; try direct
+      // chat-input focus before declaring manual-focus required.
+      const inputOnly = await this._focusChatWithoutOpenCommands(rejected);
+      if (inputOnly) {
+        return inputOnly;
+      }
+    }
+    for (const command of context.commands) {
+      const result = await this._tryFocusChatCommand(command, context, rejected);
+      if (result) {
+        return result;
+      }
+    }
+    return this._focusChatFailure(primary, context, rejected);
   }
 
   private async pasteText(text: string, replaceCurrentInput = false): Promise<CommandOutcome> {

@@ -2,6 +2,7 @@ import {
   decideBusyInputAction,
   interpretPostSubmitProbe,
   readVerifySubmitEnabled,
+  shouldRequireVerifiedHostSubmit,
   shouldVerifyPostSubmit,
   shouldVerifyPrePasteBusy,
 } from "./step-decisions";
@@ -39,6 +40,26 @@ function testShouldVerifyPostSubmitAllPluginIdes(): void {
   assert(
     !shouldVerifyPostSubmit("cursor", "hi", base),
     "short prompt skips verify",
+  );
+}
+
+function testHostSubmitIdesRequireVerificationEvenWhenOptionalVerifyDisabled(): void {
+  const cfg = { probeLadder: true, verifySubmit: false, skipWhenInputBusy: true };
+  assert(
+    shouldRequireVerifiedHostSubmit("vscodium", "long enough prompt", cfg),
+    "VSCodium host-key submit must be verified because host keys can be no-ops",
+  );
+  assert(
+    shouldRequireVerifiedHostSubmit("cursor", "long enough prompt", cfg),
+    "Cursor host-key submit must be verified because Return can be a newline",
+  );
+  assert(
+    !shouldRequireVerifiedHostSubmit("vscode", "long enough prompt", cfg),
+    "VS Code registered-command path does not force host-submit verification",
+  );
+  assert(
+    !shouldRequireVerifiedHostSubmit("vscodium", "hi", cfg),
+    "short prompts skip mandatory host-submit verification",
   );
 }
 
@@ -103,6 +124,7 @@ function testInterpretPostSubmitProbeRetry(): void {
 
 testReadVerifySubmitPrefersNewSetting();
 testShouldVerifyPostSubmitAllPluginIdes();
+testHostSubmitIdesRequireVerificationEvenWhenOptionalVerifyDisabled();
 testIdeStrategiesAreSeparated();
 testShouldVerifyPrePasteBusy();
 testDecideBusyInputAction();

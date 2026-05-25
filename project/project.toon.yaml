@@ -1,54 +1,55 @@
-# koru | 10209 func | 333f | 202739L | python | 2026-05-24
+# koru | 2981 func | 325f | 73308L | python | 2026-05-25
+# generated in 0.00s
 
 HEALTH:
-  CC̄=1.1  critical=214 (limit:10)  dup=11  cycles=0
+  CC̄=3.7  critical=220 (limit:10)  dup=8  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     build_dashboard_handler = 49 (limit:10)
   !!! high_fan_out     _build_handler = 44 (limit:10)
   !!! high_fan_out     create_app = 44 (limit:10)
-  !!! cc_exceeded      setup_autopilot_plugin = 33 (limit:15)
-  !!! high_fan_out     AutopilotBridge.focusChat = 26 (limit:10)
   !!! high_fan_out     init_project = 23 (limit:10)
   !!! high_fan_out     run_cycle = 23 (limit:10)
+  !!! high_fan_out     _skip_due_to_recent_chat_activity = 23 (limit:10)
   !!! high_fan_out     topology_main = 23 (limit:10)
   !!! high_fan_out     observe_up = 22 (limit:10)
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
+  !!! high_fan_out     _create_nl_task_impl = 21 (limit:10)
 
-MODULES[617] (top by size):
-  M[project/planfile-tickets.yaml] 14115L C:0 F:1 CC↑0 D:0 (yaml)
-  M[SUMD.md] 12696L C:1 F:2961 CC↑0 D:174 (md)
-  M[code2llm_output/map.toon.yaml] 6886L C:0 F:2072 CC↑0 D:66 (yaml)
-  M[project/calls.yaml] 5923L C:0 F:0 CC↑0 D:0 (yaml)
-  M[project/logic.pl] 5238L C:0 F:0 CC↑0 D:0 (perl)
-  M[CHANGELOG.md] 5207L C:0 F:0 CC↑0 D:0 (md)
-  M[project/map.toon.yaml] 4127L C:0 F:2216 CC↑0 D:0 (yaml)
-  M[SUMR.md] 3988L C:1 F:0 CC↑0 D:0 (md)
-  M[src/koru/doctor.py] 1965L C:2 F:91 CC↑14 D:0 (python)
-  M[plugins/koru-autopilot-vscode/src/extension.ts] 1742L C:2 F:150 CC↑16 D:17 (typescript)
+MODULES[493] (top by size):
+  M[plugins/koru-autopilot-vscode/src/extension.ts] 2061L C:2 F:166 CC↑14 D:17 (typescript)
+  M[src/koru/doctor.py] 1965L C:2 F:91 CC↑14 D:2 (python)
   M[planfile.yaml] 1383L C:0 F:0 CC↑0 D:0 (yaml)
-  M[README.md] 1253L C:0 F:1 CC↑0 D:0 (md)
-  M[src/koru/autonomous.py] 1063L C:1 F:57 CC↑7 D:0 (python)
-  M[src/koru/scan.py] 1033L C:2 F:28 CC↑13 D:0 (python)
-  M[src/koruapi/mcp_server.py] 1023L C:0 F:35 CC↑14 D:0 (python)
-  LANGS: python:357/md:95/shell:53/yaml:48/typescript:29/yml:9/json:9/kotlin:5/other:4/txt:3/javascript:1/properties:1/xml:1/perl:1/toml:1
+  M[src/koru/autonomous.py] 1063L C:1 F:57 CC↑7 D:4 (python)
+  M[src/koru/scan.py] 1033L C:2 F:28 CC↑13 D:4 (python)
+  M[src/koruapi/mcp_server.py] 1023L C:0 F:35 CC↑14 D:4 (python)
+  M[src/koru/autonomous_cycle.py] 1020L C:0 F:24 CC↑11 D:1 (python)
+  M[src/koru/autopilot/cli_command.py] 1004L C:0 F:26 CC↑14 D:0 (python)
+  M[src/koru/autonomous_cycle_chat_activity.py] 962L C:0 F:39 CC↑18 D:2 (python)
+  M[Taskfile.yml] 922L C:0 F:0 CC↑0 D:0 (yml)
+  M[src/koru/autonomy/operator_pipeline.py] 901L C:2 F:32 CC↑12 D:0 (python)
+  M[src/koruide/daemon/handlers.py] 837L C:0 F:32 CC↑14 D:1 (python)
+  M[src/koru/context.py] 822L C:0 F:31 CC↑12 D:8 (python)
+  M[src/koru/autonomous_wup.py] 808L C:3 F:39 CC↑12 D:2 (python)
+  M[src/koruide/ide.py] 746L C:1 F:44 CC↑13 D:24 (python)
+  LANGS: python:356/shell:49/typescript:29/yaml:22/yml:10/json:10/kotlin:6/other:4/txt:2/javascript:1/md:1/properties:1/xml:1/toml:1
 
 HOTSPOTS[10]:
   ★ build_dashboard_handler fan=49  // Build and return a DashboardRequestHandler subclass for the dashboard.
   ★ _build_handler fan=44  // Orchestrates 44 calls
   ★ create_app fan=44  // Build the FastAPI app (requires ``koru[api]``).
-  ★ AutopilotBridge.focusChat fan=26  // Orchestrates 26 calls
   ★ init_project fan=23  // Initialise (or re-initialise with ``force``) a koru project.
 
 Steps:
     1. Refu
+  ★ run_cycle fan=23  // Orchestrates 23 calls
 
 REFACTOR[15]:
-  [1] H/L Split setup_autopilot_plugin (CC=33)
-  [2] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (1742L, 2 classes)
+  [1] H/H Split god module src/koru/autonomous_cycle_chat_activity.py (962L, 0 classes)
+  [2] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (2061L, 2 classes)
   [3] H/H Split god module src/koru/autopilot/cli_command.py (1004L, 0 classes)
   [4] H/H Split god module src/koru/cli_cleaned.py (564L, 0 classes)
   [5] H/H Split god module src/koru/doctor.py (1965L, 2 classes)
 
 EVOLUTION:
-  2026-05-24 CC̄=1.1 crit=214 202739L // Automated analysis
+  2026-05-25 CC̄=3.7 crit=220 73308L // Automated analysis

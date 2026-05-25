@@ -53,6 +53,27 @@ export function shouldVerifyPostSubmit(
   return true;
 }
 
+/**
+ * Host-level submit commands can report rc=0 even when the chat webview did
+ * not consume the key. For those IDEs, a long pasted prompt must be verified
+ * whenever the probe ladder is available, even if the legacy user setting
+ * disabled optional post-submit verification.
+ */
+export function shouldRequireVerifiedHostSubmit(
+  ide: string,
+  pastedText: string | undefined,
+  cfg: KoruAutopilotStepConfig
+): boolean {
+  if (!cfg.probeLadder) {
+    return false;
+  }
+  if (!pastedText || pastedText.trim().length < 4) {
+    return false;
+  }
+  const strategy = ideControlStrategy(ide);
+  return strategy.verifyPostSubmit && strategy.submitStrategy.endsWith("host-submit");
+}
+
 /** Should the pre-paste busy probe run before injecting? */
 export function shouldVerifyPrePasteBusy(cfg: KoruAutopilotStepConfig): boolean {
   return cfg.probeLadder && (cfg.skipWhenInputBusy ?? true);

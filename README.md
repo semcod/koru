@@ -7,13 +7,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.262-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$10.98-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-106.1h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.263-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$12.66-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-107.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $10.9751 (336 commits)
-- 👤 **Human dev:** ~$10611 (106.1h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $12.6628 (337 commits)
+- 👤 **Human dev:** ~$10697 (107.0h @ $100/h, 30min dedup)
 
-Generated on 2026-05-24 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
+Generated on 2026-05-25 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
 ---
 
@@ -42,6 +42,17 @@ A meta-orchestrator that coordinates **LLM-augmented refactor tools** with
         ↑                                                  │
         └─────────── closed-loop feedback ─────────────────┘
 ```
+
+
+## autonomous cycle chat activity
+![img.png](img.png)
+```
+[10:18:48] koru ▸ KORUAUTONOMOUS: next 1/3 wait 240s; chat cooldown is active for STARTER-217, so Koru will not paste over the IDE chat
+[10:18:48] koru ▸ KORUAUTONOMOUS: next 2/3 rerun planfile queue (max 50) and check whether STARTER-217 moved
+[10:18:48] koru ▸ KORUAUTONOMOUS: next 3/3 if queue becomes idle, run scan/discovery; if still waiting, use chat events/reflection before any redrive
+```
+
+
 
 ## Quick start — start an LLM session in 3 commands
 

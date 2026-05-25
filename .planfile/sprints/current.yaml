@@ -281,9 +281,10 @@ sprint:
         to verify.'
       execution:
         attempt: 0
+        finished_at: '2026-05-25T10:20:51.422097Z'
         max_attempts: 1
         queue: default
-        state: ready
+        state: done
       executor:
         kind: human
         mode: interactive
@@ -296,6 +297,16 @@ sprint:
           to verify.'
         source: koru task
         timestamp: '2026-05-24T19:34:15.160219+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:20:51.445013+00:00'
       id: STARTER-217
       inputs:
         api_headers: {}
@@ -327,9 +338,9 @@ sprint:
         timestamp: '2026-05-24T19:34:15.160219+00:00'
         tool: koru-scan
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-24T19:34:15.160219+00:00'
+      updated_at: '2026-05-25T10:20:51.444971+00:00'
     STARTER-218:
       blocked_by: []
       blocks: []
@@ -411,38 +422,9 @@ sprint:
       sync: {}
       updated_at: '2026-05-24T20:25:04.246897+00:00'
     STARTER-219:
-      id: STARTER-219
-      name: '[OPERATOR] intake from IDE chat'
-      status: open
-      priority: high
-      sprint: current
-      source:
-        tool: koru-autonomous-chat-intake
-        timestamp: '2026-05-24T20:42:35.637964+00:00'
-        context:
-          input: '[OPERATOR] intake from IDE chat
-
-
-            A new external chat message was sent in IDE while the queue is blocked
-            in waiting_input.
-
-            Create/update a dedicated operator task from this intake instead of re-driving
-            the old prompt.
-
-
-            Origin waiting ticket: STARTER-217
-
-            Incoming intake:
-
-            Bug: koru auto treated copy-paste intake as an IDE chat drive instead
-            of creating a new operator ticket. Repro: run koru auto, paste a short
-            intake text/path, and observe immediate chat drive (message'
-          signal: chat_intake_message_sent
-          origin_waiting_ticket: STARTER-217
-          dedupe_key: autopilot:chat-intake:35ee44c2b9d7861c
-          intake_preview: 'Bug: koru auto treated copy-paste intake as an IDE chat
-            drive instead of creating a new operator ticket. Repro: run koru auto,
-            paste a short intake text/path, and observe immediate chat drive (message'
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-24T20:42:35.637964+00:00'
       description: '[OPERATOR] intake from IDE chat
 
 
@@ -460,53 +442,18 @@ sprint:
         Bug: koru auto treated copy-paste intake as an IDE chat drive instead of creating
         a new operator ticket. Repro: run koru auto, paste a short intake text/path,
         and observe immediate chat drive (message'
-      labels:
-      - koru
-      - nl-task
-      - llm-ready
-      - operator
-      - autopilot-chat-intake
-      blocked_by: []
-      blocks: []
-      files: []
+      execution:
+        attempt: 0
+        finished_at: '2026-05-24T20:53:26.127682Z'
+        max_attempts: 1
+        queue: operator
+        state: done
       executor:
         kind: human
         mode: interactive
-      execution:
-        queue: operator
-        state: ready
-        attempt: 0
-        max_attempts: 1
-      inputs:
-        prompt: '[OPERATOR] intake from IDE chat
-
-
-          A new external chat message was sent in IDE while the queue is blocked in
-          waiting_input.
-
-          Create/update a dedicated operator task from this intake instead of re-driving
-          the old prompt.
-
-
-          Origin waiting ticket: STARTER-217
-
-          Incoming intake:
-
-          Bug: koru auto treated copy-paste intake as an IDE chat drive instead of
-          creating a new operator ticket. Repro: run koru auto, paste a short intake
-          text/path, and observe immediate chat drive (message'
-        env_keys: []
-        api_method: GET
-        api_headers: {}
-        api_timeout_seconds: 30.0
-      outputs:
-        artifacts: []
-        notes: []
-      sync: {}
+      files: []
       history:
-      - timestamp: '2026-05-24T20:42:35.637964+00:00'
-        action: created
-        source: koru task
+      - action: created
         message: '[OPERATOR] intake from IDE chat
 
 
@@ -524,5 +471,1543 @@ sprint:
           Bug: koru auto treated copy-paste intake as an IDE chat drive instead of
           creating a new operator ticket. Repro: run koru auto, paste a short intake
           text/path, and observe immediate chat drive (message'
-      created_at: '2026-05-24T20:42:35.637964+00:00'
-      updated_at: '2026-05-24T20:42:35.637964+00:00'
+        source: koru task
+        timestamp: '2026-05-24T20:42:35.637964+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-24T20:49:03.322768+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-24T20:53:26.130301+00:00'
+      id: STARTER-219
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] intake from IDE chat
+
+
+          A new external chat message was sent in IDE while the queue is blocked in
+          waiting_input.
+
+          Create/update a dedicated operator task from this intake instead of re-driving
+          the old prompt.
+
+
+          Origin waiting ticket: STARTER-217
+
+          Incoming intake:
+
+          Bug: koru auto treated copy-paste intake as an IDE chat drive instead of
+          creating a new operator ticket. Repro: run koru auto, paste a short intake
+          text/path, and observe immediate chat drive (message'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - autopilot-chat-intake
+      name: '[OPERATOR] intake from IDE chat'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: autopilot:chat-intake:35ee44c2b9d7861c
+          input: '[OPERATOR] intake from IDE chat
+
+
+            A new external chat message was sent in IDE while the queue is blocked
+            in waiting_input.
+
+            Create/update a dedicated operator task from this intake instead of re-driving
+            the old prompt.
+
+
+            Origin waiting ticket: STARTER-217
+
+            Incoming intake:
+
+            Bug: koru auto treated copy-paste intake as an IDE chat drive instead
+            of creating a new operator ticket. Repro: run koru auto, paste a short
+            intake text/path, and observe immediate chat drive (message'
+          intake_preview: 'Bug: koru auto treated copy-paste intake as an IDE chat
+            drive instead of creating a new operator ticket. Repro: run koru auto,
+            paste a short intake text/path, and observe immediate chat drive (message'
+          origin_waiting_ticket: STARTER-217
+          signal: chat_intake_message_sent
+        timestamp: '2026-05-24T20:42:35.637964+00:00'
+        tool: koru-autonomous-chat-intake
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-24T20:53:26.130275+00:00'
+    STARTER-220:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T10:22:55.338449Z'
+      description: 'code2llm reports `God Function: _action_up` in `src/koru/autonomous.py:920`.
+
+
+        Function ''_action_up'' is oversized: CC=7, fan-out=14, mutations=45.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+
+        code2llm-dedupe: code2llm:smell:god_function:src/koru/autonomous.py:920:God
+        Function: _action_up'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T10:26:24.650915Z'
+        lease_expires_at: '2026-05-25T11:23:31.111593Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T10:23:31.588366Z'
+        state: done
+      files:
+      - src/koru/autonomous.py
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:31.126317+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T10:23:31.593176+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:32.061121+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:23:32.549380+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T10:26:24.909169+00:00'
+      id: STARTER-220
+      labels:
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _action_up'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "b989f50c01be498b", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T10:22:55.330098Z'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T10:26:24.909126+00:00'
+    STARTER-221:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T10:22:55.790269Z'
+      description: 'code2llm reports `God Function: _build_parser` in `src/koru/cli_parser.py:24`.
+
+
+        Function ''_build_parser'' is oversized: CC=1, fan-out=4, mutations=34.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+
+        code2llm-dedupe: code2llm:smell:god_function:src/koru/cli_parser.py:24:God
+        Function: _build_parser'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T10:23:34.925010Z'
+        lease_expires_at: '2026-05-25T11:23:33.492127Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T10:23:33.970900Z'
+        state: done
+      files:
+      - src/koru/cli_parser.py
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:33.496970+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T10:23:33.975841+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:34.466033+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:23:34.931951+00:00'
+      id: STARTER-221
+      labels:
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _build_parser'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "6fe64e3b5ce04f7d", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T10:22:55.789334Z'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T10:23:34.931921+00:00'
+    STARTER-222:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T10:22:56.235291Z'
+      description: 'code2llm reports `God Function: _check_autopilot_chat_control`
+        in `src/koru/doctor.py:998`.
+
+
+        Function ''_check_autopilot_chat_control'' is oversized: CC=13, fan-out=13,
+        mutations=34.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+
+        code2llm-dedupe: code2llm:smell:god_function:src/koru/doctor.py:998:God Function:
+        _check_autopilot_chat_control'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T10:23:37.291066Z'
+        lease_expires_at: '2026-05-25T11:23:35.864689Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T10:23:36.335575Z'
+        state: done
+      files:
+      - src/koru/doctor.py
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:35.869744+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T10:23:36.341276+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:36.819960+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:23:37.296291+00:00'
+      id: STARTER-222
+      labels:
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _check_autopilot_chat_control'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "c95c1ea5671e497d", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T10:22:56.234211Z'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T10:23:37.296262+00:00'
+    STARTER-223:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T10:22:56.678823Z'
+      description: 'code2llm reports `God Function: _check_detected_configuration`
+        in `src/koru/doctor.py:281`.
+
+
+        Function ''_check_detected_configuration'' is oversized: CC=13, fan-out=18,
+        mutations=17.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+
+        code2llm-dedupe: code2llm:smell:god_function:src/koru/doctor.py:281:God Function:
+        _check_detected_configuration'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T10:23:39.788634Z'
+        lease_expires_at: '2026-05-25T11:23:38.253853Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T10:23:38.761701Z'
+        state: done
+      files:
+      - src/koru/doctor.py
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:38.261404+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T10:23:38.769867+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:39.280867+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:23:39.796253+00:00'
+      id: STARTER-223
+      labels:
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _check_detected_configuration'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "54440975669042ab", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T10:22:56.677947Z'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T10:23:39.796225+00:00'
+    STARTER-224:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T10:22:57.130748Z'
+      description: 'code2llm reports `God Function: _check_plugin_console_logs` in
+        `src/koru/doctor.py:1223`.
+
+
+        Function ''_check_plugin_console_logs'' is oversized: CC=14, fan-out=12, mutations=21.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+
+        code2llm-dedupe: code2llm:smell:god_function:src/koru/doctor.py:1223:God Function:
+        _check_plugin_console_logs'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T10:23:42.222558Z'
+        lease_expires_at: '2026-05-25T11:23:40.739322Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T10:23:41.219959Z'
+        state: done
+      files:
+      - src/koru/doctor.py
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:40.747078+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T10:23:41.227803+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:41.742088+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:23:42.230639+00:00'
+      id: STARTER-224
+      labels:
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _check_plugin_console_logs'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "a1e9402cb7ae4b27", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T10:22:57.129876Z'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T10:23:42.230612+00:00'
+    STARTER-225:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T10:22:57.588719Z'
+      description: 'code2llm reports `God Function: _create_nl_task_impl` in `src/koru/tasks.py:22`.
+
+
+        Function ''_create_nl_task_impl'' is oversized: CC=13, fan-out=21, mutations=29.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+
+        code2llm-dedupe: code2llm:smell:god_function:src/koru/tasks.py:22:God Function:
+        _create_nl_task_impl'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T10:23:44.712831Z'
+        lease_expires_at: '2026-05-25T11:23:43.199140Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T10:23:43.710168Z'
+        state: done
+      files:
+      - src/koru/tasks.py
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:43.207698+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T10:23:43.719083+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:44.221372+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:23:44.721367+00:00'
+      id: STARTER-225
+      labels:
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _create_nl_task_impl'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "ee3a110dfe0348fb", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T10:22:57.587842Z'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T10:23:44.721338+00:00'
+    STARTER-226:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T10:22:58.048666Z'
+      description: 'code2llm reports `God Function: _drive_via_keyboard` in `src/koruide/daemon/handlers.py:220`.
+
+
+        Function ''_drive_via_keyboard'' is oversized: CC=13, fan-out=19, mutations=19.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+
+        code2llm-dedupe: code2llm:smell:god_function:src/koruide/daemon/handlers.py:220:God
+        Function: _drive_via_keyboard'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T10:23:47.111445Z'
+        lease_expires_at: '2026-05-25T11:23:45.667246Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T10:23:46.142707Z'
+        state: done
+      files:
+      - src/koruide/daemon/handlers.py
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:45.675742+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T10:23:46.151135+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:46.635016+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:23:47.119898+00:00'
+      id: STARTER-226
+      labels:
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _drive_via_keyboard'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "4f5c6e72fa5d4460", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T10:22:58.047768Z'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T10:23:47.119866+00:00'
+    STARTER-227:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T10:22:58.530366Z'
+      description: 'code2llm reports `God Function: _find_existing_autonomous_processes`
+        in `src/koru/autonomous_processes.py:83`.
+
+
+        Function ''_find_existing_autonomous_processes'' is oversized: CC=11, fan-out=15,
+        mutations=21.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+
+        code2llm-dedupe: code2llm:smell:god_function:src/koru/autonomous_processes.py:83:God
+        Function: _find_existing_autonomous_processes'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T10:23:49.614553Z'
+        lease_expires_at: '2026-05-25T11:23:48.103817Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T10:23:48.612843Z'
+        state: done
+      files:
+      - src/koru/autonomous_processes.py
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:48.112106+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T10:23:48.622471+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:49.114306+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:23:49.623917+00:00'
+      id: STARTER-227
+      labels:
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _find_existing_autonomous_processes'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "4037cb3d76794ead", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T10:22:58.529443Z'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T10:23:49.623875+00:00'
+    STARTER-228:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T10:22:59.018235Z'
+      description: 'code2llm reports `God Function: _find_existing_wup_processes`
+        in `src/koru/autonomous_processes.py:128`.
+
+
+        Function ''_find_existing_wup_processes'' is oversized: CC=11, fan-out=14,
+        mutations=20.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+
+        code2llm-dedupe: code2llm:smell:god_function:src/koru/autonomous_processes.py:128:God
+        Function: _find_existing_wup_processes'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T10:23:52.707589Z'
+        lease_expires_at: '2026-05-25T11:23:51.164551Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T10:23:51.661957Z'
+        state: done
+      files:
+      - src/koru/autonomous_processes.py
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:51.173013+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T10:23:51.670561+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:52.184415+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:23:52.716276+00:00'
+      id: STARTER-228
+      labels:
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _find_existing_wup_processes'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "5155d58f16aa4b0a", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T10:22:59.017281Z'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T10:23:52.716250+00:00'
+    STARTER-229:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T10:22:59.494094Z'
+      description: 'code2llm reports `God Function: _handle_autopilot_phase` in `src/koru/autonomous_cycle_orchestrator.py:22`.
+
+
+        Function ''_handle_autopilot_phase'' is oversized: CC=14, fan-out=13, mutations=34.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+
+        code2llm-dedupe: code2llm:smell:god_function:src/koru/autonomous_cycle_orchestrator.py:22:God
+        Function: _handle_autopilot_phase'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T10:23:55.384330Z'
+        lease_expires_at: '2026-05-25T11:23:53.756742Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T10:23:54.276151Z'
+        state: done
+      files:
+      - src/koru/autonomous_cycle_orchestrator.py
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:53.766299+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T10:23:54.288379+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:54.860136+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:23:55.393570+00:00'
+      id: STARTER-229
+      labels:
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _handle_autopilot_phase'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "338bd065fe544837", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T10:22:59.492910Z'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T10:23:55.393539+00:00'
+    STARTER-230:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T10:22:59.962362Z'
+      description: 'code2llm reports `God Function: _merge_components` in `src/koru/topology.py:174`.
+
+
+        Function ''_merge_components'' is oversized: CC=12, fan-out=13, mutations=21.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+
+        code2llm-dedupe: code2llm:smell:god_function:src/koru/topology.py:174:God
+        Function: _merge_components'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T10:23:57.841571Z'
+        lease_expires_at: '2026-05-25T11:23:56.356295Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T10:23:56.847300Z'
+        state: done
+      files:
+      - src/koru/topology.py
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:56.365581+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T10:23:56.856676+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:57.350966+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:23:57.850928+00:00'
+      id: STARTER-230
+      labels:
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _merge_components'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "a9bd2b138fac4a6b", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T10:22:59.961394Z'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T10:23:57.850899+00:00'
+    STARTER-231:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T10:23:00.423986Z'
+      description: 'code2llm reports `God Function: _run_next_planfile_task_impl`
+        in `src/koru/queue/runner.py:266`.
+
+
+        Function ''_run_next_planfile_task_impl'' is oversized: CC=14, fan-out=16,
+        mutations=18.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+
+        code2llm-dedupe: code2llm:smell:god_function:src/koru/queue/runner.py:266:God
+        Function: _run_next_planfile_task_impl'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T10:24:00.346313Z'
+        lease_expires_at: '2026-05-25T11:23:58.856525Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T10:23:59.358046Z'
+        state: done
+      files:
+      - src/koru/queue/runner.py
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:58.865683+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T10:23:59.367514+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T10:23:59.868870+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:24:00.355835+00:00'
+      id: STARTER-231
+      labels:
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _run_next_planfile_task_impl'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "9e2ddff8d0e04c95", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T10:23:00.423054Z'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T10:24:00.355793+00:00'
+    STARTER-232:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T10:23:00.888150Z'
+      description: 'code2llm reports `God Function: build_operator_steps` in `src/koru/autonomy/operator_pipeline.py:424`.
+
+
+        Function ''build_operator_steps'' is oversized: CC=12, fan-out=9, mutations=35.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+
+        code2llm-dedupe: code2llm:smell:god_function:src/koru/autonomy/operator_pipeline.py:424:God
+        Function: build_operator_steps'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T10:24:02.849638Z'
+        lease_expires_at: '2026-05-25T11:24:01.305725Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T10:24:01.799443Z'
+        state: done
+      files:
+      - src/koru/autonomy/operator_pipeline.py
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T10:24:01.315209+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T10:24:01.808928+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T10:24:02.329979+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:24:02.859700+00:00'
+      id: STARTER-232
+      labels:
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: build_operator_steps'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "3e805e9e36624208", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T10:23:00.887246Z'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T10:24:02.859668+00:00'
+    STARTER-233:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T10:23:01.361158Z'
+      description: 'code2llm reports `God Function: build_parser` in `src/koru/autonomous_parser.py:8`.
+
+
+        Function ''build_parser'' is oversized: CC=1, fan-out=9, mutations=72.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+
+        code2llm-dedupe: code2llm:smell:god_function:src/koru/autonomous_parser.py:8:God
+        Function: build_parser'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T10:24:05.447151Z'
+        lease_expires_at: '2026-05-25T11:24:03.896505Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T10:24:04.422210Z'
+        state: done
+      files:
+      - src/koru/autonomous_parser.py
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T10:24:03.906535+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T10:24:04.431910+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T10:24:04.954703+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:24:05.458358+00:00'
+      id: STARTER-233
+      labels:
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: build_parser'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "5f30b05ff5244dce", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T10:23:01.360205Z'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T10:24:05.458325+00:00'
+    STARTER-234:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T10:23:01.840691Z'
+      description: 'code2llm reports `God Function: collect_install_manager_report`
+        in `src/koru/autopilot/install_manager.py:520`.
+
+
+        Function ''collect_install_manager_report'' is oversized: CC=11, fan-out=20,
+        mutations=16.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+
+        code2llm-dedupe: code2llm:smell:god_function:src/koru/autopilot/install_manager.py:520:God
+        Function: collect_install_manager_report'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T10:24:07.964529Z'
+        lease_expires_at: '2026-05-25T11:24:06.430661Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T10:24:06.933407Z'
+        state: done
+      files:
+      - src/koru/autopilot/install_manager.py
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T10:24:06.442283+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T10:24:06.943504+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T10:24:07.456969+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:24:07.975008+00:00'
+      id: STARTER-234
+      labels:
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: collect_install_manager_report'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "ddfe3b9171ef4b1d", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T10:23:01.839720Z'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T10:24:07.974964+00:00'
+    STARTER-235:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T10:23:02.342709Z'
+      description: 'code2llm reports `God Function: create_app` in `src/koru/wizard/gui/app.py:120`.
+
+
+        Function ''create_app'' is oversized: CC=3, fan-out=44, mutations=51.
+
+
+        Make the smallest refactor that removes the smell and run local tests.
+
+
+        code2llm-dedupe: code2llm:smell:god_function:src/koru/wizard/gui/app.py:120:God
+        Function: create_app'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T10:24:10.550763Z'
+        lease_expires_at: '2026-05-25T11:24:09.004168Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T10:24:09.534206Z'
+        state: done
+      files:
+      - src/koru/wizard/gui/app.py
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T10:24:09.014545+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T10:24:09.544692+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T10:24:10.058796+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T10:24:10.561335+00:00'
+      id: STARTER-235
+      labels:
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: create_app'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "b16ded8670234e80", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T10:23:02.334061Z'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T10:24:10.561303+00:00'

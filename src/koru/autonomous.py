@@ -879,6 +879,30 @@ class StopSignalState:
     stopped_by_sigterm: bool = False
 
 
+@dataclass
+class AutonomousUpContext:
+    args: argparse.Namespace
+    previous_stdio_format_env: str | None
+    strict_env: str | None
+    correlation_id: str
+    project: Path
+    startup_probe: object
+    client: Any
+    daemon: Any
+    thread: Any
+    socket_path: Path | None
+    autopilot_socket_observed_at_boot: bool
+    enable_scan: bool
+    queue_name: str | None
+    autopilot_ide: str
+    loop_state: Any
+    checkpoint_path: Path | None
+    restored_cycle: int | None
+    diagnostic_state_dir: Path | None
+    wup_process: Any
+    auto_pipeline_state: Any
+
+
 def _build_and_log_startup_probe(args: argparse.Namespace, project: Path) -> object:
     return _autonomous_runtime.build_and_log_startup_probe(
         args,
@@ -917,23 +941,19 @@ def _handle_autonomous_interrupt(
     )
 
 
-def _action_up(args: argparse.Namespace) -> int:
-    try:
-        _maybe_run_interactive_onboarding(args)
-    except KeyboardInterrupt:
-        _stdio_info("\nkoru auto onboarding: interrupted", fmt=args.emit_events)
-        return 130
-
+def _prepare_autonomous_up_context(
+    args: argparse.Namespace,
+) -> tuple[AutonomousUpContext | None, int]:
     previous_stdio_format_env, strict_env = _setup_autonomous_env_vars()
     correlation_id, project, guard_rc = _setup_autonomous_session(args)
     if guard_rc:
-        return guard_rc
+        return None, guard_rc
+
     install_koru_agent_coauthor_hook(
         project,
         stdio_info=_stdio_info,
         stdio_format=args.emit_events,
     )
-
     startup_probe = _build_and_log_startup_probe(args, project)
     (
         client,
@@ -957,60 +977,96 @@ def _action_up(args: argparse.Namespace) -> int:
         setup_autopilot_daemon=_setup_autopilot_daemon,
         load_checkpoint=_load_loop_checkpoint,
     )
+    return AutonomousUpContext(
+        args=args,
+        previous_stdio_format_env=previous_stdio_format_env,
+        strict_env=strict_env,
+        correlation_id=correlation_id,
+        project=project,
+        startup_probe=startup_probe,
+        client=client,
+        daemon=daemon,
+        thread=thread,
+        socket_path=socket_path,
+        autopilot_socket_observed_at_boot=autopilot_socket_observed_at_boot,
+        enable_scan=enable_scan,
+        queue_name=queue_name,
+        autopilot_ide=autopilot_ide,
+        loop_state=loop_state,
+        checkpoint_path=checkpoint_path,
+        restored_cycle=restored_cycle,
+        diagnostic_state_dir=diagnostic_state_dir,
+        wup_process=wup_process,
+        auto_pipeline_state=auto_pipeline_state,
+    ), 0
 
+
+def _run_autonomous_up_loop(context: AutonomousUpContext) -> int:
     stop_state = StopSignalState()
-    previous_sigterm = _install_sigterm_interrupt_handler(args, stop_state)
+    previous_sigterm = _install_sigterm_interrupt_handler(context.args, stop_state)
     try:
         _run_autonomous_pre_checks(
-            args,
-            project,
-            startup_probe,
-            socket_path,
-            autopilot_ide,
-            client,
-            correlation_id,
+            context.args,
+            context.project,
+            context.startup_probe,
+            context.socket_path,
+            context.autopilot_ide,
+            context.client,
+            context.correlation_id,
         )
 
-        cycle = restored_cycle or 0
+        cycle = context.restored_cycle or 0
         while True:
             cycle += 1
             should_exit = _run_autonomous_cycle(
                 cycle=cycle,
-                args=args,
-                project=project,
-                client=client,
-                daemon=daemon,
-                thread=thread,
-                socket_path=socket_path,
-                autopilot_socket_observed_at_boot=autopilot_socket_observed_at_boot,
-                queue_name=queue_name,
-                enable_scan=enable_scan,
-                autopilot_ide=autopilot_ide,
-                loop_state=loop_state,
-                checkpoint_path=checkpoint_path,
-                diagnostic_state_dir=diagnostic_state_dir,
-                wup_process=wup_process,
-                correlation_id=correlation_id,
-                auto_pipeline_state=auto_pipeline_state,
+                args=context.args,
+                project=context.project,
+                client=context.client,
+                daemon=context.daemon,
+                thread=context.thread,
+                socket_path=context.socket_path,
+                autopilot_socket_observed_at_boot=context.autopilot_socket_observed_at_boot,
+                queue_name=context.queue_name,
+                enable_scan=context.enable_scan,
+                autopilot_ide=context.autopilot_ide,
+                loop_state=context.loop_state,
+                checkpoint_path=context.checkpoint_path,
+                diagnostic_state_dir=context.diagnostic_state_dir,
+                wup_process=context.wup_process,
+                correlation_id=context.correlation_id,
+                auto_pipeline_state=context.auto_pipeline_state,
             )
             if should_exit:
                 return 0
     except KeyboardInterrupt:
         return _handle_autonomous_interrupt(
-            args,
-            correlation_id=correlation_id,
+            context.args,
+            correlation_id=context.correlation_id,
             stopped_by_sigterm=stop_state.stopped_by_sigterm,
         )
     finally:
-        _restore_autonomous_env_vars(strict_env)
+        _restore_autonomous_env_vars(context.strict_env)
         _cleanup_autonomous_session(
-            previous_stdio_format_env,
+            context.previous_stdio_format_env,
             previous_sigterm,
-            daemon,
-            thread,
-            wup_process,
-            args.emit_events,
+            context.daemon,
+            context.thread,
+            context.wup_process,
+            context.args.emit_events,
         )
+
+
+def _action_up(args: argparse.Namespace) -> int:
+    try:
+        _maybe_run_interactive_onboarding(args)
+    except KeyboardInterrupt:
+        _stdio_info("\nkoru auto onboarding: interrupted", fmt=args.emit_events)
+        return 130
+    context, rc = _prepare_autonomous_up_context(args)
+    if context is None:
+        return rc
+    return _run_autonomous_up_loop(context)
 
 
 def _normalize_autonomous_argv(argv: list[str]) -> list[str]:
