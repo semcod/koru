@@ -347,6 +347,45 @@ def test_format_post_startup_operator_hints_mentions_socket(tmp_path: Path) -> N
     assert "drive jest wstrzymany" in text
 
 
+def test_format_post_startup_operator_hints_compact_for_disconnected_plugin(
+    tmp_path: Path,
+) -> None:
+    probe = startup.AutonomousStartupProbe(
+        koru_version="0.0-test",
+        python_version="3.12",
+        project=tmp_path,
+        agent_lane_cli="vscode",
+        autopilot_ide_cli="vscode",
+        resolved_lane="vscode",
+        lane_source="cli:vscode",
+        resolved_autopilot_ide="vscode",
+        autopilot_ide_source="cli:vscode",
+        running_ides=("VS Code (pid=1)",),
+        terminal_lane="vscode",
+        socket_path="/run/user/1000/koru-autopilot-vscode.sock",
+        session="wayland",
+        term_program="vscode",
+        headless=False,
+        xdg_runtime_dir="/run/user/1000",
+    )
+
+    text = "\n".join(
+        startup.format_post_startup_operator_hints(
+            probe,
+            plugin_connected=False,
+            compact=True,
+        ),
+    )
+
+    assert "[!] brak zgodnego pluginu" in text
+    assert "next reload/reconnect plugin" in text
+    assert "koru autopilot status --explain" in text
+    assert "koru ide doctor --ide vscode --fix --explain" in text
+    assert "co zrobić teraz" not in text
+    assert "1) Otwórz" not in text
+    assert "require-plugin" not in text
+
+
 def test_format_post_startup_operator_hints_can_name_plugin_version_mismatch(
     tmp_path: Path,
 ) -> None:

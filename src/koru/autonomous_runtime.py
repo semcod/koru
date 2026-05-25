@@ -153,6 +153,10 @@ def setup_autopilot_daemon(
         lane,
         resolve_ide_route_fn=resolve_ide_route_fn,
     )
+    # Update KORU_AUTOPILOT_INSTANCE to match resolved autopilot_ide so default_socket_path() uses the correct value
+    # This ensures the socket path matches the lane even if the env var was stale
+    if autopilot_ide and autopilot_ide != "auto":
+        os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
     env_socket = (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip()
     env_instance_before = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
     socket_source = "cli --socket" if args.socket else "default socket"
@@ -160,13 +164,8 @@ def setup_autopilot_daemon(
         socket_source = "env:KORU_AUTOPILOT_SOCKET"
     elif env_instance_before and not args.socket:
         socket_source = f"env:KORU_AUTOPILOT_INSTANCE={env_instance_before}"
-    if (
-        autopilot_ide
-        and "KORU_AUTOPILOT_INSTANCE" not in os.environ
-        and "KORU_AUTOPILOT_SOCKET" not in os.environ
-    ):
-        os.environ["KORU_AUTOPILOT_INSTANCE"] = autopilot_ide
-        socket_source = f"autopilot ide={autopilot_ide} -> KORU_AUTOPILOT_INSTANCE"
+    elif autopilot_ide and not args.socket:
+        socket_source = f"resolved autopilot_ide={autopilot_ide}"
     socket_path = (args.socket or default_socket_path()).resolve()
     stdio_info(
         "koru autonomous: autopilot socket decision: "

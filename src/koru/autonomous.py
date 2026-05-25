@@ -558,6 +558,17 @@ def _run_operator_pipeline(
     correlation_id: str,
 ) -> None:
     """Run operator pipeline if enabled."""
+    def format_runtime_hints(
+        probe: Any,
+        *,
+        plugin_connected: bool | None = None,
+    ) -> list[str]:
+        return format_post_startup_operator_hints(
+            probe,
+            plugin_connected=plugin_connected,
+            compact=plugin_connected is False,
+        )
+
     _autonomous_operator.run_operator_pipeline(
         args,
         project,
@@ -565,7 +576,7 @@ def _run_operator_pipeline(
         plugin_connected,
         mcp_provision_ran,
         correlation_id,
-        format_hints=format_post_startup_operator_hints,
+        format_hints=format_runtime_hints,
         run_pipeline=run_startup_operator_pipeline,
         stdio_info=_stdio_info,
     )

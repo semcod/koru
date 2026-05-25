@@ -1,0 +1,195 @@
+"""Hello message handlers for koruide daemon (R6).
+
+Extracted from :mod:`koruide.daemon.handlers` to isolate plugin hello
+handshake logic (version checks, client configuration, rejection logging)
+into a cohesive module.
+"""
+
+from __future__ import annotations
+
+import time
+from typing import Any
+
+from koruide.daemon.protocol import _Client, _daemon_package_version
+from koruide.drive_orchestrator import DriveOrchestrator
+from koruide.ide import normalize_ide_id
+from koruide.protocol import Message, ack, error, MIN_PLUGIN_PROTOCOL_VERSION
+
+
+def _extract_hello_metadata(msg: Message) -> tuple[str | None, str | None, int | None, list[str]]:
+    """Extract and validate hello message metadata."""
+    raw_ide = msg.data.get("ide")
+    ide = normalize_ide_id(raw_ide) if isinstance(raw_ide, str) else raw_ide
+    version = msg.data.get("version")
+    plugin_version = version if isinstance(version, str) else None
+    protocol_raw = msg.data.get("protocolVersion")
+    protocol_version = protocol_raw if isinstance(protocol_raw, int) else None
+    capabilities_raw = msg.data.get("capabilities")
+    capabilities = (
+        [item for item in capabilities_raw if isinstance(item, str)]
+        if isinstance(capabilities_raw, list)
+        else []
+    )
+    return ide, plugin_version, protocol_version, capabilities
+
+
+def _handle_plugin_version_check(
+    daemon: Any,
+    client: _Client,
+    msg: Message,
+    ide: str,
+    plugin_version: str | None,
+    protocol_version: int | None,
+    capabilities: list[str],
+) -> bool:
+    """Check plugin version and return True if accepted, False if rejected."""
+    version_info = DriveOrchestrator.plugin_version_info(
+        plugin_ide=ide,
+        connected_version=plugin_version,
+        protocol_version=protocol_version,
+        capabilities=capabilities,
+    )
+    if DriveOrchestrator.should_block_plugin_version(version_info):
+        message = DriveOrchestrator.plugin_version_block_message(version_info)
+        daemon._send(client, error(msg.id, message).encode())
+        # Route via instance method so tests calling
+        # ``daemon._log_rejected_plugin_connection(...)`` directly observe
+        # the same code path and shared rejection state.
+        daemon._log_rejected_plugin_connection(
+            ide=ide,
+            plugin_version=plugin_version,
+            expected_plugin_version=version_info.get("expected_plugin_version"),
+            message=message,
+        )
+        daemon.audit.record(
+            "plugin_rejected",
+            ide=ide,
+            version=plugin_version,
+            expected_plugin_version=version_info.get("expected_plugin_version"),
+            error=message,
+        )
+        daemon._drop(client)
+        return False
+    return True
+
+
+def _configure_plugin_client(
+    daemon: Any,
+    client: _Client,
+    ide: str,
+    plugin_version: str | None,
+    protocol_version: int | None,
+    capabilities: list[str],
+) -> None:
+    """Configure client as a plugin with provided metadata."""
+    client.role = "plugin"
+    client.ide = ide
+    client.version = plugin_version
+    client.protocol_version = protocol_version
+    client.capabilities = capabilities
+    daemon._plugin_router.drop_stale_plugins(client, ide)
+
+
+def _log_plugin_hello_accepted(
+    daemon: Any,
+    ide: str,
+    plugin_version: str | None,
+    protocol_version: int | None,
+    capabilities: list[str],
+    version_info: dict[str, Any],
+    matching_cmds: Any,
+) -> None:
+    """Log successful plugin hello acceptance."""
+    command_count = len(matching_cmds) if isinstance(matching_cmds, list) else "-"
+    daemon.log(
+        "plugin hello accepted: "
+        f"ide={ide} version={plugin_version or '-'} "
+        f"expected={version_info.get('expected_plugin_version') or '-'} "
+        f"policy={version_info.get('plugin_version_policy') or 'warn'} "
+        f"protocol={protocol_version or '-'} min_protocol={MIN_PLUGIN_PROTOCOL_VERSION} "
+        f"capabilities={len(capabilities)} matching_commands={command_count}",
+    )
+
+
+def handle_hello(daemon: Any, client: _Client, msg: Message) -> None:
+    """Handle plugin hello message."""
+    ide, plugin_version, protocol_version, capabilities = _extract_hello_metadata(msg)
+    if not isinstance(ide, str) or not ide:
+        daemon._send(client, error(msg.id, "hello requires 'ide'").encode())
+        return
+
+    if not _handle_plugin_version_check(
+        daemon, client, msg, ide, plugin_version, protocol_version, capabilities
+    ):
+        return
+
+    version_info = DriveOrchestrator.plugin_version_info(
+        plugin_ide=ide,
+        connected_version=plugin_version,
+        protocol_version=protocol_version,
+        capabilities=capabilities,
+    )
+
+    _configure_plugin_client(daemon, client, ide, plugin_version, protocol_version, capabilities)
+    matching_cmds = msg.data.get("matchingCommands")
+    _log_plugin_hello_accepted(
+        daemon, ide, plugin_version, protocol_version, capabilities, version_info, matching_cmds
+    )
+    daemon._send(client, ack(msg.id or "", info={"role": "plugin"}).encode())
+    daemon.audit.record(
+        "plugin_connected",
+        ide=ide,
+        version=plugin_version,
+    )
+
+
+def _log_rejected_plugin_connection(
+    daemon: Any,
+    *,
+    ide: str,
+    plugin_version: str | None,
+    expected_plugin_version: Any,
+    message: str,
+) -> None:
+    """Log rejected plugin connection with rate limiting."""
+    from koruide.daemon.handlers import _ide_reload_label, _plugin_rejection_log_interval_seconds
+
+    expected = expected_plugin_version if isinstance(expected_plugin_version, str) else None
+    key = (ide, plugin_version, expected)
+    now = time.monotonic()
+    last, suppressed = daemon._plugin_rejection_log_state.get(key, (0.0, 0))
+    if last and now - last < _plugin_rejection_log_interval_seconds():
+        daemon._plugin_rejection_log_state[key] = (last, suppressed + 1)
+        return
+    suffix = f" (suppressed {suppressed} repeated reconnects)" if suppressed else ""
+    daemon.log(f"rejecting plugin connection: ide={ide} {message}{suffix}")
+    if expected and plugin_version and plugin_version != expected:
+        ide_label = _ide_reload_label(ide)
+        daemon.log(
+            f"  → installed VSIX is v{plugin_version} but daemon expects "
+            f"v{expected}. The IDE is still running the older plugin. "
+            f"Action: in {ide_label} run `Developer: Reload Window` then "
+            "`koru: Connect autopilot daemon` from the command palette. "
+            "If still mismatched after reload, rebuild and reinstall the "
+            "VSIX from plugins/koru-autopilot-vscode/.",
+        )
+    elif expected and not plugin_version:
+        daemon.log(
+            f"  → plugin sent no version; daemon expects v{expected}. "
+            "This usually means the VSIX is older than the policy gate. "
+            "Action: reinstall the VSIX from plugins/koru-autopilot-vscode/ "
+            "and reload the IDE window.",
+        )
+    daemon._plugin_rejection_log_state[key] = (now, 0)
+    daemon._plugin_rejections.append(
+        {
+            "ide": ide,
+            "version": plugin_version,
+            "expected_version": expected,
+            "message": message,
+            "suppressed": suppressed,
+            "at": time.time(),
+        }
+    )
+    if len(daemon._plugin_rejections) > 20:
+        del daemon._plugin_rejections[:-20]

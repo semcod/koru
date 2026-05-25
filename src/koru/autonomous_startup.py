@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from koru.autopilot import default_socket_path
+from koru.ide_router import is_headless_environment, resolve_ide_route
 from koruide.ide import (
     RunningIDE,
     detect_running_ides,
@@ -18,7 +19,6 @@ from koruide.ide import (
     supported_autopilot_ide_ids,
     supports_vscode_extension_plugin,
 )
-from koru.ide_router import is_headless_environment, resolve_ide_route
 
 _PLUGIN_IDE_LANES = supported_autopilot_ide_ids() - {"auto"}
 _AUTOPILOT_PLUGIN_LANES = ("antigravity", "cursor", "windsurf", "vscodium", "vscode")
@@ -617,29 +617,39 @@ def format_post_startup_operator_hints(
     plugin_connected: bool | None = None,
     plugin_blocker: str | None = None,
     plugin_reason: str | None = None,
+    compact: bool = False,
 ) -> list[str]:
     """Human checklist printed after daemon start (and optional plugin wait)."""
     ide = probe.resolved_autopilot_ide
     sock = probe.socket_path
     settings_hint = _get_settings_hint(ide)
+    plugin_supported = supports_autopilot_plugin_ide(ide)
+    status_line = _format_plugin_status_line(
+        ide,
+        plugin_supported,
+        plugin_connected,
+        sock,
+        plugin_blocker=plugin_blocker,
+        plugin_reason=plugin_reason,
+    )
+    mismatch_warnings = _format_ide_mismatch_warnings(probe)
+
+    if compact and plugin_supported and plugin_connected is False:
+        return [
+            status_line,
+            *mismatch_warnings,
+            "koru autonomous: next reload/reconnect plugin; "
+            "check: koru autopilot status --explain; "
+            f"repair: koru ide doctor --ide {ide} --fix --explain",
+        ]
 
     lines: list[str] = [
         "",
         "koru autonomous: --- co zrobić teraz (operator IDE) ---",
     ]
 
-    plugin_supported = supports_autopilot_plugin_ide(ide)
-    lines.append(
-        _format_plugin_status_line(
-            ide,
-            plugin_supported,
-            plugin_connected,
-            sock,
-            plugin_blocker=plugin_blocker,
-            plugin_reason=plugin_reason,
-        )
-    )
-    lines.extend(_format_ide_mismatch_warnings(probe))
+    lines.append(status_line)
+    lines.extend(mismatch_warnings)
 
     if plugin_supported:
         lines.extend(_format_plugin_setup_steps(ide, sock, settings_hint, probe.project))

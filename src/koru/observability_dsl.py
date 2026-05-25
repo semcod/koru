@@ -266,21 +266,35 @@ def _compact_data(event: KoruObsEvent) -> dict[str, Any]:
     if event.kind == "autonomy.next":
         return _pick(data, "action", "ide", "decision_kind")
     if event.kind == "control.command":
-        return _pick(
+        compact = _pick(
             data,
             "surface",
             "interface_id",
             "transport",
             "operation",
             "target",
-            "args",
             "replayable",
         )
+        args = data.get("args")
+        if isinstance(args, dict):
+            if isinstance(args.get("argv"), list):
+                compact["argv_text"] = _argv_text(args["argv"])
+            elif isinstance(args.get("query"), dict) and args["query"]:
+                compact["query"] = args["query"]
+            elif isinstance(args.get("commands"), list):
+                compact["commands"] = args["commands"]
+            else:
+                compact["args"] = args
+        return compact
     return data
 
 
 def _pick(data: dict[str, Any], *keys: str) -> dict[str, Any]:
     return {key: data[key] for key in keys if key in data}
+
+
+def _argv_text(argv: list[Any]) -> str:
+    return " ".join(shlex.quote(str(part)) for part in argv)
 
 
 def _compact_time(value: str | None) -> str:

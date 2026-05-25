@@ -224,7 +224,8 @@ def test_control_command_dsl_roundtrips_to_replay_plan(tmp_path) -> None:
     assert plan["argv"] == ["planfile", "ticket", "done", "STARTER-1"]
     assert plan["cwd"] == str(tmp_path)
     compact = render_compact_observability_line(event)
-    assert "args=" in compact
+    assert "argv_text=" in compact
+    assert "args=" not in compact
     assert "planfile" in compact
     assert "STARTER-1" in compact
 
