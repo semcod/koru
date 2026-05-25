@@ -197,44 +197,80 @@ def _as_obs_event(event: KoruObsEvent | StoredEvent) -> KoruObsEvent:
     return KoruObsEvent.from_stored_event(event)
 
 
+def _path_step_control_command(data: dict[str, Any]) -> str:
+    surface = str(data.get("surface") or "control")
+    interface_id = str(data.get("interface_id") or "")
+    if surface == "desktop_gui" and interface_id.startswith("ide_"):
+        surface = interface_id
+    operation = str(data.get("operation") or "").strip()
+    return f"command({surface} {operation})" if operation else f"command({surface})"
+
+
+def _path_step_autopilot_intent(data: dict[str, Any]) -> str:
+    goal = str(data.get("goal") or "intent")
+    return f"intent({goal})"
+
+
+def _path_step_autopilot_route_decision(data: dict[str, Any]) -> str:
+    chosen = data.get("chosen") or data.get("route") or data.get("transport")
+    return f"decision({chosen})" if chosen else "decision"
+
+
+def _path_step_autopilot_drive_requested(data: dict[str, Any]) -> str:
+    name = str(data.get("name") or "drive")
+    return f"action({name})"
+
+
+def _path_step_autopilot_drive_phase(data: dict[str, Any]) -> str:
+    name = str(data.get("name") or "phase")
+    status = str(data.get("status") or "").strip()
+    return f"phase({name} {status})" if status else f"phase({name})"
+
+
+def _path_step_autopilot_drive_verified(data: dict[str, Any]) -> str:
+    name = str(data.get("name") or "submit")
+    status = str(data.get("status") or "ok")
+    return f"verify({name} {status})"
+
+
+def _path_step_autopilot_drive_failed(data: dict[str, Any]) -> str:
+    code = str(data.get("code") or "failed")
+    return f"failure({code})"
+
+
+def _path_step_autonomy_blocker(data: dict[str, Any]) -> str:
+    name = str(data.get("name") or "blocked")
+    return f"blocker({name})"
+
+
+def _path_step_autonomy_next(data: dict[str, Any]) -> str:
+    action = str(data.get("action") or "next")
+    return f"next({action})"
+
+
+def _path_step_autonomy_summary(data: dict[str, Any]) -> str:
+    status = str(data.get("status") or data.get("outcome") or "result")
+    return f"result({status})"
+
+
+_PATH_STEP_HANDLERS: dict[str, callable[[dict[str, Any]], str]] = {
+    "control.command": _path_step_control_command,
+    "autopilot.intent": _path_step_autopilot_intent,
+    "autopilot.route.decision": _path_step_autopilot_route_decision,
+    "autopilot.drive.requested": _path_step_autopilot_drive_requested,
+    "autopilot.drive.phase": _path_step_autopilot_drive_phase,
+    "autopilot.drive.verified": _path_step_autopilot_drive_verified,
+    "autopilot.drive.failed": _path_step_autopilot_drive_failed,
+    "autonomy.blocker": _path_step_autonomy_blocker,
+    "autonomy.next": _path_step_autonomy_next,
+    "autonomy.summary": _path_step_autonomy_summary,
+}
+
+
 def _path_step(event: KoruObsEvent) -> str:
-    data = event.data
-    if event.kind == "control.command":
-        surface = str(data.get("surface") or "control")
-        interface_id = str(data.get("interface_id") or "")
-        if surface == "desktop_gui" and interface_id.startswith("ide_"):
-            surface = interface_id
-        operation = str(data.get("operation") or "").strip()
-        return f"command({surface} {operation})" if operation else f"command({surface})"
-    if event.kind == "autopilot.intent":
-        goal = str(data.get("goal") or "intent")
-        return f"intent({goal})"
-    if event.kind == "autopilot.route.decision":
-        chosen = data.get("chosen") or data.get("route") or data.get("transport")
-        return f"decision({chosen})" if chosen else "decision"
-    if event.kind == "autopilot.drive.requested":
-        name = str(data.get("name") or "drive")
-        return f"action({name})"
-    if event.kind == "autopilot.drive.phase":
-        name = str(data.get("name") or "phase")
-        status = str(data.get("status") or "").strip()
-        return f"phase({name} {status})" if status else f"phase({name})"
-    if event.kind == "autopilot.drive.verified":
-        name = str(data.get("name") or "submit")
-        status = str(data.get("status") or "ok")
-        return f"verify({name} {status})"
-    if event.kind == "autopilot.drive.failed":
-        code = str(data.get("code") or "failed")
-        return f"failure({code})"
-    if event.kind == "autonomy.blocker":
-        name = str(data.get("name") or "blocked")
-        return f"blocker({name})"
-    if event.kind == "autonomy.next":
-        action = str(data.get("action") or "next")
-        return f"next({action})"
-    if event.kind == "autonomy.summary":
-        status = str(data.get("status") or data.get("outcome") or "result")
-        return f"result({status})"
+    handler = _PATH_STEP_HANDLERS.get(event.kind)
+    if handler:
+        return handler(event.data)
     return ""
 
 

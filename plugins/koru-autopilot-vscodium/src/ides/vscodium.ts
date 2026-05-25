@@ -25,7 +25,7 @@ function pasteDirectCommandsPrefix(): string[] {
 }
 
 function submitCommandsOverride(): string[] | null {
-  return [];
+  return null;
 }
 
 function focusInputCommandsPrefix(): string[] {
@@ -40,10 +40,6 @@ function sanitizeProbeCache(
   entry: ProbeCacheEntry,
   _opts: { isWayland: boolean }
 ): void {
-  if (entry.submit === "workbench.action.chat.submit") {
-    entry.submit = undefined;
-    return;
-  }
   if (typeof entry.submit !== "string") return;
   const cmd = entry.submit;
   const hasCtrl = /\bctrl\b/i.test(cmd) || /-M\s+ctrl\b/.test(cmd);

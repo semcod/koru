@@ -254,21 +254,56 @@ def handle_ping(daemon: Any, client: _Client, msg: Message) -> None:
     daemon._send(client, ack(msg.id or "ping", info={"pong": True}).encode())
 
 
+def _console_log_payload(msg: Message) -> tuple[str, Any | None, str] | None:
+    if not isinstance(msg.data, dict):
+        return None
+    message = msg.data.get("message")
+    timestamp = msg.data.get("timestamp")
+    if not isinstance(message, str) or not isinstance(timestamp, str):
+        return None
+    return message, msg.data.get("data"), timestamp
+
+
+def _console_log_meta(client: _Client, msg: Message) -> tuple[str | None, str | None]:
+    data = msg.data if isinstance(msg.data, dict) else {}
+    entry_ide = data.get("ide")
+    entry_version = data.get("version")
+    ide = str(entry_ide or client.ide or "").strip() or None
+    version = str(entry_version or client.version or "").strip() or None
+    return ide, version
+
+
+def _record_console_log(client: _Client, msg: Message) -> str | None:
+    payload = _console_log_payload(msg)
+    if payload is None:
+        return None
+    message, data, timestamp = payload
+    ide, version = _console_log_meta(client, msg)
+    add_console_log(message, data, timestamp, ide=ide, version=version)
+    return message
+
+
+def _live_dsl_log_line(message: str) -> str | None:
+    prefix = "[DSL-LIVE]"
+    if not message.startswith(prefix):
+        return None
+    return message[len(prefix):].strip()
+
+
+def _log_live_dsl_console_line(daemon: Any, client: _Client, msg: Message, message: str) -> None:
+    dsl_line = _live_dsl_log_line(message)
+    if dsl_line is None:
+        return
+    data = msg.data if isinstance(msg.data, dict) else {}
+    entry_ide = data.get("ide")
+    ide_token = str(entry_ide or client.ide or "?").strip() or "?"
+    daemon.log(f"[DSL] {dsl_line} via=plugin ide={ide_token}")
+
+
 def handle_console_log(daemon: Any, client: _Client, msg: Message) -> None:
     """Handle console log messages from the plugin for koru doctor."""
-    message = msg.data.get("message") if isinstance(msg.data, dict) else None
-    data = msg.data.get("data") if isinstance(msg.data, dict) else None
-    timestamp = msg.data.get("timestamp") if isinstance(msg.data, dict) else None
-    if isinstance(message, str) and isinstance(timestamp, str):
-        entry_ide = msg.data.get("ide") if isinstance(msg.data, dict) else None
-        entry_version = msg.data.get("version") if isinstance(msg.data, dict) else None
-        add_console_log(
-            message,
-            data,
-            timestamp,
-            ide=str(entry_ide or client.ide or "").strip() or None,
-            version=str(entry_version or client.version or "").strip() or None,
-        )
+    message = _record_console_log(client, msg)
+    if message is not None:
         # Surface plugin-emitted DSL lines in the daemon log immediately
         # (i.e. *before* the drive ack arrives). This is what makes the
         # DSL "live": the operator sees each ladder candidate the
@@ -276,6 +311,4 @@ def handle_console_log(daemon: Any, client: _Client, msg: Message) -> None:
         # the post-ack summary. Plugins emit these via
         # ``sendConsoleLog("[DSL-LIVE] ...")`` from ``traceOperation``;
         # see ``docs/koru-drive-dsl.md``.
-        if message.startswith("[DSL-LIVE]"):
-            ide_token = str(entry_ide or client.ide or "?").strip() or "?"
-            daemon.log(f"[DSL] {message[len('[DSL-LIVE] '):]} via=plugin ide={ide_token}")
+        _log_live_dsl_console_line(daemon, client, msg, message)

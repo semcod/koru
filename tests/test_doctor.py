@@ -95,7 +95,10 @@ class TestHappyPath(unittest.TestCase):
             with (
                 patch.dict(os.environ, _without_autopilot_env(), clear=True),
                 patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"),
-                patch("koru.doctor.detect_terminal_host_ide_id", return_value=None),
+                patch(
+                    "koru.doctor_autopilot_checks.detect_terminal_host_ide_id",
+                    return_value=None,
+                ),
             ):
                 report = _run(project)
             # No failures on a properly-set-up project.
@@ -189,8 +192,11 @@ class TestAutopilotDoctorChecks(unittest.TestCase):
             _scaffold(project)
             with (
                 patch.dict(os.environ, _without_autopilot_env(), clear=True),
-                patch("koru.doctor.detect_terminal_host_ide_id", return_value=None),
-                patch("koru.doctor.detect_running_ides", return_value=[]),
+                patch(
+                    "koru.doctor_autopilot_checks.detect_terminal_host_ide_id",
+                    return_value=None,
+                ),
+                patch("koru.doctor_autopilot_checks.detect_running_ides", return_value=[]),
             ):
                 report = _run(project)
             self.assertEqual(_named(report, "autopilot_env").status, SKIP)
@@ -359,9 +365,12 @@ class TestAutopilotDoctorChecks(unittest.TestCase):
                     },
                     clear=True,
                 ),
-                patch("koru.doctor.collect_install_manager_report", return_value=fake_report),
                 patch(
-                    "koru.doctor._resolve_autopilot_socket_for_doctor",
+                    "koru.doctor_autopilot_checks.collect_install_manager_report",
+                    return_value=fake_report,
+                ),
+                patch(
+                    "koru.doctor_autopilot_checks._resolve_autopilot_socket_for_doctor",
                     return_value=Path("/tmp/a.sock"),
                 ),
             ):

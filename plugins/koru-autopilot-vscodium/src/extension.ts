@@ -11,18 +11,33 @@ import * as fs from "fs";
 import * as net from "net";
 import { spawn } from "child_process";
 import * as vscode from "vscode";
-import { sanitizeOutboundEnvelope } from "./ack-payload";
-import { planDispatch } from "./dispatch-plan";
+import {
+  sanitizeOutboundEnvelope,
+  defaultSocketPathFromEnv,
+  socketCandidatesFromEnv,
+  bottomRightSubmitPoint,
+  parseXdotoolGeometryShell,
+  type CommandOutcome,
+  type FocusOutcome,
+  type PasteAttempt,
+  type SubmitOutcome,
+  type HostCommandResult,
+  type OperationTraceStep,
+  type Envelope,
+  type ScreenPoint,
+  isAllowedFocusOpenCommand,
+  sanitizeFocusOpenCommand,
+  sanitizeFocusOpenCandidates,
+  filterUnsafeFocusOpenForIde,
+  isSpecificChatInputFocusCommand,
+  isTogglingFocusOpenCommand,
+} from "./_shared";
+import { planDispatch } from "./_shared";
 import {
   ANTIGRAVITY_SEND_PROMPT_COMMAND,
   canUseAntigravitySendPrompt,
   selectAntigravityOpenCommand,
 } from "./antigravity-fastpath";
-import {
-  bottomRightSubmitPoint,
-  parseXdotoolGeometryShell,
-  type ScreenPoint,
-} from "./host-click-submit";
 import {
   buildFocusInputCommands,
   buildFocusOpenCommands,
@@ -37,11 +52,11 @@ import {
   mergeProbeCache,
   orderWithCache,
   pasteLandedInEditor,
+  prioritizePlainHostKeySubmitCandidates,
   type ProbeCacheEntry,
   sanitizeProbeCacheForIde,
   verifyFocusAfterOpen,
 } from "./probe-ladder";
-import { defaultSocketPathFromEnv, socketCandidatesFromEnv } from "./socketPath";
 import { ChatHistoryWatcher, SupportedIde } from "./chat-history-watcher";
 import { CursorBubbleAdapter } from "./cursor-bubble-adapter";
 import {
@@ -61,89 +76,6 @@ import {
   type CommandCatalog,
 } from "./command-catalog";
 
-
-const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
-  "workbench.action.chat.openagent",
-  "workbench.action.chat.openask",
-]);
-
-const UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS = new Set([
-  "workbench.panel.chat",
-  "workbench.panel.chat.view.copilot.focus",
-  "workbench.panel.aichat.view.copilot.focus",
-]);
-
-function isAllowedFocusOpenCommand(command: unknown): command is string {
-  return (
-    typeof command === "string" &&
-    command.trim().length > 0 &&
-    !DISALLOWED_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase())
-  );
-}
-
-function sanitizeFocusOpenCommand(command: unknown): string | undefined {
-  if (!isAllowedFocusOpenCommand(command)) {
-    return undefined;
-  }
-  return command.trim();
-}
-
-function sanitizeFocusOpenCandidates(commands: readonly string[]): string[] {
-  return commands.filter(isAllowedFocusOpenCommand);
-}
-
-function filterUnsafeFocusOpenForIde(commands: readonly string[], ide: string): string[] {
-  if (ide !== "vscode") {
-    return [...commands];
-  }
-  return commands.filter((command) => !UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase()));
-}
-
-function isSpecificChatInputFocusCommand(command: string | undefined): boolean {
-  if (!command) {
-    return false;
-  }
-  const normalized = command.toLowerCase();
-  return normalized.includes("chat") || normalized.includes("composer") || normalized.includes("cascade");
-}
-
-/**
- * Commands whose effect *toggles* a chat/composer panel (open → hidden,
- * hidden → open) rather than idempotently opening it. Running these on
- * an already-visible panel hides it, which silently breaks the
- * subsequent paste+submit pipeline because the target surface is no
- * longer rendered. The focus ladder uses this to gate a focus-only
- * preflight (try ``composer.focusComposer`` first; only fall through
- * to toggle commands when the chat input cannot be focused, which
- * implies the panel really is closed).
- */
-const TOGGLING_FOCUS_OPEN_COMMANDS: ReadonlySet<string> = new Set([
-  "composer.openaspane",
-  "workbench.action.toggleauxiliarybar",
-  "workbench.action.togglepanel",
-  "workbench.action.togglesidebar",
-  "workbench.view.chat.toggle",
-]);
-
-function isTogglingFocusOpenCommand(command: string | undefined): boolean {
-  if (!command) {
-    return false;
-  }
-  return TOGGLING_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase());
-}
-
-
-interface Envelope {
-  type: string;
-  id?: string;
-  [k: string]: unknown;
-}
-
-type CommandOutcome = { ok: boolean; command?: string; reason?: string; attempts?: string[] };
-type FocusOutcome = CommandOutcome & { diagnostics?: Record<string, unknown> };
-type PasteAttempt = { handled: boolean; result: CommandOutcome };
-type SubmitOutcome = CommandOutcome & { unverified?: boolean };
-type HostCommandResult = { ok: boolean; stdout: string };
 type FocusChatContext = {
   ide: string;
   cache: ProbeCacheEntry | undefined;
@@ -151,15 +83,15 @@ type FocusChatContext = {
   commands: string[];
   before: ReturnType<typeof captureEditorSnapshot>;
 };
-type OperationTraceStep = {
-  op: string;
-  route: string;
-  ok: boolean;
-  command?: string;
-  reason?: string;
-  attempts?: string[];
-  detail?: Record<string, unknown>;
+
+type VerifiedHostKeySubmitOptions = {
+  preserveFocus?: boolean;
+  preferPlain?: boolean;
 };
+
+function isHostClipboardPasteCommand(command: string | undefined): boolean {
+  return Boolean(command && command.includes("host-clipboard"));
+}
 
 let activeBridge: AutopilotBridge | null = null;
 
@@ -646,20 +578,29 @@ class AutopilotBridge {
 
   private async _tryVerifiedHostKeySubmit(
     ide: string,
-    verifyText: string | undefined
+    verifyText: string | undefined,
+    options: VerifiedHostKeySubmitOptions = {}
   ): Promise<SubmitOutcome> {
     if (process.platform !== "linux" || !verifyText) {
       return { ok: false };
     }
     const cfg = vscode.workspace.getConfiguration("koruAutopilot");
     const override = cfg.get<string>("submitHostKey", "auto") || "auto";
-    const candidates = buildHostKeySubmitCandidates(ide, override);
+    const builtCandidates = buildHostKeySubmitCandidates(ide, override);
+    const candidates =
+      options.preferPlain && override.toLowerCase() === "auto"
+        ? prioritizePlainHostKeySubmitCandidates(builtCandidates)
+        : builtCandidates;
     const attempts: string[] = [];
     this.traceOperation({
       op: "submit_host_key_verified",
       route: "host-key-candidates",
       ok: true,
-      detail: { candidates: candidates.map(([command, args]) => `${command} ${args.join(" ")}`) },
+      detail: {
+        candidates: candidates.map(([command, args]) => `${command} ${args.join(" ")}`),
+        preserveFocus: Boolean(options.preserveFocus),
+        preferPlain: Boolean(options.preferPlain),
+      },
     });
     for (const [command, args] of candidates) {
       const rendered = `${command} ${args.join(" ")}`;
@@ -698,12 +639,21 @@ class AutopilotBridge {
         reason: "input still contains pasted text",
         detail: { observedLength: verify.observedLength },
       });
-      await this.focusChatInput();
-      await this.runHostKeyCandidates("SUBMIT_DESELECT", [
-        ["wtype", ["-k", "End"]],
-        ["xdotool", ["key", "End"]],
-        ["ydotool", ["key", "End"]],
-      ]);
+      if (options.preserveFocus) {
+        this.traceOperation({
+          op: "submit_deselect",
+          route: "preserve-focused-webview",
+          ok: true,
+          reason: "keeping host focus on the pasted webview input for the next submit candidate",
+        });
+      } else {
+        await this.focusChatInput();
+        await this.runHostKeyCandidates("SUBMIT_DESELECT", [
+          ["wtype", ["-k", "End"]],
+          ["xdotool", ["key", "End"]],
+          ["ydotool", ["key", "End"]],
+        ]);
+      }
     }
     return {
       ok: false,
@@ -1206,17 +1156,18 @@ class AutopilotBridge {
 
   private async _submitChatVSCodium(
     verifyText: string | undefined,
-    verifyEnabled: boolean
+    verifyEnabled: boolean,
+    pasteCommand?: string
   ): Promise<SubmitOutcome> {
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     const cache = this.getProbeCache();
-    const candidates = filterRegistered(
-      orderWithCache(buildSubmitCommands("vscodium"), cache?.submit),
-      existing
-    );
+    const orderedCandidates = orderWithCache(buildSubmitCommands("vscodium"), cache?.submit);
+    const registeredCandidates = filterRegistered(orderedCandidates, existing);
+    const candidates = registeredCandidates.length > 0 ? registeredCandidates : orderedCandidates;
     const hostVerifyEnabled =
       verifyEnabled ||
       shouldRequireVerifiedHostSubmit("vscodium", verifyText, this.koruStepConfig());
+    const preserveWebviewFocus = isHostClipboardPasteCommand(pasteCommand);
     this.traceOperation({
       op: "submit",
       route: "vscodium",
@@ -1225,11 +1176,24 @@ class AutopilotBridge {
         verifyEnabled,
         hostVerifyEnabled,
         trustUnverifiedHostSubmit: this.trustUnverifiedHostSubmit(),
-        registeredCandidates: candidates,
+        pasteCommand,
+        preserveWebviewFocus,
+        usedUnregisteredFallback: registeredCandidates.length === 0,
+        registeredCandidates,
+        attemptedCandidates: candidates,
       },
     });
     const registered = await this._tryRegisteredCommands(candidates, verifyText, hostVerifyEnabled);
     if (registered) return registered;
+
+    let preservedFocusHostKey: SubmitOutcome | undefined;
+    if (hostVerifyEnabled && verifyText && preserveWebviewFocus) {
+      preservedFocusHostKey = await this._tryVerifiedHostKeySubmit("vscodium", verifyText, {
+        preserveFocus: true,
+        preferPlain: true,
+      });
+      if (preservedFocusHostKey.ok && preservedFocusHostKey.command) return preservedFocusHostKey;
+    }
 
     const hostClick = await this._tryHostClickSubmit();
     if (hostClick.ok && hostClick.command) {
@@ -1242,6 +1206,7 @@ class AutopilotBridge {
       if (accepted) return accepted;
     }
     if (hostVerifyEnabled && verifyText) {
+      if (preservedFocusHostKey) return preservedFocusHostKey;
       const hostKey = await this._tryVerifiedHostKeySubmit("vscodium", verifyText);
       if (hostKey.ok && hostKey.command) return hostKey;
       return hostKey;
@@ -1362,17 +1327,17 @@ class AutopilotBridge {
     return null;
   }
 
-  private async submitChat(verifyText?: string): Promise<SubmitOutcome> {
+  private async submitChat(verifyText?: string, pasteCommand?: string): Promise<SubmitOutcome> {
     const ide = this.detectIde();
     const verifyEnabled = this.postSubmitVerifyEnabled(verifyText);
     this.traceOperation({
       op: "submit",
       route: "start",
       ok: true,
-      detail: { ide, verifyEnabled, verifyTextLength: verifyText?.length || 0 },
+      detail: { ide, verifyEnabled, verifyTextLength: verifyText?.length || 0, pasteCommand },
     });
     if (ide === "vscodium") {
-      return this._submitChatVSCodium(verifyText, verifyEnabled);
+      return this._submitChatVSCodium(verifyText, verifyEnabled, pasteCommand);
     }
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     const cache = this.getProbeCache();
@@ -1921,7 +1886,7 @@ class AutopilotBridge {
 
   private detectIde(): string {
     const app = vscode.env.appName || "";
-    return detectIdeViaStrategies(app) ?? "vscode";
+    return detectIdeViaStrategies(app) ?? "vscodium";
   }
 
   private send(env: Envelope): void {
@@ -2529,9 +2494,20 @@ class AutopilotBridge {
       return undefined;
     }
     await this.sleep(150);
-    await this.focusChatInput();
+    const ide = this.detectIde();
+    const preserveWebviewFocus = ide === "vscodium" && isHostClipboardPasteCommand(pasted.command);
+    if (preserveWebviewFocus) {
+      this.traceOperation({
+        op: "focus_input",
+        route: "preserve-after-host-clipboard-paste",
+        ok: true,
+        detail: { ide, pasteCommand: pasted.command },
+      });
+    } else {
+      await this.focusChatInput();
+    }
     await this.captureCursorBubbleAnchor();
-    const submitResult = await this.submitChat(pastedText);
+    const submitResult = await this.submitChat(pastedText, pasted.command);
     if (submitResult.unverified) {
       this.traceOperation({
         op: "submit",
@@ -2689,7 +2665,7 @@ class AutopilotBridge {
 
 function isVscodiumHost(appName: string): boolean {
   const lowered = appName.toLowerCase();
-  return lowered.includes("vscodium") || lowered.includes("code - oss") || lowered.includes("code-oss");
+  return lowered.includes("vscodium") || lowered.includes("code - oss") || lowered.includes("code-oss") || lowered === "";
 }
 
 function maybeAutoConnect(bridge: AutopilotBridge): void {
@@ -2697,18 +2673,32 @@ function maybeAutoConnect(bridge: AutopilotBridge): void {
   if (cfg.get<boolean>("autoConnect", true)) bridge.connect();
 }
 
+function safeRegisterCommand(
+  context: vscode.ExtensionContext,
+  command: string,
+  callback: (...args: unknown[]) => unknown
+): void {
+  try {
+    context.subscriptions.push(vscode.commands.registerCommand(command, callback));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    debugLog("COMMAND_REGISTER_SKIPPED", { command, message });
+    console.warn(`koru-autopilot-vscodium: command ${command} unavailable (${message})`);
+  }
+}
+
 function registerBridgeCommands(context: vscode.ExtensionContext, bridge: AutopilotBridge): void {
+  safeRegisterCommand(context, "koruAutopilot.connect", () => bridge.connect());
+  safeRegisterCommand(context, "koruAutopilot.openChat", () => bridge.openChatFromCommand());
+  safeRegisterCommand(context, "koruAutopilot.sendChat", async () => {
+    const text = await vscode.window.showInputBox({ prompt: "Send to chat:" });
+    if (text) await bridge.sendManualChat(text);
+  });
+  safeRegisterCommand(context, "koruAutopilot.calibrateProbe", () => bridge.calibrateProbe());
+  safeRegisterCommand(context, "koruAutopilot.calibrate", () => bridge.calibrateProbe());
+  safeRegisterCommand(context, "koruAutopilot.calibrateCompact", () => bridge.calibrateProbe());
+  safeRegisterCommand(context, "koruAutopilot.captureSubmitClick", () => bridge.captureSubmitClickPosition());
   context.subscriptions.push(
-    vscode.commands.registerCommand("koruAutopilot.connect", () => bridge.connect()),
-    vscode.commands.registerCommand("koruAutopilot.openChat", () => bridge.openChatFromCommand()),
-    vscode.commands.registerCommand("koruAutopilot.sendChat", async () => {
-      const text = await vscode.window.showInputBox({ prompt: "Send to chat:" });
-      if (text) await bridge.sendManualChat(text);
-    }),
-    vscode.commands.registerCommand("koruAutopilot.calibrateProbe", () => bridge.calibrateProbe()),
-    vscode.commands.registerCommand("koruAutopilot.calibrate", () => bridge.calibrateProbe()),
-    vscode.commands.registerCommand("koruAutopilot.calibrateCompact", () => bridge.calibrateProbe()),
-    vscode.commands.registerCommand("koruAutopilot.captureSubmitClick", () => bridge.captureSubmitClickPosition()),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (
         event.affectsConfiguration("koruAutopilot.socketPath") ||
@@ -2729,8 +2719,10 @@ function activateBridge(context: vscode.ExtensionContext): void {
 
 export function activate(context: vscode.ExtensionContext): void {
   const appName = vscode.env.appName || "";
+  const detectedIde = detectIdeViaStrategies(appName) ?? "vscodium";
   debugLog("ACTIVATE", {
     appName,
+    detectedIde,
     extensionMode: context.extensionMode,
     extensionPath: context.extensionPath,
   });

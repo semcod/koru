@@ -103,6 +103,131 @@ def ide_command_scenario_schema() -> dict[str, Any]:
     return SCENARIO_SCHEMA
 
 
+def _validate_step(
+    index: int,
+    step: dict[str, Any],
+    ide: str,
+    catalog_rows: dict[str, dict[str, Any]],
+) -> tuple[list[str], list[str], dict[str, Any]]:
+    """Validate a single step and return errors, warnings, and normalized step."""
+    errors: list[str] = []
+    warnings: list[str] = []
+    
+    if not isinstance(step, dict):
+        errors.append(f"steps[{index}] must be an object")
+        return errors, warnings, {}
+    
+    action = str(step.get("action") or "").strip()
+    if not action:
+        errors.append(f"steps[{index}].action is required")
+        return errors, warnings, {}
+    
+    command = str(step.get("command") or "").strip()
+    row = catalog_rows.get(command) if command else None
+    
+    _validate_step_action(index, action, errors)
+    _validate_step_command(index, action, command, errors)
+    _validate_step_catalog(index, command, row, ide, warnings)
+    _validate_step_category(index, command, row, action, warnings)
+    _validate_step_risk(index, command, row, step, errors, warnings)
+    
+    normalized = _normalize_step(step, action, command)
+    return errors, warnings, normalized
+
+
+def _validate_step_action(index: int, action: str, errors: list[str]) -> None:
+    """Validate step action is allowed."""
+    if action not in _allowed_actions():
+        errors.append(f"steps[{index}].action {action!r} is not allowed")
+
+
+def _validate_step_command(index: int, action: str, command: str, errors: list[str]) -> None:
+    """Validate step command is required for certain actions."""
+    if action not in {"wait", "diagnostics"} and not command:
+        errors.append(f"steps[{index}].command is required for action {action!r}")
+
+
+def _validate_step_catalog(
+    index: int,
+    command: str,
+    row: dict[str, Any] | None,
+    ide: str,
+    warnings: list[str],
+) -> None:
+    """Validate step command exists in catalog."""
+    if command and row is None:
+        warnings.append(f"steps[{index}].command {command!r} is not in catalog for {ide}")
+
+
+def _validate_step_category(
+    index: int,
+    command: str,
+    row: dict[str, Any] | None,
+    action: str,
+    warnings: list[str],
+) -> None:
+    """Validate step command category matches action."""
+    if row is not None and row["category"] != action:
+        warnings.append(
+            f"steps[{index}].command {command!r} is category {row['category']!r}, "
+            f"not action {action!r}",
+        )
+
+
+def _validate_step_risk(
+    index: int,
+    command: str,
+    row: dict[str, Any] | None,
+    step: dict[str, Any],
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    """Validate step command risk level."""
+    if row is not None and row["risk"] not in SAFE_EXECUTION_RISKS:
+        reason = str(step.get("risk_override_reason") or "").strip()
+        if reason:
+            warnings.append(
+                f"steps[{index}].command {command!r} is high risk; override recorded",
+            )
+        else:
+            errors.append(
+                f"steps[{index}].command {command!r} is high risk and needs "
+                "risk_override_reason",
+            )
+
+
+def _normalize_step(step: dict[str, Any], action: str, command: str) -> dict[str, Any]:
+    """Normalize step data."""
+    return {
+        "action": action,
+        **({"command": command} if command else {}),
+        **({"args": step.get("args")} if isinstance(step.get("args"), dict) else {}),
+        **({"expect": step.get("expect")} if isinstance(step.get("expect"), dict) else {}),
+        **({"optional": bool(step.get("optional"))} if "optional" in step else {}),
+        **(
+            {"timeout_seconds": step.get("timeout_seconds")}
+            if "timeout_seconds" in step
+            else {}
+        ),
+        **(
+            {"risk_override_reason": str(step.get("risk_override_reason"))}
+            if step.get("risk_override_reason")
+            else {}
+        ),
+        **({"notes": str(step.get("notes"))} if step.get("notes") else {}),
+    }
+
+
+def _validate_mode(mode: str, errors: list[str], warnings: list[str]) -> None:
+    """Validate scenario mode."""
+    if mode not in {"plan", "dry_run", "execute"}:
+        errors.append(f"mode {mode!r} is not allowed")
+    if mode == "execute":
+        warnings.append(
+            "execute mode still requires runtime command verification and Koru policy approval",
+        )
+
+
 def validate_ide_command_scenario(raw: dict[str, Any]) -> ScenarioValidation:
     """Validate a scenario against Koru's static command catalog.
 
@@ -111,6 +236,7 @@ def validate_ide_command_scenario(raw: dict[str, Any]) -> ScenarioValidation:
     """
     errors: list[str] = []
     warnings: list[str] = []
+    
     if not isinstance(raw, dict):
         return ScenarioValidation(
             ok=False,
@@ -131,58 +257,15 @@ def validate_ide_command_scenario(raw: dict[str, Any]) -> ScenarioValidation:
 
     catalog_rows = _rows_by_command(ide) if ide in supported_catalog_ides() else {}
     normalized_steps: list[dict[str, Any]] = []
+    
     for index, step in enumerate(steps, start=1):
-        if not isinstance(step, dict):
-            errors.append(f"steps[{index}] must be an object")
-            continue
-        action = str(step.get("action") or "").strip()
-        if not action:
-            errors.append(f"steps[{index}].action is required")
-            continue
-        command = str(step.get("command") or "").strip()
-        row = catalog_rows.get(command) if command else None
-        if action not in _allowed_actions():
-            errors.append(f"steps[{index}].action {action!r} is not allowed")
-        if action not in {"wait", "diagnostics"} and not command:
-            errors.append(f"steps[{index}].command is required for action {action!r}")
-        if command and row is None:
-            warnings.append(f"steps[{index}].command {command!r} is not in catalog for {ide}")
-        if row is not None and row["category"] != action:
-            warnings.append(
-                f"steps[{index}].command {command!r} is category {row['category']!r}, "
-                f"not action {action!r}",
-            )
-        if row is not None and row["risk"] not in SAFE_EXECUTION_RISKS:
-            reason = str(step.get("risk_override_reason") or "").strip()
-            if reason:
-                warnings.append(
-                    f"steps[{index}].command {command!r} is high risk; override recorded",
-                )
-            else:
-                errors.append(
-                    f"steps[{index}].command {command!r} is high risk and needs "
-                    "risk_override_reason",
-                )
-        normalized_steps.append(
-            {
-                "action": action,
-                **({"command": command} if command else {}),
-                **({"args": step.get("args")} if isinstance(step.get("args"), dict) else {}),
-                **({"expect": step.get("expect")} if isinstance(step.get("expect"), dict) else {}),
-                **({"optional": bool(step.get("optional"))} if "optional" in step else {}),
-                **(
-                    {"timeout_seconds": step.get("timeout_seconds")}
-                    if "timeout_seconds" in step
-                    else {}
-                ),
-                **(
-                    {"risk_override_reason": str(step.get("risk_override_reason"))}
-                    if step.get("risk_override_reason")
-                    else {}
-                ),
-                **({"notes": str(step.get("notes"))} if step.get("notes") else {}),
-            },
+        step_errors, step_warnings, normalized_step = _validate_step(
+            index, step, ide, catalog_rows
         )
+        errors.extend(step_errors)
+        warnings.extend(step_warnings)
+        if normalized_step:
+            normalized_steps.append(normalized_step)
 
     normalized = {
         "schema": "koru.ide_command_scenario.v1",
@@ -193,13 +276,9 @@ def validate_ide_command_scenario(raw: dict[str, Any]) -> ScenarioValidation:
         **({"name": str(raw.get("name"))} if raw.get("name") else {}),
         **({"description": str(raw.get("description"))} if raw.get("description") else {}),
     }
-    mode = normalized["mode"]
-    if mode not in {"plan", "dry_run", "execute"}:
-        errors.append(f"mode {mode!r} is not allowed")
-    if mode == "execute":
-        warnings.append(
-            "execute mode still requires runtime command verification and Koru policy approval",
-        )
+    
+    _validate_mode(normalized["mode"], errors, warnings)
+    
     return ScenarioValidation(
         ok=not errors,
         errors=tuple(errors),

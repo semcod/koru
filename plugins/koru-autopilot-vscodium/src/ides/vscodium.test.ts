@@ -35,7 +35,7 @@ function testSubmitSanitize() {
     },
     "vscodium",
   );
-  assert(entry?.submit === undefined, "workbench.action.chat.submit cleared");
+  assert(entry?.submit === "workbench.action.chat.submit", "registered chat submit retained");
 }
 
 function testTrustFocusOpen() {
@@ -43,9 +43,9 @@ function testTrustFocusOpen() {
   assert(verifyFocusAfterOpen(file, file, "vscodium"), "vscodium trusts focus open");
 }
 
-function testSubmitCommandsSkipRegisteredSubmit() {
+function testSubmitCommandsTryRegisteredSubmitFirst() {
   const cmds = buildSubmitCommands("vscodium");
-  assert(cmds.length === 0, "vscodium must not trust registered submit commands");
+  assert(cmds[0] === "workbench.action.chat.submit", "vscodium tries native chat submit first");
 }
 
 function run() {
@@ -53,7 +53,7 @@ function run() {
   testPreferCtrlSubmit();
   testSubmitSanitize();
   testTrustFocusOpen();
-  testSubmitCommandsSkipRegisteredSubmit();
+  testSubmitCommandsTryRegisteredSubmitFirst();
   console.log("vscodium-strategy tests: ok");
 }
 

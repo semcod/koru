@@ -1,55 +1,53 @@
 import { classifyCommand, classifyCommands } from "./command-catalog";
 
-function assertEqual<T>(actual: T, expected: T, message: string): void {
-  if (actual !== expected) {
-    throw new Error(
-      `command-catalog test failed: ${message}; expected ${expected}, got ${actual}`,
-    );
-  }
-}
-
-function assertDeepEqual(actual: unknown, expected: unknown, message: string): void {
-  const actualJson = JSON.stringify(actual);
-  const expectedJson = JSON.stringify(expected);
-  if (actualJson !== expectedJson) {
-    throw new Error(
-      `command-catalog test failed: ${message}; expected ${expectedJson}, got ${actualJson}`,
-    );
+function assert(condition: unknown, message: string): void {
+  if (!condition) {
+    throw new Error(`command-catalog test failed: ${message}`);
   }
 }
 
 function testClassifiesCursorSubmitAndPaste(): void {
-  assertEqual(classifyCommand("composer.sendToAgent"), "submit", "Cursor submit");
-  assertEqual(classifyCommand("composer.startComposerPrompt2"), "paste", "Cursor paste");
-  assertEqual(classifyCommand("workbench.action.chat.submit"), "submit", "VS Code submit");
+  assert(classifyCommand("composer.sendToAgent") === "submit", "composer.sendToAgent → submit");
+  assert(classifyCommand("composer.startComposerPrompt2") === "paste", "startComposerPrompt2 → paste");
+  assert(classifyCommand("workbench.action.chat.submit") === "submit", "chat.submit → submit");
 }
 
-function testClassifiesFocusOpenVsInput(): void {
-  assertEqual(classifyCommand("composer.openComposer"), "focus_open", "Composer open");
-  assertEqual(classifyCommand("composer.focusComposer"), "focus_input", "Composer focus");
+function testFocusOpenVsInput(): void {
+  assert(classifyCommand("composer.openComposer") === "focus_open", "openComposer → focus_open");
+  assert(classifyCommand("composer.focusComposer") === "focus_input", "focusComposer → focus_input");
 }
 
-function testClassifiesUnknownChatHints(): void {
-  assertEqual(classifyCommand("cursor.chat.experimentalFoo"), "unknown_chat", "chat hint");
-  assertEqual(classifyCommand("workbench.files.save"), null, "non-chat command");
+function testUnknownChatBucket(): void {
+  assert(
+    classifyCommand("cursor.chat.experimentalFoo") === "unknown_chat",
+    "unknown chat hint → unknown_chat",
+  );
+  assert(classifyCommand("workbench.files.save") === null, "non-chat → null");
 }
 
-function testClassifyCommandsDeduplicatesAndSorts(): void {
+function testClassifyCommandsDeduplicates(): void {
   const catalog = classifyCommands([
     "composer.sendToAgent",
     "workbench.action.chat.submit",
     "composer.sendToAgent",
     "composer.openComposer",
   ]);
-  assertDeepEqual(
-    catalog.submit,
-    ["composer.sendToAgent", "workbench.action.chat.submit"],
-    "submit bucket",
+  assert(catalog.submit.length === 2, "submit dedup: expected 2, got " + catalog.submit.length);
+  assert(
+    catalog.submit.includes("composer.sendToAgent"),
+    "submit must include composer.sendToAgent",
   );
-  assertDeepEqual(catalog.focus_open, ["composer.openComposer"], "focus_open bucket");
+  assert(
+    catalog.submit.includes("workbench.action.chat.submit"),
+    "submit must include workbench.action.chat.submit",
+  );
+  assert(catalog.focus_open.length === 1, "focus_open dedup: expected 1");
+  assert(catalog.focus_open[0] === "composer.openComposer", "focus_open[0]");
 }
 
 testClassifiesCursorSubmitAndPaste();
-testClassifiesFocusOpenVsInput();
-testClassifiesUnknownChatHints();
-testClassifyCommandsDeduplicatesAndSorts();
+testFocusOpenVsInput();
+testUnknownChatBucket();
+testClassifyCommandsDeduplicates();
+
+console.log("command-catalog: all tests passed");

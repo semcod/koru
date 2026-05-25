@@ -47,76 +47,15 @@ const fs = __importStar(require("fs"));
 const net = __importStar(require("net"));
 const child_process_1 = require("child_process");
 const vscode = __importStar(require("vscode"));
-const ack_payload_1 = require("./ack-payload");
-const dispatch_plan_1 = require("./dispatch-plan");
+const _shared_1 = require("./_shared");
+const _shared_2 = require("./_shared");
 const antigravity_fastpath_1 = require("./antigravity-fastpath");
-const host_click_submit_1 = require("./host-click-submit");
 const probe_ladder_1 = require("./probe-ladder");
-const socketPath_1 = require("./socketPath");
 const chat_history_watcher_1 = require("./chat-history-watcher");
 const cursor_bubble_adapter_1 = require("./cursor-bubble-adapter");
 const step_decisions_1 = require("./step-decisions");
 const registry_1 = require("./ides/registry");
 const command_catalog_1 = require("./command-catalog");
-const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
-    "workbench.action.chat.openagent",
-    "workbench.action.chat.openask",
-]);
-const UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS = new Set([
-    "workbench.panel.chat",
-    "workbench.panel.chat.view.copilot.focus",
-    "workbench.panel.aichat.view.copilot.focus",
-]);
-function isAllowedFocusOpenCommand(command) {
-    return (typeof command === "string" &&
-        command.trim().length > 0 &&
-        !DISALLOWED_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase()));
-}
-function sanitizeFocusOpenCommand(command) {
-    if (!isAllowedFocusOpenCommand(command)) {
-        return undefined;
-    }
-    return command.trim();
-}
-function sanitizeFocusOpenCandidates(commands) {
-    return commands.filter(isAllowedFocusOpenCommand);
-}
-function filterUnsafeFocusOpenForIde(commands, ide) {
-    if (ide !== "vscode") {
-        return [...commands];
-    }
-    return commands.filter((command) => !UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase()));
-}
-function isSpecificChatInputFocusCommand(command) {
-    if (!command) {
-        return false;
-    }
-    const normalized = command.toLowerCase();
-    return normalized.includes("chat") || normalized.includes("composer") || normalized.includes("cascade");
-}
-/**
- * Commands whose effect *toggles* a chat/composer panel (open → hidden,
- * hidden → open) rather than idempotently opening it. Running these on
- * an already-visible panel hides it, which silently breaks the
- * subsequent paste+submit pipeline because the target surface is no
- * longer rendered. The focus ladder uses this to gate a focus-only
- * preflight (try ``composer.focusComposer`` first; only fall through
- * to toggle commands when the chat input cannot be focused, which
- * implies the panel really is closed).
- */
-const TOGGLING_FOCUS_OPEN_COMMANDS = new Set([
-    "composer.openaspane",
-    "workbench.action.toggleauxiliarybar",
-    "workbench.action.togglepanel",
-    "workbench.action.togglesidebar",
-    "workbench.view.chat.toggle",
-]);
-function isTogglingFocusOpenCommand(command) {
-    if (!command) {
-        return false;
-    }
-    return TOGGLING_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase());
-}
 let activeBridge = null;
 function debugLog(message, data) {
     try {
@@ -278,14 +217,14 @@ class AutopilotBridge {
     socketPath() {
         const cfg = vscode.workspace.getConfiguration("koruAutopilot");
         const override = (cfg.get("socketPath") || "").trim();
-        return override || (0, socketPath_1.defaultSocketPathFromEnv)();
+        return override || (0, _shared_1.defaultSocketPathFromEnv)();
     }
     connect() {
         this.disconnect();
         this.reconnectBlockedReason = null;
         const cfg = vscode.workspace.getConfiguration("koruAutopilot");
         const override = (cfg.get("socketPath") || "").trim();
-        this.connectCandidates = (0, socketPath_1.socketCandidatesFromEnv)(this.detectIde(), override);
+        this.connectCandidates = (0, _shared_1.socketCandidatesFromEnv)(this.detectIde(), override);
         this.connectIndex = 0;
         debugLog("CONNECT_CANDIDATES", {
             ide: this.detectIde(),
@@ -713,7 +652,7 @@ class AutopilotBridge {
             });
             return null;
         }
-        const parsed = (0, host_click_submit_1.parseXdotoolGeometryShell)(geometry.stdout);
+        const parsed = (0, _shared_1.parseXdotoolGeometryShell)(geometry.stdout);
         if (!parsed) {
             this.traceOperation({
                 op: "submit",
@@ -723,7 +662,7 @@ class AutopilotBridge {
             });
             return null;
         }
-        const point = (0, host_click_submit_1.bottomRightSubmitPoint)(parsed);
+        const point = (0, _shared_1.bottomRightSubmitPoint)(parsed);
         this.traceOperation({
             op: "submit",
             route: "host-click:auto-point",
@@ -1255,7 +1194,7 @@ class AutopilotBridge {
         const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
         const cache = this.getProbeCache();
         const useProbe = this.probeLadderEnabled();
-        let commands = filterUnsafeFocusOpenForIde((0, probe_ladder_1.filterRegistered)(this.orderWithServerOverride("focus_open", (0, probe_ladder_1.buildFocusOpenCommands)(ide, primary), cache?.focusOpen), existing), ide);
+        let commands = (0, _shared_1.filterUnsafeFocusOpenForIde)((0, probe_ladder_1.filterRegistered)(this.orderWithServerOverride("focus_open", (0, probe_ladder_1.buildFocusOpenCommands)(ide, primary), cache?.focusOpen), existing), ide);
         if (ide === "vscode" && commands.length === 0 && existing.has("workbench.action.chat.open")) {
             commands = ["workbench.action.chat.open"];
             debugLog("FOCUS_OPEN_HARD_FALLBACK", { ide, command: "workbench.action.chat.open" });
@@ -1280,7 +1219,7 @@ class AutopilotBridge {
     async _focusChatWithoutOpenCommands(rejected) {
         const before = this.editorSnapshot();
         const inputOnly = await this.focusChatInput();
-        if (!isSpecificChatInputFocusCommand(inputOnly.command)) {
+        if (!(0, _shared_1.isSpecificChatInputFocusCommand)(inputOnly.command)) {
             rejected.push({
                 cmd: "(input-only)",
                 reason: "no specific chat input focus command succeeded",
@@ -1335,7 +1274,7 @@ class AutopilotBridge {
         }
         await this.sleep(this.probeFocusDelayMs());
         const inputFocus = await this.focusChatInput();
-        if (isSpecificChatInputFocusCommand(inputFocus.command)) {
+        if ((0, _shared_1.isSpecificChatInputFocusCommand)(inputFocus.command)) {
             const combined = `${command}+${inputFocus.command}`;
             debugLog("FOCUS_OPEN_SUCCESS_INPUT", { cmd: command, inputFocus: inputFocus.command });
             if (context.useProbe) {
@@ -1374,7 +1313,7 @@ class AutopilotBridge {
             route: "all-candidates",
             ok: false,
             reason: "no focus-open candidate verified",
-            detail: { rejectedCount: rejected.length, candidates: sanitizeFocusOpenCandidates(context.commands) },
+            detail: { rejectedCount: rejected.length, candidates: (0, _shared_1.sanitizeFocusOpenCandidates)(context.commands) },
         });
         return {
             ok: false,
@@ -1384,8 +1323,8 @@ class AutopilotBridge {
                 logPath: "/tmp/koru-plugin-debug.log",
                 probeLadder: context.useProbe,
                 configuredChatOpenCommands: primary,
-                focusOpenCandidates: sanitizeFocusOpenCandidates(context.commands),
-                cacheFocusOpen: sanitizeFocusOpenCommand(context.cache?.focusOpen),
+                focusOpenCandidates: (0, _shared_1.sanitizeFocusOpenCandidates)(context.commands),
+                cacheFocusOpen: (0, _shared_1.sanitizeFocusOpenCommand)(context.cache?.focusOpen),
                 before: context.before,
                 rejected,
             },
@@ -1443,7 +1382,7 @@ class AutopilotBridge {
         if (context.commands.length === 0) {
             return false;
         }
-        return context.commands.some((cmd) => isTogglingFocusOpenCommand(cmd));
+        return context.commands.some((cmd) => (0, _shared_1.isTogglingFocusOpenCommand)(cmd));
     }
     async pasteText(text, replaceCurrentInput = false) {
         const ide = this.detectIde();
@@ -1682,7 +1621,7 @@ class AutopilotBridge {
                 debugLog("FOCUS_INPUT_COMMAND_FAILED", { cmd });
                 continue;
             }
-            if (!isSpecificChatInputFocusCommand(cmd)) {
+            if (!(0, _shared_1.isSpecificChatInputFocusCommand)(cmd)) {
                 debugLog("FOCUS_INPUT_NOT_CHAT", { cmd });
                 this.traceOperation({
                     op: "focus_input",
@@ -1717,7 +1656,7 @@ class AutopilotBridge {
     send(env) {
         if (!this.socket)
             return;
-        const wire = (0, ack_payload_1.sanitizeOutboundEnvelope)(env);
+        const wire = (0, _shared_1.sanitizeOutboundEnvelope)(env);
         const line = JSON.stringify(wire) + "\n";
         debugLog("OUT", env);
         // STARTER-242 telemetry: log oversized envelopes BEFORE they hit the
@@ -1783,7 +1722,7 @@ class AutopilotBridge {
             }
             return;
         }
-        const plan = (0, dispatch_plan_1.planDispatch)(env);
+        const plan = (0, _shared_2.planDispatch)(env);
         switch (plan.kind) {
             case "injectChat":
                 await this.injectChat(env);

@@ -59,10 +59,9 @@ def test_contract_is_running(factory) -> None:
     assert transport.calls == [("is_running", {})]
 
 
-@pytest.mark.parametrize("factory", [_legacy_factory, _koruide_factory])
-def test_contract_drive(factory) -> None:
+def test_contract_drive_legacy() -> None:
     transport = _TransportStub()
-    client = factory(transport)
+    client = _legacy_factory(transport)
 
     out = client.drive("continue", submit=False, ide="cursor", require_plugin=True)
 
@@ -77,6 +76,29 @@ def test_contract_drive(factory) -> None:
                 "submit": False,
                 "ide": "cursor",
                 "require_plugin": True,
+            },
+        ),
+    ]
+
+
+def test_contract_drive_koruide() -> None:
+    transport = _TransportStub()
+    client = _koruide_factory(transport)
+
+    out = client.drive("continue", submit=False, ide="cursor", require_plugin=True)
+
+    assert out["ok"] is True
+    assert out["backend"] == "stub"
+    assert out["text"] == "continue"
+    assert transport.calls == [
+        (
+            "drive",
+            {
+                "text": "continue",
+                "submit": False,
+                "ide": "cursor",
+                "require_plugin": True,
+                "strategy_hint": None,
             },
         ),
     ]

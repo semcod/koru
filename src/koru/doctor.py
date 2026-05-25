@@ -68,57 +68,105 @@ import re
 import shlex
 import shutil
 import subprocess
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
 
 from koru.autonomous_env import autonomous_environ_doctor_probe
-from koru.autonomy.environment import probe_socket_health
 from koru.autopilot.ide import (
-    detect_running_ides,
-    detect_terminal_host_ide_id,
     normalize_ide_id,
 )
-from koru.autopilot.install_manager import collect_install_manager_report
+from koru.doctor_autopilot_checks import (
+    _autopilot_env_detail_bits as _autopilot_env_detail_bits,
+)
+from koru.doctor_autopilot_checks import (
+    _autopilot_env_snapshot as _autopilot_env_snapshot,
+)
+from koru.doctor_autopilot_checks import (
+    _autopilot_env_status as _autopilot_env_status,
+)
+from koru.doctor_autopilot_checks import (
+    _check_autopilot_env,
+    _check_autopilot_manage,
+    _check_autopilot_socket,
+    _check_ide_runtime_presence,
+    _resolve_autopilot_socket_for_doctor,
+    _selected_autopilot_ide,
+)
+from koru.doctor_autopilot_checks import (
+    _has_autopilot_selection as _has_autopilot_selection,
+)
 from koru.doctor_constants import (
+    _PROBLEM_CATALOG,
     FAIL,
     PASS,
-    ProblemCatalogEntry,
     SKIP,
     WARN,
-    _PROBLEM_CATALOG,
+)
+from koru.doctor_constants import (
+    ProblemCatalogEntry as ProblemCatalogEntry,
 )
 from koru.doctor_plugin_bundle import (
-    _autopilot_plugin_bundle_detail_bits,
-    _autopilot_plugin_bundle_issues,
-    _autopilot_plugin_bundle_paths,
+    _autopilot_plugin_bundle_detail_bits as _autopilot_plugin_bundle_detail_bits,
+)
+from koru.doctor_plugin_bundle import (
+    _autopilot_plugin_bundle_issues as _autopilot_plugin_bundle_issues,
+)
+from koru.doctor_plugin_bundle import (
+    _autopilot_plugin_bundle_paths as _autopilot_plugin_bundle_paths,
+)
+from koru.doctor_plugin_bundle import (
     _check_autopilot_plugin_bundle,
-    _package_lock_root_version,
-    _read_json_file,
+)
+from koru.doctor_plugin_bundle import (
+    _package_lock_root_version as _package_lock_root_version,
+)
+from koru.doctor_plugin_bundle import (
+    _read_json_file as _read_json_file,
 )
 from koru.doctor_project_checks import (
     _check_detected_configuration,
     _check_detected_environment,
-    _detected_configuration_json_bits,
-    _detected_configuration_presence_bits,
 )
-from koru.doctor_render import detected_problems, render_problem_catalog_text, render_text
+from koru.doctor_project_checks import (
+    _detected_configuration_json_bits as _detected_configuration_json_bits,
+)
+from koru.doctor_project_checks import (
+    _detected_configuration_presence_bits as _detected_configuration_presence_bits,
+)
+from koru.doctor_render import (
+    detected_problems as detected_problems,
+)
+from koru.doctor_render import (
+    render_problem_catalog_text as render_problem_catalog_text,
+)
+from koru.doctor_render import (
+    render_text as render_text,
+)
 from koru.doctor_runtime_checks import (
     _check_koru_runtime_identity,
     _check_python_venv_alignment,
-    _installed_koru_version,
-    _is_relative_to,
-    _koru_path_version_issues,
-    _path_koru_supports_auto_subcommand,
-    _read_project_version,
+)
+from koru.doctor_runtime_checks import (
+    _installed_koru_version as _installed_koru_version,
+)
+from koru.doctor_runtime_checks import (
+    _is_relative_to as _is_relative_to,
+)
+from koru.doctor_runtime_checks import (
+    _koru_path_version_issues as _koru_path_version_issues,
+)
+from koru.doctor_runtime_checks import (
+    _path_koru_supports_auto_subcommand as _path_koru_supports_auto_subcommand,
+)
+from koru.doctor_runtime_checks import (
+    _read_project_version as _read_project_version,
 )
 from koru.policy import policy_path
 from koru.project_pipeline import KORU_PROJECT_PIPELINE_FILENAME, project_pipeline_path
 from koru.runtime import planfile_dir, runtime_dir
 from koru.utils.subprocess_runner import get_python_cmd
-from koruide.socket import default_socket_path
 
 # Default timeout for the pytest-collect probe. Doctor is meant to be
 # *interactive and fast*; we deliberately keep this tighter than
@@ -271,135 +319,8 @@ def _check_interface_registry(_project: Path) -> tuple[str, str]:
         return WARN, "0 interfaces loaded"
     families = summarize_interfaces_by_family()
     family_summary = ", ".join(f"{name}={count}" for name, count in sorted(families.items()))
-    return PASS, f"{len(ids)} interfaces: {', '.join(ids[:5])}{' ...' if len(ids) > 5 else ''}; families: {family_summary}"
-
-
-def _selected_autopilot_ide(*, include_terminal_hint: bool = True) -> str | None:
-    raw_ide = os.environ.get("KORU_AUTOPILOT_IDE")
-    raw_instance = os.environ.get("KORU_AUTOPILOT_INSTANCE")
-    selected = normalize_ide_id(raw_ide) or normalize_ide_id(raw_instance)
-    if selected or not include_terminal_hint:
-        return selected
-    return normalize_ide_id(detect_terminal_host_ide_id())
-
-
-def _has_autopilot_selection() -> bool:
-    return bool(
-        os.environ.get("KORU_AUTOPILOT_IDE")
-        or os.environ.get("KORU_AUTOPILOT_INSTANCE")
-        or os.environ.get("KORU_AUTOPILOT_SOCKET")
-        or _selected_autopilot_ide(include_terminal_hint=True)
-    )
-
-
-def _resolve_autopilot_socket_for_doctor() -> Path:
-    selected = _selected_autopilot_ide()
-    if selected and not os.environ.get("KORU_AUTOPILOT_SOCKET"):
-        previous = os.environ.get("KORU_AUTOPILOT_INSTANCE")
-        try:
-            os.environ["KORU_AUTOPILOT_INSTANCE"] = selected
-            return default_socket_path()
-        finally:
-            if previous is None:
-                os.environ.pop("KORU_AUTOPILOT_INSTANCE", None)
-            else:
-                os.environ["KORU_AUTOPILOT_INSTANCE"] = previous
-    return default_socket_path()
-
-
-def _autopilot_env_snapshot() -> dict[str, str]:
-    return {
-        "instance": (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip(),
-        "ide": (os.environ.get("KORU_AUTOPILOT_IDE") or "").strip(),
-        "socket_env": (os.environ.get("KORU_AUTOPILOT_SOCKET") or "").strip(),
-        "terminal": detect_terminal_host_ide_id() or "-",
-        "session": os.environ.get("XDG_SESSION_TYPE") or "-",
-        "runtime": os.environ.get("XDG_RUNTIME_DIR") or "-",
-    }
-
-
-def _autopilot_env_detail_bits(values: dict[str, str]) -> list[str]:
-    return [
-        f"instance={values['instance'] or '-'}",
-        f"ide={values['ide'] or '-'}",
-        f"socket_env={values['socket_env'] or '-'}",
-        f"terminal_hint={values['terminal']}",
-        f"session={values['session']}",
-        f"runtime={values['runtime']}",
-    ]
-
-
-def _autopilot_env_status(values: dict[str, str]) -> tuple[str, list[str]]:
-    normalized_instance = normalize_ide_id(values["instance"])
-    normalized_ide = normalize_ide_id(values["ide"])
-    if normalized_instance and normalized_ide and normalized_instance != normalized_ide:
-        return WARN, ["instance_ide_mismatch=true"]
-    if not _selected_autopilot_ide(include_terminal_hint=True):
-        return SKIP, ["autopilot_env=unset"]
-    if not (values["instance"] or values["ide"] or values["socket_env"]):
-        return WARN, ["autopilot_env=unset", "using_terminal_hint=true"]
-    return PASS, []
-
-
-def _check_autopilot_env(_project: Path) -> tuple[str, str]:
-    values = _autopilot_env_snapshot()
-    status, extra_bits = _autopilot_env_status(values)
-    return status, "; ".join(_autopilot_env_detail_bits(values) + extra_bits)
-
-
-def _check_ide_runtime_presence(_project: Path) -> tuple[str, str]:
-    selected = _selected_autopilot_ide()
-    running = detect_running_ides()
-    ids = [item.id for item in running]
-    detail = f"selected={selected or '-'}; running={', '.join(ids) or '-'}"
-    if not selected:
-        return SKIP, detail
-    if selected not in ids:
-        return WARN, detail + "; selected_ide_not_running=true"
-    return PASS, detail
-
-
-def _check_autopilot_socket(_project: Path) -> tuple[str, str]:
-    if not _has_autopilot_selection():
-        return SKIP, "autopilot env unset"
-    path = _resolve_autopilot_socket_for_doctor()
-    health = probe_socket_health(path)
-    detail = (
-        f"path={health.path}; exists={health.exists}; "
-        f"listening={health.listening}; stale={health.stale}"
-    )
-    if health.healthy:
-        return PASS, detail
-    if health.stale:
-        return WARN, detail + "; restart daemon or remove stale socket"
-    return WARN, detail + "; daemon not listening yet"
-
-
-def _check_autopilot_manage(_project: Path) -> tuple[str, str]:
-    if not _has_autopilot_selection():
-        return SKIP, "autopilot env unset"
-    selected = _selected_autopilot_ide() or "auto"
-    report = collect_install_manager_report(
-        ide=selected,
-        socket_path=_resolve_autopilot_socket_for_doctor(),
-    )
-    issue_rows = [issue.to_dict() for issue in report.issues]
-    severities = {str(row.get("severity")) for row in issue_rows}
-    issue_codes = ", ".join(str(row.get("code")) for row in issue_rows) or "-"
-    plugin = report.plugin
-    daemon_running = bool(report.daemon.get("running"))
-    detail = (
-        f"ide={plugin.get('ide')}; daemon={'running' if daemon_running else 'stopped'}; "
-        f"socket={report.socket}; connected={plugin.get('connected')}; "
-        f"connected_version={plugin.get('connected_version') or '-'}; "
-        f"installed={plugin.get('installed_version') or '-'}; "
-        f"expected={plugin.get('expected_version') or '-'}; issues={issue_codes}"
-    )
-    if "error" in severities:
-        return FAIL, detail
-    if severities:
-        return WARN, detail
-    return PASS, detail
+    preview = f"{', '.join(ids[:5])}{' ...' if len(ids) > 5 else ''}"
+    return PASS, f"{len(ids)} interfaces: {preview}; families: {family_summary}"
 
 
 def _autopilot_debug_log_path() -> Path:
@@ -532,7 +453,12 @@ def _count_daemon_metrics(activity: list[str]) -> tuple[int, int, int, int]:
         ),
         default=-1,
     )
-    return daemon_successes, daemon_failures, last_activity_success_index, last_activity_failure_index
+    return (
+        daemon_successes,
+        daemon_failures,
+        last_activity_success_index,
+        last_activity_failure_index,
+    )
 
 
 def _count_chat_control_metrics(relevant: list[str]) -> dict[str, int | int]:

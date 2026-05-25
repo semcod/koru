@@ -35,3 +35,20 @@ export type {
   IdeAdapter,
   SupportedIde,
 } from "./chat-history-types";
+export type {
+  CommandOutcome,
+  FocusOutcome,
+  PasteAttempt,
+  SubmitOutcome,
+  HostCommandResult,
+  OperationTraceStep,
+  Envelope,
+} from "./types";
+export {
+  isAllowedFocusOpenCommand,
+  sanitizeFocusOpenCommand,
+  sanitizeFocusOpenCandidates,
+  filterUnsafeFocusOpenForIde,
+  isSpecificChatInputFocusCommand,
+  isTogglingFocusOpenCommand,
+} from "./bridge-helpers";

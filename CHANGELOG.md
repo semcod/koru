@@ -113,6 +113,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.281] - 2026-05-25
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+
+### Test
+- Update tests/test_autonomous_runtime.py
+- Update tests/test_autopilot_daemon.py
+- Update tests/test_doctor.py
+- Update tests/test_doctor_facade.py
+- Update tests/test_ide_client_contract.py
+- Update tests/test_koruide_client.py
+- Update tests/test_koruide_daemon_handlers_console_log.py
+- Update tests/test_mcp_server.py
+- Update tests/test_strategy_prompt.py
+
+### Other
+- Update .koru/project.json
+- Update .planfile/config.yaml
+- Update .planfile/sprints/current.yaml
+- Update package-lock.json
+- Update plugins/koru-autopilot-antigravity/src/command-catalog.test.ts
+- Update plugins/koru-autopilot-cursor/src/command-catalog.test.ts
+- Update plugins/koru-autopilot-shared/src/bridge-helpers.ts
+- Update plugins/koru-autopilot-shared/src/index.ts
+- Update plugins/koru-autopilot-shared/src/types.ts
+- Update plugins/koru-autopilot-vscode/out/extension.js
+- ... and 14 more files
+
 ## [0.1.280] - 2026-05-25
 
 ### Docs

@@ -50,7 +50,7 @@ except ImportError:
 
 _PROTOCOL_VERSION = "2024-11-05"
 _SERVER_NAME = "koru"
-_SERVER_VERSION = "0.2.0"
+_SERVER_VERSION = "0.2.1"
 _PROJECT_ROOT_DESCRIPTION = "Absolute path to project root on disk."
 _DEFAULT_GATES = ["regix", "redup"]
 _RUN_TICKET_TIMEOUT_SECONDS = 300
@@ -361,6 +361,33 @@ TOOLS: list[dict[str, Any]] = [
         },
     },
     {
+        "name": "koru_strategy_prompt",
+        "description": (
+            "Return the LLM strategy briefing (catalog + scenario schema + policy) "
+            "as a ready-to-paste prompt for IDE control planning."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "ide": {
+                    "type": "string",
+                    "description": "IDE id or 'all'.",
+                    "default": "all",
+                },
+                "for_llm": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "Compact category-only catalog (recommended).",
+                },
+                "include_text": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "Include rendered Markdown 'text' field.",
+                },
+            },
+        },
+    },
+    {
         "name": "koru_validate_ide_command_scenario",
         "description": (
             "Validate an LLM-authored IDE command scenario against Koru's command catalog "
@@ -558,6 +585,21 @@ def tool_ide_command_scenario_schema(_arguments: dict[str, Any]) -> dict[str, An
     from koruide.command_scenario import ide_command_scenario_schema
 
     return {"schema": ide_command_scenario_schema()}
+
+
+def tool_strategy_prompt(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Return Koru's LLM-ready IDE strategy prompt."""
+    from koruide.strategy_prompt import build_strategy_prompt
+
+    ide_raw = arguments.get("ide", "all")
+    ide = None if ide_raw in (None, "", "all") else str(ide_raw)
+    for_llm = bool(arguments.get("for_llm", True))
+    include_text = bool(arguments.get("include_text", True))
+    try:
+        payload = build_strategy_prompt(ide, for_llm=for_llm, include_text=include_text)
+    except ValueError as exc:
+        return {"ok": False, "error": str(exc)}
+    return {"ok": True, "prompt": payload}
 
 
 def tool_ide_commands(arguments: dict[str, Any]) -> dict[str, Any]:
@@ -1101,6 +1143,7 @@ _TOOL_DISPATCH: dict[str, Any] = {
     "koru_propose_edits": tool_propose_edits,
     "koru_ide_command_catalog": tool_ide_command_catalog,
     "koru_ide_command_scenario_schema": tool_ide_command_scenario_schema,
+    "koru_strategy_prompt": tool_strategy_prompt,
     "koru_validate_ide_command_scenario": tool_validate_ide_command_scenario,
     "koru_ide_commands": tool_ide_commands,
     "koru_ide_drive": tool_ide_drive,

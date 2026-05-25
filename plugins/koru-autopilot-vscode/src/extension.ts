@@ -11,18 +11,33 @@ import * as fs from "fs";
 import * as net from "net";
 import { spawn } from "child_process";
 import * as vscode from "vscode";
-import { sanitizeOutboundEnvelope } from "./ack-payload";
-import { planDispatch } from "./dispatch-plan";
+import {
+  sanitizeOutboundEnvelope,
+  defaultSocketPathFromEnv,
+  socketCandidatesFromEnv,
+  bottomRightSubmitPoint,
+  parseXdotoolGeometryShell,
+  type CommandOutcome,
+  type FocusOutcome,
+  type PasteAttempt,
+  type SubmitOutcome,
+  type HostCommandResult,
+  type OperationTraceStep,
+  type Envelope,
+  type ScreenPoint,
+  isAllowedFocusOpenCommand,
+  sanitizeFocusOpenCommand,
+  sanitizeFocusOpenCandidates,
+  filterUnsafeFocusOpenForIde,
+  isSpecificChatInputFocusCommand,
+  isTogglingFocusOpenCommand,
+} from "./_shared";
+import { planDispatch } from "./_shared";
 import {
   ANTIGRAVITY_SEND_PROMPT_COMMAND,
   canUseAntigravitySendPrompt,
   selectAntigravityOpenCommand,
 } from "./antigravity-fastpath";
-import {
-  bottomRightSubmitPoint,
-  parseXdotoolGeometryShell,
-  type ScreenPoint,
-} from "./host-click-submit";
 import {
   buildFocusInputCommands,
   buildFocusOpenCommands,
@@ -41,7 +56,6 @@ import {
   sanitizeProbeCacheForIde,
   verifyFocusAfterOpen,
 } from "./probe-ladder";
-import { defaultSocketPathFromEnv, socketCandidatesFromEnv } from "./socketPath";
 import { ChatHistoryWatcher, SupportedIde } from "./chat-history-watcher";
 import { CursorBubbleAdapter } from "./cursor-bubble-adapter";
 import {
@@ -61,104 +75,12 @@ import {
   type CommandCatalog,
 } from "./command-catalog";
 
-
-const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
-  "workbench.action.chat.openagent",
-  "workbench.action.chat.openask",
-]);
-
-const UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS = new Set([
-  "workbench.panel.chat",
-  "workbench.panel.chat.view.copilot.focus",
-  "workbench.panel.aichat.view.copilot.focus",
-]);
-
-function isAllowedFocusOpenCommand(command: unknown): command is string {
-  return (
-    typeof command === "string" &&
-    command.trim().length > 0 &&
-    !DISALLOWED_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase())
-  );
-}
-
-function sanitizeFocusOpenCommand(command: unknown): string | undefined {
-  if (!isAllowedFocusOpenCommand(command)) {
-    return undefined;
-  }
-  return command.trim();
-}
-
-function sanitizeFocusOpenCandidates(commands: readonly string[]): string[] {
-  return commands.filter(isAllowedFocusOpenCommand);
-}
-
-function filterUnsafeFocusOpenForIde(commands: readonly string[], ide: string): string[] {
-  if (ide !== "vscode") {
-    return [...commands];
-  }
-  return commands.filter((command) => !UNSAFE_VSCODE_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase()));
-}
-
-function isSpecificChatInputFocusCommand(command: string | undefined): boolean {
-  if (!command) {
-    return false;
-  }
-  const normalized = command.toLowerCase();
-  return normalized.includes("chat") || normalized.includes("composer") || normalized.includes("cascade");
-}
-
-/**
- * Commands whose effect *toggles* a chat/composer panel (open → hidden,
- * hidden → open) rather than idempotently opening it. Running these on
- * an already-visible panel hides it, which silently breaks the
- * subsequent paste+submit pipeline because the target surface is no
- * longer rendered. The focus ladder uses this to gate a focus-only
- * preflight (try ``composer.focusComposer`` first; only fall through
- * to toggle commands when the chat input cannot be focused, which
- * implies the panel really is closed).
- */
-const TOGGLING_FOCUS_OPEN_COMMANDS: ReadonlySet<string> = new Set([
-  "composer.openaspane",
-  "workbench.action.toggleauxiliarybar",
-  "workbench.action.togglepanel",
-  "workbench.action.togglesidebar",
-  "workbench.view.chat.toggle",
-]);
-
-function isTogglingFocusOpenCommand(command: string | undefined): boolean {
-  if (!command) {
-    return false;
-  }
-  return TOGGLING_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase());
-}
-
-
-interface Envelope {
-  type: string;
-  id?: string;
-  [k: string]: unknown;
-}
-
-type CommandOutcome = { ok: boolean; command?: string; reason?: string; attempts?: string[] };
-type FocusOutcome = CommandOutcome & { diagnostics?: Record<string, unknown> };
-type PasteAttempt = { handled: boolean; result: CommandOutcome };
-type SubmitOutcome = CommandOutcome & { unverified?: boolean };
-type HostCommandResult = { ok: boolean; stdout: string };
 type FocusChatContext = {
   ide: string;
   cache: ProbeCacheEntry | undefined;
   useProbe: boolean;
   commands: string[];
   before: ReturnType<typeof captureEditorSnapshot>;
-};
-type OperationTraceStep = {
-  op: string;
-  route: string;
-  ok: boolean;
-  command?: string;
-  reason?: string;
-  attempts?: string[];
-  detail?: Record<string, unknown>;
 };
 
 let activeBridge: AutopilotBridge | null = null;

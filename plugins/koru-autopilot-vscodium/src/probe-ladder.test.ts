@@ -12,6 +12,7 @@ import {
   mergeUnique,
   orderWithCache,
   pasteLandedInEditor,
+  prioritizePlainHostKeySubmitCandidates,
   sanitizeProbeCacheForIde,
   verifyFocusAfterOpen,
   PROBE_CACHE_VERSION,
@@ -57,6 +58,13 @@ function testHostKeyOrderVscodiumPrefersCtrlReturn(): void {
   assert(firstKey(cands).includes("ctrl"), "VSCodium tries Ctrl+Return first");
 }
 
+function testPlainHostKeyPrioritizerPreservesRows(): void {
+  const cands = buildHostKeySubmitCandidates("vscodium", "auto", WAYLAND_ENV);
+  const prioritized = prioritizePlainHostKeySubmitCandidates(cands);
+  assert(!firstKey(prioritized).includes("ctrl"), "plain Return can be promoted for focused webviews");
+  assert(prioritized.length === cands.length, "prioritizer keeps all host-key candidates");
+}
+
 function testBuildFocusInputUsesChatCommands(): void {
   assert(buildFocusInputCommands("vscodium")[0] === "workbench.action.chat.focusInput", "focus input first");
 }
@@ -67,4 +75,5 @@ testVerifyFocusAfterOpen();
 testPasteLandedInEditor();
 testMergeUnique();
 testHostKeyOrderVscodiumPrefersCtrlReturn();
+testPlainHostKeyPrioritizerPreservesRows();
 testBuildFocusInputUsesChatCommands();

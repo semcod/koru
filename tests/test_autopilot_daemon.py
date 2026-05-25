@@ -557,6 +557,38 @@ def test_status_reports_plugin_console_logs(
         koruide_daemon_mod.clear_console_logs()
 
 
+def test_console_log_surfaces_live_dsl_lines(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    logs: list[str] = []
+    with _daemon(tmp_path, monkeypatch) as h:
+        h.daemon.log = logs.append
+        plugin, plugin_reader = _connect_plugin(
+            h.sock_path,
+            ide="vscode",
+            version="0.2.0",
+            pid=42,
+        )
+        plugin.sendall(
+            Message(
+                type="console_log",
+                id="console-log",
+                data={
+                    "message": "[DSL-LIVE] #001 act=focus_open route=plugin ok=true",
+                    "timestamp": "2026-05-22T12:00:00Z",
+                },
+            ).encode()
+        )
+        plugin.sendall(
+            Message(type="message.sent", id="flush", data={"chat": "default"}).encode()
+        )
+        assert plugin_reader.read_message().type == "ack"
+        plugin.close()
+
+    assert "[DSL] #001 act=focus_open route=plugin ok=true via=plugin ide=vscode" in logs
+
+
 def test_accept_rejects_foreign_peer_uid(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

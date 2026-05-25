@@ -38,6 +38,7 @@ def test_tools_list_includes_required_koru_tools() -> None:
         "koru_ide_commands",
         "koru_ide_drive",
         "koru_ide_dsl_recent",
+        "koru_strategy_prompt",
     }.issubset(names)
 
 

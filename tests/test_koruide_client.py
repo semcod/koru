@@ -35,6 +35,7 @@ def test_koruide_client_forwards_all_operations() -> None:
         submit=False,
         ide="cursor",
         require_plugin=True,
+        strategy_hint=None,
     )
     transport.status.assert_called_once_with()
     transport.shutdown.assert_called_once_with()

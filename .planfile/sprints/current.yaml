@@ -1129,7 +1129,7 @@ sprint:
         --yes`'
       execution:
         attempt: 0
-        finished_at: '2026-05-25T20:09:19.893983Z'
+        finished_at: '2026-05-25T20:18:25.387932Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -1190,6 +1190,11 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-05-25T20:09:19.928505+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T20:18:25.409607+00:00'
       id: STARTER-266
       inputs:
         api_headers: {}
@@ -1244,7 +1249,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-25T20:09:19.928459+00:00'
+      updated_at: '2026-05-25T20:18:25.409556+00:00'
     STARTER-267:
       blocked_by: []
       blocks: []
@@ -2067,7 +2072,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-05-25T19:25:33.572151Z'
+        finished_at: '2026-05-25T20:22:51.220054Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -2170,6 +2175,16 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-05-25T19:25:33.585056+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T20:14:12.907275+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T20:22:51.232830+00:00'
       id: STARTER-275
       inputs:
         api_headers: {}
@@ -2222,7 +2237,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-25T19:25:33.585016+00:00'
+      updated_at: '2026-05-25T20:22:51.232797+00:00'
     STARTER-276:
       blocked_by: []
       blocks: []
@@ -2622,9 +2637,26 @@ sprint:
         Current source is 2083 lines. Extract cohesive doctor check/render/helper
         modules behind existing public behavior and add focused regression tests before
         broad edits.
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T20:27:11.260301Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - src/koru/doctor.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T20:27:11.280419+00:00'
       id: STARTER-281
       labels:
       - koru
@@ -2636,15 +2668,18 @@ sprint:
       - refactor
       - scan
       name: 'Split large module: src/koru/doctor.py'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-05-25T19:08:02.806200Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-25T19:08:02.817814Z'
+      updated_at: '2026-05-25T20:27:11.280372+00:00'
     STARTER-282:
       acceptance_criteria: []
       blocked_by: []
@@ -2653,9 +2688,26 @@ sprint:
       description: project/analysis.toon.yaml flags scan as a large/hot module. Current
         source is 1183 lines. Split scan suggestion parsing, dedupe/apply behavior,
         and rendering-facing orchestration into focused helpers with regression tests.
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T20:29:55.656153Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - src/koru/scan.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T20:29:55.668127+00:00'
       id: STARTER-282
       labels:
       - koru
@@ -2667,15 +2719,18 @@ sprint:
       - refactor
       - scan
       name: 'Split large module: src/koru/scan.py'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-05-25T19:08:03.494345Z'
         tool: koru-project-discovery
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-25T19:08:03.505675Z'
+      updated_at: '2026-05-25T20:29:55.668093+00:00'
     STARTER-283:
       acceptance_criteria: []
       blocked_by: []
@@ -2685,9 +2740,31 @@ sprint:
         Live source is src/koruide/daemon/handlers.py. Extract sub-functions or strategy
         helpers for console log handling and preserve daemon handler behavior with
         focused tests.
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T20:35:34.834069Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - src/koruide/daemon/handlers.py
-      history: []
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T20:33:26.372822+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T20:35:34.846259+00:00'
       id: STARTER-283
       labels:
       - koru
@@ -2698,12 +2775,1559 @@ sprint:
       - refactor
       - scan
       name: 'Reduce cyclomatic complexity: handle_console_log'
+      outputs:
+        artifacts: []
+        notes: []
       priority: normal
       source:
         context: {}
         timestamp: '2026-05-25T19:08:04.090295Z'
         tool: koru-project-discovery
       sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T20:35:34.846223+00:00'
+    STARTER-284:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:33.556597+00:00'
+      description: 'code2llm reports `src.koru.observability_dsl._path_step` at `src/koru/observability_dsl.py:200`
+        with cyclomatic complexity 32 (limit 15).
+
+
+        Extract smaller functions, flatten conditionals, or split strategy branches.
+        Re-run code2llm after the change and keep tests green.'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T20:38:26.009560Z'
+        max_attempts: 1
+        queue: default
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koru/observability_dsl.py
+      history:
+      - action: created
+        message: 'code2llm reports `src.koru.observability_dsl._path_step` at `src/koru/observability_dsl.py:200`
+          with cyclomatic complexity 32 (limit 15).
+
+
+          Extract smaller functions, flatten conditionals, or split strategy branches.
+          Re-run code2llm after the change and keep tests green.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:33.556597+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T20:38:26.032183+00:00'
+      id: STARTER-284
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm reports `src.koru.observability_dsl._path_step` at `src/koru/observability_dsl.py:200`
+          with cyclomatic complexity 32 (limit 15).
+
+
+          Extract smaller functions, flatten conditionals, or split strategy branches.
+          Re-run code2llm after the change and keep tests green.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      name: 'Reduce cyclomatic complexity: src.koru.observability_dsl._path_step (CC=32)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: code2llm:cc:src/koru/observability_dsl.py:src.koru.observability_dsl._path_step
+          input: 'code2llm reports `src.koru.observability_dsl._path_step` at `src/koru/observability_dsl.py:200`
+            with cyclomatic complexity 32 (limit 15).
+
+
+            Extract smaller functions, flatten conditionals, or split strategy branches.
+            Re-run code2llm after the change and keep tests green.'
+          signal: code2llm_cc
+        timestamp: '2026-05-25T20:37:33.556597+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T20:38:26.032145+00:00'
+    STARTER-285:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:33.815935+00:00'
+      description: 'code2llm reports `src.koruide.command_scenario.validate_ide_command_scenario`
+        at `src/koruide/command_scenario.py:106` with cyclomatic complexity 37 (limit
+        15).
+
+
+        Extract smaller functions, flatten conditionals, or split strategy branches.
+        Re-run code2llm after the change and keep tests green.'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T20:39:38.803133Z'
+        max_attempts: 1
+        queue: default
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koruide/command_scenario.py
+      history:
+      - action: created
+        message: 'code2llm reports `src.koruide.command_scenario.validate_ide_command_scenario`
+          at `src/koruide/command_scenario.py:106` with cyclomatic complexity 37 (limit
+          15).
+
+
+          Extract smaller functions, flatten conditionals, or split strategy branches.
+          Re-run code2llm after the change and keep tests green.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:33.815935+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T20:39:38.824423+00:00'
+      id: STARTER-285
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm reports `src.koruide.command_scenario.validate_ide_command_scenario`
+          at `src/koruide/command_scenario.py:106` with cyclomatic complexity 37 (limit
+          15).
+
+
+          Extract smaller functions, flatten conditionals, or split strategy branches.
+          Re-run code2llm after the change and keep tests green.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      name: 'Reduce cyclomatic complexity: src.koruide.command_scenario.validate_ide_command_scenario
+        (CC=37)'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: code2llm:cc:src/koruide/command_scenario.py:src.koruide.command_scenario.validate_ide_command_scenario
+          input: 'code2llm reports `src.koruide.command_scenario.validate_ide_command_scenario`
+            at `src/koruide/command_scenario.py:106` with cyclomatic complexity 37
+            (limit 15).
+
+
+            Extract smaller functions, flatten conditionals, or split strategy branches.
+            Re-run code2llm after the change and keep tests green.'
+          signal: code2llm_cc
+        timestamp: '2026-05-25T20:37:33.815935+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T20:39:38.824385+00:00'
+    STARTER-286:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:34.064209+00:00'
+      description: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscode/src/extension.ts`
+        and `plugins/koru-autopilot-vscodium/src/extension.ts` with 191 overlapping
+        methods.
+
+
+        Extract a shared base/helper or merge the duplicated behavior, then re-run
+        code2llm to confirm the duplicate signal is gone.'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T20:43:44.855342Z'
+        max_attempts: 1
+        queue: default
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - plugins/koru-autopilot-vscode/src/extension.ts
+      - plugins/koru-autopilot-vscodium/src/extension.ts
+      history:
+      - action: created
+        message: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscode/src/extension.ts`
+          and `plugins/koru-autopilot-vscodium/src/extension.ts` with 191 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:34.064209+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T20:43:44.874637+00:00'
+      id: STARTER-286
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscode/src/extension.ts`
+          and `plugins/koru-autopilot-vscodium/src/extension.ts` with 191 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - duplication
+      - refactor
+      name: Consolidate duplicate class AutopilotBridge
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: code2llm:dup:AutopilotBridge:plugins/koru-autopilot-vscode/src/extension.ts:plugins/koru-autopilot-vscodium/src/extension.ts
+          input: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscode/src/extension.ts`
+            and `plugins/koru-autopilot-vscodium/src/extension.ts` with 191 overlapping
+            methods.
+
+
+            Extract a shared base/helper or merge the duplicated behavior, then re-run
+            code2llm to confirm the duplicate signal is gone.'
+          signal: code2llm_dup
+        timestamp: '2026-05-25T20:37:34.064209+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T20:43:44.874603+00:00'
+    STARTER-287:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:34.349162+00:00'
+      description: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscode/src/extension.ts`
+        and `plugins/koru-autopilot-cursor/src/extension.ts` with 187 overlapping
+        methods.
+
+
+        Extract a shared base/helper or merge the duplicated behavior, then re-run
+        code2llm to confirm the duplicate signal is gone.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - plugins/koru-autopilot-vscode/src/extension.ts
+      - plugins/koru-autopilot-cursor/src/extension.ts
+      history:
+      - action: created
+        message: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscode/src/extension.ts`
+          and `plugins/koru-autopilot-cursor/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:34.349162+00:00'
+      id: STARTER-287
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscode/src/extension.ts`
+          and `plugins/koru-autopilot-cursor/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - duplication
+      - refactor
+      name: Consolidate duplicate class AutopilotBridge
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: code2llm:dup:AutopilotBridge:plugins/koru-autopilot-vscode/src/extension.ts:plugins/koru-autopilot-cursor/src/extension.ts
+          input: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscode/src/extension.ts`
+            and `plugins/koru-autopilot-cursor/src/extension.ts` with 187 overlapping
+            methods.
+
+
+            Extract a shared base/helper or merge the duplicated behavior, then re-run
+            code2llm to confirm the duplicate signal is gone.'
+          signal: code2llm_dup
+        timestamp: '2026-05-25T20:37:34.349162+00:00'
+        tool: koru-project-discovery
+      sprint: current
       status: open
       sync: {}
-      updated_at: '2026-05-25T19:08:04.094394Z'
+      updated_at: '2026-05-25T20:37:34.349162+00:00'
+    STARTER-288:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:34.615459+00:00'
+      description: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscode/src/extension.ts`
+        and `plugins/koru-autopilot-antigravity/src/extension.ts` with 187 overlapping
+        methods.
+
+
+        Extract a shared base/helper or merge the duplicated behavior, then re-run
+        code2llm to confirm the duplicate signal is gone.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - plugins/koru-autopilot-vscode/src/extension.ts
+      - plugins/koru-autopilot-antigravity/src/extension.ts
+      history:
+      - action: created
+        message: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscode/src/extension.ts`
+          and `plugins/koru-autopilot-antigravity/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:34.615459+00:00'
+      id: STARTER-288
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscode/src/extension.ts`
+          and `plugins/koru-autopilot-antigravity/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - duplication
+      - refactor
+      name: Consolidate duplicate class AutopilotBridge
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: code2llm:dup:AutopilotBridge:plugins/koru-autopilot-vscode/src/extension.ts:plugins/koru-autopilot-antigravity/src/extension.ts
+          input: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscode/src/extension.ts`
+            and `plugins/koru-autopilot-antigravity/src/extension.ts` with 187 overlapping
+            methods.
+
+
+            Extract a shared base/helper or merge the duplicated behavior, then re-run
+            code2llm to confirm the duplicate signal is gone.'
+          signal: code2llm_dup
+        timestamp: '2026-05-25T20:37:34.615459+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T20:37:34.615459+00:00'
+    STARTER-289:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:34.899611+00:00'
+      description: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscode/src/extension.ts`
+        and `plugins/koru-autopilot-windsurf/src/extension.ts` with 187 overlapping
+        methods.
+
+
+        Extract a shared base/helper or merge the duplicated behavior, then re-run
+        code2llm to confirm the duplicate signal is gone.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - plugins/koru-autopilot-vscode/src/extension.ts
+      - plugins/koru-autopilot-windsurf/src/extension.ts
+      history:
+      - action: created
+        message: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscode/src/extension.ts`
+          and `plugins/koru-autopilot-windsurf/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:34.899611+00:00'
+      id: STARTER-289
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscode/src/extension.ts`
+          and `plugins/koru-autopilot-windsurf/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - duplication
+      - refactor
+      name: Consolidate duplicate class AutopilotBridge
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: code2llm:dup:AutopilotBridge:plugins/koru-autopilot-vscode/src/extension.ts:plugins/koru-autopilot-windsurf/src/extension.ts
+          input: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscode/src/extension.ts`
+            and `plugins/koru-autopilot-windsurf/src/extension.ts` with 187 overlapping
+            methods.
+
+
+            Extract a shared base/helper or merge the duplicated behavior, then re-run
+            code2llm to confirm the duplicate signal is gone.'
+          signal: code2llm_dup
+        timestamp: '2026-05-25T20:37:34.899611+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T20:37:34.899611+00:00'
+    STARTER-290:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:35.180834+00:00'
+      description: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscodium/src/extension.ts`
+        and `plugins/koru-autopilot-cursor/src/extension.ts` with 187 overlapping
+        methods.
+
+
+        Extract a shared base/helper or merge the duplicated behavior, then re-run
+        code2llm to confirm the duplicate signal is gone.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - plugins/koru-autopilot-vscodium/src/extension.ts
+      - plugins/koru-autopilot-cursor/src/extension.ts
+      history:
+      - action: created
+        message: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscodium/src/extension.ts`
+          and `plugins/koru-autopilot-cursor/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:35.180834+00:00'
+      id: STARTER-290
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscodium/src/extension.ts`
+          and `plugins/koru-autopilot-cursor/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - duplication
+      - refactor
+      name: Consolidate duplicate class AutopilotBridge
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: code2llm:dup:AutopilotBridge:plugins/koru-autopilot-vscodium/src/extension.ts:plugins/koru-autopilot-cursor/src/extension.ts
+          input: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscodium/src/extension.ts`
+            and `plugins/koru-autopilot-cursor/src/extension.ts` with 187 overlapping
+            methods.
+
+
+            Extract a shared base/helper or merge the duplicated behavior, then re-run
+            code2llm to confirm the duplicate signal is gone.'
+          signal: code2llm_dup
+        timestamp: '2026-05-25T20:37:35.180834+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T20:37:35.180834+00:00'
+    STARTER-291:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:35.463777+00:00'
+      description: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscodium/src/extension.ts`
+        and `plugins/koru-autopilot-antigravity/src/extension.ts` with 187 overlapping
+        methods.
+
+
+        Extract a shared base/helper or merge the duplicated behavior, then re-run
+        code2llm to confirm the duplicate signal is gone.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - plugins/koru-autopilot-vscodium/src/extension.ts
+      - plugins/koru-autopilot-antigravity/src/extension.ts
+      history:
+      - action: created
+        message: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscodium/src/extension.ts`
+          and `plugins/koru-autopilot-antigravity/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:35.463777+00:00'
+      id: STARTER-291
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscodium/src/extension.ts`
+          and `plugins/koru-autopilot-antigravity/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - duplication
+      - refactor
+      name: Consolidate duplicate class AutopilotBridge
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: code2llm:dup:AutopilotBridge:plugins/koru-autopilot-vscodium/src/extension.ts:plugins/koru-autopilot-antigravity/src/extension.ts
+          input: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscodium/src/extension.ts`
+            and `plugins/koru-autopilot-antigravity/src/extension.ts` with 187 overlapping
+            methods.
+
+
+            Extract a shared base/helper or merge the duplicated behavior, then re-run
+            code2llm to confirm the duplicate signal is gone.'
+          signal: code2llm_dup
+        timestamp: '2026-05-25T20:37:35.463777+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T20:37:35.463777+00:00'
+    STARTER-292:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:35.767533+00:00'
+      description: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscodium/src/extension.ts`
+        and `plugins/koru-autopilot-windsurf/src/extension.ts` with 187 overlapping
+        methods.
+
+
+        Extract a shared base/helper or merge the duplicated behavior, then re-run
+        code2llm to confirm the duplicate signal is gone.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - plugins/koru-autopilot-vscodium/src/extension.ts
+      - plugins/koru-autopilot-windsurf/src/extension.ts
+      history:
+      - action: created
+        message: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscodium/src/extension.ts`
+          and `plugins/koru-autopilot-windsurf/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:35.767533+00:00'
+      id: STARTER-292
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscodium/src/extension.ts`
+          and `plugins/koru-autopilot-windsurf/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - duplication
+      - refactor
+      name: Consolidate duplicate class AutopilotBridge
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: code2llm:dup:AutopilotBridge:plugins/koru-autopilot-vscodium/src/extension.ts:plugins/koru-autopilot-windsurf/src/extension.ts
+          input: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-vscodium/src/extension.ts`
+            and `plugins/koru-autopilot-windsurf/src/extension.ts` with 187 overlapping
+            methods.
+
+
+            Extract a shared base/helper or merge the duplicated behavior, then re-run
+            code2llm to confirm the duplicate signal is gone.'
+          signal: code2llm_dup
+        timestamp: '2026-05-25T20:37:35.767533+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T20:37:35.767533+00:00'
+    STARTER-293:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:36.116100+00:00'
+      description: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-cursor/src/extension.ts`
+        and `plugins/koru-autopilot-antigravity/src/extension.ts` with 187 overlapping
+        methods.
+
+
+        Extract a shared base/helper or merge the duplicated behavior, then re-run
+        code2llm to confirm the duplicate signal is gone.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - plugins/koru-autopilot-cursor/src/extension.ts
+      - plugins/koru-autopilot-antigravity/src/extension.ts
+      history:
+      - action: created
+        message: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-cursor/src/extension.ts`
+          and `plugins/koru-autopilot-antigravity/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:36.116100+00:00'
+      id: STARTER-293
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-cursor/src/extension.ts`
+          and `plugins/koru-autopilot-antigravity/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - duplication
+      - refactor
+      name: Consolidate duplicate class AutopilotBridge
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: code2llm:dup:AutopilotBridge:plugins/koru-autopilot-cursor/src/extension.ts:plugins/koru-autopilot-antigravity/src/extension.ts
+          input: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-cursor/src/extension.ts`
+            and `plugins/koru-autopilot-antigravity/src/extension.ts` with 187 overlapping
+            methods.
+
+
+            Extract a shared base/helper or merge the duplicated behavior, then re-run
+            code2llm to confirm the duplicate signal is gone.'
+          signal: code2llm_dup
+        timestamp: '2026-05-25T20:37:36.116100+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T20:37:36.116100+00:00'
+    STARTER-294:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:36.415211+00:00'
+      description: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-cursor/src/extension.ts`
+        and `plugins/koru-autopilot-windsurf/src/extension.ts` with 187 overlapping
+        methods.
+
+
+        Extract a shared base/helper or merge the duplicated behavior, then re-run
+        code2llm to confirm the duplicate signal is gone.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - plugins/koru-autopilot-cursor/src/extension.ts
+      - plugins/koru-autopilot-windsurf/src/extension.ts
+      history:
+      - action: created
+        message: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-cursor/src/extension.ts`
+          and `plugins/koru-autopilot-windsurf/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:36.415211+00:00'
+      id: STARTER-294
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-cursor/src/extension.ts`
+          and `plugins/koru-autopilot-windsurf/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - duplication
+      - refactor
+      name: Consolidate duplicate class AutopilotBridge
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: code2llm:dup:AutopilotBridge:plugins/koru-autopilot-cursor/src/extension.ts:plugins/koru-autopilot-windsurf/src/extension.ts
+          input: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-cursor/src/extension.ts`
+            and `plugins/koru-autopilot-windsurf/src/extension.ts` with 187 overlapping
+            methods.
+
+
+            Extract a shared base/helper or merge the duplicated behavior, then re-run
+            code2llm to confirm the duplicate signal is gone.'
+          signal: code2llm_dup
+        timestamp: '2026-05-25T20:37:36.415211+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T20:37:36.415211+00:00'
+    STARTER-295:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:36.723020+00:00'
+      description: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-antigravity/src/extension.ts`
+        and `plugins/koru-autopilot-windsurf/src/extension.ts` with 187 overlapping
+        methods.
+
+
+        Extract a shared base/helper or merge the duplicated behavior, then re-run
+        code2llm to confirm the duplicate signal is gone.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - plugins/koru-autopilot-antigravity/src/extension.ts
+      - plugins/koru-autopilot-windsurf/src/extension.ts
+      history:
+      - action: created
+        message: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-antigravity/src/extension.ts`
+          and `plugins/koru-autopilot-windsurf/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:36.723020+00:00'
+      id: STARTER-295
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-antigravity/src/extension.ts`
+          and `plugins/koru-autopilot-windsurf/src/extension.ts` with 187 overlapping
+          methods.
+
+
+          Extract a shared base/helper or merge the duplicated behavior, then re-run
+          code2llm to confirm the duplicate signal is gone.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - duplication
+      - refactor
+      name: Consolidate duplicate class AutopilotBridge
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: code2llm:dup:AutopilotBridge:plugins/koru-autopilot-antigravity/src/extension.ts:plugins/koru-autopilot-windsurf/src/extension.ts
+          input: 'code2llm found similar `AutopilotBridge` classes in `plugins/koru-autopilot-antigravity/src/extension.ts`
+            and `plugins/koru-autopilot-windsurf/src/extension.ts` with 187 overlapping
+            methods.
+
+
+            Extract a shared base/helper or merge the duplicated behavior, then re-run
+            code2llm to confirm the duplicate signal is gone.'
+          signal: code2llm_dup
+        timestamp: '2026-05-25T20:37:36.723020+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T20:37:36.723020+00:00'
+    STARTER-296:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:37.059326+00:00'
+      description: 'code2llm reports `God Function: _build_parser` in `src/koru/cli_cleaned.py:67`.
+
+
+        Function ''_build_parser'' is oversized: CC=1, fan-out=4, mutations=34.
+
+
+        Make the smallest refactor that removes the smell and run local tests.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koru/cli_cleaned.py
+      history:
+      - action: created
+        message: 'code2llm reports `God Function: _build_parser` in `src/koru/cli_cleaned.py:67`.
+
+
+          Function ''_build_parser'' is oversized: CC=1, fan-out=4, mutations=34.
+
+
+          Make the smallest refactor that removes the smell and run local tests.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:37.059326+00:00'
+      id: STARTER-296
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm reports `God Function: _build_parser` in `src/koru/cli_cleaned.py:67`.
+
+
+          Function ''_build_parser'' is oversized: CC=1, fan-out=4, mutations=34.
+
+
+          Make the smallest refactor that removes the smell and run local tests.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _build_parser'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: 'code2llm:smell:god_function:src/koru/cli_cleaned.py:67:God
+            Function: _build_parser'
+          input: 'code2llm reports `God Function: _build_parser` in `src/koru/cli_cleaned.py:67`.
+
+
+            Function ''_build_parser'' is oversized: CC=1, fan-out=4, mutations=34.
+
+
+            Make the smallest refactor that removes the smell and run local tests.'
+          signal: code2llm_smell_god_function
+        timestamp: '2026-05-25T20:37:37.059326+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T20:37:37.059326+00:00'
+    STARTER-297:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:37.378898+00:00'
+      description: 'code2llm reports `God Function: _build_parser_impl` in `src/koru/autonomous_parser.py:8`.
+
+
+        Function ''_build_parser_impl'' is oversized: CC=1, fan-out=9, mutations=72.
+
+
+        Make the smallest refactor that removes the smell and run local tests.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koru/autonomous_parser.py
+      history:
+      - action: created
+        message: 'code2llm reports `God Function: _build_parser_impl` in `src/koru/autonomous_parser.py:8`.
+
+
+          Function ''_build_parser_impl'' is oversized: CC=1, fan-out=9, mutations=72.
+
+
+          Make the smallest refactor that removes the smell and run local tests.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:37.378898+00:00'
+      id: STARTER-297
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm reports `God Function: _build_parser_impl` in `src/koru/autonomous_parser.py:8`.
+
+
+          Function ''_build_parser_impl'' is oversized: CC=1, fan-out=9, mutations=72.
+
+
+          Make the smallest refactor that removes the smell and run local tests.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _build_parser_impl'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: 'code2llm:smell:god_function:src/koru/autonomous_parser.py:8:God
+            Function: _build_parser_impl'
+          input: 'code2llm reports `God Function: _build_parser_impl` in `src/koru/autonomous_parser.py:8`.
+
+
+            Function ''_build_parser_impl'' is oversized: CC=1, fan-out=9, mutations=72.
+
+
+            Make the smallest refactor that removes the smell and run local tests.'
+          signal: code2llm_smell_god_function
+        timestamp: '2026-05-25T20:37:37.378898+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T20:37:37.378898+00:00'
+    STARTER-298:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:37.711345+00:00'
+      description: 'code2llm reports `God Function: _check_autopilot_chat_control`
+        in `src/koru/doctor.py:921`.
+
+
+        Function ''_check_autopilot_chat_control'' is oversized: CC=3, fan-out=8,
+        mutations=32.
+
+
+        Make the smallest refactor that removes the smell and run local tests.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koru/doctor.py
+      history:
+      - action: created
+        message: 'code2llm reports `God Function: _check_autopilot_chat_control` in
+          `src/koru/doctor.py:921`.
+
+
+          Function ''_check_autopilot_chat_control'' is oversized: CC=3, fan-out=8,
+          mutations=32.
+
+
+          Make the smallest refactor that removes the smell and run local tests.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:37.711345+00:00'
+      id: STARTER-298
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm reports `God Function: _check_autopilot_chat_control` in
+          `src/koru/doctor.py:921`.
+
+
+          Function ''_check_autopilot_chat_control'' is oversized: CC=3, fan-out=8,
+          mutations=32.
+
+
+          Make the smallest refactor that removes the smell and run local tests.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _check_autopilot_chat_control'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: 'code2llm:smell:god_function:src/koru/doctor.py:921:God Function:
+            _check_autopilot_chat_control'
+          input: 'code2llm reports `God Function: _check_autopilot_chat_control` in
+            `src/koru/doctor.py:921`.
+
+
+            Function ''_check_autopilot_chat_control'' is oversized: CC=3, fan-out=8,
+            mutations=32.
+
+
+            Make the smallest refactor that removes the smell and run local tests.'
+          signal: code2llm_smell_god_function
+        timestamp: '2026-05-25T20:37:37.711345+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T20:37:37.711345+00:00'
+    STARTER-299:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:38.161069+00:00'
+      description: 'code2llm reports `God Function: _create_nl_task_impl` in `src/koru/tasks.py:100`.
+
+
+        Function ''_create_nl_task_impl'' is oversized: CC=3, fan-out=11, mutations=28.
+
+
+        Make the smallest refactor that removes the smell and run local tests.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koru/tasks.py
+      history:
+      - action: created
+        message: 'code2llm reports `God Function: _create_nl_task_impl` in `src/koru/tasks.py:100`.
+
+
+          Function ''_create_nl_task_impl'' is oversized: CC=3, fan-out=11, mutations=28.
+
+
+          Make the smallest refactor that removes the smell and run local tests.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:38.161069+00:00'
+      id: STARTER-299
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm reports `God Function: _create_nl_task_impl` in `src/koru/tasks.py:100`.
+
+
+          Function ''_create_nl_task_impl'' is oversized: CC=3, fan-out=11, mutations=28.
+
+
+          Make the smallest refactor that removes the smell and run local tests.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _create_nl_task_impl'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: 'code2llm:smell:god_function:src/koru/tasks.py:100:God Function:
+            _create_nl_task_impl'
+          input: 'code2llm reports `God Function: _create_nl_task_impl` in `src/koru/tasks.py:100`.
+
+
+            Function ''_create_nl_task_impl'' is oversized: CC=3, fan-out=11, mutations=28.
+
+
+            Make the smallest refactor that removes the smell and run local tests.'
+          signal: code2llm_smell_god_function
+        timestamp: '2026-05-25T20:37:38.161069+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T20:37:38.161069+00:00'
+    STARTER-300:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:38.564517+00:00'
+      description: 'code2llm reports `God Function: _drive_via_plugin` in `src/koruide/daemon/handlers_drive.py:103`.
+
+
+        Function ''_drive_via_plugin'' is oversized: CC=12, fan-out=29, mutations=9.
+
+
+        Make the smallest refactor that removes the smell and run local tests.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koruide/daemon/handlers_drive.py
+      history:
+      - action: created
+        message: 'code2llm reports `God Function: _drive_via_plugin` in `src/koruide/daemon/handlers_drive.py:103`.
+
+
+          Function ''_drive_via_plugin'' is oversized: CC=12, fan-out=29, mutations=9.
+
+
+          Make the smallest refactor that removes the smell and run local tests.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:38.564517+00:00'
+      id: STARTER-300
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm reports `God Function: _drive_via_plugin` in `src/koruide/daemon/handlers_drive.py:103`.
+
+
+          Function ''_drive_via_plugin'' is oversized: CC=12, fan-out=29, mutations=9.
+
+
+          Make the smallest refactor that removes the smell and run local tests.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: _drive_via_plugin'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: 'code2llm:smell:god_function:src/koruide/daemon/handlers_drive.py:103:God
+            Function: _drive_via_plugin'
+          input: 'code2llm reports `God Function: _drive_via_plugin` in `src/koruide/daemon/handlers_drive.py:103`.
+
+
+            Function ''_drive_via_plugin'' is oversized: CC=12, fan-out=29, mutations=9.
+
+
+            Make the smallest refactor that removes the smell and run local tests.'
+          signal: code2llm_smell_god_function
+        timestamp: '2026-05-25T20:37:38.564517+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T20:37:38.564517+00:00'
+    STARTER-301:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:38.918287+00:00'
+      description: 'code2llm reports `God Function: build_parser` in `src/koru/ide_doctor_cli.py:46`.
+
+
+        Function ''build_parser'' is oversized: CC=1, fan-out=13, mutations=47.
+
+
+        Make the smallest refactor that removes the smell and run local tests.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koru/ide_doctor_cli.py
+      history:
+      - action: created
+        message: 'code2llm reports `God Function: build_parser` in `src/koru/ide_doctor_cli.py:46`.
+
+
+          Function ''build_parser'' is oversized: CC=1, fan-out=13, mutations=47.
+
+
+          Make the smallest refactor that removes the smell and run local tests.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:38.918287+00:00'
+      id: STARTER-301
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm reports `God Function: build_parser` in `src/koru/ide_doctor_cli.py:46`.
+
+
+          Function ''build_parser'' is oversized: CC=1, fan-out=13, mutations=47.
+
+
+          Make the smallest refactor that removes the smell and run local tests.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: build_parser'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: 'code2llm:smell:god_function:src/koru/ide_doctor_cli.py:46:God
+            Function: build_parser'
+          input: 'code2llm reports `God Function: build_parser` in `src/koru/ide_doctor_cli.py:46`.
+
+
+            Function ''build_parser'' is oversized: CC=1, fan-out=13, mutations=47.
+
+
+            Make the smallest refactor that removes the smell and run local tests.'
+          signal: code2llm_smell_god_function
+        timestamp: '2026-05-25T20:37:38.918287+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T20:37:38.918287+00:00'
+    STARTER-302:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:39.320962+00:00'
+      description: 'code2llm reports `God Function: build_parser` in `src/koru/git_cli.py:184`.
+
+
+        Function ''build_parser'' is oversized: CC=1, fan-out=12, mutations=42.
+
+
+        Make the smallest refactor that removes the smell and run local tests.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koru/git_cli.py
+      history:
+      - action: created
+        message: 'code2llm reports `God Function: build_parser` in `src/koru/git_cli.py:184`.
+
+
+          Function ''build_parser'' is oversized: CC=1, fan-out=12, mutations=42.
+
+
+          Make the smallest refactor that removes the smell and run local tests.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:39.320962+00:00'
+      id: STARTER-302
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm reports `God Function: build_parser` in `src/koru/git_cli.py:184`.
+
+
+          Function ''build_parser'' is oversized: CC=1, fan-out=12, mutations=42.
+
+
+          Make the smallest refactor that removes the smell and run local tests.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: build_parser'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: 'code2llm:smell:god_function:src/koru/git_cli.py:184:God Function:
+            build_parser'
+          input: 'code2llm reports `God Function: build_parser` in `src/koru/git_cli.py:184`.
+
+
+            Function ''build_parser'' is oversized: CC=1, fan-out=12, mutations=42.
+
+
+            Make the smallest refactor that removes the smell and run local tests.'
+          signal: code2llm_smell_god_function
+        timestamp: '2026-05-25T20:37:39.320962+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T20:37:39.320962+00:00'
+    STARTER-303:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T20:37:39.921337+00:00'
+      description: 'code2llm reports `God Function: collect_install_manager_report`
+        in `src/koru/autopilot/install_manager.py:296`.
+
+
+        Function ''collect_install_manager_report'' is oversized: CC=11, fan-out=20,
+        mutations=16.
+
+
+        Make the smallest refactor that removes the smell and run local tests.'
+      execution:
+        attempt: 0
+        max_attempts: 1
+        queue: default
+        state: ready
+      executor:
+        kind: human
+        mode: interactive
+      files:
+      - src/koru/autopilot/install_manager.py
+      history:
+      - action: created
+        message: 'code2llm reports `God Function: collect_install_manager_report`
+          in `src/koru/autopilot/install_manager.py:296`.
+
+
+          Function ''collect_install_manager_report'' is oversized: CC=11, fan-out=20,
+          mutations=16.
+
+
+          Make the smallest refactor that removes the smell and run local tests.'
+        source: koru task
+        timestamp: '2026-05-25T20:37:39.921337+00:00'
+      id: STARTER-303
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: 'code2llm reports `God Function: collect_install_manager_report` in
+          `src/koru/autopilot/install_manager.py:296`.
+
+
+          Function ''collect_install_manager_report'' is oversized: CC=11, fan-out=20,
+          mutations=16.
+
+
+          Make the smallest refactor that removes the smell and run local tests.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - code-smell
+      - god-function
+      name: 'Address code smell: God Function: collect_install_manager_report'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: 'code2llm:smell:god_function:src/koru/autopilot/install_manager.py:296:God
+            Function: collect_install_manager_report'
+          input: 'code2llm reports `God Function: collect_install_manager_report`
+            in `src/koru/autopilot/install_manager.py:296`.
+
+
+            Function ''collect_install_manager_report'' is oversized: CC=11, fan-out=20,
+            mutations=16.
+
+
+            Make the smallest refactor that removes the smell and run local tests.'
+          signal: code2llm_smell_god_function
+        timestamp: '2026-05-25T20:37:39.921337+00:00'
+        tool: koru-project-discovery
+      sprint: current
+      status: open
+      sync: {}
+      updated_at: '2026-05-25T20:37:39.921337+00:00'

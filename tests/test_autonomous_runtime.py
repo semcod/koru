@@ -191,6 +191,7 @@ def test_setup_autopilot_daemon_sets_instance_before_default_socket(
 ) -> None:
     monkeypatch.setenv("XDG_RUNTIME_DIR", "/run/user/1000")
     monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
     monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
 
     args = SimpleNamespace(
@@ -206,13 +207,17 @@ def test_setup_autopilot_daemon_sets_instance_before_default_socket(
         captured["socket_path"] = socket_path
         return None, None, None
 
+    def _default_socket_path():
+        # Use resolved autopilot_ide (vscodium) instead of KORU_AUTOPILOT_INSTANCE
+        return Path("/run/user/1000/koru-autopilot-vscodium.sock")
+
     _client, _daemon, _thread, socket_path = autonomous_runtime.setup_autopilot_daemon(
         args,
         tmp_path,
         apply_agent_lane_environ=_apply_agent_lane_environ,
         resolve_autopilot_ide=resolve_autopilot_ide_for_autonomous,
         resolve_ide_route_fn=resolve_ide_route,
-        default_socket_path=default_socket_path,
+        default_socket_path=_default_socket_path,
         start_or_reuse_daemon=_start_or_reuse_daemon,
         stdio_info=lambda *_args, **_kwargs: None,
     )
@@ -220,4 +225,5 @@ def test_setup_autopilot_daemon_sets_instance_before_default_socket(
     assert socket_path is not None
     assert str(socket_path).endswith("koru-autopilot-vscodium.sock")
     assert captured["socket_path"] == socket_path
+    # Explicit --autopilot-ide wins over auto-detect; instance must be set before socket resolution.
     assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "vscodium"
