@@ -9,11 +9,12 @@ from collections.abc import Callable
 from pathlib import Path
 
 from koru.autoloop_cli import autoloop_main
-from koru.autonomous import autonomous_main
+from koru.autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
 from koru.autonomous_runtime import project_venv_reexec_argv
 from koru.autopilot.cli_command import autopilot_main
 from koru.cli_loop import command_loop_main as _command_loop_main
-from koru.cli_parser import _build_parser
+from koru.cli_parser import _build_parser, _command_value
+from koru.cli_agent import detect_agent_options
 from koru.cli_scan import scan_main as _scan_main
 from koru.dev_sync import dev_main
 from koru.git_cli import git_main
