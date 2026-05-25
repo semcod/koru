@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+package koru.deployment;
+
+// Deployment event types for tracking deployment and self-deployment operations
+enum DeploymentEventType {
+  DEPLOYMENT_EVENT_UNKNOWN = 0;
+  
+  // Deployment lifecycle events
+  DEPLOYMENT_STARTED = 1;
+  DEPLOYMENT_COMPLETED = 2;
+  DEPLOYMENT_FAILED = 3;
+  DEPLOYMENT_ROLLED_BACK = 4;
+  DEPLOYMENT_CANCELLED = 5;
+  
+  // Self-deployment events
+  SELF_DEPLOYMENT_INITIATED = 10;
+  SELF_DEPLOYMENT_APPLIED = 11;
+  SELF_DEPLOYMENT_REJECTED = 12;
+  SELF_DEPLOYMENT_VALIDATED = 13;
+  
+  // Plugin events
+  PLUGIN_INSTALLED = 20;
+  PLUGIN_UNINSTALLED = 21;
+  PLUGIN_UPGRADED = 22;
+  PLUGIN_VERSION_MISMATCH = 23;
+  PLUGIN_CONNECTED = 24;
+  PLUGIN_DISCONNECTED = 25;
+  
+  // Configuration events
+  CONFIG_CHANGED = 30;
+  CONFIG_VALIDATED = 31;
+  CONFIG_RELOADED = 32;
+  
+  // Service events
+  SERVICE_STARTED = 40;
+  SERVICE_STOPPED = 41;
+  SERVICE_RESTARTED = 42;
+  SERVICE_HEALTH_CHECK = 43;
+  
+  // Dependency events
+  DEPENDENCY_INSTALLED = 50;
+  DEPENDENCY_REMOVED = 51;
+  DEPENDENCY_UPDATED = 52;
+}
+
+// Source of the deployment event
+enum EventSource {
+  SOURCE_UNKNOWN = 0;
+  SOURCE_KORU_CLI = 1;
+  SOURCE_KORU_DAEMON = 2;
+  SOURCE_AUTONOMOUS = 3;
+  SOURCE_PLUGIN = 4;
+  SOURCE_EXTERNAL = 5;
+  SOURCE_SELF_DEPLOYMENT = 6;
+}
+
+// Severity level for events
+enum Severity {
+  SEVERITY_UNKNOWN = 0;
+  SEVERITY_DEBUG = 1;
+  SEVERITY_INFO = 2;
+  SEVERITY_WARNING = 3;
+  SEVERITY_ERROR = 4;
+  SEVERITY_CRITICAL = 5;
+}
+
+// Component being deployed or affected
+message Component {
+  string name = 1;
+  string version = 2;
+  string type = 3;  // e.g., "plugin", "service", "config", "dependency"
+  map<string, string> metadata = 4;
+}
+
+// Deployment event payload
+message DeploymentEvent {
+  string event_id = 1;           // Unique event identifier
+  int64 timestamp = 2;           // Unix timestamp in nanoseconds
+  DeploymentEventType event_type = 3;
+  EventSource source = 4;
+  Severity severity = 5;
+  
+  string correlation_id = 10;    // For tracking related events
+  string session_id = 11;        // Session identifier
+  
+  // Component information
+  Component component = 20;
+  string environment = 21;       // e.g., "production", "staging", "development"
+  string deployment_target = 22; // e.g., hostname, container, service name
+  
+  // Event details
+  string message = 30;
+  map<string, string> details = 31;
+  
+  // Performance metrics
+  int64 duration_ms = 40;        // Event duration in milliseconds
+  map<string, double> metrics = 41;  // Additional metrics
+  
+  // Error information
+  string error_code = 50;
+  string error_message = 51;
+  repeated string stack_trace = 52;
+  
+  // Plugin-specific fields
+  string plugin_ide = 60;        // IDE type (vscode, cursor, windsurf, jetbrains)
+  string plugin_version = 61;
+  bool plugin_connected = 62;
+  
+  // Koru package information
+  string koru_version = 70;
+  string koru_source_root = 71;
+}
+
+// Batch of events for efficient transmission
+message DeploymentEventBatch {
+  repeated DeploymentEvent events = 1;
+  string batch_id = 2;
+  int64 batch_timestamp = 3;
+}
