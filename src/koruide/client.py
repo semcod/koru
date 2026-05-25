@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import socket
 from collections.abc import Callable
 from pathlib import Path
@@ -28,19 +29,30 @@ class KoruIDEClient:
         self.timeout = timeout
         self._log = log
 
-    def _connect(self) -> socket.socket:
+    def _drive_timeout(self) -> float:
+        raw = os.environ.get("KORU_AUTOPILOT_DRIVE_TIMEOUT_SECONDS", "").strip()
+        if raw:
+            try:
+                return max(self.timeout, float(raw))
+            except ValueError:
+                pass
+        # Drive acks can legitimately arrive later than simple ping/status
+        # because the daemon waits for plugin focus/paste/submit verification.
+        return max(self.timeout, 8.0)
+
+    def _connect(self, *, timeout: float | None = None) -> socket.socket:
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.settimeout(self.timeout)
+        sock.settimeout(self.timeout if timeout is None else timeout)
         sock.connect(str(self.socket_path))
         return sock
 
-    def request(self, msg: Message) -> Message:
+    def request(self, msg: Message, *, timeout: float | None = None) -> Message:
         if self._client is not None:
             req = getattr(self._client, "request", None)
             if not callable(req):
                 raise RuntimeError("injected client does not expose request(msg)")
             return req(msg)
-        with self._connect() as sock:
+        with self._connect(timeout=timeout) as sock:
             sock.sendall(msg.encode())
             buf = bytearray()
             while b"\n" not in buf:
@@ -102,6 +114,7 @@ class KoruIDEClient:
                     require_plugin=require_plugin,
                     id="cli-drive",
                 ),
+                timeout=self._drive_timeout(),
             )
             data = reply.to_dict()
             if self._log:

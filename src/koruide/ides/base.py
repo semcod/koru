@@ -175,6 +175,46 @@ class IdeStrategy(ABC):
         return f"<{type(self).__name__} id={self.id!r}>"
 
 
+@dataclass(frozen=True)
+class VscodeFamilyStrategy(IdeStrategy):
+    """Common base strategy for VS Code-family IDEs (VS Code, VSCodium, Cursor, Windsurf, Antigravity)."""
+
+    @property
+    def config_folder_name(self) -> str:
+        """Name of the configuration folder under XDG_CONFIG_HOME."""
+        raise NotImplementedError
+
+    @property
+    def workspace_settings_folder_name(self) -> str:
+        """Name of the workspace settings folder (usually .vscode, sometimes .cursor)."""
+        return ".vscode"
+
+    def config_home(self) -> Path | None:
+        import os
+        base = Path(
+            os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config"),
+        ).expanduser()
+        return base / self.config_folder_name
+
+    def workspace_settings_path(self, project: Path) -> Path | None:
+        return project / self.workspace_settings_folder_name / "settings.json"
+
+    @property
+    def plugin(self) -> PluginPolicy:
+        return PluginPolicy(
+            supports_vscode_extension=True,
+            requires_trusted_publisher=True,
+            strict_plugin_ack_required=True,
+        )
+
+    @property
+    def keyboard(self) -> KeyboardPolicy:
+        return KeyboardPolicy(
+            submit_key="Return",
+            os_injector_tool_id=self.id,
+        )
+
+
 __all__ = [
     "DetectionSignature",
     "IdeAliases",
@@ -182,4 +222,5 @@ __all__ = [
     "KeyboardPolicy",
     "PluginPolicy",
     "TerminalSignature",
+    "VscodeFamilyStrategy",
 ]

@@ -147,6 +147,42 @@ def _bundled_vsix_candidates() -> list[Path]:
     )
 
 
+def _fallback_vsix_candidates(anchor: Path | None = None) -> list[Path]:
+    candidates: list[Path] = []
+    if anchor is not None:
+        try:
+            candidates.extend(sorted(anchor.parent.glob("*.vsix"), key=lambda p: p.stat().st_mtime, reverse=True))
+        except OSError:
+            pass
+
+    repo_root = _repo_root()
+    if repo_root is not None:
+        plugin_dir = repo_root / "plugins" / "koru-autopilot-vscode"
+        try:
+            candidates.extend(sorted(plugin_dir.glob("*.vsix"), key=lambda p: p.stat().st_mtime, reverse=True))
+        except OSError:
+            pass
+
+    cwd_plugin = Path.cwd() / "plugins" / "koru-autopilot-vscode"
+    try:
+        candidates.extend(sorted(cwd_plugin.glob("*.vsix"), key=lambda p: p.stat().st_mtime, reverse=True))
+    except OSError:
+        pass
+
+    out: list[Path] = []
+    seen: set[Path] = set()
+    for candidate in candidates:
+        try:
+            resolved = candidate.resolve()
+        except OSError:
+            continue
+        if not resolved.is_file() or resolved in seen:
+            continue
+        seen.add(resolved)
+        out.append(resolved)
+    return out
+
+
 def _running_vscode_flavor() -> str | None:
     """Return VS Code-family flavor from the actually running editor process."""
     for ide in detect_running_ides():
@@ -361,6 +397,10 @@ def _reassert_extension_extra(
     dry_run: bool,
     runner: Runner,
 ) -> tuple[list[str], str]:
+    def _missing_vsix_hint(proc: subprocess.CompletedProcess[str]) -> bool:
+        detail = (proc.stderr or proc.stdout or "").lower()
+        return "no such file" in detail or "enoent" in detail
+
     last_cmd: list[str] = [command, "--list-extensions"]
     extra = ""
     if dry_run or not _env_reassert_extension_install():
@@ -375,7 +415,30 @@ def _reassert_extension_extra(
         proc = runner(reassert_cmd, timeout=90.0)
     except (OSError, subprocess.SubprocessError) as exc:
         return last_cmd, f"; reassert failed: {exc}"
-    last_cmd = reassert_cmd
+    used_retry_cmd = False
+    if (
+        proc.returncode != 0
+        and vsix is not None
+        and not vsix.is_file()
+        and _missing_vsix_hint(proc)
+    ):
+        for fallback in _fallback_vsix_candidates(vsix):
+            if fallback == vsix:
+                continue
+            retry_cmd = [command, "--install-extension", str(fallback), "--force"]
+            try:
+                retry = runner(retry_cmd, timeout=90.0)
+            except (OSError, subprocess.SubprocessError) as exc:
+                return last_cmd, f"; reassert failed: {exc}"
+            last_cmd = retry_cmd
+            used_retry_cmd = True
+            extra = f"; reassert fallback rc={retry.returncode}"
+            if retry.returncode == 0:
+                return last_cmd, extra
+            proc = retry
+            break
+    if not used_retry_cmd:
+        last_cmd = reassert_cmd
     extra = f"; reassert rc={proc.returncode}"
     if proc.returncode != 0:
         hint = (proc.stderr or proc.stdout or "").strip()

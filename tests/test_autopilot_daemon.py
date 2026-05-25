@@ -974,6 +974,55 @@ def test_message_sent_event_does_not_complete_strict_ack_drive(
         cli.close()
 
 
+def test_plugin_ack_after_cli_disconnect_is_logged_as_late_ack(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_ACK", "1")
+    logs: list[str] = []
+
+    _patch_no_running_ides(monkeypatch)
+    with _DaemonHarness(tmp_path, logs=logs) as h:
+        plugin, plugin_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
+
+        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli.settimeout(2.0)
+        cli.connect(str(h.sock_path))
+        cli.sendall(
+            Message(
+                type="drive",
+                id="d-late-ack",
+                data={"text": "hi", "ide": "vscode", "submit": True},
+            ).encode(),
+        )
+
+        forwarded = plugin_reader.read_message()
+        assert forwarded.type == "chat.send"
+        cli.close()
+        time.sleep(0.05)
+
+        plugin.sendall(
+            Message(
+                type="ack",
+                id="d-late-ack",
+                data={
+                    "ok": True,
+                    "delivered": True,
+                    "opened": True,
+                    "submitted": True,
+                    "winning_focus_open": "workbench.action.chat.open",
+                    "winning_paste": "editor.action.clipboardPasteAction",
+                    "winning_submit": "workbench.action.chat.submit",
+                },
+            ).encode(),
+        )
+        time.sleep(0.2)
+
+        assert any("late ack" in line for line in logs), logs
+        assert not any("send to fd" in line for line in logs), logs
+        plugin.close()
+
+
 def test_newer_plugin_connection_replaces_stale_same_ide_client(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

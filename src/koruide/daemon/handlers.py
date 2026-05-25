@@ -563,6 +563,13 @@ def _relay_os_fallback_ack(
     return True
 
 
+def _cli_client_still_connected(daemon: Any, cli_client: _Client) -> bool:
+    fd = cli_client.sock.fileno()
+    if fd < 0:
+        return False
+    return getattr(daemon, "_clients", {}).get(fd) is cli_client
+
+
 def _relay_message_sent_ack(daemon: Any, client: _Client, msg: Message) -> bool:
     """Use ``message.sent`` event as fallback completion for pending ``drive``."""
     pending = client.awaiting_plugin
@@ -593,6 +600,12 @@ def _relay_message_sent_ack(daemon: Any, client: _Client, msg: Message) -> bool:
         "drive → plugin event completion: "
         + DriveOrchestrator.plugin_ack_summary(info)
     )
+    if not _cli_client_still_connected(daemon, cli_client):
+        daemon.log(
+            "drive → plugin event completion arrived after CLI client disconnected; "
+            "treating as late ack"
+        )
+        return True
     daemon._send(cli_client, ack(corr, ok=True, info=info).encode())
     return True
 
@@ -654,6 +667,12 @@ def handle_ack(daemon: Any, client: _Client, msg: Message) -> None:
     route_summary = DriveOrchestrator.operation_trace_summary(info)
     if route_summary:
         daemon.log(f"drive → plugin operation trace: {route_summary}")
+    if not _cli_client_still_connected(daemon, cli_client):
+        daemon.log(
+            "drive → plugin ack arrived after CLI client disconnected; "
+            "treating as late ack"
+        )
+        return
     relay = ack(corr, ok=plugin_ok, info=info)
     daemon._send(cli_client, relay.encode())
 

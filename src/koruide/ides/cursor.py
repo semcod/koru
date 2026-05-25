@@ -18,16 +18,16 @@ from pathlib import Path
 from koruide.ides.base import (
     DetectionSignature,
     IdeAliases,
-    IdeStrategy,
     KeyboardPolicy,
     PluginPolicy,
     TerminalSignature,
+    VscodeFamilyStrategy,
 )
 from koruide.ides.registry import register_strategy
 
 
 @dataclass(frozen=True)
-class CursorStrategy(IdeStrategy):
+class CursorStrategy(VscodeFamilyStrategy):
     """Strategy for Cursor (VS Code-fork by Anysphere)."""
 
     @property
@@ -37,6 +37,14 @@ class CursorStrategy(IdeStrategy):
     @property
     def label(self) -> str:
         return "Cursor"
+
+    @property
+    def config_folder_name(self) -> str:
+        return "Cursor"
+
+    @property
+    def workspace_settings_folder_name(self) -> str:
+        return ".cursor"
 
     @property
     def detection(self) -> DetectionSignature:
@@ -57,15 +65,6 @@ class CursorStrategy(IdeStrategy):
     def aliases(self) -> IdeAliases:
         return IdeAliases(canonical=self.id, aliases=("cursor",))
 
-    def config_home(self) -> Path | None:
-        base = Path(
-            os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config"),
-        ).expanduser()
-        return base / "Cursor"
-
-    def workspace_settings_path(self, project: Path) -> Path | None:
-        return project / ".cursor" / "settings.json"
-
     def extensions_metadata_path(self) -> Path | None:
         return Path.home() / ".cursor" / "extensions" / "extensions.json"
 
@@ -82,14 +81,6 @@ class CursorStrategy(IdeStrategy):
             strict_plugin_ack_required=False,
         )
 
-    @property
-    def keyboard(self) -> KeyboardPolicy:
-        return KeyboardPolicy(
-            submit_key="Return",
-            os_injector_tool_id="cursor",
-            keyboard_fallback_default=False,
-        )
-
     def editor_cli_candidates(self) -> tuple[str, ...]:
         return ("cursor",)
 
@@ -98,6 +89,5 @@ class CursorStrategy(IdeStrategy):
 
 
 register_strategy(CursorStrategy())
-
 
 __all__ = ["CursorStrategy"]

@@ -2220,3 +2220,90 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-05-25T11:21:38.021426+00:00'
+    STARTER-238:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T11:26:29.454638Z'
+      description: 'Manual fallback after koru scan --apply returned create_failed
+        for all suggestions. Based on project/analysis.toon.yaml hotspot: autonomous
+        (1119 lines, 59 methods). Goal: extract cohesive submodules with focused regression
+        tests; keep changes incremental.'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T11:27:08.693407Z'
+        lease_expires_at: '2026-05-25T12:27:06.853728Z'
+        max_attempts: 1
+        queue: default
+        started_at: '2026-05-25T11:27:07.439299Z'
+        state: done
+      files:
+      - project/analysis.toon.yaml
+      history:
+      - action: update
+        changes:
+        - execution
+        execution_state: ready
+        previous_execution_state: null
+        source: planfile.store
+        timestamp: '2026-05-25T11:27:06.863530+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T11:27:07.449407+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T11:27:08.066388+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T11:27:08.705725+00:00'
+      id: STARTER-238
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - architecture
+      - large-module
+      - refactor
+      - scan
+      name: 'Split large module: autonomous (fresh discovery)'
+      outputs:
+        artifacts: []
+        notes:
+        - 'KORU-SHELL-RUN {"exit_code": 0, "run_id": "54c47df6a0b6408b", "stderr_chars":
+          0, "stdout_chars": 0, "truncated": false}
+
+          --- stdout ---
+
+          (empty)
+
+
+          --- stderr ---
+
+          (empty)'
+      priority: high
+      source:
+        context: {}
+        timestamp: '2026-05-25T11:26:29.449718Z'
+        tool: koru-manual-discovery
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T11:27:08.705681+00:00'

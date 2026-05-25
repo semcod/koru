@@ -151,6 +151,43 @@ def test_install_plugin_configures_socket_path(
     assert result.command == ["/usr/bin/windsurf", "--install-extension", str(vsix), "--force"]
 
 
+def test_install_plugin_reassert_falls_back_when_resolved_vsix_is_missing(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    root = tmp_path / "koru"
+    plugin_dir = root / "plugins" / "koru-autopilot-vscode"
+    plugin_dir.mkdir(parents=True)
+    (root / "pyproject.toml").write_text("[project]\nname='koru'\n", encoding="utf-8")
+    fallback_vsix = plugin_dir / "koru-autopilot-0.1.62.vsix"
+    fallback_vsix.write_text("fallback", encoding="utf-8")
+    missing_vsix = plugin_dir / "koru-autopilot-vscode-0.1.63.vsix"
+
+    monkeypatch.setattr(plugin_installer, "_repo_root", lambda: root)
+    monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda: missing_vsix)
+    monkeypatch.setattr(plugin_installer.shutil, "which", lambda name: f"/usr/bin/{name}")
+
+    def fake_runner(cmd, **_kwargs):
+        if cmd[1] == "--list-extensions":
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout=plugin_installer.EXTENSION_ID, stderr=""
+            )
+        if cmd[1] == "--install-extension" and cmd[2] == str(missing_vsix):
+            return subprocess.CompletedProcess(cmd, 1, stdout="", stderr="ENOENT: no such file")
+        if cmd[1] == "--install-extension" and cmd[2] == str(fallback_vsix):
+            return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
+        raise AssertionError(f"unexpected cmd {cmd}")
+
+    result = plugin_installer.install_plugin_for_ide(
+        ide="cursor",
+        runner=fake_runner,
+    )
+
+    assert result.status == "already_installed"
+    assert result.command == ["/usr/bin/cursor", "--install-extension", str(fallback_vsix), "--force"]
+    assert "reassert fallback rc=0" in result.message
+
+
 def test_install_plugin_targets_vscodium_from_integrated_terminal(
     tmp_path: Path,
     monkeypatch,

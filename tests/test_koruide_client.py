@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 from koruide.client import KoruIDEClient, build_client
+from koruide.protocol import Message
 
 
 def test_koruide_client_forwards_all_operations() -> None:
@@ -80,3 +81,23 @@ def test_drive_missing_socket_returns_ok_false(tmp_path: Path) -> None:
 
     assert reply.get("ok") is False
     assert "missing" in (reply.get("message") or "").lower()
+
+
+def test_drive_uses_extended_timeout(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    client = KoruIDEClient(socket_path=Path("/tmp/koruide.sock"), timeout=0.25)
+
+    def fake_request(msg, *, timeout=None):
+        captured["msg_type"] = msg.type
+        captured["timeout"] = timeout
+        reply = MagicMock()
+        reply.to_dict.return_value = {"ok": True, "backend": "plugin"}
+        return reply
+
+    monkeypatch.setenv("KORU_AUTOPILOT_DRIVE_TIMEOUT_SECONDS", "9")
+    client.request = fake_request  # type: ignore[method-assign]
+
+    reply = client.drive("hello", ide="vscode")
+
+    assert reply["ok"] is True
+    assert captured == {"msg_type": "drive", "timeout": 9.0}

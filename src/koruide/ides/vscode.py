@@ -9,16 +9,16 @@ from pathlib import Path
 from koruide.ides.base import (
     DetectionSignature,
     IdeAliases,
-    IdeStrategy,
     KeyboardPolicy,
     PluginPolicy,
     TerminalSignature,
+    VscodeFamilyStrategy,
 )
 from koruide.ides.registry import register_strategy
 
 
 @dataclass(frozen=True)
-class VscodeStrategy(IdeStrategy):
+class VscodeStrategy(VscodeFamilyStrategy):
     @property
     def id(self) -> str:
         return "vscode"
@@ -26,6 +26,10 @@ class VscodeStrategy(IdeStrategy):
     @property
     def label(self) -> str:
         return "VS Code"
+
+    @property
+    def config_folder_name(self) -> str:
+        return "Code"
 
     @property
     def detection(self) -> DetectionSignature:
@@ -54,32 +58,8 @@ class VscodeStrategy(IdeStrategy):
             aliases=("code", "code-insiders", "vs-code", "visual-studio-code"),
         )
 
-    def config_home(self) -> Path | None:
-        base = Path(
-            os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config"),
-        ).expanduser()
-        return base / "Code"
-
-    def workspace_settings_path(self, project: Path) -> Path | None:
-        return project / ".vscode" / "settings.json"
-
     def extensions_metadata_path(self) -> Path | None:
         return Path.home() / ".vscode" / "extensions" / "extensions.json"
-
-    @property
-    def plugin(self) -> PluginPolicy:
-        return PluginPolicy(
-            supports_vscode_extension=True,
-            requires_trusted_publisher=True,
-            strict_plugin_ack_required=True,
-        )
-
-    @property
-    def keyboard(self) -> KeyboardPolicy:
-        return KeyboardPolicy(
-            submit_key="Return",
-            os_injector_tool_id="vscode",
-        )
 
     def editor_cli_candidates(self) -> tuple[str, ...]:
         return ("code", "code-insiders")
