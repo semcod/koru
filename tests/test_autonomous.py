@@ -3092,6 +3092,63 @@ def test_resolve_autopilot_drive_decision_includes_recent_llx_summary(
     assert "Do not restart from scratch" in decision.prompt
 
 
+def test_resolve_autopilot_drive_decision_skips_closed_waiting_ticket(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-2011"],
+        last_status="waiting_input",
+        last_message="continue",
+    )
+    state = autonomous_mod.AutoloopState()
+    monkeypatch.setattr(drive_retry_mod, "_planfile_ticket_status", lambda *_args: "done")
+
+    decision, idle_kind = drive_retry_mod._resolve_autopilot_drive_decision(
+        tmp_path,
+        state,
+        queue_result,
+        drive_prompt="ignored",
+        autopilot_action="drive",
+    )
+
+    assert idle_kind is None
+    assert decision.skip is True
+    assert decision.skip_reason == "waiting_ticket_closed"
+
+
+def test_resolve_autopilot_drive_decision_does_not_skip_closed_waiting_ticket_when_disabled(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-2011"],
+        last_status="waiting_input",
+        last_message="continue",
+    )
+    state = autonomous_mod.AutoloopState()
+    monkeypatch.setenv("KORU_AUTOPILOT_SKIP_CLOSED_WAITING_TICKET", "0")
+    monkeypatch.setattr(drive_retry_mod, "_planfile_ticket_status", lambda *_args: "done")
+
+    decision, idle_kind = drive_retry_mod._resolve_autopilot_drive_decision(
+        tmp_path,
+        state,
+        queue_result,
+        drive_prompt="ignored",
+        autopilot_action="drive",
+    )
+
+    assert idle_kind is None
+    assert decision.skip is False
+    assert decision.kind == "ticket_prompt"
+
+
 def test_autopilot_idle_without_open_ticket_does_not_drive(
     tmp_path,
     monkeypatch,
@@ -3144,6 +3201,77 @@ def test_autopilot_idle_without_open_ticket_does_not_drive(
     assert any("idle_no_ticket" in message for message in messages)
     assert any("/llm/action/create-ticket-for-project" in message for message in messages)
     assert not any("open the dashboard at http://127.0.0.1:8765/" in message for message in messages)
+
+
+def test_handle_autopilot_phase_waiting_ticket_closed_sets_skip_status_and_telemetry(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    from koru import autonomous_cycle_orchestrator as orchestrator_mod
+
+    class Client:
+        def drive(self, *_args, **_kwargs):
+            raise AssertionError("closed waiting ticket path must skip before drive")
+
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["STARTER-239"],
+        last_status="waiting_input",
+        last_message="continue",
+        last_ticket_id="STARTER-239",
+    )
+    messages: list[str] = []
+    telemetry: dict[str, object] = {}
+    monkeypatch.setattr(
+        orchestrator_mod,
+        "_check_autopilot_skip_conditions",
+        lambda *_args, **_kwargs: (False, ""),
+    )
+    monkeypatch.setattr(
+        orchestrator_mod,
+        "_execute_autopilot_drive",
+        lambda *_args, **_kwargs: (
+            {
+                "ok": False,
+                "backend": None,
+                "message": "waiting ticket STARTER-239 is already closed",
+                "prompt": "",
+            },
+            False,
+            "waiting_ticket_closed",
+            None,
+        ),
+    )
+
+    status, backend, kind = autonomous_cycle_mod._handle_autopilot_phase(
+        tmp_path,
+        autonomous_mod.AutoloopState(),
+        1,
+        queue_result,
+        True,
+        Client(),
+        "auto",
+        "continue with the next ticket",
+        True,
+        "drive",
+        False,
+        True,
+        0,
+        "",
+        autonomous_cycle_mod.DiagnosticResult("ok", []),
+        False,
+        telemetry,
+        messages.append,
+        lambda *_args, **_kwargs: None,
+    )
+
+    assert status == "skipped(waiting_ticket_closed)"
+    assert backend is None
+    assert kind == "waiting_ticket_closed"
+    assert telemetry["autopilot_skipped_waiting_ticket_closed"] is True
+    assert telemetry["autopilot_skipped_waiting_ticket_closed_ticket"] == "STARTER-239"
 
 
 def test_run_cycle_autopilot_uses_os_injector_fallback_on_plugin_failure(
@@ -3577,9 +3705,9 @@ def test_run_cycle_skips_drive_when_required_plugin_missing(
         client=MissingPluginClient(),
     )
 
-    assert autopilot_status == "skipped(plugin_missing)"
+    assert autopilot_status == "skipped(plugin_not_connected)"
     assert drive_calls == []
-    assert "plugin_missing" in capsys.readouterr().out
+    assert "plugin_not_connected" in capsys.readouterr().out
 
 
 def test_run_cycle_visible_typing_does_not_require_plugin(
@@ -3728,6 +3856,8 @@ def test_up_stops_on_waiting_input_when_flag_set(
     tmp_path,
     monkeypatch,
 ) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_IDE", raising=False)
     monkeypatch.setattr(
         autonomous_mod,
         "init_project",

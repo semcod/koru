@@ -468,6 +468,8 @@ def _format_plugin_status_line(
     plugin_supported: bool,
     plugin_connected: bool | None,
     sock: str,
+    plugin_blocker: str | None = None,
+    plugin_reason: str | None = None,
 ) -> str:
     """Format plugin connection status line."""
     if plugin_supported and plugin_connected is True:
@@ -476,11 +478,29 @@ def _format_plugin_status_line(
             f"prompty idą do czatu, nie ydotool"
         )
     if plugin_supported and plugin_connected is False:
+        blocker = (plugin_blocker or "plugin_not_connected").strip()
+        reason = (plugin_reason or "").strip()
+        if blocker == "plugin_version_mismatch":
+            tail = (
+                "wersja/protokół aktywnej wtyczki nie pasuje do daemona. "
+                "Zrób Developer: Reload Window po instalacji aktualnego VSIX, "
+                "potem połącz plugin."
+            )
+        elif blocker == "plugin_status_unavailable":
+            tail = (
+                "daemon nie zwraca statusu pluginu. Sprawdź socket i uruchom "
+                "`koru autopilot status --explain`."
+            )
+        else:
+            tail = (
+                "plugin nie jest połączony z daemonem. Jeśli VSIX był instalowany "
+                "po starcie IDE, zrób Developer: Reload Window albo restart IDE, "
+                "potem połącz plugin."
+            )
+        reason_part = f" Powód: {reason}." if reason else ""
         return (
-            f"koru autonomous: [!] brak zgodnego pluginu na {sock} — "
-            f"drive jest wstrzymany w trybie strict. Jeśli VSIX był instalowany "
-            f"po starcie IDE, zrób Developer: Reload Window albo restart IDE, "
-            f"potem połącz plugin."
+            f"koru autonomous: [!] brak zgodnego pluginu ({blocker}) na {sock} — "
+            f"drive jest wstrzymany w trybie strict; {tail}{reason_part}"
         )
     if not plugin_supported:
         return (
@@ -587,6 +607,8 @@ def format_post_startup_operator_hints(
     probe: AutonomousStartupProbe,
     *,
     plugin_connected: bool | None = None,
+    plugin_blocker: str | None = None,
+    plugin_reason: str | None = None,
 ) -> list[str]:
     """Human checklist printed after daemon start (and optional plugin wait)."""
     ide = probe.resolved_autopilot_ide
@@ -599,7 +621,16 @@ def format_post_startup_operator_hints(
     ]
 
     plugin_supported = supports_autopilot_plugin_ide(ide)
-    lines.append(_format_plugin_status_line(ide, plugin_supported, plugin_connected, sock))
+    lines.append(
+        _format_plugin_status_line(
+            ide,
+            plugin_supported,
+            plugin_connected,
+            sock,
+            plugin_blocker=plugin_blocker,
+            plugin_reason=plugin_reason,
+        )
+    )
     lines.extend(_format_ide_mismatch_warnings(probe))
 
     if plugin_supported:

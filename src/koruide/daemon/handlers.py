@@ -8,10 +8,19 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from koruide.daemon.protocol import (
+    _Client,
+    _daemon_package_version,
+    _PluginEventHandoff,
+)
+from koruide.daemon.storage import (
+    add_console_log,
+    get_console_logs,
+    start_new_log_session,
+)
 from koruide.drive_orchestrator import DriveOrchestrator
 from koruide.ide import detect_running_ides_cached as detect_running_ides
-from koruide.ide import normalize_ide_id
-from koruide.ide import pick_target, resolve_drive_target
+from koruide.ide import normalize_ide_id, pick_target, resolve_drive_target
 from koruide.injector import InjectorError
 from koruide.protocol import (
     MIN_PLUGIN_PROTOCOL_VERSION,
@@ -20,18 +29,37 @@ from koruide.protocol import (
     chat_send,
     error,
 )
-from koruide.daemon.protocol import (
-    _Client,
-    _PluginEventHandoff,
-    _daemon_package_version,
-)
-from koruide.daemon.storage import (
-    add_console_log,
-    get_console_logs,
-    start_new_log_session,
-)
 
 _STATUS_CONSOLE_LOGS_LIMIT = 80
+
+# STARTER-242: plugin ack ``info`` must fit one NDJSON line for the CLI client.
+_MAX_RELAY_ACK_INFO_BYTES = 48 * 1024
+
+
+def _cap_ack_info_for_cli(info: dict[str, Any]) -> dict[str, Any]:
+    """Drop heavy optional ack fields before relaying to the CLI socket."""
+    if not info:
+        return info
+    try:
+        size = len(json.dumps(info, separators=(",", ":")).encode("utf-8"))
+    except (TypeError, ValueError):
+        return info
+    if size <= _MAX_RELAY_ACK_INFO_BYTES:
+        return info
+    trimmed = dict(info)
+    for key in ("diagnostics", "submit_attempts", "operation_trace"):
+        trimmed.pop(key, None)
+    try:
+        size = len(json.dumps(trimmed, separators=(",", ":")).encode("utf-8"))
+    except (TypeError, ValueError):
+        trimmed["payload_trimmed"] = True
+        return trimmed
+    if size <= _MAX_RELAY_ACK_INFO_BYTES:
+        trimmed["payload_trimmed"] = True
+        return trimmed
+    trimmed["payload_trimmed"] = True
+    trimmed["operation_trace_dropped"] = True
+    return trimmed
 
 
 def _env_truthy(name: str) -> bool:
@@ -77,6 +105,8 @@ def _default_handoff(project: Path) -> Callable[[dict[str, Any]], str]:
 
 
 def handle_drive(daemon: Any, client: _Client, msg: Message) -> None:
+    if client.role == "unknown":
+        client.role = "cli"
     text = msg.data.get("text")
     if not isinstance(text, str) or not text:
         daemon._send(client, error(msg.id, "missing 'text'").encode())
@@ -86,10 +116,18 @@ def handle_drive(daemon: Any, client: _Client, msg: Message) -> None:
     ide_pref = normalized_ide if normalized_ide not in (None, "auto") else None
     submit = bool(msg.data.get("submit", True))
     require_plugin = bool(msg.data.get("require_plugin", False))
-    daemon.log(f"drive request: ide={raw_ide or 'auto'}, chars={len(text)}, submit={submit}, require_plugin={require_plugin}")
+    daemon.log(
+        "drive request: "
+        f"ide={raw_ide or 'auto'}, chars={len(text)}, submit={submit}, "
+        f"require_plugin={require_plugin}"
+    )
     plugin = daemon._plugin_for(ide_pref)
     if plugin is not None:
-        daemon.log(f"drive: found plugin for ide={plugin.ide} (version={plugin.version}, protocol={plugin.protocol_version})")
+        daemon.log(
+            "drive: found plugin for "
+            f"ide={plugin.ide} (version={plugin.version}, "
+            f"protocol={plugin.protocol_version})"
+        )
     else:
         daemon.log(f"drive: no plugin found for ide={ide_pref}")
     if plugin is not None and not _prefer_keyboard_drive():
@@ -111,7 +149,7 @@ def handle_drive(daemon: Any, client: _Client, msg: Message) -> None:
             error=message,
         )
         return
-    daemon.log(f"drive: routing via keyboard/os_injector fallback")
+    daemon.log("drive: routing via keyboard/os_injector fallback")
     _drive_via_keyboard(daemon, client, msg, ide_pref, text, submit)
 
 
@@ -125,7 +163,11 @@ def _drive_via_plugin(
     require_plugin: bool,
 ) -> None:
     """Forward a drive request to a connected plugin for that IDE."""
-    daemon.log(f"drive_via_plugin: ide={plugin.ide}, version={plugin.version}, protocol={plugin.protocol_version}, capabilities={plugin.capabilities}")
+    daemon.log(
+        "drive_via_plugin: "
+        f"ide={plugin.ide}, version={plugin.version}, "
+        f"protocol={plugin.protocol_version}, capabilities={plugin.capabilities}"
+    )
     corr = msg.id or f"drive-{time.monotonic_ns():x}"
     version_info = DriveOrchestrator.plugin_version_info(
         plugin_ide=plugin.ide,
@@ -234,7 +276,11 @@ def _drive_via_keyboard(
         project=daemon.project,
         _log=daemon.log,
     )
-    daemon.log(f"drive_via_keyboard: resolved target_id={target_id}, profile_id={profile_id}, selection={selection}")
+    daemon.log(
+        "drive_via_keyboard: "
+        f"resolved target_id={target_id}, profile_id={profile_id}, "
+        f"selection={selection}"
+    )
     if ide_arg == "auto":
         daemon.log(f"drive auto-selected {profile_id} ({selection})")
     preview = text.replace("\n", " ")[:100]
@@ -650,16 +696,18 @@ def handle_ack(daemon: Any, client: _Client, msg: Message) -> None:
         submit_requested=submit_requested,
         plugin_ide=plugin_ide,
         require_plugin=require_plugin,
-    ) and _relay_os_fallback_ack(
-        daemon,
-        cli_client,
-        corr,
-        plugin_ide,
-        original_text,
-        submit_requested,
-        info,
     ):
-        return
+        fallback_ide = plugin_ide or "auto"
+        if _relay_os_fallback_ack(
+            daemon,
+            cli_client,
+            corr,
+            fallback_ide,
+            original_text,
+            submit_requested,
+            info,
+        ):
+            return
     if info.get("delivered") is True and "backend" not in info:
         info["backend"] = "plugin"
     summary = DriveOrchestrator.plugin_ack_summary(info)
@@ -673,7 +721,7 @@ def handle_ack(daemon: Any, client: _Client, msg: Message) -> None:
             "treating as late ack"
         )
         return
-    relay = ack(corr, ok=plugin_ok, info=info)
+    relay = ack(corr, ok=plugin_ok, info=_cap_ack_info_for_cli(info))
     daemon._send(cli_client, relay.encode())
 
 

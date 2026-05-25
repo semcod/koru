@@ -31,6 +31,7 @@ environment:
   # KORU_AUTOPILOT_INSTANCE: "main"       # unique per IDE window; default from init lane
   # KORU_AUTOPILOT_SOCKET: ""            # absolute Unix socket path (overrides instance path)
   # KORU_AUTOPILOT_IDE: "auto"           # auto | cursor | windsurf | vscode | jetbrains | zed
+  # KORU_AUTOPILOT_SKIP_CLOSED_WAITING_TICKET: "1"  # suppress stale waiting_input redrive when ticket is already done/closed
   # KORU_SUGGESTED_QUEUE_ACTOR: ""       # planfile queue actor hint (koru-<lane> from init)
 
 when:

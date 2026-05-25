@@ -54,3 +54,5 @@ def test_interface_registry_payload_contains_blocker_index() -> None:
     assert payload["schema"] == "koru.interface-registry/v1"
     assert "blockers" in payload
     assert "plugin_missing" in payload["blockers"]
+    assert "plugin_not_connected" in payload["blockers"]
+    assert "plugin_version_mismatch" in payload["blockers"]

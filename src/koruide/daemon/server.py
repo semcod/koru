@@ -6,10 +6,11 @@ import os
 import selectors
 import socket
 import stat
+import struct
 import threading
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from koruide.audit import AuditLog
 from koruide.daemon.handlers import _default_handoff
@@ -27,6 +28,7 @@ from koruide.socket import default_socket_path
 
 # Type alias
 HandoffBuilder = Callable[[dict[str, Any]], str]
+_FRAME_HEADER = struct.Struct(">I")
 
 
 def _env_truthy(name: str) -> bool:
@@ -70,7 +72,11 @@ class AutopilotDaemon:
         self._clients: dict[int, _Client] = {}
         self._stop = threading.Event()
         self._lock = threading.Lock()
-        self._plugin_router = PluginRouter(self._clients, drop_client=self._drop, log=self.log)
+        self._plugin_router = PluginRouter(
+            cast(dict[int, Any], self._clients),
+            drop_client=cast(Callable[[Any], None], self._drop),
+            log=self.log,
+        )
         self._handlers = self._build_handler_table()
         self._plugin_rejection_log_state: dict[
             tuple[str, str | None, str | None], tuple[float, int]
@@ -180,7 +186,7 @@ class AutopilotDaemon:
             if not line.strip():
                 continue
             try:
-                msg = decode(line)
+                msg = decode(bytes(line))
             except ProtocolError as exc:
                 self._send(client, error(None, str(exc)).encode())
                 continue
@@ -200,8 +206,22 @@ class AutopilotDaemon:
             self._send(client, error(msg.id, f"internal error: {exc}").encode())
 
     def _send(self, client: _Client, payload: bytes) -> None:
+        # STARTER-242 telemetry: surface oversized envelopes before sendall.
+        # The truncated-NDJSON crash on cycle #632 was a ~170 KB ack arriving
+        # at the CLI without a trailing newline; logging the size here
+        # narrows the suspect (plugin ack? OS-fallback relay? handoff?) and
+        # gives us a concrete budget to enforce later.
+        if len(payload) > 32 * 1024:
+            head = payload[:120].decode("utf-8", errors="replace")
+            self.log(
+                f"send to {client.addr} oversized: bytes={len(payload)} "
+                f"head={head!r}",
+            )
+        wire_payload = payload
+        if client.role == "cli":
+            wire_payload = _FRAME_HEADER.pack(len(payload)) + payload
         try:
-            client.sock.sendall(payload)
+            client.sock.sendall(wire_payload)
         except BrokenPipeError:
             if _verbose_io():
                 self.log(f"send to {client.addr} skipped: peer already gone")
@@ -220,7 +240,7 @@ class AutopilotDaemon:
             client.sock.close()
 
     def _plugin_for(self, ide: str | None) -> _Client | None:
-        return self._plugin_router.plugin_for(ide)
+        return cast(_Client | None, self._plugin_router.plugin_for(ide))
 
     # ----- back-compat method proxies -----------------------------------
     #

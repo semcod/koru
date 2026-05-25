@@ -27,3 +27,6 @@ test-api-parallel:
 		tests/test_dashboard_topology_post.py \
 		tests/test_mcp_server.py \
 		$(PYTEST_ARGS)
+
+sync-plugin-version:
+	python3 scripts/sync-vscode-plugin-version.py

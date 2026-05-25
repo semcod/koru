@@ -83,6 +83,25 @@ def _plugin_reason_requires_reload(reason: str) -> bool:
     )
 
 
+def _plugin_blocker_line(reason: str, autopilot_ide: str) -> str:
+    from koru.autonomous_plugin import plugin_skip_code
+
+    blocker = plugin_skip_code(reason)
+    if blocker == "plugin_version_mismatch":
+        action = "reload IDE window after current VSIX install, then reconnect plugin"
+    elif blocker == "plugin_status_unavailable":
+        action = "check daemon socket and run `koru autopilot status --explain`"
+    elif blocker == "plugin_not_connected":
+        action = "run `koru: Connect autopilot daemon` in the IDE"
+    else:
+        action = "reload/reconnect the autopilot plugin"
+    return (
+        "koru autonomous: plugin blocker "
+        f"blocked_by={blocker} ide={autopilot_ide} reason={reason or '-'}; "
+        f"recovery={action}"
+    )
+
+
 def _report_unsupported_plugin_result(
     autopilot_ide: str,
     *,
@@ -274,6 +293,10 @@ def _wait_for_plugin_connection(
         return True
 
     reason = _plugin_status_reason(client, autopilot_ide)
+    stdio_info(
+        _plugin_blocker_line(reason, autopilot_ide),
+        fmt=args.emit_events,
+    )
     if (
         plugin_install_status in {"installed", "already_installed"}
         and _plugin_reason_requires_reload(reason)

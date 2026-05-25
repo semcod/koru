@@ -722,6 +722,11 @@ def _decision_next_step_hint(
         return "operator must foreground the chat surface"
     if cycle_telemetry.get("autopilot_skipped_stuck_status"):
         return "mark ticket llm-ready OR move it to input/done before next drive"
+    if cycle_telemetry.get("autopilot_skipped_diagnostics_fail"):
+        return (
+            "fix failing WUP/diagnostics, OR mark the diag ticket done, "
+            "OR rerun with --no-autopilot-skip-on-diagnostics-fail"
+        )
     if status == "failed":
         return "retry next cycle (cached winner discarded)"
     queue_status = (queue_status or "").lower()

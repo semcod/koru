@@ -211,6 +211,92 @@ def _reload_explain_reuse_window_disabled(palette: IdeReloadOutcome) -> IdeReloa
     )
 
 
+def detect_reload_command(
+    ide: str,
+    *,
+    dry_run: bool,
+) -> tuple[str | None, str | None]:
+    """Return ``(method, reason)`` for the reload strategy decision."""
+    if ide not in _VSCODE_FAMILY_IDES:
+        return None, f"unsupported ide={ide}"
+    if not auto_reload_enabled():
+        return None, "auto reload disabled"
+    if dry_run:
+        return "dry_run", None
+    if config_home_for_ide(ide) is None:
+        return None, "unknown config home"
+    return "command_palette", None
+
+
+def execute_reload(
+    ide: str,
+    *,
+    method: str,
+    project: Path | None,
+) -> IdeReloadOutcome:
+    """Execute the selected reload strategy and return the raw outcome."""
+    if method == "dry_run":
+        return IdeReloadOutcome(attempted=True, ok=True, method="dry_run")
+
+    if method != "command_palette":
+        return IdeReloadOutcome(
+            attempted=False,
+            ok=False,
+            method=method,
+            detail=f"unsupported reload method={method}",
+        )
+
+    palette = reload_via_command_palette(ide)
+    if palette.ok:
+        return palette
+
+    if project is None or not project.is_dir():
+        return palette
+    if reuse_window_reload_enabled():
+        return _reload_fallback_reopen(ide, project, palette)
+    return _reload_explain_reuse_window_disabled(palette)
+
+
+def await_plugin_handshake(
+    ide: str,
+    *,
+    timeout_seconds: float = 5.0,
+    interval_seconds: float = 0.25,
+) -> tuple[bool, str]:
+    """Optionally verify extension-host activation after issuing reload."""
+    raw = os.environ.get("KORU_AUTOPILOT_RELOAD_VERIFY_PLUGIN", "").strip().lower()
+    if raw not in {"1", "true", "yes", "on"}:
+        return True, "handshake_verification_disabled"
+
+    from koru.ide_adapters import shared
+
+    deadline = time.time() + max(0.0, timeout_seconds)
+    while time.time() <= deadline:
+        active = shared.extension_activated_in_exthost(ide)
+        if active is True:
+            return True, "plugin_handshake_ok"
+        if active is False:
+            time.sleep(max(0.0, interval_seconds))
+            continue
+        return False, "plugin_handshake_unknown"
+    return False, "plugin_handshake_timeout"
+
+
+def explain_reload_failure(
+    *,
+    ide: str,
+    method: str,
+    reason: str,
+    outcome: IdeReloadOutcome,
+    handshake_reason: str | None = None,
+) -> str:
+    """Compose a stable failure explanation for operator logs and telemetry."""
+    detail = outcome.detail or reason or f"reload_failed ide={ide}"
+    if handshake_reason and handshake_reason != "handshake_verification_disabled":
+        return f"{detail}; {handshake_reason}"
+    return detail
+
+
 def try_reload_vscode_family_ide(
     ide: str,
     *,
@@ -218,30 +304,48 @@ def try_reload_vscode_family_ide(
     dry_run: bool = False,
 ) -> IdeReloadOutcome:
     """Reload a VS Code–family IDE so a newly installed VSIX can activate."""
-    if ide not in _VSCODE_FAMILY_IDES:
-        return IdeReloadOutcome(attempted=False, ok=False, detail=f"unsupported ide={ide}")
-    if not auto_reload_enabled():
-        return IdeReloadOutcome(attempted=False, ok=False, detail="auto reload disabled")
-    if dry_run:
-        return IdeReloadOutcome(attempted=True, ok=True, method="dry_run")
-    if config_home_for_ide(ide) is None:
-        return IdeReloadOutcome(attempted=False, ok=False, detail="unknown config home")
+    method, reason = detect_reload_command(ide, dry_run=dry_run)
+    if method is None:
+        return IdeReloadOutcome(attempted=False, ok=False, detail=reason)
 
-    palette = reload_via_command_palette(ide)
-    if palette.ok:
-        return palette
+    outcome = execute_reload(ide, method=method, project=project)
+    if not outcome.ok:
+        return IdeReloadOutcome(
+            attempted=outcome.attempted,
+            ok=False,
+            method=outcome.method,
+            detail=explain_reload_failure(
+                ide=ide,
+                method=method,
+                reason=reason or "reload execution failed",
+                outcome=outcome,
+            ),
+        )
 
-    if project is not None and project.is_dir():
-        if reuse_window_reload_enabled():
-            return _reload_fallback_reopen(ide, project, palette)
-        return _reload_explain_reuse_window_disabled(palette)
-
-    return palette
+    handshake_ok, handshake_reason = await_plugin_handshake(ide)
+    if handshake_ok:
+        return outcome
+    return IdeReloadOutcome(
+        attempted=outcome.attempted,
+        ok=False,
+        method=outcome.method,
+        detail=explain_reload_failure(
+            ide=ide,
+            method=method,
+            reason=reason or "plugin handshake failed",
+            outcome=outcome,
+            handshake_reason=handshake_reason,
+        ),
+    )
 
 
 __all__ = [
     "IdeReloadOutcome",
+    "await_plugin_handshake",
     "auto_reload_enabled",
+    "detect_reload_command",
+    "execute_reload",
+    "explain_reload_failure",
     "reload_via_command_palette",
     "reload_via_reopen_workspace",
     "reuse_window_reload_enabled",

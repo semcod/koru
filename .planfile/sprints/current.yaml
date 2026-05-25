@@ -96,7 +96,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-05-25T12:02:51.916043Z'
+        finished_at: '2026-05-25T12:38:56.976322Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -175,6 +175,26 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-05-25T12:02:51.931760+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T12:21:46.742663+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T12:30:40.625850+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T12:33:28.803677+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T12:38:56.991617+00:00'
       id: STARTER-215
       inputs:
         api_headers: {}
@@ -230,7 +250,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-25T12:02:51.931725+00:00'
+      updated_at: '2026-05-25T12:38:56.991576+00:00'
     STARTER-216:
       blocked_by: []
       blocks: []
@@ -2358,6 +2378,12 @@ sprint:
         Success: ruff/mypy clean, decision trace still records the same skip_code
         distribution, and unit tests for the new pure decision helpers cover happy
         path + each skip branch.'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T12:10:27.365688Z'
+        max_attempts: 1
+        queue: default
+        state: done
       files:
       - src/koru/autonomous_cycle_chat_activity.py
       - src/koru/autonomous_loop_runner.py
@@ -2373,21 +2399,40 @@ sprint:
         - labels
         source: planfile.store
         timestamp: '2026-05-25T12:01:10.849878+00:00'
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T12:09:27.690234+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T12:10:27.475104+00:00'
       id: STARTER-239
       labels:
       - refactor
       - autonomy
       name: 'Refactor: split high-CC functions in autonomous_cycle_chat_activity,
         autonomous_loop_runner, ide_reload'
+      outputs:
+        artifacts: []
+        notes: []
       priority: high
       source:
         context: {}
         timestamp: '2026-05-25T11:37:42.636220Z'
         tool: human
       sprint: current
-      status: open
+      status: done
       sync: {}
-      updated_at: '2026-05-25T12:01:10.849814+00:00'
+      updated_at: '2026-05-25T12:10:27.475073+00:00'
     STARTER-240:
       acceptance_criteria: []
       blocked_by: []
@@ -2507,3 +2552,506 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-05-25T11:56:52.712401+00:00'
+    STARTER-242:
+      acceptance_criteria: []
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T12:05:00.486027Z'
+      description: "Powtarzalny crash zaobserwowany podczas cyklu #632 po dodaniu
+        llm-ready do STARTER-239 i pierwszego drive po v0.1.64:\n\n  File koruide/protocol.py:119,
+        in decode\n    raise ProtocolError(f'invalid json: {exc}') from exc\n  koruide.protocol.ProtocolError:
+        invalid json: Unterminated string starting at: line 1 column 170532 (char
+        170531)\n\nDaemon wysłał ~170 KB na CLI socket bez końcowego \\n, partition(b'\\n')
+        zwrócił niepełny JSON, koru auto się wywaliło — daemon przestał działać razem
+        z głównym procesem.\n\nBandaid (już wmergeowany w v0.1.270): client.request()
+        łapie ProtocolError i zwraca syntetyczny error reply zamiast crashować autoloop.
+        Cykl reportuje autopilot=failed i leci dalej. Test: tests/test_koruide_client.py::test_request_returns_structured_error_on_truncated_response.\n\nCo
+        naprawdę trzeba zrobić:\n1. Zbadać dlaczego ack > 170 KB. Hipoteza: route_trace
+        + operation_trace × 40 kroków × kilkanaście attempts każdy zlepione + jakieś
+        pole zwrócone z pluginu zawierające pełny route history. Plugin 0.1.64 ack
+        info ma winning_focus_open / winning_paste / winning_submit / operation_trace
+        / route_trace. Operation_trace jest już cappowane do 40 ostatnich kroków z
+        12 attempts każdy w extension.ts:220-231 — to nie powinno dać 170k. Sprawdzić
+        build_message_sent_info i annotate_plugin_ack pod kątem dodawanych pól.\n2.
+        Po stronie pluginu: cap rozmiaru każdego field w ack do np. 8 KB (truncate
+        z markerem '...[trimmed N bytes]').\n3. Po stronie daemon → CLI: rozważyć
+        length-prefix framing zamiast NDJSON (4-byte big-endian length + payload)
+        i atomic send aby nie zostawić partial frame przy zerwaniu połączenia.\n4.
+        Multi-plugin: gdy dwa pluginy (np. cursor + windsurf) wysyłają eventy w trakcie
+        drive, daemon nie powinien zlepiać eventów z drive ack w jednym strumieniu
+        — drive ack musi mieć osobny lock / kolejkę.\n\nPowtórka: dodać llm-ready
+        do STARTER-239, uruchomić koru auto, zaobserwować rzeczywisty rozmiar ack
+        info w daemon logu (dodać self.log z len(json.dumps(info))).\n\nSuccess: koru
+        auto wykonuje 100 cykli z włączonym drive bez ProtocolError. Drive ack info
+        zawsze < 16 KB. Test pokrywa truncated response, ack > 1 MB, i połączone event+ack
+        na tym samym socket connection."
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T12:38:12.559392Z'
+        max_attempts: 1
+        queue: default
+        state: done
+      files:
+      - src/koruide/client.py
+      - src/koruide/protocol.py
+      - src/koruide/daemon/handlers.py
+      history:
+      - action: update
+        changes:
+        - execution
+        - outputs
+        - status
+        execution_state: done
+        previous_execution_state: null
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T12:34:34.676870+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T12:38:12.573969+00:00'
+      id: STARTER-242
+      labels:
+      - autopilot
+      - daemon
+      - robustness
+      name: 'Daemon: truncated/multiplexed CLI response (170k bez \n) wywala ''koru
+        auto'''
+      outputs:
+        artifacts: []
+        notes: []
+      priority: critical
+      source:
+        context: {}
+        timestamp: '2026-05-25T12:05:00.474097Z'
+        tool: human
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T12:38:12.573938+00:00'
+    STARTER-243:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T12:26:07.646415+00:00'
+      description: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): entrypoint_identity:
+        path_koru=/home/tom/github/semcod/koru/venv/bin/koru; local_koru=/home/tom/github/semcod/koru/.venv/bin/koru;
+        path_not_project_venv=true
+
+
+        Shell: `koru self --project /home/tom/github/semcod/koru --ide vscode repair
+        --yes`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T12:30:13.393379Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: shell
+        mode: noninteractive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): entrypoint_identity:
+          path_koru=/home/tom/github/semcod/koru/venv/bin/koru; local_koru=/home/tom/github/semcod/koru/.venv/bin/koru;
+          path_not_project_venv=true
+
+
+          Shell: `koru self --project /home/tom/github/semcod/koru --ide vscode repair
+          --yes`'
+        source: koru task
+        timestamp: '2026-05-25T12:26:07.646415+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T12:28:06.627626+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T12:30:13.411542+00:00'
+      id: STARTER-243
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): entrypoint_identity:
+          path_koru=/home/tom/github/semcod/koru/venv/bin/koru; local_koru=/home/tom/github/semcod/koru/.venv/bin/koru;
+          path_not_project_venv=true
+
+
+          Shell: `koru self --project /home/tom/github/semcod/koru --ide vscode repair
+          --yes`'
+        script: koru self --project /home/tom/github/semcod/koru --ide vscode repair
+          --yes
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:self_control
+      name: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): entrypoint_identity:
+        path_koru=/home/tom/github/semcod/koru/v...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-operator-pipeline:operator-koru-self-control-paczka-/-vsix-/-runtime-entrypoint_identity-path_koru-/home/tom/github/semcod/koru/v...
+          detail: 'entrypoint_identity: path_koru=/home/tom/github/semcod/koru/venv/bin/koru;
+            local_koru=/home/tom/github/semcod/koru/.venv/bin/koru; path_not_project_venv=true'
+          input: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): entrypoint_identity:
+            path_koru=/home/tom/github/semcod/koru/venv/bin/koru; local_koru=/home/tom/github/semcod/koru/.venv/bin/koru;
+            path_not_project_venv=true
+
+
+            Shell: `koru self --project /home/tom/github/semcod/koru --ide vscode
+            repair --yes`'
+          step_id: self_control
+          task_command: koru self --project /home/tom/github/semcod/koru --ide vscode
+            repair --yes
+        timestamp: '2026-05-25T12:26:07.646415+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T12:30:13.411501+00:00'
+    STARTER-244:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T12:29:08.883215+00:00'
+      description: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): autopilot_install_manager:
+        ide=vscode; socket=/run/user/1000/koru-autopilot-vscode.sock; package=0.1.270;
+        source=0.1.270; connected=False; installed=0.1.67; expected=0.1.68; repairable=plugin_installed_version_mismatch:error
+
+
+        Shell: `koru self --project /home/tom/github/semcod/koru --ide vscode repair
+        --yes`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T12:30:41.290337Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: shell
+        mode: noninteractive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): autopilot_install_manager:
+          ide=vscode; socket=/run/user/1000/koru-autopilot-vscode.sock; package=0.1.270;
+          source=0.1.270; connected=False; installed=0.1.67; expected=0.1.68; repairable=plugin_installed_version_mismatch:error
+
+
+          Shell: `koru self --project /home/tom/github/semcod/koru --ide vscode repair
+          --yes`'
+        source: koru task
+        timestamp: '2026-05-25T12:29:08.883215+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T12:30:41.301561+00:00'
+      id: STARTER-244
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): autopilot_install_manager:
+          ide=vscode; socket=/run/user/1000/koru-autopilot-vscode.sock; package=0.1.270;
+          source=0.1.270; connected=False; installed=0.1.67; expected=0.1.68; repairable=plugin_installed_version_mismatch:error
+
+
+          Shell: `koru self --project /home/tom/github/semcod/koru --ide vscode repair
+          --yes`'
+        script: koru self --project /home/tom/github/semcod/koru --ide vscode repair
+          --yes
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:self_control
+      name: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): autopilot_install_manager:
+        ide=vscode; socket=/run/user/1000/...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-operator-pipeline:operator-koru-self-control-paczka-/-vsix-/-runtime-autopilot_install_manager-ide-vscode-socket-/run/user/1000/...
+          detail: 'autopilot_install_manager: ide=vscode; socket=/run/user/1000/koru-autopilot-vscode.sock;
+            package=0.1.270; source=0.1.270; connected=False; installed=0.1.67; expected=0.1.68;
+            repairable=plugin_installed_version_mismatch:error'
+          input: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): autopilot_install_manager:
+            ide=vscode; socket=/run/user/1000/koru-autopilot-vscode.sock; package=0.1.270;
+            source=0.1.270; connected=False; installed=0.1.67; expected=0.1.68; repairable=plugin_installed_version_mismatch:error
+
+
+            Shell: `koru self --project /home/tom/github/semcod/koru --ide vscode
+            repair --yes`'
+          step_id: self_control
+          task_command: koru self --project /home/tom/github/semcod/koru --ide vscode
+            repair --yes
+        timestamp: '2026-05-25T12:29:08.883215+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T12:30:41.301531+00:00'
+    STARTER-245:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T12:32:56.300989+00:00'
+      description: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): autopilot_install_manager:
+        ide=vscodium; socket=/run/user/1000/koru-autopilot-vscodium.sock; package=0.1.270;
+        source=0.1.270; connected=False; installed=0.1.68; expected=0.1.68; repairable=plugin_live_host_stale:error
+
+
+        Shell: `koru self --project /home/tom/github/semcod/koru --ide vscodium repair
+        --yes`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T12:38:57.755155Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: shell
+        mode: noninteractive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): autopilot_install_manager:
+          ide=vscodium; socket=/run/user/1000/koru-autopilot-vscodium.sock; package=0.1.270;
+          source=0.1.270; connected=False; installed=0.1.68; expected=0.1.68; repairable=plugin_live_host_stale:error
+
+
+          Shell: `koru self --project /home/tom/github/semcod/koru --ide vscodium
+          repair --yes`'
+        source: koru task
+        timestamp: '2026-05-25T12:32:56.300989+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T12:33:29.572440+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T12:38:57.768344+00:00'
+      id: STARTER-245
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): autopilot_install_manager:
+          ide=vscodium; socket=/run/user/1000/koru-autopilot-vscodium.sock; package=0.1.270;
+          source=0.1.270; connected=False; installed=0.1.68; expected=0.1.68; repairable=plugin_live_host_stale:error
+
+
+          Shell: `koru self --project /home/tom/github/semcod/koru --ide vscodium
+          repair --yes`'
+        script: koru self --project /home/tom/github/semcod/koru --ide vscodium repair
+          --yes
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:self_control
+      name: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): autopilot_install_manager:
+        ide=vscodium; socket=/run/user/100...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-operator-pipeline:operator-koru-self-control-paczka-/-vsix-/-runtime-autopilot_install_manager-ide-vscodium-socket-/run/user/100...
+          detail: 'autopilot_install_manager: ide=vscodium; socket=/run/user/1000/koru-autopilot-vscodium.sock;
+            package=0.1.270; source=0.1.270; connected=False; installed=0.1.68; expected=0.1.68;
+            repairable=plugin_live_host_stale:error'
+          input: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): autopilot_install_manager:
+            ide=vscodium; socket=/run/user/1000/koru-autopilot-vscodium.sock; package=0.1.270;
+            source=0.1.270; connected=False; installed=0.1.68; expected=0.1.68; repairable=plugin_live_host_stale:error
+
+
+            Shell: `koru self --project /home/tom/github/semcod/koru --ide vscodium
+            repair --yes`'
+          step_id: self_control
+          task_command: koru self --project /home/tom/github/semcod/koru --ide vscodium
+            repair --yes
+        timestamp: '2026-05-25T12:32:56.300989+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T12:38:57.768311+00:00'
+    STARTER-246:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T12:37:16.549451+00:00'
+      description: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): autopilot_install_manager:
+        ide=cursor; socket=/run/user/1000/koru-autopilot-cursor.sock; package=0.1.270;
+        source=0.1.270; connected=False; installed=0.1.69; expected=0.1.69; repairable=plugin_live_host_stale:error
+
+
+        Shell: `koru self --project /home/tom/github/semcod/koru --ide cursor repair
+        --yes`'
+      execution:
+        assigned_to: koru-shell
+        attempt: 0
+        finished_at: '2026-05-25T12:37:24.971819Z'
+        lease_expires_at: '2026-05-25T13:37:19.109028Z'
+        max_attempts: 1
+        queue: operator
+        started_at: '2026-05-25T12:37:19.704878Z'
+        state: done
+      executor:
+        kind: shell
+        mode: noninteractive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): autopilot_install_manager:
+          ide=cursor; socket=/run/user/1000/koru-autopilot-cursor.sock; package=0.1.270;
+          source=0.1.270; connected=False; installed=0.1.69; expected=0.1.69; repairable=plugin_live_host_stale:error
+
+
+          Shell: `koru self --project /home/tom/github/semcod/koru --ide cursor repair
+          --yes`'
+        source: koru task
+        timestamp: '2026-05-25T12:37:16.549451+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T12:37:19.123926+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: running
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: in_progress
+        timestamp: '2026-05-25T12:37:19.719013+00:00'
+      - action: update
+        changes:
+        - outputs
+        source: planfile.store
+        timestamp: '2026-05-25T12:37:24.231946+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: running
+        previous_status: in_progress
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T12:37:24.988396+00:00'
+      id: STARTER-246
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): autopilot_install_manager:
+          ide=cursor; socket=/run/user/1000/koru-autopilot-cursor.sock; package=0.1.270;
+          source=0.1.270; connected=False; installed=0.1.69; expected=0.1.69; repairable=plugin_live_host_stale:error
+
+
+          Shell: `koru self --project /home/tom/github/semcod/koru --ide cursor repair
+          --yes`'
+        script: koru self --project /home/tom/github/semcod/koru --ide cursor repair
+          --yes
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:self_control
+      name: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): autopilot_install_manager:
+        ide=cursor; socket=/run/user/1000/...'
+      outputs:
+        artifacts: []
+        notes:
+        - "KORU-SHELL-RUN {\"exit_code\": 0, \"run_id\": \"8f672d72ce7841e9\", \"stderr_chars\":
+          0, \"stdout_chars\": 1780, \"truncated\": false}\n--- stdout ---\nkoru self-control:
+          project=/home/tom/github/semcod/koru\nkoru self-control: ok=False needs_repair=True
+          summary={'ok': 3, 'warn': 1, 'fail': 0, 'skip': 0}\n  - OK package_identity:
+          source=0.1.270; installed=0.1.270; python=/home/tom/github/semcod/koru/.venv/bin/python3\n
+          \ - OK entrypoint_identity: path_koru=/home/tom/github/semcod/koru/.venv/bin/koru;
+          local_koru=/home/tom/github/semcod/koru/.venv/bin/koru\n  - WARN autopilot_install_manager:
+          ide=cursor; socket=/run/user/1000/koru-autopilot-cursor.sock; package=0.1.270;
+          source=0.1.270; connected=False; installed=0.1.69; expected=0.1.69; repairable=plugin_live_host_stale:error
+          repair=`koru autopilot manage --ide cursor --fix`\n  - OK interface_registry:
+          interfaces=12; families=artifact_exchange,browser_control,desktop_control,ide_control,observation,tool_invocation\nkoru
+          self-control: actions\n  - {\"action\": \"install_plugin\", \"result\":
+          {\"command\": [\"/usr/bin/cursor\", \"--install-extension\", \"/home/tom/github/semcod/koru/plugins/koru-autopilot-vscode/koru-autopilot-0.1.69.vsix\",
+          \"--force\"], \"ide\": \"cursor\", \"message\": \"semcod.koru-autopilot-vscode
+          is already installed for cursor; reassert rc=0; if the IDE was already open
+          during install/reassert, run `Developer: Reload Window` (or restart it),
+          then run `koru: Connect autopilot daemon`\", \"settings_path\": \"/home/tom/.config/Cursor/User/settings.json\",
+          \"socket_path\": \"/run/user/1000/koru-autopilot-cursor.sock\", \"status\":
+          \"already_installed\"}}\n  - {\"action\": \"shutdown_daemon_for_reload\",
+          \"result\": {\"id\": \"cli-shutdown\", \"ok\": true, \"stopping\": true,
+          \"type\": \"ack\"}}\n  - {\"action\": \"reload_ide_and_reconnect\", \"result\":
+          {\"message\": \"Reload the IDE window, then run `koru: Connect autopilot
+          daemon` so the live extension matches the installed VSIX.\", \"status\":
+          \"manual\"}}\n\n\n--- stderr ---\n(empty)"
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-operator-pipeline:operator-koru-self-control-paczka-/-vsix-/-runtime-autopilot_install_manager-ide-cursor-socket-/run/user/1000/...
+          detail: 'autopilot_install_manager: ide=cursor; socket=/run/user/1000/koru-autopilot-cursor.sock;
+            package=0.1.270; source=0.1.270; connected=False; installed=0.1.69; expected=0.1.69;
+            repairable=plugin_live_host_stale:error'
+          input: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): autopilot_install_manager:
+            ide=cursor; socket=/run/user/1000/koru-autopilot-cursor.sock; package=0.1.270;
+            source=0.1.270; connected=False; installed=0.1.69; expected=0.1.69; repairable=plugin_live_host_stale:error
+
+
+            Shell: `koru self --project /home/tom/github/semcod/koru --ide cursor
+            repair --yes`'
+          step_id: self_control
+          task_command: koru self --project /home/tom/github/semcod/koru --ide cursor
+            repair --yes
+        timestamp: '2026-05-25T12:37:16.549451+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T12:37:24.988360+00:00'

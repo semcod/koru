@@ -399,6 +399,26 @@ def _host_injectors_ok() -> tuple[bool, str]:
     return False, "; ".join(parts) if parts else "host setup wymaga uwagi"
 
 
+def _self_control_ok(project: Path, ide: str, socket_path: str) -> tuple[bool, str, str | None]:
+    from koru.self_control import run_self_control
+
+    try:
+        report = run_self_control(project, ide=ide, socket_path=Path(socket_path))
+    except Exception as exc:
+        return (
+            False,
+            f"self-control probe failed: {type(exc).__name__}: {exc}",
+            f"koru self --project {project} --ide {ide} doctor",
+        )
+    problems = [check for check in report.checks if check.status in {"warn", "fail"}]
+    if not problems or not report.needs_repair:
+        return True, f"self-control OK ({len(report.checks)} checks)", None
+    first = problems[0]
+    detail = f"{first.name}: {first.detail}"
+    command = f"koru self --project {project} --ide {ide} repair --yes"
+    return False, detail, command
+
+
 def _build_os_calibration_step(ide: str, project: Path) -> OperatorStep:
     """Return OS injector calibration status for IDEs that need keyboard fallback."""
     if supports_autopilot_plugin_ide(ide):
@@ -506,6 +526,18 @@ def build_operator_steps(
             status="ok" if host_ok else "pending",
             detail=host_detail,
             task_command=None if host_ok else "task koru:operator:setup-host",
+        ),
+    )
+
+    self_ok, self_detail, self_task = _self_control_ok(project, ide, str(probe.socket_path))
+    steps.append(
+        OperatorStep(
+            step_id="self_control",
+            title="Koru self-control (paczka / VSIX / runtime)",
+            actor="taskfile",
+            status="ok" if self_ok else "pending",
+            detail=self_detail,
+            task_command=self_task,
         ),
     )
 

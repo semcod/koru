@@ -94,6 +94,15 @@ def _check_autopilot_skip_conditions(
 
     if autopilot_skip_on_diagnostics_fail and diag_result.status == "failed":
         _hp("- autopilot skipped (diagnostics_fail)")
+        # Capture the concrete failing services (e.g. "wup", "koru-shell")
+        # so decision_trace can build a machine + human reason like
+        # "diagnostic failure: wup". Without this the trace falls back to
+        # the generic "Pre-drive diagnostics reported a failure" sentence
+        # which doesn't tell the operator what to fix.
+        cycle_telemetry["autopilot_skipped_diagnostics_fail"] = True
+        failed = list(getattr(diag_result, "failed", []) or [])
+        if failed:
+            cycle_telemetry["autopilot_skipped_diagnostics_failed_services"] = failed
         return True, "skipped(diagnostics_fail)"
 
     if _should_skip_for_idle_streak(

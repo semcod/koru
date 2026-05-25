@@ -151,3 +151,35 @@ def test_try_reload_calls_reuse_window_when_opted_in(
     assert reopen_calls == [tmp_path]
     assert outcome.ok is True
     assert outcome.method == "reuse_window"
+
+
+def test_detect_reload_command_reports_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_AUTO_RELOAD_IDE", "0")
+    method, reason = ide_reload.detect_reload_command("vscode", dry_run=False)
+    assert method is None
+    assert reason == "auto reload disabled"
+
+
+def test_await_plugin_handshake_disabled_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("KORU_AUTOPILOT_RELOAD_VERIFY_PLUGIN", raising=False)
+    ok, reason = ide_reload.await_plugin_handshake("vscode")
+    assert ok is True
+    assert reason == "handshake_verification_disabled"
+
+
+def test_explain_reload_failure_includes_handshake_reason() -> None:
+    outcome = ide_reload.IdeReloadOutcome(
+        attempted=True,
+        ok=False,
+        method="command_palette",
+        detail="failed to open command palette",
+    )
+    text = ide_reload.explain_reload_failure(
+        ide="vscode",
+        method="command_palette",
+        reason="reload execution failed",
+        outcome=outcome,
+        handshake_reason="plugin_handshake_timeout",
+    )
+    assert "failed to open command palette" in text
+    assert "plugin_handshake_timeout" in text

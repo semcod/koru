@@ -25,6 +25,10 @@ import pytest
 from koru.autonomous_cycle_chat_activity import (
     _autopilot_redrive_cooldown_seconds,
     _skip_due_to_recent_chat_activity,
+    classify_chat_event,
+    decide_intake_ticket,
+    decide_redrive_cooldown,
+    explain_skip,
 )
 
 _EVENTS_FILENAME = "koru-autopilot-events.ndjson"
@@ -98,7 +102,7 @@ def test_skip_when_recent_message_sent_for_same_ide(
         cycle_telemetry=telemetry,
         _hp=logs.append,
     )
-    assert skipped is True
+    assert skipped is True, f"logs: {logs}, telemetry: {telemetry}"
     assert telemetry.get("autopilot_skipped_chat_activity") is True
     assert telemetry.get("autopilot_chat_activity_last_event") == "message.sent"
     assert any("recent_chat_activity" in line for line in logs), logs
@@ -289,3 +293,36 @@ def test_recent_successful_drive_fallback_does_not_block_different_ide(
     )
 
     assert skipped is False
+
+
+def test_classify_chat_event_prefers_recent_state_events() -> None:
+    now = time.time()
+    has_activity, event_type, age, reflection_events = classify_chat_event(
+        state=mock.Mock(),
+        ide="vscode",
+        cooldown=300.0,
+        recent_events=[{"type": "message.received", "ts": now - 3.0}],
+        reflection_events=[],
+    )
+    assert has_activity is True
+    assert event_type == "message.received"
+    assert age.endswith("s")
+    assert reflection_events == []
+
+
+def test_decide_intake_ticket_is_true_when_ticket_exists() -> None:
+    assert decide_intake_ticket("STARTER-999") is True
+    assert decide_intake_ticket(None) is False
+
+
+def test_decide_redrive_cooldown_and_explain_skip() -> None:
+    decision = decide_redrive_cooldown(
+        event_type="message.sent",
+        age_seconds=12.0,
+        cooldown_seconds=60.0,
+        waiting_ticket="STARTER-239",
+    )
+    assert decision["should_skip"] is True
+    because = explain_skip(decision)
+    assert "recent_chat_activity" in because
+    assert "STARTER-239" in because

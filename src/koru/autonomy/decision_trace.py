@@ -14,9 +14,20 @@ Skip codes (keep this list in sync with
 ``autonomous_cycle_orchestrator``, ``autonomous_cycle_skip_conditions``,
 and ``autonomous_cycle_chat_activity``):
 
+``plugin_not_connected``
+    Autopilot needed a VSIX plugin session but the daemon has no live
+    matching connection yet.
+
+``plugin_version_mismatch``
+    A plugin is present, but its version/protocol is incompatible with
+    the daemon's strict policy.
+
+``plugin_status_unavailable``
+    Koru could not read plugin status from the daemon at all.
+
 ``plugin_missing``
-    Autopilot needed a connected VSIX plugin but the daemon has no
-    matching session. User must reload the IDE / connect the plugin.
+    Generic fallback for plugin gate failures that do not fit a more
+    specific class.
 
 ``ide_mismatch``
     The autopilot lane points at one IDE but the running IDE process
@@ -24,6 +35,10 @@ and ``autonomous_cycle_chat_activity``):
 
 ``idle_no_ticket``
     Queue is idle AND there is no open ticket in the planfile to drive.
+
+``waiting_ticket_closed``
+    Queue says ``waiting_input`` but the referenced ticket is already
+    closed/done in the planfile, so stale redrive is suppressed.
 
 ``idle_only``
     ``--autopilot-on-idle-only`` is set and the queue is currently
@@ -80,6 +95,18 @@ DECISION_TRACE_RING_SIZE = 10
 # allowed to override this with a more specific message (e.g. include the
 # concrete ticket id, cooldown seconds, or plugin version mismatch text).
 SKIP_CODE_DESCRIPTIONS: dict[str, str] = {
+    "plugin_not_connected": (
+        "Autopilot needs a connected VSIX plugin but no compatible live "
+        "session is attached to the daemon yet. Reload/connect the IDE plugin."
+    ),
+    "plugin_version_mismatch": (
+        "Autopilot found a plugin session, but its version/protocol does not "
+        "match the daemon policy. Reload the IDE after installing the current VSIX."
+    ),
+    "plugin_status_unavailable": (
+        "Autopilot could not read plugin status from the daemon. Check the "
+        "daemon socket and run `koru autopilot status --explain`."
+    ),
     "plugin_missing": (
         "Autopilot needs a connected VSIX plugin but the daemon has no "
         "compatible session for this IDE. Reload the IDE window and run "
@@ -93,6 +120,10 @@ SKIP_CODE_DESCRIPTIONS: dict[str, str] = {
         "Queue is idle AND no open ticket exists in the planfile. Drive "
         "is suppressed so the user's chat input isn't clobbered with stale "
         "prompts."
+    ),
+    "waiting_ticket_closed": (
+        "Queue points at a waiting ticket that is already closed in the "
+        "planfile; stale redrive is suppressed."
     ),
     "idle_only": (
         "``--autopilot-on-idle-only`` is on and the queue is not idle."
@@ -324,6 +355,9 @@ def classify_skip_code(cycle_telemetry: dict[str, Any], autopilot_status: str) -
     of them on the happy path.
     """
     if cycle_telemetry.get("autopilot_skipped_plugin_missing"):
+        blocker = str(cycle_telemetry.get("autopilot_skipped_plugin_blocker") or "").strip()
+        if blocker in SKIP_CODE_DESCRIPTIONS:
+            return blocker
         return "plugin_missing"
     if cycle_telemetry.get("autopilot_skipped_ide_mismatch"):
         return "ide_mismatch"
@@ -331,10 +365,14 @@ def classify_skip_code(cycle_telemetry: dict[str, Any], autopilot_status: str) -
         return "chat_activity"
     if cycle_telemetry.get("autopilot_skipped_idle_no_ticket"):
         return "idle_no_ticket"
+    if cycle_telemetry.get("autopilot_skipped_waiting_ticket_closed"):
+        return "waiting_ticket_closed"
     if cycle_telemetry.get("autopilot_skipped_idle_streak"):
         return "idle_streak"
     if cycle_telemetry.get("autopilot_skipped_manual_focus"):
         return "manual_focus"
+    if cycle_telemetry.get("autopilot_skipped_diagnostics_fail"):
+        return "diagnostics_fail"
     if cycle_telemetry.get("autopilot_skipped_stuck_status"):
         queue = str(cycle_telemetry.get("autopilot_skipped_stuck_status_queue") or "")
         specific = f"stuck_{queue}" if queue else "stuck_status"
@@ -434,6 +472,9 @@ def _evidence_label(
     chat_event = cycle_telemetry.get("autopilot_chat_activity_last_event")
     if chat_event:
         parts.append(f"chat_event={chat_event}")
+    plugin_reason = cycle_telemetry.get("autopilot_skipped_plugin_missing_reason")
+    if plugin_reason:
+        parts.append(f"plugin_reason={plugin_reason}")
     scan_run = cycle_telemetry.get("scan_after_idle_run")
     scan_applied = cycle_telemetry.get("scan_after_idle_applied")
     if scan_run:
@@ -468,18 +509,51 @@ def build_decision_record(
     blocked_by = "" if skip_code in {"ok", "unknown"} else skip_code
     skip_because = ""
     if skip_code == "chat_activity":
-        chat_event = cycle_telemetry.get("autopilot_chat_activity_last_event")
-        if chat_event:
-            skip_because = f"last chat event: {chat_event}"
+        because = str(cycle_telemetry.get("autopilot_skipped_chat_activity_because") or "")
+        if because:
+            skip_because = because
+        else:
+            chat_event = cycle_telemetry.get("autopilot_chat_activity_last_event")
+            if chat_event:
+                skip_because = f"last chat event: {chat_event}"
     elif skip_code == "idle_streak":
         if stagnation_streak:
             skip_because = f"queue idle for {stagnation_streak} consecutive cycles"
-    elif skip_code == "plugin_missing":
-        skip_because = f"daemon has no compatible plugin session for ide={autopilot_ide}"
+    elif skip_code in {
+        "plugin_missing",
+        "plugin_not_connected",
+        "plugin_version_mismatch",
+        "plugin_status_unavailable",
+    }:
+        plugin_reason = str(
+            cycle_telemetry.get("autopilot_skipped_plugin_missing_reason") or ""
+        ).strip()
+        if plugin_reason:
+            skip_because = plugin_reason
+        elif skip_code == "plugin_version_mismatch":
+            skip_because = (
+                f"connected plugin session for ide={autopilot_ide} failed strict "
+                "version/protocol checks"
+            )
+        elif skip_code == "plugin_status_unavailable":
+            skip_because = f"daemon status unavailable while probing ide={autopilot_ide}"
+        else:
+            skip_because = f"daemon has no compatible plugin session for ide={autopilot_ide}"
     elif skip_code == "ide_mismatch":
         skip_because = f"autopilot lane ide={autopilot_ide} mismatches the foreground IDE"
     elif skip_code == "idle_no_ticket":
         skip_because = "queue idle AND zero open planfile tickets"
+    elif skip_code == "waiting_ticket_closed":
+        ticket = str(
+            cycle_telemetry.get("autopilot_skipped_waiting_ticket_closed_ticket") or "-"
+        ).strip()
+        if ticket and ticket != "-":
+            skip_because = (
+                f"queue references ticket={ticket} in waiting_input, but planfile "
+                "marks it closed/done"
+            )
+        else:
+            skip_because = "queue references a waiting_input ticket already marked closed/done"
     elif skip_code.startswith("stuck_"):
         streak = cycle_telemetry.get("autopilot_skipped_stuck_status_streak")
         queue = cycle_telemetry.get("autopilot_skipped_stuck_status_queue") or queue_status
@@ -493,6 +567,21 @@ def build_decision_record(
             f"queue stuck on {queue}{ticket_hint}{streak_hint}; "
             "waiting ticket is not llm-ready, autopilot will not redrive"
         )
+    elif skip_code == "diagnostics_fail":
+        services = cycle_telemetry.get("autopilot_skipped_diagnostics_failed_services")
+        if isinstance(services, list) and services:
+            joined = ", ".join(str(s) for s in services)
+            skip_because = (
+                f"failing diagnostic services: {joined}; "
+                "fix the underlying check, mark the related diagnostic "
+                "ticket done, or set --no-autopilot-skip-on-diagnostics-fail"
+            )
+        else:
+            skip_because = (
+                "pre-drive diagnostics returned failed status; "
+                "fix the underlying check or rerun with "
+                "--no-autopilot-skip-on-diagnostics-fail"
+            )
     return DecisionRecord(
         at=now_utc_iso(),
         cycle=cycle,

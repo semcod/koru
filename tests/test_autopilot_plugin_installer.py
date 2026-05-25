@@ -161,7 +161,7 @@ def test_install_plugin_reassert_falls_back_when_resolved_vsix_is_missing(
     (root / "pyproject.toml").write_text("[project]\nname='koru'\n", encoding="utf-8")
     fallback_vsix = plugin_dir / "koru-autopilot-0.1.62.vsix"
     fallback_vsix.write_text("fallback", encoding="utf-8")
-    missing_vsix = plugin_dir / "koru-autopilot-vscode-0.1.64.vsix"
+    missing_vsix = plugin_dir / "koru-autopilot-vscode-0.1.66.vsix"
 
     monkeypatch.setattr(plugin_installer, "_repo_root", lambda: root)
     monkeypatch.setattr(plugin_installer, "resolve_extension_vsix", lambda: missing_vsix)

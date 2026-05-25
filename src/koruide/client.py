@@ -4,13 +4,18 @@ from __future__ import annotations
 
 import os
 import socket
+import struct
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from .protocol import MAX_LINE_BYTES, Message, ProtocolError, decode, error as error_msg
+from .protocol import Message, ProtocolError, decode
 from .protocol import drive as drive_msg
+from .protocol import error as error_msg
 from .socket import default_socket_path
+
+_FRAME_HEADER_BYTES = 4
+_MAX_FRAME_BYTES = 8 * 1024 * 1024
 
 
 class KoruIDEClient:
@@ -55,18 +60,20 @@ class KoruIDEClient:
         with self._connect(timeout=timeout) as sock:
             sock.sendall(msg.encode())
             buf = bytearray()
-            while b"\n" not in buf:
+            while True:
+                parsed = self._extract_reply(buf)
+                if parsed is not None:
+                    return parsed
                 chunk = sock.recv(4096)
                 if not chunk:
                     break
                 buf.extend(chunk)
-                if len(buf) > MAX_LINE_BYTES:
+                if len(buf) > _MAX_FRAME_BYTES:
                     raise RuntimeError("response too large")
-            line, _, _ = buf.partition(b"\n")
-            if not line:
+            if not buf:
                 raise RuntimeError("daemon closed connection without replying")
             try:
-                return decode(line)
+                return decode(bytes(buf))
             except ProtocolError as exc:
                 # Daemon sometimes drops the trailing newline (e.g. plugin
                 # disconnects mid-ack, or the ack payload is truncated by an
@@ -85,6 +92,35 @@ class KoruIDEClient:
                     f"daemon response could not be decoded ({exc}); "
                     f"got {len(buf)} bytes without a complete NDJSON envelope",
                 )
+
+    def _extract_reply(self, buf: bytearray) -> Message | None:
+        """Decode one full daemon envelope from ``buf``.
+
+        The daemon may answer with legacy NDJSON (``{...}\n``) or a
+        length-prefixed frame (4-byte big-endian length + JSON payload).
+        """
+        if not buf:
+            return None
+        # Legacy NDJSON reply path.
+        if buf[0] == ord("{"):
+            if b"\n" not in buf:
+                return None
+            line, _, rest = buf.partition(b"\n")
+            del buf[: len(buf) - len(rest)]
+            return decode(bytes(line))
+
+        # Length-prefixed reply path.
+        if len(buf) < _FRAME_HEADER_BYTES:
+            return None
+        frame_len = struct.unpack(">I", bytes(buf[:_FRAME_HEADER_BYTES]))[0]
+        if frame_len <= 0 or frame_len > _MAX_FRAME_BYTES:
+            raise RuntimeError(f"invalid frame length: {frame_len}")
+        total = _FRAME_HEADER_BYTES + frame_len
+        if len(buf) < total:
+            return None
+        payload = bytes(buf[_FRAME_HEADER_BYTES:total])
+        del buf[:total]
+        return decode(payload.decode("utf-8"))
 
     def is_running(self) -> bool:
         if self._client is not None:

@@ -850,7 +850,7 @@ def _check_chat_intake_skip(
         cycle_telemetry=cycle_telemetry,
         _hp=_hp,
     )
-    if intake_ticket:
+    if decide_intake_ticket(intake_ticket):
         cycle_telemetry["autopilot_skipped_chat_intake"] = True
         return True
     return False
@@ -886,42 +886,79 @@ def _check_recent_self_drive_skip(
 
 def _determine_chat_activity_status(
     state: AutoloopState,
-    queue_result: QueueLoopResult,
-    project: Path,
-    cooldown: float,
-    waiting_ticket: str,
     ide: str | None,
+    cooldown: float,
     recent_events: list[dict[str, Any]],
     reflection_events: list[Any],
-    _hp: Any,
 ) -> tuple[bool, str, str, list[Any]]:
+    return classify_chat_event(
+        state=state,
+        ide=ide,
+        cooldown=cooldown,
+        recent_events=recent_events,
+        reflection_events=reflection_events,
+    )
+
+
+def classify_chat_event(
+    *,
+    state: AutoloopState,
+    ide: str | None,
+    cooldown: float,
+    recent_events: list[dict[str, Any]],
+    reflection_events: list[Any],
+) -> tuple[bool, str, str, list[Any]]:
+    """Return ``(has_activity, event_type, age_label, reflection_events)``."""
     if recent_events:
         last_payload = recent_events[-1]
         last_type = str(last_payload.get("type") or "?")
         age_seconds = max(0.0, time.time() - _event_timestamp(last_payload, default=0.0))
         age = f"{age_seconds:.0f}s"
-        if _recent_message_sent_allows_redrive(
-            project=project,
-            queue_result=queue_result,
-            state=state,
-            recent_events=recent_events,
-            last_type=last_type,
-            age=age,
-            waiting_ticket=waiting_ticket,
-            _hp=_hp,
-        ):
-            return False, "", "", []
         return True, last_type, age, reflection_events
-    else:
-        fallback = _recent_chat_history_fallback(
-            ide=ide,
-            cooldown=cooldown,
-            reflection_events=reflection_events,
-        )
-        if fallback is None:
-            return False, "", "", []
-        last_type, age, reflection_events = fallback
-        return True, last_type, age, reflection_events
+
+    fallback = _recent_chat_history_fallback(
+        ide=ide,
+        cooldown=cooldown,
+        reflection_events=reflection_events,
+    )
+    if fallback is None:
+        return False, "", "", []
+    last_type, age, reflection_events = fallback
+    return True, last_type, age, reflection_events
+
+
+def decide_intake_ticket(intake_ticket: str | None) -> bool:
+    """Pure decision: skip redrive when a chat intake ticket was upserted."""
+    return bool(intake_ticket)
+
+
+def decide_redrive_cooldown(
+    *,
+    event_type: str,
+    age_seconds: float,
+    cooldown_seconds: float,
+    waiting_ticket: str,
+) -> dict[str, str | bool]:
+    """Pure cooldown decision used by chat-activity skip paths."""
+    event = str(event_type or "?")
+    age = max(0.0, float(age_seconds))
+    cooldown = max(0.0, float(cooldown_seconds))
+    should_skip = bool(event and age <= cooldown)
+    because = (
+        f"recent_chat_activity last={event} age={age:.0f}s cooldown={cooldown:.0f}s "
+        f"ticket={waiting_ticket}"
+    )
+    return {
+        "should_skip": should_skip,
+        "event_type": event,
+        "because": because,
+        "age": f"{age:.0f}s",
+    }
+
+
+def explain_skip(decision: dict[str, str | bool]) -> str:
+    """Render a human-readable skip explanation from a pure decision payload."""
+    return str(decision.get("because") or "")
 
 
 def _skip_due_to_recent_chat_activity(
@@ -979,25 +1016,45 @@ def _skip_due_to_recent_chat_activity(
 
     has_activity, last_type, age, reflection_events = _determine_chat_activity_status(
         state=state,
-        queue_result=queue_result,
-        project=project,
-        cooldown=cooldown,
-        waiting_ticket=waiting_ticket,
         ide=ide,
+        cooldown=cooldown,
         recent_events=recent_events,
         reflection_events=reflection_events,
-        _hp=_hp,
     )
     if not has_activity:
         return False
 
+    if recent_events and _recent_message_sent_allows_redrive(
+        project=project,
+        queue_result=queue_result,
+        state=state,
+        recent_events=recent_events,
+        last_type=last_type,
+        age=age,
+        waiting_ticket=waiting_ticket,
+        _hp=_hp,
+    ):
+        return False
+
+    age_seconds = 0.0
+    if age.endswith("s"):
+        try:
+            age_seconds = float(age[:-1])
+        except ValueError:
+            age_seconds = 0.0
+    decision = decide_redrive_cooldown(
+        event_type=last_type,
+        age_seconds=age_seconds,
+        cooldown_seconds=cooldown,
+        waiting_ticket=waiting_ticket,
+    )
+    if not bool(decision["should_skip"]):
+        return False
+
     cycle_telemetry["autopilot_skipped_chat_activity"] = True
     cycle_telemetry["autopilot_chat_activity_last_event"] = last_type
-    _hp(
-        "- autopilot skipped (recent_chat_activity "
-        f"last={last_type} age={age} cooldown={cooldown:.0f}s "
-        f"ticket={waiting_ticket})",
-    )
+    cycle_telemetry["autopilot_skipped_chat_activity_because"] = explain_skip(decision)
+    _hp(f"- autopilot skipped ({explain_skip(decision)})")
     reflection_resolved, reflection_done = _apply_llx_chat_reflection(
         project=project,
         queue_result=queue_result,

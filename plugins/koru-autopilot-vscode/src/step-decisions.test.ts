@@ -122,6 +122,21 @@ function testInterpretPostSubmitProbeRetry(): void {
   assert(!result.cleared, "not cleared");
 }
 
+function testInterpretPostSubmitProbeStrictEmpty(): void {
+  const result = interpretPostSubmitProbe(
+    "unrelated copied text from editor",
+    "Ticket prompt that was pasted into chat",
+    { requireEmpty: true },
+  );
+  assert(result.action === "retry", "strict host submit must reject non-empty probe");
+  assert(!result.cleared, "strict host submit requires empty input");
+  const inconclusive = interpretPostSubmitProbe(null, "Ticket prompt", { requireEmpty: true });
+  assert(inconclusive.action === "retry", "strict host submit rejects inconclusive probe");
+  assert(!inconclusive.cleared, "strict inconclusive probe is not cleared");
+  const empty = interpretPostSubmitProbe("", "Ticket prompt", { requireEmpty: true });
+  assert(empty.action === "accept", "strict host submit accepts empty input");
+}
+
 testReadVerifySubmitPrefersNewSetting();
 testShouldVerifyPostSubmitAllPluginIdes();
 testHostSubmitIdesRequireVerificationEvenWhenOptionalVerifyDisabled();
@@ -129,4 +144,5 @@ testIdeStrategiesAreSeparated();
 testShouldVerifyPrePasteBusy();
 testDecideBusyInputAction();
 testInterpretPostSubmitProbeRetry();
+testInterpretPostSubmitProbeStrictEmpty();
 console.log("step-decisions tests: ok");

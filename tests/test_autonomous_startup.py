@@ -347,6 +347,40 @@ def test_format_post_startup_operator_hints_mentions_socket(tmp_path: Path) -> N
     assert "drive jest wstrzymany" in text
 
 
+def test_format_post_startup_operator_hints_can_name_plugin_version_mismatch(
+    tmp_path: Path,
+) -> None:
+    probe = startup.AutonomousStartupProbe(
+        koru_version="0.0-test",
+        python_version="3.12",
+        project=tmp_path,
+        agent_lane_cli="vscodium",
+        autopilot_ide_cli="vscodium",
+        resolved_lane="vscodium",
+        lane_source="cli:vscodium",
+        resolved_autopilot_ide="vscodium",
+        autopilot_ide_source="cli:vscodium",
+        running_ides=("VSCodium (pid=1)",),
+        terminal_lane="vscodium",
+        socket_path="/run/user/1000/koru-autopilot-vscodium.sock",
+        session="wayland",
+        term_program="vscode",
+        headless=False,
+        xdg_runtime_dir="/run/user/1000",
+    )
+    text = "\n".join(
+        startup.format_post_startup_operator_hints(
+            probe,
+            plugin_connected=False,
+            plugin_blocker="plugin_version_mismatch",
+            plugin_reason="connected=0.1.63 expected=0.1.64",
+        ),
+    )
+    assert "plugin_version_mismatch" in text
+    assert "connected=0.1.63 expected=0.1.64" in text
+    assert "wersja/protokół aktywnej wtyczki" in text
+
+
 def test_format_post_startup_operator_hints_warns_when_vscode_selected_with_vscodium_running(
     tmp_path: Path,
 ) -> None:

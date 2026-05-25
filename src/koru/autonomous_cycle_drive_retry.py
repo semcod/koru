@@ -1,4 +1,6 @@
+import json
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -6,16 +8,25 @@ from koru.autonomous_cycle_chat_activity import _inject_reflection_summary_into_
 from koru.autonomous_cycle_common import _queue_loop_waiting_ticket_label
 from koru.autonomy.env import (
     allow_keyboard_autopilot_fallback as _allow_keyboard_autopilot_fallback,
+)
+from koru.autonomy.env import (
+    env_truthy,
+)
+from koru.autonomy.env import (
     plugin_required_for_ide as _plugin_required_for_ide,
+)
+from koru.autonomy.env import (
     prefer_keyboard_autopilot as _prefer_keyboard_autopilot,
 )
 from koru.autonomy.ide_work import extract_ticket_id_from_text, resolve_idle_drive_prompt
-from koru.autonomy.prompts import build_prompt
+from koru.autonomy.prompts import PromptDecision, build_prompt
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
 from koru.queue import run_process as _run_process
 from koruide.ide import normalize_ide_id as _normalize_ide_id
 from koruide.ide import supports_vscode_extension_plugin as _supports_vscode_extension_plugin
+
+_CLOSED_TICKET_STATUSES = frozenset({"done", "closed", "cancelled", "canceled", "failed"})
 
 
 def _cycle_attr(name: str, fallback: Any) -> Any:
@@ -60,6 +71,52 @@ def _try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | 
     return _autonomous_mod._try_os_injector_fallback(prompt, submit=submit)
 
 
+def _skip_closed_waiting_ticket_enabled() -> bool:
+    """Guard stale ``waiting_input`` redrives when the ticket is already closed."""
+    return env_truthy("KORU_AUTOPILOT_SKIP_CLOSED_WAITING_TICKET", True)
+
+
+def _resolve_waiting_ticket_id(queue_result: QueueLoopResult) -> str:
+    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
+    if waiting_ticket and waiting_ticket != "-":
+        return waiting_ticket
+    raw = str(getattr(queue_result, "last_ticket_id", "") or "").strip()
+    return raw
+
+
+def _planfile_ticket_status(project: Path, ticket_id: str) -> str | None:
+    ticket = ticket_id.strip()
+    if not ticket:
+        return None
+    try:
+        proc = _run_process(
+            ["planfile", "ticket", "show", ticket, "--format", "json"],
+            project,
+        )
+    except (OSError, TimeoutError, RuntimeError):
+        return None
+    if proc.returncode != 0:
+        return None
+    raw = str(proc.stdout or "").strip()
+    if not raw:
+        return None
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    status = str(payload.get("status") or "").strip().lower()
+    if status:
+        return status
+    return None
+
+
+def _waiting_ticket_is_closed(project: Path, ticket_id: str) -> bool:
+    status = _planfile_ticket_status(project, ticket_id)
+    return bool(status and status in _CLOSED_TICKET_STATUSES)
+
+
 def _resolve_autopilot_drive_decision(
     project: Path,
     state: AutoloopState,
@@ -68,7 +125,7 @@ def _resolve_autopilot_drive_decision(
     drive_prompt: str,
     autopilot_action: str,
 ) -> tuple[Any, str | None]:
-    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
+    waiting_ticket_id = _resolve_waiting_ticket_id(queue_result)
     effective_drive_prompt = drive_prompt
     idle_prompt_kind: str | None = None
     if queue_result.last_status == "idle":
@@ -81,15 +138,26 @@ def _resolve_autopilot_drive_decision(
             drive_prompt=drive_prompt,
             runner=_cycle_attr("_run_process", _run_process),
         )
+    if (
+        queue_result.last_status == "waiting_input"
+        and waiting_ticket_id
+        and _skip_closed_waiting_ticket_enabled()
+        and _waiting_ticket_is_closed(project, waiting_ticket_id)
+    ):
+        return (
+            PromptDecision(
+                prompt="",
+                kind="drive_prompt",
+                skip=True,
+                skip_reason="waiting_ticket_closed",
+            ),
+            idle_prompt_kind,
+        )
     build_prompt_fn = _cycle_attr("build_prompt", build_prompt)
     decision = build_prompt_fn(
         queue_status=queue_result.last_status,
         last_message=getattr(queue_result, "last_message", "") or "",
-        waiting_ticket_id=(
-            waiting_ticket
-            if waiting_ticket != "-"
-            else getattr(queue_result, "last_ticket_id", None)
-        ),
+        waiting_ticket_id=waiting_ticket_id or None,
         drive_prompt=effective_drive_prompt,
         autopilot_action=autopilot_action,
         stagnation_streak=state.stagnation_streak,
@@ -229,7 +297,11 @@ def _format_autopilot_failure_details(reply: dict[str, Any]) -> list[str]:
     return lines
 
 
-def _warn_autopilot_focus_retry(attempt: int, attempts: int, reply: dict[str, Any] | None = None) -> None:
+def _warn_autopilot_focus_retry(
+    attempt: int,
+    attempts: int,
+    reply: dict[str, Any] | None = None,
+) -> None:
     print("\033[1;31m")  # bold red
     print("================================================================================")
     print("[AUTOPILOT FOCUS ERROR] Please place your cursor inside the IDE chat input!")
@@ -261,7 +333,11 @@ def _warn_autopilot_manual_focus_required(reply: dict[str, Any] | None = None) -
     )
 
 
-def _warn_autopilot_plugin_retry(attempt: int, attempts: int, reply: dict[str, Any] | None = None) -> None:
+def _warn_autopilot_plugin_retry(
+    attempt: int,
+    attempts: int,
+    reply: dict[str, Any] | None = None,
+) -> None:
     print("\033[1;33m")  # bold yellow
     print("================================================================================")
     print("[AUTOPILOT PLUGIN RETRY] Plugin send did not succeed yet.")
@@ -274,7 +350,11 @@ def _warn_autopilot_plugin_retry(attempt: int, attempts: int, reply: dict[str, A
     print("\033[0m")  # reset colors
 
 
-def _warn_autopilot_submit_retry(attempt: int, attempts: int, reply: dict[str, Any] | None = None) -> None:
+def _warn_autopilot_submit_retry(
+    attempt: int,
+    attempts: int,
+    reply: dict[str, Any] | None = None,
+) -> None:
     print("\033[1;33m")  # bold yellow
     print("================================================================================")
     print("[AUTOPILOT SUBMIT RETRY] Text was pasted, but Send was not confirmed.")
@@ -325,7 +405,7 @@ def _execute_autopilot_drive(
     drive_prompt: str,
     submit: bool,
     autopilot_action: str,
-    _hp: callable,
+    _hp: Callable[..., Any],
 ) -> tuple[dict[str, Any], bool, str, str | None]:
     """Execute autopilot drive and return (reply, ok, decision_kind, idle_prompt_kind)."""
     decision, idle_prompt_kind = _resolve_autopilot_drive_decision(
@@ -335,6 +415,26 @@ def _execute_autopilot_drive(
         drive_prompt=drive_prompt,
         autopilot_action=autopilot_action,
     )
+    if decision.skip:
+        waiting_ticket = _resolve_waiting_ticket_id(queue_result) or "-"
+        _hp(
+            "- autopilot skipped (waiting_ticket_closed): "
+            f"ticket {waiting_ticket} is already closed in planfile; "
+            "suppressing stale waiting_input redrive.",
+        )
+        return (
+            {
+                "ok": False,
+                "backend": None,
+                "message": (
+                    f"waiting ticket {waiting_ticket} is already closed; skip stale redrive"
+                ),
+                "prompt": "",
+            },
+            False,
+            decision.skip_reason or "skipped",
+            idle_prompt_kind,
+        )
     if idle_prompt_kind == "idle_no_ticket":
         from koru.autonomous_loop_runner import _dashboard_action_urls
         from koru.autonomy.ide_work import sprint_ticket_status_summary
@@ -417,7 +517,7 @@ def _log_autopilot_result(
     autopilot_ide: str,
     decision_kind: str,
     reply: dict[str, Any],
-    _hp: callable,
+    _hp: Callable[..., Any],
 ) -> None:
     """Log autopilot result."""
     if ok:
@@ -449,7 +549,7 @@ def _log_autopilot_result(
                 f"(ide={autopilot_ide}, backend={backend}, kind={decision_kind}{extra})",
             )
     else:
-        if decision_kind == "idle_no_ticket":
+        if decision_kind in {"idle_no_ticket", "waiting_ticket_closed"}:
             return
         elif _reply_requires_manual_chat_focus(reply):
             _hp(
@@ -457,6 +557,7 @@ def _log_autopilot_result(
                 f"({reply.get('message', 'unknown error')}, kind={decision_kind})",
             )
         else:
+            msg = reply.get("message", "unknown error")
             _hp(
-                f"  autopilot: failed ({reply.get('message', 'unknown error')}, kind={decision_kind})",
+                f"  autopilot: failed ({msg}, kind={decision_kind})",
             )

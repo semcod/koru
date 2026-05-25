@@ -54,7 +54,12 @@ function submitCommandsOverride(): string[] {
 }
 
 function focusInputCommandsPrefix(): string[] {
-  return [];
+  return [
+    "composer.focusComposer",
+    "cursor.composer.focus",
+    "workbench.panel.chat.view.copilot.focus",
+    "workbench.panel.aichat.view.copilot.focus",
+  ];
 }
 
 function preferCtrlSubmit(): boolean {

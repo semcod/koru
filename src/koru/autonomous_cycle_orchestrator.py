@@ -1,4 +1,5 @@
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -11,8 +12,11 @@ from koru.autonomous_cycle_drive_retry import (
     _update_autopilot_state,
 )
 from koru.autonomous_cycle_skip_conditions import _check_autopilot_skip_conditions
+from koru.autonomous_plugin import plugin_skip_code
 from koru.autonomy.env import (
     autopilot_terminal_conflict_reason as _autopilot_terminal_conflict_reason,
+)
+from koru.autonomy.env import (
     plugin_required_for_ide as _plugin_required_for_ide,
 )
 from koru.autonomy.state import AutoloopState
@@ -37,8 +41,8 @@ def _handle_autopilot_phase(
     diag_result: DiagnosticResult,
     topology_integration: bool,
     cycle_telemetry: dict[str, Any],
-    _hp: callable,
-    _emit: callable,
+    _hp: Callable[..., Any],
+    _emit: Callable[..., Any],
 ) -> tuple[str, str | None, str | None]:
     autopilot_status = "skipped"
     autopilot_backend: str | None = None
@@ -50,7 +54,8 @@ def _handle_autopilot_phase(
         if _plugin_required_for_ide(autopilot_ide):
             plugin_ok, plugin_reason = _client_has_usable_plugin(client, autopilot_ide)
             if not plugin_ok:
-                _hp(f"- autopilot skipped (plugin_missing: {plugin_reason})")
+                blocker = plugin_skip_code(plugin_reason)
+                _hp(f"- autopilot skipped ({blocker}: {plugin_reason})")
                 _hp(
                     "  → VSIX plugin is not connected to the daemon socket. "
                     "In the IDE: Command Palette → `koru: Connect autopilot daemon` "
@@ -59,7 +64,9 @@ def _handle_autopilot_phase(
                     "connect again. Check: `koru autopilot status --explain`.",
                 )
                 cycle_telemetry["autopilot_skipped_plugin_missing"] = True
-                return "skipped(plugin_missing)", None, None
+                cycle_telemetry["autopilot_skipped_plugin_blocker"] = blocker
+                cycle_telemetry["autopilot_skipped_plugin_missing_reason"] = plugin_reason
+                return f"skipped({blocker})", None, None
         if conflict_reason := _autopilot_terminal_conflict_reason(
             autopilot_ide,
             plugin_connected=plugin_ok and _plugin_required_for_ide(autopilot_ide),
@@ -99,6 +106,11 @@ def _handle_autopilot_phase(
             if decision_kind == "idle_no_ticket":
                 autopilot_status = "skipped(idle_no_ticket)"
                 cycle_telemetry["autopilot_skipped_idle_no_ticket"] = True
+            elif decision_kind == "waiting_ticket_closed":
+                waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
+                autopilot_status = "skipped(waiting_ticket_closed)"
+                cycle_telemetry["autopilot_skipped_waiting_ticket_closed"] = True
+                cycle_telemetry["autopilot_skipped_waiting_ticket_closed_ticket"] = waiting_ticket
             elif ok:
                 autopilot_status = "ok"
             elif _reply_requires_manual_chat_focus(reply):

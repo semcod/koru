@@ -118,13 +118,25 @@ export type PostSubmitVerifyResult = ReturnType<typeof decideSubmitCleared> & {
  *
  * Returns ``accept`` when the submit step succeeded (or probe inconclusive),
  * ``retry`` when the pasted tail is still in the input (try next candidate).
+ * With ``requireEmpty`` enabled, inconclusive probes are also retried because
+ * host-level submit commands often report rc=0 even when the webview ignored
+ * the key/click.
  */
 export function interpretPostSubmitProbe(
   observedAfter: string | null,
-  originalText: string
+  originalText: string,
+  opts: { requireEmpty?: boolean } = {}
 ): PostSubmitVerifyResult & { action: "accept" | "retry" } {
   const decision = decideSubmitCleared(observedAfter, originalText);
   const observedLength = observedAfter === null ? -1 : observedAfter.trim().length;
+  if (opts.requireEmpty && (observedAfter === null || observedLength > 0)) {
+    return {
+      ...decision,
+      cleared: false,
+      observedLength,
+      action: "retry",
+    };
+  }
   return {
     ...decision,
     observedLength,

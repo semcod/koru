@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import socket
+import struct
 import threading
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -85,6 +86,51 @@ def test_drive_missing_socket_returns_ok_false(tmp_path: Path) -> None:
     assert "missing" in (reply.get("message") or "").lower()
 
 
+def test_request_returns_structured_error_on_truncated_response(tmp_path: Path) -> None:
+    """Daemon sometimes drops trailing newline (multiplexed events, plugin
+    disconnect mid-ack, 170k JSON without ``\\n``). The client must NOT
+    crash the autonomous loop — it should surface a graceful ``error``
+    reply so the cycle can record ``autopilot=failed`` and keep running.
+    """
+    sock_path = tmp_path / "trunc.sock"
+    server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    server.bind(str(sock_path))
+    server.listen(1)
+    server.settimeout(3.0)
+
+    def serve() -> None:
+        conn, _ = server.accept()
+        try:
+            conn.recv(4096)
+            # Send a truncated JSON envelope with NO trailing newline,
+            # then close the connection. Mirrors the production failure.
+            conn.sendall(b'{"type":"ack","id":"req-1","ok":true,"info":{"text":"abc')
+        finally:
+            conn.close()
+
+    t = threading.Thread(target=serve, daemon=True)
+    t.start()
+
+    captured_logs: list[str] = []
+    client = KoruIDEClient(
+        socket_path=sock_path, timeout=2.0, log=captured_logs.append
+    )
+    reply = client.request(Message(type="ping", id="req-1"))
+
+    t.join(timeout=3.0)
+    server.close()
+    sock_path.unlink(missing_ok=True)
+
+    assert reply.type == "error", "truncated response must surface as error reply"
+    assert reply.id == "req-1", "correlation id is preserved on graceful error"
+    assert reply.data.get("ok") is False
+    message = str(reply.data.get("message", ""))
+    assert "decoded" in message or "envelope" in message
+    assert any("response parse failed" in entry for entry in captured_logs), (
+        "diagnostic line with partial bytes must be logged for postmortem"
+    )
+
+
 def test_drive_uses_extended_timeout(monkeypatch) -> None:
     captured: dict[str, object] = {}
     client = KoruIDEClient(socket_path=Path("/tmp/koruide.sock"), timeout=0.25)
@@ -103,3 +149,47 @@ def test_drive_uses_extended_timeout(monkeypatch) -> None:
 
     assert reply["ok"] is True
     assert captured == {"msg_type": "drive", "timeout": 9.0}
+
+
+def test_request_decodes_length_prefixed_large_ack(tmp_path: Path) -> None:
+    """Client must decode framed ACK payloads larger than NDJSON line budget."""
+    sock_path = tmp_path / "framed-large.sock"
+    server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    server.bind(str(sock_path))
+    server.listen(1)
+    server.settimeout(3.0)
+
+    huge = "x" * (1024 * 1024 + 256)
+    payload = (
+        "{"
+        '"type":"ack",'
+        '"id":"req-big",'
+        '"ok":true,'
+        '"backend":"plugin",'
+        f'"note":"{huge}"'
+        "}"
+    ).encode()
+
+    def serve() -> None:
+        conn, _ = server.accept()
+        try:
+            conn.recv(4096)
+            conn.sendall(struct.pack(">I", len(payload)) + payload)
+        finally:
+            conn.close()
+
+    t = threading.Thread(target=serve, daemon=True)
+    t.start()
+
+    client = KoruIDEClient(socket_path=sock_path, timeout=2.0)
+    reply = client.request(Message(type="ping", id="req-big"))
+
+    t.join(timeout=3.0)
+    server.close()
+    sock_path.unlink(missing_ok=True)
+
+    assert reply.type == "ack"
+    assert reply.id == "req-big"
+    assert reply.data.get("ok") is True
+    assert reply.data.get("backend") == "plugin"
+    assert len(str(reply.data.get("note") or "")) > 1024 * 1024

@@ -62,6 +62,24 @@ def plugin_rows_log_summary(rows: object) -> str:
     return f"[{', '.join(parts)}]"
 
 
+def plugin_skip_code(reason: str) -> str:
+    """Classify plugin-gate failures into actionable blocker codes."""
+    text = (reason or "").strip().lower()
+    if not text:
+        return "plugin_missing"
+    if "version mismatch" in text or "protocol mismatch" in text or "protocol missing" in text:
+        return "plugin_version_mismatch"
+    if "daemon status unavailable" in text:
+        return "plugin_status_unavailable"
+    if (
+        "plugin list is empty" in text
+        or "no plugin row matched" in text
+        or "has no plugin list" in text
+    ):
+        return "plugin_not_connected"
+    return "plugin_missing"
+
+
 def _plugin_rows(status: Mapping[str, Any]) -> tuple[list[Any] | None, str | None]:
     plugins = status.get("plugins")
     if not isinstance(plugins, list):
@@ -196,6 +214,7 @@ def wait_for_autopilot_plugin(
 
 __all__ = [
     "enable_autonomous_strict_plugin_policy",
+    "plugin_skip_code",
     "plugin_rows_log_summary",
     "plugin_status_decision",
     "status_has_autopilot_plugin",

@@ -163,6 +163,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
         argv,
     ),
     "serve": lambda argv: _lazy_module_main("koru.cli_serve", "_serve_main", argv),
+    "self": lambda argv: _lazy_module_main("koru.cli_self", "self_main", argv),
     "scan": _scan_main,
     "refactor-planfile-handoff": lambda argv: _lazy_module_main(
         "koru.cli_refactor_planfile_handoff",

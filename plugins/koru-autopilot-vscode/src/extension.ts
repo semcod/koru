@@ -11,12 +11,18 @@ import * as fs from "fs";
 import * as net from "net";
 import { spawn } from "child_process";
 import * as vscode from "vscode";
+import { sanitizeOutboundEnvelope } from "./ack-payload";
 import { planDispatch } from "./dispatch-plan";
 import {
   ANTIGRAVITY_SEND_PROMPT_COMMAND,
   canUseAntigravitySendPrompt,
   selectAntigravityOpenCommand,
 } from "./antigravity-fastpath";
+import {
+  bottomRightSubmitPoint,
+  parseXdotoolGeometryShell,
+  type ScreenPoint,
+} from "./host-click-submit";
 import {
   buildFocusInputCommands,
   buildFocusOpenCommands,
@@ -557,53 +563,153 @@ class AutopilotBridge {
     return { x, y };
   }
 
+  private async autoSubmitClickPoint(): Promise<ScreenPoint | null> {
+    const geometry = await this.runHostCommand("xdotool", [
+      "getactivewindow",
+      "getwindowgeometry",
+      "--shell",
+    ]);
+    if (!geometry.ok) {
+      this.traceOperation({
+        op: "submit",
+        route: "host-click:auto-point",
+        ok: false,
+        reason: "xdotool window geometry unavailable",
+      });
+      return null;
+    }
+    const parsed = parseXdotoolGeometryShell(geometry.stdout);
+    if (!parsed) {
+      this.traceOperation({
+        op: "submit",
+        route: "host-click:auto-point",
+        ok: false,
+        reason: "invalid xdotool window geometry",
+      });
+      return null;
+    }
+    const point = bottomRightSubmitPoint(parsed);
+    this.traceOperation({
+      op: "submit",
+      route: "host-click:auto-point",
+      ok: true,
+      detail: { x: point.x, y: point.y },
+    });
+    return point;
+  }
+
+  private isWaylandSession(): boolean {
+    return (
+      (process.env.XDG_SESSION_TYPE || "").toLowerCase() === "wayland"
+      || Boolean(process.env.WAYLAND_DISPLAY)
+    );
+  }
+
+  private async _tryHostClickSubmitYdotool(
+    point: ScreenPoint,
+    source: string,
+    details: string[]
+  ): Promise<SubmitOutcome | null> {
+    const move = await this.runHostCommand("ydotool", ["mousemove", String(point.x), String(point.y)]);
+    details.push(`ydotool mousemove ${point.x} ${point.y} => ${move.ok ? "ok" : "failed"}`);
+    debugLog("SUBMIT_CLICK", { command: `ydotool mousemove ${point.x} ${point.y}`, ok: move.ok, x: point.x, y: point.y });
+    this.traceOperation({
+      op: "submit",
+      route: "host-click:ydotool-move",
+      ok: move.ok,
+      command: `ydotool mousemove ${point.x} ${point.y}`,
+    });
+    if (!move.ok) {
+      return null;
+    }
+    const click = await this.runHostCommand("ydotool", ["click", "1"]);
+    details.push(`ydotool click 1 => ${click.ok ? "ok" : "failed"}`);
+    debugLog("SUBMIT_CLICK", { command: "ydotool click 1", ok: click.ok, x: point.x, y: point.y });
+    this.traceOperation({
+      op: "submit",
+      route: "host-click:ydotool-click",
+      ok: click.ok,
+      command: `ydotool click@${point.x},${point.y}`,
+      detail: { source },
+    });
+    if (!click.ok) {
+      return null;
+    }
+    return {
+      ok: true,
+      command: `ydotool click@${point.x},${point.y} (${source})`,
+      attempts: details,
+    };
+  }
+
+  private async _tryHostClickSubmitXdotool(
+    point: ScreenPoint,
+    source: string,
+    details: string[]
+  ): Promise<SubmitOutcome | null> {
+    const x = String(point.x);
+    const y = String(point.y);
+    const xdotoolResult = await this.runHostCommand("xdotool", ["mousemove", "--sync", x, y, "click", "1"]);
+    details.push(`xdotool mousemove --sync ${x} ${y} click 1 => ${xdotoolResult.ok ? "ok" : "failed"}`);
+    debugLog("SUBMIT_CLICK", {
+      command: `xdotool mousemove --sync ${x} ${y} click 1`,
+      ok: xdotoolResult.ok,
+      x: point.x,
+      y: point.y,
+      source,
+    });
+    this.traceOperation({
+      op: "submit",
+      route: "host-click:xdotool",
+      ok: xdotoolResult.ok,
+      command: `xdotool click@${point.x},${point.y}`,
+      detail: { source },
+    });
+    if (!xdotoolResult.ok) {
+      return null;
+    }
+    return {
+      ok: true,
+      command: `xdotool click@${point.x},${point.y} (${source})`,
+      attempts: details,
+    };
+  }
+
   private async _tryHostClickSubmit(): Promise<SubmitOutcome> {
     if (process.platform !== "linux") {
       this.traceOperation({ op: "submit", route: "host-click", ok: false, reason: "non-linux" });
       return { ok: false };
     }
-    const point = this.submitClickPoint();
+    const configuredPoint = this.submitClickPoint();
+    const point = configuredPoint ?? await this.autoSubmitClickPoint();
     if (!point) {
       debugLog("SUBMIT_CLICK_SKIP", { reason: "missing submitClickX/submitClickY" });
       this.traceOperation({
         op: "submit",
         route: "host-click",
         ok: false,
-        reason: "missing submitClickX/submitClickY",
+        reason: "missing submitClickX/submitClickY and auto point unavailable",
       });
       return {
         ok: false,
-        reason: "missing submit click coordinates",
-        attempts: ["submit click skipped: missing submitClickX/submitClickY"],
+        reason: "missing submit click coordinates and auto point unavailable",
+        attempts: ["submit click skipped: no calibrated or auto bottom-right point"],
       };
     }
-    const x = String(point.x);
-    const y = String(point.y);
-    const attempts: Array<[string, string[]]> = [
-      ["xdotool", ["mousemove", "--sync", x, y, "click", "1"]],
-      ["ydotool", ["mousemove", x, y]],
-      ["ydotool", ["click", "1"]],
-    ];
-    const xdotoolResult = await this.runHostCommand(attempts[0][0], attempts[0][1]);
+    const source = configuredPoint ? "configured" : "auto-bottom-right";
     const details: string[] = [];
-    details.push(`${attempts[0][0]} ${attempts[0][1].join(" ")} => ${xdotoolResult.ok ? "ok" : "failed"}`);
-    debugLog("SUBMIT_CLICK", { command: `${attempts[0][0]} ${attempts[0][1].join(" ")}`, ok: xdotoolResult.ok, x: point.x, y: point.y });
-    this.traceOperation({ op: "submit", route: "host-click:xdotool", ok: xdotoolResult.ok, command: `xdotool click@${point.x},${point.y}` });
-    if (xdotoolResult.ok) {
-      return { ok: true, command: `xdotool click@${point.x},${point.y}`, attempts: details };
+    const tryYdotoolFirst = this.isWaylandSession();
+    const first = tryYdotoolFirst
+      ? await this._tryHostClickSubmitYdotool(point, source, details)
+      : await this._tryHostClickSubmitXdotool(point, source, details);
+    if (first?.ok) {
+      return first;
     }
-    const move = await this.runHostCommand(attempts[1][0], attempts[1][1]);
-    details.push(`${attempts[1][0]} ${attempts[1][1].join(" ")} => ${move.ok ? "ok" : "failed"}`);
-    debugLog("SUBMIT_CLICK", { command: `${attempts[1][0]} ${attempts[1][1].join(" ")}`, ok: move.ok, x: point.x, y: point.y });
-    this.traceOperation({ op: "submit", route: "host-click:ydotool-move", ok: move.ok, command: `${attempts[1][0]} ${attempts[1][1].join(" ")}` });
-    if (move.ok) {
-      const click = await this.runHostCommand(attempts[2][0], attempts[2][1]);
-      details.push(`${attempts[2][0]} ${attempts[2][1].join(" ")} => ${click.ok ? "ok" : "failed"}`);
-      debugLog("SUBMIT_CLICK", { command: `${attempts[2][0]} ${attempts[2][1].join(" ")}`, ok: click.ok, x: point.x, y: point.y });
-      this.traceOperation({ op: "submit", route: "host-click:ydotool-click", ok: click.ok, command: `ydotool click@${point.x},${point.y}` });
-      if (click.ok) {
-        return { ok: true, command: `ydotool click@${point.x},${point.y}`, attempts: details };
-      }
+    const second = tryYdotoolFirst
+      ? await this._tryHostClickSubmitXdotool(point, source, details)
+      : await this._tryHostClickSubmitYdotool(point, source, details);
+    if (second?.ok) {
+      return second;
     }
     this.traceOperation({ op: "submit", route: "host-click", ok: false, reason: "submit click failed", attempts: details });
     return { ok: false, reason: "submit click failed", attempts: details };
@@ -700,13 +806,13 @@ class AutopilotBridge {
   /**
    * Post-submit step: probe chat input and decide accept vs retry next candidate.
    */
-  private async verifySubmitStep(originalText: string): Promise<{
+  private async verifySubmitStep(originalText: string, requireEmpty = false): Promise<{
     cleared: boolean;
     observedLength: number;
   }> {
     await this.sleep(180);
     const probe = await this._probeChatInputContents();
-    const result = interpretPostSubmitProbe(probe, originalText);
+    const result = interpretPostSubmitProbe(probe, originalText, { requireEmpty });
     if (result.action === "retry") {
       debugLog("SUBMIT_VERIFY_FAILED", {
         observedLength: result.observedLength,
@@ -854,10 +960,11 @@ class AutopilotBridge {
     cmd: string,
     verifyText: string | undefined,
     verifyEnabled: boolean,
+    requireEmptyAfterSubmit = false,
     extra?: Partial<SubmitOutcome>
   ): Promise<SubmitOutcome | null> {
     if (verifyEnabled && verifyText) {
-      const verify = await this.verifySubmitStep(verifyText);
+      const verify = await this.verifySubmitStep(verifyText, requireEmptyAfterSubmit);
       if (!verify.cleared) {
         debugLog("SUBMIT_VERIFY_DISCARD", { cmd, observedLength: verify.observedLength });
         await this.discardCachedSubmitWinner(cmd);
@@ -872,7 +979,7 @@ class AutopilotBridge {
       route: "accepted",
       ok: true,
       command: cmd,
-      detail: { verifyEnabled },
+      detail: { verifyEnabled, requireEmptyAfterSubmit },
     });
     return { ok: true, command: cmd, ...extra };
   }
@@ -899,7 +1006,8 @@ class AutopilotBridge {
       const accepted = await this.finalizeSubmitCandidate(
         hostClick.command,
         verifyText,
-        hostVerifyEnabled
+        hostVerifyEnabled,
+        true
       );
       if (accepted) return accepted;
     }
@@ -909,6 +1017,7 @@ class AutopilotBridge {
         hostKey.command,
         verifyText,
         hostVerifyEnabled,
+        true,
         { unverified: hostVerifyEnabled ? false : !this.trustUnverifiedHostSubmit() }
       );
       if (accepted) return accepted;
@@ -937,16 +1046,47 @@ class AutopilotBridge {
     verifyEnabled: boolean
   ): Promise<SubmitOutcome | null> {
     const strategy = getStrategy(ide);
+    const hostVerifyEnabled =
+      verifyEnabled ||
+      shouldRequireVerifiedHostSubmit(ide, verifyText, this.koruStepConfig());
+
+    // Cursor: host-key / host-click submit requires the OS keyboard focus to
+    // be on the Cursor window. When `koru auto` runs from a terminal the
+    // synthetic keystroke goes to the terminal and the chat never receives
+    // it. Registered commands (composer.sendToAgent, workbench.action.chat.*)
+    // operate inside VS Code without OS focus, so if they failed there is
+    // nothing meaningful to fall back to — return a verified failure with
+    // operator guidance instead of pseudo-succeeding via the wrong window.
+    if (ide === "cursor") {
+      this.traceOperation({
+        op: "submit",
+        route: "cursor-host-fallback-refused",
+        ok: false,
+        reason: "registered submit commands exhausted; host-key/host-click "
+          + "would target whatever OS window has keyboard focus (typically "
+          + "the terminal running `koru auto`), not the Cursor chat input",
+      });
+      return {
+        ok: false,
+        command: "cursor-submit-unavailable",
+        reason: "registered Cursor submit commands no-oped (chat input was "
+          + "likely empty because paste did not land in the chat); host-key "
+          + "fallback refused because Cursor does not have OS keyboard focus",
+        unverified: true,
+      };
+    }
+
     const hostKey = await this._tryHostKeySubmit(strategy?.preferCtrlSubmit() ? ide : undefined);
     if (hostKey.ok && hostKey.command) {
       const accepted = await this.finalizeSubmitCandidate(
         hostKey.command,
         verifyText,
-        verifyEnabled,
-        { unverified: !this.trustUnverifiedHostSubmit() }
+        hostVerifyEnabled,
+        true,
+        { unverified: hostVerifyEnabled ? false : !this.trustUnverifiedHostSubmit() }
       );
       if (accepted) return accepted;
-      if (verifyEnabled && verifyText) {
+      if (hostVerifyEnabled && verifyText) {
         return {
           ok: false,
           command: hostKey.command || `${ide}-host-key-noop`,
@@ -1478,8 +1618,31 @@ class AutopilotBridge {
 
   private send(env: Envelope): void {
     if (!this.socket) return;
-    const line = JSON.stringify(env) + "\n";
+    const wire = sanitizeOutboundEnvelope(env as Record<string, unknown>);
+    const line = JSON.stringify(wire) + "\n";
     debugLog("OUT", env);
+    // STARTER-242 telemetry: log oversized envelopes BEFORE they hit the
+    // daemon socket. The truncated-NDJSON crash reported on cycle #632
+    // (~170 KB ack with no trailing newline reaching the CLI) needs a
+    // concrete size budget per envelope type before we cap fields. Treat
+    // >32 KB as "investigate" and >128 KB as "almost certainly the cause".
+    const bytes = Buffer.byteLength(line, "utf8");
+    if (bytes > 32 * 1024) {
+      const fieldSizes: Record<string, number> = {};
+      for (const [k, v] of Object.entries(env as Record<string, unknown>)) {
+        try {
+          fieldSizes[k] = Buffer.byteLength(JSON.stringify(v), "utf8");
+        } catch {
+          fieldSizes[k] = -1;
+        }
+      }
+      safeLog("OUT_OVERSIZED", {
+        type: env.type,
+        id: (env as { id?: unknown }).id,
+        bytes,
+        fields: fieldSizes,
+      });
+    }
     this.socket.write(line);
   }
 

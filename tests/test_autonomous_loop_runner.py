@@ -195,6 +195,9 @@ def test_run_autonomous_cycle_logs_plan_before_max_cycles_exit() -> None:
     assert any("[show decision trace]" in line for line in logs), (
         "operator log must include quick action links after next-step lines"
     )
+    assert any("[show interfaces]" in line for line in logs), (
+        "operator log should expose the registry view alongside decision trace"
+    )
 
 
 def test_operator_next_steps_explain_waiting_input_chat_cooldown() -> None:
@@ -216,6 +219,24 @@ def test_operator_next_steps_explain_waiting_input_chat_cooldown() -> None:
     ]
 
 
+def test_next_step_narrator_returns_exactly_three_lines() -> None:
+    narrator = autonomous_loop_runner.AutonomyNextStepNarrator(
+        args=SimpleNamespace(max_iterations=50, scan_after_idle_queue=True),
+        project="project",
+        waiting_ticket="STARTER-239",
+    )
+    lines = narrator.narrate(
+        queue_status="waiting_input",
+        autopilot_status="skipped(plugin_missing)",
+        sleep_seconds=240.0,
+        stagnation_streak=5,
+        stop_reason=None,
+    )
+
+    assert len(lines) == 3
+    assert lines[0].startswith("1/3 wait 240s; keep queue on STARTER-239")
+
+
 def test_current_mission_lines_include_ticket_and_plugin_blocker() -> None:
     lines = autonomous_loop_runner._current_mission_lines(
         queue_result=SimpleNamespace(last_status="waiting_input"),
@@ -227,6 +248,47 @@ def test_current_mission_lines_include_ticket_and_plugin_blocker() -> None:
     assert lines == [
         "koru autonomous: current mission ticket=STARTER-239 "
         "queue=waiting_input blocker=plugin_missing",
+        "koru autonomous: current mission next=reload/reconnect plugin, "
+        "then rerun queue for the same ticket",
+    ]
+
+
+def test_quick_action_lines_include_registry_backed_blocked_interface_hint() -> None:
+    actions = autonomous_loop_runner._quick_action_lines(
+        project="project",
+        queue_status="waiting_input",
+        waiting_ticket="STARTER-239",
+        autopilot_status="skipped(plugin_missing)",
+        autopilot_ide="vscodium",
+    )
+
+    assert any("[show interfaces]" in line for line in actions)
+    assert any("[blocked interface]" in line for line in actions)
+    assert any("plugin_socket_vscode_family" in line for line in actions)
+    assert not any("plugin_socket_jetbrains" in line for line in actions)
+
+
+def test_blocked_interface_action_lines_filter_to_jetbrains_lane() -> None:
+    actions = autonomous_loop_runner._blocked_interface_action_lines(
+        "plugin_missing",
+        autopilot_ide="jetbrains",
+    )
+
+    assert any("plugin_socket_jetbrains" in line for line in actions)
+    assert not any("plugin_socket_vscode_family" in line for line in actions)
+
+
+def test_current_mission_lines_treat_plugin_version_mismatch_as_plugin_blocker() -> None:
+    lines = autonomous_loop_runner._current_mission_lines(
+        queue_result=SimpleNamespace(last_status="waiting_input"),
+        waiting_ticket="STARTER-215",
+        autopilot_status="skipped(plugin_version_mismatch)",
+        effective_sleep=30.0,
+    )
+
+    assert lines == [
+        "koru autonomous: current mission ticket=STARTER-215 "
+        "queue=waiting_input blocker=plugin_version_mismatch",
         "koru autonomous: current mission next=reload/reconnect plugin, "
         "then rerun queue for the same ticket",
     ]

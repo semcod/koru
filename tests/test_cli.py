@@ -633,6 +633,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "dev",
             "events",
             "ide",
+            "self",
         },
     )
 

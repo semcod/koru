@@ -8,6 +8,82 @@ from typing import Any
 _AUTOPILOT_BLOCKED_QUEUE_STATUSES = frozenset({"waiting_input"})
 
 
+def _blocked_by_from_autopilot_status(autopilot_status: str) -> str:
+    status = (autopilot_status or "").strip().lower()
+    if status.startswith("skipped("):
+        return status[len("skipped("):].rstrip(")").strip()
+    if status == "failed":
+        return "drive_failed"
+    return ""
+
+
+def _is_plugin_blocker(blocked_by: str) -> bool:
+    key = (blocked_by or "").strip().lower()
+    return key.startswith("plugin_")
+
+
+def _interface_matches_ide(interface_id: str, target_ide: str) -> bool:
+    ide = (target_ide or "").strip().lower()
+    if not ide or ide == "auto":
+        return True
+    if ide == "jetbrains":
+        return "jetbrains" in interface_id
+    if ide == "antigravity":
+        return interface_id in {"plugin_socket_vscode_family", "antigravity_native_send"}
+    if ide in {"cursor", "vscode", "vscodium", "windsurf"}:
+        return interface_id == "plugin_socket_vscode_family"
+    return True
+
+
+def _blocked_interface_action_lines(
+    blocked_by: str,
+    *,
+    autopilot_ide: str = "",
+) -> list[str]:
+    key = (blocked_by or "").strip()
+    if not key:
+        return []
+    try:
+        from koru.interface_registry import blocker_interface_payload
+
+        payload = blocker_interface_payload(key)
+    except Exception:
+        return []
+    items = payload.get("interfaces")
+    if not isinstance(items, list) or not items:
+        return []
+    lines: list[str] = []
+    matching_items = [
+        item
+        for item in items
+        if isinstance(item, dict)
+        and _interface_matches_ide(str(item.get("id") or "").strip(), autopilot_ide)
+    ]
+    for item in (matching_items or items)[:2]:
+        if not isinstance(item, dict):
+            continue
+        interface_id = str(item.get("id") or "").strip()
+        family = str(item.get("family") or "").strip()
+        transport = str(item.get("transport") or "").strip()
+        recovery = item.get("operator_recovery")
+        recovery_text = ""
+        if isinstance(recovery, list):
+            steps = [str(step).strip() for step in recovery if str(step).strip()]
+            if steps:
+                recovery_text = " ; recovery: " + " | ".join(steps[:2])
+        if interface_id:
+            details: list[str] = []
+            if family:
+                details.append(f"family={family}")
+            if transport:
+                details.append(f"transport={transport}")
+            suffix = f" ({', '.join(details)})" if details else ""
+            lines.append(
+                f"[blocked interface] {interface_id}{suffix}{recovery_text}"
+            )
+    return lines
+
+
 def _dashboard_action_urls(project: Any) -> dict[str, str]:
     base = "http://127.0.0.1:8765"
     try:
@@ -61,7 +137,7 @@ def _handle_status_waiting_input(
             f"1/3 wait {sleep_text}; chat cooldown is active for {ticket}, "
             "so Koru will not paste over the IDE chat"
         )
-    elif "plugin_missing" in autopilot_status:
+    elif _is_plugin_blocker(_blocked_by_from_autopilot_status(autopilot_status)):
         first = (
             f"1/3 wait {sleep_text}; keep queue on {ticket} while the IDE "
             "plugin reconnects"
@@ -132,6 +208,60 @@ def _handle_default_steps(
     ]
 
 
+class AutonomyNextStepNarrator:
+    """Build exactly three operator-facing next-step lines per cycle."""
+
+    def __init__(
+        self,
+        *,
+        args: Any,
+        project: Any | None,
+        waiting_ticket: str,
+    ) -> None:
+        self.args = args
+        self.project = project
+        self.waiting_ticket = waiting_ticket if waiting_ticket and waiting_ticket != "-" else "none"
+
+    def narrate(
+        self,
+        *,
+        queue_status: str,
+        autopilot_status: str,
+        sleep_seconds: float,
+        stagnation_streak: int,
+        stop_reason: str | None,
+    ) -> list[str]:
+        sleep_text = f"{sleep_seconds:g}s"
+        max_iterations = int(getattr(self.args, "max_iterations", 50) or 50)
+
+        kwargs = {
+            "args": self.args,
+            "project": self.project,
+            "waiting_ticket": self.waiting_ticket,
+            "autopilot_status": autopilot_status,
+            "effective_sleep": sleep_seconds,
+            "stagnation_streak": stagnation_streak,
+            "stop_reason": stop_reason,
+            "status": queue_status,
+            "max_iterations": max_iterations,
+            "ticket": self.waiting_ticket,
+            "sleep_text": sleep_text,
+        }
+
+        if stop_reason == "waiting_input":
+            return _handle_stop_reason_waiting_input(**kwargs)
+        if stop_reason == "max_cycles":
+            return _handle_stop_reason_max_cycles(**kwargs)
+        if queue_status == "waiting_input":
+            return _handle_status_waiting_input(**kwargs)
+        if queue_status == "idle":
+            return _handle_status_idle(**kwargs)
+        if queue_status in {"completed", "failed"}:
+            return _handle_status_completed_or_failed(**kwargs)
+
+        return _handle_default_steps(**kwargs)
+
+
 def _operator_next_steps(
     *,
     args: Any,
@@ -144,38 +274,18 @@ def _operator_next_steps(
     stop_reason: str | None = None,
 ) -> list[str]:
     """Human-readable plan for the next outer-loop moves."""
-    status = str(getattr(queue_result, "last_status", "") or "")
-    max_iterations = int(getattr(args, "max_iterations", 50) or 50)
-    ticket = waiting_ticket if waiting_ticket and waiting_ticket != "-" else "none"
-    sleep_text = f"{effective_sleep:g}s"
-
-    kwargs = {
-        "args": args,
-        "project": project,
-        "queue_result": queue_result,
-        "waiting_ticket": waiting_ticket,
-        "autopilot_status": autopilot_status,
-        "effective_sleep": effective_sleep,
-        "stagnation_streak": stagnation_streak,
-        "stop_reason": stop_reason,
-        "status": status,
-        "max_iterations": max_iterations,
-        "ticket": ticket,
-        "sleep_text": sleep_text,
-    }
-
-    if stop_reason == "waiting_input":
-        return _handle_stop_reason_waiting_input(**kwargs)
-    if stop_reason == "max_cycles":
-        return _handle_stop_reason_max_cycles(**kwargs)
-    if status == "waiting_input":
-        return _handle_status_waiting_input(**kwargs)
-    if status == "idle":
-        return _handle_status_idle(**kwargs)
-    if status in {"completed", "failed"}:
-        return _handle_status_completed_or_failed(**kwargs)
-
-    return _handle_default_steps(**kwargs)
+    narrator = AutonomyNextStepNarrator(
+        args=args,
+        project=project,
+        waiting_ticket=waiting_ticket,
+    )
+    return narrator.narrate(
+        queue_status=str(getattr(queue_result, "last_status", "") or ""),
+        autopilot_status=autopilot_status,
+        sleep_seconds=effective_sleep,
+        stagnation_streak=stagnation_streak,
+        stop_reason=stop_reason,
+    )
 
 
 def _quick_action_lines(
@@ -184,6 +294,7 @@ def _quick_action_lines(
     queue_status: str,
     waiting_ticket: str,
     autopilot_status: str,
+    autopilot_ide: str = "",
 ) -> list[str]:
     """Concrete one-liners the operator can copy/paste right now.
 
@@ -214,11 +325,18 @@ def _quick_action_lines(
     actions.append(
         "[show decision trace] `curl -s http://127.0.0.1:8765/api/autonomy/trace | jq .decisions`"
     )
+    actions.append(
+        "[show interfaces] "
+        "`curl -s http://127.0.0.1:8765/api/interfaces | jq '.families, .blockers'`"
+    )
 
     status = (autopilot_status or "").lower()
     queue_status = (queue_status or "").lower()
+    blocked_by = _blocked_by_from_autopilot_status(autopilot_status)
 
-    if "plugin_missing" in status:
+    actions.extend(_blocked_interface_action_lines(blocked_by, autopilot_ide=autopilot_ide))
+
+    if _is_plugin_blocker(blocked_by):
         actions.append(
             "[reconnect plugin] in IDE: Command Palette → `Developer: Reload Window`, "
             "then `koru: Connect autopilot daemon`"
@@ -240,6 +358,11 @@ def _quick_action_lines(
             "[force fresh scan] `rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`"
         )
     if queue_status == "waiting_input" and waiting_ticket and waiting_ticket != "-":
+        if "stuck_waiting_input" in status:
+            actions.append(
+                f"[mark llm-ready] `planfile ticket bulk-update -s current "
+                f"-l {waiting_ticket} --add-label llm-ready --force`"
+            )
         actions.append(
             f"[mark ticket input] `planfile ticket input {waiting_ticket} "
             "--prompt '<input needed>' --note '<what was verified>'`"
@@ -251,6 +374,24 @@ def _quick_action_lines(
         actions.append(
             f"[retry submit] `koru autopilot drive --ide cursor --require-plugin "
             f"-p 'continue with {waiting_ticket}'`"
+        )
+    if "diagnostics_fail" in status:
+        # When WUP / diagnostics blocks the cycle, the generic
+        # "wait + rerun queue" advice is useless — the loop will report
+        # the SAME skip until the human fixes the failing service or
+        # disables the gate. Hand the operator three concrete commands.
+        actions.append(
+            "[show wup track] `ls -t .wup/tracks/*_quick.json | head -1 | xargs cat`"
+        )
+        actions.append(
+            "[show wup failures] "
+            "`curl -s http://127.0.0.1:8765/api/dashboard 2>/dev/null | "
+            "jq '.wup.health' || cat .wup/service-health.json`"
+        )
+        actions.append(
+            "[disable diagnostics gate] "
+            "`koru auto --no-autopilot-skip-on-diagnostics-fail` "
+            "(or env: KORU_AUTOPILOT_SKIP_ON_DIAGNOSTICS_FAIL=0)"
         )
     return actions
 
@@ -270,17 +411,12 @@ def _current_mission_lines(
     queue_status = str(getattr(queue_result, "last_status", "") or "unknown")
     if not waiting_ticket or waiting_ticket == "-":
         return []
-    status = (autopilot_status or "").lower()
-    blocker = "none"
-    if status.startswith("skipped("):
-        blocker = status[len("skipped("):].rstrip(")").strip() or "unknown"
-    elif status == "failed":
-        blocker = "drive_failed"
+    blocker = _blocked_by_from_autopilot_status(autopilot_status) or "none"
     line_1 = (
         "koru autonomous: current mission "
         f"ticket={waiting_ticket} queue={queue_status} blocker={blocker}"
     )
-    if blocker == "plugin_missing":
+    if _is_plugin_blocker(blocker):
         line_2 = (
             "koru autonomous: current mission next="
             "reload/reconnect plugin, then rerun queue for the same ticket"
@@ -314,6 +450,7 @@ def _log_operator_next_steps(
     loop_state: Any,
     stop_reason: str | None,
     stdio_info: Any,
+    autopilot_ide: str = "",
 ) -> None:
     for line in _current_mission_lines(
         queue_result=queue_result,
@@ -338,6 +475,7 @@ def _log_operator_next_steps(
         queue_status=str(getattr(queue_result, "last_status", "") or ""),
         waiting_ticket=waiting_ticket,
         autopilot_status=autopilot_status,
+        autopilot_ide=autopilot_ide,
     ):
         stdio_info(f"koru autonomous: action {action}", fmt=args.emit_events)
 
@@ -513,6 +651,7 @@ def run_autonomous_cycle(
         loop_state=loop_state,
         stop_reason=stop_reason,
         stdio_info=stdio_info,
+        autopilot_ide=autopilot_ide,
     )
     if handle_exit_conditions(args, queue_result, cycle, correlation_id):
         return True

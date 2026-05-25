@@ -52,7 +52,9 @@ interfaces:
       can_confirm_submit: true
     blocking_modes:
       - plugin_missing
+      - plugin_not_connected
       - plugin_version_mismatch
+      - plugin_status_unavailable
       - chat_busy
     operator_recovery:
       - reload_window
@@ -74,6 +76,9 @@ interfaces:
       can_confirm_submit: false
     blocking_modes:
       - plugin_missing
+      - plugin_not_connected
+      - plugin_version_mismatch
+      - plugin_status_unavailable
       - plugin_partial_support
     operator_recovery:
       - reconnect_plugin
@@ -94,6 +99,8 @@ interfaces:
     blocking_modes:
       - command_unavailable
       - plugin_missing
+      - plugin_not_connected
+      - plugin_version_mismatch
     operator_recovery:
       - reload_window
       - reconnect_plugin

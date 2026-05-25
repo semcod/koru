@@ -1,38 +1,46 @@
-# code2llm/evolution | 2932 func | 310f | 2026-05-25
+# code2llm/evolution | 2998 func | 310f | 2026-05-25
 # generated in 0.01s
 
-NEXT[5] (ranked by impact):
+NEXT[7] (ranked by impact):
   [1] !! SPLIT           plugins/koru-autopilot-vscode/src/extension.ts
-      WHY: 2201L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 30814
+      WHY: 2223L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 31122
 
-  [2] !! SPLIT           src/koru/scan.py
-      WHY: 1117L, 2 classes, max CC=13
-      EFFORT: ~4h  IMPACT: 14521
+  [2] !! SPLIT           src/koru/doctor.py
+      WHY: 1978L, 2 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 27692
 
-  [3] !! SPLIT           src/koru/autonomous.py
-      WHY: 1119L, 2 classes, max CC=5
-      EFFORT: ~4h  IMPACT: 5595
+  [3] !! SPLIT           src/koru/scan.py
+      WHY: 1167L, 3 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 17505
 
-  [4] !  SPLIT-FUNC      _skip_due_to_recent_chat_activity  CC=18  fan=23
-      WHY: CC=18 exceeds 15
-      EFFORT: ~1h  IMPACT: 414
-
-  [5] !  SPLIT-FUNC      execFile  CC=18  fan=18
+  [4] !  SPLIT-FUNC      execFile  CC=18  fan=18
       WHY: CC=18 exceeds 15
       EFFORT: ~1h  IMPACT: 324
 
+  [5] !  SPLIT-FUNC      build_decision_record  CC=24  fan=13
+      WHY: CC=24 exceeds 15
+      EFFORT: ~1h  IMPACT: 312
+
+  [6] !  SPLIT-FUNC      run_scan  CC=15  fan=19
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 285
+
+  [7] !  SPLIT-FUNC      _blocked_interface_action_lines  CC=24  fan=10
+      WHY: CC=24 exceeds 15
+      EFFORT: ~1h  IMPACT: 240
+
 
 RISKS[3]:
-  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 172 import paths
-  ⚠ Splitting src/koru/autonomous.py may break 59 import paths
-  ⚠ Splitting src/koru/scan.py may break 29 import paths
+  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 173 import paths
+  ⚠ Splitting src/koru/doctor.py may break 92 import paths
+  ⚠ Splitting src/koru/scan.py may break 31 import paths
 
 METRICS-TARGET:
   CC̄:          3.8 → ≤2.7
-  max-CC:      18 → ≤9
-  god-modules: 8 → 0
-  high-CC(≥15): 5 → ≤2
+  max-CC:      24 → ≤12
+  god-modules: 14 → 0
+  high-CC(≥15): 8 → ≤4
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

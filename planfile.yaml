@@ -484,19 +484,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-b5e9485d
-    name: Fix string-concat issues
-    description: Resolve 9 string-concat issues in src/koru/autonomous_cycle.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - src/koru/autonomous_cycle.py
-    rule_id: string-concat
-    count: 9
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-5d4bc4ce
     name: Fix string-concat issues
     description: Resolve 9 string-concat issues in src/koru/autonomous_parser.py

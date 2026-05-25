@@ -4,6 +4,112 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.70] — 2026-05-25
+
+### Fixed
+- **VSCodium no longer reports paste-only as a sent chat message when the
+  post-submit probe is inconclusive.** In strict host-submit mode,
+  ``sentinel unchanged`` / ``null`` probes are now treated as retry/failure
+  instead of success. This prevents ``ydotool key ctrl+Return`` from producing
+  a false ``message.sent`` event when the chat input still contains the prompt.
+
+## [0.1.69] — 2026-05-25
+
+### Fixed
+- **Cursor: drive pasted to the terminal instead of the chat (regression
+  introduced in 0.1.68).** `koru auto` runs from a terminal, so when 0.1.68
+  disabled the VS Code internal `editor.action.clipboardPasteAction` path
+  for Cursor, the ladder fell through to host clipboard + `xdotool ctrl+v`
+  / `ydotool ctrl+v`. Those synthetic keystrokes target whichever OS window
+  currently has keyboard focus — the terminal, not Cursor — so the paste
+  reported `ok` (xdotool exit 0) but the chat input stayed empty and
+  every registered submit command (`composer.sendToAgent`,
+  `workbench.action.chat.submit`) no-oped, failing the `cursorDiskKV`
+  bubble check.
+
+  Fix:
+  - **Re-enable `editor.action.clipboardPasteAction` for Cursor.** It is a
+    VS Code internal command, not a host keystroke, so it pastes into the
+    focused VS Code element (the chat input) without needing the Cursor
+    window to have OS keyboard focus. The 0.1.61 verified-clipboard-seed
+    logic still applies, so the OS clipboard never leaks a stale value.
+  - **Refuse host-clipboard paste for Cursor.** Only VSCodium uses
+    `tryHostClipboardPaste`. For Cursor we go through direct-command
+    paste (`composer.typeText` / `cursor.action.chat.typeText` if
+    registered), then internal `editor.action.clipboardPasteAction`,
+    then the `type` command — all of which run inside VS Code and do
+    not depend on OS keyboard focus.
+  - **Refuse host-key / host-click submit for Cursor.** When registered
+    submit commands fail their `cursorDiskKV` verification (chat input
+    was empty / Composer not foreground / wrong tab), `koru auto` now
+    surfaces a clean `cursor-submit-unavailable` failure instead of
+    pseudo-succeeding via a synthetic Ctrl+Return aimed at the terminal.
+- **VSCodium submit verification no longer accepts arbitrary non-empty
+  clipboard probe text as success.** Host-click/host-key submit now requires
+  the post-submit input probe to be empty. If the probe copies unrelated text
+  from the editor or UI, the candidate is discarded and Koru reports
+  `submit_unverified` instead of emitting a false `message.sent`.
+
+## [0.1.68] — 2026-05-25
+
+### Fixed
+- **Cursor (Wayland): drive no longer stops at paste-without-submit when
+  ``ydotool key ctrl+Return`` exits 0 but the chat webview ignores it.**
+  After registered submit commands fail ``cursorDiskKV`` verification, the
+  fallback ladder now tries a bottom-right Send-button click (``ydotool`` first
+  on Wayland, ``xdotool`` on X11) before host-key chords — the same path that
+  fixed VSCodium in 0.1.67.
+- **Cursor paste: skip ``editor.action.clipboardPasteAction`` fallback** so
+  the probe cache cannot latch onto a clipboard-reading command that misses
+  the chat webview. Cursor now prefers ``composer.typeText`` / host
+  ``wl-copy``+``Ctrl+V`` before ``type`` fallback.
+- **Cursor focus-input ladder** now tries ``composer.focusComposer`` and
+  related composer/chat focus commands before generic VS Code candidates.
+
+## [0.1.67] — 2026-05-25
+
+### Fixed
+- VSCodium submit now tries an automatic bottom-right Send-button click
+  based on the active window geometry before falling back to host key
+  chords. This prevents the drive path from only pasting text when
+  ``Ctrl+Return`` is accepted by the OS injector but not by the chat
+  webview.
+
+## [0.1.66] — 2026-05-25
+
+### Fixed (STARTER-242)
+- **Wire ack payloads are now capped before they hit the daemon socket.**
+  Root cause of the ~170 KB truncated NDJSON crash: failure-path
+  ``diagnostics.rejected`` entries included full editor snapshots
+  (``before`` / ``after`` document text) and long ``operation_trace``
+  steps. The CLI client read a partial JSON line and ``koru auto`` exited
+  with ``ProtocolError: Unterminated string``.
+
+  Fix:
+  - New ``ack-payload.ts`` sanitizes every outbound ``ack`` / ``error``
+    envelope in ``send()``: strips editor snapshots from
+    ``diagnostics.rejected``, caps ``operation_trace`` (20 steps, short
+    reason/command strings), caps ``focusOpenCandidates``, and drops
+    heavy fields if the line still exceeds 48 KiB.
+  - Daemon ``_cap_ack_info_for_cli`` mirrors the same budget before
+    relaying plugin acks to the CLI (defense in depth).
+  - ``koruide.client`` already maps parse failures to a structured
+    ``error`` reply so the autonomous loop survives a bad frame.
+
+## [0.1.65] — 2026-05-25
+
+### Added (diagnostics for STARTER-242)
+- **Oversized envelope telemetry.** ``send(env)`` now measures
+  ``Buffer.byteLength(JSON.stringify(env) + "\n", "utf8")`` before
+  writing to the socket. Envelopes >32 KB emit a ``OUT_OVERSIZED``
+  ``safeLog`` entry that lists per-field byte counts, so the next
+  reproduction of the cycle #632 crash (~170 KB ack truncated mid-string
+  on the CLI side) pinpoints which field is exploding (operation_trace
+  vs winning_* vs verification message). No behavioural change.
+- Companion daemon-side telemetry: ``AutopilotDaemon._send`` logs
+  ``send to <addr> oversized: bytes=… head=…`` when the relay frame
+  exceeds 32 KB.
+
 ## [0.1.64] — 2026-05-25
 
 ### Fixed

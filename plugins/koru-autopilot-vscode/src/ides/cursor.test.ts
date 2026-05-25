@@ -100,9 +100,9 @@ function testProbeLadderUsesCursorStrategy(): void {
     firstArgs.some((arg) => /ctrl/i.test(arg)),
     "first host-key candidate for Cursor must include ctrl modifier",
   );
-  // buildFocusInputCommands: Cursor has no prefix, so generic only
+  // buildFocusInputCommands: Cursor has composer-specific focus commands first
   const focus = buildFocusInputCommands("cursor");
-  eq(focus[0], "workbench.action.chat.focusInput", "Cursor focus list starts with generic");
+  eq(focus[0], "composer.focusComposer", "Cursor focus list starts with composer.focusComposer");
 }
 
 function testProbeCacheSanitizationForCursor(): void {

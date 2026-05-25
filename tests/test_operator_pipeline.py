@@ -40,6 +40,11 @@ def probe(tmp_path: Path) -> AutonomousStartupProbe:
     )
 
 
+@pytest.fixture(autouse=True)
+def self_control_ok_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(op, "_self_control_ok", lambda *_args: (True, "ok", None))
+
+
 def test_build_operator_steps_mcp_pending_without_config(
     tmp_path: Path, probe: AutonomousStartupProbe
 ) -> None:
@@ -157,6 +162,24 @@ def test_build_operator_steps_skips_os_calibration_for_plugin_ide(
     assert profile_checks == []
 
 
+def test_build_operator_steps_adds_self_control_step(
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(op, "_self_control_ok", lambda *_args: (False, "package stale", "koru self repair --yes"))
+    steps = op.build_operator_steps(
+        project=tmp_path,
+        probe=probe,
+        plugin_connected=True,
+    )
+
+    self_step = next(s for s in steps if s.step_id == "self_control")
+    assert self_step.status == "pending"
+    assert self_step.actor == "taskfile"
+    assert self_step.task_command == "koru self repair --yes"
+
+
 def test_run_startup_operator_pipeline_creates_tickets(
     tmp_path: Path,
     probe: AutonomousStartupProbe,
@@ -174,6 +197,7 @@ def test_run_startup_operator_pipeline_creates_tickets(
     monkeypatch.setattr(op, "_planfile_api_ok", lambda _p: (True, "ok"))
     monkeypatch.setattr(op, "_host_injectors_ok", lambda: (True, "ok"))
     monkeypatch.setattr(op, "_os_profile_ok", lambda _i, _p: (True, "ok"))
+    monkeypatch.setattr(op, "_self_control_ok", lambda *_args: (True, "ok", None))
 
     result = op.run_startup_operator_pipeline(
         project=tmp_path,
@@ -200,6 +224,7 @@ def test_run_startup_operator_pipeline_autostarts_planfile_api_when_missing(
     )
     monkeypatch.setattr(op, "_host_injectors_ok", lambda: (True, "ok"))
     monkeypatch.setattr(op, "_os_profile_ok", lambda _i, _p: (True, "ok"))
+    monkeypatch.setattr(op, "_self_control_ok", lambda *_args: (True, "ok", None))
 
     result = op.run_startup_operator_pipeline(
         project=tmp_path,
@@ -244,6 +269,7 @@ def test_run_startup_operator_pipeline_dedup_markers(
     monkeypatch.setattr(op, "_planfile_api_ok", lambda _p: (True, "ok"))
     monkeypatch.setattr(op, "_host_injectors_ok", lambda: (True, "ok"))
     monkeypatch.setattr(op, "_os_profile_ok", lambda _i, _p: (True, "ok"))
+    monkeypatch.setattr(op, "_self_control_ok", lambda *_args: (True, "ok", None))
 
     first = op.run_startup_operator_pipeline(
         project=tmp_path,

@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscode",
   "displayName": "koru autopilot",
   "description": "Bridge between VS Code / Windsurf / Cursor and the koru autopilot daemon.",
-  "version": "0.1.64",
+  "version": "0.1.70",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -166,10 +166,12 @@
   },
   "scripts": {
     "compile": "tsc -p ./",
-    "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/step-decisions.test.js && node out/antigravity-fastpath.test.js && node out/chat-history-watcher.test.js && node out/ides/cursor.test.js && node out/ides/vscodium.test.js",
+    "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/step-decisions.test.js && node out/antigravity-fastpath.test.js && node out/host-click-submit.test.js && node out/chat-history-watcher.test.js && node out/ack-payload.test.js && node out/ides/cursor.test.js && node out/ides/vscodium.test.js",
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
+    "prepackage": "python3 ../../scripts/sync-vscode-plugin-version.py --from-package",
     "package": "vsce package --no-dependencies --out koru-autopilot-${npm_package_version}.vsix",
+    "prepublish": "python3 ../../scripts/sync-vscode-plugin-version.py --from-package",
     "publish": "vsce publish --no-dependencies",
     "clean": "rm -rf out node_modules *.vsix"
   },

@@ -18,6 +18,7 @@ Shared plumbing (R2):
 from __future__ import annotations
 
 import socket
+import struct
 import threading
 import time
 from collections.abc import Iterator
@@ -93,6 +94,29 @@ class _LineReader:
         self.sock = sock
         self.buf = bytearray()
 
+    @staticmethod
+    def _decode_frame(buf: bytearray) -> Message | None:
+        if not buf:
+            return None
+        # Legacy NDJSON.
+        if buf[0] == ord("{"):
+            idx = buf.find(b"\n")
+            if idx < 0:
+                return None
+            line = bytes(buf[:idx])
+            del buf[: idx + 1]
+            return decode(line)
+        # Length-prefixed daemon reply for CLI sockets.
+        if len(buf) < 4:
+            return None
+        frame_len = struct.unpack(">I", bytes(buf[:4]))[0]
+        total = 4 + frame_len
+        if len(buf) < total:
+            return None
+        payload = bytes(buf[4:total])
+        del buf[:total]
+        return decode(payload)
+
     def read_line(self) -> bytes:
         while b"\n" not in self.buf:
             chunk = self.sock.recv(8192)
@@ -109,6 +133,14 @@ class _LineReader:
         return line
 
     def read_message(self) -> Message:
+        while True:
+            decoded = self._decode_frame(self.buf)
+            if decoded is not None:
+                return decoded
+            chunk = self.sock.recv(8192)
+            if not chunk:
+                break
+            self.buf.extend(chunk)
         return decode(self.read_line())
 
 
@@ -974,6 +1006,67 @@ def test_message_sent_event_does_not_complete_strict_ack_drive(
         cli.close()
 
 
+def test_message_sent_from_other_plugin_does_not_complete_pending_drive(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Only the plugin owning pending drive may complete CLI ack."""
+    monkeypatch.setenv("KORU_STRICT_PLUGIN_ACK", "1")
+    with _daemon(tmp_path, monkeypatch) as h:
+        vscode_plugin, vscode_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
+        cursor_plugin, cursor_reader = _connect_plugin(h.sock_path, ide="cursor", pid=43)
+
+        cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        cli.settimeout(2.0)
+        cli.connect(str(h.sock_path))
+        cli_reader = _LineReader(cli)
+        cli.sendall(
+            Message(
+                type="drive",
+                id="d-other-plugin-event",
+                data={"text": "hi", "ide": "vscode", "submit": True},
+            ).encode(),
+        )
+
+        forwarded = vscode_reader.read_message()
+        assert forwarded.type == "chat.send"
+
+        cursor_plugin.sendall(
+            Message(type="message.sent", data={"chat": "default", "text": "x"}).encode(),
+        )
+        cursor_ack = cursor_reader.read_message()
+        assert cursor_ack.type == "ack"
+
+        cli.settimeout(0.25)
+        with pytest.raises(TimeoutError):
+            cli_reader.read_message()
+        cli.settimeout(2.0)
+
+        vscode_plugin.sendall(
+            Message(
+                type="ack",
+                id=forwarded.id,
+                data={
+                    "ok": True,
+                    "delivered": True,
+                    "opened": True,
+                    "submitted": True,
+                    "winning_focus_open": "workbench.action.chat.open",
+                    "winning_paste": "editor.action.clipboardPasteAction",
+                    "winning_submit": "workbench.action.chat.submit",
+                },
+            ).encode(),
+        )
+        cli_reply = cli_reader.read_message()
+        assert cli_reply.type == "ack"
+        assert cli_reply.data.get("ok") is True
+        assert cli_reply.data.get("verification") == "strict"
+
+        vscode_plugin.close()
+        cursor_plugin.close()
+        cli.close()
+
+
 def test_plugin_ack_after_cli_disconnect_is_logged_as_late_ack(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1488,3 +1581,24 @@ def test_connect_disconnect_logged_when_verbose(
 
     assert any("client connected" in line for line in logs), logs
     assert any("client disconnected" in line for line in logs), logs
+
+
+def test_cap_ack_info_for_cli_strips_oversized_fields() -> None:
+    """STARTER-242: relay ack info must stay under the CLI wire budget."""
+    from koruide.daemon.handlers import _MAX_RELAY_ACK_INFO_BYTES, _cap_ack_info_for_cli
+
+    huge = "x" * 100_000
+    info = {
+        "verification": "strict",
+        "winning_focus_open": "composer.showComposer",
+        "diagnostics": {
+            "rejected": [{"cmd": "a", "before": {"text": huge}, "after": {"text": huge}}],
+        },
+        "operation_trace": [{"op": "paste", "route": "x", "ok": True, "detail": {"text": huge}}],
+    }
+    capped = _cap_ack_info_for_cli(info)
+    import json
+
+    size = len(json.dumps(capped, separators=(",", ":")).encode("utf-8"))
+    assert size <= _MAX_RELAY_ACK_INFO_BYTES
+    assert "diagnostics" not in capped or capped.get("payload_trimmed")
