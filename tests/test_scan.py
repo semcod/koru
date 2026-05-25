@@ -102,7 +102,7 @@ class TestScanCLI(unittest.TestCase):
             ],
         )
 
-        with mock.patch.dict("os.environ", {}, clear=False):
+        with mock.patch.dict("os.environ", {"CLICOLOR_FORCE": "1", "NO_COLOR": ""}, clear=False):
             with mock.patch("sys.stdout.isatty", return_value=True):
                 text = cli_scan.render_scan_text(result)
 
@@ -151,7 +151,7 @@ class TestScanCLI(unittest.TestCase):
             ],
         )
 
-        with mock.patch.dict("os.environ", {}, clear=False):
+        with mock.patch.dict("os.environ", {"CLICOLOR_FORCE": "1", "NO_COLOR": ""}, clear=False):
             with mock.patch("sys.stdout.isatty", return_value=True):
                 text = cli_scan.render_scan_text(result)
 
@@ -518,7 +518,7 @@ class TestRunScan(unittest.TestCase):
                 if cmd[:3] == ["planfile", "ticket", "create"]:
                     title = cmd[3]
                     if title == "Create fails":
-                        return _ok("boom", returncode=2)
+                        return SimpleNamespace(returncode=2, stdout="", stderr="lock busy")
                     return _ok("ok")
                 return _ok()
 
@@ -553,8 +553,57 @@ class TestRunScan(unittest.TestCase):
             self.assertEqual(by_signal["dup-signal"].get("reason"), "duplicate_signal")
             self.assertEqual(by_signal["create-fail"].get("decision"), "skipped")
             self.assertEqual(by_signal["create-fail"].get("reason"), "create_failed")
+            self.assertEqual(result.skipped_create_failed_details, ["Create fails: lock busy"])
+            create_fail_message = next(
+                str(call.args[0])
+                for call in activity.call_args_list
+                if "Create fails" in str(call.args[0])
+            )
+            self.assertIn("lock busy", create_fail_message)
             self.assertEqual(by_signal["create-ok"].get("decision"), "applied")
             self.assertNotIn("reason", by_signal["create-ok"])
+
+    def test_apply_treats_reused_create_as_duplicate(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            suggestions = [
+                Suggestion(
+                    signal="create-reused",
+                    title="Create reused",
+                    description="desc",
+                    priority="normal",
+                ),
+            ]
+
+            def runner(cmd, _proj) -> SimpleNamespace:
+                if cmd[:3] == ["planfile", "ticket", "list"]:
+                    return _ok("[]")
+                if cmd[:3] == ["planfile", "ticket", "create"]:
+                    return SimpleNamespace(
+                        returncode=1,
+                        stdout="",
+                        stderr="task already exists (reused)",
+                    )
+                return _ok()
+
+            with mock.patch("koru.scan.collect_suggestions", return_value=suggestions):
+                with mock.patch("koru.scan._record_scan_activity") as activity:
+                    result = run_scan(
+                        project,
+                        apply=True,
+                        skip_pytest=True,
+                        include_semcod_artifacts=False,
+                        runner=runner,
+                    )
+
+            self.assertEqual(result.applied, [])
+            self.assertEqual(result.skipped, ["Create reused"])
+            self.assertEqual(result.skipped_as_duplicate, ["Create reused"])
+            self.assertEqual(result.skipped_create_failed, [])
+            self.assertEqual(result.skipped_create_failed_details, [])
+            payload = activity.call_args.kwargs.get("data", {})
+            self.assertEqual(payload.get("decision"), "skipped")
+            self.assertEqual(payload.get("reason"), "duplicate_reused")
 
     def test_apply_creates_human_executor_tickets_without_custom_runner(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

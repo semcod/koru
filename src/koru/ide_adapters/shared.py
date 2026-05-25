@@ -254,7 +254,7 @@ def extension_reload_required_lines(
             enabled=color,
         ),
         _yellow(
-            "koru autonomous:     1) W Cursorze/VS Code naciśnij Ctrl+Shift+P "
+            f"koru autonomous:     1) W {name} naciśnij Ctrl+Shift+P "
             "i uruchom: Developer: Reload Window",
             enabled=color,
         ),

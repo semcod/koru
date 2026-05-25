@@ -140,6 +140,13 @@ def test_extension_activated_in_exthost(tmp_path: Path, monkeypatch: pytest.Monk
     assert shared.extension_activated_in_exthost("cursor") is True
 
 
+def test_extension_reload_required_lines_use_actual_ide_label() -> None:
+    lines = shared.extension_reload_required_lines("vscodium", label="VSCodium")
+
+    assert any("W VSCodium naci" in line for line in lines)
+    assert not any("Cursorze/VS Code" in line for line in lines)
+
+
 def test_extension_activated_uses_latest_session_only(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

@@ -128,6 +128,82 @@ def _operator_next_steps(
     ]
 
 
+def _quick_action_lines(
+    *,
+    project: Any | None,
+    queue_status: str,
+    waiting_ticket: str,
+    autopilot_status: str,
+) -> list[str]:
+    """Concrete one-liners the operator can copy/paste right now.
+
+    Returns ``[label] cmd-or-link`` items tailored to the current state.
+    Each item is a separate line so the operator log stays grep-friendly.
+
+    The set is intentionally small (≤ 6 actions) so the output does NOT
+    drown out the next-step narrative. Items only appear when they are
+    actually relevant to the current cycle.
+    """
+    actions: list[str] = []
+    if project is not None:
+        try:
+            urls = _dashboard_action_urls(project)
+        except Exception:
+            urls = {
+                "dashboard": "http://127.0.0.1:8765/",
+                "create_project_ticket": "http://127.0.0.1:8765/llm/prompt/create-ticket-for-project",
+                "tickets": "http://127.0.0.1:8765/?tab=tickets",
+            }
+    else:
+        urls = {
+            "dashboard": "http://127.0.0.1:8765/",
+            "create_project_ticket": "http://127.0.0.1:8765/llm/prompt/create-ticket-for-project",
+            "tickets": "http://127.0.0.1:8765/?tab=tickets",
+        }
+
+    actions.append(
+        "[show decision trace] `curl -s http://127.0.0.1:8765/api/autonomy/trace | jq .decisions`"
+    )
+
+    status = (autopilot_status or "").lower()
+    queue_status = (queue_status or "").lower()
+
+    if "plugin_missing" in status:
+        actions.append(
+            "[reconnect plugin] in IDE: Command Palette → `Developer: Reload Window`, "
+            "then `koru: Connect autopilot daemon`"
+        )
+    if "ide_mismatch" in status:
+        actions.append(
+            "[switch lane] export KORU_AUTOPILOT_INSTANCE=<ide> "
+            "(or rerun `koru auto --autopilot-ide <ide>`)"
+        )
+    if "chat_activity" in status:
+        actions.append(
+            "[pause autopilot 10m] `touch .planfile/.koru/autopilot-pause-until-$(date +%s -d '+10 minutes')`"
+        )
+    if "idle_no_ticket" in status or queue_status == "idle":
+        actions.append(f"[create ticket] {urls['create_project_ticket']}")
+        actions.append(f"[reopen done ticket] {urls['tickets']}")
+        actions.append(
+            "[force fresh scan] `rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`"
+        )
+    if queue_status == "waiting_input" and waiting_ticket and waiting_ticket != "-":
+        actions.append(
+            f"[mark ticket input] `planfile ticket input {waiting_ticket} "
+            "--prompt '<input needed>' --note '<what was verified>'`"
+        )
+        actions.append(
+            f"[open ticket] http://127.0.0.1:8765/?tab=tickets#{waiting_ticket}"
+        )
+    if "submit_unverified" in status or status == "failed":
+        actions.append(
+            f"[retry submit] `koru autopilot drive --ide cursor --require-plugin "
+            f"-p 'continue with {waiting_ticket}'`"
+        )
+    return actions
+
+
 def _log_operator_next_steps(
     *,
     args: Any,
@@ -151,6 +227,13 @@ def _log_operator_next_steps(
         stop_reason=stop_reason,
     ):
         stdio_info(f"koru autonomous: next {line}", fmt=args.emit_events)
+    for action in _quick_action_lines(
+        project=project,
+        queue_status=str(getattr(queue_result, "last_status", "") or ""),
+        waiting_ticket=waiting_ticket,
+        autopilot_status=autopilot_status,
+    ):
+        stdio_info(f"koru autonomous: action {action}", fmt=args.emit_events)
 
 
 def _cycle_stop_reason(args: Any, queue_result: Any, cycle: int) -> str | None:

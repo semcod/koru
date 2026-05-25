@@ -21,8 +21,12 @@ class EventLogEntry:
 class EventLogProjection:
     """Collect StoredEvent objects for a single bounded context."""
 
-    def __init__(self, *, context: str) -> None:
-        self._context = context
+    context: str | None = None
+
+    def __init__(self, *, context: str | None = None) -> None:
+        self._context = context or self.context
+        if not self._context:
+            raise ValueError("context must be provided or set as a class attribute")
         self._entries: list[EventLogEntry] = []
 
     def handle(self, event: StoredEvent) -> None:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from koru.cqrs import EventLogEntry, EventLogQueryService, EventSourcingRuntime
+from koru.cqrs import CqrsService, EventLogEntry, EventLogQueryService
 from koru.tasks import CreatedTask, _create_nl_task_impl, _read_config, _read_sprint
 
 from .commands import CreateNlTaskCommand
@@ -12,11 +12,8 @@ from .events import TASK_CONTEXT, TASK_CREATED, TASK_REUSED, TaskCreated, TaskRe
 from .queries import LoadTaskConfigQuery, LoadTaskHistoryQuery, LoadTaskSprintQuery
 
 
-class TaskCommandService:
+class TaskCommandService(CqrsService):
     """Handles state-changing task intake operations."""
-
-    def __init__(self, runtime: EventSourcingRuntime | None = None) -> None:
-        self.runtime = runtime or EventSourcingRuntime()
 
     def create_nl_task(self, command: CreateNlTaskCommand) -> CreatedTask:
         created = _create_nl_task_impl(
@@ -59,11 +56,8 @@ class TaskCommandService:
         return created
 
 
-class TaskQueryService:
+class TaskQueryService(CqrsService):
     """Handles read-only task queries."""
-
-    def __init__(self, runtime: EventSourcingRuntime | None = None) -> None:
-        self.runtime = runtime or EventSourcingRuntime()
 
     def load_config(self, query: LoadTaskConfigQuery) -> dict[str, Any]:
         return _read_config(query.path, project_name=query.project_name)

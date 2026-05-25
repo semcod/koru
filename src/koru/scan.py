@@ -89,6 +89,7 @@ class ScanResult:
     # (permission, lock, validation, etc.).
     skipped_as_duplicate: list[str] = field(default_factory=list)
     skipped_create_failed: list[str] = field(default_factory=list)
+    skipped_create_failed_details: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -97,7 +98,14 @@ class ScanResult:
             "skipped": list(self.skipped),
             "skipped_as_duplicate": list(self.skipped_as_duplicate),
             "skipped_create_failed": list(self.skipped_create_failed),
+            "skipped_create_failed_details": list(self.skipped_create_failed_details),
         }
+
+
+@dataclass(frozen=True)
+class CreateTicketResult:
+    ok: bool
+    detail: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -941,8 +949,8 @@ def _create_ticket(
     *,
     source: str,
     runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]] | None = None,
-) -> bool:
-    """Create one ticket via ``planfile ticket create``. Returns success."""
+) -> CreateTicketResult:
+    """Create one ticket via ``planfile ticket create``."""
     if runner is None:
         try:
             created = create_nl_task(
@@ -962,9 +970,11 @@ def _create_ticket(
                     "executor_mode": "interactive",
                 },
             )
-            return not getattr(created, "reused", False)
-        except (OSError, ValueError):
-            return False
+            if getattr(created, "reused", False):
+                return CreateTicketResult(ok=False, detail="task already exists (reused)")
+            return CreateTicketResult(ok=True)
+        except (OSError, ValueError) as exc:
+            return CreateTicketResult(ok=False, detail=str(exc))
 
     use_runner = runner or default_subprocess_runner
     cmd: list[str] = [
@@ -985,9 +995,12 @@ def _create_ticket(
         cmd.extend(["--files", f])
     try:
         result = use_runner(cmd, project)
-    except (FileNotFoundError, OSError):
-        return False
-    return result.returncode == 0
+    except (FileNotFoundError, OSError) as exc:
+        return CreateTicketResult(ok=False, detail=str(exc))
+    if result.returncode == 0:
+        return CreateTicketResult(ok=True)
+    detail = (result.stderr or result.stdout or "").strip()
+    return CreateTicketResult(ok=False, detail=detail)
 
 
 def _suggestion_dedupe_key(source: str, suggestion: Suggestion) -> str:
@@ -1000,6 +1013,11 @@ def _suggestion_dedupe_key(source: str, suggestion: Suggestion) -> str:
     if files:
         return f"{source}:{suggestion.signal}:{':'.join(files[:3])}"
     return f"{source}:{suggestion.signal}:{suggestion.title.strip().lower()}"
+
+
+def _is_reused_create_detail(detail: str) -> bool:
+    normalized = detail.strip().lower()
+    return "reused" in normalized or "already exists" in normalized
 
 
 def run_scan(
@@ -1038,6 +1056,7 @@ def run_scan(
     skipped: list[str] = []
     skipped_as_duplicate: list[str] = []
     skipped_create_failed: list[str] = []
+    skipped_create_failed_details: list[str] = []
 
     def _log_scan_decision(
         s: "Suggestion",
@@ -1087,8 +1106,8 @@ def run_scan(
                 ),
             )
             continue
-        ok = _create_ticket(project, s, source=source, runner=runner)
-        if ok:
+        create_result = _create_ticket(project, s, source=source, runner=runner)
+        if create_result.ok:
             applied.append(s.title)
             _log_scan_decision(
                 s,
@@ -1098,20 +1117,40 @@ def run_scan(
             )
         else:
             skipped.append(s.title)
-            skipped_create_failed.append(s.title)
-            _log_scan_decision(
-                s,
-                decision="skipped",
-                reason="create_failed",
-                message=(
-                    f"pomijam ze skanu (planfile odrzucił create): {s.title} "
-                    f"(signal={s.signal} — sprawdź `.planfile/` uprawnienia/lock)"
-                ),
-            )
+            detail = (create_result.detail or "").strip()
+            if detail:
+                detail = detail.replace("\n", " ")
+            if detail and _is_reused_create_detail(detail):
+                skipped_as_duplicate.append(s.title)
+                _log_scan_decision(
+                    s,
+                    decision="skipped",
+                    reason="duplicate_reused",
+                    message=(
+                        f"pomijam ze skanu (ticket już istnieje / reused): {s.title} "
+                        f"(signal={s.signal} — {detail[:180]})"
+                    ),
+                )
+            else:
+                skipped_create_failed.append(s.title)
+                if detail:
+                    skipped_create_failed_details.append(f"{s.title}: {detail[:240]}")
+                _log_scan_decision(
+                    s,
+                    decision="skipped",
+                    reason="create_failed",
+                    message=(
+                        f"pomijam ze skanu (planfile odrzucił create): {s.title} "
+                        f"(signal={s.signal}"
+                        + (f" — {detail[:180]}" if detail else " — sprawdź `.planfile/` uprawnienia/lock")
+                        + ")"
+                    ),
+                )
     return ScanResult(
         suggestions=suggestions,
         applied=applied,
         skipped=skipped,
         skipped_as_duplicate=skipped_as_duplicate,
         skipped_create_failed=skipped_create_failed,
+        skipped_create_failed_details=skipped_create_failed_details,
     )

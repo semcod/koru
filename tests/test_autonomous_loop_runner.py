@@ -186,7 +186,10 @@ def test_run_autonomous_cycle_logs_plan_before_max_cycles_exit() -> None:
         "waiting=STARTER-217",
         "koru autonomous: next 3/3 next koru auto run will continue from the saved checkpoint",
     ]
-    assert "reached max-cycles=3" in logs[4]
+    assert any("reached max-cycles=3" in line for line in logs[4:])
+    assert any("[show decision trace]" in line for line in logs), (
+        "operator log must include quick action links after next-step lines"
+    )
 
 
 def test_operator_next_steps_explain_waiting_input_chat_cooldown() -> None:

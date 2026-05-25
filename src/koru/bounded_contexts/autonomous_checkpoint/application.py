@@ -11,7 +11,7 @@ from koru.autonomous_checkpoint import (
     _stdio_info,
     _write_checkpoint_payload,
 )
-from koru.cqrs import EventLogEntry, EventLogQueryService, EventSourcingRuntime
+from koru.cqrs import CqrsService, EventLogEntry, EventLogQueryService
 
 from .commands import RestoreLoopCheckpointCommand, SaveLoopCheckpointCommand
 from .events import (
@@ -24,11 +24,8 @@ from .events import (
 from .queries import LoadCheckpointHistoryQuery, LoadLoopCheckpointSnapshotQuery
 
 
-class AutonomousCheckpointCommandService:
+class AutonomousCheckpointCommandService(CqrsService):
     """Handles state-changing checkpoint operations."""
-
-    def __init__(self, runtime: EventSourcingRuntime | None = None) -> None:
-        self.runtime = runtime or EventSourcingRuntime()
 
     def save(self, command: SaveLoopCheckpointCommand) -> None:
         payload = _build_checkpoint_payload(
@@ -77,11 +74,8 @@ class AutonomousCheckpointCommandService:
         return cycle
 
 
-class AutonomousCheckpointQueryService:
+class AutonomousCheckpointQueryService(CqrsService):
     """Handles read-only checkpoint queries."""
-
-    def __init__(self, runtime: EventSourcingRuntime | None = None) -> None:
-        self.runtime = runtime or EventSourcingRuntime()
 
     def load_snapshot(self, query: LoadLoopCheckpointSnapshotQuery) -> dict[str, Any] | None:
         return _read_checkpoint_payload(query.path)

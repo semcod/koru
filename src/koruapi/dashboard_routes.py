@@ -163,6 +163,40 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
                 runtime = runtime_context_error_payload(project, exc)
             self._send_json(runtime)
 
+        def _get_autonomy_trace(self) -> None:
+            """Return the structured ``DecisionRecord`` ring buffer.
+
+            Same data the operator sees on each cycle as ``  decision:
+            observed=… → decided=… → action=…``. Exposed so the dashboard
+            and CLI tooling can answer "why is Koru not doing anything?"
+            without grepping shell scrollback.
+            """
+            from koru.autonomy.decision_trace import (
+                SKIP_CODE_DESCRIPTIONS,
+                load_recent_decisions,
+            )
+
+            try:
+                project = self._selected_project()
+            except ValueError as exc:
+                self._send_json({"error": str(exc)}, status=400)
+                return
+            try:
+                history = load_recent_decisions(project)
+            except Exception as exc:  # pragma: no cover — defensive
+                self._send_json(
+                    {"error": str(exc), "type": type(exc).__name__},
+                    status=500,
+                )
+                return
+            self._send_json(
+                {
+                    "project": str(project),
+                    "decisions": history,
+                    "skip_code_descriptions": dict(SKIP_CODE_DESCRIPTIONS),
+                }
+            )
+
         def _get_handoff(self) -> None:
             try:
                 project = self._selected_project()
@@ -307,6 +341,7 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
                 "/api/runtime-context": self._get_runtime_context,
                 "/api/handoff": self._get_handoff,
                 "/api/plugin-logs": self._get_plugin_logs,
+                "/api/autonomy/trace": self._get_autonomy_trace,
             }.get(path)
             if route is not None:
                 route()

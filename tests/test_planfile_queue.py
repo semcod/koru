@@ -282,6 +282,30 @@ class TestPlanfileQueue(unittest.TestCase):
             self.assertEqual(result.ticket_id, "PLF-002")
             self.assertEqual(result.message, "Provide OPENROUTER_API_KEY")
 
+    def test_missing_executor_kind_defaults_to_human_waiting_input(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = {
+                "id": "PLF-002B",
+                "name": "Split large module: autonomous (fresh discovery)",
+                "source": {"tool": "koru-manual-discovery"},
+                "executor": {"mode": "interactive"},
+                "inputs": {"prompt": "Work this ticket manually"},
+            }
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                self.assertEqual(
+                    _ticket_args(command),
+                    ["ticket", "list", "--status", "open", "--format", "json"],
+                )
+                return _ok(json.dumps(ticket))
+
+            result = run_next_planfile_task(project=project, planfile_runner=planfile_runner)
+
+            self.assertEqual(result.status, "waiting_input")
+            self.assertEqual(result.ticket_id, "PLF-002B")
+            self.assertEqual(result.executor_kind, "human")
+
     def test_shell_failure_marks_ticket_failed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)

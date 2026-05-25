@@ -293,6 +293,29 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     sub.add_parser("shutdown", help="Ask a running daemon to stop.")
 
+    trace = sub.add_parser(
+        "trace",
+        help="Print the structured decision trace ring buffer (last 10 cycles).",
+    )
+    trace.add_argument(
+        "--project",
+        type=Path,
+        default=Path.cwd(),
+        help="Project whose `.planfile/.koru/autonomy-telemetry.json` to read.",
+    )
+    trace.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format (default: text — one compact line per record).",
+    )
+    trace.add_argument(
+        "--limit",
+        type=int,
+        default=10,
+        help="How many of the most-recent records to show (default: 10).",
+    )
+
     sub.add_parser("ide-list", help="List currently running IDEs (process scan).")
     doctor = sub.add_parser("doctor", help="Report which injection backends are available.")
     doctor.add_argument(
@@ -976,6 +999,62 @@ def _action_install_unit(args: argparse.Namespace) -> int:
     )
 
 
+def _action_trace(args: argparse.Namespace) -> int:
+    """Print the structured ``DecisionRecord`` ring buffer.
+
+    Default output is one compact ``observed=… → decided=… → action=…``
+    line per record, prefixed with the cycle number + skip code so the
+    operator can scan ``why is Koru not doing anything?`` in one screen.
+    ``--format json`` emits the raw payload for downstream tools.
+    """
+    import json as _json
+
+    from koru.autonomy.decision_trace import (
+        DecisionRecord,
+        human_skip_reason,
+        load_recent_decisions,
+    )
+
+    project = args.project.resolve()
+    history = load_recent_decisions(project, limit=int(args.limit or 10))
+    if args.format == "json":
+        print(_json.dumps({"project": str(project), "decisions": history}, indent=2))
+        return 0
+    if not history:
+        print(
+            f"koru autopilot trace: no decisions recorded yet for {project}\n"
+            "  Run `koru auto` (or one cycle of it) to populate "
+            "`.planfile/.koru/autonomy-telemetry.json`.",
+        )
+        return 0
+    print(f"koru autopilot trace: last {len(history)} decision(s) for {project}\n")
+    for item in history:
+        try:
+            record = DecisionRecord(
+                at=str(item.get("at", "")),
+                cycle=int(item.get("cycle", 0) or 0),
+                observed=str(item.get("observed", "")),
+                decided=str(item.get("decided", "")),
+                action=str(item.get("action", "")),
+                evidence=str(item.get("evidence", "")),
+                next_step=str(item.get("next_step", "")),
+                skip_code=str(item.get("skip_code", "unknown")),
+                skip_because=str(item.get("skip_because", "")),
+            )
+        except (TypeError, ValueError):
+            continue
+        print(
+            f"  cycle={record.cycle:>4} [{record.skip_code}] {record.at}"
+        )
+        print(f"    {record.compact_line()}")
+        if record.skip_because:
+            print(f"    because: {record.skip_because}")
+        elif record.skip_code not in ("ok", "unknown"):
+            print(f"    because: {human_skip_reason(record.skip_code)}")
+        print()
+    return 0
+
+
 _ACTIONS = {
     "daemon": _action_daemon,
     "drive": _action_drive,
@@ -992,6 +1071,7 @@ _ACTIONS = {
     "handoff": _action_handoff,
     "tail": _action_tail,
     "install-unit": _action_install_unit,
+    "trace": _action_trace,
 }
 
 

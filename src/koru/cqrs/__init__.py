@@ -51,6 +51,13 @@ class EventSourcingRuntime:
         return event
 
 
+class CqrsService:
+    """Base class for CQRS services using EventSourcingRuntime."""
+
+    def __init__(self, runtime: EventSourcingRuntime | None = None) -> None:
+        self.runtime = runtime or EventSourcingRuntime()
+
+
 def runtime_for_project(project: Path, *, bus: InProcessEventBus | None = None) -> EventSourcingRuntime:
     return EventSourcingRuntime(
         store=JsonlEventStore(project_event_store_path(project)),
@@ -70,6 +77,7 @@ def runtime_for_storage_dir(
 
 
 __all__ = [
+    "CqrsService",
     "DomainEvent",
     "EventStore",
     "EventSourcingRuntime",

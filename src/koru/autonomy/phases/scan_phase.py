@@ -57,12 +57,15 @@ def _hp_scan_skip_hint(result: ScanResult, _hp: Callable[..., Any]) -> None:
             if len(result.skipped_create_failed) > 3
             else ""
         )
+        detail = ""
+        if result.skipped_create_failed_details:
+            detail = f" First error: {result.skipped_create_failed_details[0]}."
         _hp(
             f"  scan: {len(result.skipped_create_failed)} suggestion(s) "
             "could not be turned into a planfile ticket (create failed — "
             "check `.planfile/` permissions, lockfile, or run "
             "`koru ide doctor --explain`). "
-            f"Examples: {sample}{more}.",
+            f"Examples: {sample}{more}.{detail}",
         )
 
 

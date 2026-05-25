@@ -42,10 +42,8 @@ def _resolve_executor_kind(ticket: dict, interactive: bool, dry_run: bool) -> st
     """Determine executor kind from ticket metadata."""
     executor = ticket.get("executor") or {}
     raw_kind = executor.get("kind")
-    if raw_kind is None and _source_tool(ticket) == "koru-scan":
+    if raw_kind is None:
         return "human"
-    if raw_kind is None and not interactive and not dry_run:
-        return "shell"
     return str(raw_kind or "human")
 
 
