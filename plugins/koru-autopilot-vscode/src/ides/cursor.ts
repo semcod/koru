@@ -101,9 +101,20 @@ function sanitizeProbeCache(
   // they only see "pasted but not submitted" in the chat they were
   // watching. Force re-probing so we land on
   // ``composer.showComposer`` / ``workbench.panel.chat`` instead.
+  //
+  // ``composer.openAsPane`` is a *toggle*: when the user has the chat
+  // panel already open, running this command hides it. The plugin then
+  // pastes into a now-invisible target and the registered submit
+  // commands no-op (no new bubble in ``cursorDiskKV``). Cached as the
+  // focus_open winner it produces the exact "schowal panel + wkleil ale
+  // nie wysłał" symptom we just hit on Cursor builds where the user
+  // already had Composer visible. Never cache it — re-probe each drive
+  // so the ladder picks the non-toggling ``composer.openComposer`` when
+  // Composer is closed and the focus-only short-circuit when it is open.
   if (
     typeof entry.focusOpen === "string" &&
-    entry.focusOpen === "aichat.newchataction"
+    (entry.focusOpen === "aichat.newchataction" ||
+      entry.focusOpen === "composer.openAsPane")
   ) {
     entry.focusOpen = undefined;
   }

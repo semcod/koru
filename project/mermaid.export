@@ -1,5 +1,5 @@
 flowchart TD
-%% generated in 0.01s
+%% generated in 0.03s
     subgraph docker__capture
         docker__capture__smoke___png_size["_png_size"]
         docker__capture__smoke___scan_providers["_scan_providers"]
@@ -13,13 +13,19 @@ flowchart TD
     subgraph examples__remote_orchestration_demo
         examples__remote_orchestration_demo__run_multi_node_orchestration("run_multi_node_orchestration CC=9")
     end
+    subgraph koru__autonomy
+        koru__autonomy__events__prompt_hash["prompt_hash"]
+        koru__autonomy__events__correlation_id["correlation_id"]
+        koru__autonomy__events__AutonomyEvent__to_dict["to_dict"]
+        koru__autonomy__events___chat_kind["_chat_kind"]
+        koru__autonomy__events___event_ts["_event_ts"]
+        koru__autonomy__events___event_text["_event_text"]
+        koru__autonomy__events___same_prompt["_same_prompt"]
+        koru__autonomy__events__normalize_chat_events{{normalize_chat_events CC=16}}
+    end
     subgraph plugins__koru_autopilot_jetbrains
         plugins__koru_autopilot_jetbrains__settings__gradle__gradlePluginPortal["gradlePluginPortal"]
         plugins__koru_autopilot_jetbrains__settings__gradle__mavenCentral["mavenCentral"]
-        plugins__koru_autopilot_jetbrains__build__gradle__jvmToolchain["jvmToolchain"]
-        plugins__koru_autopilot_jetbrains__build__gradle__mavenCentral["mavenCentral"]
-        plugins__koru_autopilot_jetbrains__build__gradle__defaultRepositories["defaultRepositories"]
-        plugins__koru_autopilot_jetbrains__build__gradle__bundledPlugin["bundledPlugin"]
         plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__reconnect["reconnect"]
         plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__disconnect["disconnect"]
         plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__sendHello["sendHello"]
@@ -28,6 +34,10 @@ flowchart TD
         plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__KoruAutopilotService__when["when"]
         plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__ChatInjector__openAiPanel["openAiPanel"]
         plugins__koru_autopilot_jetbrains__src__main__kotlin__com__semcod__koru__autopilot__ChatInjector__pasteViaClipboard["pasteViaClipboard"]
+        plugins__koru_autopilot_jetbrains__build__gradle__jvmToolchain["jvmToolchain"]
+        plugins__koru_autopilot_jetbrains__build__gradle__mavenCentral["mavenCentral"]
+        plugins__koru_autopilot_jetbrains__build__gradle__defaultRepositories["defaultRepositories"]
+        plugins__koru_autopilot_jetbrains__build__gradle__bundledPlugin["bundledPlugin"]
     end
     subgraph plugins__koru_autopilot_vscode
         plugins__koru_autopilot_vscode__src__chat_history_watcher__test__buildSqliteOutput["buildSqliteOutput"]
@@ -272,13 +282,13 @@ flowchart TD
         src__koru__autonomous_processes___process_cwd["_process_cwd"]
         src__koru__autonomous_processes___ancestor_pids["_ancestor_pids"]
         src__koru__autonomous_processes___looks_like_autonomous_up_command["_looks_like_autonomous_up_command"]
-        src__koru__autonomous_processes___find_existing_autonomous_processes("_find_existing_autonomous_processes CC=11")
-        src__koru__autonomous_processes___find_existing_wup_processes("_find_existing_wup_processes CC=11")
+        src__koru__autonomous_processes___ps_rows["_ps_rows"]
+        src__koru__autonomous_processes___parse_ps_row["_parse_ps_row"]
+        src__koru__autonomous_processes___autonomous_process_matches_project["_autonomous_process_matches_project"]
+        src__koru__autonomous_processes___wup_process_matches_project["_wup_process_matches_project"]
+        src__koru__autonomous_processes___find_existing_autonomous_processes["_find_existing_autonomous_processes"]
+        src__koru__autonomous_processes___find_existing_wup_processes["_find_existing_wup_processes"]
         src__koru__autonomous_processes___as_managed["_as_managed"]
-        src__koru__autonomous_processes___stdio_info["_stdio_info"]
-        src__koru__autonomous_processes___terminate_existing_processes("_terminate_existing_processes CC=10")
-        src__koru__autonomous_processes___confirm_replace_existing["_confirm_replace_existing"]
-        src__koru__autonomous_processes__stop_prior_autonomous_for_auto_start["stop_prior_autonomous_for_auto_star"]
     end
     subgraph src__koruapi
         src__koruapi__runtime_insights___run_ps("_run_ps CC=9")
@@ -288,6 +298,11 @@ flowchart TD
         src__koruapi__runtime_insights___top_processes["_top_processes"]
         src__koruapi__runtime_insights__collect_runtime_insights["collect_runtime_insights"]
         src__koruapi__mcp__mcp_main["mcp_main"]
+        src__koruapi__dashboard_routes___load_dashboard_html["_load_dashboard_html"]
+        src__koruapi__dashboard_routes___config_defaults["_config_defaults"]
+        src__koruapi__dashboard_routes___state_payload["_state_payload"]
+        src__koruapi__dashboard_routes___build_dashboard_handler_impl["_build_dashboard_handler_impl"]
+        src__koruapi__dashboard_routes__build_dashboard_handler["build_dashboard_handler"]
         src__koruapi__dashboard___env_truthy["_env_truthy"]
         src__koruapi__dashboard___argv_has_flag["_argv_has_flag"]
         src__koruapi__dashboard__build_serve_parser["build_serve_parser"]
@@ -336,11 +351,6 @@ flowchart TD
         src__koruapi__dashboard_tickets__update_ticket_from_dashboard("update_ticket_from_dashboard CC=9")
         src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard("reorder_ticket_from_dashboard CC=9")
         src__koruapi__dashboard_runtime___interface_runtime_payload["_interface_runtime_payload"]
-        src__koruapi__dashboard_runtime__runtime_context_payload["runtime_context_payload"]
-        src__koruapi__dashboard_runtime__runtime_context_error_payload["runtime_context_error_payload"]
-        src__koruapi__dashboard_runtime__save_runtime_context_config["save_runtime_context_config"]
-        src__koruapi__invoke__invoke_integration["invoke_integration"]
-        src__koruapi__dashboard_context__dashboard_context_payload["dashboard_context_payload"]
     end
     subgraph src__korudsl
         src__korudsl__cli___build_parser["_build_parser"]
@@ -432,6 +442,47 @@ flowchart TD
         src__koruide__drive_orchestrator__DriveOrchestrator__should_fail_strict_plugin_ack["should_fail_strict_plugin_ack"]
         src__koruide__drive_orchestrator__DriveOrchestrator__plugin_ack_summary("plugin_ack_summary CC=12")
         src__koruide__drive_orchestrator__DriveOrchestrator__operation_trace_summary("operation_trace_summary CC=11")
+    end
+    subgraph src__korullm
+        src__korullm__strategies__codex__CodexStrategy__matches_environment["matches_environment"]
+        src__korullm__strategies__codex__CodexStrategy__capabilities["capabilities"]
+        src__korullm__strategies__codex__CodexStrategy__assess_drive_failure["assess_drive_failure"]
+        src__korullm__strategies__codex__CodexStrategy__idle_marker_patterns["idle_marker_patterns"]
+        src__korullm__strategies__codex__CodexStrategy__prompt_envelope["prompt_envelope"]
+        src__korullm__strategies__base__LlmStrategy__matches_environment["matches_environment"]
+        src__korullm__strategies__base__LlmStrategy__capabilities["capabilities"]
+        src__korullm__strategies__base__LlmStrategy__assess_drive_failure["assess_drive_failure"]
+        src__korullm__strategies__base__LlmStrategy__idle_marker_patterns["idle_marker_patterns"]
+        src__korullm__strategies__base__LlmStrategy__prompt_envelope["prompt_envelope"]
+        src__korullm__strategies__base__LlmStrategy___reply_message["_reply_message"]
+        src__korullm__strategies__base__LlmStrategy___reply_verification["_reply_verification"]
+        src__korullm__strategies__base__LlmStrategy___reply_reason["_reply_reason"]
+        src__korullm__strategies__base__LlmStrategy__failure_signature["failure_signature"]
+        src__korullm__strategies__base__LlmStrategy____repr__["__repr__"]
+        src__korullm__strategies__ollama__OllamaStrategy__matches_environment["matches_environment"]
+        src__korullm__strategies__ollama__OllamaStrategy__capabilities["capabilities"]
+        src__korullm__strategies__ollama__OllamaStrategy__assess_drive_failure["assess_drive_failure"]
+        src__korullm__strategies__ollama__OllamaStrategy__idle_marker_patterns["idle_marker_patterns"]
+        src__korullm__strategies__gpt__GptStrategy__matches_environment["matches_environment"]
+        src__korullm__strategies__gpt__GptStrategy__capabilities["capabilities"]
+        src__korullm__strategies__gpt__GptStrategy__assess_drive_failure["assess_drive_failure"]
+        src__korullm__strategies__gpt__GptStrategy__idle_marker_patterns["idle_marker_patterns"]
+        src__korullm__strategies__registry__register_llm_strategy["register_llm_strategy"]
+        src__korullm__strategies__registry__get_llm_strategy["get_llm_strategy"]
+        src__korullm__strategies__registry__list_llm_strategy_ids["list_llm_strategy_ids"]
+        src__korullm__strategies__registry___fallback_strategy["_fallback_strategy"]
+        src__korullm__strategies__registry__resolve_active_llm_strategy["resolve_active_llm_strategy"]
+        src__korullm__strategies__registry__resolve_llm_strategy_from_environment("resolve_llm_strategy_from_environme CC=9")
+        src__korullm__strategies__claude__ClaudeStrategy__matches_environment["matches_environment"]
+        src__korullm__strategies__claude__ClaudeStrategy__capabilities["capabilities"]
+        src__korullm__strategies__claude__ClaudeStrategy__assess_drive_failure["assess_drive_failure"]
+        src__korullm__strategies__claude__ClaudeStrategy__idle_marker_patterns["idle_marker_patterns"]
+        src__korullm__strategies__ide_chat__IdeChatStrategy__matches_environment["matches_environment"]
+        src__korullm__strategies__ide_chat__IdeChatStrategy__capabilities["capabilities"]
+        src__korullm__strategies__ide_chat__IdeChatStrategy__assess_drive_failure("assess_drive_failure CC=9")
+        src__korullm__strategies__ide_chat__IdeChatStrategy___requires_manual_chat_focus["_requires_manual_chat_focus"]
+        src__korullm__strategies__ide_chat__IdeChatStrategy___needs_submit_retry("_needs_submit_retry CC=9")
+        src__korullm__strategies__ide_chat__IdeChatStrategy___needs_plugin_retry("_needs_plugin_retry CC=9")
     end
     subgraph src__korumesh
         src__korumesh__dashboard__grid_html["grid_html"]
@@ -530,6 +581,47 @@ flowchart TD
         src__koruobserve__cli_parser__build_observe_parser["build_observe_parser"]
         src__koruobserve__cli_parser__project_path["project_path"]
     end
+    subgraph src__koruos
+        src__koruos__strategies__base__KeySequence____post_init__["__post_init__"]
+        src__koruos__strategies__base__OsStrategy__matches_current_environment["matches_current_environment"]
+        src__koruos__strategies__base__OsStrategy__capabilities["capabilities"]
+        src__koruos__strategies__base__OsStrategy__focus_window["focus_window"]
+        src__koruos__strategies__base__OsStrategy__inject_keys["inject_keys"]
+        src__koruos__strategies__base__OsStrategy___term_program_is_vscode_family["_term_program_is_vscode_family"]
+        src__koruos__strategies__base__OsStrategy____repr__["__repr__"]
+        src__koruos__strategies__registry__register_os_strategy["register_os_strategy"]
+        src__koruos__strategies__registry__get_os_strategy["get_os_strategy"]
+        src__koruos__strategies__registry__list_os_strategy_ids["list_os_strategy_ids"]
+        src__koruos__strategies__registry__resolve_active_os_strategy["resolve_active_os_strategy"]
+        src__koruos__strategies__x11_linux___run["_run"]
+        src__koruos__strategies__x11_linux__X11LinuxStrategy__matches_current_environment["matches_current_environment"]
+        src__koruos__strategies__x11_linux__X11LinuxStrategy__capabilities["capabilities"]
+        src__koruos__strategies__x11_linux__X11LinuxStrategy__focus_window["focus_window"]
+        src__koruos__strategies__x11_linux__X11LinuxStrategy__inject_keys["inject_keys"]
+        src__koruos__strategies__x11_linux__X11LinuxStrategy___focus_via_xdotool("_focus_via_xdotool CC=11")
+        src__koruos__strategies__x11_linux__X11LinuxStrategy___focus_via_wmctrl["_focus_via_wmctrl"]
+        src__koruos__strategies__x11_linux__X11LinuxStrategy___inject_via_xdotool["_inject_via_xdotool"]
+        src__koruos__strategies__darwin___run["_run"]
+        src__koruos__strategies__darwin__DarwinStrategy__matches_current_environment["matches_current_environment"]
+        src__koruos__strategies__darwin__DarwinStrategy__capabilities["capabilities"]
+        src__koruos__strategies__darwin__DarwinStrategy__focus_window["focus_window"]
+        src__koruos__strategies__darwin__DarwinStrategy__inject_keys["inject_keys"]
+        src__koruos__strategies__windows__WindowsStrategy__matches_current_environment["matches_current_environment"]
+        src__koruos__strategies__windows__WindowsStrategy__capabilities["capabilities"]
+        src__koruos__strategies__windows__WindowsStrategy__focus_window["focus_window"]
+        src__koruos__strategies__windows__WindowsStrategy__inject_keys["inject_keys"]
+        src__koruos__strategies__wayland_linux___run["_run"]
+        src__koruos__strategies__wayland_linux___scan_for_key["_scan_for_key"]
+        src__koruos__strategies__wayland_linux___gnome_compositor["_gnome_compositor"]
+        src__koruos__strategies__wayland_linux___prefer_ydotool["_prefer_ydotool"]
+        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__matches_current_environment["matches_current_environment"]
+        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__capabilities["capabilities"]
+        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__focus_window["focus_window"]
+        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy__inject_keys("inject_keys CC=9")
+        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___focus_via_wmctrl["_focus_via_wmctrl"]
+        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___inject_via_wtype("_inject_via_wtype CC=9")
+        src__koruos__strategies__wayland_linux__WaylandLinuxStrategy___inject_via_ydotool["_inject_via_ydotool"]
+    end
     subgraph src__koruvision
         src__koruvision__capture_probe__python_can_capture["python_can_capture"]
         src__koruvision__capture_probe__resolve_observe_python["resolve_observe_python"]
@@ -624,9 +716,6 @@ flowchart TD
     services__healing_webhook__app__probe_failure --> services__healing_webhook__app__create_planfile_ticket
     services__healing_webhook__app__probe_failure --> services__healing_webhook__app__heal_redsl_improve
     services__healing_webhook__app__probe_failure --> services__healing_webhook__app__heal_redsl_gate
-    services__healing_webhook__ticket_builder__build_ticket_payload --> services__healing_webhook__ticket_builder___format_paths
-    services__healing_webhook__ticket_builder__build_ticket_payload --> services__healing_webhook__ticket_builder___default_acceptance
-    services__healing_webhook__ticket_builder__build_ticket_payload --> services__healing_webhook__ticket_builder___reproduction_for
     src__koruobserve__lifecycle___spawn --> src__koruobserve__paths__logfile
     src__koruobserve__lifecycle___spawn --> src__koruobserve__paths__runtime_dir
     src__koruobserve__lifecycle___spawn --> src__koruobserve__paths__pidfile
@@ -710,6 +799,12 @@ flowchart TD
     src__koruobserve__paths__state_file --> src__koruobserve__paths__runtime_dir
     src__koruobserve__cli_parser__build_observe_parser --> src__koruobserve__cli_parser___add_subproject
     src__koruobserve__cli_parser__build_observe_parser --> src__koruobserve__cli_parser___register_up_arguments
+    src__koruos__strategies__base__OsStrategy____repr__ --> plugins__koru_autopilot_vscode__src__cursor_bubble_adapter__CursorBubbleAdapter__type
+    src__koruos__strategies__x11_linux__X11LinuxStrategy___focus_via_xdotool --> src__koruos__strategies__x11_linux___run
+    src__koruos__strategies__x11_linux__X11LinuxStrategy___focus_via_wmctrl --> src__koruos__strategies__x11_linux___run
+    src__koruos__strategies__x11_linux__X11LinuxStrategy___inject_via_xdotool --> src__koru__wizard__gui__static__wizard__list
+    src__koruos__strategies__x11_linux__X11LinuxStrategy___inject_via_xdotool --> src__koruos__strategies__x11_linux___run
+    src__koruos__strategies__darwin__DarwinStrategy__focus_window --> src__koruos__strategies__x11_linux___run
     src__korudsl__cli___build_parser --> src__korudsl__cli___cli_version
     src__korudsl__cli__main --> src__korudsl__cli___read_input
     src__korudsl__cli__main --> src__korudsl__transform__library_from_any
@@ -749,6 +844,11 @@ flowchart TD
     src__koruapi__runtime_insights__collect_runtime_insights --> src__koru__autonomous_process_guard__find_existing_wup_processes
     src__koruapi__mcp__mcp_main --> src__koru__activity_log__activity
     src__koruapi__mcp__mcp_main --> src__koruapi__mcp_server__mcp_serve_main
+    src__koruapi__dashboard_routes___config_defaults --> src__koruapi__dashboard_projects__dashboard_workspace
+    src__koruapi__dashboard_routes___state_payload --> src__koruapi__dashboard_state__dashboard_state
+    src__koruapi__dashboard_routes___build_dashboard_handler_impl --> src__koruapi__dashboard_projects__resolve_dashboard_project
+    src__koruapi__dashboard_routes___build_dashboard_handler_impl --> src__koruapi__dashboard_topology__apply_dashboard_topology_update
+    src__koruapi__dashboard_routes__build_dashboard_handler --> src__koruapi__dashboard_routes___build_dashboard_handler_impl
     src__koruapi__dashboard___resolve_serve_config --> src__koruapi__dashboard___resolve_serve_lan
     src__koruapi__dashboard___resolve_serve_config --> src__koruapi__dashboard___resolve_serve_host
     src__koruapi__dashboard___resolve_serve_config --> src__koruapi__dashboard___resolve_serve_port
@@ -985,6 +1085,11 @@ flowchart TD
     src__koruapi__mcp_server___log --> scripts__koru_soak_monitor__print
     src__koruapi__mcp_server__mcp_serve_main --> src__koruapi__mcp_server__run_stdio
     src__koruapi__mcp_server__mcp_serve_main --> scripts__koru_soak_monitor__print
+    src__korullm__strategies__base__LlmStrategy____repr__ --> plugins__koru_autopilot_vscode__src__cursor_bubble_adapter__CursorBubbleAdapter__type
+    src__korullm__strategies__registry___fallback_strategy --> src__korullm__strategies__registry__get_llm_strategy
+    src__korullm__strategies__registry__resolve_active_llm_strategy --> src__korullm__strategies__registry__resolve_llm_strategy_from_environment
+    src__korullm__strategies__registry__resolve_llm_strategy_from_environment --> src__korullm__strategies__registry___fallback_strategy
+    src__korullm__strategies__registry__resolve_llm_strategy_from_environment --> src__korullm__strategies__registry__get_llm_strategy
     src__koruvision__capture_probe__resolve_observe_python --> src__koruvision__capture_probe__python_can_capture
     src__koruvision__scaling__downscale_rgb_nearest --> plugins__koru_autopilot_vscode__src__ack_payload__bytes
     src__koruvision__cli___vision_interval --> src__koru__configurator__load_project_config
@@ -1179,21 +1284,8 @@ flowchart TD
     src__korumesh__envelope__verify_envelope --> src__korumesh__envelope__sign_envelope
     src__korumesh__transport___relay_client --> src__korumesh__codec__envelope_to_wire
     src__korumesh__transport___relay_client --> src__korumesh__codec__envelope_from_wire
-    src__korumesh__transport___relay_client --> src__korumesh__envelope__verify_envelope
-    src__korumesh__transport__run_relay --> src__korumesh__transport___require_websockets
-    src__korumesh__transport__run_relay --> src__korumesh__transport___relay_client
-    src__korumesh__transport__publish_envelope --> src__korumesh__transport___require_websockets
-    src__korumesh__transport__publish_envelope --> src__korumesh__codec__envelope_to_wire
-    src__korumesh__transport__publish_envelope --> src__korumesh__codec__envelope_from_wire
-    src__korumesh__dashboard_parse__envelope_to_frame_entry --> src__korumesh__dashboard_parse__parse_mime_params
-    src__korumesh__dashboard_parse__envelope_to_frame_entry --> src__korumesh__dashboard_parse___int_param
-    src__korumesh__browser_capture__capture_host_context --> src__koruvision__providers__browser_getdisplay__browser_capture_interval_seconds
-    src__korumesh__browser_capture___render_capture_host --> src__korumesh__browser_capture__capture_host_html
-    src__korumesh__browser_capture___render_capture_host --> src__korumesh__browser_capture__capture_host_context
-    src__korumesh__browser_capture__browser_upload_payload --> src__koruvision__providers__browser_getdisplay__ingest_browser_upload
-    src__korumesh__browser_capture__serve_browser_capture_http --> plugins__koru_autopilot_vscode__src__extension__AutopilotBridge__send
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class src__koruide__plugin_installer___reassert_extension_extra,plugins__koru_autopilot_vscode__src__cursor_bubble_adapter__execFile,src__koru__autonomous_loop_runner___blocked_interface_action_lines,src__koru__autonomous_loop_runner___quick_action_lines,src__koru__autonomous_cycle_orchestrator___handle_autopilot_phase,src__koru__autonomous_cycle_skip_conditions___add_label_to_ticket_yaml_text,src__koru__autonomy__cycle_trace__decision_next_step_hint,plugins__koru_autopilot_vscode__src__ack_payload__slimDiagnostics,plugins__koru_autopilot_vscode__src__ides__cursor__test__testProbeCacheSanitizationForCursor,src__koru__scan__run_scan,src__koru__autonomy__decision_trace__classify_skip_code,src__koru__autonomy__decision_trace__build_decision_record,src__koru__self_control___install_manager_checks highCC
-    class examples__remote_orchestration_demo__run_multi_node_orchestration,services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,services__healing_webhook__ticket_builder__build_ticket_payload,src__koruobserve__lifecycle___pids_matching_koru_cmdline,src__koruobserve__diagnostics___monitors_from_mss,src__koruobserve__providers_cli__providers_list_text,src__koruobserve__providers_cli__providers_test_text,src__korudsl__cli__main,src__korudsl__transform__library_from_any,src__korudsl__library__convert_goals_json_to_library,src__korudsl__library___emit_step,src__korudsl__library___emit_goal,src__koruapi__runtime_insights___run_ps,src__koruapi__runtime_insights___active_tools,src__koruapi__cli__main,src__koruapi__dashboard_tickets__list_tickets,src__koruapi__dashboard_tickets__bulk_waiting_input_action,src__koruapi__dashboard_tickets___build_ticket_scaffold,src__koruapi__dashboard_tickets__create_ticket_from_dashboard,src__koruapi__dashboard_tickets__update_ticket_from_dashboard,src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard,src__koruapi__server___parse_invoke_request,src__koruapi__topology_post__apply_topology_post_update,src__koruapi__dashboard_config___dashboard_config_request_kwargs medCC
+    class src__koruide__plugin_installer___reassert_extension_extra,src__koru__autonomous_cycle_orchestrator___handle_autopilot_phase,src__koru__scan__run_scan,src__koru__autonomous_loop_runner___blocked_interface_action_lines,src__koru__autonomous_loop_runner___quick_action_lines,src__koru__self_control___install_manager_checks,src__koru__autonomous_cycle_skip_conditions___add_label_to_ticket_yaml_text,src__koru__autonomy__decision_trace__classify_skip_code,koru__autonomy__events__normalize_chat_events,src__koru__autonomy__code2llm_discovery___backfill_existing_dedupe_keys,src__koru__autonomy__code2llm_discovery___apply_planfile_ticket_items,src__koru__autonomy__cycle_trace__decision_next_step_hint,plugins__koru_autopilot_vscode__src__cursor_bubble_adapter__execFile,plugins__koru_autopilot_vscode__src__ack_payload__slimDiagnostics,plugins__koru_autopilot_vscode__src__ides__cursor__test__testProbeCacheSanitizationForCursor highCC
+    class examples__remote_orchestration_demo__run_multi_node_orchestration,services__healing_webhook__app___enrich_ticket_with_vallm,services__healing_webhook__app___execute_planfile_create,services__healing_webhook__app___run_vallm_check,services__healing_webhook__app___run_vallm_validate,services__healing_webhook__app___resolve_affected_files,services__healing_webhook__app__heal_vallm_validate,services__healing_webhook__app___parse_redup_summary,src__koruobserve__lifecycle___pids_matching_koru_cmdline,src__koruobserve__diagnostics___monitors_from_mss,src__koruobserve__providers_cli__providers_list_text,src__koruobserve__providers_cli__providers_test_text,src__koruos__strategies__x11_linux__X11LinuxStrategy___focus_via_xdotool,src__korudsl__cli__main,src__korudsl__transform__library_from_any,src__korudsl__library__convert_goals_json_to_library,src__korudsl__library___emit_step,src__korudsl__library___emit_goal,src__koruapi__runtime_insights___run_ps,src__koruapi__runtime_insights___active_tools,src__koruapi__cli__main,src__koruapi__dashboard_tickets__list_tickets,src__koruapi__dashboard_tickets__bulk_waiting_input_action,src__koruapi__dashboard_tickets___build_ticket_scaffold,src__koruapi__dashboard_tickets__create_ticket_from_dashboard,src__koruapi__dashboard_tickets__update_ticket_from_dashboard,src__koruapi__dashboard_tickets__reorder_ticket_from_dashboard,src__koruapi__server___parse_invoke_request,src__koruapi__topology_post__apply_topology_post_update,src__koruapi__dashboard_config___dashboard_config_request_kwargs medCC

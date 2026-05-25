@@ -227,6 +227,29 @@ function testProbeCacheSanitizationForCursor(): void {
     undefined,
     "aichat.newchataction focus_open cache must be cleared for Cursor",
   );
+
+  // composer.openAsPane is a TOGGLE in current Cursor builds: when the
+  // Composer panel is already open, this command hides it. Cached as
+  // the focus_open winner it produces the exact "schowal panel + wkleil
+  // ale nie wysłał" symptom — the plugin pastes into a now-invisible
+  // surface and submit commands no-op. The cache must be invalidated
+  // so the ladder re-probes the non-toggling composer.openComposer.
+  const openAsPane = sanitizeProbeCacheForIde(
+    {
+      version: PROBE_CACHE_VERSION,
+      ide: "cursor",
+      appName: "Cursor",
+      focusOpen: "composer.openAsPane",
+      updatedAt: "",
+    },
+    "cursor",
+  );
+  eq(
+    openAsPane?.focusOpen,
+    undefined,
+    "composer.openAsPane focus_open cache must be cleared for Cursor "
+      + "(toggle hides an already-open chat panel)",
+  );
 }
 
 function testFocusOpenDefaultsExcludeNewChatTab(): void {

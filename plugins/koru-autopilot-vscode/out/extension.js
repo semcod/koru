@@ -93,6 +93,29 @@ function isSpecificChatInputFocusCommand(command) {
     const normalized = command.toLowerCase();
     return normalized.includes("chat") || normalized.includes("composer") || normalized.includes("cascade");
 }
+/**
+ * Commands whose effect *toggles* a chat/composer panel (open → hidden,
+ * hidden → open) rather than idempotently opening it. Running these on
+ * an already-visible panel hides it, which silently breaks the
+ * subsequent paste+submit pipeline because the target surface is no
+ * longer rendered. The focus ladder uses this to gate a focus-only
+ * preflight (try ``composer.focusComposer`` first; only fall through
+ * to toggle commands when the chat input cannot be focused, which
+ * implies the panel really is closed).
+ */
+const TOGGLING_FOCUS_OPEN_COMMANDS = new Set([
+    "composer.openaspane",
+    "workbench.action.toggleauxiliarybar",
+    "workbench.action.togglepanel",
+    "workbench.action.togglesidebar",
+    "workbench.view.chat.toggle",
+]);
+function isTogglingFocusOpenCommand(command) {
+    if (!command) {
+        return false;
+    }
+    return TOGGLING_FOCUS_OPEN_COMMANDS.has(command.trim().toLowerCase());
+}
 let activeBridge = null;
 function debugLog(message, data) {
     try {
@@ -1085,22 +1108,52 @@ class AutopilotBridge {
         return null;
     }
     async _focusChatWithoutOpenCommands(rejected) {
+        const before = this.editorSnapshot();
         const inputOnly = await this.focusChatInput();
-        if (isSpecificChatInputFocusCommand(inputOnly.command)) {
-            debugLog("FOCUS_OPEN_INPUT_ONLY_SUCCESS", { command: inputOnly.command });
+        if (!isSpecificChatInputFocusCommand(inputOnly.command)) {
+            rejected.push({
+                cmd: "(input-only)",
+                reason: "no specific chat input focus command succeeded",
+            });
+            return null;
+        }
+        // ``composer.focusComposer`` (and friends) can return ``true`` even
+        // when the chat panel is *hidden* — Cursor focuses the logical
+        // composer state without making it visible. Paste then lands in the
+        // invisible composer and the submit pipeline silently no-ops. Guard
+        // against this with the editor-snapshot heuristic: if the active
+        // text editor is still a file-like editor after the focus command,
+        // chat is NOT actually the foreground surface and we must fall
+        // through to the open commands instead of returning a false win.
+        const after = this.editorSnapshot();
+        if (!(0, probe_ladder_1.chatFocusHeuristic)(after)) {
+            debugLog("FOCUS_OPEN_INPUT_ONLY_HIDDEN_PANEL", {
+                command: inputOnly.command,
+                before,
+                after,
+            });
             this.traceOperation({
                 op: "focus_open",
                 route: "input-only",
-                ok: true,
+                ok: false,
                 command: inputOnly.command,
+                reason: "focus command succeeded but file editor is still active "
+                    + "(chat panel likely hidden) — fall through to open commands",
             });
-            return { ok: true, command: inputOnly.command };
+            rejected.push({
+                cmd: inputOnly.command || "(input-only)",
+                reason: "focus succeeded but snapshot shows file editor active",
+            });
+            return null;
         }
-        rejected.push({
-            cmd: "(input-only)",
-            reason: "no specific chat input focus command succeeded",
+        debugLog("FOCUS_OPEN_INPUT_ONLY_SUCCESS", { command: inputOnly.command });
+        this.traceOperation({
+            op: "focus_open",
+            route: "input-only",
+            ok: true,
+            command: inputOnly.command,
         });
-        return null;
+        return { ok: true, command: inputOnly.command };
     }
     async _tryFocusChatCommand(command, context, rejected) {
         debugLog("FOCUS_OPEN_ATTEMPT", { cmd: command, isToggle: command.includes("toggle") });
@@ -1177,9 +1230,22 @@ class AutopilotBridge {
             return alreadyFocused;
         }
         const rejected = [];
-        if (context.commands.length === 0) {
-            // VS Code often has no safe focus-open command configured; try direct
-            // chat-input focus before declaring manual-focus required.
+        // Preflight: try focus-only commands BEFORE any open-command in the
+        // ladder. On Cursor (and any IDE whose open commands include
+        // toggles like ``composer.openAsPane``) running an open command
+        // when the chat panel is *already visible* hides it. The plugin
+        // then pastes into an invisible/file-editor target and the
+        // bubble-DB verifier correctly reports "no new user bubble", but
+        // the user sees "schowal panel, wkleil, nie wysłał". When a
+        // focus-only command can land focus on a specific chat input,
+        // chat is already open and we must not call any toggle commands.
+        if (this._shouldPreflightFocusOnly(context)) {
+            const inputOnly = await this._focusChatWithoutOpenCommands(rejected);
+            if (inputOnly) {
+                return inputOnly;
+            }
+        }
+        else if (context.commands.length === 0) {
             const inputOnly = await this._focusChatWithoutOpenCommands(rejected);
             if (inputOnly) {
                 return inputOnly;
@@ -1192,6 +1258,22 @@ class AutopilotBridge {
             }
         }
         return this._focusChatFailure(primary, context, rejected);
+    }
+    /**
+     * Should we try focus-only commands *before* any open command?
+     *
+     * Returns ``true`` when the open-command ladder contains at least
+     * one toggle (currently: ``composer.openAsPane`` for Cursor).
+     * Running a toggle on an already-visible panel hides it, and the
+     * subsequent paste+submit pipeline silently no-ops. The preflight
+     * short-circuits that by checking whether a focus-only command can
+     * land focus on the chat input without touching the panel chrome.
+     */
+    _shouldPreflightFocusOnly(context) {
+        if (context.commands.length === 0) {
+            return false;
+        }
+        return context.commands.some((cmd) => isTogglingFocusOpenCommand(cmd));
     }
     async pasteText(text, replaceCurrentInput = false) {
         const ide = this.detectIde();

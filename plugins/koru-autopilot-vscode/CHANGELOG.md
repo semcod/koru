@@ -4,6 +4,43 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.75] — 2026-05-25
+
+### Fixed
+- **Cursor: drive hid the chat panel and pasted-but-did-not-submit.**
+  Symptom: user had Composer visible on the right column; after a
+  drive started the panel disappeared and the prompt landed in
+  something else (no submit, no bubble in `cursorDiskKV`). Plugin
+  honestly reported `submit_unverified` (thanks to 0.1.74's bubble-DB
+  cross-check) but the underlying focus path was wrong.
+
+  Root cause: `composer.openAsPane` is a **toggle** in current Cursor
+  builds — running it on a *visible* Composer panel hides it. The
+  plugin had cached `composer.openAsPane` as the focus_open winner
+  from a previous drive (when chat was closed and the command did
+  open it). Every subsequent drive then ran the cached toggle and
+  closed the panel the user was watching.
+
+  Fix:
+  - `cursor.ts.sanitizeProbeCache` now discards `composer.openAsPane`
+    just like it discards `aichat.newchataction`. Toggles are
+    state-dependent and unsafe as cached winners.
+  - `focusChat()` now runs a **focus-only preflight** whenever the
+    open-command ladder contains any toggle (e.g. `composer.openAsPane`,
+    `workbench.action.toggle*`). The preflight tries
+    `composer.focusComposer` first; if the editor snapshot heuristic
+    confirms chat is the foreground surface, we skip the open commands
+    entirely. This means: when Composer is already visible we never
+    touch the toggle; when Composer is closed the preflight fails
+    (file editor still active) and the ladder falls through to
+    `composer.openComposer` (the non-toggling opener).
+  - The focus-only path additionally cross-checks
+    `chatFocusHeuristic(editorSnapshot)` after `focusChatInput` to
+    catch the case where `composer.focusComposer` returns `true`
+    while the file `TextEditor` is still active — that means chat is
+    "logically" focused but not visible, which would otherwise hand
+    the next paste to an invisible target.
+
 ## [0.1.74] — 2026-05-25
 
 ### Fixed

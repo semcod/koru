@@ -293,6 +293,19 @@ def test_ping_round_trip(running_daemon) -> None:
     assert reply.data.get("pong") is True
 
 
+def test_ping_unknown_role_does_not_log_noise(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    logs: list[str] = []
+    with _daemon(tmp_path, monkeypatch, patch_ides=True) as h:
+        h.daemon._log = logs.append
+        reply = h.client().request(Message(type="ping", id="p1"))
+        assert reply.type == "ack"
+        assert reply.data.get("pong") is True
+    assert not any("ping from" in line and "role=unknown" in line for line in logs)
+
+
 def test_is_running_true_when_daemon_alive(running_daemon) -> None:
     _, client, _ = running_daemon
     assert client.is_running() is True

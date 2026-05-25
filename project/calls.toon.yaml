@@ -1,33 +1,33 @@
 # code2llm call graph | /home/tom/github/semcod/koru
-# generated in 0.25s
-# nodes: 402 | edges: 500 | modules: 89
+# generated in 0.36s
+# nodes: 404 | edges: 500 | modules: 92
 # CC̄=3.8
 
 HUBS[20]:
   scripts.koru-soak-monitor.print
     CC=0  in:545  out:0  total:545
-  src.koruapi.dashboard_routes.build_dashboard_handler
-    CC=1  in:2  out:267  total:269
+  src.koruapi.dashboard_routes._build_dashboard_handler_impl
+    CC=1  in:1  out:267  total:268
   src.koru.wizard.gui.static.wizard.list
-    CC=5  in:126  out:9  total:135
+    CC=5  in:127  out:9  total:136
   src.koruide.ide.normalize_ide_id
-    CC=6  in:62  out:11  total:73
+    CC=6  in:64  out:11  total:75
   src.koru.activity_log.activity
     CC=6  in:44  out:13  total:57
   src.koru.context_render.render_markdown_handoff
     CC=10  in:6  out:47  total:53
   src.koru.events.emit_management_event
     CC=8  in:31  out:7  total:38
+  plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.type
+    CC=1  in:32  out:2  total:34
   src.koruide.ide.detect_running_ides
     CC=13  in:24  out:10  total:34
-  src.koruobserve.lifecycle.observe_up
-    CC=4  in:1  out:32  total:33
   src.koru.scan.run_scan
     CC=15  in:4  out:29  total:33
+  src.koruobserve.lifecycle.observe_up
+    CC=4  in:1  out:32  total:33
   src.koruapi.mcp_server.tool_run_ticket
     CC=12  in:1  out:31  total:32
-  plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.type
-    CC=1  in:30  out:2  total:32
   src.koruide.socket.default_socket_path
     CC=4  in:15  out:15  total:30
   src.koruvision.providers.obs_websocket._with_obs_connection
@@ -40,10 +40,10 @@ HUBS[20]:
     CC=6  in:9  out:16  total:25
   examples.remote_orchestration_demo.run_multi_node_orchestration
     CC=9  in:0  out:24  total:24
-  src.koru.queue.ticket.planfile_command
-    CC=5  in:17  out:7  total:24
   src.koruapi.dashboard_config._dashboard_config_request_kwargs
     CC=10  in:1  out:23  total:24
+  src.koru.queue.ticket.planfile_command
+    CC=5  in:17  out:7  total:24
 
 MODULES:
   examples.remote_orchestration_demo  [1 funcs]
@@ -68,11 +68,8 @@ MODULES:
     _resolve_affected_files  CC=11  out:24
     _resolve_strategy  CC=3  out:1
     _run_docker  CC=1  out:3
-  services.healing-webhook.ticket_builder  [5 funcs]
-    _default_acceptance  CC=2  out:1
-    _format_paths  CC=2  out:1
+  services.healing-webhook.ticket_builder  [2 funcs]
     _infer_paths  CC=7  out:1
-    _reproduction_for  CC=5  out:5
     build_ticket_payload  CC=11  out:25
   src.koru.activity_log  [1 funcs]
     activity  CC=6  out:13
@@ -172,8 +169,11 @@ MODULES:
     _read_workspace_folder  CC=8  out:12
     _running_ide_to_detected  CC=1  out:1
     _walk_descendant_pids  CC=6  out:8
-  src.koruapi.dashboard_routes  [1 funcs]
-    build_dashboard_handler  CC=1  out:267
+  src.koruapi.dashboard_routes  [4 funcs]
+    _build_dashboard_handler_impl  CC=1  out:267
+    _config_defaults  CC=1  out:4
+    _state_payload  CC=1  out:2
+    build_dashboard_handler  CC=1  out:1
   src.koruapi.dashboard_runtime  [3 funcs]
     _interface_runtime_payload  CC=5  out:3
     runtime_context_error_payload  CC=1  out:5
@@ -296,6 +296,13 @@ MODULES:
     normalize_ide_id  CC=6  out:11
   src.koruide.socket  [1 funcs]
     default_socket_path  CC=4  out:15
+  src.korullm.strategies.base  [1 funcs]
+    __repr__  CC=1  out:1
+  src.korullm.strategies.registry  [4 funcs]
+    _fallback_strategy  CC=3  out:2
+    get_llm_strategy  CC=3  out:3
+    resolve_active_llm_strategy  CC=1  out:1
+    resolve_llm_strategy_from_environment  CC=9  out:17
   src.korumesh.envelope  [1 funcs]
     sign_envelope  CC=3  out:8
   src.korumesh.keys  [2 funcs]
@@ -359,6 +366,15 @@ MODULES:
     providers_test_payload  CC=6  out:5
     providers_test_text  CC=13  out:20
     screencast_session_path  CC=1  out:1
+  src.koruos.strategies.base  [1 funcs]
+    __repr__  CC=1  out:1
+  src.koruos.strategies.darwin  [1 funcs]
+    focus_window  CC=4  out:5
+  src.koruos.strategies.x11_linux  [4 funcs]
+    _focus_via_wmctrl  CC=4  out:3
+    _focus_via_xdotool  CC=11  out:10
+    _inject_via_xdotool  CC=3  out:4
+    _run  CC=1  out:1
   src.koruvision.agent  [5 funcs]
     _capture_cycle  CC=2  out:2
     capture_all_once  CC=1  out:1
@@ -428,13 +444,6 @@ MODULES:
     looks_headless  CC=3  out:4
     portal_possible  CC=3  out:5
     tool_available  CC=1  out:2
-  src.koruvision.providers.grim  [4 funcs]
-    availability  CC=2  out:3
-    capture_all  CC=1  out:2
-    list_monitors  CC=1  out:1
-    _grim_png  CC=4  out:4
-  src.koruvision.providers.mss  [1 funcs]
-    capture_all  CC=2  out:3
   src.koruvision.providers.obs_websocket  [13 funcs]
     availability  CC=3  out:8
     capture_all  CC=1  out:3
@@ -446,13 +455,9 @@ MODULES:
     _with_obs_connection  CC=9  out:26
     obs_password  CC=1  out:2
     obs_screenshot_width  CC=2  out:4
-  src.koruvision.providers.portal_screencast  [6 funcs]
+  src.koruvision.providers.portal_screencast  [2 funcs]
     availability  CC=7  out:10
-    capture_all  CC=3  out:5
     list_monitors  CC=1  out:1
-    _parse_screencast_stdout  CC=10  out:13
-    _run_screencast_subprocess  CC=2  out:2
-    _screencast_frames  CC=9  out:14
   src.koruvision.providers.portal_screenshot  [3 funcs]
     availability  CC=2  out:3
     capture_one  CC=2  out:4
@@ -499,9 +504,6 @@ EDGES:
   services.healing-webhook.app.get_history → src.koru.wizard.gui.static.wizard.list
   services.healing-webhook.app.alertmanager_webhook → services.healing-webhook.app._resolve_strategy
   services.healing-webhook.app.probe_failure → services.healing-webhook.app.create_planfile_ticket
-  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._format_paths
-  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._default_acceptance
-  services.healing-webhook.ticket_builder.build_ticket_payload → services.healing-webhook.ticket_builder._reproduction_for
   src.koruobserve.lifecycle._spawn → src.koruobserve.paths.logfile
   src.koruobserve.lifecycle._spawn → src.koruobserve.paths.runtime_dir
   src.koruobserve.lifecycle._spawn → src.koruobserve.paths.pidfile
@@ -520,3 +522,6 @@ EDGES:
   src.koruobserve.lifecycle.observe_up → src.koruobserve.lifecycle._spawn
   src.koruobserve.lifecycle.observe_down → src.koruobserve.lifecycle._stop_orphan_observe_processes
   src.koruobserve.lifecycle.observe_down → src.koruobserve.lifecycle._stop_pid
+  src.koruobserve.lifecycle.observe_down → src.koruobserve.paths.state_file
+  src.koruobserve.lifecycle.observe_status → src.koruobserve.lifecycle._read_pid
+  src.koruobserve.lifecycle.observe_status → src.koruobserve.lifecycle._is_alive

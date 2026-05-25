@@ -21,7 +21,6 @@ import threading
 import time
 import uuid
 from collections.abc import Mapping
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -62,6 +61,7 @@ from koru.autonomous_cycle import (
     AutoloopState,
     DiagnosticResult,
 )
+from koru.autonomous_cycle_bridge import run_cycle_with_compat as _run_cycle_with_compat
 from koru.autonomous_env import (
     apply_autonomous_env_overrides as _env_apply_autoloop_defaults,
 )
@@ -70,6 +70,15 @@ from koru.autonomous_startup import (
     format_post_startup_operator_hints,
     format_startup_banner,
     resolve_autopilot_ide_for_autonomous,
+)
+from koru.autonomous_up import (
+    AutonomousUpContext,
+    StopSignalState,
+    action_up as _autonomous_up_action_up,
+    autonomous_context_resource_kwargs as _autonomous_context_resource_kwargs_impl,
+    prepare_autonomous_startup_probe as _prepare_autonomous_startup_probe_impl,
+    prepare_autonomous_up_context as _prepare_autonomous_up_context_impl,
+    run_autonomous_up_loop as _run_autonomous_up_loop_impl,
 )
 from koru.autonomous_wup import (
     WupHealthResult,
@@ -435,97 +444,30 @@ def _run_idle_diagnostics(
     )
 
 
-def _run_cycle(
-    *,
-    cycle: int,
-    project: Path,
-    actor: str,
-    queue_name: str | None,
-    enable_scan: bool,
-    max_iterations: int,
-    enable_autopilot: bool,
-    autopilot_ide: str,
-    drive_prompt: str,
-    submit: bool,
-    include_semcod_artifacts: bool | None,
-    client: IDEControlClient | None,
-    state: AutoloopState | None = None,
-    idle_diagnostics: str = "off",
-    diagnostic_tickets: bool = False,
-    diagnostic_ticket_queue: str = "default",
-    diagnostic_ticket_priority: str = "high",
-    diagnostic_state_dir: Path | None = None,
-    wup_watch_enabled: bool = False,
-    wup_diagnostic_tickets: bool = True,
-    wup_ticket_queue: str = "default",
-    strict_diagnostics: bool = False,
-    autopilot_action: str = "drive",
-    autopilot_on_idle_only: bool = False,
-    autopilot_skip_on_diagnostics_fail: bool = True,
-    autopilot_skip_drive_idle_streak: int = 0,
-    autopilot_skip_statuses: str = "waiting_input",
-    scan_skip_if_clean: bool = False,
-    scan_skip_after: int = 1,
-    scan_after_idle_queue: bool = False,
-    scan_after_idle_min_interval_seconds: float = 0.0,
-    topology_integration: bool = True,
-    stdio_format: str = "human",
-    correlation_id: str = "",
-) -> tuple[ScanResult | None, QueueLoopResult, str, DiagnosticResult]:
+def _run_cycle(**kwargs: Any) -> tuple[ScanResult | None, QueueLoopResult, str, DiagnosticResult]:
     # Keep historical monkeypatch points on ``koru.autonomous`` working by
     # forwarding the current module callables into the canonical cycle module.
-    _autonomous_cycle_module.time = time
-    _autonomous_cycle_module.run_scan = run_scan
-    _autonomous_cycle_module.run_planfile_queue_loop = run_planfile_queue_loop
-    _autonomous_cycle_module._run_process = _run_process
-    _autonomous_cycle_module._run_shell_command = _run_shell_command
-    _autonomous_cycle_module._run_api_request = _run_api_request
-    _autonomous_cycle_module._run_llm_request = _run_llm_request
-    _autonomous_cycle_module._default_human_prompt = _default_human_prompt
-    _autonomous_cycle_module.resolve_idle_drive_prompt = resolve_idle_drive_prompt
-    _autonomous_cycle_module.build_prompt = build_prompt
-    _autonomous_cycle_module.write_autonomy_cycle_telemetry = write_autonomy_cycle_telemetry
-    _autonomous_cycle_module.create_nl_task = create_nl_task
-    _autonomous_cycle_module.is_component_enabled = is_component_enabled
-    _autonomous_cycle_module.is_pipeline_enabled = is_pipeline_enabled
-    _autonomous_cycle_module._run_idle_diagnostics = _run_idle_diagnostics
-    _autonomous_cycle_module._try_os_injector_fallback = _try_os_injector_fallback
-
-    return _autonomous_cycle_module.run_cycle(
-        cycle=cycle,
-        project=project,
-        actor=actor,
-        queue_name=queue_name,
-        enable_scan=enable_scan,
-        max_iterations=max_iterations,
-        enable_autopilot=enable_autopilot,
-        autopilot_ide=autopilot_ide,
-        drive_prompt=drive_prompt,
-        submit=submit,
-        include_semcod_artifacts=include_semcod_artifacts,
-        client=client,
-        state=state,
-        idle_diagnostics=idle_diagnostics,
-        diagnostic_tickets=diagnostic_tickets,
-        diagnostic_ticket_queue=diagnostic_ticket_queue,
-        diagnostic_ticket_priority=diagnostic_ticket_priority,
-        diagnostic_state_dir=diagnostic_state_dir,
-        wup_watch_enabled=wup_watch_enabled,
-        wup_diagnostic_tickets=wup_diagnostic_tickets,
-        wup_ticket_queue=wup_ticket_queue,
-        strict_diagnostics=strict_diagnostics,
-        autopilot_action=autopilot_action,
-        autopilot_on_idle_only=autopilot_on_idle_only,
-        autopilot_skip_on_diagnostics_fail=autopilot_skip_on_diagnostics_fail,
-        autopilot_skip_drive_idle_streak=autopilot_skip_drive_idle_streak,
-        autopilot_skip_statuses=autopilot_skip_statuses,
-        scan_skip_if_clean=scan_skip_if_clean,
-        scan_skip_after=scan_skip_after,
-        scan_after_idle_queue=scan_after_idle_queue,
-        scan_after_idle_min_interval_seconds=scan_after_idle_min_interval_seconds,
-        topology_integration=topology_integration,
-        stdio_format=stdio_format,
-        correlation_id=correlation_id,
+    return _run_cycle_with_compat(
+        kwargs,
+        cycle_module=_autonomous_cycle_module,
+        dependencies={
+            "time": time,
+            "run_scan": run_scan,
+            "run_planfile_queue_loop": run_planfile_queue_loop,
+            "_run_process": _run_process,
+            "_run_shell_command": _run_shell_command,
+            "_run_api_request": _run_api_request,
+            "_run_llm_request": _run_llm_request,
+            "_default_human_prompt": _default_human_prompt,
+            "resolve_idle_drive_prompt": resolve_idle_drive_prompt,
+            "build_prompt": build_prompt,
+            "write_autonomy_cycle_telemetry": write_autonomy_cycle_telemetry,
+            "create_nl_task": create_nl_task,
+            "is_component_enabled": is_component_enabled,
+            "is_pipeline_enabled": is_pipeline_enabled,
+            "_run_idle_diagnostics": _run_idle_diagnostics,
+            "_try_os_injector_fallback": _try_os_injector_fallback,
+        },
     )
 
 
@@ -877,35 +819,6 @@ def _maybe_run_interactive_onboarding(args: argparse.Namespace) -> object | None
     )
 
 
-@dataclass
-class StopSignalState:
-    stopped_by_sigterm: bool = False
-
-
-@dataclass
-class AutonomousUpContext:
-    args: argparse.Namespace
-    previous_stdio_format_env: str | None
-    strict_env: str | None
-    correlation_id: str
-    project: Path
-    startup_probe: object
-    client: Any
-    daemon: Any
-    thread: Any
-    socket_path: Path | None
-    autopilot_socket_observed_at_boot: bool
-    enable_scan: bool
-    queue_name: str | None
-    autopilot_ide: str
-    loop_state: Any
-    checkpoint_path: Path | None
-    restored_cycle: int | None
-    diagnostic_state_dir: Path | None
-    wup_process: Any
-    auto_pipeline_state: Any
-
-
 def _build_and_log_startup_probe(args: argparse.Namespace, project: Path) -> object:
     return _autonomous_runtime.build_and_log_startup_probe(
         args,
@@ -945,143 +858,54 @@ def _handle_autonomous_interrupt(
 
 
 def _prepare_autonomous_startup_probe(args: argparse.Namespace, project: Path) -> object:
-    install_koru_agent_coauthor_hook(
+    return _prepare_autonomous_startup_probe_impl(
+        args,
         project,
+        install_coauthor_hook=install_koru_agent_coauthor_hook,
+        build_and_log_startup_probe=_build_and_log_startup_probe,
         stdio_info=_stdio_info,
-        stdio_format=args.emit_events,
     )
-    return _build_and_log_startup_probe(args, project)
 
 
 def _autonomous_context_resource_kwargs(resources: tuple[object, ...]) -> dict[str, object]:
-    (
-        client,
-        daemon,
-        thread,
-        socket_path,
-        autopilot_socket_observed_at_boot,
-        enable_scan,
-        queue_name,
-        autopilot_ide,
-        loop_state,
-        checkpoint_path,
-        restored_cycle,
-        diagnostic_state_dir,
-        wup_process,
-        auto_pipeline_state,
-    ) = resources
-    return {
-        "client": client,
-        "daemon": daemon,
-        "thread": thread,
-        "socket_path": socket_path,
-        "autopilot_socket_observed_at_boot": autopilot_socket_observed_at_boot,
-        "enable_scan": enable_scan,
-        "queue_name": queue_name,
-        "autopilot_ide": autopilot_ide,
-        "loop_state": loop_state,
-        "checkpoint_path": checkpoint_path,
-        "restored_cycle": restored_cycle,
-        "diagnostic_state_dir": diagnostic_state_dir,
-        "wup_process": wup_process,
-        "auto_pipeline_state": auto_pipeline_state,
-    }
+    return _autonomous_context_resource_kwargs_impl(resources)
 
 
 def _prepare_autonomous_up_context(
     args: argparse.Namespace,
 ) -> tuple[AutonomousUpContext | None, int]:
-    previous_stdio_format_env, strict_env = _setup_autonomous_env_vars()
-    correlation_id, project, guard_rc = _setup_autonomous_session(args)
-    if guard_rc:
-        return None, guard_rc
-
-    startup_probe = _prepare_autonomous_startup_probe(args, project)
-    resources = _autonomous_resources.setup_autonomous_resources(
+    return _prepare_autonomous_up_context_impl(
         args,
-        project,
+        setup_env_vars=_setup_autonomous_env_vars,
+        setup_session=_setup_autonomous_session,
+        prepare_startup_probe=_prepare_autonomous_startup_probe,
+        setup_resources=_autonomous_resources.setup_autonomous_resources,
         enable_strict_plugin_policy=_enable_autonomous_strict_plugin_policy,
         setup_autopilot_daemon=_setup_autopilot_daemon,
         load_checkpoint=_load_loop_checkpoint,
     )
-    context_kwargs = _autonomous_context_resource_kwargs(resources)
-    return AutonomousUpContext(
-        args=args,
-        previous_stdio_format_env=previous_stdio_format_env,
-        strict_env=strict_env,
-        correlation_id=correlation_id,
-        project=project,
-        startup_probe=startup_probe,
-        **context_kwargs,
-    ), 0
 
 
 def _run_autonomous_up_loop(context: AutonomousUpContext) -> int:
-    stop_state = StopSignalState()
-    previous_sigterm = _install_sigterm_interrupt_handler(context.args, stop_state)
-    try:
-        _run_autonomous_pre_checks(
-            context.args,
-            context.project,
-            context.startup_probe,
-            context.socket_path,
-            context.autopilot_ide,
-            context.client,
-            context.correlation_id,
-        )
-
-        cycle = context.restored_cycle or 0
-        while True:
-            cycle += 1
-            should_exit = _run_autonomous_cycle(
-                cycle=cycle,
-                args=context.args,
-                project=context.project,
-                client=context.client,
-                daemon=context.daemon,
-                thread=context.thread,
-                socket_path=context.socket_path,
-                autopilot_socket_observed_at_boot=context.autopilot_socket_observed_at_boot,
-                queue_name=context.queue_name,
-                enable_scan=context.enable_scan,
-                autopilot_ide=context.autopilot_ide,
-                loop_state=context.loop_state,
-                checkpoint_path=context.checkpoint_path,
-                diagnostic_state_dir=context.diagnostic_state_dir,
-                wup_process=context.wup_process,
-                correlation_id=context.correlation_id,
-                auto_pipeline_state=context.auto_pipeline_state,
-            )
-            if should_exit:
-                return 0
-    except KeyboardInterrupt:
-        return _handle_autonomous_interrupt(
-            context.args,
-            correlation_id=context.correlation_id,
-            stopped_by_sigterm=stop_state.stopped_by_sigterm,
-        )
-    finally:
-        _restore_autonomous_env_vars(context.strict_env)
-        _cleanup_autonomous_session(
-            context.previous_stdio_format_env,
-            previous_sigterm,
-            context.daemon,
-            context.thread,
-            context.wup_process,
-            context.args.emit_events,
-        )
+    return _run_autonomous_up_loop_impl(
+        context,
+        install_sigterm_handler=_install_sigterm_interrupt_handler,
+        run_pre_checks=_run_autonomous_pre_checks,
+        run_autonomous_cycle=_run_autonomous_cycle,
+        handle_interrupt=_handle_autonomous_interrupt,
+        restore_env_vars=_restore_autonomous_env_vars,
+        cleanup_session=_cleanup_autonomous_session,
+    )
 
 
 def _action_up(args: argparse.Namespace) -> int:
-    try:
-        _maybe_run_interactive_onboarding(args)
-    except KeyboardInterrupt:
-        _stdio_info("\nkoru auto onboarding: interrupted", fmt=args.emit_events)
-        return 130
-    context, rc = _prepare_autonomous_up_context(args)
-    if context is None:
-        return rc
-    return _run_autonomous_up_loop(context)
+    return _autonomous_up_action_up(
+        args,
+        maybe_run_interactive_onboarding=_maybe_run_interactive_onboarding,
+        prepare_up_context=_prepare_autonomous_up_context,
+        run_up_loop=_run_autonomous_up_loop,
+        stdio_info=_stdio_info,
+    )
 
 
 def _normalize_autonomous_argv(argv: list[str]) -> list[str]:

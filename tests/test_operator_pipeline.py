@@ -517,6 +517,73 @@ sprint:
     assert [_ticket_args(call) for call in calls] == [["ticket", "done", "PLF-1280"]]
 
 
+def test_run_startup_operator_pipeline_keeps_plugin_ticket_with_matching_dedupe_key(
+    tmp_path: Path,
+    probe: AutonomousStartupProbe,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (tmp_path / ".cursor").mkdir()
+    (tmp_path / ".cursor" / "mcp.json").write_text(
+        json.dumps({"mcpServers": {"koru": {"command": "koru", "args": ["mcp-serve"]}}}),
+        encoding="utf-8",
+    )
+    marker_dir = tmp_path / ".planfile" / ".koru" / "operator-steps"
+    marker_dir.mkdir(parents=True)
+    marker = marker_dir / "autopilot_plugin.ticket"
+    marker.write_text("PLF-1280", encoding="utf-8")
+    (tmp_path / ".planfile" / "sprints").mkdir(parents=True)
+    (tmp_path / ".planfile" / "config.yaml").write_text(
+        "prefix: PLF\nnext_id: 1281\n",
+        encoding="utf-8",
+    )
+    (tmp_path / ".planfile" / "sprints" / "current.yaml").write_text(
+        """
+sprint:
+    name: current
+    tickets:
+        PLF-1280:
+            id: PLF-1280
+            name: "[OPERATOR] Autopilot: Connect + plugin w czacie"
+            status: waiting_input
+            labels: [koru, operator, auto-pipeline, step:autopilot_plugin]
+            description: "legacy detail text that no longer matches"
+            execution:
+                queue: operator
+            source:
+                context:
+                    step_id: autopilot_plugin
+                    detail: "legacy detail text that no longer matches"
+                    task_command: "koru ide doctor --ide cursor --fix --gc-sockets"
+                    dedupe_key: "koru:operator-pipeline:autopilot-plugin:cursor"
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(op, "_planfile_api_ok", lambda _p: (True, "ok"))
+    monkeypatch.setattr(op, "_host_injectors_ok", lambda: (True, "ok"))
+    monkeypatch.setattr(op, "_os_profile_ok", lambda _i, _p: (True, "ok"))
+
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, **_kwargs):
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0, stdout="done", stderr="")
+
+    monkeypatch.setattr(op.subprocess, "run", fake_run)
+
+    result = op.run_startup_operator_pipeline(
+        project=tmp_path,
+        probe=probe,
+        plugin_connected=False,
+        create_tickets=True,
+    )
+
+    plugin_step = next(s for s in result.steps if s.step_id == "autopilot_plugin")
+    assert result.tickets_created == []
+    assert plugin_step.ticket_id == "PLF-1280"
+    assert marker.read_text(encoding="utf-8") == "PLF-1280"
+    assert calls == []
+
+
 def test_run_startup_operator_pipeline_closes_resolved_marker_ticket(
     tmp_path: Path,
     probe: AutonomousStartupProbe,

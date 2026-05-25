@@ -974,9 +974,10 @@ def handle_shutdown(daemon: Any, client: _Client, msg: Message) -> None:
 
 
 def handle_ping(daemon: Any, client: _Client, msg: Message) -> None:
-    daemon.log(f"ping from {client.addr} role={client.role}")
     if client.role == "unknown":
         client.role = "cli"
+    else:
+        daemon.log(f"ping from {client.addr} role={client.role}")
     daemon._send(client, ack(msg.id or "ping", info={"pong": True}).encode())
 
 

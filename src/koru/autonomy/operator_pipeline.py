@@ -37,6 +37,7 @@ class OperatorStep:
     status: StepStatus
     detail: str
     task_command: str | None = None
+    dedupe_key: str | None = None
     ticket_id: str | None = None
 
 
@@ -117,6 +118,9 @@ def _ticket_text(ticket: dict[str, Any]) -> str:
 def _ticket_matches_current_step(ticket: dict[str, Any], step: OperatorStep) -> bool:
     source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}
     context = source.get("context") if isinstance(source.get("context"), dict) else {}
+    context_dedupe = str(context.get("dedupe_key") or "").strip()
+    if step.dedupe_key and context_dedupe:
+        return context_dedupe == step.dedupe_key
     if context.get("step_id") == step.step_id:
         context_detail = context.get("detail")
         context_command = context.get("task_command")
@@ -559,6 +563,7 @@ def _build_plugin_step(
         status=plug_status,
         detail=plug_detail,
         task_command=plug_task,
+        dedupe_key=f"koru:operator-pipeline:autopilot-plugin:{ide}",
     )
 
 
@@ -701,6 +706,10 @@ def _create_step_ticket(
             },
             "inputs": {"script": script},
         }
+
+    source_context = scaffold.get("source_context")
+    if isinstance(source_context, dict) and step.dedupe_key:
+        source_context["dedupe_key"] = step.dedupe_key
 
     from koru.activity_log import activity
 
@@ -900,6 +909,7 @@ def _process_operator_step(
         status=step.status,
         detail=step.detail,
         task_command=step.task_command,
+        dedupe_key=step.dedupe_key,
         ticket_id=ticket_id,
     )
 
