@@ -3,6 +3,8 @@ from __future__ import annotations
 import functools
 import json
 import os
+import select
+import socket
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -76,10 +78,16 @@ def _env_truthy(name: str) -> bool:
     return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
 
 
-def _prefer_keyboard_drive() -> bool:
-    return _env_truthy("KORU_AUTOPILOT_PREFER_KEYBOARD") or _env_truthy(
-        "KORU_AUTOPILOT_VISIBLE_TYPING",
-    )
+from koruide.daemon.handlers_drive import (
+    _drive_via_keyboard,
+    _drive_via_keyboard_backend,
+    _drive_via_os_injector_backend,
+    _drive_via_plugin,
+    _prefer_keyboard_drive,
+    _resolve_keyboard_drive_selection,
+    _try_os_injector_drive,
+    handle_drive,
+)
 
 
 def _plugin_rejection_log_interval_seconds() -> float:
@@ -122,421 +130,6 @@ def _default_handoff(project: Path) -> Callable[[dict[str, Any]], str]:
         return render_markdown_handoff(ctx)
 
     return _build
-
-
-def handle_drive(daemon: Any, client: _Client, msg: Message) -> None:
-    if client.role == "unknown":
-        client.role = "cli"
-    text = msg.data.get("text")
-    if not isinstance(text, str) or not text:
-        daemon._send(client, error(msg.id, "missing 'text'").encode())
-        return
-    raw_ide = msg.data.get("ide") if isinstance(msg.data.get("ide"), str) else None
-    normalized_ide = normalize_ide_id(raw_ide)
-    ide_pref = normalized_ide if normalized_ide not in (None, "auto") else None
-    submit = bool(msg.data.get("submit", True))
-    require_plugin = bool(msg.data.get("require_plugin", False))
-    daemon.log(
-        "drive request: "
-        f"ide={raw_ide or 'auto'}, chars={len(text)}, submit={submit}, "
-        f"require_plugin={require_plugin}"
-    )
-    plugin = daemon._plugin_for(ide_pref)
-    if plugin is not None:
-        daemon.log(
-            "drive: found plugin for "
-            f"ide={plugin.ide} (version={plugin.version}, "
-            f"protocol={plugin.protocol_version})"
-        )
-    else:
-        daemon.log(f"drive: no plugin found for ide={ide_pref}")
-    if plugin is not None and not _prefer_keyboard_drive():
-        daemon.log(f"drive: routing via plugin (ide={plugin.ide})")
-        _drive_via_plugin(daemon, client, msg, plugin, text, submit, require_plugin)
-        return
-    if require_plugin:
-        label = ide_pref or "auto"
-        message = DriveOrchestrator.plugin_required_message(ide_pref)
-        daemon._send(client, error(msg.id, message).encode())
-        daemon.log(f"drive blocked: {message}")
-        daemon.audit.record(
-            "drive",
-            ide=label,
-            backend="plugin_required",
-            chars=len(text),
-            submit=submit,
-            ok=False,
-            error=message,
-        )
-        return
-    daemon.log("drive: routing via keyboard/os_injector fallback")
-    _drive_via_keyboard(daemon, client, msg, ide_pref, text, submit)
-
-
-def _drive_via_plugin(
-    daemon: Any,
-    client: _Client,
-    msg: Message,
-    plugin: _Client,
-    text: str,
-    submit: bool,
-    require_plugin: bool,
-) -> None:
-    """Forward a drive request to a connected plugin for that IDE."""
-    daemon.log(
-        "drive_via_plugin: "
-        f"ide={plugin.ide}, version={plugin.version}, "
-        f"protocol={plugin.protocol_version}, capabilities={plugin.capabilities}"
-    )
-    corr = msg.id or f"drive-{time.monotonic_ns():x}"
-    version_info = DriveOrchestrator.plugin_version_info(
-        plugin_ide=plugin.ide,
-        connected_version=plugin.version,
-        protocol_version=plugin.protocol_version,
-        capabilities=plugin.capabilities,
-    )
-    daemon.log(f"drive_via_plugin: version_info={version_info}")
-    if version_info.get("plugin_version_mismatch"):
-        summary = DriveOrchestrator.plugin_ack_summary(version_info)
-        daemon.log(f"drive plugin version drift: {summary}")
-        daemon.audit.record(
-            "plugin_version_mismatch",
-            ide=plugin.ide,
-            plugin_version=version_info.get("plugin_version"),
-            expected_plugin_version=version_info.get("expected_plugin_version"),
-            policy=version_info.get("plugin_version_policy"),
-        )
-    if DriveOrchestrator.should_block_plugin_version(version_info):
-        message = DriveOrchestrator.plugin_version_block_message(version_info)
-        daemon._send(client, error(msg.id, message).encode())
-        daemon.log(f"drive blocked: {message}")
-        daemon.audit.record(
-            "drive",
-            ide=plugin.ide,
-            backend="plugin",
-            chars=len(text),
-            submit=submit,
-            ok=False,
-            error=message,
-            plugin_version=version_info.get("plugin_version"),
-            expected_plugin_version=version_info.get("expected_plugin_version"),
-        )
-        return
-    plugin.awaiting_plugin = (client, corr, submit, plugin.ide, text, require_plugin)
-    daemon.log(
-        "drive_via_plugin: route_decision "
-        f"corr={corr} plugin_fd={plugin.sock.fileno()} cli_fd={client.sock.fileno()} "
-        f"ide={plugin.ide} submit={submit} require_plugin={require_plugin} "
-        "transport=plugin phases=focus_open,input_busy_probe,paste,submit",
-    )
-    emit_intent(
-        daemon.project,
-        corr=corr,
-        goal="send_prompt",
-        target="ide.chat",
-        ide=plugin.ide,
-        chars=len(text),
-    )
-    emit_decision(
-        daemon.project,
-        corr=corr,
-        name="route_transport",
-        chosen="plugin",
-        because="plugin_connected",
-        ide=plugin.ide,
-        require_plugin=require_plugin,
-        plugin_fd=plugin.sock.fileno(),
-        cli_fd=client.sock.fileno(),
-    )
-    record_integration_action(
-        project=daemon.project,
-        action="drive.route",
-        intent="deliver prompt to IDE chat and request submit",
-        actor="autopilot-daemon",
-        target=plugin.ide,
-        transport="plugin-socket",
-        phase="route",
-        outcome="selected",
-        evidence=(
-            f"corr={corr}; plugin_fd={plugin.sock.fileno()}; cli_fd={client.sock.fileno()}; "
-            f"submit={submit}; require_plugin={require_plugin}"
-        ),
-        next_step="send chat.send to plugin",
-        data={
-            "corr": corr,
-            "plugin_fd": plugin.sock.fileno(),
-            "cli_fd": client.sock.fileno(),
-            "submit": submit,
-            "require_plugin": require_plugin,
-        },
-    )
-    emit_action(
-        daemon.project,
-        corr=corr,
-        name="drive",
-        chars=len(text),
-        submit=submit,
-        transport="plugin",
-        ide=plugin.ide,
-    )
-    plugin_socket_command(
-        daemon.project,
-        corr=corr,
-        message_type="chat.send",
-        ide=plugin.ide,
-        payload={
-            "text": text,
-            "text_len": len(text),
-            "submit": submit,
-            "require_plugin": require_plugin,
-        },
-        actor="autopilot-daemon",
-        replayable=True,
-    )
-    daemon._send(plugin, chat_send(text, submit=submit, id=corr).encode())
-    daemon._last_chat_send_at = time.monotonic()
-    preview = text.replace("\n", " ")[:100]
-    daemon.log(
-        f"drive → plugin/{plugin.ide}: wklejam do czatu ({len(text)} zn, "
-        f"submit={submit}) «{preview}»",
-    )
-    for phase_name in ("focus_open", "input_busy_probe", "paste"):
-        emit_phase(
-            daemon.project,
-            corr=corr,
-            name=phase_name,
-            status="attempted",
-            ide=plugin.ide,
-        )
-    emit_phase(
-        daemon.project,
-        corr=corr,
-        name="submit",
-        status="awaiting_ack" if submit else "not_requested",
-        ide=plugin.ide,
-    )
-    record_integration_action(
-        project=daemon.project,
-        action="chat.send",
-        intent="paste prompt into current chat surface",
-        actor="autopilot-daemon",
-        target=plugin.ide,
-        transport="plugin-socket",
-        phase="paste+submit",
-        outcome="requested",
-        evidence=f"chars={len(text)}; submit={submit}; preview={preview}",
-        next_step="await plugin ack with verification",
-        data={"chars": len(text), "submit": submit, "corr": corr},
-    )
-    daemon.audit.record(
-        "drive",
-        ide=plugin.ide,
-        backend="plugin",
-        chars=len(text),
-        submit=submit,
-        ok=True,
-    )
-
-
-def _try_os_injector_drive(
-    daemon: Any, target_id: str, text: str, submit: bool
-) -> dict[str, Any] | None:
-    """Run :mod:`os_injector` when configured; ``None`` means use keyboard."""
-    daemon.log(f"try_os_injector_drive: target_id={target_id}, chars={len(text)}, submit={submit}")
-    from koruide import os_injector as oi
-
-    try:
-        result = oi.try_drive_with_profile(
-            tool_id=target_id,
-            text=text,
-            submit=submit,
-            project=daemon.project,
-            cli_dry_run=False,
-            _log=daemon.log,
-        )
-        if result:
-            daemon.log(
-                f"try_os_injector_drive: SUCCESS backend={result.get('backend')}, "
-                f"chat_coords=({result.get('chat_x')}, {result.get('chat_y')}), "
-                f"input_method={result.get('input_method')}"
-            )
-        else:
-            daemon.log(
-                f"try_os_injector_drive: no profile for '{target_id}' — "
-                f"uruchom: koru autopilot calibrate --ide {target_id}"
-            )
-        return result
-    except oi.OsInjectorError as exc:
-        daemon.log(f"try_os_injector_drive: FAILED: {exc}")
-        raise InjectorError(str(exc)) from exc
-
-
-def _drive_via_keyboard(
-    daemon: Any,
-    client: _Client,
-    msg: Message,
-    ide_pref: str | None,
-    text: str,
-    submit: bool,
-) -> None:
-    """Fallback: OS injector profile (X11) or :class:`Injector` keyboard sim."""
-    ide_arg = ide_pref if ide_pref else "auto"
-    daemon.log(f"drive_via_keyboard: ide_arg={ide_arg}, chars={len(text)}, submit={submit}")
-    target_id, profile_id, target, preview = _resolve_keyboard_drive_selection(
-        daemon=daemon,
-        ide_arg=ide_arg,
-        ide_pref=ide_pref,
-        text=text,
-    )
-    handled = _drive_via_os_injector_backend(
-        daemon=daemon,
-        client=client,
-        msg=msg,
-        target_id=target_id,
-        profile_id=profile_id,
-        text=text,
-        submit=submit,
-        preview=preview,
-        target=target,
-    )
-    if handled:
-        return
-
-    _drive_via_keyboard_backend(
-        daemon=daemon,
-        client=client,
-        msg=msg,
-        target_id=target_id,
-        text=text,
-        submit=submit,
-        preview=preview,
-        target=target,
-    )
-
-
-def _resolve_keyboard_drive_selection(
-    *,
-    daemon: Any,
-    ide_arg: str,
-    ide_pref: str | None,
-    text: str,
-) -> tuple[str, str, Any, str]:
-    target_id, profile_id, selection = resolve_drive_target(
-        ide_arg,
-        None,
-        project=daemon.project,
-        _log=daemon.log,
-    )
-    daemon.log(
-        "drive_via_keyboard: "
-        f"resolved target_id={target_id}, profile_id={profile_id}, "
-        f"selection={selection}"
-    )
-    if ide_arg == "auto":
-        daemon.log(f"drive auto-selected {profile_id} ({selection})")
-    preview = text.replace("\n", " ")[:100]
-    target = pick_target(detect_running_ides(), prefer=ide_pref)
-    return target_id, profile_id, target, preview
-
-
-def _drive_via_os_injector_backend(
-    *,
-    daemon: Any,
-    client: _Client,
-    msg: Message,
-    target_id: str,
-    profile_id: str,
-    text: str,
-    submit: bool,
-    preview: str,
-    target: Any,
-) -> bool:
-    try:
-        # Call via the AutopilotDaemon instance method (which proxies back
-        # to ``_try_os_injector_drive`` here) so tests can
-        # ``monkeypatch.setattr(daemon, "_try_os_injector_drive", fake)``.
-        os_res = daemon._try_os_injector_drive(profile_id, text, submit)
-    except InjectorError as exc:
-        daemon.log(f"drive → os_injector/{profile_id} failed; trying keyboard fallback: {exc}")
-        return False
-    if os_res is None:
-        return False
-    daemon.log(
-        f"drive → os_injector/{profile_id}: klik ({os_res.get('chat_x')}, "
-        f"{os_res.get('chat_y')}) + {os_res.get('input_method', 'type')} "
-        f"«{preview}»",
-    )
-    info: dict[str, Any] = {
-        "backend": str(os_res.get("backend", "os_injector")),
-        "submitted": bool(os_res.get("submitted", submit)),
-    }
-    if os_res.get("dry_run"):
-        info["dry_run"] = True
-    tid = os_res.get("tool_id")
-    if isinstance(tid, str):
-        info["tool_id"] = tid
-    if target is not None:
-        info["ide"] = target.to_dict()
-    daemon._send(client, ack(msg.id or "", info=info).encode())
-    daemon.log(
-        f"drive → {target_id} via {info['backend']}"
-        f" ({len(text)} chars, submit={submit})",
-    )
-    daemon.audit.record(
-        "drive",
-        ide=target_id,
-        backend=str(info["backend"]),
-        chars=len(text),
-        submit=submit,
-        ok=True,
-    )
-    return True
-
-
-def _drive_via_keyboard_backend(
-    *,
-    daemon: Any,
-    client: _Client,
-    msg: Message,
-    target_id: str,
-    text: str,
-    submit: bool,
-    preview: str,
-    target: Any,
-) -> None:
-    backend = daemon.injector.select_backend()
-    daemon.log(
-        f"drive → keyboard/{target_id}: {backend or 'no-backend'} "
-        f"({len(text)} zn) «{preview}»",
-    )
-    try:
-        result = daemon.injector.type_text(text, ide=target_id, submit=submit)
-    except InjectorError as exc:
-        daemon._send(client, error(msg.id, str(exc)).encode())
-        daemon.log(f"drive failed: {exc}")
-        daemon.audit.record(
-            "drive",
-            ide=target_id,
-            backend="keyboard",
-            chars=len(text),
-            submit=submit,
-            ok=False,
-            error=str(exc),
-        )
-        return
-    info = {"backend": result.backend, "submitted": result.submitted}
-    if target is not None:
-        info["ide"] = target.to_dict()
-    daemon._send(client, ack(msg.id or "", info=info).encode())
-    daemon.log(f"drive → {target_id} via {result.backend} ({len(text)} chars, submit={submit})")
-    daemon.audit.record(
-        "drive",
-        ide=target_id,
-        backend=result.backend,
-        chars=len(text),
-        submit=submit,
-        ok=True,
-    )
 
 
 def _extract_hello_metadata(msg: Message) -> tuple[str | None, str | None, int | None, list[str]]:
@@ -792,7 +385,21 @@ def _cli_client_still_connected(daemon: Any, cli_client: _Client) -> bool:
     fd = cli_client.sock.fileno()
     if fd < 0:
         return False
-    return getattr(daemon, "_clients", {}).get(fd) is cli_client
+    if getattr(daemon, "_clients", {}).get(fd) is not cli_client:
+        return False
+    try:
+        readable, _, _ = select.select([cli_client.sock], [], [], 0)
+    except (OSError, ValueError):
+        return False
+    if not readable:
+        return True
+    flags = getattr(socket, "MSG_PEEK", 0) | getattr(socket, "MSG_DONTWAIT", 0)
+    try:
+        return bool(cli_client.sock.recv(1, flags))
+    except BlockingIOError:
+        return True
+    except OSError:
+        return False
 
 
 def _relay_message_sent_ack(daemon: Any, client: _Client, msg: Message) -> bool:
@@ -831,7 +438,11 @@ def _relay_message_sent_ack(daemon: Any, client: _Client, msg: Message) -> bool:
             "treating as late ack"
         )
         return True
-    daemon._send(cli_client, ack(corr, ok=True, info=info).encode())
+    if not daemon._send(cli_client, ack(corr, ok=True, info=info).encode()):
+        daemon.log(
+            "drive → plugin event completion arrived after CLI client disconnected; "
+            "treating as late ack"
+        )
     return True
 
 
@@ -961,7 +572,11 @@ def _send_plugin_ack_reply(
         )
         return
     relay = ack(corr, ok=plugin_ok, info=_cap_ack_info_for_cli(info))
-    daemon._send(cli_client, relay.encode())
+    if not daemon._send(cli_client, relay.encode()):
+        daemon.log(
+            "drive → plugin ack arrived after CLI client disconnected; "
+            "treating as late ack"
+        )
 
 
 def _annotated_plugin_ack_info(

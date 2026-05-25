@@ -1163,6 +1163,24 @@ def test_plugin_ack_after_cli_disconnect_is_logged_as_late_ack(
         plugin.close()
 
 
+def test_cli_client_still_connected_detects_peer_eof() -> None:
+    """A still-registered CLI fd can already be half-closed by the peer."""
+    from koruide.daemon.handlers import _cli_client_still_connected
+    from koruide.daemon.protocol import _Client
+
+    daemon_sock, peer_sock = socket.socketpair()
+    daemon_sock.setblocking(False)
+    client = _Client(sock=daemon_sock, addr="fd-test", role="cli")
+    daemon = type("Daemon", (), {"_clients": {daemon_sock.fileno(): client}})()
+
+    try:
+        assert _cli_client_still_connected(daemon, client) is True
+        peer_sock.close()
+        assert _cli_client_still_connected(daemon, client) is False
+    finally:
+        daemon_sock.close()
+
+
 def test_newer_plugin_connection_replaces_stale_same_ide_client(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

@@ -6,6 +6,15 @@ from pathlib import Path
 from typing import Any
 
 from koru import autonomous_plugin_runtime as plugin_runtime
+from koru.control_commands import desktop_gui_command, shell_command
+from koru.observability_events import (
+    emit_blocker,
+    emit_decision,
+    emit_failure,
+    emit_intent,
+    emit_next,
+)
+from koru.observability_writer import emit_terminal_observability_path
 
 
 def prepare_plugin_wait(
@@ -257,7 +266,14 @@ def wait_for_plugin_connection(
         "autopilot drive will be skipped until it connects",
         fmt=args.emit_events,
     )
-    if plugin_install_status in {"installed", "already_installed"}:
+    emitted_trace = _emit_plugin_bootstrap_blocker_trace(
+        project,
+        autopilot_ide=autopilot_ide,
+        reason=reason,
+        wait_seconds=wait_seconds,
+        plugin_install_status=plugin_install_status,
+    )
+    if plugin_install_status in {"installed", "already_installed"} and not emitted_trace:
         emit_reload_lines(
             autopilot_ide,
             emit_fmt=args.emit_events,
@@ -266,7 +282,89 @@ def wait_for_plugin_connection(
     return False
 
 
+def _emit_plugin_bootstrap_blocker_trace(
+    project: Path | None,
+    *,
+    autopilot_ide: str,
+    reason: str,
+    wait_seconds: float,
+    plugin_install_status: str,
+) -> bool:
+    if project is None:
+        return False
+    corr = f"bootstrap-plugin-{autopilot_ide}"
+    events = [
+        emit_intent(
+            project,
+            corr=corr,
+            goal="prepare_ide_autopilot_plugin",
+            target=autopilot_ide,
+            ide=autopilot_ide,
+            require_plugin=True,
+        ),
+        emit_decision(
+            project,
+            corr=corr,
+            name="plugin_bootstrap_gate",
+            chosen="skip",
+            because="plugin_not_connected",
+            ide=autopilot_ide,
+            wait_seconds=wait_seconds,
+            install_status=plugin_install_status,
+        ),
+        emit_failure(
+            project,
+            corr=corr,
+            code="plugin_not_connected",
+            message=reason,
+            verification="plugin_connected",
+            ide=autopilot_ide,
+        ),
+        emit_blocker(
+            project,
+            corr=corr,
+            name="plugin_not_connected",
+            because=reason,
+            ide=autopilot_ide,
+            status="bootstrap_skipped",
+        ),
+        emit_next(
+            project,
+            corr=corr,
+            action="reload_reconnect_plugin",
+            ide=autopilot_ide,
+            decision_kind="plugin_bootstrap_gate",
+        ),
+        desktop_gui_command(
+            project,
+            corr=corr,
+            operation="command_palette_sequence",
+            backend="command_palette",
+            target=autopilot_ide,
+            payload={
+                "commands": [
+                    "Developer: Reload Window",
+                    "koru: Connect autopilot daemon",
+                ],
+                "reason": "plugin_not_connected",
+            },
+            actor="operator-guidance",
+            replayable=False,
+        ),
+        shell_command(
+            project,
+            corr=corr,
+            argv=["koru", "autopilot", "status", "--explain"],
+            actor="operator-guidance",
+            replayable=True,
+        ),
+    ]
+    emit_terminal_observability_path(events)
+    return True
+
+
 __all__ = [
+    "_emit_plugin_bootstrap_blocker_trace",
     "force_reload_if_extension_host_stale",
     "prepare_plugin_wait",
     "retry_plugin_wait_after_reload",

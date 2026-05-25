@@ -254,7 +254,8 @@ def resolve_autopilot_ide_for_autonomous(
     if raw != "auto":
         route = resolve_ide_route_fn(cli_autopilot_ide=raw)
         return route.autopilot_ide, f"cli:{raw}"
-    if lane and lane in _PLUGIN_IDE_LANES:
+    # Respect the lane even for non-plugin IDEs (e.g., jetbrains) when explicitly set
+    if lane and lane != "auto":
         return lane, "lane"
     route = resolve_ide_route_fn(cli_autopilot_ide="auto")
     return route.autopilot_ide, "router:auto"

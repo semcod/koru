@@ -4,15 +4,18 @@ from __future__ import annotations
 
 import os
 import sys
-from datetime import datetime
+from dataclasses import replace
+from datetime import UTC, datetime
 from pathlib import Path
 
 from koru.cqrs.event_store import JsonlEventStore, StoredEvent, project_event_store_path
 from koru.observability_dsl import (
     OBSERVABILITY_CONTEXT,
     KoruObsEvent,
+    render_compact_observability_line,
     render_observability_path,
     stored_event_to_compact_line,
+    stored_event_to_dsl,
 )
 
 DEFAULT_OBSERVABILITY_EVENT_FILE = "events/observability.jsonl"
@@ -40,6 +43,14 @@ def _emit_terminal_observability_line(stored: StoredEvent) -> None:
     print(stored_event_to_compact_line(stored), file=sys.stderr, flush=True)
 
 
+def _compact_utc_time() -> str:
+    return datetime.now(UTC).strftime("%H:%M:%S")
+
+
+def _utc_now() -> str:
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
+
+
 def emit_terminal_observability_path(events: list[KoruObsEvent]) -> None:
     """Emit a one-line terminal summary for an already-persisted trace slice."""
     if not observability_terminal_enabled():
@@ -47,7 +58,7 @@ def emit_terminal_observability_path(events: list[KoruObsEvent]) -> None:
     path = render_observability_path(events)
     if path.startswith("OBS "):
         path = path[len("OBS "):]
-    print(f"[{datetime.now().astimezone():%H:%M:%S}] koru ▸ OBS-PATH: {path}", file=sys.stderr)
+    print(f"[{_compact_utc_time()}] koru ▸ OBS-PATH: {path}", file=sys.stderr)
 
 
 def write_observability_event(
@@ -59,6 +70,7 @@ def write_observability_event(
     emit_terminal: bool | None = None,
 ) -> StoredEvent:
     """Append an observability event and optionally mirror it as DSL text."""
+    terminal_event = event if event.ts else replace(event, ts=_utc_now())
     active_project = (project or Path.cwd()).resolve()
     active_store = store or JsonlEventStore(observability_event_store_path(active_project))
     stored = active_store.append(
@@ -78,12 +90,12 @@ def write_observability_event(
         path = observability_dsl_log_path(active_project)
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
-            handle.write(event.to_dsl() + "\n\n")
+            handle.write(stored_event_to_dsl(stored) + "\n\n")
     should_emit_terminal = (
         observability_terminal_enabled() if emit_terminal is None else emit_terminal
     )
     if should_emit_terminal:
-        _emit_terminal_observability_line(stored)
+        print(render_compact_observability_line(terminal_event), file=sys.stderr, flush=True)
     return stored
 
 
@@ -109,6 +121,7 @@ def try_write_observability_event(
 __all__ = [
     "DEFAULT_OBSERVABILITY_DSL_FILE",
     "DEFAULT_OBSERVABILITY_EVENT_FILE",
+    "_compact_utc_time",
     "emit_terminal_observability_path",
     "observability_dsl_log_path",
     "observability_event_store_path",

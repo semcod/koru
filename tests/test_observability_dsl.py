@@ -2,10 +2,15 @@ from __future__ import annotations
 
 import json
 from argparse import Namespace
+from datetime import UTC, datetime
 
 from koru.autonomous_cycle_orchestrator import (
     _emit_autopilot_observability_outcome,
     _plugin_gate_status,
+)
+from koru.autonomous_plugin_wait import (
+    _emit_plugin_bootstrap_blocker_trace,
+    wait_for_plugin_connection,
 )
 from koru.autopilot.cli_command import _action_trace
 from koru.control_commands import (
@@ -418,7 +423,19 @@ def test_autonomy_failed_drive_emits_blocker_and_next(tmp_path) -> None:
     assert rows[1]["payload"]["data"]["action"] == "retry_next_cycle"
 
 
-def test_plugin_gate_skip_emits_semantic_observability_trace(tmp_path, capsys) -> None:
+def test_plugin_gate_skip_emits_semantic_observability_trace(
+    tmp_path, capsys, monkeypatch
+) -> None:
+    import koru.observability_writer as writer
+
+    class _FixedDatetime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            assert tz is UTC
+            return cls(2026, 5, 25, 17, 43, 7, tzinfo=UTC)
+
+    monkeypatch.setattr(writer, "datetime", _FixedDatetime)
+
     class _Client:
         def status(self) -> dict[str, object]:
             return {"plugins": []}
@@ -465,9 +482,89 @@ def test_plugin_gate_skip_emits_semantic_observability_trace(tmp_path, capsys) -
     assert rows[2]["payload"]["data"]["code"] == "plugin_not_connected"
     assert rows[4]["payload"]["data"]["action"] == "reload_reconnect_plugin"
     terminal = capsys.readouterr().err
+    assert any(
+        line.startswith("[17:43:07] koru ▸ OBS-PATH:")
+        for line in terminal.splitlines()
+    )
     assert "OBS-PATH:" in terminal
     assert "intent(deliver_prompt_to_ide_chat) -> decision(skip)" in terminal
     assert "failure(plugin_not_connected)" in terminal
+
+
+def test_plugin_bootstrap_blocker_emits_control_command_dsl(tmp_path, capsys) -> None:
+    emitted = _emit_plugin_bootstrap_blocker_trace(
+        tmp_path,
+        autopilot_ide="vscodium",
+        reason="daemon status plugin list is empty",
+        wait_seconds=5.0,
+        plugin_install_status="already_installed",
+    )
+
+    assert emitted is True
+    rows = [
+        json.loads(raw)
+        for raw in observability_event_store_path(tmp_path).read_text(encoding="utf-8").splitlines()
+    ]
+    assert [row["event_type"] for row in rows] == [
+        "autopilot.intent",
+        "autopilot.route.decision",
+        "autopilot.drive.failed",
+        "autonomy.blocker",
+        "autonomy.next",
+        "control.command",
+        "control.command",
+    ]
+    assert {row["payload"]["corr"] for row in rows} == {"bootstrap-plugin-vscodium"}
+    gui_command = rows[5]["payload"]["data"]
+    assert gui_command["surface"] == "desktop_gui"
+    assert gui_command["operation"] == "command_palette_sequence"
+    assert gui_command["replayable"] is False
+    shell = rows[6]["payload"]["data"]
+    assert shell["surface"] == "shell_cli"
+    assert shell["args"]["argv"] == ["koru", "autopilot", "status", "--explain"]
+    terminal = capsys.readouterr().err
+    assert "OBS-PATH:" in terminal
+    assert "command(desktop_gui command_palette_sequence)" in terminal
+    assert "command(shell_cli koru)" in terminal
+
+
+def test_plugin_wait_trace_replaces_legacy_reload_lines(tmp_path) -> None:
+    messages: list[str] = []
+    reload_lines: list[str] = []
+
+    class _Client:
+        pass
+
+    result = wait_for_plugin_connection(
+        Namespace(autopilot_plugin_wait_seconds=0.0, emit_events="text"),
+        "vscodium",
+        "already_installed",
+        None,
+        client=_Client(),
+        project=tmp_path,
+        wait_for_plugin=lambda *_args, **_kwargs: False,
+        stdio_info=lambda msg, **_kwargs: messages.append(msg),
+        plugin_status_reason=lambda *_args: "daemon status plugin list is empty",
+        plugin_blocker_line=lambda reason, ide: f"blocker {ide} {reason}",
+        plugin_reason_requires_reload=lambda _reason: True,
+        retry_after_reload=lambda *_args, **_kwargs: None,
+        emit_reload_lines=lambda ide, **_kwargs: reload_lines.append(ide),
+    )
+
+    assert result is False
+    assert any("no connected autopilot plugin" in msg for msg in messages)
+    assert reload_lines == []
+    rows = [
+        json.loads(raw)
+        for raw in observability_event_store_path(tmp_path).read_text(encoding="utf-8").splitlines()
+    ]
+    assert rows[-2]["event_type"] == "control.command"
+    assert rows[-1]["payload"]["data"]["args"]["argv"] == [
+        "koru",
+        "autopilot",
+        "status",
+        "--explain",
+    ]
 
 
 def test_control_commands_cover_api_shell_plugin_and_desktop_surfaces(tmp_path) -> None:

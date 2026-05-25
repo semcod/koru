@@ -205,7 +205,7 @@ class AutopilotDaemon:
             self.log(f"handler {msg.type} raised: {exc}")
             self._send(client, error(msg.id, f"internal error: {exc}").encode())
 
-    def _send(self, client: _Client, payload: bytes) -> None:
+    def _send(self, client: _Client, payload: bytes) -> bool:
         # STARTER-242 telemetry: surface oversized envelopes before sendall.
         # The truncated-NDJSON crash on cycle #632 was a ~170 KB ack arriving
         # at the CLI without a trailing newline; logging the size here
@@ -226,11 +226,23 @@ class AutopilotDaemon:
             if _verbose_io():
                 self.log(f"send to {client.addr} skipped: peer already gone")
             self._drop(client)
+            return False
         except OSError as exc:
             self.log(f"send to {client.addr} failed: {exc}")
             self._drop(client)
+            return False
+        return True
 
     def _drop(self, client: _Client) -> None:
+        if client.role == "cli":
+            for plugin in self._clients.values():
+                pending = plugin.awaiting_plugin
+                if pending is not None and pending[0] is client:
+                    plugin.awaiting_plugin = None
+                    self.log(
+                        "drive → plugin ack pending when CLI client disconnected; "
+                        "treating future ack as late ack"
+                    )
         fd = client.sock.fileno()
         if fd in self._clients:
             del self._clients[fd]

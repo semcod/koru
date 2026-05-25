@@ -217,6 +217,20 @@ def reload_via_command_palette(ide: str) -> IdeReloadOutcome:
     focused, focus_method = _focus_ide_window(ide)
     if not focused:
         wayland = "wayland" if _on_wayland() else "x11"
+        if wayland == "wayland":
+            help_text = (
+                "Wayland: auto-focus requires wmctrl (with XWayland) or running "
+                "koru inside the IDE's integrated terminal. "
+                "Alternatively: 1) Install ydotool + wtype for keyboard injection; "
+                "2) Manually reload the IDE (Ctrl+Shift+P → 'Developer: Reload Window'); "
+                "3) Run 'koru: Connect autopilot daemon' after reload. "
+                "Or set KORU_AUTOPILOT_REUSE_WINDOW_RELOAD=1 to enable CLI reload fallback."
+            )
+        else:
+            help_text = (
+                "Run `koru auto` from a terminal *inside* the IDE so "
+                "TERM_PROGRAM=vscode is set, or install wmctrl/xdotool"
+            )
         return IdeReloadOutcome(
             attempted=True,
             ok=False,
@@ -224,8 +238,7 @@ def reload_via_command_palette(ide: str) -> IdeReloadOutcome:
             detail=(
                 f"could not focus {ide} window (session={wayland}, "
                 f"strategy={strategy.id}, methods={capabilities.focus_methods}). "
-                "Run `koru auto` from a terminal *inside* the IDE so "
-                "TERM_PROGRAM=vscode is set, or install wmctrl/xdotool"
+                f"{help_text}"
             ),
         )
     if focus_method == "integrated_terminal":
