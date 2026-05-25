@@ -122,8 +122,8 @@ def test_run_autonomous_cycle_checkpoints_updates_pipeline_and_sleeps() -> None:
         "koru autonomous: next 2/3 next cycle: "
         "scan/code2llm discovery if freshness and rate limits allow"
     )
-    assert logs[3].startswith("koru autonomous: next 3/3 action links:")
-    assert "/llm/prompt/create-ticket-for-project" in logs[3]
+    assert logs[3].startswith("koru autonomous: next 3/3 quick links:")
+    assert "/llm/action/create-ticket-for-project" in logs[3]
     assert "/?tab=tickets" in logs[3]
     assert sleeps == [4.5]
 

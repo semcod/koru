@@ -112,11 +112,19 @@ def create_ticket_from_dashboard(project: Path, body: dict[str, Any]) -> dict[st
 
   from koru.tasks import create_nl_task
 
+  source_context: dict[str, Any] = {"ide": ide}
+  dedupe_key = str(body.get("dedupe_key") or "").strip()
+  if dedupe_key:
+    source_context["dedupe_key"] = dedupe_key
+  signal = str(body.get("signal") or "").strip()
+  if signal:
+    source_context["signal"] = signal
+
   scaffold: dict[str, Any] = {
     "executor_kind": executor_kind,
     "executor_mode": "interactive",
     "labels": ["koru", "dashboard", "llm-ready"],
-    "source_context": {"ide": ide},
+    "source_context": source_context,
     "source_tool": "koru-dashboard",
   }
   if title:
@@ -136,6 +144,7 @@ def create_ticket_from_dashboard(project: Path, body: dict[str, Any]) -> dict[st
     "path": str(created.path),
     "project": str(project),
     "ide": ide,
+    "reused": bool(created.reused),
   }
 
 

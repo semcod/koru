@@ -213,6 +213,17 @@ class TestServe(unittest.TestCase):
         self.assertIn("title=Project+discovery", location)
         self.assertIn("description=Run+a+broad+project+discovery", location)
 
+    def test_llm_action_create_ticket_is_fast_and_idempotent(self) -> None:
+        status, ctype, body = _get(self.port, "/llm/action/create-ticket-for-project")
+        self.assertEqual(status, 200)
+        self.assertIn("text/html", ctype)
+        self.assertIn("Ticket created", body)
+        self.assertIn("This quick action is idempotent", body)
+
+        status2, _, body2 = _get(self.port, "/llm/action/create-ticket-for-project")
+        self.assertEqual(status2, 200)
+        self.assertIn("Ticket reused", body2)
+
     def test_dashboard_html_has_mobile_layout_guards(self) -> None:
         status, _, body = _get(self.port, "/")
         self.assertEqual(status, 200)

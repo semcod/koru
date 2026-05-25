@@ -29,6 +29,7 @@ def _dashboard_action_urls(project: Any) -> dict[str, str]:
     return {
         "dashboard": f"{base}/{suffix}",
         "create_project_ticket": f"{base}/llm/prompt/create-ticket-for-project{suffix}",
+        "create_project_ticket_action": f"{base}/llm/action/create-ticket-for-project{suffix}",
         "tickets": f"{base}/?tab=tickets{('&' + query) if query else ''}",
     }
 
@@ -90,6 +91,7 @@ def _operator_next_steps(
         urls = _dashboard_action_urls(project) if project is not None else {
             "dashboard": "http://127.0.0.1:8765/",
             "create_project_ticket": "http://127.0.0.1:8765/llm/prompt/create-ticket-for-project",
+            "create_project_ticket_action": "http://127.0.0.1:8765/llm/action/create-ticket-for-project",
             "tickets": "http://127.0.0.1:8765/?tab=tickets",
         }
         discovery = (
@@ -105,8 +107,8 @@ def _operator_next_steps(
             ),
             f"2/3 next cycle: {discovery}; deduplicated against active tickets only",
             (
-                "3/3 action links: create discovery ticket "
-                f"{urls['create_project_ticket']} ; tickets {urls['tickets']} ; "
+                "3/3 quick links: create discovery ticket "
+                f"{urls['create_project_ticket_action']} ; tickets {urls['tickets']} ; "
                 "force fresh scan command remains: "
                 "`rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`"
             ),

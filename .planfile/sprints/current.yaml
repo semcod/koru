@@ -2129,3 +2129,83 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-05-25T10:55:32.294492+00:00'
+    STARTER-237:
+      id: STARTER-237
+      name: 'Project discovery: generate code2llm analysis and tickets'
+      status: open
+      priority: high
+      sprint: current
+      source:
+        tool: koru-dashboard
+        timestamp: '2026-05-25T11:15:38.907332+00:00'
+        context:
+          input: 'Run a broad project discovery pass because the planfile queue is
+            idle.
+
+
+            1. Refresh project/code2llm artifacts when stale.
+
+            2. Review findings and create focused planfile tickets for concrete work.
+
+            3. Keep broad discovery scoped: stop when runnable tickets exist.'
+          ide: auto
+          dedupe_key: koru:quick-action:create-ticket-for-project
+          signal: project_discovery_quick_action
+      description: 'Run a broad project discovery pass because the planfile queue
+        is idle.
+
+
+        1. Refresh project/code2llm artifacts when stale.
+
+        2. Review findings and create focused planfile tickets for concrete work.
+
+        3. Keep broad discovery scoped: stop when runnable tickets exist.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - dashboard
+      blocked_by: []
+      blocks: []
+      files: []
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: operator
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: 'Run a broad project discovery pass because the planfile queue is
+          idle.
+
+
+          1. Refresh project/code2llm artifacts when stale.
+
+          2. Review findings and create focused planfile tickets for concrete work.
+
+          3. Keep broad discovery scoped: stop when runnable tickets exist.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-25T11:15:38.907332+00:00'
+        action: created
+        source: koru task
+        message: 'Run a broad project discovery pass because the planfile queue is
+          idle.
+
+
+          1. Refresh project/code2llm artifacts when stale.
+
+          2. Review findings and create focused planfile tickets for concrete work.
+
+          3. Keep broad discovery scoped: stop when runnable tickets exist.'
+      created_at: '2026-05-25T11:15:38.907332+00:00'
+      updated_at: '2026-05-25T11:15:38.907332+00:00'
