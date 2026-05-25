@@ -12,7 +12,6 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Any
 
 from koru.autopilot import (
     calibrate_cli,
@@ -23,6 +22,36 @@ from koru.autopilot import (
     systemd_cli,
     tail_cli,
 )
+from koru.autopilot.cli_direct_drive import (
+    _auto_direct_fallback_enabled as _auto_direct_fallback_enabled,
+)
+from koru.autopilot.cli_direct_drive import (
+    _emit_direct_drive_auto_selection as _emit_direct_drive_auto_selection,
+)
+from koru.autopilot.cli_direct_drive import (
+    _emit_json_payload as _emit_json_payload,
+)
+from koru.autopilot.cli_direct_drive import (
+    _handle_os_injector_fallback as _handle_os_injector_fallback,
+)
+from koru.autopilot.cli_direct_drive import (
+    _handle_os_profile_direct_error as _handle_os_profile_direct_error,
+)
+from koru.autopilot.cli_direct_drive import (
+    _print_drive_delay_message as _print_drive_delay_message,
+)
+from koru.autopilot.cli_direct_drive import (
+    _run_direct_drive as _run_direct_drive,
+)
+from koru.autopilot.cli_direct_drive import (
+    _should_fallback_to_direct as _should_fallback_to_direct,
+)
+from koru.autopilot.cli_direct_drive import (
+    _try_profile_direct_drive as _try_profile_direct_drive,
+)
+from koru.autopilot.cli_direct_drive import (
+    _type_text_direct_drive as _type_text_direct_drive,
+)
 from koru.autopilot.client import AutopilotClient
 from koru.autopilot.ide import (
     detect_focused_ide_id,
@@ -31,7 +60,9 @@ from koru.autopilot.ide import (
     normalize_ide_id,
     resolve_drive_target,
 )
-from koru.autopilot.injector import Injector, InjectorError
+from koru.autopilot.injector import Injector
+from koru.autopilot.injector import InjectorError as InjectorError
+from koru.control_commands import shell_command
 
 
 def _action_calibrate(args: argparse.Namespace) -> int:
@@ -305,7 +336,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     trace.add_argument(
         "--format",
-        choices=("text", "json"),
+        choices=("text", "json", "dsl"),
         default="text",
         help="Output format (default: text — one compact line per record).",
     )
@@ -654,192 +685,6 @@ def _daemon_start_hint(args: argparse.Namespace) -> str:
 _action_daemon = daemon_cli.action_daemon
 
 
-def _auto_direct_fallback_enabled() -> bool:
-    raw = os.environ.get("KORU_AUTOPILOT_DRIVE_AUTO_DIRECT", "").strip().lower()
-    if not raw:
-        return True
-    return raw not in {"0", "false", "no", "off"}
-
-
-def _should_fallback_to_direct(args: argparse.Namespace, reply: dict[str, Any]) -> bool:
-    if args.require_plugin:
-        return False
-    if not _auto_direct_fallback_enabled():
-        return False
-    if bool(reply.get("ok", True)):
-        return False
-    message = str(reply.get("message") or "").lower()
-    if "chat input is not focused/open" in message:
-        return True
-    return bool(reply.get("opened") is False and reply.get("submitted") is False)
-
-
-def _print_drive_delay_message(delay_seconds: float) -> None:
-    """Print delay message before direct injection."""
-    print(
-        f"koru autopilot drive: waiting {delay_seconds:.1f}s "
-        "before direct injection (focus the target IDE now)...",
-        file=sys.stderr,
-    )
-    time.sleep(delay_seconds)
-
-
-def _handle_os_injector_fallback(
-    args: argparse.Namespace, profile_id: str, injector: Injector
-) -> tuple[int, dict[str, Any] | None]:
-    """Handle fallback when OS injector is unavailable."""
-    if args.os_profile:
-        print(
-            "koru autopilot drive: requested --os-profile but os-injector path is unavailable. "
-            "Run `koru autopilot calibrate --ide <id>` first, or install xdotool.",
-            file=sys.stderr,
-        )
-        return 2, None
-    if injector.session == "wayland":
-        print(
-            "koru autopilot drive: no OS-injector profile for "
-            f"{profile_id!r}; using ydotool/wtype (keystrokes go only to the "
-            "currently focused window — click the IDE chat first, or run "
-            "`koru autopilot calibrate --ide auto`).",
-            file=sys.stderr,
-        )
-    return None, None
-
-
-def _emit_direct_drive_auto_selection(
-    args: argparse.Namespace,
-    profile_id: str,
-    selection: str,
-) -> None:
-    raw_ide = (args.ide or "").strip().lower()
-    if raw_ide in ("", "auto") and not (args.os_profile or "").strip():
-        print(
-            f"koru autopilot drive: auto-selected {profile_id} ({selection})",
-            file=sys.stderr,
-        )
-
-
-def _emit_json_payload(payload: dict[str, Any], *, enabled: bool) -> None:
-    if enabled:
-        print(json.dumps(payload, indent=2, sort_keys=True))
-
-
-def _try_profile_direct_drive(
-    args: argparse.Namespace,
-    text: str,
-    profile_id: str,
-    *,
-    emit_payload: bool,
-) -> tuple[bool, int, dict[str, Any] | None]:
-    from koru.autopilot import os_injector as oi
-
-    if float(args.delay_seconds) > 0:
-        _print_drive_delay_message(float(args.delay_seconds))
-    os_res = oi.try_drive_with_profile(
-        tool_id=profile_id,
-        text=text,
-        submit=args.submit,
-        project=args.project,
-        cli_dry_run=args.dry_run,
-    )
-    if os_res is None:
-        return False, 0, None
-    _emit_json_payload(os_res, enabled=emit_payload)
-    return True, 0, os_res
-
-
-def _type_text_direct_drive(
-    args: argparse.Namespace,
-    text: str,
-    *,
-    target_id: str,
-    injector: Injector,
-    emit_payload: bool,
-) -> tuple[int, dict[str, Any] | None]:
-    result = injector.type_text(
-        text,
-        ide=target_id,
-        submit=args.submit,
-        dry_run=args.dry_run,
-    )
-    payload = result.to_dict()
-    _emit_json_payload(payload, enabled=emit_payload)
-    return 0, payload
-
-
-def _handle_os_profile_direct_error(
-    args: argparse.Namespace,
-    profile_id: str,
-    exc: Exception,
-) -> bool:
-    if not args.os_profile:
-        return False
-    print(
-        f"koru autopilot drive: os-injector failed for requested profile "
-        f"{profile_id!r}: {exc}",
-        file=sys.stderr,
-    )
-    return True
-
-
-def _run_direct_drive(
-    args: argparse.Namespace,
-    text: str,
-    *,
-    emit_payload: bool = True,
-) -> tuple[int, dict[str, Any] | None]:
-    from koru.autopilot import os_injector as oi
-
-    injector = Injector()
-    target_id, profile_id, selection = resolve_drive_target(
-        args.ide,
-        args.os_profile,
-        project=args.project,
-    )
-    _emit_direct_drive_auto_selection(args, profile_id, selection)
-
-    try:
-        handled, rc, payload = _try_profile_direct_drive(
-            args,
-            text,
-            profile_id,
-            emit_payload=emit_payload,
-        )
-        if handled:
-            return rc, payload
-        fallback_rc, _ = _handle_os_injector_fallback(args, profile_id, injector)
-        if fallback_rc is not None:
-            return fallback_rc, None
-        return _type_text_direct_drive(
-            args,
-            text,
-            target_id=target_id,
-            injector=injector,
-            emit_payload=emit_payload,
-        )
-    except oi.OsInjectorError as exc:
-        if _handle_os_profile_direct_error(args, profile_id, exc):
-            return 1, None
-        print(
-            f"koru autopilot drive: os-injector failed; falling back to keyboard injector: {exc}",
-            file=sys.stderr,
-        )
-        try:
-            return _type_text_direct_drive(
-                args,
-                text,
-                target_id=target_id,
-                injector=injector,
-                emit_payload=emit_payload,
-            )
-        except InjectorError as inner_exc:
-            print(f"koru autopilot drive: {inner_exc}", file=sys.stderr)
-            return 1, None
-    except InjectorError as exc:
-        print(f"koru autopilot drive: {exc}", file=sys.stderr)
-        return 1, None
-
-
 def _action_drive(args: argparse.Namespace) -> int:
     text = str(args.prompt).strip() if args.prompt is not None else " ".join(args.text).strip()
     if not text:
@@ -849,6 +694,15 @@ def _action_drive(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 2
+    project = getattr(args, "project", None) or Path.cwd()
+    shell_command(
+        project,
+        corr="cli-drive",
+        argv=_drive_command_argv(args, text),
+        cwd=str(project.resolve()),
+        actor="operator",
+        replayable=not args.dry_run,
+    )
     if args.direct:
         rc, _payload = _run_direct_drive(args, text, emit_payload=True)
         return rc
@@ -894,6 +748,24 @@ def _action_drive(args: argparse.Namespace) -> int:
         return rc
     print(json.dumps(reply, indent=2, sort_keys=True))
     return 0 if reply.get("ok", True) else 1
+
+
+def _drive_command_argv(args: argparse.Namespace, text: str) -> list[str]:
+    argv = ["koru", "autopilot", "drive", "--ide", str(args.ide)]
+    if not args.submit:
+        argv.append("--no-submit")
+    if args.require_plugin:
+        argv.append("--require-plugin")
+    if args.direct:
+        argv.append("--direct")
+    if args.dry_run:
+        argv.append("--dry-run")
+    if args.os_profile:
+        argv.extend(["--os-profile", str(args.os_profile)])
+    if args.delay_seconds:
+        argv.extend(["--delay-seconds", str(args.delay_seconds)])
+    argv.extend(["--prompt", text])
+    return argv
 
 
 def _action_status(args: argparse.Namespace) -> int:
@@ -1074,6 +946,23 @@ def _action_trace(args: argparse.Namespace) -> int:
     )
 
     project = args.project.resolve()
+    if args.format == "dsl":
+        from koru.cqrs.event_store import JsonlEventStore
+        from koru.observability_dsl import OBSERVABILITY_CONTEXT, stored_event_to_dsl
+        from koru.observability_writer import observability_event_store_path
+
+        store = JsonlEventStore(observability_event_store_path(project))
+        events = store.all_events(context=OBSERVABILITY_CONTEXT)
+        limit = int(args.limit or 10)
+        if limit > 0:
+            events = events[-limit:]
+        if not events:
+            print(
+                f"koru autopilot trace: no observability DSL events recorded yet for {project}"
+            )
+            return 0
+        print("\n\n".join(stored_event_to_dsl(event) for event in events))
+        return 0
     history = load_recent_decisions(project, limit=int(args.limit or 10))
     if args.format == "json":
         print(_json.dumps({"project": str(project), "decisions": history}, indent=2))

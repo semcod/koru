@@ -117,7 +117,8 @@ PIPELINE: list[ScanStage] = [DetectStage(), AnalyzeStage(), ReportStage()]
 
 ### FAZA 2 — Rozbicia modułów (3–5 dni)
 - [ ] **R4**: `dashboard_routes.py` – migracja z closure do ClassVar config injection
-- [ ] **R5**: `autopilot/cli_command.py` – podział na `commands/{daemon,drive,status,doctor}.py`
+- [~] **R5a**: `autopilot/cli_command.py` – ekstrakcja warstwy direct-drive fallback (10 funkcji: `_auto_direct_fallback_enabled`, `_should_fallback_to_direct`, `_print_drive_delay_message`, `_handle_os_injector_fallback`, `_emit_direct_drive_auto_selection`, `_emit_json_payload`, `_try_profile_direct_drive`, `_type_text_direct_drive`, `_handle_os_profile_direct_error`, `_run_direct_drive`) do `autopilot/cli_direct_drive.py` (1143 → 984 LOC, **-13.9%**; +15 testów; backward-compat re-eksport + lazy resolve `cli_command.Injector` / `cli_command.resolve_drive_target` zachowuje istniejący kontrakt monkeypatchowania w testach)
+- [ ] **R5b**: pozostała część `autopilot/cli_command.py` – podział na `commands/{drive,status,doctor,handoff,trace,install_unit,manage,...}.py`
 - [ ] **R6**: `koruide/daemon/handlers.py` – podział per typ wiadomości
 - [ ] **R7**: `autonomous_cycle_chat_activity.py` – pozostała część (ticket-upsert, operator-payload, skip-orchestration) — R-CA1/R-CA2/R-CA3 zrealizowały już warstwy config, text-processing i event-analysis; pozostaje wyodrębnienie warstwy ticket-upsert / orchestracji do osobnego modułu
 
