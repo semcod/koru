@@ -17,7 +17,7 @@ class VSCodeFamilyAdapter:
 
     @property
     def extension_id(self) -> str:
-        return shared.EXTENSION_ID
+        return shared.extension_id_for_ide(self.ide_id)
 
     def diagnose_activation(self) -> ActivationReport:
         hypotheses: list[Hypothesis] = []

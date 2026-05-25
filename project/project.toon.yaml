@@ -1,38 +1,38 @@
-# koru | 3796 func | 378f | 87311L | python | 2026-05-25
-# generated in 0.01s
+# koru | 4477 func | 390f | 97472L | python | 2026-05-25
+# generated in 0.00s
 
 HEALTH:
-  CC̄=3.7  critical=250 (limit:10)  dup=14  cycles=0
+  CC̄=3.6  critical=271 (limit:10)  dup=9  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     _build_dashboard_handler_impl = 62 (limit:10)
   !!! high_fan_out     _build_handler = 44 (limit:10)
   !!! high_fan_out     create_app = 44 (limit:10)
-  !!! cc_exceeded      _backfill_existing_dedupe_keys = 26 (limit:15)
   !!! high_fan_out     run_cycle = 25 (limit:10)
   !!! high_fan_out     init_project = 23 (limit:10)
   !!! high_fan_out     topology_main = 23 (limit:10)
   !!! high_fan_out     observe_up = 22 (limit:10)
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
   !!! high_fan_out     _build_parser = 22 (limit:10)
+  !!! high_fan_out     setup_autonomous_session = 20 (limit:10)
 
-MODULES[559] (top by size):
-  M[plugins/koru-autopilot-cursor/src/extension.ts] 2616L C:2 F:191 CC↑14 D:19 (typescript)
-  M[plugins/koru-autopilot-vscode/src/extension.ts] 2615L C:2 F:191 CC↑14 D:0 (typescript)
+MODULES[572] (top by size):
+  M[plugins/koru-autopilot-vscode/src/extension.ts] 2619L C:2 F:192 CC↑15 D:0 (typescript)
+  M[plugins/koru-autopilot-cursor/src/extension.ts] 2616L C:2 F:191 CC↑14 D:0 (typescript)
+  M[plugins/koru-autopilot-antigravity/src/extension.ts] 2610L C:2 F:191 CC↑14 D:19 (typescript)
+  M[plugins/koru-autopilot-vscodium/src/extension.ts] 2610L C:2 F:191 CC↑14 D:0 (typescript)
+  M[plugins/koru-autopilot-windsurf/src/extension.ts] 2610L C:2 F:191 CC↑14 D:0 (typescript)
   M[src/koru/doctor.py] 2083L C:2 F:98 CC↑13 D:2 (python)
   M[planfile.yaml] 1357L C:0 F:0 CC↑0 D:0 (yaml)
-  M[src/koru/autonomous_cycle_chat_activity.py] 1185L C:0 F:52 CC↑12 D:2 (python)
+  M[src/koru/autonomous_cycle_chat_activity.py] 1118L C:0 F:44 CC↑12 D:2 (python)
   M[src/koru/scan.py] 1104L C:0 F:28 CC↑15 D:3 (python)
   M[src/koru/autopilot/cli_command.py] 1084L C:0 F:27 CC↑14 D:0 (python)
   M[src/koruapi/mcp_server.py] 1023L C:0 F:35 CC↑14 D:4 (python)
   M[src/koru/autonomy/operator_pipeline.py] 1016L C:2 F:44 CC↑14 D:0 (python)
-  M[src/koruide/daemon/handlers.py] 998L C:0 F:38 CC↑14 D:1 (python)
-  M[src/koru/autonomous.py] 974L C:0 F:62 CC↑4 D:3 (python)
+  M[src/koruide/daemon/handlers.py] 999L C:0 F:38 CC↑14 D:1 (python)
+  M[src/koru/autonomous.py] 974L C:0 F:62 CC↑4 D:4 (python)
   M[src/koru/autonomous_cycle.py] 953L C:0 F:27 CC↑11 D:1 (python)
-  M[Taskfile.yml] 922L C:0 F:0 CC↑0 D:0 (yml)
-  M[src/koru/context.py] 822L C:0 F:31 CC↑12 D:8 (python)
-  M[src/koru/autonomous_wup.py] 808L C:3 F:39 CC↑12 D:2 (python)
-  LANGS: python:397/typescript:49/shell:49/yaml:23/json:13/yml:10/kotlin:6/other:4/txt:2/javascript:1/md:1/properties:1/xml:1/toml:1/proto:1
+  LANGS: python:401/typescript:55/shell:49/yaml:23/json:16/yml:10/kotlin:6/other:4/txt:2/javascript:1/md:1/properties:1/xml:1/toml:1/proto:1
 
 HOTSPOTS[10]:
   ★ _build_dashboard_handler_impl fan=62  // Build and return a DashboardRequestHandler subclass for the dashboard.
@@ -45,11 +45,11 @@ Steps:
     1. Refu
 
 REFACTOR[15]:
-  [1] H/L Split _backfill_existing_dedupe_keys (CC=26)
-  [2] H/H Split god module src/koru/autonomous_loop_runner.py (759L, 1 classes)
-  [3] H/H Split god module src/koru/autonomy/decision_trace.py (662L, 1 classes)
-  [4] H/H Split god module src/koruide/plugin_installer.py (713L, 1 classes)
-  [5] H/H Split god module src/koru/scan.py (1104L, 0 classes)
+  [1] H/H Split god module src/koruide/plugin_installer.py (708L, 1 classes)
+  [2] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (2619L, 2 classes)
+  [3] H/H Split god module src/koru/scan.py (1104L, 0 classes)
+  [4] H/H Split god module plugins/koru-autopilot-antigravity/src/extension.ts (2610L, 2 classes)
+  [5] H/H Split god module plugins/koru-autopilot-cursor/src/extension.ts (2616L, 2 classes)
 
 EVOLUTION:
-  2026-05-25 CC̄=3.7 crit=250 87311L // Automated analysis
+  2026-05-25 CC̄=3.6 crit=271 97472L // Automated analysis

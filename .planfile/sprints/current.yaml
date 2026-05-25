@@ -1765,13 +1765,13 @@ sprint:
       blocked_by: []
       blocks: []
       created_at: '2026-05-25T15:18:52.447431+00:00'
-      description: "BLOCKED: FAIL: oru/autopilot/install_manager.py\", line 605, in
-        collect_install_manager_report\n    expected_plugin = _expected_plugin_version(root,
-        resolved_ide) if plugin_supported else None\n                      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\n
-        \ File \"/home/tom/github/semcod/koru/src/koru/autopilot/install_manager.py\",
-        line 187, in _expected_plugin_version\n    except (OSError, json.JSONDecodeError):\n
-        \                    ^^^^\nNameError: name 'json' is not defined. Did you
-        forget to import 'json'?"
+      description: "BLOCKED: FAIL: oru/autopilot/install_manager.py\", line 605, in\
+        \ collect_install_manager_report\n    expected_plugin = _expected_plugin_version(root,\
+        \ resolved_ide) if plugin_supported else None\n                      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\n\
+        \  File \"/home/tom/github/semcod/koru/src/koru/autopilot/install_manager.py\"\
+        , line 187, in _expected_plugin_version\n    except (OSError, json.JSONDecodeError):\n\
+        \                     ^^^^\nNameError: name 'json' is not defined. Did you\
+        \ forget to import 'json'?"
       execution:
         assigned_to: koru-shell
         attempt: 0
@@ -1989,3 +1989,95 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-05-25T16:27:55.743297+00:00'
+    STARTER-275:
+      id: STARTER-275
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie plugin połączony (ide=vscodium)
+        Wykonaj w IDE, potem zamknij ticket: ...'
+      status: open
+      priority: high
+      sprint: current
+      source:
+        tool: koru-operator-pipeline
+        timestamp: '2026-05-25T16:31:21.547394+00:00'
+        context:
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            plugin połączony (ide=vscodium)
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
+          detail: plugin połączony (ide=vscodium)
+          step_id: autopilot_plugin
+          task_command: koru ide doctor --ide vscodium --fix --gc-sockets
+          dedupe_key: koru:operator-pipeline:autopilot-plugin:vscodium
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        plugin połączony (ide=vscodium)
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      blocked_by: []
+      blocks: []
+      files: []
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: operator
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          plugin połączony (ide=vscodium)
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-25T16:31:21.547394+00:00'
+        action: created
+        source: koru task
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          plugin połączony (ide=vscodium)
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
+      created_at: '2026-05-25T16:31:21.547394+00:00'
+      updated_at: '2026-05-25T16:31:21.547394+00:00'

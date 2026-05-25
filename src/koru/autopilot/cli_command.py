@@ -706,6 +706,82 @@ def _handle_os_injector_fallback(
     return None, None
 
 
+def _emit_direct_drive_auto_selection(
+    args: argparse.Namespace,
+    profile_id: str,
+    selection: str,
+) -> None:
+    raw_ide = (args.ide or "").strip().lower()
+    if raw_ide in ("", "auto") and not (args.os_profile or "").strip():
+        print(
+            f"koru autopilot drive: auto-selected {profile_id} ({selection})",
+            file=sys.stderr,
+        )
+
+
+def _emit_json_payload(payload: dict[str, Any], *, enabled: bool) -> None:
+    if enabled:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+
+
+def _try_profile_direct_drive(
+    args: argparse.Namespace,
+    text: str,
+    profile_id: str,
+    *,
+    emit_payload: bool,
+) -> tuple[bool, int, dict[str, Any] | None]:
+    from koru.autopilot import os_injector as oi
+
+    if float(args.delay_seconds) > 0:
+        _print_drive_delay_message(float(args.delay_seconds))
+    os_res = oi.try_drive_with_profile(
+        tool_id=profile_id,
+        text=text,
+        submit=args.submit,
+        project=args.project,
+        cli_dry_run=args.dry_run,
+    )
+    if os_res is None:
+        return False, 0, None
+    _emit_json_payload(os_res, enabled=emit_payload)
+    return True, 0, os_res
+
+
+def _type_text_direct_drive(
+    args: argparse.Namespace,
+    text: str,
+    *,
+    target_id: str,
+    injector: Injector,
+    emit_payload: bool,
+) -> tuple[int, dict[str, Any] | None]:
+    result = injector.type_text(
+        text,
+        ide=target_id,
+        submit=args.submit,
+        dry_run=args.dry_run,
+    )
+    payload = result.to_dict()
+    _emit_json_payload(payload, enabled=emit_payload)
+    return 0, payload
+
+
+def _handle_os_profile_direct_error(
+    args: argparse.Namespace,
+    profile_id: str,
+    exc: Exception,
+) -> bool:
+    if not args.os_profile:
+        return False
+    print(
+        f"koru autopilot drive: os-injector failed for requested profile "
+        f"{profile_id!r}: {exc}",
+        file=sys.stderr,
+    )
+    return True
+
+
 def _run_direct_drive(
     args: argparse.Namespace,
     text: str,
@@ -720,54 +796,41 @@ def _run_direct_drive(
         args.os_profile,
         project=args.project,
     )
-    raw_ide = (args.ide or "").strip().lower()
-    if raw_ide in ("", "auto") and not (args.os_profile or "").strip():
-        print(
-            f"koru autopilot drive: auto-selected {profile_id} ({selection})",
-            file=sys.stderr,
-        )
+    _emit_direct_drive_auto_selection(args, profile_id, selection)
 
     try:
-        if float(args.delay_seconds) > 0:
-            _print_drive_delay_message(float(args.delay_seconds))
-        os_res = oi.try_drive_with_profile(
-            tool_id=profile_id,
-            text=text,
-            submit=args.submit,
-            project=args.project,
-            cli_dry_run=args.dry_run,
+        handled, rc, payload = _try_profile_direct_drive(
+            args,
+            text,
+            profile_id,
+            emit_payload=emit_payload,
         )
-        if os_res is not None:
-            if emit_payload:
-                print(json.dumps(os_res, indent=2, sort_keys=True))
-            return 0, os_res
+        if handled:
+            return rc, payload
         fallback_rc, _ = _handle_os_injector_fallback(args, profile_id, injector)
         if fallback_rc is not None:
             return fallback_rc, None
-        result = injector.type_text(
+        return _type_text_direct_drive(
+            args,
             text,
-            ide=target_id,
-            submit=args.submit,
-            dry_run=args.dry_run,
+            target_id=target_id,
+            injector=injector,
+            emit_payload=emit_payload,
         )
     except oi.OsInjectorError as exc:
-        if args.os_profile:
-            print(
-                f"koru autopilot drive: os-injector failed for requested profile "
-                f"{profile_id!r}: {exc}",
-                file=sys.stderr,
-            )
+        if _handle_os_profile_direct_error(args, profile_id, exc):
             return 1, None
         print(
             f"koru autopilot drive: os-injector failed; falling back to keyboard injector: {exc}",
             file=sys.stderr,
         )
         try:
-            result = injector.type_text(
+            return _type_text_direct_drive(
+                args,
                 text,
-                ide=target_id,
-                submit=args.submit,
-                dry_run=args.dry_run,
+                target_id=target_id,
+                injector=injector,
+                emit_payload=emit_payload,
             )
         except InjectorError as inner_exc:
             print(f"koru autopilot drive: {inner_exc}", file=sys.stderr)
@@ -775,11 +838,6 @@ def _run_direct_drive(
     except InjectorError as exc:
         print(f"koru autopilot drive: {exc}", file=sys.stderr)
         return 1, None
-
-    payload = result.to_dict()
-    if emit_payload:
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    return 0, payload
 
 
 def _action_drive(args: argparse.Namespace) -> int:

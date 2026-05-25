@@ -112,6 +112,7 @@ PIPELINE: list[ScanStage] = [DetectStage(), AnalyzeStage(), ReportStage()]
 - [x] **R3**: `koruapi/cli.py::main` – rozbicie na subcommand dispatcher (`main` CC: 11 → 3, +2 testy zabezpieczające spójność dispatch table)
 - [x] **R-IM1**: `install_manager.py` – ekstrakcja 11 funkcji `_check_*` + `ManagerIssue` do `install_checks.py` (`install_manager.py`: 734 → 466 LOC, **-36.5%**; +23 testy jednostkowe; legacy `_check_*` aliasy zachowane dla backward-compat z testami)
 - [x] **R-CA1**: `autonomous_cycle_chat_activity.py` – ekstrakcja 8 env-readerów do `autonomous_cycle_chat_activity_config.py` (1186 → 1118 LOC, +18 testów jednostkowych; legacy `_*` aliasy zachowane)
+- [x] **R-CA2**: `autonomous_cycle_chat_activity.py` – ekstrakcja 6 czystych funkcji text-processing (`normalize_prompt_text`, `looks_like_*`, `compact_question_text`, `extract_needs_input_question`, `latest_received_text`) do `autonomous_cycle_chat_activity_text.py` (1118 → 1037 LOC, łącznie z R-CA1: **-149 LOC, -12.6%**; +24 testy; legacy `_*` aliasy zachowane)
 
 ### FAZA 2 — Rozbicia modułów (3–5 dni)
 - [ ] **R4**: `dashboard_routes.py` – migracja z closure do ClassVar config injection

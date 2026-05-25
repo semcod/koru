@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import time
 from collections.abc import Callable, Mapping
-import os
 from typing import Any
 
 from koru.ide_client import IDEControlClient
@@ -24,7 +24,10 @@ def enable_autonomous_strict_plugin_policy(
     env = environ or os.environ
     setter = set_env or os.environ.__setitem__
     version_set = False
-    if env.get("KORU_STRICT_PLUGIN_VERSION") is None and env.get("KORU_PLUGIN_VERSION_POLICY") is None:
+    if (
+        env.get("KORU_STRICT_PLUGIN_VERSION") is None
+        and env.get("KORU_PLUGIN_VERSION_POLICY") is None
+    ):
         setter("KORU_STRICT_PLUGIN_VERSION", "1")
         version_set = True
 
@@ -164,6 +167,25 @@ def status_has_autopilot_plugin(status: Mapping[str, Any], ide: str) -> bool:
     return plugin_status_decision(status, ide)[0]
 
 
+def _probe_plugin_status(client: IDEControlClient, ide: str) -> tuple[bool, str]:
+    try:
+        return plugin_status_decision(client.status(), ide)
+    except (OSError, RuntimeError, TimeoutError) as exc:
+        return False, f"daemon status unavailable: {exc}"
+
+
+def _emit_plugin_wait_decision(
+    *,
+    emit: Callable[[str], None],
+    ide: str,
+    reason: str,
+    last_reason: str | None,
+) -> str:
+    if reason != last_reason:
+        emit(f"koru autonomous: plugin decision ide={ide}: {reason}")
+    return reason
+
+
 def wait_for_autopilot_plugin(
     client: IDEControlClient,
     ide: str,
@@ -189,27 +211,24 @@ def wait_for_autopilot_plugin(
     deadline = monotonic() + timeout_seconds
     last_reason: str | None = None
     while monotonic() < deadline:
-        try:
-            ready, reason = plugin_status_decision(client.status(), ide)
-            if reason != last_reason:
-                emit(f"koru autonomous: plugin decision ide={ide}: {reason}")
-                last_reason = reason
-            if ready:
-                return True
-        except (OSError, RuntimeError, TimeoutError) as exc:
-            reason = f"daemon status unavailable: {exc}"
-            if reason != last_reason:
-                emit(f"koru autonomous: plugin decision ide={ide}: {reason}")
-                last_reason = reason
+        ready, reason = _probe_plugin_status(client, ide)
+        last_reason = _emit_plugin_wait_decision(
+            emit=emit,
+            ide=ide,
+            reason=reason,
+            last_reason=last_reason,
+        )
+        if ready:
+            return True
         sleep(interval_seconds)
-    try:
-        ready, reason = plugin_status_decision(client.status(), ide)
-        if reason != last_reason:
-            emit(f"koru autonomous: plugin decision ide={ide}: {reason}")
-        return ready
-    except (OSError, RuntimeError, TimeoutError) as exc:
-        emit(f"koru autonomous: plugin decision ide={ide}: daemon status unavailable: {exc}")
-        return False
+    ready, reason = _probe_plugin_status(client, ide)
+    _emit_plugin_wait_decision(
+        emit=emit,
+        ide=ide,
+        reason=reason,
+        last_reason=last_reason,
+    )
+    return ready
 
 
 __all__ = [

@@ -1,13 +1,20 @@
 from __future__ import annotations
 
 import os
-import re
 import subprocess
 import time
 from hashlib import sha1
 from pathlib import Path
 from typing import Any
 
+from koru.autonomous_cycle_chat_activity_text import (
+    compact_question_text as _compact_question_text,
+    extract_needs_input_question as _extract_needs_input_question,
+    latest_received_text as _latest_received_text,
+    looks_like_autopilot_generated_prompt as _looks_like_autopilot_generated_prompt,
+    looks_like_explicit_intake_text as _looks_like_explicit_intake_text,
+    normalize_prompt_text as _normalize_prompt_text,
+)
 from koru.autonomous_cycle_chat_activity_config import (
     autopilot_escalation_cooldown_seconds as _autopilot_escalation_cooldown_seconds,
     autopilot_redrive_cooldown_seconds as _autopilot_redrive_cooldown_seconds,
@@ -59,39 +66,6 @@ def _waiting_ticket_has_chat_intake_label(
     except ImportError:
         return False
     return _waiting_ticket_has_label(project, queue_result, "autopilot-chat-intake")
-
-
-def _normalize_prompt_text(text: str) -> str:
-    return " ".join(str(text or "").split()).strip().lower()
-
-
-def _looks_like_autopilot_generated_prompt(text: str) -> bool:
-    normalized = _normalize_prompt_text(text)
-    if not normalized:
-        return False
-    if normalized.startswith("ticket ") and " has been stuck in status " in normalized:
-        return True
-    if normalized.startswith("work on planfile ticket "):
-        return True
-    if "planfile ticket done " in normalized:
-        return True
-    if normalized.startswith("the queue is blocked on waiting_input"):
-        return True
-    return False
-
-
-def _looks_like_explicit_intake_text(text: str) -> bool:
-    raw = " ".join(str(text or "").split()).strip()
-    if not raw:
-        return False
-    lowered = raw.lower()
-    if lowered.startswith(("/", "./", "../", "~/")):
-        return True
-    if lowered.startswith(("bug:", "task:", "todo:", "ticket:", "fix:", "feature:")):
-        return True
-    if re.search(r"\b(?:src|tests|docs|plugins|services|project)/[\w./-]+", raw):
-        return True
-    return False
 
 
 def _external_message_sent_text(
@@ -188,61 +162,6 @@ def _upsert_chat_intake_operator_ticket(
             f"{created.ticket_id} (waiting={waiting_ticket})",
         )
     return created.ticket_id
-
-
-def _compact_question_text(text: str, *, limit: int = 240) -> str:
-    collapsed = " ".join(str(text or "").split()).strip()
-    if not collapsed:
-        return ""
-    return collapsed[:limit]
-
-
-def _extract_needs_input_question(
-    reflection_events: list[Any],
-    reflection_summary: str,
-) -> str:
-    """Best-effort extraction of the concrete question asked by IDE LLM."""
-    for event in reversed(reflection_events):
-        ev_type = str(getattr(event, "type", "") or "")
-        if ev_type != "message.received":
-            continue
-        text = str(getattr(event, "text", "") or getattr(event, "summary", "") or "")
-        if not text.strip():
-            continue
-        collapsed = _compact_question_text(text, limit=600)
-        if not collapsed:
-            continue
-        matches = re.findall(r"([^?]{8,260}\?)", collapsed)
-        if matches:
-            return _compact_question_text(matches[-1], limit=240)
-        for marker in (
-            "please provide",
-            "can you provide",
-            "could you provide",
-            "what is",
-            "which",
-            "need ",
-            "missing ",
-        ):
-            if marker in collapsed.lower():
-                return _compact_question_text(collapsed, limit=240)
-
-    summary = _compact_question_text(reflection_summary, limit=240)
-    if "?" in summary:
-        return summary
-    return ""
-
-
-def _latest_received_text(reflection_events: list[Any]) -> str:
-    for event in reversed(reflection_events):
-        ev_type = str(getattr(event, "type", "") or "")
-        if ev_type != "message.received":
-            continue
-        text = str(getattr(event, "text", "") or getattr(event, "summary", "") or "")
-        if not text.strip():
-            continue
-        return _compact_question_text(text, limit=320)
-    return ""
 
 
 def _llm_needs_input_waiting_ticket(queue_result: QueueLoopResult) -> str:

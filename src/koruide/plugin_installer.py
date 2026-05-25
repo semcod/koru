@@ -12,7 +12,7 @@ import json
 import os
 import shutil
 import subprocess
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from importlib import resources
 from pathlib import Path
@@ -304,51 +304,41 @@ def resolve_extension_vsix(target_ide: str | None = None) -> Path | None:
         candidates.append(Path(env_path).expanduser())
 
     dir_names = plugin_dir_names_for_ide(target_ide)
-    repo_root = _repo_root()
-    for dir_name in dir_names:
-        if repo_root is not None:
-            plugin_dir = repo_root / "plugins" / dir_name
-            for candidate in _versioned_vsix_candidates(plugin_dir):
-                if candidate.is_file():
-                    return candidate.resolve()
-            try:
-                repo_matches = sorted(
-                    plugin_dir.glob("*.vsix"),
-                    key=lambda p: p.stat().st_mtime,
-                    reverse=True,
-                )
-            except OSError:
-                repo_matches = []
-            if repo_matches:
-                return repo_matches[0].resolve()
-
-        cwd_plugin = Path.cwd() / "plugins" / dir_name
-        for candidate in _versioned_vsix_candidates(cwd_plugin):
-            if candidate.is_file():
-                return candidate.resolve()
-        try:
-            cwd_matches = sorted(
-                cwd_plugin.glob("*.vsix"),
-                key=lambda p: p.stat().st_mtime,
-                reverse=True,
-            )
-        except OSError:
-            cwd_matches = []
-        if cwd_matches:
-            return cwd_matches[0].resolve()
+    if local_vsix := _first_local_extension_vsix(dir_names):
+        return local_vsix
 
     for dir_name in dir_names:
         candidates.extend(_bundled_vsix_candidates(dir_name))
 
-    candidates = sorted(
-        {candidate.resolve() for candidate in candidates if candidate.is_file()},
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
-    for candidate in candidates:
-        if candidate.is_file():
-            return candidate
+    return _newest_existing_vsix(candidates)
+
+
+def _first_local_extension_vsix(dir_names: Sequence[str]) -> Path | None:
+    roots = [root for root in (_repo_root(), Path.cwd()) if root is not None]
+    for dir_name in dir_names:
+        for root in roots:
+            if match := _newest_plugin_dir_vsix(root / "plugins" / dir_name):
+                return match
     return None
+
+
+def _newest_plugin_dir_vsix(plugin_dir: Path) -> Path | None:
+    for candidate in _versioned_vsix_candidates(plugin_dir):
+        if candidate.is_file():
+            return candidate.resolve()
+    return _newest_existing_vsix(plugin_dir.glob("*.vsix"))
+
+
+def _newest_existing_vsix(candidates: Iterable[Path]) -> Path | None:
+    try:
+        matches = sorted(
+            {candidate.resolve() for candidate in candidates if candidate.is_file()},
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+    except OSError:
+        return None
+    return matches[0] if matches else None
 
 
 def _resolve_ide_command(ide: str) -> str | None:
@@ -485,14 +475,9 @@ def _reassert_extension_extra(
     runner: Runner,
     target_ide: str | None = None,
 ) -> tuple[list[str], str]:
-    def _missing_vsix_hint(proc: subprocess.CompletedProcess[str]) -> bool:
-        detail = (proc.stderr or proc.stdout or "").lower()
-        return "no such file" in detail or "enoent" in detail
-
     last_cmd: list[str] = [command, "--list-extensions"]
-    extra = ""
     if dry_run or not _env_reassert_extension_install():
-        return last_cmd, extra
+        return last_cmd, ""
     vsix = resolve_extension_vsix(target_ide)
     ext_id = extension_id_for_ide(target_ide)
     reassert_cmd = (
@@ -500,42 +485,76 @@ def _reassert_extension_extra(
         if vsix is not None
         else [command, "--install-extension", ext_id]
     )
+    proc, error = _run_reassert_command(runner, reassert_cmd)
+    if error:
+        return last_cmd, error
+    assert proc is not None
+    retry = _maybe_retry_missing_vsix(
+        command,
+        runner=runner,
+        target_ide=target_ide,
+        vsix=vsix,
+        proc=proc,
+    )
+    if retry is not None:
+        retry_cmd, retry_proc, retry_error = retry
+        if retry_error:
+            return last_cmd, retry_error
+        return retry_cmd, _reassert_extra(retry_proc, fallback=True)
+    return reassert_cmd, _reassert_extra(proc)
+
+
+def _run_reassert_command(
+    runner: Runner,
+    command: list[str],
+) -> tuple[subprocess.CompletedProcess[str] | None, str]:
     try:
-        proc = runner(reassert_cmd, timeout=90.0)
+        return runner(command, timeout=90.0), ""
     except (OSError, subprocess.SubprocessError) as exc:
-        return last_cmd, f"; reassert failed: {exc}"
-    used_retry_cmd = False
-    if (
-        proc.returncode != 0
-        and vsix is not None
-        and not vsix.is_file()
-        and _missing_vsix_hint(proc)
+        return None, f"; reassert failed: {exc}"
+
+
+def _maybe_retry_missing_vsix(
+    command: str,
+    *,
+    runner: Runner,
+    target_ide: str | None,
+    vsix: Path | None,
+    proc: subprocess.CompletedProcess[str],
+) -> tuple[list[str], subprocess.CompletedProcess[str], str] | None:
+    if not _should_retry_missing_vsix(vsix, proc):
+        return None
+    for fallback in _fallback_vsix_candidates(
+        vsix, plugin_dir_names=plugin_dir_names_for_ide(target_ide)
     ):
-        for fallback in _fallback_vsix_candidates(
-            vsix, plugin_dir_names=plugin_dir_names_for_ide(target_ide)
-        ):
-            if fallback == vsix:
-                continue
-            retry_cmd = [command, "--install-extension", str(fallback), "--force"]
-            try:
-                retry = runner(retry_cmd, timeout=90.0)
-            except (OSError, subprocess.SubprocessError) as exc:
-                return last_cmd, f"; reassert failed: {exc}"
-            last_cmd = retry_cmd
-            used_retry_cmd = True
-            extra = f"; reassert fallback rc={retry.returncode}"
-            if retry.returncode == 0:
-                return last_cmd, extra
-            proc = retry
-            break
-    if not used_retry_cmd:
-        last_cmd = reassert_cmd
-    extra = f"; reassert rc={proc.returncode}"
-    if proc.returncode != 0:
-        hint = (proc.stderr or proc.stdout or "").strip()
-        if hint:
-            extra += f" ({hint[:240]})"
-    return last_cmd, extra
+        if fallback == vsix:
+            continue
+        retry_cmd = [command, "--install-extension", str(fallback), "--force"]
+        retry, error = _run_reassert_command(runner, retry_cmd)
+        if error:
+            return retry_cmd, proc, error
+        assert retry is not None
+        return retry_cmd, retry, ""
+    return None
+
+
+def _should_retry_missing_vsix(
+    vsix: Path | None,
+    proc: subprocess.CompletedProcess[str],
+) -> bool:
+    if proc.returncode == 0 or vsix is None or vsix.is_file():
+        return False
+    detail = (proc.stderr or proc.stdout or "").lower()
+    return "no such file" in detail or "enoent" in detail
+
+
+def _reassert_extra(proc: subprocess.CompletedProcess[str], *, fallback: bool = False) -> str:
+    prefix = "; reassert fallback rc=" if fallback else "; reassert rc="
+    extra = f"{prefix}{proc.returncode}"
+    if proc.returncode == 0:
+        return extra
+    hint = (proc.stderr or proc.stdout or "").strip()
+    return extra + (f" ({hint[:240]})" if hint else "")
 
 
 def _result_already_installed(

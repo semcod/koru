@@ -11,8 +11,11 @@ from pathlib import Path
 
 from koru.ide_adapters.base import Hypothesis, Remediation, SettingsReport
 from koruide.ides import get_strategy as _get_ide_strategy
+from koruide.plugin_installer import (
+    EXTENSION_ID,
+    extension_id_for_ide,
+)
 
-EXTENSION_ID = "semcod.koru-autopilot-vscode"
 SOCKET_SETTING_KEY = "koruAutopilot.socketPath"
 PUBLISHER_ID = "semcod"
 _ANSI_YELLOW = "\033[33m"
@@ -168,7 +171,8 @@ def extension_disabled(ide: str) -> bool:
     disabled = read_vscdb_json("extensionsIdentifiers/disabled", ide=ide)
     if not isinstance(disabled, list):
         return False
-    return EXTENSION_ID in {str(item) for item in disabled}
+    ext_id = extension_id_for_ide(ide)
+    return ext_id in {str(item) for item in disabled}
 
 
 def publisher_trusted(ide: str, publisher: str = PUBLISHER_ID) -> bool | None:
@@ -215,16 +219,18 @@ def latest_ide_exthost_session(ide: str) -> Path | None:
     return None
 
 
-def extension_activated_in_exthost(ide: str, extension_id: str = EXTENSION_ID) -> bool | None:
-    """Whether ``extension_id`` activated in the **current** IDE session's extension host.
+def extension_activated_in_exthost(ide: str, extension_id: str | None = None) -> bool | None:
+    """Whether the per-IDE extension activated in the **current** IDE session's extension host.
 
     Only the newest session with ``window*/exthost/exthost.log`` is checked so a
-  stale activation from an older Cursor/VS Code run does not mask a VSIX that was
+    stale activation from an older Cursor/VS Code run does not mask a VSIX that was
     installed after the IDE started (requires Reload Window).
     """
     session = latest_ide_exthost_session(ide)
     if session is None:
         return None
+    if extension_id is None:
+        extension_id = extension_id_for_ide(ide)
     pattern = re.compile(
         rf"_doActivateExtension\s+{re.escape(extension_id)}\b|"
         rf"Extension activated success:\s+{re.escape(extension_id)}\b",
@@ -247,9 +253,10 @@ def extension_reload_required_lines(
 ) -> list[str]:
     """Actionable operator lines when VSIX is on disk but exthost never loaded the extension."""
     name = label or ide
+    ext_id = extension_id_for_ide(ide)
     lines = [
         _yellow(
-            f"koru autonomous: [!] VSIX zainstalowany, ale {EXTENSION_ID} "
+            f"koru autonomous: [!] VSIX zainstalowany, ale {ext_id} "
             f"nie jest aktywny w bieżącej sesji {name}.",
             enabled=color,
         ),
@@ -301,11 +308,15 @@ def extension_listed_in_extensions_json(ide: str) -> bool:
         return False
     if not isinstance(data, list):
         return False
+    ext_id = extension_id_for_ide(ide)
     for entry in data:
         if not isinstance(entry, dict):
             continue
         ident = entry.get("identifier")
-        if isinstance(ident, dict) and ident.get("id") == EXTENSION_ID:
+        if not isinstance(ident, dict):
+            continue
+        candidate = ident.get("id")
+        if candidate == ext_id or candidate == EXTENSION_ID:
             return True
     return False
 
@@ -438,7 +449,7 @@ def inactive_extension_hypothesis(ide: str) -> Hypothesis | None:
         id=f"{ide}.extension.not_activated",
         confidence=0.75,
         evidence=(
-            f"Brak aktywacji {EXTENSION_ID} w ostatnich logach exthost "
+            f"Brak aktywacji {extension_id_for_ide(ide)} w ostatnich logach exthost "
             f"({logs_hint}/.../exthost.log)"
         ),
         remediation=Remediation(

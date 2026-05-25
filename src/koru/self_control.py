@@ -179,49 +179,56 @@ def _install_manager_checks(project: Path, *, ide: str, socket_path: Path | None
                 repair=f"koru autopilot manage --ide {ide} --fix",
             )
         ]
-    checks: list[SelfCheck] = []
-    issue_rows = [issue.to_dict() for issue in report.issues]
-    repairable = []
-    advisory = []
-    for row in issue_rows:
-        code = str(row.get("code") or "")
-        severity = str(row.get("severity") or "")
-        if code in {
-            "koru_version_mismatch",
-            "koru_path_mismatch",
-            "plugin_installed_version_mismatch",
-            "plugin_live_host_stale",
-            "plugin_socket_candidate_mismatch",
-            "plugin_version_mismatch",
-        }:
-            repairable.append(f"{code}:{severity}")
-        else:
-            advisory.append(f"{code}:{severity}")
-    detail = (
-        f"ide={report.plugin.get('ide')}; socket={report.socket}; "
-        f"package={report.package_version or '-'}; source={report.source_version or '-'}; "
-        f"connected={report.plugin.get('connected')}; "
-        f"installed={report.plugin.get('installed_version') or '-'}; "
-        f"expected={report.plugin.get('expected_version') or '-'}"
-    )
+    repairable, advisory = _install_manager_issue_groups(report)
+    detail = _install_manager_check_detail(report)
     if repairable:
-        checks.append(
+        return [
             SelfCheck(
                 "autopilot_install_manager",
                 "warn",
                 detail + f"; repairable={','.join(repairable)}",
                 repair=f"koru autopilot manage --ide {report.plugin.get('ide') or ide} --fix",
             )
+        ]
+    return [
+        SelfCheck(
+            "autopilot_install_manager",
+            "ok" if not advisory else "warn",
+            detail + (f"; advisory={','.join(advisory)}" if advisory else ""),
         )
-    else:
-        checks.append(
-            SelfCheck(
-                "autopilot_install_manager",
-                "ok" if not advisory else "warn",
-                detail + (f"; advisory={','.join(advisory)}" if advisory else ""),
-            )
-        )
-    return checks
+    ]
+
+
+_INSTALL_MANAGER_REPAIRABLE_CODES = {
+    "koru_version_mismatch",
+    "koru_path_mismatch",
+    "plugin_installed_version_mismatch",
+    "plugin_live_host_stale",
+    "plugin_socket_candidate_mismatch",
+    "plugin_version_mismatch",
+}
+
+
+def _install_manager_issue_groups(report: Any) -> tuple[list[str], list[str]]:
+    repairable: list[str] = []
+    advisory: list[str] = []
+    for issue in report.issues:
+        row = issue.to_dict()
+        code = str(row.get("code") or "")
+        severity = str(row.get("severity") or "")
+        target = repairable if code in _INSTALL_MANAGER_REPAIRABLE_CODES else advisory
+        target.append(f"{code}:{severity}")
+    return repairable, advisory
+
+
+def _install_manager_check_detail(report: Any) -> str:
+    return (
+        f"ide={report.plugin.get('ide')}; socket={report.socket}; "
+        f"package={report.package_version or '-'}; source={report.source_version or '-'}; "
+        f"connected={report.plugin.get('connected')}; "
+        f"installed={report.plugin.get('installed_version') or '-'}; "
+        f"expected={report.plugin.get('expected_version') or '-'}"
+    )
 
 
 def _check_interface_registry() -> SelfCheck:

@@ -1,58 +1,50 @@
-# code2llm/evolution | 3713 func | 361f | 2026-05-25
-# generated in 0.01s
+# code2llm/evolution | 4380 func | 370f | 2026-05-25
+# generated in 0.02s
 
-NEXT[10] (ranked by impact):
+NEXT[8] (ranked by impact):
   [1] !! SPLIT           plugins/koru-autopilot-cursor/src/extension.ts
       WHY: 2616L, 2 classes, max CC=14
       EFFORT: ~4h  IMPACT: 36624
 
-  [2] !! SPLIT           plugins/koru-autopilot-vscode/src/extension.ts
-      WHY: 2615L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 36610
+  [2] !! SPLIT           src/koru/scan.py
+      WHY: 1104L, 0 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 16560
 
-  [3] !! SPLIT-FUNC      _backfill_existing_dedupe_keys  CC=26  fan=20
-      WHY: CC=26 exceeds 15
-      EFFORT: ~1h  IMPACT: 520
-
-  [4] !  SPLIT-FUNC      execFile  CC=18  fan=18
+  [3] !  SPLIT-FUNC      execFile  CC=18  fan=18
       WHY: CC=18 exceeds 15
       EFFORT: ~1h  IMPACT: 324
 
-  [5] !  SPLIT-FUNC      resolve_extension_vsix  CC=17  fan=18
+  [4] !  SPLIT-FUNC      resolve_extension_vsix  CC=17  fan=18
       WHY: CC=17 exceeds 15
       EFFORT: ~1h  IMPACT: 306
 
-  [6] !  SPLIT-FUNC      run_scan  CC=15  fan=19
+  [5] !  SPLIT-FUNC      run_scan  CC=15  fan=19
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 285
 
-  [7] !  SPLIT-FUNC      _blocked_interface_action_lines  CC=24  fan=10
-      WHY: CC=24 exceeds 15
-      EFFORT: ~1h  IMPACT: 240
+  [6] !  SPLIT-FUNC      AutopilotBridge.activate  CC=15  fan=15
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 225
 
-  [8] !  SPLIT-FUNC      _handle_autopilot_phase  CC=15  fan=14
+  [7] !  SPLIT-FUNC      _handle_autopilot_phase  CC=15  fan=14
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 210
 
-  [9] !  SPLIT-FUNC      _apply_planfile_ticket_items  CC=19  fan=11
-      WHY: CC=19 exceeds 15
-      EFFORT: ~1h  IMPACT: 209
-
-  [10] !  SPLIT-FUNC      _reassert_extension_extra  CC=18  fan=11
-      WHY: CC=18 exceeds 15
-      EFFORT: ~1h  IMPACT: 198
+  [8] !! SPLIT           planfile.yaml
+      WHY: 1357L, 0 classes, max CC=0
+      EFFORT: ~4h  IMPACT: 0
 
 
 RISKS[3]:
   ⚠ Splitting plugins/koru-autopilot-cursor/src/extension.ts may break 191 import paths
-  ⚠ Splitting plugins/koru-autopilot-vscode/src/extension.ts may break 191 import paths
   ⚠ Splitting planfile.yaml may break 0 import paths
+  ⚠ Splitting src/koru/scan.py may break 28 import paths
 
 METRICS-TARGET:
-  CC̄:          3.7 → ≤2.6
-  max-CC:      26 → ≤13
-  god-modules: 15 → 0
-  high-CC(≥15): 15 → ≤7
+  CC̄:          3.6 → ≤2.5
+  max-CC:      18 → ≤9
+  god-modules: 11 → 0
+  high-CC(≥15): 9 → ≤4
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +72,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=3.7 → now CC̄=3.7
+  prev CC̄=3.7 → now CC̄=3.6

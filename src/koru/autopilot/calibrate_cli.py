@@ -136,6 +136,40 @@ def detect_duplicate_coordinates(
     return dups
 
 
+def _default_session_capture_profile(
+    sleep_fn: Callable[[float], None],
+) -> Callable[[str, float, argparse.Namespace, dict[tuple[int, int], list[str]]], dict[str, Any]]:
+    def capture_profile(
+        ide: str,
+        delay: float,
+        ns: argparse.Namespace,
+        captured: dict[tuple[int, int], list[str]],
+    ) -> dict[str, Any]:
+        return capture_ide_profile(
+            ide,
+            delay,
+            ns,
+            captured,
+            sleep_fn=sleep_fn,
+        )
+
+    return capture_profile
+
+
+def _annotate_shared_coordinate_warnings(
+    targets: list[dict[str, object]],
+    captured: dict[tuple[int, int], list[str]],
+) -> None:
+    for row in targets:
+        if row.get("ok") is not True:
+            continue
+        pair = (int(row["chat_x"]), int(row["chat_y"]))
+        peers = [ide for ide in captured.get(pair, []) if ide != row["ide"]]
+        if peers:
+            row["shared_with"] = sorted(peers)
+            row["warning"] = "shared_coordinates_with_other_ides"
+
+
 def action_session_start(
     args: argparse.Namespace,
     *,
@@ -152,19 +186,7 @@ def action_session_start(
     if resolve_ides is None:
         resolve_ides = resolve_session_ides
     if capture_profile is None:
-        def capture_profile(  # type: ignore[no-redef]
-            ide: str,
-            delay: float,
-            ns: argparse.Namespace,
-            captured: dict[tuple[int, int], list[str]],
-        ) -> dict[str, Any]:
-            return capture_ide_profile(
-                ide,
-                delay,
-                ns,
-                captured,
-                sleep_fn=sleep_fn,
-            )
+        capture_profile = _default_session_capture_profile(sleep_fn)
 
     ides = resolve_ides(args.ides)
     if not ides:
@@ -186,14 +208,7 @@ def action_session_start(
             ok = False
         targets.append(row)
 
-    for row in targets:
-        if row.get("ok") is not True:
-            continue
-        pair = (int(row["chat_x"]), int(row["chat_y"]))
-        peers = [i for i in captured.get(pair, []) if i != row["ide"]]
-        if peers:
-            row["shared_with"] = sorted(peers)
-            row["warning"] = "shared_coordinates_with_other_ides"
+    _annotate_shared_coordinate_warnings(targets, captured)
 
     payload: dict[str, object] = {"ok": ok, "targets": targets}
     dups = duplicate_detector(captured)
