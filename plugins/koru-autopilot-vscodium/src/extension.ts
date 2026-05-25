@@ -616,7 +616,7 @@ class AutopilotBridge {
         await this.sleep(80);
         continue;
       }
-      const verify = await this.verifySubmitStep(verifyText, !options.preserveFocus);
+      const verify = await this.verifySubmitStep(verifyText, true);
       if (verify.cleared) {
         if (this.probeLadderEnabled()) {
           await this.saveProbeCache({ submit: rendered });
@@ -1201,7 +1201,6 @@ class AutopilotBridge {
     if (hostVerifyEnabled && verifyText && preserveWebviewFocus) {
       preservedFocusHostKey = await this._tryVerifiedHostKeySubmit("vscodium", verifyText, {
         preserveFocus: true,
-        preferPlain: true,
       });
       if (preservedFocusHostKey.ok && preservedFocusHostKey.command) return preservedFocusHostKey;
       return preservedFocusHostKey;

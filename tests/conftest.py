@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import os
-import threading
+
+from koruide.config import cached_config
 
 
 def pytest_runtest_teardown(item, nextitem):
@@ -15,3 +16,4 @@ def pytest_runtest_teardown(item, nextitem):
         "KORU_PLUGIN_REJECTION_LOG_INTERVAL_SECONDS",
     ):
         os.environ.pop(key, None)
+    cached_config.cache_clear()

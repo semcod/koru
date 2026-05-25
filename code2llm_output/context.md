@@ -2,359 +2,436 @@
 
 ## Overview
 
-- **Project**: /home/tom/github/semcod/koru
-- **Primary Language**: python
-- **Languages**: python: 892, md: 108, typescript: 61, yaml: 58, shell: 49
+- **Project**: /home/tom/github/semcod/koru/plugins
+- **Primary Language**: typescript
+- **Languages**: typescript: 205, yaml: 15, md: 12, json: 11, kotlin: 5
 - **Analysis Mode**: static
-- **Total Functions**: 30623
-- **Total Classes**: 681
-- **Modules**: 1219
-- **Entry Points**: 0
+- **Total Functions**: 3385
+- **Total Classes**: 142
+- **Modules**: 250
+- **Entry Points**: 2412
 
 ## Architecture by Module
 
-### code2llm_output.map.toon
-- **Functions**: 92399
-- **File**: `map.toon.yaml`
+### koru-autopilot-shared.src.autopilot-bridge
+- **Functions**: 392
+- **Classes**: 4
+- **File**: `autopilot-bridge.ts`
 
-### batch_1.SUMD
-- **Functions**: 4386
-- **Classes**: 1
-- **File**: `SUMD.md`
+### koru-autopilot-cursor.src._shared.autopilot-bridge
+- **Functions**: 392
+- **Classes**: 4
+- **File**: `autopilot-bridge.ts`
 
-### project.map.toon
-- **Functions**: 4386
-- **File**: `map.toon.yaml`
+### koru-autopilot-vscode.src._shared.autopilot-bridge
+- **Functions**: 392
+- **Classes**: 4
+- **File**: `autopilot-bridge.ts`
 
-### project.src_part4.map.toon
-- **Functions**: 2552
-- **File**: `map.toon.yaml`
-
-### project.src_part3.map.toon
-- **Functions**: 2549
-- **File**: `map.toon.yaml`
-
-### project.src_part2.map.toon
-- **Functions**: 2546
-- **File**: `map.toon.yaml`
-
-### project.src.map.toon
-- **Functions**: 2544
-- **File**: `map.toon.yaml`
-
-### plugins.koru-autopilot-shared.src.autopilot-bridge
+### koru-autopilot-vscodium.src._shared.autopilot-bridge
 - **Functions**: 391
 - **Classes**: 3
 - **File**: `autopilot-bridge.ts`
 
-### plugins.koru-autopilot-vscodium.src.extension
+### koru-autopilot-vscodium.src.extension
 - **Functions**: 389
 - **Classes**: 1
 - **File**: `extension.ts`
 
-### plugins.koru-autopilot-antigravity.src.extension
+### koru-autopilot-antigravity.src.extension
 - **Functions**: 373
 - **Classes**: 2
 - **File**: `extension.ts`
 
-### plugins.koru-autopilot-windsurf.src.extension
+### koru-autopilot-windsurf.src.extension
 - **Functions**: 373
 - **Classes**: 2
 - **File**: `extension.ts`
 
-### koru.doctor
-- **Functions**: 71
-- **Classes**: 2
-- **File**: `doctor.py`
-
-### src.koru.doctor
-- **Functions**: 71
-- **Classes**: 2
-- **File**: `doctor.py`
-
-### koru.autonomous
-- **Functions**: 62
-- **File**: `autonomous.py`
-
-### src.koru.autonomous
-- **Functions**: 62
-- **File**: `autonomous.py`
-
-### plugins.koru-autopilot-vscodium.src.probe-ladder
+### koru-autopilot-vscodium.src.probe-ladder
 - **Functions**: 53
 - **Classes**: 3
 - **File**: `probe-ladder.ts`
 
-### plugins.koru-autopilot-vscode.src.probe-ladder
+### koru-autopilot-antigravity.src.probe-ladder
 - **Functions**: 49
 - **Classes**: 3
 - **File**: `probe-ladder.ts`
 
-### koru.autonomous_loop_runner
-- **Functions**: 48
-- **Classes**: 1
-- **File**: `autonomous_loop_runner.py`
+### koru-autopilot-cursor.src.probe-ladder
+- **Functions**: 49
+- **Classes**: 3
+- **File**: `probe-ladder.ts`
 
-### src.koru.autonomous_loop_runner
-- **Functions**: 48
-- **Classes**: 1
-- **File**: `autonomous_loop_runner.py`
+### koru-autopilot-vscode.src.probe-ladder
+- **Functions**: 49
+- **Classes**: 3
+- **File**: `probe-ladder.ts`
 
-### plugins.koru-autopilot-cursor.src.probe-ladder.test
+### koru-autopilot-windsurf.src.probe-ladder
+- **Functions**: 49
+- **Classes**: 3
+- **File**: `probe-ladder.ts`
+
+### koru-autopilot-cursor.src.probe-ladder.test
 - **Functions**: 48
 - **File**: `probe-ladder.test.ts`
+
+### koru-autopilot-cursor.src.chat-history-watcher.test
+- **Functions**: 43
+- **File**: `chat-history-watcher.test.ts`
+
+### koru-autopilot-antigravity.src.chat-history-watcher.test
+- **Functions**: 43
+- **File**: `chat-history-watcher.test.ts`
+
+### koru-autopilot-vscode.src.chat-history-watcher.test
+- **Functions**: 43
+- **File**: `chat-history-watcher.test.ts`
+
+### koru-autopilot-windsurf.src.chat-history-watcher.test
+- **Functions**: 43
+- **File**: `chat-history-watcher.test.ts`
+
+### koru-autopilot-vscodium.src.chat-history-watcher.test
+- **Functions**: 43
+- **File**: `chat-history-watcher.test.ts`
+
+### koru-autopilot-antigravity.src.ack-payload
+- **Functions**: 35
+- **File**: `ack-payload.ts`
+
+### koru-autopilot-shared.src.ack-payload
+- **Functions**: 35
+- **File**: `ack-payload.ts`
 
 ## Key Entry Points
 
 Main execution flows into the system:
 
+### koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sock
+- **Calls**: koru-autopilot-shared.src.autopilot-bridge.on, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.debugLog, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.detectIde, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.maybeOpenChatOnConnect, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.resolve, koru-autopilot-shared.src.autopilot-bridge.getCommands, koru-autopilot-shared.src.autopilot-bridge.then, koru-autopilot-shared.src.autopilot-bridge.classifyCommands
+
+### koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.connected
+- **Calls**: koru-autopilot-shared.src.autopilot-bridge.on, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.debugLog, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.detectIde, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.maybeOpenChatOnConnect, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.resolve, koru-autopilot-shared.src.autopilot-bridge.getCommands, koru-autopilot-shared.src.autopilot-bridge.then, koru-autopilot-shared.src.autopilot-bridge.classifyCommands
+
+### koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.sock
+- **Calls**: koru-autopilot-cursor.src._shared.autopilot-bridge.on, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.debugLog, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.detectIde, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.maybeOpenChatOnConnect, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.resolve, koru-autopilot-cursor.src._shared.autopilot-bridge.getCommands, koru-autopilot-cursor.src._shared.autopilot-bridge.then, koru-autopilot-cursor.src._shared.autopilot-bridge.classifyCommands
+
+### koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.connected
+- **Calls**: koru-autopilot-cursor.src._shared.autopilot-bridge.on, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.debugLog, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.detectIde, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.maybeOpenChatOnConnect, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.resolve, koru-autopilot-cursor.src._shared.autopilot-bridge.getCommands, koru-autopilot-cursor.src._shared.autopilot-bridge.then, koru-autopilot-cursor.src._shared.autopilot-bridge.classifyCommands
+
+### koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.sock
+- **Calls**: koru-autopilot-vscode.src._shared.autopilot-bridge.on, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.debugLog, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.detectIde, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.maybeOpenChatOnConnect, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.resolve, koru-autopilot-vscode.src._shared.autopilot-bridge.getCommands, koru-autopilot-vscode.src._shared.autopilot-bridge.then, koru-autopilot-vscode.src._shared.autopilot-bridge.classifyCommands
+
+### koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.connected
+- **Calls**: koru-autopilot-vscode.src._shared.autopilot-bridge.on, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.debugLog, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.detectIde, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.maybeOpenChatOnConnect, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.resolve, koru-autopilot-vscode.src._shared.autopilot-bridge.getCommands, koru-autopilot-vscode.src._shared.autopilot-bridge.then, koru-autopilot-vscode.src._shared.autopilot-bridge.classifyCommands
+
+### koru-autopilot-vscodium.src.extension.AutopilotBridge.sock
+- **Calls**: koru-autopilot-vscodium.src.extension.on, koru-autopilot-vscodium.src.extension.AutopilotBridge.debugLog, koru-autopilot-vscodium.src.extension.AutopilotBridge.detectIde, koru-autopilot-vscodium.src.extension.AutopilotBridge.maybeOpenChatOnConnect, koru-autopilot-vscodium.src.extension.AutopilotBridge.resolve, koru-autopilot-vscodium.src.extension.getCommands, koru-autopilot-vscodium.src.extension.then, koru-autopilot-vscodium.src.extension.classifyCommands
+
+### koru-autopilot-vscodium.src.extension.AutopilotBridge.connected
+- **Calls**: koru-autopilot-vscodium.src.extension.on, koru-autopilot-vscodium.src.extension.AutopilotBridge.debugLog, koru-autopilot-vscodium.src.extension.AutopilotBridge.detectIde, koru-autopilot-vscodium.src.extension.AutopilotBridge.maybeOpenChatOnConnect, koru-autopilot-vscodium.src.extension.AutopilotBridge.resolve, koru-autopilot-vscodium.src.extension.getCommands, koru-autopilot-vscodium.src.extension.then, koru-autopilot-vscodium.src.extension.classifyCommands
+
+### koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.sock
+- **Calls**: koru-autopilot-vscodium.src._shared.autopilot-bridge.on, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.debugLog, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.detectIde, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.maybeOpenChatOnConnect, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.resolve, koru-autopilot-vscodium.src._shared.autopilot-bridge.getCommands, koru-autopilot-vscodium.src._shared.autopilot-bridge.then, koru-autopilot-vscodium.src._shared.autopilot-bridge.classifyCommands
+
+### koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.connected
+- **Calls**: koru-autopilot-vscodium.src._shared.autopilot-bridge.on, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.debugLog, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.detectIde, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.maybeOpenChatOnConnect, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.resolve, koru-autopilot-vscodium.src._shared.autopilot-bridge.getCommands, koru-autopilot-vscodium.src._shared.autopilot-bridge.then, koru-autopilot-vscodium.src._shared.autopilot-bridge.classifyCommands
+
+### koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.calibrateProbe
+- **Calls**: koru-autopilot-shared.src.autopilot-bridge.random, koru-autopilot-shared.src.autopilot-bridge.toString, koru-autopilot-shared.src.autopilot-bridge.slice, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.detectIde, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.focusChat, koru-autopilot-shared.src.autopilot-bridge.push, koru-autopilot-shared.src.autopilot-bridge.showWarningMessage, koru-autopilot-shared.src.autopilot-bridge.join
+
+### koru-autopilot-antigravity.src.extension.AutopilotBridge.sock
+- **Calls**: koru-autopilot-antigravity.src.extension.on, koru-autopilot-antigravity.src.extension.AutopilotBridge.debugLog, koru-autopilot-antigravity.src.extension.AutopilotBridge.detectIde, koru-autopilot-antigravity.src.extension.AutopilotBridge.resolve, koru-autopilot-antigravity.src.extension.getCommands, koru-autopilot-antigravity.src.extension.then, koru-autopilot-antigravity.src.extension.classifyCommands, koru-autopilot-antigravity.src.extension.matchingCommandsFlat
+
+### koru-autopilot-antigravity.src.extension.AutopilotBridge.connected
+- **Calls**: koru-autopilot-antigravity.src.extension.on, koru-autopilot-antigravity.src.extension.AutopilotBridge.debugLog, koru-autopilot-antigravity.src.extension.AutopilotBridge.detectIde, koru-autopilot-antigravity.src.extension.AutopilotBridge.resolve, koru-autopilot-antigravity.src.extension.getCommands, koru-autopilot-antigravity.src.extension.then, koru-autopilot-antigravity.src.extension.classifyCommands, koru-autopilot-antigravity.src.extension.matchingCommandsFlat
+
+### koru-autopilot-antigravity.src.extension.AutopilotBridge.calibrateProbe
+- **Calls**: koru-autopilot-antigravity.src.extension.random, koru-autopilot-antigravity.src.extension.toString, koru-autopilot-antigravity.src.extension.slice, koru-autopilot-antigravity.src.extension.AutopilotBridge.detectIde, koru-autopilot-antigravity.src.extension.AutopilotBridge.focusChat, koru-autopilot-antigravity.src.extension.push, koru-autopilot-antigravity.src.extension.showWarningMessage, koru-autopilot-antigravity.src.extension.join
+
+### koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.calibrateProbe
+- **Calls**: koru-autopilot-cursor.src._shared.autopilot-bridge.random, koru-autopilot-cursor.src._shared.autopilot-bridge.toString, koru-autopilot-cursor.src._shared.autopilot-bridge.slice, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.detectIde, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.focusChat, koru-autopilot-cursor.src._shared.autopilot-bridge.push, koru-autopilot-cursor.src._shared.autopilot-bridge.showWarningMessage, koru-autopilot-cursor.src._shared.autopilot-bridge.join
+
+### koru-autopilot-windsurf.src.extension.AutopilotBridge.sock
+- **Calls**: koru-autopilot-windsurf.src.extension.on, koru-autopilot-windsurf.src.extension.AutopilotBridge.debugLog, koru-autopilot-windsurf.src.extension.AutopilotBridge.detectIde, koru-autopilot-windsurf.src.extension.AutopilotBridge.resolve, koru-autopilot-windsurf.src.extension.getCommands, koru-autopilot-windsurf.src.extension.then, koru-autopilot-windsurf.src.extension.classifyCommands, koru-autopilot-windsurf.src.extension.matchingCommandsFlat
+
+### koru-autopilot-windsurf.src.extension.AutopilotBridge.connected
+- **Calls**: koru-autopilot-windsurf.src.extension.on, koru-autopilot-windsurf.src.extension.AutopilotBridge.debugLog, koru-autopilot-windsurf.src.extension.AutopilotBridge.detectIde, koru-autopilot-windsurf.src.extension.AutopilotBridge.resolve, koru-autopilot-windsurf.src.extension.getCommands, koru-autopilot-windsurf.src.extension.then, koru-autopilot-windsurf.src.extension.classifyCommands, koru-autopilot-windsurf.src.extension.matchingCommandsFlat
+
+### koru-autopilot-windsurf.src.extension.AutopilotBridge.calibrateProbe
+- **Calls**: koru-autopilot-windsurf.src.extension.random, koru-autopilot-windsurf.src.extension.toString, koru-autopilot-windsurf.src.extension.slice, koru-autopilot-windsurf.src.extension.AutopilotBridge.detectIde, koru-autopilot-windsurf.src.extension.AutopilotBridge.focusChat, koru-autopilot-windsurf.src.extension.push, koru-autopilot-windsurf.src.extension.showWarningMessage, koru-autopilot-windsurf.src.extension.join
+
+### koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.calibrateProbe
+- **Calls**: koru-autopilot-vscode.src._shared.autopilot-bridge.random, koru-autopilot-vscode.src._shared.autopilot-bridge.toString, koru-autopilot-vscode.src._shared.autopilot-bridge.slice, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.detectIde, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.focusChat, koru-autopilot-vscode.src._shared.autopilot-bridge.push, koru-autopilot-vscode.src._shared.autopilot-bridge.showWarningMessage, koru-autopilot-vscode.src._shared.autopilot-bridge.join
+
+### koru-autopilot-vscodium.src.extension.AutopilotBridge.calibrateProbe
+- **Calls**: koru-autopilot-vscodium.src.extension.random, koru-autopilot-vscodium.src.extension.toString, koru-autopilot-vscodium.src.extension.slice, koru-autopilot-vscodium.src.extension.AutopilotBridge.detectIde, koru-autopilot-vscodium.src.extension.AutopilotBridge.focusChat, koru-autopilot-vscodium.src.extension.push, koru-autopilot-vscodium.src.extension.showWarningMessage, koru-autopilot-vscodium.src.extension.join
+
+### koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.calibrateProbe
+- **Calls**: koru-autopilot-vscodium.src._shared.autopilot-bridge.random, koru-autopilot-vscodium.src._shared.autopilot-bridge.toString, koru-autopilot-vscodium.src._shared.autopilot-bridge.slice, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.detectIde, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.focusChat, koru-autopilot-vscodium.src._shared.autopilot-bridge.push, koru-autopilot-vscodium.src._shared.autopilot-bridge.showWarningMessage, koru-autopilot-vscodium.src._shared.autopilot-bridge.join
+
+### koru-autopilot-cursor.src.chat-history-watcher.test.main
+- **Calls**: koru-autopilot-cursor.src.chat-history-watcher.test.testParseCursorBubbleRowsHandlesMultilineText, koru-autopilot-cursor.src.chat-history-watcher.test.testWatcherEmitsNewBubblesAndAdvancesCursor, koru-autopilot-cursor.src.chat-history-watcher.test.testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse, koru-autopilot-cursor.src.chat-history-watcher.test.testWatcherSwallowsAdapterErrors, koru-autopilot-cursor.src.chat-history-watcher.test.testUnsupportedAdapterEmitsNothing, koru-autopilot-cursor.src.chat-history-watcher.test.testBuildAdapterForIdeReturnsCorrectKind, koru-autopilot-cursor.src.chat-history-watcher.test.testParseVSCodeChatIndexExtractsAssistantResponses, koru-autopilot-cursor.src.chat-history-watcher.test.testParseVSCodeChatIndexReturnsEmptyOnGarbage
+
+### koru-autopilot-antigravity.src.chat-history-watcher.test.main
+- **Calls**: koru-autopilot-antigravity.src.chat-history-watcher.test.testParseCursorBubbleRowsHandlesMultilineText, koru-autopilot-antigravity.src.chat-history-watcher.test.testWatcherEmitsNewBubblesAndAdvancesCursor, koru-autopilot-antigravity.src.chat-history-watcher.test.testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse, koru-autopilot-antigravity.src.chat-history-watcher.test.testWatcherSwallowsAdapterErrors, koru-autopilot-antigravity.src.chat-history-watcher.test.testUnsupportedAdapterEmitsNothing, koru-autopilot-antigravity.src.chat-history-watcher.test.testBuildAdapterForIdeReturnsCorrectKind, koru-autopilot-antigravity.src.chat-history-watcher.test.testParseVSCodeChatIndexExtractsAssistantResponses, koru-autopilot-antigravity.src.chat-history-watcher.test.testParseVSCodeChatIndexReturnsEmptyOnGarbage
+
+### koru-autopilot-vscode.src.chat-history-watcher.test.main
+- **Calls**: koru-autopilot-vscode.src.chat-history-watcher.test.testParseCursorBubbleRowsHandlesMultilineText, koru-autopilot-vscode.src.chat-history-watcher.test.testWatcherEmitsNewBubblesAndAdvancesCursor, koru-autopilot-vscode.src.chat-history-watcher.test.testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse, koru-autopilot-vscode.src.chat-history-watcher.test.testWatcherSwallowsAdapterErrors, koru-autopilot-vscode.src.chat-history-watcher.test.testUnsupportedAdapterEmitsNothing, koru-autopilot-vscode.src.chat-history-watcher.test.testBuildAdapterForIdeReturnsCorrectKind, koru-autopilot-vscode.src.chat-history-watcher.test.testParseVSCodeChatIndexExtractsAssistantResponses, koru-autopilot-vscode.src.chat-history-watcher.test.testParseVSCodeChatIndexReturnsEmptyOnGarbage
+
+### koru-autopilot-windsurf.src.chat-history-watcher.test.main
+- **Calls**: koru-autopilot-windsurf.src.chat-history-watcher.test.testParseCursorBubbleRowsHandlesMultilineText, koru-autopilot-windsurf.src.chat-history-watcher.test.testWatcherEmitsNewBubblesAndAdvancesCursor, koru-autopilot-windsurf.src.chat-history-watcher.test.testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse, koru-autopilot-windsurf.src.chat-history-watcher.test.testWatcherSwallowsAdapterErrors, koru-autopilot-windsurf.src.chat-history-watcher.test.testUnsupportedAdapterEmitsNothing, koru-autopilot-windsurf.src.chat-history-watcher.test.testBuildAdapterForIdeReturnsCorrectKind, koru-autopilot-windsurf.src.chat-history-watcher.test.testParseVSCodeChatIndexExtractsAssistantResponses, koru-autopilot-windsurf.src.chat-history-watcher.test.testParseVSCodeChatIndexReturnsEmptyOnGarbage
+
+### koru-autopilot-vscodium.src.chat-history-watcher.test.main
+- **Calls**: koru-autopilot-vscodium.src.chat-history-watcher.test.testParseCursorBubbleRowsHandlesMultilineText, koru-autopilot-vscodium.src.chat-history-watcher.test.testWatcherEmitsNewBubblesAndAdvancesCursor, koru-autopilot-vscodium.src.chat-history-watcher.test.testWatcherDoesNotAdvanceWhenDeliveryReturnsFalse, koru-autopilot-vscodium.src.chat-history-watcher.test.testWatcherSwallowsAdapterErrors, koru-autopilot-vscodium.src.chat-history-watcher.test.testUnsupportedAdapterEmitsNothing, koru-autopilot-vscodium.src.chat-history-watcher.test.testBuildAdapterForIdeReturnsCorrectKind, koru-autopilot-vscodium.src.chat-history-watcher.test.testParseVSCodeChatIndexExtractsAssistantResponses, koru-autopilot-vscodium.src.chat-history-watcher.test.testParseVSCodeChatIndexReturnsEmptyOnGarbage
+
+### koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.directCommands
+- **Calls**: koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.directPasteReadsClipboard, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.writeClipboardVerified, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.debugLog, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.traceOperation, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.resolve, koru-autopilot-shared.src.autopilot-bridge.executeCommand, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sleep, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.probePasteDelayMs
+
+### koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.previousClip
+- **Calls**: koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.directPasteReadsClipboard, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.writeClipboardVerified, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.debugLog, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.traceOperation, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.resolve, koru-autopilot-shared.src.autopilot-bridge.executeCommand, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sleep, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.probePasteDelayMs
+
+### koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.clipboardSeeded
+- **Calls**: koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.directPasteReadsClipboard, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.writeClipboardVerified, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.debugLog, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.traceOperation, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.resolve, koru-autopilot-shared.src.autopilot-bridge.executeCommand, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sleep, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.probePasteDelayMs
+
+### koru-autopilot-antigravity.src.extension.AutopilotBridge.directCommands
+- **Calls**: koru-autopilot-antigravity.src.extension.AutopilotBridge.directPasteReadsClipboard, koru-autopilot-antigravity.src.extension.AutopilotBridge.writeClipboardVerified, koru-autopilot-antigravity.src.extension.AutopilotBridge.debugLog, koru-autopilot-antigravity.src.extension.AutopilotBridge.traceOperation, koru-autopilot-antigravity.src.extension.AutopilotBridge.resolve, koru-autopilot-antigravity.src.extension.executeCommand, koru-autopilot-antigravity.src.extension.AutopilotBridge.sleep, koru-autopilot-antigravity.src.extension.AutopilotBridge.probePasteDelayMs
+
 ## Process Flows
 
 Key execution flows identified:
 
+### Flow 1: sock
+```
+sock [koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge]
+  └─> debugLog
+  └─> detectIde
+```
+
+### Flow 2: connected
+```
+connected [koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge]
+  └─> debugLog
+  └─> detectIde
+```
+
+### Flow 3: calibrateProbe
+```
+calibrateProbe [koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge]
+  └─> detectIde
+  └─> focusChat
+      └─> _buildFocusChatContext
+          └─> detectIde
+          └─> resolve
+```
+
 ## Key Classes
 
-### plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge
+### koru-autopilot-vscodium.src.extension.AutopilotBridge
 - **Methods**: 382
-- **Key Methods**: plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.value, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.commands, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.server, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.safeLog, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.emitLiveDsl, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.seq
+- **Key Methods**: koru-autopilot-vscodium.src.extension.AutopilotBridge.isConnected, koru-autopilot-vscodium.src.extension.AutopilotBridge.sendConsoleLog, koru-autopilot-vscodium.src.extension.AutopilotBridge.resetOperationTrace, koru-autopilot-vscodium.src.extension.AutopilotBridge.value, koru-autopilot-vscodium.src.extension.AutopilotBridge.commands, koru-autopilot-vscodium.src.extension.AutopilotBridge.server, koru-autopilot-vscodium.src.extension.AutopilotBridge.traceOperation, koru-autopilot-vscodium.src.extension.AutopilotBridge.safeLog, koru-autopilot-vscodium.src.extension.AutopilotBridge.emitLiveDsl, koru-autopilot-vscodium.src.extension.AutopilotBridge.seq
 
-### plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge
+### koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge
 - **Methods**: 376
-- **Key Methods**: plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.isConnected, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sendConsoleLog, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.resetOperationTrace, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.value, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.commands, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.server, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.traceOperation, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.safeLog, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.emitLiveDsl, plugins.koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.seq
+- **Key Methods**: koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.isConnected, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sendConsoleLog, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.resetOperationTrace, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.value, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.commands, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.server, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.traceOperation, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.safeLog, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.emitLiveDsl, koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.seq
 
-### plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge
+### koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge
+- **Methods**: 376
+- **Key Methods**: koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.isConnected, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.sendConsoleLog, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.resetOperationTrace, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.value, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.commands, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.server, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.traceOperation, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.safeLog, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.emitLiveDsl, koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.seq
+
+### koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge
+- **Methods**: 376
+- **Key Methods**: koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.isConnected, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.sendConsoleLog, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.resetOperationTrace, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.value, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.commands, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.server, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.traceOperation, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.safeLog, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.emitLiveDsl, koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.seq
+
+### koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge
 - **Methods**: 375
-- **Key Methods**: plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.isConnected, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.value, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.commands, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.server, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.traceOperation, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.safeLog, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.emitLiveDsl, plugins.koru-autopilot-shared.src.autopilot-bridge.AutopilotBridge.seq
+- **Key Methods**: koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.isConnected, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.sendConsoleLog, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.resetOperationTrace, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.value, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.commands, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.server, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.traceOperation, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.safeLog, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.emitLiveDsl, koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.seq
 
-### plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge
+### koru-autopilot-antigravity.src.extension.AutopilotBridge
 - **Methods**: 358
-- **Key Methods**: plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.value, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.commands, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.server, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.safeLog, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.emitLiveDsl, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.seq
+- **Key Methods**: koru-autopilot-antigravity.src.extension.AutopilotBridge.isConnected, koru-autopilot-antigravity.src.extension.AutopilotBridge.sendConsoleLog, koru-autopilot-antigravity.src.extension.AutopilotBridge.resetOperationTrace, koru-autopilot-antigravity.src.extension.AutopilotBridge.value, koru-autopilot-antigravity.src.extension.AutopilotBridge.commands, koru-autopilot-antigravity.src.extension.AutopilotBridge.server, koru-autopilot-antigravity.src.extension.AutopilotBridge.traceOperation, koru-autopilot-antigravity.src.extension.AutopilotBridge.safeLog, koru-autopilot-antigravity.src.extension.AutopilotBridge.emitLiveDsl, koru-autopilot-antigravity.src.extension.AutopilotBridge.seq
 
-### plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge
+### koru-autopilot-windsurf.src.extension.AutopilotBridge
 - **Methods**: 358
-- **Key Methods**: plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.value, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.commands, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.server, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.safeLog, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.emitLiveDsl, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.seq
+- **Key Methods**: koru-autopilot-windsurf.src.extension.AutopilotBridge.isConnected, koru-autopilot-windsurf.src.extension.AutopilotBridge.sendConsoleLog, koru-autopilot-windsurf.src.extension.AutopilotBridge.resetOperationTrace, koru-autopilot-windsurf.src.extension.AutopilotBridge.value, koru-autopilot-windsurf.src.extension.AutopilotBridge.commands, koru-autopilot-windsurf.src.extension.AutopilotBridge.server, koru-autopilot-windsurf.src.extension.AutopilotBridge.traceOperation, koru-autopilot-windsurf.src.extension.AutopilotBridge.safeLog, koru-autopilot-windsurf.src.extension.AutopilotBridge.emitLiveDsl, koru-autopilot-windsurf.src.extension.AutopilotBridge.seq
 
-### koruide.drive_orchestrator.DriveOrchestrator
-> Pure helpers used by the autopilot daemon.
-- **Methods**: 22
-- **Key Methods**: koruide.drive_orchestrator.DriveOrchestrator.plugin_required_message, koruide.drive_orchestrator.DriveOrchestrator.should_try_os_fallback, koruide.drive_orchestrator.DriveOrchestrator.build_message_sent_info, koruide.drive_orchestrator.DriveOrchestrator.annotate_plugin_ack, koruide.drive_orchestrator.DriveOrchestrator.is_poisoned_submit_ack, koruide.drive_orchestrator.DriveOrchestrator.strict_plugin_ack_required, koruide.drive_orchestrator.DriveOrchestrator.expected_plugin_version, koruide.drive_orchestrator.DriveOrchestrator.strict_plugin_version_required, koruide.drive_orchestrator.DriveOrchestrator.protocol_plugin_version_policy, koruide.drive_orchestrator.DriveOrchestrator.plugin_version_info
-
-### src.koruide.drive_orchestrator.DriveOrchestrator
-> Pure helpers used by the autopilot daemon.
-- **Methods**: 22
-- **Key Methods**: src.koruide.drive_orchestrator.DriveOrchestrator.plugin_required_message, src.koruide.drive_orchestrator.DriveOrchestrator.should_try_os_fallback, src.koruide.drive_orchestrator.DriveOrchestrator.build_message_sent_info, src.koruide.drive_orchestrator.DriveOrchestrator.annotate_plugin_ack, src.koruide.drive_orchestrator.DriveOrchestrator.is_poisoned_submit_ack, src.koruide.drive_orchestrator.DriveOrchestrator.strict_plugin_ack_required, src.koruide.drive_orchestrator.DriveOrchestrator.expected_plugin_version, src.koruide.drive_orchestrator.DriveOrchestrator.strict_plugin_version_required, src.koruide.drive_orchestrator.DriveOrchestrator.protocol_plugin_version_policy, src.koruide.drive_orchestrator.DriveOrchestrator.plugin_version_info
-
-### plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter
+### koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter
 - **Methods**: 17
-- **Key Methods**: plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.storeAvailable, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.fetchNewer, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.r, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.extractResponsesFromSession, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.responses, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.resp, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.ts, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.text, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.safeParseJson, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.trimmed
+- **Key Methods**: koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.storeAvailable, koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.fetchNewer, koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.r, koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.extractResponsesFromSession, koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.responses, koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.resp, koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.ts, koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.text, koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.safeParseJson, koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.trimmed
 
-### plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter
+### koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter
+- **Methods**: 17
+- **Key Methods**: koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.storeAvailable, koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.fetchNewer, koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.r, koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.extractResponsesFromSession, koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.responses, koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.resp, koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.ts, koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.text, koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.safeParseJson, koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.trimmed
+
+### koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter
+- **Methods**: 17
+- **Key Methods**: koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.storeAvailable, koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.fetchNewer, koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.r, koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.extractResponsesFromSession, koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.responses, koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.resp, koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.ts, koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.text, koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.safeParseJson, koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.trimmed
+
+### koru-autopilot-windsurf.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter
+- **Methods**: 17
+- **Key Methods**: koru-autopilot-windsurf.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.storeAvailable, koru-autopilot-windsurf.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.fetchNewer, koru-autopilot-windsurf.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.r, koru-autopilot-windsurf.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.extractResponsesFromSession, koru-autopilot-windsurf.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.responses, koru-autopilot-windsurf.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.resp, koru-autopilot-windsurf.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.ts, koru-autopilot-windsurf.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.text, koru-autopilot-windsurf.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.safeParseJson, koru-autopilot-windsurf.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.trimmed
+
+### koru-autopilot-vscodium.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter
+- **Methods**: 17
+- **Key Methods**: koru-autopilot-vscodium.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.storeAvailable, koru-autopilot-vscodium.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.fetchNewer, koru-autopilot-vscodium.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.r, koru-autopilot-vscodium.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.extractResponsesFromSession, koru-autopilot-vscodium.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.responses, koru-autopilot-vscodium.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.resp, koru-autopilot-vscodium.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.ts, koru-autopilot-vscodium.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.text, koru-autopilot-vscodium.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.safeParseJson, koru-autopilot-vscodium.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.trimmed
+
+### koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter
 - **Methods**: 16
-- **Key Methods**: plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.storeAvailable, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.fetchNewer, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.lastRowid, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.latestBubbleRowid, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.n, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.parseCursorBubbleRows, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.recSep, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.fldSep
+- **Key Methods**: koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.storeAvailable, koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.fetchNewer, koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.lastRowid, koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.latestBubbleRowid, koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.r, koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.n, koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.r, koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.parseCursorBubbleRows, koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.recSep, koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.fldSep
 
-### src.koruide.injector.Injector
-> Pick the best available backend and type text through it.
+### koru-autopilot-cursor.src.cursor-bubble-adapter.CursorBubbleAdapter
+- **Methods**: 16
+- **Key Methods**: koru-autopilot-cursor.src.cursor-bubble-adapter.CursorBubbleAdapter.storeAvailable, koru-autopilot-cursor.src.cursor-bubble-adapter.CursorBubbleAdapter.fetchNewer, koru-autopilot-cursor.src.cursor-bubble-adapter.CursorBubbleAdapter.lastRowid, koru-autopilot-cursor.src.cursor-bubble-adapter.CursorBubbleAdapter.latestBubbleRowid, koru-autopilot-cursor.src.cursor-bubble-adapter.CursorBubbleAdapter.r, koru-autopilot-cursor.src.cursor-bubble-adapter.CursorBubbleAdapter.n, koru-autopilot-cursor.src.cursor-bubble-adapter.CursorBubbleAdapter.r, koru-autopilot-cursor.src.cursor-bubble-adapter.CursorBubbleAdapter.parseCursorBubbleRows, koru-autopilot-cursor.src.cursor-bubble-adapter.CursorBubbleAdapter.recSep, koru-autopilot-cursor.src.cursor-bubble-adapter.CursorBubbleAdapter.fldSep
 
-Parameters
-----------
-session:
-    Overri
-- **Methods**: 15
-- **Key Methods**: src.koruide.injector.Injector.probe, src.koruide.injector.Injector._candidate_backends, src.koruide.injector.Injector._forced_backend_candidates, src.koruide.injector.Injector._available_backend_candidates, src.koruide.injector.Injector.select_backend, src.koruide.injector.Injector._type_with_backend, src.koruide.injector.Injector._type_text_backends, src.koruide.injector.Injector._log_type_text_request, src.koruide.injector.Injector._dry_run_type_text_result, src.koruide.injector.Injector._try_type_text_backends
+### koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter
+- **Methods**: 16
+- **Key Methods**: koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.storeAvailable, koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.fetchNewer, koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.lastRowid, koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.latestBubbleRowid, koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.r, koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.n, koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.r, koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.parseCursorBubbleRows, koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.recSep, koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.fldSep
 
-### koruide.ides.base.IdeStrategy
-> Per-IDE knowledge object.
+### koru-autopilot-windsurf.src.cursor-bubble-adapter.CursorBubbleAdapter
+- **Methods**: 16
+- **Key Methods**: koru-autopilot-windsurf.src.cursor-bubble-adapter.CursorBubbleAdapter.storeAvailable, koru-autopilot-windsurf.src.cursor-bubble-adapter.CursorBubbleAdapter.fetchNewer, koru-autopilot-windsurf.src.cursor-bubble-adapter.CursorBubbleAdapter.lastRowid, koru-autopilot-windsurf.src.cursor-bubble-adapter.CursorBubbleAdapter.latestBubbleRowid, koru-autopilot-windsurf.src.cursor-bubble-adapter.CursorBubbleAdapter.r, koru-autopilot-windsurf.src.cursor-bubble-adapter.CursorBubbleAdapter.n, koru-autopilot-windsurf.src.cursor-bubble-adapter.CursorBubbleAdapter.r, koru-autopilot-windsurf.src.cursor-bubble-adapter.CursorBubbleAdapter.parseCursorBubbleRows, koru-autopilot-windsurf.src.cursor-bubble-adapter.CursorBubbleAdapter.recSep, koru-autopilot-windsurf.src.cursor-bubble-adapter.CursorBubbleAdapter.fldSep
 
-Subclasses are **pure data + thin helpers** — no global mutable state,
-no
-- **Methods**: 15
-- **Key Methods**: koruide.ides.base.IdeStrategy.id, koruide.ides.base.IdeStrategy.label, koruide.ides.base.IdeStrategy.detection, koruide.ides.base.IdeStrategy.terminal, koruide.ides.base.IdeStrategy.aliases, koruide.ides.base.IdeStrategy.config_home, koruide.ides.base.IdeStrategy.user_settings_path, koruide.ides.base.IdeStrategy.workspace_settings_path, koruide.ides.base.IdeStrategy.state_vscdb_path, koruide.ides.base.IdeStrategy.extensions_metadata_path
-- **Inherits**: ABC
+### koru-autopilot-vscodium.src.cursor-bubble-adapter.CursorBubbleAdapter
+- **Methods**: 16
+- **Key Methods**: koru-autopilot-vscodium.src.cursor-bubble-adapter.CursorBubbleAdapter.storeAvailable, koru-autopilot-vscodium.src.cursor-bubble-adapter.CursorBubbleAdapter.fetchNewer, koru-autopilot-vscodium.src.cursor-bubble-adapter.CursorBubbleAdapter.lastRowid, koru-autopilot-vscodium.src.cursor-bubble-adapter.CursorBubbleAdapter.latestBubbleRowid, koru-autopilot-vscodium.src.cursor-bubble-adapter.CursorBubbleAdapter.r, koru-autopilot-vscodium.src.cursor-bubble-adapter.CursorBubbleAdapter.n, koru-autopilot-vscodium.src.cursor-bubble-adapter.CursorBubbleAdapter.r, koru-autopilot-vscodium.src.cursor-bubble-adapter.CursorBubbleAdapter.parseCursorBubbleRows, koru-autopilot-vscodium.src.cursor-bubble-adapter.CursorBubbleAdapter.recSep, koru-autopilot-vscodium.src.cursor-bubble-adapter.CursorBubbleAdapter.fldSep
 
-### src.koruide.ides.base.IdeStrategy
-> Per-IDE knowledge object.
-
-Subclasses are **pure data + thin helpers** — no global mutable state,
-no
-- **Methods**: 15
-- **Key Methods**: src.koruide.ides.base.IdeStrategy.id, src.koruide.ides.base.IdeStrategy.label, src.koruide.ides.base.IdeStrategy.detection, src.koruide.ides.base.IdeStrategy.terminal, src.koruide.ides.base.IdeStrategy.aliases, src.koruide.ides.base.IdeStrategy.config_home, src.koruide.ides.base.IdeStrategy.user_settings_path, src.koruide.ides.base.IdeStrategy.workspace_settings_path, src.koruide.ides.base.IdeStrategy.state_vscdb_path, src.koruide.ides.base.IdeStrategy.extensions_metadata_path
-- **Inherits**: ABC
-
-### koruide.daemon.server.AutopilotDaemon
-> Selector-based unix-socket broker.
-- **Methods**: 14
-- **Key Methods**: koruide.daemon.server.AutopilotDaemon.__init__, koruide.daemon.server.AutopilotDaemon.start, koruide.daemon.server.AutopilotDaemon.serve_forever, koruide.daemon.server.AutopilotDaemon.stop, koruide.daemon.server.AutopilotDaemon._shutdown, koruide.daemon.server.AutopilotDaemon._accept, koruide.daemon.server.AutopilotDaemon._on_readable, koruide.daemon.server.AutopilotDaemon._dispatch, koruide.daemon.server.AutopilotDaemon._send, koruide.daemon.server.AutopilotDaemon._drop
-
-### src.koruide.daemon.server.AutopilotDaemon
-> Selector-based unix-socket broker.
-- **Methods**: 14
-- **Key Methods**: src.koruide.daemon.server.AutopilotDaemon.__init__, src.koruide.daemon.server.AutopilotDaemon.start, src.koruide.daemon.server.AutopilotDaemon.serve_forever, src.koruide.daemon.server.AutopilotDaemon.stop, src.koruide.daemon.server.AutopilotDaemon._shutdown, src.koruide.daemon.server.AutopilotDaemon._accept, src.koruide.daemon.server.AutopilotDaemon._on_readable, src.koruide.daemon.server.AutopilotDaemon._dispatch, src.koruide.daemon.server.AutopilotDaemon._send, src.koruide.daemon.server.AutopilotDaemon._drop
-
-### korullm.strategies.base.LlmStrategy
-> Per-LLM knowledge object.
-- **Methods**: 12
-- **Key Methods**: korullm.strategies.base.LlmStrategy.id, korullm.strategies.base.LlmStrategy.label, korullm.strategies.base.LlmStrategy.matches_environment, korullm.strategies.base.LlmStrategy.capabilities, korullm.strategies.base.LlmStrategy.assess_drive_failure, korullm.strategies.base.LlmStrategy.idle_marker_patterns, korullm.strategies.base.LlmStrategy.prompt_envelope, korullm.strategies.base.LlmStrategy._reply_message, korullm.strategies.base.LlmStrategy._reply_verification, korullm.strategies.base.LlmStrategy._reply_reason
-- **Inherits**: ABC
-
-### koru.deployment_events.analyzer.DeploymentEventAnalyzer
-> Analyzer for deployment event history with reflection capabilities.
-- **Methods**: 12
-- **Key Methods**: koru.deployment_events.analyzer.DeploymentEventAnalyzer.__init__, koru.deployment_events.analyzer.DeploymentEventAnalyzer.add_events, koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_type, koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_source, koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_correlation, koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_time_range, koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_errors, koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_plugin_events, koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_deployment_summary, koru.deployment_events.analyzer.DeploymentEventAnalyzer.analyze_deployment_flow
-
-### src.korullm.strategies.base.LlmStrategy
-> Per-LLM knowledge object.
-- **Methods**: 12
-- **Key Methods**: src.korullm.strategies.base.LlmStrategy.id, src.korullm.strategies.base.LlmStrategy.label, src.korullm.strategies.base.LlmStrategy.matches_environment, src.korullm.strategies.base.LlmStrategy.capabilities, src.korullm.strategies.base.LlmStrategy.assess_drive_failure, src.korullm.strategies.base.LlmStrategy.idle_marker_patterns, src.korullm.strategies.base.LlmStrategy.prompt_envelope, src.korullm.strategies.base.LlmStrategy._reply_message, src.korullm.strategies.base.LlmStrategy._reply_verification, src.korullm.strategies.base.LlmStrategy._reply_reason
-- **Inherits**: ABC
-
-### src.koru.deployment_events.analyzer.DeploymentEventAnalyzer
-> Analyzer for deployment event history with reflection capabilities.
-- **Methods**: 12
-- **Key Methods**: src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.__init__, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.add_events, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_type, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_source, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_correlation, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.filter_by_time_range, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_errors, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_plugin_events, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.get_deployment_summary, src.koru.deployment_events.analyzer.DeploymentEventAnalyzer.analyze_deployment_flow
-
-### koruide.ides.cursor.CursorStrategy
-> Strategy for Cursor (VS Code-fork by Anysphere).
+### koru-autopilot-antigravity.src.chat-history-watcher.ChatHistoryWatcher
 - **Methods**: 11
-- **Key Methods**: koruide.ides.cursor.CursorStrategy.id, koruide.ides.cursor.CursorStrategy.label, koruide.ides.cursor.CursorStrategy.config_folder_name, koruide.ides.cursor.CursorStrategy.workspace_settings_folder_name, koruide.ides.cursor.CursorStrategy.detection, koruide.ides.cursor.CursorStrategy.terminal, koruide.ides.cursor.CursorStrategy.aliases, koruide.ides.cursor.CursorStrategy.extensions_metadata_path, koruide.ides.cursor.CursorStrategy.plugin, koruide.ides.cursor.CursorStrategy.editor_cli_candidates
-- **Inherits**: VscodeFamilyStrategy
+- **Key Methods**: koru-autopilot-antigravity.src.chat-history-watcher.ChatHistoryWatcher.currentCursor, koru-autopilot-antigravity.src.chat-history-watcher.ChatHistoryWatcher.adapterDescription, koru-autopilot-antigravity.src.chat-history-watcher.ChatHistoryWatcher.setCursor, koru-autopilot-antigravity.src.chat-history-watcher.ChatHistoryWatcher.start, koru-autopilot-antigravity.src.chat-history-watcher.ChatHistoryWatcher.tick, koru-autopilot-antigravity.src.chat-history-watcher.ChatHistoryWatcher.stop, koru-autopilot-antigravity.src.chat-history-watcher.ChatHistoryWatcher.clearInterval, koru-autopilot-antigravity.src.chat-history-watcher.ChatHistoryWatcher.pollOnce, koru-autopilot-antigravity.src.chat-history-watcher.ChatHistoryWatcher.cursorAdvances, koru-autopilot-antigravity.src.chat-history-watcher.ChatHistoryWatcher.a
 
-### src.koruide.ides.cursor.CursorStrategy
-> Strategy for Cursor (VS Code-fork by Anysphere).
+### koru-autopilot-cursor.src.chat-history-watcher.ChatHistoryWatcher
 - **Methods**: 11
-- **Key Methods**: src.koruide.ides.cursor.CursorStrategy.id, src.koruide.ides.cursor.CursorStrategy.label, src.koruide.ides.cursor.CursorStrategy.config_folder_name, src.koruide.ides.cursor.CursorStrategy.workspace_settings_folder_name, src.koruide.ides.cursor.CursorStrategy.detection, src.koruide.ides.cursor.CursorStrategy.terminal, src.koruide.ides.cursor.CursorStrategy.aliases, src.koruide.ides.cursor.CursorStrategy.extensions_metadata_path, src.koruide.ides.cursor.CursorStrategy.plugin, src.koruide.ides.cursor.CursorStrategy.editor_cli_candidates
-- **Inherits**: VscodeFamilyStrategy
+- **Key Methods**: koru-autopilot-cursor.src.chat-history-watcher.ChatHistoryWatcher.currentCursor, koru-autopilot-cursor.src.chat-history-watcher.ChatHistoryWatcher.adapterDescription, koru-autopilot-cursor.src.chat-history-watcher.ChatHistoryWatcher.setCursor, koru-autopilot-cursor.src.chat-history-watcher.ChatHistoryWatcher.start, koru-autopilot-cursor.src.chat-history-watcher.ChatHistoryWatcher.tick, koru-autopilot-cursor.src.chat-history-watcher.ChatHistoryWatcher.stop, koru-autopilot-cursor.src.chat-history-watcher.ChatHistoryWatcher.clearInterval, koru-autopilot-cursor.src.chat-history-watcher.ChatHistoryWatcher.pollOnce, koru-autopilot-cursor.src.chat-history-watcher.ChatHistoryWatcher.cursorAdvances, koru-autopilot-cursor.src.chat-history-watcher.ChatHistoryWatcher.a
+
+### koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher
+- **Methods**: 11
+- **Key Methods**: koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.currentCursor, koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.adapterDescription, koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.setCursor, koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.start, koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.tick, koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.stop, koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.clearInterval, koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.pollOnce, koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.cursorAdvances, koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.a
 
 ## Data Transformation Functions
 
 Key functions that process and transform data:
 
-### koruobserve.lifecycle._stop_orphan_observe_processes
-> SIGTERM stale observe children when pidfiles are missing (e.g. after crash).
-- **Output to**: needles.items, koruobserve.lifecycle._pids_matching_koru_cmdline, None.unlink, contextlib.suppress, os.kill
+### koru-autopilot-shared.src.host-click-submit.parseXdotoolGeometryShell
+- **Output to**: koru-autopilot-shared.src.host-click-submit.split, koru-autopilot-shared.src.host-click-submit.match, koru-autopilot-shared.src.host-click-submit.parseInt, koru-autopilot-shared.src.host-click-submit.every, koru-autopilot-shared.src.host-click-submit.isFinite
 
-### koruobserve.cli_parser.build_observe_parser
-- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_subparsers, sub.add_parser, koruobserve.cli_parser._add_subproject
+### koru-autopilot-antigravity.src.host-click-submit.parseXdotoolGeometryShell
+- **Output to**: koru-autopilot-antigravity.src.host-click-submit.split, koru-autopilot-antigravity.src.host-click-submit.match, koru-autopilot-antigravity.src.host-click-submit.parseInt, koru-autopilot-antigravity.src.host-click-submit.every, koru-autopilot-antigravity.src.host-click-submit.isFinite
 
-### korudsl.cli._build_parser
-- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_subparsers, sub.add_parser, to_lib.add_argument
+### koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.parseCursorBubbleRows
+- **Output to**: koru-autopilot-antigravity.src.cursor-bubble-adapter.includes, koru-autopilot-antigravity.src.cursor-bubble-adapter.split, koru-autopilot-antigravity.src.cursor-bubble-adapter.trim, koru-autopilot-antigravity.src.cursor-bubble-adapter.parseInt, koru-autopilot-antigravity.src.cursor-bubble-adapter.isFinite
 
-### korudsl.library.convert_goals_json_to_library
-> Convert legacy goals JSON to OQL library.
-- **Output to**: korudsl.library.ensure_library_structure, isinstance, isinstance, isinstance, json.loads
+### koru-autopilot-antigravity.src.host-click-submit.test.testParseXdotoolGeometryShell
+- **Output to**: koru-autopilot-antigravity.src.host-click-submit.test.parseXdotoolGeometryShell, koru-autopilot-antigravity.src.host-click-submit.test.Error, koru-autopilot-antigravity.src.host-click-submit.test.assert
 
-### koruapi.runtime_insights._classify_process
-- **Output to**: None.lower, None.lower, koruapi.runtime_insights._looks_project_related, any, str
+### koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.safeParseJson
+- **Output to**: koru-autopilot-antigravity.src.vscode-chat-session-adapter.trim, koru-autopilot-antigravity.src.vscode-chat-session-adapter.parse
 
-### koruapi.runtime_insights._top_processes
-- **Output to**: sorted, out.append, koruapi.runtime_insights._classify_process, koruapi.runtime_insights._looks_project_related, int
+### koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.parseAfterCursor
+- **Output to**: koru-autopilot-antigravity.src.vscode-chat-session-adapter.parseFloat
 
-### koruapi.dashboard.build_serve_parser
-- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.add_argument, parser.add_argument
+### koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.parseVSCodeChatIndex
+- **Output to**: koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.extractEntriesMap, koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.safeParseJson, koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.parseAfterCursor, koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.entries, koru-autopilot-antigravity.src.vscode-chat-session-adapter.push
 
-### koruapi.cli._build_parser
-- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.add_subparsers, sub.add_parser
+### koru-autopilot-antigravity.src._shared.host-click-submit.parseXdotoolGeometryShell
+- **Output to**: koru-autopilot-antigravity.src._shared.host-click-submit.split, koru-autopilot-antigravity.src._shared.host-click-submit.match, koru-autopilot-antigravity.src._shared.host-click-submit.parseInt, koru-autopilot-antigravity.src._shared.host-click-submit.every, koru-autopilot-antigravity.src._shared.host-click-submit.isFinite
 
-### koruapi.cli._parse_body
-- **Output to**: raw.startswith, json.loads, json.loads, None.read_text, Path
+### koru-autopilot-cursor.src.host-click-submit.parseXdotoolGeometryShell
+- **Output to**: koru-autopilot-cursor.src.host-click-submit.split, koru-autopilot-cursor.src.host-click-submit.match, koru-autopilot-cursor.src.host-click-submit.parseInt, koru-autopilot-cursor.src.host-click-submit.every, koru-autopilot-cursor.src.host-click-submit.isFinite
 
-### koruapi.local.build_local_parser
-- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.add_argument
+### koru-autopilot-cursor.src.chat-history-watcher.test.testParseCursorBubbleRowsHandlesMultilineText
+- **Output to**: koru-autopilot-cursor.src.chat-history-watcher.test.buildSqliteOutput, koru-autopilot-cursor.src.chat-history-watcher.test.parseCursorBubbleRows, koru-autopilot-cursor.src.chat-history-watcher.test.strictEqual
 
-### koruapi.invoke_handlers._handle_ide_scenario_validate
-- **Output to**: koruide.command_scenario.validate_ide_command_scenario, payload.get, isinstance, InvokeError, result.to_dict
+### koru-autopilot-cursor.src.chat-history-watcher.test.testParseVSCodeChatIndexExtractsAssistantResponses
+- **Output to**: koru-autopilot-cursor.src.chat-history-watcher.test.stringify, koru-autopilot-cursor.src.chat-history-watcher.test.answer, koru-autopilot-cursor.src.chat-history-watcher.test.parseVSCodeChatIndex, koru-autopilot-cursor.src.chat-history-watcher.test.strictEqual, koru-autopilot-cursor.src.chat-history-watcher.test.deepStrictEqual
 
-### koruapi.server._parse_invoke_request
-- **Output to**: str, str, None.resolve, body.get, str
+### koru-autopilot-cursor.src.chat-history-watcher.test.testParseVSCodeChatIndexReturnsEmptyOnGarbage
+- **Output to**: koru-autopilot-cursor.src.chat-history-watcher.test.deepStrictEqual, koru-autopilot-cursor.src.chat-history-watcher.test.parseVSCodeChatIndex, koru-autopilot-cursor.src.chat-history-watcher.test.stringify, koru-autopilot-cursor.src.chat-history-watcher.test.strictEqual
 
-### koruapi.mcp_server._get_process_memory_mb
-> Get process memory usage in MB.
-- **Output to**: psutil.Process, process.memory_info
+### koru-autopilot-cursor.src.chat-history-watcher.test.testCursorBubbleAdapterLatestBubbleRowidParsesMax
+- **Output to**: koru-autopilot-cursor.src.chat-history-watcher.test.CursorBubbleAdapter, koru-autopilot-cursor.src.chat-history-watcher.test.latestBubbleRowid, koru-autopilot-cursor.src.chat-history-watcher.test.strictEqual
 
-### koruapi.mcp_server._monitor_subprocess_oom
-> Monitor subprocess for OOM conditions.
+### koru-autopilot-cursor.src.host-click-submit.test.testParseXdotoolGeometryShell
+- **Output to**: koru-autopilot-cursor.src.host-click-submit.test.parseXdotoolGeometryShell, koru-autopilot-cursor.src.host-click-submit.test.Error, koru-autopilot-cursor.src.host-click-submit.test.assert
 
-Returns (should_kill, logs) tuple.
-- **Output to**: proc.poll, koruapi.mcp_server._get_process_memory_mb, time.sleep, logs.append, logs.append
+### koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.safeParseJson
+- **Output to**: koru-autopilot-cursor.src.vscode-chat-session-adapter.trim, koru-autopilot-cursor.src.vscode-chat-session-adapter.parse
 
-### koruapi.mcp_server._parse_tickets_json
-> Parse planfile ticket list JSON output.
-- **Output to**: stdout.strip, isinstance, isinstance, json.loads, isinstance
+### koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.parseAfterCursor
+- **Output to**: koru-autopilot-cursor.src.vscode-chat-session-adapter.parseFloat
 
-### koruapi.mcp_server._serialize_mcp_ticket
-- **Output to**: ticket.get, ticket.get, ticket.get, ticket.get, ticket.get
+### koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.parseVSCodeChatIndex
+- **Output to**: koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.extractEntriesMap, koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.safeParseJson, koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.parseAfterCursor, koru-autopilot-cursor.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.entries, koru-autopilot-cursor.src.vscode-chat-session-adapter.push
 
-### koruapi.mcp_server.tool_validate_ide_command_scenario
-- **Output to**: arguments.get, koruide.command_scenario.validate_ide_command_scenario, isinstance, validation.to_dict
+### koru-autopilot-antigravity.src.chat-history-watcher.test.testParseCursorBubbleRowsHandlesMultilineText
+- **Output to**: koru-autopilot-antigravity.src.chat-history-watcher.test.buildSqliteOutput, koru-autopilot-antigravity.src.chat-history-watcher.test.parseCursorBubbleRows, koru-autopilot-antigravity.src.chat-history-watcher.test.strictEqual
 
-### koruapi.mcp_server._collect_process_logs
-- **Output to**: logs.extend, logs.extend, None.split, None.split, result.stdout.strip
+### koru-autopilot-antigravity.src.chat-history-watcher.test.testParseVSCodeChatIndexExtractsAssistantResponses
+- **Output to**: koru-autopilot-antigravity.src.chat-history-watcher.test.stringify, koru-autopilot-antigravity.src.chat-history-watcher.test.answer, koru-autopilot-antigravity.src.chat-history-watcher.test.parseVSCodeChatIndex, koru-autopilot-antigravity.src.chat-history-watcher.test.strictEqual, koru-autopilot-antigravity.src.chat-history-watcher.test.deepStrictEqual
 
-### koruvision.cli_parser._add_capture_subparser
-- **Output to**: sub.add_parser, once.add_argument, koruvision.cli_parser.register_mesh_publish_args
+### koru-autopilot-antigravity.src.chat-history-watcher.test.testParseVSCodeChatIndexReturnsEmptyOnGarbage
+- **Output to**: koru-autopilot-antigravity.src.chat-history-watcher.test.deepStrictEqual, koru-autopilot-antigravity.src.chat-history-watcher.test.parseVSCodeChatIndex, koru-autopilot-antigravity.src.chat-history-watcher.test.stringify, koru-autopilot-antigravity.src.chat-history-watcher.test.strictEqual
 
-### koruvision.cli_parser._add_agent_subparser
-- **Output to**: sub.add_parser, agent.add_argument, agent.add_argument, agent.add_argument, koruvision.cli_parser.register_mesh_publish_args
+### koru-autopilot-antigravity.src.chat-history-watcher.test.testCursorBubbleAdapterLatestBubbleRowidParsesMax
+- **Output to**: koru-autopilot-antigravity.src.chat-history-watcher.test.CursorBubbleAdapter, koru-autopilot-antigravity.src.chat-history-watcher.test.latestBubbleRowid, koru-autopilot-antigravity.src.chat-history-watcher.test.strictEqual
 
-### koruvision.cli_parser.build_vision_parser
-> Build the ``koru vision`` argparse tree (capture + agent subcommands).
-- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_subparsers, koruvision.cli_parser._add_capture_subparser, koruvision.cli_parser._add_agent_subparser
+### koru-autopilot-cursor.src.cursor-bubble-adapter.CursorBubbleAdapter.parseCursorBubbleRows
+- **Output to**: koru-autopilot-cursor.src.cursor-bubble-adapter.includes, koru-autopilot-cursor.src.cursor-bubble-adapter.split, koru-autopilot-cursor.src.cursor-bubble-adapter.trim, koru-autopilot-cursor.src.cursor-bubble-adapter.parseInt, koru-autopilot-cursor.src.cursor-bubble-adapter.isFinite
 
-### koruvision.providers.portal_screencast._run_screencast_subprocess
-- **Output to**: subprocess.run, RuntimeError
+### koru-autopilot-cursor.src._shared.host-click-submit.parseXdotoolGeometryShell
+- **Output to**: koru-autopilot-cursor.src._shared.host-click-submit.split, koru-autopilot-cursor.src._shared.host-click-submit.match, koru-autopilot-cursor.src._shared.host-click-submit.parseInt, koru-autopilot-cursor.src._shared.host-click-submit.every, koru-autopilot-cursor.src._shared.host-click-submit.isFinite
 
-### koruvision.providers.portal_screencast._parse_screencast_stdout
-- **Output to**: stdout.strip, RuntimeError, json.loads, RuntimeError, dict
+### koru-autopilot-vscode.src.host-click-submit.parseXdotoolGeometryShell
+- **Output to**: koru-autopilot-vscode.src.host-click-submit.split, koru-autopilot-vscode.src.host-click-submit.match, koru-autopilot-vscode.src.host-click-submit.parseInt, koru-autopilot-vscode.src.host-click-submit.every, koru-autopilot-vscode.src.host-click-submit.isFinite
 
-### koruvision.providers.browser_getdisplay._decode_browser_png_upload
-- **Output to**: body.get, body.get, ValueError, base64.b64decode, payload.startswith
-
-### korumesh.cli_parser.build_mesh_parser
-- **Output to**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, relay.add_argument, relay.add_argument
+### koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.parseCursorBubbleRows
+- **Output to**: koru-autopilot-vscode.src.cursor-bubble-adapter.includes, koru-autopilot-vscode.src.cursor-bubble-adapter.split, koru-autopilot-vscode.src.cursor-bubble-adapter.trim, koru-autopilot-vscode.src.cursor-bubble-adapter.parseInt, koru-autopilot-vscode.src.cursor-bubble-adapter.isFinite
 
 ## Public API Surface
 
 Functions exposed as public API (no underscore prefix):
 
-- `koru.autonomy.config.AutonomyConfig.from_env` - 50 calls
-- `src.koru.autonomy.config.AutonomyConfig.from_env` - 50 calls
-- `koru.context_render.render_markdown_handoff` - 47 calls
-- `src.koru.context_render.render_markdown_handoff` - 47 calls
-- `koru.ide_doctor_cli.build_parser` - 44 calls
-- `src.koru.ide_doctor_cli.build_parser` - 44 calls
-- `koru.policy.load_policy` - 43 calls
-- `src.koru.policy.load_policy` - 43 calls
-- `src.koru.git_cli.build_parser` - 39 calls
-- `koru.queue.runners.run_api_request` - 39 calls
-- `src.koru.queue.runners.run_api_request` - 39 calls
-- `koru.local_manager_state.WorkerRegistry.register` - 37 calls
-- `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
-- `koru.autopilot.cli_trace.action_trace` - 36 calls
-- `src.koru.autopilot.cli_trace.action_trace` - 36 calls
-- `koru.autopilot.commands.drive.action_drive` - 35 calls
-- `src.koru.autopilot.commands.drive.action_drive` - 35 calls
-- `koruide.command_scenario.validate_ide_command_scenario` - 34 calls
-- `src.koruide.command_scenario.validate_ide_command_scenario` - 34 calls
-- `koru.cli_topology.topology_main` - 33 calls
-- `src.koru.cli_topology.topology_main` - 33 calls
-- `koruobserve.lifecycle.observe_up` - 32 calls
-- `koruide.daemon.handlers_drive.handle_drive` - 32 calls
-- `src.koruobserve.lifecycle.observe_up` - 32 calls
-- `src.koruide.daemon.handlers_drive.handle_drive` - 32 calls
-- `koruapi.mcp_server.tool_run_ticket` - 31 calls
-- `src.koruapi.mcp_server.tool_run_ticket` - 31 calls
-- `koru.autonomy.phases.scan_phase.handle_scan_after_idle` - 30 calls
-- `koru.deployment_events.models.DeploymentEvent.from_dict` - 30 calls
-- `src.koru.autonomy.phases.scan_phase.handle_scan_after_idle` - 30 calls
-- `src.koru.deployment_events.models.DeploymentEvent.from_dict` - 30 calls
-- `koru.ide_client.LegacyAutopilotClientAdapter.drive` - 29 calls
-- `koru.observability_dsl.parse_observability_dsl` - 29 calls
-- `koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
-- `koru.ide_adapters.bridge.evaluate_bridge` - 29 calls
-- `src.koru.observability_dsl.parse_observability_dsl` - 29 calls
-- `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
-- `src.koru.ide_adapters.bridge.evaluate_bridge` - 29 calls
-- `koruide.daemon.handlers_hello.handle_hello` - 28 calls
-- `koru.control_commands.control_command_replay_plan` - 28 calls
+- `koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.tryCursorComposerPromptFastPath` - 24 calls
+- `koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.tryCursorComposerPromptFastPath` - 22 calls
+- `koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.tryCursorComposerPromptFastPath` - 22 calls
+- `koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.tryCursorComposerPromptFastPath` - 22 calls
+- `koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.tryConnectNext` - 20 calls
+- `koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.tryConnectNext` - 20 calls
+- `koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.tryConnectNext` - 20 calls
+- `koru-autopilot-vscodium.src.extension.AutopilotBridge.tryConnectNext` - 20 calls
+- `koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.tryConnectNext` - 20 calls
+- `koru-autopilot-antigravity.src.extension.AutopilotBridge.tryConnectNext` - 19 calls
+- `koru-autopilot-windsurf.src.extension.AutopilotBridge.tryConnectNext` - 19 calls
+- `koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.sock` - 15 calls
+- `koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.connected` - 15 calls
+- `koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.submitChat` - 15 calls
+- `koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.pasteText` - 15 calls
+- `koru-autopilot-antigravity.src.extension.AutopilotBridge.submitChat` - 15 calls
+- `koru-autopilot-antigravity.src.extension.AutopilotBridge.pasteText` - 15 calls
+- `koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.sock` - 15 calls
+- `koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.connected` - 15 calls
+- `koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.submitChat` - 15 calls
+- `koru-autopilot-cursor.src._shared.autopilot-bridge.SharedAutopilotBridge.pasteText` - 15 calls
+- `koru-autopilot-windsurf.src.extension.AutopilotBridge.submitChat` - 15 calls
+- `koru-autopilot-windsurf.src.extension.AutopilotBridge.pasteText` - 15 calls
+- `koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.sock` - 15 calls
+- `koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.connected` - 15 calls
+- `koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.submitChat` - 15 calls
+- `koru-autopilot-vscode.src._shared.autopilot-bridge.SharedAutopilotBridge.pasteText` - 15 calls
+- `koru-autopilot-vscodium.src.extension.AutopilotBridge.sock` - 15 calls
+- `koru-autopilot-vscodium.src.extension.AutopilotBridge.connected` - 15 calls
+- `koru-autopilot-vscodium.src.extension.AutopilotBridge.submitChat` - 15 calls
+- `koru-autopilot-vscodium.src.extension.AutopilotBridge.pasteText` - 15 calls
+- `koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.sock` - 15 calls
+- `koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.connected` - 15 calls
+- `koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.submitChat` - 15 calls
+- `koru-autopilot-vscodium.src._shared.autopilot-bridge.AutopilotBridge.pasteText` - 15 calls
+- `koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.focusChatInput` - 14 calls
+- `koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.injectChat` - 14 calls
+- `koru-autopilot-shared.src.autopilot-bridge.SharedAutopilotBridge.calibrateProbe` - 14 calls
+- `koru-autopilot-antigravity.src.extension.AutopilotBridge.sock` - 14 calls
+- `koru-autopilot-antigravity.src.extension.AutopilotBridge.connected` - 14 calls
 
 ## System Interactions
 
@@ -362,6 +439,23 @@ How components interact:
 
 ```mermaid
 graph TD
+    sock --> on
+    sock --> debugLog
+    sock --> detectIde
+    sock --> maybeOpenChatOnConne
+    sock --> resolve
+    connected --> on
+    connected --> debugLog
+    connected --> detectIde
+    connected --> maybeOpenChatOnConne
+    connected --> resolve
+    calibrateProbe --> random
+    calibrateProbe --> toString
+    calibrateProbe --> slice
+    calibrateProbe --> detectIde
+    calibrateProbe --> focusChat
+    sock --> getCommands
+    connected --> getCommands
 ```
 
 ## Reverse Engineering Guidelines

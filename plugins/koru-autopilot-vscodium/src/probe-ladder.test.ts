@@ -65,6 +65,19 @@ function testPlainHostKeyPrioritizerPreservesRows(): void {
   assert(prioritized.length === cands.length, "prioritizer keeps all host-key candidates");
 }
 
+function testHostKeyOrderVscodiumPrefersXdotoolBeforeYdotool(): void {
+  const cands = buildHostKeySubmitCandidates("vscodium", "auto", WAYLAND_ENV);
+  const rendered = cands.map(([cmd, args]) => `${cmd} ${args.join(" ")}`);
+  assert(
+    rendered.indexOf("xdotool key ctrl+Return") < rendered.indexOf("ydotool key ctrl+Return"),
+    "VSCodium tries xdotool before ydotool for Ctrl+Return",
+  );
+  assert(
+    rendered.indexOf("xdotool key Return") < rendered.indexOf("ydotool key Return"),
+    "VSCodium tries xdotool before ydotool for Return",
+  );
+}
+
 function testBuildFocusInputUsesChatCommands(): void {
   assert(buildFocusInputCommands("vscodium")[0] === "workbench.action.chat.focusInput", "focus input first");
 }
@@ -76,4 +89,5 @@ testPasteLandedInEditor();
 testMergeUnique();
 testHostKeyOrderVscodiumPrefersCtrlReturn();
 testPlainHostKeyPrioritizerPreservesRows();
+testHostKeyOrderVscodiumPrefersXdotoolBeforeYdotool();
 testBuildFocusInputUsesChatCommands();

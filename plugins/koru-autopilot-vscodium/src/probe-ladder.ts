@@ -299,6 +299,13 @@ function reorderForXSession(
   );
 }
 
+function reorderForVscodiumHostKeys(row: ReadonlyArray<HostKeyCandidate>): HostKeyCandidate[] {
+  const order = ["wtype", "xdotool", "ydotool"];
+  return [...row].sort(
+    (a, b) => order.indexOf(a[0]) - order.indexOf(b[0])
+  );
+}
+
 /**
  * Order host-level submit candidates for an IDE and X session.
  *
@@ -331,8 +338,14 @@ export function buildHostKeySubmitCandidates(
   const isWayland =
     (env.XDG_SESSION_TYPE || "").toLowerCase() === "wayland" ||
     Boolean(env.WAYLAND_DISPLAY);
-  const plain = reorderForXSession(injectorRow("plain"), isWayland);
-  const ctrl = reorderForXSession(injectorRow("ctrl"), isWayland);
+  const plain =
+    ide === "vscodium"
+      ? reorderForVscodiumHostKeys(injectorRow("plain"))
+      : reorderForXSession(injectorRow("plain"), isWayland);
+  const ctrl =
+    ide === "vscodium"
+      ? reorderForVscodiumHostKeys(injectorRow("ctrl"))
+      : reorderForXSession(injectorRow("ctrl"), isWayland);
   if (normalized === "return" || normalized === "enter") {
     return [...plain, ...ctrl];
   }
