@@ -16,11 +16,11 @@ from __future__ import annotations
 # Each per-IDE plugin tracks its own version. When you bump a plugin,
 # bump only the matching entry — do NOT lockstep all IDEs.
 EXPECTED_PLUGIN_VERSIONS: dict[str, str] = {
-    "cursor": "0.1.77",
-    "vscode": "0.1.77",
-    "vscodium": "0.1.77",
-    "windsurf": "0.1.77",
-    "antigravity": "0.1.77",
+    "cursor": "0.1.78",
+    "vscode": "0.1.78",
+    "vscodium": "0.1.78",
+    "windsurf": "0.1.78",
+    "antigravity": "0.1.78",
 }
 
 # Legacy alias: points at the VS Code-only umbrella plugin.

@@ -4,10 +4,13 @@
 import json
 import os
 import subprocess
+import time
 import urllib.error
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 
+from koru.control_commands import api_command, shell_command
 from koru.queue.types import ApiRunResult, LlmRunResult
 
 
@@ -18,8 +21,18 @@ def _planfile_env() -> dict[str, str]:
     return {**os.environ, "COLUMNS": "10000", "TERM": "dumb", "PYTHONWARNINGS": "ignore"}
 
 
+def _control_corr(prefix: str) -> str:
+    return f"{prefix}-{time.monotonic_ns():x}"
+
+
 def run_process(command: list[str], project: Path) -> subprocess.CompletedProcess[str]:
     """Run a subprocess command with planfile-friendly environment."""
+    shell_command(
+        project,
+        corr=_control_corr("process"),
+        argv=command,
+        actor="planfile-runner",
+    )
     return subprocess.run(
         command,
         cwd=project,
@@ -32,6 +45,12 @@ def run_process(command: list[str], project: Path) -> subprocess.CompletedProces
 
 def run_shell_command(command: str, project: Path) -> subprocess.CompletedProcess[str]:
     """Run a shell command."""
+    shell_command(
+        project,
+        corr=_control_corr("shell"),
+        argv=["sh", "-lc", command],
+        actor="planfile-runner",
+    )
     return subprocess.run(
         command,
         cwd=project,
@@ -51,8 +70,26 @@ def run_api_request(request: dict[str, Any], _project: Path) -> ApiRunResult:
         data = json.dumps(body).encode("utf-8")
         headers.setdefault("content-type", "application/json")
 
+    endpoint = str(request["endpoint"])
+    parsed = urlparse(endpoint)
+    query = {
+        key: values[-1] if len(values) == 1 else values
+        for key, values in parse_qs(parsed.query, keep_blank_values=True).items()
+    }
+    api_command(
+        _project,
+        corr=_control_corr("api"),
+        method=str(request.get("method") or "GET"),
+        path=endpoint,
+        query=query,
+        body=body if isinstance(body, dict) else None,
+        headers=headers,
+        actor="planfile-runner",
+        interface_id="queue_api_request",
+    )
+
     api_request = urllib.request.Request(
-        str(request["endpoint"]),
+        endpoint,
         data=data,
         headers=headers,
         method=str(request.get("method") or "GET").upper(),

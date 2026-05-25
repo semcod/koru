@@ -17,6 +17,7 @@ Shared plumbing (R2):
 
 from __future__ import annotations
 
+import json
 import socket
 import struct
 import threading
@@ -35,8 +36,10 @@ from koru.autopilot.ide import RunningIDE
 from koru.autopilot.injector import InjectionResult, InjectorError
 from koru.autopilot.os_injector import OsInjectorProfile
 from koru.autopilot.protocol import Message, decode, hello
+from koru.observability_writer import observability_event_store_path
 from koruide import daemon as koruide_daemon_mod
 from koruide.drive_orchestrator import DriveOrchestrator
+from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 
 # ---------------------------------------------------------------------------
 # Shared test plumbing
@@ -235,11 +238,17 @@ def _connect_plugin(
     sock_path: Path,
     *,
     ide: str = "vscode",
-    version: str = "0.1.0",
+    version: str | None = None,
     pid: int = 1,
     protocol_version: int | None = 1,
     capabilities: list[str] | None = None,
 ) -> tuple[socket.socket, _LineReader]:
+    """Connect a fake plugin client. ``version`` defaults to the
+    expected VSIX version so the strict version check the daemon now
+    enforces does not reject the test plugin every time the project
+    bumps ``EXPECTED_PLUGIN_VERSIONS``."""
+    if version is None:
+        version = EXPECTED_VSCODE_PLUGIN_VERSION
     """Open a plugin connection, send ``hello``, consume the ack."""
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.settimeout(2.0)
@@ -1232,7 +1241,7 @@ def test_plugin_ack_with_shutdown_info_is_relayed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Plugin ACK metadata (including ``shutdown``) must be preserved for CLI."""
-    with _daemon(tmp_path, monkeypatch) as h:
+    with _daemon(tmp_path, monkeypatch, project=tmp_path) as h:
         plugin, plugin_reader = _connect_plugin(h.sock_path, ide="vscode", pid=42)
 
         cli = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -1263,6 +1272,19 @@ def test_plugin_ack_with_shutdown_info_is_relayed(
         assert cli_reply.data.get("delivered") is True
         assert cli_reply.data.get("shutdown") is True
         assert cli_reply.data.get("backend") == "plugin"
+
+        raw_events = observability_event_store_path(tmp_path).read_text(encoding="utf-8")
+        rows = [json.loads(raw) for raw in raw_events.splitlines()]
+        commands = [
+            row["payload"]["data"]
+            for row in rows
+            if row["event_type"] == "control.command"
+        ]
+        assert commands[0]["surface"] == "ide_chat"
+        assert commands[0]["operation"] == "chat.send"
+        assert commands[0]["target"] == "vscode"
+        assert commands[0]["args"]["text"] == "hi"
+        assert commands[0]["replayable"] is True
 
         assert h.injector.calls == []
         plugin.close()

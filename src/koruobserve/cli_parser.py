@@ -10,6 +10,7 @@ _SUBCOMMANDS: tuple[tuple[str, str], ...] = (
     ("down", "Stop relay + vision agent + dashboard."),
     ("status", "Show PID and aliveness for each process."),
     ("grid", "Print the dashboard /grid URL."),
+    ("trace", "Render the semantic observability timeline."),
     ("install", "Pip-install optional observe dependencies (mss + websockets)."),
     ("providers", "List, test, or reset screen-capture providers."),
 )
@@ -101,6 +102,21 @@ def build_observe_parser() -> argparse.ArgumentParser:
                         default=0.2,
                         help="Thumbnail scale for the probe capture.",
                     )
+        if name == "trace":
+            cmd.add_argument(
+                "--format",
+                choices=("compact", "dsl", "json"),
+                default="compact",
+                help="Trace output format (default: compact OBS lines).",
+            )
+            cmd.add_argument("--corr", default=None, help="Filter by correlation id.")
+            cmd.add_argument("--ticket", default=None, help="Filter by ticket id.")
+            cmd.add_argument(
+                "--limit",
+                type=int,
+                default=50,
+                help="Maximum recent observability events to render.",
+            )
     return parser
 
 

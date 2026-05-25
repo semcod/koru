@@ -211,6 +211,38 @@ class AutopilotBridge {
         };
         this.operationTrace.push(clipped);
         safeLog("OP_ROUTE", clipped);
+        this.emitLiveDsl(clipped);
+    }
+    /**
+     * Emit a Koru Drive DSL line *immediately* to the daemon — i.e.
+     * before the drive ack envelope is even built. This is what makes
+     * the DSL "live": the operator sees every focus/paste/submit
+     * candidate the plugin tries while the drive is still in flight,
+     * not just in the post-ack summary. See ``docs/koru-drive-dsl.md``
+     * for the full format and intent table.
+     */
+    emitLiveDsl(step) {
+        if (!this.socket)
+            return;
+        try {
+            const seq = String(this.operationTrace.length).padStart(3, "0");
+            const okToken = step.ok === true ? "true" : step.ok === false ? "false" : "ambiguous";
+            const routeToken = step.command ? `${step.route}:${step.command}` : step.route;
+            const parts = [
+                `#${seq}`,
+                `act=${step.op}`,
+                `route=${routeToken}`,
+                `ok=${okToken}`,
+            ];
+            if (step.reason) {
+                const reason = String(step.reason).replace(/"/g, "'").replace(/\s+/g, " ").slice(0, 160);
+                parts.push(`reason="${reason}"`);
+            }
+            this.sendConsoleLog(`[DSL-LIVE] ${parts.join(" ")}`);
+        }
+        catch (err) {
+            debugLog("DSL_LIVE_EMIT_FAILED", { err: String(err) });
+        }
     }
     currentOperationTrace() {
         return this.operationTrace.slice(-40);

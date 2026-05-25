@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from typing import Any
 
 import pytest
@@ -13,6 +14,7 @@ from koru.autopilot.cli_direct_drive import (
     _emit_json_payload,
     _should_fallback_to_direct,
 )
+from koru.observability_writer import observability_event_store_path
 
 
 def _ns(**kwargs: Any) -> argparse.Namespace:
@@ -133,3 +135,56 @@ def test_backward_compat_reexports_from_cli_command() -> None:
     assert cli_command._should_fallback_to_direct is _should_fallback_to_direct
     assert cli_command._run_direct_drive is cli_direct_drive._run_direct_drive
     assert cli_command._emit_json_payload is _emit_json_payload
+
+
+def test_run_direct_drive_emits_desktop_gui_control_command(
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from koru.autopilot import cli_command
+    from koru.autopilot import os_injector as oi
+
+    class _DummyInjector:
+        session = "wayland"
+
+        def select_backend(self) -> str:
+            return "stub"
+
+    monkeypatch.setattr(cli_command, "Injector", _DummyInjector)
+    monkeypatch.setattr(
+        cli_command,
+        "resolve_drive_target",
+        lambda _ide, _profile, project=None: ("vscode", "vscode", "explicit"),
+    )
+    monkeypatch.setattr(
+        oi,
+        "try_drive_with_profile",
+        lambda **kwargs: {
+            "ok": True,
+            "backend": "os_injector",
+            "submitted": kwargs["submit"],
+        },
+    )
+    args = _ns(
+        ide="vscode",
+        os_profile="",
+        project=tmp_path,
+        submit=True,
+        dry_run=False,
+        delay_seconds=0.0,
+    )
+
+    rc, payload = cli_direct_drive._run_direct_drive(args, "hello replay", emit_payload=False)
+
+    rows = [
+        json.loads(raw)
+        for raw in observability_event_store_path(tmp_path).read_text(encoding="utf-8").splitlines()
+    ]
+    command = rows[0]["payload"]["data"]
+    assert rc == 0
+    assert payload == {"ok": True, "backend": "os_injector", "submitted": True}
+    assert command["surface"] == "desktop_gui"
+    assert command["operation"] == "os_injector.profile_drive"
+    assert command["replayable"] is True
+    assert command["args"]["text"] == "hello replay"
+    assert command["args"]["profile_id"] == "vscode"

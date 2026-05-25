@@ -6,7 +6,7 @@ import functools
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from koruide.ide_control import ide_control_strategy
 from koruide.plugin_version import (
@@ -311,6 +311,140 @@ class DriveOrchestrator:
             if len(pieces) >= 12:
                 break
         return " > ".join(pieces)
+
+    # ------------------------------------------------------------------
+    # Koru Drive DSL — transparent, line-per-step integration trace.
+    #
+    # Goal: when a drive fails ("plugin wkleil ale nie wyslal"), give the
+    # operator a single human-readable sequence describing exactly what
+    # the plugin tried, why each candidate was chosen, whether it worked,
+    # and why it failed. The DSL is generated from the structured
+    # ``operation_trace`` the plugin already sends with every ack, plus
+    # the post-ack diagnostic fields the daemon enriches with
+    # (``winning_*``, ``verification``, ``submit_failure_reason``).
+    #
+    # Format per line (one operation step):
+    #
+    #     #NNN act=<op> intent="..." route=<route>[:cmd] ok=<true|false|ambiguous>
+    #          [verify=<probe>] [reason="..."]
+    #
+    # Lines are intended to be logged verbatim — each line is a complete,
+    # grep-friendly record of one decision in the drive pipeline.
+    # ------------------------------------------------------------------
+    _INTENT_BY_OP: ClassVar[dict[str, str]] = {
+        "focus_open": "make the chat panel the foreground surface",
+        "focus_input": "land the caret inside the chat input",
+        "input_probe": "check whether the chat input is empty before pasting",
+        "input_busy_probe": "check whether the chat input is empty before pasting",
+        "paste": "write the prompt text into the chat input",
+        "submit": "send the prompt as a user message",
+        "submit_verify": "verify a fresh user message was actually committed",
+        "submit_host": "send via host-level key/click after registered commands failed",
+        "host_clipboard": "stage the prompt via OS clipboard",
+        "clipboard": "stage the prompt via OS clipboard",
+        "drive": "top-level autopilot drive pipeline",
+    }
+
+    @staticmethod
+    def _dsl_intent(op: str) -> str:
+        return DriveOrchestrator._INTENT_BY_OP.get(op, f"plugin-internal step '{op}'")
+
+    @staticmethod
+    def _dsl_ok_token(value: Any) -> str:
+        if value is True:
+            return "true"
+        if value is False:
+            return "false"
+        return "ambiguous"
+
+    @staticmethod
+    def _dsl_quote(value: Any) -> str:
+        """Quote ``value`` for inclusion in a DSL line, hiding ANSI noise."""
+        text = str(value).strip()
+        if not text:
+            return '""'
+        text = text.replace("\n", " ").replace('"', "'")
+        if len(text) > 160:
+            text = text[:157] + "..."
+        return f'"{text}"'
+
+    @staticmethod
+    def operation_trace_dsl(info: dict[str, Any]) -> list[str]:
+        """Render the plugin's ``operation_trace`` as one DSL line per step.
+
+        Returns at most 40 lines (the same cap the plugin already
+        enforces on the wire) so a runaway ladder can't blow up the
+        daemon log.
+        """
+        trace = info.get("operation_trace")
+        if not isinstance(trace, list):
+            return []
+        lines: list[str] = []
+        for index, raw_step in enumerate(trace, start=1):
+            if not isinstance(raw_step, dict):
+                continue
+            op = str(raw_step.get("op") or "?")
+            route = str(raw_step.get("route") or "?")
+            command = raw_step.get("command")
+            reason = raw_step.get("reason")
+            detail = raw_step.get("detail")
+            ok_token = DriveOrchestrator._dsl_ok_token(raw_step.get("ok"))
+            intent = DriveOrchestrator._dsl_intent(op)
+            route_token = route
+            if command:
+                route_token = f"{route}:{command}"
+            parts = [
+                f"#{index:03d}",
+                f"act={op}",
+                f'intent={DriveOrchestrator._dsl_quote(intent)}',
+                f"route={route_token}",
+                f"ok={ok_token}",
+            ]
+            if reason:
+                parts.append(f"reason={DriveOrchestrator._dsl_quote(reason)}")
+            if isinstance(detail, dict) and detail:
+                short = {
+                    k: v
+                    for k, v in detail.items()
+                    if k in {"empty", "matched", "tail", "rowid", "ide", "verification"}
+                }
+                if short:
+                    parts.append(f"detail={DriveOrchestrator._dsl_quote(short)}")
+            lines.append(" ".join(parts))
+            if len(lines) >= 40:
+                break
+        return lines
+
+    @staticmethod
+    def drive_outcome_dsl(info: dict[str, Any]) -> str:
+        """Render the *final* drive verdict as a single DSL line.
+
+        Combines the plugin's ``verification`` field, the cached winners
+        (``winning_focus_open``/``winning_paste``/``winning_submit``)
+        and any structured failure reason so the operator sees the
+        bottom line without grepping the step trace.
+        """
+        verification = str(info.get("verification") or "-")
+        delivered = bool(info.get("delivered"))
+        wfocus = info.get("winning_focus_open") or "-"
+        wpaste = info.get("winning_paste") or "-"
+        wsubmit = info.get("winning_submit") or "-"
+        reason = (
+            info.get("submit_failure_reason")
+            or info.get("reason")
+            or info.get("message")
+        )
+        parts = [
+            "#999",
+            "act=drive",
+            f'intent={DriveOrchestrator._dsl_quote(DriveOrchestrator._dsl_intent("drive"))}',
+            f"delivered={'true' if delivered else 'false'}",
+            f"verification={verification}",
+            f"winners=focus={wfocus}|paste={wpaste}|submit={wsubmit}",
+        ]
+        if reason:
+            parts.append(f"reason={DriveOrchestrator._dsl_quote(reason)}")
+        return " ".join(parts)
 
 
 __all__ = ["DriveOrchestrator"]

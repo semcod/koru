@@ -43,11 +43,16 @@ def _require_observe_runtime() -> None:
     if not missing:
         return
     names = ", ".join(name for name, _ in missing)
-    print(f"koru observe: missing observation dependency {names}. Attempting automatic installation...")
+    print(
+        f"koru observe: missing observation dependency {names}. "
+        "Attempting automatic installation..."
+    )
     specs = [spec for _, spec in missing]
     rc = _pip_install(specs)
     if rc != 0:
-        raise RuntimeError(f"automatic installation of {names} failed with exit code {rc}; {_INSTALL_HINT}")
+        raise RuntimeError(
+            f"automatic installation of {names} failed with exit code {rc}; {_INSTALL_HINT}"
+        )
     print("koru observe: dependencies installed successfully!")
 
 
@@ -117,6 +122,69 @@ def _cmd_grid(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_trace(args: argparse.Namespace) -> int:
+    from koru.cqrs.event_store import JsonlEventStore
+    from koru.observability_dsl import (
+        OBSERVABILITY_CONTEXT,
+        stored_event_to_compact_line,
+        stored_event_to_dsl,
+    )
+    from koru.observability_writer import observability_event_store_path
+
+    project = project_path(args)
+    store = JsonlEventStore(observability_event_store_path(project))
+    events = [
+        event
+        for event in store.all_events(context=OBSERVABILITY_CONTEXT)
+        if _trace_event_matches(event.payload, corr=args.corr, ticket=args.ticket)
+    ]
+    limit = int(args.limit or 50)
+    if limit > 0:
+        events = events[-limit:]
+    if args.format == "json":
+        print(
+            json.dumps(
+                {
+                    "project": str(project),
+                    "count": len(events),
+                    "events": [
+                        {
+                            "sequence": event.sequence,
+                            "event_type": event.event_type,
+                            "occurred_at": event.occurred_at,
+                            "aggregate_id": event.aggregate_id,
+                            "payload": event.payload,
+                        }
+                        for event in events
+                    ],
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 0
+    if not events:
+        print(f"koru observe trace: no observability events for {project}")
+        return 0
+    renderer = stored_event_to_dsl if args.format == "dsl" else stored_event_to_compact_line
+    separator = "\n\n" if args.format == "dsl" else "\n"
+    print(separator.join(renderer(event) for event in events))
+    return 0
+
+
+def _trace_event_matches(
+    payload: dict[str, object],
+    *,
+    corr: str | None,
+    ticket: str | None,
+) -> bool:
+    if corr and str(payload.get("corr") or "") != corr:
+        return False
+    if ticket and str(payload.get("ticket") or "") != ticket:
+        return False
+    return True
+
+
 def _cmd_providers(args: argparse.Namespace) -> int:
     project = project_path(args)
     json_out = bool(getattr(args, "json", False))
@@ -141,6 +209,7 @@ _HANDLERS = {
     "down": _cmd_down,
     "status": _cmd_status,
     "grid": _cmd_grid,
+    "trace": _cmd_trace,
     "install": _cmd_install,
     "providers": _cmd_providers,
 }

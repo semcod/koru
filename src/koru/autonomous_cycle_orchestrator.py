@@ -20,6 +20,7 @@ from koru.autonomy.env import (
     plugin_required_for_ide as _plugin_required_for_ide,
 )
 from koru.autonomy.state import AutoloopState
+from koru.observability_events import emit_blocker, emit_next
 from koru.queue import QueueLoopResult
 
 
@@ -103,6 +104,7 @@ def _handle_autopilot_phase(
         drive_prompt,
         submit,
         autopilot_action,
+        cycle,
         cycle_telemetry,
         _hp,
     )
@@ -159,6 +161,7 @@ def _drive_autopilot_once(
     drive_prompt: str,
     submit: bool,
     autopilot_action: str,
+    cycle: int,
     cycle_telemetry: dict[str, Any],
     _hp: Callable[..., Any],
 ) -> tuple[str, str | None, str | None]:
@@ -191,4 +194,60 @@ def _drive_autopilot_once(
         state, ok, decision_kind, autopilot_drive_kind, reply.get("prompt", "")
     )
     _log_autopilot_result(ok, queue_result, autopilot_ide, decision_kind, reply, _hp)
+    _emit_autopilot_observability_outcome(
+        project=project,
+        cycle=cycle,
+        queue_result=queue_result,
+        reply=reply,
+        ok=ok,
+        autopilot_status=autopilot_status,
+        decision_kind=decision_kind,
+        autopilot_ide=autopilot_ide,
+    )
     return autopilot_status, autopilot_backend, autopilot_drive_kind
+
+
+def _emit_autopilot_observability_outcome(
+    *,
+    project: Path,
+    cycle: Any,
+    queue_result: QueueLoopResult,
+    reply: dict[str, Any],
+    ok: bool,
+    autopilot_status: str,
+    decision_kind: str,
+    autopilot_ide: str,
+) -> None:
+    if ok:
+        return
+    if not (autopilot_status == "failed" or autopilot_status.startswith("skipped(")):
+        return
+    corr = str(reply.get("id") or "cli-drive")
+    ticket = _queue_loop_waiting_ticket_label(queue_result)
+    cycle_number = cycle if isinstance(cycle, int) else None
+    blocker = "drive_failed"
+    next_action = "retry_next_cycle"
+    if autopilot_status == "skipped(manual_focus)":
+        blocker = "manual_focus_required"
+        next_action = "focus_chat_or_open_interfaces"
+    elif decision_kind in {"idle_no_ticket", "waiting_ticket_closed"}:
+        return
+    emit_blocker(
+        project,
+        corr=corr,
+        cycle=cycle_number,
+        ticket=None if ticket == "-" else ticket,
+        name=blocker,
+        because=str(reply.get("reason") or reply.get("message") or "autopilot_failed"),
+        ide=autopilot_ide,
+        status=autopilot_status,
+    )
+    emit_next(
+        project,
+        corr=corr,
+        cycle=cycle_number,
+        ticket=None if ticket == "-" else ticket,
+        action=next_action,
+        ide=autopilot_ide,
+        decision_kind=decision_kind,
+    )

@@ -182,6 +182,9 @@ def test_drive_dry_run_direct(
         def __init__(self) -> None:
             pass
 
+        def select_backend(self) -> str:
+            return "xdotool"
+
         def type_text(self, text, *, ide="default", submit=True, dry_run=False):
             from koru.autopilot.injector import InjectionResult
 

@@ -4,6 +4,21 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.78] — 2026-05-25
+
+### Added
+- **Live Koru Drive DSL emission.** `traceOperation()` now sends a
+  `[DSL-LIVE]` console-log line to the daemon immediately when each
+  focus/paste/submit candidate runs, *before* the drive ack is built.
+  The daemon mirrors it into the live log as
+  `[DSL] #NNN act=... route=... ok=... reason="..." via=plugin
+  ide=cursor`, so the operator sees the ladder step-by-step while the
+  drive is still in flight instead of waiting for the final ack
+  summary. Format is documented in `docs/koru-drive-dsl.md`. The
+  post-ack DSL block (emitted by the daemon from `operation_trace`)
+  is unchanged and still works against older plugins, so this is a
+  pure additive upgrade.
+
 ## [0.1.77] — 2026-05-25
 
 ### Fixed

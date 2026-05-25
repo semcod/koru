@@ -4,50 +4,50 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 803, md: 107, yaml: 56, typescript: 55, shell: 49
+- **Languages**: python: 801, md: 101, typescript: 55, shell: 49, yaml: 48
 - **Analysis Mode**: static
-- **Total Functions**: 17514
-- **Total Classes**: 630
-- **Modules**: 1122
+- **Total Functions**: 19162
+- **Total Classes**: 626
+- **Modules**: 1106
 - **Entry Points**: 0
 
 ## Architecture by Module
 
 ### code2llm_output.map.toon
-- **Functions**: 27063
+- **Functions**: 53586
+- **File**: `map.toon.yaml`
+
+### project.map.toon
+- **Functions**: 4015
 - **File**: `map.toon.yaml`
 
 ### batch_1.SUMD
-- **Functions**: 3907
+- **Functions**: 4015
 - **Classes**: 1
 - **File**: `SUMD.md`
 
-### project.map.toon
-- **Functions**: 3303
-- **File**: `map.toon.yaml`
-
 ### plugins.koru-autopilot-vscode.src.extension
-- **Functions**: 360
-- **Classes**: 2
-- **File**: `extension.ts`
-
-### plugins.koru-autopilot-antigravity.src.extension
-- **Functions**: 359
-- **Classes**: 2
-- **File**: `extension.ts`
-
-### plugins.koru-autopilot-cursor.src.extension
-- **Functions**: 359
-- **Classes**: 2
-- **File**: `extension.ts`
-
-### plugins.koru-autopilot-windsurf.src.extension
-- **Functions**: 359
+- **Functions**: 368
 - **Classes**: 2
 - **File**: `extension.ts`
 
 ### plugins.koru-autopilot-vscodium.src.extension
-- **Functions**: 359
+- **Functions**: 367
+- **Classes**: 2
+- **File**: `extension.ts`
+
+### plugins.koru-autopilot-antigravity.src.extension
+- **Functions**: 366
+- **Classes**: 2
+- **File**: `extension.ts`
+
+### plugins.koru-autopilot-cursor.src.extension
+- **Functions**: 366
+- **Classes**: 2
+- **File**: `extension.ts`
+
+### plugins.koru-autopilot-windsurf.src.extension
+- **Functions**: 366
 - **Classes**: 2
 - **File**: `extension.ts`
 
@@ -117,37 +117,37 @@ Key execution flows identified:
 ## Key Classes
 
 ### plugins.koru-autopilot-vscode.src.extension.AutopilotBridge
-- **Methods**: 345
+- **Methods**: 353
 - **Key Methods**: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.safeLog, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.currentOperationTrace, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
 
+### plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge
+- **Methods**: 352
+- **Key Methods**: plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.safeLog, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.currentOperationTrace, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.connect
+
 ### plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge
-- **Methods**: 344
+- **Methods**: 351
 - **Key Methods**: plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.safeLog, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.currentOperationTrace, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.override, plugins.koru-autopilot-antigravity.src.extension.AutopilotBridge.connect
 
 ### plugins.koru-autopilot-cursor.src.extension.AutopilotBridge
-- **Methods**: 344
+- **Methods**: 351
 - **Key Methods**: plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.safeLog, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.currentOperationTrace, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.override, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.connect
 
 ### plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge
-- **Methods**: 344
+- **Methods**: 351
 - **Key Methods**: plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.safeLog, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.currentOperationTrace, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.override, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.connect
-
-### plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge
-- **Methods**: 344
-- **Key Methods**: plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.safeLog, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.currentOperationTrace, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.connect
-
-### plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter
-- **Methods**: 20
-- **Key Methods**: plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.storeAvailable, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.fetchNewer, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.lastRowid, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.latestBubbleRowid, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.exec, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.n, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.exec, plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter.r
-
-### plugins.koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter
-- **Methods**: 19
-- **Key Methods**: plugins.koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.storeAvailable, plugins.koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.fetchNewer, plugins.koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.exec, plugins.koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.r, plugins.koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.r, plugins.koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.extractResponsesFromSession, plugins.koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.responses, plugins.koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.resp, plugins.koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.ts, plugins.koru-autopilot-vscode.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.text
 
 ### koruide.drive_orchestrator.DriveOrchestrator
 > Pure helpers used by the autopilot daemon.
-- **Methods**: 15
+- **Methods**: 20
 - **Key Methods**: koruide.drive_orchestrator.DriveOrchestrator.plugin_required_message, koruide.drive_orchestrator.DriveOrchestrator.should_try_os_fallback, koruide.drive_orchestrator.DriveOrchestrator.build_message_sent_info, koruide.drive_orchestrator.DriveOrchestrator.annotate_plugin_ack, koruide.drive_orchestrator.DriveOrchestrator.is_poisoned_submit_ack, koruide.drive_orchestrator.DriveOrchestrator.strict_plugin_ack_required, koruide.drive_orchestrator.DriveOrchestrator.expected_plugin_version, koruide.drive_orchestrator.DriveOrchestrator.strict_plugin_version_required, koruide.drive_orchestrator.DriveOrchestrator.protocol_plugin_version_policy, koruide.drive_orchestrator.DriveOrchestrator.plugin_version_info
+
+### plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter
+- **Methods**: 17
+- **Key Methods**: plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.storeAvailable, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.fetchNewer, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.r, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.extractResponsesFromSession, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.responses, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.resp, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.ts, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.text, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.safeParseJson, plugins.koru-autopilot-antigravity.src.vscode-chat-session-adapter.VSCodeChatSessionAdapter.trimmed
+
+### plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter
+- **Methods**: 16
+- **Key Methods**: plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.storeAvailable, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.fetchNewer, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.lastRowid, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.latestBubbleRowid, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.n, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.parseCursorBubbleRows, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.recSep, plugins.koru-autopilot-antigravity.src.cursor-bubble-adapter.CursorBubbleAdapter.fldSep
 
 ### src.koruide.injector.Injector
 > Pick the best available backend and type text through it.
@@ -167,11 +167,6 @@ no
 - **Methods**: 15
 - **Key Methods**: koruide.ides.base.IdeStrategy.id, koruide.ides.base.IdeStrategy.label, koruide.ides.base.IdeStrategy.detection, koruide.ides.base.IdeStrategy.terminal, koruide.ides.base.IdeStrategy.aliases, koruide.ides.base.IdeStrategy.config_home, koruide.ides.base.IdeStrategy.user_settings_path, koruide.ides.base.IdeStrategy.workspace_settings_path, koruide.ides.base.IdeStrategy.state_vscdb_path, koruide.ides.base.IdeStrategy.extensions_metadata_path
 - **Inherits**: ABC
-
-### src.koruide.drive_orchestrator.DriveOrchestrator
-> Pure helpers used by the autopilot daemon.
-- **Methods**: 15
-- **Key Methods**: src.koruide.drive_orchestrator.DriveOrchestrator.plugin_required_message, src.koruide.drive_orchestrator.DriveOrchestrator.should_try_os_fallback, src.koruide.drive_orchestrator.DriveOrchestrator.build_message_sent_info, src.koruide.drive_orchestrator.DriveOrchestrator.annotate_plugin_ack, src.koruide.drive_orchestrator.DriveOrchestrator.is_poisoned_submit_ack, src.koruide.drive_orchestrator.DriveOrchestrator.strict_plugin_ack_required, src.koruide.drive_orchestrator.DriveOrchestrator.expected_plugin_version, src.koruide.drive_orchestrator.DriveOrchestrator.strict_plugin_version_required, src.koruide.drive_orchestrator.DriveOrchestrator.protocol_plugin_version_policy, src.koruide.drive_orchestrator.DriveOrchestrator.plugin_version_info
 
 ### src.koruide.ides.base.IdeStrategy
 > Per-IDE knowledge object.
@@ -224,6 +219,11 @@ no
 ### plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher
 - **Methods**: 11
 - **Key Methods**: plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.currentCursor, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.adapterDescription, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.setCursor, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.start, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.tick, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.stop, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.clearInterval, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.pollOnce, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.cursorAdvances, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.a
+
+### koruide.ides.antigravity.AntigravityStrategy
+- **Methods**: 10
+- **Key Methods**: koruide.ides.antigravity.AntigravityStrategy.id, koruide.ides.antigravity.AntigravityStrategy.label, koruide.ides.antigravity.AntigravityStrategy.config_folder_name, koruide.ides.antigravity.AntigravityStrategy.detection, koruide.ides.antigravity.AntigravityStrategy.terminal, koruide.ides.antigravity.AntigravityStrategy.aliases, koruide.ides.antigravity.AntigravityStrategy.extensions_metadata_path, koruide.ides.antigravity.AntigravityStrategy.plugin, koruide.ides.antigravity.AntigravityStrategy.editor_cli_candidates, koruide.ides.antigravity.AntigravityStrategy.window_name_hints
+- **Inherits**: VscodeFamilyStrategy
 
 ## Data Transformation Functions
 
@@ -336,12 +336,13 @@ Functions exposed as public API (no underscore prefix):
 - `koru.autonomy.phases.scan_phase.handle_scan_after_idle` - 31 calls
 - `src.koruapi.mcp_server.tool_run_ticket` - 31 calls
 - `src.koru.autonomy.phases.scan_phase.handle_scan_after_idle` - 31 calls
-- `koruide.daemon.handlers.handle_drive` - 30 calls
 - `koru.deployment_events.DeploymentEvent.from_dict` - 30 calls
 - `koru.queue.runners.run_api_request` - 30 calls
-- `src.koruide.daemon.handlers.handle_drive` - 30 calls
+- `koruide.daemon.handlers.handle_drive` - 30 calls
 - `src.koru.queue.runners.run_api_request` - 30 calls
 - `koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
+- `koru.ide_client.LegacyAutopilotClientAdapter.drive` - 29 calls
+- `koru.observability_dsl.parse_observability_dsl` - 29 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
 - `koru.cli_queue.render_clean_report_text` - 28 calls
 - `src.koru.cli_queue.render_clean_report_text` - 28 calls
@@ -356,7 +357,6 @@ Functions exposed as public API (no underscore prefix):
 - `koru.ide_adapters.bridge.evaluate_bridge` - 26 calls
 - `src.koru.autonomous_daemon.start_or_reuse_daemon` - 26 calls
 - `src.koru.autonomous_runtime.setup_autonomous_session` - 26 calls
-- `src.koru.autonomy.phases.scan_phase.handle_scan_phase` - 26 calls
 
 ## System Interactions
 

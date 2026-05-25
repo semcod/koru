@@ -234,6 +234,84 @@ def test_plugin_ack_summary_includes_operation_trace() -> None:
     assert "submit/host-key=fail:input still contains pasted text" in summary
 
 
+def test_operation_trace_dsl_renders_one_line_per_step() -> None:
+    """Each plugin operation_trace step becomes a self-contained DSL line.
+
+    This is the transparent decision log the operator asked for:
+    instead of a single ``route_trace=op/route=ok:cmd > op/route=...``
+    glob, we render one ``#NNN act=... intent="..." route=... ok=...``
+    line per step so the daemon log can be grepped step-by-step.
+    """
+    lines = DriveOrchestrator.operation_trace_dsl(
+        {
+            "operation_trace": [
+                {"op": "focus_open", "route": "command", "ok": True, "command": "chat.open"},
+                {
+                    "op": "paste",
+                    "route": "host-clipboard",
+                    "ok": True,
+                    "command": "wl-copy+wtype",
+                },
+                {
+                    "op": "submit",
+                    "route": "host-key",
+                    "ok": False,
+                    "reason": "input still contains pasted text",
+                },
+            ],
+        },
+    )
+
+    assert len(lines) == 3
+    assert lines[0].startswith("#001 act=focus_open")
+    assert "intent=" in lines[0]
+    assert "route=command:chat.open" in lines[0]
+    assert "ok=true" in lines[0]
+    assert lines[1].startswith("#002 act=paste")
+    assert "route=host-clipboard:wl-copy+wtype" in lines[1]
+    assert lines[2].startswith("#003 act=submit")
+    assert "ok=false" in lines[2]
+    assert 'reason="input still contains pasted text"' in lines[2]
+
+
+def test_operation_trace_dsl_marks_ambiguous_when_ok_unknown() -> None:
+    lines = DriveOrchestrator.operation_trace_dsl(
+        {
+            "operation_trace": [
+                {"op": "submit", "route": "command", "ok": None, "command": "composer.send"},
+            ],
+        },
+    )
+
+    assert lines == ["#001 act=submit "
+                     'intent="send the prompt as a user message" '
+                     "route=command:composer.send ok=ambiguous"]
+
+
+def test_operation_trace_dsl_handles_missing_trace() -> None:
+    assert DriveOrchestrator.operation_trace_dsl({}) == []
+    assert DriveOrchestrator.operation_trace_dsl({"operation_trace": "garbage"}) == []
+
+
+def test_drive_outcome_dsl_includes_winners_and_reason() -> None:
+    line = DriveOrchestrator.drive_outcome_dsl(
+        {
+            "delivered": False,
+            "verification": "submit_unverified",
+            "winning_focus_open": "composer.openComposer",
+            "winning_paste": "editor.action.clipboardPasteAction",
+            "winning_submit": "",
+            "submit_failure_reason": "no fresh user bubble after 2.5s",
+        },
+    )
+
+    assert line.startswith("#999 act=drive")
+    assert "delivered=false" in line
+    assert "verification=submit_unverified" in line
+    assert "winners=focus=composer.openComposer|paste=editor.action.clipboardPasteAction|submit=-" in line
+    assert 'reason="no fresh user bubble after 2.5s"' in line
+
+
 def test_strict_plugin_version_blocks_when_expected_version_missing(monkeypatch) -> None:
     monkeypatch.setenv("KORU_STRICT_PLUGIN_VERSION", "1")
     monkeypatch.setattr(DriveOrchestrator, "expected_plugin_version", lambda _ide=None: None)

@@ -8,7 +8,16 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from koru.control_commands import plugin_socket_command
 from koru.integration_ledger import record_integration_action
+from koru.observability_events import (
+    emit_action,
+    emit_decision,
+    emit_failure,
+    emit_intent,
+    emit_phase,
+    emit_verify,
+)
 from koruide.daemon.protocol import (
     _Client,
     _daemon_package_version,
@@ -220,6 +229,25 @@ def _drive_via_plugin(
         f"ide={plugin.ide} submit={submit} require_plugin={require_plugin} "
         "transport=plugin phases=focus_open,input_busy_probe,paste,submit",
     )
+    emit_intent(
+        daemon.project,
+        corr=corr,
+        goal="send_prompt",
+        target="ide.chat",
+        ide=plugin.ide,
+        chars=len(text),
+    )
+    emit_decision(
+        daemon.project,
+        corr=corr,
+        name="route_transport",
+        chosen="plugin",
+        because="plugin_connected",
+        ide=plugin.ide,
+        require_plugin=require_plugin,
+        plugin_fd=plugin.sock.fileno(),
+        cli_fd=client.sock.fileno(),
+    )
     record_integration_action(
         project=daemon.project,
         action="drive.route",
@@ -242,12 +270,50 @@ def _drive_via_plugin(
             "require_plugin": require_plugin,
         },
     )
+    emit_action(
+        daemon.project,
+        corr=corr,
+        name="drive",
+        chars=len(text),
+        submit=submit,
+        transport="plugin",
+        ide=plugin.ide,
+    )
+    plugin_socket_command(
+        daemon.project,
+        corr=corr,
+        message_type="chat.send",
+        ide=plugin.ide,
+        payload={
+            "text": text,
+            "text_len": len(text),
+            "submit": submit,
+            "require_plugin": require_plugin,
+        },
+        actor="autopilot-daemon",
+        replayable=True,
+    )
     daemon._send(plugin, chat_send(text, submit=submit, id=corr).encode())
     daemon._last_chat_send_at = time.monotonic()
     preview = text.replace("\n", " ")[:100]
     daemon.log(
         f"drive → plugin/{plugin.ide}: wklejam do czatu ({len(text)} zn, "
         f"submit={submit}) «{preview}»",
+    )
+    for phase_name in ("focus_open", "input_busy_probe", "paste"):
+        emit_phase(
+            daemon.project,
+            corr=corr,
+            name=phase_name,
+            status="attempted",
+            ide=plugin.ide,
+        )
+    emit_phase(
+        daemon.project,
+        corr=corr,
+        name="submit",
+        status="awaiting_ack" if submit else "not_requested",
+        ide=plugin.ide,
     )
     record_integration_action(
         project=daemon.project,
@@ -863,8 +929,25 @@ def _send_plugin_ack_reply(
     route_summary = DriveOrchestrator.operation_trace_summary(info)
     if route_summary:
         daemon.log(f"drive → plugin operation trace: {route_summary}")
+    # Koru Drive DSL — one human-readable line per integration step.
+    # This is the *transparent* trace the operator asked for: each line
+    # carries act + intent + route + ok + reason, so a failed drive
+    # ("plugin wkleil ale nie wyslal") explains itself instead of just
+    # logging a single opaque "winning_submit=composer.sendToAgent".
+    dsl_lines = DriveOrchestrator.operation_trace_dsl(info)
+    for dsl_line in dsl_lines:
+        daemon.log(f"[DSL] {dsl_line}")
+    final_dsl_line = DriveOrchestrator.drive_outcome_dsl(info)
+    daemon.log(f"[DSL] {final_dsl_line}")
+    # Persist the DSL on the ack info so the CLI/autonomous receives it
+    # in the relay envelope and can echo it verbatim instead of having
+    # to ship its own renderer.
+    if dsl_lines:
+        info["drive_dsl"] = dsl_lines
+    info["drive_dsl_outcome"] = final_dsl_line
     _record_plugin_ack_integration(
         daemon,
+        corr=corr,
         target_ide=fallback_ide,
         info=info,
         plugin_ok=plugin_ok,
@@ -931,6 +1014,7 @@ def _strict_plugin_ack_ok(
 def _record_plugin_ack_integration(
     daemon: Any,
     *,
+    corr: str,
     target_ide: str,
     info: dict[str, Any],
     plugin_ok: bool,
@@ -954,6 +1038,30 @@ def _record_plugin_ack_integration(
             else "stop retry for non-confirmed submit; inspect integration ledger"
         ),
         data={"ack": info, "route_trace": route_summary},
+    )
+    verification = str(info.get("verification") or "ack")
+    if plugin_ok:
+        emit_verify(
+            daemon.project,
+            corr=corr,
+            name="submit" if "submit" in verification else "drive",
+            status=verification,
+            ide=target_ide,
+            delivered=info.get("delivered"),
+            submitted=info.get("submitted"),
+            backend=info.get("backend"),
+        )
+        return
+    emit_failure(
+        daemon.project,
+        corr=corr,
+        code=str(info.get("submit_failure_reason") or info.get("reason") or verification),
+        message=str(info.get("message") or summary),
+        ide=target_ide,
+        verification=verification,
+        delivered=info.get("delivered"),
+        submitted=info.get("submitted"),
+        route=route_summary,
     )
 
 
@@ -1151,3 +1259,13 @@ def handle_console_log(daemon: Any, client: _Client, msg: Message) -> None:
             ide=str(entry_ide or client.ide or "").strip() or None,
             version=str(entry_version or client.version or "").strip() or None,
         )
+        # Surface plugin-emitted DSL lines in the daemon log immediately
+        # (i.e. *before* the drive ack arrives). This is what makes the
+        # DSL "live": the operator sees each ladder candidate the
+        # plugin tries while the drive is still in flight, not only in
+        # the post-ack summary. Plugins emit these via
+        # ``sendConsoleLog("[DSL-LIVE] ...")`` from ``traceOperation``;
+        # see ``docs/koru-drive-dsl.md``.
+        if message.startswith("[DSL-LIVE]"):
+            ide_token = str(entry_ide or client.ide or "?").strip() or "?"
+            daemon.log(f"[DSL] {message[len('[DSL-LIVE] '):]} via=plugin ide={ide_token}")

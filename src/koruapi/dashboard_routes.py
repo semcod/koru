@@ -30,6 +30,7 @@ from koruapi.dashboard_html import (
     render_create_ticket_success_html,
 )
 from koruapi.dashboard_http import DashboardRequestHandler
+from koruapi.dashboard_observability import dashboard_observability_trace_payload
 from koruapi.dashboard_plugin_logs import dashboard_plugin_logs_payload
 from koruapi.dashboard_projects import (
     dashboard_workspace,
@@ -154,6 +155,37 @@ def _get_autonomy_trace(handler: Any, _config: ServeConfig) -> None:
             },
         }
     )
+
+
+def _get_observe_trace(handler: Any, _config: ServeConfig) -> None:
+    qs = handler._query_params()
+    corr = _first_query_value(qs, "corr")
+    ticket = _first_query_value(qs, "ticket")
+    limit = _int_query_value(qs, "limit", default=50)
+    handler._safe_respond_json(
+        lambda: dashboard_observability_trace_payload(
+            handler._selected_project(),
+            corr=corr,
+            ticket=ticket,
+            limit=limit,
+        )
+    )
+
+
+def _first_query_value(qs: dict[str, list[str]], key: str) -> str | None:
+    values = qs.get(key) or []
+    value = str(values[0]).strip() if values else ""
+    return value or None
+
+
+def _int_query_value(qs: dict[str, list[str]], key: str, *, default: int) -> int:
+    value = _first_query_value(qs, key)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
 
 
 def _get_interfaces(handler: Any, _config: ServeConfig) -> None:
@@ -403,6 +435,7 @@ _GET_ROUTES: dict[str, _GetHandler] = {
     "/api/handoff": _get_handoff,
     "/api/plugin-logs": _get_plugin_logs,
     "/api/autonomy/trace": _get_autonomy_trace,
+    "/api/observe/trace": _get_observe_trace,
     "/api/interfaces": _get_interfaces,
     "/api/environment": _get_environment,
     "/llm/prompt/create-ticket-for-project": _redirect_create_project_ticket_prompt,

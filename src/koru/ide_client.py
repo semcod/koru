@@ -99,6 +99,26 @@ class LegacyAutopilotClientAdapter:
                 "diagnostics": reply.get("diagnostics", {}),
             },
         )
+        # Surface the Koru Drive DSL — one line per integration step.
+        # This is the transparent decision log the operator asked for:
+        # it explains exactly which routes the plugin tried for focus /
+        # paste / submit, whether each one succeeded, and why the
+        # failing step failed (instead of the older "drive wynik: ok=False"
+        # one-liner that hid everything in opaque ack fields).
+        dsl_lines = reply.get("drive_dsl")
+        if isinstance(dsl_lines, list):
+            for raw_line in dsl_lines:
+                line = str(raw_line).strip()
+                if not line:
+                    continue
+                activity("DSL", line, data={"ide": ide, "phase": "step"})
+        outcome_line = reply.get("drive_dsl_outcome")
+        if outcome_line:
+            activity(
+                "DSL",
+                str(outcome_line),
+                data={"ide": ide, "phase": "outcome"},
+            )
         return reply
 
     def status(self) -> dict[str, Any]:

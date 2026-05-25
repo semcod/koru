@@ -4,6 +4,16 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.78] — 2026-05-25
+
+### Added
+- **Live Koru Drive DSL emission** in `traceOperation()` so the daemon
+  log receives one `[DSL-LIVE]` line per focus/paste/submit candidate
+  *before* the drive ack is assembled. See
+  `docs/koru-drive-dsl.md` for the format. The plugin keeps emitting
+  the structured `operation_trace` in the ack envelope so older
+  daemons continue to work unchanged.
+
 ## [0.1.77] — 2026-05-25
 
 ### Changed (architecture — full per-IDE split)

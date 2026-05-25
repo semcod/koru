@@ -394,6 +394,55 @@ class TestServe(unittest.TestCase):
         ids = [item["id"] for item in blocked["interfaces"]]
         self.assertIn("plugin_socket_vscode_family", ids)
 
+    def test_api_observe_trace_returns_replayable_dsl_and_compact_lines(self) -> None:
+        from koru.observability_dsl import KoruObsEvent
+        from koru.observability_writer import write_observability_event
+
+        write_observability_event(
+            KoruObsEvent(
+                ts="2026-05-25T15:10:26Z",
+                corr="cli-drive",
+                component="autopilot",
+                kind="autopilot.intent",
+                ticket="STARTER-277",
+                data={
+                    "goal": "deliver_prompt_to_ide_chat",
+                    "target": "vscodium",
+                    "submit": True,
+                },
+            ),
+            project=self.project,
+            write_dsl_log=False,
+        )
+        write_observability_event(
+            KoruObsEvent(
+                ts="2026-05-25T15:10:34Z",
+                corr="cli-drive",
+                component="autopilot",
+                kind="autopilot.drive.failed",
+                ticket="STARTER-277",
+                severity="error",
+                data={
+                    "code": "autopilot_daemon_timeout",
+                    "message": "daemon unreachable: timed out",
+                },
+            ),
+            project=self.project,
+            write_dsl_log=False,
+        )
+
+        status, ctype, body = _get(self.port, "/api/observe/trace?ticket=STARTER-277")
+
+        self.assertEqual(status, 200)
+        self.assertIn("application/json", ctype)
+        payload = json.loads(body)
+        self.assertEqual(payload["count"], 2)
+        self.assertEqual(payload["filters"]["ticket"], "STARTER-277")
+        self.assertIn("intent goal=deliver_prompt_to_ide_chat", payload["dsl"][0])
+        self.assertIn("failure code=autopilot_daemon_timeout", payload["dsl"][1])
+        self.assertIn("OBS:", payload["compact"][0])
+        self.assertEqual(payload["events"][1]["event_type"], "autopilot.drive.failed")
+
     def test_api_handoff_returns_markdown(self) -> None:
         status, ctype, body = _get(self.port, "/api/handoff")
         self.assertEqual(status, 200)

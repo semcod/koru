@@ -1,37 +1,29 @@
-# code2llm/evolution | 17400 func | 381f | 2026-05-25
+# code2llm/evolution | 19048 func | 385f | 2026-05-25
 
-NEXT[5] (ranked by impact):
+NEXT[3] (ranked by impact):
   [1] !! SPLIT           src/koru/doctor.py
       WHY: 2083L, 2 classes, max CC=13
       EFFORT: ~4h  IMPACT: 27079
 
-  [2] !! SPLIT           src/koru/scan.py
+  [2] !! SPLIT           src/koruide/daemon/handlers.py
+      WHY: 1256L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 17584
+
+  [3] !! SPLIT           src/koru/scan.py
       WHY: 1183L, 0 classes, max CC=13
       EFFORT: ~4h  IMPACT: 15379
-
-  [3] !! SPLIT           src/koru/autopilot/cli_command.py
-      WHY: 1142L, 0 classes, max CC=10
-      EFFORT: ~4h  IMPACT: 11420
-
-  [4] !  SPLIT-FUNC      execFile  CC=18  fan=18
-      WHY: CC=18 exceeds 15
-      EFFORT: ~1h  IMPACT: 324
-
-  [5] !  SPLIT-FUNC      AutopilotBridge.activate  CC=15  fan=15
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 225
 
 
 RISKS[3]:
   ⚠ Splitting src/koru/doctor.py may break 196 import paths
+  ⚠ Splitting src/koruide/daemon/handlers.py may break 43 import paths
   ⚠ Splitting src/koru/scan.py may break 74 import paths
-  ⚠ Splitting src/koru/autopilot/cli_command.py may break 64 import paths
 
 METRICS-TARGET:
-  CC̄:          1.5 → ≤1.0
-  max-CC:      18 → ≤9
+  CC̄:          1.4 → ≤1.0
+  max-CC:      14 → ≤7
   god-modules: 24 → 0
-  high-CC(≥15): 4 → ≤2
+  high-CC(≥15): 0 → ≤0
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -59,4 +51,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=1.5 → now CC̄=1.5
+  prev CC̄=1.4 → now CC̄=1.4

@@ -133,7 +133,7 @@ def test_extension_activated_in_exthost(tmp_path: Path, monkeypatch: pytest.Monk
     log_dir = config / "logs" / "20260524T120000" / "window1" / "exthost"
     log_dir.mkdir(parents=True)
     (log_dir / "exthost.log").write_text(
-        "ExtensionService#_doActivateExtension semcod.koru-autopilot-vscode\n",
+        "ExtensionService#_doActivateExtension semcod.koru-autopilot-cursor\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(shared, "config_home_for_ide", lambda _ide: config)
@@ -158,7 +158,7 @@ def test_extension_activated_uses_latest_session_only(
     old.mkdir(parents=True)
     new.mkdir(parents=True)
     (old / "exthost.log").write_text(
-        "Extension activated success: semcod.koru-autopilot-vscode\n",
+        "Extension activated success: semcod.koru-autopilot-cursor\n",
         encoding="utf-8",
     )
     (new / "exthost.log").write_text(

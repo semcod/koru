@@ -2138,6 +2138,8 @@ def test_run_cycle_drives_llm_ready_waiting_ticket_without_stagnation_skip(
     monkeypatch,
 ) -> None:
     """llm-ready tickets should be driven by IDE autopilot even when human queue waits."""
+    # Clear chat activity state to avoid test isolation failures
+    monkeypatch.setattr(autonomous_cycle_mod, "_skip_due_to_recent_chat_activity", lambda *args, **kwargs: False)
     sprint_dir = tmp_path / ".planfile" / "sprints"
     sprint_dir.mkdir(parents=True)
     (sprint_dir / "current.yaml").write_text(

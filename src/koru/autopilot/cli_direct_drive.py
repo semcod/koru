@@ -17,6 +17,7 @@ import time
 from typing import Any
 
 from koru.autopilot.injector import Injector, InjectorError
+from koru.control_commands import desktop_gui_command
 
 
 def _auto_direct_fallback_enabled() -> bool:
@@ -89,17 +90,62 @@ def _emit_json_payload(payload: dict[str, Any], *, enabled: bool) -> None:
         print(json.dumps(payload, indent=2, sort_keys=True))
 
 
+def _direct_drive_corr() -> str:
+    return f"direct-drive-{time.monotonic_ns():x}"
+
+
+def _emit_desktop_drive_command(
+    args: argparse.Namespace,
+    *,
+    corr: str,
+    operation: str,
+    backend: str,
+    target: str,
+    text: str,
+    replayable: bool,
+    **payload: Any,
+) -> None:
+    project = getattr(args, "project", None)
+    desktop_gui_command(
+        project,
+        corr=corr,
+        operation=operation,
+        backend=backend,
+        target=target,
+        payload={
+            "text": text,
+            "text_len": len(text),
+            "submit": bool(getattr(args, "submit", True)),
+            "dry_run": bool(getattr(args, "dry_run", False)),
+            **payload,
+        },
+        actor="koru-autopilot-cli",
+        replayable=replayable,
+    )
+
+
 def _try_profile_direct_drive(
     args: argparse.Namespace,
     text: str,
     profile_id: str,
     *,
+    corr: str,
     emit_payload: bool,
 ) -> tuple[bool, int, dict[str, Any] | None]:
     from koru.autopilot import os_injector as oi
 
     if float(args.delay_seconds) > 0:
         _print_drive_delay_message(float(args.delay_seconds))
+    _emit_desktop_drive_command(
+        args,
+        corr=corr,
+        operation="os_injector.profile_drive",
+        backend="os_injector",
+        target=profile_id,
+        text=text,
+        profile_id=profile_id,
+        replayable=True,
+    )
     os_res = oi.try_drive_with_profile(
         tool_id=profile_id,
         text=text,
@@ -117,10 +163,23 @@ def _type_text_direct_drive(
     args: argparse.Namespace,
     text: str,
     *,
+    corr: str,
     target_id: str,
     injector: Injector,
     emit_payload: bool,
 ) -> tuple[int, dict[str, Any] | None]:
+    select_backend = getattr(injector, "select_backend", None)
+    backend = select_backend() if callable(select_backend) else getattr(injector, "session", "")
+    _emit_desktop_drive_command(
+        args,
+        corr=corr,
+        operation="injector.type_text",
+        backend=str(backend or "keyboard"),
+        target=target_id,
+        text=text,
+        ide=target_id,
+        replayable=False,
+    )
     result = injector.type_text(
         text,
         ide=target_id,
@@ -166,6 +225,7 @@ def _run_direct_drive(
         args.os_profile,
         project=args.project,
     )
+    corr = _direct_drive_corr()
     _emit_direct_drive_auto_selection(args, profile_id, selection)
 
     try:
@@ -173,6 +233,7 @@ def _run_direct_drive(
             args,
             text,
             profile_id,
+            corr=corr,
             emit_payload=emit_payload,
         )
         if handled:
@@ -183,6 +244,7 @@ def _run_direct_drive(
         return _type_text_direct_drive(
             args,
             text,
+            corr=corr,
             target_id=target_id,
             injector=injector,
             emit_payload=emit_payload,
@@ -198,6 +260,7 @@ def _run_direct_drive(
             return _type_text_direct_drive(
                 args,
                 text,
+                corr=corr,
                 target_id=target_id,
                 injector=injector,
                 emit_payload=emit_payload,
