@@ -1604,7 +1604,7 @@ def test_setup_autopilot_plugin_stale_version_attempts_reload_and_waits_again(
     )
 
     assert connected is True
-    assert wait_timeouts == [5.0, 30.0]
+    assert wait_timeouts == [5.0, 12.0]
     text = "\n".join(messages)
     assert "plugin wymaga przeładowania IDE" in text
     assert "autopilot plugin reconnected after reload" in text
@@ -1662,7 +1662,7 @@ def test_setup_autopilot_plugin_empty_plugin_list_attempts_reload(
     )
 
     assert connected is True
-    assert wait_timeouts == [5.0, 30.0]
+    assert wait_timeouts == [5.0, 12.0]
 
 
 def test_status_has_autopilot_plugin_matches_specific_ide(monkeypatch) -> None:

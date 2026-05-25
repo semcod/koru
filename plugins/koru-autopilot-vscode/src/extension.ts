@@ -826,17 +826,21 @@ class AutopilotBridge {
       reason: result.cleared ? undefined : "input still contains pasted text",
       detail: { observedLength: result.observedLength, tailMatched: result.tailMatched },
     });
-    // The clipboard probe falls closed to ``cleared=true`` whenever it
-    // cannot read the chat input (sentinel unchanged, clipboard
-    // unreadable). For Cursor that is the COMMON case: the chat surface
-    // is a webview, so ``editor.action.selectAll`` has no effect and the
-    // probe returns ``null`` → the legacy logic treats failed submits as
-    // success and caches the bogus winner. Cross-check against Cursor's
-    // own conversation database, which is the only ground truth.
+    // The clipboard probe is unreliable on Cursor's chat webview:
+    // ``editor.action.selectAll`` may either no-op (probe → ``null``)
+    // or, when the focus chrome falls back to the underlying file
+    // ``TextEditor``, copy unrelated editor content. In *either* case
+    // the legacy heuristic returns ``cleared=true`` because the tail
+    // of our prompt is not present, and we cache the bogus winner.
+    //
+    // The only ground truth on Cursor is the conversation database
+    // (``cursorDiskKV``): a successful submit creates a new
+    // ``type = 1`` user bubble containing the prompt tail. Consult it
+    // unconditionally for Cursor whenever the probe said the input
+    // was cleared.
     if (
       result.cleared
       && this.detectIde() === "cursor"
-      && probe === null
       && originalText.trim().length >= 4
     ) {
       const dbResult = await this._verifySubmitViaCursorBubble(originalText);
@@ -846,6 +850,7 @@ class AutopilotBridge {
           tailMatched: result.tailMatched,
           dbVerified: dbResult.matched,
           newUserBubbles: dbResult.newUserBubbles,
+          probeWasNull: probe === null,
         };
         this.traceOperation({
           op: "submit_verify",
@@ -889,7 +894,11 @@ class AutopilotBridge {
       return null;
     }
     const tail = originalText.trim().slice(-40);
-    const deadline = Date.now() + 1200;
+    // Cursor's bubble writer is debounced; on slower machines the new
+    // ``type=1`` row sometimes lands 1.5–2.0 s after ``executeCommand``
+    // returns. 1.2 s was too short and produced ``matched=false`` for
+    // submits that actually went through.
+    const deadline = Date.now() + 2500;
     let attempts = 0;
     let lastRows: number = 0;
     while (Date.now() <= deadline) {
@@ -1709,7 +1718,7 @@ class AutopilotBridge {
         this.reconnectBlockedReason = message;
         this.status.text = "$(warning) koru: reload";
         this.status.tooltip = message;
-        void vscode.window.showWarningMessage(`koru autopilot: ${message}`);
+        await this._handleVersionMismatchRejection(message);
       }
       return;
     }
@@ -1730,6 +1739,55 @@ class AutopilotBridge {
       case "error":
         this.send({ type: "error", id: env.id, ok: false, message: plan.message });
         return;
+    }
+  }
+
+  /**
+   * Daemon rejected this plugin because the installed VSIX version no
+   * longer matches the expected version. The classic recovery is for the
+   * user to run `Developer: Reload Window`, but Koru's host-side reload
+   * automation (`wtype Ctrl+Shift+P`) fails on many Wayland compositors.
+   * Since we already have a privileged VS Code extension context, just
+   * call `workbench.action.reloadWindow` ourselves — that bypasses every
+   * xdotool/wtype quirk because the IDE reloads itself natively.
+   *
+   * Honours `koruAutopilot.reloadOnVersionMismatch` (default: `true`)
+   * and a per-session cooldown so we never loop into a reload storm.
+   */
+  private async _handleVersionMismatchRejection(message: string): Promise<void> {
+    const cfg = vscode.workspace.getConfiguration("koruAutopilot");
+    const enabled = cfg.get<boolean>("reloadOnVersionMismatch");
+    if (enabled === false) {
+      void vscode.window.showWarningMessage(`koru autopilot: ${message}`);
+      return;
+    }
+    const ctx = this.context;
+    const lastReloadAt = ctx.globalState.get<number>(
+      "koruAutopilot.lastVersionMismatchReloadAt",
+      0,
+    );
+    const COOLDOWN_MS = 60_000;
+    if (Date.now() - lastReloadAt < COOLDOWN_MS) {
+      void vscode.window.showWarningMessage(
+        `koru autopilot: ${message} (reload skipped — already attempted within last 60s; ` +
+        "use Developer: Reload Window manually if the mismatch persists)",
+      );
+      return;
+    }
+    await ctx.globalState.update("koruAutopilot.lastVersionMismatchReloadAt", Date.now());
+    safeLog("PLUGIN_VERSION_MISMATCH_AUTO_RELOAD", { message });
+    void vscode.window.showInformationMessage(
+      `koru autopilot: ${message}. Reloading the window to load the new VSIX…`,
+    );
+    try {
+      await vscode.commands.executeCommand("workbench.action.reloadWindow");
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      safeLog("PLUGIN_VERSION_MISMATCH_RELOAD_FAILED", { detail });
+      void vscode.window.showWarningMessage(
+        `koru autopilot: automatic reload failed (${detail}). ` +
+        "Run `Developer: Reload Window` manually.",
+      );
     }
   }
 

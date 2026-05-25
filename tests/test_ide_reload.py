@@ -296,6 +296,31 @@ def test_reload_via_command_palette_uses_os_strategy_inject_keys(
     )
 
 
+def test_reload_via_command_palette_refuses_integrated_terminal_focus(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The TERM_PROGRAM=vscode alibi means the shell is inside the IDE, not
+    that the command palette will receive literal text. Do not type reload
+    commands into the user's terminal."""
+    from koruos.strategies.base import FocusOutcome
+
+    strategy = _fake_os_strategy(
+        ide_reload_module=ide_reload,
+        monkeypatch=monkeypatch,
+        focus_outcome=FocusOutcome(ok=True, method="integrated_terminal"),
+        focus_methods=("integrated_terminal",),
+    )
+
+    outcome = ide_reload.reload_via_command_palette("vscodium")
+
+    assert outcome.ok is False
+    assert outcome.attempted is True
+    assert "refusing command-palette reload from integrated terminal focus" in (
+        outcome.detail or ""
+    )
+    strategy.inject_keys.assert_not_called()
+
+
 def test_reload_via_command_palette_explains_wayland_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

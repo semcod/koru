@@ -870,6 +870,31 @@ def test_rejected_plugin_log_default_interval_is_quiet(
     assert "suppressed 1 repeated reconnects" in rejection_logs[1]
 
 
+def test_rejected_plugin_log_names_actual_ide_for_reload_action(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_PLUGIN_REJECTION_LOG_INTERVAL_SECONDS", "5")
+    logs: list[str] = []
+    daemon = AutopilotDaemon(
+        socket_path=tmp_path / "autopilot.sock",
+        injector=_StubInjector(),
+        log=logs.append,
+    )
+
+    daemon._log_rejected_plugin_connection(
+        ide="vscodium",
+        plugin_version="0.1.72",
+        expected_plugin_version="0.1.73",
+        message="connected autopilot plugin version mismatch",
+    )
+
+    reload_logs = [line for line in logs if "Developer: Reload Window" in line]
+    assert reload_logs
+    assert "Action: in VSCodium run `Developer: Reload Window`" in reload_logs[0]
+    assert "Action: in Cursor run" not in reload_logs[0]
+
+
 def test_status_reports_rejected_plugin_versions(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

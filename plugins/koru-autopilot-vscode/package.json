@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscode",
   "displayName": "koru autopilot",
   "description": "Bridge between VS Code / Windsurf / Cursor and the koru autopilot daemon.",
-  "version": "0.1.72",
+  "version": "0.1.74",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -160,6 +160,11 @@
           "type": "boolean",
           "default": false,
           "description": "After using Windsurf's native sendTextToChat command, run extra Cascade open commands. Disabled by default because those commands can toggle the right chat column closed when it is already open."
+        },
+        "koruAutopilot.reloadOnVersionMismatch": {
+          "type": "boolean",
+          "default": true,
+          "description": "When the koru daemon rejects this plugin because the installed VSIX version does not match the daemon's expected version, run `Developer: Reload Window` automatically so the freshly installed VSIX gets loaded. The plugin enforces a 60s cooldown so it never reloads more than once per minute. Set to false to keep the manual recovery (status bar shows `koru: reload`)."
         }
       }
     }

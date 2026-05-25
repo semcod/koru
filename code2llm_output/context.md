@@ -4,17 +4,17 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 751, md: 97, shell: 49, yaml: 48, typescript: 33
+- **Languages**: python: 778, md: 97, shell: 49, yaml: 48, typescript: 33
 - **Analysis Mode**: static
-- **Total Functions**: 13834
-- **Total Classes**: 578
-- **Modules**: 1023
+- **Total Functions**: 15552
+- **Total Classes**: 611
+- **Modules**: 1050
 - **Entry Points**: 0
 
 ## Architecture by Module
 
 ### code2llm_output.map.toon
-- **Functions**: 4534
+- **Functions**: 15733
 - **File**: `map.toon.yaml`
 
 ### batch_1.SUMD
@@ -26,17 +26,17 @@
 - **File**: `map.toon.yaml`
 
 ### plugins.koru-autopilot-vscode.src.extension
-- **Functions**: 334
+- **Functions**: 339
 - **Classes**: 2
 - **File**: `extension.ts`
 
 ### koru.doctor
-- **Functions**: 89
+- **Functions**: 98
 - **Classes**: 2
 - **File**: `doctor.py`
 
 ### src.koru.doctor
-- **Functions**: 89
+- **Functions**: 98
 - **Classes**: 2
 - **File**: `doctor.py`
 
@@ -45,14 +45,22 @@
 - **File**: `probe-ladder.test.ts`
 
 ### koru.autonomous
-- **Functions**: 59
+- **Functions**: 61
 - **Classes**: 2
 - **File**: `autonomous.py`
 
 ### src.koru.autonomous
-- **Functions**: 59
+- **Functions**: 61
 - **Classes**: 2
 - **File**: `autonomous.py`
+
+### koru.autonomous_cycle_chat_activity
+- **Functions**: 51
+- **File**: `autonomous_cycle_chat_activity.py`
+
+### src.koru.autonomous_cycle_chat_activity
+- **Functions**: 51
+- **File**: `autonomous_cycle_chat_activity.py`
 
 ### plugins.koru-autopilot-vscode.src.probe-ladder
 - **Functions**: 49
@@ -63,14 +71,6 @@
 - **Functions**: 47
 - **File**: `wizard.js`
 
-### koru.autonomous_cycle_chat_activity
-- **Functions**: 47
-- **File**: `autonomous_cycle_chat_activity.py`
-
-### src.koru.autonomous_cycle_chat_activity
-- **Functions**: 47
-- **File**: `autonomous_cycle_chat_activity.py`
-
 ### src.koru.wizard.gui.static.wizard
 - **Functions**: 47
 - **File**: `wizard.js`
@@ -80,10 +80,20 @@
 - **Classes**: 1
 - **File**: `ide.py`
 
+### koru.autonomy.operator_pipeline
+- **Functions**: 44
+- **Classes**: 2
+- **File**: `operator_pipeline.py`
+
 ### src.koruide.ide
 - **Functions**: 44
 - **Classes**: 1
 - **File**: `ide.py`
+
+### src.koru.autonomy.operator_pipeline
+- **Functions**: 44
+- **Classes**: 2
+- **File**: `operator_pipeline.py`
 
 ### plugins.koru-autopilot-vscode.src.chat-history-watcher.test
 - **Functions**: 42
@@ -92,15 +102,6 @@
 ### koru.cli_cleaned
 - **Functions**: 41
 - **File**: `cli_cleaned.py`
-
-### src.koru.cli_cleaned
-- **Functions**: 41
-- **File**: `cli_cleaned.py`
-
-### koru.autonomous_wup
-- **Functions**: 39
-- **Classes**: 3
-- **File**: `autonomous_wup.py`
 
 ## Key Entry Points
 
@@ -113,7 +114,7 @@ Key execution flows identified:
 ## Key Classes
 
 ### plugins.koru-autopilot-vscode.src.extension.AutopilotBridge
-- **Methods**: 320
+- **Methods**: 325
 - **Key Methods**: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.safeLog, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.currentOperationTrace, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.socketPath, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.cfg, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.override, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.connect
 
 ### plugins.koru-autopilot-vscode.src.cursor-bubble-adapter.CursorBubbleAdapter
@@ -182,6 +183,18 @@ session:
 - **Methods**: 13
 - **Key Methods**: src.koruide.injector.Injector.probe, src.koruide.injector.Injector._candidate_backends, src.koruide.injector.Injector.select_backend, src.koruide.injector.Injector._type_with_backend, src.koruide.injector.Injector._type_text_backends, src.koruide.injector.Injector._log_type_text_request, src.koruide.injector.Injector._dry_run_type_text_result, src.koruide.injector.Injector._try_type_text_backends, src.koruide.injector.Injector._all_type_backends_failed, src.koruide.injector.Injector.type_text
 
+### korullm.strategies.base.LlmStrategy
+> Per-LLM knowledge object.
+- **Methods**: 12
+- **Key Methods**: korullm.strategies.base.LlmStrategy.id, korullm.strategies.base.LlmStrategy.label, korullm.strategies.base.LlmStrategy.matches_environment, korullm.strategies.base.LlmStrategy.capabilities, korullm.strategies.base.LlmStrategy.assess_drive_failure, korullm.strategies.base.LlmStrategy.idle_marker_patterns, korullm.strategies.base.LlmStrategy.prompt_envelope, korullm.strategies.base.LlmStrategy._reply_message, korullm.strategies.base.LlmStrategy._reply_verification, korullm.strategies.base.LlmStrategy._reply_reason
+- **Inherits**: ABC
+
+### src.korullm.strategies.base.LlmStrategy
+> Per-LLM knowledge object.
+- **Methods**: 12
+- **Key Methods**: src.korullm.strategies.base.LlmStrategy.id, src.korullm.strategies.base.LlmStrategy.label, src.korullm.strategies.base.LlmStrategy.matches_environment, src.korullm.strategies.base.LlmStrategy.capabilities, src.korullm.strategies.base.LlmStrategy.assess_drive_failure, src.korullm.strategies.base.LlmStrategy.idle_marker_patterns, src.korullm.strategies.base.LlmStrategy.prompt_envelope, src.korullm.strategies.base.LlmStrategy._reply_message, src.korullm.strategies.base.LlmStrategy._reply_verification, src.korullm.strategies.base.LlmStrategy._reply_reason
+- **Inherits**: ABC
+
 ### koruide.ides.cursor.CursorStrategy
 > Strategy for Cursor (VS Code-fork by Anysphere).
 - **Methods**: 11
@@ -198,14 +211,14 @@ session:
 - **Methods**: 11
 - **Key Methods**: plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.currentCursor, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.adapterDescription, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.setCursor, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.start, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.tick, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.stop, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.clearInterval, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.pollOnce, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.cursorAdvances, plugins.koru-autopilot-vscode.src.chat-history-watcher.ChatHistoryWatcher.a
 
-### koruide.ides.windsurf.WindsurfStrategy
-- **Methods**: 10
-- **Key Methods**: koruide.ides.windsurf.WindsurfStrategy.id, koruide.ides.windsurf.WindsurfStrategy.label, koruide.ides.windsurf.WindsurfStrategy.config_folder_name, koruide.ides.windsurf.WindsurfStrategy.detection, koruide.ides.windsurf.WindsurfStrategy.terminal, koruide.ides.windsurf.WindsurfStrategy.aliases, koruide.ides.windsurf.WindsurfStrategy.extensions_metadata_path, koruide.ides.windsurf.WindsurfStrategy.plugin, koruide.ides.windsurf.WindsurfStrategy.editor_cli_candidates, koruide.ides.windsurf.WindsurfStrategy.window_name_hints
-- **Inherits**: VscodeFamilyStrategy
-
 ### koruide.ides.antigravity.AntigravityStrategy
 - **Methods**: 10
 - **Key Methods**: koruide.ides.antigravity.AntigravityStrategy.id, koruide.ides.antigravity.AntigravityStrategy.label, koruide.ides.antigravity.AntigravityStrategy.config_folder_name, koruide.ides.antigravity.AntigravityStrategy.detection, koruide.ides.antigravity.AntigravityStrategy.terminal, koruide.ides.antigravity.AntigravityStrategy.aliases, koruide.ides.antigravity.AntigravityStrategy.extensions_metadata_path, koruide.ides.antigravity.AntigravityStrategy.plugin, koruide.ides.antigravity.AntigravityStrategy.editor_cli_candidates, koruide.ides.antigravity.AntigravityStrategy.window_name_hints
+- **Inherits**: VscodeFamilyStrategy
+
+### koruide.ides.windsurf.WindsurfStrategy
+- **Methods**: 10
+- **Key Methods**: koruide.ides.windsurf.WindsurfStrategy.id, koruide.ides.windsurf.WindsurfStrategy.label, koruide.ides.windsurf.WindsurfStrategy.config_folder_name, koruide.ides.windsurf.WindsurfStrategy.detection, koruide.ides.windsurf.WindsurfStrategy.terminal, koruide.ides.windsurf.WindsurfStrategy.aliases, koruide.ides.windsurf.WindsurfStrategy.extensions_metadata_path, koruide.ides.windsurf.WindsurfStrategy.plugin, koruide.ides.windsurf.WindsurfStrategy.editor_cli_candidates, koruide.ides.windsurf.WindsurfStrategy.window_name_hints
 - **Inherits**: VscodeFamilyStrategy
 
 ### src.koruide.ides.antigravity.AntigravityStrategy
@@ -217,16 +230,6 @@ session:
 - **Methods**: 10
 - **Key Methods**: src.koruide.ides.windsurf.WindsurfStrategy.id, src.koruide.ides.windsurf.WindsurfStrategy.label, src.koruide.ides.windsurf.WindsurfStrategy.config_folder_name, src.koruide.ides.windsurf.WindsurfStrategy.detection, src.koruide.ides.windsurf.WindsurfStrategy.terminal, src.koruide.ides.windsurf.WindsurfStrategy.aliases, src.koruide.ides.windsurf.WindsurfStrategy.extensions_metadata_path, src.koruide.ides.windsurf.WindsurfStrategy.plugin, src.koruide.ides.windsurf.WindsurfStrategy.editor_cli_candidates, src.koruide.ides.windsurf.WindsurfStrategy.window_name_hints
 - **Inherits**: VscodeFamilyStrategy
-
-### koruide.ides.vscode.VscodeStrategy
-- **Methods**: 9
-- **Key Methods**: koruide.ides.vscode.VscodeStrategy.id, koruide.ides.vscode.VscodeStrategy.label, koruide.ides.vscode.VscodeStrategy.config_folder_name, koruide.ides.vscode.VscodeStrategy.detection, koruide.ides.vscode.VscodeStrategy.terminal, koruide.ides.vscode.VscodeStrategy.aliases, koruide.ides.vscode.VscodeStrategy.extensions_metadata_path, koruide.ides.vscode.VscodeStrategy.editor_cli_candidates, koruide.ides.vscode.VscodeStrategy.window_name_hints
-- **Inherits**: VscodeFamilyStrategy
-
-### koruide.client.KoruIDEClient
-> Connect, send one message, read one reply, disconnect.
-- **Methods**: 9
-- **Key Methods**: koruide.client.KoruIDEClient.__init__, koruide.client.KoruIDEClient._drive_timeout, koruide.client.KoruIDEClient._connect, koruide.client.KoruIDEClient.request, koruide.client.KoruIDEClient._extract_reply, koruide.client.KoruIDEClient.is_running, koruide.client.KoruIDEClient.drive, koruide.client.KoruIDEClient.status, koruide.client.KoruIDEClient.shutdown
 
 ## Data Transformation Functions
 
@@ -320,12 +323,8 @@ Returns (should_kill, logs) tuple.
 
 Functions exposed as public API (no underscore prefix):
 
-- `koruapi.dashboard_routes.build_dashboard_handler` - 267 calls
-- `src.koruapi.dashboard_routes.build_dashboard_handler` - 267 calls
 - `koru.wizard.gui.app.create_app` - 96 calls
 - `src.koru.wizard.gui.app.create_app` - 96 calls
-- `koru.autonomous_parser.build_parser` - 71 calls
-- `src.koru.autonomous_parser.build_parser` - 71 calls
 - `koru.autonomy.config.AutonomyConfig.from_env` - 50 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 50 calls
 - `koru.context_render.render_markdown_handoff` - 47 calls
@@ -345,21 +344,25 @@ Functions exposed as public API (no underscore prefix):
 - `koruobserve.lifecycle.observe_up` - 32 calls
 - `src.koruobserve.lifecycle.observe_up` - 32 calls
 - `koruapi.mcp_server.tool_run_ticket` - 31 calls
+- `koru.autonomy.phases.scan_phase.handle_scan_after_idle` - 31 calls
 - `src.koruapi.mcp_server.tool_run_ticket` - 31 calls
+- `src.koru.autonomy.phases.scan_phase.handle_scan_after_idle` - 31 calls
 - `koru.queue.runners.run_api_request` - 30 calls
 - `koruide.daemon.handlers.handle_drive` - 30 calls
-- `src.koruide.daemon.handlers.handle_drive` - 30 calls
 - `src.koru.queue.runners.run_api_request` - 30 calls
-- `koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
+- `src.koruide.daemon.handlers.handle_drive` - 30 calls
 - `koru.scan.run_scan` - 29 calls
+- `koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
 - `src.koru.scan.run_scan` - 29 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
-- `koru.cli_queue.render_clean_report_text` - 28 calls
 - `koruide.plugin_installer.resolve_extension_vsix` - 28 calls
+- `koru.cli_queue.render_clean_report_text` - 28 calls
 - `src.koruide.plugin_installer.resolve_extension_vsix` - 28 calls
 - `src.koru.cli_queue.render_clean_report_text` - 28 calls
-- `koru.autonomy.ide_work.build_ide_work_prompt` - 27 calls
 - `koru.doctor_render.render_text` - 27 calls
+- `koru.autonomy.ide_work.build_ide_work_prompt` - 27 calls
+- `src.koru.doctor_render.render_text` - 27 calls
+- `src.koru.autonomy.ide_work.build_ide_work_prompt` - 27 calls
 
 ## System Interactions
 

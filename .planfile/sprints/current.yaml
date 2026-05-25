@@ -893,3 +893,587 @@ sprint:
       status: done
       sync: {}
       updated_at: '2026-05-25T13:47:17.670973+00:00'
+    STARTER-264:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T13:50:47.111932+00:00'
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        Plugin nie połączony z daemonem na /run/user/1000/koru-autopilot-cursor.sock
+        → Command Palette → koru: Connect autopilot daemon (socket /run/user/1000/koru-autopilot-cursor.sock)
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `koru ide doctor --ide cursor --fix --gc-sockets`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T13:58:30.782297Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          Plugin nie połączony z daemonem na /run/user/1000/koru-autopilot-cursor.sock
+          → Command Palette → koru: Connect autopilot daemon (socket /run/user/1000/koru-autopilot-cursor.sock)
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `koru ide doctor --ide cursor --fix --gc-sockets`'
+        source: koru task
+        timestamp: '2026-05-25T13:50:47.111932+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T13:58:30.790553+00:00'
+      id: STARTER-264
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          Plugin nie połączony z daemonem na /run/user/1000/koru-autopilot-cursor.sock
+          → Command Palette → koru: Connect autopilot daemon (socket /run/user/1000/koru-autopilot-cursor.sock)
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `koru ide doctor --ide cursor --fix --gc-sockets`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie Plugin nie połączony
+        z daemonem na /run/user/1000/koru-autopilot-curs...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-operator-pipeline:operator-autopilot-connect-plugin-w-czacie-plugin-nie-po-czony-z-daemonem-na-/run/user/1000/koru-autopilot-curs...
+          detail: 'Plugin nie połączony z daemonem na /run/user/1000/koru-autopilot-cursor.sock
+            → Command Palette → koru: Connect autopilot daemon (socket /run/user/1000/koru-autopilot-cursor.sock)'
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            Plugin nie połączony z daemonem na /run/user/1000/koru-autopilot-cursor.sock
+            → Command Palette → koru: Connect autopilot daemon (socket /run/user/1000/koru-autopilot-cursor.sock)
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `koru ide doctor --ide cursor --fix --gc-sockets`'
+          step_id: autopilot_plugin
+          task_command: koru ide doctor --ide cursor --fix --gc-sockets
+        timestamp: '2026-05-25T13:50:47.111932+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T13:58:30.790511+00:00'
+    STARTER-265:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T13:58:31.561277+00:00'
+      description: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+        Plugin nie połączony z daemonem na /run/user/1000/koru-autopilot-vscodium.sock
+        → Command Palette → koru: Connect autopilot daemon (socket /run/user/1000/koru-autopilot-vscodium.sock)
+
+
+        Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+        ticket done.
+
+
+        Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T14:27:12.742273Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: human
+        mode: interactive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          Plugin nie połączony z daemonem na /run/user/1000/koru-autopilot-vscodium.sock
+          → Command Palette → koru: Connect autopilot daemon (socket /run/user/1000/koru-autopilot-vscodium.sock)
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
+        source: koru task
+        timestamp: '2026-05-25T13:58:31.561277+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T14:27:12.748098+00:00'
+      id: STARTER-265
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+          Plugin nie połączony z daemonem na /run/user/1000/koru-autopilot-vscodium.sock
+          → Command Palette → koru: Connect autopilot daemon (socket /run/user/1000/koru-autopilot-vscodium.sock)
+
+
+          Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+          ticket done.
+
+
+          Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:autopilot_plugin
+      name: '[OPERATOR] Autopilot: Connect + plugin w czacie Plugin nie połączony
+        z daemonem na /run/user/1000/koru-autopilot-vsco...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-operator-pipeline:operator-autopilot-connect-plugin-w-czacie-plugin-nie-po-czony-z-daemonem-na-/run/user/1000/koru-autopilot-vsco...
+          detail: 'Plugin nie połączony z daemonem na /run/user/1000/koru-autopilot-vscodium.sock
+            → Command Palette → koru: Connect autopilot daemon (socket /run/user/1000/koru-autopilot-vscodium.sock)'
+          input: '[OPERATOR] Autopilot: Connect + plugin w czacie
+
+
+            Plugin nie połączony z daemonem na /run/user/1000/koru-autopilot-vscodium.sock
+            → Command Palette → koru: Connect autopilot daemon (socket /run/user/1000/koru-autopilot-vscodium.sock)
+
+
+            Wykonaj w IDE, potem zamknij ticket: `task tickets:done -- <id>` lub planfile
+            ticket done.
+
+
+            Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
+          step_id: autopilot_plugin
+          task_command: koru ide doctor --ide vscodium --fix --gc-sockets
+        timestamp: '2026-05-25T13:58:31.561277+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T14:27:12.748060+00:00'
+    STARTER-266:
+      blocked_by: []
+      blocks: []
+      created_at: '2026-05-25T13:58:32.057010+00:00'
+      description: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+        auto-repair ran (install_plugin, shutdown_daemon_for_reload, reload_ide_and_reconnect);
+        autopilot_install_manager: ide=vscodium; socket=/run/user/1000/koru-autopilot-vscodium.sock;
+        package=0.1.272; source=0.1.272; connected=False; installed=0.1.72; expected=0.1.73;
+        repairable=plugin_installed_version_mismatch:error
+
+
+        Shell: `koru self --project /home/tom/github/semcod/koru --ide vscodium repair
+        --yes`'
+      execution:
+        attempt: 0
+        finished_at: '2026-05-25T14:26:48.184603Z'
+        max_attempts: 1
+        queue: operator
+        state: done
+      executor:
+        kind: shell
+        mode: noninteractive
+      files: []
+      history:
+      - action: created
+        message: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+          auto-repair ran (install_plugin, shutdown_daemon_for_reload, reload_ide_and_reconnect);
+          autopilot_install_manager: ide=vscodium; socket=/run/user/1000/koru-autopilot-vscodium.sock;
+          package=0.1.272; source=0.1.272; connected=False; installed=0.1.72; expected=0.1.73;
+          repairable=plugin_installed_version_mismatch:error
+
+
+          Shell: `koru self --project /home/tom/github/semcod/koru --ide vscodium
+          repair --yes`'
+        source: koru task
+        timestamp: '2026-05-25T13:58:32.057010+00:00'
+      - action: update
+        changes:
+        - execution
+        - status
+        execution_state: done
+        previous_execution_state: ready
+        previous_status: open
+        source: planfile.store
+        status: done
+        timestamp: '2026-05-25T14:26:48.190628+00:00'
+      id: STARTER-266
+      inputs:
+        api_headers: {}
+        api_method: GET
+        api_timeout_seconds: 30.0
+        env_keys: []
+        prompt: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+          auto-repair ran (install_plugin, shutdown_daemon_for_reload, reload_ide_and_reconnect);
+          autopilot_install_manager: ide=vscodium; socket=/run/user/1000/koru-autopilot-vscodium.sock;
+          package=0.1.272; source=0.1.272; connected=False; installed=0.1.72; expected=0.1.73;
+          repairable=plugin_installed_version_mismatch:error
+
+
+          Shell: `koru self --project /home/tom/github/semcod/koru --ide vscodium
+          repair --yes`'
+        script: koru self --project /home/tom/github/semcod/koru --ide vscodium repair
+          --yes
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:self_control
+      name: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+        auto-repair ran (install_plugin, shutdown_daemon...'
+      outputs:
+        artifacts: []
+        notes: []
+      priority: high
+      source:
+        context:
+          dedupe_key: koru-operator-pipeline:operator-koru-self-control-paczka-/-vsix-/-runtime-self-control-auto-repair-ran-install_plugin-shutdown_daemon...
+          detail: 'self-control auto-repair ran (install_plugin, shutdown_daemon_for_reload,
+            reload_ide_and_reconnect); autopilot_install_manager: ide=vscodium; socket=/run/user/1000/koru-autopilot-vscodium.sock;
+            package=0.1.272; source=0.1.272; connected=False; installed=0.1.72; expected=0.1.73;
+            repairable=plugin_installed_version_mismatch:error'
+          input: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+            auto-repair ran (install_plugin, shutdown_daemon_for_reload, reload_ide_and_reconnect);
+            autopilot_install_manager: ide=vscodium; socket=/run/user/1000/koru-autopilot-vscodium.sock;
+            package=0.1.272; source=0.1.272; connected=False; installed=0.1.72; expected=0.1.73;
+            repairable=plugin_installed_version_mismatch:error
+
+
+            Shell: `koru self --project /home/tom/github/semcod/koru --ide vscodium
+            repair --yes`'
+          step_id: self_control
+          task_command: koru self --project /home/tom/github/semcod/koru --ide vscodium
+            repair --yes
+        timestamp: '2026-05-25T13:58:32.057010+00:00'
+        tool: koru-operator-pipeline
+      sprint: current
+      status: done
+      sync: {}
+      updated_at: '2026-05-25T14:26:48.190597+00:00'
+    STARTER-267:
+      id: STARTER-267
+      name: 'Split large module: autonomous'
+      status: open
+      priority: high
+      sprint: current
+      source:
+        tool: koru-scan
+        timestamp: '2026-05-25T14:27:18.492762+00:00'
+        context:
+          input: '`project/analysis.toon.yaml` flags `autonomous` in LAYERS as a large/hot
+            module (1126 lines, 2 classes, 59 methods, CC=5). Extract cohesive submodules
+            around stable responsibilities and add focused regression tests before
+            broad edits.'
+          signal: code2llm_layer_hotspot
+          dedupe_key: koru-scan:code2llm_layer_hotspot:project/analysis.toon.yaml
+      description: '`project/analysis.toon.yaml` flags `autonomous` in LAYERS as a
+        large/hot module (1126 lines, 2 classes, 59 methods, CC=5). Extract cohesive
+        submodules around stable responsibilities and add focused regression tests
+        before broad edits.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - architecture
+      - large-module
+      - refactor
+      - scan
+      blocked_by: []
+      blocks: []
+      files:
+      - project/analysis.toon.yaml
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '`project/analysis.toon.yaml` flags `autonomous` in LAYERS as a large/hot
+          module (1126 lines, 2 classes, 59 methods, CC=5). Extract cohesive submodules
+          around stable responsibilities and add focused regression tests before broad
+          edits.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-25T14:27:18.492762+00:00'
+        action: created
+        source: koru task
+        message: '`project/analysis.toon.yaml` flags `autonomous` in LAYERS as a large/hot
+          module (1126 lines, 2 classes, 59 methods, CC=5). Extract cohesive submodules
+          around stable responsibilities and add focused regression tests before broad
+          edits.'
+      created_at: '2026-05-25T14:27:18.492762+00:00'
+      updated_at: '2026-05-25T14:27:18.492762+00:00'
+    STARTER-268:
+      id: STARTER-268
+      name: 'Reduce cyclomatic complexity: _add_label_to_ticket_yaml_text (CC=20,
+        limit=15)'
+      status: open
+      priority: normal
+      sprint: current
+      source:
+        tool: koru-scan
+        timestamp: '2026-05-25T14:27:18.872451+00:00'
+        context:
+          input: '`project/analysis.toon.yaml` reports `_add_label_to_ticket_yaml_text`
+            with CC=20 (limit=15). Extract sub-functions, simplify conditionals, or
+            split into strategy pattern.'
+          signal: code2llm_cc
+          dedupe_key: koru-scan:code2llm_cc:project/analysis.toon.yaml
+      description: '`project/analysis.toon.yaml` reports `_add_label_to_ticket_yaml_text`
+        with CC=20 (limit=15). Extract sub-functions, simplify conditionals, or split
+        into strategy pattern.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - complexity
+      - refactor
+      - scan
+      blocked_by: []
+      blocks: []
+      files:
+      - project/analysis.toon.yaml
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '`project/analysis.toon.yaml` reports `_add_label_to_ticket_yaml_text`
+          with CC=20 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-25T14:27:18.872451+00:00'
+        action: created
+        source: koru task
+        message: '`project/analysis.toon.yaml` reports `_add_label_to_ticket_yaml_text`
+          with CC=20 (limit=15). Extract sub-functions, simplify conditionals, or
+          split into strategy pattern.'
+      created_at: '2026-05-25T14:27:18.872451+00:00'
+      updated_at: '2026-05-25T14:27:18.872451+00:00'
+    STARTER-269:
+      id: STARTER-269
+      name: 'code2llm refactor: split 13 high-CC methods'
+      status: open
+      priority: normal
+      sprint: current
+      source:
+        tool: koru-scan
+        timestamp: '2026-05-25T14:27:19.988762+00:00'
+        context:
+          input: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+            methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f
+            toon` to verify.'
+          signal: code2llm_refactor
+          dedupe_key: semcod:code2llm:refactor:project/analysis.toon.yaml
+      description: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+        methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+        to verify.'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - code2llm
+      - refactor
+      - scan
+      blocked_by: []
+      blocks: []
+      files:
+      - project/analysis.toon.yaml
+      executor:
+        kind: human
+        mode: interactive
+      execution:
+        queue: default
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-25T14:27:19.988762+00:00'
+        action: created
+        source: koru task
+        message: 'REFACTOR item from `project/analysis.toon.yaml`: **split 13 high-CC
+          methods** (CC>15). Execute this refactor step; re-run `code2llm ./ -f toon`
+          to verify.'
+      created_at: '2026-05-25T14:27:19.988762+00:00'
+      updated_at: '2026-05-25T14:27:19.988762+00:00'
+    STARTER-270:
+      id: STARTER-270
+      name: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+        auto-repair ran (no repair action recorded); aut...'
+      status: open
+      priority: high
+      sprint: current
+      source:
+        tool: koru-operator-pipeline
+        timestamp: '2026-05-25T14:41:50.616715+00:00'
+        context:
+          input: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+            auto-repair ran (no repair action recorded); autopilot_install_manager:
+            ide=cursor; socket=/run/user/1000/koru-autopilot-cursor.sock; package=0.1.272;
+            source=0.1.272; connected=False; installed=0.1.74; expected=0.1.74; repairable=plugin_live_host_stale:error
+
+
+            Shell: `koru self --project /home/tom/github/semcod/koru --ide cursor
+            repair --yes`'
+          detail: 'self-control auto-repair ran (no repair action recorded); autopilot_install_manager:
+            ide=cursor; socket=/run/user/1000/koru-autopilot-cursor.sock; package=0.1.272;
+            source=0.1.272; connected=False; installed=0.1.74; expected=0.1.74; repairable=plugin_live_host_stale:error'
+          step_id: self_control
+          task_command: koru self --project /home/tom/github/semcod/koru --ide cursor
+            repair --yes
+          dedupe_key: koru-operator-pipeline:operator-koru-self-control-paczka-/-vsix-/-runtime-self-control-auto-repair-ran-no-repair-action-recorded-aut...
+      description: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+        auto-repair ran (no repair action recorded); autopilot_install_manager: ide=cursor;
+        socket=/run/user/1000/koru-autopilot-cursor.sock; package=0.1.272; source=0.1.272;
+        connected=False; installed=0.1.74; expected=0.1.74; repairable=plugin_live_host_stale:error
+
+
+        Shell: `koru self --project /home/tom/github/semcod/koru --ide cursor repair
+        --yes`'
+      labels:
+      - koru
+      - nl-task
+      - llm-ready
+      - operator
+      - auto-pipeline
+      - step:self_control
+      blocked_by: []
+      blocks: []
+      files: []
+      executor:
+        kind: shell
+        mode: noninteractive
+      execution:
+        queue: operator
+        state: ready
+        attempt: 0
+        max_attempts: 1
+      inputs:
+        prompt: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+          auto-repair ran (no repair action recorded); autopilot_install_manager:
+          ide=cursor; socket=/run/user/1000/koru-autopilot-cursor.sock; package=0.1.272;
+          source=0.1.272; connected=False; installed=0.1.74; expected=0.1.74; repairable=plugin_live_host_stale:error
+
+
+          Shell: `koru self --project /home/tom/github/semcod/koru --ide cursor repair
+          --yes`'
+        env_keys: []
+        api_method: GET
+        api_headers: {}
+        api_timeout_seconds: 30.0
+        script: koru self --project /home/tom/github/semcod/koru --ide cursor repair
+          --yes
+      outputs:
+        artifacts: []
+        notes: []
+      sync: {}
+      history:
+      - timestamp: '2026-05-25T14:41:50.616715+00:00'
+        action: created
+        source: koru task
+        message: '[OPERATOR] Koru self-control (paczka / VSIX / runtime): self-control
+          auto-repair ran (no repair action recorded); autopilot_install_manager:
+          ide=cursor; socket=/run/user/1000/koru-autopilot-cursor.sock; package=0.1.272;
+          source=0.1.272; connected=False; installed=0.1.74; expected=0.1.74; repairable=plugin_live_host_stale:error
+
+
+          Shell: `koru self --project /home/tom/github/semcod/koru --ide cursor repair
+          --yes`'
+      created_at: '2026-05-25T14:41:50.616715+00:00'
+      updated_at: '2026-05-25T14:41:50.616715+00:00'

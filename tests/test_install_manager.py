@@ -630,6 +630,9 @@ def test_collect_report_auto_still_checks_plugin_connection(monkeypatch, tmp_pat
     monkeypatch.setattr(install_manager, "detect_terminal_host_ide_id", lambda: None)
     monkeypatch.setattr(install_manager, "detect_running_ides", lambda: [])
     monkeypatch.setattr(install_manager, "_daemon_status", lambda _socket: {"running": True})
+    # Mock koru.autopilot.ide since install_manager imports from there (compatibility shim)
+    monkeypatch.setattr("koru.autopilot.ide.detect_terminal_host_ide_id", lambda: None)
+    monkeypatch.setattr("koru.autopilot.ide.detect_running_ides", lambda: [])
     # Mock koruide.ide functions since koru.autopilot.ide is now a compatibility shim
     monkeypatch.setattr("koruide.ide.detect_terminal_host_ide_id", lambda: None)
     monkeypatch.setattr("koruide.ide.detect_running_ides", lambda: [])
@@ -640,5 +643,8 @@ def test_collect_report_auto_still_checks_plugin_connection(monkeypatch, tmp_pat
     )
 
     codes = {issue.code for issue in report.issues}
+    print(f"DEBUG report.plugin: {report.plugin}")
+    print(f"DEBUG report.daemon: {report.daemon}")
+    print(f"DEBUG codes: {codes}")
     assert "plugin_not_connected" in codes
     assert report.plugin["supported"] is True

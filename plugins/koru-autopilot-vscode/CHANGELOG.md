@@ -4,6 +4,58 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.74] — 2026-05-25
+
+### Fixed
+- **Cursor: paste landed but submit silently failed.** Plugin reported
+  `winning_submit=composer.sendToAgent` + `input_probe/select-copy=ok`
+  + `ok=true`, but the user saw the prompt sitting in the chat input
+  with no message sent.
+
+  Root cause: the post-submit probe (`select-all` + `clipboardCopy`)
+  is unreliable on Cursor's chat webview. When `composer.focusComposer`
+  only focused the surrounding chrome (not the input contenteditable),
+  `editor.action.selectAll` fell back to the underlying file
+  `TextEditor` and the probe returned unrelated file content. That
+  content did not contain the prompt tail, so `decideSubmitCleared`
+  returned `cleared=true` and we cached `composer.sendToAgent` as the
+  winner — even though no `type=1` user bubble was ever written to
+  `cursorDiskKV`.
+
+  The bubble-DB cross-check existed but was gated on
+  `probe === null` and never triggered for non-null garbage probes.
+
+  Fix:
+  - `verifySubmitStep` now consults `_verifySubmitViaCursorBubble` for
+    **every** Cursor submit (when `probe`-cleared and prompt length
+    ≥ 4), not only when the probe returned `null`. The bubble DB is
+    ground truth: if `cursorDiskKV` has no fresh `type=1` row with the
+    prompt tail after submit, the candidate is rejected and the ladder
+    tries the next one (`composer.acceptComposerStep`,
+    `composer.startComposerPrompt`, …).
+  - Bubble-poll deadline bumped from 1.2 s to 2.5 s so the debounced
+    writer has time to materialize the new row before we give up.
+
+## [0.1.73] — 2026-05-25
+
+### Fixed
+- **Plugin now reloads its own window when the daemon rejects it for a
+  version mismatch.** Previously the daemon told the user to run
+  `Developer: Reload Window` and Koru's Python side tried to do it for
+  them via `wtype Ctrl+Shift+P`, which silently fails on most
+  GNOME/mutter sessions (the compositor doesn't expose
+  `virtual-keyboard-v1` to arbitrary clients). The user then sat in a
+  permanent `plugin_not_connected` state.
+
+  Fix: when the daemon replies with an `error` envelope whose message
+  contains `plugin version mismatch`, the extension now calls
+  `vscode.commands.executeCommand('workbench.action.reloadWindow')`
+  itself. This bypasses every xdotool/wtype/ydotool quirk because the
+  IDE reloads itself natively. A 60-second cooldown stored in
+  `globalState` ensures we never enter a reload loop, and the new
+  `koruAutopilot.reloadOnVersionMismatch` setting (default `true`) lets
+  power users keep the manual recovery if they prefer it.
+
 ## [0.1.72] — 2026-05-25
 
 ### Fixed

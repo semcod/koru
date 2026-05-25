@@ -82,6 +82,16 @@ def _plugin_rejection_log_interval_seconds() -> float:
         return 300.0
 
 
+def _ide_reload_label(ide: str) -> str:
+    labels = {
+        "cursor": "Cursor",
+        "vscode": "VS Code",
+        "vscodium": "VSCodium",
+        "windsurf": "Windsurf",
+    }
+    return labels.get(normalize_ide_id(ide) or ide, ide or "the IDE")
+
+
 @functools.lru_cache(maxsize=1)
 def _load_context_module() -> tuple[Callable[..., dict[str, Any]], Callable[[dict[str, Any]], str]]:
     """Import ``koru.context`` exactly once (R4)."""
@@ -571,10 +581,11 @@ def _log_rejected_plugin_connection(
     suffix = f" (suppressed {suppressed} repeated reconnects)" if suppressed else ""
     daemon.log(f"rejecting plugin connection: ide={ide} {message}{suffix}")
     if expected and plugin_version and plugin_version != expected:
+        ide_label = _ide_reload_label(ide)
         daemon.log(
             f"  → installed VSIX is v{plugin_version} but daemon expects "
             f"v{expected}. The IDE is still running the older plugin. "
-            "Action: in Cursor run `Developer: Reload Window` then "
+            f"Action: in {ide_label} run `Developer: Reload Window` then "
             "`koru: Connect autopilot daemon` from the command palette. "
             "If still mismatched after reload, rebuild and reinstall the "
             "VSIX from plugins/koru-autopilot-vscode/.",
@@ -602,7 +613,6 @@ def _log_rejected_plugin_connection(
 
 
 def handle_status(daemon: Any, client: _Client, msg: Message) -> None:
-    daemon.log(f"status request from {client.addr} role={client.role}")
     if client.role == "unknown":
         client.role = "cli"
     plugins = [row.to_dict() for row in daemon._plugin_router.status_rows()]

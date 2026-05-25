@@ -154,6 +154,152 @@ class WaylandLinuxStrategyTests(unittest.TestCase):
             )
         self.assertEqual(runs[-1], ["wtype", "-t", "Developer: Reload Window"])
 
+    def test_wtype_returncode_zero_but_stderr_unsupported_is_failure(self) -> None:
+        # Mutter/GNOME compositors routinely print
+        # "Compositor doesn't support virtual-keyboard-v1" yet still
+        # return 0 — wtype must be treated as failed in that case so
+        # the strategy escalates to ydotool.
+        runs: list[list[str]] = []
+        ydotool_called: dict[str, bool] = {"hit": False}
+
+        def fake_run(argv: list[str], **_kw: Any) -> Any:
+            runs.append(list(argv))
+            if argv[0] == "wtype":
+                return mock.Mock(
+                    returncode=0,
+                    stdout="",
+                    stderr="Compositor doesn't support virtual-keyboard-v1",
+                )
+            if argv[0] == "ydotool":
+                ydotool_called["hit"] = True
+                return mock.Mock(returncode=0, stdout="", stderr="")
+            return mock.Mock(returncode=1, stdout="", stderr="unknown")
+
+        with (
+            mock.patch(
+                "koruos.strategies.wayland_linux.shutil.which",
+                lambda name: f"/usr/bin/{name}" if name in {"wtype", "ydotool"} else None,
+            ),
+            mock.patch("koruos.strategies.wayland_linux._run", fake_run),
+            mock.patch.dict(
+                "os.environ",
+                {"KORU_OS_PREFER_YDOTOOL": "0", "XDG_CURRENT_DESKTOP": "KDE"},
+                clear=False,
+            ),
+        ):
+            ok = WaylandLinuxStrategy().inject_keys(
+                KeySequence(modifiers=("ctrl", "shift"), key="p"),
+            )
+        self.assertTrue(ok, "expected ydotool fallback to take over from wtype")
+        self.assertTrue(ydotool_called["hit"])
+
+    def test_gnome_compositor_prefers_ydotool_first(self) -> None:
+        runs: list[list[str]] = []
+
+        def fake_run(argv: list[str], **_kw: Any) -> Any:
+            runs.append(list(argv))
+            return mock.Mock(returncode=0, stdout="", stderr="")
+
+        with (
+            mock.patch(
+                "koruos.strategies.wayland_linux.shutil.which",
+                lambda name: f"/usr/bin/{name}" if name in {"wtype", "ydotool"} else None,
+            ),
+            mock.patch("koruos.strategies.wayland_linux._run", fake_run),
+            mock.patch.dict(
+                "os.environ",
+                {"XDG_CURRENT_DESKTOP": "GNOME", "KORU_OS_PREFER_YDOTOOL": ""},
+                clear=False,
+            ),
+        ):
+            self.assertTrue(
+                WaylandLinuxStrategy().inject_keys(
+                    KeySequence(modifiers=("ctrl", "shift"), key="p"),
+                ),
+            )
+        self.assertEqual(runs[0][0], "ydotool")
+
+    def test_ydotool_chord_emits_press_release_in_order(self) -> None:
+        runs: list[list[str]] = []
+
+        def fake_run(argv: list[str], **_kw: Any) -> Any:
+            runs.append(list(argv))
+            return mock.Mock(returncode=0, stdout="", stderr="")
+
+        with (
+            mock.patch(
+                "koruos.strategies.wayland_linux.shutil.which",
+                lambda name: f"/usr/bin/{name}" if name == "ydotool" else None,
+            ),
+            mock.patch("koruos.strategies.wayland_linux._run", fake_run),
+            mock.patch.dict(
+                "os.environ",
+                {"KORU_OS_PREFER_YDOTOOL": "1"},
+                clear=False,
+            ),
+        ):
+            self.assertTrue(
+                WaylandLinuxStrategy().inject_keys(
+                    KeySequence(modifiers=("ctrl", "shift"), key="p"),
+                ),
+            )
+        # 29=ctrl, 42=shift, 25=p — press low→high, release high→low.
+        self.assertEqual(
+            runs[-1],
+            ["ydotool", "key", "29:1", "42:1", "25:1", "25:0", "42:0", "29:0"],
+        )
+
+    def test_ydotool_return_uses_correct_scancode(self) -> None:
+        runs: list[list[str]] = []
+
+        def fake_run(argv: list[str], **_kw: Any) -> Any:
+            runs.append(list(argv))
+            return mock.Mock(returncode=0, stdout="", stderr="")
+
+        with (
+            mock.patch(
+                "koruos.strategies.wayland_linux.shutil.which",
+                lambda name: f"/usr/bin/{name}" if name == "ydotool" else None,
+            ),
+            mock.patch("koruos.strategies.wayland_linux._run", fake_run),
+            mock.patch.dict(
+                "os.environ",
+                {"KORU_OS_PREFER_YDOTOOL": "1"},
+                clear=False,
+            ),
+        ):
+            self.assertTrue(
+                WaylandLinuxStrategy().inject_keys(KeySequence(key="Return")),
+            )
+        self.assertEqual(runs[-1], ["ydotool", "key", "28:1", "28:0"])
+
+    def test_env_override_disables_gnome_preference(self) -> None:
+        # GNOME but explicit opt-out → wtype is tried first.
+        runs: list[list[str]] = []
+
+        def fake_run(argv: list[str], **_kw: Any) -> Any:
+            runs.append(list(argv))
+            return mock.Mock(returncode=0, stdout="", stderr="")
+
+        with (
+            mock.patch(
+                "koruos.strategies.wayland_linux.shutil.which",
+                lambda name: f"/usr/bin/{name}" if name in {"wtype", "ydotool"} else None,
+            ),
+            mock.patch("koruos.strategies.wayland_linux._run", fake_run),
+            mock.patch.dict(
+                "os.environ",
+                {"XDG_CURRENT_DESKTOP": "GNOME", "KORU_OS_PREFER_YDOTOOL": "0"},
+                clear=False,
+            ),
+        ):
+            self.assertTrue(
+                WaylandLinuxStrategy().inject_keys(
+                    KeySequence(modifiers=("ctrl",), key="p"),
+                ),
+            )
+        self.assertEqual(runs[0][0], "wtype")
+
 
 class X11LinuxStrategyTests(unittest.TestCase):
     def test_does_not_match_when_wayland_display_present(self) -> None:

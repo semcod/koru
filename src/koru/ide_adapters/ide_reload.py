@@ -214,7 +214,7 @@ def reload_via_command_palette(ide: str) -> IdeReloadOutcome:
                 f"(strategy={strategy.id})"
             ),
         )
-    focused, _ = _focus_ide_window(ide)
+    focused, focus_method = _focus_ide_window(ide)
     if not focused:
         wayland = "wayland" if _on_wayland() else "x11"
         return IdeReloadOutcome(
@@ -226,6 +226,19 @@ def reload_via_command_palette(ide: str) -> IdeReloadOutcome:
                 f"strategy={strategy.id}, methods={capabilities.focus_methods}). "
                 "Run `koru auto` from a terminal *inside* the IDE so "
                 "TERM_PROGRAM=vscode is set, or install wmctrl/xdotool"
+            ),
+        )
+    if focus_method == "integrated_terminal":
+        return IdeReloadOutcome(
+            attempted=True,
+            ok=False,
+            method="command_palette",
+            detail=(
+                "refusing command-palette reload from integrated terminal focus; "
+                "typing `Developer: Reload Window` here would write into the "
+                "shell. Reload the IDE manually or enable "
+                "KORU_AUTOPILOT_REUSE_WINDOW_RELOAD=1 to allow the CLI "
+                "reuse-window fallback."
             ),
         )
     time.sleep(0.6)

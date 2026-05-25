@@ -9,7 +9,9 @@ from pathlib import Path
 from typing import Any
 
 from koru.autonomous_cycle_common import _queue_loop_waiting_ticket_label
+from koru.autonomy.events import normalize_chat_events
 from koru.autonomy.prompts import PromptDecision
+from koru.autonomy.reflection_policy import decide_chat_reflection
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
 from koru.tasks import create_nl_task
@@ -659,6 +661,28 @@ def _filter_chat_activity_events_for_waiting_ticket(
     ]
 
 
+def _record_normalized_chat_activity_events(
+    *,
+    state: AutoloopState,
+    cycle_telemetry: dict[str, Any],
+    recent_events: list[dict[str, Any]],
+    waiting_ticket: str,
+    environment_key: str = "",
+) -> None:
+    if not recent_events:
+        return
+    normalized = normalize_chat_events(
+        recent_events,
+        waiting_ticket=waiting_ticket,
+        last_driven_ticket=str(getattr(state, "last_driven_ticket_id", "") or ""),
+        last_driven_prompt=str(getattr(state, "last_driven_prompt", "") or ""),
+        environment_key=environment_key,
+    )
+    cycle_telemetry["autopilot_chat_activity_events"] = [
+        event.to_dict() for event in normalized[-10:]
+    ]
+
+
 def _llx_chat_reflection_enabled() -> bool:
     try:
         from koru.llm_reflect import llm_reflect_enabled
@@ -1025,16 +1049,25 @@ def _apply_chat_activity_skip_decision(
     cycle_telemetry["autopilot_chat_activity_last_event"] = last_type
     cycle_telemetry["autopilot_skipped_chat_activity_because"] = explain_skip(decision)
     _hp(f"- autopilot skipped ({explain_skip(decision)})")
-    reflection_resolved, reflection_done = _apply_llx_chat_reflection(
-        project=project,
-        queue_result=queue_result,
-        state=state,
-        cycle_telemetry=cycle_telemetry,
-        waiting_ticket=waiting_ticket,
-        ide=ide,
+    reflection_policy = decide_chat_reflection(
+        enabled=_llx_chat_reflection_enabled(),
+        last_type=last_type,
         reflection_events=reflection_events,
-        _hp=_hp,
     )
+    cycle_telemetry["autopilot_llx_reflection_policy"] = reflection_policy.to_dict()
+    if reflection_policy.should_reflect:
+        reflection_resolved, reflection_done = _apply_llx_chat_reflection(
+            project=project,
+            queue_result=queue_result,
+            state=state,
+            cycle_telemetry=cycle_telemetry,
+            waiting_ticket=waiting_ticket,
+            ide=ide,
+            reflection_events=reflection_events,
+            _hp=_hp,
+        )
+    else:
+        reflection_resolved, reflection_done = False, False
     if reflection_done:
         return True
 
@@ -1088,6 +1121,12 @@ def _skip_due_to_recent_chat_activity(
         state,
         ide=ide,
         within_seconds=cooldown,
+    )
+    _record_normalized_chat_activity_events(
+        state=state,
+        cycle_telemetry=cycle_telemetry,
+        recent_events=recent_events,
+        waiting_ticket=waiting_ticket,
     )
     recent_events = _filter_chat_activity_events_for_waiting_ticket(
         state,

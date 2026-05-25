@@ -18,6 +18,7 @@ from koru.autonomous_operator import (
     _detect_stale_extension_host,
     _force_reload_if_extension_host_stale,
     _live_plugin_version,
+    _retry_plugin_wait_after_reload,
 )
 
 
@@ -177,6 +178,46 @@ class ForceReloadIfStaleTests(unittest.TestCase):
             any("Reload Window unavailable" in m for m in logs),
             f"expected manual-reload hint; got {logs}",
         )
+
+
+class RetryPluginWaitAfterReloadTests(unittest.TestCase):
+    def test_logs_integrated_terminal_reload_refusal_without_waiting(self) -> None:
+        logs: list[str] = []
+        wait_called = False
+        reload_result = mock.Mock(
+            attempted=True,
+            ok=False,
+            method="command_palette",
+            detail=(
+                "refusing command-palette reload from integrated terminal focus; "
+                "typing `Developer: Reload Window` here would write into the shell"
+            ),
+        )
+
+        def wait_for_plugin(*_a: Any, **_kw: Any) -> bool:
+            nonlocal wait_called
+            wait_called = True
+            return True
+
+        with mock.patch(
+            "koru.ide_adapters.ide_reload.try_reload_vscode_family_ide",
+            return_value=reload_result,
+        ):
+            result = _retry_plugin_wait_after_reload(
+                mock.Mock(emit_events="text"),
+                "vscodium",
+                5.0,
+                client=StubClient({"plugins": []}),
+                project=None,
+                wait_for_plugin=wait_for_plugin,
+                stdio_info=lambda msg, **_kw: logs.append(msg),
+            )
+
+        self.assertIsNone(result)
+        self.assertFalse(wait_called)
+        joined = "\n".join(logs)
+        self.assertIn("automatyczny Reload Window po mismatch nie powiódł się", joined)
+        self.assertIn("would write into the shell", joined)
 
 
 if __name__ == "__main__":

@@ -1,57 +1,57 @@
-# code2llm/evolution | 13736 func | 332f | 2026-05-25
+# code2llm/evolution | 15454 func | 342f | 2026-05-25
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           src/koru/doctor.py
-      WHY: 1921L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 26894
+      WHY: 2083L, 2 classes, max CC=13
+      EFFORT: ~4h  IMPACT: 27079
 
-  [2] !! SPLIT           src/koru/scan.py
-      WHY: 1104L, 0 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 16560
+  [2] !! SPLIT           src/koru/autonomous_cycle_chat_activity.py
+      WHY: 1185L, 0 classes, max CC=12
+      EFFORT: ~4h  IMPACT: 14220
 
   [3] !! SPLIT           src/koru/autonomous.py
-      WHY: 1126L, 2 classes, max CC=5
-      EFFORT: ~4h  IMPACT: 5630
+      WHY: 1138L, 2 classes, max CC=5
+      EFFORT: ~4h  IMPACT: 5690
 
   [4] !  SPLIT-FUNC      _add_label_to_ticket_yaml_text  CC=20  fan=26
       WHY: CC=20 exceeds 15
       EFFORT: ~1h  IMPACT: 520
 
-  [5] !  SPLIT-FUNC      _add_label_to_ticket_yaml_text  CC=20  fan=26
+  [5] !! SPLIT-FUNC      _backfill_existing_dedupe_keys  CC=26  fan=20
+      WHY: CC=26 exceeds 15
+      EFFORT: ~1h  IMPACT: 520
+
+  [6] !  SPLIT-FUNC      _add_label_to_ticket_yaml_text  CC=20  fan=26
       WHY: CC=20 exceeds 15
       EFFORT: ~1h  IMPACT: 520
 
-  [6] !  SPLIT-FUNC      execFile  CC=18  fan=18
+  [7] !! SPLIT-FUNC      _backfill_existing_dedupe_keys  CC=26  fan=20
+      WHY: CC=26 exceeds 15
+      EFFORT: ~1h  IMPACT: 520
+
+  [8] !  SPLIT-FUNC      execFile  CC=18  fan=18
       WHY: CC=18 exceeds 15
       EFFORT: ~1h  IMPACT: 324
 
-  [7] !  SPLIT-FUNC      run_scan  CC=15  fan=19
+  [9] !  SPLIT-FUNC      run_scan  CC=15  fan=19
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 285
 
-  [8] !  SPLIT-FUNC      run_scan  CC=15  fan=19
+  [10] !  SPLIT-FUNC      run_scan  CC=15  fan=19
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 285
-
-  [9] !  SPLIT-FUNC      _blocked_interface_action_lines  CC=24  fan=10
-      WHY: CC=24 exceeds 15
-      EFFORT: ~1h  IMPACT: 240
-
-  [10] !  SPLIT-FUNC      _blocked_interface_action_lines  CC=24  fan=10
-      WHY: CC=24 exceeds 15
-      EFFORT: ~1h  IMPACT: 240
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/doctor.py may break 178 import paths
-  ⚠ Splitting src/koru/autonomous.py may break 118 import paths
-  ⚠ Splitting src/koru/scan.py may break 56 import paths
+  ⚠ Splitting src/koru/doctor.py may break 196 import paths
+  ⚠ Splitting src/koru/autonomous_cycle_chat_activity.py may break 102 import paths
+  ⚠ Splitting src/koru/autonomous.py may break 122 import paths
 
 METRICS-TARGET:
-  CC̄:          1.6 → ≤1.1
-  max-CC:      24 → ≤12
+  CC̄:          1.5 → ≤1.0
+  max-CC:      26 → ≤13
   god-modules: 25 → 0
-  high-CC(≥15): 21 → ≤10
+  high-CC(≥15): 25 → ≤12
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -79,4 +79,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=3.9 → now CC̄=1.6
+  prev CC̄=1.6 → now CC̄=1.5

@@ -293,15 +293,19 @@ def test_recent_self_drive_event_does_not_block_next_waiting_ticket(
     state.last_message_sent_ts = time.time() - 30.0
     state.last_message_sent_ide = "vscode"
 
+    telemetry: dict[str, Any] = {}
     skipped = _skip_due_to_recent_chat_activity(
         project=tmp_path,
         queue_result=_FakeQueue(ticket="STARTER-261"),
         state=state,
-        cycle_telemetry={},
+        cycle_telemetry=telemetry,
         _hp=lambda _msg: None,
     )
 
     assert skipped is False
+    events = telemetry["autopilot_chat_activity_events"]
+    assert events[0]["ticket_id"] == "STARTER-260"
+    assert events[0]["payload"]["waiting_ticket"] == "STARTER-261"
 
 
 def test_recent_successful_drive_fallback_does_not_block_different_ide(

@@ -155,6 +155,24 @@ def _plugin_blocker_line(reason: str, autopilot_ide: str) -> str:
     )
 
 
+def _reload_retry_wait_seconds(base_wait_seconds: float) -> float:
+    """Bounded retry wait used after a successful automatic IDE reload.
+
+    Keep this shorter than the initial historical 30s default so operator
+    feedback arrives faster when plugin reconnect never happens.
+    """
+    raw = os.environ.get("KORU_AUTOPILOT_RELOAD_RETRY_WAIT_SECONDS", "").strip()
+    if raw:
+        try:
+            configured = float(raw)
+        except ValueError:
+            configured = 12.0
+    else:
+        configured = 12.0
+    configured = min(max(configured, 3.0), 30.0)
+    return max(base_wait_seconds, configured)
+
+
 def _report_unsupported_plugin_result(
     autopilot_ide: str,
     *,
@@ -348,7 +366,7 @@ def _retry_plugin_wait_after_reload(
 
     reload = try_reload_vscode_family_ide(autopilot_ide, project=project)
     if reload.attempted and reload.ok:
-        retry_wait = max(wait_seconds, 30.0)
+        retry_wait = _reload_retry_wait_seconds(wait_seconds)
         stdio_info(
             "koru autonomous: plugin wymaga przeładowania IDE; "
             f"automatyczny Reload Window ({reload.method}) — "
