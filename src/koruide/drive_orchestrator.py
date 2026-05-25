@@ -446,5 +446,26 @@ class DriveOrchestrator:
             parts.append(f"reason={DriveOrchestrator._dsl_quote(reason)}")
         return " ".join(parts)
 
+    @staticmethod
+    def command_catalog_for(store: Any, ide: str) -> dict[str, list[str]] | None:
+        if store is None:
+            return None
+        catalog_for = getattr(store, "catalog_for", None)
+        if callable(catalog_for):
+            result = catalog_for(ide)
+            return result if isinstance(result, dict) else None
+        return None
+
+    @staticmethod
+    def unknown_chat_commands_for(store: Any, ide: str) -> list[str]:
+        if store is None:
+            return []
+        unknown_for = getattr(store, "unknown_chat_commands_for", None)
+        if callable(unknown_for):
+            result = unknown_for(ide)
+            if isinstance(result, list):
+                return [item for item in result if isinstance(item, str)]
+        return []
+
 
 __all__ = ["DriveOrchestrator"]

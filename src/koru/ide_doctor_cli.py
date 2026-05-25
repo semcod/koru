@@ -70,12 +70,33 @@ def build_parser() -> argparse.ArgumentParser:
         "doctor",
         help="Diagnose autopilot daemon + IDE plugin bridge for one IDE lane.",
     )
-    doctor.add_argument("--ide", default="auto", help=f"IDE lane (default: auto). Supported: {', '.join(supported_adapter_ids())}")
-    doctor.add_argument("--project", type=Path, default=Path.cwd(), help="Project root for workspace settings checks.")
+    doctor.add_argument(
+        "--ide",
+        default="auto",
+        help=f"IDE lane (default: auto). Supported: {', '.join(supported_adapter_ids())}",
+    )
+    doctor.add_argument(
+        "--project",
+        type=Path,
+        default=Path.cwd(),
+        help="Project root for workspace settings checks.",
+    )
     doctor.add_argument("--socket", type=Path, default=None, help="Autopilot socket override.")
-    doctor.add_argument("--instance", default=None, help="Set KORU_AUTOPILOT_INSTANCE for this run (e.g. cursor).")
-    doctor.add_argument("--fix", action="store_true", help="Apply safe auto-fixes (workspace socket, trusted publisher when IDE closed).")
-    doctor.add_argument("--gc-sockets", action="store_true", help="Remove stale koru-autopilot-*.sock files before checks.")
+    doctor.add_argument(
+        "--instance",
+        default=None,
+        help="Set KORU_AUTOPILOT_INSTANCE for this run (e.g. cursor).",
+    )
+    doctor.add_argument(
+        "--fix",
+        action="store_true",
+        help="Apply safe auto-fixes (workspace socket, trusted publisher when IDE closed).",
+    )
+    doctor.add_argument(
+        "--gc-sockets",
+        action="store_true",
+        help="Remove stale koru-autopilot-*.sock files before checks.",
+    )
     doctor.add_argument(
         "--format",
         dest="output_format",
@@ -96,13 +117,58 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("text", "json"),
         default="text",
     )
+    commands = sub.add_parser(
+        "commands",
+        help="Print the IDE command/action catalog used by autonomy strategy planning.",
+    )
+    commands.add_argument("--ide", default="all", help="IDE id or all.")
+    commands.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json", "yaml"),
+        default="text",
+    )
+    commands.add_argument(
+        "--for-llm",
+        action="store_true",
+        help="Print the compact strategy-planning view instead of the full catalog.",
+    )
+    scenario_schema = sub.add_parser(
+        "scenario-schema",
+        help="Print the JSON Schema for LLM-authored IDE command scenarios.",
+    )
+    scenario_schema.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("json", "yaml"),
+        default="json",
+    )
+    scenario_prompt = sub.add_parser(
+        "scenario-prompt",
+        help="Print a prompt that asks an LLM to write an IDE command scenario.",
+    )
+    scenario_prompt.add_argument("--ide", default="all", help="IDE id or all.")
+    scenario_validate = sub.add_parser(
+        "scenario-validate",
+        help="Validate an IDE command scenario JSON/YAML file or stdin.",
+    )
+    scenario_validate.add_argument("scenario", nargs="?", default="-")
+    scenario_validate.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json", "yaml"),
+        default="text",
+    )
     return parser
 
 
 def action_ide_doctor(args: argparse.Namespace) -> int:
     ide = _resolve_ide(args.ide)
     if ide is None:
-        print("koru ide doctor: could not resolve IDE (pass --ide cursor|vscode|...)", file=sys.stderr)
+        print(
+            "koru ide doctor: could not resolve IDE (pass --ide cursor|vscode|...)",
+            file=sys.stderr,
+        )
         return 2
     if get_adapter(ide) is None:
         print(f"koru ide doctor: no adapter for ide={ide}", file=sys.stderr)
@@ -115,7 +181,10 @@ def action_ide_doctor(args: argparse.Namespace) -> int:
     status = evaluate_bridge(ide=ide, socket_path=socket_path, project=project)
     status = apply_bridge_fixes(status, project=project, fix=args.fix)
     if removed:
-        status.fixes_applied = [*status.fixes_applied, *[f"removed stale socket {p}" for p in removed]]
+        status.fixes_applied = [
+            *status.fixes_applied,
+            *[f"removed stale socket {p}" for p in removed],
+        ]
     if args.output_format == "json":
         payload = {
             "ide": status.ide,
@@ -217,6 +286,82 @@ def action_ide_discover(args: argparse.Namespace) -> int:
     return 0
 
 
+def action_ide_commands(args: argparse.Namespace) -> int:
+    import yaml
+
+    from koruide.command_catalog import (
+        build_ide_command_catalog,
+        command_catalog_for_llm,
+        format_command_catalog_text,
+    )
+
+    ide = None if args.ide == "all" else args.ide
+    try:
+        payload = command_catalog_for_llm(ide) if args.for_llm else build_ide_command_catalog(ide)
+    except ValueError as exc:
+        print(f"koru ide commands: {exc}", file=sys.stderr)
+        return 2
+    if args.output_format == "json":
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    elif args.output_format == "yaml":
+        print(yaml.safe_dump(payload, sort_keys=False, allow_unicode=True))
+    else:
+        print(format_command_catalog_text(ide, for_llm=args.for_llm))
+    return 0
+
+
+def action_ide_scenario_schema(args: argparse.Namespace) -> int:
+    import yaml
+
+    from koruide.command_scenario import ide_command_scenario_schema
+
+    payload = ide_command_scenario_schema()
+    if args.output_format == "yaml":
+        print(yaml.safe_dump(payload, sort_keys=False, allow_unicode=True))
+    else:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    return 0
+
+
+def action_ide_scenario_prompt(args: argparse.Namespace) -> int:
+    from koruide.command_scenario import llm_scenario_prompt
+
+    ide = None if args.ide == "all" else args.ide
+    try:
+        print(llm_scenario_prompt(ide))
+    except ValueError as exc:
+        print(f"koru ide scenario-prompt: {exc}", file=sys.stderr)
+        return 2
+    return 0
+
+
+def action_ide_scenario_validate(args: argparse.Namespace) -> int:
+    import yaml
+
+    from koruide.command_scenario import validate_ide_command_scenario
+
+    raw_text = sys.stdin.read() if args.scenario == "-" else Path(args.scenario).read_text()
+    try:
+        raw = yaml.safe_load(raw_text)
+    except yaml.YAMLError as exc:
+        print(f"koru ide scenario-validate: invalid YAML/JSON: {exc}", file=sys.stderr)
+        return 2
+    result = validate_ide_command_scenario(raw)
+    payload = result.to_dict()
+    if args.output_format == "json":
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    elif args.output_format == "yaml":
+        print(yaml.safe_dump(payload, sort_keys=False, allow_unicode=True))
+    else:
+        status = "ok" if result.ok else "invalid"
+        print(f"scenario {status}")
+        for warning in result.warnings:
+            print(f"warning: {warning}")
+        for error in result.errors:
+            print(f"error: {error}")
+    return 0 if result.ok else 1
+
+
 def ide_main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -226,5 +371,13 @@ def ide_main(argv: list[str] | None = None) -> int:
         return action_ide_discover(args)
     if args.action == "reload":
         return action_ide_reload(args)
+    if args.action == "commands":
+        return action_ide_commands(args)
+    if args.action == "scenario-schema":
+        return action_ide_scenario_schema(args)
+    if args.action == "scenario-prompt":
+        return action_ide_scenario_prompt(args)
+    if args.action == "scenario-validate":
+        return action_ide_scenario_validate(args)
     parser.error(f"unknown action: {args.action}")
     return 2

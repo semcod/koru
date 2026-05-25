@@ -5,17 +5,17 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 427, typescript: 55, shell: 49, yaml: 23, json: 16
+- **Languages**: python: 430, typescript: 55, shell: 49, yaml: 24, json: 16
 - **Analysis Mode**: static
-- **Total Functions**: 4737
-- **Total Classes**: 337
-- **Modules**: 597
-- **Entry Points**: 2114
+- **Total Functions**: 4779
+- **Total Classes**: 339
+- **Modules**: 601
+- **Entry Points**: 2135
 
 ## Architecture by Module
 
 ### plugins.koru-autopilot-cursor.src.extension
-- **Functions**: 390
+- **Functions**: 395
 - **Classes**: 2
 - **File**: `extension.ts`
 
@@ -127,6 +127,9 @@ Main execution flows into the system:
 > Print the structured ``DecisionRecord`` ring buffer.
 - **Calls**: args.project.resolve, src.koru.autonomy.decision_trace.load_recent_decisions, scripts.koru-soak-monitor.print, src.koru.autopilot.cli_trace._print_observability_dsl_trace, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print
 
+### src.koru.autopilot.cli_command._action_drive
+- **Calls**: src.koru.control_commands.shell_command, src.koru.autopilot.cli_command._client, src.koru.autopilot.cli_direct_drive._should_fallback_to_direct, scripts.koru-soak-monitor.print, None.strip, None.strip, scripts.koru-soak-monitor.print, getattr
+
 ### src.koru.cli_topology.topology_main
 - **Calls**: None.parse_args, args.project.resolve, TopologyCommandService, TopologyQueryService, query_service.load, src.koru.topology_cli.apply_topology_mutations, query_service.is_enabled, scripts.koru-soak-monitor.print
 
@@ -156,20 +159,17 @@ Main execution flows into the system:
 > Human-readable rendering — fixed-width status column.
 - **Calls**: lines.append, lines.append, max, report.summary, sum, counts.get, counts.get, counts.get
 
+### src.koru.cli_strategy.strategy_main
+- **Calls**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.add_argument, parser.add_argument, parser.add_argument, parser.add_argument, parser.parse_args
+
 ### src.koru.autonomous_runtime.setup_autonomous_session
 - **Calls**: apply_env_defaults, str, args.project.resolve, project.mkdir, koru.activity_log.configure_nfo_activity_log, koru.activity_log.activity, src.koru.autonomous_runtime.project_venv_warning_lines, guard_existing_processes
 
 ### src.koru.autonomy.phases.scan_phase.handle_scan_phase
 - **Calls**: src.koru.autonomy.phases.scan_phase._should_skip_repeated_create_failed_scan, src.koru.autonomy.phases.scan_phase._should_skip_repeated_duplicate_scan, src.koru.autonomy.phases.utils.is_topology_enabled, _hp, src.koru.run_log.RunLogWriter._emit, _hp, src.koru.run_log.RunLogWriter._emit, _hp
 
-### src.koru.cli_strategy.strategy_main
-- **Calls**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.add_argument, parser.add_argument, parser.add_argument, parser.add_argument, parser.parse_args
-
 ### examples.remote_orchestration_demo.run_multi_node_orchestration
 - **Calls**: scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, KoruRemoteClient, scripts.koru-soak-monitor.print, client.get_status, status.get
-
-### src.koruapi.dashboard_routes._post_remote_drive
-- **Calls**: None.strip, None.strip, bool, None.strip, body.get, handler._send_json, handler._selected_project, src.koru.control_commands.api_command
 
 ### koruide.drive_orchestrator.DriveOrchestrator.operation_trace_dsl
 > Render the plugin's ``operation_trace`` as one DSL line per step.
@@ -177,6 +177,12 @@ Main execution flows into the system:
 Returns at most 40 lines (the same cap the plugin already
 enforces on the wire) so 
 - **Calls**: info.get, enumerate, isinstance, str, str, raw_step.get, raw_step.get, raw_step.get
+
+### src.koruapi.dashboard_routes._post_remote_drive
+- **Calls**: None.strip, None.strip, bool, None.strip, body.get, handler._send_json, handler._selected_project, src.koru.control_commands.api_command
+
+### src.koru.autopilot.cli_command._action_status
+- **Calls**: src.koru.autopilot.cli_command._client, scripts.koru-soak-monitor.print, client.is_running, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print, client.status, json.dumps, isinstance
 
 ### src.koru.dev_sync.dev_main
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, sync.add_argument, sync.add_argument, sync.add_argument, sync.add_argument, sync.add_argument
@@ -189,11 +195,11 @@ enforces on the wire) so
 > List or describe IDE agent backend profiles (``agent_backends``).
 - **Calls**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.parse_args, src.koru.agent_backends.iter_agent_backend_profiles, src.koru.agent_backends.get_agent_backend_profile, scripts.koru-soak-monitor.print, scripts.koru-soak-monitor.print
 
-### src.koruapi.dashboard_routes._post_waiting_input_bulk
-- **Calls**: None.lower, body.get, None.strip, src.koruapi.dashboard_tickets.bulk_waiting_input_action, handler._send_json, handler._send_json, isinstance, handler._send_json
-
 ### koruide.client.KoruIDEClient.request
 - **Calls**: getattr, req, self._connect, sock.sendall, bytearray, callable, RuntimeError, msg.encode
+
+### src.koruide.daemon.server.AutopilotDaemon._on_readable
+- **Calls**: client.buf.extend, client.sock.recv, src.koruide.daemon.server._verbose_io, self._drop, len, self._send, self._drop, client.buf.partition
 
 ### src.koru.gate.parse_authorizations
 > Extract all gate authorizations recorded on a ticket.
@@ -205,23 +211,12 @@ recent one with ``parse_authorizat
 ### src.koru.observability_dsl.KoruObsEvent.from_stored_event
 - **Calls**: dict, cls, str, str, str, str, src.koru.observability_dsl._optional_str, src.koru.observability_dsl._optional_int
 
-### src.koruide.daemon.server.AutopilotDaemon._on_readable
-- **Calls**: client.buf.extend, client.sock.recv, src.koruide.daemon.server._verbose_io, self._drop, len, self._send, self._drop, client.buf.partition
+### src.koruapi.dashboard_routes._post_waiting_input_bulk
+- **Calls**: None.lower, body.get, None.strip, src.koruapi.dashboard_tickets.bulk_waiting_input_action, handler._send_json, handler._send_json, isinstance, handler._send_json
 
 ### src.koruide.daemon.handlers.handle_console_log
 > Handle console log messages from the plugin for koru doctor.
 - **Calls**: isinstance, msg.data.get, isinstance, msg.data.get, isinstance, msg.data.get, isinstance, isinstance
-
-### services.healing-webhook.app.heal_vallm_validate
-> Run vallm tier-1 (check) on all files mapped from the alert component.
-
-Cheap pre-flight gate: blocks AI patches if affected files are already
-syntact
-- **Calls**: services.healing-webhook.app._resolve_affected_files, services.healing-webhook.app._record_action, isinstance, detail.get, services.healing-webhook.app._record_action, services.healing-webhook.app._run_vallm_check, sum, max
-
-### services.healing-webhook.app.probe_failure
-> Accept the testql-watchdog probe-failure payload.
-- **Calls**: app.post, None.inc, payload.get, log.info, services.healing-webhook.app.create_planfile_ticket, request.json, payload.get, len
 
 ## Process Flows
 
@@ -266,18 +261,33 @@ action_trace [src.koru.autopilot.cli_trace]
   └─ →> print
 ```
 
-### Flow 6: topology_main
+### Flow 6: _action_drive
+```
+_action_drive [src.koru.autopilot.cli_command]
+  └─> _client
+      └─> _resolve_client_socket
+          └─> _resolve_cli_ide_lane
+          └─> _temporary_autopilot_instance
+  └─ →> shell_command
+      └─> emit_control_command
+          └─ →> record_obs_event
+      └─> control_command
+  └─ →> _should_fallback_to_direct
+      └─> _auto_direct_fallback_enabled
+```
+
+### Flow 7: topology_main
 ```
 topology_main [src.koru.cli_topology]
 ```
 
-### Flow 7: handle_drive
+### Flow 8: handle_drive
 ```
 handle_drive [src.koruide.daemon.handlers_drive]
   └─ →> normalize_ide_id
 ```
 
-### Flow 8: handle_scan_after_idle
+### Flow 9: handle_scan_after_idle
 ```
 handle_scan_after_idle [src.koru.autonomy.phases.scan_phase]
   └─> _should_skip_repeated_create_failed_scan
@@ -290,24 +300,15 @@ handle_scan_after_idle [src.koru.autonomy.phases.scan_phase]
       └─ →> is_pipeline_enabled
 ```
 
-### Flow 9: from_dict
+### Flow 10: from_dict
 ```
 from_dict [src.koru.deployment_events.models.DeploymentEvent]
-```
-
-### Flow 10: drive
-```
-drive [koru.ide_client.LegacyAutopilotClientAdapter]
-  └─ →> activity
-      └─> _out_stream
-      └─> _color_category
-          └─> _ansi
 ```
 
 ## Key Classes
 
 ### plugins.koru-autopilot-cursor.src.extension.AutopilotBridge
-- **Methods**: 375
+- **Methods**: 380
 - **Key Methods**: plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.safeLog, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.emitLiveDsl, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.seq, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.okToken, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.routeToken, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.reason
 
 ### plugins.koru-autopilot-vscode.src.extension.AutopilotBridge
@@ -427,6 +428,12 @@ Cheap pre-flight gate: block
 > Parse redup-check.sh JSON payload into summary dict.
 - **Output to**: payload.get, int, int, sorted, s.get
 
+### services.healing-webhook.ticket_builder._format_paths
+- **Output to**: None.join
+
+### services.healing-webhook.ticket_builder._format_acceptance
+- **Output to**: None.join
+
 ### src.koruobserve.lifecycle._stop_orphan_observe_processes
 > SIGTERM stale observe children when pidfiles are missing (e.g. after crash).
 - **Output to**: needles.items, src.koruobserve.lifecycle._pids_matching_koru_cmdline, None.unlink, contextlib.suppress, os.kill
@@ -459,29 +466,6 @@ Cheap pre-flight gate: block
 ### src.koruapi.local.build_local_parser
 - **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.add_argument
 
-### src.koruapi.server._parse_invoke_request
-- **Output to**: str, str, None.resolve, body.get, str
-
-### src.koruapi.mcp_server._get_process_memory_mb
-> Get process memory usage in MB.
-- **Output to**: psutil.Process, process.memory_info
-
-### src.koruapi.mcp_server._monitor_subprocess_oom
-> Monitor subprocess for OOM conditions.
-
-Returns (should_kill, logs) tuple.
-- **Output to**: proc.poll, src.koruapi.mcp_server._get_process_memory_mb, time.sleep, logs.append, logs.append
-
-### src.koruapi.mcp_server._parse_tickets_json
-> Parse planfile ticket list JSON output.
-- **Output to**: stdout.strip, isinstance, isinstance, json.loads, isinstance
-
-### src.koruapi.mcp_server._serialize_mcp_ticket
-- **Output to**: ticket.get, ticket.get, ticket.get, ticket.get, ticket.get
-
-### src.koruapi.mcp_server._collect_process_logs
-- **Output to**: logs.extend, logs.extend, None.split, None.split, result.stdout.strip
-
 ### src.koruvision.cli_parser._add_capture_subparser
 - **Output to**: sub.add_parser, once.add_argument, src.koruvision.cli_parser.register_mesh_publish_args
 
@@ -500,6 +484,19 @@ Returns (should_kill, logs) tuple.
 
 ### src.koruvision.providers.browser_getdisplay._decode_browser_png_upload
 - **Output to**: body.get, body.get, ValueError, base64.b64decode, payload.startswith
+
+### src.korumesh.cli_parser.build_mesh_parser
+- **Output to**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, relay.add_argument, relay.add_argument
+
+### src.korumesh.dashboard_parse.parse_mime_params
+> Return ``(base_mime, params)`` from a mime string with ``;`` separators.
+- **Output to**: piece.strip, piece.split, value.strip, mime.split, piece.strip
+
+### src.koruide.chat_history._parse_line
+- **Output to**: line.strip, json.loads, isinstance, ChatEvent, float
+
+### src.koruide.protocol.Message.encode
+- **Output to**: None.encode, json.dumps, self.to_dict
 
 ## Behavioral Patterns
 
@@ -531,35 +528,36 @@ Returns (should_kill, logs) tuple.
 ### state_machine_AutopilotBridge
 - **Type**: state_machine
 - **Confidence**: 0.70
-- **Functions**: plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.safeLog
-
-### state_machine_AutopilotBridge
-- **Type**: state_machine
-- **Confidence**: 0.70
-- **Functions**: plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.safeLog
-
-### state_machine_AutopilotBridge
-- **Type**: state_machine
-- **Confidence**: 0.70
 - **Functions**: plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-vscode.src.extension.AutopilotBridge.safeLog
+
+### state_machine_AutopilotBridge
+- **Type**: state_machine
+- **Confidence**: 0.70
+- **Functions**: plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-windsurf.src.extension.AutopilotBridge.safeLog
 
 ### state_machine_AutopilotBridge
 - **Type**: state_machine
 - **Confidence**: 0.70
 - **Functions**: plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-vscodium.src.extension.AutopilotBridge.safeLog
 
+### state_machine_AutopilotBridge
+- **Type**: state_machine
+- **Confidence**: 0.70
+- **Functions**: plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.isConnected, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.sendConsoleLog, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.resetOperationTrace, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.traceOperation, plugins.koru-autopilot-cursor.src.extension.AutopilotBridge.safeLog
+
 ## Public API Surface
 
 Functions exposed as public API (no underscore prefix):
 
+- `src.koruide.command_scenario.validate_ide_command_scenario` - 67 calls
 - `src.koru.autonomy.config.AutonomyConfig.from_env` - 50 calls
 - `src.koru.context_render.render_markdown_handoff` - 47 calls
+- `src.koru.ide_doctor_cli.build_parser` - 44 calls
 - `src.koru.policy.load_policy` - 43 calls
 - `src.koru.git_cli.build_parser` - 39 calls
 - `src.koru.queue.runners.run_api_request` - 39 calls
 - `src.koru.local_manager_state.WorkerRegistry.register` - 37 calls
 - `src.koru.autopilot.cli_trace.action_trace` - 36 calls
-- `src.koru.ide_doctor_cli.build_parser` - 33 calls
 - `src.koru.cli_topology.topology_main` - 33 calls
 - `src.koruobserve.lifecycle.observe_up` - 32 calls
 - `src.koruapi.mcp_server.tool_run_ticket` - 31 calls
@@ -575,10 +573,10 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.doctor_render.render_text` - 27 calls
 - `src.koru.autonomy.ide_work.build_ide_work_prompt` - 27 calls
 - `src.koru.autonomous_daemon.start_or_reuse_daemon` - 26 calls
+- `src.koru.cli_strategy.strategy_main` - 26 calls
 - `src.koru.autonomous_runtime.setup_autonomous_session` - 26 calls
 - `src.koru.autonomy.phases.scan_phase.handle_scan_phase` - 26 calls
 - `src.koru.autopilot.install_manager.repair_installation` - 26 calls
-- `src.koru.cli_strategy.strategy_main` - 26 calls
 - `services.healing-webhook.ticket_builder.build_ticket_payload` - 25 calls
 - `examples.remote_orchestration_demo.run_multi_node_orchestration` - 24 calls
 - `koruide.drive_orchestrator.DriveOrchestrator.operation_trace_dsl` - 24 calls
@@ -591,7 +589,6 @@ Functions exposed as public API (no underscore prefix):
 - `src.koru.cli_agent_backends.agent_backends_main` - 23 calls
 - `src.koru.init.init_project` - 23 calls
 - `src.koru.context_render.render_active_ticket` - 23 calls
-- `src.koruapi.dashboard_tickets.create_ticket_from_dashboard` - 22 calls
 
 ## System Interactions
 
@@ -620,15 +617,15 @@ graph TD
     action_trace --> load_recent_decision
     action_trace --> print
     action_trace --> _print_observability
+    _action_drive --> shell_command
+    _action_drive --> _client
+    _action_drive --> _should_fallback_to_
+    _action_drive --> print
+    _action_drive --> strip
     topology_main --> parse_args
     topology_main --> resolve
     topology_main --> TopologyCommandServi
     topology_main --> TopologyQueryService
-    topology_main --> load
-    handle_drive --> get
-    handle_drive --> normalize_ide_id
-    handle_drive --> bool
-    handle_drive --> log
 ```
 
 ## Reverse Engineering Guidelines

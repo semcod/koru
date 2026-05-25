@@ -53,6 +53,8 @@ from koru.autopilot.cli_direct_drive import (
     _type_text_direct_drive as _type_text_direct_drive,
 )
 from koru.autopilot.cli_parser import build_autopilot_parser as _build_parser
+from koru.autopilot.commands.drive import action_drive as _drive_action_impl
+from koru.autopilot.commands.drive import _drive_command_argv
 from koru.autopilot.cli_trace import action_trace as _action_trace
 from koru.autopilot.client import AutopilotClient
 from koru.autopilot.ide import (
@@ -149,86 +151,14 @@ _action_daemon = daemon_cli.action_daemon
 
 
 def _action_drive(args: argparse.Namespace) -> int:
-    text = str(args.prompt).strip() if args.prompt is not None else " ".join(args.text).strip()
-    if not text:
-        print(
-            "koru autopilot drive: missing text — pass words after `drive`, "
-            "or use --prompt / -p '...'",
-            file=sys.stderr,
-        )
-        return 2
-    project = getattr(args, "project", None) or Path.cwd()
-    shell_command(
-        project,
-        corr="cli-drive",
-        argv=_drive_command_argv(args, text),
-        cwd=str(project.resolve()),
-        actor="operator",
-        replayable=not args.dry_run,
+    """Wrapper for drive command with dependency injection."""
+    return _drive_action_impl(
+        args,
+        client_fn=_client,
+        daemon_start_hint_fn=_daemon_start_hint,
+        run_direct_drive_fn=_run_direct_drive,
+        should_fallback_fn=_should_fallback_to_direct,
     )
-    if args.direct:
-        rc, _payload = _run_direct_drive(args, text, emit_payload=True)
-        return rc
-    client = _client(args)
-    if not client.is_running():
-        print(
-            "koru autopilot drive: daemon not running. "
-            f"{_daemon_start_hint(args)}",
-            file=sys.stderr,
-        )
-        return 2
-    if args.dry_run:
-        print(f"[dry-run] would send {len(text)} chars to daemon ide={args.ide}")
-        return 0
-    try:
-        reply = client.drive(
-            text,
-            submit=args.submit,
-            ide=args.ide,
-            require_plugin=args.require_plugin,
-        )
-    except (OSError, RuntimeError) as exc:
-        print(f"koru autopilot drive: {exc}", file=sys.stderr)
-        return 1
-    if _should_fallback_to_direct(args, reply):
-        print(
-            "koru autopilot drive: daemon could not open/focus chat input; "
-            "falling back to local --direct injection",
-            file=sys.stderr,
-        )
-        rc, direct_payload = _run_direct_drive(args, text, emit_payload=False)
-        if direct_payload is None:
-            print(json.dumps(reply, indent=2, sort_keys=True))
-            return 1
-        direct_payload = dict(direct_payload)
-        direct_payload["daemon_fallback"] = {
-            "ok": reply.get("ok"),
-            "message": reply.get("message"),
-            "opened": reply.get("opened"),
-            "submitted": reply.get("submitted"),
-        }
-        print(json.dumps(direct_payload, indent=2, sort_keys=True))
-        return rc
-    print(json.dumps(reply, indent=2, sort_keys=True))
-    return 0 if reply.get("ok", True) else 1
-
-
-def _drive_command_argv(args: argparse.Namespace, text: str) -> list[str]:
-    argv = ["koru", "autopilot", "drive", "--ide", str(args.ide)]
-    if not args.submit:
-        argv.append("--no-submit")
-    if args.require_plugin:
-        argv.append("--require-plugin")
-    if args.direct:
-        argv.append("--direct")
-    if args.dry_run:
-        argv.append("--dry-run")
-    if args.os_profile:
-        argv.extend(["--os-profile", str(args.os_profile)])
-    if args.delay_seconds:
-        argv.extend(["--delay-seconds", str(args.delay_seconds)])
-    argv.extend(["--prompt", text])
-    return argv
 
 
 def _action_status(args: argparse.Namespace) -> int:

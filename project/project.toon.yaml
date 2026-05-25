@@ -1,10 +1,11 @@
-# koru | 4737 func | 415f | 101815L | python | 2026-05-25
+# koru | 4779 func | 418f | 103777L | python | 2026-05-25
 # generated in 0.00s
 
 HEALTH:
-  CC̄=3.6  critical=271 (limit:10)  dup=10  cycles=0
+  CC̄=3.6  critical=276 (limit:10)  dup=10  cycles=0
 
 ALERTS[20]:
+  !!! cc_exceeded      validate_ide_command_scenario = 37 (limit:15)
   !!! cc_exceeded      _path_step = 32 (limit:15)
   !!! high_fan_out     run_api_request = 24 (limit:10)
   !!! high_fan_out     _drive_via_plugin = 23 (limit:10)
@@ -13,11 +14,10 @@ ALERTS[20]:
   !!! high_fan_out     observe_up = 22 (limit:10)
   !!! high_fan_out     render_markdown_handoff = 22 (limit:10)
   !!! high_fan_out     evaluate_bridge = 22 (limit:10)
-  !!! high_fan_out     run_cycle = 21 (limit:10)
-  !!! high_fan_out     setup_autonomous_session = 20 (limit:10)
+  !!! high_fan_out     AutopilotBridge.tryCursorComposerPromptFastPath = 22 (limit:10)
 
-MODULES[598] (top by size):
-  M[plugins/koru-autopilot-cursor/src/extension.ts] 2868L C:2 F:206 CC↑15 D:0 (typescript)
+MODULES[602] (top by size):
+  M[plugins/koru-autopilot-cursor/src/extension.ts] 2965L C:2 F:207 CC↑15 D:0 (typescript)
   M[plugins/koru-autopilot-vscode/src/extension.ts] 2709L C:2 F:204 CC↑14 D:0 (typescript)
   M[plugins/koru-autopilot-vscodium/src/extension.ts] 2705L C:2 F:204 CC↑14 D:0 (typescript)
   M[plugins/koru-autopilot-antigravity/src/extension.ts] 2656L C:2 F:199 CC↑14 D:19 (typescript)
@@ -25,14 +25,14 @@ MODULES[598] (top by size):
   M[src/koru/doctor.py] 2083L C:2 F:98 CC↑13 D:2 (python)
   M[planfile.yaml] 1357L C:0 F:0 CC↑0 D:0 (yaml)
   M[src/koru/scan.py] 1183L C:0 F:37 CC↑13 D:3 (python)
-  M[src/koruapi/mcp_server.py] 1023L C:0 F:35 CC↑14 D:4 (python)
+  M[src/koruapi/mcp_server.py] 1108L C:0 F:38 CC↑14 D:2 (python)
   M[src/koru/autonomy/operator_pipeline.py] 1016L C:2 F:44 CC↑14 D:0 (python)
   M[src/koru/autonomous_loop_runner.py] 1008L C:1 F:48 CC↑10 D:2 (python)
   M[src/koru/autonomous.py] 987L C:0 F:62 CC↑4 D:4 (python)
   M[src/koru/autonomous_cycle.py] 975L C:0 F:29 CC↑11 D:1 (python)
   M[Taskfile.yml] 922L C:0 F:0 CC↑0 D:0 (yml)
-  M[src/koru/context.py] 822L C:0 F:31 CC↑12 D:7 (python)
-  LANGS: python:428/typescript:55/shell:49/yaml:23/json:16/yml:10/kotlin:6/other:4/txt:2/javascript:1/md:1/properties:1/xml:1/toml:1
+  M[src/koru/context.py] 822L C:0 F:31 CC↑12 D:8 (python)
+  LANGS: python:431/typescript:55/shell:49/yaml:24/json:16/yml:10/kotlin:6/other:4/txt:2/javascript:1/md:1/properties:1/xml:1/toml:1
 
 HOTSPOTS[10]:
   ★ run_api_request fan=24  // Execute an HTTP API request.
@@ -46,10 +46,10 @@ Steps:
 
 REFACTOR[15]:
   [1] H/L Split _path_step (CC=32)
-  [2] H/H Split god module plugins/koru-autopilot-cursor/src/extension.ts (2868L, 2 classes)
-  [3] H/H Split god module plugins/koru-autopilot-antigravity/src/extension.ts (2656L, 2 classes)
-  [4] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (2709L, 2 classes)
-  [5] H/H Split god module plugins/koru-autopilot-vscodium/src/extension.ts (2705L, 2 classes)
+  [2] H/L Split validate_ide_command_scenario (CC=37)
+  [3] H/H Split god module plugins/koru-autopilot-cursor/src/extension.ts (2965L, 2 classes)
+  [4] H/H Split god module plugins/koru-autopilot-antigravity/src/extension.ts (2656L, 2 classes)
+  [5] H/H Split god module plugins/koru-autopilot-vscode/src/extension.ts (2709L, 2 classes)
 
 EVOLUTION:
-  2026-05-25 CC̄=3.6 crit=271 101815L // Automated analysis
+  2026-05-25 CC̄=3.6 crit=276 103777L // Automated analysis

@@ -98,6 +98,7 @@ class PluginInstallResult:
     vsix: str | None = None
     settings_path: str | None = None
     socket_path: str | None = None
+    conflicts_removed: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, object]:
         out: dict[str, object] = {
@@ -113,6 +114,8 @@ class PluginInstallResult:
             out["settings_path"] = self.settings_path
         if self.socket_path is not None:
             out["socket_path"] = self.socket_path
+        if self.conflicts_removed:
+            out["conflicts_removed"] = list(self.conflicts_removed)
         return out
 
 
@@ -212,7 +215,13 @@ def _fallback_vsix_candidates(
     candidates: list[Path] = []
     if anchor is not None:
         try:
-            candidates.extend(sorted(anchor.parent.glob("*.vsix"), key=lambda p: p.stat().st_mtime, reverse=True))
+            candidates.extend(
+                sorted(
+                    anchor.parent.glob("*.vsix"),
+                    key=lambda p: p.stat().st_mtime,
+                    reverse=True,
+                ),
+            )
         except OSError:
             pass
 
@@ -221,12 +230,24 @@ def _fallback_vsix_candidates(
         if repo_root is not None:
             plugin_dir = repo_root / "plugins" / dir_name
             try:
-                candidates.extend(sorted(plugin_dir.glob("*.vsix"), key=lambda p: p.stat().st_mtime, reverse=True))
+                candidates.extend(
+                    sorted(
+                        plugin_dir.glob("*.vsix"),
+                        key=lambda p: p.stat().st_mtime,
+                        reverse=True,
+                    ),
+                )
             except OSError:
                 pass
         cwd_plugin = Path.cwd() / "plugins" / dir_name
         try:
-            candidates.extend(sorted(cwd_plugin.glob("*.vsix"), key=lambda p: p.stat().st_mtime, reverse=True))
+            candidates.extend(
+                sorted(
+                    cwd_plugin.glob("*.vsix"),
+                    key=lambda p: p.stat().st_mtime,
+                    reverse=True,
+                ),
+            )
         except OSError:
             pass
 
@@ -432,6 +453,48 @@ def _extension_is_installed(
     return extension_id.lower() in installed
 
 
+def _installed_extension_ids(command: str, runner: Runner) -> set[str] | None:
+    try:
+        proc = runner([command, "--list-extensions"])
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    return {line.strip().lower() for line in proc.stdout.splitlines() if line.strip()}
+
+
+def _conflicting_extension_ids(target_ide: str) -> tuple[str, ...]:
+    expected = extension_id_for_ide(target_ide).lower()
+    candidates = sorted({ext_id.lower() for ext_id in _EXTENSION_IDS.values()})
+    return tuple(ext_id for ext_id in candidates if ext_id != expected)
+
+
+def _remove_conflicting_extensions(
+    command: str,
+    runner: Runner,
+    *,
+    target_ide: str,
+    dry_run: bool,
+) -> tuple[str, ...]:
+    installed = _installed_extension_ids(command, runner)
+    if not installed:
+        return ()
+    conflicts = tuple(
+        ext_id for ext_id in _conflicting_extension_ids(target_ide) if ext_id in installed
+    )
+    if dry_run:
+        return conflicts
+    removed: list[str] = []
+    for ext_id in conflicts:
+        try:
+            proc = runner([command, "--uninstall-extension", ext_id], timeout=120.0)
+        except (OSError, subprocess.SubprocessError):
+            continue
+        if proc.returncode == 0:
+            removed.append(ext_id)
+    return tuple(removed)
+
+
 def _parse_extension_version(
     output: str,
     *,
@@ -566,6 +629,7 @@ def _result_already_installed(
     runner: Runner,
     settings_path: Path | None,
     socket_path_str: str | None,
+    conflicts_removed: tuple[str, ...] = (),
 ) -> PluginInstallResult:
     last_cmd, extra = _reassert_extension_extra(
         command, dry_run=dry_run, runner=runner, target_ide=target
@@ -576,6 +640,12 @@ def _result_already_installed(
         status="already_installed",
         message=(
             f"{ext_id} is already installed for {target}{extra}; "
+            + (
+                f"removed conflicting extensions: {', '.join(conflicts_removed)}; "
+                if conflicts_removed
+                else ""
+            )
+            +
             "if the IDE was already open during install/reassert, run "
             "`Developer: Reload Window` (or restart it), then run "
             "`koru: Connect autopilot daemon`"
@@ -583,6 +653,7 @@ def _result_already_installed(
         command=last_cmd,
         settings_path=str(settings_path) if settings_path is not None else None,
         socket_path=socket_path_str,
+        conflicts_removed=conflicts_removed,
     )
 
 
@@ -595,6 +666,7 @@ def _install_extension_vsix(
     runner: Runner,
     settings_path: Path | None,
     socket_path_str: str | None,
+    conflicts_removed: tuple[str, ...] = (),
 ) -> PluginInstallResult:
     cmd = [command, "--install-extension", str(vsix)]
     if dry_run:
@@ -605,6 +677,7 @@ def _install_extension_vsix(
             command=cmd,
             vsix=str(vsix),
             socket_path=socket_path_str,
+            conflicts_removed=conflicts_removed,
         )
     try:
         proc = runner(cmd, timeout=120.0)
@@ -634,12 +707,19 @@ def _install_extension_vsix(
         status="installed",
         message=(
             f"installed {extension_id_for_ide(target)}; if {target} is already open, run "
+            + (
+                f"removed conflicting extensions: {', '.join(conflicts_removed)}; "
+                if conflicts_removed
+                else ""
+            )
+            +
             "`Developer: Reload Window` or restart it so the extension host scans the VSIX"
         ),
         command=cmd,
         vsix=str(vsix),
         settings_path=str(settings_path) if settings_path is not None else None,
         socket_path=socket_path_str,
+        conflicts_removed=conflicts_removed,
     )
 
 
@@ -672,6 +752,12 @@ def install_plugin_for_ide(
 
     settings_path = None if dry_run else _configure_socket_path(target, socket_path)
     socket_path_str = str(socket_path.resolve()) if socket_path is not None else None
+    conflicts_removed = _remove_conflicting_extensions(
+        command,
+        runner,
+        target_ide=target,
+        dry_run=dry_run,
+    )
 
     if _extension_is_installed(
         command, runner, extension_id=extension_id_for_ide(target)
@@ -683,6 +769,7 @@ def install_plugin_for_ide(
             runner=runner,
             settings_path=settings_path,
             socket_path_str=socket_path_str,
+            conflicts_removed=conflicts_removed,
         )
 
     vsix = resolve_extension_vsix(target)
@@ -706,6 +793,7 @@ def install_plugin_for_ide(
         runner=runner,
         settings_path=settings_path,
         socket_path_str=socket_path_str,
+        conflicts_removed=conflicts_removed,
     )
 
 

@@ -168,6 +168,7 @@ class KoruIDEClient:
         submit: bool = True,
         ide: str = "auto",
         require_plugin: bool = False,
+        strategy_hint: str | None = None,
     ) -> dict[str, Any]:
         if self._log:
             self._log(
@@ -180,6 +181,7 @@ class KoruIDEClient:
                 submit=submit,
                 ide=ide,
                 require_plugin=require_plugin,
+                strategy_hint=strategy_hint,
             )
         try:
             reply = self.request(
@@ -188,6 +190,7 @@ class KoruIDEClient:
                     submit=submit,
                     ide=ide,
                     require_plugin=require_plugin,
+                    strategy_hint=strategy_hint,
                     id="cli-drive",
                 ),
                 timeout=self._drive_timeout(),

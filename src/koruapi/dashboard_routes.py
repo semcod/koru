@@ -120,6 +120,27 @@ def _get_runtime_context(handler: Any, config: ServeConfig) -> None:
     handler._send_json(runtime)
 
 
+def _get_ide_commands(handler: Any, _config: ServeConfig) -> None:
+    from koruide.command_catalog import build_ide_command_catalog, command_catalog_for_llm
+
+    parsed = urlparse(handler.path)
+    query = parse_qs(parsed.query)
+    ide_raw = query.get("ide", ["all"])[0]
+    ide = None if ide_raw in ("", "all") else ide_raw
+    for_llm = query.get("for_llm", ["0"])[0].lower() in {"1", "true", "yes"}
+
+    def _payload() -> dict[str, Any]:
+        return command_catalog_for_llm(ide) if for_llm else build_ide_command_catalog(ide)
+
+    handler._safe_respond_json(_payload)
+
+
+def _get_ide_scenario_schema(handler: Any, _config: ServeConfig) -> None:
+    from koruide.command_scenario import ide_command_scenario_schema
+
+    handler._safe_respond_json(ide_command_scenario_schema)
+
+
 def _get_autonomy_trace(handler: Any, _config: ServeConfig) -> None:
     """Return the structured ``DecisionRecord`` ring buffer."""
     from koru.autonomy.decision_trace import (
@@ -452,6 +473,8 @@ _GET_ROUTES: dict[str, _GetHandler] = {
     "/api/context": _get_context,
     "/api/topology": _get_topology,
     "/api/runtime-context": _get_runtime_context,
+    "/api/ide/commands": _get_ide_commands,
+    "/api/ide/scenario-schema": _get_ide_scenario_schema,
     "/api/handoff": _get_handoff,
     "/api/plugin-logs": _get_plugin_logs,
     "/api/autonomy/trace": _get_autonomy_trace,

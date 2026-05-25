@@ -6,10 +6,10 @@ import io
 import json
 import os
 import shutil
-import sys
-import types
 import subprocess
+import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -383,8 +383,10 @@ class TestAutoMain(unittest.TestCase):
             mock.patch.dict(os.environ, {"KORU_AUTO_SKIP_WIZARD": "1"}, clear=False),
         ):
             os.environ.pop("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD", None)
+            os.environ.pop("KORU_AUTOPILOT_NEW_WINDOW_RELOAD", None)
             code = _auto_main(["--project", "/tmp/proj"])
             reuse_reload = os.environ.get("KORU_AUTOPILOT_REUSE_WINDOW_RELOAD")
+            new_window_reload = os.environ.get("KORU_AUTOPILOT_NEW_WINDOW_RELOAD")
 
         self.assertEqual(code, 0)
         self.assertEqual(len(stopped), 1)
@@ -398,7 +400,7 @@ class TestAutoMain(unittest.TestCase):
         self.assertNotIn("--max-iterations", calls[0][0])
         self.assertTrue(calls[0][1])
         self.assertEqual(reuse_reload, "1")
-        self.assertEqual(os.environ.get("KORU_AUTOPILOT_NEW_WINDOW_RELOAD"), "1")
+        self.assertEqual(new_window_reload, "1")
 
     def test_auto_main_preserves_explicit_reuse_window_reload_setting(self) -> None:
         from koru.cli_auto import _auto_main
@@ -673,7 +675,6 @@ class TestSubcommandDispatch(unittest.TestCase):
             "refactor-planfile-handoff",
             "dev",
             "events",
-            "ide",
             "self",
         },
     )

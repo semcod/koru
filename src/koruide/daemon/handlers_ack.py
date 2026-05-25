@@ -7,6 +7,7 @@ DSL trace generation) into a cohesive module.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,21 @@ from koruide.injector import InjectorError
 from koruide.protocol import Message, ack, MIN_PLUGIN_PROTOCOL_VERSION
 from koru.integration_ledger import record_integration_action
 from koru.observability_events import emit_failure, emit_verify
+
+
+def _persist_recent_dsl(daemon: Any) -> None:
+    project = getattr(daemon, "project", None)
+    if project is None:
+        return
+    path = project / ".planfile" / ".koru" / "dsl_recent.json"
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps({"lines": list(daemon._recent_dsl)}, indent=2),
+            encoding="utf-8",
+        )
+    except OSError:
+        return
 
 
 def _plugin_ack_needs_os_fallback(
@@ -180,6 +196,18 @@ def _send_plugin_ack_reply(
         daemon.log(f"[DSL] {dsl_line}")
     final_dsl_line = DriveOrchestrator.drive_outcome_dsl(info)
     daemon.log(f"[DSL] {final_dsl_line}")
+    daemon._recent_dsl.extend(dsl_lines)
+    daemon._recent_dsl.append(final_dsl_line)
+    if len(daemon._recent_dsl) > 50:
+        daemon._recent_dsl = daemon._recent_dsl[-50:]
+    _persist_recent_dsl(daemon)
+    daemon._command_telemetry.record_from_ack(
+        ide=fallback_ide,
+        plugin_version=info.get("plugin_version")
+        if isinstance(info.get("plugin_version"), str)
+        else None,
+        info=info,
+    )
     # Persist the DSL on the ack info so the CLI/autonomous receives it
     # in the relay envelope and can echo it verbatim instead of having
     # to ship its own renderer.

@@ -54,6 +54,12 @@ import {
   type KoruAutopilotStepConfig,
 } from "./step-decisions";
 import { detectIdeViaStrategies, getStrategy } from "./ides/registry";
+import {
+  classifyCommands,
+  matchingCommandsFlat,
+  type CommandCapability,
+  type CommandCatalog,
+} from "./command-catalog";
 
 
 const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
@@ -218,6 +224,8 @@ class AutopilotBridge {
    * db path.
    */
   private cursorBubbleVerifierAdapter: CursorBubbleAdapter | null = null;
+  /** Per-drive server-provided command order (``command_order`` from daemon). */
+  private pendingCommandOrder: Partial<Record<CommandCapability, string[]>> | undefined;
 
   constructor(private context: vscode.ExtensionContext) {
     this.status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 50);
@@ -246,6 +254,39 @@ class AutopilotBridge {
 
   private resetOperationTrace(): void {
     this.operationTrace = [];
+  }
+
+  private parseCommandOrder(
+    raw: unknown,
+  ): Partial<Record<CommandCapability, string[]>> | undefined {
+    if (!raw || typeof raw !== "object") {
+      return undefined;
+    }
+    const allowed: CommandCapability[] = ["focus_open", "focus_input", "paste", "submit"];
+    const order: Partial<Record<CommandCapability, string[]>> = {};
+    for (const capability of allowed) {
+      const value = (raw as Record<string, unknown>)[capability];
+      if (!Array.isArray(value)) {
+        continue;
+      }
+      const commands = value.filter((item): item is string => typeof item === "string");
+      if (commands.length > 0) {
+        order[capability] = commands;
+      }
+    }
+    return Object.keys(order).length > 0 ? order : undefined;
+  }
+
+  private orderWithServerOverride(
+    capability: CommandCapability,
+    localCommands: string[],
+    cacheWinner?: string,
+  ): string[] {
+    const server = this.pendingCommandOrder?.[capability];
+    if (server?.length) {
+      return mergeUnique(server, localCommands);
+    }
+    return orderWithCache(localCommands, cacheWinner);
   }
 
   private traceOperation(step: OperationTraceStep): void {
@@ -332,9 +373,8 @@ class AutopilotBridge {
       this.status.tooltip = `koru autopilot: connected ${p}`;
       debugLog("CONNECT_OK", { path: p, ide: this.detectIde() });
       Promise.resolve(vscode.commands.getCommands(false)).then((cmds) => {
-        const matching = cmds.filter(c =>
-          c.includes("windsurf") || c.includes("cascade") || c.includes("codeium") || c.includes("chat") || c.includes("composer")
-        );
+        const commandCatalog = classifyCommands(cmds);
+        const matching = matchingCommandsFlat(commandCatalog);
         try {
           fs.writeFileSync("/tmp/windsurf-commands.json", JSON.stringify(cmds, null, 2), "utf-8");
         } catch (err) {
@@ -345,7 +385,7 @@ class AutopilotBridge {
           id: "vscode-hello",
           ide: this.detectIde(),
           version: vscode.extensions.getExtension("semcod.koru-autopilot-windsurf")?.packageJSON.version || "unknown",
-          protocolVersion: 1,
+          protocolVersion: 2,
           capabilities: [
             "ide.commands",
             "chat.focus",
@@ -354,9 +394,11 @@ class AutopilotBridge {
             "chat.events",
             "chat.history",
             "probe.ladder",
+            "command.catalog",
           ],
           pid: process.pid,
           matchingCommands: matching,
+          commandCatalog,
         });
         this.startChatHistoryWatcherIfEligible();
       });
@@ -1292,7 +1334,7 @@ class AutopilotBridge {
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     const cache = this.getProbeCache();
     const candidates = filterRegistered(
-      orderWithCache(buildSubmitCommands(ide), cache?.submit),
+      this.orderWithServerOverride("submit", buildSubmitCommands(ide), cache?.submit),
       existing
     );
     debugLog("SUBMIT_CANDIDATES", { ide, candidates, verifyEnabled });
@@ -1317,7 +1359,11 @@ class AutopilotBridge {
     const cache = this.getProbeCache();
     const useProbe = this.probeLadderEnabled();
     let commands = filterUnsafeFocusOpenForIde(filterRegistered(
-      orderWithCache(buildFocusOpenCommands(ide, primary), cache?.focusOpen),
+      this.orderWithServerOverride(
+        "focus_open",
+        buildFocusOpenCommands(ide, primary),
+        cache?.focusOpen,
+      ),
       existing
     ), ide);
     if (ide === "vscode" && commands.length === 0 && existing.has("workbench.action.chat.open")) {
@@ -1625,7 +1671,7 @@ class AutopilotBridge {
     useProbe: boolean
   ): Promise<CommandOutcome | undefined> {
     const directCommands = filterRegistered(
-      orderWithCache(buildPasteDirectCommands(ide), cache?.paste),
+      this.orderWithServerOverride("paste", buildPasteDirectCommands(ide), cache?.paste),
       existing
     );
     const previousClip = await this.saveClipboard();
@@ -1790,7 +1836,7 @@ class AutopilotBridge {
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     const cache = this.getProbeCache();
     const candidates = filterRegistered(
-      orderWithCache(buildFocusInputCommands(ide), cache?.focusInput),
+      this.orderWithServerOverride("focus_input", buildFocusInputCommands(ide), cache?.focusInput),
       existing
     );
     debugLog("FOCUS_INPUT_START", { ide, candidatesCount: candidates.length, cacheFocusInput: cache?.focusInput });
@@ -2268,6 +2314,7 @@ class AutopilotBridge {
   private async injectChat(env: Envelope): Promise<void> {
     const text = typeof env.text === "string" ? env.text : "";
     const submit = env.submit !== false;
+    this.pendingCommandOrder = this.parseCommandOrder(env.command_order);
     this.resetOperationTrace();
     this.traceOperation({
       op: "drive",
@@ -2291,6 +2338,7 @@ class AutopilotBridge {
       this.traceOperation({ op: "drive", route: "exception", ok: false, reason: message });
       this.send({ type: "ack", id: env.id, ok: false, message, operation_trace: this.currentOperationTrace() });
     } finally {
+      this.pendingCommandOrder = undefined;
       // Restore clipboard regardless of outcome.
       if (this.detectIde() === "vscodium") {
         await this.sleep(400);

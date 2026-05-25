@@ -43,6 +43,7 @@ class _Client:
     version: str | None = None
     protocol_version: int | None = None
     capabilities: list[str] = field(default_factory=list)
+    command_catalog: dict[str, list[str]] | None = None
     # Pending CLI ack: when a CLI sends ``drive`` and we forward to a
     # plugin, we remember the CLI socket so we can reply after the
     # plugin acks.

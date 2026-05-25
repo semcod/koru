@@ -16,6 +16,8 @@ from koruide.audit import AuditLog
 from koruide.daemon.handlers import _default_handoff
 from koruide.daemon.protocol import _Client, _peer_uid
 from koruide.injector import Injector
+from koruide.command_catalog_store import CommandCatalogStore
+from koruide.command_telemetry import CommandTelemetry
 from koruide.plugin_router import PluginRouter
 from koruide.protocol import (
     MAX_LINE_BYTES,
@@ -82,6 +84,9 @@ class AutopilotDaemon:
             tuple[str, str | None, str | None], tuple[float, int]
         ] = {}
         self._plugin_rejections: list[dict[str, Any]] = []
+        self._command_catalog_store = CommandCatalogStore(project)
+        self._command_telemetry = CommandTelemetry(project)
+        self._recent_dsl: list[str] = []
 
     # ----- lifecycle -----------------------------------------------------
 

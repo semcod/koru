@@ -54,6 +54,12 @@ import {
   type KoruAutopilotStepConfig,
 } from "./step-decisions";
 import { detectIdeViaStrategies, getStrategy } from "./ides/registry";
+import {
+  classifyCommands,
+  matchingCommandsFlat,
+  type CommandCapability,
+  type CommandCatalog,
+} from "./command-catalog";
 
 
 const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
@@ -218,6 +224,8 @@ class AutopilotBridge {
    * db path.
    */
   private cursorBubbleVerifierAdapter: CursorBubbleAdapter | null = null;
+  /** Per-drive server-provided command order (``command_order`` from daemon). */
+  private pendingCommandOrder: Partial<Record<CommandCapability, string[]>> | undefined;
 
   constructor(private context: vscode.ExtensionContext) {
     this.status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 50);
@@ -246,6 +254,39 @@ class AutopilotBridge {
 
   private resetOperationTrace(): void {
     this.operationTrace = [];
+  }
+
+  private parseCommandOrder(
+    raw: unknown,
+  ): Partial<Record<CommandCapability, string[]>> | undefined {
+    if (!raw || typeof raw !== "object") {
+      return undefined;
+    }
+    const allowed: CommandCapability[] = ["focus_open", "focus_input", "paste", "submit"];
+    const order: Partial<Record<CommandCapability, string[]>> = {};
+    for (const capability of allowed) {
+      const value = (raw as Record<string, unknown>)[capability];
+      if (!Array.isArray(value)) {
+        continue;
+      }
+      const commands = value.filter((item): item is string => typeof item === "string");
+      if (commands.length > 0) {
+        order[capability] = commands;
+      }
+    }
+    return Object.keys(order).length > 0 ? order : undefined;
+  }
+
+  private orderWithServerOverride(
+    capability: CommandCapability,
+    localCommands: string[],
+    cacheWinner?: string,
+  ): string[] {
+    const server = this.pendingCommandOrder?.[capability];
+    if (server?.length) {
+      return mergeUnique(server, localCommands);
+    }
+    return orderWithCache(localCommands, cacheWinner);
   }
 
   private traceOperation(step: OperationTraceStep): void {
@@ -332,9 +373,8 @@ class AutopilotBridge {
       this.status.tooltip = `koru autopilot: connected ${p}`;
       debugLog("CONNECT_OK", { path: p, ide: this.detectIde() });
       Promise.resolve(vscode.commands.getCommands(false)).then((cmds) => {
-        const matching = cmds.filter(c =>
-          c.includes("windsurf") || c.includes("cascade") || c.includes("codeium") || c.includes("chat") || c.includes("composer")
-        );
+        const commandCatalog = classifyCommands(cmds);
+        const matching = matchingCommandsFlat(commandCatalog);
         try {
           fs.writeFileSync("/tmp/windsurf-commands.json", JSON.stringify(cmds, null, 2), "utf-8");
         } catch (err) {
@@ -345,7 +385,7 @@ class AutopilotBridge {
           id: "vscode-hello",
           ide: this.detectIde(),
           version: vscode.extensions.getExtension("semcod.koru-autopilot-cursor")?.packageJSON.version || "unknown",
-          protocolVersion: 1,
+          protocolVersion: 2,
           capabilities: [
             "ide.commands",
             "chat.focus",
@@ -354,9 +394,11 @@ class AutopilotBridge {
             "chat.events",
             "chat.history",
             "probe.ladder",
+            "command.catalog",
           ],
           pid: process.pid,
           matchingCommands: matching,
+          commandCatalog,
         });
         this.startChatHistoryWatcherIfEligible();
       });
@@ -1292,7 +1334,7 @@ class AutopilotBridge {
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     const cache = this.getProbeCache();
     const candidates = filterRegistered(
-      orderWithCache(buildSubmitCommands(ide), cache?.submit),
+      this.orderWithServerOverride("submit", buildSubmitCommands(ide), cache?.submit),
       existing
     );
     debugLog("SUBMIT_CANDIDATES", { ide, candidates, verifyEnabled });
@@ -1317,7 +1359,11 @@ class AutopilotBridge {
     const cache = this.getProbeCache();
     const useProbe = this.probeLadderEnabled();
     let commands = filterUnsafeFocusOpenForIde(filterRegistered(
-      orderWithCache(buildFocusOpenCommands(ide, primary), cache?.focusOpen),
+      this.orderWithServerOverride(
+        "focus_open",
+        buildFocusOpenCommands(ide, primary),
+        cache?.focusOpen,
+      ),
       existing
     ), ide);
     if (ide === "vscode" && commands.length === 0 && existing.has("workbench.action.chat.open")) {
@@ -1655,7 +1701,7 @@ class AutopilotBridge {
     useProbe: boolean
   ): Promise<CommandOutcome | undefined> {
     const directCommands = filterRegistered(
-      orderWithCache(buildPasteDirectCommands(ide), cache?.paste),
+      this.orderWithServerOverride("paste", buildPasteDirectCommands(ide), cache?.paste),
       existing
     );
     const previousClip = await this.saveClipboard();
@@ -1820,7 +1866,7 @@ class AutopilotBridge {
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
     const cache = this.getProbeCache();
     const candidates = filterRegistered(
-      orderWithCache(buildFocusInputCommands(ide), cache?.focusInput),
+      this.orderWithServerOverride("focus_input", buildFocusInputCommands(ide), cache?.focusInput),
       existing
     );
     debugLog("FOCUS_INPUT_START", { ide, candidatesCount: candidates.length, cacheFocusInput: cache?.focusInput });
@@ -2362,6 +2408,7 @@ class AutopilotBridge {
   private async injectChat(env: Envelope): Promise<void> {
     const text = typeof env.text === "string" ? env.text : "";
     const submit = env.submit !== false;
+    this.pendingCommandOrder = this.parseCommandOrder(env.command_order);
     this.resetOperationTrace();
     this.traceOperation({
       op: "drive",
@@ -2385,6 +2432,7 @@ class AutopilotBridge {
       this.traceOperation({ op: "drive", route: "exception", ok: false, reason: message });
       this.send({ type: "ack", id: env.id, ok: false, message, operation_trace: this.currentOperationTrace() });
     } finally {
+      this.pendingCommandOrder = undefined;
       // Restore clipboard regardless of outcome.
       if (this.detectIde() === "vscodium") {
         await this.sleep(400);
@@ -2515,39 +2563,51 @@ class AutopilotBridge {
   }
 
   /**
-   * Cursor-native fast path: paste **and** submit in a single
-   * ``composer.startComposerPrompt2(text)`` (or fallback
-   * ``composer.startComposerPrompt(text)``) call.
+   * Cursor-native fast path: paste via ``composer.startComposerPrompt2``
+   * (which targets the webview directly — not the active TextEditor) +
+   * submit via ``composer.sendToAgent`` + verify via ``cursorDiskKV``.
    *
-   * Why this matters — the regression captured in cycle #810 DSL trace:
-   *   #004 focus_open route=command+input:composer.openAsPane+composer.focusComposer ok=true
-   *   #009 paste     route=vscode-clipboard:editor.action.clipboardPasteAction ok=true
-   *   #013 submit_verify route=chat-input-probe   ok=true   ← input pusty (false positive!)
-   *   #014 submit_verify route=cursor-bubble-db   ok=false  ← w SQLite brak bubble
+   * Regression history (each DSL trace led to one piece of the fix):
    *
-   * Root cause: ``composer.focusComposer`` ustawia focus na **webview**
-   * Composer, ale ``editor.action.clipboardPasteAction`` celuje w
-   * ``vscode.window.activeTextEditor`` (otwarty plik .ts) — paste
-   * landuje w pliku, composer pozostaje pusty, ``composer.sendToAgent``
-   * jest no-op (nic do wysłania), bubble nie powstaje.
+   * Cycle #760 → 0.1.79: invisible-composer trap. ``composer.focusComposer``
+   * returned ok=true on a *hidden* panel; paste landed nowhere.
+   * Fix: skip input-only preflight when a non-toggling open command
+   * (``composer.openComposer``) is in the ladder.
    *
-   * Cursor 3.5 udostępnia ``composer.startComposerPrompt2`` (i legacy
-   * ``composer.startComposerPrompt``), które **bezpośrednio** wpisują
-   * tekst do composer i wykonują submit — bez polegania na clipboard,
-   * focus matching ani VS Code editor commands. Tutaj wywołujemy je
-   * jako fast path z weryfikacją przez ``cursorDiskKV``.
+   * Cycle #810 → 0.1.81 (first attempt): paste lands in active editor.
+   * ``editor.action.clipboardPasteAction`` targets
+   * ``vscode.window.activeTextEditor``, not the webview Composer.
+   * Even with the panel visibly open, the prompt text went into the
+   * .ts file the user had focused, while the chat input stayed empty.
+   * Fix attempt: call ``composer.startComposerPrompt2(text)`` as a
+   * single paste+submit combo.
+   *
+   * Cycle (this) → 0.1.82: ``startComposerPrompt2`` writes the text
+   * into the chat input but does **not** auto-submit. The DSL showed:
+   *
+   *   #003 paste route=cursor-composer-fastpath:composer.startComposerPrompt2 ok=true
+   *   #004 submit_verify route=cursor-bubble-db ok=false  ← no bubble — not submitted
+   *   #005 paste route=cursor-composer-fastpath:composer.startComposerPrompt ok=true
+   *   #006 submit_verify ok=false  ← drugi wpis (kumulacja draftu!)
+   *   #010 input_busy_probe ok=false reason="input contains unrelated draft"
+   *
+   * So this fast path is now structured as **paste, then submit, then
+   * verify** — and we only ever attempt one paste command (the highest
+   * ranked available) so we don't kumulate drafts when verification
+   * fails. The legacy probe ladder is left as a fallback in case
+   * sendToAgent is unavailable.
    */
   private async tryCursorComposerPromptFastPath(env: Envelope, text: string, submit: boolean): Promise<boolean> {
     if (this.detectIde() !== "cursor" || !submit) {
       return false;
     }
     const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
-    const candidates = [
+    const pasteCandidates = [
       "composer.startComposerPrompt2",
       "composer.startComposerPrompt",
     ];
-    const available = candidates.filter((cmd) => existing.has(cmd));
-    if (available.length === 0) {
+    const pasteCmd = pasteCandidates.find((cmd) => existing.has(cmd));
+    if (!pasteCmd) {
       this.traceOperation({
         op: "paste",
         route: "cursor-composer-fastpath:probe",
@@ -2556,70 +2616,155 @@ class AutopilotBridge {
       });
       return false;
     }
+    const submitCandidates = [
+      "composer.sendToAgent",
+      "composer.acceptComposerStep",
+      "workbench.action.chat.submit",
+      "workbench.action.chat.acceptInput",
+    ];
+    const submitCmd = submitCandidates.find((cmd) => existing.has(cmd));
+    if (!submitCmd) {
+      this.traceOperation({
+        op: "submit",
+        route: "cursor-composer-fastpath:probe",
+        ok: false,
+        reason: "no registered Cursor submit command (sendToAgent et al)",
+      });
+      return false;
+    }
+
     await this.captureCursorBubbleAnchor();
-    for (const cmd of available) {
+
+    // Paste step. ``startComposerPrompt2(text)`` targets the webview
+    // composer directly, so we don't need clipboard, focus matching, or
+    // VS Code editor commands.
+    this.traceOperation({
+      op: "paste",
+      route: `cursor-composer-fastpath:${pasteCmd}`,
+      ok: true,
+      detail: { ide: "cursor", textLength: text.length, submitCmd },
+    });
+    try {
+      safeLog("CURSOR_COMPOSER_FASTPATH_PASTE", { pasteCmd, submitCmd, textLength: text.length });
+      await Promise.resolve(vscode.commands.executeCommand(pasteCmd, text));
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      safeLog("CURSOR_COMPOSER_FASTPATH_PASTE_ERROR", { pasteCmd, detail });
       this.traceOperation({
         op: "paste",
-        route: `cursor-composer-fastpath:${cmd}`,
-        ok: true,
-        detail: { ide: "cursor", textLength: text.length },
+        route: `cursor-composer-fastpath:${pasteCmd}`,
+        ok: false,
+        reason: `executeCommand threw: ${detail}`,
       });
-      try {
-        safeLog("CURSOR_COMPOSER_FASTPATH_EXECUTE", { cmd, textLength: text.length });
-        await Promise.resolve(vscode.commands.executeCommand(cmd, text));
-      } catch (err) {
-        const detail = err instanceof Error ? err.message : String(err);
-        safeLog("CURSOR_COMPOSER_FASTPATH_EXEC_ERROR", { cmd, detail });
-        this.traceOperation({
-          op: "paste",
-          route: `cursor-composer-fastpath:${cmd}`,
-          ok: false,
-          reason: `executeCommand threw: ${detail}`,
-        });
-        continue;
-      }
-      const verifyResult = await this._verifySubmitViaCursorBubble(text);
-      if (verifyResult === null) {
-        this.traceOperation({
-          op: "submit_verify",
-          route: "cursor-bubble-db",
-          ok: false,
-          reason: "verification skipped (no anchor / sqlite unavailable)",
-          detail: { cmd },
-        });
-        return false;
-      }
-      if (verifyResult.matched) {
-        safeLog("CURSOR_COMPOSER_FASTPATH_VERIFIED", { cmd, newUserBubbles: verifyResult.newUserBubbles });
-        this.traceOperation({
-          op: "submit",
-          route: `cursor-composer-fastpath:${cmd}`,
-          ok: true,
-          command: cmd,
-          detail: { newUserBubbles: verifyResult.newUserBubbles },
-        });
-        this.traceOperation({
-          op: "submit_verify",
-          route: "cursor-bubble-db",
-          ok: true,
-          detail: { cmd, newUserBubbles: verifyResult.newUserBubbles },
-        });
-        const focusOutcome: CommandOutcome = { ok: true, command: cmd };
-        const pasteOutcome: CommandOutcome = { ok: true, command: cmd };
-        this.sendSuccessAck(env, focusOutcome, pasteOutcome, cmd);
-        this.sendMessageSent(text);
-        return true;
-      }
-      safeLog("CURSOR_COMPOSER_FASTPATH_NO_BUBBLE", { cmd, newUserBubbles: verifyResult.newUserBubbles });
+      return false;
+    }
+
+    // Cursor's webview takes a moment to settle after the prompt is
+    // injected. Without this delay sendToAgent occasionally runs before
+    // the composer textarea has accepted the value and submits empty.
+    await this.sleep(180);
+
+    // Submit step.
+    this.traceOperation({
+      op: "submit",
+      route: `cursor-composer-fastpath:${submitCmd}`,
+      ok: true,
+      command: submitCmd,
+      detail: { pasteCmd },
+    });
+    try {
+      safeLog("CURSOR_COMPOSER_FASTPATH_SUBMIT", { pasteCmd, submitCmd });
+      await Promise.resolve(vscode.commands.executeCommand(submitCmd));
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      safeLog("CURSOR_COMPOSER_FASTPATH_SUBMIT_ERROR", { submitCmd, detail });
+      this.traceOperation({
+        op: "submit",
+        route: `cursor-composer-fastpath:${submitCmd}`,
+        ok: false,
+        reason: `executeCommand threw: ${detail}`,
+      });
+      // Try to clear the draft we just injected so the legacy ladder
+      // doesn't see input_busy on its next attempt.
+      await this._clearComposerDraft();
+      return false;
+    }
+
+    // Verification via cursorDiskKV (ground truth on Cursor).
+    const verifyResult = await this._verifySubmitViaCursorBubble(text);
+    if (verifyResult === null) {
       this.traceOperation({
         op: "submit_verify",
         route: "cursor-bubble-db",
         ok: false,
-        reason: "no new user bubble in cursorDiskKV after composer prompt fastpath",
-        detail: { cmd, newUserBubbles: verifyResult.newUserBubbles },
+        reason: "verification skipped (no anchor / sqlite unavailable)",
+        detail: { pasteCmd, submitCmd },
       });
+      // No verification possible — but the commands succeeded, so we
+      // optimistically treat this as success rather than dragging the
+      // legacy ladder over an already-injected prompt.
+      const focusOutcome: CommandOutcome = { ok: true, command: pasteCmd };
+      const pasteOutcome: CommandOutcome = { ok: true, command: pasteCmd };
+      this.sendSuccessAck(env, focusOutcome, pasteOutcome, submitCmd);
+      this.sendMessageSent(text);
+      return true;
     }
+    if (verifyResult.matched) {
+      safeLog("CURSOR_COMPOSER_FASTPATH_VERIFIED", {
+        pasteCmd,
+        submitCmd,
+        newUserBubbles: verifyResult.newUserBubbles,
+      });
+      this.traceOperation({
+        op: "submit_verify",
+        route: "cursor-bubble-db",
+        ok: true,
+        detail: { pasteCmd, submitCmd, newUserBubbles: verifyResult.newUserBubbles },
+      });
+      const focusOutcome: CommandOutcome = { ok: true, command: pasteCmd };
+      const pasteOutcome: CommandOutcome = { ok: true, command: pasteCmd };
+      this.sendSuccessAck(env, focusOutcome, pasteOutcome, submitCmd);
+      this.sendMessageSent(text);
+      return true;
+    }
+
+    // sendToAgent reported success but no bubble landed. This can
+    // happen when the composer was already busy (e.g. agent is mid-
+    // response). Clear the draft so the legacy ladder doesn't pile up
+    // on top of it.
+    safeLog("CURSOR_COMPOSER_FASTPATH_NO_BUBBLE", {
+      pasteCmd,
+      submitCmd,
+      newUserBubbles: verifyResult.newUserBubbles,
+    });
+    this.traceOperation({
+      op: "submit_verify",
+      route: "cursor-bubble-db",
+      ok: false,
+      reason: "no new user bubble in cursorDiskKV after composer fastpath (paste+sendToAgent)",
+      detail: { pasteCmd, submitCmd, newUserBubbles: verifyResult.newUserBubbles },
+    });
+    await this._clearComposerDraft();
     return false;
+  }
+
+  /**
+   * Best-effort: clear any draft text we left in the Composer input
+   * before falling back to the legacy ladder. Without this, the next
+   * ``input_busy_probe`` sees our own injected prompt as "unrelated
+   * draft" and refuses to paste again.
+   */
+  private async _clearComposerDraft(): Promise<void> {
+    try {
+      await vscode.commands.executeCommand("composer.focusComposer");
+      await this.sleep(60);
+      await vscode.commands.executeCommand("editor.action.selectAll");
+      await this.sleep(40);
+      await vscode.commands.executeCommand("deleteLeft");
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      safeLog("CURSOR_COMPOSER_FASTPATH_CLEAR_DRAFT_FAILED", { detail });
+    }
   }
 
   private async submitAfterPaste(

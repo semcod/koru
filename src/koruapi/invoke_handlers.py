@@ -94,6 +94,36 @@ def _handle_autopilot_drive(
     return {"ok": bool(reply.get("ok", True)), "reply": reply}
 
 
+def _handle_ide_commands(_project: Path, method: str, payload: dict[str, Any]) -> dict[str, Any]:
+    from koruide.command_catalog import build_ide_command_catalog, command_catalog_for_llm
+
+    ide = payload.get("ide")
+    ide_arg = None if ide in (None, "", "all") else str(ide)
+    for_llm = bool(payload.get("for_llm", method == "llm"))
+    catalog = command_catalog_for_llm(ide_arg) if for_llm else build_ide_command_catalog(ide_arg)
+    return {"ok": True, "catalog": catalog}
+
+
+def _handle_ide_scenario_schema(
+    _project: Path, _method: str, _payload: dict[str, Any]
+) -> dict[str, Any]:
+    from koruide.command_scenario import ide_command_scenario_schema
+
+    return {"ok": True, "schema": ide_command_scenario_schema()}
+
+
+def _handle_ide_scenario_validate(
+    _project: Path, _method: str, payload: dict[str, Any]
+) -> dict[str, Any]:
+    from koruide.command_scenario import validate_ide_command_scenario
+
+    scenario = payload.get("scenario") or payload
+    if not isinstance(scenario, dict):
+        raise InvokeError("ide.scenario_validate requires body.scenario object")
+    result = validate_ide_command_scenario(scenario)
+    return {"ok": result.ok, "validation": result.to_dict()}
+
+
 def _handle_dsl_to_library(_project: Path, _method: str, payload: dict[str, Any]) -> dict[str, Any]:
     from korudsl import library_from_any
 
@@ -187,6 +217,9 @@ INTEGRATION_HANDLERS: dict[str, IntegrationHandler] = {
     "queue.loop": _handle_queue_loop,
     "autopilot.status": _handle_autopilot_status,
     "autopilot.drive": _handle_autopilot_drive,
+    "ide.commands": _handle_ide_commands,
+    "ide.scenario_schema": _handle_ide_scenario_schema,
+    "ide.scenario_validate": _handle_ide_scenario_validate,
     "dsl.to_library": _handle_dsl_to_library,
     "dsl.to_dsl": _handle_dsl_to_dsl,
     "dsl.roundtrip": _handle_dsl_roundtrip,

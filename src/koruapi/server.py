@@ -138,6 +138,21 @@ class KoruAPIHandler(BaseHTTPRequestHandler):
                 },
             )
             return
+        if parsed.path == "/api/v1/ide/commands":
+            from koruide.command_catalog import build_ide_command_catalog, command_catalog_for_llm
+
+            query = parse_qs(parsed.query)
+            ide_raw = query.get("ide", ["all"])[0]
+            ide = None if ide_raw in ("", "all") else ide_raw
+            for_llm = query.get("for_llm", ["0"])[0].lower() in {"1", "true", "yes"}
+            payload = command_catalog_for_llm(ide) if for_llm else build_ide_command_catalog(ide)
+            _json_response(self, 200, {"ok": True, "catalog": payload})
+            return
+        if parsed.path == "/api/v1/ide/scenario-schema":
+            from koruide.command_scenario import ide_command_scenario_schema
+
+            _json_response(self, 200, {"ok": True, "schema": ide_command_scenario_schema()})
+            return
         _json_response(self, 404, {"ok": False, "error": "not_found", "path": parsed.path})
 
     def do_POST(self) -> None:  # noqa: N802

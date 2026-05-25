@@ -353,6 +353,32 @@ def test_install_plugin_skips_when_extension_already_installed(monkeypatch) -> N
     assert result.status == "already_installed"
 
 
+def test_install_plugin_removes_conflicting_family_extension(monkeypatch) -> None:
+    monkeypatch.setenv("KORU_AUTOPILOT_REASSERT_INSTALL", "0")
+    monkeypatch.setattr(plugin_installer.shutil, "which", lambda name: f"/usr/bin/{name}")
+    vscodium_ext_id = plugin_installer.extension_id_for_ide("vscodium")
+    conflict_ext_id = plugin_installer.extension_id_for_ide("vscode")
+    calls: list[list[str]] = []
+
+    def fake_runner(cmd, **_kwargs):
+        calls.append(list(cmd))
+        if cmd[1] == "--list-extensions":
+            stdout = f"{vscodium_ext_id}\n{conflict_ext_id}\n"
+            return subprocess.CompletedProcess(cmd, 0, stdout=stdout, stderr="")
+        if cmd[1] == "--uninstall-extension":
+            return subprocess.CompletedProcess(cmd, 0, stdout="removed", stderr="")
+        raise AssertionError(f"unexpected cmd {cmd}")
+
+    result = plugin_installer.install_plugin_for_ide(
+        ide="vscodium",
+        runner=fake_runner,
+    )
+
+    assert result.status == "already_installed"
+    assert result.conflicts_removed == (conflict_ext_id,)
+    assert ["/usr/bin/codium", "--uninstall-extension", conflict_ext_id] in calls
+
+
 def test_installed_extension_version_for_ide_reads_editor_cli(monkeypatch) -> None:
     monkeypatch.setattr(plugin_installer, "_vscode_flavor", lambda: None)
     monkeypatch.setattr(plugin_installer.shutil, "which", lambda name: f"/usr/bin/{name}")

@@ -1,0 +1,425 @@
+version: "2026-05-25"
+status: draft
+purpose: >-
+  Machine-readable command map for Koru autonomy. The map is intended for
+  OpenRouter prompts, IDE-side LLM prompts, and local heuristics that must decide
+  when to use planfile, MCP, plugin socket chat control, vendor IDE commands, or
+  OS injection.
+
+current_runtime_diagnosis:
+  observed_at: 2026-05-25
+  before_repair:
+    autopilot_socket: /run/user/1000/koru-autopilot-vscode.sock
+    daemon_running: false
+    symptom: "koru autopilot status --explain reported daemon is NOT running"
+    effect: "Koru could not push prompts into the VS Code IDE chat."
+  after_repair:
+    daemon_running: true
+    daemon_version: 0.1.279
+    plugin:
+      ide: vscode
+      version: 0.1.78
+      protocol_version: 1
+      capabilities:
+        - ide.commands
+        - chat.focus
+        - chat.paste
+        - chat.submit
+        - chat.events
+        - chat.history
+        - probe.ladder
+      matching_command_count: 404
+  last_autonomy_skip:
+    skip_code: chat_activity
+    ticket: STARTER-281
+    because: "recent message.sent event was still inside the chat cooldown window"
+    note: "This is a pause policy, not a missing-ticket problem."
+
+providers:
+  openrouter_llm:
+    role: "headless planner or semantic reviewer"
+    preferred_interfaces:
+      - planfile_queue
+      - shell_quality_gates
+      - code_context
+      - command_map_readonly
+    avoid:
+      - direct_gui_control
+      - assuming IDE chat replies are available unless message.received is present
+  ide_llm:
+    role: "LLM embedded in Cursor/Windsurf/VS Code/JetBrains"
+    preferred_interfaces:
+      - mcp_tools
+      - plugin_socket_chat
+      - ide_native_commands
+      - local_filesystem
+    avoid:
+      - overwriting non-empty chat input
+      - retrying submit without operation_trace evidence
+  heuristics:
+    role: "deterministic local router"
+    preferred_interfaces:
+      - status_trace
+      - planfile_queue
+      - plugin_capabilities
+      - transport_policy
+
+command_api:
+  - id: koru.autonomy.status.explain
+    stability: stable
+    side_effect: read
+    audience: [openrouter_llm, ide_llm, heuristics]
+    implementation: "koru autopilot status --explain"
+    returns:
+      - daemon.ok
+      - socket
+      - plugins[].ide
+      - plugins[].capabilities
+      - selected_backend
+      - running_ides
+    use_when: "Before any attempt to drive IDE chat."
+
+  - id: koru.autonomy.trace
+    stability: stable
+    side_effect: read
+    audience: [openrouter_llm, ide_llm, heuristics]
+    implementation: "koru autopilot trace --limit N"
+    returns:
+      - skip_code
+      - observed
+      - decided
+      - action
+      - evidence
+      - next_step
+    use_when: "Explain why autonomous did or did not act."
+
+  - id: koru.planfile.queue.list
+    stability: stable
+    side_effect: read
+    audience: [openrouter_llm, ide_llm, heuristics]
+    implementation: "planfile ticket list --status open --format json"
+    returns:
+      - tickets[].id
+      - tickets[].status
+      - tickets[].labels
+      - tickets[].files
+    use_when: "Decide whether there is runnable concrete work."
+
+  - id: koru.planfile.ticket.transition
+    stability: stable
+    side_effect: write
+    audience: [ide_llm, heuristics]
+    implementation:
+      done: "planfile ticket done <id>"
+      input: "planfile ticket input <id> --prompt <text> --note <text>"
+      fail: "planfile ticket fail <id> --error <text>"
+    use_when: "Close, block, or fail a ticket after verified work."
+
+  - id: koru.ide.chat.drive
+    stability: stable
+    side_effect: ide_chat_write
+    audience: [ide_llm, heuristics]
+    implementation: "koru autopilot drive --ide <ide> --prompt <text>"
+    protocol:
+      cli_to_daemon: drive
+      daemon_to_plugin: chat.send
+      plugin_to_daemon: ack
+    parameters:
+      ide: [auto, vscode, vscodium, cursor, windsurf, antigravity, jetbrains, zed]
+      submit: boolean
+      require_plugin: boolean
+    use_when: "A prompt must be pushed into an IDE chat and daemon/plugin status is healthy."
+
+  - id: koru.ide.chat.handoff
+    stability: stable
+    side_effect: ide_chat_write
+    audience: [ide_llm, heuristics]
+    implementation: "koru autopilot handoff --project <path>"
+    use_when: "Koru must send the current markdown brief back into the active IDE chat."
+
+  - id: koru.ide.commands.list
+    stability: proposed
+    side_effect: read
+    audience: [openrouter_llm, ide_llm, heuristics]
+    current_source: "plugin hello matchingCommands + vscode.commands.getCommands(false)"
+    proposed_protocol: command.ide.commands.list
+    returns:
+      - command_id
+      - ide
+      - category
+      - trust_level
+      - arguments_schema
+    use_when: "Build a verified allowlist of IDE-native commands instead of scraping plugin logs."
+
+  - id: koru.ide.command.execute
+    stability: proposed
+    side_effect: ide_command_write
+    audience: [ide_llm, heuristics]
+    current_source: "extension runCommand(command) / vscode.commands.executeCommand"
+    proposed_protocol: command.ide.command.execute
+    parameters:
+      command_id: string
+      args: object
+      verify: boolean
+    use_when: "Execute an allowlisted IDE command such as open chat, focus input, reload window, or run a task."
+
+  - id: koru.ide.workspace.open_file
+    stability: proposed
+    side_effect: ide_navigation
+    audience: [openrouter_llm, ide_llm, heuristics]
+    proposed_protocol: command.workspace.open_file
+    parameters:
+      path: string
+      line: integer
+      column: integer
+    use_when: "Show the operator or IDE LLM the concrete file under discussion."
+
+  - id: koru.ide.workspace.apply_edit
+    stability: proposed
+    side_effect: file_write
+    audience: [ide_llm, heuristics]
+    proposed_protocol: command.workspace.apply_edit
+    parameters:
+      edits: array
+      require_clean_diagnostics: boolean
+    use_when: "Apply structured edits through the IDE API when patch files are not enough."
+
+  - id: koru.ide.diagnostics.list
+    stability: proposed
+    side_effect: read
+    audience: [openrouter_llm, ide_llm, heuristics]
+    proposed_protocol: command.diagnostics.list
+    use_when: "Read IDE diagnostics before deciding whether to run shell gates."
+
+  - id: koru.ide.task.run
+    stability: proposed
+    side_effect: process_write
+    audience: [ide_llm, heuristics]
+    proposed_protocol: command.task.run
+    use_when: "Run a named IDE task/debug configuration with deterministic output."
+
+  - id: koru.mcp.list_tickets
+    stability: stable
+    side_effect: read
+    audience: [ide_llm]
+    implementation: MCP tool koru_list_tickets
+    use_when: "IDE LLM needs queue context without shelling out."
+
+  - id: koru.mcp.run_quality_gates
+    stability: stable
+    side_effect: process_write
+    audience: [ide_llm]
+    implementation: MCP tool koru_run_quality_gates
+    use_when: "IDE LLM needs bounded validation through Koru."
+
+ide_surfaces:
+  vscode:
+    preferred_transport: vscode_family_plugin_socket
+    plugin_package: plugins/koru-autopilot-vscode
+    current_capabilities: [ide.commands, chat.focus, chat.paste, chat.submit, chat.events, chat.history, probe.ladder]
+    command_groups:
+      focus_open: [workbench.action.chat.open]
+      focus_input:
+        - workbench.action.chat.focusInput
+        - chat.action.focus
+        - workbench.chat.action.focusLastFocused
+      paste:
+        - workbench.action.chat.insertText
+        - workbench.action.chat.typeText
+        - aichat.typeText
+        - editor.action.clipboardPasteAction
+        - type
+      submit:
+        - workbench.action.chat.submit
+        - workbench.action.chat.acceptInput
+        - workbench.action.chat.send
+        - workbench.action.chat.sendMessage
+        - workbench.action.interactive.accept
+      repair: [workbench.action.reloadWindow, koruAutopilot.connect]
+    observe: [message.sent, chat.opened, operation_trace]
+    gaps: [message.received_not_universal]
+
+  cursor:
+    preferred_transport: vscode_family_plugin_socket
+    plugin_package: plugins/koru-autopilot-cursor
+    command_groups:
+      focus_open:
+        - composer.openComposer
+        - composer.openAsPane
+        - composer.focusComposer
+        - cursor.composer.open
+        - cursor.composer.focus
+        - workbench.panel.chat.view.copilot.focus
+        - workbench.panel.aichat.view.copilot.focus
+      focus_input:
+        - composer.focusComposer
+        - cursor.composer.focus
+      paste:
+        - cursor.action.chat.typeText
+        - composer.typeText
+        - aichat.typeText
+      submit:
+        - composer.sendToAgent
+        - composer.acceptComposerStep
+        - composer.startComposerPrompt
+        - composer.startComposerPrompt2
+        - composer.submit
+        - aichat.submit
+      host_submit_preference: ctrl+Return
+    observe: [message.sent, message.received_via_chat_history_sqlite, cursor_bubble_db_verification, operation_trace]
+    hazards:
+      - plain_Return_can_insert_newline
+      - composer.openAsPane_can_toggle_hidden
+      - clipboard_paste_commands_can_use_stale_clipboard
+
+  vscodium:
+    preferred_transport: vscode_family_plugin_socket
+    plugin_package: plugins/koru-autopilot-vscodium
+    command_groups:
+      focus_open: []
+      focus_input: []
+      paste: [host_clipboard_paste, type]
+      submit: [host_ctrl_Return, host_Return]
+    observe: [message.sent, operation_trace]
+    hazards:
+      - workbench.action.chat.submit_is_not_trusted_as_send_proof
+      - plain_Return_can_report_success_without_submission
+
+  windsurf:
+    preferred_transport: windsurf_native_plugin
+    plugin_package: plugins/koru-autopilot-windsurf
+    command_groups:
+      atomic_send: [windsurf.sendTextToChat]
+      focus_open:
+        - windsurf.cascadePanel.open
+        - windsurf.cascadePanel.focus
+        - windsurf.action.openChat
+        - windsurf.chat.open
+        - windsurf.cascade.open
+        - windsurf.panel.chat
+        - cascade.focus
+        - windsurf.action.showCascade
+      focus_input:
+        - windsurf.cascadePanel.focus
+        - windsurf.action.focusChatInput
+        - windsurf.chat.focusInput
+        - windsurf.cascade.focusInput
+        - cascade.focusInput
+      paste:
+        - windsurf.sendTextToChat
+        - windsurf.action.chat.typeText
+        - windsurf.action.cascade.typeText
+        - windsurf.chat.typeText
+        - windsurf.cascade.typeText
+        - cascade.typeText
+      submit:
+        - windsurf.action.cascade.submit
+        - windsurf.action.submitCascade
+        - windsurf.action.submitChat
+        - windsurf.action.chat.submit
+        - windsurf.chat.submit
+        - windsurf.cascade.submit
+        - cascade.submit
+    observe: [message.sent, operation_trace]
+    hazards:
+      - generic_paste_can_contaminate_editor
+      - open_commands_can_toggle_or_hide_panel
+
+  antigravity:
+    preferred_transport: antigravity_native_plugin
+    plugin_package: plugins/koru-autopilot-antigravity
+    command_groups:
+      atomic_send: [antigravity.sendPromptToAgentPanel]
+      focus_open:
+        - antigravity.openAgent
+        - antigravity.agentSidePanel.open
+        - antigravity.agentSidePanel.focus
+      paste: [atomic_send]
+      submit: [atomic_send]
+    observe: [message.sent, operation_trace]
+    hazards:
+      - requires_registered_atomic_send_command
+
+  jetbrains:
+    preferred_transport: jetbrains_plugin_socket_or_os_injector
+    plugin_package: plugins/koru-autopilot-jetbrains
+    current_bridge: "Kotlin service connects to socket and handles chat.send."
+    command_groups:
+      open_ai_panel:
+        - AIAssistant.OpenAIAssistantToolWindow
+        - AIAssistant.Chat.OpenChat
+        - AiAssistant.OpenAiAssistantToolWindow
+        - Grazie.OpenAssistant
+      paste: [system_clipboard, AWT_Robot_Ctrl_V]
+      submit: [AWT_Robot_Enter]
+      fallback_submit_key: ctrl+Return
+    observe: [session.ended_manual, ack]
+    gaps:
+      - hello_capabilities_need_structured_json_array
+      - no_command_list_or_diagnostics_api_yet
+      - no_stable_message_received_stream
+
+  zed:
+    preferred_transport: os_injector
+    plugin_package: none
+    command_groups:
+      paste: [keyboard_type, clipboard_paste]
+      submit: [Return]
+    observe: []
+    gaps:
+      - no_native_plugin_bridge
+      - no_mcp_or_command_rpc_in_repo
+
+heuristics:
+  - id: explain_before_drive
+    rule: "Always check koru.autonomy.status.explain before pushing chat."
+    reason: "If the daemon or plugin is down, chat control fails regardless of ticket state."
+
+  - id: respect_chat_activity_cooldown
+    rule: "If trace skip_code is chat_activity, wait or reduce cooldown explicitly; do not repaste."
+    reason: "Recent IDE chat activity means the user or IDE LLM may still be responding."
+
+  - id: prefer_planfile_for_work_selection
+    rule: "Choose planfile open tickets before broad discovery or chat prompts."
+    reason: "Planfile is Koru's source of truth for autonomous work."
+
+  - id: prefer_mcp_for_ide_llm_pull
+    rule: "When the IDE LLM needs data, use MCP tools instead of prompting Koru through chat."
+    reason: "MCP is deterministic stdio and does not require GUI focus."
+
+  - id: prefer_plugin_socket_for_chat_push
+    rule: "When Koru must push text to IDE chat, use plugin socket before OS injection."
+    reason: "Plugin socket is Wayland-safe and returns operation_trace."
+
+  - id: prefer_atomic_vendor_send
+    rule: "Use vendor atomic send commands when present: windsurf.sendTextToChat or antigravity.sendPromptToAgentPanel."
+    reason: "Atomic send reduces focus/paste/submit races."
+
+  - id: avoid_unverified_submit_loops
+    rule: "Do not retry submit blindly when operation_trace lacks winning_submit or verification."
+    reason: "False-positive host keys can insert newlines or duplicate prompts."
+
+  - id: openrouter_stays_headless
+    rule: "OpenRouter should propose strategy patches, ticket plans, and semantic review, not GUI actions."
+    reason: "OpenRouter cannot observe the IDE chat surface directly."
+
+  - id: ide_llm_uses_command_map
+    rule: "IDE-side LLM can use this map to pick MCP tools, IDE commands, or request Koru drive."
+    reason: "The model sees capabilities as explicit tools instead of hidden plugin heuristics."
+
+recommended_next_protocol:
+  version: KIDE-004
+  add_messages:
+    - command.ide.commands.list
+    - command.ide.command.execute
+    - command.workspace.open_file
+    - command.workspace.apply_edit
+    - command.diagnostics.list
+    - command.task.run
+    - event.chat.message.received
+  add_negotiation_fields:
+    - capabilities_effective
+    - command_allowlist_hash
+    - ide_family
+    - chat_surfaces
+    - observation_streams

@@ -3,6 +3,8 @@
 There is **no single API** that wakes or drives the embedded LLM across
 all editors. Koru already splits the problem into **transports**; this
 document names the layers, maps popular IDEs to them, and points to code.
+For the LLM/heuristic-facing command facade, see
+[ide-command-api-map.md](ide-command-api-map.md).
 
 ## Design rule
 
@@ -93,8 +95,8 @@ combinations as `agent_integration_config` failures.
 
 ## References (external)
 
-- Cursor MCP: https://cursor.com/docs/mcp  
-- Cursor CLI: https://cursor.com/docs/cli  
+- [Cursor MCP](https://cursor.com/docs/mcp)
+- [Cursor CLI](https://cursor.com/docs/cli)
 
 These URLs describe **vendor contracts**; koru does not control when they
 change.

@@ -57,6 +57,7 @@ const chat_history_watcher_1 = require("./chat-history-watcher");
 const cursor_bubble_adapter_1 = require("./cursor-bubble-adapter");
 const step_decisions_1 = require("./step-decisions");
 const registry_1 = require("./ides/registry");
+const command_catalog_1 = require("./command-catalog");
 const DISALLOWED_FOCUS_OPEN_COMMANDS = new Set([
     "workbench.action.chat.openagent",
     "workbench.action.chat.openask",
@@ -177,6 +178,8 @@ class AutopilotBridge {
      * db path.
      */
     cursorBubbleVerifierAdapter = null;
+    /** Per-drive server-provided command order (``command_order`` from daemon). */
+    pendingCommandOrder;
     constructor(context) {
         this.context = context;
         this.status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 50);
@@ -203,6 +206,31 @@ class AutopilotBridge {
     }
     resetOperationTrace() {
         this.operationTrace = [];
+    }
+    parseCommandOrder(raw) {
+        if (!raw || typeof raw !== "object") {
+            return undefined;
+        }
+        const allowed = ["focus_open", "focus_input", "paste", "submit"];
+        const order = {};
+        for (const capability of allowed) {
+            const value = raw[capability];
+            if (!Array.isArray(value)) {
+                continue;
+            }
+            const commands = value.filter((item) => typeof item === "string");
+            if (commands.length > 0) {
+                order[capability] = commands;
+            }
+        }
+        return Object.keys(order).length > 0 ? order : undefined;
+    }
+    orderWithServerOverride(capability, localCommands, cacheWinner) {
+        const server = this.pendingCommandOrder?.[capability];
+        if (server?.length) {
+            return (0, probe_ladder_1.mergeUnique)(server, localCommands);
+        }
+        return (0, probe_ladder_1.orderWithCache)(localCommands, cacheWinner);
     }
     traceOperation(step) {
         const clipped = {
@@ -286,7 +314,8 @@ class AutopilotBridge {
             debugLog("CONNECT_OK", { path: p, ide: this.detectIde() });
             this.maybeOpenChatOnConnect();
             Promise.resolve(vscode.commands.getCommands(false)).then((cmds) => {
-                const matching = cmds.filter(c => c.includes("windsurf") || c.includes("cascade") || c.includes("codeium") || c.includes("chat") || c.includes("composer"));
+                const commandCatalog = (0, command_catalog_1.classifyCommands)(cmds);
+                const matching = (0, command_catalog_1.matchingCommandsFlat)(commandCatalog);
                 try {
                     fs.writeFileSync("/tmp/windsurf-commands.json", JSON.stringify(cmds, null, 2), "utf-8");
                 }
@@ -298,7 +327,7 @@ class AutopilotBridge {
                     id: "vscode-hello",
                     ide: this.detectIde(),
                     version: vscode.extensions.getExtension("semcod.koru-autopilot-vscode")?.packageJSON.version || "unknown",
-                    protocolVersion: 1,
+                    protocolVersion: 2,
                     capabilities: [
                         "ide.commands",
                         "chat.focus",
@@ -307,9 +336,11 @@ class AutopilotBridge {
                         "chat.events",
                         "chat.history",
                         "probe.ladder",
+                        "command.catalog",
                     ],
                     pid: process.pid,
                     matchingCommands: matching,
+                    commandCatalog,
                 });
                 this.startChatHistoryWatcherIfEligible();
             });
@@ -1200,7 +1231,7 @@ class AutopilotBridge {
         }
         const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
         const cache = this.getProbeCache();
-        const candidates = (0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildSubmitCommands)(ide), cache?.submit), existing);
+        const candidates = (0, probe_ladder_1.filterRegistered)(this.orderWithServerOverride("submit", (0, probe_ladder_1.buildSubmitCommands)(ide), cache?.submit), existing);
         debugLog("SUBMIT_CANDIDATES", { ide, candidates, verifyEnabled });
         const registered = await this._tryRegisteredCommands(candidates, verifyText, verifyEnabled);
         if (registered)
@@ -1224,7 +1255,7 @@ class AutopilotBridge {
         const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
         const cache = this.getProbeCache();
         const useProbe = this.probeLadderEnabled();
-        let commands = filterUnsafeFocusOpenForIde((0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildFocusOpenCommands)(ide, primary), cache?.focusOpen), existing), ide);
+        let commands = filterUnsafeFocusOpenForIde((0, probe_ladder_1.filterRegistered)(this.orderWithServerOverride("focus_open", (0, probe_ladder_1.buildFocusOpenCommands)(ide, primary), cache?.focusOpen), existing), ide);
         if (ide === "vscode" && commands.length === 0 && existing.has("workbench.action.chat.open")) {
             commands = ["workbench.action.chat.open"];
             debugLog("FOCUS_OPEN_HARD_FALLBACK", { ide, command: "workbench.action.chat.open" });
@@ -1494,7 +1525,7 @@ class AutopilotBridge {
             || cmd === "paste");
     }
     async tryDirectPasteCommands(text, ide, existing, cache, before, useProbe) {
-        const directCommands = (0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildPasteDirectCommands)(ide), cache?.paste), existing);
+        const directCommands = (0, probe_ladder_1.filterRegistered)(this.orderWithServerOverride("paste", (0, probe_ladder_1.buildPasteDirectCommands)(ide), cache?.paste), existing);
         const previousClip = await this.saveClipboard();
         let clipboardSeeded = false;
         try {
@@ -1642,7 +1673,7 @@ class AutopilotBridge {
         const ide = this.detectIde();
         const existing = new Set(await Promise.resolve(vscode.commands.getCommands(false)));
         const cache = this.getProbeCache();
-        const candidates = (0, probe_ladder_1.filterRegistered)((0, probe_ladder_1.orderWithCache)((0, probe_ladder_1.buildFocusInputCommands)(ide), cache?.focusInput), existing);
+        const candidates = (0, probe_ladder_1.filterRegistered)(this.orderWithServerOverride("focus_input", (0, probe_ladder_1.buildFocusInputCommands)(ide), cache?.focusInput), existing);
         debugLog("FOCUS_INPUT_START", { ide, candidatesCount: candidates.length, cacheFocusInput: cache?.focusInput });
         debugLog("FOCUS_INPUT_CANDIDATES", { ide, candidates });
         for (const cmd of candidates) {
@@ -2070,6 +2101,7 @@ class AutopilotBridge {
     async injectChat(env) {
         const text = typeof env.text === "string" ? env.text : "";
         const submit = env.submit !== false;
+        this.pendingCommandOrder = this.parseCommandOrder(env.command_order);
         this.resetOperationTrace();
         this.traceOperation({
             op: "drive",
@@ -2095,6 +2127,7 @@ class AutopilotBridge {
             this.send({ type: "ack", id: env.id, ok: false, message, operation_trace: this.currentOperationTrace() });
         }
         finally {
+            this.pendingCommandOrder = undefined;
             // Restore clipboard regardless of outcome.
             if (this.detectIde() === "vscodium") {
                 await this.sleep(400);

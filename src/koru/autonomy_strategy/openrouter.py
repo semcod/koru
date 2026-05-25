@@ -17,14 +17,15 @@ class OpenRouterStrategyResponse:
     error: str = ""
 
 
-def ask_openrouter_for_strategy_patch(
+def call_openrouter_json(
     prompt: str,
     *,
+    system_prompt: str = "Return only valid JSON.",
     model: str = "qwen/qwen3-coder-next",
     api_key: str | None = None,
     timeout_seconds: float = 30.0,
 ) -> OpenRouterStrategyResponse:
-    """Call OpenRouter explicitly; never used by default autonomous cycles."""
+    """Low-level OpenRouter chat completion returning raw assistant text."""
     key = api_key or os.environ.get("OPENROUTER_API_KEY", "").strip()
     if not key:
         return OpenRouterStrategyResponse(
@@ -35,10 +36,7 @@ def ask_openrouter_for_strategy_patch(
     payload = {
         "model": model,
         "messages": [
-            {
-                "role": "system",
-                "content": "Return only reviewable YAML or unified diff output.",
-            },
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ],
     }
@@ -67,4 +65,25 @@ def ask_openrouter_for_strategy_patch(
     return OpenRouterStrategyResponse(ok=True, content=content)
 
 
-__all__ = ["OpenRouterStrategyResponse", "ask_openrouter_for_strategy_patch"]
+def ask_openrouter_for_strategy_patch(
+    prompt: str,
+    *,
+    model: str = "qwen/qwen3-coder-next",
+    api_key: str | None = None,
+    timeout_seconds: float = 30.0,
+) -> OpenRouterStrategyResponse:
+    """Call OpenRouter explicitly; never used by default autonomous cycles."""
+    return call_openrouter_json(
+        prompt,
+        system_prompt="Return only reviewable YAML or unified diff output.",
+        model=model,
+        api_key=api_key,
+        timeout_seconds=timeout_seconds,
+    )
+
+
+__all__ = [
+    "OpenRouterStrategyResponse",
+    "ask_openrouter_for_strategy_patch",
+    "call_openrouter_json",
+]

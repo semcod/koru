@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 MAX_LINE_BYTES = 1024 * 1024  # 1 MiB
-PLUGIN_PROTOCOL_VERSION = 1
+PLUGIN_PROTOCOL_VERSION = 2
 MIN_PLUGIN_PROTOCOL_VERSION = 1
 
 PLUGIN_TO_DAEMON = frozenset(
@@ -52,7 +52,15 @@ ALL_TYPES = PLUGIN_TO_DAEMON | DAEMON_TO_PLUGIN | CLI_TO_DAEMON
 
 _FIELD_SCHEMA: dict[str, frozenset[str] | None] = {
     "hello": frozenset(
-        {"ide", "version", "pid", "matchingCommands", "protocolVersion", "capabilities"}
+        {
+            "ide",
+            "version",
+            "pid",
+            "matchingCommands",
+            "commandCatalog",
+            "protocolVersion",
+            "capabilities",
+        }
     ),
     "session.started": frozenset({"chat"}),
     "session.ended": frozenset({"chat", "reason"}),
@@ -61,8 +69,8 @@ _FIELD_SCHEMA: dict[str, frozenset[str] | None] = {
     "chat.opened": frozenset({"chat", "ok", "reason", "command", "message", "operation_trace"}),
     "status.error": frozenset({"message", "severity", "source"}),
     "console_log": frozenset({"message", "data", "timestamp", "ide", "version"}),
-    "chat.send": frozenset({"text", "submit"}),
-    "drive": frozenset({"text", "submit", "ide", "require_plugin"}),
+    "chat.send": frozenset({"text", "submit", "command_order", "strategy_hint"}),
+    "drive": frozenset({"text", "submit", "ide", "require_plugin", "strategy_hint"}),
     "ping": frozenset(),
     "shutdown": frozenset(),
     "status": frozenset(),
@@ -150,8 +158,20 @@ def hello(
     return Message(type="hello", id=id, data=data)
 
 
-def chat_send(text: str, *, submit: bool = True, id: str | None = None) -> Message:
-    return Message(type="chat.send", id=id, data={"text": text, "submit": submit})
+def chat_send(
+    text: str,
+    *,
+    submit: bool = True,
+    id: str | None = None,
+    command_order: dict[str, list[str]] | None = None,
+    strategy_hint: str | None = None,
+) -> Message:
+    data: dict[str, Any] = {"text": text, "submit": submit}
+    if command_order:
+        data["command_order"] = command_order
+    if strategy_hint:
+        data["strategy_hint"] = strategy_hint
+    return Message(type="chat.send", id=id, data=data)
 
 
 def drive(
@@ -160,13 +180,18 @@ def drive(
     submit: bool = True,
     ide: str = "auto",
     require_plugin: bool = False,
+    strategy_hint: str | None = None,
     id: str | None = None,
 ) -> Message:
-    return Message(
-        type="drive",
-        id=id,
-        data={"text": text, "submit": submit, "ide": ide, "require_plugin": require_plugin},
-    )
+    data: dict[str, Any] = {
+        "text": text,
+        "submit": submit,
+        "ide": ide,
+        "require_plugin": require_plugin,
+    }
+    if strategy_hint:
+        data["strategy_hint"] = strategy_hint
+    return Message(type="drive", id=id, data=data)
 
 
 def ack(reply_to: str, *, ok: bool = True, info: dict[str, Any] | None = None) -> Message:

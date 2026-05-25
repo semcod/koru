@@ -11,6 +11,10 @@ import time
 from typing import Any
 
 from koruide.daemon.protocol import _Client, _daemon_package_version
+from koruide.command_catalog_store import (
+    command_catalog_enabled,
+    parse_hello_command_catalog,
+)
 from koruide.drive_orchestrator import DriveOrchestrator
 from koruide.ide import normalize_ide_id
 from koruide.protocol import Message, ack, error, MIN_PLUGIN_PROTOCOL_VERSION
@@ -132,8 +136,31 @@ def handle_hello(daemon: Any, client: _Client, msg: Message) -> None:
 
     _configure_plugin_client(daemon, client, ide, plugin_version, protocol_version, capabilities)
     matching_cmds = msg.data.get("matchingCommands")
+    catalog = parse_hello_command_catalog(msg.data)
+    if catalog and command_catalog_enabled():
+        client.command_catalog = catalog
+        unknown = catalog.get("unknown_chat") or []
+        daemon._command_catalog_store.update(
+            ide,
+            plugin_version=plugin_version,
+            catalog=catalog,
+            unknown_sample=unknown[:20] if isinstance(unknown, list) else None,
+        )
+        daemon.log(
+            f"plugin command catalog stored: ide={ide} "
+            f"focus_open={len(catalog.get('focus_open', []))} "
+            f"paste={len(catalog.get('paste', []))} "
+            f"submit={len(catalog.get('submit', []))} "
+            f"unknown_chat={len(catalog.get('unknown_chat', []))}",
+        )
     _log_plugin_hello_accepted(
-        daemon, ide, plugin_version, protocol_version, capabilities, version_info, matching_cmds
+        daemon,
+        ide,
+        plugin_version,
+        protocol_version,
+        capabilities,
+        version_info,
+        matching_cmds,
     )
     daemon._send(client, ack(msg.id or "", info={"role": "plugin"}).encode())
     daemon.audit.record(

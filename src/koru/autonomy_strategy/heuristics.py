@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from koru.semcod_tools import detect_semcod_tools
+from koruide.command_catalog import command_catalog_for_llm
 
 
 def build_strategy_heuristics(project: Path) -> dict[str, Any]:
@@ -29,6 +30,7 @@ def build_strategy_heuristics(project: Path) -> dict[str, Any]:
             "missing": missing_tools,
             "details": tool_rows,
         },
+        "ide_command_api": command_catalog_for_llm(),
         "recommendations": _recommendations(available_tools, analysis.is_file()),
     }
 

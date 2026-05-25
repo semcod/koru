@@ -137,6 +137,34 @@ def build_openapi_document(*, host: str = "127.0.0.1", port: int = 8790) -> dict
                     },
                 },
             },
+            "/api/v1/ide/commands": {
+                "get": {
+                    "summary": "IDE command catalog",
+                    "parameters": [
+                        {
+                            "name": "ide",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "string"},
+                            "description": "IDE id or all.",
+                        },
+                        {
+                            "name": "for_llm",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "boolean"},
+                            "description": "Return compact LLM-oriented catalog.",
+                        },
+                    ],
+                    "responses": {"200": {"description": "IDE command catalog"}},
+                },
+            },
+            "/api/v1/ide/scenario-schema": {
+                "get": {
+                    "summary": "IDE command scenario JSON Schema",
+                    "responses": {"200": {"description": "Scenario schema"}},
+                },
+            },
             "/api/v1/openapi.json": {
                 "get": {
                     "summary": "This OpenAPI document",

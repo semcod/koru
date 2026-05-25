@@ -48,6 +48,7 @@ def test_strategy_prompt_mentions_editable_yaml_and_heuristics(tmp_path: Path) -
     assert "autonomy.strategy" in prompt
     assert "Planfile as the source of truth" in prompt
     assert "Heuristic project report" in prompt
+    assert "ide_command_api" in prompt
 
 
 def test_strategy_heuristics_reports_semcod_tools(tmp_path: Path) -> None:
@@ -55,4 +56,7 @@ def test_strategy_heuristics_reports_semcod_tools(tmp_path: Path) -> None:
 
     assert report["project"] == str(tmp_path.resolve())
     assert "semcod_tools" in report
+    assert "ide_command_api" in report
+    assert "cursor" in report["ide_command_api"]["ides"]
+    assert "zed" in report["ide_command_api"]["ides"]
     assert "recommendations" in report

@@ -20,6 +20,8 @@ from koru.observability_events import (
     emit_phase,
 )
 from koruide.daemon.protocol import _Client
+from koruide.command_catalog_store import command_picker_enabled
+from koruide.command_picker import pick_command_order
 from koruide.drive_orchestrator import DriveOrchestrator
 from koruide.ide import detect_running_ides_cached as detect_running_ides
 from koruide.ide import normalize_ide_id, pick_target, resolve_drive_target
@@ -49,6 +51,9 @@ def handle_drive(daemon: Any, client: _Client, msg: Message) -> None:
     ide_pref = normalized_ide if normalized_ide not in (None, "auto") else None
     submit = bool(msg.data.get("submit", True))
     require_plugin = bool(msg.data.get("require_plugin", False))
+    strategy_hint = msg.data.get("strategy_hint")
+    if strategy_hint is not None and not isinstance(strategy_hint, str):
+        strategy_hint = None
     daemon.log(
         "drive request: "
         f"ide={raw_ide or 'auto'}, chars={len(text)}, submit={submit}, "
@@ -65,7 +70,16 @@ def handle_drive(daemon: Any, client: _Client, msg: Message) -> None:
         daemon.log(f"drive: no plugin found for ide={ide_pref}")
     if plugin is not None and not _prefer_keyboard_drive():
         daemon.log(f"drive: routing via plugin (ide={plugin.ide})")
-        _drive_via_plugin(daemon, client, msg, plugin, text, submit, require_plugin)
+        _drive_via_plugin(
+            daemon,
+            client,
+            msg,
+            plugin,
+            text,
+            submit,
+            require_plugin,
+            strategy_hint=strategy_hint,
+        )
         return
     if require_plugin:
         label = ide_pref or "auto"
@@ -94,6 +108,8 @@ def _drive_via_plugin(
     text: str,
     submit: bool,
     require_plugin: bool,
+    *,
+    strategy_hint: str | None = None,
 ) -> None:
     """Forward a drive request to a connected plugin for that IDE."""
     daemon.log(
@@ -206,7 +222,35 @@ def _drive_via_plugin(
         actor="autopilot-daemon",
         replayable=True,
     )
-    daemon._send(plugin, chat_send(text, submit=submit, id=corr).encode())
+    command_order: dict[str, list[str]] | None = None
+    if command_picker_enabled():
+        catalog = (
+            plugin.command_catalog
+            or DriveOrchestrator.command_catalog_for(daemon._command_catalog_store, plugin.ide or "")
+        )
+        command_order = pick_command_order(
+            ide=plugin.ide or "",
+            plugin_version=plugin.version,
+            catalog=catalog,
+            telemetry=daemon._command_telemetry,
+            recent_dsl=list(daemon._recent_dsl),
+            strategy_hint=strategy_hint,
+        )
+        if command_order:
+            daemon.log(
+                "drive command_order: "
+                + " ".join(f"{cap}={len(cmds)}" for cap, cmds in command_order.items()),
+            )
+    daemon._send(
+        plugin,
+        chat_send(
+            text,
+            submit=submit,
+            id=corr,
+            command_order=command_order,
+            strategy_hint=strategy_hint,
+        ).encode(),
+    )
     daemon._last_chat_send_at = time.monotonic()
     preview = text.replace("\n", " ")[:100]
     daemon.log(

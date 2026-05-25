@@ -32,6 +32,12 @@ def test_tools_list_includes_required_koru_tools() -> None:
         "koru_job_status",
         "koru_run_quality_gates",
         "koru_propose_edits",
+        "koru_ide_command_catalog",
+        "koru_ide_command_scenario_schema",
+        "koru_validate_ide_command_scenario",
+        "koru_ide_commands",
+        "koru_ide_drive",
+        "koru_ide_dsl_recent",
     }.issubset(names)
 
 
@@ -55,6 +61,27 @@ def test_tool_job_status_unknown_job() -> None:
     payload = mcp_server.tool_job_status({"job_id": "JOB-DOES-NOT-EXIST"})
     assert payload["status"] == "not_found"
     assert payload["job_id"] == "JOB-DOES-NOT-EXIST"
+
+
+def test_tool_ide_command_catalog_for_llm() -> None:
+    payload = mcp_server.tool_ide_command_catalog({"ide": "cursor", "for_llm": True})
+
+    assert set(payload["catalog"]["ides"]) == {"cursor"}
+    assert "submit" in payload["catalog"]["ides"]["cursor"]["categories"]
+
+
+def test_tool_validate_ide_command_scenario() -> None:
+    payload = mcp_server.tool_validate_ide_command_scenario(
+        {
+            "scenario": {
+                "ide": "windsurf",
+                "steps": [{"action": "atomic_send", "command": "windsurf.sendTextToChat"}],
+            },
+        },
+    )
+
+    assert payload["ok"] is True
+    assert payload["validation"]["normalized"]["ide"] == "windsurf"
 
 
 def test_run_ticket_invokes_queue_mode_without_ticket_flag(monkeypatch, tmp_path: Path) -> None:
@@ -213,6 +240,20 @@ def test_job_store_is_ephemeral_across_imports(tmp_path: Path) -> None:
     status_after_clear = mcp1.tool_job_status({"job_id": job_id})
     assert status_after_clear["status"] == "not_found"
     assert "Unknown job" in status_after_clear["error"]
+
+
+def test_tool_ide_dsl_recent_reads_persisted_file(tmp_path: Path) -> None:
+    dsl_path = tmp_path / ".planfile" / ".koru" / "dsl_recent.json"
+    dsl_path.parent.mkdir(parents=True, exist_ok=True)
+    dsl_path.write_text(
+        '{"lines": ["#001 act=paste ok=true", "#999 act=drive ok=false"]}',
+        encoding="utf-8",
+    )
+    payload = mcp_server.tool_ide_dsl_recent(
+        {"project_root": str(tmp_path), "limit": 5},
+    )
+    assert payload["count"] == 2
+    assert "#001" in payload["lines"][0]
 
 
 def test_job_store_persists_to_disk_and_reloads(tmp_path: Path) -> None:

@@ -4,6 +4,42 @@ All notable changes to this extension will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.82] — 2026-05-25
+
+### Fixed
+- **Fast path split into paste + submit + verify (was: single combo
+  call that never submitted).** DSL trace from the 0.1.81 test drive
+  showed `composer.startComposerPrompt2(text)` returns ok=true and
+  injects the text into the chat input, but does **not** auto-submit:
+
+  ```
+  #003 paste route=cursor-composer-fastpath:composer.startComposerPrompt2 ok=true
+  #004 submit_verify route=cursor-bubble-db ok=false   ← no bubble: not submitted
+  #005 paste route=cursor-composer-fastpath:composer.startComposerPrompt ok=true   ← drugi raz!
+  #006 submit_verify ok=false                          ← znów wpisał, draft kumuluje
+  #010 input_busy_probe ok=false reason="input contains unrelated draft"
+  ```
+
+  Three issues fixed in this release:
+  1. `startComposerPrompt2` is a paste-only command, not paste+submit.
+     The fast path now calls a separate registered Cursor submit
+     command (preferring `composer.sendToAgent`) after the paste.
+  2. Only **one** paste candidate is attempted per drive — never both
+     `startComposerPrompt2` AND `startComposerPrompt`, which previously
+     stacked two copies of the same prompt in the composer.
+  3. If `sendToAgent` runs but `cursorDiskKV` shows no new user bubble
+     (rare: composer was already busy), the plugin now clears the
+     draft it just injected via `composer.focusComposer` +
+     `editor.action.selectAll` + `deleteLeft`, so the legacy probe
+     ladder doesn't trip its own `input_busy_probe` on text the fast
+     path left behind.
+
+  Edge case: when `_verifySubmitViaCursorBubble` returns `null`
+  (sqlite missing or no anchor), the fast path treats successful
+  command execution as success rather than dragging the legacy ladder
+  over an already-injected prompt — preventing double-paste regressions
+  in environments where the bubble adapter cannot run.
+
 ## [0.1.81] — 2026-05-25
 
 ### Fixed

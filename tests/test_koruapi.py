@@ -16,6 +16,8 @@ def test_list_integrations_has_dsl_and_scan() -> None:
     assert "dsl.to_library" in ids
     assert "scan.apply" in ids
     assert "autopilot.drive" in ids
+    assert "ide.commands" in ids
+    assert "ide.scenario_validate" in ids
 
 
 def test_dsl_roundtrip_invoke() -> None:
@@ -132,3 +134,33 @@ def test_openapi_document_lists_invoke_path() -> None:
             "schema"
         ]["properties"]["integration_id"]["enum"]
     )
+    assert "/api/v1/ide/commands" in doc["paths"]
+    assert "/api/v1/ide/scenario-schema" in doc["paths"]
+
+
+def test_ide_command_catalog_invoke() -> None:
+    result = invoke_integration(
+        "ide.commands",
+        project=Path("."),
+        method="llm",
+        body={"ide": "cursor"},
+    )
+
+    assert result["ok"] is True
+    assert set(result["catalog"]["ides"]) == {"cursor"}
+
+
+def test_ide_scenario_validate_invoke() -> None:
+    result = invoke_integration(
+        "ide.scenario_validate",
+        project=Path("."),
+        body={
+            "scenario": {
+                "ide": "cursor",
+                "steps": [{"action": "submit", "command": "composer.sendToAgent"}],
+            },
+        },
+    )
+
+    assert result["ok"] is True
+    assert result["validation"]["normalized"]["ide"] == "cursor"

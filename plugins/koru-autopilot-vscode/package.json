@@ -2,7 +2,7 @@
   "name": "koru-autopilot-vscode",
   "displayName": "koru autopilot (VS Code)",
   "description": "Bridge between Microsoft VS Code and the koru autopilot daemon. Standalone VSIX for VS Code only; sibling packages cover Cursor, VSCodium, Windsurf and Antigravity.",
-  "version": "0.1.78",
+  "version": "0.2.0",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -30,13 +30,6 @@
   ],
   "activationEvents": [
     "*",
-    "onCommand:koruAutopilot.connect",
-    "onCommand:koruAutopilot.openChat",
-    "onCommand:koruAutopilot.sendChat",
-    "onCommand:koruAutopilot.calibrateProbe",
-    "onCommand:koruAutopilot.calibrate",
-    "onCommand:koruAutopilot.calibrateCompact",
-    "onCommand:koruAutopilot.captureSubmitClick",
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
@@ -183,7 +176,7 @@
     "precompile": "python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-vscode",
     "compile": "tsc -p ./",
     "pretest": "python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-vscode",
-    "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/step-decisions.test.js && node out/host-click-submit.test.js && node out/chat-history-watcher.test.js && node out/ack-payload.test.js",
+    "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/step-decisions.test.js && node out/host-click-submit.test.js && node out/chat-history-watcher.test.js && node out/ack-payload.test.js && node out/command-catalog.test.js",
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
     "prepackage": "python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-vscode && python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-vscode",

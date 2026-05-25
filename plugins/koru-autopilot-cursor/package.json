@@ -2,7 +2,7 @@
   "name": "koru-autopilot-cursor",
   "displayName": "koru autopilot (Cursor)",
   "description": "Bridge between Cursor and the koru autopilot daemon. Standalone VSIX dedicated to Cursor IDE; sibling VSIX packages cover VS Code, VSCodium, Windsurf and Antigravity so a regression in this plugin cannot leak into another IDE's runtime.",
-  "version": "0.1.81",
+  "version": "0.2.0",
   "publisher": "semcod",
   "license": "Apache-2.0",
   "repository": {
@@ -28,12 +28,6 @@
   ],
   "activationEvents": [
     "*",
-    "onCommand:koruAutopilot.connect",
-    "onCommand:koruAutopilot.sendChat",
-    "onCommand:koruAutopilot.calibrateProbe",
-    "onCommand:koruAutopilot.calibrate",
-    "onCommand:koruAutopilot.calibrateCompact",
-    "onCommand:koruAutopilot.captureSubmitClick",
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
@@ -162,7 +156,7 @@
     "precompile": "python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-cursor",
     "compile": "tsc -p ./",
     "pretest": "python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-cursor",
-    "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/step-decisions.test.js && node out/host-click-submit.test.js && node out/chat-history-watcher.test.js && node out/ack-payload.test.js && node out/ides/cursor.test.js",
+    "test": "npm run compile && node out/dispatch-plan.test.js && node out/probe-ladder.test.js && node out/step-decisions.test.js && node out/host-click-submit.test.js && node out/chat-history-watcher.test.js && node out/ack-payload.test.js && node out/command-catalog.test.js && node out/ides/cursor.test.js",
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
     "prepackage": "python3 ../../scripts/sync-plugin-version.py --plugin koru-autopilot-cursor && python3 ../../scripts/sync-plugin-shared.py --plugin koru-autopilot-cursor",
