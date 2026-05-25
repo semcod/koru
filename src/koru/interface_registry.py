@@ -141,12 +141,70 @@ def summarize_interfaces_by_family() -> dict[str, int]:
     return counts
 
 
+def interfaces_for_blocker(blocker: str) -> tuple[InterfaceDescriptor, ...]:
+    key = blocker.strip()
+    if not key:
+        return ()
+    return tuple(item for item in iter_interfaces() if key in item.blocking_modes)
+
+
+def blocker_interface_payload(blocker: str) -> dict[str, object]:
+    items = interfaces_for_blocker(blocker)
+    return {
+        "blocked_by": blocker,
+        "interfaces": [
+            {
+                "id": item.id,
+                "family": item.family,
+                "transport": item.transport,
+                "operator_recovery": list(item.operator_recovery),
+            }
+            for item in items
+        ],
+    }
+
+
+def interface_registry_payload() -> dict[str, object]:
+    registry = load_interface_registry()
+    blockers: dict[str, list[str]] = {}
+    for item in registry.interfaces:
+        for blocker in item.blocking_modes:
+            blockers.setdefault(blocker, []).append(item.id)
+    return {
+        "schema": registry.schema,
+        "interfaces": [
+            {
+                "id": item.id,
+                "family": item.family,
+                "direction": item.direction,
+                "transport": item.transport,
+                "surface": item.surface,
+                "authority": item.authority,
+                "write_mode": item.write_mode,
+                "verification": {
+                    "mode": item.verification.mode,
+                    "can_confirm_submit": item.verification.can_confirm_submit,
+                },
+                "blocking_modes": list(item.blocking_modes),
+                "operator_recovery": list(item.operator_recovery),
+                "primary_code": list(item.primary_code),
+            }
+            for item in registry.interfaces
+        ],
+        "families": summarize_interfaces_by_family(),
+        "blockers": blockers,
+    }
+
+
 __all__ = [
+    "blocker_interface_payload",
     "InterfaceDescriptor",
     "InterfaceRegistry",
     "InterfaceVerification",
     "get_interface_descriptor",
+    "interface_registry_payload",
     "interface_registry_path",
+    "interfaces_for_blocker",
     "iter_interfaces",
     "list_interface_ids",
     "load_interface_registry",

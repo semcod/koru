@@ -68,6 +68,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/plans/observation-mesh-plan.md` describe where to add new
   dashboard routes.
 
+## [0.1.270] - 2026-05-25
+
+### Docs
+- Update README.md
+
+### Test
+- Update tests/test_interface_registry.py
+- Update tests/test_koruide_client.py
+- Update tests/test_serve.py
+
+### Other
+- Update .koru/project.json
+- Update .planfile/sprints/current.yaml
+- Update wup.yaml
+
 ## [0.1.269] - 2026-05-25
 
 ### Docs

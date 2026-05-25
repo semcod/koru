@@ -8,7 +8,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from .protocol import MAX_LINE_BYTES, Message, decode
+from .protocol import MAX_LINE_BYTES, Message, ProtocolError, decode, error as error_msg
 from .protocol import drive as drive_msg
 from .socket import default_socket_path
 
@@ -65,7 +65,26 @@ class KoruIDEClient:
             line, _, _ = buf.partition(b"\n")
             if not line:
                 raise RuntimeError("daemon closed connection without replying")
-            return decode(line)
+            try:
+                return decode(line)
+            except ProtocolError as exc:
+                # Daemon sometimes drops the trailing newline (e.g. plugin
+                # disconnects mid-ack, or the ack payload is truncated by an
+                # interleaved event). Promote this to a structured ``error``
+                # reply so the autonomous loop can record a failed cycle and
+                # continue instead of crashing the whole ``koru auto`` run.
+                # The partial bytes are logged for postmortem.
+                if self._log:
+                    head = bytes(buf[:160]).decode("utf-8", errors="replace")
+                    self._log(
+                        f"client: response parse failed ({exc}); "
+                        f"bytes={len(buf)} head={head!r}"
+                    )
+                return error_msg(
+                    msg.id,
+                    f"daemon response could not be decoded ({exc}); "
+                    f"got {len(buf)} bytes without a complete NDJSON envelope",
+                )
 
     def is_running(self) -> bool:
         if self._client is not None:

@@ -15,6 +15,7 @@ from typing import Any
 from urllib.parse import urlencode, parse_qs, urlparse
 
 from koru.env_config import apply_env_updates, env_config_payload, write_env_config
+from koru.interface_registry import blocker_interface_payload, interface_registry_payload
 from koruapi.dashboard_config import (
     DashboardConfigDefaults,
     dashboard_config_payload,
@@ -194,8 +195,22 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
                     "project": str(project),
                     "decisions": history,
                     "skip_code_descriptions": dict(SKIP_CODE_DESCRIPTIONS),
+                    "blocked_interfaces": {
+                        blocker: blocker_interface_payload(blocker)
+                        for blocker in {
+                            str(item.get("blocked_by") or "").strip()
+                            for item in history
+                            if str(item.get("blocked_by") or "").strip()
+                        }
+                    },
                 }
             )
+
+        def _get_interfaces(self) -> None:
+            try:
+                self._send_json(interface_registry_payload())
+            except Exception as exc:  # pragma: no cover - defensive surface
+                self._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
 
         def _get_handoff(self) -> None:
             try:
@@ -342,6 +357,7 @@ def build_dashboard_handler(config: ServeConfig) -> type[BaseHTTPRequestHandler]
                 "/api/handoff": self._get_handoff,
                 "/api/plugin-logs": self._get_plugin_logs,
                 "/api/autonomy/trace": self._get_autonomy_trace,
+                "/api/interfaces": self._get_interfaces,
             }.get(path)
             if route is not None:
                 route()

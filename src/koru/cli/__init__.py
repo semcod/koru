@@ -16,7 +16,6 @@ from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from types import ModuleType
 
-
 _LEGACY_REQUIRED_EXPORTS = (
     "main",
     "_SUBCOMMANDS",
@@ -58,8 +57,8 @@ def _load_legacy_cli_module() -> ModuleType:
 
 _legacy = _load_legacy_cli_module()
 
-from koru.cli_auto import _auto_main  # noqa: E402
 from koru.cli_agent_backends import agent_backends_main as _agent_backends_main  # noqa: E402
+from koru.cli_auto import _auto_main  # noqa: E402
 from koru.cli_ide_router import ide_router_main  # noqa: E402
 
 if not hasattr(_legacy, "_auto_main"):

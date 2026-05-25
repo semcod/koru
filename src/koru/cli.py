@@ -8,16 +8,20 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
+import koru.cli_parser as _cli_parser
+from koru.agents import detect_agent_options
 from koru.autoloop_cli import autoloop_main
-from koru.autonomous import autonomous_main, stop_prior_autonomous_for_auto_start
+from koru.autonomous import autonomous_main
+from koru.autonomous_processes import stop_prior_autonomous_for_auto_start
 from koru.autonomous_runtime import project_venv_reexec_argv
 from koru.autopilot.cli_command import autopilot_main
 from koru.cli_loop import command_loop_main as _command_loop_main
-from koru.cli_parser import _build_parser, _command_value
-from koru.cli_agent import detect_agent_options
 from koru.cli_scan import scan_main as _scan_main
 from koru.dev_sync import dev_main
 from koru.git_cli import git_main
+
+_build_parser = _cli_parser._build_parser
+_command_value = _cli_parser._command_value
 
 
 def _env_truthy(name: str) -> bool:

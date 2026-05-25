@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from koru.interface_registry import (
+    blocker_interface_payload,
     get_interface_descriptor,
+    interface_registry_payload,
     interface_registry_path,
     list_interface_ids,
     load_interface_registry,
@@ -38,3 +40,17 @@ def test_interface_registry_family_summary_has_multiple_families() -> None:
     assert summary["ide_control"] >= 2
     assert summary["observation"] >= 1
     assert summary["tool_invocation"] >= 1
+
+
+def test_blocker_interface_payload_returns_recovery_for_plugin_mismatch() -> None:
+    payload = blocker_interface_payload("plugin_version_mismatch")
+    assert payload["blocked_by"] == "plugin_version_mismatch"
+    ids = [item["id"] for item in payload["interfaces"]]
+    assert "plugin_socket_vscode_family" in ids
+
+
+def test_interface_registry_payload_contains_blocker_index() -> None:
+    payload = interface_registry_payload()
+    assert payload["schema"] == "koru.interface-registry/v1"
+    assert "blockers" in payload
+    assert "plugin_missing" in payload["blockers"]

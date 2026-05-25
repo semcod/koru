@@ -96,7 +96,7 @@ sprint:
         Weryfikacja (opcjonalnie): `koru ide doctor --ide vscodium --fix --gc-sockets`'
       execution:
         attempt: 0
-        finished_at: '2026-05-25T11:49:34.222535Z'
+        finished_at: '2026-05-25T12:02:51.916043Z'
         max_attempts: 1
         queue: operator
         state: done
@@ -170,6 +170,11 @@ sprint:
         - execution
         source: planfile.store
         timestamp: '2026-05-25T11:49:34.232994+00:00'
+      - action: update
+        changes:
+        - execution
+        source: planfile.store
+        timestamp: '2026-05-25T12:02:51.931760+00:00'
       id: STARTER-215
       inputs:
         api_headers: {}
@@ -225,7 +230,7 @@ sprint:
       sprint: current
       status: done
       sync: {}
-      updated_at: '2026-05-25T11:49:34.232955+00:00'
+      updated_at: '2026-05-25T12:02:51.931725+00:00'
     STARTER-216:
       blocked_by: []
       blocks: []
@@ -2363,11 +2368,15 @@ sprint:
         - labels
         source: planfile.store
         timestamp: '2026-05-25T11:56:56.535138+00:00'
+      - action: update
+        changes:
+        - labels
+        source: planfile.store
+        timestamp: '2026-05-25T12:01:10.849878+00:00'
       id: STARTER-239
       labels:
-      - autonomy
-      - llm-ready
       - refactor
+      - autonomy
       name: 'Refactor: split high-CC functions in autonomous_cycle_chat_activity,
         autonomous_loop_runner, ide_reload'
       priority: high
@@ -2378,7 +2387,7 @@ sprint:
       sprint: current
       status: open
       sync: {}
-      updated_at: '2026-05-25T11:56:56.535103+00:00'
+      updated_at: '2026-05-25T12:01:10.849814+00:00'
     STARTER-240:
       acceptance_criteria: []
       blocked_by: []

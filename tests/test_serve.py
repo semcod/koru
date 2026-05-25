@@ -344,6 +344,56 @@ class TestServe(unittest.TestCase):
         self.assertIn("interactive_control", payload["interfaces"])
         self.assertIn("observation", payload["interfaces"])
 
+    def test_api_interfaces_returns_registry_payload(self) -> None:
+        status, ctype, body = _get(self.port, "/api/interfaces")
+        self.assertEqual(status, 200)
+        self.assertIn("application/json", ctype)
+        payload = json.loads(body)
+        self.assertEqual(payload["schema"], "koru.interface-registry/v1")
+        self.assertIn("interfaces", payload)
+        self.assertIn("families", payload)
+        self.assertIn("blockers", payload)
+        self.assertIn("plugin_missing", payload["blockers"])
+        self.assertTrue(
+            any(item["id"] == "plugin_socket_vscode_family" for item in payload["interfaces"])
+        )
+
+    def test_api_autonomy_trace_includes_blocked_interface_mapping(self) -> None:
+        telemetry_path = self.project / ".planfile" / ".koru" / "autonomy-telemetry.json"
+        telemetry_path.parent.mkdir(parents=True, exist_ok=True)
+        telemetry_path.write_text(
+            json.dumps(
+                {
+                    "recent_decisions": [
+                        {
+                            "at": "2026-05-25T10:00:00+00:00",
+                            "cycle": 631,
+                            "observed": "queue=waiting_input ticket=STARTER-239",
+                            "decided": "skip:plugin_missing",
+                            "action": "no_op",
+                            "evidence": "blocked_by=plugin_missing",
+                            "next_step": "wait for plugin reconnect",
+                            "blocked_by": "plugin_missing",
+                            "skip_code": "plugin_missing",
+                            "skip_because": "daemon has no compatible plugin session",
+                        }
+                    ]
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        status, ctype, body = _get(self.port, "/api/autonomy/trace")
+        self.assertEqual(status, 200)
+        self.assertIn("application/json", ctype)
+        payload = json.loads(body)
+        self.assertIn("blocked_interfaces", payload)
+        self.assertIn("plugin_missing", payload["blocked_interfaces"])
+        blocked = payload["blocked_interfaces"]["plugin_missing"]
+        self.assertEqual(blocked["blocked_by"], "plugin_missing")
+        ids = [item["id"] for item in blocked["interfaces"]]
+        self.assertIn("plugin_socket_vscode_family", ids)
+
     def test_api_handoff_returns_markdown(self) -> None:
         status, ctype, body = _get(self.port, "/api/handoff")
         self.assertEqual(status, 200)
